@@ -6,10 +6,10 @@ Implements comprehensive troubleshooting utilities as specified in CODEX Integra
 import json
 import logging
 import os
+from pathlib import Path
 import socket
 import sqlite3
 import time
-from pathlib import Path
 from typing import Any
 
 import psutil
@@ -106,9 +106,9 @@ class TroubleshootingTools:
                                 port_info["protocol"] = (
                                     "TCP" if conn.type == socket.SOCK_STREAM else "UDP"
                                 )
-                                port_info["address"] = (
-                                    f"{conn.laddr.ip}:{conn.laddr.port}"
-                                )
+                                port_info[
+                                    "address"
+                                ] = f"{conn.laddr.ip}:{conn.laddr.port}"
                                 break
                             except (psutil.NoSuchProcess, psutil.AccessDenied):
                                 port_info["process_name"] = "Unknown"

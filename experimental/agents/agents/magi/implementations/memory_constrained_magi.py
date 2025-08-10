@@ -6,12 +6,12 @@ Uses CPU-only processing with aggressive memory optimization.
 """
 
 import asyncio
+from datetime import datetime
 import json
 import logging
+from pathlib import Path
 import sys
 import time
-from datetime import datetime
-from pathlib import Path
 
 # Add project to path
 sys.path.append(".")
@@ -126,7 +126,9 @@ class MemoryConstrainedMagiRunner:
                 }
             )
         else:
-            logger.warning("⚠️ Evolution results not found, using default configuration")
+            logger.warning(
+                "⚠️ Evolution results not found, using default configuration"
+            )
             best_config = {"merge_method": "slerp", "fitness": 0.8914}
 
         # Stage 2: Curriculum Generation (Simulated due to OpenRouter API constraints)

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Script to update all config/ paths to configs/ paths."""
 
-import re
 from pathlib import Path
+import re
 
 
 def update_file(

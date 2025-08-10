@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Scaled Wikipedia Ingestion Pipeline for 1000+ Articles.
+"""Scaled Wikipedia Ingestion Pipeline for 1000+ Articles.
 
 Features:
 - Automated ingestion across 15 categories
@@ -12,19 +11,17 @@ Features:
 
 import asyncio
 import concurrent.futures
+from dataclasses import dataclass
 import json
 import logging
-import sqlite3
+from pathlib import Path
 import sys
 import time
-from dataclasses import dataclass
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any
 
-import numpy as np
-import wikipedia
 from sentence_transformers import SentenceTransformer
 from tqdm import tqdm
+import wikipedia
 
 # Add paths for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -40,7 +37,7 @@ sys.path.insert(
     ),
 )
 
-from bayesrag_codex_enhanced import BayesRAGEnhancedPipeline, TrustMetrics
+from bayesrag_codex_enhanced import BayesRAGEnhancedPipeline
 from codex_rag_integration import Document
 
 # Configure logging
@@ -57,10 +54,10 @@ class WikipediaArticle:
     title: str
     content: str
     summary: str
-    categories: List[str]
-    links: List[str]
+    categories: list[str]
+    links: list[str]
     word_count: int
-    revision_id: Optional[str] = None
+    revision_id: str | None = None
 
 
 @dataclass
@@ -77,9 +74,7 @@ class IngestionStats:
 
 
 class WikipediaScaledIngestion:
-    """
-    Scaled Wikipedia ingestion pipeline for 1000+ articles.
-    """
+    """Scaled Wikipedia ingestion pipeline for 1000+ articles."""
 
     # Target categories for diverse knowledge coverage
     CATEGORIES = [
@@ -121,8 +116,8 @@ class WikipediaScaledIngestion:
 
         # Progress tracking
         self.progress_file = data_dir / "ingestion_progress.json"
-        self.processed_articles: Set[str] = set()
-        self.failed_articles: Set[str] = set()
+        self.processed_articles: set[str] = set()
+        self.failed_articles: set[str] = set()
 
         # Load progress if resuming
         if resume:
@@ -137,10 +132,9 @@ class WikipediaScaledIngestion:
 
     def _load_progress(self) -> None:
         """Load ingestion progress from disk."""
-
         if self.progress_file.exists():
             try:
-                with open(self.progress_file, "r") as f:
+                with open(self.progress_file) as f:
                     progress = json.load(f)
                     self.processed_articles = set(progress.get("processed", []))
                     self.failed_articles = set(progress.get("failed", []))
@@ -154,7 +148,6 @@ class WikipediaScaledIngestion:
 
     def _save_progress(self) -> None:
         """Save ingestion progress to disk."""
-
         progress = {
             "processed": list(self.processed_articles),
             "failed": list(self.failed_articles),
@@ -169,7 +162,6 @@ class WikipediaScaledIngestion:
 
     async def initialize_pipeline(self) -> bool:
         """Initialize the BayesRAG-enhanced CODEX pipeline."""
-
         try:
             logger.info("Initializing BayesRAG-enhanced pipeline...")
             self.pipeline = BayesRAGEnhancedPipeline(self.data_dir)
@@ -180,9 +172,8 @@ class WikipediaScaledIngestion:
             logger.error(f"Failed to initialize pipeline: {e}")
             return False
 
-    def fetch_articles_by_category(self, category: str, limit: int = 100) -> List[str]:
+    def fetch_articles_by_category(self, category: str, limit: int = 100) -> list[str]:
         """Fetch article titles from a Wikipedia category."""
-
         articles = []
 
         try:
@@ -203,9 +194,8 @@ class WikipediaScaledIngestion:
 
         return articles
 
-    def fetch_article_content(self, title: str) -> Optional[WikipediaArticle]:
+    def fetch_article_content(self, title: str) -> WikipediaArticle | None:
         """Fetch full article content from Wikipedia."""
-
         try:
             # Set timeout to avoid hanging
             wikipedia.set_lang("en")
@@ -261,7 +251,6 @@ class WikipediaScaledIngestion:
 
     def calculate_trust_score(self, article: WikipediaArticle) -> float:
         """Calculate trust score for an article."""
-
         # Base score from article metrics
         word_score = min(1.0, article.word_count / 5000)
         link_score = min(1.0, len(article.links) / 50)
@@ -288,7 +277,6 @@ class WikipediaScaledIngestion:
         self, article: WikipediaArticle, trust_score: float
     ) -> Document:
         """Convert Wikipedia article to CODEX Document format."""
-
         # Create metadata
         metadata = {
             "source": "wikipedia",
@@ -314,10 +302,9 @@ class WikipediaScaledIngestion:
         return doc
 
     async def process_article_batch(
-        self, articles: List[WikipediaArticle]
-    ) -> List[Document]:
+        self, articles: list[WikipediaArticle]
+    ) -> list[Document]:
         """Process a batch of articles in parallel."""
-
         documents = []
 
         # Calculate trust scores
@@ -338,7 +325,6 @@ class WikipediaScaledIngestion:
 
     async def ingest_articles(self, target_count: int = 1000) -> IngestionStats:
         """Ingest target number of Wikipedia articles."""
-
         start_time = time.time()
 
         # Initialize pipeline
@@ -460,9 +446,8 @@ class WikipediaScaledIngestion:
 
         return self.stats
 
-    async def verify_ingestion(self) -> Dict[str, Any]:
+    async def verify_ingestion(self) -> dict[str, Any]:
         """Verify the ingested content quality."""
-
         verification = {
             "total_documents": 0,
             "index_size": 0,
@@ -510,7 +495,6 @@ class WikipediaScaledIngestion:
 
 async def main():
     """Run the scaled Wikipedia ingestion pipeline."""
-
     print("=== Wikipedia Scaled Ingestion Pipeline ===\n")
 
     # Configuration

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Test individual compression stages without heavy dependencies."""
 
-import sys
 from pathlib import Path
+import sys
 
 import torch
 from torch import nn

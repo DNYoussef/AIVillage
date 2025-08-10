@@ -3,12 +3,12 @@
 Migrates from mock Bluetooth to LibP2P mesh network according to CODEX requirements.
 """
 
+from datetime import datetime
 import json
 import logging
 import os
-import sqlite3
-from datetime import datetime
 from pathlib import Path
+import sqlite3
 from typing import Any
 
 logging.basicConfig(level=logging.INFO)

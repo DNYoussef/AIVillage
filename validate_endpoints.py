@@ -1,21 +1,18 @@
 #!/usr/bin/env python3
-"""
-CODEX Integration Requirements - Service Endpoint Validation
+"""CODEX Integration Requirements - Service Endpoint Validation
 Tests all service endpoints per CODEX specifications
 """
 
-import json
 import socket
 import time
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import requests
 
 
 def check_port_availability(
     host: str, port: int, timeout: float = 5.0
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Check if a port is available and responding."""
     result = {
         "host": host,
@@ -36,7 +33,7 @@ def check_port_availability(
         result["response_time_ms"] = (end_time - start_time) * 1000
         sock.close()
 
-    except socket.timeout:
+    except TimeoutError:
         result["error"] = "Connection timeout"
     except ConnectionRefusedError:
         result["error"] = "Connection refused - service not running"
@@ -47,8 +44,8 @@ def check_port_availability(
 
 
 def test_http_endpoint(
-    url: str, timeout: float = 10.0, expected_codes: List[int] = None
-) -> Dict[str, Any]:
+    url: str, timeout: float = 10.0, expected_codes: list[int] = None
+) -> dict[str, Any]:
     """Test HTTP endpoint availability and response."""
     if expected_codes is None:
         expected_codes = [
@@ -92,9 +89,8 @@ def test_http_endpoint(
     return result
 
 
-def validate_service_endpoints() -> Dict[str, Any]:
+def validate_service_endpoints() -> dict[str, Any]:
     """Validate all service endpoints per CODEX Integration Requirements."""
-
     print("[VALIDATION] Service Endpoint Testing Per CODEX Integration Requirements")
     print("=" * 80)
 

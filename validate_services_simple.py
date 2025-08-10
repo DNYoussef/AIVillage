@@ -1,17 +1,16 @@
 #!/usr/bin/env python3
-"""
-Simplified Service Health Validation - No external dependencies
+"""Simplified Service Health Validation - No external dependencies
 Tests basic connectivity to all required services
 """
 
+from datetime import datetime
 import json
+from pathlib import Path
 import socket
 import sys
 import time
 import urllib.error
 import urllib.request
-from datetime import datetime
-from pathlib import Path
 
 # Service definitions based on CODEX requirements
 SERVICES = [
@@ -51,7 +50,7 @@ def test_tcp_port(host, port, timeout=2):
         result = sock.connect_ex((host, port))
         sock.close()
         return result == 0
-    except Exception as e:
+    except Exception:
         return False
 
 
@@ -67,7 +66,7 @@ def test_udp_port(host, port, timeout=2):
             return True
         sock.close()
         return True
-    except Exception as e:
+    except Exception:
         return False
 
 
@@ -78,7 +77,7 @@ def test_http_endpoint(host, port, path="/", timeout=2):
         req = urllib.request.Request(url)
         with urllib.request.urlopen(req, timeout=timeout) as response:
             return response.status == 200
-    except (urllib.error.URLError, urllib.error.HTTPError) as e:
+    except (urllib.error.URLError, urllib.error.HTTPError):
         return False
 
 

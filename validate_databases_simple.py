@@ -1,16 +1,13 @@
 #!/usr/bin/env python3
-"""
-Simplified Database Validation - No external dependencies
+"""Simplified Database Validation - No external dependencies
 Checks database existence, schemas, and basic integrity
 """
 
+from datetime import datetime
 import json
-import os
+from pathlib import Path
 import sqlite3
 import sys
-import time
-from datetime import datetime
-from pathlib import Path
 
 
 class DatabaseValidator:
@@ -368,7 +365,7 @@ class DatabaseValidator:
                     for issue in result["issues"]:
                         print(f"    - {issue}")
             else:
-                print(f"  [MISSING] Database does not exist")
+                print("  [MISSING] Database does not exist")
 
         # Summary
         print("\n" + "=" * 80)

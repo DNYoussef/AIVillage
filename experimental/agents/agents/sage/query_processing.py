@@ -2,11 +2,10 @@ import asyncio
 import logging
 from typing import Any
 
+from agent_forge.adas.technique_archive import ChainOfThought, TreeOfThoughts
 from rag_system.utils.embedding import BERTEmbeddingModel
 from rag_system.utils.named_entity_recognition import NamedEntityRecognizer
 from rag_system.utils.relation_extraction import RelationExtractor
-
-from agent_forge.adas.technique_archive import ChainOfThought, TreeOfThoughts
 
 logger = logging.getLogger(__name__)
 
@@ -30,9 +29,12 @@ class QueryProcessor:
                 self.apply_advanced_reasoning({"content": query}),
                 self.query_rag(query),
             )
-            activated_knowledge, cognitive_context, reasoning_result, rag_result = (
-                results
-            )
+            (
+                activated_knowledge,
+                cognitive_context,
+                reasoning_result,
+                rag_result,
+            ) = results
 
             enhanced_query = f"""
             Original Query: {query}

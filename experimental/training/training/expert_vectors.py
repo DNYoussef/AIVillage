@@ -2,8 +2,8 @@ from collections.abc import Iterable
 from dataclasses import dataclass
 
 import torch
-import torch.nn.functional as F
 from torch import nn
+import torch.nn.functional as F
 
 
 @dataclass

@@ -4,17 +4,17 @@ Brain-inspired neocortical memory system for consolidated semantic knowledge
 with hypergraph relationships, personalized PageRank, and community detection.
 """
 
+from datetime import datetime
 import json
 import logging
-import uuid
-from datetime import datetime
 from typing import Any
+import uuid
 
-import numpy as np
-import redis.asyncio as redis
 from neo4j import AsyncGraphDatabase
+import numpy as np
 from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, PointStruct, VectorParams
+import redis.asyncio as redis
 
 from .base import (
     ConfidenceType,
@@ -77,9 +77,9 @@ class Hyperedge(Edge):
         # Hypergraph-specific properties
         self.hyperedge_type: str = "n-ary" if len(participants) > 2 else "binary"
         self.semantic_role: str | None = None  # Subject, predicate, object, etc.
-        self.consolidation_source: list[str] = (
-            []
-        )  # IDs of episodic edges that formed this
+        self.consolidation_source: list[
+            str
+        ] = []  # IDs of episodic edges that formed this
 
 
 class Subgraph:

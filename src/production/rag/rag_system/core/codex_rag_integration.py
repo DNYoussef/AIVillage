@@ -5,21 +5,21 @@ with exact configuration values, models, and performance targets.
 """
 
 import asyncio
+from collections import OrderedDict
+from dataclasses import dataclass
 import hashlib
 import json
 import logging
 import os
-import time
-from collections import OrderedDict
-from dataclasses import dataclass
 from pathlib import Path
+import time
 from typing import Any
 
+from diskcache import Cache as DiskCache
 import faiss
 import numpy as np
-import redis
-from diskcache import Cache as DiskCache
 from rank_bm25 import BM25Okapi
+import redis
 from sentence_transformers import CrossEncoder, SentenceTransformer
 
 # Configure logging

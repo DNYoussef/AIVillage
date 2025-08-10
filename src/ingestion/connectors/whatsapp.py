@@ -3,11 +3,11 @@
 Actually connects and retrieves messages - NO MORE STUBS!
 """
 
+from datetime import datetime, timedelta
 import logging
 import os
 import random
 import time
-from datetime import datetime, timedelta
 from typing import Any
 
 import requests
@@ -257,19 +257,19 @@ class WhatsAppConnector:
                 if msg.get("type") == "text":
                     formatted_msg["text"] = msg.get("text", {}).get("body", "")
                 elif msg.get("type") == "image":
-                    formatted_msg["text"] = (
-                        f"[IMAGE] {msg.get('image', {}).get('caption', 'Photo')}"
-                    )
+                    formatted_msg[
+                        "text"
+                    ] = f"[IMAGE] {msg.get('image', {}).get('caption', 'Photo')}"
                 elif msg.get("type") == "document":
-                    formatted_msg["text"] = (
-                        f"[DOCUMENT] {msg.get('document', {}).get('filename', 'File')}"
-                    )
+                    formatted_msg[
+                        "text"
+                    ] = f"[DOCUMENT] {msg.get('document', {}).get('filename', 'File')}"
                 elif msg.get("type") == "audio":
                     formatted_msg["text"] = "[AUDIO] Voice message"
                 else:
-                    formatted_msg["text"] = (
-                        f"[{msg.get('type', 'UNKNOWN').upper()}] Message"
-                    )
+                    formatted_msg[
+                        "text"
+                    ] = f"[{msg.get('type', 'UNKNOWN').upper()}] Message"
 
                 formatted.append(formatted_msg)
 

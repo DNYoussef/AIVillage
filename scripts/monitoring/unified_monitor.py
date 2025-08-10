@@ -15,13 +15,13 @@ Provides comprehensive monitoring with:
 """
 
 import asyncio
-import json
-import logging
-import time
 from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta
 from enum import Enum
+import json
+import logging
 from pathlib import Path
+import time
 from typing import Any
 
 try:
@@ -297,8 +297,12 @@ class UnifiedMonitor(BaseScript):
                 disk_usage_percent=(disk_usage.used / disk_usage.total) * 100,
                 disk_io_read_mb=disk_io.read_bytes / (1024**2) if disk_io else 0,
                 disk_io_write_mb=disk_io.write_bytes / (1024**2) if disk_io else 0,
-                network_sent_mb=network_io.bytes_sent / (1024**2) if network_io else 0,
-                network_recv_mb=network_io.bytes_recv / (1024**2) if network_io else 0,
+                network_sent_mb=network_io.bytes_sent / (1024**2)
+                if network_io
+                else 0,
+                network_recv_mb=network_io.bytes_recv / (1024**2)
+                if network_io
+                else 0,
                 load_average=load_avg,
                 process_count=process_count,
                 temperature=temperature,

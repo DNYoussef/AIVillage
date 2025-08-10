@@ -8,9 +8,9 @@ import os
 import sys
 import time
 
+from enhance_compression_mobile import MobileCompressionPipeline, MobileOptimizedLayers
 import numpy as np
 import torch
-from enhance_compression_mobile import MobileCompressionPipeline, MobileOptimizedLayers
 from torch import nn
 
 # Add the scripts directory to the path

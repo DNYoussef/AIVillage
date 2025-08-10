@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Benchmark compression performance."""
 
+from pathlib import Path
 import sys
 import time
-from pathlib import Path
 
 import torch
 from torch import nn

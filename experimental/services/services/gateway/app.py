@@ -12,10 +12,10 @@ import os
 import sys
 import time
 
-import httpx
 from cachetools import TTLCache
 from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+import httpx
 from prometheus_client import (
     CONTENT_TYPE_LATEST,
     REGISTRY,

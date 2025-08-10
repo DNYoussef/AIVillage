@@ -10,15 +10,15 @@ This module provides shared functionality including:
 """
 
 import argparse
+from collections.abc import Callable
+from datetime import datetime
 import functools
 import logging
 import os
+from pathlib import Path
 import signal
 import sys
 import time
-from collections.abc import Callable
-from datetime import datetime
-from pathlib import Path
 from typing import Any, NoReturn, TypeVar
 
 import psutil

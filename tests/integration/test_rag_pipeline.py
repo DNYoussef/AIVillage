@@ -1,5 +1,3 @@
-import pytest
-
 from experimental.rag.storm.wikipedia_storm_pipeline import WikipediaSTORMPipeline
 
 

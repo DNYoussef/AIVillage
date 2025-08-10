@@ -1,9 +1,10 @@
-import logging
 from datetime import datetime
+import logging
 from typing import Any
 
 import numpy as np
 import pandas as pd
+
 from rag_system.utils.advanced_analytics import AdvancedAnalytics
 
 logger = logging.getLogger(__name__)
@@ -84,18 +85,18 @@ class EvaluationFramework:
 
     def generate_visualizations(self) -> dict[str, bytes]:
         visualizations = {}
-        visualizations["metrics_over_time"] = (
-            self.advanced_analytics.visualize_metrics()
-        )
+        visualizations[
+            "metrics_over_time"
+        ] = self.advanced_analytics.visualize_metrics()
 
         # Generate correlation heatmap
         metric_values = {name: metric.values for name, metric in self.metrics.items()}
         df = pd.DataFrame(metric_values)
         correlation_matrix = df.corr()
-        visualizations["correlation_heatmap"] = (
-            self.advanced_analytics.generate_heatmap(
-                correlation_matrix.values.tolist(), correlation_matrix.index.tolist()
-            )
+        visualizations[
+            "correlation_heatmap"
+        ] = self.advanced_analytics.generate_heatmap(
+            correlation_matrix.values.tolist(), correlation_matrix.index.tolist()
         )
 
         return visualizations

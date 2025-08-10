@@ -1,6 +1,6 @@
+from collections import deque
 import io
 import logging
-from collections import deque
 from typing import Any
 
 import matplotlib.pyplot as plt

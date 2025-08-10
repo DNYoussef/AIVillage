@@ -5,10 +5,10 @@ Canary tests are expected to fail but serve as indicators of
 architectural changes when they start passing or fail differently.
 """
 
-import json
-import logging
 from dataclasses import dataclass
 from datetime import datetime, timezone
+import json
+import logging
 from pathlib import Path
 from typing import Any
 
@@ -319,7 +319,9 @@ class CanaryMonitor:
                 else (
                     "🟡"
                     if canary.last_seen_status in ["skipped", "xfail"]
-                    else "🟢" if canary.last_seen_status == "passed" else "⚪"
+                    else "🟢"
+                    if canary.last_seen_status == "passed"
+                    else "⚪"
                 )
             )
 

@@ -1,20 +1,18 @@
 #!/usr/bin/env python3
-"""
-Integration script to bridge BayesRAG system with existing CODEX RAG requirements.
+"""Integration script to bridge BayesRAG system with existing CODEX RAG requirements.
 Migrates BayesRAG data to CODEX-compliant pipeline and enhances caching architecture.
 """
 
 import asyncio
 import json
 import logging
+from pathlib import Path
 import sqlite3
 import sys
 import time
-from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 import numpy as np
-from sentence_transformers import SentenceTransformer
 
 # Add paths for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -65,9 +63,8 @@ class BayesRAGToCODEXIntegrator:
             logger.error(f"Failed to initialize CODEX pipeline: {e}")
             return False
 
-    def migrate_bayesrag_to_codex(self) -> Dict[str, Any]:
+    def migrate_bayesrag_to_codex(self) -> dict[str, Any]:
         """Migrate BayesRAG data to CODEX-compliant format."""
-
         logger.info("Starting BayesRAG to CODEX migration...")
         migration_stats = {
             "global_contexts_migrated": 0,
@@ -116,9 +113,8 @@ class BayesRAGToCODEXIntegrator:
             migration_stats["errors"].append(str(e))
             return migration_stats
 
-    def _load_global_contexts(self) -> List[Dict[str, Any]]:
+    def _load_global_contexts(self) -> list[dict[str, Any]]:
         """Load global contexts from BayesRAG database."""
-
         contexts = []
         with sqlite3.connect(self.bayesrag_global_db) as conn:
             cursor = conn.execute(
@@ -146,9 +142,8 @@ class BayesRAGToCODEXIntegrator:
         logger.info(f"Loaded {len(contexts)} global contexts")
         return contexts
 
-    def _load_local_contexts(self) -> List[Dict[str, Any]]:
+    def _load_local_contexts(self) -> list[dict[str, Any]]:
         """Load local contexts from BayesRAG database."""
-
         contexts = []
         with sqlite3.connect(self.bayesrag_local_db) as conn:
             cursor = conn.execute(
@@ -189,11 +184,10 @@ class BayesRAGToCODEXIntegrator:
 
     def _convert_to_codex_documents(
         self,
-        global_contexts: List[Dict[str, Any]],
-        local_contexts: List[Dict[str, Any]],
-    ) -> List[Document]:
+        global_contexts: list[dict[str, Any]],
+        local_contexts: list[dict[str, Any]],
+    ) -> list[Document]:
         """Convert BayesRAG contexts to CODEX Document format."""
-
         documents = []
 
         # Group local contexts by parent article
@@ -254,7 +248,6 @@ class BayesRAGToCODEXIntegrator:
 
     async def _index_document_in_codex(self, document: Document) -> bool:
         """Index a document in the CODEX pipeline."""
-
         try:
             # Index document using CODEX pipeline
             result = await self.codex_pipeline.index_documents([document])
@@ -265,7 +258,6 @@ class BayesRAGToCODEXIntegrator:
 
     async def enhance_codex_caching(self):
         """Enhance CODEX pipeline with BayesRAG context-aware caching."""
-
         logger.info("Enhancing CODEX pipeline with context-aware caching...")
 
         if not self.codex_pipeline:
@@ -286,9 +278,8 @@ class BayesRAGToCODEXIntegrator:
             logger.error(f"Cache enhancement failed: {e}")
             return False
 
-    async def validate_integration(self) -> Dict[str, Any]:
+    async def validate_integration(self) -> dict[str, Any]:
         """Validate the integrated BayesRAG + CODEX system."""
-
         logger.info("Validating BayesRAG + CODEX integration...")
 
         validation_results = {
@@ -369,7 +360,6 @@ class BayesRAGToCODEXIntegrator:
 
 async def main():
     """Run the complete BayesRAG to CODEX integration."""
-
     logger.info("=== BayesRAG to CODEX Integration ===")
 
     integrator = BayesRAGToCODEXIntegrator()
@@ -386,7 +376,7 @@ async def main():
     logger.info("Phase 2: Migrating BayesRAG data to CODEX format")
     migration_stats = await integrator.migrate_bayesrag_to_codex()
 
-    print(f"\n=== Migration Results ===")
+    print("\n=== Migration Results ===")
     print(f"Global contexts migrated: {migration_stats['global_contexts_migrated']}")
     print(f"Local contexts migrated: {migration_stats['local_contexts_migrated']}")
     print(f"Documents indexed in CODEX: {migration_stats['documents_indexed']}")
@@ -405,7 +395,7 @@ async def main():
     logger.info("Phase 4: Validating integrated system")
     validation = await integrator.validate_integration()
 
-    print(f"\n=== Validation Results ===")
+    print("\n=== Validation Results ===")
     print(f"API Accessible: {validation['api_accessible']}")
     print(f"Latency Target Met (<100ms): {validation['latency_target_met']}")
     print(f"Index Size: {validation['index_size']} documents")
@@ -424,7 +414,7 @@ async def main():
             print(f"  - {error}")
 
     # Final assessment
-    print(f"\n=== Integration Assessment ===")
+    print("\n=== Integration Assessment ===")
 
     integration_success = (
         codex_initialized

@@ -163,7 +163,9 @@ class ConversationalMagi(SafeMagiInterface):
             level = (
                 "MASTERY"
                 if score >= 0.90
-                else "EXPERT" if score >= 0.75 else "ADVANCED"
+                else "EXPERT"
+                if score >= 0.75
+                else "ADVANCED"
             )
             cap_name = cap.replace("_", " ").title()
             print(f"  {cap_name:<25} {score:.3f}  [{level}]")

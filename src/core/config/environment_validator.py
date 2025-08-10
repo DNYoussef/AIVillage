@@ -8,12 +8,12 @@ validation, and dependency verification.
 from __future__ import annotations
 
 import base64
-import logging
-import os
-import socket
 from dataclasses import dataclass, field
 from enum import Enum
+import logging
+import os
 from pathlib import Path
+import socket
 
 try:
     import redis

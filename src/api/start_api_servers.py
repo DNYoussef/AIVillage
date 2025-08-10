@@ -4,18 +4,18 @@
 import hashlib
 import logging
 import os
+from pathlib import Path
 import sqlite3
 import sys
-from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from concurrent.futures import ThreadPoolExecutor
 
-import uvicorn
 from fastapi import FastAPI, HTTPException
+import uvicorn
 
 # Import CODEX-compliant RAG implementation
 sys.path.insert(
@@ -80,7 +80,7 @@ except DigitalTwinEncryptionError:
 
 
 @digital_twin_app.get("/health/twin")
-async def health_twin() -> Dict[str, Any]:
+async def health_twin() -> dict[str, Any]:
     try:
         with sqlite3.connect(DIGITAL_TWIN_DB) as conn:
             conn.execute("SELECT 1")
@@ -91,7 +91,7 @@ async def health_twin() -> Dict[str, Any]:
 
 
 @digital_twin_app.post("/profile/create")
-async def create_profile(data: Dict[str, Any]) -> Dict[str, Any]:
+async def create_profile(data: dict[str, Any]) -> dict[str, Any]:
     user_id = data.get("user_id")
     learning_style = data.get("learning_style")
     preferred_difficulty = data.get("preferred_difficulty", "medium")
@@ -121,7 +121,7 @@ async def create_profile(data: Dict[str, Any]) -> Dict[str, Any]:
 
 
 @digital_twin_app.get("/profile/{profile_id}")
-async def get_profile(profile_id: str) -> Dict[str, Any]:
+async def get_profile(profile_id: str) -> dict[str, Any]:
     with sqlite3.connect(DIGITAL_TWIN_DB) as conn:
         row = conn.execute(
             "SELECT preferred_difficulty, learning_style_encrypted FROM profiles WHERE profile_id=?",
@@ -169,7 +169,7 @@ def init_evolution_db() -> None:
 
 
 @evolution_app.get("/health/evolution")
-async def health_evolution() -> Dict[str, Any]:
+async def health_evolution() -> dict[str, Any]:
     try:
         with sqlite3.connect(EVOLUTION_DB) as conn:
             conn.execute("SELECT 1")
@@ -180,7 +180,7 @@ async def health_evolution() -> Dict[str, Any]:
 
 
 @evolution_app.post("/metrics/record")
-async def record_metrics(data: Dict[str, Any]) -> Dict[str, Any]:
+async def record_metrics(data: dict[str, Any]) -> dict[str, Any]:
     metrics = data.get("metrics")
     if not isinstance(metrics, dict) or not metrics:
         raise HTTPException(status_code=400, detail="metrics dict required")
@@ -200,7 +200,7 @@ async def record_metrics(data: Dict[str, Any]) -> Dict[str, Any]:
 
 
 @evolution_app.get("/metrics/latest")
-async def get_latest_metrics() -> Dict[str, Any]:
+async def get_latest_metrics() -> dict[str, Any]:
     try:
         with sqlite3.connect(EVOLUTION_DB) as conn:
             rows = conn.execute(
@@ -210,7 +210,7 @@ async def get_latest_metrics() -> Dict[str, Any]:
         logger.exception("Failed to fetch metrics")
         raise HTTPException(status_code=500, detail=str(exc))
 
-    latest: Dict[str, float] = {}
+    latest: dict[str, float] = {}
     for name, value in rows:
         if name not in latest:
             latest[name] = float(value)
@@ -246,7 +246,7 @@ def init_rag_pipeline() -> None:
 
 
 @rag_app.get("/health/rag")
-async def health_rag() -> Dict[str, Any]:
+async def health_rag() -> dict[str, Any]:
     if rag_pipeline is None:
         return {
             "status": "degraded",
@@ -265,7 +265,7 @@ async def health_rag() -> Dict[str, Any]:
 
 
 @rag_app.post("/index/add")
-async def add_to_index(data: Dict[str, Any]) -> Dict[str, Any]:
+async def add_to_index(data: dict[str, Any]) -> dict[str, Any]:
     if rag_pipeline is None:
         raise HTTPException(status_code=503, detail="RAG pipeline not available")
 
@@ -315,7 +315,7 @@ async def add_to_index(data: Dict[str, Any]) -> Dict[str, Any]:
 
 
 @rag_app.post("/query")
-async def query_rag(data: Dict[str, Any]) -> Dict[str, Any]:
+async def query_rag(data: dict[str, Any]) -> dict[str, Any]:
     if rag_pipeline is None:
         raise HTTPException(status_code=503, detail="RAG pipeline not available")
 
@@ -360,7 +360,7 @@ async def query_rag(data: Dict[str, Any]) -> Dict[str, Any]:
 
 
 @rag_app.get("/metrics/performance")
-async def get_rag_metrics() -> Dict[str, Any]:
+async def get_rag_metrics() -> dict[str, Any]:
     """Get RAG pipeline performance metrics."""
     if rag_pipeline is None:
         raise HTTPException(status_code=503, detail="RAG pipeline not available")
@@ -418,7 +418,8 @@ if __name__ == "__main__":
         import subprocess
 
         subprocess.run(
-            [sys.executable, "-m", "pip", "install", "fastapi", "uvicorn[standard]"]
+            [sys.executable, "-m", "pip", "install", "fastapi", "uvicorn[standard]"],
+            check=False,
         )
         print("Packages installed. Please run the script again.")
         sys.exit(1)

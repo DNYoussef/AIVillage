@@ -2,9 +2,9 @@
 """Test 4-stage compression on real model weights using safetensors directly."""
 
 import json
+from pathlib import Path
 import sys
 import time
-from pathlib import Path
 
 from safetensors import safe_open
 

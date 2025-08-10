@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Debug the AgentFactory template loading."""
 
-import sys
 from pathlib import Path
+import sys
 
 sys.path.insert(0, str(Path.cwd()))
 

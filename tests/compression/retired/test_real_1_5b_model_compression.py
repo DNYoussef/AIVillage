@@ -2,9 +2,9 @@
 """Download and compress a real 1.5B parameter model through all 4 stages."""
 
 import gc
+from pathlib import Path
 import sys
 import time
-from pathlib import Path
 
 import torch
 from torch import nn

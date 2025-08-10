@@ -15,17 +15,17 @@ understand and hack on for further experiments.
 
 from __future__ import annotations
 
-import hashlib
 from collections import OrderedDict, defaultdict
 from collections.abc import Iterable
 from dataclasses import dataclass
+import hashlib
 from typing import Any
 
+from diskcache import Cache as DiskCache  # type: ignore
 import faiss  # type: ignore
 import numpy as np
-import redis  # type: ignore
-from diskcache import Cache as DiskCache  # type: ignore
 from rank_bm25 import BM25Okapi  # type: ignore
+import redis  # type: ignore
 from sentence_transformers import SentenceTransformer  # type: ignore
 
 try:  # pragma: no cover - optional dependency

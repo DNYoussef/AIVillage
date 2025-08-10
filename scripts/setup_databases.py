@@ -6,9 +6,9 @@ and performance optimizations according to CODEX Integration Requirements.
 """
 
 import logging
+from pathlib import Path
 import sqlite3
 import sys
-from pathlib import Path
 
 # Setup logging
 logging.basicConfig(

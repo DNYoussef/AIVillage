@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Test the advanced 4-stage compression pipeline."""
 
-import sys
 from pathlib import Path
+import sys
 
 import torch
 from torch import nn

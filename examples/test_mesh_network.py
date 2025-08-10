@@ -581,19 +581,19 @@ def main() -> None:
                 # Focus on routing tests
                 await tester.setup_nodes()
                 await tester.wait_for_network_convergence()
-                tester.test_results["message_routing"] = (
-                    await tester.test_message_routing()
-                )
-                tester.test_results["network_resilience"] = (
-                    await tester.test_network_resilience()
-                )
+                tester.test_results[
+                    "message_routing"
+                ] = await tester.test_message_routing()
+                tester.test_results[
+                    "network_resilience"
+                ] = await tester.test_network_resilience()
             elif args.test_dht:
                 # Focus on DHT tests
                 await tester.setup_nodes()
                 await tester.wait_for_network_convergence()
-                tester.test_results["dht_functionality"] = (
-                    await tester.test_dht_functionality()
-                )
+                tester.test_results[
+                    "dht_functionality"
+                ] = await tester.test_dht_functionality()
             else:
                 # Run all tests
                 await tester.run_all_tests()

@@ -4,8 +4,8 @@ Concrete implementations of reasoning strategies for different query types.
 Each strategy defines how to break down and execute specific types of queries.
 """
 
-import logging
 from abc import ABC, abstractmethod
+import logging
 from typing import Any
 
 from .plan_structures import (

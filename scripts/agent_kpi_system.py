@@ -4,12 +4,12 @@
 Enables automatic retirement of underperforming agents.
 """
 
-import json
-import random
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from enum import Enum
+import json
 from pathlib import Path
+import random
 from typing import Any
 
 import numpy as np

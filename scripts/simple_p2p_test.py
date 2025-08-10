@@ -4,8 +4,8 @@ Test the basic functionality of the P2P protocol compatibility fix.
 """
 
 import asyncio
-import sys
 from pathlib import Path
+import sys
 
 # Add paths
 sys.path.insert(0, str(Path(__file__).parent.parent))

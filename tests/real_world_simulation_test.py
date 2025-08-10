@@ -6,9 +6,9 @@ Simulates actual deployment scenarios and edge cases
 import asyncio
 import json
 import logging
+from pathlib import Path
 import sys
 import time
-from pathlib import Path
 from typing import Any
 
 # Add project root to path

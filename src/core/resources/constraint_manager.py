@@ -1,12 +1,12 @@
 """Resource Constraint Manager for Evolution Tasks."""
 
 import asyncio
-import contextlib
-import logging
-import time
 from collections.abc import Callable
+import contextlib
 from dataclasses import dataclass, field
 from enum import Enum
+import logging
+import time
 from typing import Any
 
 from .device_profiler import DeviceProfiler, DeviceType, ResourceSnapshot, ThermalState
@@ -146,9 +146,9 @@ class ConstraintManager:
 
         # Violation callbacks
         self.violation_callbacks: list[Callable[[str, ConstraintViolation], None]] = []
-        self.enforcement_callbacks: list[Callable[[str, str], None]] = (
-            []
-        )  # task_id, action
+        self.enforcement_callbacks: list[
+            Callable[[str, str], None]
+        ] = []  # task_id, action
 
         # Statistics
         self.stats = {

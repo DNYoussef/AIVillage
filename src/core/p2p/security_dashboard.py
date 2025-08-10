@@ -4,10 +4,10 @@ Real-time security monitoring and alerting for the P2P mesh network.
 Provides web interface for security events, peer reputation, and threat detection.
 """
 
-import json
-import logging
 from datetime import datetime, timedelta
 from http.server import BaseHTTPRequestHandler, HTTPServer
+import json
+import logging
 from pathlib import Path
 from typing import Any
 from urllib.parse import parse_qs, urlparse
@@ -745,8 +745,8 @@ def start_security_dashboard(security_monitor: SecurityMonitor, port: int = 8083
 
 # Standalone server for testing
 if __name__ == "__main__":
-    import sys
     from pathlib import Path
+    import sys
 
     # Add parent directory to path
     sys.path.insert(0, str(Path(__file__).parent.parent.parent))

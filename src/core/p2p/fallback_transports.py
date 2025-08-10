@@ -11,17 +11,17 @@ This ensures the mesh network can operate in offline scenarios or
 when primary transports fail.
 """
 
+from abc import ABC, abstractmethod
 import asyncio
+from collections.abc import Callable
+from dataclasses import dataclass
+from enum import Enum
 import json
 import logging
 import os
 import time
-import uuid
-from abc import ABC, abstractmethod
-from collections.abc import Callable
-from dataclasses import dataclass
-from enum import Enum
 from typing import Any
+import uuid
 
 logger = logging.getLogger(__name__)
 

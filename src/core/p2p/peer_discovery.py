@@ -2,6 +2,7 @@
 
 import asyncio
 import contextlib
+from dataclasses import dataclass
 import ipaddress
 import json
 import logging
@@ -9,7 +10,6 @@ import queue
 import socket
 import threading
 import time
-from dataclasses import dataclass
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -45,9 +45,9 @@ class PeerDiscovery:
 
         # Discovered peers
         self.discovered_peers: set[tuple[str, int]] = set()
-        self.failed_peers: dict[tuple[str, int], float] = (
-            {}
-        )  # peer -> last_failure_time
+        self.failed_peers: dict[
+            tuple[str, int], float
+        ] = {}  # peer -> last_failure_time
         self.peer_response_times: dict[tuple[str, int], float] = {}
 
         # Statistics

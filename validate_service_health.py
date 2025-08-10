@@ -1,27 +1,25 @@
 #!/usr/bin/env python3
-"""
-Comprehensive Service Health and Connectivity Verification Script
+"""Comprehensive Service Health and Connectivity Verification Script
 Verifies all CODEX integration services are running and responding correctly
 """
 
 import asyncio
+from dataclasses import dataclass, field
+from datetime import datetime
 import json
 import logging
+from pathlib import Path
 import socket
 import struct
 import subprocess
 import sys
 import time
-from dataclasses import dataclass, field
-from datetime import datetime
-from pathlib import Path
-from typing import Dict, List, Optional, Tuple
 
 try:
     import aiohttp
+    from colorama import Fore, Style, init
     import redis
     import websockets
-    from colorama import Fore, Style, init
 except ImportError as e:
     print(f"Missing dependencies: {e}")
     print("Installing required packages...")
@@ -35,12 +33,13 @@ except ImportError as e:
             "redis",
             "websockets",
             "colorama",
-        ]
+        ],
+        check=False,
     )
     import aiohttp
+    from colorama import Fore, Style, init
     import redis
     import websockets
-    from colorama import Fore, Style, init
 
 # Initialize colorama for colored output
 init(autoreset=True)
@@ -61,9 +60,9 @@ class ServiceEndpoint:
     port: int
     protocol: str  # TCP, UDP, HTTP, WS
     path: str = "/"
-    expected_response: Optional[Dict] = None
+    expected_response: dict | None = None
     timeout: float = 5.0
-    test_data: Optional[Dict] = None
+    test_data: dict | None = None
 
 
 @dataclass
@@ -73,8 +72,8 @@ class TestResult:
     service: str
     success: bool
     latency_ms: float
-    error: Optional[str] = None
-    response_data: Optional[Dict] = None
+    error: str | None = None
+    response_data: dict | None = None
     timestamp: datetime = field(default_factory=datetime.now)
 
 
@@ -82,10 +81,10 @@ class ServiceHealthValidator:
     """Comprehensive service health and connectivity validator"""
 
     def __init__(self):
-        self.results: List[TestResult] = []
+        self.results: list[TestResult] = []
         self.services = self._define_services()
 
-    def _define_services(self) -> List[ServiceEndpoint]:
+    def _define_services(self) -> list[ServiceEndpoint]:
         """Define all services to test based on CODEX requirements"""
         return [
             # LibP2P Services
@@ -222,7 +221,7 @@ class ServiceHealthValidator:
                     data, addr = sock.recvfrom(1024)
                     response_data = {"from": str(addr), "size": len(data)}
                     success = True
-                except socket.timeout:
+                except TimeoutError:
                     response_data = None
                     success = True  # mDNS might not respond immediately
                 except Exception as e:
@@ -248,13 +247,12 @@ class ServiceHealthValidator:
                     latency_ms=latency,
                     response_data=response_data,
                 )
-            else:
-                return TestResult(
-                    service=endpoint.name,
-                    success=False,
-                    latency_ms=latency,
-                    error=error if "error" in locals() else "UDP test failed",
-                )
+            return TestResult(
+                service=endpoint.name,
+                success=False,
+                latency_ms=latency,
+                error=error if "error" in locals() else "UDP test failed",
+            )
 
         except Exception as e:
             latency = (time.time() - start_time) * 1000
@@ -410,23 +408,22 @@ class ServiceHealthValidator:
 
         if endpoint.protocol == "TCP":
             return await self.test_tcp_port(endpoint)
-        elif endpoint.protocol == "UDP":
+        if endpoint.protocol == "UDP":
             return await self.test_udp_port(endpoint)
-        elif endpoint.protocol == "HTTP":
+        if endpoint.protocol == "HTTP":
             return await self.test_http_endpoint(endpoint)
-        elif endpoint.protocol == "WS":
+        if endpoint.protocol == "WS":
             return await self.test_websocket(endpoint)
-        elif endpoint.protocol == "REDIS":
+        if endpoint.protocol == "REDIS":
             return self.test_redis(endpoint)
-        else:
-            return TestResult(
-                service=endpoint.name,
-                success=False,
-                latency_ms=0,
-                error=f"Unknown protocol: {endpoint.protocol}",
-            )
+        return TestResult(
+            service=endpoint.name,
+            success=False,
+            latency_ms=0,
+            error=f"Unknown protocol: {endpoint.protocol}",
+        )
 
-    async def test_service_communication(self) -> List[TestResult]:
+    async def test_service_communication(self) -> list[TestResult]:
         """Test that services can communicate with each other"""
         communication_tests = []
 
@@ -442,7 +439,7 @@ class ServiceHealthValidator:
 
         return communication_tests
 
-    async def test_failover_scenarios(self) -> List[TestResult]:
+    async def test_failover_scenarios(self) -> list[TestResult]:
         """Test failover when services are unavailable"""
         failover_tests = []
 
@@ -454,7 +451,7 @@ class ServiceHealthValidator:
 
         return failover_tests
 
-    async def run_all_tests(self) -> Tuple[List[TestResult], Dict]:
+    async def run_all_tests(self) -> tuple[list[TestResult], dict]:
         """Run all service health tests"""
         logger.info("Starting comprehensive service health validation...")
 
@@ -488,7 +485,7 @@ class ServiceHealthValidator:
 
         return results, stats
 
-    def print_results(self, results: List[TestResult], stats: Dict):
+    def print_results(self, results: list[TestResult], stats: dict):
         """Print test results with colors"""
         print("\n" + "=" * 80)
         print(f"{Style.BRIGHT}SERVICE HEALTH VALIDATION RESULTS{Style.RESET_ALL}")
@@ -523,7 +520,9 @@ class ServiceHealthValidator:
         success_color = (
             Fore.GREEN
             if stats["success_rate"] > 90
-            else Fore.YELLOW if stats["success_rate"] > 70 else Fore.RED
+            else Fore.YELLOW
+            if stats["success_rate"] > 70
+            else Fore.RED
         )
 
         print(f"Total Tests: {stats['total_tests']}")
@@ -543,7 +542,7 @@ class ServiceHealthValidator:
                 if not result.success:
                     print(f"  - {result.service}: {result.error}")
 
-    def save_results(self, results: List[TestResult], stats: Dict):
+    def save_results(self, results: list[TestResult], stats: dict):
         """Save results to JSON file"""
         output_file = Path("service_health_report.json")
 
@@ -567,7 +566,7 @@ class ServiceHealthValidator:
 
         print(f"\n{Fore.CYAN}Results saved to {output_file}{Style.RESET_ALL}")
 
-    async def auto_fix_issues(self, results: List[TestResult]):
+    async def auto_fix_issues(self, results: list[TestResult]):
         """Attempt to automatically fix identified issues"""
         print(
             f"\n{Style.BRIGHT}ATTEMPTING AUTO-FIX FOR FAILED SERVICES...{Style.RESET_ALL}"

@@ -4,10 +4,10 @@
 import asyncio
 import json
 import logging
+from pathlib import Path
 import sys
 import time
-from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
@@ -84,7 +84,7 @@ class RAGAnswerGenerator:
             return False
 
     def extract_context_text(
-        self, retrieval_results: List[Any], max_context_length: int = 2000
+        self, retrieval_results: list[Any], max_context_length: int = 2000
     ) -> str:
         """Extract context text from retrieval results."""
         if not retrieval_results:
@@ -112,7 +112,7 @@ class RAGAnswerGenerator:
 
     def generate_rule_based_answer(
         self, question: str, context: str, template_type: str = "informative"
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Generate answer using rule-based approach without LLM."""
         if not context or context.strip() == "No relevant information found.":
             return {
@@ -176,7 +176,7 @@ class RAGAnswerGenerator:
         template_type: str = "informative",
         max_retrieval_results: int = 5,
         max_context_length: int = 2000,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Answer a question using RAG pipeline."""
         if not self.rag_pipeline:
             raise RuntimeError("RAG pipeline not initialized")
@@ -220,7 +220,7 @@ class RAGAnswerGenerator:
 
             return {
                 "question": question,
-                "answer": f"I apologize, but I encountered an error while trying to answer your question: {str(e)}",
+                "answer": f"I apologize, but I encountered an error while trying to answer your question: {e!s}",
                 "confidence": 0.0,
                 "generation_method": "error_fallback",
                 "template_type": template_type,
@@ -230,8 +230,8 @@ class RAGAnswerGenerator:
             }
 
     async def run_demonstration(
-        self, questions: Optional[List[str]] = None
-    ) -> List[Dict[str, Any]]:
+        self, questions: list[str] | None = None
+    ) -> list[dict[str, Any]]:
         """Run demonstration of answer generation."""
         questions = questions or self.demo_questions[:5]  # Use first 5 demo questions
 
@@ -263,13 +263,13 @@ class RAGAnswerGenerator:
 
         return results
 
-    def print_result(self, result: Dict[str, Any]) -> None:
+    def print_result(self, result: dict[str, Any]) -> None:
         """Print a formatted result."""
         print(f"\n{'=' * 60}")
         print(f"Question: {result['question']}")
         print(f"{'=' * 60}")
         print(f"Answer: {result['answer']}")
-        print(f"\nMetrics:")
+        print("\nMetrics:")
         print(f"  Confidence: {result['confidence'] * 100:.1f}%")
         print(f"  Sources Used: {result['sources_count']}")
         print(f"  Total Latency: {result['total_latency_ms']:.2f}ms")
@@ -296,7 +296,7 @@ async def main():
 
         # Display results
         print(f"\n{'=' * 80}")
-        print(f" RAG ANSWER GENERATION DEMONSTRATION RESULTS")
+        print(" RAG ANSWER GENERATION DEMONSTRATION RESULTS")
         print(f"{'=' * 80}")
 
         for result in results:
@@ -308,7 +308,7 @@ async def main():
         successful_answers = sum(1 for r in results if r["confidence"] > 0.3)
 
         print(f"\n{'=' * 80}")
-        print(f" SUMMARY STATISTICS")
+        print(" SUMMARY STATISTICS")
         print(f"{'=' * 80}")
         print(f"Total Questions: {len(results)}")
         print(

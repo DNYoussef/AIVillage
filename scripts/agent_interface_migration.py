@@ -3,9 +3,9 @@
 Updates agent interfaces to use new RAG and evolution metrics systems.
 """
 
+from datetime import datetime
 import json
 import logging
-from datetime import datetime
 from pathlib import Path
 from typing import Any
 

@@ -1,6 +1,6 @@
-import logging
 from dataclasses import dataclass
 from enum import Enum
+import logging
 
 logger = logging.getLogger(__name__)
 
@@ -32,9 +32,9 @@ class JurisdictionManager:
 
     def __init__(self) -> None:
         """Initialise a jurisdiction manager with default rules."""
-        self.jurisdiction_rules: dict[str, dict[str, str]] = (
-            self.load_jurisdiction_rules()
-        )
+        self.jurisdiction_rules: dict[
+            str, dict[str, str]
+        ] = self.load_jurisdiction_rules()
         self.user_modes: dict[str, str] = {}
         self.disabled_features: dict[str, set] = {}
 

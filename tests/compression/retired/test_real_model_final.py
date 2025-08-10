@@ -2,9 +2,9 @@
 """Final test of 4-stage compression on real DeepSeek model (fixing BFloat16 issue)."""
 
 import json
+from pathlib import Path
 import sys
 import time
-from pathlib import Path
 
 from safetensors import safe_open
 

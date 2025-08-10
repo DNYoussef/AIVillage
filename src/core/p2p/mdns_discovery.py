@@ -13,12 +13,12 @@ Features:
 """
 
 import asyncio
+from collections.abc import Callable
+from dataclasses import dataclass
 import json
 import logging
 import socket
 import time
-from collections.abc import Callable
-from dataclasses import dataclass
 from typing import Any
 
 # mDNS/Zeroconf imports
@@ -87,9 +87,9 @@ class mDNSDiscovery:
 
         # Discovery state
         self.discovered_peers: dict[str, PeerInfo] = {}
-        self.peer_callbacks: list[Callable[[PeerInfo, str], None]] = (
-            []
-        )  # (peer_info, event_type)
+        self.peer_callbacks: list[
+            Callable[[PeerInfo, str], None]
+        ] = []  # (peer_info, event_type)
         self.running = False
 
         # Network monitoring

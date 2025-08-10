@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Find all .backup files in the workspace and categorize them by risk level."""
 
-import json
 from datetime import datetime
+import json
 from pathlib import Path
 
 

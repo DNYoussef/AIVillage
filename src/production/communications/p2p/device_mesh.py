@@ -1,14 +1,14 @@
 """Device Mesh Implementation for Mobile P2P Networks."""
 
 import asyncio
+from dataclasses import dataclass, field
+from enum import Enum
 import logging
 import platform
 import socket
 import time
-import uuid
-from dataclasses import dataclass, field
-from enum import Enum
 from typing import Any
+import uuid
 
 import psutil
 
@@ -94,9 +94,9 @@ class DeviceMesh:
 
         # Mesh networking
         self.routing_table: dict[str, MeshRoute] = {}
-        self.network_topology: dict[str, set[str]] = (
-            {}
-        )  # node_id -> connected neighbors
+        self.network_topology: dict[
+            str, set[str]
+        ] = {}  # node_id -> connected neighbors
         self.connection_types: dict[str, ConnectionType] = {}
         self.network_metrics: dict[str, NetworkMetrics] = {}
 
@@ -104,9 +104,9 @@ class DeviceMesh:
         self.flooding_cache: set[str] = set()  # Message IDs for flood prevention
         self.tree_parent: str | None = None
         self.tree_children: set[str] = set()
-        self.link_state_db: dict[str, dict[str, float]] = (
-            {}
-        )  # node -> {neighbor -> cost}
+        self.link_state_db: dict[
+            str, dict[str, float]
+        ] = {}  # node -> {neighbor -> cost}
 
         # Background tasks
         self.routing_task: asyncio.Task | None = None

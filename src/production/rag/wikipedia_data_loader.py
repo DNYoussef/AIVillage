@@ -3,16 +3,17 @@
 Loads and processes Wikipedia articles for educational content retrieval.
 """
 
+from datetime import datetime
 import hashlib
 import json
 import logging
-import sqlite3
-from datetime import datetime
 from pathlib import Path
+import sqlite3
 from typing import Any
 
-import requests
 from bs4 import BeautifulSoup
+import requests
+
 from rag_system.core.codex_rag_integration import Document
 
 # Configure logging

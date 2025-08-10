@@ -13,11 +13,11 @@ Usage:
 import argparse
 import asyncio
 import csv
+from datetime import datetime, timezone
 import json
 import logging
-import sys
-from datetime import datetime, timezone
 from pathlib import Path
+import sys
 
 from mcp_servers.hyperag.gdc.extractor import GDCExtractorContext
 from mcp_servers.hyperag.gdc.registry import GDC_REGISTRY, validate_registry

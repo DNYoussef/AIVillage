@@ -6,14 +6,14 @@ and automated issue creation for test degradation.
 """
 
 import asyncio
-import json
-import logging
-import os
-import smtplib
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from email.mime.text import MIMEMultipart, MIMEText
+import json
+import logging
+import os
 from pathlib import Path
+import smtplib
 from typing import Any
 
 import aiohttp
@@ -174,7 +174,9 @@ class AlertManager:
             severity = (
                 "critical"
                 if success_rate < 80
-                else "high" if success_rate < 90 else "medium"
+                else "high"
+                if success_rate < 90
+                else "medium"
             )
 
             alert = Alert(

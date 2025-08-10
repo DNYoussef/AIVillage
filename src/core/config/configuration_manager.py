@@ -7,12 +7,12 @@ multiple sources in priority order and validates all configurations before use.
 from __future__ import annotations
 
 import argparse
+from dataclasses import dataclass, field
 import json
 import logging
 import os
-import sys
-from dataclasses import dataclass, field
 from pathlib import Path
+import sys
 from typing import Any
 
 try:

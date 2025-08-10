@@ -5,9 +5,9 @@ Validates that the CODEX RAG integration meets all specified requirements.
 
 import json
 import os
+from pathlib import Path
 import sqlite3
 import sys
-from pathlib import Path
 from typing import Any
 
 # Add project root to path

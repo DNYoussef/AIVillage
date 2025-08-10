@@ -5,12 +5,12 @@ Migrates evolution metrics from JSON files to SQLite as noted in
 CODEX Integration Requirements Migration Notes.
 """
 
+from datetime import datetime
 import hashlib
 import json
 import logging
-import sqlite3
-from datetime import datetime
 from pathlib import Path
+import sqlite3
 
 logger = logging.getLogger(__name__)
 

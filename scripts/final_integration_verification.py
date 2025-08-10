@@ -3,13 +3,13 @@
 Completes CODEX integration checklist and verifies all systems.
 """
 
+from datetime import datetime
 import json
 import logging
 import os
+from pathlib import Path
 import sqlite3
 import sys
-from datetime import datetime
-from pathlib import Path
 from typing import Any
 
 import requests
@@ -700,7 +700,9 @@ def main():
         status_icon = (
             "✓"
             if results["success_rate"] >= 0.8
-            else "⚠" if results["success_rate"] >= 0.5 else "✗"
+            else "⚠"
+            if results["success_rate"] >= 0.5
+            else "✗"
         )
         print(
             f"  {status_icon} {category}: {results['passed']}/{results['total']} ({results['success_rate']:.1%})"

@@ -7,10 +7,10 @@ triggers dashboard updates, and sends alerts on degradation.
 
 import argparse
 import asyncio
-import json
-import logging
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
+import json
+import logging
 from pathlib import Path
 from typing import Any
 
@@ -304,7 +304,9 @@ Trend: {trend_arrow} {trend_description}
             status = (
                 "✅"
                 if success_rate_mod >= 95
-                else "⚠️" if success_rate_mod >= 80 else "❌"
+                else "⚠️"
+                if success_rate_mod >= 80
+                else "❌"
             )
 
             dashboard_content += f"| {module_name} | {module_stats['total']} | {module_stats['passed']} | {module_stats['failed']} | {module_stats['skipped']} | {success_rate_mod:.1f}% | {status} |\n"

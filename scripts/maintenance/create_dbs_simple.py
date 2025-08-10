@@ -1,5 +1,5 @@
-import sqlite3
 from pathlib import Path
+import sqlite3
 
 # Ensure data directory exists
 data_dir = Path("data")

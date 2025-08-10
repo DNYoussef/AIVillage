@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Audit the compression claims with detailed byte-level analysis."""
 
-import sys
 from pathlib import Path
+import sys
 
 import numpy as np
 import torch

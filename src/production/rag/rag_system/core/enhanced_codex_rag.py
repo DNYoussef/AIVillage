@@ -11,10 +11,10 @@ import logging
 import time
 from typing import Any
 
-import numpy as np
 from codex_rag_integration import Chunk, CODEXRAGPipeline, Document, RetrievalResult
 from intelligent_chunking_simple import ContentType, DocumentType
 from intelligent_chunking_simple import SimpleIntelligentChunker as IntelligentChunker
+import numpy as np
 
 logger = logging.getLogger(__name__)
 

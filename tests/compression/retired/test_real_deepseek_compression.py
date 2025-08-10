@@ -2,9 +2,9 @@
 """Test 4-stage compression on the actual downloaded DeepSeek-R1-Distill-Qwen-1.5B model."""
 
 import gc
+from pathlib import Path
 import sys
 import time
-from pathlib import Path
 
 import torch
 from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer

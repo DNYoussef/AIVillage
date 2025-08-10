@@ -2,8 +2,8 @@ import logging
 from typing import Any
 
 import numpy as np
-import torch
 from sklearn.metrics.pairwise import cosine_similarity
+import torch
 from transformers import BertForSequenceClassification, BertModel, BertTokenizer
 
 logger = logging.getLogger(__name__)

@@ -5,9 +5,9 @@ Tests actual agent behavior and communication patterns, not just attribute exist
 """
 
 import asyncio
+from pathlib import Path
 import tempfile
 import time
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest

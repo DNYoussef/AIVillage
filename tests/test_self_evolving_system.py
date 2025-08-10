@@ -11,8 +11,8 @@ if (
     msg = "Required dependency not installed"
     raise unittest.SkipTest(msg)
 
-import sys
 from pathlib import Path
+import sys
 from unittest.mock import AsyncMock, MagicMock
 
 import numpy as np

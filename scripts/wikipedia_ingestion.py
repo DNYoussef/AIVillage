@@ -4,10 +4,10 @@
 import asyncio
 import json
 import logging
+from pathlib import Path
 import sys
 import time
-from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 import requests
 
@@ -80,7 +80,7 @@ class WikipediaIngestion:
             logger.error(f"Failed to initialize RAG pipeline: {e}")
             return False
 
-    def search_articles_by_category(self, category: str, limit: int = 50) -> List[str]:
+    def search_articles_by_category(self, category: str, limit: int = 50) -> list[str]:
         """Search for articles in a specific category."""
         try:
             params = {
@@ -107,7 +107,7 @@ class WikipediaIngestion:
             logger.error(f"Failed to search category '{category}': {e}")
             return []
 
-    def fetch_article_content(self, title: str) -> Dict[str, Any]:
+    def fetch_article_content(self, title: str) -> dict[str, Any]:
         """Fetch full article content from Wikipedia."""
         try:
             # First get the summary
@@ -158,8 +158,8 @@ class WikipediaIngestion:
             return None
 
     def filter_quality_articles(
-        self, articles: List[Dict[str, Any]]
-    ) -> List[Dict[str, Any]]:
+        self, articles: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
         """Filter articles for quality content suitable for education."""
         quality_articles = []
 
@@ -197,7 +197,7 @@ class WikipediaIngestion:
 
         return quality_articles
 
-    async def ingest_articles(self, articles: List[Dict[str, Any]]) -> Dict[str, Any]:
+    async def ingest_articles(self, articles: list[dict[str, Any]]) -> dict[str, Any]:
         """Ingest articles into the RAG pipeline."""
         if not self.rag_pipeline:
             raise RuntimeError("RAG pipeline not initialized")
@@ -247,7 +247,7 @@ class WikipediaIngestion:
 
         return total_stats
 
-    async def run_ingestion(self) -> Dict[str, Any]:
+    async def run_ingestion(self) -> dict[str, Any]:
         """Run the complete Wikipedia ingestion process."""
         logger.info(
             f"Starting Wikipedia ingestion (target: {self.target_articles} articles)"
@@ -327,7 +327,7 @@ async def main():
         with open(results_file, "w", encoding="utf-8") as f:
             json.dump(stats, f, indent=2, default=str)
 
-        print(f"\n=== Wikipedia Ingestion Complete ===")
+        print("\n=== Wikipedia Ingestion Complete ===")
         print(f"Articles ingested: {stats['articles_ingested']}")
         print(f"Documents processed: {stats['documents_processed']}")
         print(f"Chunks created: {stats['chunks_created']}")

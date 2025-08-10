@@ -5,10 +5,10 @@ This script validates the successful creation of the Magi agent
 and confirms all achievements from the Agent Forge pipeline.
 """
 
-import json
-import sys
 from datetime import datetime
+import json
 from pathlib import Path
+import sys
 
 # Force UTF-8 encoding for Windows
 if sys.platform == "win32":

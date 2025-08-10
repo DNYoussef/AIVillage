@@ -73,15 +73,15 @@ class DefaultKnowledgeConstructor:
         if total_weight > 0:
             constructed_knowledge["uncertainty"] = total_uncertainty / total_weight
         else:
-            constructed_knowledge["uncertainty"] = (
-                1.0  # Maximum uncertainty if no weights
-            )
+            constructed_knowledge[
+                "uncertainty"
+            ] = 1.0  # Maximum uncertainty if no weights
 
         # Calculate temporal relevance
-        constructed_knowledge["temporal_relevance"] = (
-            self._calculate_temporal_relevance(
-                [doc.timestamp for doc in retrieved_docs], timestamp
-            )
+        constructed_knowledge[
+            "temporal_relevance"
+        ] = self._calculate_temporal_relevance(
+            [doc.timestamp for doc in retrieved_docs], timestamp
         )
 
         return constructed_knowledge

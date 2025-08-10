@@ -1,10 +1,10 @@
 """Adaptive Model Loader for Resource-Constrained Devices."""
 
 import asyncio
-import logging
-import time
 from dataclasses import dataclass
 from enum import Enum
+import logging
+import time
 from typing import Any
 
 from .constraint_manager import ConstraintManager, ResourceConstraints

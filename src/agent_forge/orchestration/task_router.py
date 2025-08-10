@@ -1,7 +1,7 @@
 """Task router for intelligent model selection based on task characteristics."""
 
-import logging
 from dataclasses import dataclass
+import logging
 from typing import Any
 
 from .model_config import MODEL_ROUTING_CONFIG, TaskType

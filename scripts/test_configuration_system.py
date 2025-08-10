@@ -10,10 +10,10 @@ This script validates the complete configuration system including:
 
 import base64
 import os
+from pathlib import Path
 import secrets
 import sys
 import tempfile
-from pathlib import Path
 
 # Add src to path for imports
 script_dir = Path(__file__).parent
@@ -105,9 +105,7 @@ def test_environment_validator():
         validator = EnvironmentValidator("development")
         dev_report = validator.validate_all(test_env)
 
-        print(
-            f"Validation Result: {'✅ VALID' if dev_report.is_valid else '❌ INVALID'}"
-        )
+        print(f"Validation Result: {'✅ VALID' if dev_report.is_valid else '❌ INVALID'}")
         print(f"Errors: {dev_report.errors}")
         print(f"Warnings: {dev_report.warnings}")
         print(f"Total Variables: {dev_report.total_variables}")

@@ -1,8 +1,8 @@
 """Test model generator for consistent compression testing."""
 
 import logging
-import tempfile
 from pathlib import Path
+import tempfile
 from typing import Any
 
 logger = logging.getLogger(__name__)

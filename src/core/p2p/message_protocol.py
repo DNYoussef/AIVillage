@@ -1,14 +1,14 @@
 """Evolution-Aware Message Protocol for P2P Communication."""
 
 import asyncio
+from dataclasses import dataclass
+from enum import Enum
 import json
 import logging
 import struct
 import time
-import uuid
-from dataclasses import dataclass
-from enum import Enum
 from typing import Any
+import uuid
 
 logger = logging.getLogger(__name__)
 

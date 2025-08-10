@@ -2,11 +2,11 @@
 """Download the 3 new 1.5B parameter models for 50-generation evolution merge."""
 
 import os
-import time
 from pathlib import Path
+import time
 
-import torch
 from huggingface_hub import snapshot_download
+import torch
 
 
 def check_gpu_availability() -> bool:

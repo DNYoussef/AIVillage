@@ -1,8 +1,8 @@
+from collections.abc import Callable
 import json
 import os
 import random
 import shutil
-from collections.abc import Callable
 from typing import Any
 
 from rag_system.utils.logging import setup_logger as get_logger

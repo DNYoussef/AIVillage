@@ -58,8 +58,8 @@ class AITutor:
         """Initialize Agent Forge model for tutoring."""
         try:
             # Import Agent Forge components
-            import sys
             from pathlib import Path
+            import sys
 
             # Add Agent Forge path
             agent_forge_path = Path(__file__).parent.parent.parent / "agent_forge"

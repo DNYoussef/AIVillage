@@ -1,11 +1,11 @@
 """Tests for route migration from server.py to microservices."""
 
 import os
-import warnings
 from unittest.mock import MagicMock, patch
+import warnings
 
-import pytest
 from fastapi.testclient import TestClient
+import pytest
 
 
 @pytest.fixture
@@ -53,8 +53,8 @@ class TestRouteMigration:
     @pytest.fixture
     def server_client(self):
         """Create test client for server.py."""
-        import sys
         from pathlib import Path
+        import sys
 
         sys.path.insert(0, str(Path(__file__).parent.parent / "bin"))
         from server import app

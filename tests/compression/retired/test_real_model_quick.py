@@ -2,9 +2,9 @@
 """Quick test of compression on real model using smaller layers."""
 
 import json
+from pathlib import Path
 import sys
 import time
-from pathlib import Path
 
 from safetensors import safe_open
 

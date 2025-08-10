@@ -2,11 +2,11 @@
 """Earn Shells Worker - Mints credits based on Prometheus metrics."""
 
 import argparse
+from datetime import datetime, timezone
 import logging
+from pathlib import Path
 import sys
 import time
-from datetime import datetime, timezone
-from pathlib import Path
 from urllib.parse import urljoin
 
 try:

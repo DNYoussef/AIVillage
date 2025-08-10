@@ -2,9 +2,9 @@
 """Benchmark Sprint 9 SimpleQuantizer, Advanced pipeline and Unified compressor."""
 
 import os
+from pathlib import Path
 import sys
 import time
-from pathlib import Path
 
 import psutil
 from torch import nn

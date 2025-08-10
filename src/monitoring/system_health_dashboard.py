@@ -7,11 +7,11 @@ Tracks the progress from 40% to >60% completion after stub replacement sprint.
 """
 
 import asyncio
+from datetime import datetime
 import json
 import logging
-import sys
-from datetime import datetime
 from pathlib import Path
+import sys
 from typing import Any
 
 logging.basicConfig(level=logging.INFO)
@@ -69,7 +69,9 @@ class ComponentHealthChecker:
                 "status": (
                     "healthy"
                     if health_score > 0.7
-                    else "partial" if health_score > 0.3 else "unhealthy"
+                    else "partial"
+                    if health_score > 0.3
+                    else "unhealthy"
                 ),
                 "health_score": health_score,
                 "implementation_score": implementation_score,
@@ -341,7 +343,9 @@ class ComponentHealthChecker:
             "health_status": (
                 "healthy"
                 if avg_health_score > 0.7
-                else "partial" if avg_health_score > 0.4 else "unhealthy"
+                else "partial"
+                if avg_health_score > 0.4
+                else "unhealthy"
             ),
         }
 

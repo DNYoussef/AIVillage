@@ -3,13 +3,13 @@
 Provides HTTP API endpoints for evolution metrics system on port 8081.
 """
 
-import json
-import os
-import sqlite3
-import sys
 from datetime import datetime
 from http.server import BaseHTTPRequestHandler, HTTPServer
+import json
+import os
 from pathlib import Path
+import sqlite3
+import sys
 
 # Add parent to path
 sys.path.insert(0, str(Path(__file__).parent.parent))

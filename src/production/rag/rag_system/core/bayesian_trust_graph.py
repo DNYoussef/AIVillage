@@ -12,10 +12,10 @@ Features:
 - Multiple relationship types (CONTINUES, ELABORATES, CONTRASTS, etc.)
 """
 
-import logging
-import time
 from dataclasses import asdict, dataclass
 from enum import Enum
+import logging
+import time
 from typing import Any
 
 import networkx as nx
@@ -272,9 +272,9 @@ class BayesianTrustGraph:
                 )
 
                 # Store relationship
-                self.relationships[(chunk_node.chunk_id, other_chunk.chunk_id)] = (
-                    relationship
-                )
+                self.relationships[
+                    (chunk_node.chunk_id, other_chunk.chunk_id)
+                ] = relationship
 
                 # Add reverse relationship if bidirectional
                 if bidirectional:
@@ -297,9 +297,9 @@ class BayesianTrustGraph:
                         **asdict(reverse_relationship),
                     )
 
-                    self.relationships[(other_chunk.chunk_id, chunk_node.chunk_id)] = (
-                        reverse_relationship
-                    )
+                    self.relationships[
+                        (other_chunk.chunk_id, chunk_node.chunk_id)
+                    ] = reverse_relationship
 
             self.stats["relationships_detected"] += len(relationships)
             logger.debug(

@@ -4,14 +4,14 @@ Verifies security features implementation without complex dependencies.
 Tests according to CODEX Integration Requirements.
 """
 
+from datetime import datetime
 import hashlib
 import hmac
 import json
 import os
+from pathlib import Path
 import secrets
 import time
-from datetime import datetime
-from pathlib import Path
 
 
 def print_header(title: str):
@@ -617,7 +617,9 @@ def test_security_monitoring():
         "threat_level": (
             "high"
             if severity_counts["critical"] > 0
-            else "medium" if severity_counts["high"] > 2 else "low"
+            else "medium"
+            if severity_counts["high"] > 2
+            else "low"
         ),
     }
 

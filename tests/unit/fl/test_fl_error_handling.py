@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 """Test FL error handling and edge cases."""
 
-import sys
 from pathlib import Path
+import sys
 
-import pytest
-import torch
 from implement_federated_learning import (
     FederatedLearningClient,
     FederatedLearningServer,
 )
+import pytest
+import torch
 
 # Add scripts to path
 sys.path.append(str(Path(__file__).parent.parent.parent / "scripts"))

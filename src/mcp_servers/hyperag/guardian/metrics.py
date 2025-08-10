@@ -154,8 +154,8 @@ except ImportError:
         @classmethod
         def export_to_file(cls, filepath: str = "mock_metrics_export.json") -> None:
             """Export all metric data to JSON file for analysis."""
-            import json
             from datetime import datetime
+            import json
 
             export_data = {
                 "timestamp": datetime.now().isoformat(),

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Analyze GitHub Actions workflows for issues."""
 
-import sys
 from pathlib import Path
+import sys
 
 import yaml
 

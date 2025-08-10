@@ -13,13 +13,13 @@ import asyncio
 import importlib.util
 import logging
 import os
+from pathlib import Path
 import shutil
 import sys
 import tempfile
 import time
 import types
 import unittest
-from pathlib import Path
 from unittest.mock import AsyncMock, Mock, patch
 
 import numpy as np
@@ -747,9 +747,7 @@ async def test_evolution_demo():
                 diversity = results["results"]["diversity_history"][-1]
                 print(f"   Population diversity: {diversity:.3f}")
             else:
-                print(
-                    f"   ❌ Evolution failed: {results.get('error', 'Unknown error')}"
-                )
+                print(f"   ❌ Evolution failed: {results.get('error', 'Unknown error')}")
 
         # Final status
         final_status = await orchestrator.get_orchestration_status()

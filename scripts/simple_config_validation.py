@@ -4,10 +4,10 @@
 Validates configuration files without complex dependencies.
 """
 
-import json
-import sys
 from datetime import datetime
+import json
 from pathlib import Path
+import sys
 
 import yaml
 

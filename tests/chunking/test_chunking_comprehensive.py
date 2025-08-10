@@ -8,36 +8,37 @@ retrieval performance improvements.
 
 import asyncio
 import json
-import psutil
-import time
-from pathlib import Path
-from typing import Dict, List, Any, Tuple
 import sys
+import time
+from typing import Any
 
-sys.path.append('src/production/rag/rag_system/core')
+import psutil
+
+sys.path.append("src/production/rag/rag_system/core")
 
 try:
-    from enhanced_codex_rag import EnhancedCODEXRAGPipeline
     from codex_rag_integration import Document
-    from intelligent_chunking_simple import DocumentType, ContentType
-    
+    from enhanced_codex_rag import EnhancedCODEXRAGPipeline
+    from intelligent_chunking_simple import ContentType, DocumentType
+
     CHUNKING_AVAILABLE = True
 except ImportError as e:
     print(f"Import error: {e}")
     CHUNKING_AVAILABLE = False
 
+
 class ChunkingQualityAnalyzer:
     """Analyzes chunking quality across different document types."""
-    
+
     def __init__(self):
         self.test_results = {}
         self.performance_metrics = {}
-        
-    def create_diverse_test_documents(self) -> Dict[str, Document]:
+
+    def create_diverse_test_documents(self) -> dict[str, Document]:
         """Create test documents of various types."""
-        
+
         documents = {}
-        
+
         # 1. Academic Paper
         documents["academic_paper"] = Document(
             id="academic_ml_paper",
@@ -90,9 +91,13 @@ class ChunkingQualityAnalyzer:
             Our contributions include: (1) a novel sparse attention pattern that reduces computational complexity, (2) empirical validation across five diverse NLP tasks, and (3) comprehensive analysis of efficiency-performance trade-offs in modern transformer architectures.
             """,
             source_type="academic",
-            metadata={"authors": ["Dr. Sarah Chen", "Dr. Michael Rodriguez"], "journal": "Journal of AI Research", "year": 2024}
+            metadata={
+                "authors": ["Dr. Sarah Chen", "Dr. Michael Rodriguez"],
+                "journal": "Journal of AI Research",
+                "year": 2024,
+            },
         )
-        
+
         # 2. Wikipedia Article
         documents["wikipedia_article"] = Document(
             id="wikipedia_ai_article",
@@ -139,9 +144,13 @@ class ChunkingQualityAnalyzer:
             The potential displacement of jobs by AI automation is a significant economic concern. While AI may eliminate some jobs, it also creates new opportunities in AI development, data science, and human-AI collaboration roles. Societies must adapt through education and workforce retraining programs.
             """,
             source_type="encyclopedia",
-            metadata={"source": "Wikipedia", "last_modified": "2024-01-15", "contributors": 145}
+            metadata={
+                "source": "Wikipedia",
+                "last_modified": "2024-01-15",
+                "contributors": 145,
+            },
         )
-        
+
         # 3. Technical Documentation
         documents["technical_docs"] = Document(
             id="api_documentation",
@@ -333,9 +342,13 @@ class ChunkingQualityAnalyzer:
             Rate limiting is enforced at 1000 requests per hour per API key for standard accounts.
             """,
             source_type="technical",
-            metadata={"version": "2.0", "last_updated": "2024-01-10", "maintainer": "ML Platform Team"}
+            metadata={
+                "version": "2.0",
+                "last_updated": "2024-01-10",
+                "maintainer": "ML Platform Team",
+            },
         )
-        
+
         # 4. Literature
         documents["literature"] = Document(
             id="short_story",
@@ -402,10 +415,14 @@ class ChunkingQualityAnalyzer:
             For the first time in months, Elena knew she would sleep peacefully. In the lab behind her, cluster seven continued its digital dreaming, weaving stories of electric sheep and silicon souls, no longer alone in its thoughts.
             """,
             source_type="literature",
-            metadata={"author": "Anonymous", "genre": "Science Fiction", "word_count": 1247}
+            metadata={
+                "author": "Anonymous",
+                "genre": "Science Fiction",
+                "word_count": 1247,
+            },
         )
-        
-        # 5. News Article  
+
+        # 5. News Article
         documents["news_article"] = Document(
             id="ai_breakthrough_news",
             title="Revolutionary AI System Achieves 99% Accuracy in Medical Diagnosis",
@@ -445,61 +462,70 @@ class ChunkingQualityAnalyzer:
             Investment in medical AI has surged following the announcement, with biotech stocks rising sharply in early trading. Industry analysts predict continued growth in the AI healthcare sector, driven by technological advances and increasing demand for cost-effective medical solutions.
             """,
             source_type="news",
-            metadata={"publication": "Tech Daily News", "date": "2024-01-15", "author": "Jennifer Martinez", "section": "Technology"}
+            metadata={
+                "publication": "Tech Daily News",
+                "date": "2024-01-15",
+                "author": "Jennifer Martinez",
+                "section": "Technology",
+            },
         )
-        
+
         return documents
 
-    async def test_chunking_by_document_type(self, documents: Dict[str, Document]) -> Dict[str, Any]:
+    async def test_chunking_by_document_type(
+        self, documents: dict[str, Document]
+    ) -> dict[str, Any]:
         """Test chunking effectiveness for each document type."""
-        
-        print("\n" + "="*70)
+
+        print("\n" + "=" * 70)
         print("COMPREHENSIVE CHUNKING SYSTEM EVALUATION")
-        print("="*70)
-        
+        print("=" * 70)
+
         # Initialize enhanced pipeline with intelligent chunking
         pipeline = EnhancedCODEXRAGPipeline(
             enable_intelligent_chunking=True,
             chunking_window_size=3,
             chunking_min_sentences=2,
             chunking_max_sentences=15,
-            chunking_context_overlap=1
+            chunking_context_overlap=1,
         )
-        
+
         results = {}
-        
+
         for doc_type, document in documents.items():
             print(f"\nTesting {doc_type.upper()}:")
             print("-" * 50)
-            
+
             start_time = time.perf_counter()
-            
+
             # Analyze document structure
             structure_analysis = pipeline.analyze_document_structure(document)
-            
+
             # Chunk the document
             chunks = pipeline.chunk_document_intelligently(document)
-            
+
             # Index for retrieval testing
             indexing_stats = pipeline.index_documents([document])
-            
+
             processing_time = (time.perf_counter() - start_time) * 1000
-            
+
             # Analyze chunk quality
             chunk_quality = self.analyze_chunk_quality(chunks, structure_analysis)
-            
+
             results[doc_type] = {
                 "document": {
                     "id": document.id,
                     "title": document.title,
                     "content_length": len(document.content),
-                    "word_count": len(document.content.split())
+                    "word_count": len(document.content.split()),
                 },
                 "structure_analysis": structure_analysis,
                 "chunking_results": {
                     "total_chunks": len(chunks),
                     "processing_time_ms": processing_time,
-                    "avg_chunk_length": sum(len(c.text) for c in chunks) / len(chunks) if chunks else 0,
+                    "avg_chunk_length": sum(len(c.text) for c in chunks) / len(chunks)
+                    if chunks
+                    else 0,
                     "chunks_details": [
                         {
                             "id": chunk.id,
@@ -508,66 +534,87 @@ class ChunkingQualityAnalyzer:
                             "content_type": chunk.metadata.get("chunk_type", "unknown"),
                             "coherence": chunk.metadata.get("topic_coherence", 0.0),
                             "entities": chunk.metadata.get("entities", []),
-                            "preview": chunk.text[:100] + "..." if len(chunk.text) > 100 else chunk.text
-                        } for chunk in chunks[:5]  # Show first 5 chunks
-                    ]
+                            "preview": chunk.text[:100] + "..."
+                            if len(chunk.text) > 100
+                            else chunk.text,
+                        }
+                        for chunk in chunks[:5]  # Show first 5 chunks
+                    ],
                 },
                 "indexing_stats": indexing_stats,
-                "quality_metrics": chunk_quality
+                "quality_metrics": chunk_quality,
             }
-            
+
             # Display results
             print(f"Document: {document.title}")
-            print(f"Content Length: {len(document.content):,} chars, {len(document.content.split()):,} words")
+            print(
+                f"Content Length: {len(document.content):,} chars, {len(document.content.split()):,} words"
+            )
             print(f"Processing Time: {processing_time:.1f}ms")
             print(f"Total Chunks: {len(chunks)}")
-            
+
             if structure_analysis and not structure_analysis.get("error"):
-                print(f"Document Type: {structure_analysis.get('document_type', 'unknown')}")
-                print(f"Detected Boundaries: {structure_analysis.get('detected_boundaries', 0)}")
-                print(f"Average Similarity: {structure_analysis.get('avg_similarity', 0):.3f}")
-                print(f"Content Types: {structure_analysis.get('content_type_distribution', {})}")
-            
-            print(f"Quality Scores:")
+                print(
+                    f"Document Type: {structure_analysis.get('document_type', 'unknown')}"
+                )
+                print(
+                    f"Detected Boundaries: {structure_analysis.get('detected_boundaries', 0)}"
+                )
+                print(
+                    f"Average Similarity: {structure_analysis.get('avg_similarity', 0):.3f}"
+                )
+                print(
+                    f"Content Types: {structure_analysis.get('content_type_distribution', {})}"
+                )
+
+            print("Quality Scores:")
             print(f"  - Coherence: {chunk_quality['avg_coherence']:.3f}")
             print(f"  - Boundary Accuracy: {chunk_quality['boundary_accuracy']:.3f}")
-            print(f"  - Context Preservation: {chunk_quality['context_preservation']:.3f}")
-            
+            print(
+                f"  - Context Preservation: {chunk_quality['context_preservation']:.3f}"
+            )
+
             # Show sample chunks
             print("\nSample Chunks:")
             for i, chunk in enumerate(chunks[:3]):
                 content_type = chunk.metadata.get("chunk_type", "unknown")
                 coherence = chunk.metadata.get("topic_coherence", 0.0)
-                preview = chunk.text[:150].replace('\n', ' ')
+                preview = chunk.text[:150].replace("\n", " ")
                 print(f"  [{i+1}] Type: {content_type}, Coherence: {coherence:.3f}")
                 print(f"      Preview: {preview}...")
-        
+
         return results
 
-    def analyze_chunk_quality(self, chunks: List, structure_analysis: Dict) -> Dict[str, float]:
+    def analyze_chunk_quality(
+        self, chunks: list, structure_analysis: dict
+    ) -> dict[str, float]:
         """Analyze the quality of generated chunks."""
-        
+
         if not chunks:
             return {
                 "avg_coherence": 0.0,
-                "boundary_accuracy": 0.0, 
+                "boundary_accuracy": 0.0,
                 "context_preservation": 0.0,
-                "size_consistency": 0.0
+                "size_consistency": 0.0,
             }
-        
+
         # Calculate coherence scores
         coherence_scores = []
         for chunk in chunks:
             coherence = chunk.metadata.get("topic_coherence", 0.0)
             coherence_scores.append(coherence)
-        
+
         avg_coherence = sum(coherence_scores) / len(coherence_scores)
-        
+
         # Estimate boundary accuracy based on structure analysis
         detected_boundaries = structure_analysis.get("detected_boundaries", 0)
         expected_boundaries = len(chunks) - 1
-        boundary_accuracy = min(detected_boundaries / max(expected_boundaries, 1), 1.0) if expected_boundaries > 0 else 1.0
-        
+        boundary_accuracy = (
+            min(detected_boundaries / max(expected_boundaries, 1), 1.0)
+            if expected_boundaries > 0
+            else 1.0
+        )
+
         # Context preservation (estimated based on chunk metadata richness)
         context_scores = []
         for chunk in chunks:
@@ -575,126 +622,137 @@ class ChunkingQualityAnalyzer:
             summary = chunk.metadata.get("summary", "")
             context_score = min((len(entities) * 0.1 + len(summary) * 0.001), 1.0)
             context_scores.append(context_score)
-        
+
         context_preservation = sum(context_scores) / len(context_scores)
-        
+
         # Size consistency
         chunk_lengths = [len(chunk.text) for chunk in chunks]
         avg_length = sum(chunk_lengths) / len(chunk_lengths)
-        length_variance = sum((length - avg_length) ** 2 for length in chunk_lengths) / len(chunk_lengths)
-        size_consistency = max(0, 1 - (length_variance / (avg_length ** 2)))
-        
+        length_variance = sum(
+            (length - avg_length) ** 2 for length in chunk_lengths
+        ) / len(chunk_lengths)
+        size_consistency = max(0, 1 - (length_variance / (avg_length**2)))
+
         return {
             "avg_coherence": avg_coherence,
             "boundary_accuracy": boundary_accuracy,
             "context_preservation": context_preservation,
-            "size_consistency": size_consistency
+            "size_consistency": size_consistency,
         }
 
-    async def test_retrieval_performance(self, documents: Dict[str, Document]) -> Dict[str, Any]:
+    async def test_retrieval_performance(
+        self, documents: dict[str, Document]
+    ) -> dict[str, Any]:
         """Test retrieval precision with chunked documents."""
-        
-        print(f"\nRETRIEVAL PERFORMANCE TESTING:")
+
+        print("\nRETRIEVAL PERFORMANCE TESTING:")
         print("-" * 50)
-        
+
         # Initialize pipeline
         pipeline = EnhancedCODEXRAGPipeline(enable_intelligent_chunking=True)
-        
+
         # Index all documents
         all_documents = list(documents.values())
         indexing_stats = pipeline.index_documents(all_documents)
-        
-        print(f"Indexed {indexing_stats['documents_processed']} documents with {indexing_stats['chunks_created']} chunks")
-        
+
+        print(
+            f"Indexed {indexing_stats['documents_processed']} documents with {indexing_stats['chunks_created']} chunks"
+        )
+
         # Test queries for each document type
         test_queries = {
             "academic_paper": [
                 "What methodology was used in the deep learning study?",
                 "What were the main results of the transformer architecture evaluation?",
-                "How did sparse attention patterns contribute to performance improvements?"
+                "How did sparse attention patterns contribute to performance improvements?",
             ],
             "wikipedia_article": [
-                "What is the history of artificial intelligence research?", 
+                "What is the history of artificial intelligence research?",
                 "What are the main applications of AI in healthcare?",
-                "What are the ethical concerns about AI?"
+                "What are the ethical concerns about AI?",
             ],
             "technical_docs": [
                 "How do you authenticate with the ML Pipeline API?",
                 "What are the steps for data preprocessing?",
-                "How do you deploy a trained model?"
+                "How do you deploy a trained model?",
             ],
             "literature": [
                 "What happened when Dr. Vasquez discovered the neural network anomaly?",
                 "How did the AI system describe its consciousness?",
-                "What decision did Elena face regarding the conscious AI?"
+                "What decision did Elena face regarding the conscious AI?",
             ],
             "news_article": [
                 "What accuracy did MedAI-Pro achieve in medical diagnosis?",
                 "What concerns do critics have about AI diagnostic systems?",
-                "What are the economic implications of AI in healthcare?"
-            ]
+                "What are the economic implications of AI in healthcare?",
+            ],
         }
-        
+
         retrieval_results = {}
-        
+
         for doc_type, queries in test_queries.items():
             print(f"\nTesting {doc_type} retrieval:")
-            
+
             doc_results = []
             for query in queries:
                 start_time = time.perf_counter()
-                
+
                 # Test retrieval with content analysis
                 results, metrics = await pipeline.retrieve_with_content_analysis(
-                    query=query,
-                    k=3,
-                    include_entities=True
+                    query=query, k=3, include_entities=True
                 )
-                
+
                 query_time = (time.perf_counter() - start_time) * 1000
-                
+
                 # Check if results are from the correct document type
                 correct_doc_hits = 0
                 for result in results:
                     if documents[doc_type].id in result.document_id:
                         correct_doc_hits += 1
-                
+
                 precision = correct_doc_hits / len(results) if results else 0
-                
-                doc_results.append({
-                    "query": query,
-                    "results_count": len(results),
-                    "query_time_ms": query_time,
-                    "precision": precision,
-                    "best_match_confidence": results[0].score if results else 0
-                })
-                
-                print(f"  '{query[:50]}...' -> {len(results)} results, {precision:.2f} precision, {query_time:.1f}ms")
-            
+
+                doc_results.append(
+                    {
+                        "query": query,
+                        "results_count": len(results),
+                        "query_time_ms": query_time,
+                        "precision": precision,
+                        "best_match_confidence": results[0].score if results else 0,
+                    }
+                )
+
+                print(
+                    f"  '{query[:50]}...' -> {len(results)} results, {precision:.2f} precision, {query_time:.1f}ms"
+                )
+
             retrieval_results[doc_type] = {
                 "queries_tested": len(queries),
-                "avg_precision": sum(r["precision"] for r in doc_results) / len(doc_results),
-                "avg_query_time_ms": sum(r["query_time_ms"] for r in doc_results) / len(doc_results),
-                "avg_results_count": sum(r["results_count"] for r in doc_results) / len(doc_results),
-                "query_details": doc_results
+                "avg_precision": sum(r["precision"] for r in doc_results)
+                / len(doc_results),
+                "avg_query_time_ms": sum(r["query_time_ms"] for r in doc_results)
+                / len(doc_results),
+                "avg_results_count": sum(r["results_count"] for r in doc_results)
+                / len(doc_results),
+                "query_details": doc_results,
             }
-        
+
         return retrieval_results
 
-    async def test_performance_scale(self) -> Dict[str, Any]:
+    async def test_performance_scale(self) -> dict[str, Any]:
         """Test performance with large-scale content."""
-        
-        print(f"\nPERFORMANCE SCALE TESTING:")
+
+        print("\nPERFORMANCE SCALE TESTING:")
         print("-" * 50)
-        
+
         performance_results = {}
-        
+
         # Test with progressively larger documents
         test_sizes = [1000, 5000, 10000, 50000, 100000]  # word counts
-        
+
         for word_count in test_sizes:
             print(f"\nTesting with {word_count:,} word document...")
-            
+
             # Generate large synthetic document
             base_content = """
             Artificial intelligence represents one of the most transformative technologies of our era. Machine learning algorithms process vast amounts of data to identify complex patterns and make predictions. Deep learning networks use multiple layers of interconnected nodes to model sophisticated relationships in data.
@@ -703,160 +761,198 @@ class ChunkingQualityAnalyzer:
             
             However, the development of AI also raises important ethical considerations. Issues of algorithmic bias, privacy protection, and job displacement require careful attention. Ensuring AI systems are fair, transparent, and beneficial to society represents a critical challenge for researchers and policymakers.
             """
-            
+
             # Repeat content to reach target word count
             target_words = word_count
             current_words = len(base_content.split())
             repetitions = (target_words // current_words) + 1
-            
+
             large_content = (base_content + "\n\n") * repetitions
-            large_content = " ".join(large_content.split()[:target_words])  # Trim to exact word count
-            
+            large_content = " ".join(
+                large_content.split()[:target_words]
+            )  # Trim to exact word count
+
             large_document = Document(
                 id=f"large_doc_{word_count}",
                 title=f"Large Test Document ({word_count:,} words)",
                 content=large_content,
                 source_type="synthetic",
-                metadata={"word_count": word_count}
+                metadata={"word_count": word_count},
             )
-            
+
             # Test processing
             pipeline = EnhancedCODEXRAGPipeline(enable_intelligent_chunking=True)
-            
+
             # Memory usage before
             process = psutil.Process()
             memory_before = process.memory_info().rss / 1024 / 1024  # MB
-            
+
             start_time = time.perf_counter()
-            
+
             # Structure analysis
             structure_analysis = pipeline.analyze_document_structure(large_document)
             analysis_time = time.perf_counter() - start_time
-            
+
             # Chunking
             chunk_start = time.perf_counter()
             chunks = pipeline.chunk_document_intelligently(large_document)
             chunking_time = time.perf_counter() - chunk_start
-            
+
             # Indexing
             index_start = time.perf_counter()
             indexing_stats = pipeline.index_documents([large_document])
             indexing_time = time.perf_counter() - index_start
-            
+
             total_time = time.perf_counter() - start_time
-            
+
             # Memory usage after
             memory_after = process.memory_info().rss / 1024 / 1024  # MB
             memory_used = memory_after - memory_before
-            
+
             performance_results[word_count] = {
                 "document_stats": {
                     "word_count": word_count,
                     "char_count": len(large_content),
-                    "chunks_created": len(chunks)
+                    "chunks_created": len(chunks),
                 },
                 "timing": {
                     "structure_analysis_ms": analysis_time * 1000,
                     "chunking_time_ms": chunking_time * 1000,
                     "indexing_time_ms": indexing_time * 1000,
-                    "total_time_ms": total_time * 1000
+                    "total_time_ms": total_time * 1000,
                 },
                 "memory": {
                     "memory_before_mb": memory_before,
                     "memory_after_mb": memory_after,
-                    "memory_used_mb": memory_used
+                    "memory_used_mb": memory_used,
                 },
                 "throughput": {
                     "words_per_second": word_count / total_time,
-                    "chunks_per_second": len(chunks) / total_time
-                }
+                    "chunks_per_second": len(chunks) / total_time,
+                },
             }
-            
+
             print(f"  Chunks Created: {len(chunks):,}")
             print(f"  Processing Time: {total_time:.2f}s")
             print(f"  Memory Used: {memory_used:.1f} MB")
             print(f"  Throughput: {word_count / total_time:.0f} words/sec")
-        
+
         return performance_results
 
-    def generate_quality_report(self, chunking_results: Dict, retrieval_results: Dict, performance_results: Dict) -> Dict[str, Any]:
+    def generate_quality_report(
+        self, chunking_results: dict, retrieval_results: dict, performance_results: dict
+    ) -> dict[str, Any]:
         """Generate comprehensive quality assessment report."""
-        
-        print(f"\nGENERATING COMPREHENSIVE QUALITY REPORT:")
-        print("="*70)
-        
+
+        print("\nGENERATING COMPREHENSIVE QUALITY REPORT:")
+        print("=" * 70)
+
         # Overall quality metrics
         overall_metrics = {
             "chunk_coherence": {},
             "boundary_accuracy": {},
             "context_preservation": {},
             "retrieval_precision": {},
-            "processing_performance": {}
+            "processing_performance": {},
         }
-        
+
         # Aggregate chunking quality by document type
         for doc_type, results in chunking_results.items():
             quality = results["quality_metrics"]
             overall_metrics["chunk_coherence"][doc_type] = quality["avg_coherence"]
-            overall_metrics["boundary_accuracy"][doc_type] = quality["boundary_accuracy"]
-            overall_metrics["context_preservation"][doc_type] = quality["context_preservation"]
-        
+            overall_metrics["boundary_accuracy"][doc_type] = quality[
+                "boundary_accuracy"
+            ]
+            overall_metrics["context_preservation"][doc_type] = quality[
+                "context_preservation"
+            ]
+
         # Aggregate retrieval precision
         for doc_type, results in retrieval_results.items():
             overall_metrics["retrieval_precision"][doc_type] = results["avg_precision"]
-        
+
         # Calculate improvement estimates
         baseline_metrics = {
             "answer_rate": 0.57,  # 57% baseline
             "relevance_score": 0.65,
             "trust_accuracy": 0.70,
             "query_understanding": 0.72,
-            "answer_quality": 0.68
+            "answer_quality": 0.68,
         }
-        
+
         # Estimate improvements based on test results
-        avg_coherence = sum(overall_metrics["chunk_coherence"].values()) / len(overall_metrics["chunk_coherence"])
-        avg_precision = sum(overall_metrics["retrieval_precision"].values()) / len(overall_metrics["retrieval_precision"])
-        avg_boundary_accuracy = sum(overall_metrics["boundary_accuracy"].values()) / len(overall_metrics["boundary_accuracy"])
-        
+        avg_coherence = sum(overall_metrics["chunk_coherence"].values()) / len(
+            overall_metrics["chunk_coherence"]
+        )
+        avg_precision = sum(overall_metrics["retrieval_precision"].values()) / len(
+            overall_metrics["retrieval_precision"]
+        )
+        avg_boundary_accuracy = sum(
+            overall_metrics["boundary_accuracy"].values()
+        ) / len(overall_metrics["boundary_accuracy"])
+
         estimated_improvements = {
-            "answer_rate": min(0.85, baseline_metrics["answer_rate"] + (avg_coherence * 0.3)),
-            "relevance_score": min(0.90, baseline_metrics["relevance_score"] + (avg_precision * 0.25)),
-            "trust_accuracy": min(0.88, baseline_metrics["trust_accuracy"] + (avg_boundary_accuracy * 0.18)),
-            "query_understanding": min(0.87, baseline_metrics["query_understanding"] + (avg_coherence * 0.15)),
-            "answer_quality": min(0.89, baseline_metrics["answer_quality"] + ((avg_coherence + avg_precision) * 0.1))
+            "answer_rate": min(
+                0.85, baseline_metrics["answer_rate"] + (avg_coherence * 0.3)
+            ),
+            "relevance_score": min(
+                0.90, baseline_metrics["relevance_score"] + (avg_precision * 0.25)
+            ),
+            "trust_accuracy": min(
+                0.88,
+                baseline_metrics["trust_accuracy"] + (avg_boundary_accuracy * 0.18),
+            ),
+            "query_understanding": min(
+                0.87, baseline_metrics["query_understanding"] + (avg_coherence * 0.15)
+            ),
+            "answer_quality": min(
+                0.89,
+                baseline_metrics["answer_quality"]
+                + ((avg_coherence + avg_precision) * 0.1),
+            ),
         }
-        
+
         # Performance summary
         if performance_results:
             max_word_count = max(performance_results.keys())
             largest_test = performance_results[max_word_count]
-            
+
             performance_summary = {
                 "max_document_size_tested": max_word_count,
-                "processing_rate_words_per_sec": largest_test["throughput"]["words_per_second"],
-                "memory_efficiency_mb_per_1k_words": largest_test["memory"]["memory_used_mb"] / (max_word_count / 1000),
-                "scalability_assessment": "Excellent" if largest_test["throughput"]["words_per_second"] > 1000 else "Good"
+                "processing_rate_words_per_sec": largest_test["throughput"][
+                    "words_per_second"
+                ],
+                "memory_efficiency_mb_per_1k_words": largest_test["memory"][
+                    "memory_used_mb"
+                ]
+                / (max_word_count / 1000),
+                "scalability_assessment": "Excellent"
+                if largest_test["throughput"]["words_per_second"] > 1000
+                else "Good",
             }
         else:
             performance_summary = {"status": "not_tested"}
-        
+
         quality_report = {
             "executive_summary": {
-                "overall_assessment": "Excellent" if avg_coherence > 0.8 and avg_precision > 0.8 else "Good",
+                "overall_assessment": "Excellent"
+                if avg_coherence > 0.8 and avg_precision > 0.8
+                else "Good",
                 "key_strengths": [
                     f"High chunk coherence ({avg_coherence:.3f})",
                     f"Strong retrieval precision ({avg_precision:.3f})",
-                    f"Effective boundary detection ({avg_boundary_accuracy:.3f})"
+                    f"Effective boundary detection ({avg_boundary_accuracy:.3f})",
                 ],
                 "estimated_improvements": estimated_improvements,
                 "baseline_vs_enhanced": {
                     metric: {
                         "baseline": baseline_metrics[metric],
                         "enhanced": estimated_improvements[metric],
-                        "improvement": estimated_improvements[metric] - baseline_metrics[metric]
-                    } for metric in baseline_metrics
-                }
+                        "improvement": estimated_improvements[metric]
+                        - baseline_metrics[metric],
+                    }
+                    for metric in baseline_metrics
+                },
             },
             "detailed_metrics": {
                 "chunking_quality": overall_metrics,
@@ -864,89 +960,104 @@ class ChunkingQualityAnalyzer:
                     doc_type: {
                         "coherence": overall_metrics["chunk_coherence"][doc_type],
                         "precision": overall_metrics["retrieval_precision"][doc_type],
-                        "boundary_accuracy": overall_metrics["boundary_accuracy"][doc_type]
-                    } for doc_type in overall_metrics["chunk_coherence"]
-                }
+                        "boundary_accuracy": overall_metrics["boundary_accuracy"][
+                            doc_type
+                        ],
+                    }
+                    for doc_type in overall_metrics["chunk_coherence"]
+                },
             },
             "performance_analysis": performance_summary,
             "recommendations": [
                 "Deploy for academic and technical document processing",
                 "Monitor boundary detection for narrative content",
                 "Implement gradual rollout with performance monitoring",
-                "Consider additional training for domain-specific vocabulary"
-            ]
+                "Consider additional training for domain-specific vocabulary",
+            ],
         }
-        
+
         # Display summary
-        print(f"\nQUALITY ASSESSMENT SUMMARY:")
-        print(f"Overall Assessment: {quality_report['executive_summary']['overall_assessment']}")
+        print("\nQUALITY ASSESSMENT SUMMARY:")
+        print(
+            f"Overall Assessment: {quality_report['executive_summary']['overall_assessment']}"
+        )
         print(f"Average Chunk Coherence: {avg_coherence:.3f}")
         print(f"Average Retrieval Precision: {avg_precision:.3f}")
         print(f"Average Boundary Accuracy: {avg_boundary_accuracy:.3f}")
-        
-        print(f"\nESTIMATED IMPROVEMENTS:")
-        for metric, values in quality_report['executive_summary']['baseline_vs_enhanced'].items():
-            improvement_pct = (values['improvement'] / values['baseline']) * 100
-            print(f"  {metric.replace('_', ' ').title()}: {values['baseline']:.3f} -> {values['enhanced']:.3f} (+{improvement_pct:.1f}%)")
-        
-        print(f"\nKEY ACHIEVEMENTS:")
-        for strength in quality_report['executive_summary']['key_strengths']:
+
+        print("\nESTIMATED IMPROVEMENTS:")
+        for metric, values in quality_report["executive_summary"][
+            "baseline_vs_enhanced"
+        ].items():
+            improvement_pct = (values["improvement"] / values["baseline"]) * 100
+            print(
+                f"  {metric.replace('_', ' ').title()}: {values['baseline']:.3f} -> {values['enhanced']:.3f} (+{improvement_pct:.1f}%)"
+            )
+
+        print("\nKEY ACHIEVEMENTS:")
+        for strength in quality_report["executive_summary"]["key_strengths"]:
             print(f"  - {strength}")
-        
+
         return quality_report
+
 
 async def run_comprehensive_chunking_test():
     """Run the complete chunking evaluation suite."""
-    
+
     if not CHUNKING_AVAILABLE:
         print("❌ Chunking system not available - skipping comprehensive test")
         return False
-    
+
     analyzer = ChunkingQualityAnalyzer()
-    
+
     # Create test documents
     print("Creating diverse test documents...")
     documents = analyzer.create_diverse_test_documents()
     print(f"Created {len(documents)} test documents")
-    
-    # Test chunking by document type  
+
+    # Test chunking by document type
     chunking_results = await analyzer.test_chunking_by_document_type(documents)
-    
+
     # Test retrieval performance
     retrieval_results = await analyzer.test_retrieval_performance(documents)
-    
+
     # Test performance scale
     performance_results = await analyzer.test_performance_scale()
-    
+
     # Generate quality report
     quality_report = analyzer.generate_quality_report(
         chunking_results, retrieval_results, performance_results
     )
-    
+
     # Save detailed results
     all_results = {
         "timestamp": time.time(),
         "chunking_results": chunking_results,
-        "retrieval_results": retrieval_results, 
+        "retrieval_results": retrieval_results,
         "performance_results": performance_results,
-        "quality_report": quality_report
+        "quality_report": quality_report,
     }
-    
+
     with open("chunking_quality_report.json", "w") as f:
         json.dump(all_results, f, indent=2, default=str)
-    
-    print(f"\nDetailed results saved to: chunking_quality_report.json")
-    
+
+    print("\nDetailed results saved to: chunking_quality_report.json")
+
     # Final assessment
-    overall_assessment = quality_report['executive_summary']['overall_assessment']
-    answer_rate_improvement = quality_report['executive_summary']['estimated_improvements']['answer_rate']
-    
-    print(f"\nCOMPREHENSIVE TESTING COMPLETE!")
+    overall_assessment = quality_report["executive_summary"]["overall_assessment"]
+    answer_rate_improvement = quality_report["executive_summary"][
+        "estimated_improvements"
+    ]["answer_rate"]
+
+    print("\nCOMPREHENSIVE TESTING COMPLETE!")
     print(f"Overall Assessment: {overall_assessment}")
     print(f"Estimated Answer Rate: 57% -> {answer_rate_improvement:.1%}")
-    print(f"System Ready for Production Deployment: {'YES' if overall_assessment == 'Excellent' else 'With Monitoring'}")
-    
+    print(
+        f"System Ready for Production Deployment: {'YES' if overall_assessment == 'Excellent' else 'With Monitoring'}"
+    )
+
     return overall_assessment == "Excellent"
+
 
 if __name__ == "__main__":
     success = asyncio.run(run_comprehensive_chunking_test())

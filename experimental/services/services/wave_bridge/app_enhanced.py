@@ -3,17 +3,17 @@ Part B: Agent Forge Phase 4 - Full Integration.
 """
 
 import asyncio
+from datetime import datetime, timezone
 import hashlib
 import logging
 import os
 import time
-from datetime import datetime, timezone
 from typing import Any
 
-import wandb
 from fastapi import BackgroundTasks, FastAPI, HTTPException, Request
 from fastapi.responses import PlainTextResponse
 from twilio.twiml.messaging_response import MessagingResponse
+import wandb
 
 from .agent_forge.prompt_engineering.ab_testing import prompt_ab_test
 from .agent_forge.prompt_engineering.prompt_baker import prompt_baker
@@ -600,7 +600,9 @@ async def log_enhanced_response_metrics(
         else (
             "good"
             if response_time < 4.0
-            else "acceptable" if response_time < 5.0 else "slow"
+            else "acceptable"
+            if response_time < 5.0
+            else "slow"
         )
     )
     all_metrics["enhancement_impact"] = (

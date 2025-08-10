@@ -8,12 +8,11 @@ import asyncio
 import logging
 from typing import Any
 
+from agent_forge.adas.technique_archive import ChainOfThought, TreeOfThoughts
+from agents.base import ProcessConfig, QueryProcessor
 from rag_system.utils.embedding import BERTEmbeddingModel
 from rag_system.utils.named_entity_recognition import NamedEntityRecognizer
 from rag_system.utils.relation_extraction import RelationExtractor
-
-from agent_forge.adas.technique_archive import ChainOfThought, TreeOfThoughts
-from agents.base import ProcessConfig, QueryProcessor
 
 logger = logging.getLogger(__name__)
 

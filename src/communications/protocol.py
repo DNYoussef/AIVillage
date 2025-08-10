@@ -4,17 +4,17 @@ No more stubs - this actually connects agents!
 """
 
 import asyncio
+from collections.abc import Callable
 import hashlib
 import json
 import logging
 import os
 import ssl
 import time
-from collections.abc import Callable
 from typing import Any
 
-import websockets
 from cryptography.fernet import Fernet
+import websockets
 
 from .message import Message
 
@@ -430,6 +430,10 @@ def send_message(agent_id: str, message: dict | Message) -> bool:
     return loop.run_until_complete(protocol.send_message(agent_id, message))
 
 
-# Legacy compatibility
+# Legacy compatibility aliases
 class StandardCommunicationProtocol(CommunicationsProtocol):
     """Legacy compatibility wrapper."""
+
+
+# Backward compatibility alias
+CommunicationProtocol = CommunicationsProtocol

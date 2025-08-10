@@ -4,12 +4,12 @@ Core data structures for the dual-memory hypergraph knowledge system.
 Implements Hyperedge for n-ary relationships and HippoNode for episodic memory.
 """
 
-import uuid
 from datetime import datetime, timezone
 from typing import Any
+import uuid
 
 import numpy as np
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 
 class Hyperedge(BaseModel):
@@ -52,7 +52,7 @@ class Hyperedge(BaseModel):
             }
         }
 
-    @validator("entities")
+    @field_validator("entities")
     def validate_entities(self, v):
         """Ensure minimum entity count and no duplicates."""
         if len(v) < 2:
@@ -63,7 +63,7 @@ class Hyperedge(BaseModel):
             raise ValueError(msg)
         return v
 
-    @validator("relation")
+    @field_validator("relation")
     def validate_relation(self, v):
         """Ensure relation is non-empty and valid."""
         if not v or not v.strip():
@@ -71,7 +71,7 @@ class Hyperedge(BaseModel):
             raise ValueError(msg)
         return v.strip()
 
-    @validator("embedding")
+    @field_validator("embedding")
     def validate_embedding(self, v):
         """Validate embedding vector if provided."""
         if v is not None:
@@ -167,7 +167,7 @@ class HippoNode(BaseModel):
             }
         }
 
-    @validator("content")
+    @field_validator("content")
     def validate_content(self, v):
         """Ensure content is not empty."""
         if not v or not v.strip():
@@ -175,7 +175,7 @@ class HippoNode(BaseModel):
             raise ValueError(msg)
         return v.strip()
 
-    @validator("access_pattern")
+    @field_validator("access_pattern")
     def validate_access_pattern(self, v):
         """Validate access pattern for Personalized PageRank."""
         if v is not None:

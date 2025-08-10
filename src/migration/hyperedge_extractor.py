@@ -6,16 +6,16 @@ Creates rich semantic relationships for HypeRAG knowledge graph.
 """
 
 import argparse
+from collections import Counter, defaultdict
+from dataclasses import asdict, dataclass
+from datetime import datetime, timezone
 import json
 import logging
+from pathlib import Path
 import re
 
 # Import HypeRAG components
 import sys
-from collections import Counter, defaultdict
-from dataclasses import asdict, dataclass
-from datetime import datetime, timezone
-from pathlib import Path
 from typing import Any
 
 import numpy as np

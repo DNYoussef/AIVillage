@@ -1,13 +1,11 @@
 #!/usr/bin/env python3
 """Start P2P networking services"""
 
-import asyncio
 import json
 import logging
 import socket
 import sys
 import threading
-from pathlib import Path
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -42,7 +40,7 @@ class P2PServer:
                     threading.Thread(
                         target=self.handle_peer, args=(client, addr)
                     ).start()
-                except socket.timeout:
+                except TimeoutError:
                     continue
                 except Exception as e:
                     logger.error(f"Server error: {e}")
@@ -69,7 +67,7 @@ class P2PServer:
 
                     # Echo back for now
                     client.send(data)
-                except socket.timeout:
+                except TimeoutError:
                     continue
                 except:
                     break
@@ -100,7 +98,7 @@ class P2PServer:
                     # Simple response
                     client.send(b"HTTP/1.1 200 OK\r\n\r\n")
                     client.close()
-                except socket.timeout:
+                except TimeoutError:
                     continue
                 except:
                     continue
@@ -114,7 +112,6 @@ class P2PServer:
         """Start mDNS service announcement"""
         logger.info("mDNS service started (mock implementation)")
         # Real mDNS would use python-zeroconf or similar
-        pass
 
 
 def main():

@@ -2,9 +2,9 @@
 """Integration tests for RAG pipeline functionality."""
 
 import asyncio
+from pathlib import Path
 import sys
 import time
-from pathlib import Path
 
 import pytest
 
@@ -37,7 +37,7 @@ pytestmark = pytest.mark.skipif(not RAG_AVAILABLE, reason="CODEX RAG not availab
 async def rag_pipeline():
     """Create a RAG pipeline for testing."""
     pipeline = CODEXRAGPipeline()
-    yield pipeline
+    return pipeline
 
 
 @pytest.fixture
@@ -158,7 +158,7 @@ class TestRAGIntegration:
 
         # Cache hit should be faster (though with small dataset difference might be minimal)
         assert len(results1) == len(results2)
-        for r1, r2 in zip(results1, results2):
+        for r1, r2 in zip(results1, results2, strict=False):
             assert r1.chunk_id == r2.chunk_id
             assert r1.score == r2.score
 

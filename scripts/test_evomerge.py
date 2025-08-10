@@ -7,17 +7,15 @@ evaluation, and the complete evolution process.
 """
 
 import asyncio
+from pathlib import Path
 import shutil
 
 # Import our pipeline components
 import sys
 import tempfile
 import unittest
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-import pytest
-import torch
 from evomerge_pipeline import (
     BaseModelConfig,
     CodeEvaluator,
@@ -28,6 +26,8 @@ from evomerge_pipeline import (
     MergeOperators,
     ModelCandidate,
 )
+import pytest
+import torch
 from transformers import AutoConfig, AutoModelForCausalLM
 
 sys.path.append(str(Path(__file__).parent.parent / "agent_forge"))

@@ -1,6 +1,6 @@
+from functools import wraps
 import logging
 import traceback
-from functools import wraps
 from typing import Any
 
 

@@ -9,11 +9,11 @@ Orchestrates the complete benchmarking pipeline for Agent Forge models:
 """
 
 import asyncio
+from datetime import datetime
 import json
 import logging
-import sys
-from datetime import datetime
 from pathlib import Path
+import sys
 from typing import Any
 
 import torch
@@ -235,7 +235,9 @@ The **{model_name}** model has been evaluated across multiple standardized bench
             performance_level = (
                 "🟢 Excellent"
                 if score > 0.8
-                else "🟡 Good" if score > 0.6 else "🔴 Needs Improvement"
+                else "🟡 Good"
+                if score > 0.6
+                else "🔴 Needs Improvement"
             )
             category = self._get_benchmark_category(benchmark_name)
             report_content += f"| {benchmark_name} | {score:.3f} | {category} | {performance_level} |\n"

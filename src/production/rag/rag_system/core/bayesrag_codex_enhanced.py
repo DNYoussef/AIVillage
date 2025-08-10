@@ -8,16 +8,16 @@ This module extends the CODEX RAG pipeline with BayesRAG's innovative features:
 """
 
 import asyncio
+from dataclasses import dataclass, field
 import json
 import logging
+from pathlib import Path
 import sqlite3
 import time
-from dataclasses import dataclass, field
-from pathlib import Path
 from typing import Any
 
-import numpy as np
 from codex_rag_integration import CODEXCompliantCache, CODEXRAGPipeline, RetrievalResult
+import numpy as np
 from sentence_transformers import SentenceTransformer
 
 logger = logging.getLogger(__name__)

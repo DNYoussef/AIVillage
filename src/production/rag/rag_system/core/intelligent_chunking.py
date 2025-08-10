@@ -7,24 +7,19 @@ Implements idea-aware document chunking that:
 - Handles edge cases like short paragraphs, lists, and code blocks
 """
 
-import logging
-import re
 from dataclasses import dataclass
 from enum import Enum
+import logging
+import re
 from typing import Any
 
 import numpy as np
 from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 
-# Optional spaCy import
-try:
-    import spacy
-
-    SPACY_AVAILABLE = True
-except ImportError:
-    SPACY_AVAILABLE = False
-    spacy = None
+# Optional spaCy import - disabled due to pydantic compatibility issues
+SPACY_AVAILABLE = False
+spacy = None
 
 logger = logging.getLogger(__name__)
 

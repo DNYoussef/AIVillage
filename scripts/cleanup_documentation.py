@@ -14,11 +14,11 @@ Goals:
 6. Update cross-references
 """
 
+from collections import defaultdict
 import os
+from pathlib import Path
 import re
 import shutil
-from collections import defaultdict
-from pathlib import Path
 
 
 class DocumentationCleanup:

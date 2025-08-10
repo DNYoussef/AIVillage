@@ -2,8 +2,8 @@
 """Create evolutionary tree visualization for Agent Forge evolution merge results."""
 
 import json
-import warnings
 from pathlib import Path
+import warnings
 
 import matplotlib.pyplot as plt
 import numpy as np

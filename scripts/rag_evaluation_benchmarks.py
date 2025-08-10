@@ -4,11 +4,11 @@
 import asyncio
 import json
 import logging
+from pathlib import Path
 import statistics
 import sys
 import time
-from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
@@ -24,7 +24,7 @@ sys.path.insert(
     ),
 )
 
-from codex_rag_integration import CODEXRAGPipeline, Document
+from codex_rag_integration import CODEXRAGPipeline
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -196,7 +196,7 @@ class RAGEvaluationBenchmarks:
             return False
 
     def calculate_relevance_score(
-        self, query: Dict[str, Any], results: List[Any]
+        self, query: dict[str, Any], results: list[Any]
     ) -> float:
         """Calculate relevance score based on keyword matching."""
         expected_keywords = [kw.lower() for kw in query["expected_keywords"]]
@@ -214,8 +214,8 @@ class RAGEvaluationBenchmarks:
         return total_score / min(len(results), 5)
 
     async def run_latency_benchmark(
-        self, queries: List[str], iterations: int = 3
-    ) -> Dict[str, Any]:
+        self, queries: list[str], iterations: int = 3
+    ) -> dict[str, Any]:
         """Run latency benchmarks with multiple iterations."""
         all_latencies = []
         cache_hits = 0
@@ -279,8 +279,8 @@ class RAGEvaluationBenchmarks:
         }
 
     async def run_accuracy_benchmark(
-        self, queries: List[Dict[str, Any]]
-    ) -> Dict[str, Any]:
+        self, queries: list[dict[str, Any]]
+    ) -> dict[str, Any]:
         """Run accuracy benchmarks based on relevance scoring."""
         relevance_scores = []
         retrieval_counts = []
@@ -331,7 +331,7 @@ class RAGEvaluationBenchmarks:
 
     async def run_stress_test(
         self, concurrent_queries: int = 10, total_requests: int = 100
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Run concurrent stress test to evaluate performance under load."""
         logger.info(
             f"Running stress test: {concurrent_queries} concurrent queries, {total_requests} total requests"
@@ -416,7 +416,7 @@ class RAGEvaluationBenchmarks:
             ),
         }
 
-    async def run_comprehensive_evaluation(self) -> Dict[str, Any]:
+    async def run_comprehensive_evaluation(self) -> dict[str, Any]:
         """Run all evaluation benchmarks."""
         logger.info("Starting comprehensive RAG evaluation")
 
@@ -469,7 +469,7 @@ class RAGEvaluationBenchmarks:
         logger.info("Comprehensive evaluation completed")
         return evaluation_results
 
-    def generate_assessment(self, results: Dict[str, Any]) -> Dict[str, Any]:
+    def generate_assessment(self, results: dict[str, Any]) -> dict[str, Any]:
         """Generate overall assessment of RAG pipeline performance."""
         latency_results = results["latency_benchmark"]
         accuracy_results = results["accuracy_benchmark"]
@@ -512,7 +512,7 @@ class RAGEvaluationBenchmarks:
             "recommendations": self.generate_recommendations(results),
         }
 
-    def generate_recommendations(self, results: Dict[str, Any]) -> List[str]:
+    def generate_recommendations(self, results: dict[str, Any]) -> list[str]:
         """Generate recommendations based on evaluation results."""
         recommendations = []
 
@@ -575,14 +575,14 @@ async def main():
         accuracy = results["accuracy_benchmark"]
         stress = results["stress_test"]
 
-        print(f"\n=== RAG Pipeline Evaluation Results ===")
+        print("\n=== RAG Pipeline Evaluation Results ===")
         print(
             f"Overall Score: {assessment['overall_score']:.1f}/100 (Grade: {assessment['grade']})"
         )
         print(
             f"Meets CODEX Requirements: {'YES' if assessment['meets_codex_requirements'] else 'NO'}"
         )
-        print(f"\n--- Performance Metrics ---")
+        print("\n--- Performance Metrics ---")
         print(f"Average Latency: {latency['avg_latency_ms']:.2f}ms (target: <100ms)")
         print(f"P95 Latency: {latency['p95_latency_ms']:.2f}ms")
         print(f"Cache Hit Rate: {latency['cache_hit_rate']:.1%}")
@@ -592,7 +592,7 @@ async def main():
         print(f"Requests/Second: {stress['requests_per_second']:.1f}")
 
         if assessment["recommendations"]:
-            print(f"\n--- Recommendations ---")
+            print("\n--- Recommendations ---")
             for i, rec in enumerate(assessment["recommendations"], 1):
                 print(f"{i}. {rec}")
 

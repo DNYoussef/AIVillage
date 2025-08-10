@@ -7,8 +7,8 @@ This validates all components work together correctly before running the full pi
 """
 
 import json
-import tempfile
 from pathlib import Path
+import tempfile
 from unittest.mock import Mock, patch
 
 import pytest

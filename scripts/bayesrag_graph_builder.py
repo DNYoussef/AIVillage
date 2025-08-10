@@ -1,17 +1,15 @@
 #!/usr/bin/env python3
-"""
-Graph RAG builder with Bayesian trust networks for Wikipedia knowledge.
+"""Graph RAG builder with Bayesian trust networks for Wikipedia knowledge.
 Creates semantic relationship graphs with trust-weighted connections.
 """
 
 import asyncio
+from dataclasses import dataclass
 import json
 import logging
-import sqlite3
-from dataclasses import dataclass
-from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple
+import sqlite3
+from typing import Any
 
 import networkx as nx
 import numpy as np
@@ -35,7 +33,7 @@ class SemanticRelationship:
     temporal_alignment: float
     geographic_alignment: float
     trust_weight: float
-    evidence_sources: List[str]
+    evidence_sources: list[str]
 
 
 class BayesianTrustCalculator:
@@ -54,7 +52,6 @@ class BayesianTrustCalculator:
         temporal_consistency: float = 1.0,
     ) -> float:
         """Calculate Bayesian trust score for relationship between chunks."""
-
         # Evidence strength based on similarity and context
         evidence_strength = (
             semantic_sim * 0.4 + context_overlap * 0.3 + temporal_consistency * 0.3
@@ -84,7 +81,6 @@ class BayesianTrustCalculator:
         connection_quality: float,
     ) -> float:
         """Update node trust based on retrieval performance."""
-
         if total_retrievals == 0:
             return current_trust
 
@@ -120,7 +116,7 @@ class GraphRAGBuilder:
         self.chunk_cache = {}
         self.embedding_cache = {}
 
-    def load_chunks_and_embeddings(self) -> Dict[str, Any]:
+    def load_chunks_and_embeddings(self) -> dict[str, Any]:
         """Load all chunks and their embeddings from database."""
         chunks = {}
 
@@ -160,10 +156,9 @@ class GraphRAGBuilder:
         return chunks
 
     def calculate_semantic_relationships(
-        self, chunks: Dict[str, Any], similarity_threshold: float = 0.3
-    ) -> List[SemanticRelationship]:
+        self, chunks: dict[str, Any], similarity_threshold: float = 0.3
+    ) -> list[SemanticRelationship]:
         """Calculate semantic relationships between chunks."""
-
         relationships = []
         chunk_ids = list(chunks.keys())
 
@@ -239,16 +234,13 @@ class GraphRAGBuilder:
         logger.info(f"Found {len(relationships)} semantic relationships")
         return relationships
 
-    def _calculate_contextual_relevance(self, chunk1: Dict, chunk2: Dict) -> float:
+    def _calculate_contextual_relevance(self, chunk1: dict, chunk2: dict) -> float:
         """Calculate contextual relevance between two chunks."""
-
         # Tag overlap
         tags1 = set(chunk1["local_tags"])
         tags2 = set(chunk2["local_tags"])
 
-        if not tags1 and not tags2:
-            tag_overlap = 0.0
-        elif not tags1 or not tags2:
+        if (not tags1 and not tags2) or not tags1 or not tags2:
             tag_overlap = 0.0
         else:
             tag_overlap = len(tags1 & tags2) / len(tags1 | tags2)
@@ -270,9 +262,8 @@ class GraphRAGBuilder:
         relevance = tag_overlap * 0.4 + article_factor * 0.3 + ref_overlap * 0.3
         return min(1.0, relevance)
 
-    def _calculate_temporal_alignment(self, chunk1: Dict, chunk2: Dict) -> float:
+    def _calculate_temporal_alignment(self, chunk1: dict, chunk2: dict) -> float:
         """Calculate temporal alignment between chunks."""
-
         temp1 = chunk1.get("temporal_context")
         temp2 = chunk2.get("temporal_context")
 
@@ -297,19 +288,18 @@ class GraphRAGBuilder:
             # Convert distance to similarity (closer = more similar)
             if min_distance == 0:
                 return 1.0
-            elif min_distance <= 10:
+            if min_distance <= 10:
                 return 0.9
-            elif min_distance <= 50:
+            if min_distance <= 50:
                 return 0.7
-            elif min_distance <= 100:
+            if min_distance <= 100:
                 return 0.5
-            else:
-                return 0.3
+            return 0.3
 
         except:
             return 0.7
 
-    def _extract_years(self, temporal_context: str) -> List[int]:
+    def _extract_years(self, temporal_context: str) -> list[int]:
         """Extract years from temporal context string."""
         import re
 
@@ -317,9 +307,8 @@ class GraphRAGBuilder:
         matches = re.findall(year_pattern, temporal_context)
         return [int(year) for year in matches]
 
-    def _calculate_geographic_alignment(self, chunk1: Dict, chunk2: Dict) -> float:
+    def _calculate_geographic_alignment(self, chunk1: dict, chunk2: dict) -> float:
         """Calculate geographic alignment between chunks."""
-
         geo1 = chunk1.get("geographic_context")
         geo2 = chunk2.get("geographic_context")
 
@@ -352,10 +341,9 @@ class GraphRAGBuilder:
         return 0.3  # Different regions
 
     def _determine_relationship_type(
-        self, chunk1: Dict, chunk2: Dict, semantic_sim: float
+        self, chunk1: dict, chunk2: dict, semantic_sim: float
     ) -> str:
         """Determine the type of relationship between chunks."""
-
         # Same article = hierarchical relationship
         if chunk1["parent_title"] == chunk2["parent_title"]:
             return "hierarchical"
@@ -392,7 +380,6 @@ class GraphRAGBuilder:
 
     def _get_chunk_trust(self, chunk_id: str) -> float:
         """Get trust score for a chunk (from parent article)."""
-
         with sqlite3.connect(self.local_db_path) as conn:
             cursor = conn.execute(
                 "SELECT parent_title FROM local_contexts WHERE chunk_id = ?",
@@ -415,12 +402,10 @@ class GraphRAGBuilder:
 
             if result:
                 return result[0]
-            else:
-                return 0.5
+            return 0.5
 
-    def build_knowledge_graph(self, relationships: List[SemanticRelationship]):
+    def build_knowledge_graph(self, relationships: list[SemanticRelationship]):
         """Build NetworkX knowledge graph from relationships."""
-
         logger.info("Building NetworkX knowledge graph")
 
         # Add nodes (chunks)
@@ -457,9 +442,8 @@ class GraphRAGBuilder:
             f"{self.knowledge_graph.number_of_edges()} edges"
         )
 
-    def store_graph_in_database(self, relationships: List[SemanticRelationship]):
+    def store_graph_in_database(self, relationships: list[SemanticRelationship]):
         """Store graph relationships in database."""
-
         with sqlite3.connect(self.graph_db_path) as conn:
             # Store edges
             for rel in relationships:
@@ -492,9 +476,8 @@ class GraphRAGBuilder:
 
     def find_trust_paths(
         self, source_chunk: str, target_chunk: str, max_path_length: int = 4
-    ) -> List[Tuple[List[str], float]]:
+    ) -> list[tuple[list[str], float]]:
         """Find trust-weighted paths between chunks."""
-
         if not self.knowledge_graph.has_node(
             source_chunk
         ) or not self.knowledge_graph.has_node(target_chunk):
@@ -535,7 +518,6 @@ class GraphRAGBuilder:
 
 async def main():
     """Test the Graph RAG builder."""
-
     builder = GraphRAGBuilder()
 
     logger.info("Loading chunks and building knowledge graph...")
@@ -569,7 +551,7 @@ async def main():
             print(f"Path {i + 1} (Trust: {trust:.3f}): {' -> '.join(path)}")
 
     # Graph statistics
-    print(f"\n=== Graph Statistics ===")
+    print("\n=== Graph Statistics ===")
     print(f"Nodes: {builder.knowledge_graph.number_of_nodes()}")
     print(f"Edges: {builder.knowledge_graph.number_of_edges()}")
     print(

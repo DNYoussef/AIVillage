@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Final comprehensive analysis of AIVillage agent system."""
 
-import sys
 from pathlib import Path
+import sys
 
 sys.path.insert(0, str(Path.cwd()))
 

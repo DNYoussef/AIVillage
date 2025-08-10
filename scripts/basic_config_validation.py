@@ -4,10 +4,10 @@
 Validates configuration files without external dependencies.
 """
 
-import json
-import sys
 from datetime import datetime
+import json
 from pathlib import Path
+import sys
 
 
 def validate_json_file(file_path):

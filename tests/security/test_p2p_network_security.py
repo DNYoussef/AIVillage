@@ -12,10 +12,10 @@ Tests network resilience against various attacks:
 """
 
 import os
+from pathlib import Path
 import sys
 import time
 import unittest
-from pathlib import Path
 
 # Add parent directories to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))

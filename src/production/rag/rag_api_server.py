@@ -6,14 +6,15 @@ Provides REST API endpoints on port 8082 as specified in CODEX requirements.
 import json
 import logging
 import os
-import time
 from pathlib import Path
+import time
 from typing import Any
 
-import uvicorn
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
+import uvicorn
+
 from rag_system.core.codex_rag_integration import CODEXRAGPipeline, Document
 
 # Configure logging

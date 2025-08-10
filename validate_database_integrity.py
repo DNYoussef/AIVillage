@@ -1,35 +1,31 @@
 #!/usr/bin/env python3
-"""
-Database Integrity and Migration Verification Script
+"""Database Integrity and Migration Verification Script
 Verifies all SQLite databases exist with correct schemas and data integrity
 """
 
-import hashlib
+from dataclasses import dataclass
+from datetime import datetime
 import json
 import logging
 import os
+from pathlib import Path
 import sqlite3
 import subprocess
 import sys
-import tempfile
 import threading
 import time
-from dataclasses import dataclass
-from datetime import datetime, timedelta
-from pathlib import Path
-from typing import Dict, List, Optional, Tuple
 
 try:
-    import numpy as np
     from colorama import Fore, Style, init
     from cryptography.fernet import Fernet
+    import numpy as np
 except ImportError as e:
     print(f"Missing dependencies: {e}")
     print("Installing required packages...")
     subprocess.run(
-        [sys.executable, "-m", "pip", "install", "numpy", "cryptography", "colorama"]
+        [sys.executable, "-m", "pip", "install", "numpy", "cryptography", "colorama"],
+        check=False,
     )
-    import numpy as np
     from colorama import Fore, Style, init
     from cryptography.fernet import Fernet
 
@@ -49,10 +45,10 @@ class DatabaseSchema:
 
     name: str
     path: str
-    tables: Dict[str, List[str]]  # table_name: [columns]
-    indexes: Dict[str, List[str]]  # index_name: [columns]
+    tables: dict[str, list[str]]  # table_name: [columns]
+    indexes: dict[str, list[str]]  # index_name: [columns]
     wal_enabled: bool = True
-    encrypted_fields: List[str] = None
+    encrypted_fields: list[str] = None
 
 
 class DatabaseIntegrityValidator:
@@ -74,7 +70,7 @@ class DatabaseIntegrityValidator:
             self.encryption_key = Fernet.generate_key()
             os.environ["DIGITAL_TWIN_ENCRYPTION_KEY"] = self.encryption_key.decode()
 
-    def _define_schemas(self) -> List[DatabaseSchema]:
+    def _define_schemas(self) -> list[DatabaseSchema]:
         """Define expected database schemas"""
         return [
             DatabaseSchema(
@@ -300,7 +296,7 @@ class DatabaseIntegrityValidator:
 
         return True
 
-    def verify_schema(self, schema: DatabaseSchema) -> Dict:
+    def verify_schema(self, schema: DatabaseSchema) -> dict:
         """Verify database schema matches expectations"""
         result = {
             "database": schema.name,
@@ -367,7 +363,7 @@ class DatabaseIntegrityValidator:
 
         return result
 
-    def test_concurrent_access(self, schema: DatabaseSchema) -> Dict:
+    def test_concurrent_access(self, schema: DatabaseSchema) -> dict:
         """Test concurrent database access without locks or corruption"""
         result = {
             "database": schema.name,
@@ -472,7 +468,7 @@ class DatabaseIntegrityValidator:
 
         return result
 
-    def test_data_persistence(self, schema: DatabaseSchema) -> Dict:
+    def test_data_persistence(self, schema: DatabaseSchema) -> dict:
         """Test that data persists across restarts"""
         result = {
             "database": schema.name,
@@ -558,7 +554,7 @@ class DatabaseIntegrityValidator:
 
         return result
 
-    def test_encryption(self, schema: DatabaseSchema) -> Dict:
+    def test_encryption(self, schema: DatabaseSchema) -> dict:
         """Test encryption for sensitive fields"""
         result = {
             "database": schema.name,
@@ -640,7 +636,7 @@ class DatabaseIntegrityValidator:
 
         return result
 
-    def test_rag_embeddings(self) -> Dict:
+    def test_rag_embeddings(self) -> dict:
         """Test that RAG index contains real embeddings, not SHA256 hashes"""
         result = {
             "has_real_embeddings": False,
@@ -695,7 +691,7 @@ class DatabaseIntegrityValidator:
 
         return result
 
-    def run_all_tests(self) -> Tuple[List[Dict], Dict]:
+    def run_all_tests(self) -> tuple[list[dict], dict]:
         """Run all database integrity tests"""
         results = []
 
@@ -748,7 +744,7 @@ class DatabaseIntegrityValidator:
 
         return results, stats
 
-    def _is_test_passed(self, test_type: str, result: Dict) -> bool:
+    def _is_test_passed(self, test_type: str, result: dict) -> bool:
         """Determine if a test passed"""
         if test_type == "schema":
             return (
@@ -756,21 +752,21 @@ class DatabaseIntegrityValidator:
                 and result.get("tables_correct")
                 and not result.get("issues")
             )
-        elif test_type == "concurrent":
+        if test_type == "concurrent":
             return (
                 result.get("concurrent_writes")
                 and result.get("concurrent_reads")
                 and result.get("no_corruption")
             )
-        elif test_type == "persistence":
+        if test_type == "persistence":
             return result.get("data_persists") and result.get("recovery_works")
-        elif test_type == "encryption":
+        if test_type == "encryption":
             return result.get("encryption_works") and result.get("decryption_works")
-        elif test_type == "rag_embeddings":
+        if test_type == "rag_embeddings":
             return result.get("has_real_embeddings") and not result.get("uses_sha256")
         return False
 
-    def print_results(self, results: List[Tuple[str, Dict]], stats: Dict):
+    def print_results(self, results: list[tuple[str, dict]], stats: dict):
         """Print test results with colors"""
         print("\n" + "=" * 80)
         print(f"{Style.BRIGHT}DATABASE INTEGRITY VALIDATION RESULTS{Style.RESET_ALL}")
@@ -839,7 +835,9 @@ class DatabaseIntegrityValidator:
         success_color = (
             Fore.GREEN
             if stats["success_rate"] > 90
-            else Fore.YELLOW if stats["success_rate"] > 70 else Fore.RED
+            else Fore.YELLOW
+            if stats["success_rate"] > 70
+            else Fore.RED
         )
 
         print(f"Total Tests: {stats['total_tests']}")
@@ -849,7 +847,7 @@ class DatabaseIntegrityValidator:
             f"Success Rate: {success_color}{stats['success_rate']:.1f}%{Style.RESET_ALL}"
         )
 
-    def save_results(self, results: List[Tuple[str, Dict]], stats: Dict):
+    def save_results(self, results: list[tuple[str, dict]], stats: dict):
         """Save results to JSON file"""
         output_file = Path("database_integrity_report.json")
 
@@ -866,7 +864,7 @@ class DatabaseIntegrityValidator:
 
         print(f"\n{Fore.CYAN}Results saved to {output_file}{Style.RESET_ALL}")
 
-    def auto_fix_issues(self, results: List[Tuple[str, Dict]]):
+    def auto_fix_issues(self, results: list[tuple[str, dict]]):
         """Attempt to fix identified database issues"""
         print(
             f"\n{Style.BRIGHT}ATTEMPTING AUTO-FIX FOR DATABASE ISSUES...{Style.RESET_ALL}"

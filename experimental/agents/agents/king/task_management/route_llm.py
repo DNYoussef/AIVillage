@@ -1,5 +1,5 @@
-import logging
 from functools import lru_cache
+import logging
 
 import torch
 from torch import nn, optim

@@ -1,15 +1,15 @@
 """Enhanced P2P Node for Evolution-Aware Communication."""
 
 import asyncio
+from collections.abc import Callable
+from dataclasses import dataclass, field
+from enum import Enum
 import json
 import logging
 import ssl
 import time
-import uuid
-from collections.abc import Callable
-from dataclasses import dataclass, field
-from enum import Enum
 from typing import Any
+import uuid
 
 from .encryption_layer import EncryptionLayer
 from .message_protocol import MessageProtocol

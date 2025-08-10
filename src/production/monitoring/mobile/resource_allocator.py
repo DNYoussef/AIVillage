@@ -1,10 +1,10 @@
 """Dynamic resource allocation for mobile devices - Sprint 6 Enhanced."""
 
+from dataclasses import dataclass
 import logging
 import os
 import platform
 import resource as sys_resource
-from dataclasses import dataclass
 from typing import Any
 
 from .device_profiler import DeviceProfile

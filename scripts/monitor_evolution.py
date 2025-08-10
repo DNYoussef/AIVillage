@@ -2,8 +2,8 @@
 """Monitor the 50-generation evolution progress."""
 
 import json
-import time
 from pathlib import Path
+import time
 
 
 def monitor_progress() -> None:

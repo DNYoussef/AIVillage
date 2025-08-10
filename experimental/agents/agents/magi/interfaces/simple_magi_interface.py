@@ -45,7 +45,9 @@ class SimpleMagiInterface:
                 level = (
                     "MASTERY"
                     if score >= 0.90
-                    else "EXPERT" if score >= 0.75 else "ADVANCED"
+                    else "EXPERT"
+                    if score >= 0.75
+                    else "ADVANCED"
                 )
                 print(
                     f"  {capability.replace('_', ' ').title()}: {score:.3f} [{level}]"
@@ -212,7 +214,9 @@ class SimpleMagiInterface:
                         level = (
                             "MASTERY"
                             if score >= 0.90
-                            else "EXPERT" if score >= 0.75 else "ADVANCED"
+                            else "EXPERT"
+                            if score >= 0.75
+                            else "ADVANCED"
                         )
                         print(
                             f"  {cap.replace('_', ' ').title()}: {score:.3f} [{level}]"

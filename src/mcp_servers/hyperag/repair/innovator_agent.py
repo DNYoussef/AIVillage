@@ -5,15 +5,15 @@ without auto-applying changes. Supports pluggable local LLM models.
 """
 
 import asyncio
-import json
-import logging
-import re
-import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
+import json
+import logging
 from pathlib import Path
+import re
 from typing import Any
+import uuid
 
 from AIVillage.src.mcp_servers.hyperag.guardian.gate import GuardianGate
 
@@ -824,7 +824,9 @@ class InnovatorAgent:
         confidence_desc = (
             "high"
             if avg_confidence >= 0.8
-            else "medium" if avg_confidence >= 0.6 else "low"
+            else "medium"
+            if avg_confidence >= 0.6
+            else "low"
         )
 
         return f"{base_summary}. Average confidence: {confidence_desc} ({avg_confidence:.2f})"

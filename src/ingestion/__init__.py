@@ -5,8 +5,8 @@ A connector = any module that exposes:
 """
 
 import importlib
-import re
 from pathlib import Path
+import re
 
 _BAD_WORDS = re.compile(r"(?:spam|unsubscribe|buy now)", re.I)
 

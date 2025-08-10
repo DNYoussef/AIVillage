@@ -8,13 +8,13 @@ Implements:
 """
 
 import asyncio
-import hashlib
-import logging
-import pickle
-import time
 from collections import OrderedDict, defaultdict
 from dataclasses import dataclass
+import hashlib
+import logging
 from pathlib import Path
+import pickle
+import time
 from typing import Any
 
 import faiss

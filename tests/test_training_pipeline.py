@@ -268,9 +268,10 @@ class TestAgentForgeTrainingLoop:
             model=model, tokenizer=tokenizer, enable_quiet_star=False
         )
 
-        logits_no_qs, thought_logits_no_qs = (
-            training_loop_no_qs.process_quiet_star_thoughts(input_ids, attention_mask)
-        )
+        (
+            logits_no_qs,
+            thought_logits_no_qs,
+        ) = training_loop_no_qs.process_quiet_star_thoughts(input_ids, attention_mask)
 
         assert logits_no_qs is not None
         assert thought_logits_no_qs is None

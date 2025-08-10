@@ -8,9 +8,9 @@ and can upgrade/rollback database schemas safely.
 import base64
 import logging
 import os
+from pathlib import Path
 import sqlite3
 import sys
-from pathlib import Path
 
 # Ensure repository root and src are on path for imports
 ROOT_DIR = Path(__file__).resolve().parents[1]

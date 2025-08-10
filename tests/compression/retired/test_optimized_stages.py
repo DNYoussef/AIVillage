@@ -2,11 +2,11 @@
 """Test the optimized compression stages directly without dependency issues."""
 
 import lzma
+from pathlib import Path
 import pickle
 import struct
 import sys
 import time
-from pathlib import Path
 
 from torch import nn
 

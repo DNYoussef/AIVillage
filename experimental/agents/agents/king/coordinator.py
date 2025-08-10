@@ -1,8 +1,6 @@
 from asyncio.log import logger
 from typing import TYPE_CHECKING, Any
 
-from rag_system.core.config import UnifiedConfig
-
 from agents.utils.task import Task as LangroidTask
 from AIVillage.experimental.agents.agents.magi.magi_agent import MagiAgent
 from AIVillage.experimental.agents.agents.sage.sage_agent import SageAgent
@@ -13,6 +11,7 @@ from core.error_handling import (
     StandardCommunicationProtocol,
     error_handler,
 )
+from rag_system.core.config import UnifiedConfig
 
 from .analytics.unified_analytics import UnifiedAnalytics
 

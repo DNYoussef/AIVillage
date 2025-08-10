@@ -1,15 +1,15 @@
 """KPI-based evolution engine with retirement and evolution logic."""
 
 import asyncio
-import json
-import logging
-import threading
-import time
 from collections import defaultdict
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
+import json
+import logging
 from pathlib import Path
+import threading
+import time
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -325,9 +325,9 @@ class KPIEvolutionEngine:
             list
         )  # agent_id -> KPI history
         self.retired_agents: dict[str, dict[str, Any]] = {}  # Retired agent archive
-        self.expert_knowledge: dict[str, dict[str, Any]] = (
-            {}
-        )  # Distilled knowledge from experts
+        self.expert_knowledge: dict[
+            str, dict[str, Any]
+        ] = {}  # Distilled knowledge from experts
 
         # Evolution tracking
         self.evolution_history: list[EvolutionResult] = []

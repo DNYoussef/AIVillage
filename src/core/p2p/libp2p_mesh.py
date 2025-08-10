@@ -16,14 +16,14 @@ DESIGN:
 """
 
 import asyncio
-import json
-import logging
-import time
-import uuid
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
+import json
+import logging
+import time
 from typing import Any
+import uuid
 
 # LibP2P imports (install with: pip install py-libp2p)
 try:

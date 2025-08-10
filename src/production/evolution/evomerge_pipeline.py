@@ -14,24 +14,24 @@ Usage:
 """
 
 import asyncio
+from datetime import datetime
 import json
 import logging
+from pathlib import Path
 import random
 import sys
 import time
 import traceback
-from datetime import datetime
-from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
 import click
 import numpy as np
+from pydantic import BaseModel, Field, field_validator
 import torch
-import wandb
-from pydantic import BaseModel, Field, validator
 from tqdm import tqdm
 from transformers import AutoModelForCausalLM, AutoTokenizer
+import wandb
 
 # Configure logging
 logging.basicConfig(
@@ -132,14 +132,14 @@ class EvolutionConfig(BaseModel):
     save_intermediate_models: bool = Field(default=True)
     cleanup_failed_models: bool = Field(default=True)
 
-    @validator("base_models")
+    @field_validator("base_models")
     def validate_base_models(self, v: list[BaseModelConfig]) -> list[BaseModelConfig]:
         if len(v) != 3:
             msg = "Exactly 3 base models required"
             raise ValueError(msg)
         return v
 
-    @validator("evaluation_weights")
+    @field_validator("evaluation_weights")
     def validate_evaluation_weights(self, v: dict[str, float]) -> dict[str, float]:
         total = sum(v.values())
         if abs(total - 1.0) > 0.01:

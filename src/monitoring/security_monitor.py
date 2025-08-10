@@ -4,13 +4,13 @@ Real-time security event detection and alerting.
 """
 
 import asyncio
+from collections import defaultdict, deque
+from dataclasses import dataclass
+from datetime import datetime
 import logging
 import os
 import re
 import time
-from collections import defaultdict, deque
-from dataclasses import dataclass
-from datetime import datetime
 from typing import Any
 
 # Optional dependencies for enhanced monitoring

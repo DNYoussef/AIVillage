@@ -1,10 +1,10 @@
+from collections.abc import Callable, Sequence
+from dataclasses import dataclass
+from enum import Enum
 import logging
 import socket
 import threading
 import time
-from collections.abc import Callable, Sequence
-from dataclasses import dataclass
-from enum import Enum
 
 # ruff: noqa: S104,TRY300,PERF203
 

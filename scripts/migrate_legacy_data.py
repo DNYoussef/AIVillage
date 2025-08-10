@@ -8,12 +8,12 @@ This script migrates data from various legacy formats to the new SQLite database
 """
 
 import asyncio
+from datetime import datetime
 import json
 import logging
+from pathlib import Path
 import sys
 import time
-from datetime import datetime
-from pathlib import Path
 from typing import Any
 
 # Add src to path for imports

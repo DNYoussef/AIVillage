@@ -2,17 +2,17 @@
 Optimized for edge translation with fallback options.
 """
 
-import logging
 from datetime import datetime
+import logging
 
 try:
     import anthropic
 except ImportError:  # pragma: no cover - optional dependency
     anthropic = None  # type: ignore[assignment]
+from googletrans import Translator
 import langdetect
 import openai
 import wandb
-from googletrans import Translator
 
 logger = logging.getLogger(__name__)
 

@@ -3,14 +3,14 @@
 Migrates evolution metrics from JSON files to CODEX-compliant SQLite database.
 """
 
+from datetime import datetime, timezone
 import hashlib
 import json
 import logging
 import os
+from pathlib import Path
 import shutil
 import sqlite3
-from datetime import datetime, timezone
-from pathlib import Path
 from typing import Any
 
 logging.basicConfig(level=logging.INFO)

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Create a backup of the current codebase structure before restructuring."""
 
+from datetime import datetime
 import json
 import os
-from datetime import datetime
 from pathlib import Path
 
 

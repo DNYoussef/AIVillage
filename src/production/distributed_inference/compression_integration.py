@@ -5,10 +5,10 @@ enabling compressed model shards to be distributed efficiently across devices.
 """
 
 import asyncio
-import logging
-import time
 from dataclasses import dataclass, field
+import logging
 from pathlib import Path
+import time
 from typing import Any
 
 import torch
@@ -137,12 +137,12 @@ class DistributedCompressionManager:
                         compressed_shard = await self._compress_shard(
                             shard, plan.model_name
                         )
-                        successful_compressions[compressed_shard.shard_id] = (
-                            compressed_shard
-                        )
-                        self.compressed_shards[compressed_shard.shard_id] = (
-                            compressed_shard
-                        )
+                        successful_compressions[
+                            compressed_shard.shard_id
+                        ] = compressed_shard
+                        self.compressed_shards[
+                            compressed_shard.shard_id
+                        ] = compressed_shard
                     except Exception as e:
                         logger.exception(
                             f"Failed to compress shard {shard.shard_id}: {e}"

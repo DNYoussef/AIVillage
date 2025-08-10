@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
+from dataclasses import asdict, dataclass
 import json
+from pathlib import Path
 import threading
 import time
-import uuid
-from dataclasses import asdict, dataclass
-from pathlib import Path
 from typing import Any
+import uuid
 
 # Optional dependencies -----------------------------------------------------
 try:  # pragma: no cover - import guard
@@ -122,7 +122,9 @@ class EvolutionMetricsRecorder:
         start_time = time.time()
         cpu_percent = psutil.cpu_percent(interval=None) if PSUTIL_AVAILABLE else 0.0
         mem_mb = (
-            psutil.Process().memory_info().rss / (1024**2) if PSUTIL_AVAILABLE else 0.0
+            psutil.Process().memory_info().rss / (1024**2)
+            if PSUTIL_AVAILABLE
+            else 0.0
         )
 
         with self.lock:
@@ -158,7 +160,9 @@ class EvolutionMetricsRecorder:
         end_time = time.time()
         cpu_percent = psutil.cpu_percent(interval=None) if PSUTIL_AVAILABLE else 0.0
         mem_mb = (
-            psutil.Process().memory_info().rss / (1024**2) if PSUTIL_AVAILABLE else 0.0
+            psutil.Process().memory_info().rss / (1024**2)
+            if PSUTIL_AVAILABLE
+            else 0.0
         )
 
         with self.lock:

@@ -2,8 +2,8 @@
 Part B: Agent Forge Phase 4 - Configuration Management.
 """
 
-import os
 from dataclasses import dataclass
+import os
 from typing import Any
 
 

@@ -8,17 +8,17 @@ This module provides comprehensive evolution metrics tracking with:
 - API endpoints for health monitoring
 """
 
-import json
-import logging
-import os
-import sqlite3
-import threading
-import time
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from enum import Enum
+import json
+import logging
+import os
 from pathlib import Path
 from queue import Empty, Queue
+import sqlite3
+import threading
+import time
 from typing import Any
 
 # Try to import Redis with graceful fallback

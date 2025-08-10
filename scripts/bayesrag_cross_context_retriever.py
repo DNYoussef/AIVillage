@@ -1,20 +1,16 @@
 #!/usr/bin/env python3
-"""
-Cross-context retrieval system for BayesRAG.
+"""Cross-context retrieval system for BayesRAG.
 Handles queries spanning global and local contexts with trust-weighted ranking.
 """
 
 import asyncio
-import heapq
+from dataclasses import dataclass
 import json
 import logging
-import sqlite3
-from dataclasses import dataclass
-from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+import sqlite3
+from typing import Any
 
-import networkx as nx
 import numpy as np
 from sentence_transformers import CrossEncoder, SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
@@ -33,25 +29,25 @@ class RetrievalResult:
     local_summary: str
     global_summary: str  # From parent article
     parent_title: str
-    section_title: Optional[str]
+    section_title: str | None
     relevance_score: float
     trust_score: float
     combined_score: float
     context_type: str  # 'global', 'local', 'cross-reference'
-    matching_contexts: List[str]  # Which contexts matched the query
-    graph_path_trust: Optional[float]  # Trust score from graph path
-    evidence_chain: List[str]  # Chain of evidence supporting this result
+    matching_contexts: list[str]  # Which contexts matched the query
+    graph_path_trust: float | None  # Trust score from graph path
+    evidence_chain: list[str]  # Chain of evidence supporting this result
 
 
 @dataclass
 class QueryContext:
     """Context information extracted from query."""
 
-    temporal_hints: List[str]
-    geographic_hints: List[str]
-    topic_hints: List[str]
+    temporal_hints: list[str]
+    geographic_hints: list[str]
+    topic_hints: list[str]
     specificity_level: str  # 'global', 'local', 'specific'
-    cross_reference_hints: List[str]
+    cross_reference_hints: list[str]
 
 
 class CrossContextRetriever:
@@ -75,7 +71,6 @@ class CrossContextRetriever:
 
     def analyze_query_context(self, query: str) -> QueryContext:
         """Analyze query to determine context requirements."""
-
         query_lower = query.lower()
 
         # Temporal hints
@@ -169,9 +164,8 @@ class CrossContextRetriever:
         k: int = 10,
         trust_threshold: float = 0.3,
         use_graph_paths: bool = True,
-    ) -> List[RetrievalResult]:
+    ) -> list[RetrievalResult]:
         """Perform cross-context retrieval with trust weighting."""
-
         logger.info(f"Cross-context retrieval for query: '{query}'")
 
         # Analyze query context
@@ -217,15 +211,11 @@ class CrossContextRetriever:
         # Remove duplicates
         unique_candidates = {}
         for candidate in candidates:
-            if candidate.chunk_id not in unique_candidates:
+            if candidate.chunk_id not in unique_candidates or (
+                candidate.combined_score
+                > unique_candidates[candidate.chunk_id].combined_score
+            ):
                 unique_candidates[candidate.chunk_id] = candidate
-            else:
-                # Keep the one with higher score
-                if (
-                    candidate.combined_score
-                    > unique_candidates[candidate.chunk_id].combined_score
-                ):
-                    unique_candidates[candidate.chunk_id] = candidate
 
         candidates = list(unique_candidates.values())
 
@@ -242,9 +232,8 @@ class CrossContextRetriever:
 
     async def _retrieve_local_context(
         self, query_embedding: np.ndarray, query_context: QueryContext, k: int
-    ) -> List[RetrievalResult]:
+    ) -> list[RetrievalResult]:
         """Retrieve from local chunk contexts."""
-
         candidates = []
 
         with sqlite3.connect(self.local_db_path) as conn:
@@ -319,9 +308,8 @@ class CrossContextRetriever:
 
     async def _retrieve_global_context(
         self, query_embedding: np.ndarray, query_context: QueryContext, k: int
-    ) -> List[RetrievalResult]:
+    ) -> list[RetrievalResult]:
         """Retrieve based on global article context."""
-
         candidates = []
 
         with sqlite3.connect(self.global_db_path) as conn:
@@ -381,9 +369,8 @@ class CrossContextRetriever:
         candidates.sort(key=lambda x: x.combined_score, reverse=True)
         return candidates[:k]
 
-    async def _get_representative_chunk(self, title: str) -> Optional[Dict[str, Any]]:
+    async def _get_representative_chunk(self, title: str) -> dict[str, Any] | None:
         """Get the most representative chunk for an article."""
-
         with sqlite3.connect(self.local_db_path) as conn:
             cursor = conn.execute(
                 """
@@ -409,9 +396,8 @@ class CrossContextRetriever:
 
     async def _retrieve_cross_references(
         self, query_embedding: np.ndarray, query_context: QueryContext, k: int
-    ) -> List[RetrievalResult]:
+    ) -> list[RetrievalResult]:
         """Retrieve based on cross-reference relationships."""
-
         # This would involve finding chunks that reference each other
         # and exploring those connections for relevant content
         candidates = []
@@ -425,10 +411,9 @@ class CrossContextRetriever:
         return candidates
 
     async def _retrieve_via_graph_paths(
-        self, query: str, seed_candidates: List[RetrievalResult], k: int
-    ) -> List[RetrievalResult]:
+        self, query: str, seed_candidates: list[RetrievalResult], k: int
+    ) -> list[RetrievalResult]:
         """Retrieve additional candidates via graph paths."""
-
         if not seed_candidates:
             return []
 
@@ -479,7 +464,6 @@ class CrossContextRetriever:
 
     async def _load_graph_cache(self):
         """Load graph relationships into memory cache."""
-
         self.graph_cache = {}
 
         with sqlite3.connect(self.graph_db_path) as conn:
@@ -505,9 +489,8 @@ class CrossContextRetriever:
 
     async def _find_trusted_neighbors(
         self, chunk_id: str, max_depth: int = 2, min_trust: float = 0.3
-    ) -> List[Tuple[str, float]]:
+    ) -> list[tuple[str, float]]:
         """Find trusted neighbors via graph traversal."""
-
         if not self.graph_cache or chunk_id not in self.graph_cache:
             return []
 
@@ -537,9 +520,8 @@ class CrossContextRetriever:
         neighbors.sort(key=lambda x: x[1], reverse=True)
         return neighbors[:10]
 
-    async def _get_chunk_data(self, chunk_id: str) -> Optional[Dict[str, Any]]:
+    async def _get_chunk_data(self, chunk_id: str) -> dict[str, Any] | None:
         """Get chunk data from database."""
-
         with sqlite3.connect(self.local_db_path) as conn:
             cursor = conn.execute(
                 """
@@ -569,12 +551,11 @@ class CrossContextRetriever:
     def _calculate_context_relevance(
         self,
         query_context: QueryContext,
-        chunk_tags: List[str],
-        temporal_context: Optional[str],
-        geographic_context: Optional[str],
+        chunk_tags: list[str],
+        temporal_context: str | None,
+        geographic_context: str | None,
     ) -> float:
         """Calculate how well chunk context matches query context."""
-
         relevance = 0.0
         factors = 0
 
@@ -606,10 +587,9 @@ class CrossContextRetriever:
         return relevance / max(factors, 1)
 
     def _calculate_global_context_relevance(
-        self, query_context: QueryContext, global_tags: List[str], categories: List[str]
+        self, query_context: QueryContext, global_tags: list[str], categories: list[str]
     ) -> float:
         """Calculate relevance for global context."""
-
         relevance = 0.0
 
         # Topic matching with global tags
@@ -631,11 +611,10 @@ class CrossContextRetriever:
         self,
         query_context: QueryContext,
         local_tags: str,
-        temporal_context: Optional[str],
-        geographic_context: Optional[str],
-    ) -> List[str]:
+        temporal_context: str | None,
+        geographic_context: str | None,
+    ) -> list[str]:
         """Identify which context aspects matched the query."""
-
         matching = []
 
         if local_tags:
@@ -658,7 +637,6 @@ class CrossContextRetriever:
 
     def _calculate_graph_relevance(self, query: str, content: str) -> float:
         """Calculate relevance using cross-encoder for graph-retrieved content."""
-
         try:
             scores = self.cross_encoder.predict([(query, content[:512])])
             return float(scores[0]) if hasattr(scores, "__iter__") else float(scores)
@@ -670,10 +648,9 @@ class CrossContextRetriever:
             return overlap / len(query_words) if query_words else 0.0
 
     async def _rerank_with_cross_encoder(
-        self, query: str, candidates: List[RetrievalResult]
-    ) -> List[RetrievalResult]:
+        self, query: str, candidates: list[RetrievalResult]
+    ) -> list[RetrievalResult]:
         """Re-rank candidates using cross-encoder."""
-
         if not candidates:
             return candidates
 
@@ -706,7 +683,6 @@ class CrossContextRetriever:
 
 async def main():
     """Test the cross-context retriever."""
-
     retriever = CrossContextRetriever()
 
     # Test queries of different types

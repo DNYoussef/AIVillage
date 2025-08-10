@@ -76,9 +76,8 @@ try:
         if result.overall_confidence > 0.5:
             print("\nSUCCESS: Full integration working!")
             return True
-        else:
-            print("\nPARTIAL: Integration working with low confidence")
-            return False
+        print("\nPARTIAL: Integration working with low confidence")
+        return False
 
 except ImportError as e:
     print(f"Import error: {e}")

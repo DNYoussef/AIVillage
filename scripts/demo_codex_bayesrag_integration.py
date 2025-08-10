@@ -1,21 +1,17 @@
 #!/usr/bin/env python3
-"""
-Demonstration of BayesRAG and CODEX integration concept.
+"""Demonstration of BayesRAG and CODEX integration concept.
 Shows how BayesRAG enhancements can be integrated with existing CODEX infrastructure.
 """
 
-import json
-import sqlite3
-import time
 from pathlib import Path
-from typing import Any, Dict, List
+import sqlite3
+from typing import Any
 
 import requests
 
 
 def test_current_codex_api():
     """Test current CODEX RAG API status."""
-
     print("=== Testing Current CODEX RAG API ===")
 
     try:
@@ -37,7 +33,6 @@ def test_current_codex_api():
 
 def analyze_bayesrag_data():
     """Analyze BayesRAG data for integration potential."""
-
     print("\n=== Analyzing BayesRAG Data for Integration ===")
 
     data_dir = Path("../data")
@@ -124,9 +119,8 @@ def analyze_bayesrag_data():
     return integration_data
 
 
-def demonstrate_integration_potential(integration_data: Dict[str, Any]):
+def demonstrate_integration_potential(integration_data: dict[str, Any]):
     """Demonstrate how BayesRAG data enhances CODEX capabilities."""
-
     print("\n=== Integration Enhancement Potential ===")
 
     articles = integration_data.get("articles", 0)
@@ -134,22 +128,22 @@ def demonstrate_integration_potential(integration_data: Dict[str, Any]):
     relationships = integration_data.get("relationships", 0)
     avg_trust = integration_data.get("avg_trust", 0)
 
-    print(f"📊 Current BayesRAG Data Scale:")
+    print("📊 Current BayesRAG Data Scale:")
     print(f"   • {articles} Wikipedia articles with hierarchical context")
     print(f"   • {chunks} contextual chunks with embeddings")
     print(f"   • {relationships:,} semantic relationships")
     print(f"   • {avg_trust:.3f} average trust score")
 
-    print(f"\n🚀 Integration Benefits for CODEX:")
-    print(f"   • Hierarchical Context: Global summaries + local details")
-    print(f"   • Trust-Weighted Results: Bayesian reliability scoring")
+    print("\n🚀 Integration Benefits for CODEX:")
+    print("   • Hierarchical Context: Global summaries + local details")
+    print("   • Trust-Weighted Results: Bayesian reliability scoring")
     print(
         f"   • Cross-Reference Discovery: {relationships:,} knowledge graph connections"
     )
-    print(f"   • Enhanced Metadata: Temporal/geographic/topical context")
-    print(f"   • Query Intelligence: Multi-level query understanding")
+    print("   • Enhanced Metadata: Temporal/geographic/topical context")
+    print("   • Query Intelligence: Multi-level query understanding")
 
-    print(f"\n📈 Scale Enhancement Needed:")
+    print("\n📈 Scale Enhancement Needed:")
     target_articles = 1000
     scale_factor = target_articles / max(articles, 1)
     print(
@@ -158,46 +152,44 @@ def demonstrate_integration_potential(integration_data: Dict[str, Any]):
     print(f"   • Projected chunks: ~{int(chunks * scale_factor):,}")
     print(f"   • Projected relationships: ~{int(relationships * scale_factor):,}")
 
-    print(f"\n⚡ Performance Optimization Opportunities:")
-    print(f"   • Context-aware caching: Cache by trust score and context hierarchy")
-    print(f"   • Semantic cache matching: Use embeddings for cache similarity")
-    print(f"   • Trust-based prefetching: Pre-load high-trust content")
-    print(f"   • Graph-accelerated retrieval: Use relationships for expansion")
+    print("\n⚡ Performance Optimization Opportunities:")
+    print("   • Context-aware caching: Cache by trust score and context hierarchy")
+    print("   • Semantic cache matching: Use embeddings for cache similarity")
+    print("   • Trust-based prefetching: Pre-load high-trust content")
+    print("   • Graph-accelerated retrieval: Use relationships for expansion")
 
 
 def test_sample_integration_query():
     """Test how a sample query would work with integrated system."""
-
     print("\n=== Sample Integrated Query Demonstration ===")
 
     # Sample query that would benefit from BayesRAG enhancements
     query = "What caused World War I in Europe?"
     print(f"Sample Query: '{query}'")
 
-    print(f"\nTraditional CODEX Response:")
-    print(f"   • Standard embedding similarity search")
-    print(f"   • FAISS + BM25 hybrid retrieval")
-    print(f"   • Basic relevance scoring")
+    print("\nTraditional CODEX Response:")
+    print("   • Standard embedding similarity search")
+    print("   • FAISS + BM25 hybrid retrieval")
+    print("   • Basic relevance scoring")
 
-    print(f"\nBayesRAG-Enhanced CODEX Response:")
+    print("\nBayesRAG-Enhanced CODEX Response:")
     print(
-        f"   • Query context analysis: temporal='1914-1918', geographic='Europe', topic='history'"
+        "   • Query context analysis: temporal='1914-1918', geographic='Europe', topic='history'"
     )
-    print(f"   • Hierarchical retrieval: Global overview + local details")
-    print(f"   • Trust-weighted ranking: Results scored by source reliability")
-    print(f"   • Cross-reference expansion: Related causes, consequences, key figures")
-    print(f"   • Context-aware caching: Cache hits for similar historical queries")
+    print("   • Hierarchical retrieval: Global overview + local details")
+    print("   • Trust-weighted ranking: Results scored by source reliability")
+    print("   • Cross-reference expansion: Related causes, consequences, key figures")
+    print("   • Context-aware caching: Cache hits for similar historical queries")
 
-    print(f"\nExpected Performance:")
-    print(f"   • Standard CODEX: ~50-100ms retrieval")
-    print(f"   • BayesRAG-Enhanced: ~10-50ms (due to context-aware caching)")
-    print(f"   • Improved relevance: Trust scores prioritize authoritative sources")
-    print(f"   • Richer results: Global context + detailed local information")
+    print("\nExpected Performance:")
+    print("   • Standard CODEX: ~50-100ms retrieval")
+    print("   • BayesRAG-Enhanced: ~10-50ms (due to context-aware caching)")
+    print("   • Improved relevance: Trust scores prioritize authoritative sources")
+    print("   • Richer results: Global context + detailed local information")
 
 
 def main():
     """Run the complete integration demonstration."""
-
     print("BayesRAG + CODEX Integration Demonstration")
     print("=" * 60)
 

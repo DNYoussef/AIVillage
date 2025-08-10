@@ -9,11 +9,11 @@ This module implements the complete federated learning system including:
 """
 
 import asyncio
+from dataclasses import dataclass, field
+from enum import Enum, auto
 import hashlib
 import logging
 import time
-from dataclasses import dataclass, field
-from enum import Enum, auto
 from typing import Any
 
 import numpy as np
@@ -518,7 +518,9 @@ class TrainingMonitor:
             "status": (
                 "healthy"
                 if health_score > 0.7
-                else "degraded" if health_score > 0.4 else "unhealthy"
+                else "degraded"
+                if health_score > 0.4
+                else "unhealthy"
             ),
             "health_score": health_score,
             "participation_rate": participation_rate,
@@ -646,12 +648,12 @@ class FederatedTrainingCoordinator:
 
         # Generate final results
         training_results["final_metrics"] = self.monitor.get_training_health()
-        training_results["convergence_analysis"] = (
-            self.monitor.get_convergence_analysis()
-        )
-        training_results["privacy_report"] = (
-            self.privacy_engine.validate_privacy_guarantees()
-        )
+        training_results[
+            "convergence_analysis"
+        ] = self.monitor.get_convergence_analysis()
+        training_results[
+            "privacy_report"
+        ] = self.privacy_engine.validate_privacy_guarantees()
 
         return training_results
 
@@ -727,10 +729,11 @@ class FederatedTrainingCoordinator:
         # Apply privacy mechanisms
         if self.privacy_engine.mechanism != PrivacyMechanism.NONE:
             try:
-                noisy_gradients, privacy_cost = (
-                    self.privacy_engine.add_noise_to_gradients(
-                        update.gradients, epsilon=0.01
-                    )
+                (
+                    noisy_gradients,
+                    privacy_cost,
+                ) = self.privacy_engine.add_noise_to_gradients(
+                    update.gradients, epsilon=0.01
                 )
                 update.gradients = noisy_gradients
                 update.privacy_spent = privacy_cost

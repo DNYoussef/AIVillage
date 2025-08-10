@@ -9,14 +9,14 @@ CRITICAL FIXES:
 """
 
 import asyncio
+from collections.abc import Callable
+from dataclasses import dataclass, field
+from enum import Enum, auto
 import hashlib
 import json
 import logging
 import struct
 import time
-from collections.abc import Callable
-from dataclasses import dataclass, field
-from enum import Enum, auto
 from typing import Any
 
 import numpy as np
@@ -92,9 +92,15 @@ class MeshMessage:
 
         header = data[:header_size]
 
-        msg_id, msg_type, sender, recipient, payload_len, ttl_priority, timestamp = (
-            struct.unpack("!16s B 16s 16s H B f", header)
-        )
+        (
+            msg_id,
+            msg_type,
+            sender,
+            recipient,
+            payload_len,
+            ttl_priority,
+            timestamp,
+        ) = struct.unpack("!16s B 16s 16s H B f", header)
 
         ttl = ttl_priority >> 4
         priority = ttl_priority & 0x0F
@@ -129,9 +135,9 @@ class MeshProtocol:
         """Initialize mesh protocol with node ID."""
         self.node_id = node_id
         self.neighbors: dict[str, MeshNode] = {}
-        self.routing_table: dict[str, tuple[str, int]] = (
-            {}
-        )  # destination -> (next_hop, distance)
+        self.routing_table: dict[
+            str, tuple[str, int]
+        ] = {}  # destination -> (next_hop, distance)
         self.message_cache: set[str] = set()  # Prevent duplicate forwarding
         self.pending_messages: asyncio.Queue = asyncio.Queue()
         self.received_messages: asyncio.Queue = asyncio.Queue()

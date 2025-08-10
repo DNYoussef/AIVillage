@@ -6,17 +6,17 @@ Tests the Mesh↔FL handshake under extreme network conditions as required by Sp
 """
 
 import asyncio
+from pathlib import Path
 import random
 import sys
-from pathlib import Path
 
-import pytest
-import torch
 from implement_federated_learning import (
     FederatedLearningClient,
     FederatedLearningServer,
 )
 from implement_mesh_protocol import MeshNetworkSimulator, MessageType
+import pytest
+import torch
 
 # Add scripts to path for module resolution
 sys.path.append(str(Path(__file__).parent.parent.parent / "scripts"))
@@ -70,9 +70,9 @@ class PacketLossMeshSimulator(MeshNetworkSimulator):
                 # Simulate packet loss
                 if packet_simulator.should_drop_packet():
                     # Packet dropped - update node stats
-                    target_node.stats["packet_loss_rate"] = (
-                        packet_simulator.get_actual_loss_rate()
-                    )
+                    target_node.stats[
+                        "packet_loss_rate"
+                    ] = packet_simulator.get_actual_loss_rate()
                     # Simulate processing time but don't actually send
                     await asyncio.sleep(0.01)
                     return f"dropped_{random.randint(1000, 9999)}"
@@ -81,15 +81,15 @@ class PacketLossMeshSimulator(MeshNetworkSimulator):
                     result = await original_method(
                         message_type, payload, recipient_id, priority
                     )
-                    target_node.stats["packet_loss_rate"] = (
-                        packet_simulator.get_actual_loss_rate()
-                    )
+                    target_node.stats[
+                        "packet_loss_rate"
+                    ] = packet_simulator.get_actual_loss_rate()
                     return result
                 except Exception:
                     # Even successful packets might fail for other reasons
-                    target_node.stats["packet_loss_rate"] = (
-                        packet_simulator.get_actual_loss_rate()
-                    )
+                    target_node.stats[
+                        "packet_loss_rate"
+                    ] = packet_simulator.get_actual_loss_rate()
                     raise
 
             return send_with_loss

@@ -12,13 +12,13 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+from dataclasses import dataclass
 import json
 import logging
+from pathlib import Path
 import sys
 import time
 import types
-from dataclasses import dataclass
-from pathlib import Path
 from typing import Any
 
 import torch

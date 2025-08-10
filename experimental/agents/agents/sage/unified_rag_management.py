@@ -2,11 +2,11 @@ import logging
 from typing import Any
 
 from langroid.language_models.openai_gpt import OpenAIGPTConfig
+
+from core.error_handling import AIVillageException, error_handler, safe_execute
 from rag_system.core.config import RAGConfig
 from rag_system.core.pipeline import EnhancedRAGPipeline
 from rag_system.tracking.unified_knowledge_tracker import UnifiedKnowledgeTracker
-
-from core.error_handling import AIVillageException, error_handler, safe_execute
 
 logger = logging.getLogger(__name__)
 

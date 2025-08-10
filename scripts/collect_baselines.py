@@ -7,10 +7,10 @@ performance baselines that can be used for regression detection.
 
 import argparse
 import json
+from pathlib import Path
 import statistics
 import subprocess
 import sys
-from pathlib import Path
 
 
 def run_benchmarks(iterations: int = 5) -> dict[str, list[float]]:

@@ -11,20 +11,20 @@ ready for deployment.
 """
 
 import asyncio
+from datetime import datetime
 import json
 import logging
-from datetime import datetime
 from pathlib import Path
 from typing import Any
 
 import click
-import wandb
 from compression_pipeline import CompressionConfig, CompressionPipeline
 
 # Import pipeline components
 from evomerge_pipeline import EvolutionConfig, EvoMergePipeline
 from pydantic import BaseModel, Field
 from quietstar_baker import QuietSTaRBaker, QuietSTaRConfig
+import wandb
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"

@@ -3,14 +3,14 @@
 Upgrades RAG system from SHA256 embeddings to real vector embeddings.
 """
 
+from datetime import datetime
 import hashlib
 import json
 import logging
 import os
+from pathlib import Path
 import pickle
 import sqlite3
-from datetime import datetime
-from pathlib import Path
 from typing import Any
 
 

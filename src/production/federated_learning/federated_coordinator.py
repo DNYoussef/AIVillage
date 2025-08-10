@@ -5,13 +5,13 @@ Sprint 6's evolution system and P2P infrastructure.
 """
 
 import asyncio
+from dataclasses import dataclass, field
+from enum import Enum
 import logging
 import random
 import time
-import uuid
-from dataclasses import dataclass, field
-from enum import Enum
 from typing import Any
+import uuid
 
 import numpy as np
 import torch
@@ -297,9 +297,9 @@ class DistributedFederatedLearning:
 
         for device_id in self.available_participants:
             self.privacy_budgets[device_id] = initial_budget
-            self.available_participants[device_id].privacy_budget_remaining = (
-                initial_budget
-            )
+            self.available_participants[
+                device_id
+            ].privacy_budget_remaining = initial_budget
 
     async def _announce_fl_capability(self) -> None:
         """Announce federated learning capability to network."""

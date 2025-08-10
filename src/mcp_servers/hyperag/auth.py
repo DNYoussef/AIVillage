@@ -3,11 +3,11 @@
 Implements role-based access control with granular permissions for different agent types.
 """
 
-import logging
-import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime, timedelta
+import logging
+import time
 from typing import Any
 
 import jwt

@@ -6,10 +6,10 @@ with 32-byte base64 key requirement and GDPR/COPPA/FERPA compliance.
 """
 
 import base64
+from datetime import datetime, timedelta
 import hashlib
 import logging
 import os
-from datetime import datetime, timedelta
 from typing import Any
 
 from cryptography.fernet import Fernet
@@ -322,9 +322,9 @@ class DigitalTwinEncryption:
         for field_name in sensitive_fields:
             if field_name in profile_data:
                 original_value = profile_data[field_name]
-                encrypted_profile[f"{field_name}_encrypted"] = (
-                    self.encrypt_sensitive_field(original_value, field_name)
-                )
+                encrypted_profile[
+                    f"{field_name}_encrypted"
+                ] = self.encrypt_sensitive_field(original_value, field_name)
                 # Remove plaintext version
                 del encrypted_profile[field_name]
 

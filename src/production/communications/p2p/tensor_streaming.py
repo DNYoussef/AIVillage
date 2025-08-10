@@ -1,16 +1,16 @@
 """Tensor Streaming for Efficient Model Weight Transfer."""
 
 import asyncio
+from dataclasses import dataclass, field
+from enum import Enum
 import hashlib
 import io
 import json
 import logging
 import time
+from typing import Any
 import uuid
 import zlib
-from dataclasses import dataclass, field
-from enum import Enum
-from typing import Any
 
 # For compression (using existing compression pipeline)
 import lz4.frame
@@ -132,18 +132,18 @@ class TensorStreaming:
 
         # Transfer tracking
         self.active_transfers: dict[str, TransferProgress] = {}
-        self.pending_chunks: dict[str, dict[int, TensorChunk]] = (
-            {}
-        )  # tensor_id -> chunk_index -> chunk
+        self.pending_chunks: dict[
+            str, dict[int, TensorChunk]
+        ] = {}  # tensor_id -> chunk_index -> chunk
         self.tensor_metadata: dict[str, TensorMetadata] = {}
 
         # Bandwidth management
         self.bandwidth_tracker = BandwidthTracker(self.config.bandwidth_limit_kbps)
 
         # Priority queue for chunk requests
-        self.priority_queue: list[tuple[float, str, int]] = (
-            []
-        )  # (priority, tensor_id, chunk_index)
+        self.priority_queue: list[
+            tuple[float, str, int]
+        ] = []  # (priority, tensor_id, chunk_index)
 
         # Statistics
         self.stats = {

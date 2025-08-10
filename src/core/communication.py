@@ -102,9 +102,9 @@ from .error_handling import StandardCommunicationProtocol  # pragma: no cover
 __all__ = [
     "AgentMessage",
     "AgentMessageType",
-    "Priority",
     "Message",
     "MessageType",
+    "Priority",
     "StandardCommunicationProtocol",
 ]
 

@@ -3,18 +3,17 @@ Sprint R-4+AF1: Education Core System - Task A.2.
 """
 
 import asyncio
-import logging
-import random
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import datetime, timezone
+import logging
+import random
 from typing import Any
-
-import wandb
 
 # Import AI model clients
 from anthropic import AsyncAnthropic
 from openai import AsyncOpenAI
+import wandb
 
 logger = logging.getLogger(__name__)
 

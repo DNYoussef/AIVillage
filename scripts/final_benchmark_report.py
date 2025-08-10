@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Generate the final post-cleanup benchmark report."""
 
+from datetime import datetime, timezone
 import json
 import os
-from datetime import datetime, timezone
 from pathlib import Path
 
 COMPRESSION_TARGET_RATIO = 4.0

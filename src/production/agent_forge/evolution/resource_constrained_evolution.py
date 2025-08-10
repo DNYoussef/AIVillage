@@ -1,11 +1,11 @@
 """Resource-Constrained Evolution System for Mobile-First Operation."""
 
 import asyncio
-import logging
-import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
+import logging
+import time
 from typing import Any
 
 # Import resource management and dual evolution

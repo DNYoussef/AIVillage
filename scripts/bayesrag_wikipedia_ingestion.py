@@ -1,23 +1,22 @@
 #!/usr/bin/env python3
-"""
-Enhanced Wikipedia ingestion with BayesRAG, cross-context tagging, and graph relationships.
+"""Enhanced Wikipedia ingestion with BayesRAG, cross-context tagging, and graph relationships.
 Supports hierarchical chunking with global/local context and Bayesian trust scoring.
 """
 
 import asyncio
+from dataclasses import dataclass
+from datetime import datetime
 import json
 import logging
+from pathlib import Path
 import sqlite3
 import time
-from dataclasses import asdict, dataclass
-from datetime import datetime
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any
 
 import networkx as nx
 import numpy as np
-import wikipediaapi as wikipedia
 from sentence_transformers import SentenceTransformer
+import wikipediaapi as wikipedia
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -31,8 +30,8 @@ class GlobalContext:
     title: str
     summary: str  # Generated summary of entire document
     word_count: int
-    categories: List[str]  # Wikipedia categories
-    global_tags: List[str]  # High-level semantic tags
+    categories: list[str]  # Wikipedia categories
+    global_tags: list[str]  # High-level semantic tags
     trust_score: float  # Bayesian trust rating (0.0-1.0)
     citation_count: int
     edit_frequency: float  # Edits per day
@@ -45,15 +44,15 @@ class LocalContext:
 
     chunk_id: str
     parent_title: str
-    section_title: Optional[str]
+    section_title: str | None
     content: str
     local_summary: str  # Summary of this specific chunk
     start_position: int
     end_position: int
-    local_tags: List[str]  # Specific semantic tags for this chunk
-    temporal_context: Optional[str]  # Time period if applicable
-    geographic_context: Optional[str]  # Location if applicable
-    cross_references: List[str]  # Links to other chunks/articles
+    local_tags: list[str]  # Specific semantic tags for this chunk
+    temporal_context: str | None  # Time period if applicable
+    geographic_context: str | None  # Location if applicable
+    cross_references: list[str]  # Links to other chunks/articles
 
 
 @dataclass
@@ -62,9 +61,9 @@ class GraphNode:
 
     node_id: str
     chunk_id: str
-    embedding: List[float]
+    embedding: list[float]
     node_type: str  # 'article', 'section', 'concept'
-    metadata: Dict[str, Any]
+    metadata: dict[str, Any]
 
 
 @dataclass
@@ -76,7 +75,7 @@ class GraphEdge:
     relationship_type: str  # 'semantic', 'temporal', 'causal', 'reference'
     trust_weight: float  # Bayesian trust score (0.0-1.0)
     evidence_count: int  # How many sources support this connection
-    metadata: Dict[str, Any]
+    metadata: dict[str, Any]
 
 
 class BayesRAGWikipediaIngestion:
@@ -101,7 +100,6 @@ class BayesRAGWikipediaIngestion:
 
     def _init_databases(self):
         """Initialize SQLite databases for contexts and graph."""
-
         # Global context database
         with sqlite3.connect(self.global_db_path) as conn:
             conn.execute(
@@ -178,9 +176,8 @@ class BayesRAGWikipediaIngestion:
             """
             )
 
-    def calculate_article_trust_score(self, page_data: Dict[str, Any]) -> float:
+    def calculate_article_trust_score(self, page_data: dict[str, Any]) -> float:
         """Calculate Bayesian trust score for Wikipedia article."""
-
         # Base factors for trust calculation
         factors = {
             "citation_density": 0.0,  # Citations per 1000 words
@@ -252,7 +249,7 @@ class BayesRAGWikipediaIngestion:
 
         return summary
 
-    def extract_global_tags(self, content: str, categories: List[str]) -> List[str]:
+    def extract_global_tags(self, content: str, categories: list[str]) -> list[str]:
         """Extract high-level semantic tags from article."""
         tags = set()
 
@@ -297,7 +294,7 @@ class BayesRAGWikipediaIngestion:
 
     def create_hierarchical_chunks(
         self, content: str, title: str, chunk_size: int = 1000
-    ) -> List[LocalContext]:
+    ) -> list[LocalContext]:
         """Create hierarchical chunks with local context."""
         chunks = []
 
@@ -347,7 +344,7 @@ class BayesRAGWikipediaIngestion:
 
         return chunks
 
-    def _split_by_sections(self, content: str) -> List[Tuple[str, str]]:
+    def _split_by_sections(self, content: str) -> list[tuple[str, str]]:
         """Split content by Wikipedia sections."""
         sections = []
 
@@ -374,7 +371,7 @@ class BayesRAGWikipediaIngestion:
 
         return sections
 
-    def _split_into_chunks(self, content: str, chunk_size: int) -> List[str]:
+    def _split_into_chunks(self, content: str, chunk_size: int) -> list[str]:
         """Split content into overlapping chunks."""
         words = content.split()
         chunks = []
@@ -408,7 +405,7 @@ class BayesRAGWikipediaIngestion:
 
         return f"Section about {section_title}" if section_title else "Content chunk"
 
-    def _extract_local_tags(self, content: str, section_title: str) -> List[str]:
+    def _extract_local_tags(self, content: str, section_title: str) -> list[str]:
         """Extract specific semantic tags for chunk."""
         tags = set()
         content_lower = content.lower()
@@ -439,7 +436,7 @@ class BayesRAGWikipediaIngestion:
 
         return list(tags)
 
-    def _extract_temporal_context(self, content: str) -> Optional[str]:
+    def _extract_temporal_context(self, content: str) -> str | None:
         """Extract time period context from chunk."""
         import re
 
@@ -453,8 +450,7 @@ class BayesRAGWikipediaIngestion:
 
             if min_year == max_year:
                 return str(min_year)
-            else:
-                return f"{min_year}-{max_year}"
+            return f"{min_year}-{max_year}"
 
         # Look for period indicators
         if any(
@@ -467,10 +463,8 @@ class BayesRAGWikipediaIngestion:
 
         return None
 
-    def _extract_geographic_context(self, content: str) -> Optional[str]:
+    def _extract_geographic_context(self, content: str) -> str | None:
         """Extract geographic context from chunk."""
-        import re
-
         # Look for country/city patterns (simplified)
         geo_patterns = [
             "Germany",
@@ -489,7 +483,7 @@ class BayesRAGWikipediaIngestion:
 
         return None
 
-    def _extract_cross_references(self, content: str) -> List[str]:
+    def _extract_cross_references(self, content: str) -> list[str]:
         """Extract references to other articles/concepts."""
         import re
 
@@ -509,7 +503,7 @@ class BayesRAGWikipediaIngestion:
 
     async def ingest_article_with_bayesrag(
         self, title: str
-    ) -> Tuple[GlobalContext, List[LocalContext]]:
+    ) -> tuple[GlobalContext, list[LocalContext]]:
         """Ingest single Wikipedia article with full BayesRAG processing."""
         logger.info(f"Ingesting article: {title}")
 
@@ -563,7 +557,7 @@ class BayesRAGWikipediaIngestion:
             for local_context in local_contexts:
                 embedding = self.embedder.encode(local_context.content)
                 # Store embedding separately since dataclass doesn't handle numpy arrays well
-                setattr(local_context, "_embedding", embedding)
+                local_context._embedding = embedding
 
             # Store in databases
             await self._store_contexts(global_context, local_contexts)
@@ -579,10 +573,9 @@ class BayesRAGWikipediaIngestion:
             raise
 
     async def _store_contexts(
-        self, global_context: GlobalContext, local_contexts: List[LocalContext]
+        self, global_context: GlobalContext, local_contexts: list[LocalContext]
     ):
         """Store global and local contexts in databases."""
-
         # Store global context
         with sqlite3.connect(self.global_db_path) as conn:
             conn.execute(
@@ -640,7 +633,6 @@ class BayesRAGWikipediaIngestion:
 
 async def main():
     """Test the BayesRAG Wikipedia ingestion system."""
-
     ingestion = BayesRAGWikipediaIngestion()
 
     # Test with a few articles

@@ -2,8 +2,8 @@
 """FINAL PROOF: Real PyTorch compression working."""
 
 import io
-import tempfile
 from pathlib import Path
+import tempfile
 
 print("=" * 60)
 print("FINAL PROOF: REAL PYTORCH COMPRESSION WORKING")

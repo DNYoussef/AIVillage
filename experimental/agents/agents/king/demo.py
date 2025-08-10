@@ -1,9 +1,6 @@
 import asyncio
 import logging
 
-from rag_system.core.config import UnifiedConfig
-from rag_system.core.pipeline import EnhancedRAGPipeline as RAGSystem
-
 from agents.king.king_agent import KingAgent, KingAgentConfig
 from agents.magi.magi_agent import MagiAgent
 from agents.sage.sage_agent import SageAgent
@@ -13,6 +10,8 @@ from core.error_handling import (
     MessageType,
     StandardCommunicationProtocol,
 )
+from rag_system.core.config import UnifiedConfig
+from rag_system.core.pipeline import EnhancedRAGPipeline as RAGSystem
 
 # Set up logging
 logging.basicConfig(

@@ -5,12 +5,12 @@ Provides trend analysis for test success rates, performance metrics,
 and flaky test detection.
 """
 
-import json
-import statistics
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
+import json
 from pathlib import Path
+import statistics
 from typing import Any
 
 
@@ -152,7 +152,9 @@ class TrendAnalyzer:
                         "severity": (
                             "high"
                             if change < -20
-                            else "medium" if change < -10 else "low"
+                            else "medium"
+                            if change < -10
+                            else "low"
                         ),
                     }
                 )

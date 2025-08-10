@@ -5,13 +5,13 @@ Provides encrypted database operations for Digital Twin system with full
 CODEX compliance including GDPR, COPPA, and FERPA requirements.
 """
 
+from contextlib import contextmanager
+from datetime import datetime, timedelta
 import json
 import logging
 import os
-import sqlite3
-from contextlib import contextmanager
-from datetime import datetime, timedelta
 from pathlib import Path
+import sqlite3
 from typing import Any
 
 from .digital_twin_encryption import ComplianceViolationError, DigitalTwinEncryption
@@ -299,10 +299,10 @@ class SecureDigitalTwinDB:
 
             for field in sensitive_fields:
                 if field in profile_data:
-                    encrypted_data[f"{field}_encrypted"] = (
-                        self.encryption.encrypt_sensitive_field(
-                            profile_data[field], field
-                        )
+                    encrypted_data[
+                        f"{field}_encrypted"
+                    ] = self.encryption.encrypt_sensitive_field(
+                        profile_data[field], field
                     )
 
             # Insert profile
@@ -865,9 +865,9 @@ if __name__ == "__main__":
     import tempfile
 
     # Set test environment
-    os.environ["DIGITAL_TWIN_ENCRYPTION_KEY"] = (
-        "dGVzdF9rZXlfMzJfYnl0ZXNfZm9yX2VuY3J5cHRpb25fdGVzdGluZ19wdXJwb3Nlcw=="
-    )
+    os.environ[
+        "DIGITAL_TWIN_ENCRYPTION_KEY"
+    ] = "dGVzdF9rZXlfMzJfYnl0ZXNfZm9yX2VuY3J5cHRpb25fdGVzdGluZ19wdXJwb3Nlcw=="
     os.environ["DIGITAL_TWIN_COPPA_COMPLIANT"] = "true"
     os.environ["DIGITAL_TWIN_FERPA_COMPLIANT"] = "true"
     os.environ["DIGITAL_TWIN_GDPR_COMPLIANT"] = "true"

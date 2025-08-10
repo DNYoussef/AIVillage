@@ -2,8 +2,8 @@
 """Create comprehensive text summary of 50-generation evolution results."""
 
 import json
-import statistics
 from pathlib import Path
+import statistics
 
 
 def create_comprehensive_summary() -> None:

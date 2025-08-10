@@ -5,12 +5,12 @@ building on Sprint 6's P2P infrastructure and resource management.
 """
 
 import asyncio
-import logging
-import time
-import uuid
 from dataclasses import dataclass, field
 from enum import Enum
+import logging
+import time
 from typing import Any
+import uuid
 
 from AIVillage.src.core.p2p.p2p_node import P2PNode
 from AIVillage.src.core.resources.resource_monitor import ResourceMonitor
@@ -117,14 +117,14 @@ class DistributedAgentOrchestrator:
         # Agent state
         self.current_deployment_plan: AgentDeploymentPlan | None = None
         self.active_agents: dict[str, AgentInstance] = {}  # instance_id -> instance
-        self.agent_registry: dict[AgentType, list[str]] = (
-            {}
-        )  # agent_type -> instance_ids
+        self.agent_registry: dict[
+            AgentType, list[str]
+        ] = {}  # agent_type -> instance_ids
 
         # Device assignments
-        self.device_agent_assignments: dict[str, list[str]] = (
-            {}
-        )  # device_id -> instance_ids
+        self.device_agent_assignments: dict[
+            str, list[str]
+        ] = {}  # device_id -> instance_ids
 
         # Performance tracking
         self.deployment_stats = {

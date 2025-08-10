@@ -6,8 +6,8 @@ Moved from root to tests/experimental/mesh/ for better organization.
 
 import asyncio
 import logging
-import sys
 from pathlib import Path
+import sys
 
 from mesh_network_manager import MeshNetworkManager
 

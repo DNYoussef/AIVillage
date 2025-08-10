@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """Test compression components directly to avoid import dependencies."""
 
+from collections import Counter
 import gzip
 import lzma
+from pathlib import Path
 import struct
 import sys
 import time
-from collections import Counter
-from pathlib import Path
 
 import torch
 from torch import nn
@@ -322,7 +322,9 @@ def mobile_deployment_analysis():
         print()
 
     # Kenya deployment assessment
-    kenyan_target = 7_000_000_000 * 4 / (1024**2) / best_ratio < 1000  # 7B model < 1GB
+    kenyan_target = (
+        7_000_000_000 * 4 / (1024**2) / best_ratio < 1000
+    )  # 7B model < 1GB
 
     print("Kenya Deployment Assessment:")
     print(f"  7B model fits on 2GB phone: {'YES' if kenyan_target else 'NO'}")
@@ -335,9 +337,10 @@ def main():
     """Run comprehensive improved compression validation."""
     try:
         # Test improved compression methods
-        integrated_ratio, integrated_significant = (
-            test_integrated_compression_simulation()
-        )
+        (
+            integrated_ratio,
+            integrated_significant,
+        ) = test_integrated_compression_simulation()
         cascade_avg, cascade_effective = test_cascade_compression_simulation()
         mobile_ready = mobile_deployment_analysis()
 

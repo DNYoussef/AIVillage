@@ -1,17 +1,14 @@
 #!/usr/bin/env python3
-"""
-CODEX Integration Requirements - Environment Variable Validation
+"""CODEX Integration Requirements - Environment Variable Validation
 Validates all environment variables per CODEX specifications
 """
 
 import os
-import sys
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
-def validate_codex_environment() -> Dict[str, Any]:
+def validate_codex_environment() -> dict[str, Any]:
     """Validate all environment variables per CODEX Integration Requirements."""
-
     print("[VALIDATION] Environment Variable Check Per CODEX Integration Requirements")
     print("=" * 80)
 

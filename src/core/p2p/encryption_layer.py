@@ -3,13 +3,13 @@
 import asyncio
 import base64
 import contextlib
+from dataclasses import dataclass
 import hashlib
 import hmac
 import logging
 import os
 import secrets
 import time
-from dataclasses import dataclass
 from typing import Any
 
 from cryptography.hazmat.backends import default_backend

@@ -5,12 +5,12 @@ Validates all configuration files, checks consistency, verifies paths and models
 and generates comprehensive validation report.
 """
 
+from datetime import datetime
 import json
 import logging
 import os
-import sys
-from datetime import datetime
 from pathlib import Path
+import sys
 from typing import Any
 
 # Add src to path for imports
@@ -631,9 +631,9 @@ class ConfigurationValidator:
 
         # Configuration loading validation
         print("  Testing configuration loading...")
-        self.validation_results["configuration_consistency"] = (
-            self.validate_configuration_loading()
-        )
+        self.validation_results[
+            "configuration_consistency"
+        ] = self.validate_configuration_loading()
 
         # Path validation
         print("  Validating paths...")
@@ -649,9 +649,9 @@ class ConfigurationValidator:
 
         # Environment variables
         print("  Checking environment variables...")
-        self.validation_results["environment_variables"] = (
-            self.validate_environment_variables()
-        )
+        self.validation_results[
+            "environment_variables"
+        ] = self.validate_environment_variables()
 
         # CODEX compliance
         print("  Validating CODEX compliance...")

@@ -2,8 +2,9 @@ import logging
 import random
 from typing import Any
 
-from rag_system.utils.error_handling import AIVillageException, log_and_handle_errors
 from torch import nn
+
+from rag_system.utils.error_handling import AIVillageException, log_and_handle_errors
 
 logger = logging.getLogger(__name__)
 

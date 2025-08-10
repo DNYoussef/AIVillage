@@ -7,8 +7,8 @@ capabilities in technical reasoning, Python programming, and algorithm design.
 """
 
 import json
-import sys
 from pathlib import Path
+import sys
 
 # Add project to path
 sys.path.append(".")
@@ -53,7 +53,9 @@ class MagiInterface:
                 level = (
                     "🔥 MASTERY"
                     if score >= 0.90
-                    else "⭐ EXPERT" if score >= 0.75 else "📈 ADVANCED"
+                    else "⭐ EXPERT"
+                    if score >= 0.75
+                    else "📈 ADVANCED"
                 )
                 print(f"  {capability.replace('_', ' ').title()}: {score:.3f} {level}")
             print("=" * 50)

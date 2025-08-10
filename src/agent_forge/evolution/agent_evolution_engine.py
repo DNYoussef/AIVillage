@@ -5,13 +5,13 @@ It implements performance-based selection, genetic optimization, and autonomous 
 """
 
 import asyncio
-import json
-import logging
-import time
 from collections.abc import Callable
 from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta
+import json
+import logging
 from pathlib import Path
+import time
 from typing import Any
 
 import numpy as np
@@ -366,9 +366,9 @@ class CodeMutator:
             if np.random.random() < 0.1:  # 10% chance to mutate each template
                 if "system" in template_key.lower():
                     prefix = np.random.choice(template_variations["system_prompt"])
-                    mutated.code_templates[template_key] = (
-                        f"{prefix} {mutated.code_templates[template_key].split(' ', 5)[-1]}"
-                    )
+                    mutated.code_templates[
+                        template_key
+                    ] = f"{prefix} {mutated.code_templates[template_key].split(' ', 5)[-1]}"
 
         return mutated
 

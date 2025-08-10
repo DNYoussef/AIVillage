@@ -13,8 +13,8 @@ The script performs the restructuring safely with validation checks.
 import json
 import logging
 import os
-import shutil
 from pathlib import Path
+import shutil
 
 # Configure logging
 logging.basicConfig(
