@@ -53,6 +53,8 @@ huggingface-hub>=0.24.5
 sentence-transformers>=3.0.1
 peft>=0.12.0
 anthropic>=0.28.0
+openai==1.99.6
+tiktoken==0.11.0
 
 # Vector Search & Embeddings
 faiss-cpu>=1.8.0
@@ -71,14 +73,14 @@ scikit-learn>=1.5.1
 # Plotting
 matplotlib>=3.9.1
 seaborn>=0.13.2
-plotly>=5.23.0
+plotly==6.2.0
 bokeh>=3.5.2
 
 # Monitoring & Logging
 prometheus-client>=0.20.0
 structlog>=24.4.0
 sentry-sdk>=2.13.0
-wandb>=0.17.8
+wandb==0.21.1
 grafana-api>=1.0.3
 
 # ============================================================================
@@ -113,6 +115,7 @@ bittensor-wallet>=4.0.0
 # Note: Platform-specific P2P dependencies
 libp2p>=0.2.9
 # bluetooth-mesh>=0.9.1  # Uncomment if Bluetooth mesh needed
+zeroconf==0.147.0
 
 # ============================================================================
 # UTILITIES
@@ -130,8 +133,9 @@ Werkzeug>=3.0.6
 bleach>=6.1.0
 requests>=2.32.3
 urllib3>=2.2.2
-
 Babel>=2.15.0
+twilio==9.7.0
+googletrans==4.0.2
 # Image & Media Processing
 pillow>=10.4.0
 opencv-python>=4.10.0
