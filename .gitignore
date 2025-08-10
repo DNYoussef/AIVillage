@@ -13,6 +13,7 @@ ENV/
 env/
 evomerge_env/
 new_env/
+old_env/
 venv/
 
 # Environment variables
@@ -105,6 +106,13 @@ test_output/
 forge_checkpoints/
 forge_output/
 agent_forge_outputs/
+
+# RAG system cache and temporary files
+/tmp/rag_disk_cache/
+*.faiss
+*.pkl
+bm25_corpus/
+faiss_index/
 
 # Performance and analysis files
 performance_*.py

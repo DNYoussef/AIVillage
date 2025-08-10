@@ -46,23 +46,6 @@ except Exception:  # pragma: no cover - import guard
     PSUTIL_AVAILABLE = False
 
 # Prometheus metric definitions ---------------------------------------------
-EVOLUTION_ROUNDS = Counter(
-    "evolution_round_total",
-    "Number of evolution rounds executed",
-    ["mutation_type", "node_type"],
-)
-
-FITNESS_GAUGE = Gauge(
-    "fitness_score",
-    "Fitness score achieved by a mutation",
-    ["mutation_type", "node_type"],
-)
-
-RESOURCE_EFFICIENCY_GAUGE = Gauge(
-    "resource_efficiency",
-    "Estimated resource efficiency of a mutation",
-    ["mutation_type", "node_type"],
-)
 
 
 @dataclass
@@ -96,6 +79,25 @@ class EvolutionMetricsRecorder:
         self.lock = threading.Lock()
         self.active: dict[str, MutationMetrics] = {}
         self.completed: list[MutationMetrics] = []
+
+        # Prometheus metric definitions
+        self.EVOLUTION_ROUNDS = Counter(
+            "evolution_round_total",
+            "Number of evolution rounds executed",
+            ["mutation_type", "node_type"],
+        )
+
+        self.FITNESS_GAUGE = Gauge(
+            "fitness_score",
+            "Fitness score achieved by a mutation",
+            ["mutation_type", "node_type"],
+        )
+
+        self.RESOURCE_EFFICIENCY_GAUGE = Gauge(
+            "resource_efficiency",
+            "Estimated resource efficiency of a mutation",
+            ["mutation_type", "node_type"],
+        )
 
         # Load existing metrics if available
         if self.storage_path.exists():  # pragma: no cover - simple IO
@@ -133,7 +135,7 @@ class EvolutionMetricsRecorder:
                 memory_mb=mem_mb,
             )
 
-        EVOLUTION_ROUNDS.labels(mutation_type=mutation_type, node_type=node_type).inc()
+        self.EVOLUTION_ROUNDS.labels(mutation_type=mutation_type, node_type=node_type).inc()
         return mutation_id
 
     def record_fitness(self, mutation_id: str, fitness: float) -> None:
@@ -142,7 +144,7 @@ class EvolutionMetricsRecorder:
             metrics = self.active.get(mutation_id)
             if metrics:
                 metrics.fitness_score = fitness
-                FITNESS_GAUGE.labels(
+                self.FITNESS_GAUGE.labels(
                     mutation_type=metrics.mutation_type,
                     node_type=metrics.node_type,
                 ).set(fitness)
@@ -171,7 +173,7 @@ class EvolutionMetricsRecorder:
             self.completed.append(metrics)
 
             efficiency = metrics.resource_efficiency() or 0.0
-            RESOURCE_EFFICIENCY_GAUGE.labels(
+            self.RESOURCE_EFFICIENCY_GAUGE.labels(
                 mutation_type=metrics.mutation_type,
                 node_type=metrics.node_type,
             ).set(efficiency)

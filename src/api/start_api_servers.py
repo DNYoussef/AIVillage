@@ -16,10 +16,9 @@ from fastapi import FastAPI, HTTPException
 import uvicorn
 from concurrent.futures import ThreadPoolExecutor
 
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
-import joblib
-
+# Import CODEX-compliant RAG implementation
+sys.path.insert(0, str(Path(__file__).parent.parent / "production" / "rag" / "rag_system" / "core"))
+sys.path.insert(0, str(Path(__file__).parent.parent))
 from core.security.digital_twin_encryption import (
     DigitalTwinEncryption,
     DigitalTwinEncryptionError,
@@ -28,6 +27,16 @@ from core.security.digital_twin_encryption import (
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+try:
+    from codex_rag_integration import CODEXRAGPipeline, Document
+    CODEX_RAG_AVAILABLE = True
+    logger.info("CODEX-compliant RAG implementation loaded successfully")
+except ImportError as e:
+    logger.warning(f"CODEX RAG not available, using fallback: {e}")
+    CODEXRAGPipeline = None
+    Document = None
+    CODEX_RAG_AVAILABLE = False
 
 
 # ---------------------------------------------------------------------------
@@ -206,91 +215,146 @@ async def get_latest_metrics() -> Dict[str, Any]:
 
 
 # ---------------------------------------------------------------------------
-# RAG Pipeline API with TF-IDF search
+# RAG Pipeline API with CODEX-compliant FAISS + sentence-transformers
 # ---------------------------------------------------------------------------
 
 rag_app = FastAPI(title="RAG Pipeline API")
 
-RAG_INDEX_PATH = Path("data/rag_index.pkl")
-RAG_INDEX_PATH.parent.mkdir(parents=True, exist_ok=True)
+# Initialize CODEX-compliant RAG pipeline
+rag_pipeline: CODEXRAGPipeline = None
 
-vectorizer = TfidfVectorizer()
-doc_ids: List[str] = []
-doc_texts: List[str] = []
-doc_matrix = None
-
-
-def load_rag_index() -> None:
-    global vectorizer, doc_ids, doc_texts, doc_matrix
-    if RAG_INDEX_PATH.exists():
-        data = joblib.load(RAG_INDEX_PATH)
-        vectorizer = data["vectorizer"]
-        doc_ids = data["doc_ids"]
-        doc_texts = data["doc_texts"]
-        doc_matrix = data["doc_matrix"]
-
-
-def save_rag_index() -> None:
-    joblib.dump(
-        {
-            "vectorizer": vectorizer,
-            "doc_ids": doc_ids,
-            "doc_texts": doc_texts,
-            "doc_matrix": doc_matrix,
-        },
-        RAG_INDEX_PATH,
-    )
+def init_rag_pipeline() -> None:
+    """Initialize the CODEX-compliant RAG pipeline."""
+    global rag_pipeline
+    if not CODEX_RAG_AVAILABLE or CODEXRAGPipeline is None:
+        logger.error("CODEX RAG implementation not available")
+        rag_pipeline = None
+        return
+        
+    try:
+        rag_pipeline = CODEXRAGPipeline()
+        logger.info("CODEX-compliant RAG pipeline initialized successfully")
+    except Exception as e:
+        logger.error(f"Failed to initialize RAG pipeline: {e}")
+        # Fallback to None - will be handled in endpoints
+        rag_pipeline = None
 
 
 @rag_app.get("/health/rag")
 async def health_rag() -> Dict[str, Any]:
-    return {"status": "healthy", "service": "rag_pipeline", "index_size": len(doc_ids)}
+    if rag_pipeline is None:
+        return {"status": "degraded", "service": "rag_pipeline", "error": "Pipeline not initialized"}
+    
+    performance_metrics = rag_pipeline.get_performance_metrics()
+    return {
+        "status": "healthy", 
+        "service": "rag_pipeline", 
+        "index_size": performance_metrics.get("index_size", 0),
+        "avg_latency_ms": performance_metrics.get("avg_latency_ms", 0),
+        "meets_target": performance_metrics.get("meets_target", True)
+    }
 
 
 @rag_app.post("/index/add")
 async def add_to_index(data: Dict[str, Any]) -> Dict[str, Any]:
-    documents = data.get("documents")
-    if not isinstance(documents, list):
+    if rag_pipeline is None:
+        raise HTTPException(status_code=503, detail="RAG pipeline not available")
+    
+    documents_data = data.get("documents")
+    if not isinstance(documents_data, list):
         raise HTTPException(status_code=400, detail="documents list required")
 
-    added = 0
-    for doc in documents:
-        doc_id = doc.get("id")
-        content = doc.get("content")
+    # Convert to Document objects
+    documents = []
+    for doc_data in documents_data:
+        doc_id = doc_data.get("id")
+        title = doc_data.get("title", f"Document {doc_id}")
+        content = doc_data.get("content")
+        source_type = doc_data.get("source_type", "api")
+        metadata = doc_data.get("metadata", {})
+        
         if doc_id and content:
-            doc_ids.append(str(doc_id))
-            doc_texts.append(str(content))
-            added += 1
+            documents.append(Document(
+                id=str(doc_id),
+                title=title,
+                content=str(content),
+                source_type=source_type,
+                metadata=metadata
+            ))
 
-    if added:
-        global doc_matrix
-        doc_matrix = vectorizer.fit_transform(doc_texts)
-        save_rag_index()
-
-    return {"success": True, "documents_added": added}
+    if not documents:
+        return {"success": False, "documents_added": 0, "error": "No valid documents provided"}
+    
+    try:
+        stats = rag_pipeline.index_documents(documents)
+        return {
+            "success": True, 
+            "documents_added": stats["documents_processed"],
+            "chunks_created": stats["chunks_created"],
+            "vectors_indexed": stats["vectors_indexed"],
+            "processing_time_ms": stats["processing_time_ms"]
+        }
+    except Exception as e:
+        logger.exception("Failed to index documents")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @rag_app.post("/query")
 async def query_rag(data: Dict[str, Any]) -> Dict[str, Any]:
+    if rag_pipeline is None:
+        raise HTTPException(status_code=503, detail="RAG pipeline not available")
+    
     query = data.get("query")
+    k = data.get("k", 5)  # Number of results to return
+    use_cache = data.get("use_cache", True)
+    
     if not query:
         raise HTTPException(status_code=400, detail="query required")
-    if doc_matrix is None or not doc_texts:
-        raise HTTPException(status_code=404, detail="index empty")
-
-    query_vec = vectorizer.transform([query])
-    scores = cosine_similarity(query_vec, doc_matrix)[0]
-    top_idx = scores.argsort()[::-1][:5]
-    results = [
-        {
-            "doc_id": doc_ids[i],
-            "score": float(scores[i]),
-            "content": doc_texts[i],
+    
+    if not isinstance(k, int) or k < 1 or k > 50:
+        raise HTTPException(status_code=400, detail="k must be integer between 1 and 50")
+    
+    try:
+        results, metrics = await rag_pipeline.retrieve(query, k=k, use_cache=use_cache)
+        
+        # Format results for API response
+        formatted_results = [
+            {
+                "chunk_id": result.chunk_id,
+                "document_id": result.document_id,
+                "text": result.text,
+                "score": result.score,
+                "retrieval_method": result.retrieval_method,
+                "metadata": result.metadata
+            }
+            for result in results
+        ]
+        
+        return {
+            "query": query,
+            "results": formatted_results,
+            "metrics": metrics,
+            "total_results": len(formatted_results)
         }
-        for i in top_idx
-    ]
+        
+    except Exception as e:
+        logger.exception("RAG query failed")
+        raise HTTPException(status_code=500, detail=str(e))
 
-    return {"query": query, "results": results}
+
+@rag_app.get("/metrics/performance")
+async def get_rag_metrics() -> Dict[str, Any]:
+    """Get RAG pipeline performance metrics."""
+    if rag_pipeline is None:
+        raise HTTPException(status_code=503, detail="RAG pipeline not available")
+    
+    try:
+        performance_metrics = rag_pipeline.get_performance_metrics()
+        return performance_metrics
+    except Exception as e:
+        logger.exception("Failed to get RAG metrics")
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 def run_server(app, host: str, port: int):
     """Run a FastAPI server"""
@@ -300,7 +364,7 @@ def main():
     """Start all API servers"""
     init_digital_twin_db()
     init_evolution_db()
-    load_rag_index()
+    init_rag_pipeline()
 
     print("Starting AIVillage API servers...")
     

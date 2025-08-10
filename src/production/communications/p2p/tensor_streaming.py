@@ -266,7 +266,7 @@ class TensorStreaming:
         self,
         tensor_id: str,
         timeout: float = 300.0,
-        progress_callback: callable | None = None,
+        progress_callback: callable = None,
     ) -> tuple[Any, TensorMetadata] | None:
         """Receive a tensor from a peer node."""
         if tensor_id not in self.tensor_metadata:

@@ -27,7 +27,7 @@ CREDITS_LATENCY = Histogram(
 
 
 class CreateUserRequest(BaseModel):
-    username: str = Field(..., min_length=3, max_length=64, regex="^[a-zA-Z0-9_-]+$")
+    username: str = Field(..., min_length=3, max_length=64, pattern="^[a-zA-Z0-9_-]+$")
     node_id: str | None = Field(None, max_length=128)
 
 
