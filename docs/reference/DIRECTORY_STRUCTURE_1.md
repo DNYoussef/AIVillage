@@ -184,15 +184,8 @@ AIVillage/
 │   └── grafana/
 ├── nlp/                        # NLP utilities
 │   └── named_entity_recognition.py
-├── rag_system/                 # RAG (Retrieval Augmented Generation) system
-│   ├── agents/
-│   ├── core/
-│   ├── error_handling/
-│   ├── evaluation/
-│   ├── processing/
-│   ├── retrieval/
-│   ├── tracking/
-│   └── utils/
+├── rag_system/                 # Shim exposing src/production/rag/rag_system
+├── experimental/rag/storm/     # Experimental STORM RAG pipeline
 ├── schemas/                    # JSON schemas
 │   └── evidencepack_v1.json
 ├── scripts/                    # Utility scripts
@@ -247,11 +240,11 @@ Contains the three main agents:
 - **MAGI**: Multi-Agent Generative Intelligence
 
 ### rag_system/
-The Retrieval Augmented Generation system with:
-- Knowledge tracking
-- Advanced NLP processing
-- Hybrid retrieval mechanisms
-- Confidence estimation
+Compatibility wrapper that exposes the production RAG system located at
+``src/production/rag/rag_system``.
+
+### experimental/rag/storm/
+Lightweight STORM-based RAG pipeline maintained for experimentation.
 
 ### communications/
 Handles inter-agent communication with:

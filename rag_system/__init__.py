@@ -1,44 +1,19 @@
-"""Stub implementation for rag_system.
-This is a placeholder to fix test infrastructure.
+"""Compatibility shim for the production RAG system.
+
+The lightweight STORM implementation has moved to
+:mod:`experimental.rag.storm`. This package now exposes the
+production RAG modules located under ``src/production/rag/rag_system``.
 """
+from __future__ import annotations
 
-import warnings
+from pathlib import Path
+from pkgutil import extend_path
 
-warnings.warn(
-    "rag_system is a stub implementation. "
-    "Replace with actual implementation before production use.",
-    UserWarning,
-    stacklevel=2,
-)
+# Start with existing search path for namespace packages
+__path__ = extend_path(__path__, __name__)
 
-
-class Ragsystem:
-    """Placeholder class for testing."""
-
-    def __init__(self) -> None:
-        self.initialized = True
-
-    def process(self, *args, **kwargs):
-        """Stub processing method."""
-        return {"status": "stub", "module": "rag_system"}
-
-
-from .wikipedia_storm_pipeline import (
-    ContentDatabase,
-    EducationalContentGenerator,
-    Lesson,
-    OfflineOptimizedRAG,
-    Perspective,
-    WikipediaSTORMPipeline,
-)
-
-# Module-level exports
-__all__ = [
-    "ContentDatabase",
-    "EducationalContentGenerator",
-    "Lesson",
-    "OfflineOptimizedRAG",
-    "Perspective",
-    "Ragsystem",
-    "WikipediaSTORMPipeline",
-]
+# Add the production RAG system path so ``import rag_system.*`` works
+_root = Path(__file__).resolve().parents[1]
+_prod_path = _root / "src" / "production" / "rag" / "rag_system"
+if _prod_path.exists():
+    __path__.append(str(_prod_path))
