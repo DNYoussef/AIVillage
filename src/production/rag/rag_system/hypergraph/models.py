@@ -9,7 +9,7 @@ from typing import Any
 import uuid
 
 import numpy as np
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, ConfigDict, field_validator
 
 
 class Hyperedge(BaseModel):
@@ -37,23 +37,22 @@ class Hyperedge(BaseModel):
     # Additional metadata fields for different domains
     metadata: dict[str, Any] = Field(default_factory=dict)
 
-    class Config:
-        # Allow numpy arrays in Pydantic model
-        arbitrary_types_allowed = True
-        # Use enum values in schema
-        use_enum_values = True
-        # Generate example for docs
-        schema_extra = {
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True,
+        use_enum_values=True,
+        json_schema_extra={
             "example": {
                 "entities": ["patient_123", "medication_456", "ingredient_789"],
                 "relation": "prescribed_containing_allergen",
                 "confidence": 0.95,
                 "source_docs": ["medical_record_001", "drug_database"],
             }
-        }
+        },
+    )
 
     @field_validator("entities")
-    def validate_entities(self, v):
+    @classmethod
+    def validate_entities(cls, v: list[str]) -> list[str]:
         """Ensure minimum entity count and no duplicates."""
         if len(v) < 2:
             msg = "Hyperedge must connect at least 2 entities"
@@ -64,7 +63,8 @@ class Hyperedge(BaseModel):
         return v
 
     @field_validator("relation")
-    def validate_relation(self, v):
+    @classmethod
+    def validate_relation(cls, v: str) -> str:
         """Ensure relation is non-empty and valid."""
         if not v or not v.strip():
             msg = "Relation cannot be empty"
@@ -72,7 +72,8 @@ class Hyperedge(BaseModel):
         return v.strip()
 
     @field_validator("embedding")
-    def validate_embedding(self, v):
+    @classmethod
+    def validate_embedding(cls, v):
         """Validate embedding vector if provided."""
         if v is not None:
             if not isinstance(v, np.ndarray):
@@ -156,19 +157,21 @@ class HippoNode(BaseModel):
         default=1.0, ge=0.0, le=1.0, description="Time-based relevance decay"
     )
 
-    class Config:
-        arbitrary_types_allowed = True
-        schema_extra = {
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True,
+        json_schema_extra={
             "example": {
                 "id": "hippo_session_001",
                 "content": "User asked about diabetes management options",
                 "session_id": "user_session_12345",
                 "context_type": "query",
             }
-        }
+        },
+    )
 
     @field_validator("content")
-    def validate_content(self, v):
+    @classmethod
+    def validate_content(cls, v: str) -> str:
         """Ensure content is not empty."""
         if not v or not v.strip():
             msg = "Content cannot be empty"
@@ -176,7 +179,8 @@ class HippoNode(BaseModel):
         return v.strip()
 
     @field_validator("access_pattern")
-    def validate_access_pattern(self, v):
+    @classmethod
+    def validate_access_pattern(cls, v):
         """Validate access pattern for Personalized PageRank."""
         if v is not None:
             if not isinstance(v, np.ndarray):

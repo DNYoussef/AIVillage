@@ -21,7 +21,7 @@ import time
 import traceback
 from typing import Any
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 import torch
 from torch import nn
 from tqdm import tqdm
@@ -101,8 +101,9 @@ class PromptBakingConfig(BaseModel):
         default_factory=lambda: ["prompt_baking", "optimization"]
     )
 
-    @validator("device")
-    def validate_device(self, v):
+    @field_validator("device")
+    @classmethod
+    def validate_device(cls, v: str) -> str:
         if v == "auto":
             return "cuda" if torch.cuda.is_available() else "cpu"
         return v
@@ -481,7 +482,7 @@ class PromptBakingPipeline:
                 entity=self.config.wandb_entity,
                 job_type="prompt_baking",
                 tags=self.config.wandb_tags,
-                config=self.config.dict(),
+                config=self.config.model_dump(),
             )
             logger.info(f"W&B initialized: {self.wandb_run.url}")
         except Exception as e:
@@ -555,7 +556,7 @@ class PromptBakingPipeline:
                     "best_prompt_template": best_variant.template,
                     "best_performance": ab_results["best_performance"],
                     "output_model_path": str(output_path),
-                    "baking_config": self.config.dict(),
+                    "baking_config": self.config.model_dump(),
                 }
             )
 
@@ -619,7 +620,7 @@ async def run_prompt_baking(config: dict[str, Any]) -> "PhaseResult":
                         "tool_integration": results.get("tool_integration", {}),
                     },
                     metadata={
-                        "baking_config": baking_config.dict(),
+                        "baking_config": baking_config.model_dump(),
                         "baking_method": "weight_optimization",
                     },
                 )

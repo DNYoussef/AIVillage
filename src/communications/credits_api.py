@@ -112,7 +112,7 @@ async def value_error_handler(request, exc):
             error="validation_error",
             message=str(exc),
             timestamp=datetime.now(timezone.utc),
-        ).dict(),
+        ).model_dump(),
     )
 
 
@@ -126,7 +126,7 @@ async def general_error_handler(request, exc):
             error="internal_error",
             message="An unexpected error occurred",
             timestamp=datetime.now(timezone.utc),
-        ).dict(),
+        ).model_dump(),
     )
 
 

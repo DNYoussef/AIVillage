@@ -26,7 +26,7 @@ import traceback
 from typing import Any
 from uuid import uuid4
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 import wandb
 
 # Setup logging
@@ -140,8 +140,9 @@ class OrchestratorConfig(BaseModel):
         ]
     )
 
-    @validator("output_dir", "checkpoint_dir")
-    def ensure_path_exists(self, v):
+    @field_validator("output_dir", "checkpoint_dir")
+    @classmethod
+    def ensure_path_exists(cls, v: Path) -> Path:
         Path(v).mkdir(parents=True, exist_ok=True)
         return v
 
@@ -325,7 +326,7 @@ class ForgeOrchestrator:
                     "base_models": self.config.base_models,
                     "enabled_phases": [p.value for p in self.config.enabled_phases],
                     "discovered_phases": [p.value for p in self.discovered_phases],
-                    "config": self.config.dict(),
+                    "config": self.config.model_dump(),
                 },
             )
             logger.info("Initialized W&B tracking: %s", wandb.run.url)
@@ -442,9 +443,9 @@ class ForgeOrchestrator:
 
         except asyncio.TimeoutError:
             result.status = PhaseStatus.FAILED
-            result.error_message = f"Phase exceeded maximum duration of {
-                self.config.max_phase_duration_minutes
-            } minutes"
+            result.error_message = (
+                f"Phase exceeded maximum duration of {self.config.max_phase_duration_minutes} minutes"
+            )
 
         except Exception as e:
             result.status = PhaseStatus.FAILED
@@ -796,8 +797,8 @@ class ForgeOrchestrator:
             "run_id": self.run_id,
             "phase": phase_type.value,
             "timestamp": datetime.now().isoformat(),
-            "results": {k.value: v.dict() for k, v in self.phase_results.items()},
-            "artifacts": {k: v.dict() for k, v in self.artifact_store.items()},
+            "results": {k.value: v.model_dump() for k, v in self.phase_results.items()},
+            "artifacts": {k: v.model_dump() for k, v in self.artifact_store.items()},
         }
 
         try:
@@ -935,7 +936,7 @@ class ForgeOrchestrator:
                 "phases_failed": len(failed_phases),
                 "phases_stub": len(stub_phases),
             },
-            "phase_details": {k.value: v.dict() for k, v in self.phase_results.items()},
+            "phase_details": {k.value: v.model_dump() for k, v in self.phase_results.items()},
             "artifacts_produced": len(self.artifact_store),
             "todos": list(set(all_todos)),  # Deduplicate
             "warnings": list(set(all_warnings)),  # Deduplicate

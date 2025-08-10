@@ -23,7 +23,7 @@ from fastapi import FastAPI, File, Request, UploadFile
 from fastapi.middleware import Middleware
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel, Field, ValidationError, validator
+from pydantic import BaseModel, Field, ValidationError, field_validator
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from core.evidence import Chunk, ConfidenceTier, EvidencePack
@@ -186,8 +186,9 @@ rag_pipeline.knowledge_tracker = knowledge_tracker
 class SecureQueryRequest(BaseModel):
     query: str = Field(..., min_length=1, max_length=5000)
 
-    @validator("query")
-    def validate_query(self, v):
+    @field_validator("query")
+    @classmethod
+    def validate_query(cls, v: str) -> str:
         if not isinstance(v, str):
             msg = "Query must be a string"
             raise ValueError(msg)
@@ -217,8 +218,9 @@ class SecureUploadFile(BaseModel):
     content_type: str
     size: int
 
-    @validator("filename")
-    def validate_filename(self, v):
+    @field_validator("filename")
+    @classmethod
+    def validate_filename(cls, v: str) -> str:
         if not v or ".." in v or "/" in v or "\\" in v:
             msg = "Invalid filename"
             raise ValueError(msg)
@@ -228,8 +230,9 @@ class SecureUploadFile(BaseModel):
             raise ValueError(msg)
         return v
 
-    @validator("size")
-    def validate_size(self, v):
+    @field_validator("size")
+    @classmethod
+    def validate_size(cls, v: int) -> int:
         if v > MAX_FILE_SIZE:
             msg = f"File too large: {v} bytes (max {MAX_FILE_SIZE})"
             raise ValueError(msg)
@@ -391,7 +394,7 @@ async def v1_explanation_endpoint(chat_id: str):
                 confidence_tier=ConfidenceTier.LOW,
             )
         ]
-        return [pack.dict() for pack in placeholder_packs]
+        return [pack.model_dump() for pack in placeholder_packs]
     except Exception as e:
         logger.exception(f"Error retrieving evidence for chat {chat_id}: {e}")
         return []
