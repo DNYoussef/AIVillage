@@ -1,10 +1,13 @@
-# CODEX RAG Integration - Complete Implementation
+# CODEX RAG Integration
 
 ## Overview
 
-The RAG (Retrieval-Augmented Generation) pipeline has been successfully integrated according to all CODEX Integration Requirements specifications. This implementation provides a production-ready RAG system with <100ms retrieval target, three-tier caching, and Wikipedia educational content.
+The RAG (Retrieval-Augmented Generation) pipeline has an implementation that follows the CODEX Integration Requirements specification. It provides a prototype RAG system with a <100 ms retrieval **target**, three-tier caching, and Wikipedia educational content. Full validation is still pending.
 
-## Integration Status: ✅ COMPLETE
+## Implementation and Testing Status
+
+- **Implementation**: Core features implemented according to CODEX requirements.
+- **Testing**: Latest integration tests show the RAG API failing (see `integration_test_results.json`).
 
 All CODEX requirements have been implemented:
 
@@ -45,16 +48,18 @@ All CODEX requirements have been implemented:
 
 ## Performance Metrics
 
+The following performance numbers are **aspirational targets** and have not been validated in production.
+
 ### Latency Targets
-- **Target**: <100ms retrieval latency
+- **Target**: <100 ms retrieval latency
 - **Implementation**: Optimized hybrid retrieval with caching
 - **Monitoring**: Real-time latency tracking and alerting
 - **Fallback**: Graceful performance degradation
 
 ### Cache Performance
-- **L1 Hit Rate**: Target 60-70% for common queries
-- **L2 Hit Rate**: Target 20-25% for Redis cache
-- **L3 Hit Rate**: Target 10-15% for disk cache
+- **L1 Hit Rate**: Target 60–70% for common queries
+- **L2 Hit Rate**: Target 20–25% for Redis cache
+- **L3 Hit Rate**: Target 10–15% for disk cache
 - **Combined**: Target 90%+ overall hit rate
 
 ### Throughput
@@ -191,14 +196,15 @@ RAG_DISK_CACHE_DIR=/tmp/rag_disk_cache
 
 ### Integration Tests
 - **File**: `tests/integration/test_codex_rag_integration.py`
-- **Coverage**: All CODEX requirements validated
-- **Performance**: Latency benchmarking included
+- **Coverage**: Partial; several integration tests currently failing
+- **Results**: See `integration_test_results.json` (5/24 tests passing overall)
+- **Performance**: Latency benchmarking included but not yet validated
 - **Error Handling**: Fallback scenario testing
 
 ### Validation Scripts
 - **Simple Validation**: `scripts/simple_rag_validation.py`
 - **Comprehensive Validation**: `scripts/validate_rag_integration.py`
-- **Status**: All checks passing
+- **Status**: Scripts execute, but manual review required
 
 ## Deployment Instructions
 
@@ -240,23 +246,23 @@ curl -X POST http://localhost:8082/query \
 CODEX RAG Integration Validation
 ==================================================
 
-1. Environment Variables: ✅ ALL OK
-2. Source Files: ✅ ALL EXISTS
-3. Configuration: ✅ ALL CODEX-COMPLIANT  
-4. API Endpoints: ✅ PORT 8082 READY
-5. Database Schema: ✅ CODEX-COMPLIANT
-6. Cache System: ✅ THREE-TIER READY
+1. Environment Variables: ✅ All present
+2. Source Files: ✅ All expected modules exist
+3. Configuration: ✅ CODEX-compliant values
+4. API Endpoints: ⚠️ `/query` failing in integration tests
+5. Database Schema: ✅ CODEX-compliant
+6. Cache System: ✅ Three-tier cache configured
 
-INTEGRATION STATUS: ✅ CONFIGURED
-Ready for RAG pipeline deployment
+INTEGRATION STATUS: ⚠️ CONFIGURED BUT UNVERIFIED
+Additional testing required before deployment
 ```
 
-### Benchmark Results (Expected)
-- **Average Latency**: <50ms (target: <100ms)
-- **P95 Latency**: <80ms
+### Benchmark Targets
+- **Average Latency**: <50 ms (target: <100 ms)
+- **P95 Latency**: <80 ms
 - **Cache Hit Rate**: >85%
 - **Concurrent Queries**: 10+ simultaneous users
-- **Index Size**: 100K+ document chunks supported
+- **Index Size**: 100 K+ document chunks supported
 
 ## Security and Compliance
 
@@ -303,15 +309,14 @@ Ready for RAG pipeline deployment
 
 ## Summary
 
-The CODEX RAG Integration is **COMPLETE** and **PRODUCTION-READY**:
+The CODEX RAG integration is **functionally complete** but **not yet production-ready**:
 
-✅ **All Requirements Met**: Every CODEX specification implemented  
-✅ **Performance Target**: <100ms retrieval latency achieved  
-✅ **Three-Tier Caching**: L1/L2/L3 cache system operational  
-✅ **Wikipedia Integration**: Educational content loaded and indexed  
-✅ **API Compliance**: Port 8082 with required endpoints  
-✅ **Database Schema**: CODEX-compliant SQLite structure  
-✅ **Configuration**: All environment variables and configs set  
-✅ **Testing**: Comprehensive validation suite included  
+- ✅ **Feature Coverage**: All CODEX-required components implemented
+- ⚠️ **Testing Status**: `/query` endpoint failing integration tests (`integration_test_results.json`)
+- 🎯 **Performance**: <100 ms latency and >85% cache hit rate remain targets
+- ✅ **Three-Tier Caching**: L1/L2/L3 cache system configured
+- ✅ **Wikipedia Integration**: Educational content loaded and indexed
+- ✅ **API Compliance**: Port 8082 with required endpoints
+- ✅ **Database Schema**: CODEX-compliant SQLite structure
 
-The RAG pipeline is ready for immediate deployment and meets all CODEX Integration Requirements for production use.
+Additional validation is required before deployment.
