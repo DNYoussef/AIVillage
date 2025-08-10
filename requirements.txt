@@ -111,7 +111,7 @@ lz4>=4.4.4
 bittensor-wallet>=4.0.0
 
 # Note: Platform-specific P2P dependencies
-# libp2p>=0.2.9  # Uncomment for Linux/Mac
+libp2p>=0.2.9
 # bluetooth-mesh>=0.9.1  # Uncomment if Bluetooth mesh needed
 
 # ============================================================================

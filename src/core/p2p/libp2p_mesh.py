@@ -16,14 +16,14 @@ DESIGN:
 """
 
 import asyncio
-from collections.abc import Callable
-from dataclasses import dataclass, field
-from enum import Enum
 import json
 import logging
 import time
-from typing import Any
 import uuid
+from collections.abc import Callable
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import Any
 
 # LibP2P imports (install with: pip install py-libp2p)
 try:
@@ -43,10 +43,13 @@ except ImportError:
     # Define placeholder types for when LibP2P is not available
     class INetStream:  # type: ignore
         pass
-    class Pubsub: # type: ignore
+
+    class Pubsub:  # type: ignore
         pass
-    class KadDHT: # type: ignore
+
+    class KadDHT:  # type: ignore
         pass
+
 
 from .fallback_transports import (
     FallbackTransportManager,
@@ -163,6 +166,7 @@ class LibP2PMeshNetwork:
         self.message_handlers: dict[MeshMessageType, Callable] = {}
         self.routing_table: dict[str, str] = {}  # destination -> next_hop
         self.message_cache: set[str] = set()  # For duplicate detection
+        self.pending_messages: dict[str, list[MeshMessage]] = {}  # Offline queue
 
         # Statistics
         self.stats = {
@@ -303,6 +307,9 @@ class LibP2PMeshNetwork:
             message.timestamp = time.time()
 
             if message.recipient:
+                if message.recipient not in self.connected_peers:
+                    self._queue_offline_message(message.recipient, message)
+                    return False
                 # Direct message
                 success = await self._send_direct_message(message)
             else:
@@ -321,6 +328,8 @@ class LibP2PMeshNetwork:
 
             if fallback_success:
                 self.stats["messages_sent"] += 1
+            elif message.recipient:
+                self._queue_offline_message(message.recipient, message)
 
             return fallback_success
 
@@ -406,6 +415,32 @@ class LibP2PMeshNetwork:
         except Exception as e:
             logger.debug(f"Failed to route message to {next_hop}: {e}")
             return False
+
+    def _queue_offline_message(self, peer_id: str, message: MeshMessage) -> None:
+        """Queue message for later delivery when peer comes online."""
+        if peer_id not in self.pending_messages:
+            self.pending_messages[peer_id] = []
+
+        self.pending_messages[peer_id].append(message)
+
+        # Limit queued messages per peer to prevent unbounded growth
+        max_stored = 100
+        if len(self.pending_messages[peer_id]) > max_stored:
+            self.pending_messages[peer_id] = self.pending_messages[peer_id][
+                -max_stored:
+            ]
+
+    async def _deliver_pending_messages(self, peer_id: str) -> None:
+        """Deliver queued messages to a peer that just connected."""
+        if peer_id not in self.pending_messages:
+            return
+
+        messages = self.pending_messages.pop(peer_id)
+        for message in messages:
+            try:
+                await self.send_message(message)
+            except Exception as e:  # pragma: no cover - defensive
+                logger.debug(f"Failed to deliver queued message {message.id}: {e}")
 
     async def _handle_stream(self, stream: INetStream) -> None:
         """Handle incoming stream (direct messages)."""
@@ -495,7 +530,8 @@ class LibP2PMeshNetwork:
         if self.dht:
             try:
                 # Query DHT for peers
-                # Note: This is a simplified example - real implementation would be more complex
+                # Note: This is a simplified example.
+                # A production-grade implementation would be more complex.
                 await self.dht.provide_key("aivillage-mesh", self.node_id.encode())
 
                 # Find other providers
@@ -600,7 +636,7 @@ class LibP2PMeshNetwork:
 
             battery = psutil.sensors_battery()
             return int(battery.percent) if battery else None
-        except:
+        except Exception:
             return None
 
     # Fallback methods for when LibP2P is not available
@@ -679,6 +715,7 @@ class LibP2PMeshNetwork:
         try:
             peer_info = info_from_p2p_addr(Multiaddr(peer_address))
             await self.host.connect(peer_info)
+            await self._deliver_pending_messages(str(peer_info.peer_id))
             return True
         except Exception as e:
             logger.exception(f"Failed to add peer {peer_address}: {e}")
@@ -704,7 +741,10 @@ class LibP2PMeshNetwork:
                     break  # Connected successfully
                 except Exception as e:
                     logger.debug(
-                        f"Failed to connect to {peer_info.peer_id} via {multiaddr_str}: {e}"
+                        "Failed to connect to %s via %s: %s",
+                        peer_info.peer_id,
+                        multiaddr_str,
+                        e,
                     )
 
             # Update capabilities
@@ -717,6 +757,7 @@ class LibP2PMeshNetwork:
                 last_seen=peer_info.last_seen,
             )
             self.connected_peers[peer_info.peer_id] = capabilities
+            await self._deliver_pending_messages(peer_info.peer_id)
 
         elif event_type == "removed":
             # Remove peer from connected peers
