@@ -804,12 +804,7 @@ async def run_compression(config: dict[str, Any]) -> "PhaseResult":
         PhaseResult with status, artifacts, and metrics
     """
     try:
-        from agent_forge.forge_orchestrator import (
-            PhaseArtifact,
-            PhaseResult,
-            PhaseStatus,
-            PhaseType,
-        )
+        from src.agent_forge.forge_orchestrator import PhaseArtifact, PhaseResult, PhaseStatus, PhaseType
     except ImportError:
         # Fallback classes for when orchestrator is not available
         from dataclasses import dataclass

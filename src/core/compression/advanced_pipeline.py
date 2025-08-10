@@ -11,16 +11,16 @@ import struct
 import torch
 
 try:  # pragma: no cover - allow running without installation
-    from agent_forge.compression.bitnet import BITNETCompressor
-    from agent_forge.compression.seedlm import SEEDLMCompressor
-    from agent_forge.compression.vptq import VPTQCompressor
+    from src.agent_forge.compression.bitnet import BITNETCompressor
+    from src.agent_forge.compression.seedlm import SEEDLMCompressor
+    from src.agent_forge.compression.vptq import VPTQCompressor
 except ModuleNotFoundError:  # pragma: no cover - tests run from repo root
     from src.agent_forge.compression.bitnet import BITNETCompressor
     from src.agent_forge.compression.seedlm import SEEDLMCompressor
     from src.agent_forge.compression.vptq import VPTQCompressor
 
 try:  # pragma: no cover - optional dependency
-    from production.compression.hyper_compression import HyperCompressionEncoder
+    from src.production.compression.hyper_compression import HyperCompressionEncoder
 except ModuleNotFoundError:  # pragma: no cover - fallback
 
     class HyperCompressionEncoder:  # type: ignore

@@ -59,7 +59,7 @@ class AgentFactory:
 
         # King Agent
         try:
-            from production.agents.king import KingAgent
+            from src.production.agents.king import KingAgent
 
             agent_classes["king"] = KingAgent
         except ImportError:
@@ -68,7 +68,7 @@ class AgentFactory:
 
         # Magi Agent
         try:
-            from production.agents.magi import MagiAgent
+            from src.production.agents.magi import MagiAgent
 
             agent_classes["magi"] = MagiAgent
         except ImportError:
@@ -77,7 +77,7 @@ class AgentFactory:
 
         # Sage Agent
         try:
-            from production.agents.sage import SageAgent
+            from src.production.agents.sage import SageAgent
 
             agent_classes["sage"] = SageAgent
         except ImportError:
@@ -86,7 +86,7 @@ class AgentFactory:
 
         # Gardener Agent
         try:
-            from production.agents.gardener import GardenerAgent
+            from src.production.agents.gardener import GardenerAgent
 
             agent_classes["gardener"] = GardenerAgent
         except ImportError:
@@ -95,7 +95,7 @@ class AgentFactory:
 
         # Sword & Shield Agent
         try:
-            from production.agents.sword_shield import SwordAndShieldAgent
+            from src.production.agents.sword_shield import SwordAndShieldAgent
 
             agent_classes["sword_shield"] = SwordAndShieldAgent
         except ImportError:
@@ -106,7 +106,7 @@ class AgentFactory:
 
         # Legal AI Agent
         try:
-            from production.agents.legal import LegalAIAgent
+            from src.production.agents.legal import LegalAIAgent
 
             agent_classes["legal"] = LegalAIAgent
         except ImportError:
@@ -115,7 +115,7 @@ class AgentFactory:
 
         # Shaman Agent
         try:
-            from production.agents.shaman import ShamanAgent
+            from src.production.agents.shaman import ShamanAgent
 
             agent_classes["shaman"] = ShamanAgent
         except ImportError:
@@ -124,7 +124,7 @@ class AgentFactory:
 
         # Oracle Agent
         try:
-            from production.agents.oracle import OracleAgent
+            from src.production.agents.oracle import OracleAgent
 
             agent_classes["oracle"] = OracleAgent
         except ImportError:
@@ -133,7 +133,7 @@ class AgentFactory:
 
         # Maker Agent
         try:
-            from production.agents.maker import MakerAgent
+            from src.production.agents.maker import MakerAgent
 
             agent_classes["maker"] = MakerAgent
         except ImportError:
@@ -142,7 +142,7 @@ class AgentFactory:
 
         # Ensemble Agent
         try:
-            from production.agents.ensemble import EnsembleAgent
+            from src.production.agents.ensemble import EnsembleAgent
 
             agent_classes["ensemble"] = EnsembleAgent
         except ImportError:
@@ -151,7 +151,7 @@ class AgentFactory:
 
         # Curator Agent
         try:
-            from production.agents.curator import CuratorAgent
+            from src.production.agents.curator import CuratorAgent
 
             agent_classes["curator"] = CuratorAgent
         except ImportError:
@@ -160,7 +160,7 @@ class AgentFactory:
 
         # Auditor Agent
         try:
-            from production.agents.auditor import AuditorAgent
+            from src.production.agents.auditor import AuditorAgent
 
             agent_classes["auditor"] = AuditorAgent
         except ImportError:
@@ -169,7 +169,7 @@ class AgentFactory:
 
         # Medic Agent
         try:
-            from production.agents.medic import MedicAgent
+            from src.production.agents.medic import MedicAgent
 
             agent_classes["medic"] = MedicAgent
         except ImportError:
@@ -178,7 +178,7 @@ class AgentFactory:
 
         # Sustainer Agent
         try:
-            from production.agents.sustainer import SustainerAgent
+            from src.production.agents.sustainer import SustainerAgent
 
             agent_classes["sustainer"] = SustainerAgent
         except ImportError:
@@ -187,7 +187,7 @@ class AgentFactory:
 
         # Navigator Agent
         try:
-            from production.agents.navigator import NavigatorAgent
+            from src.production.agents.navigator import NavigatorAgent
 
             agent_classes["navigator"] = NavigatorAgent
         except ImportError:
@@ -196,7 +196,7 @@ class AgentFactory:
 
         # Tutor Agent
         try:
-            from production.agents.tutor import TutorAgent
+            from src.production.agents.tutor import TutorAgent
 
             agent_classes["tutor"] = TutorAgent
         except ImportError:
@@ -205,7 +205,7 @@ class AgentFactory:
 
         # Polyglot Agent
         try:
-            from production.agents.polyglot import PolyglotAgent
+            from src.production.agents.polyglot import PolyglotAgent
 
             agent_classes["polyglot"] = PolyglotAgent
         except ImportError:
@@ -214,7 +214,7 @@ class AgentFactory:
 
         # Strategist Agent
         try:
-            from production.agents.strategist import StrategistAgent
+            from src.production.agents.strategist import StrategistAgent
 
             agent_classes["strategist"] = StrategistAgent
         except ImportError:

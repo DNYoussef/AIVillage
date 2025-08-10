@@ -559,7 +559,7 @@ class EdgeDeploymentManager:
         """Prepare tutor model for deployment."""
         try:
             # Import deployment system
-            from agent_forge.evolution.deploy_winner import tutor_deployment
+            from src.agent_forge.evolution.deploy_winner import tutor_deployment
 
             # Get champion model (would normally load from storage)
             champion_model = {
@@ -738,7 +738,7 @@ class EdgeDeploymentManager:
         """Generate offline content package."""
         # Get student's learning profile
         try:
-            from digital_twin.core.digital_twin import digital_twin
+            from src.digital_twin.core.digital_twin import digital_twin
 
             if student_id in digital_twin.students:
                 student = digital_twin.students[student_id]

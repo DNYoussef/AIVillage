@@ -6,7 +6,7 @@ import types
 from typing import Any
 
 # Import necessary dependencies (adjust import paths as needed)
-from agent_forge.utils.tool_message import ToolMessage
+from src.agent_forge.utils.tool_message import ToolMessage
 
 # Safe builtins for code execution
 SAFE_BUILTINS: dict[str, Any] = {

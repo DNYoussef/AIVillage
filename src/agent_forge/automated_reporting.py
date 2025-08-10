@@ -25,7 +25,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 
-from agent_forge.results_analyzer import ResultsAnalyzer
+from src.agent_forge.results_analyzer import ResultsAnalyzer
 
 logger = logging.getLogger(__name__)
 

@@ -22,10 +22,7 @@ sys.path.insert(
     0, str(Path(__file__).parent.parent / "production" / "rag" / "rag_system" / "core")
 )
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from core.security.digital_twin_encryption import (
-    DigitalTwinEncryption,
-    DigitalTwinEncryptionError,
-)
+from src.core.security.digital_twin_encryption import DigitalTwinEncryption, DigitalTwinEncryptionError
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

@@ -381,7 +381,7 @@ class PersonalizedTutorEngine:
         """Get comprehensive student profile."""
         try:
             # Import digital twin
-            from digital_twin.core.digital_twin import digital_twin
+            from src.digital_twin.core.digital_twin import digital_twin
 
             if student_id in digital_twin.students:
                 student = digital_twin.students[student_id]
@@ -1179,7 +1179,7 @@ class PersonalizedTutorEngine:
 
         # Update parent tracker if available
         try:
-            from digital_twin.monitoring.parent_tracker import parent_progress_tracker
+            from src.digital_twin.monitoring.parent_tracker import parent_progress_tracker
 
             session_data = {
                 "session_id": session_id,

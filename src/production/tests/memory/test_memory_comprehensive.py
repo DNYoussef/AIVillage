@@ -8,9 +8,9 @@ import psutil
 import pytest
 
 try:
-    from production.memory import MemoryManager, WandbManager
-    from production.memory.memory_manager import MemoryManager as MM
-    from production.memory.wandb_manager import WandbManager as WM
+    from src.production.memory import MemoryManager, WandbManager
+    from src.production.memory.memory_manager import MemoryManager as MM
+    from src.production.memory.wandb_manager import WandbManager as WM
 except ImportError:
     # Handle missing imports gracefully
     pytest.skip("Production memory modules not available", allow_module_level=True)
@@ -22,7 +22,7 @@ class TestMemoryManager:
     def test_memory_manager_exists(self) -> None:
         """Test that memory manager can be imported."""
         try:
-            from production.memory.memory_manager import MemoryManager
+            from src.production.memory.memory_manager import MemoryManager
 
             assert MemoryManager is not None
         except ImportError:
@@ -57,7 +57,7 @@ class TestWandbManager:
     def test_wandb_manager_exists(self) -> None:
         """Test that wandb manager can be imported."""
         try:
-            from production.memory.wandb_manager import WandbManager
+            from src.production.memory.wandb_manager import WandbManager
 
             assert WandbManager is not None
         except ImportError:

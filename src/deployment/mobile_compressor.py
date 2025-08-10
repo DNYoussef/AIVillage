@@ -7,7 +7,7 @@ from pathlib import Path
 
 import torch
 
-from core.compression.unified_compressor import UnifiedCompressor
+from src.core.compression.unified_compressor import UnifiedCompressor
 
 logger = logging.getLogger(__name__)
 

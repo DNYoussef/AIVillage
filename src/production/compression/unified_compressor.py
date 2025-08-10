@@ -25,13 +25,7 @@ from torch import nn
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 # Import best implementations from agent_forge
-from agent_forge.compression import (
-    BITNETCompressor,
-    SEEDLMCompressor,
-    VPTQCompressor,
-    bitnet_compress,
-    seedlm_compress,
-)
+from src.agent_forge.compression import BITNETCompressor, SEEDLMCompressor, VPTQCompressor, bitnet_compress, seedlm_compress
 
 # Import production pipeline components
 from .compression_pipeline import CompressionConfig, CompressionPipeline

@@ -10,7 +10,7 @@ import torch
 import torch.nn.functional as F
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-from agent_forge.self_awareness.metacognaitve_eval import MetacognitiveEvaluatorTask
+from src.agent_forge.self_awareness.metacognaitve_eval import MetacognitiveEvaluatorTask
 
 nltk.download("punkt")
 

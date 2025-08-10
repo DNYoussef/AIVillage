@@ -9,7 +9,7 @@ import uuid
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
-from digital_twin.core.digital_twin import DigitalTwin, LearningProfile, LearningSession
+from src.digital_twin.core.digital_twin import DigitalTwin, LearningProfile, LearningSession
 
 app = FastAPI(title="Digital Twin API")
 

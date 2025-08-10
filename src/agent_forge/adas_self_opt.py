@@ -26,7 +26,7 @@ from torch import nn
 from transformers import AutoConfig, AutoModelForCausalLM
 import wandb
 
-from agent_forge.geometry_feedback import GeometryTracker
+from src.agent_forge.geometry_feedback import GeometryTracker
 
 logger = logging.getLogger(__name__)
 
