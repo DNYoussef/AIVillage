@@ -124,7 +124,7 @@ class PipelineState(BaseModel):
         checkpoint_path = checkpoint_dir / f"unified_pipeline_{self.run_id}.json"
 
         with open(checkpoint_path, "w") as f:
-            json.dump(self.dict(), f, indent=2, default=str)
+            json.dump(self.model_dump(), f, indent=2, default=str)
 
         logger.info(f"Pipeline checkpoint saved: {checkpoint_path}")
 
@@ -167,7 +167,7 @@ class UnifiedPipeline:
                 entity=self.config.wandb_entity,
                 job_type="unified_pipeline",
                 tags=[*self.config.wandb_tags, f"run-{self.state.run_id}"],
-                config=self.config.dict(),
+                config=self.config.model_dump(),
                 name=f"unified_pipeline_{self.state.run_id}",
             )
 
@@ -495,9 +495,10 @@ class UnifiedPipeline:
                 model_artifact = wandb.Artifact(
                     f"agent_forge_final_model_{self.state.run_id}",
                     type="model",
-                    description=f"Complete Agent Forge model with {
-                        self.state.total_improvement:.1f}% improvement and {
-                        self.state.compression_ratio:.1f}x compression",
+                    description=(
+                        f"Complete Agent Forge model with {self.state.total_improvement:.1f}% improvement and "
+                        f"{self.state.compression_ratio:.1f}x compression"
+                    ),
                 )
                 model_artifact.add_dir(self.state.final_model_path)
                 self.wandb_run.log_artifact(model_artifact)

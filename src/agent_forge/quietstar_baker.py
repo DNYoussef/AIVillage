@@ -20,7 +20,7 @@ from typing import Any
 import click
 from datasets import load_dataset
 import numpy as np
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 import torch
 from torch import nn
 import torch.nn.functional as F
@@ -89,8 +89,9 @@ class QuietSTaRConfig(BaseModel):
     wandb_entity: str | None = None
     wandb_tags: list[str] = Field(default_factory=lambda: ["quietstar", "reasoning"])
 
-    @validator("device")
-    def validate_device(self, v):
+    @field_validator("device")
+    @classmethod
+    def validate_device(cls, v: str) -> str:
         if v == "auto":
             return "cuda" if torch.cuda.is_available() else "cpu"
         return v
@@ -812,7 +813,7 @@ class QuietSTaRBaker:
                 entity=self.config.wandb_entity,
                 job_type="quietstar",
                 tags=self.config.wandb_tags,
-                config=self.config.dict(),
+                config=self.config.model_dump(),
             )
 
             logger.info(f"W&B initialized: {self.wandb_run.url}")

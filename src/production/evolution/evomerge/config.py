@@ -1,6 +1,6 @@
 import os
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, ValidationInfo, field_validator
 
 
 class ModelDomain(BaseModel):
@@ -36,16 +36,18 @@ class MergeSettings(BaseModel):
     use_disk_based_merge: bool = Field(default=True)
     chunk_size: int = Field(default=1000000)
 
-    @validator("merge_method")
-    def validate_merge_method(self, v):
+    @field_validator("merge_method")
+    @classmethod
+    def validate_merge_method(cls, v: str) -> str:
         valid_methods = ["ps", "dfs", "ps_dfs"]
         if v not in valid_methods:
             msg = f"Invalid merge method. Choose from: {', '.join(valid_methods)}"
             raise ValueError(msg)
         return v
 
-    @validator("ps_techniques", "dfs_techniques")
-    def validate_techniques(self, v):
+    @field_validator("ps_techniques", "dfs_techniques")
+    @classmethod
+    def validate_techniques(cls, v: list[str]) -> list[str]:
         valid_techniques = [
             "linear",
             "slerp",
@@ -61,22 +63,25 @@ class MergeSettings(BaseModel):
                 raise ValueError(msg)
         return v
 
-    @validator("custom_dir")
-    def validate_custom_dir(self, v):
+    @field_validator("custom_dir")
+    @classmethod
+    def validate_custom_dir(cls, v: str) -> str:
         if not os.path.exists(v):
             os.makedirs(v, exist_ok=True)
         return v
 
-    @validator("cross_domain_strategy")
-    def validate_cross_domain_strategy(self, v):
+    @field_validator("cross_domain_strategy")
+    @classmethod
+    def validate_cross_domain_strategy(cls, v: str) -> str:
         valid_strategies = ["adapter", "embedding_only", "full"]
         if v not in valid_strategies:
             msg = f"Invalid cross-domain strategy. Choose from: {', '.join(valid_strategies)}"
             raise ValueError(msg)
         return v
 
-    @validator("mask_strategy")
-    def validate_mask_strategy(self, v):
+    @field_validator("mask_strategy")
+    @classmethod
+    def validate_mask_strategy(cls, v: str) -> str:
         valid_strategies = ["random", "magnitude"]
         if v not in valid_strategies:
             msg = f"Invalid mask strategy. Choose from: {', '.join(valid_strategies)}"
@@ -94,15 +99,18 @@ class EvolutionSettings(BaseModel):
     adaptive_mutation: bool = Field(default=True)
     objectives: list[str] = Field(default=["overall_score", "perplexity"])
 
-    @validator("tournament_size")
-    def validate_tournament_size(self, v, values):
-        if "population_size" in values and v > values["population_size"]:
+    @field_validator("tournament_size")
+    @classmethod
+    def validate_tournament_size(cls, v: int, info: ValidationInfo) -> int:
+        population_size = info.data.get("population_size")
+        if population_size is not None and v > population_size:
             msg = "Tournament size must be less than or equal to population size"
             raise ValueError(msg)
         return v
 
-    @validator("objectives")
-    def validate_objectives(self, v):
+    @field_validator("objectives")
+    @classmethod
+    def validate_objectives(cls, v: list[str]) -> list[str]:
         valid_objectives = ["overall_score", "perplexity", "accuracy", "coherence"]
         for obj in v:
             if obj not in valid_objectives:
