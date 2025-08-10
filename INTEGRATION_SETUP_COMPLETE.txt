@@ -1,0 +1,49 @@
+
+================================================================================
+INTEGRATION FIXES COMPLETE
+================================================================================
+
+All database schema issues have been fixed and test data has been added.
+
+To start the services, you need to:
+
+1. INSTALL DEPENDENCIES (if not already installed):
+   pip install fastapi uvicorn[standard] aiohttp redis websockets
+
+2. START API SERVERS:
+   python src/api/start_api_servers.py
+   
+   This will start:
+   - Digital Twin API on port 8080
+   - Evolution Metrics API on port 8081  
+   - RAG Pipeline API on port 8082
+
+3. START P2P SERVICES:
+   python src/core/p2p/start_p2p_services.py
+   
+   This will start:
+   - LibP2P TCP on port 4001
+   - LibP2P WebSocket on port 4002
+   - mDNS discovery on port 5353
+
+4. VERIFY SERVICES:
+   python validate_services_simple.py
+   
+   This will check that all services are responding correctly.
+
+5. ACCESS API DOCUMENTATION:
+   - Digital Twin: http://localhost:8080/docs
+   - Evolution Metrics: http://localhost:8081/docs
+   - RAG Pipeline: http://localhost:8082/docs
+
+ENVIRONMENT CONFIGURATION:
+- Configuration file created at: .env.integration
+- Load with: source .env.integration (Linux/Mac) or set -a && . .env.integration && set +a (Windows Git Bash)
+
+DATABASE LOCATIONS:
+- Evolution Metrics: data/evolution_metrics.db
+- Digital Twin: data/digital_twin.db
+- RAG Index: data/rag_index.db
+
+All databases have WAL mode enabled for concurrent access.
+================================================================================
