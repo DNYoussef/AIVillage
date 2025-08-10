@@ -1,20 +1,20 @@
 # AIVillage Architecture
 
-AIVillage is a comprehensive self-evolving AI infrastructure platform that has evolved from a monolithic Python project into a distributed system with production-ready components, experimental microservices, and autonomous evolution capabilities.
+AIVillage is a self-evolving AI infrastructure platform that has evolved from a monolithic Python project into a distributed system with prototype components, experimental microservices, and autonomous evolution capabilities. Testing remains limited (5 of 24 integration tests passing per `integration_test_results.json`).
 
 ## System Architecture Overview
 
 The platform is organized into three main layers:
 
-1. **Production Layer**: Battle-tested components ready for production use
+1. **Production Layer**: Prototype components targeting production readiness
 2. **Experimental Layer**: Development components with evolving APIs
 3. **Infrastructure Layer**: Core deployment and communication systems
 
 ## Production Architecture
 
-### Core Production Components
+### Core Prototype Components
 
-- **Compression System** (`production/compression/`): Advanced model compression with 4-8x reduction
+- **Compression System** (`production/compression/`): Advanced model compression with 4–8× target reduction
   - BitNet implementation for 1-bit neural networks
   - VPTQ (Vector Post-Training Quantization)
   - SeedLM sparse model representation
@@ -26,7 +26,7 @@ The platform is organized into three main layers:
   - Cross-domain model merging
   - Advanced visualization tools
 
-- **RAG System** (`production/rag/rag_system/`): Production-grade retrieval-augmented generation
+- **RAG System** (`production/rag/rag_system/`): Retrieval-augmented generation with <100 ms latency target
   - Cognitive nexus for advanced reasoning
   - Hybrid retrieval mechanisms
   - Confidence estimation and error handling
@@ -67,7 +67,7 @@ Advanced training methodologies:
 
 ### Agent Forge (`agent_forge/`)
 
-Production model deployment infrastructure:
+Prototype model deployment infrastructure:
 - FastAPI-based model servers
 - Automated deployment pipelines
 - Model versioning and management
@@ -83,9 +83,9 @@ Decentralized networking and resource management:
 
 ### Quality Assurance
 
-Comprehensive testing and monitoring infrastructure:
+Comprehensive testing and monitoring infrastructure (partial):
 - Automated quality gates
-- Performance benchmarking
+- Performance benchmarking (targets, not validated)
 - Security auditing
 - Memory optimization
 - Real-time health monitoring
@@ -94,7 +94,7 @@ Comprehensive testing and monitoring infrastructure:
 
 ### Production APIs
 
-The system exposes several production-ready API endpoints:
+The system exposes several API endpoints under development (see `integration_test_results.json` for current pass rates):
 
 ```
 Gateway Service (port 8000):

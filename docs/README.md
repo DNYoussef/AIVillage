@@ -1,6 +1,8 @@
 # AIVillage - Distributed AI Platform
 
-⚠️ **Development Status**: This project is under active development with **significant functionality implemented** but requires further work for production deployment. This README provides an **honest assessment** based on comprehensive code analysis and real testing results.
+⚠️ **Development Status**: This project is under active development with **significant functionality implemented** but requiring further work for production deployment. This README provides an **honest assessment** based on comprehensive code analysis and real testing results.
+
+🧪 **Latest Test Summary**: 5 of 24 integration tests passing (`integration_test_results.json`).
 
 [![CI Pipeline](https://github.com/DNYoussef/AIVillage/workflows/CI/badge.svg)](https://github.com/DNYoussef/AIVillage/actions)
 [![Code Quality](https://img.shields.io/badge/code%20quality-85%25-brightgreen)](https://github.com/DNYoussef/AIVillage)
@@ -32,10 +34,10 @@ AIVillage is a sophisticated multi-agent AI system with self-evolution capabilit
 
 ### Core Functionality
 - 🟡 **Agent Communication**: Protocol defined but end-to-end workflow needs validation
-- 🟡 **Unified Compression System**: Consolidated from 28+ fragmented implementations into production-ready pipeline with 4x-100x+ compression ratios ([documentation](src/production/compression/README.md))
-- 🟡 **RAG System**: Structure implemented; baseline latency ~1.19 ms/query with 100% accuracy ([results](docs/benchmarks/rag_latency_results.json))
+- 🟡 **Unified Compression System**: Consolidated from 28+ fragmented implementations into a pipeline targeting 4×–100× compression ([documentation](src/production/compression/README.md))
+- 🟡 **RAG System**: Structure implemented; small benchmark of 5 queries averaged **1.509 ms** with 100% accuracy ([results](docs/benchmarks/rag_latency_results.json))
 - 🟡 **Evolution System**: Simulation logic complete but real agent evolution needs testing
-- 🟡 **P2P Networking**: Basic implementation; localhost round-trip latency ~2.076 ms with 100% success rate ([results](docs/benchmarks/p2p_network_results.json))
+- 🟡 **P2P Networking**: Basic implementation; 5-message localhost benchmark averaged **0.748 ms** round trip with 100% success ([results](docs/benchmarks/p2p_network_results.json))
 
 ## Known Issues
 
