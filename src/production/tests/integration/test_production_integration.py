@@ -7,12 +7,12 @@ import torch
 
 # Import all production components
 try:
-    from production.benchmarking import RealBenchmark
-    from production.compression import CompressionPipeline
-    from production.evolution import EvolutionaryTournament
-    from production.geometry import GeometryFeedback
-    from production.memory import MemoryManager
-    from production.rag import RAGPipeline
+    from src.production.benchmarking import RealBenchmark
+    from src.production.compression import CompressionPipeline
+    from src.production.evolution import EvolutionaryTournament
+    from src.production.geometry import GeometryFeedback
+    from src.production.memory import MemoryManager
+    from src.production.rag import RAGPipeline
 except ImportError:
     pytest.skip("Production modules not available", allow_module_level=True)
 

@@ -1422,12 +1422,7 @@ async def run_evomerge(config: dict[str, Any]) -> "PhaseResult":
     Returns:
         PhaseResult with status, artifacts, and metrics.
     """
-    from agent_forge.forge_orchestrator import (
-        PhaseArtifact,
-        PhaseResult,
-        PhaseStatus,
-        PhaseType,
-    )
+    from src.agent_forge.forge_orchestrator import PhaseArtifact, PhaseResult, PhaseStatus, PhaseType
 
     start_time = time.time()
 

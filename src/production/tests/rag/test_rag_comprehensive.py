@@ -5,8 +5,8 @@ Verifies retrieval and generation capabilities.
 import pytest
 
 try:
-    from production.rag import RAGPipeline
-    from production.rag.rag_system import RAGSystem
+    from src.production.rag import RAGPipeline
+    from src.production.rag.rag_system import RAGSystem
 except ImportError:
     # Handle missing imports gracefully
     pytest.skip("Production RAG modules not available", allow_module_level=True)
@@ -18,7 +18,7 @@ class TestRAGSystem:
     def test_rag_imports(self) -> None:
         """Test that RAG modules can be imported."""
         try:
-            from production.rag.rag_system.main import RAGSystem
+            from src.production.rag.rag_system.main import RAGSystem
 
             assert RAGSystem is not None
         except ImportError:
@@ -27,7 +27,7 @@ class TestRAGSystem:
     def test_vector_store_exists(self) -> None:
         """Test that vector store exists."""
         try:
-            from production.rag.rag_system.vector_store import VectorStore
+            from src.production.rag.rag_system.vector_store import VectorStore
 
             assert VectorStore is not None
         except ImportError:
@@ -74,7 +74,7 @@ class TestRAGRetrieval:
     def test_faiss_backend_exists(self) -> None:
         """Test FAISS backend availability."""
         try:
-            from production.rag.rag_system.faiss_backend import FAISSBackend
+            from src.production.rag.rag_system.faiss_backend import FAISSBackend
 
             assert FAISSBackend is not None
         except ImportError:
@@ -83,7 +83,7 @@ class TestRAGRetrieval:
     def test_graph_explain_exists(self) -> None:
         """Test graph explanation module."""
         try:
-            from production.rag.rag_system.graph_explain import GraphExplain
+            from src.production.rag.rag_system.graph_explain import GraphExplain
 
             assert GraphExplain is not None
         except ImportError:

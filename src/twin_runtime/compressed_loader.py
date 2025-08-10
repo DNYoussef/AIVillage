@@ -1,6 +1,6 @@
 import torch
 
-from agent_forge.compression import CompressionConfig, TwoStageCompressor
+from src.agent_forge.compression import CompressionConfig, TwoStageCompressor
 
 
 class CompressedModelLoader:

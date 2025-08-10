@@ -1,9 +1,9 @@
 import click
 import yaml
 
-from agent_forge.mergekit.config import MergeKitConfig
-from agent_forge.mergekit.merger import MergeKitMerger
-from agent_forge.mergekit.utils import load_models, save_model
+from src.agent_forge.mergekit.config import MergeKitConfig
+from src.agent_forge.mergekit.merger import MergeKitMerger
+from src.agent_forge.mergekit.utils import load_models, save_model
 
 
 @click.command()

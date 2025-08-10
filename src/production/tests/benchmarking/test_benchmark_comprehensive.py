@@ -5,8 +5,8 @@ Verifies real benchmark functionality and metrics.
 import pytest
 
 try:
-    from production.benchmarking import RealBenchmark
-    from production.benchmarking.real_benchmark import RealBenchmark as RB
+    from src.production.benchmarking import RealBenchmark
+    from src.production.benchmarking.real_benchmark import RealBenchmark as RB
 except ImportError:
     # Handle missing imports gracefully
     pytest.skip(
@@ -20,7 +20,7 @@ class TestRealBenchmark:
     def test_real_benchmark_exists(self) -> None:
         """Test that real benchmark can be imported."""
         try:
-            from production.benchmarking.real_benchmark import RealBenchmark
+            from src.production.benchmarking.real_benchmark import RealBenchmark
 
             assert RealBenchmark is not None
         except ImportError:

@@ -18,11 +18,7 @@ from typing import Any
 
 import torch
 
-from agent_forge.benchmark_suite import (
-    BenchmarkConfig,
-    ComparisonReport,
-    ComprehensiveBenchmark,
-)
+from src.agent_forge.benchmark_suite import BenchmarkConfig, ComparisonReport, ComprehensiveBenchmark
 
 logger = logging.getLogger(__name__)
 

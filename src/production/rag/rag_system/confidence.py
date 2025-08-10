@@ -3,7 +3,7 @@ from __future__ import annotations
 """Rule-based confidence scoring utilities."""
 
 
-from core.evidence import ConfidenceTier, EvidencePack
+from src.core.evidence import ConfidenceTier, EvidencePack
 
 THRESHOLDS = {
     ConfidenceTier.HIGH: 0.8,

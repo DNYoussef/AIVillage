@@ -6,9 +6,9 @@ import pytest
 import torch
 
 try:
-    from production.geometry import GeometryFeedback
-    from production.geometry.geometry import Snapshot
-    from production.geometry.geometry_feedback import GeometryFeedback as GF
+    from src.production.geometry import GeometryFeedback
+    from src.production.geometry.geometry import Snapshot
+    from src.production.geometry.geometry_feedback import GeometryFeedback as GF
 except ImportError:
     # Handle missing imports gracefully
     pytest.skip("Production geometry modules not available", allow_module_level=True)
@@ -20,7 +20,7 @@ class TestGeometryFeedback:
     def test_geometry_feedback_exists(self) -> None:
         """Test that geometry feedback can be imported."""
         try:
-            from production.geometry.geometry_feedback import GeometryFeedback
+            from src.production.geometry.geometry_feedback import GeometryFeedback
 
             assert GeometryFeedback is not None
         except ImportError:
@@ -67,7 +67,7 @@ class TestGeometrySnapshot:
     def test_snapshot_concept(self) -> None:
         """Test snapshot concept."""
         try:
-            from production.geometry.geometry.snapshot import Snapshot
+            from src.production.geometry.geometry.snapshot import Snapshot
 
             assert Snapshot is not None
         except ImportError:

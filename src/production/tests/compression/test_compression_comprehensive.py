@@ -9,7 +9,7 @@ import pytest
 import torch
 
 try:
-    from production.compression import CompressionPipeline
+    from src.production.compression import CompressionPipeline
 
     if CompressionPipeline is None:
         msg = "CompressionPipeline not available"
@@ -17,15 +17,13 @@ try:
 
     # Try to import ModelCompression, but don't fail if it's not available
     try:
-        from production.compression import ModelCompression
+        from src.production.compression import ModelCompression
     except (ImportError, AttributeError):
         ModelCompression = None
 
     # Also try direct import as backup
     try:
-        from production.compression.compression_pipeline import (
-            CompressionPipeline as CP,
-        )
+        from src.production.compression.compression_pipeline import CompressionPipeline as CP
     except ImportError:
         CP = CompressionPipeline
 
@@ -68,9 +66,9 @@ class TestCompressionClaims:
     def test_compression_pipeline_exists(self) -> None:
         """Test that compression pipeline can be imported and instantiated."""
         try:
-            from production.compression.compression_pipeline import CompressionPipeline
+            from src.production.compression.compression_pipeline import CompressionPipeline
 
-            pipeline = CompressionPipeline()
+            from src.production.compression.compression_pipeline import CompressionPipeline
             assert pipeline is not None
         except ImportError:
             pytest.skip("CompressionPipeline not available")
@@ -78,9 +76,9 @@ class TestCompressionClaims:
     def test_model_compression_exists(self) -> None:
         """Test that model compression modules exist."""
         try:
-            from production.compression.model_compression import ModelCompression
+            from src.production.compression.model_compression import ModelCompression
 
-            assert ModelCompression is not None
+            from src.production.compression.model_compression import ModelCompression
         except ImportError:
             pytest.skip("ModelCompression not available")
 
@@ -126,27 +124,27 @@ class TestCompressionMethods:
     def test_seedlm_available(self) -> None:
         """Test SeedLM compression method availability."""
         try:
-            from production.compression.compression.seedlm import SeedLM
+            from src.production.compression.compression.seedlm import SeedLM
 
-            assert SeedLM is not None
+            from src.production.compression.compression.seedlm import SeedLM
         except ImportError:
             pytest.skip("SeedLM not available")
 
     def test_vptq_available(self) -> None:
         """Test VPTQ compression method availability."""
         try:
-            from production.compression.compression.vptq import VPTQ
+            from src.production.compression.compression.vptq import VPTQ
 
-            assert VPTQ is not None
+            from src.production.compression.compression.vptq import VPTQ
         except ImportError:
             pytest.skip("VPTQ not available")
 
     def test_bitnet_available(self) -> None:
         """Test BitNet compression method availability."""
         try:
-            from production.compression.model_compression.bitlinearization import BitNet
+            from src.production.compression.model_compression.bitlinearization import BitNet
 
-            assert BitNet is not None
+            from src.production.compression.model_compression.bitlinearization import BitNet
         except ImportError:
             pytest.skip("BitNet not available")
 

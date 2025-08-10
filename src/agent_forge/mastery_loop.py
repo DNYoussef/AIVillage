@@ -29,12 +29,12 @@ from tqdm import tqdm
 from transformers import AutoModelForCausalLM, AutoTokenizer
 import wandb
 
-from agent_forge.geometry.id_twonn import twonn
-from agent_forge.training.grokfast import GrokFastTask
-from agent_forge.training.self_modeling import SelfModelingTask
+from src.agent_forge.geometry.id_twonn import twonn
+from src.agent_forge.training.grokfast import GrokFastTask
+from src.agent_forge.training.self_modeling import SelfModelingTask
 
 # Import existing training components
-from agent_forge.training.sleep_and_dream import SleepAndDreamTask
+from src.agent_forge.training.sleep_and_dream import SleepAndDreamTask
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -748,12 +748,7 @@ async def run_self_modeling(config: dict[str, Any]) -> "PhaseResult":
     from datetime import datetime
     import time
 
-    from agent_forge.forge_orchestrator import (
-        PhaseArtifact,
-        PhaseResult,
-        PhaseStatus,
-        PhaseType,
-    )
+    from src.agent_forge.forge_orchestrator import PhaseArtifact, PhaseResult, PhaseStatus, PhaseType
 
     start_time = time.time()
 

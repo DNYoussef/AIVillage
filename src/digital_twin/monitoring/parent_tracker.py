@@ -400,7 +400,7 @@ class ParentProgressTracker:
         """Initialize learning milestones for a student."""
         # Get student's current grade/age from digital twin
         try:
-            from digital_twin.core.digital_twin import digital_twin
+            from src.digital_twin.core.digital_twin import digital_twin
 
             if student_id in digital_twin.students:
                 student = digital_twin.students[student_id]

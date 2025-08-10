@@ -1,7 +1,7 @@
 import logging
 from typing import Any
 
-from core.error_handling import StandardCommunicationProtocol
+from src.core.error_handling import StandardCommunicationProtocol
 
 logger = logging.getLogger(__name__)
 

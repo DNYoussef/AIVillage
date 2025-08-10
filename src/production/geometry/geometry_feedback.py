@@ -24,7 +24,7 @@ import torch
 from torch import nn
 import wandb
 
-from agent_forge.geometry.id_twonn import twonn
+from src.agent_forge.geometry.id_twonn import twonn
 
 logger = logging.getLogger(__name__)
 
@@ -725,12 +725,7 @@ async def run_geometry(config: dict[str, Any]) -> "PhaseResult":
     from datetime import datetime
     import time
 
-    from agent_forge.forge_orchestrator import (
-        PhaseArtifact,
-        PhaseResult,
-        PhaseStatus,
-        PhaseType,
-    )
+    from src.agent_forge.forge_orchestrator import PhaseArtifact, PhaseResult, PhaseStatus, PhaseType
 
     start_time = time.time()
 
