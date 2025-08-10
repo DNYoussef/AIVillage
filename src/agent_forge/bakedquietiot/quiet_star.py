@@ -1,5 +1,5 @@
-from langroid import ChatAgent, ChatAgentConfig, Task
 import torch
+from langroid import ChatAgent, ChatAgentConfig, Task
 from torch import nn
 from transformers import AutoModelForCausalLM, AutoTokenizer
 

@@ -2,11 +2,12 @@
 """Comprehensive verification of stub elimination sprint
 Tests all implemented components to ensure they actually work.
 """
+
 import asyncio
 import json
-from pathlib import Path
 import sys
 import time
+from pathlib import Path
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent / "src"))
@@ -373,10 +374,10 @@ async def main():
     print("=" * 60)
     print(f"Total Tests: {total_tests}")
     print(
-        f"Passed: {test_results['passed']} ({test_results['passed']/total_tests*100:.1f}%)"
+        f"Passed: {test_results['passed']} ({test_results['passed'] / total_tests * 100:.1f}%)"
     )
     print(
-        f"Failed: {test_results['failed']} ({test_results['failed']/total_tests*100:.1f}%)"
+        f"Failed: {test_results['failed']} ({test_results['failed'] / total_tests * 100:.1f}%)"
     )
     print(f"Time: {elapsed:.2f} seconds")
 

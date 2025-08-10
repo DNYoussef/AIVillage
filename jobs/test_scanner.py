@@ -5,9 +5,9 @@ Validates scanner components with mock data to ensure functionality.
 """
 
 import asyncio
+import tempfile
 from datetime import datetime
 from pathlib import Path
-import tempfile
 
 from hyperag_scan_hidden_links import (
     CoMentionPair,

@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Simplified verification focusing on core functionality."""
-from pathlib import Path
+
 import sys
+from pathlib import Path
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent / "src"))
@@ -121,8 +122,10 @@ try:
     protocol_path = Path(__file__).parent / "src" / "communications" / "protocol.py"
     if protocol_path.exists():
         health = checker.check_component_health(protocol_path, "protocol")
-        print(f"  [OK] Protocol health score: {health['health_score']*100:.1f}%")
-        print(f"  [OK] Implementation score: {health['implementation_score']*100:.1f}%")
+        print(f"  [OK] Protocol health score: {health['health_score'] * 100:.1f}%")
+        print(
+            f"  [OK] Implementation score: {health['implementation_score'] * 100:.1f}%"
+        )
         print(f"  [OK] Lines of code: {health['line_count']}")
 
         if health.get("working_indicators"):

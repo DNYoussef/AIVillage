@@ -4,17 +4,17 @@ No more stubs - this actually connects agents!
 """
 
 import asyncio
-from collections.abc import Callable
 import hashlib
 import json
 import logging
 import os
 import ssl
 import time
+from collections.abc import Callable
 from typing import Any
 
-from cryptography.fernet import Fernet
 import websockets
+from cryptography.fernet import Fernet
 
 from .message import Message
 
@@ -145,7 +145,6 @@ class CommunicationsProtocol:
                 return False
 
         try:
-
             # Add metadata
             message_dict["from"] = self.agent_id
             message_dict["timestamp"] = time.time()

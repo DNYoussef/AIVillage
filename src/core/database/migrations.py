@@ -2,7 +2,7 @@
 
 This module provides comprehensive database schema migration functionality with:
 - Version tracking and history
-- Forward and backward migrations  
+- Forward and backward migrations
 - Data preservation during schema changes
 - Migration validation and rollback
 - Cross-database migration support
@@ -10,12 +10,12 @@ This module provides comprehensive database schema migration functionality with:
 
 from __future__ import annotations
 
-from datetime import datetime
 import json
 import logging
-from pathlib import Path
 import sqlite3
 import time
+from datetime import datetime
+from pathlib import Path
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -32,7 +32,7 @@ class Migration:
         up_sql: str,
         down_sql: str = "",
         data_migration: callable | None = None,
-        requires: list[int] | None = None
+        requires: list[int] | None = None,
     ):
         self.version = version
         self.name = name
@@ -54,7 +54,7 @@ class MigrationManager:
         self.migrations: dict[str, list[Migration]] = {
             "evolution_metrics": [],
             "digital_twin": [],
-            "rag_index": []
+            "rag_index": [],
         }
         self._load_migrations()
 
@@ -73,7 +73,7 @@ class MigrationManager:
                 DROP TABLE IF EXISTS fitness_metrics;
                 DROP TABLE IF EXISTS evolution_rounds;
                 DROP TABLE IF EXISTS schema_version;
-                """
+                """,
             ),
             Migration(
                 version=2,
@@ -83,7 +83,7 @@ class MigrationManager:
                 ALTER TABLE fitness_metrics ADD COLUMN agent_type TEXT;
                 ALTER TABLE fitness_metrics ADD COLUMN generation INTEGER DEFAULT 0;
                 ALTER TABLE evolution_rounds ADD COLUMN configuration TEXT;
-                
+
                 CREATE INDEX IF NOT EXISTS idx_fitness_metrics_agent_type ON fitness_metrics(agent_type);
                 CREATE INDEX IF NOT EXISTS idx_fitness_metrics_generation ON fitness_metrics(generation);
                 """,
@@ -91,8 +91,8 @@ class MigrationManager:
                 DROP INDEX IF EXISTS idx_fitness_metrics_generation;
                 DROP INDEX IF EXISTS idx_fitness_metrics_agent_type;
                 -- Note: SQLite doesn't support DROP COLUMN, would need table recreation
-                """
-            )
+                """,
+            ),
         ]
 
         # Digital Twin migrations
@@ -107,7 +107,7 @@ class MigrationManager:
                 DROP TABLE IF EXISTS learning_sessions;
                 DROP TABLE IF EXISTS learning_profiles;
                 DROP TABLE IF EXISTS schema_version;
-                """
+                """,
             ),
             Migration(
                 version=2,
@@ -117,14 +117,14 @@ class MigrationManager:
                 ALTER TABLE learning_profiles ADD COLUMN privacy_consent TEXT;
                 ALTER TABLE learning_profiles ADD COLUMN data_retention_until TIMESTAMP;
                 ALTER TABLE learning_sessions ADD COLUMN privacy_level TEXT DEFAULT 'standard';
-                
+
                 CREATE INDEX IF NOT EXISTS idx_learning_profiles_retention ON learning_profiles(data_retention_until);
                 """,
                 down_sql="""
                 DROP INDEX IF EXISTS idx_learning_profiles_retention;
                 -- Note: SQLite doesn't support DROP COLUMN, would need table recreation
-                """
-            )
+                """,
+            ),
         ]
 
         # RAG Index migrations
@@ -140,7 +140,7 @@ class MigrationManager:
                 DROP TABLE IF EXISTS chunks;
                 DROP TABLE IF EXISTS documents;
                 DROP TABLE IF EXISTS schema_version;
-                """
+                """,
             ),
             Migration(
                 version=2,
@@ -150,7 +150,7 @@ class MigrationManager:
                 ALTER TABLE chunks ADD COLUMN semantic_keywords TEXT;
                 ALTER TABLE documents ADD COLUMN document_category TEXT;
                 ALTER TABLE query_cache ADD COLUMN query_intent TEXT;
-                
+
                 CREATE TABLE IF NOT EXISTS semantic_clusters (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     cluster_id TEXT UNIQUE NOT NULL,
@@ -159,7 +159,7 @@ class MigrationManager:
                     keywords TEXT,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 );
-                
+
                 CREATE INDEX IF NOT EXISTS idx_documents_category ON documents(document_category);
                 CREATE INDEX IF NOT EXISTS idx_semantic_clusters_keywords ON semantic_clusters(keywords);
                 """,
@@ -168,8 +168,8 @@ class MigrationManager:
                 DROP INDEX IF EXISTS idx_documents_category;
                 DROP TABLE IF EXISTS semantic_clusters;
                 -- Note: SQLite doesn't support DROP COLUMN, would need table recreation
-                """
-            )
+                """,
+            ),
         ]
 
     async def get_current_version(self, database: str) -> int:
@@ -195,19 +195,19 @@ class MigrationManager:
         with self.database_manager.get_connection(database) as conn:
             try:
                 cursor = conn.cursor()
-                cursor.execute("""
-                SELECT version, applied_at, description 
-                FROM schema_version 
+                cursor.execute(
+                    """
+                SELECT version, applied_at, description
+                FROM schema_version
                 ORDER BY version ASC
-                """)
+                """
+                )
 
                 history = []
                 for row in cursor.fetchall():
-                    history.append({
-                        "version": row[0],
-                        "applied_at": row[1],
-                        "description": row[2]
-                    })
+                    history.append(
+                        {"version": row[0], "applied_at": row[1], "description": row[2]}
+                    )
 
                 return history
 
@@ -230,15 +230,18 @@ class MigrationManager:
         latest_version = max(m.version for m in available_migrations)
 
         if current_version >= latest_version:
-            logger.info(f"Database {database} is already at latest version {latest_version}")
+            logger.info(
+                f"Database {database} is already at latest version {latest_version}"
+            )
             return True
 
-        logger.info(f"Migrating {database} from version {current_version} to {latest_version}")
+        logger.info(
+            f"Migrating {database} from version {current_version} to {latest_version}"
+        )
 
         # Get migrations to apply
         migrations_to_apply = [
-            m for m in available_migrations
-            if m.version > current_version
+            m for m in available_migrations if m.version > current_version
         ]
         migrations_to_apply.sort(key=lambda m: m.version)
 
@@ -246,7 +249,9 @@ class MigrationManager:
         for migration in migrations_to_apply:
             success = await self._apply_migration(database, migration)
             if not success:
-                logger.error(f"Failed to apply migration {migration.version} to {database}")
+                logger.error(
+                    f"Failed to apply migration {migration.version} to {database}"
+                )
                 return False
             logger.info(f"Applied migration {migration.version}: {migration.name}")
 
@@ -264,7 +269,8 @@ class MigrationManager:
         if current_version < target_version:
             # Forward migration
             migrations_to_apply = [
-                m for m in self.migrations[database]
+                m
+                for m in self.migrations[database]
                 if current_version < m.version <= target_version
             ]
             migrations_to_apply.sort(key=lambda m: m.version)
@@ -277,7 +283,8 @@ class MigrationManager:
         else:
             # Backward migration (rollback)
             migrations_to_rollback = [
-                m for m in self.migrations[database]
+                m
+                for m in self.migrations[database]
                 if target_version < m.version <= current_version
             ]
             migrations_to_rollback.sort(key=lambda m: m.version, reverse=True)
@@ -300,7 +307,10 @@ class MigrationManager:
 
                 # Check if migration already applied
                 cursor = conn.cursor()
-                cursor.execute("SELECT 1 FROM schema_version WHERE version = ?", (migration.version,))
+                cursor.execute(
+                    "SELECT 1 FROM schema_version WHERE version = ?",
+                    (migration.version,),
+                )
                 if cursor.fetchone():
                     logger.warning(f"Migration {migration.version} already applied")
                     conn.rollback()
@@ -317,7 +327,7 @@ class MigrationManager:
                 # Record migration
                 conn.execute(
                     "INSERT INTO schema_version (version, description) VALUES (?, ?)",
-                    (migration.version, migration.description)
+                    (migration.version, migration.description),
                 )
 
                 # Commit transaction
@@ -348,7 +358,9 @@ class MigrationManager:
                 conn.executescript(migration.down_sql)
 
                 # Remove migration record
-                conn.execute("DELETE FROM schema_version WHERE version = ?", (migration.version,))
+                conn.execute(
+                    "DELETE FROM schema_version WHERE version = ?", (migration.version,)
+                )
 
                 # Commit transaction
                 conn.commit()
@@ -363,34 +375,36 @@ class MigrationManager:
 
     async def validate_migrations(self, database: str) -> dict[str, Any]:
         """Validate migration consistency and dependencies."""
-        validation_results = {
-            "valid": True,
-            "errors": [],
-            "warnings": []
-        }
+        validation_results = {"valid": True, "errors": [], "warnings": []}
 
         migrations = self.migrations.get(database, [])
         if not migrations:
-            validation_results["warnings"].append(f"No migrations defined for {database}")
+            validation_results["warnings"].append(
+                f"No migrations defined for {database}"
+            )
             return validation_results
 
         # Check version sequences
         versions = sorted([m.version for m in migrations])
         for i, version in enumerate(versions[1:], 1):
-            if version != versions[i-1] + 1:
+            if version != versions[i - 1] + 1:
                 validation_results["errors"].append(
-                    f"Missing migration version {versions[i-1] + 1} (gap between {versions[i-1]} and {version})"
+                    f"Missing migration version {versions[i - 1] + 1} (gap between {versions[i - 1]} and {version})"
                 )
                 validation_results["valid"] = False
 
         # Check for duplicate versions
         version_counts = {}
         for migration in migrations:
-            version_counts[migration.version] = version_counts.get(migration.version, 0) + 1
+            version_counts[migration.version] = (
+                version_counts.get(migration.version, 0) + 1
+            )
 
         for version, count in version_counts.items():
             if count > 1:
-                validation_results["errors"].append(f"Duplicate migration version {version}")
+                validation_results["errors"].append(
+                    f"Duplicate migration version {version}"
+                )
                 validation_results["valid"] = False
 
         # Check dependencies
@@ -432,7 +446,7 @@ migration_{next_version} = Migration(
     -- TODO: Add rollback migration SQL
     """,
     # data_migration=custom_data_migration_function,  # Optional
-    # requires=[{next_version-1}]  # Optional dependencies
+    # requires=[{next_version - 1}]  # Optional dependencies
 )
 
 # Optional: Custom data migration function
@@ -474,39 +488,47 @@ class DataMigrator:
                 # Migrate evolution rounds
                 if "rounds" in data:
                     for round_data in data["rounds"]:
-                        conn.execute("""
-                        INSERT OR REPLACE INTO evolution_rounds 
+                        conn.execute(
+                            """
+                        INSERT OR REPLACE INTO evolution_rounds
                         (start_time, end_time, status, agent_count, success_rate, metadata)
                         VALUES (?, ?, ?, ?, ?, ?)
-                        """, (
-                            round_data.get("start_time", time.time()),
-                            round_data.get("end_time"),
-                            round_data.get("status", "completed"),
-                            round_data.get("agent_count", 0),
-                            round_data.get("success_rate", 0.0),
-                            json.dumps(round_data.get("metadata", {}))
-                        ))
+                        """,
+                            (
+                                round_data.get("start_time", time.time()),
+                                round_data.get("end_time"),
+                                round_data.get("status", "completed"),
+                                round_data.get("agent_count", 0),
+                                round_data.get("success_rate", 0.0),
+                                json.dumps(round_data.get("metadata", {})),
+                            ),
+                        )
                         round_id = conn.lastrowid
 
                         # Migrate fitness metrics for this round
                         if "fitness_metrics" in round_data:
                             for metric in round_data["fitness_metrics"]:
-                                conn.execute("""
+                                conn.execute(
+                                    """
                                 INSERT INTO fitness_metrics
                                 (round_id, agent_id, evolution_id, fitness_score, improvement_delta, timestamp, metadata)
                                 VALUES (?, ?, ?, ?, ?, ?, ?)
-                                """, (
-                                    round_id,
-                                    metric.get("agent_id", "unknown"),
-                                    metric.get("evolution_id", "unknown"),
-                                    metric.get("fitness_score", 0.0),
-                                    metric.get("improvement_delta", 0.0),
-                                    metric.get("timestamp", time.time()),
-                                    json.dumps(metric.get("metadata", {}))
-                                ))
+                                """,
+                                    (
+                                        round_id,
+                                        metric.get("agent_id", "unknown"),
+                                        metric.get("evolution_id", "unknown"),
+                                        metric.get("fitness_score", 0.0),
+                                        metric.get("improvement_delta", 0.0),
+                                        metric.get("timestamp", time.time()),
+                                        json.dumps(metric.get("metadata", {})),
+                                    ),
+                                )
 
                 conn.commit()
-                logger.info(f"Successfully migrated evolution metrics from {json_file_path}")
+                logger.info(
+                    f"Successfully migrated evolution metrics from {json_file_path}"
+                )
                 return True
 
             except Exception as e:
@@ -518,7 +540,9 @@ class DataMigrator:
         """Migrate digital twin profiles from directory structure to database."""
         profiles_path = Path(profiles_dir)
         if not profiles_path.exists():
-            logger.warning(f"Profiles directory {profiles_dir} not found, skipping migration")
+            logger.warning(
+                f"Profiles directory {profiles_dir} not found, skipping migration"
+            )
             return True
 
         logger.info(f"Migrating digital twin profiles from {profiles_dir}")
@@ -534,59 +558,75 @@ class DataMigrator:
                             profile_data = json.load(f)
 
                         # Insert learning profile
-                        conn.execute("""
+                        conn.execute(
+                            """
                         INSERT OR REPLACE INTO learning_profiles
                         (student_id, name, age, grade_level, language, region, learning_style,
                          strengths, challenges, interests, attention_span_minutes,
                          preferred_session_times, accessibility_needs, motivation_triggers)
                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                        """, (
-                            profile_data.get("student_id", profile_file.stem),
-                            profile_data.get("name", "Unknown"),
-                            profile_data.get("age", 10),
-                            profile_data.get("grade_level", 5),
-                            profile_data.get("language", "en"),
-                            profile_data.get("region", "US"),
-                            profile_data.get("learning_style", "visual"),
-                            json.dumps(profile_data.get("strengths", [])),
-                            json.dumps(profile_data.get("challenges", [])),
-                            json.dumps(profile_data.get("interests", [])),
-                            profile_data.get("attention_span_minutes", 15),
-                            json.dumps(profile_data.get("preferred_session_times", [])),
-                            json.dumps(profile_data.get("accessibility_needs", [])),
-                            json.dumps(profile_data.get("motivation_triggers", []))
-                        ))
+                        """,
+                            (
+                                profile_data.get("student_id", profile_file.stem),
+                                profile_data.get("name", "Unknown"),
+                                profile_data.get("age", 10),
+                                profile_data.get("grade_level", 5),
+                                profile_data.get("language", "en"),
+                                profile_data.get("region", "US"),
+                                profile_data.get("learning_style", "visual"),
+                                json.dumps(profile_data.get("strengths", [])),
+                                json.dumps(profile_data.get("challenges", [])),
+                                json.dumps(profile_data.get("interests", [])),
+                                profile_data.get("attention_span_minutes", 15),
+                                json.dumps(
+                                    profile_data.get("preferred_session_times", [])
+                                ),
+                                json.dumps(profile_data.get("accessibility_needs", [])),
+                                json.dumps(profile_data.get("motivation_triggers", [])),
+                            ),
+                        )
 
                         # Migrate learning sessions if present
                         if "sessions" in profile_data:
-                            student_id = profile_data.get("student_id", profile_file.stem)
+                            student_id = profile_data.get(
+                                "student_id", profile_file.stem
+                            )
                             for session in profile_data["sessions"]:
-                                conn.execute("""
+                                conn.execute(
+                                    """
                                 INSERT INTO learning_sessions
                                 (session_id, student_id, start_time, end_time, duration_minutes,
                                  concepts_covered, questions_asked, questions_correct,
                                  engagement_score, difficulty_level, session_notes)
                                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                                """, (
-                                    session.get("session_id", f"{student_id}_{time.time()}"),
-                                    student_id,
-                                    session.get("start_time", datetime.now().isoformat()),
-                                    session.get("end_time"),
-                                    session.get("duration_minutes", 0),
-                                    json.dumps(session.get("concepts_covered", [])),
-                                    session.get("questions_asked", 0),
-                                    session.get("questions_correct", 0),
-                                    session.get("engagement_score", 0.0),
-                                    session.get("difficulty_level", 0.5),
-                                    session.get("session_notes", "")
-                                ))
+                                """,
+                                    (
+                                        session.get(
+                                            "session_id", f"{student_id}_{time.time()}"
+                                        ),
+                                        student_id,
+                                        session.get(
+                                            "start_time", datetime.now().isoformat()
+                                        ),
+                                        session.get("end_time"),
+                                        session.get("duration_minutes", 0),
+                                        json.dumps(session.get("concepts_covered", [])),
+                                        session.get("questions_asked", 0),
+                                        session.get("questions_correct", 0),
+                                        session.get("engagement_score", 0.0),
+                                        session.get("difficulty_level", 0.5),
+                                        session.get("session_notes", ""),
+                                    ),
+                                )
 
                     except Exception as e:
                         logger.warning(f"Failed to migrate profile {profile_file}: {e}")
                         continue
 
                 conn.commit()
-                logger.info(f"Successfully migrated digital twin profiles from {profiles_dir}")
+                logger.info(
+                    f"Successfully migrated digital twin profiles from {profiles_dir}"
+                )
                 return True
 
             except Exception as e:
@@ -634,13 +674,17 @@ if __name__ == "__main__":
 
             # Migrate to latest
             success = await migration_manager.migrate_to_latest(database)
-            print(f"Migration to latest for {database}: {'success' if success else 'failed'}")
+            print(
+                f"Migration to latest for {database}: {'success' if success else 'failed'}"
+            )
 
         # Test data migration
         data_migrator = DataMigrator(db_manager)
 
         # Try to migrate from common file locations
-        await data_migrator.migrate_evolution_metrics_from_json("./evolution_metrics.json")
+        await data_migrator.migrate_evolution_metrics_from_json(
+            "./evolution_metrics.json"
+        )
         await data_migrator.migrate_digital_twin_profiles("./profiles")
 
         await db_manager.close()

@@ -7,13 +7,14 @@ Provides comprehensive benchmarking of compression, evolution, and RAG pipelines
 Usage:
     python production_benchmark_suite.py
 """
-from datetime import datetime
+
 import json
 import logging
-from pathlib import Path
 import sys
 import time
 import traceback
+from datetime import datetime
+from pathlib import Path
 from typing import Any
 
 try:
@@ -397,7 +398,6 @@ class ProductionBenchmarkSuite:
             if "compression" in results["benchmarks"] and "compression" in baseline.get(
                 "benchmarks", {}
             ):
-
                 current_comp = results["benchmarks"]["compression"]
                 baseline_comp = baseline["benchmarks"]["compression"]
 
@@ -518,9 +518,7 @@ def main() -> int | None:
                         "📈" if change_pct > 0 else "📉" if change_pct < 0 else "➡️"
                     )
                     print(
-                        f"  {metric}: {
-                            data['current']:.2f} vs {
-                            data['baseline']:.2f} ({
+                        f"  {metric}: {data['current']:.2f} vs {data['baseline']:.2f} ({
                             change_pct:+.1f}%) {direction}"
                     )
             else:

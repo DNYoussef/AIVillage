@@ -3,7 +3,7 @@
 
 Configures Redis connections for all databases:
 - Database 0: Evolution metrics real-time data
-- Database 1: RAG pipeline caching  
+- Database 1: RAG pipeline caching
 - Database 2: P2P peer discovery cache
 """
 
@@ -19,7 +19,7 @@ REDIS_CONFIGS = {
         "url": "redis://localhost:6379/0",
         "host": "localhost",
         "port": 6379,
-        "decode_responses": True
+        "decode_responses": True,
     },
     "rag_pipeline": {
         "db": 1,
@@ -27,7 +27,7 @@ REDIS_CONFIGS = {
         "url": "redis://localhost:6379/1",
         "host": "localhost",
         "port": 6379,
-        "decode_responses": True
+        "decode_responses": True,
     },
     "p2p_discovery": {
         "db": 2,
@@ -35,9 +35,10 @@ REDIS_CONFIGS = {
         "url": "redis://localhost:6379/2",
         "host": "localhost",
         "port": 6379,
-        "decode_responses": True
-    }
+        "decode_responses": True,
+    },
 }
+
 
 class RedisConnectionManager:
     """Manages Redis connections for CODEX integration."""
@@ -55,7 +56,7 @@ class RedisConnectionManager:
             client = redis.Redis(
                 host=REDIS_CONFIGS["evolution_metrics"]["host"],
                 port=REDIS_CONFIGS["evolution_metrics"]["port"],
-                decode_responses=True
+                decode_responses=True,
             )
 
             # Test connection
@@ -66,7 +67,9 @@ class RedisConnectionManager:
             return True
 
         except ImportError:
-            logger.warning("Redis package not installed. Install with: pip install redis")
+            logger.warning(
+                "Redis package not installed. Install with: pip install redis"
+            )
             return False
         except Exception as e:
             logger.warning(f"Redis server not available: {e}")
@@ -75,7 +78,9 @@ class RedisConnectionManager:
     def create_connection(self, config_name: str) -> object | None:
         """Create Redis connection for specified configuration."""
         if not self.redis_available:
-            logger.warning(f"Cannot create Redis connection for {config_name}: Redis not available")
+            logger.warning(
+                f"Cannot create Redis connection for {config_name}: Redis not available"
+            )
             return None
 
         config = REDIS_CONFIGS[config_name]
@@ -89,14 +94,16 @@ class RedisConnectionManager:
                 socket_connect_timeout=5,
                 socket_timeout=5,
                 retry_on_timeout=True,
-                health_check_interval=30
+                health_check_interval=30,
             )
 
             # Test the connection
             connection.ping()
 
             self.connections[config_name] = connection
-            logger.info(f"Created Redis connection for {config_name} (db={config['db']})")
+            logger.info(
+                f"Created Redis connection for {config_name} (db={config['db']})"
+            )
             return connection
 
         except Exception as e:
@@ -106,7 +113,9 @@ class RedisConnectionManager:
     def setup_all_connections(self) -> dict[str, object | None]:
         """Set up all Redis connections."""
         if not self.check_redis_availability():
-            logger.warning("Redis not available - using SQLite fallback for all operations")
+            logger.warning(
+                "Redis not available - using SQLite fallback for all operations"
+            )
             return {}
 
         for config_name in REDIS_CONFIGS:
@@ -144,27 +153,36 @@ class RedisConnectionManager:
 
                 if config_name == "evolution_metrics":
                     # Initialize evolution metrics structures
-                    connection.hset("evolution:config", mapping={
-                        "flush_threshold": 50,
-                        "current_round": 0,
-                        "active_agents": 0
-                    })
+                    connection.hset(
+                        "evolution:config",
+                        mapping={
+                            "flush_threshold": 50,
+                            "current_round": 0,
+                            "active_agents": 0,
+                        },
+                    )
 
                 elif config_name == "rag_pipeline":
                     # Initialize RAG cache structures
-                    connection.hset("rag:config", mapping={
-                        "cache_enabled": "true",
-                        "l1_cache_size": 128,
-                        "hit_rate": 0.0
-                    })
+                    connection.hset(
+                        "rag:config",
+                        mapping={
+                            "cache_enabled": "true",
+                            "l1_cache_size": 128,
+                            "hit_rate": 0.0,
+                        },
+                    )
 
                 elif config_name == "p2p_discovery":
                     # Initialize P2P discovery structures
-                    connection.hset("p2p:config", mapping={
-                        "max_peers": 50,
-                        "discovery_interval": 30,
-                        "active_peers": 0
-                    })
+                    connection.hset(
+                        "p2p:config",
+                        mapping={
+                            "max_peers": 50,
+                            "discovery_interval": 30,
+                            "active_peers": 0,
+                        },
+                    )
 
                 logger.info(f"Initialized Redis database: {config_name}")
 
@@ -176,7 +194,7 @@ class RedisConnectionManager:
         info = {
             "redis_available": self.redis_available,
             "connections": {},
-            "server_info": None
+            "server_info": None,
         }
 
         for config_name, config in REDIS_CONFIGS.items():
@@ -184,7 +202,8 @@ class RedisConnectionManager:
                 "database": config["db"],
                 "description": config["description"],
                 "url": config["url"],
-                "connected": config_name in self.connections and self.connections[config_name] is not None
+                "connected": config_name in self.connections
+                and self.connections[config_name] is not None,
             }
 
             if connection_info["connected"]:
@@ -205,7 +224,7 @@ class RedisConnectionManager:
                 info["server_info"] = {
                     "version": server_info.get("redis_version"),
                     "mode": server_info.get("redis_mode"),
-                    "uptime": server_info.get("uptime_in_seconds")
+                    "uptime": server_info.get("uptime_in_seconds"),
                 }
             except Exception as e:
                 info["server_info"] = {"error": str(e)}
@@ -250,9 +269,9 @@ def main():
     info = manager.get_connection_info()
 
     # Print summary
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("REDIS CONNECTION SETUP COMPLETE")
-    print("="*60)
+    print("=" * 60)
 
     if info["server_info"] and "version" in info["server_info"]:
         server_info = info["server_info"]
@@ -276,12 +295,12 @@ def main():
     total = len(test_results)
     print(f"  Passed: {passed}/{total} connections")
 
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     if passed == total:
         print("Redis setup completed successfully!")
     else:
         print("Redis setup completed with some failures - check logs")
-    print("="*60)
+    print("=" * 60)
 
     # Close connections
     manager.close_all_connections()

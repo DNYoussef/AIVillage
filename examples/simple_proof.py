@@ -2,8 +2,8 @@
 """SIMPLE PROOF: Our compression actually works."""
 
 import io
-from pathlib import Path
 import tempfile
+from pathlib import Path
 
 print("=== PROOF: REAL COMPRESSION WORKING ===")
 print()

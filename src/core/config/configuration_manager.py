@@ -7,22 +7,24 @@ multiple sources in priority order and validates all configurations before use.
 from __future__ import annotations
 
 import argparse
-from dataclasses import dataclass, field
 import json
 import logging
 import os
-from pathlib import Path
 import sys
+from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any
 
 try:
     import yaml
+
     YAML_AVAILABLE = True
 except ImportError:
     YAML_AVAILABLE = False
 
 try:
     from dotenv import load_dotenv
+
     DOTENV_AVAILABLE = True
 except ImportError:
     DOTENV_AVAILABLE = False
@@ -39,6 +41,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class ConfigurationSource:
     """Configuration source with priority level."""
+
     name: str
     data: dict[str, Any]
     priority: int  # Higher number = higher priority
@@ -47,6 +50,7 @@ class ConfigurationSource:
 @dataclass
 class ConfigurationProfile:
     """Configuration profile for different environments."""
+
     name: str
     description: str
     required_variables: list[str] = field(default_factory=list)
@@ -78,21 +82,19 @@ class ConfigurationManager:
                 "BACKUP_ENABLED": "false",
                 "FEATURE_ADVANCED_ANALYTICS": "true",
                 "RATE_LIMIT_ENABLED": "false",
-
                 # Paths
                 "AIVILLAGE_DB_PATH": "./data/development/evolution_metrics.db",
                 "DIGITAL_TWIN_DB_PATH": "./data/development/digital_twin.db",
                 "RAG_FAISS_INDEX_PATH": "./data/development/faiss_index",
                 "DIGITAL_TWIN_VAULT_PATH": "./data/development/vault",
                 "AIVILLAGE_LOG_DIR": "./logs/development",
-
                 # Ports
                 "LIBP2P_PORT": "4001",
                 "DIGITAL_TWIN_API_PORT": "8080",
                 "EVOLUTION_METRICS_API_PORT": "8081",
                 "RAG_PIPELINE_API_PORT": "8082",
-                "P2P_STATUS_API_PORT": "8083"
-            }
+                "P2P_STATUS_API_PORT": "8083",
+            },
         ),
         "testing": ConfigurationProfile(
             name="testing",
@@ -104,24 +106,21 @@ class ConfigurationManager:
                 "TEST_MOCK_EXTERNAL_SERVICES": "true",
                 "DEV_MOCK_P2P": "true",
                 "BACKUP_ENABLED": "false",
-
                 # In-memory databases for testing
                 "AIVILLAGE_DB_PATH": ":memory:",
                 "DIGITAL_TWIN_DB_PATH": ":memory:",
                 "TEST_DB_PATH": ":memory:",
-
                 # Temporary paths
                 "RAG_FAISS_INDEX_PATH": "/tmp/test_faiss_index",
                 "DIGITAL_TWIN_VAULT_PATH": "/tmp/test_vault",
                 "AIVILLAGE_LOG_DIR": "/tmp/test_logs",
                 "MESH_FILE_TRANSPORT_DIR": "/tmp/test_mesh",
-
                 # Test ports (higher range to avoid conflicts)
                 "LIBP2P_PORT": "14001",
                 "DIGITAL_TWIN_API_PORT": "18080",
                 "EVOLUTION_METRICS_API_PORT": "18081",
-                "RAG_PIPELINE_API_PORT": "18082"
-            }
+                "RAG_PIPELINE_API_PORT": "18082",
+            },
         ),
         "staging": ConfigurationProfile(
             name="staging",
@@ -135,14 +134,13 @@ class ConfigurationManager:
                 "DIGITAL_TWIN_BACKUP_ENCRYPTION": "true",
                 "BACKUP_ENABLED": "true",
                 "RATE_LIMIT_ENABLED": "true",
-
                 # Production-like paths
                 "AIVILLAGE_DB_PATH": "./data/staging/evolution_metrics.db",
                 "DIGITAL_TWIN_DB_PATH": "./data/staging/digital_twin.db",
                 "RAG_FAISS_INDEX_PATH": "./data/staging/faiss_index",
                 "DIGITAL_TWIN_VAULT_PATH": "./secure/staging/vault",
-                "BACKUP_STORAGE_PATH": "./backups/staging"
-            }
+                "BACKUP_STORAGE_PATH": "./backups/staging",
+            },
         ),
         "production": ConfigurationProfile(
             name="production",
@@ -152,7 +150,7 @@ class ConfigurationManager:
                 "tls_required": True,
                 "auth_required": True,
                 "compliance_required": True,
-                "backup_required": True
+                "backup_required": True,
             },
             defaults={
                 "AIVILLAGE_ENV": "production",
@@ -161,7 +159,6 @@ class ConfigurationManager:
                 "DEV_AUTO_RELOAD": "false",
                 "DEV_MOCK_P2P": "false",
                 "TEST_DISABLE_AUTH": "false",
-
                 # Security enabled
                 "API_AUTH_ENABLED": "true",
                 "MESH_TLS_ENABLED": "true",
@@ -175,16 +172,15 @@ class ConfigurationManager:
                 "SECURITY_HSTS_ENABLED": "true",
                 "SECURITY_CSP_ENABLED": "true",
                 "TLS_VERIFY_PEER": "true",
-
                 # Production paths
                 "AIVILLAGE_DB_PATH": "/var/lib/aivillage/evolution_metrics.db",
                 "DIGITAL_TWIN_DB_PATH": "/var/lib/aivillage/digital_twin.db",
                 "RAG_FAISS_INDEX_PATH": "/var/lib/aivillage/faiss_index",
                 "DIGITAL_TWIN_VAULT_PATH": "/var/lib/aivillage/secure/vault",
                 "BACKUP_STORAGE_PATH": "/var/backups/aivillage",
-                "AIVILLAGE_LOG_DIR": "/var/log/aivillage"
-            }
-        )
+                "AIVILLAGE_LOG_DIR": "/var/log/aivillage",
+            },
+        ),
     }
 
     def __init__(self, profile: str = None, config_dir: str = None):
@@ -198,17 +194,19 @@ class ConfigurationManager:
         # Ensure profile exists
         if self.profile_name not in self.PROFILES:
             available = ", ".join(self.PROFILES.keys())
-            raise ValueError(f"Unknown profile '{self.profile_name}'. Available: {available}")
+            raise ValueError(
+                f"Unknown profile '{self.profile_name}'. Available: {available}"
+            )
 
         self.profile = self.PROFILES[self.profile_name]
 
-    def load_configuration(self,
-                         cli_args: dict[str, Any] | None = None,
-                         validate: bool = True) -> dict[str, str]:
+    def load_configuration(
+        self, cli_args: dict[str, Any] | None = None, validate: bool = True
+    ) -> dict[str, str]:
         """Load configuration from all sources in priority order.
-        
+
         Priority order (highest to lowest):
-        1. Command line arguments  
+        1. Command line arguments
         2. Environment variables
         3. Profile-specific config file
         4. Main config file
@@ -247,12 +245,16 @@ class ConfigurationManager:
 
     def _load_profile_defaults(self) -> None:
         """Load default values for the current profile."""
-        self.sources.append(ConfigurationSource(
-            name=f"profile_defaults_{self.profile_name}",
-            data=self.profile.defaults,
-            priority=1
-        ))
-        logger.debug(f"Loaded {len(self.profile.defaults)} default values for profile '{self.profile_name}'")
+        self.sources.append(
+            ConfigurationSource(
+                name=f"profile_defaults_{self.profile_name}",
+                data=self.profile.defaults,
+                priority=1,
+            )
+        )
+        logger.debug(
+            f"Loaded {len(self.profile.defaults)} default values for profile '{self.profile_name}'"
+        )
 
     def _load_env_file(self) -> None:
         """Load .env file if available."""
@@ -269,13 +271,13 @@ class ConfigurationManager:
                             line = line.strip()
                             if line and not line.startswith("#") and "=" in line:
                                 key, value = line.split("=", 1)
-                                env_vars[key.strip()] = value.strip().strip('"\'')
+                                env_vars[key.strip()] = value.strip().strip("\"'")
 
-                    self.sources.append(ConfigurationSource(
-                        name=f"env_file_{env_file}",
-                        data=env_vars,
-                        priority=2
-                    ))
+                    self.sources.append(
+                        ConfigurationSource(
+                            name=f"env_file_{env_file}", data=env_vars, priority=2
+                        )
+                    )
                     logger.debug(f"Loaded {len(env_vars)} variables from {env_file}")
                 else:
                     logger.warning(f"Found {env_file} but python-dotenv not available")
@@ -291,7 +293,9 @@ class ConfigurationManager:
                             if YAML_AVAILABLE:
                                 data = yaml.safe_load(f)
                             else:
-                                logger.warning(f"Found {config_path} but PyYAML not available")
+                                logger.warning(
+                                    f"Found {config_path} but PyYAML not available"
+                                )
                                 continue
                         else:  # json
                             data = json.load(f)
@@ -300,12 +304,16 @@ class ConfigurationManager:
                     flat_data = self._flatten_config(data)
 
                     priority = 3 if filename == "aivillage_config" else 4
-                    self.sources.append(ConfigurationSource(
-                        name=f"config_file_{config_path.name}",
-                        data=flat_data,
-                        priority=priority
-                    ))
-                    logger.debug(f"Loaded {len(flat_data)} variables from {config_path}")
+                    self.sources.append(
+                        ConfigurationSource(
+                            name=f"config_file_{config_path.name}",
+                            data=flat_data,
+                            priority=priority,
+                        )
+                    )
+                    logger.debug(
+                        f"Loaded {len(flat_data)} variables from {config_path}"
+                    )
                     break
                 except Exception as e:
                     logger.error(f"Error loading config file {config_path}: {e}")
@@ -331,21 +339,44 @@ class ConfigurationManager:
         """Load configuration from environment variables."""
         # Filter environment variables to only include relevant ones
         relevant_vars = {}
-        aivillage_prefixes = ["AIVILLAGE_", "RAG_", "LIBP2P_", "MESH_", "DIGITAL_TWIN_",
-                             "API_", "MDNS_", "REDIS_", "WANDB_", "OPENAI_", "HUGGINGFACE_",
-                             "TLS_", "SECURITY_", "RATE_LIMIT_", "BACKUP_", "RECOVERY_",
-                             "MAX_", "TEST_", "DEV_", "MOBILE_", "FEATURE_", "LEGACY_",
-                             "ANDROID_", "IOS_", "WIFI_DIRECT_", "HEALTH_CHECK_"]
+        aivillage_prefixes = [
+            "AIVILLAGE_",
+            "RAG_",
+            "LIBP2P_",
+            "MESH_",
+            "DIGITAL_TWIN_",
+            "API_",
+            "MDNS_",
+            "REDIS_",
+            "WANDB_",
+            "OPENAI_",
+            "HUGGINGFACE_",
+            "TLS_",
+            "SECURITY_",
+            "RATE_LIMIT_",
+            "BACKUP_",
+            "RECOVERY_",
+            "MAX_",
+            "TEST_",
+            "DEV_",
+            "MOBILE_",
+            "FEATURE_",
+            "LEGACY_",
+            "ANDROID_",
+            "IOS_",
+            "WIFI_DIRECT_",
+            "HEALTH_CHECK_",
+        ]
 
         for key, value in os.environ.items():
             if any(key.startswith(prefix) for prefix in aivillage_prefixes):
                 relevant_vars[key] = value
 
-        self.sources.append(ConfigurationSource(
-            name="environment_variables",
-            data=relevant_vars,
-            priority=5
-        ))
+        self.sources.append(
+            ConfigurationSource(
+                name="environment_variables", data=relevant_vars, priority=5
+            )
+        )
         logger.debug(f"Loaded {len(relevant_vars)} environment variables")
 
     def _load_cli_args(self, cli_args: dict[str, Any]) -> None:
@@ -359,11 +390,9 @@ class ConfigurationManager:
                     env_key = f"AIVILLAGE_{env_key}"
                 env_format_args[env_key] = str(value)
 
-        self.sources.append(ConfigurationSource(
-            name="cli_arguments",
-            data=env_format_args,
-            priority=6
-        ))
+        self.sources.append(
+            ConfigurationSource(name="cli_arguments", data=env_format_args, priority=6)
+        )
         logger.debug(f"Loaded {len(env_format_args)} command line arguments")
 
     def _merge_sources(self) -> None:
@@ -386,8 +415,13 @@ class ConfigurationManager:
         self.validation_report = validator.validate_all(self.final_config)
 
         if not self.validation_report.is_valid:
-            error_count = len([i for i in self.validation_report.issues
-                             if i.level == ValidationLevel.ERROR])
+            error_count = len(
+                [
+                    i
+                    for i in self.validation_report.issues
+                    if i.level == ValidationLevel.ERROR
+                ]
+            )
             logger.error(f"Configuration validation failed with {error_count} errors")
 
             # Print validation report
@@ -407,7 +441,9 @@ class ConfigurationManager:
         try:
             return int(value)
         except ValueError:
-            logger.warning(f"Invalid integer value for {key}: {value}, using default {default}")
+            logger.warning(
+                f"Invalid integer value for {key}: {value}, using default {default}"
+            )
             return default
 
     def get_float(self, key: str, default: float = 0.0) -> float:
@@ -416,7 +452,9 @@ class ConfigurationManager:
         try:
             return float(value)
         except ValueError:
-            logger.warning(f"Invalid float value for {key}: {value}, using default {default}")
+            logger.warning(
+                f"Invalid float value for {key}: {value}, using default {default}"
+            )
             return default
 
     def get_bool(self, key: str, default: bool = False) -> bool:
@@ -424,7 +462,9 @@ class ConfigurationManager:
         value = self.get(key, str(default)).lower()
         return value in ["true", "1", "yes", "on", "enabled"]
 
-    def get_list(self, key: str, separator: str = ",", default: list[str] = None) -> list[str]:
+    def get_list(
+        self, key: str, separator: str = ",", default: list[str] = None
+    ) -> list[str]:
         """Get configuration value as list."""
         if default is None:
             default = []
@@ -472,18 +512,22 @@ class ConfigurationManager:
             "digital_twin": "DIGITAL_TWIN_API_PORT",
             "evolution": "EVOLUTION_METRICS_API_PORT",
             "rag": "RAG_PIPELINE_API_PORT",
-            "p2p": "P2P_STATUS_API_PORT"
+            "p2p": "P2P_STATUS_API_PORT",
         }
 
         if component not in port_map:
             available = ", ".join(port_map.keys())
-            raise ValueError(f"Unknown API component: {component}. Available: {available}")
+            raise ValueError(
+                f"Unknown API component: {component}. Available: {available}"
+            )
 
         host = self.get("LIBP2P_HOST", "localhost")
         port = self.get_int(port_map[component], 8080)
 
         # Use HTTPS in production
-        protocol = "https" if self.is_production() and self.get_bool("TLS_ENABLED") else "http"
+        protocol = (
+            "https" if self.is_production() and self.get_bool("TLS_ENABLED") else "http"
+        )
 
         return f"{protocol}://{host}:{port}"
 
@@ -507,41 +551,54 @@ class ConfigurationManager:
     def generate_report(self) -> str:
         """Generate configuration report."""
         lines = [
-            "="*80,
+            "=" * 80,
             "AIVILLAGE CONFIGURATION REPORT",
-            "="*80,
+            "=" * 80,
             f"Profile: {self.profile_name} ({self.profile.description})",
             f"Configuration Directory: {self.config_dir}",
             f"Total Variables: {len(self.final_config)}",
-            ""
+            "",
         ]
 
         # Sources summary
         lines.append("CONFIGURATION SOURCES:")
         lines.append("-" * 40)
         for source in sorted(self.sources, key=lambda s: s.priority, reverse=True):
-            lines.append(f"  {source.priority}. {source.name} ({len(source.data)} variables)")
+            lines.append(
+                f"  {source.priority}. {source.name} ({len(source.data)} variables)"
+            )
         lines.append("")
 
         # Validation summary
         if self.validation_report:
-            lines.extend([
-                "VALIDATION SUMMARY:",
-                "-" * 40,
-                f"Status: {'✅ VALID' if self.validation_report.is_valid else '❌ INVALID'}",
-                f"Errors: {self.validation_report.errors}",
-                f"Warnings: {self.validation_report.warnings}",
-                ""
-            ])
+            lines.extend(
+                [
+                    "VALIDATION SUMMARY:",
+                    "-" * 40,
+                    f"Status: {'✅ VALID' if self.validation_report.is_valid else '❌ INVALID'}",
+                    f"Errors: {self.validation_report.errors}",
+                    f"Warnings: {self.validation_report.warnings}",
+                    "",
+                ]
+            )
 
         # Component configuration
-        components = ["evolution_metrics", "rag_pipeline", "p2p_networking", "digital_twin", "api_server"]
+        components = [
+            "evolution_metrics",
+            "rag_pipeline",
+            "p2p_networking",
+            "digital_twin",
+            "api_server",
+        ]
         lines.append("COMPONENT CONFIGURATION:")
         lines.append("-" * 40)
 
         for component in components:
-            component_vars = [k for k in self.final_config.keys()
-                            if self._is_component_variable(k, component)]
+            component_vars = [
+                k
+                for k in self.final_config.keys()
+                if self._is_component_variable(k, component)
+            ]
             lines.append(f"  {component}: {len(component_vars)} variables configured")
 
         return "\n".join(lines)
@@ -553,8 +610,13 @@ class ConfigurationManager:
             "rag_pipeline": ["RAG_"],
             "p2p_networking": ["LIBP2P_", "MESH_", "MDNS_"],
             "digital_twin": ["DIGITAL_TWIN_"],
-            "api_server": ["API_", "DIGITAL_TWIN_API_", "EVOLUTION_METRICS_API_",
-                          "RAG_PIPELINE_API_", "P2P_STATUS_API_"]
+            "api_server": [
+                "API_",
+                "DIGITAL_TWIN_API_",
+                "EVOLUTION_METRICS_API_",
+                "RAG_PIPELINE_API_",
+                "P2P_STATUS_API_",
+            ],
         }
 
         prefixes = component_prefixes.get(component, [])
@@ -576,10 +638,12 @@ def get_config(profile: str = None) -> ConfigurationManager:
     return _config_manager
 
 
-def setup_configuration(profile: str = None,
-                       cli_args: dict[str, Any] = None,
-                       config_dir: str = None,
-                       validate: bool = True) -> ConfigurationManager:
+def setup_configuration(
+    profile: str = None,
+    cli_args: dict[str, Any] = None,
+    config_dir: str = None,
+    validate: bool = True,
+) -> ConfigurationManager:
     """Setup global configuration manager."""
     global _config_manager
 
@@ -592,22 +656,26 @@ def setup_configuration(profile: str = None,
 if __name__ == "__main__":
     # CLI interface for configuration management
     parser = argparse.ArgumentParser(description="AIVillage Configuration Manager")
-    parser.add_argument("--profile", choices=["development", "testing", "staging", "production"],
-                       help="Configuration profile")
+    parser.add_argument(
+        "--profile",
+        choices=["development", "testing", "staging", "production"],
+        help="Configuration profile",
+    )
     parser.add_argument("--config-dir", help="Configuration directory path")
     parser.add_argument("--validate", action="store_true", help="Run validation")
     parser.add_argument("--export", help="Export configuration to file")
-    parser.add_argument("--include-secrets", action="store_true",
-                       help="Include secrets in export (use with caution)")
+    parser.add_argument(
+        "--include-secrets",
+        action="store_true",
+        help="Include secrets in export (use with caution)",
+    )
 
     args = parser.parse_args()
 
     try:
         # Setup configuration
         config = setup_configuration(
-            profile=args.profile,
-            config_dir=args.config_dir,
-            validate=args.validate
+            profile=args.profile, config_dir=args.config_dir, validate=args.validate
         )
 
         # Print report

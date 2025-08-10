@@ -6,9 +6,9 @@ import time
 
 
 def print_section(title) -> None:
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f" {title}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
 
 def print_check(item, status, details="") -> None:
@@ -182,8 +182,8 @@ async def validate_sprint6() -> bool:
         print_check(
             "Resource constraints configuration",
             True,
-            f"Memory limit: {config.memory_limit_multiplier*100}%, "
-            f"CPU limit: {config.cpu_limit_multiplier*100}%",
+            f"Memory limit: {config.memory_limit_multiplier * 100}%, "
+            f"CPU limit: {config.cpu_limit_multiplier * 100}%",
         )
 
     except Exception as e:

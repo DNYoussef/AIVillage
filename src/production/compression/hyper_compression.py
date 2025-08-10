@@ -9,8 +9,8 @@ sophisticated approaches in the future.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
 import zlib
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from collections.abc import ByteString

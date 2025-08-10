@@ -2,8 +2,8 @@
 """Direct test of agent templates and implementations."""
 
 import json
-from pathlib import Path
 import sys
+from pathlib import Path
 
 
 def check_agent_templates():

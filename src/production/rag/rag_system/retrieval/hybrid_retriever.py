@@ -1,6 +1,6 @@
+import re
 from collections import Counter
 from datetime import datetime
-import re
 from typing import Any
 
 from rag_system.core.config import UnifiedConfig

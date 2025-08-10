@@ -2,12 +2,13 @@
 """Focused Production Benchmark
 Tests the actual working components post-cleanup.
 """
-from datetime import datetime
+
 import json
 import logging
-from pathlib import Path
 import sys
 import time
+from datetime import datetime
+from pathlib import Path
 from typing import Any
 
 import psutil
@@ -171,8 +172,8 @@ class ProductionBenchmark:
 
         try:
             # Test basic text processing
-            from collections import Counter
             import re
+            from collections import Counter
 
             # Sample documents
             docs = [

@@ -10,10 +10,10 @@ This script validates the complete configuration system including:
 
 import base64
 import os
-from pathlib import Path
 import secrets
 import sys
 import tempfile
+from pathlib import Path
 
 # Add src to path for imports
 script_dir = Path(__file__).parent
@@ -37,7 +37,7 @@ AIVILLAGE_ENV=development
 AIVILLAGE_DB_PATH=./data/test/evolution_metrics.db
 AIVILLAGE_STORAGE_BACKEND=sqlite
 
-# RAG Pipeline  
+# RAG Pipeline
 RAG_EMBEDDING_MODEL=paraphrase-MiniLM-L3-v2
 RAG_VECTOR_DIM=384
 RAG_FAISS_INDEX_PATH=./data/test/faiss_index
@@ -105,7 +105,9 @@ def test_environment_validator():
         validator = EnvironmentValidator("development")
         dev_report = validator.validate_all(test_env)
 
-        print(f"Validation Result: {'✅ VALID' if dev_report.is_valid else '❌ INVALID'}")
+        print(
+            f"Validation Result: {'✅ VALID' if dev_report.is_valid else '❌ INVALID'}"
+        )
         print(f"Errors: {dev_report.errors}")
         print(f"Warnings: {dev_report.warnings}")
         print(f"Total Variables: {dev_report.total_variables}")
@@ -114,19 +116,25 @@ def test_environment_validator():
         if dev_report.issues:
             print("\nFirst 3 issues:")
             for issue in dev_report.issues[:3]:
-                print(f"  {issue.level.value.upper()}: {issue.variable} - {issue.message}")
+                print(
+                    f"  {issue.level.value.upper()}: {issue.variable} - {issue.message}"
+                )
 
         # Test production profile validation (should be stricter)
         print("\n--- Testing Production Profile ---")
         validator_prod = EnvironmentValidator("production")
         prod_report = validator_prod.validate_all(test_env)
 
-        print(f"Validation Result: {'✅ VALID' if prod_report.is_valid else '❌ INVALID'}")
+        print(
+            f"Validation Result: {'✅ VALID' if prod_report.is_valid else '❌ INVALID'}"
+        )
         print(f"Errors: {prod_report.errors}")
         print(f"Warnings: {prod_report.warnings}")
 
         if prod_report.errors > dev_report.errors:
-            print("✓ Production validation is stricter (more errors) - Expected behavior")
+            print(
+                "✓ Production validation is stricter (more errors) - Expected behavior"
+            )
 
         return dev_report.is_valid
 
@@ -204,7 +212,7 @@ def test_configuration_profiles():
                 "variables": len(config.final_config),
                 "is_secure": config.get_bool("MESH_TLS_ENABLED", False),
                 "has_auth": config.get_bool("API_AUTH_ENABLED", False),
-                "debug_mode": config.get_bool("AIVILLAGE_DEBUG_MODE", False)
+                "debug_mode": config.get_bool("AIVILLAGE_DEBUG_MODE", False),
             }
 
             print(f"✓ Loaded {results[profile]['variables']} variables")
@@ -219,8 +227,12 @@ def test_configuration_profiles():
     # Validate profile progression (dev -> staging -> production should be more secure)
     print("\n--- Profile Security Progression ---")
     if all(results[p].get("loaded", False) for p in profiles):
-        dev_secure = sum([results["development"]["is_secure"], results["development"]["has_auth"]])
-        prod_secure = sum([results["production"]["is_secure"], results["production"]["has_auth"]])
+        dev_secure = sum(
+            [results["development"]["is_secure"], results["development"]["has_auth"]]
+        )
+        prod_secure = sum(
+            [results["production"]["is_secure"], results["production"]["has_auth"]]
+        )
 
         if prod_secure > dev_secure:
             print("✅ Security increases from development to production")
@@ -243,7 +255,7 @@ def test_security_validation():
         "API_SECRET_KEY": "REPLACE_WITH_SECURE_SECRET_KEY",  # Template value
         "DIGITAL_TWIN_COPPA_COMPLIANT": "false",  # Non-compliant in production
         "MESH_TLS_ENABLED": "false",  # Insecure in production
-        "API_AUTH_ENABLED": "false"  # Insecure in production
+        "API_AUTH_ENABLED": "false",  # Insecure in production
     }
 
     print("\n--- Testing Insecure Production Configuration ---")
@@ -259,9 +271,14 @@ def test_security_validation():
     print("✅ Security validation correctly identified issues")
 
     # Show first few security issues
-    security_issues = [issue for issue in report.issues
-                     if any(keyword in issue.message.lower()
-                           for keyword in ["security", "insecure", "compliant", "encryption"])]
+    security_issues = [
+        issue
+        for issue in report.issues
+        if any(
+            keyword in issue.message.lower()
+            for keyword in ["security", "insecure", "compliant", "encryption"]
+        )
+    ]
 
     print("\nSecurity issues found:")
     for issue in security_issues[:3]:
@@ -279,14 +296,21 @@ def test_security_validation():
         "DIGITAL_TWIN_GDPR_COMPLIANT": "true",
         "MESH_TLS_ENABLED": "true",
         "API_AUTH_ENABLED": "true",
-        "MESH_ENCRYPTION_REQUIRED": "true"
+        "MESH_ENCRYPTION_REQUIRED": "true",
     }
 
     secure_report = validator.validate_all(secure_env)
-    security_errors = len([issue for issue in secure_report.issues
-                          if issue.level.value == "error" and
-                          any(keyword in issue.message.lower()
-                              for keyword in ["security", "insecure", "compliant"])])
+    security_errors = len(
+        [
+            issue
+            for issue in secure_report.issues
+            if issue.level.value == "error"
+            and any(
+                keyword in issue.message.lower()
+                for keyword in ["security", "insecure", "compliant"]
+            )
+        ]
+    )
 
     print(f"Security errors in secure config: {security_errors}")
 
@@ -317,15 +341,18 @@ def test_path_validation():
         "AIVILLAGE_LOG_DIR": str(test_base / "logs"),
         "RAG_FAISS_INDEX_PATH": str(test_base / "data" / "faiss"),
         "DIGITAL_TWIN_VAULT_PATH": str(test_base / "vault"),
-        "LIBP2P_PRIVATE_KEY_FILE": str(test_base / "config" / "key.pem")
+        "LIBP2P_PRIVATE_KEY_FILE": str(test_base / "config" / "key.pem"),
     }
 
     print("--- Testing Path Validation ---")
     validator = EnvironmentValidator("development")
     report = validator.validate_all(path_env)
 
-    path_issues = [issue for issue in report.issues
-                   if any(var in issue.variable for var in path_env)]
+    path_issues = [
+        issue
+        for issue in report.issues
+        if any(var in issue.variable for var in path_env)
+    ]
 
     print(f"Path-related issues: {len(path_issues)}")
 
@@ -335,13 +362,16 @@ def test_path_validation():
 
     # Cleanup
     import shutil
+
     try:
         shutil.rmtree(test_base)
         print("✓ Cleaned up test directories")
     except Exception as e:
         print(f"⚠️  Cleanup warning: {e}")
 
-    return len(path_issues) == 0 or all(issue.level.value != "error" for issue in path_issues)
+    return len(path_issues) == 0 or all(
+        issue.level.value != "error" for issue in path_issues
+    )
 
 
 def run_all_tests():
@@ -354,7 +384,7 @@ def run_all_tests():
         ("Configuration Manager", test_configuration_manager),
         ("Configuration Profiles", test_configuration_profiles),
         ("Security Validation", test_security_validation),
-        ("Path Validation", test_path_validation)
+        ("Path Validation", test_path_validation),
     ]
 
     results = {}
@@ -398,17 +428,22 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(description="Test AIVillage configuration system")
-    parser.add_argument("--test", choices=["validator", "manager", "profiles", "security", "paths", "all"],
-                       default="all", help="Specific test to run")
+    parser.add_argument(
+        "--test",
+        choices=["validator", "manager", "profiles", "security", "paths", "all"],
+        default="all",
+        help="Specific test to run",
+    )
     parser.add_argument("--verbose", action="store_true", help="Verbose output")
 
     args = parser.parse_args()
 
     # Set up basic logging
     import logging
+
     logging.basicConfig(
         level=logging.DEBUG if args.verbose else logging.INFO,
-        format="%(levelname)s: %(message)s"
+        format="%(levelname)s: %(message)s",
     )
 
     # Run specific test or all tests

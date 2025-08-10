@@ -3,7 +3,7 @@
 This module provides comprehensive database validation including:
 - Schema integrity checks
 - Performance benchmarking
-- Data consistency validation  
+- Data consistency validation
 - Connection pool health monitoring
 - Optimization recommendations
 """
@@ -11,10 +11,10 @@ This module provides comprehensive database validation including:
 from __future__ import annotations
 
 import asyncio
-from dataclasses import dataclass
-from datetime import datetime
 import logging
 import time
+from dataclasses import dataclass
+from datetime import datetime
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -23,6 +23,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class ValidationResult:
     """Database validation result."""
+
     database: str
     test_name: str
     passed: bool
@@ -36,6 +37,7 @@ class ValidationResult:
 @dataclass
 class PerformanceMetrics:
     """Database performance metrics."""
+
     database: str
     operation: str
     duration_ms: float
@@ -119,26 +121,30 @@ class DatabaseValidator:
 
                 duration_ms = (time.time() - start_time) * 1000
 
-                self.results.append(ValidationResult(
-                    database=database,
-                    test_name="connection_test",
-                    passed=True,
-                    value={"sqlite_version": version, "table_count": table_count},
-                    message=f"Connection successful, SQLite {version}, {table_count} tables",
-                    duration_ms=duration_ms
-                ))
+                self.results.append(
+                    ValidationResult(
+                        database=database,
+                        test_name="connection_test",
+                        passed=True,
+                        value={"sqlite_version": version, "table_count": table_count},
+                        message=f"Connection successful, SQLite {version}, {table_count} tables",
+                        duration_ms=duration_ms,
+                    )
+                )
 
         except Exception as e:
             duration_ms = (time.time() - start_time) * 1000
-            self.results.append(ValidationResult(
-                database=database,
-                test_name="connection_test",
-                passed=False,
-                value=None,
-                message=f"Connection failed: {e!s}",
-                duration_ms=duration_ms,
-                severity="error"
-            ))
+            self.results.append(
+                ValidationResult(
+                    database=database,
+                    test_name="connection_test",
+                    passed=False,
+                    value=None,
+                    message=f"Connection failed: {e!s}",
+                    duration_ms=duration_ms,
+                    severity="error",
+                )
+            )
 
     async def _validate_schema_integrity(self, database: str):
         """Validate database schema integrity."""
@@ -149,32 +155,38 @@ class DatabaseValidator:
                 cursor = conn.cursor()
 
                 # Check schema version
-                cursor.execute("""
-                SELECT version, description FROM schema_version 
+                cursor.execute(
+                    """
+                SELECT version, description FROM schema_version
                 ORDER BY version DESC LIMIT 1
-                """)
+                """
+                )
                 version_info = cursor.fetchone()
 
                 if not version_info:
-                    self.results.append(ValidationResult(
-                        database=database,
-                        test_name="schema_version",
-                        passed=False,
-                        value=None,
-                        message="No schema version found",
-                        duration_ms=(time.time() - start_time) * 1000,
-                        severity="error"
-                    ))
+                    self.results.append(
+                        ValidationResult(
+                            database=database,
+                            test_name="schema_version",
+                            passed=False,
+                            value=None,
+                            message="No schema version found",
+                            duration_ms=(time.time() - start_time) * 1000,
+                            severity="error",
+                        )
+                    )
                     return
 
                 current_version, description = version_info
 
                 # Validate required tables exist
                 expected_tables = self._get_expected_tables(database)
-                cursor.execute("""
-                SELECT name FROM sqlite_master 
+                cursor.execute(
+                    """
+                SELECT name FROM sqlite_master
                 WHERE type='table' AND name NOT LIKE 'sqlite_%'
-                """)
+                """
+                )
                 actual_tables = set(row[0] for row in cursor.fetchall())
 
                 missing_tables = expected_tables - actual_tables
@@ -186,54 +198,63 @@ class DatabaseValidator:
 
                 duration_ms = (time.time() - start_time) * 1000
 
-                passed = (
-                    len(missing_tables) == 0 and
-                    integrity_result == "ok"
-                )
+                passed = len(missing_tables) == 0 and integrity_result == "ok"
 
-                self.results.append(ValidationResult(
-                    database=database,
-                    test_name="schema_integrity",
-                    passed=passed,
-                    value={
-                        "current_version": current_version,
-                        "description": description,
-                        "missing_tables": list(missing_tables),
-                        "extra_tables": list(extra_tables),
-                        "integrity_check": integrity_result
-                    },
-                    message=f"Schema v{current_version}, integrity: {integrity_result}",
-                    duration_ms=duration_ms,
-                    severity="error" if not passed else "info"
-                ))
+                self.results.append(
+                    ValidationResult(
+                        database=database,
+                        test_name="schema_integrity",
+                        passed=passed,
+                        value={
+                            "current_version": current_version,
+                            "description": description,
+                            "missing_tables": list(missing_tables),
+                            "extra_tables": list(extra_tables),
+                            "integrity_check": integrity_result,
+                        },
+                        message=f"Schema v{current_version}, integrity: {integrity_result}",
+                        duration_ms=duration_ms,
+                        severity="error" if not passed else "info",
+                    )
+                )
 
         except Exception as e:
             duration_ms = (time.time() - start_time) * 1000
-            self.results.append(ValidationResult(
-                database=database,
-                test_name="schema_integrity",
-                passed=False,
-                value=None,
-                message=f"Schema validation failed: {e!s}",
-                duration_ms=duration_ms,
-                severity="error"
-            ))
+            self.results.append(
+                ValidationResult(
+                    database=database,
+                    test_name="schema_integrity",
+                    passed=False,
+                    value=None,
+                    message=f"Schema validation failed: {e!s}",
+                    duration_ms=duration_ms,
+                    severity="error",
+                )
+            )
 
     def _get_expected_tables(self, database: str) -> set:
         """Get expected tables for each database."""
         table_map = {
             "evolution_metrics": {
-                "schema_version", "evolution_rounds", "fitness_metrics",
-                "resource_metrics", "selection_outcomes"
+                "schema_version",
+                "evolution_rounds",
+                "fitness_metrics",
+                "resource_metrics",
+                "selection_outcomes",
             },
             "digital_twin": {
-                "schema_version", "learning_profiles", "learning_sessions",
-                "knowledge_states"
+                "schema_version",
+                "learning_profiles",
+                "learning_sessions",
+                "knowledge_states",
             },
             "rag_index": {
-                "schema_version", "documents", "chunks",
-                "embeddings_metadata", "query_cache"
-            }
+                "schema_version",
+                "documents",
+                "chunks",
+                "embeddings_metadata",
+                "query_cache",
+            },
         }
         return table_map.get(database, set())
 
@@ -249,29 +270,42 @@ class DatabaseValidator:
                 if database == "evolution_metrics":
                     # Test evolution round creation
                     test_round_id = f"test_round_{int(time.time())}"
-                    cursor.execute("""
+                    cursor.execute(
+                        """
                     INSERT INTO evolution_rounds (start_time, status, agent_count)
                     VALUES (?, 'testing', 1)
-                    """, (time.time(),))
+                    """,
+                        (time.time(),),
+                    )
 
                     round_id = cursor.lastrowid
 
                     # Test fitness metric creation
-                    cursor.execute("""
-                    INSERT INTO fitness_metrics 
+                    cursor.execute(
+                        """
+                    INSERT INTO fitness_metrics
                     (round_id, agent_id, evolution_id, fitness_score, timestamp)
                     VALUES (?, 'test_agent', 'test_evolution', 0.85, ?)
-                    """, (round_id, time.time()))
+                    """,
+                        (round_id, time.time()),
+                    )
 
                     # Test query
-                    cursor.execute("""
+                    cursor.execute(
+                        """
                     SELECT COUNT(*) FROM fitness_metrics WHERE round_id = ?
-                    """, (round_id,))
+                    """,
+                        (round_id,),
+                    )
                     count = cursor.fetchone()[0]
 
                     # Cleanup test data
-                    cursor.execute("DELETE FROM fitness_metrics WHERE round_id = ?", (round_id,))
-                    cursor.execute("DELETE FROM evolution_rounds WHERE id = ?", (round_id,))
+                    cursor.execute(
+                        "DELETE FROM fitness_metrics WHERE round_id = ?", (round_id,)
+                    )
+                    cursor.execute(
+                        "DELETE FROM evolution_rounds WHERE id = ?", (round_id,)
+                    )
 
                     conn.commit()
 
@@ -281,46 +315,67 @@ class DatabaseValidator:
                 elif database == "digital_twin":
                     # Test profile creation
                     test_student_id = f"test_student_{int(time.time())}"
-                    cursor.execute("""
-                    INSERT INTO learning_profiles 
+                    cursor.execute(
+                        """
+                    INSERT INTO learning_profiles
                     (student_id, name, age, grade_level)
                     VALUES (?, 'Test Student', 12, 7)
-                    """, (test_student_id,))
+                    """,
+                        (test_student_id,),
+                    )
 
                     # Test query
-                    cursor.execute("""
+                    cursor.execute(
+                        """
                     SELECT name FROM learning_profiles WHERE student_id = ?
-                    """, (test_student_id,))
+                    """,
+                        (test_student_id,),
+                    )
                     result = cursor.fetchone()
 
                     # Cleanup
-                    cursor.execute("DELETE FROM learning_profiles WHERE student_id = ?", (test_student_id,))
+                    cursor.execute(
+                        "DELETE FROM learning_profiles WHERE student_id = ?",
+                        (test_student_id,),
+                    )
                     conn.commit()
 
                     passed = result and result[0] == "Test Student"
-                    message = f"CRUD operations successful, profile test passed: {passed}"
+                    message = (
+                        f"CRUD operations successful, profile test passed: {passed}"
+                    )
 
                 elif database == "rag_index":
                     # Test document creation
                     test_doc_id = f"test_doc_{int(time.time())}"
-                    cursor.execute("""
-                    INSERT INTO documents 
+                    cursor.execute(
+                        """
+                    INSERT INTO documents
                     (document_id, title, content_hash, word_count)
                     VALUES (?, 'Test Document', 'test_hash_123', 100)
-                    """, (test_doc_id,))
+                    """,
+                        (test_doc_id,),
+                    )
 
                     # Test query
-                    cursor.execute("""
+                    cursor.execute(
+                        """
                     SELECT title FROM documents WHERE document_id = ?
-                    """, (test_doc_id,))
+                    """,
+                        (test_doc_id,),
+                    )
                     result = cursor.fetchone()
 
                     # Cleanup
-                    cursor.execute("DELETE FROM documents WHERE document_id = ?", (test_doc_id,))
+                    cursor.execute(
+                        "DELETE FROM documents WHERE document_id = ?", (test_doc_id,)
+                    )
                     conn.commit()
 
                     passed = result and result[0] == "Test Document"
-                    message = f"CRUD operations successful, document test passed: {passed}"
+                    message = (
+                        f"CRUD operations successful, document test passed: {passed}"
+                    )
 
                 else:
                     passed = True
@@ -328,26 +383,30 @@ class DatabaseValidator:
 
                 duration_ms = (time.time() - start_time) * 1000
 
-                self.results.append(ValidationResult(
-                    database=database,
-                    test_name="basic_operations",
-                    passed=passed,
-                    value={"operations_tested": "insert, select, delete"},
-                    message=message,
-                    duration_ms=duration_ms
-                ))
+                self.results.append(
+                    ValidationResult(
+                        database=database,
+                        test_name="basic_operations",
+                        passed=passed,
+                        value={"operations_tested": "insert, select, delete"},
+                        message=message,
+                        duration_ms=duration_ms,
+                    )
+                )
 
         except Exception as e:
             duration_ms = (time.time() - start_time) * 1000
-            self.results.append(ValidationResult(
-                database=database,
-                test_name="basic_operations",
-                passed=False,
-                value=None,
-                message=f"Basic operations failed: {e!s}",
-                duration_ms=duration_ms,
-                severity="error"
-            ))
+            self.results.append(
+                ValidationResult(
+                    database=database,
+                    test_name="basic_operations",
+                    passed=False,
+                    value=None,
+                    message=f"Basic operations failed: {e!s}",
+                    duration_ms=duration_ms,
+                    severity="error",
+                )
+            )
 
     async def _benchmark_database_performance(self, database: str):
         """Benchmark database performance."""
@@ -362,12 +421,14 @@ class DatabaseValidator:
                 cursor.execute("SELECT COUNT(*) FROM sqlite_master")
                 select_duration = (time.time() - select_start) * 1000
 
-                self.performance_metrics.append(PerformanceMetrics(
-                    database=database,
-                    operation="select_count",
-                    duration_ms=select_duration,
-                    rows_affected=1
-                ))
+                self.performance_metrics.append(
+                    PerformanceMetrics(
+                        database=database,
+                        operation="select_count",
+                        duration_ms=select_duration,
+                        rows_affected=1,
+                    )
+                )
 
                 # Benchmark INSERT performance (batch)
                 insert_start = time.time()
@@ -383,13 +444,15 @@ class DatabaseValidator:
                     conn.commit()
                     insert_duration = (time.time() - insert_start) * 1000
 
-                    self.performance_metrics.append(PerformanceMetrics(
-                        database=database,
-                        operation="batch_insert",
-                        duration_ms=insert_duration,
-                        rows_affected=len(test_data),
-                        rows_per_second=len(test_data) / (insert_duration / 1000)
-                    ))
+                    self.performance_metrics.append(
+                        PerformanceMetrics(
+                            database=database,
+                            operation="batch_insert",
+                            duration_ms=insert_duration,
+                            rows_affected=len(test_data),
+                            rows_per_second=len(test_data) / (insert_duration / 1000),
+                        )
+                    )
 
                     # Cleanup test data
                     cleanup_sql = self._get_cleanup_sql(database)
@@ -407,46 +470,52 @@ class DatabaseValidator:
 
                 query_duration = (time.time() - query_start) * 1000
 
-                self.performance_metrics.append(PerformanceMetrics(
-                    database=database,
-                    operation="multi_table_count",
-                    duration_ms=query_duration,
-                    rows_affected=len(tables)
-                ))
+                self.performance_metrics.append(
+                    PerformanceMetrics(
+                        database=database,
+                        operation="multi_table_count",
+                        duration_ms=query_duration,
+                        rows_affected=len(tables),
+                    )
+                )
 
                 duration_ms = (time.time() - start_time) * 1000
 
-                self.results.append(ValidationResult(
-                    database=database,
-                    test_name="performance_benchmark",
-                    passed=True,
-                    value={
-                        "select_duration_ms": select_duration,
-                        "insert_duration_ms": insert_duration if test_table else 0,
-                        "query_duration_ms": query_duration
-                    },
-                    message=f"Performance benchmark completed in {duration_ms:.2f}ms",
-                    duration_ms=duration_ms
-                ))
+                self.results.append(
+                    ValidationResult(
+                        database=database,
+                        test_name="performance_benchmark",
+                        passed=True,
+                        value={
+                            "select_duration_ms": select_duration,
+                            "insert_duration_ms": insert_duration if test_table else 0,
+                            "query_duration_ms": query_duration,
+                        },
+                        message=f"Performance benchmark completed in {duration_ms:.2f}ms",
+                        duration_ms=duration_ms,
+                    )
+                )
 
         except Exception as e:
             duration_ms = (time.time() - start_time) * 1000
-            self.results.append(ValidationResult(
-                database=database,
-                test_name="performance_benchmark",
-                passed=False,
-                value=None,
-                message=f"Performance benchmark failed: {e!s}",
-                duration_ms=duration_ms,
-                severity="warning"
-            ))
+            self.results.append(
+                ValidationResult(
+                    database=database,
+                    test_name="performance_benchmark",
+                    passed=False,
+                    value=None,
+                    message=f"Performance benchmark failed: {e!s}",
+                    duration_ms=duration_ms,
+                    severity="warning",
+                )
+            )
 
     def _get_test_table_name(self, database: str) -> str | None:
         """Get appropriate test table name for each database."""
         table_map = {
             "evolution_metrics": "evolution_rounds",
             "digital_twin": "learning_profiles",
-            "rag_index": "documents"
+            "rag_index": "documents",
         }
         return table_map.get(database)
 
@@ -456,24 +525,34 @@ class DatabaseValidator:
 
         for i in range(count):
             if database == "evolution_metrics":
-                test_data.append({
-                    "sql": "INSERT INTO evolution_rounds (start_time, status) VALUES (?, 'test')",
-                    "params": (time.time() + i,)
-                })
+                test_data.append(
+                    {
+                        "sql": "INSERT INTO evolution_rounds (start_time, status) VALUES (?, 'test')",
+                        "params": (time.time() + i,),
+                    }
+                )
             elif database == "digital_twin":
-                test_data.append({
-                    "sql": """INSERT INTO learning_profiles 
-                             (student_id, name, age, grade_level) 
+                test_data.append(
+                    {
+                        "sql": """INSERT INTO learning_profiles
+                             (student_id, name, age, grade_level)
                              VALUES (?, ?, 10, 5)""",
-                    "params": (f"perf_test_student_{i}", f"Test Student {i}")
-                })
+                        "params": (f"perf_test_student_{i}", f"Test Student {i}"),
+                    }
+                )
             elif database == "rag_index":
-                test_data.append({
-                    "sql": """INSERT INTO documents 
-                             (document_id, title, content_hash, word_count) 
+                test_data.append(
+                    {
+                        "sql": """INSERT INTO documents
+                             (document_id, title, content_hash, word_count)
                              VALUES (?, ?, ?, 100)""",
-                    "params": (f"perf_test_doc_{i}", f"Test Document {i}", f"hash_{i}")
-                })
+                        "params": (
+                            f"perf_test_doc_{i}",
+                            f"Test Document {i}",
+                            f"hash_{i}",
+                        ),
+                    }
+                )
 
         return test_data
 
@@ -482,7 +561,7 @@ class DatabaseValidator:
         cleanup_map = {
             "evolution_metrics": "DELETE FROM evolution_rounds WHERE status = 'test'",
             "digital_twin": "DELETE FROM learning_profiles WHERE student_id LIKE 'perf_test_%'",
-            "rag_index": "DELETE FROM documents WHERE document_id LIKE 'perf_test_%'"
+            "rag_index": "DELETE FROM documents WHERE document_id LIKE 'perf_test_%'",
         }
         return cleanup_map.get(database)
 
@@ -516,10 +595,12 @@ class DatabaseValidator:
                         table_stats[table] = row_count
 
                 # Check index usage
-                cursor.execute("""
-                SELECT name, sql FROM sqlite_master 
+                cursor.execute(
+                    """
+                SELECT name, sql FROM sqlite_master
                 WHERE type='index' AND sql IS NOT NULL
-                """)
+                """
+                )
                 indexes = cursor.fetchall()
 
                 duration_ms = (time.time() - start_time) * 1000
@@ -534,35 +615,41 @@ class DatabaseValidator:
 
                 total_rows = sum(table_stats.values())
                 if total_rows > 10000 and len(indexes) < 3:
-                    recommendations.append("Consider adding more indexes for better query performance")
+                    recommendations.append(
+                        "Consider adding more indexes for better query performance"
+                    )
 
-                self.results.append(ValidationResult(
-                    database=database,
-                    test_name="optimization_analysis",
-                    passed=True,
-                    value={
-                        "size_mb": db_size_mb,
-                        "page_count": page_count,
-                        "freelist_count": freelist_count,
-                        "table_stats": table_stats,
-                        "index_count": len(indexes),
-                        "recommendations": recommendations
-                    },
-                    message=f"Database size: {db_size_mb:.2f}MB, {len(recommendations)} recommendations",
-                    duration_ms=duration_ms
-                ))
+                self.results.append(
+                    ValidationResult(
+                        database=database,
+                        test_name="optimization_analysis",
+                        passed=True,
+                        value={
+                            "size_mb": db_size_mb,
+                            "page_count": page_count,
+                            "freelist_count": freelist_count,
+                            "table_stats": table_stats,
+                            "index_count": len(indexes),
+                            "recommendations": recommendations,
+                        },
+                        message=f"Database size: {db_size_mb:.2f}MB, {len(recommendations)} recommendations",
+                        duration_ms=duration_ms,
+                    )
+                )
 
         except Exception as e:
             duration_ms = (time.time() - start_time) * 1000
-            self.results.append(ValidationResult(
-                database=database,
-                test_name="optimization_analysis",
-                passed=False,
-                value=None,
-                message=f"Optimization analysis failed: {e!s}",
-                duration_ms=duration_ms,
-                severity="warning"
-            ))
+            self.results.append(
+                ValidationResult(
+                    database=database,
+                    test_name="optimization_analysis",
+                    passed=False,
+                    value=None,
+                    message=f"Optimization analysis failed: {e!s}",
+                    duration_ms=duration_ms,
+                    severity="warning",
+                )
+            )
 
     async def _validate_data_consistency(self, database: str):
         """Validate data consistency and referential integrity."""
@@ -581,33 +668,43 @@ class DatabaseValidator:
 
                 if database == "evolution_metrics":
                     # Check that all fitness_metrics have valid round_ids
-                    cursor.execute("""
+                    cursor.execute(
+                        """
                     SELECT COUNT(*) FROM fitness_metrics fm
                     LEFT JOIN evolution_rounds er ON fm.round_id = er.id
                     WHERE er.id IS NULL
-                    """)
+                    """
+                    )
                     orphaned_metrics = cursor.fetchone()[0]
                     if orphaned_metrics > 0:
-                        consistency_issues.append(f"{orphaned_metrics} orphaned fitness metrics")
+                        consistency_issues.append(
+                            f"{orphaned_metrics} orphaned fitness metrics"
+                        )
 
                 elif database == "digital_twin":
                     # Check that all learning_sessions have valid student_ids
-                    cursor.execute("""
+                    cursor.execute(
+                        """
                     SELECT COUNT(*) FROM learning_sessions ls
                     LEFT JOIN learning_profiles lp ON ls.student_id = lp.student_id
                     WHERE lp.student_id IS NULL
-                    """)
+                    """
+                    )
                     orphaned_sessions = cursor.fetchone()[0]
                     if orphaned_sessions > 0:
-                        consistency_issues.append(f"{orphaned_sessions} orphaned learning sessions")
+                        consistency_issues.append(
+                            f"{orphaned_sessions} orphaned learning sessions"
+                        )
 
                 elif database == "rag_index":
                     # Check that all chunks have valid document_ids
-                    cursor.execute("""
+                    cursor.execute(
+                        """
                     SELECT COUNT(*) FROM chunks c
                     LEFT JOIN documents d ON c.document_id = d.document_id
                     WHERE d.document_id IS NULL
-                    """)
+                    """
+                    )
                     orphaned_chunks = cursor.fetchone()[0]
                     if orphaned_chunks > 0:
                         consistency_issues.append(f"{orphaned_chunks} orphaned chunks")
@@ -616,30 +713,34 @@ class DatabaseValidator:
 
                 passed = len(fk_violations) == 0 and len(consistency_issues) == 0
 
-                self.results.append(ValidationResult(
-                    database=database,
-                    test_name="data_consistency",
-                    passed=passed,
-                    value={
-                        "foreign_key_violations": len(fk_violations),
-                        "consistency_issues": consistency_issues
-                    },
-                    message=f"Consistency check: {len(fk_violations)} FK violations, {len(consistency_issues)} issues",
-                    duration_ms=duration_ms,
-                    severity="error" if not passed else "info"
-                ))
+                self.results.append(
+                    ValidationResult(
+                        database=database,
+                        test_name="data_consistency",
+                        passed=passed,
+                        value={
+                            "foreign_key_violations": len(fk_violations),
+                            "consistency_issues": consistency_issues,
+                        },
+                        message=f"Consistency check: {len(fk_violations)} FK violations, {len(consistency_issues)} issues",
+                        duration_ms=duration_ms,
+                        severity="error" if not passed else "info",
+                    )
+                )
 
         except Exception as e:
             duration_ms = (time.time() - start_time) * 1000
-            self.results.append(ValidationResult(
-                database=database,
-                test_name="data_consistency",
-                passed=False,
-                value=None,
-                message=f"Data consistency check failed: {e!s}",
-                duration_ms=duration_ms,
-                severity="error"
-            ))
+            self.results.append(
+                ValidationResult(
+                    database=database,
+                    test_name="data_consistency",
+                    passed=False,
+                    value=None,
+                    message=f"Data consistency check failed: {e!s}",
+                    duration_ms=duration_ms,
+                    severity="error",
+                )
+            )
 
     async def _validate_redis_connections(self):
         """Validate Redis connections and fallback systems."""
@@ -650,7 +751,12 @@ class DatabaseValidator:
             connection_status = await self.redis_manager.check_connections()
 
             # Test each connection pool
-            for pool_name in ["evolution_metrics", "rag_cache", "p2p_discovery", "session_store"]:
+            for pool_name in [
+                "evolution_metrics",
+                "rag_cache",
+                "p2p_discovery",
+                "session_store",
+            ]:
                 pool_start = time.time()
 
                 async with self.redis_manager.get_connection(pool_name) as conn:
@@ -670,41 +776,47 @@ class DatabaseValidator:
                     passed = set_success and get_value is not None
                     connection_type = conn.connection_type
 
-                    self.results.append(ValidationResult(
-                        database=f"redis_{pool_name}",
-                        test_name="redis_operations",
-                        passed=passed,
-                        value={
-                            "connection_type": connection_type,
-                            "set_success": set_success,
-                            "get_success": get_value is not None
-                        },
-                        message=f"Redis {pool_name} ({connection_type}): Operations {'successful' if passed else 'failed'}",
-                        duration_ms=pool_duration
-                    ))
+                    self.results.append(
+                        ValidationResult(
+                            database=f"redis_{pool_name}",
+                            test_name="redis_operations",
+                            passed=passed,
+                            value={
+                                "connection_type": connection_type,
+                                "set_success": set_success,
+                                "get_success": get_value is not None,
+                            },
+                            message=f"Redis {pool_name} ({connection_type}): Operations {'successful' if passed else 'failed'}",
+                            duration_ms=pool_duration,
+                        )
+                    )
 
             duration_ms = (time.time() - start_time) * 1000
 
-            self.results.append(ValidationResult(
-                database="redis_manager",
-                test_name="redis_validation",
-                passed=True,
-                value=connection_status,
-                message=f"Redis validation completed for {len(connection_status)} pools",
-                duration_ms=duration_ms
-            ))
+            self.results.append(
+                ValidationResult(
+                    database="redis_manager",
+                    test_name="redis_validation",
+                    passed=True,
+                    value=connection_status,
+                    message=f"Redis validation completed for {len(connection_status)} pools",
+                    duration_ms=duration_ms,
+                )
+            )
 
         except Exception as e:
             duration_ms = (time.time() - start_time) * 1000
-            self.results.append(ValidationResult(
-                database="redis_manager",
-                test_name="redis_validation",
-                passed=False,
-                value=None,
-                message=f"Redis validation failed: {e!s}",
-                duration_ms=duration_ms,
-                severity="warning"
-            ))
+            self.results.append(
+                ValidationResult(
+                    database="redis_manager",
+                    test_name="redis_validation",
+                    passed=False,
+                    value=None,
+                    message=f"Redis validation failed: {e!s}",
+                    duration_ms=duration_ms,
+                    severity="warning",
+                )
+            )
 
     def _generate_validation_summary(self, total_duration_ms: float) -> dict[str, Any]:
         """Generate comprehensive validation summary."""
@@ -720,30 +832,34 @@ class DatabaseValidator:
             "performance_metrics_count": len(self.performance_metrics),
             "results": [],
             "performance_metrics": [],
-            "recommendations": []
+            "recommendations": [],
         }
 
         # Add detailed results
         for result in self.results:
-            summary["results"].append({
-                "database": result.database,
-                "test_name": result.test_name,
-                "passed": result.passed,
-                "value": result.value,
-                "message": result.message,
-                "duration_ms": result.duration_ms,
-                "severity": result.severity
-            })
+            summary["results"].append(
+                {
+                    "database": result.database,
+                    "test_name": result.test_name,
+                    "passed": result.passed,
+                    "value": result.value,
+                    "message": result.message,
+                    "duration_ms": result.duration_ms,
+                    "severity": result.severity,
+                }
+            )
 
         # Add performance metrics
         for metric in self.performance_metrics:
-            summary["performance_metrics"].append({
-                "database": metric.database,
-                "operation": metric.operation,
-                "duration_ms": metric.duration_ms,
-                "rows_affected": metric.rows_affected,
-                "rows_per_second": metric.rows_per_second
-            })
+            summary["performance_metrics"].append(
+                {
+                    "database": metric.database,
+                    "operation": metric.operation,
+                    "duration_ms": metric.duration_ms,
+                    "rows_affected": metric.rows_affected,
+                    "rows_per_second": metric.rows_per_second,
+                }
+            )
 
         # Generate recommendations
         recommendations = []
@@ -751,19 +867,31 @@ class DatabaseValidator:
         # Check for slow operations
         slow_operations = [m for m in self.performance_metrics if m.duration_ms > 1000]
         if slow_operations:
-            recommendations.append(f"Found {len(slow_operations)} slow operations (>1s) - consider optimization")
+            recommendations.append(
+                f"Found {len(slow_operations)} slow operations (>1s) - consider optimization"
+            )
 
         # Check for failed tests
-        failed_critical = [r for r in self.results if not r.passed and r.severity == "error"]
+        failed_critical = [
+            r for r in self.results if not r.passed and r.severity == "error"
+        ]
         if failed_critical:
-            recommendations.append(f"{len(failed_critical)} critical tests failed - immediate attention required")
+            recommendations.append(
+                f"{len(failed_critical)} critical tests failed - immediate attention required"
+            )
 
         # Check database sizes
-        large_dbs = [r for r in self.results
-                    if r.test_name == "optimization_analysis"
-                    and r.value and r.value.get("size_mb", 0) > 100]
+        large_dbs = [
+            r
+            for r in self.results
+            if r.test_name == "optimization_analysis"
+            and r.value
+            and r.value.get("size_mb", 0) > 100
+        ]
         if large_dbs:
-            recommendations.append("Large databases detected - consider maintenance and optimization")
+            recommendations.append(
+                "Large databases detected - consider maintenance and optimization"
+            )
 
         summary["recommendations"] = recommendations
 
@@ -776,22 +904,28 @@ class DatabaseValidator:
 
         summary["health_score"] = round(health_score, 2)
         summary["health_status"] = (
-            "excellent" if health_score >= 95 else
-            "good" if health_score >= 85 else
-            "fair" if health_score >= 70 else
-            "poor"
+            "excellent"
+            if health_score >= 95
+            else (
+                "good"
+                if health_score >= 85
+                else "fair" if health_score >= 70 else "poor"
+            )
         )
 
         return summary
 
 
-async def validate_aivillage_databases(database_manager, redis_manager=None) -> dict[str, Any]:
+async def validate_aivillage_databases(
+    database_manager, redis_manager=None
+) -> dict[str, Any]:
     """Run comprehensive validation on AIVillage databases."""
     validator = DatabaseValidator(database_manager, redis_manager)
     return await validator.validate_all_databases()
 
 
 if __name__ == "__main__":
+
     async def main():
         """Test database validation."""
         from database_manager import initialize_databases
@@ -806,7 +940,9 @@ if __name__ == "__main__":
 
         # Print summary
         print("Database Validation Results")
-        print(f"Health Score: {results['health_score']}/100 ({results['health_status']})")
+        print(
+            f"Health Score: {results['health_score']}/100 ({results['health_status']})"
+        )
         print(f"Tests: {results['passed_tests']}/{results['total_tests']} passed")
         print(f"Duration: {results['total_duration_ms']:.2f}ms")
 

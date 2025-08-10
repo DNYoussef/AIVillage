@@ -5,9 +5,10 @@ Tests the complete distributed infrastructure.
 """
 
 import asyncio
-from pathlib import Path
 import sys
+from pathlib import Path
 
+import torch
 from implement_federated_learning import (
     AggregationStrategy,
     ClientUpdate,
@@ -15,7 +16,6 @@ from implement_federated_learning import (
     FederatedLearningServer,
 )
 from implement_mesh_protocol import MeshNetworkSimulator, MessageType
-import torch
 
 # Add current directory to path to import our implementations
 sys.path.append(str(Path(__file__).resolve().parent))

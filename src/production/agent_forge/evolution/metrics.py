@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
 import json
-from pathlib import Path
 import threading
 import time
-from typing import Any
 import uuid
+from dataclasses import asdict, dataclass
+from pathlib import Path
+from typing import Any
 
 # Optional dependencies -----------------------------------------------------
 try:  # pragma: no cover - import guard
@@ -135,7 +135,9 @@ class EvolutionMetricsRecorder:
                 memory_mb=mem_mb,
             )
 
-        self.EVOLUTION_ROUNDS.labels(mutation_type=mutation_type, node_type=node_type).inc()
+        self.EVOLUTION_ROUNDS.labels(
+            mutation_type=mutation_type, node_type=node_type
+        ).inc()
         return mutation_id
 
     def record_fitness(self, mutation_id: str, fitness: float) -> None:

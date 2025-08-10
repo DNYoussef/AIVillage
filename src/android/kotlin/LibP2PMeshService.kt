@@ -212,4 +212,3 @@ fun MeshMessage.toJson(): String {
         "\"ttl\":$ttl" +
         "}"
 }
-

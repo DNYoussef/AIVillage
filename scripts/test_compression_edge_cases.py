@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Test edge cases in compression."""
+
 import torch
 
 from core.compression.advanced_pipeline import AdvancedCompressionPipeline
@@ -14,7 +15,7 @@ def test_sparse_weights() -> None:
     weights[::10, ::10] = torch.randn(100, 100)  # Only 1% non-zero
 
     sparsity = (weights == 0).sum().item() / weights.numel()
-    print(f"Sparsity: {sparsity*100:.1f}%")
+    print(f"Sparsity: {sparsity * 100:.1f}%")
 
     AdvancedCompressionPipeline()
     # Test individual stages...

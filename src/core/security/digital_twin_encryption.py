@@ -6,10 +6,10 @@ with 32-byte base64 key requirement and GDPR/COPPA/FERPA compliance.
 """
 
 import base64
-from datetime import datetime, timedelta
 import hashlib
 import logging
 import os
+from datetime import datetime, timedelta
 from typing import Any
 
 from cryptography.fernet import Fernet
@@ -33,7 +33,7 @@ class DigitalTwinEncryption:
 
     def __init__(self, encryption_key: str | None = None):
         """Initialize encryption with CODEX-compliant configuration.
-        
+
         Args:
             encryption_key: Base64-encoded 32-byte key from environment
                           (DIGITAL_TWIN_ENCRYPTION_KEY)
@@ -50,26 +50,34 @@ class DigitalTwinEncryption:
         self.cipher = Fernet(self.fernet_key)
 
         # Compliance flags from environment
-        self.coppa_compliant = os.getenv("DIGITAL_TWIN_COPPA_COMPLIANT", "true").lower() == "true"
-        self.ferpa_compliant = os.getenv("DIGITAL_TWIN_FERPA_COMPLIANT", "true").lower() == "true"
-        self.gdpr_compliant = os.getenv("DIGITAL_TWIN_GDPR_COMPLIANT", "true").lower() == "true"
+        self.coppa_compliant = (
+            os.getenv("DIGITAL_TWIN_COPPA_COMPLIANT", "true").lower() == "true"
+        )
+        self.ferpa_compliant = (
+            os.getenv("DIGITAL_TWIN_FERPA_COMPLIANT", "true").lower() == "true"
+        )
+        self.gdpr_compliant = (
+            os.getenv("DIGITAL_TWIN_GDPR_COMPLIANT", "true").lower() == "true"
+        )
 
         # Data retention settings
         self.profile_ttl_days = int(os.getenv("DIGITAL_TWIN_PROFILE_TTL_DAYS", "365"))
 
-        logger.info("Digital Twin encryption initialized with compliance flags: "
-                   f"COPPA={self.coppa_compliant}, FERPA={self.ferpa_compliant}, "
-                   f"GDPR={self.gdpr_compliant}")
+        logger.info(
+            "Digital Twin encryption initialized with compliance flags: "
+            f"COPPA={self.coppa_compliant}, FERPA={self.ferpa_compliant}, "
+            f"GDPR={self.gdpr_compliant}"
+        )
 
     def _validate_and_derive_key(self, base64_key: str) -> bytes:
         """Validate and derive Fernet key from base64 encoded key.
-        
+
         Args:
             base64_key: Base64-encoded 32-byte key
-            
+
         Returns:
             Fernet-compatible key
-            
+
         Raises:
             DigitalTwinEncryptionError: If key is invalid
         """
@@ -90,7 +98,7 @@ class DigitalTwinEncryption:
                 length=32,
                 salt=b"digital_twin_salt_aivillage_2025",
                 iterations=100000,
-                backend=default_backend()
+                backend=default_backend(),
             )
 
             fernet_key = base64.urlsafe_b64encode(kdf.derive(key_bytes))
@@ -100,13 +108,15 @@ class DigitalTwinEncryption:
         except Exception as e:
             raise DigitalTwinEncryptionError(f"Invalid encryption key: {e}")
 
-    def encrypt_sensitive_field(self, plaintext_value: Any, field_name: str = "") -> bytes:
+    def encrypt_sensitive_field(
+        self, plaintext_value: Any, field_name: str = ""
+    ) -> bytes:
         """Encrypt sensitive field value for database storage.
-        
+
         Args:
             plaintext_value: Value to encrypt
             field_name: Field name for audit logging
-            
+
         Returns:
             Encrypted bytes suitable for BLOB storage
         """
@@ -122,18 +132,16 @@ class DigitalTwinEncryption:
                 "compliance_flags": {
                     "coppa": self.coppa_compliant,
                     "ferpa": self.ferpa_compliant,
-                    "gdpr": self.gdpr_compliant
-                }
+                    "gdpr": self.gdpr_compliant,
+                },
             }
 
             # Create payload with metadata
-            payload = {
-                "data": plaintext_value,
-                "meta": metadata
-            }
+            payload = {"data": plaintext_value, "meta": metadata}
 
             # Serialize and encrypt
             import json
+
             json_data = json.dumps(payload).encode("utf-8")
             encrypted_data = self.cipher.encrypt(json_data)
 
@@ -144,13 +152,15 @@ class DigitalTwinEncryption:
             logger.error(f"Failed to encrypt field {field_name}: {e}")
             raise DigitalTwinEncryptionError(f"Encryption failed for {field_name}: {e}")
 
-    def decrypt_sensitive_field(self, encrypted_data: bytes, field_name: str = "") -> Any:
+    def decrypt_sensitive_field(
+        self, encrypted_data: bytes, field_name: str = ""
+    ) -> Any:
         """Decrypt sensitive field value from database.
-        
+
         Args:
             encrypted_data: Encrypted bytes from database
             field_name: Field name for audit logging
-            
+
         Returns:
             Decrypted original value
         """
@@ -160,6 +170,7 @@ class DigitalTwinEncryption:
 
             # Deserialize payload
             import json
+
             payload = json.loads(decrypted_bytes.decode("utf-8"))
 
             # Validate compliance requirements
@@ -177,11 +188,11 @@ class DigitalTwinEncryption:
 
     def _validate_compliance_access(self, metadata: dict[str, Any], field_name: str):
         """Validate compliance requirements for data access.
-        
+
         Args:
             metadata: Encrypted data metadata
             field_name: Field being accessed
-            
+
         Raises:
             ComplianceViolationError: If compliance requirements not met
         """
@@ -208,10 +219,10 @@ class DigitalTwinEncryption:
 
     def hash_user_id(self, user_id: str) -> str:
         """Create privacy-compliant hash of user ID.
-        
+
         Args:
             user_id: Original user identifier
-            
+
         Returns:
             SHA-256 hash for privacy compliance
         """
@@ -224,10 +235,10 @@ class DigitalTwinEncryption:
 
     def check_data_retention_compliance(self, created_at: datetime) -> dict[str, Any]:
         """Check if data meets retention policy requirements.
-        
+
         Args:
             created_at: When the data was created
-            
+
         Returns:
             Compliance status and actions needed
         """
@@ -241,7 +252,7 @@ class DigitalTwinEncryption:
             "is_expired": age_days > self.profile_ttl_days,
             "days_until_expiry": self.profile_ttl_days - age_days,
             "requires_deletion": False,
-            "compliance_actions": []
+            "compliance_actions": [],
         }
 
         # GDPR right to be forgotten
@@ -259,14 +270,16 @@ class DigitalTwinEncryption:
 
         return status
 
-    def create_audit_log_entry(self, action: str, field_name: str, user_id_hash: str) -> dict[str, Any]:
+    def create_audit_log_entry(
+        self, action: str, field_name: str, user_id_hash: str
+    ) -> dict[str, Any]:
         """Create audit log entry for compliance tracking.
-        
+
         Args:
             action: Action performed (encrypt, decrypt, access, delete)
             field_name: Field name accessed
             user_id_hash: Hashed user identifier
-            
+
         Returns:
             Audit log entry data
         """
@@ -278,25 +291,29 @@ class DigitalTwinEncryption:
             "compliance_flags": {
                 "coppa_enabled": self.coppa_compliant,
                 "ferpa_enabled": self.ferpa_compliant,
-                "gdpr_enabled": self.gdpr_compliant
+                "gdpr_enabled": self.gdpr_compliant,
             },
             "node_id": os.getenv("LIBP2P_PEER_ID_FILE", "unknown"),
-            "session_id": os.urandom(8).hex()
+            "session_id": os.urandom(8).hex(),
         }
 
     def encrypt_profile_data(self, profile_data: dict[str, Any]) -> dict[str, Any]:
         """Encrypt entire learning profile with field-level encryption.
-        
+
         Args:
             profile_data: Complete profile dictionary
-            
+
         Returns:
             Profile with encrypted sensitive fields
         """
         # Define sensitive fields that require encryption
         sensitive_fields = {
-            "learning_style", "knowledge_domains", "learning_goals",
-            "performance_metrics", "engagement_score", "learning_trajectory"
+            "learning_style",
+            "knowledge_domains",
+            "learning_goals",
+            "performance_metrics",
+            "engagement_score",
+            "learning_trajectory",
         }
 
         encrypted_profile = profile_data.copy()
@@ -305,8 +322,8 @@ class DigitalTwinEncryption:
         for field_name in sensitive_fields:
             if field_name in profile_data:
                 original_value = profile_data[field_name]
-                encrypted_profile[f"{field_name}_encrypted"] = self.encrypt_sensitive_field(
-                    original_value, field_name
+                encrypted_profile[f"{field_name}_encrypted"] = (
+                    self.encrypt_sensitive_field(original_value, field_name)
                 )
                 # Remove plaintext version
                 del encrypted_profile[field_name]
@@ -318,18 +335,18 @@ class DigitalTwinEncryption:
             "compliance_status": {
                 "coppa_compliant": self.coppa_compliant,
                 "ferpa_compliant": self.ferpa_compliant,
-                "gdpr_compliant": self.gdpr_compliant
-            }
+                "gdpr_compliant": self.gdpr_compliant,
+            },
         }
 
         return encrypted_profile
 
     def decrypt_profile_data(self, encrypted_profile: dict[str, Any]) -> dict[str, Any]:
         """Decrypt learning profile with field-level decryption.
-        
+
         Args:
             encrypted_profile: Profile with encrypted fields
-            
+
         Returns:
             Profile with decrypted sensitive fields
         """
@@ -337,8 +354,7 @@ class DigitalTwinEncryption:
 
         # Find and decrypt encrypted fields
         encrypted_field_names = [
-            field for field in encrypted_profile
-            if field.endswith("_encrypted")
+            field for field in encrypted_profile if field.endswith("_encrypted")
         ]
 
         for encrypted_field in encrypted_field_names:
@@ -347,7 +363,9 @@ class DigitalTwinEncryption:
 
             # Decrypt the field
             encrypted_data = encrypted_profile[encrypted_field]
-            decrypted_value = self.decrypt_sensitive_field(encrypted_data, original_field)
+            decrypted_value = self.decrypt_sensitive_field(
+                encrypted_data, original_field
+            )
 
             # Add decrypted value
             decrypted_profile[original_field] = decrypted_value
@@ -360,7 +378,7 @@ class DigitalTwinEncryption:
 
 def generate_encryption_key() -> str:
     """Generate a new 32-byte base64-encoded encryption key.
-    
+
     Returns:
         Base64-encoded encryption key suitable for environment variable
     """
@@ -385,7 +403,9 @@ if __name__ == "__main__":
 
     # Test field encryption
     sensitive_data = "learning_style: visual, preferred_subjects: [math, science]"
-    encrypted = encryption.encrypt_sensitive_field(sensitive_data, "learning_preferences")
+    encrypted = encryption.encrypt_sensitive_field(
+        sensitive_data, "learning_preferences"
+    )
     decrypted = encryption.decrypt_sensitive_field(encrypted, "learning_preferences")
 
     print(f"Original: {sensitive_data}")

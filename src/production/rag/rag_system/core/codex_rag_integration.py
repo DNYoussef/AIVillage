@@ -5,21 +5,21 @@ with exact configuration values, models, and performance targets.
 """
 
 import asyncio
-from collections import OrderedDict
-from dataclasses import dataclass
 import hashlib
 import json
 import logging
 import os
-from pathlib import Path
 import time
+from collections import OrderedDict
+from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
-from diskcache import Cache as DiskCache
 import faiss
 import numpy as np
-from rank_bm25 import BM25Okapi
 import redis
+from diskcache import Cache as DiskCache
+from rank_bm25 import BM25Okapi
 from sentence_transformers import CrossEncoder, SentenceTransformer
 
 # Configure logging
@@ -33,7 +33,9 @@ RAG_REDIS_URL = os.getenv("RAG_REDIS_URL", "redis://localhost:6379/1")
 RAG_DISK_CACHE_DIR = os.getenv("RAG_DISK_CACHE_DIR", "/tmp/rag_disk_cache")
 
 RAG_EMBEDDING_MODEL = os.getenv("RAG_EMBEDDING_MODEL", "paraphrase-MiniLM-L3-v2")
-RAG_CROSS_ENCODER_MODEL = os.getenv("RAG_CROSS_ENCODER_MODEL", "cross-encoder/ms-marco-MiniLM-L-2-v2")
+RAG_CROSS_ENCODER_MODEL = os.getenv(
+    "RAG_CROSS_ENCODER_MODEL", "cross-encoder/ms-marco-MiniLM-L-2-v2"
+)
 
 RAG_VECTOR_DIM = int(os.getenv("RAG_VECTOR_DIM", "384"))
 RAG_FAISS_INDEX_PATH = os.getenv("RAG_FAISS_INDEX_PATH", "./data/faiss_index")
@@ -47,6 +49,7 @@ RAG_CHUNK_OVERLAP = int(os.getenv("RAG_CHUNK_OVERLAP", "50"))
 @dataclass
 class Document:
     """Document container with CODEX-compliant metadata."""
+
     id: str
     title: str
     content: str
@@ -57,6 +60,7 @@ class Document:
 @dataclass
 class Chunk:
     """Chunk with position and metadata."""
+
     id: str
     document_id: str
     text: str
@@ -69,6 +73,7 @@ class Chunk:
 @dataclass
 class RetrievalResult:
     """CODEX-compliant retrieval result."""
+
     chunk_id: str
     document_id: str
     text: str
@@ -79,9 +84,9 @@ class RetrievalResult:
 
 class CODEXCompliantCache:
     """Three-tier cache meeting CODEX specifications.
-    
+
     L1: In-memory LRU cache (128 entries)
-    L2: Redis cache (optional, falls back gracefully)  
+    L2: Redis cache (optional, falls back gracefully)
     L3: Disk cache for persistence
     """
 
@@ -104,10 +109,12 @@ class CODEXCompliantCache:
                     db = int(parts[1]) if len(parts) > 1 else 1
 
                     self.l2_cache = redis.Redis(
-                        host=host, port=port, db=db,
+                        host=host,
+                        port=port,
+                        db=db,
                         decode_responses=True,
                         socket_connect_timeout=1,
-                        socket_timeout=1
+                        socket_timeout=1,
                     )
                     # Test connection
                     self.l2_cache.ping()
@@ -222,7 +229,7 @@ class CODEXCompliantCache:
                 "text": r.text,
                 "score": r.score,
                 "retrieval_method": r.retrieval_method,
-                "metadata": r.metadata
+                "metadata": r.metadata,
             }
             for r in results
         ]
@@ -245,13 +252,13 @@ class CODEXCompliantCache:
             "hits": self.hits,
             "misses": self.misses,
             "avg_latency_ms": avg_latency,
-            "total_requests": total_requests
+            "total_requests": total_requests,
         }
 
 
 class CODEXRAGPipeline:
     """CODEX-compliant RAG pipeline implementation.
-    
+
     Features:
     - Exact embedding model: paraphrase-MiniLM-L3-v2 (384 dims)
     - FAISS vector index with ID mapping
@@ -327,17 +334,16 @@ class CODEXRAGPipeline:
                 self.keyword_ids = data["ids"]
                 if self.keyword_corpus:
                     self.bm25_index = BM25Okapi(self.keyword_corpus)
-                logger.info(f"Loaded BM25 corpus with {len(self.keyword_corpus)} chunks")
+                logger.info(
+                    f"Loaded BM25 corpus with {len(self.keyword_corpus)} chunks"
+                )
         except Exception as e:
             logger.warning(f"Failed to load BM25 corpus: {e}")
 
     def _save_bm25_corpus(self) -> None:
         """Save BM25 corpus to disk."""
         try:
-            data = {
-                "corpus": self.keyword_corpus,
-                "ids": self.keyword_ids
-            }
+            data = {"corpus": self.keyword_corpus, "ids": self.keyword_ids}
             with open(self.bm25_path, "w", encoding="utf-8") as f:
                 json.dump(data, f)
             logger.info(f"Saved BM25 corpus to {self.bm25_path}")
@@ -345,10 +351,7 @@ class CODEXRAGPipeline:
             logger.error(f"Failed to save BM25 corpus: {e}")
 
     def chunk_document(
-        self,
-        document: Document,
-        chunk_size: int = None,
-        chunk_overlap: int = None
+        self, document: Document, chunk_size: int = None, chunk_overlap: int = None
     ) -> list[Chunk]:
         """Chunk document according to CODEX specifications."""
         chunk_size = chunk_size or RAG_CHUNK_SIZE
@@ -377,12 +380,12 @@ class CODEXRAGPipeline:
                 position=position,
                 start_idx=char_start,
                 end_idx=char_end,
-                metadata=document.metadata
+                metadata=document.metadata,
             )
             chunks.append(chunk)
 
             position += 1
-            start_idx += (chunk_size - chunk_overlap)
+            start_idx += chunk_size - chunk_overlap
 
         return chunks
 
@@ -393,7 +396,7 @@ class CODEXRAGPipeline:
             "documents_processed": 0,
             "chunks_created": 0,
             "vectors_indexed": 0,
-            "processing_time_ms": 0
+            "processing_time_ms": 0,
         }
 
         all_chunks = []
@@ -410,10 +413,7 @@ class CODEXRAGPipeline:
         # Batch encode chunks
         texts = [chunk.text for chunk in all_chunks]
         embeddings = self.embedder.encode(
-            texts,
-            batch_size=32,
-            show_progress_bar=False,
-            convert_to_numpy=True
+            texts, batch_size=32, show_progress_bar=False, convert_to_numpy=True
         )
 
         # Add to FAISS index
@@ -424,10 +424,7 @@ class CODEXRAGPipeline:
             chunk_ids.append(chunk_id)
 
             # Store chunk metadata
-            self.chunk_store[chunk_id] = {
-                "chunk": chunk,
-                "embedding": embedding
-            }
+            self.chunk_store[chunk_id] = {"chunk": chunk, "embedding": embedding}
 
             # Add to keyword corpus
             tokens = chunk.text.lower().split()
@@ -458,10 +455,7 @@ class CODEXRAGPipeline:
         return stats
 
     async def retrieve(
-        self,
-        query: str,
-        k: int = None,
-        use_cache: bool = True
+        self, query: str, k: int = None, use_cache: bool = True
     ) -> tuple[list[RetrievalResult], dict[str, Any]]:
         """Retrieve relevant chunks with <100ms target latency."""
         k = k or RAG_DEFAULT_K
@@ -477,9 +471,7 @@ class CODEXRAGPipeline:
 
         # Encode query
         query_embedding = self.embedder.encode(
-            query,
-            convert_to_numpy=True,
-            show_progress_bar=False
+            query, convert_to_numpy=True, show_progress_bar=False
         )
 
         # Vector search
@@ -487,7 +479,7 @@ class CODEXRAGPipeline:
         if self.index.ntotal > 0:
             scores, ids = self.index.search(
                 np.array([query_embedding]).astype("float32"),
-                min(k * 2, self.index.ntotal)
+                min(k * 2, self.index.ntotal),
             )
             vector_results = list(zip(ids[0], scores[0], strict=False))
 
@@ -498,23 +490,25 @@ class CODEXRAGPipeline:
             scores = self.bm25_index.get_scores(query_tokens)
             keyword_results = list(zip(self.keyword_ids, scores, strict=False))
             keyword_results.sort(key=lambda x: x[1], reverse=True)
-            keyword_results = keyword_results[:k * 2]
+            keyword_results = keyword_results[: k * 2]
 
         # Reciprocal rank fusion
         combined_scores = {}
         for rank, (chunk_id, score) in enumerate(vector_results):
             if chunk_id != -1:  # FAISS returns -1 for empty results
-                combined_scores[chunk_id] = combined_scores.get(chunk_id, 0) + 1.0 / (60 + rank)
+                combined_scores[chunk_id] = combined_scores.get(chunk_id, 0) + 1.0 / (
+                    60 + rank
+                )
 
         for rank, (chunk_id, score) in enumerate(keyword_results):
-            combined_scores[chunk_id] = combined_scores.get(chunk_id, 0) + 1.0 / (60 + rank)
+            combined_scores[chunk_id] = combined_scores.get(chunk_id, 0) + 1.0 / (
+                60 + rank
+            )
 
         # Sort by combined score
-        ranked_ids = sorted(
-            combined_scores.items(),
-            key=lambda x: x[1],
-            reverse=True
-        )[:k]
+        ranked_ids = sorted(combined_scores.items(), key=lambda x: x[1], reverse=True)[
+            :k
+        ]
 
         # Build retrieval results
         results = []
@@ -529,7 +523,7 @@ class CODEXRAGPipeline:
                     text=chunk.text,
                     score=float(score),
                     retrieval_method="hybrid",
-                    metadata=chunk.metadata
+                    metadata=chunk.metadata,
                 )
                 results.append(result)
 
@@ -555,7 +549,7 @@ class CODEXRAGPipeline:
             "num_results": len(results),
             "vector_search": len(vector_results) > 0,
             "keyword_search": len(keyword_results) > 0,
-            "reranked": self.cross_encoder is not None
+            "reranked": self.cross_encoder is not None,
         }
 
         # Log performance warning if >100ms
@@ -572,7 +566,7 @@ class CODEXRAGPipeline:
                 "p50_latency_ms": 0,
                 "p95_latency_ms": 0,
                 "p99_latency_ms": 0,
-                "meets_target": True
+                "meets_target": True,
             }
 
         latencies = np.array(self.retrieval_times)
@@ -585,7 +579,7 @@ class CODEXRAGPipeline:
             "meets_target": float(np.mean(latencies)) < 100,
             "cache_metrics": self.cache.get_metrics(),
             "index_size": self.index.ntotal,
-            "corpus_size": len(self.keyword_corpus)
+            "corpus_size": len(self.keyword_corpus),
         }
 
 
@@ -603,22 +597,22 @@ async def test_integration():
             title="Machine Learning",
             content="Machine learning is a subset of artificial intelligence that enables systems to learn and improve from experience without being explicitly programmed. It focuses on developing computer programs that can access data and use it to learn for themselves. The process of learning begins with observations or data, such as examples, direct experience, or instruction, in order to look for patterns in data and make better decisions in the future.",
             source_type="wikipedia",
-            metadata={"category": "AI", "difficulty": "beginner"}
+            metadata={"category": "AI", "difficulty": "beginner"},
         ),
         Document(
             id="wiki_2",
             title="Neural Networks",
             content="Neural networks are computing systems inspired by the biological neural networks that constitute animal brains. An artificial neural network is based on a collection of connected units or nodes called artificial neurons, which loosely model the neurons in a biological brain. Each connection, like the synapses in a biological brain, can transmit a signal to other neurons. Deep learning architectures such as deep neural networks, recurrent neural networks, and convolutional neural networks have been applied to fields including computer vision, machine translation, and speech recognition.",
             source_type="wikipedia",
-            metadata={"category": "AI", "difficulty": "intermediate"}
+            metadata={"category": "AI", "difficulty": "intermediate"},
         ),
         Document(
             id="wiki_3",
             title="Natural Language Processing",
             content="Natural language processing is a subfield of linguistics, computer science, and artificial intelligence concerned with the interactions between computers and human language. In particular, it focuses on how to program computers to process and analyze large amounts of natural language data. The goal is to enable computers to understand, interpret, and generate human language in a valuable way. Common NLP tasks include text classification, named entity recognition, machine translation, question answering, and sentiment analysis.",
             source_type="wikipedia",
-            metadata={"category": "AI", "difficulty": "intermediate"}
-        )
+            metadata={"category": "AI", "difficulty": "intermediate"},
+        ),
     ]
 
     # Index documents
@@ -631,7 +625,7 @@ async def test_integration():
         "How do neural networks work?",
         "What are the applications of NLP?",
         "Explain deep learning architectures",
-        "What is artificial intelligence?"
+        "What is artificial intelligence?",
     ]
 
     # Run retrieval tests
@@ -639,7 +633,9 @@ async def test_integration():
         logger.info(f"\nQuery: {query}")
         results, metrics = await pipeline.retrieve(query, k=5)
 
-        logger.info(f"Retrieved {len(results)} results in {metrics['latency_ms']:.2f}ms")
+        logger.info(
+            f"Retrieved {len(results)} results in {metrics['latency_ms']:.2f}ms"
+        )
         logger.info(f"Cache hit: {metrics['cache_hit']}")
 
         if results:
@@ -650,7 +646,9 @@ async def test_integration():
     logger.info("\n--- Testing cache performance ---")
     for query in test_queries[:2]:
         results, metrics = await pipeline.retrieve(query, k=5)
-        logger.info(f"Query: {query[:30]}... - Latency: {metrics['latency_ms']:.2f}ms (cache: {metrics['cache_hit']})")
+        logger.info(
+            f"Query: {query[:30]}... - Latency: {metrics['latency_ms']:.2f}ms (cache: {metrics['cache_hit']})"
+        )
 
     # Get final performance metrics
     perf_metrics = pipeline.get_performance_metrics()

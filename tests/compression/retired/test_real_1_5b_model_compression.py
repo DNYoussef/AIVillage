@@ -2,9 +2,9 @@
 """Download and compress a real 1.5B parameter model through all 4 stages."""
 
 import gc
-from pathlib import Path
 import sys
 import time
+from pathlib import Path
 
 import torch
 from torch import nn
@@ -114,14 +114,14 @@ def create_synthetic_1_5b_model():
 
     print("✅ Synthetic model created!")
     print(f"Total parameters: {total_params:,}")
-    print(f"Target was 1.5B, achieved: {total_params/1_000_000_000:.2f}B")
+    print(f"Target was 1.5B, achieved: {total_params / 1_000_000_000:.2f}B")
 
     return model, None, total_params
 
 
 def compress_model_stage1_bitnet(model, model_name="model"):
     """Compress model through Stage 1: BitNet."""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("STAGE 1: BITNET COMPRESSION")
     print("=" * 60)
 
@@ -170,10 +170,10 @@ def compress_model_stage1_bitnet(model, model_name="model"):
 
     print("\nSTAGE 1 RESULTS:")
     print(
-        f"  Total original: {total_original_size:,} bytes ({total_original_size/(1024**3):.2f} GB)"
+        f"  Total original: {total_original_size:,} bytes ({total_original_size / (1024**3):.2f} GB)"
     )
     print(
-        f"  Total compressed: {total_compressed_size:,} bytes ({total_compressed_size/(1024**2):.1f} MB)"
+        f"  Total compressed: {total_compressed_size:,} bytes ({total_compressed_size / (1024**2):.1f} MB)"
     )
     print(f"  BitNet compression: {stage1_ratio:.1f}x")
 
@@ -182,7 +182,7 @@ def compress_model_stage1_bitnet(model, model_name="model"):
 
 def compress_model_stage2_seedlm(compressed_params, model):
     """Compress model through Stage 2: SeedLM (on decompressed weights)."""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("STAGE 2: SEEDLM COMPRESSION")
     print("=" * 60)
 
@@ -265,7 +265,7 @@ def compress_model_stage2_seedlm(compressed_params, model):
 
 def compress_model_stage3_vptq(model, previous_size):
     """Compress model through Stage 3: VPTQ."""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("STAGE 3: VPTQ COMPRESSION")
     print("=" * 60)
 
@@ -316,7 +316,7 @@ def compress_model_stage3_vptq(model, previous_size):
 
     print("\nSTAGE 3 RESULTS:")
     print(
-        f"  Total VPTQ size: {total_stage3_size:,} bytes ({total_stage3_size/(1024**2):.1f} MB)"
+        f"  Total VPTQ size: {total_stage3_size:,} bytes ({total_stage3_size / (1024**2):.1f} MB)"
     )
     print(f"  VPTQ improvement: {stage3_ratio:.1f}x over previous stage")
 
@@ -325,7 +325,7 @@ def compress_model_stage3_vptq(model, previous_size):
 
 def compress_model_stage4_hyper(stage3_size):
     """Apply Stage 4: HyperCompression (LZMA optimization)."""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("STAGE 4: HYPERCOMPRESSION (LZMA)")
     print("=" * 60)
 
@@ -388,7 +388,7 @@ def test_full_1_5b_compression():
         overall_ratio = (total_params * 4) / final_size
         final_size_mb = final_size / (1024**2)
 
-        print(f"\n{'='*70}")
+        print(f"\n{'=' * 70}")
         print("FINAL 1.5B MODEL COMPRESSION RESULTS")
         print("=" * 70)
 
@@ -411,7 +411,7 @@ def test_full_1_5b_compression():
         print("\nMobile deployment:")
         mobile_viable = final_size_mb < 1000
         print(f"  Fits on 2GB phone: {'✅ YES' if mobile_viable else '❌ NO'}")
-        print(f"  Memory usage: {final_size_mb/1024:.1f}% of 1GB")
+        print(f"  Memory usage: {final_size_mb / 1024:.1f}% of 1GB")
 
         # Kenya deployment
         kenya_viable = final_size_mb < 500
@@ -436,7 +436,7 @@ def main():
     """Run the full 1.5B model compression test."""
     success = test_full_1_5b_compression()
 
-    print(f"\n{'='*70}")
+    print(f"\n{'=' * 70}")
     print(f"1.5B MODEL COMPRESSION TEST: {'✅ SUCCESS' if success else '❌ FAILED'}")
     print("=" * 70)
 

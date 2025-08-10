@@ -12,14 +12,15 @@ import time
 from datetime import datetime
 from pathlib import Path
 
+
 class DatabaseValidator:
     """Simple database validator"""
-    
+
     def __init__(self):
         self.base_path = Path.cwd()
         self.data_dir = self.base_path / "data"
         self.results = []
-        
+
     def check_database(self, name, path, expected_tables):
         """Check if database exists and has expected tables"""
         result = {
@@ -30,35 +31,35 @@ class DatabaseValidator:
             "missing_tables": [],
             "wal_enabled": False,
             "row_counts": {},
-            "issues": []
+            "issues": [],
         }
-        
+
         if not Path(path).exists():
             result["issues"].append("Database file does not exist")
             return result
-        
+
         result["exists"] = True
-        
+
         try:
             conn = sqlite3.connect(path)
             cursor = conn.cursor()
-            
+
             # Check WAL mode
             wal_mode = cursor.execute("PRAGMA journal_mode").fetchone()
             if wal_mode:
                 result["wal_enabled"] = wal_mode[0].upper() == "WAL"
-            
+
             # Get existing tables
             cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
             existing_tables = [row[0] for row in cursor.fetchall()]
             result["tables"] = existing_tables
-            
+
             # Check for missing tables
             missing = set(expected_tables) - set(existing_tables)
             if missing:
                 result["missing_tables"] = list(missing)
                 result["issues"].append(f"Missing tables: {', '.join(missing)}")
-            
+
             # Get row counts
             for table in existing_tables:
                 if table != "sqlite_sequence":
@@ -68,20 +69,20 @@ class DatabaseValidator:
                         result["row_counts"][table] = count
                     except:
                         result["row_counts"][table] = "error"
-            
+
             # Check integrity
             cursor.execute("PRAGMA integrity_check")
             integrity = cursor.fetchone()[0]
             if integrity != "ok":
                 result["issues"].append(f"Integrity check failed: {integrity}")
-            
+
             conn.close()
-            
+
         except sqlite3.Error as e:
             result["issues"].append(f"Database error: {e}")
-        
+
         return result
-    
+
     def create_missing_databases(self):
         """Create any missing databases with proper schemas"""
         databases = [
@@ -145,8 +146,8 @@ class DatabaseValidator:
                             achievement_rate REAL,
                             timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                         )
-                    """
-                }
+                    """,
+                },
             },
             {
                 "name": "Digital Twin",
@@ -206,8 +207,8 @@ class DatabaseValidator:
                             deletion_requested BOOLEAN DEFAULT 0,
                             deletion_date TIMESTAMP
                         )
-                    """
-                }
+                    """,
+                },
             },
             {
                 "name": "RAG Index",
@@ -262,143 +263,161 @@ class DatabaseValidator:
                             timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                             hit_count INTEGER DEFAULT 0
                         )
-                    """
-                }
-            }
+                    """,
+                },
+            },
         ]
-        
+
         # Create data directory if it doesn't exist
         self.data_dir.mkdir(exist_ok=True)
-        
+
         created = []
-        
+
         for db_config in databases:
             db_path = db_config["path"]
-            
+
             if not db_path.exists():
                 print(f"\nCreating database: {db_config['name']}")
-                
+
                 try:
                     conn = sqlite3.connect(str(db_path))
                     cursor = conn.cursor()
-                    
+
                     # Enable WAL mode
                     cursor.execute("PRAGMA journal_mode=WAL")
                     cursor.execute("PRAGMA synchronous=NORMAL")
-                    
+
                     # Create tables
                     for table_name, create_sql in db_config["tables"].items():
                         cursor.execute(create_sql)
                         print(f"  Created table: {table_name}")
-                    
+
                     conn.commit()
                     conn.close()
-                    
+
                     created.append(db_config["name"])
-                    
+
                 except sqlite3.Error as e:
                     print(f"  ERROR: Failed to create database: {e}")
-        
+
         return created
-    
+
     def run_validation(self):
         """Run database validation"""
-        print("="*80)
+        print("=" * 80)
         print("DATABASE VALIDATION")
-        print("="*80)
-        
+        print("=" * 80)
+
         # Define expected databases
         databases = [
             {
                 "name": "Evolution Metrics",
                 "path": self.data_dir / "evolution_metrics.db",
-                "tables": ["evolution_rounds", "fitness_metrics", "resource_metrics", 
-                          "selection_outcomes", "kpi_tracking"]
+                "tables": [
+                    "evolution_rounds",
+                    "fitness_metrics",
+                    "resource_metrics",
+                    "selection_outcomes",
+                    "kpi_tracking",
+                ],
             },
             {
                 "name": "Digital Twin",
                 "path": self.data_dir / "digital_twin.db",
-                "tables": ["learning_profiles", "learning_sessions", "knowledge_states", 
-                          "privacy_settings"]
+                "tables": [
+                    "learning_profiles",
+                    "learning_sessions",
+                    "knowledge_states",
+                    "privacy_settings",
+                ],
             },
             {
                 "name": "RAG Index",
                 "path": self.data_dir / "rag_index.db",
-                "tables": ["documents", "chunks", "embeddings_metadata", "search_cache"]
-            }
+                "tables": [
+                    "documents",
+                    "chunks",
+                    "embeddings_metadata",
+                    "search_cache",
+                ],
+            },
         ]
-        
+
         # Check each database
         for db_config in databases:
             print(f"\nChecking {db_config['name']}...")
             result = self.check_database(
-                db_config["name"],
-                db_config["path"],
-                db_config["tables"]
+                db_config["name"], db_config["path"], db_config["tables"]
             )
             self.results.append(result)
-            
+
             if result["exists"]:
                 print(f"  [EXISTS] at {result['path']}")
                 print(f"  Tables: {len(result['tables'])}")
-                print(f"  WAL Mode: {'Enabled' if result['wal_enabled'] else 'Disabled'}")
-                
+                print(
+                    f"  WAL Mode: {'Enabled' if result['wal_enabled'] else 'Disabled'}"
+                )
+
                 if result["row_counts"]:
                     print("  Row counts:")
                     for table, count in result["row_counts"].items():
                         print(f"    - {table}: {count}")
-                
+
                 if result["issues"]:
                     print("  ISSUES:")
                     for issue in result["issues"]:
                         print(f"    - {issue}")
             else:
                 print(f"  [MISSING] Database does not exist")
-        
+
         # Summary
-        print("\n" + "="*80)
+        print("\n" + "=" * 80)
         print("SUMMARY")
-        print("="*80)
-        
+        print("=" * 80)
+
         total = len(self.results)
         existing = sum(1 for r in self.results if r["exists"])
         healthy = sum(1 for r in self.results if r["exists"] and not r["issues"])
-        
+
         print(f"Total Databases: {total}")
         print(f"Existing: {existing}")
         print(f"Healthy: {healthy}")
         print(f"Missing: {total - existing}")
-        
+
         # Save results
         output_file = Path("database_validation.json")
-        with open(output_file, 'w') as f:
-            json.dump({
-                "summary": {
-                    "total": total,
-                    "existing": existing,
-                    "healthy": healthy,
-                    "missing": total - existing,
-                    "timestamp": datetime.now().isoformat()
+        with open(output_file, "w") as f:
+            json.dump(
+                {
+                    "summary": {
+                        "total": total,
+                        "existing": existing,
+                        "healthy": healthy,
+                        "missing": total - existing,
+                        "timestamp": datetime.now().isoformat(),
+                    },
+                    "results": self.results,
                 },
-                "results": self.results
-            }, f, indent=2)
-        
+                f,
+                indent=2,
+            )
+
         print(f"\nResults saved to {output_file}")
-        
+
         return existing == total and healthy == total
-    
+
     def fix_issues(self):
         """Attempt to fix database issues"""
-        print("\n" + "="*80)
+        print("\n" + "=" * 80)
         print("ATTEMPTING TO FIX DATABASE ISSUES")
-        print("="*80)
-        
+        print("=" * 80)
+
         # Create missing databases
         created = self.create_missing_databases()
-        
+
         if created:
             print(f"\nCreated {len(created)} missing database(s)")
-        
+
         # Fix WAL mode for existing databases
         for result in self.results:
             if result["exists"] and not result["wal_enabled"]:
@@ -410,29 +429,29 @@ class DatabaseValidator:
                     print("  [SUCCESS] WAL mode enabled")
                 except Exception as e:
                     print(f"  [ERROR] Failed to enable WAL: {e}")
-        
+
         return len(created) > 0
 
 
 def main():
     """Main entry point"""
     validator = DatabaseValidator()
-    
+
     # Run validation
     all_healthy = validator.run_validation()
-    
+
     if not all_healthy:
         # Attempt fixes
         validator.fix_issues()
-        
+
         # Re-run validation
-        print("\n" + "="*80)
+        print("\n" + "=" * 80)
         print("RE-RUNNING VALIDATION AFTER FIXES")
-        print("="*80)
-        
+        print("=" * 80)
+
         validator.results = []
         all_healthy = validator.run_validation()
-    
+
     return 0 if all_healthy else 1
 
 

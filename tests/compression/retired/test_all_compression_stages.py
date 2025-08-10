@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Test ALL compression stages with real running code to prove they work."""
 
-from pathlib import Path
 import sys
 import time
+from pathlib import Path
 
 import torch
 
@@ -198,7 +198,7 @@ def test_real_hyperfn():
 
 def test_pipeline_integration():
     """Test if we can actually run stages together."""
-    print(f"\n{'='*50}")
+    print(f"\n{'=' * 50}")
     print("TESTING PIPELINE INTEGRATION")
     print("=" * 50)
 
@@ -312,7 +312,7 @@ def main():
     # Test pipeline integration
     pipeline_ratio, working_stages = test_pipeline_integration()
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("REAL COMPRESSION STAGE RESULTS")
     print("=" * 60)
 

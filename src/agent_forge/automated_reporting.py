@@ -9,21 +9,21 @@ Generates professional reports from Agent Forge benchmark results:
 """
 
 import asyncio
-from dataclasses import dataclass
-from datetime import datetime
 import json
 import logging
 import os
-from pathlib import Path
 import subprocess
 import sys
 import time
+from dataclasses import dataclass
+from datetime import datetime
+from pathlib import Path
 from typing import Any
 
-from jinja2 import Template
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
+from jinja2 import Template
 
 from agent_forge.results_analyzer import ResultsAnalyzer
 

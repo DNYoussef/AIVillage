@@ -16,7 +16,7 @@ TOOL AVAILABILITY ASSESSMENT
 Python Linting Tools:
 ✅ [OK] ruff (v0.12.3) - Available via CLI
 ✅ [OK] black - Available as Python module
-✅ [OK] isort - Available as Python module  
+✅ [OK] isort - Available as Python module
 ✅ [OK] mypy - Available as Python module
 ✅ [OK] flake8 - Available as Python module
 

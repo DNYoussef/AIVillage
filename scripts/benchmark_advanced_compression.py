@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """Benchmark the advanced compression pipeline against a simple quantizer."""
+
 from __future__ import annotations
 
-from pathlib import Path
 import sys
 import time
+from pathlib import Path
 
 from torch import nn
 

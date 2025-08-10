@@ -2,9 +2,9 @@
 """Test 4-stage compression on real model weights using safetensors directly."""
 
 import json
-from pathlib import Path
 import sys
 import time
+from pathlib import Path
 
 from safetensors import safe_open
 
@@ -123,7 +123,7 @@ def test_real_weights_compression(weights_dict, max_layers=5):
         print(f"\nLayer {layer_count}: {name}")
         print(f"  Shape: {tuple(weight.shape)}")
         print(f"  Parameters: {weight.numel():,}")
-        print(f"  Size: {original_size:,} bytes ({original_size/(1024**2):.1f} MB)")
+        print(f"  Size: {original_size:,} bytes ({original_size / (1024**2):.1f} MB)")
 
         try:
             # Ensure tensor is on CPU and contiguous
@@ -200,12 +200,12 @@ def test_real_weights_compression(weights_dict, max_layers=5):
         print("=" * 60)
         print(f"Layers tested: {layer_count}")
         print(f"Successful: {successful_layers}/{layer_count}")
-        print(f"Success rate: {successful_layers/layer_count*100:.1f}%")
+        print(f"Success rate: {successful_layers / layer_count * 100:.1f}%")
         print(
-            f"Original size: {total_original:,} bytes ({total_original/(1024**2):.1f} MB)"
+            f"Original size: {total_original:,} bytes ({total_original / (1024**2):.1f} MB)"
         )
         print(
-            f"Compressed size: {total_compressed:,} bytes ({total_compressed/(1024**2):.2f} MB)"
+            f"Compressed size: {total_compressed:,} bytes ({total_compressed / (1024**2):.2f} MB)"
         )
         print(f"Compression ratio: {overall_ratio:.1f}x")
 
@@ -235,7 +235,7 @@ def project_full_model_compression(test_ratio, model_params, model_size_gb):
     print(f"  Original: {model_size_gb:.2f} GB ({original_bytes:,} bytes)")
     print(f"  Compressed: {compressed_mb:.1f} MB ({compressed_gb:.3f} GB)")
     print(f"  Compression ratio: {test_ratio:.1f}x")
-    print(f"  Size reduction: {(1 - compressed_gb/model_size_gb)*100:.1f}%")
+    print(f"  Size reduction: {(1 - compressed_gb / model_size_gb) * 100:.1f}%")
 
     # Mobile deployment analysis
     mobile_viable = compressed_mb < 1000  # Less than 1GB
@@ -247,7 +247,7 @@ def project_full_model_compression(test_ratio, model_params, model_size_gb):
     print(f"  Fits on 2GB phone: {'YES' if mobile_viable else 'NO'}")
     print(f"  Kenya deployment: {'READY' if kenya_viable else 'MARGINAL'}")
     print(f"  Excellent performance: {'YES' if excellent else 'NO'}")
-    print(f"  Memory overhead: {compressed_mb/1024:.1f}% of 1GB RAM")
+    print(f"  Memory overhead: {compressed_mb / 1024:.1f}% of 1GB RAM")
 
     return compressed_mb, mobile_viable, kenya_viable
 

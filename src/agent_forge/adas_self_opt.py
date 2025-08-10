@@ -9,22 +9,22 @@ Implements automated design and architecture search for self-improving agents:
 """
 
 import asyncio
-from dataclasses import asdict, dataclass
 import json
 import logging
-from pathlib import Path
 import random
 import time
+from dataclasses import asdict, dataclass
+from pathlib import Path
 from typing import Any
 
 import numpy as np
+import torch
+import wandb
 from scipy.optimize import minimize
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import Matern
-import torch
 from torch import nn
 from transformers import AutoConfig, AutoModelForCausalLM
-import wandb
 
 from agent_forge.geometry_feedback import GeometryTracker
 

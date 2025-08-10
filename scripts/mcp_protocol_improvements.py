@@ -5,11 +5,11 @@ This script contains the implementations to replace the TODO items in
 mcp_servers/hyperag/protocol.py with actual functionality.
 """
 
+import logging
+import uuid
 from dataclasses import asdict
 from datetime import datetime
-import logging
 from typing import Any
-import uuid
 
 logger = logging.getLogger(__name__)
 

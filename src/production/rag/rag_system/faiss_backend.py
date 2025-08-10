@@ -7,7 +7,6 @@ from typing import TYPE_CHECKING, Any
 
 import faiss
 import numpy as np
-
 from rag_system.core.config import UnifiedConfig
 from rag_system.retrieval.vector_store import VectorStore as PickledStore
 

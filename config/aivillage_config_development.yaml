@@ -18,19 +18,19 @@ logging:
     size: 10MB
     retention_days: 7
 
-# Database Configuration  
+# Database Configuration
 database:
   evolution_metrics:
     path: ./data/development/evolution_metrics.db
     backend: sqlite
     wal_mode: true
     connection_timeout: 30
-  
+
   digital_twin:
     path: ./data/development/digital_twin.db
     wal_mode: true
     backup_encryption: false
-    
+
   rag:
     faiss_index_path: ./data/development/faiss_index
     chunk_store_path: ./data/development/chunk_store
@@ -41,15 +41,15 @@ api:
   authentication:
     enabled: false
     jwt_expiry_hours: 24
-  
+
   cors:
     enabled: true
     origins: ["http://localhost:3000", "http://127.0.0.1:3000"]
-  
+
   rate_limiting:
     enabled: false
     per_minute: 1000
-  
+
   ports:
     digital_twin: 8080
     evolution_metrics: 8081
@@ -63,14 +63,14 @@ p2p:
     port: 4001
     websocket_port: 4002
     private_key_file: ./config/development/libp2p_private_key
-  
+
   mesh:
     max_peers: 20
     heartbeat_interval: 10
     connection_timeout: 30
     tls_enabled: false
     encryption_required: false
-    
+
   transports:
     tcp_enabled: true
     websocket_enabled: true
@@ -78,7 +78,7 @@ p2p:
     wifi_direct_enabled: false
     file_transport_enabled: true
     file_transport_dir: /tmp/aivillage_mesh_dev
-  
+
   discovery:
     mdns:
       enabled: true
@@ -92,17 +92,17 @@ rag:
     model: paraphrase-MiniLM-L3-v2
     device: cpu
     batch_size: 16
-  
+
   retrieval:
     vector_top_k: 20
     keyword_top_k: 20
     final_top_k: 10
     rerank_enabled: false
-    
+
   chunking:
     size: 512
     overlap: 50
-    
+
   cache:
     enabled: true
     l1_size: 64
@@ -115,19 +115,19 @@ digital_twin:
   encryption:
     enabled: false  # Disabled for easier development
     key: ""  # Empty in development
-    
+
   vault:
     path: ./data/development/vault
-    
+
   privacy:
     coppa_compliant: false  # Relaxed for development
     ferpa_compliant: false
     gdpr_compliant: false
-    
+
   profiles:
     max_count: 1000
     ttl_days: 30  # Shorter for development
-    
+
   analytics:
     enabled: true
     telemetry_enabled: true
@@ -138,11 +138,11 @@ evolution:
     flush_threshold: 20  # Lower for faster feedback
     flush_interval: 15
     storage_backend: sqlite
-    
+
   orchestration:
     nightly_enabled: false  # Manual triggering in dev
     max_concurrent: 3
-    
+
   analysis:
     plateau_detection: true
     improvement_tracking: true
@@ -156,7 +156,7 @@ mobile:
       android_end: 4005
       ios_start: 4005
       ios_end: 4010
-  
+
   optimization:
     battery_aware: false
     offline_mode: true
@@ -167,11 +167,11 @@ external_services:
   redis:
     enabled: false  # Optional in development
     url: redis://localhost:6379/0
-    
+
   wandb:
     enabled: true
     project: aivillage-dev
-    
+
   openai:
     enabled: false  # Optional
 
@@ -180,12 +180,12 @@ security:
   tls:
     enabled: false
     verify_peer: false
-    
+
   headers:
     hsts_enabled: false
     csp_enabled: false
     frame_options: SAMEORIGIN
-    
+
   backup:
     enabled: false
     encryption: false
@@ -196,11 +196,11 @@ performance:
     max_total_mb: 1024
     max_faiss_mb: 256
     max_cache_mb: 128
-    
+
   concurrency:
     max_queries: 5
     max_processes: 3
-    
+
   timeouts:
     connection: 30
     read: 60
@@ -212,7 +212,7 @@ features:
   multi_tenant: false
   blockchain_integration: false
   federated_learning: true  # Enable for development testing
-  
+
 # Development Tools
 dev_tools:
   auto_reload: true
@@ -220,7 +220,7 @@ dev_tools:
   mock_p2p: false
   seed_data: true
   fast_startup: true
-  
+
 # Testing Configuration
 testing:
   fast_mode: false

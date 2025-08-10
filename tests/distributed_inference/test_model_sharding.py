@@ -142,7 +142,6 @@ class TestModelShardingEngine:
             patch("transformers.AutoTokenizer.from_pretrained") as mock_tokenizer,
             patch("transformers.AutoModelForCausalLM.from_pretrained") as mock_model,
         ):
-
             # Mock tokenizer
             mock_tokenizer.return_value = MagicMock()
 
@@ -345,7 +344,6 @@ class TestModelShardingEngine:
                 sharding_engine, "_get_device_profiles", return_value=device_profiles
             ),
         ):
-
             mock_analyze.return_value = {
                 "model_path": temp_model_dir,
                 "num_layers": 6,
@@ -382,7 +380,6 @@ class TestModelShardingEngine:
                 sharding_engine, "_get_device_profiles", return_value=device_profiles
             ),
         ):
-
             mock_analyze.return_value = {
                 "model_path": temp_model_dir,
                 "num_layers": 3,

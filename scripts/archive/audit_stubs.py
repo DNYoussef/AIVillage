@@ -4,8 +4,8 @@ Outputs GitHub issues, pre-commit compatible reports, and human-readable analysi
 """
 
 import ast
-from collections import defaultdict
 import json
+from collections import defaultdict
 from pathlib import Path
 
 

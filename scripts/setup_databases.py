@@ -6,14 +6,13 @@ and performance optimizations according to CODEX Integration Requirements.
 """
 
 import logging
-from pathlib import Path
 import sqlite3
 import sys
+from pathlib import Path
 
 # Setup logging
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -70,17 +69,16 @@ DATABASE_CONFIGS = {
                 survival_reason TEXT,
                 timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (round_id) REFERENCES evolution_rounds (id)
-            )"""
+            )""",
         ],
         "indexes": [
             "CREATE INDEX IF NOT EXISTS idx_evolution_rounds_number ON evolution_rounds(round_number)",
             "CREATE INDEX IF NOT EXISTS idx_fitness_agent ON fitness_metrics(agent_id)",
             "CREATE INDEX IF NOT EXISTS idx_fitness_score ON fitness_metrics(fitness_score DESC)",
             "CREATE INDEX IF NOT EXISTS idx_resource_timestamp ON resource_metrics(timestamp)",
-            "CREATE INDEX IF NOT EXISTS idx_selection_parent ON selection_outcomes(parent_agent_id)"
-        ]
+            "CREATE INDEX IF NOT EXISTS idx_selection_parent ON selection_outcomes(parent_agent_id)",
+        ],
     },
-
     "digital_twin": {
         "path": "./data/digital_twin.db",
         "tables": [
@@ -128,7 +126,7 @@ DATABASE_CONFIGS = {
                 prerequisites_met BOOLEAN DEFAULT FALSE,
                 FOREIGN KEY (profile_id) REFERENCES learning_profiles (profile_id),
                 UNIQUE(profile_id, knowledge_domain, topic)
-            )"""
+            )""",
         ],
         "indexes": [
             "CREATE INDEX IF NOT EXISTS idx_profiles_user_hash ON learning_profiles(user_id_hash)",
@@ -137,10 +135,9 @@ DATABASE_CONFIGS = {
             "CREATE INDEX IF NOT EXISTS idx_sessions_start ON learning_sessions(start_time)",
             "CREATE INDEX IF NOT EXISTS idx_knowledge_profile ON knowledge_states(profile_id)",
             "CREATE INDEX IF NOT EXISTS idx_knowledge_domain ON knowledge_states(knowledge_domain)",
-            "CREATE INDEX IF NOT EXISTS idx_knowledge_mastery ON knowledge_states(mastery_level DESC)"
-        ]
+            "CREATE INDEX IF NOT EXISTS idx_knowledge_mastery ON knowledge_states(mastery_level DESC)",
+        ],
     },
-
     "rag_index": {
         "path": "./data/rag_index.db",
         "tables": [
@@ -188,7 +185,7 @@ DATABASE_CONFIGS = {
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (chunk_id) REFERENCES chunks (chunk_id),
                 UNIQUE(chunk_id)
-            )"""
+            )""",
         ],
         "indexes": [
             "CREATE INDEX IF NOT EXISTS idx_documents_hash ON documents(file_hash)",
@@ -196,10 +193,11 @@ DATABASE_CONFIGS = {
             "CREATE INDEX IF NOT EXISTS idx_chunks_document ON chunks(document_id)",
             "CREATE INDEX IF NOT EXISTS idx_chunks_index ON chunks(chunk_index)",
             "CREATE INDEX IF NOT EXISTS idx_embeddings_faiss ON embeddings_metadata(faiss_index_id)",
-            "CREATE INDEX IF NOT EXISTS idx_embeddings_queries ON embeddings_metadata(query_count DESC)"
-        ]
-    }
+            "CREATE INDEX IF NOT EXISTS idx_embeddings_queries ON embeddings_metadata(query_count DESC)",
+        ],
+    },
 }
+
 
 class DatabaseSetup:
     """Database setup and initialization class."""
@@ -279,7 +277,9 @@ class DatabaseSetup:
                     logger.info(f"Database {db_name} integrity check: PASSED")
                 else:
                     results[db_name] = False
-                    logger.error(f"Database {db_name} integrity check: FAILED - {result}")
+                    logger.error(
+                        f"Database {db_name} integrity check: FAILED - {result}"
+                    )
 
             except Exception as e:
                 results[db_name] = False
@@ -293,7 +293,9 @@ class DatabaseSetup:
 
         for db_name, conn in self.connections.items():
             try:
-                cursor = conn.execute("SELECT name FROM sqlite_master WHERE type='table'")
+                cursor = conn.execute(
+                    "SELECT name FROM sqlite_master WHERE type='table'"
+                )
                 tables = [row[0] for row in cursor.fetchall()]
 
                 cursor = conn.execute("PRAGMA page_count")
@@ -305,10 +307,12 @@ class DatabaseSetup:
                 size_bytes = page_count * page_size
 
                 info[db_name] = {
-                    "path": str(self.data_dir / Path(DATABASE_CONFIGS[db_name]["path"]).name),
+                    "path": str(
+                        self.data_dir / Path(DATABASE_CONFIGS[db_name]["path"]).name
+                    ),
                     "tables": tables,
                     "size_bytes": size_bytes,
-                    "size_mb": round(size_bytes / (1024 * 1024), 2)
+                    "size_mb": round(size_bytes / (1024 * 1024), 2),
                 }
 
             except Exception as e:
@@ -343,9 +347,9 @@ def main():
         db_info = setup.get_database_info()
 
         # Print summary
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("CODEX DATABASE SETUP COMPLETE")
-        print("="*60)
+        print("=" * 60)
 
         for db_name, info in db_info.items():
             if "error" not in info:
@@ -354,14 +358,16 @@ def main():
                 print(f"  Tables: {len(info['tables'])}")
                 print(f"  Size: {info['size_mb']} MB")
                 print(f"  Tables: {', '.join(info['tables'])}")
-                print(f"  Integrity: {'✅ PASSED' if integrity_results.get(db_name) else '❌ FAILED'}")
+                print(
+                    f"  Integrity: {'✅ PASSED' if integrity_results.get(db_name) else '❌ FAILED'}"
+                )
             else:
                 print(f"\n{db_name.upper()} DATABASE: ❌ ERROR - {info['error']}")
 
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("Database setup completed successfully!")
         print("All databases are ready for CODEX integration.")
-        print("="*60)
+        print("=" * 60)
 
         # Close connections
         setup.close_connections()

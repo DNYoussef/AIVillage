@@ -8,8 +8,8 @@ import json
 from pathlib import Path
 from typing import Any
 
-from pydantic import BaseSettings
 import yaml
+from pydantic import BaseSettings
 
 
 class Settings(BaseSettings):

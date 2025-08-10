@@ -1,5 +1,5 @@
-from pathlib import Path
 import sqlite3
+from pathlib import Path
 
 # Ensure data directory exists
 data_dir = Path("data")
@@ -67,9 +67,8 @@ databases = {
         "CREATE INDEX IF NOT EXISTS idx_fitness_score ON fitness_metrics(fitness_score DESC);",
         "CREATE INDEX IF NOT EXISTS idx_resource_timestamp ON resource_metrics(timestamp);",
         "CREATE INDEX IF NOT EXISTS idx_selection_parent ON selection_outcomes(parent_agent_id);",
-        "INSERT OR IGNORE INTO schema_version (version) VALUES (1);"
+        "INSERT OR IGNORE INTO schema_version (version) VALUES (1);",
     ],
-
     "digital_twin.db": [
         "PRAGMA journal_mode=WAL;",
         "PRAGMA synchronous=NORMAL;",
@@ -128,9 +127,8 @@ databases = {
         "CREATE INDEX IF NOT EXISTS idx_knowledge_profile ON knowledge_states(profile_id);",
         "CREATE INDEX IF NOT EXISTS idx_knowledge_domain ON knowledge_states(knowledge_domain);",
         "CREATE INDEX IF NOT EXISTS idx_knowledge_mastery ON knowledge_states(mastery_level DESC);",
-        "INSERT OR IGNORE INTO schema_version (version) VALUES (1);"
+        "INSERT OR IGNORE INTO schema_version (version) VALUES (1);",
     ],
-
     "rag_index.db": [
         "PRAGMA journal_mode=WAL;",
         "PRAGMA synchronous=NORMAL;",
@@ -188,8 +186,8 @@ databases = {
         "CREATE INDEX IF NOT EXISTS idx_chunks_index ON chunks(chunk_index);",
         "CREATE INDEX IF NOT EXISTS idx_embeddings_faiss ON embeddings_metadata(faiss_index_id);",
         "CREATE INDEX IF NOT EXISTS idx_embeddings_queries ON embeddings_metadata(query_count DESC);",
-        "INSERT OR IGNORE INTO schema_version (version) VALUES (1);"
-    ]
+        "INSERT OR IGNORE INTO schema_version (version) VALUES (1);",
+    ],
 }
 
 print("Creating CODEX Integration databases...")

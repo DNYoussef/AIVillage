@@ -56,7 +56,7 @@ class VerificationResults:
         total = len(self.test_results)
 
         print(
-            f"\nTEST RESULTS: {passed}/{total} tests passed ({passed/total*100:.1f}%)"
+            f"\nTEST RESULTS: {passed}/{total} tests passed ({passed / total * 100:.1f}%)"
         )
         print("-" * 60)
 

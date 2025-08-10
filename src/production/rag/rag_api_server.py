@@ -6,24 +6,19 @@ Provides REST API endpoints on port 8082 as specified in CODEX requirements.
 import json
 import logging
 import os
-from pathlib import Path
 import time
+from pathlib import Path
 from typing import Any
 
+import uvicorn
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
-import uvicorn
-
-from rag_system.core.codex_rag_integration import (
-    CODEXRAGPipeline,
-    Document,
-)
+from rag_system.core.codex_rag_integration import CODEXRAGPipeline, Document
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -34,7 +29,7 @@ RAG_API_PORT = int(os.getenv("RAG_API_PORT", "8082"))
 app = FastAPI(
     title="CODEX RAG Pipeline API",
     description="CODEX-compliant RAG system with <100ms retrieval target",
-    version="1.0.0"
+    version="1.0.0",
 )
 
 # Global pipeline instance
@@ -43,15 +38,21 @@ pipeline: CODEXRAGPipeline | None = None
 
 class DocumentInput(BaseModel):
     """Input model for document indexing."""
+
     id: str = Field(..., description="Unique document identifier")
     title: str = Field(..., description="Document title")
     content: str = Field(..., description="Document content")
-    source_type: str = Field("wikipedia", description="Source type (wikipedia, educational, etc.)")
-    metadata: dict[str, Any] | None = Field(default_factory=dict, description="Additional metadata")
+    source_type: str = Field(
+        "wikipedia", description="Source type (wikipedia, educational, etc.)"
+    )
+    metadata: dict[str, Any] | None = Field(
+        default_factory=dict, description="Additional metadata"
+    )
 
 
 class QueryRequest(BaseModel):
     """Request model for RAG queries."""
+
     query: str = Field(..., description="Search query")
     k: int = Field(10, description="Number of results to retrieve", ge=1, le=100)
     use_cache: bool = Field(True, description="Whether to use cache")
@@ -60,6 +61,7 @@ class QueryRequest(BaseModel):
 
 class QueryResponse(BaseModel):
     """Response model for RAG queries."""
+
     query: str
     results: list[dict[str, Any]]
     metrics: dict[str, Any]
@@ -68,6 +70,7 @@ class QueryResponse(BaseModel):
 
 class IndexRequest(BaseModel):
     """Request model for batch document indexing."""
+
     documents: list[DocumentInput]
     chunk_size: int | None = Field(512, description="Chunk size in tokens")
     chunk_overlap: int | None = Field(50, description="Chunk overlap in tokens")
@@ -75,6 +78,7 @@ class IndexRequest(BaseModel):
 
 class HealthResponse(BaseModel):
     """Health check response model."""
+
     status: str
     pipeline_ready: bool
     index_size: int
@@ -128,14 +132,14 @@ async def health_check():
         index_size=perf_metrics.get("index_size", 0),
         cache_enabled=pipeline.cache.enabled,
         performance_metrics=perf_metrics,
-        timestamp=time.time()
+        timestamp=time.time(),
     )
 
 
 @app.post("/query", response_model=QueryResponse)
 async def query_documents(request: QueryRequest):
     """Retrieve relevant documents for a query.
-    
+
     This endpoint performs hybrid retrieval with optional caching and reranking.
     Target latency: <100ms
     """
@@ -147,9 +151,7 @@ async def query_documents(request: QueryRequest):
 
         # Perform retrieval
         results, metrics = await pipeline.retrieve(
-            query=request.query,
-            k=request.k,
-            use_cache=request.use_cache
+            query=request.query, k=request.k, use_cache=request.use_cache
         )
 
         # Format results
@@ -160,7 +162,7 @@ async def query_documents(request: QueryRequest):
                 "text": r.text,
                 "score": r.score,
                 "retrieval_method": r.retrieval_method,
-                "metadata": r.metadata
+                "metadata": r.metadata,
             }
             for r in results
         ]
@@ -180,7 +182,7 @@ async def query_documents(request: QueryRequest):
             query=request.query,
             results=formatted_results,
             metrics=metrics,
-            timestamp=time.time()
+            timestamp=time.time(),
         )
 
     except Exception as e:
@@ -202,7 +204,7 @@ async def index_documents(request: IndexRequest):
                 title=doc.title,
                 content=doc.content,
                 source_type=doc.source_type,
-                metadata=doc.metadata
+                metadata=doc.metadata,
             )
             for doc in request.documents
         ]
@@ -211,11 +213,7 @@ async def index_documents(request: IndexRequest):
         stats = pipeline.index_documents(documents)
 
         return JSONResponse(
-            content={
-                "status": "success",
-                "stats": stats,
-                "timestamp": time.time()
-            }
+            content={"status": "success", "stats": stats, "timestamp": time.time()}
         )
 
     except Exception as e:
@@ -235,7 +233,7 @@ async def get_metrics():
         content={
             "pipeline_metrics": metrics,
             "cache_metrics": pipeline.cache.get_metrics() if pipeline.cache else {},
-            "timestamp": time.time()
+            "timestamp": time.time(),
         }
     )
 
@@ -264,7 +262,7 @@ async def clear_cache():
             content={
                 "status": "success",
                 "message": "Cache cleared successfully",
-                "timestamp": time.time()
+                "timestamp": time.time(),
             }
         )
 
@@ -295,7 +293,7 @@ async def warm_cache(queries: list[str] = Query(...)):
                 "queries_warmed": warmed,
                 "total_time_ms": total_time,
                 "avg_time_ms": total_time / warmed if warmed > 0 else 0,
-                "timestamp": time.time()
+                "timestamp": time.time(),
             }
         )
 
@@ -313,7 +311,7 @@ async def root():
         "port": RAG_API_PORT,
         "health_endpoint": "/health/rag",
         "documentation": "/docs",
-        "requirements": "CODEX Integration Requirements compliant"
+        "requirements": "CODEX Integration Requirements compliant",
     }
 
 
@@ -322,11 +320,7 @@ def run_server():
     logger.info(f"Starting RAG API server on port {RAG_API_PORT}...")
 
     uvicorn.run(
-        app,
-        host="0.0.0.0",
-        port=RAG_API_PORT,
-        log_level="info",
-        access_log=True
+        app, host="0.0.0.0", port=RAG_API_PORT, log_level="info", access_log=True
     )
 
 

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Final comprehensive validation of the entire compression system."""
 
-from pathlib import Path
 import sys
 import time
+from pathlib import Path
 
 import torch
 from torch import nn
@@ -43,14 +43,14 @@ def test_full_compression_workflow():
     results = {}
 
     for model_name, model in models.items():
-        print(f"\n{'='*20} {model_name} {'='*20}")
+        print(f"\n{'=' * 20} {model_name} {'=' * 20}")
 
         # Calculate model stats
         total_params = sum(p.numel() for p in model.parameters())
         original_size = total_params * 4  # float32
 
         print(f"Parameters: {total_params:,}")
-        print(f"Original size: {original_size:,} bytes ({original_size/1024:.1f}KB)")
+        print(f"Original size: {original_size:,} bytes ({original_size / 1024:.1f}KB)")
 
         model_results = {}
 
@@ -118,7 +118,7 @@ def test_full_compression_workflow():
 
 def test_pipeline_integration():
     """Test the 4-stage pipeline integration."""
-    print(f"\n{'='*20} PIPELINE INTEGRATION TEST {'='*20}")
+    print(f"\n{'=' * 20} PIPELINE INTEGRATION TEST {'=' * 20}")
 
     # Create test data
     test_tensor = torch.randn(256, 256)
@@ -185,7 +185,7 @@ def test_pipeline_integration():
 
 def demonstrate_mobile_scenarios():
     """Demonstrate mobile deployment scenarios."""
-    print(f"\n{'='*20} MOBILE DEPLOYMENT SCENARIOS {'='*20}")
+    print(f"\n{'=' * 20} MOBILE DEPLOYMENT SCENARIOS {'=' * 20}")
 
     # Different mobile device scenarios
     devices = {
@@ -205,7 +205,7 @@ def demonstrate_mobile_scenarios():
     print(
         f"{'Device':<25} {'Model':<15} {'Original':<10} {'Compressed':<12} {'Fits?':<8}"
     )
-    print(f"{'-'*75}")
+    print(f"{'-' * 75}")
 
     for device_name, device_info in devices.items():
         available_mb = device_info["memory_gb"] * 1024 * 0.3  # 30% of RAM for model
@@ -237,9 +237,9 @@ def main():
         mobile_success = demonstrate_mobile_scenarios()
 
         # Final summary
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print("FINAL VALIDATION SUMMARY")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
 
         print("\nCompression Performance by Method:")
         for model_name, model_results in compression_results.items():

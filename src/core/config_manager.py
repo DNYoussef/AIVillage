@@ -9,17 +9,17 @@ Provides centralized configuration management with:
 """
 
 import copy
-from datetime import datetime
 import json
 import logging
 import os
-from pathlib import Path
 import threading
+from datetime import datetime
+from pathlib import Path
 from typing import Any
 
+import yaml
 from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
-import yaml
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +36,10 @@ class ConfigWatcher(FileSystemEventHandler):
 
     def on_modified(self, event):
         """Handle file modification events."""
-        if not event.is_directory and event.src_path in self.config_manager.watched_files:
+        if (
+            not event.is_directory
+            and event.src_path in self.config_manager.watched_files
+        ):
             logger.info(f"Configuration file changed: {event.src_path}")
             self.config_manager.reload_config()
 
@@ -70,7 +73,6 @@ class CODEXConfigManager:
             "REDIS_HOST": "redis.host",
             "REDIS_PORT": "redis.port",
             "REDIS_DB": "redis.db",
-
             # RAG Pipeline System
             "RAG_CACHE_ENABLED": "integration.rag_pipeline.cache_enabled",
             "RAG_L1_CACHE_SIZE": "rag_config.cache.l1_size",
@@ -84,7 +86,6 @@ class CODEXConfigManager:
             "RAG_DEFAULT_K": "rag_config.retrieval.final_top_k",
             "RAG_CHUNK_SIZE": "integration.rag_pipeline.chunk_size",
             "RAG_CHUNK_OVERLAP": "integration.rag_pipeline.chunk_overlap",
-
             # P2P Networking
             "LIBP2P_HOST": "p2p_config.host",
             "LIBP2P_PORT": "p2p_config.port",
@@ -100,7 +101,6 @@ class CODEXConfigManager:
             "MESH_ENABLE_WIFI_DIRECT": "p2p_config.transports.wifi_direct_enabled",
             "MESH_ENABLE_FILE_TRANSPORT": "p2p_config.enable_file_transport",
             "MESH_FILE_TRANSPORT_DIR": "p2p_config.file_transport_dir",
-
             # Digital Twin System
             "DIGITAL_TWIN_ENCRYPTION_KEY": "integration.digital_twin.encryption_key",
             "DIGITAL_TWIN_VAULT_PATH": "integration.digital_twin.vault_path",
@@ -194,7 +194,12 @@ class CODEXConfigManager:
 
                 if existing_value is not None:
                     if isinstance(existing_value, bool):
-                        converted_value = env_value.lower() in ("true", "1", "yes", "on")
+                        converted_value = env_value.lower() in (
+                            "true",
+                            "1",
+                            "yes",
+                            "on",
+                        )
                     elif isinstance(existing_value, int):
                         converted_value = int(env_value)
                     elif isinstance(existing_value, float):
@@ -212,7 +217,9 @@ class CODEXConfigManager:
                     converted_value = env_value
 
                 self.set_nested_value(config_copy, config_path, converted_value)
-                logger.info(f"Applied environment override: {env_var} -> {config_path} = {converted_value}")
+                logger.info(
+                    f"Applied environment override: {env_var} -> {config_path} = {converted_value}"
+                )
 
         return config_copy
 
@@ -231,7 +238,7 @@ class CODEXConfigManager:
                 merged_config = {
                     **main_config,
                     "p2p_config": p2p_config,
-                    "rag_config": rag_config
+                    "rag_config": rag_config,
                 }
 
                 # Apply environment variable overrides
@@ -248,7 +255,7 @@ class CODEXConfigManager:
                 self.watched_files = {
                     str(self.main_config),
                     str(self.p2p_config),
-                    str(self.rag_config)
+                    str(self.rag_config),
                 }
 
                 logger.info("Configuration reloaded successfully")
@@ -273,7 +280,9 @@ class CODEXConfigManager:
             # Check if database path parent directory exists
             db_path_obj = Path(db_path)
             if not db_path_obj.parent.exists():
-                warnings.append(f"Evolution metrics database directory does not exist: {db_path_obj.parent}")
+                warnings.append(
+                    f"Evolution metrics database directory does not exist: {db_path_obj.parent}"
+                )
 
         # RAG pipeline validation
         if integration.get("rag_pipeline", {}).get("enabled"):
@@ -292,7 +301,9 @@ class CODEXConfigManager:
             if cache_dir:
                 cache_path = Path(cache_dir)
                 if not cache_path.parent.exists():
-                    warnings.append(f"RAG cache directory parent does not exist: {cache_path.parent}")
+                    warnings.append(
+                        f"RAG cache directory parent does not exist: {cache_path.parent}"
+                    )
 
         # P2P networking validation
         if integration.get("p2p_networking", {}).get("enabled"):
@@ -308,14 +319,20 @@ class CODEXConfigManager:
             # Check required P2P settings match CODEX requirements
             expected_port = 4001
             if port != expected_port:
-                warnings.append(f"P2P port {port} differs from CODEX requirement: {expected_port}")
+                warnings.append(
+                    f"P2P port {port} differs from CODEX requirement: {expected_port}"
+                )
 
         # Digital twin validation
         if integration.get("digital_twin", {}).get("enabled"):
             dt_config = integration["digital_twin"]
 
-            if dt_config.get("encryption_enabled") and not dt_config.get("encryption_key"):
-                errors.append("Digital twin encryption enabled but no encryption_key provided")
+            if dt_config.get("encryption_enabled") and not dt_config.get(
+                "encryption_key"
+            ):
+                errors.append(
+                    "Digital twin encryption enabled but no encryption_key provided"
+                )
 
             max_profiles = dt_config.get("max_profiles", 10000)
             if not isinstance(max_profiles, int) or max_profiles <= 0:
@@ -396,10 +413,13 @@ class CODEXConfigManager:
             "last_reload": self.last_reload.isoformat(),
             "hot_reload_enabled": self.enable_hot_reload,
             "watched_files": list(self.watched_files),
-            "environment_overrides_applied": len([
-                env_var for env_var in self.env_mappings.keys()
-                if os.getenv(env_var) is not None
-            ])
+            "environment_overrides_applied": len(
+                [
+                    env_var
+                    for env_var in self.env_mappings.keys()
+                    if os.getenv(env_var) is not None
+                ]
+            ),
         }
 
     def export_effective_config(self, output_path: str | None = None) -> dict[str, Any]:
@@ -407,7 +427,7 @@ class CODEXConfigManager:
         effective_config = {
             "timestamp": datetime.now().isoformat(),
             "sources": self.get_config_sources(),
-            "configuration": self.get_all()
+            "configuration": self.get_all(),
         }
 
         if output_path:
@@ -433,6 +453,7 @@ class CODEXConfigManager:
 # Global configuration instance
 _config_manager = None
 
+
 def get_config_manager(**kwargs) -> CODEXConfigManager:
     """Get or create the global configuration manager."""
     global _config_manager
@@ -441,6 +462,7 @@ def get_config_manager(**kwargs) -> CODEXConfigManager:
         _config_manager = CODEXConfigManager(**kwargs)
 
     return _config_manager
+
 
 def reload_global_config():
     """Reload the global configuration."""
@@ -451,9 +473,11 @@ def reload_global_config():
     else:
         _config_manager = CODEXConfigManager()
 
+
 def get_config(key_path: str, default=None):
     """Get configuration value from global config manager."""
     return get_config_manager().get(key_path, default)
+
 
 def is_component_enabled(component: str) -> bool:
     """Check if a component is enabled in global config."""

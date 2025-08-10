@@ -22,20 +22,20 @@ jobs:
         run: |
           pip install -r requirements.txt -r requirements-dev.txt -r requirements-test.txt
           pip install ruff black isort mypy flake8
-      
+
       - name: Run Unified Linter (Check Only)
         run: python tools/linting/lint.py . --output summary
         continue-on-error: false
-      
+
       - name: Run Security Scan
         run: ruff check . --select S --quiet | head -20 || echo "Security scan completed"
         continue-on-error: true
-      
+
       - name: Generate Lint Report
         if: failure()
         run: python tools/linting/lint.py . --output both --output-file ci_lint_report
         continue-on-error: true
-      
+
       - name: Upload Lint Report
         if: failure()
         uses: actions/upload-artifact@v3

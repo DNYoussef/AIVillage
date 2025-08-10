@@ -5,9 +5,9 @@ Tests actual agent behavior and communication patterns, not just attribute exist
 """
 
 import asyncio
-from pathlib import Path
 import tempfile
 import time
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -479,8 +479,8 @@ class TestRealAgentCommunication:
         print(
             f"Load test completed: {num_messages} messages processed in {total_time:.3f}s"
         )
-        print(f"Average processing time: {avg_processing_time*1000:.2f}ms")
-        print(f"Throughput: {num_messages/total_time:.1f} messages/second")
+        print(f"Average processing time: {avg_processing_time * 1000:.2f}ms")
+        print(f"Throughput: {num_messages / total_time:.1f} messages/second")
 
 
 if __name__ == "__main__":

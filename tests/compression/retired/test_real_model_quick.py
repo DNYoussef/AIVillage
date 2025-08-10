@@ -2,9 +2,9 @@
 """Quick test of compression on real model using smaller layers."""
 
 import json
-from pathlib import Path
 import sys
 import time
+from pathlib import Path
 
 from safetensors import safe_open
 
@@ -63,7 +63,7 @@ def quick_real_model_test():
 
             print(f"\nLayer {successful_tests}: {key}")
             print(f"  Shape: {tuple(tensor.shape)}")
-            print(f"  Size: {original_size/(1024**2):.1f} MB")
+            print(f"  Size: {original_size / (1024**2):.1f} MB")
 
             try:
                 # Stage 1: BitNet
@@ -101,7 +101,7 @@ def quick_real_model_test():
                 total_compressed += s4_size
 
                 print(
-                    f"  Result: {original_size/(1024**2):.1f}MB -> {s4_size/1024:.1f}KB ({final_ratio:.1f}x)"
+                    f"  Result: {original_size / (1024**2):.1f}MB -> {s4_size / 1024:.1f}KB ({final_ratio:.1f}x)"
                 )
 
             except Exception as e:
@@ -116,8 +116,8 @@ def quick_real_model_test():
         print("QUICK TEST RESULTS")
         print("=" * 50)
         print(f"Layers tested: {successful_tests}")
-        print(f"Original: {total_original/(1024**2):.1f} MB")
-        print(f"Compressed: {total_compressed/(1024**2):.2f} MB")
+        print(f"Original: {total_original / (1024**2):.1f} MB")
+        print(f"Compressed: {total_compressed / (1024**2):.2f} MB")
         print(f"Compression: {overall_ratio:.1f}x")
 
         # Extrapolate to full 1.78B model
@@ -126,7 +126,7 @@ def quick_real_model_test():
         projected_mb = projected_compressed / (1024**2)
 
         print("\nExtrapolation to full 1.78B model:")
-        print(f"  Original: {full_model_bytes/(1024**3):.2f} GB")
+        print(f"  Original: {full_model_bytes / (1024**3):.2f} GB")
         print(f"  Projected: {projected_mb:.1f} MB")
         print(f"  Mobile viable: {'YES' if projected_mb < 1000 else 'NO'}")
 

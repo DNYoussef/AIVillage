@@ -1,15 +1,15 @@
 """P2P node implementation with discovery and routing."""
 
 import asyncio
-from collections.abc import Callable
-from dataclasses import dataclass, field
-from enum import Enum
 import json
 import logging
 import socket
 import time
-from typing import Any
 import uuid
+from collections.abc import Callable
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import Any
 
 # For now, we'll implement a basic P2P system without libp2p dependency
 # This can be upgraded to full libp2p later when dependencies are resolved

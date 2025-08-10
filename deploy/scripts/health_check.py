@@ -384,9 +384,9 @@ class HealthChecker:
 
     def print_health_summary(self) -> None:
         """Print a human-readable health summary."""
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print(f"AIVillage Health Check Summary - {self.environment.upper()}")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
 
         overall_status = "🟢 HEALTHY" if self.overall_health else "🔴 UNHEALTHY"
         print(f"Overall Status: {overall_status}")
@@ -427,7 +427,7 @@ class HealthChecker:
             )
         print()
 
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
 
     def save_results(self, output_file: str) -> None:
         """Save results to a JSON file."""

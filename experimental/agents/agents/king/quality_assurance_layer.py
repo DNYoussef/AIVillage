@@ -4,8 +4,8 @@ import os
 from typing import Any
 
 import numpy as np
-from scipy.spatial.distance import cosine
 import torch
+from scipy.spatial.distance import cosine
 from transformers import AutoModel, AutoTokenizer
 
 from agents.utils.task import Task as LangroidTask

@@ -36,7 +36,9 @@ class TestSystemIntegration:
         """Initialize all systems for testing"""
 
         # 1. Configure and initialize the real services with in-memory/test settings
-        self.evolution = EvolutionMetricsCollector(config={"storage_backend": "sqlite", "db_path": ":memory:"})
+        self.evolution = EvolutionMetricsCollector(
+            config={"storage_backend": "sqlite", "db_path": ":memory:"}
+        )
         await self.evolution.start()
 
         # RAG pipeline can be initialized with an empty dataset for testing its methods
@@ -61,8 +63,10 @@ class TestSystemIntegration:
         class ReactNativeTestHarness:
             def create_test_user(self):
                 return "test_user_001"
+
             def simulate_memory_pressure(self):
                 pass
+
         self.app = ReactNativeTestHarness()
 
         yield
@@ -98,10 +102,9 @@ class TestSystemIntegration:
 
         # Create a mock answer for the P2P share
         answer = {"text": "light good", "sources": ["wikipedia"], "confidence": 0.9}
-        message_sent = await self.p2p.send_message({
-            "type": "LESSON_SHARE",
-            "content": answer
-        })
+        message_sent = await self.p2p.send_message(
+            {"type": "LESSON_SHARE", "content": answer}
+        )
         assert message_sent.delivery_status == "SUCCESS"
 
         # 6. Evolution tracks performance
@@ -112,7 +115,7 @@ class TestSystemIntegration:
         credits = self.tokens.earn_credits(
             user_id=user_id,
             action="LESSON_COMPLETED",
-            metadata={"lesson_id": "photo_001"}
+            metadata={"lesson_id": "photo_001"},
         )
         assert credits > 0
 
@@ -122,7 +125,6 @@ class TestSystemIntegration:
 
         # Simulate offline mode
         with patch("network.is_connected", return_value=False):
-
             # P2P should queue messages - this needs to be adapted to the mock
             # message = await self.p2p.send_message({'data': 'test'})
             # assert message.status == 'QUEUED'
@@ -136,9 +138,7 @@ class TestSystemIntegration:
 
             # Credits should accumulate locally
             credits = self.tokens.earn_credits(
-                user_id="test",
-                action="OFFLINE_LESSON",
-                metadata={}
+                user_id="test", action="OFFLINE_LESSON", metadata={}
             )
             assert credits > 0
 

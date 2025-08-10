@@ -9,10 +9,10 @@ This script validates that the P2P integration bug has been fixed by testing:
 import asyncio
 import json
 import logging
-from pathlib import Path
 import socket
 import sys
 import time
+from pathlib import Path
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent))

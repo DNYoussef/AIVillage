@@ -13,21 +13,21 @@ Integrates all training components:
 
 import asyncio
 import contextlib
-from dataclasses import dataclass
 import json
 import logging
-from pathlib import Path
 import random
 import sys
 import time
+from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
+import torch
+import wandb
 from langroid import ChatAgent, ChatAgentConfig
 from langroid.language_models.openai_gpt import OpenAIGPTConfig
-import torch
 from tqdm import tqdm
 from transformers import AutoModelForCausalLM, AutoTokenizer
-import wandb
 
 from agent_forge.geometry.id_twonn import twonn
 from agent_forge.training.grokfast import GrokFastTask
@@ -745,8 +745,8 @@ async def run_self_modeling(config: dict[str, Any]) -> "PhaseResult":
     Returns:
         PhaseResult with status, artifacts, and metrics
     """
-    from datetime import datetime
     import time
+    from datetime import datetime
 
     from agent_forge.forge_orchestrator import (
         PhaseArtifact,

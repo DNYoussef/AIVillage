@@ -2,8 +2,8 @@
 """FINAL PROOF: Real PyTorch compression working."""
 
 import io
-from pathlib import Path
 import tempfile
+from pathlib import Path
 
 print("=" * 60)
 print("FINAL PROOF: REAL PYTORCH COMPRESSION WORKING")
@@ -64,8 +64,8 @@ with tempfile.TemporaryDirectory() as temp_dir:
     compressed_file_size = Path(compressed_file_path).stat().st_size
     file_ratio = original_file_size / compressed_file_size
 
-    print(f"   Original file: {original_file_size / (1024*1024):.2f} MB")
-    print(f"   Compressed file: {compressed_file_size / (1024*1024):.2f} MB")
+    print(f"   Original file: {original_file_size / (1024 * 1024):.2f} MB")
+    print(f"   Compressed file: {compressed_file_size / (1024 * 1024):.2f} MB")
     print(f"   File compression: {file_ratio:.2f}x")
 
     # Verify file can be loaded

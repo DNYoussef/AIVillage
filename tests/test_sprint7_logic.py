@@ -140,7 +140,6 @@ try:
                     + agent.compute_requirement
                     <= device.compute_score
                 ):
-
                     # Calculate suitability score
                     memory_ratio = (
                         device.available_memory_mb / agent.memory_requirement_mb

@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Audit the compression claims with detailed byte-level analysis."""
-from pathlib import Path
+
 import sys
+from pathlib import Path
 
 import numpy as np
 import torch
@@ -75,7 +76,7 @@ def audit_bitnet():
         # Theoretical ratio for ternary (2 bits per weight)
         theoretical_ratio = 32 / 2  # 32-bit float to 2-bit ternary
         print(f"Theoretical max: {theoretical_ratio}x")
-        print(f"Efficiency: {ratio/theoretical_ratio*100:.1f}%")
+        print(f"Efficiency: {ratio / theoretical_ratio * 100:.1f}%")
 
         # Verify decompression
         decompressed = compressor.decompress(compressed)
@@ -123,7 +124,7 @@ def audit_seedlm():
         theoretical_ratio = 32 / bits
         print(f"Theoretical max: {theoretical_ratio:.1f}x")
         print("Paper claims: 8x for 4-bit")
-        print(f"Efficiency vs theoretical: {ratio/theoretical_ratio*100:.1f}%")
+        print(f"Efficiency vs theoretical: {ratio / theoretical_ratio * 100:.1f}%")
 
     return ratio
 
@@ -156,7 +157,7 @@ def audit_vptq():
         # Theoretical
         theoretical_ratio = 32 / bits
         print(f"Theoretical max: {theoretical_ratio}x")
-        print(f"Efficiency: {ratio/theoretical_ratio*100:.1f}%")
+        print(f"Efficiency: {ratio / theoretical_ratio * 100:.1f}%")
 
     return ratio
 
@@ -205,7 +206,7 @@ def audit_pipeline_combination() -> None:
     expected_ratio = stage1_ratio * stage2_ratio * stage3_ratio
     print(f"\nExpected multiplicative: {expected_ratio:.1f}x")
     print(f"Actual cumulative: {cumulative_ratio:.1f}x")
-    print(f"Efficiency: {cumulative_ratio/expected_ratio*100:.1f}%")
+    print(f"Efficiency: {cumulative_ratio / expected_ratio * 100:.1f}%")
 
     # Why might it not be multiplicative?
     print("\nPossible reasons for non-multiplicative compression:")
@@ -236,7 +237,7 @@ def test_real_model_compression() -> None:
     original_bytes = total_params * 4
 
     print(f"Model parameters: {total_params:,}")
-    print(f"Original size: {original_bytes/1024/1024:.2f} MB")
+    print(f"Original size: {original_bytes / 1024 / 1024:.2f} MB")
 
     # Test pipeline
     pipeline = AdvancedCompressionPipeline()
@@ -244,7 +245,7 @@ def test_real_model_compression() -> None:
     compressed_bytes = len(compressed)
     ratio = original_bytes / compressed_bytes
 
-    print(f"Compressed size: {compressed_bytes/1024:.2f} KB")
+    print(f"Compressed size: {compressed_bytes / 1024:.2f} KB")
     print(f"Compression ratio: {ratio:.1f}x")
 
     # Compare to Claude's claim
@@ -312,7 +313,7 @@ def test_real_model_compression() -> None:
     original_bytes = total_params * 4
 
     print(f"Model parameters: {total_params:,}")
-    print(f"Original size: {original_bytes/1024/1024:.2f} MB")
+    print(f"Original size: {original_bytes / 1024 / 1024:.2f} MB")
 
     # Test pipeline
     pipeline = AdvancedCompressionPipeline()
@@ -320,7 +321,7 @@ def test_real_model_compression() -> None:
     compressed_bytes = len(compressed)
     ratio = original_bytes / compressed_bytes
 
-    print(f"Compressed size: {compressed_bytes/1024:.2f} KB")
+    print(f"Compressed size: {compressed_bytes / 1024:.2f} KB")
     print(f"Compression ratio: {ratio:.1f}x")
 
     # Compare to Claude's claim

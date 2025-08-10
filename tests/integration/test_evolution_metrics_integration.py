@@ -12,11 +12,11 @@ Tests:
 
 import json
 import os
-from pathlib import Path
 import random
 import sqlite3
 import sys
 import time
+from pathlib import Path
 
 # Add parent directories to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
@@ -35,9 +35,9 @@ from src.core.evolution_metrics_integrated import (
 
 def test_database_connection():
     """Test 1: Verify database connection with WAL mode."""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST 1: DATABASE CONNECTION WITH WAL MODE")
-    print("="*60)
+    print("=" * 60)
 
     # Check database exists
     db_path = os.getenv("AIVILLAGE_DB_PATH", "./data/evolution_metrics.db")
@@ -62,7 +62,12 @@ def test_database_connection():
     # Check tables exist
     cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
     tables = [row[0] for row in cursor.fetchall()]
-    required_tables = ["evolution_rounds", "fitness_metrics", "resource_metrics", "selection_outcomes"]
+    required_tables = [
+        "evolution_rounds",
+        "fitness_metrics",
+        "resource_metrics",
+        "selection_outcomes",
+    ]
 
     for table in required_tables:
         if table in tables:
@@ -77,15 +82,16 @@ def test_database_connection():
 
 def test_redis_integration():
     """Test 2: Verify Redis integration with fallback."""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST 2: REDIS INTEGRATION WITH FALLBACK")
-    print("="*60)
+    print("=" * 60)
 
     metrics = IntegratedEvolutionMetrics()
 
     # Check Redis availability
     try:
         import redis
+
         print("✅ Redis module available")
     except ImportError:
         print("⚠️ Redis module not installed (will use SQLite fallback)")
@@ -96,6 +102,7 @@ def test_redis_integration():
 
     try:
         import redis
+
         client = redis.Redis(host=redis_host, port=redis_port, socket_timeout=2)
         client.ping()
         print(f"✅ Redis connected at {redis_host}:{redis_port}")
@@ -116,9 +123,9 @@ def test_redis_integration():
 
 def test_data_persistence():
     """Test 3: Run 100 evolution cycles and verify persistence."""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST 3: DATA PERSISTENCE (100 EVOLUTION CYCLES)")
-    print("="*60)
+    print("=" * 60)
 
     # Start metrics system
     metrics = IntegratedEvolutionMetrics()
@@ -139,7 +146,6 @@ def test_data_persistence():
             round_number=cycle,
             generation=cycle // 10,
             evolution_type="genetic",
-
             # 18 KPIs with random values
             performance_score=random.uniform(0.5, 1.0),
             learning_rate=random.uniform(0.001, 0.1),
@@ -159,18 +165,16 @@ def test_data_persistence():
             innovation_rate=random.uniform(0.1, 0.6),
             quality_consistency=random.uniform(0.7, 0.95),
             resource_utilization=random.uniform(0.4, 0.8),
-
             # Resource metrics
             memory_used_mb=random.uniform(100, 500),
             cpu_percent=random.uniform(10, 80),
             network_io_kb=random.uniform(0, 1000),
             disk_io_kb=random.uniform(0, 500),
-
             # Selection outcomes
             fitness_score=random.uniform(0.5, 1.0),
             selected=random.choice([True, False]),
             selection_method=random.choice(["tournament", "roulette", "elite"]),
-            mutation_applied=random.choice([True, False])
+            mutation_applied=random.choice([True, False]),
         )
 
         metrics.record_metric(evolution_metrics)
@@ -227,9 +231,9 @@ def test_data_persistence():
 
 def test_kpi_tracking():
     """Test 4: Verify all 18 KPIs are tracked correctly."""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST 4: 18 KPI TRACKING VERIFICATION")
-    print("="*60)
+    print("=" * 60)
 
     metrics = start_metrics()
 
@@ -250,13 +254,15 @@ def test_kpi_tracking():
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
 
-    cursor.execute("""
-        SELECT performance_metrics 
-        FROM fitness_metrics 
-        WHERE agent_id = 'test_agent' 
-        ORDER BY timestamp DESC 
+    cursor.execute(
+        """
+        SELECT performance_metrics
+        FROM fitness_metrics
+        WHERE agent_id = 'test_agent'
+        ORDER BY timestamp DESC
         LIMIT 1
-    """)
+    """
+    )
 
     row = cursor.fetchone()
     if row and row[0]:
@@ -270,9 +276,9 @@ def test_kpi_tracking():
 
 def test_flush_threshold():
     """Test 5: Verify flush threshold is working correctly."""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST 5: FLUSH THRESHOLD VERIFICATION")
-    print("="*60)
+    print("=" * 60)
 
     # Set a low flush threshold for testing
     os.environ["AIVILLAGE_METRICS_FLUSH_THRESHOLD"] = "5"
@@ -287,8 +293,7 @@ def test_flush_threshold():
     # Add metrics up to threshold
     for i in range(4):
         m = EvolutionMetricsData(
-            agent_id=f"threshold_test_{i}",
-            fitness_score=random.random()
+            agent_id=f"threshold_test_{i}", fitness_score=random.random()
         )
         metrics.record_metric(m)
 
@@ -297,8 +302,7 @@ def test_flush_threshold():
 
     # Add one more to trigger flush
     m = EvolutionMetricsData(
-        agent_id="threshold_trigger",
-        fitness_score=random.random()
+        agent_id="threshold_trigger", fitness_score=random.random()
     )
     metrics.record_metric(m)
 
@@ -324,9 +328,9 @@ def test_flush_threshold():
 
 def test_api_health_endpoint():
     """Test 6: Verify API health endpoint."""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST 6: API HEALTH ENDPOINT VERIFICATION")
-    print("="*60)
+    print("=" * 60)
 
     metrics = start_metrics()
 
@@ -363,9 +367,9 @@ def test_api_health_endpoint():
 
 def test_concurrent_metrics():
     """Test 7: Test concurrent metric updates."""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST 7: CONCURRENT METRIC UPDATES")
-    print("="*60)
+    print("=" * 60)
 
     import threading
 
@@ -379,7 +383,7 @@ def test_concurrent_metrics():
                 m = EvolutionMetricsData(
                     agent_id=f"thread_{thread_id}_agent_{i}",
                     fitness_score=random.random(),
-                    performance_score=random.random()
+                    performance_score=random.random(),
                 )
                 metrics.record_metric(m)
                 time.sleep(0.001)  # Small delay
@@ -391,7 +395,9 @@ def test_concurrent_metrics():
     thread_count = 5
     metrics_per_thread = 20
 
-    print(f"Starting {thread_count} threads, each recording {metrics_per_thread} metrics...")
+    print(
+        f"Starting {thread_count} threads, each recording {metrics_per_thread} metrics..."
+    )
 
     for i in range(thread_count):
         t = threading.Thread(target=record_metrics_thread, args=(i, metrics_per_thread))
@@ -428,9 +434,9 @@ def test_concurrent_metrics():
 
 def test_agent_integration():
     """Test 8: Integration with agent system."""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST 8: AGENT SYSTEM INTEGRATION")
-    print("="*60)
+    print("=" * 60)
 
     # Simulate agent KPI reporting
     class MockAgent:
@@ -452,7 +458,9 @@ def test_agent_integration():
             # Report multiple KPIs
             record_kpi(self.agent_id, KPIType.TASK_COMPLETION, 1.0 if success else 0.0)
             record_kpi(self.agent_id, KPIType.RESPONSE_TIME, duration * 1000)
-            record_kpi(self.agent_id, KPIType.PERFORMANCE_SCORE, random.uniform(0.6, 1.0))
+            record_kpi(
+                self.agent_id, KPIType.PERFORMANCE_SCORE, random.uniform(0.6, 1.0)
+            )
 
             return success
 
@@ -488,10 +496,10 @@ def test_agent_integration():
 
 def run_all_tests():
     """Run all integration tests."""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("EVOLUTION METRICS INTEGRATION TESTS")
     print("CODEX Requirements Compliance Verification")
-    print("="*60)
+    print("=" * 60)
 
     tests = [
         ("Database Connection", test_database_connection),
@@ -501,7 +509,7 @@ def run_all_tests():
         ("Flush Threshold", test_flush_threshold),
         ("API Health Endpoint", test_api_health_endpoint),
         ("Concurrent Updates", test_concurrent_metrics),
-        ("Agent Integration", test_agent_integration)
+        ("Agent Integration", test_agent_integration),
     ]
 
     results = []
@@ -516,9 +524,9 @@ def run_all_tests():
             results.append((name, False))
 
     # Summary
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST SUMMARY")
-    print("="*60)
+    print("=" * 60)
 
     passed = sum(1 for _, success in results if success)
     total = len(results)

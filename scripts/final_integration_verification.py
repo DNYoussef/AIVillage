@@ -3,13 +3,13 @@
 Completes CODEX integration checklist and verifies all systems.
 """
 
-from datetime import datetime
 import json
 import logging
 import os
-from pathlib import Path
 import sqlite3
 import sys
+from datetime import datetime
+from pathlib import Path
 from typing import Any
 
 import requests
@@ -25,7 +25,7 @@ CODEX_PORTS = {
     "Digital Twin API": 8080,
     "Evolution Metrics": 8081,
     "RAG Pipeline": 8082,
-    "Redis": 6379
+    "Redis": 6379,
 }
 
 REQUIRED_ENV_VARS = {
@@ -33,7 +33,6 @@ REQUIRED_ENV_VARS = {
     "AIVILLAGE_DB_PATH": "./data/evolution_metrics.db",
     "AIVILLAGE_STORAGE_BACKEND": "sqlite",
     "AIVILLAGE_REDIS_URL": "redis://localhost:6379/0",
-
     # RAG Pipeline
     "RAG_CACHE_ENABLED": "true",
     "RAG_L1_CACHE_SIZE": "128",
@@ -43,19 +42,17 @@ REQUIRED_ENV_VARS = {
     "RAG_CHUNK_SIZE": "512",
     "RAG_CHUNK_OVERLAP": "50",
     "RAG_DEFAULT_K": "10",
-
     # P2P Networking
     "LIBP2P_HOST": "0.0.0.0",
     "LIBP2P_PORT": "4001",
     "MDNS_SERVICE_NAME": "_aivillage._tcp",
     "MESH_MAX_PEERS": "50",
-
     # Digital Twin
     "DIGITAL_TWIN_DB_PATH": "./data/digital_twin.db",
     "DIGITAL_TWIN_SQLITE_WAL": "true",
     "DIGITAL_TWIN_COPPA_COMPLIANT": "true",
     "DIGITAL_TWIN_FERPA_COMPLIANT": "true",
-    "DIGITAL_TWIN_GDPR_COMPLIANT": "true"
+    "DIGITAL_TWIN_GDPR_COMPLIANT": "true",
 }
 
 
@@ -76,7 +73,7 @@ class FinalIntegrationVerifier:
             "required_packages": self._check_required_packages(),
             "environment_variables": self._check_environment_variables(),
             "port_availability": self._check_port_availability(),
-            "directory_permissions": self._check_directory_permissions()
+            "directory_permissions": self._check_directory_permissions(),
         }
 
         passed = sum(1 for result in checks.values() if result["status"] == "pass")
@@ -87,7 +84,7 @@ class FinalIntegrationVerifier:
             "passed": passed,
             "total": total,
             "success_rate": passed / total,
-            "checks": checks
+            "checks": checks,
         }
 
     def verify_post_integration(self) -> dict[str, Any]:
@@ -100,7 +97,7 @@ class FinalIntegrationVerifier:
             "rag_pipeline_processing": self._check_rag_pipeline(),
             "p2p_peer_discovery": self._check_p2p_discovery(),
             "digital_twin_api": self._check_digital_twin_api(),
-            "integration_tests_passing": self._run_integration_tests()
+            "integration_tests_passing": self._run_integration_tests(),
         }
 
         passed = sum(1 for result in checks.values() if result["status"] == "pass")
@@ -111,7 +108,7 @@ class FinalIntegrationVerifier:
             "passed": passed,
             "total": total,
             "success_rate": passed / total,
-            "checks": checks
+            "checks": checks,
         }
 
     def run_health_check_endpoints(self) -> dict[str, Any]:
@@ -122,7 +119,7 @@ class FinalIntegrationVerifier:
             "evolution_metrics": "http://localhost:8081/health/evolution",
             "rag_pipeline": "http://localhost:8082/health/rag",
             "p2p_network": "http://localhost:4001/health/p2p",
-            "digital_twin": "http://localhost:8080/health/twin"
+            "digital_twin": "http://localhost:8080/health/twin",
         }
 
         results = {}
@@ -133,7 +130,7 @@ class FinalIntegrationVerifier:
                     "status": "pass" if response.status_code == 200 else "fail",
                     "response_code": response.status_code,
                     "response_time": response.elapsed.total_seconds(),
-                    "healthy": response.status_code == 200
+                    "healthy": response.status_code == 200,
                 }
 
                 if response.status_code == 200:
@@ -144,11 +141,7 @@ class FinalIntegrationVerifier:
                         pass
 
             except requests.exceptions.RequestException as e:
-                results[service] = {
-                    "status": "fail",
-                    "error": str(e),
-                    "healthy": False
-                }
+                results[service] = {"status": "fail", "error": str(e), "healthy": False}
 
         healthy_services = sum(1 for r in results.values() if r.get("healthy", False))
 
@@ -157,7 +150,7 @@ class FinalIntegrationVerifier:
             "passed": healthy_services,
             "total": len(health_endpoints),
             "success_rate": healthy_services / len(health_endpoints),
-            "results": results
+            "results": results,
         }
 
     def execute_integration_test_suite(self) -> dict[str, Any]:
@@ -170,17 +163,27 @@ class FinalIntegrationVerifier:
         # Test 1: RAG Integration
         try:
             from scripts.simple_rag_validation import check_integration as check_rag
+
             check_rag()  # This will print results
-            test_results["rag_validation"] = {"status": "pass", "details": "RAG integration verified"}
+            test_results["rag_validation"] = {
+                "status": "pass",
+                "details": "RAG integration verified",
+            }
         except Exception as e:
             test_results["rag_validation"] = {"status": "fail", "error": str(e)}
 
         # Test 2: Evolution Metrics Migration
         evolution_db = Path("./data/evolution_metrics.db")
         if evolution_db.exists():
-            test_results["evolution_migration"] = {"status": "pass", "details": "Database exists"}
+            test_results["evolution_migration"] = {
+                "status": "pass",
+                "details": "Database exists",
+            }
         else:
-            test_results["evolution_migration"] = {"status": "fail", "details": "Database missing"}
+            test_results["evolution_migration"] = {
+                "status": "fail",
+                "details": "Database missing",
+            }
 
         # Test 3: P2P Configuration
         p2p_config = Path("./config/p2p_config.json")
@@ -191,28 +194,33 @@ class FinalIntegrationVerifier:
                     port_correct = config.get("port") == 4001
                     test_results["p2p_configuration"] = {
                         "status": "pass" if port_correct else "partial",
-                        "details": f"Config exists, port: {config.get('port')}"
+                        "details": f"Config exists, port: {config.get('port')}",
                     }
             except Exception as e:
                 test_results["p2p_configuration"] = {"status": "fail", "error": str(e)}
         else:
-            test_results["p2p_configuration"] = {"status": "fail", "details": "Config missing"}
+            test_results["p2p_configuration"] = {
+                "status": "fail",
+                "details": "Config missing",
+            }
 
         # Test 4: Agent Adapter
         adapter_file = Path("./src/integration/codex_agent_adapter.py")
         test_results["agent_adapter"] = {
             "status": "pass" if adapter_file.exists() else "fail",
-            "details": f"Adapter {'exists' if adapter_file.exists() else 'missing'}"
+            "details": f"Adapter {'exists' if adapter_file.exists() else 'missing'}",
         }
 
-        passed = sum(1 for r in test_results.values() if r["status"] in ["pass", "partial"])
+        passed = sum(
+            1 for r in test_results.values() if r["status"] in ["pass", "partial"]
+        )
 
         return {
             "category": "integration_test_suite",
             "passed": passed,
             "total": len(test_results),
             "success_rate": passed / len(test_results),
-            "test_results": test_results
+            "test_results": test_results,
         }
 
     def generate_final_integration_report(self) -> dict[str, Any]:
@@ -251,16 +259,16 @@ class FinalIntegrationVerifier:
                 "evolution_metrics": "Migrated from JSON to SQLite database",
                 "rag_system": "Upgraded from SHA256 to real embeddings",
                 "p2p_network": "Transitioned from mock Bluetooth to LibP2P",
-                "agent_interfaces": "Updated to use new CODEX systems"
+                "agent_interfaces": "Updated to use new CODEX systems",
             },
             "verification_categories": {
                 "pre_integration": pre_integration,
                 "post_integration": post_integration,
                 "health_checks": health_checks,
-                "test_suite": test_suite
+                "test_suite": test_suite,
             },
             "codex_compliance": self._verify_codex_compliance(),
-            "migration_artifacts": self._collect_migration_artifacts()
+            "migration_artifacts": self._collect_migration_artifacts(),
         }
 
         return report
@@ -275,7 +283,7 @@ class FinalIntegrationVerifier:
         return {
             "status": "pass" if meets_requirement else "fail",
             "version": f"{version.major}.{version.minor}.{version.micro}",
-            "requirement": ">=3.8"
+            "requirement": ">=3.8",
         }
 
     def _check_sqlite_version(self) -> dict[str, Any]:
@@ -291,16 +299,14 @@ class FinalIntegrationVerifier:
             return {
                 "status": "pass" if meets_requirement else "fail",
                 "version": version,
-                "requirement": ">=3.35"
+                "requirement": ">=3.35",
             }
         except Exception as e:
             return {"status": "fail", "error": str(e)}
 
     def _check_required_packages(self) -> dict[str, Any]:
         """Check required Python packages."""
-        required_packages = [
-            "sqlite3", "json", "pathlib", "requests", "numpy"
-        ]
+        required_packages = ["sqlite3", "json", "pathlib", "requests", "numpy"]
 
         missing = []
         for package in required_packages:
@@ -312,7 +318,7 @@ class FinalIntegrationVerifier:
         return {
             "status": "pass" if not missing else "fail",
             "missing_packages": missing,
-            "required": required_packages
+            "required": required_packages,
         }
 
     def _check_environment_variables(self) -> dict[str, Any]:
@@ -331,7 +337,9 @@ class FinalIntegrationVerifier:
         return {
             "status": "pass",  # All have defaults
             "variables": set_vars,
-            "using_defaults": len([v for v in REQUIRED_ENV_VARS if v not in os.environ])
+            "using_defaults": len(
+                [v for v in REQUIRED_ENV_VARS if v not in os.environ]
+            ),
         }
 
     def _check_port_availability(self) -> dict[str, Any]:
@@ -340,14 +348,12 @@ class FinalIntegrationVerifier:
         return {
             "status": "pass",
             "required_ports": CODEX_PORTS,
-            "note": "Port availability assumed for integration"
+            "note": "Port availability assumed for integration",
         }
 
     def _check_directory_permissions(self) -> dict[str, Any]:
         """Check directory permissions."""
-        required_dirs = [
-            "./data", "./config", "./logs", "./src"
-        ]
+        required_dirs = ["./data", "./config", "./logs", "./src"]
 
         issues = []
         for dir_path in required_dirs:
@@ -361,7 +367,7 @@ class FinalIntegrationVerifier:
         return {
             "status": "pass" if not issues else "fail",
             "directories": required_dirs,
-            "permission_issues": issues
+            "permission_issues": issues,
         }
 
     def _check_databases_created(self) -> dict[str, Any]:
@@ -369,7 +375,7 @@ class FinalIntegrationVerifier:
         databases = [
             "./data/evolution_metrics.db",
             "./data/rag_index.db",
-            "./data/digital_twin.db"
+            "./data/digital_twin.db",
         ]
 
         existing = [db for db in databases if Path(db).exists()]
@@ -378,7 +384,7 @@ class FinalIntegrationVerifier:
             "status": "pass" if len(existing) >= 1 else "fail",  # At least one DB
             "required": databases,
             "existing": existing,
-            "count": len(existing)
+            "count": len(existing),
         }
 
     def _check_evolution_metrics(self) -> dict[str, Any]:
@@ -408,7 +414,7 @@ class FinalIntegrationVerifier:
             return {
                 "status": "pass" if has_tables else "fail",
                 "tables": tables,
-                "record_count": record_count
+                "record_count": record_count,
             }
 
         except Exception as e:
@@ -426,16 +432,23 @@ class FinalIntegrationVerifier:
                 config = json.load(f)
 
             # Check configuration values
-            model_correct = config.get("embedder", {}).get("model_name") == "paraphrase-MiniLM-L3-v2"
+            model_correct = (
+                config.get("embedder", {}).get("model_name")
+                == "paraphrase-MiniLM-L3-v2"
+            )
             dims_correct = config.get("embedder", {}).get("vector_dimension") == 384
             cache_enabled = config.get("cache", {}).get("enabled", False)
 
             return {
-                "status": "pass" if all([model_correct, dims_correct, cache_enabled]) else "partial",
+                "status": (
+                    "pass"
+                    if all([model_correct, dims_correct, cache_enabled])
+                    else "partial"
+                ),
                 "config": config,
                 "model_correct": model_correct,
                 "dims_correct": dims_correct,
-                "cache_enabled": cache_enabled
+                "cache_enabled": cache_enabled,
             }
 
         except Exception as e:
@@ -457,11 +470,15 @@ class FinalIntegrationVerifier:
             max_peers = config.get("mesh", {}).get("max_peers", 0) == 50
 
             return {
-                "status": "pass" if all([port_correct, mdns_enabled, max_peers]) else "partial",
+                "status": (
+                    "pass"
+                    if all([port_correct, mdns_enabled, max_peers])
+                    else "partial"
+                ),
                 "config": config,
                 "port_correct": port_correct,
                 "mdns_enabled": mdns_enabled,
-                "max_peers_correct": max_peers
+                "max_peers_correct": max_peers,
             }
 
         except Exception as e:
@@ -474,7 +491,7 @@ class FinalIntegrationVerifier:
             "DIGITAL_TWIN_DB_PATH",
             "DIGITAL_TWIN_COPPA_COMPLIANT",
             "DIGITAL_TWIN_FERPA_COMPLIANT",
-            "DIGITAL_TWIN_GDPR_COMPLIANT"
+            "DIGITAL_TWIN_GDPR_COMPLIANT",
         ]
 
         configured = all(os.getenv(var) for var in env_vars)
@@ -482,7 +499,7 @@ class FinalIntegrationVerifier:
         return {
             "status": "pass" if configured else "partial",
             "environment_configured": configured,
-            "required_vars": env_vars
+            "required_vars": env_vars,
         }
 
     def _run_integration_tests(self) -> dict[str, Any]:
@@ -490,7 +507,7 @@ class FinalIntegrationVerifier:
         # Check if test files exist
         test_files = [
             "./tests/integration/test_codex_rag_integration.py",
-            "./tests/integration/test_full_system_integration.py"
+            "./tests/integration/test_full_system_integration.py",
         ]
 
         existing_tests = [test for test in test_files if Path(test).exists()]
@@ -499,7 +516,7 @@ class FinalIntegrationVerifier:
             "status": "pass" if existing_tests else "partial",
             "test_files": test_files,
             "existing": existing_tests,
-            "note": "Integration test files created"
+            "note": "Integration test files created",
         }
 
     def _verify_codex_compliance(self) -> dict[str, Any]:
@@ -508,7 +525,7 @@ class FinalIntegrationVerifier:
             "exact_port_numbers": self._check_exact_ports(),
             "environment_variables": self._check_exact_env_vars(),
             "database_schemas": self._check_database_schemas(),
-            "api_endpoints": self._check_api_endpoints()
+            "api_endpoints": self._check_api_endpoints(),
         }
 
         return compliance_checks
@@ -517,7 +534,7 @@ class FinalIntegrationVerifier:
         """Check exact CODEX port compliance."""
         config_files = [
             ("./config/rag_config.json", "api.port", 8082),
-            ("./config/p2p_config.json", "port", 4001)
+            ("./config/p2p_config.json", "port", 4001),
         ]
 
         results = {}
@@ -536,7 +553,7 @@ class FinalIntegrationVerifier:
                     results[file_path] = {
                         "expected": expected_port,
                         "actual": value,
-                        "correct": value == expected_port
+                        "correct": value == expected_port,
                     }
                 except Exception as e:
                     results[file_path] = {"error": str(e)}
@@ -549,7 +566,7 @@ class FinalIntegrationVerifier:
             "RAG_EMBEDDING_MODEL": "paraphrase-MiniLM-L3-v2",
             "RAG_VECTOR_DIM": "384",
             "LIBP2P_PORT": "4001",
-            "MESH_MAX_PEERS": "50"
+            "MESH_MAX_PEERS": "50",
         }
 
         results = {}
@@ -558,7 +575,7 @@ class FinalIntegrationVerifier:
             results[var] = {
                 "expected": expected,
                 "actual": actual,
-                "correct": str(actual) == str(expected)
+                "correct": str(actual) == str(expected),
             }
 
         return results
@@ -579,8 +596,12 @@ class FinalIntegrationVerifier:
             columns = [row[1] for row in cursor.fetchall()]
 
             required_columns = [
-                "round_number", "generation", "timestamp",
-                "population_size", "mutation_rate", "selection_pressure"
+                "round_number",
+                "generation",
+                "timestamp",
+                "population_size",
+                "mutation_rate",
+                "selection_pressure",
             ]
 
             has_required = all(col in columns for col in required_columns)
@@ -590,7 +611,7 @@ class FinalIntegrationVerifier:
             return {
                 "status": "compliant" if has_required else "partial",
                 "columns": columns,
-                "required": required_columns
+                "required": required_columns,
             }
 
         except Exception as e:
@@ -601,14 +622,14 @@ class FinalIntegrationVerifier:
         required_endpoints = {
             "rag_health": "/health/rag",
             "rag_query": "/query",
-            "rag_metrics": "/metrics"
+            "rag_metrics": "/metrics",
         }
 
         # For now, just confirm configuration exists
         return {
             "status": "configured",
             "required_endpoints": required_endpoints,
-            "note": "API endpoints configured in server files"
+            "note": "API endpoints configured in server files",
         }
 
     def _collect_migration_artifacts(self) -> dict[str, Any]:
@@ -619,7 +640,7 @@ class FinalIntegrationVerifier:
         report_patterns = [
             "./data/*_migration_report.json",
             "./data/*_upgrade_report.json",
-            "./rag_integration_validation_report.json"
+            "./rag_integration_validation_report.json",
         ]
 
         for pattern in report_patterns:
@@ -628,7 +649,9 @@ class FinalIntegrationVerifier:
                     artifacts[report_file.stem] = {
                         "path": str(report_file),
                         "size": report_file.stat().st_size,
-                        "modified": datetime.fromtimestamp(report_file.stat().st_mtime).isoformat()
+                        "modified": datetime.fromtimestamp(
+                            report_file.stat().st_mtime
+                        ).isoformat(),
                     }
 
         # Check for key integration files
@@ -636,7 +659,7 @@ class FinalIntegrationVerifier:
             "./src/production/rag/rag_system/core/codex_rag_integration.py",
             "./src/integration/codex_agent_adapter.py",
             "./config/rag_config.json",
-            "./config/p2p_config.json"
+            "./config/p2p_config.json",
         ]
 
         for file_path in key_files:
@@ -645,7 +668,7 @@ class FinalIntegrationVerifier:
                 artifacts[f"integration_{path.stem}"] = {
                     "path": str(path),
                     "size": path.stat().st_size,
-                    "type": "integration_file"
+                    "type": "integration_file",
                 }
 
         return artifacts
@@ -661,9 +684,9 @@ def main():
     with open(report_path, "w") as f:
         json.dump(report, f, indent=2, default=str)
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("CODEX INTEGRATION - FINAL VERIFICATION COMPLETE")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
     print(f"Integration Status: {report['integration_status']}")
     print(f"Overall Success Rate: {report['overall_success_rate']:.1%}")
     print(f"Checks Passed: {report['total_checks_passed']}/{report['total_checks']}")
@@ -674,8 +697,14 @@ def main():
 
     print("\nVerification Categories:")
     for category, results in report["verification_categories"].items():
-        status_icon = "✓" if results["success_rate"] >= 0.8 else "⚠" if results["success_rate"] >= 0.5 else "✗"
-        print(f"  {status_icon} {category}: {results['passed']}/{results['total']} ({results['success_rate']:.1%})")
+        status_icon = (
+            "✓"
+            if results["success_rate"] >= 0.8
+            else "⚠" if results["success_rate"] >= 0.5 else "✗"
+        )
+        print(
+            f"  {status_icon} {category}: {results['passed']}/{results['total']} ({results['success_rate']:.1%})"
+        )
 
     print(f"\nMigration Artifacts: {len(report['migration_artifacts'])} files created")
     print(f"Final Report: {report_path}")

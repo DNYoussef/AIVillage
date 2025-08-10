@@ -2,9 +2,9 @@
 """Test 4-stage compression on large model (ASCII only)."""
 
 import gc
-from pathlib import Path
 import sys
 import time
+from pathlib import Path
 
 from torch import nn
 
@@ -89,9 +89,9 @@ def test_bitnet_compression(model):
     stage1_ratio = total_original / total_compressed
 
     print("\nBitNet Results:")
-    print(f"  Original: {total_original:,} bytes ({total_original/(1024**2):.1f} MB)")
+    print(f"  Original: {total_original:,} bytes ({total_original / (1024**2):.1f} MB)")
     print(
-        f"  Compressed: {total_compressed:,} bytes ({total_compressed/(1024**2):.1f} MB)"
+        f"  Compressed: {total_compressed:,} bytes ({total_compressed / (1024**2):.1f} MB)"
     )
     print(f"  Compression: {stage1_ratio:.1f}x")
 
@@ -162,7 +162,7 @@ def test_seedlm_compression(model):
     print(f"  Compatible layers: {compatible_layers}")
     print(f"  Original: {total_original:,} bytes")
     print(
-        f"  Compressed: {total_compressed:,} bytes ({total_compressed/(1024**2):.1f} MB)"
+        f"  Compressed: {total_compressed:,} bytes ({total_compressed / (1024**2):.1f} MB)"
     )
     print(f"  Compression: {stage2_ratio:.1f}x")
 
@@ -219,7 +219,7 @@ def test_vptq_compression(model):
     print("\nVPTQ Results:")
     print(f"  Original: {total_original:,} bytes")
     print(
-        f"  Compressed: {total_compressed:,} bytes ({total_compressed/(1024**2):.1f} MB)"
+        f"  Compressed: {total_compressed:,} bytes ({total_compressed / (1024**2):.1f} MB)"
     )
     print(f"  Compression: {stage3_ratio:.1f}x")
 
@@ -343,7 +343,7 @@ def main():
     print(f"  Stage 4 (LZMA): {stage4_ratio:.1f}x")
 
     print("\nTest model final:")
-    print(f"  Original: {total_params:,} params ({original_bytes/(1024**2):.1f} MB)")
+    print(f"  Original: {total_params:,} params ({original_bytes / (1024**2):.1f} MB)")
     print(f"  Compressed: {test_final_mb:.2f} MB")
     print(f"  Overall: {test_overall_ratio:.1f}x")
 

@@ -3,13 +3,13 @@
 Provides HTTP API endpoints for evolution metrics system on port 8081.
 """
 
-from datetime import datetime
-from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
 import os
-from pathlib import Path
 import sqlite3
 import sys
+from datetime import datetime
+from http.server import BaseHTTPRequestHandler, HTTPServer
+from pathlib import Path
 
 # Add parent to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -21,6 +21,7 @@ try:
         get_health_status,
         get_metrics_instance,
     )
+
     INTEGRATED_AVAILABLE = True
 except ImportError:
     INTEGRATED_AVAILABLE = False
@@ -96,14 +97,13 @@ class EvolutionMetricsHandler(BaseHTTPRequestHandler):
             "database": {
                 "connected": os.path.exists(db_path),
                 "path": db_path,
-                "wal_mode": False
+                "wal_mode": False,
             },
-            "redis": {
-                "available": False,
-                "connected": False
-            },
+            "redis": {"available": False, "connected": False},
             "metrics": {
-                "flush_threshold": int(os.getenv("AIVILLAGE_METRICS_FLUSH_THRESHOLD", "50"))
+                "flush_threshold": int(
+                    os.getenv("AIVILLAGE_METRICS_FLUSH_THRESHOLD", "50")
+                )
             },
             "api": {
                 "port": 8081,
@@ -111,9 +111,9 @@ class EvolutionMetricsHandler(BaseHTTPRequestHandler):
                     "/health/evolution",
                     "/metrics/current",
                     "/metrics/leaderboard",
-                    "/metrics/agent/{agent_id}"
-                ]
-            }
+                    "/metrics/agent/{agent_id}",
+                ],
+            },
         }
 
         # Check database details
@@ -132,7 +132,9 @@ class EvolutionMetricsHandler(BaseHTTPRequestHandler):
                 health["metrics"]["total_collected"] = cursor.fetchone()[0]
 
                 # Get current round
-                cursor.execute("SELECT id, status FROM evolution_rounds ORDER BY id DESC LIMIT 1")
+                cursor.execute(
+                    "SELECT id, status FROM evolution_rounds ORDER BY id DESC LIMIT 1"
+                )
                 row = cursor.fetchone()
                 if row:
                     health["database"]["current_round"] = row[0]
@@ -157,15 +159,17 @@ class EvolutionMetricsHandler(BaseHTTPRequestHandler):
             cursor = conn.cursor()
 
             # Get latest round metrics
-            cursor.execute("""
-                SELECT 
+            cursor.execute(
+                """
+                SELECT
                     COUNT(DISTINCT agent_id) as agent_count,
                     AVG(fitness_score) as avg_fitness,
                     MAX(fitness_score) as max_fitness,
                     MIN(fitness_score) as min_fitness
                 FROM fitness_metrics
                 WHERE round_id = (SELECT MAX(id) FROM evolution_rounds)
-            """)
+            """
+            )
 
             row = cursor.fetchone()
 
@@ -175,23 +179,25 @@ class EvolutionMetricsHandler(BaseHTTPRequestHandler):
                     "agent_count": row[0] or 0,
                     "avg_fitness": row[1] or 0.0,
                     "max_fitness": row[2] or 0.0,
-                    "min_fitness": row[3] or 0.0
-                }
+                    "min_fitness": row[3] or 0.0,
+                },
             }
 
             # Get resource usage
-            cursor.execute("""
-                SELECT 
+            cursor.execute(
+                """
+                SELECT
                     AVG(cpu_usage) as avg_cpu,
                     AVG(memory_usage_mb) as avg_memory
                 FROM resource_metrics
                 WHERE round_id = (SELECT MAX(id) FROM evolution_rounds)
-            """)
+            """
+            )
 
             row = cursor.fetchone()
             metrics["resources"] = {
                 "avg_cpu_percent": row[0] or 0.0,
-                "avg_memory_mb": row[1] or 0.0
+                "avg_memory_mb": row[1] or 0.0,
             }
 
             conn.close()
@@ -211,8 +217,9 @@ class EvolutionMetricsHandler(BaseHTTPRequestHandler):
             conn = sqlite3.connect(db_path)
             cursor = conn.cursor()
 
-            cursor.execute("""
-                SELECT 
+            cursor.execute(
+                """
+                SELECT
                     agent_id,
                     AVG(fitness_score) as avg_fitness,
                     COUNT(*) as evaluation_count
@@ -220,20 +227,20 @@ class EvolutionMetricsHandler(BaseHTTPRequestHandler):
                 GROUP BY agent_id
                 ORDER BY avg_fitness DESC
                 LIMIT 10
-            """)
+            """
+            )
 
-            leaderboard = {
-                "timestamp": datetime.now().isoformat(),
-                "top_agents": []
-            }
+            leaderboard = {"timestamp": datetime.now().isoformat(), "top_agents": []}
 
             for i, row in enumerate(cursor.fetchall(), 1):
-                leaderboard["top_agents"].append({
-                    "rank": i,
-                    "agent_id": row[0],
-                    "avg_fitness": row[1],
-                    "evaluations": row[2]
-                })
+                leaderboard["top_agents"].append(
+                    {
+                        "rank": i,
+                        "agent_id": row[0],
+                        "avg_fitness": row[1],
+                        "evaluations": row[2],
+                    }
+                )
 
             conn.close()
             return leaderboard
@@ -252,8 +259,9 @@ class EvolutionMetricsHandler(BaseHTTPRequestHandler):
             conn = sqlite3.connect(db_path)
             cursor = conn.cursor()
 
-            cursor.execute("""
-                SELECT 
+            cursor.execute(
+                """
+                SELECT
                     fitness_score,
                     performance_metrics,
                     timestamp
@@ -261,7 +269,9 @@ class EvolutionMetricsHandler(BaseHTTPRequestHandler):
                 WHERE agent_id = ?
                 ORDER BY timestamp DESC
                 LIMIT 10
-            """, (agent_id,))
+            """,
+                (agent_id,),
+            )
 
             rows = cursor.fetchall()
             if not rows:
@@ -271,14 +281,11 @@ class EvolutionMetricsHandler(BaseHTTPRequestHandler):
             agent_data = {
                 "agent_id": agent_id,
                 "timestamp": datetime.now().isoformat(),
-                "recent_metrics": []
+                "recent_metrics": [],
             }
 
             for row in rows:
-                metric = {
-                    "fitness_score": row[0],
-                    "timestamp": row[2]
-                }
+                metric = {"fitness_score": row[0], "timestamp": row[2]}
                 if row[1]:
                     try:
                         metric["kpis"] = json.loads(row[1])

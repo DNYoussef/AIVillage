@@ -1,16 +1,16 @@
 """Enhanced Device Profiler for Sprint 6 Resource Management."""
 
-from collections.abc import Callable
 import contextlib
-from dataclasses import dataclass, field
-from enum import Enum
 import logging
 import platform
 import queue
 import threading
 import time
-from typing import Any
 import uuid
+from collections.abc import Callable
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import Any
 
 # System monitoring
 import psutil

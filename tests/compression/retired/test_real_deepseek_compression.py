@@ -2,9 +2,9 @@
 """Test 4-stage compression on the actual downloaded DeepSeek-R1-Distill-Qwen-1.5B model."""
 
 import gc
-from pathlib import Path
 import sys
 import time
+from pathlib import Path
 
 import torch
 from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer
@@ -48,7 +48,7 @@ def load_real_deepseek_model():
         estimated_params = embedding_params + layer_params + output_params
 
         print(
-            f"  Estimated parameters: {estimated_params:,} ({estimated_params/1_000_000_000:.2f}B)"
+            f"  Estimated parameters: {estimated_params:,} ({estimated_params / 1_000_000_000:.2f}B)"
         )
         print(f"  Estimated size: {estimated_params * 4 / (1024**3):.2f} GB")
 
@@ -138,7 +138,7 @@ def test_compression_on_real_layers(model, max_layers=5):
         print(f"\nLayer {layer_count}: {name}")
         print(f"  Shape: {tuple(param.shape)}")
         print(f"  Parameters: {param.numel():,}")
-        print(f"  Size: {original_size:,} bytes ({original_size/(1024**2):.1f} MB)")
+        print(f"  Size: {original_size:,} bytes ({original_size / (1024**2):.1f} MB)")
 
         try:
             # Stage 1: BitNet
@@ -216,12 +216,12 @@ def test_compression_on_real_layers(model, max_layers=5):
         print("=" * 60)
         print(f"Layers tested: {layer_count}")
         print(f"Successful: {successful_layers}")
-        print(f"Success rate: {successful_layers/layer_count*100:.1f}%")
+        print(f"Success rate: {successful_layers / layer_count * 100:.1f}%")
         print(
-            f"Total original: {total_original:,} bytes ({total_original/(1024**2):.1f} MB)"
+            f"Total original: {total_original:,} bytes ({total_original / (1024**2):.1f} MB)"
         )
         print(
-            f"Total compressed: {total_compressed:,} bytes ({total_compressed/(1024**2):.2f} MB)"
+            f"Total compressed: {total_compressed:,} bytes ({total_compressed / (1024**2):.2f} MB)"
         )
         print(f"Overall ratio: {overall_ratio:.1f}x")
 
@@ -296,7 +296,9 @@ def main():
 
             print("PROVEN WITH REAL MODEL:")
             print("  Model: DeepSeek-R1-Distill-Qwen-1.5B")
-            print(f"  Parameters: {total_params:,} ({total_params/1_000_000_000:.2f}B)")
+            print(
+                f"  Parameters: {total_params:,} ({total_params / 1_000_000_000:.2f}B)"
+            )
             print(f"  All 4 stages work: {'YES' if all_stages_work else 'PARTIAL'}")
             print(f"  Compression ratio: {compression_ratio:.1f}x")
             print(f"  Final size: {final_mb:.1f} MB")

@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Remove all NotImplementedError stubs and replace with minimal working code."""
-from pathlib import Path
+
 import re
+from pathlib import Path
 
 
 def remove_not_implemented(file_path: Path) -> bool:

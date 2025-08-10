@@ -2,11 +2,11 @@
 Implements multi-level compression with adaptive block sizing and robust error handling.
 """
 
-from dataclasses import dataclass
 import hashlib
 import logging
 import math
 import time
+from dataclasses import dataclass
 from typing import Any
 
 import numpy as np

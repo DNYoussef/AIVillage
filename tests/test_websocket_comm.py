@@ -69,7 +69,7 @@ async def test_websocket_communication():
     # Queue messages while disconnected
     print("   Queueing messages while disconnected...")
     for i in range(3):
-        queued_msg = {"type": "test", "content": f"Queued message {i+1}"}
+        queued_msg = {"type": "test", "content": f"Queued message {i + 1}"}
         await client.send_message("server", queued_msg)
 
     print("   Reconnecting client...")

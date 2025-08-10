@@ -12,19 +12,19 @@ standardized interfaces that can be called from Kotlin/Java via JNI.
 
 import asyncio
 import base64
-from concurrent.futures import ThreadPoolExecutor
-from dataclasses import asdict
 import json
 import logging
-from threading import Thread
 import time
+from concurrent.futures import ThreadPoolExecutor
+from dataclasses import asdict
+from threading import Thread
 from typing import Any
 
 # HTTP/WebSocket servers
 try:
+    import uvicorn
     from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
     from fastapi.responses import JSONResponse
-    import uvicorn
 
     FASTAPI_AVAILABLE = True
 except ImportError:
@@ -535,7 +535,9 @@ def send_message_via_bridge(message_json: str) -> bool:
         )
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-        result = loop.run_until_complete(_bridge_instance.mesh_network.send_message(message))
+        result = loop.run_until_complete(
+            _bridge_instance.mesh_network.send_message(message)
+        )
         return bool(result)
     except Exception as e:
         logger.exception(f"JNI send_message failed: {e}")

@@ -238,8 +238,10 @@ async def benchmark_p2p_performance():
         logger.info(f"Discovery completed in {discovery_time:.2f} seconds")
         logger.info(f"Total peers discovered: {total_peers}")
         logger.info(f"Total active connections: {total_connections}")
-        logger.info(f"Average peers per node: {total_peers/num_nodes:.1f}")
-        logger.info(f"Average connections per node: {total_connections/num_nodes:.1f}")
+        logger.info(f"Average peers per node: {total_peers / num_nodes:.1f}")
+        logger.info(
+            f"Average connections per node: {total_connections / num_nodes:.1f}"
+        )
 
         # Message throughput test
         if total_connections > 0:
@@ -255,7 +257,7 @@ async def benchmark_p2p_performance():
             message_time = time.time() - message_start
             logger.info(f"Sent {message_count} messages in {message_time:.2f} seconds")
             logger.info(
-                f"Message rate: {message_count/message_time:.1f} messages/second"
+                f"Message rate: {message_count / message_time:.1f} messages/second"
             )
 
     except Exception as e:

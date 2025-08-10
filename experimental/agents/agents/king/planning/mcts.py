@@ -1,7 +1,7 @@
 import asyncio
-from collections import defaultdict
 import math
 import random
+from collections import defaultdict
 
 
 class MCTSNode:

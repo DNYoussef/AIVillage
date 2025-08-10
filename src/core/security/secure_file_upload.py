@@ -9,11 +9,11 @@ import hashlib
 import logging
 import mimetypes
 import os
-from pathlib import Path
 import re
 import tempfile
-from typing import Any
 import zipfile
+from pathlib import Path
+from typing import Any
 
 import magic
 
@@ -33,7 +33,7 @@ class SecureFileUploadValidator:
 
     def __init__(self, config: dict[str, Any] | None = None):
         """Initialize file upload validator.
-        
+
         Args:
             config: Configuration dictionary
         """
@@ -41,38 +41,125 @@ class SecureFileUploadValidator:
 
         # File size limits (in bytes)
         self.max_file_size = self.config.get("max_file_size", 10 * 1024 * 1024)  # 10MB
-        self.max_total_size = self.config.get("max_total_size", 100 * 1024 * 1024)  # 100MB
+        self.max_total_size = self.config.get(
+            "max_total_size", 100 * 1024 * 1024
+        )  # 100MB
 
         # Allowed file types and extensions
-        self.allowed_extensions = set(self.config.get("allowed_extensions", [
-            "txt", "pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx",
-            "png", "jpg", "jpeg", "gif", "svg", "bmp", "webp",
-            "mp3", "wav", "ogg", "mp4", "webm", "avi",
-            "csv", "json", "xml", "yaml", "md",
-            "py", "js", "html", "css", "sql"
-        ]))
+        self.allowed_extensions = set(
+            self.config.get(
+                "allowed_extensions",
+                [
+                    "txt",
+                    "pdf",
+                    "doc",
+                    "docx",
+                    "xls",
+                    "xlsx",
+                    "ppt",
+                    "pptx",
+                    "png",
+                    "jpg",
+                    "jpeg",
+                    "gif",
+                    "svg",
+                    "bmp",
+                    "webp",
+                    "mp3",
+                    "wav",
+                    "ogg",
+                    "mp4",
+                    "webm",
+                    "avi",
+                    "csv",
+                    "json",
+                    "xml",
+                    "yaml",
+                    "md",
+                    "py",
+                    "js",
+                    "html",
+                    "css",
+                    "sql",
+                ],
+            )
+        )
 
-        self.allowed_mime_types = set(self.config.get("allowed_mime_types", [
-            "text/plain", "text/csv", "text/html", "text/css",
-            "application/pdf", "application/json", "application/xml",
-            "application/msword", "application/vnd.ms-excel", "application/vnd.ms-powerpoint",
-            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-            "image/png", "image/jpeg", "image/gif", "image/svg+xml", "image/bmp", "image/webp",
-            "audio/mpeg", "audio/wav", "audio/ogg",
-            "video/mp4", "video/webm", "video/x-msvideo",
-            "application/x-python-code", "application/javascript",
-        ]))
+        self.allowed_mime_types = set(
+            self.config.get(
+                "allowed_mime_types",
+                [
+                    "text/plain",
+                    "text/csv",
+                    "text/html",
+                    "text/css",
+                    "application/pdf",
+                    "application/json",
+                    "application/xml",
+                    "application/msword",
+                    "application/vnd.ms-excel",
+                    "application/vnd.ms-powerpoint",
+                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+                    "image/png",
+                    "image/jpeg",
+                    "image/gif",
+                    "image/svg+xml",
+                    "image/bmp",
+                    "image/webp",
+                    "audio/mpeg",
+                    "audio/wav",
+                    "audio/ogg",
+                    "video/mp4",
+                    "video/webm",
+                    "video/x-msvideo",
+                    "application/x-python-code",
+                    "application/javascript",
+                ],
+            )
+        )
 
         # Blocked extensions and patterns
-        self.blocked_extensions = set(self.config.get("blocked_extensions", [
-            "exe", "bat", "cmd", "com", "pif", "scr", "vbs", "js", "jar",
-            "msi", "dll", "sys", "drv", "bin", "deb", "rpm",
-            "sh", "bash", "csh", "ksh", "zsh",
-            "ps1", "psm1", "psd1", "ps1xml", "psc1", "psc2",
-            "php", "asp", "aspx", "jsp", "cgi"
-        ]))
+        self.blocked_extensions = set(
+            self.config.get(
+                "blocked_extensions",
+                [
+                    "exe",
+                    "bat",
+                    "cmd",
+                    "com",
+                    "pif",
+                    "scr",
+                    "vbs",
+                    "js",
+                    "jar",
+                    "msi",
+                    "dll",
+                    "sys",
+                    "drv",
+                    "bin",
+                    "deb",
+                    "rpm",
+                    "sh",
+                    "bash",
+                    "csh",
+                    "ksh",
+                    "zsh",
+                    "ps1",
+                    "psm1",
+                    "psd1",
+                    "ps1xml",
+                    "psc1",
+                    "psc2",
+                    "php",
+                    "asp",
+                    "aspx",
+                    "jsp",
+                    "cgi",
+                ],
+            )
+        )
 
         # Dangerous file patterns
         self.dangerous_patterns = [
@@ -94,14 +181,14 @@ class SecureFileUploadValidator:
         # Magic number signatures for common file types
         self.magic_signatures = {
             b"\x89PNG\r\n\x1a\n": "image/png",
-            b"\xFF\xD8\xFF": "image/jpeg",
+            b"\xff\xd8\xff": "image/jpeg",
             b"GIF87a": "image/gif",
             b"GIF89a": "image/gif",
             b"%PDF-": "application/pdf",
             b"PK\x03\x04": "application/zip",  # Also used by office files
             b"PK\x05\x06": "application/zip",
             b"PK\x07\x08": "application/zip",
-            b"\x50\x4B\x03\x04": "application/zip",
+            b"\x50\x4b\x03\x04": "application/zip",
         }
 
         # Initialize virus scanning if available
@@ -114,6 +201,7 @@ class SecureFileUploadValidator:
         try:
             # Try to import ClamAV Python bindings
             import pyclamd
+
             cd = pyclamd.ClamdUnixSocket()
             if cd.ping():
                 logger.info("ClamAV virus scanner initialized")
@@ -125,18 +213,19 @@ class SecureFileUploadValidator:
 
         return None
 
-    def validate_file(self, file_path: str, filename: str = None,
-                     content: bytes = None) -> dict[str, Any]:
+    def validate_file(
+        self, file_path: str, filename: str = None, content: bytes = None
+    ) -> dict[str, Any]:
         """Validate uploaded file for security issues.
-        
+
         Args:
             file_path: Path to uploaded file
             filename: Original filename
             content: File content (optional, will read if not provided)
-            
+
         Returns:
             Validation result dictionary
-            
+
         Raises:
             FileUploadError: If file is invalid
             MaliciousFileError: If file is potentially malicious
@@ -156,7 +245,7 @@ class SecureFileUploadValidator:
             "is_safe": True,
             "warnings": [],
             "errors": [],
-            "metadata": {}
+            "metadata": {},
         }
 
         try:
@@ -187,7 +276,9 @@ class SecureFileUploadValidator:
                 self._validate_archive(content, validation_result)
 
             # 9. Calculate file hash
-            validation_result["metadata"]["sha256"] = hashlib.sha256(content).hexdigest()
+            validation_result["metadata"]["sha256"] = hashlib.sha256(
+                content
+            ).hexdigest()
             validation_result["metadata"]["md5"] = hashlib.md5(content).hexdigest()
 
             # Determine overall safety
@@ -197,8 +288,10 @@ class SecureFileUploadValidator:
                 raise MaliciousFileError(f"File validation failed: {error_msg}")
 
             if validation_result["warnings"]:
-                logger.warning(f"File validation warnings for {filename}: "
-                             f"{'; '.join(validation_result['warnings'])}")
+                logger.warning(
+                    f"File validation warnings for {filename}: "
+                    f"{'; '.join(validation_result['warnings'])}"
+                )
 
             return validation_result
 
@@ -241,9 +334,30 @@ class SecureFileUploadValidator:
             result["errors"].append("Filename too long")
 
         # Check for reserved names (Windows)
-        reserved_names = ["CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4",
-                         "COM5", "COM6", "COM7", "COM8", "COM9", "LPT1", "LPT2",
-                         "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9"]
+        reserved_names = [
+            "CON",
+            "PRN",
+            "AUX",
+            "NUL",
+            "COM1",
+            "COM2",
+            "COM3",
+            "COM4",
+            "COM5",
+            "COM6",
+            "COM7",
+            "COM8",
+            "COM9",
+            "LPT1",
+            "LPT2",
+            "LPT3",
+            "LPT4",
+            "LPT5",
+            "LPT6",
+            "LPT7",
+            "LPT8",
+            "LPT9",
+        ]
 
         basename = filename.split(".")[0].upper()
         if basename in reserved_names:
@@ -260,11 +374,15 @@ class SecureFileUploadValidator:
 
         # Check if extension is in allowed list (if specified)
         if self.allowed_extensions and extension not in self.allowed_extensions:
-            result["warnings"].append(f"File extension '{extension}' is not in allowed list")
+            result["warnings"].append(
+                f"File extension '{extension}' is not in allowed list"
+            )
 
         result["metadata"]["extension"] = extension
 
-    def _validate_mime_type(self, content: bytes, filename: str, result: dict[str, Any]):
+    def _validate_mime_type(
+        self, content: bytes, filename: str, result: dict[str, Any]
+    ):
         """Validate MIME type."""
         # Get MIME type from python-magic
         try:
@@ -280,7 +398,9 @@ class SecureFileUploadValidator:
 
         # Check if detected MIME type is allowed
         if self.allowed_mime_types and detected_mime not in self.allowed_mime_types:
-            result["warnings"].append(f"MIME type '{detected_mime}' is not in allowed list")
+            result["warnings"].append(
+                f"MIME type '{detected_mime}' is not in allowed list"
+            )
 
         # Check for MIME type mismatch
         if guessed_mime and detected_mime != guessed_mime:
@@ -307,12 +427,16 @@ class SecureFileUploadValidator:
                 f"MIME type '{detected_mime}'"
             )
 
-    def _analyze_file_content(self, content: bytes, filename: str, result: dict[str, Any]):
+    def _analyze_file_content(
+        self, content: bytes, filename: str, result: dict[str, Any]
+    ):
         """Analyze file content for dangerous patterns."""
         # Check for dangerous patterns
         for pattern in self.dangerous_patterns:
             if re.search(pattern, content, re.IGNORECASE):
-                result["errors"].append(f"File contains dangerous pattern: {pattern.decode('utf-8', errors='ignore')}")
+                result["errors"].append(
+                    f"File contains dangerous pattern: {pattern.decode('utf-8', errors='ignore')}"
+                )
 
         # Check for embedded executables in images
         if result["metadata"]["detected_mime_type"].startswith("image/"):
@@ -332,7 +456,9 @@ class SecureFileUploadValidator:
         url_pattern = rb'https?://[^\s<>"{}|\\^`\[\]]+'
         urls = re.findall(url_pattern, content)
         if urls:
-            result["metadata"]["embedded_urls"] = [url.decode("utf-8", errors="ignore") for url in urls[:10]]
+            result["metadata"]["embedded_urls"] = [
+                url.decode("utf-8", errors="ignore") for url in urls[:10]
+            ]
             if len(urls) > 5:
                 result["warnings"].append(f"File contains {len(urls)} URLs")
 
@@ -343,7 +469,11 @@ class SecureFileUploadValidator:
 
             if scan_result:
                 # File is infected
-                virus_name = scan_result[str(file_path)][1] if str(file_path) in scan_result else "Unknown"
+                virus_name = (
+                    scan_result[str(file_path)][1]
+                    if str(file_path) in scan_result
+                    else "Unknown"
+                )
                 result["errors"].append(f"Virus detected: {virus_name}")
 
             result["metadata"]["virus_scanned"] = True
@@ -395,20 +525,26 @@ class SecureFileUploadValidator:
 
             # Check for path traversal in archive
             if ".." in info.filename or info.filename.startswith("/"):
-                result["errors"].append(f"Archive contains path traversal: {info.filename}")
+                result["errors"].append(
+                    f"Archive contains path traversal: {info.filename}"
+                )
 
             # Check individual file names
             try:
                 self._validate_filename(info.filename, {"errors": [], "warnings": []})
             except Exception:
-                result["warnings"].append(f"Archive contains file with invalid name: {info.filename}")
+                result["warnings"].append(
+                    f"Archive contains file with invalid name: {info.filename}"
+                )
 
         # Check for zip bomb indicators
         if file_count > 1000:
             result["warnings"].append(f"Archive contains many files: {file_count}")
 
         if total_uncompressed_size > 100 * 1024 * 1024:  # 100MB
-            result["warnings"].append(f"Archive uncompressed size is large: {total_uncompressed_size}")
+            result["warnings"].append(
+                f"Archive uncompressed size is large: {total_uncompressed_size}"
+            )
 
         result["metadata"]["archive_file_count"] = file_count
         result["metadata"]["archive_uncompressed_size"] = total_uncompressed_size
@@ -424,7 +560,7 @@ class SecureFileUploadValidator:
         # Limit length
         if len(filename) > 200:
             name, ext = os.path.splitext(filename)
-            filename = name[:200-len(ext)] + ext
+            filename = name[: 200 - len(ext)] + ext
 
         # Ensure it doesn't start with dot or dash
         if filename.startswith(".") or filename.startswith("-"):
@@ -432,15 +568,16 @@ class SecureFileUploadValidator:
 
         return filename
 
-    def get_safe_upload_path(self, base_dir: str, filename: str,
-                           create_subdirs: bool = True) -> Path:
+    def get_safe_upload_path(
+        self, base_dir: str, filename: str, create_subdirs: bool = True
+    ) -> Path:
         """Get safe path for file upload.
-        
+
         Args:
             base_dir: Base upload directory
             filename: Original filename
             create_subdirs: Whether to create date-based subdirectories
-            
+
         Returns:
             Safe file path
         """
@@ -452,8 +589,11 @@ class SecureFileUploadValidator:
         # Create date-based subdirectories if requested
         if create_subdirs:
             from datetime import datetime
+
             now = datetime.now()
-            subdir = base_path / now.strftime("%Y") / now.strftime("%m") / now.strftime("%d")
+            subdir = (
+                base_path / now.strftime("%Y") / now.strftime("%m") / now.strftime("%d")
+            )
             subdir.mkdir(parents=True, exist_ok=True)
             base_path = subdir
         else:
@@ -477,7 +617,9 @@ if __name__ == "__main__":
     import tempfile
 
     # Create test files
-    with tempfile.NamedTemporaryFile(mode="w+b", suffix=".txt", delete=False) as test_file:
+    with tempfile.NamedTemporaryFile(
+        mode="w+b", suffix=".txt", delete=False
+    ) as test_file:
         test_content = b"This is a test file content."
         test_file.write(test_content)
         test_file_path = test_file.name

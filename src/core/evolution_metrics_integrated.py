@@ -8,23 +8,24 @@ This module provides comprehensive evolution metrics tracking with:
 - API endpoints for health monitoring
 """
 
-from dataclasses import asdict, dataclass, field
-from datetime import datetime
-from enum import Enum
 import json
 import logging
 import os
-from pathlib import Path
-from queue import Empty, Queue
 import sqlite3
 import threading
 import time
+from dataclasses import asdict, dataclass, field
+from datetime import datetime
+from enum import Enum
+from pathlib import Path
+from queue import Empty, Queue
 from typing import Any
 
 # Try to import Redis with graceful fallback
 try:
     import redis
     from redis import Redis
+
     REDIS_AVAILABLE = True
 except ImportError:
     REDIS_AVAILABLE = False
@@ -33,6 +34,7 @@ except ImportError:
 # Try to import psutil for resource monitoring
 try:
     import psutil
+
     PSUTIL_AVAILABLE = True
 except ImportError:
     PSUTIL_AVAILABLE = False
@@ -43,6 +45,7 @@ logger = logging.getLogger(__name__)
 
 class KPIType(Enum):
     """18 Core KPIs for Evolution System"""
+
     PERFORMANCE_SCORE = "performance_score"
     LEARNING_RATE = "learning_rate"
     TASK_COMPLETION = "task_completion"
@@ -122,7 +125,7 @@ class EvolutionMetricsData:
 
 class IntegratedEvolutionMetrics:
     """Integrated Evolution Metrics system with CODEX requirements.
-    
+
     Features:
     - SQLite database with WAL mode
     - Redis caching with fallback
@@ -137,7 +140,9 @@ class IntegratedEvolutionMetrics:
         self.db_path = os.getenv("AIVILLAGE_DB_PATH", "./data/evolution_metrics.db")
         self.storage_backend = os.getenv("AIVILLAGE_STORAGE_BACKEND", "sqlite")
         self.flush_threshold = int(os.getenv("AIVILLAGE_METRICS_FLUSH_THRESHOLD", "50"))
-        self.metrics_file = os.getenv("AIVILLAGE_METRICS_FILE", "evolution_metrics.json")
+        self.metrics_file = os.getenv(
+            "AIVILLAGE_METRICS_FILE", "evolution_metrics.json"
+        )
         self.log_dir = os.getenv("AIVILLAGE_LOG_DIR", "./evolution_logs")
 
         # Redis configuration
@@ -204,11 +209,13 @@ class IntegratedEvolutionMetrics:
                 db=self.redis_db,
                 decode_responses=True,
                 socket_connect_timeout=5,
-                socket_timeout=5
+                socket_timeout=5,
             )
             # Test connection
             self.redis_client.ping()
-            logger.info(f"Redis connection established at {self.redis_host}:{self.redis_port}")
+            logger.info(
+                f"Redis connection established at {self.redis_host}:{self.redis_port}"
+            )
         except Exception as e:
             logger.warning(f"Redis connection failed, falling back to SQLite: {e}")
             self.redis_client = None
@@ -262,15 +269,18 @@ class IntegratedEvolutionMetrics:
 
         try:
             cursor = self.db_conn.cursor()
-            cursor.execute("""
+            cursor.execute(
+                """
                 INSERT INTO evolution_rounds (round_number, generation, status, timestamp)
                 VALUES (?, ?, ?, ?)
-            """, (
-                int(time.time()),  # Use timestamp as round number for uniqueness
-                1,  # Generation 1
-                "running",
-                datetime.now()
-            ))
+            """,
+                (
+                    int(time.time()),  # Use timestamp as round number for uniqueness
+                    1,  # Generation 1
+                    "running",
+                    datetime.now(),
+                ),
+            )
             self.current_round_id = cursor.lastrowid
             self.db_conn.commit()
             logger.info(f"Started evolution round {self.current_round_id}")
@@ -284,11 +294,14 @@ class IntegratedEvolutionMetrics:
 
         try:
             cursor = self.db_conn.cursor()
-            cursor.execute("""
-                UPDATE evolution_rounds 
+            cursor.execute(
+                """
+                UPDATE evolution_rounds
                 SET status = 'completed'
                 WHERE id = ?
-            """, (self.current_round_id,))
+            """,
+                (self.current_round_id,),
+            )
             self.db_conn.commit()
             logger.info(f"Completed evolution round {self.current_round_id}")
         except Exception as e:
@@ -296,7 +309,7 @@ class IntegratedEvolutionMetrics:
 
     def record_metric(self, metrics: EvolutionMetricsData):
         """Record evolution metrics.
-        
+
         Args:
             metrics: EvolutionMetricsData object with KPI values
         """
@@ -312,9 +325,11 @@ class IntegratedEvolutionMetrics:
         if self.redis_client:
             self._send_to_redis(metrics)
 
-    def record_kpi(self, agent_id: str, kpi_type: KPIType, value: float, metadata: dict = None):
+    def record_kpi(
+        self, agent_id: str, kpi_type: KPIType, value: float, metadata: dict = None
+    ):
         """Record a single KPI value.
-        
+
         Args:
             agent_id: Agent identifier
             kpi_type: Type of KPI from KPIType enum
@@ -322,9 +337,7 @@ class IntegratedEvolutionMetrics:
             metadata: Optional metadata
         """
         metrics = EvolutionMetricsData(
-            agent_id=agent_id,
-            timestamp=time.time(),
-            metadata=metadata or {}
+            agent_id=agent_id, timestamp=time.time(), metadata=metadata or {}
         )
 
         # Set the specific KPI value
@@ -378,62 +391,73 @@ class IntegratedEvolutionMetrics:
 
             for metrics in metrics_list:
                 # Insert fitness metrics
-                cursor.execute("""
-                    INSERT INTO fitness_metrics 
+                cursor.execute(
+                    """
+                    INSERT INTO fitness_metrics
                     (round_id, agent_id, fitness_score, performance_metrics, timestamp)
                     VALUES (?, ?, ?, ?, ?)
-                """, (
-                    self.current_round_id,
-                    metrics.agent_id,
-                    metrics.fitness_score,
-                    json.dumps({
-                        "performance_score": metrics.performance_score,
-                        "learning_rate": metrics.learning_rate,
-                        "task_completion": metrics.task_completion,
-                        "error_rate": metrics.error_rate,
-                        "response_time": metrics.response_time,
-                        "adaptation_speed": metrics.adaptation_speed,
-                        "creativity_score": metrics.creativity_score,
-                        "collaboration_score": metrics.collaboration_score,
-                        "specialization_depth": metrics.specialization_depth,
-                        "generalization_breadth": metrics.generalization_breadth,
-                        "robustness_score": metrics.robustness_score,
-                        "innovation_rate": metrics.innovation_rate,
-                        "quality_consistency": metrics.quality_consistency,
-                        "knowledge_retention": metrics.knowledge_retention,
-                    }),
-                    datetime.fromtimestamp(metrics.timestamp)
-                ))
+                """,
+                    (
+                        self.current_round_id,
+                        metrics.agent_id,
+                        metrics.fitness_score,
+                        json.dumps(
+                            {
+                                "performance_score": metrics.performance_score,
+                                "learning_rate": metrics.learning_rate,
+                                "task_completion": metrics.task_completion,
+                                "error_rate": metrics.error_rate,
+                                "response_time": metrics.response_time,
+                                "adaptation_speed": metrics.adaptation_speed,
+                                "creativity_score": metrics.creativity_score,
+                                "collaboration_score": metrics.collaboration_score,
+                                "specialization_depth": metrics.specialization_depth,
+                                "generalization_breadth": metrics.generalization_breadth,
+                                "robustness_score": metrics.robustness_score,
+                                "innovation_rate": metrics.innovation_rate,
+                                "quality_consistency": metrics.quality_consistency,
+                                "knowledge_retention": metrics.knowledge_retention,
+                            }
+                        ),
+                        datetime.fromtimestamp(metrics.timestamp),
+                    ),
+                )
 
                 # Insert resource metrics
-                cursor.execute("""
+                cursor.execute(
+                    """
                     INSERT INTO resource_metrics
                     (round_id, cpu_usage, memory_usage_mb, network_io_kb, disk_io_kb, gpu_usage, timestamp)
                     VALUES (?, ?, ?, ?, ?, ?, ?)
-                """, (
-                    self.current_round_id,
-                    metrics.cpu_percent,
-                    metrics.memory_used_mb,
-                    metrics.network_io_kb,
-                    metrics.disk_io_kb,
-                    metrics.gpu_usage,
-                    datetime.fromtimestamp(metrics.timestamp)
-                ))
+                """,
+                    (
+                        self.current_round_id,
+                        metrics.cpu_percent,
+                        metrics.memory_used_mb,
+                        metrics.network_io_kb,
+                        metrics.disk_io_kb,
+                        metrics.gpu_usage,
+                        datetime.fromtimestamp(metrics.timestamp),
+                    ),
+                )
 
                 # Insert selection outcomes if applicable
                 if metrics.selection_method:
-                    cursor.execute("""
+                    cursor.execute(
+                        """
                         INSERT INTO selection_outcomes
                         (round_id, parent_agent_id, selection_method, mutation_applied, survival_reason, timestamp)
                         VALUES (?, ?, ?, ?, ?, ?)
-                    """, (
-                        self.current_round_id,
-                        metrics.agent_id,
-                        metrics.selection_method,
-                        metrics.mutation_applied,
-                        "selected" if metrics.selected else "not_selected",
-                        datetime.fromtimestamp(metrics.timestamp)
-                    ))
+                    """,
+                        (
+                            self.current_round_id,
+                            metrics.agent_id,
+                            metrics.selection_method,
+                            metrics.mutation_applied,
+                            "selected" if metrics.selected else "not_selected",
+                            datetime.fromtimestamp(metrics.timestamp),
+                        ),
+                    )
 
             self.db_conn.commit()
             logger.debug(f"Persisted {len(metrics_list)} metrics to database")
@@ -451,8 +475,7 @@ class IntegratedEvolutionMetrics:
             # Store in sorted set by timestamp
             key = f"evolution:metrics:{metrics.agent_id}"
             self.redis_client.zadd(
-                key,
-                {json.dumps(metrics.to_dict()): metrics.timestamp}
+                key, {json.dumps(metrics.to_dict()): metrics.timestamp}
             )
 
             # Set expiry (1 hour)
@@ -460,18 +483,19 @@ class IntegratedEvolutionMetrics:
 
             # Update real-time leaderboard
             self.redis_client.zadd(
-                "evolution:leaderboard",
-                {metrics.agent_id: metrics.fitness_score}
+                "evolution:leaderboard", {metrics.agent_id: metrics.fitness_score}
             )
 
             # Publish to pub/sub channel
             self.redis_client.publish(
                 "evolution:updates",
-                json.dumps({
-                    "agent_id": metrics.agent_id,
-                    "fitness_score": metrics.fitness_score,
-                    "timestamp": metrics.timestamp
-                })
+                json.dumps(
+                    {
+                        "agent_id": metrics.agent_id,
+                        "fitness_score": metrics.fitness_score,
+                        "timestamp": metrics.timestamp,
+                    }
+                ),
             )
 
         except Exception as e:
@@ -485,7 +509,7 @@ class IntegratedEvolutionMetrics:
             "last_flush_time": self.last_flush_time,
             "current_round_id": self.current_round_id,
             "redis_connected": self.redis_client is not None,
-            "db_connected": self.db_conn is not None
+            "db_connected": self.db_conn is not None,
         }
 
         # Add leaderboard from Redis if available
@@ -503,15 +527,18 @@ class IntegratedEvolutionMetrics:
 
         return summary
 
-    def get_agent_history(self, agent_id: str, limit: int = 100) -> list[dict[str, Any]]:
+    def get_agent_history(
+        self, agent_id: str, limit: int = 100
+    ) -> list[dict[str, Any]]:
         """Get historical metrics for an agent."""
         if not self.db_conn:
             return []
 
         try:
             cursor = self.db_conn.cursor()
-            cursor.execute("""
-                SELECT 
+            cursor.execute(
+                """
+                SELECT
                     fm.fitness_score,
                     fm.performance_metrics,
                     fm.timestamp,
@@ -522,18 +549,22 @@ class IntegratedEvolutionMetrics:
                 WHERE fm.agent_id = ?
                 ORDER BY fm.timestamp DESC
                 LIMIT ?
-            """, (agent_id, limit))
+            """,
+                (agent_id, limit),
+            )
 
             rows = cursor.fetchall()
             history = []
             for row in rows:
-                history.append({
-                    "fitness_score": row[0],
-                    "performance_metrics": json.loads(row[1]) if row[1] else {},
-                    "timestamp": row[2],
-                    "cpu_usage": row[3],
-                    "memory_usage_mb": row[4]
-                })
+                history.append(
+                    {
+                        "fitness_score": row[0],
+                        "performance_metrics": json.loads(row[1]) if row[1] else {},
+                        "timestamp": row[2],
+                        "cpu_usage": row[3],
+                        "memory_usage_mb": row[4],
+                    }
+                )
 
             return history
 
@@ -549,17 +580,14 @@ class IntegratedEvolutionMetrics:
             "database": {
                 "connected": self.db_conn is not None,
                 "path": self.db_path,
-                "current_round": self.current_round_id
+                "current_round": self.current_round_id,
             },
-            "redis": {
-                "available": REDIS_AVAILABLE,
-                "connected": False
-            },
+            "redis": {"available": REDIS_AVAILABLE, "connected": False},
             "metrics": {
                 "total_collected": self.total_metrics_collected,
                 "buffer_size": len(self.metrics_buffer),
-                "flush_threshold": self.flush_threshold
-            }
+                "flush_threshold": self.flush_threshold,
+            },
         }
 
         # Check Redis connection
@@ -584,10 +612,7 @@ class IntegratedEvolutionMetrics:
 
     def collect_system_metrics(self) -> EvolutionMetricsData:
         """Collect current system resource metrics."""
-        metrics = EvolutionMetricsData(
-            agent_id="system",
-            timestamp=time.time()
-        )
+        metrics = EvolutionMetricsData(agent_id="system", timestamp=time.time())
 
         if PSUTIL_AVAILABLE:
             try:
@@ -610,7 +635,9 @@ class IntegratedEvolutionMetrics:
                 metrics.disk_io_kb = (disk.read_bytes + disk.write_bytes) / 1024
 
                 # Energy efficiency estimate (simplified)
-                metrics.energy_efficiency = metrics.cpu_efficiency * 0.7 + metrics.memory_efficiency * 0.3
+                metrics.energy_efficiency = (
+                    metrics.cpu_efficiency * 0.7 + metrics.memory_efficiency * 0.3
+                )
 
             except Exception as e:
                 logger.debug(f"Failed to collect system metrics: {e}")

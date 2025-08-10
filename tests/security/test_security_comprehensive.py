@@ -6,14 +6,14 @@ authorization, compliance, and other CODEX security requirements.
 """
 
 import base64
-from datetime import datetime, timedelta
 import os
-from pathlib import Path
 
 # Import our security modules
 import sys
 import tempfile
 import unittest
+from datetime import datetime, timedelta
+from pathlib import Path
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
@@ -117,7 +117,7 @@ class TestDigitalTwinEncryption(unittest.TestCase):
             "learning_style": "visual",
             "knowledge_domains": ["math", "science"],
             "learning_goals": ["improve_algebra"],
-            "non_sensitive": "public_data"
+            "non_sensitive": "public_data",
         }
 
         # Encrypt profile
@@ -130,7 +130,9 @@ class TestDigitalTwinEncryption(unittest.TestCase):
 
         # Decrypt profile
         decrypted_profile = self.encryption.decrypt_profile_data(encrypted_profile)
-        self.assertEqual(decrypted_profile["learning_style"], profile_data["learning_style"])
+        self.assertEqual(
+            decrypted_profile["learning_style"], profile_data["learning_style"]
+        )
 
 
 class TestSecureDigitalTwinDB(unittest.TestCase):
@@ -162,7 +164,7 @@ class TestSecureDigitalTwinDB(unittest.TestCase):
             "user_id": "test_user_123",
             "learning_style": "kinesthetic",
             "knowledge_domains": ["biology", "chemistry"],
-            "preferred_difficulty": "advanced"
+            "preferred_difficulty": "advanced",
         }
 
         profile_id = self.secure_db.create_learning_profile(profile_data)
@@ -175,7 +177,7 @@ class TestSecureDigitalTwinDB(unittest.TestCase):
         profile_data = {
             "user_id": "test_user_456",
             "learning_style": "auditory",
-            "knowledge_domains": ["history", "literature"]
+            "knowledge_domains": ["history", "literature"],
         }
 
         profile_id = self.secure_db.create_learning_profile(profile_data)
@@ -219,7 +221,7 @@ class TestSecureDigitalTwinDB(unittest.TestCase):
         for i in range(3):
             profile_data = {
                 "user_id": f"stats_test_user_{i}",
-                "learning_style": "visual"
+                "learning_style": "visual",
             }
             self.secure_db.create_learning_profile(profile_data)
 
@@ -282,7 +284,9 @@ class TestSecureAPIServer(unittest.TestCase):
         self.assertTrue(is_valid)
 
         # Verify wrong password
-        is_invalid = self.authenticator.verify_password("wrong_password", salt, hash_value)
+        is_invalid = self.authenticator.verify_password(
+            "wrong_password", salt, hash_value
+        )
         self.assertFalse(is_invalid)
 
     def test_rate_limiting(self):
@@ -307,15 +311,11 @@ class TestSecureAPIServer(unittest.TestCase):
         schema = {
             "username": {"required": True, "type": str, "min_length": 3},
             "age": {"type": int, "min_value": 0, "max_value": 150},
-            "email": {"pattern": r"^[^@]+@[^@]+\.[^@]+$"}
+            "email": {"pattern": r"^[^@]+@[^@]+\.[^@]+$"},
         }
 
         # Valid data
-        valid_data = {
-            "username": "testuser",
-            "age": 25,
-            "email": "test@example.com"
-        }
+        valid_data = {"username": "testuser", "age": 25, "email": "test@example.com"}
         validated = self.validator.validate_json(valid_data, schema)
         self.assertEqual(validated["username"], "testuser")
 
@@ -323,7 +323,7 @@ class TestSecureAPIServer(unittest.TestCase):
         invalid_data = {
             "username": "ab",  # Too short
             "age": 200,  # Too high
-            "email": "invalid-email"
+            "email": "invalid-email",
         }
         with self.assertRaises(Exception):
             self.validator.validate_json(invalid_data, schema)
@@ -354,7 +354,7 @@ class TestRBACSystem(unittest.TestCase):
             user_id=user_id,
             username=username,
             email="test@example.com",
-            roles=[Role.STUDENT]
+            roles=[Role.STUDENT],
         )
         self.assertTrue(success)
 
@@ -368,9 +368,7 @@ class TestRBACSystem(unittest.TestCase):
 
         # Create user with educator role (inherits from user)
         self.rbac.create_user(
-            user_id=user_id,
-            username="educator",
-            roles=[Role.EDUCATOR]
+            user_id=user_id, username="educator", roles=[Role.EDUCATOR]
         )
 
         # Check inherited permissions
@@ -385,11 +383,7 @@ class TestRBACSystem(unittest.TestCase):
         user_id = "permission_test_user"
 
         # Create user with basic permissions
-        self.rbac.create_user(
-            user_id=user_id,
-            username="basicuser",
-            roles=[Role.USER]
-        )
+        self.rbac.create_user(user_id=user_id, username="basicuser", roles=[Role.USER])
 
         # Test permission checks
         has_read = self.rbac.check_permission(user_id, Permission.DIGITAL_TWIN_READ)
@@ -403,9 +397,7 @@ class TestRBACSystem(unittest.TestCase):
         user_id = "denial_test_user"
 
         self.rbac.create_user(
-            user_id=user_id,
-            username="limiteduser",
-            roles=[Role.GUEST]
+            user_id=user_id, username="limiteduser", roles=[Role.GUEST]
         )
 
         # Should raise exception for insufficient permissions
@@ -417,9 +409,7 @@ class TestRBACSystem(unittest.TestCase):
         user_id = "super_admin_test"
 
         self.rbac.create_user(
-            user_id=user_id,
-            username="superadmin",
-            roles=[Role.SUPER_ADMIN]
+            user_id=user_id, username="superadmin", roles=[Role.SUPER_ADMIN]
         )
 
         permissions = self.rbac.get_user_permissions(user_id)
@@ -442,6 +432,7 @@ class TestP2PMTLSConfig(unittest.TestCase):
     def tearDown(self):
         """Clean up test environment."""
         import shutil
+
         shutil.rmtree(self.temp_dir)
 
     def test_certificate_generation(self):
@@ -486,7 +477,7 @@ class TestP2PMTLSConfig(unittest.TestCase):
         new_info = self.mtls_config.get_certificate_info()
         self.assertNotEqual(
             original_info["certificate"]["serial_number"],
-            new_info["certificate"]["serial_number"]
+            new_info["certificate"]["serial_number"],
         )
 
 
@@ -501,6 +492,7 @@ class TestSecureFileUpload(unittest.TestCase):
     def tearDown(self):
         """Clean up test environment."""
         import shutil
+
         shutil.rmtree(self.temp_dir)
 
     def test_safe_file_validation(self):
@@ -538,7 +530,7 @@ class TestSecureFileUpload(unittest.TestCase):
             "../../../etc/passwd",
             'file<>:"*?.txt',
             "con.txt",  # Reserved name
-            "file\x00name.txt"  # Null byte
+            "file\x00name.txt",  # Null byte
         ]
 
         for dangerous in dangerous_filenames:
@@ -603,7 +595,7 @@ class TestSecurityIntegration(unittest.TestCase):
             user_id=user_id,
             username=username,
             email="integration@test.com",
-            roles=[Role.STUDENT]
+            roles=[Role.STUDENT],
         )
         self.assertTrue(success)
 
@@ -617,7 +609,7 @@ class TestSecurityIntegration(unittest.TestCase):
         token = self.authenticator.create_access_token(
             user_id=user_id,
             roles=["student"],
-            permissions=["digital_twin:read", "digital_twin:write"]
+            permissions=["digital_twin:read", "digital_twin:write"],
         )
         self.assertIsInstance(token, str)
 
@@ -625,7 +617,7 @@ class TestSecurityIntegration(unittest.TestCase):
         profile_data = {
             "user_id": user_id,
             "learning_style": "visual",
-            "knowledge_domains": ["mathematics"]
+            "knowledge_domains": ["mathematics"],
         }
         profile_id = self.secure_db.create_learning_profile(profile_data)
         self.assertIsNotNone(profile_id)
@@ -645,7 +637,7 @@ class TestSecurityIntegration(unittest.TestCase):
         self.rbac.create_user(
             user_id=unauthorized_user,
             username="unauthorized",
-            roles=[Role.GUEST]  # Limited permissions
+            roles=[Role.GUEST],  # Limited permissions
         )
 
         with self.assertRaises(AccessDeniedException):
@@ -670,7 +662,7 @@ def run_security_tests():
         TestRBACSystem,
         TestP2PMTLSConfig,
         TestSecureFileUpload,
-        TestSecurityIntegration
+        TestSecurityIntegration,
     ]
 
     suite = unittest.TestSuite()
@@ -688,7 +680,12 @@ def run_security_tests():
         "tests_run": result.testsRun,
         "failures": len(result.failures),
         "errors": len(result.errors),
-        "success_rate": (result.testsRun - len(result.failures) - len(result.errors)) / result.testsRun if result.testsRun > 0 else 0
+        "success_rate": (
+            (result.testsRun - len(result.failures) - len(result.errors))
+            / result.testsRun
+            if result.testsRun > 0
+            else 0
+        ),
     }
 
 

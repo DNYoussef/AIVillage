@@ -2,8 +2,8 @@ from datetime import timedelta
 from pathlib import Path
 from typing import Any
 
-from pydantic import BaseModel, Field
 import yaml
+from pydantic import BaseModel, Field
 
 
 class UnifiedConfig(BaseModel):

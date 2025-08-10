@@ -7,12 +7,12 @@ Core retrieval engine that combines:
 - Creative mode routing to divergent retrieval
 """
 
-from dataclasses import dataclass, field
-from datetime import datetime
 import json
 import logging
-from pathlib import Path
 import time
+from dataclasses import dataclass, field
+from datetime import datetime
+from pathlib import Path
 from typing import Any
 
 import yaml

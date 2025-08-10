@@ -2,9 +2,9 @@
 """Test 4-stage compression on a synthetic 1.5B parameter model."""
 
 import gc
-from pathlib import Path
 import sys
 import time
+from pathlib import Path
 
 from torch import nn
 
@@ -77,14 +77,14 @@ def analyze_model_structure(model):
     print("\nModel Summary:")
     print(f"  Total parameters: {total_params:,}")
     print(f"  Total size: {total_size_gb:.2f} GB")
-    print(f"  Target was 1.5B, achieved: {total_params/1_000_000_000:.2f}B")
+    print(f"  Target was 1.5B, achieved: {total_params / 1_000_000_000:.2f}B")
 
     return total_params, total_size_gb
 
 
 def compress_stage1_bitnet(model):
     """Stage 1: BitNet compression."""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("STAGE 1: BITNET COMPRESSION ON 1.5B MODEL")
     print("=" * 60)
 
@@ -140,10 +140,10 @@ def compress_stage1_bitnet(model):
     print("\nSTAGE 1 RESULTS:")
     print(f"  Layers processed: {layer_count}")
     print(
-        f"  Original size: {total_original:,} bytes ({total_original/(1024**3):.2f} GB)"
+        f"  Original size: {total_original:,} bytes ({total_original / (1024**3):.2f} GB)"
     )
     print(
-        f"  Compressed size: {total_compressed:,} bytes ({total_compressed/(1024**2):.1f} MB)"
+        f"  Compressed size: {total_compressed:,} bytes ({total_compressed / (1024**2):.1f} MB)"
     )
     print(f"  BitNet compression: {stage1_ratio:.1f}x")
 
@@ -152,7 +152,7 @@ def compress_stage1_bitnet(model):
 
 def compress_stage2_seedlm(model, prev_size):
     """Stage 2: SeedLM compression."""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("STAGE 2: SEEDLM COMPRESSION ON 1.5B MODEL")
     print("=" * 60)
 
@@ -229,8 +229,8 @@ def compress_stage2_seedlm(model, prev_size):
     print("\nSTAGE 2 RESULTS:")
     print(f"  Total layers: {layer_count}")
     print(f"  Compatible layers: {compatible_layers}")
-    print(f"  Compatibility rate: {compatible_layers/layer_count*100:.1f}%")
-    print(f"  Stage 2 size: {total_stage2:,} bytes ({total_stage2/(1024**2):.1f} MB)")
+    print(f"  Compatibility rate: {compatible_layers / layer_count * 100:.1f}%")
+    print(f"  Stage 2 size: {total_stage2:,} bytes ({total_stage2 / (1024**2):.1f} MB)")
     print(f"  SeedLM improvement: {stage2_ratio:.1f}x over stage 1")
 
     return stage2_ratio, total_stage2
@@ -238,7 +238,7 @@ def compress_stage2_seedlm(model, prev_size):
 
 def compress_stage3_vptq(model, prev_size):
     """Stage 3: VPTQ compression."""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("STAGE 3: VPTQ COMPRESSION ON 1.5B MODEL")
     print("=" * 60)
 
@@ -300,7 +300,7 @@ def compress_stage3_vptq(model, prev_size):
 
     print("\nSTAGE 3 RESULTS:")
     print(f"  Layers processed: {layer_count}")
-    print(f"  Stage 3 size: {total_stage3:,} bytes ({total_stage3/(1024**2):.1f} MB)")
+    print(f"  Stage 3 size: {total_stage3:,} bytes ({total_stage3 / (1024**2):.1f} MB)")
     print(f"  VPTQ improvement: {stage3_ratio:.1f}x over stage 2")
 
     return stage3_ratio, total_stage3
@@ -308,7 +308,7 @@ def compress_stage3_vptq(model, prev_size):
 
 def compress_stage4_lzma(stage3_size):
     """Stage 4: LZMA compression."""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("STAGE 4: LZMA HYPERCOMPRESSION ON 1.5B MODEL")
     print("=" * 60)
 
@@ -350,7 +350,7 @@ def test_1_5b_compression():
 
     if total_params < 1_000_000_000:  # Less than 1B
         print(
-            f"⚠️ Warning: Model has {total_params/1_000_000_000:.2f}B params, less than target 1.5B"
+            f"⚠️ Warning: Model has {total_params / 1_000_000_000:.2f}B params, less than target 1.5B"
         )
 
     print("\nStarting 4-stage compression...")
@@ -373,7 +373,7 @@ def test_1_5b_compression():
     final_mb = final_size / (1024**2)
     final_gb = final_size / (1024**3)
 
-    print(f"\n{'='*70}")
+    print(f"\n{'=' * 70}")
     print("FINAL 1.5B MODEL COMPRESSION RESULTS")
     print("=" * 70)
 
@@ -382,9 +382,9 @@ def test_1_5b_compression():
     print(f"  Size: {total_size_gb:.2f} GB ({original_bytes:,} bytes)")
 
     print("\nCompression breakdown:")
-    print(f"  Stage 1 (BitNet): {stage1_ratio:.1f}x → {stage1_size/(1024**2):.1f} MB")
-    print(f"  Stage 2 (SeedLM): {stage2_ratio:.1f}x → {stage2_size/(1024**2):.1f} MB")
-    print(f"  Stage 3 (VPTQ): {stage3_ratio:.1f}x → {stage3_size/(1024**2):.1f} MB")
+    print(f"  Stage 1 (BitNet): {stage1_ratio:.1f}x → {stage1_size / (1024**2):.1f} MB")
+    print(f"  Stage 2 (SeedLM): {stage2_ratio:.1f}x → {stage2_size / (1024**2):.1f} MB")
+    print(f"  Stage 3 (VPTQ): {stage3_ratio:.1f}x → {stage3_size / (1024**2):.1f} MB")
     print(f"  Stage 4 (LZMA): {stage4_ratio:.1f}x → {final_mb:.1f} MB")
 
     print("\nFinal compression:")
@@ -396,7 +396,7 @@ def test_1_5b_compression():
     print("\nMobile deployment assessment:")
     mobile_viable = final_mb < 1000
     print(f"  Fits on 2GB phone: {'✅ YES' if mobile_viable else '❌ NO'}")
-    print(f"  Memory usage: {final_mb:.1f} MB ({final_mb/1024:.1f}% of 1GB)")
+    print(f"  Memory usage: {final_mb:.1f} MB ({final_mb / 1024:.1f}% of 1GB)")
 
     kenya_viable = final_mb < 500
     print(f"  Kenya deployment: {'✅ READY' if kenya_viable else '⚠️ MARGINAL'}")
@@ -424,7 +424,7 @@ def main():
     try:
         success = test_1_5b_compression()
 
-        print(f"\n{'='*70}")
+        print(f"\n{'=' * 70}")
         if success:
             print("✅ 1.5B MODEL COMPRESSION: SUCCESS")
             print("All 4 stages proven to work on real 1.5B parameter model!")

@@ -27,7 +27,7 @@ def demonstrate_key_improvements():
 
     print(f"Original data: {original_size} bytes")
     print(f"After HyperCompression: {len(hyper_compressed)} bytes")
-    print(f"Compression ratio: {original_size/len(hyper_compressed):.1f}x")
+    print(f"Compression ratio: {original_size / len(hyper_compressed):.1f}x")
     print(f"Effectiveness check: {'APPLY' if is_effective else 'SKIP'}")
 
     if is_effective:
@@ -129,7 +129,7 @@ def demonstrate_key_improvements():
 
 def demonstrate_mobile_deployment():
     """Demonstrate mobile deployment capability."""
-    print(f"\n{'='*50}")
+    print(f"\n{'=' * 50}")
     print("MOBILE DEPLOYMENT DEMONSTRATION")
     print("=" * 50)
 
@@ -184,7 +184,7 @@ def demonstrate_mobile_deployment():
 
 def atlantis_vision_progress():
     """Show progress toward Atlantis vision goals."""
-    print(f"\n{'='*50}")
+    print(f"\n{'=' * 50}")
     print("ATLANTIS VISION PROGRESS")
     print("=" * 50)
 
@@ -244,7 +244,7 @@ def main():
     try:
         atlantis_vision_progress()
 
-        print(f"\n{'='*50}")
+        print(f"\n{'=' * 50}")
         print("SUMMARY OF ACHIEVEMENTS")
         print("=" * 50)
 

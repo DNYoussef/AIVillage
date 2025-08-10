@@ -12,15 +12,15 @@ To start the services, you need to:
 
 2. START API SERVERS:
    python src/api/start_api_servers.py
-   
+
    This will start:
    - Digital Twin API on port 8080
-   - Evolution Metrics API on port 8081  
+   - Evolution Metrics API on port 8081
    - RAG Pipeline API on port 8082
 
 3. START P2P SERVICES:
    python src/core/p2p/start_p2p_services.py
-   
+
    This will start:
    - LibP2P TCP on port 4001
    - LibP2P WebSocket on port 4002
@@ -28,7 +28,7 @@ To start the services, you need to:
 
 4. VERIFY SERVICES:
    python validate_services_simple.py
-   
+
    This will check that all services are responding correctly.
 
 5. ACCESS API DOCUMENTATION:

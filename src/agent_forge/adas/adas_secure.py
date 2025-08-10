@@ -1,20 +1,19 @@
 from __future__ import annotations
 
 import ast
-from contextlib import contextmanager
 import json
 import os
 import signal
 import subprocess
 import sys
 import tempfile
+from contextlib import contextmanager
 from typing import Any, NoReturn
 
 from langroid.agent.chat_agent import ChatAgent, ChatAgentConfig
 from langroid.agent.task import Task
 from langroid.agent.tool_message import ToolMessage
 from langroid.language_models.openai_gpt import OpenAIGPTConfig
-
 from rag_system.utils.logging import setup_logger as get_logger
 
 from .technique_archive import PROMPT_TECHNIQUE_ARCHIVE

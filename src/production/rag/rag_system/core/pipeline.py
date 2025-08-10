@@ -15,17 +15,17 @@ understand and hack on for further experiments.
 
 from __future__ import annotations
 
+import hashlib
 from collections import OrderedDict, defaultdict
 from collections.abc import Iterable
 from dataclasses import dataclass
-import hashlib
 from typing import Any
 
-from diskcache import Cache as DiskCache  # type: ignore
 import faiss  # type: ignore
 import numpy as np
-from rank_bm25 import BM25Okapi  # type: ignore
 import redis  # type: ignore
+from diskcache import Cache as DiskCache  # type: ignore
+from rank_bm25 import BM25Okapi  # type: ignore
 from sentence_transformers import SentenceTransformer  # type: ignore
 
 try:  # pragma: no cover - optional dependency
@@ -185,9 +185,7 @@ class EnhancedRAGPipeline:
         self.cross_encoder: CrossEncoder | None = None
 
         # FAISS index with ID mapping
-        self.index: faiss.Index = faiss.IndexIDMap(
-            faiss.IndexFlatIP(self.vector_dim)
-        )
+        self.index: faiss.Index = faiss.IndexIDMap(faiss.IndexFlatIP(self.vector_dim))
 
         # BM25 keyword store data
         self.keyword_corpus: list[list[str]] = []
@@ -334,7 +332,7 @@ class EnhancedRAGPipeline:
             keyword_results = []
 
         combined = self.reciprocal_rank_fusion(
-        vector_results=vector_results, keyword_results=keyword_results, k=k
+            vector_results=vector_results, keyword_results=keyword_results, k=k
         )
         reranked = self.rerank_with_cross_encoder(query, combined)
 
@@ -378,8 +376,7 @@ class EnhancedRAGPipeline:
         answer_coherence: float,
     ) -> float:
         return float(
-            (query_embedding_similarity + source_agreement + answer_coherence)
-            / 3
+            (query_embedding_similarity + source_agreement + answer_coherence) / 3
         )
 
     class DummyLLM:
@@ -387,7 +384,9 @@ class EnhancedRAGPipeline:
             """Return a slice of the prompt as a pseudo answer."""
             # Simply echo the last line of the prompt.  This is sufficient for
             # unit tests where we only assert that a string is returned.
-            return prompt.split("Question:")[-1].split("Answer:")[-1].strip()[:max_tokens]
+            return (
+                prompt.split("Question:")[-1].split("Answer:")[-1].strip()[:max_tokens]
+            )
 
     def generate_answer(
         self, query: str, retrieved_docs: list[RetrievalResult]
@@ -428,4 +427,3 @@ __all__ = [
     "RetrievalResult",
     "ThreeTierCache",
 ]
-

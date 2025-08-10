@@ -5,9 +5,9 @@ Implements a version-based migration system that tracks schema changes
 and can upgrade/rollback database schemas safely.
 """
 
+import base64
 import logging
 import os
-import base64
 import sqlite3
 import sys
 from pathlib import Path
@@ -24,6 +24,7 @@ from core.security.digital_twin_encryption import (
 
 logger = logging.getLogger(__name__)
 
+
 class DatabaseMigrator:
     """Handles schema migrations for CODEX databases."""
 
@@ -36,7 +37,7 @@ class DatabaseMigrator:
         """Connect to database with proper settings."""
         self.connection = sqlite3.connect(
             str(self.db_path),
-            isolation_level=None  # autocommit mode
+            isolation_level=None,  # autocommit mode
         )
 
         # Enable WAL mode and optimizations
@@ -51,9 +52,7 @@ class DatabaseMigrator:
     def get_current_version(self) -> int:
         """Get current schema version from database."""
         try:
-            cursor = self.connection.execute(
-                "SELECT MAX(version) FROM schema_version"
-            )
+            cursor = self.connection.execute("SELECT MAX(version) FROM schema_version")
             result = cursor.fetchone()[0]
             self.current_version = result if result is not None else 0
         except sqlite3.OperationalError:
@@ -64,26 +63,27 @@ class DatabaseMigrator:
 
     def create_schema_version_table(self):
         """Create schema_version table if it doesn't exist."""
-        self.connection.execute("""
+        self.connection.execute(
+            """
             CREATE TABLE IF NOT EXISTS schema_version (
                 version INTEGER PRIMARY KEY,
                 applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 description TEXT
             )
-        """)
+        """
+        )
 
     def record_migration(self, version: int, description: str):
         """Record a successful migration."""
         self.connection.execute(
             "INSERT OR REPLACE INTO schema_version (version, description) VALUES (?, ?)",
-            (version, description)
+            (version, description),
         )
 
     def rollback_migration(self, version: int):
         """Remove a migration record."""
         self.connection.execute(
-            "DELETE FROM schema_version WHERE version = ?",
-            (version,)
+            "DELETE FROM schema_version WHERE version = ?", (version,)
         )
 
     def rename_column_if_exists(self, table: str, old: str, new: str) -> None:
@@ -91,9 +91,7 @@ class DatabaseMigrator:
         cursor = self.connection.execute(f"PRAGMA table_info({table})")
         columns = [row[1] for row in cursor.fetchall()]
         if old in columns and new not in columns:
-            self.connection.execute(
-                f"ALTER TABLE {table} RENAME COLUMN {old} TO {new}"
-            )
+            self.connection.execute(f"ALTER TABLE {table} RENAME COLUMN {old} TO {new}")
 
     def close(self):
         """Close database connection."""
@@ -196,7 +194,7 @@ class EvolutionMetricsMigrator(DatabaseMigrator):
             "CREATE INDEX IF NOT EXISTS idx_fitness_metric ON fitness_metrics(metric_name)",
             "CREATE INDEX IF NOT EXISTS idx_resource_round ON resource_metrics(round_id)",
             "CREATE INDEX IF NOT EXISTS idx_selection_round ON selection_outcomes(round_id)",
-            "CREATE INDEX IF NOT EXISTS idx_kpi_name ON kpi_tracking(kpi_name)"
+            "CREATE INDEX IF NOT EXISTS idx_kpi_name ON kpi_tracking(kpi_name)",
         ]
         for sql in indexes:
             self.connection.execute(sql)
@@ -210,7 +208,7 @@ class EvolutionMetricsMigrator(DatabaseMigrator):
         ).fetchone()[0]
         self.connection.execute(
             "INSERT INTO fitness_metrics (round_id, agent_id, metric_name, metric_value) VALUES (?, ?, ?, ?)",
-            (round_id, 'agent_1', 'accuracy', 0.8),
+            (round_id, "agent_1", "accuracy", 0.8),
         )
         self.connection.execute(
             "INSERT INTO resource_metrics (round_id, cpu_usage, memory_usage_mb) VALUES (?, ?, ?)",
@@ -218,7 +216,7 @@ class EvolutionMetricsMigrator(DatabaseMigrator):
         )
         self.connection.execute(
             "INSERT INTO selection_outcomes (round_id, parent_agent_id, offspring_agent_id, mutation_type) VALUES (?, ?, ?, ?)",
-            (round_id, 'agent_parent', 'agent_child', 'mutation'),
+            (round_id, "agent_parent", "agent_child", "mutation"),
         )
         self.connection.execute(
             "INSERT INTO kpi_tracking (kpi_name, kpi_value, target_value, achievement_rate) VALUES ('throughput', 10, 20, 0.5)"
@@ -325,7 +323,7 @@ class DigitalTwinMigrator(DatabaseMigrator):
             "CREATE INDEX IF NOT EXISTS idx_profiles_user ON learning_profiles(user_id)",
             "CREATE INDEX IF NOT EXISTS idx_sessions_profile ON learning_sessions(profile_id)",
             "CREATE INDEX IF NOT EXISTS idx_knowledge_profile ON knowledge_states(profile_id)",
-            "CREATE INDEX IF NOT EXISTS idx_privacy_profile ON privacy_settings(profile_id)"
+            "CREATE INDEX IF NOT EXISTS idx_privacy_profile ON privacy_settings(profile_id)",
         ]
         for sql in indexes:
             self.connection.execute(sql)
@@ -335,7 +333,9 @@ class DigitalTwinMigrator(DatabaseMigrator):
             encryption = DigitalTwinEncryption()
         except DigitalTwinEncryptionError:
             raw_key = os.urandom(32)
-            os.environ["DIGITAL_TWIN_ENCRYPTION_KEY"] = base64.b64encode(raw_key).decode()
+            os.environ["DIGITAL_TWIN_ENCRYPTION_KEY"] = base64.b64encode(
+                raw_key
+            ).decode()
             encryption = DigitalTwinEncryption()
 
         enc_name = encryption.encrypt_sensitive_field("Seed Learner", "name")
@@ -458,7 +458,7 @@ class RAGIndexMigrator(DatabaseMigrator):
             "CREATE INDEX IF NOT EXISTS idx_documents_id ON documents(doc_id)",
             "CREATE INDEX IF NOT EXISTS idx_chunks_doc ON chunks(doc_id)",
             "CREATE INDEX IF NOT EXISTS idx_embeddings_chunk ON embeddings_metadata(chunk_id)",
-            "CREATE INDEX IF NOT EXISTS idx_search_query ON search_cache(query_hash)"
+            "CREATE INDEX IF NOT EXISTS idx_search_query ON search_cache(query_hash)",
         ]
         for sql in indexes:
             self.connection.execute(sql)
@@ -502,11 +502,7 @@ def main():
     print("Starting CODEX database migrations...")
 
     # Run migrations for all databases
-    migrators = [
-        EvolutionMetricsMigrator(),
-        DigitalTwinMigrator(),
-        RAGIndexMigrator()
-    ]
+    migrators = [EvolutionMetricsMigrator(), DigitalTwinMigrator(), RAGIndexMigrator()]
 
     success_count = 0
 
@@ -517,7 +513,9 @@ def main():
         except Exception as e:
             logger.error(f"Migration failed for {migrator.__class__.__name__}: {e}")
 
-    print(f"\nMigration complete: {success_count}/{len(migrators)} databases migrated successfully")
+    print(
+        f"\nMigration complete: {success_count}/{len(migrators)} databases migrated successfully"
+    )
 
     # Verify databases exist
     data_dir = Path("data")

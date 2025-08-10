@@ -30,6 +30,7 @@ except Exception:  # pragma: no cover - fallback for minimal environments
 try:  # pragma: no cover - optional dependency
     from agent_forge.compression.vptq import VPTQCompressor
 except Exception:  # pragma: no cover
+
     class VPTQCompressor:  # type: ignore
         """Fallback compressor used when agent_forge is unavailable."""
 
@@ -145,10 +146,16 @@ class WikipediaSTORMPipeline:
         return [f"When did {topic} begin?", f"How has {topic} changed over time?"]
 
     def generate_scientific_questions(self, topic: str) -> list[str]:
-        return [f"What principles govern {topic}?", f"What are key mechanisms of {topic}?"]
+        return [
+            f"What principles govern {topic}?",
+            f"What are key mechanisms of {topic}?",
+        ]
 
     def generate_cultural_questions(self, topic: str) -> list[str]:
-        return [f"How does {topic} influence culture?", f"Are there traditions about {topic}?"]
+        return [
+            f"How does {topic} influence culture?",
+            f"Are there traditions about {topic}?",
+        ]
 
     def generate_geographical_questions(self, topic: str) -> list[str]:
         return [
@@ -228,10 +235,14 @@ class WikipediaSTORMPipeline:
     ) -> dict[str, Any]:
         return {
             "grade_levels": grade_levels,
-            "conversation_summaries": [c[0]["answer"] if c else "" for c in conversations],
+            "conversation_summaries": [
+                c[0]["answer"] if c else "" for c in conversations
+            ],
         }
 
-    def store_educational_content(self, outline: dict[str, Any], article: dict[str, str]) -> None:
+    def store_educational_content(
+        self, outline: dict[str, Any], article: dict[str, str]
+    ) -> None:
         self.processed_content[article["title"]] = outline
 
     async def process_wikipedia_for_education(self) -> None:
@@ -268,7 +279,9 @@ class OfflineOptimizedRAG:
         return metadata
 
     def create_minimal_vocabulary(self, content_db: ContentDatabase) -> list[str]:
-        return sorted({w for m in content_db.metadata for w in m.get("title", "").split()})
+        return sorted(
+            {w for m in content_db.metadata for w in m.get("title", "").split()}
+        )
 
     def calculate_size(self, index: Any, metadata: Any) -> int:
         index_size = getattr(index, "nbytes", 0)
@@ -312,21 +325,32 @@ class EducationalContentGenerator:
     def get_reading_level(self, grade: int) -> int:
         return grade
 
-    def simplify_for_grade(self, content: dict[str, Any], grade: int, reading_level: int) -> dict[str, Any]:
+    def simplify_for_grade(
+        self, content: dict[str, Any], grade: int, reading_level: int
+    ) -> dict[str, Any]:
         return {"summary": content.get("conversation_summaries", []), "grade": grade}
 
-    def get_local_examples(self, cultural_context: dict[str, Any], topic: str) -> list[str]:
-        return [f"Example of {topic} in {cultural_context.get('region', 'local')} context"]
+    def get_local_examples(
+        self, cultural_context: dict[str, Any], topic: str
+    ) -> list[str]:
+        return [
+            f"Example of {topic} in {cultural_context.get('region', 'local')} context"
+        ]
 
     def add_cultural_context(
-        self, content: dict[str, Any], culture: dict[str, Any], local_examples: list[str]
+        self,
+        content: dict[str, Any],
+        culture: dict[str, Any],
+        local_examples: list[str],
     ) -> dict[str, Any]:
         content = dict(content)
         content["local_examples"] = local_examples
         content["culture"] = culture
         return content
 
-    def create_interactions(self, content: dict[str, Any], interaction_types: list[str]) -> dict[str, Any]:
+    def create_interactions(
+        self, content: dict[str, Any], interaction_types: list[str]
+    ) -> dict[str, Any]:
         content = dict(content)
         content["interactions"] = interaction_types
         content["narration"] = " ".join(content.get("summary", []))

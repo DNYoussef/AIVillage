@@ -11,21 +11,21 @@ Pipeline: EvoMerge → Quiet-STaR → BitNet → Deployment
 """
 
 import asyncio
-from datetime import datetime
 import json
 import logging
-from pathlib import Path
 import time
+from datetime import datetime
+from pathlib import Path
 from typing import Any
 
 import click
+import torch
+import wandb
 from datasets import load_dataset
 from pydantic import BaseModel, Field, field_validator
-import torch
 from torch import nn
 from tqdm import tqdm
 from transformers import AutoModelForCausalLM, AutoTokenizer
-import wandb
 
 # Import compression modules
 from .compression.stage1_bitnet import (
@@ -84,8 +84,10 @@ class CompressionConfig(BaseModel):
     @classmethod
     def validate_device(cls, v: str) -> str:
         """Resolve ``"auto"`` to an actual device string."""
-        return "cuda" if v == "auto" and torch.cuda.is_available() else (
-            "cpu" if v == "auto" else v
+        return (
+            "cuda"
+            if v == "auto" and torch.cuda.is_available()
+            else ("cpu" if v == "auto" else v)
         )
 
 

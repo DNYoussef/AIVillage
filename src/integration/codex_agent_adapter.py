@@ -1,18 +1,18 @@
-
 """Agent Integration Adapter.
 
 Provides seamless integration with CODEX systems.
 """
 
-from datetime import datetime
 import json
 import logging
 import sqlite3
+from datetime import datetime
 from typing import Any
 
 import requests
 
 logger = logging.getLogger(__name__)
+
 
 class CODEXAgentAdapter:
     """Adapter for seamless CODEX integration."""
@@ -31,16 +31,18 @@ class CODEXAgentAdapter:
             self.p2p_config = {"host": "0.0.0.0", "port": 4001}
 
     # RAG Integration Methods
-    async def query_knowledge(self, query: str, context: str = "", k: int = 5) -> list[dict[str, Any]]:
+    async def query_knowledge(
+        self, query: str, context: str = "", k: int = 5
+    ) -> list[dict[str, Any]]:
         """Query RAG system with context."""
         try:
             full_query = f"{context} {query}" if context else query
 
-            response = requests.post(f"{self.rag_base_url}/query", json={
-                "query": full_query,
-                "k": k,
-                "use_cache": True
-            }, timeout=10)
+            response = requests.post(
+                f"{self.rag_base_url}/query",
+                json={"query": full_query, "k": k, "use_cache": True},
+                timeout=10,
+            )
 
             if response.status_code == 200:
                 return response.json().get("results", [])
@@ -55,29 +57,35 @@ class CODEXAgentAdapter:
         """Check RAG system health."""
         try:
             response = requests.get(f"{self.rag_base_url}/health/rag", timeout=5)
-            return response.status_code == 200 and response.json().get("pipeline_ready", False)
+            return response.status_code == 200 and response.json().get(
+                "pipeline_ready", False
+            )
         except:
             return False
 
     # Evolution Metrics Methods
-    def log_agent_fitness(self, round_id: int, fitness_score: float,
-                         performance_data: dict[str, Any]) -> bool:
+    def log_agent_fitness(
+        self, round_id: int, fitness_score: float, performance_data: dict[str, Any]
+    ) -> bool:
         """Log agent fitness to evolution metrics database."""
         try:
             conn = sqlite3.connect(self.evolution_db_path)
             cursor = conn.cursor()
 
-            cursor.execute("""
-                INSERT INTO fitness_metrics 
+            cursor.execute(
+                """
+                INSERT INTO fitness_metrics
                 (round_id, agent_id, fitness_score, performance_metrics, timestamp)
                 VALUES (?, ?, ?, ?, ?)
-            """, (
-                round_id,
-                self.agent_id,
-                fitness_score,
-                json.dumps(performance_data),
-                datetime.now()
-            ))
+            """,
+                (
+                    round_id,
+                    self.agent_id,
+                    fitness_score,
+                    json.dumps(performance_data),
+                    datetime.now(),
+                ),
+            )
 
             conn.commit()
             conn.close()
@@ -95,25 +103,30 @@ class CODEXAgentAdapter:
             conn = sqlite3.connect(self.evolution_db_path)
             cursor = conn.cursor()
 
-            cursor.execute("""
-                SELECT r.round_number, r.generation, f.fitness_score, 
+            cursor.execute(
+                """
+                SELECT r.round_number, r.generation, f.fitness_score,
                        f.performance_metrics, f.timestamp
                 FROM fitness_metrics f
-                JOIN evolution_rounds r ON f.round_id = r.id  
+                JOIN evolution_rounds r ON f.round_id = r.id
                 WHERE f.agent_id = ?
                 ORDER BY f.timestamp DESC
                 LIMIT ?
-            """, (self.agent_id, limit))
+            """,
+                (self.agent_id, limit),
+            )
 
             history = []
             for row in cursor.fetchall():
-                history.append({
-                    "round": row[0],
-                    "generation": row[1],
-                    "fitness": row[2],
-                    "metrics": json.loads(row[3]),
-                    "timestamp": row[4]
-                })
+                history.append(
+                    {
+                        "round": row[0],
+                        "generation": row[1],
+                        "fitness": row[2],
+                        "metrics": json.loads(row[3]),
+                        "timestamp": row[4],
+                    }
+                )
 
             conn.close()
             return history
@@ -123,8 +136,9 @@ class CODEXAgentAdapter:
             return []
 
     # P2P Communication Methods
-    async def send_agent_message(self, target_agent: str, message_type: str,
-                                data: dict[str, Any]) -> bool:
+    async def send_agent_message(
+        self, target_agent: str, message_type: str, data: dict[str, Any]
+    ) -> bool:
         """Send message to another agent via P2P network."""
         try:
             message = {
@@ -132,7 +146,7 @@ class CODEXAgentAdapter:
                 "to_agent": target_agent,
                 "type": message_type,
                 "data": data,
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
 
             # Use LibP2P or fallback transport
@@ -149,7 +163,7 @@ class CODEXAgentAdapter:
             status_message = {
                 "agent_id": self.agent_id,
                 "status": status_data,
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
 
             # Broadcast via P2P network
@@ -166,7 +180,7 @@ class CODEXAgentAdapter:
         return {
             "rag_system": self.get_rag_health(),
             "evolution_db": Path(self.evolution_db_path).exists(),
-            "p2p_config": Path(self.p2p_config_path).exists()
+            "p2p_config": Path(self.p2p_config_path).exists(),
         }
 
     async def initialize_agent(self) -> bool:
@@ -177,7 +191,9 @@ class CODEXAgentAdapter:
         ready = all(health.values())
 
         if ready:
-            logger.info(f"Agent {self.agent_id} successfully integrated with CODEX systems")
+            logger.info(
+                f"Agent {self.agent_id} successfully integrated with CODEX systems"
+            )
         else:
             logger.warning(f"Agent {self.agent_id} integration incomplete: {health}")
 

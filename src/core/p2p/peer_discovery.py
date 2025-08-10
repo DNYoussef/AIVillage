@@ -2,7 +2,6 @@
 
 import asyncio
 import contextlib
-from dataclasses import dataclass
 import ipaddress
 import json
 import logging
@@ -10,6 +9,7 @@ import queue
 import socket
 import threading
 import time
+from dataclasses import dataclass
 from typing import Any
 
 logger = logging.getLogger(__name__)

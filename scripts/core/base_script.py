@@ -10,12 +10,12 @@ should inherit from. It provides:
 - Resource monitoring
 """
 
-from abc import ABC, abstractmethod
-from datetime import datetime
 import json
 import logging
-from pathlib import Path
 import time
+from abc import ABC, abstractmethod
+from datetime import datetime
+from pathlib import Path
 from typing import Any
 
 from .common_utils import (

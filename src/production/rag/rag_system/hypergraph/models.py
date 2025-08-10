@@ -4,9 +4,9 @@ Core data structures for the dual-memory hypergraph knowledge system.
 Implements Hyperedge for n-ary relationships and HippoNode for episodic memory.
 """
 
+import uuid
 from datetime import datetime, timezone
 from typing import Any
-import uuid
 
 import numpy as np
 from pydantic import BaseModel, Field, validator

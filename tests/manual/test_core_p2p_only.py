@@ -91,9 +91,9 @@ async def test_five_node_network():
         logger.info("\nNETWORK SUMMARY:")
         logger.info(f"Total peers discovered across network: {total_peers_discovered}")
         logger.info(f"Total active connections: {total_active_connections}")
-        logger.info(f"Average peers per node: {total_peers_discovered/num_nodes:.1f}")
+        logger.info(f"Average peers per node: {total_peers_discovered / num_nodes:.1f}")
         logger.info(
-            f"Average connections per node: {total_active_connections/num_nodes:.1f}"
+            f"Average connections per node: {total_active_connections / num_nodes:.1f}"
         )
 
         # Test message passing if any connections exist

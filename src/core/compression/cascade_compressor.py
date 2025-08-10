@@ -3,8 +3,8 @@
 
 from __future__ import annotations
 
-from collections import Counter
 import lzma
+from collections import Counter
 from typing import Any
 
 import torch

@@ -2,18 +2,18 @@
 
 This script migrates data from various legacy formats to the new SQLite databases:
 - JSON evolution metrics → evolution_metrics.db
-- Profile directories → digital_twin.db  
+- Profile directories → digital_twin.db
 - File-based document storage → rag_index.db
 - Configuration files → unified configuration system
 """
 
 import asyncio
-from datetime import datetime
 import json
 import logging
-from pathlib import Path
 import sys
 import time
+from datetime import datetime
+from pathlib import Path
 from typing import Any
 
 # Add src to path for imports
@@ -25,8 +25,7 @@ from core.database.migrations import DataMigrator, get_migration_manager
 
 # Set up logging
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -42,7 +41,7 @@ class LegacyDataMigrator:
             "evolution_metrics": {"processed": 0, "migrated": 0, "errors": 0},
             "digital_twin": {"processed": 0, "migrated": 0, "errors": 0},
             "rag_index": {"processed": 0, "migrated": 0, "errors": 0},
-            "configuration": {"processed": 0, "migrated": 0, "errors": 0}
+            "configuration": {"processed": 0, "migrated": 0, "errors": 0},
         }
 
     async def migrate_all_legacy_data(self) -> dict[str, Any]:
@@ -55,7 +54,7 @@ class LegacyDataMigrator:
             ("Evolution Metrics", self._migrate_evolution_metrics),
             ("Digital Twin Data", self._migrate_digital_twin_data),
             ("RAG Document Data", self._migrate_rag_documents),
-            ("Configuration Files", self._migrate_configuration_data)
+            ("Configuration Files", self._migrate_configuration_data),
         ]
 
         results = {}
@@ -71,7 +70,7 @@ class LegacyDataMigrator:
                 results[phase_name.lower().replace(" ", "_")] = {
                     "success": True,
                     "duration_seconds": phase_duration,
-                    "details": phase_result
+                    "details": phase_result,
                 }
 
                 logger.info(f"Completed {phase_name} in {phase_duration:.2f}s")
@@ -83,7 +82,7 @@ class LegacyDataMigrator:
                 results[phase_name.lower().replace(" ", "_")] = {
                     "success": False,
                     "duration_seconds": phase_duration,
-                    "error": str(e)
+                    "error": str(e),
                 }
 
         total_duration = time.time() - start_time
@@ -95,7 +94,7 @@ class LegacyDataMigrator:
             "phases_completed": len(results),
             "phases_successful": sum(1 for r in results.values() if r["success"]),
             "migration_stats": self.migration_stats,
-            "phase_results": results
+            "phase_results": results,
         }
 
         logger.info(f"Legacy data migration completed in {total_duration:.2f}s")
@@ -107,7 +106,7 @@ class LegacyDataMigrator:
             "json_files_processed": 0,
             "csv_files_processed": 0,
             "records_migrated": 0,
-            "errors": []
+            "errors": [],
         }
 
         # Common legacy file locations
@@ -117,7 +116,7 @@ class LegacyDataMigrator:
             "./logs/evolution_metrics.json",
             "./evolution_logs/metrics.json",
             "./data/metrics/evolution_*.json",
-            "./evolution_history.json"
+            "./evolution_history.json",
         ]
 
         # Search for JSON files
@@ -141,7 +140,9 @@ class LegacyDataMigrator:
             try:
                 logger.info(f"Processing evolution metrics file: {json_file}")
 
-                success = await self.data_migrator.migrate_evolution_metrics_from_json(str(json_file))
+                success = await self.data_migrator.migrate_evolution_metrics_from_json(
+                    str(json_file)
+                )
 
                 if success:
                     results["json_files_processed"] += 1
@@ -165,7 +166,9 @@ class LegacyDataMigrator:
                         logger.info(f"Migrated {record_count} records from {json_file}")
 
                     except Exception as count_error:
-                        logger.warning(f"Could not count records in {json_file}: {count_error}")
+                        logger.warning(
+                            f"Could not count records in {json_file}: {count_error}"
+                        )
 
                 else:
                     results["errors"].append(f"Failed to migrate {json_file}")
@@ -181,7 +184,7 @@ class LegacyDataMigrator:
         csv_patterns = [
             "./data/evolution_metrics.csv",
             "./logs/evolution_*.csv",
-            "./data/metrics/*.csv"
+            "./data/metrics/*.csv",
         ]
 
         csv_files = []
@@ -238,17 +241,19 @@ class LegacyDataMigrator:
                             "start_time": float(row.get("timestamp", time.time())),
                             "status": row.get("status", "completed"),
                             "agent_count": int(row.get("agent_count", 0)),
-                            "fitness_metrics": []
+                            "fitness_metrics": [],
                         }
 
                     # Add fitness metric
                     if row.get("fitness_score"):
-                        current_round["fitness_metrics"].append({
-                            "agent_id": row.get("agent_id", "unknown"),
-                            "evolution_id": row.get("evolution_id", "unknown"),
-                            "fitness_score": float(row.get("fitness_score", 0.0)),
-                            "timestamp": float(row.get("timestamp", time.time()))
-                        })
+                        current_round["fitness_metrics"].append(
+                            {
+                                "agent_id": row.get("agent_id", "unknown"),
+                                "evolution_id": row.get("evolution_id", "unknown"),
+                                "fitness_score": float(row.get("fitness_score", 0.0)),
+                                "timestamp": float(row.get("timestamp", time.time())),
+                            }
+                        )
 
                 # Add last round
                 if current_round:
@@ -262,7 +267,9 @@ class LegacyDataMigrator:
                     json.dump(temp_json, f)
 
                 # Migrate using existing JSON migrator
-                success = await self.data_migrator.migrate_evolution_metrics_from_json(str(temp_file))
+                success = await self.data_migrator.migrate_evolution_metrics_from_json(
+                    str(temp_file)
+                )
 
                 # Cleanup temp file
                 if temp_file.exists():
@@ -285,7 +292,7 @@ class LegacyDataMigrator:
             "profile_files_processed": 0,
             "profiles_migrated": 0,
             "sessions_migrated": 0,
-            "errors": []
+            "errors": [],
         }
 
         # Common profile storage locations
@@ -294,7 +301,7 @@ class LegacyDataMigrator:
             "./data/profiles",
             "./student_profiles",
             "./digital_twin/profiles",
-            "./data/digital_twin/profiles"
+            "./data/digital_twin/profiles",
         ]
 
         for profile_dir in profile_paths:
@@ -305,7 +312,9 @@ class LegacyDataMigrator:
             logger.info(f"Processing profile directory: {profile_dir}")
 
             try:
-                success = await self.data_migrator.migrate_digital_twin_profiles(str(profile_path))
+                success = await self.data_migrator.migrate_digital_twin_profiles(
+                    str(profile_path)
+                )
 
                 if success:
                     results["profile_directories_processed"] += 1
@@ -331,10 +340,14 @@ class LegacyDataMigrator:
                             logger.warning(f"Could not parse {json_file}: {e}")
 
                     self.migration_stats["digital_twin"]["migrated"] += 1
-                    logger.info(f"Migrated {len(json_files)} profiles from {profile_dir}")
+                    logger.info(
+                        f"Migrated {len(json_files)} profiles from {profile_dir}"
+                    )
 
                 else:
-                    results["errors"].append(f"Failed to migrate profiles from {profile_dir}")
+                    results["errors"].append(
+                        f"Failed to migrate profiles from {profile_dir}"
+                    )
                     self.migration_stats["digital_twin"]["errors"] += 1
 
             except Exception as e:
@@ -347,7 +360,7 @@ class LegacyDataMigrator:
         individual_profile_patterns = [
             "./profile_*.json",
             "./data/profile_*.json",
-            "./student_*.json"
+            "./student_*.json",
         ]
 
         for pattern in individual_profile_patterns:
@@ -358,11 +371,14 @@ class LegacyDataMigrator:
                     temp_dir.mkdir(exist_ok=True)
 
                     import shutil
+
                     temp_file = temp_dir / profile_file.name
                     shutil.copy2(profile_file, temp_file)
 
                     # Migrate
-                    success = await self.data_migrator.migrate_digital_twin_profiles(str(temp_dir))
+                    success = await self.data_migrator.migrate_digital_twin_profiles(
+                        str(temp_dir)
+                    )
 
                     if success:
                         results["profile_files_processed"] += 1
@@ -373,7 +389,9 @@ class LegacyDataMigrator:
                     shutil.rmtree(temp_dir)
 
                 except Exception as e:
-                    error_msg = f"Error migrating individual profile {profile_file}: {e!s}"
+                    error_msg = (
+                        f"Error migrating individual profile {profile_file}: {e!s}"
+                    )
                     results["errors"].append(error_msg)
                     logger.error(error_msg)
 
@@ -385,7 +403,7 @@ class LegacyDataMigrator:
             "document_directories_processed": 0,
             "documents_migrated": 0,
             "chunks_generated": 0,
-            "errors": []
+            "errors": [],
         }
 
         # Common document storage locations
@@ -395,7 +413,7 @@ class LegacyDataMigrator:
             "./rag_documents",
             "./data/rag",
             "./corpus",
-            "./data/corpus"
+            "./data/corpus",
         ]
 
         for doc_dir in document_paths:
@@ -441,6 +459,7 @@ class LegacyDataMigrator:
 
         # Generate document metadata
         import hashlib
+
         content_hash = hashlib.sha256(content.encode()).hexdigest()
         word_count = len(content.split())
 
@@ -448,39 +467,45 @@ class LegacyDataMigrator:
         with self.database_manager.get_connection("rag_index") as conn:
             cursor = conn.cursor()
 
-            cursor.execute("""
-            INSERT OR REPLACE INTO documents 
+            cursor.execute(
+                """
+            INSERT OR REPLACE INTO documents
             (document_id, title, content_hash, source_type, file_path, word_count)
             VALUES (?, ?, ?, 'text', ?, ?)
-            """, (
-                str(file_path),
-                file_path.stem,
-                content_hash,
-                str(file_path),
-                word_count
-            ))
+            """,
+                (
+                    str(file_path),
+                    file_path.stem,
+                    content_hash,
+                    str(file_path),
+                    word_count,
+                ),
+            )
 
             # Generate chunks (simple sentence-based chunking)
             sentences = content.split(". ")
             chunk_size = 3  # 3 sentences per chunk
 
             for i in range(0, len(sentences), chunk_size):
-                chunk_content = ". ".join(sentences[i:i+chunk_size])
+                chunk_content = ". ".join(sentences[i : i + chunk_size])
                 if chunk_content:
                     chunk_hash = hashlib.sha256(chunk_content.encode()).hexdigest()
 
-                    cursor.execute("""
+                    cursor.execute(
+                        """
                     INSERT OR REPLACE INTO chunks
                     (chunk_id, document_id, chunk_index, content, content_hash, token_count)
                     VALUES (?, ?, ?, ?, ?, ?)
-                    """, (
-                        f"{file_path}_{i//chunk_size}",
-                        str(file_path),
-                        i // chunk_size,
-                        chunk_content,
-                        chunk_hash,
-                        len(chunk_content.split())
-                    ))
+                    """,
+                        (
+                            f"{file_path}_{i // chunk_size}",
+                            str(file_path),
+                            i // chunk_size,
+                            chunk_content,
+                            chunk_hash,
+                            len(chunk_content.split()),
+                        ),
+                    )
 
             conn.commit()
 
@@ -490,7 +515,7 @@ class LegacyDataMigrator:
             "config_files_processed": 0,
             "env_files_processed": 0,
             "variables_migrated": 0,
-            "errors": []
+            "errors": [],
         }
 
         # Look for legacy configuration files
@@ -500,7 +525,7 @@ class LegacyDataMigrator:
             "./.env.prod",
             "./config.json",
             "./aivillage.conf",
-            "./settings.ini"
+            "./settings.ini",
         ]
 
         for config_pattern in config_patterns:
@@ -548,7 +573,7 @@ class LegacyDataMigrator:
         migration_record = {
             "source_file": str(config_path),
             "migrated_at": datetime.now().isoformat(),
-            "variables": flat_config
+            "variables": flat_config,
         }
 
         mapping_file.parent.mkdir(exist_ok=True)
@@ -571,7 +596,7 @@ class LegacyDataMigrator:
         migration_record = {
             "source_file": str(env_path),
             "migrated_at": datetime.now().isoformat(),
-            "variables": env_vars
+            "variables": env_vars,
         }
 
         migration_file.parent.mkdir(exist_ok=True)
@@ -598,7 +623,7 @@ class LegacyDataMigrator:
             migration_record = {
                 "source_file": str(ini_path),
                 "migrated_at": datetime.now().isoformat(),
-                "variables": flat_config
+                "variables": flat_config,
             }
 
             migration_file.parent.mkdir(exist_ok=True)
@@ -608,7 +633,9 @@ class LegacyDataMigrator:
         except ImportError:
             logger.warning("configparser not available, skipping INI migration")
 
-    def _flatten_dict(self, d: dict[str, Any], parent: dict[str, Any], prefix: str = ""):
+    def _flatten_dict(
+        self, d: dict[str, Any], parent: dict[str, Any], prefix: str = ""
+    ):
         """Flatten nested dictionary for configuration migration."""
         for key, value in d.items():
             new_key = f"{prefix}_{key}".upper() if prefix else key.upper()
@@ -655,7 +682,9 @@ async def main():
         print("\nPhase Results:")
         for phase, result in migration_results["phase_results"].items():
             status = "✅" if result["success"] else "❌"
-            print(f"  {status} {phase.replace('_', ' ').title()}: {result['duration_seconds']:.2f}s")
+            print(
+                f"  {status} {phase.replace('_', ' ').title()}: {result['duration_seconds']:.2f}s"
+            )
 
             if not result["success"]:
                 print(f"    Error: {result.get('error', 'Unknown error')}")
@@ -663,7 +692,9 @@ async def main():
         print("\nMigration Statistics:")
         for component, stats in migration_results["migration_stats"].items():
             if stats["processed"] > 0:
-                print(f"  {component}: {stats['migrated']}/{stats['processed']} successful, {stats['errors']} errors")
+                print(
+                    f"  {component}: {stats['migrated']}/{stats['processed']} successful, {stats['errors']} errors"
+                )
 
         # Save detailed results
         results_file = Path("migration_results.json")
@@ -678,8 +709,12 @@ async def main():
 
         validation_results = await validate_aivillage_databases(db_manager)
 
-        print(f"Database Health Score: {validation_results['health_score']}/100 ({validation_results['health_status']})")
-        print(f"Tests: {validation_results['passed_tests']}/{validation_results['total_tests']} passed")
+        print(
+            f"Database Health Score: {validation_results['health_score']}/100 ({validation_results['health_status']})"
+        )
+        print(
+            f"Tests: {validation_results['passed_tests']}/{validation_results['total_tests']} passed"
+        )
 
         if validation_results["recommendations"]:
             print("\nRecommendations:")
@@ -689,8 +724,9 @@ async def main():
         await db_manager.close()
 
         success = (
-            migration_results["phases_successful"] == migration_results["phases_completed"] and
-            validation_results["health_score"] > 80
+            migration_results["phases_successful"]
+            == migration_results["phases_completed"]
+            and validation_results["health_score"] > 80
         )
 
         if success:

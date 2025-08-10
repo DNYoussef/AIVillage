@@ -75,7 +75,7 @@ pip install black
 
 **Verification:**
 ```bash
-black --version  
+black --version
 # Expected: black, 24.8.0 or later
 ```
 
@@ -142,7 +142,7 @@ python lint.py src/core --output summary
 ```
 [TOOLS] Available Tools:
   [OK] ruff
-  [OK] black  
+  [OK] black
   [OK] isort
   [OK] mypy
   [OK] flake8
@@ -193,7 +193,7 @@ The `.pre-commit-config.yaml` file is already configured with:
 
 **Install Extensions:**
 1. Python (Microsoft)
-2. Ruff (Astral Software)  
+2. Ruff (Astral Software)
 3. Black Formatter (Microsoft)
 4. isort (Microsoft)
 
@@ -205,7 +205,7 @@ The `.pre-commit-config.yaml` file is already configured with:
     "python.linting.ruffEnabled": true,
     "python.linting.flake8Enabled": false,
     "python.linting.pylintEnabled": false,
-    
+
     "python.formatting.provider": "none",
     "[python]": {
         "editor.formatOnSave": true,
@@ -215,11 +215,11 @@ The `.pre-commit-config.yaml` file is already configured with:
             "source.fixAll.ruff": true
         }
     },
-    
+
     "ruff.args": ["--line-length", "88"],
     "black-formatter.args": ["--line-length", "88"],
     "isort.args": ["--profile", "black", "--line-length", "88"],
-    
+
     "files.exclude": {
         "**/__pycache__": true,
         "**/.mypy_cache": true,
@@ -284,7 +284,7 @@ Create `.gitlab-ci.yml`:
 ```yaml
 stages:
   - lint
-  - security  
+  - security
   - test
 
 lint:
@@ -345,7 +345,7 @@ pipeline {
 # Check Python installation
 python --version
 
-# Check pip installation  
+# Check pip installation
 pip --version
 
 # Install in correct environment

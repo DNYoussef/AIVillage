@@ -1,7 +1,7 @@
 import builtins
 import importlib.util
-from pathlib import Path
 import sys
+from pathlib import Path
 
 # Path to metrics module
 ROOT = Path(__file__).resolve().parents[2]

@@ -317,7 +317,6 @@ class TestInfrastructureAwareEvolution:
             patch.object(system, "device_profiler"),
             patch.object(system, "dual_evolution"),
         ):
-
             # Mock the initialization
             system.system_initialized = True
             system.infrastructure_status = "active"

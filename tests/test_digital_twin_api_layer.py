@@ -1,6 +1,6 @@
 import base64
-from pathlib import Path
 import sys
+from pathlib import Path
 
 import httpx
 import pytest
@@ -48,11 +48,15 @@ def _session() -> dict:
         "student_mood": "happy",
         "session_notes": "",
     }
+
+
 @pytest.mark.asyncio
 async def test_digital_twin_api_flow():
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
-        r = await client.post("/twin/create", params={"user_id": "user1"}, json=_profile())
+        r = await client.post(
+            "/twin/create", params={"user_id": "user1"}, json=_profile()
+        )
         assert r.status_code == 200
 
         r = await client.post("/twin/user1/learn", json=_session())
@@ -83,4 +87,3 @@ async def test_digital_twin_api_flow():
         assert r.status_code == 200
         returned = base64.b64decode(r.json()["data"])
         assert twin.decrypt_mobile_data(returned) == {"students": {}}
-

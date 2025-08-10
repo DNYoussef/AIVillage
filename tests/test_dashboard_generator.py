@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Generate comprehensive test dashboard for AIVillage project."""
 
-from datetime import datetime
 import json
 import subprocess
 import time
+from datetime import datetime
 
 
 class TestDashboard:
@@ -247,16 +247,14 @@ class TestDashboard:
         summary = self.results["summary"]
         print("\n📊 OVERALL SUMMARY")
         print(
-            f"   Test Suites: {
-                summary['passed_test_suites']}/{
-                summary['total_test_suites']} passed ({
-                summary['suite_pass_rate']:.1f}%)"
+            f"   Test Suites: {summary['passed_test_suites']}/{
+                summary['total_test_suites']
+            } passed ({summary['suite_pass_rate']:.1f}%)"
         )
         print(
-            f"   Individual Tests: {
-                summary['total_passed_tests']}/{
-                summary['total_individual_tests']} passed ({
-                summary['overall_pass_rate']:.1f}%)"
+            f"   Individual Tests: {summary['total_passed_tests']}/{
+                summary['total_individual_tests']
+            } passed ({summary['overall_pass_rate']:.1f}%)"
         )
         print(f"   Code Quality Issues: {summary['total_issues']}")
 
@@ -278,12 +276,9 @@ class TestDashboard:
 
             if suite.get("tests_total"):
                 print(
-                    f"      └─ {
-                        suite['tests_passed']}/{
-                        suite['tests_total']} tests passed ({
-                        suite.get(
-                            'pass_rate',
-                            0):.1f}%)"
+                    f"      └─ {suite['tests_passed']}/{
+                        suite['tests_total']
+                    } tests passed ({suite.get('pass_rate', 0):.1f}%)"
                 )
 
             if suite["status"] != "PASSED" and suite["stderr"]:

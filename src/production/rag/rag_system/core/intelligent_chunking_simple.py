@@ -1,5 +1,4 @@
-"""
-Simplified Intelligent Chunking using Sliding Window Similarity Analysis.
+"""Simplified Intelligent Chunking using Sliding Window Similarity Analysis.
 This version works without spaCy dependency.
 
 Implements idea-aware document chunking that:
@@ -9,11 +8,11 @@ Implements idea-aware document chunking that:
 - Handles edge cases like short paragraphs, lists, and code blocks
 """
 
-import re
 import logging
+import re
 from dataclasses import dataclass
-from typing import List, Tuple, Dict, Any, Optional
 from enum import Enum
+from typing import Any
 
 import numpy as np
 from sentence_transformers import SentenceTransformer
@@ -24,14 +23,16 @@ logger = logging.getLogger(__name__)
 
 class DocumentType(Enum):
     """Document type for threshold calibration."""
+
     TECHNICAL = "technical"
-    NARRATIVE = "narrative" 
+    NARRATIVE = "narrative"
     ACADEMIC = "academic"
     CONVERSATIONAL = "conversational"
 
 
 class ContentType(Enum):
     """Content type for special handling."""
+
     TEXT = "text"
     CODE = "code"
     LIST = "list"
@@ -42,12 +43,13 @@ class ContentType(Enum):
 @dataclass
 class SlidingWindow:
     """Sliding window with sentences and metadata."""
+
     start_idx: int
     end_idx: int
-    sentences: List[str]
+    sentences: list[str]
     embedding: np.ndarray
     content_type: ContentType = ContentType.TEXT
-    
+
     @property
     def text(self) -> str:
         """Get concatenated text of window."""
@@ -57,6 +59,7 @@ class SlidingWindow:
 @dataclass
 class IdeaBoundary:
     """Detected idea boundary with metadata."""
+
     sentence_idx: int
     similarity_drop: float
     confidence: float
@@ -66,21 +69,22 @@ class IdeaBoundary:
 @dataclass
 class IntelligentChunk:
     """Semantically coherent chunk with context."""
+
     id: str
     start_sentence_idx: int
     end_sentence_idx: int
-    sentences: List[str]
+    sentences: list[str]
     content_type: ContentType
     summary: str = ""
-    entities: List[str] = None  # Simplified: will be empty without spaCy
+    entities: list[str] = None  # Simplified: will be empty without spaCy
     topic_coherence: float = 0.0
     context_overlap: int = 1
-    
+
     @property
     def text(self) -> str:
         """Get full text of chunk."""
         return " ".join(self.sentences)
-    
+
     @property
     def word_count(self) -> int:
         """Get word count of chunk."""
@@ -88,11 +92,10 @@ class IntelligentChunk:
 
 
 class SimpleIntelligentChunker:
-    """
-    Simplified intelligent document chunker using sliding window similarity analysis.
+    """Simplified intelligent document chunker using sliding window similarity analysis.
     Works without external NLP libraries beyond SentenceTransformers.
     """
-    
+
     def __init__(
         self,
         embedding_model: str = "paraphrase-MiniLM-L3-v2",
@@ -100,11 +103,10 @@ class SimpleIntelligentChunker:
         min_chunk_sentences: int = 2,
         max_chunk_sentences: int = 20,
         context_overlap: int = 1,
-        similarity_threshold: Dict[DocumentType, float] = None
+        similarity_threshold: dict[DocumentType, float] = None,
     ):
-        """
-        Initialize simple intelligent chunker.
-        
+        """Initialize simple intelligent chunker.
+
         Args:
             embedding_model: SentenceTransformer model for embeddings
             window_size: Size of sliding window (sentences)
@@ -118,162 +120,191 @@ class SimpleIntelligentChunker:
         self.min_chunk_sentences = min_chunk_sentences
         self.max_chunk_sentences = max_chunk_sentences
         self.context_overlap = context_overlap
-        
+
         # Default similarity thresholds based on research
         self.similarity_threshold = similarity_threshold or {
             DocumentType.TECHNICAL: 0.25,
             DocumentType.NARRATIVE: 0.35,
             DocumentType.ACADEMIC: 0.30,
-            DocumentType.CONVERSATIONAL: 0.40
+            DocumentType.CONVERSATIONAL: 0.40,
         }
-        
+
         # Patterns for content type detection
         self.code_patterns = [
-            r'```[\s\S]*?```',  # Markdown code blocks
-            r'`[^`]+`',  # Inline code
-            r'^\s*(?:def|class|import|from|if|for|while|try)\s',  # Python keywords
-            r'^\s*(?:function|var|let|const|class)\s',  # JavaScript keywords
-            r'^\s*(?:#include|int|void|char|double)\s'  # C/C++ keywords
-        ]
-        
-        self.list_patterns = [
-            r'^\s*[-*+]\s',  # Markdown lists
-            r'^\s*\d+\.\s',  # Numbered lists
-            r'^\s*[a-zA-Z]\)\s',  # Lettered lists
-            r'^\s*[ivxlc]+\.\s'  # Roman numeral lists
-        ]
-        
-        self.table_patterns = [
-            r'\|.*\|',  # Markdown tables
-            r'^\s*\+[-=]+\+',  # ASCII tables
-        ]
-        
-        self.formula_patterns = [
-            r'\$.*?\$',  # LaTeX math
-            r'\\[a-zA-Z]+\{.*?\}',  # LaTeX commands
-            r'^\s*[A-Za-z]\s*=\s*[^=]+$'  # Simple equations
+            r"```[\s\S]*?```",  # Markdown code blocks
+            r"`[^`]+`",  # Inline code
+            r"^\s*(?:def|class|import|from|if|for|while|try)\s",  # Python keywords
+            r"^\s*(?:function|var|let|const|class)\s",  # JavaScript keywords
+            r"^\s*(?:#include|int|void|char|double)\s",  # C/C++ keywords
         ]
 
-    def extract_sentences(self, text: str) -> List[str]:
-        """
-        Extract sentences from text with improved sentence boundary detection.
-        
+        self.list_patterns = [
+            r"^\s*[-*+]\s",  # Markdown lists
+            r"^\s*\d+\.\s",  # Numbered lists
+            r"^\s*[a-zA-Z]\)\s",  # Lettered lists
+            r"^\s*[ivxlc]+\.\s",  # Roman numeral lists
+        ]
+
+        self.table_patterns = [
+            r"\|.*\|",  # Markdown tables
+            r"^\s*\+[-=]+\+",  # ASCII tables
+        ]
+
+        self.formula_patterns = [
+            r"\$.*?\$",  # LaTeX math
+            r"\\[a-zA-Z]+\{.*?\}",  # LaTeX commands
+            r"^\s*[A-Za-z]\s*=\s*[^=]+$",  # Simple equations
+        ]
+
+    def extract_sentences(self, text: str) -> list[str]:
+        """Extract sentences from text with improved sentence boundary detection.
+
         Args:
             text: Input text
-            
+
         Returns:
             List of sentences
         """
         sentences = []
-        
+
         # Split by common sentence endings
-        raw_sentences = re.split(r'(?<=[.!?])\s+', text.strip())
-        
+        raw_sentences = re.split(r"(?<=[.!?])\s+", text.strip())
+
         for sentence in raw_sentences:
             sentence = sentence.strip()
             if not sentence:
                 continue
-                
+
             # Skip if too short (likely abbreviation)
             if len(sentence.split()) < 2:
                 continue
-                
+
             # Clean up sentence
-            sentence = re.sub(r'\s+', ' ', sentence)  # Normalize whitespace
+            sentence = re.sub(r"\s+", " ", sentence)  # Normalize whitespace
             sentences.append(sentence)
-            
+
         return sentences
 
     def detect_content_type(self, text: str) -> ContentType:
-        """
-        Detect content type for special handling.
-        
+        """Detect content type for special handling.
+
         Args:
             text: Text to analyze
-            
+
         Returns:
             Content type
         """
         text_lower = text.lower().strip()
-        
+
         # Check for code
         for pattern in self.code_patterns:
             if re.search(pattern, text, re.MULTILINE):
                 return ContentType.CODE
-                
+
         # Check for lists
         for pattern in self.list_patterns:
             if re.search(pattern, text, re.MULTILINE):
                 return ContentType.LIST
-                
+
         # Check for tables
         for pattern in self.table_patterns:
             if re.search(pattern, text, re.MULTILINE):
                 return ContentType.TABLE
-                
+
         # Check for formulas
         for pattern in self.formula_patterns:
             if re.search(pattern, text):
                 return ContentType.FORMULA
-                
+
         return ContentType.TEXT
 
     def infer_document_type(self, text: str) -> DocumentType:
-        """
-        Infer document type for threshold calibration.
-        
+        """Infer document type for threshold calibration.
+
         Args:
             text: Document text
-            
+
         Returns:
             Document type
         """
         text_lower = text.lower()
-        
+
         # Technical indicators
         technical_terms = [
-            'algorithm', 'implementation', 'function', 'method', 'api',
-            'database', 'server', 'client', 'protocol', 'framework',
-            'library', 'module', 'class', 'object', 'variable'
+            "algorithm",
+            "implementation",
+            "function",
+            "method",
+            "api",
+            "database",
+            "server",
+            "client",
+            "protocol",
+            "framework",
+            "library",
+            "module",
+            "class",
+            "object",
+            "variable",
         ]
-        
+
         # Academic indicators
         academic_terms = [
-            'research', 'study', 'analysis', 'hypothesis', 'methodology',
-            'literature', 'findings', 'conclusion', 'references', 'abstract',
-            'experiment', 'data', 'results', 'discussion', 'significant'
+            "research",
+            "study",
+            "analysis",
+            "hypothesis",
+            "methodology",
+            "literature",
+            "findings",
+            "conclusion",
+            "references",
+            "abstract",
+            "experiment",
+            "data",
+            "results",
+            "discussion",
+            "significant",
         ]
-        
+
         # Narrative indicators
         narrative_terms = [
-            'story', 'character', 'plot', 'narrative', 'told', 'said',
-            'happened', 'once', 'suddenly', 'then', 'finally', 'meanwhile'
+            "story",
+            "character",
+            "plot",
+            "narrative",
+            "told",
+            "said",
+            "happened",
+            "once",
+            "suddenly",
+            "then",
+            "finally",
+            "meanwhile",
         ]
-        
+
         # Count occurrences
         technical_count = sum(1 for term in technical_terms if term in text_lower)
         academic_count = sum(1 for term in academic_terms if term in text_lower)
         narrative_count = sum(1 for term in narrative_terms if term in text_lower)
-        
+
         # Determine type based on highest count
         max_count = max(technical_count, academic_count, narrative_count)
-        
+
         if max_count == 0 or max_count < 3:
             return DocumentType.CONVERSATIONAL
-        elif technical_count == max_count:
+        if technical_count == max_count:
             return DocumentType.TECHNICAL
-        elif academic_count == max_count:
+        if academic_count == max_count:
             return DocumentType.ACADEMIC
-        else:
-            return DocumentType.NARRATIVE
+        return DocumentType.NARRATIVE
 
-    def create_sliding_windows(self, sentences: List[str]) -> List[SlidingWindow]:
-        """
-        Create sliding windows from sentences.
-        
+    def create_sliding_windows(self, sentences: list[str]) -> list[SlidingWindow]:
+        """Create sliding windows from sentences.
+
         Args:
             sentences: List of sentences
-            
+
         Returns:
             List of sliding windows
         """
@@ -281,113 +312,115 @@ class SimpleIntelligentChunker:
             # Too few sentences, create single window
             content_type = self.detect_content_type(" ".join(sentences))
             embedding = self.embedding_model.encode(" ".join(sentences))
-            
-            return [SlidingWindow(
-                start_idx=0,
-                end_idx=len(sentences) - 1,
-                sentences=sentences,
-                embedding=embedding,
-                content_type=content_type
-            )]
-            
+
+            return [
+                SlidingWindow(
+                    start_idx=0,
+                    end_idx=len(sentences) - 1,
+                    sentences=sentences,
+                    embedding=embedding,
+                    content_type=content_type,
+                )
+            ]
+
         windows = []
-        
+
         for i in range(len(sentences) - self.window_size + 1):
-            window_sentences = sentences[i:i + self.window_size]
+            window_sentences = sentences[i : i + self.window_size]
             window_text = " ".join(window_sentences)
-            
+
             # Detect content type
             content_type = self.detect_content_type(window_text)
-            
+
             # Generate embedding
             embedding = self.embedding_model.encode(window_text)
-            
+
             window = SlidingWindow(
                 start_idx=i,
                 end_idx=i + self.window_size - 1,
                 sentences=window_sentences,
                 embedding=embedding,
-                content_type=content_type
+                content_type=content_type,
             )
-            
+
             windows.append(window)
-            
+
         return windows
 
-    def calculate_similarity_scores(self, windows: List[SlidingWindow]) -> List[float]:
-        """
-        Calculate similarity scores between consecutive windows.
-        
+    def calculate_similarity_scores(self, windows: list[SlidingWindow]) -> list[float]:
+        """Calculate similarity scores between consecutive windows.
+
         Args:
             windows: List of sliding windows
-            
+
         Returns:
             List of similarity scores
         """
         if len(windows) < 2:
             return []
-            
+
         similarities = []
-        
+
         for i in range(len(windows) - 1):
             # Calculate cosine similarity between consecutive windows
             sim = cosine_similarity(
                 windows[i].embedding.reshape(1, -1),
-                windows[i + 1].embedding.reshape(1, -1)
+                windows[i + 1].embedding.reshape(1, -1),
             )[0, 0]
             similarities.append(sim)
-            
+
         return similarities
 
     def detect_idea_boundaries(
         self,
-        similarities: List[float],
+        similarities: list[float],
         doc_type: DocumentType,
-        consecutive_windows: int = 3
-    ) -> List[IdeaBoundary]:
-        """
-        Detect idea boundaries using similarity analysis.
-        
+        consecutive_windows: int = 3,
+    ) -> list[IdeaBoundary]:
+        """Detect idea boundaries using similarity analysis.
+
         Args:
             similarities: Similarity scores between windows
             doc_type: Document type for threshold selection
             consecutive_windows: Required consecutive low similarities
-            
+
         Returns:
             List of detected boundaries
         """
         if len(similarities) < consecutive_windows:
             return []
-            
+
         threshold = self.similarity_threshold[doc_type]
         boundaries = []
-        
+
         # Find significant drops in similarity
         for i in range(len(similarities) - consecutive_windows + 1):
             # Check if we have consecutive low similarities
             consecutive_low = all(
-                similarities[i + j] < (1.0 - threshold) 
+                similarities[i + j] < (1.0 - threshold)
                 for j in range(consecutive_windows)
             )
-            
+
             if consecutive_low:
                 # Calculate average similarity drop
-                avg_similarity = np.mean(similarities[i:i + consecutive_windows])
+                avg_similarity = np.mean(similarities[i : i + consecutive_windows])
                 similarity_drop = 1.0 - avg_similarity
-                
+
                 # Calculate confidence based on consistency
-                std_similarity = np.std(similarities[i:i + consecutive_windows])
-                confidence = min(1.0, similarity_drop / threshold * (1.0 - std_similarity))
-                
+                std_similarity = np.std(similarities[i : i + consecutive_windows])
+                confidence = min(
+                    1.0, similarity_drop / threshold * (1.0 - std_similarity)
+                )
+
                 boundary = IdeaBoundary(
                     sentence_idx=i + self.window_size,  # Boundary after window
                     similarity_drop=similarity_drop,
                     confidence=confidence,
-                    boundary_type="topic_shift"
+                    boundary_type="topic_shift",
                 )
-                
+
                 boundaries.append(boundary)
-                
+
         # Remove overlapping boundaries (keep highest confidence)
         filtered_boundaries = []
         for boundary in boundaries:
@@ -396,105 +429,101 @@ class SimpleIntelligentChunker:
                 abs(boundary.sentence_idx - existing.sentence_idx) < consecutive_windows
                 for existing in filtered_boundaries
             )
-            
+
             if not too_close:
                 filtered_boundaries.append(boundary)
-                
+
         # Sort by sentence index
         filtered_boundaries.sort(key=lambda x: x.sentence_idx)
-        
+
         return filtered_boundaries
 
-    def calculate_topic_coherence(self, sentences: List[str]) -> float:
-        """
-        Calculate topic coherence score for a chunk.
-        
+    def calculate_topic_coherence(self, sentences: list[str]) -> float:
+        """Calculate topic coherence score for a chunk.
+
         Args:
             sentences: Chunk sentences
-            
+
         Returns:
             Coherence score (0-1)
         """
         if len(sentences) < 2:
             return 1.0
-            
+
         # Calculate pairwise similarities within chunk
         embeddings = self.embedding_model.encode(sentences)
-        
+
         similarities = []
         for i in range(len(embeddings)):
             for j in range(i + 1, len(embeddings)):
                 sim = cosine_similarity(
-                    embeddings[i].reshape(1, -1),
-                    embeddings[j].reshape(1, -1)
+                    embeddings[i].reshape(1, -1), embeddings[j].reshape(1, -1)
                 )[0, 0]
                 similarities.append(sim)
-                
+
         return float(np.mean(similarities)) if similarities else 1.0
 
     def generate_chunk_summary(self, text: str, max_length: int = 100) -> str:
-        """
-        Generate simple extractive summary for chunk.
-        
+        """Generate simple extractive summary for chunk.
+
         Args:
             text: Chunk text
             max_length: Maximum summary length
-            
+
         Returns:
             Summary text
         """
         sentences = self.extract_sentences(text)
-        
+
         if len(sentences) <= 2:
             return text[:max_length]
-            
+
         # Simple extractive summarization: take first and most central sentence
         if len(sentences) >= 3:
             # Use first sentence and middle sentence
             summary_sentences = [sentences[0], sentences[len(sentences) // 2]]
         else:
             summary_sentences = sentences[:1]
-            
+
         summary = " ".join(summary_sentences)
-        
+
         if len(summary) > max_length:
-            summary = summary[:max_length - 3] + "..."
-            
+            summary = summary[: max_length - 3] + "..."
+
         return summary
 
     def chunk_document(
         self,
         text: str,
         document_id: str = "doc",
-        doc_type: Optional[DocumentType] = None
-    ) -> List[IntelligentChunk]:
-        """
-        Chunk document using intelligent sliding window analysis.
-        
+        doc_type: DocumentType | None = None,
+    ) -> list[IntelligentChunk]:
+        """Chunk document using intelligent sliding window analysis.
+
         Args:
             text: Document text
             document_id: Document identifier
             doc_type: Document type (inferred if None)
-            
+
         Returns:
             List of intelligent chunks
         """
         logger.info(f"Starting intelligent chunking for document {document_id}")
-        
+
         # Extract sentences
         sentences = self.extract_sentences(text)
-        
+
         if len(sentences) == 0:
             logger.warning("No sentences found in document")
             return []
-            
+
         logger.info(f"Extracted {len(sentences)} sentences")
-        
+
         # Infer document type if not provided
         if doc_type is None:
             doc_type = self.infer_document_type(text)
             logger.info(f"Inferred document type: {doc_type.value}")
-            
+
         # Handle very short documents
         if len(sentences) <= self.min_chunk_sentences:
             chunk = IntelligentChunk(
@@ -506,52 +535,53 @@ class SimpleIntelligentChunker:
                 summary=self.generate_chunk_summary(text),
                 entities=[],  # Empty without spaCy
                 topic_coherence=1.0,
-                context_overlap=0
+                context_overlap=0,
             )
             return [chunk]
-            
+
         # Create sliding windows
         windows = self.create_sliding_windows(sentences)
         logger.info(f"Created {len(windows)} sliding windows")
-        
+
         # Calculate similarity scores
         similarities = self.calculate_similarity_scores(windows)
         logger.info(f"Calculated {len(similarities)} similarity scores")
-        
+
         # Detect idea boundaries
         boundaries = self.detect_idea_boundaries(similarities, doc_type)
         logger.info(f"Detected {len(boundaries)} potential boundaries")
-        
+
         # Extract boundary positions
         boundary_positions = [b.sentence_idx for b in boundaries]
         logger.info(f"Final boundaries: {boundary_positions}")
-        
+
         # Create chunks based on boundaries
         chunks = []
         start_idx = 0
-        
+
         for boundary_pos in boundary_positions + [len(sentences)]:
             end_idx = min(boundary_pos, len(sentences))
-            
+
             # Ensure minimum chunk size
             if end_idx - start_idx < self.min_chunk_sentences:
                 if chunks:  # Merge with previous chunk
                     chunks[-1].end_sentence_idx = end_idx - 1
-                    chunks[-1].sentences.extend(sentences[chunks[-1].end_sentence_idx + 1:end_idx])
+                    chunks[-1].sentences.extend(
+                        sentences[chunks[-1].end_sentence_idx + 1 : end_idx]
+                    )
                     continue
-                else:
-                    continue
-                    
+                continue
+
             # Handle maximum chunk size
             if end_idx - start_idx > self.max_chunk_sentences:
                 # Split large chunk
                 sub_start = start_idx
                 while sub_start < end_idx:
                     sub_end = min(sub_start + self.max_chunk_sentences, end_idx)
-                    
+
                     chunk_sentences = sentences[sub_start:sub_end]
                     chunk_text = " ".join(chunk_sentences)
-                    
+
                     chunk = IntelligentChunk(
                         id=f"{document_id}_chunk_{len(chunks)}",
                         start_sentence_idx=sub_start,
@@ -561,17 +591,21 @@ class SimpleIntelligentChunker:
                         summary=self.generate_chunk_summary(chunk_text),
                         entities=[],  # Empty without spaCy
                         topic_coherence=self.calculate_topic_coherence(chunk_sentences),
-                        context_overlap=self.context_overlap if len(chunks) > 0 else 0
+                        context_overlap=self.context_overlap if len(chunks) > 0 else 0,
                     )
-                    
+
                     chunks.append(chunk)
                     sub_start = sub_end - self.context_overlap
-                    
+
             else:
                 # Add context overlap from previous chunk
-                actual_start = max(0, start_idx - self.context_overlap) if len(chunks) > 0 else start_idx
+                actual_start = (
+                    max(0, start_idx - self.context_overlap)
+                    if len(chunks) > 0
+                    else start_idx
+                )
                 chunk_sentences = sentences[actual_start:end_idx]
-                
+
                 chunk = IntelligentChunk(
                     id=f"{document_id}_chunk_{len(chunks)}",
                     start_sentence_idx=start_idx,
@@ -581,38 +615,37 @@ class SimpleIntelligentChunker:
                     summary=self.generate_chunk_summary(" ".join(chunk_sentences)),
                     entities=[],  # Empty without spaCy
                     topic_coherence=self.calculate_topic_coherence(chunk_sentences),
-                    context_overlap=self.context_overlap if len(chunks) > 0 else 0
+                    context_overlap=self.context_overlap if len(chunks) > 0 else 0,
                 )
-                
+
                 chunks.append(chunk)
-                
+
             start_idx = end_idx
-            
+
         logger.info(f"Created {len(chunks)} intelligent chunks")
-        
+
         # Log chunk statistics
         if chunks:
             avg_coherence = np.mean([c.topic_coherence for c in chunks])
             avg_length = np.mean([c.word_count for c in chunks])
-            
+
             logger.info(f"Average topic coherence: {avg_coherence:.3f}")
             logger.info(f"Average chunk length: {avg_length:.1f} words")
-        
+
         return chunks
 
-    def get_chunking_stats(self, chunks: List[IntelligentChunk]) -> Dict[str, Any]:
-        """
-        Get statistics about chunking results.
-        
+    def get_chunking_stats(self, chunks: list[IntelligentChunk]) -> dict[str, Any]:
+        """Get statistics about chunking results.
+
         Args:
             chunks: List of chunks
-            
+
         Returns:
             Statistics dictionary
         """
         if not chunks:
             return {}
-            
+
         return {
             "total_chunks": len(chunks),
             "avg_sentences_per_chunk": np.mean([len(c.sentences) for c in chunks]),
@@ -621,66 +654,65 @@ class SimpleIntelligentChunker:
             "content_types": {
                 ct.value: sum(1 for c in chunks if c.content_type == ct)
                 for ct in ContentType
-            }
+            },
         }
 
 
 # Test function
 async def test_simple_intelligent_chunking():
     """Test simple intelligent chunking."""
-    
     print("Testing Simple Intelligent Chunking System")
     print("=" * 50)
-    
+
     # Initialize chunker
     chunker = SimpleIntelligentChunker(
-        window_size=3,
-        min_chunk_sentences=2,
-        max_chunk_sentences=15,
-        context_overlap=1
+        window_size=3, min_chunk_sentences=2, max_chunk_sentences=15, context_overlap=1
     )
-    
+
     # Test document with clear topic boundaries
     test_document = """
     Artificial intelligence is revolutionizing many industries today. Machine learning algorithms can now process vast amounts of data to identify patterns and make predictions. Deep learning has been particularly successful in computer vision and natural language processing tasks.
-    
+
     However, AI development faces significant challenges. Data quality and bias remain major concerns that can lead to unfair or inaccurate results. Privacy issues arise when AI systems require access to personal information for training and operation.
-    
+
     Climate change represents one of the most pressing global challenges of our time. Rising global temperatures are causing sea levels to rise and weather patterns to become more extreme. The primary cause is the emission of greenhouse gases from human activities, particularly the burning of fossil fuels.
-    
+
     Renewable energy technologies offer promising solutions to reduce carbon emissions. Solar power has become increasingly cost-effective and efficient in recent years. Wind energy is another rapidly growing renewable source that can provide clean electricity at scale.
     """
-    
+
     # Chunk the document
     print("Chunking test document...")
     chunks = chunker.chunk_document(test_document, "test_doc")
-    
+
     print(f"\nCreated {len(chunks)} intelligent chunks:")
     print("-" * 50)
-    
+
     for i, chunk in enumerate(chunks):
         print(f"\nChunk {i + 1}: {chunk.id}")
-        print(f"Sentences: {chunk.start_sentence_idx}-{chunk.end_sentence_idx} ({len(chunk.sentences)} total)")
+        print(
+            f"Sentences: {chunk.start_sentence_idx}-{chunk.end_sentence_idx} ({len(chunk.sentences)} total)"
+        )
         print(f"Content Type: {chunk.content_type.value}")
         print(f"Word Count: {chunk.word_count}")
         print(f"Topic Coherence: {chunk.topic_coherence:.3f}")
         print(f"Summary: {chunk.summary}")
         print(f"Text: {chunk.text[:200]}...")
-        
+
     # Get statistics
     stats = chunker.get_chunking_stats(chunks)
-    print(f"\n{'='*50}")
+    print(f"\n{'=' * 50}")
     print("Chunking Statistics:")
-    print(f"{'='*50}")
+    print(f"{'=' * 50}")
     for key, value in stats.items():
         if isinstance(value, float):
             print(f"{key}: {value:.3f}")
         else:
             print(f"{key}: {value}")
-        
+
     return chunks
 
 
 if __name__ == "__main__":
     import asyncio
+
     asyncio.run(test_simple_intelligent_chunking())

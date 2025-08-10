@@ -23,7 +23,6 @@ from typing import Any
 
 from qdrant_client import QdrantClient
 from qdrant_client.http import models
-
 from rag_system.vector_store import FaissAdapter
 
 logging.basicConfig(level=logging.INFO)

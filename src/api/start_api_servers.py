@@ -1,23 +1,26 @@
 #!/usr/bin/env python3
 """Start all API servers for AIVillage integration with real implementations."""
 
+import hashlib
 import logging
 import os
 import sqlite3
 import sys
-import hashlib
 from pathlib import Path
 from typing import Any, Dict, List
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from fastapi import FastAPI, HTTPException
-import uvicorn
 from concurrent.futures import ThreadPoolExecutor
 
+import uvicorn
+from fastapi import FastAPI, HTTPException
+
 # Import CODEX-compliant RAG implementation
-sys.path.insert(0, str(Path(__file__).parent.parent / "production" / "rag" / "rag_system" / "core"))
+sys.path.insert(
+    0, str(Path(__file__).parent.parent / "production" / "rag" / "rag_system" / "core")
+)
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from core.security.digital_twin_encryption import (
     DigitalTwinEncryption,
@@ -30,6 +33,7 @@ logger = logging.getLogger(__name__)
 
 try:
     from codex_rag_integration import CODEXRAGPipeline, Document
+
     CODEX_RAG_AVAILABLE = True
     logger.info("CODEX-compliant RAG implementation loaded successfully")
 except ImportError as e:
@@ -92,7 +96,9 @@ async def create_profile(data: Dict[str, Any]) -> Dict[str, Any]:
     learning_style = data.get("learning_style")
     preferred_difficulty = data.get("preferred_difficulty", "medium")
     if not user_id or not learning_style:
-        raise HTTPException(status_code=400, detail="user_id and learning_style required")
+        raise HTTPException(
+            status_code=400, detail="user_id and learning_style required"
+        )
 
     profile_id = hashlib.sha256(f"{user_id}-{os.urandom(4)}".encode()).hexdigest()[:16]
     user_hash = hashlib.sha256(user_id.encode()).hexdigest()
@@ -126,9 +132,7 @@ async def get_profile(profile_id: str) -> Dict[str, Any]:
         raise HTTPException(status_code=404, detail="Profile not found")
 
     try:
-        learning_style = encryption.decrypt_sensitive_field(
-            row[1], "learning_style"
-        )
+        learning_style = encryption.decrypt_sensitive_field(row[1], "learning_style")
     except Exception as exc:  # pragma: no cover - defensive
         logger.exception("Failed to decrypt learning style")
         raise HTTPException(status_code=500, detail=str(exc))
@@ -223,6 +227,7 @@ rag_app = FastAPI(title="RAG Pipeline API")
 # Initialize CODEX-compliant RAG pipeline
 rag_pipeline: CODEXRAGPipeline = None
 
+
 def init_rag_pipeline() -> None:
     """Initialize the CODEX-compliant RAG pipeline."""
     global rag_pipeline
@@ -230,7 +235,7 @@ def init_rag_pipeline() -> None:
         logger.error("CODEX RAG implementation not available")
         rag_pipeline = None
         return
-        
+
     try:
         rag_pipeline = CODEXRAGPipeline()
         logger.info("CODEX-compliant RAG pipeline initialized successfully")
@@ -243,15 +248,19 @@ def init_rag_pipeline() -> None:
 @rag_app.get("/health/rag")
 async def health_rag() -> Dict[str, Any]:
     if rag_pipeline is None:
-        return {"status": "degraded", "service": "rag_pipeline", "error": "Pipeline not initialized"}
-    
+        return {
+            "status": "degraded",
+            "service": "rag_pipeline",
+            "error": "Pipeline not initialized",
+        }
+
     performance_metrics = rag_pipeline.get_performance_metrics()
     return {
-        "status": "healthy", 
-        "service": "rag_pipeline", 
+        "status": "healthy",
+        "service": "rag_pipeline",
         "index_size": performance_metrics.get("index_size", 0),
         "avg_latency_ms": performance_metrics.get("avg_latency_ms", 0),
-        "meets_target": performance_metrics.get("meets_target", True)
+        "meets_target": performance_metrics.get("meets_target", True),
     }
 
 
@@ -259,7 +268,7 @@ async def health_rag() -> Dict[str, Any]:
 async def add_to_index(data: Dict[str, Any]) -> Dict[str, Any]:
     if rag_pipeline is None:
         raise HTTPException(status_code=503, detail="RAG pipeline not available")
-    
+
     documents_data = data.get("documents")
     if not isinstance(documents_data, list):
         raise HTTPException(status_code=400, detail="documents list required")
@@ -272,27 +281,33 @@ async def add_to_index(data: Dict[str, Any]) -> Dict[str, Any]:
         content = doc_data.get("content")
         source_type = doc_data.get("source_type", "api")
         metadata = doc_data.get("metadata", {})
-        
+
         if doc_id and content:
-            documents.append(Document(
-                id=str(doc_id),
-                title=title,
-                content=str(content),
-                source_type=source_type,
-                metadata=metadata
-            ))
+            documents.append(
+                Document(
+                    id=str(doc_id),
+                    title=title,
+                    content=str(content),
+                    source_type=source_type,
+                    metadata=metadata,
+                )
+            )
 
     if not documents:
-        return {"success": False, "documents_added": 0, "error": "No valid documents provided"}
-    
+        return {
+            "success": False,
+            "documents_added": 0,
+            "error": "No valid documents provided",
+        }
+
     try:
         stats = rag_pipeline.index_documents(documents)
         return {
-            "success": True, 
+            "success": True,
             "documents_added": stats["documents_processed"],
             "chunks_created": stats["chunks_created"],
             "vectors_indexed": stats["vectors_indexed"],
-            "processing_time_ms": stats["processing_time_ms"]
+            "processing_time_ms": stats["processing_time_ms"],
         }
     except Exception as e:
         logger.exception("Failed to index documents")
@@ -303,20 +318,22 @@ async def add_to_index(data: Dict[str, Any]) -> Dict[str, Any]:
 async def query_rag(data: Dict[str, Any]) -> Dict[str, Any]:
     if rag_pipeline is None:
         raise HTTPException(status_code=503, detail="RAG pipeline not available")
-    
+
     query = data.get("query")
     k = data.get("k", 5)  # Number of results to return
     use_cache = data.get("use_cache", True)
-    
+
     if not query:
         raise HTTPException(status_code=400, detail="query required")
-    
+
     if not isinstance(k, int) or k < 1 or k > 50:
-        raise HTTPException(status_code=400, detail="k must be integer between 1 and 50")
-    
+        raise HTTPException(
+            status_code=400, detail="k must be integer between 1 and 50"
+        )
+
     try:
         results, metrics = await rag_pipeline.retrieve(query, k=k, use_cache=use_cache)
-        
+
         # Format results for API response
         formatted_results = [
             {
@@ -325,18 +342,18 @@ async def query_rag(data: Dict[str, Any]) -> Dict[str, Any]:
                 "text": result.text,
                 "score": result.score,
                 "retrieval_method": result.retrieval_method,
-                "metadata": result.metadata
+                "metadata": result.metadata,
             }
             for result in results
         ]
-        
+
         return {
             "query": query,
             "results": formatted_results,
             "metrics": metrics,
-            "total_results": len(formatted_results)
+            "total_results": len(formatted_results),
         }
-        
+
     except Exception as e:
         logger.exception("RAG query failed")
         raise HTTPException(status_code=500, detail=str(e))
@@ -347,7 +364,7 @@ async def get_rag_metrics() -> Dict[str, Any]:
     """Get RAG pipeline performance metrics."""
     if rag_pipeline is None:
         raise HTTPException(status_code=503, detail="RAG pipeline not available")
-    
+
     try:
         performance_metrics = rag_pipeline.get_performance_metrics()
         return performance_metrics
@@ -360,6 +377,7 @@ def run_server(app, host: str, port: int):
     """Run a FastAPI server"""
     uvicorn.run(app, host=host, port=port, log_level="info")
 
+
 def main():
     """Start all API servers"""
     init_digital_twin_db()
@@ -367,20 +385,20 @@ def main():
     init_rag_pipeline()
 
     print("Starting AIVillage API servers...")
-    
+
     servers = [
         (digital_twin_app, "0.0.0.0", 8080),
         (evolution_app, "0.0.0.0", 8081),
-        (rag_app, "0.0.0.0", 8082)
+        (rag_app, "0.0.0.0", 8082),
     ]
-    
+
     with ThreadPoolExecutor(max_workers=3) as executor:
         futures = []
         for app, host, port in servers:
             print(f"Starting {app.title} on {host}:{port}")
             future = executor.submit(run_server, app, host, port)
             futures.append(future)
-        
+
         # Wait for all servers
         try:
             for future in futures:
@@ -388,6 +406,7 @@ def main():
         except KeyboardInterrupt:
             print("\nShutting down servers...")
             sys.exit(0)
+
 
 if __name__ == "__main__":
     # Check if FastAPI is installed
@@ -397,8 +416,11 @@ if __name__ == "__main__":
     except ImportError:
         print("Installing required packages...")
         import subprocess
-        subprocess.run([sys.executable, "-m", "pip", "install", "fastapi", "uvicorn[standard]"])
+
+        subprocess.run(
+            [sys.executable, "-m", "pip", "install", "fastapi", "uvicorn[standard]"]
+        )
         print("Packages installed. Please run the script again.")
         sys.exit(1)
-    
+
     main()

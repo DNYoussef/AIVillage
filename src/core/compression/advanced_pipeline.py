@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import logging
 import lzma
-from pathlib import Path
 import pickle
 import struct
+from pathlib import Path
 
 import torch
 

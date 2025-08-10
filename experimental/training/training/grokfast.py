@@ -1,8 +1,8 @@
 from collections import deque
 from typing import Literal
 
-from langroid import ChatAgent, ChatAgentConfig, Task
 import torch
+from langroid import ChatAgent, ChatAgentConfig, Task
 
 
 class GrokFastTask(Task):

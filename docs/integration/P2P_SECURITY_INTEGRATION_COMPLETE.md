@@ -67,7 +67,7 @@ The secure P2P networking system has been successfully implemented according to 
 
 #### **Replay Attack Prevention:** ✅ PASS
 - Duplicate message detection: 100% effective
-- Out-of-order sequence blocking: 100% effective  
+- Out-of-order sequence blocking: 100% effective
 - Expired message rejection: 100% effective (5-minute TTL)
 
 #### **Rate Limiting Effectiveness:** ✅ PASS
@@ -118,7 +118,7 @@ The secure P2P networking system has been successfully implemented according to 
 
 ### Attack Resistance Validation:
 - **Message Tampering:** 100% detection rate
-- **Peer Spoofing:** 100% blocking rate  
+- **Peer Spoofing:** 100% blocking rate
 - **Replay Attacks:** 100% prevention rate
 - **Rate Limit Evasion:** 100% enforcement
 - **Man-in-the-Middle:** 100% resistance
@@ -158,7 +158,7 @@ The secure P2P networking system has been successfully implemented according to 
 
 ### Core Security Components:
 - `src/core/p2p/secure_libp2p_mesh.py` (892 lines) - Main security implementation
-- `src/core/p2p/security_dashboard.py` (685 lines) - Monitoring dashboard  
+- `src/core/p2p/security_dashboard.py` (685 lines) - Monitoring dashboard
 - `config/p2p_config.json` (68 lines) - Security configuration
 - `tests/security/test_p2p_network_security.py` (789 lines) - Security tests
 
@@ -222,7 +222,7 @@ export MESH_CONNECTION_TIMEOUT=30
 ### Dashboard Features:
 - **Real-time Security Overview:** Threat level and health scoring
 - **Active Alerts:** Critical security events requiring attention
-- **Peer Reputation:** Trust scores and interaction history  
+- **Peer Reputation:** Trust scores and interaction history
 - **Event Timeline:** Chronological security event analysis
 - **Network Statistics:** Connection and message rate monitoring
 

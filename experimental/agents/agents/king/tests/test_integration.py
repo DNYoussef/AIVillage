@@ -12,12 +12,13 @@ if torch_spec is None:
     msg = "PyTorch not installed"
     raise unittest.SkipTest(msg)
 
+from rag_system.core.pipeline import EnhancedRAGPipeline
+from rag_system.retrieval.vector_store import VectorStore
+
 from agents.king.king_agent import KingAgent
 from agents.unified_base_agent import UnifiedAgentConfig as KingAgentConfig
 from agents.utils.task import Task as LangroidTask
 from core.error_handling import StandardCommunicationProtocol
-from rag_system.core.pipeline import EnhancedRAGPipeline
-from rag_system.retrieval.vector_store import VectorStore
 
 
 class TestIntegration(unittest.IsolatedAsyncioTestCase):

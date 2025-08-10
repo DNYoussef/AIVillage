@@ -3,10 +3,10 @@
 
 import gzip
 import lzma
-from pathlib import Path
 import pickle
 import struct
 import sys
+from pathlib import Path
 
 # Add source paths
 sys.path.insert(0, str(Path("src").resolve()))
@@ -38,7 +38,7 @@ def test_key_improvements():
 
     print(f"  Original data: {original_size} bytes")
     print(f"  After compression: {len(hyper_compressed)} bytes")
-    print(f"  Compression ratio: {original_size/len(hyper_compressed):.1f}x")
+    print(f"  Compression ratio: {original_size / len(hyper_compressed):.1f}x")
     print(f"  Effectiveness threshold: {effectiveness_threshold}")
     print(f"  Is effective: {'YES' if is_effective else 'NO (would be skipped)'}")
 
@@ -147,7 +147,7 @@ def test_key_improvements():
 
 def test_mobile_deployment_scenarios():
     """Test mobile deployment with improved compression."""
-    print(f"\n{'='*50}")
+    print(f"\n{'=' * 50}")
     print("MOBILE DEPLOYMENT SCENARIOS")
     print("=" * 50)
 
@@ -174,7 +174,7 @@ def test_mobile_deployment_scenarios():
         compressed_mb = original_mb / estimated_ratio
 
         print(f"{model_name}:")
-        print(f"  Original size: {original_mb:.0f} MB ({original_mb/1024:.1f} GB)")
+        print(f"  Original size: {original_mb:.0f} MB ({original_mb / 1024:.1f} GB)")
         print(f"  Compressed size: {compressed_mb:.0f} MB")
 
         fits_devices = []
@@ -203,7 +203,7 @@ def main():
     try:
         mobile_ready = test_mobile_deployment_scenarios()
 
-        print(f"\n{'='*50}")
+        print(f"\n{'=' * 50}")
         print("IMPROVEMENT VALIDATION SUMMARY")
         print("=" * 50)
 

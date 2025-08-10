@@ -2,7 +2,7 @@
 
 This module provides centralized database management for all CODEX components:
 - Evolution metrics SQLite database
-- Digital Twin SQLite database  
+- Digital Twin SQLite database
 - RAG index SQLite database
 - Redis connections with fallbacks
 """
@@ -10,17 +10,18 @@ This module provides centralized database management for all CODEX components:
 from __future__ import annotations
 
 import asyncio
+import logging
+import sqlite3
 from contextlib import asynccontextmanager, contextmanager
 from dataclasses import dataclass
 from datetime import datetime
-import logging
 from pathlib import Path
-import sqlite3
 from typing import Any
 
 try:
     import redis
     import redis.asyncio as aioredis
+
     REDIS_AVAILABLE = True
 except ImportError:
     redis = None
@@ -29,6 +30,7 @@ except ImportError:
 
 try:
     from cryptography.fernet import Fernet
+
     CRYPTO_AVAILABLE = True
 except ImportError:
     Fernet = None
@@ -40,6 +42,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class DatabaseConfig:
     """Database configuration."""
+
     path: str
     wal_mode: bool = True
     timeout: int = 30
@@ -52,6 +55,7 @@ class DatabaseConfig:
 @dataclass
 class RedisConfig:
     """Redis configuration."""
+
     url: str
     db: int = 0
     max_connections: int = 10
@@ -71,7 +75,7 @@ class DatabaseManager:
         applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         description TEXT
     );
-    
+
     -- Evolution rounds tracking
     CREATE TABLE IF NOT EXISTS evolution_rounds (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -83,7 +87,7 @@ class DatabaseManager:
         metadata TEXT, -- JSON blob
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
-    
+
     -- Fitness metrics for each agent evolution
     CREATE TABLE IF NOT EXISTS fitness_metrics (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -96,7 +100,7 @@ class DatabaseManager:
         metadata TEXT, -- JSON blob
         FOREIGN KEY(round_id) REFERENCES evolution_rounds(id)
     );
-    
+
     -- Resource usage metrics
     CREATE TABLE IF NOT EXISTS resource_metrics (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -108,7 +112,7 @@ class DatabaseManager:
         timestamp REAL NOT NULL,
         FOREIGN KEY(round_id) REFERENCES evolution_rounds(id)
     );
-    
+
     -- Selection outcomes for mutations
     CREATE TABLE IF NOT EXISTS selection_outcomes (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -120,7 +124,7 @@ class DatabaseManager:
         timestamp REAL NOT NULL,
         FOREIGN KEY(round_id) REFERENCES evolution_rounds(id)
     );
-    
+
     -- Indexes for performance
     CREATE INDEX IF NOT EXISTS idx_fitness_metrics_round_agent ON fitness_metrics(round_id, agent_id);
     CREATE INDEX IF NOT EXISTS idx_fitness_metrics_timestamp ON fitness_metrics(timestamp);
@@ -135,7 +139,7 @@ class DatabaseManager:
         applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         description TEXT
     );
-    
+
     -- Learning profiles for students
     CREATE TABLE IF NOT EXISTS learning_profiles (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -147,7 +151,7 @@ class DatabaseManager:
         region TEXT NOT NULL DEFAULT 'US',
         learning_style TEXT NOT NULL DEFAULT 'visual',
         strengths TEXT, -- JSON array
-        challenges TEXT, -- JSON array  
+        challenges TEXT, -- JSON array
         interests TEXT, -- JSON array
         attention_span_minutes INTEGER DEFAULT 15,
         preferred_session_times TEXT, -- JSON array
@@ -157,7 +161,7 @@ class DatabaseManager:
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
-    
+
     -- Learning sessions
     CREATE TABLE IF NOT EXISTS learning_sessions (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -179,7 +183,7 @@ class DatabaseManager:
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY(student_id) REFERENCES learning_profiles(student_id)
     );
-    
+
     -- Knowledge state tracking
     CREATE TABLE IF NOT EXISTS knowledge_states (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -197,7 +201,7 @@ class DatabaseManager:
         FOREIGN KEY(student_id) REFERENCES learning_profiles(student_id),
         UNIQUE(student_id, subject, concept)
     );
-    
+
     -- Indexes for performance
     CREATE INDEX IF NOT EXISTS idx_learning_profiles_student_id ON learning_profiles(student_id);
     CREATE INDEX IF NOT EXISTS idx_learning_sessions_student_id ON learning_sessions(student_id);
@@ -213,7 +217,7 @@ class DatabaseManager:
         applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         description TEXT
     );
-    
+
     -- Document metadata
     CREATE TABLE IF NOT EXISTS documents (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -230,7 +234,7 @@ class DatabaseManager:
         processed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         metadata TEXT -- JSON blob
     );
-    
+
     -- Document chunks for retrieval
     CREATE TABLE IF NOT EXISTS chunks (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -246,7 +250,7 @@ class DatabaseManager:
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY(document_id) REFERENCES documents(document_id)
     );
-    
+
     -- Embeddings metadata for FAISS index
     CREATE TABLE IF NOT EXISTS embeddings_metadata (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -258,7 +262,7 @@ class DatabaseManager:
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY(chunk_id) REFERENCES chunks(chunk_id)
     );
-    
+
     -- Query cache for performance
     CREATE TABLE IF NOT EXISTS query_cache (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -271,7 +275,7 @@ class DatabaseManager:
         last_accessed TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         expires_at TIMESTAMP
     );
-    
+
     -- Indexes for performance
     CREATE INDEX IF NOT EXISTS idx_documents_content_hash ON documents(content_hash);
     CREATE INDEX IF NOT EXISTS idx_chunks_document_id ON chunks(document_id);
@@ -319,7 +323,7 @@ class DatabaseManager:
                 self.config_manager.get("AIVILLAGE_LOG_DIR", "./logs"),
                 self.config_manager.get("RAG_FAISS_INDEX_PATH", "./data/faiss_index"),
                 self.config_manager.get("DIGITAL_TWIN_VAULT_PATH", "./data/vault"),
-                self.config_manager.get("BACKUP_STORAGE_PATH", "./backups")
+                self.config_manager.get("BACKUP_STORAGE_PATH", "./backups"),
             ]
         else:
             dirs = ["./data", "./logs", "./backups"]
@@ -334,20 +338,36 @@ class DatabaseManager:
         """Initialize all SQLite databases with schemas."""
         databases = {
             "evolution_metrics": {
-                "path": self.config_manager.get("AIVILLAGE_DB_PATH", "./data/evolution_metrics.db") if self.config_manager else "./data/evolution_metrics.db",
+                "path": (
+                    self.config_manager.get(
+                        "AIVILLAGE_DB_PATH", "./data/evolution_metrics.db"
+                    )
+                    if self.config_manager
+                    else "./data/evolution_metrics.db"
+                ),
                 "schema": self.EVOLUTION_METRICS_SCHEMA,
-                "description": "Evolution metrics database v1.0"
+                "description": "Evolution metrics database v1.0",
             },
             "digital_twin": {
-                "path": self.config_manager.get("DIGITAL_TWIN_DB_PATH", "./data/digital_twin.db") if self.config_manager else "./data/digital_twin.db",
+                "path": (
+                    self.config_manager.get(
+                        "DIGITAL_TWIN_DB_PATH", "./data/digital_twin.db"
+                    )
+                    if self.config_manager
+                    else "./data/digital_twin.db"
+                ),
                 "schema": self.DIGITAL_TWIN_SCHEMA,
-                "description": "Digital Twin database v1.0"
+                "description": "Digital Twin database v1.0",
             },
             "rag_index": {
-                "path": self.config_manager.get("RAG_INDEX_DB_PATH", "./data/rag_index.db") if self.config_manager else "./data/rag_index.db",
+                "path": (
+                    self.config_manager.get("RAG_INDEX_DB_PATH", "./data/rag_index.db")
+                    if self.config_manager
+                    else "./data/rag_index.db"
+                ),
                 "schema": self.RAG_INDEX_SCHEMA,
-                "description": "RAG index database v1.0"
-            }
+                "description": "RAG index database v1.0",
+            },
         }
 
         for db_name, db_config in databases.items():
@@ -383,7 +403,7 @@ class DatabaseManager:
             schema_version = 1
             conn.execute(
                 "INSERT OR REPLACE INTO schema_version (version, description) VALUES (?, ?)",
-                (schema_version, config["description"])
+                (schema_version, config["description"]),
             )
 
             conn.commit()
@@ -391,7 +411,9 @@ class DatabaseManager:
             # Store connection
             self.connections[name] = conn
 
-            logger.info(f"Database {name} initialized successfully with schema version {schema_version}")
+            logger.info(
+                f"Database {name} initialized successfully with schema version {schema_version}"
+            )
 
         except Exception as e:
             conn.close()
@@ -409,20 +431,24 @@ class DatabaseManager:
 
         redis_configs = {
             "evolution_metrics": {
-                "url": self.config_manager.get("AIVILLAGE_REDIS_URL", "redis://localhost:6379/0"),
+                "url": self.config_manager.get(
+                    "AIVILLAGE_REDIS_URL", "redis://localhost:6379/0"
+                ),
                 "db": 0,
-                "description": "Evolution metrics real-time data"
+                "description": "Evolution metrics real-time data",
             },
             "rag_cache": {
-                "url": self.config_manager.get("RAG_REDIS_URL", "redis://localhost:6379/1"),
+                "url": self.config_manager.get(
+                    "RAG_REDIS_URL", "redis://localhost:6379/1"
+                ),
                 "db": 1,
-                "description": "RAG pipeline caching"
+                "description": "RAG pipeline caching",
             },
             "p2p_discovery": {
                 "url": "redis://localhost:6379/2",
                 "db": 2,
-                "description": "P2P peer discovery cache"
-            }
+                "description": "P2P peer discovery cache",
+            },
         }
 
         for pool_name, config in redis_configs.items():
@@ -442,7 +468,7 @@ class DatabaseManager:
                     max_connections=10,
                     retry_on_timeout=True,
                     socket_timeout=5,
-                    socket_connect_timeout=5
+                    socket_connect_timeout=5,
                 )
 
                 # Test connection
@@ -451,7 +477,9 @@ class DatabaseManager:
                 await redis_client.close()
 
                 self.redis_pools[pool_name] = pool
-                logger.info(f"Redis pool {pool_name} initialized: {config['description']}")
+                logger.info(
+                    f"Redis pool {pool_name} initialized: {config['description']}"
+                )
 
             except Exception as e:
                 logger.warning(f"Failed to initialize Redis pool {pool_name}: {e}")
@@ -468,7 +496,10 @@ class DatabaseManager:
 
         # Digital Twin encryption
         encryption_key = self.config_manager.get("DIGITAL_TWIN_ENCRYPTION_KEY")
-        if encryption_key and encryption_key != "REPLACE_WITH_BASE64_ENCODED_32_BYTE_KEY":
+        if (
+            encryption_key
+            and encryption_key != "REPLACE_WITH_BASE64_ENCODED_32_BYTE_KEY"
+        ):
             try:
                 self.encryption_keys["digital_twin"] = Fernet(encryption_key.encode())
                 logger.info("Digital Twin encryption enabled")
@@ -514,7 +545,9 @@ class DatabaseManager:
         fernet = self.encryption_keys[encryption_type]
         return fernet.encrypt(data.encode()).decode()
 
-    def decrypt_data(self, encrypted_data: str, encryption_type: str = "digital_twin") -> str:
+    def decrypt_data(
+        self, encrypted_data: str, encryption_type: str = "digital_twin"
+    ) -> str:
         """Decrypt sensitive data."""
         if encryption_type not in self.encryption_keys:
             logger.warning(f"Encryption key {encryption_type} not available")
@@ -538,7 +571,9 @@ class DatabaseManager:
                 cursor.execute("PRAGMA integrity_check")
                 result = cursor.fetchone()
                 results[f"sqlite_{db_name}"] = result[0] == "ok" if result else False
-                logger.info(f"Database {db_name} integrity: {results[f'sqlite_{db_name}']}")
+                logger.info(
+                    f"Database {db_name} integrity: {results[f'sqlite_{db_name}']}"
+                )
             except Exception as e:
                 logger.error(f"Integrity check failed for {db_name}: {e}")
                 results[f"sqlite_{db_name}"] = False
@@ -633,7 +668,12 @@ class DatabaseManager:
                         total_rows += count
 
                 # Get database size
-                if self.connections[db_name].execute("PRAGMA database_list").fetchone()[2] != ":memory:":
+                if (
+                    self.connections[db_name]
+                    .execute("PRAGMA database_list")
+                    .fetchone()[2]
+                    != ":memory:"
+                ):
                     cursor.execute("PRAGMA page_count")
                     page_count = cursor.fetchone()[0]
                     cursor.execute("PRAGMA page_size")
@@ -646,7 +686,7 @@ class DatabaseManager:
                     "tables": table_stats,
                     "total_rows": total_rows,
                     "size_bytes": size_bytes,
-                    "size_mb": size_bytes / (1024 * 1024)
+                    "size_mb": size_bytes / (1024 * 1024),
                 }
 
             except Exception as e:

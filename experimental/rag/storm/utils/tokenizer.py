@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+
 @dataclass
 class _DummyTokenizer:
     """Simple tokenizer returning byte lengths.

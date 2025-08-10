@@ -3,9 +3,9 @@
 Creates production/experimental/deprecated directories and moves key components.
 """
 
+import subprocess
 from datetime import datetime
 from pathlib import Path
-import subprocess
 
 
 class SimpleReorganizer:

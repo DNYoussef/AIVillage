@@ -5,10 +5,10 @@ Currently returns empty list - no peers ever found!
 
 import json
 import logging
-from pathlib import Path
 import socket
 import threading
 import time
+from pathlib import Path
 from typing import Any
 
 from .nat_traversal import NATTraversal

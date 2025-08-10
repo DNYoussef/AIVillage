@@ -2,11 +2,11 @@
 Target: <5 second response time with comprehensive tracking.
 """
 
-from collections import defaultdict, deque
-from datetime import datetime, timedelta
 import logging
 import statistics
 import time
+from collections import defaultdict, deque
+from datetime import datetime, timedelta
 from typing import Any
 
 import wandb

@@ -5,13 +5,14 @@ Validates that the CODEX RAG integration meets all specified requirements.
 
 import json
 import os
-from pathlib import Path
 import sqlite3
 import sys
+from pathlib import Path
 from typing import Any
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
+
 
 def validate_environment_variables() -> dict[str, Any]:
     """Validate CODEX-required environment variables."""
@@ -29,7 +30,7 @@ def validate_environment_variables() -> dict[str, Any]:
         "RAG_BM25_CORPUS_PATH": "./data/bm25_corpus",
         "RAG_DEFAULT_K": "10",
         "RAG_CHUNK_SIZE": "512",
-        "RAG_CHUNK_OVERLAP": "50"
+        "RAG_CHUNK_OVERLAP": "50",
     }
 
     results = {"passed": 0, "failed": 0, "issues": []}
@@ -55,7 +56,7 @@ def validate_configuration_files() -> dict[str, Any]:
     config_files = [
         "config/rag_config.json",
         "config/aivillage_config.yaml",
-        "config/p2p_config.json"
+        "config/p2p_config.json",
     ]
 
     for config_file in config_files:
@@ -114,8 +115,13 @@ def validate_database_schema() -> dict[str, Any]:
         cursor.execute("PRAGMA table_info(documents)")
         columns = [row[1] for row in cursor.fetchall()]
         required_columns = [
-            "document_id", "title", "content", "file_hash",
-            "word_count", "created_at", "metadata"
+            "document_id",
+            "title",
+            "content",
+            "file_hash",
+            "word_count",
+            "created_at",
+            "metadata",
         ]
 
         for col in required_columns:
@@ -139,7 +145,7 @@ def validate_source_code_structure() -> dict[str, Any]:
         "src/production/rag/rag_system/core/codex_rag_integration.py",
         "src/production/rag/rag_api_server.py",
         "src/production/rag/wikipedia_data_loader.py",
-        "tests/integration/test_codex_rag_integration.py"
+        "tests/integration/test_codex_rag_integration.py",
     ]
 
     for file_path in required_files:
@@ -167,7 +173,7 @@ def validate_port_configuration() -> dict[str, Any]:
         "Evolution Metrics": 8081,
         "Digital Twin API": 8080,
         "LibP2P Main": 4001,
-        "Redis": 6379
+        "Redis": 6379,
     }
 
     # Check environment variables for port configs
@@ -260,7 +266,9 @@ def validate_model_configuration() -> dict[str, Any]:
         results["issues"].append("Vector dimension mismatch")
 
     # Check cross-encoder model
-    cross_encoder = os.getenv("RAG_CROSS_ENCODER_MODEL", "cross-encoder/ms-marco-MiniLM-L-2-v2")
+    cross_encoder = os.getenv(
+        "RAG_CROSS_ENCODER_MODEL", "cross-encoder/ms-marco-MiniLM-L-2-v2"
+    )
     if "cross-encoder/ms-marco-MiniLM" in cross_encoder:
         print(f"✅ Cross-encoder model: {cross_encoder}")
         results["passed"] += 1
@@ -309,9 +317,9 @@ def validate_chunking_configuration() -> dict[str, Any]:
 
 def generate_integration_report() -> dict[str, Any]:
     """Generate comprehensive integration report."""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("CODEX RAG INTEGRATION VALIDATION REPORT")
-    print("="*60)
+    print("=" * 60)
 
     all_results = {
         "environment_variables": validate_environment_variables(),
@@ -321,7 +329,7 @@ def generate_integration_report() -> dict[str, Any]:
         "port_configuration": validate_port_configuration(),
         "cache_configuration": validate_cache_configuration(),
         "model_configuration": validate_model_configuration(),
-        "chunking_configuration": validate_chunking_configuration()
+        "chunking_configuration": validate_chunking_configuration(),
     }
 
     # Calculate totals
@@ -365,7 +373,7 @@ def generate_integration_report() -> dict[str, Any]:
         "total_failed": total_failed,
         "total_issues": total_issues,
         "success_rate": (total_passed / total_checks * 100) if total_checks > 0 else 0,
-        "detailed_results": all_results
+        "detailed_results": all_results,
     }
 
 

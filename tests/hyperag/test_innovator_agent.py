@@ -4,8 +4,8 @@ Unit tests for Enhanced Innovator Repair Agent
 
 import asyncio
 import json
-from pathlib import Path
 import sys
+from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest

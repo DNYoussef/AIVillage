@@ -17,7 +17,7 @@ def check_stage_4_hyper() -> None:
 
         print("HyperCompression found and tested")
         print(f"Test compression: {len(test_data)} -> {len(compressed)} bytes")
-        print(f"Ratio: {len(test_data)/len(compressed):.2f}x")
+        print(f"Ratio: {len(test_data) / len(compressed):.2f}x")
 
         # Check if it's real compression or fake
         if compressed == test_data:
@@ -62,7 +62,7 @@ def check_overhead_accumulation() -> None:
 
     print(f"Compressed data: {data_size} bytes")
     print(f"With metadata: {total_size} bytes")
-    print(f"Overhead: {overhead} bytes ({overhead/data_size*100:.1f}%)")
+    print(f"Overhead: {overhead} bytes ({overhead / data_size * 100:.1f}%)")
     print("This overhead compounds and reduces effective compression!")
 
 
@@ -93,7 +93,7 @@ def check_decompression_quality() -> None:
 
     two_stage_error = torch.mean((original - stage2_decompressed) ** 2).item()
     print(f"Two stage MSE: {two_stage_error:.6f}")
-    print(f"Error amplification: {two_stage_error/single_stage_error:.2f}x")
+    print(f"Error amplification: {two_stage_error / single_stage_error:.2f}x")
 
     print("\nConclusion: Errors compound through stages!")
 

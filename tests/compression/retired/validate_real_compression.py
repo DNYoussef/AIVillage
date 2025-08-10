@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Validate compression with REAL measured values from actual implementations."""
 
-from pathlib import Path
 import sys
 import time
+from pathlib import Path
 
 import torch
 from torch import nn
@@ -27,7 +27,9 @@ def test_real_individual_stages():
     original_size = test_weights.numel() * 4
 
     print(f"Test tensor: {test_weights.shape}")
-    print(f"Original size: {original_size:,} bytes ({original_size/1024/1024:.1f}MB)")
+    print(
+        f"Original size: {original_size:,} bytes ({original_size / 1024 / 1024:.1f}MB)"
+    )
 
     # Test BitNet - REAL measurements
     print("\n--- BitNet 1.58-bit Compression ---")
@@ -124,7 +126,7 @@ def test_real_individual_stages():
 
 def test_real_pipeline_simulation():
     """Test realistic pipeline with REAL stage measurements."""
-    print(f"\n{'='*50}")
+    print(f"\n{'=' * 50}")
     print("TESTING REAL PIPELINE SIMULATION")
     print("=" * 50)
 
@@ -144,7 +146,9 @@ def test_real_pipeline_simulation():
     original_size = param_count * 4
 
     print(f"\nTest model: {param_count:,} parameters")
-    print(f"Original size: {original_size:,} bytes ({original_size/1024/1024:.1f}MB)")
+    print(
+        f"Original size: {original_size:,} bytes ({original_size / 1024 / 1024:.1f}MB)"
+    )
 
     # Simulate pipeline with REAL compression ratios from individual tests
     print("\n--- Simulating 4-Stage Pipeline ---")
@@ -172,14 +176,14 @@ def test_real_pipeline_simulation():
     # Compare to previous validation results
     previous_measured = 20.8  # From our previous actual tests
     print(f"  Previous measured result: {previous_measured:.1f}x")
-    print(f"  Improvement factor: {estimated_ratio/previous_measured:.1f}x")
+    print(f"  Improvement factor: {estimated_ratio / previous_measured:.1f}x")
 
     return estimated_ratio
 
 
 def test_real_optimization_improvements():
     """Test the REAL optimization improvements from the code."""
-    print(f"\n{'='*50}")
+    print(f"\n{'=' * 50}")
     print("TESTING REAL OPTIMIZATION IMPROVEMENTS")
     print("=" * 50)
 
@@ -243,7 +247,7 @@ def test_real_optimization_improvements():
 
 def test_real_mobile_deployment():
     """Test mobile deployment with REAL compression numbers."""
-    print(f"\n{'='*50}")
+    print(f"\n{'=' * 50}")
     print("TESTING REAL MOBILE DEPLOYMENT")
     print("=" * 50)
 
@@ -320,7 +324,7 @@ def main():
         # Test with REAL measurements
         final_ratio, kenya_ready, mobile_results = test_real_mobile_deployment()
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print("REAL VALIDATION RESULTS")
         print("=" * 60)
 

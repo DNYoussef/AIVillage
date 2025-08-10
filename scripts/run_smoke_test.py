@@ -12,12 +12,12 @@ Usage:
 
 import argparse
 import asyncio
-from datetime import datetime
 import json
 import logging
 import os
-from pathlib import Path
 import sys
+from datetime import datetime
+from pathlib import Path
 from typing import Any
 
 # Configure logging
@@ -462,7 +462,8 @@ class AgentForgeSmokeTest:
         if execution_time > self.thresholds["maximum_execution_time"]:
             logger.error(
                 f"Pipeline exceeded maximum execution time: {execution_time}s > {
-                    self.thresholds['maximum_execution_time']}s"
+                    self.thresholds['maximum_execution_time']
+                }s"
             )
             return False
 

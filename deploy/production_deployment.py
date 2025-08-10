@@ -5,13 +5,13 @@ automated rollback, and production hardening.
 """
 
 import asyncio
-from datetime import datetime
 import json
 import logging
 import os
 import subprocess
 import sys
 import time
+from datetime import datetime
 from typing import Any
 
 import yaml

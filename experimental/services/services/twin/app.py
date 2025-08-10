@@ -7,29 +7,31 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
 import logging
 import os
-from pathlib import Path
 
 # Import unified error handling and configuration
 import sys
+from datetime import datetime, timezone
+from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parents[3]))
 import time
-from typing import Any
 import uuid
+from typing import Any
 
+import uvicorn
 from cachetools import LRUCache
 from fastapi import Depends, FastAPI, File, HTTPException, UploadFile
 from prometheus_client import REGISTRY, Counter, Histogram, generate_latest
 from pydantic import BaseModel, Field
-import uvicorn
 
 from core.chat_engine import ChatEngine
 
 # Add the production RAG system to the path
-sys.path.insert(0, str(Path(__file__).resolve().parents[4] / "src" / "production" / "rag"))
+sys.path.insert(
+    0, str(Path(__file__).resolve().parents[4] / "src" / "production" / "rag")
+)
 from rag_system.graph_explain import MAX_HOPS, explain_path
 
 from .schemas import ChatRequest, ChatResponse, HealthResponse

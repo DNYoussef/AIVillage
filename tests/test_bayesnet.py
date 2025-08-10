@@ -1,7 +1,7 @@
-from pathlib import Path
 import sys
 import types
 import unittest
+from pathlib import Path
 from unittest import mock
 
 import pytest

@@ -9,19 +9,20 @@ This module provides Redis connection management with automatic fallbacks to:
 from __future__ import annotations
 
 import asyncio
-from contextlib import asynccontextmanager
-from dataclasses import dataclass
 import json
 import logging
-from pathlib import Path
 import pickle
 import sqlite3
 import time
+from contextlib import asynccontextmanager
+from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 try:
     import redis
     import redis.asyncio as aioredis
+
     REDIS_AVAILABLE = True
 except ImportError:
     redis = None
@@ -34,6 +35,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class RedisConfig:
     """Redis connection configuration."""
+
     url: str
     db: int = 0
     max_connections: int = 10
@@ -69,7 +71,8 @@ class RedisFallbackStorage:
         self._sqlite_conn.execute("PRAGMA journal_mode=WAL")
 
         # Create fallback tables
-        self._sqlite_conn.executescript("""
+        self._sqlite_conn.executescript(
+            """
         CREATE TABLE IF NOT EXISTS redis_fallback (
             key TEXT PRIMARY KEY,
             value BLOB NOT NULL,
@@ -77,9 +80,9 @@ class RedisFallbackStorage:
             expires_at REAL NULL,
             created_at REAL DEFAULT (datetime('now','unixepoch'))
         );
-        
+
         CREATE INDEX IF NOT EXISTS idx_redis_fallback_expires ON redis_fallback(expires_at);
-        
+
         CREATE TABLE IF NOT EXISTS redis_lists (
             key TEXT NOT NULL,
             index_pos INTEGER NOT NULL,
@@ -87,14 +90,14 @@ class RedisFallbackStorage:
             created_at REAL DEFAULT (datetime('now','unixepoch')),
             PRIMARY KEY (key, index_pos)
         );
-        
+
         CREATE TABLE IF NOT EXISTS redis_sets (
             key TEXT NOT NULL,
             member BLOB NOT NULL,
             created_at REAL DEFAULT (datetime('now','unixepoch')),
             PRIMARY KEY (key, member)
         );
-        
+
         CREATE TABLE IF NOT EXISTS redis_hashes (
             key TEXT NOT NULL,
             field TEXT NOT NULL,
@@ -102,7 +105,8 @@ class RedisFallbackStorage:
             created_at REAL DEFAULT (datetime('now','unixepoch')),
             PRIMARY KEY (key, field)
         );
-        """)
+        """
+        )
         self._sqlite_conn.commit()
 
     async def get(self, key: str) -> Any | None:
@@ -112,11 +116,14 @@ class RedisFallbackStorage:
 
         if self.storage_type == "sqlite" and self._sqlite_conn:
             cursor = self._sqlite_conn.cursor()
-            cursor.execute("""
-            SELECT value, value_type, expires_at 
-            FROM redis_fallback 
+            cursor.execute(
+                """
+            SELECT value, value_type, expires_at
+            FROM redis_fallback
             WHERE key = ? AND (expires_at IS NULL OR expires_at > ?)
-            """, (key, time.time()))
+            """,
+                (key, time.time()),
+            )
 
             row = cursor.fetchone()
             if row:
@@ -169,10 +176,13 @@ class RedisFallbackStorage:
                     value_blob = pickle.dumps(value)
                     value_type = "pickle"
 
-                self._sqlite_conn.execute("""
+                self._sqlite_conn.execute(
+                    """
                 INSERT OR REPLACE INTO redis_fallback (key, value, value_type, expires_at)
                 VALUES (?, ?, ?, ?)
-                """, (key, value_blob, value_type, expires_at))
+                """,
+                    (key, value_blob, value_type, expires_at),
+                )
 
                 self._sqlite_conn.commit()
                 return True
@@ -186,7 +196,7 @@ class RedisFallbackStorage:
                 data = {
                     "value": value,
                     "created_at": time.time(),
-                    "expires_at": expires_at
+                    "expires_at": expires_at,
                 }
 
                 with open(file_path, "w") as f:
@@ -229,11 +239,14 @@ class RedisFallbackStorage:
         if self.storage_type == "sqlite" and self._sqlite_conn:
             expires_at = time.time() + seconds
             cursor = self._sqlite_conn.cursor()
-            cursor.execute("""
-            UPDATE redis_fallback 
-            SET expires_at = ? 
+            cursor.execute(
+                """
+            UPDATE redis_fallback
+            SET expires_at = ?
             WHERE key = ?
-            """, (expires_at, key))
+            """,
+                (expires_at, key),
+            )
             self._sqlite_conn.commit()
             return cursor.rowcount > 0
 
@@ -244,10 +257,13 @@ class RedisFallbackStorage:
         """Clean up expired keys."""
         if self.storage_type == "sqlite" and self._sqlite_conn:
             cursor = self._sqlite_conn.cursor()
-            cursor.execute("""
-            DELETE FROM redis_fallback 
+            cursor.execute(
+                """
+            DELETE FROM redis_fallback
             WHERE expires_at IS NOT NULL AND expires_at < ?
-            """, (time.time(),))
+            """,
+                (time.time(),),
+            )
             self._sqlite_conn.commit()
             return cursor.rowcount
 
@@ -313,25 +329,25 @@ class RedisManager:
 
         redis_configs = {
             "evolution_metrics": RedisConfig(
-                url=self.config_manager.get("AIVILLAGE_REDIS_URL", "redis://localhost:6379/0"),
+                url=self.config_manager.get(
+                    "AIVILLAGE_REDIS_URL", "redis://localhost:6379/0"
+                ),
                 db=0,
-                fallback_storage="sqlite"
+                fallback_storage="sqlite",
             ),
             "rag_cache": RedisConfig(
-                url=self.config_manager.get("RAG_REDIS_URL", "redis://localhost:6379/1"),
+                url=self.config_manager.get(
+                    "RAG_REDIS_URL", "redis://localhost:6379/1"
+                ),
                 db=1,
-                fallback_storage="memory"
+                fallback_storage="memory",
             ),
             "p2p_discovery": RedisConfig(
-                url="redis://localhost:6379/2",
-                db=2,
-                fallback_storage="file"
+                url="redis://localhost:6379/2", db=2, fallback_storage="file"
             ),
             "session_store": RedisConfig(
-                url="redis://localhost:6379/3",
-                db=3,
-                fallback_storage="sqlite"
-            )
+                url="redis://localhost:6379/3", db=3, fallback_storage="sqlite"
+            ),
         }
 
         for pool_name, config in redis_configs.items():
@@ -342,7 +358,7 @@ class RedisManager:
                     max_connections=config.max_connections,
                     retry_on_timeout=config.retry_on_timeout,
                     socket_timeout=config.socket_timeout,
-                    socket_connect_timeout=config.socket_connect_timeout
+                    socket_connect_timeout=config.socket_connect_timeout,
                 )
 
                 # Test connection
@@ -353,7 +369,7 @@ class RedisManager:
                 self.pools[pool_name] = {
                     "pool": pool,
                     "config": config,
-                    "available": True
+                    "available": True,
                 }
 
                 logger.info(f"Redis pool {pool_name} initialized successfully")
@@ -363,7 +379,7 @@ class RedisManager:
                 self.pools[pool_name] = {
                     "pool": None,
                     "config": config,
-                    "available": False
+                    "available": False,
                 }
 
     async def _init_fallback_stores(self):
@@ -372,7 +388,7 @@ class RedisManager:
             "evolution_metrics": ("sqlite", "./data/fallback/evolution_metrics"),
             "rag_cache": ("memory", "./data/fallback/rag_cache"),
             "p2p_discovery": ("file", "./data/fallback/p2p_discovery"),
-            "session_store": ("sqlite", "./data/fallback/sessions")
+            "session_store": ("sqlite", "./data/fallback/sessions"),
         }
 
         for store_name, (storage_type, storage_path) in fallback_configs.items():
@@ -417,7 +433,7 @@ class RedisManager:
             pool_status = {
                 "redis_available": False,
                 "fallback_available": False,
-                "last_error": None
+                "last_error": None,
             }
 
             # Test Redis connection
@@ -454,7 +470,9 @@ class RedisManager:
                 expired_count = await fallback_store.cleanup_expired()
                 cleanup_results[store_name] = expired_count
                 if expired_count > 0:
-                    logger.info(f"Cleaned up {expired_count} expired keys from {store_name}")
+                    logger.info(
+                        f"Cleaned up {expired_count} expired keys from {store_name}"
+                    )
             except Exception as e:
                 logger.error(f"Failed to cleanup expired keys from {store_name}: {e}")
                 cleanup_results[store_name] = 0
@@ -612,6 +630,7 @@ async def initialize_redis(config_manager=None) -> RedisManager:
 
 
 if __name__ == "__main__":
+
     async def main():
         """Test Redis manager with fallbacks."""
         # Initialize Redis manager

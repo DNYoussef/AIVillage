@@ -5,6 +5,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import numpy as np
 import pytest
+from rag_system.core.config import UnifiedConfig
+from rag_system.retrieval.vector_store import VectorStore
 
 from agents.unified_base_agent import (
     SelfEvolvingSystem,
@@ -21,8 +23,6 @@ from core.error_handling import (
     ErrorSeverity,
     StandardCommunicationProtocol,
 )
-from rag_system.core.config import UnifiedConfig
-from rag_system.retrieval.vector_store import VectorStore
 
 
 class TestUnifiedBaseAgent:

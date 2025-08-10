@@ -2,9 +2,9 @@ import io
 import logging
 from typing import Any
 
-from langroid.language_models.openai_gpt import OpenAIGPTConfig
 import matplotlib.pyplot as plt
 import networkx as nx
+from langroid.language_models.openai_gpt import OpenAIGPTConfig
 
 from core.error_handling import AIVillageException, error_handler, safe_execute
 

@@ -69,4 +69,3 @@ Java_ai_atlantis_aivillage_mesh_LibP2PJNIBridge_registerNativeHandler(
     // In this minimal implementation, messages are delivered via the existing
     // WebSocket bridge. A direct JNI callback is left as future work.
 }
-

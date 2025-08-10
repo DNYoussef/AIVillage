@@ -9,7 +9,7 @@ repos:
       - id: check-added-large-files
       - id: check-merge-conflict
       - id: detect-private-key
-  
+
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.12.3
     hooks:
@@ -18,21 +18,21 @@ repos:
         exclude: ^(scripts/archived/|\.github/workflows/archived/|deprecated/)
       - id: ruff-format
         exclude: ^(scripts/archived/|\.github/workflows/archived/|deprecated/)
-  
+
   - repo: https://github.com/psf/black
     rev: 24.8.0
     hooks:
       - id: black
         args: [--line-length=88]
         exclude: ^(scripts/archived/|\.github/workflows/archived/|deprecated/)
-  
+
   - repo: https://github.com/pycqa/isort
     rev: 5.13.2
     hooks:
       - id: isort
         args: [--profile=black, --line-length=88]
         exclude: ^(scripts/archived/|\.github/workflows/archived/|deprecated/)
-  
+
   - repo: local
     hooks:
       - id: unified-linter
@@ -43,7 +43,7 @@ repos:
         pass_filenames: false
         types: [python]
         stages: [pre-push]
-      
+
       - id: security-scan
         name: Security scan (critical issues only)
         entry: bash -c 'ruff check . --select S --quiet | head -10 || true'

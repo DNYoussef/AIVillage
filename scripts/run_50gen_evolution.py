@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """Run enhanced 50-generation Agent Forge Evolution Merge with 8 models per generation."""
 
-from datetime import datetime
 import json
 import logging
-from pathlib import Path
 import random
 import time
+from datetime import datetime
+from pathlib import Path
 from typing import Any
 
 import numpy as np

@@ -11,8 +11,8 @@ The generated agents provide a minimal interface used in tests:
 from __future__ import annotations
 
 import time
-from typing import Any
 import uuid
+from typing import Any
 
 # ---------------------------------------------------------------------------
 # Base agent

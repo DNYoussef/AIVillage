@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Final comprehensive analysis of AIVillage agent system."""
 
-from pathlib import Path
 import sys
+from pathlib import Path
 
 sys.path.insert(0, str(Path.cwd()))
 
@@ -356,7 +356,7 @@ class AgentAnalyzer:
         print(f"Experimental Implementations: {exp_count}/3 checked")
 
         # Overall assessment
-        print(f"\n{'='*20} VERDICT {'='*20}")
+        print(f"\n{'=' * 20} VERDICT {'=' * 20}")
 
         if real_count > 0:
             print("VERDICT: Some real agent implementations exist")

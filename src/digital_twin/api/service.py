@@ -3,17 +3,13 @@
 from __future__ import annotations
 
 import base64
-from typing import Any
 import uuid
+from typing import Any
 
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
-from digital_twin.core.digital_twin import (
-    DigitalTwin,
-    LearningProfile,
-    LearningSession,
-)
+from digital_twin.core.digital_twin import DigitalTwin, LearningProfile, LearningSession
 
 app = FastAPI(title="Digital Twin API")
 
@@ -92,7 +88,9 @@ async def create_twin(user_id: str, profile: UserProfile) -> dict[str, Any]:
 
 
 @app.post("/twin/{user_id}/learn")
-async def record_learning(user_id: str, session: LearningSessionModel) -> dict[str, Any]:
+async def record_learning(
+    user_id: str, session: LearningSessionModel
+) -> dict[str, Any]:
     """Record a learning session for the specified user."""
     twin = service._get_twin(user_id)
     sess = LearningSession(**session.dict())
@@ -119,7 +117,9 @@ async def get_recommendations(user_id: str) -> dict[str, Any]:
 
 
 @app.post("/twin/{user_id}/marketplace/share")
-async def share_to_marketplace(user_id: str, share_config: ShareConfig) -> dict[str, Any]:
+async def share_to_marketplace(
+    user_id: str, share_config: ShareConfig
+) -> dict[str, Any]:
     """Share anonymized patterns to the marketplace."""
     twin = service._get_twin(user_id)
     patterns = twin.extract_learning_patterns()
@@ -133,7 +133,9 @@ async def share_to_marketplace(user_id: str, share_config: ShareConfig) -> dict[
 async def health_check(user_id: str) -> dict[str, Any]:
     twin = service._get_twin(user_id)
     last_activity = (
-        twin.session_history[user_id][-1].end_time if twin.session_history[user_id] else None
+        twin.session_history[user_id][-1].end_time
+        if twin.session_history[user_id]
+        else None
     )
     return {
         "vault_status": "encrypted",
@@ -182,4 +184,3 @@ async def sync_mobile(user_id: str, req: MobileSyncRequest) -> dict[str, Any]:
     payload = base64.b64decode(req.data)
     response = await syncer.sync_from_mobile(payload)
     return {"data": base64.b64encode(response).decode()}
-

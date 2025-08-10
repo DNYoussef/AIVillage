@@ -2,11 +2,11 @@
 """Test the optimized compression stages directly without dependency issues."""
 
 import lzma
-from pathlib import Path
 import pickle
 import struct
 import sys
 import time
+from pathlib import Path
 
 from torch import nn
 
@@ -38,7 +38,7 @@ def test_optimized_compression_simulation():
 
     print("Test Model:")
     print(f"  Parameters: {param_count:,}")
-    print(f"  Original size: {original_size/1024:.1f} KB")
+    print(f"  Original size: {original_size / 1024:.1f} KB")
 
     # Initialize compressors
     stage1 = BITNETCompressor()
@@ -106,14 +106,14 @@ def test_optimized_compression_simulation():
         s4_size = len(s4_bytes)
 
         print(
-            f"    Stage 1 (BitNet): {original_param_size/s1_size:.1f}x ({s1_time:.3f}s)"
+            f"    Stage 1 (BitNet): {original_param_size / s1_size:.1f}x ({s1_time:.3f}s)"
         )
-        print(f"    Stage 2 (SeedLM): {s1_size/s2_size:.1f}x ({s2_time:.3f}s)")
-        print(f"    Stage 3 (VPTQ): {s2_size/s3_size:.1f}x ({s3_time:.3f}s)")
+        print(f"    Stage 2 (SeedLM): {s1_size / s2_size:.1f}x ({s2_time:.3f}s)")
+        print(f"    Stage 3 (VPTQ): {s2_size / s3_size:.1f}x ({s3_time:.3f}s)")
         print(
-            f"    Stage 4 (Hyper): {s3_size/s4_size:.1f}x ({s4_time:.3f}s) {'[SKIPPED]' if not hyper_effective else ''}"
+            f"    Stage 4 (Hyper): {s3_size / s4_size:.1f}x ({s4_time:.3f}s) {'[SKIPPED]' if not hyper_effective else ''}"
         )
-        print(f"    Overall: {original_param_size/s4_size:.1f}x")
+        print(f"    Overall: {original_param_size / s4_size:.1f}x")
 
         compressed_params[name] = (tuple(param.shape), s4_bytes)
         total_compressed_size += s4_size
@@ -123,7 +123,7 @@ def test_optimized_compression_simulation():
 
 def test_optimized_packing():
     """Test the new optimized binary packing format."""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("TESTING OPTIMIZED BINARY PACKING")
     print("=" * 60)
 
@@ -171,17 +171,17 @@ def test_optimized_packing():
     print("Packing Comparison:")
     print(f"  Old method (pickle): {old_size:,} bytes")
     print(
-        f"  New binary packing: {new_size:,} bytes ({old_size/new_size:.1f}x smaller)"
+        f"  New binary packing: {new_size:,} bytes ({old_size / new_size:.1f}x smaller)"
     )
-    print(f"  With LZMA: {lzma_size:,} bytes ({new_size/lzma_size:.1f}x additional)")
-    print(f"  Total improvement: {old_size/lzma_size:.1f}x vs pickle")
+    print(f"  With LZMA: {lzma_size:,} bytes ({new_size / lzma_size:.1f}x additional)")
+    print(f"  Total improvement: {old_size / lzma_size:.1f}x vs pickle")
 
     return old_size / lzma_size
 
 
 def simulate_full_optimized_pipeline():
     """Simulate the complete optimized pipeline."""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("FULL OPTIMIZED PIPELINE SIMULATION")
     print("=" * 60)
 
@@ -208,9 +208,9 @@ def simulate_full_optimized_pipeline():
     final_ratio = original_total / estimated_final_size
 
     print("\nFINAL PIPELINE RESULTS:")
-    print(f"  Original model: {original_total/1024:.1f} KB")
-    print(f"  After stage compression: {stage_compressed_size/1024:.1f} KB")
-    print(f"  After optimized packing: {estimated_final_size/1024:.1f} KB")
+    print(f"  Original model: {original_total / 1024:.1f} KB")
+    print(f"  After stage compression: {stage_compressed_size / 1024:.1f} KB")
+    print(f"  After optimized packing: {estimated_final_size / 1024:.1f} KB")
     print(f"  Final compression ratio: {final_ratio:.1f}x")
 
     # Compare to previous results
@@ -246,7 +246,7 @@ def main():
     try:
         final_ratio, efficiency = simulate_full_optimized_pipeline()
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print("OPTIMIZATION ASSESSMENT")
         print("=" * 60)
 
@@ -281,7 +281,7 @@ def main():
         compressed_7b = model_7b_size / final_ratio
         compressed_7b_mb = compressed_7b / (1024 * 1024)
 
-        print(f"  7B model original: {model_7b_size/(1024**3):.1f} GB")
+        print(f"  7B model original: {model_7b_size / (1024**3):.1f} GB")
         print(f"  7B model compressed: {compressed_7b_mb:.0f} MB")
         print(f"  Fits on 2GB phone: {'YES' if compressed_7b_mb < 1000 else 'NO'}")
 

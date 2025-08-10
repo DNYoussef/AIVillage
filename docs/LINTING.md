@@ -68,7 +68,7 @@ make format        # Format code with Black + isort
 
 - **`pyproject.toml`**: Primary configuration (Ruff, Black, isort, mypy)
 - **`.flake8`**: Flake8-specific rules
-- **`.isort.cfg`**: Import sorting configuration  
+- **`.isort.cfg`**: Import sorting configuration
 - **`.pre-commit-config.yaml`**: Git hooks configuration
 - **`lint.py`**: Unified linting orchestrator
 
@@ -86,7 +86,7 @@ import os
 import sys
 from pathlib import Path
 
-# Third-party imports  
+# Third-party imports
 import numpy as np
 import requests
 from transformers import AutoModel
@@ -124,7 +124,7 @@ def complex_function(param1: str, param2: int) -> Dict[str, Any]:
 
     Raises:
         ValueError: If param2 is negative.
-        
+
     Example:
         >>> result = complex_function("test", 42)
         >>> print(result['status'])
@@ -240,14 +240,14 @@ The CI pipeline includes three jobs:
 - **S-series**: Security vulnerabilities
 - **E9-series**: Syntax errors
 
-### 🟡 High Priority (Fix Soon)  
+### 🟡 High Priority (Fix Soon)
 - **E-series**: Style violations
 - **W-series**: Warnings
 - **I-series**: Import issues
 - **ANN-series**: Missing type annotations
 
 ### 🟢 Medium Priority (Fix Eventually)
-- **D-series**: Documentation issues  
+- **D-series**: Documentation issues
 - **UP-series**: Upgrade opportunities
 - **SIM-series**: Simplification suggestions
 

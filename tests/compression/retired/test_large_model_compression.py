@@ -2,9 +2,9 @@
 """Test 4-stage compression on a large model (scaled down for testing)."""
 
 import gc
-from pathlib import Path
 import sys
 import time
+from pathlib import Path
 
 from torch import nn
 
@@ -58,7 +58,7 @@ def create_representative_model():
 
 def test_compression_stage(model, stage_name, compress_func):
     """Test a single compression stage on the model."""
-    print(f"\n{'='*50}")
+    print(f"\n{'=' * 50}")
     print(f"TESTING {stage_name.upper()}")
     print("=" * 50)
 
@@ -109,10 +109,10 @@ def test_compression_stage(model, stage_name, compress_func):
         print(f"  Layers tested: {layer_count}")
         print(f"  Successful: {successful_layers} ({success_rate:.1f}%)")
         print(
-            f"  Original: {total_original:,} bytes ({total_original/(1024**2):.1f} MB)"
+            f"  Original: {total_original:,} bytes ({total_original / (1024**2):.1f} MB)"
         )
         print(
-            f"  Compressed: {total_compressed:,} bytes ({total_compressed/(1024**2):.1f} MB)"
+            f"  Compressed: {total_compressed:,} bytes ({total_compressed / (1024**2):.1f} MB)"
         )
         print(f"  Compression ratio: {overall_ratio:.1f}x")
 
@@ -189,7 +189,7 @@ def extrapolate_to_1_5b(test_params, test_results, target_params=1_500_000_000):
     """Extrapolate test results to 1.5B parameter model."""
     scaling_factor = target_params / test_params
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("EXTRAPOLATION TO 1.5B PARAMETER MODEL")
     print("=" * 60)
 
@@ -218,9 +218,13 @@ def extrapolate_to_1_5b(test_params, test_results, target_params=1_500_000_000):
 
     print("\nExtrapolated 1.5B results:")
     print(f"  Original size: {original_1_5b_gb:.2f} GB")
-    print(f"  Stage 1 (BitNet): {stage1_ratio:.1f}x → {scaled_stage1/(1024**2):.1f} MB")
-    print(f"  Stage 2 (SeedLM): {stage2_ratio:.1f}x → {scaled_stage2/(1024**2):.1f} MB")
-    print(f"  Stage 3 (VPTQ): {stage3_ratio:.1f}x → {scaled_stage3/(1024**2):.1f} MB")
+    print(
+        f"  Stage 1 (BitNet): {stage1_ratio:.1f}x → {scaled_stage1 / (1024**2):.1f} MB"
+    )
+    print(
+        f"  Stage 2 (SeedLM): {stage2_ratio:.1f}x → {scaled_stage2 / (1024**2):.1f} MB"
+    )
+    print(f"  Stage 3 (VPTQ): {stage3_ratio:.1f}x → {scaled_stage3 / (1024**2):.1f} MB")
     print(f"  Stage 4 (LZMA): {stage4_ratio:.1f}x → {final_1_5b_mb:.1f} MB")
 
     print("\nFinal 1.5B model projection:")
@@ -235,7 +239,9 @@ def extrapolate_to_1_5b(test_params, test_results, target_params=1_500_000_000):
     print("\nMobile deployment projection:")
     print(f"  Fits on 2GB phone: {'✅ YES' if mobile_viable else '❌ NO'}")
     print(f"  Kenya deployment: {'✅ READY' if kenya_viable else '⚠️ MARGINAL'}")
-    print(f"  Memory usage: {final_1_5b_mb:.1f} MB ({final_1_5b_mb/1024:.1f}% of 1GB)")
+    print(
+        f"  Memory usage: {final_1_5b_mb:.1f} MB ({final_1_5b_mb / 1024:.1f}% of 1GB)"
+    )
 
     return overall_ratio, final_1_5b_mb, mobile_viable
 
@@ -265,7 +271,7 @@ def main():
     results["vptq"] = (vptq_ratio, vptq_size)
 
     # Stage 4: LZMA
-    print(f"\n{'='*50}")
+    print(f"\n{'=' * 50}")
     print("TESTING LZMA HYPERCOMPRESSION")
     print("=" * 50)
 
@@ -281,7 +287,7 @@ def main():
     overall_ratio, final_mb, mobile_viable = extrapolate_to_1_5b(total_params, results)
 
     # Final assessment
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("FINAL ASSESSMENT")
     print("=" * 60)
 

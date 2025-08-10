@@ -2,8 +2,8 @@
 """Test actual inter-agent coordination capabilities."""
 
 import asyncio
-from pathlib import Path
 import sys
+from pathlib import Path
 
 sys.path.insert(0, str(Path.cwd()))
 
@@ -99,7 +99,7 @@ async def test_multi_agent_coordination():
             )
 
         # Assessment
-        print(f"\n{'='*20} COORDINATION ASSESSMENT {'='*20}")
+        print(f"\n{'=' * 20} COORDINATION ASSESSMENT {'=' * 20}")
 
         can_differentiate = differentiated
         can_track_performance = all(

@@ -6,9 +6,9 @@ Simulates actual deployment scenarios and edge cases
 import asyncio
 import json
 import logging
-from pathlib import Path
 import sys
 import time
+from pathlib import Path
 from typing import Any
 
 # Add project root to path
@@ -76,7 +76,6 @@ class RealWorldSimulation:
                     with patch.object(
                         profiler.profile, "total_memory_gb", specs["memory_gb"]
                     ):
-
                         # Test system adaptation
                         profiler.take_snapshot()
                         suitable = profiler.is_suitable_for_evolution("nightly")
@@ -120,7 +119,6 @@ class RealWorldSimulation:
         logger.info("=== Network Condition Simulation ===")
 
         try:
-
             from src.core.p2p import P2PNode, PeerDiscovery
 
             network_scenarios = [

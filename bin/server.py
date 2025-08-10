@@ -9,28 +9,28 @@ This server is for development and testing purposes only.
 WARNING: This server is NOT production-ready despite being shown in quick start guides.
 """
 
-from collections import defaultdict
 import html
 import mimetypes
 import os
-from pathlib import Path
 import re
 import tempfile
 import time
 import warnings
+from collections import defaultdict
+from pathlib import Path
 
 from fastapi import FastAPI, File, Request, UploadFile
 from fastapi.middleware import Middleware
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field, ValidationError, validator
-from starlette.middleware.base import BaseHTTPMiddleware
-
-from core.evidence import Chunk, ConfidenceTier, EvidencePack
 from rag_system.core.pipeline import EnhancedRAGPipeline
 from rag_system.graph_explain import MAX_HOPS, explain_path
 from rag_system.tracking.unified_knowledge_tracker import UnifiedKnowledgeTracker
 from rag_system.utils.logging import setup_logger as get_logger
+from starlette.middleware.base import BaseHTTPMiddleware
+
+from core.evidence import Chunk, ConfidenceTier, EvidencePack
 
 logger = get_logger(__name__)
 

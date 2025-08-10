@@ -4,16 +4,16 @@ Supports pluggable local models (7B-14B) like Llama for repair proposals.
 Provides unified interface for different model backends.
 """
 
-from abc import ABC, abstractmethod
 import asyncio
-from collections.abc import AsyncIterator
-from dataclasses import dataclass, field
-from datetime import datetime
-from enum import Enum
 import json
 import logging
 import re
 import time
+from abc import ABC, abstractmethod
+from collections.abc import AsyncIterator
+from dataclasses import dataclass, field
+from datetime import datetime
+from enum import Enum
 from typing import Any
 
 

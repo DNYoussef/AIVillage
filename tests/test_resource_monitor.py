@@ -17,7 +17,7 @@ cpu_values = []
 for i in range(3):
     cpu = get_cpu_usage()
     cpu_values.append(cpu)
-    print(f"   Reading {i+1}: {cpu:.1f}%")
+    print(f"   Reading {i + 1}: {cpu:.1f}%")
     time.sleep(0.5)
 
 print(f"   CPU values are changing: {len(set(cpu_values)) > 1}")
@@ -69,7 +69,7 @@ for i in range(5):
     metrics = get_all_metrics()
     metrics_list.append(metrics)
     print(
-        f"   Run {i+1}: CPU={metrics['cpu_percent']:.1f}%, Memory={metrics['memory']['percent']:.1f}%"
+        f"   Run {i + 1}: CPU={metrics['cpu_percent']:.1f}%, Memory={metrics['memory']['percent']:.1f}%"
     )
     time.sleep(1)
 
@@ -77,7 +77,7 @@ for i in range(5):
 cpu_changing = len({m["cpu_percent"] for m in metrics_list}) > 1
 print(f"\nCPU values changing: {cpu_changing}")
 print(
-    f"Timestamps incrementing: {all(metrics_list[i]['timestamp'] < metrics_list[i+1]['timestamp'] for i in range(4))}"
+    f"Timestamps incrementing: {all(metrics_list[i]['timestamp'] < metrics_list[i + 1]['timestamp'] for i in range(4))}"
 )
 
 # Test resource allocation checks
@@ -100,7 +100,7 @@ print(f"Memory history length: {len(monitor.memory_history)}")
 print(f"Full metrics history length: {len(monitor.history)}")
 if monitor.cpu_history:
     print(
-        f"Average CPU over time: {sum(monitor.cpu_history)/len(monitor.cpu_history):.1f}%"
+        f"Average CPU over time: {sum(monitor.cpu_history) / len(monitor.cpu_history):.1f}%"
     )
 
 print("\n✅ Resource Monitor Test Complete!")

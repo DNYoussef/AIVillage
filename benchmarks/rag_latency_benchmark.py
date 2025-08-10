@@ -5,10 +5,11 @@ This benchmark performs deterministic lookups over a small in-memory
 corpus and simulates generation time to measure average query latency
 and retrieval accuracy.
 """
+
 import argparse
 import json
-from pathlib import Path
 import time
+from pathlib import Path
 
 # Simple corpus for deterministic retrieval
 CORPUS = {

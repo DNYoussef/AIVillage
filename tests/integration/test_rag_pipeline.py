@@ -1,8 +1,6 @@
 import pytest
 
-from experimental.rag.storm.wikipedia_storm_pipeline import (
-    WikipediaSTORMPipeline,
-)
+from experimental.rag.storm.wikipedia_storm_pipeline import WikipediaSTORMPipeline
 
 
 def test_rag_pipeline_integration():

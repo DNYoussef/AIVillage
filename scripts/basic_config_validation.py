@@ -4,10 +4,10 @@
 Validates configuration files without external dependencies.
 """
 
-from datetime import datetime
 import json
-from pathlib import Path
 import sys
+from datetime import datetime
+from pathlib import Path
 
 
 def validate_json_file(file_path):
@@ -52,14 +52,14 @@ def main():
         "overall_status": "UNKNOWN",
         "files_checked": 0,
         "files_passed": 0,
-        "validation_results": {}
+        "validation_results": {},
     }
 
     # Files to validate
     files_to_check = [
         ("aivillage_config.yaml", validate_yaml_basic),
         ("p2p_config.json", validate_json_file),
-        ("rag_config.json", validate_json_file)
+        ("rag_config.json", validate_json_file),
     ]
 
     print(f"\nChecking configuration files in {config_dir}...")
@@ -72,7 +72,7 @@ def main():
             "exists": file_path.exists(),
             "size_bytes": 0,
             "valid": False,
-            "errors": []
+            "errors": [],
         }
 
         if file_result["exists"]:
@@ -91,7 +91,11 @@ def main():
         results["validation_results"][filename] = file_result
 
     # Determine overall status
-    success_rate = (results["files_passed"] / results["files_checked"]) * 100 if results["files_checked"] > 0 else 0
+    success_rate = (
+        (results["files_passed"] / results["files_checked"]) * 100
+        if results["files_checked"] > 0
+        else 0
+    )
 
     if success_rate >= 100:
         results["overall_status"] = "EXCELLENT"
@@ -103,9 +107,9 @@ def main():
         results["overall_status"] = "POOR"
 
     # Print results
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print("BASIC CODEX CONFIGURATION VALIDATION REPORT")
-    print("="*80)
+    print("=" * 80)
 
     print(f"\nOverall Status: {results['overall_status']}")
     print(f"Files Checked: {results['files_checked']}")
@@ -115,7 +119,9 @@ def main():
     print("\nFile Validation Results:")
     for filename, file_result in results["validation_results"].items():
         status = "✅" if file_result["valid"] else "❌"
-        size_info = f" ({file_result['size_bytes']} bytes)" if file_result["exists"] else ""
+        size_info = (
+            f" ({file_result['size_bytes']} bytes)" if file_result["exists"] else ""
+        )
         print(f"  {filename}: {status}{size_info}")
 
         if file_result["errors"]:
@@ -136,11 +142,26 @@ def main():
             checks = [
                 ("Host is 0.0.0.0", p2p_config.get("host") == "0.0.0.0"),
                 ("Port is 4001", p2p_config.get("port") == 4001),
-                ("mDNS enabled", p2p_config.get("peer_discovery", {}).get("mdns_enabled") is True),
-                ("TCP transport enabled", p2p_config.get("transports", {}).get("tcp_enabled") is True),
-                ("WebSocket transport enabled", p2p_config.get("transports", {}).get("websocket_enabled") is True),
-                ("TLS security enabled", p2p_config.get("security", {}).get("tls_enabled") is True),
-                ("Peer verification enabled", p2p_config.get("security", {}).get("peer_verification") is True)
+                (
+                    "mDNS enabled",
+                    p2p_config.get("peer_discovery", {}).get("mdns_enabled") is True,
+                ),
+                (
+                    "TCP transport enabled",
+                    p2p_config.get("transports", {}).get("tcp_enabled") is True,
+                ),
+                (
+                    "WebSocket transport enabled",
+                    p2p_config.get("transports", {}).get("websocket_enabled") is True,
+                ),
+                (
+                    "TLS security enabled",
+                    p2p_config.get("security", {}).get("tls_enabled") is True,
+                ),
+                (
+                    "Peer verification enabled",
+                    p2p_config.get("security", {}).get("peer_verification") is True,
+                ),
             ]
 
             for check_name, check_result in checks:
@@ -160,12 +181,27 @@ def main():
                 rag_config = json.load(f)
 
             checks = [
-                ("Embedding model is paraphrase-MiniLM-L3-v2",
-                 rag_config.get("embedder", {}).get("model_name") == "paraphrase-MiniLM-L3-v2"),
-                ("Vector top-k is 20", rag_config.get("retrieval", {}).get("vector_top_k") == 20),
-                ("Keyword top-k is 20", rag_config.get("retrieval", {}).get("keyword_top_k") == 20),
-                ("Final top-k is 10", rag_config.get("retrieval", {}).get("final_top_k") == 10),
-                ("L1 cache size is 128", rag_config.get("cache", {}).get("l1_size") == 128)
+                (
+                    "Embedding model is paraphrase-MiniLM-L3-v2",
+                    rag_config.get("embedder", {}).get("model_name")
+                    == "paraphrase-MiniLM-L3-v2",
+                ),
+                (
+                    "Vector top-k is 20",
+                    rag_config.get("retrieval", {}).get("vector_top_k") == 20,
+                ),
+                (
+                    "Keyword top-k is 20",
+                    rag_config.get("retrieval", {}).get("keyword_top_k") == 20,
+                ),
+                (
+                    "Final top-k is 10",
+                    rag_config.get("retrieval", {}).get("final_top_k") == 10,
+                ),
+                (
+                    "L1 cache size is 128",
+                    rag_config.get("cache", {}).get("l1_size") == 128,
+                ),
             ]
 
             for check_name, check_result in checks:
@@ -177,16 +213,18 @@ def main():
     else:
         print("  RAG config: ❌ File missing")
 
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
 
     if results["overall_status"] in ["EXCELLENT", "GOOD"]:
         print("✅ Basic configuration validation passed!")
-        print("Configuration files are syntactically valid and meet basic CODEX requirements.")
+        print(
+            "Configuration files are syntactically valid and meet basic CODEX requirements."
+        )
     else:
         print("❌ Configuration validation found issues!")
         print("Review and fix the issues above before proceeding.")
 
-    print("="*80)
+    print("=" * 80)
 
     # Save basic report
     report_file = config_dir / "basic_validation_report.json"

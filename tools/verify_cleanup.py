@@ -11,6 +11,7 @@ Usage:
 The default log file is ``cleanup.log`` and the default metrics file is
 ``cleanup_metrics.json``.
 """
+
 from __future__ import annotations
 
 import argparse

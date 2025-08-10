@@ -21,7 +21,10 @@ async def run_pipeline(pipeline: WikipediaSTORMPipeline) -> None:
 
 def test_wikipedia_storm_rag():
     dataset = [
-        {"title": "History of Science", "text": "History and Science content for education."},
+        {
+            "title": "History of Science",
+            "text": "History and Science content for education.",
+        },
         {"title": "Sports", "text": "General sports article"},
     ]
     pipeline = WikipediaSTORMPipeline(dataset=dataset)

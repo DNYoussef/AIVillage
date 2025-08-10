@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """PROVE compression works with real running code - no simulations."""
 
-from pathlib import Path
 import sys
 import time
+from pathlib import Path
 
 import torch
 from torch import nn
@@ -28,7 +28,7 @@ def prove_bitnet_compression():
     print(f"  Tensor shape: {weights.shape}")
     print(f"  Parameters: {weights.numel():,}")
     print(f"  Size in bytes: {original_bytes:,}")
-    print(f"  Size in KB: {original_bytes/1024:.1f}")
+    print(f"  Size in KB: {original_bytes / 1024:.1f}")
 
     # Run ACTUAL BitNet compression
     compressor = BITNETCompressor()
@@ -57,7 +57,7 @@ def prove_bitnet_compression():
     print(f"  Shape info: {shape_size} bytes")
     print(f"  Threshold: {threshold_size} bytes")
     print(f"  TOTAL compressed: {total_compressed_size} bytes")
-    print(f"  TOTAL compressed KB: {total_compressed_size/1024:.1f}")
+    print(f"  TOTAL compressed KB: {total_compressed_size / 1024:.1f}")
 
     # Calculate REAL compression ratio
     real_ratio = original_bytes / total_compressed_size
@@ -81,7 +81,7 @@ def prove_bitnet_compression():
 
 def prove_actual_advanced_pipeline():
     """Try to run the ACTUAL AdvancedCompressionPipeline if possible."""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("ATTEMPTING TO RUN ACTUAL ADVANCED PIPELINE")
     print("=" * 60)
 
@@ -180,7 +180,7 @@ def prove_actual_advanced_pipeline():
 
 def prove_optimization_improvements():
     """Prove the optimization improvements with actual code."""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("PROVING OPTIMIZATION IMPROVEMENTS")
     print("=" * 60)
 
@@ -253,7 +253,7 @@ def prove_optimization_improvements():
 
 def prove_real_mobile_deployment():
     """Prove mobile deployment with exact calculations."""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("PROVING REAL MOBILE DEPLOYMENT")
     print("=" * 60)
 
@@ -324,7 +324,7 @@ def main():
     try:
         final_ratio, mb_7b, mb_1b = prove_real_mobile_deployment()
 
-        print(f"\n{'='*70}")
+        print(f"\n{'=' * 70}")
         print("PROOF SUMMARY - REAL MEASUREMENTS ONLY")
         print("=" * 70)
 

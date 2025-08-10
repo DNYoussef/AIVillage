@@ -3,12 +3,12 @@
 Migrates from mock Bluetooth to LibP2P mesh network according to CODEX requirements.
 """
 
-from datetime import datetime
 import json
 import logging
 import os
-from pathlib import Path
 import sqlite3
+from datetime import datetime
+from pathlib import Path
 from typing import Any
 
 logging.basicConfig(level=logging.INFO)
@@ -41,14 +41,18 @@ class P2PNetworkMigrator:
             "*bluetooth*",
             "*mesh*network*",
             "*p2p*mock*",
-            "*bluetooth*peer*"
+            "*bluetooth*peer*",
         ]
 
         for search_dir in search_dirs:
             if search_dir.exists():
                 for pattern in search_patterns:
                     for file_path in search_dir.rglob(pattern):
-                        if file_path.is_file() and file_path.suffix in [".py", ".json", ".txt"]:
+                        if file_path.is_file() and file_path.suffix in [
+                            ".py",
+                            ".json",
+                            ".txt",
+                        ]:
                             legacy_files.append(file_path)
                             logger.info(f"Found legacy file: {file_path}")
 
@@ -62,7 +66,7 @@ class P2PNetworkMigrator:
             "known_peers": [],
             "peer_groups": {},
             "network_settings": {},
-            "message_history": []
+            "message_history": [],
         }
 
         for file_path in legacy_files:
@@ -95,12 +99,14 @@ class P2PNetworkMigrator:
             logger.info("No legacy peers found, using default configuration")
             peer_config["known_peers"] = [
                 {"id": "default_peer_1", "address": "127.0.0.1", "port": 4001},
-                {"id": "default_peer_2", "address": "127.0.0.1", "port": 4002}
+                {"id": "default_peer_2", "address": "127.0.0.1", "port": 4002},
             ]
 
         return peer_config
 
-    def create_libp2p_configuration(self, peer_config: dict[str, Any]) -> dict[str, Any]:
+    def create_libp2p_configuration(
+        self, peer_config: dict[str, Any]
+    ) -> dict[str, Any]:
         """Create LibP2P configuration from legacy data."""
         logger.info("Creating LibP2P configuration...")
 
@@ -112,13 +118,13 @@ class P2PNetworkMigrator:
                 "mdns_enabled": True,
                 "mdns_service_name": MDNS_SERVICE_NAME,
                 "discovery_interval": MDNS_DISCOVERY_INTERVAL,
-                "bootstrap_peers": []
+                "bootstrap_peers": [],
             },
             "transports": {
                 "tcp_enabled": True,
                 "websocket_enabled": True,
                 "bluetooth_enabled": False,  # Disabled broken Bluetooth
-                "wifi_direct_enabled": False
+                "wifi_direct_enabled": False,
             },
             "pubsub": {
                 "gossipsub_enabled": True,
@@ -126,30 +132,29 @@ class P2PNetworkMigrator:
                     "/aivillage/data",
                     "/aivillage/agents",
                     "/aivillage/evolution",
-                    "/aivillage/coordination"
-                ]
+                    "/aivillage/coordination",
+                ],
             },
-            "dht": {
-                "kademlia_enabled": True,
-                "replication_factor": 3
-            },
+            "dht": {"kademlia_enabled": True, "replication_factor": 3},
             "mesh": {
                 "max_peers": MESH_MAX_PEERS,
                 "heartbeat_interval": MESH_HEARTBEAT_INTERVAL,
-                "connection_timeout": 30
+                "connection_timeout": 30,
             },
             "fallback_transports": {
                 "file_transport_enabled": True,
                 "file_transport_dir": "/tmp/aivillage_mesh",
-                "local_socket_enabled": True
-            }
+                "local_socket_enabled": True,
+            },
         }
 
         # Convert legacy peer addresses to LibP2P bootstrap peers
         for peer in peer_config["known_peers"]:
             if isinstance(peer, dict) and "address" in peer:
                 bootstrap_addr = f"/ip4/{peer['address']}/tcp/{peer.get('port', 4001)}"
-                libp2p_config["peer_discovery"]["bootstrap_peers"].append(bootstrap_addr)
+                libp2p_config["peer_discovery"]["bootstrap_peers"].append(
+                    bootstrap_addr
+                )
 
         return libp2p_config
 
@@ -171,7 +176,7 @@ class P2PNetworkMigrator:
         android_updates = {
             "libp2p_service_created": False,
             "jni_bridge_updated": False,
-            "kotlin_service_replaced": False
+            "kotlin_service_replaced": False,
         }
 
         # Check if Android files exist
@@ -201,13 +206,14 @@ class P2PNetworkMigrator:
             "pubsub_messaging": False,
             "dht_routing": False,
             "message_delivery_rate": 0.0,
-            "peer_discovery_time": 0.0
+            "peer_discovery_time": 0.0,
         }
 
         try:
             # Check if LibP2P is available
             try:
                 from libp2p import new_host
+
                 connectivity_results["libp2p_available"] = True
                 logger.info("LibP2P library is available")
             except ImportError:
@@ -237,15 +243,15 @@ class P2PNetworkMigrator:
                 "message_delivery_rate": 0.0,  # Broken Bluetooth
                 "peer_discovery_time": float("inf"),
                 "max_peers": 5,
-                "connection_reliability": 0.0
+                "connection_reliability": 0.0,
             },
             "libp2p_performance": {
                 "message_delivery_rate": 0.95,  # Target rate
-                "peer_discovery_time": 15.0,    # Via mDNS
+                "peer_discovery_time": 15.0,  # Via mDNS
                 "max_peers": MESH_MAX_PEERS,
-                "connection_reliability": 0.98
+                "connection_reliability": 0.98,
             },
-            "improvements": {}
+            "improvements": {},
         }
 
         # Calculate improvements
@@ -256,7 +262,7 @@ class P2PNetworkMigrator:
             "delivery_rate_improvement": "0% → 95%",
             "peer_discovery_improvement": "Failed → 15s",
             "max_peers_improvement": f"{bluetooth['max_peers']} → {libp2p['max_peers']}",
-            "reliability_improvement": "0% → 98%"
+            "reliability_improvement": "0% → 98%",
         }
 
         return performance_metrics
@@ -269,7 +275,8 @@ class P2PNetworkMigrator:
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
 
-        cursor.execute("""
+        cursor.execute(
+            """
             CREATE TABLE IF NOT EXISTS p2p_migration_log (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 migration_step TEXT NOT NULL,
@@ -279,9 +286,11 @@ class P2PNetworkMigrator:
                 notes TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
-        """)
+        """
+        )
 
-        cursor.execute("""
+        cursor.execute(
+            """
             CREATE TABLE IF NOT EXISTS peer_migration (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 legacy_peer_id TEXT,
@@ -290,7 +299,8 @@ class P2PNetworkMigrator:
                 migration_status TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
-        """)
+        """
+        )
 
         conn.commit()
         conn.close()
@@ -337,17 +347,19 @@ class P2PNetworkMigrator:
             "legacy_files": {
                 "found": len(legacy_files),
                 "processed": len(legacy_files),
-                "files": [str(f) for f in legacy_files]
+                "files": [str(f) for f in legacy_files],
             },
             "peer_configuration": {
                 "legacy_peers": len(peer_config["known_peers"]),
-                "libp2p_bootstrap_peers": len(libp2p_config["peer_discovery"]["bootstrap_peers"])
+                "libp2p_bootstrap_peers": len(
+                    libp2p_config["peer_discovery"]["bootstrap_peers"]
+                ),
             },
             "libp2p_config": {
                 "path": str(config_path),
                 "host": libp2p_config["host"],
                 "port": libp2p_config["port"],
-                "max_peers": libp2p_config["mesh"]["max_peers"]
+                "max_peers": libp2p_config["mesh"]["max_peers"],
             },
             "android_integration": android_updates,
             "connectivity_test": connectivity_results,
@@ -356,11 +368,13 @@ class P2PNetworkMigrator:
                 "port_4001": libp2p_config["port"] == 4001,
                 "mdns_enabled": libp2p_config["peer_discovery"]["mdns_enabled"],
                 "max_peers_50": libp2p_config["mesh"]["max_peers"] == 50,
-                "heartbeat_10s": libp2p_config["mesh"]["heartbeat_interval"] == 10
-            }
+                "heartbeat_10s": libp2p_config["mesh"]["heartbeat_interval"] == 10,
+            },
         }
 
-        logger.info(f"P2P migration completed: {connectivity_results['message_delivery_rate']:.0%} delivery rate")
+        logger.info(
+            f"P2P migration completed: {connectivity_results['message_delivery_rate']:.0%} delivery rate"
+        )
 
         return report
 
@@ -375,16 +389,20 @@ def main():
     with open(report_path, "w") as f:
         json.dump(report, f, indent=2, default=str)
 
-    print(f"\n{'='*50}")
+    print(f"\n{'=' * 50}")
     print("P2P NETWORK MIGRATION COMPLETE")
-    print(f"{'='*50}")
+    print(f"{'=' * 50}")
     print(f"Status: {report['status']}")
     print(f"Migration: {report['migration_type']}")
     print(f"Legacy files: {report['legacy_files']['found']}")
-    print(f"LibP2P host: {report['libp2p_config']['host']}:{report['libp2p_config']['port']}")
+    print(
+        f"LibP2P host: {report['libp2p_config']['host']}:{report['libp2p_config']['port']}"
+    )
     print(f"Max peers: {report['libp2p_config']['max_peers']}")
     print(f"LibP2P available: {report['connectivity_test']['libp2p_available']}")
-    print(f"Message delivery: {report['performance_metrics']['libp2p_performance']['message_delivery_rate']:.0%}")
+    print(
+        f"Message delivery: {report['performance_metrics']['libp2p_performance']['message_delivery_rate']:.0%}"
+    )
     print(f"CODEX compliance: {all(report['codex_compliance'].values())}")
     print(f"Duration: {report['duration']:.2f} seconds")
     print(f"Report saved: {report_path}")

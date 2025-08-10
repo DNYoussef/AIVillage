@@ -68,7 +68,9 @@ class TestPasswordHashing(unittest.TestCase):
     def hash_password(self, password: str):
         """Hash password with salt using PBKDF2."""
         salt = os.urandom(32)
-        password_hash = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, 100000)
+        password_hash = hashlib.pbkdf2_hmac(
+            "sha256", password.encode("utf-8"), salt, 100000
+        )
         return salt.hex(), password_hash.hex()
 
     def verify_password(self, password: str, salt_hex: str, hash_hex: str) -> bool:
@@ -76,10 +78,13 @@ class TestPasswordHashing(unittest.TestCase):
         try:
             salt = bytes.fromhex(salt_hex)
             stored_hash = bytes.fromhex(hash_hex)
-            password_hash = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, 100000)
+            password_hash = hashlib.pbkdf2_hmac(
+                "sha256", password.encode("utf-8"), salt, 100000
+            )
 
             # Constant time comparison
             import hmac
+
             return hmac.compare_digest(password_hash, stored_hash)
         except Exception:
             return False
@@ -166,7 +171,7 @@ class TestInputValidation(unittest.TestCase):
         # Limit length
         if len(filename) > 200:
             name, ext = os.path.splitext(filename)
-            filename = name[:200-len(ext)] + ext
+            filename = name[: 200 - len(ext)] + ext
 
         # Ensure it doesn't start with dot or dash
         if filename.startswith(".") or filename.startswith("-"):
@@ -177,8 +182,14 @@ class TestInputValidation(unittest.TestCase):
     def test_json_validation(self):
         """Test JSON field validation."""
         # Valid values
-        self.assertTrue(self.validate_json_field("test", {"type": str, "min_length": 3}))
-        self.assertTrue(self.validate_json_field(25, {"type": int, "min_value": 0, "max_value": 100}))
+        self.assertTrue(
+            self.validate_json_field("test", {"type": str, "min_length": 3})
+        )
+        self.assertTrue(
+            self.validate_json_field(
+                25, {"type": int, "min_value": 0, "max_value": 100}
+            )
+        )
 
         # Invalid values
         with self.assertRaises(ValueError):
@@ -198,7 +209,7 @@ class TestInputValidation(unittest.TestCase):
             "con.txt": "file_con.txt",
             "file\x00name.txt": "file_name.txt",
             ".hidden": "file_.hidden",
-            "-dash": "file_-dash"
+            "-dash": "file_-dash",
         }
 
         for dangerous, expected_safe in dangerous_filenames.items():
@@ -219,7 +230,9 @@ class TestRateLimiting(unittest.TestCase):
         super().__init__(*args, **kwargs)
         self.rate_limits = {}  # client_id -> list of timestamps
 
-    def is_rate_limited(self, client_id: str, max_requests: int = 5, window_seconds: int = 60) -> bool:
+    def is_rate_limited(
+        self, client_id: str, max_requests: int = 5, window_seconds: int = 60
+    ) -> bool:
         """Check if client is rate limited."""
         now = time.time()
 
@@ -229,7 +242,8 @@ class TestRateLimiting(unittest.TestCase):
 
         # Clean old requests
         self.rate_limits[client_id] = [
-            timestamp for timestamp in self.rate_limits[client_id]
+            timestamp
+            for timestamp in self.rate_limits[client_id]
             if now - timestamp < window_seconds
         ]
 
@@ -247,8 +261,10 @@ class TestRateLimiting(unittest.TestCase):
 
         # First 5 requests should pass
         for i in range(5):
-            is_limited = self.is_rate_limited(client_id, max_requests=5, window_seconds=10)
-            self.assertFalse(is_limited, f"Request {i+1} should not be rate limited")
+            is_limited = self.is_rate_limited(
+                client_id, max_requests=5, window_seconds=10
+            )
+            self.assertFalse(is_limited, f"Request {i + 1} should not be rate limited")
 
         # 6th request should be rate limited
         is_limited = self.is_rate_limited(client_id, max_requests=5, window_seconds=10)
@@ -260,7 +276,9 @@ class TestRateLimiting(unittest.TestCase):
 
         # Fill up the rate limit with very short window
         for i in range(3):
-            is_limited = self.is_rate_limited(client_id, max_requests=3, window_seconds=1)
+            is_limited = self.is_rate_limited(
+                client_id, max_requests=3, window_seconds=1
+            )
             self.assertFalse(is_limited)
 
         # Should be limited now
@@ -286,7 +304,7 @@ class TestSecurityHeaders(unittest.TestCase):
             "X-XSS-Protection": "1; mode=block",
             "Referrer-Policy": "strict-origin-when-cross-origin",
             "Content-Security-Policy": "default-src 'self'",
-            "Strict-Transport-Security": "max-age=31536000; includeSubDomains"
+            "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
         }
 
     def test_security_headers_present(self):
@@ -297,7 +315,7 @@ class TestSecurityHeaders(unittest.TestCase):
             "X-Content-Type-Options",
             "X-Frame-Options",
             "X-XSS-Protection",
-            "Content-Security-Policy"
+            "Content-Security-Policy",
         ]
 
         for header in required_headers:
@@ -323,7 +341,7 @@ class TestComplianceFlags(unittest.TestCase):
             "coppa_required": user_age < 13 and region == "US",
             "gdpr_required": region in ["EU", "UK"],
             "ferpa_applicable": True,  # Always applicable for educational records
-            "data_retention_days": 365 if user_age >= 18 else 180  # Shorter for minors
+            "data_retention_days": 365 if user_age >= 18 else 180,  # Shorter for minors
         }
         return requirements
 
@@ -384,27 +402,25 @@ class TestDatabaseSecurity(unittest.TestCase):
             conn = self.create_secure_connection(temp_db.name)
 
             # Create test table
-            conn.execute("""
+            conn.execute(
+                """
                 CREATE TABLE users (
                     id INTEGER PRIMARY KEY,
                     username TEXT NOT NULL,
                     email TEXT
                 )
-            """)
+            """
+            )
 
             # Test parameterized insert (safe)
             username = "test_user"
             email = "test@example.com"
             conn.execute(
-                "INSERT INTO users (username, email) VALUES (?, ?)",
-                (username, email)
+                "INSERT INTO users (username, email) VALUES (?, ?)", (username, email)
             )
 
             # Test parameterized select (safe)
-            cursor = conn.execute(
-                "SELECT * FROM users WHERE username = ?",
-                (username,)
-            )
+            cursor = conn.execute("SELECT * FROM users WHERE username = ?", (username,))
             result = cursor.fetchone()
 
             self.assertIsNotNone(result)
@@ -447,7 +463,7 @@ def run_security_tests():
         TestRateLimiting,
         TestSecurityHeaders,
         TestComplianceFlags,
-        TestDatabaseSecurity
+        TestDatabaseSecurity,
     ]
 
     suite = unittest.TestSuite()
@@ -465,7 +481,12 @@ def run_security_tests():
         "failures": len(result.failures),
         "errors": len(result.errors),
         "skipped": len(getattr(result, "skipped", [])),
-        "success_rate": (result.testsRun - len(result.failures) - len(result.errors)) / result.testsRun if result.testsRun > 0 else 0
+        "success_rate": (
+            (result.testsRun - len(result.failures) - len(result.errors))
+            / result.testsRun
+            if result.testsRun > 0
+            else 0
+        ),
     }
 
 

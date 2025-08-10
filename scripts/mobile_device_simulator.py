@@ -3,9 +3,9 @@
 Based on feasibility report: 2-4GB RAM devices with MediaTek Helio processors.
 """
 
+import time
 from contextlib import contextmanager
 from dataclasses import dataclass
-import time
 from typing import Any
 
 import psutil

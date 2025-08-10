@@ -2,14 +2,14 @@
 """Create comprehensive visualizations for 50-generation evolution results."""
 
 import json
-from pathlib import Path
 import warnings
+from pathlib import Path
 
-from matplotlib.gridspec import GridSpec
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
+from matplotlib.gridspec import GridSpec
 
 warnings.filterwarnings("ignore")
 

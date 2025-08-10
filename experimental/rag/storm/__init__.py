@@ -5,6 +5,7 @@ This module provides a lightweight pipeline and related utilities for
 educational mobile scenarios. It remains experimental and is not
 intended for production use.
 """
+
 import warnings
 
 warnings.warn(

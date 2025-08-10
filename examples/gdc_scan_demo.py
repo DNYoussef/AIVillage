@@ -6,8 +6,8 @@ Demonstrates how to use the HypeRAG Graph-Doctor constraint detection system.
 
 import asyncio
 import json
-from pathlib import Path
 import sys
+from pathlib import Path
 
 # Add project root to path
 project_root = Path(__file__).parent.parent

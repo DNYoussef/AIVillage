@@ -6,9 +6,9 @@ with consistent logging, error categorization, and API responses.
 
 from __future__ import annotations
 
-from functools import wraps
 import logging
 import traceback
+from functools import wraps
 from typing import TYPE_CHECKING, Any
 
 from fastapi import HTTPException, Request

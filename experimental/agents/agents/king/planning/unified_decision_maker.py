@@ -1,21 +1,21 @@
 import asyncio
-from collections import defaultdict
 import io
 import json
 import logging
 import math
 import os
 import random
+from collections import defaultdict
 from typing import Any
 
-from langroid.language_models.openai_gpt import OpenAIGPTConfig
 import matplotlib.pyplot as plt
 import networkx as nx
 import torch
+from langroid.language_models.openai_gpt import OpenAIGPTConfig
+from rag_system.core.pipeline import EnhancedRAGPipeline
 from transformers import GPT2LMHeadModel, GPT2Tokenizer
 
 from core.error_handling import AIVillageException, StandardCommunicationProtocol
-from rag_system.core.pipeline import EnhancedRAGPipeline
 
 from .quality_assurance_layer import QualityAssuranceLayer
 

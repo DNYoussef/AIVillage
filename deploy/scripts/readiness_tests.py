@@ -3,12 +3,12 @@
 
 import argparse
 import asyncio
-from dataclasses import dataclass
 import json
 import logging
 import subprocess
 import sys
 import time
+from dataclasses import dataclass
 
 import aiohttp
 
@@ -84,7 +84,9 @@ class ProductionReadinessValidator:
                             await asyncio.sleep(0.5)  # Small delay between requests
 
                     except Exception as e:
-                        logger.warning(f"Request {i+1} failed for {service_name}: {e}")
+                        logger.warning(
+                            f"Request {i + 1} failed for {service_name}: {e}"
+                        )
                         continue
 
             proc.terminate()

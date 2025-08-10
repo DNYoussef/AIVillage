@@ -3,13 +3,13 @@ Provides comprehensive error handling with categories, severity levels, and cont
 """
 
 import asyncio
+import functools
+import logging
+import traceback
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
-import functools
-import logging
-import traceback
 from typing import Any, TypeVar, cast
 
 from src.communications.message import Priority

@@ -7,6 +7,7 @@ print("----------------")
 
 try:
     import babel
+
     print("\n--- Babel Import ---")
     print("Successfully imported babel.")
     print(f"Location: {babel.__file__}")

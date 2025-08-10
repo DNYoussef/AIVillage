@@ -1,5 +1,5 @@
-from datetime import datetime
 import os
+from datetime import datetime
 from typing import Any
 
 import faiss

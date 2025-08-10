@@ -221,7 +221,6 @@ class TestAdaptiveReshardingManager:
             patch.object(resharding_manager, "_handle_device_joined") as mock_join,
             patch.object(resharding_manager, "_handle_device_left") as mock_leave,
         ):
-
             # Add new device to peer registry
             resharding_manager.p2p_node.peer_registry["device_3"] = device_profiles[
                 2
@@ -242,7 +241,6 @@ class TestAdaptiveReshardingManager:
             ),
             patch.object(resharding_manager, "trigger_resharding") as mock_trigger,
         ):
-
             await resharding_manager._check_performance_degradation()
 
             # Should trigger resharding for performance degradation
@@ -260,7 +258,6 @@ class TestAdaptiveReshardingManager:
             ),
             patch.object(resharding_manager, "trigger_resharding") as mock_trigger,
         ):
-
             await resharding_manager._check_performance_degradation()
 
             # Should trigger emergency resharding

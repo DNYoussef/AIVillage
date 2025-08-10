@@ -52,7 +52,7 @@ class TestResults:
             print(f"{status:8} | {test_name:<40} | {self.details[test_name]}")
 
         print("=" * 80)
-        print(f"SUMMARY: {passed}/{total} tests passed ({passed/total*100:.1f}%)")
+        print(f"SUMMARY: {passed}/{total} tests passed ({passed / total * 100:.1f}%)")
         print("=" * 80)
 
 

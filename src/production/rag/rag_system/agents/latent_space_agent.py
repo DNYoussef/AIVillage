@@ -1,8 +1,8 @@
 from typing import Any
 
-from some_embedding_library import (
+from some_embedding_library import (  # Replace with actual embedding library
     get_embedding,
-)  # Replace with actual embedding library
+)
 from some_llm_library import LLMModel  # Replace with actual LLM library
 
 from AIVillage.src.production.rag.rag_system.core.agent_interface import AgentInterface

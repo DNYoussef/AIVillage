@@ -1,10 +1,11 @@
 """Simple configuration validation test."""
 
-from pathlib import Path
 import sys
+from pathlib import Path
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent / "src"))
+
 
 def test_basic_validation():
     """Test basic environment validation."""
@@ -27,7 +28,7 @@ def test_basic_validation():
             "LIBP2P_PORT": "4001",
             "DIGITAL_TWIN_COPPA_COMPLIANT": "true",
             "DIGITAL_TWIN_FERPA_COMPLIANT": "true",
-            "DIGITAL_TWIN_GDPR_COMPLIANT": "true"
+            "DIGITAL_TWIN_GDPR_COMPLIANT": "true",
         }
 
         # Test development profile
@@ -35,7 +36,9 @@ def test_basic_validation():
         print("✅ Created development validator")
 
         report = validator.validate_all(test_env)
-        print(f"✅ Validation completed - Errors: {report.errors}, Warnings: {report.warnings}")
+        print(
+            f"✅ Validation completed - Errors: {report.errors}, Warnings: {report.warnings}"
+        )
 
         # Show first few issues if any
         if report.issues:
@@ -49,6 +52,7 @@ def test_basic_validation():
     except Exception as e:
         print(f"❌ Error during validation test: {e}")
         return False
+
 
 def test_configuration_manager():
     """Test configuration manager."""
@@ -83,6 +87,7 @@ def test_configuration_manager():
         print(f"❌ Error during configuration manager test: {e}")
         return False
 
+
 def test_template_completeness():
     """Test that .env.template has all required variables."""
     try:
@@ -100,7 +105,7 @@ def test_template_completeness():
             "RAG PIPELINE SYSTEM",
             "P2P NETWORKING",
             "DIGITAL TWIN SYSTEM",
-            "API SERVER CONFIGURATION"
+            "API SERVER CONFIGURATION",
         ]
 
         missing_sections = []
@@ -113,8 +118,11 @@ def test_template_completeness():
             return False
 
         # Count variables
-        variable_lines = [line for line in template_content.split("\n")
-                         if "=" in line and not line.strip().startswith("#")]
+        variable_lines = [
+            line
+            for line in template_content.split("\n")
+            if "=" in line and not line.strip().startswith("#")
+        ]
 
         print(f"✅ .env.template has {len(variable_lines)} configuration variables")
         print("✅ All required sections present")
@@ -124,6 +132,7 @@ def test_template_completeness():
     except Exception as e:
         print(f"❌ Error checking .env.template: {e}")
         return False
+
 
 def test_yaml_config_files():
     """Test YAML configuration files."""
@@ -135,7 +144,7 @@ def test_yaml_config_files():
 
         config_files = [
             "aivillage_config_development.yaml",
-            "aivillage_config_production.yaml"
+            "aivillage_config_production.yaml",
         ]
 
         for config_file in config_files:
@@ -161,6 +170,7 @@ def test_yaml_config_files():
         print(f"❌ Error checking YAML config files: {e}")
         return False
 
+
 def main():
     """Run all validation tests."""
     print("🔧 AIVillage Configuration System Validation")
@@ -170,7 +180,7 @@ def main():
         ("Environment Template", test_template_completeness),
         ("YAML Config Files", test_yaml_config_files),
         ("Environment Validator", test_basic_validation),
-        ("Configuration Manager", test_configuration_manager)
+        ("Configuration Manager", test_configuration_manager),
     ]
 
     results = []
@@ -207,6 +217,7 @@ def main():
         print(f"\n⚠️ {total - passed} test(s) failed. Check the errors above.")
 
     return passed == total
+
 
 if __name__ == "__main__":
     success = main()

@@ -5,12 +5,12 @@ Comprehensive code quality and linting orchestrator
 
 import argparse
 import concurrent.futures
-from datetime import datetime
 import json
-from pathlib import Path
 import subprocess
 import sys
 import time
+from datetime import datetime
+from pathlib import Path
 from typing import Any
 
 
@@ -31,37 +31,24 @@ class LintingOrchestrator:
                 "line_length": 88,
                 "target_python": "py310",
                 "exclude_dirs": [
-                    ".git", "__pycache__", "build", "dist", "venv", "env",
-                    ".mypy_cache", "archived"
+                    ".git",
+                    "__pycache__",
+                    "build",
+                    "dist",
+                    "venv",
+                    "env",
+                    ".mypy_cache",
+                    "archived",
                 ],
                 "tools": {
-                    "ruff": {
-                        "enabled": True,
-                        "fix": False,
-                        "config": "pyproject.toml"
-                    },
-                    "black": {
-                        "enabled": True,
-                        "check": True
-                    },
-                    "isort": {
-                        "enabled": True,
-                        "check": True
-                    },
-                    "mypy": {
-                        "enabled": True,
-                        "non_blocking": True
-                    },
-                    "flake8": {
-                        "enabled": True,
-                        "config": ".flake8"
-                    }
-                }
+                    "ruff": {"enabled": True, "fix": False, "config": "pyproject.toml"},
+                    "black": {"enabled": True, "check": True},
+                    "isort": {"enabled": True, "check": True},
+                    "mypy": {"enabled": True, "non_blocking": True},
+                    "flake8": {"enabled": True, "config": ".flake8"},
+                },
             },
-            "performance": {
-                "max_workers": 4,
-                "timeout_per_tool": 300
-            }
+            "performance": {"max_workers": 4, "timeout_per_tool": 300},
         }
 
         if config_path and Path(config_path).exists():
@@ -88,46 +75,74 @@ class LintingOrchestrator:
 
         # Test Ruff (CLI)
         try:
-            result = subprocess.run(["ruff", "--version"], check=False, capture_output=True, text=True, timeout=10)
+            result = subprocess.run(
+                ["ruff", "--version"],
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=10,
+            )
             tools["ruff"] = result.returncode == 0
         except (subprocess.TimeoutExpired, FileNotFoundError):
             tools["ruff"] = False
 
         # Test Black (Python module)
         try:
-            result = subprocess.run([sys.executable, "-c", "import black; print('ok')"],
-                                  check=False, capture_output=True, text=True, timeout=10)
+            result = subprocess.run(
+                [sys.executable, "-c", "import black; print('ok')"],
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=10,
+            )
             tools["black"] = result.returncode == 0 and "ok" in result.stdout
         except (subprocess.TimeoutExpired, FileNotFoundError):
             tools["black"] = False
 
         # Test isort
         try:
-            result = subprocess.run([sys.executable, "-c", "import isort; print('ok')"],
-                                  check=False, capture_output=True, text=True, timeout=10)
+            result = subprocess.run(
+                [sys.executable, "-c", "import isort; print('ok')"],
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=10,
+            )
             tools["isort"] = result.returncode == 0 and "ok" in result.stdout
         except (subprocess.TimeoutExpired, FileNotFoundError):
             tools["isort"] = False
 
         # Test mypy
         try:
-            result = subprocess.run([sys.executable, "-c", "import mypy; print('ok')"],
-                                  check=False, capture_output=True, text=True, timeout=10)
+            result = subprocess.run(
+                [sys.executable, "-c", "import mypy; print('ok')"],
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=10,
+            )
             tools["mypy"] = result.returncode == 0 and "ok" in result.stdout
         except (subprocess.TimeoutExpired, FileNotFoundError):
             tools["mypy"] = False
 
         # Test flake8
         try:
-            result = subprocess.run([sys.executable, "-c", "import flake8; print('ok')"],
-                                  check=False, capture_output=True, text=True, timeout=10)
+            result = subprocess.run(
+                [sys.executable, "-c", "import flake8; print('ok')"],
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=10,
+            )
             tools["flake8"] = result.returncode == 0 and "ok" in result.stdout
         except (subprocess.TimeoutExpired, FileNotFoundError):
             tools["flake8"] = False
 
         return tools
 
-    def find_python_files(self, path: str = ".", exclude_dirs: list[str] = None) -> list[Path]:
+    def find_python_files(
+        self, path: str = ".", exclude_dirs: list[str] = None
+    ) -> list[Path]:
         """Find all Python files, excluding specified directories."""
         if exclude_dirs is None:
             exclude_dirs = self.config["python"]["exclude_dirs"]
@@ -163,11 +178,26 @@ class LintingOrchestrator:
             cmd.append(".")
 
         try:
-            result = subprocess.run(cmd, check=False, capture_output=True, text=True,
-                                  timeout=self.config["performance"]["timeout_per_tool"])
+            result = subprocess.run(
+                cmd,
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=self.config["performance"]["timeout_per_tool"],
+            )
 
             # Count actual issues (each line is typically one issue)
-            issues_count = len([line for line in result.stdout.splitlines() if line.strip() and not line.startswith("warning:")]) if result.stdout else 0
+            issues_count = (
+                len(
+                    [
+                        line
+                        for line in result.stdout.splitlines()
+                        if line.strip() and not line.startswith("warning:")
+                    ]
+                )
+                if result.stdout
+                else 0
+            )
 
             return {
                 "status": "completed",
@@ -176,14 +206,16 @@ class LintingOrchestrator:
                 "stderr": result.stderr,
                 "duration": time.time() - start_time,
                 "files_processed": len(files) if files else "all",
-                "issues_found": issues_count
+                "issues_found": issues_count,
             }
         except subprocess.TimeoutExpired:
             return {"status": "timeout", "duration": time.time() - start_time}
         except Exception as e:
             return {"status": "error", "error": str(e)}
 
-    def run_black(self, files: list[Path] = None, check_only: bool = True) -> dict[str, Any]:
+    def run_black(
+        self, files: list[Path] = None, check_only: bool = True
+    ) -> dict[str, Any]:
         """Run Black formatter."""
         if not self.available_tools.get("black", False):
             return {"status": "skipped", "reason": "black not available"}
@@ -202,8 +234,13 @@ class LintingOrchestrator:
             cmd.append(".")
 
         try:
-            result = subprocess.run(cmd, check=False, capture_output=True, text=True,
-                                  timeout=self.config["performance"]["timeout_per_tool"])
+            result = subprocess.run(
+                cmd,
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=self.config["performance"]["timeout_per_tool"],
+            )
 
             return {
                 "status": "completed",
@@ -212,14 +249,22 @@ class LintingOrchestrator:
                 "stderr": result.stderr,
                 "duration": time.time() - start_time,
                 "files_processed": len(files) if files else "all",
-                "issues_found": len([line for line in result.stdout.splitlines() if "would reformat" in line or "error:" in line.lower()])
+                "issues_found": len(
+                    [
+                        line
+                        for line in result.stdout.splitlines()
+                        if "would reformat" in line or "error:" in line.lower()
+                    ]
+                ),
             }
         except subprocess.TimeoutExpired:
             return {"status": "timeout", "duration": time.time() - start_time}
         except Exception as e:
             return {"status": "error", "error": str(e)}
 
-    def run_isort(self, files: list[Path] = None, check_only: bool = True) -> dict[str, Any]:
+    def run_isort(
+        self, files: list[Path] = None, check_only: bool = True
+    ) -> dict[str, Any]:
         """Run isort import sorting."""
         if not self.available_tools.get("isort", False):
             return {"status": "skipped", "reason": "isort not available"}
@@ -236,8 +281,13 @@ class LintingOrchestrator:
             cmd.append(".")
 
         try:
-            result = subprocess.run(cmd, check=False, capture_output=True, text=True,
-                                  timeout=self.config["performance"]["timeout_per_tool"])
+            result = subprocess.run(
+                cmd,
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=self.config["performance"]["timeout_per_tool"],
+            )
 
             return {
                 "status": "completed",
@@ -245,7 +295,7 @@ class LintingOrchestrator:
                 "stdout": result.stdout,
                 "stderr": result.stderr,
                 "duration": time.time() - start_time,
-                "files_processed": len(files) if files else "all"
+                "files_processed": len(files) if files else "all",
             }
         except subprocess.TimeoutExpired:
             return {"status": "timeout", "duration": time.time() - start_time}
@@ -266,8 +316,13 @@ class LintingOrchestrator:
             cmd.append(".")
 
         try:
-            result = subprocess.run(cmd, check=False, capture_output=True, text=True,
-                                  timeout=self.config["performance"]["timeout_per_tool"])
+            result = subprocess.run(
+                cmd,
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=self.config["performance"]["timeout_per_tool"],
+            )
 
             return {
                 "status": "completed",
@@ -276,7 +331,7 @@ class LintingOrchestrator:
                 "stderr": result.stderr,
                 "duration": time.time() - start_time,
                 "files_processed": len(files) if files else "all",
-                "non_blocking": self.config["python"]["tools"]["mypy"]["non_blocking"]
+                "non_blocking": self.config["python"]["tools"]["mypy"]["non_blocking"],
             }
         except subprocess.TimeoutExpired:
             return {"status": "timeout", "duration": time.time() - start_time}
@@ -297,11 +352,20 @@ class LintingOrchestrator:
             cmd.append(".")
 
         try:
-            result = subprocess.run(cmd, check=False, capture_output=True, text=True,
-                                  timeout=self.config["performance"]["timeout_per_tool"])
+            result = subprocess.run(
+                cmd,
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=self.config["performance"]["timeout_per_tool"],
+            )
 
             # Count actual issues for flake8 (each line is an issue)
-            issues_count = len([line for line in result.stdout.splitlines() if line.strip()]) if result.stdout else 0
+            issues_count = (
+                len([line for line in result.stdout.splitlines() if line.strip()])
+                if result.stdout
+                else 0
+            )
 
             return {
                 "status": "completed",
@@ -310,14 +374,16 @@ class LintingOrchestrator:
                 "stderr": result.stderr,
                 "duration": time.time() - start_time,
                 "files_processed": len(files) if files else "all",
-                "issues_found": issues_count
+                "issues_found": issues_count,
             }
         except subprocess.TimeoutExpired:
             return {"status": "timeout", "duration": time.time() - start_time}
         except Exception as e:
             return {"status": "error", "error": str(e)}
 
-    def lint_python(self, path: str = ".", fix: bool = False, parallel: bool = True) -> dict[str, Any]:
+    def lint_python(
+        self, path: str = ".", fix: bool = False, parallel: bool = True
+    ) -> dict[str, Any]:
         """Run comprehensive Python linting."""
         print(f"[PYTHON] Running Python linting on: {path}")
 
@@ -334,10 +400,14 @@ class LintingOrchestrator:
             linting_functions.append(("ruff", lambda: self.run_ruff(fix=fix)))
 
         if self.config["python"]["tools"]["black"]["enabled"]:
-            linting_functions.append(("black", lambda: self.run_black(check_only=not fix)))
+            linting_functions.append(
+                ("black", lambda: self.run_black(check_only=not fix))
+            )
 
         if self.config["python"]["tools"]["isort"]["enabled"]:
-            linting_functions.append(("isort", lambda: self.run_isort(check_only=not fix)))
+            linting_functions.append(
+                ("isort", lambda: self.run_isort(check_only=not fix))
+            )
 
         if self.config["python"]["tools"]["mypy"]["enabled"]:
             linting_functions.append(("mypy", lambda: self.run_mypy()))
@@ -349,8 +419,12 @@ class LintingOrchestrator:
 
         if parallel and len(linting_functions) > 1:
             # Run tools in parallel
-            with concurrent.futures.ThreadPoolExecutor(max_workers=self.config["performance"]["max_workers"]) as executor:
-                futures = {executor.submit(func): name for name, func in linting_functions}
+            with concurrent.futures.ThreadPoolExecutor(
+                max_workers=self.config["performance"]["max_workers"]
+            ) as executor:
+                futures = {
+                    executor.submit(func): name for name, func in linting_functions
+                }
 
                 for future in concurrent.futures.as_completed(futures):
                     tool_name = futures[future]
@@ -372,7 +446,7 @@ class LintingOrchestrator:
             "files_found": len(python_files),
             "tools_run": len(results),
             "results": results,
-            "summary": self.generate_summary(results)
+            "summary": self.generate_summary(results),
         }
 
     def generate_summary(self, results: dict[str, Any]) -> dict[str, Any]:
@@ -397,10 +471,12 @@ class LintingOrchestrator:
             "completed_tools": completed_tools,
             "failed_tools": failed_tools,
             "skipped_tools": skipped_tools,
-            "success_rate": completed_tools / len(results) if results else 0
+            "success_rate": completed_tools / len(results) if results else 0,
         }
 
-    def generate_report(self, results: dict[str, Any], output_format: str = "json") -> str:
+    def generate_report(
+        self, results: dict[str, Any], output_format: str = "json"
+    ) -> str:
         """Generate comprehensive linting report."""
         report_data = {
             "metadata": {
@@ -408,9 +484,9 @@ class LintingOrchestrator:
                 "project_root": str(self.project_root),
                 "total_duration": time.time() - self.start_time,
                 "available_tools": self.available_tools,
-                "config": self.config
+                "config": self.config,
             },
-            "results": results
+            "results": results,
         }
 
         if output_format == "json":
@@ -446,17 +522,28 @@ class LintingOrchestrator:
 
         return "\n".join(lines)
 
+
 def main():
     """Main entry point for the unified linting system."""
     parser = argparse.ArgumentParser(description="AIVillage Unified Linting System")
-    parser.add_argument("path", nargs="?", default=".", help="Path to lint (default: current directory)")
+    parser.add_argument(
+        "path", nargs="?", default=".", help="Path to lint (default: current directory)"
+    )
     parser.add_argument("--fix", action="store_true", help="Apply fixes where possible")
     parser.add_argument("--config", help="Path to custom configuration file")
-    parser.add_argument("--output", choices=["json", "summary", "both"], default="summary",
-                       help="Output format")
+    parser.add_argument(
+        "--output",
+        choices=["json", "summary", "both"],
+        default="summary",
+        help="Output format",
+    )
     parser.add_argument("--output-file", help="Save report to file")
-    parser.add_argument("--parallel", action="store_true", default=True, help="Run tools in parallel")
-    parser.add_argument("--no-parallel", action="store_true", help="Disable parallel execution")
+    parser.add_argument(
+        "--parallel", action="store_true", default=True, help="Run tools in parallel"
+    )
+    parser.add_argument(
+        "--no-parallel", action="store_true", help="Disable parallel execution"
+    )
 
     args = parser.parse_args()
 
@@ -498,10 +585,14 @@ def main():
             print(summary_report)
 
     # Exit with appropriate code
-    if results.get("summary", {}).get("failed_tools", 0) > 0 or results.get("summary", {}).get("total_issues", 0) > 0:
+    if (
+        results.get("summary", {}).get("failed_tools", 0) > 0
+        or results.get("summary", {}).get("total_issues", 0) > 0
+    ):
         sys.exit(1)
     else:
         sys.exit(0)
+
 
 if __name__ == "__main__":
     main()

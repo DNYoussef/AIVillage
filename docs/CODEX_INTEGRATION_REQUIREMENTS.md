@@ -23,7 +23,7 @@ REDIS_PORT=6379
 REDIS_DB=0
 ```
 
-### RAG Pipeline System  
+### RAG Pipeline System
 ```bash
 # Cache Configuration
 RAG_CACHE_ENABLED=true
@@ -48,7 +48,7 @@ RAG_CHUNK_OVERLAP=50
 
 ### P2P Networking
 ```bash
-# LibP2P Configuration  
+# LibP2P Configuration
 LIBP2P_HOST=0.0.0.0
 LIBP2P_PORT=4001
 LIBP2P_PEER_ID_FILE=/path/to/peer_id
@@ -81,7 +81,7 @@ DIGITAL_TWIN_VAULT_PATH=/secure/path/to/vault
 DIGITAL_TWIN_DB_PATH=/path/to/digital_twin.db
 DIGITAL_TWIN_SQLITE_WAL=true
 
-# Privacy Settings  
+# Privacy Settings
 DIGITAL_TWIN_COPPA_COMPLIANT=true
 DIGITAL_TWIN_FERPA_COMPLIANT=true
 DIGITAL_TWIN_GDPR_COMPLIANT=true
@@ -107,7 +107,7 @@ DIGITAL_TWIN_PROFILE_TTL_DAYS=365
 ### Port Ranges for Mobile
 ```
 Android P2P: 4000-4010
-iOS P2P: 4010-4020  
+iOS P2P: 4010-4020
 WiFi Direct: 4020-4030
 Bluetooth: Dynamic allocation
 ```
@@ -120,7 +120,7 @@ Bluetooth: Dynamic allocation
    - WAL mode enabled for concurrent access
    - Automatic schema migration
 
-2. **Digital Twin DB** (`digital_twin.db`)  
+2. **Digital Twin DB** (`digital_twin.db`)
    - Tables: `learning_profiles`, `learning_sessions`, `knowledge_states`
    - Encrypted sensitive data fields
    - GDPR compliance features
@@ -131,7 +131,7 @@ Bluetooth: Dynamic allocation
 
 ### Redis Connections (Optional)
 - **Database 0**: Evolution metrics real-time data
-- **Database 1**: RAG pipeline caching  
+- **Database 1**: RAG pipeline caching
 - **Database 2**: P2P peer discovery cache
 
 ## External Service Dependencies
@@ -152,7 +152,7 @@ Bluetooth: Dynamic allocation
    - Version: ≥0.2.0
    - System dependencies: `libp2p-dev`
 
-### Optional Services  
+### Optional Services
 1. **Redis Server**
    - Version: ≥6.0
    - Persistence: RDB + AOF recommended
@@ -173,19 +173,19 @@ integration:
     backend: sqlite
     db_path: ./data/evolution_metrics.db
     flush_interval_seconds: 30
-    
+
   rag_pipeline:
     enabled: true
     embedding_model: paraphrase-MiniLM-L3-v2
     cache_enabled: true
     chunk_size: 512
-    
+
   p2p_networking:
     enabled: true
     transport: libp2p
     discovery_method: mdns
     max_peers: 50
-    
+
   digital_twin:
     enabled: true
     encryption_enabled: true
@@ -205,7 +205,7 @@ integration:
   },
   "transports": {
     "tcp_enabled": true,
-    "websocket_enabled": true,  
+    "websocket_enabled": true,
     "bluetooth_enabled": false,
     "wifi_direct_enabled": false
   },
@@ -249,7 +249,7 @@ integration:
 - [ ] Directory permissions set
 
 ### Post-Integration Verification
-- [ ] All databases created successfully  
+- [ ] All databases created successfully
 - [ ] Evolution metrics collection working
 - [ ] RAG pipeline processing documents
 - [ ] P2P peer discovery functional
@@ -258,7 +258,7 @@ integration:
 
 ### Performance Tuning
 - [ ] Database indexes created
-- [ ] Cache hit rates optimized  
+- [ ] Cache hit rates optimized
 - [ ] Memory usage within limits
 - [ ] Network latency acceptable
 - [ ] Error rates below thresholds
@@ -279,7 +279,7 @@ export AIVILLAGE_PROFILE_PERFORMANCE=true
 ```
 
 ### Health Check Endpoints
-- Evolution Metrics: `GET /health/evolution`  
+- Evolution Metrics: `GET /health/evolution`
 - RAG Pipeline: `GET /health/rag`
 - P2P Network: `GET /health/p2p`
 - Digital Twin: `GET /health/twin`
@@ -291,7 +291,7 @@ export AIVILLAGE_PROFILE_PERFORMANCE=true
 - P2P messages encrypted in transit
 - API endpoints require authentication tokens
 
-### Privacy Compliance  
+### Privacy Compliance
 - COPPA compliance for users under 13
 - FERPA compliance for educational records
 - GDPR compliance for EU users
@@ -299,7 +299,7 @@ export AIVILLAGE_PROFILE_PERFORMANCE=true
 
 ### Network Security
 - TLS 1.3 for all HTTP traffic
-- mTLS for P2P communications  
+- mTLS for P2P communications
 - Rate limiting on API endpoints
 - Input validation on all interfaces
 
@@ -307,7 +307,7 @@ export AIVILLAGE_PROFILE_PERFORMANCE=true
 
 ### From Existing Systems
 1. **Evolution Metrics**: Migrate from JSON files to database
-2. **RAG System**: Replace SHA256 embeddings with real vectors  
+2. **RAG System**: Replace SHA256 embeddings with real vectors
 3. **P2P Network**: Migrate from mock Bluetooth to LibP2P
 4. **Agents**: Update to use new RAG and evolution interfaces
 

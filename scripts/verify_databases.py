@@ -5,16 +5,17 @@ Verifies database integrity, tests concurrent access patterns,
 and validates all CODEX integration requirements.
 """
 
-from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime
 import hashlib
 import json
 import logging
-from pathlib import Path
 import sqlite3
 import time
+from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
+
 
 class DatabaseVerifier:
     """Comprehensive database verification for CODEX integration."""
@@ -34,7 +35,7 @@ class DatabaseVerifier:
             "tables": [],
             "indexes": [],
             "schema_version": None,
-            "errors": []
+            "errors": [],
         }
 
         try:
@@ -66,14 +67,18 @@ class DatabaseVerifier:
             results["tables"] = [row[0] for row in cursor.fetchall()]
 
             # Get indexes
-            cursor = conn.execute("SELECT name FROM sqlite_master WHERE type='index' AND name NOT LIKE 'sqlite_autoindex_%'")
+            cursor = conn.execute(
+                "SELECT name FROM sqlite_master WHERE type='index' AND name NOT LIKE 'sqlite_autoindex_%'"
+            )
             results["indexes"] = [row[0] for row in cursor.fetchall()]
 
             # Get schema version
             if "schema_version" in results["tables"]:
                 cursor = conn.execute("SELECT MAX(version) FROM schema_version")
                 version_result = cursor.fetchone()
-                results["schema_version"] = version_result[0] if version_result[0] is not None else 0
+                results["schema_version"] = (
+                    version_result[0] if version_result[0] is not None else 0
+                )
 
             conn.close()
 
@@ -92,7 +97,7 @@ class DatabaseVerifier:
             "read_operations": 0,
             "write_operations": 0,
             "errors": [],
-            "avg_response_time": 0.0
+            "avg_response_time": 0.0,
         }
 
         if not db_path.exists():
@@ -106,7 +111,7 @@ class DatabaseVerifier:
                 "read_success": False,
                 "write_success": False,
                 "response_times": [],
-                "errors": []
+                "errors": [],
             }
 
             try:
@@ -119,7 +124,9 @@ class DatabaseVerifier:
 
                 # Test read operation
                 start_time = time.time()
-                cursor = conn.execute("SELECT name FROM sqlite_master WHERE type='table'")
+                cursor = conn.execute(
+                    "SELECT name FROM sqlite_master WHERE type='table'"
+                )
                 tables = cursor.fetchall()
                 read_time = time.time() - start_time
                 thread_results["response_times"].append(read_time)
@@ -128,10 +135,12 @@ class DatabaseVerifier:
                 # Test write operation (if schema_version table exists)
                 if any("schema_version" in str(table) for table in tables):
                     start_time = time.time()
-                    conn.execute(f"""
-                        INSERT OR IGNORE INTO schema_version (version, description) 
+                    conn.execute(
+                        f"""
+                        INSERT OR IGNORE INTO schema_version (version, description)
                         VALUES (999, 'Concurrent test thread {thread_id}')
-                    """)
+                    """
+                    )
                     conn.execute("DELETE FROM schema_version WHERE version = 999")
                     conn.commit()
                     write_time = time.time() - start_time
@@ -171,7 +180,9 @@ class DatabaseVerifier:
             results["errors"].extend(thread_result["errors"])
 
         if all_response_times:
-            results["avg_response_time"] = sum(all_response_times) / len(all_response_times)
+            results["avg_response_time"] = sum(all_response_times) / len(
+                all_response_times
+            )
 
         return results
 
@@ -184,27 +195,60 @@ class DatabaseVerifier:
             "missing_tables": [],
             "required_indexes": [],
             "missing_indexes": [],
-            "errors": []
+            "errors": [],
         }
 
         # Define required schemas per CODEX requirements
         required_schemas = {
             "evolution_metrics.db": {
-                "tables": ["schema_version", "evolution_rounds", "fitness_metrics",
-                          "resource_metrics", "selection_outcomes"],
-                "indexes": ["idx_evolution_rounds_number", "idx_fitness_agent",
-                           "idx_fitness_score", "idx_resource_timestamp", "idx_selection_parent"]
+                "tables": [
+                    "schema_version",
+                    "evolution_rounds",
+                    "fitness_metrics",
+                    "resource_metrics",
+                    "selection_outcomes",
+                ],
+                "indexes": [
+                    "idx_evolution_rounds_number",
+                    "idx_fitness_agent",
+                    "idx_fitness_score",
+                    "idx_resource_timestamp",
+                    "idx_selection_parent",
+                ],
             },
             "digital_twin.db": {
-                "tables": ["schema_version", "learning_profiles", "learning_sessions", "knowledge_states"],
-                "indexes": ["idx_profiles_user_hash", "idx_profiles_updated", "idx_sessions_profile",
-                           "idx_sessions_start", "idx_knowledge_profile", "idx_knowledge_domain", "idx_knowledge_mastery"]
+                "tables": [
+                    "schema_version",
+                    "learning_profiles",
+                    "learning_sessions",
+                    "knowledge_states",
+                ],
+                "indexes": [
+                    "idx_profiles_user_hash",
+                    "idx_profiles_updated",
+                    "idx_sessions_profile",
+                    "idx_sessions_start",
+                    "idx_knowledge_profile",
+                    "idx_knowledge_domain",
+                    "idx_knowledge_mastery",
+                ],
             },
             "rag_index.db": {
-                "tables": ["schema_version", "documents", "chunks", "embeddings_metadata"],
-                "indexes": ["idx_documents_hash", "idx_documents_type", "idx_chunks_document",
-                           "idx_chunks_index", "idx_embeddings_faiss", "idx_embeddings_queries"]
-            }
+                "tables": [
+                    "schema_version",
+                    "documents",
+                    "chunks",
+                    "embeddings_metadata",
+                ],
+                "indexes": [
+                    "idx_documents_hash",
+                    "idx_documents_type",
+                    "idx_chunks_document",
+                    "idx_chunks_index",
+                    "idx_embeddings_faiss",
+                    "idx_embeddings_queries",
+                ],
+            },
         }
 
         if db_name not in required_schemas:
@@ -224,18 +268,26 @@ class DatabaseVerifier:
             cursor = conn.execute("SELECT name FROM sqlite_master WHERE type='table'")
             existing_tables = [row[0] for row in cursor.fetchall()]
 
-            results["missing_tables"] = [table for table in schema_req["tables"]
-                                       if table not in existing_tables]
+            results["missing_tables"] = [
+                table for table in schema_req["tables"] if table not in existing_tables
+            ]
 
             # Check indexes
-            cursor = conn.execute("SELECT name FROM sqlite_master WHERE type='index' AND name NOT LIKE 'sqlite_autoindex_%'")
+            cursor = conn.execute(
+                "SELECT name FROM sqlite_master WHERE type='index' AND name NOT LIKE 'sqlite_autoindex_%'"
+            )
             existing_indexes = [row[0] for row in cursor.fetchall()]
 
-            results["missing_indexes"] = [index for index in schema_req["indexes"]
-                                        if index not in existing_indexes]
+            results["missing_indexes"] = [
+                index
+                for index in schema_req["indexes"]
+                if index not in existing_indexes
+            ]
 
-            results["schema_compliant"] = (len(results["missing_tables"]) == 0 and
-                                         len(results["missing_indexes"]) == 0)
+            results["schema_compliant"] = (
+                len(results["missing_tables"]) == 0
+                and len(results["missing_indexes"]) == 0
+            )
 
             conn.close()
 
@@ -252,7 +304,7 @@ class DatabaseVerifier:
             "backup_size": 0,
             "restore_successful": False,
             "data_integrity_maintained": False,
-            "errors": []
+            "errors": [],
         }
 
         if not db_path.exists():
@@ -281,7 +333,9 @@ class DatabaseVerifier:
                 backup_checksum = self._get_database_checksum(backup_path)
 
                 results["restore_successful"] = True
-                results["data_integrity_maintained"] = (original_checksum == backup_checksum)
+                results["data_integrity_maintained"] = (
+                    original_checksum == backup_checksum
+                )
 
                 # Clean up backup
                 backup_path.unlink()
@@ -297,7 +351,9 @@ class DatabaseVerifier:
             conn = sqlite3.connect(str(db_path))
 
             # Get all table data in deterministic order
-            cursor = conn.execute("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name")
+            cursor = conn.execute(
+                "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name"
+            )
             tables = [row[0] for row in cursor.fetchall()]
 
             content_hash = hashlib.sha256()
@@ -318,11 +374,7 @@ class DatabaseVerifier:
         """Run all verification tests on all databases."""
         print("Running comprehensive database verification...")
 
-        expected_databases = [
-            "evolution_metrics.db",
-            "digital_twin.db",
-            "rag_index.db"
-        ]
+        expected_databases = ["evolution_metrics.db", "digital_twin.db", "rag_index.db"]
 
         verification_results = {
             "timestamp": datetime.now().isoformat(),
@@ -334,8 +386,8 @@ class DatabaseVerifier:
                 "schema_compliant": 0,
                 "concurrent_access_ok": 0,
                 "backup_restore_ok": 0,
-                "overall_health": "UNKNOWN"
-            }
+                "overall_health": "UNKNOWN",
+            },
         }
 
         for db_name in expected_databases:
@@ -347,7 +399,7 @@ class DatabaseVerifier:
                 "integrity": self.verify_database_integrity(db_path),
                 "schema": self.verify_schema_requirements(db_name),
                 "concurrent_access": self.test_concurrent_access(db_path),
-                "backup_restore": self.test_backup_restore(db_path)
+                "backup_restore": self.test_backup_restore(db_path),
             }
 
             verification_results["databases"][db_name] = db_results
@@ -371,9 +423,11 @@ class DatabaseVerifier:
         # Determine overall health
         summary = verification_results["summary"]
         if summary["databases_found"] == summary["total_databases"]:
-            if (summary["integrity_passed"] == summary["total_databases"] and
-                summary["schema_compliant"] == summary["total_databases"] and
-                summary["concurrent_access_ok"] == summary["total_databases"]):
+            if (
+                summary["integrity_passed"] == summary["total_databases"]
+                and summary["schema_compliant"] == summary["total_databases"]
+                and summary["concurrent_access_ok"] == summary["total_databases"]
+            ):
                 summary["overall_health"] = "EXCELLENT"
             elif summary["integrity_passed"] == summary["total_databases"]:
                 summary["overall_health"] = "GOOD"
@@ -393,20 +447,30 @@ def main():
     results = verifier.run_comprehensive_verification()
 
     # Print detailed results
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print("CODEX DATABASE VERIFICATION REPORT")
-    print("="*80)
+    print("=" * 80)
 
     summary = results["summary"]
     print(f"\nOverall Health: {summary['overall_health']}")
     print(f"Timestamp: {results['timestamp']}")
 
     print("\nSummary:")
-    print(f"  Databases Found: {summary['databases_found']}/{summary['total_databases']}")
-    print(f"  Integrity Passed: {summary['integrity_passed']}/{summary['total_databases']}")
-    print(f"  Schema Compliant: {summary['schema_compliant']}/{summary['total_databases']}")
-    print(f"  Concurrent Access OK: {summary['concurrent_access_ok']}/{summary['total_databases']}")
-    print(f"  Backup/Restore OK: {summary['backup_restore_ok']}/{summary['total_databases']}")
+    print(
+        f"  Databases Found: {summary['databases_found']}/{summary['total_databases']}"
+    )
+    print(
+        f"  Integrity Passed: {summary['integrity_passed']}/{summary['total_databases']}"
+    )
+    print(
+        f"  Schema Compliant: {summary['schema_compliant']}/{summary['total_databases']}"
+    )
+    print(
+        f"  Concurrent Access OK: {summary['concurrent_access_ok']}/{summary['total_databases']}"
+    )
+    print(
+        f"  Backup/Restore OK: {summary['backup_restore_ok']}/{summary['total_databases']}"
+    )
 
     print("\nDetailed Results:")
     for db_name, db_results in results["databases"].items():
@@ -423,7 +487,9 @@ def main():
         # Schema
         schema = db_results["schema"]
         status = "✅" if schema["schema_compliant"] else "❌"
-        print(f"  Schema: {status} ({len(schema['required_tables'])} tables, {len(schema['required_indexes'])} indexes)")
+        print(
+            f"  Schema: {status} ({len(schema['required_tables'])} tables, {len(schema['required_indexes'])} indexes)"
+        )
         if schema["missing_tables"]:
             print(f"    Missing tables: {', '.join(schema['missing_tables'])}")
         if schema["missing_indexes"]:
@@ -432,7 +498,9 @@ def main():
         # Concurrent access
         concurrent = db_results["concurrent_access"]
         status = "✅" if concurrent["failed_connections"] == 0 else "❌"
-        print(f"  Concurrent Access: {status} ({concurrent['successful_connections']}/{concurrent['threads_tested']} threads)")
+        print(
+            f"  Concurrent Access: {status} ({concurrent['successful_connections']}/{concurrent['threads_tested']} threads)"
+        )
         if concurrent["avg_response_time"] > 0:
             print(f"    Avg Response Time: {concurrent['avg_response_time']:.3f}s")
 
@@ -441,7 +509,7 @@ def main():
         status = "✅" if backup["data_integrity_maintained"] else "❌"
         print(f"  Backup/Restore: {status}")
 
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
 
     if summary["overall_health"] in ["EXCELLENT", "GOOD"]:
         print("✅ Database verification completed successfully!")
@@ -450,7 +518,7 @@ def main():
         print("❌ Database verification found issues!")
         print("Review the detailed results above and fix issues before proceeding.")
 
-    print("="*80)
+    print("=" * 80)
 
     # Save detailed report
     report_file = Path("data") / "database_verification_report.json"

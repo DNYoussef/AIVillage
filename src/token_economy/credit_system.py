@@ -1,9 +1,9 @@
-from dataclasses import dataclass
 import json
 import logging
-from pathlib import Path
 import sqlite3
 import time
+from dataclasses import dataclass
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -165,7 +165,7 @@ class VILLAGECreditSystem:
         category: str,
         metadata: dict[str, str],
     ) -> None:
-        tx_id = f"{user_id}-{int(time.time()*1000)}"
+        tx_id = f"{user_id}-{int(time.time() * 1000)}"
         self.db.execute(
             (
                 "INSERT INTO transactions "

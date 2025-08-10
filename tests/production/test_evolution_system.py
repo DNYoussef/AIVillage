@@ -2,8 +2,8 @@
 Comprehensive tests for Production Evolution System.
 """
 
-from dataclasses import dataclass
 import json
+from dataclasses import dataclass
 from unittest.mock import Mock, patch
 
 import numpy as np

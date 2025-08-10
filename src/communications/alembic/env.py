@@ -1,7 +1,7 @@
 """Alembic environment configuration for credits ledger."""
 
-from logging.config import fileConfig
 import os
+from logging.config import fileConfig
 
 from alembic import context
 

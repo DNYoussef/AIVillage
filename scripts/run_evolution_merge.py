@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """Run Agent Forge Evolution Merge with real benchmarking for 10 generations."""
 
-from datetime import datetime
 import json
 import logging
-from pathlib import Path
 import random
 import time
+from datetime import datetime
+from pathlib import Path
 from typing import Any
 
 import torch

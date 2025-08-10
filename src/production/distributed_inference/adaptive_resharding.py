@@ -5,14 +5,14 @@ ensuring continuous inference operation without interruption.
 """
 
 import asyncio
-from collections.abc import Callable
 import contextlib
-from dataclasses import dataclass, field
-from enum import Enum
 import logging
 import time
-from typing import Any
 import uuid
+from collections.abc import Callable
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import Any
 
 from AIVillage.src.core.p2p.p2p_node import P2PNode
 

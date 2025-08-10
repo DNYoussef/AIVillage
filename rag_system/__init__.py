@@ -4,6 +4,7 @@ The lightweight STORM implementation has moved to
 :mod:`experimental.rag.storm`. This package now exposes the
 production RAG modules located under ``src/production/rag/rag_system``.
 """
+
 from __future__ import annotations
 
 from pathlib import Path

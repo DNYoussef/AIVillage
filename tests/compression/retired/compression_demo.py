@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Demonstration of the validated compression system capabilities."""
 
-from pathlib import Path
 import sys
+from pathlib import Path
 
 from torch import nn
 

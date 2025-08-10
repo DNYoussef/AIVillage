@@ -3,12 +3,12 @@
 Enhanced logging setup for debug mode following CODEX Integration Requirements.
 """
 
-from datetime import datetime
 import logging
 import logging.handlers
 import os
-from pathlib import Path
 import sys
+from datetime import datetime
+from pathlib import Path
 from typing import Any
 
 
@@ -20,12 +20,12 @@ class DebugFormatter(logging.Formatter):
 
         # Color codes for different log levels (if terminal supports it)
         self.colors = {
-            "DEBUG": "\033[36m",    # Cyan
-            "INFO": "\033[32m",     # Green
+            "DEBUG": "\033[36m",  # Cyan
+            "INFO": "\033[32m",  # Green
             "WARNING": "\033[33m",  # Yellow
-            "ERROR": "\033[31m",    # Red
-            "CRITICAL": "\033[35m", # Magenta
-            "RESET": "\033[0m"      # Reset
+            "ERROR": "\033[31m",  # Red
+            "CRITICAL": "\033[35m",  # Magenta
+            "RESET": "\033[0m",  # Reset
         }
 
         base_format = "[{levelname}] {asctime} | {name} | {message}"
@@ -55,16 +55,17 @@ class DebugFormatter(logging.Formatter):
 
         return super().format(record)
 
+
 def setup_debug_logging(
     log_level: str = "DEBUG",
     log_file: str | None = None,
     enable_console: bool = True,
     enable_file: bool = True,
     max_file_size: int = 10 * 1024 * 1024,  # 10MB
-    backup_count: int = 5
+    backup_count: int = 5,
 ) -> logging.Logger:
     """Set up comprehensive debug logging.
-    
+
     Args:
         log_level: Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
         log_file: Path to log file (default: logs/aivillage_debug.log)
@@ -72,7 +73,7 @@ def setup_debug_logging(
         enable_file: Whether to log to file
         max_file_size: Maximum size of log file before rotation
         backup_count: Number of backup files to keep
-        
+
     Returns:
         Configured logger instance
     """
@@ -99,7 +100,7 @@ def setup_debug_logging(
     simple_formatter = logging.Formatter(
         fmt="[{levelname}] {asctime} | {name} | {message}",
         datefmt="%Y-%m-%d %H:%M:%S",
-        style="{"
+        style="{",
     )
 
     # Console handler
@@ -112,10 +113,7 @@ def setup_debug_logging(
     # File handler with rotation
     if enable_file:
         file_handler = logging.handlers.RotatingFileHandler(
-            log_file,
-            maxBytes=max_file_size,
-            backupCount=backup_count,
-            encoding="utf-8"
+            log_file, maxBytes=max_file_size, backupCount=backup_count, encoding="utf-8"
         )
         file_handler.setLevel(logging.DEBUG)  # Always log everything to file
         file_handler.setFormatter(simple_formatter)
@@ -138,23 +136,29 @@ def setup_debug_logging(
     # Log environment information
     debug_mode = os.getenv("AIVILLAGE_DEBUG_MODE", "false")
     aivillage_logger.info(f"AIVILLAGE_DEBUG_MODE: {debug_mode}")
-    aivillage_logger.info(f"AIVILLAGE_LOG_LEVEL: {os.getenv('AIVILLAGE_LOG_LEVEL', 'not set')}")
-    aivillage_logger.info(f"AIVILLAGE_PROFILE_PERFORMANCE: {os.getenv('AIVILLAGE_PROFILE_PERFORMANCE', 'not set')}")
+    aivillage_logger.info(
+        f"AIVILLAGE_LOG_LEVEL: {os.getenv('AIVILLAGE_LOG_LEVEL', 'not set')}"
+    )
+    aivillage_logger.info(
+        f"AIVILLAGE_PROFILE_PERFORMANCE: {os.getenv('AIVILLAGE_PROFILE_PERFORMANCE', 'not set')}"
+    )
 
     return aivillage_logger
 
+
 def get_debug_logger(name: str = None) -> logging.Logger:
     """Get a debug logger instance.
-    
+
     Args:
         name: Logger name (defaults to calling module name)
-        
+
     Returns:
         Logger instance configured for debug mode
     """
     if name is None:
         # Get the calling module name
         import inspect
+
         frame = inspect.currentframe().f_back
         name = frame.f_globals.get("__name__", "aivillage")
 
@@ -167,9 +171,10 @@ def get_debug_logger(name: str = None) -> logging.Logger:
 
     return logger
 
+
 class RequestResponseLogger:
     """Logger for request/response data in debug mode.
-    
+
     Provides structured logging for API calls, database queries, and other operations.
     """
 
@@ -183,7 +188,7 @@ class RequestResponseLogger:
         method: str = "POST",
         headers: dict[str, str] | None = None,
         data: Any | None = None,
-        params: dict[str, Any] | None = None
+        params: dict[str, Any] | None = None,
     ):
         """Log API request details."""
         if not self.enabled:
@@ -209,7 +214,7 @@ class RequestResponseLogger:
         status_code: int | None = None,
         response_data: Any | None = None,
         duration_ms: float | None = None,
-        error: str | None = None
+        error: str | None = None,
     ):
         """Log API response details."""
         if not self.enabled:
@@ -236,7 +241,7 @@ class RequestResponseLogger:
         params: Any | None = None,
         duration_ms: float | None = None,
         result_count: int | None = None,
-        error: str | None = None
+        error: str | None = None,
     ):
         """Log database query details."""
         if not self.enabled:
@@ -266,7 +271,7 @@ class RequestResponseLogger:
         key: str,
         hit: bool,
         duration_ms: float | None = None,
-        value_size: int | None = None
+        value_size: int | None = None,
     ):
         """Log cache operation details."""
         if not self.enabled:
@@ -279,7 +284,9 @@ class RequestResponseLogger:
         duration_str = f" ({duration_ms:.2f}ms)" if duration_ms else ""
         size_str = f" [{value_size} bytes]" if value_size else ""
 
-        self.logger.debug(f"[CACHE_{hit_str}]{duration_str} {operation}: {display_key}{size_str}")
+        self.logger.debug(
+            f"[CACHE_{hit_str}]{duration_str} {operation}: {display_key}{size_str}"
+        )
 
     def _sanitize_headers(self, headers: dict[str, str]) -> dict[str, str]:
         """Remove sensitive information from headers."""
@@ -310,6 +317,7 @@ class RequestResponseLogger:
 
         return query
 
+
 class PerformanceTimer:
     """Context manager for timing operations in debug mode."""
 
@@ -317,11 +325,14 @@ class PerformanceTimer:
         self.operation_name = operation_name
         self.logger = logger or logging.getLogger("aivillage.performance")
         self.start_time = None
-        self.enabled = os.getenv("AIVILLAGE_PROFILE_PERFORMANCE", "false").lower() == "true"
+        self.enabled = (
+            os.getenv("AIVILLAGE_PROFILE_PERFORMANCE", "false").lower() == "true"
+        )
 
     def __enter__(self):
         if self.enabled:
             import time
+
             self.start_time = time.time()
             self.logger.debug(f"[TIMER_START] {self.operation_name}")
         return self
@@ -329,18 +340,24 @@ class PerformanceTimer:
     def __exit__(self, exc_type, exc_val, exc_tb):
         if self.enabled and self.start_time:
             import time
+
             duration = time.time() - self.start_time
             duration_ms = duration * 1000
 
             if exc_type:
-                self.logger.error(f"[TIMER_ERROR] {self.operation_name} failed after {duration_ms:.2f}ms: {exc_val}")
+                self.logger.error(
+                    f"[TIMER_ERROR] {self.operation_name} failed after {duration_ms:.2f}ms: {exc_val}"
+                )
             else:
                 level = logging.WARNING if duration_ms > 1000 else logging.DEBUG
-                self.logger.log(level, f"[TIMER_END] {self.operation_name}: {duration_ms:.2f}ms")
+                self.logger.log(
+                    level, f"[TIMER_END] {self.operation_name}: {duration_ms:.2f}ms"
+                )
 
     def get_duration_ms(self) -> float | None:
         """Get current duration in milliseconds."""
         if self.enabled and self.start_time:
             import time
+
             return (time.time() - self.start_time) * 1000
         return None

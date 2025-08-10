@@ -6,8 +6,8 @@ Tests that the compression phase entry point executes successfully
 and returns valid PhaseResult objects with real compression operations.
 """
 
-from pathlib import Path
 import sys
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest

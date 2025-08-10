@@ -2,9 +2,9 @@
 """Test the optimized compression pipelines for improved efficiency."""
 
 import logging
-from pathlib import Path
 import sys
 import time
+from pathlib import Path
 
 import torch
 from torch import nn
@@ -37,7 +37,7 @@ def test_optimized_advanced_pipeline():
 
     print("Test Model:")
     print(f"  Parameters: {param_count:,}")
-    print(f"  Original size: {original_size/1024:.1f} KB")
+    print(f"  Original size: {original_size / 1024:.1f} KB")
 
     # Test optimized pipeline
     pipeline = AdvancedCompressionPipeline()
@@ -52,8 +52,8 @@ def test_optimized_advanced_pipeline():
     ratio = original_size / compressed_size
 
     print("\nOptimized AdvancedPipeline Results:")
-    print(f"  Original size: {original_size/1024:.1f} KB")
-    print(f"  Compressed size: {compressed_size/1024:.1f} KB")
+    print(f"  Original size: {original_size / 1024:.1f} KB")
+    print(f"  Compressed size: {compressed_size / 1024:.1f} KB")
     print(f"  Compression ratio: {ratio:.1f}x")
     print(f"  Compression time: {duration:.2f}s")
     print("  Previous ratio was: 20.8x")
@@ -85,7 +85,7 @@ def test_optimized_advanced_pipeline():
 
 def test_hypercompression_effectiveness():
     """Test if HyperCompression stage is being optimized/skipped."""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("TESTING HYPERCOMPRESSION OPTIMIZATION")
     print("=" * 60)
 
@@ -134,7 +134,7 @@ def test_hypercompression_effectiveness():
 
 def test_lzma_compression_effectiveness():
     """Test the effectiveness of the new LZMA compression."""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("TESTING LZMA COMPRESSION EFFECTIVENESS")
     print("=" * 60)
 
@@ -159,8 +159,8 @@ def test_lzma_compression_effectiveness():
     lzma_ratio = uncompressed_size / lzma_size
 
     print("LZMA Compression Test:")
-    print(f"  Uncompressed: {uncompressed_size/1024:.1f} KB")
-    print(f"  LZMA compressed: {lzma_size/1024:.1f} KB")
+    print(f"  Uncompressed: {uncompressed_size / 1024:.1f} KB")
+    print(f"  LZMA compressed: {lzma_size / 1024:.1f} KB")
     print(f"  LZMA ratio: {lzma_ratio:.1f}x")
 
     if lzma_ratio > 2.0:
@@ -175,7 +175,7 @@ def test_lzma_compression_effectiveness():
 
 def efficiency_analysis(old_ratio, new_ratio):
     """Analyze the efficiency improvement."""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("EFFICIENCY ANALYSIS")
     print("=" * 60)
 
@@ -230,7 +230,7 @@ def main():
         efficiency_analysis(old_ratio, ratio)
 
         # Final assessment
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print("OPTIMIZATION ASSESSMENT")
         print("=" * 60)
 

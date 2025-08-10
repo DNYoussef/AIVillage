@@ -6,15 +6,15 @@ Handles entity resolution, relationship extraction, and confidence initializatio
 """
 
 import argparse
-from collections import defaultdict
-from dataclasses import asdict, dataclass
-from datetime import datetime, timezone
 import json
 import logging
-from pathlib import Path
 
 # Import HypeRAG components and migration tools
 import sys
+from collections import defaultdict
+from dataclasses import asdict, dataclass
+from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any
 
 import numpy as np

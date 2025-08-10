@@ -3,19 +3,19 @@ Sprint R-5: Digital Twin MVP - Task A.1.
 """
 
 import asyncio
+import json
+import logging
+import sqlite3
+import uuid
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
-import json
-import logging
-import sqlite3
 from typing import Any
-import uuid
 
-from cryptography.fernet import Fernet
 import numpy as np
 import wandb
+from cryptography.fernet import Fernet
 
 logger = logging.getLogger(__name__)
 
@@ -101,7 +101,9 @@ class PersonalizationVector:
 class ShadowSimulator:
     """Simple shadow simulator stub for recommendation exploration."""
 
-    def explore_paths(self, current_state: dict[str, Any], time_horizon: int) -> list[str]:
+    def explore_paths(
+        self, current_state: dict[str, Any], time_horizon: int
+    ) -> list[str]:
         """Return candidate learning paths.
 
         This is a lightweight placeholder used by the API layer.  It
@@ -1410,7 +1412,6 @@ class DigitalTwin:
 
         return insights
 
-
     # ------------------------------------------------------------------
     # Lightweight utilities used by the API layer
 
@@ -1427,7 +1428,9 @@ class DigitalTwin:
         payload = json.dumps(data).encode()
         return self.cipher_suite.encrypt(payload)
 
-    def merge_states(self, local_state: dict[str, Any], conflict_resolution: str = "latest_wins") -> dict[str, Any]:
+    def merge_states(
+        self, local_state: dict[str, Any], conflict_resolution: str = "latest_wins"
+    ) -> dict[str, Any]:
         """Merge mobile state into the twin.
 
         This simplified implementation just updates the in-memory student
@@ -1469,9 +1472,15 @@ class DigitalTwin:
         noise_scale = 1.0
 
         metrics = {
-            "learning_velocity": self.add_laplace_noise(self.calculate_velocity(), noise_scale),
-            "knowledge_coverage": self.add_laplace_noise(self.calculate_coverage(), noise_scale),
-            "engagement_score": self.add_laplace_noise(self.calculate_engagement(), noise_scale),
+            "learning_velocity": self.add_laplace_noise(
+                self.calculate_velocity(), noise_scale
+            ),
+            "knowledge_coverage": self.add_laplace_noise(
+                self.calculate_coverage(), noise_scale
+            ),
+            "engagement_score": self.add_laplace_noise(
+                self.calculate_engagement(), noise_scale
+            ),
         }
 
         return self.k_anonymize(metrics, k=5)

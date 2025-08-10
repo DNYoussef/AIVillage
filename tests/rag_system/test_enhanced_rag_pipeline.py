@@ -1,8 +1,8 @@
 import asyncio
-from pathlib import Path
 import sys
 import time
 import types
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -32,7 +32,16 @@ sys.modules["sentence_transformers"] = types.SimpleNamespace(
 )
 
 # Import the pipeline module directly from the source tree
-sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src" / "production" / "rag" / "rag_system"))
+sys.path.insert(
+    0,
+    str(
+        Path(__file__).resolve().parents[2]
+        / "src"
+        / "production"
+        / "rag"
+        / "rag_system"
+    ),
+)
 from core.pipeline import Document, EnhancedRAGPipeline
 
 

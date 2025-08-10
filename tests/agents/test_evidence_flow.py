@@ -43,11 +43,11 @@ sys.modules.setdefault("matplotlib.pyplot", types.ModuleType("matplotlib.pyplot"
 
 import importlib  # noqa: E402
 
-from core.error_handling import (
+from core.error_handling import (  # noqa: E402
     Message,
     MessageType,
     StandardCommunicationProtocol,
-)  # noqa: E402
+)
 
 SageAgent = importlib.import_module("agents.sage.sage_agent").SageAgent  # noqa: E402
 UnifiedConfig = importlib.import_module(

@@ -4,10 +4,10 @@ Real-time security monitoring and alerting for the P2P mesh network.
 Provides web interface for security events, peer reputation, and threat detection.
 """
 
-from datetime import datetime, timedelta
-from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
 import logging
+from datetime import datetime, timedelta
+from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 from typing import Any
 from urllib.parse import parse_qs, urlparse
@@ -20,7 +20,9 @@ logger = logging.getLogger(__name__)
 class SecurityDashboardHandler(BaseHTTPRequestHandler):
     """HTTP handler for security dashboard."""
 
-    def __init__(self, request, client_address, server, security_monitor: SecurityMonitor):
+    def __init__(
+        self, request, client_address, server, security_monitor: SecurityMonitor
+    ):
         self.security_monitor = security_monitor
         super().__init__(request, client_address, server)
 
@@ -63,18 +65,17 @@ class SecurityDashboardHandler(BaseHTTPRequestHandler):
         recent_threshold = now - timedelta(hours=1)
 
         recent_events = [
-            log for log in self.security_monitor.security_logs
+            log
+            for log in self.security_monitor.security_logs
             if log.timestamp >= recent_threshold
         ]
 
         critical_events = [
-            log for log in recent_events
-            if log.severity == SecurityLevel.CRITICAL
+            log for log in recent_events if log.severity == SecurityLevel.CRITICAL
         ]
 
         high_severity_events = [
-            log for log in recent_events
-            if log.severity == SecurityLevel.HIGH
+            log for log in recent_events if log.severity == SecurityLevel.HIGH
         ]
 
         enhanced_summary = {
@@ -83,7 +84,7 @@ class SecurityDashboardHandler(BaseHTTPRequestHandler):
             "recent_high_severity_events": len(high_severity_events),
             "security_health_score": self._calculate_security_health_score(),
             "threat_level": self._assess_threat_level(),
-            "last_updated": now.isoformat()
+            "last_updated": now.isoformat(),
         }
 
         self.send_json_response(enhanced_summary)
@@ -120,43 +121,50 @@ class SecurityDashboardHandler(BaseHTTPRequestHandler):
                 "source_ip": event.source_ip,
                 "severity": event.severity.value,
                 "description": event.description,
-                "metadata": event.metadata
+                "metadata": event.metadata,
             }
             for event in events
         ]
 
-        self.send_json_response({
-            "events": events_data,
-            "total_count": len(self.security_monitor.security_logs),
-            "filtered_count": len(events_data)
-        })
+        self.send_json_response(
+            {
+                "events": events_data,
+                "total_count": len(self.security_monitor.security_logs),
+                "filtered_count": len(events_data),
+            }
+        )
 
     def serve_peer_reputation(self):
         """Serve peer reputation data."""
         reputations = []
 
         for peer_id, reputation in self.security_monitor.peer_reputations.items():
-            reputations.append({
-                "peer_id": peer_id,
-                "trust_score": reputation.trust_score,
-                "successful_interactions": reputation.successful_interactions,
-                "failed_interactions": reputation.failed_interactions,
-                "last_interaction": reputation.last_interaction.isoformat(),
-                "blocked": reputation.blocked,
-                "first_seen": reputation.first_seen.isoformat(),
-                "total_connections": len(reputation.connection_attempts),
-                "reported_by_peers": len(reputation.reported_by_peers)
-            })
+            reputations.append(
+                {
+                    "peer_id": peer_id,
+                    "trust_score": reputation.trust_score,
+                    "successful_interactions": reputation.successful_interactions,
+                    "failed_interactions": reputation.failed_interactions,
+                    "last_interaction": reputation.last_interaction.isoformat(),
+                    "blocked": reputation.blocked,
+                    "first_seen": reputation.first_seen.isoformat(),
+                    "total_connections": len(reputation.connection_attempts),
+                    "reported_by_peers": len(reputation.reported_by_peers),
+                }
+            )
 
         # Sort by trust score (descending)
         reputations.sort(key=lambda x: x["trust_score"], reverse=True)
 
-        self.send_json_response({
-            "peer_reputations": reputations,
-            "total_peers": len(reputations),
-            "blocked_peers": len(self.security_monitor.blocked_peers),
-            "avg_trust_score": sum(r["trust_score"] for r in reputations) / max(1, len(reputations))
-        })
+        self.send_json_response(
+            {
+                "peer_reputations": reputations,
+                "total_peers": len(reputations),
+                "blocked_peers": len(self.security_monitor.blocked_peers),
+                "avg_trust_score": sum(r["trust_score"] for r in reputations)
+                / max(1, len(reputations)),
+            }
+        )
 
     def serve_security_alerts(self):
         """Serve current security alerts."""
@@ -167,74 +175,95 @@ class SecurityDashboardHandler(BaseHTTPRequestHandler):
 
         # Critical peer blocks in last hour
         recent_blocks = [
-            log for log in self.security_monitor.security_logs
-            if (log.event_type == SecurityEvent.PEER_BLOCKED and
-                (now - log.timestamp).total_seconds() < 3600)
+            log
+            for log in self.security_monitor.security_logs
+            if (
+                log.event_type == SecurityEvent.PEER_BLOCKED
+                and (now - log.timestamp).total_seconds() < 3600
+            )
         ]
 
         if len(recent_blocks) > 5:
-            alerts.append({
-                "id": "mass_peer_blocks",
-                "level": "critical",
-                "title": "Mass Peer Blocking Detected",
-                "description": f"{len(recent_blocks)} peers blocked in the last hour",
-                "timestamp": now.isoformat(),
-                "action_required": True
-            })
+            alerts.append(
+                {
+                    "id": "mass_peer_blocks",
+                    "level": "critical",
+                    "title": "Mass Peer Blocking Detected",
+                    "description": f"{len(recent_blocks)} peers blocked in the last hour",
+                    "timestamp": now.isoformat(),
+                    "action_required": True,
+                }
+            )
 
         # High rate of authentication failures
         auth_failures = [
-            log for log in self.security_monitor.security_logs
-            if (log.event_type == SecurityEvent.AUTH_FAILURE and
-                (now - log.timestamp).total_seconds() < 3600)
+            log
+            for log in self.security_monitor.security_logs
+            if (
+                log.event_type == SecurityEvent.AUTH_FAILURE
+                and (now - log.timestamp).total_seconds() < 3600
+            )
         ]
 
         if len(auth_failures) > 20:
-            alerts.append({
-                "id": "high_auth_failures",
-                "level": "high",
-                "title": "High Authentication Failure Rate",
-                "description": f"{len(auth_failures)} authentication failures in the last hour",
-                "timestamp": now.isoformat(),
-                "action_required": False
-            })
+            alerts.append(
+                {
+                    "id": "high_auth_failures",
+                    "level": "high",
+                    "title": "High Authentication Failure Rate",
+                    "description": f"{len(auth_failures)} authentication failures in the last hour",
+                    "timestamp": now.isoformat(),
+                    "action_required": False,
+                }
+            )
 
         # Low average trust score
         if self.security_monitor.peer_reputations:
-            avg_trust = sum(r.trust_score for r in self.security_monitor.peer_reputations.values()) / len(self.security_monitor.peer_reputations)
+            avg_trust = sum(
+                r.trust_score for r in self.security_monitor.peer_reputations.values()
+            ) / len(self.security_monitor.peer_reputations)
 
             if avg_trust < 0.4:
-                alerts.append({
-                    "id": "low_trust_network",
-                    "level": "warning",
-                    "title": "Low Network Trust Score",
-                    "description": f"Average peer trust score: {avg_trust:.3f}",
-                    "timestamp": now.isoformat(),
-                    "action_required": False
-                })
+                alerts.append(
+                    {
+                        "id": "low_trust_network",
+                        "level": "warning",
+                        "title": "Low Network Trust Score",
+                        "description": f"Average peer trust score: {avg_trust:.3f}",
+                        "timestamp": now.isoformat(),
+                        "action_required": False,
+                    }
+                )
 
         # Replay attacks detected
         replay_attacks = [
-            log for log in self.security_monitor.security_logs
-            if (log.event_type == SecurityEvent.REPLAY_ATTACK_DETECTED and
-                (now - log.timestamp).total_seconds() < 3600)
+            log
+            for log in self.security_monitor.security_logs
+            if (
+                log.event_type == SecurityEvent.REPLAY_ATTACK_DETECTED
+                and (now - log.timestamp).total_seconds() < 3600
+            )
         ]
 
         if replay_attacks:
-            alerts.append({
-                "id": "replay_attacks",
-                "level": "high",
-                "title": "Replay Attacks Detected",
-                "description": f"{len(replay_attacks)} replay attacks in the last hour",
-                "timestamp": now.isoformat(),
-                "action_required": True
-            })
+            alerts.append(
+                {
+                    "id": "replay_attacks",
+                    "level": "high",
+                    "title": "Replay Attacks Detected",
+                    "description": f"{len(replay_attacks)} replay attacks in the last hour",
+                    "timestamp": now.isoformat(),
+                    "action_required": True,
+                }
+            )
 
-        self.send_json_response({
-            "alerts": alerts,
-            "alert_count": len(alerts),
-            "last_updated": now.isoformat()
-        })
+        self.send_json_response(
+            {
+                "alerts": alerts,
+                "alert_count": len(alerts),
+                "last_updated": now.isoformat(),
+            }
+        )
 
     def _calculate_security_health_score(self) -> float:
         """Calculate overall security health score (0.0 to 1.0)."""
@@ -247,17 +276,22 @@ class SecurityDashboardHandler(BaseHTTPRequestHandler):
         # Reduce score based on recent critical events
         now = datetime.now()
         recent_critical = [
-            log for log in self.security_monitor.security_logs
-            if (log.severity == SecurityLevel.CRITICAL and
-                (now - log.timestamp).total_seconds() < 3600)
+            log
+            for log in self.security_monitor.security_logs
+            if (
+                log.severity == SecurityLevel.CRITICAL
+                and (now - log.timestamp).total_seconds() < 3600
+            )
         ]
         score -= min(0.4, len(recent_critical) * 0.05)
 
         # Reduce score based on low average trust
         if self.security_monitor.peer_reputations:
-            avg_trust = sum(r.trust_score for r in self.security_monitor.peer_reputations.values()) / len(self.security_monitor.peer_reputations)
+            avg_trust = sum(
+                r.trust_score for r in self.security_monitor.peer_reputations.values()
+            ) / len(self.security_monitor.peer_reputations)
             if avg_trust < 0.5:
-                score -= (0.5 - avg_trust)
+                score -= 0.5 - avg_trust
 
         return max(0.0, score)
 
@@ -300,7 +334,7 @@ class SecurityDashboardHandler(BaseHTTPRequestHandler):
             background-color: #1e1e2e;
             color: #cdd6f4;
         }
-        
+
         .header {
             background: linear-gradient(135deg, #89b4fa, #cba6f7);
             color: #1e1e2e;
@@ -309,58 +343,58 @@ class SecurityDashboardHandler(BaseHTTPRequestHandler):
             margin-bottom: 20px;
             text-align: center;
         }
-        
+
         .dashboard-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 20px;
             margin-bottom: 20px;
         }
-        
+
         .card {
             background: #313244;
             border-radius: 10px;
             padding: 20px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
-        
+
         .card h3 {
             margin: 0 0 15px 0;
             color: #f38ba8;
         }
-        
+
         .metric {
             display: flex;
             justify-content: space-between;
             margin: 10px 0;
         }
-        
+
         .metric-value {
             font-weight: bold;
             color: #94e2d5;
         }
-        
+
         .alert {
             padding: 10px;
             border-radius: 5px;
             margin: 10px 0;
         }
-        
+
         .alert-critical {
             background: rgba(243, 139, 168, 0.2);
             border-left: 4px solid #f38ba8;
         }
-        
+
         .alert-high {
             background: rgba(250, 179, 135, 0.2);
             border-left: 4px solid #fab387;
         }
-        
+
         .alert-warning {
             background: rgba(249, 226, 175, 0.2);
             border-left: 4px solid #f9e2af;
         }
-        
+
         .threat-level {
             padding: 5px 10px;
             border-radius: 15px;
@@ -368,30 +402,30 @@ class SecurityDashboardHandler(BaseHTTPRequestHandler):
             text-align: center;
             display: inline-block;
         }
-        
+
         .threat-low { background: #a6e3a1; color: #1e1e2e; }
         .threat-medium { background: #f9e2af; color: #1e1e2e; }
         .threat-high { background: #fab387; color: #1e1e2e; }
         .threat-critical { background: #f38ba8; color: #1e1e2e; }
-        
+
         .events-table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 15px;
         }
-        
+
         .events-table th,
         .events-table td {
             padding: 8px 12px;
             text-align: left;
             border-bottom: 1px solid #45475a;
         }
-        
+
         .events-table th {
             background: #45475a;
             font-weight: bold;
         }
-        
+
         .refresh-btn {
             background: #89b4fa;
             color: #1e1e2e;
@@ -401,7 +435,7 @@ class SecurityDashboardHandler(BaseHTTPRequestHandler):
             cursor: pointer;
             font-weight: bold;
         }
-        
+
         .refresh-btn:hover {
             background: #74c7ec;
         }
@@ -413,29 +447,29 @@ class SecurityDashboardHandler(BaseHTTPRequestHandler):
         <p>Real-time monitoring of mesh network security</p>
         <button class="refresh-btn" onclick="refreshDashboard()">Refresh Data</button>
     </div>
-    
+
     <div class="dashboard-grid">
         <div class="card">
             <h3>Security Overview</h3>
             <div id="security-overview">Loading...</div>
         </div>
-        
+
         <div class="card">
             <h3>Active Alerts</h3>
             <div id="security-alerts">Loading...</div>
         </div>
-        
+
         <div class="card">
             <h3>Peer Reputation</h3>
             <div id="peer-reputation">Loading...</div>
         </div>
-        
+
         <div class="card">
             <h3>Network Statistics</h3>
             <div id="network-stats">Loading...</div>
         </div>
     </div>
-    
+
     <div class="card">
         <h3>Recent Security Events</h3>
         <div id="recent-events">Loading...</div>
@@ -443,7 +477,7 @@ class SecurityDashboardHandler(BaseHTTPRequestHandler):
 
     <script>
         let refreshInterval;
-        
+
         async function fetchData(endpoint) {
             try {
                 const response = await fetch(endpoint);
@@ -453,14 +487,14 @@ class SecurityDashboardHandler(BaseHTTPRequestHandler):
                 return null;
             }
         }
-        
+
         async function updateSecurityOverview() {
             const data = await fetchData('/api/security/summary');
             if (!data) return;
-            
+
             const threatLevel = data.threat_level || 'unknown';
             const healthScore = (data.security_health_score * 100).toFixed(1);
-            
+
             document.getElementById('security-overview').innerHTML = `
                 <div class="metric">
                     <span>Threat Level:</span>
@@ -488,16 +522,16 @@ class SecurityDashboardHandler(BaseHTTPRequestHandler):
                 </div>
             `;
         }
-        
+
         async function updateSecurityAlerts() {
             const data = await fetchData('/api/security/alerts');
             if (!data) return;
-            
+
             if (data.alerts.length === 0) {
                 document.getElementById('security-alerts').innerHTML = '<p>No active alerts</p>';
                 return;
             }
-            
+
             let alertsHtml = '';
             for (const alert of data.alerts) {
                 alertsHtml += `
@@ -508,21 +542,21 @@ class SecurityDashboardHandler(BaseHTTPRequestHandler):
                     </div>
                 `;
             }
-            
+
             document.getElementById('security-alerts').innerHTML = alertsHtml;
         }
-        
+
         async function updatePeerReputation() {
             const data = await fetchData('/api/security/peers');
             if (!data) return;
-            
+
             const topPeers = data.peer_reputations.slice(0, 5);
             let peersHtml = '';
-            
+
             for (const peer of topPeers) {
-                const trustColor = peer.trust_score >= 0.7 ? '#a6e3a1' : 
+                const trustColor = peer.trust_score >= 0.7 ? '#a6e3a1' :
                                  peer.trust_score >= 0.4 ? '#f9e2af' : '#f38ba8';
-                
+
                 peersHtml += `
                     <div class="metric">
                         <span>${peer.peer_id.substring(0, 12)}...</span>
@@ -530,7 +564,7 @@ class SecurityDashboardHandler(BaseHTTPRequestHandler):
                     </div>
                 `;
             }
-            
+
             document.getElementById('peer-reputation').innerHTML = `
                 <div class="metric">
                     <span>Total Peers:</span>
@@ -545,11 +579,11 @@ class SecurityDashboardHandler(BaseHTTPRequestHandler):
                 ${peersHtml}
             `;
         }
-        
+
         async function updateNetworkStats() {
             const data = await fetchData('/api/security/summary');
             if (!data) return;
-            
+
             let eventTypesHtml = '';
             for (const [eventType, count] of Object.entries(data.event_types || {})) {
                 eventTypesHtml += `
@@ -559,7 +593,7 @@ class SecurityDashboardHandler(BaseHTTPRequestHandler):
                     </div>
                 `;
             }
-            
+
             document.getElementById('network-stats').innerHTML = `
                 <strong>Event Types (Recent):</strong>
                 ${eventTypesHtml}
@@ -573,16 +607,16 @@ class SecurityDashboardHandler(BaseHTTPRequestHandler):
                 </div>
             `;
         }
-        
+
         async function updateRecentEvents() {
             const data = await fetchData('/api/security/events?limit=10');
             if (!data) return;
-            
+
             if (data.events.length === 0) {
                 document.getElementById('recent-events').innerHTML = '<p>No recent events</p>';
                 return;
             }
-            
+
             let tableHtml = `
                 <table class="events-table">
                     <thead>
@@ -596,7 +630,7 @@ class SecurityDashboardHandler(BaseHTTPRequestHandler):
                     </thead>
                     <tbody>
             `;
-            
+
             for (const event of data.events) {
                 const timestamp = new Date(event.timestamp).toLocaleString();
                 const severityColor = {
@@ -605,7 +639,7 @@ class SecurityDashboardHandler(BaseHTTPRequestHandler):
                     3: '#fab387',
                     4: '#f38ba8'
                 }[event.severity] || '#cdd6f4';
-                
+
                 tableHtml += `
                     <tr>
                         <td>${timestamp}</td>
@@ -616,11 +650,11 @@ class SecurityDashboardHandler(BaseHTTPRequestHandler):
                     </tr>
                 `;
             }
-            
+
             tableHtml += '</tbody></table>';
             document.getElementById('recent-events').innerHTML = tableHtml;
         }
-        
+
         async function refreshDashboard() {
             await Promise.all([
                 updateSecurityOverview(),
@@ -630,11 +664,11 @@ class SecurityDashboardHandler(BaseHTTPRequestHandler):
                 updateRecentEvents()
             ]);
         }
-        
+
         // Initial load and auto-refresh
         refreshDashboard();
         refreshInterval = setInterval(refreshDashboard, 30000); // Refresh every 30 seconds
-        
+
         // Cleanup on page unload
         window.addEventListener('beforeunload', () => {
             if (refreshInterval) {
@@ -666,8 +700,9 @@ class SecurityDashboardServer:
         # Create custom handler with security monitor
         class CustomHandler(SecurityDashboardHandler):
             def __init__(self, request, client_address, server):
-                super().__init__(request, client_address, server,
-                               server.security_monitor)
+                super().__init__(
+                    request, client_address, server, server.security_monitor
+                )
 
         # Create server
         self.server = HTTPServer(("localhost", self.port), CustomHandler)
@@ -676,7 +711,7 @@ class SecurityDashboardServer:
         self.running = True
 
         logger.info(f"Security dashboard started at http://localhost:{self.port}")
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print("P2P SECURITY DASHBOARD STARTED")
         print(f"URL: http://localhost:{self.port}")
         print("Features:")
@@ -685,7 +720,7 @@ class SecurityDashboardServer:
         print("  - Peer reputation tracking")
         print("  - Security event logging")
         print("  - Automated alerting")
-        print(f"{'='*60}\n")
+        print(f"{'=' * 60}\n")
 
         try:
             self.server.serve_forever()
@@ -710,8 +745,8 @@ def start_security_dashboard(security_monitor: SecurityMonitor, port: int = 8083
 
 # Standalone server for testing
 if __name__ == "__main__":
-    from pathlib import Path
     import sys
+    from pathlib import Path
 
     # Add parent directory to path
     sys.path.insert(0, str(Path(__file__).parent.parent.parent))
@@ -727,10 +762,30 @@ if __name__ == "__main__":
 
     # Sample security events
     events = [
-        ("peer_test_1", SecurityEvent.CONNECTION_ATTEMPT, SecurityLevel.LOW, "Test connection"),
-        ("peer_test_2", SecurityEvent.AUTH_FAILURE, SecurityLevel.MEDIUM, "Authentication failed"),
-        ("peer_malicious", SecurityEvent.RATE_LIMIT_EXCEEDED, SecurityLevel.HIGH, "Too many connections"),
-        ("peer_attacker", SecurityEvent.MALICIOUS_PEER_DETECTED, SecurityLevel.CRITICAL, "Malicious behavior"),
+        (
+            "peer_test_1",
+            SecurityEvent.CONNECTION_ATTEMPT,
+            SecurityLevel.LOW,
+            "Test connection",
+        ),
+        (
+            "peer_test_2",
+            SecurityEvent.AUTH_FAILURE,
+            SecurityLevel.MEDIUM,
+            "Authentication failed",
+        ),
+        (
+            "peer_malicious",
+            SecurityEvent.RATE_LIMIT_EXCEEDED,
+            SecurityLevel.HIGH,
+            "Too many connections",
+        ),
+        (
+            "peer_attacker",
+            SecurityEvent.MALICIOUS_PEER_DETECTED,
+            SecurityLevel.CRITICAL,
+            "Malicious behavior",
+        ),
     ]
 
     for peer_id, event_type, severity, description in events:
@@ -738,7 +793,7 @@ if __name__ == "__main__":
             event_type=event_type,
             peer_id=peer_id,
             severity=severity,
-            description=description
+            description=description,
         )
         monitor.log_security_event(event)
 

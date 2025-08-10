@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Benchmark compression performance."""
-from pathlib import Path
+
 import sys
 import time
+from pathlib import Path
 
 import torch
 from torch import nn
@@ -69,7 +70,7 @@ def benchmark_compression() -> None:
             compressed_size = len(compressed)
             ratio = original_size / compressed_size
             print(
-                f"{name:<10} {original_size/1024:.1f}KB {compressed_size/1024:.1f}KB {ratio:.2f}x {elapsed:.2f}s"
+                f"{name:<10} {original_size / 1024:.1f}KB {compressed_size / 1024:.1f}KB {ratio:.2f}x {elapsed:.2f}s"
             )
         except Exception as e:
             print(f"{name:<10} FAILED: {e}")

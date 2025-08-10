@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Test the advanced 4-stage compression pipeline."""
 
-from pathlib import Path
 import sys
+from pathlib import Path
 
 import torch
 from torch import nn
@@ -25,7 +25,7 @@ def test_pipeline_stages_isolated():
     original_size = weights.numel() * 4
 
     print(f"Original tensor: {weights.shape} = {weights.numel():,} params")
-    print(f"Original size: {original_size:,} bytes ({original_size/1024:.1f}KB)")
+    print(f"Original size: {original_size:,} bytes ({original_size / 1024:.1f}KB)")
 
     # Stage 1: BitNet
     print("\nStage 1: BitNet compression")

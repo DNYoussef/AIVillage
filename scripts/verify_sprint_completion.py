@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Verify Sprints 8-9 are actually complete."""
-from pathlib import Path
+
 import subprocess
 import sys
+from pathlib import Path
 
 
 def run_command(cmd):

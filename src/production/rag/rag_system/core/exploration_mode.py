@@ -3,10 +3,10 @@ import random
 from typing import Any
 
 import networkx as nx
-
-from agents.language_models.openai_gpt import OpenAIGPTConfig
 from rag_system.processing.advanced_nlp import AdvancedNLP
 from rag_system.retrieval.graph_store import GraphStore
+
+from agents.language_models.openai_gpt import OpenAIGPTConfig
 
 logger = logging.getLogger(__name__)
 

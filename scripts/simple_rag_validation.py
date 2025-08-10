@@ -8,7 +8,7 @@ from pathlib import Path
 def check_integration():
     """Check RAG integration compliance."""
     print("CODEX RAG Integration Validation")
-    print("="*50)
+    print("=" * 50)
 
     # 1. Check environment variables
     print("\n1. Environment Variables:")
@@ -18,7 +18,7 @@ def check_integration():
         "RAG_CHUNK_SIZE": "512",
         "RAG_CHUNK_OVERLAP": "50",
         "RAG_DEFAULT_K": "10",
-        "RAG_L1_CACHE_SIZE": "128"
+        "RAG_L1_CACHE_SIZE": "128",
     }
 
     for var, expected in env_vars.items():
@@ -32,7 +32,7 @@ def check_integration():
         "src/production/rag/rag_system/core/codex_rag_integration.py",
         "src/production/rag/rag_api_server.py",
         "src/production/rag/wikipedia_data_loader.py",
-        "config/rag_config.json"
+        "config/rag_config.json",
     ]
 
     for file_path in files:
@@ -70,11 +70,7 @@ def check_integration():
 
     # 4. Check data directories
     print("\n4. Data Directories:")
-    data_dirs = [
-        "data",
-        "data/faiss_index",
-        "data/bm25_corpus"
-    ]
+    data_dirs = ["data", "data/faiss_index", "data/bm25_corpus"]
 
     for dir_path in data_dirs:
         path = Path(dir_path)
@@ -83,13 +79,16 @@ def check_integration():
         else:
             print(f"  {dir_path}: WILL BE CREATED")
 
-    print("\n" + "="*50)
+    print("\n" + "=" * 50)
     print("INTEGRATION STATUS: CONFIGURED")
     print("Ready for RAG pipeline deployment")
     print("\nNext steps:")
-    print("1. Install dependencies: pip install sentence-transformers faiss-cpu rank-bm25")
+    print(
+        "1. Install dependencies: pip install sentence-transformers faiss-cpu rank-bm25"
+    )
     print("2. Run API server: python src/production/rag/rag_api_server.py")
     print("3. Test endpoint: GET http://localhost:8082/health/rag")
+
 
 if __name__ == "__main__":
     check_integration()

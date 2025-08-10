@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Validate actual compression performance with real measurements."""
 
-from pathlib import Path
 import sys
 import time
+from pathlib import Path
 
 import torch
 
@@ -33,8 +33,8 @@ def test_actual_bitnet():
     actual_ratio = original_size / compressed_size
 
     print(f"Input: {weights.shape} = {weights.numel():,} params")
-    print(f"Original: {original_size:,} bytes ({original_size/1024:.1f}KB)")
-    print(f"Compressed: {compressed_size:,} bytes ({compressed_size/1024:.1f}KB)")
+    print(f"Original: {original_size:,} bytes ({original_size / 1024:.1f}KB)")
+    print(f"Compressed: {compressed_size:,} bytes ({compressed_size / 1024:.1f}KB)")
     print(f"ACTUAL ratio: {actual_ratio:.1f}x")
     print(f"Time: {compress_time:.3f}s")
 
@@ -72,10 +72,10 @@ def test_actual_vptq():
     actual_ratio = original_size / total_size
 
     print(f"Input: {weights.shape} = {weights.numel():,} params")
-    print(f"Original: {original_size:,} bytes ({original_size/1024:.1f}KB)")
+    print(f"Original: {original_size:,} bytes ({original_size / 1024:.1f}KB)")
     print(f"Codebook: {compressed['codebook'].shape} = {codebook_size} bytes")
     print(f"Indices: {len(compressed['indices'])} bytes")
-    print(f"Total compressed: {total_size:,} bytes ({total_size/1024:.1f}KB)")
+    print(f"Total compressed: {total_size:,} bytes ({total_size / 1024:.1f}KB)")
     print(f"ACTUAL ratio: {actual_ratio:.1f}x")
     print(f"Time: {compress_time:.3f}s")
 
@@ -236,7 +236,7 @@ def main():
         # Run realistic tests
         final_ratio, kenya_viable, model_7b_mb = test_realistic_mobile_deployment()
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print("REALISTIC VALIDATION RESULTS")
         print("=" * 60)
 

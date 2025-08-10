@@ -6,10 +6,10 @@ Implements comprehensive troubleshooting utilities as specified in CODEX Integra
 import json
 import logging
 import os
-from pathlib import Path
 import socket
 import sqlite3
 import time
+from pathlib import Path
 from typing import Any
 
 import psutil
@@ -17,7 +17,7 @@ import psutil
 
 class TroubleshootingTools:
     """Comprehensive troubleshooting toolkit for AIVillage system.
-    
+
     Implements all debugging tools specified in CODEX Integration Requirements:
     - Port conflict checker
     - Database lock detector
@@ -31,10 +31,10 @@ class TroubleshootingTools:
 
     def check_port_conflicts(self, required_ports: list[int] = None) -> dict[str, Any]:
         """Check for port conflicts using netstat equivalent functionality.
-        
+
         Args:
             required_ports: List of ports that need to be available
-            
+
         Returns:
             Dictionary with port conflict analysis
         """
@@ -48,7 +48,7 @@ class TroubleshootingTools:
             "conflicts_found": 0,
             "available_ports": [],
             "conflicted_ports": [],
-            "port_details": {}
+            "port_details": {},
         }
 
         self.logger.debug(f"Checking port conflicts for ports: {required_ports}")
@@ -60,7 +60,9 @@ class TroubleshootingTools:
             if port_info["in_use"]:
                 results["conflicts_found"] += 1
                 results["conflicted_ports"].append(port)
-                self.logger.warning(f"Port {port} is in use by: {port_info['process_name']}")
+                self.logger.warning(
+                    f"Port {port} is in use by: {port_info['process_name']}"
+                )
             else:
                 results["available_ports"].append(port)
                 self.logger.debug(f"Port {port} is available")
@@ -79,7 +81,7 @@ class TroubleshootingTools:
             "process_name": None,
             "process_pid": None,
             "protocol": None,
-            "address": None
+            "address": None,
         }
 
         try:
@@ -93,13 +95,20 @@ class TroubleshootingTools:
 
                     # Get process information using psutil
                     for conn in psutil.net_connections():
-                        if conn.laddr.port == port and conn.status == psutil.CONN_LISTEN:
+                        if (
+                            conn.laddr.port == port
+                            and conn.status == psutil.CONN_LISTEN
+                        ):
                             try:
                                 process = psutil.Process(conn.pid)
                                 port_info["process_name"] = process.name()
                                 port_info["process_pid"] = conn.pid
-                                port_info["protocol"] = "TCP" if conn.type == socket.SOCK_STREAM else "UDP"
-                                port_info["address"] = f"{conn.laddr.ip}:{conn.laddr.port}"
+                                port_info["protocol"] = (
+                                    "TCP" if conn.type == socket.SOCK_STREAM else "UDP"
+                                )
+                                port_info["address"] = (
+                                    f"{conn.laddr.ip}:{conn.laddr.port}"
+                                )
                                 break
                             except (psutil.NoSuchProcess, psutil.AccessDenied):
                                 port_info["process_name"] = "Unknown"
@@ -122,9 +131,11 @@ class TroubleshootingTools:
                         port_info = {
                             "port": conn.laddr.port,
                             "address": f"{conn.laddr.ip}:{conn.laddr.port}",
-                            "protocol": "TCP" if conn.type == socket.SOCK_STREAM else "UDP",
+                            "protocol": (
+                                "TCP" if conn.type == socket.SOCK_STREAM else "UDP"
+                            ),
                             "process_name": process.name() if process else "Unknown",
-                            "process_pid": conn.pid
+                            "process_pid": conn.pid,
                         }
                         listening_ports.append(port_info)
                     except (psutil.NoSuchProcess, psutil.AccessDenied):
@@ -136,10 +147,10 @@ class TroubleshootingTools:
 
     def detect_database_locks(self, db_paths: list[str] = None) -> dict[str, Any]:
         """Detect SQLite database locks and analyze database status.
-        
+
         Args:
             db_paths: List of database file paths to check
-            
+
         Returns:
             Dictionary with database lock analysis
         """
@@ -147,14 +158,14 @@ class TroubleshootingTools:
             db_paths = [
                 "./data/evolution_metrics.db",
                 "./data/digital_twin.db",
-                "./data/rag_index.db"
+                "./data/rag_index.db",
             ]
 
         results = {
             "timestamp": time.time(),
             "databases_checked": len(db_paths),
             "locked_databases": 0,
-            "database_details": {}
+            "database_details": {},
         }
 
         self.logger.debug(f"Checking database locks for: {db_paths}")
@@ -181,7 +192,7 @@ class TroubleshootingTools:
             "connection_count": 0,
             "wal_file_exists": False,
             "shm_file_exists": False,
-            "error": None
+            "error": None,
         }
 
         try:
@@ -231,12 +242,14 @@ class TroubleshootingTools:
 
         return db_info
 
-    def profile_memory_usage(self, include_faiss_simulation: bool = True) -> dict[str, Any]:
+    def profile_memory_usage(
+        self, include_faiss_simulation: bool = True
+    ) -> dict[str, Any]:
         """Profile memory usage with FAISS memory simulation.
-        
+
         Args:
             include_faiss_simulation: Whether to simulate FAISS memory usage
-            
+
         Returns:
             Dictionary with memory usage analysis
         """
@@ -245,7 +258,7 @@ class TroubleshootingTools:
             "system_memory": {},
             "process_memory": {},
             "faiss_simulation": {},
-            "recommendations": []
+            "recommendations": [],
         }
 
         # Get system memory information
@@ -257,7 +270,7 @@ class TroubleshootingTools:
             "free_gb": memory.free / (1024**3),
             "percent_used": memory.percent,
             "buffers_gb": getattr(memory, "buffers", 0) / (1024**3),
-            "cached_gb": getattr(memory, "cached", 0) / (1024**3)
+            "cached_gb": getattr(memory, "cached", 0) / (1024**3),
         }
 
         # Get current process memory information
@@ -268,7 +281,9 @@ class TroubleshootingTools:
             "vms_mb": process_memory.vms / (1024**2),
             "percent": process.memory_percent(),
             "num_threads": process.num_threads(),
-            "open_files": len(process.open_files()) if hasattr(process, "open_files") else 0
+            "open_files": (
+                len(process.open_files()) if hasattr(process, "open_files") else 0
+            ),
         }
 
         # FAISS memory simulation (CODEX requirement: keep under 2GB for 100K docs)
@@ -279,17 +294,28 @@ class TroubleshootingTools:
         # Generate recommendations
         recommendations = []
         if memory.percent > 85:
-            recommendations.append("High system memory usage - consider optimizing memory allocation")
+            recommendations.append(
+                "High system memory usage - consider optimizing memory allocation"
+            )
 
         if results["process_memory"]["rss_mb"] > 1000:
-            recommendations.append("High process memory usage - monitor for memory leaks")
+            recommendations.append(
+                "High process memory usage - monitor for memory leaks"
+            )
 
-        if include_faiss_simulation and results["faiss_simulation"]["estimated_usage_gb"] > 1.8:
-            recommendations.append("FAISS memory usage approaching 2GB limit - implement lazy loading")
+        if (
+            include_faiss_simulation
+            and results["faiss_simulation"]["estimated_usage_gb"] > 1.8
+        ):
+            recommendations.append(
+                "FAISS memory usage approaching 2GB limit - implement lazy loading"
+            )
 
         results["recommendations"] = recommendations
 
-        self.logger.debug(f"Memory profiling completed: {memory.percent:.1f}% system usage")
+        self.logger.debug(
+            f"Memory profiling completed: {memory.percent:.1f}% system usage"
+        )
 
         return results
 
@@ -316,17 +342,18 @@ class TroubleshootingTools:
             "document_count": document_count,
             "vector_dimension": vector_dimension,
             "vectors_memory_gb": vectors_memory_bytes / (1024**3),
-            "faiss_overhead_gb": (total_faiss_memory - vectors_memory_bytes) / (1024**3),
+            "faiss_overhead_gb": (total_faiss_memory - vectors_memory_bytes)
+            / (1024**3),
             "metadata_memory_mb": metadata_memory / (1024**2),
             "estimated_usage_gb": total_memory / (1024**3),
             "codex_limit_gb": 2.0,
             "within_limit": total_memory / (1024**3) < 2.0,
-            "utilization_percent": (total_memory / (1024**3)) / 2.0 * 100
+            "utilization_percent": (total_memory / (1024**3)) / 2.0 * 100,
         }
 
     def debug_network_discovery(self) -> dict[str, Any]:
         """Debug P2P network discovery functionality.
-        
+
         Returns:
             Dictionary with network discovery analysis
         """
@@ -335,25 +362,24 @@ class TroubleshootingTools:
             "network_interfaces": [],
             "mdns_status": {},
             "peer_discovery": {},
-            "connectivity_tests": {}
+            "connectivity_tests": {},
         }
 
         # Get network interfaces
         try:
             interfaces = psutil.net_if_addrs()
             for interface_name, addresses in interfaces.items():
-                interface_info = {
-                    "name": interface_name,
-                    "addresses": []
-                }
+                interface_info = {"name": interface_name, "addresses": []}
 
                 for addr in addresses:
-                    interface_info["addresses"].append({
-                        "family": str(addr.family),
-                        "address": addr.address,
-                        "netmask": addr.netmask,
-                        "broadcast": addr.broadcast
-                    })
+                    interface_info["addresses"].append(
+                        {
+                            "family": str(addr.family),
+                            "address": addr.address,
+                            "netmask": addr.netmask,
+                            "broadcast": addr.broadcast,
+                        }
+                    )
 
                 results["network_interfaces"].append(interface_info)
 
@@ -380,7 +406,7 @@ class TroubleshootingTools:
             "ttl": 120,
             "status": "simulated",
             "broadcast_capability": True,
-            "discovery_interval": 30
+            "discovery_interval": 30,
         }
 
     def _simulate_peer_discovery(self) -> dict[str, Any]:
@@ -390,11 +416,23 @@ class TroubleshootingTools:
             "peers_found": 0,
             "discovery_steps": [
                 {"step": "mDNS broadcast", "duration_ms": 500, "status": "completed"},
-                {"step": "Response collection", "duration_ms": 2000, "status": "completed"},
-                {"step": "Peer verification", "duration_ms": 1500, "status": "completed"},
-                {"step": "Connection establishment", "duration_ms": 1000, "status": "completed"}
+                {
+                    "step": "Response collection",
+                    "duration_ms": 2000,
+                    "status": "completed",
+                },
+                {
+                    "step": "Peer verification",
+                    "duration_ms": 1500,
+                    "status": "completed",
+                },
+                {
+                    "step": "Connection establishment",
+                    "duration_ms": 1000,
+                    "status": "completed",
+                },
             ],
-            "total_discovery_time": 5.0
+            "total_discovery_time": 5.0,
         }
 
     def _test_connectivity(self) -> dict[str, Any]:
@@ -402,19 +440,21 @@ class TroubleshootingTools:
         connectivity_tests = {
             "localhost": self._test_connection("localhost", 80),
             "dns_resolution": self._test_dns_resolution(),
-            "local_network": self._test_local_network()
+            "local_network": self._test_local_network(),
         }
 
         return connectivity_tests
 
-    def _test_connection(self, host: str, port: int, timeout: float = 5.0) -> dict[str, Any]:
+    def _test_connection(
+        self, host: str, port: int, timeout: float = 5.0
+    ) -> dict[str, Any]:
         """Test connection to a specific host and port."""
         result = {
             "host": host,
             "port": port,
             "connected": False,
             "response_time_ms": None,
-            "error": None
+            "error": None,
         }
 
         try:
@@ -445,13 +485,10 @@ class TroubleshootingTools:
                 results[host] = {
                     "resolved": True,
                     "addresses": [info[4][0] for info in addr_info],
-                    "resolution_time_ms": (end_time - start_time) * 1000
+                    "resolution_time_ms": (end_time - start_time) * 1000,
                 }
             except Exception as e:
-                results[host] = {
-                    "resolved": False,
-                    "error": str(e)
-                }
+                results[host] = {"resolved": False, "error": str(e)}
 
         return results
 
@@ -460,15 +497,15 @@ class TroubleshootingTools:
         return {
             "gateway_reachable": True,  # Simplified for now
             "local_subnet_accessible": True,
-            "multicast_capable": True
+            "multicast_capable": True,
         }
 
     def validate_configuration(self, config_files: list[str] = None) -> dict[str, Any]:
         """Validate system configuration files.
-        
+
         Args:
             config_files: List of configuration file paths to validate
-            
+
         Returns:
             Dictionary with configuration validation results
         """
@@ -478,7 +515,7 @@ class TroubleshootingTools:
                 ".flake8",
                 ".isort.cfg",
                 ".pre-commit-config.yaml",
-                "config/aivillage_config.yaml"
+                "config/aivillage_config.yaml",
             ]
 
         results = {
@@ -487,7 +524,7 @@ class TroubleshootingTools:
             "valid_files": 0,
             "invalid_files": 0,
             "file_details": {},
-            "environment_variables": self._check_environment_variables()
+            "environment_variables": self._check_environment_variables(),
         }
 
         for config_file in config_files:
@@ -510,7 +547,7 @@ class TroubleshootingTools:
             "format": None,
             "size_bytes": 0,
             "errors": [],
-            "warnings": []
+            "warnings": [],
         }
 
         try:
@@ -556,6 +593,7 @@ class TroubleshootingTools:
         """Validate a YAML file."""
         try:
             import yaml
+
             with open(path) as f:
                 yaml.safe_load(f)
         except ImportError:
@@ -567,11 +605,13 @@ class TroubleshootingTools:
         """Validate a TOML file."""
         try:
             import tomllib
+
             with open(path, "rb") as f:
                 tomllib.load(f)
         except ImportError:
             try:
                 import toml
+
                 with open(path) as f:
                     toml.load(f)
             except ImportError:
@@ -586,21 +626,21 @@ class TroubleshootingTools:
             "AIVILLAGE_LOG_LEVEL",
             "AIVILLAGE_PROFILE_PERFORMANCE",
             "PYTHONPATH",
-            "PATH"
+            "PATH",
         ]
 
         env_status = {}
         for var in important_vars:
             env_status[var] = {
                 "set": var in os.environ,
-                "value": os.environ.get(var, None)
+                "value": os.environ.get(var, None),
             }
 
         return env_status
 
     def run_comprehensive_diagnosis(self) -> dict[str, Any]:
         """Run comprehensive system diagnosis.
-        
+
         Returns:
             Complete diagnostic report
         """
@@ -616,7 +656,7 @@ class TroubleshootingTools:
             "memory_profile": {},
             "network_discovery": {},
             "configuration_validation": {},
-            "overall_health": "unknown"
+            "overall_health": "unknown",
         }
 
         try:
@@ -646,7 +686,9 @@ class TroubleshootingTools:
 
         diagnosis["duration_seconds"] = time.time() - start_time
 
-        self.logger.info(f"Comprehensive diagnosis completed in {diagnosis['duration_seconds']:.2f}s")
+        self.logger.info(
+            f"Comprehensive diagnosis completed in {diagnosis['duration_seconds']:.2f}s"
+        )
         self.logger.info(f"Overall system health: {diagnosis['overall_health']}")
 
         return diagnosis
@@ -664,14 +706,20 @@ class TroubleshootingTools:
             score -= 0.3
 
         # High memory usage reduces score
-        memory_percent = diagnosis.get("memory_profile", {}).get("system_memory", {}).get("percent_used", 0)
+        memory_percent = (
+            diagnosis.get("memory_profile", {})
+            .get("system_memory", {})
+            .get("percent_used", 0)
+        )
         if memory_percent > 90:
             score -= 0.3
         elif memory_percent > 80:
             score -= 0.1
 
         # Configuration issues reduce score
-        invalid_configs = diagnosis.get("configuration_validation", {}).get("invalid_files", 0)
+        invalid_configs = diagnosis.get("configuration_validation", {}).get(
+            "invalid_files", 0
+        )
         if invalid_configs > 0:
             score -= 0.1 * invalid_configs
 

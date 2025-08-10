@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """PROVE each compression stage works individually - no excuses."""
 
-from pathlib import Path
 import sys
 import time
+from pathlib import Path
 
 import torch
 
@@ -397,7 +397,7 @@ def prove_all_stages():
 
     print("\nSTATISTICS:")
     print(f"  Stages working: {working_count}/4")
-    print(f"  Success rate: {working_count/4*100:.0f}%")
+    print(f"  Success rate: {working_count / 4 * 100:.0f}%")
 
     if working_count == 4:
         print(f"  Theoretical combined: {total_ratio:.1f}x")

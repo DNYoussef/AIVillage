@@ -2,9 +2,9 @@
 """Comprehensive validation of the unified compression system."""
 
 import logging
-from pathlib import Path
 import sys
 import time
+from pathlib import Path
 
 import torch
 from torch import nn
@@ -44,8 +44,12 @@ def test_bitnet_compression():
     compressed_size = len(compressed["packed_weights"]) + 24  # +metadata
     compression_ratio = original_size / compressed_size
 
-    print(f"Original size: {original_size:,} bytes ({original_size/1024/1024:.1f}MB)")
-    print(f"Compressed size: {compressed_size:,} bytes ({compressed_size/1024:.1f}KB)")
+    print(
+        f"Original size: {original_size:,} bytes ({original_size / 1024 / 1024:.1f}MB)"
+    )
+    print(
+        f"Compressed size: {compressed_size:,} bytes ({compressed_size / 1024:.1f}KB)"
+    )
     print(f"Compression ratio: {compression_ratio:.1f}x")
     print(f"Compression time: {compress_time:.3f}s")
 
@@ -179,7 +183,7 @@ def test_advanced_pipeline():
     pipeline = AdvancedCompressionPipeline()
 
     print(f"Test model parameters: {sum(p.numel() for p in model.parameters()):,}")
-    print(f"Original size: {original_size:,} bytes ({original_size/1024:.1f}KB)")
+    print(f"Original size: {original_size:,} bytes ({original_size / 1024:.1f}KB)")
 
     # Compress
     start_time = time.time()
@@ -190,7 +194,9 @@ def test_advanced_pipeline():
     ratio = original_size / compressed_size
 
     print(f"Compression time: {duration:.2f}s")
-    print(f"Compressed size: {compressed_size:,} bytes ({compressed_size/1024:.1f}KB)")
+    print(
+        f"Compressed size: {compressed_size:,} bytes ({compressed_size / 1024:.1f}KB)"
+    )
     print(f"Pipeline compression ratio: {ratio:.1f}x")
 
     # Test decompression

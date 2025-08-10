@@ -4,11 +4,12 @@
 This script compresses deterministic sample data and reports
 compression ratio, percentage reduction, and time taken.
 """
+
 import argparse
 import json
-from pathlib import Path
 import time
 import zlib
+from pathlib import Path
 
 
 def run_benchmark() -> dict:

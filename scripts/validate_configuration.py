@@ -5,12 +5,12 @@ Validates all configuration files, checks consistency, verifies paths and models
 and generates comprehensive validation report.
 """
 
-from datetime import datetime
 import json
 import logging
 import os
-from pathlib import Path
 import sys
+from datetime import datetime
+from pathlib import Path
 from typing import Any
 
 # Add src to path for imports
@@ -19,6 +19,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 from core.config_manager import CODEXConfigManager, ConfigurationError
 
 logger = logging.getLogger(__name__)
+
 
 class ConfigurationValidator:
     """Comprehensive configuration validation for CODEX integration."""
@@ -33,7 +34,7 @@ class ConfigurationValidator:
                 "total_checks": 0,
                 "passed_checks": 0,
                 "failed_checks": 0,
-                "warnings": 0
+                "warnings": 0,
             },
             "file_validation": {},
             "configuration_consistency": {},
@@ -42,7 +43,7 @@ class ConfigurationValidator:
             "port_validation": {},
             "environment_variables": {},
             "codex_compliance": {},
-            "recommendations": []
+            "recommendations": [],
         }
 
     def validate_file_syntax(self) -> dict[str, Any]:
@@ -52,7 +53,7 @@ class ConfigurationValidator:
         files_to_check = [
             ("aivillage_config.yaml", "yaml"),
             ("p2p_config.json", "json"),
-            ("rag_config.json", "json")
+            ("rag_config.json", "json"),
         ]
 
         for filename, file_type in files_to_check:
@@ -62,7 +63,7 @@ class ConfigurationValidator:
                 "readable": False,
                 "valid_syntax": False,
                 "size_bytes": 0,
-                "errors": []
+                "errors": [],
             }
 
             if file_result["exists"]:
@@ -75,6 +76,7 @@ class ConfigurationValidator:
 
                     if file_type == "yaml":
                         import yaml
+
                         yaml.safe_load(content)
                     elif file_type == "json":
                         json.loads(content)
@@ -98,13 +100,12 @@ class ConfigurationValidator:
             "config_loaded": False,
             "hot_reload_enabled": False,
             "validation_passed": False,
-            "errors": []
+            "errors": [],
         }
 
         try:
             self.config_manager = CODEXConfigManager(
-                config_dir=str(self.config_dir),
-                enable_hot_reload=True
+                config_dir=str(self.config_dir), enable_hot_reload=True
             )
             results["manager_created"] = True
             results["hot_reload_enabled"] = True
@@ -154,7 +155,7 @@ class ConfigurationValidator:
                     "type": path_type,
                     "accessible": False,
                     "writable": False,
-                    "issues": []
+                    "issues": [],
                 }
 
                 if path_type == "directory":
@@ -177,7 +178,9 @@ class ConfigurationValidator:
                     elif not path_obj.parent.exists():
                         path_result["issues"].append("Parent directory does not exist")
                     else:
-                        path_result["issues"].append("File does not exist but parent directory is accessible")
+                        path_result["issues"].append(
+                            "File does not exist but parent directory is accessible"
+                        )
 
                 results[config_path] = path_result
 
@@ -191,14 +194,18 @@ class ConfigurationValidator:
         results = {}
 
         # Models to check
-        embedding_model = self.config_manager.get("integration.rag_pipeline.embedding_model")
-        cross_encoder_model = self.config_manager.get("integration.rag_pipeline.cross_encoder_model")
+        embedding_model = self.config_manager.get(
+            "integration.rag_pipeline.embedding_model"
+        )
+        cross_encoder_model = self.config_manager.get(
+            "integration.rag_pipeline.cross_encoder_model"
+        )
         rag_embedder_model = self.config_manager.get("rag_config.embedder.model_name")
 
         models_to_check = [
             ("embedding_model", embedding_model),
             ("cross_encoder_model", cross_encoder_model),
-            ("rag_embedder_model", rag_embedder_model)
+            ("rag_embedder_model", rag_embedder_model),
         ]
 
         for model_name, model_path in models_to_check:
@@ -207,13 +214,13 @@ class ConfigurationValidator:
                     "model_path": model_path,
                     "expected_available": False,
                     "can_load": False,
-                    "issues": []
+                    "issues": [],
                 }
 
                 # Check if model matches CODEX requirements
                 expected_models = [
                     "paraphrase-MiniLM-L3-v2",
-                    "cross-encoder/ms-marco-MiniLM-L-2-v2"
+                    "cross-encoder/ms-marco-MiniLM-L-2-v2",
                 ]
 
                 if model_path in expected_models:
@@ -222,14 +229,19 @@ class ConfigurationValidator:
                     # Attempt to verify model can be loaded
                     try:
                         from sentence_transformers import SentenceTransformer
+
                         # Don't actually load, just check if library is available
                         model_result["can_load"] = True
                     except ImportError:
-                        model_result["issues"].append("sentence-transformers library not available")
+                        model_result["issues"].append(
+                            "sentence-transformers library not available"
+                        )
                     except Exception as e:
                         model_result["issues"].append(f"Error checking model: {e}")
                 else:
-                    model_result["issues"].append(f"Model {model_path} not in CODEX requirements")
+                    model_result["issues"].append(
+                        f"Model {model_path} not in CODEX requirements"
+                    )
 
                 results[model_name] = model_result
 
@@ -250,7 +262,7 @@ class ConfigurationValidator:
             "digital_twin_api": 8080,
             "evolution_metrics": 8081,
             "rag_pipeline": 8082,
-            "redis": 6379
+            "redis": 6379,
         }
 
         # Check configured P2P port
@@ -261,7 +273,7 @@ class ConfigurationValidator:
                 "expected_port": expected_ports["libp2p_main"],
                 "matches_requirement": p2p_port == expected_ports["libp2p_main"],
                 "is_valid_port": isinstance(p2p_port, int) and 1 <= p2p_port <= 65535,
-                "issues": []
+                "issues": [],
             }
 
             if not port_result["matches_requirement"]:
@@ -277,7 +289,7 @@ class ConfigurationValidator:
             results["android_p2p_conflict"] = {
                 "port": p2p_port,
                 "conflict": True,
-                "issue": f"Port {p2p_port} conflicts with Android P2P range (4000-4010)"
+                "issue": f"Port {p2p_port} conflicts with Android P2P range (4000-4010)",
             }
 
         return results
@@ -292,14 +304,14 @@ class ConfigurationValidator:
             "set_env_vars": 0,
             "unset_env_vars": 0,
             "overrides_applied": {},
-            "missing_critical": []
+            "missing_critical": [],
         }
 
         # Critical environment variables that should be set
         critical_env_vars = [
             "DIGITAL_TWIN_ENCRYPTION_KEY",
             "AIVILLAGE_DB_PATH",
-            "RAG_EMBEDDING_MODEL"
+            "RAG_EMBEDDING_MODEL",
         ]
 
         for env_var, config_path in self.config_manager.env_mappings.items():
@@ -310,7 +322,7 @@ class ConfigurationValidator:
                 results["overrides_applied"][env_var] = {
                     "value": env_value,
                     "config_path": config_path,
-                    "applied": True
+                    "applied": True,
                 }
             else:
                 results["unset_env_vars"] += 1
@@ -330,141 +342,201 @@ class ConfigurationValidator:
             "total_requirements": 0,
             "met_requirements": 0,
             "failed_requirements": [],
-            "compliance_score": 0.0
+            "compliance_score": 0.0,
         }
 
         # CODEX requirements checklist
         requirements = [
             {
                 "name": "Evolution metrics enabled",
-                "check": lambda: self.config_manager.get("integration.evolution_metrics.enabled", False),
-                "critical": True
+                "check": lambda: self.config_manager.get(
+                    "integration.evolution_metrics.enabled", False
+                ),
+                "critical": True,
             },
             {
                 "name": "Evolution metrics backend is sqlite",
-                "check": lambda: self.config_manager.get("integration.evolution_metrics.backend") == "sqlite",
-                "critical": True
+                "check": lambda: self.config_manager.get(
+                    "integration.evolution_metrics.backend"
+                )
+                == "sqlite",
+                "critical": True,
             },
             {
                 "name": "RAG pipeline enabled",
-                "check": lambda: self.config_manager.get("integration.rag_pipeline.enabled", False),
-                "critical": True
+                "check": lambda: self.config_manager.get(
+                    "integration.rag_pipeline.enabled", False
+                ),
+                "critical": True,
             },
             {
                 "name": "RAG embedding model is paraphrase-MiniLM-L3-v2",
-                "check": lambda: self.config_manager.get("integration.rag_pipeline.embedding_model") == "paraphrase-MiniLM-L3-v2",
-                "critical": True
+                "check": lambda: self.config_manager.get(
+                    "integration.rag_pipeline.embedding_model"
+                )
+                == "paraphrase-MiniLM-L3-v2",
+                "critical": True,
             },
             {
                 "name": "RAG cache enabled",
-                "check": lambda: self.config_manager.get("integration.rag_pipeline.cache_enabled", False),
-                "critical": False
+                "check": lambda: self.config_manager.get(
+                    "integration.rag_pipeline.cache_enabled", False
+                ),
+                "critical": False,
             },
             {
                 "name": "RAG chunk size is 512",
-                "check": lambda: self.config_manager.get("integration.rag_pipeline.chunk_size") == 512,
-                "critical": False
+                "check": lambda: self.config_manager.get(
+                    "integration.rag_pipeline.chunk_size"
+                )
+                == 512,
+                "critical": False,
             },
             {
                 "name": "P2P networking enabled",
-                "check": lambda: self.config_manager.get("integration.p2p_networking.enabled", False),
-                "critical": True
+                "check": lambda: self.config_manager.get(
+                    "integration.p2p_networking.enabled", False
+                ),
+                "critical": True,
             },
             {
                 "name": "P2P transport is libp2p",
-                "check": lambda: self.config_manager.get("integration.p2p_networking.transport") == "libp2p",
-                "critical": True
+                "check": lambda: self.config_manager.get(
+                    "integration.p2p_networking.transport"
+                )
+                == "libp2p",
+                "critical": True,
             },
             {
                 "name": "P2P discovery method is mdns",
-                "check": lambda: self.config_manager.get("integration.p2p_networking.discovery_method") == "mdns",
-                "critical": True
+                "check": lambda: self.config_manager.get(
+                    "integration.p2p_networking.discovery_method"
+                )
+                == "mdns",
+                "critical": True,
             },
             {
                 "name": "P2P max peers is 50",
-                "check": lambda: self.config_manager.get("integration.p2p_networking.max_peers") == 50,
-                "critical": False
+                "check": lambda: self.config_manager.get(
+                    "integration.p2p_networking.max_peers"
+                )
+                == 50,
+                "critical": False,
             },
             {
                 "name": "Digital twin enabled",
-                "check": lambda: self.config_manager.get("integration.digital_twin.enabled", False),
-                "critical": True
+                "check": lambda: self.config_manager.get(
+                    "integration.digital_twin.enabled", False
+                ),
+                "critical": True,
             },
             {
                 "name": "Digital twin encryption enabled",
-                "check": lambda: self.config_manager.get("integration.digital_twin.encryption_enabled", False),
-                "critical": True
+                "check": lambda: self.config_manager.get(
+                    "integration.digital_twin.encryption_enabled", False
+                ),
+                "critical": True,
             },
             {
                 "name": "Digital twin privacy mode is strict",
-                "check": lambda: self.config_manager.get("integration.digital_twin.privacy_mode") == "strict",
-                "critical": False
+                "check": lambda: self.config_manager.get(
+                    "integration.digital_twin.privacy_mode"
+                )
+                == "strict",
+                "critical": False,
             },
             {
                 "name": "Digital twin max profiles is 10000",
-                "check": lambda: self.config_manager.get("integration.digital_twin.max_profiles") == 10000,
-                "critical": False
+                "check": lambda: self.config_manager.get(
+                    "integration.digital_twin.max_profiles"
+                )
+                == 10000,
+                "critical": False,
             },
             {
                 "name": "P2P host is 0.0.0.0",
-                "check": lambda: self.config_manager.get("p2p_config.host") == "0.0.0.0",
-                "critical": True
+                "check": lambda: self.config_manager.get("p2p_config.host")
+                == "0.0.0.0",
+                "critical": True,
             },
             {
                 "name": "P2P port is 4001",
                 "check": lambda: self.config_manager.get("p2p_config.port") == 4001,
-                "critical": True
+                "critical": True,
             },
             {
                 "name": "P2P mDNS enabled",
-                "check": lambda: self.config_manager.get("p2p_config.peer_discovery.mdns_enabled", False),
-                "critical": True
+                "check": lambda: self.config_manager.get(
+                    "p2p_config.peer_discovery.mdns_enabled", False
+                ),
+                "critical": True,
             },
             {
                 "name": "P2P TCP transport enabled",
-                "check": lambda: self.config_manager.get("p2p_config.transports.tcp_enabled", False),
-                "critical": True
+                "check": lambda: self.config_manager.get(
+                    "p2p_config.transports.tcp_enabled", False
+                ),
+                "critical": True,
             },
             {
                 "name": "P2P WebSocket transport enabled",
-                "check": lambda: self.config_manager.get("p2p_config.transports.websocket_enabled", False),
-                "critical": True
+                "check": lambda: self.config_manager.get(
+                    "p2p_config.transports.websocket_enabled", False
+                ),
+                "critical": True,
             },
             {
                 "name": "P2P TLS security enabled",
-                "check": lambda: self.config_manager.get("p2p_config.security.tls_enabled", False),
-                "critical": True
+                "check": lambda: self.config_manager.get(
+                    "p2p_config.security.tls_enabled", False
+                ),
+                "critical": True,
             },
             {
                 "name": "P2P peer verification enabled",
-                "check": lambda: self.config_manager.get("p2p_config.security.peer_verification", False),
-                "critical": True
+                "check": lambda: self.config_manager.get(
+                    "p2p_config.security.peer_verification", False
+                ),
+                "critical": True,
             },
             {
                 "name": "RAG embedder model name matches",
-                "check": lambda: self.config_manager.get("rag_config.embedder.model_name") == "paraphrase-MiniLM-L3-v2",
-                "critical": True
+                "check": lambda: self.config_manager.get(
+                    "rag_config.embedder.model_name"
+                )
+                == "paraphrase-MiniLM-L3-v2",
+                "critical": True,
             },
             {
                 "name": "RAG retrieval vector_top_k is 20",
-                "check": lambda: self.config_manager.get("rag_config.retrieval.vector_top_k") == 20,
-                "critical": False
+                "check": lambda: self.config_manager.get(
+                    "rag_config.retrieval.vector_top_k"
+                )
+                == 20,
+                "critical": False,
             },
             {
                 "name": "RAG retrieval keyword_top_k is 20",
-                "check": lambda: self.config_manager.get("rag_config.retrieval.keyword_top_k") == 20,
-                "critical": False
+                "check": lambda: self.config_manager.get(
+                    "rag_config.retrieval.keyword_top_k"
+                )
+                == 20,
+                "critical": False,
             },
             {
                 "name": "RAG retrieval final_top_k is 10",
-                "check": lambda: self.config_manager.get("rag_config.retrieval.final_top_k") == 10,
-                "critical": False
+                "check": lambda: self.config_manager.get(
+                    "rag_config.retrieval.final_top_k"
+                )
+                == 10,
+                "critical": False,
             },
             {
                 "name": "RAG cache L1 size is 128",
-                "check": lambda: self.config_manager.get("rag_config.cache.l1_size") == 128,
-                "critical": False
-            }
+                "check": lambda: self.config_manager.get("rag_config.cache.l1_size")
+                == 128,
+                "critical": False,
+            },
         ]
 
         results["total_requirements"] = len(requirements)
@@ -474,19 +546,18 @@ class ConfigurationValidator:
                 if req["check"]():
                     results["met_requirements"] += 1
                 else:
-                    results["failed_requirements"].append({
-                        "name": req["name"],
-                        "critical": req["critical"]
-                    })
+                    results["failed_requirements"].append(
+                        {"name": req["name"], "critical": req["critical"]}
+                    )
             except Exception as e:
-                results["failed_requirements"].append({
-                    "name": req["name"],
-                    "critical": req["critical"],
-                    "error": str(e)
-                })
+                results["failed_requirements"].append(
+                    {"name": req["name"], "critical": req["critical"], "error": str(e)}
+                )
 
         if results["total_requirements"] > 0:
-            results["compliance_score"] = (results["met_requirements"] / results["total_requirements"]) * 100
+            results["compliance_score"] = (
+                results["met_requirements"] / results["total_requirements"]
+            ) * 100
 
         return results
 
@@ -495,7 +566,9 @@ class ConfigurationValidator:
         recommendations = []
 
         if not self.config_manager:
-            return ["Cannot generate recommendations: Configuration manager not initialized"]
+            return [
+                "Cannot generate recommendations: Configuration manager not initialized"
+            ]
 
         # Check file validation results
         file_results = self.validation_results.get("file_validation", {})
@@ -509,13 +582,17 @@ class ConfigurationValidator:
         path_results = self.validation_results.get("path_validation", {})
         for path_config, result in path_results.items():
             if result.get("issues"):
-                recommendations.append(f"Fix path issues for {path_config}: {', '.join(result['issues'])}")
+                recommendations.append(
+                    f"Fix path issues for {path_config}: {', '.join(result['issues'])}"
+                )
 
         # Check model validation results
         model_results = self.validation_results.get("model_validation", {})
         for model_name, result in model_results.items():
             if result.get("issues"):
-                recommendations.append(f"Address model issues for {model_name}: {', '.join(result['issues'])}")
+                recommendations.append(
+                    f"Address model issues for {model_name}: {', '.join(result['issues'])}"
+                )
 
         # Check CODEX compliance
         codex_results = self.validation_results.get("codex_compliance", {})
@@ -523,13 +600,17 @@ class ConfigurationValidator:
 
         critical_failures = [req for req in failed_reqs if req.get("critical")]
         if critical_failures:
-            recommendations.append(f"Fix critical CODEX compliance issues: {len(critical_failures)} requirements not met")
+            recommendations.append(
+                f"Fix critical CODEX compliance issues: {len(critical_failures)} requirements not met"
+            )
 
         # Environment variable recommendations
         env_results = self.validation_results.get("environment_variables", {})
         missing_critical = env_results.get("missing_critical", [])
         if missing_critical:
-            recommendations.append(f"Set critical environment variables: {', '.join(missing_critical)}")
+            recommendations.append(
+                f"Set critical environment variables: {', '.join(missing_critical)}"
+            )
 
         # Performance recommendations
         if self.config_manager.get("integration.rag_pipeline.cache_enabled") is False:
@@ -550,7 +631,9 @@ class ConfigurationValidator:
 
         # Configuration loading validation
         print("  Testing configuration loading...")
-        self.validation_results["configuration_consistency"] = self.validate_configuration_loading()
+        self.validation_results["configuration_consistency"] = (
+            self.validate_configuration_loading()
+        )
 
         # Path validation
         print("  Validating paths...")
@@ -566,7 +649,9 @@ class ConfigurationValidator:
 
         # Environment variables
         print("  Checking environment variables...")
-        self.validation_results["environment_variables"] = self.validate_environment_variables()
+        self.validation_results["environment_variables"] = (
+            self.validate_environment_variables()
+        )
 
         # CODEX compliance
         print("  Validating CODEX compliance...")
@@ -594,7 +679,9 @@ class ConfigurationValidator:
                 passed_checks += 1
 
         # Count configuration consistency
-        if self.validation_results["configuration_consistency"].get("validation_passed"):
+        if self.validation_results["configuration_consistency"].get(
+            "validation_passed"
+        ):
             passed_checks += 1
         total_checks += 1
 
@@ -634,7 +721,11 @@ class ConfigurationValidator:
             "passed_checks": passed_checks,
             "failed_checks": total_checks - passed_checks,
             "warnings": warnings,
-            "success_rate": round((passed_checks / total_checks) * 100, 1) if total_checks > 0 else 0
+            "success_rate": (
+                round((passed_checks / total_checks) * 100, 1)
+                if total_checks > 0
+                else 0
+            ),
         }
 
 
@@ -646,9 +737,9 @@ def main():
     results = validator.run_comprehensive_validation()
 
     # Print summary
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print("CODEX CONFIGURATION VALIDATION REPORT")
-    print("="*80)
+    print("=" * 80)
 
     summary = results["summary"]
     print(f"\nOverall Status: {results['overall_status']}")
@@ -665,7 +756,11 @@ def main():
 
     # Print critical issues
     if codex_compliance.get("failed_requirements"):
-        critical_failures = [req for req in codex_compliance["failed_requirements"] if req.get("critical")]
+        critical_failures = [
+            req
+            for req in codex_compliance["failed_requirements"]
+            if req.get("critical")
+        ]
         if critical_failures:
             print(f"\nCritical Issues ({len(critical_failures)}):")
             for failure in critical_failures:
@@ -677,7 +772,7 @@ def main():
         for rec in results["recommendations"][:5]:  # Show top 5
             print(f"  💡 {rec}")
 
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
 
     if results["overall_status"] in ["EXCELLENT", "GOOD"]:
         print("✅ Configuration validation passed!")
@@ -686,7 +781,7 @@ def main():
         print("❌ Configuration validation found issues!")
         print("Review the detailed results and fix issues before proceeding.")
 
-    print("="*80)
+    print("=" * 80)
 
     # Save detailed report
     report_file = Path("config") / "configuration_validation_report.json"

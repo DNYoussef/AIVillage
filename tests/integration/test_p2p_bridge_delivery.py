@@ -67,4 +67,3 @@ async def test_offline_queue_and_reconnect() -> None:
             delivered += 1
 
     assert delivered == len(offline)
-

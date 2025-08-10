@@ -1,5 +1,5 @@
-from pathlib import Path
 import sys
+from pathlib import Path
 
 # Ensure src package is importable
 project_root = Path(__file__).parent.parent.parent.parent

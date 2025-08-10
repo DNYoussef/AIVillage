@@ -11,12 +11,12 @@ Tests all aspects of the mesh network including:
 """
 
 import asyncio
-from datetime import datetime
 import json
-from pathlib import Path
 import statistics
 import sys
 import time
+from datetime import datetime
+from pathlib import Path
 
 from implement_mesh_protocol import MeshMessage, MeshNetworkSimulator, MessageType
 
@@ -762,7 +762,12 @@ class MeshNetworkTester:
         print(f"   Generated: {self.results['test_start']}")
         print(
             f"   Status: {
-                '✅ OPERATIONAL' if overall_success_rate >= 0.7 else '⚠️ NEEDS ATTENTION' if overall_success_rate >= 0.5 else '❌ CRITICAL ISSUES'}"
+                '✅ OPERATIONAL'
+                if overall_success_rate >= 0.7
+                else '⚠️ NEEDS ATTENTION'
+                if overall_success_rate >= 0.5
+                else '❌ CRITICAL ISSUES'
+            }"
         )
 
         # Test category results

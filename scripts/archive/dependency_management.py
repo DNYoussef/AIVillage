@@ -5,12 +5,12 @@ This script provides tools for managing dependencies, checking compatibility,
 and resolving version conflicts.
 """
 
-from dataclasses import dataclass
 import json
-from pathlib import Path
 import re
 import subprocess
 import sys
+from dataclasses import dataclass
+from pathlib import Path
 
 
 @dataclass

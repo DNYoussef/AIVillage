@@ -1,5 +1,10 @@
 from typing import Any
 
+from rag_system.core.config import RAGConfig
+from rag_system.core.pipeline import EnhancedRAGPipeline
+from rag_system.retrieval.vector_store import VectorStore
+from rag_system.tracking.unified_knowledge_tracker import UnifiedKnowledgeTracker
+
 from agents.unified_base_agent import (
     SelfEvolvingSystem,
     UnifiedAgentConfig,
@@ -7,10 +12,6 @@ from agents.unified_base_agent import (
 )
 from agents.utils.task import Task as LangroidTask
 from core.error_handling import Message, MessageType, StandardCommunicationProtocol
-from rag_system.core.config import RAGConfig
-from rag_system.core.pipeline import EnhancedRAGPipeline
-from rag_system.retrieval.vector_store import VectorStore
-from rag_system.tracking.unified_knowledge_tracker import UnifiedKnowledgeTracker
 
 
 class MagiAgentConfig(UnifiedAgentConfig):

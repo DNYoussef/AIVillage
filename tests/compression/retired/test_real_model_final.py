@@ -2,9 +2,9 @@
 """Final test of 4-stage compression on real DeepSeek model (fixing BFloat16 issue)."""
 
 import json
-from pathlib import Path
 import sys
 import time
+from pathlib import Path
 
 from safetensors import safe_open
 
@@ -74,7 +74,7 @@ def load_and_test_real_compression():
             print(f"\nLayer {layer_count}: {key}")
             print(f"  Shape: {tuple(tensor.shape)}")
             print(f"  Parameters: {tensor.numel():,}")
-            print(f"  Size: {original_size/(1024**2):.1f} MB")
+            print(f"  Size: {original_size / (1024**2):.1f} MB")
 
             try:
                 # Stage 1: BitNet
@@ -132,7 +132,7 @@ def load_and_test_real_compression():
                 # Final result
                 final_ratio = original_size / s4_size
                 print(
-                    f"  RESULT: {original_size/(1024**2):.1f}MB -> {s4_size/1024:.1f}KB ({final_ratio:.1f}x)"
+                    f"  RESULT: {original_size / (1024**2):.1f}MB -> {s4_size / 1024:.1f}KB ({final_ratio:.1f}x)"
                 )
 
                 results[key] = {
@@ -214,11 +214,11 @@ def analyze_results_and_extrapolate(results, successful_tests, total_params):
 
     print("\nFULL MODEL EXTRAPOLATION:")
     print(f"  Real model parameters: {full_model_params:,}")
-    print(f"  Parameter size: {full_model_params/1_000_000_000:.2f}B")
+    print(f"  Parameter size: {full_model_params / 1_000_000_000:.2f}B")
     print(f"  Original size: {original_gb:.2f} GB")
     print(f"  Compressed size: {compressed_mb:.1f} MB ({compressed_gb:.3f} GB)")
     print(f"  Compression ratio: {measured_ratio:.1f}x")
-    print(f"  Size reduction: {(1-compressed_gb/original_gb)*100:.1f}%")
+    print(f"  Size reduction: {(1 - compressed_gb / original_gb) * 100:.1f}%")
 
     # Mobile deployment assessment
     mobile_viable = compressed_mb < 1000
@@ -230,7 +230,7 @@ def analyze_results_and_extrapolate(results, successful_tests, total_params):
     print(f"  Fits 2GB phone: {'YES' if mobile_viable else 'NO'}")
     print(f"  Kenya deployment: {'READY' if kenya_viable else 'MARGINAL'}")
     print(f"  Excellent (<100MB): {'YES' if excellent else 'NO'}")
-    print(f"  Memory overhead: {compressed_mb/1024:.2f}% of 1GB RAM")
+    print(f"  Memory overhead: {compressed_mb / 1024:.2f}% of 1GB RAM")
 
     return {
         "success": True,

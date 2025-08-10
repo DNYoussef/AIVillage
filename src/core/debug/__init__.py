@@ -17,7 +17,7 @@ __all__ = [
     "TroubleshootingTools",
     "get_debug_logger",
     "get_debug_manager",
-    "setup_debug_logging"
+    "setup_debug_logging",
 ]
 
 __version__ = "1.0.0"

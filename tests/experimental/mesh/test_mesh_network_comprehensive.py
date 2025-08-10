@@ -4,8 +4,8 @@
 Comprehensive testing of mesh network functionality.
 """
 
-from pathlib import Path
 import sys
+from pathlib import Path
 
 # Add the project root to the path for imports
 project_root = Path(__file__).parent.parent.parent.parent

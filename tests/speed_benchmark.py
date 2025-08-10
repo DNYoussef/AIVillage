@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Quick speed benchmark of compression system."""
 
-from pathlib import Path
 import sys
 import time
+from pathlib import Path
 
 import torch
 

@@ -2,9 +2,9 @@
 """Benchmark Sprint 9 SimpleQuantizer, Advanced pipeline and Unified compressor."""
 
 import os
-from pathlib import Path
 import sys
 import time
+from pathlib import Path
 
 import psutil
 from torch import nn
@@ -73,7 +73,7 @@ def benchmark_all_methods() -> None:
                 mem_used = peak_memory - start_memory
                 ratio = (param_count * 4) / compressed_size
                 print(f"    Compression ratio: {ratio:.1f}x")
-                print(f"    Compressed size: {compressed_size/1024:.1f}KB")
+                print(f"    Compressed size: {compressed_size / 1024:.1f}KB")
                 print(f"    Time: {elapsed:.2f}s")
                 print(f"    Memory used: {mem_used:.1f}MB")
                 if "Unified" in comp_name:

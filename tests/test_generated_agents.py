@@ -1,8 +1,4 @@
-from agent_forge.core.generator import (
-    AGENT_REGISTRY,
-    HeraldAgent,
-    ScribeAgent,
-)
+from agent_forge.core.generator import AGENT_REGISTRY, HeraldAgent, ScribeAgent
 
 
 def test_agents_register_and_basic_commands():

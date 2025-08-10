@@ -2,9 +2,9 @@
 """Test the IntegratedCompressionPipeline and CascadeCompressor."""
 
 import logging
-from pathlib import Path
 import sys
 import time
+from pathlib import Path
 
 import torch
 from torch import nn
@@ -37,7 +37,7 @@ def test_integrated_pipeline():
 
     print("Test Model:")
     print(f"  Parameters: {param_count:,}")
-    print(f"  Original size: {original_size/1024:.1f} KB")
+    print(f"  Original size: {original_size / 1024:.1f} KB")
 
     # Test integrated pipeline
     integrated = IntegratedCompressionPipeline()
@@ -63,7 +63,7 @@ def test_integrated_pipeline():
     print("\nIntegrated Pipeline Results:")
     print(f"  Compression ratio: {ratio:.1f}x")
     print(f"  Compression time: {duration:.2f}s")
-    print(f"  vs Advanced (20.8x): {ratio/20.8:.1%} better")
+    print(f"  vs Advanced (20.8x): {ratio / 20.8:.1%} better")
 
     # Verify no intermediate decompression
     log_contents = log_capture.getvalue()
@@ -92,7 +92,7 @@ def test_integrated_pipeline():
 
 def test_cascade_compressor():
     """Test the CascadeCompressor for multiplicative gains."""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("TESTING CASCADE COMPRESSOR")
     print("=" * 60)
 
@@ -124,8 +124,8 @@ def test_cascade_compressor():
         ratio = original_size / compressed_size
 
         print(f"\n{size_name} tensor ({rows}x{cols}):")
-        print(f"  Original: {original_size/1024:.1f} KB")
-        print(f"  Compressed: {compressed_size/1024:.1f} KB")
+        print(f"  Original: {original_size / 1024:.1f} KB")
+        print(f"  Compressed: {compressed_size / 1024:.1f} KB")
         print(f"  Ratio: {ratio:.1f}x")
         print(f"  Time: {duration:.3f}s")
 
@@ -148,7 +148,7 @@ def test_cascade_compressor():
 
 def test_cascade_stage_contributions():
     """Test that each cascade stage contributes to compression."""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("TESTING CASCADE STAGE CONTRIBUTIONS")
     print("=" * 60)
 
@@ -159,7 +159,7 @@ def test_cascade_stage_contributions():
     original_size = weights.numel() * 4
 
     print("Testing stage contributions on 1000x1000 tensor:")
-    print(f"Original size: {original_size/1024:.1f} KB")
+    print(f"Original size: {original_size / 1024:.1f} KB")
 
     # Stage 1: Quantization only
     quantized, quant_meta = cascade.quantize_cascade(weights)
@@ -167,7 +167,7 @@ def test_cascade_stage_contributions():
     stage1_ratio = original_size / stage1_size
 
     print("\nStage 1 (Quantization):")
-    print(f"  Size: {stage1_size/1024:.1f} KB")
+    print(f"  Size: {stage1_size / 1024:.1f} KB")
     print(f"  Ratio: {stage1_ratio:.1f}x")
 
     # Stage 2: Pattern compression
@@ -184,7 +184,7 @@ def test_cascade_stage_contributions():
         print("\nStage 2 (Pattern Detection):")
         print(f"  Unique patterns found: {unique_patterns}")
         print(f"  Pattern length: {pattern_length}")
-        print(f"  Estimated size: {stage2_size/1024:.1f} KB")
+        print(f"  Estimated size: {stage2_size / 1024:.1f} KB")
         print(f"  Additional ratio: {stage2_ratio:.1f}x")
     else:
         print("\nStage 2 (Pattern Detection):")
@@ -198,7 +198,7 @@ def test_cascade_stage_contributions():
     stage3_ratio = stage2_size / len(full_compressed)
 
     print("\nStage 3 (Entropy Coding):")
-    print(f"  Final size: {len(full_compressed)/1024:.1f} KB")
+    print(f"  Final size: {len(full_compressed) / 1024:.1f} KB")
     print(f"  Additional ratio: {stage3_ratio:.1f}x")
     print(f"  Full cascade ratio: {full_ratio:.1f}x")
 
@@ -216,7 +216,7 @@ def test_cascade_stage_contributions():
 
 def comprehensive_comparison():
     """Compare all compression methods."""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("COMPREHENSIVE COMPRESSION COMPARISON")
     print("=" * 60)
 
@@ -296,9 +296,9 @@ def comprehensive_comparison():
 
     # Previous baselines
     print("\nBaseline Comparison:")
-    print(f"{'SimpleQuantizer':<20} {'4.0':<10} {'<0.1':<8} {original_mb/4:<10.3f}")
+    print(f"{'SimpleQuantizer':<20} {'4.0':<10} {'<0.1':<8} {original_mb / 4:<10.3f}")
     print(
-        f"{'AdvancedPipeline':<20} {'20.8':<10} {'~1.0':<8} {original_mb/20.8:<10.3f}"
+        f"{'AdvancedPipeline':<20} {'20.8':<10} {'~1.0':<8} {original_mb / 20.8:<10.3f}"
     )
 
     return results
@@ -319,7 +319,7 @@ def main():
         # Test 4: Comprehensive comparison
         comprehensive_comparison()
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print("VALIDATION SUMMARY")
         print("=" * 60)
 

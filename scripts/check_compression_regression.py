@@ -5,9 +5,9 @@ Validates that compression performance meets the ≤40% throughput drop requirem
 
 import argparse
 import json
-from pathlib import Path
 import sys
 import time
+from pathlib import Path
 
 import torch
 

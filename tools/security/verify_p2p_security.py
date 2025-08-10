@@ -4,21 +4,21 @@ Verifies security features implementation without complex dependencies.
 Tests according to CODEX Integration Requirements.
 """
 
-from datetime import datetime
 import hashlib
 import hmac
 import json
 import os
-from pathlib import Path
 import secrets
 import time
+from datetime import datetime
+from pathlib import Path
 
 
 def print_header(title: str):
     """Print formatted header."""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print(title.center(60))
-    print("="*60)
+    print("=" * 60)
 
 
 def verify_security_configuration():
@@ -36,7 +36,7 @@ def verify_security_configuration():
         "MDNS_TTL": "120",
         "MESH_MAX_PEERS": "50",
         "MESH_HEARTBEAT_INTERVAL": "10",
-        "MESH_CONNECTION_TIMEOUT": "30"
+        "MESH_CONNECTION_TIMEOUT": "30",
     }
 
     print("Checking environment variables:")
@@ -61,7 +61,7 @@ def verify_security_configuration():
                 "peer_verification": True,
                 "mtls_enabled": True,
                 "encryption_required": True,
-                "message_authentication": True
+                "message_authentication": True,
             }
 
             print("Security configuration:")
@@ -93,7 +93,7 @@ def test_message_encryption():
         b"small_message",
         b"medium_length_message_for_testing_encryption" * 5,
         b"large_message_payload_" * 50,
-        secrets.token_bytes(10000)  # Large random payload
+        secrets.token_bytes(10000),  # Large random payload
     ]
 
     print(f"\nTesting encryption with {len(test_payloads)} different payload sizes:")
@@ -104,17 +104,23 @@ def test_message_encryption():
             nonce = secrets.token_bytes(16)
 
             # Simple encryption simulation (XOR with key stream)
-            key_stream = hashlib.pbkdf2_hmac("sha256", encryption_key, nonce, 1000, len(payload))
+            key_stream = hashlib.pbkdf2_hmac(
+                "sha256", encryption_key, nonce, 1000, len(payload)
+            )
             encrypted = bytes(a ^ b for a, b in zip(payload, key_stream, strict=False))
 
             # Generate MAC
             mac_data = encrypted + b"test_sender" + nonce
             mac = hmac.new(encryption_key, mac_data, hashlib.sha256).digest()
 
-            print(f"  [OK] Payload {i+1} ({len(payload)} bytes): encrypted={len(encrypted)}, mac={len(mac)}, nonce={len(nonce)}")
+            print(
+                f"  [OK] Payload {i + 1} ({len(payload)} bytes): encrypted={len(encrypted)}, mac={len(mac)}, nonce={len(nonce)}"
+            )
 
             # Test decryption
-            decrypted = bytes(a ^ b for a, b in zip(encrypted, key_stream, strict=False))
+            decrypted = bytes(
+                a ^ b for a, b in zip(encrypted, key_stream, strict=False)
+            )
 
             if decrypted == payload:
                 print("       Decryption: PASS")
@@ -131,7 +137,7 @@ def test_message_encryption():
                 return False
 
         except Exception as e:
-            print(f"  [FAIL] Payload {i+1} encryption failed: {e}")
+            print(f"  [FAIL] Payload {i + 1} encryption failed: {e}")
             return False
 
     # Test MAC tampering detection
@@ -139,7 +145,9 @@ def test_message_encryption():
 
     payload = b"test_message_for_tampering"
     nonce = secrets.token_bytes(16)
-    key_stream = hashlib.pbkdf2_hmac("sha256", encryption_key, nonce, 1000, len(payload))
+    key_stream = hashlib.pbkdf2_hmac(
+        "sha256", encryption_key, nonce, 1000, len(payload)
+    )
     encrypted = bytes(a ^ b for a, b in zip(payload, key_stream, strict=False))
 
     # Generate valid MAC
@@ -151,28 +159,32 @@ def test_message_encryption():
         valid_mac[:-1] + b"\x00",  # Modify last byte
         b"invalid_mac_data_here_",  # Completely wrong MAC
         valid_mac[:16],  # Truncated MAC
-        b""  # Empty MAC
+        b"",  # Empty MAC
     ]
 
     tampering_detected = 0
     for i, tampered_mac in enumerate(tampered_macs):
         try:
             # This should fail MAC verification
-            is_valid = len(tampered_mac) == 32 and hmac.compare_digest(tampered_mac, valid_mac)
+            is_valid = len(tampered_mac) == 32 and hmac.compare_digest(
+                tampered_mac, valid_mac
+            )
 
             if not is_valid:
-                print(f"  [OK] Tampering {i+1} detected")
+                print(f"  [OK] Tampering {i + 1} detected")
                 tampering_detected += 1
             else:
-                print(f"  [FAIL] Tampering {i+1} NOT detected")
+                print(f"  [FAIL] Tampering {i + 1} NOT detected")
         except:
-            print(f"  [OK] Tampering {i+1} detected (exception)")
+            print(f"  [OK] Tampering {i + 1} detected (exception)")
             tampering_detected += 1
 
     if tampering_detected == len(tampered_macs):
         print(f"[PASS] All {tampering_detected} tampering attempts detected")
         return True
-    print(f"[FAIL] Only {tampering_detected}/{len(tampered_macs)} tampering attempts detected")
+    print(
+        f"[FAIL] Only {tampering_detected}/{len(tampered_macs)} tampering attempts detected"
+    )
     return False
 
 
@@ -189,7 +201,7 @@ def test_peer_reputation_system():
             peer_reputations[peer_id] = {
                 "trust_score": 0.5,
                 "interactions": 0,
-                "last_update": datetime.now()
+                "last_update": datetime.now(),
             }
 
         peer = peer_reputations[peer_id]
@@ -203,20 +215,24 @@ def test_peer_reputation_system():
         # Auto-block if trust score too low
         if peer["trust_score"] < 0.3 and peer_id not in blocked_peers:
             blocked_peers.add(peer_id)
-            print(f"    [AUTO-BLOCKED] {peer_id} (trust score: {peer['trust_score']:.3f})")
+            print(
+                f"    [AUTO-BLOCKED] {peer_id} (trust score: {peer['trust_score']:.3f})"
+            )
 
     # Test legitimate peer interactions
     print("Testing legitimate peer behavior:")
     legitimate_peer = "peer_legitimate_user"
 
     for i in range(10):
-        update_reputation(legitimate_peer, 0.05, f"Successful message {i+1}")
+        update_reputation(legitimate_peer, 0.05, f"Successful message {i + 1}")
 
     legitimate_score = peer_reputations[legitimate_peer]["trust_score"]
     if legitimate_score >= 0.8:
         print(f"[OK] Legitimate peer has high trust: {legitimate_score:.3f}")
     else:
-        print(f"[WARN] Legitimate peer trust lower than expected: {legitimate_score:.3f}")
+        print(
+            f"[WARN] Legitimate peer trust lower than expected: {legitimate_score:.3f}"
+        )
 
     # Test malicious peer behavior
     print("\nTesting malicious peer behavior:")
@@ -228,7 +244,7 @@ def test_peer_reputation_system():
         (-0.3, "Replay attack detected"),
         (-0.2, "Rate limit exceeded"),
         (-0.1, "Invalid signature"),
-        (-0.2, "Suspicious behavior pattern")
+        (-0.2, "Suspicious behavior pattern"),
     ]
 
     for delta, reason in malicious_actions:
@@ -240,7 +256,9 @@ def test_peer_reputation_system():
     if malicious_score < 0.3 and is_blocked:
         print(f"[PASS] Malicious peer blocked (trust: {malicious_score:.3f})")
     else:
-        print(f"[FAIL] Malicious peer not blocked (trust: {malicious_score:.3f}, blocked: {is_blocked})")
+        print(
+            f"[FAIL] Malicious peer not blocked (trust: {malicious_score:.3f}, blocked: {is_blocked})"
+        )
         return False
 
     # Test mixed behavior peer
@@ -254,7 +272,7 @@ def test_peer_reputation_system():
         (0.05, "Valid heartbeat"),
         (-0.1, "Timeout"),
         (0.1, "Successful message"),
-        (0.05, "Valid response")
+        (0.05, "Valid response"),
     ]
 
     for delta, reason in mixed_actions:
@@ -267,7 +285,9 @@ def test_peer_reputation_system():
     print("\nReputation System Summary:")
     print(f"  Total peers tracked: {len(peer_reputations)}")
     print(f"  Blocked peers: {len(blocked_peers)}")
-    print(f"  Average trust score: {sum(p['trust_score'] for p in peer_reputations.values()) / len(peer_reputations):.3f}")
+    print(
+        f"  Average trust score: {sum(p['trust_score'] for p in peer_reputations.values()) / len(peer_reputations):.3f}"
+    )
 
     return True
 
@@ -294,8 +314,7 @@ def test_rate_limiting():
 
             # Clean old attempts
             connection_attempts[peer_id] = [
-                t for t in connection_attempts[peer_id]
-                if now - t < window_seconds
+                t for t in connection_attempts[peer_id] if now - t < window_seconds
             ]
 
             # Check limit
@@ -312,8 +331,7 @@ def test_rate_limiting():
 
             # Clean old attempts
             message_attempts[peer_id] = [
-                t for t in message_attempts[peer_id]
-                if now - t < window_seconds
+                t for t in message_attempts[peer_id] if now - t < window_seconds
             ]
 
             # Check limit
@@ -336,7 +354,9 @@ def test_rate_limiting():
         if check_rate_limits(normal_peer, "connection"):
             successful_connections += 1
 
-    print(f"  [OK] Normal connections: {successful_connections}/{max_connections_per_minute} allowed")
+    print(
+        f"  [OK] Normal connections: {successful_connections}/{max_connections_per_minute} allowed"
+    )
 
     # Test rate limit enforcement
     print("\nTesting rate limit enforcement:")
@@ -392,7 +412,9 @@ def test_replay_attack_prevention():
     seen_messages = set()
     peer_sequences = {}
 
-    def is_replay_attack(peer_id: str, message_id: str, sequence_num: int, timestamp: float) -> bool:
+    def is_replay_attack(
+        peer_id: str, message_id: str, sequence_num: int, timestamp: float
+    ) -> bool:
         # Check message ID uniqueness
         message_key = f"{peer_id}:{message_id}:{sequence_num}"
 
@@ -404,7 +426,9 @@ def test_replay_attack_prevention():
         if peer_id in peer_sequences:
             expected_seq = peer_sequences[peer_id] + 1
             if sequence_num <= peer_sequences[peer_id]:
-                print(f"    [DETECTED] Old sequence number: {sequence_num} <= {peer_sequences[peer_id]}")
+                print(
+                    f"    [DETECTED] Old sequence number: {sequence_num} <= {peer_sequences[peer_id]}"
+                )
                 return True
 
         # Check timestamp (message age)
@@ -442,7 +466,9 @@ def test_replay_attack_prevention():
     if legitimate_accepted == len(legitimate_messages):
         print("[PASS] All legitimate messages accepted")
     else:
-        print(f"[FAIL] {len(legitimate_messages) - legitimate_accepted} legitimate messages rejected")
+        print(
+            f"[FAIL] {len(legitimate_messages) - legitimate_accepted} legitimate messages rejected"
+        )
         return False
 
     # Test replay attacks
@@ -493,16 +519,20 @@ def test_security_monitoring():
     # Security event log
     security_events = []
 
-    def log_security_event(event_type: str, peer_id: str, severity: str, description: str):
+    def log_security_event(
+        event_type: str, peer_id: str, severity: str, description: str
+    ):
         event = {
             "timestamp": datetime.now(),
             "event_type": event_type,
             "peer_id": peer_id,
             "severity": severity,
-            "description": description
+            "description": description,
         }
         security_events.append(event)
-        print(f"  [LOG] {severity.upper()}: {event_type} from {peer_id} - {description}")
+        print(
+            f"  [LOG] {severity.upper()}: {event_type} from {peer_id} - {description}"
+        )
 
     # Generate various security events
     print("Generating security events:")
@@ -515,7 +545,7 @@ def test_security_monitoring():
         ("replay_attack_detected", "peer_005", "high", "Message replay attempt"),
         ("message_decrypt_fail", "peer_006", "medium", "Invalid message format"),
         ("spoofing_attempt", "peer_007", "high", "Peer identity spoofing"),
-        ("unusual_pattern", "peer_008", "medium", "Abnormal traffic pattern")
+        ("unusual_pattern", "peer_008", "medium", "Abnormal traffic pattern"),
     ]
 
     for event_type, peer_id, severity, description in test_events:
@@ -539,27 +569,33 @@ def test_security_monitoring():
     alerts = []
 
     if severity_counts["critical"] > 0:
-        alerts.append({
-            "level": "critical",
-            "title": "Critical Security Threats Detected",
-            "description": f"{severity_counts['critical']} critical security events"
-        })
+        alerts.append(
+            {
+                "level": "critical",
+                "title": "Critical Security Threats Detected",
+                "description": f"{severity_counts['critical']} critical security events",
+            }
+        )
 
     if severity_counts["high"] >= 3:
-        alerts.append({
-            "level": "high",
-            "title": "Multiple High-Severity Events",
-            "description": f"{severity_counts['high']} high-severity security events"
-        })
+        alerts.append(
+            {
+                "level": "high",
+                "title": "Multiple High-Severity Events",
+                "description": f"{severity_counts['high']} high-severity security events",
+            }
+        )
 
     # Check for specific attack patterns
     attack_types = [event["event_type"] for event in security_events]
     if "replay_attack_detected" in attack_types and "spoofing_attempt" in attack_types:
-        alerts.append({
-            "level": "high",
-            "title": "Coordinated Attack Pattern",
-            "description": "Multiple attack types detected from different peers"
-        })
+        alerts.append(
+            {
+                "level": "high",
+                "title": "Coordinated Attack Pattern",
+                "description": "Multiple attack types detected from different peers",
+            }
+        )
 
     print("\nGenerated alerts:")
     for i, alert in enumerate(alerts, 1):
@@ -569,10 +605,20 @@ def test_security_monitoring():
     # Security dashboard data simulation
     dashboard_data = {
         "total_events": len(security_events),
-        "recent_events": len([e for e in security_events if (datetime.now() - e["timestamp"]).total_seconds() < 3600]),
+        "recent_events": len(
+            [
+                e
+                for e in security_events
+                if (datetime.now() - e["timestamp"]).total_seconds() < 3600
+            ]
+        ),
         "severity_distribution": severity_counts,
         "active_alerts": len(alerts),
-        "threat_level": "high" if severity_counts["critical"] > 0 else "medium" if severity_counts["high"] > 2 else "low"
+        "threat_level": (
+            "high"
+            if severity_counts["critical"] > 0
+            else "medium" if severity_counts["high"] > 2 else "low"
+        ),
     }
 
     print("\nSecurity dashboard summary:")
@@ -605,7 +651,7 @@ def verify_tls_configuration():
             ("mtls_enabled", True, "Mutual TLS enabled"),
             ("encryption_required", True, "Message encryption required"),
             ("message_authentication", True, "Message authentication required"),
-            ("forward_secrecy", True, "Forward secrecy enabled")
+            ("forward_secrecy", True, "Forward secrecy enabled"),
         ]
 
         passed_checks = 0
@@ -631,10 +677,10 @@ def verify_tls_configuration():
 
 def main():
     """Run all security verification tests."""
-    print("="*60)
+    print("=" * 60)
     print("P2P NETWORK SECURITY VERIFICATION")
     print("CODEX Integration Requirements Compliance Check")
-    print("="*60)
+    print("=" * 60)
     print(f"Timestamp: {datetime.now()}")
 
     test_functions = [
@@ -644,7 +690,7 @@ def main():
         ("Peer Reputation System", test_peer_reputation_system),
         ("Rate Limiting", test_rate_limiting),
         ("Replay Attack Prevention", test_replay_attack_prevention),
-        ("Security Monitoring", test_security_monitoring)
+        ("Security Monitoring", test_security_monitoring),
     ]
 
     results = []
@@ -659,9 +705,9 @@ def main():
             results.append((test_name, False))
 
     # Summary
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("SECURITY VERIFICATION SUMMARY")
-    print("="*60)
+    print("=" * 60)
 
     passed = sum(1 for _, success in results if success)
     total = len(results)
@@ -673,7 +719,7 @@ def main():
     print(f"\nResults: {passed}/{total} tests passed")
 
     if passed == total:
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("[SUCCESS] ALL SECURITY TESTS PASSED!")
         print("P2P network meets CODEX security requirements:")
         print("  ✓ Secure transports with TLS and peer verification")
@@ -681,7 +727,7 @@ def main():
         print("  ✓ Secure message passing with encryption and MAC")
         print("  ✓ Network resilience against attacks")
         print("  ✓ Security event monitoring and alerting")
-        print("="*60)
+        print("=" * 60)
         return True
     print(f"\n[WARNING] {total - passed} security tests failed.")
     print("Please review the implementation to address security gaps.")

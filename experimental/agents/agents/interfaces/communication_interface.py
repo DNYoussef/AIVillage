@@ -4,8 +4,8 @@ This module defines the standard interface for inter-agent communication
 protocols and message handling systems.
 """
 
-from abc import ABC, abstractmethod
 import asyncio
+from abc import ABC, abstractmethod
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime

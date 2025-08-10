@@ -501,7 +501,9 @@ class MeshNetworkTester:
         print("-" * 60)
         print(f"Overall: {passed}/{total} tests passed")
         print(
-            f"Success Rate: {(passed/total*100):.1f}%" if total > 0 else "No tests run"
+            f"Success Rate: {(passed / total * 100):.1f}%"
+            if total > 0
+            else "No tests run"
         )
 
         print("\nMessage Statistics:")

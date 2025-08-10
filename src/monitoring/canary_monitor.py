@@ -5,10 +5,10 @@ Canary tests are expected to fail but serve as indicators of
 architectural changes when they start passing or fail differently.
 """
 
-from dataclasses import dataclass
-from datetime import datetime, timezone
 import json
 import logging
+from dataclasses import dataclass
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 

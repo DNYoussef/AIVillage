@@ -1,14 +1,14 @@
 """Integration tests for CODEX-built components with existing AIVillage systems.
 
-This test suite verifies that all CODEX-built components integrate correctly 
+This test suite verifies that all CODEX-built components integrate correctly
 with the existing AIVillage codebase without conflicts or data format mismatches.
 """
 
 import json
-from pathlib import Path
 import sqlite3
 import tempfile
 import time
+from pathlib import Path
 from typing import Any
 from unittest.mock import patch
 
@@ -21,6 +21,7 @@ try:
         EvolutionMetricsCollector,
         SQLiteMetricsBackend,
     )
+
     EVOLUTION_AVAILABLE = True
 except ImportError:
     EVOLUTION_AVAILABLE = False
@@ -31,6 +32,7 @@ try:
         Document,
         EnhancedRAGPipeline,
     )
+
     RAG_AVAILABLE = True
 except ImportError:
     RAG_AVAILABLE = False
@@ -38,12 +40,14 @@ except ImportError:
 try:
     from src.core.p2p.libp2p_mesh import LibP2PMeshNetwork, MeshMessage
     from src.core.p2p.p2p_node import P2PNode, PeerCapabilities
+
     P2P_AVAILABLE = True
 except ImportError:
     P2P_AVAILABLE = False
 
 try:
     from src.digital_twin.core.digital_twin import DigitalTwin, LearningProfile
+
     DIGITAL_TWIN_AVAILABLE = True
 except ImportError:
     DIGITAL_TWIN_AVAILABLE = False
@@ -52,15 +56,14 @@ except ImportError:
 class TestEvolutionIntegration:
     """Test evolution metrics integration with existing agent forge."""
 
-    @pytest.mark.skipif(not EVOLUTION_AVAILABLE, reason="Evolution metrics not available")
+    @pytest.mark.skipif(
+        not EVOLUTION_AVAILABLE, reason="Evolution metrics not available"
+    )
     @pytest.mark.asyncio
     async def test_evolution_metrics_persistence(self):
         """Test that evolution metrics properly persist to database."""
         with tempfile.NamedTemporaryFile(suffix=".db") as temp_db:
-            config = {
-                "db_path": temp_db.name,
-                "storage_backend": "sqlite"
-            }
+            config = {"db_path": temp_db.name, "storage_backend": "sqlite"}
             collector = EvolutionMetricsCollector(config)
 
             await collector.start()
@@ -80,7 +83,7 @@ class TestEvolutionIntegration:
                 success=True,
                 error_count=0,
                 warning_count=1,
-                metadata={"test": True}
+                metadata={"test": True},
             )
 
             await collector.save_metrics(metrics)
@@ -95,7 +98,9 @@ class TestEvolutionIntegration:
 
             assert count == 1, "Evolution metrics should be persisted to database"
 
-    @pytest.mark.skipif(not EVOLUTION_AVAILABLE, reason="Evolution metrics not available")
+    @pytest.mark.skipif(
+        not EVOLUTION_AVAILABLE, reason="Evolution metrics not available"
+    )
     def test_metrics_data_format_compatibility(self):
         """Test that evolution metrics use compatible data formats."""
         metrics = EvolutionMetrics(
@@ -111,7 +116,7 @@ class TestEvolutionIntegration:
             duration_minutes=1.5,
             success=True,
             error_count=0,
-            warning_count=0
+            warning_count=0,
         )
 
         # Test serialization/deserialization
@@ -147,7 +152,7 @@ class TestRAGIntegration:
         docs = [
             Document(id="doc1", text="The quick brown fox jumps over the lazy dog"),
             Document(id="doc2", text="Machine learning models require training data"),
-            Document(id="doc3", text="AIVillage is a distributed AI system")
+            Document(id="doc3", text="AIVillage is a distributed AI system"),
         ]
 
         # Process documents
@@ -167,9 +172,12 @@ class TestRAGIntegration:
 
         # Mock retrieval results
         from src.production.rag.rag_system.core.pipeline import RetrievalResult
+
         results = [
             RetrievalResult(id=1, text="Test content about AI", score=0.9),
-            RetrievalResult(id=2, text="More information on machine learning", score=0.8)
+            RetrievalResult(
+                id=2, text="More information on machine learning", score=0.8
+            ),
         ]
 
         answer = pipeline.generate_answer("What is AI?", results)
@@ -178,7 +186,9 @@ class TestRAGIntegration:
         assert hasattr(answer, "text"), "Answer should have text"
         assert hasattr(answer, "citations"), "Answer should have citations"
         assert hasattr(answer, "confidence"), "Answer should have confidence score"
-        assert hasattr(answer, "source_documents"), "Answer should have source documents"
+        assert hasattr(
+            answer, "source_documents"
+        ), "Answer should have source documents"
 
 
 class TestP2PIntegration:
@@ -190,15 +200,12 @@ class TestP2PIntegration:
         # Test that existing P2PNode and LibP2PMeshNetwork have compatible interfaces
 
         # Mock dependencies to avoid actual network connections
-        with patch("src.core.p2p.p2p_node.EncryptionLayer"), \
-             patch("src.core.p2p.p2p_node.MessageProtocol"), \
-             patch("src.core.p2p.p2p_node.PeerDiscovery"):
-
-            node = P2PNode(
-                node_id="test_node",
-                host="localhost",
-                port=8000
-            )
+        with (
+            patch("src.core.p2p.p2p_node.EncryptionLayer"),
+            patch("src.core.p2p.p2p_node.MessageProtocol"),
+            patch("src.core.p2p.p2p_node.PeerDiscovery"),
+        ):
+            node = P2PNode(node_id="test_node", host="localhost", port=8000)
 
             # Verify node has expected attributes
             assert hasattr(node, "node_id"), "Node should have ID"
@@ -215,7 +222,7 @@ class TestP2PIntegration:
             sender_id="node_123",
             target_id="node_456",
             payload={"test": "data"},
-            hop_count=0
+            hop_count=0,
         )
 
         # Verify message structure
@@ -246,7 +253,7 @@ class TestDigitalTwinIntegration:
             preferred_session_times=["morning"],
             parent_constraints={"screen_time_max": 60},
             accessibility_needs=[],
-            motivation_triggers=["games", "rewards"]
+            motivation_triggers=["games", "rewards"],
         )
 
         # Verify profile has required fields
@@ -285,18 +292,18 @@ class TestDataFlowIntegration:
             "evolution_metrics": {
                 "timestamp": 1234567890.0,
                 "agent_id": "test_agent",
-                "performance_score": 0.85
+                "performance_score": 0.85,
             },
             "rag_query": {
                 "query": "test query",
                 "context": "test context",
-                "timestamp": 1234567890.0
+                "timestamp": 1234567890.0,
             },
             "p2p_message": {
                 "type": "DATA_MESSAGE",
                 "sender": "node_1",
-                "data": {"key": "value"}
-            }
+                "data": {"key": "value"},
+            },
         }
 
         # Test JSON serialization
@@ -316,10 +323,13 @@ class TestDataFlowIntegration:
 
         # Verify method signature compatibility
         import inspect
+
         sig = inspect.signature(mock_async_method)
 
         assert "data" in sig.parameters, "Methods should accept data parameter"
-        assert sig.return_annotation != inspect.Signature.empty, "Methods should have return annotations"
+        assert (
+            sig.return_annotation != inspect.Signature.empty
+        ), "Methods should have return annotations"
 
 
 # Test configuration and fixtures
@@ -338,7 +348,7 @@ def mock_config():
         "storage_backend": "sqlite",
         "cache_enabled": True,
         "redis_url": "redis://localhost:6379/0",
-        "log_level": "DEBUG"
+        "log_level": "DEBUG",
     }
 
 
@@ -359,30 +369,31 @@ class TestCODEXConfigurationIntegration:
                         "enabled": True,
                         "backend": "sqlite",
                         "db_path": "./data/evolution_metrics.db",
-                        "flush_interval_seconds": 30
+                        "flush_interval_seconds": 30,
                     },
                     "rag_pipeline": {
                         "enabled": True,
                         "embedding_model": "paraphrase-MiniLM-L3-v2",
                         "cache_enabled": True,
-                        "chunk_size": 512
+                        "chunk_size": 512,
                     },
                     "p2p_networking": {
                         "enabled": True,
                         "transport": "libp2p",
                         "discovery_method": "mdns",
-                        "max_peers": 50
+                        "max_peers": 50,
                     },
                     "digital_twin": {
                         "enabled": True,
                         "encryption_enabled": True,
                         "privacy_mode": "strict",
-                        "max_profiles": 10000
-                    }
+                        "max_profiles": 10000,
+                    },
                 }
             }
 
             import yaml
+
             with open(config_dir / "aivillage_config.yaml", "w") as f:
                 yaml.dump(main_config, f)
 
@@ -393,18 +404,15 @@ class TestCODEXConfigurationIntegration:
                 "peer_discovery": {
                     "mdns_enabled": True,
                     "bootstrap_peers": [],
-                    "discovery_interval": 30
+                    "discovery_interval": 30,
                 },
                 "transports": {
                     "tcp_enabled": True,
                     "websocket_enabled": True,
                     "bluetooth_enabled": False,
-                    "wifi_direct_enabled": False
+                    "wifi_direct_enabled": False,
                 },
-                "security": {
-                    "tls_enabled": True,
-                    "peer_verification": True
-                }
+                "security": {"tls_enabled": True, "peer_verification": True},
             }
 
             with open(config_dir / "p2p_config.json", "w") as f:
@@ -415,19 +423,19 @@ class TestCODEXConfigurationIntegration:
                 "embedder": {
                     "model_name": "paraphrase-MiniLM-L3-v2",
                     "device": "cpu",
-                    "batch_size": 32
+                    "batch_size": 32,
                 },
                 "retrieval": {
                     "vector_top_k": 20,
                     "keyword_top_k": 20,
                     "final_top_k": 10,
-                    "rerank_enabled": False
+                    "rerank_enabled": False,
                 },
                 "cache": {
                     "l1_size": 128,
                     "l2_enabled": False,
-                    "l3_directory": "/tmp/rag_cache"
-                }
+                    "l3_directory": "/tmp/rag_cache",
+                },
             }
 
             with open(config_dir / "rag_config.json", "w") as f:
@@ -439,20 +447,29 @@ class TestCODEXConfigurationIntegration:
         """Test that all configuration files are loaded correctly."""
         try:
             import sys
+
             sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
             from core.config_manager import CODEXConfigManager
 
             config_manager = CODEXConfigManager(
-                config_dir=str(temp_config_dir),
-                enable_hot_reload=False
+                config_dir=str(temp_config_dir), enable_hot_reload=False
             )
 
             # Test main configuration
             assert config_manager.get("integration.evolution_metrics.enabled") is True
-            assert config_manager.get("integration.evolution_metrics.backend") == "sqlite"
-            assert config_manager.get("integration.rag_pipeline.embedding_model") == "paraphrase-MiniLM-L3-v2"
-            assert config_manager.get("integration.p2p_networking.transport") == "libp2p"
-            assert config_manager.get("integration.digital_twin.privacy_mode") == "strict"
+            assert (
+                config_manager.get("integration.evolution_metrics.backend") == "sqlite"
+            )
+            assert (
+                config_manager.get("integration.rag_pipeline.embedding_model")
+                == "paraphrase-MiniLM-L3-v2"
+            )
+            assert (
+                config_manager.get("integration.p2p_networking.transport") == "libp2p"
+            )
+            assert (
+                config_manager.get("integration.digital_twin.privacy_mode") == "strict"
+            )
 
             # Test P2P configuration
             assert config_manager.get("p2p_config.host") == "0.0.0.0"
@@ -462,7 +479,10 @@ class TestCODEXConfigurationIntegration:
             assert config_manager.get("p2p_config.security.tls_enabled") is True
 
             # Test RAG configuration
-            assert config_manager.get("rag_config.embedder.model_name") == "paraphrase-MiniLM-L3-v2"
+            assert (
+                config_manager.get("rag_config.embedder.model_name")
+                == "paraphrase-MiniLM-L3-v2"
+            )
             assert config_manager.get("rag_config.retrieval.vector_top_k") == 20
             assert config_manager.get("rag_config.retrieval.final_top_k") == 10
             assert config_manager.get("rag_config.cache.l1_size") == 128
@@ -476,6 +496,7 @@ class TestCODEXConfigurationIntegration:
             import os
             import sys
             from unittest.mock import patch
+
             sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
             from core.config_manager import CODEXConfigManager
 
@@ -484,20 +505,24 @@ class TestCODEXConfigurationIntegration:
                 "AIVILLAGE_STORAGE_BACKEND": "redis",
                 "LIBP2P_PORT": "4002",
                 "RAG_L1_CACHE_SIZE": "256",
-                "DIGITAL_TWIN_MAX_PROFILES": "5000"
+                "DIGITAL_TWIN_MAX_PROFILES": "5000",
             }
 
             with patch.dict(os.environ, test_env):
                 config_manager = CODEXConfigManager(
-                    config_dir=str(temp_config_dir),
-                    enable_hot_reload=False
+                    config_dir=str(temp_config_dir), enable_hot_reload=False
                 )
 
                 # Verify overrides are applied
-                assert config_manager.get("integration.evolution_metrics.backend") == "redis"
+                assert (
+                    config_manager.get("integration.evolution_metrics.backend")
+                    == "redis"
+                )
                 assert config_manager.get("p2p_config.port") == 4002
                 assert config_manager.get("rag_config.cache.l1_size") == 256
-                assert config_manager.get("integration.digital_twin.max_profiles") == 5000
+                assert (
+                    config_manager.get("integration.digital_twin.max_profiles") == 5000
+                )
 
         except ImportError:
             pytest.skip("Config manager not available for testing")
@@ -506,12 +531,12 @@ class TestCODEXConfigurationIntegration:
         """Test that configuration meets all CODEX requirements."""
         try:
             import sys
+
             sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
             from core.config_manager import CODEXConfigManager
 
             config_manager = CODEXConfigManager(
-                config_dir=str(temp_config_dir),
-                enable_hot_reload=False
+                config_dir=str(temp_config_dir), enable_hot_reload=False
             )
 
             # Test CODEX requirement compliance
@@ -540,12 +565,14 @@ class TestCODEXConfigurationIntegration:
                 ("rag_config.retrieval.vector_top_k", 20),
                 ("rag_config.retrieval.keyword_top_k", 20),
                 ("rag_config.retrieval.final_top_k", 10),
-                ("rag_config.cache.l1_size", 128)
+                ("rag_config.cache.l1_size", 128),
             ]
 
             for config_path, expected_value in codex_requirements:
                 actual_value = config_manager.get(config_path)
-                assert actual_value == expected_value, f"CODEX requirement failed: {config_path} = {actual_value}, expected {expected_value}"
+                assert (
+                    actual_value == expected_value
+                ), f"CODEX requirement failed: {config_path} = {actual_value}, expected {expected_value}"
 
         except ImportError:
             pytest.skip("Config manager not available for testing")

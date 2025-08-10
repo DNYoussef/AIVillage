@@ -44,4 +44,3 @@ public class LibP2PJNIBridge {
         void onMessage(String messageJson);
     }
 }
-

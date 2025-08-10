@@ -3,12 +3,12 @@
 Centralized debug mode management following CODEX Integration Requirements.
 """
 
-from dataclasses import dataclass
-from datetime import datetime
 import logging
 import os
 import threading
 import time
+from dataclasses import dataclass
+from datetime import datetime
 from typing import Any, Optional
 
 import psutil
@@ -17,6 +17,7 @@ import psutil
 @dataclass
 class DebugConfig:
     """Debug configuration settings."""
+
     log_level: str = "DEBUG"
     verbose_output: bool = True
     profile_performance: bool = True
@@ -29,9 +30,10 @@ class DebugConfig:
     aivillage_log_level: str = "INFO"
     aivillage_profile_performance: bool = False
 
+
 class DebugManager:
     """Centralized debug management system.
-    
+
     Manages debug flags, logging configuration, and troubleshooting tools
     according to CODEX Integration Requirements.
     """
@@ -65,9 +67,13 @@ class DebugManager:
         config = DebugConfig()
 
         # CODEX required environment variables
-        config.aivillage_debug_mode = os.getenv("AIVILLAGE_DEBUG_MODE", "false").lower() == "true"
+        config.aivillage_debug_mode = (
+            os.getenv("AIVILLAGE_DEBUG_MODE", "false").lower() == "true"
+        )
         config.aivillage_log_level = os.getenv("AIVILLAGE_LOG_LEVEL", "INFO")
-        config.aivillage_profile_performance = os.getenv("AIVILLAGE_PROFILE_PERFORMANCE", "false").lower() == "true"
+        config.aivillage_profile_performance = (
+            os.getenv("AIVILLAGE_PROFILE_PERFORMANCE", "false").lower() == "true"
+        )
 
         # Set derived configuration
         if config.aivillage_debug_mode:
@@ -110,7 +116,9 @@ class DebugManager:
         """Check if performance profiling is enabled."""
         return self.config.profile_performance
 
-    def log_debug_info(self, component: str, message: str, data: dict[str, Any] | None = None):
+    def log_debug_info(
+        self, component: str, message: str, data: dict[str, Any] | None = None
+    ):
         """Log debug information for a specific component."""
         if not self.is_debug_enabled():
             return
@@ -120,7 +128,7 @@ class DebugManager:
             "timestamp": timestamp,
             "component": component,
             "message": message,
-            "data": data or {}
+            "data": data or {},
         }
 
         # Store debug data
@@ -135,22 +143,28 @@ class DebugManager:
                 for key, value in data.items():
                     self.logger.debug(f"  {key}: {value}")
 
-    def log_request_response(self, endpoint: str, request_data: Any, response_data: Any, duration_ms: float):
+    def log_request_response(
+        self, endpoint: str, request_data: Any, response_data: Any, duration_ms: float
+    ):
         """Log request/response data for debugging API calls."""
         if not self.is_debug_enabled():
             return
 
         debug_info = {
             "endpoint": endpoint,
-            "request": str(request_data)[:1000] if request_data else None,  # Truncate large payloads
+            "request": (
+                str(request_data)[:1000] if request_data else None
+            ),  # Truncate large payloads
             "response": str(response_data)[:1000] if response_data else None,
             "duration_ms": duration_ms,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
         self.log_debug_info("api_requests", f"API call to {endpoint}", debug_info)
 
-    def log_database_query(self, query: str, params: Any, duration_ms: float, result_count: int):
+    def log_database_query(
+        self, query: str, params: Any, duration_ms: float, result_count: int
+    ):
         """Log database queries with timing information."""
         if not self.is_debug_enabled():
             return
@@ -160,12 +174,16 @@ class DebugManager:
             "params": str(params)[:200] if params else None,
             "duration_ms": duration_ms,
             "result_count": result_count,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
-        self.log_debug_info("database", f"Query executed in {duration_ms:.2f}ms", debug_info)
+        self.log_debug_info(
+            "database", f"Query executed in {duration_ms:.2f}ms", debug_info
+        )
 
-    def log_cache_operation(self, operation: str, key: str, hit: bool, duration_ms: float | None = None):
+    def log_cache_operation(
+        self, operation: str, key: str, hit: bool, duration_ms: float | None = None
+    ):
         """Log cache operations for debugging cache performance."""
         if not self.is_debug_enabled():
             return
@@ -175,7 +193,7 @@ class DebugManager:
             "key": key[:100],  # Truncate long keys
             "cache_hit": hit,
             "duration_ms": duration_ms,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
         status = "HIT" if hit else "MISS"
@@ -188,9 +206,7 @@ class DebugManager:
 
         self._monitoring_active = True
         self._monitoring_thread = threading.Thread(
-            target=self._monitor_resources,
-            args=(interval_seconds,),
-            daemon=True
+            target=self._monitor_resources, args=(interval_seconds,), daemon=True
         )
         self._monitoring_thread.start()
 
@@ -219,7 +235,7 @@ class DebugManager:
                     "memory_used_mb": memory.used / (1024 * 1024),
                     "memory_available_mb": memory.available / (1024 * 1024),
                     "disk_percent": disk.percent,
-                    "disk_free_gb": disk.free / (1024 * 1024 * 1024)
+                    "disk_free_gb": disk.free / (1024 * 1024 * 1024),
                 }
 
                 self.log_debug_info("resources", "System resource usage", resource_info)
@@ -229,10 +245,14 @@ class DebugManager:
                     self.logger.warning(f"High CPU usage detected: {cpu_percent:.1f}%")
 
                 if memory.percent > 85:
-                    self.logger.warning(f"High memory usage detected: {memory.percent:.1f}%")
+                    self.logger.warning(
+                        f"High memory usage detected: {memory.percent:.1f}%"
+                    )
 
                 if disk.percent > 90:
-                    self.logger.warning(f"Low disk space detected: {disk.percent:.1f}% used")
+                    self.logger.warning(
+                        f"Low disk space detected: {disk.percent:.1f}% used"
+                    )
 
                 time.sleep(interval_seconds)
 
@@ -246,13 +266,17 @@ class DebugManager:
             "debug_enabled": self.is_debug_enabled(),
             "config": self.config.__dict__,
             "components_tracked": list(self._debug_data.keys()),
-            "total_debug_entries": sum(len(entries) for entries in self._debug_data.values()),
+            "total_debug_entries": sum(
+                len(entries) for entries in self._debug_data.values()
+            ),
             "monitoring_active": self._monitoring_active,
             "environment_variables": {
                 "AIVILLAGE_DEBUG_MODE": os.getenv("AIVILLAGE_DEBUG_MODE"),
                 "AIVILLAGE_LOG_LEVEL": os.getenv("AIVILLAGE_LOG_LEVEL"),
-                "AIVILLAGE_PROFILE_PERFORMANCE": os.getenv("AIVILLAGE_PROFILE_PERFORMANCE")
-            }
+                "AIVILLAGE_PROFILE_PERFORMANCE": os.getenv(
+                    "AIVILLAGE_PROFILE_PERFORMANCE"
+                ),
+            },
         }
 
         # Add component summaries
@@ -261,19 +285,19 @@ class DebugManager:
             component_summaries[component] = {
                 "entry_count": len(entries),
                 "latest_entry": entries[-1]["timestamp"] if entries else None,
-                "first_entry": entries[0]["timestamp"] if entries else None
+                "first_entry": entries[0]["timestamp"] if entries else None,
             }
 
         summary["component_summaries"] = component_summaries
 
         return summary
 
-    def get_debug_data(self, component: str | None = None, limit: int = 100) -> dict[str, Any]:
+    def get_debug_data(
+        self, component: str | None = None, limit: int = 100
+    ) -> dict[str, Any]:
         """Get debug data for analysis."""
         if component:
-            return {
-                component: self._debug_data.get(component, [])[-limit:]
-            }
+            return {component: self._debug_data.get(component, [])[-limit:]}
 
         # Return all components with limit applied
         result = {}
@@ -294,6 +318,7 @@ class DebugManager:
 
 # Global debug manager instance
 _debug_manager: DebugManager | None = None
+
 
 def get_debug_manager() -> DebugManager:
     """Get the global debug manager instance."""

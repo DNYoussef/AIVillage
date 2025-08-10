@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """Test compression components directly to avoid import dependencies."""
 
-from collections import Counter
 import gzip
 import lzma
-from pathlib import Path
 import struct
 import sys
 import time
+from collections import Counter
+from pathlib import Path
 
 import torch
 from torch import nn
@@ -37,7 +37,7 @@ def test_integrated_compression_simulation():
 
     print("Test Model:")
     print(f"  Parameters: {param_count:,}")
-    print(f"  Original size: {original_size/1024:.1f} KB")
+    print(f"  Original size: {original_size / 1024:.1f} KB")
 
     # Simulate integrated compression (based on the code structure)
     def integrated_compress_tensor(weights):
@@ -119,7 +119,7 @@ def test_integrated_compression_simulation():
     print("\nIntegrated Pipeline Results:")
     print(f"  Overall compression ratio: {overall_ratio:.1f}x")
     print(f"  Average parameter ratio: {avg_param_ratio:.1f}x")
-    print(f"  vs Advanced Pipeline (20.8x): {overall_ratio/20.8:.1%} improvement")
+    print(f"  vs Advanced Pipeline (20.8x): {overall_ratio / 20.8:.1%} improvement")
 
     # Key advantages confirmed:
     print("\nIntegrated Pipeline Advantages:")
@@ -133,7 +133,7 @@ def test_integrated_compression_simulation():
 
 def test_cascade_compression_simulation():
     """Simulate the CascadeCompressor approach."""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("SIMULATING CASCADE COMPRESSOR")
     print("=" * 60)
 
@@ -277,7 +277,7 @@ def test_cascade_compression_simulation():
 
 def mobile_deployment_analysis():
     """Analyze mobile deployment with improved compression."""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("MOBILE DEPLOYMENT ANALYSIS")
     print("=" * 60)
 
@@ -341,7 +341,7 @@ def main():
         cascade_avg, cascade_effective = test_cascade_compression_simulation()
         mobile_ready = mobile_deployment_analysis()
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print("IMPROVED COMPRESSION VALIDATION SUMMARY")
         print("=" * 60)
 

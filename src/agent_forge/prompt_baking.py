@@ -13,20 +13,20 @@ patterns through systematic testing and parameter adjustment.
 """
 
 import asyncio
-from datetime import datetime
 import json
 import logging
-from pathlib import Path
 import time
 import traceback
+from datetime import datetime
+from pathlib import Path
 from typing import Any
 
-from pydantic import BaseModel, Field, validator
 import torch
+import wandb
+from pydantic import BaseModel, Field, validator
 from torch import nn
 from tqdm import tqdm
 from transformers import AdamW, AutoModelForCausalLM, AutoTokenizer
-import wandb
 
 logger = logging.getLogger(__name__)
 

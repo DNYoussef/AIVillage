@@ -6,10 +6,10 @@ Intended for CI gate.
 from __future__ import annotations
 
 import difflib
-from pathlib import Path
 import sys
 import tempfile
 import textwrap
+from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 TMP = tempfile.gettempdir()

@@ -4,11 +4,12 @@
 This benchmark spins up a simple echo server and measures round-trip
 latency for a series of messages to approximate P2P performance.
 """
+
 import argparse
 import asyncio
 import json
-from pathlib import Path
 import time
+from pathlib import Path
 
 
 async def _handle_echo(

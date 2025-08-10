@@ -5,14 +5,15 @@ Migrates evolution metrics from JSON files to SQLite as noted in
 CODEX Integration Requirements Migration Notes.
 """
 
-from datetime import datetime
 import hashlib
 import json
 import logging
-from pathlib import Path
 import sqlite3
+from datetime import datetime
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
+
 
 class DataMigrator:
     """Handles migration of data from legacy formats to CODEX databases."""
@@ -23,11 +24,7 @@ class DataMigrator:
 
     def connect_databases(self):
         """Connect to all SQLite databases."""
-        db_files = [
-            "evolution_metrics.db",
-            "digital_twin.db",
-            "rag_index.db"
-        ]
+        db_files = ["evolution_metrics.db", "digital_twin.db", "rag_index.db"]
 
         for db_file in db_files:
             db_path = self.data_dir / db_file
@@ -60,21 +57,24 @@ class DataMigrator:
             # Migrate evolution rounds
             if "rounds" in data:
                 for round_data in data["rounds"]:
-                    conn.execute("""
-                        INSERT OR REPLACE INTO evolution_rounds 
-                        (round_number, generation, population_size, mutation_rate, 
+                    conn.execute(
+                        """
+                        INSERT OR REPLACE INTO evolution_rounds
+                        (round_number, generation, population_size, mutation_rate,
                          selection_pressure, status, metadata, timestamp)
                         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                    """, (
-                        round_data.get("round_number", 0),
-                        round_data.get("generation", 0),
-                        round_data.get("population_size"),
-                        round_data.get("mutation_rate"),
-                        round_data.get("selection_pressure"),
-                        round_data.get("status", "completed"),
-                        json.dumps(round_data.get("metadata", {})),
-                        round_data.get("timestamp", datetime.now().isoformat())
-                    ))
+                    """,
+                        (
+                            round_data.get("round_number", 0),
+                            round_data.get("generation", 0),
+                            round_data.get("population_size"),
+                            round_data.get("mutation_rate"),
+                            round_data.get("selection_pressure"),
+                            round_data.get("status", "completed"),
+                            json.dumps(round_data.get("metadata", {})),
+                            round_data.get("timestamp", datetime.now().isoformat()),
+                        ),
+                    )
 
                 logger.info(f"Migrated {len(data['rounds'])} evolution rounds")
 
@@ -85,24 +85,29 @@ class DataMigrator:
                     round_number = fitness_data.get("round_number", 0)
                     cursor = conn.execute(
                         "SELECT id FROM evolution_rounds WHERE round_number = ?",
-                        (round_number,)
+                        (round_number,),
                     )
                     round_row = cursor.fetchone()
 
                     if round_row:
-                        conn.execute("""
+                        conn.execute(
+                            """
                             INSERT OR REPLACE INTO fitness_metrics
-                            (round_id, agent_id, fitness_score, performance_metrics, 
+                            (round_id, agent_id, fitness_score, performance_metrics,
                              resource_usage, timestamp)
                             VALUES (?, ?, ?, ?, ?, ?)
-                        """, (
-                            round_row[0],
-                            fitness_data.get("agent_id", "unknown"),
-                            fitness_data.get("fitness_score", 0.0),
-                            json.dumps(fitness_data.get("performance_metrics", {})),
-                            json.dumps(fitness_data.get("resource_usage", {})),
-                            fitness_data.get("timestamp", datetime.now().isoformat())
-                        ))
+                        """,
+                            (
+                                round_row[0],
+                                fitness_data.get("agent_id", "unknown"),
+                                fitness_data.get("fitness_score", 0.0),
+                                json.dumps(fitness_data.get("performance_metrics", {})),
+                                json.dumps(fitness_data.get("resource_usage", {})),
+                                fitness_data.get(
+                                    "timestamp", datetime.now().isoformat()
+                                ),
+                            ),
+                        )
 
                 logger.info(f"Migrated {len(data['fitness_scores'])} fitness metrics")
 
@@ -129,10 +134,12 @@ class DataMigrator:
             conn = self.databases["rag_index.db"]
 
             # Find documents with SHA256 embeddings (placeholder data)
-            cursor = conn.execute("""
-                SELECT chunk_id, embedding_vector FROM chunks 
+            cursor = conn.execute(
+                """
+                SELECT chunk_id, embedding_vector FROM chunks
                 WHERE embedding_vector IS NOT NULL
-            """)
+            """
+            )
 
             sha256_chunks = []
             for row in cursor.fetchall():
@@ -141,15 +148,22 @@ class DataMigrator:
                     sha256_chunks.append(chunk_id)
 
             if sha256_chunks:
-                logger.warning(f"Found {len(sha256_chunks)} chunks with SHA256 embeddings")
-                logger.info("Note: Real embedding vectors will be generated during RAG system initialization")
+                logger.warning(
+                    f"Found {len(sha256_chunks)} chunks with SHA256 embeddings"
+                )
+                logger.info(
+                    "Note: Real embedding vectors will be generated during RAG system initialization"
+                )
 
                 # Mark these for re-processing
                 for chunk_id in sha256_chunks:
-                    conn.execute("""
-                        UPDATE chunks SET embedding_vector = NULL 
+                    conn.execute(
+                        """
+                        UPDATE chunks SET embedding_vector = NULL
                         WHERE chunk_id = ?
-                    """, (chunk_id,))
+                    """,
+                        (chunk_id,),
+                    )
 
                 conn.commit()
                 logger.info("Cleared SHA256 placeholder embeddings for re-processing")
@@ -187,21 +201,24 @@ class DataMigrator:
                 # Create a hash for privacy compliance
                 user_id_hash = hashlib.sha256(user_id.encode()).hexdigest()
 
-                conn.execute("""
+                conn.execute(
+                    """
                     INSERT OR REPLACE INTO learning_profiles
                     (profile_id, user_id_hash, learning_style, preferred_difficulty,
                      knowledge_domains, learning_goals, privacy_settings, created_at)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                """, (
-                    profile_id,
-                    user_id_hash,
-                    profile_data.get("learning_style"),
-                    profile_data.get("preferred_difficulty", "medium"),
-                    json.dumps(profile_data.get("knowledge_domains", [])),
-                    json.dumps(profile_data.get("learning_goals", [])),
-                    json.dumps(profile_data.get("privacy_settings", {})),
-                    profile_data.get("created_at", datetime.now().isoformat())
-                ))
+                """,
+                    (
+                        profile_id,
+                        user_id_hash,
+                        profile_data.get("learning_style"),
+                        profile_data.get("preferred_difficulty", "medium"),
+                        json.dumps(profile_data.get("knowledge_domains", [])),
+                        json.dumps(profile_data.get("learning_goals", [])),
+                        json.dumps(profile_data.get("privacy_settings", {})),
+                        profile_data.get("created_at", datetime.now().isoformat()),
+                    ),
+                )
 
                 migrated_count += 1
 
@@ -223,7 +240,9 @@ class DataMigrator:
 
         for db_name, conn in self.databases.items():
             try:
-                cursor = conn.execute("SELECT name FROM sqlite_master WHERE type='table'")
+                cursor = conn.execute(
+                    "SELECT name FROM sqlite_master WHERE type='table'"
+                )
                 tables = [row[0] for row in cursor.fetchall()]
 
                 table_counts = {}
@@ -236,14 +255,11 @@ class DataMigrator:
                 results[db_name] = {
                     "status": "success",
                     "tables": tables,
-                    "record_counts": table_counts
+                    "record_counts": table_counts,
                 }
 
             except Exception as e:
-                results[db_name] = {
-                    "status": "error",
-                    "error": str(e)
-                }
+                results[db_name] = {"status": "error", "error": str(e)}
 
         return results
 
@@ -300,9 +316,9 @@ def main():
     print("\nValidating migration results...")
     validation_results = migrator.validate_migration()
 
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("DATA MIGRATION COMPLETE")
-    print("="*60)
+    print("=" * 60)
 
     for db_name, result in validation_results.items():
         print(f"\n{db_name.upper()}:")
@@ -316,14 +332,16 @@ def main():
 
     print("\nMigration Summary:")
     print(f"  Completed: {success_count}/{total_migrations} migrations")
-    print(f"  Databases: {len([r for r in validation_results.values() if r['status'] == 'success'])}/{len(validation_results)} validated")
+    print(
+        f"  Databases: {len([r for r in validation_results.values() if r['status'] == 'success'])}/{len(validation_results)} validated"
+    )
 
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     if success_count == total_migrations:
         print("All data migrations completed successfully!")
     else:
         print("Some migrations failed - check logs for details")
-    print("="*60)
+    print("=" * 60)
 
     # Close connections
     migrator.close_databases()

@@ -4,14 +4,14 @@ Comprehensive Test Coverage Dashboard for AIVillage
 Real-time monitoring and analysis of test coverage across all components.
 """
 
-from dataclasses import dataclass
-from datetime import datetime
 import json
 import os
-from pathlib import Path
 import subprocess
 import sys
 import time
+from dataclasses import dataclass
+from datetime import datetime
+from pathlib import Path
 
 
 @dataclass
@@ -739,7 +739,7 @@ class TestCoverageDashboard:
     <div class="container">
         <div class="header">
             <h1>🚀 Sprint 6 Test Dashboard</h1>
-            <p>Real-time monitoring for P2P, Resource Management, and Evolution Infrastructure • Generated: {dashboard_data['timestamp']}</p>
+            <p>Real-time monitoring for P2P, Resource Management, and Evolution Infrastructure • Generated: {dashboard_data["timestamp"]}</p>
         </div>
 
         <div class="status-grid">
@@ -769,14 +769,14 @@ class TestCoverageDashboard:
             html_content += f"""
         <div class="test-results {validation_class}">
             <h2>🔧 Sprint 6 Validation Results</h2>
-            <p><strong>Status:</strong> <span class="test-status-{'pass' if validation.get('success', False) else 'fail'}">{validation_status}</span></p>
-            <p><strong>Execution Time:</strong> <span class="execution-time">{validation.get('execution_time', 0):.2f} seconds</span></p>
+            <p><strong>Status:</strong> <span class="test-status-{"pass" if validation.get("success", False) else "fail"}">{validation_status}</span></p>
+            <p><strong>Execution Time:</strong> <span class="execution-time">{validation.get("execution_time", 0):.2f} seconds</span></p>
 
             <button class="collapsible" onclick="toggleContent('validation-details')">View Validation Output</button>
             <div id="validation-details" class="content">
                 <h4>Standard Output:</h4>
-                <pre>{validation.get('stdout', 'No output')}</pre>
-                {f'<h4>Error Output:</h4><pre>{validation.get("stderr", "")}</pre>' if validation.get('stderr') else ''}
+                <pre>{validation.get("stdout", "No output")}</pre>
+                {f"<h4>Error Output:</h4><pre>{validation.get('stderr', '')}</pre>" if validation.get("stderr") else ""}
             </div>
         </div>"""
 
@@ -789,19 +789,19 @@ class TestCoverageDashboard:
             <div class="status-grid">
                 <div class="metric-card success">
                     <h3>Passed Tests</h3>
-                    <div class="status-value test-status-pass">{infra.get('passed_files', 0)}</div>
+                    <div class="status-value test-status-pass">{infra.get("passed_files", 0)}</div>
                 </div>
-                <div class="metric-card {'critical' if infra.get('failed_files', 0) > 0 else 'info'}">
+                <div class="metric-card {"critical" if infra.get("failed_files", 0) > 0 else "info"}">
                     <h3>Failed Tests</h3>
-                    <div class="status-value test-status-{'fail' if infra.get('failed_files', 0) > 0 else 'pass'}">{infra.get('failed_files', 0)}</div>
+                    <div class="status-value test-status-{"fail" if infra.get("failed_files", 0) > 0 else "pass"}">{infra.get("failed_files", 0)}</div>
                 </div>
                 <div class="metric-card info">
                     <h3>Total Files</h3>
-                    <div class="status-value">{infra.get('total_files', 0)}</div>
+                    <div class="status-value">{infra.get("total_files", 0)}</div>
                 </div>
             </div>
             <div class="progress-bar">
-                <div class="progress-fill" style="width: {(infra.get('passed_files', 0) / max(infra.get('total_files', 1), 1)) * 100:.1f}%"></div>
+                <div class="progress-fill" style="width: {(infra.get("passed_files", 0) / max(infra.get("total_files", 1), 1)) * 100:.1f}%"></div>
             </div>
 
             <table>
@@ -818,10 +818,10 @@ class TestCoverageDashboard:
 
                 html_content += f"""
                 <tr>
-                    <td>{test_file.split('/')[-1]}</td>
+                    <td>{test_file.split("/")[-1]}</td>
                     <td class="{status_class}">{status_icon}</td>
                     <td class="execution-time">{exec_time:.2f}s</td>
-                    <td><button class="collapsible" onclick="toggleContent('{test_file.replace('/', '-').replace('.', '-')}')">View</button></td>
+                    <td><button class="collapsible" onclick="toggleContent('{test_file.replace("/", "-").replace(".", "-")}')">View</button></td>
                 </tr>"""
 
             html_content += "</table>"
@@ -832,11 +832,11 @@ class TestCoverageDashboard:
                 html_content += f"""
             <div id="{content_id}" class="content">
                 <h4>{test_file}</h4>
-                <p><strong>Status:</strong> {'Success' if result.get('success', False) else 'Failed'}</p>
-                <p><strong>Execution Time:</strong> {result.get('execution_time', 0):.2f} seconds</p>
-                {f'<p><strong>Error:</strong> {result.get("error", "")}</p>' if result.get('error') else ''}
-                {f'<h5>Output:</h5><pre>{result.get("stdout", "No output")}</pre>' if result.get('stdout') else ''}
-                {f'<h5>Errors:</h5><pre>{result.get("stderr", "")}</pre>' if result.get('stderr') else ''}
+                <p><strong>Status:</strong> {"Success" if result.get("success", False) else "Failed"}</p>
+                <p><strong>Execution Time:</strong> {result.get("execution_time", 0):.2f} seconds</p>
+                {f"<p><strong>Error:</strong> {result.get('error', '')}</p>" if result.get("error") else ""}
+                {f"<h5>Output:</h5><pre>{result.get('stdout', 'No output')}</pre>" if result.get("stdout") else ""}
+                {f"<h5>Errors:</h5><pre>{result.get('stderr', '')}</pre>" if result.get("stderr") else ""}
             </div>"""
 
             html_content += "</div>"
@@ -849,14 +849,14 @@ class TestCoverageDashboard:
             html_content += f"""
         <div class="test-results {perf_class}">
             <h2>⚡ Sprint 6 Performance Tests</h2>
-            <p><strong>Status:</strong> <span class="test-status-{'pass' if perf.get('success', False) else 'fail'}">{perf_status}</span></p>
-            <p><strong>Execution Time:</strong> <span class="execution-time">{perf.get('execution_time', 0):.2f} seconds</span></p>
+            <p><strong>Status:</strong> <span class="test-status-{"pass" if perf.get("success", False) else "fail"}">{perf_status}</span></p>
+            <p><strong>Execution Time:</strong> <span class="execution-time">{perf.get("execution_time", 0):.2f} seconds</span></p>
 
             <button class="collapsible" onclick="toggleContent('performance-details')">View Performance Results</button>
             <div id="performance-details" class="content">
                 <h4>Benchmark Output:</h4>
-                <pre>{perf.get('stdout', 'No output')}</pre>
-                {f'<h4>Error Output:</h4><pre>{perf.get("stderr", "")}</pre>' if perf.get('stderr') else ''}
+                <pre>{perf.get("stdout", "No output")}</pre>
+                {f"<h4>Error Output:</h4><pre>{perf.get('stderr', '')}</pre>" if perf.get("stderr") else ""}
             </div>
         </div>"""
 
@@ -877,8 +877,8 @@ class TestCoverageDashboard:
 
             html_content += f"""
             <tr>
-                <td>{category.replace('_', ' ').title()}</td>
-                <td>{metrics['total_files']}</td>
+                <td>{category.replace("_", " ").title()}</td>
+                <td>{metrics["total_files"]}</td>
                 <td>{coverage:.1f}%</td>
                 <td>{status}</td>
             </tr>
@@ -895,11 +895,11 @@ class TestCoverageDashboard:
         for rec in dashboard_data["recommendations"][:3]:
             html_content += f"""
         <div class="recommendation">
-            <h3>{rec['title']}</h3>
-            <p>{rec['description']}</p>
-            <p><strong>Priority:</strong> {rec['priority'].upper()}</p>
-            <p><strong>Estimated Effort:</strong> {rec['estimated_effort']}</p>
-            <p><strong>Impact:</strong> {rec['impact']}</p>
+            <h3>{rec["title"]}</h3>
+            <p>{rec["description"]}</p>
+            <p><strong>Priority:</strong> {rec["priority"].upper()}</p>
+            <p><strong>Estimated Effort:</strong> {rec["estimated_effort"]}</p>
+            <p><strong>Impact:</strong> {rec["impact"]}</p>
         </div>
 """
 
@@ -990,12 +990,12 @@ class TestCoverageDashboard:
         return (
             f"""# Test Coverage Analysis Summary
 
-Generated: {dashboard_data['timestamp']}
+Generated: {dashboard_data["timestamp"]}
 
 ## Overview
 - **Analysis Status**: Complete
 - **Components Analyzed**: {len(self.critical_components)} categories
-- **Critical Untested Files**: {len(dashboard_data['coverage_gaps']['critical_untested'])}
+- **Critical Untested Files**: {len(dashboard_data["coverage_gaps"]["critical_untested"])}
 
 ## Component Coverage
 
@@ -1004,8 +1004,14 @@ Generated: {dashboard_data['timestamp']}
 """
             + "\n".join(
                 [
-                    f"| {cat.replace('_',
-                                  ' ').title()} | {metrics['total_files']} | {metrics['average_coverage']:.1f}% | {'🟢' if metrics['average_coverage'] > 80 else '🟡' if metrics['average_coverage'] > 50 else '🔴'} |"
+                    f"| {cat.replace('_', ' ').title()} | {metrics['total_files']} | {
+                        metrics['average_coverage']:.1f}% | {
+                        '🟢'
+                        if metrics['average_coverage'] > 80
+                        else '🟡'
+                        if metrics['average_coverage'] > 50
+                        else '🔴'
+                    } |"
                     for cat, metrics in dashboard_data["component_coverage"].items()
                 ]
             )

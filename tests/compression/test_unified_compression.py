@@ -5,9 +5,9 @@ This replaces the fragmented test suite with a consolidated set of tests
 that cover all compression functionality in a structured way.
 """
 
-from pathlib import Path
 import shutil
 import tempfile
+from pathlib import Path
 from unittest.mock import Mock, patch
 
 import pytest

@@ -4,6 +4,7 @@ This module delegates to ``src.production.rag.rag_system.main`` so the
 production RAG pipeline can be invoked from the repository root using
 ``python rag_system/main.py``.
 """
+
 from __future__ import annotations
 
 import sys
@@ -28,7 +29,6 @@ for path in (SRC, ROOT):
 sys.modules.pop("rag_system", None)
 
 from src.production.rag.rag_system.main import main as _main
-
 
 if __name__ == "__main__":
     raise SystemExit(_main())

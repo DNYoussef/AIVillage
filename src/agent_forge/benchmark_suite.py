@@ -12,22 +12,22 @@ Supports comparison against baseline 1.5B and frontier models with detailed W&B 
 """
 
 import asyncio
-from dataclasses import asdict, dataclass
 import json
 import logging
-from pathlib import Path
 import re
 import time
+from dataclasses import asdict, dataclass
+from pathlib import Path
 from typing import Any
 
-from datasets import load_dataset
 import numpy as np
 import pandas as pd
-from scipy import stats
 import torch
+import wandb
+from datasets import load_dataset
+from scipy import stats
 from tqdm import tqdm
 from transformers import AutoModelForCausalLM, AutoTokenizer
-import wandb
 
 logger = logging.getLogger(__name__)
 

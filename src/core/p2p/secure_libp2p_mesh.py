@@ -12,22 +12,22 @@ according to CODEX Integration Requirements:
 
 import asyncio
 import base64
-from collections import defaultdict, deque
-from collections.abc import Callable
-from dataclasses import dataclass, field
-from datetime import datetime, timedelta
-from enum import Enum
 import hashlib
 import hmac
 import json
 import logging
 import os
-from pathlib import Path
 import secrets
 import ssl
 import time
-from typing import Any
 import uuid
+from collections import defaultdict, deque
+from collections.abc import Callable
+from dataclasses import dataclass, field
+from datetime import datetime, timedelta
+from enum import Enum
+from pathlib import Path
+from typing import Any
 
 from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import serialization
@@ -43,6 +43,7 @@ try:
     from libp2p.pubsub.gossipsub import GossipSub
     from libp2p.pubsub.pubsub import Pubsub
     from multiaddr import Multiaddr
+
     LIBP2P_AVAILABLE = True
 except ImportError:
     LIBP2P_AVAILABLE = False
@@ -53,6 +54,7 @@ logger = logging.getLogger(__name__)
 
 class SecurityLevel(Enum):
     """Security levels for P2P operations."""
+
     LOW = 1
     MEDIUM = 2
     HIGH = 3
@@ -61,6 +63,7 @@ class SecurityLevel(Enum):
 
 class SecurityEvent(Enum):
     """Types of security events to monitor."""
+
     CONNECTION_ATTEMPT = "connection_attempt"
     AUTH_SUCCESS = "auth_success"
     AUTH_FAILURE = "auth_failure"
@@ -76,6 +79,7 @@ class SecurityEvent(Enum):
 @dataclass
 class SecurityEventLog:
     """Security event log entry."""
+
     timestamp: datetime = field(default_factory=datetime.now)
     event_type: SecurityEvent = SecurityEvent.CONNECTION_ATTEMPT
     peer_id: str = ""
@@ -88,6 +92,7 @@ class SecurityEventLog:
 @dataclass
 class PeerReputation:
     """Peer reputation tracking."""
+
     peer_id: str = ""
     trust_score: float = 0.5  # 0.0 = untrusted, 1.0 = fully trusted
     successful_interactions: int = 0
@@ -102,6 +107,7 @@ class PeerReputation:
 @dataclass
 class SecureMessage:
     """Secure message with encryption and authentication."""
+
     id: str = field(default_factory=lambda: str(uuid.uuid4()))
     sender: str = ""
     recipient: str | None = None
@@ -125,7 +131,7 @@ class SecureMessage:
             "timestamp": self.timestamp,
             "ttl": self.ttl,
             "message_type": self.message_type,
-            "sequence_number": self.sequence_number
+            "sequence_number": self.sequence_number,
         }
 
     @classmethod
@@ -141,7 +147,7 @@ class SecureMessage:
             timestamp=data["timestamp"],
             ttl=data.get("ttl", 300),
             message_type=data.get("message_type", "DATA_MESSAGE"),
-            sequence_number=data.get("sequence_number", 0)
+            sequence_number=data.get("sequence_number", 0),
         )
 
 
@@ -156,7 +162,9 @@ class SecureP2PNetworkConfig:
 
         # Security Configuration
         self.peer_id_file = os.getenv("LIBP2P_PEER_ID_FILE", "./data/peer_id.json")
-        self.private_key_file = os.getenv("LIBP2P_PRIVATE_KEY_FILE", "./data/private_key.pem")
+        self.private_key_file = os.getenv(
+            "LIBP2P_PRIVATE_KEY_FILE", "./data/private_key.pem"
+        )
         self.tls_enabled = True
         self.peer_verification = True
 
@@ -203,7 +211,9 @@ class SecurityMonitor:
 
     def __init__(self, config: SecureP2PNetworkConfig):
         self.config = config
-        self.security_logs: deque[SecurityEventLog] = deque(maxlen=config.max_security_logs)
+        self.security_logs: deque[SecurityEventLog] = deque(
+            maxlen=config.max_security_logs
+        )
         self.peer_reputations: dict[str, PeerReputation] = {}
         self.blocked_peers: set[str] = set()
         self.connection_counts: dict[str, list[datetime]] = defaultdict(list)
@@ -214,7 +224,9 @@ class SecurityMonitor:
     def log_security_event(self, event: SecurityEventLog) -> None:
         """Log a security event."""
         self.security_logs.append(event)
-        logger.info(f"Security Event: {event.event_type.value} from {event.peer_id} - {event.description}")
+        logger.info(
+            f"Security Event: {event.event_type.value} from {event.peer_id} - {event.description}"
+        )
 
         # Take automatic actions based on event
         if event.severity == SecurityLevel.CRITICAL:
@@ -225,12 +237,16 @@ class SecurityMonitor:
     def _handle_critical_event(self, event: SecurityEventLog) -> None:
         """Handle critical security events."""
         if event.peer_id and event.peer_id not in self.blocked_peers:
-            self.block_peer(event.peer_id, f"Critical security event: {event.description}")
+            self.block_peer(
+                event.peer_id, f"Critical security event: {event.description}"
+            )
 
     def _handle_high_severity_event(self, event: SecurityEventLog) -> None:
         """Handle high severity events."""
         if event.peer_id:
-            self.update_peer_reputation(event.peer_id, -0.3, "High severity security event")
+            self.update_peer_reputation(
+                event.peer_id, -0.3, "High severity security event"
+            )
 
     def is_peer_blocked(self, peer_id: str) -> bool:
         """Check if peer is blocked."""
@@ -242,12 +258,14 @@ class SecurityMonitor:
         if peer_id in self.peer_reputations:
             self.peer_reputations[peer_id].blocked = True
 
-        self.log_security_event(SecurityEventLog(
-            event_type=SecurityEvent.PEER_BLOCKED,
-            peer_id=peer_id,
-            severity=SecurityLevel.HIGH,
-            description=f"Peer blocked: {reason}"
-        ))
+        self.log_security_event(
+            SecurityEventLog(
+                event_type=SecurityEvent.PEER_BLOCKED,
+                peer_id=peer_id,
+                severity=SecurityLevel.HIGH,
+                description=f"Peer blocked: {reason}",
+            )
+        )
 
     def check_rate_limits(self, peer_id: str, source_ip: str = "") -> bool:
         """Check if peer exceeds rate limits."""
@@ -263,13 +281,15 @@ class SecurityMonitor:
         # Check connection rate limit
         connection_count = len(self.connection_counts[peer_id])
         if connection_count >= self.config.max_connections_per_minute:
-            self.log_security_event(SecurityEventLog(
-                event_type=SecurityEvent.RATE_LIMIT_EXCEEDED,
-                peer_id=peer_id,
-                source_ip=source_ip,
-                severity=SecurityLevel.HIGH,
-                description=f"Connection rate limit exceeded: {connection_count} connections"
-            ))
+            self.log_security_event(
+                SecurityEventLog(
+                    event_type=SecurityEvent.RATE_LIMIT_EXCEEDED,
+                    peer_id=peer_id,
+                    source_ip=source_ip,
+                    severity=SecurityLevel.HIGH,
+                    description=f"Connection rate limit exceeded: {connection_count} connections",
+                )
+            )
             return False
 
         return True
@@ -289,31 +309,37 @@ class SecurityMonitor:
         else:
             reputation.failed_interactions += 1
 
-        logger.debug(f"Peer {peer_id} reputation: {old_score:.3f} -> {reputation.trust_score:.3f} ({reason})")
+        logger.debug(
+            f"Peer {peer_id} reputation: {old_score:.3f} -> {reputation.trust_score:.3f} ({reason})"
+        )
 
     def is_message_replay(self, message: SecureMessage) -> bool:
         """Check if message is a replay attack."""
         message_key = f"{message.sender}:{message.id}:{message.sequence_number}"
 
         if message_key in self.seen_messages:
-            self.log_security_event(SecurityEventLog(
-                event_type=SecurityEvent.REPLAY_ATTACK_DETECTED,
-                peer_id=message.sender,
-                severity=SecurityLevel.HIGH,
-                description=f"Replay attack detected for message {message.id}"
-            ))
+            self.log_security_event(
+                SecurityEventLog(
+                    event_type=SecurityEvent.REPLAY_ATTACK_DETECTED,
+                    peer_id=message.sender,
+                    severity=SecurityLevel.HIGH,
+                    description=f"Replay attack detected for message {message.id}",
+                )
+            )
             return True
 
         # Check sequence number
         if message.sender in self.sequence_numbers:
             expected_seq = self.sequence_numbers[message.sender] + 1
             if message.sequence_number <= self.sequence_numbers[message.sender]:
-                self.log_security_event(SecurityEventLog(
-                    event_type=SecurityEvent.REPLAY_ATTACK_DETECTED,
-                    peer_id=message.sender,
-                    severity=SecurityLevel.HIGH,
-                    description=f"Out-of-order message sequence: got {message.sequence_number}, expected >= {expected_seq}"
-                ))
+                self.log_security_event(
+                    SecurityEventLog(
+                        event_type=SecurityEvent.REPLAY_ATTACK_DETECTED,
+                        peer_id=message.sender,
+                        severity=SecurityLevel.HIGH,
+                        description=f"Out-of-order message sequence: got {message.sequence_number}, expected >= {expected_seq}",
+                    )
+                )
                 return True
 
         # Update tracking
@@ -336,8 +362,11 @@ class SecurityMonitor:
 
     def get_security_summary(self) -> dict[str, Any]:
         """Get security monitoring summary."""
-        recent_events = [log for log in self.security_logs
-                        if (datetime.now() - log.timestamp).total_seconds() < 3600]
+        recent_events = [
+            log
+            for log in self.security_logs
+            if (datetime.now() - log.timestamp).total_seconds() < 3600
+        ]
 
         event_counts = defaultdict(int)
         for event in recent_events:
@@ -349,7 +378,10 @@ class SecurityMonitor:
             "blocked_peers": len(self.blocked_peers),
             "peer_reputations": len(self.peer_reputations),
             "event_types": dict(event_counts),
-            "avg_trust_score": sum(r.trust_score for r in self.peer_reputations.values()) / max(1, len(self.peer_reputations))
+            "avg_trust_score": sum(
+                r.trust_score for r in self.peer_reputations.values()
+            )
+            / max(1, len(self.peer_reputations)),
         }
 
 
@@ -360,7 +392,9 @@ class MessageCrypto:
         self.fernet = Fernet(encryption_key)
         self.hmac_key = encryption_key[:32]  # Use first 32 bytes for HMAC
 
-    def encrypt_message(self, payload: bytes, sender_id: str) -> tuple[bytes, bytes, bytes]:
+    def encrypt_message(
+        self, payload: bytes, sender_id: str
+    ) -> tuple[bytes, bytes, bytes]:
         """Encrypt message payload and return (encrypted, mac, nonce)."""
         # Generate random nonce
         nonce = secrets.token_bytes(16)
@@ -381,7 +415,9 @@ class MessageCrypto:
 
         return encrypted_payload, mac, nonce
 
-    def decrypt_message(self, encrypted_payload: bytes, mac: bytes, nonce: bytes, sender_id: str) -> bytes | None:
+    def decrypt_message(
+        self, encrypted_payload: bytes, mac: bytes, nonce: bytes, sender_id: str
+    ) -> bytes | None:
         """Decrypt and verify message."""
         try:
             # Verify MAC first
@@ -409,7 +445,7 @@ class MessageCrypto:
 
 class SecureLibP2PMeshNetwork:
     """Secure LibP2P mesh network implementation with comprehensive security features.
-    
+
     Features:
     - TLS encryption for all connections
     - mTLS peer verification
@@ -473,7 +509,7 @@ class SecureLibP2PMeshNetwork:
             pem = private_key.private_bytes(
                 encoding=serialization.Encoding.PEM,
                 format=serialization.PrivateFormat.PKCS8,
-                encryption_algorithm=serialization.NoEncryption()
+                encryption_algorithm=serialization.NoEncryption(),
             )
             private_key_file.write_bytes(pem)
 
@@ -481,7 +517,7 @@ class SecureLibP2PMeshNetwork:
             public_key = private_key.public_key()
             public_pem = public_key.public_bytes(
                 encoding=serialization.Encoding.PEM,
-                format=serialization.PublicFormat.SubjectPublicKeyInfo
+                format=serialization.PublicFormat.SubjectPublicKeyInfo,
             )
             peer_id = hashlib.sha256(public_pem).hexdigest()[:16]
 
@@ -489,7 +525,7 @@ class SecureLibP2PMeshNetwork:
             peer_id_data = {
                 "peer_id": peer_id,
                 "created": datetime.now().isoformat(),
-                "public_key": base64.b64encode(public_pem).decode()
+                "public_key": base64.b64encode(public_pem).decode(),
             }
             peer_id_file.write_text(json.dumps(peer_id_data, indent=2))
 
@@ -505,7 +541,9 @@ class SecureLibP2PMeshNetwork:
         """Set up TLS context for secure connections."""
         self.tls_context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
         self.tls_context.check_hostname = False
-        self.tls_context.verify_mode = ssl.CERT_REQUIRED if self.config.peer_verification else ssl.CERT_NONE
+        self.tls_context.verify_mode = (
+            ssl.CERT_REQUIRED if self.config.peer_verification else ssl.CERT_NONE
+        )
 
         # For mutual TLS, we would load client certificates here
         # This is a simplified implementation
@@ -516,7 +554,9 @@ class SecureLibP2PMeshNetwork:
             return True
 
         try:
-            logger.info(f"Starting secure P2P network on {self.config.host}:{self.config.port}")
+            logger.info(
+                f"Starting secure P2P network on {self.config.host}:{self.config.port}"
+            )
 
             if LIBP2P_AVAILABLE:
                 await self._start_libp2p()
@@ -529,12 +569,14 @@ class SecureLibP2PMeshNetwork:
             asyncio.create_task(self._heartbeat_loop())
             asyncio.create_task(self._reputation_maintenance())
 
-            self.security_monitor.log_security_event(SecurityEventLog(
-                event_type=SecurityEvent.CONNECTION_ATTEMPT,
-                peer_id=self.peer_id,
-                severity=SecurityLevel.LOW,
-                description="P2P network started successfully"
-            ))
+            self.security_monitor.log_security_event(
+                SecurityEventLog(
+                    event_type=SecurityEvent.CONNECTION_ATTEMPT,
+                    peer_id=self.peer_id,
+                    severity=SecurityLevel.LOW,
+                    description="P2P network started successfully",
+                )
+            )
 
             return True
 
@@ -548,14 +590,18 @@ class SecureLibP2PMeshNetwork:
         self.host = new_host()
 
         # Set up GossipSub for pub/sub messaging
-        gossipsub = GossipSub(protocols=["gossipsub"], degree=6, degree_low=4, degree_high=12)
+        gossipsub = GossipSub(
+            protocols=["gossipsub"], degree=6, degree_low=4, degree_high=12
+        )
         self.pubsub = Pubsub(host=self.host, router=gossipsub)
 
         # Set up Kademlia DHT
         self.dht = KadDHT(host=self.host)
 
         # Start services
-        await self.host.get_network().listen(Multiaddr(f"/ip4/{self.config.host}/tcp/{self.config.port}"))
+        await self.host.get_network().listen(
+            Multiaddr(f"/ip4/{self.config.host}/tcp/{self.config.port}")
+        )
         await self.pubsub.subscribe("aivillage-mesh")
 
         logger.info("LibP2P host started with security features")
@@ -574,7 +620,7 @@ class SecureLibP2PMeshNetwork:
                 heartbeat_msg = {
                     "type": "HEARTBEAT",
                     "timestamp": time.time(),
-                    "peer_id": self.peer_id
+                    "peer_id": self.peer_id,
                 }
 
                 await self.broadcast_message(json.dumps(heartbeat_msg).encode())
@@ -591,12 +637,16 @@ class SecureLibP2PMeshNetwork:
                 # Decay reputation scores over time
                 now = datetime.now()
                 for reputation in self.security_monitor.peer_reputations.values():
-                    time_since_interaction = (now - reputation.last_interaction).total_seconds()
+                    time_since_interaction = (
+                        now - reputation.last_interaction
+                    ).total_seconds()
 
                     # Decay trust score if no recent interactions
                     if time_since_interaction > self.config.reputation_decay_interval:
                         decay_amount = min(0.1, time_since_interaction / (24 * 3600))
-                        reputation.trust_score = max(0.0, reputation.trust_score - decay_amount)
+                        reputation.trust_score = max(
+                            0.0, reputation.trust_score - decay_amount
+                        )
 
                 await asyncio.sleep(3600)  # Run every hour
 
@@ -623,16 +673,20 @@ class SecureLibP2PMeshNetwork:
             if peer_id in self.security_monitor.peer_reputations:
                 reputation = self.security_monitor.peer_reputations[peer_id]
                 if reputation.trust_score < self.config.min_trust_score:
-                    logger.warning(f"Peer {peer_id} trust score too low: {reputation.trust_score}")
+                    logger.warning(
+                        f"Peer {peer_id} trust score too low: {reputation.trust_score}"
+                    )
                     return False
 
             # Log connection attempt
-            self.security_monitor.log_security_event(SecurityEventLog(
-                event_type=SecurityEvent.CONNECTION_ATTEMPT,
-                peer_id=peer_id,
-                severity=SecurityLevel.LOW,
-                description=f"Attempting to connect to peer {peer_address}"
-            ))
+            self.security_monitor.log_security_event(
+                SecurityEventLog(
+                    event_type=SecurityEvent.CONNECTION_ATTEMPT,
+                    peer_id=peer_id,
+                    severity=SecurityLevel.LOW,
+                    description=f"Attempting to connect to peer {peer_address}",
+                )
+            )
 
             # Record connection attempt
             self.security_monitor.connection_counts[peer_id].append(datetime.now())
@@ -644,14 +698,18 @@ class SecureLibP2PMeshNetwork:
                 await self.host.connect(peer_info)
 
                 self.connected_peers.add(peer_id)
-                self.security_monitor.update_peer_reputation(peer_id, 0.1, "Successful connection")
+                self.security_monitor.update_peer_reputation(
+                    peer_id, 0.1, "Successful connection"
+                )
 
-                self.security_monitor.log_security_event(SecurityEventLog(
-                    event_type=SecurityEvent.AUTH_SUCCESS,
-                    peer_id=peer_id,
-                    severity=SecurityLevel.LOW,
-                    description="Peer connection established"
-                ))
+                self.security_monitor.log_security_event(
+                    SecurityEventLog(
+                        event_type=SecurityEvent.AUTH_SUCCESS,
+                        peer_id=peer_id,
+                        severity=SecurityLevel.LOW,
+                        description="Peer connection established",
+                    )
+                )
 
                 return True
             # Fallback secure connection
@@ -661,13 +719,17 @@ class SecureLibP2PMeshNetwork:
             logger.error(f"Failed to connect to peer {peer_address}: {e}")
 
             if "peer_id" in locals():
-                self.security_monitor.update_peer_reputation(peer_id, -0.2, f"Connection failed: {e}")
-                self.security_monitor.log_security_event(SecurityEventLog(
-                    event_type=SecurityEvent.AUTH_FAILURE,
-                    peer_id=peer_id,
-                    severity=SecurityLevel.MEDIUM,
-                    description=f"Connection failed: {e}"
-                ))
+                self.security_monitor.update_peer_reputation(
+                    peer_id, -0.2, f"Connection failed: {e}"
+                )
+                self.security_monitor.log_security_event(
+                    SecurityEventLog(
+                        event_type=SecurityEvent.AUTH_FAILURE,
+                        peer_id=peer_id,
+                        severity=SecurityLevel.MEDIUM,
+                        description=f"Connection failed: {e}",
+                    )
+                )
 
             return False
 
@@ -677,19 +739,25 @@ class SecureLibP2PMeshNetwork:
         logger.info(f"Using fallback connection for peer {peer_id}")
         return True
 
-    async def send_secure_message(self, recipient: str, payload: bytes, message_type: str = "DATA_MESSAGE") -> bool:
+    async def send_secure_message(
+        self, recipient: str, payload: bytes, message_type: str = "DATA_MESSAGE"
+    ) -> bool:
         """Send encrypted and authenticated message."""
         try:
             # Check if recipient is blocked
             if self.security_monitor.is_peer_blocked(recipient):
-                logger.warning(f"Attempted to send message to blocked peer: {recipient}")
+                logger.warning(
+                    f"Attempted to send message to blocked peer: {recipient}"
+                )
                 return False
 
             # Create secure message
             self.outgoing_sequence += 1
 
             # Encrypt payload
-            encrypted_payload, mac, nonce = self.message_crypto.encrypt_message(payload, self.peer_id)
+            encrypted_payload, mac, nonce = self.message_crypto.encrypt_message(
+                payload, self.peer_id
+            )
 
             secure_msg = SecureMessage(
                 sender=self.peer_id,
@@ -698,17 +766,21 @@ class SecureLibP2PMeshNetwork:
                 mac=mac,
                 nonce=nonce,
                 message_type=message_type,
-                sequence_number=self.outgoing_sequence
+                sequence_number=self.outgoing_sequence,
             )
 
             # Send message
             if LIBP2P_AVAILABLE and self.pubsub:
-                await self.pubsub.publish("aivillage-mesh", json.dumps(secure_msg.to_dict()).encode())
+                await self.pubsub.publish(
+                    "aivillage-mesh", json.dumps(secure_msg.to_dict()).encode()
+                )
             else:
                 await self._send_fallback(secure_msg)
 
             # Update reputation for successful send
-            self.security_monitor.update_peer_reputation(recipient, 0.05, "Message sent successfully")
+            self.security_monitor.update_peer_reputation(
+                recipient, 0.05, "Message sent successfully"
+            )
 
             return True
 
@@ -716,11 +788,15 @@ class SecureLibP2PMeshNetwork:
             logger.error(f"Failed to send secure message to {recipient}: {e}")
             return False
 
-    async def broadcast_message(self, payload: bytes, message_type: str = "DATA_MESSAGE") -> bool:
+    async def broadcast_message(
+        self, payload: bytes, message_type: str = "DATA_MESSAGE"
+    ) -> bool:
         """Broadcast encrypted message to all peers."""
         return await self.send_secure_message("", payload, message_type)
 
-    async def _handle_incoming_message(self, message_data: bytes, sender_peer: str = "") -> None:
+    async def _handle_incoming_message(
+        self, message_data: bytes, sender_peer: str = ""
+    ) -> None:
         """Handle incoming encrypted message."""
         try:
             # Parse message
@@ -729,7 +805,9 @@ class SecureLibP2PMeshNetwork:
 
             # Security checks
             if self.security_monitor.is_peer_blocked(secure_msg.sender):
-                logger.warning(f"Blocked peer {secure_msg.sender} attempted to send message")
+                logger.warning(
+                    f"Blocked peer {secure_msg.sender} attempted to send message"
+                )
                 return
 
             if self.security_monitor.is_message_expired(secure_msg):
@@ -745,32 +823,42 @@ class SecureLibP2PMeshNetwork:
                 secure_msg.encrypted_payload,
                 secure_msg.mac,
                 secure_msg.nonce,
-                secure_msg.sender
+                secure_msg.sender,
             )
 
             if payload is None:
-                self.security_monitor.log_security_event(SecurityEventLog(
-                    event_type=SecurityEvent.MESSAGE_DECRYPT_FAIL,
-                    peer_id=secure_msg.sender,
-                    severity=SecurityLevel.MEDIUM,
-                    description="Message decryption failed"
-                ))
-                self.security_monitor.update_peer_reputation(secure_msg.sender, -0.1, "Decryption failed")
+                self.security_monitor.log_security_event(
+                    SecurityEventLog(
+                        event_type=SecurityEvent.MESSAGE_DECRYPT_FAIL,
+                        peer_id=secure_msg.sender,
+                        severity=SecurityLevel.MEDIUM,
+                        description="Message decryption failed",
+                    )
+                )
+                self.security_monitor.update_peer_reputation(
+                    secure_msg.sender, -0.1, "Decryption failed"
+                )
                 return
 
             # Update reputation for successful message
-            self.security_monitor.update_peer_reputation(secure_msg.sender, 0.02, "Message received successfully")
+            self.security_monitor.update_peer_reputation(
+                secure_msg.sender, 0.02, "Message received successfully"
+            )
 
             # Handle message based on type
             if secure_msg.message_type in self.message_handlers:
-                await self.message_handlers[secure_msg.message_type](payload, secure_msg.sender)
+                await self.message_handlers[secure_msg.message_type](
+                    payload, secure_msg.sender
+                )
             else:
                 logger.debug(f"No handler for message type: {secure_msg.message_type}")
 
         except Exception as e:
             logger.error(f"Error handling incoming message: {e}")
             if sender_peer:
-                self.security_monitor.update_peer_reputation(sender_peer, -0.1, f"Message handling error: {e}")
+                self.security_monitor.update_peer_reputation(
+                    sender_peer, -0.1, f"Message handling error: {e}"
+                )
 
     def register_message_handler(self, message_type: str, handler: Callable) -> None:
         """Register handler for specific message type."""
@@ -784,12 +872,14 @@ class SecureLibP2PMeshNetwork:
         if self.host:
             await self.host.close()
 
-        self.security_monitor.log_security_event(SecurityEventLog(
-            event_type=SecurityEvent.CONNECTION_ATTEMPT,
-            peer_id=self.peer_id,
-            severity=SecurityLevel.LOW,
-            description="P2P network stopped"
-        ))
+        self.security_monitor.log_security_event(
+            SecurityEventLog(
+                event_type=SecurityEvent.CONNECTION_ATTEMPT,
+                peer_id=self.peer_id,
+                severity=SecurityLevel.LOW,
+                description="P2P network stopped",
+            )
+        )
 
     def get_network_status(self) -> dict[str, Any]:
         """Get comprehensive network status."""
@@ -804,9 +894,9 @@ class SecureLibP2PMeshNetwork:
                 "max_peers": self.config.max_peers,
                 "rate_limits": {
                     "connections_per_minute": self.config.max_connections_per_minute,
-                    "messages_per_minute": self.config.max_messages_per_minute
-                }
-            }
+                    "messages_per_minute": self.config.max_messages_per_minute,
+                },
+            },
         }
 
     def get_security_dashboard(self) -> dict[str, Any]:
@@ -817,15 +907,17 @@ class SecureLibP2PMeshNetwork:
                 "type": log.event_type.value,
                 "peer_id": log.peer_id,
                 "severity": log.severity.value,
-                "description": log.description
+                "description": log.description,
             }
-            for log in list(self.security_monitor.security_logs)[-100:]  # Last 100 events
+            for log in list(self.security_monitor.security_logs)[
+                -100:
+            ]  # Last 100 events
         ]
 
         top_peers = sorted(
             self.security_monitor.peer_reputations.values(),
             key=lambda x: x.trust_score,
-            reverse=True
+            reverse=True,
         )[:10]
 
         return {
@@ -836,17 +928,23 @@ class SecureLibP2PMeshNetwork:
                     "peer_id": p.peer_id,
                     "trust_score": p.trust_score,
                     "interactions": p.successful_interactions + p.failed_interactions,
-                    "last_seen": p.last_interaction.isoformat()
+                    "last_seen": p.last_interaction.isoformat(),
                 }
                 for p in top_peers
             ],
             "blocked_peers": list(self.security_monitor.blocked_peers),
-            "network_health": "healthy" if len(self.security_monitor.blocked_peers) < 10 else "degraded"
+            "network_health": (
+                "healthy"
+                if len(self.security_monitor.blocked_peers) < 10
+                else "degraded"
+            ),
         }
 
 
 # Convenience functions for integration
-async def create_secure_p2p_network(config: SecureP2PNetworkConfig | None = None) -> SecureLibP2PMeshNetwork:
+async def create_secure_p2p_network(
+    config: SecureP2PNetworkConfig | None = None,
+) -> SecureLibP2PMeshNetwork:
     """Create and start a secure P2P network."""
     network = SecureLibP2PMeshNetwork(config)
     await network.start()
@@ -872,7 +970,9 @@ def load_p2p_config() -> SecureP2PNetworkConfig:
             if "security" in p2p_config:
                 security_config = p2p_config["security"]
                 config.tls_enabled = security_config.get("tls_enabled", True)
-                config.peer_verification = security_config.get("peer_verification", True)
+                config.peer_verification = security_config.get(
+                    "peer_verification", True
+                )
 
             logger.info("Loaded P2P configuration from p2p_config.json")
 

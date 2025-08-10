@@ -1,12 +1,12 @@
 """Resource Constraint Manager for Evolution Tasks."""
 
 import asyncio
-from collections.abc import Callable
 import contextlib
-from dataclasses import dataclass, field
-from enum import Enum
 import logging
 import time
+from collections.abc import Callable
+from dataclasses import dataclass, field
+from enum import Enum
 from typing import Any
 
 from .device_profiler import DeviceProfiler, DeviceType, ResourceSnapshot, ThermalState
