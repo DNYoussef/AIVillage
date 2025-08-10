@@ -3,10 +3,11 @@ import sys
 
 import numpy as np
 
-sys.modules.pop("rag_system", None)
-sys.modules.pop("rag_system.wikipedia_storm_pipeline", None)
+# Ensure a clean import of the experimental STORM pipeline
+sys.modules.pop("experimental.rag.storm", None)
+sys.modules.pop("experimental.rag.storm.wikipedia_storm_pipeline", None)
 
-from rag_system.wikipedia_storm_pipeline import (
+from experimental.rag.storm.wikipedia_storm_pipeline import (
     ContentDatabase,
     EducationalContentGenerator,
     OfflineOptimizedRAG,
