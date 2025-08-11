@@ -12,10 +12,18 @@ import logging
 import traceback
 from typing import Any, TypeVar, cast
 
-from src.communications.message import Priority
-from src.communications.protocol import (
-    StandardCommunicationProtocol as BaseCommProtocol,
-)
+# Avoid circular import - define Priority locally for now
+# TODO: Refactor to remove circular dependency
+class Priority(Enum):
+    LOW = 1
+    MEDIUM = 2
+    NORMAL = 2  # Alias for MEDIUM
+    HIGH = 3
+    URGENT = 4
+    CRITICAL = 5
+
+# Placeholder for protocol - will be injected at runtime to avoid circular import
+BaseCommProtocol = None
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -117,7 +125,7 @@ class Message:
         )
 
 
-class StandardCommunicationProtocol(BaseCommProtocol):
+class StandardCommunicationProtocol:
     """Standard protocol for communication between components.
 
     This class extends the full implementation from :mod:`src.communications` and

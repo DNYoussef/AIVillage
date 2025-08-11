@@ -15,6 +15,19 @@ from rag_system.core.config import UnifiedConfig
 
 from .analytics.unified_analytics import UnifiedAnalytics
 
+# Import dual-path transport for P2P networking
+try:
+    import sys
+    import os
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../../src'))
+    from core.p2p.dual_path_transport import DualPathTransport, DualPathMessage
+    DUAL_PATH_AVAILABLE = True
+except ImportError as e:
+    logger.warning(f"Dual-path transport not available: {e}")
+    DualPathTransport = None
+    DualPathMessage = None
+    DUAL_PATH_AVAILABLE = False
+
 if TYPE_CHECKING:
     from agents.unified_base_agent import UnifiedBaseAgent
 
@@ -34,6 +47,18 @@ class KingCoordinator:
         self.problem_analyzer = None  # Initialize this in the setup method
         self.king_agent = None  # Initialize this in the setup method
         self.unified_analytics = UnifiedAnalytics()
+        
+        # Initialize dual-path P2P transport
+        self.dual_path_transport: DualPathTransport = None
+        self.p2p_enabled = DUAL_PATH_AVAILABLE
+        if DUAL_PATH_AVAILABLE:
+            self.dual_path_transport = DualPathTransport(
+                node_id=f"king_{config.get('node_id', 'default')}",
+                enable_bitchat=config.get('enable_bitchat', True),
+                enable_betanet=config.get('enable_betanet', True)
+            )
+            # Register P2P message handler
+            self.dual_path_transport.register_message_handler('agent_message', self._handle_p2p_message)
 
     @error_handler.handle_error
     async def coordinate_task(self, task: dict[str, Any]) -> dict[str, Any]:
@@ -97,6 +122,203 @@ class KingCoordinator:
         else:
             # Handle other message types if needed
             logger.warning(f"Unhandled message type: {message.type}")
+    
+    async def start_p2p_transport(self) -> bool:
+        """Start dual-path P2P transport for mesh networking"""
+        if not self.p2p_enabled or not self.dual_path_transport:
+            logger.info("P2P transport not available")
+            return False
+            
+        try:
+            success = await self.dual_path_transport.start()
+            if success:
+                logger.info("Dual-path P2P transport started successfully")
+                # Enable Global South optimizations for offline-first routing
+                if hasattr(self.dual_path_transport.navigator, 'enable_global_south_mode'):
+                    self.dual_path_transport.navigator.enable_global_south_mode(True)
+            return success
+        except Exception as e:
+            logger.exception(f"Failed to start P2P transport: {e}")
+            return False
+    
+    async def stop_p2p_transport(self) -> None:
+        """Stop dual-path P2P transport"""
+        if self.dual_path_transport:
+            await self.dual_path_transport.stop()
+            logger.info("Dual-path P2P transport stopped")
+    
+    async def send_p2p_message(self, 
+                              recipient: str,
+                              message_content: dict,
+                              priority: int = 5,
+                              privacy_required: bool = False) -> bool:
+        """Send message to another agent via P2P mesh network"""
+        if not self.p2p_enabled or not self.dual_path_transport:
+            logger.warning("P2P transport not available for message sending")
+            return False
+        
+        try:
+            # Create agent message format
+            agent_message = {
+                'type': 'agent_coordination',
+                'from_agent': 'king_coordinator',
+                'to_agent': recipient,
+                'content': message_content,
+                'timestamp': self.unified_analytics.get_current_time(),
+                'requires_response': message_content.get('requires_response', False)
+            }
+            
+            # Send via dual-path transport
+            success = await self.dual_path_transport.send_message(
+                recipient=recipient,
+                payload=agent_message,
+                priority=priority,
+                privacy_required=privacy_required
+            )
+            
+            if success:
+                logger.info(f"Sent P2P message to {recipient}")
+            else:
+                logger.warning(f"Failed to send P2P message to {recipient}")
+                
+            return success
+            
+        except Exception as e:
+            logger.exception(f"Error sending P2P message: {e}")
+            return False
+    
+    async def broadcast_to_mesh(self, message_content: dict, priority: int = 5) -> int:
+        """Broadcast message to all agents in mesh network"""
+        if not self.p2p_enabled or not self.dual_path_transport:
+            logger.warning("P2P transport not available for broadcasting")
+            return 0
+        
+        try:
+            # Create broadcast message
+            broadcast_message = {
+                'type': 'agent_broadcast',
+                'from_agent': 'king_coordinator',
+                'content': message_content,
+                'timestamp': self.unified_analytics.get_current_time(),
+                'broadcast_id': f"broadcast_{self.unified_analytics.get_current_time()}"
+            }
+            
+            # Broadcast via dual-path transport
+            peer_count = await self.dual_path_transport.broadcast_message(
+                payload=broadcast_message,
+                priority=priority
+            )
+            
+            logger.info(f"Broadcast message to {peer_count} peers in mesh network")
+            return peer_count
+            
+        except Exception as e:
+            logger.exception(f"Error broadcasting to mesh: {e}")
+            return 0
+    
+    async def _handle_p2p_message(self, dual_path_msg, source_protocol: str) -> None:
+        """Handle incoming P2P message from dual-path transport"""
+        try:
+            # Parse message payload
+            if isinstance(dual_path_msg.payload, bytes):
+                import json
+                message_data = json.loads(dual_path_msg.payload.decode())
+            else:
+                message_data = dual_path_msg.payload
+            
+            logger.info(f"Received P2P message via {source_protocol} from {dual_path_msg.sender}")
+            
+            # Handle different message types
+            msg_type = message_data.get('type', 'unknown')
+            
+            if msg_type == 'agent_coordination':
+                await self._handle_agent_coordination_message(message_data, dual_path_msg.sender)
+            elif msg_type == 'agent_broadcast':
+                await self._handle_agent_broadcast_message(message_data, dual_path_msg.sender)
+            elif msg_type == 'task_delegation':
+                await self._handle_task_delegation_message(message_data, dual_path_msg.sender)
+            else:
+                logger.warning(f"Unknown P2P message type: {msg_type}")
+                
+        except Exception as e:
+            logger.exception(f"Error handling P2P message: {e}")
+    
+    async def _handle_agent_coordination_message(self, message_data: dict, sender: str) -> None:
+        """Handle agent coordination message"""
+        content = message_data.get('content', {})
+        
+        if content.get('type') == 'task_request':
+            # Another agent is requesting task delegation
+            task = content.get('task', {})
+            result = await self.coordinate_task(task)
+            
+            # Send response back if requested
+            if message_data.get('requires_response', False):
+                response = {
+                    'type': 'task_response',
+                    'original_task': task,
+                    'result': result,
+                    'success': result.get('success', False)
+                }
+                
+                await self.send_p2p_message(sender, response, priority=7)
+        
+        elif content.get('type') == 'status_update':
+            # Agent status update
+            agent_status = content.get('status', {})
+            self.unified_analytics.record_metric(f"agent_{sender}_status", agent_status)
+            logger.info(f"Status update from agent {sender}: {agent_status}")
+    
+    async def _handle_agent_broadcast_message(self, message_data: dict, sender: str) -> None:
+        """Handle agent broadcast message"""
+        content = message_data.get('content', {})
+        
+        if content.get('type') == 'network_discovery':
+            # Agent announcing presence in network
+            agent_info = content.get('agent_info', {})
+            logger.info(f"Network discovery from {sender}: {agent_info}")
+            
+        elif content.get('type') == 'emergency_alert':
+            # Emergency alert from agent
+            alert = content.get('alert', {})
+            logger.warning(f"Emergency alert from {sender}: {alert}")
+            
+            # Potentially coordinate emergency response
+            emergency_task = {
+                'type': 'emergency_response',
+                'alert': alert,
+                'source_agent': sender,
+                'priority': 10
+            }
+            await self.coordinate_task(emergency_task)
+    
+    async def _handle_task_delegation_message(self, message_data: dict, sender: str) -> None:
+        """Handle task delegation from other agents"""
+        task = message_data.get('task', {})
+        
+        # Delegate task through normal coordination
+        result = await self.coordinate_task(task)
+        
+        # Send result back to requesting agent
+        response = {
+            'type': 'delegation_result',
+            'original_task': task,
+            'result': result,
+            'coordinator': 'king_coordinator'
+        }
+        
+        await self.send_p2p_message(sender, response, priority=6)
+    
+    def get_p2p_status(self) -> dict[str, Any]:
+        """Get status of P2P mesh networking"""
+        if not self.p2p_enabled or not self.dual_path_transport:
+            return {'enabled': False, 'reason': 'not_available'}
+        
+        return {
+            'enabled': True,
+            'transport_status': self.dual_path_transport.get_status(),
+            'reachable_peers': self.dual_path_transport.get_reachable_peers()
+        }
             msg = f"Message type {message.type} not supported"
             raise NotImplementedError(msg)
 
