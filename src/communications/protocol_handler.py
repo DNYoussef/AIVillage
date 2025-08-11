@@ -1,20 +1,13 @@
-"""Generic protocol handler utilities."""
+"""Handle messages using a communication protocol."""
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:  # pragma: no cover - type checking only
-    from .message import Message
-    from .standard_protocol import StandardCommunicationProtocol
+from typing import Any
 
 
 class ProtocolHandler:
-    """Binds a protocol to a simple message handler."""
+    """Pass messages to a protocol instance."""
 
-    def __init__(self, protocol: StandardCommunicationProtocol) -> None:
-        """Store the protocol instance."""
-        self.protocol = protocol
-
-    async def handle(self, message: Message) -> None:
-        await self.protocol.send_message(message.receiver, message)
+    def handle(self, protocol: Any, message: Any) -> None:
+        """Use ``protocol`` to send ``message``."""
+        protocol.send(message)

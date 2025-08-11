@@ -1,13 +1,15 @@
 """Core Digital Twin module with minimal implementation.
 
-This simplified version provides the basic data structures and
-APIs needed for import validation and lightweight tests.
+This simplified version provides the basic data structures and APIs needed
+for import validation and lightweight tests.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import Any, Dict, List
+
+from .shadow_simulator import ShadowSimulator
 
 
 @dataclass
@@ -46,13 +48,6 @@ class KnowledgeState:
     subject: str
     concept: str
     mastery_level: float = 0.0
-
-
-class ShadowSimulator:
-    """Very small placeholder for path exploration logic."""
-
-    def explore_paths(self, *args: Any, **kwargs: Any) -> List[Dict[str, Any]]:
-        return []
 
 
 class DigitalTwin:

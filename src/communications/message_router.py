@@ -1,20 +1,18 @@
-"""Simple message router for directing messages via a protocol."""
+"""Route messages via a communication protocol."""
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import Any
 
-if TYPE_CHECKING:  # pragma: no cover - type checking only
-    from .message import Message
-    from .standard_protocol import StandardCommunicationProtocol
+from .standard_protocol import StandardCommunicationProtocol
 
 
 class MessageRouter:
-    """Routes messages using a :class:`StandardCommunicationProtocol`."""
+    """Send messages to a destination using the provided protocol."""
 
     def __init__(self, protocol: StandardCommunicationProtocol) -> None:
-        """Store the protocol used for routing."""
         self.protocol = protocol
 
-    async def route(self, message: Message) -> None:
-        await self.protocol.send_message(message.receiver, message)
+    def route(self, message: Any, destination: str) -> None:
+        """Forward ``message`` tagged with ``destination``."""
+        self.protocol.send({"to": destination, "message": message})

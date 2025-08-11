@@ -1,20 +1,21 @@
-"""High level manager for the preference vault."""
+"""Minimal vault manager used for tests."""
 
 from __future__ import annotations
 
-from typing import Any
-
-from .preference_vault import PreferenceVault
+from typing import Any, Dict
 
 
 class VaultManager:
-    """Thin wrapper providing a simpler API around :class:`PreferenceVault`."""
+    """Store and retrieve key/value pairs in an in-memory vault."""
 
-    def __init__(self, vault: PreferenceVault | None = None) -> None:
-        self.vault = vault or PreferenceVault({})
+    def __init__(self) -> None:
+        self.vault_path = "./vault"
+        self._storage: Dict[str, Any] = {}
 
-    async def store(self, *args: Any, **kwargs: Any) -> Any:
-        return await self.vault.store_preference(*args, **kwargs)
+    def store(self, key: str, value: Any) -> None:
+        """Persist ``value`` under ``key``."""
+        self._storage[key] = value
 
-    async def retrieve(self, *args: Any, **kwargs: Any) -> Any:
-        return await self.vault.get_preference(*args, **kwargs)
+    def retrieve(self, key: str) -> Any:
+        """Return previously stored value or ``None``."""
+        return self._storage.get(key)

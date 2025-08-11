@@ -1,23 +1,20 @@
-"""Simple in-memory profile manager for the Digital Twin."""
+"""Minimal profile manager for the Digital Twin."""
 
 from __future__ import annotations
 
-from typing import Dict, List, Optional
-
-from .digital_twin import LearningProfile
+from typing import Any, Dict
 
 
 class ProfileManager:
-    """Manages ``LearningProfile`` instances."""
+    """Create and retrieve simple user profiles."""
 
     def __init__(self) -> None:
-        self._profiles: Dict[str, LearningProfile] = {}
+        self.profiles: Dict[str, Dict[str, Any]] = {}
 
-    def add_profile(self, profile: LearningProfile) -> None:
-        self._profiles[profile.student_id] = profile
+    def create_profile(self, user_id: str) -> None:
+        """Create an empty profile for ``user_id``."""
+        self.profiles[user_id] = {}
 
-    def get_profile(self, student_id: str) -> Optional[LearningProfile]:
-        return self._profiles.get(student_id)
-
-    def list_profiles(self) -> List[LearningProfile]:
-        return list(self._profiles.values())
+    def get_profile(self, user_id: str) -> Dict[str, Any] | None:
+        """Return the stored profile if it exists."""
+        return self.profiles.get(user_id)

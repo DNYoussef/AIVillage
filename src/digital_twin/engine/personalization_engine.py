@@ -4,12 +4,16 @@ from __future__ import annotations
 
 from typing import Any
 
-from ..core.digital_twin import LearningProfile
+from typing import Dict
 
 
 class PersonalizationEngine:
     """Trivial content personalization placeholder."""
 
-    def personalize(self, profile: LearningProfile, content: Any) -> Any:
+    def __init__(self) -> None:
+        self.vectors: Dict[str, Any] = {}
+
+    def personalize(self, user_id: str, content: Any) -> Any:
         """Return ``content`` unchanged; real implementation would adapt it."""
+        self.vectors.setdefault(user_id, [])
         return content

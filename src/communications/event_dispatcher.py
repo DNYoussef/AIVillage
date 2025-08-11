@@ -1,21 +1,16 @@
-"""Tiny event dispatcher used by communication components."""
+"""Minimal event dispatcher."""
 
 from __future__ import annotations
 
-from collections import defaultdict
-from typing import Any, Callable  # noqa: UP035
+from typing import Any, List
 
 
 class EventDispatcher:
-    """Minimal publish/subscribe implementation."""
+    """Record dispatched events for later inspection."""
 
     def __init__(self) -> None:
-        """Create a dispatcher with no registered handlers."""
-        self._handlers: dict[str, list[Callable[..., Any]]] = defaultdict(list)
+        self.events: List[Any] = []
 
-    def register(self, event: str, handler: Callable[..., Any]) -> None:
-        self._handlers[event].append(handler)
-
-    def dispatch(self, event: str, *args: Any, **kwargs: Any) -> None:
-        for handler in self._handlers.get(event, []):
-            handler(*args, **kwargs)
+    def dispatch(self, event: Any) -> None:
+        """Store ``event`` in the internal list."""
+        self.events.append(event)
