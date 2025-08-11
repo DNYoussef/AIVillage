@@ -1,9 +1,13 @@
+from .event_dispatcher import EventDispatcher
 from .message import Message, MessageType, Priority
+from .message_passing_system import MessagePassing, MessagePassingSystem
 from .message_queue import MessageQueue
-from .protocol import StandardCommunicationProtocol
+from .message_router import MessageRouter
+from .protocol_handler import ProtocolHandler
 from .service_discovery import ServiceDiscovery, ServiceRegistry, discover_services
 from .service_info import ServiceInfo
-from .message_passing_system import MessagePassingSystem, MessagePassing
+from .standard_protocol import StandardCommunicationProtocol
+from .websocket_handler import WebSocketHandler
 
 try:
     from .credit_manager import CreditManager
@@ -23,7 +27,7 @@ __all__ = [
     "Message",
     "MessageQueue",
     "MessagePassingSystem",
-    "MessagePassing", 
+    "MessagePassing",
     "MessageType",
     "Priority",
     "ServiceDiscovery",
@@ -31,5 +35,9 @@ __all__ = [
     "ServiceRegistry",
     "ShardPlanner",
     "StandardCommunicationProtocol",
+    "MessageRouter",
+    "ProtocolHandler",
+    "EventDispatcher",
+    "WebSocketHandler",
     "discover_services",
 ]

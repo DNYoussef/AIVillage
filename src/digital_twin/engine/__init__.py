@@ -1,3 +1,5 @@
-"""Auto-generated __init__.py for proper module imports.
-Created by test infrastructure repair script.
-"""
+"""Digital Twin engine components."""
+
+from .personalization_engine import PersonalizationEngine
+
+__all__ = ["PersonalizationEngine"]
