@@ -5,8 +5,8 @@ Auto-generated from agent specifications.
 
 import json
 import os
-from pathlib import Path
 import sys
+from pathlib import Path
 from typing import Any
 
 # Add the parent directory to the path to import our modules
@@ -257,9 +257,38 @@ class AgentFactory:
         return GenericAgent
 
     def create_agent(
-        self, agent_type: str, config: dict[str, Any] | None = None
+        self, agent_spec: str | dict[str, Any], config: dict[str, Any] | None = None
     ) -> BaseMetaAgent:
-        """Create an agent of the specified type."""
+        """Create an agent of the specified type.
+
+        Parameters
+        ----------
+        agent_spec:
+            Either the string identifier of the agent to create or a
+            configuration dictionary containing at minimum the ``agent_type``
+            field. When a dictionary is provided it is merged with the template
+            defaults and used as the agent's configuration.
+        config:
+            Optional configuration dictionary. Only used when ``agent_spec`` is
+            a string. If provided it must be a mapping.
+        """
+
+        # Normalise input and validate types
+        if isinstance(agent_spec, dict):
+            agent_type = agent_spec.get("agent_type")
+            if not isinstance(agent_type, str):
+                msg = "agent_spec dictionary must include an 'agent_type' string"
+                raise TypeError(msg)
+            if config is None:
+                config = {k: v for k, v in agent_spec.items() if k != "agent_type"}
+        elif isinstance(agent_spec, str):
+            agent_type = agent_spec
+        else:  # pragma: no cover - defensive programming
+            raise TypeError("agent_spec must be a string or a configuration dict")
+
+        if config is not None and not isinstance(config, dict):
+            raise TypeError("config must be a dictionary if provided")
+
         if agent_type not in self.templates:
             msg = f"Unknown agent type: {agent_type}. Available: {list(self.templates.keys())}"
             raise ValueError(msg)

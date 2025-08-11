@@ -16,14 +16,14 @@ DESIGN:
 """
 
 import asyncio
-from collections.abc import Callable
-from dataclasses import dataclass, field
-from enum import Enum
 import json
 import logging
 import time
-from typing import Any
 import uuid
+from collections.abc import Callable
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import Any
 
 # LibP2P imports (install with: pip install py-libp2p)
 try:
@@ -148,6 +148,17 @@ class LibP2PMeshNetwork:
     """LibP2P-based mesh network implementation."""
 
     def __init__(self, config: MeshConfiguration | None = None) -> None:
+        """Create a LibP2P mesh instance.
+
+        Parameters
+        ----------
+        config:
+            Optional :class:`MeshConfiguration` object. If ``None`` a default
+            configuration is used. Passing any other type raises
+            :class:`TypeError`.
+        """
+        if config is not None and not isinstance(config, MeshConfiguration):
+            raise TypeError("config must be a MeshConfiguration instance or None")
         self.config = config or MeshConfiguration()
         self.node_id = self.config.node_id or str(uuid.uuid4())
         self.status = NodeStatus.STARTING
