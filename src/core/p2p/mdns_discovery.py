@@ -13,12 +13,12 @@ Features:
 """
 
 import asyncio
-from collections.abc import Callable
-from dataclasses import dataclass
 import json
 import logging
 import socket
 import time
+from collections.abc import Callable
+from dataclasses import dataclass
 from typing import Any
 
 # mDNS/Zeroconf imports
@@ -71,10 +71,24 @@ class mDNSDiscovery:
     def __init__(
         self,
         node_id: str,
-        listen_port: int,
+        listen_port: int = 5353,
         capabilities: dict[str, Any] | None = None,
         service_name_prefix: str = "aivillage",
     ) -> None:
+        """Initialize the discovery service.
+
+        Parameters
+        ----------
+        node_id:
+            Unique identifier for the local node.
+        listen_port:
+            UDP port used for mDNS. Defaults to ``5353`` which is the standard
+            mDNS port.
+        capabilities:
+            Optional capability metadata advertised with the service.
+        service_name_prefix:
+            Prefix used when advertising the service on the local network.
+        """
         self.node_id = node_id
         self.listen_port = listen_port
         self.capabilities = capabilities or {}
@@ -87,9 +101,9 @@ class mDNSDiscovery:
 
         # Discovery state
         self.discovered_peers: dict[str, PeerInfo] = {}
-        self.peer_callbacks: list[
-            Callable[[PeerInfo, str], None]
-        ] = []  # (peer_info, event_type)
+        self.peer_callbacks: list[Callable[[PeerInfo, str], None]] = (
+            []
+        )  # (peer_info, event_type)
         self.running = False
 
         # Network monitoring

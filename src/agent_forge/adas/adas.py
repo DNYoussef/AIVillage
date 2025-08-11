@@ -61,7 +61,35 @@ from .technique_archive import PROMPT_TECHNIQUE_ARCHIVE
 class ADASTask(Task):
     """ADAS Task for evolutionary agent development."""
 
-    def __init__(self, task_description: str) -> None:
+    def __init__(
+        self,
+        task_id: str,
+        task_type: str,
+        task_content: str,
+        metadata: dict[str, Any] | None = None,
+    ) -> None:
+        """Create a new ADAS task.
+
+        Parameters
+        ----------
+        task_id:
+            Unique identifier for the task.
+        task_type:
+            High level category of the task.
+        task_content:
+            Description of the objective the agent should address.
+        metadata:
+            Optional additional parameters describing constraints or context.
+        """
+        if (
+            not isinstance(task_id, str)
+            or not isinstance(task_type, str)
+            or not isinstance(task_content, str)
+        ):
+            raise TypeError("task_id, task_type and task_content must be strings")
+        if metadata is not None and not isinstance(metadata, dict):
+            raise TypeError("metadata must be a dictionary if provided")
+
         config = ChatAgentConfig(
             name="ADAS",
             system_message="You are an expert machine learning researcher designing agentic systems.",
@@ -69,7 +97,15 @@ class ADASTask(Task):
         )
         agent = ChatAgent(config)
         super().__init__(agent)
-        self.task_description = task_description
+
+        self.task_id = task_id
+        self.task_type = task_type
+        self.task_content = task_content
+        self.metadata = metadata or {}
+
+        # Backward compatibility with older code expecting task_description
+        self.task_description = task_content
+
         self.archive = PROMPT_TECHNIQUE_ARCHIVE
         self.best_agent = None
         self.best_performance = float("-inf")
@@ -292,7 +328,9 @@ if __name__ == "__main__":
     task_description = (
         "Design an agent that can solve abstract reasoning tasks in the ARC challenge."
     )
-    adas_task = ADASTask(task_description)
-    best_agent = adas_task.run()
+    demo_task = ADASTask(
+        task_id="demo", task_type="research", task_content=task_description
+    )
+    best_agent = demo_task.run()
     print("Best Agent:")
     print(best_agent)
