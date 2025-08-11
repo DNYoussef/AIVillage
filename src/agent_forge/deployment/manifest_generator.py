@@ -15,8 +15,8 @@ from typing import Any
 
 import torch
 
-from AIVillage.src.agent_forge.compression.eval_utils import CompressionEvaluator
-from AIVillage.src.agent_forge.version import __version__
+from src.agent_forge.compression.eval_utils import CompressionEvaluator
+from src.agent_forge.version import __version__
 
 logger = logging.getLogger(__name__)
 

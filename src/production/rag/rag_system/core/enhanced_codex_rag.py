@@ -11,9 +11,9 @@ import logging
 import time
 from typing import Any
 
-from codex_rag_integration import Chunk, CODEXRAGPipeline, Document, RetrievalResult
-from intelligent_chunking_simple import ContentType, DocumentType
-from intelligent_chunking_simple import SimpleIntelligentChunker as IntelligentChunker
+from src.production.rag.rag_system.core.codex_rag_integration import Chunk, CODEXRAGPipeline, Document, RetrievalResult
+from src.production.rag.rag_system.core.intelligent_chunking_simple import ContentType, DocumentType
+from src.production.rag.rag_system.core.intelligent_chunking_simple import SimpleIntelligentChunker as IntelligentChunker
 import numpy as np
 
 logger = logging.getLogger(__name__)

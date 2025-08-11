@@ -117,8 +117,12 @@ class SecurePreferenceVault:
         # Initialize W&B tracking (with privacy protection)
         self.initialize_wandb_tracking()
 
-        # Start security monitoring
-        asyncio.create_task(self.start_security_monitoring())
+        # Start security monitoring (only if event loop is available)
+        try:
+            asyncio.create_task(self.start_security_monitoring())
+        except RuntimeError:
+            # No event loop available - security monitoring can be started later
+            logger.info("No event loop available, security monitoring can be started manually")
 
         logger.info(
             "Secure Preference Vault initialized with military-grade encryption"

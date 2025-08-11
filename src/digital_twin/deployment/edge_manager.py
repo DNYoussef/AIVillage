@@ -184,8 +184,12 @@ class EdgeDeploymentManager:
         # Initialize W&B tracking
         self.initialize_wandb_tracking()
 
-        # Start background deployment monitoring
-        asyncio.create_task(self.start_deployment_monitoring())
+        # Start background deployment monitoring (only if event loop is available)
+        try:
+            asyncio.create_task(self.start_deployment_monitoring())
+        except RuntimeError:
+            # No event loop available - deployment monitoring can be started later
+            logger.info("No event loop available, deployment monitoring can be started manually")
 
         logger.info("Edge Deployment Manager initialized")
 

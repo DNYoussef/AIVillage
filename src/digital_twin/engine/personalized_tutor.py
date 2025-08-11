@@ -147,8 +147,12 @@ class PersonalizedTutorEngine:
         # Initialize W&B tracking
         self.initialize_wandb_tracking()
 
-        # Load tutoring strategies
-        asyncio.create_task(self.initialize_tutoring_strategies())
+        # Load tutoring strategies (only if event loop is available)
+        try:
+            asyncio.create_task(self.initialize_tutoring_strategies())
+        except RuntimeError:
+            # No event loop available - tutoring strategies can be initialized later
+            logger.info("No event loop available, tutoring strategies can be initialized manually")
 
         logger.info("Personalized Tutor Engine initialized")
 

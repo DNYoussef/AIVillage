@@ -133,14 +133,16 @@ class EvolutionConfig(BaseModel):
     cleanup_failed_models: bool = Field(default=True)
 
     @field_validator("base_models")
-    def validate_base_models(self, v: list[BaseModelConfig]) -> list[BaseModelConfig]:
+    @classmethod
+    def validate_base_models(cls, v: list[BaseModelConfig]) -> list[BaseModelConfig]:
         if len(v) != 3:
             msg = "Exactly 3 base models required"
             raise ValueError(msg)
         return v
 
     @field_validator("evaluation_weights")
-    def validate_evaluation_weights(self, v: dict[str, float]) -> dict[str, float]:
+    @classmethod
+    def validate_evaluation_weights(cls, v: dict[str, float]) -> dict[str, float]:
         total = sum(v.values())
         if abs(total - 1.0) > 0.01:
             msg = f"Evaluation weights must sum to 1.0, got {total}"

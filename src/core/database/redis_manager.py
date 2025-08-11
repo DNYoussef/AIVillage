@@ -327,26 +327,59 @@ class RedisManager:
             logger.warning("No config manager provided, skipping Redis initialization")
             return
 
+        # Check if we're in development mode with Redis disabled
+        env = self.config_manager.get("AIVILLAGE_ENV", "development")
+        disable_redis = self.config_manager.get("DISABLE_REDIS", "false").lower() == "true"
+        
+        if env == "development" and disable_redis:
+            logger.info("Redis disabled in development mode, using fallbacks only")
+            return
+
+        # Get Redis configuration with authentication fallbacks
+        def get_redis_url(base_url: str, db: int) -> str:
+            """Build Redis URL with optional authentication."""
+            if self.config_manager:
+                redis_password = self.config_manager.get("REDIS_PASSWORD", "")
+                if redis_password:
+                    # Add password to URL if provided
+                    if "://" in base_url:
+                        protocol, rest = base_url.split("://", 1)
+                        return f"{protocol}://:{redis_password}@{rest}"
+            return base_url
+        
+        base_redis_host = self.config_manager.get("REDIS_HOST", "localhost") if self.config_manager else "localhost"
+        base_redis_port = self.config_manager.get("REDIS_PORT", "6379") if self.config_manager else "6379"
+
         redis_configs = {
             "evolution_metrics": RedisConfig(
-                url=self.config_manager.get(
-                    "AIVILLAGE_REDIS_URL", "redis://localhost:6379/0"
+                url=get_redis_url(
+                    self.config_manager.get(
+                        "AIVILLAGE_REDIS_URL", f"redis://{base_redis_host}:{base_redis_port}/0"
+                    ) if self.config_manager else "redis://localhost:6379/0",
+                    0
                 ),
                 db=0,
                 fallback_storage="sqlite",
             ),
             "rag_cache": RedisConfig(
-                url=self.config_manager.get(
-                    "RAG_REDIS_URL", "redis://localhost:6379/1"
+                url=get_redis_url(
+                    self.config_manager.get(
+                        "RAG_REDIS_URL", f"redis://{base_redis_host}:{base_redis_port}/1"
+                    ) if self.config_manager else "redis://localhost:6379/1",
+                    1
                 ),
                 db=1,
                 fallback_storage="memory",
             ),
             "p2p_discovery": RedisConfig(
-                url="redis://localhost:6379/2", db=2, fallback_storage="file"
+                url=get_redis_url(f"redis://{base_redis_host}:{base_redis_port}/2", 2), 
+                db=2, 
+                fallback_storage="file"
             ),
             "session_store": RedisConfig(
-                url="redis://localhost:6379/3", db=3, fallback_storage="sqlite"
+                url=get_redis_url(f"redis://{base_redis_host}:{base_redis_port}/3", 3), 
+                db=3, 
+                fallback_storage="sqlite"
             ),
         }
 
@@ -375,11 +408,19 @@ class RedisManager:
                 logger.info(f"Redis pool {pool_name} initialized successfully")
 
             except Exception as e:
-                logger.warning(f"Failed to initialize Redis pool {pool_name}: {e}")
+                error_msg = str(e)
+                if "Authentication required" in error_msg or "NOAUTH" in error_msg:
+                    logger.warning(f"Redis pool {pool_name} requires authentication but none provided, using fallback storage")
+                elif "Connection refused" in error_msg:
+                    logger.warning(f"Redis server not running for {pool_name}, using fallback storage")
+                else:
+                    logger.warning(f"Failed to initialize Redis pool {pool_name}: {e}")
+                
                 self.pools[pool_name] = {
                     "pool": None,
                     "config": config,
                     "available": False,
+                    "error": error_msg,
                 }
 
     async def _init_fallback_stores(self):

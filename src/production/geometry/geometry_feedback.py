@@ -24,7 +24,7 @@ import torch
 from torch import nn
 import wandb
 
-from src.agent_forge.geometry.id_twonn import twonn
+from src.production.geometry.geometry.id_twonn import twonn
 
 logger = logging.getLogger(__name__)
 

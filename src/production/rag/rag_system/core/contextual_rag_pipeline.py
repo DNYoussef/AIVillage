@@ -16,8 +16,8 @@ import logging
 import time
 from typing import Any
 
-from codex_rag_integration import Chunk, Document, RetrievalResult
-from contextual_tagging import (
+from src.production.rag.rag_system.core.codex_rag_integration import Chunk, Document, RetrievalResult
+from src.production.rag.rag_system.core.contextual_tagging import (
     ChunkType,
     ContentDomain,
     ContextualTagger,
@@ -25,7 +25,7 @@ from contextual_tagging import (
     DocumentType,
     ReadingLevel,
 )
-from enhanced_codex_rag import EnhancedCODEXRAGPipeline
+from src.production.rag.rag_system.core.enhanced_codex_rag import EnhancedCODEXRAGPipeline
 
 logger = logging.getLogger(__name__)
 

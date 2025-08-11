@@ -158,8 +158,12 @@ class ShieldValidator:
         # Initialize W&B tracking
         self.initialize_wandb_tracking()
 
-        # Load validation rules and models
-        asyncio.create_task(self.initialize_shield_system())
+        # Load validation rules and models (only if event loop is available)
+        try:
+            asyncio.create_task(self.initialize_shield_system())
+        except RuntimeError:
+            # No event loop available - shield system can be initialized later
+            logger.info("No event loop available, shield system can be initialized manually")
 
     def initialize_wandb_tracking(self) -> None:
         """Initialize W&B tracking for Shield validation."""
