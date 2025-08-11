@@ -183,7 +183,7 @@ class ConfigurationManager:
         ),
     }
 
-    def __init__(self, profile: str = None, config_dir: str = None):
+    def __init__(self, profile: str | None = None, config_dir: str | None = None) -> None:
         """Initialize configuration manager."""
         self.profile_name = profile or os.environ.get("AIVILLAGE_ENV", "development")
         self.config_dir = Path(config_dir) if config_dir else Path("./config")
@@ -194,15 +194,12 @@ class ConfigurationManager:
         # Ensure profile exists
         if self.profile_name not in self.PROFILES:
             available = ", ".join(self.PROFILES.keys())
-            raise ValueError(
-                f"Unknown profile '{self.profile_name}'. Available: {available}"
-            )
+            msg = f"Unknown profile '{self.profile_name}'. Available: {available}"
+            raise ValueError(msg)
 
         self.profile = self.PROFILES[self.profile_name]
 
-    def load_configuration(
-        self, cli_args: dict[str, Any] | None = None, validate: bool = True
-    ) -> dict[str, str]:
+    def load_configuration(self, cli_args: dict[str, Any] | None = None, validate: bool = True) -> dict[str, str]:
         """Load configuration from all sources in priority order.
 
         Priority order (highest to lowest):
@@ -252,9 +249,7 @@ class ConfigurationManager:
                 priority=1,
             )
         )
-        logger.debug(
-            f"Loaded {len(self.profile.defaults)} default values for profile '{self.profile_name}'"
-        )
+        logger.debug(f"Loaded {len(self.profile.defaults)} default values for profile '{self.profile_name}'")
 
     def _load_env_file(self) -> None:
         """Load .env file if available."""
@@ -273,11 +268,7 @@ class ConfigurationManager:
                                 key, value = line.split("=", 1)
                                 env_vars[key.strip()] = value.strip().strip("\"'")
 
-                    self.sources.append(
-                        ConfigurationSource(
-                            name=f"env_file_{env_file}", data=env_vars, priority=2
-                        )
-                    )
+                    self.sources.append(ConfigurationSource(name=f"env_file_{env_file}", data=env_vars, priority=2))
                     logger.debug(f"Loaded {len(env_vars)} variables from {env_file}")
                 else:
                     logger.warning(f"Found {env_file} but python-dotenv not available")
@@ -293,9 +284,7 @@ class ConfigurationManager:
                             if YAML_AVAILABLE:
                                 data = yaml.safe_load(f)
                             else:
-                                logger.warning(
-                                    f"Found {config_path} but PyYAML not available"
-                                )
+                                logger.warning(f"Found {config_path} but PyYAML not available")
                                 continue
                         else:  # json
                             data = json.load(f)
@@ -311,22 +300,17 @@ class ConfigurationManager:
                             priority=priority,
                         )
                     )
-                    logger.debug(
-                        f"Loaded {len(flat_data)} variables from {config_path}"
-                    )
+                    logger.debug(f"Loaded {len(flat_data)} variables from {config_path}")
                     break
                 except Exception as e:
-                    logger.error(f"Error loading config file {config_path}: {e}")
+                    logger.exception(f"Error loading config file {config_path}: {e}")
 
     def _flatten_config(self, data: dict[str, Any], prefix: str = "") -> dict[str, str]:
         """Flatten nested configuration to environment variable format."""
         result = {}
 
         for key, value in data.items():
-            if prefix:
-                full_key = f"{prefix}_{key}".upper()
-            else:
-                full_key = key.upper()
+            full_key = f"{prefix}_{key}".upper() if prefix else key.upper()
 
             if isinstance(value, dict):
                 result.update(self._flatten_config(value, full_key))
@@ -372,11 +356,7 @@ class ConfigurationManager:
             if any(key.startswith(prefix) for prefix in aivillage_prefixes):
                 relevant_vars[key] = value
 
-        self.sources.append(
-            ConfigurationSource(
-                name="environment_variables", data=relevant_vars, priority=5
-            )
-        )
+        self.sources.append(ConfigurationSource(name="environment_variables", data=relevant_vars, priority=5))
         logger.debug(f"Loaded {len(relevant_vars)} environment variables")
 
     def _load_cli_args(self, cli_args: dict[str, Any]) -> None:
@@ -390,9 +370,7 @@ class ConfigurationManager:
                     env_key = f"AIVILLAGE_{env_key}"
                 env_format_args[env_key] = str(value)
 
-        self.sources.append(
-            ConfigurationSource(name="cli_arguments", data=env_format_args, priority=6)
-        )
+        self.sources.append(ConfigurationSource(name="cli_arguments", data=env_format_args, priority=6))
         logger.debug(f"Loaded {len(env_format_args)} command line arguments")
 
     def _merge_sources(self) -> None:
@@ -415,13 +393,7 @@ class ConfigurationManager:
         self.validation_report = validator.validate_all(self.final_config)
 
         if not self.validation_report.is_valid:
-            error_count = len(
-                [
-                    i
-                    for i in self.validation_report.issues
-                    if i.level == ValidationLevel.ERROR
-                ]
-            )
+            error_count = len([i for i in self.validation_report.issues if i.level == ValidationLevel.ERROR])
             logger.error(f"Configuration validation failed with {error_count} errors")
 
             # Print validation report
@@ -429,7 +401,8 @@ class ConfigurationManager:
 
             # In production, fail fast on invalid configuration
             if self.profile_name == "production":
-                raise RuntimeError("Invalid configuration in production environment")
+                msg = "Invalid configuration in production environment"
+                raise RuntimeError(msg)
 
     def get(self, key: str, default: Any = None) -> str:
         """Get configuration value with optional default."""
@@ -441,9 +414,7 @@ class ConfigurationManager:
         try:
             return int(value)
         except ValueError:
-            logger.warning(
-                f"Invalid integer value for {key}: {value}, using default {default}"
-            )
+            logger.warning(f"Invalid integer value for {key}: {value}, using default {default}")
             return default
 
     def get_float(self, key: str, default: float = 0.0) -> float:
@@ -452,9 +423,7 @@ class ConfigurationManager:
         try:
             return float(value)
         except ValueError:
-            logger.warning(
-                f"Invalid float value for {key}: {value}, using default {default}"
-            )
+            logger.warning(f"Invalid float value for {key}: {value}, using default {default}")
             return default
 
     def get_bool(self, key: str, default: bool = False) -> bool:
@@ -462,9 +431,7 @@ class ConfigurationManager:
         value = self.get(key, str(default)).lower()
         return value in ["true", "1", "yes", "on", "enabled"]
 
-    def get_list(
-        self, key: str, separator: str = ",", default: list[str] = None
-    ) -> list[str]:
+    def get_list(self, key: str, separator: str = ",", default: list[str] | None = None) -> list[str]:
         """Get configuration value as list."""
         if default is None:
             default = []
@@ -475,7 +442,7 @@ class ConfigurationManager:
 
         return [item.strip() for item in value.split(separator) if item.strip()]
 
-    def get_path(self, key: str, default: str = None) -> Path:
+    def get_path(self, key: str, default: str | None = None) -> Path:
         """Get configuration value as Path object."""
         value = self.get(key, default)
         return Path(value) if value else None
@@ -504,7 +471,8 @@ class ConfigurationManager:
             if db_path == ":memory:":
                 return "sqlite:///:memory:"
             return f"sqlite:///{db_path}"
-        raise ValueError(f"Unknown database component: {component}")
+        msg = f"Unknown database component: {component}"
+        raise ValueError(msg)
 
     def get_api_base_url(self, component: str) -> str:
         """Get API base URL for a component."""
@@ -517,17 +485,14 @@ class ConfigurationManager:
 
         if component not in port_map:
             available = ", ".join(port_map.keys())
-            raise ValueError(
-                f"Unknown API component: {component}. Available: {available}"
-            )
+            msg = f"Unknown API component: {component}. Available: {available}"
+            raise ValueError(msg)
 
         host = self.get("LIBP2P_HOST", "localhost")
         port = self.get_int(port_map[component], 8080)
 
         # Use HTTPS in production
-        protocol = (
-            "https" if self.is_production() and self.get_bool("TLS_ENABLED") else "http"
-        )
+        protocol = "https" if self.is_production() and self.get_bool("TLS_ENABLED") else "http"
 
         return f"{protocol}://{host}:{port}"
 
@@ -564,9 +529,7 @@ class ConfigurationManager:
         lines.append("CONFIGURATION SOURCES:")
         lines.append("-" * 40)
         for source in sorted(self.sources, key=lambda s: s.priority, reverse=True):
-            lines.append(
-                f"  {source.priority}. {source.name} ({len(source.data)} variables)"
-            )
+            lines.append(f"  {source.priority}. {source.name} ({len(source.data)} variables)")
         lines.append("")
 
         # Validation summary
@@ -594,11 +557,7 @@ class ConfigurationManager:
         lines.append("-" * 40)
 
         for component in components:
-            component_vars = [
-                k
-                for k in self.final_config.keys()
-                if self._is_component_variable(k, component)
-            ]
+            component_vars = [k for k in self.final_config if self._is_component_variable(k, component)]
             lines.append(f"  {component}: {len(component_vars)} variables configured")
 
         return "\n".join(lines)
@@ -627,7 +586,7 @@ class ConfigurationManager:
 _config_manager: ConfigurationManager | None = None
 
 
-def get_config(profile: str = None) -> ConfigurationManager:
+def get_config(profile: str | None = None) -> ConfigurationManager:
     """Get global configuration manager instance."""
     global _config_manager
 
@@ -639,9 +598,9 @@ def get_config(profile: str = None) -> ConfigurationManager:
 
 
 def setup_configuration(
-    profile: str = None,
-    cli_args: dict[str, Any] = None,
-    config_dir: str = None,
+    profile: str | None = None,
+    cli_args: dict[str, Any] | None = None,
+    config_dir: str | None = None,
     validate: bool = True,
 ) -> ConfigurationManager:
     """Setup global configuration manager."""
@@ -674,9 +633,7 @@ if __name__ == "__main__":
 
     try:
         # Setup configuration
-        config = setup_configuration(
-            profile=args.profile, config_dir=args.config_dir, validate=args.validate
-        )
+        config = setup_configuration(profile=args.profile, config_dir=args.config_dir, validate=args.validate)
 
         # Print report
         print(config.generate_report())
@@ -689,5 +646,5 @@ if __name__ == "__main__":
             print(f"\nConfiguration exported to {args.export}")
 
     except Exception as e:
-        logger.error(f"Configuration error: {e}")
+        logger.exception(f"Configuration error: {e}")
         sys.exit(1)

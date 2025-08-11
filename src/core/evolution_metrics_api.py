@@ -1,8 +1,10 @@
-"""Evolution Metrics API Server
+"""Evolution Metrics API Server.
 
 Provides HTTP API endpoints for evolution metrics system on port 8081.
 """
 
+import builtins
+import contextlib
 from datetime import datetime
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
@@ -30,7 +32,7 @@ except ImportError:
 class EvolutionMetricsHandler(BaseHTTPRequestHandler):
     """HTTP request handler for evolution metrics API."""
 
-    def do_GET(self):
+    def do_GET(self) -> None:
         """Handle GET requests."""
         if self.path == "/health/evolution":
             self.handle_health_check()
@@ -43,7 +45,7 @@ class EvolutionMetricsHandler(BaseHTTPRequestHandler):
         else:
             self.send_error(404, "Not Found")
 
-    def handle_health_check(self):
+    def handle_health_check(self) -> None:
         """Handle health check endpoint."""
         health_data = self.get_health_status()
 
@@ -52,7 +54,7 @@ class EvolutionMetricsHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(json.dumps(health_data, indent=2).encode())
 
-    def handle_current_metrics(self):
+    def handle_current_metrics(self) -> None:
         """Handle current metrics endpoint."""
         metrics_data = self.get_current_metrics()
 
@@ -61,7 +63,7 @@ class EvolutionMetricsHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(json.dumps(metrics_data, indent=2).encode())
 
-    def handle_leaderboard(self):
+    def handle_leaderboard(self) -> None:
         """Handle leaderboard endpoint."""
         leaderboard = self.get_leaderboard()
 
@@ -70,7 +72,7 @@ class EvolutionMetricsHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(json.dumps(leaderboard, indent=2).encode())
 
-    def handle_agent_metrics(self):
+    def handle_agent_metrics(self) -> None:
         """Handle agent-specific metrics endpoint."""
         agent_id = self.path.split("/")[-1]
         agent_data = self.get_agent_metrics(agent_id)
@@ -100,11 +102,7 @@ class EvolutionMetricsHandler(BaseHTTPRequestHandler):
                 "wal_mode": False,
             },
             "redis": {"available": False, "connected": False},
-            "metrics": {
-                "flush_threshold": int(
-                    os.getenv("AIVILLAGE_METRICS_FLUSH_THRESHOLD", "50")
-                )
-            },
+            "metrics": {"flush_threshold": int(os.getenv("AIVILLAGE_METRICS_FLUSH_THRESHOLD", "50"))},
             "api": {
                 "port": 8081,
                 "endpoints": [
@@ -132,9 +130,7 @@ class EvolutionMetricsHandler(BaseHTTPRequestHandler):
                 health["metrics"]["total_collected"] = cursor.fetchone()[0]
 
                 # Get current round
-                cursor.execute(
-                    "SELECT id, status FROM evolution_rounds ORDER BY id DESC LIMIT 1"
-                )
+                cursor.execute("SELECT id, status FROM evolution_rounds ORDER BY id DESC LIMIT 1")
                 row = cursor.fetchone()
                 if row:
                     health["database"]["current_round"] = row[0]
@@ -287,10 +283,8 @@ class EvolutionMetricsHandler(BaseHTTPRequestHandler):
             for row in rows:
                 metric = {"fitness_score": row[0], "timestamp": row[2]}
                 if row[1]:
-                    try:
+                    with contextlib.suppress(builtins.BaseException):
                         metric["kpis"] = json.loads(row[1])
-                    except:
-                        pass
                 agent_data["recent_metrics"].append(metric)
 
             conn.close()
@@ -299,11 +293,11 @@ class EvolutionMetricsHandler(BaseHTTPRequestHandler):
         except Exception as e:
             return {"error": str(e)}
 
-    def log_message(self, format, *args):
+    def log_message(self, format, *args) -> None:
         """Suppress default logging."""
 
 
-def run_api_server(port=8081):
+def run_api_server(port=8081) -> None:
     """Run the evolution metrics API server."""
     server_address = ("", port)
     httpd = HTTPServer(server_address, EvolutionMetricsHandler)

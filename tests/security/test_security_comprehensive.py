@@ -130,9 +130,7 @@ class TestDigitalTwinEncryption(unittest.TestCase):
 
         # Decrypt profile
         decrypted_profile = self.encryption.decrypt_profile_data(encrypted_profile)
-        self.assertEqual(
-            decrypted_profile["learning_style"], profile_data["learning_style"]
-        )
+        self.assertEqual(decrypted_profile["learning_style"], profile_data["learning_style"])
 
 
 class TestSecureDigitalTwinDB(unittest.TestCase):
@@ -284,9 +282,7 @@ class TestSecureAPIServer(unittest.TestCase):
         self.assertTrue(is_valid)
 
         # Verify wrong password
-        is_invalid = self.authenticator.verify_password(
-            "wrong_password", salt, hash_value
-        )
+        is_invalid = self.authenticator.verify_password("wrong_password", salt, hash_value)
         self.assertFalse(is_invalid)
 
     def test_rate_limiting(self):
@@ -367,9 +363,7 @@ class TestRBACSystem(unittest.TestCase):
         user_id = "inheritance_test_user"
 
         # Create user with educator role (inherits from user)
-        self.rbac.create_user(
-            user_id=user_id, username="educator", roles=[Role.EDUCATOR]
-        )
+        self.rbac.create_user(user_id=user_id, username="educator", roles=[Role.EDUCATOR])
 
         # Check inherited permissions
         permissions = self.rbac.get_user_permissions(user_id)
@@ -396,9 +390,7 @@ class TestRBACSystem(unittest.TestCase):
         """Test access denial exception."""
         user_id = "denial_test_user"
 
-        self.rbac.create_user(
-            user_id=user_id, username="limiteduser", roles=[Role.GUEST]
-        )
+        self.rbac.create_user(user_id=user_id, username="limiteduser", roles=[Role.GUEST])
 
         # Should raise exception for insufficient permissions
         with self.assertRaises(AccessDeniedException):
@@ -408,9 +400,7 @@ class TestRBACSystem(unittest.TestCase):
         """Test super admin gets all permissions."""
         user_id = "super_admin_test"
 
-        self.rbac.create_user(
-            user_id=user_id, username="superadmin", roles=[Role.SUPER_ADMIN]
-        )
+        self.rbac.create_user(user_id=user_id, username="superadmin", roles=[Role.SUPER_ADMIN])
 
         permissions = self.rbac.get_user_permissions(user_id)
 
@@ -681,8 +671,7 @@ def run_security_tests():
         "failures": len(result.failures),
         "errors": len(result.errors),
         "success_rate": (
-            (result.testsRun - len(result.failures) - len(result.errors))
-            / result.testsRun
+            (result.testsRun - len(result.failures) - len(result.errors)) / result.testsRun
             if result.testsRun > 0
             else 0
         ),

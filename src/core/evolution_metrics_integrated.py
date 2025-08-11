@@ -44,7 +44,7 @@ logger = logging.getLogger(__name__)
 
 
 class KPIType(Enum):
-    """18 Core KPIs for Evolution System"""
+    """18 Core KPIs for Evolution System."""
 
     PERFORMANCE_SCORE = "performance_score"
     LEARNING_RATE = "learning_rate"
@@ -134,15 +134,13 @@ class IntegratedEvolutionMetrics:
     - Real-time metrics collection
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the integrated metrics system."""
         # Load configuration from environment
         self.db_path = os.getenv("AIVILLAGE_DB_PATH", "./data/evolution_metrics.db")
         self.storage_backend = os.getenv("AIVILLAGE_STORAGE_BACKEND", "sqlite")
         self.flush_threshold = int(os.getenv("AIVILLAGE_METRICS_FLUSH_THRESHOLD", "50"))
-        self.metrics_file = os.getenv(
-            "AIVILLAGE_METRICS_FILE", "evolution_metrics.json"
-        )
+        self.metrics_file = os.getenv("AIVILLAGE_METRICS_FILE", "evolution_metrics.json")
         self.log_dir = os.getenv("AIVILLAGE_LOG_DIR", "./evolution_logs")
 
         # Redis configuration
@@ -169,7 +167,7 @@ class IntegratedEvolutionMetrics:
         # Initialize storage
         self._init_storage()
 
-    def _init_storage(self):
+    def _init_storage(self) -> None:
         """Initialize storage backends."""
         # Initialize SQLite
         self._init_sqlite()
@@ -181,7 +179,7 @@ class IntegratedEvolutionMetrics:
         # Create log directory
         Path(self.log_dir).mkdir(parents=True, exist_ok=True)
 
-    def _init_sqlite(self):
+    def _init_sqlite(self) -> None:
         """Initialize SQLite database with WAL mode."""
         try:
             self.db_conn = sqlite3.connect(self.db_path, check_same_thread=False)
@@ -193,10 +191,10 @@ class IntegratedEvolutionMetrics:
 
             logger.info(f"SQLite database initialized at {self.db_path} with WAL mode")
         except Exception as e:
-            logger.error(f"Failed to initialize SQLite: {e}")
+            logger.exception(f"Failed to initialize SQLite: {e}")
             raise
 
-    def _init_redis(self):
+    def _init_redis(self) -> None:
         """Initialize Redis connection with fallback."""
         if not REDIS_AVAILABLE:
             logger.warning("Redis module not available, using SQLite only")
@@ -213,14 +211,12 @@ class IntegratedEvolutionMetrics:
             )
             # Test connection
             self.redis_client.ping()
-            logger.info(
-                f"Redis connection established at {self.redis_host}:{self.redis_port}"
-            )
+            logger.info(f"Redis connection established at {self.redis_host}:{self.redis_port}")
         except Exception as e:
             logger.warning(f"Redis connection failed, falling back to SQLite: {e}")
             self.redis_client = None
 
-    def start(self):
+    def start(self) -> None:
         """Start the metrics collection system."""
         if self.running:
             return
@@ -236,7 +232,7 @@ class IntegratedEvolutionMetrics:
 
         logger.info("Evolution metrics system started")
 
-    def stop(self):
+    def stop(self) -> None:
         """Stop the metrics collection system."""
         if not self.running:
             return
@@ -262,7 +258,7 @@ class IntegratedEvolutionMetrics:
 
         logger.info("Evolution metrics system stopped")
 
-    def _start_evolution_round(self):
+    def _start_evolution_round(self) -> None:
         """Start a new evolution round in the database."""
         if not self.db_conn:
             return
@@ -285,9 +281,9 @@ class IntegratedEvolutionMetrics:
             self.db_conn.commit()
             logger.info(f"Started evolution round {self.current_round_id}")
         except Exception as e:
-            logger.error(f"Failed to start evolution round: {e}")
+            logger.exception(f"Failed to start evolution round: {e}")
 
-    def _complete_evolution_round(self):
+    def _complete_evolution_round(self) -> None:
         """Mark the current evolution round as completed."""
         if not self.db_conn or not self.current_round_id:
             return
@@ -305,9 +301,9 @@ class IntegratedEvolutionMetrics:
             self.db_conn.commit()
             logger.info(f"Completed evolution round {self.current_round_id}")
         except Exception as e:
-            logger.error(f"Failed to complete evolution round: {e}")
+            logger.exception(f"Failed to complete evolution round: {e}")
 
-    def record_metric(self, metrics: EvolutionMetricsData):
+    def record_metric(self, metrics: EvolutionMetricsData) -> None:
         """Record evolution metrics.
 
         Args:
@@ -325,9 +321,7 @@ class IntegratedEvolutionMetrics:
         if self.redis_client:
             self._send_to_redis(metrics)
 
-    def record_kpi(
-        self, agent_id: str, kpi_type: KPIType, value: float, metadata: dict = None
-    ):
+    def record_kpi(self, agent_id: str, kpi_type: KPIType, value: float, metadata: dict | None = None) -> None:
         """Record a single KPI value.
 
         Args:
@@ -336,16 +330,14 @@ class IntegratedEvolutionMetrics:
             value: KPI value
             metadata: Optional metadata
         """
-        metrics = EvolutionMetricsData(
-            agent_id=agent_id, timestamp=time.time(), metadata=metadata or {}
-        )
+        metrics = EvolutionMetricsData(agent_id=agent_id, timestamp=time.time(), metadata=metadata or {})
 
         # Set the specific KPI value
         setattr(metrics, kpi_type.value, value)
 
         self.record_metric(metrics)
 
-    def _flush_internal(self):
+    def _flush_internal(self) -> None:
         """Internal flush method (assumes lock is held)."""
         if not self.metrics_buffer:
             return
@@ -359,12 +351,12 @@ class IntegratedEvolutionMetrics:
 
         self.last_flush_time = time.time()
 
-    def flush(self):
+    def flush(self) -> None:
         """Manually flush metrics buffer."""
         with self.buffer_lock:
             self._flush_internal()
 
-    def _worker_loop(self):
+    def _worker_loop(self) -> None:
         """Background worker for processing metrics."""
         while self.running:
             try:
@@ -379,9 +371,9 @@ class IntegratedEvolutionMetrics:
             except Empty:
                 continue
             except Exception as e:
-                logger.error(f"Worker error: {e}")
+                logger.exception(f"Worker error: {e}")
 
-    def _persist_metrics(self, metrics_list: list[EvolutionMetricsData]):
+    def _persist_metrics(self, metrics_list: list[EvolutionMetricsData]) -> None:
         """Persist metrics to database."""
         if not self.db_conn or not self.current_round_id:
             return
@@ -463,10 +455,10 @@ class IntegratedEvolutionMetrics:
             logger.debug(f"Persisted {len(metrics_list)} metrics to database")
 
         except Exception as e:
-            logger.error(f"Failed to persist metrics: {e}")
+            logger.exception(f"Failed to persist metrics: {e}")
             self.db_conn.rollback()
 
-    def _send_to_redis(self, metrics: EvolutionMetricsData):
+    def _send_to_redis(self, metrics: EvolutionMetricsData) -> None:
         """Send metrics to Redis for real-time access."""
         if not self.redis_client:
             return
@@ -474,17 +466,13 @@ class IntegratedEvolutionMetrics:
         try:
             # Store in sorted set by timestamp
             key = f"evolution:metrics:{metrics.agent_id}"
-            self.redis_client.zadd(
-                key, {json.dumps(metrics.to_dict()): metrics.timestamp}
-            )
+            self.redis_client.zadd(key, {json.dumps(metrics.to_dict()): metrics.timestamp})
 
             # Set expiry (1 hour)
             self.redis_client.expire(key, 3600)
 
             # Update real-time leaderboard
-            self.redis_client.zadd(
-                "evolution:leaderboard", {metrics.agent_id: metrics.fitness_score}
-            )
+            self.redis_client.zadd("evolution:leaderboard", {metrics.agent_id: metrics.fitness_score})
 
             # Publish to pub/sub channel
             self.redis_client.publish(
@@ -515,21 +503,14 @@ class IntegratedEvolutionMetrics:
         # Add leaderboard from Redis if available
         if self.redis_client:
             try:
-                top_agents = self.redis_client.zrevrange(
-                    "evolution:leaderboard", 0, 9, withscores=True
-                )
-                summary["top_agents"] = [
-                    {"agent_id": agent, "fitness_score": score}
-                    for agent, score in top_agents
-                ]
+                top_agents = self.redis_client.zrevrange("evolution:leaderboard", 0, 9, withscores=True)
+                summary["top_agents"] = [{"agent_id": agent, "fitness_score": score} for agent, score in top_agents]
             except:
                 pass
 
         return summary
 
-    def get_agent_history(
-        self, agent_id: str, limit: int = 100
-    ) -> list[dict[str, Any]]:
+    def get_agent_history(self, agent_id: str, limit: int = 100) -> list[dict[str, Any]]:
         """Get historical metrics for an agent."""
         if not self.db_conn:
             return []
@@ -569,7 +550,7 @@ class IntegratedEvolutionMetrics:
             return history
 
         except Exception as e:
-            logger.error(f"Failed to get agent history: {e}")
+            logger.exception(f"Failed to get agent history: {e}")
             return []
 
     def get_health_status(self) -> dict[str, Any]:
@@ -635,9 +616,7 @@ class IntegratedEvolutionMetrics:
                 metrics.disk_io_kb = (disk.read_bytes + disk.write_bytes) / 1024
 
                 # Energy efficiency estimate (simplified)
-                metrics.energy_efficiency = (
-                    metrics.cpu_efficiency * 0.7 + metrics.memory_efficiency * 0.3
-                )
+                metrics.energy_efficiency = metrics.cpu_efficiency * 0.7 + metrics.memory_efficiency * 0.3
 
             except Exception as e:
                 logger.debug(f"Failed to collect system metrics: {e}")
@@ -665,13 +644,13 @@ def start_metrics():
     return instance
 
 
-def stop_metrics():
+def stop_metrics() -> None:
     """Stop the evolution metrics system."""
     instance = get_metrics_instance()
     instance.stop()
 
 
-def record_kpi(agent_id: str, kpi_type: KPIType, value: float, metadata: dict = None):
+def record_kpi(agent_id: str, kpi_type: KPIType, value: float, metadata: dict | None = None) -> None:
     """Record a KPI value."""
     instance = get_metrics_instance()
     instance.record_kpi(agent_id, kpi_type, value, metadata)

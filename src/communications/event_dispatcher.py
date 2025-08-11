@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 
-from typing import Any, List
+from typing import Any
 
 
 class EventDispatcher:
     """Record dispatched events for later inspection."""
 
     def __init__(self) -> None:
-        self.events: List[Any] = []
+        self.events: list[Any] = []
 
     def dispatch(self, event: Any) -> None:
         """Store ``event`` in the internal list."""

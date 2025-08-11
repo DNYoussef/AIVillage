@@ -62,9 +62,7 @@ def download_1_5b_model():
             try:
                 print(f"\nTrying alternative: {alt_model}")
                 tokenizer = AutoTokenizer.from_pretrained(alt_model)
-                model = AutoModelForCausalLM.from_pretrained(
-                    alt_model, torch_dtype=torch.float32, device_map="cpu"
-                )
+                model = AutoModelForCausalLM.from_pretrained(alt_model, torch_dtype=torch.float32, device_map="cpu")
 
                 total_params = sum(p.numel() for p in model.parameters())
                 print("✅ Alternative model downloaded!")
@@ -156,9 +154,7 @@ def compress_model_stage1_bitnet(model, model_name="model"):
 
         ratio = original_size / layer_compressed_size
 
-        print(
-            f"    {original_size:,} → {layer_compressed_size:,} bytes ({ratio:.1f}x) [{compress_time:.3f}s]"
-        )
+        print(f"    {original_size:,} → {layer_compressed_size:,} bytes ({ratio:.1f}x) [{compress_time:.3f}s]")
 
         compressed_params[name] = compressed
 
@@ -169,12 +165,8 @@ def compress_model_stage1_bitnet(model, model_name="model"):
     stage1_ratio = total_original_size / total_compressed_size
 
     print("\nSTAGE 1 RESULTS:")
-    print(
-        f"  Total original: {total_original_size:,} bytes ({total_original_size / (1024**3):.2f} GB)"
-    )
-    print(
-        f"  Total compressed: {total_compressed_size:,} bytes ({total_compressed_size / (1024**2):.1f} MB)"
-    )
+    print(f"  Total original: {total_original_size:,} bytes ({total_original_size / (1024**3):.2f} GB)")
+    print(f"  Total compressed: {total_compressed_size:,} bytes ({total_compressed_size / (1024**2):.1f} MB)")
     print(f"  BitNet compression: {stage1_ratio:.1f}x")
 
     return compressed_params, stage1_ratio, total_compressed_size
@@ -231,9 +223,7 @@ def compress_model_stage2_seedlm(compressed_params, model):
             total_stage2_size += stage2_size
 
             ratio = stage1_size / stage2_size
-            print(
-                f"    {stage1_size:,} → {stage2_size:,} bytes ({ratio:.1f}x) [{compress_time:.3f}s]"
-            )
+            print(f"    {stage1_size:,} → {stage2_size:,} bytes ({ratio:.1f}x) [{compress_time:.3f}s]")
 
             stage2_compressed[name] = compressed
 
@@ -254,10 +244,7 @@ def compress_model_stage2_seedlm(compressed_params, model):
         print(f"  SeedLM improvement: {stage2_ratio:.1f}x")
     else:
         stage2_ratio = 1.0
-        total_stage2_size = sum(
-            len(compressed_params[name]["packed_weights"]) + 32
-            for name in compressed_params
-        )
+        total_stage2_size = sum(len(compressed_params[name]["packed_weights"]) + 32 for name in compressed_params)
         print("  No compatible layers for SeedLM")
 
     return stage2_compressed, stage2_ratio, total_stage2_size
@@ -300,9 +287,7 @@ def compress_model_stage3_vptq(model, previous_size):
             original_size = param.numel() * 4
             ratio = original_size / stage3_layer_size
 
-            print(
-                f"    {original_size:,} → {stage3_layer_size:,} bytes ({ratio:.1f}x) [{compress_time:.3f}s]"
-            )
+            print(f"    {original_size:,} → {stage3_layer_size:,} bytes ({ratio:.1f}x) [{compress_time:.3f}s]")
 
             stage3_compressed[name] = compressed
 
@@ -315,9 +300,7 @@ def compress_model_stage3_vptq(model, previous_size):
     stage3_ratio = previous_size / total_stage3_size if total_stage3_size > 0 else 1.0
 
     print("\nSTAGE 3 RESULTS:")
-    print(
-        f"  Total VPTQ size: {total_stage3_size:,} bytes ({total_stage3_size / (1024**2):.1f} MB)"
-    )
+    print(f"  Total VPTQ size: {total_stage3_size:,} bytes ({total_stage3_size / (1024**2):.1f} MB)")
     print(f"  VPTQ improvement: {stage3_ratio:.1f}x over previous stage")
 
     return stage3_compressed, stage3_ratio, total_stage3_size
@@ -367,19 +350,13 @@ def test_full_1_5b_compression():
 
     try:
         # Stage 1: BitNet
-        stage1_compressed, stage1_ratio, stage1_size = compress_model_stage1_bitnet(
-            model
-        )
+        stage1_compressed, stage1_ratio, stage1_size = compress_model_stage1_bitnet(model)
 
         # Stage 2: SeedLM
-        stage2_compressed, stage2_ratio, stage2_size = compress_model_stage2_seedlm(
-            stage1_compressed, model
-        )
+        stage2_compressed, stage2_ratio, stage2_size = compress_model_stage2_seedlm(stage1_compressed, model)
 
         # Stage 3: VPTQ
-        stage3_compressed, stage3_ratio, stage3_size = compress_model_stage3_vptq(
-            model, stage2_size
-        )
+        stage3_compressed, stage3_ratio, stage3_size = compress_model_stage3_vptq(model, stage2_size)
 
         # Stage 4: HyperCompression
         stage4_ratio, final_size = compress_model_stage4_hyper(stage3_size)

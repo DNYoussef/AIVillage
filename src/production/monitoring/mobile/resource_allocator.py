@@ -135,17 +135,11 @@ class ResourceAllocator:
     def _select_base_profile(self, profile: DeviceProfile) -> dict[str, Any]:
         """Select base performance profile."""
         # Critical battery - always use critical profile
-        if (
-            profile.battery_percent
-            and profile.battery_percent <= self.battery_critical_threshold
-        ):
+        if profile.battery_percent and profile.battery_percent <= self.battery_critical_threshold:
             return self.profiles["critical"]
 
         # High thermal load
-        if (
-            profile.cpu_temp_celsius
-            and profile.cpu_temp_celsius > self.thermal_threshold + 10
-        ):
+        if profile.cpu_temp_celsius and profile.cpu_temp_celsius > self.thermal_threshold + 10:
             return self.profiles["power_save"]
 
         # Low battery and not charging
@@ -170,9 +164,7 @@ class ResourceAllocator:
         # Laptops/desktops can use performance
         return self.profiles["performance"]
 
-    def _apply_thermal_constraints(
-        self, allocation: ResourceAllocation, profile: DeviceProfile
-    ) -> ResourceAllocation:
+    def _apply_thermal_constraints(self, allocation: ResourceAllocation, profile: DeviceProfile) -> ResourceAllocation:
         """Apply thermal throttling constraints."""
         if not profile.cpu_temp_celsius:
             return allocation
@@ -207,9 +199,7 @@ class ResourceAllocator:
 
         return allocation
 
-    def _apply_battery_constraints(
-        self, allocation: ResourceAllocation, profile: DeviceProfile
-    ) -> ResourceAllocation:
+    def _apply_battery_constraints(self, allocation: ResourceAllocation, profile: DeviceProfile) -> ResourceAllocation:
         """Apply battery conservation constraints."""
         if not profile.battery_percent:
             return allocation
@@ -247,9 +237,7 @@ class ResourceAllocator:
 
         return allocation
 
-    def _apply_memory_constraints(
-        self, allocation: ResourceAllocation, profile: DeviceProfile
-    ) -> ResourceAllocation:
+    def _apply_memory_constraints(self, allocation: ResourceAllocation, profile: DeviceProfile) -> ResourceAllocation:
         """Apply memory pressure constraints."""
         memory_usage_percent = (profile.ram_used_mb / profile.ram_total_mb) * 100
 
@@ -269,9 +257,7 @@ class ResourceAllocator:
 
         return allocation
 
-    def _apply_network_constraints(
-        self, allocation: ResourceAllocation, profile: DeviceProfile
-    ) -> ResourceAllocation:
+    def _apply_network_constraints(self, allocation: ResourceAllocation, profile: DeviceProfile) -> ResourceAllocation:
         """Apply network-based constraints."""
         # Cellular networks - be more conservative
         if profile.network_type in ["cellular", "3g", "4g", "5g"]:
@@ -291,21 +277,15 @@ class ResourceAllocator:
 
         return allocation
 
-    def _validate_allocation(
-        self, allocation: ResourceAllocation, profile: DeviceProfile
-    ) -> ResourceAllocation:
+    def _validate_allocation(self, allocation: ResourceAllocation, profile: DeviceProfile) -> ResourceAllocation:
         """Validate and adjust allocation for sanity."""
         # Minimum viable limits
         allocation.cpu_limit_percent = max(allocation.cpu_limit_percent, 10)
-        allocation.memory_limit_mb = max(
-            allocation.memory_limit_mb, 64
-        )  # At least 64MB
+        allocation.memory_limit_mb = max(allocation.memory_limit_mb, 64)  # At least 64MB
 
         # Maximum limits based on hardware
         allocation.cpu_limit_percent = min(allocation.cpu_limit_percent, 100)
-        allocation.memory_limit_mb = min(
-            allocation.memory_limit_mb, profile.ram_available_mb
-        )
+        allocation.memory_limit_mb = min(allocation.memory_limit_mb, profile.ram_available_mb)
 
         # Consistency checks
         if allocation.cpu_limit_percent <= 25:
@@ -444,9 +424,7 @@ class ResourceAllocator:
 
         # Average resource usage
         avg_cpu = sum(p.cpu_percent for p in recent_profiles) / len(recent_profiles)
-        avg_memory_usage = sum(p.ram_used_mb for p in recent_profiles) / len(
-            recent_profiles
-        )
+        avg_memory_usage = sum(p.ram_used_mb for p in recent_profiles) / len(recent_profiles)
 
         # Predict based on trends and upcoming tasks
         predicted_cpu = min(100, avg_cpu * 1.2)  # 20% buffer

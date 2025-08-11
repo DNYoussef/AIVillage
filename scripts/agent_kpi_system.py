@@ -115,9 +115,7 @@ class AgentKPITracker:
         total = sum(weights.values())
         return {k: v / total for k, v in weights.items()}
 
-    def record_performance(
-        self, task_id: str, metrics: dict[KPIMetric, float], context: dict | None = None
-    ) -> None:
+    def record_performance(self, task_id: str, metrics: dict[KPIMetric, float], context: dict | None = None) -> None:
         """Record a performance measurement."""
         record = PerformanceRecord(
             timestamp=datetime.now(timezone.utc),
@@ -145,9 +143,7 @@ class AgentKPITracker:
         # Calculate average for each metric
         metric_averages = {}
         for metric in KPIMetric:
-            values = [
-                r.metrics.get(metric, 0.5) for r in records if metric in r.metrics
-            ]
+            values = [r.metrics.get(metric, 0.5) for r in records if metric in r.metrics]
             if values:
                 metric_averages[metric] = np.mean(values)
 
@@ -160,11 +156,7 @@ class AgentKPITracker:
 
     def get_trend(self, metric: KPIMetric, window_size: int = 10) -> float:
         """Calculate trend for a specific metric."""
-        values = [
-            r.metrics.get(metric, 0.5)
-            for r in self.performance_history[-window_size:]
-            if metric in r.metrics
-        ]
+        values = [r.metrics.get(metric, 0.5) for r in self.performance_history[-window_size:] if metric in r.metrics]
 
         if len(values) < MIN_VALUES_FOR_TREND:
             return 0.0
@@ -186,9 +178,7 @@ class AgentKPITracker:
         declining_metrics = []
         for metric in KPIMetric:
             trend = self.get_trend(metric)
-            if (
-                trend < SIGNIFICANT_NEGATIVE_TREND_THRESHOLD
-            ):  # Significant negative trend
+            if trend < SIGNIFICANT_NEGATIVE_TREND_THRESHOLD:  # Significant negative trend
                 declining_metrics.append(metric)
 
         if len(declining_metrics) > len(KPIMetric) / 2:
@@ -220,11 +210,7 @@ class AgentKPITracker:
 
         # Add per-metric summaries
         for metric in KPIMetric:
-            values = [
-                r.metrics.get(metric, 0.5)
-                for r in self.performance_history
-                if metric in r.metrics
-            ]
+            values = [r.metrics.get(metric, 0.5) for r in self.performance_history if metric in r.metrics]
             if values:
                 summary["metrics"][metric.value] = {
                     "average": np.mean(values),
@@ -261,9 +247,7 @@ class AgentPerformanceManager:
             self.trackers[agent_id] = AgentKPITracker(agent_id, role)
             print(f"Registered agent {agent_id} with role {role}")
 
-    def record_task_performance(
-        self, agent_id: str, task_id: str, performance_data: dict[str, float]
-    ) -> None:
+    def record_task_performance(self, agent_id: str, task_id: str, performance_data: dict[str, float]) -> None:
         """Record performance for a completed task."""
         if agent_id not in self.trackers:
             msg = f"Agent {agent_id} not registered"
@@ -275,9 +259,7 @@ class AgentPerformanceManager:
         # Map raw performance data to KPI metrics
         if "completion_time" in performance_data:
             # Normalize to 0-1 scale (assuming 10s is target)
-            metrics[KPIMetric.AVERAGE_RESPONSE_TIME] = min(
-                1.0, 10.0 / performance_data["completion_time"]
-            )
+            metrics[KPIMetric.AVERAGE_RESPONSE_TIME] = min(1.0, 10.0 / performance_data["completion_time"])
 
         if "success" in performance_data:
             metrics[KPIMetric.TASK_COMPLETION_RATE] = float(performance_data["success"])
@@ -286,28 +268,20 @@ class AgentPerformanceManager:
             metrics[KPIMetric.OUTPUT_QUALITY_SCORE] = performance_data["quality_score"]
 
         if "errors" in performance_data:
-            metrics[KPIMetric.ERROR_RATE] = 1.0 - min(
-                1.0, performance_data["errors"] / 10.0
-            )
+            metrics[KPIMetric.ERROR_RATE] = 1.0 - min(1.0, performance_data["errors"] / 10.0)
 
         if "resource_usage" in performance_data:
             # Normalize resource usage (lower is better)
-            metrics[KPIMetric.RESOURCE_EFFICIENCY] = 1.0 - min(
-                1.0, performance_data["resource_usage"]
-            )
+            metrics[KPIMetric.RESOURCE_EFFICIENCY] = 1.0 - min(1.0, performance_data["resource_usage"])
 
         if "user_satisfaction" in performance_data:
             metrics[KPIMetric.USER_SATISFACTION] = performance_data["user_satisfaction"]
 
         if "cooperation_score" in performance_data:
-            metrics[KPIMetric.INTER_AGENT_COOPERATION] = performance_data[
-                "cooperation_score"
-            ]
+            metrics[KPIMetric.INTER_AGENT_COOPERATION] = performance_data["cooperation_score"]
 
         if "communication_clarity" in performance_data:
-            metrics[KPIMetric.COMMUNICATION_CLARITY] = performance_data[
-                "communication_clarity"
-            ]
+            metrics[KPIMetric.COMMUNICATION_CLARITY] = performance_data["communication_clarity"]
 
         self.trackers[agent_id].record_performance(task_id, metrics, performance_data)
 
@@ -428,9 +402,7 @@ class AgentPerformanceManager:
                     record = PerformanceRecord(
                         timestamp=datetime.fromisoformat(record_data["timestamp"]),
                         task_id=record_data["task_id"],
-                        metrics={
-                            KPIMetric(k): v for k, v in record_data["metrics"].items()
-                        },
+                        metrics={KPIMetric(k): v for k, v in record_data["metrics"].items()},
                         context=record_data.get("context", {}),
                     )
                     tracker.performance_history.append(record)
@@ -484,22 +456,12 @@ def test_kpi_system() -> None:
                 performance_data = {
                     "completion_time": random.uniform(5, 15) / base_performance,
                     "success": random.random() < base_performance,
-                    "quality_score": min(
-                        1.0, base_performance + random.uniform(-0.1, 0.1)
-                    ),
-                    "errors": (
-                        random.randint(0, 5)
-                        if random.random() > base_performance
-                        else 0
-                    ),
+                    "quality_score": min(1.0, base_performance + random.uniform(-0.1, 0.1)),
+                    "errors": (random.randint(0, 5) if random.random() > base_performance else 0),
                     "resource_usage": random.uniform(0.3, 0.9),
-                    "user_satisfaction": min(
-                        1.0, base_performance + random.uniform(-0.15, 0.1)
-                    ),
+                    "user_satisfaction": min(1.0, base_performance + random.uniform(-0.15, 0.1)),
                     "cooperation_score": random.uniform(0.4, 1.0),
-                    "communication_clarity": min(
-                        1.0, base_performance + random.uniform(-0.1, 0.1)
-                    ),
+                    "communication_clarity": min(1.0, base_performance + random.uniform(-0.1, 0.1)),
                 }
 
                 manager.record_task_performance(agent_id, task_id, performance_data)

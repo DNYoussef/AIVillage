@@ -10,7 +10,6 @@ Provides high-level mesh networking functionality built on LibP2P:
 import asyncio
 import logging
 import time
-from typing import Dict, List, Optional, Set
 
 from .fallback_transports import FallbackTransportManager
 from .libp2p_mesh import LibP2PMeshNetwork
@@ -29,22 +28,22 @@ class MeshNetwork:
         listen_port: int = 4001,
         enable_mdns: bool = True,
         enable_fallbacks: bool = True,
-    ):
+    ) -> None:
         self.node_id = node_id
         self.listen_port = listen_port
         self.enable_mdns = enable_mdns
         self.enable_fallbacks = enable_fallbacks
 
         # Core components
-        self.libp2p_mesh: Optional[LibP2PMeshNetwork] = None
-        self.mdns_discovery: Optional[mDNSDiscovery] = None
-        self.fallback_manager: Optional[FallbackTransportManager] = None
+        self.libp2p_mesh: LibP2PMeshNetwork | None = None
+        self.mdns_discovery: mDNSDiscovery | None = None
+        self.fallback_manager: FallbackTransportManager | None = None
         self.message_protocol = MessageProtocol(node_id)
 
         # Network state
-        self.connected_peers: Set[str] = set()
-        self.peer_info: Dict[str, Dict] = {}
-        self.message_handlers: Dict[str, callable] = {}
+        self.connected_peers: set[str] = set()
+        self.peer_info: dict[str, dict] = {}
+        self.message_handlers: dict[str, callable] = {}
         self.running = False
 
         # Network statistics
@@ -68,9 +67,7 @@ class MeshNetwork:
 
             # Initialize LibP2P mesh
             try:
-                self.libp2p_mesh = LibP2PMeshNetwork(
-                    node_id=self.node_id, listen_port=self.listen_port
-                )
+                self.libp2p_mesh = LibP2PMeshNetwork(node_id=self.node_id, listen_port=self.listen_port)
                 await self.libp2p_mesh.start()
                 logger.info("LibP2P mesh network started successfully")
             except Exception as e:
@@ -80,9 +77,7 @@ class MeshNetwork:
             # Initialize mDNS discovery
             if self.enable_mdns:
                 try:
-                    self.mdns_discovery = mDNSDiscovery(
-                        self.node_id, listen_port=self.listen_port
-                    )
+                    self.mdns_discovery = mDNSDiscovery(self.node_id, listen_port=self.listen_port)
                     await self.mdns_discovery.start()
                     logger.info("mDNS peer discovery started")
                 except Exception as e:
@@ -108,11 +103,11 @@ class MeshNetwork:
             return True
 
         except Exception as e:
-            logger.error(f"Failed to start mesh network: {e}")
+            logger.exception(f"Failed to start mesh network: {e}")
             await self.stop()
             return False
 
-    async def stop(self):
+    async def stop(self) -> None:
         """Stop the mesh network."""
         if not self.running:
             return
@@ -125,29 +120,29 @@ class MeshNetwork:
             try:
                 await self.libp2p_mesh.stop()
             except Exception as e:
-                logger.error(f"Error stopping LibP2P mesh: {e}")
+                logger.exception(f"Error stopping LibP2P mesh: {e}")
 
         if self.mdns_discovery:
             try:
                 await self.mdns_discovery.stop_discovery()
             except Exception as e:
-                logger.error(f"Error stopping mDNS discovery: {e}")
+                logger.exception(f"Error stopping mDNS discovery: {e}")
 
         if self.fallback_manager:
             try:
                 await self.fallback_manager.stop()
             except Exception as e:
-                logger.error(f"Error stopping fallback manager: {e}")
+                logger.exception(f"Error stopping fallback manager: {e}")
 
         logger.info("Mesh network stopped")
 
-    def register_message_handler(self, message_type: str, handler: callable):
+    def register_message_handler(self, message_type: str, handler: callable) -> None:
         """Register a handler for specific message types."""
         self.message_handlers[message_type] = handler
         logger.info(f"Registered handler for message type: {message_type}")
 
     async def send_message(
-        self, target_peer: str, message_type: str, payload: dict, metadata: dict = None
+        self, target_peer: str, message_type: str, payload: dict, metadata: dict | None = None
     ) -> bool:
         """Send a message to a specific peer."""
         try:
@@ -171,9 +166,7 @@ class MeshNetwork:
             # Try fallback transports
             if self.fallback_manager:
                 try:
-                    success = await self.fallback_manager.send_message(
-                        target_peer, message
-                    )
+                    success = await self.fallback_manager.send_message(target_peer, message)
                     if success:
                         self.stats["messages_sent"] += 1
                         return True
@@ -184,12 +177,10 @@ class MeshNetwork:
             return False
 
         except Exception as e:
-            logger.error(f"Error sending message: {e}")
+            logger.exception(f"Error sending message: {e}")
             return False
 
-    async def broadcast_message(
-        self, message_type: str, payload: dict, metadata: dict = None
-    ) -> int:
+    async def broadcast_message(self, message_type: str, payload: dict, metadata: dict | None = None) -> int:
         """Broadcast a message to all connected peers."""
         sent_count = 0
 
@@ -201,7 +192,7 @@ class MeshNetwork:
         logger.info(f"Broadcast message sent to {sent_count} peers")
         return sent_count
 
-    async def connect_to_peer(self, peer_id: str, peer_address: str = None) -> bool:
+    async def connect_to_peer(self, peer_id: str, peer_address: str | None = None) -> bool:
         """Manually connect to a specific peer."""
         try:
             self.stats["connection_attempts"] += 1
@@ -217,9 +208,7 @@ class MeshNetwork:
 
             # Try fallback connection
             if self.fallback_manager and peer_address:
-                success = await self.fallback_manager.connect_to_peer(
-                    peer_id, peer_address
-                )
+                success = await self.fallback_manager.connect_to_peer(peer_id, peer_address)
                 if success:
                     self.connected_peers.add(peer_id)
                     self.stats["successful_connections"] += 1
@@ -229,7 +218,7 @@ class MeshNetwork:
             return False
 
         except Exception as e:
-            logger.error(f"Error connecting to peer {peer_id}: {e}")
+            logger.exception(f"Error connecting to peer {peer_id}: {e}")
             return False
 
     async def disconnect_from_peer(self, peer_id: str) -> bool:
@@ -252,26 +241,24 @@ class MeshNetwork:
             return False
 
         except Exception as e:
-            logger.error(f"Error disconnecting from peer {peer_id}: {e}")
+            logger.exception(f"Error disconnecting from peer {peer_id}: {e}")
             return False
 
-    def get_connected_peers(self) -> List[str]:
+    def get_connected_peers(self) -> list[str]:
         """Get list of connected peer IDs."""
         return list(self.connected_peers)
 
-    def get_peer_info(self, peer_id: str) -> Optional[Dict]:
+    def get_peer_info(self, peer_id: str) -> dict | None:
         """Get information about a specific peer."""
         return self.peer_info.get(peer_id)
 
-    def get_network_stats(self) -> Dict:
+    def get_network_stats(self) -> dict:
         """Get network statistics."""
         stats = self.stats.copy()
         stats.update(
             {
                 "connected_peers": len(self.connected_peers),
-                "uptime_seconds": (
-                    time.time() - stats["start_time"] if stats["start_time"] else 0
-                ),
+                "uptime_seconds": (time.time() - stats["start_time"] if stats["start_time"] else 0),
                 "libp2p_available": self.libp2p_mesh is not None,
                 "mdns_available": self.mdns_discovery is not None,
                 "fallbacks_available": self.fallback_manager is not None,
@@ -279,7 +266,7 @@ class MeshNetwork:
         )
         return stats
 
-    async def _message_processing_loop(self):
+    async def _message_processing_loop(self) -> None:
         """Background loop for processing incoming messages."""
         while self.running:
             try:
@@ -300,10 +287,10 @@ class MeshNetwork:
             except asyncio.CancelledError:
                 break
             except Exception as e:
-                logger.error(f"Error in message processing loop: {e}")
+                logger.exception(f"Error in message processing loop: {e}")
                 await asyncio.sleep(1)
 
-    async def _peer_discovery_loop(self):
+    async def _peer_discovery_loop(self) -> None:
         """Background loop for peer discovery."""
         while self.running:
             try:
@@ -311,16 +298,11 @@ class MeshNetwork:
                     discovered_peers = await self.mdns_discovery.get_discovered_peers()
 
                     for peer_id, peer_info in discovered_peers.items():
-                        if (
-                            peer_id not in self.connected_peers
-                            and peer_id != self.node_id
-                        ):
+                        if peer_id not in self.connected_peers and peer_id != self.node_id:
                             # Try to connect to newly discovered peer
                             peer_address = peer_info.get("address")
                             if peer_address:
-                                success = await self.connect_to_peer(
-                                    peer_id, peer_address
-                                )
+                                success = await self.connect_to_peer(peer_id, peer_address)
                                 if success:
                                     self.stats["peers_discovered"] += 1
                                     self.peer_info[peer_id] = peer_info
@@ -330,10 +312,10 @@ class MeshNetwork:
             except asyncio.CancelledError:
                 break
             except Exception as e:
-                logger.error(f"Error in peer discovery loop: {e}")
+                logger.exception(f"Error in peer discovery loop: {e}")
                 await asyncio.sleep(5)
 
-    async def _handle_message(self, message: EvolutionMessage):
+    async def _handle_message(self, message: EvolutionMessage) -> None:
         """Handle an incoming message."""
         try:
             self.stats["messages_received"] += 1
@@ -346,20 +328,16 @@ class MeshNetwork:
                 logger.debug(f"No handler for message type: {message.message_type}")
 
         except Exception as e:
-            logger.error(f"Error handling message: {e}")
+            logger.exception(f"Error handling message: {e}")
 
 
 # Legacy compatibility
 class MeshNetworkNode(MeshNetwork):
     """Legacy alias for MeshNetwork."""
 
-    pass
-
 
 # Convenience function
-async def create_mesh_network(
-    node_id: str, listen_port: int = 4001, auto_start: bool = True
-) -> MeshNetwork:
+async def create_mesh_network(node_id: str, listen_port: int = 4001, auto_start: bool = True) -> MeshNetwork:
     """Create and optionally start a mesh network."""
     mesh = MeshNetwork(node_id, listen_port)
 

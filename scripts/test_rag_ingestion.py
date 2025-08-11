@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Test RAG System Ingestion Verification
+"""Test RAG System Ingestion Verification.
 
 Tests that the ingested AI research papers are accessible and searchable.
 """
@@ -44,8 +44,7 @@ def test_simple_file_access():
             f
             for f in full_files
             if any(
-                paper.lower().replace("-", "").replace(" ", "")
-                in f.name.lower().replace("-", "").replace(" ", "")
+                paper.lower().replace("-", "").replace(" ", "") in f.name.lower().replace("-", "").replace(" ", "")
                 for word in paper.split()
             )
         ]
@@ -55,9 +54,7 @@ def test_simple_file_access():
         else:
             print(f"  [X] {paper}: Not found")
 
-    print(
-        f"\n[STATS] Papers found: {found_papers}/{len(test_papers)} ({found_papers/len(test_papers)*100:.1f}%)"
-    )
+    print(f"\n[STATS] Papers found: {found_papers}/{len(test_papers)} ({found_papers/len(test_papers)*100:.1f}%)")
 
     # Test content quality
     if chunk_files:
@@ -117,9 +114,7 @@ def test_content_search():
     avg_matches = sum(search_results.values()) / len(search_results)
     coverage = (avg_matches / len(total_files)) * 100 if total_files else 0
 
-    print(
-        f"\n[STATS] Search coverage: {coverage:.1f}% (avg {avg_matches:.1f} matches per term)"
-    )
+    print(f"\n[STATS] Search coverage: {coverage:.1f}% (avg {avg_matches:.1f} matches per term)")
     print(f"Search functionality: {'WORKING' if coverage > 10 else 'LIMITED'}")
 
     return coverage > 10
@@ -143,9 +138,7 @@ def main():
     print(f"Content searchability: {'PASS' if search_test else 'FAIL'}")
 
     overall_success = file_test and search_test
-    print(
-        f"\nRAG System Status: {'FULLY OPERATIONAL' if overall_success else 'PARTIALLY FUNCTIONAL'}"
-    )
+    print(f"\nRAG System Status: {'FULLY OPERATIONAL' if overall_success else 'PARTIALLY FUNCTIONAL'}")
 
     if overall_success:
         print("\n[SUCCESS] All 146+ AI research papers successfully ingested!")

@@ -8,6 +8,7 @@ Configures Redis connections for all databases:
 """
 
 import logging
+import sys
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +44,7 @@ REDIS_CONFIGS = {
 class RedisConnectionManager:
     """Manages Redis connections for CODEX integration."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.connections: dict[str, object | None] = {}
         self.redis_available = False
         self.redis_client = None
@@ -67,9 +68,7 @@ class RedisConnectionManager:
             return True
 
         except ImportError:
-            logger.warning(
-                "Redis package not installed. Install with: pip install redis"
-            )
+            logger.warning("Redis package not installed. Install with: pip install redis")
             return False
         except Exception as e:
             logger.warning(f"Redis server not available: {e}")
@@ -78,9 +77,7 @@ class RedisConnectionManager:
     def create_connection(self, config_name: str) -> object | None:
         """Create Redis connection for specified configuration."""
         if not self.redis_available:
-            logger.warning(
-                f"Cannot create Redis connection for {config_name}: Redis not available"
-            )
+            logger.warning(f"Cannot create Redis connection for {config_name}: Redis not available")
             return None
 
         config = REDIS_CONFIGS[config_name]
@@ -101,21 +98,17 @@ class RedisConnectionManager:
             connection.ping()
 
             self.connections[config_name] = connection
-            logger.info(
-                f"Created Redis connection for {config_name} (db={config['db']})"
-            )
+            logger.info(f"Created Redis connection for {config_name} (db={config['db']})")
             return connection
 
         except Exception as e:
-            logger.error(f"Failed to create Redis connection for {config_name}: {e}")
+            logger.exception(f"Failed to create Redis connection for {config_name}: {e}")
             return None
 
     def setup_all_connections(self) -> dict[str, object | None]:
         """Set up all Redis connections."""
         if not self.check_redis_availability():
-            logger.warning(
-                "Redis not available - using SQLite fallback for all operations"
-            )
+            logger.warning("Redis not available - using SQLite fallback for all operations")
             return {}
 
         for config_name in REDIS_CONFIGS:
@@ -138,18 +131,18 @@ class RedisConnectionManager:
                 logger.info(f"Redis connection test passed: {config_name}")
             except Exception as e:
                 results[config_name] = False
-                logger.error(f"Redis connection test failed for {config_name}: {e}")
+                logger.exception(f"Redis connection test failed for {config_name}: {e}")
 
         return results
 
-    def initialize_databases(self):
+    def initialize_databases(self) -> None:
         """Initialize Redis databases with initial data structures."""
         for config_name, connection in self.connections.items():
             if connection is None:
                 continue
 
             try:
-                config = REDIS_CONFIGS[config_name]
+                REDIS_CONFIGS[config_name]
 
                 if config_name == "evolution_metrics":
                     # Initialize evolution metrics structures
@@ -187,7 +180,7 @@ class RedisConnectionManager:
                 logger.info(f"Initialized Redis database: {config_name}")
 
             except Exception as e:
-                logger.error(f"Failed to initialize Redis database {config_name}: {e}")
+                logger.exception(f"Failed to initialize Redis database {config_name}: {e}")
 
     def get_connection_info(self) -> dict:
         """Get information about Redis connections."""
@@ -202,8 +195,7 @@ class RedisConnectionManager:
                 "database": config["db"],
                 "description": config["description"],
                 "url": config["url"],
-                "connected": config_name in self.connections
-                and self.connections[config_name] is not None,
+                "connected": config_name in self.connections and self.connections[config_name] is not None,
             }
 
             if connection_info["connected"]:
@@ -231,7 +223,7 @@ class RedisConnectionManager:
 
         return info
 
-    def close_all_connections(self):
+    def close_all_connections(self) -> None:
         """Close all Redis connections."""
         for config_name, connection in self.connections.items():
             if connection:
@@ -239,7 +231,7 @@ class RedisConnectionManager:
                     connection.close()
                     logger.info(f"Closed Redis connection: {config_name}")
                 except Exception as e:
-                    logger.error(f"Error closing Redis connection {config_name}: {e}")
+                    logger.exception(f"Error closing Redis connection {config_name}: {e}")
 
         self.connections.clear()
 
@@ -310,4 +302,4 @@ def main():
 
 if __name__ == "__main__":
     success = main()
-    exit(0 if success else 1)
+    sys.exit(0 if success else 1)

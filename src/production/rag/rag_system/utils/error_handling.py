@@ -42,9 +42,7 @@ def log_and_handle_errors(func: Callable) -> Callable:
     return wrapper
 
 
-def setup_logging(
-    log_file: str = "rag_system.log", log_level: int = logging.INFO
-) -> None:
+def setup_logging(log_file: str = "rag_system.log", log_level: int = logging.INFO) -> None:
     """Set up logging for the RAG system."""
     logging.basicConfig(
         filename=log_file,

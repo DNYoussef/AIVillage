@@ -217,7 +217,7 @@ class EnhancedQueryProcessor:
         enable_intent_classification: bool = True,
         enable_multi_hop_reasoning: bool = True,
         default_result_limit: int = 10,
-    ):
+    ) -> None:
         """Initialize enhanced query processor."""
         self.rag_pipeline = rag_pipeline
         self.enable_query_expansion = enable_query_expansion
@@ -277,8 +277,7 @@ class EnhancedQueryProcessor:
 
             logger.debug(f"Query decomposition completed in {decomposition_time:.1f}ms")
             logger.debug(
-                f"Intent: {decomposition.primary_intent.value}, "
-                f"Complexity: {decomposition.complexity_level.value}"
+                f"Intent: {decomposition.primary_intent.value}, " f"Complexity: {decomposition.complexity_level.value}"
             )
 
             # Step 2: Create Retrieval Strategy
@@ -286,9 +285,7 @@ class EnhancedQueryProcessor:
 
             # Step 3: Multi-Level Matching
             retrieval_start = time.perf_counter()
-            ranked_results = await self.multi_level_matching(
-                decomposition, strategy, context
-            )
+            ranked_results = await self.multi_level_matching(decomposition, strategy, context)
             retrieval_time = (time.perf_counter() - retrieval_start) * 1000
 
             logger.debug(f"Multi-level retrieval completed in {retrieval_time:.1f}ms")
@@ -296,9 +293,7 @@ class EnhancedQueryProcessor:
 
             # Step 4: Answer Synthesis
             synthesis_start = time.perf_counter()
-            synthesized_answer = await self.synthesize_answer(
-                decomposition, ranked_results, strategy
-            )
+            synthesized_answer = await self.synthesize_answer(decomposition, ranked_results, strategy)
             synthesis_time = (time.perf_counter() - synthesis_start) * 1000
 
             logger.debug(f"Answer synthesis completed in {synthesis_time:.1f}ms")
@@ -309,16 +304,14 @@ class EnhancedQueryProcessor:
             synthesized_answer.query_decomposition = decomposition
 
             # Update statistics
-            self._update_processing_stats(
-                decomposition_time, retrieval_time, synthesis_time, decomposition
-            )
+            self._update_processing_stats(decomposition_time, retrieval_time, synthesis_time, decomposition)
 
             logger.info(f"Enhanced query processing completed in {total_time:.1f}ms")
 
             return synthesized_answer
 
         except Exception as e:
-            logger.error(f"Enhanced query processing failed: {e}")
+            logger.exception(f"Enhanced query processing failed: {e}")
 
             # Return fallback answer
             return SynthesizedAnswer(
@@ -332,9 +325,7 @@ class EnhancedQueryProcessor:
                 processing_time_ms=(time.perf_counter() - start_time) * 1000,
             )
 
-    async def decompose_query(
-        self, query: str, context: dict[str, Any]
-    ) -> QueryDecomposition:
+    async def decompose_query(self, query: str, context: dict[str, Any]) -> QueryDecomposition:
         """Analyze and decompose query into components for processing strategy.
 
         Args:
@@ -352,9 +343,7 @@ class EnhancedQueryProcessor:
         key_concepts = self._extract_key_concepts(normalized_query)
 
         # Classify intent
-        primary_intent, secondary_intents, intent_confidence = self._classify_intent(
-            normalized_query
-        )
+        primary_intent, secondary_intents, intent_confidence = self._classify_intent(normalized_query)
 
         # Determine context level
         context_level = self._determine_context_level(normalized_query, context)
@@ -413,32 +402,24 @@ class EnhancedQueryProcessor:
         logger.debug("Starting multi-level matching")
 
         # Level 1: Document-level filtering and matching
-        document_candidates = await self._level1_document_matching(
-            decomposition, strategy, context
-        )
+        document_candidates = await self._level1_document_matching(decomposition, strategy, context)
 
         logger.debug(f"Level 1: Found {len(document_candidates)} document candidates")
 
         # Level 2: Chunk-level matching with idea boundary respect
-        chunk_results = await self._level2_chunk_matching(
-            decomposition, strategy, document_candidates
-        )
+        chunk_results = await self._level2_chunk_matching(decomposition, strategy, document_candidates)
 
         logger.debug(f"Level 2: Found {len(chunk_results)} chunk results")
 
         # Level 3: Graph traversal for supporting/contrasting information
         if strategy.enable_graph_traversal and decomposition.requires_multi_hop:
-            graph_results = await self._level3_graph_traversal(
-                decomposition, strategy, chunk_results
-            )
+            graph_results = await self._level3_graph_traversal(decomposition, strategy, chunk_results)
             chunk_results.extend(graph_results)
 
             logger.debug(f"Level 3: Added {len(graph_results)} graph traversal results")
 
         # Context-aware ranking
-        ranked_results = await self._context_aware_ranking(
-            decomposition, strategy, chunk_results
-        )
+        ranked_results = await self._context_aware_ranking(decomposition, strategy, chunk_results)
 
         logger.debug(f"Final ranking: {len(ranked_results)} results")
 
@@ -478,24 +459,16 @@ class EnhancedQueryProcessor:
         conflicting_sources = []  # TODO: Implement conflict detection
 
         # Generate executive summary
-        executive_summary = await self._generate_executive_summary(
-            decomposition, primary_sources
-        )
+        executive_summary = await self._generate_executive_summary(decomposition, primary_sources)
 
         # Create detailed sections respecting idea boundaries
-        detailed_sections = await self._create_detailed_sections(
-            decomposition, ranked_results, strategy
-        )
+        detailed_sections = await self._create_detailed_sections(decomposition, ranked_results, strategy)
 
         # Synthesize main answer text
-        answer_text = await self._synthesize_main_answer(
-            decomposition, primary_sources, supporting_sources
-        )
+        answer_text = await self._synthesize_main_answer(decomposition, primary_sources, supporting_sources)
 
         # Calculate quality metrics
-        quality_metrics = await self._calculate_synthesis_quality(
-            decomposition, ranked_results, answer_text
-        )
+        quality_metrics = await self._calculate_synthesis_quality(decomposition, ranked_results, answer_text)
 
         # Preserve context chain and idea boundaries
         context_chain = self._build_context_chain(ranked_results)
@@ -723,10 +696,7 @@ class EnhancedQueryProcessor:
                         continue
 
                 # Credibility filtering
-                if (
-                    doc_context.source_credibility_score
-                    < strategy.credibility_threshold
-                ):
+                if doc_context.source_credibility_score < strategy.credibility_threshold:
                     continue
 
                 # Reading level matching
@@ -735,9 +705,7 @@ class EnhancedQueryProcessor:
                         continue
 
                 # Temporal matching
-                temporal_match = self._assess_temporal_match(
-                    doc_context, decomposition.temporal_requirement
-                )
+                temporal_match = self._assess_temporal_match(doc_context, decomposition.temporal_requirement)
                 if temporal_match < 0.3:  # Minimum temporal relevance
                     continue
 
@@ -768,11 +736,7 @@ class EnhancedQueryProcessor:
         results, metrics = await self.rag_pipeline.retrieve_with_contextual_analysis(
             query=decomposition.normalized_query,
             k=self.default_result_limit * 2,  # Get extra for filtering
-            domain_filter=(
-                decomposition.target_domains[0]
-                if decomposition.target_domains
-                else None
-            ),
+            domain_filter=(decomposition.target_domains[0] if decomposition.target_domains else None),
             reading_level_filter=decomposition.reading_level,
             min_credibility=strategy.credibility_threshold,
             context_similarity_boost=0.2,
@@ -787,11 +751,7 @@ class EnhancedQueryProcessor:
 
             # Get document candidate info
             doc_candidate = next(
-                (
-                    d
-                    for d in document_candidates
-                    if d["document_id"] == result.document_id
-                ),
+                (d for d in document_candidates if d["document_id"] == result.document_id),
                 None,
             )
 
@@ -802,9 +762,7 @@ class EnhancedQueryProcessor:
             ranked_result = RankedResult(
                 result=result,
                 semantic_score=result.score,
-                trust_score=(
-                    result.metadata.get("trust_score", 0.5) if result.metadata else 0.5
-                ),
+                trust_score=(result.metadata.get("trust_score", 0.5) if result.metadata else 0.5),
                 context_score=doc_candidate["temporal_match"],
                 recency_score=self._calculate_recency_score(result),
                 idea_completeness_score=self._assess_idea_completeness(result),
@@ -850,9 +808,7 @@ class EnhancedQueryProcessor:
                 rel_type = RelationshipType(rel["relationship_type"])
 
                 # Filter by relationship relevance to query intent
-                if not self._is_relationship_relevant(
-                    rel_type, decomposition.primary_intent
-                ):
+                if not self._is_relationship_relevant(rel_type, decomposition.primary_intent):
                     continue
 
                 # Get chunk information
@@ -966,9 +922,7 @@ class EnhancedQueryProcessor:
         words = [w for w in query.split() if w not in stop_words and len(w) > 2]
         return words[:5]  # Return top 5 key concepts
 
-    def _classify_intent(
-        self, query: str
-    ) -> tuple[QueryIntent, list[QueryIntent], float]:
+    def _classify_intent(self, query: str) -> tuple[QueryIntent, list[QueryIntent], float]:
         """Classify query intent using pattern matching."""
         intent_scores = {}
 
@@ -989,16 +943,12 @@ class EnhancedQueryProcessor:
 
         # Get secondary intents (score > 0.3)
         secondary_intents = [
-            intent
-            for intent, score in intent_scores.items()
-            if score > 0.3 and intent != primary_intent[0]
+            intent for intent, score in intent_scores.items() if score > 0.3 and intent != primary_intent[0]
         ]
 
         return primary_intent[0], secondary_intents, primary_intent[1]
 
-    def _determine_context_level(
-        self, query: str, context: dict[str, Any]
-    ) -> ContextLevel:
+    def _determine_context_level(self, query: str, context: dict[str, Any]) -> ContextLevel:
         """Determine required context level."""
         for level, patterns in self.context_patterns.items():
             for pattern in patterns:
@@ -1021,9 +971,7 @@ class EnhancedQueryProcessor:
 
         return TemporalRequirement.TIMELESS  # Default
 
-    def _assess_complexity(
-        self, query: str, key_concepts: list[str]
-    ) -> ComplexityLevel:
+    def _assess_complexity(self, query: str, key_concepts: list[str]) -> ComplexityLevel:
         """Assess query complexity."""
         complexity_score = 0
 
@@ -1075,9 +1023,7 @@ class EnhancedQueryProcessor:
 
         return relationships
 
-    def _determine_target_domains(
-        self, query: str, context: dict[str, Any]
-    ) -> list[ContentDomain]:
+    def _determine_target_domains(self, query: str, context: dict[str, Any]) -> list[ContentDomain]:
         """Determine target domains for query."""
         domain_keywords = {
             ContentDomain.SCIENCE: [
@@ -1137,19 +1083,14 @@ class EnhancedQueryProcessor:
             r"overview",
         ]
 
-        has_synthesis_terms = any(
-            re.search(indicator, query, re.IGNORECASE)
-            for indicator in synthesis_indicators
-        )
+        has_synthesis_terms = any(re.search(indicator, query, re.IGNORECASE) for indicator in synthesis_indicators)
 
         return has_synthesis_terms or complexity in [
             ComplexityLevel.COMPLEX,
             ComplexityLevel.EXPERT,
         ]
 
-    def _create_retrieval_strategy(
-        self, decomposition: QueryDecomposition
-    ) -> RetrievalStrategy:
+    def _create_retrieval_strategy(self, decomposition: QueryDecomposition) -> RetrievalStrategy:
         """Create retrieval strategy based on query decomposition."""
         # Base strategy
         strategy = RetrievalStrategy()
@@ -1181,9 +1122,7 @@ class EnhancedQueryProcessor:
 
         return strategy
 
-    def _assess_temporal_match(
-        self, doc_context: DocumentContext, requirement: TemporalRequirement
-    ) -> float:
+    def _assess_temporal_match(self, doc_context: DocumentContext, requirement: TemporalRequirement) -> float:
         """Assess how well document matches temporal requirement."""
         # Simplified temporal matching
         # In production, this would analyze document dates, content temporal indicators
@@ -1202,9 +1141,7 @@ class EnhancedQueryProcessor:
             return 0.9  # High completeness for intelligent chunks
         return 0.6  # Moderate completeness for traditional chunks
 
-    def _is_relationship_relevant(
-        self, rel_type: RelationshipType, intent: QueryIntent
-    ) -> bool:
+    def _is_relationship_relevant(self, rel_type: RelationshipType, intent: QueryIntent) -> bool:
         """Check if relationship type is relevant to query intent."""
         relevance_map = {
             QueryIntent.EXPLANATORY: [
@@ -1226,23 +1163,16 @@ class EnhancedQueryProcessor:
         relevant_types = relevance_map.get(intent, [])
         return rel_type in relevant_types
 
-    def _calculate_complexity_bonus(
-        self, decomposition: QueryDecomposition, result: RankedResult
-    ) -> float:
+    def _calculate_complexity_bonus(self, decomposition: QueryDecomposition, result: RankedResult) -> float:
         """Calculate complexity matching bonus."""
         # Simple complexity bonus - would be more sophisticated in production
         if decomposition.complexity_level == ComplexityLevel.EXPERT:
-            if (
-                result.document_context
-                and result.document_context.reading_level.value == "graduate"
-            ):
+            if result.document_context and result.document_context.reading_level.value == "graduate":
                 return 0.1  # 10% bonus for graduate-level content
-        elif decomposition.complexity_level == ComplexityLevel.SIMPLE:
-            if (
-                result.document_context
-                and result.document_context.reading_level.value == "high_school"
-            ):
-                return 0.05  # 5% bonus for high school level content
+        elif decomposition.complexity_level == ComplexityLevel.SIMPLE and (
+            result.document_context and result.document_context.reading_level.value == "high_school"
+        ):
+            return 0.05  # 5% bonus for high school level content
 
         return 0.0  # No bonus
 
@@ -1258,10 +1188,7 @@ class EnhancedQueryProcessor:
         for source in primary_sources[:3]:  # Top 3 sources
             text = source.result.text
             # Simple extraction - first sentence or first 100 characters
-            if len(text) > 100:
-                summary = text[:100] + "..."
-            else:
-                summary = text
+            summary = text[:100] + "..." if len(text) > 100 else text
 
             key_points.append(
                 {
@@ -1295,14 +1222,8 @@ class EnhancedQueryProcessor:
                 "content": result.result.text,
                 "trust_score": result.trust_score,
                 "context": {
-                    "document_context": (
-                        result.document_context.to_dict()
-                        if result.document_context
-                        else None
-                    ),
-                    "chunk_context": (
-                        result.chunk_context if result.chunk_context else None
-                    ),
+                    "document_context": (result.document_context.to_dict() if result.document_context else None),
+                    "chunk_context": (result.chunk_context if result.chunk_context else None),
                 },
                 "idea_boundary_preserved": result.idea_boundary_complete,
                 "source_citation": {
@@ -1327,9 +1248,7 @@ class EnhancedQueryProcessor:
             return "I couldn't find sufficient information to answer your query."
 
         # Start with query acknowledgment
-        answer_parts = [
-            f"Based on the available information regarding '{decomposition.original_query}':"
-        ]
+        answer_parts = [f"Based on the available information regarding '{decomposition.original_query}':"]
 
         # Add primary information
         for i, source in enumerate(primary_sources[:3]):
@@ -1384,9 +1303,7 @@ class EnhancedQueryProcessor:
         completeness_score = min(len(results) / completeness_threshold, 1.0)
 
         # Coherence based on idea boundary preservation
-        boundary_complete_count = sum(
-            1 for r in results[:5] if r.idea_boundary_complete
-        )
+        boundary_complete_count = sum(1 for r in results[:5] if r.idea_boundary_complete)
         coherence_score = boundary_complete_count / min(len(results), 5)
 
         # Narrative flow (simplified)
@@ -1415,20 +1332,14 @@ class EnhancedQueryProcessor:
             }
 
             if result.result.metadata and "traversal_source" in result.result.metadata:
-                chain_link["graph_traversal_from"] = result.result.metadata[
-                    "traversal_source"
-                ]
-                chain_link["relationship_type"] = result.result.metadata[
-                    "relationship_type"
-                ]
+                chain_link["graph_traversal_from"] = result.result.metadata["traversal_source"]
+                chain_link["relationship_type"] = result.result.metadata["relationship_type"]
 
             context_chain.append(chain_link)
 
         return context_chain
 
-    def _identify_preserved_boundaries(
-        self, results: list[RankedResult]
-    ) -> list[dict[str, Any]]:
+    def _identify_preserved_boundaries(self, results: list[RankedResult]) -> list[dict[str, Any]]:
         """Identify preserved idea boundaries in results."""
         boundaries = []
 
@@ -1440,9 +1351,7 @@ class EnhancedQueryProcessor:
                     "confidence": 0.9,
                     "method": (
                         "intelligent_chunking"
-                        if result.result.metadata
-                        and result.result.metadata.get("chunking_method")
-                        == "intelligent"
+                        if result.result.metadata and result.result.metadata.get("chunking_method") == "intelligent"
                         else "traditional_chunking"
                     ),
                 }
@@ -1456,7 +1365,7 @@ class EnhancedQueryProcessor:
         retrieval_time: float,
         synthesis_time: float,
         decomposition: QueryDecomposition,
-    ):
+    ) -> None:
         """Update processing statistics."""
         self.processing_stats["queries_processed"] += 1
 
@@ -1464,8 +1373,7 @@ class EnhancedQueryProcessor:
         count = self.processing_stats["queries_processed"]
 
         self.processing_stats["avg_decomposition_time"] = (
-            self.processing_stats["avg_decomposition_time"] * (count - 1)
-            + decomposition_time
+            self.processing_stats["avg_decomposition_time"] * (count - 1) + decomposition_time
         ) / count
 
         self.processing_stats["avg_retrieval_time"] = (
@@ -1484,17 +1392,12 @@ class EnhancedQueryProcessor:
         """Get comprehensive processing statistics."""
         multi_hop_rate = 0.0
         if self.processing_stats["queries_processed"] > 0:
-            multi_hop_rate = (
-                self.processing_stats["multi_hop_queries"]
-                / self.processing_stats["queries_processed"]
-            )
+            multi_hop_rate = self.processing_stats["multi_hop_queries"] / self.processing_stats["queries_processed"]
 
         return {
             "queries_processed": self.processing_stats["queries_processed"],
             "performance": {
-                "avg_decomposition_time_ms": self.processing_stats[
-                    "avg_decomposition_time"
-                ],
+                "avg_decomposition_time_ms": self.processing_stats["avg_decomposition_time"],
                 "avg_retrieval_time_ms": self.processing_stats["avg_retrieval_time"],
                 "avg_synthesis_time_ms": self.processing_stats["avg_synthesis_time"],
                 "total_avg_time_ms": (
@@ -1505,12 +1408,8 @@ class EnhancedQueryProcessor:
             },
             "query_characteristics": {
                 "multi_hop_rate": multi_hop_rate,
-                "intent_classification_accuracy": self.processing_stats[
-                    "intent_classification_accuracy"
-                ],
-                "synthesis_success_rate": self.processing_stats[
-                    "synthesis_success_rate"
-                ],
+                "intent_classification_accuracy": self.processing_stats["intent_classification_accuracy"],
+                "synthesis_success_rate": self.processing_stats["synthesis_success_rate"],
             },
             "capabilities": {
                 "query_expansion": self.enable_query_expansion,

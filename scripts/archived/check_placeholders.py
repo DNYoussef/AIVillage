@@ -42,9 +42,7 @@ class PlaceholderDetector:
             "just_pass": re.compile(r"^\s*pass\s*$"),
             "just_ellipsis": re.compile(r"^\s*\.\.\.\s*$"),
             "todo_comment": re.compile(r"#.*TODO|#.*FIXME|#.*XXX|#.*HACK"),
-            "placeholder_comment": re.compile(
-                r"#.*placeholder|#.*stub|#.*not.implemented", re.IGNORECASE
-            ),
+            "placeholder_comment": re.compile(r"#.*placeholder|#.*stub|#.*not.implemented", re.IGNORECASE),
         }
 
         # Keywords that indicate placeholders
@@ -111,9 +109,7 @@ class PlaceholderDetector:
             if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef):
                 self._analyze_function(node, file_path, lines)
 
-    def _analyze_function(
-        self, func_node: ast.FunctionDef, file_path: Path, lines: list[str]
-    ) -> None:
+    def _analyze_function(self, func_node: ast.FunctionDef, file_path: Path, lines: list[str]) -> None:
         """Analyze a function for placeholder patterns."""
         func_name = func_node.name
 
@@ -134,10 +130,7 @@ class PlaceholderDetector:
 
             # Check for raise NotImplementedError
             if isinstance(stmt, ast.Raise) and isinstance(stmt.exc, ast.Call):
-                if (
-                    hasattr(stmt.exc.func, "id")
-                    and stmt.exc.func.id == "NotImplementedError"
-                ):
+                if hasattr(stmt.exc.func, "id") and stmt.exc.func.id == "NotImplementedError":
                     # This is intentional - check if it has proper documentation
                     if not self._has_proper_todo_documentation(stmt):
                         severity = "high"
@@ -177,11 +170,7 @@ class PlaceholderDetector:
                     and len(
                         return_value.elts
                         if hasattr(return_value, "elts")
-                        else (
-                            return_value.values
-                            if hasattr(return_value, "values")
-                            else []
-                        )
+                        else (return_value.values if hasattr(return_value, "values") else [])
                     )
                     == 0
                 ):
@@ -215,10 +204,7 @@ class PlaceholderDetector:
             # Check for TODO/FIXME comments that might indicate incomplete work
             if self.stub_patterns["todo_comment"].search(line):
                 # Only flag TODOs that seem to indicate incomplete implementation
-                if any(
-                    keyword in line.lower()
-                    for keyword in ["implement", "finish", "complete"]
-                ):
+                if any(keyword in line.lower() for keyword in ["implement", "finish", "complete"]):
                     self._add_issue(
                         file_path,
                         i,
@@ -263,11 +249,8 @@ class PlaceholderDetector:
     def _is_abstract_method(self, func_node: ast.FunctionDef) -> bool:
         """Check if function is an abstract method."""
         for decorator in func_node.decorator_list:
-            if (
-                isinstance(decorator, ast.Name) and decorator.id == "abstractmethod"
-            ) or (
-                isinstance(decorator, ast.Attribute)
-                and decorator.attr == "abstractmethod"
+            if (isinstance(decorator, ast.Name) and decorator.id == "abstractmethod") or (
+                isinstance(decorator, ast.Attribute) and decorator.attr == "abstractmethod"
             ):
                 return True
         return False
@@ -294,9 +277,7 @@ class PlaceholderDetector:
         )
         self.issues.append(issue)
 
-    def _get_code_snippet(
-        self, lines: list[str], line_number: int, context: int = 1
-    ) -> str:
+    def _get_code_snippet(self, lines: list[str], line_number: int, context: int = 1) -> str:
         """Get code snippet around the line."""
         start = max(0, line_number - context - 1)
         end = min(len(lines), line_number + context)
@@ -351,9 +332,7 @@ class PlaceholderDetector:
 
 def main() -> None:
     """Main entry point."""
-    parser = argparse.ArgumentParser(
-        description="Detect placeholder functions and stubs"
-    )
+    parser = argparse.ArgumentParser(description="Detect placeholder functions and stubs")
     parser.add_argument("--src-dir", default="src", help="Source directory to scan")
     parser.add_argument("--output", help="Output file for report")
     parser.add_argument(
@@ -393,9 +372,7 @@ def main() -> None:
         sys.exit(1)
 
     if args.fail_on_high and (critical_count > 0 or high_count > 0):
-        print(
-            f"\n❌ Exiting with error: {critical_count + high_count} critical/high issues found"
-        )
+        print(f"\n❌ Exiting with error: {critical_count + high_count} critical/high issues found")
         sys.exit(1)
 
     if issues:

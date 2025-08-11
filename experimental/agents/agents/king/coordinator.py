@@ -52,9 +52,7 @@ class KingCoordinator:
         self.unified_analytics.record_task_completion(
             task.get("id", "unknown"), execution_time, result.get("success", False)
         )
-        self.unified_analytics.record_metric(
-            f"task_type_{task.get('type', 'general')}_execution_time", execution_time
-        )
+        self.unified_analytics.record_metric(f"task_type_{task.get('type', 'general')}_execution_time", execution_time)
 
         return result
 
@@ -62,22 +60,14 @@ class KingCoordinator:
     async def _delegate_task(self, task: LangroidTask) -> dict[str, Any]:
         if task.type == "research":
             sage_agent = next(
-                (
-                    agent
-                    for agent in self.agents.values()
-                    if isinstance(agent, SageAgent)
-                ),
+                (agent for agent in self.agents.values() if isinstance(agent, SageAgent)),
                 None,
             )
             if sage_agent:
                 return await sage_agent.execute_task(task)
         elif task.type in ["coding", "debugging", "code_review"]:
             magi_agent = next(
-                (
-                    agent
-                    for agent in self.agents.values()
-                    if isinstance(agent, MagiAgent)
-                ),
+                (agent for agent in self.agents.values() if isinstance(agent, MagiAgent)),
                 None,
             )
             if magi_agent:
@@ -116,9 +106,7 @@ class KingCoordinator:
             plan = decision_result["plan"]
             suggested_agent = decision_result["suggested_agent"]
 
-            task = await self.task_manager.create_task(
-                description=chosen_alternative, agent=suggested_agent
-            )
+            task = await self.task_manager.create_task(description=chosen_alternative, agent=suggested_agent)
             await self.task_manager.assign_task(task)
 
             # Implement the plan
@@ -162,9 +150,7 @@ class KingCoordinator:
             await self.king_agent.update(task, result)
 
             # Record analytics
-            self.unified_analytics.record_metric(
-                f"task_type_{task['type']}_success", int(result.get("success", False))
-            )
+            self.unified_analytics.record_metric(f"task_type_{task['type']}_success", int(result.get("success", False)))
             self.unified_analytics.record_metric(
                 f"agent_{task['assigned_agents'][0]}_performance",
                 result.get("performance", 0.5),

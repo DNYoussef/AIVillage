@@ -35,12 +35,8 @@ def patch_modules(monkeypatch, tmp_path):
         "chromadb",
         types.SimpleNamespace(PersistentClient=DummyPersistentClient),
     )
-    monkeypatch.setitem(
-        sys.modules, "peft", types.SimpleNamespace(LoraModel=DummyLoraModel)
-    )
-    monkeypatch.setitem(
-        sys.modules, "llama_cpp", types.SimpleNamespace(Llama=lambda *a, **k: None)
-    )
+    monkeypatch.setitem(sys.modules, "peft", types.SimpleNamespace(LoraModel=DummyLoraModel))
+    monkeypatch.setitem(sys.modules, "llama_cpp", types.SimpleNamespace(Llama=lambda *a, **k: None))
 
     class DummyConfig:
         pass
@@ -127,6 +123,4 @@ def test_load_compressed_failure(monkeypatch, tmp_path, caplog):
     from twin_runtime import runner
 
     assert runner.LLM is sentinel
-    assert any(
-        "Failed to load compressed model" in rec.message for rec in caplog.records
-    )
+    assert any("Failed to load compressed model" in rec.message for rec in caplog.records)

@@ -8,9 +8,7 @@ from .base_controller import ErrorRateController
 
 
 class LTTErrorController(ErrorRateController):
-    def __init__(
-        self, num_steps: int, target_error_rate: float, confidence_level: float
-    ) -> None:
+    def __init__(self, num_steps: int, target_error_rate: float, confidence_level: float) -> None:
         """Initialize the LTTErrorController.
 
         :param num_steps: The number of steps in the multi-step process.
@@ -50,9 +48,7 @@ class LTTErrorController(ErrorRateController):
         """Compute step error rates based on the calibrated error rate."""
         if self.calibrated_error_rate is not None:
             # Allocate the calibrated error rate across steps
-            self.step_error_rates = [
-                self.calibrated_error_rate / self.num_steps
-            ] * self.num_steps
+            self.step_error_rates = [self.calibrated_error_rate / self.num_steps] * self.num_steps
         else:
             # Use default error rates if not calibrated
             super()._compute_step_error_rates()

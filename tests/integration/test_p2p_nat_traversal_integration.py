@@ -35,9 +35,7 @@ class DummyTCPSocket:
 def test_nat_traversal_flow(monkeypatch) -> None:
     # ---------- Hole punching success ----------
     trav = NATTraversal()
-    monkeypatch.setattr(
-        trav, "detect_nat", lambda: NATInfo("1.2.3.4", 1234, NATType.FULL_CONE)
-    )
+    monkeypatch.setattr(trav, "detect_nat", lambda: NATInfo("1.2.3.4", 1234, NATType.FULL_CONE))
 
     udp_socket = DummyUDPSocket()
 
@@ -59,9 +57,7 @@ def test_nat_traversal_flow(monkeypatch) -> None:
 
     # ---------- Relay fallback ----------
     trav = NATTraversal(relay_servers=[("relay.example.com", 9000)])
-    monkeypatch.setattr(
-        trav, "detect_nat", lambda: NATInfo("9.9.9.9", 9999, NATType.SYMMETRIC)
-    )
+    monkeypatch.setattr(trav, "detect_nat", lambda: NATInfo("9.9.9.9", 9999, NATType.SYMMETRIC))
 
     class FailingUDPSocket(DummyUDPSocket):
         def sendto(self, _data: bytes, _addr: tuple[str, int]) -> None:

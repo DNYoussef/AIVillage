@@ -18,9 +18,7 @@ try:
         ModelAnalyzer,
     )
 except ImportError:
-    pytest.skip(
-        "Compression pipeline dependencies not available", allow_module_level=True
-    )
+    pytest.skip("Compression pipeline dependencies not available", allow_module_level=True)
 
 
 class TestCompressionConfig:
@@ -44,9 +42,7 @@ class TestCompressionConfig:
     def test_config_validation(self):
         """Test configuration parameter validation."""
         # Test valid config
-        config = CompressionConfig(
-            bitnet_zero_threshold=0.05, bitnet_batch_size=8, calibration_samples=500
-        )
+        config = CompressionConfig(bitnet_zero_threshold=0.05, bitnet_batch_size=8, calibration_samples=500)
         assert config.bitnet_zero_threshold == 0.05
         assert config.bitnet_batch_size == 8
         assert config.calibration_samples == 500
@@ -193,58 +189,40 @@ class TestCompressionEvaluator:
         assert evaluator.config is evaluator_config
 
     @pytest.mark.asyncio
-    async def test_model_evaluation(
-        self, evaluator_config, sample_model, mock_tokenizer
-    ):
+    async def test_model_evaluation(self, evaluator_config, sample_model, mock_tokenizer):
         """Test model evaluation process."""
         evaluator = CompressionEvaluator(evaluator_config)
 
-        with patch(
-            "production.compression.compression_pipeline.load_dataset"
-        ) as mock_load:
+        with patch("production.compression.compression_pipeline.load_dataset") as mock_load:
             # Mock dataset
             mock_dataset = Mock()
             mock_dataset.__iter__ = Mock(
-                return_value=iter(
-                    [{"question": "What is 2+2?", "answer": "4"} for _ in range(10)]
-                )
+                return_value=iter([{"question": "What is 2+2?", "answer": "4"} for _ in range(10)])
             )
             mock_load.return_value = mock_dataset
 
             # Mock model generation
-            with patch.object(
-                sample_model, "generate", return_value=torch.tensor([[1, 2, 3]])
-            ):
-                results = await evaluator.evaluate_model(
-                    sample_model, mock_tokenizer, ["gsm8k"]
-                )
+            with patch.object(sample_model, "generate", return_value=torch.tensor([[1, 2, 3]])):
+                results = await evaluator.evaluate_model(sample_model, mock_tokenizer, ["gsm8k"])
 
                 assert "gsm8k" in results
                 assert isinstance(results["gsm8k"], float)
                 assert 0 <= results["gsm8k"] <= 1
 
     @pytest.mark.asyncio
-    async def test_gsm8k_evaluation(
-        self, evaluator_config, sample_model, mock_tokenizer
-    ):
+    async def test_gsm8k_evaluation(self, evaluator_config, sample_model, mock_tokenizer):
         """Test GSM8K evaluation specifically."""
         evaluator = CompressionEvaluator(evaluator_config)
 
-        with patch(
-            "production.compression.compression_pipeline.load_dataset"
-        ) as mock_load:
+        with patch("production.compression.compression_pipeline.load_dataset") as mock_load:
             # Mock GSM8K dataset
             mock_dataset = Mock()
             mock_dataset.__iter__ = Mock(
-                return_value=iter(
-                    [{"question": "What is 2+2?", "answer": "4"} for _ in range(5)]
-                )
+                return_value=iter([{"question": "What is 2+2?", "answer": "4"} for _ in range(5)])
             )
             mock_load.return_value = mock_dataset
 
-            with patch.object(
-                sample_model, "generate", return_value=torch.tensor([[1, 2, 3]])
-            ):
+            with patch.object(sample_model, "generate", return_value=torch.tensor([[1, 2, 3]])):
                 accuracy = await evaluator.evaluate_gsm8k(sample_model, mock_tokenizer)
 
                 assert isinstance(accuracy, float)
@@ -282,9 +260,7 @@ class TestCalibrationDataset:
         """Test WikiText dataset loading."""
         # Mock dataset
         mock_dataset = Mock()
-        mock_dataset.__iter__ = Mock(
-            return_value=iter([{"text": f"Sample text {i}"} for i in range(50)])
-        )
+        mock_dataset.__iter__ = Mock(return_value=iter([{"text": f"Sample text {i}"} for i in range(50)]))
         mock_load_dataset.return_value = mock_dataset
 
         dataset = CalibrationDataset("wikitext", 10)
@@ -298,9 +274,7 @@ class TestCalibrationDataset:
         """Test OpenWebText dataset loading."""
         # Mock dataset
         mock_dataset = Mock()
-        mock_dataset.__iter__ = Mock(
-            return_value=iter([{"text": f"Web text {i}"} for i in range(50)])
-        )
+        mock_dataset.__iter__ = Mock(return_value=iter([{"text": f"Web text {i}"} for i in range(50)]))
         mock_load_dataset.return_value = mock_dataset
 
         dataset = CalibrationDataset("openwebtext", 5)
@@ -354,12 +328,8 @@ class TestCompressionPipeline:
 
     @pytest.mark.asyncio
     @patch("production.compression.compression_pipeline.AutoTokenizer.from_pretrained")
-    @patch(
-        "production.compression.compression_pipeline.AutoModelForCausalLM.from_pretrained"
-    )
-    async def test_model_loading(
-        self, mock_model, mock_tokenizer, pipeline_config, sample_model_path
-    ):
+    @patch("production.compression.compression_pipeline.AutoModelForCausalLM.from_pretrained")
+    async def test_model_loading(self, mock_model, mock_tokenizer, pipeline_config, sample_model_path):
         """Test model loading in pipeline."""
         try:
             CompressionPipeline(pipeline_config)

@@ -5,9 +5,7 @@ import tempfile
 import unittest
 
 repo_root = Path(__file__).resolve().parents[1]
-spec = importlib.util.spec_from_file_location(
-    "adas_system", repo_root / "agent_forge" / "adas" / "system.py"
-)
+spec = importlib.util.spec_from_file_location("adas_system", repo_root / "agent_forge" / "adas" / "system.py")
 adas_module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(adas_module)
 ADASystem = adas_module.ADASystem

@@ -9,6 +9,6 @@ __all__ = [
     "KnowledgeState",
     "LearningProfile",
     "LearningSession",
-    "ShadowSimulator",
     "ProfileManager",
+    "ShadowSimulator",
 ]

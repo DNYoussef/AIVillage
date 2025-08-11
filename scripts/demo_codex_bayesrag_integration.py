@@ -10,7 +10,7 @@ from typing import Any
 import requests
 
 
-def test_current_codex_api():
+def test_current_codex_api() -> bool | None:
     """Test current CODEX RAG API status."""
     print("=== Testing Current CODEX RAG API ===")
 
@@ -62,9 +62,7 @@ def analyze_bayesrag_data():
                             "SELECT AVG(trust_score), MIN(trust_score), MAX(trust_score) FROM global_contexts"
                         )
                         avg_trust, min_trust, max_trust = cursor.fetchone()
-                        print(
-                            f"   🔒 Trust Scores: avg={avg_trust:.3f}, range={min_trust:.3f}-{max_trust:.3f}"
-                        )
+                        print(f"   🔒 Trust Scores: avg={avg_trust:.3f}, range={min_trust:.3f}-{max_trust:.3f}")
 
                         integration_data["articles"] = count
                         integration_data["avg_trust"] = avg_trust
@@ -75,18 +73,14 @@ def analyze_bayesrag_data():
                         print(f"   📝 Chunks: {count}")
 
                         # Get context coverage
-                        cursor = conn.execute(
-                            "SELECT COUNT(*) FROM local_contexts WHERE temporal_context IS NOT NULL"
-                        )
+                        cursor = conn.execute("SELECT COUNT(*) FROM local_contexts WHERE temporal_context IS NOT NULL")
                         temporal_count = cursor.fetchone()[0]
                         cursor = conn.execute(
                             "SELECT COUNT(*) FROM local_contexts WHERE geographic_context IS NOT NULL"
                         )
                         geo_count = cursor.fetchone()[0]
 
-                        temporal_coverage = (
-                            (temporal_count / count) * 100 if count > 0 else 0
-                        )
+                        temporal_coverage = (temporal_count / count) * 100 if count > 0 else 0
                         geo_coverage = (geo_count / count) * 100 if count > 0 else 0
 
                         print(f"   🏷️  Temporal Coverage: {temporal_coverage:.1f}%")
@@ -102,9 +96,7 @@ def analyze_bayesrag_data():
                         print(f"   🕸️  Relationships: {count}")
 
                         # Get average trust weight
-                        cursor = conn.execute(
-                            "SELECT AVG(trust_weight) FROM graph_edges"
-                        )
+                        cursor = conn.execute("SELECT AVG(trust_weight) FROM graph_edges")
                         avg_trust_weight = cursor.fetchone()[0]
                         print(f"   ⭐ Avg Relationship Trust: {avg_trust_weight:.3f}")
 
@@ -119,7 +111,7 @@ def analyze_bayesrag_data():
     return integration_data
 
 
-def demonstrate_integration_potential(integration_data: dict[str, Any]):
+def demonstrate_integration_potential(integration_data: dict[str, Any]) -> None:
     """Demonstrate how BayesRAG data enhances CODEX capabilities."""
     print("\n=== Integration Enhancement Potential ===")
 
@@ -137,18 +129,14 @@ def demonstrate_integration_potential(integration_data: dict[str, Any]):
     print("\n🚀 Integration Benefits for CODEX:")
     print("   • Hierarchical Context: Global summaries + local details")
     print("   • Trust-Weighted Results: Bayesian reliability scoring")
-    print(
-        f"   • Cross-Reference Discovery: {relationships:,} knowledge graph connections"
-    )
+    print(f"   • Cross-Reference Discovery: {relationships:,} knowledge graph connections")
     print("   • Enhanced Metadata: Temporal/geographic/topical context")
     print("   • Query Intelligence: Multi-level query understanding")
 
     print("\n📈 Scale Enhancement Needed:")
     target_articles = 1000
     scale_factor = target_articles / max(articles, 1)
-    print(
-        f"   • Target: {target_articles} articles (scale factor: {scale_factor:.1f}x)"
-    )
+    print(f"   • Target: {target_articles} articles (scale factor: {scale_factor:.1f}x)")
     print(f"   • Projected chunks: ~{int(chunks * scale_factor):,}")
     print(f"   • Projected relationships: ~{int(relationships * scale_factor):,}")
 
@@ -159,7 +147,7 @@ def demonstrate_integration_potential(integration_data: dict[str, Any]):
     print("   • Graph-accelerated retrieval: Use relationships for expansion")
 
 
-def test_sample_integration_query():
+def test_sample_integration_query() -> None:
     """Test how a sample query would work with integrated system."""
     print("\n=== Sample Integrated Query Demonstration ===")
 
@@ -173,9 +161,7 @@ def test_sample_integration_query():
     print("   • Basic relevance scoring")
 
     print("\nBayesRAG-Enhanced CODEX Response:")
-    print(
-        "   • Query context analysis: temporal='1914-1918', geographic='Europe', topic='history'"
-    )
+    print("   • Query context analysis: temporal='1914-1918', geographic='Europe', topic='history'")
     print("   • Hierarchical retrieval: Global overview + local details")
     print("   • Trust-weighted ranking: Results scored by source reliability")
     print("   • Cross-reference expansion: Related causes, consequences, key figures")
@@ -188,7 +174,7 @@ def test_sample_integration_query():
     print("   • Richer results: Global context + detailed local information")
 
 
-def main():
+def main() -> None:
     """Run the complete integration demonstration."""
     print("BayesRAG + CODEX Integration Demonstration")
     print("=" * 60)

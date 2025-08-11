@@ -9,13 +9,13 @@ import time
 from app import app
 import httpx
 import pytest
-import wandb
 
 from agent_forge.prompt_engineering.ab_testing import PromptABTest
 from agent_forge.prompt_engineering.prompt_baker import PromptBaker
 
 # Import modules from the WhatsApp Wave Bridge
 from agent_forge.prompt_engineering.tutor_prompts import TutorPromptEngineer
+import wandb
 
 sys.path.append("services/wave_bridge")
 
@@ -106,9 +106,7 @@ class TestMultiLanguageTutoringFlow:
             ), f"Response took {response_time:.2f}s, target is {PERFORMANCE_TARGET}s"
 
             # Evaluate response quality
-            response_quality = await self.evaluate_response_quality(
-                message_body, "es", "mathematics", "fracciones"
-            )
+            response_quality = await self.evaluate_response_quality(message_body, "es", "mathematics", "fracciones")
 
             assert (
                 response_quality > RESPONSE_QUALITY_THRESHOLD
@@ -120,15 +118,9 @@ class TestMultiLanguageTutoringFlow:
                     "test_case": "spanish_fractions",
                     "response_time": response_time,
                     "response_quality": response_quality,
-                    "language_consistency": self.check_language_consistency(
-                        message_body, "es"
-                    ),
-                    "tutoring_approach_detected": any(
-                        phrase in message_body.lower() for phrase in tutoring_indicators
-                    ),
-                    "mathematical_accuracy": self.check_math_content(
-                        message_body, "fractions"
-                    ),
+                    "language_consistency": self.check_language_consistency(message_body, "es"),
+                    "tutoring_approach_detected": any(phrase in message_body.lower() for phrase in tutoring_indicators),
+                    "mathematical_accuracy": self.check_math_content(message_body, "fractions"),
                     "performance_target_met": response_time < PERFORMANCE_TARGET,
                     "overall_success": True,
                 }
@@ -136,9 +128,7 @@ class TestMultiLanguageTutoringFlow:
 
             print(f"✅ Spanish math tutoring test passed in {response_time:.2f}s")
             print(f"   Response quality: {response_quality:.2f}")
-            print(
-                f"   Language consistency: {self.check_language_consistency(message_body, 'es')}"
-            )
+            print(f"   Language consistency: {self.check_language_consistency(message_body, 'es')}")
 
         finally:
             run.finish()
@@ -196,15 +186,11 @@ class TestMultiLanguageTutoringFlow:
                 "carbon dioxide",
                 "sunlight",
             ]
-            has_english_terms = any(
-                term in message_body.lower() for term in english_science_terms
-            )
+            has_english_terms = any(term in message_body.lower() for term in english_science_terms)
 
             # Either Hindi terms or English terms should be present
             has_hindi_terms = any(word in message_body for word in hindi_indicators)
-            assert (
-                has_hindi_terms or has_english_terms
-            ), "Response should contain scientific terms in Hindi or English"
+            assert has_hindi_terms or has_english_terms, "Response should contain scientific terms in Hindi or English"
 
             # Performance check
             assert response_time < PERFORMANCE_TARGET
@@ -224,9 +210,7 @@ class TestMultiLanguageTutoringFlow:
 
             print(f"✅ Hindi science tutoring test passed in {response_time:.2f}s")
             print(f"   Hindi terms present: {has_hindi_terms}")
-            print(
-                f"   English fallback used: {has_english_terms and not has_hindi_terms}"
-            )
+            print(f"   English fallback used: {has_english_terms and not has_hindi_terms}")
 
         finally:
             run.finish()
@@ -284,9 +268,7 @@ class TestMultiLanguageTutoringFlow:
 
             # Check for code examples (should be present for programming)
             code_indicators = ["def ", "print(", "return", ":", "python"]
-            has_code_example = any(
-                indicator in message_body.lower() for indicator in code_indicators
-            )
+            has_code_example = any(indicator in message_body.lower() for indicator in code_indicators)
 
             # Programming responses should include practical examples
             assert has_code_example, "Programming response should include code examples"
@@ -299,10 +281,7 @@ class TestMultiLanguageTutoringFlow:
                 {
                     "test_case": "french_python_functions",
                     "response_time": response_time,
-                    "french_terms_present": any(
-                        term in message_body.lower()
-                        for term in french_programming_terms
-                    ),
+                    "french_terms_present": any(term in message_body.lower() for term in french_programming_terms),
                     "code_example_included": has_code_example,
                     "performance_target_met": response_time < PERFORMANCE_TARGET,
                     "response_length": len(message_body),
@@ -371,12 +350,8 @@ class TestMultiLanguageTutoringFlow:
                 "cordoba",
             ]
 
-            has_arabic_terms = any(
-                term in message_body for term in arabic_history_terms
-            )
-            has_english_terms = any(
-                term in message_body.lower() for term in english_history_terms
-            )
+            has_arabic_terms = any(term in message_body for term in arabic_history_terms)
+            has_english_terms = any(term in message_body.lower() for term in english_history_terms)
 
             # Either Arabic or English historical terms should be present
             assert (
@@ -478,26 +453,16 @@ class TestMultiLanguageTutoringFlow:
                 )
 
             # Analyze overall greeting performance
-            avg_response_time = sum(r["response_time"] for r in greeting_results) / len(
-                greeting_results
-            )
-            encouragement_rate = sum(
-                r["has_encouragement"] for r in greeting_results
-            ) / len(greeting_results)
-            performance_rate = sum(
-                r["performance_met"] for r in greeting_results
-            ) / len(greeting_results)
+            avg_response_time = sum(r["response_time"] for r in greeting_results) / len(greeting_results)
+            encouragement_rate = sum(r["has_encouragement"] for r in greeting_results) / len(greeting_results)
+            performance_rate = sum(r["performance_met"] for r in greeting_results) / len(greeting_results)
 
             # Validate acceptance criteria
             assert (
                 avg_response_time < PERFORMANCE_TARGET
             ), f"Average response time {avg_response_time:.2f}s exceeds target"
-            assert (
-                encouragement_rate >= 0.95
-            ), f"Encouragement rate {encouragement_rate:.1%} below 95% requirement"
-            assert (
-                performance_rate >= 0.95
-            ), f"Performance rate {performance_rate:.1%} below 95% requirement"
+            assert encouragement_rate >= 0.95, f"Encouragement rate {encouragement_rate:.1%} below 95% requirement"
+            assert performance_rate >= 0.95, f"Performance rate {performance_rate:.1%} below 95% requirement"
 
             # Log summary
             wandb.log(
@@ -611,9 +576,7 @@ class TestMultiLanguageTutoringFlow:
 
     # Helper methods
 
-    async def evaluate_response_quality(
-        self, response: str, language: str, subject: str, topic: str
-    ) -> float:
+    async def evaluate_response_quality(self, response: str, language: str, subject: str, topic: str) -> float:
         """Evaluate response quality based on multiple criteria"""
 
         score = 0.0
@@ -656,9 +619,7 @@ class TestMultiLanguageTutoringFlow:
 
         return min(1.0, score)
 
-    def check_language_consistency(
-        self, response: str, expected_language: str
-    ) -> float:
+    def check_language_consistency(self, response: str, expected_language: str) -> float:
         """Check if response maintains expected language"""
 
         language_patterns = {
@@ -684,9 +645,7 @@ class TestMultiLanguageTutoringFlow:
 
         if math_topic == "fractions":
             fraction_indicators = ["/", "numerador", "denominador", "fracción", "común"]
-            return float(
-                any(indicator in response.lower() for indicator in fraction_indicators)
-            )
+            return float(any(indicator in response.lower() for indicator in fraction_indicators))
 
         return 1.0  # Default to correct for other topics
 
@@ -831,16 +790,12 @@ async def test_acceptance_criteria_validation():
         )
 
         # Assertions for test validation
-        assert results[
-            "response_time_under_5s"
-        ], f"Average response time {avg_response_time:.2f}s exceeds 5s target"
+        assert results["response_time_under_5s"], f"Average response time {avg_response_time:.2f}s exceeds 5s target"
         assert (
             results["languages_auto_detected"] >= 7
         ), f"Only {results['languages_auto_detected']} languages tested, need 7+"
         assert results["wandb_tracking_active"], "W&B tracking not active"
-        assert (
-            results["ab_tests_running"] >= 4
-        ), f"Only {results['ab_tests_running']} A/B tests running, need 4+"
+        assert results["ab_tests_running"] >= 4, f"Only {results['ab_tests_running']} A/B tests running, need 4+"
         assert (
             results["encouragement_rate"] >= 0.95
         ), f"Encouragement rate {results['encouragement_rate']:.1%} below 95%"

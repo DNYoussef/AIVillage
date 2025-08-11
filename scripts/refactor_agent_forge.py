@@ -251,9 +251,7 @@ class AgentForge:
 
         return templates
 
-    def forge_agent(
-        self, role: AgentRole, custom_config: dict | None = None
-    ) -> BaseMetaAgent:
+    def forge_agent(self, role: AgentRole, custom_config: dict | None = None) -> BaseMetaAgent:
         """Create a new specialized agent."""
         if role not in self.agent_templates:
             msg = f"No template for role: {role}"
@@ -298,9 +296,7 @@ class AgentForge:
                 if not self.performance_history:
                     return {"overall": 0.5}
 
-                success_rate = sum(
-                    1 for p in self.performance_history if p["success"]
-                ) / len(self.performance_history)
+                success_rate = sum(1 for p in self.performance_history if p["success"]) / len(self.performance_history)
 
                 return {"success_rate": success_rate}
 
@@ -390,12 +386,8 @@ class AgentSpecializationEngine:
         class CodingModule(torch.nn.Module):
             def __init__(self, hidden_dim=512) -> None:
                 super().__init__()
-                self.code_understanding = torch.nn.LSTM(
-                    hidden_dim, hidden_dim, num_layers=2
-                )
-                self.syntax_checker = torch.nn.Linear(
-                    hidden_dim, 100
-                )  # Common syntax patterns
+                self.code_understanding = torch.nn.LSTM(hidden_dim, hidden_dim, num_layers=2)
+                self.syntax_checker = torch.nn.Linear(hidden_dim, 100)  # Common syntax patterns
                 self.code_generator = torch.nn.TransformerDecoder(
                     torch.nn.TransformerDecoderLayer(hidden_dim, nhead=8), num_layers=4
                 )
@@ -451,9 +443,7 @@ class AgentSpecializationEngine:
             def __init__(self, hidden_dim=512) -> None:
                 super().__init__()
                 self.hypothesis_generator = torch.nn.LSTM(hidden_dim, hidden_dim)
-                self.evidence_evaluator = torch.nn.MultiheadAttention(
-                    hidden_dim, num_heads=8
-                )
+                self.evidence_evaluator = torch.nn.MultiheadAttention(hidden_dim, num_heads=8)
                 self.conclusion_synthesizer = torch.nn.TransformerEncoder(
                     torch.nn.TransformerEncoderLayer(hidden_dim, nhead=8), num_layers=2
                 )
@@ -464,9 +454,7 @@ class AgentSpecializationEngine:
 
                 # Evaluate against evidence
                 if evidence is not None:
-                    evaluated, _ = self.evidence_evaluator(
-                        hypotheses, evidence, evidence
-                    )
+                    evaluated, _ = self.evidence_evaluator(hypotheses, evidence, evidence)
                 else:
                     evaluated = hypotheses
 
@@ -484,9 +472,7 @@ class AgentSpecializationEngine:
             def __init__(self, hidden_dim=512) -> None:
                 super().__init__()
                 self.state_encoder = torch.nn.Linear(hidden_dim, hidden_dim)
-                self.dynamics_predictor = torch.nn.LSTM(
-                    hidden_dim, hidden_dim, num_layers=3
-                )
+                self.dynamics_predictor = torch.nn.LSTM(hidden_dim, hidden_dim, num_layers=3)
                 self.force_calculator = torch.nn.Sequential(
                     torch.nn.Linear(hidden_dim, hidden_dim // 2),
                     torch.nn.ReLU(),
@@ -601,11 +587,7 @@ def create_agent_templates() -> None:
             "primary_capabilities": [],
             "secondary_capabilities": [],
             "default_config": {
-                "model_size": (
-                    "small"
-                    if role in [AgentRole.POLYGLOT, AgentRole.TUTOR]
-                    else "medium"
-                ),
+                "model_size": ("small" if role in [AgentRole.POLYGLOT, AgentRole.TUTOR] else "medium"),
                 "update_frequency": "daily",
                 "specialization_depth": 0.8,
             },

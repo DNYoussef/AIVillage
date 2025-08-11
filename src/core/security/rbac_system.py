@@ -91,7 +91,7 @@ class AccessDeniedException(Exception):
 class RBACSystem:
     """Role-Based Access Control system."""
 
-    def __init__(self, db_path: str | None = None):
+    def __init__(self, db_path: str | None = None) -> None:
         """Initialize RBAC system.
 
         Args:
@@ -125,7 +125,7 @@ class RBACSystem:
         finally:
             conn.close()
 
-    def _init_database(self):
+    def _init_database(self) -> None:
         """Initialize RBAC database schema."""
         with self._get_connection() as conn:
             # Roles table
@@ -265,7 +265,7 @@ class RBACSystem:
             for index_sql in indexes:
                 conn.execute(index_sql)
 
-    def _init_default_roles(self):
+    def _init_default_roles(self) -> None:
         """Initialize default roles and permissions."""
         # Define default role hierarchy and permissions
         role_configs = {
@@ -450,10 +450,10 @@ class RBACSystem:
         self,
         user_id: str,
         username: str,
-        email: str = None,
-        password_hash: str = None,
-        password_salt: str = None,
-        roles: list[Role] = None,
+        email: str | None = None,
+        password_hash: str | None = None,
+        password_salt: str | None = None,
+        roles: list[Role] | None = None,
         **kwargs,
     ) -> bool:
         """Create new user with roles.
@@ -497,13 +497,11 @@ class RBACSystem:
                 for role in roles:
                     self.assign_role_to_user(user_id, role)
 
-                logger.info(
-                    f"Created user: {username} ({user_id}) with roles: {[r.value for r in roles]}"
-                )
+                logger.info(f"Created user: {username} ({user_id}) with roles: {[r.value for r in roles]}")
                 return True
 
             except sqlite3.IntegrityError as e:
-                logger.error(f"Failed to create user {username}: {e}")
+                logger.exception(f"Failed to create user {username}: {e}")
                 return False
 
     def assign_role_to_user(
@@ -538,9 +536,7 @@ class RBACSystem:
                 return True
 
             except Exception as e:
-                logger.error(
-                    f"Failed to assign role {role.value} to user {user_id}: {e}"
-                )
+                logger.exception(f"Failed to assign role {role.value} to user {user_id}: {e}")
                 return False
 
     def revoke_role_from_user(self, user_id: str, role: Role) -> bool:
@@ -584,9 +580,7 @@ class RBACSystem:
             )
 
             role_names = [row[0] for row in cursor.fetchall()]
-            return [
-                Role(name) for name in role_names if name in [r.value for r in Role]
-            ]
+            return [Role(name) for name in role_names if name in [r.value for r in Role]]
 
     def get_user_permissions(self, user_id: str) -> set[Permission]:
         """Get all permissions for user based on their roles.
@@ -634,11 +628,7 @@ class RBACSystem:
             )
 
             permission_names = [row[0] for row in cursor.fetchall()]
-            return {
-                Permission(name)
-                for name in permission_names
-                if name in [p.value for p in Permission]
-            }
+            return {Permission(name) for name in permission_names if name in [p.value for p in Permission]}
 
     def _get_inherited_permissions(self, role: Role) -> set[Permission]:
         """Get permissions inherited from parent roles.
@@ -669,18 +659,14 @@ class RBACSystem:
                     inherited_permissions.update(parent_permissions)
 
                     # Recursively get grandparent permissions
-                    grandparent_permissions = self._get_inherited_permissions(
-                        parent_role
-                    )
+                    grandparent_permissions = self._get_inherited_permissions(parent_role)
                     inherited_permissions.update(grandparent_permissions)
                 except ValueError:
                     pass  # Invalid parent role
 
         return inherited_permissions
 
-    def check_permission(
-        self, user_id: str, permission: Permission, resource_id: str = None
-    ) -> bool:
+    def check_permission(self, user_id: str, permission: Permission, resource_id: str | None = None) -> bool:
         """Check if user has specific permission.
 
         Args:
@@ -699,9 +685,7 @@ class RBACSystem:
 
         return has_permission
 
-    def require_permission(
-        self, user_id: str, permission: Permission, resource_id: str = None
-    ):
+    def require_permission(self, user_id: str, permission: Permission, resource_id: str | None = None) -> None:
         """Require user to have permission, raise exception if not.
 
         Args:
@@ -713,21 +697,20 @@ class RBACSystem:
             AccessDeniedException: If user lacks permission
         """
         if not self.check_permission(user_id, permission, resource_id):
-            raise AccessDeniedException(
-                f"User {user_id} does not have permission {permission.value}"
-            )
+            msg = f"User {user_id} does not have permission {permission.value}"
+            raise AccessDeniedException(msg)
 
     def _log_access(
         self,
         user_id: str,
         action: str,
-        resource: str = None,
+        resource: str | None = None,
         access_granted: bool = True,
-        denial_reason: str = None,
-        ip_address: str = None,
-        user_agent: str = None,
-        session_id: str = None,
-    ):
+        denial_reason: str | None = None,
+        ip_address: str | None = None,
+        user_agent: str | None = None,
+        session_id: str | None = None,
+    ) -> None:
         """Log access attempt.
 
         Args:
@@ -761,9 +744,7 @@ class RBACSystem:
                 ),
             )
 
-    def get_access_log(
-        self, user_id: str = None, limit: int = 100
-    ) -> list[dict[str, Any]]:
+    def get_access_log(self, user_id: str | None = None, limit: int = 100) -> list[dict[str, Any]]:
         """Get access log entries.
 
         Args:
@@ -860,7 +841,8 @@ def require_permission(permission: Permission):
             # Get user_id from function arguments or context
             user_id = kwargs.get("user_id") or getattr(args[0], "user_id", None)
             if not user_id:
-                raise AccessDeniedException("No user context for permission check")
+                msg = "No user context for permission check"
+                raise AccessDeniedException(msg)
 
             # Get RBAC instance (assume global instance)
             rbac = get_rbac_instance()

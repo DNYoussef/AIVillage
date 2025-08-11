@@ -190,11 +190,7 @@ def _load_self_evolving_system():
 
     spec = importlib.util.spec_from_file_location(
         "unified_base_agent",
-        Path(__file__).resolve().parents[1]
-        / "experimental"
-        / "agents"
-        / "agents"
-        / "unified_base_agent.py",
+        Path(__file__).resolve().parents[1] / "experimental" / "agents" / "agents" / "unified_base_agent.py",
     )
     uba = importlib.util.module_from_spec(spec)
     assert spec.loader is not None
@@ -203,8 +199,7 @@ def _load_self_evolving_system():
 
 
 @pytest.mark.skipif(
-    importlib.util.find_spec("torch") is None
-    or importlib.util.find_spec("transformers") is None,
+    importlib.util.find_spec("torch") is None or importlib.util.find_spec("transformers") is None,
     reason="torch and transformers are required",
 )
 def test_quiet_star_integration():
@@ -213,11 +208,7 @@ def test_quiet_star_integration():
 
     qs_spec = importlib.util.spec_from_file_location(
         "quiet_star",
-        Path(__file__).resolve().parents[1]
-        / "experimental"
-        / "training"
-        / "training"
-        / "quiet_star.py",
+        Path(__file__).resolve().parents[1] / "experimental" / "training" / "training" / "quiet_star.py",
     )
     qs_module = importlib.util.module_from_spec(qs_spec)
     assert qs_spec.loader is not None
@@ -249,11 +240,7 @@ def test_expert_vectors_integration():
 
     ev_spec = importlib.util.spec_from_file_location(
         "expert_vectors",
-        Path(__file__).resolve().parents[1]
-        / "experimental"
-        / "training"
-        / "training"
-        / "expert_vectors.py",
+        Path(__file__).resolve().parents[1] / "experimental" / "training" / "training" / "expert_vectors.py",
     )
     ev_module = importlib.util.module_from_spec(ev_spec)
     assert ev_spec.loader is not None
@@ -276,11 +263,7 @@ def test_adas_integration(tmp_path):
 
     adas_spec = importlib.util.spec_from_file_location(
         "adas_system",
-        Path(__file__).resolve().parents[1]
-        / "src"
-        / "agent_forge"
-        / "adas"
-        / "system.py",
+        Path(__file__).resolve().parents[1] / "src" / "agent_forge" / "adas" / "system.py",
     )
     adas_module = importlib.util.module_from_spec(adas_spec)
     assert adas_spec.loader is not None
@@ -292,9 +275,5 @@ def test_adas_integration(tmp_path):
     (model_dir / "weights.bin").write_text("data")
     ses.adas_optimizer = adas_cls(str(model_dir))
     out_dir = tmp_path / "out"
-    optimized_path = ses.adas_optimizer.optimize_agent_architecture(
-        str(out_dir), iterations=2
-    )
-    assert (
-        Path(optimized_path) / "weights.bin"
-    ).exists(), "ADAS optimization did not produce expected output"
+    optimized_path = ses.adas_optimizer.optimize_agent_architecture(str(out_dir), iterations=2)
+    assert (Path(optimized_path) / "weights.bin").exists(), "ADAS optimization did not produce expected output"

@@ -21,9 +21,7 @@ class TestAIVillageException:
 
     def test_exception_creation(self):
         """Test basic exception creation."""
-        context = ErrorContext(
-            component="test", operation="test_operation", details={"key": "value"}
-        )
+        context = ErrorContext(component="test", operation="test_operation", details={"key": "value"})
         exc = AIVillageException(
             "Test error",
             severity=ErrorSeverity.CRITICAL,
@@ -164,9 +162,7 @@ class TestWithErrorHandlingDecorator:
         """Test decorator when retries are exhausted."""
         attempts = 0
 
-        @with_error_handling(
-            component="test", operation="retry_exhausted", max_retries=1
-        )
+        @with_error_handling(component="test", operation="retry_exhausted", max_retries=1)
         def retry_exhausted():
             nonlocal attempts
             attempts += 1

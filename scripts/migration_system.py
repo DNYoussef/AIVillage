@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 class DatabaseMigrator:
     """Handles schema migrations for CODEX databases."""
 
-    def __init__(self, db_path: str):
+    def __init__(self, db_path: str) -> None:
         self.db_path = Path(db_path)
         self.connection = None
         self.current_version = 0
@@ -61,7 +61,7 @@ class DatabaseMigrator:
 
         return self.current_version
 
-    def create_schema_version_table(self):
+    def create_schema_version_table(self) -> None:
         """Create schema_version table if it doesn't exist."""
         self.connection.execute(
             """
@@ -73,18 +73,16 @@ class DatabaseMigrator:
         """
         )
 
-    def record_migration(self, version: int, description: str):
+    def record_migration(self, version: int, description: str) -> None:
         """Record a successful migration."""
         self.connection.execute(
             "INSERT OR REPLACE INTO schema_version (version, description) VALUES (?, ?)",
             (version, description),
         )
 
-    def rollback_migration(self, version: int):
+    def rollback_migration(self, version: int) -> None:
         """Remove a migration record."""
-        self.connection.execute(
-            "DELETE FROM schema_version WHERE version = ?", (version,)
-        )
+        self.connection.execute("DELETE FROM schema_version WHERE version = ?", (version,))
 
     def rename_column_if_exists(self, table: str, old: str, new: str) -> None:
         """Rename a column if the old name exists and new one is missing."""
@@ -93,7 +91,7 @@ class DatabaseMigrator:
         if old in columns and new not in columns:
             self.connection.execute(f"ALTER TABLE {table} RENAME COLUMN {old} TO {new}")
 
-    def close(self):
+    def close(self) -> None:
         """Close database connection."""
         if self.connection:
             self.connection.close()
@@ -101,12 +99,12 @@ class DatabaseMigrator:
 
 
 class EvolutionMetricsMigrator(DatabaseMigrator):
-    """Migration handler for evolution_metrics.db"""
+    """Migration handler for evolution_metrics.db."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__("data/evolution_metrics.db")
 
-    def migrate_to_v1(self):
+    def migrate_to_v1(self) -> None:
         """Create schema and seed data for evolution metrics."""
         logger.info("Creating evolution metrics schema v1...")
 
@@ -203,9 +201,7 @@ class EvolutionMetricsMigrator(DatabaseMigrator):
         self.connection.execute(
             "INSERT INTO evolution_rounds (round_number, population_size, avg_fitness) VALUES (1, 10, 0.5)"
         )
-        round_id = self.connection.execute(
-            "SELECT id FROM evolution_rounds WHERE round_number=1"
-        ).fetchone()[0]
+        round_id = self.connection.execute("SELECT id FROM evolution_rounds WHERE round_number=1").fetchone()[0]
         self.connection.execute(
             "INSERT INTO fitness_metrics (round_id, agent_id, metric_name, metric_value) VALUES (?, ?, ?, ?)",
             (round_id, "agent_1", "accuracy", 0.8),
@@ -225,7 +221,7 @@ class EvolutionMetricsMigrator(DatabaseMigrator):
         self.record_migration(1, "Initial evolution metrics schema")
         logger.info("Evolution metrics schema v1 created successfully")
 
-    def run_migrations(self):
+    def run_migrations(self) -> None:
         """Run all necessary migrations."""
         self.connect()
         self.create_schema_version_table()
@@ -238,12 +234,12 @@ class EvolutionMetricsMigrator(DatabaseMigrator):
 
 
 class DigitalTwinMigrator(DatabaseMigrator):
-    """Migration handler for digital_twin.db"""
+    """Migration handler for digital_twin.db."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__("data/digital_twin.db")
 
-    def migrate_to_v1(self):
+    def migrate_to_v1(self) -> None:
         """Create schema and seed data for digital twin."""
         logger.info("Creating digital twin schema v1...")
 
@@ -333,9 +329,7 @@ class DigitalTwinMigrator(DatabaseMigrator):
             encryption = DigitalTwinEncryption()
         except DigitalTwinEncryptionError:
             raw_key = os.urandom(32)
-            os.environ["DIGITAL_TWIN_ENCRYPTION_KEY"] = base64.b64encode(
-                raw_key
-            ).decode()
+            os.environ["DIGITAL_TWIN_ENCRYPTION_KEY"] = base64.b64encode(raw_key).decode()
             encryption = DigitalTwinEncryption()
 
         enc_name = encryption.encrypt_sensitive_field("Seed Learner", "name")
@@ -365,7 +359,7 @@ class DigitalTwinMigrator(DatabaseMigrator):
         self.record_migration(1, "Initial digital twin schema")
         logger.info("Digital twin schema v1 created successfully")
 
-    def run_migrations(self):
+    def run_migrations(self) -> None:
         """Run all necessary migrations."""
         self.connect()
         self.create_schema_version_table()
@@ -378,12 +372,12 @@ class DigitalTwinMigrator(DatabaseMigrator):
 
 
 class RAGIndexMigrator(DatabaseMigrator):
-    """Migration handler for rag_index.db"""
+    """Migration handler for rag_index.db."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__("data/rag_index.db")
 
-    def migrate_to_v1(self):
+    def migrate_to_v1(self) -> None:
         """Create schema and seed data for RAG index."""
         logger.info("Creating RAG index schema v1...")
 
@@ -480,7 +474,7 @@ class RAGIndexMigrator(DatabaseMigrator):
         self.record_migration(1, "Initial RAG index schema")
         logger.info("RAG index schema v1 created successfully")
 
-    def run_migrations(self):
+    def run_migrations(self) -> None:
         """Run all necessary migrations."""
         self.connect()
         self.create_schema_version_table()
@@ -511,11 +505,9 @@ def main():
             migrator.run_migrations()
             success_count += 1
         except Exception as e:
-            logger.error(f"Migration failed for {migrator.__class__.__name__}: {e}")
+            logger.exception(f"Migration failed for {migrator.__class__.__name__}: {e}")
 
-    print(
-        f"\nMigration complete: {success_count}/{len(migrators)} databases migrated successfully"
-    )
+    print(f"\nMigration complete: {success_count}/{len(migrators)} databases migrated successfully")
 
     # Verify databases exist
     data_dir = Path("data")
@@ -535,4 +527,4 @@ def main():
 
 if __name__ == "__main__":
     success = main()
-    exit(0 if success else 1)
+    sys.exit(0 if success else 1)

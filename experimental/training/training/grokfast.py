@@ -31,9 +31,7 @@ class GrokFastTask(Task):
     async def _filter_ma(self) -> None:
         if self.grads is None:
             self.grads = {
-                n: deque(maxlen=self.window_size)
-                for n, p in self.model.named_parameters()
-                if p.requires_grad
+                n: deque(maxlen=self.window_size) for n, p in self.model.named_parameters() if p.requires_grad
             }
 
         for n, p in self.model.named_parameters():
@@ -46,17 +44,11 @@ class GrokFastTask(Task):
 
     async def _filter_ema(self) -> None:
         if self.grads is None:
-            self.grads = {
-                n: p.grad.data.detach()
-                for n, p in self.model.named_parameters()
-                if p.requires_grad
-            }
+            self.grads = {n: p.grad.data.detach() for n, p in self.model.named_parameters() if p.requires_grad}
 
         for n, p in self.model.named_parameters():
             if p.requires_grad:
-                self.grads[n] = self.grads[n] * self.alpha + p.grad.data.detach() * (
-                    1 - self.alpha
-                )
+                self.grads[n] = self.grads[n] * self.alpha + p.grad.data.detach() * (1 - self.alpha)
                 p.grad.data = p.grad.data + self.grads[n] * self.lamb
 
     async def run(self) -> str:

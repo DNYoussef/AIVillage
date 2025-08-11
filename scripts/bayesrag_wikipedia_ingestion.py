@@ -81,7 +81,7 @@ class GraphEdge:
 class BayesRAGWikipediaIngestion:
     """Enhanced Wikipedia ingestion with BayesRAG and graph relationships."""
 
-    def __init__(self, data_dir: Path = Path("data")):
+    def __init__(self, data_dir: Path = Path("data")) -> None:
         self.data_dir = data_dir
         self.data_dir.mkdir(parents=True, exist_ok=True)
 
@@ -98,7 +98,7 @@ class BayesRAGWikipediaIngestion:
 
         self._init_databases()
 
-    def _init_databases(self):
+    def _init_databases(self) -> None:
         """Initialize SQLite databases for contexts and graph."""
         # Global context database
         with sqlite3.connect(self.global_db_path) as conn:
@@ -192,9 +192,7 @@ class BayesRAGWikipediaIngestion:
 
         # Citation density (looking for citation patterns)
         citation_patterns = content.count("[") + content.count("{{cite")
-        factors["citation_density"] = min(
-            citation_patterns / max(word_count / 1000, 1), 1.0
-        )
+        factors["citation_density"] = min(citation_patterns / max(word_count / 1000, 1), 1.0)
 
         # Content quality based on length and structure
         if word_count > 5000:
@@ -259,13 +257,9 @@ class BayesRAGWikipediaIngestion:
                 tags.add("geography")
             elif any(term in category.lower() for term in ["history", "historical"]):
                 tags.add("history")
-            elif any(
-                term in category.lower() for term in ["science", "physics", "biology"]
-            ):
+            elif any(term in category.lower() for term in ["science", "physics", "biology"]):
                 tags.add("science")
-            elif any(
-                term in category.lower() for term in ["art", "culture", "literature"]
-            ):
+            elif any(term in category.lower() for term in ["art", "culture", "literature"]):
                 tags.add("culture")
             elif any(term in category.lower() for term in ["politics", "government"]):
                 tags.add("politics")
@@ -278,23 +272,16 @@ class BayesRAGWikipediaIngestion:
             tags.add("historical-period")
 
         # Geographic indicators
-        if any(
-            geo in content_lower for geo in ["country", "city", "region", "continent"]
-        ):
+        if any(geo in content_lower for geo in ["country", "city", "region", "continent"]):
             tags.add("geography")
 
         # Scientific indicators
-        if any(
-            sci in content_lower
-            for sci in ["research", "study", "theory", "experiment"]
-        ):
+        if any(sci in content_lower for sci in ["research", "study", "theory", "experiment"]):
             tags.add("science")
 
         return list(tags)
 
-    def create_hierarchical_chunks(
-        self, content: str, title: str, chunk_size: int = 1000
-    ) -> list[LocalContext]:
+    def create_hierarchical_chunks(self, content: str, title: str, chunk_size: int = 1000) -> list[LocalContext]:
         """Create hierarchical chunks with local context."""
         chunks = []
 
@@ -307,14 +294,12 @@ class BayesRAGWikipediaIngestion:
             # Further split long sections into smaller chunks
             section_chunks = self._split_into_chunks(section_content, chunk_size)
 
-            for i, chunk_content in enumerate(section_chunks):
+            for _i, chunk_content in enumerate(section_chunks):
                 chunk_id = f"{title}_{chunk_id_counter:04d}"
                 chunk_id_counter += 1
 
                 # Generate local summary
-                local_summary = self._generate_local_summary(
-                    chunk_content, section_title
-                )
+                local_summary = self._generate_local_summary(chunk_content, section_title)
 
                 # Extract local tags
                 local_tags = self._extract_local_tags(chunk_content, section_title)
@@ -453,10 +438,7 @@ class BayesRAGWikipediaIngestion:
             return f"{min_year}-{max_year}"
 
         # Look for period indicators
-        if any(
-            period in content.lower()
-            for period in ["medieval", "renaissance", "industrial revolution"]
-        ):
+        if any(period in content.lower() for period in ["medieval", "renaissance", "industrial revolution"]):
             for period in ["medieval", "renaissance", "industrial revolution"]:
                 if period in content.lower():
                     return period
@@ -501,23 +483,20 @@ class BayesRAGWikipediaIngestion:
 
         return list(set(cross_refs))
 
-    async def ingest_article_with_bayesrag(
-        self, title: str
-    ) -> tuple[GlobalContext, list[LocalContext]]:
+    async def ingest_article_with_bayesrag(self, title: str) -> tuple[GlobalContext, list[LocalContext]]:
         """Ingest single Wikipedia article with full BayesRAG processing."""
         logger.info(f"Ingesting article: {title}")
 
         try:
             # Initialize Wikipedia API
-            wiki_wiki = wikipedia.Wikipedia(
-                language="en", user_agent="BayesRAG/1.0 (AIVillage Research Project)"
-            )
+            wiki_wiki = wikipedia.Wikipedia(language="en", user_agent="BayesRAG/1.0 (AIVillage Research Project)")
 
             # Fetch Wikipedia article
             page = wiki_wiki.page(title)
 
             if not page.exists():
-                raise ValueError(f"Wikipedia page '{title}' does not exist")
+                msg = f"Wikipedia page '{title}' does not exist"
+                raise ValueError(msg)
 
             # Create article data structure
             page_data = {
@@ -532,9 +511,7 @@ class BayesRAGWikipediaIngestion:
 
             # Generate global context
             global_summary = self.generate_global_summary(page_data["content"], title)
-            global_tags = self.extract_global_tags(
-                page_data["content"], page_data["categories"]
-            )
+            global_tags = self.extract_global_tags(page_data["content"], page_data["categories"])
 
             global_context = GlobalContext(
                 title=title,
@@ -549,9 +526,7 @@ class BayesRAGWikipediaIngestion:
             )
 
             # Create hierarchical chunks
-            local_contexts = self.create_hierarchical_chunks(
-                page_data["content"], title
-            )
+            local_contexts = self.create_hierarchical_chunks(page_data["content"], title)
 
             # Generate embeddings for chunks
             for local_context in local_contexts:
@@ -562,19 +537,15 @@ class BayesRAGWikipediaIngestion:
             # Store in databases
             await self._store_contexts(global_context, local_contexts)
 
-            logger.info(
-                f"Successfully ingested {title}: {len(local_contexts)} chunks, trust={trust_score:.3f}"
-            )
+            logger.info(f"Successfully ingested {title}: {len(local_contexts)} chunks, trust={trust_score:.3f}")
 
             return global_context, local_contexts
 
         except Exception as e:
-            logger.error(f"Error ingesting {title}: {e}")
+            logger.exception(f"Error ingesting {title}: {e}")
             raise
 
-    async def _store_contexts(
-        self, global_context: GlobalContext, local_contexts: list[LocalContext]
-    ):
+    async def _store_contexts(self, global_context: GlobalContext, local_contexts: list[LocalContext]) -> None:
         """Store global and local contexts in databases."""
         # Store global context
         with sqlite3.connect(self.global_db_path) as conn:
@@ -602,9 +573,7 @@ class BayesRAGWikipediaIngestion:
         # Store local contexts
         with sqlite3.connect(self.local_db_path) as conn:
             for local_context in local_contexts:
-                embedding_bytes = getattr(
-                    local_context, "_embedding", np.array([])
-                ).tobytes()
+                embedding_bytes = getattr(local_context, "_embedding", np.array([])).tobytes()
 
                 conn.execute(
                     """
@@ -631,7 +600,7 @@ class BayesRAGWikipediaIngestion:
                 )
 
 
-async def main():
+async def main() -> None:
     """Test the BayesRAG Wikipedia ingestion system."""
     ingestion = BayesRAGWikipediaIngestion()
 
@@ -648,9 +617,7 @@ async def main():
     for article in test_articles:
         try:
             start_time = time.time()
-            global_ctx, local_ctxs = await ingestion.ingest_article_with_bayesrag(
-                article
-            )
+            global_ctx, local_ctxs = await ingestion.ingest_article_with_bayesrag(article)
 
             processing_time = time.time() - start_time
 
@@ -670,7 +637,7 @@ async def main():
                 print(f"Geographic: {sample_chunk.geographic_context}")
 
         except Exception as e:
-            logger.error(f"Failed to ingest {article}: {e}")
+            logger.exception(f"Failed to ingest {article}: {e}")
 
     logger.info("BayesRAG Wikipedia ingestion test completed")
 

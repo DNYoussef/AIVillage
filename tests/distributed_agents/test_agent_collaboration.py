@@ -14,9 +14,7 @@ async def test_agent_collaboration_protocol(orchestrator_setup, monkeypatch):
     async def _instant_monitor(self):
         return
 
-    monkeypatch.setattr(
-        DistributedAgentOrchestrator, "_monitor_agent_collaboration", _instant_monitor
-    )
+    monkeypatch.setattr(DistributedAgentOrchestrator, "_monitor_agent_collaboration", _instant_monitor)
 
     await orchestrator.enable_cross_device_collaboration()
 

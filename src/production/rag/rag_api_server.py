@@ -18,9 +18,7 @@ import uvicorn
 from rag_system.core.codex_rag_integration import CODEXRAGPipeline, Document
 
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 # CODEX-specified port
@@ -43,12 +41,8 @@ class DocumentInput(BaseModel):
     id: str = Field(..., description="Unique document identifier")
     title: str = Field(..., description="Document title")
     content: str = Field(..., description="Document content")
-    source_type: str = Field(
-        "wikipedia", description="Source type (wikipedia, educational, etc.)"
-    )
-    metadata: dict[str, Any] | None = Field(
-        default_factory=dict, description="Additional metadata"
-    )
+    source_type: str = Field("wikipedia", description="Source type (wikipedia, educational, etc.)")
+    metadata: dict[str, Any] | None = Field(default_factory=dict, description="Additional metadata")
 
 
 class QueryRequest(BaseModel):
@@ -89,7 +83,7 @@ class HealthResponse(BaseModel):
 
 
 @app.on_event("startup")
-async def startup_event():
+async def startup_event() -> None:
     """Initialize the RAG pipeline on startup."""
     global pipeline
     logger.info("Starting CODEX RAG API server...")
@@ -109,12 +103,12 @@ async def startup_event():
                 logger.info(f"Loaded {stats['documents_processed']} Wikipedia articles")
 
     except Exception as e:
-        logger.error(f"Failed to initialize pipeline: {e}")
+        logger.exception(f"Failed to initialize pipeline: {e}")
         raise
 
 
 @app.on_event("shutdown")
-async def shutdown_event():
+async def shutdown_event() -> None:
     """Cleanup on shutdown."""
     logger.info("Shutting down RAG API server...")
 
@@ -151,9 +145,7 @@ async def query_documents(request: QueryRequest):
         start_time = time.perf_counter()
 
         # Perform retrieval
-        results, metrics = await pipeline.retrieve(
-            query=request.query, k=request.k, use_cache=request.use_cache
-        )
+        results, metrics = await pipeline.retrieve(query=request.query, k=request.k, use_cache=request.use_cache)
 
         # Format results
         formatted_results = [
@@ -174,10 +166,7 @@ async def query_documents(request: QueryRequest):
 
         # Log slow queries
         if total_latency > 100:
-            logger.warning(
-                f"Slow query detected: '{request.query[:50]}...' "
-                f"took {total_latency:.2f}ms"
-            )
+            logger.warning(f"Slow query detected: '{request.query[:50]}...' " f"took {total_latency:.2f}ms")
 
         return QueryResponse(
             query=request.query,
@@ -187,7 +176,7 @@ async def query_documents(request: QueryRequest):
         )
 
     except Exception as e:
-        logger.error(f"Query error: {e}")
+        logger.exception(f"Query error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -213,12 +202,10 @@ async def index_documents(request: IndexRequest):
         # Index documents
         stats = pipeline.index_documents(documents)
 
-        return JSONResponse(
-            content={"status": "success", "stats": stats, "timestamp": time.time()}
-        )
+        return JSONResponse(content={"status": "success", "stats": stats, "timestamp": time.time()})
 
     except Exception as e:
-        logger.error(f"Indexing error: {e}")
+        logger.exception(f"Indexing error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -268,7 +255,7 @@ async def clear_cache():
         )
 
     except Exception as e:
-        logger.error(f"Cache clear error: {e}")
+        logger.exception(f"Cache clear error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -299,7 +286,7 @@ async def warm_cache(queries: list[str] = Query(...)):
         )
 
     except Exception as e:
-        logger.error(f"Cache warming error: {e}")
+        logger.exception(f"Cache warming error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -316,13 +303,11 @@ async def root():
     }
 
 
-def run_server():
+def run_server() -> None:
     """Run the RAG API server."""
     logger.info(f"Starting RAG API server on port {RAG_API_PORT}...")
 
-    uvicorn.run(
-        app, host="0.0.0.0", port=RAG_API_PORT, log_level="info", access_log=True
-    )
+    uvicorn.run(app, host="0.0.0.0", port=RAG_API_PORT, log_level="info", access_log=True)
 
 
 if __name__ == "__main__":

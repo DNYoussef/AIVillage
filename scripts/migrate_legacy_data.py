@@ -24,16 +24,14 @@ from core.database.database_manager import initialize_databases
 from core.database.migrations import DataMigrator, get_migration_manager
 
 # Set up logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
 class LegacyDataMigrator:
     """Comprehensive legacy data migration system."""
 
-    def __init__(self, database_manager, config_manager=None):
+    def __init__(self, database_manager, config_manager=None) -> None:
         self.database_manager = database_manager
         self.config_manager = config_manager
         self.data_migrator = DataMigrator(database_manager)
@@ -77,7 +75,7 @@ class LegacyDataMigrator:
 
             except Exception as e:
                 phase_duration = time.time() - phase_start
-                logger.error(f"Failed {phase_name}: {e}")
+                logger.exception(f"Failed {phase_name}: {e}")
 
                 results[phase_name.lower().replace(" ", "_")] = {
                     "success": False,
@@ -140,9 +138,7 @@ class LegacyDataMigrator:
             try:
                 logger.info(f"Processing evolution metrics file: {json_file}")
 
-                success = await self.data_migrator.migrate_evolution_metrics_from_json(
-                    str(json_file)
-                )
+                success = await self.data_migrator.migrate_evolution_metrics_from_json(str(json_file))
 
                 if success:
                     results["json_files_processed"] += 1
@@ -166,9 +162,7 @@ class LegacyDataMigrator:
                         logger.info(f"Migrated {record_count} records from {json_file}")
 
                     except Exception as count_error:
-                        logger.warning(
-                            f"Could not count records in {json_file}: {count_error}"
-                        )
+                        logger.warning(f"Could not count records in {json_file}: {count_error}")
 
                 else:
                     results["errors"].append(f"Failed to migrate {json_file}")
@@ -177,7 +171,7 @@ class LegacyDataMigrator:
             except Exception as e:
                 error_msg = f"Error processing {json_file}: {e!s}"
                 results["errors"].append(error_msg)
-                logger.error(error_msg)
+                logger.exception(error_msg)
                 self.migration_stats["evolution_metrics"]["errors"] += 1
 
         # Look for CSV files (alternative format)
@@ -211,7 +205,7 @@ class LegacyDataMigrator:
             except Exception as e:
                 error_msg = f"Error processing CSV {csv_file}: {e!s}"
                 results["errors"].append(error_msg)
-                logger.error(error_msg)
+                logger.exception(error_msg)
                 self.migration_stats["evolution_metrics"]["errors"] += 1
 
         return results
@@ -267,9 +261,7 @@ class LegacyDataMigrator:
                     json.dump(temp_json, f)
 
                 # Migrate using existing JSON migrator
-                success = await self.data_migrator.migrate_evolution_metrics_from_json(
-                    str(temp_file)
-                )
+                success = await self.data_migrator.migrate_evolution_metrics_from_json(str(temp_file))
 
                 # Cleanup temp file
                 if temp_file.exists():
@@ -281,7 +273,7 @@ class LegacyDataMigrator:
         except ImportError:
             logger.warning("CSV module not available, skipping CSV migration")
         except Exception as e:
-            logger.error(f"CSV migration failed: {e}")
+            logger.exception(f"CSV migration failed: {e}")
 
         return records_migrated
 
@@ -312,9 +304,7 @@ class LegacyDataMigrator:
             logger.info(f"Processing profile directory: {profile_dir}")
 
             try:
-                success = await self.data_migrator.migrate_digital_twin_profiles(
-                    str(profile_path)
-                )
+                success = await self.data_migrator.migrate_digital_twin_profiles(str(profile_path))
 
                 if success:
                     results["profile_directories_processed"] += 1
@@ -340,20 +330,16 @@ class LegacyDataMigrator:
                             logger.warning(f"Could not parse {json_file}: {e}")
 
                     self.migration_stats["digital_twin"]["migrated"] += 1
-                    logger.info(
-                        f"Migrated {len(json_files)} profiles from {profile_dir}"
-                    )
+                    logger.info(f"Migrated {len(json_files)} profiles from {profile_dir}")
 
                 else:
-                    results["errors"].append(
-                        f"Failed to migrate profiles from {profile_dir}"
-                    )
+                    results["errors"].append(f"Failed to migrate profiles from {profile_dir}")
                     self.migration_stats["digital_twin"]["errors"] += 1
 
             except Exception as e:
                 error_msg = f"Error processing profile directory {profile_dir}: {e!s}"
                 results["errors"].append(error_msg)
-                logger.error(error_msg)
+                logger.exception(error_msg)
                 self.migration_stats["digital_twin"]["errors"] += 1
 
         # Look for individual profile files
@@ -376,9 +362,7 @@ class LegacyDataMigrator:
                     shutil.copy2(profile_file, temp_file)
 
                     # Migrate
-                    success = await self.data_migrator.migrate_digital_twin_profiles(
-                        str(temp_dir)
-                    )
+                    success = await self.data_migrator.migrate_digital_twin_profiles(str(temp_dir))
 
                     if success:
                         results["profile_files_processed"] += 1
@@ -389,11 +373,9 @@ class LegacyDataMigrator:
                     shutil.rmtree(temp_dir)
 
                 except Exception as e:
-                    error_msg = (
-                        f"Error migrating individual profile {profile_file}: {e!s}"
-                    )
+                    error_msg = f"Error migrating individual profile {profile_file}: {e!s}"
                     results["errors"].append(error_msg)
-                    logger.error(error_msg)
+                    logger.exception(error_msg)
 
         return results
 
@@ -435,7 +417,7 @@ class LegacyDataMigrator:
                     except Exception as e:
                         error_msg = f"Error migrating document {text_file}: {e!s}"
                         results["errors"].append(error_msg)
-                        logger.error(error_msg)
+                        logger.exception(error_msg)
 
                 if text_files:
                     results["document_directories_processed"] += 1
@@ -447,12 +429,12 @@ class LegacyDataMigrator:
             except Exception as e:
                 error_msg = f"Error processing document directory {doc_dir}: {e!s}"
                 results["errors"].append(error_msg)
-                logger.error(error_msg)
+                logger.exception(error_msg)
                 self.migration_stats["rag_index"]["errors"] += 1
 
         return results
 
-    async def _migrate_document_file(self, file_path: Path):
+    async def _migrate_document_file(self, file_path: Path) -> None:
         """Migrate a single document file to RAG database."""
         with open(file_path, encoding="utf-8") as f:
             content = f.read()
@@ -552,12 +534,12 @@ class LegacyDataMigrator:
             except Exception as e:
                 error_msg = f"Error migrating config {config_path}: {e!s}"
                 results["errors"].append(error_msg)
-                logger.error(error_msg)
+                logger.exception(error_msg)
                 self.migration_stats["configuration"]["errors"] += 1
 
         return results
 
-    async def _migrate_json_config(self, config_path: Path):
+    async def _migrate_json_config(self, config_path: Path) -> None:
         """Migrate JSON configuration to new format."""
         with open(config_path) as f:
             config_data = json.load(f)
@@ -580,7 +562,7 @@ class LegacyDataMigrator:
         with open(mapping_file, "w") as f:
             json.dump(migration_record, f, indent=2)
 
-    async def _migrate_env_config(self, env_path: Path):
+    async def _migrate_env_config(self, env_path: Path) -> None:
         """Migrate .env configuration to new format."""
         env_vars = {}
 
@@ -603,7 +585,7 @@ class LegacyDataMigrator:
         with open(migration_file, "w") as f:
             json.dump(migration_record, f, indent=2)
 
-    async def _migrate_ini_config(self, ini_path: Path):
+    async def _migrate_ini_config(self, ini_path: Path) -> None:
         """Migrate INI configuration to new format."""
         try:
             import configparser
@@ -633,9 +615,7 @@ class LegacyDataMigrator:
         except ImportError:
             logger.warning("configparser not available, skipping INI migration")
 
-    def _flatten_dict(
-        self, d: dict[str, Any], parent: dict[str, Any], prefix: str = ""
-    ):
+    def _flatten_dict(self, d: dict[str, Any], parent: dict[str, Any], prefix: str = "") -> None:
         """Flatten nested dictionary for configuration migration."""
         for key, value in d.items():
             new_key = f"{prefix}_{key}".upper() if prefix else key.upper()
@@ -646,7 +626,7 @@ class LegacyDataMigrator:
                 parent[new_key] = value
 
 
-async def main():
+async def main() -> int | None:
     """Main migration script."""
     print("🔄 AIVillage Legacy Data Migration")
     print("=" * 60)
@@ -682,9 +662,7 @@ async def main():
         print("\nPhase Results:")
         for phase, result in migration_results["phase_results"].items():
             status = "✅" if result["success"] else "❌"
-            print(
-                f"  {status} {phase.replace('_', ' ').title()}: {result['duration_seconds']:.2f}s"
-            )
+            print(f"  {status} {phase.replace('_', ' ').title()}: {result['duration_seconds']:.2f}s")
 
             if not result["success"]:
                 print(f"    Error: {result.get('error', 'Unknown error')}")
@@ -692,9 +670,7 @@ async def main():
         print("\nMigration Statistics:")
         for component, stats in migration_results["migration_stats"].items():
             if stats["processed"] > 0:
-                print(
-                    f"  {component}: {stats['migrated']}/{stats['processed']} successful, {stats['errors']} errors"
-                )
+                print(f"  {component}: {stats['migrated']}/{stats['processed']} successful, {stats['errors']} errors")
 
         # Save detailed results
         results_file = Path("migration_results.json")
@@ -712,9 +688,7 @@ async def main():
         print(
             f"Database Health Score: {validation_results['health_score']}/100 ({validation_results['health_status']})"
         )
-        print(
-            f"Tests: {validation_results['passed_tests']}/{validation_results['total_tests']} passed"
-        )
+        print(f"Tests: {validation_results['passed_tests']}/{validation_results['total_tests']} passed")
 
         if validation_results["recommendations"]:
             print("\nRecommendations:")
@@ -724,8 +698,7 @@ async def main():
         await db_manager.close()
 
         success = (
-            migration_results["phases_successful"]
-            == migration_results["phases_completed"]
+            migration_results["phases_successful"] == migration_results["phases_completed"]
             and validation_results["health_score"] > 80
         )
 

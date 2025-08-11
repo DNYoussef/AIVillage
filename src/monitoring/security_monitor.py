@@ -29,9 +29,7 @@ except ImportError:
     PROMETHEUS_AVAILABLE = False
 
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger("aivillage.security")
 
 
@@ -70,15 +68,9 @@ class SecurityMetrics:
                 "Authentication failures",
                 ["user_id", "source_ip"],
             )
-            self.security_events = Counter(
-                "security_events_total", "Security events", ["event_type", "severity"]
-            )
-            self.request_rate = Histogram(
-                "request_duration_seconds", "Request duration"
-            )
-            self.threat_score = Gauge(
-                "threat_score_current", "Current threat score", ["user_id"]
-            )
+            self.security_events = Counter("security_events_total", "Security events", ["event_type", "severity"])
+            self.request_rate = Histogram("request_duration_seconds", "Request duration")
+            self.threat_score = Gauge("threat_score_current", "Current threat score", ["user_id"])
 
             # Start Prometheus metrics server
             start_http_server(8090)
@@ -170,9 +162,7 @@ class ThreatDetector:
         key = f"{user_id}:{endpoint}"
 
         # Clean old requests
-        while (
-            self.request_patterns[key] and self.request_patterns[key][0] < now - window
-        ):
+        while self.request_patterns[key] and self.request_patterns[key][0] < now - window:
             self.request_patterns[key].popleft()
 
         # Add current request
@@ -191,9 +181,7 @@ class ThreatDetector:
 
         return 0.0
 
-    def detect_anomalous_behavior(
-        self, user_id: str, behavior_data: dict[str, Any]
-    ) -> float:
+    def detect_anomalous_behavior(self, user_id: str, behavior_data: dict[str, Any]) -> float:
         """Detect anomalous user behavior."""
         threat_score = 0.0
 
@@ -246,15 +234,11 @@ class SecurityAlertManager:
         }
 
         # Log alert
-        logger.critical(
-            f"SECURITY ALERT: {event.event_type} - {event.severity} - User: {event.user_id}"
-        )
+        logger.critical(f"SECURITY ALERT: {event.event_type} - {event.severity} - User: {event.user_id}")
 
         # Send to Sentry
         if SENTRY_AVAILABLE:
-            sentry_sdk.capture_message(
-                f"Security Alert: {event.event_type}", level="error", extra=alert_data
-            )
+            sentry_sdk.capture_message(f"Security Alert: {event.event_type}", level="error", extra=alert_data)
 
         # Store alert
         self.recent_alerts.append(alert_data)
@@ -264,9 +248,7 @@ class SecurityAlertManager:
         if webhook_url:
             await self._send_webhook_alert(webhook_url, alert_data)
 
-    async def _send_webhook_alert(
-        self, webhook_url: str, alert_data: dict[str, Any]
-    ) -> None:
+    async def _send_webhook_alert(self, webhook_url: str, alert_data: dict[str, Any]) -> None:
         """Send alert via webhook."""
         try:
             import aiohttp
@@ -322,9 +304,7 @@ class SecurityMonitor:
         self.running = False
         logger.info("Security monitoring stopped")
 
-    async def log_security_event(
-        self, event_type: str, user_id: str, source_ip: str, details: dict[str, Any]
-    ) -> None:
+    async def log_security_event(self, event_type: str, user_id: str, source_ip: str, details: dict[str, Any]) -> None:
         """Log security event for analysis."""
         event = SecurityEvent(
             timestamp=datetime.utcnow(),
@@ -354,9 +334,7 @@ class SecurityMonitor:
 
         # Analyze based on event type
         if event.event_type == "auth_failure":
-            threat_score = self.detector.detect_brute_force(
-                event.user_id, event.source_ip
-            )
+            threat_score = self.detector.detect_brute_force(event.user_id, event.source_ip)
             self.metrics.record_auth_failure(event.user_id, event.source_ip)
 
         elif event.event_type == "sql_injection_attempt":
@@ -365,14 +343,10 @@ class SecurityMonitor:
 
         elif event.event_type == "rate_limit_violation":
             endpoint = event.details.get("endpoint", "")
-            threat_score = self.detector.detect_rate_limit_violation(
-                event.user_id, endpoint
-            )
+            threat_score = self.detector.detect_rate_limit_violation(event.user_id, endpoint)
 
         elif event.event_type == "anomalous_behavior":
-            threat_score = self.detector.detect_anomalous_behavior(
-                event.user_id, event.details
-            )
+            threat_score = self.detector.detect_anomalous_behavior(event.user_id, event.details)
 
         # Update event with threat score
         event.threat_score = threat_score
@@ -396,9 +370,7 @@ class SecurityMonitor:
             await self.alert_manager.send_alert(event)
 
         # Log event
-        logger.info(
-            f"Security event analyzed: {event.event_type} - Score: {threat_score:.2f}"
-        )
+        logger.info(f"Security event analyzed: {event.event_type} - Score: {threat_score:.2f}")
 
     async def _periodic_analysis(self) -> None:
         """Perform periodic security analysis."""
@@ -423,9 +395,7 @@ class SecurityMonitor:
         # For now, just log status
         recent_alerts = self.alert_manager.get_recent_alerts(10)
         if recent_alerts:
-            logger.info(
-                f"Recent security activity: {len(recent_alerts)} alerts in last period"
-            )
+            logger.info(f"Recent security activity: {len(recent_alerts)} alerts in last period")
 
     async def _update_threat_scores(self) -> None:
         """Update threat scores for all users."""
@@ -451,9 +421,7 @@ class SecurityMonitor:
             "status": "monitoring",
             "uptime_seconds": time.time(),
             "recent_alerts_count": len(recent_alerts),
-            "critical_alerts": len(
-                [a for a in recent_alerts if a["severity"] == "CRITICAL"]
-            ),
+            "critical_alerts": len([a for a in recent_alerts if a["severity"] == "CRITICAL"]),
             "high_alerts": len([a for a in recent_alerts if a["severity"] == "HIGH"]),
             "threat_intel_entries": len(self.threat_intel),
             "monitoring_active": self.running,
@@ -474,21 +442,13 @@ class MCPSecurityIntegration:
     ) -> None:
         """Log authentication attempt."""
         if not success:
-            await self.monitor.log_security_event(
-                "auth_failure", user_id, source_ip, details
-            )
+            await self.monitor.log_security_event("auth_failure", user_id, source_ip, details)
 
-    async def log_database_query(
-        self, user_id: str, query: str, source_ip: str, details: dict[str, Any]
-    ) -> None:
+    async def log_database_query(self, user_id: str, query: str, source_ip: str, details: dict[str, Any]) -> None:
         """Log database query for SQL injection detection."""
-        await self.monitor.log_security_event(
-            "sql_injection_attempt", user_id, source_ip, {"query": query, **details}
-        )
+        await self.monitor.log_security_event("sql_injection_attempt", user_id, source_ip, {"query": query, **details})
 
-    async def log_api_request(
-        self, user_id: str, endpoint: str, source_ip: str, details: dict[str, Any]
-    ) -> None:
+    async def log_api_request(self, user_id: str, endpoint: str, source_ip: str, details: dict[str, Any]) -> None:
         """Log API request for rate limiting."""
         await self.monitor.log_security_event(
             "rate_limit_violation",

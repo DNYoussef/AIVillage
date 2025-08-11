@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, List
+from typing import Any
 
 
 @dataclass
@@ -34,14 +34,12 @@ class EnhancedRAGPipeline:
     def add_document(self, doc: Document) -> None:
         self.documents.append(doc)
 
-    def retrieve(self, query: str, top_k: int = 1) -> List[RetrievalResult]:
+    def retrieve(self, query: str, top_k: int = 1) -> list[RetrievalResult]:
         return []
 
 
 class RAGPipeline(EnhancedRAGPipeline):
     """Backward compatible alias for :class:`EnhancedRAGPipeline`."""
-
-    pass
 
 
 __all__ = [

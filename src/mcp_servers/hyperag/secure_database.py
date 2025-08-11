@@ -170,9 +170,7 @@ class SecureDatabaseManager:
             logger.exception(f"Failed to retrieve memory: {e}")
             return None
 
-    async def search_memories(
-        self, query: str, tags: list[str] | None = None, limit: int = 10
-    ) -> list[dict[str, Any]]:
+    async def search_memories(self, query: str, tags: list[str] | None = None, limit: int = 10) -> list[dict[str, Any]]:
         """Search memories with secure parameterized queries."""
         try:
             # Build secure query with parameterized placeholders
@@ -362,9 +360,7 @@ class SecureInputValidator:
             raise ValueError(msg)
 
         # Remove null bytes and control characters
-        sanitized = "".join(
-            char for char in input_str if ord(char) >= 32 or char in "\n\r\t"
-        )
+        sanitized = "".join(char for char in input_str if ord(char) >= 32 or char in "\n\r\t")
 
         # Truncate to max length
         if len(sanitized) > max_length:

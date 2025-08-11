@@ -18,29 +18,20 @@ import numpy as np
 sys.path.insert(0, str(Path(__file__).parent.parent))
 sys.path.insert(
     0,
-    str(
-        Path(__file__).parent.parent
-        / "src"
-        / "production"
-        / "rag"
-        / "rag_system"
-        / "core"
-    ),
+    str(Path(__file__).parent.parent / "src" / "production" / "rag" / "rag_system" / "core"),
 )
 
 from codex_rag_integration import CODEXRAGPipeline, Document
 
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
 class BayesRAGToCODEXIntegrator:
     """Integrates BayesRAG system with CODEX RAG requirements."""
 
-    def __init__(self, data_dir: Path = Path("data")):
+    def __init__(self, data_dir: Path = Path("data")) -> None:
         self.data_dir = data_dir
 
         # BayesRAG database paths
@@ -51,7 +42,7 @@ class BayesRAGToCODEXIntegrator:
         # CODEX RAG pipeline
         self.codex_pipeline = None
 
-    async def initialize_codex_pipeline(self):
+    async def initialize_codex_pipeline(self) -> bool | None:
         """Initialize CODEX-compliant RAG pipeline."""
         logger.info("Initializing CODEX RAG pipeline...")
 
@@ -60,7 +51,7 @@ class BayesRAGToCODEXIntegrator:
             logger.info("CODEX RAG pipeline initialized successfully")
             return True
         except Exception as e:
-            logger.error(f"Failed to initialize CODEX pipeline: {e}")
+            logger.exception(f"Failed to initialize CODEX pipeline: {e}")
             return False
 
     def migrate_bayesrag_to_codex(self) -> dict[str, Any]:
@@ -88,9 +79,7 @@ class BayesRAGToCODEXIntegrator:
             migration_stats["local_contexts_migrated"] = len(local_contexts)
 
             # Convert to CODEX documents and index
-            documents = self._convert_to_codex_documents(
-                global_contexts, local_contexts
-            )
+            documents = self._convert_to_codex_documents(global_contexts, local_contexts)
 
             # Index documents in CODEX pipeline
             if self.codex_pipeline:
@@ -103,13 +92,13 @@ class BayesRAGToCODEXIntegrator:
                     except Exception as e:
                         error_msg = f"Failed to index document {doc.id}: {e}"
                         migration_stats["errors"].append(error_msg)
-                        logger.error(error_msg)
+                        logger.exception(error_msg)
 
             logger.info(f"Migration complete: {migration_stats}")
             return migration_stats
 
         except Exception as e:
-            logger.error(f"Migration failed: {e}")
+            logger.exception(f"Migration failed: {e}")
             migration_stats["errors"].append(str(e))
             return migration_stats
 
@@ -158,11 +147,7 @@ class BayesRAGToCODEXIntegrator:
             for row in cursor.fetchall():
                 # Reconstruct embedding
                 embedding_bytes = row[9]
-                embedding = (
-                    np.frombuffer(embedding_bytes, dtype=np.float32)
-                    if embedding_bytes
-                    else None
-                )
+                embedding = np.frombuffer(embedding_bytes, dtype=np.float32) if embedding_bytes else None
 
                 contexts.append(
                     {
@@ -203,7 +188,7 @@ class BayesRAGToCODEXIntegrator:
             title = global_ctx["title"]
             local_chunks = contexts_by_article.get(title, [])
 
-            for i, local_ctx in enumerate(local_chunks):
+            for _i, local_ctx in enumerate(local_chunks):
                 # Create enhanced metadata combining global and local context
                 metadata = {
                     # Global context
@@ -253,10 +238,10 @@ class BayesRAGToCODEXIntegrator:
             result = await self.codex_pipeline.index_documents([document])
             return result.get("success", False)
         except Exception as e:
-            logger.error(f"CODEX indexing failed for {document.id}: {e}")
+            logger.exception(f"CODEX indexing failed for {document.id}: {e}")
             return False
 
-    async def enhance_codex_caching(self):
+    async def enhance_codex_caching(self) -> bool | None:
         """Enhance CODEX pipeline with BayesRAG context-aware caching."""
         logger.info("Enhancing CODEX pipeline with context-aware caching...")
 
@@ -275,7 +260,7 @@ class BayesRAGToCODEXIntegrator:
             return True
 
         except Exception as e:
-            logger.error(f"Cache enhancement failed: {e}")
+            logger.exception(f"Cache enhancement failed: {e}")
             return False
 
     async def validate_integration(self) -> dict[str, Any]:
@@ -314,9 +299,7 @@ class BayesRAGToCODEXIntegrator:
                     start_time = time.time()
 
                     # Perform retrieval using CODEX pipeline
-                    results, metrics = await self.codex_pipeline.retrieve(
-                        query=query, k=5, use_cache=True
-                    )
+                    results, metrics = await self.codex_pipeline.retrieve(query=query, k=5, use_cache=True)
 
                     latency_ms = (time.time() - start_time) * 1000
                     total_latency += latency_ms
@@ -327,9 +310,7 @@ class BayesRAGToCODEXIntegrator:
                             "query": query,
                             "latency_ms": latency_ms,
                             "result_count": len(results),
-                            "top_result_title": (
-                                results[0]["title"] if results else None
-                            ),
+                            "top_result_title": (results[0]["title"] if results else None),
                         }
                     )
 
@@ -339,9 +320,7 @@ class BayesRAGToCODEXIntegrator:
             # Calculate average latency and check target
             if query_count > 0:
                 avg_latency = total_latency / query_count
-                validation_results["latency_target_met"] = (
-                    avg_latency < 100
-                )  # <100ms target
+                validation_results["latency_target_met"] = avg_latency < 100  # <100ms target
 
             # Get index size
             try:
@@ -358,7 +337,7 @@ class BayesRAGToCODEXIntegrator:
             return validation_results
 
 
-async def main():
+async def main() -> None:
     """Run the complete BayesRAG to CODEX integration."""
     logger.info("=== BayesRAG to CODEX Integration ===")
 

@@ -27,6 +27,7 @@ from scipy import stats
 import torch
 from tqdm import tqdm
 from transformers import AutoModelForCausalLM, AutoTokenizer
+
 import wandb
 
 logger = logging.getLogger(__name__)
@@ -215,9 +216,7 @@ class MMLUEvaluator:
                     prompt = self._create_mmlu_prompt(question, choices, subject)
 
                     # Get model prediction
-                    prediction = await self._get_model_prediction(
-                        model, tokenizer, prompt
-                    )
+                    prediction = await self._get_model_prediction(model, tokenizer, prompt)
                     predicted_idx = self._parse_choice(prediction)
 
                     is_correct = predicted_idx == answer_idx
@@ -239,9 +238,7 @@ class MMLUEvaluator:
                         }
                     )
 
-                category_scores[subject] = (
-                    subject_correct / subject_samples if subject_samples > 0 else 0.0
-                )
+                category_scores[subject] = subject_correct / subject_samples if subject_samples > 0 else 0.0
                 all_results.extend(subject_results)
 
             except Exception as e:
@@ -268,9 +265,7 @@ class MMLUEvaluator:
             },
         )
 
-    def _create_mmlu_prompt(
-        self, question: str, choices: list[str], subject: str
-    ) -> str:
+    def _create_mmlu_prompt(self, question: str, choices: list[str], subject: str) -> str:
         """Create MMLU prompt with few-shot examples."""
         # Few-shot examples (simplified for brevity)
         few_shot_examples = f"""The following are multiple choice questions about {subject.replace("_", " ")}.
@@ -312,9 +307,7 @@ Answer: C
             )
 
         response = tokenizer.decode(outputs[0], skip_special_tokens=True)
-        prediction = response[
-            len(tokenizer.decode(inputs[0], skip_special_tokens=True)) :
-        ].strip()
+        prediction = response[len(tokenizer.decode(inputs[0], skip_special_tokens=True)) :].strip()
 
         return prediction
 
@@ -376,11 +369,7 @@ class GSM8KEvaluator:
             prediction = await self._get_model_prediction(model, tokenizer, prompt)
             predicted_answer = self._extract_answer(prediction)
 
-            is_correct = (
-                abs(predicted_answer - correct_answer) < 1e-6
-                if predicted_answer is not None
-                else False
-            )
+            is_correct = abs(predicted_answer - correct_answer) < 1e-6 if predicted_answer is not None else False
 
             if is_correct:
                 total_correct += 1
@@ -440,9 +429,7 @@ A: The robe takes 2 bolts of blue fiber. It takes half that much white fiber, so
             )
 
         response = tokenizer.decode(outputs[0], skip_special_tokens=True)
-        prediction = response[
-            len(tokenizer.decode(inputs[0], skip_special_tokens=True)) :
-        ].strip()
+        prediction = response[len(tokenizer.decode(inputs[0], skip_special_tokens=True)) :].strip()
 
         return prediction
 
@@ -506,9 +493,7 @@ class HumanEvalEvaluator:
             generated_code = await self._generate_code(model, tokenizer, prompt)
 
             # Test code execution
-            is_correct, error_msg = self._test_code_execution(
-                prompt + generated_code, test, entry_point
-            )
+            is_correct, error_msg = self._test_code_execution(prompt + generated_code, test, entry_point)
 
             if is_correct:
                 total_correct += 1
@@ -556,15 +541,11 @@ class HumanEvalEvaluator:
             )
 
         response = tokenizer.decode(outputs[0], skip_special_tokens=True)
-        generated = response[
-            len(tokenizer.decode(inputs[0], skip_special_tokens=True)) :
-        ].strip()
+        generated = response[len(tokenizer.decode(inputs[0], skip_special_tokens=True)) :].strip()
 
         return generated
 
-    def _test_code_execution(
-        self, code: str, test: str, entry_point: str
-    ) -> tuple[bool, str | None]:
+    def _test_code_execution(self, code: str, test: str, entry_point: str) -> tuple[bool, str | None]:
         """Test if generated code passes the test cases."""
         try:
             # Create a safe execution environment
@@ -612,9 +593,7 @@ class ComprehensiveBenchmark:
         # Model cache
         self.model_cache = {}
 
-    async def benchmark_model(
-        self, model_path: str, model_name: str
-    ) -> dict[str, BenchmarkResult]:
+    async def benchmark_model(self, model_path: str, model_name: str) -> dict[str, BenchmarkResult]:
         """Benchmark a single model."""
         logger.info(f"Benchmarking model: {model_name}")
 
@@ -707,9 +686,7 @@ class ComprehensiveBenchmark:
 
         # Benchmark target model
         logger.info("Benchmarking target model")
-        target_results = await self.benchmark_model(
-            self.config.model_path, self.config.model_name
-        )
+        target_results = await self.benchmark_model(self.config.model_path, self.config.model_name)
         all_results[self.config.model_name] = target_results
 
         # Benchmark baseline models
@@ -735,9 +712,7 @@ class ComprehensiveBenchmark:
                 logger.warning(f"Skipping frontier model {frontier_model}: {e}")
 
         # Create comparison report
-        comparison_report = await self._create_comparison_report(
-            target_results, baseline_results, frontier_results
-        )
+        comparison_report = await self._create_comparison_report(target_results, baseline_results, frontier_results)
 
         # Generate W&B report
         await self._generate_wandb_report(all_results, comparison_report)
@@ -756,14 +731,10 @@ class ComprehensiveBenchmark:
     ) -> ComparisonReport:
         """Create comprehensive comparison report."""
         # Statistical analysis
-        statistical_analysis = self._perform_statistical_analysis(
-            target_results, baseline_results, frontier_results
-        )
+        statistical_analysis = self._perform_statistical_analysis(target_results, baseline_results, frontier_results)
 
         # Performance summary
-        performance_summary = self._create_performance_summary(
-            target_results, baseline_results, frontier_results
-        )
+        performance_summary = self._create_performance_summary(target_results, baseline_results, frontier_results)
 
         # Generate recommendations
         recommendations = self._generate_recommendations(
@@ -816,21 +787,15 @@ class ComprehensiveBenchmark:
 
             # Calculate percentiles
             if baseline_scores:
-                benchmark_analysis["baseline_percentile"] = stats.percentileofscore(
-                    baseline_scores, target_score
-                )
+                benchmark_analysis["baseline_percentile"] = stats.percentileofscore(baseline_scores, target_score)
 
             if frontier_scores:
-                benchmark_analysis["frontier_percentile"] = stats.percentileofscore(
-                    frontier_scores, target_score
-                )
+                benchmark_analysis["frontier_percentile"] = stats.percentileofscore(frontier_scores, target_score)
 
             # Statistical significance tests
             if len(baseline_scores) > 1:
                 # T-test against baseline mean
-                t_stat, p_value = stats.ttest_1samp(
-                    [target_score], np.mean(baseline_scores)
-                )
+                t_stat, p_value = stats.ttest_1samp([target_score], np.mean(baseline_scores))
                 benchmark_analysis["baseline_ttest"] = {
                     "t_statistic": t_stat,
                     "p_value": p_value,
@@ -873,10 +838,7 @@ class ComprehensiveBenchmark:
             for model_results in baseline_results.values():
                 if benchmark_name in model_results:
                     baseline_total += 1
-                    if (
-                        result.overall_score
-                        > model_results[benchmark_name].overall_score
-                    ):
+                    if result.overall_score > model_results[benchmark_name].overall_score:
                         baseline_beats += 1
 
             if baseline_total > 0:
@@ -888,10 +850,7 @@ class ComprehensiveBenchmark:
             for model_results in frontier_results.values():
                 if benchmark_name in model_results:
                     frontier_total += 1
-                    if (
-                        result.overall_score
-                        > model_results[benchmark_name].overall_score
-                    ):
+                    if result.overall_score > model_results[benchmark_name].overall_score:
                         frontier_beats += 1
 
             if frontier_total > 0:
@@ -915,13 +874,9 @@ class ComprehensiveBenchmark:
         avg_score = np.mean([r.overall_score for r in target_results.values()])
 
         if avg_score > 0.8:
-            recommendations.append(
-                "🎉 Excellent overall performance! Model is ready for production deployment."
-            )
+            recommendations.append("🎉 Excellent overall performance! Model is ready for production deployment.")
         elif avg_score > 0.6:
-            recommendations.append(
-                "✅ Good performance with room for improvement in specific areas."
-            )
+            recommendations.append("✅ Good performance with room for improvement in specific areas.")
         else:
             recommendations.append(
                 "⚠️ Performance below expectations. Consider additional training or architecture changes."
@@ -932,17 +887,11 @@ class ComprehensiveBenchmark:
             target_score = analysis["target_score"]
 
             if target_score < 0.3:
-                recommendations.append(
-                    f"🔴 {benchmark_name}: Critical performance gap. Requires focused improvement."
-                )
+                recommendations.append(f"🔴 {benchmark_name}: Critical performance gap. Requires focused improvement.")
             elif target_score < 0.5:
-                recommendations.append(
-                    f"🟡 {benchmark_name}: Below average. Consider domain-specific fine-tuning."
-                )
+                recommendations.append(f"🟡 {benchmark_name}: Below average. Consider domain-specific fine-tuning.")
             elif target_score > 0.8:
-                recommendations.append(
-                    f"🟢 {benchmark_name}: Strong performance. Maintain current approach."
-                )
+                recommendations.append(f"🟢 {benchmark_name}: Strong performance. Maintain current approach.")
 
         # Comparison-based recommendations
         strong_areas = []
@@ -958,9 +907,7 @@ class ComprehensiveBenchmark:
             recommendations.append(f"💪 Strengths: {', '.join(strong_areas)}")
 
         if weak_areas:
-            recommendations.append(
-                f"🎯 Focus areas for improvement: {', '.join(weak_areas)}"
-            )
+            recommendations.append(f"🎯 Focus areas for improvement: {', '.join(weak_areas)}")
 
         return recommendations
 
@@ -984,13 +931,7 @@ class ComprehensiveBenchmark:
             comparison_data.append(row)
 
         # Log comparison table
-        wandb.log(
-            {
-                "benchmark_comparison": wandb.Table(
-                    dataframe=pd.DataFrame(comparison_data)
-                )
-            }
-        )
+        wandb.log({"benchmark_comparison": wandb.Table(dataframe=pd.DataFrame(comparison_data))})
 
         # Create detailed charts
         for benchmark_name in self.evaluators:
@@ -1027,8 +968,7 @@ class ComprehensiveBenchmark:
 
         # Create performance radar chart
         target_scores = [
-            comparison_report.target_results[bench].overall_score
-            for bench in comparison_report.target_results
+            comparison_report.target_results[bench].overall_score for bench in comparison_report.target_results
         ]
 
         wandb.log(
@@ -1089,21 +1029,13 @@ async def main() -> None:
     import argparse
 
     parser = argparse.ArgumentParser(description="Comprehensive Model Benchmarking")
-    parser.add_argument(
-        "--model-path", required=True, help="Path to model to benchmark"
-    )
+    parser.add_argument("--model-path", required=True, help="Path to model to benchmark")
     parser.add_argument("--model-name", required=True, help="Name for the model")
-    parser.add_argument(
-        "--output-dir", required=True, help="Output directory for results"
-    )
+    parser.add_argument("--output-dir", required=True, help="Output directory for results")
 
     # Benchmark selection
-    parser.add_argument(
-        "--run-mmlu", action="store_true", default=True, help="Run MMLU evaluation"
-    )
-    parser.add_argument(
-        "--run-gsm8k", action="store_true", default=True, help="Run GSM8K evaluation"
-    )
+    parser.add_argument("--run-mmlu", action="store_true", default=True, help="Run MMLU evaluation")
+    parser.add_argument("--run-gsm8k", action="store_true", default=True, help="Run GSM8K evaluation")
     parser.add_argument(
         "--run-humaneval",
         action="store_true",
@@ -1112,9 +1044,7 @@ async def main() -> None:
     )
 
     # Configuration
-    parser.add_argument(
-        "--batch-size", type=int, default=4, help="Batch size for evaluation"
-    )
+    parser.add_argument("--batch-size", type=int, default=4, help="Batch size for evaluation")
     parser.add_argument("--max-samples", type=int, help="Maximum samples per benchmark")
     parser.add_argument("--device", default="cuda", help="Device (cuda/cpu)")
     parser.add_argument(
@@ -1125,9 +1055,7 @@ async def main() -> None:
     )
 
     # W&B settings
-    parser.add_argument(
-        "--wandb-project", default="agent-forge-benchmark", help="W&B project name"
-    )
+    parser.add_argument("--wandb-project", default="agent-forge-benchmark", help="W&B project name")
     parser.add_argument("--wandb-entity", help="W&B entity")
 
     args = parser.parse_args()
@@ -1158,17 +1086,11 @@ async def main() -> None:
     print(f"{'=' * 60}")
 
     print("\nOverall Performance:")
-    print(
-        f"Average Score: {comparison_report.performance_summary['average_score']:.4f}"
-    )
-    print(
-        f"Benchmarks Completed: {comparison_report.performance_summary['total_benchmarks']}"
-    )
+    print(f"Average Score: {comparison_report.performance_summary['average_score']:.4f}")
+    print(f"Benchmarks Completed: {comparison_report.performance_summary['total_benchmarks']}")
 
     print("\nBenchmark Scores:")
-    for benchmark, score in comparison_report.performance_summary[
-        "benchmark_scores"
-    ].items():
+    for benchmark, score in comparison_report.performance_summary["benchmark_scores"].items():
         print(f"  {benchmark}: {score:.4f}")
 
     print("\nRecommendations:")
@@ -1176,9 +1098,7 @@ async def main() -> None:
         print(f"  {i}. {rec}")
 
     print(f"\nDetailed results saved to: {args.output_dir}")
-    print(
-        f"W&B report: https://wandb.ai/{args.wandb_entity or 'agent-forge'}/{args.wandb_project}"
-    )
+    print(f"W&B report: https://wandb.ai/{args.wandb_entity or 'agent-forge'}/{args.wandb_project}")
 
 
 if __name__ == "__main__":

@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from .standard_protocol import StandardCommunicationProtocol
+if TYPE_CHECKING:
+    from .standard_protocol import StandardCommunicationProtocol
 
 
 class MessageRouter:

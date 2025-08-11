@@ -33,7 +33,7 @@ class Migration:
         down_sql: str = "",
         data_migration: callable | None = None,
         requires: list[int] | None = None,
-    ):
+    ) -> None:
         self.version = version
         self.name = name
         self.description = description
@@ -42,14 +42,14 @@ class Migration:
         self.data_migration = data_migration
         self.requires = requires or []
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"Migration(v{self.version}: {self.name})"
 
 
 class MigrationManager:
     """Manages database schema migrations with version tracking."""
 
-    def __init__(self, database_manager):
+    def __init__(self, database_manager) -> None:
         self.database_manager = database_manager
         self.migrations: dict[str, list[Migration]] = {
             "evolution_metrics": [],
@@ -58,7 +58,7 @@ class MigrationManager:
         }
         self._load_migrations()
 
-    def _load_migrations(self):
+    def _load_migrations(self) -> None:
         """Load all migration definitions."""
         # Evolution Metrics migrations
         self.migrations["evolution_metrics"] = [
@@ -175,7 +175,8 @@ class MigrationManager:
     async def get_current_version(self, database: str) -> int:
         """Get current schema version for database."""
         if database not in self.database_manager.connections:
-            raise ValueError(f"Database {database} not initialized")
+            msg = f"Database {database} not initialized"
+            raise ValueError(msg)
 
         with self.database_manager.get_connection(database) as conn:
             try:
@@ -190,7 +191,8 @@ class MigrationManager:
     async def get_migration_history(self, database: str) -> list[dict[str, Any]]:
         """Get migration history for database."""
         if database not in self.database_manager.connections:
-            raise ValueError(f"Database {database} not initialized")
+            msg = f"Database {database} not initialized"
+            raise ValueError(msg)
 
         with self.database_manager.get_connection(database) as conn:
             try:
@@ -205,9 +207,7 @@ class MigrationManager:
 
                 history = []
                 for row in cursor.fetchall():
-                    history.append(
-                        {"version": row[0], "applied_at": row[1], "description": row[2]}
-                    )
+                    history.append({"version": row[0], "applied_at": row[1], "description": row[2]})
 
                 return history
 
@@ -218,7 +218,8 @@ class MigrationManager:
     async def migrate_to_latest(self, database: str) -> bool:
         """Migrate database to latest schema version."""
         if database not in self.migrations:
-            raise ValueError(f"No migrations defined for database {database}")
+            msg = f"No migrations defined for database {database}"
+            raise ValueError(msg)
 
         current_version = await self.get_current_version(database)
         available_migrations = self.migrations[database]
@@ -230,28 +231,20 @@ class MigrationManager:
         latest_version = max(m.version for m in available_migrations)
 
         if current_version >= latest_version:
-            logger.info(
-                f"Database {database} is already at latest version {latest_version}"
-            )
+            logger.info(f"Database {database} is already at latest version {latest_version}")
             return True
 
-        logger.info(
-            f"Migrating {database} from version {current_version} to {latest_version}"
-        )
+        logger.info(f"Migrating {database} from version {current_version} to {latest_version}")
 
         # Get migrations to apply
-        migrations_to_apply = [
-            m for m in available_migrations if m.version > current_version
-        ]
+        migrations_to_apply = [m for m in available_migrations if m.version > current_version]
         migrations_to_apply.sort(key=lambda m: m.version)
 
         # Apply migrations in order
         for migration in migrations_to_apply:
             success = await self._apply_migration(database, migration)
             if not success:
-                logger.error(
-                    f"Failed to apply migration {migration.version} to {database}"
-                )
+                logger.error(f"Failed to apply migration {migration.version} to {database}")
                 return False
             logger.info(f"Applied migration {migration.version}: {migration.name}")
 
@@ -269,9 +262,7 @@ class MigrationManager:
         if current_version < target_version:
             # Forward migration
             migrations_to_apply = [
-                m
-                for m in self.migrations[database]
-                if current_version < m.version <= target_version
+                m for m in self.migrations[database] if current_version < m.version <= target_version
             ]
             migrations_to_apply.sort(key=lambda m: m.version)
 
@@ -283,9 +274,7 @@ class MigrationManager:
         else:
             # Backward migration (rollback)
             migrations_to_rollback = [
-                m
-                for m in self.migrations[database]
-                if target_version < m.version <= current_version
+                m for m in self.migrations[database] if target_version < m.version <= current_version
             ]
             migrations_to_rollback.sort(key=lambda m: m.version, reverse=True)
 
@@ -338,7 +327,7 @@ class MigrationManager:
 
             except Exception as e:
                 conn.rollback()
-                logger.error(f"Failed to apply migration {migration.version}: {e}")
+                logger.exception(f"Failed to apply migration {migration.version}: {e}")
                 return False
 
     async def _rollback_migration(self, database: str, migration: Migration) -> bool:
@@ -358,9 +347,7 @@ class MigrationManager:
                 conn.executescript(migration.down_sql)
 
                 # Remove migration record
-                conn.execute(
-                    "DELETE FROM schema_version WHERE version = ?", (migration.version,)
-                )
+                conn.execute("DELETE FROM schema_version WHERE version = ?", (migration.version,))
 
                 # Commit transaction
                 conn.commit()
@@ -370,7 +357,7 @@ class MigrationManager:
 
             except Exception as e:
                 conn.rollback()
-                logger.error(f"Failed to rollback migration {migration.version}: {e}")
+                logger.exception(f"Failed to rollback migration {migration.version}: {e}")
                 return False
 
     async def validate_migrations(self, database: str) -> dict[str, Any]:
@@ -379,9 +366,7 @@ class MigrationManager:
 
         migrations = self.migrations.get(database, [])
         if not migrations:
-            validation_results["warnings"].append(
-                f"No migrations defined for {database}"
-            )
+            validation_results["warnings"].append(f"No migrations defined for {database}")
             return validation_results
 
         # Check version sequences
@@ -396,15 +381,11 @@ class MigrationManager:
         # Check for duplicate versions
         version_counts = {}
         for migration in migrations:
-            version_counts[migration.version] = (
-                version_counts.get(migration.version, 0) + 1
-            )
+            version_counts[migration.version] = version_counts.get(migration.version, 0) + 1
 
         for version, count in version_counts.items():
             if count > 1:
-                validation_results["errors"].append(
-                    f"Duplicate migration version {version}"
-                )
+                validation_results["errors"].append(f"Duplicate migration version {version}")
                 validation_results["valid"] = False
 
         # Check dependencies
@@ -421,7 +402,8 @@ class MigrationManager:
     async def create_migration_template(self, database: str, name: str) -> str:
         """Create a template for a new migration."""
         if database not in self.migrations:
-            raise ValueError(f"Unknown database {database}")
+            msg = f"Unknown database {database}"
+            raise ValueError(msg)
 
         # Get next version number
         current_migrations = self.migrations[database]
@@ -462,7 +444,7 @@ async def custom_data_migration_function(conn):
 class DataMigrator:
     """Handles data migration from existing systems."""
 
-    def __init__(self, database_manager):
+    def __init__(self, database_manager) -> None:
         self.database_manager = database_manager
 
     async def migrate_evolution_metrics_from_json(self, json_file_path: str) -> bool:
@@ -478,7 +460,7 @@ class DataMigrator:
             with open(json_path) as f:
                 data = json.load(f)
         except Exception as e:
-            logger.error(f"Failed to read JSON file {json_file_path}: {e}")
+            logger.exception(f"Failed to read JSON file {json_file_path}: {e}")
             return False
 
         with self.database_manager.get_connection("evolution_metrics") as conn:
@@ -526,23 +508,19 @@ class DataMigrator:
                                 )
 
                 conn.commit()
-                logger.info(
-                    f"Successfully migrated evolution metrics from {json_file_path}"
-                )
+                logger.info(f"Successfully migrated evolution metrics from {json_file_path}")
                 return True
 
             except Exception as e:
                 conn.rollback()
-                logger.error(f"Failed to migrate evolution metrics: {e}")
+                logger.exception(f"Failed to migrate evolution metrics: {e}")
                 return False
 
     async def migrate_digital_twin_profiles(self, profiles_dir: str) -> bool:
         """Migrate digital twin profiles from directory structure to database."""
         profiles_path = Path(profiles_dir)
         if not profiles_path.exists():
-            logger.warning(
-                f"Profiles directory {profiles_dir} not found, skipping migration"
-            )
+            logger.warning(f"Profiles directory {profiles_dir} not found, skipping migration")
             return True
 
         logger.info(f"Migrating digital twin profiles from {profiles_dir}")
@@ -578,9 +556,7 @@ class DataMigrator:
                                 json.dumps(profile_data.get("challenges", [])),
                                 json.dumps(profile_data.get("interests", [])),
                                 profile_data.get("attention_span_minutes", 15),
-                                json.dumps(
-                                    profile_data.get("preferred_session_times", [])
-                                ),
+                                json.dumps(profile_data.get("preferred_session_times", [])),
                                 json.dumps(profile_data.get("accessibility_needs", [])),
                                 json.dumps(profile_data.get("motivation_triggers", [])),
                             ),
@@ -588,9 +564,7 @@ class DataMigrator:
 
                         # Migrate learning sessions if present
                         if "sessions" in profile_data:
-                            student_id = profile_data.get(
-                                "student_id", profile_file.stem
-                            )
+                            student_id = profile_data.get("student_id", profile_file.stem)
                             for session in profile_data["sessions"]:
                                 conn.execute(
                                     """
@@ -601,13 +575,9 @@ class DataMigrator:
                                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                                 """,
                                     (
-                                        session.get(
-                                            "session_id", f"{student_id}_{time.time()}"
-                                        ),
+                                        session.get("session_id", f"{student_id}_{time.time()}"),
                                         student_id,
-                                        session.get(
-                                            "start_time", datetime.now().isoformat()
-                                        ),
+                                        session.get("start_time", datetime.now().isoformat()),
                                         session.get("end_time"),
                                         session.get("duration_minutes", 0),
                                         json.dumps(session.get("concepts_covered", [])),
@@ -624,14 +594,12 @@ class DataMigrator:
                         continue
 
                 conn.commit()
-                logger.info(
-                    f"Successfully migrated digital twin profiles from {profiles_dir}"
-                )
+                logger.info(f"Successfully migrated digital twin profiles from {profiles_dir}")
                 return True
 
             except Exception as e:
                 conn.rollback()
-                logger.error(f"Failed to migrate digital twin profiles: {e}")
+                logger.exception(f"Failed to migrate digital twin profiles: {e}")
                 return False
 
 
@@ -654,7 +622,7 @@ if __name__ == "__main__":
 
     from database_manager import DatabaseManager
 
-    async def main():
+    async def main() -> None:
         """Test migration system."""
         # Initialize database manager
         db_manager = DatabaseManager()
@@ -674,17 +642,13 @@ if __name__ == "__main__":
 
             # Migrate to latest
             success = await migration_manager.migrate_to_latest(database)
-            print(
-                f"Migration to latest for {database}: {'success' if success else 'failed'}"
-            )
+            print(f"Migration to latest for {database}: {'success' if success else 'failed'}")
 
         # Test data migration
         data_migrator = DataMigrator(db_manager)
 
         # Try to migrate from common file locations
-        await data_migrator.migrate_evolution_metrics_from_json(
-            "./evolution_metrics.json"
-        )
+        await data_migrator.migrate_evolution_metrics_from_json("./evolution_metrics.json")
         await data_migrator.migrate_digital_twin_profiles("./profiles")
 
         await db_manager.close()

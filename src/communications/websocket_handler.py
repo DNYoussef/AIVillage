@@ -23,14 +23,9 @@ class WebSocketHandler:
         self.host = config.get("host", "127.0.0.1")
         self.port = config.get("port", 8765)
         self._server: websockets.WebSocketServer | None = None
-        self._handler: (
-            Callable[[WebSocketServerProtocol], Awaitable[None]] | None
-        ) = None
+        self._handler: (Callable[[WebSocketServerProtocol], Awaitable[None]] | None) = None
 
-    async def start(
-        self,
-        handler: Callable[[WebSocketServerProtocol], Awaitable[None]] | None = None
-    ) -> None:
+    async def start(self, handler: Callable[[WebSocketServerProtocol], Awaitable[None]] | None = None) -> None:
         self._handler = handler or (lambda ws: ws.wait_closed())
         self._server = await websockets.serve(self._handler, self.host, self.port)
 

@@ -18,11 +18,12 @@ from fastapi import FastAPI, HTTPException
 import uvicorn
 
 # Import CODEX-compliant RAG implementation
-sys.path.insert(
-    0, str(Path(__file__).parent.parent / "production" / "rag" / "rag_system" / "core")
-)
+sys.path.insert(0, str(Path(__file__).parent.parent / "production" / "rag" / "rag_system" / "core"))
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from src.core.security.digital_twin_encryption import DigitalTwinEncryption, DigitalTwinEncryptionError
+from src.core.security.digital_twin_encryption import (
+    DigitalTwinEncryption,
+    DigitalTwinEncryptionError,
+)
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -93,17 +94,13 @@ async def create_profile(data: dict[str, Any]) -> dict[str, Any]:
     learning_style = data.get("learning_style")
     preferred_difficulty = data.get("preferred_difficulty", "medium")
     if not user_id or not learning_style:
-        raise HTTPException(
-            status_code=400, detail="user_id and learning_style required"
-        )
+        raise HTTPException(status_code=400, detail="user_id and learning_style required")
 
     profile_id = hashlib.sha256(f"{user_id}-{os.urandom(4)}".encode()).hexdigest()[:16]
     user_hash = hashlib.sha256(user_id.encode()).hexdigest()
 
     try:
-        encrypted_ls = encryption.encrypt_sensitive_field(
-            learning_style, "learning_style"
-        )
+        encrypted_ls = encryption.encrypt_sensitive_field(learning_style, "learning_style")
         with sqlite3.connect(DIGITAL_TWIN_DB) as conn:
             conn.execute(
                 "INSERT INTO profiles (profile_id, user_id_hash, preferred_difficulty, learning_style_encrypted)"
@@ -200,9 +197,7 @@ async def record_metrics(data: dict[str, Any]) -> dict[str, Any]:
 async def get_latest_metrics() -> dict[str, Any]:
     try:
         with sqlite3.connect(EVOLUTION_DB) as conn:
-            rows = conn.execute(
-                "SELECT metric_name, metric_value FROM metrics ORDER BY recorded_at DESC"
-            ).fetchall()
+            rows = conn.execute("SELECT metric_name, metric_value FROM metrics ORDER BY recorded_at DESC").fetchall()
     except Exception as exc:  # pragma: no cover - defensive
         logger.exception("Failed to fetch metrics")
         raise HTTPException(status_code=500, detail=str(exc))
@@ -237,7 +232,7 @@ def init_rag_pipeline() -> None:
         rag_pipeline = CODEXRAGPipeline()
         logger.info("CODEX-compliant RAG pipeline initialized successfully")
     except Exception as e:
-        logger.error(f"Failed to initialize RAG pipeline: {e}")
+        logger.exception(f"Failed to initialize RAG pipeline: {e}")
         # Fallback to None - will be handled in endpoints
         rag_pipeline = None
 
@@ -324,9 +319,7 @@ async def query_rag(data: dict[str, Any]) -> dict[str, Any]:
         raise HTTPException(status_code=400, detail="query required")
 
     if not isinstance(k, int) or k < 1 or k > 50:
-        raise HTTPException(
-            status_code=400, detail="k must be integer between 1 and 50"
-        )
+        raise HTTPException(status_code=400, detail="k must be integer between 1 and 50")
 
     try:
         results, metrics = await rag_pipeline.retrieve(query, k=k, use_cache=use_cache)
@@ -370,13 +363,13 @@ async def get_rag_metrics() -> dict[str, Any]:
         raise HTTPException(status_code=500, detail=str(e))
 
 
-def run_server(app, host: str, port: int):
-    """Run a FastAPI server"""
+def run_server(app, host: str, port: int) -> None:
+    """Run a FastAPI server."""
     uvicorn.run(app, host=host, port=port, log_level="info")
 
 
-def main():
-    """Start all API servers"""
+def main() -> None:
+    """Start all API servers."""
     init_digital_twin_db()
     init_evolution_db()
     init_rag_pipeline()

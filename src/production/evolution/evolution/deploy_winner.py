@@ -14,6 +14,7 @@ from typing import Any
 import numpy as np
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
+
 import wandb
 
 # Import compression libraries (if available)
@@ -126,9 +127,7 @@ class TutorDeployment:
                     job_type="model_deployment",
                     config={
                         "deployment_version": "1.0.0",
-                        "compression_techniques": list(
-                            self.compression_techniques.keys()
-                        ),
+                        "compression_techniques": list(self.compression_techniques.keys()),
                         "deployment_targets": list(self.deployment_targets.keys()),
                         "performance_requirements": self.performance_requirements,
                     },
@@ -157,9 +156,7 @@ class TutorDeployment:
             raise ValueError(msg)
 
         # Get target platform constraints
-        platform_config = self.deployment_targets.get(
-            target_platform, self.deployment_targets["edge_server"]
-        )
+        platform_config = self.deployment_targets.get(target_platform, self.deployment_targets["edge_server"])
 
         # Apply compression pipeline
         compressed_model, compression_results = await self.apply_compression_pipeline(
@@ -199,9 +196,7 @@ class TutorDeployment:
             )
 
         # Validate deployment package
-        validation_results = await self.validate_deployment_package(
-            deployment_package, platform_config
-        )
+        validation_results = await self.validate_deployment_package(deployment_package, platform_config)
 
         preparation_time = asyncio.get_event_loop().time() - start_time
 
@@ -213,15 +208,11 @@ class TutorDeployment:
                 "deployment/preparation_time": preparation_time,
                 "deployment/package_size_mb": deployment_package.deployment_size_mb,
                 "deployment/compression_ratio": (
-                    compression_results[0].compression_ratio
-                    if compression_results
-                    else 1.0
+                    compression_results[0].compression_ratio if compression_results else 1.0
                 ),
                 "deployment/validation_passed": validation_results["valid"],
                 "deployment/performance_retention": (
-                    compression_results[0].performance_retention
-                    if compression_results
-                    else 1.0
+                    compression_results[0].performance_retention if compression_results else 1.0
                 ),
             }
         )
@@ -235,9 +226,7 @@ class TutorDeployment:
 
         return deployment_package
 
-    async def load_champion_model(
-        self, champion_info: dict[str, Any]
-    ) -> tuple[Any | None, Any | None]:
+    async def load_champion_model(self, champion_info: dict[str, Any]) -> tuple[Any | None, Any | None]:
         """Load champion model and tokenizer."""
         try:
             # Check if model is already loaded
@@ -247,9 +236,7 @@ class TutorDeployment:
                 tokenizer = champion_info.get("tokenizer")
                 if tokenizer is None:
                     # Load tokenizer based on model name
-                    model_name = champion_info.get(
-                        "model_name", "microsoft/DialoGPT-small"
-                    )
+                    model_name = champion_info.get("model_name", "microsoft/DialoGPT-small")
                     tokenizer = AutoTokenizer.from_pretrained(model_name)
                     if tokenizer.pad_token is None:
                         tokenizer.pad_token = tokenizer.eos_token
@@ -259,9 +246,7 @@ class TutorDeployment:
             # Load from saved path
             model_path = champion_info.get("model_path")
             if model_path and Path(model_path).exists():
-                model = AutoModelForCausalLM.from_pretrained(
-                    model_path, torch_dtype=torch.float16, device_map="auto"
-                )
+                model = AutoModelForCausalLM.from_pretrained(model_path, torch_dtype=torch.float16, device_map="auto")
                 tokenizer = AutoTokenizer.from_pretrained(model_path)
                 if tokenizer.pad_token is None:
                     tokenizer.pad_token = tokenizer.eos_token
@@ -270,9 +255,7 @@ class TutorDeployment:
 
             # Fallback: load from model name
             model_name = champion_info.get("model_name", "microsoft/DialoGPT-small")
-            model = AutoModelForCausalLM.from_pretrained(
-                model_name, torch_dtype=torch.float16, device_map="auto"
-            )
+            model = AutoModelForCausalLM.from_pretrained(model_name, torch_dtype=torch.float16, device_map="auto")
             tokenizer = AutoTokenizer.from_pretrained(model_name)
             if tokenizer.pad_token is None:
                 tokenizer.pad_token = tokenizer.eos_token
@@ -299,9 +282,7 @@ class TutorDeployment:
         original_size = self.calculate_model_size_mb(model)
 
         # Select compression techniques based on platform
-        selected_techniques = self.select_compression_techniques(
-            target_platform, original_size, platform_config
-        )
+        selected_techniques = self.select_compression_techniques(target_platform, original_size, platform_config)
 
         for technique_name in selected_techniques:
             try:
@@ -311,9 +292,7 @@ class TutorDeployment:
 
                 # Apply compression technique
                 technique_func = self.compression_techniques[technique_name]
-                compressed_model = await technique_func(
-                    current_model, tokenizer, champion_info, platform_config
-                )
+                compressed_model = await technique_func(current_model, tokenizer, champion_info, platform_config)
 
                 if compressed_model is not None:
                     # Calculate compression metrics
@@ -340,11 +319,9 @@ class TutorDeployment:
                         compression_time=compression_time,
                         quality_metrics={
                             "size_reduction": 1.0 - (compressed_size / original_size),
-                            "efficiency_score": compression_ratio
-                            * performance_retention,
+                            "efficiency_score": compression_ratio * performance_retention,
                         },
-                        deployment_ready=compressed_size
-                        <= platform_config["max_size_mb"],
+                        deployment_ready=compressed_size <= platform_config["max_size_mb"],
                         timestamp=datetime.now(timezone.utc).isoformat(),
                     )
 
@@ -413,9 +390,7 @@ class TutorDeployment:
         """Apply quantization compression."""
         try:
             # Dynamic quantization using PyTorch
-            quantized_model = torch.quantization.quantize_dynamic(
-                model.cpu(), {torch.nn.Linear}, dtype=torch.qint8
-            )
+            quantized_model = torch.quantization.quantize_dynamic(model.cpu(), {torch.nn.Linear}, dtype=torch.qint8)
 
             return quantized_model
 
@@ -465,9 +440,7 @@ class TutorDeployment:
             logger.exception(f"Error in distillation: {e}")
             return None
 
-    async def extract_lora_adapter(
-        self, model: Any, fitness_score: float, rank: int = 8
-    ) -> dict[str, Any] | None:
+    async def extract_lora_adapter(self, model: Any, fitness_score: float, rank: int = 8) -> dict[str, Any] | None:
         """Extract LoRA adapter for efficient deployment."""
         if not PEFT_AVAILABLE:
             logger.warning("PEFT not available - skipping LoRA extraction")
@@ -482,9 +455,7 @@ class TutorDeployment:
                 lora_alpha=32,
                 lora_dropout=0.1,
                 target_modules=(
-                    ["q_proj", "v_proj", "k_proj", "o_proj"]
-                    if hasattr(model, "transformer")
-                    else ["query", "value"]
+                    ["q_proj", "v_proj", "k_proj", "o_proj"] if hasattr(model, "transformer") else ["query", "value"]
                 ),
             )
 
@@ -503,8 +474,7 @@ class TutorDeployment:
                 "base_model_name": getattr(model, "name_or_path", "unknown"),
                 "rank": rank,
                 "fitness_score": fitness_score,
-                "adapter_size_mb": sum(w.numel() * 4 for w in adapter_weights.values())
-                / (1024 * 1024),
+                "adapter_size_mb": sum(w.numel() * 4 for w in adapter_weights.values()) / (1024 * 1024),
             }
 
         except Exception as e:
@@ -548,21 +518,13 @@ class TutorDeployment:
                     if "weight" in name and param.dim() > 1:
                         # Simple clustering-based quantization
                         flat_weights = param.data.flatten()
-                        quantiles = torch.quantile(
-                            flat_weights, torch.tensor([0.25, 0.5, 0.75])
-                        )
+                        quantiles = torch.quantile(flat_weights, torch.tensor([0.25, 0.5, 0.75]))
 
                         # Quantize to 4 levels
                         quantized = torch.zeros_like(flat_weights)
                         quantized[flat_weights <= quantiles[0]] = quantiles[0]
-                        quantized[
-                            (flat_weights > quantiles[0])
-                            & (flat_weights <= quantiles[1])
-                        ] = quantiles[1]
-                        quantized[
-                            (flat_weights > quantiles[1])
-                            & (flat_weights <= quantiles[2])
-                        ] = quantiles[2]
+                        quantized[(flat_weights > quantiles[0]) & (flat_weights <= quantiles[1])] = quantiles[1]
+                        quantized[(flat_weights > quantiles[1]) & (flat_weights <= quantiles[2])] = quantiles[2]
                         quantized[flat_weights > quantiles[2]] = quantiles[2]
 
                         param.data = quantized.reshape(param.shape)
@@ -583,9 +545,7 @@ class TutorDeployment:
         except Exception:
             return 0.0
 
-    async def estimate_performance_retention(
-        self, original_model: Any, compressed_model: Any, technique: str
-    ) -> float:
+    async def estimate_performance_retention(self, original_model: Any, compressed_model: Any, technique: str) -> float:
         """Estimate performance retention after compression."""
         # Simplified performance estimation based on technique
         retention_estimates = {
@@ -662,38 +622,22 @@ class TutorDeployment:
             "fitness_score": champion_info.get("fitness_score", 0.0),
             "subjects": ["arithmetic", "algebra", "geometry", "word_problems"],
             "adapter_rank": lora_adapter["rank"] if lora_adapter else 0,
-            "compression_techniques": [
-                r.compression_technique for r in compression_results
-            ],
-            "performance_retention": (
-                compression_results[-1].performance_retention
-                if compression_results
-                else 1.0
-            ),
+            "compression_techniques": [r.compression_technique for r in compression_results],
+            "performance_retention": (compression_results[-1].performance_retention if compression_results else 1.0),
         }
 
         # Performance benchmarks
         performance_benchmarks = {
             "fitness_score": champion_info.get("fitness_score", 0.0),
             "model_size_mb": deployment_size,
-            "estimated_inference_time_ms": self.estimate_inference_time(
-                deployment_size, platform_config
-            ),
+            "estimated_inference_time_ms": self.estimate_inference_time(deployment_size, platform_config),
             "memory_usage_mb": deployment_size * 1.5,  # Estimate runtime memory
-            "compression_ratio": (
-                compression_results[-1].compression_ratio
-                if compression_results
-                else 1.0
-            ),
+            "compression_ratio": (compression_results[-1].compression_ratio if compression_results else 1.0),
         }
 
         # Generate requirements and installation script
-        requirements = self.generate_requirements(
-            target_platform, lora_adapter is not None
-        )
-        installation_script = self.generate_installation_script(
-            package_id, target_platform, requirements
-        )
+        requirements = self.generate_requirements(target_platform, lora_adapter is not None)
+        installation_script = self.generate_installation_script(package_id, target_platform, requirements)
 
         # Create deployment package
         deployment_package = DeploymentPackage(
@@ -728,16 +672,12 @@ class TutorDeployment:
     def calculate_directory_size_mb(self, directory: Path) -> float:
         """Calculate total size of directory in MB."""
         try:
-            total_size = sum(
-                f.stat().st_size for f in directory.rglob("*") if f.is_file()
-            )
+            total_size = sum(f.stat().st_size for f in directory.rglob("*") if f.is_file())
             return total_size / (1024 * 1024)
         except Exception:
             return 0.0
 
-    def estimate_inference_time(
-        self, model_size_mb: float, platform_config: dict[str, Any]
-    ) -> float:
+    def estimate_inference_time(self, model_size_mb: float, platform_config: dict[str, Any]) -> float:
         """Estimate inference time in milliseconds."""
         # Simple heuristic based on model size and platform
         base_time = model_size_mb * 2  # 2ms per MB base
@@ -764,15 +704,11 @@ class TutorDeployment:
         if target_platform == "web_browser":
             base_requirements.extend(["onnx>=1.12.0", "onnxruntime>=1.12.0"])
         elif target_platform == "mobile":
-            base_requirements.extend(
-                ["torch-mobile>=0.1.0", "pytorch-quantization>=2.1.0"]
-            )
+            base_requirements.extend(["torch-mobile>=0.1.0", "pytorch-quantization>=2.1.0"])
 
         return base_requirements
 
-    def generate_installation_script(
-        self, package_id: str, target_platform: str, requirements: list[str]
-    ) -> str:
+    def generate_installation_script(self, package_id: str, target_platform: str, requirements: list[str]) -> str:
         """Generate installation script for deployment package."""
         script = f"""#!/bin/bash
 # Installation script for {package_id}
@@ -839,9 +775,7 @@ echo "Installation complete! Model available at ~/.aivillage/models/{package_id}
             }
 
             # Save registration
-            registration_path = Path(
-                f"hyperrag/adapters/{registration_data['adapter_id']}.json"
-            )
+            registration_path = Path(f"hyperrag/adapters/{registration_data['adapter_id']}.json")
             registration_path.parent.mkdir(parents=True, exist_ok=True)
 
             with open(registration_path, "w") as f:
@@ -858,9 +792,7 @@ echo "Installation complete! Model available at ~/.aivillage/models/{package_id}
             artifact.add_file(str(registration_path))
             wandb.log_artifact(artifact)
 
-            logger.info(
-                f"Registered LoRA adapter in HyperRAG: {registration_data['adapter_id']}"
-            )
+            logger.info(f"Registered LoRA adapter in HyperRAG: {registration_data['adapter_id']}")
 
         except Exception as e:
             logger.exception(f"Error registering in HyperRAG: {e}")
@@ -888,10 +820,7 @@ echo "Installation complete! Model available at ~/.aivillage/models/{package_id}
             validation_results["valid"] = False
 
         # Performance validation
-        if (
-            package.performance_benchmarks["fitness_score"]
-            >= self.performance_requirements["min_fitness_retention"]
-        ):
+        if package.performance_benchmarks["fitness_score"] >= self.performance_requirements["min_fitness_retention"]:
             validation_results["checks_passed"].append(
                 f"Fitness retention: {package.performance_benchmarks['fitness_score']:.3f}"
             )
@@ -904,13 +833,9 @@ echo "Installation complete! Model available at ~/.aivillage/models/{package_id}
         # Memory validation
         estimated_memory = package.performance_benchmarks["memory_usage_mb"]
         if estimated_memory <= platform_config.get("memory_limit", 4096):
-            validation_results["checks_passed"].append(
-                f"Memory usage: {estimated_memory:.1f}MB"
-            )
+            validation_results["checks_passed"].append(f"Memory usage: {estimated_memory:.1f}MB")
         else:
-            validation_results["checks_failed"].append(
-                f"Memory usage too high: {estimated_memory:.1f}MB"
-            )
+            validation_results["checks_failed"].append(f"Memory usage too high: {estimated_memory:.1f}MB")
             validation_results["valid"] = False
 
         # File existence validation
@@ -930,13 +855,8 @@ echo "Installation complete! Model available at ~/.aivillage/models/{package_id}
             validation_results["valid"] = False
 
         # Platform-specific validation
-        if (
-            platform_config.get("cpu_only", False)
-            and "gpu" in str(package.requirements).lower()
-        ):
-            validation_results["warnings"].append(
-                "GPU requirements on CPU-only platform"
-            )
+        if platform_config.get("cpu_only", False) and "gpu" in str(package.requirements).lower():
+            validation_results["warnings"].append("GPU requirements on CPU-only platform")
 
         return validation_results
 
@@ -973,20 +893,14 @@ echo "Installation complete! Model available at ~/.aivillage/models/{package_id}
 
             stats = analytics["compression_techniques"][technique]
             stats["count"] += 1
-            stats["avg_ratio"] = (
-                stats["avg_ratio"] * (stats["count"] - 1) + result.compression_ratio
-            ) / stats["count"]
+            stats["avg_ratio"] = (stats["avg_ratio"] * (stats["count"] - 1) + result.compression_ratio) / stats["count"]
             stats["avg_retention"] = (
-                stats["avg_retention"] * (stats["count"] - 1)
-                + result.performance_retention
+                stats["avg_retention"] * (stats["count"] - 1) + result.performance_retention
             ) / stats["count"]
 
         # Performance metrics
         sizes = [p.deployment_size_mb for p in self.deployment_packages.values()]
-        fitness_scores = [
-            p.performance_benchmarks["fitness_score"]
-            for p in self.deployment_packages.values()
-        ]
+        fitness_scores = [p.performance_benchmarks["fitness_score"] for p in self.deployment_packages.values()]
 
         if sizes:
             analytics["performance_metrics"] = {

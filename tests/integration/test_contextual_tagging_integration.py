@@ -84,9 +84,7 @@ def test_contextual_tagging_features():
     print(f"  Domain: {document_context.domain.value}")
     print(f"  Reading Level: {document_context.reading_level.value}")
     print(f"  Credibility: {document_context.source_credibility_score:.2f}")
-    print(
-        f"  Estimated Reading Time: {document_context.estimated_reading_time} minutes"
-    )
+    print(f"  Estimated Reading Time: {document_context.estimated_reading_time} minutes")
     print(f"  Key Themes: {document_context.key_themes}")
     print(f"  Key Concepts: {len(document_context.key_concepts)} identified")
     print(f"  Document Entities: {len(document_context.document_entities)} found")
@@ -127,21 +125,11 @@ def test_contextual_tagging_features():
 
         print(f"  Processing Time: {processing_time:.1f}ms")
         print(f"  Chunk Type: {contextual_chunk['chunk_context']['chunk_type']}")
-        print(
-            f"  Local Summary: {contextual_chunk['chunk_context']['local_summary'][:100]}..."
-        )
-        print(
-            f"  Section Hierarchy: {contextual_chunk['chunk_context']['section_hierarchy']}"
-        )
-        print(
-            f"  Local Keywords: {contextual_chunk['chunk_context']['local_keywords'][:5]}"
-        )
-        print(
-            f"  Quality Score: {contextual_chunk['quality_metrics']['overall_quality']:.3f}"
-        )
-        print(
-            f"  Context Richness: {contextual_chunk.get('context_richness_score', 0):.3f}"
-        )
+        print(f"  Local Summary: {contextual_chunk['chunk_context']['local_summary'][:100]}...")
+        print(f"  Section Hierarchy: {contextual_chunk['chunk_context']['section_hierarchy']}")
+        print(f"  Local Keywords: {contextual_chunk['chunk_context']['local_keywords'][:5]}")
+        print(f"  Quality Score: {contextual_chunk['quality_metrics']['overall_quality']:.3f}")
+        print(f"  Context Richness: {contextual_chunk.get('context_richness_score', 0):.3f}")
 
         # Show inheritance
         if contextual_chunk["context_inheritance"]["inherited_context"]:
@@ -149,9 +137,7 @@ def test_contextual_tagging_features():
                 f"  Inherited Context: {len(contextual_chunk['context_inheritance']['inherited_context'])} properties"
             )
         if contextual_chunk["context_inheritance"]["context_overrides"]:
-            print(
-                f"  Context Overrides: {list(contextual_chunk['context_inheritance']['context_overrides'].keys())}"
-            )
+            print(f"  Context Overrides: {list(contextual_chunk['context_inheritance']['context_overrides'].keys())}")
 
         # Update previous chunk context for next iteration
         previous_chunk_context = tagger.extract_chunk_context(
@@ -176,12 +162,8 @@ def test_contextual_tagging_features():
 
         print(f"\nChunk {i+1} ({chunk['chunk_id']}):")
         print(f"  Previous Chunk: {relationships['previous_chunk_id'] or 'None'}")
-        print(
-            f"  Document Context Inherited: {len(inheritance['inherited_context'])} properties"
-        )
-        print(
-            f"  Local Context Override: {len(inheritance['context_overrides'])} properties"
-        )
+        print(f"  Document Context Inherited: {len(inheritance['inherited_context'])} properties")
+        print(f"  Local Context Override: {len(inheritance['context_overrides'])} properties")
 
         # Show specific inherited properties
         inherited = inheritance["inherited_context"]
@@ -196,9 +178,7 @@ def test_contextual_tagging_features():
     print("-" * 40)
 
     # Demonstrate rich bilateral context
-    sample_chunk = (
-        contextual_chunks[1] if len(contextual_chunks) > 1 else contextual_chunks[0]
-    )
+    sample_chunk = contextual_chunks[1] if len(contextual_chunks) > 1 else contextual_chunks[0]
 
     print("Sample Chunk with Full Bilateral Context:")
     print(f"  Chunk ID: {sample_chunk['chunk_id']}")
@@ -230,12 +210,8 @@ def test_contextual_tagging_features():
     print("=" * 50)
 
     print("[SUCCESS] Level 1 Context: Document-level metadata extracted")
-    print(
-        f"   - Classification: {document_context.document_type.value} / {document_context.domain.value}"
-    )
-    print(
-        f"   - Quality Assessment: {document_context.source_credibility_score:.2f} credibility"
-    )
+    print(f"   - Classification: {document_context.document_type.value} / {document_context.domain.value}")
+    print(f"   - Quality Assessment: {document_context.source_credibility_score:.2f} credibility")
     print(
         f"   - Content Analysis: {len(document_context.key_themes)} themes, {len(document_context.key_concepts)} concepts"
     )

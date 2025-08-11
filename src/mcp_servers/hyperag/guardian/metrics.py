@@ -100,9 +100,7 @@ except ImportError:
 
             # Log significant changes
             if abs(self.gauge_value - old_value) > 0.1:
-                logger.info(
-                    f"MockMetric {self.name}: gauge changed from {old_value:.3f} to {self.gauge_value:.3f}"
-                )
+                logger.info(f"MockMetric {self.name}: gauge changed from {old_value:.3f} to {self.gauge_value:.3f}")
 
         def info(self, info_dict) -> None:
             """Store info metric data."""
@@ -115,9 +113,7 @@ except ImportError:
                 self._warn_once = True
 
             self.info_data.update(info_dict)
-            logger.info(
-                f"MockMetric {self.name}: info updated with {len(info_dict)} fields"
-            )
+            logger.info(f"MockMetric {self.name}: info updated with {len(info_dict)} fields")
 
         def get_stats(self) -> dict:
             """Get statistical summary of observations."""
@@ -182,9 +178,7 @@ class GuardianMetrics:
         self.enabled = enabled and PROMETHEUS_AVAILABLE
 
         if not self.enabled:
-            logger.warning(
-                "Prometheus metrics disabled (prometheus_client not available)"
-            )
+            logger.warning("Prometheus metrics disabled (prometheus_client not available)")
             return
 
         # Decision counters
@@ -292,32 +286,22 @@ class GuardianMetrics:
             if decision == "APPLY":
                 self.guardian_autoapply_total.inc(domain=domain, component=component)
             elif decision == "QUARANTINE":
-                self.guardian_quarantine_total.inc(
-                    domain=domain, component=component, reason="low_confidence"
-                )
+                self.guardian_quarantine_total.inc(domain=domain, component=component, reason="low_confidence")
             elif decision == "REJECT":
-                self.guardian_blocks_total.inc(
-                    decision_type="reject", domain=domain, component=component
-                )
+                self.guardian_blocks_total.inc(decision_type="reject", domain=domain, component=component)
 
             # Record timing
             if duration_seconds > 0:
-                self.guardian_decision_duration.observe(
-                    duration_seconds, decision_type=decision.lower(), domain=domain
-                )
+                self.guardian_decision_duration.observe(duration_seconds, decision_type=decision.lower(), domain=domain)
 
             # Record confidence
             if confidence > 0:
-                self.guardian_confidence_score.observe(
-                    confidence, component=component, domain=domain
-                )
+                self.guardian_confidence_score.observe(confidence, component=component, domain=domain)
 
         except Exception as e:
             logger.exception(f"Failed to record Guardian decision metrics: {e}")
 
-    def record_query_validation(
-        self, domain: str, decision: str, confidence: float
-    ) -> None:
+    def record_query_validation(self, domain: str, decision: str, confidence: float) -> None:
         """Record query pipeline validation."""
         if not self.enabled:
             return
@@ -332,9 +316,7 @@ class GuardianMetrics:
         except Exception as e:
             logger.exception(f"Failed to record query validation metrics: {e}")
 
-    def record_repair_validation(
-        self, domain: str, decision: str, operation_count: int
-    ) -> None:
+    def record_repair_validation(self, domain: str, decision: str, operation_count: int) -> None:
         """Record repair pipeline validation."""
         if not self.enabled:
             return
@@ -349,17 +331,13 @@ class GuardianMetrics:
         except Exception as e:
             logger.exception(f"Failed to record repair validation metrics: {e}")
 
-    def record_consolidation_validation(
-        self, domain: str, decision: str, item_type: str
-    ) -> None:
+    def record_consolidation_validation(self, domain: str, decision: str, item_type: str) -> None:
         """Record consolidation pipeline validation."""
         if not self.enabled:
             return
 
         try:
-            self.consolidation_guardian_validations.inc(
-                domain=domain, decision=decision.lower(), item_type=item_type
-            )
+            self.consolidation_guardian_validations.inc(domain=domain, decision=decision.lower(), item_type=item_type)
         except Exception as e:
             logger.exception(f"Failed to record consolidation validation metrics: {e}")
 
@@ -369,15 +347,11 @@ class GuardianMetrics:
             return
 
         try:
-            self.adapter_load_validations.inc(
-                domain=domain, verification_result=verification_result
-            )
+            self.adapter_load_validations.inc(domain=domain, verification_result=verification_result)
         except Exception as e:
             logger.exception(f"Failed to record adapter validation metrics: {e}")
 
-    def record_validation(
-        self, domain: str, decision: str, validation_type: str
-    ) -> None:
+    def record_validation(self, domain: str, decision: str, validation_type: str) -> None:
         """Generic validation recording for different types."""
         if not self.enabled:
             return
@@ -385,17 +359,11 @@ class GuardianMetrics:
         try:
             # Update the generic counters based on decision
             if decision == "REJECT":
-                self.guardian_blocks_total.inc(
-                    decision_type="reject", domain=domain, component=validation_type
-                )
+                self.guardian_blocks_total.inc(decision_type="reject", domain=domain, component=validation_type)
             elif decision == "QUARANTINE":
-                self.guardian_quarantine_total.inc(
-                    domain=domain, component=validation_type, reason="validation_failed"
-                )
+                self.guardian_quarantine_total.inc(domain=domain, component=validation_type, reason="validation_failed")
             elif decision == "APPLY":
-                self.guardian_autoapply_total.inc(
-                    domain=domain, component=validation_type
-                )
+                self.guardian_autoapply_total.inc(domain=domain, component=validation_type)
         except Exception as e:
             logger.exception(f"Failed to record validation metrics: {e}")
 
@@ -427,9 +395,7 @@ class GuardianMetrics:
         try:
             # Convert values to strings for Info metric
             string_info = {
-                key: str(value)
-                for key, value in policy_info.items()
-                if isinstance(value, str | int | float | bool)
+                key: str(value) for key, value in policy_info.items() if isinstance(value, str | int | float | bool)
             }
             self.guardian_policy_version.info(string_info)
         except Exception as e:
@@ -477,9 +443,7 @@ class GuardianMetrics:
 
         return summary
 
-    def export_metrics_dashboard(
-        self, filepath: str = "guardian_metrics_dashboard.html"
-    ) -> None:
+    def export_metrics_dashboard(self, filepath: str = "guardian_metrics_dashboard.html") -> None:
         """Export metrics dashboard as HTML file."""
         if not PROMETHEUS_AVAILABLE:
             try:

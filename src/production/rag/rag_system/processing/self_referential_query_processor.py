@@ -4,9 +4,7 @@ from AIVillage.src.production.rag.rag_system.core.pipeline import EnhancedRAGPip
 
 
 class SelfReferentialQueryProcessor:
-    def __init__(
-        self, rag_system: EnhancedRAGPipeline, history_limit: int = 100
-    ) -> None:
+    def __init__(self, rag_system: EnhancedRAGPipeline, history_limit: int = 100) -> None:
         self.rag_system = rag_system
         # Keep an in-memory list of processed queries
         self.query_history: list[str] = []

@@ -11,6 +11,7 @@ import json
 import logging
 from pathlib import Path
 import sqlite3
+import sys
 
 logger = logging.getLogger(__name__)
 
@@ -18,11 +19,11 @@ logger = logging.getLogger(__name__)
 class DataMigrator:
     """Handles migration of data from legacy formats to CODEX databases."""
 
-    def __init__(self, data_dir: str = "data"):
+    def __init__(self, data_dir: str = "data") -> None:
         self.data_dir = Path(data_dir)
         self.databases = {}
 
-    def connect_databases(self):
+    def connect_databases(self) -> None:
         """Connect to all SQLite databases."""
         db_files = ["evolution_metrics.db", "digital_twin.db", "rag_index.db"]
 
@@ -103,9 +104,7 @@ class DataMigrator:
                                 fitness_data.get("fitness_score", 0.0),
                                 json.dumps(fitness_data.get("performance_metrics", {})),
                                 json.dumps(fitness_data.get("resource_usage", {})),
-                                fitness_data.get(
-                                    "timestamp", datetime.now().isoformat()
-                                ),
+                                fitness_data.get("timestamp", datetime.now().isoformat()),
                             ),
                         )
 
@@ -121,7 +120,7 @@ class DataMigrator:
             return True
 
         except Exception as e:
-            logger.error(f"Failed to migrate evolution metrics: {e}")
+            logger.exception(f"Failed to migrate evolution metrics: {e}")
             return False
 
     def migrate_rag_embeddings(self) -> bool:
@@ -148,12 +147,8 @@ class DataMigrator:
                     sha256_chunks.append(chunk_id)
 
             if sha256_chunks:
-                logger.warning(
-                    f"Found {len(sha256_chunks)} chunks with SHA256 embeddings"
-                )
-                logger.info(
-                    "Note: Real embedding vectors will be generated during RAG system initialization"
-                )
+                logger.warning(f"Found {len(sha256_chunks)} chunks with SHA256 embeddings")
+                logger.info("Note: Real embedding vectors will be generated during RAG system initialization")
 
                 # Mark these for re-processing
                 for chunk_id in sha256_chunks:
@@ -171,7 +166,7 @@ class DataMigrator:
             return True
 
         except Exception as e:
-            logger.error(f"Failed to migrate RAG embeddings: {e}")
+            logger.exception(f"Failed to migrate RAG embeddings: {e}")
             return False
 
     def migrate_digital_twin_data(self) -> bool:
@@ -231,7 +226,7 @@ class DataMigrator:
             return True
 
         except Exception as e:
-            logger.error(f"Failed to migrate digital twin data: {e}")
+            logger.exception(f"Failed to migrate digital twin data: {e}")
             return False
 
     def validate_migration(self) -> dict[str, dict]:
@@ -240,9 +235,7 @@ class DataMigrator:
 
         for db_name, conn in self.databases.items():
             try:
-                cursor = conn.execute(
-                    "SELECT name FROM sqlite_master WHERE type='table'"
-                )
+                cursor = conn.execute("SELECT name FROM sqlite_master WHERE type='table'")
                 tables = [row[0] for row in cursor.fetchall()]
 
                 table_counts = {}
@@ -263,7 +256,7 @@ class DataMigrator:
 
         return results
 
-    def close_databases(self):
+    def close_databases(self) -> None:
         """Close all database connections."""
         for db_name, conn in self.databases.items():
             conn.close()
@@ -351,4 +344,4 @@ def main():
 
 if __name__ == "__main__":
     success = main()
-    exit(0 if success else 1)
+    sys.exit(0 if success else 1)

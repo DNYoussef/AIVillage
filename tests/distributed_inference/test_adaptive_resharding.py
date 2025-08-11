@@ -149,9 +149,7 @@ def device_profiles():
 @pytest.fixture
 def resharding_manager(mock_sharding_engine, mock_p2p_node, resharding_config):
     """Create AdaptiveReshardingManager for testing"""
-    return AdaptiveReshardingManager(
-        mock_sharding_engine, mock_p2p_node, resharding_config
-    )
+    return AdaptiveReshardingManager(mock_sharding_engine, mock_p2p_node, resharding_config)
 
 
 class TestAdaptiveReshardingManager:
@@ -222,9 +220,7 @@ class TestAdaptiveReshardingManager:
             patch.object(resharding_manager, "_handle_device_left") as mock_leave,
         ):
             # Add new device to peer registry
-            resharding_manager.p2p_node.peer_registry["device_3"] = device_profiles[
-                2
-            ].capabilities
+            resharding_manager.p2p_node.peer_registry["device_3"] = device_profiles[2].capabilities
 
             await resharding_manager._check_device_changes()
 
@@ -236,9 +232,7 @@ class TestAdaptiveReshardingManager:
     async def test_performance_degradation_detection(self, resharding_manager):
         """Test performance degradation detection"""
         with (
-            patch.object(
-                resharding_manager, "_get_current_performance", return_value=0.6
-            ),
+            patch.object(resharding_manager, "_get_current_performance", return_value=0.6),
             patch.object(resharding_manager, "trigger_resharding") as mock_trigger,
         ):
             await resharding_manager._check_performance_degradation()
@@ -253,9 +247,7 @@ class TestAdaptiveReshardingManager:
     async def test_emergency_performance_threshold(self, resharding_manager):
         """Test emergency resharding on critical performance"""
         with (
-            patch.object(
-                resharding_manager, "_get_current_performance", return_value=0.4
-            ),
+            patch.object(resharding_manager, "_get_current_performance", return_value=0.4),
             patch.object(resharding_manager, "trigger_resharding") as mock_trigger,
         ):
             await resharding_manager._check_performance_degradation()
@@ -270,9 +262,7 @@ class TestAdaptiveReshardingManager:
     async def test_load_imbalance_detection(self, resharding_manager):
         """Test load imbalance detection"""
         # Set low compute balance score
-        resharding_manager.sharding_engine.current_sharding_plan.compute_balance_score = (
-            0.5
-        )
+        resharding_manager.sharding_engine.current_sharding_plan.compute_balance_score = 0.5
 
         with patch.object(resharding_manager, "trigger_resharding") as mock_trigger:
             await resharding_manager._check_load_imbalance()
@@ -322,9 +312,7 @@ class TestAdaptiveReshardingManager:
         assert resharding_manager._can_reshard() is False
 
     @pytest.mark.asyncio
-    async def test_minimal_disruption_resharding(
-        self, resharding_manager, device_profiles
-    ):
+    async def test_minimal_disruption_resharding(self, resharding_manager, device_profiles):
         """Test minimal disruption resharding strategy"""
         # Create event with old plan
         event = ReshardingEvent(
@@ -334,9 +322,7 @@ class TestAdaptiveReshardingManager:
         )
 
         # Mock device profiles (all devices available)
-        resharding_manager.sharding_engine._get_device_profiles.return_value = (
-            device_profiles
-        )
+        resharding_manager.sharding_engine._get_device_profiles.return_value = device_profiles
 
         success = await resharding_manager._minimal_disruption_resharding(event)
 
@@ -344,9 +330,7 @@ class TestAdaptiveReshardingManager:
         resharding_manager.sharding_engine._activate_sharding_plan.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_optimal_rebalance_resharding(
-        self, resharding_manager, device_profiles
-    ):
+    async def test_optimal_rebalance_resharding(self, resharding_manager, device_profiles):
         """Test optimal rebalance resharding strategy"""
         event = ReshardingEvent(
             event_id="test_event",
@@ -355,9 +339,7 @@ class TestAdaptiveReshardingManager:
         )
 
         # Mock dependencies
-        resharding_manager.sharding_engine._get_device_profiles.return_value = (
-            device_profiles
-        )
+        resharding_manager.sharding_engine._get_device_profiles.return_value = device_profiles
         mock_new_plan = ShardingPlan(
             model_name="test_model",
             total_shards=3,
@@ -375,12 +357,8 @@ class TestAdaptiveReshardingManager:
             compute_balance_score=0.85,
         )
 
-        resharding_manager.sharding_engine._create_hybrid_plan.return_value = (
-            mock_new_plan
-        )
-        resharding_manager.sharding_engine._optimize_sharding_plan.return_value = (
-            mock_new_plan
-        )
+        resharding_manager.sharding_engine._create_hybrid_plan.return_value = mock_new_plan
+        resharding_manager.sharding_engine._optimize_sharding_plan.return_value = mock_new_plan
 
         success = await resharding_manager._optimal_rebalance_resharding(event)
 
@@ -398,9 +376,7 @@ class TestAdaptiveReshardingManager:
             old_plan=resharding_manager.sharding_engine.current_sharding_plan,
         )
 
-        resharding_manager.sharding_engine._get_device_profiles.return_value = (
-            device_profiles
-        )
+        resharding_manager.sharding_engine._get_device_profiles.return_value = device_profiles
         mock_plan = ShardingPlan(
             model_name="test_model",
             total_shards=2,
@@ -416,9 +392,7 @@ class TestAdaptiveReshardingManager:
             compute_balance_score=0.6,
         )
 
-        resharding_manager.sharding_engine._create_sequential_plan.return_value = (
-            mock_plan
-        )
+        resharding_manager.sharding_engine._create_sequential_plan.return_value = mock_plan
 
         success = await resharding_manager._emergency_resharding(event)
 
@@ -430,9 +404,7 @@ class TestAdaptiveReshardingManager:
     @pytest.mark.asyncio
     async def test_trigger_resharding_workflow(self, resharding_manager):
         """Test complete resharding trigger workflow"""
-        with patch.object(
-            resharding_manager, "_execute_resharding", return_value=True
-        ) as mock_execute:
+        with patch.object(resharding_manager, "_execute_resharding", return_value=True) as mock_execute:
             success = await resharding_manager.trigger_resharding(
                 ReshardingReason.DEVICE_JOINED,
                 strategy=ReshardingStrategy.OPTIMAL_REBALANCE,
@@ -498,9 +470,7 @@ class TestAdaptiveReshardingManager:
             compute_balance_score=0.7,
         )
 
-        disruption_same = resharding_manager._calculate_disruption_score(
-            old_plan, new_plan_same
-        )
+        disruption_same = resharding_manager._calculate_disruption_score(old_plan, new_plan_same)
         assert disruption_same == 0.0
 
         # Complete change - should have high disruption
@@ -508,21 +478,15 @@ class TestAdaptiveReshardingManager:
             model_name="test",
             total_shards=2,
             shards=[
-                ModelShard(
-                    "shard1", "device_3", [0, 1, 2], 1000, 300.0, 3.0
-                ),  # Moved to different device
-                ModelShard(
-                    "shard2", "device_1", [3, 4, 5], 1000, 300.0, 3.0
-                ),  # Moved to different device
+                ModelShard("shard1", "device_3", [0, 1, 2], 1000, 300.0, 3.0),  # Moved to different device
+                ModelShard("shard2", "device_1", [3, 4, 5], 1000, 300.0, 3.0),  # Moved to different device
             ],
             activation_routing={},
             memory_efficiency=0.8,
             compute_balance_score=0.7,
         )
 
-        disruption_different = resharding_manager._calculate_disruption_score(
-            old_plan, new_plan_different
-        )
+        disruption_different = resharding_manager._calculate_disruption_score(old_plan, new_plan_different)
         assert disruption_different == 1.0
 
     @pytest.mark.asyncio
@@ -559,17 +523,11 @@ class TestAdaptiveReshardingManager:
     @pytest.mark.asyncio
     async def test_force_resharding(self, resharding_manager):
         """Test forced resharding for manual intervention"""
-        with patch.object(
-            resharding_manager, "trigger_resharding", return_value=True
-        ) as mock_trigger:
-            success = await resharding_manager.force_resharding(
-                ReshardingStrategy.EMERGENCY
-            )
+        with patch.object(resharding_manager, "trigger_resharding", return_value=True) as mock_trigger:
+            success = await resharding_manager.force_resharding(ReshardingStrategy.EMERGENCY)
 
             assert success is True
-            mock_trigger.assert_called_once_with(
-                ReshardingReason.MANUAL_TRIGGER, strategy=ReshardingStrategy.EMERGENCY
-            )
+            mock_trigger.assert_called_once_with(ReshardingReason.MANUAL_TRIGGER, strategy=ReshardingStrategy.EMERGENCY)
 
     def test_get_resharding_status(self, resharding_manager):
         """Test resharding status reporting"""
@@ -613,9 +571,7 @@ class TestAdaptiveReshardingManager:
         # Set resharding as active
         resharding_manager.resharding_active = True
 
-        success = await resharding_manager.trigger_resharding(
-            ReshardingReason.DEVICE_JOINED
-        )
+        success = await resharding_manager.trigger_resharding(ReshardingReason.DEVICE_JOINED)
 
         # Should be rejected due to active resharding
         assert success is False
@@ -626,9 +582,7 @@ class TestAdaptiveReshardingManager:
         # Set recent resharding time
         resharding_manager.last_resharding_time = time.time()
 
-        success = await resharding_manager.trigger_resharding(
-            ReshardingReason.DEVICE_JOINED
-        )
+        success = await resharding_manager.trigger_resharding(ReshardingReason.DEVICE_JOINED)
 
         # Should be rejected due to minimum interval
         assert success is False
@@ -641,13 +595,9 @@ class TestAdaptiveReshardingManager:
             await asyncio.sleep(0.1)  # Simulate slow operation
             return True
 
-        with patch.object(
-            resharding_manager, "_execute_resharding", side_effect=slow_resharding
-        ):
+        with patch.object(resharding_manager, "_execute_resharding", side_effect=slow_resharding):
             start_time = time.time()
-            success = await resharding_manager.trigger_resharding(
-                ReshardingReason.DEVICE_JOINED
-            )
+            success = await resharding_manager.trigger_resharding(ReshardingReason.DEVICE_JOINED)
             duration = time.time() - start_time
 
             assert success is True

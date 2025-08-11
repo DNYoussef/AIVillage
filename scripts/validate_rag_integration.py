@@ -168,13 +168,6 @@ def validate_port_configuration() -> dict[str, Any]:
     results = {"passed": 0, "failed": 0, "issues": []}
 
     # CODEX specified ports
-    required_ports = {
-        "RAG Pipeline": 8082,
-        "Evolution Metrics": 8081,
-        "Digital Twin API": 8080,
-        "LibP2P Main": 4001,
-        "Redis": 6379,
-    }
 
     # Check environment variables for port configs
     rag_port = os.getenv("RAG_API_PORT", "8082")
@@ -266,9 +259,7 @@ def validate_model_configuration() -> dict[str, Any]:
         results["issues"].append("Vector dimension mismatch")
 
     # Check cross-encoder model
-    cross_encoder = os.getenv(
-        "RAG_CROSS_ENCODER_MODEL", "cross-encoder/ms-marco-MiniLM-L-2-v2"
-    )
+    cross_encoder = os.getenv("RAG_CROSS_ENCODER_MODEL", "cross-encoder/ms-marco-MiniLM-L-2-v2")
     if "cross-encoder/ms-marco-MiniLM" in cross_encoder:
         print(f"✅ Cross-encoder model: {cross_encoder}")
         results["passed"] += 1
@@ -377,7 +368,7 @@ def generate_integration_report() -> dict[str, Any]:
     }
 
 
-def main():
+def main() -> None:
     """Main validation function."""
     try:
         report = generate_integration_report()

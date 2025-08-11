@@ -25,9 +25,7 @@ def debug_agent_factory():
 
         # Try with absolute path
         print("\n2. Testing with absolute path...")
-        abs_template_path = (
-            Path.cwd() / "src" / "production" / "agent_forge" / "templates"
-        )
+        abs_template_path = Path.cwd() / "src" / "production" / "agent_forge" / "templates"
         print(f"   Trying absolute path: {abs_template_path}")
         print(f"   Path exists: {abs_template_path.exists()}")
 

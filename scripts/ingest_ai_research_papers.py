@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""AI Research Papers RAG Ingestion Script
+"""AI Research Papers RAG Ingestion Script.
 
 Ingests all AI research papers including:
 - 147 papers from the ai_papers zip file
-- Grossman Non-Newtonian Calculus PDF 
+- Grossman Non-Newtonian Calculus PDF
 - Grossman Meta-Calculus PDF
 
 Processes PDFs with intelligent chunking and adds to RAG system.
@@ -49,7 +49,7 @@ logger = logging.getLogger(__name__)
 class PDFIngestionManager:
     """Manages PDF ingestion into RAG system with intelligent chunking."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.loader = WikipediaDataLoader()
         self.chunker = IntelligentChunker(
             window_size=3,
@@ -90,12 +90,13 @@ class PDFIngestionManager:
             doc.close()
 
             if not full_text.strip():
-                raise ValueError("No text extracted from PDF")
+                msg = "No text extracted from PDF"
+                raise ValueError(msg)
 
             return full_text, metadata
 
         except Exception as e:
-            logger.error(f"Failed to extract text from {pdf_path}: {e}")
+            logger.exception(f"Failed to extract text from {pdf_path}: {e}")
             # Fallback to PyPDF2
             try:
                 with open(pdf_path, "rb") as file:
@@ -103,12 +104,8 @@ class PDFIngestionManager:
                     text_blocks = []
                     metadata = {
                         "total_pages": len(reader.pages),
-                        "title": getattr(reader.metadata, "title", "")
-                        if reader.metadata
-                        else "",
-                        "author": getattr(reader.metadata, "author", "")
-                        if reader.metadata
-                        else "",
+                        "title": getattr(reader.metadata, "title", "") if reader.metadata else "",
+                        "author": getattr(reader.metadata, "author", "") if reader.metadata else "",
                         "pdf_path": pdf_path,
                     }
 
@@ -120,7 +117,7 @@ class PDFIngestionManager:
                     return "\n\n".join(text_blocks), metadata
 
             except Exception as e2:
-                logger.error(f"Both PDF extraction methods failed for {pdf_path}: {e2}")
+                logger.exception(f"Both PDF extraction methods failed for {pdf_path}: {e2}")
                 raise
 
     def determine_document_type(self, text: str, filename: str) -> DocumentType:
@@ -192,9 +189,7 @@ class PDFIngestionManager:
             doc_id = f"{category}_{filename}_{file_hash[:8]}"
 
             # Chunk the document intelligently
-            chunks = self.chunker.chunk_document(
-                text=text, document_id=doc_id, doc_type=doc_type
-            )
+            chunks = self.chunker.chunk_document(text=text, document_id=doc_id, doc_type=doc_type)
 
             logger.info(f"Created {len(chunks)} intelligent chunks for {filename}")
 
@@ -239,17 +234,15 @@ class PDFIngestionManager:
                 self.stats["total_chunks"] += len(chunks)
                 self.stats["total_pages"] += metadata.get("total_pages", 0)
 
-                logger.info(
-                    f"Successfully ingested {filename} with {len(chunks)} chunks"
-                )
+                logger.info(f"Successfully ingested {filename} with {len(chunks)} chunks")
                 return True
 
             except Exception as e:
-                logger.error(f"Failed to store document {filename} in RAG system: {e}")
+                logger.exception(f"Failed to store document {filename} in RAG system: {e}")
                 return False
 
         except Exception as e:
-            logger.error(f"Failed to ingest PDF {pdf_path}: {e}")
+            logger.exception(f"Failed to ingest PDF {pdf_path}: {e}")
             self.stats["failed_ingestions"] += 1
             return False
 
@@ -275,11 +268,7 @@ class PDFIngestionManager:
                 category = "magi_research"
             elif "multiagent" in path_str:
                 category = "multiagent"
-            elif (
-                "Math" in path_str
-                or "geometry" in path_str
-                or "calculus" in path_str.lower()
-            ):
+            elif "Math" in path_str or "geometry" in path_str or "calculus" in path_str.lower():
                 category = "mathematics"
             elif "Grossman" in path_str:
                 category = "grossman_calculus"
@@ -290,7 +279,7 @@ class PDFIngestionManager:
 
         return pdfs
 
-    async def ingest_all_papers(self):
+    async def ingest_all_papers(self) -> None:
         """Ingest all AI research papers into RAG system."""
         logger.info("Starting comprehensive AI research paper ingestion")
 
@@ -325,9 +314,7 @@ class PDFIngestionManager:
         batch_size = 5
         for i in range(0, len(pdf_sources), batch_size):
             batch = pdf_sources[i : i + batch_size]
-            logger.info(
-                f"Processing batch {i//batch_size + 1}/{(len(pdf_sources)-1)//batch_size + 1}"
-            )
+            logger.info(f"Processing batch {i//batch_size + 1}/{(len(pdf_sources)-1)//batch_size + 1}")
 
             tasks = []
             for pdf_path, category in batch:
@@ -350,12 +337,10 @@ class PDFIngestionManager:
         logger.info(f"Failed ingestions: {self.stats['failed_ingestions']}")
         logger.info(f"Total chunks created: {self.stats['total_chunks']}")
         logger.info(f"Total pages processed: {self.stats['total_pages']}")
-        logger.info(
-            f"Success rate: {self.stats['successful_ingestions']/self.stats['total_files']*100:.1f}%"
-        )
+        logger.info(f"Success rate: {self.stats['successful_ingestions']/self.stats['total_files']*100:.1f}%")
 
 
-async def main():
+async def main() -> None:
     """Main ingestion function."""
     try:
         manager = PDFIngestionManager()
@@ -371,7 +356,7 @@ async def main():
         # You can add a test query here if needed
 
     except Exception as e:
-        logger.error(f"Ingestion failed: {e}")
+        logger.exception(f"Ingestion failed: {e}")
         import traceback
 
         traceback.print_exc()

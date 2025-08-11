@@ -13,15 +13,15 @@ from .privacy import ComplianceManager
 from .security import EncryptionManager, PreferenceVault, VaultManager
 
 __all__ = [
+    "ComplianceManager",
     "DigitalTwin",
+    "EncryptionManager",
+    "KnowledgeState",
     "LearningProfile",
     "LearningSession",
-    "KnowledgeState",
-    "ShadowSimulator",
-    "ProfileManager",
     "PersonalizationEngine",
     "PreferenceVault",
-    "EncryptionManager",
+    "ProfileManager",
+    "ShadowSimulator",
     "VaultManager",
-    "ComplianceManager",
 ]

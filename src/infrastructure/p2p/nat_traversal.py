@@ -65,16 +65,12 @@ class NATTraversal:
         try:  # pragma: no cover - network may be unavailable
             import stun  # type: ignore[import-not-found]
 
-            nat_type, external_ip, external_port = stun.get_ip_info(
-                stun_host=self.stun_host, stun_port=self.stun_port
-            )
+            nat_type, external_ip, external_port = stun.get_ip_info(stun_host=self.stun_host, stun_port=self.stun_port)
             nat_enum = NATType.UNKNOWN
             if nat_type:
                 formatted = nat_type.replace(" ", "_").upper()
                 nat_enum = NATType.__members__.get(formatted, NATType.UNKNOWN)
-            self._nat_info = NATInfo(
-                external_ip or "0.0.0.0", int(external_port or 0), nat_enum
-            )
+            self._nat_info = NATInfo(external_ip or "0.0.0.0", int(external_port or 0), nat_enum)
         except Exception as exc:  # noqa: BLE001
             logger.debug("STUN detection failed: %s", exc)
             self._nat_info = NATInfo("0.0.0.0", 0, NATType.UNKNOWN)
@@ -139,9 +135,7 @@ class NATTraversal:
                 )
                 t.start()
                 return True
-            except (
-                OSError
-            ) as exc:  # pragma: no cover - network operations mocked in tests
+            except OSError as exc:  # pragma: no cover - network operations mocked in tests
                 logger.debug("Hole punching attempt %s failed: %s", attempt + 1, exc)
                 time.sleep(0.2)
 
@@ -155,8 +149,6 @@ class NATTraversal:
                     on_success(sock)
                 return True
             except OSError as exc:  # pragma: no cover
-                logger.debug(
-                    "Relay connection to %s:%s failed: %s", relay_ip, relay_port, exc
-                )
+                logger.debug("Relay connection to %s:%s failed: %s", relay_ip, relay_port, exc)
                 continue
         return False

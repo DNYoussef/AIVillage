@@ -1,4 +1,4 @@
-"""AIVillage Comprehensive Debug System
+"""AIVillage Comprehensive Debug System.
 
 Provides debugging, monitoring, and troubleshooting tools for the entire AIVillage system.
 Follows CODEX Integration Requirements for debug mode implementation.

@@ -17,9 +17,7 @@ from .utils import EvoMergeException
 logger = logging.getLogger(__name__)
 
 
-def is_instruction_tuned_model(
-    model: torch.nn.Module, tokenizer: AutoTokenizer
-) -> bool:
+def is_instruction_tuned_model(model: torch.nn.Module, tokenizer: AutoTokenizer) -> bool:
     instruction_keywords = [
         "instruction",
         "task",
@@ -33,9 +31,7 @@ def is_instruction_tuned_model(
 
     keyword_presence = sum(1 for keyword in instruction_keywords if keyword in vocab)
     special_token_presence = sum(
-        1
-        for token in special_tokens
-        if any(keyword in token.lower() for keyword in instruction_keywords)
+        1 for token in special_tokens if any(keyword in token.lower() for keyword in instruction_keywords)
     )
 
     return (keyword_presence >= 3) or (special_token_presence >= 2)
@@ -72,9 +68,7 @@ def merge_instruction_tuned_models(
         raise EvoMergeException(msg)
 
 
-def merge_ps(
-    models: list[torch.nn.Module], merge_settings: MergeSettings
-) -> torch.nn.Module:
+def merge_ps(models: list[torch.nn.Module], merge_settings: MergeSettings) -> torch.nn.Module:
     logger.info("Performing parameter space merge")
     merged_state_dict = {}
     for technique in merge_settings.ps_techniques:
@@ -101,9 +95,7 @@ def merge_ps(
     return merged_model
 
 
-def merge_dfs(
-    models: list[torch.nn.Module], merge_settings: MergeSettings
-) -> torch.nn.Module:
+def merge_dfs(models: list[torch.nn.Module], merge_settings: MergeSettings) -> torch.nn.Module:
     logger.info("Performing deep fusion space merge")
     config = AutoConfig.from_pretrained(models[0].config._name_or_path)
     merged_model = AutoModelForCausalLM.from_config(config)
@@ -112,15 +104,11 @@ def merge_dfs(
         if technique not in MERGE_TECHNIQUES:
             msg = f"Unknown merge technique: {technique}"
             raise ValueError(msg)
-        merged_model = MERGE_TECHNIQUES[technique](
-            merged_model, models, **merge_settings.parameters.get(technique, {})
-        )
+        merged_model = MERGE_TECHNIQUES[technique](merged_model, models, **merge_settings.parameters.get(technique, {}))
     return merged_model
 
 
-def merge_ps_dfs(
-    models: list[torch.nn.Module], merge_settings: MergeSettings
-) -> torch.nn.Module:
+def merge_ps_dfs(models: list[torch.nn.Module], merge_settings: MergeSettings) -> torch.nn.Module:
     logger.info("Performing combined parameter space and deep fusion space merge")
     ps_model = merge_ps(models, merge_settings)
     return merge_dfs([ps_model, *models], merge_settings)
@@ -130,12 +118,7 @@ def merge_tokenizers(tokenizers: list[AutoTokenizer]) -> AutoTokenizer:
     logger.info("Merging tokenizers")
     base_tokenizer = tokenizers[0]
     for tokenizer in tokenizers[1:]:
-        base_tokenizer.add_tokens(
-            list(
-                set(tokenizer.get_vocab().keys())
-                - set(base_tokenizer.get_vocab().keys())
-            )
-        )
+        base_tokenizer.add_tokens(list(set(tokenizer.get_vocab().keys()) - set(base_tokenizer.get_vocab().keys())))
     return base_tokenizer
 
 
@@ -148,31 +131,21 @@ def preserve_instruction_tuning(
     instruction_embeddings = []
     for model, tokenizer in zip(original_models, tokenizers, strict=False):
         instruction_tokens = [
-            token
-            for token in tokenizer.get_vocab()
-            if "instruction" in token.lower() or "task" in token.lower()
+            token for token in tokenizer.get_vocab() if "instruction" in token.lower() or "task" in token.lower()
         ]
         instruction_ids = tokenizer.convert_tokens_to_ids(instruction_tokens)
-        instruction_embeddings.append(
-            model.get_input_embeddings().weight[instruction_ids]
-        )
+        instruction_embeddings.append(model.get_input_embeddings().weight[instruction_ids])
 
     avg_instruction_embedding = torch.mean(torch.stack(instruction_embeddings), dim=0)
 
     merged_tokenizer = merge_tokenizers(tokenizers)
     merged_instruction_tokens = [
-        token
-        for token in merged_tokenizer.get_vocab()
-        if "instruction" in token.lower() or "task" in token.lower()
+        token for token in merged_tokenizer.get_vocab() if "instruction" in token.lower() or "task" in token.lower()
     ]
-    merged_instruction_ids = merged_tokenizer.convert_tokens_to_ids(
-        merged_instruction_tokens
-    )
+    merged_instruction_ids = merged_tokenizer.convert_tokens_to_ids(merged_instruction_tokens)
 
     with torch.no_grad():
-        merged_model.get_input_embeddings().weight[
-            merged_instruction_ids
-        ] = avg_instruction_embedding
+        merged_model.get_input_embeddings().weight[merged_instruction_ids] = avg_instruction_embedding
 
     return merged_model
 
@@ -188,10 +161,7 @@ def fine_tune_on_instructions(
     optimizer = torch.optim.AdamW(model.parameters(), lr=5e-5)
 
     # Prepare the dataset
-    encoded_dataset = [
-        tokenizer.encode(text, truncation=True, max_length=512)
-        for text in instruction_dataset
-    ]
+    encoded_dataset = [tokenizer.encode(text, truncation=True, max_length=512) for text in instruction_dataset]
     dataset = TextDataset(encoded_dataset, tokenizer)
     data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
     dataloader = DataLoader(dataset, batch_size=4, collate_fn=data_collator)
@@ -228,10 +198,7 @@ def evaluate_instruction_following(
         response = tokenizer.decode(outputs[0], skip_special_tokens=True)
 
         # Simple heuristic: check if the response contains key instruction-related words
-        if any(
-            keyword in response.lower()
-            for keyword in ["answer", "result", "output", "response"]
-        ):
+        if any(keyword in response.lower() for keyword in ["answer", "result", "output", "response"]):
             correct_responses += 1
 
     accuracy = correct_responses / len(test_instructions)
@@ -246,14 +213,8 @@ def merge_and_evaluate_instruction_models(
     instruction_dataset: list[str],
     test_instructions: list[str],
 ) -> tuple[torch.nn.Module, float]:
-    merged_model, merged_tokenizer = merge_instruction_tuned_models(
-        models, tokenizers, merge_settings
-    )
-    fine_tuned_model = fine_tune_on_instructions(
-        merged_model, merged_tokenizer, instruction_dataset
-    )
-    accuracy = evaluate_instruction_following(
-        fine_tuned_model, merged_tokenizer, test_instructions
-    )
+    merged_model, merged_tokenizer = merge_instruction_tuned_models(models, tokenizers, merge_settings)
+    fine_tuned_model = fine_tune_on_instructions(merged_model, merged_tokenizer, instruction_dataset)
+    accuracy = evaluate_instruction_following(fine_tuned_model, merged_tokenizer, test_instructions)
     print(f"Instruction-following accuracy: {accuracy:.2f}")
     return fine_tuned_model, accuracy

@@ -12,9 +12,7 @@ class Retriever(ABC):
 
 class KnowledgeConstructor(ABC):
     @abstractmethod
-    async def construct(
-        self, query: str, retrieved_docs: list[dict[str, Any]]
-    ) -> dict[str, Any]:
+    async def construct(self, query: str, retrieved_docs: list[dict[str, Any]]) -> dict[str, Any]:
         pass
 
 

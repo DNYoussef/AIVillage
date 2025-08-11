@@ -126,9 +126,7 @@ class UnifiedKnowledgeTracker:
         summary = {
             "total_changes": len(self.knowledge_changes),
             "entities_changed": len({c.entity for c in self.knowledge_changes}),
-            "last_update": max(
-                (c.timestamp for c in self.knowledge_changes), default=None
-            ),
+            "last_update": max((c.timestamp for c in self.knowledge_changes), default=None),
         }
 
         if not self.knowledge_changes:
@@ -151,9 +149,7 @@ class UnifiedKnowledgeTracker:
         sorted_changes = sorted(self.knowledge_changes, key=lambda c: c.timestamp)
         if len(sorted_changes) > 1:
             diffs = [
-                (
-                    sorted_changes[i].timestamp - sorted_changes[i - 1].timestamp
-                ).total_seconds()
+                (sorted_changes[i].timestamp - sorted_changes[i - 1].timestamp).total_seconds()
                 for i in range(1, len(sorted_changes))
             ]
             avg_diff = sum(diffs) / len(diffs)

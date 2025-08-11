@@ -78,17 +78,11 @@ class TestP2PNetworkSecurity(unittest.TestCase):
 
         # Test reputation system response
         monitor = SecurityMonitor(self.config)
-        monitor.update_peer_reputation(
-            legitimate_peer, -0.5, "Spoofing attempt detected"
-        )
+        monitor.update_peer_reputation(legitimate_peer, -0.5, "Spoofing attempt detected")
 
         reputation = monitor.peer_reputations[legitimate_peer]
-        self.assertLess(
-            reputation.trust_score, 0.3, "Spoofing should severely damage reputation"
-        )
-        print(
-            f"[PASS] Peer reputation reduced to {reputation.trust_score:.3f} after spoofing"
-        )
+        self.assertLess(reputation.trust_score, 0.3, "Spoofing should severely damage reputation")
+        print(f"[PASS] Peer reputation reduced to {reputation.trust_score:.3f} after spoofing")
 
     def test_replay_attack_prevention(self):
         """Test prevention of replay attacks."""
@@ -142,22 +136,14 @@ class TestP2PNetworkSecurity(unittest.TestCase):
                 connection_allowed_count += 1
                 monitor.connection_counts[malicious_peer].append(time.time())
 
-        self.assertLessEqual(
-            connection_allowed_count, self.config.max_connections_per_minute + 1
-        )
-        print(
-            f"[PASS] Rate limiting effective - only {connection_allowed_count} of 15 attempts allowed"
-        )
+        self.assertLessEqual(connection_allowed_count, self.config.max_connections_per_minute + 1)
+        print(f"[PASS] Rate limiting effective - only {connection_allowed_count} of 15 attempts allowed")
 
         # Check that peer gets blocked after excessive attempts
-        self.assertTrue(
-            malicious_peer in monitor.peer_reputations, "Attacker should be tracked"
-        )
+        self.assertTrue(malicious_peer in monitor.peer_reputations, "Attacker should be tracked")
 
         reputation = monitor.peer_reputations[malicious_peer]
-        self.assertLess(
-            reputation.trust_score, 0.5, "Attacker reputation should be damaged"
-        )
+        self.assertLess(reputation.trust_score, 0.5, "Attacker reputation should be damaged")
         print(f"[PASS] Attacker reputation reduced to {reputation.trust_score:.3f}")
 
     def test_peer_isolation_for_bad_actors(self):
@@ -189,21 +175,15 @@ class TestP2PNetworkSecurity(unittest.TestCase):
         monitor.block_peer(bad_actor, "Multiple security violations")
 
         # Verify peer is blocked
-        self.assertTrue(
-            monitor.is_peer_blocked(bad_actor), "Bad actor should be blocked"
-        )
+        self.assertTrue(monitor.is_peer_blocked(bad_actor), "Bad actor should be blocked")
         print("[PASS] Bad actor successfully blocked from network")
 
         # Test that blocked peer cannot send messages
-        blocked_message = SecureMessage(
-            sender=bad_actor, encrypted_payload=b"malicious_payload"
-        )
+        blocked_message = SecureMessage(sender=bad_actor, encrypted_payload=b"malicious_payload")
 
         # In real implementation, this would be checked before processing
         should_process = not monitor.is_peer_blocked(blocked_message.sender)
-        self.assertFalse(
-            should_process, "Messages from blocked peers should be rejected"
-        )
+        self.assertFalse(should_process, "Messages from blocked peers should be rejected")
         print("[PASS] Messages from blocked peer rejected")
 
     def test_encryption_strength_validation(self):
@@ -231,30 +211,22 @@ class TestP2PNetworkSecurity(unittest.TestCase):
 
             # Decrypt and verify
             decrypted = crypto.decrypt_message(encrypted, mac, nonce, "test_peer")
-            self.assertEqual(
-                decrypted, payload, f"Payload {i} should decrypt correctly"
-            )
+            self.assertEqual(decrypted, payload, f"Payload {i} should decrypt correctly")
 
-        print(
-            f"[PASS] Encryption/decryption successful for {len(test_payloads)} payload sizes"
-        )
+        print(f"[PASS] Encryption/decryption successful for {len(test_payloads)} payload sizes")
 
         # Test that modified encrypted data fails
         encrypted, mac, nonce = crypto.encrypt_message(b"test_payload", "test_peer")
 
         # Modify encrypted data
         modified_encrypted = encrypted[:-1] + b"\x00"
-        decrypted_modified = crypto.decrypt_message(
-            modified_encrypted, mac, nonce, "test_peer"
-        )
+        decrypted_modified = crypto.decrypt_message(modified_encrypted, mac, nonce, "test_peer")
         self.assertIsNone(decrypted_modified, "Modified encrypted data should fail")
         print("[PASS] Modified encrypted data rejected")
 
         # Test that modified MAC fails
         modified_mac = mac[:-1] + b"\x00"
-        decrypted_bad_mac = crypto.decrypt_message(
-            encrypted, modified_mac, nonce, "test_peer"
-        )
+        decrypted_bad_mac = crypto.decrypt_message(encrypted, modified_mac, nonce, "test_peer")
         self.assertIsNone(decrypted_bad_mac, "Modified MAC should fail verification")
         print("[PASS] Modified MAC rejected")
 
@@ -291,12 +263,8 @@ class TestP2PNetworkSecurity(unittest.TestCase):
         max_deviation = max(abs(t - avg_timing) for t in timing_results)
 
         # Allow up to 50% deviation (timing attacks are complex)
-        self.assertLess(
-            max_deviation, avg_timing * 0.5, "Timing deviation should be minimal"
-        )
-        print(
-            f"[PASS] MAC verification timing consistent (max deviation: {max_deviation * 1000:.2f}ms)"
-        )
+        self.assertLess(max_deviation, avg_timing * 0.5, "Timing deviation should be minimal")
+        print(f"[PASS] MAC verification timing consistent (max deviation: {max_deviation * 1000:.2f}ms)")
 
         # Test that error messages don't reveal sensitive information
         monitor = SecurityMonitor(self.config)
@@ -386,9 +354,7 @@ class TestP2PNetworkSecurity(unittest.TestCase):
             alice_id,  # Bob expects this to be from Alice
         )
 
-        self.assertIsNone(
-            decrypted_forged, "Forged message should fail MAC verification"
-        )
+        self.assertIsNone(decrypted_forged, "Forged message should fail MAC verification")
         print("[PASS] Forged message with wrong sender detected")
 
         # Test sequence number tampering
@@ -432,9 +398,7 @@ class TestP2PNetworkSecurity(unittest.TestCase):
             encrypted, _, _ = crypto.encrypt_message(payload, "same_peer")
             ciphertexts.add(encrypted.hex())
 
-        self.assertEqual(
-            len(ciphertexts), 10, "Same payload should produce different ciphertexts"
-        )
+        self.assertEqual(len(ciphertexts), 10, "Same payload should produce different ciphertexts")
         print("[PASS] Same payload produces different ciphertexts (semantic security)")
 
     def test_security_event_monitoring(self):
@@ -472,9 +436,7 @@ class TestP2PNetworkSecurity(unittest.TestCase):
         self.assertIn("blocked_peers", summary)
         self.assertIn("event_types", summary)
 
-        print(
-            f"[PASS] Security summary generated: {summary['total_events']} total events"
-        )
+        print(f"[PASS] Security summary generated: {summary['total_events']} total events")
 
         # Test that critical events trigger automatic blocking
         critical_peer = "peer_critical_attack"
@@ -534,21 +496,15 @@ class TestP2PNetworkSecurity(unittest.TestCase):
 
         # Count peers with low reputation
         low_reputation_peers = sum(
-            1
-            for r in monitor.peer_reputations.values()
-            if r.trust_score < self.config.min_trust_score
+            1 for r in monitor.peer_reputations.values() if r.trust_score < self.config.min_trust_score
         )
 
         blocked_peers = len(monitor.blocked_peers)
 
-        print(
-            f"[INFO] After attack: {low_reputation_peers} low-reputation peers, {blocked_peers} blocked peers"
-        )
+        print(f"[INFO] After attack: {low_reputation_peers} low-reputation peers, {blocked_peers} blocked peers")
 
         # Network should have identified and isolated most attackers
-        self.assertGreater(
-            low_reputation_peers, 15, "Most attackers should have low reputation"
-        )
+        self.assertGreater(low_reputation_peers, 15, "Most attackers should have low reputation")
 
         # Some attackers should be blocked
         self.assertGreater(blocked_peers, 0, "Some attackers should be blocked")
@@ -599,9 +555,7 @@ def run_security_tests():
         print("\n[SUCCESS] ALL SECURITY TESTS PASSED!")
         print("P2P network is resilient against tested attack vectors.")
     else:
-        print(
-            f"\n[WARNING] {failures + errors} tests failed. Review security implementation."
-        )
+        print(f"\n[WARNING] {failures + errors} tests failed. Review security implementation.")
 
         if result.failures:
             print("\nFailures:")

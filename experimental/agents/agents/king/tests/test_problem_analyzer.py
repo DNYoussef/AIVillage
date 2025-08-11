@@ -35,12 +35,8 @@ from agents.king.quality_assurance_layer import QualityAssuranceLayer
 
 class TestProblemAnalyzer(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self) -> None:
-        tok_patch = patch(
-            "transformers.AutoTokenizer.from_pretrained", return_value=DummyTok()
-        )
-        model_patch = patch(
-            "transformers.AutoModel.from_pretrained", return_value=DummyModel()
-        )
+        tok_patch = patch("transformers.AutoTokenizer.from_pretrained", return_value=DummyTok())
+        model_patch = patch("transformers.AutoModel.from_pretrained", return_value=DummyModel())
         self.addCleanup(tok_patch.stop)
         self.addCleanup(model_patch.stop)
         tok_patch.start()
@@ -48,21 +44,15 @@ class TestProblemAnalyzer(unittest.IsolatedAsyncioTestCase):
         self.communication_protocol = Mock()
         self.agent = Mock()
         self.quality_assurance_layer = Mock(spec=QualityAssuranceLayer)
-        self.problem_analyzer = ProblemAnalyzer(
-            self.communication_protocol, self.agent, self.quality_assurance_layer
-        )
+        self.problem_analyzer = ProblemAnalyzer(self.communication_protocol, self.agent, self.quality_assurance_layer)
 
     async def test_analyze(self) -> None:
         content = "Test problem content"
         rag_info = {"rag_data": "Test RAG info"}
         rule_compliance = 0.9
 
-        self.quality_assurance_layer.eudaimonia_triangulator.get_embedding.return_value = [
-            0.1
-        ] * 768
-        self.quality_assurance_layer.eudaimonia_triangulator.triangulate.return_value = (
-            0.8
-        )
+        self.quality_assurance_layer.eudaimonia_triangulator.get_embedding.return_value = [0.1] * 768
+        self.quality_assurance_layer.eudaimonia_triangulator.triangulate.return_value = 0.8
         self.problem_analyzer.llm.complete.return_value.text = "Test analysis"
 
         result = await self.problem_analyzer.analyze(content, rag_info, rule_compliance)
@@ -75,9 +65,7 @@ class TestProblemAnalyzer(unittest.IsolatedAsyncioTestCase):
     async def test_collect_agent_analyses(self) -> None:
         task = "Test task"
         self.communication_protocol.get_all_agents.return_value = ["Agent1", "Agent2"]
-        self.communication_protocol.send_and_wait.return_value.content = {
-            "analysis": "Test analysis"
-        }
+        self.communication_protocol.send_and_wait.return_value.content = {"analysis": "Test analysis"}
 
         analyses = await self.problem_analyzer._collect_agent_analyses(task)
 
@@ -90,13 +78,9 @@ class TestProblemAnalyzer(unittest.IsolatedAsyncioTestCase):
             {"agent": "Agent1", "analysis": "Analysis 1"},
             {"agent": "Agent2", "analysis": "Analysis 2"},
         ]
-        self.communication_protocol.send_and_wait.return_value.content = {
-            "critique": "Test critique"
-        }
+        self.communication_protocol.send_and_wait.return_value.content = {"critique": "Test critique"}
 
-        critiqued_analyses = await self.problem_analyzer._collect_critiqued_analyses(
-            initial_analyses
-        )
+        critiqued_analyses = await self.problem_analyzer._collect_critiqued_analyses(initial_analyses)
 
         assert len(critiqued_analyses) == 2
         assert "critiques" in critiqued_analyses[0]
@@ -106,13 +90,9 @@ class TestProblemAnalyzer(unittest.IsolatedAsyncioTestCase):
             {"agent": "Agent1", "analysis": "Analysis 1", "critiques": ["Critique 1"]},
             {"agent": "Agent2", "analysis": "Analysis 2", "critiques": ["Critique 2"]},
         ]
-        self.communication_protocol.send_and_wait.return_value.content = {
-            "revised_analysis": "Revised analysis"
-        }
+        self.communication_protocol.send_and_wait.return_value.content = {"revised_analysis": "Revised analysis"}
 
-        revised_analyses = await self.problem_analyzer._collect_revised_analyses(
-            critiqued_analyses
-        )
+        revised_analyses = await self.problem_analyzer._collect_revised_analyses(critiqued_analyses)
 
         assert len(revised_analyses) == 2
         assert "revised_analysis" in revised_analyses[0]
@@ -125,9 +105,7 @@ class TestProblemAnalyzer(unittest.IsolatedAsyncioTestCase):
         king_analysis = "King's analysis"
         self.problem_analyzer.llm.complete.return_value.text = "Consolidated analysis"
 
-        consolidated_analysis = await self.problem_analyzer._consolidate_analyses(
-            revised_analyses, king_analysis
-        )
+        consolidated_analysis = await self.problem_analyzer._consolidate_analyses(revised_analyses, king_analysis)
 
         assert consolidated_analysis == "Consolidated analysis"
 
@@ -135,12 +113,8 @@ class TestProblemAnalyzer(unittest.IsolatedAsyncioTestCase):
         task = {"content": "Test task"}
         result = {"performance": 0.7, "uncertainty": 0.3}
         await self.problem_analyzer.update_models(task, result)
-        self.problem_analyzer.enhanced_plan_generator.update.assert_called_once_with(
-            task, result
-        )
-        self.quality_assurance_layer.update_task_history.assert_called_once_with(
-            task, 0.7, 0.3
-        )
+        self.problem_analyzer.enhanced_plan_generator.update.assert_called_once_with(task, result)
+        self.quality_assurance_layer.update_task_history.assert_called_once_with(task, 0.7, 0.3)
 
     async def test_save_models(self) -> None:
         path = "test_path"

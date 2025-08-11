@@ -41,9 +41,7 @@ class KeyConceptExtractorAgent(AgentInterface):
         import torch.nn.functional as F
 
         sentence_emb = token_embeddings.mean(dim=0)
-        similarities = F.cosine_similarity(
-            token_embeddings, sentence_emb.unsqueeze(0), dim=1
-        )
+        similarities = F.cosine_similarity(token_embeddings, sentence_emb.unsqueeze(0), dim=1)
         topk = similarities.topk(min(5, len(tokens))).indices.tolist()
 
         keywords = []

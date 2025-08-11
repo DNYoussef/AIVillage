@@ -81,9 +81,7 @@ def demonstrate_cleanup() -> None:
     status_files = list(base_path.glob("*STATUS*.md"))
     plan_files = list(base_path.glob("*PLAN*.md"))
 
-    total_archive = (
-        len(report_files) + len(summary_files) + len(status_files) + len(plan_files)
-    )
+    total_archive = len(report_files) + len(summary_files) + len(status_files) + len(plan_files)
 
     print(f"   📁 Archive {total_archive} report/summary files")
     print("   🗂️  Organize ~80 docs/ files into categories")

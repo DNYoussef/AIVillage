@@ -129,9 +129,7 @@ class MessageProtocol(ABC):
         """
 
     @abstractmethod
-    async def receive_message(
-        self, timeout_seconds: float | None = None
-    ) -> MessageInterface | None:
+    async def receive_message(self, timeout_seconds: float | None = None) -> MessageInterface | None:
         """Receive a message using this protocol.
 
         Args:
@@ -142,9 +140,7 @@ class MessageProtocol(ABC):
         """
 
     @abstractmethod
-    async def broadcast_message(
-        self, message: MessageInterface, recipients: list[str]
-    ) -> dict[str, bool]:
+    async def broadcast_message(self, message: MessageInterface, recipients: list[str]) -> dict[str, bool]:
         """Broadcast message to multiple recipients.
 
         Args:
@@ -283,9 +279,7 @@ class CommunicationInterface(ABC):
         protocol_instance = self.protocols[protocol_name]
         return await protocol_instance.send_message(message, delivery_guarantee)
 
-    async def receive_message(
-        self, timeout_seconds: float | None = None
-    ) -> MessageInterface | None:
+    async def receive_message(self, timeout_seconds: float | None = None) -> MessageInterface | None:
         """Receive next message from queue.
 
         Args:
@@ -295,9 +289,7 @@ class CommunicationInterface(ABC):
             Next message or None if timeout
         """
         try:
-            return await asyncio.wait_for(
-                self.message_queue.get(), timeout=timeout_seconds
-            )
+            return await asyncio.wait_for(self.message_queue.get(), timeout=timeout_seconds)
         except asyncio.TimeoutError:
             return None
 
@@ -324,9 +316,7 @@ class CommunicationInterface(ABC):
         protocol_instance = self.protocols[protocol_name]
         return await protocol_instance.broadcast_message(message, recipients)
 
-    async def subscribe(
-        self, topic: str, subscriber_id: str, protocol: str | None = None
-    ) -> bool:
+    async def subscribe(self, topic: str, subscriber_id: str, protocol: str | None = None) -> bool:
         """Subscribe to topic for publish-subscribe messaging."""
         protocol_name = protocol or self.default_protocol
         if not protocol_name or protocol_name not in self.protocols:
@@ -335,9 +325,7 @@ class CommunicationInterface(ABC):
         protocol_instance = self.protocols[protocol_name]
         return await protocol_instance.subscribe(topic, subscriber_id)
 
-    async def publish(
-        self, topic: str, message: MessageInterface, protocol: str | None = None
-    ) -> int:
+    async def publish(self, topic: str, message: MessageInterface, protocol: str | None = None) -> int:
         """Publish message to topic subscribers."""
         protocol_name = protocol or self.default_protocol
         if not protocol_name or protocol_name not in self.protocols:
@@ -357,9 +345,7 @@ class CommunicationInterface(ABC):
         # Start message receiving tasks for each protocol
         tasks = []
         for protocol_name, protocol in self.protocols.items():
-            task = asyncio.create_task(
-                self._message_receiver_loop(protocol_name, protocol)
-            )
+            task = asyncio.create_task(self._message_receiver_loop(protocol_name, protocol))
             tasks.append(task)
 
         # Start message processing task
@@ -379,9 +365,7 @@ class CommunicationInterface(ABC):
         """Stop background message processing."""
         self._running = False
 
-    async def _message_receiver_loop(
-        self, protocol_name: str, protocol: MessageProtocol
-    ) -> None:
+    async def _message_receiver_loop(self, protocol_name: str, protocol: MessageProtocol) -> None:
         """Background loop for receiving messages from protocol."""
         while self._running:
             try:
@@ -431,9 +415,7 @@ class CommunicationInterface(ABC):
 # Utility functions
 
 
-def create_protocol_config(
-    name: str, capabilities: list[ProtocolCapability], **config_options
-) -> ProtocolConfig:
+def create_protocol_config(name: str, capabilities: list[ProtocolCapability], **config_options) -> ProtocolConfig:
     """Create protocol configuration with specified capabilities.
 
     Args:
@@ -444,9 +426,7 @@ def create_protocol_config(
     Returns:
         ProtocolConfig instance
     """
-    return ProtocolConfig(
-        protocol_name=name, capabilities=set(capabilities), **config_options
-    )
+    return ProtocolConfig(protocol_name=name, capabilities=set(capabilities), **config_options)
 
 
 def validate_communication_interface(comm: Any) -> bool:

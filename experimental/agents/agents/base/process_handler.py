@@ -121,9 +121,7 @@ class BaseProcessHandler(ABC, Generic[T]):
 
             # Log success
             if self.config.enable_logging:
-                self.logger.info(
-                    f"Completed {self.name} processing in {processing_time:.2f}ms"
-                )
+                self.logger.info(f"Completed {self.name} processing in {processing_time:.2f}ms")
 
             return ProcessResult(
                 status=ProcessStatus.COMPLETED,
@@ -174,9 +172,7 @@ class BaseProcessHandler(ABC, Generic[T]):
             except Exception as e:
                 last_exception = e
                 if attempt < self.config.retry_attempts:
-                    self.logger.warning(
-                        f"Attempt {attempt + 1} failed, retrying in {self.config.retry_delay_seconds}s"
-                    )
+                    self.logger.warning(f"Attempt {attempt + 1} failed, retrying in {self.config.retry_delay_seconds}s")
                     await asyncio.sleep(self.config.retry_delay_seconds)
                 else:
                     raise
@@ -224,15 +220,9 @@ class BaseProcessHandler(ABC, Generic[T]):
         # Update timing statistics
         total = self._metrics["total_processed"]
         current_avg = self._metrics["avg_processing_time"]
-        self._metrics["avg_processing_time"] = (
-            current_avg * (total - 1) + processing_time
-        ) / total
-        self._metrics["min_processing_time"] = min(
-            self._metrics["min_processing_time"], processing_time
-        )
-        self._metrics["max_processing_time"] = max(
-            self._metrics["max_processing_time"], processing_time
-        )
+        self._metrics["avg_processing_time"] = (current_avg * (total - 1) + processing_time) / total
+        self._metrics["min_processing_time"] = min(self._metrics["min_processing_time"], processing_time)
+        self._metrics["max_processing_time"] = max(self._metrics["max_processing_time"], processing_time)
 
     @property
     def metrics(self) -> dict[str, Any]:

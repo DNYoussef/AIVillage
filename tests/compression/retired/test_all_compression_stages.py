@@ -177,9 +177,7 @@ def test_real_hyperfn():
             # Calculate total size of all components
             total_size = sum(len(str(v).encode()) for v in compressed.values())
         else:
-            total_size = (
-                len(compressed) if hasattr(compressed, "__len__") else original_size
-            )
+            total_size = len(compressed) if hasattr(compressed, "__len__") else original_size
 
         ratio = original_size / total_size if total_size > 0 else 0
 
@@ -317,16 +315,10 @@ def main():
     print("=" * 60)
 
     print("Individual Stage Results:")
-    print(
-        f"  BitNet: {bitnet_ratio:.1f}x - {'WORKING' if bitnet_ratio > 0 else 'FAILED'}"
-    )
-    print(
-        f"  SeedLM: {seedlm_ratio:.1f}x - {'WORKING' if seedlm_ratio > 0 else 'FAILED'}"
-    )
+    print(f"  BitNet: {bitnet_ratio:.1f}x - {'WORKING' if bitnet_ratio > 0 else 'FAILED'}")
+    print(f"  SeedLM: {seedlm_ratio:.1f}x - {'WORKING' if seedlm_ratio > 0 else 'FAILED'}")
     print(f"  VPTQ: {vptq_ratio:.1f}x - {'WORKING' if vptq_ratio > 0 else 'FAILED'}")
-    print(
-        f"  HyperFn: {hyperfn_ratio:.1f}x - {'WORKING' if hyperfn_ratio > 0 else 'FAILED'}"
-    )
+    print(f"  HyperFn: {hyperfn_ratio:.1f}x - {'WORKING' if hyperfn_ratio > 0 else 'FAILED'}")
 
     print("\nPipeline Integration:")
     print(f"  Working stages: {len(working_stages)}")
@@ -334,11 +326,7 @@ def main():
     print(f"  Stages: {', '.join(working_stages) if working_stages else 'NONE'}")
 
     # Honest assessment
-    working_count = sum(
-        1
-        for ratio in [bitnet_ratio, seedlm_ratio, vptq_ratio, hyperfn_ratio]
-        if ratio > 0
-    )
+    working_count = sum(1 for ratio in [bitnet_ratio, seedlm_ratio, vptq_ratio, hyperfn_ratio] if ratio > 0)
 
     print("\nHONEST ASSESSMENT:")
     print(f"  Stages actually working: {working_count}/4")

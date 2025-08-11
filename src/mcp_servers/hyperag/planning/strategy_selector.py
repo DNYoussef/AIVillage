@@ -102,9 +102,7 @@ class StrategySelector:
         constraints = constraints or RetrievalConstraints()
 
         # Get candidate strategies for this query type
-        candidates = self.type_strategy_map.get(
-            query_type, [ReasoningStrategy.DIRECT_RETRIEVAL]
-        )
+        candidates = self.type_strategy_map.get(query_type, [ReasoningStrategy.DIRECT_RETRIEVAL])
 
         # Apply complexity-based filtering
         if complexity_score > 0.8:
@@ -131,10 +129,7 @@ class StrategySelector:
         # Select based on performance metrics
         best_strategy = self._select_by_performance(candidates, context)
 
-        logger.debug(
-            f"Selected {best_strategy.value} for {query_type.value} "
-            f"(complexity: {complexity_score:.2f})"
-        )
+        logger.debug(f"Selected {best_strategy.value} for {query_type.value} " f"(complexity: {complexity_score:.2f})")
 
         return best_strategy
 
@@ -148,9 +143,7 @@ class StrategySelector:
 
         return strategy_class(**kwargs)
 
-    def _select_by_performance(
-        self, candidates: list[ReasoningStrategy], context: dict
-    ) -> ReasoningStrategy:
+    def _select_by_performance(self, candidates: list[ReasoningStrategy], context: dict) -> ReasoningStrategy:
         """Select strategy based on performance metrics."""
         if not candidates:
             return ReasoningStrategy.DIRECT_RETRIEVAL
@@ -204,21 +197,15 @@ class StrategySelector:
 
         # Update success rate
         current_success = 1.0 if success else 0.0
-        perf["success_rate"] = (1 - alpha) * perf[
-            "success_rate"
-        ] + alpha * current_success
+        perf["success_rate"] = (1 - alpha) * perf["success_rate"] + alpha * current_success
 
         # Update average confidence
         if confidence > 0:
-            perf["avg_confidence"] = (1 - alpha) * perf[
-                "avg_confidence"
-            ] + alpha * confidence
+            perf["avg_confidence"] = (1 - alpha) * perf["avg_confidence"] + alpha * confidence
 
         # Update average time
         if execution_time_ms > 0:
-            perf["avg_time_ms"] = (1 - alpha) * perf[
-                "avg_time_ms"
-            ] + alpha * execution_time_ms
+            perf["avg_time_ms"] = (1 - alpha) * perf["avg_time_ms"] + alpha * execution_time_ms
 
         perf["sample_count"] = count + 1
 
@@ -238,16 +225,10 @@ class StrategySelector:
             "strategy": strategy.value,
             "class_name": strategy_class.__name__ if strategy_class else None,
             "description": (
-                strategy_class.description
-                if strategy_class and hasattr(strategy_class, "description")
-                else ""
+                strategy_class.description if strategy_class and hasattr(strategy_class, "description") else ""
             ),
             "performance": perf,
-            "suitable_for": [
-                qt.value
-                for qt, strategies in self.type_strategy_map.items()
-                if strategy in strategies
-            ],
+            "suitable_for": [qt.value for qt, strategies in self.type_strategy_map.items() if strategy in strategies],
         }
 
     def list_available_strategies(self) -> list[dict]:
@@ -268,13 +249,9 @@ class StrategySelector:
             return ReasoningStrategy.DIRECT_RETRIEVAL
 
         # Select fallback based on performance
-        return self._select_by_performance(
-            fallback_candidates, {"prefer_reliable": True}
-        )
+        return self._select_by_performance(fallback_candidates, {"prefer_reliable": True})
 
-    def can_handle_complexity(
-        self, strategy: ReasoningStrategy, complexity_score: float
-    ) -> bool:
+    def can_handle_complexity(self, strategy: ReasoningStrategy, complexity_score: float) -> bool:
         """Check if strategy can handle given complexity level."""
         complexity_thresholds = {
             ReasoningStrategy.DIRECT_RETRIEVAL: 0.5,
@@ -343,6 +320,4 @@ class StrategySelector:
             },
         }
 
-        return requirements.get(
-            strategy, requirements[ReasoningStrategy.DIRECT_RETRIEVAL]
-        )
+        return requirements.get(strategy, requirements[ReasoningStrategy.DIRECT_RETRIEVAL])

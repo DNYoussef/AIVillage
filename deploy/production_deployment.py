@@ -229,9 +229,7 @@ class KubernetesDeployer:
         self.manifests_dir = "deploy/k8s"
         os.makedirs(self.manifests_dir, exist_ok=True)
 
-    def create_deployment_manifest(
-        self, service: str, environment: str, version: str = "latest"
-    ) -> str:
+    def create_deployment_manifest(self, service: str, environment: str, version: str = "latest") -> str:
         """Create Kubernetes deployment manifest."""
         env_config = self.config.get_environment_config(environment)
         service_config = self.config.get_service_config(service)
@@ -250,9 +248,7 @@ class KubernetesDeployer:
             },
             "spec": {
                 "replicas": env_config.get("replicas", 1),
-                "selector": {
-                    "matchLabels": {"app": service, "environment": environment}
-                },
+                "selector": {"matchLabels": {"app": service, "environment": environment}},
                 "template": {
                     "metadata": {
                         "labels": {
@@ -268,18 +264,14 @@ class KubernetesDeployer:
                                 "image": f"{service_config.get('image', f'aivillage/{service}:latest')}",
                                 "ports": [
                                     {
-                                        "containerPort": service_config.get(
-                                            "port", 8000
-                                        ),
+                                        "containerPort": service_config.get("port", 8000),
                                         "name": "http",
                                     }
                                 ],
                                 "resources": env_config.get("resources", {}),
                                 "livenessProbe": {
                                     "httpGet": {
-                                        "path": service_config.get(
-                                            "health_endpoint", "/health"
-                                        ),
+                                        "path": service_config.get("health_endpoint", "/health"),
                                         "port": "http",
                                     },
                                     "initialDelaySeconds": 30,
@@ -289,9 +281,7 @@ class KubernetesDeployer:
                                 },
                                 "readinessProbe": {
                                     "httpGet": {
-                                        "path": service_config.get(
-                                            "health_endpoint", "/health"
-                                        ),
+                                        "path": service_config.get("health_endpoint", "/health"),
                                         "port": "http",
                                     },
                                     "initialDelaySeconds": 5,
@@ -316,9 +306,7 @@ class KubernetesDeployer:
             },
         }
 
-        manifest_path = os.path.join(
-            self.manifests_dir, f"{service}-{environment}-deployment.yaml"
-        )
+        manifest_path = os.path.join(self.manifests_dir, f"{service}-{environment}-deployment.yaml")
 
         with open(manifest_path, "w") as f:
             yaml.dump(manifest, f, default_flow_style=False)
@@ -351,37 +339,27 @@ class KubernetesDeployer:
             },
         }
 
-        manifest_path = os.path.join(
-            self.manifests_dir, f"{service}-{environment}-service.yaml"
-        )
+        manifest_path = os.path.join(self.manifests_dir, f"{service}-{environment}-service.yaml")
 
         with open(manifest_path, "w") as f:
             yaml.dump(manifest, f, default_flow_style=False)
 
         return manifest_path
 
-    async def deploy_service(
-        self, service: str, environment: str, version: str = "latest"
-    ) -> bool:
+    async def deploy_service(self, service: str, environment: str, version: str = "latest") -> bool:
         """Deploy service to Kubernetes."""
         try:
             # Create manifests
-            deployment_manifest = self.create_deployment_manifest(
-                service, environment, version
-            )
+            deployment_manifest = self.create_deployment_manifest(service, environment, version)
             service_manifest = self.create_service_manifest(service, environment)
 
             # Apply manifests
             for manifest in [deployment_manifest, service_manifest]:
                 cmd = ["kubectl", "apply", "-f", manifest]
-                result = subprocess.run(
-                    cmd, capture_output=True, text=True, check=False
-                )
+                result = subprocess.run(cmd, capture_output=True, text=True, check=False)
 
                 if result.returncode != 0:
-                    logger.error(
-                        f"Failed to apply manifest {manifest}: {result.stderr}"
-                    )
+                    logger.error(f"Failed to apply manifest {manifest}: {result.stderr}")
                     return False
 
             # Wait for rollout
@@ -395,9 +373,7 @@ class KubernetesDeployer:
                 "--timeout=300s",
             ]
 
-            result = subprocess.run(
-                rollout_cmd, capture_output=True, text=True, check=False
-            )
+            result = subprocess.run(rollout_cmd, capture_output=True, text=True, check=False)
 
             if result.returncode == 0:
                 logger.info(f"Successfully deployed {service} to {environment}")
@@ -416,9 +392,7 @@ class HealthChecker:
     def __init__(self, config: DeploymentConfig) -> None:
         self.config = config
 
-    async def check_service_health(
-        self, service: str, environment: str, timeout: int = 60
-    ) -> bool:
+    async def check_service_health(self, service: str, environment: str, timeout: int = 60) -> bool:
         """Check if service is healthy."""
         service_config = self.config.get_service_config(service)
         health_endpoint = service_config.get("health_endpoint", "/health")
@@ -456,9 +430,7 @@ class HealthChecker:
         success_count = sum(1 for result in results if result is True)
         total_count = len(services)
 
-        logger.info(
-            f"Health validation: {success_count}/{total_count} services healthy"
-        )
+        logger.info(f"Health validation: {success_count}/{total_count} services healthy")
 
         return success_count == total_count
 
@@ -466,16 +438,12 @@ class HealthChecker:
 class BlueGreenDeployer:
     """Implements blue-green deployment strategy."""
 
-    def __init__(
-        self, config: DeploymentConfig, k8s_deployer: KubernetesDeployer
-    ) -> None:
+    def __init__(self, config: DeploymentConfig, k8s_deployer: KubernetesDeployer) -> None:
         self.config = config
         self.k8s_deployer = k8s_deployer
         self.health_checker = HealthChecker(config)
 
-    async def deploy_blue_green(
-        self, services: list[str], environment: str, version: str
-    ) -> bool:
+    async def deploy_blue_green(self, services: list[str], environment: str, version: str) -> bool:
         """Execute blue-green deployment."""
         logger.info(f"Starting blue-green deployment to {environment}")
 
@@ -484,9 +452,7 @@ class BlueGreenDeployer:
 
         deployment_success = True
         for service in services:
-            success = await self.k8s_deployer.deploy_service(
-                service, green_env, version
-            )
+            success = await self.k8s_deployer.deploy_service(service, green_env, version)
             if not success:
                 deployment_success = False
                 break
@@ -496,9 +462,7 @@ class BlueGreenDeployer:
             return False
 
         # Step 2: Validate green environment
-        validation_success = await self.health_checker.validate_deployment(
-            services, green_env
-        )
+        validation_success = await self.health_checker.validate_deployment(services, green_env)
 
         if not validation_success:
             logger.error("Green environment validation failed")
@@ -530,9 +494,7 @@ class BlueGreenDeployer:
         await asyncio.sleep(2)
         return True
 
-    async def _cleanup_green_environment(
-        self, services: list[str], green_env: str
-    ) -> None:
+    async def _cleanup_green_environment(self, services: list[str], green_env: str) -> None:
         """Clean up failed green environment."""
         for service in services:
             try:
@@ -548,15 +510,11 @@ class BlueGreenDeployer:
             except Exception as e:
                 logger.warning(f"Failed to cleanup green deployment for {service}: {e}")
 
-    async def _cleanup_blue_environment(
-        self, services: list[str], blue_env: str
-    ) -> None:
+    async def _cleanup_blue_environment(self, services: list[str], blue_env: str) -> None:
         """Clean up old blue environment."""
         # Similar to green cleanup
 
-    async def _promote_green_to_blue(
-        self, services: list[str], blue_env: str, green_env: str
-    ) -> None:
+    async def _promote_green_to_blue(self, services: list[str], blue_env: str, green_env: str) -> None:
         """Promote green environment to blue."""
         # Update labels and configurations
 
@@ -610,22 +568,16 @@ class ProductionDeploymentOrchestrator:
             strategy = deployment_config.get("strategy", "rolling")
 
             if strategy == "blue-green":
-                deploy_success = await self.blue_green_deployer.deploy_blue_green(
-                    services, environment, version
-                )
+                deploy_success = await self.blue_green_deployer.deploy_blue_green(services, environment, version)
             else:
-                deploy_success = await self._rolling_deployment(
-                    services, environment, version
-                )
+                deploy_success = await self._rolling_deployment(services, environment, version)
 
             if not deploy_success:
                 logger.error("Deployment failed")
                 return False
 
             # Step 4: Post-deployment validation
-            validation_success = await self.health_checker.validate_deployment(
-                services, environment
-            )
+            validation_success = await self.health_checker.validate_deployment(services, environment)
 
             if not validation_success:
                 logger.error("Post-deployment validation failed")
@@ -715,23 +667,17 @@ class ProductionDeploymentOrchestrator:
 
         return success_count == total_count
 
-    async def _rolling_deployment(
-        self, services: list[str], environment: str, version: str
-    ) -> bool:
+    async def _rolling_deployment(self, services: list[str], environment: str, version: str) -> bool:
         """Execute rolling deployment."""
         logger.info("Executing rolling deployment")
 
         for service in services:
-            success = await self.k8s_deployer.deploy_service(
-                service, environment, version
-            )
+            success = await self.k8s_deployer.deploy_service(service, environment, version)
             if not success:
                 return False
 
             # Wait for service to be healthy before continuing
-            health_success = await self.health_checker.check_service_health(
-                service, environment
-            )
+            health_success = await self.health_checker.check_service_health(service, environment)
             if not health_success:
                 return False
 
@@ -742,9 +688,7 @@ class ProductionDeploymentOrchestrator:
         logger.info(f"Rolling back deployment {deployment_id}")
 
         # Find previous successful deployment
-        successful_deployments = [
-            d for d in self.deployment_history if d["status"] == "success"
-        ]
+        successful_deployments = [d for d in self.deployment_history if d["status"] == "success"]
 
         if not successful_deployments:
             logger.error("No previous successful deployment found for rollback")
@@ -778,21 +722,13 @@ class ProductionDeploymentOrchestrator:
         """Get current deployment status."""
         recent_deployments = self.deployment_history[-10:]  # Last 10 deployments
 
-        successful_deployments = sum(
-            1 for d in recent_deployments if d["status"] == "success"
-        )
+        successful_deployments = sum(1 for d in recent_deployments if d["status"] == "success")
 
         return {
             "total_deployments": len(self.deployment_history),
             "recent_deployments": len(recent_deployments),
-            "recent_success_rate": (
-                successful_deployments / len(recent_deployments)
-                if recent_deployments
-                else 0
-            ),
-            "last_deployment": (
-                self.deployment_history[-1] if self.deployment_history else None
-            ),
+            "recent_success_rate": (successful_deployments / len(recent_deployments) if recent_deployments else 0),
+            "last_deployment": (self.deployment_history[-1] if self.deployment_history else None),
             "environments": list({d["environment"] for d in self.deployment_history}),
             "available_services": list(self.config.config["services"].keys()),
         }
@@ -805,16 +741,10 @@ async def main() -> None:
 
     parser = argparse.ArgumentParser(description="AIVillage Production Deployment")
     parser.add_argument("action", choices=["deploy", "status", "rollback"])
-    parser.add_argument(
-        "--environment", "-e", default="staging", help="Target environment"
-    )
-    parser.add_argument(
-        "--services", "-s", nargs="+", help="Services to deploy (default: all)"
-    )
+    parser.add_argument("--environment", "-e", default="staging", help="Target environment")
+    parser.add_argument("--services", "-s", nargs="+", help="Services to deploy (default: all)")
     parser.add_argument("--version", "-v", default="latest", help="Version to deploy")
-    parser.add_argument(
-        "--skip-tests", action="store_true", help="Skip pre-deployment tests"
-    )
+    parser.add_argument("--skip-tests", action="store_true", help="Skip pre-deployment tests")
 
     args = parser.parse_args()
 

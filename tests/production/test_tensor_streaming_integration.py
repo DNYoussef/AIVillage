@@ -35,9 +35,7 @@ async def test_tensor_stream_round_trip(monkeypatch):
         return False
 
     # Bind the helper as a method on the sender node
-    monkeypatch.setattr(
-        sender, "send_message", fake_send_message.__get__(sender, P2PNode)
-    )
+    monkeypatch.setattr(sender, "send_message", fake_send_message.__get__(sender, P2PNode))
 
     tensor = np.arange(8, dtype=np.float32)
     tensor_id = await send_stream.send_tensor(tensor, "test", receiver.node_id)

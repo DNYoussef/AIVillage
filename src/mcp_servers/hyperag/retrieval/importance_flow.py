@@ -67,10 +67,7 @@ class ImportanceFlow:
             prev_pagerank = pagerank.copy()
 
             # PageRank update: r = d * M * r + (1-d) * p
-            pagerank = (
-                self.damping * transition_matrix.T.dot(pagerank)
-                + (1 - self.damping) * personalization
-            )
+            pagerank = self.damping * transition_matrix.T.dot(pagerank) + (1 - self.damping) * personalization
 
             # Check convergence
             diff = norm(pagerank - prev_pagerank, ord=1)
@@ -99,9 +96,7 @@ class ImportanceFlow:
         if not hyperedge_participants:
             return {}
 
-        participant_scores = {
-            node_id: node_scores.get(node_id, 0.0) for node_id in hyperedge_participants
-        }
+        participant_scores = {node_id: node_scores.get(node_id, 0.0) for node_id in hyperedge_participants}
 
         if distribution_method == "uniform":
             # Equal distribution
@@ -112,28 +107,18 @@ class ImportanceFlow:
             # Proportional to current node scores
             total_score = sum(participant_scores.values())
             if total_score == 0:
-                return self.hyperedge_importance_distribution(
-                    hyperedge_participants, node_scores, "uniform"
-                )
+                return self.hyperedge_importance_distribution(hyperedge_participants, node_scores, "uniform")
 
-            return {
-                node_id: score / total_score
-                for node_id, score in participant_scores.items()
-            }
+            return {node_id: score / total_score for node_id, score in participant_scores.items()}
 
         if distribution_method == "max_flow":
             # Max-flow based distribution (simplified)
             max_score = max(participant_scores.values()) if participant_scores else 0.0
             if max_score == 0:
-                return self.hyperedge_importance_distribution(
-                    hyperedge_participants, node_scores, "uniform"
-                )
+                return self.hyperedge_importance_distribution(hyperedge_participants, node_scores, "uniform")
 
             # Normalize by max score
-            return {
-                node_id: score / max_score
-                for node_id, score in participant_scores.items()
-            }
+            return {node_id: score / max_score for node_id, score in participant_scores.items()}
 
         msg = f"Unknown distribution method: {distribution_method}"
         raise ValueError(msg)
@@ -167,14 +152,10 @@ class ImportanceFlow:
 
                 # Propagate uncertainty along edge
                 # Higher confidence edges propagate less uncertainty
-                propagated_uncertainty = (
-                    source_uncertainty * (1.0 - confidence) * decay_factor
-                )
+                propagated_uncertainty = source_uncertainty * (1.0 - confidence) * decay_factor
 
                 # Update target uncertainty (take maximum)
-                new_uncertainties[target] = max(
-                    new_uncertainties.get(target, 0.0), propagated_uncertainty
-                )
+                new_uncertainties[target] = max(new_uncertainties.get(target, 0.0), propagated_uncertainty)
 
             current_uncertainties = new_uncertainties
             decay_factor *= 0.9  # Decay the decay factor
@@ -267,11 +248,7 @@ class ImportanceFlow:
         for i, node_id in enumerate(node_ids):
             # Simplified using degree and PageRank
             degree_norm = degrees[i] / np.max(degrees) if np.max(degrees) > 0 else 0.0
-            pagerank_norm = (
-                pagerank_scores[i] / np.max(pagerank_scores)
-                if np.max(pagerank_scores) > 0
-                else 0.0
-            )
+            pagerank_norm = pagerank_scores[i] / np.max(pagerank_scores) if np.max(pagerank_scores) > 0 else 0.0
             centralities[node_id]["betweenness"] = (degree_norm + pagerank_norm) / 2
 
         return centralities
@@ -297,12 +274,8 @@ class ImportanceFlow:
         node_to_idx = {node_id: i for i, node_id in enumerate(node_ids)}
 
         # Get source and target indices
-        source_indices = [
-            node_to_idx[node_id] for node_id in source_nodes if node_id in node_to_idx
-        ]
-        target_indices = [
-            node_to_idx[node_id] for node_id in target_nodes if node_id in node_to_idx
-        ]
+        source_indices = [node_to_idx[node_id] for node_id in source_nodes if node_id in node_to_idx]
+        target_indices = [node_to_idx[node_id] for node_id in target_nodes if node_id in node_to_idx]
 
         if not source_indices or not target_indices:
             return dict.fromkeys(node_ids, 0.0)
@@ -322,9 +295,7 @@ class ImportanceFlow:
 
         return flow_scores
 
-    def compute_resistance_distance(
-        self, adjacency_matrix: csr_matrix, source_idx: int, target_idx: int
-    ) -> float:
+    def compute_resistance_distance(self, adjacency_matrix: csr_matrix, source_idx: int, target_idx: int) -> float:
         """Compute resistance distance between two nodes (simplified).
 
         Args:
@@ -366,9 +337,7 @@ class ImportanceFlow:
             logger.warning(f"Resistance distance computation failed: {e!s}")
             return 1.0  # Default distance
 
-    def normalize_scores(
-        self, scores: dict[str, float], method: str = "minmax"
-    ) -> dict[str, float]:
+    def normalize_scores(self, scores: dict[str, float], method: str = "minmax") -> dict[str, float]:
         """Normalize scores using various methods.
 
         Args:
@@ -408,17 +377,13 @@ class ImportanceFlow:
             msg = f"Unknown normalization method: {method}"
             raise ValueError(msg)
 
-        return {
-            node_id: normalized_values[i] for i, node_id in enumerate(scores.keys())
-        }
+        return {node_id: normalized_values[i] for i, node_id in enumerate(scores.keys())}
 
 
 # Utility functions
 
 
-def build_sparse_adjacency(
-    edges: list[tuple[str, str, float]], node_ids: list[str]
-) -> csr_matrix:
+def build_sparse_adjacency(edges: list[tuple[str, str, float]], node_ids: list[str]) -> csr_matrix:
     """Build sparse adjacency matrix from edge list."""
     node_to_idx = {node_id: i for i, node_id in enumerate(node_ids)}
     n = len(node_ids)

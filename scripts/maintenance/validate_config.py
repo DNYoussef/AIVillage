@@ -36,9 +36,7 @@ def test_basic_validation():
         print("✅ Created development validator")
 
         report = validator.validate_all(test_env)
-        print(
-            f"✅ Validation completed - Errors: {report.errors}, Warnings: {report.warnings}"
-        )
+        print(f"✅ Validation completed - Errors: {report.errors}, Warnings: {report.warnings}")
 
         # Show first few issues if any
         if report.issues:
@@ -54,7 +52,7 @@ def test_basic_validation():
         return False
 
 
-def test_configuration_manager():
+def test_configuration_manager() -> bool | None:
     """Test configuration manager."""
     try:
         from core.config.configuration_manager import ConfigurationManager
@@ -88,7 +86,7 @@ def test_configuration_manager():
         return False
 
 
-def test_template_completeness():
+def test_template_completeness() -> bool | None:
     """Test that .env.template has all required variables."""
     try:
         template_path = Path(".env.template")
@@ -119,9 +117,7 @@ def test_template_completeness():
 
         # Count variables
         variable_lines = [
-            line
-            for line in template_content.split("\n")
-            if "=" in line and not line.strip().startswith("#")
+            line for line in template_content.split("\n") if "=" in line and not line.strip().startswith("#")
         ]
 
         print(f"✅ .env.template has {len(variable_lines)} configuration variables")
@@ -134,7 +130,7 @@ def test_template_completeness():
         return False
 
 
-def test_yaml_config_files():
+def test_yaml_config_files() -> bool | None:
     """Test YAML configuration files."""
     try:
         config_dir = Path("config")

@@ -83,9 +83,7 @@ class MoralFrameworkBaker:
             ),
             Rule(
                 number=4,
-                text=(
-                    "Your own life has some value. Protect it as long as it doesn't interfere with Rules 1-3."
-                ),
+                text=("Your own life has some value. Protect it as long as it doesn't interfere with Rules 1-3."),
             ),
         ]
 
@@ -159,9 +157,7 @@ class MoralFrameworkBaker:
                 )
 
             enriched_text = " ".join([rule.text, *additional])
-            baked_rules.append(
-                Rule(number=rule.number, text=enriched_text, priority=rule.priority)
-            )
+            baked_rules.append(Rule(number=rule.number, text=enriched_text, priority=rule.priority))
 
         self.core_rules = baked_rules
         return baked_rules

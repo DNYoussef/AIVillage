@@ -15,8 +15,7 @@ class CreditManager:
         """Create a credit manager bound to a wallet mnemonic."""
         if _BITTENSOR_IMPORT_ERROR is not None:
             msg = (
-                "bittensor-wallet is required to use CreditManager. "
-                "Install it with 'pip install bittensor-wallet'."
+                "bittensor-wallet is required to use CreditManager. " "Install it with 'pip install bittensor-wallet'."
             )
             raise ImportError(msg) from _BITTENSOR_IMPORT_ERROR
         self.wallet = Wallet.from_mnemonic(mnemonic)

@@ -17,9 +17,7 @@ class ModelReference(BaseModel):
 
 class MergeSettings(BaseModel):
     merge_method: str
-    parameters: dict[str, float | list[float] | dict[str, float | list[float]]] = Field(
-        default_factory=dict
-    )
+    parameters: dict[str, float | list[float] | dict[str, float | list[float]]] = Field(default_factory=dict)
     custom_dir: str = Field(default="./merged_models")
     ps_techniques: list[str] = ["linear"]
     dfs_techniques: list[str] = []
@@ -124,17 +122,13 @@ class Configuration(BaseModel):
     merge_settings: MergeSettings
     evolution_settings: EvolutionSettings
     target_domain: ModelDomain | None = None
-    enable_adas: bool = Field(
-        default=True, description="Run ADAS optimization after training"
-    )
+    enable_adas: bool = Field(default=True, description="Run ADAS optimization after training")
 
 
 def create_default_config() -> Configuration:
     return Configuration(
         models=[
-            ModelReference(
-                name="Qwen2.5-1.5B-Instruct", path="Qwen/Qwen2.5-1.5B-Instruct"
-            ),
+            ModelReference(name="Qwen2.5-1.5B-Instruct", path="Qwen/Qwen2.5-1.5B-Instruct"),
             ModelReference(
                 name="Qwen2.5-Coder-1.5B-Instruct",
                 path="Qwen/Qwen2.5-Coder-1.5B-Instruct",

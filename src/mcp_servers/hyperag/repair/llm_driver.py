@@ -197,8 +197,7 @@ class OllamaBackend(LLMBackend):
                 usage={
                     "prompt_tokens": result.get("prompt_eval_count", 0),
                     "completion_tokens": result.get("eval_count", 0),
-                    "total_tokens": result.get("prompt_eval_count", 0)
-                    + result.get("eval_count", 0),
+                    "total_tokens": result.get("prompt_eval_count", 0) + result.get("eval_count", 0),
                 },
                 model=self.config.model_name,
                 latency_ms=latency_ms,
@@ -275,9 +274,7 @@ class OllamaBackend(LLMBackend):
         try:
             async with (
                 aiohttp.ClientSession() as session,
-                session.post(
-                    f"{self.base_url}/api/show", json={"name": self.config.model_name}
-                ) as response,
+                session.post(f"{self.base_url}/api/show", json={"name": self.config.model_name}) as response,
             ):
                 if response.status == 200:
                     return await response.json()
@@ -443,9 +440,7 @@ class HuggingFaceBackend(LLMBackend):
 
                 device = "cuda" if torch.cuda.is_available() else "cpu"
 
-                self.tokenizer = AutoTokenizer.from_pretrained(
-                    self.config.model_path or self.config.model_name
-                )
+                self.tokenizer = AutoTokenizer.from_pretrained(self.config.model_path or self.config.model_name)
                 self.model = AutoModelForCausalLM.from_pretrained(
                     self.config.model_path or self.config.model_name,
                     torch_dtype=torch.float16 if device == "cuda" else torch.float32,
@@ -494,9 +489,7 @@ class HuggingFaceBackend(LLMBackend):
             )
 
         # Decode response
-        generated_text = self.tokenizer.decode(
-            outputs[0][inputs.shape[-1] :], skip_special_tokens=True
-        )
+        generated_text = self.tokenizer.decode(outputs[0][inputs.shape[-1] :], skip_special_tokens=True)
 
         latency_ms = (time.time() - start_time) * 1000
 
@@ -534,9 +527,7 @@ class HuggingFaceBackend(LLMBackend):
             "model_name": self.config.model_name,
             "model_type": type(self.model).__name__,
             "parameters": sum(p.numel() for p in self.model.parameters()),
-            "device": (
-                str(self.model.device) if hasattr(self.model, "device") else "unknown"
-            ),
+            "device": (str(self.model.device) if hasattr(self.model, "device") else "unknown"),
         }
 
 
@@ -592,9 +583,7 @@ class LLMDriver:
         # Record this request
         self._request_times.append(now)
 
-    def _log_request(
-        self, prompt: str, system_prompt: str | None, response: GenerationResponse
-    ) -> None:
+    def _log_request(self, prompt: str, system_prompt: str | None, response: GenerationResponse) -> None:
         """Log request for audit trail."""
         log_entry = {
             "timestamp": datetime.now().isoformat(),
@@ -613,9 +602,7 @@ class LLMDriver:
         if len(self._audit_log) > 1000:
             self._audit_log = self._audit_log[-500:]
 
-    async def generate(
-        self, prompt: str, system_prompt: str | None = None, **kwargs
-    ) -> GenerationResponse:
+    async def generate(self, prompt: str, system_prompt: str | None = None, **kwargs) -> GenerationResponse:
         """Generate text from prompt with rate limiting and audit logging.
 
         Args:
@@ -629,9 +616,7 @@ class LLMDriver:
         # Check rate limits
         await self._check_rate_limit()
 
-        request = GenerationRequest(
-            prompt=prompt, system_prompt=system_prompt, **kwargs
-        )
+        request = GenerationRequest(prompt=prompt, system_prompt=system_prompt, **kwargs)
 
         self._concurrent_requests += 1
         try:
@@ -645,20 +630,14 @@ class LLMDriver:
                     return response
                 except Exception as e:
                     if attempt == self.config.retry_attempts - 1:
-                        self.logger.exception(
-                            f"Generation failed after {self.config.retry_attempts} attempts: {e}"
-                        )
+                        self.logger.exception(f"Generation failed after {self.config.retry_attempts} attempts: {e}")
                         raise
-                    self.logger.warning(
-                        f"Generation attempt {attempt + 1} failed: {e}, retrying..."
-                    )
+                    self.logger.warning(f"Generation attempt {attempt + 1} failed: {e}, retrying...")
                     await asyncio.sleep(1)
         finally:
             self._concurrent_requests -= 1
 
-    async def generate_stream(
-        self, prompt: str, system_prompt: str | None = None, **kwargs
-    ) -> AsyncIterator[str]:
+    async def generate_stream(self, prompt: str, system_prompt: str | None = None, **kwargs) -> AsyncIterator[str]:
         """Generate text with streaming.
 
         Args:
@@ -669,9 +648,7 @@ class LLMDriver:
         Yields:
             Text chunks
         """
-        request = GenerationRequest(
-            prompt=prompt, system_prompt=system_prompt, stream=True, **kwargs
-        )
+        request = GenerationRequest(prompt=prompt, system_prompt=system_prompt, stream=True, **kwargs)
 
         async for chunk in self.backend.generate_stream(request):
             yield chunk
@@ -730,12 +707,8 @@ class LLMDriver:
         recent_entries = self._audit_log[-100:]  # Last 100 requests
 
         total_requests = len(recent_entries)
-        total_tokens = sum(
-            entry["usage"].get("total_tokens", 0) for entry in recent_entries
-        )
-        avg_latency = (
-            sum(entry["latency_ms"] for entry in recent_entries) / total_requests
-        )
+        total_tokens = sum(entry["usage"].get("total_tokens", 0) for entry in recent_entries)
+        avg_latency = sum(entry["latency_ms"] for entry in recent_entries) / total_requests
 
         return {
             "total_requests": total_requests,
@@ -747,9 +720,7 @@ class LLMDriver:
         }
 
     @classmethod
-    def create_default_config(
-        cls, model_name: str, backend: ModelBackend = ModelBackend.OLLAMA
-    ) -> ModelConfig:
+    def create_default_config(cls, model_name: str, backend: ModelBackend = ModelBackend.OLLAMA) -> ModelConfig:
         """Create default configuration for common models.
 
         Args:

@@ -69,9 +69,7 @@ class AgentForge:
             try:
                 from . import evomerge
 
-                self._evolution_tournament = evomerge.EvolutionaryTournament(
-                    self.config
-                )
+                self._evolution_tournament = evomerge.EvolutionaryTournament(self.config)
             except ImportError:
                 msg = "evomerge module not available - install heavy dependencies"
                 raise ImportError(msg)

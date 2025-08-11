@@ -83,9 +83,7 @@ def test_integrated_pipeline():
 
     # Test if this is MUCH better than 20.8x
     significant_improvement = ratio > 40
-    print(
-        f"\nSignificant improvement (>40x): {'YES' if significant_improvement else 'NO'}"
-    )
+    print(f"\nSignificant improvement (>40x): {'YES' if significant_improvement else 'NO'}")
 
     return ratio, not has_decompress, significant_improvement
 
@@ -207,9 +205,7 @@ def test_cascade_stage_contributions():
     print("\nMultiplicative Analysis:")
     print(f"  Expected (stage1 × stage2 × stage3): {expected_ratio:.1f}x")
     print(f"  Actual full cascade: {full_ratio:.1f}x")
-    print(
-        f"  Multiplicative effect: {'YES' if abs(expected_ratio - full_ratio) < full_ratio * 0.3 else 'NO'}"
-    )
+    print(f"  Multiplicative effect: {'YES' if abs(expected_ratio - full_ratio) < full_ratio * 0.3 else 'NO'}")
 
     return full_ratio > 40  # Success if we get >40x
 
@@ -290,16 +286,12 @@ def comprehensive_comparison():
     print("-" * 50)
 
     for method, data in results.items():
-        print(
-            f"{method:<20} {data['ratio']:<10.1f} {data['time']:<8.2f} {data['size_mb']:<10.3f}"
-        )
+        print(f"{method:<20} {data['ratio']:<10.1f} {data['time']:<8.2f} {data['size_mb']:<10.3f}")
 
     # Previous baselines
     print("\nBaseline Comparison:")
     print(f"{'SimpleQuantizer':<20} {'4.0':<10} {'<0.1':<8} {original_mb / 4:<10.3f}")
-    print(
-        f"{'AdvancedPipeline':<20} {'20.8':<10} {'~1.0':<8} {original_mb / 20.8:<10.3f}"
-    )
+    print(f"{'AdvancedPipeline':<20} {'20.8':<10} {'~1.0':<8} {original_mb / 20.8:<10.3f}")
 
     return results
 
@@ -332,9 +324,7 @@ def main():
             avg_cascade = sum(r[1] for r in cascade_results) / len(cascade_results)
             print(f"  Cascade Compressor average: {avg_cascade:.1f}x compression")
 
-        print(
-            f"  Cascade multiplicative effect: {'YES' if cascade_effective else 'NO'}"
-        )
+        print(f"  Cascade multiplicative effect: {'YES' if cascade_effective else 'NO'}")
 
         # Success criteria
         success_criteria = [
@@ -354,9 +344,7 @@ def main():
 
         overall_success = passed >= 3
 
-        print(
-            f"\nOverall Assessment: {'SUCCESS' if overall_success else 'PARTIAL SUCCESS'}"
-        )
+        print(f"\nOverall Assessment: {'SUCCESS' if overall_success else 'PARTIAL SUCCESS'}")
         print(f"Criteria passed: {passed}/{len(success_criteria)}")
 
         if overall_success:

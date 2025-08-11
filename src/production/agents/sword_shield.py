@@ -21,9 +21,7 @@ class WasiSandbox:
         """Create sandbox with a timeout in seconds."""
         self.timeout = timeout
 
-    def run(
-        self, func: Callable[[bytes], Any], data: bytes
-    ) -> tuple[bool, set[int], dict[str, Any]]:
+    def run(self, func: Callable[[bytes], Any], data: bytes) -> tuple[bool, set[int], dict[str, Any]]:
         """Execute ``func`` with ``data`` and capture coverage."""
         tracer = Trace(count=True, trace=False)
         crashed = False
@@ -186,8 +184,6 @@ class SwordAndShieldAgent:
         """Delegate to :class:`SwordAgent` fuzzing."""
         return self.sword.fuzz(target, seeds, iterations)
 
-    def secure_run(
-        self, func: Callable[[bytes], Any], data: bytes
-    ) -> tuple[bool, set[int]]:
+    def secure_run(self, func: Callable[[bytes], Any], data: bytes) -> tuple[bool, set[int]]:
         """Run ``func`` through :class:`ShieldAgent` policy enforcement."""
         return self.shield.run(func, data)

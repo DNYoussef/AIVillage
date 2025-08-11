@@ -145,9 +145,7 @@ class TestGuardianGate:
         ]
 
         # High-severity violation
-        violation = MockViolation(
-            id="GDC_MED_ALLERGY", severity="high", domain="medical"
-        )
+        violation = MockViolation(id="GDC_MED_ALLERGY", severity="high", domain="medical")
 
         # Mock external fact-checking to return high confidence
         with patch.object(guardian_gate, "_external_fact_check", return_value=1.0):
@@ -228,9 +226,7 @@ class TestGuardianGate:
         bridge = MockCreativeBridge(id="IMPLAUSIBLE_BRIDGE", confidence=0.2)
 
         # Mock plausibility check to fail
-        with patch.object(
-            guardian_gate, "_check_bridge_plausibility", return_value=0.1
-        ):
+        with patch.object(guardian_gate, "_check_bridge_plausibility", return_value=0.1):
             decision = await guardian_gate.evaluate_creative(bridge)
 
         assert decision == "REJECT"
@@ -268,11 +264,7 @@ class TestGuardianGate:
         assert not any(n["id"] == "patient1" for n in simulated["nodes"])
 
         # Should remove connected edges
-        remaining_edges = [
-            e
-            for e in simulated["edges"]
-            if e["startNode"] != "patient1" and e["endNode"] != "patient1"
-        ]
+        remaining_edges = [e for e in simulated["edges"] if e["startNode"] != "patient1" and e["endNode"] != "patient1"]
         assert len(simulated["edges"]) == len(remaining_edges)
 
     def test_simulation_edge_addition(self, guardian_gate, medical_subgraph):
@@ -431,9 +423,7 @@ class TestGuardianGate:
 
     def test_proposal_serialization(self, guardian_gate):
         """Test proposal serialization for audit logging."""
-        proposal = MockProposal(
-            "add_edge", "test_edge", confidence=0.8, relationship_type="RELATED"
-        )
+        proposal = MockProposal("add_edge", "test_edge", confidence=0.8, relationship_type="RELATED")
 
         serialized = guardian_gate._serialize_proposal(proposal)
 
@@ -448,9 +438,7 @@ class TestGuardianGate:
         """Test that evaluation meets performance target of ≤ 20ms per proposal set."""
         import time
 
-        proposals = [
-            MockProposal("add_edge", f"edge_{i}", confidence=0.7) for i in range(5)
-        ]
+        proposals = [MockProposal("add_edge", f"edge_{i}", confidence=0.7) for i in range(5)]
         violation = MockViolation()
 
         start_time = time.time()

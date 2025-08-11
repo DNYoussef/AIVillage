@@ -48,9 +48,7 @@ async def compare_pipelines():
 
     basic_pipeline = CODEXRAGPipeline()
     basic_stats = basic_pipeline.index_documents(docs)
-    print(
-        f"Indexed: {basic_stats['documents_processed']} docs, {basic_stats['chunks_created']} chunks"
-    )
+    print(f"Indexed: {basic_stats['documents_processed']} docs, {basic_stats['chunks_created']} chunks")
 
     basic_results = []
 
@@ -66,9 +64,7 @@ async def compare_pipelines():
             if results:
                 print(f"   Answer: {results[0].text[:100]}...")
 
-            basic_results.append(
-                {"question": q, "success": success, "latency": latency}
-            )
+            basic_results.append({"question": q, "success": success, "latency": latency})
 
         except Exception as e:
             print(f"   ERROR: {e}")
@@ -80,9 +76,7 @@ async def compare_pipelines():
 
     enhanced_pipeline = BayesRAGEnhancedPipeline()
     enhanced_stats = enhanced_pipeline.index_documents(docs)
-    print(
-        f"Indexed: {enhanced_stats['documents_processed']} docs, {enhanced_stats['chunks_created']} chunks"
-    )
+    print(f"Indexed: {enhanced_stats['documents_processed']} docs, {enhanced_stats['chunks_created']} chunks")
 
     enhanced_results = []
 
@@ -100,9 +94,7 @@ async def compare_pipelines():
                 if hasattr(results[0], "trust_metrics") and results[0].trust_metrics:
                     print(f"   Trust: {results[0].trust_metrics.trust_score:.3f}")
 
-            enhanced_results.append(
-                {"question": q, "success": success, "latency": latency}
-            )
+            enhanced_results.append({"question": q, "success": success, "latency": latency})
 
         except Exception as e:
             print(f"   ERROR: {e}")
@@ -119,16 +111,10 @@ async def compare_pipelines():
     basic_avg_latency = basic_avg_latency / basic_success if basic_success > 0 else 0
 
     enhanced_avg_latency = sum(r["latency"] for r in enhanced_results if r["success"])
-    enhanced_avg_latency = (
-        enhanced_avg_latency / enhanced_success if enhanced_success > 0 else 0
-    )
+    enhanced_avg_latency = enhanced_avg_latency / enhanced_success if enhanced_success > 0 else 0
 
-    print(
-        f"Basic Pipeline:    {basic_success}/{len(questions)} success, {basic_avg_latency:.1f}ms avg"
-    )
-    print(
-        f"Enhanced Pipeline: {enhanced_success}/{len(questions)} success, {enhanced_avg_latency:.1f}ms avg"
-    )
+    print(f"Basic Pipeline:    {basic_success}/{len(questions)} success, {basic_avg_latency:.1f}ms avg")
+    print(f"Enhanced Pipeline: {enhanced_success}/{len(questions)} success, {enhanced_avg_latency:.1f}ms avg")
 
     if basic_success > enhanced_success:
         print("\nWARNING: Enhanced pipeline performs worse than basic!")

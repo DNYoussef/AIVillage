@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 
-from typing import Any, List
+from typing import Any
 
 
 class StandardCommunicationProtocol:
     """Send and receive messages using an in-memory list."""
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
-        self._messages: List[Any] = []
+        self._messages: list[Any] = []
 
     def send(self, message: Any) -> None:
         """Store ``message`` for later retrieval."""

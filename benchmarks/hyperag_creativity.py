@@ -83,53 +83,23 @@ class CreativityDatasetGenerator:
         """Create remote association challenge tasks."""
         tasks = [
             # Easy tasks
-            RemoteAssociationTask(
-                "rat_001", ["cottage", "swiss", "cake"], "cheese", "food", "easy"
-            ),
-            RemoteAssociationTask(
-                "rat_002", ["dream", "break", "light"], "day", "time", "easy"
-            ),
-            RemoteAssociationTask(
-                "rat_003", ["fish", "mine", "rush"], "gold", "metal", "easy"
-            ),
-            RemoteAssociationTask(
-                "rat_004", ["base", "snow", "dance"], "ball", "sports", "easy"
-            ),
-            RemoteAssociationTask(
-                "rat_005", ["mouse", "sharp", "blue"], "cheese", "food", "easy"
-            ),
+            RemoteAssociationTask("rat_001", ["cottage", "swiss", "cake"], "cheese", "food", "easy"),
+            RemoteAssociationTask("rat_002", ["dream", "break", "light"], "day", "time", "easy"),
+            RemoteAssociationTask("rat_003", ["fish", "mine", "rush"], "gold", "metal", "easy"),
+            RemoteAssociationTask("rat_004", ["base", "snow", "dance"], "ball", "sports", "easy"),
+            RemoteAssociationTask("rat_005", ["mouse", "sharp", "blue"], "cheese", "food", "easy"),
             # Medium tasks
-            RemoteAssociationTask(
-                "rat_006", ["nuclear", "feud", "album"], "family", "social", "medium"
-            ),
-            RemoteAssociationTask(
-                "rat_007", ["measure", "worm", "video"], "tape", "material", "medium"
-            ),
-            RemoteAssociationTask(
-                "rat_008", ["flower", "friend", "scout"], "girl", "person", "medium"
-            ),
-            RemoteAssociationTask(
-                "rat_009", ["painting", "bowl", "nail"], "finger", "body", "medium"
-            ),
-            RemoteAssociationTask(
-                "rat_010", ["river", "note", "account"], "bank", "finance", "medium"
-            ),
+            RemoteAssociationTask("rat_006", ["nuclear", "feud", "album"], "family", "social", "medium"),
+            RemoteAssociationTask("rat_007", ["measure", "worm", "video"], "tape", "material", "medium"),
+            RemoteAssociationTask("rat_008", ["flower", "friend", "scout"], "girl", "person", "medium"),
+            RemoteAssociationTask("rat_009", ["painting", "bowl", "nail"], "finger", "body", "medium"),
+            RemoteAssociationTask("rat_010", ["river", "note", "account"], "bank", "finance", "medium"),
             # Hard tasks
-            RemoteAssociationTask(
-                "rat_011", ["phoenix", "york", "lawyer"], "new", "concept", "hard"
-            ),
-            RemoteAssociationTask(
-                "rat_012", ["magic", "chocolate", "fortune"], "cookie", "food", "hard"
-            ),
-            RemoteAssociationTask(
-                "rat_013", ["sleeping", "bean", "trash"], "bag", "container", "hard"
-            ),
-            RemoteAssociationTask(
-                "rat_014", ["cross", "rain", "tie"], "bow", "object", "hard"
-            ),
-            RemoteAssociationTask(
-                "rat_015", ["widget", "days", "person"], "sales", "business", "hard"
-            ),
+            RemoteAssociationTask("rat_011", ["phoenix", "york", "lawyer"], "new", "concept", "hard"),
+            RemoteAssociationTask("rat_012", ["magic", "chocolate", "fortune"], "cookie", "food", "hard"),
+            RemoteAssociationTask("rat_013", ["sleeping", "bean", "trash"], "bag", "container", "hard"),
+            RemoteAssociationTask("rat_014", ["cross", "rain", "tie"], "bow", "object", "hard"),
+            RemoteAssociationTask("rat_015", ["widget", "days", "person"], "sales", "business", "hard"),
         ]
         return tasks
 
@@ -326,15 +296,9 @@ class CreativityBenchmark:
                     "difficulty": task.difficulty,
                     "bridges_generated": len(bridges),
                     "bridges_evaluated": bridge_evaluations,
-                    "surprise_scores": [
-                        e["surprise_score"] for e in bridge_evaluations
-                    ],
-                    "guardian_passes": [
-                        e["guardian_passed"] for e in bridge_evaluations
-                    ],
-                    "user_usefulness": [
-                        e["user_usefulness"] for e in bridge_evaluations
-                    ],
+                    "surprise_scores": [e["surprise_score"] for e in bridge_evaluations],
+                    "guardian_passes": [e["guardian_passed"] for e in bridge_evaluations],
+                    "user_usefulness": [e["user_usefulness"] for e in bridge_evaluations],
                 }
 
                 results["task_results"].append(task_result)
@@ -345,9 +309,7 @@ class CreativityBenchmark:
                 continue
 
         # Calculate summary metrics
-        results["summary_metrics"] = self._calculate_summary_metrics(
-            results["task_results"]
-        )
+        results["summary_metrics"] = self._calculate_summary_metrics(results["task_results"])
 
         return results
 
@@ -378,15 +340,9 @@ class CreativityBenchmark:
                     "expected_connections": pair.expected_connections,
                     "bridges_generated": len(bridges),
                     "bridges_evaluated": bridge_evaluations,
-                    "surprise_scores": [
-                        e["surprise_score"] for e in bridge_evaluations
-                    ],
-                    "guardian_passes": [
-                        e["guardian_passed"] for e in bridge_evaluations
-                    ],
-                    "precision_score": self._calculate_precision_score(
-                        bridge_evaluations, pair.expected_connections
-                    ),
+                    "surprise_scores": [e["surprise_score"] for e in bridge_evaluations],
+                    "guardian_passes": [e["guardian_passed"] for e in bridge_evaluations],
+                    "precision_score": self._calculate_precision_score(bridge_evaluations, pair.expected_connections),
                 }
 
                 results["pair_results"].append(pair_result)
@@ -397,15 +353,11 @@ class CreativityBenchmark:
                 continue
 
         # Calculate summary metrics
-        results["summary_metrics"] = self._calculate_summary_metrics(
-            results["pair_results"], is_cross_domain=True
-        )
+        results["summary_metrics"] = self._calculate_summary_metrics(results["pair_results"], is_cross_domain=True)
 
         return results
 
-    async def _generate_creative_bridges_for_task(
-        self, task: RemoteAssociationTask
-    ) -> list[CreativeBridge]:
+    async def _generate_creative_bridges_for_task(self, task: RemoteAssociationTask) -> list[CreativeBridge]:
         """Generate creative bridges for a remote association task."""
         bridges = []
 
@@ -433,9 +385,7 @@ class CreativityBenchmark:
 
         return bridges
 
-    async def _generate_cross_domain_bridges(
-        self, pair: CrossDomainPair
-    ) -> list[CreativeBridge]:
+    async def _generate_cross_domain_bridges(self, pair: CrossDomainPair) -> list[CreativeBridge]:
         """Generate creative bridges between cross-domain concepts."""
         bridges = []
 
@@ -468,9 +418,7 @@ class CreativityBenchmark:
 
         return bridges
 
-    async def _evaluate_creative_bridge(
-        self, bridge: CreativeBridge, context: Any
-    ) -> dict[str, Any]:
+    async def _evaluate_creative_bridge(self, bridge: CreativeBridge, context: Any) -> dict[str, Any]:
         """Evaluate a single creative bridge."""
         evaluation = {
             "bridge_id": bridge.id,
@@ -527,18 +475,14 @@ class CreativityBenchmark:
         node_count = len(bridge.source_nodes) + len(bridge.target_nodes)
         complexity_factor = 1.0 + (node_count - 2) * 0.1
 
-        surprise_score = (
-            base_surprise * type_factor * confidence_factor * complexity_factor
-        )
+        surprise_score = base_surprise * type_factor * confidence_factor * complexity_factor
 
         # Add some randomness to simulate real-world variability
         surprise_score += np.random.normal(0, 0.1)
 
         return min(max(surprise_score, 0.0), 1.0)  # Clamp to [0, 1]
 
-    def _calculate_precision_score(
-        self, evaluations: list[dict], expected_connections: list[str]
-    ) -> float:
+    def _calculate_precision_score(self, evaluations: list[dict], expected_connections: list[str]) -> float:
         """Calculate precision of discovered connections against ground truth."""
         if not evaluations or not expected_connections:
             return 0.0
@@ -560,18 +504,14 @@ class CreativityBenchmark:
         # Mock precision calculation
         # In reality, this would use semantic similarity to match discovered vs expected
         overlap = len(discovered_connections.intersection(expected_set))
-        precision = (
-            overlap / len(discovered_connections) if discovered_connections else 0.0
-        )
+        precision = overlap / len(discovered_connections) if discovered_connections else 0.0
 
         # Add some realistic variation
         precision = min(max(precision + np.random.normal(0, 0.1), 0.0), 1.0)
 
         return precision
 
-    def _calculate_summary_metrics(
-        self, results: list[dict], is_cross_domain: bool = False
-    ) -> dict[str, float]:
+    def _calculate_summary_metrics(self, results: list[dict], is_cross_domain: bool = False) -> dict[str, float]:
         """Calculate summary metrics across all tasks/pairs."""
         if not results:
             return {}
@@ -594,23 +534,13 @@ class CreativityBenchmark:
         surprise_at_5 = statistics.mean(top_5_surprise) if top_5_surprise else 0.0
 
         # Guardian Pass Rate
-        guardian_pass_rate = (
-            sum(all_guardian_passes) / len(all_guardian_passes)
-            if all_guardian_passes
-            else 0.0
-        )
+        guardian_pass_rate = sum(all_guardian_passes) / len(all_guardian_passes) if all_guardian_passes else 0.0
 
         # User Usefulness Score
-        user_usefulness_avg = (
-            statistics.mean([s for s in all_user_scores if s > 0])
-            if all_user_scores
-            else 0.0
-        )
+        user_usefulness_avg = statistics.mean([s for s in all_user_scores if s > 0]) if all_user_scores else 0.0
 
         # Hidden-Link Precision (for cross-domain tasks)
-        hidden_link_precision = (
-            statistics.mean(all_precision_scores) if all_precision_scores else 0.0
-        )
+        hidden_link_precision = statistics.mean(all_precision_scores) if all_precision_scores else 0.0
 
         return {
             "surprise_at_5": surprise_at_5,
@@ -618,19 +548,11 @@ class CreativityBenchmark:
             "user_usefulness_score": user_usefulness_avg,
             "hidden_link_precision": hidden_link_precision,
             "total_bridges_evaluated": len(all_surprise_scores),
-            "mean_surprise_score": (
-                statistics.mean(all_surprise_scores) if all_surprise_scores else 0.0
-            ),
-            "std_surprise_score": (
-                statistics.stdev(all_surprise_scores)
-                if len(all_surprise_scores) > 1
-                else 0.0
-            ),
+            "mean_surprise_score": (statistics.mean(all_surprise_scores) if all_surprise_scores else 0.0),
+            "std_surprise_score": (statistics.stdev(all_surprise_scores) if len(all_surprise_scores) > 1 else 0.0),
         }
 
-    async def run_full_benchmark(
-        self, user_scores_path: Path | None = None
-    ) -> CreativityMetrics:
+    async def run_full_benchmark(self, user_scores_path: Path | None = None) -> CreativityMetrics:
         """Run the complete creativity benchmark suite."""
         logger.info("Starting HypeRAG Creativity Benchmark Suite...")
 
@@ -675,8 +597,7 @@ class CreativityBenchmark:
 
         combined = {
             "surprise_at_5": (
-                rat_metrics.get("surprise_at_5", 0) * rat_weight
-                + cd_metrics.get("surprise_at_5", 0) * cd_weight
+                rat_metrics.get("surprise_at_5", 0) * rat_weight + cd_metrics.get("surprise_at_5", 0) * cd_weight
             ),
             "guardian_pass_rate": (
                 rat_metrics.get("guardian_pass_rate", 0) * rat_weight
@@ -686,20 +607,15 @@ class CreativityBenchmark:
                 rat_metrics.get("user_usefulness_score", 0) * rat_weight
                 + cd_metrics.get("user_usefulness_score", 0) * cd_weight
             ),
-            "hidden_link_precision": cd_metrics.get(
-                "hidden_link_precision", 0
-            ),  # Only from cross-domain
+            "hidden_link_precision": cd_metrics.get("hidden_link_precision", 0),  # Only from cross-domain
             "total_bridges_evaluated": (
-                rat_metrics.get("total_bridges_evaluated", 0)
-                + cd_metrics.get("total_bridges_evaluated", 0)
+                rat_metrics.get("total_bridges_evaluated", 0) + cd_metrics.get("total_bridges_evaluated", 0)
             ),
         }
 
         return combined
 
-    async def _save_results(
-        self, rat_results: dict, cd_results: dict, metrics: CreativityMetrics
-    ) -> None:
+    async def _save_results(self, rat_results: dict, cd_results: dict, metrics: CreativityMetrics) -> None:
         """Save benchmark results to files."""
         timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
 
@@ -762,9 +678,7 @@ async def main() -> None:
         default=Path("./benchmark_results"),
         help="Output directory for results",
     )
-    parser.add_argument(
-        "--user-scores", type=Path, help="Path to user evaluation scores JSON file"
-    )
+    parser.add_argument("--user-scores", type=Path, help="Path to user evaluation scores JSON file")
     parser.add_argument(
         "--generate-sample-scores",
         action="store_true",

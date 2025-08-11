@@ -177,9 +177,7 @@ class TestP2PProtocolCompatibility:
         suitable_peers = node.get_suitable_evolution_peers(min_count=1)
 
         # Should return all 10 peers, not limited to 5
-        assert (
-            len(suitable_peers) == 10
-        ), f"Expected 10 peers, got {len(suitable_peers)}"
+        assert len(suitable_peers) == 10, f"Expected 10 peers, got {len(suitable_peers)}"
 
         # Test with higher minimum
         suitable_peers = node.get_suitable_evolution_peers(min_count=8)
@@ -231,9 +229,7 @@ class TestP2PProtocolCompatibility:
 
         async def discovery_client():
             """Simulate discovery client."""
-            reader, writer = await asyncio.open_connection(
-                "localhost", node1.listen_port
-            )
+            reader, writer = await asyncio.open_connection("localhost", node1.listen_port)
             try:
                 discovery_msg = {
                     "type": "PEER_DISCOVERY",
@@ -262,9 +258,7 @@ class TestP2PProtocolCompatibility:
             """Simulate P2P encrypted client."""
             # This would normally use encrypted protocol
             # For now, just test that the server can handle mixed connections
-            reader, writer = await asyncio.open_connection(
-                "localhost", node2.listen_port
-            )
+            reader, writer = await asyncio.open_connection("localhost", node2.listen_port)
             try:
                 # Send a simple discovery message to verify connection handling
                 discovery_msg = {
@@ -291,9 +285,7 @@ class TestP2PProtocolCompatibility:
                 await writer.wait_closed()
 
         # Run both clients concurrently
-        discovery_result, p2p_result = await asyncio.gather(
-            discovery_client(), p2p_client()
-        )
+        discovery_result, p2p_result = await asyncio.gather(discovery_client(), p2p_client())
 
         # Both should succeed
         assert discovery_result["type"] == "PEER_DISCOVERY_RESPONSE"
@@ -320,9 +312,7 @@ class TestP2PProtocolCompatibility:
             if discovered_count > 0:
                 successful_nodes += 1
 
-            logger.info(
-                f"Node {i} ({node.node_id}): {discovered_count} peers discovered"
-            )
+            logger.info(f"Node {i} ({node.node_id}): {discovered_count} peers discovered")
 
         # Stop discovery
         for node in p2p_nodes:
@@ -335,9 +325,7 @@ class TestP2PProtocolCompatibility:
         # Test evolution peer selection across the network
         for node in p2p_nodes[:3]:  # Test first 3 nodes
             suitable_peers = node.get_suitable_evolution_peers()
-            logger.info(
-                f"Node {node.node_id}: {len(suitable_peers)} suitable evolution peers"
-            )
+            logger.info(f"Node {node.node_id}: {len(suitable_peers)} suitable evolution peers")
 
         logger.info("✅ Large network scalability test PASSED")
         logger.info(f"   - {successful_nodes}/10 nodes successfully discovered peers")
@@ -357,9 +345,7 @@ class TestP2PPerformance:
         for i in range(10):
             start_time = time.time()
 
-            reader, writer = await asyncio.open_connection(
-                "localhost", node.listen_port
-            )
+            reader, writer = await asyncio.open_connection("localhost", node.listen_port)
 
             discovery_msg = {
                 "type": "PEER_DISCOVERY",

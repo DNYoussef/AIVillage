@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Knowledge Graph Visualization
+"""Knowledge Graph Visualization.
 
 Creates an interactive graph showing connections between:
 - Grossman mathematical papers (Non-Newtonian calculus, Meta-calculus)
-- Wikipedia articles 
+- Wikipedia articles
 - AI research papers
 
 Shows semantic relationships and concept overlap.
@@ -141,10 +141,7 @@ def extract_key_concepts(text: str, max_concepts: int = 20) -> list[str]:
         meaningful_bigrams = [
             bg
             for bg in bigrams
-            if len(bg) > 6
-            and not any(
-                stop in bg for stop in ["the ", "and ", "for ", "that ", "with "]
-            )
+            if len(bg) > 6 and not any(stop in bg for stop in ["the ", "and ", "for ", "that ", "with "])
         ]
 
         # Add top bigrams
@@ -170,10 +167,9 @@ def analyze_document_relationships(papers_dir: Path) -> dict[str, dict]:
 
             # Extract metadata and content
             if "=== METADATA ===" in content and "=== CONTENT ===" in content:
-                metadata_section = content.split("=== CONTENT ===")[0]
+                content.split("=== CONTENT ===")[0]
                 text_content = content.split("=== CONTENT ===")[1]
             else:
-                metadata_section = ""
                 text_content = content
 
             # Determine document type
@@ -181,9 +177,7 @@ def analyze_document_relationships(papers_dir: Path) -> dict[str, dict]:
             if "grossman" in filename.lower():
                 doc_type = "mathematics"
                 category = "grossman_calculus"
-            elif any(
-                term in filename.lower() for term in ["rag", "retrieval", "knowledge"]
-            ):
+            elif any(term in filename.lower() for term in ["rag", "retrieval", "knowledge"]):
                 doc_type = "rag_research"
                 category = "rag_research"
             elif any(term in filename.lower() for term in ["agent", "multi", "swarm"]):
@@ -192,10 +186,7 @@ def analyze_document_relationships(papers_dir: Path) -> dict[str, dict]:
             elif any(term in filename.lower() for term in ["compress", "quant", "bit"]):
                 doc_type = "compression"
                 category = "compression"
-            elif any(
-                term in filename.lower()
-                for term in ["neural", "transform", "attention"]
-            ):
+            elif any(term in filename.lower() for term in ["neural", "transform", "attention"]):
                 doc_type = "ai_research"
                 category = "ai_research"
             else:
@@ -256,14 +247,10 @@ def create_knowledge_graph(documents: dict[str, dict]) -> nx.Graph:
     for (doc1, doc2), weight in edge_weights.items():
         if weight >= 2:
             # Calculate similarity bonus for same category
-            bonus = (
-                0.2 if documents[doc1]["category"] == documents[doc2]["category"] else 0
-            )
+            bonus = 0.2 if documents[doc1]["category"] == documents[doc2]["category"] else 0
             G.add_edge(doc1, doc2, weight=weight, similarity=weight / 10 + bonus)
 
-    print(
-        f"Created graph with {G.number_of_nodes()} nodes and {G.number_of_edges()} edges"
-    )
+    print(f"Created graph with {G.number_of_nodes()} nodes and {G.number_of_edges()} edges")
     return G
 
 
@@ -301,14 +288,8 @@ def visualize_knowledge_graph(G: nx.Graph, output_file: str = "knowledge_graph.p
         pos = nx.circular_layout(G)
 
     # Prepare node attributes
-    node_colors = [
-        color_map.get(G.nodes[node].get("type", "general_research"), "#DDA0DD")
-        for node in G.nodes()
-    ]
-    node_sizes = [
-        max(100, min(2000, G.nodes[node].get("word_count", 1000) / 50))
-        for node in G.nodes()
-    ]
+    node_colors = [color_map.get(G.nodes[node].get("type", "general_research"), "#DDA0DD") for node in G.nodes()]
+    node_sizes = [max(100, min(2000, G.nodes[node].get("word_count", 1000) / 50)) for node in G.nodes()]
 
     # Draw edges first (behind nodes)
     edge_widths = [G[u][v].get("weight", 1) * 0.5 for u, v in G.edges()]
@@ -328,9 +309,7 @@ def visualize_knowledge_graph(G: nx.Graph, output_file: str = "knowledge_graph.p
     # Add labels for important nodes
     important_nodes = {}
     for node in G.nodes():
-        if (
-            G.degree(node) >= 3 or "grossman" in node.lower()
-        ):  # High degree or Grossman papers
+        if G.degree(node) >= 3 or "grossman" in node.lower():  # High degree or Grossman papers
             title = G.nodes[node].get("title", node)
             # Truncate long titles
             if len(title) > 25:
@@ -376,7 +355,7 @@ def visualize_knowledge_graph(G: nx.Graph, output_file: str = "knowledge_graph.p
         transform=plt.gca().transAxes,
         fontsize=10,
         verticalalignment="top",
-        bbox=dict(boxstyle="round,pad=0.3", facecolor="white", alpha=0.8),
+        bbox={"boxstyle": "round,pad=0.3", "facecolor": "white", "alpha": 0.8},
     )
 
     plt.axis("off")
@@ -384,9 +363,7 @@ def visualize_knowledge_graph(G: nx.Graph, output_file: str = "knowledge_graph.p
 
     # Save the plot
     output_path = Path(output_file)
-    plt.savefig(
-        output_path, dpi=300, bbox_inches="tight", facecolor="white", edgecolor="none"
-    )
+    plt.savefig(output_path, dpi=300, bbox_inches="tight", facecolor="white", edgecolor="none")
     print(f"Knowledge graph saved to: {output_path.absolute()}")
 
     # Show the plot
@@ -395,7 +372,7 @@ def visualize_knowledge_graph(G: nx.Graph, output_file: str = "knowledge_graph.p
     return pos
 
 
-def analyze_key_connections(G: nx.Graph, documents: dict[str, dict]):
+def analyze_key_connections(G: nx.Graph, documents: dict[str, dict]) -> None:
     """Analyze and report key connections in the graph."""
     print("\n" + "=" * 60)
     print("KEY KNOWLEDGE CONNECTIONS ANALYSIS")
@@ -415,17 +392,13 @@ def analyze_key_connections(G: nx.Graph, documents: dict[str, dict]):
 
         # Show strongest connections
         if connections:
-            weighted_connections = [
-                (conn, G[paper][conn].get("weight", 1)) for conn in connections
-            ]
+            weighted_connections = [(conn, G[paper][conn].get("weight", 1)) for conn in connections]
             weighted_connections.sort(key=lambda x: x[1], reverse=True)
 
             print("     • Strongest links:")
             for conn, weight in weighted_connections[:3]:
                 conn_type = documents[conn]["type"]
-                print(
-                    f"       → {documents[conn]['title'][:40]}... ({conn_type}, {weight} shared concepts)"
-                )
+                print(f"       → {documents[conn]['title'][:40]}... ({conn_type}, {weight} shared concepts)")
 
     # Find most connected papers
     print("\n🌟 Most Connected Papers (Knowledge Hubs):")
@@ -436,9 +409,7 @@ def analyze_key_connections(G: nx.Graph, documents: dict[str, dict]):
         degree = G.degree(node)
         doc_type = documents[node]["type"]
         print(f"   {i}. {documents[node]['title'][:50]}...")
-        print(
-            f"      Type: {doc_type}, Connections: {degree}, Centrality: {centrality:.3f}"
-        )
+        print(f"      Type: {doc_type}, Connections: {degree}, Centrality: {centrality:.3f}")
 
     # Analyze cross-domain connections
     print("\n🔗 Cross-Domain Knowledge Bridges:")
@@ -447,9 +418,7 @@ def analyze_key_connections(G: nx.Graph, documents: dict[str, dict]):
     for u, v in G.edges():
         if documents[u]["type"] != documents[v]["type"]:
             weight = G[u][v].get("weight", 1)
-            cross_domain_edges.append(
-                (u, v, weight, documents[u]["type"], documents[v]["type"])
-            )
+            cross_domain_edges.append((u, v, weight, documents[u]["type"], documents[v]["type"]))
 
     cross_domain_edges.sort(key=lambda x: x[2], reverse=True)
 
@@ -472,12 +441,12 @@ def analyze_key_connections(G: nx.Graph, documents: dict[str, dict]):
 
     for concept, freq in top_concepts:
         if freq >= 3:  # Concepts appearing in 3+ documents
-            doc_types = set(documents[doc]["type"] for doc in concept_docs[concept])
+            doc_types = {documents[doc]["type"] for doc in concept_docs[concept]}
             print(f"   • '{concept}': {freq} papers across {len(doc_types)} domains")
             print(f"     Domains: {', '.join(sorted(doc_types))}")
 
 
-def main():
+def main() -> None:
     """Main function to create and visualize the knowledge graph."""
     print("🔍 KNOWLEDGE GRAPH VISUALIZATION")
     print("=" * 50)
@@ -506,9 +475,7 @@ def main():
     if VISUALIZATION_AVAILABLE:
         visualize_knowledge_graph(G)
     else:
-        print(
-            "❌ Visualization not available. Install matplotlib, networkx, scikit-learn"
-        )
+        print("❌ Visualization not available. Install matplotlib, networkx, scikit-learn")
 
     print("🔍 Step 4: Analyzing key connections...")
     analyze_key_connections(G, documents)
@@ -519,9 +486,7 @@ def main():
         "edges": len(G.edges()),
         "document_types": dict(Counter(documents[node]["type"] for node in G.nodes())),
         "grossman_papers": len([n for n in G.nodes() if "grossman" in n.lower()]),
-        "avg_degree": sum(dict(G.degree()).values()) / len(G.nodes())
-        if G.nodes()
-        else 0,
+        "avg_degree": sum(dict(G.degree()).values()) / len(G.nodes()) if G.nodes() else 0,
     }
 
     with open("knowledge_graph_stats.json", "w") as f:

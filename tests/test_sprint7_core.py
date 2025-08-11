@@ -113,9 +113,7 @@ try:
         source_device_id="device_1",
         strategy=strategy,
     )
-    print(
-        f"  ✓ MigrationRequest: {request.agent_instance_id} from {request.source_device_id}"
-    )
+    print(f"  ✓ MigrationRequest: {request.agent_instance_id} from {request.source_device_id}")
 
     print("  PASS: Migration system working\n")
 
@@ -137,12 +135,8 @@ try:
     print(f"  ✓ Resharding enums: {reason.value} -> {strategy.value}")
 
     # Test resharding event
-    event = ReshardingEvent(
-        event_id=str(uuid.uuid4()), reason=reason, trigger_device_id="new_device"
-    )
-    print(
-        f"  ✓ ReshardingEvent: {event.reason.value} triggered by {event.trigger_device_id}"
-    )
+    event = ReshardingEvent(event_id=str(uuid.uuid4()), reason=reason, trigger_device_id="new_device")
+    print(f"  ✓ ReshardingEvent: {event.reason.value} triggered by {event.trigger_device_id}")
 
     print("  PASS: Resharding system working\n")
 
@@ -169,9 +163,7 @@ try:
         max_participants_per_round=10,
         target_accuracy=0.85,
     )
-    print(
-        f"  ✓ FederatedConfig: {config.min_participants_per_round}-{config.max_participants_per_round} participants"
-    )
+    print(f"  ✓ FederatedConfig: {config.min_participants_per_round}-{config.max_participants_per_round} participants")
 
     print("  PASS: Federated learning system working\n")
 

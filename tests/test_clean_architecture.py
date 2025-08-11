@@ -45,9 +45,7 @@ class TestBusinessLogic:
             max_message_length=test_config.gateway.max_request_size,
         )
 
-        request = ChatRequest(
-            message="Hello, how are you?", conversation_id="test-conv-123"
-        )
+        request = ChatRequest(message="Hello, how are you?", conversation_id="test-conv-123")
 
         response = await chat_logic.process_chat(request)
 
@@ -80,9 +78,7 @@ class TestBusinessLogic:
             max_file_size=test_config.gateway.max_request_size,
         )
 
-        request = UploadRequest(
-            filename="test.txt", content=b"Test file content", content_type="text/plain"
-        )
+        request = UploadRequest(filename="test.txt", content=b"Test file content", content_type="text/plain")
 
         response = await upload_logic.process_upload(request)
 
@@ -95,9 +91,7 @@ class TestBusinessLogic:
     @pytest.mark.asyncio
     async def test_health_check_logic(self, test_config):
         """Test health check logic."""
-        health_logic = HealthCheckLogic(
-            service_name=test_config.gateway.name, version=test_config.gateway.version
-        )
+        health_logic = HealthCheckLogic(service_name=test_config.gateway.name, version=test_config.gateway.version)
 
         response = await health_logic.check_health()
 
@@ -208,9 +202,7 @@ class TestIntegration:
         adapter = ChatHTTPAdapter(mock_chat_service)
 
         with pytest.raises(Exception, match="Service error"):
-            await adapter.handle_chat_request(
-                {"message": "test", "conversation_id": "test-123"}
-            )
+            await adapter.handle_chat_request({"message": "test", "conversation_id": "test-123"})
 
     @pytest.mark.asyncio
     async def test_validation_in_business_logic(self, mock_chat_engine, test_config):

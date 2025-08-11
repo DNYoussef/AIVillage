@@ -69,9 +69,7 @@ async def validate_sprint6() -> bool:
             ResourceMonitor,
         )
 
-        print_check(
-            "Resource management imports", True, "All resource components available"
-        )
+        print_check("Resource management imports", True, "All resource components available")
 
         # Test Device Profiler
         profiler = DeviceProfiler()
@@ -220,8 +218,7 @@ async def validate_sprint6() -> bool:
         print_check(
             "Coordination proposal creation",
             True,
-            f"Proposal ID: {proposal.proposal_id}, "
-            f"Consensus: {proposal.consensus_type.value}",
+            f"Proposal ID: {proposal.proposal_id}, " f"Consensus: {proposal.consensus_type.value}",
         )
 
     except Exception as e:
@@ -246,9 +243,7 @@ async def validate_sprint6() -> bool:
         print_check(
             "Resource allocation flow",
             True,
-            f"Memory: {allocation['memory_mb']}MB, "
-            f"CPU: {allocation['cpu_percent']}%, "
-            f"Suitable: {suitable}",
+            f"Memory: {allocation['memory_mb']}MB, " f"CPU: {allocation['cpu_percent']}%, " f"Suitable: {suitable}",
         )
 
         # Test constraint checking
@@ -262,9 +257,7 @@ async def validate_sprint6() -> bool:
             "Task registration and constraint checking",
         )
 
-        print_check(
-            "End-to-end integration", True, "All components integrated successfully"
-        )
+        print_check("End-to-end integration", True, "All components integrated successfully")
 
     except Exception as e:
         print_check("End-to-End Integration", False, str(e))

@@ -16,7 +16,7 @@ from typing import Any
 
 # Mock the missing imports for now
 class MockSentenceTransformer:
-    def __init__(self, model_name):
+    def __init__(self, model_name) -> None:
         self.model_name = model_name
         self.dimension = 384
 
@@ -43,22 +43,22 @@ except ImportError:
 
     class MockFaiss:
         class IndexIDMap:
-            def __init__(self, inner_index):
+            def __init__(self, inner_index) -> None:
                 self.inner_index = inner_index
                 self.ntotal = 0
 
-            def add_with_ids(self, embeddings, ids):
+            def add_with_ids(self, embeddings, ids) -> None:
                 self.ntotal += len(embeddings)
 
             def search(self, query, k):
                 return np.array([[0, 1, 2]]), np.array([[0.9, 0.8, 0.7]])
 
         class IndexFlatIP:
-            def __init__(self, d):
+            def __init__(self, d) -> None:
                 self.d = d
 
         @staticmethod
-        def write_index(index, path):
+        def write_index(index, path) -> None:
             pass
 
         @staticmethod
@@ -80,7 +80,7 @@ RAG_BM25_CORPUS_PATH = os.getenv("RAG_BM25_CORPUS_PATH", "./data/bm25_corpus")
 class RAGSystemUpgrader:
     """Handles upgrade from SHA256 to real embeddings."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.db_path = Path("./data/rag_index.db")
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -94,9 +94,7 @@ class RAGSystemUpgrader:
         self.embedder = SentenceTransformer(RAG_EMBEDDING_MODEL)
         self.vector_dim = self.embedder.get_sentence_embedding_dimension()
 
-        logger.info(
-            f"Initialized embedder: {RAG_EMBEDDING_MODEL} (dim: {self.vector_dim})"
-        )
+        logger.info(f"Initialized embedder: {RAG_EMBEDDING_MODEL} (dim: {self.vector_dim})")
 
     def find_legacy_rag_data(self) -> dict[str, list[Path]]:
         """Find legacy RAG data files."""
@@ -120,8 +118,7 @@ class RAGSystemUpgrader:
                         with open(file_path) as f:
                             content = f.read()
                             if "sha256" in content.lower() and (
-                                "embedding" in content.lower()
-                                or "vector" in content.lower()
+                                "embedding" in content.lower() or "vector" in content.lower()
                             ):
                                 legacy_data["sha256_files"].append(file_path)
                                 logger.info(f"Found SHA256 file: {file_path}")
@@ -135,10 +132,7 @@ class RAGSystemUpgrader:
 
                 # Look for pickle files (potential embeddings)
                 for file_path in search_dir.rglob("*.pkl"):
-                    if (
-                        "embed" in str(file_path).lower()
-                        or "vector" in str(file_path).lower()
-                    ):
+                    if "embed" in str(file_path).lower() or "vector" in str(file_path).lower():
                         legacy_data["mock_embeddings"].append(file_path)
                         logger.info(f"Found potential embedding file: {file_path}")
 
@@ -237,33 +231,19 @@ class RAGSystemUpgrader:
         )
 
         # Create indexes
-        cursor.execute(
-            "CREATE INDEX IF NOT EXISTS idx_documents_hash ON documents(file_hash)"
-        )
-        cursor.execute(
-            "CREATE INDEX IF NOT EXISTS idx_documents_type ON documents(document_type)"
-        )
-        cursor.execute(
-            "CREATE INDEX IF NOT EXISTS idx_chunks_document ON chunks(document_id)"
-        )
-        cursor.execute(
-            "CREATE INDEX IF NOT EXISTS idx_chunks_index ON chunks(chunk_index)"
-        )
-        cursor.execute(
-            "CREATE INDEX IF NOT EXISTS idx_embeddings_faiss ON embeddings_metadata(faiss_index_id)"
-        )
-        cursor.execute(
-            "CREATE INDEX IF NOT EXISTS idx_embeddings_queries ON embeddings_metadata(query_count)"
-        )
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_documents_hash ON documents(file_hash)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_documents_type ON documents(document_type)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_chunks_document ON chunks(document_id)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_chunks_index ON chunks(chunk_index)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_embeddings_faiss ON embeddings_metadata(faiss_index_id)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_embeddings_queries ON embeddings_metadata(query_count)")
 
         conn.commit()
         conn.close()
 
         logger.info(f"Upgraded database created at {self.db_path}")
 
-    def extract_documents_from_legacy(
-        self, legacy_files: dict[str, list[Path]]
-    ) -> list[dict[str, Any]]:
+    def extract_documents_from_legacy(self, legacy_files: dict[str, list[Path]]) -> list[dict[str, Any]]:
         """Extract documents from legacy files."""
         logger.info("Extracting documents from legacy files...")
 
@@ -280,10 +260,7 @@ class RAGSystemUpgrader:
                     if "documents" in data:
                         docs = data["documents"]
                     elif "texts" in data:
-                        docs = [
-                            {"content": text, "id": f"doc_{i}"}
-                            for i, text in enumerate(data["texts"])
-                        ]
+                        docs = [{"content": text, "id": f"doc_{i}"} for i, text in enumerate(data["texts"])]
                     else:
                         # Assume the whole object is a document
                         docs = [{"content": str(data), "id": file_path.stem}]
@@ -291,10 +268,7 @@ class RAGSystemUpgrader:
                     docs = (
                         data
                         if data and isinstance(data[0], dict)
-                        else [
-                            {"content": str(item), "id": f"doc_{i}"}
-                            for i, item in enumerate(data)
-                        ]
+                        else [{"content": str(item), "id": f"doc_{i}"} for i, item in enumerate(data)]
                     )
                 else:
                     docs = [{"content": str(data), "id": file_path.stem}]
@@ -302,12 +276,8 @@ class RAGSystemUpgrader:
                 for doc in docs:
                     if isinstance(doc, dict) and doc.get("content"):
                         document = {
-                            "document_id": doc.get(
-                                "id", f"{file_path.stem}_{len(documents)}"
-                            ),
-                            "title": doc.get(
-                                "title", f"Document from {file_path.name}"
-                            ),
+                            "document_id": doc.get("id", f"{file_path.stem}_{len(documents)}"),
+                            "title": doc.get("title", f"Document from {file_path.name}"),
                             "content": doc["content"],
                             "source_path": str(file_path),
                             "document_type": "legacy_sha256",
@@ -326,36 +296,28 @@ class RAGSystemUpgrader:
 
         # Add sample educational documents if no legacy found
         if not documents:
-            logger.info(
-                "No legacy documents found, creating sample educational content..."
-            )
+            logger.info("No legacy documents found, creating sample educational content...")
             sample_docs = [
                 {
                     "document_id": "edu_ml_basics",
                     "title": "Machine Learning Fundamentals",
                     "content": """Machine learning is a subset of artificial intelligence that enables computers to learn and make decisions from data without being explicitly programmed for every task. It involves algorithms that can identify patterns in data and make predictions or classifications based on those patterns. The three main types are supervised learning (learning from labeled examples), unsupervised learning (finding hidden patterns in unlabeled data), and reinforcement learning (learning through trial and error with rewards and penalties).""",
                     "document_type": "educational",
-                    "metadata": json.dumps(
-                        {"category": "AI/ML", "difficulty": "beginner"}
-                    ),
+                    "metadata": json.dumps({"category": "AI/ML", "difficulty": "beginner"}),
                 },
                 {
                     "document_id": "edu_neural_networks",
                     "title": "Neural Networks Overview",
                     "content": """Neural networks are computational models inspired by the human brain, consisting of interconnected nodes (neurons) organized in layers. They excel at pattern recognition tasks like image classification, natural language processing, and speech recognition. Deep neural networks with multiple hidden layers can learn increasingly complex representations of data. Common architectures include convolutional neural networks (CNNs) for images, recurrent neural networks (RNNs) for sequences, and transformers for natural language understanding.""",
                     "document_type": "educational",
-                    "metadata": json.dumps(
-                        {"category": "AI/ML", "difficulty": "intermediate"}
-                    ),
+                    "metadata": json.dumps({"category": "AI/ML", "difficulty": "intermediate"}),
                 },
                 {
                     "document_id": "edu_data_science",
                     "title": "Data Science Process",
                     "content": """Data science is an interdisciplinary field that combines statistics, programming, and domain expertise to extract insights from data. The typical process involves data collection, cleaning, exploration, modeling, and interpretation. Key skills include programming (Python, R, SQL), statistical analysis, machine learning, and data visualization. Common applications include predictive analytics, recommendation systems, fraud detection, and business intelligence.""",
                     "document_type": "educational",
-                    "metadata": json.dumps(
-                        {"category": "Data Science", "difficulty": "beginner"}
-                    ),
+                    "metadata": json.dumps({"category": "Data Science", "difficulty": "beginner"}),
                 },
             ]
             documents.extend(sample_docs)
@@ -363,9 +325,7 @@ class RAGSystemUpgrader:
         logger.info(f"Extracted {len(documents)} documents for upgrade")
         return documents
 
-    def generate_real_embeddings(
-        self, documents: list[dict[str, Any]]
-    ) -> dict[str, Any]:
+    def generate_real_embeddings(self, documents: list[dict[str, Any]]) -> dict[str, Any]:
         """Generate real vector embeddings for documents."""
         logger.info("Generating real vector embeddings...")
 
@@ -437,9 +397,7 @@ class RAGSystemUpgrader:
 
                     # Add to FAISS index
                     chunk_hash = hash(chunk_id) & 0x7FFFFFFFFFFFFFFF  # Ensure positive
-                    index.add_with_ids(
-                        np.array([embedding]), np.array([chunk_hash], dtype="int64")
-                    )
+                    index.add_with_ids(np.array([embedding]), np.array([chunk_hash], dtype="int64"))
 
                     # Store embedding metadata
                     cursor.execute(
@@ -457,7 +415,7 @@ class RAGSystemUpgrader:
 
             except Exception as e:
                 error_msg = f"Error processing document {doc.get('document_id', 'unknown')}: {e}"
-                logger.error(error_msg)
+                logger.exception(error_msg)
                 upgrade_stats["errors"].append(error_msg)
 
         # Save FAISS index
@@ -472,9 +430,7 @@ class RAGSystemUpgrader:
 
         return upgrade_stats
 
-    def _create_chunks(
-        self, text: str, doc_id: str, chunk_size: int = 512, overlap: int = 50
-    ) -> list[str]:
+    def _create_chunks(self, text: str, doc_id: str, chunk_size: int = 512, overlap: int = 50) -> list[str]:
         """Create chunks from text with specified overlap."""
         words = text.split()
         chunks = []
@@ -535,7 +491,7 @@ class RAGSystemUpgrader:
         try:
             index = faiss.read_index(str(self.faiss_index_path))
         except Exception as e:
-            logger.error(f"Cannot load FAISS index: {e}")
+            logger.exception(f"Cannot load FAISS index: {e}")
             return accuracy_results
 
         total_results = 0
@@ -543,9 +499,7 @@ class RAGSystemUpgrader:
         for query in test_queries:
             try:
                 # Generate query embedding
-                query_embedding = self.embedder.encode(
-                    query, convert_to_numpy=True
-                ).astype("float32")
+                query_embedding = self.embedder.encode(query, convert_to_numpy=True).astype("float32")
 
                 # Search FAISS index
                 scores, ids = index.search(np.array([query_embedding]), k=5)
@@ -583,11 +537,9 @@ class RAGSystemUpgrader:
                 logger.info(f"Query '{query}': {len(results)} results")
 
             except Exception as e:
-                logger.error(f"Error testing query '{query}': {e}")
+                logger.exception(f"Error testing query '{query}': {e}")
 
-        accuracy_results["average_results_per_query"] = total_results / len(
-            test_queries
-        )
+        accuracy_results["average_results_per_query"] = total_results / len(test_queries)
 
         conn.close()
         return accuracy_results
@@ -611,7 +563,7 @@ class RAGSystemUpgrader:
                     shutil.copy2(file_path, archive_path)
                     logger.info(f"Archived {file_path} -> {archive_path}")
                 except Exception as e:
-                    logger.error(f"Error archiving {file_path}: {e}")
+                    logger.exception(f"Error archiving {file_path}: {e}")
 
     def run_upgrade(self) -> dict[str, Any]:
         """Execute complete RAG system upgrade."""
@@ -669,14 +621,12 @@ class RAGSystemUpgrader:
             "duration": (datetime.now() - start_time).total_seconds(),
         }
 
-        logger.info(
-            f"RAG upgrade completed: {upgrade_stats['embeddings_generated']} real embeddings generated"
-        )
+        logger.info(f"RAG upgrade completed: {upgrade_stats['embeddings_generated']} real embeddings generated")
 
         return report
 
 
-def main():
+def main() -> None:
     """Main upgrade function."""
     upgrader = RAGSystemUpgrader()
     report = upgrader.run_upgrade()

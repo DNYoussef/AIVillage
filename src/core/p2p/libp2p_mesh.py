@@ -16,14 +16,14 @@ DESIGN:
 """
 
 import asyncio
-import json
-import logging
-import time
-import uuid
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
+import json
+import logging
+import time
 from typing import Any
+import uuid
 
 # LibP2P imports (install with: pip install py-libp2p)
 try:
@@ -96,9 +96,7 @@ class MeshMessage:
             "type": self.type.value,
             "sender": self.sender,
             "recipient": self.recipient,
-            "payload": (
-                self.payload.hex() if isinstance(self.payload, bytes) else self.payload
-            ),
+            "payload": (self.payload.hex() if isinstance(self.payload, bytes) else self.payload),
             "ttl": self.ttl,
             "timestamp": self.timestamp,
             "hop_count": self.hop_count,
@@ -139,9 +137,7 @@ class MeshConfiguration:
     dht_enabled: bool = True
     mdns_enabled: bool = True
     transports: list[str] = field(default_factory=lambda: ["tcp", "ws"])
-    fallback_transports: list[str] = field(
-        default_factory=lambda: ["bluetooth", "wifi_direct"]
-    )
+    fallback_transports: list[str] = field(default_factory=lambda: ["bluetooth", "wifi_direct"])
 
 
 class LibP2PMeshNetwork:
@@ -158,7 +154,8 @@ class LibP2PMeshNetwork:
             :class:`TypeError`.
         """
         if config is not None and not isinstance(config, MeshConfiguration):
-            raise TypeError("config must be a MeshConfiguration instance or None")
+            msg = "config must be a MeshConfiguration instance or None"
+            raise TypeError(msg)
         self.config = config or MeshConfiguration()
         self.node_id = self.config.node_id or str(uuid.uuid4())
         self.status = NodeStatus.STARTING
@@ -212,13 +209,9 @@ class LibP2PMeshNetwork:
                 if transport == "tcp":
                     transports.append(f"/ip4/0.0.0.0/tcp/{self.config.listen_port}")
                 elif transport == "ws":
-                    transports.append(
-                        f"/ip4/0.0.0.0/tcp/{self.config.listen_port + 1}/ws"
-                    )
+                    transports.append(f"/ip4/0.0.0.0/tcp/{self.config.listen_port + 1}/ws")
 
-            self.host = await new_host(
-                listen_addrs=[Multiaddr(addr) for addr in transports]
-            )
+            self.host = await new_host(listen_addrs=[Multiaddr(addr) for addr in transports])
 
             # Set up Pub/Sub
             gossipsub = GossipSub(
@@ -228,9 +221,7 @@ class LibP2PMeshNetwork:
                 degree_high=12,  # Upper bound for peers
             )
 
-            self.pubsub = Pubsub(
-                host=self.host, router=gossipsub, my_id=self.host.get_id()
-            )
+            self.pubsub = Pubsub(host=self.host, router=gossipsub, my_id=self.host.get_id())
 
             # Subscribe to mesh topic
             await self.pubsub.subscribe(self.config.pubsub_topic)
@@ -298,9 +289,7 @@ class LibP2PMeshNetwork:
         if self.fallback_node:
             await self.fallback_node.stop()
 
-    def register_message_handler(
-        self, message_type: MeshMessageType, handler: Callable[[MeshMessage], None]
-    ) -> None:
+    def register_message_handler(self, message_type: MeshMessageType, handler: Callable[[MeshMessage], None]) -> None:
         """Register handler for specific message type."""
         self.message_handlers[message_type] = handler
         logger.debug(f"Registered handler for {message_type}")
@@ -332,9 +321,7 @@ class LibP2PMeshNetwork:
                 return success
 
             # Try fallback transports if primary sending failed
-            logger.debug(
-                f"Primary send failed for {message.id}, trying fallback transports"
-            )
+            logger.debug(f"Primary send failed for {message.id}, trying fallback transports")
             fallback_success = await self._try_fallback_send(message)
 
             if fallback_success:
@@ -354,9 +341,7 @@ class LibP2PMeshNetwork:
         for peer_id in self.connected_peers:
             if peer_id == message.recipient:
                 try:
-                    stream = await self.host.new_stream(
-                        peer_id, ["/aivillage/mesh/1.0.0"]
-                    )
+                    stream = await self.host.new_stream(peer_id, ["/aivillage/mesh/1.0.0"])
 
                     data = json.dumps(message.to_dict()).encode()
                     await stream.write(data)
@@ -437,9 +422,7 @@ class LibP2PMeshNetwork:
         # Limit queued messages per peer to prevent unbounded growth
         max_stored = 100
         if len(self.pending_messages[peer_id]) > max_stored:
-            self.pending_messages[peer_id] = self.pending_messages[peer_id][
-                -max_stored:
-            ]
+            self.pending_messages[peer_id] = self.pending_messages[peer_id][-max_stored:]
 
     async def _deliver_pending_messages(self, peer_id: str) -> None:
         """Deliver queued messages to a peer that just connected."""
@@ -507,11 +490,7 @@ class LibP2PMeshNetwork:
         handler = self.message_handlers.get(message.type)
         if handler:
             try:
-                (
-                    await handler(message)
-                    if asyncio.iscoroutinefunction(handler)
-                    else handler(message)
-                )
+                (await handler(message) if asyncio.iscoroutinefunction(handler) else handler(message))
             except Exception as e:
                 logger.exception(f"Error in message handler for {message.type}: {e}")
         else:
@@ -553,9 +532,7 @@ class LibP2PMeshNetwork:
                         try:
                             await self.host.connect(provider)
                         except Exception as e:
-                            logger.debug(
-                                f"Failed to connect to DHT peer {provider}: {e}"
-                            )
+                            logger.debug(f"Failed to connect to DHT peer {provider}: {e}")
 
             except Exception as e:
                 logger.debug(f"DHT discovery error: {e}")
@@ -666,9 +643,7 @@ class LibP2PMeshNetwork:
         }
 
         if message.recipient:
-            return await self.fallback_node.send_to_peer(
-                message.recipient, fallback_message
-            )
+            return await self.fallback_node.send_to_peer(message.recipient, fallback_message)
         await self.fallback_node.broadcast_to_peers("MESH_BROADCAST", fallback_message)
         return True
 
@@ -702,8 +677,7 @@ class LibP2PMeshNetwork:
             "libp2p_available": LIBP2P_AVAILABLE,
             "connected_peers": len(self.connected_peers),
             "peer_details": [
-                {"peer_id": peer_id, "capabilities": caps.__dict__}
-                for peer_id, caps in self.connected_peers.items()
+                {"peer_id": peer_id, "capabilities": caps.__dict__} for peer_id, caps in self.connected_peers.items()
             ],
             "routing_table_size": len(self.routing_table),
             "message_cache_size": len(self.message_cache),
@@ -859,9 +833,7 @@ class LibP2PMeshNetwork:
         except Exception as e:
             logger.exception(f"Failed to start fallback transports: {e}")
 
-    async def _handle_fallback_message(
-        self, transport_message: TransportMessage
-    ) -> None:
+    async def _handle_fallback_message(self, transport_message: TransportMessage) -> None:
         """Handle message from fallback transport."""
         try:
             # Convert transport message to mesh message
@@ -902,9 +874,7 @@ class LibP2PMeshNetwork:
 
             # Try preferred transport based on message type
             preferred_transport = self._get_preferred_transport(message.type)
-            success = await self.fallback_manager.send_message(
-                transport_message, preferred_transport
-            )
+            success = await self.fallback_manager.send_message(transport_message, preferred_transport)
 
             if success:
                 logger.debug(f"Message sent via fallback transport: {message.id}")
@@ -915,9 +885,7 @@ class LibP2PMeshNetwork:
 
         return False
 
-    def _get_preferred_transport(
-        self, message_type: MeshMessageType
-    ) -> TransportType | None:
+    def _get_preferred_transport(self, message_type: MeshMessageType) -> TransportType | None:
         """Get preferred transport for message type."""
         # Route different message types through appropriate transports
         transport_preferences = {

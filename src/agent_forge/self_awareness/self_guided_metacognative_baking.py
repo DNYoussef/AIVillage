@@ -31,9 +31,7 @@ class SelfGuidedEvolutionTask(Task):
         self.tokenizer = tokenizer
         self.evaluator = evaluator
 
-    async def evolve_prompt(
-        self, initial_prompt: str, num_generations: int = 5, num_variants: int = 5
-    ) -> str:
+    async def evolve_prompt(self, initial_prompt: str, num_generations: int = 5, num_variants: int = 5) -> str:
         best_prompt = initial_prompt
         best_score = await self.evaluator.evaluate(best_prompt)
 
@@ -46,12 +44,8 @@ class SelfGuidedEvolutionTask(Task):
                 try:
                     score = await self.evaluator.evaluate(variant)
                     coherence_score = await self.evaluate_coherence(variant)
-                    relevance_score = await self.evaluate_relevance(
-                        variant, initial_prompt
-                    )
-                    combined_score = (
-                        0.6 * score + 0.2 * coherence_score + 0.2 * relevance_score
-                    )
+                    relevance_score = await self.evaluate_relevance(variant, initial_prompt)
+                    combined_score = 0.6 * score + 0.2 * coherence_score + 0.2 * relevance_score
                     scores.append(combined_score)
                     logger.info(
                         f"Variant score: {combined_score} (Performance: {score}, Coherence: {coherence_score}, Relevance: {relevance_score})"
@@ -66,21 +60,15 @@ class SelfGuidedEvolutionTask(Task):
                 if scores[best_idx] > best_score:
                     best_prompt = variants[best_idx]
                     best_score = scores[best_idx]
-                    logger.info(
-                        f"New best prompt (score: {best_score}):\n{best_prompt}"
-                    )
+                    logger.info(f"New best prompt (score: {best_score}):\n{best_prompt}")
                 else:
                     logger.info("No improvement in this generation.")
             else:
-                logger.warning(
-                    "All variants failed evaluation. Keeping the previous best prompt."
-                )
+                logger.warning("All variants failed evaluation. Keeping the previous best prompt.")
 
         return best_prompt
 
-    async def generate_prompt_variants(
-        self, base_prompt: str, num_variants: int
-    ) -> list[str]:
+    async def generate_prompt_variants(self, base_prompt: str, num_variants: int) -> list[str]:
         variants = [base_prompt]  # Keep the original prompt
 
         for _ in range(num_variants - 1):
@@ -134,9 +122,7 @@ class SelfGuidedEvolutionTask(Task):
     async def paraphrase_sentence(self, prompt: str) -> str:
         sentences = sent_tokenize(prompt)
         paraphrase_pos = random.randint(0, len(sentences) - 1)
-        sentences[paraphrase_pos] = await self.generate_paraphrase(
-            sentences[paraphrase_pos]
-        )
+        sentences[paraphrase_pos] = await self.generate_paraphrase(sentences[paraphrase_pos])
         return " ".join(sentences)
 
     async def combine_sentences(self, prompt: str) -> str:
@@ -156,9 +142,7 @@ class SelfGuidedEvolutionTask(Task):
         split_pos = random.randint(0, len(sentences) - 1)
         split_sentence = sentences[split_pos].split(", ", 1)
         if len(split_sentence) > 1:
-            sentences = (
-                sentences[:split_pos] + split_sentence + sentences[split_pos + 1 :]
-            )
+            sentences = sentences[:split_pos] + split_sentence + sentences[split_pos + 1 :]
         return " ".join(sentences)
 
     async def generate_new_sentence(self) -> str:
@@ -198,20 +182,14 @@ class SelfGuidedEvolutionTask(Task):
             "Leverage your {concept} to overcome cognitive biases.",
         ]
 
-        return random.choice(templates).format(
-            concept=random.choice(metacognitive_concepts)
-        )
+        return random.choice(templates).format(concept=random.choice(metacognitive_concepts))
 
     async def generate_paraphrase(self, sentence: str) -> str:
-        input_text = (
-            f"Paraphrase the following sentence:\n{sentence}\n\nParaphrased version:"
-        )
+        input_text = f"Paraphrase the following sentence:\n{sentence}\n\nParaphrased version:"
         inputs = self.tokenizer(input_text, return_tensors="pt").to(self.model.device)
 
         with torch.no_grad():
-            outputs = self.model.generate(
-                **inputs, max_length=100, num_return_sequences=1, temperature=0.7
-            )
+            outputs = self.model.generate(**inputs, max_length=100, num_return_sequences=1, temperature=0.7)
 
         paraphrased = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
         return paraphrased.split("Paraphrased version:")[-1].strip()
@@ -221,9 +199,7 @@ class SelfGuidedEvolutionTask(Task):
         inputs = self.tokenizer(input_text, return_tensors="pt").to(self.model.device)
 
         with torch.no_grad():
-            outputs = self.model.generate(
-                **inputs, max_length=300, num_return_sequences=1, temperature=0.8
-            )
+            outputs = self.model.generate(**inputs, max_length=300, num_return_sequences=1, temperature=0.8)
 
         variant = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
         return variant.split("Variation:")[-1].strip()
@@ -243,27 +219,19 @@ class SelfGuidedEvolutionTask(Task):
     async def evaluate_relevance(self, variant: str, original: str) -> float:
         return sentence_bleu([original.split()], variant.split())
 
-    async def run(
-        self, initial_prompt: str, num_generations: int = 5, num_variants: int = 5
-    ):
-        final_prompt = await self.evolve_prompt(
-            initial_prompt, num_generations, num_variants
-        )
+    async def run(self, initial_prompt: str, num_generations: int = 5, num_variants: int = 5):
+        final_prompt = await self.evolve_prompt(initial_prompt, num_generations, num_variants)
         return final_prompt
 
 
 class PromptBakerTask(Task):
-    def __init__(
-        self, agent: ChatAgent, model: AutoModelForCausalLM, tokenizer: AutoTokenizer
-    ) -> None:
+    def __init__(self, agent: ChatAgent, model: AutoModelForCausalLM, tokenizer: AutoTokenizer) -> None:
         super().__init__(agent)
         self.model = model
         self.tokenizer = tokenizer
         self.device = next(model.parameters()).device
 
-    async def bake_prompt(
-        self, prompt: str, num_iterations: int = 1000, lr: float = 1e-4
-    ) -> None:
+    async def bake_prompt(self, prompt: str, num_iterations: int = 1000, lr: float = 1e-4) -> None:
         optimizer = torch.optim.Adam(self.model.parameters(), lr=lr)
 
         for i in range(num_iterations):
@@ -280,16 +248,12 @@ class PromptBakerTask(Task):
                 logger.exception(traceback.format_exc())
                 break
 
-    async def compute_kl_loss(
-        self, prompt: str, num_samples: int = 10, max_length: int = 100
-    ) -> torch.Tensor:
+    async def compute_kl_loss(self, prompt: str, num_samples: int = 10, max_length: int = 100) -> torch.Tensor:
         total_loss = 0
         for _ in range(num_samples):
             inputs = self.tokenizer(prompt, return_tensors="pt").to(self.device)
             with torch.no_grad():
-                outputs_original = self.model(
-                    **inputs, max_length=max_length, do_sample=True
-                )
+                outputs_original = self.model(**inputs, max_length=max_length, do_sample=True)
 
             outputs_baked = self.model(**inputs, max_length=max_length, do_sample=True)
 
@@ -302,29 +266,21 @@ class PromptBakerTask(Task):
 
         return total_loss / num_samples
 
-    async def run(
-        self, prompt: str, num_iterations: int = 1000, lr: float = 1e-4
-    ) -> str:
+    async def run(self, prompt: str, num_iterations: int = 1000, lr: float = 1e-4) -> str:
         await self.bake_prompt(prompt, num_iterations, lr)
         return "Prompt baking completed"
 
 
 class IterativeBakingCycleTask(Task):
-    def __init__(
-        self, agent: ChatAgent, model: AutoModelForCausalLM, tokenizer: AutoTokenizer
-    ) -> None:
+    def __init__(self, agent: ChatAgent, model: AutoModelForCausalLM, tokenizer: AutoTokenizer) -> None:
         super().__init__(agent)
         self.model = model
         self.tokenizer = tokenizer
         self.evaluator = MetacognitiveEvaluatorTask(agent, model, tokenizer)
-        self.evolution = SelfGuidedEvolutionTask(
-            agent, model, tokenizer, self.evaluator
-        )
+        self.evolution = SelfGuidedEvolutionTask(agent, model, tokenizer, self.evaluator)
         self.baker = PromptBakerTask(agent, model, tokenizer)
 
-    async def run(
-        self, initial_prompt: str, num_cycles: int = 3
-    ) -> tuple[AutoModelForCausalLM, str]:
+    async def run(self, initial_prompt: str, num_cycles: int = 3) -> tuple[AutoModelForCausalLM, str]:
         current_prompt = initial_prompt
 
         for cycle in range(num_cycles):
@@ -363,9 +319,7 @@ if __name__ == "__main__":
             llm=OpenAIGPTConfig(chat_model="gpt-3.5-turbo"),
         )
         agent = ChatAgent(config)
-        model = AutoModelForCausalLM.from_pretrained(
-            "gpt2"
-        )  # Replace with your preferred model
+        model = AutoModelForCausalLM.from_pretrained("gpt2")  # Replace with your preferred model
         tokenizer = AutoTokenizer.from_pretrained("gpt2")
         task = IterativeBakingCycleTask(agent, model, tokenizer)
 

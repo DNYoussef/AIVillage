@@ -59,8 +59,7 @@ class TestRAGSystem:
 
         # Calculate similarity (dot product)
         similarities = [
-            sum(q * d for q, d in zip(query_embedding, doc_emb, strict=False))
-            for doc_emb in doc_embeddings
+            sum(q * d for q, d in zip(query_embedding, doc_emb, strict=False)) for doc_emb in doc_embeddings
         ]
 
         # Find most similar

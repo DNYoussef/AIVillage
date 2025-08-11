@@ -66,9 +66,7 @@ class CollaborationManager:
     async def perform_joint_reasoning(self, message: Message) -> None:
         try:
             reasoning_context = message.content.get("reasoning_context")
-            our_reasoning = await self.agent.apply_advanced_reasoning(
-                {"content": reasoning_context}
-            )
+            our_reasoning = await self.agent.apply_advanced_reasoning({"content": reasoning_context})
             response = Message(
                 type=MessageType.JOINT_REASONING_RESULT,
                 sender=self.agent.name,
@@ -80,9 +78,7 @@ class CollaborationManager:
         except Exception as e:
             logger.exception(f"Error performing joint reasoning: {e!s}")
 
-    async def request_collaboration(
-        self, agent_name: str, collaboration_type: str, content: Any
-    ) -> None:
+    async def request_collaboration(self, agent_name: str, collaboration_type: str, content: Any) -> None:
         try:
             request = Message(
                 type=MessageType.COLLABORATION_REQUEST,
@@ -94,9 +90,7 @@ class CollaborationManager:
         except Exception as e:
             logger.exception(f"Error requesting collaboration: {e!s}")
 
-    async def register_collaborating_agent(
-        self, agent_name: str, capabilities: list[str]
-    ) -> None:
+    async def register_collaborating_agent(self, agent_name: str, capabilities: list[str]) -> None:
         self.collaborating_agents[agent_name] = capabilities
 
     async def find_best_agent_for_task(self, task: dict[str, Any]) -> str:

@@ -16,9 +16,7 @@ async def test_full_integration():
     monitor = get_monitor_instance()
     metrics = get_all_metrics()
     print(f"   CPU Usage: {metrics['cpu_percent']:.1f}%")
-    print(
-        f"   Memory: {metrics['memory']['percent']:.1f}% ({metrics['memory']['available_gb']:.1f} GB available)"
-    )
+    print(f"   Memory: {metrics['memory']['percent']:.1f}% ({metrics['memory']['available_gb']:.1f} GB available)")
     print(f"   Can allocate 1GB: {monitor.can_allocate(1.0)}")
 
     # 2. P2P Discovery finds peers
@@ -70,9 +68,7 @@ async def test_full_integration():
         if gate_result == "deny":
             print(f"   [BLOCKED] Dangerous message from {agent_id}")
         else:
-            print(
-                f"   [ALLOWED] Safe message from {agent_id}: {message.get('content', '')}"
-            )
+            print(f"   [ALLOWED] Safe message from {agent_id}: {message.get('content', '')}")
             messages_received.append(message)
 
     comm_server.register_handler("integration_test", secure_message_handler)
@@ -99,9 +95,7 @@ async def test_full_integration():
 
     # 6. Summary
     print("\n=== INTEGRATION TEST SUMMARY ===")
-    print(
-        f"✓ Resource Monitor: Real metrics reported (CPU: {metrics['cpu_percent']:.1f}%)"
-    )
+    print(f"✓ Resource Monitor: Real metrics reported (CPU: {metrics['cpu_percent']:.1f}%)")
     print(f"✓ P2P Discovery: Found {len(peers)} peers")
     print("✓ WebSocket: Connected and encrypted")
     print("✓ Security Gate: Blocked dangerous content")

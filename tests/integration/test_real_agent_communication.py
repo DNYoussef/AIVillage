@@ -253,9 +253,7 @@ class TestRealAgentCommunication:
 
             # Verify connection is established
             assert len(node1.get_connected_peers()) >= 1
-            assert "localhost:9002" in [
-                f"{p['host']}:{p['port']}" for p in node1.get_connected_peers()
-            ]
+            assert "localhost:9002" in [f"{p['host']}:{p['port']}" for p in node1.get_connected_peers()]
 
             # Test message transmission
             test_message = {
@@ -265,9 +263,7 @@ class TestRealAgentCommunication:
                 "sender": node1.node_id,
             }
 
-            send_result = await node1.send_message_to_peer(
-                "localhost", 9002, test_message
-            )
+            send_result = await node1.send_message_to_peer("localhost", 9002, test_message)
             assert send_result["status"] == "sent"
 
             # Wait for message processing
@@ -322,18 +318,13 @@ class TestRealAgentCommunication:
                     self.metrics["tasks_completed"] += 1
                     self.metrics["total_processing_time"] += processing_time
                     self.metrics["average_response_time"] = (
-                        self.metrics["total_processing_time"]
-                        / self.metrics["tasks_completed"]
+                        self.metrics["total_processing_time"] / self.metrics["tasks_completed"]
                     )
                     self.metrics["last_activity"] = time.time()
 
                     # Calculate success rate
-                    total_attempts = (
-                        self.metrics["tasks_completed"] + self.metrics["errors_count"]
-                    )
-                    self.metrics["success_rate"] = (
-                        self.metrics["tasks_completed"] / total_attempts
-                    )
+                    total_attempts = self.metrics["tasks_completed"] + self.metrics["errors_count"]
+                    self.metrics["success_rate"] = self.metrics["tasks_completed"] / total_attempts
 
                     return {
                         "status": "success",
@@ -344,12 +335,8 @@ class TestRealAgentCommunication:
                 except Exception as e:
                     # Update metrics on failure
                     self.metrics["errors_count"] += 1
-                    total_attempts = (
-                        self.metrics["tasks_completed"] + self.metrics["errors_count"]
-                    )
-                    self.metrics["success_rate"] = (
-                        self.metrics["tasks_completed"] / total_attempts
-                    )
+                    total_attempts = self.metrics["tasks_completed"] + self.metrics["errors_count"]
+                    self.metrics["success_rate"] = self.metrics["tasks_completed"] / total_attempts
                     self.metrics["last_activity"] = time.time()
 
                     return {
@@ -397,17 +384,12 @@ class TestRealAgentCommunication:
         # Verify metrics after failure
         assert test_agent.metrics["tasks_completed"] == 5  # Still 5 completed
         assert test_agent.metrics["errors_count"] == 1
-        assert (
-            test_agent.metrics["success_rate"] == 5 / 6
-        )  # 5 successes out of 6 attempts
+        assert test_agent.metrics["success_rate"] == 5 / 6  # 5 successes out of 6 attempts
 
         # Verify response time tracking
         assert len(test_agent.task_times) == 5  # Only successful tasks counted
         assert all(t > 0 for t in test_agent.task_times)
-        assert (
-            test_agent.metrics["average_response_time"]
-            == sum(test_agent.task_times) / 5
-        )
+        assert test_agent.metrics["average_response_time"] == sum(test_agent.task_times) / 5
 
     def test_message_queue_behavior_under_load(self, communication_setup):
         """Test message queue behavior under high load conditions."""
@@ -455,9 +437,7 @@ class TestRealAgentCommunication:
 
         # Verify all messages were processed
         assert len(processed_messages) == num_messages
-        assert (
-            len({msg["message_id"] for msg in processed_messages}) == num_messages
-        )  # No duplicates
+        assert len({msg["message_id"] for msg in processed_messages}) == num_messages  # No duplicates
 
         # Verify processing order (should be FIFO)
         for i, processed in enumerate(processed_messages):
@@ -465,9 +445,7 @@ class TestRealAgentCommunication:
             assert processed["message_id"] == expected_id
 
         # Verify performance constraints
-        avg_processing_time = (
-            sum(msg["processing_time"] for msg in processed_messages) / num_messages
-        )
+        avg_processing_time = sum(msg["processing_time"] for msg in processed_messages) / num_messages
         assert avg_processing_time < 0.01  # Less than 10ms average
         assert total_time < 5.0  # Total processing under 5 seconds
 
@@ -476,9 +454,7 @@ class TestRealAgentCommunication:
         processed_ids = {msg["message_id"] for msg in processed_messages}
         assert original_ids == processed_ids
 
-        print(
-            f"Load test completed: {num_messages} messages processed in {total_time:.3f}s"
-        )
+        print(f"Load test completed: {num_messages} messages processed in {total_time:.3f}s")
         print(f"Average processing time: {avg_processing_time * 1000:.2f}ms")
         print(f"Throughput: {num_messages / total_time:.1f} messages/second")
 
@@ -501,9 +477,7 @@ if __name__ == "__main__":
 
                 # Run individual tests
                 try:
-                    await test_instance.test_agent_message_creation_and_validation(
-                        setup
-                    )
+                    await test_instance.test_agent_message_creation_and_validation(setup)
                     print("✓ Message creation and validation test passed")
                 except Exception as e:
                     print(f"✗ Message test failed: {e}")
@@ -539,6 +513,4 @@ if __name__ == "__main__":
     if len(sys.argv) > 1 and sys.argv[1] == "--manual":
         asyncio.run(run_manual_tests())
     else:
-        print(
-            "Run with --manual flag for manual testing, or use pytest for automated testing"
-        )
+        print("Run with --manual flag for manual testing, or use pytest for automated testing")

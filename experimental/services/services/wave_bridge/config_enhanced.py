@@ -103,10 +103,7 @@ class EnhancedAppConfig:
         self.security_settings = {
             "rate_limit_per_minute": int(os.getenv("RATE_LIMIT_PER_MINUTE", "60")),
             "max_message_length": int(os.getenv("MAX_MESSAGE_LENGTH", "1000")),
-            "enable_request_validation": os.getenv(
-                "ENABLE_REQUEST_VALIDATION", "true"
-            ).lower()
-            == "true",
+            "enable_request_validation": os.getenv("ENABLE_REQUEST_VALIDATION", "true").lower() == "true",
             "allowed_origins": os.getenv("ALLOWED_ORIGINS", "*").split(","),
         }
 
@@ -115,9 +112,7 @@ class EnhancedAppConfig:
             "twilio": {
                 "account_sid": os.getenv("TWILIO_ACCOUNT_SID"),
                 "auth_token": os.getenv("TWILIO_AUTH_TOKEN"),
-                "whatsapp_number": os.getenv(
-                    "TWILIO_WHATSAPP_NUMBER", "whatsapp:+14155238886"
-                ),
+                "whatsapp_number": os.getenv("TWILIO_WHATSAPP_NUMBER", "whatsapp:+14155238886"),
             },
             "anthropic": {
                 "api_key": os.getenv("ANTHROPIC_API_KEY"),
@@ -142,16 +137,12 @@ class EnhancedAppConfig:
             "metrics_port": int(os.getenv("METRICS_PORT", "9090")),
             "health_check_interval": int(os.getenv("HEALTH_CHECK_INTERVAL", "30")),
             "alert_webhook_url": os.getenv("ALERT_WEBHOOK_URL"),
-            "enable_performance_alerts": os.getenv(
-                "ENABLE_PERFORMANCE_ALERTS", "true"
-            ).lower()
-            == "true",
+            "enable_performance_alerts": os.getenv("ENABLE_PERFORMANCE_ALERTS", "true").lower() == "true",
         }
 
         # Caching settings
         self.caching = {
-            "enable_response_cache": os.getenv("ENABLE_RESPONSE_CACHE", "true").lower()
-            == "true",
+            "enable_response_cache": os.getenv("ENABLE_RESPONSE_CACHE", "true").lower() == "true",
             "cache_ttl": int(os.getenv("CACHE_TTL", "300")),  # 5 minutes
             "max_cache_size": int(os.getenv("MAX_CACHE_SIZE", "1000")),
             "cache_backend": os.getenv("CACHE_BACKEND", "memory"),  # memory, redis
@@ -161,32 +152,18 @@ class EnhancedAppConfig:
         """Load configuration from environment variables."""
         # Prompt engineering feature flags
         pe_config = {
-            "enable_enhanced_prompts": os.getenv(
-                "ENABLE_ENHANCED_PROMPTS", "true"
-            ).lower()
-            == "true",
-            "enable_real_time_optimization": os.getenv(
-                "ENABLE_REAL_TIME_OPTIMIZATION", "true"
-            ).lower()
-            == "true",
-            "enable_advanced_ab_testing": os.getenv(
-                "ENABLE_ADVANCED_AB_TESTING", "true"
-            ).lower()
-            == "true",
-            "enable_prompt_baking": os.getenv("ENABLE_PROMPT_BAKING", "true").lower()
-            == "true",
+            "enable_enhanced_prompts": os.getenv("ENABLE_ENHANCED_PROMPTS", "true").lower() == "true",
+            "enable_real_time_optimization": os.getenv("ENABLE_REAL_TIME_OPTIMIZATION", "true").lower() == "true",
+            "enable_advanced_ab_testing": os.getenv("ENABLE_ADVANCED_AB_TESTING", "true").lower() == "true",
+            "enable_prompt_baking": os.getenv("ENABLE_PROMPT_BAKING", "true").lower() == "true",
         }
 
         # Performance thresholds
         pe_config.update(
             {
-                "prompt_optimization_threshold": float(
-                    os.getenv("PROMPT_OPTIMIZATION_THRESHOLD", "0.75")
-                ),
+                "prompt_optimization_threshold": float(os.getenv("PROMPT_OPTIMIZATION_THRESHOLD", "0.75")),
                 "response_time_target": float(os.getenv("RESPONSE_TIME_TARGET", "5.0")),
-                "min_sample_size_ab_test": int(
-                    os.getenv("MIN_SAMPLE_SIZE_AB_TEST", "30")
-                ),
+                "min_sample_size_ab_test": int(os.getenv("MIN_SAMPLE_SIZE_AB_TEST", "30")),
                 "confidence_level": float(os.getenv("CONFIDENCE_LEVEL", "0.95")),
             }
         )
@@ -201,9 +178,7 @@ class EnhancedAppConfig:
         required_apis = ["TWILIO_ACCOUNT_SID", "TWILIO_AUTH_TOKEN"]
         for api_key in required_apis:
             if not os.getenv(api_key):
-                validation_results["errors"].append(
-                    f"Missing required environment variable: {api_key}"
-                )
+                validation_results["errors"].append(f"Missing required environment variable: {api_key}")
                 validation_results["valid"] = False
 
         # Validate AI model API keys (at least one required)
@@ -215,12 +190,8 @@ class EnhancedAppConfig:
             validation_results["valid"] = False
 
         # Validate W&B API key for prompt engineering
-        if self.prompt_engineering.enable_wandb_logging and not os.getenv(
-            "WANDB_API_KEY"
-        ):
-            validation_results["warnings"].append(
-                "WANDB_API_KEY not set - prompt engineering tracking will be limited"
-            )
+        if self.prompt_engineering.enable_wandb_logging and not os.getenv("WANDB_API_KEY"):
+            validation_results["warnings"].append("WANDB_API_KEY not set - prompt engineering tracking will be limited")
 
         # Validate performance thresholds
         if self.prompt_engineering.response_time_target <= 0:
@@ -231,18 +202,14 @@ class EnhancedAppConfig:
             self.prompt_engineering.prompt_optimization_threshold < 0
             or self.prompt_engineering.prompt_optimization_threshold > 1
         ):
-            validation_results["errors"].append(
-                "PROMPT_OPTIMIZATION_THRESHOLD must be between 0 and 1"
-            )
+            validation_results["errors"].append("PROMPT_OPTIMIZATION_THRESHOLD must be between 0 and 1")
             validation_results["valid"] = False
 
         # Validate port settings
         try:
             port = int(os.getenv("PORT", "8000"))
             if port < 1024 or port > 65535:
-                validation_results["warnings"].append(
-                    f"Port {port} may require special permissions"
-                )
+                validation_results["warnings"].append(f"Port {port} may require special permissions")
         except ValueError:
             validation_results["errors"].append("PORT must be a valid integer")
             validation_results["valid"] = False
@@ -273,11 +240,7 @@ class EnhancedAppConfig:
             "security_settings": self.security_settings,
             "external_apis": {
                 # Exclude sensitive keys
-                api_name: {
-                    k: v
-                    for k, v in api_config.items()
-                    if "key" not in k.lower() and "token" not in k.lower()
-                }
+                api_name: {k: v for k, v in api_config.items() if "key" not in k.lower() and "token" not in k.lower()}
                 for api_name, api_config in self.external_apis.items()
             },
             "prompt_engineering": {
@@ -302,9 +265,7 @@ validation = config.validate_config()
 if not validation["valid"]:
     import warnings
 
-    warnings.warn(
-        f"Configuration validation failed: {validation['errors']}", stacklevel=2
-    )
+    warnings.warn(f"Configuration validation failed: {validation['errors']}", stacklevel=2)
 
 if validation["warnings"]:
     import warnings

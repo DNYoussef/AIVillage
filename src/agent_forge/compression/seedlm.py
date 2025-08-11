@@ -113,9 +113,7 @@ class SEEDLMCompressor:
         flat = np.concatenate(blocks)
         if compressed["pad_length"]:
             flat = flat[: -compressed["pad_length"]]
-        return torch.tensor(flat, dtype=torch.float32).reshape(
-            compressed["original_shape"]
-        )
+        return torch.tensor(flat, dtype=torch.float32).reshape(compressed["original_shape"])
 
 
 def compress(weights: torch.Tensor) -> dict[str, object]:

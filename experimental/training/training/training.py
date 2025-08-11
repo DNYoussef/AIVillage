@@ -36,9 +36,7 @@ class CodingTask(ToolMessage):
 
 
 class CodeState:
-    def __init__(
-        self, task: CodingTask, code: str = "", thoughts: str = "", response: str = ""
-    ) -> None:
+    def __init__(self, task: CodingTask, code: str = "", thoughts: str = "", response: str = "") -> None:
         self.task = task
         self.code = code
         self.thoughts = thoughts
@@ -69,12 +67,8 @@ class EnhancedMagiAgent(ChatAgent):
 
     async def coding_task(self, task: CodingTask) -> tuple[str, str, str]:
         thoughts = await self.generate_thoughts(task)
-        response = await self.llm_response(
-            f"Explain your approach to solving this task: {task.task_description}"
-        )
-        code = await self.llm_response(
-            f"Write code to solve this task: {task.task_description}"
-        )
+        response = await self.llm_response(f"Explain your approach to solving this task: {task.task_description}")
+        code = await self.llm_response(f"Write code to solve this task: {task.task_description}")
         return thoughts, response.content, code.content
 
     async def generate_thoughts(self, task: CodingTask) -> str:
@@ -163,9 +157,7 @@ class EnhancedSupervisorAgent(ChatAgent):
         )
 
     async def grade_mcts_state(self, state: CodeState) -> tuple[int, int, int, bool]:
-        return await self.grade_attempt(
-            state.task, state.thoughts, state.response, state.code
-        )
+        return await self.grade_attempt(state.task, state.thoughts, state.response, state.code)
 
     def determine_competence_level(self, results: list[tuple[CodingTask, bool]]) -> int:
         sorted_results = sorted(results, key=lambda x: x[0].difficulty)
@@ -190,9 +182,7 @@ class EnhancedSupervisorAgent(ChatAgent):
             )
 
         for _ in range(500):
-            difficulty = random.randint(
-                competence_level + 1, min(100, competence_level + 20)
-            )
+            difficulty = random.randint(competence_level + 1, min(100, competence_level + 20))
             prompt = f"Create a coding task with difficulty {difficulty}/100. Include description and expected result."
             response = await self.llm_response(prompt)
             description, expected_result = response.content.split("\nExpected Result:")
@@ -232,13 +222,9 @@ class EnhancedSupervisorAgent(ChatAgent):
 
     async def analyze_reasoning(self, thoughts: str) -> float:
         strategies_used = sum(
-            1
-            for strategy in EnhancedMagiAgent(self.config).cognitive_strategies
-            if f"<{strategy}>" in thoughts
+            1 for strategy in EnhancedMagiAgent(self.config).cognitive_strategies if f"<{strategy}>" in thoughts
         )
-        return strategies_used / len(
-            EnhancedMagiAgent(self.config).cognitive_strategies
-        )
+        return strategies_used / len(EnhancedMagiAgent(self.config).cognitive_strategies)
 
     async def score_output(self, code: str, expected_result: str) -> float:
         response = await self.llm_response(
@@ -302,9 +288,7 @@ class CodePreferenceModel(nn.Module):
 
 
 class DPOTrainer:
-    def __init__(
-        self, model: CodePreferenceModel, learning_rate: float = 1e-4, beta: float = 0.1
-    ) -> None:
+    def __init__(self, model: CodePreferenceModel, learning_rate: float = 1e-4, beta: float = 0.1) -> None:
         self.model = model
         self.optimizer = optim.Adam(model.parameters(), lr=learning_rate)
         self.beta = beta
@@ -315,9 +299,7 @@ class DPOTrainer:
         preferred_score = self.model(preferred)
         non_preferred_score = self.model(non_preferred)
 
-        loss = -torch.log(
-            torch.sigmoid(self.beta * (preferred_score - non_preferred_score))
-        ).mean()
+        loss = -torch.log(torch.sigmoid(self.beta * (preferred_score - non_preferred_score))).mean()
 
         loss.backward()
 
@@ -348,12 +330,8 @@ class HyperparameterOptimizationTask(Task):
         }
         self.performance_history = []
 
-    async def suggest_hyperparameters(
-        self, performance_metric: float, grok_detected: bool
-    ) -> dict[str, Any]:
-        self.performance_history.append(
-            (self.current_hyperparameters.copy(), performance_metric, grok_detected)
-        )
+    async def suggest_hyperparameters(self, performance_metric: float, grok_detected: bool) -> dict[str, Any]:
+        self.performance_history.append((self.current_hyperparameters.copy(), performance_metric, grok_detected))
 
         prompt = f"""
         Current hyperparameters:
@@ -385,9 +363,7 @@ class HyperparameterOptimizationTask(Task):
                 key = key.strip()
                 if key in self.current_hyperparameters:
                     try:
-                        suggested_hyperparameters[key] = type(
-                            self.current_hyperparameters[key]
-                        )(value.strip())
+                        suggested_hyperparameters[key] = type(self.current_hyperparameters[key])(value.strip())
                     except ValueError:
                         print(f"Failed to parse suggested value for {key}: {value}")
 
@@ -495,9 +471,7 @@ def uct_select_child(node: MCTSNode, exploration_weight: float = 1.0) -> MCTSNod
     def uct_value(n):
         if n.visits == 0:
             return float("inf")
-        return n.value / n.visits + exploration_weight * np.sqrt(
-            np.log(node.visits) / n.visits
-        )
+        return n.value / n.visits + exploration_weight * np.sqrt(np.log(node.visits) / n.visits)
 
     return max(node.children, key=uct_value)
 
@@ -508,11 +482,7 @@ async def expand(node: MCTSNode, magi_agent: EnhancedMagiAgent) -> MCTSNode:
         node.state.task,
         code=node.state.code + new_action if node.state.response else node.state.code,
         thoughts=new_action if not node.state.thoughts else node.state.thoughts,
-        response=(
-            new_action
-            if node.state.thoughts and not node.state.response
-            else node.state.response
-        ),
+        response=(new_action if node.state.thoughts and not node.state.response else node.state.response),
     )
     child = MCTSNode(new_state, parent=node)
     node.children.append(child)
@@ -568,9 +538,7 @@ async def mcts_code_generation(
             node = await expand(node, magi_agent)
 
         # Simulation
-        reward = await simulate(
-            node, supervisor_agent, ai_feedback_task, ai_feedback_weight
-        )
+        reward = await simulate(node, supervisor_agent, ai_feedback_task, ai_feedback_weight)
 
         # Backpropagation
         backpropagate(node, reward)
@@ -589,9 +557,7 @@ async def mcts_code_generation(
         )
 
     # Return the best child's state
-    best_child = max(
-        root.children, key=lambda c: c.value / c.visits if c.visits > 0 else 0
-    )
+    best_child = max(root.children, key=lambda c: c.value / c.visits if c.visits > 0 else 0)
     return best_child.state
 
 
@@ -802,25 +768,19 @@ class TrainingTask(Task):
             if patience_counter >= patience:
                 if not overfitting_detected:
                     print("Overfitting detected. Activating GrokFast.")
-                    grokfast_task = GrokFastTask(
-                        self.agent, dpo_model, method="EMA", lamb=2.0, alpha=0.98
-                    )
+                    grokfast_task = GrokFastTask(self.agent, dpo_model, method="EMA", lamb=2.0, alpha=0.98)
                     overfitting_detected = True
                     grokfast_activated = True
                     patience_counter = 0  # Reset patience counter
                 elif grokfast_activated:
                     # Check for the "second spike" indicating groking
                     if val_performance > best_val_performance * (1 + grok_threshold):
-                        print(
-                            "Groking detected! Significant performance improvement observed."
-                        )
+                        print("Groking detected! Significant performance improvement observed.")
                         best_val_performance = val_performance
                         patience_counter = 0  # Reset patience counter
                         grok_detected = True
                     else:
-                        print(
-                            "No significant improvement. Continuing training with GrokFast."
-                        )
+                        print("No significant improvement. Continuing training with GrokFast.")
                 else:
                     print("Training complete. No groking observed.")
                     break
@@ -842,9 +802,7 @@ class TrainingTask(Task):
         quiet_model: QuietSTaRModel | None = None,
         tokenizer: AutoTokenizer | None = None,
     ) -> float:
-        validation_tasks = await supervisor_agent.create_training_tasks(
-            50
-        )  # Create 50 validation tasks
+        validation_tasks = await supervisor_agent.create_training_tasks(50)  # Create 50 validation tasks
         total_reward = 0
 
         for task in validation_tasks:
@@ -860,9 +818,7 @@ class TrainingTask(Task):
                 ai_feedback_weight=hyperparameters["ai_feedback_weight"],
                 trajectory=trajectory,
             )
-            reward = await supervisor_agent.compute_reward(
-                final_state.thoughts, final_state.code, task
-            )
+            reward = await supervisor_agent.compute_reward(final_state.thoughts, final_state.code, task)
             total_reward += reward
 
         return total_reward / len(validation_tasks)
@@ -910,10 +866,8 @@ class OptimizationTask(Task):
                 best_hyperparameters = hyperparameters.copy()
 
             # Suggest new hyperparameters based on performance and grok occurrence
-            new_hyperparameters = (
-                await hyperparameter_optimization_task.suggest_hyperparameters(
-                    performance_metric, grok_detected
-                )
+            new_hyperparameters = await hyperparameter_optimization_task.suggest_hyperparameters(
+                performance_metric, grok_detected
             )
 
             print(f"New suggested hyperparameters: {new_hyperparameters}")
@@ -956,9 +910,7 @@ async def main() -> None:
     supervisor_agent = EnhancedSupervisorAgent(supervisor_config)
 
     optimization_task = OptimizationTask(magi_agent)
-    training_config = TrainingConfig(
-        enable_quiet_star=os.environ.get("ENABLE_QUIET_STAR") == "1"
-    )
+    training_config = TrainingConfig(enable_quiet_star=os.environ.get("ENABLE_QUIET_STAR") == "1")
     (
         best_hyperparameters,
         grok_detected,

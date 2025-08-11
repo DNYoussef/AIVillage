@@ -11,9 +11,7 @@ logger = logging.getLogger(__name__)
 class RAGSystemError(Exception):
     """Base exception class for RAG system errors."""
 
-    def __init__(
-        self, message: str, error_code: str, details: dict[str, Any] | None = None
-    ) -> None:
+    def __init__(self, message: str, error_code: str, details: dict[str, Any] | None = None) -> None:
         self.message = message
         self.error_code = error_code
         self.details = details or {}
@@ -64,9 +62,7 @@ def error_handler(func: Callable):
                 "UNEXPECTED_ERROR",
                 {"original_error": str(e), "error_type": type(e).__name__},
             )
-            log_error(
-                error, {"function": func.__name__, "args": args, "kwargs": kwargs}
-            )
+            log_error(error, {"function": func.__name__, "args": args, "kwargs": kwargs})
             raise error
 
     return wrapper
@@ -94,22 +90,16 @@ class ErrorHandler:
         }
 
     @staticmethod
-    def raise_input_error(
-        message: str, details: dict[str, Any] | None = None
-    ) -> NoReturn:
+    def raise_input_error(message: str, details: dict[str, Any] | None = None) -> NoReturn:
         """Raise an InputError with the given message and details."""
         raise InputError(message, "INPUT_ERROR", details)
 
     @staticmethod
-    def raise_processing_error(
-        message: str, details: dict[str, Any] | None = None
-    ) -> NoReturn:
+    def raise_processing_error(message: str, details: dict[str, Any] | None = None) -> NoReturn:
         """Raise a ProcessingError with the given message and details."""
         raise ProcessingError(message, "PROCESSING_ERROR", details)
 
     @staticmethod
-    def raise_output_error(
-        message: str, details: dict[str, Any] | None = None
-    ) -> NoReturn:
+    def raise_output_error(message: str, details: dict[str, Any] | None = None) -> NoReturn:
         """Raise an OutputError with the given message and details."""
         raise OutputError(message, "OUTPUT_ERROR", details)

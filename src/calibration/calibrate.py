@@ -9,9 +9,7 @@ if TYPE_CHECKING:
     from .dataset import CalibrationDataset
 
 
-def expected_calibration_error(
-    scores: list[float], labels: list[int], n_bins: int = 10
-) -> float:
+def expected_calibration_error(scores: list[float], labels: list[int], n_bins: int = 10) -> float:
     bin_size = 1.0 / n_bins
     total = 0.0
     for b in range(n_bins):

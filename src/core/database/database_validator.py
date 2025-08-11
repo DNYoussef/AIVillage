@@ -50,7 +50,7 @@ class PerformanceMetrics:
 class DatabaseValidator:
     """Comprehensive database validation and performance testing."""
 
-    def __init__(self, database_manager, redis_manager=None):
+    def __init__(self, database_manager, redis_manager=None) -> None:
         self.database_manager = database_manager
         self.redis_manager = redis_manager
         self.results: list[ValidationResult] = []
@@ -81,7 +81,7 @@ class DatabaseValidator:
         logger.info(f"Database validation completed in {total_duration:.2f}ms")
         return summary
 
-    async def _validate_database(self, database: str):
+    async def _validate_database(self, database: str) -> None:
         """Validate a single SQLite database."""
         logger.info(f"Validating database: {database}")
 
@@ -103,7 +103,7 @@ class DatabaseValidator:
         # Validate data consistency
         await self._validate_data_consistency(database)
 
-    async def _test_database_connection(self, database: str):
+    async def _test_database_connection(self, database: str) -> None:
         """Test database connection and basic queries."""
         start_time = time.time()
 
@@ -146,7 +146,7 @@ class DatabaseValidator:
                 )
             )
 
-    async def _validate_schema_integrity(self, database: str):
+    async def _validate_schema_integrity(self, database: str) -> None:
         """Validate database schema integrity."""
         start_time = time.time()
 
@@ -187,7 +187,7 @@ class DatabaseValidator:
                 WHERE type='table' AND name NOT LIKE 'sqlite_%'
                 """
                 )
-                actual_tables = set(row[0] for row in cursor.fetchall())
+                actual_tables = {row[0] for row in cursor.fetchall()}
 
                 missing_tables = expected_tables - actual_tables
                 extra_tables = actual_tables - expected_tables
@@ -258,7 +258,7 @@ class DatabaseValidator:
         }
         return table_map.get(database, set())
 
-    async def _test_basic_operations(self, database: str):
+    async def _test_basic_operations(self, database: str) -> None:
         """Test basic CRUD operations."""
         start_time = time.time()
 
@@ -269,7 +269,7 @@ class DatabaseValidator:
                 # Test operations based on database type
                 if database == "evolution_metrics":
                     # Test evolution round creation
-                    test_round_id = f"test_round_{int(time.time())}"
+                    f"test_round_{int(time.time())}"
                     cursor.execute(
                         """
                     INSERT INTO evolution_rounds (start_time, status, agent_count)
@@ -300,12 +300,8 @@ class DatabaseValidator:
                     count = cursor.fetchone()[0]
 
                     # Cleanup test data
-                    cursor.execute(
-                        "DELETE FROM fitness_metrics WHERE round_id = ?", (round_id,)
-                    )
-                    cursor.execute(
-                        "DELETE FROM evolution_rounds WHERE id = ?", (round_id,)
-                    )
+                    cursor.execute("DELETE FROM fitness_metrics WHERE round_id = ?", (round_id,))
+                    cursor.execute("DELETE FROM evolution_rounds WHERE id = ?", (round_id,))
 
                     conn.commit()
 
@@ -341,9 +337,7 @@ class DatabaseValidator:
                     conn.commit()
 
                     passed = result and result[0] == "Test Student"
-                    message = (
-                        f"CRUD operations successful, profile test passed: {passed}"
-                    )
+                    message = f"CRUD operations successful, profile test passed: {passed}"
 
                 elif database == "rag_index":
                     # Test document creation
@@ -367,15 +361,11 @@ class DatabaseValidator:
                     result = cursor.fetchone()
 
                     # Cleanup
-                    cursor.execute(
-                        "DELETE FROM documents WHERE document_id = ?", (test_doc_id,)
-                    )
+                    cursor.execute("DELETE FROM documents WHERE document_id = ?", (test_doc_id,))
                     conn.commit()
 
                     passed = result and result[0] == "Test Document"
-                    message = (
-                        f"CRUD operations successful, document test passed: {passed}"
-                    )
+                    message = f"CRUD operations successful, document test passed: {passed}"
 
                 else:
                     passed = True
@@ -408,7 +398,7 @@ class DatabaseValidator:
                 )
             )
 
-    async def _benchmark_database_performance(self, database: str):
+    async def _benchmark_database_performance(self, database: str) -> None:
         """Benchmark database performance."""
         start_time = time.time()
 
@@ -565,7 +555,7 @@ class DatabaseValidator:
         }
         return cleanup_map.get(database)
 
-    async def _analyze_database_optimization(self, database: str):
+    async def _analyze_database_optimization(self, database: str) -> None:
         """Analyze database optimization opportunities."""
         start_time = time.time()
 
@@ -615,9 +605,7 @@ class DatabaseValidator:
 
                 total_rows = sum(table_stats.values())
                 if total_rows > 10000 and len(indexes) < 3:
-                    recommendations.append(
-                        "Consider adding more indexes for better query performance"
-                    )
+                    recommendations.append("Consider adding more indexes for better query performance")
 
                 self.results.append(
                     ValidationResult(
@@ -651,7 +639,7 @@ class DatabaseValidator:
                 )
             )
 
-    async def _validate_data_consistency(self, database: str):
+    async def _validate_data_consistency(self, database: str) -> None:
         """Validate data consistency and referential integrity."""
         start_time = time.time()
 
@@ -677,9 +665,7 @@ class DatabaseValidator:
                     )
                     orphaned_metrics = cursor.fetchone()[0]
                     if orphaned_metrics > 0:
-                        consistency_issues.append(
-                            f"{orphaned_metrics} orphaned fitness metrics"
-                        )
+                        consistency_issues.append(f"{orphaned_metrics} orphaned fitness metrics")
 
                 elif database == "digital_twin":
                     # Check that all learning_sessions have valid student_ids
@@ -692,9 +678,7 @@ class DatabaseValidator:
                     )
                     orphaned_sessions = cursor.fetchone()[0]
                     if orphaned_sessions > 0:
-                        consistency_issues.append(
-                            f"{orphaned_sessions} orphaned learning sessions"
-                        )
+                        consistency_issues.append(f"{orphaned_sessions} orphaned learning sessions")
 
                 elif database == "rag_index":
                     # Check that all chunks have valid document_ids
@@ -742,7 +726,7 @@ class DatabaseValidator:
                 )
             )
 
-    async def _validate_redis_connections(self):
+    async def _validate_redis_connections(self) -> None:
         """Validate Redis connections and fallback systems."""
         start_time = time.time()
 
@@ -828,7 +812,7 @@ class DatabaseValidator:
             "failed_tests": sum(1 for r in self.results if not r.passed),
             "warnings": sum(1 for r in self.results if r.severity == "warning"),
             "errors": sum(1 for r in self.results if r.severity == "error"),
-            "databases_tested": len(set(r.database for r in self.results)),
+            "databases_tested": len({r.database for r in self.results}),
             "performance_metrics_count": len(self.performance_metrics),
             "results": [],
             "performance_metrics": [],
@@ -867,31 +851,21 @@ class DatabaseValidator:
         # Check for slow operations
         slow_operations = [m for m in self.performance_metrics if m.duration_ms > 1000]
         if slow_operations:
-            recommendations.append(
-                f"Found {len(slow_operations)} slow operations (>1s) - consider optimization"
-            )
+            recommendations.append(f"Found {len(slow_operations)} slow operations (>1s) - consider optimization")
 
         # Check for failed tests
-        failed_critical = [
-            r for r in self.results if not r.passed and r.severity == "error"
-        ]
+        failed_critical = [r for r in self.results if not r.passed and r.severity == "error"]
         if failed_critical:
-            recommendations.append(
-                f"{len(failed_critical)} critical tests failed - immediate attention required"
-            )
+            recommendations.append(f"{len(failed_critical)} critical tests failed - immediate attention required")
 
         # Check database sizes
         large_dbs = [
             r
             for r in self.results
-            if r.test_name == "optimization_analysis"
-            and r.value
-            and r.value.get("size_mb", 0) > 100
+            if r.test_name == "optimization_analysis" and r.value and r.value.get("size_mb", 0) > 100
         ]
         if large_dbs:
-            recommendations.append(
-                "Large databases detected - consider maintenance and optimization"
-            )
+            recommendations.append("Large databases detected - consider maintenance and optimization")
 
         summary["recommendations"] = recommendations
 
@@ -906,21 +880,13 @@ class DatabaseValidator:
         summary["health_status"] = (
             "excellent"
             if health_score >= 95
-            else (
-                "good"
-                if health_score >= 85
-                else "fair"
-                if health_score >= 70
-                else "poor"
-            )
+            else ("good" if health_score >= 85 else "fair" if health_score >= 70 else "poor")
         )
 
         return summary
 
 
-async def validate_aivillage_databases(
-    database_manager, redis_manager=None
-) -> dict[str, Any]:
+async def validate_aivillage_databases(database_manager, redis_manager=None) -> dict[str, Any]:
     """Run comprehensive validation on AIVillage databases."""
     validator = DatabaseValidator(database_manager, redis_manager)
     return await validator.validate_all_databases()
@@ -928,7 +894,7 @@ async def validate_aivillage_databases(
 
 if __name__ == "__main__":
 
-    async def main():
+    async def main() -> None:
         """Test database validation."""
         from database_manager import initialize_databases
         from redis_manager import initialize_redis
@@ -942,9 +908,7 @@ if __name__ == "__main__":
 
         # Print summary
         print("Database Validation Results")
-        print(
-            f"Health Score: {results['health_score']}/100 ({results['health_status']})"
-        )
+        print(f"Health Score: {results['health_score']}/100 ({results['health_status']})")
         print(f"Tests: {results['passed_tests']}/{results['total_tests']} passed")
         print(f"Duration: {results['total_duration_ms']:.2f}ms")
 

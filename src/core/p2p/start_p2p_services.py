@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Start P2P networking services"""
+"""Start P2P networking services."""
 
 import json
 import logging
@@ -13,14 +13,14 @@ logger = logging.getLogger(__name__)
 
 
 class P2PServer:
-    """Simple P2P server implementation"""
+    """Simple P2P server implementation."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.peers = []
         self.running = False
 
-    def start_tcp_server(self, host="0.0.0.0", port=4001):
-        """Start TCP server for P2P communication"""
+    def start_tcp_server(self, host="0.0.0.0", port=4001) -> None:
+        """Start TCP server for P2P communication."""
         try:
             server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -37,21 +37,19 @@ class P2PServer:
                     logger.info(f"New peer connected from {addr}")
 
                     # Handle peer in thread
-                    threading.Thread(
-                        target=self.handle_peer, args=(client, addr)
-                    ).start()
+                    threading.Thread(target=self.handle_peer, args=(client, addr)).start()
                 except TimeoutError:
                     continue
                 except Exception as e:
-                    logger.error(f"Server error: {e}")
+                    logger.exception(f"Server error: {e}")
 
             server.close()
 
         except Exception as e:
-            logger.error(f"Failed to start TCP server: {e}")
+            logger.exception(f"Failed to start TCP server: {e}")
 
-    def handle_peer(self, client, addr):
-        """Handle peer connection"""
+    def handle_peer(self, client, addr) -> None:
+        """Handle peer connection."""
         try:
             # Send welcome message
             welcome = json.dumps({"type": "welcome", "peer_id": str(addr)})
@@ -76,10 +74,10 @@ class P2PServer:
             logger.info(f"Peer {addr} disconnected")
 
         except Exception as e:
-            logger.error(f"Error handling peer {addr}: {e}")
+            logger.exception(f"Error handling peer {addr}: {e}")
 
-    def start_websocket_server(self, host="0.0.0.0", port=4002):
-        """Start WebSocket server"""
+    def start_websocket_server(self, host="0.0.0.0", port=4002) -> None:
+        """Start WebSocket server."""
         # Simple WebSocket-like server using TCP for now
         try:
             server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -106,16 +104,16 @@ class P2PServer:
             server.close()
 
         except Exception as e:
-            logger.error(f"Failed to start WebSocket server: {e}")
+            logger.exception(f"Failed to start WebSocket server: {e}")
 
-    def start_mdns_service(self):
-        """Start mDNS service announcement"""
+    def start_mdns_service(self) -> None:
+        """Start mDNS service announcement."""
         logger.info("mDNS service started (mock implementation)")
         # Real mDNS would use python-zeroconf or similar
 
 
-def main():
-    """Main entry point"""
+def main() -> None:
+    """Main entry point."""
     print("Starting P2P networking services...")
 
     server = P2PServer()

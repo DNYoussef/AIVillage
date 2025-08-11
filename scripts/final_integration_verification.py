@@ -59,7 +59,7 @@ REQUIRED_ENV_VARS = {
 class FinalIntegrationVerifier:
     """Completes CODEX integration verification."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.verification_results = {}
         self.health_checks = {}
 
@@ -211,9 +211,7 @@ class FinalIntegrationVerifier:
             "details": f"Adapter {'exists' if adapter_file.exists() else 'missing'}",
         }
 
-        passed = sum(
-            1 for r in test_results.values() if r["status"] in ["pass", "partial"]
-        )
+        passed = sum(1 for r in test_results.values() if r["status"] in ["pass", "partial"])
 
         return {
             "category": "integration_test_suite",
@@ -323,7 +321,6 @@ class FinalIntegrationVerifier:
 
     def _check_environment_variables(self) -> dict[str, Any]:
         """Check CODEX environment variables."""
-        missing_vars = []
         set_vars = {}
 
         for var, default_val in REQUIRED_ENV_VARS.items():
@@ -337,9 +334,7 @@ class FinalIntegrationVerifier:
         return {
             "status": "pass",  # All have defaults
             "variables": set_vars,
-            "using_defaults": len(
-                [v for v in REQUIRED_ENV_VARS if v not in os.environ]
-            ),
+            "using_defaults": len([v for v in REQUIRED_ENV_VARS if v not in os.environ]),
         }
 
     def _check_port_availability(self) -> dict[str, Any]:
@@ -432,19 +427,12 @@ class FinalIntegrationVerifier:
                 config = json.load(f)
 
             # Check configuration values
-            model_correct = (
-                config.get("embedder", {}).get("model_name")
-                == "paraphrase-MiniLM-L3-v2"
-            )
+            model_correct = config.get("embedder", {}).get("model_name") == "paraphrase-MiniLM-L3-v2"
             dims_correct = config.get("embedder", {}).get("vector_dimension") == 384
             cache_enabled = config.get("cache", {}).get("enabled", False)
 
             return {
-                "status": (
-                    "pass"
-                    if all([model_correct, dims_correct, cache_enabled])
-                    else "partial"
-                ),
+                "status": ("pass" if all([model_correct, dims_correct, cache_enabled]) else "partial"),
                 "config": config,
                 "model_correct": model_correct,
                 "dims_correct": dims_correct,
@@ -470,11 +458,7 @@ class FinalIntegrationVerifier:
             max_peers = config.get("mesh", {}).get("max_peers", 0) == 50
 
             return {
-                "status": (
-                    "pass"
-                    if all([port_correct, mdns_enabled, max_peers])
-                    else "partial"
-                ),
+                "status": ("pass" if all([port_correct, mdns_enabled, max_peers]) else "partial"),
                 "config": config,
                 "port_correct": port_correct,
                 "mdns_enabled": mdns_enabled,
@@ -649,9 +633,7 @@ class FinalIntegrationVerifier:
                     artifacts[report_file.stem] = {
                         "path": str(report_file),
                         "size": report_file.stat().st_size,
-                        "modified": datetime.fromtimestamp(
-                            report_file.stat().st_mtime
-                        ).isoformat(),
+                        "modified": datetime.fromtimestamp(report_file.stat().st_mtime).isoformat(),
                     }
 
         # Check for key integration files
@@ -674,7 +656,7 @@ class FinalIntegrationVerifier:
         return artifacts
 
 
-def main():
+def main() -> None:
     """Main verification function."""
     verifier = FinalIntegrationVerifier()
     report = verifier.generate_final_integration_report()
@@ -697,16 +679,8 @@ def main():
 
     print("\nVerification Categories:")
     for category, results in report["verification_categories"].items():
-        status_icon = (
-            "✓"
-            if results["success_rate"] >= 0.8
-            else "⚠"
-            if results["success_rate"] >= 0.5
-            else "✗"
-        )
-        print(
-            f"  {status_icon} {category}: {results['passed']}/{results['total']} ({results['success_rate']:.1%})"
-        )
+        status_icon = "✓" if results["success_rate"] >= 0.8 else "⚠" if results["success_rate"] >= 0.5 else "✗"
+        print(f"  {status_icon} {category}: {results['passed']}/{results['total']} ({results['success_rate']:.1%})")
 
     print(f"\nMigration Artifacts: {len(report['migration_artifacts'])} files created")
     print(f"Final Report: {report_path}")

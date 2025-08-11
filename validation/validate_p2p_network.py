@@ -3,11 +3,10 @@
 Tests mesh networking, LibP2P integration, peer discovery, and message passing.
 """
 
-import asyncio
 import logging
+from pathlib import Path
 import sys
 import time
-from pathlib import Path
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
@@ -22,16 +21,14 @@ except ImportError as e:
     print(f"Warning: Could not import P2P components: {e}")
     MeshNetwork = None
 
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
 class P2PNetworkValidator:
     """Validates P2P Network component functionality."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.results = {
             "mesh_network": {"status": "pending", "time": 0, "details": ""},
             "libp2p_integration": {"status": "pending", "time": 0, "details": ""},
@@ -39,7 +36,7 @@ class P2PNetworkValidator:
             "message_passing": {"status": "pending", "time": 0, "details": ""},
         }
 
-    def test_mesh_network(self):
+    def test_mesh_network(self) -> None:
         """Test mesh network wrapper functionality."""
         logger.info("Testing Mesh Network...")
         start_time = time.time()
@@ -82,10 +79,10 @@ class P2PNetworkValidator:
             self.results["mesh_network"] = {
                 "status": "failed",
                 "time": time.time() - start_time,
-                "details": f"Error: {str(e)}",
+                "details": f"Error: {e!s}",
             }
 
-    def test_libp2p_integration(self):
+    def test_libp2p_integration(self) -> None:
         """Test LibP2P mesh network integration."""
         logger.info("Testing LibP2P Integration...")
         start_time = time.time()
@@ -118,10 +115,10 @@ class P2PNetworkValidator:
             self.results["libp2p_integration"] = {
                 "status": "failed",
                 "time": time.time() - start_time,
-                "details": f"Error: {str(e)}",
+                "details": f"Error: {e!s}",
             }
 
-    def test_peer_discovery(self):
+    def test_peer_discovery(self) -> None:
         """Test peer discovery mechanisms."""
         logger.info("Testing Peer Discovery...")
         start_time = time.time()
@@ -151,10 +148,10 @@ class P2PNetworkValidator:
             self.results["peer_discovery"] = {
                 "status": "failed",
                 "time": time.time() - start_time,
-                "details": f"Error: {str(e)}",
+                "details": f"Error: {e!s}",
             }
 
-    def test_message_passing(self):
+    def test_message_passing(self) -> None:
         """Test message passing and transport fallbacks."""
         logger.info("Testing Message Passing...")
         start_time = time.time()
@@ -170,11 +167,9 @@ class P2PNetworkValidator:
 
             transport_manager = FallbackTransportManager(transport_config)
 
-            if hasattr(transport_manager, "send_message") and hasattr(
-                transport_manager, "get_available_transports"
-            ):
+            if hasattr(transport_manager, "send_message") and hasattr(transport_manager, "get_available_transports"):
                 # Test message structure
-                test_message = {
+                {
                     "message_id": "test_msg_001",
                     "message_type": "DATA_MESSAGE",
                     "content": {"test": "validation message"},
@@ -202,7 +197,7 @@ class P2PNetworkValidator:
             self.results["message_passing"] = {
                 "status": "failed",
                 "time": time.time() - start_time,
-                "details": f"Error: {str(e)}",
+                "details": f"Error: {e!s}",
             }
 
     def run_validation(self):
@@ -217,12 +212,8 @@ class P2PNetworkValidator:
 
         # Calculate results
         total_tests = len(self.results)
-        successful_tests = sum(
-            1 for r in self.results.values() if r["status"] == "success"
-        )
-        partial_tests = sum(
-            1 for r in self.results.values() if r["status"] == "partial"
-        )
+        successful_tests = sum(1 for r in self.results.values() if r["status"] == "success")
+        partial_tests = sum(1 for r in self.results.values() if r["status"] == "partial")
 
         logger.info("=== P2P Network Validation Results ===")
         for test_name, result in self.results.items():
@@ -233,9 +224,7 @@ class P2PNetworkValidator:
                 "pending": "PEND",
             }
 
-            logger.info(
-                f"[{status_emoji[result['status']]}] {test_name}: {result['status'].upper()}"
-            )
+            logger.info(f"[{status_emoji[result['status']]}] {test_name}: {result['status'].upper()}")
             logger.info(f"   Time: {result['time']:.2f}s")
             logger.info(f"   Details: {result['details']}")
 

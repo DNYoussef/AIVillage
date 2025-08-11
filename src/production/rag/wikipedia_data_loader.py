@@ -61,7 +61,7 @@ EDUCATIONAL_TOPICS = [
 class WikipediaDataLoader:
     """Loads and processes Wikipedia articles for RAG system."""
 
-    def __init__(self, data_dir: str = "./data"):
+    def __init__(self, data_dir: str = "./data") -> None:
         self.data_dir = Path(data_dir)
         self.data_dir.mkdir(parents=True, exist_ok=True)
 
@@ -71,7 +71,7 @@ class WikipediaDataLoader:
         # Initialize database
         self._init_database()
 
-    def _init_database(self):
+    def _init_database(self) -> None:
         """Initialize the RAG index database according to CODEX specs."""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
@@ -136,24 +136,12 @@ class WikipediaDataLoader:
         )
 
         # Create indices for performance
-        cursor.execute(
-            "CREATE INDEX IF NOT EXISTS idx_documents_hash ON documents(file_hash)"
-        )
-        cursor.execute(
-            "CREATE INDEX IF NOT EXISTS idx_documents_type ON documents(document_type)"
-        )
-        cursor.execute(
-            "CREATE INDEX IF NOT EXISTS idx_chunks_document ON chunks(document_id)"
-        )
-        cursor.execute(
-            "CREATE INDEX IF NOT EXISTS idx_chunks_index ON chunks(chunk_index)"
-        )
-        cursor.execute(
-            "CREATE INDEX IF NOT EXISTS idx_embeddings_faiss ON embeddings_metadata(faiss_index_id)"
-        )
-        cursor.execute(
-            "CREATE INDEX IF NOT EXISTS idx_embeddings_queries ON embeddings_metadata(query_count)"
-        )
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_documents_hash ON documents(file_hash)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_documents_type ON documents(document_type)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_chunks_document ON chunks(document_id)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_chunks_index ON chunks(chunk_index)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_embeddings_faiss ON embeddings_metadata(faiss_index_id)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_embeddings_queries ON embeddings_metadata(query_count)")
 
         conn.commit()
         conn.close()
@@ -168,9 +156,7 @@ class WikipediaDataLoader:
             summary_response = requests.get(summary_url, timeout=10)
 
             if summary_response.status_code != 200:
-                logger.warning(
-                    f"Failed to fetch {title}: {summary_response.status_code}"
-                )
+                logger.warning(f"Failed to fetch {title}: {summary_response.status_code}")
                 return None
 
             summary_data = summary_response.json()
@@ -192,9 +178,7 @@ class WikipediaDataLoader:
 
                 # Clean up text
                 lines = (line.strip() for line in text.splitlines())
-                chunks = (
-                    phrase.strip() for line in lines for phrase in line.split("  ")
-                )
+                chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
                 text = " ".join(chunk for chunk in chunks if chunk)
 
                 # Limit to reasonable length
@@ -208,17 +192,15 @@ class WikipediaDataLoader:
                 "content": text,
                 "description": summary_data.get("description", ""),
                 "extract": summary_data.get("extract", ""),
-                "url": summary_data.get("content_urls", {})
-                .get("desktop", {})
-                .get("page", ""),
+                "url": summary_data.get("content_urls", {}).get("desktop", {}).get("page", ""),
                 "timestamp": datetime.now().isoformat(),
             }
 
         except Exception as e:
-            logger.error(f"Error fetching {title}: {e}")
+            logger.exception(f"Error fetching {title}: {e}")
             return None
 
-    def load_wikipedia_corpus(self, topics: list[str] = None) -> list[Document]:
+    def load_wikipedia_corpus(self, topics: list[str] | None = None) -> list[Document]:
         """Load Wikipedia articles for specified topics."""
         topics = topics or EDUCATIONAL_TOPICS
         documents = []
@@ -280,24 +262,15 @@ class WikipediaDataLoader:
             ]
         ):
             return "Computer Science"
-        if any(
-            term in topic_lower
-            for term in ["algebra", "calculus", "statistics", "probability", "graph"]
-        ):
+        if any(term in topic_lower for term in ["algebra", "calculus", "statistics", "probability", "graph"]):
             return "Mathematics"
-        if any(
-            term in topic_lower
-            for term in ["physics", "chemistry", "biology", "quantum", "evolution"]
-        ):
+        if any(term in topic_lower for term in ["physics", "chemistry", "biology", "quantum", "evolution"]):
             return "Science"
-        if any(
-            term in topic_lower
-            for term in ["war", "renaissance", "shakespeare", "rome", "revolution"]
-        ):
+        if any(term in topic_lower for term in ["war", "renaissance", "shakespeare", "rome", "revolution"]):
             return "History & Literature"
         return "General"
 
-    def _store_document(self, doc: Document):
+    def _store_document(self, doc: Document) -> None:
         """Store document in SQLite database."""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
@@ -329,12 +302,12 @@ class WikipediaDataLoader:
             conn.commit()
 
         except Exception as e:
-            logger.error(f"Error storing document {doc.id}: {e}")
+            logger.exception(f"Error storing document {doc.id}: {e}")
             conn.rollback()
         finally:
             conn.close()
 
-    def _save_corpus(self, documents: list[Document]):
+    def _save_corpus(self, documents: list[Document]) -> None:
         """Save corpus to JSON file."""
         corpus_data = {
             "version": "1.0",
@@ -385,9 +358,7 @@ class WikipediaDataLoader:
         total_words = cursor.fetchone()[0] or 0
 
         # Get category distribution
-        cursor.execute(
-            "SELECT document_type, COUNT(*) FROM documents GROUP BY document_type"
-        )
+        cursor.execute("SELECT document_type, COUNT(*) FROM documents GROUP BY document_type")
         categories = dict(cursor.fetchall())
 
         # Get chunk count
@@ -475,9 +446,7 @@ if __name__ == "__main__":
     loader = WikipediaDataLoader()
 
     # Load Wikipedia corpus
-    documents = loader.load_wikipedia_corpus(
-        EDUCATIONAL_TOPICS[:5]
-    )  # Start with 5 topics
+    documents = loader.load_wikipedia_corpus(EDUCATIONAL_TOPICS[:5])  # Start with 5 topics
 
     # Add sample educational content
     samples = create_sample_educational_content()

@@ -24,9 +24,7 @@ class EvolutionSchedule:
 
     nightly_time_utc: str = "02:00"  # 2 AM UTC for nightly evolution
     breakthrough_interval_days: int = 7  # Weekly breakthrough attempts
-    emergency_threshold: float = (
-        0.3  # Performance drop threshold for emergency evolution
-    )
+    emergency_threshold: float = 0.3  # Performance drop threshold for emergency evolution
     cooling_period_hours: int = 4  # Minimum time between evolutions
     max_concurrent_evolutions: int = 3  # Max agents evolving simultaneously
 
@@ -55,18 +53,10 @@ class DualEvolutionSystem:
         self.schedule = EvolutionSchedule(**self.config.get("schedule", {}))
 
         # Evolution orchestrators
-        self.nightly_orchestrator = NightlyEvolutionOrchestrator(
-            self.config.get("nightly_config", {})
-        )
-        self.magi_evolution = MagiArchitecturalEvolution(
-            self.config.get("magi_config", {})
-        )
-        self.metrics_collector = EvolutionMetricsCollector(
-            self.config.get("metrics_config", {})
-        )
-        self.scheduler = EvolutionScheduler(
-            SchedulerConfig(**self.config.get("scheduler", {}))
-        )
+        self.nightly_orchestrator = NightlyEvolutionOrchestrator(self.config.get("nightly_config", {}))
+        self.magi_evolution = MagiArchitecturalEvolution(self.config.get("magi_config", {}))
+        self.metrics_collector = EvolutionMetricsCollector(self.config.get("metrics_config", {}))
+        self.scheduler = EvolutionScheduler(SchedulerConfig(**self.config.get("scheduler", {})))
 
         # Agent registry
         self.registered_agents: dict[str, EvolvableAgent] = {}
@@ -85,9 +75,7 @@ class DualEvolutionSystem:
 
         logger.info("Dual Evolution System initialized")
 
-    def register_agent(
-        self, agent: EvolvableAgent, metadata: dict | None = None
-    ) -> None:
+    def register_agent(self, agent: EvolvableAgent, metadata: dict | None = None) -> None:
         """Register agent for evolution management."""
         self.registered_agents[agent.agent_id] = agent
         self.agent_metadata[agent.agent_id] = metadata or {}
@@ -181,9 +169,7 @@ class DualEvolutionSystem:
         """Check if nightly evolution should run."""
         # Parse scheduled time
         hour, minute = map(int, self.schedule.nightly_time_utc.split(":"))
-        scheduled_time = current_utc.replace(
-            hour=hour, minute=minute, second=0, microsecond=0
-        )
+        scheduled_time = current_utc.replace(hour=hour, minute=minute, second=0, microsecond=0)
 
         # Check if we've crossed the scheduled time since last run
         if self.last_nightly_run:
@@ -263,9 +249,7 @@ class DualEvolutionSystem:
             },
         )
 
-        logger.info(
-            f"Breakthrough evolution completed: {successful_breakthroughs}/{len(candidates)} successful"
-        )
+        logger.info(f"Breakthrough evolution completed: {successful_breakthroughs}/{len(candidates)} successful")
 
     async def _monitor_agent_performance(self) -> None:
         """Monitor agent performance for emergency evolution triggers."""
@@ -282,19 +266,15 @@ class DualEvolutionSystem:
                     logger.info(f"Retiring agent {agent_id} based on KPIs")
                     self.unregister_agent(agent_id)
                     continue
-                if action == "evolve" and not self._agent_in_cooling_period(
-                    agent_id, current_time
-                ):
+                if action == "evolve" and not self._agent_in_cooling_period(agent_id, current_time):
                     await self._evolve_agent_nightly(agent)
 
                 # Check for emergency evolution trigger
-                if (
-                    performance < self.schedule.emergency_threshold
-                    and not self._agent_in_cooling_period(agent_id, current_time)
+                if performance < self.schedule.emergency_threshold and not self._agent_in_cooling_period(
+                    agent_id, current_time
                 ):
                     logger.warning(
-                        f"Emergency evolution triggered for agent {agent_id} "
-                        f"(performance: {performance:.2f})"
+                        f"Emergency evolution triggered for agent {agent_id} " f"(performance: {performance:.2f})"
                     )
 
                     await self._evolve_agent_emergency(agent)
@@ -316,9 +296,7 @@ class DualEvolutionSystem:
         hours_since_evolution = (current_time - last_evolution) / 3600
         return hours_since_evolution < self.schedule.cooling_period_hours
 
-    def _update_performance_trend(
-        self, agent_id: str, current_performance: float
-    ) -> None:
+    def _update_performance_trend(self, agent_id: str, current_performance: float) -> None:
         """Update agent performance trend."""
         metadata = self.agent_metadata.get(agent_id, {})
 
@@ -350,10 +328,7 @@ class DualEvolutionSystem:
 
         for agent_id, agent in self.registered_agents.items():
             # Skip agents in cooling period or actively evolving
-            if (
-                self._agent_in_cooling_period(agent_id, time.time())
-                or agent_id in self.active_evolutions
-            ):
+            if self._agent_in_cooling_period(agent_id, time.time()) or agent_id in self.active_evolutions:
                 continue
 
             # Check if agent needs evolution
@@ -439,9 +414,7 @@ class DualEvolutionSystem:
             return success
 
         except Exception as e:
-            logger.exception(
-                f"Error in nightly evolution for agent {agent.agent_id}: {e}"
-            )
+            logger.exception(f"Error in nightly evolution for agent {agent.agent_id}: {e}")
             evolution_event.success = False
             evolution_event.insights.append(f"Evolution failed: {e!s}")
             return False
@@ -489,21 +462,16 @@ class DualEvolutionSystem:
                 self.agent_metadata[agent.agent_id]["evolution_count"] += 1
 
                 logger.info(
-                    f"Breakthrough evolution successful for agent {agent.agent_id} "
-                    f"(+{generation_jump} generations)"
+                    f"Breakthrough evolution successful for agent {agent.agent_id} " f"(+{generation_jump} generations)"
                 )
             else:
-                logger.warning(
-                    f"Breakthrough evolution failed for agent {agent.agent_id}"
-                )
+                logger.warning(f"Breakthrough evolution failed for agent {agent.agent_id}")
 
             await self.metrics_collector.record_evolution_completion(evolution_event)
             return success
 
         except Exception as e:
-            logger.exception(
-                f"Error in breakthrough evolution for agent {agent.agent_id}: {e}"
-            )
+            logger.exception(f"Error in breakthrough evolution for agent {agent.agent_id}: {e}")
             evolution_event.success = False
             evolution_event.insights.append(f"Breakthrough evolution failed: {e!s}")
             return False
@@ -543,24 +511,16 @@ class DualEvolutionSystem:
                 if new_performance > self.schedule.emergency_threshold + 0.1:
                     # Success with nightly evolution
                     evolution_event.success = True
-                    evolution_event.insights.append(
-                        "Emergency resolved with nightly evolution"
-                    )
+                    evolution_event.insights.append("Emergency resolved with nightly evolution")
                 else:
                     # Try breakthrough evolution
-                    logger.info(
-                        f"Nightly evolution insufficient, trying breakthrough for {agent.agent_id}"
-                    )
+                    logger.info(f"Nightly evolution insufficient, trying breakthrough for {agent.agent_id}")
                     breakthrough_result = await self.magi_evolution.evolve_agent(agent)
                     evolution_event.success = breakthrough_result.get("success", False)
-                    evolution_event.insights.extend(
-                        breakthrough_result.get("insights", [])
-                    )
+                    evolution_event.insights.extend(breakthrough_result.get("insights", []))
             else:
                 # Nightly failed, try breakthrough
-                logger.info(
-                    f"Nightly evolution failed, trying breakthrough for {agent.agent_id}"
-                )
+                logger.info(f"Nightly evolution failed, trying breakthrough for {agent.agent_id}")
                 breakthrough_result = await self.magi_evolution.evolve_agent(agent)
                 evolution_event.success = breakthrough_result.get("success", False)
                 evolution_event.insights.extend(breakthrough_result.get("insights", []))
@@ -572,9 +532,7 @@ class DualEvolutionSystem:
             if evolution_event.success:
                 self.agent_metadata[agent.agent_id]["last_evolution"] = time.time()
                 self.agent_metadata[agent.agent_id]["evolution_count"] += 1
-                logger.info(
-                    f"Emergency evolution successful for agent {agent.agent_id}"
-                )
+                logger.info(f"Emergency evolution successful for agent {agent.agent_id}")
             else:
                 logger.error(f"Emergency evolution failed for agent {agent.agent_id}")
 
@@ -582,9 +540,7 @@ class DualEvolutionSystem:
             return evolution_event.success
 
         except Exception as e:
-            logger.exception(
-                f"Error in emergency evolution for agent {agent.agent_id}: {e}"
-            )
+            logger.exception(f"Error in emergency evolution for agent {agent.agent_id}: {e}")
             evolution_event.success = False
             evolution_event.insights.append(f"Emergency evolution failed: {e!s}")
             return False
@@ -605,13 +561,7 @@ class DualEvolutionSystem:
         system_metrics = {
             "registered_agents": len(self.registered_agents),
             "active_evolutions": len(self.active_evolutions),
-            "total_evolutions_today": len(
-                [
-                    e
-                    for e in self.evolution_history
-                    if current_time - e.timestamp < 86400
-                ]
-            ),
+            "total_evolutions_today": len([e for e in self.evolution_history if current_time - e.timestamp < 86400]),
             "success_rate_24h": self._calculate_success_rate(86400),
             "avg_evolution_duration": self._calculate_avg_duration(),
             "system_uptime": current_time - (self.last_nightly_run or current_time),
@@ -666,10 +616,7 @@ class DualEvolutionSystem:
                     [
                         e
                         for e in self.evolution_history
-                        if (
-                            current_time - e.timestamp < 86400
-                            and e.evolution_type == "emergency"
-                        )
+                        if (current_time - e.timestamp < 86400 and e.evolution_type == "emergency")
                     ]
                 ),
             },
@@ -695,13 +642,9 @@ class DualEvolutionSystem:
         if not self.system_active or not self.last_breakthrough_run:
             return None
 
-        return self.last_breakthrough_run + (
-            self.schedule.breakthrough_interval_days * 86400
-        )
+        return self.last_breakthrough_run + (self.schedule.breakthrough_interval_days * 86400)
 
-    async def force_evolution(
-        self, agent_id: str, evolution_type: str = "nightly"
-    ) -> bool:
+    async def force_evolution(self, agent_id: str, evolution_type: str = "nightly") -> bool:
         """Force evolution of specific agent."""
         if agent_id not in self.registered_agents:
             logger.error(f"Agent {agent_id} not registered")

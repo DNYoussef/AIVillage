@@ -31,15 +31,12 @@ class ConfigurationError(Exception):
 class ConfigWatcher(FileSystemEventHandler):
     """Watches configuration files for changes and triggers reloads."""
 
-    def __init__(self, config_manager):
+    def __init__(self, config_manager) -> None:
         self.config_manager = config_manager
 
-    def on_modified(self, event):
+    def on_modified(self, event) -> None:
         """Handle file modification events."""
-        if (
-            not event.is_directory
-            and event.src_path in self.config_manager.watched_files
-        ):
+        if not event.is_directory and event.src_path in self.config_manager.watched_files:
             logger.info(f"Configuration file changed: {event.src_path}")
             self.config_manager.reload_config()
 
@@ -47,7 +44,7 @@ class ConfigWatcher(FileSystemEventHandler):
 class CODEXConfigManager:
     """Comprehensive configuration manager for CODEX integration."""
 
-    def __init__(self, config_dir: str = "config", enable_hot_reload: bool = True):
+    def __init__(self, config_dir: str = "config", enable_hot_reload: bool = True) -> None:
         self.config_dir = Path(config_dir)
         self.enable_hot_reload = enable_hot_reload
         self.config_data = {}
@@ -134,9 +131,11 @@ class CODEXConfigManager:
             return data if data is not None else {}
 
         except yaml.YAMLError as e:
-            raise ConfigurationError(f"Invalid YAML in {file_path}: {e}")
+            msg = f"Invalid YAML in {file_path}: {e}"
+            raise ConfigurationError(msg)
         except Exception as e:
-            raise ConfigurationError(f"Error loading {file_path}: {e}")
+            msg = f"Error loading {file_path}: {e}"
+            raise ConfigurationError(msg)
 
     def load_json_file(self, file_path: Path) -> dict[str, Any]:
         """Load and parse JSON configuration file."""
@@ -152,9 +151,11 @@ class CODEXConfigManager:
             return data if data is not None else {}
 
         except json.JSONDecodeError as e:
-            raise ConfigurationError(f"Invalid JSON in {file_path}: {e}")
+            msg = f"Invalid JSON in {file_path}: {e}"
+            raise ConfigurationError(msg)
         except Exception as e:
-            raise ConfigurationError(f"Error loading {file_path}: {e}")
+            msg = f"Error loading {file_path}: {e}"
+            raise ConfigurationError(msg)
 
     def get_nested_value(self, data: dict, key_path: str, default=None):
         """Get nested dictionary value using dot notation."""
@@ -169,7 +170,7 @@ class CODEXConfigManager:
 
         return current
 
-    def set_nested_value(self, data: dict, key_path: str, value: Any):
+    def set_nested_value(self, data: dict, key_path: str, value: Any) -> None:
         """Set nested dictionary value using dot notation."""
         keys = key_path.split(".")
         current = data
@@ -217,13 +218,11 @@ class CODEXConfigManager:
                     converted_value = env_value
 
                 self.set_nested_value(config_copy, config_path, converted_value)
-                logger.info(
-                    f"Applied environment override: {env_var} -> {config_path} = {converted_value}"
-                )
+                logger.info(f"Applied environment override: {env_var} -> {config_path} = {converted_value}")
 
         return config_copy
 
-    def reload_config(self):
+    def reload_config(self) -> None:
         """Reload all configuration files and apply overrides."""
         with self.lock:
             try:
@@ -261,10 +260,11 @@ class CODEXConfigManager:
                 logger.info("Configuration reloaded successfully")
 
             except Exception as e:
-                logger.error(f"Failed to reload configuration: {e}")
-                raise ConfigurationError(f"Configuration reload failed: {e}")
+                logger.exception(f"Failed to reload configuration: {e}")
+                msg = f"Configuration reload failed: {e}"
+                raise ConfigurationError(msg)
 
-    def validate_configuration(self, config: dict[str, Any]):
+    def validate_configuration(self, config: dict[str, Any]) -> None:
         """Validate configuration consistency and requirements."""
         errors = []
         warnings = []
@@ -280,9 +280,7 @@ class CODEXConfigManager:
             # Check if database path parent directory exists
             db_path_obj = Path(db_path)
             if not db_path_obj.parent.exists():
-                warnings.append(
-                    f"Evolution metrics database directory does not exist: {db_path_obj.parent}"
-                )
+                warnings.append(f"Evolution metrics database directory does not exist: {db_path_obj.parent}")
 
         # RAG pipeline validation
         if integration.get("rag_pipeline", {}).get("enabled"):
@@ -301,9 +299,7 @@ class CODEXConfigManager:
             if cache_dir:
                 cache_path = Path(cache_dir)
                 if not cache_path.parent.exists():
-                    warnings.append(
-                        f"RAG cache directory parent does not exist: {cache_path.parent}"
-                    )
+                    warnings.append(f"RAG cache directory parent does not exist: {cache_path.parent}")
 
         # P2P networking validation
         if integration.get("p2p_networking", {}).get("enabled"):
@@ -319,20 +315,14 @@ class CODEXConfigManager:
             # Check required P2P settings match CODEX requirements
             expected_port = 4001
             if port != expected_port:
-                warnings.append(
-                    f"P2P port {port} differs from CODEX requirement: {expected_port}"
-                )
+                warnings.append(f"P2P port {port} differs from CODEX requirement: {expected_port}")
 
         # Digital twin validation
         if integration.get("digital_twin", {}).get("enabled"):
             dt_config = integration["digital_twin"]
 
-            if dt_config.get("encryption_enabled") and not dt_config.get(
-                "encryption_key"
-            ):
-                errors.append(
-                    "Digital twin encryption enabled but no encryption_key provided"
-                )
+            if dt_config.get("encryption_enabled") and not dt_config.get("encryption_key"):
+                errors.append("Digital twin encryption enabled but no encryption_key provided")
 
             max_profiles = dt_config.get("max_profiles", 10000)
             if not isinstance(max_profiles, int) or max_profiles <= 0:
@@ -345,7 +335,7 @@ class CODEXConfigManager:
 
         # Check for port conflicts
         seen_ports = set()
-        for service, port in ports_in_use:
+        for _service, port in ports_in_use:
             if port in seen_ports:
                 errors.append(f"Port conflict: {port} used by multiple services")
             seen_ports.add(port)
@@ -376,7 +366,7 @@ class CODEXConfigManager:
         """Check if a component is enabled."""
         return self.get(f"integration.{component}.enabled", False)
 
-    def start_file_watcher(self):
+    def start_file_watcher(self) -> None:
         """Start file system watcher for hot reload."""
         if self.observer is not None:
             return
@@ -392,10 +382,10 @@ class CODEXConfigManager:
             logger.info(f"Started configuration file watcher on {self.config_dir}")
 
         except Exception as e:
-            logger.error(f"Failed to start file watcher: {e}")
+            logger.exception(f"Failed to start file watcher: {e}")
             self.observer = None
 
-    def stop_file_watcher(self):
+    def stop_file_watcher(self) -> None:
         """Stop file system watcher."""
         if self.observer:
             self.observer.stop()
@@ -414,11 +404,7 @@ class CODEXConfigManager:
             "hot_reload_enabled": self.enable_hot_reload,
             "watched_files": list(self.watched_files),
             "environment_overrides_applied": len(
-                [
-                    env_var
-                    for env_var in self.env_mappings.keys()
-                    if os.getenv(env_var) is not None
-                ]
+                [env_var for env_var in self.env_mappings if os.getenv(env_var) is not None]
             ),
         }
 
@@ -464,7 +450,7 @@ def get_config_manager(**kwargs) -> CODEXConfigManager:
     return _config_manager
 
 
-def reload_global_config():
+def reload_global_config() -> None:
     """Reload the global configuration."""
     global _config_manager
 

@@ -214,21 +214,15 @@ def test_data_persistence():
     print(f"\n[OK] Recorded {cycles_recorded} evolution cycles")
 
     # Verify data was persisted
-    cursor.execute(
-        "SELECT COUNT(*) FROM fitness_metrics WHERE round_id = ?", (round_id,)
-    )
+    cursor.execute("SELECT COUNT(*) FROM fitness_metrics WHERE round_id = ?", (round_id,))
     fitness_count = cursor.fetchone()[0]
     print(f"[OK] Fitness metrics persisted: {fitness_count} records")
 
-    cursor.execute(
-        "SELECT COUNT(*) FROM resource_metrics WHERE round_id = ?", (round_id,)
-    )
+    cursor.execute("SELECT COUNT(*) FROM resource_metrics WHERE round_id = ?", (round_id,))
     resource_count = cursor.fetchone()[0]
     print(f"[OK] Resource metrics persisted: {resource_count} records")
 
-    cursor.execute(
-        "SELECT COUNT(*) FROM selection_outcomes WHERE round_id = ?", (round_id,)
-    )
+    cursor.execute("SELECT COUNT(*) FROM selection_outcomes WHERE round_id = ?", (round_id,))
     selection_count = cursor.fetchone()[0]
     print(f"[OK] Selection outcomes persisted: {selection_count} records")
 
@@ -379,9 +373,7 @@ def test_flush_threshold():
     conn.commit()  # Simulate flush
 
     # Count records after
-    cursor.execute(
-        "SELECT COUNT(*) FROM fitness_metrics WHERE round_id = ?", (test_round_id,)
-    )
+    cursor.execute("SELECT COUNT(*) FROM fitness_metrics WHERE round_id = ?", (test_round_id,))
     added_count = cursor.fetchone()[0]
 
     if added_count == flush_threshold:
@@ -482,9 +474,7 @@ def test_api_health_simulation():
         "redis": {"available": False, "connected": False},
         "metrics": {
             "total_collected": 0,
-            "flush_threshold": int(
-                os.getenv("AIVILLAGE_METRICS_FLUSH_THRESHOLD", "50")
-            ),
+            "flush_threshold": int(os.getenv("AIVILLAGE_METRICS_FLUSH_THRESHOLD", "50")),
         },
         "port": 8081,
     }
@@ -505,9 +495,7 @@ def test_api_health_simulation():
             health_status["metrics"]["total_collected"] = cursor.fetchone()[0]
 
             # Get latest round
-            cursor.execute(
-                "SELECT id, status FROM evolution_rounds ORDER BY id DESC LIMIT 1"
-            )
+            cursor.execute("SELECT id, status FROM evolution_rounds ORDER BY id DESC LIMIT 1")
             row = cursor.fetchone()
             if row:
                 health_status["database"]["current_round"] = row[0]
@@ -683,15 +671,9 @@ def run_all_tests():
     print("\n" + "=" * 60)
     print("CONFIGURATION SUMMARY")
     print("=" * 60)
-    print(
-        f"AIVILLAGE_DB_PATH: {os.getenv('AIVILLAGE_DB_PATH', './data/evolution_metrics.db')}"
-    )
-    print(
-        f"AIVILLAGE_STORAGE_BACKEND: {os.getenv('AIVILLAGE_STORAGE_BACKEND', 'sqlite')}"
-    )
-    print(
-        f"AIVILLAGE_METRICS_FLUSH_THRESHOLD: {os.getenv('AIVILLAGE_METRICS_FLUSH_THRESHOLD', '50')}"
-    )
+    print(f"AIVILLAGE_DB_PATH: {os.getenv('AIVILLAGE_DB_PATH', './data/evolution_metrics.db')}")
+    print(f"AIVILLAGE_STORAGE_BACKEND: {os.getenv('AIVILLAGE_STORAGE_BACKEND', 'sqlite')}")
+    print(f"AIVILLAGE_METRICS_FLUSH_THRESHOLD: {os.getenv('AIVILLAGE_METRICS_FLUSH_THRESHOLD', '50')}")
     print(f"REDIS_HOST: {os.getenv('REDIS_HOST', 'localhost')}")
     print(f"REDIS_PORT: {os.getenv('REDIS_PORT', '6379')}")
     print("Evolution Metrics Port: 8081")
@@ -702,9 +684,7 @@ def run_all_tests():
         print("Evolution metrics system is fully integrated per CODEX requirements.")
         print("=" * 60)
     else:
-        print(
-            f"\n[WARN] {total - passed} tests failed. Please review the failures above."
-        )
+        print(f"\n[WARN] {total - passed} tests failed. Please review the failures above.")
 
     return passed == total
 

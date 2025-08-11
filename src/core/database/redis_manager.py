@@ -51,7 +51,7 @@ class RedisConfig:
 class RedisFallbackStorage:
     """Fallback storage implementation for Redis operations."""
 
-    def __init__(self, storage_type: str, storage_path: str = "./data/redis_fallback"):
+    def __init__(self, storage_type: str, storage_path: str = "./data/redis_fallback") -> None:
         self.storage_type = storage_type
         self.storage_path = Path(storage_path)
         self._memory_store: dict[str, Any] = {}
@@ -62,7 +62,7 @@ class RedisFallbackStorage:
         elif storage_type == "file":
             self.storage_path.mkdir(parents=True, exist_ok=True)
 
-    def _init_sqlite(self):
+    def _init_sqlite(self) -> None:
         """Initialize SQLite fallback database."""
         self.storage_path.parent.mkdir(parents=True, exist_ok=True)
         db_path = self.storage_path.parent / "redis_fallback.db"
@@ -166,10 +166,10 @@ class RedisFallbackStorage:
         if self.storage_type == "sqlite" and self._sqlite_conn:
             try:
                 # Determine value type and serialize
-                if isinstance(value, (dict, list)):
+                if isinstance(value, dict | list):
                     value_blob = json.dumps(value).encode()
                     value_type = "json"
-                elif isinstance(value, (str, int, float, bool)):
+                elif isinstance(value, str | int | float | bool):
                     value_blob = str(value).encode()
                     value_type = "string"
                 else:
@@ -187,7 +187,7 @@ class RedisFallbackStorage:
                 self._sqlite_conn.commit()
                 return True
             except Exception as e:
-                logger.error(f"Failed to set fallback value for {key}: {e}")
+                logger.exception(f"Failed to set fallback value for {key}: {e}")
                 return False
 
         elif self.storage_type == "file":
@@ -204,7 +204,7 @@ class RedisFallbackStorage:
 
                 return True
             except Exception as e:
-                logger.error(f"Failed to write fallback file for {key}: {e}")
+                logger.exception(f"Failed to write fallback file for {key}: {e}")
                 return False
 
         return False
@@ -284,7 +284,7 @@ class RedisFallbackStorage:
 
         return 0
 
-    def close(self):
+    def close(self) -> None:
         """Close fallback storage connections."""
         if self._sqlite_conn:
             self._sqlite_conn.close()
@@ -293,7 +293,7 @@ class RedisFallbackStorage:
 class RedisManager:
     """Redis connection manager with fallback support."""
 
-    def __init__(self, config_manager=None):
+    def __init__(self, config_manager=None) -> None:
         self.config_manager = config_manager
         self.pools: dict[str, Any] = {}
         self.fallback_stores: dict[str, RedisFallbackStorage] = {}
@@ -321,7 +321,7 @@ class RedisManager:
         self._initialized = True
         logger.info("Redis manager initialized successfully")
 
-    async def _init_redis_pools(self):
+    async def _init_redis_pools(self) -> None:
         """Initialize Redis connection pools."""
         if not self.config_manager:
             logger.warning("No config manager provided, skipping Redis initialization")
@@ -330,7 +330,7 @@ class RedisManager:
         # Check if we're in development mode with Redis disabled
         env = self.config_manager.get("AIVILLAGE_ENV", "development")
         disable_redis = self.config_manager.get("DISABLE_REDIS", "false").lower() == "true"
-        
+
         if env == "development" and disable_redis:
             logger.info("Redis disabled in development mode, using fallbacks only")
             return
@@ -346,40 +346,36 @@ class RedisManager:
                         protocol, rest = base_url.split("://", 1)
                         return f"{protocol}://:{redis_password}@{rest}"
             return base_url
-        
+
         base_redis_host = self.config_manager.get("REDIS_HOST", "localhost") if self.config_manager else "localhost"
         base_redis_port = self.config_manager.get("REDIS_PORT", "6379") if self.config_manager else "6379"
 
         redis_configs = {
             "evolution_metrics": RedisConfig(
                 url=get_redis_url(
-                    self.config_manager.get(
-                        "AIVILLAGE_REDIS_URL", f"redis://{base_redis_host}:{base_redis_port}/0"
-                    ) if self.config_manager else "redis://localhost:6379/0",
-                    0
+                    self.config_manager.get("AIVILLAGE_REDIS_URL", f"redis://{base_redis_host}:{base_redis_port}/0")
+                    if self.config_manager
+                    else "redis://localhost:6379/0",
+                    0,
                 ),
                 db=0,
                 fallback_storage="sqlite",
             ),
             "rag_cache": RedisConfig(
                 url=get_redis_url(
-                    self.config_manager.get(
-                        "RAG_REDIS_URL", f"redis://{base_redis_host}:{base_redis_port}/1"
-                    ) if self.config_manager else "redis://localhost:6379/1",
-                    1
+                    self.config_manager.get("RAG_REDIS_URL", f"redis://{base_redis_host}:{base_redis_port}/1")
+                    if self.config_manager
+                    else "redis://localhost:6379/1",
+                    1,
                 ),
                 db=1,
                 fallback_storage="memory",
             ),
             "p2p_discovery": RedisConfig(
-                url=get_redis_url(f"redis://{base_redis_host}:{base_redis_port}/2", 2), 
-                db=2, 
-                fallback_storage="file"
+                url=get_redis_url(f"redis://{base_redis_host}:{base_redis_port}/2", 2), db=2, fallback_storage="file"
             ),
             "session_store": RedisConfig(
-                url=get_redis_url(f"redis://{base_redis_host}:{base_redis_port}/3", 3), 
-                db=3, 
-                fallback_storage="sqlite"
+                url=get_redis_url(f"redis://{base_redis_host}:{base_redis_port}/3", 3), db=3, fallback_storage="sqlite"
             ),
         }
 
@@ -410,12 +406,14 @@ class RedisManager:
             except Exception as e:
                 error_msg = str(e)
                 if "Authentication required" in error_msg or "NOAUTH" in error_msg:
-                    logger.warning(f"Redis pool {pool_name} requires authentication but none provided, using fallback storage")
+                    logger.warning(
+                        f"Redis pool {pool_name} requires authentication but none provided, using fallback storage"
+                    )
                 elif "Connection refused" in error_msg:
                     logger.warning(f"Redis server not running for {pool_name}, using fallback storage")
                 else:
                     logger.warning(f"Failed to initialize Redis pool {pool_name}: {e}")
-                
+
                 self.pools[pool_name] = {
                     "pool": None,
                     "config": config,
@@ -423,7 +421,7 @@ class RedisManager:
                     "error": error_msg,
                 }
 
-    async def _init_fallback_stores(self):
+    async def _init_fallback_stores(self) -> None:
         """Initialize fallback storage systems."""
         fallback_configs = {
             "evolution_metrics": ("sqlite", "./data/fallback/evolution_metrics"),
@@ -438,7 +436,7 @@ class RedisManager:
                 self.fallback_stores[store_name] = fallback_store
                 logger.info(f"Fallback store {store_name} ({storage_type}) initialized")
             except Exception as e:
-                logger.error(f"Failed to initialize fallback store {store_name}: {e}")
+                logger.exception(f"Failed to initialize fallback store {store_name}: {e}")
 
     @asynccontextmanager
     async def get_connection(self, pool_name: str):
@@ -511,16 +509,14 @@ class RedisManager:
                 expired_count = await fallback_store.cleanup_expired()
                 cleanup_results[store_name] = expired_count
                 if expired_count > 0:
-                    logger.info(
-                        f"Cleaned up {expired_count} expired keys from {store_name}"
-                    )
+                    logger.info(f"Cleaned up {expired_count} expired keys from {store_name}")
             except Exception as e:
-                logger.error(f"Failed to cleanup expired keys from {store_name}: {e}")
+                logger.exception(f"Failed to cleanup expired keys from {store_name}: {e}")
                 cleanup_results[store_name] = 0
 
         return cleanup_results
 
-    async def close(self):
+    async def close(self) -> None:
         """Close all Redis connections and fallback stores."""
         logger.info("Closing Redis manager...")
 
@@ -531,7 +527,7 @@ class RedisManager:
                     await pool_info["pool"].disconnect()
                     logger.debug(f"Closed Redis pool: {pool_name}")
                 except Exception as e:
-                    logger.error(f"Error closing Redis pool {pool_name}: {e}")
+                    logger.exception(f"Error closing Redis pool {pool_name}: {e}")
 
         # Close fallback stores
         for store_name, fallback_store in self.fallback_stores.items():
@@ -539,7 +535,7 @@ class RedisManager:
                 fallback_store.close()
                 logger.debug(f"Closed fallback store: {store_name}")
             except Exception as e:
-                logger.error(f"Error closing fallback store {store_name}: {e}")
+                logger.exception(f"Error closing fallback store {store_name}: {e}")
 
         self.pools.clear()
         self.fallback_stores.clear()
@@ -551,7 +547,7 @@ class RedisManager:
 class RedisConnection:
     """Unified interface for Redis and fallback storage operations."""
 
-    def __init__(self, redis_client, fallback_store, connection_type):
+    def __init__(self, redis_client, fallback_store, connection_type) -> None:
         self.redis_client = redis_client
         self.fallback_store = fallback_store
         self.connection_type = connection_type
@@ -582,7 +578,7 @@ class RedisConnection:
         if self.redis_client:
             try:
                 # Serialize complex types to JSON
-                if isinstance(value, (dict, list)):
+                if isinstance(value, dict | list):
                     value = json.dumps(value)
 
                 if ex:
@@ -642,7 +638,7 @@ class RedisConnection:
 
         return False
 
-    async def close(self):
+    async def close(self) -> None:
         """Close the connection."""
         if self.redis_client:
             await self.redis_client.close()
@@ -672,7 +668,7 @@ async def initialize_redis(config_manager=None) -> RedisManager:
 
 if __name__ == "__main__":
 
-    async def main():
+    async def main() -> None:
         """Test Redis manager with fallbacks."""
         # Initialize Redis manager
         redis_manager = RedisManager()

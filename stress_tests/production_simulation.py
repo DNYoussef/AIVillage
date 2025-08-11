@@ -30,9 +30,7 @@ class StabilityMetrics:
     mean_time_between_failures: float
 
 
-def run_simulation(
-    devices: int, duration: int, failure_rate: float
-) -> StabilityMetrics:
+def run_simulation(devices: int, duration: int, failure_rate: float) -> StabilityMetrics:
     """Run a probabilistic failure simulation."""
     failures = 0
     events = devices * duration
@@ -61,9 +59,7 @@ def run_simulation(
 def main() -> None:
     parser = argparse.ArgumentParser(description="Production load simulation")
     parser.add_argument("--devices", type=int, default=100, help="Number of devices")
-    parser.add_argument(
-        "--duration", type=int, default=60, help="Duration of the simulation in seconds"
-    )
+    parser.add_argument("--duration", type=int, default=60, help="Duration of the simulation in seconds")
     parser.add_argument(
         "--failure-rate",
         type=float,
@@ -76,9 +72,7 @@ def main() -> None:
         default=Path("stress_test_results.json"),
         help="Output file",
     )
-    parser.add_argument(
-        "--seed", type=int, default=None, help="Random seed for reproducibility"
-    )
+    parser.add_argument("--seed", type=int, default=None, help="Random seed for reproducibility")
     args = parser.parse_args()
 
     if args.seed is not None:

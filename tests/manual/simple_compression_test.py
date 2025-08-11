@@ -39,9 +39,7 @@ def test_individual_compressors():
 
         print(f"   ✓ Compression ratio: {ratio:.2f}x")
         print(f"   ✓ MSE error: {mse:.6f}")
-        print(
-            f"   ✓ Original shape preserved: {test_tensor.shape == decompressed.shape}"
-        )
+        print(f"   ✓ Original shape preserved: {test_tensor.shape == decompressed.shape}")
 
     except Exception as e:
         print(f"   ✗ BitNet failed: {e}")
@@ -69,9 +67,7 @@ def test_individual_compressors():
 
         print(f"   ✓ Compression ratio: {ratio:.2f}x")
         print(f"   ✓ MSE error: {mse:.6f}")
-        print(
-            f"   ✓ Original shape preserved: {test_tensor.shape == decompressed.shape}"
-        )
+        print(f"   ✓ Original shape preserved: {test_tensor.shape == decompressed.shape}")
 
     except Exception as e:
         print(f"   ✗ SeedLM failed: {e}")
@@ -99,9 +95,7 @@ def test_individual_compressors():
 
         print(f"   ✓ Compression ratio: {ratio:.2f}x")
         print(f"   ✓ MSE error: {mse:.6f}")
-        print(
-            f"   ✓ Original shape preserved: {test_tensor.shape == decompressed.shape}"
-        )
+        print(f"   ✓ Original shape preserved: {test_tensor.shape == decompressed.shape}")
 
     except Exception as e:
         print(f"   ✗ VPTQ failed: {e}")

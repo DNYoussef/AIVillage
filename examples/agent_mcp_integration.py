@@ -290,17 +290,13 @@ async def demonstrate_agent_integration():
             else:
                 result = {"error": "Unknown agent type"}
 
-            results.append(
-                {"agent": config["id"], "task": config["task"], "result": result}
-            )
+            results.append({"agent": config["id"], "task": config["task"], "result": result})
 
             await client.disconnect()
 
         except Exception as e:
             logger.exception(f"Error with agent {config['id']}: {e!s}")
-            results.append(
-                {"agent": config["id"], "task": config["task"], "error": str(e)}
-            )
+            results.append({"agent": config["id"], "task": config["task"], "error": str(e)})
 
     return results
 
@@ -341,9 +337,7 @@ async def test_permission_system():
 
     for test_case in test_cases:
         try:
-            client = HypeRAGMCPClient(
-                "ws://localhost:8765", test_case["agent"], test_case["api_key"]
-            )
+            client = HypeRAGMCPClient("ws://localhost:8765", test_case["agent"], test_case["api_key"])
             await client.connect()
 
             try:

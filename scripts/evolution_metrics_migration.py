@@ -26,7 +26,7 @@ AIVILLAGE_LOG_DIR = os.getenv("AIVILLAGE_LOG_DIR", "./evolution_logs")
 class EvolutionMetricsMigrator:
     """Handles migration from JSON files to SQLite database."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.db_path = Path(AIVILLAGE_DB_PATH)
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -119,21 +119,11 @@ class EvolutionMetricsMigrator:
         )
 
         # Create performance indexes
-        cursor.execute(
-            "CREATE INDEX IF NOT EXISTS idx_evolution_rounds_number ON evolution_rounds(round_number)"
-        )
-        cursor.execute(
-            "CREATE INDEX IF NOT EXISTS idx_fitness_agent ON fitness_metrics(agent_id)"
-        )
-        cursor.execute(
-            "CREATE INDEX IF NOT EXISTS idx_fitness_score ON fitness_metrics(fitness_score)"
-        )
-        cursor.execute(
-            "CREATE INDEX IF NOT EXISTS idx_resource_timestamp ON resource_metrics(timestamp)"
-        )
-        cursor.execute(
-            "CREATE INDEX IF NOT EXISTS idx_selection_parent ON selection_outcomes(parent_agent_id)"
-        )
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_evolution_rounds_number ON evolution_rounds(round_number)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_fitness_agent ON fitness_metrics(agent_id)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_fitness_score ON fitness_metrics(fitness_score)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_resource_timestamp ON resource_metrics(timestamp)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_selection_parent ON selection_outcomes(parent_agent_id)")
 
         # Schema version tracking
         cursor.execute(
@@ -219,10 +209,7 @@ class EvolutionMetricsMigrator:
                 # Check if it's a list of metrics
                 if data and isinstance(data[0], dict):
                     first_item = data[0]
-                    if any(
-                        key in str(first_item).lower()
-                        for key in ["fitness", "agent", "round", "generation"]
-                    ):
+                    if any(key in str(first_item).lower() for key in ["fitness", "agent", "round", "generation"]):
                         return True
 
             return False
@@ -261,14 +248,12 @@ class EvolutionMetricsMigrator:
 
         except Exception as e:
             error_msg = f"Error migrating {file_path}: {e}"
-            logger.error(error_msg)
+            logger.exception(error_msg)
             migration_stats["errors"].append(error_msg)
 
         return migration_stats
 
-    def _migrate_dict_format(
-        self, cursor: sqlite3.Cursor, data: dict, stats: dict[str, Any]
-    ) -> None:
+    def _migrate_dict_format(self, cursor: sqlite3.Cursor, data: dict, stats: dict[str, Any]) -> None:
         """Migrate dictionary format data."""
         # Handle nested evolution data
         if "evolution_rounds" in data:
@@ -287,25 +272,19 @@ class EvolutionMetricsMigrator:
         for round_data in rounds_data:
             self._migrate_round(cursor, round_data, stats)
 
-    def _migrate_list_format(
-        self, cursor: sqlite3.Cursor, data: list, stats: dict[str, Any]
-    ) -> None:
+    def _migrate_list_format(self, cursor: sqlite3.Cursor, data: list, stats: dict[str, Any]) -> None:
         """Migrate list format data."""
         for item in data:
             if isinstance(item, dict):
                 self._migrate_round(cursor, item, stats)
 
-    def _migrate_round(
-        self, cursor: sqlite3.Cursor, round_data: dict, stats: dict[str, Any]
-    ) -> None:
+    def _migrate_round(self, cursor: sqlite3.Cursor, round_data: dict, stats: dict[str, Any]) -> None:
         """Migrate a single evolution round."""
         try:
             # Extract round information
             round_number = round_data.get("round", round_data.get("round_number", 0))
             generation = round_data.get("generation", round_data.get("gen", 0))
-            timestamp = round_data.get(
-                "timestamp", datetime.now(timezone.utc).isoformat()
-            )
+            timestamp = round_data.get("timestamp", datetime.now(timezone.utc).isoformat())
 
             # Parse timestamp if it's a string
             if isinstance(timestamp, str):
@@ -333,8 +312,7 @@ class EvolutionMetricsMigrator:
                         {
                             k: v
                             for k, v in round_data.items()
-                            if k
-                            not in ["agents", "fitness_metrics", "resource_metrics"]
+                            if k not in ["agents", "fitness_metrics", "resource_metrics"]
                         }
                     ),
                 ),
@@ -350,9 +328,7 @@ class EvolutionMetricsMigrator:
             stats["rounds_migrated"] += 1
 
             # Migrate agent fitness metrics
-            agents_data = round_data.get(
-                "agents", round_data.get("fitness_metrics", [])
-            )
+            agents_data = round_data.get("agents", round_data.get("fitness_metrics", []))
             if isinstance(agents_data, dict):
                 # Convert dict to list format
                 agents_data = [{"agent_id": k, **v} for k, v in agents_data.items()]
@@ -362,16 +338,12 @@ class EvolutionMetricsMigrator:
                     self._migrate_agent_fitness(cursor, round_id, agent_data, stats)
 
             # Migrate resource metrics
-            resource_data = round_data.get(
-                "resource_metrics", round_data.get("resources", {})
-            )
+            resource_data = round_data.get("resource_metrics", round_data.get("resources", {}))
             if resource_data:
                 self._migrate_resource_metrics(cursor, round_id, resource_data, stats)
 
             # Migrate selection outcomes
-            selection_data = round_data.get(
-                "selection_outcomes", round_data.get("selections", [])
-            )
+            selection_data = round_data.get("selection_outcomes", round_data.get("selections", []))
             for selection in selection_data:
                 if isinstance(selection, dict):
                     self._migrate_selection_outcome(cursor, round_id, selection, stats)
@@ -390,12 +362,8 @@ class EvolutionMetricsMigrator:
     ) -> None:
         """Migrate agent fitness data."""
         try:
-            agent_id = agent_data.get(
-                "agent_id", agent_data.get("id", f"agent_{stats['agents_migrated']}")
-            )
-            fitness_score = agent_data.get(
-                "fitness", agent_data.get("fitness_score", 0.0)
-            )
+            agent_id = agent_data.get("agent_id", agent_data.get("id", f"agent_{stats['agents_migrated']}"))
+            fitness_score = agent_data.get("fitness", agent_data.get("fitness_score", 0.0))
 
             performance_metrics = {
                 k: v
@@ -403,9 +371,7 @@ class EvolutionMetricsMigrator:
                 if k not in ["agent_id", "id", "fitness", "fitness_score", "resources"]
             }
 
-            resource_usage = agent_data.get(
-                "resources", agent_data.get("resource_usage", {})
-            )
+            resource_usage = agent_data.get("resources", agent_data.get("resource_usage", {}))
 
             cursor.execute(
                 """
@@ -476,9 +442,7 @@ class EvolutionMetricsMigrator:
                     round_id,
                     selection_data.get("parent_agent_id", selection_data.get("parent")),
                     selection_data.get("child_agent_id", selection_data.get("child")),
-                    selection_data.get(
-                        "selection_method", selection_data.get("method")
-                    ),
+                    selection_data.get("selection_method", selection_data.get("method")),
                     json.dumps(selection_data.get("crossover_points", [])),
                     bool(selection_data.get("mutation_applied", False)),
                     selection_data.get("survival_reason", selection_data.get("reason")),
@@ -514,16 +478,14 @@ class EvolutionMetricsMigrator:
                             "original_path": str(file_path),
                             "archived_at": datetime.now(timezone.utc).isoformat(),
                             "file_size": file_path.stat().st_size,
-                            "file_hash": hashlib.md5(
-                                file_path.read_bytes()
-                            ).hexdigest(),
+                            "file_hash": hashlib.md5(file_path.read_bytes()).hexdigest(),
                         },
                         f,
                         indent=2,
                     )
 
             except Exception as e:
-                logger.error(f"Error archiving {file_path}: {e}")
+                logger.exception(f"Error archiving {file_path}: {e}")
 
     def validate_migration(self) -> dict[str, Any]:
         """Validate migration integrity."""
@@ -571,9 +533,7 @@ class EvolutionMetricsMigrator:
                 logger.info(f"{table}: {count} records")
 
         # Check indexes
-        cursor.execute(
-            "SELECT name FROM sqlite_master WHERE type='index' AND name LIKE 'idx_%'"
-        )
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='index' AND name LIKE 'idx_%'")
         indexes = [row[0] for row in cursor.fetchall()]
         validation_results["indexes_created"] = indexes
 
@@ -627,9 +587,7 @@ class EvolutionMetricsMigrator:
                 logger.warning(f"Skipping {file_path} - not evolution metrics format")
 
         # Archive legacy files
-        migrated_files = [
-            Path(r["file"]) for r in migration_results if r["rounds_migrated"] > 0
-        ]
+        migrated_files = [Path(r["file"]) for r in migration_results if r["rounds_migrated"] > 0]
         if migrated_files:
             self.archive_legacy_files(migrated_files)
 
@@ -648,14 +606,12 @@ class EvolutionMetricsMigrator:
             "duration": (datetime.now() - start_time).total_seconds(),
         }
 
-        logger.info(
-            f"Migration completed: {total_rounds} rounds, {total_agents} agents migrated"
-        )
+        logger.info(f"Migration completed: {total_rounds} rounds, {total_agents} agents migrated")
 
         return report
 
 
-def main():
+def main() -> None:
     """Main migration function."""
     migrator = EvolutionMetricsMigrator()
     report = migrator.run_migration()

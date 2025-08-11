@@ -27,9 +27,7 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     handlers=[
-        logging.FileHandler(
-            f"D:/AgentForge/historic_real_run_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
-        ),
+        logging.FileHandler(f"D:/AgentForge/historic_real_run_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"),
         logging.StreamHandler(),
     ],
 )
@@ -54,9 +52,7 @@ class MemoryConstrainedEvolutionRunner:
         logger.info("=" * 80)
         logger.info(f"Run ID: {self.run_id}")
         logger.info(f"Output Directory: {self.output_dir}")
-        logger.info(
-            f"Memory Available: {memory_manager.get_memory_stats()['system_ram_available_gb']:.2f} GB"
-        )
+        logger.info(f"Memory Available: {memory_manager.get_memory_stats()['system_ram_available_gb']:.2f} GB")
         logger.info("CPU Cores: 12, CPU-Only Mode")
 
     def initialize_wandb_tracking(self):
@@ -71,9 +67,7 @@ class MemoryConstrainedEvolutionRunner:
                 "run_type": "historic_first_real_execution",
                 "generations": self.generations,
                 "population_size": self.population_size,
-                "memory_available_gb": memory_manager.get_memory_stats()[
-                    "system_ram_available_gb"
-                ],
+                "memory_available_gb": memory_manager.get_memory_stats()["system_ram_available_gb"],
                 "cpu_cores": 12,
                 "device": "cpu",
                 "memory_constrained": True,
@@ -88,9 +82,7 @@ class MemoryConstrainedEvolutionRunner:
                 {
                     "historic_milestone": 1,
                     "execution_start_time": time.time(),
-                    "available_memory_gb": memory_manager.get_memory_stats()[
-                        "system_ram_available_gb"
-                    ],
+                    "available_memory_gb": memory_manager.get_memory_stats()["system_ram_available_gb"],
                 }
             )
         else:
@@ -203,9 +195,7 @@ async def main():
             duration = (datetime.now() - runner.start_time).total_seconds()
 
             logger.info("=" * 80)
-            logger.info(
-                "🎉 HISTORIC SUCCESS - FIRST REAL AGENT FORGE EXECUTION COMPLETE!"
-            )
+            logger.info("🎉 HISTORIC SUCCESS - FIRST REAL AGENT FORGE EXECUTION COMPLETE!")
             logger.info("=" * 80)
             logger.info(f"Duration: {duration / 60:.1f} minutes")
             logger.info(f"Best Configuration: {best_config}")

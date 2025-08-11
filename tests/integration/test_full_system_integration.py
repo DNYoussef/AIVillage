@@ -36,9 +36,7 @@ class TestSystemIntegration:
         """Initialize all systems for testing"""
 
         # 1. Configure and initialize the real services with in-memory/test settings
-        self.evolution = EvolutionMetricsCollector(
-            config={"storage_backend": "sqlite", "db_path": ":memory:"}
-        )
+        self.evolution = EvolutionMetricsCollector(config={"storage_backend": "sqlite", "db_path": ":memory:"})
         await self.evolution.start()
 
         # RAG pipeline can be initialized with an empty dataset for testing its methods
@@ -102,9 +100,7 @@ class TestSystemIntegration:
 
         # Create a mock answer for the P2P share
         answer = {"text": "light good", "sources": ["wikipedia"], "confidence": 0.9}
-        message_sent = await self.p2p.send_message(
-            {"type": "LESSON_SHARE", "content": answer}
-        )
+        message_sent = await self.p2p.send_message({"type": "LESSON_SHARE", "content": answer})
         assert message_sent.delivery_status == "SUCCESS"
 
         # 6. Evolution tracks performance
@@ -137,9 +133,7 @@ class TestSystemIntegration:
             # await self.evolution.record_metric('offline_test', 1.0)
 
             # Credits should accumulate locally
-            credits = self.tokens.earn_credits(
-                user_id="test", action="OFFLINE_LESSON", metadata={}
-            )
+            credits = self.tokens.earn_credits(user_id="test", action="OFFLINE_LESSON", metadata={})
             assert credits > 0
 
         # Go back online

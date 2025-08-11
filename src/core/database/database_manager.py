@@ -286,7 +286,7 @@ class DatabaseManager:
     CREATE INDEX IF NOT EXISTS idx_query_cache_expires ON query_cache(expires_at);
     """
 
-    def __init__(self, config_manager=None):
+    def __init__(self, config_manager=None) -> None:
         """Initialize database manager."""
         self.config_manager = config_manager
         self.connections: dict[str, sqlite3.Connection] = {}
@@ -339,9 +339,7 @@ class DatabaseManager:
         databases = {
             "evolution_metrics": {
                 "path": (
-                    self.config_manager.get(
-                        "AIVILLAGE_DB_PATH", "./data/evolution_metrics.db"
-                    )
+                    self.config_manager.get("AIVILLAGE_DB_PATH", "./data/evolution_metrics.db")
                     if self.config_manager
                     else "./data/evolution_metrics.db"
                 ),
@@ -350,9 +348,7 @@ class DatabaseManager:
             },
             "digital_twin": {
                 "path": (
-                    self.config_manager.get(
-                        "DIGITAL_TWIN_DB_PATH", "./data/digital_twin.db"
-                    )
+                    self.config_manager.get("DIGITAL_TWIN_DB_PATH", "./data/digital_twin.db")
                     if self.config_manager
                     else "./data/digital_twin.db"
                 ),
@@ -411,13 +407,11 @@ class DatabaseManager:
             # Store connection
             self.connections[name] = conn
 
-            logger.info(
-                f"Database {name} initialized successfully with schema version {schema_version}"
-            )
+            logger.info(f"Database {name} initialized successfully with schema version {schema_version}")
 
         except Exception as e:
             conn.close()
-            logger.error(f"Failed to initialize database {name}: {e}")
+            logger.exception(f"Failed to initialize database {name}: {e}")
             raise
 
     async def _initialize_redis_connections(self) -> None:
@@ -431,16 +425,12 @@ class DatabaseManager:
 
         redis_configs = {
             "evolution_metrics": {
-                "url": self.config_manager.get(
-                    "AIVILLAGE_REDIS_URL", "redis://localhost:6379/0"
-                ),
+                "url": self.config_manager.get("AIVILLAGE_REDIS_URL", "redis://localhost:6379/0"),
                 "db": 0,
                 "description": "Evolution metrics real-time data",
             },
             "rag_cache": {
-                "url": self.config_manager.get(
-                    "RAG_REDIS_URL", "redis://localhost:6379/1"
-                ),
+                "url": self.config_manager.get("RAG_REDIS_URL", "redis://localhost:6379/1"),
                 "db": 1,
                 "description": "RAG pipeline caching",
             },
@@ -477,9 +467,7 @@ class DatabaseManager:
                 await redis_client.close()
 
                 self.redis_pools[pool_name] = pool
-                logger.info(
-                    f"Redis pool {pool_name} initialized: {config['description']}"
-                )
+                logger.info(f"Redis pool {pool_name} initialized: {config['description']}")
 
             except Exception as e:
                 logger.warning(f"Failed to initialize Redis pool {pool_name}: {e}")
@@ -496,15 +484,12 @@ class DatabaseManager:
 
         # Digital Twin encryption
         encryption_key = self.config_manager.get("DIGITAL_TWIN_ENCRYPTION_KEY")
-        if (
-            encryption_key
-            and encryption_key != "REPLACE_WITH_BASE64_ENCODED_32_BYTE_KEY"
-        ):
+        if encryption_key and encryption_key != "REPLACE_WITH_BASE64_ENCODED_32_BYTE_KEY":
             try:
                 self.encryption_keys["digital_twin"] = Fernet(encryption_key.encode())
                 logger.info("Digital Twin encryption enabled")
             except Exception as e:
-                logger.error(f"Failed to setup Digital Twin encryption: {e}")
+                logger.exception(f"Failed to setup Digital Twin encryption: {e}")
         else:
             logger.warning("Digital Twin encryption key not configured")
 
@@ -512,7 +497,8 @@ class DatabaseManager:
     def get_connection(self, database: str):
         """Get SQLite database connection (context manager)."""
         if database not in self.connections:
-            raise ValueError(f"Database {database} not initialized")
+            msg = f"Database {database} not initialized"
+            raise ValueError(msg)
 
         conn = self.connections[database]
         try:
@@ -545,9 +531,7 @@ class DatabaseManager:
         fernet = self.encryption_keys[encryption_type]
         return fernet.encrypt(data.encode()).decode()
 
-    def decrypt_data(
-        self, encrypted_data: str, encryption_type: str = "digital_twin"
-    ) -> str:
+    def decrypt_data(self, encrypted_data: str, encryption_type: str = "digital_twin") -> str:
         """Decrypt sensitive data."""
         if encryption_type not in self.encryption_keys:
             logger.warning(f"Encryption key {encryption_type} not available")
@@ -557,7 +541,7 @@ class DatabaseManager:
             fernet = self.encryption_keys[encryption_type]
             return fernet.decrypt(encrypted_data.encode()).decode()
         except Exception as e:
-            logger.error(f"Failed to decrypt data: {e}")
+            logger.exception(f"Failed to decrypt data: {e}")
             return encrypted_data
 
     async def check_database_integrity(self) -> dict[str, bool]:
@@ -571,11 +555,9 @@ class DatabaseManager:
                 cursor.execute("PRAGMA integrity_check")
                 result = cursor.fetchone()
                 results[f"sqlite_{db_name}"] = result[0] == "ok" if result else False
-                logger.info(
-                    f"Database {db_name} integrity: {results[f'sqlite_{db_name}']}"
-                )
+                logger.info(f"Database {db_name} integrity: {results[f'sqlite_{db_name}']}")
             except Exception as e:
-                logger.error(f"Integrity check failed for {db_name}: {e}")
+                logger.exception(f"Integrity check failed for {db_name}: {e}")
                 results[f"sqlite_{db_name}"] = False
 
         # Check Redis connections
@@ -588,7 +570,7 @@ class DatabaseManager:
                     else:
                         results[f"redis_{pool_name}"] = False
             except Exception as e:
-                logger.error(f"Redis connection check failed for {pool_name}: {e}")
+                logger.exception(f"Redis connection check failed for {pool_name}: {e}")
                 results[f"redis_{pool_name}"] = False
 
         return results
@@ -596,7 +578,8 @@ class DatabaseManager:
     async def create_backup(self, database: str, backup_path: str | None = None) -> str:
         """Create database backup."""
         if database not in self.connections:
-            raise ValueError(f"Database {database} not found")
+            msg = f"Database {database} not found"
+            raise ValueError(msg)
 
         if not backup_path:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -619,7 +602,7 @@ class DatabaseManager:
             backup_conn.close()
             if Path(backup_path).exists():
                 Path(backup_path).unlink()
-            logger.error(f"Backup failed for {database}: {e}")
+            logger.exception(f"Backup failed for {database}: {e}")
             raise
 
     async def optimize_databases(self) -> None:
@@ -643,7 +626,7 @@ class DatabaseManager:
                 conn.commit()
 
             except Exception as e:
-                logger.error(f"Optimization failed for {db_name}: {e}")
+                logger.exception(f"Optimization failed for {db_name}: {e}")
 
     async def get_database_stats(self) -> dict[str, dict[str, Any]]:
         """Get statistics for all databases."""
@@ -668,12 +651,7 @@ class DatabaseManager:
                         total_rows += count
 
                 # Get database size
-                if (
-                    self.connections[db_name]
-                    .execute("PRAGMA database_list")
-                    .fetchone()[2]
-                    != ":memory:"
-                ):
+                if self.connections[db_name].execute("PRAGMA database_list").fetchone()[2] != ":memory:":
                     cursor.execute("PRAGMA page_count")
                     page_count = cursor.fetchone()[0]
                     cursor.execute("PRAGMA page_size")
@@ -690,7 +668,7 @@ class DatabaseManager:
                 }
 
             except Exception as e:
-                logger.error(f"Failed to get stats for {db_name}: {e}")
+                logger.exception(f"Failed to get stats for {db_name}: {e}")
                 stats[db_name] = {"error": str(e)}
 
         return stats
@@ -705,7 +683,7 @@ class DatabaseManager:
                 conn.close()
                 logger.debug(f"Closed SQLite connection: {db_name}")
             except Exception as e:
-                logger.error(f"Error closing SQLite connection {db_name}: {e}")
+                logger.exception(f"Error closing SQLite connection {db_name}: {e}")
 
         self.connections.clear()
 
@@ -715,7 +693,7 @@ class DatabaseManager:
                 await pool.disconnect()
                 logger.debug(f"Closed Redis pool: {pool_name}")
             except Exception as e:
-                logger.error(f"Error closing Redis pool {pool_name}: {e}")
+                logger.exception(f"Error closing Redis pool {pool_name}: {e}")
 
         self.redis_pools.clear()
 
@@ -748,7 +726,7 @@ async def initialize_databases(config_manager=None) -> DatabaseManager:
 if __name__ == "__main__":
     import asyncio
 
-    async def main():
+    async def main() -> None:
         """Test database manager."""
         db_manager = DatabaseManager()
         await db_manager.initialize()

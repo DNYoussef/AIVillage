@@ -4,10 +4,7 @@ import unittest
 
 import pytest
 
-if (
-    importlib.util.find_spec("numpy") is None
-    or importlib.util.find_spec("torch") is None
-):
+if importlib.util.find_spec("numpy") is None or importlib.util.find_spec("torch") is None:
     msg = "Required dependency not installed"
     raise unittest.SkipTest(msg)
 
@@ -79,9 +76,7 @@ class DummyAgent:
 
 
 class TestSelfEvolvingSystem(unittest.IsolatedAsyncioTestCase):
-    @pytest.mark.xfail(
-        reason="SelfEvolvingSystem is a stub implementation - see unified_base_agent.py:791"
-    )
+    @pytest.mark.xfail(reason="SelfEvolvingSystem is a stub implementation - see unified_base_agent.py:791")
     async def test_evolve_agent(self):
         agent = DummyAgent()
         ses = SelfEvolvingSystem([agent])
@@ -90,9 +85,7 @@ class TestSelfEvolvingSystem(unittest.IsolatedAsyncioTestCase):
         assert "cap1" in agent.capabilities
         assert "cap2" in agent.capabilities
 
-    @pytest.mark.xfail(
-        reason="SelfEvolvingSystem is a stub implementation - see unified_base_agent.py:791"
-    )
+    @pytest.mark.xfail(reason="SelfEvolvingSystem is a stub implementation - see unified_base_agent.py:791")
     async def test_evolve_decision_maker(self):
         agent = DummyAgent()
         ses = SelfEvolvingSystem([agent])
@@ -105,9 +98,7 @@ class TestSelfEvolvingSystem(unittest.IsolatedAsyncioTestCase):
         assert ses.mcts.exploration_weight > old_weight
         assert ses.mcts.simulation_depth > old_depth
 
-    @pytest.mark.xfail(
-        reason="SelfEvolvingSystem is a stub implementation - see unified_base_agent.py:791"
-    )
+    @pytest.mark.xfail(reason="SelfEvolvingSystem is a stub implementation - see unified_base_agent.py:791")
     async def test_system_evolve(self):
         class EvoAgent(DummyAgent):
             async def evolve(self):

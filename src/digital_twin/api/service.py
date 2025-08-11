@@ -9,7 +9,11 @@ import uuid
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
-from src.digital_twin.core.digital_twin import DigitalTwin, LearningProfile, LearningSession
+from src.digital_twin.core.digital_twin import (
+    DigitalTwin,
+    LearningProfile,
+    LearningSession,
+)
 
 app = FastAPI(title="Digital Twin API")
 
@@ -88,9 +92,7 @@ async def create_twin(user_id: str, profile: UserProfile) -> dict[str, Any]:
 
 
 @app.post("/twin/{user_id}/learn")
-async def record_learning(
-    user_id: str, session: LearningSessionModel
-) -> dict[str, Any]:
+async def record_learning(user_id: str, session: LearningSessionModel) -> dict[str, Any]:
     """Record a learning session for the specified user."""
     twin = service._get_twin(user_id)
     sess = LearningSession(**session.dict())
@@ -104,9 +106,7 @@ async def record_learning(
 async def get_recommendations(user_id: str) -> dict[str, Any]:
     """Return personalized learning recommendations."""
     twin = service._get_twin(user_id)
-    simulated_paths = twin.shadow_simulator.explore_paths(
-        current_state=twin.current_knowledge, time_horizon=7
-    )
+    simulated_paths = twin.shadow_simulator.explore_paths(current_state=twin.current_knowledge, time_horizon=7)
     ranked_paths = twin.rank_by_learning_style(simulated_paths)
     top = ranked_paths[:5]
     return {
@@ -117,9 +117,7 @@ async def get_recommendations(user_id: str) -> dict[str, Any]:
 
 
 @app.post("/twin/{user_id}/marketplace/share")
-async def share_to_marketplace(
-    user_id: str, share_config: ShareConfig
-) -> dict[str, Any]:
+async def share_to_marketplace(user_id: str, share_config: ShareConfig) -> dict[str, Any]:
     """Share anonymized patterns to the marketplace."""
     twin = service._get_twin(user_id)
     patterns = twin.extract_learning_patterns()
@@ -132,11 +130,7 @@ async def share_to_marketplace(
 @app.get("/twin/{user_id}/health")
 async def health_check(user_id: str) -> dict[str, Any]:
     twin = service._get_twin(user_id)
-    last_activity = (
-        twin.session_history[user_id][-1].end_time
-        if twin.session_history[user_id]
-        else None
-    )
+    last_activity = twin.session_history[user_id][-1].end_time if twin.session_history[user_id] else None
     return {
         "vault_status": "encrypted",
         "sync_status": "healthy",
@@ -170,9 +164,7 @@ class TwinMobileSync:
 
     async def sync_from_mobile(self, mobile_data: bytes) -> bytes:
         decrypted = self.twin.decrypt_mobile_data(mobile_data)
-        merge_result = self.twin.merge_states(
-            local_state=decrypted, conflict_resolution="latest_wins"
-        )
+        merge_result = self.twin.merge_states(local_state=decrypted, conflict_resolution="latest_wins")
         diff = self.twin.generate_state_diff(merge_result)
         return self.twin.encrypt_for_mobile(diff)
 

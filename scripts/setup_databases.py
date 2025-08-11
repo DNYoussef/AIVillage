@@ -11,9 +11,7 @@ import sqlite3
 import sys
 
 # Setup logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 # Database configurations from CODEX Integration Requirements
@@ -202,7 +200,7 @@ DATABASE_CONFIGS = {
 class DatabaseSetup:
     """Database setup and initialization class."""
 
-    def __init__(self, base_path: str = "."):
+    def __init__(self, base_path: str = ".") -> None:
         self.base_path = Path(base_path)
         self.data_dir = self.base_path / "data"
         self.connections: dict[str, sqlite3.Connection] = {}
@@ -256,7 +254,7 @@ class DatabaseSetup:
                 conn = self.initialize_database(db_name, config)
                 self.connections[db_name] = conn
             except Exception as e:
-                logger.error(f"Failed to initialize {db_name}: {e}")
+                logger.exception(f"Failed to initialize {db_name}: {e}")
                 raise
 
         logger.info("All databases initialized successfully")
@@ -277,13 +275,11 @@ class DatabaseSetup:
                     logger.info(f"Database {db_name} integrity check: PASSED")
                 else:
                     results[db_name] = False
-                    logger.error(
-                        f"Database {db_name} integrity check: FAILED - {result}"
-                    )
+                    logger.error(f"Database {db_name} integrity check: FAILED - {result}")
 
             except Exception as e:
                 results[db_name] = False
-                logger.error(f"Database {db_name} integrity check error: {e}")
+                logger.exception(f"Database {db_name} integrity check error: {e}")
 
         return results
 
@@ -293,9 +289,7 @@ class DatabaseSetup:
 
         for db_name, conn in self.connections.items():
             try:
-                cursor = conn.execute(
-                    "SELECT name FROM sqlite_master WHERE type='table'"
-                )
+                cursor = conn.execute("SELECT name FROM sqlite_master WHERE type='table'")
                 tables = [row[0] for row in cursor.fetchall()]
 
                 cursor = conn.execute("PRAGMA page_count")
@@ -307,16 +301,14 @@ class DatabaseSetup:
                 size_bytes = page_count * page_size
 
                 info[db_name] = {
-                    "path": str(
-                        self.data_dir / Path(DATABASE_CONFIGS[db_name]["path"]).name
-                    ),
+                    "path": str(self.data_dir / Path(DATABASE_CONFIGS[db_name]["path"]).name),
                     "tables": tables,
                     "size_bytes": size_bytes,
                     "size_mb": round(size_bytes / (1024 * 1024), 2),
                 }
 
             except Exception as e:
-                logger.error(f"Error getting info for {db_name}: {e}")
+                logger.exception(f"Error getting info for {db_name}: {e}")
                 info[db_name] = {"error": str(e)}
 
         return info
@@ -330,7 +322,7 @@ class DatabaseSetup:
         self.connections.clear()
 
 
-def main():
+def main() -> bool | None:
     """Main database setup function."""
     logger.info("Starting CODEX database setup...")
 
@@ -338,7 +330,7 @@ def main():
         setup = DatabaseSetup()
 
         # Initialize all databases
-        connections = setup.setup_all_databases()
+        setup.setup_all_databases()
 
         # Verify integrity
         integrity_results = setup.verify_database_integrity()
@@ -358,9 +350,7 @@ def main():
                 print(f"  Tables: {len(info['tables'])}")
                 print(f"  Size: {info['size_mb']} MB")
                 print(f"  Tables: {', '.join(info['tables'])}")
-                print(
-                    f"  Integrity: {'✅ PASSED' if integrity_results.get(db_name) else '❌ FAILED'}"
-                )
+                print(f"  Integrity: {'✅ PASSED' if integrity_results.get(db_name) else '❌ FAILED'}")
             else:
                 print(f"\n{db_name.upper()} DATABASE: ❌ ERROR - {info['error']}")
 
@@ -375,7 +365,7 @@ def main():
         return True
 
     except Exception as e:
-        logger.error(f"Database setup failed: {e}")
+        logger.exception(f"Database setup failed: {e}")
         return False
 
 

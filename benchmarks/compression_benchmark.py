@@ -34,9 +34,7 @@ def run_benchmark() -> dict:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(
-        description="Run a simple compression benchmark and output JSON metrics"
-    )
+    parser = argparse.ArgumentParser(description="Run a simple compression benchmark and output JSON metrics")
     parser.add_argument(
         "--output",
         type=Path,

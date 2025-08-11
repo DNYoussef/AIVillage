@@ -49,9 +49,7 @@ class GDCExtractor:
     async def initialize(self) -> None:
         """Initialize Neo4j driver connection."""
         try:
-            self.driver = AsyncGraphDatabase.driver(
-                self.neo4j_uri, auth=self.neo4j_auth
-            )
+            self.driver = AsyncGraphDatabase.driver(self.neo4j_uri, auth=self.neo4j_auth)
             # Test connection
             async with self.driver.session() as session:
                 await session.run("RETURN 1")
@@ -96,9 +94,7 @@ class GDCExtractor:
 
         # Apply severity filter
         if severity_filter:
-            gdcs_to_scan = [
-                gdc for gdc in gdcs_to_scan if gdc.severity == severity_filter
-            ]
+            gdcs_to_scan = [gdc for gdc in gdcs_to_scan if gdc.severity == severity_filter]
 
         if not gdcs_to_scan:
             logger.warning("No GDCs match scan criteria")
@@ -159,16 +155,11 @@ class GDCExtractor:
                 logger.exception(f"Error scanning {gdc_spec.id}: {e}")
                 return []
 
-    async def _execute_gdc_query(
-        self, session: AsyncSession, gdc_spec: GDCSpec, limit: int
-    ) -> list[Violation]:
+    async def _execute_gdc_query(self, session: AsyncSession, gdc_spec: GDCSpec, limit: int) -> list[Violation]:
         """Execute a GDC Cypher query and convert results to violations."""
         # Add LIMIT to query if not present
         cypher = gdc_spec.cypher.strip()
-        if (
-            not cypher.lower().endswith(f"limit {limit}")
-            and "limit" not in cypher.lower()
-        ):
+        if not cypher.lower().endswith(f"limit {limit}") and "limit" not in cypher.lower():
             cypher += f" LIMIT {limit}"
 
         try:
@@ -186,9 +177,7 @@ class GDCExtractor:
             logger.exception(f"Cypher error in {gdc_spec.id}: {e}")
             return []
 
-    async def _record_to_violation(
-        self, record: dict[str, Any], gdc_spec: GDCSpec
-    ) -> Violation:
+    async def _record_to_violation(self, record: dict[str, Any], gdc_spec: GDCSpec) -> Violation:
         """Convert a Cypher query result record to a Violation object."""
         nodes = []
         edges = []
@@ -277,9 +266,7 @@ class GDCExtractor:
                     RETURN label, value.count as count
                 """
                 )
-                node_counts = {
-                    record["label"]: record["count"] async for record in node_result
-                }
+                node_counts = {record["label"]: record["count"] async for record in node_result}
 
                 # Get relationship counts by type
                 rel_result = await session.run(
@@ -290,10 +277,7 @@ class GDCExtractor:
                     RETURN relationshipType, value.count as count
                 """
                 )
-                rel_counts = {
-                    record["relationshipType"]: record["count"]
-                    async for record in rel_result
-                }
+                rel_counts = {record["relationshipType"]: record["count"] async for record in rel_result}
 
                 return {
                     "node_counts": node_counts,

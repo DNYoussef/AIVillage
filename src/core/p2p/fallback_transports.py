@@ -116,9 +116,7 @@ class FallbackTransport(ABC):
         """Add message handler."""
         self.message_handlers.append(handler)
 
-    def remove_message_handler(
-        self, handler: Callable[[TransportMessage], None]
-    ) -> None:
+    def remove_message_handler(self, handler: Callable[[TransportMessage], None]) -> None:
         """Remove message handler."""
         if handler in self.message_handlers:
             self.message_handlers.remove(handler)
@@ -141,9 +139,7 @@ class BluetoothTransport(FallbackTransport):
             node_id,
         )
         self.use_ble = use_ble
-        self.service_uuid = (
-            "12345678-1234-5678-9012-123456789abc"  # Custom service UUID
-        )
+        self.service_uuid = "12345678-1234-5678-9012-123456789abc"  # Custom service UUID
 
         # Try to import bluetooth libraries
         self.bluetooth_available = self._check_bluetooth_availability()
@@ -159,9 +155,7 @@ class BluetoothTransport(FallbackTransport):
 
             return True
         except ImportError:
-            logger.warning(
-                f"Bluetooth libraries not available for {self.transport_type}"
-            )
+            logger.warning(f"Bluetooth libraries not available for {self.transport_type}")
             return False
 
     async def start(self) -> bool:
@@ -340,9 +334,7 @@ class FileSystemTransport(FallbackTransport):
         try:
             if message.recipient:
                 # Direct message
-                recipient_inbox = os.path.join(
-                    self.base_dir, "nodes", message.recipient, "inbox"
-                )
+                recipient_inbox = os.path.join(self.base_dir, "nodes", message.recipient, "inbox")
                 if not os.path.exists(recipient_inbox):
                     logger.debug(f"Recipient inbox not found: {message.recipient}")
                     return False
@@ -350,9 +342,7 @@ class FileSystemTransport(FallbackTransport):
                 message_file = os.path.join(recipient_inbox, f"{message.id}.json")
             else:
                 # Broadcast message
-                message_file = os.path.join(
-                    self.base_dir, "broadcast", f"{message.id}.json"
-                )
+                message_file = os.path.join(self.base_dir, "broadcast", f"{message.id}.json")
                 os.makedirs(os.path.dirname(message_file), exist_ok=True)
 
             # Write message to file
@@ -405,9 +395,7 @@ class FileSystemTransport(FallbackTransport):
                                 os.remove(filepath)
 
                             except Exception as e:
-                                logger.debug(
-                                    f"Error processing message {filename}: {e}"
-                                )
+                                logger.debug(f"Error processing message {filename}: {e}")
 
                 # Check for broadcast messages
                 broadcast_dir = os.path.join(self.base_dir, "broadcast")
@@ -427,9 +415,7 @@ class FileSystemTransport(FallbackTransport):
                                     await self._handle_message(message)
 
                             except Exception as e:
-                                logger.debug(
-                                    f"Error processing broadcast {filename}: {e}"
-                                )
+                                logger.debug(f"Error processing broadcast {filename}: {e}")
 
                 await asyncio.sleep(1)  # Check every second
 
@@ -441,9 +427,7 @@ class FileSystemTransport(FallbackTransport):
         """Announce presence via discovery file."""
         while self._running:
             try:
-                presence_file = os.path.join(
-                    self.discovery_dir, f"{self.node_id}.presence"
-                )
+                presence_file = os.path.join(self.discovery_dir, f"{self.node_id}.presence")
                 presence_data = {
                     "node_id": self.node_id,
                     "timestamp": time.time(),
@@ -474,9 +458,7 @@ class LocalSocketTransport(FallbackTransport):
         self.status = TransportStatus.STARTING
 
         try:
-            self.server = await asyncio.start_server(
-                self._handle_connection, "127.0.0.1", self.listen_port
-            )
+            self.server = await asyncio.start_server(self._handle_connection, "127.0.0.1", self.listen_port)
 
             self.status = TransportStatus.ACTIVE
             logger.info(f"Local socket transport started on port {self.listen_port}")
@@ -560,9 +542,7 @@ class LocalSocketTransport(FallbackTransport):
                     continue
 
                 try:
-                    reader, writer = await asyncio.wait_for(
-                        asyncio.open_connection("127.0.0.1", port), timeout=0.1
-                    )
+                    reader, writer = await asyncio.wait_for(asyncio.open_connection("127.0.0.1", port), timeout=0.1)
 
                     # Send discovery message
                     discovery_msg = {
@@ -591,9 +571,7 @@ class LocalSocketTransport(FallbackTransport):
 
         return peers
 
-    async def _handle_connection(
-        self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter
-    ) -> None:
+    async def _handle_connection(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
         """Handle incoming connection."""
         peer_addr = writer.get_extra_info("peername")
 
@@ -657,14 +635,10 @@ class FallbackTransportManager:
                     logger.warning(f"Failed to start transport: {transport_type.value}")
 
             except Exception as e:
-                logger.exception(
-                    f"Error starting transport {transport_type.value}: {e}"
-                )
+                logger.exception(f"Error starting transport {transport_type.value}: {e}")
                 results[transport_type] = False
 
-        logger.info(
-            f"Started {len(self.active_transports)}/{len(self.transports)} transports"
-        )
+        logger.info(f"Started {len(self.active_transports)}/{len(self.transports)} transports")
         return results
 
     async def stop_all_transports(self) -> None:
@@ -717,9 +691,7 @@ class FallbackTransportManager:
                 peers = await transport.discover_peers()
                 results[transport.transport_type] = peers
             except Exception as e:
-                logger.exception(
-                    f"Discovery failed for {transport.transport_type.value}: {e}"
-                )
+                logger.exception(f"Discovery failed for {transport.transport_type.value}: {e}")
                 results[transport.transport_type] = []
 
         return results
@@ -728,9 +700,7 @@ class FallbackTransportManager:
         """Add message handler."""
         self.message_handlers.append(handler)
 
-    def remove_message_handler(
-        self, handler: Callable[[TransportMessage], None]
-    ) -> None:
+    def remove_message_handler(self, handler: Callable[[TransportMessage], None]) -> None:
         """Remove message handler."""
         if handler in self.message_handlers:
             self.message_handlers.remove(handler)

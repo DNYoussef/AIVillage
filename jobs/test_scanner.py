@@ -59,9 +59,7 @@ async def test_hippo_analyzer() -> None:
                 f"  {pair.entity1} <-> {pair.entity2}: {pair.co_mention_count} mentions (confidence: {pair.confidence:.2f})"
             )
 
-        assert (
-            len(pairs) >= 2
-        ), "Should find at least aspirin-headache and ibuprofen-headache pairs"
+        assert len(pairs) >= 2, "Should find at least aspirin-headache and ibuprofen-headache pairs"
         print("+ HippoIndexAnalyzer test passed")
 
 
@@ -71,12 +69,8 @@ async def test_divergent_scanner() -> None:
 
     # Create mock co-mention pairs
     pairs = [
-        CoMentionPair(
-            entity1="aspirin", entity2="headache", co_mention_count=3, confidence=0.8
-        ),
-        CoMentionPair(
-            entity1="ibuprofen", entity2="headache", co_mention_count=2, confidence=0.6
-        ),
+        CoMentionPair(entity1="aspirin", entity2="headache", co_mention_count=3, confidence=0.8),
+        CoMentionPair(entity1="ibuprofen", entity2="headache", co_mention_count=2, confidence=0.6),
     ]
 
     scanner = DivergentRetrieverScanner(None)  # Mock retriever

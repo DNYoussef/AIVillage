@@ -53,12 +53,8 @@ async def test_mesh_simple():
     stats2 = node2.get_network_statistics()
 
     print("\nNetwork Statistics:")
-    print(
-        f"  Node 1 - Active peers: {stats1['active_peers']}, Routes: {stats1['routing_entries']}"
-    )
-    print(
-        f"  Node 2 - Active peers: {stats2['active_peers']}, Routes: {stats2['routing_entries']}"
-    )
+    print(f"  Node 1 - Active peers: {stats1['active_peers']}, Routes: {stats1['routing_entries']}")
+    print(f"  Node 2 - Active peers: {stats2['active_peers']}, Routes: {stats2['routing_entries']}")
 
     # Check health
     health1 = stats1["network_health"]
@@ -91,9 +87,7 @@ async def test_mesh_simple():
     print("\nFinal Results:")
     print(f"  Total messages processed: {final_health['total_messages']}")
     print(f"  Success rate: {final_health['success_rate']:.1%}")
-    print(
-        f"  Network operational: {'YES' if final_health['success_rate'] > 0.8 else 'NO'}"
-    )
+    print(f"  Network operational: {'YES' if final_health['success_rate'] > 0.8 else 'NO'}")
 
     # Test resilience
     print("\nTesting network resilience...")
@@ -108,11 +102,7 @@ async def test_mesh_simple():
     print("MESH NETWORK INTEGRATION TEST COMPLETE")
 
     # Determine overall result
-    success = (
-        stats1["active_peers"] > 0
-        and final_health["success_rate"] >= 1.0
-        and final_health["total_messages"] >= 4
-    )
+    success = stats1["active_peers"] > 0 and final_health["success_rate"] >= 1.0 and final_health["total_messages"] >= 4
 
     print(f"OVERALL RESULT: {'SUCCESS' if success else 'FAILED'}")
 

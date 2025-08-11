@@ -28,9 +28,7 @@ class GGUFReader:
             # Read metadata
             n_tensors = struct.unpack("<Q", f.read(8))[0]
             n_kv = struct.unpack("<Q", f.read(8))[0]
-            logger.debug(
-                f"Number of tensors: {n_tensors}, Number of metadata key-value pairs: {n_kv}"
-            )
+            logger.debug(f"Number of tensors: {n_tensors}, Number of metadata key-value pairs: {n_kv}")
 
             for _ in range(n_kv):
                 key_length = struct.unpack("<Q", f.read(8))[0]
@@ -137,9 +135,7 @@ class GGUFWriter:
                 self._write_value(f, value)
 
             # Write tensor information
-            offset = f.tell() + len(self.tensors) * (
-                8 + 4 + 8 + 8
-            )  # Estimate tensor data start
+            offset = f.tell() + len(self.tensors) * (8 + 4 + 8 + 8)  # Estimate tensor data start
             for name, tensor in self.tensors.items():
                 f.write(struct.pack("<Q", len(name)))
                 f.write(name.encode("utf-8"))

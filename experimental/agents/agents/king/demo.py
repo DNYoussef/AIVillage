@@ -14,9 +14,7 @@ from rag_system.core.config import UnifiedConfig
 from rag_system.core.pipeline import EnhancedRAGPipeline as RAGSystem
 
 # Set up logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -57,17 +55,13 @@ async def run_demo() -> None:
                 type=MessageType.TASK,
                 sender="User",
                 receiver="KingAgent",
-                content={
-                    "description": "Develop a simple machine learning model for sentiment analysis"
-                },
+                content={"description": "Develop a simple machine learning model for sentiment analysis"},
             ),
             Message(
                 type=MessageType.TASK,
                 sender="User",
                 receiver="KingAgent",
-                content={
-                    "description": "Summarize recent advancements in quantum computing"
-                },
+                content={"description": "Summarize recent advancements in quantum computing"},
             ),
         ]
 

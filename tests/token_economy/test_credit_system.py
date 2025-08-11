@@ -9,9 +9,7 @@ def test_earn_and_spend_credits():
         db_path = Path(tmp) / "credits.db"
         cs = VILLAGECreditSystem(str(db_path))
         cs.add_earning_rule(EarningRule("LESSON", 10, {}, {}))
-        earned = cs.earn_credits(
-            "user1", "LESSON", {"location": "Nigeria", "country": "Nigeria"}
-        )
+        earned = cs.earn_credits("user1", "LESSON", {"location": "Nigeria", "country": "Nigeria"})
         assert earned == int(10 * 1.5 * 1.3 * 2)
         balance = cs.get_balance("user1")
         assert balance == earned

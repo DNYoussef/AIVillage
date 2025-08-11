@@ -189,9 +189,7 @@ def main():
         failed_services = [r for r in results if not r["success"]]
 
         # Group by service type
-        p2p_failed = any(
-            "LibP2P" in r["service"] or "mDNS" in r["service"] for r in failed_services
-        )
+        p2p_failed = any("LibP2P" in r["service"] or "mDNS" in r["service"] for r in failed_services)
         api_failed = any("API" in r["service"] for r in failed_services)
         redis_failed = any("Redis" in r["service"] for r in failed_services)
 

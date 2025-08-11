@@ -131,9 +131,7 @@ def load_and_test_real_compression():
 
                 # Final result
                 final_ratio = original_size / s4_size
-                print(
-                    f"  RESULT: {original_size / (1024**2):.1f}MB -> {s4_size / 1024:.1f}KB ({final_ratio:.1f}x)"
-                )
+                print(f"  RESULT: {original_size / (1024**2):.1f}MB -> {s4_size / 1024:.1f}KB ({final_ratio:.1f}x)")
 
                 results[key] = {
                     "original_size": original_size,
@@ -188,9 +186,7 @@ def analyze_results_and_extrapolate(results, successful_tests, total_params):
     all_stages_work = successful_tests > 0
 
     print("  Stage 1 (BitNet): WORKS on all layers")
-    print(
-        f"  Stage 2 (SeedLM): WORKS on {stage2_compatible}/{successful_tests} compatible layers"
-    )
+    print(f"  Stage 2 (SeedLM): WORKS on {stage2_compatible}/{successful_tests} compatible layers")
     print("  Stage 3 (VPTQ): WORKS on all layers")
     print("  Stage 4 (LZMA): WORKS on all layers")
 
@@ -256,9 +252,7 @@ def main():
 
         if successful_tests > 0:
             # Analyze and extrapolate
-            final_results = analyze_results_and_extrapolate(
-                results, successful_tests, total_params
-            )
+            final_results = analyze_results_and_extrapolate(results, successful_tests, total_params)
 
             if final_results and final_results["success"]:
                 print("\n" + "=" * 80)
@@ -271,20 +265,12 @@ def main():
 
                 print("PROVEN WITH REAL MODEL:")
                 print("  ✓ Model: DeepSeek-R1-Distill-Qwen-1.5B (ACTUAL DOWNLOAD)")
-                print(
-                    f"  ✓ Parameters: {final_results['model_params']:,} ({param_b:.2f}B)"
-                )
-                print(
-                    f"  ✓ All 4 compression stages: {'WORKING' if final_results['all_stages_work'] else 'PARTIAL'}"
-                )
+                print(f"  ✓ Parameters: {final_results['model_params']:,} ({param_b:.2f}B)")
+                print(f"  ✓ All 4 compression stages: {'WORKING' if final_results['all_stages_work'] else 'PARTIAL'}")
                 print(f"  ✓ Measured compression: {ratio:.1f}x")
                 print(f"  ✓ Final size: {size_mb:.1f} MB")
-                print(
-                    f"  ✓ Mobile deployment: {'READY' if final_results['mobile_viable'] else 'LIMITED'}"
-                )
-                print(
-                    f"  ✓ Kenya deployment: {'READY' if final_results['kenya_viable'] else 'MARGINAL'}"
-                )
+                print(f"  ✓ Mobile deployment: {'READY' if final_results['mobile_viable'] else 'LIMITED'}")
+                print(f"  ✓ Kenya deployment: {'READY' if final_results['kenya_viable'] else 'MARGINAL'}")
 
                 # Final assessment
                 is_1_5b_scale = param_b >= 1.0 and param_b <= 2.5
@@ -292,38 +278,21 @@ def main():
                 mobile_ready = final_results["mobile_viable"]
 
                 overall_success = (
-                    is_1_5b_scale
-                    and final_results["all_stages_work"]
-                    and significant_compression
-                    and mobile_ready
+                    is_1_5b_scale and final_results["all_stages_work"] and significant_compression and mobile_ready
                 )
 
                 print("\nFINAL VERIFICATION:")
-                print(
-                    f"  Real 1.5B scale model: {'YES' if is_1_5b_scale else 'NO'} ({param_b:.2f}B)"
-                )
-                print(
-                    f"  All stages functional: {'YES' if final_results['all_stages_work'] else 'NO'}"
-                )
-                print(
-                    f"  Significant compression: {'YES' if significant_compression else 'NO'} ({ratio:.1f}x)"
-                )
-                print(
-                    f"  Mobile deployment ready: {'YES' if mobile_ready else 'NO'} ({size_mb:.1f}MB)"
-                )
+                print(f"  Real 1.5B scale model: {'YES' if is_1_5b_scale else 'NO'} ({param_b:.2f}B)")
+                print(f"  All stages functional: {'YES' if final_results['all_stages_work'] else 'NO'}")
+                print(f"  Significant compression: {'YES' if significant_compression else 'NO'} ({ratio:.1f}x)")
+                print(f"  Mobile deployment ready: {'YES' if mobile_ready else 'NO'} ({size_mb:.1f}MB)")
 
                 if overall_success:
                     print("\n🎉 **COMPRESSION CLAIMS PROVEN WITH REAL MODEL!**")
-                    print(
-                        "   ✅ Downloaded and tested actual DeepSeek-R1-Distill-Qwen-1.5B"
-                    )
+                    print("   ✅ Downloaded and tested actual DeepSeek-R1-Distill-Qwen-1.5B")
                     print("   ✅ All 4 compression stages work on real model weights")
-                    print(
-                        f"   ✅ Achieves {ratio:.1f}x compression on {param_b:.2f}B parameter model"
-                    )
-                    print(
-                        f"   ✅ Compresses {param_b:.2f}B model to {size_mb:.1f}MB for mobile"
-                    )
+                    print(f"   ✅ Achieves {ratio:.1f}x compression on {param_b:.2f}B parameter model")
+                    print(f"   ✅ Compresses {param_b:.2f}B model to {size_mb:.1f}MB for mobile")
                     print("   ✅ Ready for deployment on 2GB phones in Kenya")
                     print("\n   **NO MORE SYNTHETIC DATA - THIS IS REAL!**")
                 else:

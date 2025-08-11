@@ -10,9 +10,7 @@ import subprocess
 import sys
 
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -31,9 +29,7 @@ class DevEnvironmentSetup:
         """Run a command and return (returncode, stdout, stderr)."""
         logger.info(f"Running: {' '.join(cmd)}")
         try:
-            result = subprocess.run(
-                cmd, capture_output=True, text=True, check=check, cwd=self.project_root
-            )
+            result = subprocess.run(cmd, capture_output=True, text=True, check=check, cwd=self.project_root)
             return result.returncode, result.stdout, result.stderr
         except subprocess.CalledProcessError as e:
             logger.exception(f"Command failed: {e}")
@@ -44,9 +40,7 @@ class DevEnvironmentSetup:
         logger.info("Checking Python version...")
         version = sys.version_info
         if version < (3, 10):
-            logger.error(
-                f"Python 3.10+ required, found {version.major}.{version.minor}"
-            )
+            logger.error(f"Python 3.10+ required, found {version.major}.{version.minor}")
             return False
         logger.info(f"Python {version.major}.{version.minor}.{version.micro} - OK")
         return True
@@ -76,9 +70,7 @@ class DevEnvironmentSetup:
 
         # Try poetry first
         if (self.project_root / "pyproject.toml").exists():
-            returncode, _, stderr = self.run_command(
-                ["poetry", "install", "--with", "dev"], check=False
-            )
+            returncode, _, stderr = self.run_command(["poetry", "install", "--with", "dev"], check=False)
             if returncode == 0:
                 logger.info("Dependencies installed via poetry")
                 return True
@@ -176,9 +168,7 @@ OUTPUTS_DIR=./outputs
             return False
 
         # Check if tests can be discovered
-        returncode, stdout, _ = self.run_command(
-            [sys.executable, "-m", "pytest", "--collect-only", "-q"], check=False
-        )
+        returncode, stdout, _ = self.run_command([sys.executable, "-m", "pytest", "--collect-only", "-q"], check=False)
 
         if returncode == 0:
             logger.info("Test discovery successful")
@@ -219,15 +209,9 @@ OUTPUTS_DIR=./outputs
 
 def main() -> int:
     """Main setup function."""
-    parser = argparse.ArgumentParser(
-        description="Set up AIVillage development environment"
-    )
-    parser.add_argument(
-        "--skip-deps", action="store_true", help="Skip dependency installation"
-    )
-    parser.add_argument(
-        "--skip-validation", action="store_true", help="Skip setup validation"
-    )
+    parser = argparse.ArgumentParser(description="Set up AIVillage development environment")
+    parser.add_argument("--skip-deps", action="store_true", help="Skip dependency installation")
+    parser.add_argument("--skip-validation", action="store_true", help="Skip setup validation")
     parser.add_argument("--project-root", type=Path, help="Project root directory")
 
     args = parser.parse_args()

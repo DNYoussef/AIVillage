@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict
+from typing import Any
 
 
 class VaultManager:
@@ -10,7 +10,7 @@ class VaultManager:
 
     def __init__(self) -> None:
         self.vault_path = "./vault"
-        self._storage: Dict[str, Any] = {}
+        self._storage: dict[str, Any] = {}
 
     def store(self, key: str, value: Any) -> None:
         """Persist ``value`` under ``key``."""

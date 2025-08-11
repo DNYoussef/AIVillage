@@ -108,9 +108,7 @@ def device_profiles():
 @pytest.fixture
 def sharding_engine(mock_p2p_node, mock_resource_monitor, mock_device_profiler):
     """Create ModelShardingEngine for testing"""
-    return ModelShardingEngine(
-        mock_p2p_node, mock_resource_monitor, mock_device_profiler
-    )
+    return ModelShardingEngine(mock_p2p_node, mock_resource_monitor, mock_device_profiler)
 
 
 @pytest.fixture
@@ -193,9 +191,7 @@ class TestModelShardingEngine:
         assert profiles[0].available_memory_mb >= profiles[1].available_memory_mb
 
     @pytest.mark.asyncio
-    async def test_memory_aware_sharding(
-        self, sharding_engine, device_profiles, temp_model_dir
-    ):
+    async def test_memory_aware_sharding(self, sharding_engine, device_profiles, temp_model_dir):
         """Test memory-aware sharding strategy"""
         # Mock model analysis
         mock_analysis = {
@@ -206,12 +202,8 @@ class TestModelShardingEngine:
             "total_memory_mb": 1200.0,
         }
 
-        with patch.object(
-            sharding_engine, "_analyze_model", return_value=mock_analysis
-        ):
-            plan = await sharding_engine._create_memory_aware_plan(
-                mock_analysis, device_profiles
-            )
+        with patch.object(sharding_engine, "_analyze_model", return_value=mock_analysis):
+            plan = await sharding_engine._create_memory_aware_plan(mock_analysis, device_profiles)
 
             # Verify plan structure
             assert isinstance(plan, ShardingPlan)
@@ -220,18 +212,14 @@ class TestModelShardingEngine:
 
             # Verify memory constraints are respected
             for shard in plan.shards:
-                device = next(
-                    d for d in device_profiles if d.device_id == shard.device_id
-                )
+                device = next(d for d in device_profiles if d.device_id == shard.device_id)
                 assert shard.memory_mb <= device.available_memory_mb
 
             # Verify activation routing
             assert len(plan.activation_routing) == len(plan.shards)
 
     @pytest.mark.asyncio
-    async def test_compute_balanced_sharding(
-        self, sharding_engine, device_profiles, temp_model_dir
-    ):
+    async def test_compute_balanced_sharding(self, sharding_engine, device_profiles, temp_model_dir):
         """Test compute-balanced sharding strategy"""
         mock_analysis = {
             "model_path": temp_model_dir,
@@ -241,12 +229,8 @@ class TestModelShardingEngine:
             "total_memory_mb": 960.0,
         }
 
-        with patch.object(
-            sharding_engine, "_analyze_model", return_value=mock_analysis
-        ):
-            plan = await sharding_engine._create_compute_balanced_plan(
-                mock_analysis, device_profiles
-            )
+        with patch.object(sharding_engine, "_analyze_model", return_value=mock_analysis):
+            plan = await sharding_engine._create_compute_balanced_plan(mock_analysis, device_profiles)
 
             # Verify plan structure
             assert isinstance(plan, ShardingPlan)
@@ -255,26 +239,18 @@ class TestModelShardingEngine:
             # Verify compute distribution is reasonable
             device_loads = {}
             for shard in plan.shards:
-                device = next(
-                    d for d in device_profiles if d.device_id == shard.device_id
-                )
+                device = next(d for d in device_profiles if d.device_id == shard.device_id)
                 load_ratio = shard.compute_requirement / device.compute_score
-                device_loads[shard.device_id] = (
-                    device_loads.get(shard.device_id, 0) + load_ratio
-                )
+                device_loads[shard.device_id] = device_loads.get(shard.device_id, 0) + load_ratio
 
             # Should have relatively balanced loads
             load_values = list(device_loads.values())
             if len(load_values) > 1:
-                load_variance = sum(
-                    (x - sum(load_values) / len(load_values)) ** 2 for x in load_values
-                )
+                load_variance = sum((x - sum(load_values) / len(load_values)) ** 2 for x in load_values)
                 assert load_variance < 2.0  # Reasonable variance threshold
 
     @pytest.mark.asyncio
-    async def test_sharding_plan_optimization(
-        self, sharding_engine, device_profiles, temp_model_dir
-    ):
+    async def test_sharding_plan_optimization(self, sharding_engine, device_profiles, temp_model_dir):
         """Test sharding plan optimization"""
         # Create a plan with memory constraint violations
         problematic_shard = ModelShard(
@@ -295,9 +271,7 @@ class TestModelShardingEngine:
             compute_balance_score=0.7,
         )
 
-        optimized_plan = await sharding_engine._optimize_sharding_plan(
-            initial_plan, device_profiles
-        )
+        optimized_plan = await sharding_engine._optimize_sharding_plan(initial_plan, device_profiles)
 
         # Should have resolved memory constraints
         for shard in optimized_plan.shards:
@@ -305,9 +279,7 @@ class TestModelShardingEngine:
             assert shard.memory_mb <= device.available_memory_mb
 
     @pytest.mark.asyncio
-    async def test_hybrid_sharding_strategy(
-        self, sharding_engine, device_profiles, temp_model_dir
-    ):
+    async def test_hybrid_sharding_strategy(self, sharding_engine, device_profiles, temp_model_dir):
         """Test hybrid sharding strategy"""
         mock_analysis = {
             "model_path": temp_model_dir,
@@ -317,12 +289,8 @@ class TestModelShardingEngine:
             "total_memory_mb": 1200.0,
         }
 
-        with patch.object(
-            sharding_engine, "_analyze_model", return_value=mock_analysis
-        ):
-            plan = await sharding_engine._create_hybrid_plan(
-                mock_analysis, device_profiles
-            )
+        with patch.object(sharding_engine, "_analyze_model", return_value=mock_analysis):
+            plan = await sharding_engine._create_hybrid_plan(mock_analysis, device_profiles)
 
             # Should choose the better of memory-aware or compute-balanced
             assert isinstance(plan, ShardingPlan)
@@ -333,16 +301,12 @@ class TestModelShardingEngine:
             assert 0.0 <= plan.compute_balance_score <= 1.0
 
     @pytest.mark.asyncio
-    async def test_full_sharding_workflow(
-        self, sharding_engine, device_profiles, temp_model_dir
-    ):
+    async def test_full_sharding_workflow(self, sharding_engine, device_profiles, temp_model_dir):
         """Test complete sharding workflow"""
         # Mock dependencies
         with (
             patch.object(sharding_engine, "_analyze_model") as mock_analyze,
-            patch.object(
-                sharding_engine, "_get_device_profiles", return_value=device_profiles
-            ),
+            patch.object(sharding_engine, "_get_device_profiles", return_value=device_profiles),
         ):
             mock_analyze.return_value = {
                 "model_path": temp_model_dir,
@@ -355,9 +319,7 @@ class TestModelShardingEngine:
             }
 
             # Execute sharding
-            plan = await sharding_engine.shard_model(
-                temp_model_dir, strategy=ShardingStrategy.HYBRID
-            )
+            plan = await sharding_engine.shard_model(temp_model_dir, strategy=ShardingStrategy.HYBRID)
 
             # Verify results
             assert sharding_engine.current_sharding_plan == plan
@@ -369,16 +331,12 @@ class TestModelShardingEngine:
             sharding_engine.p2p_node.broadcast_to_peers.assert_called()
 
     @pytest.mark.asyncio
-    async def test_device_failure_handling(
-        self, sharding_engine, device_profiles, temp_model_dir
-    ):
+    async def test_device_failure_handling(self, sharding_engine, device_profiles, temp_model_dir):
         """Test handling of device failures during sharding"""
         # Create initial sharding plan
         with (
             patch.object(sharding_engine, "_analyze_model") as mock_analyze,
-            patch.object(
-                sharding_engine, "_get_device_profiles", return_value=device_profiles
-            ),
+            patch.object(sharding_engine, "_get_device_profiles", return_value=device_profiles),
         ):
             mock_analyze.return_value = {
                 "model_path": temp_model_dir,
@@ -392,22 +350,14 @@ class TestModelShardingEngine:
 
             # Simulate device failure by removing device from profiles
             failed_device_id = plan.shards[0].device_id
-            remaining_devices = [
-                d for d in device_profiles if d.device_id != failed_device_id
-            ]
+            remaining_devices = [d for d in device_profiles if d.device_id != failed_device_id]
 
             # Test resharding with failed device
-            with patch.object(
-                sharding_engine, "_get_device_profiles", return_value=remaining_devices
-            ):
-                new_plan = await sharding_engine._create_memory_aware_plan(
-                    mock_analyze.return_value, remaining_devices
-                )
+            with patch.object(sharding_engine, "_get_device_profiles", return_value=remaining_devices):
+                new_plan = await sharding_engine._create_memory_aware_plan(mock_analyze.return_value, remaining_devices)
 
                 # Should not assign shards to failed device
-                assert all(
-                    shard.device_id != failed_device_id for shard in new_plan.shards
-                )
+                assert all(shard.device_id != failed_device_id for shard in new_plan.shards)
 
     @pytest.mark.asyncio
     async def test_memory_constraint_validation(self, sharding_engine, device_profiles):
@@ -432,9 +382,7 @@ class TestModelShardingEngine:
         )
 
         # Optimization should handle the constraint violation
-        optimized_plan = await sharding_engine._optimize_sharding_plan(
-            plan, device_profiles
-        )
+        optimized_plan = await sharding_engine._optimize_sharding_plan(plan, device_profiles)
 
         # Should either split the shard or move it to a larger device
         for shard in optimized_plan.shards:
@@ -442,9 +390,7 @@ class TestModelShardingEngine:
             assert shard.memory_mb <= device.available_memory_mb
 
     @pytest.mark.asyncio
-    async def test_activation_routing(
-        self, sharding_engine, device_profiles, temp_model_dir
-    ):
+    async def test_activation_routing(self, sharding_engine, device_profiles, temp_model_dir):
         """Test activation routing between shards"""
         mock_analysis = {
             "model_path": temp_model_dir,
@@ -454,12 +400,8 @@ class TestModelShardingEngine:
             "total_memory_mb": 600.0,
         }
 
-        with patch.object(
-            sharding_engine, "_analyze_model", return_value=mock_analysis
-        ):
-            plan = await sharding_engine._create_sequential_plan(
-                mock_analysis, device_profiles
-            )
+        with patch.object(sharding_engine, "_analyze_model", return_value=mock_analysis):
+            plan = await sharding_engine._create_sequential_plan(mock_analysis, device_profiles)
 
             # Verify activation routing forms a proper chain
             assert len(plan.activation_routing) == len(plan.shards)
@@ -472,9 +414,7 @@ class TestModelShardingEngine:
             for i in range(1, len(plan.shards)):
                 current_shard = plan.shards[i]
                 previous_shard = plan.shards[i - 1]
-                assert plan.activation_routing[current_shard.shard_id] == [
-                    previous_shard.shard_id
-                ]
+                assert plan.activation_routing[current_shard.shard_id] == [previous_shard.shard_id]
 
     def test_memory_efficiency_calculation(self, sharding_engine, device_profiles):
         """Test memory efficiency calculation"""
@@ -484,9 +424,7 @@ class TestModelShardingEngine:
             ModelShard("shard3", "device_3", [4, 5], 1000, 150.0, 1.0),
         ]
 
-        efficiency = sharding_engine._calculate_memory_efficiency(
-            shards, device_profiles
-        )
+        efficiency = sharding_engine._calculate_memory_efficiency(shards, device_profiles)
 
         # Total used: 450MB, Total available: ~21GB (sum of device memory)
         total_available = sum(d.available_memory_mb for d in device_profiles)
@@ -502,25 +440,19 @@ class TestModelShardingEngine:
             ModelShard("shard3", "device_3", [4, 5], 1000, 100.0, 0.5),
         ]
 
-        balance_score = sharding_engine._calculate_compute_balance(
-            shards, device_profiles
-        )
+        balance_score = sharding_engine._calculate_compute_balance(shards, device_profiles)
 
         # Should be between 0 and 1
         assert 0.0 <= balance_score <= 1.0
 
         # Better balance should have higher score
         balanced_shards = [
-            ModelShard(
-                "shard1", "device_1", [0, 1], 1000, 100.0, 3.0
-            ),  # Matches device compute
+            ModelShard("shard1", "device_1", [0, 1], 1000, 100.0, 3.0),  # Matches device compute
             ModelShard("shard2", "device_2", [2, 3], 1000, 100.0, 2.0),  # Proportional
             ModelShard("shard3", "device_3", [4, 5], 1000, 100.0, 1.0),  # Proportional
         ]
 
-        balanced_score = sharding_engine._calculate_compute_balance(
-            balanced_shards, device_profiles
-        )
+        balanced_score = sharding_engine._calculate_compute_balance(balanced_shards, device_profiles)
         assert balanced_score >= balance_score  # More balanced should score higher
 
     @pytest.mark.asyncio

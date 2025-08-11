@@ -19,8 +19,6 @@ class SVFLinear(nn.Module):
 def replace_linear_with_svf(model: nn.Module, rank: int) -> None:
     for name, module in model.named_children():
         if isinstance(module, nn.Linear):
-            setattr(
-                model, name, SVFLinear(module.in_features, module.out_features, rank)
-            )
+            setattr(model, name, SVFLinear(module.in_features, module.out_features, rank))
         else:
             replace_linear_with_svf(module, rank)

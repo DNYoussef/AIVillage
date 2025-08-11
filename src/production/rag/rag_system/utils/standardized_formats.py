@@ -13,24 +13,12 @@ class OutputFormat(str, Enum):
 
 class StandardizedPrompt(BaseModel):
     task: str = Field(..., description="The main task or question to be addressed")
-    context: str = Field(
-        ..., description="Any relevant context or background information"
-    )
-    constraints: list[str] = Field(
-        default=[], description="Any constraints or limitations to consider"
-    )
-    examples: list[dict[str, str]] = Field(
-        default=[], description="Optional examples to guide the response"
-    )
-    output_format: OutputFormat = Field(
-        ..., description="The desired format for the output"
-    )
-    additional_instructions: str = Field(
-        default="", description="Any additional instructions or guidelines"
-    )
-    metadata: dict[str, Any] = Field(
-        default={}, description="Any additional metadata for the prompt"
-    )
+    context: str = Field(..., description="Any relevant context or background information")
+    constraints: list[str] = Field(default=[], description="Any constraints or limitations to consider")
+    examples: list[dict[str, str]] = Field(default=[], description="Optional examples to guide the response")
+    output_format: OutputFormat = Field(..., description="The desired format for the output")
+    additional_instructions: str = Field(default="", description="Any additional instructions or guidelines")
+    metadata: dict[str, Any] = Field(default={}, description="Any additional metadata for the prompt")
 
     def to_string(self) -> str:
         prompt = f"Task: {self.task}\n\n"
@@ -62,27 +50,13 @@ class StandardizedPrompt(BaseModel):
 
 class StandardizedOutput(BaseModel):
     task: str = Field(..., description="The original task or question addressed")
-    response: str | list[str] | dict[str, Any] = Field(
-        ..., description="The main response content"
-    )
-    confidence: float = Field(
-        ..., ge=0, le=1, description="Confidence score of the response (0-1)"
-    )
-    sources: list[str] = Field(
-        default=[], description="Sources or references used in the response"
-    )
-    metadata: dict[str, Any] = Field(
-        default={}, description="Any additional metadata about the response"
-    )
-    reasoning: str = Field(
-        default="", description="Explanation of the reasoning process"
-    )
-    uncertainty: float = Field(
-        default=0.0, ge=0, le=1, description="Uncertainty level of the response (0-1)"
-    )
-    alternative_responses: list[dict[str, Any]] = Field(
-        default=[], description="Alternative responses or perspectives"
-    )
+    response: str | list[str] | dict[str, Any] = Field(..., description="The main response content")
+    confidence: float = Field(..., ge=0, le=1, description="Confidence score of the response (0-1)")
+    sources: list[str] = Field(default=[], description="Sources or references used in the response")
+    metadata: dict[str, Any] = Field(default={}, description="Any additional metadata about the response")
+    reasoning: str = Field(default="", description="Explanation of the reasoning process")
+    uncertainty: float = Field(default=0.0, ge=0, le=1, description="Uncertainty level of the response (0-1)")
+    alternative_responses: list[dict[str, Any]] = Field(default=[], description="Alternative responses or perspectives")
 
     def to_dict(self) -> dict[str, Any]:
         return {

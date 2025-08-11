@@ -11,9 +11,7 @@ import sys
 import tempfile
 
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -276,9 +274,7 @@ def test_end_to_end_simple():
             if param.dim() >= 2:  # Only compress weight matrices
                 compressed_data = compressor.compress_weight_matrix(param.data)
                 compressed_weights[name] = compressed_data
-                print(
-                    f"   Compressed {name}: {compressed_data['compression_ratio']:.2f}x"
-                )
+                print(f"   Compressed {name}: {compressed_data['compression_ratio']:.2f}x")
 
         print("[PASS] Stage 1 (SeedLM) Compression: Working")
 
@@ -307,9 +303,7 @@ def test_end_to_end_simple():
         stage1_output = {
             "compressed_state": compressed_weights,
             "config": {"compression_method": "seedlm"},
-            "model_info": {
-                "original_params": sum(p.numel() for p in model.parameters())
-            },
+            "model_info": {"original_params": sum(p.numel() for p in model.parameters())},
         }
 
         # Simulate Stage 2 processing

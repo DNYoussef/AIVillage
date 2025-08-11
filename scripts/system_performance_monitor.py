@@ -100,9 +100,7 @@ class SystemMetrics:
 class PerformanceMonitor:
     """System performance monitor."""
 
-    def __init__(
-        self, interval: float = 5.0, data_file: str = "system_metrics.json"
-    ) -> None:
+    def __init__(self, interval: float = 5.0, data_file: str = "system_metrics.json") -> None:
         """Initialize the performance monitor.
 
         Args:
@@ -131,9 +129,7 @@ class PerformanceMonitor:
             try:
                 with open(self.data_file, encoding="utf-8") as f:
                     data = json.load(f)
-                    self.metrics_history = [
-                        SystemMetrics.from_dict(item) for item in data
-                    ]
+                    self.metrics_history = [SystemMetrics.from_dict(item) for item in data]
                 logger.info(f"Loaded {len(self.metrics_history)} historical metrics")
             except Exception as e:
                 logger.exception(f"Failed to load metrics history: {e}")
@@ -199,9 +195,7 @@ class PerformanceMonitor:
 
             # Python process details
             python_processes = []
-            for proc in psutil.process_iter(
-                ["pid", "name", "cpu_percent", "memory_percent"]
-            ):
+            for proc in psutil.process_iter(["pid", "name", "cpu_percent", "memory_percent"]):
                 try:
                     if "python" in proc.info["name"].lower():
                         python_processes.append(
@@ -259,8 +253,7 @@ class PerformanceMonitor:
             load_1min = metrics.load_average[0]
             if load_1min > self.thresholds["load_average_high"]:
                 alerts.append(
-                    f"High load average: {load_1min:.2f} "
-                    f"(threshold: {self.thresholds['load_average_high']:.2f})"
+                    f"High load average: {load_1min:.2f} " f"(threshold: {self.thresholds['load_average_high']:.2f})"
                 )
 
         return alerts
@@ -308,9 +301,7 @@ class PerformanceMonitor:
                 if duration_minutes:
                     elapsed_minutes = (time.time() - start_time) / 60
                     if elapsed_minutes >= duration_minutes:
-                        logger.info(
-                            f"Monitoring completed ({elapsed_minutes:.1f} minutes)"
-                        )
+                        logger.info(f"Monitoring completed ({elapsed_minutes:.1f} minutes)")
                         break
 
                 time.sleep(self.interval)
@@ -331,11 +322,7 @@ class PerformanceMonitor:
             Formatted report string
         """
         cutoff_time = datetime.now() - timedelta(hours=hours)
-        recent_metrics = [
-            m
-            for m in self.metrics_history
-            if datetime.fromisoformat(m.timestamp) > cutoff_time
-        ]
+        recent_metrics = [m for m in self.metrics_history if datetime.fromisoformat(m.timestamp) > cutoff_time]
 
         if not recent_metrics:
             return "No metrics available for the specified time period."
@@ -391,11 +378,7 @@ class PerformanceMonitor:
         cutoff_date = datetime.now() - timedelta(days=days_to_keep)
         original_count = len(self.metrics_history)
 
-        self.metrics_history = [
-            m
-            for m in self.metrics_history
-            if datetime.fromisoformat(m.timestamp) > cutoff_date
-        ]
+        self.metrics_history = [m for m in self.metrics_history if datetime.fromisoformat(m.timestamp) > cutoff_date]
 
         removed_count = original_count - len(self.metrics_history)
         if removed_count > 0:

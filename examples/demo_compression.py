@@ -51,9 +51,7 @@ def demo_basic_compression() -> None:
 
         # Verify we can load it back
         restored_model = SimpleQuantizer.load_quantized_model(compressed_bytes)
-        print(
-            f"   Model restoration: {'[SUCCESS]' if restored_model is not None else '[FAILED]'}"
-        )
+        print(f"   Model restoration: {'[SUCCESS]' if restored_model is not None else '[FAILED]'}")
 
     except CompressionError as e:
         print(f"[ERROR] Compression failed: {e}")
@@ -84,9 +82,7 @@ def demo_mobile_pipeline() -> None:
         quantizer = SimpleQuantizer(target_compression_ratio=3.5)
 
         try:
-            mobile_path = quantizer.compress_for_mobile(
-                str(model_path), output_dir=str(temp_path / "mobile_deploy")
-            )
+            mobile_path = quantizer.compress_for_mobile(str(model_path), output_dir=str(temp_path / "mobile_deploy"))
 
             mobile_size_mb = Path(mobile_path).stat().st_size / 1024 / 1024
             actual_ratio = original_size_mb / mobile_size_mb
@@ -99,9 +95,7 @@ def demo_mobile_pipeline() -> None:
 
             # Test loading on "mobile device" (CPU only)
             mobile_model = torch.load(mobile_path, map_location="cpu")
-            print(
-                f"   Mobile loading test: {'[SUCCESS] Success' if mobile_model is not None else '[ERROR] Failed'}"
-            )
+            print(f"   Mobile loading test: {'[SUCCESS] Success' if mobile_model is not None else '[ERROR] Failed'}")
 
         except CompressionError as e:
             print(f"[ERROR] Mobile pipeline failed: {e}")

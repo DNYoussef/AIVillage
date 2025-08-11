@@ -55,23 +55,13 @@ class UnifiedDecisionMaker:
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model.to(self.device)
 
-    async def make_decision(
-        self, content: str, eudaimonia_score: float
-    ) -> dict[str, Any]:
+    async def make_decision(self, content: str, eudaimonia_score: float) -> dict[str, Any]:
         try:
             rag_info = await self.rag_system.process_query(content)
-            task_vector = (
-                self.quality_assurance_layer.eudaimonia_triangulator.get_embedding(
-                    content
-                )
-            )
-            rule_compliance = self.quality_assurance_layer.evaluate_rule_compliance(
-                task_vector
-            )
+            task_vector = self.quality_assurance_layer.eudaimonia_triangulator.get_embedding(content)
+            rule_compliance = self.quality_assurance_layer.evaluate_rule_compliance(task_vector)
 
-            plan = await self.generate_plan(
-                content, {"content": content, "rag_info": rag_info}
-            )
+            plan = await self.generate_plan(content, {"content": content, "rag_info": rag_info})
 
             decision = plan["decision"]
             best_alternative = plan["best_alternative"]
@@ -91,9 +81,7 @@ class UnifiedDecisionMaker:
             msg = f"Error making decision: {e!s}"
             raise AIVillageException(msg) from e
 
-    async def generate_plan(
-        self, goal: str, problem_analysis: dict[str, Any]
-    ) -> dict[str, Any]:
+    async def generate_plan(self, goal: str, problem_analysis: dict[str, Any]) -> dict[str, Any]:
         try:
             current_resources = await self._get_current_resources()
             plan_tree = await self._create_plan_tree(goal, current_resources)
@@ -114,12 +102,8 @@ class UnifiedDecisionMaker:
                 iteration += 1
 
             gaps = self._identify_capability_gaps(plan_tree, current_resources)
-            checkpoints = await self._plan_checkpoints(
-                self._extract_all_tasks(plan_tree)
-            )
-            swot_analysis = await self._perform_swot_analysis(
-                plan_tree, problem_analysis
-            )
+            checkpoints = await self._plan_checkpoints(self._extract_all_tasks(plan_tree))
+            swot_analysis = await self._perform_swot_analysis(plan_tree, problem_analysis)
             metrics = self._calculate_plan_metrics(plan_tree)
 
             plan_data = {
@@ -141,9 +125,7 @@ class UnifiedDecisionMaker:
             msg = f"Error in plan generation: {e!s}"
             raise AIVillageException(msg)
 
-    async def mcts_search(
-        self, task, problem_analyzer, plan_generator, iterations=1000
-    ):
+    async def mcts_search(self, task, problem_analyzer, plan_generator, iterations=1000):
         root = MCTSNode(task)
 
         for _ in range(iterations):
@@ -172,9 +154,7 @@ class UnifiedDecisionMaker:
         if problem_analyzer:
             new_states = await problem_analyzer.generate_possible_states(node.state)
         else:
-            new_states = [
-                node.state
-            ]  # Placeholder for when problem_analyzer is not provided
+            new_states = [node.state]  # Placeholder for when problem_analyzer is not provided
         for state in new_states:
             if state not in [child.state for child in node.children]:
                 new_node = MCTSNode(state, parent=node)
@@ -198,8 +178,7 @@ class UnifiedDecisionMaker:
         return max(
             node.children,
             key=lambda c: (self.stats[c.state]["value"] / self.stats[c.state]["visits"])
-            + self.exploration_weight
-            * math.sqrt(log_n_visits / self.stats[c.state]["visits"]),
+            + self.exploration_weight * math.sqrt(log_n_visits / self.stats[c.state]["visits"]),
         )
 
     def best_child(self, node):
@@ -207,9 +186,7 @@ class UnifiedDecisionMaker:
 
     async def update_model(self, task: dict[str, Any], result: Any) -> None:
         try:
-            logger.info(
-                "Updating unified decision maker model with task result: %s", result
-            )
+            logger.info("Updating unified decision maker model with task result: %s", result)
             await self.mcts_update(task, result)
             await self.quality_assurance_layer.update_task_history(
                 task, result.get("performance", 0.5), result.get("uncertainty", 0.5)
@@ -224,17 +201,11 @@ class UnifiedDecisionMaker:
         self.stats[task]["value"] += result
 
     async def mcts_prune(self, node, threshold) -> None:
-        node.children = [
-            child
-            for child in node.children
-            if self.stats[child.state]["visits"] > threshold
-        ]
+        node.children = [child for child in node.children if self.stats[child.state]["visits"] > threshold]
         for child in node.children:
             await self.mcts_prune(child, threshold)
 
-    async def parallel_mcts_search(
-        self, task, problem_analyzer, plan_generator, iterations=1000, num_workers=4
-    ):
+    async def parallel_mcts_search(self, task, problem_analyzer, plan_generator, iterations=1000, num_workers=4):
         root = MCTSNode(task)
         semaphore = asyncio.Semaphore(num_workers)
 
@@ -262,9 +233,7 @@ class UnifiedDecisionMaker:
             with open(os.path.join(path, "mcts_stats.json"), "w") as f:
                 json.dump(dict(self.stats), f)
 
-            await self.quality_assurance_layer.save(
-                os.path.join(path, "quality_assurance_layer.json")
-            )
+            await self.quality_assurance_layer.save(os.path.join(path, "quality_assurance_layer.json"))
 
             data = {
                 "exploration_weight": self.exploration_weight,
@@ -283,13 +252,9 @@ class UnifiedDecisionMaker:
     async def load_models(self, path: str) -> None:
         try:
             with open(os.path.join(path, "mcts_stats.json")) as f:
-                self.stats = defaultdict(
-                    lambda: {"visits": 0, "value": 0}, json.load(f)
-                )
+                self.stats = defaultdict(lambda: {"visits": 0, "value": 0}, json.load(f))
 
-            await self.quality_assurance_layer.load(
-                os.path.join(path, "quality_assurance_layer.json")
-            )
+            await self.quality_assurance_layer.load(os.path.join(path, "quality_assurance_layer.json"))
 
             with open(os.path.join(path, "unified_decision_maker_data.json")) as f:
                 data = json.load(f)
@@ -321,9 +286,7 @@ class UnifiedDecisionMaker:
             msg = f"Error getting current resources: {e!s}"
             raise AIVillageException(msg)
 
-    async def _create_plan_tree(
-        self, goal: str, current_resources: dict[str, Any]
-    ) -> dict[str, Any]:
+    async def _create_plan_tree(self, goal: str, current_resources: dict[str, Any]) -> dict[str, Any]:
         try:
             prompt = f"""
             Create a detailed plan tree for the goal: "{goal}"
@@ -378,11 +341,7 @@ class UnifiedDecisionMaker:
             # Update the plan tree with optimized tasks
             def update_tasks_recursive(node) -> None:
                 if "tasks" in node:
-                    node["tasks"] = [
-                        task
-                        for task in optimized_tasks
-                        if task["id"] in [t["id"] for t in node["tasks"]]
-                    ]
+                    node["tasks"] = [task for task in optimized_tasks if task["id"] in [t["id"] for t in node["tasks"]]]
                 for sub_goal in node.get("sub_goals", []):
                     update_tasks_recursive(sub_goal)
 
@@ -437,9 +396,7 @@ class UnifiedDecisionMaker:
             Suggest improvements to increase the overall antifragility of the plan.
             Output the results as a JSON structure with 'antifragility_scores' and 'improvement_suggestions' keys.
             """
-            antifragility_assessment = await self.agent.generate_structured_response(
-                prompt
-            )
+            antifragility_assessment = await self.agent.generate_structured_response(prompt)
 
             # Update the plan tree with antifragility assessment
             plan_tree["antifragility_assessment"] = antifragility_assessment
@@ -449,9 +406,7 @@ class UnifiedDecisionMaker:
             msg = f"Error assessing antifragility: {e!s}"
             raise AIVillageException(msg)
 
-    async def _develop_xanatos_gambits(
-        self, plan_tree: dict[str, Any]
-    ) -> dict[str, Any]:
+    async def _develop_xanatos_gambits(self, plan_tree: dict[str, Any]) -> dict[str, Any]:
         try:
             prompt = f"""
             Develop Xanatos Gambits for the following plan:
@@ -503,46 +458,31 @@ class UnifiedDecisionMaker:
     def _calculate_success_likelihood(self, plan_tree: dict[str, Any]) -> float:
         try:
             # This is a simplified calculation and should be expanded based on your specific requirements
-            antifragility_scores = plan_tree.get("antifragility_assessment", {}).get(
-                "antifragility_scores", {}
-            )
+            antifragility_scores = plan_tree.get("antifragility_assessment", {}).get("antifragility_scores", {})
             if not antifragility_scores:
                 return 0.5  # Default to 50% if no scores are available
 
-            avg_antifragility = sum(antifragility_scores.values()) / len(
-                antifragility_scores
-            )
-            success_likelihood = (
-                avg_antifragility + 10
-            ) / 20  # Convert -10 to 10 scale to 0 to 1 scale
-            return max(
-                0, min(1, success_likelihood)
-            )  # Ensure the result is between 0 and 1
+            avg_antifragility = sum(antifragility_scores.values()) / len(antifragility_scores)
+            success_likelihood = (avg_antifragility + 10) / 20  # Convert -10 to 10 scale to 0 to 1 scale
+            return max(0, min(1, success_likelihood))  # Ensure the result is between 0 and 1
         except Exception as e:
             logger.exception("Error calculating success likelihood: %s", e)
             return 0.5  # Return a default value in case of error
 
-    def _identify_capability_gaps(
-        self, plan_tree: dict[str, Any], current_resources: dict[str, Any]
-    ) -> list[str]:
+    def _identify_capability_gaps(self, plan_tree: dict[str, Any], current_resources: dict[str, Any]) -> list[str]:
         try:
             required_resources = set()
             for task in self._extract_all_tasks(plan_tree):
                 required_resources.update(task.get("required_resources", []))
 
-            available_resources = set(
-                current_resources.get("resources", [])
-                + current_resources.get("tools", [])
-            )
+            available_resources = set(current_resources.get("resources", []) + current_resources.get("tools", []))
 
             return list(required_resources - available_resources)
         except Exception as e:
             logger.exception("Error identifying capability gaps: %s", e)
             return []
 
-    async def _plan_checkpoints(
-        self, tasks: list[dict[str, Any]]
-    ) -> list[dict[str, Any]]:
+    async def _plan_checkpoints(self, tasks: list[dict[str, Any]]) -> list[dict[str, Any]]:
         try:
             prompt = f"""
             Plan checkpoints for the following set of tasks:
@@ -597,12 +537,8 @@ class UnifiedDecisionMaker:
         try:
             tasks = self._extract_all_tasks(plan_tree)
             total_time = sum(task.get("estimated_time", 0) for task in tasks)
-            total_resources = sum(
-                len(task.get("required_resources", [])) for task in tasks
-            )
-            risk_levels = [
-                task.get("risk_level", 0) for task in tasks if "risk_level" in task
-            ]
+            total_resources = sum(len(task.get("required_resources", [])) for task in tasks)
+            risk_levels = [task.get("risk_level", 0) for task in tasks if "risk_level" in task]
             avg_risk = sum(risk_levels) / len(risk_levels) if risk_levels else 0
 
             return {
@@ -624,9 +560,7 @@ class UnifiedDecisionMaker:
             "xanatos_factor": node.get("xanatos_factor", 0),
         }
         if "sub_goals" in node:
-            result["children"] = [
-                self._tree_to_dict(child) for child in node["sub_goals"]
-            ]
+            result["children"] = [self._tree_to_dict(child) for child in node["sub_goals"]]
         return result
 
     def _create_plan_visualization(self, plan_tree: dict[str, Any]) -> str:
@@ -662,13 +596,7 @@ class UnifiedDecisionMaker:
         ]
 
         [
-            (
-                "s"
-                if G.nodes[node]["xanatos_factor"] < -3
-                else "^"
-                if G.nodes[node]["xanatos_factor"] > 3
-                else "o"
-            )
+            ("s" if G.nodes[node]["xanatos_factor"] < -3 else "^" if G.nodes[node]["xanatos_factor"] > 3 else "o")
             for node in G.nodes()
         ]
 
@@ -681,9 +609,7 @@ class UnifiedDecisionMaker:
             with_labels=False,
         )
 
-        nx.draw_networkx_labels(
-            G, pos, {node: node for node in G.nodes()}, font_size=8, font_weight="bold"
-        )
+        nx.draw_networkx_labels(G, pos, {node: node for node in G.nodes()}, font_size=8, font_weight="bold")
 
         node_labels = nx.get_node_attributes(G, "description")
         pos_attrs = {}

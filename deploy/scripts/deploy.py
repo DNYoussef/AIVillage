@@ -11,31 +11,23 @@ import sys
 import time
 
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
 class AIVillageDeploymentOrchestrator:
-    def __init__(
-        self, environment: str, namespace: str, image_tag: str = "latest"
-    ) -> None:
+    def __init__(self, environment: str, namespace: str, image_tag: str = "latest") -> None:
         self.environment = environment
         self.namespace = namespace
         self.image_tag = image_tag
         self.helm_chart_path = Path(__file__).parent.parent / "helm" / "aivillage"
         self.k8s_manifests_path = Path(__file__).parent.parent / "k8s"
 
-    def run_command(
-        self, cmd: list[str], timeout: int = 300
-    ) -> subprocess.CompletedProcess:
+    def run_command(self, cmd: list[str], timeout: int = 300) -> subprocess.CompletedProcess:
         """Run a command with error handling."""
         logger.info(f"Running: {' '.join(cmd)}")
         try:
-            result = subprocess.run(
-                cmd, capture_output=True, text=True, timeout=timeout, check=True
-            )
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, check=True)
             if result.stdout:
                 logger.debug(f"stdout: {result.stdout}")
             return result
@@ -266,9 +258,7 @@ class AIVillageDeploymentOrchestrator:
             if running_pods == total_pods and total_pods > 0:
                 logger.info(f"✅ All pods are running ({running_pods}/{total_pods})")
             else:
-                logger.error(
-                    f"❌ Not all pods are running ({running_pods}/{total_pods})"
-                )
+                logger.error(f"❌ Not all pods are running ({running_pods}/{total_pods})")
                 return False
 
             # Run basic health checks
@@ -387,9 +377,7 @@ class AIVillageDeploymentOrchestrator:
             helm_status = json.loads(result.stdout)
 
             # Get pod status
-            result = self.run_command(
-                ["kubectl", "get", "pods", "-n", self.namespace, "-o", "json"]
-            )
+            result = self.run_command(["kubectl", "get", "pods", "-n", self.namespace, "-o", "json"])
 
             pods_data = json.loads(result.stdout)
 
@@ -398,13 +386,8 @@ class AIVillageDeploymentOrchestrator:
                 pod_name = pod["metadata"]["name"]
                 pod_status[pod_name] = {
                     "phase": pod["status"]["phase"],
-                    "ready": all(
-                        cs["ready"] for cs in pod["status"].get("containerStatuses", [])
-                    ),
-                    "restarts": sum(
-                        cs.get("restartCount", 0)
-                        for cs in pod["status"].get("containerStatuses", [])
-                    ),
+                    "ready": all(cs["ready"] for cs in pod["status"].get("containerStatuses", [])),
+                    "restarts": sum(cs.get("restartCount", 0) for cs in pod["status"].get("containerStatuses", [])),
                 }
 
             return {
@@ -428,9 +411,7 @@ def main() -> int | None:
         choices=["staging", "production"],
         help="Deployment environment",
     )
-    parser.add_argument(
-        "--image-tag", default="latest", help="Docker image tag to deploy"
-    )
+    parser.add_argument("--image-tag", default="latest", help="Docker image tag to deploy")
     parser.add_argument(
         "--action",
         default="deploy",
@@ -447,9 +428,7 @@ def main() -> int | None:
     args = parser.parse_args()
 
     namespace = f"aivillage-{args.environment}"
-    orchestrator = AIVillageDeploymentOrchestrator(
-        args.environment, namespace, args.image_tag
-    )
+    orchestrator = AIVillageDeploymentOrchestrator(args.environment, namespace, args.image_tag)
 
     if args.dry_run:
         logger.info("🏃 Dry run mode - showing what would be done")

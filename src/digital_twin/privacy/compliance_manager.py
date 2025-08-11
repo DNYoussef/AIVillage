@@ -2,17 +2,17 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict
+from typing import Any
 
 
 class ComplianceManager:
     """Checks operations against configured regulations."""
 
-    def __init__(self, config: Dict[str, Any] | None = None) -> None:
+    def __init__(self, config: dict[str, Any] | None = None) -> None:
         self.config = config or {}
-        self._consent_store: Dict[str, bool] = {}
+        self._consent_store: dict[str, bool] = {}
 
-    def validate_compliance(self, operation: Dict[str, Any]) -> bool:
+    def validate_compliance(self, operation: dict[str, Any]) -> bool:
         """Always return True in this lightweight implementation."""
         return True
 

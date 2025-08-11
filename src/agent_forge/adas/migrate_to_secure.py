@@ -18,9 +18,7 @@ import sys
 def backup_original(file_path: Path) -> Path:
     """Create a timestamped backup of the original file."""
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    backup_path = (
-        file_path.parent / f"{file_path.stem}_backup_{timestamp}{file_path.suffix}"
-    )
+    backup_path = file_path.parent / f"{file_path.stem}_backup_{timestamp}{file_path.suffix}"
     shutil.copy2(file_path, backup_path)
     print(f"✓ Created backup: {backup_path}")
     return backup_path
@@ -55,9 +53,7 @@ def update_imports(root_dir: Path) -> None:
                     "from agent_forge.adas.adas import",
                     "from agent_forge.adas.adas_secure import",
                 )
-                content = content.replace(
-                    "from .adas import", "from .adas_secure import"
-                )
+                content = content.replace("from .adas import", "from .adas_secure import")
                 content = content.replace(
                     "import agent_forge.adas.adas",
                     "import agent_forge.adas.adas_secure",

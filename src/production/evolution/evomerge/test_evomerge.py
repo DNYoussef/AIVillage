@@ -27,9 +27,7 @@ class TestEvoMerge(unittest.TestCase):
         self.config = Configuration(
             models=[
                 ModelReference(name="model1", path="gpt2"),
-                ModelReference(
-                    name="model2", path="gpt2"
-                ),  # Changed from gpt2-medium to gpt2
+                ModelReference(name="model2", path="gpt2"),  # Changed from gpt2-medium to gpt2
             ],
             merge_settings=MergeSettings(
                 merge_method="ps_dfs",
@@ -89,9 +87,7 @@ class TestEvoMerge(unittest.TestCase):
 
     def test_dare_merge(self) -> None:
         weights = {"layer1": torch.rand(2, 3, 4), "layer2": torch.rand(2, 4, 5)}
-        merged_weights = MERGE_TECHNIQUES["dare"](
-            weights, [], threshold=0.1, amplification=2.0
-        )
+        merged_weights = MERGE_TECHNIQUES["dare"](weights, [], threshold=0.1, amplification=2.0)
         assert len(merged_weights) == len(weights)
         for key in weights:
             assert merged_weights[key].shape == weights[key].shape
@@ -121,19 +117,13 @@ class TestEvoMerge(unittest.TestCase):
         best_models = evolutionary_tournament.evolve()
         assert isinstance(best_models, list)
         assert all(isinstance(model, str) for model in best_models)
-        assert all(
-            model.startswith(self.config.merge_settings.custom_dir)
-            for model in best_models
-        )
+        assert all(model.startswith(self.config.merge_settings.custom_dir) for model in best_models)
 
     def test_run_evolutionary_tournament(self) -> None:
         best_models = run_evolutionary_tournament(self.config)
         assert isinstance(best_models, list)
         assert all(isinstance(model, str) for model in best_models)
-        assert all(
-            model.startswith(self.config.merge_settings.custom_dir)
-            for model in best_models
-        )
+        assert all(model.startswith(self.config.merge_settings.custom_dir) for model in best_models)
 
     def tearDown(self) -> None:
         clean_up_models([f"{self.config.merge_settings.custom_dir}/merged_*"])

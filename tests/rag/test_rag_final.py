@@ -120,9 +120,7 @@ async def final_rag_test():
     stats = pipeline.index_documents(knowledge_docs)
     print("RAG SYSTEM FINAL TEST")
     print("=" * 50)
-    print(
-        f"Knowledge Base: {stats['documents_processed']} docs, {stats['chunks_created']} chunks indexed"
-    )
+    print(f"Knowledge Base: {stats['documents_processed']} docs, {stats['chunks_created']} chunks indexed")
     print(f"Total index size: {pipeline.index.ntotal} vectors")
 
     # Comprehensive test questions
@@ -149,9 +147,7 @@ async def final_rag_test():
         try:
             # Use enhanced retrieval with trust weighting
             start_time = asyncio.get_event_loop().time()
-            results, metrics = await pipeline.retrieve_with_trust(
-                query=question, k=3, trust_weight=0.4
-            )
+            results, metrics = await pipeline.retrieve_with_trust(query=question, k=3, trust_weight=0.4)
             end_time = asyncio.get_event_loop().time()
             latency = (end_time - start_time) * 1000
             total_latency += latency
@@ -211,9 +207,7 @@ async def final_rag_test():
                 relevant_a_words = answer_keywords - stop_words
 
                 overlap = len(relevant_q_words & relevant_a_words)
-                relevance_score = (
-                    overlap / len(relevant_q_words) if relevant_q_words else 0
-                )
+                relevance_score = overlap / len(relevant_q_words) if relevant_q_words else 0
 
                 if relevance_score >= 0.3:
                     relevance_status = "HIGH RELEVANCE"
@@ -223,9 +217,7 @@ async def final_rag_test():
                     relevance_status = "LOW RELEVANCE"
 
                 print(f"\nRelevance Analysis: {relevance_status}")
-                print(
-                    f"Keywords matched: {overlap}/{len(relevant_q_words)} ({relevance_score:.2%})"
-                )
+                print(f"Keywords matched: {overlap}/{len(relevant_q_words)} ({relevance_score:.2%})")
 
                 # Check cache performance
                 if metrics.get("cache_hit"):
@@ -235,9 +227,7 @@ async def final_rag_test():
 
             else:
                 print("NO ANSWER FOUND")
-                print(
-                    "The RAG system could not retrieve relevant information for this question."
-                )
+                print("The RAG system could not retrieve relevant information for this question.")
 
         except Exception as e:
             print(f"ERROR: {e!s}")
@@ -250,9 +240,7 @@ async def final_rag_test():
     success_rate = successful_answers / len(test_questions)
     avg_latency = total_latency / len(test_questions)
 
-    print(
-        f"Questions Answered: {successful_answers}/{len(test_questions)} ({success_rate:.1%})"
-    )
+    print(f"Questions Answered: {successful_answers}/{len(test_questions)} ({success_rate:.1%})")
     print(f"Average Response Time: {avg_latency:.1f}ms")
     print(f"Performance Target (<100ms): {'PASS' if avg_latency < 100 else 'FAIL'}")
 
@@ -287,9 +275,7 @@ async def final_rag_test():
         print("✓ Production-ready monitoring capabilities")
         print("\nThis is a functional RAG system, not just stubs!")
     else:
-        print(
-            "\nThe system shows basic functionality but may need refinement for production use."
-        )
+        print("\nThe system shows basic functionality but may need refinement for production use.")
 
     return success_rate >= 0.6
 

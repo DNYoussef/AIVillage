@@ -15,14 +15,7 @@ import requests
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 sys.path.insert(
     0,
-    str(
-        Path(__file__).parent.parent
-        / "src"
-        / "production"
-        / "rag"
-        / "rag_system"
-        / "core"
-    ),
+    str(Path(__file__).parent.parent / "src" / "production" / "rag" / "rag_system" / "core"),
 )
 
 from codex_rag_integration import CODEXRAGPipeline, Document
@@ -35,7 +28,7 @@ logger = logging.getLogger(__name__)
 class WikipediaIngestion:
     """Wikipedia article ingestion for RAG pipeline."""
 
-    def __init__(self, target_articles: int = 1000):
+    def __init__(self, target_articles: int = 1000) -> None:
         self.target_articles = target_articles
         self.rag_pipeline = None
 
@@ -77,7 +70,7 @@ class WikipediaIngestion:
             logger.info("RAG pipeline initialized successfully")
             return True
         except Exception as e:
-            logger.error(f"Failed to initialize RAG pipeline: {e}")
+            logger.exception(f"Failed to initialize RAG pipeline: {e}")
             return False
 
     def search_articles_by_category(self, category: str, limit: int = 50) -> list[str]:
@@ -104,7 +97,7 @@ class WikipediaIngestion:
             return titles
 
         except Exception as e:
-            logger.error(f"Failed to search category '{category}': {e}")
+            logger.exception(f"Failed to search category '{category}': {e}")
             return []
 
     def fetch_article_content(self, title: str) -> dict[str, Any]:
@@ -127,15 +120,13 @@ class WikipediaIngestion:
                 "exsectionformat": "plain",
             }
 
-            content_response = requests.get(
-                self.wikipedia_search, params=params, timeout=10
-            )
+            content_response = requests.get(self.wikipedia_search, params=params, timeout=10)
             content_response.raise_for_status()
             content_data = content_response.json()
 
             # Extract content
             pages = content_data.get("query", {}).get("pages", {})
-            page_id = list(pages.keys())[0]
+            page_id = next(iter(pages.keys()))
             full_content = pages[page_id].get("extract", "")
 
             # Fallback to summary if no full content
@@ -146,9 +137,7 @@ class WikipediaIngestion:
                 "title": title,
                 "content": full_content,
                 "summary": summary_data.get("extract", ""),
-                "url": summary_data.get("content_urls", {})
-                .get("desktop", {})
-                .get("page", ""),
+                "url": summary_data.get("content_urls", {}).get("desktop", {}).get("page", ""),
                 "word_count": len(full_content.split()),
                 "extract_date": time.strftime("%Y-%m-%d"),
             }
@@ -157,9 +146,7 @@ class WikipediaIngestion:
             logger.warning(f"Failed to fetch article '{title}': {e}")
             return None
 
-    def filter_quality_articles(
-        self, articles: list[dict[str, Any]]
-    ) -> list[dict[str, Any]]:
+    def filter_quality_articles(self, articles: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Filter articles for quality content suitable for education."""
         quality_articles = []
 
@@ -200,7 +187,8 @@ class WikipediaIngestion:
     async def ingest_articles(self, articles: list[dict[str, Any]]) -> dict[str, Any]:
         """Ingest articles into the RAG pipeline."""
         if not self.rag_pipeline:
-            raise RuntimeError("RAG pipeline not initialized")
+            msg = "RAG pipeline not initialized"
+            raise RuntimeError(msg)
 
         documents = []
         for article in articles:
@@ -232,9 +220,7 @@ class WikipediaIngestion:
 
         for i in range(0, len(documents), batch_size):
             batch = documents[i : i + batch_size]
-            logger.info(
-                f"Indexing batch {i // batch_size + 1} ({len(batch)} documents)"
-            )
+            logger.info(f"Indexing batch {i // batch_size + 1} ({len(batch)} documents)")
 
             batch_stats = self.rag_pipeline.index_documents(batch)
 
@@ -249,13 +235,12 @@ class WikipediaIngestion:
 
     async def run_ingestion(self) -> dict[str, Any]:
         """Run the complete Wikipedia ingestion process."""
-        logger.info(
-            f"Starting Wikipedia ingestion (target: {self.target_articles} articles)"
-        )
+        logger.info(f"Starting Wikipedia ingestion (target: {self.target_articles} articles)")
 
         # Initialize RAG pipeline
         if not await self.initialize_rag_pipeline():
-            raise RuntimeError("Failed to initialize RAG pipeline")
+            msg = "Failed to initialize RAG pipeline"
+            raise RuntimeError(msg)
 
         all_articles = []
         articles_per_category = self.target_articles // len(self.categories) + 10
@@ -285,9 +270,7 @@ class WikipediaIngestion:
             quality_articles = self.filter_quality_articles(category_articles)
             all_articles.extend(quality_articles)
 
-            logger.info(
-                f"Category '{category}': {len(quality_articles)} quality articles"
-            )
+            logger.info(f"Category '{category}': {len(quality_articles)} quality articles")
 
         # Trim to target number
         all_articles = all_articles[: self.target_articles]
@@ -302,8 +285,7 @@ class WikipediaIngestion:
         final_stats = {
             **stats,
             "articles_ingested": len(all_articles),
-            "average_article_length": sum(a.get("word_count", 0) for a in all_articles)
-            // len(all_articles),
+            "average_article_length": sum(a.get("word_count", 0) for a in all_articles) // len(all_articles),
             "performance_metrics": performance_metrics,
         }
 
@@ -333,15 +315,13 @@ async def main():
         print(f"Chunks created: {stats['chunks_created']}")
         print(f"Vectors indexed: {stats['vectors_indexed']}")
         print(f"Processing time: {stats['processing_time_ms']:.2f}ms")
-        print(
-            f"Average latency: {stats['performance_metrics']['avg_latency_ms']:.2f}ms"
-        )
+        print(f"Average latency: {stats['performance_metrics']['avg_latency_ms']:.2f}ms")
         print(f"Results saved to: {results_file}")
 
         return stats
 
     except Exception as e:
-        logger.error(f"Wikipedia ingestion failed: {e}")
+        logger.exception(f"Wikipedia ingestion failed: {e}")
         raise
 
 

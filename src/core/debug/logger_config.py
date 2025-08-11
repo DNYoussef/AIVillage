@@ -1,4 +1,4 @@
-"""AIVillage Debug Logging Configuration
+"""AIVillage Debug Logging Configuration.
 
 Enhanced logging setup for debug mode following CODEX Integration Requirements.
 """
@@ -15,7 +15,7 @@ from typing import Any
 class DebugFormatter(logging.Formatter):
     """Custom formatter for debug logging with enhanced information."""
 
-    def __init__(self, include_thread_info: bool = True):
+    def __init__(self, include_thread_info: bool = True) -> None:
         self.include_thread_info = include_thread_info
 
         # Color codes for different log levels (if terminal supports it)
@@ -136,17 +136,13 @@ def setup_debug_logging(
     # Log environment information
     debug_mode = os.getenv("AIVILLAGE_DEBUG_MODE", "false")
     aivillage_logger.info(f"AIVILLAGE_DEBUG_MODE: {debug_mode}")
-    aivillage_logger.info(
-        f"AIVILLAGE_LOG_LEVEL: {os.getenv('AIVILLAGE_LOG_LEVEL', 'not set')}"
-    )
-    aivillage_logger.info(
-        f"AIVILLAGE_PROFILE_PERFORMANCE: {os.getenv('AIVILLAGE_PROFILE_PERFORMANCE', 'not set')}"
-    )
+    aivillage_logger.info(f"AIVILLAGE_LOG_LEVEL: {os.getenv('AIVILLAGE_LOG_LEVEL', 'not set')}")
+    aivillage_logger.info(f"AIVILLAGE_PROFILE_PERFORMANCE: {os.getenv('AIVILLAGE_PROFILE_PERFORMANCE', 'not set')}")
 
     return aivillage_logger
 
 
-def get_debug_logger(name: str = None) -> logging.Logger:
+def get_debug_logger(name: str | None = None) -> logging.Logger:
     """Get a debug logger instance.
 
     Args:
@@ -178,7 +174,7 @@ class RequestResponseLogger:
     Provides structured logging for API calls, database queries, and other operations.
     """
 
-    def __init__(self, logger_name: str = "aivillage.requests"):
+    def __init__(self, logger_name: str = "aivillage.requests") -> None:
         self.logger = logging.getLogger(logger_name)
         self.enabled = os.getenv("AIVILLAGE_DEBUG_MODE", "false").lower() == "true"
 
@@ -189,7 +185,7 @@ class RequestResponseLogger:
         headers: dict[str, str] | None = None,
         data: Any | None = None,
         params: dict[str, Any] | None = None,
-    ):
+    ) -> None:
         """Log API request details."""
         if not self.enabled:
             return
@@ -215,7 +211,7 @@ class RequestResponseLogger:
         response_data: Any | None = None,
         duration_ms: float | None = None,
         error: str | None = None,
-    ):
+    ) -> None:
         """Log API response details."""
         if not self.enabled:
             return
@@ -242,7 +238,7 @@ class RequestResponseLogger:
         duration_ms: float | None = None,
         result_count: int | None = None,
         error: str | None = None,
-    ):
+    ) -> None:
         """Log database query details."""
         if not self.enabled:
             return
@@ -272,7 +268,7 @@ class RequestResponseLogger:
         hit: bool,
         duration_ms: float | None = None,
         value_size: int | None = None,
-    ):
+    ) -> None:
         """Log cache operation details."""
         if not self.enabled:
             return
@@ -284,9 +280,7 @@ class RequestResponseLogger:
         duration_str = f" ({duration_ms:.2f}ms)" if duration_ms else ""
         size_str = f" [{value_size} bytes]" if value_size else ""
 
-        self.logger.debug(
-            f"[CACHE_{hit_str}]{duration_str} {operation}: {display_key}{size_str}"
-        )
+        self.logger.debug(f"[CACHE_{hit_str}]{duration_str} {operation}: {display_key}{size_str}")
 
     def _sanitize_headers(self, headers: dict[str, str]) -> dict[str, str]:
         """Remove sensitive information from headers."""
@@ -321,13 +315,11 @@ class RequestResponseLogger:
 class PerformanceTimer:
     """Context manager for timing operations in debug mode."""
 
-    def __init__(self, operation_name: str, logger: logging.Logger | None = None):
+    def __init__(self, operation_name: str, logger: logging.Logger | None = None) -> None:
         self.operation_name = operation_name
         self.logger = logger or logging.getLogger("aivillage.performance")
         self.start_time = None
-        self.enabled = (
-            os.getenv("AIVILLAGE_PROFILE_PERFORMANCE", "false").lower() == "true"
-        )
+        self.enabled = os.getenv("AIVILLAGE_PROFILE_PERFORMANCE", "false").lower() == "true"
 
     def __enter__(self):
         if self.enabled:
@@ -345,14 +337,10 @@ class PerformanceTimer:
             duration_ms = duration * 1000
 
             if exc_type:
-                self.logger.error(
-                    f"[TIMER_ERROR] {self.operation_name} failed after {duration_ms:.2f}ms: {exc_val}"
-                )
+                self.logger.error(f"[TIMER_ERROR] {self.operation_name} failed after {duration_ms:.2f}ms: {exc_val}")
             else:
                 level = logging.WARNING if duration_ms > 1000 else logging.DEBUG
-                self.logger.log(
-                    level, f"[TIMER_END] {self.operation_name}: {duration_ms:.2f}ms"
-                )
+                self.logger.log(level, f"[TIMER_END] {self.operation_name}: {duration_ms:.2f}ms")
 
     def get_duration_ms(self) -> float | None:
         """Get current duration in milliseconds."""

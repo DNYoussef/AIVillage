@@ -131,9 +131,7 @@ class TestUnifiedCompressor:
     @pytest.mark.asyncio
     async def test_simple_compression(self, tiny_model):
         """Test simple compression pipeline."""
-        compressor = UnifiedCompressor(
-            strategy=CompressionStrategy.SIMPLE, enable_benchmarking=False
-        )
+        compressor = UnifiedCompressor(strategy=CompressionStrategy.SIMPLE, enable_benchmarking=False)
 
         result = await compressor.compress_model(tiny_model)
 
@@ -146,9 +144,7 @@ class TestUnifiedCompressor:
     @pytest.mark.asyncio
     async def test_mobile_compression(self, tiny_model):
         """Test mobile compression pipeline."""
-        compressor = UnifiedCompressor(
-            strategy=CompressionStrategy.MOBILE, enable_benchmarking=False
-        )
+        compressor = UnifiedCompressor(strategy=CompressionStrategy.MOBILE, enable_benchmarking=False)
 
         result = await compressor.compress_model(tiny_model)
 
@@ -159,9 +155,7 @@ class TestUnifiedCompressor:
     @pytest.mark.asyncio
     async def test_compression_with_output_path(self, tiny_model, temp_dir):
         """Test compression with file output."""
-        compressor = UnifiedCompressor(
-            strategy=CompressionStrategy.SIMPLE, enable_benchmarking=False
-        )
+        compressor = UnifiedCompressor(strategy=CompressionStrategy.SIMPLE, enable_benchmarking=False)
 
         output_path = temp_dir / "compressed_model"
         await compressor.compress_model(tiny_model, output_path=output_path)
@@ -173,16 +167,10 @@ class TestUnifiedCompressor:
     @pytest.mark.asyncio
     async def test_compression_with_benchmarking(self, tiny_model, mock_tokenizer):
         """Test compression with benchmarking enabled."""
-        compressor = UnifiedCompressor(
-            strategy=CompressionStrategy.SIMPLE, enable_benchmarking=True
-        )
+        compressor = UnifiedCompressor(strategy=CompressionStrategy.SIMPLE, enable_benchmarking=True)
 
-        with patch.object(
-            tiny_model, "generate", return_value=torch.tensor([[1, 2, 3]])
-        ):
-            result = await compressor.compress_model(
-                tiny_model, tokenizer=mock_tokenizer
-            )
+        with patch.object(tiny_model, "generate", return_value=torch.tensor([[1, 2, 3]])):
+            result = await compressor.compress_model(tiny_model, tokenizer=mock_tokenizer)
 
         assert result.benchmark_metrics is not None
         assert isinstance(result.benchmark_metrics, dict)
@@ -357,9 +345,7 @@ class TestIntegration:
 
         # Verify results
         assert result.compression_ratio > 1.0
-        assert (
-            result.strategy_used == CompressionStrategy.SIMPLE
-        )  # Auto-selected for tiny model
+        assert result.strategy_used == CompressionStrategy.SIMPLE  # Auto-selected for tiny model
         assert output_path.exists()
 
         # Verify compression info
@@ -376,9 +362,7 @@ class TestPerformance:
     @pytest.mark.asyncio
     async def test_compression_performance_simple(self, tiny_model):
         """Test performance of simple compression."""
-        compressor = UnifiedCompressor(
-            strategy=CompressionStrategy.SIMPLE, enable_benchmarking=False
-        )
+        compressor = UnifiedCompressor(strategy=CompressionStrategy.SIMPLE, enable_benchmarking=False)
 
         # Measure compression time
         import time

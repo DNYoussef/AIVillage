@@ -137,15 +137,9 @@ class EvolutionCoordinationProtocol:
 
         # Active coordination state
         self.active_proposals: dict[str, EvolutionProposal] = {}
-        self.peer_contributions: dict[
-            str, list[PeerContribution]
-        ] = {}  # proposal_id -> contributions
-        self.consensus_votes: dict[
-            str, list[ConsensusVote]
-        ] = {}  # proposal_id -> votes
-        self.evolution_results: dict[
-            str, list[EvolutionResult]
-        ] = {}  # proposal_id -> results
+        self.peer_contributions: dict[str, list[PeerContribution]] = {}  # proposal_id -> contributions
+        self.consensus_votes: dict[str, list[ConsensusVote]] = {}  # proposal_id -> votes
+        self.evolution_results: dict[str, list[EvolutionResult]] = {}  # proposal_id -> results
 
         # Coordination tracking
         self.coordination_phases: dict[str, CoordinationPhase] = {}
@@ -206,9 +200,7 @@ class EvolutionCoordinationProtocol:
             max_peers_allowed=resource_requirements.get("max_peers", 5),
             total_memory_mb_required=resource_requirements.get("memory_mb", 2048),
             total_cpu_percent_required=resource_requirements.get("cpu_percent", 200.0),
-            estimated_duration_minutes=resource_requirements.get(
-                "duration_minutes", 60.0
-            ),
+            estimated_duration_minutes=resource_requirements.get("duration_minutes", 60.0),
             quality_target=resource_requirements.get("quality_target", 0.8),
             priority_level=resource_requirements.get("priority", 2),
             can_be_interrupted=resource_requirements.get("can_interrupt", True),
@@ -301,9 +293,7 @@ class EvolutionCoordinationProtocol:
             if len(contributions) >= proposal.min_peers_required:
                 # Sufficient peers found, move to preparation
                 self.coordination_phases[proposal_id] = CoordinationPhase.PREPARATION
-                logger.info(
-                    f"Discovery phase completed for proposal {proposal_id} with {len(contributions)} peers"
-                )
+                logger.info(f"Discovery phase completed for proposal {proposal_id} with {len(contributions)} peers")
                 return
 
             await asyncio.sleep(1.0)
@@ -427,21 +417,15 @@ class EvolutionCoordinationProtocol:
 
         return [contrib for _, contrib in scored_contributions[:max_peers]]
 
-    async def _send_preparation_request(
-        self, proposal_id: str, peer: PeerContribution
-    ) -> None:
+    async def _send_preparation_request(self, proposal_id: str, peer: PeerContribution) -> None:
         """Send preparation request to peer."""
         # Implementation would send actual preparation message
 
-    async def _request_consensus_votes(
-        self, proposal_id: str, results: list[EvolutionResult]
-    ) -> None:
+    async def _request_consensus_votes(self, proposal_id: str, results: list[EvolutionResult]) -> None:
         """Request consensus votes from participating peers."""
         # Implementation would request votes from peers
 
-    async def _broadcast_final_result(
-        self, proposal_id: str, result: EvolutionResult
-    ) -> None:
+    async def _broadcast_final_result(self, proposal_id: str, result: EvolutionResult) -> None:
         """Broadcast final consensus result."""
         message = EvolutionMessage(
             message_id=str(uuid.uuid4()),
@@ -469,9 +453,7 @@ class EvolutionCoordinationProtocol:
             data={"reason": reason},
         )
 
-        await self.p2p_node.broadcast_to_peers(
-            "EVOLUTION_COORDINATION_ABORT", abort_message.data
-        )
+        await self.p2p_node.broadcast_to_peers("EVOLUTION_COORDINATION_ABORT", abort_message.data)
 
     async def _cleanup_coordination(self, proposal_id: str) -> None:
         """Cleanup coordination data."""
@@ -501,44 +483,29 @@ class EvolutionCoordinationProtocol:
             contribution = PeerContribution(
                 peer_id=self.p2p_node.node_id,
                 node_capabilities=self.node_capabilities,
-                offered_memory_mb=min(
-                    1024, self.node_capabilities.get("memory_available_mb", 0)
-                ),
-                offered_cpu_percent=min(
-                    50.0, self.node_capabilities.get("cpu_available_percent", 0)
-                ),
+                offered_memory_mb=min(1024, self.node_capabilities.get("memory_available_mb", 0)),
+                offered_cpu_percent=min(50.0, self.node_capabilities.get("cpu_available_percent", 0)),
                 estimated_availability_minutes=120.0,
                 commitment_strength=0.8,
                 trust_score=1.0,  # Self-trust
             )
 
             # Send contribution offer
-            await self._send_contribution_offer(
-                proposal_id, contribution, message["sender_id"]
-            )
+            await self._send_contribution_offer(proposal_id, contribution, message["sender_id"])
 
             self.stats["proposals_participated"] += 1
 
-    async def _evaluate_contribution_capability(
-        self, proposal_data: dict[str, Any]
-    ) -> bool:
+    async def _evaluate_contribution_capability(self, proposal_data: dict[str, Any]) -> bool:
         """Evaluate if we can contribute to a proposal."""
         # Check resource availability
-        required_memory = proposal_data.get(
-            "total_memory_mb_required", 0
-        ) / proposal_data.get("max_peers_allowed", 1)
-        required_cpu = proposal_data.get(
-            "total_cpu_percent_required", 0
-        ) / proposal_data.get("max_peers_allowed", 1)
+        required_memory = proposal_data.get("total_memory_mb_required", 0) / proposal_data.get("max_peers_allowed", 1)
+        required_cpu = proposal_data.get("total_cpu_percent_required", 0) / proposal_data.get("max_peers_allowed", 1)
 
         available_memory = self.node_capabilities.get("memory_available_mb", 0)
         available_cpu = self.node_capabilities.get("cpu_available_percent", 0)
 
         # Simple capability check
-        return (
-            available_memory >= required_memory * 0.5
-            and available_cpu >= required_cpu * 0.5
-        )
+        return available_memory >= required_memory * 0.5 and available_cpu >= required_cpu * 0.5
 
     async def _send_contribution_offer(
         self, proposal_id: str, contribution: PeerContribution, initiator_id: str
@@ -574,9 +541,7 @@ class EvolutionCoordinationProtocol:
                 self.peer_contributions[proposal_id] = []
             self.peer_contributions[proposal_id].append(contribution)
 
-            logger.info(
-                f"Received contribution offer for proposal {proposal_id} from {contribution.peer_id}"
-            )
+            logger.info(f"Received contribution offer for proposal {proposal_id} from {contribution.peer_id}")
 
     async def _handle_contribution_accept(self, message: dict, writer) -> None:
         """Handle contribution acceptance."""
@@ -617,17 +582,12 @@ class EvolutionCoordinationProtocol:
         return {
             "active_proposals": len(self.active_proposals),
             "coordination_phases": {
-                proposal_id: phase.value
-                for proposal_id, phase in self.coordination_phases.items()
+                proposal_id: phase.value for proposal_id, phase in self.coordination_phases.items()
             },
             "peer_contributions": {
-                proposal_id: len(contributions)
-                for proposal_id, contributions in self.peer_contributions.items()
+                proposal_id: len(contributions) for proposal_id, contributions in self.peer_contributions.items()
             },
-            "evolution_results": {
-                proposal_id: len(results)
-                for proposal_id, results in self.evolution_results.items()
-            },
+            "evolution_results": {proposal_id: len(results) for proposal_id, results in self.evolution_results.items()},
             "stats": self.stats.copy(),
         }
 

@@ -25,23 +25,17 @@ class MonteCarloTreeSearch:
 
     def search(self, options: list[Any], simulate: Callable[[Any], float]) -> Any:
         """Return the best option according to simulated rewards."""
-        stats: dict[Any, dict[str, float]] = {
-            opt: {"visits": 0, "value": 0.0} for opt in options
-        }
+        stats: dict[Any, dict[str, float]] = {opt: {"visits": 0, "value": 0.0} for opt in options}
         for _ in range(self.config.iterations):
             option = self._select_option(options, stats)
             reward = simulate(option)
             entry = stats[option]
             entry["visits"] += 1
             entry["value"] += reward
-        best = max(
-            options, key=lambda o: stats[o]["value"] / max(1, stats[o]["visits"])
-        )
+        best = max(options, key=lambda o: stats[o]["value"] / max(1, stats[o]["visits"]))
         return best
 
-    def _select_option(
-        self, options: list[Any], stats: dict[Any, dict[str, float]]
-    ) -> Any:
+    def _select_option(self, options: list[Any], stats: dict[Any, dict[str, float]]) -> Any:
         for opt in options:
             if stats[opt]["visits"] == 0:
                 return opt
@@ -50,8 +44,6 @@ class MonteCarloTreeSearch:
 
         def uct(opt: Any) -> float:
             s = stats[opt]
-            return (
-                s["value"] / s["visits"]
-            ) + self.config.exploration_weight * math.sqrt(log_total / s["visits"])
+            return (s["value"] / s["visits"]) + self.config.exploration_weight * math.sqrt(log_total / s["visits"])
 
         return max(options, key=uct)

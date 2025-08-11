@@ -47,9 +47,7 @@ def ensure_collection(client: QdrantClient, delete_existing: bool) -> None:
         logger.info("Creating collection %s", COLLECTION)
         client.recreate_collection(
             COLLECTION,
-            vectors_config=models.VectorParams(
-                size=DIMENSION, distance=models.Distance.COSINE
-            ),
+            vectors_config=models.VectorParams(size=DIMENSION, distance=models.Distance.COSINE),
         )
 
 
@@ -71,8 +69,7 @@ def migrate(dry_run: bool, delete_existing: bool) -> dict[str, Any]:
         client.upsert(
             collection_name=COLLECTION,
             points=[
-                models.PointStruct(id=i, vector=v, payload=p)
-                for i, v, p in zip(ids, vectors, payload, strict=False)
+                models.PointStruct(id=i, vector=v, payload=p) for i, v, p in zip(ids, vectors, payload, strict=False)
             ],
         )
         written += len(ids)

@@ -66,7 +66,7 @@ class SemanticMultiTierCache:
         embedding_model: str = "paraphrase-MiniLM-L3-v2",
         cache_dir: Path = Path("/tmp/semantic_cache"),
         enable_prefetch: bool = True,
-    ):
+    ) -> None:
         # Embedding model for semantic matching
         self.embedder = SentenceTransformer(embedding_model)
         self.embedding_dim = self.embedder.get_sentence_embedding_dimension()
@@ -136,7 +136,7 @@ class SemanticMultiTierCache:
         self,
         query: str,
         semantic_threshold: float = 0.85,
-        context_hints: dict[str, Any] = None,
+        context_hints: dict[str, Any] | None = None,
     ) -> tuple[list[Any], dict[str, Any]] | None:
         """Get cached results with semantic matching across all tiers.
 
@@ -170,9 +170,7 @@ class SemanticMultiTierCache:
             return result
 
         # Try semantic match if exact match fails
-        result = await self._check_semantic_match(
-            query, semantic_threshold, context_hints
-        )
+        result = await self._check_semantic_match(query, semantic_threshold, context_hints)
         if result:
             self.metrics["hits"]["semantic"] += 1
             latency = (time.perf_counter() - start_time) * 1000
@@ -188,7 +186,7 @@ class SemanticMultiTierCache:
         results: list[Any],
         trust_score: float = 0.5,
         context_type: str = "standard",
-        metadata: dict[str, Any] = None,
+        metadata: dict[str, Any] | None = None,
     ) -> None:
         """Store results in appropriate tier based on trust and context.
 
@@ -211,9 +209,7 @@ class SemanticMultiTierCache:
             timestamp=time.time(),
             trust_score=trust_score,
             context_type=context_type,
-            prefetch_priority=self._calculate_prefetch_priority(
-                trust_score, context_type
-            ),
+            prefetch_priority=self._calculate_prefetch_priority(trust_score, context_type),
         )
 
         # Determine target tier based on trust score
@@ -232,9 +228,7 @@ class SemanticMultiTierCache:
         if self.enable_prefetch and trust_score > 0.7:
             await self._schedule_prefetch(query, embedding)
 
-    async def _check_exact_match(
-        self, key: str
-    ) -> tuple[list[Any], dict[str, Any]] | None:
+    async def _check_exact_match(self, key: str) -> tuple[list[Any], dict[str, Any]] | None:
         """Check for exact match across all tiers."""
         # Check hot tier
         if key in self.hot_cache:
@@ -281,7 +275,7 @@ class SemanticMultiTierCache:
         return None
 
     async def _check_semantic_match(
-        self, query: str, threshold: float, context_hints: dict[str, Any] = None
+        self, query: str, threshold: float, context_hints: dict[str, Any] | None = None
     ) -> tuple[list[Any], dict[str, Any]] | None:
         """Find semantically similar cached queries."""
         if self.semantic_index.ntotal == 0:
@@ -321,10 +315,7 @@ class SemanticMultiTierCache:
             entry = self.warm_cache[key]
 
             # Promote to hot if access count high enough
-            if (
-                entry.access_count >= 5
-                and entry.trust_score >= self.tiers["hot"].min_trust_score
-            ):
+            if entry.access_count >= 5 and entry.trust_score >= self.tiers["hot"].min_trust_score:
                 del self.warm_cache[key]
                 await self._add_to_tier(entry, "hot")
                 self.metrics["promotions"] += 1
@@ -333,10 +324,7 @@ class SemanticMultiTierCache:
             entry = self.cold_cache[key]
 
             # Promote to warm if access count high enough
-            if (
-                entry.access_count >= 3
-                and entry.trust_score >= self.tiers["warm"].min_trust_score
-            ):
+            if entry.access_count >= 3 and entry.trust_score >= self.tiers["warm"].min_trust_score:
                 del self.cold_cache[key]
                 await self._add_to_tier(entry, "warm")
                 self.metrics["promotions"] += 1
@@ -458,9 +446,7 @@ class SemanticMultiTierCache:
 
         self.context_patterns[context_type] += 1
 
-    def _calculate_prefetch_priority(
-        self, trust_score: float, context_type: str
-    ) -> float:
+    def _calculate_prefetch_priority(self, trust_score: float, context_type: str) -> float:
         """Calculate prefetch priority based on trust and context patterns."""
         # Base priority from trust
         priority = trust_score
@@ -482,9 +468,7 @@ class SemanticMultiTierCache:
         # Find semantic neighbors for prefetching
         if self.semantic_index.ntotal > 0:
             k = min(3, self.semantic_index.ntotal)
-            scores, indices = self.semantic_index.search(
-                embedding.reshape(1, -1).astype("float32"), k
-            )
+            scores, indices = self.semantic_index.search(embedding.reshape(1, -1).astype("float32"), k)
 
             for score, idx in zip(scores[0], indices[0], strict=False):
                 if score > 0.9:  # Very similar queries
@@ -515,7 +499,7 @@ class SemanticMultiTierCache:
                 await self._cleanup_prefetch_cache()
 
             except Exception as e:
-                logger.error(f"Prefetch worker error: {e}")
+                logger.exception(f"Prefetch worker error: {e}")
 
     async def _remove_from_prefetch(self, key: str, delay: int) -> None:
         """Remove entry from prefetch cache after delay."""
@@ -542,10 +526,7 @@ class SemanticMultiTierCache:
         total_hits = sum(self.metrics["hits"].values())
         total_requests = total_hits + self.metrics["misses"]
 
-        if total_requests == 0:
-            hit_rate = 0
-        else:
-            hit_rate = total_hits / total_requests
+        hit_rate = 0 if total_requests == 0 else total_hits / total_requests
 
         return {
             "hit_rate": hit_rate,
@@ -619,11 +600,11 @@ class SemanticMultiTierCache:
             return True
 
         except Exception as e:
-            logger.error(f"Failed to load cache from disk: {e}")
+            logger.exception(f"Failed to load cache from disk: {e}")
             return False
 
 
-async def test_semantic_cache():
+async def test_semantic_cache() -> bool:
     """Test the semantic multi-tier cache."""
     print("=== Testing Semantic Multi-Tier Cache ===\n")
 

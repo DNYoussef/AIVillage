@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Simple Knowledge Connections Analysis
+"""Simple Knowledge Connections Analysis.
 
 Analyzes semantic connections between Grossman papers and AI research.
 """
@@ -83,7 +83,7 @@ def extract_concepts(text):
     return list(concepts)
 
 
-def analyze_documents():
+def analyze_documents() -> None:
     """Analyze all documents."""
     papers_dir = Path("data/ingested_papers")
 
@@ -176,11 +176,7 @@ def analyze_documents():
                     shared_concepts[doc].append(concept)
 
         # Filter for meaningful connections (2+ shared concepts)
-        strong_connections = {
-            doc: concepts
-            for doc, concepts in shared_concepts.items()
-            if len(concepts) >= 2
-        }
+        strong_connections = {doc: concepts for doc, concepts in shared_concepts.items() if len(concepts) >= 2}
 
         if strong_connections:
             total_connections += len(strong_connections)
@@ -198,16 +194,14 @@ def analyze_documents():
 
     cross_domain_concepts = {}
     for concept, docs in concept_docs.items():
-        domains = set(documents[doc]["domain"] for doc in docs)
+        domains = {documents[doc]["domain"] for doc in docs}
         if len(domains) > 1 and len(docs) >= 3:
             cross_domain_concepts[concept] = {"domains": domains, "papers": len(docs)}
 
     print(f"[ANALYSIS] Found {len(cross_domain_concepts)} cross-domain concepts")
     print("\nTop bridging concepts:")
 
-    sorted_concepts = sorted(
-        cross_domain_concepts.items(), key=lambda x: x[1]["papers"], reverse=True
-    )
+    sorted_concepts = sorted(cross_domain_concepts.items(), key=lambda x: x[1]["papers"], reverse=True)
 
     for concept, data in sorted_concepts[:8]:
         domains_list = ", ".join(sorted(data["domains"]))
@@ -256,9 +250,7 @@ def analyze_documents():
     print("[OUTPUT] Results saved to connections_analysis.json")
 
     if total_connections > 0:
-        print(
-            f"\n[RESULT] CONFIRMED: Knowledge graph shows {total_connections} connections"
-        )
+        print(f"\n[RESULT] CONFIRMED: Knowledge graph shows {total_connections} connections")
         print("         between Grossman mathematics and AI research!")
     else:
         print("\n[RESULT] Limited direct connections found - may need deeper analysis")

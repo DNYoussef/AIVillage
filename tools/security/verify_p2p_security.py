@@ -104,9 +104,7 @@ def test_message_encryption():
             nonce = secrets.token_bytes(16)
 
             # Simple encryption simulation (XOR with key stream)
-            key_stream = hashlib.pbkdf2_hmac(
-                "sha256", encryption_key, nonce, 1000, len(payload)
-            )
+            key_stream = hashlib.pbkdf2_hmac("sha256", encryption_key, nonce, 1000, len(payload))
             encrypted = bytes(a ^ b for a, b in zip(payload, key_stream, strict=False))
 
             # Generate MAC
@@ -118,9 +116,7 @@ def test_message_encryption():
             )
 
             # Test decryption
-            decrypted = bytes(
-                a ^ b for a, b in zip(encrypted, key_stream, strict=False)
-            )
+            decrypted = bytes(a ^ b for a, b in zip(encrypted, key_stream, strict=False))
 
             if decrypted == payload:
                 print("       Decryption: PASS")
@@ -145,9 +141,7 @@ def test_message_encryption():
 
     payload = b"test_message_for_tampering"
     nonce = secrets.token_bytes(16)
-    key_stream = hashlib.pbkdf2_hmac(
-        "sha256", encryption_key, nonce, 1000, len(payload)
-    )
+    key_stream = hashlib.pbkdf2_hmac("sha256", encryption_key, nonce, 1000, len(payload))
     encrypted = bytes(a ^ b for a, b in zip(payload, key_stream, strict=False))
 
     # Generate valid MAC
@@ -166,9 +160,7 @@ def test_message_encryption():
     for i, tampered_mac in enumerate(tampered_macs):
         try:
             # This should fail MAC verification
-            is_valid = len(tampered_mac) == 32 and hmac.compare_digest(
-                tampered_mac, valid_mac
-            )
+            is_valid = len(tampered_mac) == 32 and hmac.compare_digest(tampered_mac, valid_mac)
 
             if not is_valid:
                 print(f"  [OK] Tampering {i + 1} detected")
@@ -182,9 +174,7 @@ def test_message_encryption():
     if tampering_detected == len(tampered_macs):
         print(f"[PASS] All {tampering_detected} tampering attempts detected")
         return True
-    print(
-        f"[FAIL] Only {tampering_detected}/{len(tampered_macs)} tampering attempts detected"
-    )
+    print(f"[FAIL] Only {tampering_detected}/{len(tampered_macs)} tampering attempts detected")
     return False
 
 
@@ -215,9 +205,7 @@ def test_peer_reputation_system():
         # Auto-block if trust score too low
         if peer["trust_score"] < 0.3 and peer_id not in blocked_peers:
             blocked_peers.add(peer_id)
-            print(
-                f"    [AUTO-BLOCKED] {peer_id} (trust score: {peer['trust_score']:.3f})"
-            )
+            print(f"    [AUTO-BLOCKED] {peer_id} (trust score: {peer['trust_score']:.3f})")
 
     # Test legitimate peer interactions
     print("Testing legitimate peer behavior:")
@@ -230,9 +218,7 @@ def test_peer_reputation_system():
     if legitimate_score >= 0.8:
         print(f"[OK] Legitimate peer has high trust: {legitimate_score:.3f}")
     else:
-        print(
-            f"[WARN] Legitimate peer trust lower than expected: {legitimate_score:.3f}"
-        )
+        print(f"[WARN] Legitimate peer trust lower than expected: {legitimate_score:.3f}")
 
     # Test malicious peer behavior
     print("\nTesting malicious peer behavior:")
@@ -256,9 +242,7 @@ def test_peer_reputation_system():
     if malicious_score < 0.3 and is_blocked:
         print(f"[PASS] Malicious peer blocked (trust: {malicious_score:.3f})")
     else:
-        print(
-            f"[FAIL] Malicious peer not blocked (trust: {malicious_score:.3f}, blocked: {is_blocked})"
-        )
+        print(f"[FAIL] Malicious peer not blocked (trust: {malicious_score:.3f}, blocked: {is_blocked})")
         return False
 
     # Test mixed behavior peer
@@ -313,9 +297,7 @@ def test_rate_limiting():
                 connection_attempts[peer_id] = []
 
             # Clean old attempts
-            connection_attempts[peer_id] = [
-                t for t in connection_attempts[peer_id] if now - t < window_seconds
-            ]
+            connection_attempts[peer_id] = [t for t in connection_attempts[peer_id] if now - t < window_seconds]
 
             # Check limit
             if len(connection_attempts[peer_id]) >= max_connections_per_minute:
@@ -330,9 +312,7 @@ def test_rate_limiting():
                 message_attempts[peer_id] = []
 
             # Clean old attempts
-            message_attempts[peer_id] = [
-                t for t in message_attempts[peer_id] if now - t < window_seconds
-            ]
+            message_attempts[peer_id] = [t for t in message_attempts[peer_id] if now - t < window_seconds]
 
             # Check limit
             if len(message_attempts[peer_id]) >= max_messages_per_minute:
@@ -354,9 +334,7 @@ def test_rate_limiting():
         if check_rate_limits(normal_peer, "connection"):
             successful_connections += 1
 
-    print(
-        f"  [OK] Normal connections: {successful_connections}/{max_connections_per_minute} allowed"
-    )
+    print(f"  [OK] Normal connections: {successful_connections}/{max_connections_per_minute} allowed")
 
     # Test rate limit enforcement
     print("\nTesting rate limit enforcement:")
@@ -412,9 +390,7 @@ def test_replay_attack_prevention():
     seen_messages = set()
     peer_sequences = {}
 
-    def is_replay_attack(
-        peer_id: str, message_id: str, sequence_num: int, timestamp: float
-    ) -> bool:
+    def is_replay_attack(peer_id: str, message_id: str, sequence_num: int, timestamp: float) -> bool:
         # Check message ID uniqueness
         message_key = f"{peer_id}:{message_id}:{sequence_num}"
 
@@ -426,9 +402,7 @@ def test_replay_attack_prevention():
         if peer_id in peer_sequences:
             expected_seq = peer_sequences[peer_id] + 1
             if sequence_num <= peer_sequences[peer_id]:
-                print(
-                    f"    [DETECTED] Old sequence number: {sequence_num} <= {peer_sequences[peer_id]}"
-                )
+                print(f"    [DETECTED] Old sequence number: {sequence_num} <= {peer_sequences[peer_id]}")
                 return True
 
         # Check timestamp (message age)
@@ -466,9 +440,7 @@ def test_replay_attack_prevention():
     if legitimate_accepted == len(legitimate_messages):
         print("[PASS] All legitimate messages accepted")
     else:
-        print(
-            f"[FAIL] {len(legitimate_messages) - legitimate_accepted} legitimate messages rejected"
-        )
+        print(f"[FAIL] {len(legitimate_messages) - legitimate_accepted} legitimate messages rejected")
         return False
 
     # Test replay attacks
@@ -519,9 +491,7 @@ def test_security_monitoring():
     # Security event log
     security_events = []
 
-    def log_security_event(
-        event_type: str, peer_id: str, severity: str, description: str
-    ):
+    def log_security_event(event_type: str, peer_id: str, severity: str, description: str):
         event = {
             "timestamp": datetime.now(),
             "event_type": event_type,
@@ -530,9 +500,7 @@ def test_security_monitoring():
             "description": description,
         }
         security_events.append(event)
-        print(
-            f"  [LOG] {severity.upper()}: {event_type} from {peer_id} - {description}"
-        )
+        print(f"  [LOG] {severity.upper()}: {event_type} from {peer_id} - {description}")
 
     # Generate various security events
     print("Generating security events:")
@@ -605,21 +573,11 @@ def test_security_monitoring():
     # Security dashboard data simulation
     dashboard_data = {
         "total_events": len(security_events),
-        "recent_events": len(
-            [
-                e
-                for e in security_events
-                if (datetime.now() - e["timestamp"]).total_seconds() < 3600
-            ]
-        ),
+        "recent_events": len([e for e in security_events if (datetime.now() - e["timestamp"]).total_seconds() < 3600]),
         "severity_distribution": severity_counts,
         "active_alerts": len(alerts),
         "threat_level": (
-            "high"
-            if severity_counts["critical"] > 0
-            else "medium"
-            if severity_counts["high"] > 2
-            else "low"
+            "high" if severity_counts["critical"] > 0 else "medium" if severity_counts["high"] > 2 else "low"
         ),
     }
 

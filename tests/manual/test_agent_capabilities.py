@@ -196,11 +196,7 @@ def main():
     print("\nDetailed Agent Analysis:")
     for agent_id, result in creation_results.items():
         if result.get("created"):
-            status = (
-                "✓ REAL IMPLEMENTATION"
-                if result.get("agent_class") != "GenericAgent"
-                else "○ GENERIC STUB"
-            )
+            status = "✓ REAL IMPLEMENTATION" if result.get("agent_class") != "GenericAgent" else "○ GENERIC STUB"
             print(f"  {agent_id}: {status} ({result.get('agent_class', 'Unknown')})")
         else:
             print(f"  {agent_id}: ✗ FAILED - {result.get('error', 'Unknown error')}")

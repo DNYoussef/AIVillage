@@ -24,11 +24,7 @@ class QuietStarModel(nn.Module):
             thought_input = torch.cat(
                 [
                     hidden_states,
-                    self.thought_embeddings(
-                        thoughts[-1]
-                        if thoughts
-                        else torch.zeros_like(hidden_states[:, :1])
-                    ),
+                    self.thought_embeddings(thoughts[-1] if thoughts else torch.zeros_like(hidden_states[:, :1])),
                 ],
                 dim=1,
             )
@@ -52,15 +48,11 @@ class QuietStarModel(nn.Module):
     def mix_predictions(self, base_hidden, thought_hidden):
         combined = torch.cat([base_hidden, thought_hidden], dim=-1)
         mixing_weight = torch.sigmoid(self.mixing_head(combined))
-        mixed = self.layer_norm(
-            mixing_weight * thought_hidden + (1 - mixing_weight) * base_hidden
-        )
+        mixed = self.layer_norm(mixing_weight * thought_hidden + (1 - mixing_weight) * base_hidden)
         return mixed
 
     def forward(self, input_ids, attention_mask=None, labels=None):
-        base_output = self.model(
-            input_ids, attention_mask=attention_mask, return_dict=True
-        )
+        base_output = self.model(input_ids, attention_mask=attention_mask, return_dict=True)
         thoughts = self.generate_thoughts(base_output.last_hidden_state, attention_mask)
         mixed_hidden = self.mix_predictions(base_output.last_hidden_state, thoughts)
         logits = self.model.lm_head(mixed_hidden)
@@ -70,9 +62,7 @@ class QuietStarModel(nn.Module):
             loss_fct = nn.CrossEntropyLoss()
             loss = loss_fct(logits.view(-1, logits.size(-1)), labels.view(-1))
 
-        return QuietStarOutput(
-            loss=loss, logits=logits, hidden_states=mixed_hidden, thoughts=thoughts
-        )
+        return QuietStarOutput(loss=loss, logits=logits, hidden_states=mixed_hidden, thoughts=thoughts)
 
 
 class QuietStarOutput:

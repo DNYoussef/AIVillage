@@ -91,9 +91,7 @@ def test_compression_stage(model, stage_name, compress_func):
             total_compressed += compressed_size
             successful_layers += 1
 
-            print(
-                f"    {original_size:,} → {compressed_size:,} bytes ({ratio:.1f}x) [{compress_time:.3f}s]"
-            )
+            print(f"    {original_size:,} → {compressed_size:,} bytes ({ratio:.1f}x) [{compress_time:.3f}s]")
 
         except Exception as e:
             print(f"    ❌ Failed: {e}")
@@ -108,12 +106,8 @@ def test_compression_stage(model, stage_name, compress_func):
         print(f"\n{stage_name} Results:")
         print(f"  Layers tested: {layer_count}")
         print(f"  Successful: {successful_layers} ({success_rate:.1f}%)")
-        print(
-            f"  Original: {total_original:,} bytes ({total_original / (1024**2):.1f} MB)"
-        )
-        print(
-            f"  Compressed: {total_compressed:,} bytes ({total_compressed / (1024**2):.1f} MB)"
-        )
+        print(f"  Original: {total_original:,} bytes ({total_original / (1024**2):.1f} MB)")
+        print(f"  Compressed: {total_compressed:,} bytes ({total_compressed / (1024**2):.1f} MB)")
         print(f"  Compression ratio: {overall_ratio:.1f}x")
 
         return overall_ratio, total_compressed
@@ -218,12 +212,8 @@ def extrapolate_to_1_5b(test_params, test_results, target_params=1_500_000_000):
 
     print("\nExtrapolated 1.5B results:")
     print(f"  Original size: {original_1_5b_gb:.2f} GB")
-    print(
-        f"  Stage 1 (BitNet): {stage1_ratio:.1f}x → {scaled_stage1 / (1024**2):.1f} MB"
-    )
-    print(
-        f"  Stage 2 (SeedLM): {stage2_ratio:.1f}x → {scaled_stage2 / (1024**2):.1f} MB"
-    )
+    print(f"  Stage 1 (BitNet): {stage1_ratio:.1f}x → {scaled_stage1 / (1024**2):.1f} MB")
+    print(f"  Stage 2 (SeedLM): {stage2_ratio:.1f}x → {scaled_stage2 / (1024**2):.1f} MB")
     print(f"  Stage 3 (VPTQ): {stage3_ratio:.1f}x → {scaled_stage3 / (1024**2):.1f} MB")
     print(f"  Stage 4 (LZMA): {stage4_ratio:.1f}x → {final_1_5b_mb:.1f} MB")
 
@@ -239,9 +229,7 @@ def extrapolate_to_1_5b(test_params, test_results, target_params=1_500_000_000):
     print("\nMobile deployment projection:")
     print(f"  Fits on 2GB phone: {'✅ YES' if mobile_viable else '❌ NO'}")
     print(f"  Kenya deployment: {'✅ READY' if kenya_viable else '⚠️ MARGINAL'}")
-    print(
-        f"  Memory usage: {final_1_5b_mb:.1f} MB ({final_1_5b_mb / 1024:.1f}% of 1GB)"
-    )
+    print(f"  Memory usage: {final_1_5b_mb:.1f} MB ({final_1_5b_mb / 1024:.1f}% of 1GB)")
 
     return overall_ratio, final_1_5b_mb, mobile_viable
 

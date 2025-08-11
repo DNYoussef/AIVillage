@@ -143,9 +143,7 @@ def test_mobile_compressor_profiles():
         print(f"Compression scales with device capability: {low_ratio >= high_ratio}")
 
         # All should fit in their target devices
-        all_fit = all(
-            r["compressed_size_mb"] < 1500 for r in results.values()
-        )  # Conservative threshold
+        all_fit = all(r["compressed_size_mb"] < 1500 for r in results.values())  # Conservative threshold
         print(f"All models fit in target devices: {all_fit}")
 
         # Sprint 9 compatibility should be consistent
@@ -247,9 +245,7 @@ def main():
         print("FAIL: Fallback mechanism issues")
 
     print("\nSystem Integration Status:")
-    print(
-        f"  Intelligent method selection: {'Working' if unified_success else 'Failed'}"
-    )
+    print(f"  Intelligent method selection: {'Working' if unified_success else 'Failed'}")
     print(f"  Mobile device compatibility: {'Working' if mobile_success else 'Failed'}")
     print(f"  Graceful error handling: {'Working' if fallback_success else 'Failed'}")
     print(f"  Production ready: {'YES' if success else 'NO'}")

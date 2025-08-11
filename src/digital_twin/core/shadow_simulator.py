@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict
+from typing import Any
 
 
 class ShadowSimulator:
     """Very small simulator that records simulation requests."""
 
     def __init__(self) -> None:
-        self.simulations: Dict[str, Any] = {}
+        self.simulations: dict[str, Any] = {}
 
     def simulate(self, profile: Any, scenario: str) -> None:
         """Store the scenario keyed by the profile's identifier."""

@@ -21,9 +21,9 @@ import numpy as np
 from sentence_transformers import SentenceTransformer
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
-import wandb
 
 from agent_forge.results_analyzer import ResultsAnalyzer
+import wandb
 
 logger = logging.getLogger(__name__)
 

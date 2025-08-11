@@ -16,9 +16,7 @@ import time
 from typing import Any
 
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 # Import our enhanced RAG components
@@ -321,9 +319,7 @@ class RAGIntegrationTester:
         print(f"  - Content Types: {stats.get('content_type_distribution', {})}")
 
         # Test retrieval quality
-        print(
-            f"\n[TEST] Testing Retrieval Quality with {len(self.test_questions)} questions..."
-        )
+        print(f"\n[TEST] Testing Retrieval Quality with {len(self.test_questions)} questions...")
         print("-" * 60)
 
         correct_answers = 0
@@ -347,9 +343,7 @@ class RAGIntegrationTester:
             retrieval_times.append(retrieval_time)
 
             # Evaluate answer quality
-            answer_quality = self._evaluate_answer_quality(
-                question, results, expected_topics, expected_doc
-            )
+            answer_quality = self._evaluate_answer_quality(question, results, expected_topics, expected_doc)
 
             if answer_quality["is_correct"]:
                 correct_answers += 1
@@ -364,12 +358,8 @@ class RAGIntegrationTester:
             if results:
                 best_result = results[0]
                 print(f"  Best Match: {best_result.document_id}")
-                print(
-                    f"  Content Type: {best_result.metadata.get('chunk_type', 'unknown')}"
-                )
-                print(
-                    f"  Coherence: {best_result.metadata.get('topic_coherence', 0):.3f}"
-                )
+                print(f"  Content Type: {best_result.metadata.get('chunk_type', 'unknown')}")
+                print(f"  Coherence: {best_result.metadata.get('topic_coherence', 0):.3f}")
                 print(f"  Entities: {best_result.metadata.get('entities', [])}")
                 print(f"  Text: {best_result.text[:150]}...")
 
@@ -391,9 +381,7 @@ class RAGIntegrationTester:
 
         print("\n[RESULTS] Final Results Summary")
         print("=" * 60)
-        print(
-            f"Success Rate: {success_rate:.1f}% ({correct_answers}/{total_questions})"
-        )
+        print(f"Success Rate: {success_rate:.1f}% ({correct_answers}/{total_questions})")
         print(f"Average Latency: {avg_latency:.1f}ms")
         print(f"Performance Target (<100ms): {'PASS' if avg_latency < 100 else 'FAIL'}")
 
@@ -403,23 +391,13 @@ class RAGIntegrationTester:
         print(f"  - Chunking Method: {perf_metrics['chunking_method']}")
         print(f"  - Cache Hit Rate: {perf_metrics['cache_metrics']['hit_rate']:.2%}")
         print(f"  - Index Size: {perf_metrics['index_size']} vectors")
-        print(
-            f"  - Average Chunk Coherence: {perf_metrics['chunking_quality']['avg_coherence']:.3f}"
-        )
-        print(
-            f"  - Total Entities: {perf_metrics['chunking_quality']['total_entities']}"
-        )
-        print(
-            f"  - Content Diversity: {perf_metrics['chunking_quality']['content_diversity']} types"
-        )
+        print(f"  - Average Chunk Coherence: {perf_metrics['chunking_quality']['avg_coherence']:.3f}")
+        print(f"  - Total Entities: {perf_metrics['chunking_quality']['total_entities']}")
+        print(f"  - Content Diversity: {perf_metrics['chunking_quality']['content_diversity']} types")
 
         # Overall assessment
         print("\n[ASSESSMENT] Overall Assessment:")
-        if (
-            success_rate >= 80
-            and avg_latency < 100
-            and perf_metrics["chunking_quality"]["avg_coherence"] > 0.6
-        ):
+        if success_rate >= 80 and avg_latency < 100 and perf_metrics["chunking_quality"]["avg_coherence"] > 0.6:
             print("EXCELLENT: Enhanced RAG system performing above targets!")
             print("  - Success rate >=80% target achieved")
             print("  - Latency <100ms target met")

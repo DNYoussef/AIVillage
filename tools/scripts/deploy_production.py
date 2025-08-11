@@ -15,9 +15,7 @@ import traceback
 from typing import Any
 
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -60,9 +58,7 @@ class ProductionDeployer:
 
         return default_config
 
-    def run_command(
-        self, cmd: list[str], check: bool = True, timeout: int = 300
-    ) -> tuple[int, str, str]:
+    def run_command(self, cmd: list[str], check: bool = True, timeout: int = 300) -> tuple[int, str, str]:
         """Run a command with error handling."""
         logger.info(f"Running: {' '.join(cmd)}")
         try:
@@ -104,9 +100,7 @@ class ProductionDeployer:
             logger.info(f"✅ {tool} is available")
 
         # Check kubectl context
-        returncode, stdout, _ = self.run_command(
-            ["kubectl", "config", "current-context"], check=False
-        )
+        returncode, stdout, _ = self.run_command(["kubectl", "config", "current-context"], check=False)
         if returncode == 0:
             logger.info(f"kubectl context: {stdout.strip()}")
         else:
@@ -148,15 +142,11 @@ class ProductionDeployer:
         logger.info(f"📦 Ensuring namespace {self.config['namespace']} exists...")
 
         # Check if namespace exists
-        returncode, _, _ = self.run_command(
-            ["kubectl", "get", "namespace", self.config["namespace"]], check=False
-        )
+        returncode, _, _ = self.run_command(["kubectl", "get", "namespace", self.config["namespace"]], check=False)
 
         if returncode != 0:
             # Create namespace
-            returncode, _, _ = self.run_command(
-                ["kubectl", "create", "namespace", self.config["namespace"]]
-            )
+            returncode, _, _ = self.run_command(["kubectl", "create", "namespace", self.config["namespace"]])
             if returncode != 0:
                 logger.error(f"Failed to create namespace {self.config['namespace']}")
                 return False
@@ -435,9 +425,7 @@ class ProductionDeployer:
                 status["pods"] = {
                     "total": len(pods.get("items", [])),
                     "running": sum(
-                        1
-                        for pod in pods.get("items", [])
-                        if pod.get("status", {}).get("phase") == "Running"
+                        1 for pod in pods.get("items", []) if pod.get("status", {}).get("phase") == "Running"
                     ),
                 }
             except json.JSONDecodeError:

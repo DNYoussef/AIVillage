@@ -45,9 +45,7 @@ def auth_context():
 async def test_add_and_search(protocol_handler, auth_context):
     handler, storage = protocol_handler
 
-    add_result = await handler.handle_add_knowledge(
-        auth_context, content="hello world", content_type="text"
-    )
+    add_result = await handler.handle_add_knowledge(auth_context, content="hello world", content_type="text")
     node_id = add_result["node_id"]
 
     search_result = await handler.handle_search_knowledge(auth_context, query="hello")
@@ -60,9 +58,7 @@ async def test_add_and_search(protocol_handler, auth_context):
 async def test_update(protocol_handler, auth_context):
     handler, storage = protocol_handler
 
-    add_result = await handler.handle_add_knowledge(
-        auth_context, content="foo", content_type="text"
-    )
+    add_result = await handler.handle_add_knowledge(auth_context, content="foo", content_type="text")
     node_id = add_result["node_id"]
 
     await handler.handle_update_knowledge(auth_context, node_id=node_id, content="bar")
@@ -77,15 +73,11 @@ async def test_update(protocol_handler, auth_context):
 async def test_delete(protocol_handler, auth_context):
     handler, storage = protocol_handler
 
-    add_result = await handler.handle_add_knowledge(
-        auth_context, content="to delete", content_type="text"
-    )
+    add_result = await handler.handle_add_knowledge(auth_context, content="to delete", content_type="text")
     node_id = add_result["node_id"]
 
     await handler.handle_delete_knowledge(auth_context, node_id=node_id)
 
-    search_result = await handler.handle_search_knowledge(
-        auth_context, query="to delete"
-    )
+    search_result = await handler.handle_search_knowledge(auth_context, query="to delete")
 
     assert search_result["total_count"] == 0

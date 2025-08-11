@@ -10,9 +10,12 @@ from __future__ import annotations
 
 import ast
 import importlib
-import sys
 from pathlib import Path
-from typing import Iterable, List, Tuple
+import sys
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 MODULE_PREFIXES = {
     "agent_forge": "src.agent_forge",
@@ -32,7 +35,7 @@ def iter_python_files(root: Path) -> Iterable[Path]:
         yield path
 
 
-def replace_segment(lines: List[str], node: ast.AST, new_segment: str) -> None:
+def replace_segment(lines: list[str], node: ast.AST, new_segment: str) -> None:
     if not hasattr(node, "lineno") or not hasattr(node, "end_lineno"):
         return
     start, end = node.lineno - 1, node.end_lineno - 1
@@ -41,9 +44,9 @@ def replace_segment(lines: List[str], node: ast.AST, new_segment: str) -> None:
     lines[start : end + 1] = [prefix + new_segment + suffix]
 
 
-def handle_import(node: ast.Import, lines: List[str], ambiguous: List[Tuple[Path, str]]) -> bool:
+def handle_import(node: ast.Import, lines: list[str], ambiguous: list[tuple[Path, str]]) -> bool:
     modified = False
-    new_parts: List[str] = []
+    new_parts: list[str] = []
     for alias in node.names:
         name = alias.name
         as_part = f" as {alias.asname}" if alias.asname else ""
@@ -64,7 +67,7 @@ def handle_import(node: ast.Import, lines: List[str], ambiguous: List[Tuple[Path
     return modified
 
 
-def handle_import_from(node: ast.ImportFrom, lines: List[str]) -> bool:
+def handle_import_from(node: ast.ImportFrom, lines: list[str]) -> bool:
     if not node.module:
         return False
     module = node.module
@@ -77,7 +80,7 @@ def handle_import_from(node: ast.ImportFrom, lines: List[str]) -> bool:
     return False
 
 
-def process_file(path: Path, ambiguous: List[Tuple[Path, str]]) -> bool:
+def process_file(path: Path, ambiguous: list[tuple[Path, str]]) -> bool:
     source = path.read_text()
     try:
         tree = ast.parse(source)
@@ -98,7 +101,7 @@ def process_file(path: Path, ambiguous: List[Tuple[Path, str]]) -> bool:
     return modified
 
 
-def validate_modules(repo_root: Path, modules: Iterable[str]) -> List[str]:
+def validate_modules(repo_root: Path, modules: Iterable[str]) -> list[str]:
     """Attempt to import each module to ensure the new paths resolve."""
     project_root = repo_root
     if repo_root.name == "src":
@@ -115,7 +118,7 @@ def validate_modules(repo_root: Path, modules: Iterable[str]) -> List[str]:
 
 def main(root: str = ".") -> None:
     repo_root = Path(root).resolve()
-    ambiguous: List[Tuple[Path, str]] = []
+    ambiguous: list[tuple[Path, str]] = []
     modified_files = []
     for py_file in iter_python_files(repo_root):
         if process_file(py_file, ambiguous):

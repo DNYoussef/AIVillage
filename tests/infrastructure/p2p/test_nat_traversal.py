@@ -33,9 +33,7 @@ class DummyTCPSocket:
 
 def test_full_cone_hole_punching(monkeypatch):
     trav = NATTraversal()
-    monkeypatch.setattr(
-        trav, "detect_nat", lambda: NATInfo("1.2.3.4", 1234, NATType.FULL_CONE)
-    )
+    monkeypatch.setattr(trav, "detect_nat", lambda: NATInfo("1.2.3.4", 1234, NATType.FULL_CONE))
 
     def socket_factory(_family, sock_type):
         assert sock_type == real_socket.SOCK_DGRAM
@@ -52,9 +50,7 @@ def test_full_cone_hole_punching(monkeypatch):
 def test_symmetric_nat_uses_relay(monkeypatch):
     relays = [("relay.example.com", 9000)]
     trav = NATTraversal(relay_servers=relays)
-    monkeypatch.setattr(
-        trav, "detect_nat", lambda: NATInfo("9.9.9.9", 9999, NATType.SYMMETRIC)
-    )
+    monkeypatch.setattr(trav, "detect_nat", lambda: NATInfo("9.9.9.9", 9999, NATType.SYMMETRIC))
     attempts: list[int] = []
 
     def predict(base, attempt):

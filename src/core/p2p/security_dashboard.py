@@ -20,13 +20,11 @@ logger = logging.getLogger(__name__)
 class SecurityDashboardHandler(BaseHTTPRequestHandler):
     """HTTP handler for security dashboard."""
 
-    def __init__(
-        self, request, client_address, server, security_monitor: SecurityMonitor
-    ):
+    def __init__(self, request, client_address, server, security_monitor: SecurityMonitor) -> None:
         self.security_monitor = security_monitor
         super().__init__(request, client_address, server)
 
-    def do_GET(self):
+    def do_GET(self) -> None:
         """Handle GET requests."""
         parsed_path = urlparse(self.path)
         path = parsed_path.path
@@ -46,7 +44,7 @@ class SecurityDashboardHandler(BaseHTTPRequestHandler):
         else:
             self.send_error(404, "Not Found")
 
-    def serve_dashboard_html(self):
+    def serve_dashboard_html(self) -> None:
         """Serve the main dashboard HTML."""
         html_content = self.get_dashboard_html()
 
@@ -56,7 +54,7 @@ class SecurityDashboardHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(html_content.encode())
 
-    def serve_security_summary(self):
+    def serve_security_summary(self) -> None:
         """Serve security summary data."""
         summary = self.security_monitor.get_security_summary()
 
@@ -64,19 +62,11 @@ class SecurityDashboardHandler(BaseHTTPRequestHandler):
         now = datetime.now()
         recent_threshold = now - timedelta(hours=1)
 
-        recent_events = [
-            log
-            for log in self.security_monitor.security_logs
-            if log.timestamp >= recent_threshold
-        ]
+        recent_events = [log for log in self.security_monitor.security_logs if log.timestamp >= recent_threshold]
 
-        critical_events = [
-            log for log in recent_events if log.severity == SecurityLevel.CRITICAL
-        ]
+        critical_events = [log for log in recent_events if log.severity == SecurityLevel.CRITICAL]
 
-        high_severity_events = [
-            log for log in recent_events if log.severity == SecurityLevel.HIGH
-        ]
+        high_severity_events = [log for log in recent_events if log.severity == SecurityLevel.HIGH]
 
         enhanced_summary = {
             **summary,
@@ -89,7 +79,7 @@ class SecurityDashboardHandler(BaseHTTPRequestHandler):
 
         self.send_json_response(enhanced_summary)
 
-    def serve_security_events(self):
+    def serve_security_events(self) -> None:
         """Serve recent security events."""
         # Get query parameters
         parsed_path = urlparse(self.path)
@@ -134,7 +124,7 @@ class SecurityDashboardHandler(BaseHTTPRequestHandler):
             }
         )
 
-    def serve_peer_reputation(self):
+    def serve_peer_reputation(self) -> None:
         """Serve peer reputation data."""
         reputations = []
 
@@ -161,12 +151,11 @@ class SecurityDashboardHandler(BaseHTTPRequestHandler):
                 "peer_reputations": reputations,
                 "total_peers": len(reputations),
                 "blocked_peers": len(self.security_monitor.blocked_peers),
-                "avg_trust_score": sum(r["trust_score"] for r in reputations)
-                / max(1, len(reputations)),
+                "avg_trust_score": sum(r["trust_score"] for r in reputations) / max(1, len(reputations)),
             }
         )
 
-    def serve_security_alerts(self):
+    def serve_security_alerts(self) -> None:
         """Serve current security alerts."""
         alerts = []
         now = datetime.now()
@@ -177,10 +166,7 @@ class SecurityDashboardHandler(BaseHTTPRequestHandler):
         recent_blocks = [
             log
             for log in self.security_monitor.security_logs
-            if (
-                log.event_type == SecurityEvent.PEER_BLOCKED
-                and (now - log.timestamp).total_seconds() < 3600
-            )
+            if (log.event_type == SecurityEvent.PEER_BLOCKED and (now - log.timestamp).total_seconds() < 3600)
         ]
 
         if len(recent_blocks) > 5:
@@ -199,10 +185,7 @@ class SecurityDashboardHandler(BaseHTTPRequestHandler):
         auth_failures = [
             log
             for log in self.security_monitor.security_logs
-            if (
-                log.event_type == SecurityEvent.AUTH_FAILURE
-                and (now - log.timestamp).total_seconds() < 3600
-            )
+            if (log.event_type == SecurityEvent.AUTH_FAILURE and (now - log.timestamp).total_seconds() < 3600)
         ]
 
         if len(auth_failures) > 20:
@@ -219,9 +202,9 @@ class SecurityDashboardHandler(BaseHTTPRequestHandler):
 
         # Low average trust score
         if self.security_monitor.peer_reputations:
-            avg_trust = sum(
-                r.trust_score for r in self.security_monitor.peer_reputations.values()
-            ) / len(self.security_monitor.peer_reputations)
+            avg_trust = sum(r.trust_score for r in self.security_monitor.peer_reputations.values()) / len(
+                self.security_monitor.peer_reputations
+            )
 
             if avg_trust < 0.4:
                 alerts.append(
@@ -239,10 +222,7 @@ class SecurityDashboardHandler(BaseHTTPRequestHandler):
         replay_attacks = [
             log
             for log in self.security_monitor.security_logs
-            if (
-                log.event_type == SecurityEvent.REPLAY_ATTACK_DETECTED
-                and (now - log.timestamp).total_seconds() < 3600
-            )
+            if (log.event_type == SecurityEvent.REPLAY_ATTACK_DETECTED and (now - log.timestamp).total_seconds() < 3600)
         ]
 
         if replay_attacks:
@@ -278,18 +258,15 @@ class SecurityDashboardHandler(BaseHTTPRequestHandler):
         recent_critical = [
             log
             for log in self.security_monitor.security_logs
-            if (
-                log.severity == SecurityLevel.CRITICAL
-                and (now - log.timestamp).total_seconds() < 3600
-            )
+            if (log.severity == SecurityLevel.CRITICAL and (now - log.timestamp).total_seconds() < 3600)
         ]
         score -= min(0.4, len(recent_critical) * 0.05)
 
         # Reduce score based on low average trust
         if self.security_monitor.peer_reputations:
-            avg_trust = sum(
-                r.trust_score for r in self.security_monitor.peer_reputations.values()
-            ) / len(self.security_monitor.peer_reputations)
+            avg_trust = sum(r.trust_score for r in self.security_monitor.peer_reputations.values()) / len(
+                self.security_monitor.peer_reputations
+            )
             if avg_trust < 0.5:
                 score -= 0.5 - avg_trust
 
@@ -307,7 +284,7 @@ class SecurityDashboardHandler(BaseHTTPRequestHandler):
             return "high"
         return "critical"
 
-    def send_json_response(self, data: dict[str, Any]):
+    def send_json_response(self, data: dict[str, Any]) -> None:
         """Send JSON response."""
         json_data = json.dumps(data, indent=2)
 
@@ -679,30 +656,28 @@ class SecurityDashboardHandler(BaseHTTPRequestHandler):
 </body>
 </html>"""
 
-    def log_message(self, format, *args):
+    def log_message(self, format, *args) -> None:
         """Suppress default logging."""
 
 
 class SecurityDashboardServer:
     """Security dashboard web server."""
 
-    def __init__(self, security_monitor: SecurityMonitor, port: int = 8083):
+    def __init__(self, security_monitor: SecurityMonitor, port: int = 8083) -> None:
         self.security_monitor = security_monitor
         self.port = port
         self.server = None
         self.running = False
 
-    def start(self):
+    def start(self) -> None:
         """Start the dashboard server."""
         if self.running:
             return
 
         # Create custom handler with security monitor
         class CustomHandler(SecurityDashboardHandler):
-            def __init__(self, request, client_address, server):
-                super().__init__(
-                    request, client_address, server, server.security_monitor
-                )
+            def __init__(self, request, client_address, server) -> None:
+                super().__init__(request, client_address, server, server.security_monitor)
 
         # Create server
         self.server = HTTPServer(("localhost", self.port), CustomHandler)
@@ -727,7 +702,7 @@ class SecurityDashboardServer:
         except KeyboardInterrupt:
             self.stop()
 
-    def stop(self):
+    def stop(self) -> None:
         """Stop the dashboard server."""
         if self.server and self.running:
             self.server.shutdown()

@@ -114,7 +114,7 @@ class BayesianTrustGraph:
         trust_decay_factor: float = 0.85,
         max_propagation_hops: int = 3,
         relationship_confidence_threshold: float = 0.6,
-    ):
+    ) -> None:
         """Initialize Bayesian trust graph."""
         self.embedding_model_name = embedding_model
         self.similarity_threshold = similarity_threshold
@@ -195,7 +195,7 @@ class BayesianTrustGraph:
             return chunk_node
 
         except Exception as e:
-            logger.error(f"Failed to add semantic chunk {chunk_id}: {e}")
+            logger.exception(f"Failed to add semantic chunk {chunk_id}: {e}")
             raise
 
     def detect_semantic_relationships(
@@ -213,13 +213,9 @@ class BayesianTrustGraph:
                     continue
 
                 # Calculate semantic similarity
-                if (
-                    chunk_node.embedding is not None
-                    and other_chunk.embedding is not None
-                ):
+                if chunk_node.embedding is not None and other_chunk.embedding is not None:
                     similarity = np.dot(chunk_node.embedding, other_chunk.embedding) / (
-                        np.linalg.norm(chunk_node.embedding)
-                        * np.linalg.norm(other_chunk.embedding)
+                        np.linalg.norm(chunk_node.embedding) * np.linalg.norm(other_chunk.embedding)
                     )
                 else:
                     continue
@@ -239,14 +235,10 @@ class BayesianTrustGraph:
                     continue
 
                 # Calculate contextual proximity
-                contextual_proximity = self._calculate_contextual_proximity(
-                    chunk_node, other_chunk
-                )
+                contextual_proximity = self._calculate_contextual_proximity(chunk_node, other_chunk)
 
                 # Calculate trust transfer rate
-                trust_transfer_rate = self._calculate_trust_transfer_rate(
-                    relationship_type, confidence, similarity
-                )
+                trust_transfer_rate = self._calculate_trust_transfer_rate(relationship_type, confidence, similarity)
 
                 # Create relationship
                 relationship = SemanticRelationship(
@@ -257,9 +249,7 @@ class BayesianTrustGraph:
                     weight=similarity * confidence,
                     semantic_similarity=similarity,
                     contextual_proximity=contextual_proximity,
-                    discourse_markers=self._extract_discourse_markers(
-                        chunk_node.text, other_chunk.text
-                    ),
+                    discourse_markers=self._extract_discourse_markers(chunk_node.text, other_chunk.text),
                     trust_transfer_rate=trust_transfer_rate,
                     bidirectional=bidirectional,
                 )
@@ -267,14 +257,10 @@ class BayesianTrustGraph:
                 relationships.append(relationship)
 
                 # Add edge to graph
-                self.graph.add_edge(
-                    chunk_node.chunk_id, other_chunk.chunk_id, **asdict(relationship)
-                )
+                self.graph.add_edge(chunk_node.chunk_id, other_chunk.chunk_id, **asdict(relationship))
 
                 # Store relationship
-                self.relationships[
-                    (chunk_node.chunk_id, other_chunk.chunk_id)
-                ] = relationship
+                self.relationships[(chunk_node.chunk_id, other_chunk.chunk_id)] = relationship
 
                 # Add reverse relationship if bidirectional
                 if bidirectional:
@@ -297,21 +283,15 @@ class BayesianTrustGraph:
                         **asdict(reverse_relationship),
                     )
 
-                    self.relationships[
-                        (other_chunk.chunk_id, chunk_node.chunk_id)
-                    ] = reverse_relationship
+                    self.relationships[(other_chunk.chunk_id, chunk_node.chunk_id)] = reverse_relationship
 
             self.stats["relationships_detected"] += len(relationships)
-            logger.debug(
-                f"Detected {len(relationships)} relationships for chunk {chunk_node.chunk_id}"
-            )
+            logger.debug(f"Detected {len(relationships)} relationships for chunk {chunk_node.chunk_id}")
 
             return relationships
 
         except Exception as e:
-            logger.error(
-                f"Failed to detect relationships for {chunk_node.chunk_id}: {e}"
-            )
+            logger.exception(f"Failed to detect relationships for {chunk_node.chunk_id}: {e}")
             return []
 
     def _classify_relationship(
@@ -319,17 +299,11 @@ class BayesianTrustGraph:
     ) -> tuple[RelationshipType, float, bool]:
         """Classify the type of relationship between two chunks."""
         # Check sequential continuation (same document, adjacent positions)
-        if (
-            chunk1.document_id == chunk2.document_id
-            and abs(chunk1.position - chunk2.position) == 1
-        ):
+        if chunk1.document_id == chunk2.document_id and abs(chunk1.position - chunk2.position) == 1:
             return RelationshipType.CONTINUES, 0.9, True
 
         # Check for elaboration patterns (hierarchical sections)
-        if (
-            chunk1.document_id == chunk2.document_id
-            and self._is_hierarchical_elaboration(chunk1, chunk2)
-        ):
+        if chunk1.document_id == chunk2.document_id and self._is_hierarchical_elaboration(chunk1, chunk2):
             return RelationshipType.ELABORATES, 0.8, False
 
         # Check for contrasting language
@@ -353,9 +327,7 @@ class BayesianTrustGraph:
             return RelationshipType.REFERENCES, similarity, True
         return RelationshipType.CONTEXTUALIZES, similarity * 0.8, False
 
-    def _is_hierarchical_elaboration(
-        self, chunk1: SemanticChunkNode, chunk2: SemanticChunkNode
-    ) -> bool:
+    def _is_hierarchical_elaboration(self, chunk1: SemanticChunkNode, chunk2: SemanticChunkNode) -> bool:
         """Check if chunks have hierarchical elaboration relationship."""
         h1 = chunk1.section_hierarchy
         h2 = chunk2.section_hierarchy
@@ -364,9 +336,7 @@ class BayesianTrustGraph:
             return False
 
         # Check if one hierarchy is a subset of the other (elaboration)
-        return (len(h2) > len(h1) and h2[: len(h1)] == h1) or (
-            len(h1) > len(h2) and h1[: len(h2)] == h2
-        )
+        return (len(h2) > len(h1) and h2[: len(h1)] == h1) or (len(h1) > len(h2) and h1[: len(h2)] == h2)
 
     def _has_contrasting_markers(self, text1: str, text2: str) -> bool:
         """Check for linguistic markers of contrasting relationships."""
@@ -441,9 +411,7 @@ class BayesianTrustGraph:
         combined_text = (text1 + " " + text2).lower()
         return any(marker in combined_text for marker in example_markers)
 
-    def _calculate_contextual_proximity(
-        self, chunk1: SemanticChunkNode, chunk2: SemanticChunkNode
-    ) -> float:
+    def _calculate_contextual_proximity(self, chunk1: SemanticChunkNode, chunk2: SemanticChunkNode) -> float:
         """Calculate contextual proximity between chunks."""
         proximity = 0.0
 
@@ -549,10 +517,7 @@ class BayesianTrustGraph:
 
             # Iterative trust propagation
             for iteration in range(max_iterations):
-                previous_scores = {
-                    chunk_id: node.trust_score
-                    for chunk_id, node in self.chunk_nodes.items()
-                }
+                previous_scores = {chunk_id: node.trust_score for chunk_id, node in self.chunk_nodes.items()}
 
                 # Update trust scores based on incoming relationships
                 for chunk_id, chunk_node in self.chunk_nodes.items():
@@ -565,17 +530,11 @@ class BayesianTrustGraph:
                             pred_node = self.chunk_nodes[pred_id]
                             edge_data = self.graph[pred_id][chunk_id]
 
-                            trust_transfer_rate = edge_data.get(
-                                "trust_transfer_rate", 0.5
-                            )
+                            trust_transfer_rate = edge_data.get("trust_transfer_rate", 0.5)
                             weight = edge_data.get("weight", 0.5)
 
                             # Bayesian trust transfer
-                            transferred_trust = (
-                                pred_node.trust_score
-                                * trust_transfer_rate
-                                * self.trust_decay_factor
-                            )
+                            transferred_trust = pred_node.trust_score * trust_transfer_rate * self.trust_decay_factor
 
                             incoming_trust += transferred_trust * weight
                             total_weight += weight
@@ -592,8 +551,7 @@ class BayesianTrustGraph:
                         confidence_in_evidence = min(total_weight, 1.0)
 
                         chunk_node.trust_score = (
-                            prior * (1 - confidence_in_evidence)
-                            + evidence * confidence_in_evidence
+                            prior * (1 - confidence_in_evidence) + evidence * confidence_in_evidence
                         )
 
                     # Update graph node
@@ -606,9 +564,7 @@ class BayesianTrustGraph:
                 )
 
                 if max_change < convergence_threshold:
-                    logger.debug(
-                        f"Trust propagation converged after {iteration + 1} iterations"
-                    )
+                    logger.debug(f"Trust propagation converged after {iteration + 1} iterations")
                     break
 
             # Calculate centrality scores
@@ -618,32 +574,25 @@ class BayesianTrustGraph:
             propagation_time = (time.perf_counter() - start_time) * 1000
             self.stats["trust_propagations"] += 1
             self.stats["avg_trust_propagation_time"] = (
-                self.stats["avg_trust_propagation_time"]
-                * (self.stats["trust_propagations"] - 1)
-                + propagation_time
+                self.stats["avg_trust_propagation_time"] * (self.stats["trust_propagations"] - 1) + propagation_time
             ) / self.stats["trust_propagations"]
 
             logger.info(f"Trust propagation completed in {propagation_time:.1f}ms")
 
-            return {
-                chunk_id: node.trust_score
-                for chunk_id, node in self.chunk_nodes.items()
-            }
+            return {chunk_id: node.trust_score for chunk_id, node in self.chunk_nodes.items()}
 
         except Exception as e:
-            logger.error(f"Trust propagation failed: {e}")
+            logger.exception(f"Trust propagation failed: {e}")
             return {}
 
-    def _update_centrality_scores(self):
+    def _update_centrality_scores(self) -> None:
         """Update centrality scores for graph nodes."""
         try:
             if len(self.graph.nodes) == 0:
                 return
 
             # Calculate PageRank centrality
-            pagerank_scores = nx.pagerank(
-                self.graph, weight="weight", max_iter=100, tol=1e-06
-            )
+            pagerank_scores = nx.pagerank(self.graph, weight="weight", max_iter=100, tol=1e-06)
 
             # Update chunk nodes with centrality scores
             for chunk_id, centrality_score in pagerank_scores.items():
@@ -696,8 +645,7 @@ class BayesianTrustGraph:
 
                 # Calculate semantic similarity
                 similarity = np.dot(query_embedding, chunk_node.embedding) / (
-                    np.linalg.norm(query_embedding)
-                    * np.linalg.norm(chunk_node.embedding)
+                    np.linalg.norm(query_embedding) * np.linalg.norm(chunk_node.embedding)
                 )
 
                 # Calculate composite score
@@ -732,21 +680,16 @@ class BayesianTrustGraph:
             initial_results = chunk_scores[: k * 2]  # Get more for graph expansion
 
             # Expand results through graph traversal
-            expanded_results = self._expand_through_graph_traversal(
-                initial_results, traversal_depth, query_embedding
-            )
+            expanded_results = self._expand_through_graph_traversal(initial_results, traversal_depth, query_embedding)
 
             # Re-rank and limit to k results
-            final_results = sorted(expanded_results, key=lambda x: x[1], reverse=True)[
-                :k
-            ]
+            final_results = sorted(expanded_results, key=lambda x: x[1], reverse=True)[:k]
 
             # Update statistics
             retrieval_time = (time.perf_counter() - start_time) * 1000
             self.stats["graph_retrievals"] += 1
             self.stats["avg_retrieval_time"] = (
-                self.stats["avg_retrieval_time"] * (self.stats["graph_retrievals"] - 1)
-                + retrieval_time
+                self.stats["avg_retrieval_time"] * (self.stats["graph_retrievals"] - 1) + retrieval_time
             ) / self.stats["graph_retrievals"]
 
             logger.debug(f"Graph retrieval completed in {retrieval_time:.1f}ms")
@@ -754,7 +697,7 @@ class BayesianTrustGraph:
             return final_results
 
         except Exception as e:
-            logger.error(f"Graph retrieval failed: {e}")
+            logger.exception(f"Graph retrieval failed: {e}")
             return []
 
     def _expand_through_graph_traversal(
@@ -784,10 +727,7 @@ class BayesianTrustGraph:
             )
 
         # Convert back to list format
-        return [
-            (chunk_id, score, metadata)
-            for chunk_id, (score, metadata) in result_map.items()
-        ]
+        return [(chunk_id, score, metadata) for chunk_id, (score, metadata) in result_map.items()]
 
     def _traverse_from_chunk(
         self,
@@ -797,7 +737,7 @@ class BayesianTrustGraph:
         result_map: dict[str, tuple[float, dict[str, Any]]],
         query_embedding: np.ndarray,
         parent_score: float,
-    ):
+    ) -> None:
         """Recursively traverse graph from a chunk."""
         if remaining_depth <= 0:
             return
@@ -813,8 +753,7 @@ class BayesianTrustGraph:
             # Calculate traversal score
             if neighbor_node.embedding is not None:
                 similarity = np.dot(query_embedding, neighbor_node.embedding) / (
-                    np.linalg.norm(query_embedding)
-                    * np.linalg.norm(neighbor_node.embedding)
+                    np.linalg.norm(query_embedding) * np.linalg.norm(neighbor_node.embedding)
                 )
 
                 # Combine parent score with relationship strength
@@ -845,9 +784,7 @@ class BayesianTrustGraph:
                             "text": neighbor_node.text,
                             "traversal_depth": 3 - remaining_depth,
                             "parent_chunk": chunk_id,
-                            "relationship_type": edge_data.get(
-                                "relationship_type", "unknown"
-                            ),
+                            "relationship_type": edge_data.get("relationship_type", "unknown"),
                         },
                     )
 
@@ -873,9 +810,7 @@ class BayesianTrustGraph:
             avg_trust = np.mean(trust_scores) if trust_scores else 0.0
 
             # Centrality distribution
-            centrality_scores = [
-                node.centrality_score for node in self.chunk_nodes.values()
-            ]
+            centrality_scores = [node.centrality_score for node in self.chunk_nodes.values()]
             avg_centrality = np.mean(centrality_scores) if centrality_scores else 0.0
 
             # Relationship type distribution
@@ -910,24 +845,16 @@ class BayesianTrustGraph:
                 },
                 "centrality_metrics": {
                     "avg_centrality": avg_centrality,
-                    "centrality_std": (
-                        np.std(centrality_scores) if centrality_scores else 0.0
-                    ),
+                    "centrality_std": (np.std(centrality_scores) if centrality_scores else 0.0),
                 },
                 "relationship_distribution": relationship_types,
                 "performance_stats": self.stats.copy(),
                 "quality_metrics": {
                     "avg_quality_score": (
-                        np.mean(
-                            [node.quality_score for node in self.chunk_nodes.values()]
-                        )
-                        if self.chunk_nodes
-                        else 0.0
+                        np.mean([node.quality_score for node in self.chunk_nodes.values()]) if self.chunk_nodes else 0.0
                     ),
                     "avg_coherence_score": (
-                        np.mean(
-                            [node.coherence_score for node in self.chunk_nodes.values()]
-                        )
+                        np.mean([node.coherence_score for node in self.chunk_nodes.values()])
                         if self.chunk_nodes
                         else 0.0
                     ),
@@ -935,7 +862,7 @@ class BayesianTrustGraph:
             }
 
         except Exception as e:
-            logger.error(f"Failed to generate graph statistics: {e}")
+            logger.exception(f"Failed to generate graph statistics: {e}")
             return {"error": str(e)}
 
     def export_graph_data(self, include_embeddings: bool = False) -> dict[str, Any]:

@@ -45,9 +45,7 @@ async def test_magi_minimal():
         # Run the complete minimal training pipeline
         logger.info("Starting minimal Magi specialization run...")
         result = await pipeline.run_magi_specialization()
-        logger.info(
-            f"Magi specialization completed with success: {result.get('success', False)}"
-        )
+        logger.info(f"Magi specialization completed with success: {result.get('success', False)}")
 
         success = result.get("success", False)
         if success:

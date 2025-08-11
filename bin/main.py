@@ -50,15 +50,11 @@ Examples:
         help="Service mode to run",
     )
 
-    parser.add_argument(
-        "--action", "-a", required=True, help="Action to perform (depends on mode)"
-    )
+    parser.add_argument("--action", "-a", required=True, help="Action to perform (depends on mode)")
 
     parser.add_argument("--config", "-c", help="Configuration file path")
 
-    parser.add_argument(
-        "--verbose", "-v", action="store_true", help="Enable verbose output"
-    )
+    parser.add_argument("--verbose", "-v", action="store_true", help="Enable verbose output")
 
     parser.add_argument("--debug", action="store_true", help="Enable debug mode")
 

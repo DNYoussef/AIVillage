@@ -16,7 +16,11 @@ import logging
 import time
 from typing import Any
 
-from src.production.rag.rag_system.core.codex_rag_integration import Chunk, Document, RetrievalResult
+from src.production.rag.rag_system.core.codex_rag_integration import (
+    Chunk,
+    Document,
+    RetrievalResult,
+)
 from src.production.rag.rag_system.core.contextual_tagging import (
     ChunkType,
     ContentDomain,
@@ -25,7 +29,9 @@ from src.production.rag.rag_system.core.contextual_tagging import (
     DocumentType,
     ReadingLevel,
 )
-from src.production.rag.rag_system.core.enhanced_codex_rag import EnhancedCODEXRAGPipeline
+from src.production.rag.rag_system.core.enhanced_codex_rag import (
+    EnhancedCODEXRAGPipeline,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +56,7 @@ class ContextualRAGPipeline(EnhancedCODEXRAGPipeline):
         chunking_context_overlap: int = 1,
         similarity_thresholds: dict | None = None,
         contextual_embedding_model: str = "paraphrase-MiniLM-L3-v2",
-    ):
+    ) -> None:
         """Initialize contextual RAG pipeline."""
         # Initialize parent class
         super().__init__(
@@ -88,9 +94,7 @@ class ContextualRAGPipeline(EnhancedCODEXRAGPipeline):
             "chunk_type_distribution": {},
         }
 
-    def chunk_document_with_context(
-        self, document: Document, force_traditional: bool = False
-    ) -> list[Chunk]:
+    def chunk_document_with_context(self, document: Document, force_traditional: bool = False) -> list[Chunk]:
         """Chunk document with full contextual tagging.
 
         Args:
@@ -139,9 +143,7 @@ class ContextualRAGPipeline(EnhancedCODEXRAGPipeline):
                 )
 
                 # Enhance chunk metadata with contextual information
-                enhanced_metadata = (
-                    base_chunk.metadata.copy() if base_chunk.metadata else {}
-                )
+                enhanced_metadata = base_chunk.metadata.copy() if base_chunk.metadata else {}
 
                 # Add Level 1 context (Document)
                 enhanced_metadata.update(
@@ -165,32 +167,16 @@ class ContextualRAGPipeline(EnhancedCODEXRAGPipeline):
                 enhanced_metadata.update(
                     {
                         "chunk_context": contextual_chunk_data["chunk_context"],
-                        "local_summary": contextual_chunk_data["chunk_context"][
-                            "local_summary"
-                        ],
-                        "chunk_type": contextual_chunk_data["chunk_context"][
-                            "chunk_type"
-                        ],
-                        "section_hierarchy": contextual_chunk_data["chunk_context"][
-                            "section_hierarchy"
-                        ],
+                        "local_summary": contextual_chunk_data["chunk_context"]["local_summary"],
+                        "chunk_type": contextual_chunk_data["chunk_context"]["chunk_type"],
+                        "section_hierarchy": contextual_chunk_data["chunk_context"]["section_hierarchy"],
                         "chapter_info": {
-                            "number": contextual_chunk_data["chunk_context"][
-                                "chapter_number"
-                            ],
-                            "title": contextual_chunk_data["chunk_context"][
-                                "chapter_title"
-                            ],
+                            "number": contextual_chunk_data["chunk_context"]["chapter_number"],
+                            "title": contextual_chunk_data["chunk_context"]["chapter_title"],
                         },
-                        "contextual_entities": contextual_chunk_data["chunk_context"][
-                            "key_entities"
-                        ],
-                        "local_keywords": contextual_chunk_data["chunk_context"][
-                            "local_keywords"
-                        ],
-                        "discourse_markers": contextual_chunk_data["chunk_context"][
-                            "discourse_markers"
-                        ],
+                        "contextual_entities": contextual_chunk_data["chunk_context"]["key_entities"],
+                        "local_keywords": contextual_chunk_data["chunk_context"]["local_keywords"],
+                        "discourse_markers": contextual_chunk_data["chunk_context"]["discourse_markers"],
                     }
                 )
 
@@ -199,12 +185,8 @@ class ContextualRAGPipeline(EnhancedCODEXRAGPipeline):
                     {
                         "quality_metrics": contextual_chunk_data["quality_metrics"],
                         "relationships": contextual_chunk_data["relationships"],
-                        "context_inheritance": contextual_chunk_data[
-                            "context_inheritance"
-                        ],
-                        "context_richness_score": self._calculate_context_richness(
-                            contextual_chunk_data
-                        ),
+                        "context_inheritance": contextual_chunk_data["context_inheritance"],
+                        "context_richness_score": self._calculate_context_richness(contextual_chunk_data),
                     }
                 )
 
@@ -236,23 +218,19 @@ class ContextualRAGPipeline(EnhancedCODEXRAGPipeline):
             # Update statistics
             self._update_contextual_stats(document_context, contextual_chunks)
 
-            logger.info(
-                f"Created {len(contextual_chunks)} contextually-enhanced chunks for {document.id}"
-            )
+            logger.info(f"Created {len(contextual_chunks)} contextually-enhanced chunks for {document.id}")
 
             return contextual_chunks
 
         except Exception as e:
-            logger.warning(
-                f"Contextual chunking failed for document {document.id}: {e}"
-            )
+            logger.warning(f"Contextual chunking failed for document {document.id}: {e}")
             logger.info("Falling back to intelligent chunking")
 
             # Fall back to intelligent chunking
             return self.chunk_document_intelligently(document, force_traditional)
 
     def chunk_document(
-        self, document: Document, chunk_size: int = None, chunk_overlap: int = None
+        self, document: Document, chunk_size: int | None = None, chunk_overlap: int | None = None
     ) -> list[Chunk]:
         """Enhanced chunk_document that uses contextual chunking by default.
 
@@ -267,7 +245,7 @@ class ContextualRAGPipeline(EnhancedCODEXRAGPipeline):
     async def retrieve_with_contextual_analysis(
         self,
         query: str,
-        k: int = None,
+        k: int | None = None,
         use_cache: bool = True,
         domain_filter: ContentDomain | None = None,
         reading_level_filter: ReadingLevel | None = None,
@@ -343,9 +321,7 @@ class ContextualRAGPipeline(EnhancedCODEXRAGPipeline):
                 continue
 
             # Quality filtering
-            quality_score = metadata.get("quality_metrics", {}).get(
-                "overall_quality", 0.7
-            )
+            quality_score = metadata.get("quality_metrics", {}).get("overall_quality", 0.7)
             if quality_score < min_quality:
                 continue
 
@@ -357,9 +333,7 @@ class ContextualRAGPipeline(EnhancedCODEXRAGPipeline):
 
             # Calculate contextual similarity boost
             if context_similarity_boost > 0:
-                contextual_boost = self._calculate_contextual_boost(
-                    query, metadata, context_similarity_boost
-                )
+                contextual_boost = self._calculate_contextual_boost(query, metadata, context_similarity_boost)
                 result.score += contextual_boost
 
             contextual_results.append(result)
@@ -376,15 +350,9 @@ class ContextualRAGPipeline(EnhancedCODEXRAGPipeline):
             {
                 "contextual_filtering": True,
                 "domain_filter": domain_filter.value if domain_filter else None,
-                "reading_level_filter": (
-                    reading_level_filter.value if reading_level_filter else None
-                ),
-                "document_type_filter": (
-                    document_type_filter.value if document_type_filter else None
-                ),
-                "chunk_type_filter": (
-                    chunk_type_filter.value if chunk_type_filter else None
-                ),
+                "reading_level_filter": (reading_level_filter.value if reading_level_filter else None),
+                "document_type_filter": (document_type_filter.value if document_type_filter else None),
+                "chunk_type_filter": (chunk_type_filter.value if chunk_type_filter else None),
                 "min_credibility": min_credibility,
                 "min_quality": min_quality,
                 "results_after_contextual_filtering": len(contextual_results),
@@ -394,9 +362,7 @@ class ContextualRAGPipeline(EnhancedCODEXRAGPipeline):
 
         return contextual_results, metrics
 
-    def _calculate_context_richness(
-        self, contextual_chunk_data: dict[str, Any]
-    ) -> float:
+    def _calculate_context_richness(self, contextual_chunk_data: dict[str, Any]) -> float:
         """Calculate richness score of contextual metadata."""
         richness_score = 0.0
         max_score = 0.0
@@ -431,9 +397,7 @@ class ContextualRAGPipeline(EnhancedCODEXRAGPipeline):
 
         return richness_score / max_score if max_score > 0 else 0.0
 
-    def _calculate_contextual_boost(
-        self, query: str, metadata: dict[str, Any], boost_factor: float
-    ) -> float:
+    def _calculate_contextual_boost(self, query: str, metadata: dict[str, Any], boost_factor: float) -> float:
         """Calculate contextual similarity boost for results."""
         boost = 0.0
 
@@ -446,25 +410,19 @@ class ContextualRAGPipeline(EnhancedCODEXRAGPipeline):
 
         # Check query relevance to local keywords
         local_keywords = metadata.get("local_keywords", [])
-        keyword_matches = sum(
-            1 for keyword in local_keywords if keyword.lower() in query_lower
-        )
+        keyword_matches = sum(1 for keyword in local_keywords if keyword.lower() in query_lower)
         if keyword_matches > 0:
             boost += boost_factor * 0.5 * keyword_matches
 
         # Check entity relevance
         entities = metadata.get("contextual_entities", [])
-        entity_matches = sum(
-            1 for entity in entities if entity.get("text", "").lower() in query_lower
-        )
+        entity_matches = sum(1 for entity in entities if entity.get("text", "").lower() in query_lower)
         if entity_matches > 0:
             boost += boost_factor * 0.3 * entity_matches
 
         return min(boost, boost_factor * 2)  # Cap the boost
 
-    def _update_contextual_stats(
-        self, document_context: DocumentContext, contextual_chunks: list[Chunk]
-    ) -> None:
+    def _update_contextual_stats(self, document_context: DocumentContext, contextual_chunks: list[Chunk]) -> None:
         """Update contextual processing statistics."""
         self.contextual_stats["documents_with_context"] += 1
         self.contextual_stats["chunks_with_context"] += len(contextual_chunks)
@@ -478,32 +436,24 @@ class ContextualRAGPipeline(EnhancedCODEXRAGPipeline):
         # Update reading level distribution
         reading_level = document_context.reading_level.value
         self.contextual_stats["reading_level_distribution"][reading_level] = (
-            self.contextual_stats["reading_level_distribution"].get(reading_level, 0)
-            + 1
+            self.contextual_stats["reading_level_distribution"].get(reading_level, 0) + 1
         )
 
         # Update chunk type distribution
         for chunk in contextual_chunks:
-            chunk_type = chunk.metadata.get("chunk_context", {}).get(
-                "chunk_type", "unknown"
-            )
+            chunk_type = chunk.metadata.get("chunk_context", {}).get("chunk_type", "unknown")
             self.contextual_stats["chunk_type_distribution"][chunk_type] = (
                 self.contextual_stats["chunk_type_distribution"].get(chunk_type, 0) + 1
             )
 
         # Calculate average context richness
         if contextual_chunks:
-            total_richness = sum(
-                chunk.metadata.get("context_richness_score", 0.0)
-                for chunk in contextual_chunks
-            )
+            total_richness = sum(chunk.metadata.get("context_richness_score", 0.0) for chunk in contextual_chunks)
             avg_richness = total_richness / len(contextual_chunks)
 
             total_docs = self.contextual_stats["documents_with_context"]
             current_avg = self.contextual_stats["avg_context_richness"]
-            self.contextual_stats["avg_context_richness"] = (
-                current_avg * (total_docs - 1) + avg_richness
-            ) / total_docs
+            self.contextual_stats["avg_context_richness"] = (current_avg * (total_docs - 1) + avg_richness) / total_docs
 
     def get_contextual_performance_metrics(self) -> dict[str, Any]:
         """Get comprehensive performance metrics including contextual features."""
@@ -516,9 +466,7 @@ class ContextualRAGPipeline(EnhancedCODEXRAGPipeline):
             # Contextual quality metrics
             "contextual_quality": {
                 "avg_context_richness": self.contextual_stats["avg_context_richness"],
-                "documents_with_context": self.contextual_stats[
-                    "documents_with_context"
-                ],
+                "documents_with_context": self.contextual_stats["documents_with_context"],
                 "chunks_with_context": self.contextual_stats["chunks_with_context"],
                 "context_coverage": (
                     self.contextual_stats["chunks_with_context"]
@@ -542,9 +490,7 @@ class ContextualRAGPipeline(EnhancedCODEXRAGPipeline):
     def analyze_document_contextual_features(self, document_id: str) -> dict[str, Any]:
         """Analyze contextual features of a processed document."""
         if document_id not in self.document_contexts:
-            return {
-                "error": f"Document {document_id} not found or not processed with context"
-            }
+            return {"error": f"Document {document_id} not found or not processed with context"}
 
         document_context = self.document_contexts[document_id]
 
@@ -578,7 +524,7 @@ class ContextualRAGPipeline(EnhancedCODEXRAGPipeline):
 
 
 # Test function
-async def test_contextual_rag_pipeline():
+async def test_contextual_rag_pipeline() -> bool:
     """Test the contextual RAG pipeline with comprehensive documents."""
     print("Testing Contextual RAG Pipeline")
     print("=" * 60)
@@ -673,9 +619,7 @@ async def test_contextual_rag_pipeline():
         ),
     ]
 
-    print(
-        f"[PROCESS] Processing {len(test_documents)} documents with contextual tagging..."
-    )
+    print(f"[PROCESS] Processing {len(test_documents)} documents with contextual tagging...")
 
     # Index documents with contextual tagging
     start_time = time.perf_counter()
@@ -685,9 +629,7 @@ async def test_contextual_rag_pipeline():
     print(f"[SUCCESS] Indexing completed in {indexing_time:.2f}s:")
     print(f"  - Documents: {stats['documents_processed']}")
     print(f"  - Chunks: {stats['chunks_created']}")
-    print(
-        f"  - Contextual enhancement: {stats.get('contextual_tagging_enabled', False)}"
-    )
+    print(f"  - Contextual enhancement: {stats.get('contextual_tagging_enabled', False)}")
 
     # Analyze document contextual features
     print("\n[ANALYZE] Document Contextual Features:")
@@ -699,9 +641,7 @@ async def test_contextual_rag_pipeline():
             print(f"  Type: {ctx['document_type']}, Domain: {ctx['domain']}")
             print(f"  Reading Level: {ctx['reading_level']}")
             print(f"  Themes: {ctx['content_richness']['key_themes']}")
-            print(
-                f"  Concepts: {len(ctx['content_richness']['key_concepts'])} identified"
-            )
+            print(f"  Concepts: {len(ctx['content_richness']['key_concepts'])} identified")
             print(f"  Quality Score: {ctx['credibility_score']:.2f}")
 
     # Test contextual retrieval
@@ -741,9 +681,7 @@ async def test_contextual_rag_pipeline():
 
         # Perform contextual retrieval
         start_time = time.perf_counter()
-        results, metrics = await pipeline.retrieve_with_contextual_analysis(
-            query=query, k=3, **filters
-        )
+        results, metrics = await pipeline.retrieve_with_contextual_analysis(query=query, k=3, **filters)
         retrieval_time = (time.perf_counter() - start_time) * 1000
 
         print(f"  Latency: {retrieval_time:.1f}ms")
@@ -759,15 +697,9 @@ async def test_contextual_rag_pipeline():
             print(f"    Document: {best_result.document_id}")
             print(f"    Domain: {metadata.get('document_domain', 'unknown')}")
             print(f"    Reading Level: {metadata.get('reading_level', 'unknown')}")
-            print(
-                f"    Chunk Type: {metadata.get('chunk_context', {}).get('chunk_type', 'unknown')}"
-            )
-            print(
-                f"    Quality: {metadata.get('quality_metrics', {}).get('overall_quality', 0):.3f}"
-            )
-            print(
-                f"    Context Richness: {metadata.get('context_richness_score', 0):.3f}"
-            )
+            print(f"    Chunk Type: {metadata.get('chunk_context', {}).get('chunk_type', 'unknown')}")
+            print(f"    Quality: {metadata.get('quality_metrics', {}).get('overall_quality', 0):.3f}")
+            print(f"    Context Richness: {metadata.get('context_richness_score', 0):.3f}")
             print(f"    Text: {best_result.text[:150]}...")
 
     # Get comprehensive performance metrics

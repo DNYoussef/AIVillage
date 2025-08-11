@@ -14,16 +14,10 @@ async def test_agent_migration_stress(orchestrator_setup):
     await orchestrator.deploy_agent_constellation()
 
     # Collect a subset of agents that are migratable
-    migratable = [
-        agent_id
-        for agent_id, inst in orchestrator.active_agents.items()
-        if inst.agent_spec.can_migrate
-    ][:5]
+    migratable = [agent_id for agent_id, inst in orchestrator.active_agents.items() if inst.agent_spec.can_migrate][:5]
     assert migratable, "No migratable agents available for testing"
 
-    with patch.object(
-        AgentMigrationManager, "_start_background_tasks", lambda self: None
-    ):
+    with patch.object(AgentMigrationManager, "_start_background_tasks", lambda self: None):
         manager = AgentMigrationManager(p2p, orchestrator)
 
     for agent_id in migratable:

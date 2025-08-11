@@ -7,10 +7,10 @@ from .retrieval import VectorRetriever
 
 __all__ = [
     "ConfidenceTier",
-    "assign_tier",
-    "score_evidence",
+    "DocumentProcessor",
     "EnhancedRAGPipeline",
     "RAGPipeline",
-    "DocumentProcessor",
     "VectorRetriever",
+    "assign_tier",
+    "score_evidence",
 ]

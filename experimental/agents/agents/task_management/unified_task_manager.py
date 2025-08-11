@@ -80,9 +80,7 @@ class UnifiedManagement:
             logger.info("Created task: %s for agent: %s", task.id, agent)
 
             if project_id:
-                await self.add_task_to_project(
-                    project_id, task.id, {"description": description, "agent": agent}
-                )
+                await self.add_task_to_project(project_id, task.id, {"description": description, "agent": agent})
 
             return task
         except Exception as e:
@@ -90,13 +88,9 @@ class UnifiedManagement:
             msg = f"Error creating task: {e!s}"
             raise AIVillageException(msg)
 
-    async def create_complex_task(
-        self, description: str, context: dict[str, Any]
-    ) -> list[Task]:
+    async def create_complex_task(self, description: str, context: dict[str, Any]) -> list[Task]:
         try:
-            subgoals = await self.subgoal_generator.generate_subgoals(
-                description, context
-            )
+            subgoals = await self.subgoal_generator.generate_subgoals(description, context)
             tasks = []
             for subgoal in subgoals:
                 agent = await self._select_best_agent_for_task(subgoal)
@@ -136,9 +130,7 @@ class UnifiedManagement:
             msg = f"Error assigning task: {e!s}"
             raise AIVillageException(msg)
 
-    async def notify_agent_with_incentive(
-        self, agent: str, task: Task, incentive: float
-    ) -> None:
+    async def notify_agent_with_incentive(self, agent: str, task: Task, incentive: float) -> None:
         try:
             message = Message(
                 type=MessageType.TASK,
@@ -163,17 +155,13 @@ class UnifiedManagement:
                 msg = f"Task {task_id} not found in ongoing tasks"
                 raise AIVillageException(msg)
             task = self.ongoing_tasks[task_id]
-            updated_task = task.update_status(TaskStatus.COMPLETED).update_result(
-                result
-            )
+            updated_task = task.update_status(TaskStatus.COMPLETED).update_result(result)
             self.completed_tasks.append(updated_task)
             del self.ongoing_tasks[task_id]
             await self.update_dependent_tasks(updated_task)
 
             agent = task.assigned_agents[0]
-            self.incentive_model.update(
-                {"assigned_agent": agent, "task_id": task_id}, result
-            )
+            self.incentive_model.update({"assigned_agent": agent, "task_id": task_id}, result)
             self.incentive_model.update_agent_performance(
                 self.agent_performance,
                 agent,
@@ -183,9 +171,7 @@ class UnifiedManagement:
 
             completion_time = updated_task.completed_at - updated_task.created_at
             success = result.get("success", False)
-            self.unified_analytics.record_task_completion(
-                task_id, completion_time, success
-            )
+            self.unified_analytics.record_task_completion(task_id, completion_time, success)
 
             logger.info("Completed task: %s", task_id)
 
@@ -216,9 +202,7 @@ class UnifiedManagement:
     async def create_project(self, name: str, description: str) -> str:
         try:
             project_id = str(uuid.uuid4())
-            self.projects[project_id] = Project(
-                id=project_id, name=name, description=description
-            )
+            self.projects[project_id] = Project(id=project_id, name=name, description=description)
             logger.info("Created project: %s", project_id)
             return project_id
         except Exception as e:
@@ -256,9 +240,7 @@ class UnifiedManagement:
             msg = f"Error updating project status: {e!s}"
             raise AIVillageException(msg)
 
-    async def add_task_to_project(
-        self, project_id: str, task_id: str, task_data: dict[str, Any]
-    ) -> None:
+    async def add_task_to_project(self, project_id: str, task_id: str, task_data: dict[str, Any]) -> None:
         try:
             project = await self.get_project(project_id)
             project.tasks[task_id] = Task(id=task_id, **task_data)
@@ -277,9 +259,7 @@ class UnifiedManagement:
             msg = f"Error getting project tasks: {e!s}"
             raise AIVillageException(msg)
 
-    async def add_resources_to_project(
-        self, project_id: str, resources: dict[str, Any]
-    ) -> None:
+    async def add_resources_to_project(self, project_id: str, resources: dict[str, Any]) -> None:
         try:
             project = await self.get_project(project_id)
             project.resources.update(resources)
@@ -307,9 +287,7 @@ class UnifiedManagement:
             if not batch:
                 return
 
-            results = await asyncio.gather(
-                *[self.process_single_task(task) for task in batch]
-            )
+            results = await asyncio.gather(*[self.process_single_task(task) for task in batch])
 
             for task, result in zip(batch, results, strict=False):
                 await self.complete_task(task.id, result)
@@ -393,13 +371,9 @@ class UnifiedManagement:
             state = {
                 "tasks": [
                     task.__dict__
-                    for task in self.pending_tasks
-                    + list(self.ongoing_tasks.values())
-                    + self.completed_tasks
+                    for task in self.pending_tasks + list(self.ongoing_tasks.values()) + self.completed_tasks
                 ],
-                "projects": {
-                    pid: project.__dict__ for pid, project in self.projects.items()
-                },
+                "projects": {pid: project.__dict__ for pid, project in self.projects.items()},
                 "agent_performance": self.agent_performance,
                 "available_agents": self.available_agents,
             }
@@ -416,23 +390,15 @@ class UnifiedManagement:
             with open(filename) as f:
                 state = json.load(f)
             self.pending_tasks = deque(
-                Task(**task)
-                for task in state["tasks"]
-                if task["status"] == TaskStatus.PENDING.value
+                Task(**task) for task in state["tasks"] if task["status"] == TaskStatus.PENDING.value
             )
             self.ongoing_tasks = {
-                task["id"]: Task(**task)
-                for task in state["tasks"]
-                if task["status"] == TaskStatus.IN_PROGRESS.value
+                task["id"]: Task(**task) for task in state["tasks"] if task["status"] == TaskStatus.IN_PROGRESS.value
             }
             self.completed_tasks = [
-                Task(**task)
-                for task in state["tasks"]
-                if task["status"] == TaskStatus.COMPLETED.value
+                Task(**task) for task in state["tasks"] if task["status"] == TaskStatus.COMPLETED.value
             ]
-            self.projects = {
-                pid: Project(**project) for pid, project in state["projects"].items()
-            }
+            self.projects = {pid: Project(**project) for pid, project in state["projects"].items()}
             self.agent_performance = state["agent_performance"]
             self.available_agents = state["available_agents"]
             logger.info("Loaded state from %s", filename)

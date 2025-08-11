@@ -9,8 +9,7 @@ intended for production use.
 import warnings
 
 warnings.warn(
-    "experimental.rag.storm is a stub implementation. "
-    "Replace with actual implementation before production use.",
+    "experimental.rag.storm is a stub implementation. " "Replace with actual implementation before production use.",
     UserWarning,
     stacklevel=2,
 )

@@ -24,11 +24,10 @@ from compression_pipeline import CompressionConfig, CompressionPipeline
 from evomerge_pipeline import EvolutionConfig, EvoMergePipeline
 from pydantic import BaseModel, Field
 from quietstar_baker import QuietSTaRBaker, QuietSTaRConfig
+
 import wandb
 
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 # ============================================================================
@@ -41,9 +40,7 @@ class UnifiedPipelineConfig(BaseModel):
 
     # Pipeline control
     enable_evomerge: bool = Field(default=True, description="Run evolutionary merging")
-    enable_quietstar: bool = Field(
-        default=True, description="Run Quiet-STaR reasoning enhancement"
-    )
+    enable_quietstar: bool = Field(default=True, description="Run Quiet-STaR reasoning enhancement")
     enable_compression: bool = Field(default=True, description="Run BitNet compression")
 
     # Output configuration
@@ -80,9 +77,7 @@ class UnifiedPipelineConfig(BaseModel):
     wandb_tags: list[str] = Field(default_factory=lambda: ["unified", "end-to-end"])
 
     # Resume configuration
-    resume_from_phase: str | None = Field(
-        default=None, description="Resume from specific phase"
-    )
+    resume_from_phase: str | None = Field(default=None, description="Resume from specific phase")
     checkpoint_dir: Path = Field(default=Path("./unified_checkpoints"))
 
     def __post_init__(self):
@@ -184,19 +179,13 @@ class UnifiedPipeline:
             self.initialize_wandb()
 
             # Phase 1: EvoMerge (if enabled)
-            if (
-                self.config.enable_evomerge
-                and "evomerge" not in self.state.completed_phases
-            ):
+            if self.config.enable_evomerge and "evomerge" not in self.state.completed_phases:
                 await self.run_evomerge_phase()
                 self.state.completed_phases.append("evomerge")
                 self.state.save_checkpoint(self.config.checkpoint_dir)
 
             # Phase 2: Quiet-STaR (if enabled)
-            if (
-                self.config.enable_quietstar
-                and "quietstar" not in self.state.completed_phases
-            ):
+            if self.config.enable_quietstar and "quietstar" not in self.state.completed_phases:
                 if not self.state.evomerge_model_path:
                     msg = "EvoMerge model path required for Quiet-STaR phase"
                     raise ValueError(msg)
@@ -206,13 +195,8 @@ class UnifiedPipeline:
                 self.state.save_checkpoint(self.config.checkpoint_dir)
 
             # Phase 3: Compression (if enabled)
-            if (
-                self.config.enable_compression
-                and "compression" not in self.state.completed_phases
-            ):
-                source_model = (
-                    self.state.quietstar_model_path or self.state.evomerge_model_path
-                )
+            if self.config.enable_compression and "compression" not in self.state.completed_phases:
+                source_model = self.state.quietstar_model_path or self.state.evomerge_model_path
                 if not source_model:
                     msg = "Source model path required for compression phase"
                     raise ValueError(msg)
@@ -248,15 +232,9 @@ class UnifiedPipeline:
 
             evomerge_config = EvolutionConfig(
                 base_models=[
-                    BaseModelConfig(
-                        name="deepseek", path=self.config.evomerge_base_models[0]
-                    ),
-                    BaseModelConfig(
-                        name="nemotron", path=self.config.evomerge_base_models[1]
-                    ),
-                    BaseModelConfig(
-                        name="qwen2", path=self.config.evomerge_base_models[2]
-                    ),
+                    BaseModelConfig(name="deepseek", path=self.config.evomerge_base_models[0]),
+                    BaseModelConfig(name="nemotron", path=self.config.evomerge_base_models[1]),
+                    BaseModelConfig(name="qwen2", path=self.config.evomerge_base_models[2]),
                 ],
                 max_generations=self.config.evomerge_generations,
                 device=self.config.device,
@@ -283,18 +261,12 @@ class UnifiedPipeline:
                     {
                         "evomerge_best_fitness": best_candidate.overall_fitness,
                         "evomerge_generations": best_candidate.generation,
-                        "evomerge_code_score": best_candidate.fitness_scores.get(
-                            "code", 0
-                        ),
-                        "evomerge_math_score": best_candidate.fitness_scores.get(
-                            "math", 0
-                        ),
+                        "evomerge_code_score": best_candidate.fitness_scores.get("code", 0),
+                        "evomerge_math_score": best_candidate.fitness_scores.get("math", 0),
                     }
                 )
 
-            logger.info(
-                f"✅ EvoMerge completed - Best fitness: {best_candidate.overall_fitness:.3f}"
-            )
+            logger.info(f"✅ EvoMerge completed - Best fitness: {best_candidate.overall_fitness:.3f}")
         else:
             msg = "EvoMerge failed to produce a best candidate"
             raise RuntimeError(msg)
@@ -330,18 +302,12 @@ class UnifiedPipeline:
                 {
                     "quietstar_winner": results["winner"],
                     "quietstar_improvement": results["improvement"],
-                    "quietstar_baseline_accuracy": results["ab_test_results"][
-                        "baseline_accuracy"
-                    ],
-                    "quietstar_thoughts_accuracy": results["ab_test_results"][
-                        "thoughts_accuracy"
-                    ],
+                    "quietstar_baseline_accuracy": results["ab_test_results"]["baseline_accuracy"],
+                    "quietstar_thoughts_accuracy": results["ab_test_results"]["thoughts_accuracy"],
                 }
             )
 
-        logger.info(
-            f"✅ Quiet-STaR completed - Winner: {results['winner']}, Improvement: {results['improvement']:.1f}%"
-        )
+        logger.info(f"✅ Quiet-STaR completed - Winner: {results['winner']}, Improvement: {results['improvement']:.1f}%")
 
     async def run_compression_phase(self, source_model_path: str) -> None:
         """Run BitNet compression."""
@@ -378,9 +344,7 @@ class UnifiedPipeline:
                 }
             )
 
-        logger.info(
-            f"✅ Compression completed - Ratio: {results['compression_ratio']:.1f}x"
-        )
+        logger.info(f"✅ Compression completed - Ratio: {results['compression_ratio']:.1f}x")
 
     async def calculate_final_metrics(self) -> None:
         """Calculate final performance metrics."""
@@ -392,9 +356,7 @@ class UnifiedPipeline:
 
         # Apply EvoMerge improvement
         if self.state.evomerge_results:
-            evomerge_improvement = (
-                self.state.evomerge_results["best_fitness"] - base_performance
-            )
+            evomerge_improvement = self.state.evomerge_results["best_fitness"] - base_performance
             final_performance += evomerge_improvement
 
         # Apply Quiet-STaR improvement
@@ -402,9 +364,7 @@ class UnifiedPipeline:
             quietstar_improvement = self.state.quietstar_results["improvement"] / 100
             final_performance += quietstar_improvement
 
-        self.state.total_improvement = (
-            (final_performance - base_performance) / base_performance
-        ) * 100
+        self.state.total_improvement = ((final_performance - base_performance) / base_performance) * 100
 
         # Final performance breakdown
         self.state.final_performance = {
@@ -412,14 +372,10 @@ class UnifiedPipeline:
             "final_performance": final_performance,
             "total_improvement_percent": self.state.total_improvement,
             "evomerge_contribution": (
-                self.state.evomerge_results["best_fitness"]
-                if self.state.evomerge_results
-                else 0
+                self.state.evomerge_results["best_fitness"] if self.state.evomerge_results else 0
             ),
             "quietstar_contribution": (
-                self.state.quietstar_results["improvement"]
-                if self.state.quietstar_results
-                else 0
+                self.state.quietstar_results["improvement"] if self.state.quietstar_results else 0
             ),
             "compression_ratio": self.state.compression_ratio,
         }
@@ -451,19 +407,11 @@ class UnifiedPipeline:
             "performance_summary": {
                 "total_improvement": f"{self.state.total_improvement:.1f}%",
                 "compression_ratio": f"{self.state.compression_ratio:.1f}x",
-                "evomerge_fitness": (
-                    self.state.evomerge_results["best_fitness"]
-                    if self.state.evomerge_results
-                    else 0
-                ),
+                "evomerge_fitness": (self.state.evomerge_results["best_fitness"] if self.state.evomerge_results else 0),
                 "quietstar_improvement": (
-                    f"{self.state.quietstar_results['improvement']:.1f}%"
-                    if self.state.quietstar_results
-                    else "0%"
+                    f"{self.state.quietstar_results['improvement']:.1f}%" if self.state.quietstar_results else "0%"
                 ),
-                "final_model_size": (
-                    "Compressed" if self.state.compression_ratio > 1 else "Original"
-                ),
+                "final_model_size": ("Compressed" if self.state.compression_ratio > 1 else "Original"),
             },
             "phase_details": {
                 "evomerge": self.state.evomerge_results,
@@ -475,18 +423,13 @@ class UnifiedPipeline:
         }
 
         # Save report
-        report_path = (
-            self.config.base_output_dir
-            / f"unified_pipeline_report_{self.state.run_id}.json"
-        )
+        report_path = self.config.base_output_dir / f"unified_pipeline_report_{self.state.run_id}.json"
         with open(report_path, "w") as f:
             json.dump(report, f, indent=2, default=str)
 
         # Log to W&B as artifact
         if self.wandb_run:
-            artifact = wandb.Artifact(
-                f"unified_pipeline_report_{self.state.run_id}", type="report"
-            )
+            artifact = wandb.Artifact(f"unified_pipeline_report_{self.state.run_id}", type="report")
             artifact.add_file(str(report_path))
             self.wandb_run.log_artifact(artifact)
 
@@ -533,9 +476,7 @@ class UnifiedPipeline:
         print("\n🎯 NEXT STEPS:")
         if report["deployment_ready"]:
             print(f"  1. Load model from: {summary['final_model_path']}")
-            print(
-                f"  2. Deploy with {performance['compression_ratio']} memory efficiency"
-            )
+            print(f"  2. Deploy with {performance['compression_ratio']} memory efficiency")
             print(f"  3. Expect {performance['total_improvement']} better performance")
         else:
             print("  ❌ Pipeline incomplete - check logs for issues")
@@ -555,12 +496,8 @@ def forge() -> None:
 
 @forge.command()
 @click.option("--config", help="Configuration JSON file")
-@click.option(
-    "--evomerge/--no-evomerge", default=True, help="Enable/disable EvoMerge phase"
-)
-@click.option(
-    "--quietstar/--no-quietstar", default=True, help="Enable/disable Quiet-STaR phase"
-)
+@click.option("--evomerge/--no-evomerge", default=True, help="Enable/disable EvoMerge phase")
+@click.option("--quietstar/--no-quietstar", default=True, help="Enable/disable Quiet-STaR phase")
 @click.option(
     "--compression/--no-compression",
     default=True,
@@ -570,9 +507,7 @@ def forge() -> None:
 @click.option("--output-dir", default="./unified_output", help="Base output directory")
 @click.option("--device", default="auto", help="Device to use")
 @click.option("--resume", help="Resume from checkpoint file")
-def run_pipeline(
-    config, evomerge, quietstar, compression, generations, output_dir, device, resume
-) -> None:
+def run_pipeline(config, evomerge, quietstar, compression, generations, output_dir, device, resume) -> None:
     """Run complete Agent Forge pipeline: EvoMerge → Quiet-STaR → Compression."""
     try:
         # Load configuration
@@ -599,9 +534,7 @@ def run_pipeline(
         pipeline = UnifiedPipeline(pipeline_config)
 
         logger.info("🚀 Starting Agent Forge Unified Pipeline")
-        logger.info(
-            f"Phases enabled: EvoMerge={evomerge}, Quiet-STaR={quietstar}, Compression={compression}"
-        )
+        logger.info(f"Phases enabled: EvoMerge={evomerge}, Quiet-STaR={quietstar}, Compression={compression}")
 
         results = asyncio.run(pipeline.run_complete_pipeline())
 

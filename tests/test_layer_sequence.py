@@ -45,12 +45,8 @@ class TestLayerSequence(unittest.IsolatedAsyncioTestCase):
         task = LangroidTask(agent, "do something", "1", 1)
         task.type = "general"
         with (
-            patch.object(
-                agent.quality_assurance_layer, "check_task_safety", return_value=True
-            ) as qa_mock,
-            patch.object(
-                agent.foundational_layer, "process_task", AsyncMock(return_value=task)
-            ) as f_mock,
+            patch.object(agent.quality_assurance_layer, "check_task_safety", return_value=True) as qa_mock,
+            patch.object(agent.foundational_layer, "process_task", AsyncMock(return_value=task)) as f_mock,
             patch.object(
                 agent.agent_architecture_layer,
                 "process_result",
@@ -61,9 +57,7 @@ class TestLayerSequence(unittest.IsolatedAsyncioTestCase):
                 "make_decision",
                 AsyncMock(return_value="done"),
             ) as dm_mock,
-            patch.object(
-                agent.continuous_learning_layer, "update", AsyncMock()
-            ) as cl_mock,
+            patch.object(agent.continuous_learning_layer, "update", AsyncMock()) as cl_mock,
         ):
             result = await agent.execute_task(task)
         qa_mock.assert_called_once_with(task)

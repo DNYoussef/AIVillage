@@ -16,9 +16,7 @@ from AIVillage.experimental.training.geometry.snapshot import snapshot
 logger = logging.getLogger("AF-SelfGrokk")
 
 
-def self_model_cycle(
-    model, tokenizer, tasks: Sequence[str], opt, thresholds, state
-) -> None:
+def self_model_cycle(model, tokenizer, tasks: Sequence[str], opt, thresholds, state) -> None:
     """Runs until internal grok OR max_iter.
 
     thresholds : dict = {slow, id_drop, chaos}
@@ -36,9 +34,7 @@ def self_model_cycle(
         # ----- forward  ------------------------------------------------------
         out = model(ids, output_hidden_states=True)
         H = out.hidden_states[-1]
-        L_mask = F.cross_entropy(
-            out.logits[:, :-1].reshape(-1, out.logits.size(-1)), ids[:, 1:].reshape(-1)
-        )
+        L_mask = F.cross_entropy(out.logits[:, :-1].reshape(-1, out.logits.size(-1)), ids[:, 1:].reshape(-1))
         L_pred = F.mse_loss(hidden_pred(H.detach()), H)
         loss = L_mask + 0.1 * L_pred
         opt.zero_grad()
@@ -53,9 +49,7 @@ def self_model_cycle(
         state["G"] = G
 
         if slow > τ and drop > δ and abs(chaos - 0.5) < ε:
-            logger.info(
-                ">> INTERNAL GROK at step %d  (slow=%.3f  drop=%.3f)", step, slow, drop
-            )
+            logger.info(">> INTERNAL GROK at step %d  (slow=%.3f  drop=%.3f)", step, slow, drop)
             state["self_grok"] = True
             break
 

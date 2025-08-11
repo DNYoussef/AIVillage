@@ -13,14 +13,7 @@ from typing import Any
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 sys.path.insert(
     0,
-    str(
-        Path(__file__).parent.parent
-        / "src"
-        / "production"
-        / "rag"
-        / "rag_system"
-        / "core"
-    ),
+    str(Path(__file__).parent.parent / "src" / "production" / "rag" / "rag_system" / "core"),
 )
 
 from codex_rag_integration import CODEXRAGPipeline
@@ -33,7 +26,7 @@ logger = logging.getLogger(__name__)
 class RAGAnswerGenerator:
     """RAG-based answer generation system."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.rag_pipeline = None
 
         # Simple prompt templates for answer generation
@@ -80,12 +73,10 @@ class RAGAnswerGenerator:
             logger.info("RAG pipeline initialized for answer generation")
             return True
         except Exception as e:
-            logger.error(f"Failed to initialize RAG pipeline: {e}")
+            logger.exception(f"Failed to initialize RAG pipeline: {e}")
             return False
 
-    def extract_context_text(
-        self, retrieval_results: list[Any], max_context_length: int = 2000
-    ) -> str:
+    def extract_context_text(self, retrieval_results: list[Any], max_context_length: int = 2000) -> str:
         """Extract context text from retrieval results."""
         if not retrieval_results:
             return "No relevant information found."
@@ -179,7 +170,8 @@ class RAGAnswerGenerator:
     ) -> dict[str, Any]:
         """Answer a question using RAG pipeline."""
         if not self.rag_pipeline:
-            raise RuntimeError("RAG pipeline not initialized")
+            msg = "RAG pipeline not initialized"
+            raise RuntimeError(msg)
 
         start_time = time.perf_counter()
 
@@ -193,9 +185,7 @@ class RAGAnswerGenerator:
             context = self.extract_context_text(retrieval_results, max_context_length)
 
             # Generate answer using rule-based approach
-            answer_result = self.generate_rule_based_answer(
-                question, context, template_type
-            )
+            answer_result = self.generate_rule_based_answer(question, context, template_type)
 
             end_time = time.perf_counter()
             total_latency = (end_time - start_time) * 1000
@@ -215,7 +205,7 @@ class RAGAnswerGenerator:
             }
 
         except Exception as e:
-            logger.error(f"Failed to answer question '{question}': {e}")
+            logger.exception(f"Failed to answer question '{question}': {e}")
             end_time = time.perf_counter()
 
             return {
@@ -229,15 +219,11 @@ class RAGAnswerGenerator:
                 "error": str(e),
             }
 
-    async def run_demonstration(
-        self, questions: list[str] | None = None
-    ) -> list[dict[str, Any]]:
+    async def run_demonstration(self, questions: list[str] | None = None) -> list[dict[str, Any]]:
         """Run demonstration of answer generation."""
         questions = questions or self.demo_questions[:5]  # Use first 5 demo questions
 
-        logger.info(
-            f"Running answer generation demonstration with {len(questions)} questions"
-        )
+        logger.info(f"Running answer generation demonstration with {len(questions)} questions")
 
         results = []
 
@@ -254,8 +240,7 @@ class RAGAnswerGenerator:
             # Log result
             confidence_pct = result["confidence"] * 100
             logger.info(
-                f"Answer generated (confidence: {confidence_pct:.1f}%, "
-                f"latency: {result['total_latency_ms']:.2f}ms)"
+                f"Answer generated (confidence: {confidence_pct:.1f}%, " f"latency: {result['total_latency_ms']:.2f}ms)"
             )
 
             # Small delay to avoid overwhelming the system
@@ -284,7 +269,8 @@ async def main():
 
         # Initialize RAG pipeline
         if not await generator.initialize_rag_pipeline():
-            raise RuntimeError("Failed to initialize RAG pipeline")
+            msg = "Failed to initialize RAG pipeline"
+            raise RuntimeError(msg)
 
         # Get pipeline state
         performance_metrics = generator.rag_pipeline.get_performance_metrics()
@@ -311,9 +297,7 @@ async def main():
         print(" SUMMARY STATISTICS")
         print(f"{'=' * 80}")
         print(f"Total Questions: {len(results)}")
-        print(
-            f"Successful Answers: {successful_answers} ({successful_answers / len(results) * 100:.1f}%)"
-        )
+        print(f"Successful Answers: {successful_answers} ({successful_answers / len(results) * 100:.1f}%)")
         print(f"Average Confidence: {avg_confidence * 100:.1f}%")
         print(f"Average Latency: {avg_latency:.2f}ms")
         print(f"Index Size: {index_size} documents")
@@ -346,7 +330,7 @@ async def main():
         return results
 
     except Exception as e:
-        logger.error(f"Answer generation demonstration failed: {e}")
+        logger.exception(f"Answer generation demonstration failed: {e}")
         raise
 
 
