@@ -9,7 +9,9 @@ from collections.abc import Callable
 import contextlib
 from dataclasses import dataclass, field
 from enum import Enum
+import json
 import logging
+import os
 import time
 from typing import Any
 import uuid
@@ -57,6 +59,29 @@ class ReshardingEvent:
     disruption_score: float = 0.0  # 0-1, how disruptive the resharding was
     metadata: dict[str, Any] = field(default_factory=dict)
 
+    def to_dict(self) -> dict[str, Any]:
+        """Serialize event to a JSON-friendly dict."""
+        return {
+            "event_id": self.event_id,
+            "reason": self.reason.value,
+            "trigger_device_id": self.trigger_device_id,
+            "timestamp": self.timestamp,
+            "success": self.success,
+            "metadata": self.metadata,
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> "ReshardingEvent":
+        """Deserialize event from dict."""
+        return cls(
+            event_id=data["event_id"],
+            reason=ReshardingReason(data["reason"]),
+            trigger_device_id=data.get("trigger_device_id"),
+            timestamp=data.get("timestamp", time.time()),
+            success=data.get("success", False),
+            metadata=data.get("metadata", {}),
+        )
+
 
 @dataclass
 class ReshardingConfig:
@@ -80,10 +105,12 @@ class AdaptiveReshardingManager:
         sharding_engine: ModelShardingEngine,
         p2p_node: P2PNode,
         config: ReshardingConfig | None = None,
+        state_file: str = "adaptive_resharding_state.json",
     ) -> None:
         self.sharding_engine = sharding_engine
         self.p2p_node = p2p_node
         self.config = config or ReshardingConfig()
+        self.state_file = state_file
 
         # Resharding state
         self.resharding_active = False
@@ -113,6 +140,9 @@ class AdaptiveReshardingManager:
         # Register P2P event handlers
         self._register_p2p_handlers()
 
+        # Load persisted history
+        self._load_history_from_disk()
+
         logger.info("AdaptiveReshardingManager initialized")
 
     async def start_monitoring(self) -> None:
@@ -121,6 +151,7 @@ class AdaptiveReshardingManager:
             logger.warning("Resharding monitoring already active")
             return
 
+        await self._replay_incomplete_events()
         self.performance_monitor_task = asyncio.create_task(self._monitoring_loop())
         logger.info("Adaptive resharding monitoring started")
 
@@ -133,6 +164,39 @@ class AdaptiveReshardingManager:
             self.performance_monitor_task = None
 
         logger.info("Adaptive resharding monitoring stopped")
+
+    def _load_history_from_disk(self) -> None:
+        """Load resharding history from disk."""
+        if not os.path.exists(self.state_file):
+            return
+        try:
+            with open(self.state_file, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            self.resharding_history = [ReshardingEvent.from_dict(d) for d in data]
+            if self.resharding_history:
+                self.last_resharding_time = self.resharding_history[-1].timestamp
+        except Exception as e:
+            logger.warning(f"Failed to load resharding state: {e}")
+
+    def _save_history_to_disk(self) -> None:
+        """Persist resharding history to disk."""
+        try:
+            with open(self.state_file, "w", encoding="utf-8") as f:
+                json.dump([e.to_dict() for e in self.resharding_history], f)
+        except Exception as e:
+            logger.warning(f"Failed to save resharding state: {e}")
+
+    async def _replay_incomplete_events(self) -> None:
+        """Replay any resharding events that were incomplete before restart."""
+        pending = [e for e in self.resharding_history if not e.success]
+        for event in pending:
+            strategy_name = event.metadata.get("strategy", ReshardingStrategy.OPTIMAL_REBALANCE.value)
+            strategy = ReshardingStrategy(strategy_name)
+            logger.info(f"Replaying incomplete resharding event {event.event_id}")
+            await self.trigger_resharding(event.reason, event.trigger_device_id, strategy=strategy)
+            event.success = True
+        if pending:
+            self._save_history_to_disk()
 
     def _register_p2p_handlers(self) -> None:
         """Register P2P network event handlers."""
@@ -292,6 +356,9 @@ class AdaptiveReshardingManager:
             trigger_device_id=trigger_device_id,
             old_plan=self.sharding_engine.current_sharding_plan,
         )
+        event.metadata["strategy"] = strategy.value
+        self.resharding_history.append(event)
+        self._save_history_to_disk()
 
         try:
             logger.info(f"Starting resharding: reason={reason.value}, strategy={strategy.value}")
@@ -319,9 +386,8 @@ class AdaptiveReshardingManager:
             self.stats["avg_resharding_time"] = (self.stats["avg_resharding_time"] + event.duration_seconds) / 2
             self.stats["avg_disruption_score"] = (self.stats["avg_disruption_score"] + event.disruption_score) / 2
 
-            # Record event
-            self.resharding_history.append(event)
             self.last_resharding_time = time.time()
+            self._save_history_to_disk()
 
             logger.info(f"Resharding completed: success={success}, duration={event.duration_seconds:.2f}s")
             return success
@@ -330,10 +396,11 @@ class AdaptiveReshardingManager:
             logger.exception(f"Resharding failed: {e}")
             event.success = False
             event.metadata["error"] = str(e)
-            self.resharding_history.append(event)
+            self._save_history_to_disk()
             return False
 
         finally:
+            self._save_history_to_disk()
             self.resharding_active = False
 
     def _can_reshard(self) -> bool:
