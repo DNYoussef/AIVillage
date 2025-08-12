@@ -20,6 +20,11 @@ async def test_tensor_stream_round_trip(monkeypatch):
     # Handle metadata messages as regular tensor chunk messages
     receiver.register_handler(MessageType.DATA, recv_stream._handle_tensor_chunk)
 
+    async def fake_ensure_key(self, peer_id):
+        self._key_cache[peer_id] = b"test"
+
+    monkeypatch.setattr(send_stream, "_ensure_key", fake_ensure_key.__get__(send_stream, TensorStreaming))
+
     async def fake_send_message(self, peer_id, message_type, payload):
         assert peer_id == receiver.node_id
         msg = P2PMessage(
@@ -46,10 +51,12 @@ async def test_tensor_stream_round_trip(monkeypatch):
     for chunk in recv_stream.pending_chunks[tensor_id].values():
         assert hashlib.md5(chunk.data).hexdigest() == chunk.checksum
 
-    reconstructed = await recv_stream._reconstruct_tensor(tensor_id)
     metadata = recv_stream.tensor_metadata[tensor_id]
+    reconstructed = await recv_stream._reconstruct_tensor(tensor_id)
     assert np.array_equal(reconstructed, tensor)
     assert metadata.tensor_id == tensor_id
+    assert tensor_id not in recv_stream.tensor_metadata
+    assert tensor_id not in recv_stream.pending_chunks
 
 
 @pytest.mark.asyncio
@@ -60,6 +67,11 @@ async def test_missing_chunk_failure(monkeypatch):
     send_stream = TensorStreaming(node=sender)
     recv_stream = TensorStreaming(node=receiver)
     receiver.register_handler(MessageType.DATA, recv_stream._handle_tensor_chunk)
+
+    async def fake_key(self, peer_id):
+        self._key_cache[peer_id] = b"test"
+
+    monkeypatch.setattr(send_stream, "_ensure_key", fake_key.__get__(send_stream, TensorStreaming))
 
     async def fake_send(self, peer_id, message_type, payload):
         msg = P2PMessage(message_type, self.node_id, peer_id, payload)
@@ -87,6 +99,11 @@ async def test_corrupted_chunk_failure(monkeypatch):
     send_stream = TensorStreaming(node=sender)
     recv_stream = TensorStreaming(node=receiver)
     receiver.register_handler(MessageType.DATA, recv_stream._handle_tensor_chunk)
+
+    async def fake_key2(self, peer_id):
+        self._key_cache[peer_id] = b"test"
+
+    monkeypatch.setattr(send_stream, "_ensure_key", fake_key2.__get__(send_stream, TensorStreaming))
 
     async def fake_send(self, peer_id, message_type, payload):
         msg = P2PMessage(message_type, self.node_id, peer_id, payload)
@@ -172,3 +189,40 @@ async def test_key_exchange_after_restart(monkeypatch):
     second_key = send_stream._key_cache[receiver.node_id]
     assert second_key != first_key
     assert second_key == recv_stream._key_cache[sender.node_id]
+
+
+@pytest.mark.asyncio
+async def test_receive_tensor_cleans_metadata(monkeypatch):
+    sender = P2PNode(node_id="sender_clean", port=9401)
+    receiver = P2PNode(node_id="receiver_clean", port=9402)
+
+    send_stream = TensorStreaming(node=sender)
+    recv_stream = TensorStreaming(node=receiver)
+
+    receiver.register_handler(MessageType.DATA, recv_stream._handle_tensor_chunk)
+
+    async def fake_key3(self, peer_id):
+        self._key_cache[peer_id] = b"test"
+
+    monkeypatch.setattr(send_stream, "_ensure_key", fake_key3.__get__(send_stream, TensorStreaming))
+
+    async def fake_send_message(self, peer_id, message_type, payload):
+        msg = P2PMessage(message_type, self.node_id, peer_id, payload)
+        handler = receiver.message_handlers.get(message_type)
+        if handler:
+            await handler(msg, None)
+            return True
+        return False
+
+    monkeypatch.setattr(sender, "send_message", fake_send_message.__get__(sender, P2PNode))
+
+    tensor = np.arange(4, dtype=np.float32)
+    tensor_id = await send_stream.send_tensor(tensor, "cleanup", receiver.node_id)
+
+    result = await recv_stream.receive_tensor(tensor_id)
+    assert result is not None
+    received, metadata = result
+    assert np.array_equal(received, tensor)
+    assert metadata.tensor_id == tensor_id
+    assert tensor_id not in recv_stream.tensor_metadata
+    assert tensor_id not in recv_stream.pending_chunks

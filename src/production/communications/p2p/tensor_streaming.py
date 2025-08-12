@@ -7,8 +7,9 @@ import hashlib
 import io
 import json
 import logging
+import os
 import time
-from typing import Any
+from typing import Any, Callable
 import uuid
 import zlib
 import base64
@@ -23,6 +24,7 @@ import numpy as np
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import x25519
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
+from cryptography.fernet import Fernet
 
 from .p2p_node import MessageType, P2PMessage, P2PNode
 
@@ -89,11 +91,12 @@ class TensorChunk:
     tensor_id: str
     chunk_index: int
     total_chunks: int
-    data: bytes
+    data: bytes | None
     checksum: str
     timestamp: float = field(default_factory=time.time)
     is_compressed: bool = False
     compression_type: CompressionType | None = None
+    data_path: str | None = None
 
 
 @dataclass
@@ -134,7 +137,13 @@ class TensorStreaming:
     ) -> None:
         self.node = node
         self.config = config or StreamingConfig()
-        self.cache_dir = cache_dir or "tensor_cache"
+        self.cache_dir = cache_dir
+
+        if self.cache_dir:
+            os.makedirs(self.cache_dir, exist_ok=True)
+            self._cache_cipher = Fernet(Fernet.generate_key())
+        else:
+            self._cache_cipher = None
 
         # Transfer tracking
         self.active_transfers: dict[str, TransferProgress] = {}
@@ -300,7 +309,7 @@ class TensorStreaming:
         self,
         tensor_id: str,
         timeout: float = 300.0,
-        progress_callback: callable | None = None,
+        progress_callback: Callable[[TransferProgress], None] | None = None,
     ) -> tuple[Any, TensorMetadata] | None:
         """Receive a tensor from a peer node."""
         if tensor_id not in self.tensor_metadata:
@@ -314,7 +323,7 @@ class TensorStreaming:
             self.active_transfers[tensor_id] = TransferProgress(
                 tensor_id=tensor_id,
                 total_chunks=metadata.total_chunks,
-                received_chunks=0,
+                received_chunks=len(self.pending_chunks.get(tensor_id, {})),
                 estimated_total_bytes=metadata.size_bytes,
             )
 
@@ -344,7 +353,6 @@ class TensorStreaming:
 
                 # Clean up
                 self.active_transfers.pop(tensor_id, None)
-                self.pending_chunks.pop(tensor_id, None)
 
                 logger.info(f"Successfully received tensor {metadata.name}")
                 return tensor_data, metadata
@@ -635,16 +643,33 @@ class TensorStreaming:
                 logger.error(f"Checksum mismatch for chunk {chunk_index} of tensor {tensor_id}")
                 return
 
+        file_path: str | None = None
+        stored_data: bytes | None = chunk_data
+        if self.cache_dir:
+            os.makedirs(self.cache_dir, exist_ok=True)
+            file_path = os.path.join(self.cache_dir, f"{tensor_id}_{chunk_index}.bin")
+            data_to_write = (
+                self._cache_cipher.encrypt(chunk_data) if self._cache_cipher else chunk_data
+            )
+            with open(file_path, "wb") as f:
+                f.write(data_to_write)
+            stored_data = None
+
         # Create chunk object
         chunk = TensorChunk(
             tensor_id=tensor_id,
             chunk_index=chunk_index,
             total_chunks=payload["total_chunks"],
-            data=chunk_data,
+            data=stored_data,
             checksum=payload["checksum"],
             timestamp=payload["timestamp"],
             is_compressed=payload["is_compressed"],
-            compression_type=(CompressionType(payload["compression_type"]) if payload["compression_type"] else None),
+            compression_type=(
+                CompressionType(payload["compression_type"])
+                if payload["compression_type"]
+                else None
+            ),
+            data_path=file_path,
         )
 
         # Store chunk
@@ -700,8 +725,27 @@ class TensorStreaming:
         # Sort chunks by index
         sorted_chunks = [chunks[i] for i in range(metadata.total_chunks)]
 
+        # Load chunk data, reading from cache if needed
+        chunk_bytes: list[bytes] = []
+        for chunk in sorted_chunks:
+            data = chunk.data
+            if data is None and chunk.data_path:
+                with open(chunk.data_path, "rb") as f:
+                    encrypted = f.read()
+                data = (
+                    self._cache_cipher.decrypt(encrypted)
+                    if self._cache_cipher
+                    else encrypted
+                )
+            if data is None:
+                logger.error(
+                    f"Missing data for chunk {chunk.chunk_index} of tensor {tensor_id}"
+                )
+                return None
+            chunk_bytes.append(data)
+
         # Concatenate chunk data
-        combined_data = b"".join(chunk.data for chunk in sorted_chunks)
+        combined_data = b"".join(chunk_bytes)
 
         # Decompress if needed
         if metadata.compression != CompressionType.NONE:
@@ -723,6 +767,18 @@ class TensorStreaming:
         else:
             logger.error(f"Unsupported tensor format: {metadata.format}")
             return None
+
+        # Cleanup cached data
+        for chunk in sorted_chunks:
+            if chunk.data_path and os.path.exists(chunk.data_path):
+                try:
+                    os.remove(chunk.data_path)
+                except OSError:
+                    logger.warning(f"Failed to remove cache file {chunk.data_path}")
+
+        self.pending_chunks.pop(tensor_id, None)
+        self.tensor_metadata.pop(tensor_id, None)
+        self.active_transfers.pop(tensor_id, None)
 
         return tensor_data
 
