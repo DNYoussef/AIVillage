@@ -594,6 +594,9 @@ class SemanticMultiTierCache:
             try:
                 with open(cache_file) as f:
                     state = json.load(f)
+            except Exception as e:
+                logger.error(f"Failed to load cache state: {e}")
+                return False
         elif legacy_file.exists():
             logger.warning("Found legacy pickle cache file, skipping for security")
             return False
