@@ -395,6 +395,25 @@ class P2PNode:
             message_data = self.cipher.decrypt(encrypted_data)
             message_dict = json.loads(message_data.decode())
 
+            required_keys = {
+                "message_type",
+                "sender_id",
+                "receiver_id",
+                "payload",
+                "timestamp",
+                "message_id",
+            }
+            message_keys = set(message_dict)
+            missing = required_keys - message_keys
+            unexpected = message_keys - required_keys
+            if missing or unexpected:
+                logger.warning(
+                    "Invalid message schema. Missing: %s, unexpected: %s",
+                    missing,
+                    unexpected,
+                )
+                return None
+
             self.stats["bytes_received"] += 4 + length
             self.stats["messages_received"] += 1
 
