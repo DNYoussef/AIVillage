@@ -11,7 +11,7 @@ import logging
 from typing import Any
 
 # Import from hyperag components
-from AIVillage.src.hyperag.core.hypergraph_kg import Hyperedge, HypergraphKG, Node
+from ..core.hypergraph_kg import Hyperedge, HypergraphKG, Node
 import wandb
 
 logger = logging.getLogger(__name__)

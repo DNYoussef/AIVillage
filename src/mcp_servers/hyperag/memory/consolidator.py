@@ -13,7 +13,7 @@ from typing import Any
 
 import numpy as np
 
-from AIVillage.src.mcp_servers.hyperag.guardian.gate import GuardianGate
+from ..guardian.gate import GuardianGate
 
 from .base import ConsolidationBatch, Edge, Node
 from .hippo_index import HippoIndex

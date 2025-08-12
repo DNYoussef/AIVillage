@@ -20,8 +20,8 @@ Decision = Literal["APPLY", "QUARANTINE", "REJECT"]
 
 # Type aliases for imports that may not exist yet
 try:
-    from AIVillage.src.mcp_servers.hyperag.gdc.specs import Violation
-    from AIVillage.src.mcp_servers.hyperag.repair.innovator_agent import RepairOperation
+    from ..gdc.specs import Violation
+    from ..repair.innovator_agent import RepairOperation
 except ImportError:
     # Fallback types for testing
     RepairOperation = Any

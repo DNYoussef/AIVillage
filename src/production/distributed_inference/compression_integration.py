@@ -14,7 +14,7 @@ from typing import Any
 import torch
 from torch import nn
 
-from AIVillage.src.production.compression.compression_pipeline import (
+from ..compression.compression_pipeline import (
     CompressionConfig,
     CompressionPipeline,
 )

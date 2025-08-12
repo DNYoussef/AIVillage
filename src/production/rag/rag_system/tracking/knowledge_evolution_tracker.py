@@ -4,8 +4,8 @@ import asyncio
 from datetime import datetime
 from typing import Any
 
-from AIVillage.src.production.rag.rag_system.retrieval.graph_store import GraphStore
-from AIVillage.src.production.rag.rag_system.retrieval.vector_store import VectorStore
+from ..retrieval.graph_store import GraphStore
+from ..retrieval.vector_store import VectorStore
 
 
 class KnowledgeEvolutionTracker:
