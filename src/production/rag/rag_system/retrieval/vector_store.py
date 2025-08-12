@@ -13,11 +13,19 @@ if USE_QDRANT:
         QdrantClient = None
 import base64
 import json
-import os
 import uuid
 
 from AIVillage.src.production.rag.rag_system.core.config import UnifiedConfig
 from AIVillage.src.production.rag.rag_system.core.structures import RetrievalResult
+
+
+def _get_qdrant_url() -> str:
+    """Return validated Qdrant URL based on environment."""
+    url = os.getenv("QDRANT_URL", "http://localhost:6333")
+    if os.getenv("AIVILLAGE_ENV") == "production" and url.startswith("http://"):
+        msg = "QDRANT_URL must use https:// in production"
+        raise ValueError(msg)
+    return url
 
 DEFAULT_DIMENSION = 768
 
@@ -44,7 +52,7 @@ class VectorStore:
         )
         self.documents: list[dict[str, Any]] = []
         if USE_QDRANT and QdrantClient is not None:
-            self.qdrant = QdrantClient(url=os.getenv("QDRANT_URL", "http://localhost:6333"))
+            self.qdrant = QdrantClient(url=_get_qdrant_url())
             self.collection = "documents"
             try:  # pragma: no cover - network side effects
                 self.qdrant.get_collection(self.collection)

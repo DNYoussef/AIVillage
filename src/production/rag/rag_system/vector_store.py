@@ -10,8 +10,18 @@ from .faiss_backend import FaissAdapter
 
 logger = logging.getLogger(__name__)
 
+
+def _get_qdrant_url() -> str:
+    """Return validated Qdrant URL based on environment."""
+    url = os.getenv("QDRANT_URL", "http://localhost:6333")
+    if os.getenv("AIVILLAGE_ENV") == "production" and url.startswith("http://"):
+        msg = "QDRANT_URL must use https:// in production"
+        raise ValueError(msg)
+    return url
+
+
 USE_QDRANT = os.getenv("RAG_USE_QDRANT", "0") == "1"
-QDRANT_URL = os.getenv("QDRANT_URL", "http://localhost:6333")
+QDRANT_URL = _get_qdrant_url()
 COLLECTION_NAME = os.getenv("COLLECTION_NAME", "ai_village_vectors")
 
 
