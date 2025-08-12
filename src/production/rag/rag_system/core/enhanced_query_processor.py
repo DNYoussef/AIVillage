@@ -30,6 +30,8 @@ from contextual_tagging import (
 
 # Import existing RAG components
 from graph_enhanced_rag_pipeline import GraphEnhancedRAGPipeline
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
 
 logger = logging.getLogger(__name__)
 
@@ -224,6 +226,7 @@ class EnhancedQueryProcessor:
         self.enable_intent_classification = enable_intent_classification
         self.enable_multi_hop_reasoning = enable_multi_hop_reasoning
         self.default_result_limit = default_result_limit
+        self.conflict_similarity_threshold = 0.8
 
         # Intent classification patterns
         self.intent_patterns = self._build_intent_patterns()
@@ -425,6 +428,52 @@ class EnhancedQueryProcessor:
 
         return ranked_results
 
+    def _rank_and_select(
+        self, ranked_results: list[RankedResult]
+    ) -> tuple[list[RankedResult], list[RankedResult], list[RankedResult]]:
+        """Select primary, supporting, and conflicting sources.
+
+        Conflicts are detected when semantically similar texts contain opposing
+        statements. The lower-scoring source is classified as conflicting.
+        """
+        if not ranked_results:
+            return [], [], []
+
+        primary_sources = ranked_results[:3]
+        supporting_sources = ranked_results[3:7]
+        candidates = primary_sources + supporting_sources
+
+        texts = [r.result.text for r in candidates]
+        conflicting_indices: set[int] = set()
+        if len(texts) > 1:
+            vectorizer = TfidfVectorizer().fit(texts)
+            embeddings = vectorizer.transform(texts)
+            similarities = cosine_similarity(embeddings)
+
+            for i in range(len(texts)):
+                for j in range(i + 1, len(texts)):
+                    if (
+                        similarities[i, j] >= self.conflict_similarity_threshold
+                        and self._has_negation(texts[i]) != self._has_negation(texts[j])
+                    ):
+                        if candidates[i].final_score >= candidates[j].final_score:
+                            conflicting_indices.add(j)
+                        else:
+                            conflicting_indices.add(i)
+
+        conflicting_sources = [candidates[i] for i in sorted(conflicting_indices)]
+        remaining = [r for idx, r in enumerate(candidates) if idx not in conflicting_indices]
+        primary_sources = remaining[:3]
+        supporting_sources = remaining[3:]
+
+        return primary_sources, supporting_sources, conflicting_sources
+
+    def _has_negation(self, text: str) -> bool:
+        """Check if text contains simple negation indicators."""
+        lowered = f" {text.lower()} "
+        negations = [" not ", " no ", " never ", " without ", " none ", "n't"]
+        return any(n in lowered for n in negations)
+
     async def synthesize_answer(
         self,
         decomposition: QueryDecomposition,
@@ -453,13 +502,19 @@ class EnhancedQueryProcessor:
                 processing_time_ms=0.0,
             )
 
-        # Separate sources by quality and relevance
-        primary_sources = ranked_results[:3]  # Top 3 results
-        supporting_sources = ranked_results[3:7]  # Next 4 results
-        conflicting_sources = []  # TODO: Implement conflict detection
+        # Separate sources by quality and detect conflicts
+        (
+            primary_sources,
+            supporting_sources,
+            conflicting_sources,
+        ) = self._rank_and_select(ranked_results)
 
         # Generate executive summary
-        executive_summary = await self._generate_executive_summary(decomposition, primary_sources)
+        executive_summary = await self._generate_executive_summary(
+            decomposition, primary_sources
+        )
+        if conflicting_sources:
+            executive_summary += f"\n\nConflicts detected from {len(conflicting_sources)} sources."
 
         # Create detailed sections respecting idea boundaries
         detailed_sections = await self._create_detailed_sections(decomposition, ranked_results, strategy)
