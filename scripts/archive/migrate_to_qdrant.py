@@ -29,7 +29,17 @@ from rag_system.vector_store import FaissAdapter
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("qdrant-migrator")
 
-QDRANT_URL = os.getenv("QDRANT_URL", "http://localhost:6333")
+
+def _get_qdrant_url() -> str:
+    """Return validated Qdrant URL based on environment."""
+    url = os.getenv("QDRANT_URL", "http://localhost:6333")
+    if os.getenv("AIVILLAGE_ENV") == "production" and url.startswith("http://"):
+        msg = "QDRANT_URL must use https:// in production"
+        raise ValueError(msg)
+    return url
+
+
+QDRANT_URL = _get_qdrant_url()
 COLLECTION = os.getenv("COLLECTION_NAME", "ai_village_vectors")
 BATCH = 100
 DIMENSION = 768

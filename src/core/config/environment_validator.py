@@ -795,6 +795,18 @@ class EnvironmentValidator:
                         )
                     )
 
+            qdrant_url = env_vars.get("QDRANT_URL")
+            if qdrant_url and qdrant_url.startswith("http://"):
+                self.report.add_issue(
+                    ValidationIssue(
+                        variable="QDRANT_URL",
+                        level=ValidationLevel.ERROR,
+                        result=ValidationResult.INSECURE,
+                        message="Production requires QDRANT_URL to use https://",
+                        suggestion="Use an HTTPS Qdrant endpoint and provide proper certificates",
+                    )
+                )
+
     def generate_report(self) -> str:
         """Generate human-readable validation report."""
         report_lines = [
