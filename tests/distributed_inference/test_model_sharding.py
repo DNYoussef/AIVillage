@@ -4,6 +4,8 @@ Tests partitioning algorithms, device configurations, memory constraints,
 and activation passing between shards.
 """
 
+import gc
+import psutil
 import shutil
 import tempfile
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -138,6 +140,7 @@ class TestModelShardingEngine:
         # Mock model configuration
         with (
             patch("transformers.AutoTokenizer.from_pretrained") as mock_tokenizer,
+            patch("transformers.AutoConfig.from_pretrained") as mock_config_loader,
             patch("transformers.AutoModelForCausalLM.from_pretrained") as mock_model,
         ):
             # Mock tokenizer
@@ -151,9 +154,8 @@ class TestModelShardingEngine:
             mock_config.vocab_size = 30000
             mock_config.intermediate_size = 3072
 
-            mock_model_instance = MagicMock()
-            mock_model_instance.config = mock_config
-            mock_model.return_value = mock_model_instance
+            mock_config_loader.return_value = mock_config
+            mock_model.side_effect = AssertionError("Model weights should not be loaded")
 
             # Test analysis
             analysis = await sharding_engine._analyze_model(model_path)
@@ -165,7 +167,42 @@ class TestModelShardingEngine:
             assert analysis["vocab_size"] == 30000
             assert "layer_memory_mb" in analysis
             assert "total_memory_mb" in analysis
+            assert "embedding_memory_mb" in analysis
             assert analysis["can_split_attention"] is True  # 12 heads >= 4
+
+    @pytest.mark.asyncio
+    async def test_model_analysis_memory_usage(self, sharding_engine):
+        """Ensure model analysis doesn't increase memory excessively"""
+        sharding_engine.model_analysis_cache.clear()
+        with (
+            patch("transformers.AutoTokenizer.from_pretrained") as mock_tokenizer,
+            patch("transformers.AutoConfig.from_pretrained") as mock_config_loader,
+            patch("transformers.AutoModelForCausalLM.from_pretrained") as mock_model,
+        ):
+            mock_tokenizer.return_value = MagicMock()
+
+            mock_cfg = MagicMock()
+            mock_cfg.num_hidden_layers = 12
+            mock_cfg.hidden_size = 768
+            mock_cfg.num_attention_heads = 12
+            mock_cfg.vocab_size = 30000
+            mock_cfg.intermediate_size = 3072
+
+            mock_config_loader.return_value = mock_cfg
+
+            def heavy_model(*args, **kwargs):
+                return MagicMock(buffer=bytearray(150 * 1024 * 1024))
+
+            mock_model.side_effect = heavy_model
+
+            gc.collect()
+            process = psutil.Process()
+            before = process.memory_info().rss
+            await sharding_engine._analyze_model("unique-model-path")
+            after = process.memory_info().rss
+
+            assert not mock_model.called
+            assert after - before < 100 * 1024 * 1024
 
     @pytest.mark.asyncio
     async def test_get_device_profiles(self, sharding_engine, device_profiles):

@@ -11,7 +11,7 @@ import time
 from typing import Any
 import uuid
 
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from transformers import AutoConfig, AutoTokenizer
 
 # Import Sprint 6 infrastructure
 from AIVillage.src.core.p2p.p2p_node import P2PNode, PeerCapabilities
@@ -171,9 +171,9 @@ class ModelShardingEngine:
         logger.info(f"Analyzing model structure: {model_path}")
 
         try:
-            # Load model for analysis (without full parameters)
+            # Load tokenizer and configuration without model weights
             AutoTokenizer.from_pretrained(model_path)
-            model_config = AutoModelForCausalLM.from_pretrained(model_path, config_only=True).config
+            model_config = AutoConfig.from_pretrained(model_path)
 
             # Analyze layer structure
             num_layers = getattr(model_config, "num_hidden_layers", 12)
@@ -190,6 +190,8 @@ class ModelShardingEngine:
             # Estimate compute requirements
             layer_compute_score = (attention_params + mlp_params) / 1e6  # Normalized score
 
+            embedding_memory_mb = (vocab_size * hidden_size * 2) / (1024 * 1024)
+
             analysis = {
                 "model_path": model_path,
                 "num_layers": num_layers,
@@ -198,8 +200,8 @@ class ModelShardingEngine:
                 "vocab_size": vocab_size,
                 "layer_memory_mb": layer_memory_mb,
                 "layer_compute_score": layer_compute_score,
-                "total_memory_mb": layer_memory_mb * num_layers + 100,  # +100MB for embeddings
-                "embedding_memory_mb": (vocab_size * hidden_size * 2) / (1024 * 1024),
+                "embedding_memory_mb": embedding_memory_mb,
+                "total_memory_mb": layer_memory_mb * num_layers + embedding_memory_mb,
                 "can_split_attention": num_attention_heads >= 4,
                 "optimal_shard_count": max(2, min(8, num_layers // 3)),
                 "analyzed_at": time.time(),
