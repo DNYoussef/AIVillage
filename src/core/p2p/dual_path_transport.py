@@ -27,6 +27,24 @@ except ImportError as e:
     BITCHAT_AVAILABLE = False
     BETANET_AVAILABLE = False
 
+# Import battery/thermal-aware resource management
+try:
+    from ...production.monitoring.mobile.device_profiler import DeviceProfile
+    from ...production.monitoring.mobile.resource_management import (
+        BatteryThermalResourceManager,
+        ResourcePolicy,
+        TransportPreference,
+    )
+
+    RESOURCE_MANAGEMENT_AVAILABLE = True
+except ImportError as e:
+    logging.warning(f"Resource management import failed: {e}")
+    BatteryThermalResourceManager = None
+    ResourcePolicy = None
+    TransportPreference = None
+    DeviceProfile = None
+    RESOURCE_MANAGEMENT_AVAILABLE = False
+
 # Import Navigator for path selection
 try:
     import os
@@ -138,6 +156,7 @@ class DualPathTransport:
         node_id: str | None = None,
         enable_bitchat: bool = True,
         enable_betanet: bool = True,
+        resource_policy=None,
     ):
         self.node_id = node_id or f"dualpath_{uuid.uuid4().hex[:12]}"
 
@@ -151,6 +170,14 @@ class DualPathTransport:
         self.enable_betanet = enable_betanet and BETANET_AVAILABLE
         self.enable_navigator = NAVIGATOR_AVAILABLE
 
+        # Battery/thermal-aware resource management
+        self.resource_manager: BatteryThermalResourceManager | None = None
+        if RESOURCE_MANAGEMENT_AVAILABLE:
+            self.resource_manager = BatteryThermalResourceManager(resource_policy)
+            self.enable_resource_management = True
+        else:
+            self.enable_resource_management = False
+
         # Message handling
         self.message_handlers: dict[str, Any] = {}
         self.routing_stats = {
@@ -159,6 +186,8 @@ class DualPathTransport:
             "store_forward_queued": 0,
             "routing_decisions": 0,
             "delivery_failures": 0,
+            "resource_adaptations": 0,
+            "transport_switches": 0,
         }
 
         # Store-and-forward queue for offline scenarios
@@ -174,7 +203,8 @@ class DualPathTransport:
         logger.info(f"DualPathTransport initialized: {self.node_id}")
         logger.info(
             f"Available transports: BitChat={self.enable_bitchat}, "
-            f"Betanet={self.enable_betanet}, Navigator={self.enable_navigator}"
+            f"Betanet={self.enable_betanet}, Navigator={self.enable_navigator}, "
+            f"ResourceManagement={self.enable_resource_management}"
         )
 
     async def start(self) -> bool:
@@ -258,6 +288,54 @@ class DualPathTransport:
 
         logger.info("DualPathTransport stopped")
 
+    async def update_device_profile(self, profile) -> None:
+        """Update device profile and adapt resource policies
+
+        Args:
+            profile: Current device profile with battery, thermal, memory state
+        """
+        if not self.enable_resource_management or not self.resource_manager:
+            return
+
+        try:
+            # Evaluate and adapt resource policies
+            old_state = (
+                self.resource_manager.state.to_dict()
+                if self.resource_manager.state
+                else {}
+            )
+            new_state = await self.resource_manager.evaluate_and_adapt(profile)
+
+            # Track resource adaptations
+            if old_state.get("power_mode") != new_state.power_mode.value:
+                self.routing_stats["resource_adaptations"] += 1
+                logger.info(
+                    f"Power mode changed: {old_state.get('power_mode')} → {new_state.power_mode.value}"
+                )
+
+            if (
+                old_state.get("transport_preference")
+                != new_state.transport_preference.value
+            ):
+                self.routing_stats["transport_switches"] += 1
+                logger.info(
+                    f"Transport preference changed: {old_state.get('transport_preference')} → {new_state.transport_preference.value}"
+                )
+
+        except Exception as e:
+            logger.exception(f"Error updating device profile: {e}")
+
+    def get_resource_status(self) -> dict[str, Any]:
+        """Get current resource management status"""
+        if not self.enable_resource_management or not self.resource_manager:
+            return {"enabled": False}
+
+        return {
+            "enabled": True,
+            "status": self.resource_manager.get_status(),
+            "chunking_recommendations": self.resource_manager.get_chunking_recommendations(),
+        }
+
     async def send_message(
         self,
         recipient: str,
@@ -294,7 +372,16 @@ class DualPathTransport:
             deadline=deadline,
         )
 
-        # Select optimal path via Navigator
+        # Get resource-aware routing decision
+        resource_routing_decision = None
+        if self.enable_resource_management and self.resource_manager:
+            resource_routing_decision = (
+                await self.resource_manager.get_transport_routing_decision(
+                    len(message.payload), priority
+                )
+            )
+
+        # Select optimal path via Navigator with resource constraints
         if preferred_protocol:
             # Use forced protocol
             if preferred_protocol == "bitchat":
@@ -307,7 +394,7 @@ class DualPathTransport:
         else:
             # Use Navigator for intelligent path selection
             selected_protocol, routing_metadata = await self._select_optimal_path(
-                recipient, message.context
+                recipient, message.context, resource_routing_decision
             )
 
         self.routing_stats["routing_decisions"] += 1
@@ -375,9 +462,34 @@ class DualPathTransport:
         return sent_count
 
     async def _select_optimal_path(
-        self, destination: str, context: MessageContext
+        self, destination: str, context, resource_decision=None
     ) -> tuple[PathProtocol, dict[str, Any]]:
-        """Select optimal path using Navigator agent"""
+        """Select optimal path using Navigator agent with resource awareness"""
+        # Apply resource-aware transport preference first
+        if resource_decision:
+            primary_transport = resource_decision.get("primary_transport", "bitchat")
+            fallback_transport = resource_decision.get("fallback_transport", "betanet")
+
+            # Honor resource management decisions
+            if primary_transport == "bitchat" and self.enable_bitchat:
+                if self.bitchat and self.bitchat.is_peer_reachable(destination):
+                    return PathProtocol.BITCHAT, {
+                        "resource_optimized": True,
+                        "chunk_size": resource_decision.get("chunk_size", 512),
+                        "rationale": resource_decision.get("rationale", []),
+                    }
+                if fallback_transport == "betanet" and self.enable_betanet:
+                    return PathProtocol.BETANET, {
+                        "resource_fallback": True,
+                        "chunk_size": resource_decision.get("chunk_size", 512),
+                    }
+            elif primary_transport == "betanet" and self.enable_betanet:
+                return PathProtocol.BETANET, {
+                    "resource_optimized": True,
+                    "chunk_size": resource_decision.get("chunk_size", 512),
+                    "rationale": resource_decision.get("rationale", []),
+                }
+
         if not self.enable_navigator or not self.navigator:
             # Fallback path selection without Navigator
             if (

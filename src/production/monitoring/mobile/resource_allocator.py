@@ -3,11 +3,55 @@
 import logging
 import os
 import platform
-import resource as sys_resource
 from dataclasses import dataclass
 from typing import Any
 
-from .device_profiler import DeviceProfile
+# Handle cross-platform resource module import
+sys_resource = None
+try:
+    import resource as sys_resource
+except ImportError:
+    # Windows doesn't have the 'resource' module by default
+    # Create a mock implementation for cross-platform compatibility
+    class MockResource:
+        def __init__(self):
+            # Define some common resource limits
+            self.RLIMIT_AS = 9  # Address space limit
+            self.RLIMIT_CPU = 0  # CPU time limit
+            self.RLIMIT_DATA = 2  # Data segment limit
+
+        def setrlimit(self, resource_type, limits):
+            """Mock setrlimit - does nothing on Windows"""
+
+        def getrlimit(self, resource_type):
+            """Mock getrlimit - returns unlimited on Windows"""
+            return (-1, -1)
+
+    sys_resource = MockResource()
+
+# Handle device profiler import
+try:
+    from .device_profiler import DeviceProfile
+except ImportError:
+    # Fallback DeviceProfile for safe importing
+    from dataclasses import dataclass
+
+    @dataclass
+    class DeviceProfile:
+        """Mock DeviceProfile for safe importing"""
+
+        timestamp: float = 0.0
+        cpu_percent: float = 0.0
+        cpu_temp_celsius: float | None = None
+        battery_percent: int | None = None
+        battery_charging: bool = True
+        ram_used_mb: int = 1024
+        ram_total_mb: int = 4096
+        ram_available_mb: int = 2048
+        network_type: str = "wifi"
+        network_latency_ms: float | None = None
+        device_type: str = "laptop"
+
 
 logger = logging.getLogger(__name__)
 

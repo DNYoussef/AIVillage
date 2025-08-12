@@ -1,11 +1,10 @@
-"""
-Simple Multi-Agent Coordination Test
+"""Simple Multi-Agent Coordination Test
 Tests the 9 implemented Atlantis Meta-Agents without complex dependencies
 """
 
 import asyncio
 import time
-from typing import Any, Dict, List
+from typing import Any
 
 
 class MockAgentInterface:
@@ -37,7 +36,7 @@ class SimpleKingAgent(MockAgentInterface):
         self.specialization = "orchestration"
         self.capabilities = ["task_decomposition", "agent_coordination"]
 
-    async def decompose_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
+    async def decompose_task(self, task: dict[str, Any]) -> dict[str, Any]:
         """Decompose complex task into subtasks"""
         subtasks = [
             {
@@ -87,7 +86,7 @@ class SimpleSustainerAgent(MockAgentInterface):
         self.specialization = "resource_management"
         self.capabilities = ["resource_monitoring", "capacity_management"]
 
-    async def profile_device(self, device_spec: Dict[str, Any]) -> Dict[str, Any]:
+    async def profile_device(self, device_spec: dict[str, Any]) -> dict[str, Any]:
         """Profile device capabilities"""
 
         class DeviceClass:
@@ -110,7 +109,7 @@ class SimpleSustainerAgent(MockAgentInterface):
             },
         }
 
-    async def optimize_efficiency(self, target: str = "balanced") -> Dict[str, Any]:
+    async def optimize_efficiency(self, target: str = "balanced") -> dict[str, Any]:
         """Optimize resource efficiency"""
         return {
             "status": "success",
@@ -184,7 +183,7 @@ class SimpleAuditorAgent(MockAgentInterface):
         self.specialization = "receipts_and_compliance"
         self.capabilities = ["receipt_collection", "audit_reporting"]
 
-    async def record_receipt(self, receipt_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def record_receipt(self, receipt_data: dict[str, Any]) -> dict[str, Any]:
         """Record agent receipt"""
         return {
             "status": "success",
@@ -193,7 +192,7 @@ class SimpleAuditorAgent(MockAgentInterface):
         }
 
     async def generate_audit_report(
-        self, report_type: str, time_range, agents: List[str] = None
+        self, report_type: str, time_range, agents: list[str] = None
     ):
         """Generate audit report"""
 
@@ -226,8 +225,8 @@ class SimpleTutorAgent(MockAgentInterface):
         self.capabilities = ["personalized_learning", "learner_assessment"]
 
     async def create_learner_profile(
-        self, learner_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, learner_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """Create learner profile"""
         learner_id = f"learner_{int(time.time())}"
         return {
@@ -246,7 +245,7 @@ class SimpleTutorAgent(MockAgentInterface):
             },
         }
 
-    async def deliver_lesson(self, learner_id: str, content_id: str) -> Dict[str, Any]:
+    async def deliver_lesson(self, learner_id: str, content_id: str) -> dict[str, Any]:
         """Deliver personalized lesson"""
         return {
             "status": "success",
@@ -273,8 +272,8 @@ class SimpleHorticulturistAgent(MockAgentInterface):
         self.capabilities = ["crop_planning", "soil_assessment"]
 
     async def assess_soil(
-        self, location_id: str, soil_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, location_id: str, soil_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """Assess soil conditions"""
         return {
             "status": "success",
@@ -293,7 +292,7 @@ class SimpleHorticulturistAgent(MockAgentInterface):
             },
         }
 
-    async def plan_crop(self, crop_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def plan_crop(self, crop_data: dict[str, Any]) -> dict[str, Any]:
         """Plan crop cultivation"""
 
         class CropProfile:
@@ -317,7 +316,7 @@ class SimpleMultiAgentCoordinator:
     """Simplified multi-agent coordinator for testing"""
 
     def __init__(self):
-        self.agents: Dict[str, Any] = {}
+        self.agents: dict[str, Any] = {}
 
     async def initialize_agents(self):
         """Initialize all 9 Q1 MVP agents"""

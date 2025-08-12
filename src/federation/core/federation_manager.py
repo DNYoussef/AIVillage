@@ -431,14 +431,56 @@ class FederationManager:
 
         logger.info(f"AI service request: {service_name} from {sender}")
 
-        # TODO: Actually process the AI service request
-        # For now, just acknowledge receipt
+        # Process the AI service request by routing to appropriate agent
+        try:
+            # Map service names to agent types
+            service_to_agent = {
+                "translation": "translator",
+                "data_analysis": "data_science",
+                "testing": "tester",
+                "social_analysis": "social",
+                "creative_generation": "creative",
+                "devops_task": "devops",
+                "financial_analysis": "financial",
+            }
+
+            result = {"error": "Service not available"}
+
+            # Route to appropriate agent if service is supported
+            agent_type = service_to_agent.get(service_name)
+            if agent_type and hasattr(self, "agent_registry"):
+                try:
+                    agent = await self.agent_registry.get_agent(agent_type)
+                    if agent:
+                        # Process request with the agent
+                        prompt = request_data.get("prompt", "")
+                        if prompt:
+                            result = {
+                                "response": await agent.generate(prompt),
+                                "agent_type": agent_type,
+                                "processed_by": f"{self.device_profile.get('device_id', 'unknown')}",
+                            }
+                        else:
+                            result = {"error": "No prompt provided for AI service"}
+                except Exception as e:
+                    logger.exception(
+                        f"Error processing AI service with agent {agent_type}: {e}"
+                    )
+                    result = {"error": f"Failed to process request: {e!s}"}
+            else:
+                logger.warning(f"Unsupported service: {service_name}")
+                result = {"error": f"Unsupported service: {service_name}"}
+
+        except Exception as e:
+            logger.exception(f"Error in AI service processing: {e}")
+            result = {"error": f"Processing failed: {e!s}"}
 
         response = {
             "type": "ai_service_response",
             "request_id": request_id,
-            "status": "processed",
-            "result": {"placeholder": "simulated_result"},
+            "status": "processed" if "error" not in result else "failed",
+            "result": result,
+            "timestamp": asyncio.get_event_loop().time(),
         }
 
         await self.send_federated_message(sender, response)

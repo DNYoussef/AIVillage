@@ -38,15 +38,15 @@ class TestSimpleQuantizer:
         # Real assertions about compression
         stats = quantizer.get_compression_stats()
 
-        assert (
-            stats["compression_ratio"] >= 3.0
-        ), f"Only achieved {stats['compression_ratio']:.2f}x compression"
-        assert len(compressed) < (
-            stats["original_size_bytes"] / 3.0
-        ), "Compressed size too large"
-        assert (
-            stats["compressed_size_mb"] < stats["original_size_mb"]
-        ), "No size reduction"
+        assert stats["compression_ratio"] >= 3.0, (
+            f"Only achieved {stats['compression_ratio']:.2f}x compression"
+        )
+        assert len(compressed) < (stats["original_size_bytes"] / 3.0), (
+            "Compressed size too large"
+        )
+        assert stats["compressed_size_mb"] < stats["original_size_mb"], (
+            "No size reduction"
+        )
 
         # Verify we can load it back
         restored = SimpleQuantizer.load_quantized_model(compressed)
@@ -270,9 +270,9 @@ class TestCompressionIntegration:
             mobile_size = Path(mobile_path).stat().st_size
             actual_ratio = original_size / mobile_size
 
-            assert (
-                actual_ratio >= 3.9
-            ), f"Actual compression ratio {actual_ratio:.2f}x insufficient"
+            assert actual_ratio >= 3.9, (
+                f"Actual compression ratio {actual_ratio:.2f}x insufficient"
+            )
 
     def test_multiple_model_types_compression(self):
         """Test compression works across different model architectures."""
@@ -303,9 +303,9 @@ class TestCompressionIntegration:
 
         # All models should compress successfully
         successful = [r for r in results if r["success"]]
-        assert len(successful) == len(
-            models_and_names
-        ), f"Some models failed compression: {results}"
+        assert len(successful) == len(models_and_names), (
+            f"Some models failed compression: {results}"
+        )
 
         # All should be mobile ready
         mobile_ready = [r for r in successful if r["mobile_ready"]]

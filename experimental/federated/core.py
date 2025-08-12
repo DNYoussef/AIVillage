@@ -648,12 +648,12 @@ class FederatedTrainingCoordinator:
 
         # Generate final results
         training_results["final_metrics"] = self.monitor.get_training_health()
-        training_results[
-            "convergence_analysis"
-        ] = self.monitor.get_convergence_analysis()
-        training_results[
-            "privacy_report"
-        ] = self.privacy_engine.validate_privacy_guarantees()
+        training_results["convergence_analysis"] = (
+            self.monitor.get_convergence_analysis()
+        )
+        training_results["privacy_report"] = (
+            self.privacy_engine.validate_privacy_guarantees()
+        )
 
         return training_results
 

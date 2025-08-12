@@ -1,5 +1,4 @@
-"""
-Multi-Agent Coordination Test
+"""Multi-Agent Coordination Test
 Tests how 3+ Atlantis Meta-Agents work together on complex tasks
 """
 
@@ -7,7 +6,7 @@ import asyncio
 import os
 import sys
 import time
-from typing import Any, Dict, List
+from typing import Any
 
 # Add the src directory to the path
 sys.path.append(os.path.join(os.path.dirname(__file__), "src"))
@@ -33,8 +32,8 @@ class MultiAgentCoordinator:
     """Test coordinator to demonstrate multi-agent workflows"""
 
     def __init__(self):
-        self.agents: Dict[str, Any] = {}
-        self.coordination_logs: List[Dict[str, Any]] = []
+        self.agents: dict[str, Any] = {}
+        self.coordination_logs: list[dict[str, Any]] = []
 
     async def initialize_agents(self):
         """Initialize all 9 agents for coordination testing"""
@@ -67,8 +66,7 @@ class MultiAgentCoordinator:
         return True
 
     async def test_scenario_sustainable_garden(self):
-        """
-        Test Scenario: Multi-agent coordination for sustainable garden planning
+        """Test Scenario: Multi-agent coordination for sustainable garden planning
         Involves: King, Horticulturist, Sustainer, Tutor, Auditor, Shield
         """
         print("\n" + "=" * 60)
@@ -256,8 +254,7 @@ class MultiAgentCoordinator:
         }
 
     async def test_scenario_translation_workflow(self):
-        """
-        Test Scenario: Multi-agent workflow with translation needs
+        """Test Scenario: Multi-agent workflow with translation needs
         Involves: King, Polyglot, Tutor, Auditor
         """
         print("\n" + "=" * 60)

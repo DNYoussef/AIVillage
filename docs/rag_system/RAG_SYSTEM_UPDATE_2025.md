@@ -54,12 +54,12 @@ class SynthesizedAnswer:
 - **L1 Cache**: In-memory LRU (128 entries)
   - Hit Rate: 60-70% for common queries
   - Latency: <1ms
-  
+
 - **L2 Cache**: Redis distributed cache
   - Hit Rate: 20-25%
   - Latency: 2-5ms
   - URL: `redis://localhost:6379/1`
-  
+
 - **L3 Cache**: Disk-based persistent cache
   - Hit Rate: 10-15%
   - Latency: 10-20ms
@@ -77,22 +77,22 @@ class SynthesizedAnswer:
    - Detects methodology, results, conclusion sections
    - Preserves citation context
    - Maintains section boundaries
-   
+
 2. **Technical Documentation**
    - Preserves code examples intact
    - Maintains API references
    - Handles parameter descriptions
-   
+
 3. **Wikipedia Articles**
    - Identifies topic transitions
    - Preserves infobox data
    - Maintains reference links
-   
+
 4. **News Articles**
    - Separates claims from evidence
    - Preserves quote attribution
    - Maintains temporal context
-   
+
 5. **Literature/Narrative**
    - Respects narrative boundaries
    - Preserves character references
@@ -106,16 +106,16 @@ class SynthesizedAnswer:
   - F-string conversions applied
   - Exception handling improved
   - Type annotations added
-  
+
 - **Black**: 42 files reformatted
   - Line length: 120 characters
   - Consistent indentation (4 spaces)
   - Proper line breaking
-  
+
 - **isort**: Import sorting with black profile
   - Standard library → Third-party → Local imports
   - Alphabetical ordering within groups
-  
+
 - **Pre-commit Hooks**: All passing
   - Trailing whitespace removed
   - End-of-file newlines fixed
@@ -135,7 +135,7 @@ class SynthesizedAnswer:
    - Tests 5 document types
    - Validates boundary detection
    - Measures retrieval accuracy
-   
+
 2. **Quick Validation** (`test_chunking_quick.py`)
    - Simplified smoke tests
    - Performance benchmarking
@@ -146,7 +146,7 @@ class SynthesizedAnswer:
 Document Type Testing Results:
 ==============================
 Academic Papers:    85% accuracy (methodology/results separation)
-Wikipedia Articles: 90% accuracy (topic transition detection)  
+Wikipedia Articles: 90% accuracy (topic transition detection)
 Technical Docs:     95% accuracy (code preservation)
 Literature:         75% accuracy (narrative boundaries)
 News Articles:      80% accuracy (claim/evidence separation)
@@ -283,7 +283,7 @@ All import paths updated to reflect new organization:
 # Old
 from intelligent_chunking import IntelligentChunker
 
-# New  
+# New
 from src.production.rag.rag_system.core.intelligent_chunking import IntelligentChunker
 ```
 

@@ -57,12 +57,10 @@ class TestProblemAnalyzer(unittest.IsolatedAsyncioTestCase):
         rag_info = {"rag_data": "Test RAG info"}
         rule_compliance = 0.9
 
-        self.quality_assurance_layer.eudaimonia_triangulator.get_embedding.return_value = [
-            0.1
-        ] * 768
-        self.quality_assurance_layer.eudaimonia_triangulator.triangulate.return_value = (
-            0.8
+        self.quality_assurance_layer.eudaimonia_triangulator.get_embedding.return_value = (
+            [0.1] * 768
         )
+        self.quality_assurance_layer.eudaimonia_triangulator.triangulate.return_value = 0.8
         self.problem_analyzer.llm.complete.return_value.text = "Test analysis"
 
         result = await self.problem_analyzer.analyze(content, rag_info, rule_compliance)

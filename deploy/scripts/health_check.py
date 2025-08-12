@@ -399,7 +399,9 @@ class HealthChecker:
         if "pods" in k8s:
             for pod_name, pod_info in k8s["pods"].items():
                 status_icon = (
-                    "🟢" if pod_info["phase"] == "Running" and pod_info["ready"] else "🔴"
+                    "🟢"
+                    if pod_info["phase"] == "Running" and pod_info["ready"]
+                    else "🔴"
                 )
                 print(
                     f"  {status_icon} {pod_name}: {pod_info['phase']} (Restarts: {pod_info['restarts']})"

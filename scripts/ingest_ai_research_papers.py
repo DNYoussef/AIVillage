@@ -331,7 +331,7 @@ class PDFIngestionManager:
         for i in range(0, len(pdf_sources), batch_size):
             batch = pdf_sources[i : i + batch_size]
             logger.info(
-                f"Processing batch {i//batch_size + 1}/{(len(pdf_sources)-1)//batch_size + 1}"
+                f"Processing batch {i // batch_size + 1}/{(len(pdf_sources) - 1) // batch_size + 1}"
             )
 
             tasks = []
@@ -356,7 +356,7 @@ class PDFIngestionManager:
         logger.info(f"Total chunks created: {self.stats['total_chunks']}")
         logger.info(f"Total pages processed: {self.stats['total_pages']}")
         logger.info(
-            f"Success rate: {self.stats['successful_ingestions']/self.stats['total_files']*100:.1f}%"
+            f"Success rate: {self.stats['successful_ingestions'] / self.stats['total_files'] * 100:.1f}%"
         )
 
 

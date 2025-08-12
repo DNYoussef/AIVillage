@@ -15,7 +15,9 @@ class DummyEvaluator(MathFitnessEvaluator):
         self.in_flight = 0
         self.max_in_flight = 0
 
-    async def evaluate_problem(self, model, tokenizer, problem: MathProblem) -> EvaluationResult:  # type: ignore[override]
+    async def evaluate_problem(
+        self, model, tokenizer, problem: MathProblem
+    ) -> EvaluationResult:  # type: ignore[override]
         self.in_flight += 1
         self.max_in_flight = max(self.max_in_flight, self.in_flight)
         await asyncio.sleep(0.01)
@@ -50,7 +52,9 @@ async def test_concurrency_limit():
 
 
 class SimpleEvaluator(MathFitnessEvaluator):
-    async def generate_model_response(self, model, tokenizer, prompt: str, max_length: int = 200) -> str:  # type: ignore[override]
+    async def generate_model_response(
+        self, model, tokenizer, prompt: str, max_length: int = 200
+    ) -> str:  # type: ignore[override]
         await asyncio.sleep(0.01)
         return "2"
 

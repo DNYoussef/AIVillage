@@ -536,10 +536,8 @@ class SwordAgent(AgentInterface):
                 metrics["availability"] * 0.4
                 + (1 - min(metrics["error_rate"], 1)) * 0.3
                 + (1 - min(metrics["recovery_time"] / 600, 1)) * 0.2
-                + (  # Normalize recovery time
-                    0.1 if metrics["graceful_degradation"] else 0
-                )
-                * 0.1
+                + (0.1 if metrics["graceful_degradation"] else 0)
+                * 0.1  # Normalize recovery time
             )
             total_score += system_score
 

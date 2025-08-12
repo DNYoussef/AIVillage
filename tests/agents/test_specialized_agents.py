@@ -1,6 +1,7 @@
 """
 Comprehensive Test Suite for Specialized Agents
 """
+
 import asyncio
 
 import pandas as pd

@@ -66,9 +66,7 @@ class AgentForgeRunner:
 
             if torch.cuda.is_available():
                 device_name = torch.cuda.get_device_name(0)
-                memory_gb = torch.cuda.get_device_properties(0).total_memory / (
-                    1024**3
-                )
+                memory_gb = torch.cuda.get_device_properties(0).total_memory / (1024**3)
                 logger.info(f"✅ GPU: {device_name} ({memory_gb:.1f} GB)")
 
                 if memory_gb < 6:

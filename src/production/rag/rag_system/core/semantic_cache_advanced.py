@@ -604,7 +604,6 @@ class SemanticMultiTierCache:
             return False
 
         try:
-
             # Restore cache tiers from JSON
             for entry_data in state.get("hot", []):
                 entry = CacheEntry(**entry_data)

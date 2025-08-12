@@ -1,13 +1,13 @@
 """Navigator Agent - Dual-Path Routing for BitChat/Betanet
 
-The Navigator is a Tier 1 infrastructure agent responsible for intelligent 
-path selection between BitChat (offline Bluetooth mesh) and Betanet (global 
-decentralized internet). Optimized for Global South scenarios with offline-first 
+The Navigator is a Tier 1 infrastructure agent responsible for intelligent
+path selection between BitChat (offline Bluetooth mesh) and Betanet (global
+decentralized internet). Optimized for Global South scenarios with offline-first
 priorities.
 
 Key Responsibilities:
 - BitChat-first routing policy for energy efficiency
-- Multi-hop mesh routing optimization  
+- Multi-hop mesh routing optimization
 - DTN/store-and-forward for offline scenarios
 - Adaptive bandwidth and QoS management
 - Protocol switching based on network conditions
@@ -21,7 +21,7 @@ import uuid
 from collections import defaultdict
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any
 
 # Bluetooth imports with fallback
 try:
@@ -71,7 +71,7 @@ class NetworkConditions:
     wifi_connected: bool = False
 
     # Device status
-    battery_percent: Optional[int] = None
+    battery_percent: int | None = None
     charging: bool = False
     mobile_device: bool = False
 
@@ -81,13 +81,13 @@ class NetworkConditions:
     reliability_score: float = 0.8
 
     # Environmental context
-    geographic_region: Optional[str] = None
+    geographic_region: str | None = None
     censorship_risk: float = 0.0  # 0.0=safe, 1.0=high risk
     data_cost_usd_mb: float = 0.0  # Cost per MB
 
     # Peer proximity
     nearby_peers: int = 0
-    peer_hop_distances: Dict[str, int] = field(default_factory=dict)
+    peer_hop_distances: dict[str, int] = field(default_factory=dict)
 
     def is_low_resource_environment(self) -> bool:
         """Check if this is a resource-constrained environment"""
@@ -112,7 +112,7 @@ class MessageContext:
     content_type: str = "application/octet-stream"
     requires_realtime: bool = False
     privacy_required: bool = False
-    delivery_deadline: Optional[float] = None
+    delivery_deadline: float | None = None
     bandwidth_sensitive: bool = False
 
     def is_large_message(self) -> bool:
@@ -129,11 +129,11 @@ class PeerInfo:
     """Information about a discovered peer"""
 
     peer_id: str
-    protocols: Set[str] = field(default_factory=set)
+    protocols: set[str] = field(default_factory=set)
     hop_distance: int = 1
     last_seen: float = field(default_factory=time.time)
     trust_score: float = 0.5
-    capabilities: Set[str] = field(default_factory=set)
+    capabilities: set[str] = field(default_factory=set)
 
     # Performance metrics
     avg_latency_ms: float = 100.0
@@ -141,8 +141,8 @@ class PeerInfo:
     bandwidth_mbps: float = 1.0
 
     # Proximity indicators
-    bluetooth_rssi: Optional[int] = None  # Signal strength
-    geographic_distance_km: Optional[float] = None
+    bluetooth_rssi: int | None = None  # Signal strength
+    geographic_distance_km: float | None = None
 
     def is_nearby(self) -> bool:
         """Check if peer is in close proximity"""
@@ -186,20 +186,20 @@ class NavigatorAgent:
         self.last_condition_update = 0.0
 
         # Peer tracking
-        self.discovered_peers: Dict[str, PeerInfo] = {}
-        self.peer_proximity_cache: Dict[str, bool] = {}
+        self.discovered_peers: dict[str, PeerInfo] = {}
+        self.peer_proximity_cache: dict[str, bool] = {}
         self.peer_cache_ttl = 300.0  # 5 minutes
 
         # Routing statistics and learning
-        self.route_success_rates: Dict[str, float] = defaultdict(lambda: 0.8)
-        self.protocol_performance: Dict[str, Dict[str, float]] = {
+        self.route_success_rates: dict[str, float] = defaultdict(lambda: 0.8)
+        self.protocol_performance: dict[str, dict[str, float]] = {
             "bitchat": {"latency": 200.0, "reliability": 0.85, "energy_cost": 0.2},
             "betanet": {"latency": 100.0, "reliability": 0.95, "energy_cost": 0.8},
             "store_forward": {"latency": 0.0, "reliability": 1.0, "energy_cost": 0.1},
         }
 
         # Decision caching
-        self.routing_decisions: Dict[str, Tuple[PathProtocol, float]] = {}
+        self.routing_decisions: dict[str, tuple[PathProtocol, float]] = {}
         self.decision_cache_ttl = 60.0  # 1 minute
 
         # Global South optimizations
@@ -219,10 +219,9 @@ class NavigatorAgent:
         self,
         destination: str,
         message_context: MessageContext,
-        available_protocols: Optional[List[str]] = None,
-    ) -> Tuple[PathProtocol, Dict[str, Any]]:
-        """
-        Core path selection algorithm implementing AIVillage routing priorities:
+        available_protocols: list[str] | None = None,
+    ) -> tuple[PathProtocol, dict[str, Any]]:
+        """Core path selection algorithm implementing AIVillage routing priorities:
 
         1. BitChat-first for Global South (offline/low-power)
         2. Betanet for wide-area/high-bandwidth needs
@@ -269,10 +268,9 @@ class NavigatorAgent:
         self,
         destination: str,
         context: MessageContext,
-        available_protocols: Optional[List[str]],
+        available_protocols: list[str] | None,
     ) -> PathProtocol:
         """Evaluate and select optimal routing protocol"""
-
         # Check what protocols are available
         available = available_protocols or ["bitchat", "betanet", "store_forward"]
 
@@ -281,7 +279,7 @@ class NavigatorAgent:
             if self.conditions.internet_available and "betanet" in available:
                 logger.debug("Urgent message - selecting Betanet")
                 return PathProtocol.BETANET
-            elif self.conditions.bluetooth_available and "bitchat" in available:
+            if self.conditions.bluetooth_available and "bitchat" in available:
                 if await self._is_peer_nearby(destination):
                     logger.debug("Urgent message - peer nearby, selecting BitChat")
                     return PathProtocol.BITCHAT
@@ -338,10 +336,9 @@ class NavigatorAgent:
             ):
                 logger.debug("Energy conservation - selecting BitChat")
                 return PathProtocol.BITCHAT
-            else:
-                # Store and forward to conserve energy
-                logger.debug("Energy conservation - selecting store-and-forward")
-                return PathProtocol.STORE_FORWARD
+            # Store and forward to conserve energy
+            logger.debug("Energy conservation - selecting store-and-forward")
+            return PathProtocol.STORE_FORWARD
 
         # PRIORITY 6: Performance-first routing
         if self.routing_priority == RoutingPriority.PERFORMANCE_FIRST:
@@ -450,7 +447,7 @@ class NavigatorAgent:
         # For now, assume WiFi if internet is available
         return self.conditions.internet_available
 
-    async def _get_battery_level(self) -> Optional[int]:
+    async def _get_battery_level(self) -> int | None:
         """Get current battery percentage"""
         try:
             # Platform-specific battery check would go here
@@ -470,8 +467,7 @@ class NavigatorAgent:
         # Simplified bandwidth estimation
         if self.conditions.wifi_connected:
             return 50.0  # Assume 50 Mbps on WiFi
-        else:
-            return 5.0  # Assume 5 Mbps on cellular
+        return 5.0  # Assume 5 Mbps on cellular
 
     async def _is_peer_nearby(self, peer_id: str) -> bool:
         """Check if peer is within BitChat range"""
@@ -509,7 +505,7 @@ class NavigatorAgent:
 
     def _get_routing_metadata(
         self, protocol: PathProtocol, destination: str
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Generate routing metadata for selected protocol"""
         metadata = {
             "protocol": protocol.value,
@@ -607,7 +603,7 @@ class NavigatorAgent:
         else:
             logger.info("Global South mode disabled")
 
-    def get_status(self) -> Dict[str, Any]:
+    def get_status(self) -> dict[str, Any]:
         """Get current Navigator status and statistics"""
         return {
             "agent_id": self.agent_id,
@@ -630,7 +626,7 @@ class NavigatorAgent:
             "top_routes": dict(list(self.route_success_rates.items())[:10]),
         }
 
-    def get_recommended_protocols(self, destination: str) -> List[str]:
+    def get_recommended_protocols(self, destination: str) -> list[str]:
         """Get recommended protocols for destination in priority order"""
         # Based on current conditions, return optimal protocol list
         recommendations = []
@@ -650,7 +646,7 @@ class NavigatorAgent:
 
     async def optimize_route_for_context(
         self, protocol: PathProtocol, destination: str, context: MessageContext
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Optimize routing parameters for specific context"""
         optimizations = {}
 

@@ -270,9 +270,7 @@ class TestAdaptiveReshardingManager:
     async def test_load_imbalance_detection(self, resharding_manager):
         """Test load imbalance detection"""
         # Set low compute balance score
-        resharding_manager.sharding_engine.current_sharding_plan.compute_balance_score = (
-            0.5
-        )
+        resharding_manager.sharding_engine.current_sharding_plan.compute_balance_score = 0.5
 
         with patch.object(resharding_manager, "trigger_resharding") as mock_trigger:
             await resharding_manager._check_load_imbalance()

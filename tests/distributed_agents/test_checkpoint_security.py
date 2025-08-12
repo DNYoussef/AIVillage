@@ -132,7 +132,5 @@ async def test_legacy_json_checkpoint_supported() -> None:
         source_device_id="trusted",
     )
 
-    assert await manager._start_agent_locally_from_checkpoint(
-        checkpoint
-    )  # noqa: SLF001
+    assert await manager._start_agent_locally_from_checkpoint(checkpoint)  # noqa: SLF001
     assert agent.status == "running"

@@ -133,7 +133,7 @@ try:
             full_decomposition_success = False
 
         # Assessment
-        print(f"\n{'='*55}")
+        print(f"\n{'=' * 55}")
         print("Query Decomposition Test Results")
         print("=" * 55)
 

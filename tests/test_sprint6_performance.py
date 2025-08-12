@@ -336,9 +336,9 @@ class TestScalabilityTests:
                     suitable_variants.append(variant)
 
             # Should have appropriate number of variants for device class
-            assert (
-                len(suitable_variants) >= expected_min_variants
-            ), f"Device with {total_memory}GB should have at least {expected_min_variants} variants, got {len(suitable_variants)}"
+            assert len(suitable_variants) >= expected_min_variants, (
+                f"Device with {total_memory}GB should have at least {expected_min_variants} variants, got {len(suitable_variants)}"
+            )
 
 
 if __name__ == "__main__":

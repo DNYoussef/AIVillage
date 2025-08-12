@@ -119,7 +119,7 @@ def extract_key_concepts(text: str, max_concepts: int = 15) -> list[str]:
 
     # Extract meaningful bigrams
     for i in range(len(words) - 1):
-        bigram = f"{words[i]} {words[i+1]}"
+        bigram = f"{words[i]} {words[i + 1]}"
         if any(
             pattern.replace("\\s+", " ").replace("\\", "") in bigram
             for pattern in all_patterns
@@ -303,7 +303,7 @@ def analyze_grossman_connections(
             for i, conn in enumerate(ai_connections[:3]):
                 connected_doc = documents[conn["document"]]
                 shared = ", ".join(conn["shared_concepts"][:3])
-                print(f"      {i+1}. {connected_doc['title'][:45]}...")
+                print(f"      {i + 1}. {connected_doc['title'][:45]}...")
                 print(f"         Domain: {connected_doc['domain']}")
                 print(f"         Shared: {shared} ({conn['strength']} concepts)")
 
@@ -363,7 +363,7 @@ def analyze_concept_clusters(documents: dict[str, dict]) -> None:
         doc_count = len(concept_docs[concept])
         domain_list = ", ".join(sorted(domains))
 
-        print(f"   {i+1:2d}. '{concept}' ({doc_count} papers)")
+        print(f"   {i + 1:2d}. '{concept}' ({doc_count} papers)")
         print(f"       Bridges: {domain_list}")
 
         # Show example papers
@@ -455,7 +455,7 @@ def main() -> None:
 
     print("\n🔗 Connection Statistics:")
     print(
-        f"   Documents with connections: {connected_docs}/{len(documents)} ({connected_docs/len(documents)*100:.1f}%)"
+        f"   Documents with connections: {connected_docs}/{len(documents)} ({connected_docs / len(documents) * 100:.1f}%)"
     )
     print(f"   Average connections per document: {avg_connections:.1f}")
     print(

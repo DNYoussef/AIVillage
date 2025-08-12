@@ -16,9 +16,9 @@ class TestAgentForgePerformance:
         import_time = time.time() - start_time
 
         # Should be under 1 second after lazy loading fix
-        assert (
-            import_time < 1.0
-        ), f"agent_forge import took {import_time:.2f}s, should be <1s"
+        assert import_time < 1.0, (
+            f"agent_forge import took {import_time:.2f}s, should be <1s"
+        )
 
     def test_agent_forge_lazy_initialization(self):
         """Test that AgentForge class doesn't do heavy work at construction."""
@@ -32,9 +32,9 @@ class TestAgentForgePerformance:
         construction_time = time.time() - start_time
 
         # Construction should be nearly instantaneous
-        assert (
-            construction_time < 0.1
-        ), f"AgentForge() took {construction_time:.2f}s, should be <0.1s"
+        assert construction_time < 0.1, (
+            f"AgentForge() took {construction_time:.2f}s, should be <0.1s"
+        )
 
         # Test that accessing properties works (may raise ImportError for missing deps)
         start_time = time.time()

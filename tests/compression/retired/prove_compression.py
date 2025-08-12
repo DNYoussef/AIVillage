@@ -111,9 +111,9 @@ def test_real_inference():
     print(f"   Output difference: {output_diff:.6f} (lower is better)")
 
     # Verify outputs are reasonable
-    assert (
-        original_output.shape == compressed_output.shape
-    ), "Output shapes don't match!"
+    assert original_output.shape == compressed_output.shape, (
+        "Output shapes don't match!"
+    )
     assert output_diff < 2.0, f"Output difference too large: {output_diff}"
 
     print("   [OK] Inference test passed - compressed model works!")

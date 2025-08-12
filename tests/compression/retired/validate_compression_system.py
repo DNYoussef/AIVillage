@@ -62,9 +62,9 @@ def test_bitnet_compression():
     expected_ratio = 32 / bitnet.bits_per_weight  # 32 bits / 2 bits = 16x
     print(f"Expected ratio: ~{expected_ratio:.1f}x")
 
-    assert (
-        compression_ratio >= 10
-    ), f"BitNet compression too low: {compression_ratio:.1f}x"
+    assert compression_ratio >= 10, (
+        f"BitNet compression too low: {compression_ratio:.1f}x"
+    )
     assert len(unique_values) <= 4, f"Too many unique values: {len(unique_values)}"
 
     print("✅ BitNet compression PASSED")
@@ -116,12 +116,12 @@ def test_seedlm_compression():
     reconstruction_error = torch.norm(weights - decompressed) / torch.norm(weights)
     print(f"Reconstruction error: {reconstruction_error:.4f}")
 
-    assert (
-        bits_per_weight <= 5.0
-    ), f"SeedLM bits per weight too high: {bits_per_weight:.2f}"
-    assert (
-        compression_ratio >= 5
-    ), f"SeedLM compression too low: {compression_ratio:.1f}x"
+    assert bits_per_weight <= 5.0, (
+        f"SeedLM bits per weight too high: {bits_per_weight:.2f}"
+    )
+    assert compression_ratio >= 5, (
+        f"SeedLM compression too low: {compression_ratio:.1f}x"
+    )
 
     print("✅ SeedLM compression PASSED")
     return compression_ratio
@@ -161,9 +161,9 @@ def test_vptq_compression():
     print(f"Reconstruction error: {reconstruction_error:.4f}")
 
     assert compression_ratio >= 2, f"VPTQ compression too low: {compression_ratio:.1f}x"
-    assert (
-        reconstruction_error < 1.0
-    ), f"VPTQ reconstruction error too high: {reconstruction_error:.4f}"
+    assert reconstruction_error < 1.0, (
+        f"VPTQ reconstruction error too high: {reconstruction_error:.4f}"
+    )
 
     print("✅ VPTQ compression PASSED")
     return compression_ratio

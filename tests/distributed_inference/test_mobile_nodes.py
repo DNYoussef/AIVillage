@@ -69,9 +69,12 @@ async def test_skip_low_battery_devices(
         "layer_compute_score": 1.0,
     }
 
-    with patch.object(
-        ModelShardingEngine, "_analyze_model", AsyncMock(return_value=analysis)
-    ), patch.object(ModelShardingEngine, "_activate_sharding_plan", AsyncMock()):
+    with (
+        patch.object(
+            ModelShardingEngine, "_analyze_model", AsyncMock(return_value=analysis)
+        ),
+        patch.object(ModelShardingEngine, "_activate_sharding_plan", AsyncMock()),
+    ):
         plan = await engine.shard_model("dummy", ShardingStrategy.MEMORY_AWARE)
 
     used_devices = {shard.device_id for shard in plan.shards}

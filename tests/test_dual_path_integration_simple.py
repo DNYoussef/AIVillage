@@ -171,8 +171,8 @@ class TestDualPathComponents:
 
         # Create urgent message
         urgent_context = MessageContext(
-            size_bytes=1000, priority=10, requires_realtime=True  # Maximum urgency
-        )
+            size_bytes=1000, priority=10, requires_realtime=True
+        )  # Maximum urgency
 
         # Test emergency routing
         protocol, metadata = await nav.select_path(
@@ -237,8 +237,8 @@ class TestDualPathComponents:
         nav.set_energy_mode(EnergyMode.POWERSAVE)
 
         context = MessageContext(
-            size_bytes=1000, priority=3, requires_realtime=False  # Low priority
-        )
+            size_bytes=1000, priority=3, requires_realtime=False
+        )  # Low priority
 
         # Mock peer nearby for BitChat
         nav.conditions.bluetooth_available = True

@@ -467,12 +467,12 @@ async def test_production_readiness():
         json.dump(serializable_report, f, indent=2)
 
     # Assert production readiness
-    assert report[
-        "production_ready"
-    ], f"Production readiness failed: {report['success_rate']:.1%} success rate"
-    assert (
-        report["success_rate"] >= 0.95
-    ), f"Success rate {report['success_rate']:.1%} below 95% threshold"
+    assert report["production_ready"], (
+        f"Production readiness failed: {report['success_rate']:.1%} success rate"
+    )
+    assert report["success_rate"] >= 0.95, (
+        f"Success rate {report['success_rate']:.1%} below 95% threshold"
+    )
 
     logger.info(f"Production readiness: {report['success_rate']:.1%} success rate")
     return report

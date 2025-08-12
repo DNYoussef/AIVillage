@@ -56,7 +56,7 @@ def test_simple_file_access():
             print(f"  [X] {paper}: Not found")
 
     print(
-        f"\n[STATS] Papers found: {found_papers}/{len(test_papers)} ({found_papers/len(test_papers)*100:.1f}%)"
+        f"\n[STATS] Papers found: {found_papers}/{len(test_papers)} ({found_papers / len(test_papers) * 100:.1f}%)"
     )
 
     # Test content quality

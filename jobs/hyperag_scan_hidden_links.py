@@ -275,9 +275,9 @@ class HippoIndexAnalyzer:
                                 )
                                 pair_key = f"{entity1}|{entity2}"
 
-                                co_mention_counts[
-                                    pair_key
-                                ] += 0.5  # Lower weight for implicit co-mention
+                                co_mention_counts[pair_key] += (
+                                    0.5  # Lower weight for implicit co-mention
+                                )
 
                                 context = line.strip()[:200]
                                 if context not in pair_contexts[pair_key]:

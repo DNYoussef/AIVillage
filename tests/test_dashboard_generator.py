@@ -267,7 +267,9 @@ class TestDashboard:
                 else (
                     "❌"
                     if suite["status"] == "FAILED"
-                    else "⏱️" if suite["status"] == "TIMEOUT" else "⚠️"
+                    else "⏱️"
+                    if suite["status"] == "TIMEOUT"
+                    else "⚠️"
                 )
             )
             duration = f"({suite['duration']:.1f}s)"

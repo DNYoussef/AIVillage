@@ -202,9 +202,7 @@ class IntegrationTestPipeline:
             disk_usage_percent = used / total
             health_checks["disk_space"] = {
                 "success": free
-                > (
-                    1.0 * 1024**3
-                ),  # At least 1GB free space (critical for development)
+                > (1.0 * 1024**3),  # At least 1GB free space (critical for development)
                 "usage_percent": disk_usage_percent,
                 "free_gb": free / (1024**3),
                 "threshold_gb": 1.0,

@@ -36,22 +36,22 @@ async def test_rag_questions():
                 id="ai_overview",
                 title="Artificial Intelligence Overview",
                 content="""
-                Artificial Intelligence (AI) is a branch of computer science that aims to create intelligent machines 
-                capable of performing tasks that typically require human intelligence. AI systems can learn, reason, 
+                Artificial Intelligence (AI) is a branch of computer science that aims to create intelligent machines
+                capable of performing tasks that typically require human intelligence. AI systems can learn, reason,
                 perceive, and make decisions. The field includes several key areas:
-                
-                Machine Learning: A subset of AI where systems automatically improve through experience without being 
+
+                Machine Learning: A subset of AI where systems automatically improve through experience without being
                 explicitly programmed. Popular algorithms include neural networks, decision trees, and support vector machines.
-                
-                Deep Learning: Uses artificial neural networks with multiple layers to model and understand complex patterns 
+
+                Deep Learning: Uses artificial neural networks with multiple layers to model and understand complex patterns
                 in data. It has revolutionized computer vision, natural language processing, and speech recognition.
-                
-                Natural Language Processing (NLP): Enables computers to understand, interpret, and generate human language. 
+
+                Natural Language Processing (NLP): Enables computers to understand, interpret, and generate human language.
                 Applications include chatbots, translation systems, and sentiment analysis.
-                
-                Computer Vision: Allows machines to interpret and understand visual information from the world. 
+
+                Computer Vision: Allows machines to interpret and understand visual information from the world.
                 Used in autonomous vehicles, medical imaging, and facial recognition systems.
-                
+
                 AI has applications across industries including healthcare, finance, transportation, and entertainment.
                 """,
                 source_type="encyclopedia",
@@ -65,23 +65,23 @@ async def test_rag_questions():
                 id="climate_change",
                 title="Climate Change Science",
                 content="""
-                Climate change refers to long-term shifts in global temperatures and weather patterns. While climate 
-                variations are natural, scientific evidence shows that human activities have been the main driver of 
+                Climate change refers to long-term shifts in global temperatures and weather patterns. While climate
+                variations are natural, scientific evidence shows that human activities have been the main driver of
                 climate change since the mid-20th century.
-                
+
                 Primary Causes:
                 - Burning fossil fuels (coal, oil, gas) releases greenhouse gases
                 - Deforestation reduces CO2 absorption
                 - Industrial processes and agriculture contribute methane and other gases
-                
+
                 Key Effects:
                 - Global average temperatures have risen by about 1.1°C since pre-industrial times
                 - Sea levels are rising due to thermal expansion and melting ice sheets
                 - More frequent extreme weather events (hurricanes, droughts, heatwaves)
                 - Changes in precipitation patterns affecting agriculture and water supply
                 - Ocean acidification due to increased CO2 absorption
-                
-                Solutions include transitioning to renewable energy, improving energy efficiency, 
+
+                Solutions include transitioning to renewable energy, improving energy efficiency,
                 protecting forests, and developing carbon capture technologies.
                 """,
                 source_type="scientific_journal",
@@ -95,27 +95,27 @@ async def test_rag_questions():
                 id="quantum_computing",
                 title="Quantum Computing Principles",
                 content="""
-                Quantum computing is a revolutionary computing paradigm that harnesses quantum mechanical phenomena 
-                like superposition and entanglement to process information in fundamentally different ways than 
+                Quantum computing is a revolutionary computing paradigm that harnesses quantum mechanical phenomena
+                like superposition and entanglement to process information in fundamentally different ways than
                 classical computers.
-                
+
                 Key Principles:
                 - Quantum bits (qubits) can exist in superposition, representing both 0 and 1 simultaneously
                 - Quantum entanglement allows qubits to be correlated in ways that classical bits cannot
                 - Quantum interference enables quantum algorithms to amplify correct answers and cancel wrong ones
-                
+
                 Advantages:
                 - Potential exponential speedup for certain problems
                 - Could break current encryption methods (Shor's algorithm)
                 - Simulate complex quantum systems for drug discovery and materials science
-                
+
                 Current Challenges:
                 - Quantum states are fragile and easily disrupted by environmental noise
-                - Error rates are still high compared to classical computers  
+                - Error rates are still high compared to classical computers
                 - Limited number of qubits in current systems
                 - Requires extremely cold temperatures (near absolute zero)
-                
-                Companies like IBM, Google, and Microsoft are developing quantum computers, with applications 
+
+                Companies like IBM, Google, and Microsoft are developing quantum computers, with applications
                 expected in cryptography, optimization, and scientific simulation.
                 """,
                 source_type="technical_article",
@@ -129,9 +129,9 @@ async def test_rag_questions():
                 id="world_war2",
                 title="World War II Historical Overview",
                 content="""
-                World War II (1939-1945) was the largest and most destructive conflict in human history, involving 
+                World War II (1939-1945) was the largest and most destructive conflict in human history, involving
                 more than 30 countries and resulting in 70-85 million deaths.
-                
+
                 Key Events and Timeline:
                 - September 1939: Germany invades Poland, Britain and France declare war
                 - 1940: Fall of France, Battle of Britain begins
@@ -141,11 +141,11 @@ async def test_rag_questions():
                 - June 1944: D-Day landings in Normandy open Western Front
                 - May 1945: Germany surrenders after Hitler's suicide
                 - August 1945: Atomic bombs dropped on Japan, Japan surrenders
-                
+
                 Major Participants:
                 - Allied Powers: United States, Soviet Union, Britain, China, France
                 - Axis Powers: Germany, Japan, Italy
-                
+
                 Consequences:
                 - Establishment of United Nations
                 - Beginning of Cold War between US and USSR
@@ -165,32 +165,32 @@ async def test_rag_questions():
                 id="renewable_energy",
                 title="Renewable Energy Technologies",
                 content="""
-                Renewable energy comes from natural sources that are constantly replenished, offering sustainable 
+                Renewable energy comes from natural sources that are constantly replenished, offering sustainable
                 alternatives to fossil fuels for electricity generation and heating.
-                
+
                 Major Types:
-                
+
                 Solar Energy:
                 - Photovoltaic (PV) panels convert sunlight directly to electricity
                 - Solar thermal systems use sun's heat for hot water and space heating
                 - Costs have dropped dramatically, now competitive with fossil fuels in many regions
-                
+
                 Wind Energy:
                 - Wind turbines convert kinetic energy of wind into electricity
                 - Offshore wind farms can access stronger, more consistent winds
                 - Fastest growing renewable energy source globally
-                
+
                 Hydroelectric Power:
                 - Uses flowing water to generate electricity through turbines
                 - Provides about 16% of global electricity generation
                 - Can provide grid stability and energy storage through pumped hydro
-                
+
                 Geothermal Energy:
                 - Harnesses heat from Earth's interior for electricity and heating
                 - Provides consistent, baseload power unlike variable solar and wind
                 - Limited to regions with accessible geothermal resources
-                
-                Benefits include reduced greenhouse gas emissions, energy independence, 
+
+                Benefits include reduced greenhouse gas emissions, energy independence,
                 job creation, and increasingly competitive costs.
                 """,
                 source_type="energy_report",
@@ -312,7 +312,7 @@ async def test_rag_questions():
                 print("🔄 Cache miss - fresh retrieval")
 
         # Test the hierarchical response formatting
-        print(f"\n{'='*50}")
+        print(f"\n{'=' * 50}")
         print("Testing Hierarchical Response Formatting")
         print("=" * 50)
 
@@ -345,7 +345,7 @@ async def main():
 
     success = await test_rag_questions()
 
-    print(f"\n{'='*50}")
+    print(f"\n{'=' * 50}")
     print("RAG QUESTION TEST SUMMARY")
     print("=" * 50)
 

@@ -136,9 +136,9 @@ def test_simple_quantizer():
         print(f"Compressed: {len(compressed_data):,} bytes")
         print(f"Ratio: {compression_ratio:.1f}x")
 
-        assert (
-            compression_ratio >= 3
-        ), f"SimpleQuantizer ratio too low: {compression_ratio:.1f}x"
+        assert compression_ratio >= 3, (
+            f"SimpleQuantizer ratio too low: {compression_ratio:.1f}x"
+        )
         print("PASS: SimpleQuantizer PASSED")
         return compression_ratio
 

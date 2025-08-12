@@ -455,9 +455,9 @@ class TestRAGPerformance:
                 )
 
                 reasoning_time = time.time() - start_time
-                assert (
-                    reasoning_time < 10.0
-                ), f"Reasoning took {reasoning_time:.2f} seconds"
+                assert reasoning_time < 10.0, (
+                    f"Reasoning took {reasoning_time:.2f} seconds"
+                )
 
         except ImportError:
             pytest.skip("Reasoning engine not available")
@@ -501,9 +501,9 @@ class TestRAGScalability:
             concurrent_time = time.time() - start_time
 
             # Should handle concurrency efficiently
-            assert (
-                concurrent_time < 1.0
-            ), f"Concurrent processing took {concurrent_time:.2f} seconds"
+            assert concurrent_time < 1.0, (
+                f"Concurrent processing took {concurrent_time:.2f} seconds"
+            )
             assert len(results) == 10
 
         # Run the async test

@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
-"""
-Simple standalone test for specialized agents
-"""
+"""Simple standalone test for specialized agents"""
 
 import asyncio
 import sys
@@ -46,7 +44,7 @@ class SimpleDevOpsAgent(MockAgentInterface):
             return (
                 "I can handle deployments to dev, staging, or production environments."
             )
-        elif "pipeline" in prompt.lower():
+        if "pipeline" in prompt.lower():
             return "I manage CI/CD pipelines with automated testing and deployment."
         return "I'm a DevOps Agent specialized in infrastructure and deployment automation."
 
@@ -123,7 +121,7 @@ class SimpleCreativeAgent(MockAgentInterface):
     async def generate(self, prompt: str) -> str:
         if "story" in prompt.lower():
             return "I can create compelling stories with rich characters and engaging plots."
-        elif "design" in prompt.lower():
+        if "design" in prompt.lower():
             return "I provide visual design concepts and aesthetic direction."
         return "I'm a Creative Agent specialized in generating original content."
 
@@ -282,7 +280,7 @@ async def test_agent_registry_pattern():
                     data.get("service", "test-service"),
                     data.get("version", "v1.0.0"),
                 )
-            elif request_type == "create_story":
+            if request_type == "create_story":
                 agent = await self.get_agent("creative")
                 return await agent.generate_story(
                     data.get("theme", "adventure"), data.get("style", "fantasy")

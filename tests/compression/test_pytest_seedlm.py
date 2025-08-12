@@ -69,9 +69,9 @@ def test_basic_encoding_decoding_roundtrip():
 
         # More lenient thresholds for this implementation
         assert max_error < 10.0, f"Max error {max_error} exceeds tolerance"
-        assert (
-            relative_error < 2.0
-        ), f"Relative error {relative_error} exceeds tolerance"
+        assert relative_error < 2.0, (
+            f"Relative error {relative_error} exceeds tolerance"
+        )
 
 
 def test_progressive_compression_levels():
@@ -141,9 +141,9 @@ def test_multi_scale_lfsr_generation():
             max_error = torch.max(torch.abs(gram - identity_like)).item()
             print(f"  Orthogonality error: {max_error:.4f}")
             # More lenient orthogonality check
-            assert (
-                max_error < 2.0
-            ), f"Basis at scale {scale} should be approximately orthogonal"
+            assert max_error < 2.0, (
+                f"Basis at scale {scale} should be approximately orthogonal"
+            )
 
 
 def test_error_handling_invalid_input():

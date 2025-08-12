@@ -177,9 +177,9 @@ class TestP2PProtocolCompatibility:
         suitable_peers = node.get_suitable_evolution_peers(min_count=1)
 
         # Should return all 10 peers, not limited to 5
-        assert (
-            len(suitable_peers) == 10
-        ), f"Expected 10 peers, got {len(suitable_peers)}"
+        assert len(suitable_peers) == 10, (
+            f"Expected 10 peers, got {len(suitable_peers)}"
+        )
 
         # Test with higher minimum
         suitable_peers = node.get_suitable_evolution_peers(min_count=8)

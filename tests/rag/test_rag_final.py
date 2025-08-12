@@ -26,15 +26,15 @@ async def final_rag_test():
             title="Artificial Intelligence and Machine Learning",
             content="""
             Artificial Intelligence (AI) is a broad field of computer science focused on creating systems that can perform tasks requiring human-like intelligence. Key areas include:
-            
+
             Machine Learning: Algorithms that improve automatically through experience. Types include supervised learning (with labeled data), unsupervised learning (finding patterns), and reinforcement learning (learning through rewards).
-            
+
             Deep Learning: Uses neural networks with many layers to process complex data. Applications include image recognition, natural language processing, and speech recognition.
-            
+
             Natural Language Processing (NLP): Enables computers to understand and generate human language. Used in chatbots, translation, and sentiment analysis.
-            
+
             Computer Vision: Allows machines to interpret visual information. Applications include autonomous vehicles, medical imaging, and facial recognition.
-            
+
             AI applications span healthcare (diagnosis, drug discovery), finance (fraud detection, trading), transportation (self-driving cars), and entertainment (recommendation systems).
             """,
             source_type="educational",
@@ -45,18 +45,18 @@ async def final_rag_test():
             title="Climate Change Science and Solutions",
             content="""
             Climate change refers to long-term shifts in global temperatures and weather patterns. While climate variations are natural, human activities since the industrial revolution have been the primary driver.
-            
+
             Main Causes:
             - Burning fossil fuels (coal, oil, gas) releases carbon dioxide and other greenhouse gases
             - Deforestation reduces the Earth's capacity to absorb CO2
             - Industrial processes and agriculture release methane and nitrous oxide
-            
+
             Observed Effects:
             - Global average temperature has increased by 1.1°C since pre-industrial times
-            - Sea levels rising due to thermal expansion and ice sheet melting  
+            - Sea levels rising due to thermal expansion and ice sheet melting
             - More frequent extreme weather events (hurricanes, droughts, heatwaves)
             - Ocean acidification from increased CO2 absorption
-            
+
             Solutions include transitioning to renewable energy sources (solar, wind, hydro), improving energy efficiency, protecting and restoring forests, developing carbon capture technologies, and implementing carbon pricing policies.
             """,
             source_type="scientific",
@@ -67,18 +67,18 @@ async def final_rag_test():
             title="Quantum Computing Technology",
             content="""
             Quantum computing harnesses quantum mechanical phenomena to process information in fundamentally new ways, potentially solving certain problems exponentially faster than classical computers.
-            
+
             Key Principles:
             - Quantum bits (qubits) can exist in superposition, representing 0 and 1 simultaneously
             - Quantum entanglement creates correlations between qubits that persist across distances
             - Quantum interference allows algorithms to amplify correct answers and cancel incorrect ones
-            
+
             Potential Applications:
             - Cryptography: Could break current encryption but also enable quantum-safe security
             - Drug Discovery: Simulate molecular interactions for pharmaceutical development
             - Financial Modeling: Optimize portfolios and assess risk more accurately
             - Artificial Intelligence: Accelerate machine learning algorithms
-            
+
             Current Challenges:
             - Quantum decoherence: quantum states are fragile and easily disrupted
             - High error rates compared to classical computers
@@ -93,22 +93,22 @@ async def final_rag_test():
             title="Renewable Energy Technologies and Impact",
             content="""
             Renewable energy sources are naturally replenishing and offer sustainable alternatives to fossil fuels for electricity generation and heating.
-            
+
             Solar Energy:
             - Photovoltaic panels convert sunlight directly to electricity
             - Solar thermal systems capture heat for water heating and space heating
             - Costs have dropped 85% in the past decade, now competitive with fossil fuels
-            
+
             Wind Energy:
             - Onshore and offshore wind turbines convert wind kinetic energy to electricity
             - Wind is the fastest-growing renewable energy source globally
             - Modern turbines are much more efficient and reliable than early versions
-            
+
             Hydroelectric Power:
             - Uses flowing water to generate electricity through turbines
             - Provides about 16% of global electricity and offers grid stability
             - Pumped hydro storage can store energy for peak demand periods
-            
+
             Benefits include reduced greenhouse gas emissions, energy independence, job creation in new industries, and increasingly competitive costs compared to fossil fuels.
             """,
             source_type="industry_report",
@@ -243,9 +243,9 @@ async def final_rag_test():
             print(f"ERROR: {e!s}")
 
     # Final assessment
-    print(f"\n{'='*50}")
+    print(f"\n{'=' * 50}")
     print("FINAL RAG SYSTEM ASSESSMENT")
-    print(f"{'='*50}")
+    print(f"{'=' * 50}")
 
     success_rate = successful_answers / len(test_questions)
     avg_latency = total_latency / len(test_questions)

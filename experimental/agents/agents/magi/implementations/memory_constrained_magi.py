@@ -126,9 +126,7 @@ class MemoryConstrainedMagiRunner:
                 }
             )
         else:
-            logger.warning(
-                "⚠️ Evolution results not found, using default configuration"
-            )
+            logger.warning("⚠️ Evolution results not found, using default configuration")
             best_config = {"merge_method": "slerp", "fitness": 0.8914}
 
         # Stage 2: Curriculum Generation (Simulated due to OpenRouter API constraints)

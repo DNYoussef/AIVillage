@@ -105,7 +105,9 @@ def test_environment_validator():
         validator = EnvironmentValidator("development")
         dev_report = validator.validate_all(test_env)
 
-        print(f"Validation Result: {'✅ VALID' if dev_report.is_valid else '❌ INVALID'}")
+        print(
+            f"Validation Result: {'✅ VALID' if dev_report.is_valid else '❌ INVALID'}"
+        )
         print(f"Errors: {dev_report.errors}")
         print(f"Warnings: {dev_report.warnings}")
         print(f"Total Variables: {dev_report.total_variables}")

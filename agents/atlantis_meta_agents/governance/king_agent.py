@@ -431,9 +431,9 @@ class KingAgent(AgentInterface):
                 task, best_assignment["details"], config
             )
             best_assignment["objectives"] = objectives
-            best_assignment[
-                "completion_time"
-            ] = f"{task.estimated_complexity * 2} hours"
+            best_assignment["completion_time"] = (
+                f"{task.estimated_complexity * 2} hours"
+            )
 
         return best_assignment or {"agents": [], "score": 0, "objectives": {}}
 

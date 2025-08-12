@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
-"""
-Simple Atlantis Agent Creation Script
-"""
+"""Simple Atlantis Agent Creation Script"""
 
 from pathlib import Path
 

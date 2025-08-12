@@ -28,35 +28,35 @@ def test_contextual_tagging_features():
     # Test document
     test_document = """
     # Machine Learning in Healthcare: A Technical Analysis
-    
-    Machine learning applications in healthcare are transforming medical diagnosis and treatment planning. 
-    This technical report examines recent developments in medical AI systems, focusing on deep learning 
+
+    Machine learning applications in healthcare are transforming medical diagnosis and treatment planning.
+    This technical report examines recent developments in medical AI systems, focusing on deep learning
     approaches for medical image analysis and clinical decision support systems.
-    
+
     ## Image Analysis Applications
-    
-    Convolutional neural networks have achieved remarkable success in medical imaging tasks. For example, 
+
+    Convolutional neural networks have achieved remarkable success in medical imaging tasks. For example,
     dermatology AI systems can now identify skin cancer with accuracy comparable to expert dermatologists.
-    
+
     ### Deep Learning Architectures
-    
-    U-Net architectures are particularly effective for medical image segmentation. These networks use 
+
+    U-Net architectures are particularly effective for medical image segmentation. These networks use
     skip connections to preserve fine-grained spatial information during the encoding-decoding process.
-    
+
     ## Clinical Decision Support
-    
-    Natural language processing techniques enable analysis of electronic health records to identify 
-    at-risk patients and recommend treatment protocols. However, ensuring fairness and avoiding bias 
+
+    Natural language processing techniques enable analysis of electronic health records to identify
+    at-risk patients and recommend treatment protocols. However, ensuring fairness and avoiding bias
     in these systems remains a critical challenge.
-    
+
     ## Regulatory Considerations
-    
-    FDA approval processes for AI medical devices require rigorous validation studies demonstrating 
+
+    FDA approval processes for AI medical devices require rigorous validation studies demonstrating
     safety and efficacy. The regulatory landscape continues to evolve as AI technologies mature.
-    
+
     # Conclusion
-    
-    While promising, medical AI systems must address challenges including data privacy, algorithmic 
+
+    While promising, medical AI systems must address challenges including data privacy, algorithmic
     transparency, and clinical validation before achieving widespread deployment in healthcare settings.
     """
 
@@ -107,7 +107,7 @@ def test_contextual_tagging_features():
         start_char = test_document.find(paragraph)
         end_char = start_char + len(paragraph)
 
-        print(f"\nProcessing Chunk {i+1}: {chunk_id}")
+        print(f"\nProcessing Chunk {i + 1}: {chunk_id}")
 
         # Create contextual chunk
         start_time = time.perf_counter()
@@ -174,7 +174,7 @@ def test_contextual_tagging_features():
         relationships = chunk["relationships"]
         inheritance = chunk["context_inheritance"]
 
-        print(f"\nChunk {i+1} ({chunk['chunk_id']}):")
+        print(f"\nChunk {i + 1} ({chunk['chunk_id']}):")
         print(f"  Previous Chunk: {relationships['previous_chunk_id'] or 'None'}")
         print(
             f"  Document Context Inherited: {len(inheritance['inherited_context'])} properties"
@@ -225,7 +225,7 @@ def test_contextual_tagging_features():
     print(f"    Relevance Score: {chunk_ctx['relevance_score']:.3f}")
 
     # Success Summary
-    print(f"\n{'='*50}")
+    print(f"\n{'=' * 50}")
     print("CONTEXTUAL TAGGING INTEGRATION - SUCCESS!")
     print("=" * 50)
 

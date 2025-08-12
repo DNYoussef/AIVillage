@@ -631,9 +631,9 @@ class ConfigurationValidator:
 
         # Configuration loading validation
         print("  Testing configuration loading...")
-        self.validation_results[
-            "configuration_consistency"
-        ] = self.validate_configuration_loading()
+        self.validation_results["configuration_consistency"] = (
+            self.validate_configuration_loading()
+        )
 
         # Path validation
         print("  Validating paths...")
@@ -649,9 +649,9 @@ class ConfigurationValidator:
 
         # Environment variables
         print("  Checking environment variables...")
-        self.validation_results[
-            "environment_variables"
-        ] = self.validate_environment_variables()
+        self.validation_results["environment_variables"] = (
+            self.validate_environment_variables()
+        )
 
         # CODEX compliance
         print("  Validating CODEX compliance...")

@@ -237,8 +237,10 @@ class TestTensorStreaming:
                 return True
             return False
 
-        monkeypatch.setattr(sender, "send_message", fake_send_message.__get__(sender, P2PNode))
-        
+        monkeypatch.setattr(
+            sender, "send_message", fake_send_message.__get__(sender, P2PNode)
+        )
+
         async def recv_send_message(self, peer_id, message_type, payload):
             msg = P2PMessage(
                 message_type=message_type,
@@ -252,11 +254,15 @@ class TestTensorStreaming:
                 return True
             return False
 
-        monkeypatch.setattr(receiver, "send_message", recv_send_message.__get__(receiver, P2PNode))
+        monkeypatch.setattr(
+            receiver, "send_message", recv_send_message.__get__(receiver, P2PNode)
+        )
 
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         tensor = torch.arange(8, dtype=torch.float32, device=device, requires_grad=True)
-        tensor_id = await send_stream.send_tensor(tensor, "torch_round", receiver.node_id)
+        tensor_id = await send_stream.send_tensor(
+            tensor, "torch_round", receiver.node_id
+        )
 
         metadata = recv_stream.tensor_metadata[tensor_id]
         assert metadata.device == str(tensor.device)

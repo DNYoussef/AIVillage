@@ -59,9 +59,9 @@ async def test_hippo_analyzer() -> None:
                 f"  {pair.entity1} <-> {pair.entity2}: {pair.co_mention_count} mentions (confidence: {pair.confidence:.2f})"
             )
 
-        assert (
-            len(pairs) >= 2
-        ), "Should find at least aspirin-headache and ibuprofen-headache pairs"
+        assert len(pairs) >= 2, (
+            "Should find at least aspirin-headache and ibuprofen-headache pairs"
+        )
         print("+ HippoIndexAnalyzer test passed")
 
 

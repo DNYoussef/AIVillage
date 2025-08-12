@@ -26,9 +26,16 @@ except Exception:  # pragma: no cover - no psutil available
 try:  # pragma: no cover - optional dependency
     import redis
 
+    from src.core.security.secure_redis_client import (
+        create_secure_redis_client,
+        validate_redis_url_security,
+    )
+
     REDIS_AVAILABLE = True
 except Exception:  # pragma: no cover - no redis available
     redis = None  # type: ignore
+    create_secure_redis_client = None  # type: ignore
+    validate_redis_url_security = None  # type: ignore
     REDIS_AVAILABLE = False
 
 from .metrics import EvolutionMetricsRecorder
@@ -356,7 +363,20 @@ class RedisMetricsBackend(MetricsBackend):
         if not REDIS_AVAILABLE:
             msg = "redis library not available"
             raise RuntimeError(msg)
-        self._redis = redis.Redis.from_url(self.redis_url, decode_responses=True)
+
+        # Validate Redis URL security
+        if validate_redis_url_security:
+            validate_redis_url_security(self.redis_url)
+
+        # Create secure Redis client
+        if create_secure_redis_client:
+            self._redis = create_secure_redis_client(
+                self.redis_url, decode_responses=True
+            )
+        else:
+            # Fallback to basic Redis client
+            self._redis = redis.Redis.from_url(self.redis_url, decode_responses=True)
+
         await self.sqlite_backend.start()
 
     async def stop(self) -> None:

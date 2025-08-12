@@ -9,6 +9,10 @@ logger = logging.getLogger(__name__)
 SerializableType = Union[dict[str, Any], list[Any], str, int, float, bool, None]
 
 
+class SecureSerializationError(ValueError):
+    """Raised when secure serialization operations fail."""
+
+
 class SecureSerializer:
     """Secure JSON-based serializer to replace pickle usage."""
 

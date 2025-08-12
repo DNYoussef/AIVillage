@@ -747,7 +747,9 @@ async def test_evolution_demo():
                 diversity = results["results"]["diversity_history"][-1]
                 print(f"   Population diversity: {diversity:.3f}")
             else:
-                print(f"   ❌ Evolution failed: {results.get('error', 'Unknown error')}")
+                print(
+                    f"   ❌ Evolution failed: {results.get('error', 'Unknown error')}"
+                )
 
         # Final status
         final_status = await orchestrator.get_orchestration_status()

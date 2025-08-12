@@ -35,9 +35,9 @@ class TestMeshNetworking:
         await simulator.create_network()
 
         # Verify network formed
-        assert (
-            len(simulator.nodes) == 5
-        ), f"Expected 5 nodes, got {len(simulator.nodes)}"
+        assert len(simulator.nodes) == 5, (
+            f"Expected 5 nodes, got {len(simulator.nodes)}"
+        )
 
         # Check connectivity
         total_connections = sum(
@@ -158,9 +158,9 @@ class TestFederatedLearning:
         # Check round completed
         history = server.get_round_history()
         assert len(history) >= 1, "No rounds in history"
-        assert (
-            history[0]["num_clients"] >= 2
-        ), f"Expected >= 2 clients, got {history[0]['num_clients']}"
+        assert history[0]["num_clients"] >= 2, (
+            f"Expected >= 2 clients, got {history[0]['num_clients']}"
+        )
 
         print(f"  - Round completed with {history[0]['num_clients']} clients")
         print(f"  - Duration: {history[0]['duration']:.1f}s")
@@ -234,9 +234,9 @@ class TestFederatedLearning:
         print(f"  - Improvement: {(initial_loss - final_loss):.4f}")
 
         # Verify improvement (or at least no degradation)
-        assert (
-            final_loss <= initial_loss + 0.1
-        ), f"Model degraded: {final_loss} > {initial_loss + 0.1}"
+        assert final_loss <= initial_loss + 0.1, (
+            f"Model degraded: {final_loss} > {initial_loss + 0.1}"
+        )
 
         return True
 

@@ -463,7 +463,7 @@ async def test_bitnet_compression_ratio(tmp_path, monkeypatch):
             strategy=CompressionStrategy.SIMPLE, enable_benchmarking=False
         )
         await compressor.compress_model(model)
-    with open("compression_actual_ratio.json", "r", encoding="utf-8") as f:
+    with open("compression_actual_ratio.json", encoding="utf-8") as f:
         data = json.load(f)
     assert data["actual_ratio"] >= 4
 

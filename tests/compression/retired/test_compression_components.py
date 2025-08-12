@@ -322,9 +322,7 @@ def mobile_deployment_analysis():
         print()
 
     # Kenya deployment assessment
-    kenyan_target = (
-        7_000_000_000 * 4 / (1024**2) / best_ratio < 1000
-    )  # 7B model < 1GB
+    kenyan_target = 7_000_000_000 * 4 / (1024**2) / best_ratio < 1000  # 7B model < 1GB
 
     print("Kenya Deployment Assessment:")
     print(f"  7B model fits on 2GB phone: {'YES' if kenyan_target else 'NO'}")

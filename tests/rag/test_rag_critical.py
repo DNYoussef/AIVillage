@@ -451,7 +451,7 @@ def main():
     results = {}
 
     for test_name, test_func in tests:
-        print(f"\n{'='*20} {test_name} {'='*20}")
+        print(f"\n{'=' * 20} {test_name} {'=' * 20}")
 
         try:
             if asyncio.iscoroutinefunction(test_func):

@@ -48,13 +48,13 @@ class RAGIntegrationTester:
                 title="Artificial Intelligence Overview",
                 content="""
                 Artificial intelligence (AI) refers to the simulation of human intelligence in machines that are programmed to think and learn like humans. The term may also be applied to any machine that exhibits traits associated with a human mind such as learning and problem-solving.
-                
+
                 Machine learning is a subset of AI that focuses on the use of data and algorithms to imitate the way that humans learn, gradually improving accuracy. Deep learning is a subset of machine learning that uses artificial neural networks with multiple layers to model and understand complex patterns in data.
-                
+
                 Natural language processing (NLP) is a branch of AI that helps computers understand, interpret, and manipulate human language. NLP combines computational linguistics with statistical, machine learning, and deep learning models to enable computers to process human language in the form of text or voice data.
-                
+
                 Computer vision is another important field within AI that enables computers and systems to derive meaningful information from digital images, videos, and other visual inputs. It uses deep learning models, particularly convolutional neural networks, to analyze and understand visual content.
-                
+
                 The applications of AI are vast and growing, including healthcare diagnostics, autonomous vehicles, recommendation systems, financial fraud detection, virtual assistants, and scientific research acceleration.
                 """,
                 source_type="educational",
@@ -69,13 +69,13 @@ class RAGIntegrationTester:
                 title="Climate Change and Environmental Impact",
                 content="""
                 Climate change refers to long-term shifts in global temperatures and weather patterns. While climate variations are natural, scientific evidence shows that human activities have been the dominant driver of climate change since the 1950s.
-                
+
                 The primary cause of recent climate change is the increase in greenhouse gas concentrations in Earth's atmosphere. Carbon dioxide (CO2) is the most significant greenhouse gas, primarily released through burning fossil fuels like coal, oil, and natural gas. Other important greenhouse gases include methane (CH4), nitrous oxide (N2O), and fluorinated gases.
-                
+
                 The effects of climate change are already visible and include rising global temperatures, melting ice sheets and glaciers, rising sea levels, changing precipitation patterns, and more frequent extreme weather events such as hurricanes, droughts, and heatwaves.
-                
+
                 Climate change impacts ecosystems, biodiversity, agriculture, water resources, and human health. Many species are being forced to migrate or face extinction as their habitats change. Agricultural productivity is affected by changing temperature and precipitation patterns.
-                
+
                 Mitigation strategies include transitioning to renewable energy sources like solar and wind power, improving energy efficiency, protecting and restoring forests, developing carbon capture technologies, and implementing policies to reduce greenhouse gas emissions.
                 """,
                 source_type="educational",
@@ -90,13 +90,13 @@ class RAGIntegrationTester:
                 title="Quantum Computing Fundamentals",
                 content="""
                 Quantum computing is a revolutionary computing paradigm that leverages the principles of quantum mechanics to process information in fundamentally different ways than classical computers. While classical computers use bits that exist in either 0 or 1 states, quantum computers use quantum bits or qubits that can exist in superposition of both states simultaneously.
-                
+
                 The key principles of quantum computing include superposition, entanglement, and quantum interference. Superposition allows qubits to be in multiple states at once, enabling quantum computers to explore many possible solutions simultaneously. Entanglement creates correlations between qubits that don't exist in classical systems.
-                
+
                 Quantum algorithms like Shor's algorithm for integer factorization and Grover's algorithm for database searching demonstrate potential exponential speedups over classical algorithms for specific problems. These algorithms could revolutionize cryptography, optimization, and search problems.
-                
+
                 Current quantum computers are still in early stages and face significant challenges including quantum decoherence, error rates, and the need for extremely low temperatures. However, companies like IBM, Google, and startups are making rapid progress in building more stable and powerful quantum systems.
-                
+
                 Potential applications include drug discovery through molecular simulation, financial portfolio optimization, artificial intelligence acceleration, cryptography, and solving complex optimization problems in logistics and supply chain management.
                 """,
                 source_type="educational",
@@ -111,13 +111,13 @@ class RAGIntegrationTester:
                 title="Renewable Energy Technologies",
                 content="""
                 Renewable energy comes from natural resources that are replenished constantly, including sunlight, wind, water, and geothermal heat. These energy sources are essential for reducing greenhouse gas emissions and combating climate change.
-                
+
                 Solar energy harnesses sunlight through photovoltaic cells or solar thermal systems. Photovoltaic cells convert sunlight directly into electricity, while solar thermal systems use sunlight to heat water or air. Solar energy has become increasingly cost-effective and is now competitive with fossil fuels in many regions.
-                
+
                 Wind energy uses wind turbines to convert kinetic energy from moving air into electrical energy. Modern wind turbines are highly efficient and can generate electricity at very low costs. Both onshore and offshore wind farms are being developed worldwide.
-                
+
                 Hydroelectric power generates electricity by harnessing the energy of flowing water. Large-scale hydroelectric dams and smaller run-of-river systems provide clean electricity while also offering water storage and flood control benefits.
-                
+
                 Energy storage technologies like batteries, pumped hydro storage, and compressed air energy storage are crucial for managing the intermittent nature of renewable energy sources and ensuring grid stability.
                 """,
                 source_type="educational",

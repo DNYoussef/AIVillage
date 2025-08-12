@@ -508,9 +508,7 @@ class TutorPromptEngineer:
                 self.active_templates.values(),
                 key=lambda t: t.performance_score,
                 reverse=True,
-            )[
-                :5
-            ]  # Top 5
+            )[:5]  # Top 5
 
             for template in top_templates:
                 if template.performance_score > 0.7:  # Minimum performance threshold

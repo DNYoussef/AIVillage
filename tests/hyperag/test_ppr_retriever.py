@@ -219,14 +219,14 @@ class TestPersonalizedPageRank:
         # Calculate improvement
         if map_without_alpha > 0:
             improvement = (map_with_alpha - map_without_alpha) / map_without_alpha
-            assert (
-                improvement >= 0.05
-            ), f"α-fusion MAP improvement {improvement:.3f} below 5% threshold"
+            assert improvement >= 0.05, (
+                f"α-fusion MAP improvement {improvement:.3f} below 5% threshold"
+            )
         else:
             # If baseline MAP is 0, just check that α-fusion gives positive MAP
-            assert (
-                map_with_alpha > 0
-            ), "α-fusion should produce positive MAP when baseline is 0"
+            assert map_with_alpha > 0, (
+                "α-fusion should produce positive MAP when baseline is 0"
+            )
 
     async def test_creative_mode_routing(self, ppr_retriever, sample_query_plan):
         """Test creative mode routes to DivergentRetriever"""
@@ -302,12 +302,12 @@ class TestPersonalizedPageRank:
         actual_latency = (time.time() - start_time) * 1000
 
         # Check both actual and reported latency
-        assert (
-            actual_latency <= 150
-        ), f"Actual latency {actual_latency:.2f}ms exceeds 150ms target"
-        assert (
-            result.query_time_ms <= 150
-        ), f"Reported latency {result.query_time_ms:.2f}ms exceeds 150ms target"
+        assert actual_latency <= 150, (
+            f"Actual latency {actual_latency:.2f}ms exceeds 150ms target"
+        )
+        assert result.query_time_ms <= 150, (
+            f"Reported latency {result.query_time_ms:.2f}ms exceeds 150ms target"
+        )
 
     async def test_memory_overhead_limit(self, ppr_retriever, sample_query_plan):
         """Test performance target: < 10MB memory overhead"""
@@ -331,9 +331,9 @@ class TestPersonalizedPageRank:
         current_memory = process.memory_info().rss / 1024 / 1024  # MB
         memory_overhead = current_memory - baseline_memory
 
-        assert (
-            memory_overhead < 10
-        ), f"Memory overhead {memory_overhead:.2f}MB exceeds 10MB limit"
+        assert memory_overhead < 10, (
+            f"Memory overhead {memory_overhead:.2f}MB exceeds 10MB limit"
+        )
 
     async def test_uncertainty_weighting(self, ppr_retriever, sample_query_plan):
         """Test uncertainty weighting and pruning"""

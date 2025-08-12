@@ -33,8 +33,19 @@ except Exception:  # pragma: no cover
             )
 
 
-import redis
 from sentence_transformers import CrossEncoder, SentenceTransformer
+
+try:
+    import redis
+
+    from src.core.security.secure_redis_client import (
+        create_secure_redis_client,
+        validate_redis_url_security,
+    )
+except ImportError:
+    redis = None
+    create_secure_redis_client = None
+    validate_redis_url_security = None
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -109,30 +120,34 @@ class CODEXCompliantCache:
         self.l1_cache = OrderedDict()
         self.l1_capacity = RAG_L1_CACHE_SIZE
 
-        # L2 Redis cache (optional)
+        # L2 Redis cache (optional, with TLS in production)
         self.l2_cache = None
-        if self.enabled:
+        if self.enabled and redis is not None:
             try:
                 redis_url = RAG_REDIS_URL
-                # Parse Redis URL
-                if redis_url.startswith("redis://"):
-                    parts = redis_url.replace("redis://", "").split("/")
-                    host_port = parts[0].split(":")
-                    host = host_port[0]
-                    port = int(host_port[1]) if len(host_port) > 1 else 6379
-                    db = int(parts[1]) if len(parts) > 1 else 1
 
-                    self.l2_cache = redis.Redis(
-                        host=host,
-                        port=port,
-                        db=db,
+                # Validate Redis URL security
+                if validate_redis_url_security:
+                    validate_redis_url_security(redis_url)
+
+                # Create secure Redis client
+                if create_secure_redis_client:
+                    self.l2_cache = create_secure_redis_client(
+                        redis_url,
+                        socket_connect_timeout=1,
+                        socket_timeout=1,
+                    )
+                else:
+                    # Fallback to basic Redis client (for environments without security module)
+                    self.l2_cache = redis.Redis.from_url(
+                        redis_url,
                         decode_responses=True,
                         socket_connect_timeout=1,
                         socket_timeout=1,
                     )
-                    # Test connection
                     self.l2_cache.ping()
-                    logger.info(f"Connected to Redis at {host}:{port}/{db}")
+                    logger.info(f"Connected to Redis (fallback mode): {redis_url}")
+
             except Exception as e:
                 logger.warning(f"Redis unavailable, falling back to disk cache: {e}")
                 self.l2_cache = None

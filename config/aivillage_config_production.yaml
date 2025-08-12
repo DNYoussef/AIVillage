@@ -205,8 +205,8 @@ external_services:
 
   monitoring:
     enabled: true
-    prometheus_endpoint: http://prometheus.aivillage.internal:9090
-    jaeger_endpoint: http://jaeger.aivillage.internal:14268
+    prometheus_endpoint: https://prometheus.aivillage.internal:9090
+    jaeger_endpoint: https://jaeger.aivillage.internal:14268
 
 # Security (Full Security Enabled)
 security:

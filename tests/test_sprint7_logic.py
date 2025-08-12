@@ -157,12 +157,12 @@ try:
 
             if best_device:
                 placement[agent.agent_type] = best_device.device_id
-                device_usage[best_device.device_id][
-                    "memory"
-                ] += agent.memory_requirement_mb
-                device_usage[best_device.device_id][
-                    "compute"
-                ] += agent.compute_requirement
+                device_usage[best_device.device_id]["memory"] += (
+                    agent.memory_requirement_mb
+                )
+                device_usage[best_device.device_id]["compute"] += (
+                    agent.compute_requirement
+                )
 
         return placement
 

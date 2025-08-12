@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
-"""
-Basic test script for specialized agents without heavy dependencies
-"""
+"""Basic test script for specialized agents without heavy dependencies"""
 
 import asyncio
 import os

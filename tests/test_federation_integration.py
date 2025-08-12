@@ -2,7 +2,7 @@
 
 Tests the complete federated network architecture including:
 - Device registry and role assignment
-- Enhanced BitChat with crypto and fragmentation  
+- Enhanced BitChat with crypto and fragmentation
 - Tor hidden service integration
 - Multi-protocol routing via Navigator
 - Privacy levels and VPN-like tunneling
@@ -292,7 +292,7 @@ class TestTorTransport:
         transport = TorTransport()
 
         # Test invalid onion address
-        assert "invalid_address" != transport.get_onion_address()
+        assert transport.get_onion_address() != "invalid_address"
 
         # Mock hidden service
         transport.hidden_service = TorHiddenService(

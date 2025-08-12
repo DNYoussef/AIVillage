@@ -256,9 +256,9 @@ def create_mobile_benchmark_suite():
         with simulator.simulate():
             for model_name, model in test_models.items():
                 print(f"Testing {model_name}...")
-                results[
-                    f"{device_name}_{model_name}"
-                ] = simulator.benchmark_compression_methods(model)
+                results[f"{device_name}_{model_name}"] = (
+                    simulator.benchmark_compression_methods(model)
+                )
 
     return results
 

@@ -70,9 +70,9 @@ class PacketLossMeshSimulator(MeshNetworkSimulator):
                 # Simulate packet loss
                 if packet_simulator.should_drop_packet():
                     # Packet dropped - update node stats
-                    target_node.stats[
-                        "packet_loss_rate"
-                    ] = packet_simulator.get_actual_loss_rate()
+                    target_node.stats["packet_loss_rate"] = (
+                        packet_simulator.get_actual_loss_rate()
+                    )
                     # Simulate processing time but don't actually send
                     await asyncio.sleep(0.01)
                     return f"dropped_{random.randint(1000, 9999)}"
@@ -81,15 +81,15 @@ class PacketLossMeshSimulator(MeshNetworkSimulator):
                     result = await original_method(
                         message_type, payload, recipient_id, priority
                     )
-                    target_node.stats[
-                        "packet_loss_rate"
-                    ] = packet_simulator.get_actual_loss_rate()
+                    target_node.stats["packet_loss_rate"] = (
+                        packet_simulator.get_actual_loss_rate()
+                    )
                     return result
                 except Exception:
                     # Even successful packets might fail for other reasons
-                    target_node.stats[
-                        "packet_loss_rate"
-                    ] = packet_simulator.get_actual_loss_rate()
+                    target_node.stats["packet_loss_rate"] = (
+                        packet_simulator.get_actual_loss_rate()
+                    )
                     raise
 
             return send_with_loss
@@ -124,9 +124,9 @@ async def test_mesh_fl_handshake_70_percent_packet_loss():
 
     # Require significant packet loss to demonstrate high-loss conditions
     # (Exact 70% is hard to achieve due to low sample size, so test for substantial loss)
-    assert (
-        stats["average_packet_loss"] >= 0.25
-    ), f"Expected substantial packet loss (≥25%), got {stats['average_packet_loss']:.1%}"
+    assert stats["average_packet_loss"] >= 0.25, (
+        f"Expected substantial packet loss (≥25%), got {stats['average_packet_loss']:.1%}"
+    )
     print(
         f"  - [OK] High packet loss environment confirmed: {stats['average_packet_loss']:.1%}"
     )
@@ -262,9 +262,9 @@ async def test_mesh_fl_handshake_70_percent_packet_loss():
     print(f"  - Total messages received: {final_stats['total_messages_received']}")
 
     # Sprint-4 success criteria: FL completed despite high packet loss
-    assert (
-        final_stats["average_packet_loss"] >= 0.2
-    ), f"Test did not maintain high packet loss conditions: {final_stats['average_packet_loss']:.1%}"
+    assert final_stats["average_packet_loss"] >= 0.2, (
+        f"Test did not maintain high packet loss conditions: {final_stats['average_packet_loss']:.1%}"
+    )
 
     print(
         "[SUCCESS] Mesh-FL handshake survived high packet loss - Sprint-4 requirement met!"

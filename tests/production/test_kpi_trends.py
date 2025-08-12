@@ -13,9 +13,7 @@ class DummyEvaluator:
     def __init__(self, *args, **kwargs):
         self.kpi_scores = {}
 
-    async def evaluate(
-        self, model, tokenizer, individual_id=None, log_details=True
-    ):  # noqa: D401
+    async def evaluate(self, model, tokenizer, individual_id=None, log_details=True):
         score = 0.1 * (self.__class__.call_counter + 1)
         self.kpi_scores = {"fitness_score": score}
         self.__class__.call_counter += 1

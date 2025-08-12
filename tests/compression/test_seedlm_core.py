@@ -75,9 +75,9 @@ class TestSeedLMCore:
             compressed = encoder.encode(weight)
 
             # Verify compressed format
-            assert isinstance(
-                compressed, dict
-            ), "Compressed data should be a dictionary"
+            assert isinstance(compressed, dict), (
+                "Compressed data should be a dictionary"
+            )
             assert "data" in compressed, "Compressed dict should contain 'data'"
             assert "metadata" in compressed, "Compressed dict should contain 'metadata'"
             assert compressed["metadata"]["original_shape"] == list(weight.shape)
@@ -145,9 +145,9 @@ class TestSeedLMCore:
             compressed_size = len(str(compressed))  # Simplified size estimation
             actual_ratio = original_size / compressed_size
 
-            assert (
-                actual_ratio >= min_ratio * 0.8
-            ), f"Compression ratio {actual_ratio} below target {min_ratio} for level {level}"
+            assert actual_ratio >= min_ratio * 0.8, (
+                f"Compression ratio {actual_ratio} below target {min_ratio} for level {level}"
+            )
 
     def test_adaptive_block_sizing(self):
         """Test adaptive block size selection based on weight variance"""
@@ -184,15 +184,15 @@ class TestSeedLMCore:
             # Verify orthogonality
             gram = torch.mm(basis.T, basis)
             identity_like = torch.eye(scale)
-            assert torch.allclose(
-                gram, identity_like, atol=0.1
-            ), f"Basis at scale {scale} should be approximately orthogonal"
+            assert torch.allclose(gram, identity_like, atol=0.1), (
+                f"Basis at scale {scale} should be approximately orthogonal"
+            )
 
         # Verify multi-scale consistency
         # Larger scales should preserve patterns from smaller scales
-        assert torch.norm(bases[0]) < torch.norm(
-            bases[2]
-        ), "Larger scale bases should have more energy"
+        assert torch.norm(bases[0]) < torch.norm(bases[2]), (
+            "Larger scale bases should have more energy"
+        )
 
     @pytest.mark.parametrize(
         "weight_shape",
@@ -235,9 +235,9 @@ class TestSeedLMCore:
 
         # Should not use more than 2x the weight size in memory
         weight_size_mb = large_weight.numel() * 4 / 1024 / 1024
-        assert (
-            memory_increase < weight_size_mb * 2
-        ), f"Memory usage {memory_increase}MB exceeds 2x weight size {weight_size_mb}MB"
+        assert memory_increase < weight_size_mb * 2, (
+            f"Memory usage {memory_increase}MB exceeds 2x weight size {weight_size_mb}MB"
+        )
 
     def test_encoding_determinism(self, encoder):
         """Test that encoding is deterministic with same seed"""
@@ -394,9 +394,9 @@ class TestProgressiveEncoding:
                 compressed, max_bytes=limit
             )
 
-            assert (
-                len(str(streamed_data)) <= limit
-            ), f"Streamed data exceeds bandwidth limit {limit}"
+            assert len(str(streamed_data)) <= limit, (
+                f"Streamed data exceeds bandwidth limit {limit}"
+            )
 
             # Should still be decodable
             reconstructed = progressive_encoder.decode_progressive(streamed_data)

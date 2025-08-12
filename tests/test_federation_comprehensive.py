@@ -988,8 +988,8 @@ class TestSecurityValidation:
         spam_messages = []
         for i in range(1000):
             spam_messages.append(
-                {"id": f"spam_{i}", "payload": os.urandom(1000)}  # Random payload
-            )
+                {"id": f"spam_{i}", "payload": os.urandom(1000)}
+            )  # Random payload
 
         # Process with rate limiting
         processed = 0

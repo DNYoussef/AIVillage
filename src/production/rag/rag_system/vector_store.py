@@ -13,9 +13,16 @@ logger = logging.getLogger(__name__)
 
 def _get_qdrant_url() -> str:
     """Return validated Qdrant URL based on environment."""
-    url = os.getenv("QDRANT_URL", "http://localhost:6333")
+    # Use HTTPS by default in production, HTTP only in development
+    default_url = (
+        "https://qdrant.aivillage.internal:6333"
+        if os.getenv("AIVILLAGE_ENV") == "production"
+        else "http://localhost:6333"
+    )
+    url = os.getenv("QDRANT_URL", default_url)
+
     if os.getenv("AIVILLAGE_ENV") == "production" and url.startswith("http://"):
-        msg = "QDRANT_URL must use https:// in production"
+        msg = "QDRANT_URL must use https:// in production environment"
         raise ValueError(msg)
     return url
 

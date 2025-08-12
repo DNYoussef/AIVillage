@@ -1,12 +1,8 @@
-"""
-Specialized Agent Registry - Central management for all specialized sub-agents
-"""
+"""Specialized Agent Registry - Central management for all specialized sub-agents"""
 
-import asyncio
-import json
 import logging
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Type
+from typing import Any
 
 from src.production.rag.rag_system.core.agent_interface import AgentInterface
 
@@ -31,19 +27,18 @@ class AgentCapability:
     agent_type: str
     capability_name: str
     description: str
-    input_types: List[str]
-    output_types: List[str]
+    input_types: list[str]
+    output_types: list[str]
 
 
 class SpecializedAgentRegistry:
-    """
-    Central registry for managing all specialized sub-agents.
+    """Central registry for managing all specialized sub-agents.
     Provides discovery, instantiation, and coordination services.
     """
 
     def __init__(self):
-        self.agents: Dict[str, AgentInterface] = {}
-        self.agent_classes: Dict[str, Type[AgentInterface]] = {
+        self.agents: dict[str, AgentInterface] = {}
+        self.agent_classes: dict[str, type[AgentInterface]] = {
             "data_science": DataScienceAgent,
             "devops": DevOpsAgent,
             "financial": FinancialAgent,
@@ -53,7 +48,7 @@ class SpecializedAgentRegistry:
             "architect": ArchitectAgent,
             "tester": TesterAgent,
         }
-        self.capabilities: Dict[str, List[AgentCapability]] = {}
+        self.capabilities: dict[str, list[AgentCapability]] = {}
         self.initialized = False
 
     async def initialize(self):
@@ -321,7 +316,7 @@ class SpecializedAgentRegistry:
             ],
         }
 
-    async def get_or_create_agent(self, agent_type: str) -> Optional[AgentInterface]:
+    async def get_or_create_agent(self, agent_type: str) -> AgentInterface | None:
         """Get existing agent or create new instance"""
         if agent_type in self.agents:
             return self.agents[agent_type]
@@ -343,7 +338,7 @@ class SpecializedAgentRegistry:
             logger.error(f"Failed to create {agent_type} agent: {e}")
             return None
 
-    async def find_capable_agents(self, capability: str) -> List[str]:
+    async def find_capable_agents(self, capability: str) -> list[str]:
         """Find all agents that have a specific capability"""
         capable_agents = []
 
@@ -356,8 +351,8 @@ class SpecializedAgentRegistry:
         return capable_agents
 
     async def route_request(
-        self, request_type: str, request_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, request_type: str, request_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """Route request to most appropriate agent"""
         try:
             # Simple routing logic based on request type
@@ -391,17 +386,16 @@ class SpecializedAgentRegistry:
             # Route to appropriate method based on request type
             if hasattr(agent, "process_request"):
                 return await agent.process_request(request_data)
-            else:
-                # Use generate method as fallback
-                prompt = f"Process {request_type} request: {request_data}"
-                response = await agent.generate(prompt)
-                return {"response": response, "agent_type": agent_type}
+            # Use generate method as fallback
+            prompt = f"Process {request_type} request: {request_data}"
+            response = await agent.generate(prompt)
+            return {"response": response, "agent_type": agent_type}
 
         except Exception as e:
             logger.error(f"Request routing failed: {e}")
             return {"error": str(e)}
 
-    async def get_agent_status(self) -> Dict[str, Any]:
+    async def get_agent_status(self) -> dict[str, Any]:
         """Get status of all agents in registry"""
         status = {
             "registry_initialized": self.initialized,
@@ -421,8 +415,8 @@ class SpecializedAgentRegistry:
         return status
 
     async def coordinate_multi_agent_task(
-        self, task_description: str, required_capabilities: List[str]
-    ) -> Dict[str, Any]:
+        self, task_description: str, required_capabilities: list[str]
+    ) -> dict[str, Any]:
         """Coordinate task requiring multiple specialized agents"""
         try:
             # Find agents for each required capability
@@ -479,7 +473,7 @@ class SpecializedAgentRegistry:
         except Exception as e:
             logger.error(f"Error during shutdown: {e}")
 
-    def get_capability_documentation(self) -> Dict[str, Any]:
+    def get_capability_documentation(self) -> dict[str, Any]:
         """Get comprehensive documentation of all agent capabilities"""
         documentation = {
             "overview": "Specialized Agent Registry provides 8 specialized agents with 32+ capabilities",

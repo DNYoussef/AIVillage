@@ -54,27 +54,27 @@ async def test_enhanced_query_processing():
             title="Artificial Intelligence: Fundamentals and Applications",
             content="""
             # Introduction to Artificial Intelligence
-            
+
             Artificial Intelligence (AI) is the simulation of human intelligence processes by machines, especially computer systems. These processes include learning, reasoning, and self-correction.
-            
+
             ## Core AI Concepts
-            
+
             Machine learning is a subset of AI that provides systems the ability to automatically learn and improve from experience without being explicitly programmed. Deep learning, a subset of machine learning, uses neural networks with multiple layers to model and understand complex patterns.
-            
+
             ### Types of AI Systems
-            
+
             There are three main types of AI systems: narrow AI (designed for specific tasks), general AI (human-level intelligence across domains), and super AI (exceeding human intelligence). Currently, only narrow AI systems exist in practical applications.
-            
+
             ## Applications in Various Industries
-            
+
             AI has transformative applications across industries. In healthcare, AI assists with medical diagnosis, drug discovery, and personalized treatment plans. In finance, AI powers fraud detection, algorithmic trading, and risk assessment. Transportation benefits from AI through autonomous vehicles and traffic optimization.
-            
+
             ### Healthcare Applications
-            
+
             Medical AI systems can analyze medical images like X-rays and MRIs with remarkable accuracy. Machine learning algorithms help identify patterns in patient data to predict disease progression and recommend treatments. However, ensuring AI fairness and avoiding bias in medical decisions remains a critical challenge.
-            
+
             ## Challenges and Future Directions
-            
+
             Despite significant advances, AI faces challenges including data privacy, algorithmic transparency, and ethical considerations. The future of AI involves developing more interpretable systems, ensuring fairness across populations, and addressing the societal impact of automation.
             """,
             source_type="educational",
@@ -90,31 +90,31 @@ async def test_enhanced_query_processing():
             title="Machine Learning Techniques: A Comprehensive Overview",
             content="""
             # Machine Learning Methodologies
-            
+
             Machine learning encompasses various methodologies for creating systems that learn from data. Understanding these techniques is essential for applying AI effectively across different domains.
-            
+
             ## Supervised Learning
-            
+
             Supervised learning uses labeled training data to learn a mapping from inputs to outputs. Common supervised learning algorithms include linear regression, decision trees, support vector machines, and neural networks. These methods excel at classification and regression tasks where historical examples are available.
-            
+
             ### Neural Networks and Deep Learning
-            
+
             Neural networks, inspired by biological neurons, consist of interconnected nodes that process information. Deep learning uses multi-layered neural networks to learn hierarchical representations of data. Convolutional neural networks (CNNs) excel at image recognition, while recurrent neural networks (RNNs) handle sequential data.
-            
+
             ## Unsupervised Learning
-            
+
             Unsupervised learning finds patterns in data without labeled examples. Clustering algorithms group similar data points, while dimensionality reduction techniques like principal component analysis (PCA) simplify complex datasets while preserving important information.
-            
+
             ### Reinforcement Learning
-            
+
             Reinforcement learning trains agents to make sequential decisions by rewarding desired behaviors. This approach has achieved remarkable success in game playing (like AlphaGo), robotics, and autonomous systems. The agent learns through trial and error, gradually improving its decision-making strategy.
-            
+
             ## Model Evaluation and Selection
-            
+
             Proper evaluation prevents overfitting and ensures models generalize to new data. Cross-validation techniques split data into training and testing sets multiple times to assess model performance. Metrics like accuracy, precision, recall, and F1-score help compare different approaches.
-            
+
             ## Practical Implementation Challenges
-            
+
             Real-world machine learning faces challenges including data quality issues, computational constraints, and the need for domain expertise. Feature engineering remains crucial for many applications, though deep learning has reduced its importance in some domains.
             """,
             source_type="technical",
@@ -130,31 +130,31 @@ async def test_enhanced_query_processing():
             title="Ethical Considerations in Artificial Intelligence Development",
             content="""
             # AI Ethics: Principles and Challenges
-            
+
             As artificial intelligence becomes increasingly integrated into society, ethical considerations become paramount. Responsible AI development requires careful attention to fairness, transparency, and accountability.
-            
+
             ## Bias and Fairness in AI Systems
-            
+
             AI systems can perpetuate or amplify existing societal biases present in training data. Algorithmic bias can lead to unfair treatment of certain groups in hiring, lending, criminal justice, and healthcare. Addressing bias requires diverse datasets, bias testing, and ongoing monitoring of AI system outcomes.
-            
+
             ### Techniques for Bias Mitigation
-            
+
             Several approaches help reduce bias in AI systems. Pre-processing techniques clean and balance training data. In-processing methods modify algorithms during training to promote fairness. Post-processing approaches adjust model outputs to achieve more equitable results across different groups.
-            
+
             ## Transparency and Explainability
-            
+
             Many AI systems, particularly deep learning models, operate as "black boxes" where decision-making processes are opaque. Explainable AI (XAI) techniques help users understand how AI systems reach their conclusions. This transparency is crucial in high-stakes applications like healthcare and criminal justice.
-            
+
             ### Privacy and Data Protection
-            
+
             AI systems often require large amounts of personal data, raising privacy concerns. Techniques like differential privacy, federated learning, and homomorphic encryption help protect individual privacy while enabling AI applications. GDPR and similar regulations establish frameworks for responsible data use.
-            
+
             ## Accountability and Governance
-            
+
             Establishing clear accountability for AI system decisions remains challenging. Questions arise about liability when AI systems cause harm or make errors. Governance frameworks must balance innovation with risk management, ensuring AI benefits society while minimizing potential harms.
-            
+
             ## Future Ethical Challenges
-            
+
             As AI capabilities advance, new ethical challenges emerge. Autonomous weapons systems raise questions about machine decision-making in life-and-death situations. AI-generated content (deepfakes) threatens information integrity. The displacement of human workers by automation requires careful consideration of societal impacts.
             """,
             source_type="policy",
@@ -347,7 +347,7 @@ async def test_enhanced_query_processing():
         print(f"  - {capability.replace('_', ' ').title()}: {status}")
 
     # Calculate success metrics
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("Enhanced Query Processing Assessment")
     print("=" * 60)
 

@@ -29,6 +29,9 @@ from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.x509.oid import NameOID
 
+from .rbac_system import RBACSystem, Role
+from .secure_digital_twin_db import SecureDigitalTwinDB
+
 logger = logging.getLogger(__name__)
 
 
@@ -298,6 +301,8 @@ class SecureAPIServer:
 
         # Security components
         self.authenticator = JWTAuthenticator()
+        self.rbac_system = RBACSystem()
+        self.profile_db = SecureDigitalTwinDB()
         self.rate_limiter = RateLimiter(
             max_requests=int(os.getenv("API_RATE_LIMIT_PER_MINUTE", "60")),
             window_seconds=60,
@@ -501,27 +506,54 @@ class SecureAPIServer:
 
             validated_data = self.validator.validate_json(data, schema)
 
-            # TODO: Implement actual user authentication against database
-            # For now, using demo credentials
-            if (
-                validated_data["username"] == "demo"
-                and validated_data["password"] == "demo_password"
-            ):
-                access_token = self.authenticator.create_access_token(
-                    user_id="demo_user", roles=["user"], permissions=["read", "write"]
-                )
-                refresh_token = self.authenticator.create_refresh_token("demo_user")
+            # Authenticate user against database
+            username = validated_data["username"]
+            password = validated_data["password"]
 
-                return web.json_response(
-                    {
-                        "access_token": access_token,
-                        "refresh_token": refresh_token,
-                        "token_type": "Bearer",
-                        "expires_in": self.authenticator.token_expiry_hours * 3600,
-                    }
+            # Get user from RBAC system
+            user = self.rbac_system.get_user(username)
+            if not user:
+                raise web.HTTPUnauthorized(
+                    text=json.dumps({"error": "Invalid credentials"})
                 )
-            raise web.HTTPUnauthorized(
-                text=json.dumps({"error": "Invalid credentials"})
+
+            # Verify password
+            if not user.get("password_hash") or not user.get("password_salt"):
+                raise web.HTTPUnauthorized(
+                    text=json.dumps({"error": "Invalid credentials"})
+                )
+
+            salt = user["password_salt"]
+            expected_hash = user["password_hash"]
+            actual_hash = hashlib.pbkdf2_hmac(
+                "sha256", password.encode(), salt.encode(), 100000
+            ).hex()
+
+            if not hmac.compare_digest(expected_hash, actual_hash):
+                raise web.HTTPUnauthorized(
+                    text=json.dumps({"error": "Invalid credentials"})
+                )
+
+            # Get user roles and permissions
+            roles = self.rbac_system.get_user_roles(user["user_id"])
+            permissions = []
+            for role in roles:
+                permissions.extend(self.rbac_system.get_role_permissions(role))
+
+            access_token = self.authenticator.create_access_token(
+                user_id=user["user_id"],
+                roles=[role.value for role in roles],
+                permissions=[perm.value for perm in set(permissions)],
+            )
+            refresh_token = self.authenticator.create_refresh_token(user["user_id"])
+
+            return web.json_response(
+                {
+                    "access_token": access_token,
+                    "refresh_token": refresh_token,
+                    "token_type": "Bearer",
+                    "expires_in": self.authenticator.token_expiry_hours * 3600,
+                }
             )
 
         except (ValueError, json.JSONDecodeError):
@@ -556,12 +588,26 @@ class SecureAPIServer:
                 validated_data["password"]
             )
 
-            # TODO: Store user in database
+            # Store user in database using RBAC system
+            user_id = f"user_{secrets.token_urlsafe(8)}"
+            success = self.rbac_system.create_user(
+                user_id=user_id,
+                username=validated_data["username"],
+                email=validated_data["email"],
+                password_hash=password_hash,
+                password_salt=salt,
+                roles=[Role.USER],  # Default role for new users
+            )
+
+            if not success:
+                raise web.HTTPBadRequest(
+                    text=json.dumps({"error": "User registration failed"})
+                )
 
             return web.json_response(
                 {
                     "message": "User registered successfully",
-                    "user_id": f"user_{secrets.token_urlsafe(8)}",
+                    "user_id": user_id,
                 },
                 status=201,
             )
@@ -585,11 +631,17 @@ class SecureAPIServer:
             payload = self.authenticator.verify_token(refresh_token, "refresh_token")
             user_id = payload["user_id"]
 
+            # Get user roles and permissions from database
+            user_roles = self.rbac_system.get_user_roles(user_id)
+            permissions = []
+            for role in user_roles:
+                permissions.extend(self.rbac_system.get_role_permissions(role))
+
             # Generate new tokens
             access_token = self.authenticator.create_access_token(
                 user_id=user_id,
-                roles=["user"],  # TODO: Get from database
-                permissions=["read", "write"],
+                roles=[role.value for role in user_roles],
+                permissions=[perm.value for perm in set(permissions)],
             )
             new_refresh_token = self.authenticator.create_refresh_token(user_id)
 
@@ -634,33 +686,154 @@ class SecureAPIServer:
     async def _get_profile(self, request: web_request.Request) -> web.Response:
         """Get learning profile."""
         profile_id = request.match_info["profile_id"]
-        # TODO: Implement actual profile retrieval with encryption
-        return web.json_response({"profile_id": profile_id, "status": "placeholder"})
+        user_id = request.get("user", {}).get("user_id")
+
+        if not user_id:
+            raise web.HTTPUnauthorized(
+                text=json.dumps({"error": "Authentication required"})
+            )
+
+        try:
+            # Retrieve profile with encryption
+            profile = self.profile_db.get_profile(user_id, profile_id)
+            if not profile:
+                raise web.HTTPNotFound(text=json.dumps({"error": "Profile not found"}))
+
+            return web.json_response(
+                {"profile_id": profile_id, "data": profile, "status": "success"}
+            )
+        except Exception as e:
+            logger.exception(f"Failed to get profile {profile_id}: {e}")
+            raise web.HTTPInternalServerError(
+                text=json.dumps({"error": "Failed to retrieve profile"})
+            )
 
     async def _create_profile(self, request: web_request.Request) -> web.Response:
         """Create learning profile."""
-        # TODO: Implement actual profile creation with encryption
-        return web.json_response(
-            {"message": "Profile creation placeholder"}, status=201
-        )
+        user_id = request.get("user", {}).get("user_id")
+
+        if not user_id:
+            raise web.HTTPUnauthorized(
+                text=json.dumps({"error": "Authentication required"})
+            )
+
+        try:
+            data = await request.json()
+
+            # Validate profile data
+            schema = {
+                "name": {"required": True, "type": str, "min_length": 1},
+                "age": {"required": False, "type": int, "min": 1, "max": 150},
+                "preferences": {"required": False, "type": dict},
+                "learning_goals": {"required": False, "type": list},
+            }
+
+            validated_data = self.validator.validate_json(data, schema)
+
+            # Create profile with encryption
+            profile_id = self.profile_db.create_profile(user_id, validated_data)
+
+            return web.json_response(
+                {"message": "Profile created successfully", "profile_id": profile_id},
+                status=201,
+            )
+        except (ValueError, json.JSONDecodeError):
+            raise web.HTTPBadRequest(text=json.dumps({"error": "Invalid JSON"}))
+        except Exception as e:
+            logger.exception(f"Failed to create profile: {e}")
+            raise web.HTTPInternalServerError(
+                text=json.dumps({"error": "Failed to create profile"})
+            )
 
     async def _update_profile(self, request: web_request.Request) -> web.Response:
         """Update learning profile."""
         profile_id = request.match_info["profile_id"]
-        # TODO: Implement actual profile update with encryption
-        return web.json_response({"profile_id": profile_id, "status": "updated"})
+        user_id = request.get("user", {}).get("user_id")
+
+        if not user_id:
+            raise web.HTTPUnauthorized(
+                text=json.dumps({"error": "Authentication required"})
+            )
+
+        try:
+            data = await request.json()
+
+            # Update profile with encryption
+            success = self.profile_db.update_profile(user_id, profile_id, data)
+
+            if not success:
+                raise web.HTTPNotFound(text=json.dumps({"error": "Profile not found"}))
+
+            return web.json_response({"profile_id": profile_id, "status": "updated"})
+        except (ValueError, json.JSONDecodeError):
+            raise web.HTTPBadRequest(text=json.dumps({"error": "Invalid JSON"}))
+        except Exception as e:
+            logger.exception(f"Failed to update profile {profile_id}: {e}")
+            raise web.HTTPInternalServerError(
+                text=json.dumps({"error": "Failed to update profile"})
+            )
 
     async def _delete_profile(self, request: web_request.Request) -> web.Response:
         """Delete learning profile."""
         profile_id = request.match_info["profile_id"]
-        # TODO: Implement GDPR-compliant deletion
-        return web.json_response({"profile_id": profile_id, "status": "deleted"})
+        user_id = request.get("user", {}).get("user_id")
+
+        if not user_id:
+            raise web.HTTPUnauthorized(
+                text=json.dumps({"error": "Authentication required"})
+            )
+
+        try:
+            # GDPR-compliant deletion with secure erasure
+            success = self.profile_db.delete_profile(
+                user_id, profile_id, gdpr_compliant=True
+            )
+
+            if not success:
+                raise web.HTTPNotFound(text=json.dumps({"error": "Profile not found"}))
+
+            return web.json_response(
+                {"profile_id": profile_id, "status": "deleted", "gdpr_compliant": True}
+            )
+        except Exception as e:
+            logger.exception(f"Failed to delete profile {profile_id}: {e}")
+            raise web.HTTPInternalServerError(
+                text=json.dumps({"error": "Failed to delete profile"})
+            )
 
     async def _export_profile_data(self, request: web_request.Request) -> web.Response:
         """Export profile data for GDPR compliance."""
         profile_id = request.match_info["profile_id"]
-        # TODO: Implement actual data export
-        return web.json_response({"profile_id": profile_id, "export": "placeholder"})
+        user_id = request.get("user", {}).get("user_id")
+
+        if not user_id:
+            raise web.HTTPUnauthorized(
+                text=json.dumps({"error": "Authentication required"})
+            )
+
+        try:
+            # Export all user data for GDPR compliance
+            export_data = self.profile_db.export_user_data(user_id, profile_id)
+
+            if not export_data:
+                raise web.HTTPNotFound(
+                    text=json.dumps({"error": "No data found for export"})
+                )
+
+            return web.json_response(
+                {
+                    "profile_id": profile_id,
+                    "export_timestamp": datetime.utcnow().isoformat(),
+                    "data": export_data,
+                    "gdpr_compliant": True,
+                    "format": "JSON",
+                }
+            )
+        except Exception as e:
+            logger.exception(f"Failed to export profile data {profile_id}: {e}")
+            raise web.HTTPInternalServerError(
+                text=json.dumps({"error": "Failed to export profile data"})
+            )
 
     # Evolution Metrics endpoints (placeholder implementations)
     async def _get_metrics(self, request: web_request.Request) -> web.Response:

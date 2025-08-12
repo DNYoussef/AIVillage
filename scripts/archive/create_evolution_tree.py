@@ -114,7 +114,9 @@ def create_evolutionary_tree():
     ax2.grid(True, alpha=0.3)
 
     # 3. Method Distribution
-    ax3.set_title("🔧 Merge Method Usage", fontsize=14, fontweight="bold", color="white")
+    ax3.set_title(
+        "🔧 Merge Method Usage", fontsize=14, fontweight="bold", color="white"
+    )
 
     method_counts = {}
     for gen_data in generations:

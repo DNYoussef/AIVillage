@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
-"""
-Atlantis Meta-Agents Creation Script
+"""Atlantis Meta-Agents Creation Script
 
 Creates the complete roster of 25 Atlantis meta-agents with proper stubs and organization.
 """
 
 import sys
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 # Base directory for agents
 BASE_DIR = Path(__file__).parent / "agents" / "atlantis_meta_agents"
@@ -957,9 +956,8 @@ __all__ = {agent_names}
     print(f"Created directory structure at {BASE_DIR}")
 
 
-def generate_agent_file(domain: str, agent_key: str, agent_config: Dict[str, Any]):
+def generate_agent_file(domain: str, agent_key: str, agent_config: dict[str, Any]):
     """Generate individual agent file from template"""
-
     # Prepare template variables
     template_vars = {
         "agent_name": agent_config["name"],

@@ -61,9 +61,9 @@ class TestUnifiedDecisionMaker(unittest.IsolatedAsyncioTestCase):
         content = "Test decision content"
         eudaimonia_score = 0.8
         self.rag_system.process_query.return_value = {"rag_info": "Test RAG info"}
-        self.quality_assurance_layer.eudaimonia_triangulator.get_embedding.return_value = [
-            0.1
-        ] * 768
+        self.quality_assurance_layer.eudaimonia_triangulator.get_embedding.return_value = (
+            [0.1] * 768
+        )
         self.quality_assurance_layer.evaluate_rule_compliance.return_value = 0.9
         self.agent.generate_structured_response.return_value = [
             "Alternative 1",
@@ -125,12 +125,10 @@ class TestUnifiedDecisionMaker(unittest.IsolatedAsyncioTestCase):
             {"criterion": "eudaimonia", "weight": 0.5},
             {"criterion": "curiosity", "weight": 0.5},
         ]
-        self.quality_assurance_layer.eudaimonia_triangulator.get_embedding.return_value = [
-            0.1
-        ] * 768
-        self.quality_assurance_layer.eudaimonia_triangulator.triangulate.return_value = (
-            0.8
+        self.quality_assurance_layer.eudaimonia_triangulator.get_embedding.return_value = (
+            [0.1] * 768
         )
+        self.quality_assurance_layer.eudaimonia_triangulator.triangulate.return_value = 0.8
         self.quality_assurance_layer.evaluate_rule_compliance.return_value = 0.9
 
         evaluated = await self.decision_maker._evaluate_alternatives(

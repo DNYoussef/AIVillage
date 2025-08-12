@@ -872,7 +872,9 @@ class TestCoverageDashboard:
             status = (
                 "🟢 Good"
                 if coverage > 80
-                else "🟡 Medium" if coverage > 50 else "🔴 Needs Work"
+                else "🟡 Medium"
+                if coverage > 50
+                else "🔴 Needs Work"
             )
 
             html_content += f"""

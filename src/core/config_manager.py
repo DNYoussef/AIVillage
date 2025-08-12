@@ -21,6 +21,8 @@ import yaml
 from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
 
+from .security import HTTPSecurityError, validate_config_dict_for_production
+
 logger = logging.getLogger(__name__)
 
 
@@ -252,6 +254,15 @@ class CODEXConfigManager:
 
                 # Validate configuration
                 self.validate_configuration(final_config)
+
+                # Validate HTTPS in production
+                try:
+                    validate_config_dict_for_production(final_config)
+                except HTTPSecurityError as e:
+                    logger.error(f"HTTPS validation failed: {e}")
+                    raise ConfigurationError(
+                        f"Production security validation failed: {e}"
+                    )
 
                 # Update instance configuration
                 self.config_data = final_config

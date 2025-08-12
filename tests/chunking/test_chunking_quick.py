@@ -38,13 +38,13 @@ async def quick_chunking_validation():
             title="Machine Learning Research Paper",
             content="""
             Abstract: This paper presents novel deep learning techniques for natural language processing.
-            
+
             1. Introduction: Natural language processing has evolved significantly with transformer architectures.
-            
+
             2. Methodology: We employed BERT-based models with attention mechanisms for text classification.
-            
+
             3. Results: Our approach achieved 95% accuracy on benchmark datasets.
-            
+
             4. Conclusion: The proposed method demonstrates superior performance over existing approaches.
             """,
             source_type="academic",
@@ -54,15 +54,15 @@ async def quick_chunking_validation():
             title="API Documentation",
             content="""
             Authentication: Use API keys in the Authorization header.
-            
+
             Example:
             ```python
             headers = {"Authorization": "Bearer your_key"}
             response = requests.get(url, headers=headers)
             ```
-            
+
             Data Upload: Send POST requests to /api/data with file attachments.
-            
+
             Error Handling: The API returns standard HTTP status codes.
             """,
             source_type="technical",
@@ -72,11 +72,11 @@ async def quick_chunking_validation():
             title="AI Breakthrough Announcement",
             content="""
             SAN FRANCISCO - A new AI system achieved 99% accuracy in medical diagnosis.
-            
+
             The research team at Stanford University developed MedAI-Pro using deep learning.
-            
+
             Critics raise concerns about algorithmic bias in medical applications.
-            
+
             Industry experts predict widespread adoption within two years.
             """,
             source_type="news",

@@ -19,8 +19,24 @@ from prometheus_client import (
     push_to_gateway,
 )
 
-from .device_profiler import DeviceProfiler
-from .resource_allocator import ResourceAllocator
+# Handle safe imports for cross-platform compatibility
+try:
+    from .device_profiler import DeviceProfiler
+except ImportError:
+    # Mock DeviceProfiler for safe importing
+    class DeviceProfiler:
+        def __init__(self, *args, **kwargs):
+            pass
+
+
+try:
+    from .resource_allocator import ResourceAllocator
+except ImportError:
+    # Mock ResourceAllocator for safe importing
+    class ResourceAllocator:
+        def __init__(self, *args, **kwargs):
+            pass
+
 
 logger = logging.getLogger(__name__)
 

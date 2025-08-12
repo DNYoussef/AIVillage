@@ -84,9 +84,9 @@ class TestMultiLanguageTutoringFlow:
                 "ejemplo",
                 "matemáticas",
             ]
-            assert any(
-                word in message_body.lower() for word in spanish_indicators
-            ), f"Response should contain Spanish mathematical terms: {message_body}"
+            assert any(word in message_body.lower() for word in spanish_indicators), (
+                f"Response should contain Spanish mathematical terms: {message_body}"
+            )
 
             # Verify tutoring approach
             tutoring_indicators = [
@@ -101,18 +101,18 @@ class TestMultiLanguageTutoringFlow:
             ), f"Response should use tutoring language: {message_body}"
 
             # Performance validation
-            assert (
-                response_time < PERFORMANCE_TARGET
-            ), f"Response took {response_time:.2f}s, target is {PERFORMANCE_TARGET}s"
+            assert response_time < PERFORMANCE_TARGET, (
+                f"Response took {response_time:.2f}s, target is {PERFORMANCE_TARGET}s"
+            )
 
             # Evaluate response quality
             response_quality = await self.evaluate_response_quality(
                 message_body, "es", "mathematics", "fracciones"
             )
 
-            assert (
-                response_quality > RESPONSE_QUALITY_THRESHOLD
-            ), f"Response quality {response_quality:.2f} below threshold {RESPONSE_QUALITY_THRESHOLD}"
+            assert response_quality > RESPONSE_QUALITY_THRESHOLD, (
+                f"Response quality {response_quality:.2f} below threshold {RESPONSE_QUALITY_THRESHOLD}"
+            )
 
             # Log test results to W&B
             wandb.log(
@@ -184,9 +184,9 @@ class TestMultiLanguageTutoringFlow:
 
             # Verify Hindi language elements
             hindi_indicators = ["प्रकाश", "पौधे", "ऑक्सीजन", "कार्बन", "सूर्य"]
-            assert any(
-                word in message_body for word in hindi_indicators
-            ), f"Response should contain Hindi scientific terms: {message_body}"
+            assert any(word in message_body for word in hindi_indicators), (
+                f"Response should contain Hindi scientific terms: {message_body}"
+            )
 
             # Check for English fallback (acceptable if translation fails)
             english_science_terms = [
@@ -202,9 +202,9 @@ class TestMultiLanguageTutoringFlow:
 
             # Either Hindi terms or English terms should be present
             has_hindi_terms = any(word in message_body for word in hindi_indicators)
-            assert (
-                has_hindi_terms or has_english_terms
-            ), "Response should contain scientific terms in Hindi or English"
+            assert has_hindi_terms or has_english_terms, (
+                "Response should contain scientific terms in Hindi or English"
+            )
 
             # Performance check
             assert response_time < PERFORMANCE_TARGET
@@ -379,9 +379,9 @@ class TestMultiLanguageTutoringFlow:
             )
 
             # Either Arabic or English historical terms should be present
-            assert (
-                has_arabic_terms or has_english_terms
-            ), "Response should contain historical terms in Arabic or English"
+            assert has_arabic_terms or has_english_terms, (
+                "Response should contain historical terms in Arabic or English"
+            )
 
             # Performance check
             assert response_time < PERFORMANCE_TARGET
@@ -489,15 +489,15 @@ class TestMultiLanguageTutoringFlow:
             ) / len(greeting_results)
 
             # Validate acceptance criteria
-            assert (
-                avg_response_time < PERFORMANCE_TARGET
-            ), f"Average response time {avg_response_time:.2f}s exceeds target"
-            assert (
-                encouragement_rate >= 0.95
-            ), f"Encouragement rate {encouragement_rate:.1%} below 95% requirement"
-            assert (
-                performance_rate >= 0.95
-            ), f"Performance rate {performance_rate:.1%} below 95% requirement"
+            assert avg_response_time < PERFORMANCE_TARGET, (
+                f"Average response time {avg_response_time:.2f}s exceeds target"
+            )
+            assert encouragement_rate >= 0.95, (
+                f"Encouragement rate {encouragement_rate:.1%} below 95% requirement"
+            )
+            assert performance_rate >= 0.95, (
+                f"Performance rate {performance_rate:.1%} below 95% requirement"
+            )
 
             # Log summary
             wandb.log(
@@ -831,19 +831,19 @@ async def test_acceptance_criteria_validation():
         )
 
         # Assertions for test validation
-        assert results[
-            "response_time_under_5s"
-        ], f"Average response time {avg_response_time:.2f}s exceeds 5s target"
-        assert (
-            results["languages_auto_detected"] >= 7
-        ), f"Only {results['languages_auto_detected']} languages tested, need 7+"
+        assert results["response_time_under_5s"], (
+            f"Average response time {avg_response_time:.2f}s exceeds 5s target"
+        )
+        assert results["languages_auto_detected"] >= 7, (
+            f"Only {results['languages_auto_detected']} languages tested, need 7+"
+        )
         assert results["wandb_tracking_active"], "W&B tracking not active"
-        assert (
-            results["ab_tests_running"] >= 4
-        ), f"Only {results['ab_tests_running']} A/B tests running, need 4+"
-        assert (
-            results["encouragement_rate"] >= 0.95
-        ), f"Encouragement rate {results['encouragement_rate']:.1%} below 95%"
+        assert results["ab_tests_running"] >= 4, (
+            f"Only {results['ab_tests_running']} A/B tests running, need 4+"
+        )
+        assert results["encouragement_rate"] >= 0.95, (
+            f"Encouragement rate {results['encouragement_rate']:.1%} below 95%"
+        )
 
         print("✅ All acceptance criteria validated successfully!")
         print(f"   Average response time: {avg_response_time:.2f}s")

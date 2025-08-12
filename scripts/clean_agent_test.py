@@ -1,11 +1,10 @@
-"""
-Clean Multi-Agent Coordination Test (No Unicode Emojis)
+"""Clean Multi-Agent Coordination Test (No Unicode Emojis)
 Tests the 9 implemented Atlantis Meta-Agents
 """
 
 import asyncio
 import time
-from typing import Any, Dict, List
+from typing import Any
 
 
 class MockAgentInterface:
@@ -32,7 +31,7 @@ class SimpleKingAgent(MockAgentInterface):
         self.specialization = "orchestration"
         self.capabilities = ["task_decomposition", "agent_coordination"]
 
-    async def decompose_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
+    async def decompose_task(self, task: dict[str, Any]) -> dict[str, Any]:
         subtasks = [
             {
                 "description": "Assess soil and plan crops",
@@ -76,7 +75,7 @@ class SimpleSustainerAgent(MockAgentInterface):
         self.specialization = "resource_management"
         self.capabilities = ["resource_monitoring", "optimization"]
 
-    async def profile_device(self, device_spec: Dict[str, Any]) -> Dict[str, Any]:
+    async def profile_device(self, device_spec: dict[str, Any]) -> dict[str, Any]:
         class DeviceProfile:
             def __init__(self):
                 self.device_class = type("DeviceClass", (), {"value": "mobile"})()
@@ -92,7 +91,7 @@ class SimpleSustainerAgent(MockAgentInterface):
             },
         }
 
-    async def optimize_efficiency(self, target: str = "balanced") -> Dict[str, Any]:
+    async def optimize_efficiency(self, target: str = "balanced") -> dict[str, Any]:
         return {
             "status": "success",
             "efficiency_improvement": 15.5,
@@ -157,7 +156,7 @@ class SimpleAuditorAgent(MockAgentInterface):
         self.specialization = "compliance"
         self.capabilities = ["receipt_collection", "audit_reporting"]
 
-    async def record_receipt(self, receipt_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def record_receipt(self, receipt_data: dict[str, Any]) -> dict[str, Any]:
         return {
             "status": "success",
             "receipt_id": f"receipt_{int(time.time())}",
@@ -165,7 +164,7 @@ class SimpleAuditorAgent(MockAgentInterface):
         }
 
     async def generate_audit_report(
-        self, report_type: str, time_range, agents: List[str] = None
+        self, report_type: str, time_range, agents: list[str] = None
     ):
         class AuditReport:
             def __init__(self):
@@ -183,8 +182,8 @@ class SimpleTutorAgent(MockAgentInterface):
         self.capabilities = ["learning", "assessment"]
 
     async def create_learner_profile(
-        self, learner_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, learner_data: dict[str, Any]
+    ) -> dict[str, Any]:
         learner_id = f"learner_{int(time.time())}"
         return {
             "status": "success",
@@ -198,7 +197,7 @@ class SimpleTutorAgent(MockAgentInterface):
             },
         }
 
-    async def deliver_lesson(self, learner_id: str, content_id: str) -> Dict[str, Any]:
+    async def deliver_lesson(self, learner_id: str, content_id: str) -> dict[str, Any]:
         return {
             "status": "success",
             "content": {"title": "Sustainable Gardening Basics"},
@@ -219,8 +218,8 @@ class SimpleHorticulturistAgent(MockAgentInterface):
         self.capabilities = ["crop_planning", "soil_assessment"]
 
     async def assess_soil(
-        self, location_id: str, soil_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, location_id: str, soil_data: dict[str, Any]
+    ) -> dict[str, Any]:
         return {
             "status": "success",
             "soil_condition": "GOOD",
@@ -233,7 +232,7 @@ class SimpleHorticulturistAgent(MockAgentInterface):
             },
         }
 
-    async def plan_crop(self, crop_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def plan_crop(self, crop_data: dict[str, Any]) -> dict[str, Any]:
         class CropProfile:
             def __init__(self, name):
                 self.name = name

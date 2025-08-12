@@ -22,7 +22,6 @@ from src.production.communications.p2p.tensor_streaming import (
 @pytest.mark.asyncio
 async def test_concurrent_streams_respect_global_limit(monkeypatch):
     """Ensure combined transfers cannot exceed the configured limit."""
-
     BandwidthController.reset()
 
     receiver = P2PNode(node_id="receiver_bw", port=9400)

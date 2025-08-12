@@ -135,7 +135,7 @@ def ingest_pdf_to_rag(pdf_path: str, category: str = "research") -> bool:
             f.write("\n=== CHUNKS ===\n\n")
 
             for i, chunk in enumerate(chunks):
-                f.write(f"--- CHUNK {i+1} ---\n{chunk}\n\n")
+                f.write(f"--- CHUNK {i + 1} ---\n{chunk}\n\n")
 
         logger.info(f"Successfully processed {filename}")
         return True
@@ -218,7 +218,7 @@ def main() -> None:
     logger.info("=== INGESTION COMPLETE ===")
     logger.info(f"Successful: {successful}")
     logger.info(f"Failed: {failed}")
-    logger.info(f"Success rate: {successful/(successful+failed)*100:.1f}%")
+    logger.info(f"Success rate: {successful / (successful + failed) * 100:.1f}%")
 
     # List what was created
     output_dir = Path("data/ingested_papers")

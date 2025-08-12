@@ -37,9 +37,9 @@ def test_basic_functionality():
         reconstructed = encoder.decode(compressed)
 
         # Verify shape preservation
-        assert (
-            reconstructed.shape == weight.shape
-        ), f"Shape mismatch: {reconstructed.shape} vs {weight.shape}"
+        assert reconstructed.shape == weight.shape, (
+            f"Shape mismatch: {reconstructed.shape} vs {weight.shape}"
+        )
 
         # Check reconstruction error
         max_error = torch.max(torch.abs(reconstructed - weight)).item()

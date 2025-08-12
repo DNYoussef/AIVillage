@@ -609,7 +609,7 @@ class STEMTextbookProcessor:
         logger.info(f"Processing {len(pdf_files)} textbooks...")
 
         for i, pdf_path in enumerate(pdf_files):
-            logger.info(f"Processing {i+1}/{len(pdf_files)}: {pdf_path.name}")
+            logger.info(f"Processing {i + 1}/{len(pdf_files)}: {pdf_path.name}")
 
             try:
                 # Extract text

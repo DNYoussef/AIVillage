@@ -6,6 +6,7 @@ This script scans Python files, rewrites outdated imports to the new
 that cannot be processed is reported as an ambiguous case for manual
 follow-up.
 """
+
 from __future__ import annotations
 
 import ast

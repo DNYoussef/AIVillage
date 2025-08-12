@@ -50,9 +50,7 @@ from core.error_handling import (  # noqa: E402
 )
 
 SageAgent = importlib.import_module("agents.sage.sage_agent").SageAgent  # noqa: E402
-UnifiedConfig = importlib.import_module(
-    "rag_system.core.config"
-).UnifiedConfig  # noqa: E402
+UnifiedConfig = importlib.import_module("rag_system.core.config").UnifiedConfig  # noqa: E402
 EvidencePack = importlib.import_module("core.evidence").EvidencePack  # noqa: E402
 
 

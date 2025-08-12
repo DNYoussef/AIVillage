@@ -135,7 +135,7 @@ def extract_key_concepts(text: str, max_concepts: int = 20) -> list[str]:
 
         # Simple bigram extraction
         words = clean_text.split()
-        bigrams = [f"{words[i]} {words[i+1]}" for i in range(len(words) - 1)]
+        bigrams = [f"{words[i]} {words[i + 1]}" for i in range(len(words) - 1)]
 
         # Filter meaningful bigrams
         meaningful_bigrams = [

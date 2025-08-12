@@ -36,9 +36,9 @@ def test_basic_functionality():
         reconstructed = encoder.decode(compressed)
 
         # Verify shape preservation
-        assert (
-            reconstructed.shape == weight.shape
-        ), f"Shape mismatch: {reconstructed.shape} vs {weight.shape}"
+        assert reconstructed.shape == weight.shape, (
+            f"Shape mismatch: {reconstructed.shape} vs {weight.shape}"
+        )
 
         # Check compression ratio
         compression_ratio = compressed["data"].get("compression_ratio", 0)

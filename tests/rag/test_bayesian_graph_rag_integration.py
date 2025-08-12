@@ -51,19 +51,19 @@ async def test_bayesian_graph_rag_system():
             title="Deep Learning: Fundamentals and Applications",
             content="""
             Deep Learning Fundamentals
-            
+
             Deep learning is a subset of machine learning that uses neural networks with multiple layers to model complex patterns in data. Unlike traditional machine learning algorithms, deep learning systems can automatically discover representations from raw data without manual feature engineering.
-            
+
             Neural Network Architecture
-            
+
             The foundation of deep learning lies in artificial neural networks inspired by biological neural systems. Each neuron processes input signals, applies weights and biases, and produces an output through an activation function. Multiple layers of neurons create the "deep" structure.
-            
+
             Convolutional Neural Networks
-            
+
             CNNs excel at processing grid-like data such as images. They use convolutional layers that apply filters to detect features like edges, textures, and patterns. Pooling layers reduce spatial dimensions while preserving important information.
-            
+
             Applications in Computer Vision
-            
+
             Deep learning has revolutionized computer vision tasks including image classification, object detection, and semantic segmentation. Models like ResNet and VGG have achieved superhuman performance on various visual recognition benchmarks.
             """,
             source_type="textbook",
@@ -79,23 +79,23 @@ async def test_bayesian_graph_rag_system():
             title="Artificial Intelligence in Healthcare: Diagnostic Applications",
             content="""
             AI-Powered Medical Diagnosis
-            
+
             Artificial intelligence is transforming healthcare through advanced diagnostic capabilities. Machine learning models can analyze medical images, predict disease progression, and assist healthcare professionals in making accurate diagnoses.
-            
+
             Medical Image Analysis
-            
+
             Convolutional neural networks have shown remarkable success in analyzing medical images such as X-rays, MRIs, and CT scans. These systems can detect abnormalities that human radiologists might miss, improving diagnostic accuracy and speed.
-            
+
             Deep Learning in Radiology
-            
+
             Deep learning models trained on large datasets of medical images can identify patterns associated with various diseases. For example, CNN architectures like U-Net are particularly effective for medical image segmentation tasks.
-            
+
             Clinical Decision Support
-            
+
             AI systems provide real-time decision support to healthcare professionals by analyzing patient data, medical history, and current symptoms. These tools help reduce diagnostic errors and improve patient outcomes.
-            
+
             Challenges and Ethics
-            
+
             Despite promising results, medical AI faces challenges including data privacy, algorithm bias, and the need for regulatory approval. Ensuring fairness and transparency in AI-driven healthcare decisions is crucial.
             """,
             source_type="research_paper",
@@ -111,23 +111,23 @@ async def test_bayesian_graph_rag_system():
             title="Ethical Considerations for AI in Medical Practice",
             content="""
             Ethical Framework for Medical AI
-            
+
             The integration of artificial intelligence in healthcare raises important ethical considerations that must be addressed to ensure responsible deployment. Patient safety, privacy, and equitable access are paramount concerns.
-            
+
             Algorithmic Bias in Healthcare
-            
+
             AI systems can perpetuate or amplify existing healthcare disparities if training data lacks diversity. Biased algorithms may provide suboptimal care recommendations for underrepresented populations, highlighting the need for inclusive dataset curation.
-            
+
             Privacy and Data Protection
-            
+
             Medical AI systems require access to sensitive patient information, raising concerns about data privacy and security. Robust data governance frameworks must protect patient confidentiality while enabling beneficial AI applications.
-            
+
             Transparency and Explainability
-            
+
             Healthcare professionals and patients need to understand how AI systems reach their conclusions. Black-box algorithms that cannot explain their decision-making process may not be suitable for critical medical applications.
-            
+
             Regulatory Oversight
-            
+
             Government agencies like the FDA are developing frameworks for evaluating and approving AI-based medical devices. Rigorous testing and validation ensure that AI systems meet safety and efficacy standards before clinical deployment.
             """,
             source_type="policy_doc",
@@ -306,7 +306,7 @@ async def test_bayesian_graph_rag_system():
     # Get comprehensive performance metrics
     performance_metrics = pipeline.get_comprehensive_performance_metrics()
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("Final System Assessment")
     print("=" * 60)
 

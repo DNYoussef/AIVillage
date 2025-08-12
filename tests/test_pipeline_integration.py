@@ -117,9 +117,9 @@ class PipelineIntegrationTest:
 
             # Load and verify output
             stage1_data = torch.load(output_path)
-            assert (
-                "compressed_state" in stage1_data
-            ), "Stage 1 output missing compressed_state"
+            assert "compressed_state" in stage1_data, (
+                "Stage 1 output missing compressed_state"
+            )
             assert "config" in stage1_data, "Stage 1 output missing config"
 
             # Check compression occurred
@@ -170,19 +170,19 @@ class PipelineIntegrationTest:
 
             # Verify result
             assert result is not None, "Stage 2 compression returned None"
-            assert result.get(
-                "success", False
-            ), f"Stage 2 failed: {result.get('error', 'Unknown error')}"
+            assert result.get("success", False), (
+                f"Stage 2 failed: {result.get('error', 'Unknown error')}"
+            )
             assert os.path.exists(output_path), "Stage 2 output file not created"
 
             # Load and verify output
             stage2_data = torch.load(output_path)
-            assert (
-                "stage2_compressed_data" in stage2_data
-            ), "Stage 2 output missing stage2_compressed_data"
-            assert (
-                "stage1_metadata" in stage2_data
-            ), "Stage 2 output missing stage1_metadata"
+            assert "stage2_compressed_data" in stage2_data, (
+                "Stage 2 output missing stage2_compressed_data"
+            )
+            assert "stage1_metadata" in stage2_data, (
+                "Stage 2 output missing stage1_metadata"
+            )
 
             # Check compression
             stage1_size = os.path.getsize(stage1_path)
@@ -243,15 +243,15 @@ class PipelineIntegrationTest:
 
             # Verify results
             assert curriculum_results is not None, "Training pipeline returned None"
-            assert (
-                "levels_completed" in curriculum_results
-            ), "Training result missing levels_completed"
-            assert (
-                "level_metrics" in curriculum_results
-            ), "Training result missing level_metrics"
-            assert (
-                curriculum_results["levels_completed"] >= 1
-            ), "No training levels completed"
+            assert "levels_completed" in curriculum_results, (
+                "Training result missing levels_completed"
+            )
+            assert "level_metrics" in curriculum_results, (
+                "Training result missing level_metrics"
+            )
+            assert curriculum_results["levels_completed"] >= 1, (
+                "No training levels completed"
+            )
 
             logger.info("Training pipeline completed:")
             logger.info(
@@ -311,12 +311,12 @@ class PipelineIntegrationTest:
 
             # Verify results
             assert results is not None, "Self-modeling returned None"
-            assert (
-                "cycles_completed" in results
-            ), "Self-modeling result missing cycles_completed"
-            assert (
-                "temperature_insights" in results
-            ), "Self-modeling result missing temperature_insights"
+            assert "cycles_completed" in results, (
+                "Self-modeling result missing cycles_completed"
+            )
+            assert "temperature_insights" in results, (
+                "Self-modeling result missing temperature_insights"
+            )
             assert results["cycles_completed"] >= 1, "No self-modeling cycles completed"
 
             # Get insights
@@ -359,12 +359,12 @@ class PipelineIntegrationTest:
             # Verify manifest structure
             assert manifest is not None, "Manifest generation returned None"
             assert "model_info" in manifest, "Manifest missing model_info"
-            assert (
-                "evaluation_metrics" in manifest
-            ), "Manifest missing evaluation_metrics"
-            assert (
-                "deployment_requirements" in manifest
-            ), "Manifest missing deployment_requirements"
+            assert "evaluation_metrics" in manifest, (
+                "Manifest missing evaluation_metrics"
+            )
+            assert "deployment_requirements" in manifest, (
+                "Manifest missing deployment_requirements"
+            )
             assert "security" in manifest, "Manifest missing security"
 
             # Create release bundle
@@ -375,9 +375,9 @@ class PipelineIntegrationTest:
             bundle_dir = Path(bundle_path)
             assert bundle_dir.exists(), "Release bundle directory not created"
             assert (bundle_dir / "model.pt").exists(), "Model file not in bundle"
-            assert (
-                bundle_dir / "manifest.json"
-            ).exists(), "Manifest file not in bundle"
+            assert (bundle_dir / "manifest.json").exists(), (
+                "Manifest file not in bundle"
+            )
             assert (bundle_dir / "README.md").exists(), "README file not in bundle"
 
             logger.info("Deployment manifest generated:")
@@ -427,17 +427,17 @@ class PipelineIntegrationTest:
                 stage2_data = torch.load(stage2_path)
 
                 # Verify Stage 1 metadata is preserved in Stage 2
-                assert (
-                    "stage1_metadata" in stage2_data
-                ), "Stage 1 metadata not preserved in Stage 2"
-                assert (
-                    "config" in stage2_data["stage1_metadata"]
-                ), "Stage 1 config not preserved"
+                assert "stage1_metadata" in stage2_data, (
+                    "Stage 1 metadata not preserved in Stage 2"
+                )
+                assert "config" in stage2_data["stage1_metadata"], (
+                    "Stage 1 config not preserved"
+                )
 
                 # Verify compression pipeline information
-                assert (
-                    "compression_pipeline" in stage2_data
-                ), "Compression pipeline info missing"
+                assert "compression_pipeline" in stage2_data, (
+                    "Compression pipeline info missing"
+                )
 
                 integrity_results["stage1_to_stage2"] = {
                     "success": True,

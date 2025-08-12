@@ -295,6 +295,6 @@ def test_adas_integration(tmp_path):
     optimized_path = ses.adas_optimizer.optimize_agent_architecture(
         str(out_dir), iterations=2
     )
-    assert (
-        Path(optimized_path) / "weights.bin"
-    ).exists(), "ADAS optimization did not produce expected output"
+    assert (Path(optimized_path) / "weights.bin").exists(), (
+        "ADAS optimization did not produce expected output"
+    )

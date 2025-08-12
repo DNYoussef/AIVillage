@@ -186,9 +186,9 @@ class TestRAGIntegration:
         assert hasattr(answer, "text"), "Answer should have text"
         assert hasattr(answer, "citations"), "Answer should have citations"
         assert hasattr(answer, "confidence"), "Answer should have confidence score"
-        assert hasattr(
-            answer, "source_documents"
-        ), "Answer should have source documents"
+        assert hasattr(answer, "source_documents"), (
+            "Answer should have source documents"
+        )
 
 
 class TestP2PIntegration:
@@ -327,9 +327,9 @@ class TestDataFlowIntegration:
         sig = inspect.signature(mock_async_method)
 
         assert "data" in sig.parameters, "Methods should accept data parameter"
-        assert (
-            sig.return_annotation != inspect.Signature.empty
-        ), "Methods should have return annotations"
+        assert sig.return_annotation != inspect.Signature.empty, (
+            "Methods should have return annotations"
+        )
 
 
 # Test configuration and fixtures
@@ -570,9 +570,9 @@ class TestCODEXConfigurationIntegration:
 
             for config_path, expected_value in codex_requirements:
                 actual_value = config_manager.get(config_path)
-                assert (
-                    actual_value == expected_value
-                ), f"CODEX requirement failed: {config_path} = {actual_value}, expected {expected_value}"
+                assert actual_value == expected_value, (
+                    f"CODEX requirement failed: {config_path} = {actual_value}, expected {expected_value}"
+                )
 
         except ImportError:
             pytest.skip("Config manager not available for testing")

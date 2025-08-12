@@ -386,9 +386,9 @@ class SimpleGraphRAGChunker:
                         chunk1, chunk2
                     )
                     if relationship:
-                        self.relationships[
-                            (chunk1.chunk_id, chunk2.chunk_id)
-                        ] = relationship
+                        self.relationships[(chunk1.chunk_id, chunk2.chunk_id)] = (
+                            relationship
+                        )
                         relationships_created += 1
 
                         # Add to graph if available
@@ -625,9 +625,9 @@ class SimpleGraphRAGChunker:
                     semantic_similarity=best_similarity,
                 )
 
-                self.relationships[
-                    (isolated_chunk.chunk_id, best_match.chunk_id)
-                ] = relationship
+                self.relationships[(isolated_chunk.chunk_id, best_match.chunk_id)] = (
+                    relationship
+                )
                 repairs_applied += 1
 
         # Repair 2: Boost quality scores for low coverage topics
