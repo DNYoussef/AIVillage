@@ -1,12 +1,19 @@
 """Integration tests for tensor streaming over P2P nodes."""
 
+import asyncio
 import hashlib
+import time
 
 import numpy as np
 import pytest
 
 from src.production.communications.p2p.p2p_node import MessageType, P2PMessage, P2PNode
-from src.production.communications.p2p.tensor_streaming import TensorStreaming
+from src.production.communications.p2p.tensor_streaming import (
+    BandwidthController,
+    CompressionType,
+    StreamingConfig,
+    TensorStreaming,
+)
 
 
 @pytest.mark.asyncio
@@ -106,3 +113,45 @@ async def test_corrupted_chunk_failure(monkeypatch):
 
     with pytest.raises(RuntimeError):
         await recv_stream._reconstruct_tensor(tensor_id)
+
+
+@pytest.mark.asyncio
+async def test_global_bandwidth_limit(monkeypatch):
+    """Concurrent streams should respect a shared bandwidth limit."""
+    BandwidthController.reset()
+    sender = P2PNode(node_id="sender4", port=9131)
+    receiver = P2PNode(node_id="receiver4", port=9132)
+
+    config = StreamingConfig(
+        chunk_size=100 * 1024, bandwidth_limit_kbps=100, compression=CompressionType.NONE
+    )
+    stream1 = TensorStreaming(node=sender, config=config)
+    stream2 = TensorStreaming(node=sender, config=config)
+    recv_stream = TensorStreaming(node=receiver)
+
+    receiver.register_handler(MessageType.DATA, recv_stream._handle_tensor_chunk)
+
+    async def fake_send(self, peer_id, message_type, payload):
+        msg = P2PMessage(message_type, self.node_id, peer_id, payload)
+        handler = receiver.message_handlers.get(message_type)
+        if handler:
+            await handler(msg, None)
+            return True
+        return False
+
+    monkeypatch.setattr(sender, "send_message", fake_send.__get__(sender, P2PNode))
+
+    tensor1 = np.zeros(100 * 1024, dtype=np.uint8)
+    tensor2 = np.ones(100 * 1024, dtype=np.uint8)
+
+    start = time.perf_counter()
+    await asyncio.gather(
+        stream1.send_tensor(tensor1, "t1", receiver.node_id),
+        stream2.send_tensor(tensor2, "t2", receiver.node_id),
+    )
+    elapsed = time.perf_counter() - start
+
+    # Two 100KB tensors with a 100KB/s limit should take at least ~1 second
+    assert elapsed >= 1.0
+
+    BandwidthController.reset()

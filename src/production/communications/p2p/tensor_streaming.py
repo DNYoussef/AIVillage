@@ -1,6 +1,9 @@
 """Tensor Streaming for Efficient Model Weight Transfer."""
 
+from __future__ import annotations
+
 import asyncio
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
 import hashlib
@@ -135,8 +138,10 @@ class TensorStreaming:
         self.pending_chunks: dict[str, dict[int, TensorChunk]] = {}  # tensor_id -> chunk_index -> chunk
         self.tensor_metadata: dict[str, TensorMetadata] = {}
 
-        # Bandwidth management
-        self.bandwidth_tracker = BandwidthTracker(self.config.bandwidth_limit_kbps)
+        # Bandwidth management (shared across all instances)
+        self.bandwidth_controller = BandwidthController.get_instance(
+            self.config.bandwidth_limit_kbps
+        )
 
         # Priority queue for chunk requests
         self.priority_queue: list[tuple[float, str, int]] = []  # (priority, tensor_id, chunk_index)
@@ -209,7 +214,7 @@ class TensorStreaming:
             for chunk in chunks:
                 # Apply bandwidth throttling
                 if self.config.bandwidth_limit_kbps:
-                    await self.bandwidth_tracker.throttle(len(chunk.data))
+                    await self.bandwidth_controller.throttle(len(chunk.data))
 
                 # Send chunk
                 success = await self._send_tensor_chunk(destination, chunk)
@@ -252,7 +257,7 @@ class TensorStreaming:
         self,
         tensor_id: str,
         timeout: float = 300.0,
-        progress_callback: callable | None = None,
+        progress_callback: Callable[[TransferProgress], None] | None = None,
     ) -> tuple[Any, TensorMetadata] | None:
         """Receive a tensor from a peer node."""
         if tensor_id not in self.tensor_metadata:
@@ -676,38 +681,59 @@ class TensorStreaming:
         return list(all_indices - received_indices)
 
 
-class BandwidthTracker:
-    """Track and throttle bandwidth usage."""
+class BandwidthController:
+    """Singleton controller that tracks and throttles bandwidth usage."""
+
+    _instance: "BandwidthController" | None = None
 
     def __init__(self, limit_kbps: int | None = None) -> None:
         self.limit_kbps = limit_kbps
         self.bytes_sent = 0
         self.last_reset = time.time()
         self.reset_interval = 1.0  # Reset every second
+        self._lock = asyncio.Lock()
+
+    @classmethod
+    def get_instance(cls, limit_kbps: int | None = None) -> "BandwidthController":
+        """Return the shared bandwidth controller instance."""
+        if cls._instance is None:
+            cls._instance = cls(limit_kbps)
+        elif limit_kbps is not None:
+            if cls._instance.limit_kbps is None:
+                cls._instance.limit_kbps = limit_kbps
+            else:
+                cls._instance.limit_kbps = min(cls._instance.limit_kbps, limit_kbps)
+        return cls._instance
+
+    @classmethod
+    def reset(cls) -> None:
+        """Reset the singleton instance (mainly for tests)."""
+        cls._instance = None
 
     async def throttle(self, bytes_to_send: int) -> None:
         """Throttle bandwidth if limit is set."""
         if not self.limit_kbps:
             return
 
-        current_time = time.time()
+        async with self._lock:
+            current_time = time.time()
 
-        # Reset counter every second
-        if current_time - self.last_reset >= self.reset_interval:
-            self.bytes_sent = 0
-            self.last_reset = current_time
+            # Reset counter every second
+            if current_time - self.last_reset >= self.reset_interval:
+                self.bytes_sent = 0
+                self.last_reset = current_time
 
-        # Check if we need to throttle
-        limit_bytes_per_second = self.limit_kbps * 1024
+            # Check if we need to throttle
+            limit_bytes_per_second = self.limit_kbps * 1024
 
-        if self.bytes_sent + bytes_to_send > limit_bytes_per_second:
-            # Calculate delay needed
-            delay = self.reset_interval - (current_time - self.last_reset)
-            if delay > 0:
-                await asyncio.sleep(delay)
+            if self.bytes_sent + bytes_to_send > limit_bytes_per_second:
+                # Calculate delay needed
+                delay = self.reset_interval - (current_time - self.last_reset)
+                if delay > 0:
+                    await asyncio.sleep(delay)
 
-            # Reset after delay
-            self.bytes_sent = 0
-            self.last_reset = time.time()
+                # Reset after delay
+                self.bytes_sent = 0
+                self.last_reset = time.time()
 
-        self.bytes_sent += bytes_to_send
+            self.bytes_sent += bytes_to_send
