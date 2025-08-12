@@ -1,16 +1,17 @@
 """Tensor Streaming for Efficient Model Weight Transfer."""
 
 import asyncio
-from dataclasses import dataclass, field
-from enum import Enum
 import hashlib
 import io
 import json
 import logging
 import time
-from typing import Any
 import uuid
 import zlib
+from collections.abc import Callable
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import Any
 
 # For compression (using existing compression pipeline)
 import lz4.frame
@@ -134,6 +135,9 @@ class TensorStreaming:
         self.active_transfers: dict[str, TransferProgress] = {}
         self.pending_chunks: dict[str, dict[int, TensorChunk]] = {}  # tensor_id -> chunk_index -> chunk
         self.tensor_metadata: dict[str, TensorMetadata] = {}
+        self._active_transfers_lock = asyncio.Lock()
+        self._pending_chunks_lock = asyncio.Lock()
+        self._tensor_metadata_lock = asyncio.Lock()
 
         # Bandwidth management
         self.bandwidth_tracker = BandwidthTracker(self.config.bandwidth_limit_kbps)
@@ -252,25 +256,25 @@ class TensorStreaming:
         self,
         tensor_id: str,
         timeout: float = 300.0,
-        progress_callback: callable | None = None,
+        progress_callback: Callable[[TransferProgress], None] | None = None,
     ) -> tuple[Any, TensorMetadata] | None:
         """Receive a tensor from a peer node."""
-        if tensor_id not in self.tensor_metadata:
-            logger.error(f"No metadata found for tensor {tensor_id}")
-            return None
-
-        metadata = self.tensor_metadata[tensor_id]
+        async with self._tensor_metadata_lock:
+            if tensor_id not in self.tensor_metadata:
+                logger.error(f"No metadata found for tensor {tensor_id}")
+                return None
+            metadata = self.tensor_metadata[tensor_id]
 
         # Initialize transfer tracking
-        if tensor_id not in self.active_transfers:
-            self.active_transfers[tensor_id] = TransferProgress(
-                tensor_id=tensor_id,
-                total_chunks=metadata.total_chunks,
-                received_chunks=0,
-                estimated_total_bytes=metadata.size_bytes,
-            )
-
-        progress = self.active_transfers[tensor_id]
+        async with self._active_transfers_lock:
+            if tensor_id not in self.active_transfers:
+                self.active_transfers[tensor_id] = TransferProgress(
+                    tensor_id=tensor_id,
+                    total_chunks=metadata.total_chunks,
+                    received_chunks=0,
+                    estimated_total_bytes=metadata.size_bytes,
+                )
+            progress = self.active_transfers[tensor_id]
         start_time = time.time()
 
         logger.info(f"Receiving tensor {metadata.name} ({metadata.total_chunks} chunks)")
@@ -295,8 +299,10 @@ class TensorStreaming:
                 self.stats["bytes_received"] += metadata.size_bytes
 
                 # Clean up
-                self.active_transfers.pop(tensor_id, None)
-                self.pending_chunks.pop(tensor_id, None)
+                async with self._active_transfers_lock:
+                    self.active_transfers.pop(tensor_id, None)
+                async with self._pending_chunks_lock:
+                    self.pending_chunks.pop(tensor_id, None)
 
                 logger.info(f"Successfully received tensor {metadata.name}")
                 return tensor_data, metadata
@@ -549,8 +555,10 @@ class TensorStreaming:
             tags=metadata_dict["tags"],
         )
 
-        self.tensor_metadata[tensor_id] = metadata
-        self.pending_chunks[tensor_id] = {}
+        async with self._tensor_metadata_lock:
+            self.tensor_metadata[tensor_id] = metadata
+        async with self._pending_chunks_lock:
+            self.pending_chunks[tensor_id] = {}
 
         logger.info(f"Received metadata for tensor {metadata.name} ({metadata.total_chunks} chunks)")
 
@@ -584,22 +592,24 @@ class TensorStreaming:
         )
 
         # Store chunk
-        if tensor_id not in self.pending_chunks:
-            self.pending_chunks[tensor_id] = {}
-
-        self.pending_chunks[tensor_id][chunk_index] = chunk
+        async with self._pending_chunks_lock:
+            if tensor_id not in self.pending_chunks:
+                self.pending_chunks[tensor_id] = {}
+            self.pending_chunks[tensor_id][chunk_index] = chunk
+            received_chunks = len(self.pending_chunks[tensor_id])
 
         # Update progress
-        if tensor_id in self.active_transfers:
-            progress = self.active_transfers[tensor_id]
-            progress.received_chunks = len(self.pending_chunks[tensor_id])
-            progress.last_update = time.time()
-            progress.bytes_transferred += len(chunk_data)
+        async with self._active_transfers_lock:
+            progress = self.active_transfers.get(tensor_id)
+            if progress:
+                progress.received_chunks = received_chunks
+                progress.last_update = time.time()
+                progress.bytes_transferred += len(chunk_data)
 
-            # Calculate transfer rate
-            elapsed = progress.last_update - progress.start_time
-            if elapsed > 0:
-                progress.transfer_rate_kbps = (progress.bytes_transferred / 1024) / elapsed
+                # Calculate transfer rate
+                elapsed = progress.last_update - progress.start_time
+                if elapsed > 0:
+                    progress.transfer_rate_kbps = (progress.bytes_transferred / 1024) / elapsed
 
         self.stats["chunks_received"] += 1
 

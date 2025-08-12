@@ -1,5 +1,6 @@
 """Integration tests for tensor streaming over P2P nodes."""
 
+import asyncio
 import hashlib
 
 import numpy as np
@@ -106,3 +107,43 @@ async def test_corrupted_chunk_failure(monkeypatch):
 
     with pytest.raises(RuntimeError):
         await recv_stream._reconstruct_tensor(tensor_id)
+
+
+@pytest.mark.asyncio
+async def test_simultaneous_transfers(monkeypatch):
+    sender = P2PNode(node_id="sender4", port=9131)
+    receiver = P2PNode(node_id="receiver4", port=9132)
+
+    send_stream = TensorStreaming(node=sender)
+    recv_stream = TensorStreaming(node=receiver)
+    receiver.register_handler(MessageType.DATA, recv_stream._handle_tensor_chunk)
+
+    async def fake_send(self, peer_id, message_type, payload):
+        await asyncio.sleep(0)
+        msg = P2PMessage(message_type, self.node_id, peer_id, payload)
+        handler = receiver.message_handlers.get(message_type)
+        if handler:
+            await handler(msg, None)
+            return True
+        return False
+
+    monkeypatch.setattr(sender, "send_message", fake_send.__get__(sender, P2PNode))
+
+    tensor_a = np.arange(10, dtype=np.float32)
+    tensor_b = np.arange(12, dtype=np.float32)
+
+    send_a = asyncio.create_task(
+        send_stream.send_tensor(tensor_a, "a", receiver.node_id)
+    )
+    send_b = asyncio.create_task(
+        send_stream.send_tensor(tensor_b, "b", receiver.node_id)
+    )
+    tensor_id_a, tensor_id_b = await asyncio.gather(send_a, send_b)
+
+    rec_a, rec_b = await asyncio.gather(
+        recv_stream._reconstruct_tensor(tensor_id_a),
+        recv_stream._reconstruct_tensor(tensor_id_b),
+    )
+
+    assert np.array_equal(rec_a, tensor_a)
+    assert np.array_equal(rec_b, tensor_b)
