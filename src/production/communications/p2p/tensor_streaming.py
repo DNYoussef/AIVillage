@@ -18,6 +18,13 @@ import lz4.frame
 
 # For tensor operations
 import numpy as np
+try:
+    import torch
+
+    TORCH_AVAILABLE = True
+except Exception:  # pragma: no cover - torch optional
+    TORCH_AVAILABLE = False
+    torch = None
 
 # For key exchange
 from cryptography.hazmat.primitives import hashes, serialization
@@ -402,12 +409,36 @@ class TensorStreaming:
     async def _serialize_tensor(
         self,
         tensor_data: Any,
-        tensor_id: str,
+       tensor_id: str,
         tensor_name: str,
         tags: dict[str, Any],
     ) -> tuple[bytes, TensorMetadata]:
         """Serialize tensor to bytes."""
+        tags = dict(tags)
         if self.config.tensor_format == TensorFormat.NUMPY:
+            if TORCH_AVAILABLE and isinstance(tensor_data, torch.Tensor):
+                np_array = tensor_data.detach().cpu().numpy()
+                buffer = io.BytesIO()
+                np.save(buffer, np_array)
+                serialized = buffer.getvalue()
+                tags["framework"] = "torch"
+                tags["device"] = str(tensor_data.device)
+
+                metadata = TensorMetadata(
+                    tensor_id=tensor_id,
+                    name=tensor_name,
+                    shape=np_array.shape,
+                    dtype=str(np_array.dtype),
+                    size_bytes=len(serialized),
+                    total_chunks=0,  # Will be set later
+                    compression=self.config.compression,
+                    format=self.config.tensor_format,
+                    checksum=hashlib.sha256(serialized).hexdigest(),
+                    source_node=self.node.node_id,
+                    tags=tags,
+                )
+
+                return serialized, metadata
             if isinstance(tensor_data, np.ndarray):
                 buffer = io.BytesIO()
                 np.save(buffer, tensor_data)
@@ -718,6 +749,14 @@ class TensorStreaming:
         if metadata.format == TensorFormat.NUMPY:
             buffer = io.BytesIO(combined_data)
             tensor_data = np.load(buffer)
+            if metadata.tags.get("framework") == "torch" and TORCH_AVAILABLE:
+                tensor = torch.from_numpy(tensor_data)
+                device = metadata.tags.get("device", "cpu")
+                try:
+                    tensor = tensor.to(device)
+                except Exception:
+                    logger.warning("Requested device %s not available", device)
+                return tensor
         elif metadata.format == TensorFormat.JSON:
             tensor_data = json.loads(combined_data.decode("utf-8"))
         else:

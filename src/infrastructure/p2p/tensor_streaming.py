@@ -119,6 +119,12 @@ class TensorStreamer:
 
         if TORCH_AVAILABLE and metadata.get("is_torch_tensor", False):
             tensor = torch.from_numpy(np_array)
+            # Move back to original device if available
+            device = metadata.get("device", "cpu")
+            try:
+                tensor = tensor.to(device)
+            except Exception:
+                logger.warning("Requested device %s not available", device)
             if metadata.get("requires_grad", False):
                 tensor.requires_grad_(True)
             return tensor
