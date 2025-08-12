@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 
 from src.production.communications.p2p.p2p_node import MessageType, P2PMessage, P2PNode
-from src.production.communications.p2p.tensor_streaming import TensorStreaming
+from src.production.communications.p2p.tensor_streaming import TensorStreaming, TransferProgress
 
 
 @pytest.mark.asyncio
@@ -106,3 +106,44 @@ async def test_corrupted_chunk_failure(monkeypatch):
 
     with pytest.raises(RuntimeError):
         await recv_stream._reconstruct_tensor(tensor_id)
+
+
+@pytest.mark.asyncio
+async def test_receive_tensor_cleanup(monkeypatch):
+    sender = P2PNode(node_id="sender4", port=9131)
+    receiver = P2PNode(node_id="receiver4", port=9132)
+
+    send_stream = TensorStreaming(node=sender)
+    recv_stream = TensorStreaming(node=receiver)
+
+    receiver.register_handler(MessageType.DATA, recv_stream._handle_tensor_chunk)
+
+    async def fake_send(self, peer_id, message_type, payload):
+        msg = P2PMessage(message_type, self.node_id, peer_id, payload)
+        handler = receiver.message_handlers.get(message_type)
+        if handler:
+            await handler(msg, None)
+            return True
+        return False
+
+    monkeypatch.setattr(sender, "send_message", fake_send.__get__(sender, P2PNode))
+
+    tensor = np.arange(4, dtype=np.float32)
+    tensor_id = await send_stream.send_tensor(tensor, "cleanup", receiver.node_id)
+
+    assert tensor_id in recv_stream.pending_chunks
+    assert tensor_id in recv_stream.tensor_metadata
+    metadata = recv_stream.tensor_metadata[tensor_id]
+    recv_stream.active_transfers[tensor_id] = TransferProgress(
+        tensor_id=tensor_id,
+        total_chunks=metadata.total_chunks,
+        received_chunks=len(recv_stream.pending_chunks[tensor_id]),
+        estimated_total_bytes=metadata.size_bytes,
+    )
+
+    result = await recv_stream.receive_tensor(tensor_id)
+    assert result is not None
+
+    assert recv_stream.pending_chunks == {}
+    assert recv_stream.tensor_metadata == {}
+    assert recv_stream.active_transfers == {}

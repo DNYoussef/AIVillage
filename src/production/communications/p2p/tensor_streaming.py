@@ -297,6 +297,7 @@ class TensorStreaming:
                 # Clean up
                 self.active_transfers.pop(tensor_id, None)
                 self.pending_chunks.pop(tensor_id, None)
+                self.tensor_metadata.pop(tensor_id, None)
 
                 logger.info(f"Successfully received tensor {metadata.name}")
                 return tensor_data, metadata
