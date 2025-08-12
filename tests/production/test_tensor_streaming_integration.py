@@ -106,3 +106,69 @@ async def test_corrupted_chunk_failure(monkeypatch):
 
     with pytest.raises(RuntimeError):
         await recv_stream._reconstruct_tensor(tensor_id)
+
+
+@pytest.mark.asyncio
+async def test_key_exchange_after_restart(monkeypatch):
+    sender = P2PNode(node_id="sender_dh", port=9301)
+    receiver = P2PNode(node_id="receiver_dh", port=9302)
+
+    send_stream = TensorStreaming(node=sender)
+    recv_stream = TensorStreaming(node=receiver)
+
+    sender.register_handler(MessageType.DATA, send_stream._handle_tensor_chunk)
+    receiver.register_handler(MessageType.DATA, recv_stream._handle_tensor_chunk)
+
+    async def send_from_sender(self, peer_id, message_type, payload):
+        msg = P2PMessage(message_type, self.node_id, peer_id, payload)
+        handler = receiver.message_handlers.get(message_type)
+        if handler:
+            await handler(msg, None)
+            return True
+        return False
+
+    async def send_from_receiver(self, peer_id, message_type, payload):
+        msg = P2PMessage(message_type, self.node_id, peer_id, payload)
+        handler = sender.message_handlers.get(message_type)
+        if handler:
+            await handler(msg, None)
+            return True
+        return False
+
+    monkeypatch.setattr(sender, "send_message", send_from_sender.__get__(sender, P2PNode))
+    monkeypatch.setattr(receiver, "send_message", send_from_receiver.__get__(receiver, P2PNode))
+
+    await send_stream._ensure_key(receiver.node_id)
+    first_key = send_stream._key_cache[receiver.node_id]
+
+    # Restart receiver node and streaming
+    receiver = P2PNode(node_id="receiver_dh", port=9302)
+    recv_stream = TensorStreaming(node=receiver)
+    receiver.register_handler(MessageType.DATA, recv_stream._handle_tensor_chunk)
+
+    async def send_from_receiver_new(self, peer_id, message_type, payload):
+        msg = P2PMessage(message_type, self.node_id, peer_id, payload)
+        handler = sender.message_handlers.get(message_type)
+        if handler:
+            await handler(msg, None)
+            return True
+        return False
+
+    def make_send_from_sender(new_receiver):
+        async def _send(self, peer_id, message_type, payload):
+            msg = P2PMessage(message_type, self.node_id, peer_id, payload)
+            handler = new_receiver.message_handlers.get(message_type)
+            if handler:
+                await handler(msg, None)
+                return True
+            return False
+        return _send
+
+    monkeypatch.setattr(sender, "send_message", make_send_from_sender(receiver).__get__(sender, P2PNode))
+    monkeypatch.setattr(receiver, "send_message", send_from_receiver_new.__get__(receiver, P2PNode))
+
+    await recv_stream._initiate_key_exchange(sender.node_id)
+
+    second_key = send_stream._key_cache[receiver.node_id]
+    assert second_key != first_key
+    assert second_key == recv_stream._key_cache[sender.node_id]
