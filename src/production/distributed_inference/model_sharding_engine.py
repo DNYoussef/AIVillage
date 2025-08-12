@@ -255,6 +255,10 @@ class ModelShardingEngine:
             elif peer.performance_tier == "low":
                 compute_score *= 0.7
 
+            # Down-weight devices with limited physical RAM (<4GB)
+            if peer.ram_mb < 4096:
+                compute_score *= 0.5
+
             # Apply memory buffer
             available_memory *= (100 - self.config["memory_buffer_percent"]) / 100
 
@@ -322,9 +326,12 @@ class ModelShardingEngine:
             # Check if current device can accommodate another layer
             current_device = device_profiles[device_idx % len(device_profiles)]
 
+            # Constrain shard size on low-memory devices
+            layer_limit = 1 if current_device.available_memory_mb < 4096 else self.config["max_shards_per_device"]
+
             if (
                 current_shard_memory + layer_memory_mb <= current_device.available_memory_mb
-                and len(current_shard_layers) < self.config["max_shards_per_device"]
+                and len(current_shard_layers) < layer_limit
             ):
                 current_shard_layers.append(layer_idx)
                 current_shard_memory += layer_memory_mb

@@ -191,6 +191,60 @@ class TestModelShardingEngine:
         assert profiles[0].available_memory_mb >= profiles[1].available_memory_mb
 
     @pytest.mark.asyncio
+    async def test_mixed_memory_devices(self, sharding_engine, temp_model_dir):
+        """Ensure low-memory devices are penalized and receive smaller shards."""
+
+        high_peer = PeerCapabilities(
+            device_id="high_mem",
+            cpu_cores=4,
+            ram_mb=8192,
+            trust_score=0.9,
+            evolution_capacity=0.9,
+        )
+        medium_peer = PeerCapabilities(
+            device_id="med_mem",
+            cpu_cores=4,
+            ram_mb=8192,
+            trust_score=0.9,
+            evolution_capacity=0.9,
+        )
+        low_peer = PeerCapabilities(
+            device_id="low_mem",
+            cpu_cores=16,  # High compute but low memory
+            ram_mb=2048,
+            trust_score=0.9,
+            evolution_capacity=0.9,
+        )
+
+        sharding_engine.p2p_node.local_capabilities = high_peer
+        sharding_engine.p2p_node.node_id = "high_mem"
+        sharding_engine.p2p_node.get_suitable_evolution_peers.return_value = [
+            medium_peer,
+            low_peer,
+        ]
+
+        profiles = await sharding_engine._get_device_profiles()
+
+        low_profile = next(p for p in profiles if p.device_id == "low_mem")
+        baseline_compute = (low_peer.cpu_cores * 2 + low_peer.ram_mb / 1024) / 10
+        assert low_profile.compute_score == pytest.approx(baseline_compute * 0.5)
+
+        mock_analysis = {
+            "model_path": temp_model_dir,
+            "num_layers": 7,
+            "layer_memory_mb": 100.0,
+            "layer_compute_score": 1.0,
+            "total_memory_mb": 700.0,
+        }
+
+        plan = await sharding_engine._create_memory_aware_plan(mock_analysis, profiles)
+        low_shards = [s for s in plan.shards if s.device_id == "low_mem"]
+        assert low_shards  # low-memory device should receive a shard
+        assert all(len(s.layer_indices) == 1 for s in low_shards)
+        other_shards = [s for s in plan.shards if s.device_id != "low_mem"]
+        assert any(len(s.layer_indices) > 1 for s in other_shards)
+
+    @pytest.mark.asyncio
     async def test_memory_aware_sharding(self, sharding_engine, device_profiles, temp_model_dir):
         """Test memory-aware sharding strategy"""
         # Mock model analysis
