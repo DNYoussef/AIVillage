@@ -16,9 +16,10 @@ from src.communications.protocol import (
 )
 
 # Import P2P components
-from .p2p import DeviceMesh, P2PNode, StreamingConfig, TensorStreaming
+from .p2p import DeviceMesh, StreamingConfig, TensorStreaming
 from .p2p.device_mesh import MeshProtocol
 from .p2p.tensor_streaming import TensorMetadata
+from AIVillage.src.core.p2p.legacy import MessageType as LegacyMessageType, P2PNode
 
 logger = logging.getLogger(__name__)
 
@@ -175,7 +176,7 @@ class P2PCommunicationProtocol(CommunicationProtocol):
                 "routing_type": "direct",
             }
 
-            success = await self.p2p_node.send_message(peer_id, MessageType.DATA, p2p_payload)
+            success = await self.p2p_node.send_message(peer_id, LegacyMessageType.DATA, p2p_payload)
 
             if success:
                 self.p2p_stats["messages_routed"] += 1
@@ -442,8 +443,6 @@ class P2PCommunicationProtocol(CommunicationProtocol):
 
     def _register_p2p_handlers(self) -> None:
         """Register P2P-specific message handlers."""
-        from .p2p.p2p_node import MessageType as P2PMessageType
-
         async def handle_agent_message(p2p_message, writer=None) -> None:
             """Handle messages destined for local agents."""
             payload = p2p_message.payload
@@ -467,7 +466,7 @@ class P2PCommunicationProtocol(CommunicationProtocol):
                 if target_agent in self.local_agents:
                     await self.standard_protocol.send_message(message)
 
-        self.p2p_node.register_handler(P2PMessageType.DATA, handle_agent_message)
+        self.p2p_node.register_handler(LegacyMessageType.DATA, handle_agent_message)
 
     async def _route_via_mesh(self, message: Message) -> bool:
         """Route message via mesh network."""

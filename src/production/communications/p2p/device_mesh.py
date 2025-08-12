@@ -12,7 +12,7 @@ import uuid
 
 import psutil
 
-from .p2p_node import MessageType, P2PMessage, P2PNode
+from AIVillage.src.core.p2p.legacy import MessageType, P2PMessage, P2PNode
 
 logger = logging.getLogger(__name__)
 

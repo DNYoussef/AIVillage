@@ -18,7 +18,7 @@ import lz4.frame
 # For tensor operations
 import numpy as np
 
-from .p2p_node import MessageType, P2PMessage, P2PNode
+from AIVillage.src.core.p2p.legacy import MessageType, P2PMessage, P2PNode
 
 logger = logging.getLogger(__name__)
 

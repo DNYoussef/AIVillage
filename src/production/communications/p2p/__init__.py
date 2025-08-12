@@ -1,7 +1,7 @@
 """P2P Communication Layer for AIVillage Mobile Infrastructure."""
 
 from .device_mesh import ConnectionType, DeviceMesh, MeshProtocol
-from .p2p_node import NodeStatus, P2PNode, PeerInfo
+from AIVillage.src.core.p2p.legacy import NodeStatus, P2PNode, PeerInfo
 from .tensor_streaming import StreamingConfig, TensorChunk, TensorStreaming
 
 __all__ = [
