@@ -9,6 +9,7 @@ import hashlib
 import io
 import json
 import logging
+import os
 import time
 from typing import Any, Callable
 import uuid
@@ -33,6 +34,7 @@ except ImportError:  # pragma: no cover - torch may not be installed in all envi
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import x25519
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
+from cryptography.fernet import Fernet
 
 from .p2p_node import MessageType, P2PMessage, P2PNode
 
@@ -147,7 +149,9 @@ class TensorStreaming:
     ) -> None:
         self.node = node
         self.config = config or StreamingConfig()
-        self.cache_dir = cache_dir or "tensor_cache"
+        self.cache_dir = cache_dir
+        self._memory_cache: dict[str, bytes] = {}
+        self._fernet = Fernet(Fernet.generate_key())
 
         # Transfer tracking
         self.active_transfers: dict[str, TransferProgress] = {}
@@ -253,6 +257,9 @@ class TensorStreaming:
                 compressed_data = serialized_data
                 compression_ratio = 1.0
 
+            # Cache data for potential retries
+            self._cache_tensor_data(tensor_id, compressed_data)
+
             # Update stats
             self.stats["compression_ratio"] = (
                 self.stats["compression_ratio"] * self.stats["tensors_sent"] + compression_ratio
@@ -334,6 +341,7 @@ class TensorStreaming:
             )
 
         progress = self.active_transfers[tensor_id]
+        progress.received_chunks = len(self.pending_chunks.get(tensor_id, {}))
         start_time = time.time()
 
         logger.info(f"Receiving tensor {metadata.name} ({metadata.total_chunks} chunks)")
@@ -341,6 +349,7 @@ class TensorStreaming:
         try:
             # Wait for all chunks with timeout
             while not progress.is_complete and (time.time() - start_time) < timeout:
+                progress.received_chunks = len(self.pending_chunks.get(tensor_id, {}))
                 if progress_callback:
                     progress_callback(progress)
 
@@ -360,6 +369,7 @@ class TensorStreaming:
                 # Clean up
                 self.active_transfers.pop(tensor_id, None)
                 self.pending_chunks.pop(tensor_id, None)
+                self.tensor_metadata.pop(tensor_id, None)
 
                 logger.info(f"Successfully received tensor {metadata.name}")
                 return tensor_data, metadata
@@ -548,6 +558,17 @@ class TensorStreaming:
             chunks.append(chunk)
 
         return chunks
+
+    def _cache_tensor_data(self, tensor_id: str, data: bytes) -> None:
+        """Cache tensor data either in memory or encrypted on disk."""
+        if self.cache_dir:
+            os.makedirs(self.cache_dir, exist_ok=True)
+            encrypted = self._fernet.encrypt(data)
+            path = os.path.join(self.cache_dir, f"{tensor_id}.bin")
+            with open(path, "wb") as f:
+                f.write(encrypted)
+        else:
+            self._memory_cache[tensor_id] = data
 
     async def _send_tensor_metadata(
         self,

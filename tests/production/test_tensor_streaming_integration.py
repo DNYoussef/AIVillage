@@ -21,6 +21,11 @@ async def test_tensor_stream_round_trip(monkeypatch):
     # Handle metadata messages as regular tensor chunk messages
     receiver.register_handler(MessageType.DATA, recv_stream._handle_tensor_chunk)
 
+    async def fake_ensure_key(self, peer_id):
+        return None
+
+    monkeypatch.setattr(send_stream, "_ensure_key", fake_ensure_key.__get__(send_stream, TensorStreaming))
+
     async def fake_send_message(self, peer_id, message_type, payload):
         assert peer_id == receiver.node_id
         msg = P2PMessage(
@@ -47,10 +52,12 @@ async def test_tensor_stream_round_trip(monkeypatch):
     for chunk in recv_stream.pending_chunks[tensor_id].values():
         assert hashlib.md5(chunk.data).hexdigest() == chunk.checksum
 
-    reconstructed = await recv_stream._reconstruct_tensor(tensor_id)
-    metadata = recv_stream.tensor_metadata[tensor_id]
+    result = await recv_stream.receive_tensor(tensor_id, timeout=1.0)
+    assert result is not None
+    reconstructed, metadata = result
     assert np.array_equal(reconstructed, tensor)
     assert metadata.tensor_id == tensor_id
+    assert tensor_id not in recv_stream.tensor_metadata
 
 
 @pytest.mark.asyncio
@@ -62,6 +69,11 @@ async def test_tensor_stream_round_trip_torch(monkeypatch):
     recv_stream = TensorStreaming(node=receiver)
 
     receiver.register_handler(MessageType.DATA, recv_stream._handle_tensor_chunk)
+
+    async def fake_ensure_key(self, peer_id):
+        return None
+
+    monkeypatch.setattr(send_stream, "_ensure_key", fake_ensure_key.__get__(send_stream, TensorStreaming))
 
     async def fake_send_message(self, peer_id, message_type, payload):
         assert peer_id == receiver.node_id
@@ -83,11 +95,15 @@ async def test_tensor_stream_round_trip_torch(monkeypatch):
     tensor = torch.arange(8, dtype=torch.float32, device=device, requires_grad=True)
     tensor_id = await send_stream.send_tensor(tensor, "torch_test", receiver.node_id)
 
-    reconstructed = await recv_stream._reconstruct_tensor(tensor_id)
+    result = await recv_stream.receive_tensor(tensor_id, timeout=1.0)
+    assert result is not None
+    reconstructed, metadata = result
     assert torch.equal(reconstructed, tensor)
     assert reconstructed.device.type == tensor.device.type
     assert reconstructed.dtype == tensor.dtype
     assert reconstructed.requires_grad == tensor.requires_grad
+    assert metadata.tensor_id == tensor_id
+    assert tensor_id not in recv_stream.tensor_metadata
 
 
 @pytest.mark.asyncio
