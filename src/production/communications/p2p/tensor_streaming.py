@@ -21,6 +21,14 @@ import lz4.frame
 # For tensor operations
 import numpy as np
 
+# We'll handle torch import gracefully in case it's not available
+try:
+    import torch
+
+    TORCH_AVAILABLE = True
+except ImportError:  # pragma: no cover - torch may not be installed in all environments
+    TORCH_AVAILABLE = False
+
 # For key exchange
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import x25519
@@ -82,6 +90,9 @@ class TensorMetadata:
     timestamp: float = field(default_factory=time.time)
     source_node: str = ""
     tags: dict[str, Any] = field(default_factory=dict)
+    device: str | None = None
+    is_torch: bool = False
+    requires_grad: bool = False
 
 
 @dataclass
@@ -412,6 +423,30 @@ class TensorStreaming:
     ) -> tuple[bytes, TensorMetadata]:
         """Serialize tensor to bytes."""
         if self.config.tensor_format == TensorFormat.NUMPY:
+            if TORCH_AVAILABLE and isinstance(tensor_data, torch.Tensor):
+                np_array = tensor_data.detach().cpu().numpy()
+                buffer = io.BytesIO()
+                np.save(buffer, np_array)
+                serialized = buffer.getvalue()
+
+                metadata = TensorMetadata(
+                    tensor_id=tensor_id,
+                    name=tensor_name,
+                    shape=np_array.shape,
+                    dtype=str(np_array.dtype),
+                    size_bytes=len(serialized),
+                    total_chunks=0,  # Will be set later
+                    compression=self.config.compression,
+                    format=self.config.tensor_format,
+                    checksum=hashlib.sha256(serialized).hexdigest(),
+                    source_node=self.node.node_id,
+                    tags=tags,
+                    device=str(tensor_data.device),
+                    is_torch=True,
+                    requires_grad=tensor_data.requires_grad,
+                )
+
+                return serialized, metadata
             if isinstance(tensor_data, np.ndarray):
                 buffer = io.BytesIO()
                 np.save(buffer, tensor_data)
@@ -535,6 +570,9 @@ class TensorStreaming:
                 "timestamp": metadata.timestamp,
                 "source_node": metadata.source_node,
                 "tags": metadata.tags,
+                "device": metadata.device,
+                "is_torch": metadata.is_torch,
+                "requires_grad": metadata.requires_grad,
             },
         }
 
@@ -615,6 +653,9 @@ class TensorStreaming:
             timestamp=metadata_dict["timestamp"],
             source_node=metadata_dict["source_node"],
             tags=metadata_dict["tags"],
+            device=metadata_dict.get("device"),
+            is_torch=metadata_dict.get("is_torch", False),
+            requires_grad=metadata_dict.get("requires_grad", False),
         )
 
         self.tensor_metadata[tensor_id] = metadata
@@ -721,14 +762,23 @@ class TensorStreaming:
         # Deserialize tensor
         if metadata.format == TensorFormat.NUMPY:
             buffer = io.BytesIO(combined_data)
-            tensor_data = np.load(buffer)
+            np_array = np.load(buffer)
+            if metadata.is_torch:
+                if not TORCH_AVAILABLE:
+                    logger.error("Torch not available for tensor reconstruction")
+                    return None
+                tensor = torch.from_numpy(np_array)
+                tensor = tensor.to(metadata.device or "cpu")
+                if metadata.requires_grad:
+                    tensor.requires_grad_(True)
+                return tensor
+            return np_array
         elif metadata.format == TensorFormat.JSON:
             tensor_data = json.loads(combined_data.decode("utf-8"))
+            return tensor_data
         else:
             logger.error(f"Unsupported tensor format: {metadata.format}")
             return None
-
-        return tensor_data
 
     def _find_missing_chunks(self, tensor_id: str) -> list[int]:
         """Find missing chunk indices for a tensor."""

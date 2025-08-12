@@ -4,6 +4,7 @@ import time
 
 import numpy as np
 import pytest
+import torch
 
 from src.infrastructure.p2p.tensor_streaming import TensorStreamer
 from src.production.communications.p2p.p2p_node import MessageType, P2PNode
@@ -15,6 +16,18 @@ def test_safe_serialization_round_trip():
     data = streamer._serialize_tensor(array)
     restored = streamer._deserialize_tensor(data)
     assert np.array_equal(array, restored)
+
+
+def test_safe_serialization_round_trip_torch():
+    streamer = TensorStreamer()
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    tensor = torch.arange(10, dtype=torch.float32, device=device, requires_grad=True)
+    data = streamer._serialize_tensor(tensor)
+    restored = streamer._deserialize_tensor(data)
+    assert torch.equal(restored, tensor)
+    assert restored.device.type == tensor.device.type
+    assert restored.dtype == tensor.dtype
+    assert restored.requires_grad == tensor.requires_grad
 
 
 @pytest.mark.asyncio
