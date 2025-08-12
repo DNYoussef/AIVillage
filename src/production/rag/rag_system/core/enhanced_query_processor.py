@@ -439,8 +439,8 @@ class EnhancedQueryProcessor:
         if not ranked_results:
             return [], [], []
 
-        primary_sources = ranked_results[:3]
-        supporting_sources = ranked_results[3:7]
+        primary_sources = ranked_results[:1]
+        supporting_sources = ranked_results[1:7]
         candidates = primary_sources + supporting_sources
 
         texts = [r.result.text for r in candidates]
@@ -463,8 +463,8 @@ class EnhancedQueryProcessor:
 
         conflicting_sources = [candidates[i] for i in sorted(conflicting_indices)]
         remaining = [r for idx, r in enumerate(candidates) if idx not in conflicting_indices]
-        primary_sources = remaining[:3]
-        supporting_sources = remaining[3:]
+        primary_sources = remaining[:1]
+        supporting_sources = remaining[1:]
 
         return primary_sources, supporting_sources, conflicting_sources
 

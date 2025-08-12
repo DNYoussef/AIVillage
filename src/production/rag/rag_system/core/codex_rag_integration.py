@@ -19,7 +19,16 @@ from typing import Any
 from diskcache import Cache as DiskCache
 import faiss
 import numpy as np
-from rank_bm25 import BM25Okapi
+try:  # pragma: no cover - handle optional dependency
+    from rank_bm25 import BM25Okapi
+except Exception:  # pragma: no cover
+    class BM25Okapi:  # type: ignore[no-redef]
+        """Fallback stub when rank_bm25 is unavailable."""
+
+        def __init__(self, *args: Any, **kwargs: Any) -> None:  # pragma: no cover
+            raise ImportError(
+                "rank_bm25 is required for BM25 retrieval but is not installed."
+            )
 import redis
 from sentence_transformers import CrossEncoder, SentenceTransformer
 
