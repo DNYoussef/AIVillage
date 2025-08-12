@@ -18,8 +18,8 @@ import torch
 from torch import nn
 from torch.utils.data import DataLoader, Dataset
 
-from AIVillage.src.core.p2p.p2p_node import P2PNode, PeerCapabilities
-from AIVillage.src.production.evolution.infrastructure_aware_evolution import (
+from ...core.p2p.p2p_node import P2PNode, PeerCapabilities
+from ..evolution.infrastructure_aware_evolution import (
     InfrastructureAwareEvolution,
 )
 

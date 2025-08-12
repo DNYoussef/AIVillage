@@ -4,16 +4,16 @@ import os
 import torch
 from transformers import AutoTokenizer
 
-from AIVillage.src.production.evolution.evomerge.config import Configuration
-from AIVillage.src.production.evolution.evomerge.cross_domain import (
+from ..config import Configuration
+from ..cross_domain import (
     merge_cross_domain_models,
 )
-from AIVillage.src.production.evolution.evomerge.instruction_tuning import (
+from ..instruction_tuning import (
     is_instruction_tuned_model,
     merge_instruction_tuned_models,
 )
-from AIVillage.src.production.evolution.evomerge.model_tracker import model_tracker
-from AIVillage.src.production.evolution.evomerge.utils import (
+from ..model_tracker import model_tracker
+from ..utils import (
     EvoMergeException,
     check_system_resources,
     clean_up_models,
@@ -194,7 +194,7 @@ class AdvancedModelMerger:
 
 if __name__ == "__main__":
     # For testing purposes
-    from AIVillage.src.production.evolution.evomerge.config import create_default_config
+    from ..config import create_default_config
 
     config = create_default_config()
     merger = AdvancedModelMerger(config)

@@ -15,7 +15,7 @@ import re
 from typing import Any
 import uuid
 
-from AIVillage.src.mcp_servers.hyperag.guardian.gate import GuardianGate
+from ..guardian.gate import GuardianGate
 
 from .llm_driver import LLMDriver, ModelConfig
 from .templates import TemplateEncoder, ViolationTemplate

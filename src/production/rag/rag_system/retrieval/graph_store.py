@@ -9,14 +9,14 @@ except Exception:  # pragma: no cover - handled by fallback logic
     nx = None  # type: ignore
 
 try:  # embedding dependencies are optional
-    from AIVillage.src.production.rag.rag_system.utils.embedding import (
+    from ..utils.embedding import (
         BERTEmbeddingModel,
     )
 except Exception:  # pragma: no cover - missing torch/transformers
     BERTEmbeddingModel = None  # type: ignore
 
-from AIVillage.src.production.rag.rag_system.core.config import UnifiedConfig
-from AIVillage.src.production.rag.rag_system.core.structures import RetrievalResult
+from ..core.config import UnifiedConfig
+from ..core.structures import RetrievalResult
 
 
 class GraphStore:
