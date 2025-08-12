@@ -14,7 +14,7 @@ import time
 from typing import Any
 import uuid
 
-from AIVillage.src.core.p2p.p2p_node import P2PNode
+from src.core.p2p import P2PNode
 
 from .model_sharding_engine import ModelShard, ModelShardingEngine, ShardingPlan
 

@@ -7,8 +7,8 @@ import time
 from typing import Any
 
 # Import P2P and resource management components
-from AIVillage.src.core.p2p import P2PNode
-from AIVillage.src.core.resources import (
+from src.core.p2p import P2PNode
+from src.core.resources import (
     AdaptiveLoader,
     ConstraintManager,
     DeviceProfiler,

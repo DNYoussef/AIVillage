@@ -61,7 +61,7 @@ ReshardingReason = reshard_module.ReshardingReason
 ReshardingStrategy = reshard_module.ReshardingStrategy
 ReshardingConfig = reshard_module.ReshardingConfig
 
-from src.core.p2p.p2p_node import PeerCapabilities
+from src.core.p2p import PeerCapabilities
 
 
 class DummyP2PNode:

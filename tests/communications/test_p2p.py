@@ -34,7 +34,7 @@ class TestP2PNode:
 
         assert node.node_id == "test-node"
         assert node.port == 8001
-        assert node.status == NodeStatus.OFFLINE
+        assert node.status == NodeStatus.STARTING
         assert len(node.peers) == 0
 
     @pytest.mark.asyncio
@@ -45,7 +45,7 @@ class TestP2PNode:
         # Test start
         try:
             await node.start()
-            assert node.status == NodeStatus.CONNECTED
+            assert node.status == NodeStatus.ACTIVE
             assert node.server is not None
         except Exception as e:
             # May fail on Windows without proper network setup
@@ -53,7 +53,7 @@ class TestP2PNode:
         finally:
             # Test stop
             await node.stop()
-            assert node.status == NodeStatus.OFFLINE
+            assert node.status == NodeStatus.DISCONNECTED
 
     @pytest.mark.asyncio
     async def test_message_serialization(self):
@@ -87,7 +87,7 @@ class TestP2PNode:
             peer_id="peer-1",
             address="127.0.0.1",
             port=8005,
-            status=NodeStatus.CONNECTED,
+            status=NodeStatus.ACTIVE,
         )
 
         node.peers["peer-1"] = peer_info
@@ -107,7 +107,7 @@ class TestP2PNode:
         assert "connected_peers" in stats
         assert "total_peers" in stats
         assert stats["node_id"] == "test-node"
-        assert stats["status"] == NodeStatus.OFFLINE.value
+        assert stats["status"] == NodeStatus.STARTING.value
 
 
 class TestDeviceMesh:

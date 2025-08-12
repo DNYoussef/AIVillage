@@ -49,7 +49,7 @@ ShardingStrategy = mse.ShardingStrategy
 DeviceProfile = mse.DeviceProfile
 ShardingPlan = mse.ShardingPlan
 
-from src.core.p2p.p2p_node import PeerCapabilities
+from src.core.p2p import PeerCapabilities
 
 
 class DummyP2PNode:

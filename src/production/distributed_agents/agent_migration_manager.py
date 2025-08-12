@@ -13,7 +13,7 @@ import time
 from typing import Any
 import uuid
 
-from AIVillage.src.core.p2p.p2p_node import P2PNode
+from src.core.p2p import P2PNode
 
 from .distributed_agent_orchestrator import AgentInstance, AgentType, DeviceProfile
 

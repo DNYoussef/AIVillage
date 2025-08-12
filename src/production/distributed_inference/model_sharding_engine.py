@@ -14,7 +14,7 @@ import uuid
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 # Import Sprint 6 infrastructure
-from AIVillage.src.core.p2p.p2p_node import P2PNode, PeerCapabilities
+from src.core.p2p import P2PNode, PeerCapabilities
 from AIVillage.src.core.resources.device_profiler import DeviceProfiler
 from AIVillage.src.core.resources.resource_monitor import ResourceMonitor
 
