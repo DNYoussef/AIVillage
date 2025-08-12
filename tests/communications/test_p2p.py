@@ -4,6 +4,7 @@ import time
 
 import numpy as np
 import pytest
+import torch
 
 # Import P2P components
 from src.production.communications.p2p import DeviceMesh, P2PNode, TensorStreaming
@@ -208,6 +209,63 @@ class TestTensorStreaming:
         assert metadata.shape == (10, 10)
         assert metadata.dtype == "float32"
         assert len(serialized_data) > 0
+
+    @pytest.mark.asyncio
+    async def test_tensor_round_trip_torch(self, monkeypatch):
+        """Ensure torch tensors stream correctly between nodes."""
+        sender = P2PNode(node_id="torch-sender", port=8030)
+        receiver = P2PNode(node_id="torch-receiver", port=8031)
+
+        send_stream = TensorStreaming(node=sender)
+        recv_stream = TensorStreaming(node=receiver)
+
+        receiver.register_handler(MessageType.DATA, recv_stream._handle_tensor_chunk)
+
+        async def fake_send_message(self, peer_id, message_type, payload):
+            assert peer_id == receiver.node_id
+            msg = P2PMessage(
+                message_type=message_type,
+                sender_id=self.node_id,
+                receiver_id=peer_id,
+                payload=payload,
+            )
+            handler = receiver.message_handlers.get(message_type)
+            if handler:
+                await handler(msg, None)
+                return True
+            return False
+
+        monkeypatch.setattr(sender, "send_message", fake_send_message.__get__(sender, P2PNode))
+        
+        async def recv_send_message(self, peer_id, message_type, payload):
+            msg = P2PMessage(
+                message_type=message_type,
+                sender_id=self.node_id,
+                receiver_id=peer_id,
+                payload=payload,
+            )
+            handler = sender.message_handlers.get(message_type)
+            if handler:
+                await handler(msg, None)
+                return True
+            return False
+
+        monkeypatch.setattr(receiver, "send_message", recv_send_message.__get__(receiver, P2PNode))
+
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        tensor = torch.arange(8, dtype=torch.float32, device=device, requires_grad=True)
+        tensor_id = await send_stream.send_tensor(tensor, "torch_round", receiver.node_id)
+
+        metadata = recv_stream.tensor_metadata[tensor_id]
+        assert metadata.device == str(tensor.device)
+        assert metadata.dtype == str(tensor.dtype)
+        assert metadata.is_torch
+
+        reconstructed = await recv_stream._reconstruct_tensor(tensor_id)
+        assert torch.equal(reconstructed, tensor)
+        assert reconstructed.device.type == tensor.device.type
+        assert reconstructed.dtype == tensor.dtype
+        assert reconstructed.requires_grad == tensor.requires_grad
 
     @pytest.mark.asyncio
     async def test_tensor_compression(self):
