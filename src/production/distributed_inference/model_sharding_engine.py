@@ -68,6 +68,7 @@ class DeviceProfile:
     compute_score: float
     network_latency_ms: float
     battery_level: float | None = None
+    is_charging: bool | None = None
     thermal_state: str = "normal"
     reliability_score: float = 0.8
 
@@ -275,8 +276,11 @@ class ModelShardingEngine:
                 reliability_score=peer.trust_score,
             )
 
-            # Filter out unreliable devices
-            if device_profile.reliability_score >= self.config["reliability_threshold"]:
+            # Filter out unreliable or low-battery devices
+            if (
+                device_profile.reliability_score >= self.config["reliability_threshold"]
+                and (device_profile.battery_level is None or device_profile.battery_level >= 20)
+            ):
                 device_profiles.append(device_profile)
 
         # Sort by suitability (memory + compute + reliability)
