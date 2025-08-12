@@ -12,6 +12,13 @@ import uuid
 
 # Use local encryption instead of libp2p for Windows compatibility
 from cryptography.fernet import Fernet
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    ValidationError,
+    field_validator,
+    FieldValidationInfo,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -48,6 +55,107 @@ class MessageType(Enum):
     SYNC_REQUEST = "sync_request"
     DISCOVERY = "discovery"
     ERROR = "error"
+
+
+class HandshakePayload(BaseModel):
+    """Payload for handshake messages."""
+
+    node_id: str
+    capabilities: dict[str, Any]
+    timestamp: float
+    model_config = ConfigDict(extra="ignore")
+
+
+class HeartbeatPayload(BaseModel):
+    """Payload for heartbeat messages."""
+
+    timestamp: float
+    status: str
+    model_config = ConfigDict(extra="ignore")
+
+
+class TensorChunkPayload(BaseModel):
+    """Payload for tensor chunk messages."""
+
+    tensor_id: str
+    chunk_index: int
+    total_chunks: int
+    data: str
+    checksum: str
+    timestamp: float
+    is_compressed: bool
+    compression_type: str | None = None
+    model_config = ConfigDict(extra="ignore")
+
+
+class DiscoveryPeer(BaseModel):
+    """Information about a discovered peer."""
+
+    address: str
+    port: int
+    model_config = ConfigDict(extra="ignore")
+
+
+class DiscoveryPayload(BaseModel):
+    """Payload for discovery messages."""
+
+    peers: list[DiscoveryPeer]
+    model_config = ConfigDict(extra="ignore")
+
+
+class SyncRequestPayload(BaseModel):
+    """Payload for sync request messages."""
+
+    timestamp: float | None = None
+    model_config = ConfigDict(extra="ignore")
+
+
+class ErrorPayload(BaseModel):
+    """Payload for error messages."""
+
+    message: str
+    code: int | None = None
+    model_config = ConfigDict(extra="ignore")
+
+
+class DataPayload(BaseModel):
+    """Payload for generic data messages."""
+
+    model_config = ConfigDict(extra="allow")
+
+
+PAYLOAD_MODELS: dict[MessageType, type[BaseModel]] = {
+    MessageType.HANDSHAKE: HandshakePayload,
+    MessageType.HEARTBEAT: HeartbeatPayload,
+    MessageType.DATA: DataPayload,
+    MessageType.TENSOR_CHUNK: TensorChunkPayload,
+    MessageType.SYNC_REQUEST: SyncRequestPayload,
+    MessageType.DISCOVERY: DiscoveryPayload,
+    MessageType.ERROR: ErrorPayload,
+}
+
+
+class MessageModel(BaseModel):
+    """Pydantic model for validating P2P messages."""
+
+    message_type: MessageType
+    sender_id: str
+    receiver_id: str
+    payload: dict[str, Any]
+    timestamp: float
+    message_id: str
+
+    model_config = ConfigDict(extra="forbid")
+
+    @field_validator("payload")
+    @classmethod
+    def validate_payload(cls, v: dict[str, Any], info: FieldValidationInfo) -> dict[str, Any]:
+        message_type: MessageType | None = info.data.get("message_type")
+        if message_type:
+            payload_model = PAYLOAD_MODELS.get(message_type)
+            if payload_model:
+                payload_model(**v)
+        return v
 
 
 @dataclass
@@ -377,6 +485,22 @@ class P2PNode:
 
         self.stats["bytes_sent"] += 4 + length
 
+    def _validate_message_dict(self, message_dict: dict[str, Any]) -> P2PMessage | None:
+        """Validate and construct a ``P2PMessage`` from a dictionary."""
+        try:
+            model = MessageModel(**message_dict)
+        except ValidationError as e:
+            logger.warning("Invalid message received: %s", e)
+            return None
+        return P2PMessage(
+            message_type=model.message_type,
+            sender_id=model.sender_id,
+            receiver_id=model.receiver_id,
+            payload=model.payload,
+            timestamp=model.timestamp,
+            message_id=model.message_id,
+        )
+
     async def _receive_message_from_reader(self, reader: asyncio.StreamReader) -> P2PMessage | None:
         """Receive a message from a reader."""
         try:
@@ -398,14 +522,7 @@ class P2PNode:
             self.stats["bytes_received"] += 4 + length
             self.stats["messages_received"] += 1
 
-            return P2PMessage(
-                message_type=MessageType(message_dict["message_type"]),
-                sender_id=message_dict["sender_id"],
-                receiver_id=message_dict["receiver_id"],
-                payload=message_dict["payload"],
-                timestamp=message_dict["timestamp"],
-                message_id=message_dict["message_id"],
-            )
+            return self._validate_message_dict(message_dict)
 
         except Exception as e:
             logger.exception(f"Failed to receive message: {e}")
