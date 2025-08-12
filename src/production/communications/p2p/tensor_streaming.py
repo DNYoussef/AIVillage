@@ -462,7 +462,7 @@ class TensorStreaming:
                     tensor_id=tensor_id,
                     name=tensor_name,
                     shape=np_array.shape,
-                    dtype=str(np_array.dtype),
+                    dtype=str(tensor_data.dtype),
                     size_bytes=len(serialized),
                     total_chunks=0,  # Will be set later
                     compression=self.config.compression,
@@ -828,7 +828,12 @@ class TensorStreaming:
                     logger.error("Torch not available for tensor reconstruction")
                     return None
                 tensor = torch.from_numpy(np_array)
-                tensor = tensor.to(metadata.device or "cpu")
+                device = torch.device(metadata.device or "cpu")
+                torch_dtype = getattr(torch, metadata.dtype.split(".")[-1], None)
+                if torch_dtype is not None:
+                    tensor = tensor.to(device=device, dtype=torch_dtype)
+                else:
+                    tensor = tensor.to(device)
                 if metadata.requires_grad:
                     tensor.requires_grad_(True)
                 return tensor
