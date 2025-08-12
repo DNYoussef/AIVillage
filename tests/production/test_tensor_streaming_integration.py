@@ -1,5 +1,6 @@
 """Integration tests for tensor streaming over P2P nodes."""
 
+import asyncio
 import hashlib
 
 import numpy as np
@@ -213,3 +214,53 @@ async def test_key_exchange_after_restart(monkeypatch):
     second_key = send_stream._key_cache[receiver.node_id]
     assert second_key != first_key
     assert second_key == recv_stream._key_cache[sender.node_id]
+
+
+@pytest.mark.asyncio
+async def test_concurrent_transfers(monkeypatch):
+    sender = P2PNode(node_id="sender_con", port=9401)
+    receiver = P2PNode(node_id="receiver_con", port=9402)
+
+    send_stream = TensorStreaming(node=sender)
+    recv_stream = TensorStreaming(node=receiver)
+
+    receiver.register_handler(MessageType.DATA, recv_stream._handle_tensor_chunk)
+
+    async def fake_send_message(self, peer_id, message_type, payload):
+        assert peer_id == receiver.node_id
+        msg = P2PMessage(
+            message_type=message_type,
+            sender_id=self.node_id,
+            receiver_id=peer_id,
+            payload=payload,
+        )
+        handler = receiver.message_handlers.get(message_type)
+        if handler:
+            await handler(msg, None)
+            return True
+        return False
+
+    monkeypatch.setattr(sender, "send_message", fake_send_message.__get__(sender, P2PNode))
+
+    tensor1 = np.arange(8, dtype=np.float32)
+    tensor2 = np.arange(16, dtype=np.float32)
+
+    tensor_id1, tensor_id2 = await asyncio.gather(
+        send_stream.send_tensor(tensor1, "test1", receiver.node_id),
+        send_stream.send_tensor(tensor2, "test2", receiver.node_id),
+    )
+
+    results = await asyncio.gather(
+        recv_stream.receive_tensor(tensor_id1),
+        recv_stream.receive_tensor(tensor_id2),
+    )
+
+    rec1, _ = results[0]
+    rec2, _ = results[1]
+
+    assert np.array_equal(rec1, tensor1)
+    assert np.array_equal(rec2, tensor2)
+
+    assert recv_stream.pending_chunks == {}
+    assert recv_stream.tensor_metadata == {}
+    assert recv_stream.active_transfers == {}
