@@ -54,8 +54,9 @@ services:
       dockerfile: Dockerfile.credits-api
     ports:
       - "8002:8002"
+    env_file: .env
     environment:
-      - DATABASE_URL=postgresql://aivillage_user:aivillage_pass@postgres:5432/aivillage_credits
+      - DATABASE_URL=postgresql://aivillage_user:${POSTGRES_PASSWORD}@postgres:5432/aivillage_credits
       - PROMETHEUS_URL=http://prometheus:9090
     depends_on:
       - postgres
@@ -73,8 +74,9 @@ services:
     build:
       context: ./communications
       dockerfile: Dockerfile.credits-worker
+    env_file: .env
     environment:
-      - DATABASE_URL=postgresql://aivillage_user:aivillage_pass@postgres:5432/aivillage_credits
+      - DATABASE_URL=postgresql://aivillage_user:${POSTGRES_PASSWORD}@postgres:5432/aivillage_credits
       - PROMETHEUS_URL=http://prometheus:9090
       - CREDITS_API_URL=http://credits-api:8002
       - WORKER_INTERVAL=300  # 5 minutes
@@ -91,10 +93,11 @@ services:
   postgres:
     image: postgres:15
     container_name: ai-village-postgres
+    env_file: .env
     environment:
       - POSTGRES_DB=aivillage_credits
       - POSTGRES_USER=aivillage_user
-      - POSTGRES_PASSWORD=aivillage_pass
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
@@ -109,8 +112,9 @@ services:
   neo4j:
     image: neo4j:5.11-community
     container_name: ai-village-neo4j
+    env_file: .env
     environment:
-      - NEO4J_AUTH=neo4j/aivillage_neo4j
+      - NEO4J_AUTH=neo4j/${NEO4J_PASSWORD}
       - NEO4J_PLUGINS=["apoc"]
       - NEO4J_apoc_export_file_enabled=true
       - NEO4J_apoc_import_file_enabled=true
@@ -127,7 +131,7 @@ services:
     networks:
       - ai-village-net
     healthcheck:
-      test: ["CMD", "cypher-shell", "-u", "neo4j", "-p", "aivillage_neo4j", "MATCH (n) RETURN count(n)"]
+      test: ["CMD", "cypher-shell", "-u", "neo4j", "-p", "${NEO4J_PASSWORD}", "MATCH (n) RETURN count(n)"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -137,7 +141,8 @@ services:
   redis:
     image: redis:7-alpine
     container_name: ai-village-redis
-    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-aivillage_redis}
+    env_file: .env
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
     ports:
       - "6379:6379"
     volumes:
@@ -181,16 +186,17 @@ services:
     container_name: ai-village-hyperag-mcp
     ports:
       - "8765:8765"  # MCP WebSocket port
+    env_file: .env
     environment:
       - NEO4J_URI=bolt://neo4j:7687
       - NEO4J_USER=neo4j
-      - NEO4J_PASSWORD=aivillage_neo4j
+      - NEO4J_PASSWORD=${NEO4J_PASSWORD}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-      - REDIS_PASSWORD=${REDIS_PASSWORD:-aivillage_redis}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
       - QDRANT_HOST=qdrant
       - QDRANT_PORT=6333
-      - HYPERAG_JWT_SECRET=${HYPERAG_JWT_SECRET:-change-this-in-production}
+      - HYPERAG_JWT_SECRET=${HYPERAG_JWT_SECRET}
       - HYPERAG_LOG_LEVEL=${HYPERAG_LOG_LEVEL:-INFO}
     depends_on:
       - neo4j
@@ -235,8 +241,9 @@ services:
       - grafana_data:/var/lib/grafana
       - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
       - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards
+    env_file: .env
     environment:
-      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-changeme}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
       - GF_USERS_ALLOW_SIGN_UP=false
       - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource
     ports:
