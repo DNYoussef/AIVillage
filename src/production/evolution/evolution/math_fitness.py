@@ -3,6 +3,7 @@ Sprint R-4+AF1: Agent Forge Phase 1 - Task B.3.
 """
 
 import asyncio
+from collections import defaultdict
 from dataclasses import dataclass
 from datetime import datetime, timezone
 import logging
@@ -48,17 +49,23 @@ class EvaluationResult:
     response_time: float
     total_score: float
     feedback: str
+    evaluation_time: float = 0.0
     timestamp: str = ""
 
 
 class MathFitnessEvaluator:
     """Comprehensive evaluation system for math tutoring model fitness."""
 
-    def __init__(self, project_name: str = "agent-forge") -> None:
+    def __init__(
+        self,
+        project_name: str = "agent-forge",
+        max_concurrent_evaluations: int = 5,
+    ) -> None:
         self.project_name = project_name
         self.test_suite = {}
         self.evaluation_history = []
         self.model_performance_cache = {}
+        self.max_concurrent_evaluations = max_concurrent_evaluations
 
         # Scoring weights
         self.scoring_weights = {
@@ -340,33 +347,17 @@ class MathFitnessEvaluator:
                 logger.info(f"Using cached evaluation for {individual_id}")
                 return cached_result["fitness_score"]
 
-        category_scores = {}
-        all_evaluations = []
+        category_scores: dict[str, float] = {}
+        all_evaluations: list[EvaluationResult] = []
+        category_evaluations: defaultdict[str, list[EvaluationResult]] = defaultdict(list)
+        semaphore = asyncio.Semaphore(self.max_concurrent_evaluations)
 
-        # Evaluate each category
-        for category, problems in self.test_suite.items():
-            category_evaluations = []
-
-            for problem in problems:
+        async def evaluate_with_limit(problem: MathProblem) -> tuple[str, EvaluationResult]:
+            async with semaphore:
                 try:
                     evaluation = await self.evaluate_problem(model, tokenizer, problem)
-                    category_evaluations.append(evaluation)
-                    all_evaluations.append(evaluation)
-
-                    if log_details:
-                        wandb.log(
-                            {
-                                f"evaluation/{category}/{problem.problem_id}/score": evaluation.total_score,
-                                f"evaluation/{category}/{problem.problem_id}/correctness": evaluation.correctness_score,
-                                f"evaluation/{category}/{problem.problem_id}/explanation": evaluation.explanation_quality,
-                                f"evaluation/{category}/{problem.problem_id}/encouragement": evaluation.encouragement_score,
-                                "model_id": individual_id or "unknown",
-                            }
-                        )
-
                 except Exception as e:
                     logger.exception(f"Error evaluating problem {problem.problem_id}: {e}")
-                    # Create failed evaluation
                     evaluation = EvaluationResult(
                         problem_id=problem.problem_id,
                         model_response="Error in evaluation",
@@ -379,14 +370,37 @@ class MathFitnessEvaluator:
                         total_score=0.0,
                         feedback="Evaluation failed",
                     )
-                    category_evaluations.append(evaluation)
-                    all_evaluations.append(evaluation)
+                if log_details:
+                    wandb.log(
+                        {
+                            f"evaluation/{problem.category}/{problem.problem_id}/score": evaluation.total_score,
+                            f"evaluation/{problem.category}/{problem.problem_id}/correctness": evaluation.correctness_score,
+                            f"evaluation/{problem.category}/{problem.problem_id}/explanation": evaluation.explanation_quality,
+                            f"evaluation/{problem.category}/{problem.problem_id}/encouragement": evaluation.encouragement_score,
+                            f"evaluation/{problem.category}/{problem.problem_id}/latency": evaluation.evaluation_time,
+                            "model_id": individual_id or "unknown",
+                        }
+                    )
+                return problem.category, evaluation
 
-            # Calculate category score
-            if category_evaluations:
-                category_scores[category] = statistics.mean([eval.total_score for eval in category_evaluations])
-            else:
-                category_scores[category] = 0.0
+        tasks = [
+            asyncio.create_task(evaluate_with_limit(problem))
+            for problems in self.test_suite.values()
+            for problem in problems
+        ]
+        results = await asyncio.gather(*tasks)
+
+        for category, evaluation in results:
+            category_evaluations[category].append(evaluation)
+            all_evaluations.append(evaluation)
+
+        for category in self.test_suite.keys():
+            evaluations = category_evaluations.get(category, [])
+            category_scores[category] = (
+                statistics.mean([eval.total_score for eval in evaluations])
+                if evaluations
+                else 0.0
+            )
 
         # Calculate weighted fitness score
         fitness_score = self.calculate_weighted_fitness(category_scores)
@@ -462,6 +476,8 @@ class MathFitnessEvaluator:
                 cultural_sensitivity,
             )
 
+            evaluation_time = asyncio.get_event_loop().time() - start_time
+
             return EvaluationResult(
                 problem_id=problem.problem_id,
                 model_response=model_response,
@@ -473,11 +489,13 @@ class MathFitnessEvaluator:
                 response_time=response_time,
                 total_score=total_score,
                 feedback=feedback,
+                evaluation_time=evaluation_time,
                 timestamp=datetime.now(timezone.utc).isoformat(),
             )
 
         except Exception as e:
             logger.exception(f"Error in problem evaluation: {e}")
+            evaluation_time = asyncio.get_event_loop().time() - start_time
             return EvaluationResult(
                 problem_id=problem.problem_id,
                 model_response="Error generating response",
@@ -489,6 +507,7 @@ class MathFitnessEvaluator:
                 response_time=0.0,
                 total_score=0.0,
                 feedback="Evaluation failed due to error",
+                evaluation_time=evaluation_time,
             )
 
     def create_tutoring_prompt(self, problem: MathProblem) -> str:
