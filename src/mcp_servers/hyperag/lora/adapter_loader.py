@@ -13,7 +13,7 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from AIVillage.src.mcp_servers.hyperag.guardian.gate import GuardianGate
+from ..guardian.gate import GuardianGate
 
 logger = logging.getLogger(__name__)
 

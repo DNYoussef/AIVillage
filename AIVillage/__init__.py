@@ -11,6 +11,8 @@ if str(_src) not in sys.path:
 
 # Expose submodules under src through this package
 __path__ = [str(_src)]
+if __spec__ is not None:
+    __spec__.submodule_search_locations = [str(_src)]
 
 # Support legacy imports like `AIVillage.src.*`
 import types

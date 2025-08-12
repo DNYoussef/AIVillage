@@ -12,9 +12,9 @@ import time
 from typing import Any
 import uuid
 
-from AIVillage.src.core.p2p.p2p_node import P2PNode
-from AIVillage.src.core.resources.resource_monitor import ResourceMonitor
-from AIVillage.src.production.distributed_inference.model_sharding_engine import (
+from ...core.p2p.p2p_node import P2PNode
+from ...core.resources.resource_monitor import ResourceMonitor
+from ..distributed_inference.model_sharding_engine import (
     DeviceProfile,
     ModelShardingEngine,
 )

@@ -1,6 +1,6 @@
 # rag_system/processing/self_referential_query_processor.py
 
-from AIVillage.src.production.rag.rag_system.core.pipeline import EnhancedRAGPipeline
+from ..core.pipeline import EnhancedRAGPipeline
 
 
 class SelfReferentialQueryProcessor:
