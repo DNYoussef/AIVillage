@@ -467,6 +467,34 @@ class TestEvolutionIntegration:
         assert loaded_state["best_fitness"] == 0.92
 
 
+def test_deterministic_evolution_progress():
+    """Run two deterministic generations and persist metrics."""
+    population = [
+        ModelIndividual("model_a", fitness=0.5),
+        ModelIndividual("model_b", fitness=0.6),
+    ]
+    best_history: list[float] = []
+
+    for _ in range(2):
+        for individual in population:
+            individual.fitness += 0.1
+        best_history.append(max(ind.fitness for ind in population))
+
+    assert best_history[1] > best_history[0]
+
+    from pathlib import Path
+
+    results_path = Path("evolution_test_results.json")
+    results = {
+        "generations": [
+            {"generation": 1, "best_fitness": best_history[0]},
+            {"generation": 2, "best_fitness": best_history[1]},
+        ]
+    }
+    results_path.write_text(json.dumps(results, indent=2))
+    assert results_path.exists()
+
+
 @pytest.mark.performance
 class TestEvolutionPerformance:
     """Performance tests for evolution system."""

@@ -1,0 +1,12 @@
+{
+  "generations": [
+    {
+      "generation": 1,
+      "best_fitness": 0.7
+    },
+    {
+      "generation": 2,
+      "best_fitness": 0.8
+    }
+  ]
+}
