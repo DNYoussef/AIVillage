@@ -11,12 +11,18 @@ import time
 from typing import Any
 import uuid
 import zlib
+import base64
 
 # For compression (using existing compression pipeline)
 import lz4.frame
 
 # For tensor operations
 import numpy as np
+
+# For key exchange
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives.asymmetric import x25519
+from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 
 from .p2p_node import MessageType, P2PMessage, P2PNode
 
@@ -154,12 +160,53 @@ class TensorStreaming:
             "failed_transfers": 0,
         }
 
+        # Diffie-Hellman key exchange
+        self._dh_private_key = x25519.X25519PrivateKey.generate()
+        self._dh_public_key = self._dh_private_key.public_key()
+        self._key_cache: dict[str, bytes] = {}
+
         # Register message handlers
         self._register_handlers()
 
     def _register_handlers(self) -> None:
         """Register tensor streaming message handlers."""
         self.node.register_handler(MessageType.TENSOR_CHUNK, self._handle_tensor_chunk)
+        if MessageType.DATA not in self.node.message_handlers:
+            self.node.register_handler(MessageType.DATA, self._handle_tensor_chunk)
+
+    async def _initiate_key_exchange(self, peer_id: str) -> None:
+        """Start Diffie-Hellman key exchange with a peer."""
+        payload = {
+            "action": "dh_key",
+            "key": self._dh_public_key.public_bytes(
+                encoding=serialization.Encoding.Raw,
+                format=serialization.PublicFormat.Raw,
+            ).hex(),
+        }
+        await self.node.send_message(peer_id, MessageType.DATA, payload)
+
+    def _derive_shared_key(self, peer_public_bytes: bytes) -> bytes:
+        """Derive shared encryption key from peer's public key."""
+        peer_public = x25519.X25519PublicKey.from_public_bytes(peer_public_bytes)
+        shared = self._dh_private_key.exchange(peer_public)
+        derived = HKDF(
+            algorithm=hashes.SHA256(),
+            length=32,
+            salt=None,
+            info=b"tensor_streaming",
+        ).derive(shared)
+        return base64.urlsafe_b64encode(derived)
+
+    async def _ensure_key(self, peer_id: str) -> None:
+        """Ensure a shared key exists for a peer."""
+        if peer_id in self._key_cache:
+            return
+        await self._initiate_key_exchange(peer_id)
+        for _ in range(self.config.max_retries * 10):
+            if peer_id in self._key_cache:
+                return
+            await asyncio.sleep(self.config.retry_delay / 10)
+        raise RuntimeError(f"Key exchange failed with {peer_id}")
 
     async def send_tensor(
         self,
@@ -176,6 +223,7 @@ class TensorStreaming:
         logger.info(f"Starting tensor transfer: {tensor_name} -> {destination}")
 
         try:
+            await self._ensure_key(destination)
             # Serialize tensor
             serialized_data, tensor_metadata = await self._serialize_tensor(
                 tensor_data, tensor_id, tensor_name, metadata_tags
@@ -522,6 +570,22 @@ class TensorStreaming:
         """Handle incoming tensor chunk."""
         payload = message.payload
 
+        if payload.get("action") == "dh_key":
+            peer_bytes = bytes.fromhex(payload["key"])
+            self._key_cache[message.sender_id] = self._derive_shared_key(peer_bytes)
+            response = {
+                "action": "dh_key_response",
+                "key": self._dh_public_key.public_bytes(
+                    encoding=serialization.Encoding.Raw,
+                    format=serialization.PublicFormat.Raw,
+                ).hex(),
+            }
+            await self.node.send_message(message.sender_id, MessageType.DATA, response)
+            return
+        if payload.get("action") == "dh_key_response":
+            peer_bytes = bytes.fromhex(payload["key"])
+            self._key_cache[message.sender_id] = self._derive_shared_key(peer_bytes)
+            return
         if payload.get("action") == "tensor_metadata":
             await self._handle_tensor_metadata(payload["metadata"])
         elif payload.get("action") == "request_chunks":
