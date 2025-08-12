@@ -4,12 +4,21 @@
 from pathlib import Path
 import sys
 import time
+import io
+import importlib.util
 
 import torch
 from torch import nn
 
-sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
-from core.compression import SimpleQuantizer
+src_root = Path(__file__).parent.parent / "src"
+sys.path.insert(0, str(src_root))
+spec = importlib.util.spec_from_file_location(
+    "simple_quantizer", src_root / "core" / "compression" / "simple_quantizer.py"
+)
+simple_quantizer = importlib.util.module_from_spec(spec)
+assert spec and spec.loader
+spec.loader.exec_module(simple_quantizer)
+SimpleQuantizer = simple_quantizer.SimpleQuantizer
 
 
 def create_test_models():
@@ -50,11 +59,16 @@ def create_test_models():
     return models
 
 
-def benchmark_compression() -> None:
+def benchmark_compression(precision: str = "float32") -> None:
+    """Benchmark compression optionally using reduced precision models."""
     quantizer = SimpleQuantizer()
     models = create_test_models()
 
-    print("Compression Benchmark Results")
+    if precision == "float16":
+        for model in models.values():
+            model.half()
+
+    print(f"Compression Benchmark Results ({precision})")
     print("=" * 60)
     print(f"{'Model':<10} {'Original':<12} {'Compressed':<12} {'Ratio':<8} {'Time':<8}")
     print("-" * 60)
@@ -69,13 +83,15 @@ def benchmark_compression() -> None:
             elapsed = time.time() - start
             compressed_size = len(compressed)
             ratio = original_size / compressed_size
-            print(f"{name:<10} {original_size / 1024:.1f}KB {compressed_size / 1024:.1f}KB {ratio:.2f}x {elapsed:.2f}s")
+            print(
+                f"{name:<10} {original_size / 1024:.1f}KB "
+                f"{compressed_size / 1024:.1f}KB {ratio:.2f}x {elapsed:.2f}s"
+            )
         except Exception as e:
             print(f"{name:<10} FAILED: {e}")
     print("=" * 60)
 
 
 if __name__ == "__main__":
-    import io
-
-    benchmark_compression()
+    benchmark_compression("float32")
+    benchmark_compression("float16")
