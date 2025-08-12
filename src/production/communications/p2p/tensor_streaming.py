@@ -9,6 +9,7 @@ import hashlib
 import io
 import json
 import logging
+import os
 import time
 from typing import Any, Callable
 import uuid
@@ -33,6 +34,7 @@ except ImportError:  # pragma: no cover - torch may not be installed in all envi
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import x25519
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
+from cryptography.fernet import Fernet
 
 from .p2p_node import MessageType, P2PMessage, P2PNode
 
@@ -147,7 +149,9 @@ class TensorStreaming:
     ) -> None:
         self.node = node
         self.config = config or StreamingConfig()
-        self.cache_dir = cache_dir or "tensor_cache"
+        self.cache_dir = cache_dir
+        if self.cache_dir:
+            os.makedirs(self.cache_dir, exist_ok=True)
 
         # Transfer tracking
         self.active_transfers: dict[str, TransferProgress] = {}
@@ -179,6 +183,7 @@ class TensorStreaming:
         self._dh_private_key = x25519.X25519PrivateKey.generate()
         self._dh_public_key = self._dh_private_key.public_key()
         self._key_cache: dict[str, bytes] = {}
+        self._fernet = Fernet(Fernet.generate_key())
 
         # Register message handlers
         self._register_handlers()
@@ -357,10 +362,8 @@ class TensorStreaming:
                 self.stats["tensors_received"] += 1
                 self.stats["bytes_received"] += metadata.size_bytes
 
-                # Clean up
+                # Clean up active transfer
                 self.active_transfers.pop(tensor_id, None)
-                self.pending_chunks.pop(tensor_id, None)
-                self.tensor_metadata.pop(tensor_id, None)
 
                 logger.info(f"Successfully received tensor {metadata.name}")
                 return tensor_data, metadata
@@ -525,6 +528,14 @@ class TensorStreaming:
         if compression_type == CompressionType.ZLIB:
             return zlib.decompress(data)
         return data
+
+    def _encrypt_data(self, data: bytes) -> bytes:
+        """Encrypt data for disk caching."""
+        return self._fernet.encrypt(data)
+
+    def _decrypt_data(self, data: bytes) -> bytes:
+        """Decrypt cached data."""
+        return self._fernet.decrypt(data)
 
     def _split_into_chunks(self, data: bytes, tensor_id: str) -> list[TensorChunk]:
         """Split tensor data into chunks."""
@@ -693,9 +704,16 @@ class TensorStreaming:
             compression_type=(CompressionType(payload["compression_type"]) if payload["compression_type"] else None),
         )
 
-        # Store chunk
+        # Store chunk (encrypted on disk if cache_dir is set)
         if tensor_id not in self.pending_chunks:
             self.pending_chunks[tensor_id] = {}
+
+        if self.cache_dir:
+            file_path = os.path.join(self.cache_dir, f"{tensor_id}_{chunk_index}.chk")
+            with open(file_path, "wb") as f:
+                f.write(self._encrypt_data(chunk_data))
+            chunk.data = b""
+            chunk.file_path = file_path
 
         self.pending_chunks[tensor_id][chunk_index] = chunk
 
@@ -730,7 +748,7 @@ class TensorStreaming:
         # For now, just log the request
         logger.warning("Chunk re-request functionality not yet implemented")
 
-    async def _reconstruct_tensor(self, tensor_id: str) -> Any | None:
+    async def _reconstruct_tensor(self, tensor_id: str, cleanup: bool = True) -> Any | None:
         """Reconstruct tensor from received chunks."""
         if tensor_id not in self.pending_chunks or tensor_id not in self.tensor_metadata:
             return None
@@ -747,7 +765,16 @@ class TensorStreaming:
         sorted_chunks = [chunks[i] for i in range(metadata.total_chunks)]
 
         # Concatenate chunk data
-        combined_data = b"".join(chunk.data for chunk in sorted_chunks)
+        parts = []
+        for chunk in sorted_chunks:
+            if self.cache_dir and getattr(chunk, "file_path", None):
+                with open(chunk.file_path, "rb") as f:
+                    enc = f.read()
+                chunk_data = self._decrypt_data(enc)
+            else:
+                chunk_data = chunk.data
+            parts.append(chunk_data)
+        combined_data = b"".join(parts)
 
         # Decompress if needed
         if metadata.compression != CompressionType.NONE:
@@ -772,14 +799,27 @@ class TensorStreaming:
                 tensor = tensor.to(metadata.device or "cpu")
                 if metadata.requires_grad:
                     tensor.requires_grad_(True)
-                return tensor
-            return np_array
+                result: Any = tensor
+            else:
+                result = np_array
         elif metadata.format == TensorFormat.JSON:
-            tensor_data = json.loads(combined_data.decode("utf-8"))
-            return tensor_data
+            result = json.loads(combined_data.decode("utf-8"))
         else:
             logger.error(f"Unsupported tensor format: {metadata.format}")
             return None
+
+        if cleanup:
+            if self.cache_dir:
+                for chunk in sorted_chunks:
+                    if getattr(chunk, "file_path", None):
+                        try:
+                            os.remove(chunk.file_path)
+                        except OSError:
+                            pass
+            self.pending_chunks.pop(tensor_id, None)
+            self.tensor_metadata.pop(tensor_id, None)
+
+        return result
 
     def _find_missing_chunks(self, tensor_id: str) -> list[int]:
         """Find missing chunk indices for a tensor."""

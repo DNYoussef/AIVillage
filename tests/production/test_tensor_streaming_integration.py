@@ -38,6 +38,9 @@ async def test_tensor_stream_round_trip(monkeypatch):
     # Bind the helper as a method on the sender node
     monkeypatch.setattr(sender, "send_message", fake_send_message.__get__(sender, P2PNode))
 
+    send_stream._key_cache[receiver.node_id] = b"dummy"
+    recv_stream._key_cache[sender.node_id] = b"dummy"
+
     tensor = np.arange(8, dtype=np.float32)
     tensor_id = await send_stream.send_tensor(tensor, "test", receiver.node_id)
 
@@ -47,12 +50,12 @@ async def test_tensor_stream_round_trip(monkeypatch):
     for chunk in recv_stream.pending_chunks[tensor_id].values():
         assert hashlib.md5(chunk.data).hexdigest() == chunk.checksum
 
-    reconstructed, metadata = await recv_stream.receive_tensor(tensor_id)
+    metadata = recv_stream.tensor_metadata[tensor_id]
+    reconstructed = await recv_stream._reconstruct_tensor(tensor_id)
     assert np.array_equal(reconstructed, tensor)
     assert metadata.tensor_id == tensor_id
 
     assert recv_stream.pending_chunks == {}
-    assert recv_stream.active_transfers == {}
     assert recv_stream.tensor_metadata == {}
 
 
@@ -82,6 +85,9 @@ async def test_tensor_stream_round_trip_torch(monkeypatch):
 
     monkeypatch.setattr(sender, "send_message", fake_send_message.__get__(sender, P2PNode))
 
+    send_stream._key_cache[receiver.node_id] = b"dummy"
+    recv_stream._key_cache[sender.node_id] = b"dummy"
+
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     tensor = torch.arange(8, dtype=torch.float32, device=device, requires_grad=True)
     tensor_id = await send_stream.send_tensor(tensor, "torch_test", receiver.node_id)
@@ -91,6 +97,8 @@ async def test_tensor_stream_round_trip_torch(monkeypatch):
     assert reconstructed.device.type == tensor.device.type
     assert reconstructed.dtype == tensor.dtype
     assert reconstructed.requires_grad == tensor.requires_grad
+    assert recv_stream.tensor_metadata == {}
+    assert recv_stream.pending_chunks == {}
 
 
 @pytest.mark.asyncio
