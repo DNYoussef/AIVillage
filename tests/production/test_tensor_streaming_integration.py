@@ -47,10 +47,13 @@ async def test_tensor_stream_round_trip(monkeypatch):
     for chunk in recv_stream.pending_chunks[tensor_id].values():
         assert hashlib.md5(chunk.data).hexdigest() == chunk.checksum
 
-    reconstructed = await recv_stream._reconstruct_tensor(tensor_id)
-    metadata = recv_stream.tensor_metadata[tensor_id]
+    reconstructed, metadata = await recv_stream.receive_tensor(tensor_id)
     assert np.array_equal(reconstructed, tensor)
     assert metadata.tensor_id == tensor_id
+
+    assert recv_stream.pending_chunks == {}
+    assert recv_stream.active_transfers == {}
+    assert recv_stream.tensor_metadata == {}
 
 
 @pytest.mark.asyncio
