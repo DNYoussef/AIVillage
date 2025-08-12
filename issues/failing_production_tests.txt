@@ -1,0 +1,16 @@
+# Failing Production Tests
+
+## Summary
+The production test suite fails during collection when running `pytest tests/production --cov=src/production`.
+
+## Details
+- **Test**: `tests/production/test_tensor_streaming_integration.py`
+- **Error**: `TypeError: unsupported operand type(s) for |: 'builtin_function_or_method' and 'NoneType'`
+- **Source**: `src/production/communications/p2p/tensor_streaming.py:255`
+
+## Impact
+- Coverage report is not generated.
+- Remaining tests are skipped because collection stops on error.
+
+## Suggested Action
+- Update the type hint for `progress_callback` in `tensor_streaming.py` to use `Callable` from `typing`.
