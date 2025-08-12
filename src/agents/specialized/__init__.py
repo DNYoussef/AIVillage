@@ -1,11 +1,10 @@
-"""
-Specialized Agents Module - Advanced Sub-Agent Implementations
+"""Specialized Agents Module - Advanced Sub-Agent Implementations
 
 This module provides 8 specialized sub-agents designed to complement the existing
 18 primary agents in the AIVillage ecosystem:
 
 1. DataScienceAgent - Statistical analysis, ML training, data insights
-2. DevOpsAgent - CI/CD, infrastructure management, deployment automation  
+2. DevOpsAgent - CI/CD, infrastructure management, deployment automation
 3. FinancialAgent - Portfolio optimization, risk analysis, economic modeling
 4. CreativeAgent - Story generation, visual design, music composition
 5. SocialAgent - Community management, conflict resolution, engagement

@@ -34,41 +34,41 @@ class {agent_class}(AgentInterface):
     """
     {agent_description}
     """
-    
+
     def __init__(self, agent_id: str = "{agent_id}"):
         self.agent_id = agent_id
         self.agent_type = "{agent_type}"
         self.capabilities = {capabilities}
-        
+
         # {agent_type}-specific attributes
         {specific_attributes}
-        
+
         self.initialized = False
 
     async def generate(self, prompt: str) -> str:
         """Generate {agent_type.lower()} responses"""
         {generate_logic}
         return "I am {agent_name}, {role_description}."
-    
+
     async def get_embedding(self, text: str) -> list[float]:
         """Get embedding for {agent_type.lower()} text"""
         import hashlib
         hash_value = int(hashlib.md5(text.encode()).hexdigest(), 16)
         return [(hash_value % 1000) / 1000.0] * {embedding_size}
-    
+
     async def rerank(self, query: str, results: list[dict[str, Any]], k: int) -> list[dict[str, Any]]:
         """Rerank based on {agent_type.lower()} relevance"""
         keywords = {keywords}
-        
+
         for result in results:
             score = 0
             content = str(result.get('content', ''))
             for keyword in keywords:
                 score += content.lower().count(keyword)
             result['{relevance_key}'] = score
-            
+
         return sorted(results, key=lambda x: x.get('{relevance_key}', 0), reverse=True)[:k]
-    
+
     async def introspect(self) -> dict[str, Any]:
         """Return {agent_type} agent status"""
         return {{
@@ -78,14 +78,14 @@ class {agent_class}(AgentInterface):
             {introspection_fields}
             'initialized': self.initialized
         }}
-    
+
     async def communicate(self, message: str, recipient: "AgentInterface") -> str:
         """Communicate with other agents"""
         if recipient:
             response = await recipient.generate(f"{agent_name} says: {{message}}")
             return f"Received response: {{response[:50]}}..."
         return "No recipient specified"
-    
+
     async def activate_latent_space(self, query: str) -> tuple[str, str]:
         """Activate {agent_type.lower()} latent space"""
         {latent_space_logic}
@@ -146,12 +146,12 @@ ATLANTIS_AGENTS = {
         """Draft legal contract with specified terms"""
         # Contract drafting logic here
         pass
-    
+
     async def arbitrate_dispute(self, dispute: Dict[str, Any]) -> Dict[str, Any]:
         """Arbitrate dispute between parties"""
-        # Arbitration logic here  
+        # Arbitration logic here
         pass
-    
+
     async def check_legal_compliance(self, action: str, jurisdiction: str) -> Dict[str, Any]:
         """Check if action complies with legal requirements"""
         # Compliance checking logic here
@@ -185,12 +185,12 @@ ATLANTIS_AGENTS = {
         """Verify transaction receipts with Merkle proofs"""
         # Receipt verification logic here
         pass
-    
+
     async def conduct_financial_audit(self, period: str, scope: List[str]) -> Dict[str, Any]:
         """Conduct comprehensive financial audit"""
         # Auditing logic here
         pass
-    
+
     async def investigate_incident(self, incident_id: str) -> Dict[str, Any]:
         """Conduct forensic investigation of incident"""
         # Forensics logic here
@@ -227,12 +227,12 @@ ATLANTIS_AGENTS = {
         """Validate knowledge claim against evidence"""
         # Validation logic here
         pass
-    
+
     async def curate_knowledge_corpus(self, domain: str, sources: List[str]) -> Dict[str, Any]:
         """Curate knowledge corpus for domain"""
         # Curation logic here
         pass
-    
+
     async def conduct_research_initiative(self, research_question: str) -> Dict[str, Any]:
         """Lead comprehensive research initiative"""
         # Research coordination logic here
@@ -266,15 +266,15 @@ ATLANTIS_AGENTS = {
         """Classify content into appropriate categories"""
         # Classification logic here
         pass
-    
+
     async def identify_knowledge_gaps(self, domain: str) -> List[str]:
         """Identify gaps in domain knowledge"""
         # Gap analysis logic here
         pass
-    
+
     async def maintain_domain_pack(self, domain: str, content_updates: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Maintain domain-specific content pack"""
-        # Domain pack maintenance logic here  
+        # Domain pack maintenance logic here
         pass''',
         },
         "oracle_agent": {
@@ -305,12 +305,12 @@ ATLANTIS_AGENTS = {
         """Run advanced physics simulation"""
         # Physics simulation logic here
         pass
-    
+
     async def model_chemical_reaction(self, reactants: List[str], conditions: Dict[str, Any]) -> Dict[str, Any]:
         """Model chemical reaction kinetics"""
         # Chemistry modeling logic here
         pass
-    
+
     async def explore_quantum_algorithm(self, problem: str) -> Dict[str, Any]:
         """Explore quantum computing solutions"""
         # Quantum computing logic here
@@ -344,12 +344,12 @@ ATLANTIS_AGENTS = {
         """Analyze human behavioral patterns"""
         # Behavioral analysis logic here
         pass
-    
+
     async def detect_cultural_anomalies(self, cultural_data: Dict[str, Any]) -> List[str]:
-        """Detect anomalies in cultural patterns"""  
+        """Detect anomalies in cultural patterns"""
         # Cultural anomaly detection logic here
         pass
-    
+
     async def synthesize_wisdom(self, experiences: List[str], context: str) -> str:
         """Synthesize wisdom from experiences"""
         # Wisdom synthesis logic here
@@ -383,12 +383,12 @@ ATLANTIS_AGENTS = {
         """Develop comprehensive strategic roadmap"""
         # Roadmap development logic here
         pass
-    
+
     async def analyze_strategic_scenarios(self, scenarios: List[str]) -> Dict[str, Any]:
         """Analyze potential strategic scenarios"""
         # Scenario analysis logic here
         pass
-    
+
     async def align_agent_objectives(self, agents: List[str], goals: List[str]) -> Dict[str, Any]:
         """Align agent objectives with strategic goals"""
         # Objective alignment logic here
@@ -425,12 +425,12 @@ ATLANTIS_AGENTS = {
         """Translate with deep cultural context"""
         # Cultural translation logic here
         pass
-    
+
     async def analyze_dialect_variations(self, text: str, language: str) -> Dict[str, Any]:
         """Analyze dialect variations in text"""
         # Dialect analysis logic here
         pass
-    
+
     async def bridge_cultural_communication(self, message: str, source_culture: str, target_culture: str) -> str:
         """Bridge communication across cultures"""
         # Cultural bridging logic here
@@ -464,12 +464,12 @@ ATLANTIS_AGENTS = {
         """Assess learner's baseline knowledge and skills"""
         # Assessment logic here
         pass
-    
+
     async def generate_personalized_lesson(self, learner_profile: Dict[str, Any], topic: str) -> Dict[str, Any]:
         """Generate personalized lesson plan"""
         # Lesson generation logic here
         pass
-    
+
     async def train_new_agent(self, agent_type: str, training_data: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Train new agent in the Forge"""
         # Agent training logic here
@@ -503,12 +503,12 @@ ATLANTIS_AGENTS = {
         """Triage patient symptoms and recommend care level"""
         # Triage logic here
         pass
-    
+
     async def recommend_medical_referral(self, assessment: Dict[str, Any]) -> Dict[str, Any]:
         """Recommend appropriate medical referral"""
         # Referral logic here
         pass
-    
+
     async def optimize_clinic_workflow(self, clinic_data: Dict[str, Any]) -> Dict[str, Any]:
         """Optimize clinic operations and workflow"""
         # Workflow optimization logic here
@@ -545,12 +545,12 @@ ATLANTIS_AGENTS = {
         """Optimize marketplace pricing strategies"""
         # Pricing optimization logic here
         pass
-    
+
     async def route_demand(self, service_request: Dict[str, Any]) -> Dict[str, Any]:
         """Route demand across SNET/NuNet networks"""
         # Demand routing logic here
         pass
-    
+
     async def manage_credit_ledger(self, transactions: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Manage distributed credit ledger"""
         # Credit management logic here
@@ -584,12 +584,12 @@ ATLANTIS_AGENTS = {
         """Manage DSWF barbell portfolio strategy"""
         # Portfolio management logic here
         pass
-    
+
     async def process_micro_loans(self, loan_applications: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Process and manage micro-loan operations"""
         # Micro-lending logic here
         pass
-    
+
     async def calculate_ubi_disbursement(self, participant_data: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Calculate UBI disbursement amounts"""
         # UBI calculation logic here
@@ -626,12 +626,12 @@ ATLANTIS_AGENTS = {
         """Generate optimized code for requirements"""
         # Code generation logic here
         pass
-    
+
     async def conduct_architecture_search(self, constraints: Dict[str, Any]) -> Dict[str, Any]:
         """Conduct nightly neural architecture search"""
         # Architecture search logic here
         pass
-    
+
     async def rent_specialized_compute(self, compute_type: str, duration: int) -> Dict[str, Any]:
         """Rent specialized compute resources"""
         # Specialized compute logic here
@@ -665,12 +665,12 @@ ATLANTIS_AGENTS = {
         """Optimize routing path with constraints"""
         # Routing optimization logic here
         pass
-    
+
     async def manage_mesh_topology(self, nodes: List[str], connections: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Manage mesh network topology"""
         # Mesh management logic here
         pass
-    
+
     async def implement_dtn_protocol(self, message: Dict[str, Any], route: List[str]) -> Dict[str, Any]:
         """Implement DTN store-and-forward protocol"""
         # DTN protocol logic here
@@ -704,12 +704,12 @@ ATLANTIS_AGENTS = {
         """Maintain cluster health and performance"""
         # Cluster maintenance logic here
         pass
-    
+
     async def clean_technical_debt(self, codebase: str, debt_types: List[str]) -> Dict[str, Any]:
         """Clean identified technical debt"""
         # Debt cleanup logic here
         pass
-    
+
     async def shape_village_topology(self, space_requirements: Dict[str, Any]) -> Dict[str, Any]:
         """Shape 3D village space and topology"""
         # Topology shaping logic here
@@ -743,12 +743,12 @@ ATLANTIS_AGENTS = {
         """Profile device capabilities and constraints"""
         # Device profiling logic here
         pass
-    
+
     async def optimize_power_usage(self, power_constraints: Dict[str, Any]) -> Dict[str, Any]:
         """Optimize power usage with solar/battery constraints"""
         # Power optimization logic here
         pass
-    
+
     async def tune_cost_performance(self, workload: Dict[str, Any], budget: float) -> Dict[str, Any]:
         """Tune cost/performance under budget constraints"""
         # Cost/performance tuning logic here
@@ -782,12 +782,12 @@ ATLANTIS_AGENTS = {
         """Synchronize handoff between agents"""
         # Handoff synchronization logic here
         pass
-    
+
     async def resolve_resource_contention(self, competing_requests: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Resolve resource contention between agents"""
         # Contention resolution logic here
         pass
-    
+
     async def monitor_workflow_slas(self, workflow_id: str, sla_requirements: Dict[str, Any]) -> Dict[str, Any]:
         """Monitor workflow SLA compliance"""
         # SLA monitoring logic here
@@ -824,12 +824,12 @@ ATLANTIS_AGENTS = {
         """Convert design to manufacturable SKU"""
         # Design-to-manufacturing logic here
         pass
-    
+
     async def manage_fabrication_job(self, job_specs: Dict[str, Any], equipment: List[str]) -> Dict[str, Any]:
         """Manage digital fabrication job"""
         # Fabrication management logic here
         pass
-    
+
     async def ensure_product_quality(self, product_data: Dict[str, Any], quality_standards: Dict[str, Any]) -> Dict[str, Any]:
         """Ensure product quality standards"""
         # Quality assurance logic here
@@ -856,12 +856,12 @@ ATLANTIS_AGENTS = {
         """Compose music for specific context and style"""
         # Music composition logic here
         pass
-    
+
     async def produce_educational_video(self, content: Dict[str, Any], learning_objectives: List[str]) -> Dict[str, Any]:
         """Produce educational video content"""
         # Video production logic here
         pass
-    
+
     async def coordinate_creative_campaign(self, campaign_requirements: Dict[str, Any]) -> Dict[str, Any]:
         """Coordinate multi-media creative campaign"""
         # Creative coordination logic here
@@ -895,12 +895,12 @@ ATLANTIS_AGENTS = {
         """Analyze soil conditions and recommend improvements"""
         # Soil analysis logic here
         pass
-    
+
     async def optimize_crop_rotation(self, farm_data: Dict[str, Any], objectives: List[str]) -> Dict[str, Any]:
         """Optimize crop rotation for sustainability"""
         # Crop optimization logic here
         pass
-    
+
     async def recommend_regenerative_practices(self, current_practices: List[str], constraints: Dict[str, Any]) -> List[str]:
         """Recommend regenerative agriculture practices"""
         # Regenerative practices logic here
@@ -943,7 +943,7 @@ def create_agent_directory_structure():
                 agent_names.append(class_name)
 
             init_content = f'''"""
-{domain.replace('_', ' ').title()} Agents
+{domain.replace("_", " ").title()} Agents
 
 Domain agents for {domain} operations.
 """
@@ -979,15 +979,15 @@ def generate_agent_file(domain: str, agent_key: str, agent_config: Dict[str, Any
         ),
         "specific_attributes": f"# {agent_config['class']}-specific state and data structures",
         "introspection_fields": "'domain': '" + domain + "',",
-        "generate_logic": f"""# Context-specific responses for {agent_config['class']}
-        keywords = {agent_config['keywords']}
+        "generate_logic": f"""# Context-specific responses for {agent_config["class"]}
+        keywords = {agent_config["keywords"]}
         for keyword in keywords:
             if keyword in prompt.lower():
                 return f"I specialize in {{keyword}} operations for the village."
         """,
         "latent_space_logic": f"""
         # Determine latent space based on query context
-        keywords = {agent_config['keywords']}
+        keywords = {agent_config["keywords"]}
         space_type = "general"
         for keyword in keywords:
             if keyword in query.lower():
@@ -1033,26 +1033,26 @@ def create_master_registry():
 Atlantis Master Agent Registry
 
 Central registry for all 33 agents in the AIVillage ecosystem:
-- 25 Atlantis Meta-Agents (governance, knowledge, infrastructure, etc.)  
+- 25 Atlantis Meta-Agents (governance, knowledge, infrastructure, etc.)
 - 8 Specialized Sub-Agents (data science, DevOps, financial, etc.)
 """
 
 from .atlantis_meta_agents import (
     # Governance agents
     KingAgent, ShieldAgent, SwordAgent, LegalAgent, AuditorAgent,
-    
-    # Knowledge agents  
+
+    # Knowledge agents
     SageAgent, CuratorAgent, OracleAgent, ShamanAgent, StrategistAgent,
-    
+
     # Language/Education/Health agents
     PolyglotAgent, TutorAgent, MedicAgent,
-    
+
     # Economy agents
     MerchantAgent, BankerEconomistAgent,
-    
+
     # Infrastructure agents
     MagiAgent, NavigatorAgent, GardenerAgent, SustainerAgent, CoordinatorAgent,
-    
+
     # Culture/Making agents
     MakerAgent, EnsembleAgent, HorticulturistAgent
 )
@@ -1067,22 +1067,22 @@ from .specialized import (
 ALL_AGENTS = [
     # Governance (5)
     KingAgent, ShieldAgent, SwordAgent, LegalAgent, AuditorAgent,
-    
-    # Knowledge (5)  
+
+    # Knowledge (5)
     SageAgent, CuratorAgent, OracleAgent, ShamanAgent, StrategistAgent,
-    
+
     # Language/Education/Health (3)
     PolyglotAgent, TutorAgent, MedicAgent,
-    
+
     # Economy (2)
     MerchantAgent, BankerEconomistAgent,
-    
+
     # Infrastructure (5)
     MagiAgent, NavigatorAgent, GardenerAgent, SustainerAgent, CoordinatorAgent,
-    
+
     # Culture/Making (3)
     MakerAgent, EnsembleAgent, HorticulturistAgent,
-    
+
     # Specialized Sub-Agents (8)
     DataScienceAgent, DevOpsAgent, FinancialAgent, CreativeAgent,
     SocialAgent, TranslatorAgent, ArchitectAgent, TesterAgent
@@ -1090,20 +1090,20 @@ ALL_AGENTS = [
 
 # Agent counts
 ATLANTIS_META_AGENTS = 23
-SPECIALIZED_SUB_AGENTS = 8  
+SPECIALIZED_SUB_AGENTS = 8
 TOTAL_AGENTS = ATLANTIS_META_AGENTS + SPECIALIZED_SUB_AGENTS  # 31 agents
 
 def get_complete_agent_roster():
     """Get complete roster of all 31 agents"""
     return {
         'atlantis_meta_agents': ATLANTIS_META_AGENTS,
-        'specialized_sub_agents': SPECIALIZED_SUB_AGENTS, 
+        'specialized_sub_agents': SPECIALIZED_SUB_AGENTS,
         'total_agents': TOTAL_AGENTS,
         'agents_by_domain': {
             'governance': 5,
             'knowledge': 5,
             'language_education_health': 3,
-            'economy': 2, 
+            'economy': 2,
             'infrastructure': 5,
             'culture_making': 3,
             'specialized': 8
@@ -1114,7 +1114,7 @@ def get_complete_agent_roster():
 __all__ = [
     # All agent classes
     *[agent.__name__ for agent in ALL_AGENTS],
-    
+
     # Registry utilities
     'SpecializedAgentRegistry', 'get_global_registry',
     'get_complete_agent_roster', 'ALL_AGENTS'

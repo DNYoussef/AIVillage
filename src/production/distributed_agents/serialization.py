@@ -3,20 +3,20 @@ from __future__ import annotations
 """Safe serialization utilities for agent checkpoints."""
 
 import json
-from typing import Any, Dict
+from typing import Any
 
 import msgpack
 
 CURRENT_VERSION = 1
 
 
-def serialize_checkpoint(data: Dict[str, Any]) -> bytes:
+def serialize_checkpoint(data: dict[str, Any]) -> bytes:
     """Serialize checkpoint data with version information."""
     payload = {"version": CURRENT_VERSION, "data": data}
     return msgpack.dumps(payload)
 
 
-def deserialize_checkpoint(payload: bytes) -> Dict[str, Any]:
+def deserialize_checkpoint(payload: bytes) -> dict[str, Any]:
     """Deserialize checkpoint payload supporting legacy JSON format."""
     try:
         decoded = msgpack.loads(payload, raw=False)

@@ -1,10 +1,9 @@
-"""
-Financial Agent - Economic Modeling and Financial Analysis Specialist
-"""
+"""Financial Agent - Economic Modeling and Financial Analysis Specialist"""
+
 import logging
 import math
 from dataclasses import dataclass
-from typing import Any, Dict, List
+from typing import Any
 
 from src.production.rag.rag_system.core.agent_interface import AgentInterface
 
@@ -17,13 +16,12 @@ class FinancialAnalysisRequest:
 
     analysis_type: str  # 'portfolio', 'risk', 'valuation', 'forecast'
     data_source: str
-    parameters: Dict[str, Any]
+    parameters: dict[str, Any]
     time_horizon: str = "1Y"
 
 
 class FinancialAgent(AgentInterface):
-    """
-    Specialized agent for financial analysis including:
+    """Specialized agent for financial analysis including:
     - Portfolio optimization and risk analysis
     - Financial modeling and forecasting
     - Market sentiment analysis
@@ -53,11 +51,11 @@ class FinancialAgent(AgentInterface):
         """Generate financial analysis responses"""
         if "portfolio" in prompt.lower():
             return "I can optimize portfolios using modern portfolio theory and risk metrics like VaR and Sharpe ratio."
-        elif "risk" in prompt.lower():
+        if "risk" in prompt.lower():
             return "I analyze financial risk using VaR, CVaR, beta analysis, and stress testing scenarios."
-        elif "forecast" in prompt.lower():
+        if "forecast" in prompt.lower():
             return "I provide financial forecasts using time series analysis, Monte Carlo simulations, and economic models."
-        elif "valuation" in prompt.lower():
+        if "valuation" in prompt.lower():
             return "I perform asset valuation using DCF, comparables, and options pricing models."
         return "I'm a Financial Agent specialized in quantitative finance, risk management, and economic analysis."
 
@@ -118,8 +116,8 @@ class FinancialAgent(AgentInterface):
         return analysis_type, latent_representation
 
     async def optimize_portfolio(
-        self, assets: List[str], constraints: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, assets: list[str], constraints: dict[str, Any]
+    ) -> dict[str, Any]:
         """Optimize portfolio allocation using modern portfolio theory"""
         try:
             # Simulate expected returns and covariance matrix
@@ -141,7 +139,9 @@ class FinancialAgent(AgentInterface):
             weights = [1.0 / n_assets] * n_assets
 
             # Calculate portfolio metrics
-            portfolio_return = sum(w * r for w, r in zip(weights, expected_returns))
+            portfolio_return = sum(
+                w * r for w, r in zip(weights, expected_returns, strict=False)
+            )
             portfolio_variance = sum(
                 weights[i] * weights[j] * covariance_matrix[i][j]
                 for i in range(n_assets)
@@ -156,7 +156,10 @@ class FinancialAgent(AgentInterface):
 
             result = {
                 "assets": assets,
-                "weights": {asset: weight for asset, weight in zip(assets, weights)},
+                "weights": {
+                    asset: weight
+                    for asset, weight in zip(assets, weights, strict=False)
+                },
                 "expected_return": portfolio_return,
                 "volatility": portfolio_volatility,
                 "sharpe_ratio": sharpe_ratio,
@@ -171,8 +174,8 @@ class FinancialAgent(AgentInterface):
             return {"error": str(e)}
 
     async def calculate_risk_metrics(
-        self, portfolio_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, portfolio_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """Calculate comprehensive risk metrics"""
         try:
             # Simulate portfolio returns
@@ -239,7 +242,7 @@ class FinancialAgent(AgentInterface):
             return {"error": str(e)}
 
     def _calculate_beta(
-        self, asset_returns: List[float], market_returns: List[float]
+        self, asset_returns: list[float], market_returns: list[float]
     ) -> float:
         """Calculate beta coefficient"""
         if len(asset_returns) != len(market_returns):
@@ -250,7 +253,7 @@ class FinancialAgent(AgentInterface):
 
         covariance = sum(
             (a - asset_mean) * (m - market_mean)
-            for a, m in zip(asset_returns, market_returns)
+            for a, m in zip(asset_returns, market_returns, strict=False)
         ) / len(asset_returns)
         market_variance = sum((m - market_mean) ** 2 for m in market_returns) / len(
             market_returns
@@ -259,8 +262,8 @@ class FinancialAgent(AgentInterface):
         return covariance / market_variance if market_variance > 0 else 1.0
 
     async def perform_dcf_valuation(
-        self, company_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, company_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """Perform Discounted Cash Flow valuation"""
         try:
             # Extract key financial data
@@ -326,8 +329,8 @@ class FinancialAgent(AgentInterface):
             return {"error": str(e)}
 
     async def forecast_market_trends(
-        self, market_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, market_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """Forecast market trends using time series analysis"""
         try:
             # Simulate historical data
@@ -394,8 +397,8 @@ class FinancialAgent(AgentInterface):
             return {"error": str(e)}
 
     async def analyze_credit_risk(
-        self, borrower_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, borrower_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """Analyze credit risk using financial ratios and scoring"""
         try:
             # Extract financial metrics

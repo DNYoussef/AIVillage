@@ -27,7 +27,7 @@ class {config["class_name"]}(AgentInterface):
     """
     {config["description"]}
     """
-    
+
     def __init__(self, agent_id: str = "{config["agent_id"]}"):
         self.agent_id = agent_id
         self.agent_type = "{config["agent_type"]}"
@@ -36,15 +36,15 @@ class {config["class_name"]}(AgentInterface):
 
     async def generate(self, prompt: str) -> str:
         return "I am {config["name"]}, responsible for {config["description"]}."
-    
+
     async def get_embedding(self, text: str) -> list[float]:
         import hashlib
         hash_value = int(hashlib.md5(text.encode()).hexdigest(), 16)
         return [(hash_value % 1000) / 1000.0] * 384
-    
+
     async def rerank(self, query: str, results: list[dict[str, Any]], k: int) -> list[dict[str, Any]]:
         return results[:k]
-    
+
     async def introspect(self) -> dict[str, Any]:
         return {{
             'agent_id': self.agent_id,
@@ -52,13 +52,13 @@ class {config["class_name"]}(AgentInterface):
             'capabilities': self.capabilities,
             'initialized': self.initialized
         }}
-    
+
     async def communicate(self, message: str, recipient: "AgentInterface") -> str:
         if recipient:
             response = await recipient.generate(f"{config["name"]} says: {{message}}")
             return f"Response: {{response[:50]}}"
         return "No recipient"
-    
+
     async def activate_latent_space(self, query: str) -> tuple[str, str]:
         return "general", f"{{self.agent_type.upper()}}[general:{{query[:50]}}]"
 

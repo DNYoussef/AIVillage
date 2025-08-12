@@ -545,9 +545,9 @@ class MathTutorEvolution:
 
                     # Store in fitness history
                     self.fitness_history[individual.individual_id] = fitness_score
-                    generation_kpis[
-                        individual.individual_id
-                    ] = fitness_evaluator.kpi_scores.copy()
+                    generation_kpis[individual.individual_id] = (
+                        fitness_evaluator.kpi_scores.copy()
+                    )
 
             except Exception as e:
                 logger.exception(

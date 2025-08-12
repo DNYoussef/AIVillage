@@ -1,11 +1,10 @@
-"""
-Tester Agent - Automated Testing and Quality Assurance Specialist
-"""
+"""Tester Agent - Automated Testing and Quality Assurance Specialist"""
+
 import hashlib
 import logging
 import random
 from dataclasses import dataclass
-from typing import Any, Dict
+from typing import Any
 
 from src.production.rag.rag_system.core.agent_interface import AgentInterface
 
@@ -18,13 +17,12 @@ class TestRequest:
 
     test_type: str  # 'unit', 'integration', 'e2e', 'performance', 'security'
     target: str
-    parameters: Dict[str, Any]
+    parameters: dict[str, Any]
     coverage_threshold: float = 0.8
 
 
 class TesterAgent(AgentInterface):
-    """
-    Specialized agent for testing and QA including:
+    """Specialized agent for testing and QA including:
     - Automated test generation and execution
     - Test strategy planning and implementation
     - Performance and load testing
@@ -55,11 +53,11 @@ class TesterAgent(AgentInterface):
             "unit" in prompt.lower() or "integration" in prompt.lower()
         ):
             return "I can generate and execute comprehensive test suites including unit, integration, and E2E tests."
-        elif "performance" in prompt.lower():
+        if "performance" in prompt.lower():
             return "I conduct performance testing, load testing, and stress testing to ensure system reliability."
-        elif "security" in prompt.lower():
+        if "security" in prompt.lower():
             return "I perform security testing including vulnerability assessments and penetration testing."
-        elif "coverage" in prompt.lower():
+        if "coverage" in prompt.lower():
             return "I analyze test coverage and generate detailed coverage reports with improvement recommendations."
         return "I'm a Tester Agent specialized in automated testing, quality assurance, and test strategy planning."
 
@@ -108,7 +106,7 @@ class TesterAgent(AgentInterface):
         test_type = "performance" if "performance" in query.lower() else "functional"
         return test_type, f"TEST[{test_type}:{query[:50]}]"
 
-    async def execute_test_suite(self, request: TestRequest) -> Dict[str, Any]:
+    async def execute_test_suite(self, request: TestRequest) -> dict[str, Any]:
         """Execute comprehensive test suite"""
         try:
             test_id = f"test_{request.test_type}_{hash(request.target) % 10000}"
@@ -137,7 +135,7 @@ class TesterAgent(AgentInterface):
             logger.error(f"Test execution failed: {e}")
             return {"error": str(e)}
 
-    async def _execute_unit_tests(self, request: TestRequest) -> Dict[str, Any]:
+    async def _execute_unit_tests(self, request: TestRequest) -> dict[str, Any]:
         """Execute unit tests"""
         # Simulate unit test results
         total_tests = random.randint(50, 200)
@@ -168,7 +166,7 @@ class TesterAgent(AgentInterface):
             ],
         }
 
-    async def _execute_integration_tests(self, request: TestRequest) -> Dict[str, Any]:
+    async def _execute_integration_tests(self, request: TestRequest) -> dict[str, Any]:
         """Execute integration tests"""
         total_tests = random.randint(20, 80)
         passed_tests = int(total_tests * random.uniform(0.8, 0.95))
@@ -196,7 +194,7 @@ class TesterAgent(AgentInterface):
             ],
         }
 
-    async def _execute_e2e_tests(self, request: TestRequest) -> Dict[str, Any]:
+    async def _execute_e2e_tests(self, request: TestRequest) -> dict[str, Any]:
         """Execute end-to-end tests"""
         total_tests = random.randint(10, 50)
         passed_tests = int(total_tests * random.uniform(0.75, 0.9))
@@ -224,7 +222,7 @@ class TesterAgent(AgentInterface):
             },
         }
 
-    async def _execute_performance_tests(self, request: TestRequest) -> Dict[str, Any]:
+    async def _execute_performance_tests(self, request: TestRequest) -> dict[str, Any]:
         """Execute performance tests"""
         concurrent_users = request.parameters.get("concurrent_users", 100)
         duration_minutes = request.parameters.get("duration_minutes", 10)
@@ -268,7 +266,7 @@ class TesterAgent(AgentInterface):
             ],
         }
 
-    async def _execute_security_tests(self, request: TestRequest) -> Dict[str, Any]:
+    async def _execute_security_tests(self, request: TestRequest) -> dict[str, Any]:
         """Execute security tests"""
         vulnerability_types = [
             "SQL Injection",
@@ -323,8 +321,8 @@ class TesterAgent(AgentInterface):
         }
 
     async def generate_test_strategy(
-        self, project_requirements: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, project_requirements: dict[str, Any]
+    ) -> dict[str, Any]:
         """Generate comprehensive test strategy"""
         try:
             project_type = project_requirements.get("type", "web_application")

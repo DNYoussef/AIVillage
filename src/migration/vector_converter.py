@@ -8,7 +8,6 @@ Preserves semantic information while enabling graph-based reasoning.
 import argparse
 import json
 import logging
-import pickle
 
 # Import HypeRAG components
 import sys
@@ -173,10 +172,21 @@ class VectorStoreLoader:
     def load_custom_store(self) -> list[VectorDocument]:
         """Load documents from custom pickle format."""
         try:
-            store_file = self.vector_store_path / "vector_store.pkl"
+            # Try JSON format first (secure)
+            json_store_file = self.vector_store_path / "vector_store.json"
+            pkl_store_file = self.vector_store_path / "vector_store.pkl"
 
-            with open(store_file, "rb") as f:
-                data = pickle.load(f)
+            if json_store_file.exists():
+                with open(json_store_file) as f:
+                    data = json.load(f)
+            elif pkl_store_file.exists():
+                logger.error(
+                    "Legacy pickle file found but not supported for security reasons"
+                )
+                logger.error("Please convert your vector store to JSON format manually")
+                raise ValueError("Unsafe pickle format not supported")
+            else:
+                raise FileNotFoundError("No vector store file found")
 
             documents = []
             for doc_data in data:

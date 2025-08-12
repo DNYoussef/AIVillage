@@ -206,9 +206,9 @@ def mask_model_weights(
             param_name: param_dict[param_name] for param_name in param_names_to_merge
         }
     else:
-        assert (
-            weight_format == "delta_weight"
-        ), f"Unsupported weight_format: {weight_format}"
+        assert weight_format == "delta_weight", (
+            f"Unsupported weight_format: {weight_format}"
+        )
         task_vector = TaskVector(
             pretrained_model=pretrained_model,
             finetuned_model=finetuned_model,

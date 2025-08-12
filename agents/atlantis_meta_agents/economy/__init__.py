@@ -1,1 +1,6 @@
-"""Economy Agents"""\n\nfrom .merchant_agent import MerchantAgent\nfrom .bankereconomist_agent import BankerEconomistAgent\n\n__all__ = ['MerchantAgent', 'BankerEconomistAgent']
+"""Economy Agents"""
+
+from .bankereconomist_agent import BankerEconomistAgent
+from .merchant_agent import MerchantAgent
+
+__all__ = ["MerchantAgent", "BankerEconomistAgent"]

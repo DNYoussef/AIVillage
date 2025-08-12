@@ -1,10 +1,9 @@
-"""
-Translator Agent - Advanced Multi-language Processing Specialist
-"""
+"""Translator Agent - Advanced Multi-language Processing Specialist"""
+
 import hashlib
 import logging
 from dataclasses import dataclass
-from typing import Any, Dict, Optional
+from typing import Any
 
 from src.production.rag.rag_system.core.agent_interface import AgentInterface
 
@@ -18,13 +17,12 @@ class TranslationRequest:
     source_text: str
     source_language: str
     target_language: str
-    context: Optional[str] = None
+    context: str | None = None
     domain: str = "general"
 
 
 class TranslatorAgent(AgentInterface):
-    """
-    Specialized agent for language processing including:
+    """Specialized agent for language processing including:
     - Real-time translation between 100+ languages
     - Context-aware translation with domain expertise
     - Cultural localization and adaptation
@@ -66,11 +64,11 @@ class TranslatorAgent(AgentInterface):
     async def generate(self, prompt: str) -> str:
         if "translate" in prompt.lower():
             return "I can translate text between 100+ languages with context awareness and cultural adaptation."
-        elif "language" in prompt.lower() and "detect" in prompt.lower():
+        if "language" in prompt.lower() and "detect" in prompt.lower():
             return (
                 "I can detect the language of any text and analyze linguistic patterns."
             )
-        elif "localize" in prompt.lower():
+        if "localize" in prompt.lower():
             return "I provide cultural localization services for global content adaptation."
         return "I'm a Translator Agent specialized in multilingual processing and cross-cultural communication."
 
@@ -117,7 +115,7 @@ class TranslatorAgent(AgentInterface):
         translation_type = "document" if "document" in query.lower() else "conversation"
         return translation_type, f"TRANSLATE[{translation_type}:{query[:50]}]"
 
-    async def translate_text(self, request: TranslationRequest) -> Dict[str, Any]:
+    async def translate_text(self, request: TranslationRequest) -> dict[str, Any]:
         """Translate text with context awareness"""
         try:
             # Simulate advanced translation with context
@@ -174,7 +172,7 @@ class TranslatorAgent(AgentInterface):
             logger.error(f"Translation failed: {e}")
             return {"error": str(e)}
 
-    async def detect_language(self, text: str) -> Dict[str, Any]:
+    async def detect_language(self, text: str) -> dict[str, Any]:
         """Detect language and analyze linguistic features"""
         try:
             # Simple language detection (in practice, use langdetect library)
@@ -238,7 +236,7 @@ class TranslatorAgent(AgentInterface):
 
     async def localize_content(
         self, content: str, target_culture: str
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Localize content for specific cultural context"""
         try:
             cultural_adaptations = {

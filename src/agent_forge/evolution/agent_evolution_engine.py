@@ -366,9 +366,9 @@ class CodeMutator:
             if np.random.random() < 0.1:  # 10% chance to mutate each template
                 if "system" in template_key.lower():
                     prefix = np.random.choice(template_variations["system_prompt"])
-                    mutated.code_templates[
-                        template_key
-                    ] = f"{prefix} {mutated.code_templates[template_key].split(' ', 5)[-1]}"
+                    mutated.code_templates[template_key] = (
+                        f"{prefix} {mutated.code_templates[template_key].split(' ', 5)[-1]}"
+                    )
 
         return mutated
 

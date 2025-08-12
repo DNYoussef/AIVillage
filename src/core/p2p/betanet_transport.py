@@ -4,7 +4,7 @@ Betanet provides global-scale networking for AIVillage using decentralized proto
 as an internet replacement. Features:
 
 - HTX (Hypermedia Transfer eXtension) protocol for content routing
-- HTXQUIC for low-latency encrypted streams  
+- HTXQUIC for low-latency encrypted streams
 - Mixnode routing for privacy (minimum 2 hops)
 - DHT-based peer discovery and content addressing
 - Bandwidth-adaptive streaming
@@ -20,7 +20,7 @@ import time
 import uuid
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -37,12 +37,12 @@ class BetanetMessage:
 
     # HTX-specific headers
     content_type: str = "application/octet-stream"
-    content_hash: Optional[str] = None
+    content_hash: str | None = None
     chunk_index: int = 0
     total_chunks: int = 1
 
     # Privacy/routing headers
-    mixnode_path: List[str] = field(default_factory=list)
+    mixnode_path: list[str] = field(default_factory=list)
     encryption_layers: int = 2  # Minimum privacy requirement
     timestamp: float = field(default_factory=time.time)
     ttl_seconds: int = 300  # 5 minute TTL
@@ -53,7 +53,7 @@ class BetanetMessage:
     latency_target_ms: int = 1000
     reliability_level: str = "best_effort"  # best_effort|guaranteed
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Serialize for network transmission"""
         return {
             "id": self.id,
@@ -78,7 +78,7 @@ class BetanetMessage:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "BetanetMessage":
+    def from_dict(cls, data: dict[str, Any]) -> "BetanetMessage":
         """Deserialize from network data"""
         payload = data.get("payload", "")
         if isinstance(payload, str):
@@ -114,8 +114,8 @@ class BetanetPeer:
 
     peer_id: str
     multiaddr: str  # /ip4/1.2.3.4/tcp/4001/betanet/peer_id
-    protocols: List[str] = field(default_factory=lambda: ["htx/1.1"])
-    capabilities: Set[str] = field(default_factory=set)
+    protocols: list[str] = field(default_factory=lambda: ["htx/1.1"])
+    capabilities: set[str] = field(default_factory=set)
 
     # Network performance
     latency_ms: float = 100.0
@@ -125,12 +125,12 @@ class BetanetPeer:
     # Privacy/security
     is_mixnode: bool = False
     trust_score: float = 0.5  # 0.0-1.0
-    encryption_support: List[str] = field(default_factory=lambda: ["aes256"])
+    encryption_support: list[str] = field(default_factory=lambda: ["aes256"])
 
     # Status
     last_seen: float = field(default_factory=time.time)
     connection_count: int = 0
-    geographic_region: Optional[str] = None
+    geographic_region: str | None = None
 
     def is_available(self, max_age_seconds: int = 600) -> bool:
         """Check if peer is recently active"""
@@ -152,7 +152,7 @@ class BetanetTransport:
     - Censorship resistance
     """
 
-    def __init__(self, peer_id: Optional[str] = None, listen_port: int = 4001):
+    def __init__(self, peer_id: str | None = None, listen_port: int = 4001):
         self.peer_id = peer_id or f"betanet_{uuid.uuid4().hex[:16]}"
         self.listen_port = listen_port
 
@@ -164,16 +164,16 @@ class BetanetTransport:
         ]
 
         # Peer management
-        self.discovered_peers: Dict[str, BetanetPeer] = {}
-        self.active_connections: Dict[str, Any] = {}  # peer_id -> connection
-        self.mixnode_pool: List[str] = []  # Available mixnodes for routing
-        self.dht_routing_table: Dict[str, List[str]] = defaultdict(list)
+        self.discovered_peers: dict[str, BetanetPeer] = {}
+        self.active_connections: dict[str, Any] = {}  # peer_id -> connection
+        self.mixnode_pool: list[str] = []  # Available mixnodes for routing
+        self.dht_routing_table: dict[str, list[str]] = defaultdict(list)
 
         # Message handling
-        self.message_handlers: Dict[str, Any] = {}
-        self.pending_chunks: Dict[str, Dict[int, BetanetMessage]] = defaultdict(dict)
-        self.content_cache: Dict[str, bytes] = {}  # content_hash -> data
-        self.routing_cache: Dict[str, List[str]] = {}  # destination -> mixnode_path
+        self.message_handlers: dict[str, Any] = {}
+        self.pending_chunks: dict[str, dict[int, BetanetMessage]] = defaultdict(dict)
+        self.content_cache: dict[str, bytes] = {}  # content_hash -> data
+        self.routing_cache: dict[str, list[str]] = {}  # destination -> mixnode_path
 
         # QoS and bandwidth management
         self.bandwidth_monitor = BandwidthMonitor()
@@ -199,9 +199,9 @@ class BetanetTransport:
 
         # Control
         self.is_running = False
-        self.server_task: Optional[asyncio.Task] = None
-        self.discovery_task: Optional[asyncio.Task] = None
-        self.maintenance_task: Optional[asyncio.Task] = None
+        self.server_task: asyncio.Task | None = None
+        self.discovery_task: asyncio.Task | None = None
+        self.maintenance_task: asyncio.Task | None = None
 
         logger.info(f"Betanet initialized: {self.peer_id} (port {listen_port})")
 
@@ -405,7 +405,7 @@ class BetanetTransport:
             await writer.wait_closed()
 
     async def _handle_received_message(
-        self, raw_data: bytes, sender_addr: Tuple[str, int]
+        self, raw_data: bytes, sender_addr: tuple[str, int]
     ) -> None:
         """Handle incoming Betanet message"""
         try:
@@ -627,7 +627,7 @@ class BetanetTransport:
             encryption_layers=message.encryption_layers,
         )
 
-    def _select_mixnode_path(self, destination: str) -> List[str]:
+    def _select_mixnode_path(self, destination: str) -> list[str]:
         """Select optimal mixnode path for privacy"""
         if destination in self.routing_cache:
             cached_path = self.routing_cache[destination]
@@ -689,7 +689,7 @@ class BetanetTransport:
                 )
                 peer = BetanetPeer(
                     peer_id=peer_id,
-                    multiaddr=f"/ip4/10.0.{random.randint(1,255)}.{random.randint(1,255)}/tcp/4001/betanet/{peer_id}",
+                    multiaddr=f"/ip4/10.0.{random.randint(1, 255)}.{random.randint(1, 255)}/tcp/4001/betanet/{peer_id}",
                     protocols=["htx/1.1", "htxquic/1.1"],
                     capabilities={"relay", "storage"},
                     is_mixnode=random.choice([True, False]),
@@ -792,7 +792,7 @@ class BetanetTransport:
             except Exception as e:
                 logger.debug(f"Failed to connect to bootstrap {node}: {e}")
 
-    async def _dht_lookup(self, peer_id: str) -> Optional[BetanetPeer]:
+    async def _dht_lookup(self, peer_id: str) -> BetanetPeer | None:
         """Lookup peer info in DHT"""
         self.stats["dht_lookups"] += 1
         return self.discovered_peers.get(peer_id)
@@ -804,7 +804,7 @@ class BetanetTransport:
         # Simulate connection and send
         return await self._send_direct(peer.peer_id, message)
 
-    async def _create_htxquic_connection(self, peer_id: str) -> Optional[Any]:
+    async def _create_htxquic_connection(self, peer_id: str) -> Any | None:
         """Create HTXQUIC connection for streaming"""
         # Simulate QUIC connection
         if peer_id in self.discovered_peers:
@@ -816,7 +816,7 @@ class BetanetTransport:
         self.message_handlers[content_type] = handler
         logger.debug(f"Registered handler for {content_type}")
 
-    def get_status(self) -> Dict[str, Any]:
+    def get_status(self) -> dict[str, Any]:
         """Get current Betanet status"""
         return {
             "peer_id": self.peer_id,
@@ -850,7 +850,6 @@ class BandwidthMonitor:
     def update_metrics(self):
         """Update bandwidth metrics"""
         # Simulate bandwidth monitoring
-        pass
 
     def get_tier(self) -> str:
         """Get current bandwidth tier"""

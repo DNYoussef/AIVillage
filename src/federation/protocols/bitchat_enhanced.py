@@ -2,7 +2,7 @@
 
 Extends existing BitChatTransport with Jack Dorsey's BitChat specification:
 - X25519/Ed25519 cryptography
-- Message fragmentation for 500-byte BLE limit  
+- Message fragmentation for 500-byte BLE limit
 - LZ4 compression for messages >100 bytes
 - Dummy traffic injection for privacy
 - IRC-style channels
@@ -18,9 +18,10 @@ import struct
 import time
 import uuid
 from collections import defaultdict
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Set
+from typing import Any, Optional
 
 # Import existing BitChat implementation
 from core.p2p.bitchat_transport import BitChatMessage, BitChatPeer, BitChatTransport
@@ -70,7 +71,7 @@ class BitChatCryptoKeys:
 
     # X25519 for encryption
     private_key: bytes = field(default_factory=lambda: os.urandom(32))
-    public_key: Optional[bytes] = None
+    public_key: bytes | None = None
 
     # Ed25519 for signing
     signing_key: Optional["nacl.signing.SigningKey"] = None
@@ -140,8 +141,8 @@ class EnhancedBitChatMessage(BitChatMessage):
     compressed: bool = False
     encrypted: bool = False
     signed: bool = False
-    expires_at: Optional[float] = None
-    fragments: List[BitChatFragment] = field(default_factory=list)
+    expires_at: float | None = None
+    fragments: list[BitChatFragment] = field(default_factory=list)
     is_fragmented: bool = False
 
     def __post_init__(self):
@@ -278,7 +279,7 @@ class EnhancedBitChatMessage(BitChatMessage):
             logger.error(f"Ed25519 verification failed: {e}")
             return False
 
-    def fragment_message(self, max_fragment_size: int = 450) -> List[BitChatFragment]:
+    def fragment_message(self, max_fragment_size: int = 450) -> list[BitChatFragment]:
         """Fragment message for 500-byte BLE limit"""
         if not self.payload:
             return []
@@ -316,7 +317,7 @@ class EnhancedBitChatMessage(BitChatMessage):
 
     @classmethod
     def reassemble_from_fragments(
-        cls, fragments: List[BitChatFragment]
+        cls, fragments: list[BitChatFragment]
     ) -> Optional["EnhancedBitChatMessage"]:
         """Reassemble message from fragments"""
         if not fragments:
@@ -369,9 +370,9 @@ class BitChatChannel:
 
     name: str
     creator: str
-    members: Set[str] = field(default_factory=set)
+    members: set[str] = field(default_factory=set)
     created_at: float = field(default_factory=time.time)
-    message_history: List[EnhancedBitChatMessage] = field(default_factory=list)
+    message_history: list[EnhancedBitChatMessage] = field(default_factory=list)
     max_history: int = 100
 
     def __post_init__(self):
@@ -414,28 +415,28 @@ class EnhancedBitChatTransport(BitChatTransport):
         self.crypto_keys = BitChatCryptoKeys()
 
         # Enhanced message handling
-        self.enhanced_handlers: Dict[BitChatMessageType, Callable] = {}
-        self.pending_fragments: Dict[str, Dict[int, BitChatFragment]] = defaultdict(
+        self.enhanced_handlers: dict[BitChatMessageType, Callable] = {}
+        self.pending_fragments: dict[str, dict[int, BitChatFragment]] = defaultdict(
             dict
         )
 
         # Store-and-forward with 12-hour TTL
-        self.store_forward_cache: Dict[str, List[EnhancedBitChatMessage]] = defaultdict(
+        self.store_forward_cache: dict[str, list[EnhancedBitChatMessage]] = defaultdict(
             list
         )
         self.cache_max_messages = 1000
 
         # IRC-style channels
-        self.channels: Dict[str, BitChatChannel] = {}
-        self.joined_channels: Set[str] = set()
+        self.channels: dict[str, BitChatChannel] = {}
+        self.joined_channels: set[str] = set()
 
         # Dummy traffic for privacy
         self.dummy_traffic_enabled = True
-        self.dummy_traffic_task: Optional[asyncio.Task] = None
+        self.dummy_traffic_task: asyncio.Task | None = None
 
         # Peer key exchange
-        self.peer_keys: Dict[
-            str, Dict[str, bytes]
+        self.peer_keys: dict[
+            str, dict[str, bytes]
         ] = {}  # device_id -> {public_key, verify_key}
 
         # Enhanced statistics
@@ -491,7 +492,6 @@ class EnhancedBitChatTransport(BitChatTransport):
         priority: int = 5,
     ) -> bool:
         """Send message with all enhancements"""
-
         if not self.is_running:
             return False
 
@@ -595,7 +595,7 @@ class EnhancedBitChatTransport(BitChatTransport):
 
         return await self._transmit_enhanced_message(channel_msg)
 
-    def get_enhanced_status(self) -> Dict[str, Any]:
+    def get_enhanced_status(self) -> dict[str, Any]:
         """Get enhanced BitChat status"""
         base_status = self.get_status()
 
@@ -645,7 +645,7 @@ class EnhancedBitChatTransport(BitChatTransport):
             return False
 
     async def _send_fragments(
-        self, fragments: List[BitChatFragment], recipient: str
+        self, fragments: list[BitChatFragment], recipient: str
     ) -> bool:
         """Send message fragments"""
         success_count = 0
@@ -670,15 +670,15 @@ class EnhancedBitChatTransport(BitChatTransport):
         self.enhanced_handlers[BitChatMessageType.DATA] = self._handle_enhanced_data
         self.enhanced_handlers[BitChatMessageType.FRAGMENT] = self._handle_fragment
         self.enhanced_handlers[BitChatMessageType.HELLO] = self._handle_crypto_hello
-        self.enhanced_handlers[
-            BitChatMessageType.CHANNEL_JOIN
-        ] = self._handle_channel_join
-        self.enhanced_handlers[
-            BitChatMessageType.CHANNEL_LEAVE
-        ] = self._handle_channel_leave
-        self.enhanced_handlers[
-            BitChatMessageType.CHANNEL_MSG
-        ] = self._handle_channel_message
+        self.enhanced_handlers[BitChatMessageType.CHANNEL_JOIN] = (
+            self._handle_channel_join
+        )
+        self.enhanced_handlers[BitChatMessageType.CHANNEL_LEAVE] = (
+            self._handle_channel_leave
+        )
+        self.enhanced_handlers[BitChatMessageType.CHANNEL_MSG] = (
+            self._handle_channel_message
+        )
         self.enhanced_handlers[BitChatMessageType.DUMMY] = self._handle_dummy_traffic
 
     async def _handle_enhanced_data(self, message: EnhancedBitChatMessage):
@@ -711,9 +711,9 @@ class EnhancedBitChatTransport(BitChatTransport):
             fragment = BitChatFragment.from_bytes(message.payload)
 
             # Store fragment
-            self.pending_fragments[fragment.fragment_id][
-                fragment.fragment_index
-            ] = fragment
+            self.pending_fragments[fragment.fragment_id][fragment.fragment_index] = (
+                fragment
+            )
             self.enhanced_stats["fragments_received"] += 1
 
             # Check if we have all fragments

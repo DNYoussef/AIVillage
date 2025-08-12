@@ -352,9 +352,8 @@ class PlanLearner:
                     # Update existing score
                     old_score = strategy_scores[existing_idx][1]
                     new_score = (
-                        (1 - self.learning_rate) * old_score
-                        + self.learning_rate * feedback.confidence_achieved
-                    )
+                        1 - self.learning_rate
+                    ) * old_score + self.learning_rate * feedback.confidence_achieved
                     strategy_scores[existing_idx] = (feedback.strategy, new_score)
                 else:
                     # Add new entry

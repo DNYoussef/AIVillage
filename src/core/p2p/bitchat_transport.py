@@ -1,11 +1,11 @@
 """BitChat Transport - Bluetooth Mesh for Offline Communication
 
-BitChat provides offline-first networking for AIVillage using Bluetooth Low Energy (BLE) 
-mesh topology. Designed for Global South scenarios, disaster response, and censorship 
+BitChat provides offline-first networking for AIVillage using Bluetooth Low Energy (BLE)
+mesh topology. Designed for Global South scenarios, disaster response, and censorship
 resistance with:
 
 - 7-hop maximum TTL for mesh relay
-- Store-and-forward for offline peers  
+- Store-and-forward for offline peers
 - Auto-discovery via BLE advertisements
 - Energy-efficient routing
 - No internet dependency
@@ -18,7 +18,7 @@ import time
 import uuid
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Set
+from typing import Any
 
 # Bluetooth imports with fallback
 try:
@@ -43,7 +43,7 @@ class BitChatMessage:
     ttl: int = 7  # Maximum 7 hops for BitChat mesh
     hop_count: int = 0
     timestamp: float = field(default_factory=time.time)
-    route_path: List[str] = field(default_factory=list)
+    route_path: list[str] = field(default_factory=list)
     priority: int = 5  # 1=low, 10=urgent
 
     def __post_init__(self):
@@ -51,7 +51,7 @@ class BitChatMessage:
         if self.sender and not self.route_path:
             self.route_path = [self.sender]
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Serialize for BLE transmission"""
         return {
             "id": self.id,
@@ -68,7 +68,7 @@ class BitChatMessage:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "BitChatMessage":
+    def from_dict(cls, data: dict[str, Any]) -> "BitChatMessage":
         """Deserialize from BLE data"""
         payload = data.get("payload", "")
         if isinstance(payload, str):
@@ -101,7 +101,7 @@ class BitChatPeer:
     signal_strength: int = -50  # RSSI
     hop_distance: int = 1
     is_relay_node: bool = True
-    battery_level: Optional[int] = None
+    battery_level: int | None = None
 
     def is_reachable(self, max_age_seconds: int = 300) -> bool:
         """Check if peer was seen recently"""
@@ -119,20 +119,20 @@ class BitChatTransport:
     - Energy-aware routing prioritization
     """
 
-    def __init__(self, device_id: Optional[str] = None, max_peers: int = 20):
+    def __init__(self, device_id: str | None = None, max_peers: int = 20):
         self.device_id = device_id or f"bitchat_{uuid.uuid4().hex[:8]}"
         self.max_peers = max_peers
         self.max_hops = 7  # BitChat TTL limit
 
         # Peer management
-        self.discovered_peers: Dict[str, BitChatPeer] = {}
-        self.active_connections: Set[str] = set()
-        self.routing_table: Dict[str, str] = {}  # destination -> next_hop
+        self.discovered_peers: dict[str, BitChatPeer] = {}
+        self.active_connections: set[str] = set()
+        self.routing_table: dict[str, str] = {}  # destination -> next_hop
 
         # Message handling
-        self.message_handlers: Dict[str, Any] = {}
-        self.message_cache: Set[str] = set()  # Duplicate detection
-        self.store_forward_cache: Dict[str, List[BitChatMessage]] = defaultdict(list)
+        self.message_handlers: dict[str, Any] = {}
+        self.message_cache: set[str] = set()  # Duplicate detection
+        self.store_forward_cache: dict[str, list[BitChatMessage]] = defaultdict(list)
         self.message_queue: deque = deque(maxlen=1000)
 
         # Statistics and monitoring
@@ -147,8 +147,8 @@ class BitChatTransport:
 
         # Control flags
         self.is_running = False
-        self.discovery_task: Optional[asyncio.Task] = None
-        self.maintenance_task: Optional[asyncio.Task] = None
+        self.discovery_task: asyncio.Task | None = None
+        self.maintenance_task: asyncio.Task | None = None
 
         logger.info(f"BitChat initialized: {self.device_id} (max_peers={max_peers})")
 
@@ -283,10 +283,9 @@ class BitChatTransport:
                 await asyncio.sleep(0.01)  # Simulate BLE transmission delay
                 logger.debug(f"Sent message {message.id[:8]} to {peer_id}")
                 return True
-            else:
-                # Simulation mode - always succeeds
-                logger.debug(f"[SIM] Sent message {message.id[:8]} to {peer_id}")
-                return True
+            # Simulation mode - always succeeds
+            logger.debug(f"[SIM] Sent message {message.id[:8]} to {peer_id}")
+            return True
 
         except Exception as e:
             logger.debug(f"Failed to send to {peer_id}: {e}")
@@ -338,18 +337,17 @@ class BitChatTransport:
 
             except Exception as e:
                 logger.debug(f"BLE discovery failed: {e}")
-        else:
-            # Simulation mode - create some fake peers
-            if len(self.discovered_peers) < 3:
-                fake_peer = BitChatPeer(
-                    device_id=f"sim_peer_{len(self.discovered_peers)}",
-                    bluetooth_addr=f"00:11:22:33:44:{len(self.discovered_peers):02x}",
-                    device_name=f"SimPeer{len(self.discovered_peers)}",
-                    hop_distance=1,
-                )
-                self.discovered_peers[fake_peer.bluetooth_addr] = fake_peer
-                self.active_connections.add(fake_peer.device_id)
-                logger.debug(f"[SIM] Added fake peer: {fake_peer.device_id}")
+        # Simulation mode - create some fake peers
+        elif len(self.discovered_peers) < 3:
+            fake_peer = BitChatPeer(
+                device_id=f"sim_peer_{len(self.discovered_peers)}",
+                bluetooth_addr=f"00:11:22:33:44:{len(self.discovered_peers):02x}",
+                device_name=f"SimPeer{len(self.discovered_peers)}",
+                hop_distance=1,
+            )
+            self.discovered_peers[fake_peer.bluetooth_addr] = fake_peer
+            self.active_connections.add(fake_peer.device_id)
+            logger.debug(f"[SIM] Added fake peer: {fake_peer.device_id}")
 
     async def _attempt_connection(self, peer: BitChatPeer) -> bool:
         """Attempt to connect to discovered peer"""
@@ -436,10 +434,8 @@ class BitChatTransport:
         for peer_id in list(self.store_forward_cache.keys()):
             messages = self.store_forward_cache[peer_id]
             fresh_messages = [
-                msg
-                for msg in messages
-                if current_time - msg.timestamp < 86400  # 24 hours
-            ]
+                msg for msg in messages if current_time - msg.timestamp < 86400
+            ]  # 24 hours
 
             if fresh_messages:
                 self.store_forward_cache[peer_id] = fresh_messages
@@ -532,7 +528,7 @@ class BitChatTransport:
                 self.stats["messages_relayed"] += relayed
                 logger.debug(f"Relayed broadcast {message.id[:8]} to {relayed} peers")
 
-    def get_status(self) -> Dict[str, Any]:
+    def get_status(self) -> dict[str, Any]:
         """Get current BitChat status"""
         return {
             "device_id": self.device_id,

@@ -7,9 +7,11 @@ from pathlib import Path
 
 import pytest
 
-# Add project root to path
+# Add project root and src directory to path
 project_root = Path(__file__).parent.parent
+src_root = project_root / "src"
 sys.path.insert(0, str(project_root))
+sys.path.insert(0, str(src_root))
 
 # Import mocks for missing modules
 try:

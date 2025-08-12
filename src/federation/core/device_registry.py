@@ -11,7 +11,7 @@ import time
 import uuid
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set
+from typing import Any
 
 # Cryptography imports
 try:
@@ -59,7 +59,7 @@ class DeviceIdentity:
     device_id: str
     public_key: bytes = field(default=b"")
     signing_key_public: bytes = field(default=b"")
-    validator_key: Optional[bytes] = None  # For beacon nodes
+    validator_key: bytes | None = None  # For beacon nodes
     created_at: float = field(default_factory=time.time)
     reputation_score: float = 0.5  # Start at neutral
     last_seen: float = field(default_factory=time.time)
@@ -103,18 +103,18 @@ class DeviceProfile:
 
     identity: DeviceIdentity
     role: DeviceRole
-    capabilities: Set[DeviceCapability] = field(default_factory=set)
-    protocols: Set[str] = field(default_factory=set)  # bitchat, betanet, tor, i2p
-    resources: Dict[str, Any] = field(default_factory=dict)
-    region: Optional[str] = None
-    beacon_affinity: Optional[str] = None  # Preferred beacon node
+    capabilities: set[DeviceCapability] = field(default_factory=set)
+    protocols: set[str] = field(default_factory=set)  # bitchat, betanet, tor, i2p
+    resources: dict[str, Any] = field(default_factory=dict)
+    region: str | None = None
+    beacon_affinity: str | None = None  # Preferred beacon node
 
     # Resource metrics
     cpu_cores: int = 1
     memory_gb: float = 1.0
     storage_gb: float = 10.0
     bandwidth_mbps: float = 1.0
-    battery_percent: Optional[int] = None
+    battery_percent: int | None = None
     uptime_hours: float = 0.0
 
     # Federation metrics
@@ -149,25 +149,25 @@ class DeviceProfile:
                 and self.calculate_device_score() > 0.8  # Minimum 1 week uptime
             )
 
-        elif role == DeviceRole.WORKER:
+        if role == DeviceRole.WORKER:
             return (
                 DeviceCapability.HIGH_COMPUTE in self.capabilities
                 and self.cpu_cores >= 2
             )
 
-        elif role == DeviceRole.RELAY:
+        if role == DeviceRole.RELAY:
             return (
                 DeviceCapability.BANDWIDTH_HIGH in self.capabilities
                 and len(self.protocols) >= 2  # Support multiple protocols
             )
 
-        elif role == DeviceRole.STORAGE:
+        if role == DeviceRole.STORAGE:
             return (
                 DeviceCapability.STORAGE_LARGE in self.capabilities
                 and self.storage_gb >= 100
             )
 
-        elif role == DeviceRole.EDGE:
+        if role == DeviceRole.EDGE:
             return True  # Any device can be an edge node
 
         return False
@@ -178,15 +178,15 @@ class DeviceRegistry:
 
     def __init__(self, local_device_id: str = None):
         self.local_device_id = local_device_id or f"device_{uuid.uuid4().hex[:12]}"
-        self.devices: Dict[str, DeviceProfile] = {}
-        self.local_profile: Optional[DeviceProfile] = None
+        self.devices: dict[str, DeviceProfile] = {}
+        self.local_profile: DeviceProfile | None = None
 
         # Beacon tracking
-        self.known_beacons: Dict[str, float] = {}  # device_id -> last_heartbeat
-        self.active_beacon: Optional[str] = None
+        self.known_beacons: dict[str, float] = {}  # device_id -> last_heartbeat
+        self.active_beacon: str | None = None
 
         # Regional clustering
-        self.region_devices: Dict[str, Set[str]] = {}
+        self.region_devices: dict[str, set[str]] = {}
 
         # Federation statistics
         self.total_devices = 0
@@ -197,10 +197,9 @@ class DeviceRegistry:
         logger.info(f"DeviceRegistry initialized for device: {self.local_device_id}")
 
     async def initialize_local_device(
-        self, capabilities: Set[DeviceCapability], region: str = "unknown"
+        self, capabilities: set[DeviceCapability], region: str = "unknown"
     ) -> DeviceProfile:
         """Initialize and register the local device"""
-
         # Create device identity
         identity = DeviceIdentity(device_id=self.local_device_id)
 
@@ -270,11 +269,11 @@ class DeviceRegistry:
         logger.info(f"Registered device: {device_id} ({profile.role.value})")
         return True
 
-    def get_devices_by_role(self, role: DeviceRole) -> List[DeviceProfile]:
+    def get_devices_by_role(self, role: DeviceRole) -> list[DeviceProfile]:
         """Get all devices with specific role"""
         return [profile for profile in self.devices.values() if profile.role == role]
 
-    def get_devices_by_region(self, region: str) -> List[DeviceProfile]:
+    def get_devices_by_region(self, region: str) -> list[DeviceProfile]:
         """Get all devices in specific region"""
         return [
             profile for profile in self.devices.values() if profile.region == region
@@ -282,7 +281,7 @@ class DeviceRegistry:
 
     def get_devices_by_capability(
         self, capability: DeviceCapability
-    ) -> List[DeviceProfile]:
+    ) -> list[DeviceProfile]:
         """Get all devices with specific capability"""
         return [
             profile
@@ -290,7 +289,7 @@ class DeviceRegistry:
             if capability in profile.capabilities
         ]
 
-    def find_best_beacon(self, region: str = None) -> Optional[DeviceProfile]:
+    def find_best_beacon(self, region: str = None) -> DeviceProfile | None:
         """Find the best beacon node for coordination"""
         beacons = self.get_devices_by_role(DeviceRole.BEACON)
 
@@ -322,7 +321,7 @@ class DeviceRegistry:
         logger.info(f"Assigned device {device_id} to beacon {beacon_id}")
         return True
 
-    def get_federation_status(self) -> Dict[str, Any]:
+    def get_federation_status(self) -> dict[str, Any]:
         """Get comprehensive federation status"""
         role_counts = {}
         for role in DeviceRole:
@@ -351,7 +350,7 @@ class DeviceRegistry:
             },
         }
 
-    async def _detect_capabilities(self) -> Set[DeviceCapability]:
+    async def _detect_capabilities(self) -> set[DeviceCapability]:
         """Auto-detect device capabilities"""
         capabilities = set()
 
@@ -390,7 +389,7 @@ class DeviceRegistry:
 
         return capabilities
 
-    async def _detect_protocols(self) -> Set[str]:
+    async def _detect_protocols(self) -> set[str]:
         """Detect which protocols are available"""
         protocols = set()
 
@@ -428,7 +427,7 @@ class DeviceRegistry:
 
         return protocols
 
-    async def _gather_resources(self) -> Dict[str, Any]:
+    async def _gather_resources(self) -> dict[str, Any]:
         """Gather device resource information"""
         resources = {}
 
@@ -474,10 +473,9 @@ class DeviceRegistry:
         return resources
 
     def _determine_optimal_role(
-        self, capabilities: Set[DeviceCapability], resources: Dict[str, Any]
+        self, capabilities: set[DeviceCapability], resources: dict[str, Any]
     ) -> DeviceRole:
         """Determine optimal role for device based on capabilities"""
-
         # Check beacon suitability (highest priority)
         if (
             DeviceCapability.ALWAYS_ON in capabilities

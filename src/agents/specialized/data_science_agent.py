@@ -1,9 +1,8 @@
-"""
-Data Science Agent - Statistical Analysis and ML Model Training Specialist
-"""
+"""Data Science Agent - Statistical Analysis and ML Model Training Specialist"""
+
 import logging
 from dataclasses import dataclass
-from typing import Any, Dict
+from typing import Any
 
 try:
     import numpy as np
@@ -26,14 +25,13 @@ class DataAnalysisRequest:
 
     task_type: str  # 'statistical', 'ml_training', 'visualization', 'preprocessing'
     data_source: str
-    parameters: Dict[str, Any]
+    parameters: dict[str, Any]
     output_format: str = "json"
     priority: int = 5
 
 
 class DataScienceAgent(AgentInterface):
-    """
-    Specialized agent for data science tasks including:
+    """Specialized agent for data science tasks including:
     - Statistical analysis and hypothesis testing
     - Machine learning model training and evaluation
     - Data preprocessing and feature engineering
@@ -62,9 +60,9 @@ class DataScienceAgent(AgentInterface):
         """Generate data analysis insights from prompt"""
         if "statistical analysis" in prompt.lower():
             return "I can perform statistical analysis. Please provide data source and analysis parameters."
-        elif "machine learning" in prompt.lower():
+        if "machine learning" in prompt.lower():
             return "I can train ML models. Specify the target variable and model type."
-        elif "anomaly detection" in prompt.lower():
+        if "anomaly detection" in prompt.lower():
             return "I can detect anomalies in your data using isolation forest or other methods."
         return "I'm a Data Science Agent specialized in statistical analysis, ML training, and data insights."
 
@@ -159,11 +157,9 @@ class DataScienceAgent(AgentInterface):
         }
 
     async def perform_statistical_analysis(
-        self, data: Any, config: Dict[str, Any]
-    ) -> Dict[str, Any]:
-        """
-        Perform comprehensive statistical analysis
-        """
+        self, data: Any, config: dict[str, Any]
+    ) -> dict[str, Any]:
+        """Perform comprehensive statistical analysis"""
         results = {
             "descriptive_stats": {},
             "correlations": {},
@@ -223,10 +219,8 @@ class DataScienceAgent(AgentInterface):
 
         return results
 
-    async def train_ml_model(self, data: Any, config: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Train machine learning model based on configuration
-        """
+    async def train_ml_model(self, data: Any, config: dict[str, Any]) -> dict[str, Any]:
+        """Train machine learning model based on configuration"""
         results = {
             "model_type": config.get("model_type", "auto"),
             "metrics": {},
@@ -320,7 +314,9 @@ class DataScienceAgent(AgentInterface):
 
             # Feature importance for tree-based models
             if hasattr(model, "feature_importances_"):
-                importance_dict = dict(zip(X.columns, model.feature_importances_))
+                importance_dict = dict(
+                    zip(X.columns, model.feature_importances_, strict=False)
+                )
                 results["feature_importance"] = dict(
                     sorted(importance_dict.items(), key=lambda x: x[1], reverse=True)[
                         :20
@@ -345,11 +341,9 @@ class DataScienceAgent(AgentInterface):
         return results
 
     async def perform_anomaly_detection(
-        self, data: Any, config: Dict[str, Any]
-    ) -> Dict[str, Any]:
-        """
-        Detect anomalies in the dataset
-        """
+        self, data: Any, config: dict[str, Any]
+    ) -> dict[str, Any]:
+        """Detect anomalies in the dataset"""
         results = {
             "anomalies": [],
             "anomaly_scores": {},
@@ -395,11 +389,9 @@ class DataScienceAgent(AgentInterface):
         return results
 
     async def perform_time_series_analysis(
-        self, data: Any, config: Dict[str, Any]
-    ) -> Dict[str, Any]:
-        """
-        Perform time series analysis and forecasting
-        """
+        self, data: Any, config: dict[str, Any]
+    ) -> dict[str, Any]:
+        """Perform time series analysis and forecasting"""
         results = {"trend": {}, "seasonality": {}, "forecast": {}, "metrics": {}}
 
         try:
@@ -477,15 +469,12 @@ class DataScienceAgent(AgentInterface):
             module_name, class_name = models[model_type].rsplit(".", 1)
             module = __import__(module_name, fromlist=[class_name])
             return getattr(module, class_name)()
-        else:
-            from sklearn.ensemble import RandomForestRegressor
+        from sklearn.ensemble import RandomForestRegressor
 
-            return RandomForestRegressor()
+        return RandomForestRegressor()
 
-    async def process_request(self, request: DataAnalysisRequest) -> Dict[str, Any]:
-        """
-        Process incoming data analysis request
-        """
+    async def process_request(self, request: DataAnalysisRequest) -> dict[str, Any]:
+        """Process incoming data analysis request"""
         try:
             # Load data
             data = await self._load_data(request.data_source)
@@ -525,16 +514,15 @@ class DataScienceAgent(AgentInterface):
         """Load data from various sources"""
         if data_source.endswith(".csv"):
             return pd.read_csv(data_source)
-        elif data_source.endswith(".json"):
+        if data_source.endswith(".json"):
             return pd.read_json(data_source)
-        elif data_source.endswith(".parquet"):
+        if data_source.endswith(".parquet"):
             return pd.read_parquet(data_source)
-        elif data_source.endswith(".xlsx"):
+        if data_source.endswith(".xlsx"):
             return pd.read_excel(data_source)
-        else:
-            raise ValueError(f"Unsupported data format: {data_source}")
+        raise ValueError(f"Unsupported data format: {data_source}")
 
-    def _summarize_result(self, result: Dict[str, Any]) -> Dict[str, Any]:
+    def _summarize_result(self, result: dict[str, Any]) -> dict[str, Any]:
         """Create summary of analysis result"""
         summary = {}
         if "metrics" in result:
@@ -548,11 +536,9 @@ class DataScienceAgent(AgentInterface):
         return summary
 
     async def collaborate_with_agent(
-        self, agent_id: str, task: Dict[str, Any]
-    ) -> Dict[str, Any]:
-        """
-        Collaborate with other agents for complex tasks
-        """
+        self, agent_id: str, task: dict[str, Any]
+    ) -> dict[str, Any]:
+        """Collaborate with other agents for complex tasks"""
         logger.info(f"Collaborating with {agent_id} on task: {task}")
         # Simplified collaboration without message bus dependency
         return {"status": "collaboration_initiated", "agent_id": agent_id, "task": task}

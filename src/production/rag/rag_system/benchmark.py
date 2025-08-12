@@ -33,7 +33,6 @@ def _run_backend(
     queries: np.ndarray,
 ) -> BenchmarkResult:
     """Benchmark ``VectorStore.search`` for a given backend."""
-
     os.environ["RAG_USE_QDRANT"] = "1" if use_qdrant else "0"
     store = VectorStore()
     if use_qdrant and store.backend is store.faiss:
@@ -62,7 +61,6 @@ def run_benchmark(
     output: str = "vector_search_metrics.csv",
 ) -> list[BenchmarkResult]:
     """Run benchmark comparing FAISS and Qdrant backends."""
-
     rng = np.random.default_rng(0)
     docs = rng.random((n_docs, dim), dtype=np.float32)
     ids = [str(i) for i in range(n_docs)]

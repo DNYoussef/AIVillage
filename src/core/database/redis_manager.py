@@ -11,7 +11,6 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
-import pickle
 import sqlite3
 import time
 from contextlib import asynccontextmanager
@@ -133,7 +132,17 @@ class RedisFallbackStorage:
                 if value_type == "json":
                     return json.loads(value_blob.decode())
                 if value_type == "pickle":
-                    return pickle.loads(value_blob)
+                    # Legacy pickle data - migrate to secure format
+                    logger.warning(
+                        "Found legacy pickle data, migrating to secure format"
+                    )
+                    try:
+                        # For now, return None for security - existing pickle data is considered unsafe
+                        logger.error("Rejecting unsafe pickle data for security")
+                        return None
+                    except Exception as e:
+                        logger.error(f"Failed to process legacy pickle data: {e}")
+                        return None
                 return value_blob.decode()
             return None
 

@@ -379,9 +379,9 @@ class SecureAPIServer:
         response.headers["Content-Security-Policy"] = "default-src 'self'"
 
         if self.tls_enabled:
-            response.headers[
-                "Strict-Transport-Security"
-            ] = "max-age=31536000; includeSubDomains"
+            response.headers["Strict-Transport-Security"] = (
+                "max-age=31536000; includeSubDomains"
+            )
 
         return response
 

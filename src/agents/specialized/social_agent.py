@@ -1,10 +1,9 @@
-"""
-Social Agent - Community Management and Human Interaction Specialist
-"""
+"""Social Agent - Community Management and Human Interaction Specialist"""
+
 import hashlib
 import logging
 from dataclasses import dataclass
-from typing import Any, Dict, List
+from typing import Any
 
 from src.production.rag.rag_system.core.agent_interface import AgentInterface
 
@@ -15,15 +14,16 @@ logger = logging.getLogger(__name__)
 class SocialInteraction:
     """Social interaction request"""
 
-    interaction_type: str  # 'moderation', 'engagement', 'conflict_resolution', 'community_building'
-    context: Dict[str, Any]
-    participants: List[str]
+    interaction_type: (
+        str  # 'moderation', 'engagement', 'conflict_resolution', 'community_building'
+    )
+    context: dict[str, Any]
+    participants: list[str]
     urgency: str = "normal"
 
 
 class SocialAgent(AgentInterface):
-    """
-    Specialized agent for social interactions including:
+    """Specialized agent for social interactions including:
     - Community moderation and management
     - Conflict resolution and mediation
     - Social media engagement strategies
@@ -52,9 +52,9 @@ class SocialAgent(AgentInterface):
     async def generate(self, prompt: str) -> str:
         if "moderate" in prompt.lower() or "community" in prompt.lower():
             return "I can help moderate communities, enforce guidelines, and maintain positive interactions."
-        elif "conflict" in prompt.lower():
+        if "conflict" in prompt.lower():
             return "I specialize in conflict resolution, mediation, and finding common ground between parties."
-        elif "engage" in prompt.lower():
+        if "engage" in prompt.lower():
             return "I can develop engagement strategies to build active, healthy online communities."
         return "I'm a Social Agent specialized in community management and human interaction facilitation."
 
@@ -101,8 +101,8 @@ class SocialAgent(AgentInterface):
         return social_type, f"SOCIAL[{social_type}:{query[:50]}]"
 
     async def moderate_community(
-        self, content: str, context: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, content: str, context: dict[str, Any]
+    ) -> dict[str, Any]:
         """Moderate community content and interactions"""
         try:
             moderation_result = {
@@ -149,8 +149,8 @@ class SocialAgent(AgentInterface):
             return {"error": str(e)}
 
     async def resolve_conflict(
-        self, participants: List[str], issue: str
-    ) -> Dict[str, Any]:
+        self, participants: list[str], issue: str
+    ) -> dict[str, Any]:
         """Mediate conflicts between community members"""
         try:
             resolution_steps = [
@@ -183,8 +183,8 @@ class SocialAgent(AgentInterface):
             return {"error": str(e)}
 
     async def develop_engagement_strategy(
-        self, community_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, community_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """Develop community engagement strategies"""
         try:
             community_size = community_data.get("member_count", 100)
@@ -244,8 +244,8 @@ class SocialAgent(AgentInterface):
             return {"error": str(e)}
 
     async def monitor_sentiment(
-        self, interactions: List[Dict[str, Any]]
-    ) -> Dict[str, Any]:
+        self, interactions: list[dict[str, Any]]
+    ) -> dict[str, Any]:
         """Monitor community sentiment and health"""
         try:
             sentiment_scores = []

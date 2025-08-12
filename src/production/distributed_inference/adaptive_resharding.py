@@ -173,7 +173,7 @@ class AdaptiveReshardingManager:
         if not os.path.exists(self.state_file):
             return
         try:
-            with open(self.state_file, "r", encoding="utf-8") as f:
+            with open(self.state_file, encoding="utf-8") as f:
                 data = json.load(f)
             self.resharding_history = [ReshardingEvent.from_dict(d) for d in data]
             if self.resharding_history:

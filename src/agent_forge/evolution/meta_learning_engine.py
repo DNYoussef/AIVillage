@@ -7,7 +7,6 @@ including few-shot learning, learning rate adaptation, and strategy optimization
 import asyncio
 import json
 import logging
-import pickle
 import time
 from collections import defaultdict, deque
 from dataclasses import asdict, dataclass
@@ -733,10 +732,12 @@ class MetaLearningEngine:
     def save_meta_learning_data(self) -> None:
         """Save meta-learning data to disk."""
         try:
-            # Save experiences
-            experiences_file = self.storage_path / "experiences.pkl"
-            with open(experiences_file, "wb") as f:
-                pickle.dump(list(self.experiences), f)
+            # Save experiences as JSON for security
+            experiences_file = self.storage_path / "experiences.json"
+            with open(experiences_file, "w") as f:
+                # Convert to serializable format
+                experiences_data = [asdict(exp) for exp in self.experiences]
+                json.dump(experiences_data, f, indent=2, default=str)
 
             # Save agent profiles
             profiles_file = self.storage_path / "agent_profiles.json"
@@ -772,12 +773,22 @@ class MetaLearningEngine:
     def load_meta_learning_data(self) -> None:
         """Load meta-learning data from disk."""
         try:
-            # Load experiences
-            experiences_file = self.storage_path / "experiences.pkl"
+            # Load experiences - migrate from pickle to JSON for security
+            experiences_file = self.storage_path / "experiences.json"
+            legacy_file = self.storage_path / "experiences.pkl"
+
             if experiences_file.exists():
-                with open(experiences_file, "rb") as f:
-                    experiences_list = pickle.load(f)
-                    self.experiences.extend(experiences_list)
+                with open(experiences_file) as f:
+                    experiences_data = json.load(f)
+                    # Convert dict back to LearningExperience objects
+                    for exp_data in experiences_data:
+                        exp = LearningExperience(**exp_data)
+                        self.experiences.append(exp)
+            elif legacy_file.exists():
+                logger.warning(
+                    "Found legacy pickle file, skipping for security. Please recreate experiences."
+                )
+                # Do not load pickle data for security reasons
 
             # Load agent profiles
             profiles_file = self.storage_path / "agent_profiles.json"
@@ -870,8 +881,8 @@ class MetaLearningEngine:
         )
         if best_strategy.performance_history:
             recommendations.append(
-                f"Strategy '{best_strategy.name}' shows best performance with {
-                    best_strategy.avg_improvement:.3f} average improvement"
+                f"Strategy '{best_strategy.name}' shows best performance with "
+                f"{best_strategy.avg_improvement:.3f} average improvement"
             )
 
         # Learning rate recommendations

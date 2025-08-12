@@ -1,9 +1,8 @@
-"""
-Architect Agent - System Design and Planning Specialist
-"""
+"""Architect Agent - System Design and Planning Specialist"""
+
 import hashlib
 import logging
-from typing import Any, Dict, List
+from typing import Any
 
 from src.production.rag.rag_system.core.agent_interface import AgentInterface
 
@@ -11,8 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 class ArchitectAgent(AgentInterface):
-    """
-    Specialized agent for system architecture and design including:
+    """Specialized agent for system architecture and design including:
     - System architecture design and planning
     - Microservices and distributed system patterns
     - Database design and optimization
@@ -41,9 +39,9 @@ class ArchitectAgent(AgentInterface):
     async def generate(self, prompt: str) -> str:
         if "architecture" in prompt.lower():
             return "I design scalable system architectures using microservices, event-driven patterns, and modern tech stacks."
-        elif "database" in prompt.lower():
+        if "database" in prompt.lower():
             return "I can design optimal database schemas, choose appropriate database technologies, and plan data architecture."
-        elif "api" in prompt.lower():
+        if "api" in prompt.lower():
             return "I design RESTful APIs, GraphQL endpoints, and integration patterns for seamless system communication."
         return "I'm an Architect Agent specialized in system design, architecture planning, and technology strategy."
 
@@ -93,8 +91,8 @@ class ArchitectAgent(AgentInterface):
         return arch_type, f"ARCHITECT[{arch_type}:{query[:50]}]"
 
     async def design_system_architecture(
-        self, requirements: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, requirements: dict[str, Any]
+    ) -> dict[str, Any]:
         """Design comprehensive system architecture"""
         try:
             scale = requirements.get("scale", "medium")
@@ -125,7 +123,7 @@ class ArchitectAgent(AgentInterface):
             logger.error(f"Architecture design failed: {e}")
             return {"error": str(e)}
 
-    def _get_components_for_style(self, style: str) -> List[Dict[str, Any]]:
+    def _get_components_for_style(self, style: str) -> list[dict[str, Any]]:
         """Get recommended components for architecture style"""
         if style == "microservices":
             return [
@@ -139,7 +137,7 @@ class ArchitectAgent(AgentInterface):
                 {"name": "Load Balancer", "purpose": "Traffic distribution"},
                 {"name": "Circuit Breaker", "purpose": "Fault tolerance"},
             ]
-        elif style == "modular_monolith":
+        if style == "modular_monolith":
             return [
                 {
                     "name": "Application Layer",
@@ -149,15 +147,15 @@ class ArchitectAgent(AgentInterface):
                 {"name": "Infrastructure Layer", "purpose": "External dependencies"},
                 {"name": "Shared Kernel", "purpose": "Common utilities"},
             ]
-        else:  # monolith
-            return [
-                {"name": "Web Layer", "purpose": "HTTP handling and routing"},
-                {"name": "Service Layer", "purpose": "Business logic"},
-                {"name": "Data Access Layer", "purpose": "Database interactions"},
-                {"name": "Common Layer", "purpose": "Shared utilities"},
-            ]
+        # monolith
+        return [
+            {"name": "Web Layer", "purpose": "HTTP handling and routing"},
+            {"name": "Service Layer", "purpose": "Business logic"},
+            {"name": "Data Access Layer", "purpose": "Database interactions"},
+            {"name": "Common Layer", "purpose": "Shared utilities"},
+        ]
 
-    def _recommend_tech_stack(self, requirements: Dict[str, Any]) -> Dict[str, str]:
+    def _recommend_tech_stack(self, requirements: dict[str, Any]) -> dict[str, str]:
         """Recommend technology stack based on requirements"""
         performance_req = requirements.get("performance", "medium")
         team_expertise = requirements.get("team_expertise", "mixed")
@@ -170,7 +168,7 @@ class ArchitectAgent(AgentInterface):
                 "message_queue": "Apache Kafka",
                 "monitoring": "Micrometer + Prometheus",
             }
-        elif team_expertise == "javascript":
+        if team_expertise == "javascript":
             return {
                 "backend": "Node.js + Express",
                 "database": "MongoDB",
@@ -178,7 +176,7 @@ class ArchitectAgent(AgentInterface):
                 "message_queue": "RabbitMQ",
                 "monitoring": "Winston + New Relic",
             }
-        elif performance_req == "high":
+        if performance_req == "high":
             return {
                 "backend": "Go/Rust",
                 "database": "PostgreSQL + Redis",
@@ -186,16 +184,15 @@ class ArchitectAgent(AgentInterface):
                 "message_queue": "Apache Kafka",
                 "monitoring": "Prometheus + Grafana",
             }
-        else:
-            return {
-                "backend": "Python + FastAPI",
-                "database": "PostgreSQL",
-                "cache": "Redis",
-                "message_queue": "Celery + Redis",
-                "monitoring": "Prometheus + Grafana",
-            }
+        return {
+            "backend": "Python + FastAPI",
+            "database": "PostgreSQL",
+            "cache": "Redis",
+            "message_queue": "Celery + Redis",
+            "monitoring": "Prometheus + Grafana",
+        }
 
-    def _plan_deployment(self, scale: str, budget: str) -> Dict[str, Any]:
+    def _plan_deployment(self, scale: str, budget: str) -> dict[str, Any]:
         """Plan deployment strategy"""
         if scale == "large" and budget != "low":
             return {
@@ -205,7 +202,7 @@ class ArchitectAgent(AgentInterface):
                 "ci_cd": "GitLab CI/GitHub Actions",
                 "infrastructure_as_code": "Terraform",
             }
-        elif scale == "medium":
+        if scale == "medium":
             return {
                 "strategy": "Docker Compose/ECS",
                 "cloud_provider": "AWS/DigitalOcean",
@@ -213,16 +210,15 @@ class ArchitectAgent(AgentInterface):
                 "ci_cd": "GitHub Actions",
                 "infrastructure_as_code": "CloudFormation/Terraform",
             }
-        else:
-            return {
-                "strategy": "Single VM/Container",
-                "cloud_provider": "DigitalOcean/Heroku",
-                "environments": ["prod"],
-                "ci_cd": "GitHub Actions",
-                "infrastructure_as_code": "Docker Compose",
-            }
+        return {
+            "strategy": "Single VM/Container",
+            "cloud_provider": "DigitalOcean/Heroku",
+            "environments": ["prod"],
+            "ci_cd": "GitHub Actions",
+            "infrastructure_as_code": "Docker Compose",
+        }
 
-    def _design_data_layer(self, requirements: Dict[str, Any]) -> Dict[str, Any]:
+    def _design_data_layer(self, requirements: dict[str, Any]) -> dict[str, Any]:
         """Design data architecture"""
         data_volume = requirements.get("data_volume", "medium")
         consistency_req = requirements.get("consistency", "eventual")
@@ -236,16 +232,15 @@ class ArchitectAgent(AgentInterface):
                 "data_warehouse": "ClickHouse/BigQuery",
                 "backup_strategy": "Daily snapshots + WAL archiving",
             }
-        else:
-            return {
-                "primary_db": "PostgreSQL",
-                "read_replicas": "Single read replica",
-                "cache_strategy": "Redis",
-                "search_engine": "PostgreSQL Full Text Search",
-                "backup_strategy": "Daily automated backups",
-            }
+        return {
+            "primary_db": "PostgreSQL",
+            "read_replicas": "Single read replica",
+            "cache_strategy": "Redis",
+            "search_engine": "PostgreSQL Full Text Search",
+            "backup_strategy": "Daily automated backups",
+        }
 
-    def _plan_security(self, architecture_style: str) -> List[str]:
+    def _plan_security(self, architecture_style: str) -> list[str]:
         """Plan security measures"""
         base_security = [
             "HTTPS/TLS encryption",
@@ -268,7 +263,7 @@ class ArchitectAgent(AgentInterface):
 
         return base_security
 
-    def _plan_monitoring(self, architecture_style: str) -> Dict[str, Any]:
+    def _plan_monitoring(self, architecture_style: str) -> dict[str, Any]:
         """Plan monitoring and observability"""
         base_monitoring = {
             "metrics": "Prometheus + Grafana",
@@ -289,7 +284,7 @@ class ArchitectAgent(AgentInterface):
 
         return base_monitoring
 
-    def _plan_scalability(self, scale: str, architecture_style: str) -> Dict[str, Any]:
+    def _plan_scalability(self, scale: str, architecture_style: str) -> dict[str, Any]:
         """Plan scalability approach"""
         scalability_plan = {
             "horizontal_scaling": "Container/pod scaling",

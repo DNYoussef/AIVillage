@@ -268,3 +268,23 @@ data/cleanup_archive/
 # Performance and monitoring
 performance_monitor_*.log
 monitoring/logs/
+
+# Audit artifacts and temporary analysis files
+tmp_audit/
+*_audit/
+*_analysis/
+*_backup/
+*_archive/
+AI_VILLAGE_READINESS.md
+*_READINESS.md
+*_VERIFICATION_*.md
+*_ANALYSIS_*.md
+*_IMPLEMENTATION_*.md
+*_COMPLETION_*.md
+
+# Temporary files and logs
+*.backup
+magi_production_*.log
+cleanup_*.log
+*.tmp
+temp_env/

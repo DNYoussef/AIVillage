@@ -9,7 +9,7 @@ This sub-agent handles:
 4. Cleanup: Fix imports, remove temp files, validate syntax
 
 Created for the AIVillage project to commit our completed work:
-- Enhanced Transport Manager (WebSocket/TCP/UDP) 
+- Enhanced Transport Manager (WebSocket/TCP/UDP)
 - Complete LibP2P Mesh Network
 - Fixed Agent Factory
 - Enhanced BitNet Compression
@@ -216,7 +216,7 @@ class CleanupAndCommitAgent:
             with open(ruff_config_path, "w") as f:
                 f.write("[tool.ruff]\n")
                 f.write(f"line-length = {ruff_config['line-length']}\n")
-                f.write(f"target-version = \"{ruff_config['target-version']}\"\n")
+                f.write(f'target-version = "{ruff_config["target-version"]}"\n')
 
         # Run ruff check
         result = self.run_command(["ruff", "check", "--fix", "."], ignore_errors=True)
@@ -497,7 +497,7 @@ This commit includes the completion and cleanup of major AIVillage components:
 - Applied black formatting (line-length: 120)
 - Organized imports with isort (black profile)
 - Fixed linting issues with ruff
-- Cleaned up {self.results.get('cleanup', {}).get('temp_files', {}).get('removed_files', 0)} temporary files
+- Cleaned up {self.results.get("cleanup", {}).get("temp_files", {}).get("removed_files", 0)} temporary files
 - Validated syntax for all Python files
 
 Timestamp: {timestamp}
@@ -605,7 +605,9 @@ Co-Authored-By: AIVillage-Cleanup-Agent <cleanup@aivillage.dev>"""
                     push_result = self.git_push()
 
                     if push_result["success"]:
-                        self.logger.info("✅ Successfully pushed all changes to GitHub!")
+                        self.logger.info(
+                            "✅ Successfully pushed all changes to GitHub!"
+                        )
                     else:
                         self.logger.error(
                             f"❌ Failed to push: {push_result.get('stderr', 'Unknown error')}"

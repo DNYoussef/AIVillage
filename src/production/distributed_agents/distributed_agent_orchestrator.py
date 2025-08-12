@@ -521,12 +521,12 @@ class DistributedAgentOrchestrator:
             device_assignments[best_device.device_id].append(instance.instance_id)
 
             # Update resource usage
-            device_resource_usage[best_device.device_id][
-                "memory_mb"
-            ] += spec.memory_requirement_mb
-            device_resource_usage[best_device.device_id][
-                "compute"
-            ] += spec.compute_requirement
+            device_resource_usage[best_device.device_id]["memory_mb"] += (
+                spec.memory_requirement_mb
+            )
+            device_resource_usage[best_device.device_id]["compute"] += (
+                spec.compute_requirement
+            )
 
         # Calculate redundancy coverage
         redundancy_coverage = {}

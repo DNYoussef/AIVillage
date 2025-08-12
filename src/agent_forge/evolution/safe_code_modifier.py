@@ -112,9 +112,9 @@ class CodeValidator:
             )
 
             # 3. Complexity validation
-            validation_results["complexity_acceptable"] = (
-                await self._validate_complexity(modification.modified_code)
-            )
+            validation_results[
+                "complexity_acceptable"
+            ] = await self._validate_complexity(modification.modified_code)
 
             # 4. Import validation
             validation_results["imports_allowed"] = await self._validate_imports(
@@ -926,9 +926,10 @@ class CodeTransformations:
                     ):
                         # Generate basic docstring
                         args_str = ", ".join([arg.arg for arg in node.args.args])
-                        docstring = f'"""{node.name} function.\n\nArgs:\n    {
-                            args_str
-                        }\n\nReturns:\n    Result of {node.name}\n"""'
+                        docstring = (
+                            f'"""{node.name} function.\n\nArgs:\n    '
+                            f'{args_str}\n\nReturns:\n    Result of {node.name}\n"""'
+                        )
 
                         docstring_node = ast.Expr(value=ast.Str(s=docstring))
                         node.body.insert(0, docstring_node)

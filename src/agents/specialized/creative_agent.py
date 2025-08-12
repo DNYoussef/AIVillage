@@ -1,11 +1,10 @@
-"""
-Creative Agent - Content Generation and Artistic Task Specialist
-"""
+"""Creative Agent - Content Generation and Artistic Task Specialist"""
+
 import hashlib
 import logging
 import random
 from dataclasses import dataclass
-from typing import Any, Dict, Optional
+from typing import Any
 
 from src.production.rag.rag_system.core.agent_interface import AgentInterface
 
@@ -18,14 +17,13 @@ class CreativeRequest:
 
     content_type: str  # 'story', 'poem', 'design', 'music', 'art'
     theme: str
-    style: Optional[str] = None
+    style: str | None = None
     length: str = "medium"
-    constraints: Dict[str, Any] = None
+    constraints: dict[str, Any] = None
 
 
 class CreativeAgent(AgentInterface):
-    """
-    Specialized agent for creative tasks including:
+    """Specialized agent for creative tasks including:
     - Story and narrative generation
     - Poetry and creative writing
     - Visual design concepts
@@ -56,13 +54,13 @@ class CreativeAgent(AgentInterface):
         """Generate creative content based on prompt"""
         if "story" in prompt.lower() or "narrative" in prompt.lower():
             return "I can create compelling stories with rich characters and engaging plots. Specify genre and themes."
-        elif "poem" in prompt.lower() or "poetry" in prompt.lower():
+        if "poem" in prompt.lower() or "poetry" in prompt.lower():
             return "I craft poetry in various styles - haiku, sonnets, free verse, and more. What's your theme?"
-        elif "design" in prompt.lower() or "visual" in prompt.lower():
+        if "design" in prompt.lower() or "visual" in prompt.lower():
             return "I provide visual design concepts, color schemes, layouts, and aesthetic direction."
-        elif "music" in prompt.lower():
+        if "music" in prompt.lower():
             return "I can suggest musical compositions, chord progressions, and thematic arrangements."
-        elif "art" in prompt.lower():
+        if "art" in prompt.lower():
             return "I offer art direction, conceptual ideas, and aesthetic guidance for visual projects."
         return "I'm a Creative Agent specialized in generating original content across multiple artistic mediums."
 
@@ -124,7 +122,7 @@ class CreativeAgent(AgentInterface):
         latent_representation = f"CREATIVE[{creative_type}:{query[:50]}]"
         return creative_type, latent_representation
 
-    async def generate_story(self, request: CreativeRequest) -> Dict[str, Any]:
+    async def generate_story(self, request: CreativeRequest) -> dict[str, Any]:
         """Generate a story based on theme and style"""
         try:
             theme = request.theme
@@ -196,7 +194,7 @@ class CreativeAgent(AgentInterface):
             logger.error(f"Story generation failed: {e}")
             return {"error": str(e)}
 
-    async def create_poetry(self, request: CreativeRequest) -> Dict[str, Any]:
+    async def create_poetry(self, request: CreativeRequest) -> dict[str, Any]:
         """Create poetry based on theme and style"""
         try:
             theme = request.theme
@@ -284,7 +282,7 @@ class CreativeAgent(AgentInterface):
             logger.error(f"Poetry creation failed: {e}")
             return {"error": str(e)}
 
-    async def design_visual_concept(self, request: CreativeRequest) -> Dict[str, Any]:
+    async def design_visual_concept(self, request: CreativeRequest) -> dict[str, Any]:
         """Create visual design concept"""
         try:
             theme = request.theme
@@ -378,7 +376,7 @@ class CreativeAgent(AgentInterface):
             logger.error(f"Visual design concept failed: {e}")
             return {"error": str(e)}
 
-    async def compose_music_concept(self, request: CreativeRequest) -> Dict[str, Any]:
+    async def compose_music_concept(self, request: CreativeRequest) -> dict[str, Any]:
         """Create music composition concept"""
         try:
             theme = request.theme
@@ -475,8 +473,8 @@ class CreativeAgent(AgentInterface):
             return {"error": str(e)}
 
     async def develop_character(
-        self, character_brief: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, character_brief: dict[str, Any]
+    ) -> dict[str, Any]:
         """Develop detailed character profile"""
         try:
             name = character_brief.get("name", "Unnamed Character")

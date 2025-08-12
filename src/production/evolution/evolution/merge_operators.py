@@ -811,9 +811,7 @@ class MergeOperator:
                 [r for r in self.merge_history if r.success],
                 key=lambda x: x.merge_quality_score,
                 reverse=True,
-            )[
-                :5
-            ],  # Top 5 merges
+            )[:5],  # Top 5 merges
         }
 
         return analytics

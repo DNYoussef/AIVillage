@@ -11,9 +11,10 @@ import logging
 import time
 import uuid
 import zlib
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable
+from typing import Any
 
 # For compression (using existing compression pipeline)
 import lz4.frame
@@ -838,12 +839,11 @@ class TensorStreaming:
                     tensor.requires_grad_(True)
                 return tensor
             return np_array
-        elif metadata.format == TensorFormat.JSON:
+        if metadata.format == TensorFormat.JSON:
             tensor_data = json.loads(combined_data.decode("utf-8"))
             return tensor_data
-        else:
-            logger.error(f"Unsupported tensor format: {metadata.format}")
-            return None
+        logger.error(f"Unsupported tensor format: {metadata.format}")
+        return None
 
     def _find_missing_chunks(self, tensor_id: str) -> list[int]:
         """Find missing chunk indices for a tensor."""

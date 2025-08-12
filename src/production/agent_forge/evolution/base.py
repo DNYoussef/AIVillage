@@ -1,7 +1,6 @@
 """Base class for evolvable agents - Sprint 6 Enhanced."""
 
 import logging
-import pickle
 import time
 import uuid
 from dataclasses import dataclass, field
@@ -28,6 +27,9 @@ try:
     LZ4_AVAILABLE = True
 except ImportError:
     LZ4_AVAILABLE = False
+
+# Import secure serialization
+from core.security.secure_serialization import SecureSerializer
 
 logger = logging.getLogger(__name__)
 
@@ -68,25 +70,32 @@ class EvolutionMemory:
                 # Decompress existing, add new, recompress
                 if self.long_term_compressed:
                     try:
-                        existing = pickle.loads(
-                            lz4.frame.decompress(self.long_term_compressed)
+                        decompressed_data = lz4.frame.decompress(
+                            self.long_term_compressed
                         )
-                    except:
+                        existing = SecureSerializer.loads(decompressed_data)
+                    except Exception as e:
+                        logger.warning(f"Failed to decompress long-term memory: {e}")
                         existing = []
                 else:
                     existing = []
 
                 existing.extend(to_compress)
-                self.long_term_compressed = lz4.frame.compress(pickle.dumps(existing))
+                serialized_data = SecureSerializer.dumps(existing)
+                self.long_term_compressed = lz4.frame.compress(serialized_data)
             else:
                 # Fallback without compression
                 logger.warning("LZ4 not available, using uncompressed storage")
                 if self.long_term_compressed:
-                    existing = pickle.loads(self.long_term_compressed)
+                    try:
+                        existing = SecureSerializer.loads(self.long_term_compressed)
+                    except Exception as e:
+                        logger.warning(f"Failed to deserialize long-term memory: {e}")
+                        existing = []
                 else:
                     existing = []
                 existing.extend(to_compress)
-                self.long_term_compressed = pickle.dumps(existing)
+                self.long_term_compressed = SecureSerializer.dumps(existing)
 
 
 class EvolutionMetrics:

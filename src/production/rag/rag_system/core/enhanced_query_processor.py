@@ -475,9 +475,7 @@ class EnhancedQueryProcessor:
                         i, j
                     ] >= self.conflict_similarity_threshold and self._has_negation(
                         texts[i]
-                    ) != self._has_negation(
-                        texts[j]
-                    ):
+                    ) != self._has_negation(texts[j]):
                         if candidates[i].final_score >= candidates[j].final_score:
                             conflicting_indices.add(j)
                         else:

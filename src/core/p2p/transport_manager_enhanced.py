@@ -672,9 +672,9 @@ class EnhancedTransportManager:
                     success = await transport.send_message(peer_id, message)
                     if success:
                         self.stats["total_messages_sent"] += 1
-                        self.routing_table[
-                            peer_id
-                        ] = transport_name  # Remember successful transport
+                        self.routing_table[peer_id] = (
+                            transport_name  # Remember successful transport
+                        )
                         logger.debug(f"Message sent to {peer_id} via {transport_name}")
                         return True
                 except Exception as e:

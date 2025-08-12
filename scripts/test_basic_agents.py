@@ -2,6 +2,7 @@
 """
 Basic test script for specialized agents without heavy dependencies
 """
+
 import asyncio
 import os
 import sys

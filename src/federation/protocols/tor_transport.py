@@ -2,7 +2,7 @@
 
 Implements Tor integration for anonymous communication with:
 - Hidden service (.onion) address generation
-- SOCKS proxy routing for outbound connections  
+- SOCKS proxy routing for outbound connections
 - Circuit building with minimum 3 hops
 - Stem library for Tor daemon management
 - Bridge configuration for censored regions
@@ -15,7 +15,7 @@ import tempfile
 import time
 import uuid
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 # Tor control and management
 try:
@@ -48,7 +48,7 @@ class TorCircuit:
     """Tor circuit information"""
 
     circuit_id: str
-    path: List[str]  # Relay fingerprints
+    path: list[str]  # Relay fingerprints
     status: str
     created_at: float
     purpose: str
@@ -84,7 +84,7 @@ class TorTransport:
         control_port: int = 9051,
         hidden_service_port: int = 80,
         target_port: int = 8080,
-        data_directory: Optional[str] = None,
+        data_directory: str | None = None,
     ):
         self.socks_port = socks_port
         self.control_port = control_port
@@ -99,20 +99,20 @@ class TorTransport:
         self.tor_controller = None
 
         # Hidden service
-        self.hidden_service: Optional[TorHiddenService] = None
-        self.http_server: Optional[web.Application] = None
-        self.http_runner: Optional[web.AppRunner] = None
+        self.hidden_service: TorHiddenService | None = None
+        self.http_server: web.Application | None = None
+        self.http_runner: web.AppRunner | None = None
 
         # Circuit management
-        self.circuits: Dict[str, TorCircuit] = {}
+        self.circuits: dict[str, TorCircuit] = {}
         self.min_circuit_hops = 3
 
         # Message handling
-        self.message_handlers: Dict[str, Any] = {}
-        self.pending_requests: Dict[str, asyncio.Future] = {}
+        self.message_handlers: dict[str, Any] = {}
+        self.pending_requests: dict[str, asyncio.Future] = {}
 
         # Connection pool for outbound requests
-        self.client_session: Optional[ClientSession] = None
+        self.client_session: ClientSession | None = None
 
         # Statistics
         self.stats = {
@@ -130,7 +130,6 @@ class TorTransport:
 
     async def start(self) -> bool:
         """Start Tor transport with hidden service"""
-
         if not TOR_AVAILABLE:
             logger.error("Tor stem library not available")
             return False
@@ -202,10 +201,9 @@ class TorTransport:
         logger.info("Tor transport stopped")
 
     async def send_message(
-        self, recipient_onion: str, payload: Dict[str, Any], timeout: int = 30
+        self, recipient_onion: str, payload: dict[str, Any], timeout: int = 30
     ) -> bool:
         """Send message to Tor hidden service"""
-
         if not self.is_running:
             return False
 
@@ -233,19 +231,17 @@ class TorTransport:
                     self.stats["messages_sent"] += 1
                     logger.debug(f"Sent message to {recipient_onion[:16]}...")
                     return True
-                else:
-                    logger.warning(f"Message send failed: HTTP {response.status}")
-                    return False
+                logger.warning(f"Message send failed: HTTP {response.status}")
+                return False
 
         except Exception as e:
             logger.error(f"Tor message send failed: {e}")
             return False
 
     async def create_circuit(
-        self, purpose: str = "general", min_hops: Optional[int] = None
-    ) -> Optional[str]:
+        self, purpose: str = "general", min_hops: int | None = None
+    ) -> str | None:
         """Create new Tor circuit with specified parameters"""
-
         if not self.tor_controller:
             return None
 
@@ -284,17 +280,17 @@ class TorTransport:
 
         return None
 
-    def get_onion_address(self) -> Optional[str]:
+    def get_onion_address(self) -> str | None:
         """Get our hidden service onion address"""
         if self.hidden_service:
             return self.hidden_service.onion_address
         return None
 
-    def get_circuit_info(self, circuit_id: str) -> Optional[TorCircuit]:
+    def get_circuit_info(self, circuit_id: str) -> TorCircuit | None:
         """Get information about specific circuit"""
         return self.circuits.get(circuit_id)
 
-    def get_active_circuits(self) -> List[TorCircuit]:
+    def get_active_circuits(self) -> list[TorCircuit]:
         """Get all active circuits"""
         return [
             circuit for circuit in self.circuits.values() if circuit.is_established()
@@ -304,7 +300,7 @@ class TorTransport:
         """Register handler for incoming messages"""
         self.message_handlers[message_type] = handler
 
-    def get_status(self) -> Dict[str, Any]:
+    def get_status(self) -> dict[str, Any]:
         """Get Tor transport status"""
         return {
             "is_running": self.is_running,
@@ -523,7 +519,7 @@ class TorBridgeManager:
     """Manages Tor bridges for censored regions"""
 
     def __init__(self):
-        self.bridges: List[str] = []
+        self.bridges: list[str] = []
         self.bridge_types = ["obfs4", "meek", "snowflake"]
 
     def add_bridge(self, bridge_line: str):
@@ -532,7 +528,7 @@ class TorBridgeManager:
             self.bridges.append(bridge_line)
             logger.info(f"Added bridge: {bridge_line[:50]}...")
 
-    def get_bridge_config(self) -> Dict[str, Any]:
+    def get_bridge_config(self) -> dict[str, Any]:
         """Get bridge configuration for Tor"""
         if not self.bridges:
             return {}
@@ -543,7 +539,7 @@ class TorBridgeManager:
             "ClientTransportPlugin": "obfs4 exec /usr/bin/obfs4proxy",
         }
 
-    async def fetch_bridges_from_bridgedb(self) -> List[str]:
+    async def fetch_bridges_from_bridgedb(self) -> list[str]:
         """Fetch bridges from Tor BridgeDB (placeholder)"""
         # In practice, would fetch from https://bridges.torproject.org/
         logger.info("Fetching bridges from BridgeDB...")
@@ -560,7 +556,7 @@ class TorFederationExtension:
 
     def __init__(self, tor_transport: TorTransport):
         self.tor_transport = tor_transport
-        self.federation_peers: Dict[str, str] = {}  # device_id -> onion_address
+        self.federation_peers: dict[str, str] = {}  # device_id -> onion_address
 
     async def register_federation_peer(self, device_id: str, onion_address: str):
         """Register federation peer's onion address"""
@@ -568,10 +564,9 @@ class TorFederationExtension:
         logger.info(f"Registered federation peer {device_id}: {onion_address[:16]}...")
 
     async def send_federation_message(
-        self, device_id: str, message_type: str, payload: Dict[str, Any]
+        self, device_id: str, message_type: str, payload: dict[str, Any]
     ) -> bool:
         """Send message to federation peer via Tor"""
-
         if device_id not in self.federation_peers:
             logger.error(f"Unknown federation peer: {device_id}")
             return False
@@ -587,7 +582,7 @@ class TorFederationExtension:
         return await self.tor_transport.send_message(onion_address, federation_message)
 
     async def broadcast_to_federation(
-        self, message_type: str, payload: Dict[str, Any]
+        self, message_type: str, payload: dict[str, Any]
     ) -> int:
         """Broadcast message to all federation peers"""
         success_count = 0
@@ -598,7 +593,7 @@ class TorFederationExtension:
 
         return success_count
 
-    def get_federation_status(self) -> Dict[str, Any]:
+    def get_federation_status(self) -> dict[str, Any]:
         """Get federation-specific status"""
         return {
             "federation_peers": len(self.federation_peers),

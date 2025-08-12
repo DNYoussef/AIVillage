@@ -170,9 +170,9 @@ def preserve_instruction_tuning(
     )
 
     with torch.no_grad():
-        merged_model.get_input_embeddings().weight[
-            merged_instruction_ids
-        ] = avg_instruction_embedding
+        merged_model.get_input_embeddings().weight[merged_instruction_ids] = (
+            avg_instruction_embedding
+        )
 
     return merged_model
 

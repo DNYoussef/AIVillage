@@ -182,8 +182,7 @@ class EncryptionLayer:
             auth_data = encrypted_data[:auth_data_size]
             iv = encrypted_data[auth_data_size : auth_data_size + self.config.iv_size]
             tag = encrypted_data[
-                auth_data_size
-                + self.config.iv_size : auth_data_size
+                auth_data_size + self.config.iv_size : auth_data_size
                 + self.config.iv_size
                 + 16
             ]

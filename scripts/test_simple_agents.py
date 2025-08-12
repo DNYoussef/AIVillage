@@ -2,6 +2,7 @@
 """
 Simple standalone test for specialized agents
 """
+
 import asyncio
 import sys
 

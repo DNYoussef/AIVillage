@@ -1,10 +1,9 @@
-"""
-DevOps Agent - CI/CD and Infrastructure Management Specialist
-"""
+"""DevOps Agent - CI/CD and Infrastructure Management Specialist"""
+
 import asyncio
 import logging
 from dataclasses import dataclass
-from typing import Any, Dict
+from typing import Any
 
 from src.production.rag.rag_system.core.agent_interface import AgentInterface
 
@@ -23,8 +22,7 @@ class DeploymentRequest:
 
 
 class DevOpsAgent(AgentInterface):
-    """
-    Specialized agent for DevOps operations including:
+    """Specialized agent for DevOps operations including:
     - CI/CD pipeline management
     - Infrastructure provisioning and monitoring
     - Container orchestration
@@ -54,11 +52,11 @@ class DevOpsAgent(AgentInterface):
         """Generate DevOps operation responses"""
         if "deploy" in prompt.lower():
             return "I can handle deployments to dev, staging, or production environments. Specify the service and version."
-        elif "pipeline" in prompt.lower():
+        if "pipeline" in prompt.lower():
             return "I manage CI/CD pipelines with automated testing, building, and deployment stages."
-        elif "infrastructure" in prompt.lower():
+        if "infrastructure" in prompt.lower():
             return "I can provision and manage cloud infrastructure using IaC tools like Terraform."
-        elif "monitor" in prompt.lower():
+        if "monitor" in prompt.lower():
             return "I provide monitoring, alerting, and observability for distributed systems."
         return "I'm a DevOps Agent specialized in CI/CD, infrastructure, and deployment automation."
 
@@ -117,7 +115,7 @@ class DevOpsAgent(AgentInterface):
         latent_representation = f"DEVOPS[{operation_type}:{query[:50]}]"
         return operation_type, latent_representation
 
-    async def deploy_service(self, request: DeploymentRequest) -> Dict[str, Any]:
+    async def deploy_service(self, request: DeploymentRequest) -> dict[str, Any]:
         """Deploy service to specified environment"""
         result = {
             "deployment_id": f"{request.service}-{request.version}-{request.environment}",
@@ -175,7 +173,7 @@ class DevOpsAgent(AgentInterface):
 
         return result
 
-    async def rollback_deployment(self, deployment_id: str) -> Dict[str, Any]:
+    async def rollback_deployment(self, deployment_id: str) -> dict[str, Any]:
         """Rollback a failed deployment"""
         logger.info(f"Rolling back deployment {deployment_id}")
 
@@ -186,7 +184,7 @@ class DevOpsAgent(AgentInterface):
             "previous_version": "v1.2.3",
         }
 
-    async def manage_pipeline(self, pipeline_config: Dict[str, Any]) -> Dict[str, Any]:
+    async def manage_pipeline(self, pipeline_config: dict[str, Any]) -> dict[str, Any]:
         """Create or update CI/CD pipeline"""
         pipeline_id = pipeline_config.get("name", "default-pipeline")
 
@@ -216,7 +214,7 @@ class DevOpsAgent(AgentInterface):
 
         return pipeline
 
-    async def monitor_infrastructure(self) -> Dict[str, Any]:
+    async def monitor_infrastructure(self) -> dict[str, Any]:
         """Monitor infrastructure health and metrics"""
         metrics = {
             "timestamp": "2024-01-01T12:00:00Z",
@@ -260,7 +258,7 @@ class DevOpsAgent(AgentInterface):
 
         return metrics
 
-    async def scale_service(self, service_name: str, replicas: int) -> Dict[str, Any]:
+    async def scale_service(self, service_name: str, replicas: int) -> dict[str, Any]:
         """Scale service replicas up or down"""
         logger.info(f"Scaling {service_name} to {replicas} replicas")
 
@@ -272,7 +270,7 @@ class DevOpsAgent(AgentInterface):
             "estimated_completion": "2 minutes",
         }
 
-    async def provision_infrastructure(self, config: Dict[str, Any]) -> Dict[str, Any]:
+    async def provision_infrastructure(self, config: dict[str, Any]) -> dict[str, Any]:
         """Provision cloud infrastructure"""
         resource_type = config.get("type", "kubernetes_cluster")
 
@@ -298,7 +296,7 @@ class DevOpsAgent(AgentInterface):
 
         return result
 
-    async def run_security_scan(self, target: str) -> Dict[str, Any]:
+    async def run_security_scan(self, target: str) -> dict[str, Any]:
         """Run security scan on target"""
         scan_result = {
             "scan_id": f"security-scan-{target}",

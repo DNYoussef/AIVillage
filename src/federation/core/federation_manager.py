@@ -10,7 +10,7 @@ import json
 import logging
 import time
 import uuid
-from typing import Any, Dict, List, Optional, Set
+from typing import Any
 
 from navigator.path_policy import RoutingPriority
 
@@ -55,34 +55,34 @@ class FederationManager:
 
         # Core components (building on existing implementation)
         self.device_registry = DeviceRegistry(self.device_id)
-        self.dual_path_transport: Optional[DualPathTransport] = None
+        self.dual_path_transport: DualPathTransport | None = None
 
         # Extended protocol support
-        self.tor_transport: Optional[Any] = None  # Will be implemented
-        self.i2p_transport: Optional[Any] = None  # Will be implemented
+        self.tor_transport: Any | None = None  # Will be implemented
+        self.i2p_transport: Any | None = None  # Will be implemented
         self.enable_tor = enable_tor
         self.enable_i2p = enable_i2p
 
         # Federation state
         self.is_running = False
-        self.local_profile: Optional[DeviceProfile] = None
-        self.federation_role: Optional[DeviceRole] = None
+        self.local_profile: DeviceProfile | None = None
+        self.federation_role: DeviceRole | None = None
 
         # VPN-like privacy tunnels
-        self.active_tunnels: Dict[str, Dict[str, Any]] = {}
-        self.privacy_circuits: Dict[str, List[str]] = {}  # destination -> path
+        self.active_tunnels: dict[str, dict[str, Any]] = {}
+        self.privacy_circuits: dict[str, list[str]] = {}  # destination -> path
 
         # Beacon coordination (for beacon nodes)
-        self.coordinated_devices: Set[str] = set()
-        self.beacon_responsibilities: Dict[str, Any] = {}
+        self.coordinated_devices: set[str] = set()
+        self.beacon_responsibilities: dict[str, Any] = {}
 
         # Load balancing and task distribution
-        self.task_queue: List[Dict[str, Any]] = []
-        self.worker_pool: Set[str] = set()
+        self.task_queue: list[dict[str, Any]] = []
+        self.worker_pool: set[str] = set()
 
         # Anonymous credentials and reputation
-        self.reputation_proofs: Dict[str, bytes] = {}
-        self.credential_store: Dict[str, Any] = {}
+        self.reputation_proofs: dict[str, bytes] = {}
+        self.credential_store: dict[str, Any] = {}
 
         # Statistics
         self.federation_stats = {
@@ -100,11 +100,10 @@ class FederationManager:
 
     async def start(
         self,
-        capabilities: Set[DeviceCapability] = None,
-        preferred_role: Optional[DeviceRole] = None,
+        capabilities: set[DeviceCapability] = None,
+        preferred_role: DeviceRole | None = None,
     ) -> bool:
         """Start the federated network stack"""
-
         if self.is_running:
             return True
 
@@ -214,12 +213,11 @@ class FederationManager:
     async def send_federated_message(
         self,
         recipient: str,
-        payload: Dict[str, Any],
+        payload: dict[str, Any],
         privacy_level: int = PrivacyLevel.PRIVATE,
         service_type: str = "general",
     ) -> bool:
         """Send message through federated network with privacy levels"""
-
         if not self.is_running or not self.dual_path_transport:
             return False
 
@@ -255,11 +253,10 @@ class FederationManager:
     async def request_ai_service(
         self,
         service_name: str,
-        request_data: Dict[str, Any],
+        request_data: dict[str, Any],
         privacy_level: int = PrivacyLevel.PRIVATE,
-    ) -> Optional[Dict[str, Any]]:
+    ) -> dict[str, Any] | None:
         """Request AI service from federation with privacy guarantees"""
-
         # Find suitable edge or worker nodes for the service
         suitable_nodes = await self._find_service_providers(service_name)
 
@@ -297,7 +294,7 @@ class FederationManager:
 
         return {"status": "simulated_response", "data": "placeholder"}
 
-    async def contribute_compute_task(self, task_data: Dict[str, Any]) -> bool:
+    async def contribute_compute_task(self, task_data: dict[str, Any]) -> bool:
         """Contribute compute task to federation"""
         if self.federation_role not in [DeviceRole.WORKER, DeviceRole.EDGE]:
             return False
@@ -317,9 +314,8 @@ class FederationManager:
 
     async def create_privacy_tunnel(
         self, destination: str, privacy_level: int = PrivacyLevel.ANONYMOUS
-    ) -> Optional[str]:
+    ) -> str | None:
         """Create VPN-like privacy tunnel through federation"""
-
         if privacy_level < PrivacyLevel.ANONYMOUS:
             return None  # No tunnel needed for lower privacy levels
 
@@ -353,7 +349,7 @@ class FederationManager:
         )
         return tunnel_id
 
-    def get_federation_status(self) -> Dict[str, Any]:
+    def get_federation_status(self) -> dict[str, Any]:
         """Get comprehensive federation status"""
         status = self.device_registry.get_federation_status()
 
@@ -408,7 +404,7 @@ class FederationManager:
         except Exception as e:
             logger.exception(f"Error handling federation message: {e}")
 
-    async def _handle_device_announcement(self, message_data: Dict, sender: str):
+    async def _handle_device_announcement(self, message_data: dict, sender: str):
         """Handle device announcement for federation discovery"""
         try:
             # Extract device profile from announcement
@@ -424,7 +420,7 @@ class FederationManager:
         except Exception as e:
             logger.error(f"Error handling device announcement: {e}")
 
-    async def _handle_ai_service_request(self, message_data: Dict, sender: str):
+    async def _handle_ai_service_request(self, message_data: dict, sender: str):
         """Handle AI service request"""
         if self.federation_role not in [DeviceRole.EDGE, DeviceRole.WORKER]:
             return  # Only edge/worker nodes handle AI services
@@ -447,18 +443,18 @@ class FederationManager:
 
         await self.send_federated_message(sender, response)
 
-    async def _handle_compute_task(self, message_data: Dict, sender: str):
+    async def _handle_compute_task(self, message_data: dict, sender: str):
         """Handle distributed compute task"""
         await self.contribute_compute_task(message_data.get("task_data", {}))
 
-    async def _handle_beacon_coordination(self, message_data: Dict, sender: str):
+    async def _handle_beacon_coordination(self, message_data: dict, sender: str):
         """Handle beacon coordination messages"""
         if self.federation_role == DeviceRole.BEACON:
             # Handle coordination between beacons
             coordination_type = message_data.get("coordination_type")
             logger.debug(f"Beacon coordination: {coordination_type} from {sender}")
 
-    async def _handle_reputation_update(self, message_data: Dict, sender: str):
+    async def _handle_reputation_update(self, message_data: dict, sender: str):
         """Handle reputation system updates"""
         # TODO: Implement zero-knowledge reputation proofs
         logger.debug(f"Reputation update from {sender}")
@@ -533,7 +529,7 @@ class FederationManager:
                 f"Coordinating {len(regional_workers)} workers in region {self.region}"
             )
 
-    async def _find_service_providers(self, service_name: str) -> List[str]:
+    async def _find_service_providers(self, service_name: str) -> list[str]:
         """Find nodes capable of providing specific AI service"""
         # For now, return edge and worker nodes
         providers = []
@@ -545,7 +541,7 @@ class FederationManager:
         return providers[:5]  # Limit to 5 candidates
 
     async def _select_optimal_service_node(
-        self, candidates: List[str], privacy_level: int
+        self, candidates: list[str], privacy_level: int
     ) -> str:
         """Select optimal node for service request"""
         if not candidates:
@@ -566,13 +562,13 @@ class FederationManager:
 
     async def _build_privacy_circuit(
         self, destination: str, min_hops: int = 3
-    ) -> Optional[List[str]]:
+    ) -> list[str] | None:
         """Build privacy circuit through relay nodes"""
         relay_nodes = self.device_registry.get_devices_by_role(DeviceRole.RELAY)
 
         if len(relay_nodes) < min_hops - 1:
             logger.warning(
-                f"Insufficient relay nodes for privacy circuit: need {min_hops-1}, have {len(relay_nodes)}"
+                f"Insufficient relay nodes for privacy circuit: need {min_hops - 1}, have {len(relay_nodes)}"
             )
             return None
 
@@ -588,14 +584,14 @@ class FederationManager:
         circuit = selected_relays + [destination]
         return circuit
 
-    async def _build_paranoid_circuit(self, destination: str) -> Optional[List[str]]:
+    async def _build_paranoid_circuit(self, destination: str) -> list[str] | None:
         """Build multi-protocol paranoid circuit"""
         # For PARANOID level, chain different protocols
         # This would involve Tor -> Betanet -> I2P routing
         # For now, return a basic circuit
         return await self._build_privacy_circuit(destination, min_hops=5)
 
-    async def _send_via_privacy_circuit(self, destination: str, message: Dict) -> bool:
+    async def _send_via_privacy_circuit(self, destination: str, message: dict) -> bool:
         """Send message through privacy circuit"""
         # Create tunnel if needed
         tunnel_id = await self.create_privacy_tunnel(
@@ -619,7 +615,7 @@ class FederationManager:
         """Update federation statistics"""
         self.federation_stats["total_devices"] = len(self.device_registry.devices)
 
-    def _get_available_protocols(self) -> List[str]:
+    def _get_available_protocols(self) -> list[str]:
         """Get list of available protocols"""
         protocols = ["bitchat", "betanet"]
 

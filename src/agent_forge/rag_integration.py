@@ -463,9 +463,9 @@ Answer:"""
                 )
 
                 logger.info(
-                    f"Query {i + 1}/{len(test_queries)}: {
-                        metrics.total_latency:.3f}s, quality: {
-                        metrics.answer_quality:.3f}"
+                    f"Query {i + 1}/{len(test_queries)}: "
+                    f"{metrics.total_latency:.3f}s, quality: "
+                    f"{metrics.answer_quality:.3f}"
                 )
 
             except Exception as e:

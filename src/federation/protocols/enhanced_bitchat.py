@@ -1,7 +1,7 @@
 """Enhanced BitChat Protocol - Production Implementation
 
 Complete implementation of Jack Dorsey's BitChat specification with:
-- X25519/Ed25519 cryptography  
+- X25519/Ed25519 cryptography
 - Message fragmentation for 500-byte BLE limit
 - Store-and-forward with 12-hour TTL
 - LZ4 compression for messages >100 bytes
@@ -18,9 +18,10 @@ import struct
 import time
 import uuid
 from collections import defaultdict
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Set
+from typing import Any, Optional
 
 import lz4.frame
 
@@ -78,8 +79,8 @@ class BitChatKey:
 
     private_key: bytes = field(default_factory=lambda: nacl.utils.random(32))
     public_key: bytes = field(init=False)
-    signing_key: Optional[nacl.signing.SigningKey] = field(default=None)
-    verify_key: Optional[nacl.signing.VerifyKey] = field(init=False, default=None)
+    signing_key: nacl.signing.SigningKey | None = field(default=None)
+    verify_key: nacl.signing.VerifyKey | None = field(init=False, default=None)
 
     def __post_init__(self):
         if CRYPTO_AVAILABLE:
@@ -147,15 +148,15 @@ class BitChatMessage:
     # Routing fields
     ttl: int = 7
     hop_count: int = 0
-    route_path: List[str] = field(default_factory=list)
+    route_path: list[str] = field(default_factory=list)
 
     # Metadata
     timestamp: float = field(default_factory=time.time)
     priority: int = 5
-    expires_at: Optional[float] = None
+    expires_at: float | None = None
 
     # Fragmentation
-    fragments: List[BitChatFragment] = field(default_factory=list)
+    fragments: list[BitChatFragment] = field(default_factory=list)
     is_fragmented: bool = False
 
     def __post_init__(self):
@@ -292,7 +293,7 @@ class BitChatMessage:
         signable = f"{self.id}{self.sender}{self.recipient}{self.timestamp}".encode()
         return signable + self.payload
 
-    def fragment_message(self, max_fragment_size: int = 450) -> List[BitChatFragment]:
+    def fragment_message(self, max_fragment_size: int = 450) -> list[BitChatFragment]:
         """Fragment message for BLE transmission"""
         if not self.payload:
             return []
@@ -333,7 +334,7 @@ class BitChatMessage:
 
     @classmethod
     def reassemble_from_fragments(
-        cls, fragments: List[BitChatFragment]
+        cls, fragments: list[BitChatFragment]
     ) -> Optional["BitChatMessage"]:
         """Reassemble message from fragments"""
         if not fragments:
@@ -375,7 +376,7 @@ class BitChatMessage:
         )
         return message
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Serialize message to dictionary"""
         return {
             "id": self.id,
@@ -399,7 +400,7 @@ class BitChatMessage:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "BitChatMessage":
+    def from_dict(cls, data: dict[str, Any]) -> "BitChatMessage":
         """Deserialize message from dictionary"""
         msg = cls(
             id=data["id"],
@@ -430,9 +431,9 @@ class BitChatChannel:
     def __init__(self, name: str, creator: str):
         self.name = name
         self.creator = creator
-        self.members: Set[str] = {creator}
+        self.members: set[str] = {creator}
         self.created_at = time.time()
-        self.message_history: List[BitChatMessage] = []
+        self.message_history: list[BitChatMessage] = []
         self.max_history = 100
 
     def add_member(self, device_id: str) -> bool:
@@ -478,27 +479,27 @@ class EnhancedBitChatTransport:
 
         # Connection management
         self.is_running = False
-        self.active_connections: Set[str] = set()
-        self.discovered_peers: Dict[str, Dict[str, Any]] = {}
+        self.active_connections: set[str] = set()
+        self.discovered_peers: dict[str, dict[str, Any]] = {}
 
         # Message handling
-        self.message_handlers: Dict[BitChatMessageType, Callable] = {}
-        self.sent_messages: Set[str] = set()  # Deduplication
-        self.pending_fragments: Dict[str, Dict[int, BitChatFragment]] = defaultdict(
+        self.message_handlers: dict[BitChatMessageType, Callable] = {}
+        self.sent_messages: set[str] = set()  # Deduplication
+        self.pending_fragments: dict[str, dict[int, BitChatFragment]] = defaultdict(
             dict
         )
 
         # Store-and-forward cache
-        self.store_forward_cache: Dict[str, List[BitChatMessage]] = defaultdict(list)
+        self.store_forward_cache: dict[str, list[BitChatMessage]] = defaultdict(list)
         self.cache_max_size = 1000
 
         # Channel management
-        self.channels: Dict[str, BitChatChannel] = {}
-        self.joined_channels: Set[str] = set()
+        self.channels: dict[str, BitChatChannel] = {}
+        self.joined_channels: set[str] = set()
 
         # Traffic injection for privacy
         self.dummy_traffic_enabled = True
-        self.dummy_traffic_task: Optional[asyncio.Task] = None
+        self.dummy_traffic_task: asyncio.Task | None = None
 
         # Power management
         self.scan_interval = self._get_scan_interval()
@@ -569,7 +570,6 @@ class EnhancedBitChatTransport:
         encrypt: bool = True,
     ) -> bool:
         """Send message with full crypto and fragmentation"""
-
         if not self.is_running:
             return False
 
@@ -676,13 +676,13 @@ class EnhancedBitChatTransport:
         """Register message handler"""
         self.message_handlers[message_type] = handler
 
-    def get_channel_members(self, channel_name: str) -> Set[str]:
+    def get_channel_members(self, channel_name: str) -> set[str]:
         """Get members of a channel"""
         if channel_name in self.channels:
             return self.channels[channel_name].members.copy()
         return set()
 
-    def get_status(self) -> Dict[str, Any]:
+    def get_status(self) -> dict[str, Any]:
         """Get transport status"""
         self.stats["cache_size"] = sum(
             len(msgs) for msgs in self.store_forward_cache.values()
@@ -723,7 +723,7 @@ class EnhancedBitChatTransport:
             return False
 
     async def _send_fragments(
-        self, fragments: List[BitChatFragment], recipient: str
+        self, fragments: list[BitChatFragment], recipient: str
     ) -> bool:
         """Send message fragments"""
         success_count = 0
@@ -747,15 +747,15 @@ class EnhancedBitChatTransport:
         self.message_handlers[BitChatMessageType.DATA] = self._handle_data_message
         self.message_handlers[BitChatMessageType.FRAGMENT] = self._handle_fragment
         self.message_handlers[BitChatMessageType.HELLO] = self._handle_hello
-        self.message_handlers[
-            BitChatMessageType.CHANNEL_JOIN
-        ] = self._handle_channel_join
-        self.message_handlers[
-            BitChatMessageType.CHANNEL_LEAVE
-        ] = self._handle_channel_leave
-        self.message_handlers[
-            BitChatMessageType.CHANNEL_MSG
-        ] = self._handle_channel_message
+        self.message_handlers[BitChatMessageType.CHANNEL_JOIN] = (
+            self._handle_channel_join
+        )
+        self.message_handlers[BitChatMessageType.CHANNEL_LEAVE] = (
+            self._handle_channel_leave
+        )
+        self.message_handlers[BitChatMessageType.CHANNEL_MSG] = (
+            self._handle_channel_message
+        )
         self.message_handlers[BitChatMessageType.DUMMY] = self._handle_dummy_traffic
 
     async def _handle_data_message(self, message: BitChatMessage):
@@ -778,9 +778,9 @@ class EnhancedBitChatTransport:
             fragment = BitChatFragment.from_bytes(message.payload)
 
             # Store fragment
-            self.pending_fragments[fragment.fragment_id][
-                fragment.fragment_index
-            ] = fragment
+            self.pending_fragments[fragment.fragment_id][fragment.fragment_index] = (
+                fragment
+            )
 
             # Check if we have all fragments
             fragments_dict = self.pending_fragments[fragment.fragment_id]

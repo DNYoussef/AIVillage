@@ -527,9 +527,7 @@ class GuardianMetrics:
     <p>Total Metrics: {total_metrics}</p>
 
     <h2>Metrics Details</h2>
-""".format(
-            total_metrics=summary.get("total_metrics", 0)
-        )
+""".format(total_metrics=summary.get("total_metrics", 0))
 
         for name, data in summary.get("metrics", {}).items():
             html += f"""

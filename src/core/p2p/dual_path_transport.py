@@ -1,6 +1,6 @@
 """Dual-Path Transport Integration - BitChat + Betanet
 
-Unified transport layer that seamlessly integrates BitChat (Bluetooth mesh) and 
+Unified transport layer that seamlessly integrates BitChat (Bluetooth mesh) and
 Betanet (decentralized internet) protocols with intelligent routing via Navigator agent.
 
 This module provides the bridge between P2P transport and agent coordination layers.
@@ -11,7 +11,7 @@ import json
 import logging
 import time
 import uuid
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any
 
 # Import our dual-path components
 try:
@@ -61,11 +61,11 @@ class DualPathMessage:
         id: str = None,
         sender: str = "",
         recipient: str = "",
-        payload: Union[bytes, str, Dict] = b"",
+        payload: bytes | str | dict = b"",
         priority: int = 5,
         content_type: str = "application/json",
         privacy_required: bool = False,
-        deadline: Optional[float] = None,
+        deadline: float | None = None,
     ):
         self.id = id or str(uuid.uuid4())
         self.sender = sender
@@ -135,16 +135,16 @@ class DualPathTransport:
 
     def __init__(
         self,
-        node_id: Optional[str] = None,
+        node_id: str | None = None,
         enable_bitchat: bool = True,
         enable_betanet: bool = True,
     ):
         self.node_id = node_id or f"dualpath_{uuid.uuid4().hex[:12]}"
 
         # Initialize transport components
-        self.bitchat: Optional[BitChatTransport] = None
-        self.betanet: Optional[BetanetTransport] = None
-        self.navigator: Optional[NavigatorAgent] = None
+        self.bitchat: BitChatTransport | None = None
+        self.betanet: BetanetTransport | None = None
+        self.navigator: NavigatorAgent | None = None
 
         # Configuration
         self.enable_bitchat = enable_bitchat and BITCHAT_AVAILABLE
@@ -152,7 +152,7 @@ class DualPathTransport:
         self.enable_navigator = NAVIGATOR_AVAILABLE
 
         # Message handling
-        self.message_handlers: Dict[str, Any] = {}
+        self.message_handlers: dict[str, Any] = {}
         self.routing_stats = {
             "bitchat_sent": 0,
             "betanet_sent": 0,
@@ -162,14 +162,14 @@ class DualPathTransport:
         }
 
         # Store-and-forward queue for offline scenarios
-        self.offline_queue: List[
-            Tuple[DualPathMessage, float]
+        self.offline_queue: list[
+            tuple[DualPathMessage, float]
         ] = []  # (message, queued_time)
         self.max_queue_size = 1000
 
         # Control
         self.is_running = False
-        self.maintenance_task: Optional[asyncio.Task] = None
+        self.maintenance_task: asyncio.Task | None = None
 
         logger.info(f"DualPathTransport initialized: {self.node_id}")
         logger.info(
@@ -261,11 +261,11 @@ class DualPathTransport:
     async def send_message(
         self,
         recipient: str,
-        payload: Union[bytes, str, Dict],
+        payload: bytes | str | dict,
         priority: int = 5,
         privacy_required: bool = False,
-        deadline: Optional[float] = None,
-        preferred_protocol: Optional[str] = None,
+        deadline: float | None = None,
+        preferred_protocol: str | None = None,
     ) -> bool:
         """Send message via optimal dual-path route
 
@@ -329,7 +329,7 @@ class DualPathTransport:
         return success
 
     async def broadcast_message(
-        self, payload: Union[bytes, str, Dict], priority: int = 5, max_hops: int = 5
+        self, payload: bytes | str | dict, priority: int = 5, max_hops: int = 5
     ) -> int:
         """Broadcast message to all reachable peers
 
@@ -376,7 +376,7 @@ class DualPathTransport:
 
     async def _select_optimal_path(
         self, destination: str, context: MessageContext
-    ) -> Tuple[PathProtocol, Dict[str, Any]]:
+    ) -> tuple[PathProtocol, dict[str, Any]]:
         """Select optimal path using Navigator agent"""
         if not self.enable_navigator or not self.navigator:
             # Fallback path selection without Navigator
@@ -386,10 +386,9 @@ class DualPathTransport:
                 and self.bitchat.is_peer_reachable(destination)
             ):
                 return PathProtocol.BITCHAT, {"fallback": True}
-            elif self.enable_betanet:
+            if self.enable_betanet:
                 return PathProtocol.BETANET, {"fallback": True}
-            else:
-                return PathProtocol.STORE_FORWARD, {"fallback": True}
+            return PathProtocol.STORE_FORWARD, {"fallback": True}
 
         # Get available protocols
         available_protocols = []
@@ -405,26 +404,24 @@ class DualPathTransport:
         )
 
     async def _route_message(
-        self, message: DualPathMessage, protocol: PathProtocol, metadata: Dict[str, Any]
+        self, message: DualPathMessage, protocol: PathProtocol, metadata: dict[str, Any]
     ) -> bool:
         """Route message via selected protocol"""
-
         if protocol == PathProtocol.BITCHAT:
             return await self._send_via_bitchat(message, metadata)
 
-        elif protocol == PathProtocol.BETANET:
+        if protocol == PathProtocol.BETANET:
             return await self._send_via_betanet(message, metadata)
 
-        elif protocol == PathProtocol.STORE_FORWARD:
+        if protocol == PathProtocol.STORE_FORWARD:
             await self._queue_for_store_forward(message)
             return True
 
-        else:
-            logger.error(f"Unknown protocol: {protocol}")
-            return False
+        logger.error(f"Unknown protocol: {protocol}")
+        return False
 
     async def _send_via_bitchat(
-        self, message: DualPathMessage, metadata: Dict[str, Any]
+        self, message: DualPathMessage, metadata: dict[str, Any]
     ) -> bool:
         """Send message via BitChat transport"""
         if not self.enable_bitchat or not self.bitchat:
@@ -457,7 +454,7 @@ class DualPathTransport:
             return False
 
     async def _send_via_betanet(
-        self, message: DualPathMessage, metadata: Dict[str, Any]
+        self, message: DualPathMessage, metadata: dict[str, Any]
     ) -> bool:
         """Send message via Betanet transport"""
         if not self.enable_betanet or not self.betanet:
@@ -598,10 +595,7 @@ class DualPathTransport:
                     self.enable_bitchat
                     and self.bitchat
                     and self.bitchat.is_peer_reachable(message.recipient)
-                ):
-                    can_deliver = True
-
-                elif (
+                ) or (
                     self.enable_betanet
                     and self.betanet
                     and message.recipient in self.betanet.discovered_peers
@@ -686,7 +680,7 @@ class DualPathTransport:
         self.message_handlers[handler_name] = handler
         logger.debug(f"Registered message handler: {handler_name}")
 
-    def get_status(self) -> Dict[str, Any]:
+    def get_status(self) -> dict[str, Any]:
         """Get comprehensive transport status"""
         status = {
             "node_id": self.node_id,
@@ -712,7 +706,7 @@ class DualPathTransport:
 
         return status
 
-    def get_reachable_peers(self) -> Dict[str, List[str]]:
+    def get_reachable_peers(self) -> dict[str, list[str]]:
         """Get list of reachable peers by transport"""
         peers = {"bitchat": [], "betanet": [], "both": []}
 

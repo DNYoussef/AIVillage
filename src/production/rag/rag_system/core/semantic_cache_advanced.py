@@ -9,11 +9,11 @@ Implements:
 
 import asyncio
 import hashlib
+import json
 import logging
-import pickle
 import time
 from collections import OrderedDict, defaultdict
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 
@@ -573,34 +573,48 @@ class SemanticMultiTierCache:
             },
         }
 
-        cache_file = self.cache_dir / "cache_state.pkl"
+        cache_file = self.cache_dir / "cache_state.json"
 
-        with open(cache_file, "wb") as f:
-            pickle.dump(state, f)
+        # Convert to JSON-serializable format
+        serializable_state = {}
+        for tier, entries in state.items():
+            serializable_state[tier] = [asdict(entry) for entry in entries]
+
+        with open(cache_file, "w") as f:
+            json.dump(serializable_state, f, indent=2, default=str)
 
         logger.info(f"Cache persisted to {cache_file}")
 
     async def load_from_disk(self) -> bool:
         """Load cache state from disk."""
-        cache_file = self.cache_dir / "cache_state.pkl"
+        cache_file = self.cache_dir / "cache_state.json"
+        legacy_file = self.cache_dir / "cache_state.pkl"
 
-        if not cache_file.exists():
+        if cache_file.exists():
+            try:
+                with open(cache_file) as f:
+                    state = json.load(f)
+        elif legacy_file.exists():
+            logger.warning("Found legacy pickle cache file, skipping for security")
+            return False
+        else:
             return False
 
         try:
-            with open(cache_file, "rb") as f:
-                state = pickle.load(f)
 
-            # Restore cache tiers
-            for entry in state.get("hot", []):
+            # Restore cache tiers from JSON
+            for entry_data in state.get("hot", []):
+                entry = CacheEntry(**entry_data)
                 self.hot_cache[entry.key] = entry
                 self._update_semantic_index(entry)
 
-            for entry in state.get("warm", []):
+            for entry_data in state.get("warm", []):
+                entry = CacheEntry(**entry_data)
                 self.warm_cache[entry.key] = entry
                 self._update_semantic_index(entry)
 
-            for entry in state.get("cold", []):
+            for entry_data in state.get("cold", []):
+                entry = CacheEntry(**entry_data)
                 self.cold_cache[entry.key] = entry
                 self._update_semantic_index(entry)
 
