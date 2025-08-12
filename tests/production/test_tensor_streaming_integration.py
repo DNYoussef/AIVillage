@@ -1,12 +1,13 @@
 """Integration tests for tensor streaming over P2P nodes."""
 
+import asyncio
 import hashlib
 
 import numpy as np
 import pytest
 
 from src.production.communications.p2p.p2p_node import MessageType, P2PMessage, P2PNode
-from src.production.communications.p2p.tensor_streaming import TensorStreaming
+from src.production.communications.p2p.tensor_streaming import TensorStreaming, TransferProgress
 
 
 @pytest.mark.asyncio
@@ -172,3 +173,59 @@ async def test_key_exchange_after_restart(monkeypatch):
     second_key = send_stream._key_cache[receiver.node_id]
     assert second_key != first_key
     assert second_key == recv_stream._key_cache[sender.node_id]
+
+
+@pytest.mark.asyncio
+async def test_simultaneous_transfers(monkeypatch):
+    """Ensure multiple tensor transfers can occur concurrently."""
+    sender = P2PNode(node_id="sender_conc", port=9401)
+    receiver = P2PNode(node_id="receiver_conc", port=9402)
+
+    send_stream = TensorStreaming(node=sender)
+    recv_stream = TensorStreaming(node=receiver)
+
+    receiver.register_handler(MessageType.DATA, recv_stream._handle_tensor_chunk)
+
+    async def fake_send(self, peer_id, message_type, payload):
+        msg = P2PMessage(message_type, self.node_id, peer_id, payload)
+        handler = receiver.message_handlers.get(message_type)
+        if handler:
+            await handler(msg, None)
+            return True
+        return False
+
+    monkeypatch.setattr(sender, "send_message", fake_send.__get__(sender, P2PNode))
+
+    # Pre-share keys to avoid key exchange complexities
+    dummy_key = b"k"
+    send_stream._key_cache[receiver.node_id] = dummy_key
+    recv_stream._key_cache[sender.node_id] = dummy_key
+
+    tensor_a = np.arange(8, dtype=np.float32)
+    tensor_b = np.arange(8, dtype=np.float32) * 2
+
+    ids = await asyncio.gather(
+        send_stream.send_tensor(tensor_a, "a", receiver.node_id),
+        send_stream.send_tensor(tensor_b, "b", receiver.node_id),
+    )
+
+    # Initialize progress entries as if transfers were active
+    for tensor_id in ids:
+        metadata = recv_stream.tensor_metadata[tensor_id]
+        recv_stream.active_transfers[tensor_id] = TransferProgress(
+            tensor_id=tensor_id,
+            total_chunks=metadata.total_chunks,
+            received_chunks=len(recv_stream.pending_chunks[tensor_id]),
+            estimated_total_bytes=metadata.size_bytes,
+        )
+
+    results = await asyncio.gather(
+        recv_stream.receive_tensor(ids[0], timeout=1.0),
+        recv_stream.receive_tensor(ids[1], timeout=1.0),
+    )
+
+    for (tensor, _), expected in zip(results, [tensor_a, tensor_b]):
+        assert np.array_equal(tensor, expected)
+
+    assert recv_stream.active_transfers == {}
+    assert recv_stream.pending_chunks == {}
