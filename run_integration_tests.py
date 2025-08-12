@@ -445,7 +445,9 @@ class IntegrationTestSuite:
                 status = (
                     "PASS"
                     if result["passed"] == result["total"]
-                    else "PARTIAL" if result["passed"] > 0 else "FAIL"
+                    else "PARTIAL"
+                    if result["passed"] > 0
+                    else "FAIL"
                 )
                 print(
                     f"\n{result['test']}: [{status}] {result['passed']}/{result['total']} passed"

@@ -243,7 +243,7 @@ class MultiAgentCoordinator:
             "✅ Multi-agent coordination successful",
         ]
 
-        print(f"\n🎯 KING'S FINAL RECOMMENDATIONS:")
+        print("\n🎯 KING'S FINAL RECOMMENDATIONS:")
         for rec in final_recommendations:
             print(f"   {rec}")
 
@@ -297,7 +297,7 @@ class MultiAgentCoordinator:
             spanish_learner["receipt"]
         )
 
-        print(f"Spanish learner profile created with translation support")
+        print("Spanish learner profile created with translation support")
         print(
             f"Receipts recorded: {translation_receipt['receipt_id']}, {education_receipt['receipt_id']}"
         )
@@ -331,14 +331,14 @@ class MultiAgentCoordinator:
                 "specialization": status.get("specialization", "general"),
             }
 
-        print(f"\n🏗️ INFRASTRUCTURE STATUS:")
+        print("\n🏗️ INFRASTRUCTURE STATUS:")
         print(f"   Total Agents: {len(self.agents)}")
         print(f"   Total Capabilities: {total_capabilities}")
         print(
             f"   All Initialized: {'✅' if all(s['initialized'] for s in agent_summary.values()) else '❌'}"
         )
 
-        print(f"\n🎯 COORDINATION CAPABILITIES:")
+        print("\n🎯 COORDINATION CAPABILITIES:")
         coordination_features = [
             "✅ Task decomposition and assignment (King)",
             "✅ Cross-agent communication and data sharing",
@@ -357,7 +357,7 @@ class MultiAgentCoordinator:
         # Generate compliance dashboard
         dashboard = await self.agents["auditor"].get_compliance_dashboard()
 
-        print(f"\n📈 SYSTEM METRICS:")
+        print("\n📈 SYSTEM METRICS:")
         print(f"   Total Receipts: {dashboard['receipt_metrics']['total_receipts']}")
         print(
             f"   Verification Rate: {dashboard['receipt_metrics']['verification_rate']:.1%}"
@@ -422,7 +422,7 @@ async def main():
         print(f"   - Total agents: {summary['agents']}")
         print(f"   - Total capabilities: {summary['total_capabilities']}")
 
-        print(f"\n🏆 ATLANTIS META-AGENT ECOSYSTEM: FULLY OPERATIONAL")
+        print("\n🏆 ATLANTIS META-AGENT ECOSYSTEM: FULLY OPERATIONAL")
         print(f"All {len(coordinator.agents)} agents successfully coordinated!")
 
     except Exception as e:
@@ -433,7 +433,7 @@ async def main():
 
     finally:
         # Shutdown all agents
-        print(f"\n🔄 Shutting down agents...")
+        print("\n🔄 Shutting down agents...")
         for name, agent in coordinator.agents.items():
             try:
                 await agent.shutdown()

@@ -3,9 +3,9 @@ import json
 import logging
 from typing import Any
 
-from langroid.language_models.openai_gpt import OpenAIGPTConfig
 import matplotlib.pyplot as plt
 import networkx as nx
+from langroid.language_models.openai_gpt import OpenAIGPTConfig
 
 from core.error_handling import AIVillageException, error_handler, safe_execute
 
@@ -105,13 +105,17 @@ class KnowledgeGraphAgent:
                 self.graph.add_node(node["id"], **node.get("attributes", {}))
 
             for edge in update_instructions.get("add_edges", []):
-                self.graph.add_edge(edge["source"], edge["target"], **edge.get("attributes", {}))
+                self.graph.add_edge(
+                    edge["source"], edge["target"], **edge.get("attributes", {})
+                )
 
             for node in update_instructions.get("modify_nodes", []):
                 self.graph.nodes[node["id"]].update(node.get("attributes", {}))
 
             for edge in update_instructions.get("modify_edges", []):
-                self.graph[edge["source"]][edge["target"]].update(edge.get("attributes", {}))
+                self.graph[edge["source"]][edge["target"]].update(
+                    edge.get("attributes", {})
+                )
 
             for node in update_instructions.get("remove_nodes", []):
                 self.graph.remove_node(node)
@@ -229,7 +233,9 @@ class KnowledgeGraphAgent:
             )
 
         if highlight_edges:
-            nx.draw_networkx_edges(self.graph, pos, edgelist=highlight_edges, edge_color="red", width=2)
+            nx.draw_networkx_edges(
+                self.graph, pos, edgelist=highlight_edges, edge_color="red", width=2
+            )
 
         # Add edge labels
         edge_labels = nx.get_edge_attributes(self.graph, "relationship")
@@ -262,7 +268,9 @@ if __name__ == "__main__":
         query = "Find all people who work for CompanyX"
         new_information = {
             "nodes": [{"id": "Charlie", "type": "Person"}],
-            "edges": [{"source": "Charlie", "target": "CompanyX", "relationship": "works_for"}],
+            "edges": [
+                {"source": "Charlie", "target": "CompanyX", "relationship": "works_for"}
+            ],
         }
         reasoning_context = {"focus": "employee relationships"}
 
@@ -275,7 +283,9 @@ if __name__ == "__main__":
         print(result["reasoning_result"])
 
         # Visualize the updated graph
-        graph_image = kg_agent.visualize_graph(highlight_nodes=["Charlie"], highlight_edges=[("Charlie", "CompanyX")])
+        graph_image = kg_agent.visualize_graph(
+            highlight_nodes=["Charlie"], highlight_edges=[("Charlie", "CompanyX")]
+        )
         with open("knowledge_graph.png", "wb") as f:
             f.write(graph_image)
         print("\nKnowledge graph visualization saved as 'knowledge_graph.png'")

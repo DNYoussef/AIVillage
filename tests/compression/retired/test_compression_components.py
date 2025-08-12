@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """Test compression components directly to avoid import dependencies."""
 
-from collections import Counter
 import gzip
 import lzma
-from pathlib import Path
 import struct
 import sys
 import time
+from collections import Counter
+from pathlib import Path
 
 import torch
 from torch import nn
@@ -65,7 +65,10 @@ def test_integrated_compression_simulation():
         num_seeds = len(seed_bytes) // 2
         seeds_unpacked = struct.unpack(f"{num_seeds}H", seed_bytes)
         vector_size = 4
-        vectors = [tuple(seeds_unpacked[i : i + vector_size]) for i in range(0, num_seeds, vector_size)]
+        vectors = [
+            tuple(seeds_unpacked[i : i + vector_size])
+            for i in range(0, num_seeds, vector_size)
+        ]
         unique_vectors = list(dict.fromkeys(vectors))[:256]
         mapping = {v: i for i, v in enumerate(unique_vectors)}
         indices = bytes(mapping.get(v, 0) for v in vectors)
@@ -152,7 +155,10 @@ def test_cascade_compression_simulation():
         best_size = len(arr)
 
         for pattern_length in [2, 4, 8, 16]:
-            patterns = [tuple(arr[i : i + pattern_length]) for i in range(0, len(arr), pattern_length)]
+            patterns = [
+                tuple(arr[i : i + pattern_length])
+                for i in range(0, len(arr), pattern_length)
+            ]
             counts = Counter(patterns)
             unique_patterns = list(counts)
 
@@ -316,7 +322,9 @@ def mobile_deployment_analysis():
         print()
 
     # Kenya deployment assessment
-    kenyan_target = 7_000_000_000 * 4 / (1024**2) / best_ratio < 1000  # 7B model < 1GB
+    kenyan_target = (
+        7_000_000_000 * 4 / (1024**2) / best_ratio < 1000
+    )  # 7B model < 1GB
 
     print("Kenya Deployment Assessment:")
     print(f"  7B model fits on 2GB phone: {'YES' if kenyan_target else 'NO'}")
@@ -343,7 +351,9 @@ def main():
         print("Results:")
         print(f"  Integrated Pipeline: {integrated_ratio:.1f}x")
         print(f"  Cascade Compressor: {cascade_avg:.1f}x")
-        print(f"  Best method: {'Integrated' if integrated_ratio > cascade_avg else 'Cascade'}")
+        print(
+            f"  Best method: {'Integrated' if integrated_ratio > cascade_avg else 'Cascade'}"
+        )
 
         # Compare to previous results
         previous_advanced = 20.8
@@ -363,7 +373,9 @@ def main():
         print("\nEfficiency Analysis:")
         print(f"  Previous efficiency: {old_efficiency:.1f}%")
         print(f"  New efficiency: {new_efficiency:.1f}%")
-        print(f"  Efficiency improvement: +{new_efficiency - old_efficiency:.1f} percentage points")
+        print(
+            f"  Efficiency improvement: +{new_efficiency - old_efficiency:.1f} percentage points"
+        )
 
         # Success criteria
         success_criteria = [

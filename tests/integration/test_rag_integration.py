@@ -2,9 +2,9 @@
 """Integration tests for RAG pipeline functionality."""
 
 import asyncio
-from pathlib import Path
 import sys
 import time
+from pathlib import Path
 
 import pytest
 
@@ -12,7 +12,14 @@ import pytest
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 sys.path.insert(
     0,
-    str(Path(__file__).parent.parent.parent / "src" / "production" / "rag" / "rag_system" / "core"),
+    str(
+        Path(__file__).parent.parent.parent
+        / "src"
+        / "production"
+        / "rag"
+        / "rag_system"
+        / "core"
+    ),
 )
 
 try:
@@ -112,13 +119,18 @@ class TestRAGIntegration:
         rag_pipeline.index_documents(sample_documents)
 
         # Query about machine learning
-        results, _ = await rag_pipeline.retrieve("artificial intelligence machine learning", k=3)
+        results, _ = await rag_pipeline.retrieve(
+            "artificial intelligence machine learning", k=3
+        )
 
         assert len(results) > 0
 
         # First result should be relevant to machine learning
         top_result = results[0]
-        assert "machine" in top_result.text.lower() or "artificial" in top_result.text.lower()
+        assert (
+            "machine" in top_result.text.lower()
+            or "artificial" in top_result.text.lower()
+        )
 
         # Scores should be positive for relevant results
         for result in results:
@@ -315,7 +327,9 @@ if __name__ == "__main__":
             pipeline.index_documents(sample_docs)
             results, metrics = await pipeline.retrieve("artificial intelligence")
 
-            print(f"✓ Retrieved {len(results)} results in {metrics['latency_ms']:.2f}ms")
+            print(
+                f"✓ Retrieved {len(results)} results in {metrics['latency_ms']:.2f}ms"
+            )
             print("✓ All RAG integration tests passed")
 
         asyncio.run(main())

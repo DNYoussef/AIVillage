@@ -5,9 +5,9 @@ This script demonstrates that our compression is REAL, not fake.
 We'll create a real model, compress it, and prove it works.
 """
 
-from pathlib import Path
 import sys
 import tempfile
+from pathlib import Path
 
 print("[FIRE] PROVING REAL PYTORCH COMPRESSION WORKS")
 print("=" * 60)
@@ -111,7 +111,9 @@ def test_real_inference():
     print(f"   Output difference: {output_diff:.6f} (lower is better)")
 
     # Verify outputs are reasonable
-    assert original_output.shape == compressed_output.shape, "Output shapes don't match!"
+    assert (
+        original_output.shape == compressed_output.shape
+    ), "Output shapes don't match!"
     assert output_diff < 2.0, f"Output difference too large: {output_diff}"
 
     print("   [OK] Inference test passed - compressed model works!")
@@ -135,7 +137,9 @@ def save_and_load_test():
 
         # Compress model
         quantizer = SimpleQuantizer(target_compression_ratio=3.5)
-        compressed_path = quantizer.compress_for_mobile(str(original_path), output_dir=str(temp_path))
+        compressed_path = quantizer.compress_for_mobile(
+            str(original_path), output_dir=str(temp_path)
+        )
 
         compressed_size = Path(compressed_path).stat().st_size
         actual_ratio = original_size / compressed_size
@@ -209,7 +213,9 @@ def prove_quantization_actually_happens():
     # Verify it's actually quantized by checking for quantized layers
     for name, module in quantized_model.named_modules():
         if hasattr(module, "weight") and hasattr(module.weight, "dtype"):
-            print(f"   Layer {name}: {type(module)}, weight dtype: {module.weight.dtype}")
+            print(
+                f"   Layer {name}: {type(module)}, weight dtype: {module.weight.dtype}"
+            )
             if "int" in str(module.weight.dtype).lower():
                 pass
 
@@ -269,7 +275,9 @@ def main():
         quantizer.quantize_model_from_object(model)
         stats = quantizer.get_compression_stats()
 
-        print(f"   [OK] Model compressed: {stats['original_size_mb']:.2f}MB → {stats['compressed_size_mb']:.2f}MB")
+        print(
+            f"   [OK] Model compressed: {stats['original_size_mb']:.2f}MB → {stats['compressed_size_mb']:.2f}MB"
+        )
         print(f"   [OK] Compression ratio: {stats['compression_ratio']:.2f}x")
         print(f"   [OK] Mobile ready: {quantizer.is_mobile_ready()}")
 

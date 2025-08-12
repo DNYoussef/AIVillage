@@ -1,5 +1,5 @@
-from collections import deque
 import logging
+from collections import deque
 from typing import Any
 
 import numpy as np
@@ -34,9 +34,13 @@ class UnifiedAnalytics:
             "max": np.max(values),
         }
 
-    def record_task_completion(self, task_id: str, completion_time: float, success: bool) -> None:
+    def record_task_completion(
+        self, task_id: str, completion_time: float, success: bool
+    ) -> None:
         self.record_metric("task_completion_time", completion_time)
-        self.task_history.append({"task_id": task_id, "completion_time": completion_time, "success": success})
+        self.task_history.append(
+            {"task_id": task_id, "completion_time": completion_time, "success": success}
+        )
 
     def update_performance_history(self, performance: float) -> None:
         self.performance_history.append(performance)

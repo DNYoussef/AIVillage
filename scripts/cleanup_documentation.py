@@ -14,11 +14,11 @@ Goals:
 6. Update cross-references
 """
 
-from collections import defaultdict
 import os
-from pathlib import Path
 import re
 import shutil
+from collections import defaultdict
+from pathlib import Path
 
 
 class DocumentationCleanup:
@@ -139,7 +139,11 @@ class DocumentationCleanup:
 
         for root, dirs, files in os.walk(self.base_path):
             # Skip virtual environments and node_modules
-            dirs[:] = [d for d in dirs if not d.startswith(("env", "venv", "node_modules", "__pycache__"))]
+            dirs[:] = [
+                d
+                for d in dirs
+                if not d.startswith(("env", "venv", "node_modules", "__pycache__"))
+            ]
 
             for file in files:
                 if file.endswith(".md"):
@@ -167,13 +171,20 @@ class DocumentationCleanup:
             return "architecture"
         if "docs/guides" in path_str or "guide" in filename.lower():
             return "guides"
-        if "docs/api" in path_str or "api" in filename.lower() or "docs/specs" in path_str:
+        if (
+            "docs/api" in path_str
+            or "api" in filename.lower()
+            or "docs/specs" in path_str
+        ):
             return "api"
         if any(comp in path_str for comp in ["mesh", "rag", "twin", "agent_forge"]):
             return "components"
         if any(dev in path_str for dev in ["test", "branch", "development", "smoke"]):
             return "development"
-        if any(ref in filename.lower() for ref in ["todo", "roadmap", "feature", "benchmark", "directory", "entry"]):
+        if any(
+            ref in filename.lower()
+            for ref in ["todo", "roadmap", "feature", "benchmark", "directory", "entry"]
+        ):
             return "reference"
 
         # Default categorization based on content keywords
@@ -181,15 +192,25 @@ class DocumentationCleanup:
             with open(file_path, encoding="utf-8", errors="ignore") as f:
                 content = f.read().lower()
 
-            if any(arch in content for arch in ["architecture", "system design", "component diagram"]):
+            if any(
+                arch in content
+                for arch in ["architecture", "system design", "component diagram"]
+            ):
                 return "architecture"
-            if any(guide in content for guide in ["setup", "installation", "how to", "tutorial"]):
+            if any(
+                guide in content
+                for guide in ["setup", "installation", "how to", "tutorial"]
+            ):
                 return "guides"
-            if any(api in content for api in ["endpoint", "api", "interface", "protocol"]):
+            if any(
+                api in content for api in ["endpoint", "api", "interface", "protocol"]
+            ):
                 return "api"
             if any(comp in content for comp in ["component", "module", "service"]):
                 return "components"
-            if any(dev in content for dev in ["test", "development", "testing", "ci/cd"]):
+            if any(
+                dev in content for dev in ["test", "development", "testing", "ci/cd"]
+            ):
                 return "development"
             return "reference"
         except Exception:
@@ -311,7 +332,9 @@ class DocumentationCleanup:
             moved_to = self.move_file(file_path, target_dir)
 
             if moved_to:
-                print(f"    Successfully moved to: {moved_to.relative_to(self.base_path)}")
+                print(
+                    f"    Successfully moved to: {moved_to.relative_to(self.base_path)}"
+                )
 
     def create_documentation_index(self) -> None:
         """Create a master documentation index."""
@@ -414,8 +437,16 @@ Successfully reorganized AIVillage documentation structure.
 """
 
         for source, target in self.moved_files:
-            source_rel = Path(source).relative_to(self.base_path) if Path(source).is_absolute() else source
-            target_rel = Path(target).relative_to(self.base_path) if Path(target).is_absolute() else target
+            source_rel = (
+                Path(source).relative_to(self.base_path)
+                if Path(source).is_absolute()
+                else source
+            )
+            target_rel = (
+                Path(target).relative_to(self.base_path)
+                if Path(target).is_absolute()
+                else target
+            )
             report_content += f"- {source_rel} → {target_rel}\n"
 
         report_content += f"""
@@ -466,7 +497,9 @@ deprecated/
         try:
             with open(report_path, "w", encoding="utf-8") as f:
                 f.write(report_content)
-            print(f"\nCleanup report generated: {report_path.relative_to(self.base_path)}")
+            print(
+                f"\nCleanup report generated: {report_path.relative_to(self.base_path)}"
+            )
         except Exception as e:
             print(f"Error generating report: {e}")
 

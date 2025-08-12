@@ -201,7 +201,9 @@ class TestTensorStreaming:
         # Test numpy array serialization
         test_array = np.random.rand(10, 10).astype(np.float32)
 
-        serialized_data, metadata = await streaming._serialize_tensor(test_array, "test-tensor", "test_tensor", {})
+        serialized_data, metadata = await streaming._serialize_tensor(
+            test_array, "test-tensor", "test_tensor", {}
+        )
 
         assert isinstance(serialized_data, bytes)
         assert metadata.name == "test_tensor"
@@ -220,7 +222,9 @@ class TestTensorStreaming:
 
         # Test LZ4 compression
         compressed = await streaming._compress_tensor(test_data, CompressionType.LZ4)
-        decompressed = await streaming._decompress_tensor(compressed, CompressionType.LZ4)
+        decompressed = await streaming._decompress_tensor(
+            compressed, CompressionType.LZ4
+        )
 
         assert len(compressed) < len(test_data)  # Should be compressed
         assert decompressed == test_data  # Should decompress correctly
@@ -377,7 +381,10 @@ class TestIntegration:
         nodes = [P2PNode(node_id=f"mesh-node-{i}", port=8050 + i) for i in range(3)]
 
         # Create mesh networks
-        meshes = [DeviceMesh(node=node, protocol=MeshProtocol.OPTIMIZED_LINK_STATE) for node in nodes]
+        meshes = [
+            DeviceMesh(node=node, protocol=MeshProtocol.OPTIMIZED_LINK_STATE)
+            for node in nodes
+        ]
 
         # Simulate mesh connections
         for i, mesh in enumerate(meshes):
@@ -465,7 +472,9 @@ class TestErrorHandling:
 
         try:
             # This should handle the error gracefully
-            result = await streaming._serialize_tensor(UnsupportedType(), "test", "unsupported", {})
+            result = await streaming._serialize_tensor(
+                UnsupportedType(), "test", "unsupported", {}
+            )
             # Should fallback to pickle
             assert result is not None
         except Exception as e:

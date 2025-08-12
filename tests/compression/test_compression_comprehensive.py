@@ -44,7 +44,9 @@ class TestCompressionPipeline:
         assert result["compressed"] is True
 
         # Test with larger model
-        large_model = nn.Sequential(nn.Linear(1000, 500), nn.ReLU(), nn.Linear(500, 100))
+        large_model = nn.Sequential(
+            nn.Linear(1000, 500), nn.ReLU(), nn.Linear(500, 100)
+        )
         result = compressor.compress(large_model)
         assert result["compressed"] is True
 
@@ -218,7 +220,9 @@ class TestCompressionErrorHandling:
         compressor = seedlm.SEEDLMCompressor()
 
         # Mock a compression failure
-        with patch.object(compressor, "compress", side_effect=Exception("Compression failed")):
+        with patch.object(
+            compressor, "compress", side_effect=Exception("Compression failed")
+        ):
             try:
                 result = compressor.compress(nn.Linear(10, 5))
                 # If no exception, check result

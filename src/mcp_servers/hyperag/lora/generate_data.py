@@ -8,11 +8,11 @@ Generates domain-specific training data for LoRA fine-tuning by:
 """
 
 import argparse
-from datetime import datetime, timezone
 import json
 import logging
-from pathlib import Path
 import random
+from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -177,7 +177,9 @@ Provide your repair in JSON format:
 """
         return f"{system_prompt}\n\n{instruction}"
 
-    def generate_completion(self, violation: dict[str, Any], repair: dict[str, Any]) -> str:
+    def generate_completion(
+        self, violation: dict[str, Any], repair: dict[str, Any]
+    ) -> str:
         """Generate the expected completion for the violation."""
         completion = {
             "operation": repair["operation"],
@@ -223,8 +225,12 @@ Provide your repair in JSON format:
             if self.domain == "medical":
                 violation_desc = violation_desc.format(
                     patient_id=f"P{self.rng.randint(1000, 9999)}",
-                    drug=self.rng.choice(["Aspirin", "Penicillin", "Warfarin", "Ibuprofen"]),
-                    allergen=self.rng.choice(["Penicillin", "Sulfa", "Aspirin", "NSAIDs"]),
+                    drug=self.rng.choice(
+                        ["Aspirin", "Penicillin", "Warfarin", "Ibuprofen"]
+                    ),
+                    allergen=self.rng.choice(
+                        ["Penicillin", "Sulfa", "Aspirin", "NSAIDs"]
+                    ),
                     treatment=f"TX{self.rng.randint(100, 999)}",
                     future_date="2025-12-01",
                     corrected_date="2024-12-01",
@@ -232,12 +238,16 @@ Provide your repair in JSON format:
                 )
             elif self.domain == "movies":
                 violation_desc = violation_desc.format(
-                    title=self.rng.choice(["The Matrix", "Inception", "Interstellar", "Dune"]),
+                    title=self.rng.choice(
+                        ["The Matrix", "Inception", "Interstellar", "Dune"]
+                    ),
                     year=self.rng.randint(1990, 2024),
                     node1=f"movie_{self.rng.randint(100, 999)}",
                     node2=f"movie_{self.rng.randint(1000, 1999)}",
                     review_id=f"review_{self.rng.randint(10000, 99999)}",
-                    inferred_genre=self.rng.choice(["Sci-Fi", "Action", "Drama", "Thriller"]),
+                    inferred_genre=self.rng.choice(
+                        ["Sci-Fi", "Action", "Drama", "Thriller"]
+                    ),
                 )
             elif self.domain == "finance":
                 violation_desc = violation_desc.format(
@@ -245,7 +255,9 @@ Provide your repair in JSON format:
                     timestamp="-1234567890",
                     corrected_timestamp="1734567890",
                     amount=self.rng.randint(10, 1000),
-                    inferred_category=self.rng.choice(["Food", "Transport", "Shopping", "Bills"]),
+                    inferred_category=self.rng.choice(
+                        ["Food", "Transport", "Shopping", "Bills"]
+                    ),
                 )
 
             violation = {
@@ -254,7 +266,9 @@ Provide your repair in JSON format:
             }
 
             prompt = self.generate_prompt(violation)
-            completion = self.generate_completion(violation, violation_template["expected_repair"])
+            completion = self.generate_completion(
+                violation, violation_template["expected_repair"]
+            )
 
             examples.append(
                 {
@@ -276,8 +290,12 @@ Provide your repair in JSON format:
 
         # Calculate average lengths
         if examples:
-            self.stats["avg_prompt_length"] = sum(len(e["prompt"]) for e in examples) / len(examples)
-            self.stats["avg_completion_length"] = sum(len(e["completion"]) for e in examples) / len(examples)
+            self.stats["avg_prompt_length"] = sum(
+                len(e["prompt"]) for e in examples
+            ) / len(examples)
+            self.stats["avg_completion_length"] = sum(
+                len(e["completion"]) for e in examples
+            ) / len(examples)
 
         return examples
 
@@ -299,7 +317,9 @@ Provide your repair in JSON format:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Generate LoRA training data for HypeRAG")
+    parser = argparse.ArgumentParser(
+        description="Generate LoRA training data for HypeRAG"
+    )
     parser.add_argument(
         "--domain",
         required=True,
@@ -312,8 +332,12 @@ def main() -> None:
         default=1000,
         help="Number of examples to generate (default: 1000)",
     )
-    parser.add_argument("--out", required=True, type=Path, help="Output JSONL file path")
-    parser.add_argument("--seed", type=int, default=42, help="Random seed for reproducibility")
+    parser.add_argument(
+        "--out", required=True, type=Path, help="Output JSONL file path"
+    )
+    parser.add_argument(
+        "--seed", type=int, default=42, help="Random seed for reproducibility"
+    )
     parser.add_argument("--verbose", action="store_true", help="Enable verbose logging")
 
     args = parser.parse_args()
@@ -336,7 +360,9 @@ def main() -> None:
     print(f"  Domain: {args.domain}")
     print(f"  Total examples: {generator.stats['total_examples']}")
     print(f"  Avg prompt length: {generator.stats['avg_prompt_length']:.0f} chars")
-    print(f"  Avg completion length: {generator.stats['avg_completion_length']:.0f} chars")
+    print(
+        f"  Avg completion length: {generator.stats['avg_completion_length']:.0f} chars"
+    )
     print("\nExamples by violation type:")
     for vtype, count in generator.stats["by_violation_type"].items():
         print(f"  - {vtype}: {count}")

@@ -3,22 +3,22 @@
 Verifies all SQLite databases exist with correct schemas and data integrity
 """
 
-from dataclasses import dataclass
-from datetime import datetime
 import json
 import logging
 import os
-from pathlib import Path
 import sqlite3
 import subprocess
 import sys
 import threading
 import time
+from dataclasses import dataclass
+from datetime import datetime
+from pathlib import Path
 
 try:
+    import numpy as np
     from colorama import Fore, Style, init
     from cryptography.fernet import Fernet
-    import numpy as np
 except ImportError as e:
     print(f"Missing dependencies: {e}")
     print("Installing required packages...")
@@ -33,7 +33,9 @@ except ImportError as e:
 init(autoreset=True)
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 
@@ -278,7 +280,9 @@ class DatabaseIntegrityValidator:
 
                 # Create indexes
                 for index_name, (table, column) in schema.indexes.items():
-                    index_sql = f"CREATE INDEX IF NOT EXISTS {index_name} ON {table}({column})"
+                    index_sql = (
+                        f"CREATE INDEX IF NOT EXISTS {index_name} ON {table}({column})"
+                    )
                     cursor.execute(index_sql)
                     logger.info(f"  Created index: {index_name}")
 
@@ -340,7 +344,9 @@ class DatabaseIntegrityValidator:
 
             # Check indexes
             cursor.execute("SELECT name FROM sqlite_master WHERE type='index'")
-            existing_indexes = {row[0] for row in cursor.fetchall() if not row[0].startswith("sqlite_")}
+            existing_indexes = {
+                row[0] for row in cursor.fetchall() if not row[0].startswith("sqlite_")
+            }
             expected_indexes = set(schema.indexes.keys())
 
             missing_indexes = expected_indexes - existing_indexes
@@ -513,11 +519,17 @@ class DatabaseIntegrityValidator:
 
             # Check if data persists
             if table_name == "evolution_rounds":
-                cursor.execute(f"SELECT * FROM {table_name} WHERE round_number = 999999")
+                cursor.execute(
+                    f"SELECT * FROM {table_name} WHERE round_number = 999999"
+                )
             elif table_name == "learning_profiles":
-                cursor.execute(f"SELECT * FROM {table_name} WHERE user_id = ?", (test_id,))
+                cursor.execute(
+                    f"SELECT * FROM {table_name} WHERE user_id = ?", (test_id,)
+                )
             elif table_name == "documents":
-                cursor.execute(f"SELECT * FROM {table_name} WHERE doc_id = ?", (test_id,))
+                cursor.execute(
+                    f"SELECT * FROM {table_name} WHERE doc_id = ?", (test_id,)
+                )
 
             data = cursor.fetchone()
             result["data_persists"] = data is not None
@@ -526,7 +538,9 @@ class DatabaseIntegrityValidator:
             if table_name == "evolution_rounds":
                 cursor.execute(f"DELETE FROM {table_name} WHERE round_number = 999999")
             elif table_name == "learning_profiles":
-                cursor.execute(f"DELETE FROM {table_name} WHERE user_id = ?", (test_id,))
+                cursor.execute(
+                    f"DELETE FROM {table_name} WHERE user_id = ?", (test_id,)
+                )
             elif table_name == "documents":
                 cursor.execute(f"DELETE FROM {table_name} WHERE doc_id = ?", (test_id,))
 
@@ -571,7 +585,9 @@ class DatabaseIntegrityValidator:
                     if field in schema.encrypted_fields:
                         key = field.replace("encrypted_", "").replace("_", "")
                         if key in test_data:
-                            encrypted_data[field] = fernet.encrypt(test_data[key].encode()).decode()
+                            encrypted_data[field] = fernet.encrypt(
+                                test_data[key].encode()
+                            ).decode()
 
                 # Insert encrypted data
                 cursor.execute(
@@ -592,13 +608,18 @@ class DatabaseIntegrityValidator:
                 row = cursor.fetchone()
 
                 if row:
-                    decrypted_name = fernet.decrypt(row[0].encode()).decode() if row[0] else None
-                    decrypted_prefs = fernet.decrypt(row[1].encode()).decode() if row[1] else None
+                    decrypted_name = (
+                        fernet.decrypt(row[0].encode()).decode() if row[0] else None
+                    )
+                    decrypted_prefs = (
+                        fernet.decrypt(row[1].encode()).decode() if row[1] else None
+                    )
 
                     result["encryption_works"] = True
                     result["fields_encrypted"] = ["encrypted_name", "preferences"]
                     result["decryption_works"] = (
-                        decrypted_name == test_data["name"] and decrypted_prefs == test_data["preferences"]
+                        decrypted_name == test_data["name"]
+                        and decrypted_prefs == test_data["preferences"]
                     )
 
                 # Clean up
@@ -633,7 +654,9 @@ class DatabaseIntegrityValidator:
             cursor = conn.cursor()
 
             # Check for embeddings metadata
-            cursor.execute("SELECT embedding_id, dimension FROM embeddings_metadata LIMIT 5")
+            cursor.execute(
+                "SELECT embedding_id, dimension FROM embeddings_metadata LIMIT 5"
+            )
             embeddings = cursor.fetchall()
 
             if embeddings:
@@ -654,7 +677,9 @@ class DatabaseIntegrityValidator:
                             pass
 
             # Try to load actual vectors from FAISS if configured
-            faiss_path = os.environ.get("RAG_FAISS_INDEX_PATH", str(self.data_dir / "faiss_index"))
+            faiss_path = os.environ.get(
+                "RAG_FAISS_INDEX_PATH", str(self.data_dir / "faiss_index")
+            )
             if Path(faiss_path).exists():
                 # Would load FAISS index here to verify real vectors
                 result["sample_vectors"].append("FAISS index found")
@@ -701,13 +726,19 @@ class DatabaseIntegrityValidator:
 
         # Calculate statistics
         total_tests = len(results)
-        passed_tests = sum(1 for test_type, result in results if self._is_test_passed(test_type, result))
+        passed_tests = sum(
+            1
+            for test_type, result in results
+            if self._is_test_passed(test_type, result)
+        )
 
         stats = {
             "total_tests": total_tests,
             "passed": passed_tests,
             "failed": total_tests - passed_tests,
-            "success_rate": ((passed_tests / total_tests * 100) if total_tests > 0 else 0),
+            "success_rate": (
+                (passed_tests / total_tests * 100) if total_tests > 0 else 0
+            ),
             "timestamp": datetime.now().isoformat(),
         }
 
@@ -716,9 +747,17 @@ class DatabaseIntegrityValidator:
     def _is_test_passed(self, test_type: str, result: dict) -> bool:
         """Determine if a test passed"""
         if test_type == "schema":
-            return result.get("exists") and result.get("tables_correct") and not result.get("issues")
+            return (
+                result.get("exists")
+                and result.get("tables_correct")
+                and not result.get("issues")
+            )
         if test_type == "concurrent":
-            return result.get("concurrent_writes") and result.get("concurrent_reads") and result.get("no_corruption")
+            return (
+                result.get("concurrent_writes")
+                and result.get("concurrent_reads")
+                and result.get("no_corruption")
+            )
         if test_type == "persistence":
             return result.get("data_persists") and result.get("recovery_works")
         if test_type == "encryption":
@@ -744,7 +783,11 @@ class DatabaseIntegrityValidator:
 
             # Print test results
             if test_type == "schema":
-                status = "✓" if result.get("exists") and result.get("tables_correct") else "✗"
+                status = (
+                    "✓"
+                    if result.get("exists") and result.get("tables_correct")
+                    else "✗"
+                )
                 color = Fore.GREEN if status == "✓" else Fore.RED
                 print(f"  Schema: {color}{status}{Style.RESET_ALL}")
                 if result.get("issues"):
@@ -767,7 +810,9 @@ class DatabaseIntegrityValidator:
                 color = Fore.GREEN if status == "✓" else Fore.RED
                 print(f"  Encryption: {color}{status}{Style.RESET_ALL}")
                 if result.get("fields_encrypted"):
-                    print(f"    Encrypted fields: {', '.join(result['fields_encrypted'])}")
+                    print(
+                        f"    Encrypted fields: {', '.join(result['fields_encrypted'])}"
+                    )
 
             elif test_type == "rag_embeddings":
                 print(f"\n{Style.BRIGHT}RAG Embeddings{Style.RESET_ALL}")
@@ -778,7 +823,9 @@ class DatabaseIntegrityValidator:
                 if result.get("embedding_dimension"):
                     print(f"    Dimension: {result['embedding_dimension']}")
                 if result.get("uses_sha256"):
-                    print(f"    {Fore.RED}⚠ Using SHA256 hashes instead of embeddings{Style.RESET_ALL}")
+                    print(
+                        f"    {Fore.RED}⚠ Using SHA256 hashes instead of embeddings{Style.RESET_ALL}"
+                    )
 
         # Print summary
         print("\n" + "=" * 80)
@@ -786,13 +833,19 @@ class DatabaseIntegrityValidator:
         print("=" * 80)
 
         success_color = (
-            Fore.GREEN if stats["success_rate"] > 90 else Fore.YELLOW if stats["success_rate"] > 70 else Fore.RED
+            Fore.GREEN
+            if stats["success_rate"] > 90
+            else Fore.YELLOW
+            if stats["success_rate"] > 70
+            else Fore.RED
         )
 
         print(f"Total Tests: {stats['total_tests']}")
         print(f"Passed: {Fore.GREEN}{stats['passed']}{Style.RESET_ALL}")
         print(f"Failed: {Fore.RED}{stats['failed']}{Style.RESET_ALL}")
-        print(f"Success Rate: {success_color}{stats['success_rate']:.1f}%{Style.RESET_ALL}")
+        print(
+            f"Success Rate: {success_color}{stats['success_rate']:.1f}%{Style.RESET_ALL}"
+        )
 
     def save_results(self, results: list[tuple[str, dict]], stats: dict):
         """Save results to JSON file"""
@@ -800,7 +853,10 @@ class DatabaseIntegrityValidator:
 
         report = {
             "stats": stats,
-            "results": [{"test_type": test_type, "result": result} for test_type, result in results],
+            "results": [
+                {"test_type": test_type, "result": result}
+                for test_type, result in results
+            ],
         }
 
         with open(output_file, "w") as f:
@@ -810,7 +866,9 @@ class DatabaseIntegrityValidator:
 
     def auto_fix_issues(self, results: list[tuple[str, dict]]):
         """Attempt to fix identified database issues"""
-        print(f"\n{Style.BRIGHT}ATTEMPTING AUTO-FIX FOR DATABASE ISSUES...{Style.RESET_ALL}")
+        print(
+            f"\n{Style.BRIGHT}ATTEMPTING AUTO-FIX FOR DATABASE ISSUES...{Style.RESET_ALL}"
+        )
 
         for test_type, result in results:
             if test_type == "schema" and result.get("issues"):
@@ -831,10 +889,14 @@ class DatabaseIntegrityValidator:
                             conn.close()
                             print(f"  {Fore.GREEN}✓ Enabled WAL mode{Style.RESET_ALL}")
                         except Exception as e:
-                            print(f"  {Fore.RED}✗ Failed to enable WAL: {e}{Style.RESET_ALL}")
+                            print(
+                                f"  {Fore.RED}✗ Failed to enable WAL: {e}{Style.RESET_ALL}"
+                            )
 
             elif test_type == "rag_embeddings" and result.get("uses_sha256"):
-                print(f"\n{Fore.YELLOW}RAG system using SHA256 hashes instead of embeddings{Style.RESET_ALL}")
+                print(
+                    f"\n{Fore.YELLOW}RAG system using SHA256 hashes instead of embeddings{Style.RESET_ALL}"
+                )
                 print("  This requires regenerating embeddings with a proper model")
                 print("  Run: python scripts/regenerate_rag_embeddings.py")
 

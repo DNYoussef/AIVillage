@@ -4,9 +4,9 @@ Converts violating subgraphs to human-readable template sentences
 including critical properties (ids, labels, domain fields).
 """
 
+import json
 from dataclasses import dataclass
 from enum import Enum
-import json
 from typing import Any
 
 
@@ -47,7 +47,9 @@ class NodeTemplate:
                 value = self.properties[field.value]
                 # Natural language property descriptions
                 if field == DomainField.ALLERGY and isinstance(value, list):
-                    critical_props.append(f"allergic to {', '.join(str(v) for v in value)}")
+                    critical_props.append(
+                        f"allergic to {', '.join(str(v) for v in value)}"
+                    )
                 elif field == DomainField.DOSAGE:
                     critical_props.append(f"prescribed at {value}")
                 elif field == DomainField.CONDITION:
@@ -154,7 +156,9 @@ class ViolationTemplate:
             lines.append(f"  - {edge.to_sentence()}")
 
         if self.context:
-            lines.extend(["", "Additional Context:", f"  {json.dumps(self.context, indent=2)}"])
+            lines.extend(
+                ["", "Additional Context:", f"  {json.dumps(self.context, indent=2)}"]
+            )
 
         return "\n".join(lines)
 
@@ -385,7 +389,9 @@ class TemplateEncoder:
             "domain_context": self.domain_config.get("repair_guidelines", {}),
         }
 
-    def extract_critical_conflicts(self, violation: ViolationTemplate) -> list[dict[str, Any]]:
+    def extract_critical_conflicts(
+        self, violation: ViolationTemplate
+    ) -> list[dict[str, Any]]:
         """Extract specific conflicts that need resolution.
 
         Args:
@@ -414,7 +420,11 @@ class TemplateEncoder:
                             }
                         )
 
-                    elif field == DomainField.CONFIDENCE and isinstance(value, int | float) and value < 0.5:
+                    elif (
+                        field == DomainField.CONFIDENCE
+                        and isinstance(value, int | float)
+                        and value < 0.5
+                    ):
                         conflicts.append(
                             {
                                 "type": "low_confidence",
@@ -431,7 +441,10 @@ class TemplateEncoder:
                 if field.value in edge.properties:
                     value = edge.properties[field.value]
 
-                    if field == DomainField.DOSAGE and edge.relationship == "PRESCRIBES":
+                    if (
+                        field == DomainField.DOSAGE
+                        and edge.relationship == "PRESCRIBES"
+                    ):
                         conflicts.append(
                             {
                                 "type": "dosage_validation",

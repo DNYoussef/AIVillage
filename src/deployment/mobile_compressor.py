@@ -60,5 +60,7 @@ class MobileCompressor:
             "sprint9_compatible": compressed["method"] == "simple",
         }
         if package["compressed_size_mb"] > self.profile["memory_mb"] * 0.5:
-            logger.warning("Model may not fit in %dMB device memory", self.profile["memory_mb"])
+            logger.warning(
+                "Model may not fit in %dMB device memory", self.profile["memory_mb"]
+            )
         return package

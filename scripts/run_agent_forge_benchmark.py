@@ -21,8 +21,8 @@ from pathlib import Path
 from typing import Any
 
 import pandas as pd
-import wandb
 
+import wandb
 from agent_forge.benchmark_runner import BenchmarkRunner
 
 # Agent Forge imports

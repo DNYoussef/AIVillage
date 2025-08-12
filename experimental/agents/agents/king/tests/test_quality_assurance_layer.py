@@ -39,8 +39,12 @@ from agents.utils.task import Task as LangroidTask
 
 class TestQualityAssuranceLayer(unittest.TestCase):
     def setUp(self) -> None:
-        tok_patch = patch("transformers.AutoTokenizer.from_pretrained", return_value=DummyTok())
-        model_patch = patch("transformers.AutoModel.from_pretrained", return_value=DummyModel())
+        tok_patch = patch(
+            "transformers.AutoTokenizer.from_pretrained", return_value=DummyTok()
+        )
+        model_patch = patch(
+            "transformers.AutoModel.from_pretrained", return_value=DummyModel()
+        )
         self.addCleanup(tok_patch.stop)
         self.addCleanup(model_patch.stop)
         tok_patch.start()
@@ -63,7 +67,9 @@ class TestQualityAssuranceLayer(unittest.TestCase):
         assert uncertainty <= 1
 
     def test_evaluate_rule_compliance(self) -> None:
-        task_vector = self.qa_layer.eudaimonia_triangulator.get_embedding("Test task content")
+        task_vector = self.qa_layer.eudaimonia_triangulator.get_embedding(
+            "Test task content"
+        )
         rule_compliance = self.qa_layer.evaluate_rule_compliance(task_vector)
         assert rule_compliance >= 0
         assert rule_compliance <= 1
@@ -90,8 +96,12 @@ class TestQualityAssuranceLayer(unittest.TestCase):
 
 class TestEudaimoniaTriangulator(unittest.TestCase):
     def setUp(self) -> None:
-        tok_patch = patch("transformers.AutoTokenizer.from_pretrained", return_value=DummyTok())
-        model_patch = patch("transformers.AutoModel.from_pretrained", return_value=DummyModel())
+        tok_patch = patch(
+            "transformers.AutoTokenizer.from_pretrained", return_value=DummyTok()
+        )
+        model_patch = patch(
+            "transformers.AutoModel.from_pretrained", return_value=DummyModel()
+        )
         self.addCleanup(tok_patch.stop)
         self.addCleanup(model_patch.stop)
         tok_patch.start()

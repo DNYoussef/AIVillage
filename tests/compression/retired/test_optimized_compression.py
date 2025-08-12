@@ -2,9 +2,9 @@
 """Test the optimized compression pipelines for improved efficiency."""
 
 import logging
-from pathlib import Path
 import sys
 import time
+from pathlib import Path
 
 import torch
 from torch import nn
@@ -266,7 +266,9 @@ def main():
             status = "NEEDS WORK - No improvement"
 
         print(f"\nOverall Status: {status}")
-        print(f"Ready for mobile deployment: {'YES' if ratio >= 50 else 'PARTIAL' if ratio >= 30 else 'NO'}")
+        print(
+            f"Ready for mobile deployment: {'YES' if ratio >= 50 else 'PARTIAL' if ratio >= 30 else 'NO'}"
+        )
 
         return ratio >= 30  # Success if we get 30x or better
 

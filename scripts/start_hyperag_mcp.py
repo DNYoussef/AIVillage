@@ -6,8 +6,8 @@ Simple script to start the HypeRAG MCP server with proper configuration.
 
 import asyncio
 import logging
-from pathlib import Path
 import sys
+from pathlib import Path
 
 from mcp_servers.hyperag.server import HypeRAGMCPServer
 

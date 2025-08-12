@@ -5,7 +5,9 @@ class ConfidenceEstimator:
     def __init__(self) -> None:
         self.history: list[float] = []
 
-    def estimate_confidence(self, query: str, context: list[dict[str, Any]], response: str) -> float:
+    def estimate_confidence(
+        self, query: str, context: list[dict[str, Any]], response: str
+    ) -> float:
         """Estimate the confidence of a given response based on the query and context.
 
         :param query: The original query

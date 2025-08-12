@@ -31,15 +31,21 @@ def test_basic_functionality():
         print(f"\nTest case {i + 1}: {weight.shape}")
 
         # Test basic encode/decode with fast settings
-        compressed = encoder.encode(weight, compression_level=0.3)  # Lower level for speed
+        compressed = encoder.encode(
+            weight, compression_level=0.3
+        )  # Lower level for speed
         reconstructed = encoder.decode(compressed)
 
         # Verify shape preservation
-        assert reconstructed.shape == weight.shape, f"Shape mismatch: {reconstructed.shape} vs {weight.shape}"
+        assert (
+            reconstructed.shape == weight.shape
+        ), f"Shape mismatch: {reconstructed.shape} vs {weight.shape}"
 
         # Check reconstruction error
         max_error = torch.max(torch.abs(reconstructed - weight)).item()
-        relative_error = (torch.norm(reconstructed - weight) / torch.norm(weight)).item()
+        relative_error = (
+            torch.norm(reconstructed - weight) / torch.norm(weight)
+        ).item()
 
         print(f"  Max error: {max_error:.6f}")
         print(f"  Relative error: {relative_error:.6f}")
@@ -140,7 +146,9 @@ if __name__ == "__main__":
         test_error_handling()
         test_legacy_compatibility()
 
-        print("\n[SUCCESS] All fast tests passed! SeedLM implementation is working correctly.")
+        print(
+            "\n[SUCCESS] All fast tests passed! SeedLM implementation is working correctly."
+        )
 
     except Exception as e:
         print(f"\n[ERROR] Test failed with error: {e}")

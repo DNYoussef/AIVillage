@@ -2,8 +2,8 @@
 Unit tests for Query Planning System
 """
 
-from pathlib import Path
 import sys
+from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -45,7 +45,9 @@ class TestAgentReasoningModel:
 
     def test_agent_model_defaults(self):
         """Test default values for agent model"""
-        model = AgentReasoningModel(model_name="test_model", capabilities=[], performance_profile={})
+        model = AgentReasoningModel(
+            model_name="test_model", capabilities=[], performance_profile={}
+        )
 
         assert model.max_complexity == 0.8  # Default
         assert model.reasoning_speed == 1.0  # Default
@@ -78,7 +80,9 @@ class TestQueryPlanner:
     @pytest.fixture
     def planner(self, mock_classifier, mock_strategy_selector):
         """Create QueryPlanner with mocked dependencies"""
-        return QueryPlanner(classifier=mock_classifier, strategy_selector=mock_strategy_selector)
+        return QueryPlanner(
+            classifier=mock_classifier, strategy_selector=mock_strategy_selector
+        )
 
     @pytest.fixture
     def agent_model(self):
@@ -106,7 +110,9 @@ class TestQueryPlanner:
         assert planner.performance_metrics["plans_created"] == 0
 
     @pytest.mark.asyncio
-    async def test_create_plan_basic(self, planner, agent_model, mock_strategy_selector):
+    async def test_create_plan_basic(
+        self, planner, agent_model, mock_strategy_selector
+    ):
         """Test basic plan creation"""
 
         # Mock strategy instance
@@ -132,7 +138,9 @@ class TestQueryPlanner:
     async def test_create_plan_with_constraints(self, planner, agent_model):
         """Test plan creation with custom constraints"""
 
-        constraints = RetrievalConstraints(max_depth=5, max_nodes=200, confidence_threshold=0.8, time_budget_ms=10000)
+        constraints = RetrievalConstraints(
+            max_depth=5, max_nodes=200, confidence_threshold=0.8, time_budget_ms=10000
+        )
 
         # Mock strategy
         mock_strategy = AsyncMock()
@@ -145,7 +153,9 @@ class TestQueryPlanner:
         mock_strategy.create_plan.return_value = mock_plan
         planner.strategy_selector.create_strategy_instance.return_value = mock_strategy
 
-        plan = await planner.create_plan("test query", agent_model, constraints=constraints)
+        plan = await planner.create_plan(
+            "test query", agent_model, constraints=constraints
+        )
 
         assert plan.retrieval_constraints.max_depth <= 5
         assert plan.retrieval_constraints.time_budget_ms <= 10000
@@ -189,7 +199,9 @@ class TestQueryPlanner:
         """Test plan creation error handling"""
 
         # Force classifier to raise exception
-        planner.classifier.classify_query.side_effect = Exception("Classification failed")
+        planner.classifier.classify_query.side_effect = Exception(
+            "Classification failed"
+        )
 
         # Should create fallback plan
         plan = await planner.create_plan("test query", agent_model)
@@ -247,7 +259,9 @@ class TestQueryPlanner:
         )
 
         # Should not replan further
-        result = await planner.replan(original_plan, intermediate_results={}, current_confidence=0.1)
+        result = await planner.replan(
+            original_plan, intermediate_results={}, current_confidence=0.1
+        )
 
         assert result == original_plan  # Returns original plan
         assert result.replan_count == 3  # Unchanged
@@ -272,7 +286,9 @@ class TestQueryPlanner:
             },
         )
 
-        adjusted = planner._adjust_constraints_for_agent(base_constraints, low_agent, complexity_score=0.8)
+        adjusted = planner._adjust_constraints_for_agent(
+            base_constraints, low_agent, complexity_score=0.8
+        )
 
         # Should reduce limits
         assert adjusted.max_depth <= base_constraints.max_depth
@@ -381,7 +397,9 @@ class TestQueryPlanner:
 
         constraints = RetrievalConstraints()
 
-        with patch("mcp_servers.hyperag.planning.strategies.SimpleFactStrategy") as mock_strategy_class:
+        with patch(
+            "mcp_servers.hyperag.planning.strategies.SimpleFactStrategy"
+        ) as mock_strategy_class:
             mock_strategy = AsyncMock()
             mock_plan = QueryPlan(
                 original_query="fallback query",
@@ -391,7 +409,9 @@ class TestQueryPlanner:
             mock_strategy.create_plan.return_value = mock_plan
             mock_strategy_class.return_value = mock_strategy
 
-            fallback_plan = await planner._create_fallback_plan("fallback query", constraints)
+            fallback_plan = await planner._create_fallback_plan(
+                "fallback query", constraints
+            )
 
             assert fallback_plan.original_query == "fallback query"
             assert fallback_plan.complexity_score == 0.1

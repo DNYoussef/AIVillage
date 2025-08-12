@@ -11,7 +11,9 @@ class DefaultKnowledgeConstructor:
     def __init__(self, config: RAGConfig) -> None:
         self.config = config
 
-    async def construct(self, query: str, retrieved_docs: list[RetrievalResult], timestamp: datetime) -> dict[str, Any]:
+    async def construct(
+        self, query: str, retrieved_docs: list[RetrievalResult], timestamp: datetime
+    ) -> dict[str, Any]:
         constructed_knowledge = {
             "query": query,
             "timestamp": timestamp,
@@ -71,10 +73,14 @@ class DefaultKnowledgeConstructor:
         if total_weight > 0:
             constructed_knowledge["uncertainty"] = total_uncertainty / total_weight
         else:
-            constructed_knowledge["uncertainty"] = 1.0  # Maximum uncertainty if no weights
+            constructed_knowledge[
+                "uncertainty"
+            ] = 1.0  # Maximum uncertainty if no weights
 
         # Calculate temporal relevance
-        constructed_knowledge["temporal_relevance"] = self._calculate_temporal_relevance(
+        constructed_knowledge[
+            "temporal_relevance"
+        ] = self._calculate_temporal_relevance(
             [doc.timestamp for doc in retrieved_docs], timestamp
         )
 
@@ -90,9 +96,15 @@ class DefaultKnowledgeConstructor:
         # Implement relationship identification logic
         # This could use dependency parsing or other NLP techniques
         # For simplicity, let's just create pairs of concepts
-        return [f"{concepts[i]}-{concepts[j]}" for i in range(len(concepts)) for j in range(i + 1, len(concepts))]
+        return [
+            f"{concepts[i]}-{concepts[j]}"
+            for i in range(len(concepts))
+            for j in range(i + 1, len(concepts))
+        ]
 
-    def _calculate_temporal_relevance(self, doc_timestamps: list[datetime], current_timestamp: datetime) -> float:
+    def _calculate_temporal_relevance(
+        self, doc_timestamps: list[datetime], current_timestamp: datetime
+    ) -> float:
         # Calculate how relevant the documents are based on their age
         time_diffs = [(current_timestamp - ts).total_seconds() for ts in doc_timestamps]
         max_diff = max(time_diffs) if time_diffs else 1

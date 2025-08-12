@@ -68,7 +68,9 @@ class TestPasswordHashing(unittest.TestCase):
     def hash_password(self, password: str):
         """Hash password with salt using PBKDF2."""
         salt = os.urandom(32)
-        password_hash = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, 100000)
+        password_hash = hashlib.pbkdf2_hmac(
+            "sha256", password.encode("utf-8"), salt, 100000
+        )
         return salt.hex(), password_hash.hex()
 
     def verify_password(self, password: str, salt_hex: str, hash_hex: str) -> bool:
@@ -76,7 +78,9 @@ class TestPasswordHashing(unittest.TestCase):
         try:
             salt = bytes.fromhex(salt_hex)
             stored_hash = bytes.fromhex(hash_hex)
-            password_hash = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, 100000)
+            password_hash = hashlib.pbkdf2_hmac(
+                "sha256", password.encode("utf-8"), salt, 100000
+            )
 
             # Constant time comparison
             import hmac
@@ -178,8 +182,14 @@ class TestInputValidation(unittest.TestCase):
     def test_json_validation(self):
         """Test JSON field validation."""
         # Valid values
-        self.assertTrue(self.validate_json_field("test", {"type": str, "min_length": 3}))
-        self.assertTrue(self.validate_json_field(25, {"type": int, "min_value": 0, "max_value": 100}))
+        self.assertTrue(
+            self.validate_json_field("test", {"type": str, "min_length": 3})
+        )
+        self.assertTrue(
+            self.validate_json_field(
+                25, {"type": int, "min_value": 0, "max_value": 100}
+            )
+        )
 
         # Invalid values
         with self.assertRaises(ValueError):
@@ -220,7 +230,9 @@ class TestRateLimiting(unittest.TestCase):
         super().__init__(*args, **kwargs)
         self.rate_limits = {}  # client_id -> list of timestamps
 
-    def is_rate_limited(self, client_id: str, max_requests: int = 5, window_seconds: int = 60) -> bool:
+    def is_rate_limited(
+        self, client_id: str, max_requests: int = 5, window_seconds: int = 60
+    ) -> bool:
         """Check if client is rate limited."""
         now = time.time()
 
@@ -230,7 +242,9 @@ class TestRateLimiting(unittest.TestCase):
 
         # Clean old requests
         self.rate_limits[client_id] = [
-            timestamp for timestamp in self.rate_limits[client_id] if now - timestamp < window_seconds
+            timestamp
+            for timestamp in self.rate_limits[client_id]
+            if now - timestamp < window_seconds
         ]
 
         # Check if over limit
@@ -247,7 +261,9 @@ class TestRateLimiting(unittest.TestCase):
 
         # First 5 requests should pass
         for i in range(5):
-            is_limited = self.is_rate_limited(client_id, max_requests=5, window_seconds=10)
+            is_limited = self.is_rate_limited(
+                client_id, max_requests=5, window_seconds=10
+            )
             self.assertFalse(is_limited, f"Request {i + 1} should not be rate limited")
 
         # 6th request should be rate limited
@@ -260,7 +276,9 @@ class TestRateLimiting(unittest.TestCase):
 
         # Fill up the rate limit with very short window
         for i in range(3):
-            is_limited = self.is_rate_limited(client_id, max_requests=3, window_seconds=1)
+            is_limited = self.is_rate_limited(
+                client_id, max_requests=3, window_seconds=1
+            )
             self.assertFalse(is_limited)
 
         # Should be limited now
@@ -397,7 +415,9 @@ class TestDatabaseSecurity(unittest.TestCase):
             # Test parameterized insert (safe)
             username = "test_user"
             email = "test@example.com"
-            conn.execute("INSERT INTO users (username, email) VALUES (?, ?)", (username, email))
+            conn.execute(
+                "INSERT INTO users (username, email) VALUES (?, ?)", (username, email)
+            )
 
             # Test parameterized select (safe)
             cursor = conn.execute("SELECT * FROM users WHERE username = ?", (username,))
@@ -462,7 +482,8 @@ def run_security_tests():
         "errors": len(result.errors),
         "skipped": len(getattr(result, "skipped", [])),
         "success_rate": (
-            (result.testsRun - len(result.failures) - len(result.errors)) / result.testsRun
+            (result.testsRun - len(result.failures) - len(result.errors))
+            / result.testsRun
             if result.testsRun > 0
             else 0
         ),

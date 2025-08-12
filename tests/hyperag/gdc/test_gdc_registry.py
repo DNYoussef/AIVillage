@@ -4,9 +4,9 @@ Unit tests for GDC Registry
 Tests the GDC specification loading and management system.
 """
 
-from pathlib import Path
 import sys
 import tempfile
+from pathlib import Path
 
 import pytest
 import yaml
@@ -270,7 +270,9 @@ class TestGDCRegistry:
         issues = validate_registry(registry)
 
         # Should detect missing high-severity GDCs
-        high_severity_issues = [issue for issue in issues if "No high-severity" in issue]
+        high_severity_issues = [
+            issue for issue in issues if "No high-severity" in issue
+        ]
         assert len(high_severity_issues) > 0
 
     def test_registry_reload_functionality(self, temp_yaml_file):

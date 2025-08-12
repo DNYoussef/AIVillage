@@ -67,7 +67,9 @@ class MeshNetwork:
 
             # Initialize LibP2P mesh
             try:
-                self.libp2p_mesh = LibP2PMeshNetwork(node_id=self.node_id, listen_port=self.listen_port)
+                self.libp2p_mesh = LibP2PMeshNetwork(
+                    node_id=self.node_id, listen_port=self.listen_port
+                )
                 await self.libp2p_mesh.start()
                 logger.info("LibP2P mesh network started successfully")
             except Exception as e:
@@ -77,7 +79,9 @@ class MeshNetwork:
             # Initialize mDNS discovery
             if self.enable_mdns:
                 try:
-                    self.mdns_discovery = mDNSDiscovery(self.node_id, listen_port=self.listen_port)
+                    self.mdns_discovery = mDNSDiscovery(
+                        self.node_id, listen_port=self.listen_port
+                    )
                     await self.mdns_discovery.start()
                     logger.info("mDNS peer discovery started")
                 except Exception as e:
@@ -142,7 +146,11 @@ class MeshNetwork:
         logger.info(f"Registered handler for message type: {message_type}")
 
     async def send_message(
-        self, target_peer: str, message_type: str, payload: dict, metadata: dict | None = None
+        self,
+        target_peer: str,
+        message_type: str,
+        payload: dict,
+        metadata: dict | None = None,
     ) -> bool:
         """Send a message to a specific peer."""
         try:
@@ -166,7 +174,9 @@ class MeshNetwork:
             # Try fallback transports
             if self.fallback_manager:
                 try:
-                    success = await self.fallback_manager.send_message(target_peer, message)
+                    success = await self.fallback_manager.send_message(
+                        target_peer, message
+                    )
                     if success:
                         self.stats["messages_sent"] += 1
                         return True
@@ -180,7 +190,9 @@ class MeshNetwork:
             logger.exception(f"Error sending message: {e}")
             return False
 
-    async def broadcast_message(self, message_type: str, payload: dict, metadata: dict | None = None) -> int:
+    async def broadcast_message(
+        self, message_type: str, payload: dict, metadata: dict | None = None
+    ) -> int:
         """Broadcast a message to all connected peers."""
         sent_count = 0
 
@@ -192,7 +204,9 @@ class MeshNetwork:
         logger.info(f"Broadcast message sent to {sent_count} peers")
         return sent_count
 
-    async def connect_to_peer(self, peer_id: str, peer_address: str | None = None) -> bool:
+    async def connect_to_peer(
+        self, peer_id: str, peer_address: str | None = None
+    ) -> bool:
         """Manually connect to a specific peer."""
         try:
             self.stats["connection_attempts"] += 1
@@ -208,7 +222,9 @@ class MeshNetwork:
 
             # Try fallback connection
             if self.fallback_manager and peer_address:
-                success = await self.fallback_manager.connect_to_peer(peer_id, peer_address)
+                success = await self.fallback_manager.connect_to_peer(
+                    peer_id, peer_address
+                )
                 if success:
                     self.connected_peers.add(peer_id)
                     self.stats["successful_connections"] += 1
@@ -258,7 +274,9 @@ class MeshNetwork:
         stats.update(
             {
                 "connected_peers": len(self.connected_peers),
-                "uptime_seconds": (time.time() - stats["start_time"] if stats["start_time"] else 0),
+                "uptime_seconds": (
+                    time.time() - stats["start_time"] if stats["start_time"] else 0
+                ),
                 "libp2p_available": self.libp2p_mesh is not None,
                 "mdns_available": self.mdns_discovery is not None,
                 "fallbacks_available": self.fallback_manager is not None,
@@ -298,11 +316,16 @@ class MeshNetwork:
                     discovered_peers = await self.mdns_discovery.get_discovered_peers()
 
                     for peer_id, peer_info in discovered_peers.items():
-                        if peer_id not in self.connected_peers and peer_id != self.node_id:
+                        if (
+                            peer_id not in self.connected_peers
+                            and peer_id != self.node_id
+                        ):
                             # Try to connect to newly discovered peer
                             peer_address = peer_info.get("address")
                             if peer_address:
-                                success = await self.connect_to_peer(peer_id, peer_address)
+                                success = await self.connect_to_peer(
+                                    peer_id, peer_address
+                                )
                                 if success:
                                     self.stats["peers_discovered"] += 1
                                     self.peer_info[peer_id] = peer_info
@@ -337,7 +360,9 @@ class MeshNetworkNode(MeshNetwork):
 
 
 # Convenience function
-async def create_mesh_network(node_id: str, listen_port: int = 4001, auto_start: bool = True) -> MeshNetwork:
+async def create_mesh_network(
+    node_id: str, listen_port: int = 4001, auto_start: bool = True
+) -> MeshNetwork:
     """Create and optionally start a mesh network."""
     mesh = MeshNetwork(node_id, listen_port)
 

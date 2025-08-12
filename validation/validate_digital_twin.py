@@ -4,9 +4,9 @@ Tests Digital Twin operations, vault, encryption, and privacy compliance.
 """
 
 import logging
-from pathlib import Path
 import sys
 import time
+from pathlib import Path
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
@@ -21,7 +21,9 @@ except ImportError as e:
     print(f"Warning: Could not import Digital Twin components: {e}")
     DigitalTwin = None
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 
@@ -62,7 +64,9 @@ class DigitalTwinValidator:
             # Initialize Digital Twin
             digital_twin = DigitalTwin(twin_config)
 
-            if hasattr(digital_twin, "update_profile") and hasattr(digital_twin, "get_preferences"):
+            if hasattr(digital_twin, "update_profile") and hasattr(
+                digital_twin, "get_preferences"
+            ):
                 self.results["digital_twin_core"] = {
                     "status": "success",
                     "time": time.time() - start_time,
@@ -143,7 +147,9 @@ class DigitalTwinValidator:
 
             encryption_manager = EncryptionManager(encryption_config)
 
-            if hasattr(encryption_manager, "encrypt_data") and hasattr(encryption_manager, "decrypt_data"):
+            if hasattr(encryption_manager, "encrypt_data") and hasattr(
+                encryption_manager, "decrypt_data"
+            ):
                 # Test encryption capabilities (without actual crypto operations)
 
                 self.results["encryption_manager"] = {
@@ -181,7 +187,9 @@ class DigitalTwinValidator:
 
             compliance_manager = ComplianceManager(compliance_config)
 
-            if hasattr(compliance_manager, "validate_compliance") and hasattr(compliance_manager, "get_consent_status"):
+            if hasattr(compliance_manager, "validate_compliance") and hasattr(
+                compliance_manager, "get_consent_status"
+            ):
                 # Test compliance validation
 
                 self.results["compliance_manager"] = {
@@ -215,14 +223,25 @@ class DigitalTwinValidator:
 
         # Calculate results
         total_tests = len(self.results)
-        successful_tests = sum(1 for r in self.results.values() if r["status"] == "success")
-        partial_tests = sum(1 for r in self.results.values() if r["status"] == "partial")
+        successful_tests = sum(
+            1 for r in self.results.values() if r["status"] == "success"
+        )
+        partial_tests = sum(
+            1 for r in self.results.values() if r["status"] == "partial"
+        )
 
         logger.info("=== Digital Twin Validation Results ===")
         for test_name, result in self.results.items():
-            status_emoji = {"success": "PASS", "partial": "WARN", "failed": "FAIL", "pending": "PEND"}
+            status_emoji = {
+                "success": "PASS",
+                "partial": "WARN",
+                "failed": "FAIL",
+                "pending": "PEND",
+            }
 
-            logger.info(f"[{status_emoji[result['status']]}] {test_name}: {result['status'].upper()}")
+            logger.info(
+                f"[{status_emoji[result['status']]}] {test_name}: {result['status'].upper()}"
+            )
             logger.info(f"   Time: {result['time']:.2f}s")
             logger.info(f"   Details: {result['details']}")
 

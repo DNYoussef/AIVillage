@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Final comprehensive analysis of AIVillage agent system."""
 
-from pathlib import Path
 import sys
+from pathlib import Path
 
 sys.path.insert(0, str(Path.cwd()))
 
@@ -23,7 +23,9 @@ class AgentAnalyzer:
             from src.production.agent_forge.agent_factory import AgentFactory
 
             # Use correct path
-            template_path = Path.cwd() / "src" / "production" / "agent_forge" / "templates"
+            template_path = (
+                Path.cwd() / "src" / "production" / "agent_forge" / "templates"
+            )
             factory = AgentFactory(str(template_path))
 
             templates = factory.list_available_agents()
@@ -146,7 +148,9 @@ class AgentAnalyzer:
             else:
                 print("    -> All responses identical")
 
-        print(f"\nBehavioral differences found: {behavioral_differences}/{len(test_tasks)} tasks")
+        print(
+            f"\nBehavioral differences found: {behavioral_differences}/{len(test_tasks)} tasks"
+        )
 
         self.results["behavior"] = {
             "tasks_tested": len(test_tasks),
@@ -274,7 +278,9 @@ class AgentAnalyzer:
                         functions = content.count("def ")
                         imports = content.count("import ") + content.count("from ")
 
-                        complexity_score = (classes * 10) + (functions * 2) + (imports * 1)
+                        complexity_score = (
+                            (classes * 10) + (functions * 2) + (imports * 1)
+                        )
 
                         print(f"{agent_name}:")
                         print(f"  File: {main_file.name} ({file_size} bytes)")
@@ -339,7 +345,9 @@ class AgentAnalyzer:
 
         # Communication system
         comm = self.results.get("communication", {})
-        comm_working = comm.get("protocol_works", False) and comm.get("message_works", False)
+        comm_working = comm.get("protocol_works", False) and comm.get(
+            "message_works", False
+        )
         print(f"Communication System: {'Working' if comm_working else 'Not Working'}")
 
         # Experimental agents
@@ -367,7 +375,10 @@ class AgentAnalyzer:
 
         # Inter-agent coordination assessment
         can_coordinate = (
-            template_count >= 18 and comm_working and kpi_working and (real_count > 0 or behavioral_diff > 0)
+            template_count >= 18
+            and comm_working
+            and kpi_working
+            and (real_count > 0 or behavioral_diff > 0)
         )
 
         print(f"\nCAN COORDINATE 18 AGENTS: {'YES' if can_coordinate else 'NO'}")

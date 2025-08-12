@@ -2,9 +2,9 @@
 """Test 4-stage compression on the actual downloaded DeepSeek-R1-Distill-Qwen-1.5B model."""
 
 import gc
-from pathlib import Path
 import sys
 import time
+from pathlib import Path
 
 import torch
 from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer
@@ -47,7 +47,9 @@ def load_real_deepseek_model():
         output_params = vocab_size * hidden_size
         estimated_params = embedding_params + layer_params + output_params
 
-        print(f"  Estimated parameters: {estimated_params:,} ({estimated_params / 1_000_000_000:.2f}B)")
+        print(
+            f"  Estimated parameters: {estimated_params:,} ({estimated_params / 1_000_000_000:.2f}B)"
+        )
         print(f"  Estimated size: {estimated_params * 4 / (1024**3):.2f} GB")
 
         # Load tokenizer
@@ -78,9 +80,13 @@ def load_real_deepseek_model():
         # Verify this is actually ~1.5B
         param_billions = total_params / 1_000_000_000
         if param_billions < 1.0:
-            print(f"WARNING: Model has {param_billions:.2f}B params, less than expected 1.5B")
+            print(
+                f"WARNING: Model has {param_billions:.2f}B params, less than expected 1.5B"
+            )
         elif param_billions > 2.0:
-            print(f"WARNING: Model has {param_billions:.2f}B params, more than expected 1.5B")
+            print(
+                f"WARNING: Model has {param_billions:.2f}B params, more than expected 1.5B"
+            )
         else:
             print(f"SUCCESS: Model has {param_billions:.2f}B params - correct size!")
 
@@ -191,7 +197,9 @@ def test_compression_on_real_layers(model, max_layers=5):
             total_compressed += s4_size
             successful_layers += 1
 
-            print(f"  FINAL: {original_size:,} -> {s4_size:,} bytes ({final_ratio:.1f}x compression)")
+            print(
+                f"  FINAL: {original_size:,} -> {s4_size:,} bytes ({final_ratio:.1f}x compression)"
+            )
 
         except Exception as e:
             print(f"  ERROR: {e}")
@@ -209,8 +217,12 @@ def test_compression_on_real_layers(model, max_layers=5):
         print(f"Layers tested: {layer_count}")
         print(f"Successful: {successful_layers}")
         print(f"Success rate: {successful_layers / layer_count * 100:.1f}%")
-        print(f"Total original: {total_original:,} bytes ({total_original / (1024**2):.1f} MB)")
-        print(f"Total compressed: {total_compressed:,} bytes ({total_compressed / (1024**2):.2f} MB)")
+        print(
+            f"Total original: {total_original:,} bytes ({total_original / (1024**2):.1f} MB)"
+        )
+        print(
+            f"Total compressed: {total_compressed:,} bytes ({total_compressed / (1024**2):.2f} MB)"
+        )
         print(f"Overall ratio: {overall_ratio:.1f}x")
 
         return overall_ratio, successful_layers == layer_count
@@ -268,11 +280,15 @@ def main():
 
     try:
         # Test compression on sample layers
-        compression_ratio, all_stages_work = test_compression_on_real_layers(model, max_layers=3)
+        compression_ratio, all_stages_work = test_compression_on_real_layers(
+            model, max_layers=3
+        )
 
         if compression_ratio > 0:
             # Extrapolate to full model
-            final_mb, mobile_ok = extrapolate_to_full_model(compression_ratio, 3, total_params, size_gb)
+            final_mb, mobile_ok = extrapolate_to_full_model(
+                compression_ratio, 3, total_params, size_gb
+            )
 
             print("\n" + "=" * 70)
             print("FINAL REAL MODEL VALIDATION")
@@ -280,7 +296,9 @@ def main():
 
             print("PROVEN WITH REAL MODEL:")
             print("  Model: DeepSeek-R1-Distill-Qwen-1.5B")
-            print(f"  Parameters: {total_params:,} ({total_params / 1_000_000_000:.2f}B)")
+            print(
+                f"  Parameters: {total_params:,} ({total_params / 1_000_000_000:.2f}B)"
+            )
             print(f"  All 4 stages work: {'YES' if all_stages_work else 'PARTIAL'}")
             print(f"  Compression ratio: {compression_ratio:.1f}x")
             print(f"  Final size: {final_mb:.1f} MB")
@@ -290,7 +308,9 @@ def main():
 
             if success:
                 print("\nSUCCESS: Real 1.5B model compression PROVEN!")
-                print(f"DeepSeek model compresses from {size_gb:.2f}GB to {final_mb:.1f}MB")
+                print(
+                    f"DeepSeek model compresses from {size_gb:.2f}GB to {final_mb:.1f}MB"
+                )
             else:
                 print("\nPARTIAL: Some limitations found in compression pipeline")
 

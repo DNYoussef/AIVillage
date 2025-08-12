@@ -20,10 +20,16 @@ class HybridErrorController(AdaptiveErrorRateController, LTTErrorController):
         :param adaptation_rate: The rate at which to adapt error rates (between 0 and 1).
         :param confidence_level: The confidence level for LTT calibration.
         """
-        AdaptiveErrorRateController.__init__(self, num_steps, target_error_rate, adaptation_rate)
-        LTTErrorController.__init__(self, num_steps, target_error_rate, confidence_level)
+        AdaptiveErrorRateController.__init__(
+            self, num_steps, target_error_rate, adaptation_rate
+        )
+        LTTErrorController.__init__(
+            self, num_steps, target_error_rate, confidence_level
+        )
 
-    def update_error_rates(self, observed_errors: list[float], calibration_data: list[int] | None = None) -> None:
+    def update_error_rates(
+        self, observed_errors: list[float], calibration_data: list[int] | None = None
+    ) -> None:
         """Update error rates using both adaptive control and LTT calibration.
 
         :param observed_errors: A list of observed error rates for each step.

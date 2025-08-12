@@ -1,8 +1,8 @@
 import os
 import uuid
 
-from jose import jwt
 import requests
+from jose import jwt
 
 JWT_SECRET = os.getenv("JWT_SECRET")
 if not JWT_SECRET:

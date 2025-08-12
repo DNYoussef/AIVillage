@@ -5,7 +5,8 @@ This is a placeholder to fix test infrastructure.
 import warnings
 
 warnings.warn(
-    "agent_forge.training is a stub implementation. " "Replace with actual implementation before production use.",
+    "agent_forge.training is a stub implementation. "
+    "Replace with actual implementation before production use.",
     UserWarning,
     stacklevel=2,
 )

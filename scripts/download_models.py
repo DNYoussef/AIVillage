@@ -4,8 +4,8 @@
 import os
 from pathlib import Path
 
-from huggingface_hub import snapshot_download
 import torch
+from huggingface_hub import snapshot_download
 
 
 def check_gpu_availability() -> bool:

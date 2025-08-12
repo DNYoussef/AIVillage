@@ -119,7 +119,9 @@ class TestProductionIntegration:
         }
 
         # Test memory efficiency
-        compression_efficiency = memory_usage["after_compression"] < memory_usage["after_rag"]
+        compression_efficiency = (
+            memory_usage["after_compression"] < memory_usage["after_rag"]
+        )
         assert compression_efficiency, "Compression should reduce memory usage"
 
     def test_benchmarking_integration(self) -> None:

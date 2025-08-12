@@ -2,8 +2,8 @@
 Test configuration for production components.
 """
 
-from pathlib import Path
 import sys
+from pathlib import Path
 
 import pytest
 
@@ -38,7 +38,9 @@ def mock_model():
     """Simple mock model for testing."""
     import torch
 
-    return torch.nn.Sequential(torch.nn.Linear(10, 5), torch.nn.ReLU(), torch.nn.Linear(5, 1))
+    return torch.nn.Sequential(
+        torch.nn.Linear(10, 5), torch.nn.ReLU(), torch.nn.Linear(5, 1)
+    )
 
 
 @pytest.fixture

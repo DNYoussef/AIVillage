@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Demonstration of the validated compression system capabilities."""
 
-from pathlib import Path
 import sys
+from pathlib import Path
 
 from torch import nn
 
@@ -37,7 +37,9 @@ def demonstrate_compression_evolution():
 
         compressed_mb = size_mb / ratio
 
-        print(f"  {name:6}: {params:8,} params | {size_mb:5.2f}MB -> {compressed_mb:5.2f}MB | {method} ({ratio:.1f}x)")
+        print(
+            f"  {name:6}: {params:8,} params | {size_mb:5.2f}MB -> {compressed_mb:5.2f}MB | {method} ({ratio:.1f}x)"
+        )
 
     print("\nCompression Stage Performance:")
     print("  BitNet 1.58-bit:    15.8x (ternary quantization)")

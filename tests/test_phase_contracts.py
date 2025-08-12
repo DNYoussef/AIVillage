@@ -8,10 +8,10 @@ and tests performance regression detection logic.
 
 import asyncio
 import json
-from pathlib import Path
 import sys
 import tempfile
 import unittest
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -125,7 +125,9 @@ class TestPhaseContracts(unittest.TestCase):
 
         elif phase_name == "compression":
             # Mock Compression operations
-            compression_mock = patch("agent_forge.compression_pipeline.CompressionPipeline")
+            compression_mock = patch(
+                "agent_forge.compression_pipeline.CompressionPipeline"
+            )
             mock_pipeline = MagicMock()
             mock_pipeline.run_compression_pipeline = asyncio.coroutine(
                 lambda: {
@@ -216,21 +218,31 @@ class TestPhaseContracts(unittest.TestCase):
         """Validate that a PhaseResult follows the contract."""
 
         # Basic type validation
-        assert isinstance(result, PhaseResult), f"Phase {phase_name} must return PhaseResult"
+        assert isinstance(
+            result, PhaseResult
+        ), f"Phase {phase_name} must return PhaseResult"
 
         # Required attributes
         assert hasattr(result, "phase_type"), "PhaseResult must have phase_type"
         assert hasattr(result, "status"), "PhaseResult must have status"
         assert hasattr(result, "start_time"), "PhaseResult must have start_time"
         assert hasattr(result, "end_time"), "PhaseResult must have end_time"
-        assert hasattr(result, "duration_seconds"), "PhaseResult must have duration_seconds"
-        assert hasattr(result, "artifacts_produced"), "PhaseResult must have artifacts_produced"
+        assert hasattr(
+            result, "duration_seconds"
+        ), "PhaseResult must have duration_seconds"
+        assert hasattr(
+            result, "artifacts_produced"
+        ), "PhaseResult must have artifacts_produced"
         assert hasattr(result, "metrics"), "PhaseResult must have metrics"
 
         # Type validation
-        assert isinstance(result.phase_type, PhaseType), "phase_type must be PhaseType enum"
+        assert isinstance(
+            result.phase_type, PhaseType
+        ), "phase_type must be PhaseType enum"
         assert isinstance(result.status, PhaseStatus), "status must be PhaseStatus enum"
-        assert isinstance(result.artifacts_produced, list), "artifacts_produced must be list"
+        assert isinstance(
+            result.artifacts_produced, list
+        ), "artifacts_produced must be list"
         assert isinstance(result.metrics, dict), "metrics must be dict"
 
         # Status-specific validation
@@ -245,13 +257,19 @@ class TestPhaseContracts(unittest.TestCase):
 
         # Artifacts validation
         for artifact in result.artifacts_produced:
-            assert isinstance(artifact, PhaseArtifact), "All artifacts must be PhaseArtifact objects"
-            assert artifact.phase_type == result.phase_type, "Artifact phase_type must match result"
+            assert isinstance(
+                artifact, PhaseArtifact
+            ), "All artifacts must be PhaseArtifact objects"
+            assert (
+                artifact.phase_type == result.phase_type
+            ), "Artifact phase_type must match result"
             assert isinstance(artifact.data, dict), "Artifact data must be dict"
 
         # Metrics validation
         assert "execution_time" in result.metrics, "Metrics must include execution_time"
-        assert isinstance(result.metrics["execution_time"], int | float), "execution_time must be numeric"
+        assert isinstance(
+            result.metrics["execution_time"], int | float
+        ), "execution_time must be numeric"
 
         print(f"✓ Phase {phase_name} passed contract validation")
 
@@ -319,7 +337,10 @@ class TestPerformanceRegressionDetection(unittest.TestCase):
                 )
 
             mock_results = {
-                "model_averages": {"unified_pipeline": sum(scenario["scores"].values()) / len(scenario["scores"])},
+                "model_averages": {
+                    "unified_pipeline": sum(scenario["scores"].values())
+                    / len(scenario["scores"])
+                },
                 "benchmark_comparison": benchmark_comparison,
             }
 

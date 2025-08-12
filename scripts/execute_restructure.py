@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """Execute the AIVillage codebase restructuring."""
 
-from datetime import datetime
 import json
 import logging
 import os
-from pathlib import Path
 import shutil
+from datetime import datetime
+from pathlib import Path
 
 # Configure logging
 logging.basicConfig(

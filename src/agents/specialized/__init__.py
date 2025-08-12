@@ -17,138 +17,142 @@ These agents are designed to work together through the SpecializedAgentRegistry
 for complex multi-agent tasks and specialized domain expertise.
 """
 
-from .data_science_agent import DataScienceAgent, DataAnalysisRequest
-from .devops_agent import DevOpsAgent, DeploymentRequest  
-from .financial_agent import FinancialAgent, FinancialAnalysisRequest
-from .creative_agent import CreativeAgent, CreativeRequest
-from .social_agent import SocialAgent, SocialInteraction
-from .translator_agent import TranslatorAgent, TranslationRequest
+from .agent_registry import (
+    AgentCapability,
+    SpecializedAgentRegistry,
+    get_global_registry,
+    shutdown_global_registry,
+)
 from .architect_agent import ArchitectAgent
+from .creative_agent import CreativeAgent, CreativeRequest
+from .data_science_agent import DataAnalysisRequest, DataScienceAgent
+from .devops_agent import DeploymentRequest, DevOpsAgent
+from .financial_agent import FinancialAgent, FinancialAnalysisRequest
+from .social_agent import SocialAgent, SocialInteraction
 from .tester_agent import TesterAgent, TestRequest
-from .agent_registry import SpecializedAgentRegistry, AgentCapability, get_global_registry, shutdown_global_registry
+from .translator_agent import TranslationRequest, TranslatorAgent
 
 __all__ = [
     # Agent Classes
-    'DataScienceAgent',
-    'DevOpsAgent', 
-    'FinancialAgent',
-    'CreativeAgent',
-    'SocialAgent',
-    'TranslatorAgent',
-    'ArchitectAgent',
-    'TesterAgent',
-    
+    "DataScienceAgent",
+    "DevOpsAgent",
+    "FinancialAgent",
+    "CreativeAgent",
+    "SocialAgent",
+    "TranslatorAgent",
+    "ArchitectAgent",
+    "TesterAgent",
     # Request/Data Classes
-    'DataAnalysisRequest',
-    'DeploymentRequest',
-    'FinancialAnalysisRequest', 
-    'CreativeRequest',
-    'SocialInteraction',
-    'TranslationRequest',
-    'TestRequest',
-    
+    "DataAnalysisRequest",
+    "DeploymentRequest",
+    "FinancialAnalysisRequest",
+    "CreativeRequest",
+    "SocialInteraction",
+    "TranslationRequest",
+    "TestRequest",
     # Registry Classes
-    'SpecializedAgentRegistry',
-    'AgentCapability',
-    'get_global_registry',
-    'shutdown_global_registry'
+    "SpecializedAgentRegistry",
+    "AgentCapability",
+    "get_global_registry",
+    "shutdown_global_registry",
 ]
 
 # Module metadata
-__version__ = '1.0.0'
-__author__ = 'AIVillage Development Team'
-__description__ = 'Specialized sub-agents for domain-specific AI tasks'
+__version__ = "1.0.0"
+__author__ = "AIVillage Development Team"
+__description__ = "Specialized sub-agents for domain-specific AI tasks"
 
 # Agent capabilities summary
 AGENT_CAPABILITIES = {
-    'DataScienceAgent': [
-        'statistical_analysis',
-        'ml_model_training', 
-        'data_preprocessing',
-        'feature_engineering',
-        'visualization',
-        'ab_testing',
-        'time_series_analysis',
-        'anomaly_detection'
+    "DataScienceAgent": [
+        "statistical_analysis",
+        "ml_model_training",
+        "data_preprocessing",
+        "feature_engineering",
+        "visualization",
+        "ab_testing",
+        "time_series_analysis",
+        "anomaly_detection",
     ],
-    'DevOpsAgent': [
-        'ci_cd_management',
-        'infrastructure_provisioning',
-        'container_orchestration',
-        'deployment_automation', 
-        'monitoring_alerting',
-        'service_mesh_management',
-        'configuration_management',
-        'security_scanning'
+    "DevOpsAgent": [
+        "ci_cd_management",
+        "infrastructure_provisioning",
+        "container_orchestration",
+        "deployment_automation",
+        "monitoring_alerting",
+        "service_mesh_management",
+        "configuration_management",
+        "security_scanning",
     ],
-    'FinancialAgent': [
-        'portfolio_optimization',
-        'risk_analysis',
-        'financial_modeling',
-        'market_forecasting',
-        'sentiment_analysis',
-        'trading_strategies',
-        'economic_indicators',
-        'regulatory_compliance'
+    "FinancialAgent": [
+        "portfolio_optimization",
+        "risk_analysis",
+        "financial_modeling",
+        "market_forecasting",
+        "sentiment_analysis",
+        "trading_strategies",
+        "economic_indicators",
+        "regulatory_compliance",
     ],
-    'CreativeAgent': [
-        'story_generation',
-        'poetry_writing',
-        'visual_design',
-        'music_composition',
-        'art_direction',
-        'brand_creative',
-        'character_development',
-        'world_building'
+    "CreativeAgent": [
+        "story_generation",
+        "poetry_writing",
+        "visual_design",
+        "music_composition",
+        "art_direction",
+        "brand_creative",
+        "character_development",
+        "world_building",
     ],
-    'SocialAgent': [
-        'community_moderation',
-        'conflict_resolution',
-        'engagement_strategies',
-        'relationship_building',
-        'cultural_sensitivity',
-        'sentiment_monitoring',
-        'crisis_communication',
-        'inclusive_practices'
+    "SocialAgent": [
+        "community_moderation",
+        "conflict_resolution",
+        "engagement_strategies",
+        "relationship_building",
+        "cultural_sensitivity",
+        "sentiment_monitoring",
+        "crisis_communication",
+        "inclusive_practices",
     ],
-    'TranslatorAgent': [
-        'real_time_translation',
-        'language_detection',
-        'cultural_localization',
-        'domain_specialization',
-        'multilingual_seo',
-        'linguistic_analysis',
-        'conversation_translation',
-        'document_translation'
+    "TranslatorAgent": [
+        "real_time_translation",
+        "language_detection",
+        "cultural_localization",
+        "domain_specialization",
+        "multilingual_seo",
+        "linguistic_analysis",
+        "conversation_translation",
+        "document_translation",
     ],
-    'ArchitectAgent': [
-        'system_architecture',
-        'microservices_design',
-        'database_modeling',
-        'api_design',
-        'performance_optimization',
-        'scalability_planning',
-        'integration_patterns',
-        'technology_selection'
+    "ArchitectAgent": [
+        "system_architecture",
+        "microservices_design",
+        "database_modeling",
+        "api_design",
+        "performance_optimization",
+        "scalability_planning",
+        "integration_patterns",
+        "technology_selection",
     ],
-    'TesterAgent': [
-        'test_automation',
-        'test_strategy_planning',
-        'performance_testing',
-        'security_testing',
-        'coverage_analysis',
-        'regression_testing',
-        'api_testing',
-        'ui_testing'
-    ]
+    "TesterAgent": [
+        "test_automation",
+        "test_strategy_planning",
+        "performance_testing",
+        "security_testing",
+        "coverage_analysis",
+        "regression_testing",
+        "api_testing",
+        "ui_testing",
+    ],
 }
+
 
 def get_agent_summary() -> dict:
     """Get summary of all specialized agents and their capabilities"""
     return {
-        'total_agents': len(__all__) - 4,  # Exclude non-agent classes
-        'total_capabilities': sum(len(caps) for caps in AGENT_CAPABILITIES.values()),
-        'agent_types': list(AGENT_CAPABILITIES.keys()),
-        'capabilities_by_agent': AGENT_CAPABILITIES,
-        'module_version': __version__
+        "total_agents": len(__all__) - 4,  # Exclude non-agent classes
+        "total_capabilities": sum(len(caps) for caps in AGENT_CAPABILITIES.values()),
+        "agent_types": list(AGENT_CAPABILITIES.keys()),
+        "capabilities_by_agent": AGENT_CAPABILITIES,
+        "module_version": __version__,
     }

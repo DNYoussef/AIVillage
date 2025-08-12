@@ -4,17 +4,17 @@ No more stubs - this actually connects agents!
 """
 
 import asyncio
-from collections.abc import Callable
 import hashlib
 import json
 import logging
 import os
 import ssl
 import time
+from collections.abc import Callable
 from typing import Any
 
-from cryptography.fernet import Fernet
 import websockets
+from cryptography.fernet import Fernet
 
 from .message import Message
 
@@ -56,7 +56,9 @@ class CommunicationsProtocol:
                 ssl_context.check_hostname = False
                 ssl_context.verify_mode = ssl.CERT_NONE
 
-            websocket = await websockets.connect(target_url, ssl=ssl_context, ping_interval=20, ping_timeout=10)
+            websocket = await websockets.connect(
+                target_url, ssl=ssl_context, ping_interval=20, ping_timeout=10
+            )
 
             # Perform handshake
             handshake = {
@@ -109,16 +111,26 @@ class CommunicationsProtocol:
                 return False
         return False
 
-    async def send_message(self, agent_id: str, message: dict[str, Any] | Message) -> bool:
+    async def send_message(
+        self, agent_id: str, message: dict[str, Any] | Message
+    ) -> bool:
         """Actually send an encrypted message - NOT A STUB!"""
         # Prepare message dict
         if isinstance(message, Message):
             message_dict = {
-                "type": (message.type.value if hasattr(message.type, "value") else str(message.type)),
+                "type": (
+                    message.type.value
+                    if hasattr(message.type, "value")
+                    else str(message.type)
+                ),
                 "content": message.content,
                 "sender": message.sender,
                 "receiver": message.receiver,
-                "priority": (message.priority.value if hasattr(message.priority, "value") else str(message.priority)),
+                "priority": (
+                    message.priority.value
+                    if hasattr(message.priority, "value")
+                    else str(message.priority)
+                ),
             }
         else:
             message_dict = message
@@ -148,7 +160,9 @@ class CommunicationsProtocol:
             # Store in history
             self._store_message(agent_id, message_dict, "sent")
 
-            logger.debug(f"Sent message to {agent_id}: {message_dict.get('type', 'unknown')}")
+            logger.debug(
+                f"Sent message to {agent_id}: {message_dict.get('type', 'unknown')}"
+            )
             return True
 
         except Exception as e:
@@ -167,7 +181,9 @@ class CommunicationsProtocol:
             if await self.send_message(agent_id, message):
                 sent_count += 1
 
-        logger.info(f"Broadcast message sent to {sent_count}/{len(self.connections)} agents")
+        logger.info(
+            f"Broadcast message sent to {sent_count}/{len(self.connections)} agents"
+        )
         return sent_count
 
     def _get_or_create_key(self, agent_id: str) -> Fernet:
@@ -247,7 +263,9 @@ class CommunicationsProtocol:
         if agent_id not in self.message_history:
             self.message_history[agent_id] = []
 
-        self.message_history[agent_id].append({"message": message, "direction": direction, "timestamp": time.time()})
+        self.message_history[agent_id].append(
+            {"message": message, "direction": direction, "timestamp": time.time()}
+        )
 
         # Keep only last 100 messages per agent
         if len(self.message_history[agent_id]) > 100:

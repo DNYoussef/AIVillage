@@ -13,12 +13,12 @@ This builds directly on the validated implementation with all advanced features:
 """
 
 import asyncio
-from datetime import datetime
 import json
 import logging
-from pathlib import Path
 import sys
 import time
+from datetime import datetime
+from pathlib import Path
 
 # Add project to path
 sys.path.append(".")
@@ -35,7 +35,9 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     handlers=[
-        logging.FileHandler(f"D:/AgentForge/scaled_magi_10k_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"),
+        logging.FileHandler(
+            f"D:/AgentForge/scaled_magi_10k_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
+        ),
         logging.StreamHandler(),
     ],
 )
@@ -57,7 +59,9 @@ class ScaledMagiRunner:
         logger.info(f"Run ID: {self.run_id}")
         logger.info("Scaling from proven 300-question success to 10,000 questions")
         logger.info("Expected duration: ~6.3 minutes (33x scale-up)")
-        logger.info(f"Memory Available: {memory_manager.get_memory_stats()['system_ram_available_gb']:.2f} GB")
+        logger.info(
+            f"Memory Available: {memory_manager.get_memory_stats()['system_ram_available_gb']:.2f} GB"
+        )
 
     def initialize_wandb_tracking(self):
         """Initialize W&B for scaled Magi run."""
@@ -85,7 +89,9 @@ class ScaledMagiRunner:
                 "geometric_awareness": True,
                 "self_modification": True,
                 "sleep_cycles": True,
-                "memory_available_gb": memory_manager.get_memory_stats()["system_ram_available_gb"],
+                "memory_available_gb": memory_manager.get_memory_stats()[
+                    "system_ram_available_gb"
+                ],
                 "cpu_only": True,
             },
         )
@@ -108,13 +114,17 @@ class ScaledMagiRunner:
         logger.info("Creating scaled Magi configuration...")
 
         # Load the best evolved model from successful run
-        evolution_results_path = Path("D:/AgentForge/historic_real_run_20250726_030005/evolution_50gen_results.json")
+        evolution_results_path = Path(
+            "D:/AgentForge/historic_real_run_20250726_030005/evolution_50gen_results.json"
+        )
         if evolution_results_path.exists():
             with open(evolution_results_path) as f:
                 evolution_data = json.load(f)
 
             best_config = evolution_data["evolution_summary"]["best_configuration"]
-            optimal_model_path = best_config.get("base_model", "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B")
+            optimal_model_path = best_config.get(
+                "base_model", "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B"
+            )
             logger.info(f"Using evolved model: {optimal_model_path}")
             logger.info(f"Evolved fitness: {best_config['fitness']:.4f}")
         else:
@@ -155,7 +165,9 @@ class ScaledMagiRunner:
         )
 
         logger.info("Scaled Magi Configuration Created:")
-        logger.info(f"  Questions: {config.total_questions:,} ({config.curriculum_levels} levels)")
+        logger.info(
+            f"  Questions: {config.total_questions:,} ({config.curriculum_levels} levels)"
+        )
         logger.info(f"  Specialization Areas: {len(config.specialization_areas)}")
         logger.info(f"  Geometric Awareness: {config.enable_geometric_awareness}")
         logger.info(f"  Self-Modification: {config.enable_self_modification}")
@@ -199,7 +211,9 @@ class ScaledMagiRunner:
 
                 logger.info("Scaled Results:")
                 logger.info(f"  Overall Accuracy: {overall_accuracy:.3f}")
-                logger.info(f"  Deployment Ready: {final_eval.get('ready_for_deployment', False)}")
+                logger.info(
+                    f"  Deployment Ready: {final_eval.get('ready_for_deployment', False)}"
+                )
                 logger.info(f"  Area Results: {final_eval.get('area_results', {})}")
 
                 # Log success to W&B
@@ -207,13 +221,18 @@ class ScaledMagiRunner:
                     {
                         "scaled_magi_completed": 1,
                         "final_overall_accuracy": overall_accuracy,
-                        "deployment_ready": final_eval.get("ready_for_deployment", False),
-                        "baseline_improvement": overall_accuracy - 0.774,  # vs proven baseline
+                        "deployment_ready": final_eval.get(
+                            "ready_for_deployment", False
+                        ),
+                        "baseline_improvement": overall_accuracy
+                        - 0.774,  # vs proven baseline
                     }
                 )
 
                 return results
-            logger.error("Scaled specialization completed but returned incomplete results")
+            logger.error(
+                "Scaled specialization completed but returned incomplete results"
+            )
             return None
 
         except Exception as e:
@@ -242,7 +261,9 @@ async def main():
             logger.info("=" * 80)
             logger.info("SCALED MAGI SPECIALIZATION SUCCESS!")
             logger.info("=" * 80)
-            logger.info(f"Duration: {duration / 60:.1f} minutes ({duration:.1f} seconds)")
+            logger.info(
+                f"Duration: {duration / 60:.1f} minutes ({duration:.1f} seconds)"
+            )
             logger.info("Questions Processed: 10,000")
             logger.info("Scale Factor: 33.33x from proven baseline")
             logger.info(f"Output Saved: {runner.output_dir}")

@@ -5,12 +5,12 @@ This script provides tools for managing dependencies, checking compatibility,
 and resolving version conflicts.
 """
 
-from dataclasses import dataclass
 import json
-from pathlib import Path
 import re
 import subprocess
 import sys
+from dataclasses import dataclass
+from pathlib import Path
 
 
 @dataclass
@@ -201,7 +201,9 @@ class DependencyManager:
             report.append("## Potentially Vulnerable Packages")
             report.append("-" * 35)
             for pkg in vulnerable:
-                report.append(f"[WARNING] {pkg.name} {pkg.version}: {pkg.vulnerability_details}")
+                report.append(
+                    f"[WARNING] {pkg.name} {pkg.version}: {pkg.vulnerability_details}"
+                )
             report.append("")
         else:
             report.append("[OK] No known vulnerable packages detected")
@@ -213,7 +215,9 @@ class DependencyManager:
         report.append("1. Regularly update dependencies to latest secure versions")
         report.append("2. Use version pinning for critical dependencies")
         report.append("3. Monitor security advisories for used packages")
-        report.append("4. Consider using tools like safety or bandit for security scanning")
+        report.append(
+            "4. Consider using tools like safety or bandit for security scanning"
+        )
         report.append("5. Test thoroughly after dependency updates")
 
         return "\n".join(report)
@@ -241,7 +245,9 @@ class DependencyManager:
         conflicts = self.get_dependency_conflicts()
         if conflicts:
             fixes.append("# Fix dependency conflicts:")
-            fixes.append("pip install --upgrade --force-reinstall <conflicting_package>")
+            fixes.append(
+                "pip install --upgrade --force-reinstall <conflicting_package>"
+            )
             fixes.append("")
 
         # NumPy compatibility
@@ -271,10 +277,16 @@ def main() -> None:
     import argparse
 
     parser = argparse.ArgumentParser(description="AIVillage Dependency Manager")
-    parser.add_argument("--report", action="store_true", help="Generate security report")
-    parser.add_argument("--lock", action="store_true", help="Create dependency lock file")
+    parser.add_argument(
+        "--report", action="store_true", help="Generate security report"
+    )
+    parser.add_argument(
+        "--lock", action="store_true", help="Create dependency lock file"
+    )
     parser.add_argument("--fix", action="store_true", help="Show suggested fixes")
-    parser.add_argument("--check-numpy", action="store_true", help="Check NumPy compatibility")
+    parser.add_argument(
+        "--check-numpy", action="store_true", help="Check NumPy compatibility"
+    )
 
     args = parser.parse_args()
 

@@ -13,11 +13,15 @@ from services.core.interfaces import ChatRequest as ServiceChatRequest
 from services.core.interfaces import (
     ChatServiceInterface,
     HealthCheckInterface,
-    QueryServiceInterface,
-    UploadServiceInterface,
 )
 from services.core.interfaces import QueryRequest as ServiceQueryRequest
+from services.core.interfaces import (
+    QueryServiceInterface,
+)
 from services.core.interfaces import UploadRequest as ServiceUploadRequest
+from services.core.interfaces import (
+    UploadServiceInterface,
+)
 from services.core.service_error_handler import ServiceErrorHandler
 
 
@@ -75,7 +79,9 @@ class QueryHTTPAdapter(HTTPAdapter):
         super().__init__("QueryService")
         self.query_service = query_service
 
-    async def handle_query_request(self, query_request: dict[str, Any]) -> dict[str, Any]:
+    async def handle_query_request(
+        self, query_request: dict[str, Any]
+    ) -> dict[str, Any]:
         """Convert HTTP query request to service request and process."""
         # Convert HTTP request to service request
         service_request = ServiceQueryRequest(

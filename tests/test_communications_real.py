@@ -18,7 +18,9 @@ from src.communications.message import Message, MessageType, Priority
 from src.communications.protocol import CommunicationsProtocol
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 
@@ -33,7 +35,9 @@ class TestResults:
     def add_result(self, test_name: str, passed: bool, details: str = ""):
         self.tests[test_name] = passed
         self.details[test_name] = details
-        logger.info(f"Test '{test_name}': {'PASSED' if passed else 'FAILED'} - {details}")
+        logger.info(
+            f"Test '{test_name}': {'PASSED' if passed else 'FAILED'} - {details}"
+        )
 
     def print_summary(self):
         print("\n" + "=" * 80)
@@ -142,7 +146,9 @@ async def test_message_delivery(results: TestResults):
             "timestamp": time.time(),
         }
 
-        server_send_success = await server.send_message("client_agent", response_message)
+        server_send_success = await server.send_message(
+            "client_agent", response_message
+        )
         await asyncio.sleep(0.5)  # Wait for message processing
 
         # Verify messages were received
@@ -253,7 +259,9 @@ async def test_message_queuing(results: TestResults):
         # Set up message handler
         def message_handler(agent_id: str, message: dict):
             received_messages.append(message)
-            logger.info(f"Received queued message: {message.get('content', {}).get('message_id')}")
+            logger.info(
+                f"Received queued message: {message.get('content', {}).get('message_id')}"
+            )
 
         # Start client only (no server yet)
         client = CommunicationsProtocol("client_agent", port=8889)
@@ -345,7 +353,9 @@ async def test_tls_ssl_support(results: TestResults):
 
         # Test SSL connection support in client
         client_source = inspect.getsource(server.connect)
-        has_ssl_client_support = "ssl_context" in client_source and "wss" in client_source
+        has_ssl_client_support = (
+            "ssl_context" in client_source and "wss" in client_source
+        )
 
         if has_ssl_context and has_ssl_client_support:
             results.add_result(

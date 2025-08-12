@@ -14,7 +14,9 @@ class KnowledgeEvolutionTracker:
         self.graph_store = graph_store
         self.change_log: list[dict[str, Any]] = []
 
-    async def track_change(self, entity_id: str, old_state: Any, new_state: Any, timestamp: datetime) -> None:
+    async def track_change(
+        self, entity_id: str, old_state: Any, new_state: Any, timestamp: datetime
+    ) -> None:
         change_record = {
             "entity_id": entity_id,
             "old_state": old_state,
@@ -25,11 +27,14 @@ class KnowledgeEvolutionTracker:
 
         await self._store_change_record(change_record)
 
-    async def get_evolution(self, entity_id: str, start_time: datetime, end_time: datetime) -> list[dict[str, Any]]:
+    async def get_evolution(
+        self, entity_id: str, start_time: datetime, end_time: datetime
+    ) -> list[dict[str, Any]]:
         evolution = [
             change
             for change in self.change_log
-            if change["entity_id"] == entity_id and start_time <= change["timestamp"] <= end_time
+            if change["entity_id"] == entity_id
+            and start_time <= change["timestamp"] <= end_time
         ]
         return sorted(evolution, key=lambda x: x["timestamp"])
 

@@ -1,5 +1,6 @@
-import pytest
 from unittest.mock import AsyncMock, patch
+
+import pytest
 
 from src.core.p2p.p2p_node import P2PNode, PeerCapabilities
 from src.core.resources.device_profiler import DeviceProfiler
@@ -33,8 +34,12 @@ def mock_device_profiler():
 
 
 @pytest.mark.asyncio
-async def test_skip_low_battery_devices(mock_p2p_node, mock_resource_monitor, mock_device_profiler):
-    engine = ModelShardingEngine(mock_p2p_node, mock_resource_monitor, mock_device_profiler)
+async def test_skip_low_battery_devices(
+    mock_p2p_node, mock_resource_monitor, mock_device_profiler
+):
+    engine = ModelShardingEngine(
+        mock_p2p_node, mock_resource_monitor, mock_device_profiler
+    )
 
     high_peer = PeerCapabilities(
         device_id="high",

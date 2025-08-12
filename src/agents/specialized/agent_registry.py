@@ -4,20 +4,21 @@ Specialized Agent Registry - Central management for all specialized sub-agents
 import asyncio
 import json
 import logging
-from typing import Any, Dict, List, Optional, Type
 from dataclasses import dataclass
+from typing import Any, Dict, List, Optional, Type
 
 from src.production.rag.rag_system.core.agent_interface import AgentInterface
+
+from .architect_agent import ArchitectAgent
+from .creative_agent import CreativeAgent
 
 # Import all specialized agents
 from .data_science_agent import DataScienceAgent
 from .devops_agent import DevOpsAgent
 from .financial_agent import FinancialAgent
-from .creative_agent import CreativeAgent
 from .social_agent import SocialAgent
-from .translator_agent import TranslatorAgent
-from .architect_agent import ArchitectAgent
 from .tester_agent import TesterAgent
+from .translator_agent import TranslatorAgent
 
 logger = logging.getLogger(__name__)
 

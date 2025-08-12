@@ -12,7 +12,9 @@ print("\n1. Basic Network Discovery:")
 peers = discover_network_peers()
 print(f"   Found {len(peers)} peers")
 for i, peer in enumerate(peers):
-    print(f"   Peer {i + 1}: {peer.get('hostname')} at {peer.get('ip')}:{peer.get('port')}")
+    print(
+        f"   Peer {i + 1}: {peer.get('hostname')} at {peer.get('ip')}:{peer.get('port')}"
+    )
     print(
         f"           Platform: {peer.get('platform')}, CPUs: {peer.get('cpu_count')}, Memory: {peer.get('memory_gb', 0):.1f} GB"
     )

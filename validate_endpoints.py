@@ -10,7 +10,9 @@ from typing import Any
 import requests
 
 
-def check_port_availability(host: str, port: int, timeout: float = 5.0) -> dict[str, Any]:
+def check_port_availability(
+    host: str, port: int, timeout: float = 5.0
+) -> dict[str, Any]:
     """Check if a port is available and responding."""
     result = {
         "host": host,
@@ -41,7 +43,9 @@ def check_port_availability(host: str, port: int, timeout: float = 5.0) -> dict[
     return result
 
 
-def test_http_endpoint(url: str, timeout: float = 10.0, expected_codes: list[int] = None) -> dict[str, Any]:
+def test_http_endpoint(
+    url: str, timeout: float = 10.0, expected_codes: list[int] = None
+) -> dict[str, Any]:
     """Test HTTP endpoint availability and response."""
     if expected_codes is None:
         expected_codes = [
@@ -203,12 +207,18 @@ def validate_service_endpoints() -> dict[str, Any]:
 
     # Test port availability
     for port_info in required_ports:
-        port_result = check_port_availability(port_info["host"], port_info["port"], timeout=2.0)
+        port_result = check_port_availability(
+            port_info["host"], port_info["port"], timeout=2.0
+        )
         port_result.update(port_info)
         results["port_checks"].append(port_result)
 
         status_icon = "[LISTENING]" if port_result["listening"] else "[NOT_LISTENING]"
-        response_time = f" ({port_result['response_time_ms']:.1f}ms)" if port_result["response_time_ms"] else ""
+        response_time = (
+            f" ({port_result['response_time_ms']:.1f}ms)"
+            if port_result["response_time_ms"]
+            else ""
+        )
         error_msg = f" - {port_result['error']}" if port_result["error"] else ""
 
         print(
@@ -223,16 +233,26 @@ def validate_service_endpoints() -> dict[str, Any]:
 
     # Test health check endpoints
     for endpoint_info in health_endpoints:
-        health_result = test_http_endpoint(endpoint_info["url"], timeout=5.0, expected_codes=endpoint_info["expected"])
+        health_result = test_http_endpoint(
+            endpoint_info["url"], timeout=5.0, expected_codes=endpoint_info["expected"]
+        )
         health_result.update(endpoint_info)
         results["health_checks"].append(health_result)
 
         status_icon = "[OK]" if health_result["status"] == "OK" else "[FAIL]"
-        status_code = f"({health_result['status_code']})" if health_result["status_code"] else ""
-        response_time = f" {health_result['response_time_ms']:.1f}ms" if health_result["response_time_ms"] else ""
+        status_code = (
+            f"({health_result['status_code']})" if health_result["status_code"] else ""
+        )
+        response_time = (
+            f" {health_result['response_time_ms']:.1f}ms"
+            if health_result["response_time_ms"]
+            else ""
+        )
         error_msg = f" - {health_result['error']}" if health_result["error"] else ""
 
-        print(f"{status_icon:<10} {endpoint_info['name']:<20} {status_code:<6}{response_time}{error_msg}")
+        print(
+            f"{status_icon:<10} {endpoint_info['name']:<20} {status_code:<6}{response_time}{error_msg}"
+        )
 
         if health_result["status"] == "OK":
             results["summary"]["health_endpoints_ok"] += 1
@@ -242,16 +262,26 @@ def validate_service_endpoints() -> dict[str, Any]:
 
     # Test API endpoints
     for endpoint_info in api_endpoints:
-        api_result = test_http_endpoint(endpoint_info["url"], timeout=5.0, expected_codes=endpoint_info["expected"])
+        api_result = test_http_endpoint(
+            endpoint_info["url"], timeout=5.0, expected_codes=endpoint_info["expected"]
+        )
         api_result.update(endpoint_info)
         results["api_checks"].append(api_result)
 
         status_icon = "[OK]" if api_result["status"] == "OK" else "[FAIL]"
-        status_code = f"({api_result['status_code']})" if api_result["status_code"] else ""
-        response_time = f" {api_result['response_time_ms']:.1f}ms" if api_result["response_time_ms"] else ""
+        status_code = (
+            f"({api_result['status_code']})" if api_result["status_code"] else ""
+        )
+        response_time = (
+            f" {api_result['response_time_ms']:.1f}ms"
+            if api_result["response_time_ms"]
+            else ""
+        )
         error_msg = f" - {api_result['error']}" if api_result["error"] else ""
 
-        print(f"{status_icon:<10} {endpoint_info['name']:<20} {status_code:<6}{response_time}{error_msg}")
+        print(
+            f"{status_icon:<10} {endpoint_info['name']:<20} {status_code:<6}{response_time}{error_msg}"
+        )
 
         if api_result["status"] == "OK":
             results["summary"]["api_endpoints_ok"] += 1
@@ -260,7 +290,9 @@ def validate_service_endpoints() -> dict[str, Any]:
     print("SERVICE ENDPOINT VALIDATION SUMMARY:")
     print("=" * 80)
 
-    print(f"Port Availability: {results['summary']['ports_listening']}/{results['summary']['ports_total']} listening")
+    print(
+        f"Port Availability: {results['summary']['ports_listening']}/{results['summary']['ports_total']} listening"
+    )
     print(
         f"Health Endpoints: {results['summary']['health_endpoints_ok']}/{results['summary']['health_endpoints_total']} responding"
     )
@@ -282,7 +314,9 @@ def validate_service_endpoints() -> dict[str, Any]:
 
     health_percentage = (total_passing / total_checks) * 100 if total_checks > 0 else 0
 
-    print(f"\\nOverall Endpoint Health: {total_passing}/{total_checks} ({health_percentage:.1f}%)")
+    print(
+        f"\\nOverall Endpoint Health: {total_passing}/{total_checks} ({health_percentage:.1f}%)"
+    )
 
     if health_percentage >= 80:
         print("STATUS: ACCEPTABLE - Most services are operational")

@@ -21,7 +21,9 @@ class BatchProcessor:
         results = []
         for entity1, relation, entity2 in entity_pairs:
             known_facts = self.knowledge_graph.get_related_facts(entity1, entity2)
-            prompt = construct_extrapolation_prompt(entity1, relation, entity2, known_facts)
+            prompt = construct_extrapolation_prompt(
+                entity1, relation, entity2, known_facts
+            )
             extrapolation = await self.llm.generate(prompt)
             confidence = estimate_confidence(extrapolation)
             results.append((entity1, relation, entity2, extrapolation, confidence))
@@ -40,7 +42,9 @@ class BatchProcessor:
         :param confidence_threshold: The minimum confidence level to include a connection.
         :return: A list of tuples containing (entity1, relation, entity2, confidence).
         """
-        potential_relations = self.knowledge_graph.get_potential_relations(entity_group1, entity_group2)
+        potential_relations = self.knowledge_graph.get_potential_relations(
+            entity_group1, entity_group2
+        )
 
         entity_pairs = [
             (entity1, relation, entity2)
@@ -59,7 +63,9 @@ class BatchProcessor:
 
         return extrapolated_connections
 
-    async def iterative_extrapolation(self, initial_entities: list[str], max_iterations: int = 3) -> dict:
+    async def iterative_extrapolation(
+        self, initial_entities: list[str], max_iterations: int = 3
+    ) -> dict:
         """Perform iterative extrapolation to discover new connections.
 
         :param initial_entities: A list of initial entities to start the extrapolation from.
@@ -70,7 +76,9 @@ class BatchProcessor:
         current_entities = initial_entities
 
         for _ in range(max_iterations):
-            new_connections = await self.extrapolate_group_connections(current_entities, current_entities, 0.5)
+            new_connections = await self.extrapolate_group_connections(
+                current_entities, current_entities, 0.5
+            )
 
             for entity1, relation, entity2, confidence in new_connections:
                 key = (entity1, relation, entity2)
@@ -79,7 +87,11 @@ class BatchProcessor:
 
             # Update current_entities with newly discovered entities
             current_entities = list(
-                set(current_entities + [conn[0] for conn in new_connections] + [conn[2] for conn in new_connections])
+                set(
+                    current_entities
+                    + [conn[0] for conn in new_connections]
+                    + [conn[2] for conn in new_connections]
+                )
             )
 
         return discovered_connections

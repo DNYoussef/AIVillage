@@ -8,13 +8,13 @@ Implements:
 """
 
 import asyncio
-from collections import OrderedDict, defaultdict
-from dataclasses import dataclass
 import hashlib
 import logging
-from pathlib import Path
 import pickle
 import time
+from collections import OrderedDict, defaultdict
+from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 import faiss
@@ -170,7 +170,9 @@ class SemanticMultiTierCache:
             return result
 
         # Try semantic match if exact match fails
-        result = await self._check_semantic_match(query, semantic_threshold, context_hints)
+        result = await self._check_semantic_match(
+            query, semantic_threshold, context_hints
+        )
         if result:
             self.metrics["hits"]["semantic"] += 1
             latency = (time.perf_counter() - start_time) * 1000
@@ -209,7 +211,9 @@ class SemanticMultiTierCache:
             timestamp=time.time(),
             trust_score=trust_score,
             context_type=context_type,
-            prefetch_priority=self._calculate_prefetch_priority(trust_score, context_type),
+            prefetch_priority=self._calculate_prefetch_priority(
+                trust_score, context_type
+            ),
         )
 
         # Determine target tier based on trust score
@@ -228,7 +232,9 @@ class SemanticMultiTierCache:
         if self.enable_prefetch and trust_score > 0.7:
             await self._schedule_prefetch(query, embedding)
 
-    async def _check_exact_match(self, key: str) -> tuple[list[Any], dict[str, Any]] | None:
+    async def _check_exact_match(
+        self, key: str
+    ) -> tuple[list[Any], dict[str, Any]] | None:
         """Check for exact match across all tiers."""
         # Check hot tier
         if key in self.hot_cache:
@@ -315,7 +321,10 @@ class SemanticMultiTierCache:
             entry = self.warm_cache[key]
 
             # Promote to hot if access count high enough
-            if entry.access_count >= 5 and entry.trust_score >= self.tiers["hot"].min_trust_score:
+            if (
+                entry.access_count >= 5
+                and entry.trust_score >= self.tiers["hot"].min_trust_score
+            ):
                 del self.warm_cache[key]
                 await self._add_to_tier(entry, "hot")
                 self.metrics["promotions"] += 1
@@ -324,7 +333,10 @@ class SemanticMultiTierCache:
             entry = self.cold_cache[key]
 
             # Promote to warm if access count high enough
-            if entry.access_count >= 3 and entry.trust_score >= self.tiers["warm"].min_trust_score:
+            if (
+                entry.access_count >= 3
+                and entry.trust_score >= self.tiers["warm"].min_trust_score
+            ):
                 del self.cold_cache[key]
                 await self._add_to_tier(entry, "warm")
                 self.metrics["promotions"] += 1
@@ -446,7 +458,9 @@ class SemanticMultiTierCache:
 
         self.context_patterns[context_type] += 1
 
-    def _calculate_prefetch_priority(self, trust_score: float, context_type: str) -> float:
+    def _calculate_prefetch_priority(
+        self, trust_score: float, context_type: str
+    ) -> float:
         """Calculate prefetch priority based on trust and context patterns."""
         # Base priority from trust
         priority = trust_score
@@ -468,7 +482,9 @@ class SemanticMultiTierCache:
         # Find semantic neighbors for prefetching
         if self.semantic_index.ntotal > 0:
             k = min(3, self.semantic_index.ntotal)
-            scores, indices = self.semantic_index.search(embedding.reshape(1, -1).astype("float32"), k)
+            scores, indices = self.semantic_index.search(
+                embedding.reshape(1, -1).astype("float32"), k
+            )
 
             for score, idx in zip(scores[0], indices[0], strict=False):
                 if score > 0.9:  # Very similar queries

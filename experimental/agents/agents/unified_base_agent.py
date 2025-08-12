@@ -1,15 +1,13 @@
+import random
+import warnings
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-import random
 from typing import Any
-import warnings
 
 import numpy as np
-from sklearn.linear_model import LogisticRegression
 import yaml
-
 from agents.language_models.openai_gpt import OpenAIGPTConfig
 from agents.self_evolve.quality_assurance import BasicUPOChecker
 from agents.utils import (
@@ -19,6 +17,12 @@ from agents.utils import (
     MonteCarloTreeSearch,
 )
 from agents.utils.task import Task as LangroidTask
+from rag_system.core.config import UnifiedConfig
+from rag_system.core.pipeline import EnhancedRAGPipeline
+from rag_system.retrieval.vector_store import VectorStore
+from rag_system.tracking.unified_knowledge_tracker import UnifiedKnowledgeTracker
+from sklearn.linear_model import LogisticRegression
+
 from core.communication import (
     Message,
     MessageType,
@@ -32,10 +36,6 @@ from core.error_handling import (
     get_component_logger,
     with_error_handling,
 )
-from rag_system.core.config import UnifiedConfig
-from rag_system.core.pipeline import EnhancedRAGPipeline
-from rag_system.retrieval.vector_store import VectorStore
-from rag_system.tracking.unified_knowledge_tracker import UnifiedKnowledgeTracker
 
 
 @dataclass
@@ -58,10 +58,14 @@ class UnifiedBaseAgent:
         knowledge_tracker: UnifiedKnowledgeTracker | None = None,
     ) -> None:
         self.config = config
-        self.logger = get_component_logger("UnifiedBaseAgent", {"agent_name": config.name})
+        self.logger = get_component_logger(
+            "UnifiedBaseAgent", {"agent_name": config.name}
+        )
 
         try:
-            self.rag_pipeline = EnhancedRAGPipeline(config.rag_config, knowledge_tracker)
+            self.rag_pipeline = EnhancedRAGPipeline(
+                config.rag_config, knowledge_tracker
+            )
             self.name = config.name
             self.description = config.description
             self.capabilities = config.capabilities
@@ -96,7 +100,9 @@ class UnifiedBaseAgent:
                 context={"config": config, "error": str(e)},
             )
 
-    @with_error_handling(retries=2, context={"component": "UnifiedBaseAgent", "method": "execute_task"})
+    @with_error_handling(
+        retries=2, context={"component": "UnifiedBaseAgent", "method": "execute_task"}
+    )
     async def execute_task(self, task: LangroidTask) -> dict[str, Any]:
         self.logger.info(
             "Starting task execution",
@@ -206,7 +212,9 @@ class UnifiedBaseAgent:
                 context={"message": message, "missing_key": str(e)},
             )
 
-    @with_error_handling(retries=2, context={"component": "UnifiedBaseAgent", "method": "handle_message"})
+    @with_error_handling(
+        retries=2, context={"component": "UnifiedBaseAgent", "method": "handle_message"}
+    )
     async def handle_message(self, message: Message) -> None:
         if message.type == MessageType.TASK:
             self.logger.info(
@@ -259,7 +267,9 @@ class UnifiedBaseAgent:
 
     # Implement AgentInterface methods
 
-    @with_error_handling(retries=1, context={"component": "UnifiedBaseAgent", "method": "generate"})
+    @with_error_handling(
+        retries=1, context={"component": "UnifiedBaseAgent", "method": "generate"}
+    )
     async def generate(self, prompt: str) -> str:
         """Generate a response using the agent's language model."""
         try:
@@ -276,7 +286,9 @@ class UnifiedBaseAgent:
                 },
             )
 
-    @with_error_handling(retries=1, context={"component": "UnifiedBaseAgent", "method": "get_embedding"})
+    @with_error_handling(
+        retries=1, context={"component": "UnifiedBaseAgent", "method": "get_embedding"}
+    )
     async def get_embedding(self, text: str) -> list[float]:
         """Get the embedding for the given text."""
         try:
@@ -292,8 +304,12 @@ class UnifiedBaseAgent:
                 },
             )
 
-    @with_error_handling(retries=1, context={"component": "UnifiedBaseAgent", "method": "rerank"})
-    async def rerank(self, query: str, results: list[dict[str, Any]], k: int) -> list[dict[str, Any]]:
+    @with_error_handling(
+        retries=1, context={"component": "UnifiedBaseAgent", "method": "rerank"}
+    )
+    async def rerank(
+        self, query: str, results: list[dict[str, Any]], k: int
+    ) -> list[dict[str, Any]]:
         """Rerank the given results based on the query."""
         try:
             return await self.rag_pipeline.rerank(query, results, k)
@@ -310,12 +326,16 @@ class UnifiedBaseAgent:
                 },
             )
 
-    @with_error_handling(retries=0, context={"component": "UnifiedBaseAgent", "method": "introspect"})
+    @with_error_handling(
+        retries=0, context={"component": "UnifiedBaseAgent", "method": "introspect"}
+    )
     async def introspect(self) -> dict[str, Any]:
         """Return the agent's internal state."""
         return self.info
 
-    @with_error_handling(retries=2, context={"component": "UnifiedBaseAgent", "method": "communicate"})
+    @with_error_handling(
+        retries=2, context={"component": "UnifiedBaseAgent", "method": "communicate"}
+    )
     async def communicate(self, message: str, recipient: str) -> str:
         """Communicate with another agent using the communication protocol."""
         try:
@@ -326,7 +346,9 @@ class UnifiedBaseAgent:
                 content={"message": message},
                 priority=Priority.MEDIUM,
             )
-            response = await self.communication_protocol.query(self.name, recipient, query_message.content)
+            response = await self.communication_protocol.query(
+                self.name, recipient, query_message.content
+            )
             self.logger.info(
                 "Inter-agent communication completed",
                 extra={"sender": self.name, "recipient": recipient, "message": message},
@@ -383,7 +405,9 @@ class UnifiedBaseAgent:
                 context={"query": query, "error": str(e)},
             )
 
-    @with_error_handling(retries=1, context={"component": "UnifiedBaseAgent", "method": "query_rag"})
+    @with_error_handling(
+        retries=1, context={"component": "UnifiedBaseAgent", "method": "query_rag"}
+    )
     async def query_rag(self, query: str) -> dict[str, Any]:
         """Submit a query to the RAG system and receive a structured response."""
         try:
@@ -401,7 +425,9 @@ class UnifiedBaseAgent:
                 context={"query": query, "error": str(e)},
             )
 
-    @with_error_handling(retries=1, context={"component": "UnifiedBaseAgent", "method": "add_document"})
+    @with_error_handling(
+        retries=1, context={"component": "UnifiedBaseAgent", "method": "add_document"}
+    )
     async def add_document(self, content: str, filename: str) -> None:
         """Add a new document to the RAG system."""
         try:
@@ -422,7 +448,9 @@ class UnifiedBaseAgent:
                 },
             )
 
-    @with_error_handling(retries=0, context={"component": "UnifiedBaseAgent", "method": "create_handoff"})
+    @with_error_handling(
+        retries=0, context={"component": "UnifiedBaseAgent", "method": "create_handoff"}
+    )
     def create_handoff(self, target_agent: "UnifiedBaseAgent") -> None:
         """Create a handoff function to transfer control to another agent."""
         try:
@@ -470,7 +498,9 @@ class UnifiedBaseAgent:
                 context={"agent": self.name, "error": str(e)},
             )
 
-    @with_error_handling(retries=1, context={"component": "UnifiedBaseAgent", "method": "evolve"})
+    @with_error_handling(
+        retries=1, context={"component": "UnifiedBaseAgent", "method": "evolve"}
+    )
     async def evolve(self) -> None:
         self.logger.info("Starting agent evolution", extra={"agent": self.name})
         try:
@@ -617,7 +647,9 @@ class AgentArchitectureLayer:
         return {"quality": float(evaluation.text)}
 
     async def revise_result(self, result: Any, evaluation: dict[str, Any]) -> Any:
-        revision_prompt = f"Revise the following result to improve its quality: '{result}'"
+        revision_prompt = (
+            f"Revise the following result to improve its quality: '{result}'"
+        )
         revision = await self.llm.complete(revision_prompt)
         return revision.text
 
@@ -667,19 +699,25 @@ class DecisionMakingLayer:
 
     def _monte_carlo_tree_search(self, task: LangroidTask, context: str) -> str:
         options = ["Option A", "Option B", "Option C"]
-        best_option = self.mcts.search(options, lambda opt: self._simulate(task, context, opt))
+        best_option = self.mcts.search(
+            options, lambda opt: self._simulate(task, context, opt)
+        )
         return f"MCTS suggests: {best_option}"
 
     def _simulate(self, task: LangroidTask, context: str, option: str) -> float:
         return random.random()
 
-    async def _direct_preference_optimization(self, task: LangroidTask, context: str) -> str:
+    async def _direct_preference_optimization(
+        self, task: LangroidTask, context: str
+    ) -> str:
         options = ["Approach X", "Approach Y", "Approach Z"]
         preferences = await self._get_preferences(task, context, options)
         best_approach = self.dpo.select(preferences)
         return f"DPO suggests: {best_approach}"
 
-    async def _get_preferences(self, task: LangroidTask, context: str, options: list[str]) -> dict[str, float]:
+    async def _get_preferences(
+        self, task: LangroidTask, context: str, options: list[str]
+    ) -> dict[str, float]:
         """Return mock preference scores for each option."""
         prompt = f"""
         Task: {task.content}
@@ -696,7 +734,9 @@ class DecisionMakingLayer:
                 preferences[option.strip()] = float(score.strip())
         return preferences
 
-    async def process_query(self, query: str, timestamp: datetime | None = None) -> dict[str, Any]:
+    async def process_query(
+        self, query: str, timestamp: datetime | None = None
+    ) -> dict[str, Any]:
         # Implement query processing logic here
         retrieval_results = await self.rag_pipeline.retrieve(query, timestamp=timestamp)
         reasoning_result = await self.rag_pipeline.reason(query, retrieval_results)
@@ -777,7 +817,9 @@ class SelfEvolvingSystem:
             self.adas_optimizer = object()
             self.recent_decisions: list[tuple] = []
 
-            self.logger.info("SelfEvolvingSystem initialized", extra={"agent_count": len(agents)})
+            self.logger.info(
+                "SelfEvolvingSystem initialized", extra={"agent_count": len(agents)}
+            )
         except Exception as e:
             raise AIVillageException(
                 message="Failed to initialize SelfEvolvingSystem",
@@ -786,7 +828,9 @@ class SelfEvolvingSystem:
                 context={"agent_count": len(agents), "error": str(e)},
             )
 
-    @with_error_handling(retries=1, context={"component": "SelfEvolvingSystem", "method": "process_task"})
+    @with_error_handling(
+        retries=1, context={"component": "SelfEvolvingSystem", "method": "process_task"}
+    )
     async def process_task(self, task: LangroidTask) -> dict[str, Any]:
         try:
             for agent in self.agents:
@@ -817,7 +861,9 @@ class SelfEvolvingSystem:
                 context={"task_type": task.type, "error": str(e)},
             )
 
-    @with_error_handling(retries=1, context={"component": "SelfEvolvingSystem", "method": "evolve"})
+    @with_error_handling(
+        retries=1, context={"component": "SelfEvolvingSystem", "method": "evolve"}
+    )
     async def evolve(self) -> None:
         self.logger.info("Starting system-wide evolution")
         try:
@@ -829,7 +875,9 @@ class SelfEvolvingSystem:
                 await agent.evolve()
 
             if self.quality_assurance:
-                self.quality_assurance.upo_threshold = await self.optimize_upo_threshold()
+                self.quality_assurance.upo_threshold = (
+                    await self.optimize_upo_threshold()
+                )
             await self.evolve_decision_maker()
             self.logger.info("System-wide evolution completed")
         except Exception as e:
@@ -840,7 +888,9 @@ class SelfEvolvingSystem:
                 context={"agent_count": len(self.agents), "error": str(e)},
             )
 
-    @with_error_handling(retries=1, context={"component": "SelfEvolvingSystem", "method": "evolve_agent"})
+    @with_error_handling(
+        retries=1, context={"component": "SelfEvolvingSystem", "method": "evolve_agent"}
+    )
     async def evolve_agent(self, agent: UnifiedBaseAgent) -> None:
         try:
             self.logger.info("Evolving agent", extra={"agent": agent.name})
@@ -867,10 +917,15 @@ class SelfEvolvingSystem:
             "method": "analyze_agent_performance",
         },
     )
-    async def analyze_agent_performance(self, agent: UnifiedBaseAgent) -> dict[str, float]:
+    async def analyze_agent_performance(
+        self, agent: UnifiedBaseAgent
+    ) -> dict[str, float]:
         try:
             self.logger.info("Analyzing agent performance", extra={"agent": agent.name})
-            performance = {capability: random.uniform(0.4, 1.0) for capability in agent.capabilities}
+            performance = {
+                capability: random.uniform(0.4, 1.0)
+                for capability in agent.capabilities
+            }
             self.logger.info(
                 "Performance analysis completed",
                 extra={"agent": agent.name, "performance": performance},
@@ -891,7 +946,9 @@ class SelfEvolvingSystem:
             "method": "generate_new_capabilities",
         },
     )
-    async def generate_new_capabilities(self, agent: UnifiedBaseAgent, performance: dict[str, float]) -> list[str]:
+    async def generate_new_capabilities(
+        self, agent: UnifiedBaseAgent, performance: dict[str, float]
+    ) -> list[str]:
         try:
             self.logger.info("Generating new capabilities", extra={"agent": agent.name})
             low_performing = [cap for cap, score in performance.items() if score < 0.6]
@@ -903,7 +960,9 @@ class SelfEvolvingSystem:
             if hasattr(self.sage_framework, "assistant_response"):
                 try:
                     response = await self.sage_framework.assistant_response(prompt)
-                    new_capabilities = [cap.strip() for cap in response.split(",") if cap.strip()]
+                    new_capabilities = [
+                        cap.strip() for cap in response.split(",") if cap.strip()
+                    ]
                 except Exception as e:
                     self.logger.warning(
                         "Failed to generate capabilities via SAGE",
@@ -957,7 +1016,9 @@ class SelfEvolvingSystem:
                     self.dpo.fit()
                     evolution_updates.append("dpo_model")
                 except Exception as e:
-                    self.logger.warning("Failed to evolve DPO model", extra={"error": str(e)})
+                    self.logger.warning(
+                        "Failed to evolve DPO model", extra={"error": str(e)}
+                    )
 
             self.logger.info(
                 "Decision maker evolution completed",
@@ -979,11 +1040,17 @@ class SelfEvolvingSystem:
         try:
             self.logger.info("Optimizing UPO threshold")
             safety_checks = []
-            if self.quality_assurance and hasattr(self.quality_assurance, "get_recent_safety_checks"):
+            if self.quality_assurance and hasattr(
+                self.quality_assurance, "get_recent_safety_checks"
+            ):
                 try:
-                    safety_checks = await self.quality_assurance.get_recent_safety_checks()
+                    safety_checks = (
+                        await self.quality_assurance.get_recent_safety_checks()
+                    )
                 except Exception as e:
-                    self.logger.warning("Failed to get safety checks", extra={"error": str(e)})
+                    self.logger.warning(
+                        "Failed to get safety checks", extra={"error": str(e)}
+                    )
                     safety_checks = []
 
             if safety_checks:
@@ -994,7 +1061,11 @@ class SelfEvolvingSystem:
                 new_threshold = mean_score - (1.5 * std_score)
                 new_threshold = max(0.5, min(0.9, new_threshold))
             else:
-                base = self.quality_assurance.upo_threshold if self.quality_assurance else 0.7
+                base = (
+                    self.quality_assurance.upo_threshold
+                    if self.quality_assurance
+                    else 0.7
+                )
                 new_threshold = base * (1 + (random.random() - 0.5) * 0.1)
 
             self.logger.info(
@@ -1017,7 +1088,9 @@ class SelfEvolvingSystem:
     def get_recent_decisions(self) -> list[tuple]:
         try:
             decisions = self.recent_decisions[-100:] if self.recent_decisions else []
-            self.logger.debug("Retrieved recent decisions", extra={"count": len(decisions)})
+            self.logger.debug(
+                "Retrieved recent decisions", extra={"count": len(decisions)}
+            )
             return decisions
         except Exception as e:
             raise AIVillageException(
@@ -1027,7 +1100,9 @@ class SelfEvolvingSystem:
                 context={"error": str(e)},
             )
 
-    @with_error_handling(retries=1, context={"component": "SelfEvolvingSystem", "method": "add_decision"})
+    @with_error_handling(
+        retries=1, context={"component": "SelfEvolvingSystem", "method": "add_decision"}
+    )
     async def add_decision(self, features: np.array, outcome: int) -> None:
         try:
             self.recent_decisions.append((features, outcome))
@@ -1038,12 +1113,16 @@ class SelfEvolvingSystem:
                 try:
                     self.dpo.add_record(features, outcome)
                 except Exception as e:
-                    self.logger.warning("Failed to add record to DPO", extra={"error": str(e)})
+                    self.logger.warning(
+                        "Failed to add record to DPO", extra={"error": str(e)}
+                    )
 
             self.logger.debug(
                 "Decision added",
                 extra={
-                    "features_shape": (features.shape if hasattr(features, "shape") else "unknown"),
+                    "features_shape": (
+                        features.shape if hasattr(features, "shape") else "unknown"
+                    ),
                     "outcome": outcome,
                 },
             )
@@ -1056,7 +1135,9 @@ class SelfEvolvingSystem:
             )
 
 
-@with_error_handling(retries=0, context={"component": "create_agent", "method": "create_agent"})
+@with_error_handling(
+    retries=0, context={"component": "create_agent", "method": "create_agent"}
+)
 def create_agent(
     agent_type: str,
     config: UnifiedAgentConfig,
@@ -1095,7 +1176,9 @@ if __name__ == "__main__":
                 capabilities=["general_task"],
                 vector_store=vector_store,
                 model="gpt-4",
-                instructions=("You are an example agent capable of handling general tasks."),
+                instructions=(
+                    "You are an example agent capable of handling general tasks."
+                ),
             )
 
             agent = create_agent("ExampleAgent", agent_config, communication_protocol)
@@ -1117,7 +1200,9 @@ if __name__ == "__main__":
                 },
             )
         except Exception as e:
-            get_component_logger("main").error("Unexpected error occurred", extra={"error": str(e)})
+            get_component_logger("main").error(
+                "Unexpected error occurred", extra={"error": str(e)}
+            )
 
     # Run the async main function
     asyncio.run(main())

@@ -197,7 +197,9 @@ class TestEdgeCases:
         )
 
         # Should be barely suitable
-        assert medium_at_limit.is_suitable_for_evolution() is False  # Below 50% threshold
+        assert (
+            medium_at_limit.is_suitable_for_evolution() is False
+        )  # Below 50% threshold
 
     @pytest.mark.asyncio
     async def test_resource_monitor_error_recovery(self):
@@ -258,7 +260,9 @@ class TestEdgeCases:
 
         # Should have registered some tasks but eventually hit limits
         assert len(registered_tasks) > 0
-        assert len(registered_tasks) < 10  # Shouldn't register all due to resource limits
+        assert (
+            len(registered_tasks) < 10
+        )  # Shouldn't register all due to resource limits
 
         # Clean up
         for task_id in registered_tasks:

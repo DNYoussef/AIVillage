@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 """Script to update all config/ paths to configs/ paths."""
 
-from pathlib import Path
 import re
+from pathlib import Path
 
 
-def update_file(file_path: Path, patterns_to_replace: list[tuple[str, str]]) -> bool | None:
+def update_file(
+    file_path: Path, patterns_to_replace: list[tuple[str, str]]
+) -> bool | None:
     """Update file with pattern replacements."""
     try:
         with open(file_path, encoding="utf-8") as f:
@@ -48,9 +50,14 @@ def main() -> None:
 
     # Walk through all files
     for file_path in root_dir.rglob("*"):
-        if file_path.is_file() and any(str(file_path).endswith(ext) for ext in file_extensions):
+        if file_path.is_file() and any(
+            str(file_path).endswith(ext) for ext in file_extensions
+        ):
             # Skip files in certain directories
-            if any(part in str(file_path) for part in [".git", "__pycache__", "node_modules", ".pytest_cache"]):
+            if any(
+                part in str(file_path)
+                for part in [".git", "__pycache__", "node_modules", ".pytest_cache"]
+            ):
                 continue
 
             if update_file(file_path, patterns):

@@ -2,8 +2,8 @@ import logging
 from typing import Any
 
 import numpy as np
-from sklearn.metrics.pairwise import cosine_similarity
 import torch
+from sklearn.metrics.pairwise import cosine_similarity
 from transformers import BertForSequenceClassification, BertModel, BertTokenizer
 
 logger = logging.getLogger(__name__)
@@ -16,7 +16,9 @@ class AdvancedNLP:
             revision="main",  # Pin to main branch for security
             trust_remote_code=False,  # Disable remote code execution
         )
-        self.model = BertModel.from_pretrained("bert-base-uncased", revision="main", trust_remote_code=False)
+        self.model = BertModel.from_pretrained(
+            "bert-base-uncased", revision="main", trust_remote_code=False
+        )
         self.classifier = BertForSequenceClassification.from_pretrained(
             "bert-base-uncased", num_labels=2, revision="main", trust_remote_code=False
         )
@@ -26,7 +28,9 @@ class AdvancedNLP:
 
     def get_embeddings(self, texts: list[str]) -> np.ndarray:
         """Generate BERT embeddings for a list of texts."""
-        encoded_input = self.tokenizer(texts, padding=True, truncation=True, return_tensors="pt")
+        encoded_input = self.tokenizer(
+            texts, padding=True, truncation=True, return_tensors="pt"
+        )
         encoded_input = {k: v.to(self.device) for k, v in encoded_input.items()}
 
         with torch.no_grad():
@@ -44,7 +48,9 @@ class AdvancedNLP:
 
     def classify_sentiment(self, text: str) -> dict[str, float]:
         """Classify the sentiment of a given text using BERT."""
-        inputs = self.tokenizer(text, return_tensors="pt", padding=True, truncation=True)
+        inputs = self.tokenizer(
+            text, return_tensors="pt", padding=True, truncation=True
+        )
         inputs = {k: v.to(self.device) for k, v in inputs.items()}
 
         with torch.no_grad():
@@ -62,7 +68,9 @@ class AdvancedNLP:
         tokens = self.tokenizer.tokenize(text)
 
         # Get embeddings for each token
-        encoded_input = self.tokenizer(text, return_tensors="pt", padding=True, truncation=True)
+        encoded_input = self.tokenizer(
+            text, return_tensors="pt", padding=True, truncation=True
+        )
         encoded_input = {k: v.to(self.device) for k, v in encoded_input.items()}
 
         with torch.no_grad():
@@ -76,13 +84,19 @@ class AdvancedNLP:
 
         # Get the top-k important tokens
         top_indices = token_importance.argsort()[0][-top_k:]
-        keywords = [tokens[i] for i in top_indices if tokens[i] not in self.tokenizer.all_special_tokens]
+        keywords = [
+            tokens[i]
+            for i in top_indices
+            if tokens[i] not in self.tokenizer.all_special_tokens
+        ]
 
         return keywords
 
     def generate_summary(self, text: str, max_length: int = 100) -> str:
         """Generate a summary of the given text using BERT."""
-        inputs = self.tokenizer([text], max_length=512, return_tensors="pt", truncation=True)
+        inputs = self.tokenizer(
+            [text], max_length=512, return_tensors="pt", truncation=True
+        )
         inputs = {k: v.to(self.device) for k, v in inputs.items()}
 
         with torch.no_grad():

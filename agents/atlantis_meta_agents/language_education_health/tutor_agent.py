@@ -134,9 +134,9 @@ class TutorAgent(AgentInterface):
         self.learning_content: dict[str, LearningContent] = {}
         self.assessments: dict[str, Assessment] = {}
         self.learning_sessions: dict[str, LearningSession] = {}
-        self.learning_paths: dict[str, list[str]] = (
-            {}
-        )  # learner_id -> ordered content_ids
+        self.learning_paths: dict[
+            str, list[str]
+        ] = {}  # learner_id -> ordered content_ids
 
         # Content database by topic and level
         self.content_by_topic: dict[str, list[str]] = {}

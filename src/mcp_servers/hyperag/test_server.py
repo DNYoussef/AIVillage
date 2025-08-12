@@ -33,7 +33,9 @@ class MCPTestClient:
             await self.websocket.close()
             logger.info("Disconnected")
 
-    async def send_request(self, method: str, params: dict[str, Any], request_id: str | None = None) -> dict[str, Any]:
+    async def send_request(
+        self, method: str, params: dict[str, Any], request_id: str | None = None
+    ) -> dict[str, Any]:
         """Send a request and get response."""
         if not self.websocket:
             msg = "Not connected"
@@ -73,7 +75,9 @@ async def test_server() -> None:
 
         # Test 2: Query without auth (should fail)
         logger.info("=== Testing query without auth ===")
-        response = await client.send_request("hyperag/query", {"query": "What is machine learning?"})
+        response = await client.send_request(
+            "hyperag/query", {"query": "What is machine learning?"}
+        )
         assert "error" in response
         assert response["error"]["code"] == "AUTH_REQUIRED"
         print("✓ Auth required check passed")
@@ -126,7 +130,9 @@ async def test_server() -> None:
 
         # Test 6: List adapters
         logger.info("=== Testing adapter list ===")
-        response = await client.send_request("hyperag/adapter/list", {"api_key": "hrag_dev_test123"})
+        response = await client.send_request(
+            "hyperag/adapter/list", {"api_key": "hrag_dev_test123"}
+        )
 
         if "error" in response:
             print(f"✗ Adapter list failed: {response['error']['message']}")

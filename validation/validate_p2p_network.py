@@ -4,9 +4,9 @@ Tests mesh networking, LibP2P integration, peer discovery, and message passing.
 """
 
 import logging
-from pathlib import Path
 import sys
 import time
+from pathlib import Path
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
@@ -21,7 +21,9 @@ except ImportError as e:
     print(f"Warning: Could not import P2P components: {e}")
     MeshNetwork = None
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 
@@ -167,7 +169,9 @@ class P2PNetworkValidator:
 
             transport_manager = FallbackTransportManager(transport_config)
 
-            if hasattr(transport_manager, "send_message") and hasattr(transport_manager, "get_available_transports"):
+            if hasattr(transport_manager, "send_message") and hasattr(
+                transport_manager, "get_available_transports"
+            ):
                 # Test message structure
                 {
                     "message_id": "test_msg_001",
@@ -212,8 +216,12 @@ class P2PNetworkValidator:
 
         # Calculate results
         total_tests = len(self.results)
-        successful_tests = sum(1 for r in self.results.values() if r["status"] == "success")
-        partial_tests = sum(1 for r in self.results.values() if r["status"] == "partial")
+        successful_tests = sum(
+            1 for r in self.results.values() if r["status"] == "success"
+        )
+        partial_tests = sum(
+            1 for r in self.results.values() if r["status"] == "partial"
+        )
 
         logger.info("=== P2P Network Validation Results ===")
         for test_name, result in self.results.items():
@@ -224,7 +232,9 @@ class P2PNetworkValidator:
                 "pending": "PEND",
             }
 
-            logger.info(f"[{status_emoji[result['status']]}] {test_name}: {result['status'].upper()}")
+            logger.info(
+                f"[{status_emoji[result['status']]}] {test_name}: {result['status'].upper()}"
+            )
             logger.info(f"   Time: {result['time']:.2f}s")
             logger.info(f"   Details: {result['details']}")
 

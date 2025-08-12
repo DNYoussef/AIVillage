@@ -27,7 +27,9 @@ class TestCurriculumGenerator:
 
     def test_curriculum_generator_init(self):
         """Test curriculum generator initialization"""
-        generator = CurriculumGenerator(frontier_model="microsoft/DialoGPT-small", domain="mathematics")
+        generator = CurriculumGenerator(
+            frontier_model="microsoft/DialoGPT-small", domain="mathematics"
+        )
 
         assert generator.domain == "mathematics"
         assert generator.device in ["cuda", "cpu"]
@@ -36,7 +38,9 @@ class TestCurriculumGenerator:
 
     def test_question_creation(self):
         """Test question dataclass"""
-        question = Question(text="What is 2+2?", answer="4", difficulty=1, domain="mathematics")
+        question = Question(
+            text="What is 2+2?", answer="4", difficulty=1, domain="mathematics"
+        )
 
         assert question.text == "What is 2+2?"
         assert question.answer == "4"
@@ -66,9 +70,13 @@ class TestCurriculumGenerator:
     def test_create_assessment_questions(self, mock_generate):
         """Test assessment question creation"""
         # Mock the generation
-        mock_generate.return_value = "Question: What is AI? Answer: Artificial Intelligence"
+        mock_generate.return_value = (
+            "Question: What is AI? Answer: Artificial Intelligence"
+        )
 
-        generator = CurriculumGenerator(frontier_model="microsoft/DialoGPT-small", domain="AI")
+        generator = CurriculumGenerator(
+            frontier_model="microsoft/DialoGPT-small", domain="AI"
+        )
 
         # Test question creation
         questions = generator.create_assessment_questions(3)
@@ -111,7 +119,9 @@ class TestQuietSTaRModel:
         attention_mask = torch.ones_like(input_ids)
 
         # Forward pass without thoughts
-        logits, thought_logits = quiet_star(input_ids, attention_mask=attention_mask, generate_thoughts=False)
+        logits, thought_logits = quiet_star(
+            input_ids, attention_mask=attention_mask, generate_thoughts=False
+        )
 
         # Verify output
         assert logits.shape == (1, 10, base_model.config.vocab_size)
@@ -127,7 +137,9 @@ class TestQuietSTaRModel:
         attention_mask = torch.ones_like(input_ids)
 
         # Forward pass with thoughts
-        logits, thought_logits = quiet_star(input_ids, attention_mask=attention_mask, generate_thoughts=True)
+        logits, thought_logits = quiet_star(
+            input_ids, attention_mask=attention_mask, generate_thoughts=True
+        )
 
         # Verify output
         assert logits.shape == (1, 3, base_model.config.vocab_size)
@@ -193,10 +205,14 @@ class TestAgentForgeTrainingLoop:
         if tokenizer.pad_token is None:
             tokenizer.pad_token = tokenizer.eos_token
 
-        training_loop = AgentForgeTrainingLoop(model=model, tokenizer=tokenizer, enable_quiet_star=False)
+        training_loop = AgentForgeTrainingLoop(
+            model=model, tokenizer=tokenizer, enable_quiet_star=False
+        )
 
         # Generate curriculum level
-        with patch.object(training_loop.curriculum, "create_assessment_questions") as mock_questions:
+        with patch.object(
+            training_loop.curriculum, "create_assessment_questions"
+        ) as mock_questions:
             # Mock questions with specific difficulty
             mock_questions.return_value = [
                 Question(
@@ -208,7 +224,9 @@ class TestAgentForgeTrainingLoop:
                 for i in range(20)
             ]
 
-            curriculum_level = training_loop.generate_curriculum_level(level=5, num_tasks=16)
+            curriculum_level = training_loop.generate_curriculum_level(
+                level=5, num_tasks=16
+            )
 
             # Verify structure
             assert curriculum_level.level == 5
@@ -227,14 +245,18 @@ class TestAgentForgeTrainingLoop:
             tokenizer.pad_token = tokenizer.eos_token
 
         # Test with Quiet-STaR enabled
-        training_loop = AgentForgeTrainingLoop(model=model, tokenizer=tokenizer, enable_quiet_star=True)
+        training_loop = AgentForgeTrainingLoop(
+            model=model, tokenizer=tokenizer, enable_quiet_star=True
+        )
 
         # Create test input
         input_ids = torch.randint(0, 1000, (1, 5))
         attention_mask = torch.ones_like(input_ids)
 
         # Process thoughts
-        logits, thought_logits = training_loop.process_quiet_star_thoughts(input_ids, attention_mask)
+        logits, thought_logits = training_loop.process_quiet_star_thoughts(
+            input_ids, attention_mask
+        )
 
         # Verify output
         assert logits is not None
@@ -242,7 +264,9 @@ class TestAgentForgeTrainingLoop:
         assert training_loop.training_metrics["quiet_star_activations"] == 1
 
         # Test with Quiet-STaR disabled
-        training_loop_no_qs = AgentForgeTrainingLoop(model=model, tokenizer=tokenizer, enable_quiet_star=False)
+        training_loop_no_qs = AgentForgeTrainingLoop(
+            model=model, tokenizer=tokenizer, enable_quiet_star=False
+        )
 
         (
             logits_no_qs,
@@ -260,7 +284,9 @@ class TestAgentForgeTrainingLoop:
         if tokenizer.pad_token is None:
             tokenizer.pad_token = tokenizer.eos_token
 
-        training_loop = AgentForgeTrainingLoop(model=model, tokenizer=tokenizer, enable_quiet_star=False)
+        training_loop = AgentForgeTrainingLoop(
+            model=model, tokenizer=tokenizer, enable_quiet_star=False
+        )
 
         # Create test data
         logits = torch.randn(1, 5, 1000)
@@ -275,7 +301,9 @@ class TestAgentForgeTrainingLoop:
 
         # Test with thought logits
         thought_logits = torch.randn(1, 5, 1000)
-        reward_with_thoughts = training_loop.calculate_reward(logits, target, step=0, thought_logits=thought_logits)
+        reward_with_thoughts = training_loop.calculate_reward(
+            logits, target, step=0, thought_logits=thought_logits
+        )
 
         assert isinstance(reward_with_thoughts, float)
         assert 0 <= reward_with_thoughts <= 1
@@ -301,7 +329,9 @@ class TestEnhancedSelfModeling:
 
     def test_temperature_range(self):
         """Test temperature range dataclass"""
-        temp_range = TemperatureRange(min_temp=0.1, max_temp=0.5, name="low_creativity", exploration_weight=0.8)
+        temp_range = TemperatureRange(
+            min_temp=0.1, max_temp=0.5, name="low_creativity", exploration_weight=0.8
+        )
 
         assert temp_range.min_temp == 0.1
         assert temp_range.max_temp == 0.5
@@ -345,7 +375,9 @@ class TestEnhancedSelfModeling:
         output_ids = torch.tensor(test_tokens)
 
         # Calculate metrics
-        metrics = self_modeling._calculate_generation_metrics(output_ids, temperature=0.7)
+        metrics = self_modeling._calculate_generation_metrics(
+            output_ids, temperature=0.7
+        )
 
         # Verify metrics
         assert "diversity" in metrics
@@ -400,7 +432,9 @@ class TestEnhancedSelfModeling:
 
         # Test masking
         test_text = "The quick brown fox jumps over the lazy dog"
-        masked_input, labels, mask_positions = self_modeling.mask_and_predict(test_text, num_masks=3)
+        masked_input, labels, mask_positions = self_modeling.mask_and_predict(
+            test_text, num_masks=3
+        )
 
         # Verify masking
         assert masked_input.shape == labels.shape
@@ -409,7 +443,9 @@ class TestEnhancedSelfModeling:
         # Verify masks were applied
         for pos in mask_positions:
             assert masked_input[0, pos] == tokenizer.mask_token_id
-            assert labels[0, pos] != tokenizer.mask_token_id  # Original token preserved in labels
+            assert (
+                labels[0, pos] != tokenizer.mask_token_id
+            )  # Original token preserved in labels
 
     def test_temperature_analysis(self):
         """Test temperature effect analysis"""
@@ -509,10 +545,14 @@ class TestTrainingIntegration:
         if tokenizer.pad_token is None:
             tokenizer.pad_token = tokenizer.eos_token
 
-        training_loop = AgentForgeTrainingLoop(model=model, tokenizer=tokenizer, enable_quiet_star=False)
+        training_loop = AgentForgeTrainingLoop(
+            model=model, tokenizer=tokenizer, enable_quiet_star=False
+        )
 
         # Mock curriculum generation to avoid long generation times
-        with patch.object(training_loop, "generate_curriculum_level") as mock_curriculum:
+        with patch.object(
+            training_loop, "generate_curriculum_level"
+        ) as mock_curriculum:
             mock_level = CurriculumLevel(
                 level=1,
                 difficulty=1,

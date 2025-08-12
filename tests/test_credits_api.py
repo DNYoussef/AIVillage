@@ -1,11 +1,11 @@
 """Unit tests for credits API endpoints."""
 
-from datetime import datetime, timezone
 import os
 import tempfile
+from datetime import datetime, timezone
 
-from fastapi.testclient import TestClient
 import pytest
+from fastapi.testclient import TestClient
 
 from communications.credits_api import app, get_ledger
 from communications.credits_ledger import CreditsConfig, CreditsLedger
@@ -70,7 +70,9 @@ class TestCreditsAPI:
 
     def test_create_user_success(self, client):
         """Test successful user creation."""
-        response = client.post("/users", json={"username": "testuser", "node_id": "node_123"})
+        response = client.post(
+            "/users", json={"username": "testuser", "node_id": "node_123"}
+        )
 
         assert response.status_code == 201
         data = response.json()
@@ -82,7 +84,9 @@ class TestCreditsAPI:
 
     def test_create_user_duplicate(self, client, sample_users):
         """Test creating user with duplicate username."""
-        response = client.post("/users", json={"username": "alice", "node_id": "node_999"})
+        response = client.post(
+            "/users", json={"username": "alice", "node_id": "node_999"}
+        )
 
         assert response.status_code == 400
         data = response.json()
@@ -95,7 +99,9 @@ class TestCreditsAPI:
         assert response.status_code == 422
 
         # Invalid characters
-        response = client.post("/users", json={"username": "user@domain", "node_id": "node_123"})
+        response = client.post(
+            "/users", json={"username": "user@domain", "node_id": "node_123"}
+        )
         assert response.status_code == 422
 
     def test_get_balance_success(self, client, sample_users):
@@ -122,7 +128,9 @@ class TestCreditsAPI:
         # Give alice some credits first
         with test_ledger.get_session() as session:
             alice_wallet = (
-                session.query(test_ledger.Wallet).filter(test_ledger.Wallet.user_id == sample_users["alice"].id).first()
+                session.query(test_ledger.Wallet)
+                .filter(test_ledger.Wallet.user_id == sample_users["alice"].id)
+                .first()
             )
             alice_wallet.balance = 1000
             session.commit()
@@ -289,7 +297,9 @@ class TestCreditsAPI:
         # Give alice some credits and create transactions
         with test_ledger.get_session() as session:
             alice_wallet = (
-                session.query(test_ledger.Wallet).filter(test_ledger.Wallet.user_id == sample_users["alice"].id).first()
+                session.query(test_ledger.Wallet)
+                .filter(test_ledger.Wallet.user_id == sample_users["alice"].id)
+                .first()
             )
             alice_wallet.balance = 1000
             session.commit()
@@ -318,7 +328,9 @@ class TestCreditsAPI:
         # Give alice some credits
         with test_ledger.get_session() as session:
             alice_wallet = (
-                session.query(test_ledger.Wallet).filter(test_ledger.Wallet.user_id == sample_users["alice"].id).first()
+                session.query(test_ledger.Wallet)
+                .filter(test_ledger.Wallet.user_id == sample_users["alice"].id)
+                .first()
             )
             alice_wallet.balance = 1000
             session.commit()
@@ -425,7 +437,9 @@ class TestCreditsAPI:
         # Give alice some credits
         with test_ledger.get_session() as session:
             alice_wallet = (
-                session.query(test_ledger.Wallet).filter(test_ledger.Wallet.user_id == sample_users["alice"].id).first()
+                session.query(test_ledger.Wallet)
+                .filter(test_ledger.Wallet.user_id == sample_users["alice"].id)
+                .first()
             )
             alice_wallet.balance = 1000
             session.commit()

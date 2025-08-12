@@ -6,8 +6,8 @@ This module tests the unified error handling system for FastAPI services.
 
 from unittest.mock import MagicMock, patch
 
-from fastapi.testclient import TestClient
 import pytest
+from fastapi.testclient import TestClient
 
 from core.error_handling import (
     AIVillageException,
@@ -75,7 +75,9 @@ class TestServiceErrorHandler:
             message="Test error",
             category=ErrorCategory.NETWORK,
             severity=ErrorSeverity.ERROR,
-            context=ErrorContext(component="test-service", operation="test_operation", details={}),
+            context=ErrorContext(
+                component="test-service", operation="test_operation", details={}
+            ),
         )
 
         # Mock request
@@ -83,7 +85,9 @@ class TestServiceErrorHandler:
         mock_request.url.path = "/test/path"
         mock_request.state.request_id = "test-123"
 
-        response = handler.create_error_response(exception, request=mock_request, include_stacktrace=True)
+        response = handler.create_error_response(
+            exception, request=mock_request, include_stacktrace=True
+        )
 
         assert response["error"]["path"] == "/test/path"
         assert response["error"]["request_id"] == "test-123"
@@ -171,7 +175,9 @@ class TestServiceIntegration:
         client = TestClient(app)
 
         # Test empty message validation
-        response = client.post("/v1/chat", json={"message": "", "conversation_id": "test"})
+        response = client.post(
+            "/v1/chat", json={"message": "", "conversation_id": "test"}
+        )
 
         assert response.status_code == 422
         # Check standardized error format
@@ -232,7 +238,9 @@ class TestServiceIntegration:
 
         # Test file size limit - FastAPI will handle this with 413
         large_content = b"x" * (11 * 1024 * 1024)  # 11MB
-        response = client.post("/v1/upload", files={"file": ("test.txt", large_content)})
+        response = client.post(
+            "/v1/upload", files={"file": ("test.txt", large_content)}
+        )
 
         assert response.status_code == 413  # Request Entity Too Large
 
@@ -295,7 +303,9 @@ class TestServiceErrorHandlingWithFixtures:
             message="Chat processing failed",
             category=ErrorCategory.CONFIGURATION,
             severity=ErrorSeverity.ERROR,
-            context=ErrorContext(component="chat-service", operation="process_chat", details={}),
+            context=ErrorContext(
+                component="chat-service", operation="process_chat", details={}
+            ),
         )
 
         mock_chat_service.process_chat.side_effect = test_exception
@@ -324,7 +334,9 @@ class TestServiceErrorHandlingWithFixtures:
             message="Query execution failed",
             category=ErrorCategory.ACCESS,
             severity=ErrorSeverity.INFO,
-            context=ErrorContext(component="query-service", operation="execute_query", details={}),
+            context=ErrorContext(
+                component="query-service", operation="execute_query", details={}
+            ),
         )
 
         mock_query_service.execute_query.side_effect = test_exception

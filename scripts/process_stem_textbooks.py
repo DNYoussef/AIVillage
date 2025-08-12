@@ -9,11 +9,11 @@ import asyncio
 import json
 import logging
 import os
-from pathlib import Path
 import shutil
 import time
-from typing import Any
 import zipfile
+from pathlib import Path
+from typing import Any
 
 # Import PDF processing
 try:
@@ -93,7 +93,10 @@ class STEMTextbookProcessor:
         """Extract STEM textbook zip files."""
         logger.info("Extracting STEM textbook zip files...")
 
-        zip_files = ["STEM textbooks-20250810T172949Z-1-001.zip", "STEM textbooks-20250810T172949Z-1-002.zip"]
+        zip_files = [
+            "STEM textbooks-20250810T172949Z-1-001.zip",
+            "STEM textbooks-20250810T172949Z-1-002.zip",
+        ]
 
         extraction_dir = self.work_dir / "extracted"
         extraction_dir.mkdir(exist_ok=True)
@@ -132,7 +135,9 @@ class STEMTextbookProcessor:
                             logger.warning(f"Failed to extract {pdf_file}: {e}")
                             continue
 
-                self.processing_stats["books_extracted"] += len([f for f in file_list if f.lower().endswith(".pdf")])
+                self.processing_stats["books_extracted"] += len(
+                    [f for f in file_list if f.lower().endswith(".pdf")]
+                )
 
             except Exception as e:
                 logger.exception(f"Failed to extract {zip_name}: {e}")
@@ -146,7 +151,9 @@ class STEMTextbookProcessor:
         # Remove problematic characters and create a safe filename
         filename = Path(original_path).name
         # Replace problematic characters
-        safe_chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_. "
+        safe_chars = (
+            "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_. "
+        )
         safe_filename = "".join(c if c in safe_chars else "_" for c in filename)
         # Remove multiple underscores
         while "__" in safe_filename:
@@ -173,7 +180,9 @@ class STEMTextbookProcessor:
                         if text:
                             text_content.append(text)
                     except Exception as e:
-                        logger.warning(f"Failed to extract page {page_num} from {pdf_path.name}: {e}")
+                        logger.warning(
+                            f"Failed to extract page {page_num} from {pdf_path.name}: {e}"
+                        )
                         continue
 
         except Exception as e:
@@ -192,7 +201,9 @@ class STEMTextbookProcessor:
                             if text:
                                 text_content.append(text)
                         except Exception as e:
-                            logger.warning(f"Failed to extract page {page_num} from {pdf_path.name}: {e}")
+                            logger.warning(
+                                f"Failed to extract page {page_num} from {pdf_path.name}: {e}"
+                            )
                             continue
 
             except Exception as e:
@@ -202,7 +213,12 @@ class STEMTextbookProcessor:
         full_text = "\n\n".join(text_content)
         word_count = len(full_text.split())
 
-        return {"text": full_text, "pages": page_count, "word_count": word_count, "character_count": len(full_text)}
+        return {
+            "text": full_text,
+            "pages": page_count,
+            "word_count": word_count,
+            "character_count": len(full_text),
+        }
 
     def classify_textbook_subject(self, text: str, filename: str) -> str:
         """Classify textbook subject area."""
@@ -230,9 +246,32 @@ class STEMTextbookProcessor:
                 "relativity",
                 "particle",
             ],
-            "chemistry": ["chemistry", "molecular", "organic", "inorganic", "reaction", "compound", "element"],
-            "biology": ["biology", "genetics", "molecular biology", "biochemistry", "cell", "organism", "evolution"],
-            "engineering": ["engineering", "design", "mechanical", "electrical", "civil", "chemical engineering"],
+            "chemistry": [
+                "chemistry",
+                "molecular",
+                "organic",
+                "inorganic",
+                "reaction",
+                "compound",
+                "element",
+            ],
+            "biology": [
+                "biology",
+                "genetics",
+                "molecular biology",
+                "biochemistry",
+                "cell",
+                "organism",
+                "evolution",
+            ],
+            "engineering": [
+                "engineering",
+                "design",
+                "mechanical",
+                "electrical",
+                "civil",
+                "chemical engineering",
+            ],
             "computer_science": [
                 "computer",
                 "programming",
@@ -241,8 +280,22 @@ class STEMTextbookProcessor:
                 "machine learning",
                 "data structure",
             ],
-            "nanophysics": ["nano", "nanoscale", "nanotechnology", "nanoparticle", "nanomaterial"],
-            "economics": ["economics", "financial", "market", "economic", "finance", "business", "management"],
+            "nanophysics": [
+                "nano",
+                "nanoscale",
+                "nanotechnology",
+                "nanoparticle",
+                "nanomaterial",
+            ],
+            "economics": [
+                "economics",
+                "financial",
+                "market",
+                "economic",
+                "finance",
+                "business",
+                "management",
+            ],
         }
 
         # Score each subject
@@ -261,7 +314,9 @@ class STEMTextbookProcessor:
             return max(scores, key=scores.get)
         return "general"
 
-    def chunk_textbook_intelligently(self, text: str, doc_id: str, subject: str) -> list[dict[str, Any]]:
+    def chunk_textbook_intelligently(
+        self, text: str, doc_id: str, subject: str
+    ) -> list[dict[str, Any]]:
         """Chunk textbook using intelligent chunking."""
         if not TEXT_PROCESSING_AVAILABLE:
             # Fallback to simple chunking
@@ -327,7 +382,9 @@ class STEMTextbookProcessor:
                 chunks.append(chunk_data)
 
                 # Start new chunk with overlap
-                overlap_sentences = current_chunk[-2:] if len(current_chunk) > 2 else current_chunk
+                overlap_sentences = (
+                    current_chunk[-2:] if len(current_chunk) > 2 else current_chunk
+                )
                 current_chunk = overlap_sentences
                 current_size = sum(len(s) for s in current_chunk)
 
@@ -399,11 +456,51 @@ class STEMTextbookProcessor:
         """Extract keywords from text chunk."""
         # Subject-specific keyword patterns
         keyword_patterns = {
-            "mathematics": ["theorem", "proof", "equation", "formula", "derivative", "integral", "function"],
-            "physics": ["force", "energy", "momentum", "wave", "particle", "field", "quantum"],
-            "chemistry": ["molecule", "atom", "bond", "reaction", "compound", "element", "ion"],
-            "engineering": ["design", "system", "process", "material", "stress", "load", "efficiency"],
-            "computer_science": ["algorithm", "data", "function", "class", "method", "variable", "loop"],
+            "mathematics": [
+                "theorem",
+                "proof",
+                "equation",
+                "formula",
+                "derivative",
+                "integral",
+                "function",
+            ],
+            "physics": [
+                "force",
+                "energy",
+                "momentum",
+                "wave",
+                "particle",
+                "field",
+                "quantum",
+            ],
+            "chemistry": [
+                "molecule",
+                "atom",
+                "bond",
+                "reaction",
+                "compound",
+                "element",
+                "ion",
+            ],
+            "engineering": [
+                "design",
+                "system",
+                "process",
+                "material",
+                "stress",
+                "load",
+                "efficiency",
+            ],
+            "computer_science": [
+                "algorithm",
+                "data",
+                "function",
+                "class",
+                "method",
+                "variable",
+                "loop",
+            ],
         }
 
         patterns = keyword_patterns.get(subject, [])
@@ -415,7 +512,15 @@ class STEMTextbookProcessor:
                 found_keywords.append(pattern)
 
         # Add general academic keywords
-        general_keywords = ["analysis", "method", "approach", "theory", "principle", "concept", "model"]
+        general_keywords = [
+            "analysis",
+            "method",
+            "approach",
+            "theory",
+            "principle",
+            "concept",
+            "model",
+        ]
         for keyword in general_keywords:
             if keyword in text_lower:
                 found_keywords.append(keyword)
@@ -481,7 +586,10 @@ class STEMTextbookProcessor:
 
         # Publisher/source indicators (if detectable in filename)
         doc_lower = doc_id.lower()
-        if any(term in doc_lower for term in ["handbook", "principles", "fundamentals", "introduction"]):
+        if any(
+            term in doc_lower
+            for term in ["handbook", "principles", "fundamentals", "introduction"]
+        ):
             base_trust += 0.1
 
         return min(base_trust + subject_bonus - 0.8, 1.0)
@@ -508,7 +616,9 @@ class STEMTextbookProcessor:
                 extraction_result = self.extract_text_from_pdf(pdf_path)
 
                 if "error" in extraction_result:
-                    logger.warning(f"Skipping {pdf_path.name}: {extraction_result['error']}")
+                    logger.warning(
+                        f"Skipping {pdf_path.name}: {extraction_result['error']}"
+                    )
                     continue
 
                 text = extraction_result["text"]
@@ -545,7 +655,9 @@ class STEMTextbookProcessor:
                 self.processing_stats["total_pages"] += extraction_result["pages"]
                 self.processing_stats["total_words"] += extraction_result["word_count"]
 
-                logger.info(f"Created {len(chunks)} chunks from {pdf_path.name} ({subject})")
+                logger.info(
+                    f"Created {len(chunks)} chunks from {pdf_path.name} ({subject})"
+                )
 
             except Exception as e:
                 logger.exception(f"Failed to process {pdf_path.name}: {e}")
@@ -570,7 +682,11 @@ class STEMTextbookProcessor:
         full_texts = {}
         for doc_id, book_info in self.processed_books.items():
             # Reconstruct full text from chunks
-            doc_chunks = [chunk for chunk in self.chunks.values() if chunk["document_id"] == doc_id]
+            doc_chunks = [
+                chunk
+                for chunk in self.chunks.values()
+                if chunk["document_id"] == doc_id
+            ]
             doc_chunks.sort(key=lambda x: x["position"])
 
             full_text = "\n\n".join(chunk["text"] for chunk in doc_chunks)
@@ -595,7 +711,9 @@ class STEMTextbookProcessor:
         for chunk_id, chunk_data in self.chunks.items():
             export_chunk = chunk_data.copy()
             # Convert embedding to list for JSON serialization
-            if "embedding" in export_chunk and hasattr(export_chunk["embedding"], "tolist"):
+            if "embedding" in export_chunk and hasattr(
+                export_chunk["embedding"], "tolist"
+            ):
                 export_chunk["embedding"] = export_chunk["embedding"].tolist()
             chunk_export[chunk_id] = export_chunk
 

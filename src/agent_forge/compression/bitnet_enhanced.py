@@ -5,8 +5,8 @@ Provides comprehensive model compression with benchmarks and evaluation.
 
 import json
 import logging
-from pathlib import Path
 import time
+from pathlib import Path
 
 import numpy as np
 import torch
@@ -17,8 +17,8 @@ try:
     from .bitnet import BITNETCompressor
 except ImportError:
     # Fallback for direct execution
-    from pathlib import Path
     import sys
+    from pathlib import Path
 
     sys.path.append(str(Path(__file__).parent))
     from bitnet import BITNETCompressor
@@ -43,20 +43,28 @@ class EnhancedBitNetCompressor:
             "model_sizes_after": [],
         }
 
-    def load_test_model(self, model_name: str = "distilbert-base-uncased") -> tuple[nn.Module, AutoTokenizer]:
+    def load_test_model(
+        self, model_name: str = "distilbert-base-uncased"
+    ) -> tuple[nn.Module, AutoTokenizer]:
         """Load a small model for testing compression."""
         try:
             logger.info(f"Loading model: {model_name}")
 
             # Use small, fast models for testing
-            model = AutoModel.from_pretrained(model_name, cache_dir=str(self.cache_dir), torch_dtype=torch.float32)
-            tokenizer = AutoTokenizer.from_pretrained(model_name, cache_dir=str(self.cache_dir))
+            model = AutoModel.from_pretrained(
+                model_name, cache_dir=str(self.cache_dir), torch_dtype=torch.float32
+            )
+            tokenizer = AutoTokenizer.from_pretrained(
+                model_name, cache_dir=str(self.cache_dir)
+            )
 
             # Ensure we have a pad token
             if tokenizer.pad_token is None:
                 tokenizer.pad_token = tokenizer.eos_token or "[PAD]"
 
-            logger.info(f"Model loaded successfully. Parameters: {sum(p.numel() for p in model.parameters()):,}")
+            logger.info(
+                f"Model loaded successfully. Parameters: {sum(p.numel() for p in model.parameters()):,}"
+            )
             return model, tokenizer
 
         except Exception as e:
@@ -85,7 +93,9 @@ class EnhancedBitNetCompressor:
                 return self.output(x)
 
         model = SimpleTestModel()
-        logger.info(f"Created simple test model with {sum(p.numel() for p in model.parameters()):,} parameters")
+        logger.info(
+            f"Created simple test model with {sum(p.numel() for p in model.parameters()):,} parameters"
+        )
         return model
 
     def compress_model(self, model: nn.Module, model_name: str = "test_model") -> dict:
@@ -132,7 +142,9 @@ class EnhancedBitNetCompressor:
             # Calculate compression metrics
             compression_time = time.time() - start_time
             compressed_size = self._calculate_compressed_size(compressed_layers)
-            compression_ratio = original_size / compressed_size if compressed_size > 0 else 1.0
+            compression_ratio = (
+                original_size / compressed_size if compressed_size > 0 else 1.0
+            )
 
             # Update statistics
             self.compression_stats["models_tested"] += 1
@@ -149,13 +161,21 @@ class EnhancedBitNetCompressor:
                 "compression_time_seconds": compression_time,
                 "original_parameters": total_params_original,
                 "compressed_parameters": total_params_compressed,
-                "layers_compressed": len([k for k in compressed_layers if "weight" in k]),
+                "layers_compressed": len(
+                    [k for k in compressed_layers if "weight" in k]
+                ),
                 "quantization_method": "BitNet-1.58b",
                 "compressed_layers": compressed_layers,
-                "metadata": {"compression_timestamp": time.time(), "bits_per_weight": 1.58, "preserves_bias": True},
+                "metadata": {
+                    "compression_timestamp": time.time(),
+                    "bits_per_weight": 1.58,
+                    "preserves_bias": True,
+                },
             }
 
-            logger.info(f"Compression complete: {compression_ratio:.2f}x ratio in {compression_time:.2f}s")
+            logger.info(
+                f"Compression complete: {compression_ratio:.2f}x ratio in {compression_time:.2f}s"
+            )
             return compression_result
 
         except Exception as e:
@@ -183,9 +203,15 @@ class EnhancedBitNetCompressor:
         quantized_int8 = quantized.to(torch.int8)
 
         # Return both quantized weights and scale for reconstruction
-        return {"weights": quantized_int8.numpy(), "scale": scale.item(), "quantization_type": "bitnet_1.58"}
+        return {
+            "weights": quantized_int8.numpy(),
+            "scale": scale.item(),
+            "quantization_type": "bitnet_1.58",
+        }
 
-    def decompress_model(self, compressed_data: dict, model_class: type | None = None) -> nn.Module | None:
+    def decompress_model(
+        self, compressed_data: dict, model_class: type | None = None
+    ) -> nn.Module | None:
         """Decompress a model from compressed representation."""
         try:
             if "compressed_layers" not in compressed_data:
@@ -200,7 +226,9 @@ class EnhancedBitNetCompressor:
                 if layer_data["quantization"] == "bitnet_1.58":
                     # Decompress BitNet quantized weights
                     weights_data = layer_data["data"]
-                    quantized_weights = torch.tensor(weights_data["weights"], dtype=torch.float32)
+                    quantized_weights = torch.tensor(
+                        weights_data["weights"], dtype=torch.float32
+                    )
                     scale = weights_data["scale"]
 
                     # Reconstruct approximate weights
@@ -253,7 +281,11 @@ class EnhancedBitNetCompressor:
     def run_compression_benchmark(self, models_to_test: list | None = None) -> dict:
         """Run comprehensive compression benchmarks."""
         if models_to_test is None:
-            models_to_test = ["distilbert-base-uncased", "microsoft/DialoGPT-small", "gpt2"]  # Small GPT-2 model
+            models_to_test = [
+                "distilbert-base-uncased",
+                "microsoft/DialoGPT-small",
+                "gpt2",
+            ]  # Small GPT-2 model
 
         benchmark_results = {
             "benchmark_timestamp": time.time(),
@@ -280,10 +312,15 @@ class EnhancedBitNetCompressor:
                     successful_compressions += 1
 
                     # Save compressed model
-                    save_path = self.cache_dir / f"{model_name.replace('/', '_')}_compressed.json"
+                    save_path = (
+                        self.cache_dir
+                        / f"{model_name.replace('/', '_')}_compressed.json"
+                    )
                     self.save_compressed_model(compression_result, str(save_path))
 
-                    logger.info(f"✅ {model_name}: {compression_result['compression_ratio']:.2f}x compression")
+                    logger.info(
+                        f"✅ {model_name}: {compression_result['compression_ratio']:.2f}x compression"
+                    )
                 else:
                     logger.error(f"❌ {model_name}: {compression_result['error']}")
 
@@ -298,15 +335,25 @@ class EnhancedBitNetCompressor:
 
         # Calculate average metrics
         if successful_compressions > 0:
-            ratios = [r["compression_ratio"] for r in benchmark_results["models_tested"]]
-            times = [r["compression_time_seconds"] for r in benchmark_results["models_tested"]]
-            size_savings = [r["original_size_mb"] - r["compressed_size_mb"] for r in benchmark_results["models_tested"]]
+            ratios = [
+                r["compression_ratio"] for r in benchmark_results["models_tested"]
+            ]
+            times = [
+                r["compression_time_seconds"]
+                for r in benchmark_results["models_tested"]
+            ]
+            size_savings = [
+                r["original_size_mb"] - r["compressed_size_mb"]
+                for r in benchmark_results["models_tested"]
+            ]
 
             benchmark_results["average_compression_ratio"] = sum(ratios) / len(ratios)
             benchmark_results["average_compression_time"] = sum(times) / len(times)
             benchmark_results["total_size_saved_mb"] = sum(size_savings)
 
-        logger.info(f"Benchmark complete: {successful_compressions}/{len(models_to_test)} models compressed")
+        logger.info(
+            f"Benchmark complete: {successful_compressions}/{len(models_to_test)} models compressed"
+        )
         return benchmark_results
 
     def _calculate_model_size(self, model: nn.Module) -> int:
@@ -360,11 +407,17 @@ class EnhancedBitNetCompressor:
         stats = self.compression_stats.copy()
 
         if stats["compression_ratios"]:
-            stats["average_compression_ratio"] = sum(stats["compression_ratios"]) / len(stats["compression_ratios"])
+            stats["average_compression_ratio"] = sum(stats["compression_ratios"]) / len(
+                stats["compression_ratios"]
+            )
             stats["best_compression_ratio"] = max(stats["compression_ratios"])
             stats["total_size_saved_mb"] = sum(
                 (before - after) / 1024 / 1024
-                for before, after in zip(stats["model_sizes_before"], stats["model_sizes_after"], strict=False)
+                for before, after in zip(
+                    stats["model_sizes_before"],
+                    stats["model_sizes_after"],
+                    strict=False,
+                )
             )
 
         return stats
@@ -388,9 +441,13 @@ def test_enhanced_bitnet_compression():
     # Print individual results
     for model_result in results["models_tested"]:
         print(f"\n🤖 {model_result['model_name']}:")
-        print(f"  Size: {model_result['original_size_mb']:.1f} MB → {model_result['compressed_size_mb']:.1f} MB")
+        print(
+            f"  Size: {model_result['original_size_mb']:.1f} MB → {model_result['compressed_size_mb']:.1f} MB"
+        )
         print(f"  Ratio: {model_result['compression_ratio']:.2f}x")
-        print(f"  Parameters: {model_result['original_parameters']:,} → {model_result['compressed_parameters']:,}")
+        print(
+            f"  Parameters: {model_result['original_parameters']:,} → {model_result['compressed_parameters']:,}"
+        )
 
     return results
 

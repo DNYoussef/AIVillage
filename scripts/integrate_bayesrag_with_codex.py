@@ -6,10 +6,10 @@ Migrates BayesRAG data to CODEX-compliant pipeline and enhances caching architec
 import asyncio
 import json
 import logging
-from pathlib import Path
 import sqlite3
 import sys
 import time
+from pathlib import Path
 from typing import Any
 
 import numpy as np
@@ -18,13 +18,22 @@ import numpy as np
 sys.path.insert(0, str(Path(__file__).parent.parent))
 sys.path.insert(
     0,
-    str(Path(__file__).parent.parent / "src" / "production" / "rag" / "rag_system" / "core"),
+    str(
+        Path(__file__).parent.parent
+        / "src"
+        / "production"
+        / "rag"
+        / "rag_system"
+        / "core"
+    ),
 )
 
 from codex_rag_integration import CODEXRAGPipeline, Document
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 
@@ -79,7 +88,9 @@ class BayesRAGToCODEXIntegrator:
             migration_stats["local_contexts_migrated"] = len(local_contexts)
 
             # Convert to CODEX documents and index
-            documents = self._convert_to_codex_documents(global_contexts, local_contexts)
+            documents = self._convert_to_codex_documents(
+                global_contexts, local_contexts
+            )
 
             # Index documents in CODEX pipeline
             if self.codex_pipeline:
@@ -147,7 +158,11 @@ class BayesRAGToCODEXIntegrator:
             for row in cursor.fetchall():
                 # Reconstruct embedding
                 embedding_bytes = row[9]
-                embedding = np.frombuffer(embedding_bytes, dtype=np.float32) if embedding_bytes else None
+                embedding = (
+                    np.frombuffer(embedding_bytes, dtype=np.float32)
+                    if embedding_bytes
+                    else None
+                )
 
                 contexts.append(
                     {
@@ -299,7 +314,9 @@ class BayesRAGToCODEXIntegrator:
                     start_time = time.time()
 
                     # Perform retrieval using CODEX pipeline
-                    results, metrics = await self.codex_pipeline.retrieve(query=query, k=5, use_cache=True)
+                    results, metrics = await self.codex_pipeline.retrieve(
+                        query=query, k=5, use_cache=True
+                    )
 
                     latency_ms = (time.time() - start_time) * 1000
                     total_latency += latency_ms
@@ -310,7 +327,9 @@ class BayesRAGToCODEXIntegrator:
                             "query": query,
                             "latency_ms": latency_ms,
                             "result_count": len(results),
-                            "top_result_title": (results[0]["title"] if results else None),
+                            "top_result_title": (
+                                results[0]["title"] if results else None
+                            ),
                         }
                     )
 
@@ -320,7 +339,9 @@ class BayesRAGToCODEXIntegrator:
             # Calculate average latency and check target
             if query_count > 0:
                 avg_latency = total_latency / query_count
-                validation_results["latency_target_met"] = avg_latency < 100  # <100ms target
+                validation_results["latency_target_met"] = (
+                    avg_latency < 100
+                )  # <100ms target
 
             # Get index size
             try:

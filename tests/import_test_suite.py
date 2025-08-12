@@ -1,6 +1,6 @@
-from pathlib import Path
 import sys
 import unittest
+from pathlib import Path
 
 # Add project root to the Python path
 project_root = Path(__file__).resolve().parents[1]
@@ -38,11 +38,15 @@ class TestComponentImports(unittest.TestCase):
         except ImportError as e:
             self.skipTest(f"Digital Twin API not available: {e}")
 
-    @unittest.skip("Skipping Token Economy test: 'experimental/economy' directory not found.")
+    @unittest.skip(
+        "Skipping Token Economy test: 'experimental/economy' directory not found."
+    )
     def test_import_token_economy(self):
         pass
 
-    @unittest.skip("Skipping React Native test: 'experimental/mobile' directory not found.")
+    @unittest.skip(
+        "Skipping React Native test: 'experimental/mobile' directory not found."
+    )
     def test_import_react_native_app_api_service(self):
         pass
 

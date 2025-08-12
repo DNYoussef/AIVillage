@@ -105,7 +105,9 @@ class TestHypergraphSchema:
         mock_session = AsyncMock()
 
         # This should not raise an exception
-        await asyncio.get_event_loop().run_in_executor(None, run_cypher_migrations, mock_session)
+        await asyncio.get_event_loop().run_in_executor(
+            None, run_cypher_migrations, mock_session
+        )
 
         # Verify basic schema creation would be called
         # (Will be expanded when Neo4j integration is complete)
@@ -224,7 +226,9 @@ class TestHypergraphMigrations:
         mock_session.run = AsyncMock()
 
         # Run migrations
-        await asyncio.get_event_loop().run_in_executor(None, run_cypher_migrations, mock_session)
+        await asyncio.get_event_loop().run_in_executor(
+            None, run_cypher_migrations, mock_session
+        )
 
         # Verify migrations ran without error
         assert True  # Will be enhanced with actual Neo4j testing
@@ -236,7 +240,9 @@ class TestHypergraphMigrations:
 
         # This test will verify that performance indexes are created
         # for hyperedge queries and entity lookups
-        await asyncio.get_event_loop().run_in_executor(None, run_cypher_migrations, mock_session)
+        await asyncio.get_event_loop().run_in_executor(
+            None, run_cypher_migrations, mock_session
+        )
 
         assert True  # Placeholder - will implement with real Neo4j
 
@@ -249,7 +255,9 @@ class TestHypergraphMigrations:
         # This is critical for production deployments
 
         # For now, just verify the function doesn't crash
-        await asyncio.get_event_loop().run_in_executor(None, run_cypher_migrations, mock_session)
+        await asyncio.get_event_loop().run_in_executor(
+            None, run_cypher_migrations, mock_session
+        )
 
         assert True  # Will implement rollback testing
 
@@ -281,10 +289,14 @@ class TestArchitecturalBoundaries:
     def test_episodic_semantic_boundary(self):
         """Test clear boundary between episodic and semantic memory"""
         # Episodic node
-        episodic_node = HippoNode(id="episodic_001", content="User session data", episodic=True)
+        episodic_node = HippoNode(
+            id="episodic_001", content="User session data", episodic=True
+        )
 
         # Semantic hyperedge
-        semantic_edge = Hyperedge(entities=["concept1", "concept2"], relation="is_related_to", confidence=0.7)
+        semantic_edge = Hyperedge(
+            entities=["concept1", "concept2"], relation="is_related_to", confidence=0.7
+        )
 
         # Verify clear separation
         if hasattr(episodic_node, "episodic"):

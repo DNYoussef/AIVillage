@@ -3,16 +3,17 @@ Sprint R-4+AF1: Education Core System - Task A.1.
 """
 
 import asyncio
+import hashlib
+import logging
 from collections import defaultdict, deque
 from dataclasses import dataclass
 from datetime import datetime, timezone
-import hashlib
-import logging
 from typing import Any
+
+import wandb
 
 # Import from hyperag components
 from ..core.hypergraph_kg import Hyperedge, HypergraphKG, Node
-import wandb
 
 logger = logging.getLogger(__name__)
 
@@ -206,10 +207,16 @@ class CurriculumGraph:
         wandb.log(
             {
                 f"curriculum/{subject}/grade_{grade}_concepts": len(
-                    [c for c in self.concepts.values() if c.subject == subject and c.grade == grade]
+                    [
+                        c
+                        for c in self.concepts.values()
+                        if c.subject == subject and c.grade == grade
+                    ]
                 ),
                 "curriculum/total_concepts": len(self.concepts),
-                "curriculum/languages_covered": len(set().union(*[c.content.keys() for c in self.concepts.values()])),
+                "curriculum/languages_covered": len(
+                    set().union(*[c.content.keys() for c in self.concepts.values()])
+                ),
                 "concept_added": True,
                 "concept_id": concept_id,
                 "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -223,7 +230,9 @@ class CurriculumGraph:
     def generate_concept_id(self, subject: str, grade: int, concept: str) -> str:
         """Generate unique concept ID."""
         # Create deterministic ID based on content
-        content_hash = hashlib.md5(f"{subject}_{grade}_{concept}".encode()).hexdigest()[:8]
+        content_hash = hashlib.md5(f"{subject}_{grade}_{concept}".encode()).hexdigest()[
+            :8
+        ]
         return f"{subject.lower()}_{grade}_{content_hash}"
 
     def estimate_difficulty(self, prerequisites: list[str], grade: int) -> float:
@@ -242,7 +251,9 @@ class CurriculumGraph:
 
         depth_complexity = max_depth * 0.05
 
-        total_difficulty = min(1.0, base_difficulty + prereq_complexity + depth_complexity)
+        total_difficulty = min(
+            1.0, base_difficulty + prereq_complexity + depth_complexity
+        )
 
         return total_difficulty
 
@@ -758,7 +769,9 @@ class CurriculumGraph:
         ]
 
         for grade, concept, prereqs, content in physical_science_concepts:
-            await self.add_concept("science", grade, concept, prereqs, content, estimated_time=45)
+            await self.add_concept(
+                "science", grade, concept, prereqs, content, estimated_time=45
+            )
 
         # Life Science concepts
         life_science_concepts = [
@@ -843,7 +856,9 @@ class CurriculumGraph:
         ]
 
         for grade, concept, prereqs, content in life_science_concepts:
-            await self.add_concept("science", grade, concept, prereqs, content, estimated_time=45)
+            await self.add_concept(
+                "science", grade, concept, prereqs, content, estimated_time=45
+            )
 
         # Earth and Space Science concepts
         earth_space_concepts = [
@@ -928,7 +943,9 @@ class CurriculumGraph:
         ]
 
         for grade, concept, prereqs, content in earth_space_concepts:
-            await self.add_concept("science", grade, concept, prereqs, content, estimated_time=45)
+            await self.add_concept(
+                "science", grade, concept, prereqs, content, estimated_time=45
+            )
 
     async def build_language_arts_curriculum(self) -> None:
         """Build K-8 language arts curriculum."""
@@ -1030,7 +1047,9 @@ class CurriculumGraph:
         ]
 
         for grade, concept, prereqs, content in reading_concepts:
-            await self.add_concept("language_arts", grade, concept, prereqs, content, estimated_time=30)
+            await self.add_concept(
+                "language_arts", grade, concept, prereqs, content, estimated_time=30
+            )
 
         # Writing concepts
         writing_concepts = [
@@ -1109,7 +1128,9 @@ class CurriculumGraph:
         ]
 
         for grade, concept, prereqs, content in writing_concepts:
-            await self.add_concept("language_arts", grade, concept, prereqs, content, estimated_time=40)
+            await self.add_concept(
+                "language_arts", grade, concept, prereqs, content, estimated_time=40
+            )
 
     async def build_social_studies_curriculum(self) -> None:
         """Build K-8 social studies curriculum."""
@@ -1193,7 +1214,9 @@ class CurriculumGraph:
         ]
 
         for grade, concept, prereqs, content in history_concepts:
-            await self.add_concept("social_studies", grade, concept, prereqs, content, estimated_time=40)
+            await self.add_concept(
+                "social_studies", grade, concept, prereqs, content, estimated_time=40
+            )
 
         # Geography concepts
         geography_concepts = [
@@ -1260,7 +1283,9 @@ class CurriculumGraph:
         ]
 
         for grade, concept, prereqs, content in geography_concepts:
-            await self.add_concept("social_studies", grade, concept, prereqs, content, estimated_time=35)
+            await self.add_concept(
+                "social_studies", grade, concept, prereqs, content, estimated_time=35
+            )
 
     async def create_cross_curricular_connections(self) -> None:
         """Create connections between subjects."""
@@ -1274,7 +1299,9 @@ class CurriculumGraph:
         ]
 
         for math_concept, science_concept, connection_type in math_science_connections:
-            await self.create_concept_connection(math_concept, science_concept, connection_type)
+            await self.create_concept_connection(
+                math_concept, science_concept, connection_type
+            )
 
         # Language Arts-Social Studies connections
         la_ss_connections = [
@@ -1285,9 +1312,13 @@ class CurriculumGraph:
         ]
 
         for la_concept, ss_concept, connection_type in la_ss_connections:
-            await self.create_concept_connection(la_concept, ss_concept, connection_type)
+            await self.create_concept_connection(
+                la_concept, ss_concept, connection_type
+            )
 
-    async def create_concept_connection(self, concept1_name: str, concept2_name: str, connection_type: str) -> None:
+    async def create_concept_connection(
+        self, concept1_name: str, concept2_name: str, connection_type: str
+    ) -> None:
         """Create hyperedge connecting concepts across subjects."""
         # Find concept IDs
         concept1_id = None
@@ -1364,7 +1395,8 @@ class CurriculumGraph:
         relevant_concepts = [
             concept
             for concept in self.concepts.values()
-            if concept.subject == subject and grade_range[0] <= concept.grade <= grade_range[1]
+            if concept.subject == subject
+            and grade_range[0] <= concept.grade <= grade_range[1]
         ]
 
         if not relevant_concepts:
@@ -1376,14 +1408,22 @@ class CurriculumGraph:
         # Adjust for difficulty preference
         if difficulty_preference == "accelerated":
             # Include more challenging concepts
-            ordered_concepts = [c for c in ordered_concepts if c.difficulty_level >= 0.6]
+            ordered_concepts = [
+                c for c in ordered_concepts if c.difficulty_level >= 0.6
+            ]
         elif difficulty_preference == "remedial":
             # Focus on foundational concepts
-            ordered_concepts = [c for c in ordered_concepts if c.difficulty_level <= 0.7]
+            ordered_concepts = [
+                c for c in ordered_concepts if c.difficulty_level <= 0.7
+            ]
 
         # Calculate path metrics
-        total_time = sum(concept.estimated_time_minutes for concept in ordered_concepts) / 60.0
-        difficulty_progression = [concept.difficulty_level for concept in ordered_concepts]
+        total_time = (
+            sum(concept.estimated_time_minutes for concept in ordered_concepts) / 60.0
+        )
+        difficulty_progression = [
+            concept.difficulty_level for concept in ordered_concepts
+        ]
 
         # Create learning path
         path_id = f"{subject}_{grade_range[0]}_{grade_range[1]}_{difficulty_preference}_{cultural_region}_{language}"
@@ -1417,7 +1457,9 @@ class CurriculumGraph:
 
         return path_id
 
-    async def topological_sort_concepts(self, concepts: list[ConceptNode]) -> list[ConceptNode]:
+    async def topological_sort_concepts(
+        self, concepts: list[ConceptNode]
+    ) -> list[ConceptNode]:
         """Sort concepts by dependency order."""
         # Create concept lookup
         concept_lookup = {concept.concept_id: concept for concept in concepts}
@@ -1436,7 +1478,9 @@ class CurriculumGraph:
                     in_degree[concept.concept_id] += 1
 
         # Topological sort using Kahn's algorithm
-        queue = deque([concept_id for concept_id in in_degree if in_degree[concept_id] == 0])
+        queue = deque(
+            [concept_id for concept_id in in_degree if in_degree[concept_id] == 0]
+        )
         result = []
 
         while queue:
@@ -1454,9 +1498,15 @@ class CurriculumGraph:
         """Retrieve concept by ID."""
         return self.concepts.get(concept_id)
 
-    async def get_concepts_by_subject_grade(self, subject: str, grade: int) -> list[ConceptNode]:
+    async def get_concepts_by_subject_grade(
+        self, subject: str, grade: int
+    ) -> list[ConceptNode]:
         """Get all concepts for a subject and grade."""
-        return [concept for concept in self.concepts.values() if concept.subject == subject and concept.grade == grade]
+        return [
+            concept
+            for concept in self.concepts.values()
+            if concept.subject == subject and concept.grade == grade
+        ]
 
     async def get_learning_path(self, path_id: str) -> LearningPath | None:
         """Retrieve learning path by ID."""
@@ -1483,7 +1533,9 @@ class CurriculumGraph:
                 and path.language == language
             ):
                 # Calculate path suitability score
-                suitability_score = await self.calculate_path_suitability(path, mastered_concepts, learning_style)
+                suitability_score = await self.calculate_path_suitability(
+                    path, mastered_concepts, learning_style
+                )
 
                 candidate_paths.append((path, suitability_score))
 
@@ -1544,11 +1596,23 @@ class CurriculumGraph:
         # Learning style compatibility
         if learning_style == "visual":
             # Prefer paths with more visual concepts
-            visual_concepts = len([c for c in path_concepts if "visual" in c.name.lower() or "shape" in c.name.lower()])
+            visual_concepts = len(
+                [
+                    c
+                    for c in path_concepts
+                    if "visual" in c.name.lower() or "shape" in c.name.lower()
+                ]
+            )
             score += min(0.2, visual_concepts * 0.05)
         elif learning_style == "kinesthetic":
             # Prefer hands-on concepts
-            hands_on_concepts = len([c for c in path_concepts if "manipulatives" in str(c.assessment_criteria)])
+            hands_on_concepts = len(
+                [
+                    c
+                    for c in path_concepts
+                    if "manipulatives" in str(c.assessment_criteria)
+                ]
+            )
             score += min(0.2, hands_on_concepts * 0.05)
         else:
             score += 0.1  # Default bonus
@@ -1595,7 +1659,9 @@ class CurriculumGraph:
 
         # Calculate averages
         if self.concepts:
-            stats["average_difficulty"] = sum(c.difficulty_level for c in self.concepts.values()) / len(self.concepts)
+            stats["average_difficulty"] = sum(
+                c.difficulty_level for c in self.concepts.values()
+            ) / len(self.concepts)
 
         # Count cross-curricular connections
         edges = await self.graph.get_all_edges()

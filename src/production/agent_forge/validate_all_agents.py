@@ -106,11 +106,17 @@ def validate_all_agents(full_test: bool = False) -> dict[str, dict[str, bool]]:
 def main() -> None:
     """CLI entry point for agent validation."""
     parser = argparse.ArgumentParser(description="Validate agent templates")
-    parser.add_argument("--full-test", action="store_true", help="Run the full validation suite")
+    parser.add_argument(
+        "--full-test", action="store_true", help="Run the full validation suite"
+    )
     args = parser.parse_args()
 
     validation_results = validate_all_agents(full_test=args.full_test)
-    failures = {agent: checks for agent, checks in validation_results.items() if not all(checks.values())}
+    failures = {
+        agent: checks
+        for agent, checks in validation_results.items()
+        if not all(checks.values())
+    }
 
     if failures:
         for agent, checks in failures.items():

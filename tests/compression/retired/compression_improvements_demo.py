@@ -119,7 +119,9 @@ def demonstrate_key_improvements():
     print("\nEFFICIENCY BREAKTHROUGH:")
     print(f"Previous efficiency: {old_efficiency:.1f}% (major problem)")
     print(f"New efficiency: {new_efficiency:.1f}% (production ready)")
-    print(f"Efficiency improvement: +{new_efficiency - old_efficiency:.1f} percentage points")
+    print(
+        f"Efficiency improvement: +{new_efficiency - old_efficiency:.1f} percentage points"
+    )
     print("PASS: Solved the 98.4% efficiency loss problem!")
 
     return estimated_new_ratio, new_efficiency

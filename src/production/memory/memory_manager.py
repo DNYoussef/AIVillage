@@ -8,11 +8,11 @@ Provides safe memory management for large model operations:
 - Memory-efficient tensor operations
 """
 
+import gc
+import logging
 from collections.abc import Callable
 from contextlib import contextmanager
 from functools import wraps
-import gc
-import logging
 
 import psutil
 import torch
@@ -38,10 +38,13 @@ class MemoryManager:
         if self.is_cuda:
             stats.update(
                 {
-                    "gpu_memory_allocated_gb": torch.cuda.memory_allocated() / (1024**3),
-                    "gpu_memory_reserved_gb": torch.cuda.memory_reserved() / (1024**3),
+                    "gpu_memory_allocated_gb": torch.cuda.memory_allocated()
+                    / (1024**3),
+                    "gpu_memory_reserved_gb": torch.cuda.memory_reserved()
+                    / (1024**3),
                     "gpu_memory_free_gb": (
-                        torch.cuda.get_device_properties(0).total_memory - torch.cuda.memory_reserved()
+                        torch.cuda.get_device_properties(0).total_memory
+                        - torch.cuda.memory_reserved()
                     )
                     / (1024**3),
                 }
@@ -138,7 +141,10 @@ class SafeModelLoader:
         estimated_memory = self.estimate_model_memory(model_path)
 
         if not self.memory_manager.check_memory_available(estimated_memory):
-            msg = f"Insufficient memory to load model {model_path}. " f"Required: {estimated_memory}GB"
+            msg = (
+                f"Insufficient memory to load model {model_path}. "
+                f"Required: {estimated_memory}GB"
+            )
             raise MemoryError(msg)
 
         logger.info(f"Loading model {model_path} (estimated {estimated_memory}GB)")
@@ -152,7 +158,9 @@ class SafeModelLoader:
 
                 # Load model with appropriate precision based on available memory
                 device_map = "auto" if self.memory_manager.is_cuda else None
-                torch_dtype = torch.float16 if self.memory_manager.is_cuda else torch.float32
+                torch_dtype = (
+                    torch.float16 if self.memory_manager.is_cuda else torch.float32
+                )
 
                 model = AutoModelForCausalLM.from_pretrained(
                     model_path,

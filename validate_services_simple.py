@@ -3,14 +3,14 @@
 Tests basic connectivity to all required services
 """
 
-from datetime import datetime
 import json
-from pathlib import Path
 import socket
 import sys
 import time
 import urllib.error
 import urllib.request
+from datetime import datetime
+from pathlib import Path
 
 # Service definitions based on CODEX requirements
 SERVICES = [
@@ -189,7 +189,9 @@ def main():
         failed_services = [r for r in results if not r["success"]]
 
         # Group by service type
-        p2p_failed = any("LibP2P" in r["service"] or "mDNS" in r["service"] for r in failed_services)
+        p2p_failed = any(
+            "LibP2P" in r["service"] or "mDNS" in r["service"] for r in failed_services
+        )
         api_failed = any("API" in r["service"] for r in failed_services)
         redis_failed = any("Redis" in r["service"] for r in failed_services)
 

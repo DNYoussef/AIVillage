@@ -182,7 +182,9 @@ class TestEvolutionBenchmarks:
                 param_count = sum(p.numel() for p in model.parameters())
                 fitness = 1.0 / (1.0 + param_count / 1000)
 
-                population.append({"model": model, "fitness": fitness, "id": f"model_{i}"})
+                population.append(
+                    {"model": model, "fitness": fitness, "id": f"model_{i}"}
+                )
             return population
 
         population = benchmark(evaluate_population)
@@ -231,7 +233,9 @@ class TestEvolutionIntegration:
                 "compressed": True,
                 "method": "seedlm",
                 "ratio": 4.0,
-                "original_params": sum(p.numel() for p in compression_test_model.parameters()),
+                "original_params": sum(
+                    p.numel() for p in compression_test_model.parameters()
+                ),
             }
 
             individual = {
@@ -313,7 +317,10 @@ class TestEvolutionIntegration:
 
         # Verify evolution progress
         assert len(evolution_history) == generations
-        assert evolution_history[-1]["best_fitness"] >= evolution_history[0]["best_fitness"]
+        assert (
+            evolution_history[-1]["best_fitness"]
+            >= evolution_history[0]["best_fitness"]
+        )
 
 
 class TestEvolutionErrorHandling:

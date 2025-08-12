@@ -1,16 +1,17 @@
 import asyncio
 import importlib.util
-from pathlib import Path
 import sys
 import unittest
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 from agents.king.king_agent import KingAgent
 from agents.unified_base_agent import UnifiedAgentConfig as KingAgentConfig
 from agents.utils.task import Task as LangroidTask
-from core.error_handling import StandardCommunicationProtocol
 from rag_system.core.config import RAGConfig
 from rag_system.retrieval.vector_store import VectorStore
+
+from core.error_handling import StandardCommunicationProtocol
 
 # Skip these tests if PyTorch isn't installed since KingAgent relies on
 # transformer models.
@@ -33,7 +34,9 @@ class TestKingAgent(unittest.TestCase):
         self.communication_protocol = StandardCommunicationProtocol()
         self.rag_config = RAGConfig()
         self.vector_store = MagicMock(spec=VectorStore)
-        self.king_agent = KingAgent(self.config, self.communication_protocol, self.vector_store)
+        self.king_agent = KingAgent(
+            self.config, self.communication_protocol, self.vector_store
+        )
 
     @patch("agents.unified_base_agent.DecisionMakingLayer._get_preferences")
     @patch("agents.utils.mcts.MonteCarloTreeSearch.search")
@@ -57,8 +60,12 @@ class TestKingAgent(unittest.TestCase):
     @patch("agents.king.task_planning_agent.TaskPlanningAgent.generate_task_plan")
     @patch("agents.king.knowledge_graph_agent.KnowledgeGraphAgent.query_graph")
     @patch("agents.king.reasoning_agent.ReasoningAgent.perform_reasoning")
-    @patch("agents.king.response_generation_agent.ResponseGenerationAgent.generate_response")
-    @patch("agents.king.dynamic_knowledge_integration_agent.DynamicKnowledgeIntegrationAgent.integrate_new_knowledge")
+    @patch(
+        "agents.king.response_generation_agent.ResponseGenerationAgent.generate_response"
+    )
+    @patch(
+        "agents.king.dynamic_knowledge_integration_agent.DynamicKnowledgeIntegrationAgent.integrate_new_knowledge"
+    )
     async def test_process_user_input(
         self,
         mock_integrate,

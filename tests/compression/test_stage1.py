@@ -60,7 +60,9 @@ class TestBitNetLinear:
         layer = BitNetLinear(4, 3, bias=False)
 
         # Set test weights
-        test_weights = torch.tensor([[0.1, -0.8, 0.3, 0.0], [0.5, 0.2, -0.6, 0.1], [-0.2, 0.9, 0.0, -0.4]])
+        test_weights = torch.tensor(
+            [[0.1, -0.8, 0.3, 0.0], [0.5, 0.2, -0.6, 0.1], [-0.2, 0.9, 0.0, -0.4]]
+        )
         layer.weight_fp.data = test_weights
 
         quantized = layer.quantize_weights(test_weights)
@@ -115,7 +117,9 @@ class TestRMSNorm:
         output_norm = torch.norm(output, dim=-1)
         assert torch.allclose(
             output_norm,
-            torch.norm(x, dim=-1) / torch.norm(x, dim=-1) * torch.sqrt(torch.tensor(4.0)),
+            torch.norm(x, dim=-1)
+            / torch.norm(x, dim=-1)
+            * torch.sqrt(torch.tensor(4.0)),
             atol=1e-5,
         )
 

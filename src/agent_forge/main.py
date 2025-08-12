@@ -30,7 +30,9 @@ def create_parser():
 
     parser.add_argument("--name", help="Agent name")
 
-    parser.add_argument("--verbose", "-v", action="store_true", help="Enable verbose output")
+    parser.add_argument(
+        "--verbose", "-v", action="store_true", help="Enable verbose output"
+    )
 
     return parser
 

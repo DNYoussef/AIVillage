@@ -4,8 +4,8 @@ Outputs GitHub issues, pre-commit compatible reports, and human-readable analysi
 """
 
 import ast
-from collections import defaultdict
 import json
+from collections import defaultdict
 from pathlib import Path
 
 
@@ -71,7 +71,10 @@ class StubAuditor:
                 for arg in node.args:
                     if isinstance(arg, ast.Constant):
                         text = str(arg.value).lower()
-                        if any(word in text for word in ["evolving", "processing", "implementing"]):
+                        if any(
+                            word in text
+                            for word in ["evolving", "processing", "implementing"]
+                        ):
                             return True
         return False
 
@@ -89,7 +92,9 @@ class StubAuditor:
             for stub_type, stubs in by_type.items():
                 f.write(f"## {self.stub_patterns[stub_type]} ({len(stubs)})\n\n")
                 for stub in stubs:
-                    f.write(f"- `{stub['file']}:{stub['line']}` - {stub['function']}()\n")
+                    f.write(
+                        f"- `{stub['file']}:{stub['line']}` - {stub['function']}()\n"
+                    )
 
         # GitHub issues format
         issues = self._create_github_issues(all_stubs)

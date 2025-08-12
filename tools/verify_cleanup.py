@@ -26,7 +26,9 @@ if TYPE_CHECKING:
 
 def parse_args() -> argparse.Namespace:
     """Parse command-line arguments."""
-    parser = argparse.ArgumentParser(description="Verify cleanup actions and record metrics.")
+    parser = argparse.ArgumentParser(
+        description="Verify cleanup actions and record metrics."
+    )
     parser.add_argument(
         "logfile",
         nargs="?",

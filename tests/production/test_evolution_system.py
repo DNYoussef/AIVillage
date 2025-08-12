@@ -2,8 +2,8 @@
 Comprehensive tests for Production Evolution System.
 """
 
-from dataclasses import dataclass
 import json
+from dataclasses import dataclass
 from unittest.mock import Mock, patch
 
 import numpy as np
@@ -105,7 +105,9 @@ class TestEvolutionConfig:
 
     def test_config_creation(self):
         """Test creating evolution configuration."""
-        config = EvolutionConfig(population_size=20, num_generations=10, mutation_rate=0.05)
+        config = EvolutionConfig(
+            population_size=20, num_generations=10, mutation_rate=0.05
+        )
 
         assert config.population_size == 20
         assert config.num_generations == 10
@@ -122,7 +124,9 @@ class TestEvolutionConfig:
     def test_config_validation(self):
         """Test configuration validation."""
         # Valid config
-        config = EvolutionConfig(population_size=10, num_generations=5, mutation_rate=0.1)
+        config = EvolutionConfig(
+            population_size=10, num_generations=5, mutation_rate=0.1
+        )
         assert config.population_size > 0
         assert config.num_generations > 0
         assert 0 <= config.mutation_rate <= 1
@@ -153,7 +157,10 @@ class TestMathTutorEvolution:
     @pytest.fixture
     def sample_population(self):
         """Create sample population for testing."""
-        return [ModelIndividual(f"model_{i}", fitness=np.random.random(), generation=0) for i in range(5)]
+        return [
+            ModelIndividual(f"model_{i}", fitness=np.random.random(), generation=0)
+            for i in range(5)
+        ]
 
     def test_evolution_initialization(self, evolution_system, evolution_config):
         """Test evolution system initialization."""
@@ -238,13 +245,18 @@ class TestMathTutorEvolution:
         if hasattr(evolution_system, "run_evolution"):
             # Mock the run to avoid long execution
             with patch.object(evolution_system, "initialize_population") as mock_init:
-                mock_init.return_value = [ModelIndividual(f"model_{i}", fitness=0.5, generation=0) for i in range(3)]
+                mock_init.return_value = [
+                    ModelIndividual(f"model_{i}", fitness=0.5, generation=0)
+                    for i in range(3)
+                ]
 
                 try:
                     final_population = evolution_system.run_evolution()
 
                     assert len(final_population) > 0
-                    assert all(isinstance(ind, ModelIndividual) for ind in final_population)
+                    assert all(
+                        isinstance(ind, ModelIndividual) for ind in final_population
+                    )
 
                 except AttributeError:
                     # Method might not exist in mock
@@ -365,7 +377,9 @@ class TestMergeOperator:
     def test_linear_interpolation_merge(self, merge_operator, parent_models):
         """Test linear interpolation merging."""
         if hasattr(merge_operator, "linear_interpolation"):
-            merged = merge_operator.linear_interpolation(parent_models[0], parent_models[1], weight=0.5)
+            merged = merge_operator.linear_interpolation(
+                parent_models[0], parent_models[1], weight=0.5
+            )
 
             assert isinstance(merged, ModelIndividual | str)
             # If returns ModelIndividual, check properties
@@ -387,7 +401,9 @@ class TestMergeOperator:
         base_model = ModelIndividual("base_model", fitness=0.6)
 
         if hasattr(merge_operator, "merge_with_base"):
-            merged = merge_operator.merge_with_base(parent_models[0], base_model, alpha=0.3)
+            merged = merge_operator.merge_with_base(
+                parent_models[0], base_model, alpha=0.3
+            )
 
             assert merged is not None
             if isinstance(merged, ModelIndividual):
@@ -410,7 +426,9 @@ class TestEvolutionIntegration:
     @pytest.mark.asyncio
     async def test_full_evolution_pipeline(self, tmp_path):
         """Test complete evolution pipeline."""
-        config = EvolutionConfig(population_size=3, num_generations=2, mutation_rate=0.1)
+        config = EvolutionConfig(
+            population_size=3, num_generations=2, mutation_rate=0.1
+        )
 
         # Mock directory for models
         model_dir = tmp_path / "models"
@@ -424,7 +442,9 @@ class TestEvolutionIntegration:
             assert evolution is not None
 
             # Mock evolution run
-            mock_population = [ModelIndividual(f"model_{i}", fitness=0.5 + i * 0.1) for i in range(3)]
+            mock_population = [
+                ModelIndividual(f"model_{i}", fitness=0.5 + i * 0.1) for i in range(3)
+            ]
 
             # Verify population structure
             assert len(mock_population) == 3
@@ -503,7 +523,9 @@ class TestEvolutionPerformance:
         """Test fitness evaluation performance."""
         # Mock large population
         population_size = 50
-        population = [ModelIndividual(f"model_{i}", fitness=0.0) for i in range(population_size)]
+        population = [
+            ModelIndividual(f"model_{i}", fitness=0.0) for i in range(population_size)
+        ]
 
         import time
 
@@ -563,7 +585,10 @@ class TestEvolutionPerformance:
 
         # Create large population
         population_size = 1000
-        population = [ModelIndividual(f"model_{i}", fitness=np.random.random()) for i in range(population_size)]
+        population = [
+            ModelIndividual(f"model_{i}", fitness=np.random.random())
+            for i in range(population_size)
+        ]
 
         final_memory = process.memory_info().rss / 1024 / 1024  # MB
         memory_increase = final_memory - initial_memory

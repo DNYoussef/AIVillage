@@ -5,10 +5,10 @@ This script validates the successful creation of the Magi agent
 and confirms all achievements from the Agent Forge pipeline.
 """
 
-from datetime import datetime
 import json
-from pathlib import Path
 import sys
+from datetime import datetime
+from pathlib import Path
 
 # Force UTF-8 encoding for Windows
 if sys.platform == "win32":
@@ -22,7 +22,9 @@ def validate_magi_creation():
     print("=" * 70)
 
     # Check for results file
-    results_path = Path("D:/AgentForge/memory_efficient_magi_20250726_033506/memory_efficient_scaled_results.json")
+    results_path = Path(
+        "D:/AgentForge/memory_efficient_magi_20250726_033506/memory_efficient_scaled_results.json"
+    )
 
     if not results_path.exists():
         print("❌ ERROR: Magi results file not found")
@@ -63,7 +65,9 @@ def validate_magi_creation():
 
     mastery_count = 0
     for cap, score in capabilities.items():
-        level = "MASTERY" if score >= 0.90 else "EXPERT" if score >= 0.75 else "ADVANCED"
+        level = (
+            "MASTERY" if score >= 0.90 else "EXPERT" if score >= 0.75 else "ADVANCED"
+        )
         if score >= 0.90:
             mastery_count += 1
         status = "✅" if score >= 0.75 else "⚠️" if score >= 0.60 else "❌"
@@ -79,7 +83,10 @@ def validate_magi_creation():
     # Show progression
     print("\n  Level Progression:")
     for i, level in enumerate(results["level_results"]):
-        print(f"    Level {i}: Score={level['overall_capability']:.4f}, " f"Questions={level['questions_completed']}")
+        print(
+            f"    Level {i}: Score={level['overall_capability']:.4f}, "
+            f"Questions={level['questions_completed']}"
+        )
 
     # Validate memory efficiency
     print("\n💾 MEMORY EFFICIENCY:")

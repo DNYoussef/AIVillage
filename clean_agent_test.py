@@ -382,20 +382,20 @@ async def main():
     print("COORDINATION TEST RESULTS")
     print("=" * 60)
 
-    print(f"\n[SUCCESS] Garden Planning Scenario Complete")
+    print("\n[SUCCESS] Garden Planning Scenario Complete")
     print(f"   - Agents coordinated: {len(agents)}")
     print(f"   - Receipts generated: {len(receipts)}")
     print(f"   - Audit report cost: ${audit_report.total_cost_usd:.2f}")
 
-    print(f"\n[SUCCESS] Multi-Agent System Operational")
+    print("\n[SUCCESS] Multi-Agent System Operational")
     print(
         f"   - Total capabilities: {sum(len(a.capabilities) for a in agents.values())}"
     )
-    print(f"   - All agents initialized and registered")
-    print(f"   - Complete audit trail maintained")
-    print(f"   - Cross-domain specialization demonstrated")
+    print("   - All agents initialized and registered")
+    print("   - Complete audit trail maintained")
+    print("   - Cross-domain specialization demonstrated")
 
-    print(f"\nKEY ACHIEVEMENTS:")
+    print("\nKEY ACHIEVEMENTS:")
     achievements = [
         "Task orchestration and decomposition (King)",
         "Domain specialization across 9 different areas",
@@ -411,11 +411,11 @@ async def main():
     for i, achievement in enumerate(achievements, 1):
         print(f"   {i}. {achievement}")
 
-    print(f"\n[COMPLETE] ATLANTIS META-AGENT Q1 MVP: FULLY OPERATIONAL")
-    print(f"All 9 agents successfully demonstrated working coordination!")
+    print("\n[COMPLETE] ATLANTIS META-AGENT Q1 MVP: FULLY OPERATIONAL")
+    print("All 9 agents successfully demonstrated working coordination!")
 
     # Shutdown
-    print(f"\n>> Shutting down agents...")
+    print("\n>> Shutting down agents...")
     for name, agent in agents.items():
         await agent.shutdown()
         print(f"   [OK] {name.title()} Agent shutdown")

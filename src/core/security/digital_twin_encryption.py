@@ -6,10 +6,10 @@ with 32-byte base64 key requirement and GDPR/COPPA/FERPA compliance.
 """
 
 import base64
-from datetime import datetime, timedelta
 import hashlib
 import logging
 import os
+from datetime import datetime, timedelta
 from typing import Any
 
 from cryptography.fernet import Fernet
@@ -49,9 +49,15 @@ class DigitalTwinEncryption:
         self.cipher = Fernet(self.fernet_key)
 
         # Compliance flags from environment
-        self.coppa_compliant = os.getenv("DIGITAL_TWIN_COPPA_COMPLIANT", "true").lower() == "true"
-        self.ferpa_compliant = os.getenv("DIGITAL_TWIN_FERPA_COMPLIANT", "true").lower() == "true"
-        self.gdpr_compliant = os.getenv("DIGITAL_TWIN_GDPR_COMPLIANT", "true").lower() == "true"
+        self.coppa_compliant = (
+            os.getenv("DIGITAL_TWIN_COPPA_COMPLIANT", "true").lower() == "true"
+        )
+        self.ferpa_compliant = (
+            os.getenv("DIGITAL_TWIN_FERPA_COMPLIANT", "true").lower() == "true"
+        )
+        self.gdpr_compliant = (
+            os.getenv("DIGITAL_TWIN_GDPR_COMPLIANT", "true").lower() == "true"
+        )
 
         # Data retention settings
         self.profile_ttl_days = int(os.getenv("DIGITAL_TWIN_PROFILE_TTL_DAYS", "365"))
@@ -80,7 +86,10 @@ class DigitalTwinEncryption:
 
             # Validate key is exactly 32 bytes as required by CODEX specs
             if len(key_bytes) != 32:
-                msg = f"Encryption key must be exactly 32 bytes after base64 decoding, " f"got {len(key_bytes)} bytes"
+                msg = (
+                    f"Encryption key must be exactly 32 bytes after base64 decoding, "
+                    f"got {len(key_bytes)} bytes"
+                )
                 raise DigitalTwinEncryptionError(msg)
 
             # Derive Fernet-compatible key using PBKDF2
@@ -100,7 +109,9 @@ class DigitalTwinEncryption:
             msg = f"Invalid encryption key: {e}"
             raise DigitalTwinEncryptionError(msg)
 
-    def encrypt_sensitive_field(self, plaintext_value: Any, field_name: str = "") -> bytes:
+    def encrypt_sensitive_field(
+        self, plaintext_value: Any, field_name: str = ""
+    ) -> bytes:
         """Encrypt sensitive field value for database storage.
 
         Args:
@@ -143,7 +154,9 @@ class DigitalTwinEncryption:
             msg = f"Encryption failed for {field_name}: {e}"
             raise DigitalTwinEncryptionError(msg)
 
-    def decrypt_sensitive_field(self, encrypted_data: bytes, field_name: str = "") -> Any:
+    def decrypt_sensitive_field(
+        self, encrypted_data: bytes, field_name: str = ""
+    ) -> Any:
         """Decrypt sensitive field value from database.
 
         Args:
@@ -176,7 +189,9 @@ class DigitalTwinEncryption:
             msg = f"Decryption failed for {field_name}: {e}"
             raise DigitalTwinEncryptionError(msg)
 
-    def _validate_compliance_access(self, metadata: dict[str, Any], field_name: str) -> None:
+    def _validate_compliance_access(
+        self, metadata: dict[str, Any], field_name: str
+    ) -> None:
         """Validate compliance requirements for data access.
 
         Args:
@@ -257,7 +272,9 @@ class DigitalTwinEncryption:
 
         return status
 
-    def create_audit_log_entry(self, action: str, field_name: str, user_id_hash: str) -> dict[str, Any]:
+    def create_audit_log_entry(
+        self, action: str, field_name: str, user_id_hash: str
+    ) -> dict[str, Any]:
         """Create audit log entry for compliance tracking.
 
         Args:
@@ -307,7 +324,9 @@ class DigitalTwinEncryption:
         for field_name in sensitive_fields:
             if field_name in profile_data:
                 original_value = profile_data[field_name]
-                encrypted_profile[f"{field_name}_encrypted"] = self.encrypt_sensitive_field(original_value, field_name)
+                encrypted_profile[
+                    f"{field_name}_encrypted"
+                ] = self.encrypt_sensitive_field(original_value, field_name)
                 # Remove plaintext version
                 del encrypted_profile[field_name]
 
@@ -336,7 +355,9 @@ class DigitalTwinEncryption:
         decrypted_profile = encrypted_profile.copy()
 
         # Find and decrypt encrypted fields
-        encrypted_field_names = [field for field in encrypted_profile if field.endswith("_encrypted")]
+        encrypted_field_names = [
+            field for field in encrypted_profile if field.endswith("_encrypted")
+        ]
 
         for encrypted_field in encrypted_field_names:
             # Extract original field name
@@ -344,7 +365,9 @@ class DigitalTwinEncryption:
 
             # Decrypt the field
             encrypted_data = encrypted_profile[encrypted_field]
-            decrypted_value = self.decrypt_sensitive_field(encrypted_data, original_field)
+            decrypted_value = self.decrypt_sensitive_field(
+                encrypted_data, original_field
+            )
 
             # Add decrypted value
             decrypted_profile[original_field] = decrypted_value
@@ -382,7 +405,9 @@ if __name__ == "__main__":
 
     # Test field encryption
     sensitive_data = "learning_style: visual, preferred_subjects: [math, science]"
-    encrypted = encryption.encrypt_sensitive_field(sensitive_data, "learning_preferences")
+    encrypted = encryption.encrypt_sensitive_field(
+        sensitive_data, "learning_preferences"
+    )
     decrypted = encryption.decrypt_sensitive_field(encrypted, "learning_preferences")
 
     print(f"Original: {sensitive_data}")

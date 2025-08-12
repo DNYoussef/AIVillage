@@ -2,9 +2,9 @@
 """Quick test of compression on real model using smaller layers."""
 
 import json
-from pathlib import Path
 import sys
 import time
+from pathlib import Path
 
 from safetensors import safe_open
 
@@ -100,7 +100,9 @@ def quick_real_model_test():
                 final_ratio = original_size / s4_size
                 total_compressed += s4_size
 
-                print(f"  Result: {original_size / (1024**2):.1f}MB -> {s4_size / 1024:.1f}KB ({final_ratio:.1f}x)")
+                print(
+                    f"  Result: {original_size / (1024**2):.1f}MB -> {s4_size / 1024:.1f}KB ({final_ratio:.1f}x)"
+                )
 
             except Exception as e:
                 print(f"  ERROR: {e}")

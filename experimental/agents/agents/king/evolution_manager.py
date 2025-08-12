@@ -3,9 +3,8 @@ import random
 from typing import Any
 
 import torch
-from torch import nn, optim
-
 from rag_system.utils.error_handling import AIVillageException, log_and_handle_errors
+from torch import nn, optim
 
 # The optimization utilities live in the planning package.  The original
 # import pointed to a deprecated `planning_and_task_management` package which
@@ -58,7 +57,10 @@ class EvolutionManager:
     def initialize_population(self, architecture_space: dict[str, Any]) -> None:
         self.population = []
         for _ in range(self.population_size):
-            individual = {param: random.choice(values) for param, values in architecture_space.items()}
+            individual = {
+                param: random.choice(values)
+                for param, values in architecture_space.items()
+            }
             self.population.append(individual)
 
     async def evaluate_population(self, fitness_function) -> None:
@@ -77,7 +79,9 @@ class EvolutionManager:
             parents.append(parent)
         return parents
 
-    def crossover(self, parent1: dict[str, Any], parent2: dict[str, Any]) -> dict[str, Any]:
+    def crossover(
+        self, parent1: dict[str, Any], parent2: dict[str, Any]
+    ) -> dict[str, Any]:
         if random.random() < self.crossover_rate:
             child = {}
             for key in parent1:
@@ -86,7 +90,9 @@ class EvolutionManager:
             return child
         return random.choice([parent1, parent2]).copy()
 
-    def mutate(self, individual: dict[str, Any], architecture_space: dict[str, Any]) -> dict[str, Any]:
+    def mutate(
+        self, individual: dict[str, Any], architecture_space: dict[str, Any]
+    ) -> dict[str, Any]:
         for key in individual:
             if key != "fitness" and random.random() < self.mutation_rate:
                 individual[key] = random.choice(architecture_space[key])
@@ -146,7 +152,9 @@ async def run_evolution_and_optimization(king_agent) -> None:
 
     try:
         evolution_manager = EvolutionManager()
-        best_architecture = await evolution_manager.evolve(architecture_space, fitness_function)
+        best_architecture = await evolution_manager.evolve(
+            architecture_space, fitness_function
+        )
 
         king_agent.create_model_from_architecture(best_architecture)
         await king_agent.update_model_architecture(best_architecture)
@@ -158,10 +166,14 @@ async def run_evolution_and_optimization(king_agent) -> None:
             "optimizer": ["adam", "sgd", "rmsprop"],
         }
 
-        best_hyperparameters = await optimizer.optimize_hyperparameters(hyperparameter_space, fitness_function)
+        best_hyperparameters = await optimizer.optimize_hyperparameters(
+            hyperparameter_space, fitness_function
+        )
         await king_agent.update_hyperparameters(best_hyperparameters)
 
-        logger.info(f"Evolution and optimization completed. Best architecture: {best_architecture}")
+        logger.info(
+            f"Evolution and optimization completed. Best architecture: {best_architecture}"
+        )
         logger.info(f"Best hyperparameters: {best_hyperparameters}")
 
     except Exception as e:

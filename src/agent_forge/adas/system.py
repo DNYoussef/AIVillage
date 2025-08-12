@@ -1,8 +1,8 @@
-from collections.abc import Callable
 import json
 import os
 import random
 import shutil
+from collections.abc import Callable
 from typing import Any
 
 from rag_system.utils.logging import setup_logger as get_logger
@@ -28,8 +28,12 @@ class ADASystem:
         Tuple containing the perturbed configuration and its score.
         """
         cand = dict(config)
-        cand["num_layers"] = max(1, cand.get("num_layers", 1) + random.choice([-1, 0, 1]))
-        cand["hidden_size"] = max(1, cand.get("hidden_size", 1) + random.randint(-16, 16))
+        cand["num_layers"] = max(
+            1, cand.get("num_layers", 1) + random.choice([-1, 0, 1])
+        )
+        cand["hidden_size"] = max(
+            1, cand.get("hidden_size", 1) + random.randint(-16, 16)
+        )
 
         score = 1.0 / (cand["num_layers"] * cand["hidden_size"])
         return cand, score

@@ -5,9 +5,8 @@ from __future__ import annotations
 
 import psutil
 import torch
-from torch import nn
-
 from mobile_device_simulator import DEVICE_PROFILES, MobileSimulator
+from torch import nn
 
 
 def profile_device(profile_key: str) -> dict[str, float | str]:

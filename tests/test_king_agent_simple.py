@@ -1,6 +1,6 @@
-from pathlib import Path
 import sys
 import unittest
+from pathlib import Path
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -14,6 +14,7 @@ class TestKingAgentBasic(unittest.TestCase):
         try:
             # Try to import core components
             from agents.unified_base_agent import UnifiedBaseAgent
+
             from core.error_handling import (
                 Message,
                 MessageType,
@@ -108,12 +109,16 @@ class TestKingAgentBasic(unittest.TestCase):
             assert runner is not None
 
             # Test validation
-            technique = AgentTechnique(technique_name="test", code="def run(m,w,p): return 0.5")
+            technique = AgentTechnique(
+                technique_name="test", code="def run(m,w,p): return 0.5"
+            )
             is_valid = technique.validate_code("def run(m,w,p): return 0.5")
             assert is_valid
 
             # Test dangerous code rejection
-            is_dangerous = technique.validate_code("def run(m,w,p): eval('dangerous'); return 0.5")
+            is_dangerous = technique.validate_code(
+                "def run(m,w,p): eval('dangerous'); return 0.5"
+            )
             assert not is_dangerous
 
             print("✅ Security features operational")

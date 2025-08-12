@@ -2,8 +2,8 @@ from collections.abc import Iterable
 from dataclasses import dataclass
 
 import torch
-from torch import nn
 import torch.nn.functional as F
+from torch import nn
 
 
 @dataclass
@@ -100,7 +100,9 @@ class ExpertVectorSystem:
             s = s + scaling * vector.singular_values[pname]
             param.data = (u @ torch.diag(s) @ v).to(param.device)
 
-    def create_moral_experts(self, archetypes: list[MoralArchetype]) -> dict[str, ExpertVector]:
+    def create_moral_experts(
+        self, archetypes: list[MoralArchetype]
+    ) -> dict[str, ExpertVector]:
         """Create a simple expert vector for each archetype."""
         experts = {}
         for arch in archetypes:

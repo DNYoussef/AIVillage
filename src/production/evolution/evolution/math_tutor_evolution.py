@@ -2,12 +2,12 @@
 Sprint R-4+AF1: Model Merging and Evolution - Task B.1.
 """
 
-from dataclasses import asdict, dataclass
-from datetime import datetime, timezone
 import gc
 import hashlib
 import json
 import logging
+from dataclasses import asdict, dataclass
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -545,9 +545,9 @@ class MathTutorEvolution:
 
                     # Store in fitness history
                     self.fitness_history[individual.individual_id] = fitness_score
-                    generation_kpis[individual.individual_id] = (
-                        fitness_evaluator.kpi_scores.copy()
-                    )
+                    generation_kpis[
+                        individual.individual_id
+                    ] = fitness_evaluator.kpi_scores.copy()
 
             except Exception as e:
                 logger.exception(

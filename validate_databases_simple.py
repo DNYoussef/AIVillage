@@ -3,11 +3,11 @@
 Checks database existence, schemas, and basic integrity
 """
 
-from datetime import datetime
 import json
-from pathlib import Path
 import sqlite3
 import sys
+from datetime import datetime
+from pathlib import Path
 
 
 class DatabaseValidator:
@@ -343,13 +343,17 @@ class DatabaseValidator:
         # Check each database
         for db_config in databases:
             print(f"\nChecking {db_config['name']}...")
-            result = self.check_database(db_config["name"], db_config["path"], db_config["tables"])
+            result = self.check_database(
+                db_config["name"], db_config["path"], db_config["tables"]
+            )
             self.results.append(result)
 
             if result["exists"]:
                 print(f"  [EXISTS] at {result['path']}")
                 print(f"  Tables: {len(result['tables'])}")
-                print(f"  WAL Mode: {'Enabled' if result['wal_enabled'] else 'Disabled'}")
+                print(
+                    f"  WAL Mode: {'Enabled' if result['wal_enabled'] else 'Disabled'}"
+                )
 
                 if result["row_counts"]:
                     print("  Row counts:")

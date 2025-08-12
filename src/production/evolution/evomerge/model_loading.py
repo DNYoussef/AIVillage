@@ -3,8 +3,8 @@ import os
 import shutil
 
 import psutil
-from pydantic import BaseModel
 import torch
+from pydantic import BaseModel
 from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer
 
 logger = logging.getLogger(__name__)
@@ -24,7 +24,9 @@ def check_system_resources(model_paths: list[str]) -> None:
     for path in model_paths:
         if os.path.exists(path):
             for root, _dirs, files in os.walk(path):
-                total_model_size += sum(os.path.getsize(os.path.join(root, file)) for file in files)
+                total_model_size += sum(
+                    os.path.getsize(os.path.join(root, file)) for file in files
+                )
 
     if total_model_size > 0:
         free_disk_space = shutil.disk_usage(
@@ -42,7 +44,9 @@ def check_system_resources(model_paths: list[str]) -> None:
     if total_model_size > free_disk_space:
         logger.warning("Not enough disk space to store merged models!")
     if total_model_size > available_ram:
-        logger.warning("Available RAM might not be sufficient to load all models simultaneously!")
+        logger.warning(
+            "Available RAM might not be sufficient to load all models simultaneously!"
+        )
 
 
 def load_model_with_mmap(model_path):

@@ -316,7 +316,9 @@ def run_compression_tests():
     if simple_results.get("works"):
         print("   ✓ Works: Yes")
         print(f"   ✓ Compression ratio: {simple_results['ratio']:.2f}x")
-        print(f"   ✓ Achieves 4x compression: {'Yes' if simple_results['ratio'] >= 3.5 else 'No'}")
+        print(
+            f"   ✓ Achieves 4x compression: {'Yes' if simple_results['ratio'] >= 3.5 else 'No'}"
+        )
     else:
         print(f"   ✗ Works: No - {simple_results.get('error')}")
 
@@ -338,7 +340,9 @@ def run_compression_tests():
     print("\n4. Individual Compressors:")
     for name, result in individual_results.items():
         if result.get("works"):
-            print(f"   ✓ {name.upper()}: {result['ratio']:.2f}x ratio, MSE: {result['mse']:.6f}")
+            print(
+                f"   ✓ {name.upper()}: {result['ratio']:.2f}x ratio, MSE: {result['mse']:.6f}"
+            )
         else:
             print(f"   ✗ {name.upper()}: Failed - {result.get('error')}")
 

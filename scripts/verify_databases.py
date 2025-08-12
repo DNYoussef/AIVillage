@@ -5,15 +5,15 @@ Verifies database integrity, tests concurrent access patterns,
 and validates all CODEX integration requirements.
 """
 
-from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime
 import hashlib
 import json
 import logging
-from pathlib import Path
 import sqlite3
 import sys
 import time
+from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -77,7 +77,9 @@ class DatabaseVerifier:
             if "schema_version" in results["tables"]:
                 cursor = conn.execute("SELECT MAX(version) FROM schema_version")
                 version_result = cursor.fetchone()
-                results["schema_version"] = version_result[0] if version_result[0] is not None else 0
+                results["schema_version"] = (
+                    version_result[0] if version_result[0] is not None else 0
+                )
 
             conn.close()
 
@@ -123,7 +125,9 @@ class DatabaseVerifier:
 
                 # Test read operation
                 start_time = time.time()
-                cursor = conn.execute("SELECT name FROM sqlite_master WHERE type='table'")
+                cursor = conn.execute(
+                    "SELECT name FROM sqlite_master WHERE type='table'"
+                )
                 tables = cursor.fetchall()
                 read_time = time.time() - start_time
                 thread_results["response_times"].append(read_time)
@@ -177,7 +181,9 @@ class DatabaseVerifier:
             results["errors"].extend(thread_result["errors"])
 
         if all_response_times:
-            results["avg_response_time"] = sum(all_response_times) / len(all_response_times)
+            results["avg_response_time"] = sum(all_response_times) / len(
+                all_response_times
+            )
 
         return results
 
@@ -263,7 +269,9 @@ class DatabaseVerifier:
             cursor = conn.execute("SELECT name FROM sqlite_master WHERE type='table'")
             existing_tables = [row[0] for row in cursor.fetchall()]
 
-            results["missing_tables"] = [table for table in schema_req["tables"] if table not in existing_tables]
+            results["missing_tables"] = [
+                table for table in schema_req["tables"] if table not in existing_tables
+            ]
 
             # Check indexes
             cursor = conn.execute(
@@ -271,9 +279,16 @@ class DatabaseVerifier:
             )
             existing_indexes = [row[0] for row in cursor.fetchall()]
 
-            results["missing_indexes"] = [index for index in schema_req["indexes"] if index not in existing_indexes]
+            results["missing_indexes"] = [
+                index
+                for index in schema_req["indexes"]
+                if index not in existing_indexes
+            ]
 
-            results["schema_compliant"] = len(results["missing_tables"]) == 0 and len(results["missing_indexes"]) == 0
+            results["schema_compliant"] = (
+                len(results["missing_tables"]) == 0
+                and len(results["missing_indexes"]) == 0
+            )
 
             conn.close()
 
@@ -319,7 +334,9 @@ class DatabaseVerifier:
                 backup_checksum = self._get_database_checksum(backup_path)
 
                 results["restore_successful"] = True
-                results["data_integrity_maintained"] = original_checksum == backup_checksum
+                results["data_integrity_maintained"] = (
+                    original_checksum == backup_checksum
+                )
 
                 # Clean up backup
                 backup_path.unlink()
@@ -335,7 +352,9 @@ class DatabaseVerifier:
             conn = sqlite3.connect(str(db_path))
 
             # Get all table data in deterministic order
-            cursor = conn.execute("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name")
+            cursor = conn.execute(
+                "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name"
+            )
             tables = [row[0] for row in cursor.fetchall()]
 
             content_hash = hashlib.sha256()
@@ -438,11 +457,21 @@ def main():
     print(f"Timestamp: {results['timestamp']}")
 
     print("\nSummary:")
-    print(f"  Databases Found: {summary['databases_found']}/{summary['total_databases']}")
-    print(f"  Integrity Passed: {summary['integrity_passed']}/{summary['total_databases']}")
-    print(f"  Schema Compliant: {summary['schema_compliant']}/{summary['total_databases']}")
-    print(f"  Concurrent Access OK: {summary['concurrent_access_ok']}/{summary['total_databases']}")
-    print(f"  Backup/Restore OK: {summary['backup_restore_ok']}/{summary['total_databases']}")
+    print(
+        f"  Databases Found: {summary['databases_found']}/{summary['total_databases']}"
+    )
+    print(
+        f"  Integrity Passed: {summary['integrity_passed']}/{summary['total_databases']}"
+    )
+    print(
+        f"  Schema Compliant: {summary['schema_compliant']}/{summary['total_databases']}"
+    )
+    print(
+        f"  Concurrent Access OK: {summary['concurrent_access_ok']}/{summary['total_databases']}"
+    )
+    print(
+        f"  Backup/Restore OK: {summary['backup_restore_ok']}/{summary['total_databases']}"
+    )
 
     print("\nDetailed Results:")
     for db_name, db_results in results["databases"].items():

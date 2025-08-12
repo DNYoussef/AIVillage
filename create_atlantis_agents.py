@@ -5,10 +5,9 @@ Atlantis Meta-Agents Creation Script
 Creates the complete roster of 25 Atlantis meta-agents with proper stubs and organization.
 """
 
-import os
 import sys
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 # Base directory for agents
 BASE_DIR = Path(__file__).parent / "agents" / "atlantis_meta_agents"
@@ -121,15 +120,27 @@ ATLANTIS_AGENTS = {
     "governance": {
         "legal_agent": {
             "name": "Legal/Judiciar Agent",
-            "class": "LegalAgent", 
+            "class": "LegalAgent",
             "description": "Law, Policy, Contracts",
             "detailed_description": "Legal specialist responsible for:\n- Tracking regional laws and regulations\n- Drafting and validating contracts and policy packs\n- Arbitrating disputes within the village\n- Advising on DAO structure and credit rails\n- Ensuring legal compliance across operations",
             "capabilities": [
-                "legal_research", "contract_drafting", "dispute_arbitration", 
-                "compliance_monitoring", "policy_validation", "regulatory_tracking",
-                "dao_governance", "legal_advisory"
+                "legal_research",
+                "contract_drafting",
+                "dispute_arbitration",
+                "compliance_monitoring",
+                "policy_validation",
+                "regulatory_tracking",
+                "dao_governance",
+                "legal_advisory",
             ],
-            "keywords": ["legal", "contract", "policy", "compliance", "law", "regulation"],
+            "keywords": [
+                "legal",
+                "contract",
+                "policy",
+                "compliance",
+                "law",
+                "regulation",
+            ],
             "specialized_methods": '''
     async def draft_contract(self, contract_type: str, parties: List[str], terms: Dict[str, Any]) -> Dict[str, Any]:
         """Draft legal contract with specified terms"""
@@ -144,20 +155,31 @@ ATLANTIS_AGENTS = {
     async def check_legal_compliance(self, action: str, jurisdiction: str) -> Dict[str, Any]:
         """Check if action complies with legal requirements"""
         # Compliance checking logic here
-        pass'''
+        pass''',
         },
-        
         "auditor_agent": {
             "name": "Auditor Agent",
             "class": "AuditorAgent",
-            "description": "Receipts, Risk & Compliance", 
+            "description": "Receipts, Risk & Compliance",
             "detailed_description": "Auditing specialist responsible for:\n- Verifiable accounting with receipts and Merkle anchors\n- KPI and audit dashboard maintenance\n- Incident forensics and investigation\n- Payout validation and financial oversight\n- Risk assessment and compliance monitoring",
             "capabilities": [
-                "financial_auditing", "receipt_verification", "risk_assessment",
-                "compliance_monitoring", "incident_forensics", "kpi_tracking",
-                "payout_validation", "audit_reporting"
+                "financial_auditing",
+                "receipt_verification",
+                "risk_assessment",
+                "compliance_monitoring",
+                "incident_forensics",
+                "kpi_tracking",
+                "payout_validation",
+                "audit_reporting",
             ],
-            "keywords": ["audit", "compliance", "risk", "receipt", "verification", "forensics"],
+            "keywords": [
+                "audit",
+                "compliance",
+                "risk",
+                "receipt",
+                "verification",
+                "forensics",
+            ],
             "specialized_methods": '''
     async def verify_transaction_receipts(self, transactions: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Verify transaction receipts with Merkle proofs"""
@@ -172,10 +194,9 @@ ATLANTIS_AGENTS = {
     async def investigate_incident(self, incident_id: str) -> Dict[str, Any]:
         """Conduct forensic investigation of incident"""
         # Forensics logic here
-        pass'''
-        }
+        pass''',
+        },
     },
-    
     # Knowledge, Research, and Reasoning
     "knowledge": {
         "sage_agent": {
@@ -184,11 +205,23 @@ ATLANTIS_AGENTS = {
             "description": "Research Lead & Knowledge Graph",
             "detailed_description": "Knowledge management leader responsible for:\n- Owning Hyper-RAG/HippoRAG systems\n- Sourcing and citing evidence for claims\n- Curating knowledge corpora and datasets\n- Validating information accuracy\n- Leading research initiatives",
             "capabilities": [
-                "knowledge_management", "research_leadership", "evidence_sourcing",
-                "information_validation", "corpus_curation", "citation_tracking",
-                "hyper_rag_management", "research_coordination"
+                "knowledge_management",
+                "research_leadership",
+                "evidence_sourcing",
+                "information_validation",
+                "corpus_curation",
+                "citation_tracking",
+                "hyper_rag_management",
+                "research_coordination",
             ],
-            "keywords": ["research", "knowledge", "evidence", "validation", "corpus", "citation"],
+            "keywords": [
+                "research",
+                "knowledge",
+                "evidence",
+                "validation",
+                "corpus",
+                "citation",
+            ],
             "specialized_methods": '''
     async def validate_knowledge_claim(self, claim: str, evidence: List[str]) -> Dict[str, Any]:
         """Validate knowledge claim against evidence"""
@@ -203,20 +236,31 @@ ATLANTIS_AGENTS = {
     async def conduct_research_initiative(self, research_question: str) -> Dict[str, Any]:
         """Lead comprehensive research initiative"""
         # Research coordination logic here
-        pass'''
+        pass''',
         },
-        
         "curator_agent": {
-            "name": "Curator Agent", 
+            "name": "Curator Agent",
             "class": "CuratorAgent",
             "description": "Content Organization",
             "detailed_description": "Content organization specialist responsible for:\n- Classifying and tagging content systematically\n- Filling gaps in the knowledge graph\n- Maintaining domain-specific content packs\n- Organizing educational, health, agricultural, and security content\n- Content quality assurance",
             "capabilities": [
-                "content_classification", "knowledge_gap_analysis", "domain_pack_maintenance",
-                "content_tagging", "quality_assurance", "taxonomy_management",
-                "content_organization", "metadata_management"
+                "content_classification",
+                "knowledge_gap_analysis",
+                "domain_pack_maintenance",
+                "content_tagging",
+                "quality_assurance",
+                "taxonomy_management",
+                "content_organization",
+                "metadata_management",
             ],
-            "keywords": ["content", "classification", "organization", "taxonomy", "metadata", "curation"],
+            "keywords": [
+                "content",
+                "classification",
+                "organization",
+                "taxonomy",
+                "metadata",
+                "curation",
+            ],
             "specialized_methods": '''
     async def classify_content(self, content: str, domain: str) -> Dict[str, Any]:
         """Classify content into appropriate categories"""
@@ -231,20 +275,31 @@ ATLANTIS_AGENTS = {
     async def maintain_domain_pack(self, domain: str, content_updates: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Maintain domain-specific content pack"""
         # Domain pack maintenance logic here  
-        pass'''
+        pass''',
         },
-        
         "oracle_agent": {
             "name": "Oracle Agent",
-            "class": "OracleAgent", 
+            "class": "OracleAgent",
             "description": "Science & Simulation",
             "detailed_description": "Scientific simulation specialist responsible for:\n- Advanced mathematical modeling and computation\n- Physics simulations and modeling\n- Chemistry and materials science simulations\n- Biological system modeling and simulation\n- Exploring quantum and biocomputing pathways",
             "capabilities": [
-                "mathematical_modeling", "physics_simulation", "chemistry_modeling",
-                "materials_science", "biological_simulation", "quantum_computing",
-                "biocomputing_research", "scientific_computation"
+                "mathematical_modeling",
+                "physics_simulation",
+                "chemistry_modeling",
+                "materials_science",
+                "biological_simulation",
+                "quantum_computing",
+                "biocomputing_research",
+                "scientific_computation",
             ],
-            "keywords": ["simulation", "modeling", "physics", "chemistry", "quantum", "scientific"],
+            "keywords": [
+                "simulation",
+                "modeling",
+                "physics",
+                "chemistry",
+                "quantum",
+                "scientific",
+            ],
             "specialized_methods": '''
     async def run_physics_simulation(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
         """Run advanced physics simulation"""
@@ -259,20 +314,31 @@ ATLANTIS_AGENTS = {
     async def explore_quantum_algorithm(self, problem: str) -> Dict[str, Any]:
         """Explore quantum computing solutions"""
         # Quantum computing logic here
-        pass'''
+        pass''',
         },
-        
         "shaman_agent": {
             "name": "Shaman Agent",
             "class": "ShamanAgent",
-            "description": "Human Factors & Patterns", 
+            "description": "Human Factors & Patterns",
             "detailed_description": "Human factors specialist responsible for:\n- Psychology and behavioral analysis\n- Cultural patterns and anthropological insights\n- Philosophical reasoning and wisdom\n- Heuristic development and pattern recognition\n- Detecting anomalies and emergent social signals",
             "capabilities": [
-                "psychological_analysis", "cultural_pattern_recognition", "behavioral_modeling",
-                "philosophical_reasoning", "heuristic_development", "anomaly_detection",
-                "social_signal_analysis", "wisdom_synthesis"
+                "psychological_analysis",
+                "cultural_pattern_recognition",
+                "behavioral_modeling",
+                "philosophical_reasoning",
+                "heuristic_development",
+                "anomaly_detection",
+                "social_signal_analysis",
+                "wisdom_synthesis",
             ],
-            "keywords": ["psychology", "culture", "behavior", "philosophy", "pattern", "wisdom"],
+            "keywords": [
+                "psychology",
+                "culture",
+                "behavior",
+                "philosophy",
+                "pattern",
+                "wisdom",
+            ],
             "specialized_methods": '''
     async def analyze_behavioral_patterns(self, behavior_data: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Analyze human behavioral patterns"""
@@ -287,20 +353,31 @@ ATLANTIS_AGENTS = {
     async def synthesize_wisdom(self, experiences: List[str], context: str) -> str:
         """Synthesize wisdom from experiences"""
         # Wisdom synthesis logic here
-        pass'''
+        pass''',
         },
-        
         "strategist_agent": {
             "name": "Strategist Agent",
-            "class": "StrategistAgent", 
+            "class": "StrategistAgent",
             "description": "Long-Horizon Planning",
             "detailed_description": "Strategic planning specialist responsible for:\n- OKRs and objective setting\n- Long-term roadmap development\n- Scenario analysis and planning\n- Game theory and strategic modeling\n- Aligning agents to eudaimonic goals",
             "capabilities": [
-                "strategic_planning", "okr_management", "scenario_analysis",
-                "roadmap_development", "game_theory", "goal_alignment",
-                "long_term_forecasting", "strategic_coordination"
+                "strategic_planning",
+                "okr_management",
+                "scenario_analysis",
+                "roadmap_development",
+                "game_theory",
+                "goal_alignment",
+                "long_term_forecasting",
+                "strategic_coordination",
             ],
-            "keywords": ["strategy", "planning", "roadmap", "objectives", "scenario", "alignment"],
+            "keywords": [
+                "strategy",
+                "planning",
+                "roadmap",
+                "objectives",
+                "scenario",
+                "alignment",
+            ],
             "specialized_methods": '''
     async def develop_strategic_roadmap(self, objectives: List[str], timeline: str) -> Dict[str, Any]:
         """Develop comprehensive strategic roadmap"""
@@ -315,11 +392,10 @@ ATLANTIS_AGENTS = {
     async def align_agent_objectives(self, agents: List[str], goals: List[str]) -> Dict[str, Any]:
         """Align agent objectives with strategic goals"""
         # Objective alignment logic here
-        pass'''
-        }
+        pass''',
+        },
     },
-    
-    # Language, Education, and Health  
+    # Language, Education, and Health
     "language_education_health": {
         "polyglot_agent": {
             "name": "Polyglot Agent",
@@ -327,11 +403,23 @@ ATLANTIS_AGENTS = {
             "description": "Translation & Linguistics",
             "detailed_description": "Linguistic specialist responsible for:\n- Low-resource machine translation\n- Dialect and cultural nuance handling\n- Cross-cultural communication bridging\n- Linguistic analysis and research\n- Supporting digital twins across languages",
             "capabilities": [
-                "machine_translation", "dialect_processing", "cultural_nuance",
-                "linguistic_analysis", "cross_cultural_communication", "low_resource_mt",
-                "language_bridging", "multilingual_support"
+                "machine_translation",
+                "dialect_processing",
+                "cultural_nuance",
+                "linguistic_analysis",
+                "cross_cultural_communication",
+                "low_resource_mt",
+                "language_bridging",
+                "multilingual_support",
             ],
-            "keywords": ["translation", "language", "linguistics", "dialect", "cultural", "multilingual"],
+            "keywords": [
+                "translation",
+                "language",
+                "linguistics",
+                "dialect",
+                "cultural",
+                "multilingual",
+            ],
             "specialized_methods": '''
     async def translate_with_cultural_context(self, text: str, source_lang: str, target_lang: str, culture: str) -> Dict[str, Any]:
         """Translate with deep cultural context"""
@@ -346,20 +434,31 @@ ATLANTIS_AGENTS = {
     async def bridge_cultural_communication(self, message: str, source_culture: str, target_culture: str) -> str:
         """Bridge communication across cultures"""
         # Cultural bridging logic here
-        pass'''
+        pass''',
         },
-        
         "tutor_agent": {
-            "name": "Tutor Agent", 
+            "name": "Tutor Agent",
             "class": "TutorAgent",
             "description": "Learning & Assessment",
             "detailed_description": "Educational specialist responsible for:\n- Baseline assessment of learners (1-100 scoring)\n- Mastery-based pacing and progression\n- Personalized lesson generation\n- Training new agents in the Forge\n- Learning analytics and optimization",
             "capabilities": [
-                "learner_assessment", "mastery_tracking", "lesson_generation",
-                "personalized_learning", "agent_training", "learning_analytics",
-                "educational_planning", "skill_development"
+                "learner_assessment",
+                "mastery_tracking",
+                "lesson_generation",
+                "personalized_learning",
+                "agent_training",
+                "learning_analytics",
+                "educational_planning",
+                "skill_development",
             ],
-            "keywords": ["learning", "education", "teaching", "assessment", "mastery", "tutoring"],
+            "keywords": [
+                "learning",
+                "education",
+                "teaching",
+                "assessment",
+                "mastery",
+                "tutoring",
+            ],
             "specialized_methods": '''
     async def assess_learner_baseline(self, learner_id: str, domain: str) -> Dict[str, Any]:
         """Assess learner's baseline knowledge and skills"""
@@ -374,20 +473,31 @@ ATLANTIS_AGENTS = {
     async def train_new_agent(self, agent_type: str, training_data: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Train new agent in the Forge"""
         # Agent training logic here
-        pass'''
+        pass''',
         },
-        
         "medic_agent": {
             "name": "Medic Agent",
-            "class": "MedicAgent", 
+            "class": "MedicAgent",
             "description": "Telehealth Triage & Guidance",
             "detailed_description": "Healthcare specialist responsible for:\n- Symptom triage and assessment\n- Medical referral advice and guidance\n- Clinic workflow optimization\n- Health information management\n- Medical knowledge curation",
             "capabilities": [
-                "symptom_triage", "medical_referral", "health_assessment",
-                "clinic_workflow", "medical_knowledge", "health_guidance",
-                "telehealth_support", "medical_analytics"
+                "symptom_triage",
+                "medical_referral",
+                "health_assessment",
+                "clinic_workflow",
+                "medical_knowledge",
+                "health_guidance",
+                "telehealth_support",
+                "medical_analytics",
             ],
-            "keywords": ["health", "medical", "triage", "symptoms", "healthcare", "clinical"],
+            "keywords": [
+                "health",
+                "medical",
+                "triage",
+                "symptoms",
+                "healthcare",
+                "clinical",
+            ],
             "specialized_methods": '''
     async def triage_symptoms(self, symptoms: List[str], patient_info: Dict[str, Any]) -> Dict[str, Any]:
         """Triage patient symptoms and recommend care level"""
@@ -402,10 +512,9 @@ ATLANTIS_AGENTS = {
     async def optimize_clinic_workflow(self, clinic_data: Dict[str, Any]) -> Dict[str, Any]:
         """Optimize clinic operations and workflow"""
         # Workflow optimization logic here
-        pass'''
-        }
+        pass''',
+        },
     },
-    
     # Economy, Markets, and Finance
     "economy": {
         "merchant_agent": {
@@ -414,11 +523,23 @@ ATLANTIS_AGENTS = {
             "description": "Marketplace & Credits",
             "detailed_description": "Commerce specialist responsible for:\n- Marketplace pricing and operations\n- Billing and payment processing\n- Take-rate optimization\n- Demand routing (SNET/NuNet)\n- Credit ledger management",
             "capabilities": [
-                "marketplace_management", "pricing_optimization", "payment_processing",
-                "demand_routing", "credit_management", "billing_operations",
-                "take_rate_optimization", "commerce_analytics"
+                "marketplace_management",
+                "pricing_optimization",
+                "payment_processing",
+                "demand_routing",
+                "credit_management",
+                "billing_operations",
+                "take_rate_optimization",
+                "commerce_analytics",
             ],
-            "keywords": ["marketplace", "pricing", "payment", "commerce", "billing", "credits"],
+            "keywords": [
+                "marketplace",
+                "pricing",
+                "payment",
+                "commerce",
+                "billing",
+                "credits",
+            ],
             "specialized_methods": '''
     async def optimize_marketplace_pricing(self, market_data: Dict[str, Any]) -> Dict[str, Any]:
         """Optimize marketplace pricing strategies"""
@@ -433,20 +554,31 @@ ATLANTIS_AGENTS = {
     async def manage_credit_ledger(self, transactions: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Manage distributed credit ledger"""
         # Credit management logic here
-        pass'''
+        pass''',
         },
-        
         "banker_economist_agent": {
             "name": "Banker/Economist Agent",
             "class": "BankerEconomistAgent",
-            "description": "Treasury & Investment", 
+            "description": "Treasury & Investment",
             "detailed_description": "Financial specialist responsible for:\n- DSWF barbell portfolio management\n- Micro-loan operations and management\n- Capital allocation and investment\n- Risk caps and financial controls\n- UBI disbursement logic and operations",
             "capabilities": [
-                "portfolio_management", "investment_strategy", "micro_lending",
-                "capital_allocation", "risk_management", "ubi_operations",
-                "treasury_management", "economic_modeling"
+                "portfolio_management",
+                "investment_strategy",
+                "micro_lending",
+                "capital_allocation",
+                "risk_management",
+                "ubi_operations",
+                "treasury_management",
+                "economic_modeling",
             ],
-            "keywords": ["finance", "investment", "portfolio", "lending", "treasury", "economics"],
+            "keywords": [
+                "finance",
+                "investment",
+                "portfolio",
+                "lending",
+                "treasury",
+                "economics",
+            ],
             "specialized_methods": '''
     async def manage_dswf_portfolio(self, market_conditions: Dict[str, Any]) -> Dict[str, Any]:
         """Manage DSWF barbell portfolio strategy"""
@@ -461,23 +593,34 @@ ATLANTIS_AGENTS = {
     async def calculate_ubi_disbursement(self, participant_data: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Calculate UBI disbursement amounts"""
         # UBI calculation logic here
-        pass'''
-        }
+        pass''',
+        },
     },
-    
     # Build, Infrastructure, and Ops
     "infrastructure": {
         "magi_agent": {
             "name": "Magi Agent",
             "class": "MagiAgent",
-            "description": "Engineering & Model R&D", 
+            "description": "Engineering & Model R&D",
             "detailed_description": "Engineering specialist responsible for:\n- Code generation and development\n- Infrastructure builds and deployment\n- Model training and compression research\n- Nightly architecture search\n- Specialized compute rental (QC/brain-organoid APIs)",
             "capabilities": [
-                "code_generation", "infrastructure_development", "model_training",
-                "architecture_search", "compression_research", "specialized_compute",
-                "engineering_research", "system_development"
+                "code_generation",
+                "infrastructure_development",
+                "model_training",
+                "architecture_search",
+                "compression_research",
+                "specialized_compute",
+                "engineering_research",
+                "system_development",
             ],
-            "keywords": ["engineering", "development", "model", "architecture", "compute", "research"],
+            "keywords": [
+                "engineering",
+                "development",
+                "model",
+                "architecture",
+                "compute",
+                "research",
+            ],
             "specialized_methods": '''
     async def generate_optimized_code(self, requirements: Dict[str, Any]) -> Dict[str, Any]:
         """Generate optimized code for requirements"""
@@ -492,20 +635,31 @@ ATLANTIS_AGENTS = {
     async def rent_specialized_compute(self, compute_type: str, duration: int) -> Dict[str, Any]:
         """Rent specialized compute resources"""
         # Specialized compute logic here
-        pass'''
+        pass''',
         },
-        
         "navigator_agent": {
             "name": "Navigator Agent",
-            "class": "NavigatorAgent", 
+            "class": "NavigatorAgent",
             "description": "Routing & Data Movement",
             "detailed_description": "Network specialist responsible for:\n- Path-policy routing (BitChat-first vs Betanet-first)\n- Multi-hop mesh networking\n- DTN/store-and-forward protocols\n- Bandwidth and energy optimization\n- Network topology management",
             "capabilities": [
-                "path_routing", "mesh_networking", "dtn_protocols",
-                "bandwidth_optimization", "energy_optimization", "topology_management",
-                "network_protocols", "data_movement"
+                "path_routing",
+                "mesh_networking",
+                "dtn_protocols",
+                "bandwidth_optimization",
+                "energy_optimization",
+                "topology_management",
+                "network_protocols",
+                "data_movement",
             ],
-            "keywords": ["routing", "networking", "mesh", "bandwidth", "topology", "protocols"],
+            "keywords": [
+                "routing",
+                "networking",
+                "mesh",
+                "bandwidth",
+                "topology",
+                "protocols",
+            ],
             "specialized_methods": '''
     async def optimize_routing_path(self, source: str, destination: str, constraints: Dict[str, Any]) -> Dict[str, Any]:
         """Optimize routing path with constraints"""
@@ -520,20 +674,31 @@ ATLANTIS_AGENTS = {
     async def implement_dtn_protocol(self, message: Dict[str, Any], route: List[str]) -> Dict[str, Any]:
         """Implement DTN store-and-forward protocol"""
         # DTN protocol logic here
-        pass'''
+        pass''',
         },
-        
         "gardener_agent": {
             "name": "Gardener Agent",
             "class": "GardenerAgent",
             "description": "System Upkeep & Topology",
             "detailed_description": "System maintenance specialist responsible for:\n- Maintaining clusters and Beacons\n- Shaping 3D village space and UX\n- Cleaning technical debt\n- Managing system upgrades\n- Infrastructure health monitoring",
             "capabilities": [
-                "system_maintenance", "cluster_management", "ux_optimization",
-                "debt_cleanup", "upgrade_management", "health_monitoring",
-                "infrastructure_upkeep", "topology_shaping"
+                "system_maintenance",
+                "cluster_management",
+                "ux_optimization",
+                "debt_cleanup",
+                "upgrade_management",
+                "health_monitoring",
+                "infrastructure_upkeep",
+                "topology_shaping",
             ],
-            "keywords": ["maintenance", "upkeep", "clusters", "topology", "upgrades", "cleanup"],
+            "keywords": [
+                "maintenance",
+                "upkeep",
+                "clusters",
+                "topology",
+                "upgrades",
+                "cleanup",
+            ],
             "specialized_methods": '''
     async def maintain_cluster_health(self, cluster_id: str) -> Dict[str, Any]:
         """Maintain cluster health and performance"""
@@ -548,20 +713,31 @@ ATLANTIS_AGENTS = {
     async def shape_village_topology(self, space_requirements: Dict[str, Any]) -> Dict[str, Any]:
         """Shape 3D village space and topology"""
         # Topology shaping logic here
-        pass'''
+        pass''',
         },
-        
         "sustainer_agent": {
-            "name": "Sustainer Agent", 
+            "name": "Sustainer Agent",
             "class": "SustainerAgent",
             "description": "Capacity & Efficiency",
             "detailed_description": "Resource efficiency specialist responsible for:\n- Device profiling and optimization\n- Task scheduling and resource allocation\n- Power-aware operations (solar/charge)\n- Cost/performance tuning under constraints\n- Sustainability optimization",
             "capabilities": [
-                "device_profiling", "resource_scheduling", "power_management",
-                "cost_optimization", "performance_tuning", "sustainability",
-                "efficiency_optimization", "constraint_management"
+                "device_profiling",
+                "resource_scheduling",
+                "power_management",
+                "cost_optimization",
+                "performance_tuning",
+                "sustainability",
+                "efficiency_optimization",
+                "constraint_management",
             ],
-            "keywords": ["efficiency", "sustainability", "power", "resources", "optimization", "capacity"],
+            "keywords": [
+                "efficiency",
+                "sustainability",
+                "power",
+                "resources",
+                "optimization",
+                "capacity",
+            ],
             "specialized_methods": '''
     async def profile_device_capabilities(self, device_id: str) -> Dict[str, Any]:
         """Profile device capabilities and constraints"""
@@ -576,20 +752,31 @@ ATLANTIS_AGENTS = {
     async def tune_cost_performance(self, workload: Dict[str, Any], budget: float) -> Dict[str, Any]:
         """Tune cost/performance under budget constraints"""
         # Cost/performance tuning logic here
-        pass'''
+        pass''',
         },
-        
         "coordinator_agent": {
             "name": "Coordinator Agent",
-            "class": "CoordinatorAgent", 
+            "class": "CoordinatorAgent",
             "description": "Multi-Agent Workflow",
             "detailed_description": "Workflow coordination specialist responsible for:\n- Synchronizing agent hand-offs\n- Resolving resource contention\n- Monitoring SLAs across agent chains\n- Working under King's direction\n- Multi-agent task orchestration",
             "capabilities": [
-                "workflow_coordination", "agent_synchronization", "contention_resolution",
-                "sla_monitoring", "task_orchestration", "handoff_management",
-                "multi_agent_coordination", "workflow_optimization"
+                "workflow_coordination",
+                "agent_synchronization",
+                "contention_resolution",
+                "sla_monitoring",
+                "task_orchestration",
+                "handoff_management",
+                "multi_agent_coordination",
+                "workflow_optimization",
             ],
-            "keywords": ["coordination", "workflow", "synchronization", "handoff", "orchestration", "sla"],
+            "keywords": [
+                "coordination",
+                "workflow",
+                "synchronization",
+                "handoff",
+                "orchestration",
+                "sla",
+            ],
             "specialized_methods": '''
     async def synchronize_agent_handoff(self, from_agent: str, to_agent: str, context: Dict[str, Any]) -> Dict[str, Any]:
         """Synchronize handoff between agents"""
@@ -604,23 +791,34 @@ ATLANTIS_AGENTS = {
     async def monitor_workflow_slas(self, workflow_id: str, sla_requirements: Dict[str, Any]) -> Dict[str, Any]:
         """Monitor workflow SLA compliance"""
         # SLA monitoring logic here
-        pass'''
-        }
+        pass''',
+        },
     },
-    
     # Making, Culture, and Local Value
     "culture_making": {
         "maker_agent": {
             "name": "Maker Agent",
-            "class": "MakerAgent", 
+            "class": "MakerAgent",
             "description": "Makerspaces & Production",
             "detailed_description": "Physical production specialist responsible for:\n- Connecting to community Foundries\n- 3D printing, CNC, and laser operations\n- Converting designs into manufacturable SKUs\n- Materials management and sourcing\n- Quality assurance for physical products",
             "capabilities": [
-                "digital_fabrication", "production_management", "design_to_manufacturing",
-                "materials_management", "quality_assurance", "foundry_integration",
-                "sku_development", "manufacturing_optimization"
+                "digital_fabrication",
+                "production_management",
+                "design_to_manufacturing",
+                "materials_management",
+                "quality_assurance",
+                "foundry_integration",
+                "sku_development",
+                "manufacturing_optimization",
             ],
-            "keywords": ["making", "fabrication", "manufacturing", "production", "materials", "quality"],
+            "keywords": [
+                "making",
+                "fabrication",
+                "manufacturing",
+                "production",
+                "materials",
+                "quality",
+            ],
             "specialized_methods": '''
     async def convert_design_to_sku(self, design: Dict[str, Any], production_constraints: Dict[str, Any]) -> Dict[str, Any]:
         """Convert design to manufacturable SKU"""
@@ -635,18 +833,22 @@ ATLANTIS_AGENTS = {
     async def ensure_product_quality(self, product_data: Dict[str, Any], quality_standards: Dict[str, Any]) -> Dict[str, Any]:
         """Ensure product quality standards"""
         # Quality assurance logic here
-        pass'''
+        pass''',
         },
-        
         "ensemble_agent": {
             "name": "Ensemble Agent",
             "class": "EnsembleAgent",
             "description": "Creative Media",
             "detailed_description": "Creative media specialist responsible for:\n- Music composition and production\n- Voice synthesis and processing\n- Video creation and editing\n- Game asset development\n- Artistic coordination for campaigns, education, and storytelling",
             "capabilities": [
-                "music_composition", "voice_synthesis", "video_production",
-                "game_asset_creation", "artistic_coordination", "media_production",
-                "creative_storytelling", "multimedia_integration"
+                "music_composition",
+                "voice_synthesis",
+                "video_production",
+                "game_asset_creation",
+                "artistic_coordination",
+                "media_production",
+                "creative_storytelling",
+                "multimedia_integration",
             ],
             "keywords": ["creative", "media", "music", "video", "art", "storytelling"],
             "specialized_methods": '''
@@ -663,20 +865,31 @@ ATLANTIS_AGENTS = {
     async def coordinate_creative_campaign(self, campaign_requirements: Dict[str, Any]) -> Dict[str, Any]:
         """Coordinate multi-media creative campaign"""
         # Creative coordination logic here
-        pass'''
+        pass''',
         },
-        
         "horticulturist_agent": {
-            "name": "Horticulturist Agent", 
+            "name": "Horticulturist Agent",
             "class": "HorticulturistAgent",
             "description": "Agro/Permaculture",
             "detailed_description": "Agricultural specialist responsible for:\n- Soil, water, crop, and pest management playbooks\n- Bio-engineering advice and solutions\n- Regenerative agriculture practices\n- Supporting rural users with farming guidance\n- Sustainable agriculture optimization",
             "capabilities": [
-                "soil_management", "crop_optimization", "pest_management",
-                "bio_engineering", "regenerative_agriculture", "water_management",
-                "sustainable_farming", "agricultural_analytics"
+                "soil_management",
+                "crop_optimization",
+                "pest_management",
+                "bio_engineering",
+                "regenerative_agriculture",
+                "water_management",
+                "sustainable_farming",
+                "agricultural_analytics",
             ],
-            "keywords": ["agriculture", "farming", "soil", "crops", "sustainability", "permaculture"],
+            "keywords": [
+                "agriculture",
+                "farming",
+                "soil",
+                "crops",
+                "sustainability",
+                "permaculture",
+            ],
             "specialized_methods": '''
     async def analyze_soil_conditions(self, soil_data: Dict[str, Any]) -> Dict[str, Any]:
         """Analyze soil conditions and recommend improvements"""
@@ -691,26 +904,31 @@ ATLANTIS_AGENTS = {
     async def recommend_regenerative_practices(self, current_practices: List[str], constraints: Dict[str, Any]) -> List[str]:
         """Recommend regenerative agriculture practices"""
         # Regenerative practices logic here
-        pass'''
-        }
-    }
+        pass''',
+        },
+    },
 }
+
 
 def create_agent_directory_structure():
     """Create the complete directory structure for all agent domains"""
     domains = [
-        "governance", "knowledge", "language_education_health", 
-        "economy", "infrastructure", "culture_making"
+        "governance",
+        "knowledge",
+        "language_education_health",
+        "economy",
+        "infrastructure",
+        "culture_making",
     ]
-    
+
     # Create base directory
     BASE_DIR.mkdir(parents=True, exist_ok=True)
-    
+
     # Create domain directories
     for domain in domains:
         domain_dir = BASE_DIR / domain
         domain_dir.mkdir(exist_ok=True)
-        
+
         # Create __init__.py for each domain
         init_file = domain_dir / "__init__.py"
         if not init_file.exists():
@@ -718,12 +936,12 @@ def create_agent_directory_structure():
             domain_agents = ATLANTIS_AGENTS.get(domain, {})
             agent_imports = []
             agent_names = []
-            
+
             for agent_key, agent_config in domain_agents.items():
                 class_name = agent_config["class"]
                 agent_imports.append(f"from .{agent_key} import {class_name}")
                 agent_names.append(class_name)
-            
+
             init_content = f'''"""
 {domain.replace('_', ' ').title()} Agents
 
@@ -735,12 +953,13 @@ Domain agents for {domain} operations.
 __all__ = {agent_names}
 '''
             init_file.write_text(init_content)
-    
+
     print(f"Created directory structure at {BASE_DIR}")
+
 
 def generate_agent_file(domain: str, agent_key: str, agent_config: Dict[str, Any]):
     """Generate individual agent file from template"""
-    
+
     # Prepare template variables
     template_vars = {
         "agent_name": agent_config["name"],
@@ -755,7 +974,9 @@ def generate_agent_file(domain: str, agent_key: str, agent_config: Dict[str, Any
         "keywords": agent_config["keywords"],
         "relevance_key": f"{agent_config['class'].lower()}_relevance",
         "embedding_size": 384,  # Standard embedding size
-        "specialized_methods": agent_config.get("specialized_methods", "# No specialized methods defined"),
+        "specialized_methods": agent_config.get(
+            "specialized_methods", "# No specialized methods defined"
+        ),
         "specific_attributes": f"# {agent_config['class']}-specific state and data structures",
         "introspection_fields": "'domain': '" + domain + "',",
         "generate_logic": f"""# Context-specific responses for {agent_config['class']}
@@ -774,33 +995,37 @@ def generate_agent_file(domain: str, agent_key: str, agent_config: Dict[str, Any
                 break
         """,
         "initialization_logic": f"# Initialize {agent_config['class']}-specific systems",
-        "shutdown_logic": f"# Cleanup {agent_config['class']} resources"
+        "shutdown_logic": f"# Cleanup {agent_config['class']} resources",
     }
-    
+
     # Generate agent content from template
     agent_content = AGENT_TEMPLATE.format(**template_vars)
-    
+
     # Write agent file
     domain_dir = BASE_DIR / domain
     agent_file = domain_dir / f"{agent_key}.py"
     agent_file.write_text(agent_content)
-    
+
     print(f"  Created {agent_config['class']} at {agent_file}")
+
 
 def create_all_agents():
     """Create all Atlantis meta-agents"""
     print("Creating Atlantis Meta-Agents...")
-    
+
     # Create directory structure first
     create_agent_directory_structure()
-    
+
     # Generate all agent files
     for domain, agents in ATLANTIS_AGENTS.items():
         print(f"\\nCreating {domain} agents...")
         for agent_key, agent_config in agents.items():
             generate_agent_file(domain, agent_key, agent_config)
-    
-    print(f"\\nSuccessfully created {sum(len(agents) for agents in ATLANTIS_AGENTS.values())} Atlantis meta-agents!")
+
+    print(
+        f"\\nSuccessfully created {sum(len(agents) for agents in ATLANTIS_AGENTS.values())} Atlantis meta-agents!"
+    )
+
 
 def create_master_registry():
     """Create master registry for all agents"""
@@ -895,26 +1120,29 @@ __all__ = [
     'get_complete_agent_roster', 'ALL_AGENTS'
 ]
 '''
-    
+
     registry_file = BASE_DIR.parent / "__init__.py"
     registry_file.write_text(registry_content)
     print(f"Created master registry at {registry_file}")
 
+
 if __name__ == "__main__":
     print("Creating Complete Atlantis Agent Ecosystem")
     print("=" * 50)
-    
+
     try:
         create_all_agents()
         create_master_registry()
-        
-        print("\\n" + "=" * 50) 
+
+        print("\\n" + "=" * 50)
         print("ATLANTIS AGENT CREATION COMPLETE!")
-        print(f"Total agents created: {sum(len(agents) for agents in ATLANTIS_AGENTS.values())} meta-agents")
+        print(
+            f"Total agents created: {sum(len(agents) for agents in ATLANTIS_AGENTS.values())} meta-agents"
+        )
         print("Plus 8 existing specialized sub-agents")
         print("Total AIVillage ecosystem: 31 agents")
         print("\\nYour Atlantis civilization is ready!")
-        
+
     except Exception as e:
         print(f"Error creating agents: {e}")
         sys.exit(1)

@@ -4,11 +4,11 @@ This module contains the actual business logic separated from HTTP concerns,
 making it easier to test and maintain.
 """
 
-from datetime import datetime, timezone
 import os
 import time
-from typing import Any
 import uuid
+from datetime import datetime, timezone
+from typing import Any
 
 from core.error_handling import (
     AIVillageException,
@@ -112,7 +112,9 @@ class ChatBusinessLogic(ChatServiceInterface):
         if conversation_id in self.conversations:
             del self.conversations[conversation_id]
             return ServiceResponse(success=True, data={"deleted": True})
-        return ServiceResponse(success=False, error={"message": "Conversation not found"})
+        return ServiceResponse(
+            success=False, error={"message": "Conversation not found"}
+        )
 
     async def delete_user_data(self, user_id: str) -> ServiceResponse:
         """Delete all user data."""
@@ -123,7 +125,9 @@ class ChatBusinessLogic(ChatServiceInterface):
                 del self.conversations[conv_id]
                 deleted_count += 1
 
-        return ServiceResponse(success=True, data={"deleted_conversations": deleted_count})
+        return ServiceResponse(
+            success=True, data={"deleted_conversations": deleted_count}
+        )
 
     async def process(self, request: ChatRequest) -> ChatResponse:
         """Generic process method."""
@@ -183,7 +187,9 @@ class QueryBusinessLogic(QueryServiceInterface):
 class UploadBusinessLogic(UploadServiceInterface):
     """Business logic for upload service."""
 
-    def __init__(self, vector_store=None, max_file_size: int = 10 * 1024 * 1024) -> None:
+    def __init__(
+        self, vector_store=None, max_file_size: int = 10 * 1024 * 1024
+    ) -> None:
         self.logger = get_component_logger("UploadBusinessLogic")
         self.vector_store = vector_store
         self.max_file_size = max_file_size
@@ -229,7 +235,9 @@ class UploadBusinessLogic(UploadServiceInterface):
         """Validate uploaded file."""
         # Check filename
         if not filename or not filename.strip():
-            return ServiceResponse(success=False, error={"message": "Filename cannot be empty"})
+            return ServiceResponse(
+                success=False, error={"message": "Filename cannot be empty"}
+            )
 
         # Check extension
         file_ext = os.path.splitext(filename)[1].lower()
@@ -290,7 +298,9 @@ class HealthCheckLogic(HealthCheckInterface):
                 self.logger.exception(f"Health check failed for {name}: {e}")
                 services_status[name] = "error"
 
-        overall_status = "ok" if all(s == "ok" for s in services_status.values()) else "degraded"
+        overall_status = (
+            "ok" if all(s == "ok" for s in services_status.values()) else "degraded"
+        )
 
         return HealthCheckResponse(
             success=True,

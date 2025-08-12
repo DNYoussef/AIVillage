@@ -2,12 +2,12 @@
 Implements A/B testing and prompt optimization.
 """
 
-from collections import defaultdict, deque
-from dataclasses import asdict, dataclass
-from datetime import datetime
 import hashlib
 import logging
 import random
+from collections import defaultdict, deque
+from dataclasses import asdict, dataclass
+from datetime import datetime
 from typing import Any
 
 import numpy as np
@@ -140,7 +140,9 @@ I'm your AI tutor, and I love helping students discover new things. What's on yo
                     "category": category_key,
                     "selected_variant": best_variant.id,
                     "variant_description": best_variant.description,
-                    "performance_score": best_variant.performance_metrics.get("avg_score", 0.0),
+                    "performance_score": best_variant.performance_metrics.get(
+                        "avg_score", 0.0
+                    ),
                 }
             }
         )
@@ -191,7 +193,9 @@ I'm your AI tutor, and I love helping students discover new things. What's on yo
             return variants[0]
 
         # Calculate upper confidence bounds for each variant
-        total_samples = sum(v.performance_metrics.get("sample_count", 0) for v in variants)
+        total_samples = sum(
+            v.performance_metrics.get("sample_count", 0) for v in variants
+        )
 
         if total_samples < self.min_samples_for_optimization:
             # Random selection during exploration phase
@@ -221,8 +225,12 @@ I'm your AI tutor, and I love helping students discover new things. What's on yo
                 "variant_selection": {
                     "selected_id": selected_variant.id,
                     "ucb_score": ucb_scores[best_idx],
-                    "avg_score": selected_variant.performance_metrics.get("avg_score", 0.0),
-                    "sample_count": selected_variant.performance_metrics.get("sample_count", 0),
+                    "avg_score": selected_variant.performance_metrics.get(
+                        "avg_score", 0.0
+                    ),
+                    "sample_count": selected_variant.performance_metrics.get(
+                        "sample_count", 0
+                    ),
                     "total_samples": total_samples,
                 }
             }
@@ -252,7 +260,9 @@ Your response:""",
 
             # Generate guiding questions for Socratic method
             if "guiding_question" not in context and "user_message" in context:
-                context["guiding_question"] = self.generate_guiding_question(context["user_message"])
+                context["guiding_question"] = self.generate_guiding_question(
+                    context["user_message"]
+                )
 
             return template.format(**context)
 
@@ -338,7 +348,8 @@ Your response:""",
             "avg_satisfaction": np.mean(satisfactions),
             "conversion_rate": np.mean(conversions),
             "sample_count": len(results),
-            "avg_score": np.mean(satisfactions) * 0.7 + (1 - np.mean(response_times) / 10) * 0.3,  # Weighted score
+            "avg_score": np.mean(satisfactions) * 0.7
+            + (1 - np.mean(response_times) / 10) * 0.3,  # Weighted score
         }
 
         # Update variant in cache
@@ -441,7 +452,9 @@ class ABTestManager:
                 "ab_test_result": {
                     "test_name": test_name,
                     "variant": variant,
-                    "user_hash": hashlib.sha256(user_identifier.encode()).hexdigest()[:8],
+                    "user_hash": hashlib.sha256(user_identifier.encode()).hexdigest()[
+                        :8
+                    ],
                     "session_id": session_id,
                     "timestamp": datetime.now().isoformat(),
                     **success_metrics,

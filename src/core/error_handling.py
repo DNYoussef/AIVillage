@@ -3,14 +3,15 @@ Provides comprehensive error handling with categories, severity levels, and cont
 """
 
 import asyncio
+import functools
+import logging
+import traceback
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
-import functools
-import logging
-import traceback
 from typing import Any, TypeVar, cast
+
 
 # Avoid circular import - define Priority locally for now
 # TODO: Refactor to remove circular dependency
@@ -21,6 +22,7 @@ class Priority(Enum):
     HIGH = 3
     URGENT = 4
     CRITICAL = 5
+
 
 # Placeholder for protocol - will be injected at runtime to avoid circular import
 BaseCommProtocol = None
@@ -89,7 +91,9 @@ class Message:
     content: Any
     sender: str
     receiver: str
-    timestamp: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    timestamp: str = field(
+        default_factory=lambda: datetime.now(timezone.utc).isoformat()
+    )
     id: str = field(default_factory=lambda: str(datetime.now(timezone.utc).timestamp()))
     metadata: dict[str, Any] = field(default_factory=dict)
     priority: Priority = Priority.MEDIUM
@@ -132,7 +136,9 @@ class StandardCommunicationProtocol:
     adds convenience helpers for creating structured messages.
     """
 
-    def __init__(self, agent_id: str = "anon", port: int = 8888) -> None:  # pragma: no cover - simple wrapper
+    def __init__(
+        self, agent_id: str = "anon", port: int = 8888
+    ) -> None:  # pragma: no cover - simple wrapper
         super().__init__(agent_id=agent_id, port=port)
         self.inboxes: dict[str, asyncio.PriorityQueue[tuple[int, Message]]] = {}
         self._running = True
@@ -170,7 +176,9 @@ class StandardCommunicationProtocol:
         )
 
     @staticmethod
-    def create_error(error: str, sender: str, recipient: str, metadata: dict[str, Any] | None = None) -> Message:
+    def create_error(
+        error: str, sender: str, recipient: str, metadata: dict[str, Any] | None = None
+    ) -> Message:
         """Create an error message."""
         return Message(
             type=MessageType.ERROR,
@@ -205,7 +213,9 @@ class StandardCommunicationProtocol:
         await self.send_message(message)
         return await asyncio.wait_for(self.receive_message(message.sender), timeout)
 
-    async def broadcast(self, sender: str, message_type: MessageType, content: dict[str, Any]) -> None:
+    async def broadcast(
+        self, sender: str, message_type: MessageType, content: dict[str, Any]
+    ) -> None:
         for agent_id in list(self.message_handlers.keys()):
             msg = Message(
                 type=message_type,
@@ -223,10 +233,14 @@ class StandardCommunicationProtocol:
                     await handler(msg)
             await asyncio.sleep(0.01)
 
-    def get_message_history(self, agent_id: str, message_type: MessageType | None = None) -> list[Message]:
+    def get_message_history(
+        self, agent_id: str, message_type: MessageType | None = None
+    ) -> list[Message]:
         history = self.message_history.get(agent_id, [])
         msgs = [
-            Message.from_dict(entry["message"]) for entry in history if isinstance(entry, dict) and "message" in entry
+            Message.from_dict(entry["message"])
+            for entry in history
+            if isinstance(entry, dict) and "message" in entry
         ]
         if message_type is not None:
             msgs = [m for m in msgs if m.type == message_type]
@@ -286,9 +300,15 @@ class AIVillageException(Exception):
             "code": f"{self.category.value.upper()}_{self.severity.value.upper()}",
             "category": self.category.value.upper(),
             "severity": self.severity.value.upper(),
-            "timestamp": (self.context.timestamp if self.context else datetime.now(timezone.utc).isoformat()),
+            "timestamp": (
+                self.context.timestamp
+                if self.context
+                else datetime.now(timezone.utc).isoformat()
+            ),
             "context": self.context.__dict__ if self.context else None,
-            "original_exception": (str(self.original_exception) if self.original_exception else None),
+            "original_exception": (
+                str(self.original_exception) if self.original_exception else None
+            ),
         }
 
 
@@ -309,19 +329,25 @@ class ValidationException(AIVillageException):
             operation="validate_field",
             details={"field": field, "value": value},
         )
-        super().__init__(message, category=ErrorCategory.VALIDATION, context=context, **kwargs)
+        super().__init__(
+            message, category=ErrorCategory.VALIDATION, context=context, **kwargs
+        )
 
 
 class NetworkException(AIVillageException):
     """Exception for network-related errors."""
 
-    def __init__(self, message: str, url: str, status_code: int | None = None, **kwargs) -> None:
+    def __init__(
+        self, message: str, url: str, status_code: int | None = None, **kwargs
+    ) -> None:
         context = kwargs.pop("context", None) or ErrorContext(
             component="network",
             operation="request",
             details={"url": url, "status_code": status_code},
         )
-        super().__init__(message, category=ErrorCategory.NETWORK, context=context, **kwargs)
+        super().__init__(
+            message, category=ErrorCategory.NETWORK, context=context, **kwargs
+        )
 
 
 class ConfigurationException(AIVillageException):
@@ -333,13 +359,17 @@ class ConfigurationException(AIVillageException):
             operation="load_config",
             details={"config_key": config_key},
         )
-        super().__init__(message, category=ErrorCategory.CONFIGURATION, context=context, **kwargs)
+        super().__init__(
+            message, category=ErrorCategory.CONFIGURATION, context=context, **kwargs
+        )
 
 
 class ErrorContextManager:
     """Context manager for error handling with automatic context capture."""
 
-    def __init__(self, component: str, operation: str, details: dict[str, Any] | None = None) -> None:
+    def __init__(
+        self, component: str, operation: str, details: dict[str, Any] | None = None
+    ) -> None:
         self.component = component
         self.operation = operation
         self.details = details or {}
@@ -355,7 +385,9 @@ class ErrorContextManager:
                 component=self.component,
                 operation=self.operation,
                 details=self.details,
-                stack_trace="".join(traceback.format_exception(exc_type, exc_val, exc_tb)),
+                stack_trace="".join(
+                    traceback.format_exception(exc_type, exc_val, exc_tb)
+                ),
             )
             # Re-raise the exception
             return False
@@ -559,11 +591,15 @@ class ErrorHandler:
             },
         )
 
-    def get_errors_by_category(self, category: ErrorCategory) -> list[AIVillageException]:
+    def get_errors_by_category(
+        self, category: ErrorCategory
+    ) -> list[AIVillageException]:
         """Get all errors for a specific category."""
         return [e for e in self.errors if e.category == category]
 
-    def get_errors_by_severity(self, severity: ErrorSeverity) -> list[AIVillageException]:
+    def get_errors_by_severity(
+        self, severity: ErrorSeverity
+    ) -> list[AIVillageException]:
         """Get all errors for a specific severity."""
         return [e for e in self.errors if e.severity == severity]
 

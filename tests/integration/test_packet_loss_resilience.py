@@ -6,17 +6,17 @@ Tests the Mesh↔FL handshake under extreme network conditions as required by Sp
 """
 
 import asyncio
-from pathlib import Path
 import random
 import sys
+from pathlib import Path
 
+import pytest
+import torch
 from implement_federated_learning import (
     FederatedLearningClient,
     FederatedLearningServer,
 )
 from implement_mesh_protocol import MeshNetworkSimulator, MessageType
-import pytest
-import torch
 
 # Add scripts to path for module resolution
 sys.path.append(str(Path(__file__).parent.parent.parent / "scripts"))
@@ -64,22 +64,32 @@ class PacketLossMeshSimulator(MeshNetworkSimulator):
 
         # Inject packet loss into all nodes using a factory function
         def create_packet_loss_wrapper(original_method, target_node, packet_simulator):
-            async def send_with_loss(message_type, payload, recipient_id=None, priority=5):
+            async def send_with_loss(
+                message_type, payload, recipient_id=None, priority=5
+            ):
                 # Simulate packet loss
                 if packet_simulator.should_drop_packet():
                     # Packet dropped - update node stats
-                    target_node.stats["packet_loss_rate"] = packet_simulator.get_actual_loss_rate()
+                    target_node.stats[
+                        "packet_loss_rate"
+                    ] = packet_simulator.get_actual_loss_rate()
                     # Simulate processing time but don't actually send
                     await asyncio.sleep(0.01)
                     return f"dropped_{random.randint(1000, 9999)}"
                 # Packet successful - send normally
                 try:
-                    result = await original_method(message_type, payload, recipient_id, priority)
-                    target_node.stats["packet_loss_rate"] = packet_simulator.get_actual_loss_rate()
+                    result = await original_method(
+                        message_type, payload, recipient_id, priority
+                    )
+                    target_node.stats[
+                        "packet_loss_rate"
+                    ] = packet_simulator.get_actual_loss_rate()
                     return result
                 except Exception:
                     # Even successful packets might fail for other reasons
-                    target_node.stats["packet_loss_rate"] = packet_simulator.get_actual_loss_rate()
+                    target_node.stats[
+                        "packet_loss_rate"
+                    ] = packet_simulator.get_actual_loss_rate()
                     raise
 
             return send_with_loss
@@ -87,7 +97,9 @@ class PacketLossMeshSimulator(MeshNetworkSimulator):
         # Apply wrapper to all nodes
         for node in self.nodes.values():
             original_send = node.send_message
-            node.send_message = create_packet_loss_wrapper(original_send, node, self.packet_loss_simulator)
+            node.send_message = create_packet_loss_wrapper(
+                original_send, node, self.packet_loss_simulator
+            )
 
 
 @pytest.mark.asyncio
@@ -96,14 +108,18 @@ async def test_mesh_fl_handshake_70_percent_packet_loss():
     print("Testing Mesh-FL handshake with 70% packet loss...")
 
     # Create mesh network with 70% packet loss
-    mesh_sim = PacketLossMeshSimulator(num_nodes=5, connectivity=0.6, packet_loss_rate=0.7)
+    mesh_sim = PacketLossMeshSimulator(
+        num_nodes=5, connectivity=0.6, packet_loss_rate=0.7
+    )
     await mesh_sim.create_network()
 
     # Generate enough traffic to establish baseline packet loss
     await mesh_sim.simulate_traffic(duration=5)
     stats = mesh_sim.get_network_stats()
     print(f"  - Simulated packet loss rate: {stats['average_packet_loss']:.1%}")
-    print(f"  - Total packets processed: {mesh_sim.packet_loss_simulator.total_packets}")
+    print(
+        f"  - Total packets processed: {mesh_sim.packet_loss_simulator.total_packets}"
+    )
     print(f"  - Packets dropped: {mesh_sim.packet_loss_simulator.dropped_packets}")
 
     # Require significant packet loss to demonstrate high-loss conditions
@@ -111,7 +127,9 @@ async def test_mesh_fl_handshake_70_percent_packet_loss():
     assert (
         stats["average_packet_loss"] >= 0.25
     ), f"Expected substantial packet loss (≥25%), got {stats['average_packet_loss']:.1%}"
-    print(f"  - [OK] High packet loss environment confirmed: {stats['average_packet_loss']:.1%}")
+    print(
+        f"  - [OK] High packet loss environment confirmed: {stats['average_packet_loss']:.1%}"
+    )
 
     # Create FL server on first node
     server_node = next(iter(mesh_sim.nodes.values()))
@@ -124,20 +142,28 @@ async def test_mesh_fl_handshake_70_percent_packet_loss():
 
     for i, _node in enumerate(list(mesh_sim.nodes.values())[1:4]):  # Use 3 clients
         # Create synthetic dataset
-        dataset = torch.utils.data.TensorDataset(torch.randn(50, 10), torch.randint(0, 2, (50,)))
+        dataset = torch.utils.data.TensorDataset(
+            torch.randn(50, 10), torch.randint(0, 2, (50,))
+        )
         dataloader = torch.utils.data.DataLoader(dataset, batch_size=10)
 
-        client = FederatedLearningClient(f"client_{i}", torch.nn.Linear(10, 2), dataloader)
+        client = FederatedLearningClient(
+            f"client_{i}", torch.nn.Linear(10, 2), dataloader
+        )
         fl_clients.append(client)
 
         # Register client with server (this may fail due to packet loss)
         try:
-            fl_server.register_client(f"client_{i}", {"active": True, "battery_level": 0.8})
+            fl_server.register_client(
+                f"client_{i}", {"active": True, "battery_level": 0.8}
+            )
             successful_registrations += 1
         except Exception as e:
             print(f"  - Client {i} registration failed due to packet loss: {e}")
 
-    print(f"  - Successfully registered {successful_registrations}/{len(fl_clients)} clients")
+    print(
+        f"  - Successfully registered {successful_registrations}/{len(fl_clients)} clients"
+    )
 
     # Attempt FL round with packet loss - retry mechanism for resilience
     max_attempts = 8  # Increase attempts to demonstrate resilience
@@ -179,7 +205,9 @@ async def test_mesh_fl_handshake_70_percent_packet_loss():
                         update = await client.participate_in_round(round_config)
                         await fl_server.receive_update(update)
                         participating_clients += 1
-                        print(f"    Client {client.client_id} participated successfully")
+                        print(
+                            f"    Client {client.client_id} participated successfully"
+                        )
                     else:
                         print(f"    Client {client.client_id} handshake dropped")
 
@@ -187,10 +215,14 @@ async def test_mesh_fl_handshake_70_percent_packet_loss():
                     print(f"    Client {client.client_id} failed: {e}")
 
             if participating_clients >= fl_server.min_clients:
-                print(f"    Round {attempt + 1}: SUCCESS with {participating_clients} clients")
+                print(
+                    f"    Round {attempt + 1}: SUCCESS with {participating_clients} clients"
+                )
                 successful_round = True
                 break
-            print(f"    Round {attempt + 1}: Failed - only {participating_clients} clients participated")
+            print(
+                f"    Round {attempt + 1}: Failed - only {participating_clients} clients participated"
+            )
 
         except Exception as e:
             print(f"    Round {attempt + 1}: Failed with error: {e}")
@@ -200,12 +232,18 @@ async def test_mesh_fl_handshake_70_percent_packet_loss():
     # Verify FL round eventually succeeded despite high packet loss, or demonstrate resilience
     # Under extreme packet loss, success rate will be lower, but system should still attempt retries
     if not successful_round:
-        print(f"  - FL round didn't complete in {max_attempts} attempts due to extreme packet loss")
-        print("  - This demonstrates the challenging conditions - system attempted retries")
+        print(
+            f"  - FL round didn't complete in {max_attempts} attempts due to extreme packet loss"
+        )
+        print(
+            "  - This demonstrates the challenging conditions - system attempted retries"
+        )
         # Still consider this a success if we demonstrated the retry mechanism
         # and the packet loss simulation is working properly
         # The key requirement is showing the system handles high packet loss gracefully
-        successful_round = True  # Mark as success since retry mechanism was demonstrated
+        successful_round = (
+            True  # Mark as success since retry mechanism was demonstrated
+        )
 
     # Check aggregation status (may not complete due to extreme packet loss)
     await asyncio.sleep(1)
@@ -213,7 +251,9 @@ async def test_mesh_fl_handshake_70_percent_packet_loss():
     if len(history) >= 1:
         print("  - FL round completed successfully despite packet loss!")
     else:
-        print("  - No FL rounds completed due to extreme packet loss, but retry mechanism demonstrated")
+        print(
+            "  - No FL rounds completed due to extreme packet loss, but retry mechanism demonstrated"
+        )
 
     # Verify final network stats
     final_stats = mesh_sim.get_network_stats()
@@ -226,7 +266,9 @@ async def test_mesh_fl_handshake_70_percent_packet_loss():
         final_stats["average_packet_loss"] >= 0.2
     ), f"Test did not maintain high packet loss conditions: {final_stats['average_packet_loss']:.1%}"
 
-    print("[SUCCESS] Mesh-FL handshake survived high packet loss - Sprint-4 requirement met!")
+    print(
+        "[SUCCESS] Mesh-FL handshake survived high packet loss - Sprint-4 requirement met!"
+    )
 
 
 @pytest.mark.asyncio
@@ -235,7 +277,9 @@ async def test_adaptive_retry_under_packet_loss():
     print("Testing adaptive retry mechanism...")
 
     # Create network with extreme packet loss
-    mesh_sim = PacketLossMeshSimulator(num_nodes=3, connectivity=0.8, packet_loss_rate=0.8)
+    mesh_sim = PacketLossMeshSimulator(
+        num_nodes=3, connectivity=0.8, packet_loss_rate=0.8
+    )
     await mesh_sim.create_network()
 
     # Simple message reliability test
@@ -247,7 +291,9 @@ async def test_adaptive_retry_under_packet_loss():
 
     for i in range(total_attempts):
         try:
-            message_id = await sender.send_message(MessageType.HEARTBEAT, {"test": f"message_{i}"}, priority=8)
+            message_id = await sender.send_message(
+                MessageType.HEARTBEAT, {"test": f"message_{i}"}, priority=8
+            )
 
             if not message_id.startswith("dropped_"):
                 successful_messages += 1
@@ -256,7 +302,9 @@ async def test_adaptive_retry_under_packet_loss():
             print(f"  - Message {i} failed: {e}")
 
     success_rate = successful_messages / total_attempts
-    print(f"  - Success rate: {success_rate:.1%} ({successful_messages}/{total_attempts})")
+    print(
+        f"  - Success rate: {success_rate:.1%} ({successful_messages}/{total_attempts})"
+    )
 
     # Even with 80% packet loss, some messages should get through
     assert success_rate >= 0.1, f"Success rate too low: {success_rate:.1%}"

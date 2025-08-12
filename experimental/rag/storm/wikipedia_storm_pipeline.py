@@ -88,10 +88,14 @@ class EducationalContentFilter:
 class STORMProcessor:
     """Placeholder for a complex STORM reasoning engine."""
 
-    async def generate_perspective_question(self, topic: str, perspective: Perspective, previous_context: str) -> str:
+    async def generate_perspective_question(
+        self, topic: str, perspective: Perspective, previous_context: str
+    ) -> str:
         return f"What is the {perspective.focus} of {topic}?"
 
-    async def answer_from_wikipedia(self, question: str, article: str, perspective: Perspective) -> str:
+    async def answer_from_wikipedia(
+        self, question: str, article: str, perspective: Perspective
+    ) -> str:
         # Extremely small heuristic answer generation – real system would use LLMs
         return article.split(".")[0].strip()
 
@@ -218,7 +222,9 @@ class WikipediaSTORMPipeline:
                         "perspective": perspective.name,
                         "question": question,
                         "answer": answer,
-                        "confidence": self.storm_processor.calculate_confidence(answer, article_content),
+                        "confidence": self.storm_processor.calculate_confidence(
+                            answer, article_content
+                        ),
                     }
                 )
             conversations.append(conversation)
@@ -229,10 +235,14 @@ class WikipediaSTORMPipeline:
     ) -> dict[str, Any]:
         return {
             "grade_levels": grade_levels,
-            "conversation_summaries": [c[0]["answer"] if c else "" for c in conversations],
+            "conversation_summaries": [
+                c[0]["answer"] if c else "" for c in conversations
+            ],
         }
 
-    def store_educational_content(self, outline: dict[str, Any], article: dict[str, str]) -> None:
+    def store_educational_content(
+        self, outline: dict[str, Any], article: dict[str, str]
+    ) -> None:
         self.processed_content[article["title"]] = outline
 
     async def process_wikipedia_for_education(self) -> None:
@@ -244,7 +254,9 @@ class WikipediaSTORMPipeline:
                 perspectives=perspectives,
                 article_content=article["text"],
             )
-            outline = self.generate_educational_outline(conversations=conversations, grade_levels=[3, 4, 5, 6, 7, 8])
+            outline = self.generate_educational_outline(
+                conversations=conversations, grade_levels=[3, 4, 5, 6, 7, 8]
+            )
             self.store_educational_content(outline, article)
 
     def get_processed_content(self, topic: str) -> dict[str, Any] | None:
@@ -267,7 +279,9 @@ class OfflineOptimizedRAG:
         return metadata
 
     def create_minimal_vocabulary(self, content_db: ContentDatabase) -> list[str]:
-        return sorted({w for m in content_db.metadata for w in m.get("title", "").split()})
+        return sorted(
+            {w for m in content_db.metadata for w in m.get("title", "").split()}
+        )
 
     def calculate_size(self, index: Any, metadata: Any) -> int:
         index_size = getattr(index, "nbytes", 0)
@@ -275,7 +289,9 @@ class OfflineOptimizedRAG:
         return index_size + meta_size
 
     def prepare_for_mobile(self, content_db: ContentDatabase) -> dict[str, Any]:
-        quantized_embeddings = self.quantizer.quantize_embeddings(content_db.embeddings, bits=8)
+        quantized_embeddings = self.quantizer.quantize_embeddings(
+            content_db.embeddings, bits=8
+        )
         if faiss is not None:  # pragma: no cover - branch depends on env
             index = faiss.IndexHNSWFlat(quantized_embeddings.shape[1], 32)
             index.add(quantized_embeddings.astype(np.float32))
@@ -309,11 +325,17 @@ class EducationalContentGenerator:
     def get_reading_level(self, grade: int) -> int:
         return grade
 
-    def simplify_for_grade(self, content: dict[str, Any], grade: int, reading_level: int) -> dict[str, Any]:
+    def simplify_for_grade(
+        self, content: dict[str, Any], grade: int, reading_level: int
+    ) -> dict[str, Any]:
         return {"summary": content.get("conversation_summaries", []), "grade": grade}
 
-    def get_local_examples(self, cultural_context: dict[str, Any], topic: str) -> list[str]:
-        return [f"Example of {topic} in {cultural_context.get('region', 'local')} context"]
+    def get_local_examples(
+        self, cultural_context: dict[str, Any], topic: str
+    ) -> list[str]:
+        return [
+            f"Example of {topic} in {cultural_context.get('region', 'local')} context"
+        ]
 
     def add_cultural_context(
         self,
@@ -326,7 +348,9 @@ class EducationalContentGenerator:
         content["culture"] = culture
         return content
 
-    def create_interactions(self, content: dict[str, Any], interaction_types: list[str]) -> dict[str, Any]:
+    def create_interactions(
+        self, content: dict[str, Any], interaction_types: list[str]
+    ) -> dict[str, Any]:
         content = dict(content)
         content["interactions"] = interaction_types
         content["narration"] = " ".join(content.get("summary", []))
@@ -341,7 +365,9 @@ class EducationalContentGenerator:
     def identify_prerequisites(self, topic: str, grade_level: int) -> list[str]:
         return [f"Basic understanding of {topic}"]
 
-    def generate_lesson(self, topic: str, grade_level: int, cultural_context: dict[str, Any]) -> Lesson:
+    def generate_lesson(
+        self, topic: str, grade_level: int, cultural_context: dict[str, Any]
+    ) -> Lesson:
         storm_content = self.storm_rag.get_processed_content(topic) or {}
         simplified = self.simplify_for_grade(
             content=storm_content,

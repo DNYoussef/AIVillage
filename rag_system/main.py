@@ -7,8 +7,8 @@ production RAG pipeline can be invoked from the repository root using
 
 from __future__ import annotations
 
-from pathlib import Path
 import sys
+from pathlib import Path
 
 # Compute important paths
 ROOT = Path(__file__).resolve().parent.parent

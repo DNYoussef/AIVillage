@@ -6,14 +6,14 @@ and automated issue creation for test degradation.
 """
 
 import asyncio
-from dataclasses import asdict, dataclass
-from datetime import datetime, timezone
-from email.mime.text import MIMEMultipart, MIMEText
 import json
 import logging
 import os
-from pathlib import Path
 import smtplib
+from dataclasses import asdict, dataclass
+from datetime import datetime, timezone
+from email.mime.text import MIMEMultipart, MIMEText
+from pathlib import Path
 from typing import Any
 
 import aiohttp
@@ -59,10 +59,16 @@ class AlertConfig:
 
             alerts_config = data.get("alerts", {})
             return cls(
-                success_rate_threshold=alerts_config.get("success_rate_threshold", 95.0),
-                performance_degradation_threshold=alerts_config.get("performance_degradation", 1.5),
+                success_rate_threshold=alerts_config.get(
+                    "success_rate_threshold", 95.0
+                ),
+                performance_degradation_threshold=alerts_config.get(
+                    "performance_degradation", 1.5
+                ),
                 flaky_test_threshold=alerts_config.get("flaky_test_threshold", 0.2),
-                consecutive_failures_threshold=alerts_config.get("consecutive_failures", 3),
+                consecutive_failures_threshold=alerts_config.get(
+                    "consecutive_failures", 3
+                ),
             )
         except Exception as e:
             logger.exception(f"Failed to load alert config: {e}")
@@ -72,7 +78,9 @@ class AlertConfig:
 class AlertManager:
     """Manage test health alerts."""
 
-    def __init__(self, config_path: Path | None = None, base_dir: Path | None = None) -> None:
+    def __init__(
+        self, config_path: Path | None = None, base_dir: Path | None = None
+    ) -> None:
         self.base_dir = base_dir or Path(__file__).parent
         self.config_path = config_path or self.base_dir / "alert_config.yaml"
         self.alerts_log = self.base_dir / "alerts.log"
@@ -147,7 +155,9 @@ class AlertManager:
         try:
             self.active_alerts_file.parent.mkdir(parents=True, exist_ok=True)
             with open(self.active_alerts_file, "w") as f:
-                json.dump([alert.to_dict() for alert in self.active_alerts], f, indent=2)
+                json.dump(
+                    [alert.to_dict() for alert in self.active_alerts], f, indent=2
+                )
         except Exception as e:
             logger.exception(f"Failed to save active alerts: {e}")
 
@@ -161,7 +171,13 @@ class AlertManager:
         # Check success rate threshold
         success_rate = current_stats.get("success_rate", 0)
         if success_rate < self.config.success_rate_threshold:
-            severity = "critical" if success_rate < 80 else "high" if success_rate < 90 else "medium"
+            severity = (
+                "critical"
+                if success_rate < 80
+                else "high"
+                if success_rate < 90
+                else "medium"
+            )
 
             alert = Alert(
                 timestamp=timestamp,
@@ -180,7 +196,10 @@ class AlertManager:
         # Check consecutive failures
         if history and len(history) >= self.config.consecutive_failures_threshold:
             recent_runs = history[-self.config.consecutive_failures_threshold :]
-            if all(run.get("success_rate", 100) < self.config.success_rate_threshold for run in recent_runs):
+            if all(
+                run.get("success_rate", 100) < self.config.success_rate_threshold
+                for run in recent_runs
+            ):
                 alert = Alert(
                     timestamp=timestamp,
                     severity="critical",
@@ -188,7 +207,9 @@ class AlertManager:
                     category="success_rate",
                     details={
                         "consecutive_failures": self.config.consecutive_failures_threshold,
-                        "recent_rates": [run.get("success_rate", 0) for run in recent_runs],
+                        "recent_rates": [
+                            run.get("success_rate", 0) for run in recent_runs
+                        ],
                     },
                 )
                 alerts.append(alert)
@@ -212,7 +233,10 @@ class AlertManager:
 
                 if baseline_avgs:
                     baseline_avg = sum(baseline_avgs) / len(baseline_avgs)
-                    if current_avg > baseline_avg * self.config.performance_degradation_threshold:
+                    if (
+                        current_avg
+                        > baseline_avg * self.config.performance_degradation_threshold
+                    ):
                         slowdown_factor = current_avg / baseline_avg
 
                         alert = Alert(
@@ -236,7 +260,9 @@ class AlertManager:
             module_tests = module_stats.get("total", 0)
 
             # Alert for modules with significant failures
-            if module_tests >= 3 and module_success_rate < 70:  # At least 3 tests and <70% success
+            if (
+                module_tests >= 3 and module_success_rate < 70
+            ):  # At least 3 tests and <70% success
                 alert = Alert(
                     timestamp=timestamp,
                     severity="high" if module_success_rate < 50 else "medium",
@@ -283,7 +309,9 @@ class AlertManager:
         try:
             self.alerts_log.parent.mkdir(parents=True, exist_ok=True)
             with open(self.alerts_log, "a", encoding="utf-8") as f:
-                f.write(f"{alert.timestamp} [{alert.severity.upper()}] {alert.category}: {alert.message}\n")
+                f.write(
+                    f"{alert.timestamp} [{alert.severity.upper()}] {alert.category}: {alert.message}\n"
+                )
         except Exception as e:
             logger.exception(f"Failed to log alert: {e}")
 
@@ -367,7 +395,9 @@ class AlertManager:
                         issue_data = await response.json()
                         logger.info(f"Created GitHub issue: {issue_data['html_url']}")
                     else:
-                        logger.error(f"GitHub issue creation failed with status {response.status}")
+                        logger.error(
+                            f"GitHub issue creation failed with status {response.status}"
+                        )
         except Exception as e:
             logger.exception(f"Failed to create GitHub issue: {e}")
 

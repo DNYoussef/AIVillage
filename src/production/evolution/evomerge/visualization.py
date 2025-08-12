@@ -4,7 +4,9 @@ import pandas as pd
 import seaborn as sns
 
 
-def plot_fitness_over_generations(fitness_scores: list[float], output_path: str) -> None:
+def plot_fitness_over_generations(
+    fitness_scores: list[float], output_path: str
+) -> None:
     plt.figure(figsize=(10, 6))
     plt.plot(fitness_scores)
     plt.title("Fitness Over Generations")
@@ -49,7 +51,9 @@ def plot_evolution_progress(
     num_generations = len(all_generation_scores)
     num_objectives = len(objectives)
 
-    fig, axes = plt.subplots(num_objectives, 1, figsize=(10, 5 * num_objectives), sharex=True)
+    fig, axes = plt.subplots(
+        num_objectives, 1, figsize=(10, 5 * num_objectives), sharex=True
+    )
     if num_objectives == 1:
         axes = [axes]
 

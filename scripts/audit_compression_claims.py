@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Audit the compression claims with detailed byte-level analysis."""
 
-from pathlib import Path
 import sys
+from pathlib import Path
 
 import numpy as np
 import torch
@@ -68,7 +68,9 @@ def audit_bitnet():
         print(f"Compressed: {comp_bytes:,} bytes")
         print(f"  - packed_weights: {len(compressed['packed_weights'])} bytes")
         print("  - scale: 4 bytes")
-        print(f"  - metadata: {comp_bytes - len(compressed['packed_weights']) - 4} bytes")
+        print(
+            f"  - metadata: {comp_bytes - len(compressed['packed_weights']) - 4} bytes"
+        )
         print(f"Actual ratio: {ratio:.2f}x")
 
         # Theoretical ratio for ternary (2 bits per weight)
@@ -185,7 +187,9 @@ def audit_pipeline_combination() -> None:
     _, stage2_bytes, _ = calculate_real_compression(stage1_output, stage2_compressed)
     stage2_ratio = stage1_bytes / stage2_bytes
     cumulative_ratio = original_bytes / stage2_bytes
-    print(f"After SeedLM: {stage2_bytes:,} bytes ({stage2_ratio:.1f}x additional, {cumulative_ratio:.1f}x total)")
+    print(
+        f"After SeedLM: {stage2_bytes:,} bytes ({stage2_ratio:.1f}x additional, {cumulative_ratio:.1f}x total)"
+    )
 
     # Stage 3: VPTQ
     stage2_output = seedlm.decompress(stage2_compressed)
@@ -194,7 +198,9 @@ def audit_pipeline_combination() -> None:
     _, stage3_bytes, _ = calculate_real_compression(stage2_output, stage3_compressed)
     stage3_ratio = stage2_bytes / stage3_bytes
     cumulative_ratio = original_bytes / stage3_bytes
-    print(f"After VPTQ: {stage3_bytes:,} bytes ({stage3_ratio:.1f}x additional, {cumulative_ratio:.1f}x total)")
+    print(
+        f"After VPTQ: {stage3_bytes:,} bytes ({stage3_ratio:.1f}x additional, {cumulative_ratio:.1f}x total)"
+    )
 
     # Check if multiplicative
     expected_ratio = stage1_ratio * stage2_ratio * stage3_ratio

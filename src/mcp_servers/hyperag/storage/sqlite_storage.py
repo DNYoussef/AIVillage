@@ -106,7 +106,9 @@ class SQLiteStorage:
         def _update() -> None:
             cur = self.conn.cursor()
             if content is not None:
-                cur.execute("UPDATE knowledge SET content=? WHERE id=?", (content, node_id))
+                cur.execute(
+                    "UPDATE knowledge SET content=? WHERE id=?", (content, node_id)
+                )
             if metadata is not None:
                 cur.execute(
                     "UPDATE knowledge SET metadata=? WHERE id=?",

@@ -5,8 +5,8 @@ This script shows what the actual restructuring would look like,
 but operates in simulation mode to avoid breaking the current system.
 """
 
-from datetime import datetime
 import os
+from datetime import datetime
 from pathlib import Path
 
 

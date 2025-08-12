@@ -2,6 +2,8 @@ from asyncio.log import logger
 from typing import TYPE_CHECKING, Any
 
 from agents.utils.task import Task as LangroidTask
+from rag_system.core.config import UnifiedConfig
+
 from AIVillage.experimental.agents.agents.magi.magi_agent import MagiAgent
 from AIVillage.experimental.agents.agents.sage.sage_agent import SageAgent
 from core.error_handling import (
@@ -11,16 +13,15 @@ from core.error_handling import (
     StandardCommunicationProtocol,
     error_handler,
 )
-from rag_system.core.config import UnifiedConfig
 
 from .analytics.unified_analytics import UnifiedAnalytics
 
 # Import dual-path transport for P2P networking
 try:
-    import sys
     import os
+    import sys
     sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../../src'))
-    from core.p2p.dual_path_transport import DualPathTransport, DualPathMessage
+    from core.p2p.dual_path_transport import DualPathMessage, DualPathTransport
     DUAL_PATH_AVAILABLE = True
 except ImportError as e:
     logger.warning(f"Dual-path transport not available: {e}")

@@ -5,9 +5,9 @@ from __future__ import annotations
 import json
 import logging
 import lzma
-from pathlib import Path
 import struct
 import zlib
+from pathlib import Path
 from typing import Any
 
 import torch
@@ -129,7 +129,9 @@ class AdvancedCompressionPipeline:
         return result
 
     # ------------------------------------------------------------------
-    def pack_compressed_data(self, params: dict[str, tuple[tuple[int, ...], bytes]]) -> bytes:
+    def pack_compressed_data(
+        self, params: dict[str, tuple[tuple[int, ...], bytes]]
+    ) -> bytes:
         """Pack parameter data with minimal overhead and lzma compression."""
         blob = bytearray()
         blob.append(len(params))

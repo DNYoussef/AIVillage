@@ -4,9 +4,9 @@ Tests communication protocols, service discovery, and message passing systems.
 """
 
 import logging
-from pathlib import Path
 import sys
 import time
+from pathlib import Path
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
@@ -21,7 +21,9 @@ except ImportError as e:
     print(f"Warning: Could not import Communications components: {e}")
     StandardCommunicationProtocol = None
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 
@@ -62,7 +64,9 @@ class CommunicationsValidator:
             # Initialize protocol
             protocol = StandardCommunicationProtocol(protocol_config)
 
-            if hasattr(protocol, "send_message") and hasattr(protocol, "receive_message"):
+            if hasattr(protocol, "send_message") and hasattr(
+                protocol, "receive_message"
+            ):
                 self.results["standard_protocol"] = {
                     "status": "success",
                     "time": time.time() - start_time,
@@ -110,7 +114,9 @@ class CommunicationsValidator:
                 status="active",
             )
 
-            if hasattr(discovery, "register_service") and hasattr(discovery, "discover_services"):
+            if hasattr(discovery, "register_service") and hasattr(
+                discovery, "discover_services"
+            ):
                 self.results["service_discovery"] = {
                     "status": "success",
                     "time": time.time() - start_time,
@@ -147,14 +153,19 @@ class CommunicationsValidator:
 
             messaging = MessagePassingSystem(messaging_config)
 
-            if hasattr(messaging, "send_message") and hasattr(messaging, "receive_message"):
+            if hasattr(messaging, "send_message") and hasattr(
+                messaging, "receive_message"
+            ):
                 # Test message structure
                 {
                     "message_id": "msg_test_001",
                     "sender": "validator",
                     "recipient": "test_agent",
                     "message_type": "task_request",
-                    "content": {"task": "validate_functionality", "parameters": {"timeout": 30}},
+                    "content": {
+                        "task": "validate_functionality",
+                        "parameters": {"timeout": 30},
+                    },
                     "priority": "normal",
                     "timestamp": time.time(),
                 }
@@ -195,7 +206,9 @@ class CommunicationsValidator:
 
             ws_handler = WebSocketHandler(websocket_config)
 
-            if hasattr(ws_handler, "start_server") and hasattr(ws_handler, "broadcast_message"):
+            if hasattr(ws_handler, "start_server") and hasattr(
+                ws_handler, "broadcast_message"
+            ):
                 # Test WebSocket message structure
                 {
                     "type": "agent_communication",
@@ -238,14 +251,25 @@ class CommunicationsValidator:
 
         # Calculate results
         total_tests = len(self.results)
-        successful_tests = sum(1 for r in self.results.values() if r["status"] == "success")
-        partial_tests = sum(1 for r in self.results.values() if r["status"] == "partial")
+        successful_tests = sum(
+            1 for r in self.results.values() if r["status"] == "success"
+        )
+        partial_tests = sum(
+            1 for r in self.results.values() if r["status"] == "partial"
+        )
 
         logger.info("=== Communications Validation Results ===")
         for test_name, result in self.results.items():
-            status_emoji = {"success": "PASS", "partial": "WARN", "failed": "FAIL", "pending": "PEND"}
+            status_emoji = {
+                "success": "PASS",
+                "partial": "WARN",
+                "failed": "FAIL",
+                "pending": "PEND",
+            }
 
-            logger.info(f"[{status_emoji[result['status']]}] {test_name}: {result['status'].upper()}")
+            logger.info(
+                f"[{status_emoji[result['status']]}] {test_name}: {result['status'].upper()}"
+            )
             logger.info(f"   Time: {result['time']:.2f}s")
             logger.info(f"   Details: {result['details']}")
 

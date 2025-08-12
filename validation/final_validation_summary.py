@@ -2,8 +2,8 @@
 
 import asyncio
 import logging
-from pathlib import Path
 import sys
+from pathlib import Path
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
@@ -48,7 +48,11 @@ async def test_completed_components():
     try:
         from src.core.p2p.transport_manager_enhanced import EnhancedTransportManager
 
-        config = {"websocket": {"port": 8773}, "tcp": {"port": 8774}, "udp": {"port": 8775}}
+        config = {
+            "websocket": {"port": 8773},
+            "tcp": {"port": 8774},
+            "udp": {"port": 8775},
+        }
         manager = EnhancedTransportManager("test_final", config)
 
         started = await manager.start()
@@ -86,7 +90,9 @@ async def test_completed_components():
             mesh.get_network_stats()
             await mesh.stop()
 
-            print(f"   PASS: {len(discovered)} peers discovered, {len(connected)} connected")
+            print(
+                f"   PASS: {len(discovered)} peers discovered, {len(connected)} connected"
+            )
             results["libp2p_mesh"] = "PASS"
         else:
             print("   FAIL: Could not start mesh network")
@@ -124,7 +130,9 @@ async def test_completed_components():
     try:
         from src.agent_forge.adas.adas import ADASTask
 
-        task = ADASTask(task_type="final_test", task_content="Test ADAS system functionality")
+        task = ADASTask(
+            task_type="final_test", task_content="Test ADAS system functionality"
+        )
 
         # Test prompt generation
         prompt = task.generate_prompt([])

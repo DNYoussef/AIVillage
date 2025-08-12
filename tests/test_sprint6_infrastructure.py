@@ -288,7 +288,9 @@ class TestAdaptiveLoader:
         )
 
         # Test scoring
-        score = loader._calculate_variant_score(variant, context, mock_device_profiler.current_snapshot)
+        score = loader._calculate_variant_score(
+            variant, context, mock_device_profiler.current_snapshot
+        )
         assert isinstance(score, float)
         assert score >= 0
 
@@ -350,7 +352,9 @@ class TestResourceConstrainedEvolution:
         constraint_manager = ConstraintManager(mock_device_profiler)
 
         # Initialize system
-        system = ResourceConstrainedEvolution(mock_device_profiler, resource_monitor, constraint_manager)
+        system = ResourceConstrainedEvolution(
+            mock_device_profiler, resource_monitor, constraint_manager
+        )
 
         assert system.device_profiler == mock_device_profiler
         assert system.resource_monitor == resource_monitor
@@ -363,7 +367,9 @@ class TestResourceConstrainedEvolution:
         resource_monitor = ResourceMonitor(mock_device_profiler)
         constraint_manager = ConstraintManager(mock_device_profiler)
 
-        system = ResourceConstrainedEvolution(mock_device_profiler, resource_monitor, constraint_manager)
+        system = ResourceConstrainedEvolution(
+            mock_device_profiler, resource_monitor, constraint_manager
+        )
 
         # Mock agent
         mock_agent = Mock()
@@ -380,7 +386,9 @@ class TestResourceConstrainedEvolution:
         resource_monitor = ResourceMonitor(mock_device_profiler)
         constraint_manager = ConstraintManager(mock_device_profiler)
 
-        system = ResourceConstrainedEvolution(mock_device_profiler, resource_monitor, constraint_manager)
+        system = ResourceConstrainedEvolution(
+            mock_device_profiler, resource_monitor, constraint_manager
+        )
 
         # Test resource state update
         asyncio.run(system._update_resource_state())

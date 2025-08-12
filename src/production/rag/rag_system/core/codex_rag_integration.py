@@ -5,23 +5,25 @@ with exact configuration values, models, and performance targets.
 """
 
 import asyncio
-from collections import OrderedDict
 import contextlib
-from dataclasses import dataclass
 import hashlib
 import json
 import logging
 import os
-from pathlib import Path
 import time
+from collections import OrderedDict
+from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
-from diskcache import Cache as DiskCache
 import faiss
 import numpy as np
+from diskcache import Cache as DiskCache
+
 try:  # pragma: no cover - handle optional dependency
     from rank_bm25 import BM25Okapi
 except Exception:  # pragma: no cover
+
     class BM25Okapi:  # type: ignore[no-redef]
         """Fallback stub when rank_bm25 is unavailable."""
 
@@ -29,6 +31,8 @@ except Exception:  # pragma: no cover
             raise ImportError(
                 "rank_bm25 is required for BM25 retrieval but is not installed."
             )
+
+
 import redis
 from sentence_transformers import CrossEncoder, SentenceTransformer
 
@@ -43,7 +47,9 @@ RAG_REDIS_URL = os.getenv("RAG_REDIS_URL", "redis://localhost:6379/1")
 RAG_DISK_CACHE_DIR = os.getenv("RAG_DISK_CACHE_DIR", "/tmp/rag_disk_cache")
 
 RAG_EMBEDDING_MODEL = os.getenv("RAG_EMBEDDING_MODEL", "paraphrase-MiniLM-L3-v2")
-RAG_CROSS_ENCODER_MODEL = os.getenv("RAG_CROSS_ENCODER_MODEL", "cross-encoder/ms-marco-MiniLM-L-2-v2")
+RAG_CROSS_ENCODER_MODEL = os.getenv(
+    "RAG_CROSS_ENCODER_MODEL", "cross-encoder/ms-marco-MiniLM-L-2-v2"
+)
 
 RAG_VECTOR_DIM = int(os.getenv("RAG_VECTOR_DIM", "384"))
 RAG_FAISS_INDEX_PATH = os.getenv("RAG_FAISS_INDEX_PATH", "./data/faiss_index")
@@ -284,7 +290,9 @@ class CODEXRAGPipeline:
 
         # Validate vector dimensions
         if self.vector_dim != RAG_VECTOR_DIM:
-            logger.warning(f"Model dimension {self.vector_dim} != configured {RAG_VECTOR_DIM}")
+            logger.warning(
+                f"Model dimension {self.vector_dim} != configured {RAG_VECTOR_DIM}"
+            )
 
         # Optional cross-encoder for reranking
         self.cross_encoder = None
@@ -338,7 +346,9 @@ class CODEXRAGPipeline:
                 self.keyword_ids = data["ids"]
                 if self.keyword_corpus:
                     self.bm25_index = BM25Okapi(self.keyword_corpus)
-                logger.info(f"Loaded BM25 corpus with {len(self.keyword_corpus)} chunks")
+                logger.info(
+                    f"Loaded BM25 corpus with {len(self.keyword_corpus)} chunks"
+                )
         except Exception as e:
             logger.warning(f"Failed to load BM25 corpus: {e}")
 
@@ -353,7 +363,10 @@ class CODEXRAGPipeline:
             logger.exception(f"Failed to save BM25 corpus: {e}")
 
     def chunk_document(
-        self, document: Document, chunk_size: int | None = None, chunk_overlap: int | None = None
+        self,
+        document: Document,
+        chunk_size: int | None = None,
+        chunk_overlap: int | None = None,
     ) -> list[Chunk]:
         """Chunk document according to CODEX specifications."""
         chunk_size = chunk_size or RAG_CHUNK_SIZE
@@ -414,7 +427,9 @@ class CODEXRAGPipeline:
 
         # Batch encode chunks
         texts = [chunk.text for chunk in all_chunks]
-        embeddings = self.embedder.encode(texts, batch_size=32, show_progress_bar=False, convert_to_numpy=True)
+        embeddings = self.embedder.encode(
+            texts, batch_size=32, show_progress_bar=False, convert_to_numpy=True
+        )
 
         # Add to FAISS index
         chunk_ids = []
@@ -470,7 +485,9 @@ class CODEXRAGPipeline:
                 return cached, {"cache_hit": True, "latency_ms": latency}
 
         # Encode query
-        query_embedding = self.embedder.encode(query, convert_to_numpy=True, show_progress_bar=False)
+        query_embedding = self.embedder.encode(
+            query, convert_to_numpy=True, show_progress_bar=False
+        )
 
         # Vector search
         vector_results = []
@@ -494,13 +511,19 @@ class CODEXRAGPipeline:
         combined_scores = {}
         for rank, (chunk_id, score) in enumerate(vector_results):
             if chunk_id != -1:  # FAISS returns -1 for empty results
-                combined_scores[chunk_id] = combined_scores.get(chunk_id, 0) + 1.0 / (60 + rank)
+                combined_scores[chunk_id] = combined_scores.get(chunk_id, 0) + 1.0 / (
+                    60 + rank
+                )
 
         for rank, (chunk_id, score) in enumerate(keyword_results):
-            combined_scores[chunk_id] = combined_scores.get(chunk_id, 0) + 1.0 / (60 + rank)
+            combined_scores[chunk_id] = combined_scores.get(chunk_id, 0) + 1.0 / (
+                60 + rank
+            )
 
         # Sort by combined score
-        ranked_ids = sorted(combined_scores.items(), key=lambda x: x[1], reverse=True)[:k]
+        ranked_ids = sorted(combined_scores.items(), key=lambda x: x[1], reverse=True)[
+            :k
+        ]
 
         # Build retrieval results
         results = []
@@ -625,7 +648,9 @@ async def test_integration():
         logger.info(f"\nQuery: {query}")
         results, metrics = await pipeline.retrieve(query, k=5)
 
-        logger.info(f"Retrieved {len(results)} results in {metrics['latency_ms']:.2f}ms")
+        logger.info(
+            f"Retrieved {len(results)} results in {metrics['latency_ms']:.2f}ms"
+        )
         logger.info(f"Cache hit: {metrics['cache_hit']}")
 
         if results:
@@ -636,7 +661,9 @@ async def test_integration():
     logger.info("\n--- Testing cache performance ---")
     for query in test_queries[:2]:
         results, metrics = await pipeline.retrieve(query, k=5)
-        logger.info(f"Query: {query[:30]}... - Latency: {metrics['latency_ms']:.2f}ms (cache: {metrics['cache_hit']})")
+        logger.info(
+            f"Query: {query[:30]}... - Latency: {metrics['latency_ms']:.2f}ms (cache: {metrics['cache_hit']})"
+        )
 
     # Get final performance metrics
     perf_metrics = pipeline.get_performance_metrics()

@@ -4,11 +4,11 @@ Creates semantic relationship graphs with trust-weighted connections.
 """
 
 import asyncio
-from dataclasses import dataclass
 import json
 import logging
-from pathlib import Path
 import sqlite3
+from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 import networkx as nx
@@ -53,7 +53,9 @@ class BayesianTrustCalculator:
     ) -> float:
         """Calculate Bayesian trust score for relationship between chunks."""
         # Evidence strength based on similarity and context
-        evidence_strength = semantic_sim * 0.4 + context_overlap * 0.3 + temporal_consistency * 0.3
+        evidence_strength = (
+            semantic_sim * 0.4 + context_overlap * 0.3 + temporal_consistency * 0.3
+        )
 
         # Node trustworthiness (average of source and target)
         node_trust = (source_trust + target_trust) / 2.0
@@ -182,14 +184,22 @@ class GraphRAGBuilder:
                 target_chunk = chunks[target_id]
 
                 # Calculate contextual factors
-                context_relevance = self._calculate_contextual_relevance(source_chunk, target_chunk)
+                context_relevance = self._calculate_contextual_relevance(
+                    source_chunk, target_chunk
+                )
 
-                temporal_alignment = self._calculate_temporal_alignment(source_chunk, target_chunk)
+                temporal_alignment = self._calculate_temporal_alignment(
+                    source_chunk, target_chunk
+                )
 
-                geographic_alignment = self._calculate_geographic_alignment(source_chunk, target_chunk)
+                geographic_alignment = self._calculate_geographic_alignment(
+                    source_chunk, target_chunk
+                )
 
                 # Determine relationship type
-                rel_type = self._determine_relationship_type(source_chunk, target_chunk, semantic_sim)
+                rel_type = self._determine_relationship_type(
+                    source_chunk, target_chunk, semantic_sim
+                )
 
                 # Calculate trust weight
                 source_trust = self._get_chunk_trust(source_id)
@@ -200,7 +210,8 @@ class GraphRAGBuilder:
                     context_overlap=context_relevance,
                     source_trust=source_trust,
                     target_trust=target_trust,
-                    evidence_count=len(source_chunk["cross_references"]) + len(target_chunk["cross_references"]),
+                    evidence_count=len(source_chunk["cross_references"])
+                    + len(target_chunk["cross_references"]),
                     temporal_consistency=temporal_alignment,
                 )
 
@@ -214,7 +225,8 @@ class GraphRAGBuilder:
                     temporal_alignment=temporal_alignment,
                     geographic_alignment=geographic_alignment,
                     trust_weight=trust_weight,
-                    evidence_sources=source_chunk["cross_references"] + target_chunk["cross_references"],
+                    evidence_sources=source_chunk["cross_references"]
+                    + target_chunk["cross_references"],
                 )
 
                 relationships.append(relationship)
@@ -320,12 +332,17 @@ class GraphRAGBuilder:
             return 0.8
 
         # Same continent/region
-        if geo_hierarchy.get(geo1) == geo_hierarchy.get(geo2) and geo_hierarchy.get(geo1) is not None:
+        if (
+            geo_hierarchy.get(geo1) == geo_hierarchy.get(geo2)
+            and geo_hierarchy.get(geo1) is not None
+        ):
             return 0.6
 
         return 0.3  # Different regions
 
-    def _determine_relationship_type(self, chunk1: dict, chunk2: dict, semantic_sim: float) -> str:
+    def _determine_relationship_type(
+        self, chunk1: dict, chunk2: dict, semantic_sim: float
+    ) -> str:
         """Determine the type of relationship between chunks."""
         # Same article = hierarchical relationship
         if chunk1["parent_title"] == chunk2["parent_title"]:
@@ -425,7 +442,9 @@ class GraphRAGBuilder:
             f"{self.knowledge_graph.number_of_edges()} edges"
         )
 
-    def store_graph_in_database(self, relationships: list[SemanticRelationship]) -> None:
+    def store_graph_in_database(
+        self, relationships: list[SemanticRelationship]
+    ) -> None:
         """Store graph relationships in database."""
         with sqlite3.connect(self.graph_db_path) as conn:
             # Store edges
@@ -461,7 +480,9 @@ class GraphRAGBuilder:
         self, source_chunk: str, target_chunk: str, max_path_length: int = 4
     ) -> list[tuple[list[str], float]]:
         """Find trust-weighted paths between chunks."""
-        if not self.knowledge_graph.has_node(source_chunk) or not self.knowledge_graph.has_node(target_chunk):
+        if not self.knowledge_graph.has_node(
+            source_chunk
+        ) or not self.knowledge_graph.has_node(target_chunk):
             return []
 
         try:
@@ -540,7 +561,9 @@ async def main() -> None:
     )
 
     # Trust distribution
-    trust_weights = [data["trust_weight"] for _, _, data in builder.knowledge_graph.edges(data=True)]
+    trust_weights = [
+        data["trust_weight"] for _, _, data in builder.knowledge_graph.edges(data=True)
+    ]
     if trust_weights:
         print(f"Average trust weight: {np.mean(trust_weights):.3f}")
         print(f"Trust weight std: {np.std(trust_weights):.3f}")

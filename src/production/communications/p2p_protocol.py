@@ -1,10 +1,10 @@
 """Enhanced Communication Protocol with P2P Integration."""
 
 import asyncio
+import logging
 from collections.abc import Callable, Coroutine
 from dataclasses import dataclass
 from enum import Enum
-import logging
 from typing import Any
 
 from src.communications.message import Message, MessageType, Priority
@@ -175,7 +175,9 @@ class P2PCommunicationProtocol(CommunicationProtocol):
                 "routing_type": "direct",
             }
 
-            success = await self.p2p_node.send_message(peer_id, MessageType.DATA, p2p_payload)
+            success = await self.p2p_node.send_message(
+                peer_id, MessageType.DATA, p2p_payload
+            )
 
             if success:
                 self.p2p_stats["messages_routed"] += 1
@@ -248,7 +250,9 @@ class P2PCommunicationProtocol(CommunicationProtocol):
         msg = "Response timeout in P2P send_and_wait"
         raise TimeoutError(msg)
 
-    def subscribe(self, agent_id: str, callback: Callable[[Message], Coroutine[Any, Any, None]]) -> None:
+    def subscribe(
+        self, agent_id: str, callback: Callable[[Message], Coroutine[Any, Any, None]]
+    ) -> None:
         """Subscribe to messages for an agent."""
         self.standard_protocol.subscribe(agent_id, callback)
 
@@ -315,7 +319,9 @@ class P2PCommunicationProtocol(CommunicationProtocol):
         progress_callback: Callable | None = None,
     ) -> tuple[Any, TensorMetadata] | None:
         """Receive tensor data from peer."""
-        return await self.tensor_streaming.receive_tensor(tensor_id, timeout, progress_callback)
+        return await self.tensor_streaming.receive_tensor(
+            tensor_id, timeout, progress_callback
+        )
 
     async def distribute_task(
         self,
@@ -399,7 +405,9 @@ class P2PCommunicationProtocol(CommunicationProtocol):
                 "max_concurrent_connections": self.capabilities.max_concurrent_connections,
             },
             "statistics": self.p2p_stats,
-            "mesh_status": (self.device_mesh.get_mesh_status() if self.mesh_enabled else None),
+            "mesh_status": (
+                self.device_mesh.get_mesh_status() if self.mesh_enabled else None
+            ),
             "streaming_stats": self.tensor_streaming.get_streaming_stats(),
         }
 
@@ -410,9 +418,21 @@ class P2PCommunicationProtocol(CommunicationProtocol):
         return {
             "node_metrics": node_stats,
             "mesh_metrics": {
-                "avg_latency_ms": (self.device_mesh._calculate_average_latency() if self.mesh_enabled else 0),
-                "avg_bandwidth_kbps": (self.device_mesh._calculate_average_bandwidth() if self.mesh_enabled else 0),
-                "network_diameter": (self.device_mesh._calculate_network_diameter() if self.mesh_enabled else 0),
+                "avg_latency_ms": (
+                    self.device_mesh._calculate_average_latency()
+                    if self.mesh_enabled
+                    else 0
+                ),
+                "avg_bandwidth_kbps": (
+                    self.device_mesh._calculate_average_bandwidth()
+                    if self.mesh_enabled
+                    else 0
+                ),
+                "network_diameter": (
+                    self.device_mesh._calculate_network_diameter()
+                    if self.mesh_enabled
+                    else 0
+                ),
             },
             "streaming_metrics": self.tensor_streaming.get_streaming_stats(),
             "routing_efficiency": {
@@ -438,7 +458,9 @@ class P2PCommunicationProtocol(CommunicationProtocol):
         for agent_id in stale_entries:
             del self.message_routing_cache[agent_id]
 
-        logger.info(f"Network optimization complete, removed {len(stale_entries)} stale routes")
+        logger.info(
+            f"Network optimization complete, removed {len(stale_entries)} stale routes"
+        )
 
     def _register_p2p_handlers(self) -> None:
         """Register P2P-specific message handlers."""

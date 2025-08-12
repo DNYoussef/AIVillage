@@ -1,6 +1,6 @@
 import base64
-from pathlib import Path
 import sys
+from pathlib import Path
 
 import httpx
 import pytest
@@ -54,7 +54,9 @@ def _session() -> dict:
 async def test_digital_twin_api_flow():
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
-        r = await client.post("/twin/create", params={"user_id": "user1"}, json=_profile())
+        r = await client.post(
+            "/twin/create", params={"user_id": "user1"}, json=_profile()
+        )
         assert r.status_code == 200
 
         r = await client.post("/twin/user1/learn", json=_session())
@@ -69,7 +71,9 @@ async def test_digital_twin_api_flow():
         r = await client.get("/twin/user1/analytics")
         assert "engagement_score" in r.json()
 
-        r = await client.post("/twin/user1/marketplace/share", json={"revenue_percentage": 0.5})
+        r = await client.post(
+            "/twin/user1/marketplace/share", json={"revenue_percentage": 0.5}
+        )
         assert "listing_id" in r.json()
 
         r = await client.get("/twin/user1/health")

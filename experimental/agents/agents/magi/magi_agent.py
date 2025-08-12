@@ -6,11 +6,12 @@ from agents.unified_base_agent import (
     UnifiedBaseAgent,
 )
 from agents.utils.task import Task as LangroidTask
-from core.error_handling import Message, MessageType, StandardCommunicationProtocol
 from rag_system.core.config import RAGConfig
 from rag_system.core.pipeline import EnhancedRAGPipeline
 from rag_system.retrieval.vector_store import VectorStore
 from rag_system.tracking.unified_knowledge_tracker import UnifiedKnowledgeTracker
+
+from core.error_handling import Message, MessageType, StandardCommunicationProtocol
 
 
 class MagiAgentConfig(UnifiedAgentConfig):
@@ -47,7 +48,9 @@ class MagiAgent(UnifiedBaseAgent):
         return {"debug_result": debug_result}
 
     async def handle_code_review(self, task: LangroidTask) -> dict[str, Any]:
-        review_result = await self.generate(f"Review the following code: {task.content}")
+        review_result = await self.generate(
+            f"Review the following code: {task.content}"
+        )
         return {"review_result": review_result}
 
     async def handle_message(self, message: Message) -> None:
@@ -95,6 +98,8 @@ if __name__ == "__main__":
         instructions="You are a Magi agent capable of writing, debugging, and reviewing code.",
     )
 
-    magi_agent = MagiAgent(magi_config, communication_protocol, rag_config, vector_store)
+    magi_agent = MagiAgent(
+        magi_config, communication_protocol, rag_config, vector_store
+    )
 
     # Use the magi_agent to process tasks and evolve

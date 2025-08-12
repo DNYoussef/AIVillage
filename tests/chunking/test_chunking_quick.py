@@ -106,7 +106,9 @@ async def quick_chunking_validation():
 
         # Calculate quality metrics
         coherence_scores = [c.metadata.get("topic_coherence", 0.0) for c in chunks]
-        avg_coherence = sum(coherence_scores) / len(coherence_scores) if coherence_scores else 0.0
+        avg_coherence = (
+            sum(coherence_scores) / len(coherence_scores) if coherence_scores else 0.0
+        )
 
         results[doc_type] = {
             "chunks_created": len(chunks),
@@ -138,7 +140,9 @@ async def quick_chunking_validation():
     # Index all documents
     all_docs = list(test_documents.values())
     indexing_stats = pipeline.index_documents(all_docs)
-    print(f"Indexed {indexing_stats['documents_processed']} docs, {indexing_stats['chunks_created']} chunks")
+    print(
+        f"Indexed {indexing_stats['documents_processed']} docs, {indexing_stats['chunks_created']} chunks"
+    )
 
     # Test queries
     test_queries = [
@@ -159,7 +163,9 @@ async def quick_chunking_validation():
             if results_data and len(results_data) > 0:
                 retrieval_success += 1
                 best_score = results_data[0].score
-                print(f"  '{query[:40]}...' -> {len(results_data)} results, score: {best_score:.3f}")
+                print(
+                    f"  '{query[:40]}...' -> {len(results_data)} results, score: {best_score:.3f}"
+                )
             else:
                 print(f"  '{query[:40]}...' -> No results")
 
@@ -181,10 +187,14 @@ async def quick_chunking_validation():
     # Improvement estimates based on results
     baseline_answer_rate = 0.57
     estimated_improvement = baseline_answer_rate + (avg_coherence * 0.3)
-    improvement_pct = ((estimated_improvement - baseline_answer_rate) / baseline_answer_rate) * 100
+    improvement_pct = (
+        (estimated_improvement - baseline_answer_rate) / baseline_answer_rate
+    ) * 100
 
     print("\nEstimated Performance Improvements:")
-    print(f"  Answer Rate: 57% -> {estimated_improvement:.1%} (+{improvement_pct:.1f}%)")
+    print(
+        f"  Answer Rate: 57% -> {estimated_improvement:.1%} (+{improvement_pct:.1f}%)"
+    )
     print(f"  Relevance: Improved with {avg_coherence:.3f} coherence")
     print("  Trust Accuracy: Enhanced with per-chunk analysis")
 
@@ -193,7 +203,9 @@ async def quick_chunking_validation():
         "coherence_good": avg_coherence > 0.6,
         "retrieval_working": retrieval_precision > 0.5,
         "chunks_created": total_chunks > 0,
-        "processing_fast": all(r["processing_time_ms"] < 1000 for r in results.values()),
+        "processing_fast": all(
+            r["processing_time_ms"] < 1000 for r in results.values()
+        ),
     }
 
     passed_criteria = sum(success_criteria.values())
@@ -209,7 +221,9 @@ async def quick_chunking_validation():
     print(
         f"\nOverall Assessment: {'EXCELLENT' if passed_criteria == total_criteria else 'GOOD' if overall_success else 'NEEDS_WORK'}"
     )
-    print(f"Chunking System Ready: {'YES' if overall_success else 'NEEDS_OPTIMIZATION'}")
+    print(
+        f"Chunking System Ready: {'YES' if overall_success else 'NEEDS_OPTIMIZATION'}"
+    )
 
     return overall_success
 

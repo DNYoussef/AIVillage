@@ -8,9 +8,9 @@ to ensure they work correctly and verify proper handoff between components.
 import json
 import logging
 import os
-from pathlib import Path
 import sys
 import tempfile
+from pathlib import Path
 
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
@@ -30,7 +30,9 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 
@@ -64,14 +66,20 @@ class PipelineIntegrationTest:
                     "config": model.config.to_dict(),
                     "model_info": {
                         "model_path": self.model_name,
-                        "tokenizer_config": (tokenizer.init_kwargs if hasattr(tokenizer, "init_kwargs") else {}),
+                        "tokenizer_config": (
+                            tokenizer.init_kwargs
+                            if hasattr(tokenizer, "init_kwargs")
+                            else {}
+                        ),
                     },
                 },
                 model_path,
             )
 
             logger.info("Test model created: %s", model_path)
-            logger.info("Model size: %.2f MB", model_path.stat().st_size / (1024 * 1024))
+            logger.info(
+                "Model size: %.2f MB", model_path.stat().st_size / (1024 * 1024)
+            )
 
             return str(model_path)
 
@@ -109,7 +117,9 @@ class PipelineIntegrationTest:
 
             # Load and verify output
             stage1_data = torch.load(output_path)
-            assert "compressed_state" in stage1_data, "Stage 1 output missing compressed_state"
+            assert (
+                "compressed_state" in stage1_data
+            ), "Stage 1 output missing compressed_state"
             assert "config" in stage1_data, "Stage 1 output missing config"
 
             # Check compression occurred
@@ -160,13 +170,19 @@ class PipelineIntegrationTest:
 
             # Verify result
             assert result is not None, "Stage 2 compression returned None"
-            assert result.get("success", False), f"Stage 2 failed: {result.get('error', 'Unknown error')}"
+            assert result.get(
+                "success", False
+            ), f"Stage 2 failed: {result.get('error', 'Unknown error')}"
             assert os.path.exists(output_path), "Stage 2 output file not created"
 
             # Load and verify output
             stage2_data = torch.load(output_path)
-            assert "stage2_compressed_data" in stage2_data, "Stage 2 output missing stage2_compressed_data"
-            assert "stage1_metadata" in stage2_data, "Stage 2 output missing stage1_metadata"
+            assert (
+                "stage2_compressed_data" in stage2_data
+            ), "Stage 2 output missing stage2_compressed_data"
+            assert (
+                "stage1_metadata" in stage2_data
+            ), "Stage 2 output missing stage1_metadata"
 
             # Check compression
             stage1_size = os.path.getsize(stage1_path)
@@ -227,14 +243,26 @@ class PipelineIntegrationTest:
 
             # Verify results
             assert curriculum_results is not None, "Training pipeline returned None"
-            assert "levels_completed" in curriculum_results, "Training result missing levels_completed"
-            assert "level_metrics" in curriculum_results, "Training result missing level_metrics"
-            assert curriculum_results["levels_completed"] >= 1, "No training levels completed"
+            assert (
+                "levels_completed" in curriculum_results
+            ), "Training result missing levels_completed"
+            assert (
+                "level_metrics" in curriculum_results
+            ), "Training result missing level_metrics"
+            assert (
+                curriculum_results["levels_completed"] >= 1
+            ), "No training levels completed"
 
             logger.info("Training pipeline completed:")
-            logger.info("  Levels completed: %d", curriculum_results["levels_completed"])
-            logger.info("  Overall accuracy: %.3f", curriculum_results["overall_accuracy"])
-            logger.info("  Quiet-STaR enabled: %s", curriculum_results["quiet_star_enabled"])
+            logger.info(
+                "  Levels completed: %d", curriculum_results["levels_completed"]
+            )
+            logger.info(
+                "  Overall accuracy: %.3f", curriculum_results["overall_accuracy"]
+            )
+            logger.info(
+                "  Quiet-STaR enabled: %s", curriculum_results["quiet_star_enabled"]
+            )
 
             # Store results
             self.test_results["training"] = {
@@ -283,8 +311,12 @@ class PipelineIntegrationTest:
 
             # Verify results
             assert results is not None, "Self-modeling returned None"
-            assert "cycles_completed" in results, "Self-modeling result missing cycles_completed"
-            assert "temperature_insights" in results, "Self-modeling result missing temperature_insights"
+            assert (
+                "cycles_completed" in results
+            ), "Self-modeling result missing cycles_completed"
+            assert (
+                "temperature_insights" in results
+            ), "Self-modeling result missing temperature_insights"
             assert results["cycles_completed"] >= 1, "No self-modeling cycles completed"
 
             # Get insights
@@ -292,7 +324,9 @@ class PipelineIntegrationTest:
 
             logger.info("Self-modeling completed:")
             logger.info("  Cycles completed: %d", results["cycles_completed"])
-            logger.info("  Temperature insights: %d", len(results["temperature_insights"]))
+            logger.info(
+                "  Temperature insights: %d", len(results["temperature_insights"])
+            )
             logger.info("  Recommendations: %d", len(insights["recommendations"]))
 
             # Store results
@@ -325,8 +359,12 @@ class PipelineIntegrationTest:
             # Verify manifest structure
             assert manifest is not None, "Manifest generation returned None"
             assert "model_info" in manifest, "Manifest missing model_info"
-            assert "evaluation_metrics" in manifest, "Manifest missing evaluation_metrics"
-            assert "deployment_requirements" in manifest, "Manifest missing deployment_requirements"
+            assert (
+                "evaluation_metrics" in manifest
+            ), "Manifest missing evaluation_metrics"
+            assert (
+                "deployment_requirements" in manifest
+            ), "Manifest missing deployment_requirements"
             assert "security" in manifest, "Manifest missing security"
 
             # Create release bundle
@@ -337,7 +375,9 @@ class PipelineIntegrationTest:
             bundle_dir = Path(bundle_path)
             assert bundle_dir.exists(), "Release bundle directory not created"
             assert (bundle_dir / "model.pt").exists(), "Model file not in bundle"
-            assert (bundle_dir / "manifest.json").exists(), "Manifest file not in bundle"
+            assert (
+                bundle_dir / "manifest.json"
+            ).exists(), "Manifest file not in bundle"
             assert (bundle_dir / "README.md").exists(), "README file not in bundle"
 
             logger.info("Deployment manifest generated:")
@@ -356,7 +396,9 @@ class PipelineIntegrationTest:
                 "bundle_path": bundle_path,
                 "version": version,
                 "model_size_mb": manifest["model_info"]["file_size_mb"],
-                "deployment_tier": manifest["deployment_requirements"]["deployment_tier"],
+                "deployment_tier": manifest["deployment_requirements"][
+                    "deployment_tier"
+                ],
             }
 
             return bundle_path
@@ -374,9 +416,9 @@ class PipelineIntegrationTest:
             integrity_results = {}
 
             # Check Stage 1 -> Stage 2 handoff
-            if self.test_results.get("stage1", {}).get("success") and self.test_results.get("stage2", {}).get(
+            if self.test_results.get("stage1", {}).get(
                 "success"
-            ):
+            ) and self.test_results.get("stage2", {}).get("success"):
                 stage1_path = self.test_results["stage1"]["output_path"]
                 stage2_path = self.test_results["stage2"]["output_path"]
 
@@ -385,11 +427,17 @@ class PipelineIntegrationTest:
                 stage2_data = torch.load(stage2_path)
 
                 # Verify Stage 1 metadata is preserved in Stage 2
-                assert "stage1_metadata" in stage2_data, "Stage 1 metadata not preserved in Stage 2"
-                assert "config" in stage2_data["stage1_metadata"], "Stage 1 config not preserved"
+                assert (
+                    "stage1_metadata" in stage2_data
+                ), "Stage 1 metadata not preserved in Stage 2"
+                assert (
+                    "config" in stage2_data["stage1_metadata"]
+                ), "Stage 1 config not preserved"
 
                 # Verify compression pipeline information
-                assert "compression_pipeline" in stage2_data, "Compression pipeline info missing"
+                assert (
+                    "compression_pipeline" in stage2_data
+                ), "Compression pipeline info missing"
 
                 integrity_results["stage1_to_stage2"] = {
                     "success": True,
@@ -403,7 +451,9 @@ class PipelineIntegrationTest:
                     "success": False,
                     "reason": "Previous stages failed",
                 }
-                logger.warning("Stage 1 -> Stage 2 handoff: ✗ SKIPPED (previous stages failed)")
+                logger.warning(
+                    "Stage 1 -> Stage 2 handoff: ✗ SKIPPED (previous stages failed)"
+                )
 
             # Check model format consistency
             if self.test_results.get("stage2", {}).get("success"):
@@ -453,7 +503,9 @@ class PipelineIntegrationTest:
             "test_timestamp": str(torch.datetime.now()),
             "test_directory": str(self.temp_dir),
             "model_used": self.model_name,
-            "overall_success": all(result.get("success", False) for result in self.test_results.values()),
+            "overall_success": all(
+                result.get("success", False) for result in self.test_results.values()
+            ),
         }
 
         # Combine all results
@@ -502,9 +554,13 @@ class PipelineIntegrationTest:
                 "test_results": self.test_results,
                 "report_path": report_path,
                 "summary": {
-                    "stages_passed": sum(1 for r in self.test_results.values() if r.get("success")),
+                    "stages_passed": sum(
+                        1 for r in self.test_results.values() if r.get("success")
+                    ),
                     "stages_total": len(self.test_results),
-                    "overall_success": all(r.get("success", False) for r in self.test_results.values()),
+                    "overall_success": all(
+                        r.get("success", False) for r in self.test_results.values()
+                    ),
                 },
             }
 
@@ -548,7 +604,9 @@ def main():
         if results["success"]:
             print("✅ Overall Result: PASSED")
             summary = results["summary"]
-            print(f"✅ Stages Passed: {summary['stages_passed']}/{summary['stages_total']}")
+            print(
+                f"✅ Stages Passed: {summary['stages_passed']}/{summary['stages_total']}"
+            )
 
             # Show individual stage results
             for stage_name, stage_result in test_runner.test_results.items():

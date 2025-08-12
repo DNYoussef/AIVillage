@@ -1,7 +1,6 @@
 import pytest
-from web3 import Web3
-
 from contracts.VILLAGEToken import VILLAGEToken
+from web3 import Web3
 
 
 @pytest.mark.asyncio
@@ -10,14 +9,20 @@ async def test_token_economy_integration():
     w3 = Web3(Web3.EthereumTesterProvider())
 
     # Deploy the token contract
-    token_contract = w3.eth.contract(abi=VILLAGEToken.abi, bytecode=VILLAGEToken.bytecode)
-    tx_hash = token_contract.constructor().transact({"from": w3.eth.accounts[0], "gas": 1000000})
+    token_contract = w3.eth.contract(
+        abi=VILLAGEToken.abi, bytecode=VILLAGEToken.bytecode
+    )
+    tx_hash = token_contract.constructor().transact(
+        {"from": w3.eth.accounts[0], "gas": 1000000}
+    )
     tx_receipt = w3.eth.waitForTransactionReceipt(tx_hash)
     token_address = tx_receipt.contractAddress
     token = w3.eth.contract(address=token_address, abi=VILLAGEToken.abi)
 
     # Mint some tokens
-    token.functions.mintForEducation(w3.eth.accounts[1], 100).transact({"from": w3.eth.accounts[0]})
+    token.functions.mintForEducation(w3.eth.accounts[1], 100).transact(
+        {"from": w3.eth.accounts[0]}
+    )
 
     # Check the balance
     balance = token.functions.balanceOf(w3.eth.accounts[1]).call()

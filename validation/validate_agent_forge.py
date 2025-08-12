@@ -4,9 +4,9 @@ Tests agent creation, evolution, and compression pipeline functionality.
 """
 
 import logging
-from pathlib import Path
 import sys
 import time
+from pathlib import Path
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
@@ -46,7 +46,11 @@ class AgentForgeValidator:
                 "agent_id": "test_agent_001",
                 "agent_type": "reasoning",
                 "capabilities": ["text_generation", "problem_solving"],
-                "model_config": {"base_model": "gpt2", "max_length": 100, "temperature": 0.7},
+                "model_config": {
+                    "base_model": "gpt2",
+                    "max_length": 100,
+                    "temperature": 0.7,
+                },
             }
 
             # Create agent
@@ -132,7 +136,10 @@ class AgentForgeValidator:
 
             if hasattr(compressor, "compress"):
                 # Test with dummy data
-                dummy_model_data = {"weights": {"layer1": [1.0, 2.0, 3.0, 4.0]}, "metadata": {"model_type": "test"}}
+                dummy_model_data = {
+                    "weights": {"layer1": [1.0, 2.0, 3.0, 4.0]},
+                    "metadata": {"model_type": "test"},
+                }
 
                 # Test compression (might not work with dummy data but tests API)
                 try:
@@ -174,7 +181,10 @@ class AgentForgeValidator:
                 task_id="test_adas_001",
                 task_type="architecture_search",
                 task_content="Optimize neural architecture",
-                metadata={"search_space": "transformer", "constraints": {"max_params": 1000000}},
+                metadata={
+                    "search_space": "transformer",
+                    "constraints": {"max_params": 1000000},
+                },
             )
 
             # Test secure code runner
@@ -213,14 +223,25 @@ class AgentForgeValidator:
 
         # Calculate results
         total_tests = len(self.results)
-        successful_tests = sum(1 for r in self.results.values() if r["status"] == "success")
-        partial_tests = sum(1 for r in self.results.values() if r["status"] == "partial")
+        successful_tests = sum(
+            1 for r in self.results.values() if r["status"] == "success"
+        )
+        partial_tests = sum(
+            1 for r in self.results.values() if r["status"] == "partial"
+        )
 
         logger.info("=== Agent Forge Validation Results ===")
         for test_name, result in self.results.items():
-            status_emoji = {"success": "✅", "partial": "⚠️", "failed": "❌", "pending": "⏳"}
+            status_emoji = {
+                "success": "✅",
+                "partial": "⚠️",
+                "failed": "❌",
+                "pending": "⏳",
+            }
 
-            logger.info(f"{status_emoji[result['status']]} {test_name}: {result['status'].upper()}")
+            logger.info(
+                f"{status_emoji[result['status']]} {test_name}: {result['status'].upper()}"
+            )
             logger.info(f"   Time: {result['time']:.2f}s")
             logger.info(f"   Details: {result['details']}")
 

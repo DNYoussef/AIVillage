@@ -219,10 +219,10 @@ class SwordAgent(AgentInterface):
             ]
 
         # Generate recommendations
-        attack_session["recommendations"] = (
-            await self._generate_security_recommendations(
-                attack_session["vulnerabilities_discovered"]
-            )
+        attack_session[
+            "recommendations"
+        ] = await self._generate_security_recommendations(
+            attack_session["vulnerabilities_discovered"]
         )
 
         # Update statistics

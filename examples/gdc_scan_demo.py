@@ -6,8 +6,8 @@ Demonstrates how to use the HypeRAG Graph-Doctor constraint detection system.
 
 import asyncio
 import json
-from pathlib import Path
 import sys
+from pathlib import Path
 
 # Add project root to path
 project_root = Path(__file__).parent.parent
@@ -61,7 +61,9 @@ async def demo_gdc_scanning() -> None:
     try:
         # This would normally connect to Neo4j
         print("# Example: Connect to Neo4j and scan for violations")
-        print("async with GDCExtractorContext('bolt://localhost:7687', ('neo4j', 'password')) as extractor:")
+        print(
+            "async with GDCExtractorContext('bolt://localhost:7687', ('neo4j', 'password')) as extractor:"
+        )
         print("    violations = await extractor.scan_all(limit=50)")
         print("    print(f'Found {len(violations)} violations')")
         print("")

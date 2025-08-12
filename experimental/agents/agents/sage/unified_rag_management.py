@@ -2,11 +2,11 @@ import logging
 from typing import Any
 
 from langroid.language_models.openai_gpt import OpenAIGPTConfig
-
-from core.error_handling import AIVillageException, error_handler, safe_execute
 from rag_system.core.config import RAGConfig
 from rag_system.core.pipeline import EnhancedRAGPipeline
 from rag_system.tracking.unified_knowledge_tracker import UnifiedKnowledgeTracker
+
+from core.error_handling import AIVillageException, error_handler, safe_execute
 
 logger = logging.getLogger(__name__)
 
@@ -56,7 +56,9 @@ class UnifiedRAGManagement:
             raise AIVillageException(msg) from e
 
     @error_handler.handle_error
-    async def handle_rag_health_issue(self, health_check_result: dict[str, Any]) -> None:
+    async def handle_rag_health_issue(
+        self, health_check_result: dict[str, Any]
+    ) -> None:
         try:
             handling_prompt = f"""
             Given the following health check result: {health_check_result}
@@ -72,11 +74,20 @@ class UnifiedRAGManagement:
             parsed_plan = self._parse_json_response(handling_plan.text)
 
             for issue, plan in parsed_plan.items():
-                if issue == "index_health" and not health_check_result["index_health"]["healthy"]:
+                if (
+                    issue == "index_health"
+                    and not health_check_result["index_health"]["healthy"]
+                ):
                     await self._handle_index_issue(plan)
-                elif issue == "performance_metrics" and not health_check_result["performance_metrics"]["acceptable"]:
+                elif (
+                    issue == "performance_metrics"
+                    and not health_check_result["performance_metrics"]["acceptable"]
+                ):
                     await self._handle_performance_issue(plan)
-                elif issue == "data_consistency" and not health_check_result["data_consistency"]["consistent"]:
+                elif (
+                    issue == "data_consistency"
+                    and not health_check_result["data_consistency"]["consistent"]
+                ):
                     await self._handle_consistency_issue(plan)
 
             await self._notify_administrators(health_check_result, parsed_plan)
@@ -104,7 +115,9 @@ class UnifiedRAGManagement:
         await self._reconcile_data()
         await self._validate_data()
 
-    async def _notify_administrators(self, health_check_result: dict[str, Any], handling_plan: dict[str, Any]) -> None:
+    async def _notify_administrators(
+        self, health_check_result: dict[str, Any], handling_plan: dict[str, Any]
+    ) -> None:
         notification_prompt = f"""
         Create a notification for administrators about RAG system issues.
         Health Check Result: {health_check_result}
@@ -119,7 +132,9 @@ class UnifiedRAGManagement:
         Format the notification in a clear, easy-to-read structure.
         """
         notification = await self.llm.complete(notification_prompt)
-        logger.info(f"Notifying administrators about RAG health issues:\n{notification.text}")
+        logger.info(
+            f"Notifying administrators about RAG health issues:\n{notification.text}"
+        )
 
     async def _rebuild_index(self) -> None:
         logger.info("Rebuilding RAG index")

@@ -48,4 +48,9 @@ def test_safe_inputs_allowed(content):
 def test_risk_thresholds():
     assert risk_gate({"content": "hello", "type": "text"}, 0.2) == "allow"
     assert risk_gate({"content": "select * from users", "type": "query"}, 0.5) == "ask"
-    assert risk_gate({"content": "DROP TABLE users; DELETE FROM logs;", "type": "command"}, 0.9) == "deny"
+    assert (
+        risk_gate(
+            {"content": "DROP TABLE users; DELETE FROM logs;", "type": "command"}, 0.9
+        )
+        == "deny"
+    )

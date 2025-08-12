@@ -7,7 +7,9 @@ import logging
 import time
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 # Import both P2P implementations
@@ -46,7 +48,9 @@ async def test_core_p2p_cluster(num_nodes: int = 5):
         for i, node in enumerate(nodes):
             for j, other_node in enumerate(nodes):
                 if i != j:
-                    node.peer_discovery.add_known_peer("127.0.0.1", other_node.listen_port)
+                    node.peer_discovery.add_known_peer(
+                        "127.0.0.1", other_node.listen_port
+                    )
 
         logger.info("Waiting for peer discovery and connections...")
         await asyncio.sleep(10)  # Give more time for discovery
@@ -58,7 +62,9 @@ async def test_core_p2p_cluster(num_nodes: int = 5):
             connection_count = len(node.connections)
             total_connections += connection_count
 
-            logger.info(f"Core Node {i}: {peer_count} peers discovered, {connection_count} active connections")
+            logger.info(
+                f"Core Node {i}: {peer_count} peers discovered, {connection_count} active connections"
+            )
             logger.info(f"  Peers: {list(node.peer_registry.keys())}")
             logger.info(f"  Connections: {list(node.connections.keys())}")
 
@@ -72,12 +78,16 @@ async def test_core_p2p_cluster(num_nodes: int = 5):
                 "data": {"test": "Hello from cluster test!", "timestamp": time.time()},
             }
 
-            success_count = await nodes[0].broadcast_to_peers("TEST_BROADCAST", test_message["data"])
+            success_count = await nodes[0].broadcast_to_peers(
+                "TEST_BROADCAST", test_message["data"]
+            )
             logger.info(f"Broadcast reached {success_count} peers")
 
         # Test evolution messaging
         logger.info("Testing evolution coordination...")
-        await nodes[0].broadcast_evolution_event("TEST_START", {"evolution_type": "cluster_test", "nodes": num_nodes})
+        await nodes[0].broadcast_evolution_event(
+            "TEST_START", {"evolution_type": "cluster_test", "nodes": num_nodes}
+        )
 
         await asyncio.sleep(2)
 
@@ -201,7 +211,9 @@ async def benchmark_p2p_performance():
             nodes.append(node)
 
         # Start all nodes
-        await asyncio.gather(*[node.start(resource_monitor=mock_resource_monitor) for node in nodes])
+        await asyncio.gather(
+            *[node.start(resource_monitor=mock_resource_monitor) for node in nodes]
+        )
 
         startup_time = time.time() - start_time
         logger.info(f"Started {num_nodes} nodes in {startup_time:.2f} seconds")
@@ -210,7 +222,9 @@ async def benchmark_p2p_performance():
         for node in nodes:
             for other_node in nodes:
                 if node != other_node:
-                    node.peer_discovery.add_known_peer("127.0.0.1", other_node.listen_port)
+                    node.peer_discovery.add_known_peer(
+                        "127.0.0.1", other_node.listen_port
+                    )
 
         # Wait for discovery
         discovery_start = time.time()
@@ -225,7 +239,9 @@ async def benchmark_p2p_performance():
         logger.info(f"Total peers discovered: {total_peers}")
         logger.info(f"Total active connections: {total_connections}")
         logger.info(f"Average peers per node: {total_peers / num_nodes:.1f}")
-        logger.info(f"Average connections per node: {total_connections / num_nodes:.1f}")
+        logger.info(
+            f"Average connections per node: {total_connections / num_nodes:.1f}"
+        )
 
         # Message throughput test
         if total_connections > 0:
@@ -233,12 +249,16 @@ async def benchmark_p2p_performance():
             message_count = 0
 
             for i in range(10):  # Send 10 broadcasts
-                success = await nodes[0].broadcast_to_peers(f"BENCHMARK_{i}", {"test": i, "timestamp": time.time()})
+                success = await nodes[0].broadcast_to_peers(
+                    f"BENCHMARK_{i}", {"test": i, "timestamp": time.time()}
+                )
                 message_count += success
 
             message_time = time.time() - message_start
             logger.info(f"Sent {message_count} messages in {message_time:.2f} seconds")
-            logger.info(f"Message rate: {message_count / message_time:.1f} messages/second")
+            logger.info(
+                f"Message rate: {message_count / message_time:.1f} messages/second"
+            )
 
     except Exception as e:
         logger.exception(f"Performance benchmark failed: {e}")

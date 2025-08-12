@@ -176,7 +176,9 @@ async def test_enhanced_query_processing():
     print(f"Indexing completed in {indexing_time:.2f}s")
     print(f"  - Documents: {indexing_stats['documents_processed']}")
     print(f"  - Chunks: {indexing_stats['chunks_created']}")
-    print(f"  - Graph enabled: {indexing_stats.get('graph_integration_enabled', False)}")
+    print(
+        f"  - Graph enabled: {indexing_stats.get('graph_integration_enabled', False)}"
+    )
 
     # Test query decomposition
     print("\n[TEST] Testing Query Decomposition:")
@@ -234,7 +236,9 @@ async def test_enhanced_query_processing():
 
         print(f"  Total processing time: {processing_time:.1f}ms")
         print(f"  Overall confidence: {synthesized_answer.overall_confidence:.3f}")
-        print(f"  Trust-weighted confidence: {synthesized_answer.trust_weighted_confidence:.3f}")
+        print(
+            f"  Trust-weighted confidence: {synthesized_answer.trust_weighted_confidence:.3f}"
+        )
         print(f"  Completeness score: {synthesized_answer.completeness_score:.3f}")
         print(f"  Coherence score: {synthesized_answer.coherence_score:.3f}")
         print(f"  Primary sources: {len(synthesized_answer.primary_sources)}")
@@ -265,7 +269,9 @@ async def test_enhanced_query_processing():
                     "total_sections": len(synthesized_answer.detailed_sections),
                 },
                 "features": {
-                    "idea_boundaries_preserved": len(synthesized_answer.preserved_idea_boundaries),
+                    "idea_boundaries_preserved": len(
+                        synthesized_answer.preserved_idea_boundaries
+                    ),
                     "context_chain_length": len(synthesized_answer.context_chain),
                     "synthesis_method": synthesized_answer.synthesis_method,
                 },
@@ -285,8 +291,12 @@ async def test_enhanced_query_processing():
     complex_time = (time.perf_counter() - start_time) * 1000
 
     print(f"  Processing time: {complex_time:.1f}ms")
-    print(f"  Query complexity detected: {complex_result.query_decomposition.complexity_level.value}")
-    print(f"  Multi-hop reasoning: {complex_result.query_decomposition.requires_multi_hop}")
+    print(
+        f"  Query complexity detected: {complex_result.query_decomposition.complexity_level.value}"
+    )
+    print(
+        f"  Multi-hop reasoning: {complex_result.query_decomposition.requires_multi_hop}"
+    )
     print(f"  Context chain links: {len(complex_result.context_chain)}")
 
     # Show context chain
@@ -317,9 +327,15 @@ async def test_enhanced_query_processing():
 
     print(f"Queries processed: {stats['queries_processed']}")
     print("Performance:")
-    print(f"  - Avg decomposition time: {stats['performance']['avg_decomposition_time_ms']:.1f}ms")
-    print(f"  - Avg retrieval time: {stats['performance']['avg_retrieval_time_ms']:.1f}ms")
-    print(f"  - Avg synthesis time: {stats['performance']['avg_synthesis_time_ms']:.1f}ms")
+    print(
+        f"  - Avg decomposition time: {stats['performance']['avg_decomposition_time_ms']:.1f}ms"
+    )
+    print(
+        f"  - Avg retrieval time: {stats['performance']['avg_retrieval_time_ms']:.1f}ms"
+    )
+    print(
+        f"  - Avg synthesis time: {stats['performance']['avg_synthesis_time_ms']:.1f}ms"
+    )
     print(f"  - Total avg time: {stats['performance']['total_avg_time_ms']:.1f}ms")
 
     print("Query characteristics:")
@@ -336,26 +352,28 @@ async def test_enhanced_query_processing():
     print("=" * 60)
 
     # Processing time assessment
-    avg_processing_time = sum(r["processing_time_ms"] for r in enhanced_processing_results) / len(
-        enhanced_processing_results
-    )
+    avg_processing_time = sum(
+        r["processing_time_ms"] for r in enhanced_processing_results
+    ) / len(enhanced_processing_results)
 
     print("Performance Metrics:")
     print(f"  - Average processing time: {avg_processing_time:.1f}ms")
-    print(f"  - Target (<500ms): {'✅ Met' if avg_processing_time < 500 else '❌ Exceeded'}")
+    print(
+        f"  - Target (<500ms): {'✅ Met' if avg_processing_time < 500 else '❌ Exceeded'}"
+    )
 
     # Quality metrics assessment
-    avg_confidence = sum(r["confidence_metrics"]["overall"] for r in enhanced_processing_results) / len(
-        enhanced_processing_results
-    )
+    avg_confidence = sum(
+        r["confidence_metrics"]["overall"] for r in enhanced_processing_results
+    ) / len(enhanced_processing_results)
 
-    avg_completeness = sum(r["confidence_metrics"]["completeness"] for r in enhanced_processing_results) / len(
-        enhanced_processing_results
-    )
+    avg_completeness = sum(
+        r["confidence_metrics"]["completeness"] for r in enhanced_processing_results
+    ) / len(enhanced_processing_results)
 
-    avg_coherence = sum(r["confidence_metrics"]["coherence"] for r in enhanced_processing_results) / len(
-        enhanced_processing_results
-    )
+    avg_coherence = sum(
+        r["confidence_metrics"]["coherence"] for r in enhanced_processing_results
+    ) / len(enhanced_processing_results)
 
     print("\nQuality Metrics:")
     print(f"  - Average confidence: {avg_confidence:.3f}")
@@ -363,9 +381,13 @@ async def test_enhanced_query_processing():
     print(f"  - Average coherence: {avg_coherence:.3f}")
 
     # Feature validation
-    total_boundaries = sum(r["features"]["idea_boundaries_preserved"] for r in enhanced_processing_results)
+    total_boundaries = sum(
+        r["features"]["idea_boundaries_preserved"] for r in enhanced_processing_results
+    )
 
-    total_context_links = sum(r["features"]["context_chain_length"] for r in enhanced_processing_results)
+    total_context_links = sum(
+        r["features"]["context_chain_length"] for r in enhanced_processing_results
+    )
 
     print("\nEnhanced Features:")
     print(f"  - Idea boundaries preserved: {total_boundaries}")
@@ -393,7 +415,9 @@ async def test_enhanced_query_processing():
         print(f"  - {criterion.replace('_', ' ').title()}: {status}")
 
     success_rate = passed_criteria / total_criteria
-    print(f"\nOverall Success Rate: {success_rate:.1%} ({passed_criteria}/{total_criteria})")
+    print(
+        f"\nOverall Success Rate: {success_rate:.1%} ({passed_criteria}/{total_criteria})"
+    )
 
     if success_rate >= 0.8:
         print("🎉 EXCELLENT: Enhanced query processing system fully operational!")
@@ -423,7 +447,9 @@ async def test_enhanced_query_processing():
             "idea_boundaries_preserved": total_boundaries,
             "context_chain_links": total_context_links,
             "multi_hop_queries_processed": sum(
-                1 for r in decomposition_results if r["decomposition"]["requires_multi_hop"]
+                1
+                for r in decomposition_results
+                if r["decomposition"]["requires_multi_hop"]
             ),
         },
         "query_decomposition_results": decomposition_results,
@@ -434,7 +460,9 @@ async def test_enhanced_query_processing():
     with open("enhanced_query_processing_test_results.json", "w") as f:
         json.dump(test_results, f, indent=2, default=str)
 
-    print("\nDetailed test results saved to: enhanced_query_processing_test_results.json")
+    print(
+        "\nDetailed test results saved to: enhanced_query_processing_test_results.json"
+    )
 
     return success_rate >= 0.6
 

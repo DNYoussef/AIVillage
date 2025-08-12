@@ -4,10 +4,10 @@ Fixed critical test of the RAG system to verify actual functionality.
 """
 
 import asyncio
-from pathlib import Path
 import sys
 import time
 import traceback
+from pathlib import Path
 
 sys.path.insert(0, str(Path("src/production/rag/rag_system/core")))
 
@@ -59,13 +59,17 @@ def test_trust_scoring_actually_works():
             base_score=0.95, citation_count=200, source_quality=0.9
         )
 
-        pipeline.trust_cache["Low Trust Document"] = TrustMetrics(base_score=0.2, citation_count=5, source_quality=0.3)
+        pipeline.trust_cache["Low Trust Document"] = TrustMetrics(
+            base_score=0.2, citation_count=5, source_quality=0.3
+        )
 
         pipeline.index_documents([high_trust_doc, low_trust_doc])
 
         # Test if trust weighting actually affects results
         async def test_trust_ranking():
-            results, metrics = await pipeline.retrieve_with_trust(query="trust document content", k=2, trust_weight=0.5)
+            results, metrics = await pipeline.retrieve_with_trust(
+                query="trust document content", k=2, trust_weight=0.5
+            )
 
             if len(results) < 2:
                 print("FAIL: Not enough results to compare trust ranking")
@@ -75,7 +79,10 @@ def test_trust_scoring_actually_works():
             first_result = results[0]
             second_result = results[1]
 
-            if not hasattr(first_result, "trust_metrics") or first_result.trust_metrics is None:
+            if (
+                not hasattr(first_result, "trust_metrics")
+                or first_result.trust_metrics is None
+            ):
                 print("FAIL: First result missing trust metrics")
                 return False
 
@@ -84,7 +91,11 @@ def test_trust_scoring_actually_works():
                 return False
 
             trust1 = first_result.trust_metrics.trust_score
-            trust2 = second_result.trust_metrics.trust_score if second_result.trust_metrics else 0
+            trust2 = (
+                second_result.trust_metrics.trust_score
+                if second_result.trust_metrics
+                else 0
+            )
 
             bayesian1 = first_result.bayesian_score
             bayesian2 = second_result.bayesian_score
@@ -148,7 +159,9 @@ def test_cache_with_fixed_async():
             if semantic_result is not None:
                 print("PASS: Semantic matching works")
                 if semantic_result[1].get("semantic_match"):
-                    print(f"Similarity score: {semantic_result[1].get('similarity_score', 0):.3f}")
+                    print(
+                        f"Similarity score: {semantic_result[1].get('similarity_score', 0):.3f}"
+                    )
             else:
                 print("INFO: No semantic match found (may be expected)")
 
@@ -206,7 +219,9 @@ def test_monitoring_with_fixed_async():
             # Add a test circuit breaker
             from production_monitoring import CircuitBreaker
 
-            monitor.circuit_breakers[breaker_name] = CircuitBreaker(name=breaker_name, failure_threshold=3)
+            monitor.circuit_breakers[breaker_name] = CircuitBreaker(
+                name=breaker_name, failure_threshold=3
+            )
 
             # Test circuit breaker functionality
             breaker = monitor.circuit_breakers[breaker_name]
@@ -270,7 +285,8 @@ def test_actual_performance():
                     title=f"Performance Test Document {i}",
                     content=f"This is performance test document number {i}. " * 10
                     + "It contains content about artificial intelligence, machine learning, "
-                    + "deep learning, neural networks, and natural language processing. " * 5,
+                    + "deep learning, neural networks, and natural language processing. "
+                    * 5,
                     source_type="test",
                     metadata={"trust_score": 0.5 + (i * 0.05)},
                 )
@@ -281,7 +297,9 @@ def test_actual_performance():
             stats = pipeline.index_documents(docs)
             index_time = (time.perf_counter() - start) * 1000
 
-            print(f"Indexing took {index_time:.1f}ms for {stats['documents_processed']} docs")
+            print(
+                f"Indexing took {index_time:.1f}ms for {stats['documents_processed']} docs"
+            )
 
             if index_time > 5000:  # 5 seconds
                 print("WARN: Indexing is slow")
@@ -310,7 +328,9 @@ def test_actual_performance():
 
                 # Warm cache test
                 start = time.perf_counter()
-                cached_results, cached_metrics = await pipeline.retrieve_with_trust(query, k=5)
+                cached_results, cached_metrics = await pipeline.retrieve_with_trust(
+                    query, k=5
+                )
                 cached_latency = (time.perf_counter() - start) * 1000
 
                 cache_hit = cached_metrics.get("cache_hit", False)

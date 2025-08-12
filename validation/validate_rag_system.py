@@ -4,9 +4,9 @@ Tests RAG query, retrieval, FAISS integration, and graph functionality.
 """
 
 import logging
-from pathlib import Path
 import sys
 import time
+from pathlib import Path
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
@@ -23,7 +23,9 @@ except ImportError as e:
     print(f"Warning: Could not import RAG components: {e}")
     RAGPipeline = None
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 
@@ -95,7 +97,8 @@ class RAGSystemValidator:
 
             # Test with sample text
             sample_document = {
-                "content": "This is a sample document for testing RAG functionality. " * 10,
+                "content": "This is a sample document for testing RAG functionality. "
+                * 10,
                 "metadata": {"title": "Test Document", "source": "validation_test"},
             }
 
@@ -136,7 +139,9 @@ class RAGSystemValidator:
         try:
             # Test vector retriever
             retriever = VectorRetriever(
-                embedding_model="sentence-transformers/all-MiniLM-L6-v2", vector_store_type="faiss", top_k=3
+                embedding_model="sentence-transformers/all-MiniLM-L6-v2",
+                vector_store_type="faiss",
+                top_k=3,
             )
 
             if hasattr(retriever, "retrieve_similar"):
@@ -224,19 +229,32 @@ class RAGSystemValidator:
 
         # Calculate results
         total_tests = len(self.results)
-        successful_tests = sum(1 for r in self.results.values() if r["status"] == "success")
-        partial_tests = sum(1 for r in self.results.values() if r["status"] == "partial")
+        successful_tests = sum(
+            1 for r in self.results.values() if r["status"] == "success"
+        )
+        partial_tests = sum(
+            1 for r in self.results.values() if r["status"] == "partial"
+        )
 
         logger.info("=== RAG System Validation Results ===")
         for test_name, result in self.results.items():
-            status_emoji = {"success": "PASS", "partial": "WARN", "failed": "FAIL", "pending": "PEND"}
+            status_emoji = {
+                "success": "PASS",
+                "partial": "WARN",
+                "failed": "FAIL",
+                "pending": "PEND",
+            }
 
-            logger.info(f"[{status_emoji[result['status']]}] {test_name}: {result['status'].upper()}")
+            logger.info(
+                f"[{status_emoji[result['status']]}] {test_name}: {result['status'].upper()}"
+            )
             logger.info(f"   Time: {result['time']:.2f}s")
             logger.info(f"   Details: {result['details']}")
 
         success_rate = (successful_tests + partial_tests * 0.5) / total_tests
-        logger.info(f"\nRAG System Success Rate: {success_rate:.1%} ({successful_tests + partial_tests}/{total_tests})")
+        logger.info(
+            f"\nRAG System Success Rate: {success_rate:.1%} ({successful_tests + partial_tests}/{total_tests})"
+        )
 
         return self.results, success_rate
 

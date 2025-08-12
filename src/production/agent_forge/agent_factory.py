@@ -5,8 +5,8 @@ Auto-generated from agent specifications.
 
 import json
 import os
-from pathlib import Path
 import sys
+from pathlib import Path
 from typing import Any
 
 # Add the parent directory to the path to import our modules
@@ -100,7 +100,9 @@ class AgentFactory:
             agent_classes["sword_shield"] = SwordAndShieldAgent
         except ImportError:
             # Use generic agent if specialized not available
-            agent_classes["sword_shield"] = self._create_generic_agent_class("sword_shield")
+            agent_classes["sword_shield"] = self._create_generic_agent_class(
+                "sword_shield"
+            )
 
         # Legal AI Agent
         try:
@@ -243,9 +245,9 @@ class AgentFactory:
                 if not self.performance_history:
                     return {"performance": 0.7}
 
-                success_rate = sum(1 for p in self.performance_history if p.get("success", False)) / len(
-                    self.performance_history
-                )
+                success_rate = sum(
+                    1 for p in self.performance_history if p.get("success", False)
+                ) / len(self.performance_history)
 
                 return {
                     "success_rate": success_rate,
@@ -254,7 +256,9 @@ class AgentFactory:
 
         return GenericAgent
 
-    def create_agent(self, agent_spec: str | dict[str, Any], config: dict[str, Any] | None = None) -> BaseMetaAgent:
+    def create_agent(
+        self, agent_spec: str | dict[str, Any], config: dict[str, Any] | None = None
+    ) -> BaseMetaAgent:
         """Create an agent of the specified type.
 
         Parameters
@@ -364,7 +368,8 @@ class AgentFactory:
             expected_total = data.get("total_agents")
             if expected_total is not None and len(agent_types) != expected_total:
                 msg = (
-                    f"master_config.json declares {expected_total} agents but " f"{len(agent_types)} types were listed"
+                    f"master_config.json declares {expected_total} agents but "
+                    f"{len(agent_types)} types were listed"
                 )
                 raise ValueError(msg)
             return agent_types

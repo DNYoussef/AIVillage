@@ -2,9 +2,9 @@
 """Test 4-stage compression on a synthetic 1.5B parameter model."""
 
 import gc
-from pathlib import Path
 import sys
 import time
+from pathlib import Path
 
 from torch import nn
 
@@ -66,7 +66,9 @@ def analyze_model_structure(model):
         layer_info.append((name, param.shape, param_count, param_size_mb))
 
         if len(layer_info) <= 10:  # Show first 10 layers
-            print(f"  {name}: {tuple(param.shape)} = {param_count:,} params ({param_size_mb:.1f}MB)")
+            print(
+                f"  {name}: {tuple(param.shape)} = {param_count:,} params ({param_size_mb:.1f}MB)"
+            )
         elif len(layer_info) == 11:
             print("  ... (showing first 10 layers)")
 
@@ -120,7 +122,9 @@ def compress_stage1_bitnet(model):
 
             if layer_count <= 5:
                 ratio = original_size / layer_compressed
-                print(f"    {original_size:,} → {layer_compressed:,} bytes ({ratio:.1f}x) [{compress_time:.3f}s]")
+                print(
+                    f"    {original_size:,} → {layer_compressed:,} bytes ({ratio:.1f}x) [{compress_time:.3f}s]"
+                )
 
             # Clean up
             del compressed
@@ -135,8 +139,12 @@ def compress_stage1_bitnet(model):
 
     print("\nSTAGE 1 RESULTS:")
     print(f"  Layers processed: {layer_count}")
-    print(f"  Original size: {total_original:,} bytes ({total_original / (1024**3):.2f} GB)")
-    print(f"  Compressed size: {total_compressed:,} bytes ({total_compressed / (1024**2):.1f} MB)")
+    print(
+        f"  Original size: {total_original:,} bytes ({total_original / (1024**3):.2f} GB)"
+    )
+    print(
+        f"  Compressed size: {total_compressed:,} bytes ({total_compressed / (1024**2):.1f} MB)"
+    )
     print(f"  BitNet compression: {stage1_ratio:.1f}x")
 
     return stage1_ratio, total_compressed
@@ -155,7 +163,9 @@ def compress_stage2_seedlm(model, prev_size):
     compatible_layers = 0
     layer_count = 0
 
-    print(f"SeedLM config: {compressor.bits_per_weight} bits, block size: {compressor.C}")
+    print(
+        f"SeedLM config: {compressor.bits_per_weight} bits, block size: {compressor.C}"
+    )
     print("Testing layer compatibility...")
 
     for name, param in model.named_parameters():
@@ -170,7 +180,9 @@ def compress_stage2_seedlm(model, prev_size):
 
             try:
                 if compatible_layers <= 3:  # Test first few compatible layers
-                    print(f"  [{layer_count}] {name}: {tuple(param.shape)} - COMPATIBLE")
+                    print(
+                        f"  [{layer_count}] {name}: {tuple(param.shape)} - COMPATIBLE"
+                    )
 
                     start = time.time()
                     compressed = compressor.compress(param.data)
@@ -187,13 +199,17 @@ def compress_stage2_seedlm(model, prev_size):
 
                     orig_size = param.numel() * 4
                     ratio = orig_size / layer_size
-                    print(f"    {orig_size:,} → {layer_size:,} bytes ({ratio:.1f}x) [{compress_time:.3f}s]")
+                    print(
+                        f"    {orig_size:,} → {layer_size:,} bytes ({ratio:.1f}x) [{compress_time:.3f}s]"
+                    )
 
                     del compressed
 
                 else:
                     # Estimate for remaining compatible layers
-                    estimated_size = param.numel() * 4 / 5.3  # Use observed SeedLM ratio
+                    estimated_size = (
+                        param.numel() * 4 / 5.3
+                    )  # Use observed SeedLM ratio
                     total_stage2 += estimated_size
 
             except Exception as e:
@@ -232,7 +248,9 @@ def compress_stage3_vptq(model, prev_size):
     total_stage3 = 0
     layer_count = 0
 
-    print(f"VPTQ config: {compressor.bits} bits, codebook size: {compressor.codebook_size}")
+    print(
+        f"VPTQ config: {compressor.bits} bits, codebook size: {compressor.codebook_size}"
+    )
     print("Compressing layers...")
 
     for name, param in model.named_parameters():
@@ -259,7 +277,9 @@ def compress_stage3_vptq(model, prev_size):
 
                 orig_size = param.numel() * 4
                 ratio = orig_size / layer_size
-                print(f"    {orig_size:,} → {layer_size:,} bytes ({ratio:.1f}x) [{compress_time:.3f}s]")
+                print(
+                    f"    {orig_size:,} → {layer_size:,} bytes ({ratio:.1f}x) [{compress_time:.3f}s]"
+                )
 
                 del compressed
 
@@ -329,7 +349,9 @@ def test_1_5b_compression():
     total_params, total_size_gb = analyze_model_structure(model)
 
     if total_params < 1_000_000_000:  # Less than 1B
-        print(f"⚠️ Warning: Model has {total_params / 1_000_000_000:.2f}B params, less than target 1.5B")
+        print(
+            f"⚠️ Warning: Model has {total_params / 1_000_000_000:.2f}B params, less than target 1.5B"
+        )
 
     print("\nStarting 4-stage compression...")
 

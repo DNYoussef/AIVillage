@@ -3,12 +3,12 @@
 Enhanced logging setup for debug mode following CODEX Integration Requirements.
 """
 
-from datetime import datetime
 import logging
 import logging.handlers
 import os
-from pathlib import Path
 import sys
+from datetime import datetime
+from pathlib import Path
 from typing import Any
 
 
@@ -136,8 +136,12 @@ def setup_debug_logging(
     # Log environment information
     debug_mode = os.getenv("AIVILLAGE_DEBUG_MODE", "false")
     aivillage_logger.info(f"AIVILLAGE_DEBUG_MODE: {debug_mode}")
-    aivillage_logger.info(f"AIVILLAGE_LOG_LEVEL: {os.getenv('AIVILLAGE_LOG_LEVEL', 'not set')}")
-    aivillage_logger.info(f"AIVILLAGE_PROFILE_PERFORMANCE: {os.getenv('AIVILLAGE_PROFILE_PERFORMANCE', 'not set')}")
+    aivillage_logger.info(
+        f"AIVILLAGE_LOG_LEVEL: {os.getenv('AIVILLAGE_LOG_LEVEL', 'not set')}"
+    )
+    aivillage_logger.info(
+        f"AIVILLAGE_PROFILE_PERFORMANCE: {os.getenv('AIVILLAGE_PROFILE_PERFORMANCE', 'not set')}"
+    )
 
     return aivillage_logger
 
@@ -280,7 +284,9 @@ class RequestResponseLogger:
         duration_str = f" ({duration_ms:.2f}ms)" if duration_ms else ""
         size_str = f" [{value_size} bytes]" if value_size else ""
 
-        self.logger.debug(f"[CACHE_{hit_str}]{duration_str} {operation}: {display_key}{size_str}")
+        self.logger.debug(
+            f"[CACHE_{hit_str}]{duration_str} {operation}: {display_key}{size_str}"
+        )
 
     def _sanitize_headers(self, headers: dict[str, str]) -> dict[str, str]:
         """Remove sensitive information from headers."""
@@ -315,11 +321,15 @@ class RequestResponseLogger:
 class PerformanceTimer:
     """Context manager for timing operations in debug mode."""
 
-    def __init__(self, operation_name: str, logger: logging.Logger | None = None) -> None:
+    def __init__(
+        self, operation_name: str, logger: logging.Logger | None = None
+    ) -> None:
         self.operation_name = operation_name
         self.logger = logger or logging.getLogger("aivillage.performance")
         self.start_time = None
-        self.enabled = os.getenv("AIVILLAGE_PROFILE_PERFORMANCE", "false").lower() == "true"
+        self.enabled = (
+            os.getenv("AIVILLAGE_PROFILE_PERFORMANCE", "false").lower() == "true"
+        )
 
     def __enter__(self):
         if self.enabled:
@@ -337,10 +347,14 @@ class PerformanceTimer:
             duration_ms = duration * 1000
 
             if exc_type:
-                self.logger.error(f"[TIMER_ERROR] {self.operation_name} failed after {duration_ms:.2f}ms: {exc_val}")
+                self.logger.error(
+                    f"[TIMER_ERROR] {self.operation_name} failed after {duration_ms:.2f}ms: {exc_val}"
+                )
             else:
                 level = logging.WARNING if duration_ms > 1000 else logging.DEBUG
-                self.logger.log(level, f"[TIMER_END] {self.operation_name}: {duration_ms:.2f}ms")
+                self.logger.log(
+                    level, f"[TIMER_END] {self.operation_name}: {duration_ms:.2f}ms"
+                )
 
     def get_duration_ms(self) -> float | None:
         """Get current duration in milliseconds."""

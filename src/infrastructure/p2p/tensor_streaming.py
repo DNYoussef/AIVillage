@@ -2,12 +2,12 @@
 
 import asyncio
 import base64
-from collections.abc import Iterator
 import hashlib
 import io
 import json
 import logging
 import time
+from collections.abc import Iterator
 from typing import Any
 
 # Import compression
@@ -125,7 +125,9 @@ class TensorStreamer:
             return tensor
         return np_array
 
-    def compress_and_chunk_tensor(self, tensor: Any, transfer_id: str | None = None) -> Iterator[TensorChunk]:
+    def compress_and_chunk_tensor(
+        self, tensor: Any, transfer_id: str | None = None
+    ) -> Iterator[TensorChunk]:
         """Compress tensor and yield chunks."""
         if not transfer_id:
             transfer_id = hashlib.md5(str(time.time()).encode()).hexdigest()[:8]
@@ -135,7 +137,9 @@ class TensorStreamer:
             serialized = self._serialize_tensor(tensor)
 
             # Compress
-            compressed = lz4.frame.compress(serialized, compression_level=self.compression_level)
+            compressed = lz4.frame.compress(
+                serialized, compression_level=self.compression_level
+            )
 
             logger.info(
                 f"Compressed tensor: {len(serialized)} -> {len(compressed)} bytes "
@@ -186,7 +190,9 @@ class TensorStreamer:
                 del self.active_transfers[transfer_id]
             raise
 
-    async def stream_tensor_to_peer(self, p2p_node, peer_id: str, tensor: Any, transfer_id: str | None = None) -> bool:
+    async def stream_tensor_to_peer(
+        self, p2p_node, peer_id: str, tensor: Any, transfer_id: str | None = None
+    ) -> bool:
         """Stream tensor to specific peer with bandwidth limiting."""
         try:
             total_bytes = 0
@@ -214,9 +220,13 @@ class TensorStreamer:
 
                 # Bandwidth throttling
                 if self.bandwidth_limit_kbps:
-                    await self._throttle_bandwidth(len(chunk.data), start_time, total_bytes)
+                    await self._throttle_bandwidth(
+                        len(chunk.data), start_time, total_bytes
+                    )
 
-                logger.debug(f"Sent chunk {chunk.chunk_id}/{chunk.total_chunks} to {peer_id}")
+                logger.debug(
+                    f"Sent chunk {chunk.chunk_id}/{chunk.total_chunks} to {peer_id}"
+                )
 
             logger.info(
                 f"Successfully streamed tensor to {peer_id} "
@@ -228,13 +238,17 @@ class TensorStreamer:
             logger.exception(f"Failed to stream tensor to {peer_id}: {e}")
             return False
 
-    async def _throttle_bandwidth(self, bytes_sent: int, start_time: float, total_bytes: int) -> None:
+    async def _throttle_bandwidth(
+        self, bytes_sent: int, start_time: float, total_bytes: int
+    ) -> None:
         """Apply bandwidth throttling."""
         if not self.bandwidth_limit_kbps:
             return
 
         elapsed = time.time() - start_time
-        target_bytes_per_second = (self.bandwidth_limit_kbps * 1024) / 8  # Convert to bytes/sec
+        target_bytes_per_second = (
+            self.bandwidth_limit_kbps * 1024
+        ) / 8  # Convert to bytes/sec
         target_total_bytes = elapsed * target_bytes_per_second
 
         if total_bytes > target_total_bytes:
@@ -256,7 +270,9 @@ class TensorStreamer:
             # Stream to all peers in parallel
             tasks = []
             for peer_id in peer_ids:
-                task = self._stream_model_to_single_peer(p2p_node, model_state_dict, peer_id)
+                task = self._stream_model_to_single_peer(
+                    p2p_node, model_state_dict, peer_id
+                )
                 tasks.append(task)
 
             completed_results = await asyncio.gather(*tasks, return_exceptions=True)
@@ -270,11 +286,15 @@ class TensorStreamer:
         else:
             # Stream sequentially
             for peer_id in peer_ids:
-                results[peer_id] = await self._stream_model_to_single_peer(p2p_node, model_state_dict, peer_id)
+                results[peer_id] = await self._stream_model_to_single_peer(
+                    p2p_node, model_state_dict, peer_id
+                )
 
         return results
 
-    async def _stream_model_to_single_peer(self, p2p_node, model_state_dict: dict[str, Any], peer_id: str) -> bool:
+    async def _stream_model_to_single_peer(
+        self, p2p_node, model_state_dict: dict[str, Any], peer_id: str
+    ) -> bool:
         """Stream model to single peer."""
         try:
             total_params = 0
@@ -288,7 +308,9 @@ class TensorStreamer:
 
                 total_params += param_count
 
-                logger.info(f"Streaming layer {layer_name} to {peer_id} ({param_count} parameters)")
+                logger.info(
+                    f"Streaming layer {layer_name} to {peer_id} ({param_count} parameters)"
+                )
 
                 success = await self.stream_tensor_to_peer(
                     p2p_node,
@@ -304,7 +326,8 @@ class TensorStreamer:
                     return False
 
             logger.info(
-                f"Successfully streamed {successful_layers} layers " f"({total_params} total parameters) to {peer_id}"
+                f"Successfully streamed {successful_layers} layers "
+                f"({total_params} total parameters) to {peer_id}"
             )
             return True
 
@@ -370,7 +393,9 @@ class TensorReceiver:
             # Store chunk
             self.pending_transfers[transfer_id]["chunks"][chunk_id] = chunk_data
 
-            logger.debug(f"Received chunk {chunk_id}/{total_chunks} for transfer {transfer_id}")
+            logger.debug(
+                f"Received chunk {chunk_id}/{total_chunks} for transfer {transfer_id}"
+            )
 
             # Check if transfer is complete
             chunks = self.pending_transfers[transfer_id]["chunks"]
@@ -422,7 +447,10 @@ class TensorReceiver:
             transfer_info["completion_time"] = time.time()
 
             duration = transfer_info["completion_time"] - transfer_info["start_time"]
-            logger.info(f"Successfully reconstructed tensor for transfer {transfer_id} " f"in {duration:.2f}s")
+            logger.info(
+                f"Successfully reconstructed tensor for transfer {transfer_id} "
+                f"in {duration:.2f}s"
+            )
 
         except Exception as e:
             logger.exception(f"Failed to complete transfer {transfer_id}: {e}")
@@ -436,7 +464,11 @@ class TensorReceiver:
 
     def get_pending_transfers(self) -> list[str]:
         """Get list of pending transfer IDs."""
-        return [tid for tid, info in self.pending_transfers.items() if not info.get("completed", False)]
+        return [
+            tid
+            for tid, info in self.pending_transfers.items()
+            if not info.get("completed", False)
+        ]
 
     def cleanup_completed_transfers(self, max_age_seconds: int = 3600) -> None:
         """Clean up old completed transfers."""

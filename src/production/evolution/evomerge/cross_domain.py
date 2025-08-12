@@ -40,7 +40,9 @@ def get_model_domain(model: torch.nn.Module, tokenizer: AutoTokenizer) -> ModelD
     else:
         task_type = "unknown"
 
-    return ModelDomain(name=primary_domain, architecture=architecture, task_type=task_type)
+    return ModelDomain(
+        name=primary_domain, architecture=architecture, task_type=task_type
+    )
 
 
 def evaluate_cross_domain_model(
@@ -58,7 +60,9 @@ def evaluate_cross_domain_model(
         results["writing_score"] = evaluate_writing(model, tokenizer)
 
     # Evaluate on general tasks
-    results["zero_shot_classification"] = evaluate_zero_shot_classification(model, tokenizer)
+    results["zero_shot_classification"] = evaluate_zero_shot_classification(
+        model, tokenizer
+    )
     results["zero_shot_qa"] = evaluate_zero_shot_qa(model, tokenizer)
 
     # Calculate perplexity on a general text
@@ -74,7 +78,9 @@ def evaluate_cross_domain_model(
     return results
 
 
-def merge_cross_domain_models(models: list[torch.nn.Module], merge_settings: MergeSettings) -> torch.nn.Module:
+def merge_cross_domain_models(
+    models: list[torch.nn.Module], merge_settings: MergeSettings
+) -> torch.nn.Module:
     """Merge models from different domains using a more advanced strategy."""
     base_model = models[0]
     num_models = len(models)
@@ -99,7 +105,9 @@ def merge_cross_domain_models(models: list[torch.nn.Module], merge_settings: Mer
     return base_model
 
 
-def adapt_model_to_domain(model: torch.nn.Module, target_domain: ModelDomain) -> torch.nn.Module:
+def adapt_model_to_domain(
+    model: torch.nn.Module, target_domain: ModelDomain
+) -> torch.nn.Module:
     """Adapt a merged model to a specific target domain."""
     # Add domain-specific adapter layers
     adapter_config = {
@@ -108,7 +116,9 @@ def adapt_model_to_domain(model: torch.nn.Module, target_domain: ModelDomain) ->
         "writing": {"hidden_size": 128, "num_layers": 3},
     }
 
-    config = adapter_config.get(target_domain.name, {"hidden_size": 64, "num_layers": 2})
+    config = adapter_config.get(
+        target_domain.name, {"hidden_size": 64, "num_layers": 2}
+    )
 
     # Add adapter layers to the model
     for i in range(len(model.transformer.h)):
@@ -148,7 +158,9 @@ def cross_domain_fine_tuning(
     for epoch in range(num_epochs):
         total_loss = 0
         for text in train_data:
-            inputs = tokenizer(text, return_tensors="pt", truncation=True, max_length=512)
+            inputs = tokenizer(
+                text, return_tensors="pt", truncation=True, max_length=512
+            )
             outputs = model(**inputs, labels=inputs["input_ids"])
             loss = outputs.loss
             total_loss += loss.item()
@@ -171,7 +183,10 @@ def cross_domain_merge_and_adapt(
     train_data: list[str],
 ) -> torch.nn.Module:
     # Detect domains of input models
-    domains = [get_model_domain(model, tokenizer) for model, tokenizer in zip(models, tokenizers, strict=False)]
+    domains = [
+        get_model_domain(model, tokenizer)
+        for model, tokenizer in zip(models, tokenizers, strict=False)
+    ]
     print(f"Input model domains: {[domain.name for domain in domains]}")
 
     # Merge models
@@ -183,11 +198,15 @@ def cross_domain_merge_and_adapt(
     print(f"Model adapted to target domain: {target_domain.name}")
 
     # Fine-tune the adapted model
-    fine_tuned_model = cross_domain_fine_tuning(adapted_model, tokenizers[0], target_domain, train_data)
+    fine_tuned_model = cross_domain_fine_tuning(
+        adapted_model, tokenizers[0], target_domain, train_data
+    )
     print("Model fine-tuned on domain-specific data")
 
     # Evaluate the final model
-    evaluation_results = evaluate_cross_domain_model(fine_tuned_model, tokenizers[0], target_domain)
+    evaluation_results = evaluate_cross_domain_model(
+        fine_tuned_model, tokenizers[0], target_domain
+    )
     print(f"Final model evaluation results: {evaluation_results}")
 
     return fine_tuned_model

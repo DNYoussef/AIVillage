@@ -83,7 +83,9 @@ def check_integration() -> None:
     print("INTEGRATION STATUS: CONFIGURED")
     print("Ready for RAG pipeline deployment")
     print("\nNext steps:")
-    print("1. Install dependencies: pip install sentence-transformers faiss-cpu rank-bm25")
+    print(
+        "1. Install dependencies: pip install sentence-transformers faiss-cpu rank-bm25"
+    )
     print("2. Run API server: python src/production/rag/rag_api_server.py")
     print("3. Test endpoint: GET http://localhost:8082/health/rag")
 

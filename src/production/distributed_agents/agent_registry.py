@@ -42,5 +42,6 @@ class DistributedAgentRegistry:
     def __init__(self) -> None:
         # Pre-populate registry with all known agent types
         self.registry: dict[Any, AgentLocation] = {
-            name: AgentLocation(agent_type=name, device_id="") for name in ALL_AGENT_TYPES
+            name: AgentLocation(agent_type=name, device_id="")
+            for name in ALL_AGENT_TYPES
         }

@@ -1,8 +1,8 @@
 import asyncio
-from pathlib import Path
 import sys
 import time
 import types
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -27,12 +27,20 @@ class DummyEmbedder:
         return self.dim
 
 
-sys.modules["sentence_transformers"] = types.SimpleNamespace(SentenceTransformer=DummyEmbedder)
+sys.modules["sentence_transformers"] = types.SimpleNamespace(
+    SentenceTransformer=DummyEmbedder
+)
 
 # Import the pipeline module directly from the source tree
 sys.path.insert(
     0,
-    str(Path(__file__).resolve().parents[2] / "src" / "production" / "rag" / "rag_system"),
+    str(
+        Path(__file__).resolve().parents[2]
+        / "src"
+        / "production"
+        / "rag"
+        / "rag_system"
+    ),
 )
 from core.pipeline import Document, EnhancedRAGPipeline
 
@@ -40,7 +48,10 @@ from core.pipeline import Document, EnhancedRAGPipeline
 def build_docs(n: int = 50):
     """Create ``n`` small synthetic documents for testing."""
 
-    return [Document(id=str(i), text=f"This is document number {i} about AI village") for i in range(n)]
+    return [
+        Document(id=str(i), text=f"This is document number {i} about AI village")
+        for i in range(n)
+    ]
 
 
 @pytest.mark.slow
@@ -75,6 +86,8 @@ def test_concurrent_queries():
     pipeline.process_documents(build_docs(200))
 
     async def run_queries():
-        await asyncio.gather(*(pipeline.retrieve(f"document number {i}") for i in range(5)))
+        await asyncio.gather(
+            *(pipeline.retrieve(f"document number {i}") for i in range(5))
+        )
 
     asyncio.run(run_queries())

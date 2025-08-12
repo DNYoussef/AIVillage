@@ -9,9 +9,9 @@ Provides automatic discovery and registration of agent services:
 
 import asyncio
 import contextlib
-from dataclasses import asdict, dataclass
 import logging
 import time
+from dataclasses import asdict, dataclass
 
 logger = logging.getLogger(__name__)
 
@@ -147,7 +147,9 @@ class ServiceRegistry:
 
     def get_registry_stats(self) -> dict:
         """Get registry statistics."""
-        active_count = len([s for s in self.services.values() if s.is_alive(self.heartbeat_timeout)])
+        active_count = len(
+            [s for s in self.services.values() if s.is_alive(self.heartbeat_timeout)]
+        )
 
         return {
             "total_services": len(self.services),
@@ -159,7 +161,8 @@ class ServiceRegistry:
                     [
                         s
                         for s in self.services.values()
-                        if s.service_type == stype and s.is_alive(self.heartbeat_timeout)
+                        if s.service_type == stype
+                        and s.is_alive(self.heartbeat_timeout)
                     ]
                 )
                 for stype in self.service_types
@@ -225,16 +228,22 @@ class ServiceDiscovery:
         """Send heartbeat for a service."""
         return self.registry.heartbeat(agent_id, service_type)
 
-    async def discover_services(self, service_type: str | None = None) -> list[ServiceInfo]:
+    async def discover_services(
+        self, service_type: str | None = None
+    ) -> list[ServiceInfo]:
         """Discover available services."""
         return self.registry.discover_services(service_type)
 
     async def find_service_by_capability(self, capability: str) -> list[ServiceInfo]:
         """Find services that advertise a specific capability."""
         all_services = self.registry.discover_services()
-        return [service for service in all_services if capability in service.capabilities]
+        return [
+            service for service in all_services if capability in service.capabilities
+        ]
 
-    async def get_best_service(self, service_type: str, prefer_local: bool = True) -> ServiceInfo | None:
+    async def get_best_service(
+        self, service_type: str, prefer_local: bool = True
+    ) -> ServiceInfo | None:
         """Get the best available service of a given type."""
         services = self.registry.discover_services(service_type)
 
@@ -243,7 +252,9 @@ class ServiceDiscovery:
 
         # Simple selection strategy: prefer local services, then by load
         if prefer_local:
-            local_services = [s for s in services if s.host in ["localhost", "127.0.0.1"]]
+            local_services = [
+                s for s in services if s.host in ["localhost", "127.0.0.1"]
+            ]
             if local_services:
                 return local_services[0]
 
@@ -292,7 +303,9 @@ async def register_service(
 ) -> bool:
     """Register a service using the global discovery system."""
     discovery = await get_service_discovery()
-    return await discovery.register_service(agent_id, service_type, host, port, capabilities, metadata)
+    return await discovery.register_service(
+        agent_id, service_type, host, port, capabilities, metadata
+    )
 
 
 async def discover_services(service_type: str | None = None) -> list[ServiceInfo]:
@@ -315,10 +328,22 @@ if __name__ == "__main__":
         await discovery.start()
 
         # Register some test services
-        await discovery.register_service("agent1", "rag", "localhost", 8001, ["embedding", "search"], {"model": "BERT"})
+        await discovery.register_service(
+            "agent1",
+            "rag",
+            "localhost",
+            8001,
+            ["embedding", "search"],
+            {"model": "BERT"},
+        )
 
         await discovery.register_service(
-            "agent2", "p2p", "localhost", 8002, ["messaging", "discovery"], {"protocol": "libp2p"}
+            "agent2",
+            "p2p",
+            "localhost",
+            8002,
+            ["messaging", "discovery"],
+            {"protocol": "libp2p"},
         )
 
         # Test discovery

@@ -4,22 +4,22 @@ Verifies all CODEX integration services are running and responding correctly
 """
 
 import asyncio
-from dataclasses import dataclass, field
-from datetime import datetime
 import json
 import logging
-from pathlib import Path
 import socket
 import struct
 import subprocess
 import sys
 import time
+from dataclasses import dataclass, field
+from datetime import datetime
+from pathlib import Path
 
 try:
     import aiohttp
-    from colorama import Fore, Style, init
     import redis
     import websockets
+    from colorama import Fore, Style, init
 except ImportError as e:
     print(f"Missing dependencies: {e}")
     print("Installing required packages...")
@@ -37,15 +37,17 @@ except ImportError as e:
         check=False,
     )
     import aiohttp
-    from colorama import Fore, Style, init
     import redis
     import websockets
+    from colorama import Fore, Style, init
 
 # Initialize colorama for colored output
 init(autoreset=True)
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 
@@ -186,7 +188,9 @@ class ServiceHealthValidator:
 
         except (ConnectionRefusedError, asyncio.TimeoutError, OSError) as e:
             latency = (time.time() - start_time) * 1000
-            return TestResult(service=endpoint.name, success=False, latency_ms=latency, error=str(e))
+            return TestResult(
+                service=endpoint.name, success=False, latency_ms=latency, error=str(e)
+            )
 
     async def test_udp_port(self, endpoint: ServiceEndpoint) -> TestResult:
         """Test UDP port connectivity (for mDNS)"""
@@ -203,7 +207,9 @@ class ServiceHealthValidator:
                 try:
                     sock.bind(("", endpoint.port))
                     # Join multicast group
-                    mreq = struct.pack("4sl", socket.inet_aton(endpoint.host), socket.INADDR_ANY)
+                    mreq = struct.pack(
+                        "4sl", socket.inet_aton(endpoint.host), socket.INADDR_ANY
+                    )
                     sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
 
                     # Send mDNS query
@@ -224,7 +230,9 @@ class ServiceHealthValidator:
                     error = str(e)
             else:
                 # Regular UDP test
-                sock.sendto(endpoint.test_data or b"ping", (endpoint.host, endpoint.port))
+                sock.sendto(
+                    endpoint.test_data or b"ping", (endpoint.host, endpoint.port)
+                )
                 success = True
                 response_data = None
 
@@ -248,7 +256,9 @@ class ServiceHealthValidator:
 
         except Exception as e:
             latency = (time.time() - start_time) * 1000
-            return TestResult(service=endpoint.name, success=False, latency_ms=latency, error=str(e))
+            return TestResult(
+                service=endpoint.name, success=False, latency_ms=latency, error=str(e)
+            )
 
     async def test_http_endpoint(self, endpoint: ServiceEndpoint) -> TestResult:
         """Test HTTP endpoint"""
@@ -257,7 +267,9 @@ class ServiceHealthValidator:
 
         try:
             async with aiohttp.ClientSession() as session:
-                async with session.get(url, timeout=aiohttp.ClientTimeout(total=endpoint.timeout)) as response:
+                async with session.get(
+                    url, timeout=aiohttp.ClientTimeout(total=endpoint.timeout)
+                ) as response:
                     latency = (time.time() - start_time) * 1000
 
                     # Check response status
@@ -267,7 +279,10 @@ class ServiceHealthValidator:
 
                             # Validate expected response if provided
                             if endpoint.expected_response:
-                                matches = all(data.get(k) == v for k, v in endpoint.expected_response.items())
+                                matches = all(
+                                    data.get(k) == v
+                                    for k, v in endpoint.expected_response.items()
+                                )
                                 if not matches:
                                     return TestResult(
                                         service=endpoint.name,
@@ -301,7 +316,9 @@ class ServiceHealthValidator:
 
         except (aiohttp.ClientError, asyncio.TimeoutError) as e:
             latency = (time.time() - start_time) * 1000
-            return TestResult(service=endpoint.name, success=False, latency_ms=latency, error=str(e))
+            return TestResult(
+                service=endpoint.name, success=False, latency_ms=latency, error=str(e)
+            )
 
     async def test_websocket(self, endpoint: ServiceEndpoint) -> TestResult:
         """Test WebSocket connection"""
@@ -338,7 +355,9 @@ class ServiceHealthValidator:
             OSError,
         ) as e:
             latency = (time.time() - start_time) * 1000
-            return TestResult(service=endpoint.name, success=False, latency_ms=latency, error=str(e))
+            return TestResult(
+                service=endpoint.name, success=False, latency_ms=latency, error=str(e)
+            )
 
     def test_redis(self, endpoint: ServiceEndpoint) -> TestResult:
         """Test Redis connectivity"""
@@ -379,7 +398,9 @@ class ServiceHealthValidator:
 
         except (redis.ConnectionError, redis.TimeoutError) as e:
             latency = (time.time() - start_time) * 1000
-            return TestResult(service=endpoint.name, success=False, latency_ms=latency, error=str(e))
+            return TestResult(
+                service=endpoint.name, success=False, latency_ms=latency, error=str(e)
+            )
 
     async def test_service(self, endpoint: ServiceEndpoint) -> TestResult:
         """Test a single service endpoint"""
@@ -449,7 +470,9 @@ class ServiceHealthValidator:
         # Calculate statistics
         successful = sum(1 for r in results if r.success)
         failed = len(results) - successful
-        avg_latency = sum(r.latency_ms for r in results) / len(results) if results else 0
+        avg_latency = (
+            sum(r.latency_ms for r in results) / len(results) if results else 0
+        )
 
         stats = {
             "total_tests": len(results),
@@ -479,7 +502,9 @@ class ServiceHealthValidator:
 
             print(f"\n{result.service}:")
             print(f"  Status: {status}")
-            print(f"  Latency: {latency_color}{result.latency_ms:.2f}ms{Style.RESET_ALL}")
+            print(
+                f"  Latency: {latency_color}{result.latency_ms:.2f}ms{Style.RESET_ALL}"
+            )
 
             if result.error:
                 print(f"  Error: {Fore.RED}{result.error}{Style.RESET_ALL}")
@@ -493,18 +518,26 @@ class ServiceHealthValidator:
         print("=" * 80)
 
         success_color = (
-            Fore.GREEN if stats["success_rate"] > 90 else Fore.YELLOW if stats["success_rate"] > 70 else Fore.RED
+            Fore.GREEN
+            if stats["success_rate"] > 90
+            else Fore.YELLOW
+            if stats["success_rate"] > 70
+            else Fore.RED
         )
 
         print(f"Total Tests: {stats['total_tests']}")
         print(f"Successful: {Fore.GREEN}{stats['successful']}{Style.RESET_ALL}")
         print(f"Failed: {Fore.RED}{stats['failed']}{Style.RESET_ALL}")
-        print(f"Success Rate: {success_color}{stats['success_rate']:.1f}%{Style.RESET_ALL}")
+        print(
+            f"Success Rate: {success_color}{stats['success_rate']:.1f}%{Style.RESET_ALL}"
+        )
         print(f"Average Latency: {stats['avg_latency_ms']:.2f}ms")
 
         # Identify critical issues
         if stats["failed"] > 0:
-            print(f"\n{Fore.YELLOW}{Style.BRIGHT}CRITICAL ISSUES FOUND:{Style.RESET_ALL}")
+            print(
+                f"\n{Fore.YELLOW}{Style.BRIGHT}CRITICAL ISSUES FOUND:{Style.RESET_ALL}"
+            )
             for result in results:
                 if not result.success:
                     print(f"  - {result.service}: {result.error}")
@@ -535,7 +568,9 @@ class ServiceHealthValidator:
 
     async def auto_fix_issues(self, results: list[TestResult]):
         """Attempt to automatically fix identified issues"""
-        print(f"\n{Style.BRIGHT}ATTEMPTING AUTO-FIX FOR FAILED SERVICES...{Style.RESET_ALL}")
+        print(
+            f"\n{Style.BRIGHT}ATTEMPTING AUTO-FIX FOR FAILED SERVICES...{Style.RESET_ALL}"
+        )
 
         for result in results:
             if not result.success:
@@ -543,15 +578,21 @@ class ServiceHealthValidator:
 
                 # Determine fix based on service type
                 if "Connection refused" in str(result.error):
-                    print(f"  {Fore.YELLOW}Service not running. Attempting to start...{Style.RESET_ALL}")
+                    print(
+                        f"  {Fore.YELLOW}Service not running. Attempting to start...{Style.RESET_ALL}"
+                    )
                     # Would implement actual service start logic here
 
                 elif "timeout" in str(result.error).lower():
-                    print(f"  {Fore.YELLOW}Service timeout. Checking firewall and network...{Style.RESET_ALL}")
+                    print(
+                        f"  {Fore.YELLOW}Service timeout. Checking firewall and network...{Style.RESET_ALL}"
+                    )
                     # Would implement firewall check and network diagnostics
 
                 elif "HTTP" in result.service:
-                    print(f"  {Fore.YELLOW}HTTP service issue. Checking configuration...{Style.RESET_ALL}")
+                    print(
+                        f"  {Fore.YELLOW}HTTP service issue. Checking configuration...{Style.RESET_ALL}"
+                    )
                     # Would check and fix HTTP service configuration
 
 

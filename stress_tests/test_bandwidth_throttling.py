@@ -92,4 +92,3 @@ async def test_concurrent_streams_respect_global_limit(monkeypatch):
     assert elapsed >= 0.9, f"Transfers finished too quickly: {elapsed}s"
 
     BandwidthController.reset()
-

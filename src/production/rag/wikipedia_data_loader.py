@@ -3,17 +3,16 @@
 Loads and processes Wikipedia articles for educational content retrieval.
 """
 
-from datetime import datetime
 import hashlib
 import json
 import logging
-from pathlib import Path
 import sqlite3
+from datetime import datetime
+from pathlib import Path
 from typing import Any
 
-from bs4 import BeautifulSoup
 import requests
-
+from bs4 import BeautifulSoup
 from rag_system.core.codex_rag_integration import Document
 
 # Configure logging
@@ -136,12 +135,24 @@ class WikipediaDataLoader:
         )
 
         # Create indices for performance
-        cursor.execute("CREATE INDEX IF NOT EXISTS idx_documents_hash ON documents(file_hash)")
-        cursor.execute("CREATE INDEX IF NOT EXISTS idx_documents_type ON documents(document_type)")
-        cursor.execute("CREATE INDEX IF NOT EXISTS idx_chunks_document ON chunks(document_id)")
-        cursor.execute("CREATE INDEX IF NOT EXISTS idx_chunks_index ON chunks(chunk_index)")
-        cursor.execute("CREATE INDEX IF NOT EXISTS idx_embeddings_faiss ON embeddings_metadata(faiss_index_id)")
-        cursor.execute("CREATE INDEX IF NOT EXISTS idx_embeddings_queries ON embeddings_metadata(query_count)")
+        cursor.execute(
+            "CREATE INDEX IF NOT EXISTS idx_documents_hash ON documents(file_hash)"
+        )
+        cursor.execute(
+            "CREATE INDEX IF NOT EXISTS idx_documents_type ON documents(document_type)"
+        )
+        cursor.execute(
+            "CREATE INDEX IF NOT EXISTS idx_chunks_document ON chunks(document_id)"
+        )
+        cursor.execute(
+            "CREATE INDEX IF NOT EXISTS idx_chunks_index ON chunks(chunk_index)"
+        )
+        cursor.execute(
+            "CREATE INDEX IF NOT EXISTS idx_embeddings_faiss ON embeddings_metadata(faiss_index_id)"
+        )
+        cursor.execute(
+            "CREATE INDEX IF NOT EXISTS idx_embeddings_queries ON embeddings_metadata(query_count)"
+        )
 
         conn.commit()
         conn.close()
@@ -156,7 +167,9 @@ class WikipediaDataLoader:
             summary_response = requests.get(summary_url, timeout=10)
 
             if summary_response.status_code != 200:
-                logger.warning(f"Failed to fetch {title}: {summary_response.status_code}")
+                logger.warning(
+                    f"Failed to fetch {title}: {summary_response.status_code}"
+                )
                 return None
 
             summary_data = summary_response.json()
@@ -178,7 +191,9 @@ class WikipediaDataLoader:
 
                 # Clean up text
                 lines = (line.strip() for line in text.splitlines())
-                chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
+                chunks = (
+                    phrase.strip() for line in lines for phrase in line.split("  ")
+                )
                 text = " ".join(chunk for chunk in chunks if chunk)
 
                 # Limit to reasonable length
@@ -192,7 +207,9 @@ class WikipediaDataLoader:
                 "content": text,
                 "description": summary_data.get("description", ""),
                 "extract": summary_data.get("extract", ""),
-                "url": summary_data.get("content_urls", {}).get("desktop", {}).get("page", ""),
+                "url": summary_data.get("content_urls", {})
+                .get("desktop", {})
+                .get("page", ""),
                 "timestamp": datetime.now().isoformat(),
             }
 
@@ -262,11 +279,20 @@ class WikipediaDataLoader:
             ]
         ):
             return "Computer Science"
-        if any(term in topic_lower for term in ["algebra", "calculus", "statistics", "probability", "graph"]):
+        if any(
+            term in topic_lower
+            for term in ["algebra", "calculus", "statistics", "probability", "graph"]
+        ):
             return "Mathematics"
-        if any(term in topic_lower for term in ["physics", "chemistry", "biology", "quantum", "evolution"]):
+        if any(
+            term in topic_lower
+            for term in ["physics", "chemistry", "biology", "quantum", "evolution"]
+        ):
             return "Science"
-        if any(term in topic_lower for term in ["war", "renaissance", "shakespeare", "rome", "revolution"]):
+        if any(
+            term in topic_lower
+            for term in ["war", "renaissance", "shakespeare", "rome", "revolution"]
+        ):
             return "History & Literature"
         return "General"
 
@@ -358,7 +384,9 @@ class WikipediaDataLoader:
         total_words = cursor.fetchone()[0] or 0
 
         # Get category distribution
-        cursor.execute("SELECT document_type, COUNT(*) FROM documents GROUP BY document_type")
+        cursor.execute(
+            "SELECT document_type, COUNT(*) FROM documents GROUP BY document_type"
+        )
         categories = dict(cursor.fetchall())
 
         # Get chunk count
@@ -446,7 +474,9 @@ if __name__ == "__main__":
     loader = WikipediaDataLoader()
 
     # Load Wikipedia corpus
-    documents = loader.load_wikipedia_corpus(EDUCATIONAL_TOPICS[:5])  # Start with 5 topics
+    documents = loader.load_wikipedia_corpus(
+        EDUCATIONAL_TOPICS[:5]
+    )  # Start with 5 topics
 
     # Add sample educational content
     samples = create_sample_educational_content()

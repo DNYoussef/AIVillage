@@ -1,4 +1,3 @@
-import asyncio
 import json
 from unittest.mock import AsyncMock
 
@@ -54,16 +53,25 @@ def mock_p2p_node():
     node.node_id = "node"
     node.peer_registry = {}
     node.local_capabilities = PeerCapabilities(
-        device_id="node", cpu_cores=4, ram_mb=4096, trust_score=1.0, evolution_capacity=1.0
+        device_id="node",
+        cpu_cores=4,
+        ram_mb=4096,
+        trust_score=1.0,
+        evolution_capacity=1.0,
     )
     return node
 
 
 @pytest.mark.asyncio
-async def test_event_serialized_after_success(tmp_path, mock_sharding_engine, mock_p2p_node, resharding_config):
+async def test_event_serialized_after_success(
+    tmp_path, mock_sharding_engine, mock_p2p_node, resharding_config
+):
     state_file = tmp_path / "reshard.json"
     manager = AdaptiveReshardingManager(
-        mock_sharding_engine, mock_p2p_node, resharding_config, state_file=str(state_file)
+        mock_sharding_engine,
+        mock_p2p_node,
+        resharding_config,
+        state_file=str(state_file),
     )
     manager._execute_resharding = AsyncMock(return_value=True)
     await manager.trigger_resharding(
@@ -76,10 +84,15 @@ async def test_event_serialized_after_success(tmp_path, mock_sharding_engine, mo
 
 
 @pytest.mark.asyncio
-async def test_incomplete_event_replayed_on_restart(tmp_path, mock_sharding_engine, mock_p2p_node, resharding_config):
+async def test_incomplete_event_replayed_on_restart(
+    tmp_path, mock_sharding_engine, mock_p2p_node, resharding_config
+):
     state_file = tmp_path / "reshard.json"
     manager = AdaptiveReshardingManager(
-        mock_sharding_engine, mock_p2p_node, resharding_config, state_file=str(state_file)
+        mock_sharding_engine,
+        mock_p2p_node,
+        resharding_config,
+        state_file=str(state_file),
     )
     # Simulate pending event on disk
     event = ReshardingEvent(event_id="1", reason=ReshardingReason.MANUAL_TRIGGER)
@@ -88,7 +101,10 @@ async def test_incomplete_event_replayed_on_restart(tmp_path, mock_sharding_engi
 
     # Restart manager and ensure pending event is replayed
     manager2 = AdaptiveReshardingManager(
-        mock_sharding_engine, mock_p2p_node, resharding_config, state_file=str(state_file)
+        mock_sharding_engine,
+        mock_p2p_node,
+        resharding_config,
+        state_file=str(state_file),
     )
     manager2._execute_resharding = AsyncMock(return_value=True)
     await manager2.start_monitoring()

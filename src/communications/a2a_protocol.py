@@ -1,8 +1,8 @@
 import json
 
+import requests
 from cryptography import x509
 from jwcrypto import jwe, jwk, jws
-import requests
 
 
 def _load_priv(pem_path: str) -> jwk.JWK:
@@ -54,7 +54,9 @@ def send_a2a(
     return requests.post(url, data=body, headers=hdr, timeout=30)
 
 
-def receive_a2a(raw: str, receiver_priv: str, sender_pub: str, encrypted: bool = True) -> dict:
+def receive_a2a(
+    raw: str, receiver_priv: str, sender_pub: str, encrypted: bool = True
+) -> dict:
     priv = _load_priv(receiver_priv)
     data = decrypt(raw, priv) if encrypted else raw
     return verify(data, _load_pub(sender_pub))

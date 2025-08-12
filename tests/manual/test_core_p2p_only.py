@@ -6,7 +6,9 @@ import logging
 import time
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 # Import only the core P2P implementation
@@ -53,7 +55,9 @@ async def test_five_node_network():
         for i, node in enumerate(nodes):
             for j, other_node in enumerate(nodes):
                 if i != j:
-                    node.peer_discovery.add_known_peer("127.0.0.1", other_node.listen_port)
+                    node.peer_discovery.add_known_peer(
+                        "127.0.0.1", other_node.listen_port
+                    )
 
         # Wait for peer discovery and connection establishment
         logger.info("Waiting for peer discovery (15 seconds)...")
@@ -88,7 +92,9 @@ async def test_five_node_network():
         logger.info(f"Total peers discovered across network: {total_peers_discovered}")
         logger.info(f"Total active connections: {total_active_connections}")
         logger.info(f"Average peers per node: {total_peers_discovered / num_nodes:.1f}")
-        logger.info(f"Average connections per node: {total_active_connections / num_nodes:.1f}")
+        logger.info(
+            f"Average connections per node: {total_active_connections / num_nodes:.1f}"
+        )
 
         # Test message passing if any connections exist
         if total_active_connections > 0:
@@ -102,7 +108,9 @@ async def test_five_node_network():
                 "test_id": "broadcast_test_1",
             }
 
-            broadcast_count = await nodes[0].broadcast_to_peers("NETWORK_TEST", test_message)
+            broadcast_count = await nodes[0].broadcast_to_peers(
+                "NETWORK_TEST", test_message
+            )
             logger.info(f"Broadcast from node 0 reached {broadcast_count} peers")
 
             # Test evolution messaging
@@ -127,7 +135,9 @@ async def test_five_node_network():
             )
 
         else:
-            logger.warning("No active connections established - message passing test skipped")
+            logger.warning(
+                "No active connections established - message passing test skipped"
+            )
 
         # Get discovery and network statistics
         logger.info("\n=== NETWORK STATISTICS ===")
@@ -138,13 +148,23 @@ async def test_five_node_network():
             logger.info(f"Node {i} Discovery Stats:")
             logger.info(f"  Discovery cycles: {discovery_stats['discovery_cycles']}")
             logger.info(f"  Peers discovered: {discovery_stats['peers_discovered']}")
-            logger.info(f"  Discovery failures: {discovery_stats['discovery_failures']}")
-            logger.info(f"  Average response time: {discovery_stats['avg_response_time']:.3f}s")
+            logger.info(
+                f"  Discovery failures: {discovery_stats['discovery_failures']}"
+            )
+            logger.info(
+                f"  Average response time: {discovery_stats['avg_response_time']:.3f}s"
+            )
 
             logger.info(f"Node {i} Network Stats:")
-            logger.info(f"  Messages sent: {network_status['network_stats']['messages_sent']}")
-            logger.info(f"  Messages received: {network_status['network_stats']['messages_received']}")
-            logger.info(f"  Evolution messages: {network_status['network_stats']['evolution_messages']}")
+            logger.info(
+                f"  Messages sent: {network_status['network_stats']['messages_sent']}"
+            )
+            logger.info(
+                f"  Messages received: {network_status['network_stats']['messages_received']}"
+            )
+            logger.info(
+                f"  Evolution messages: {network_status['network_stats']['evolution_messages']}"
+            )
             logger.info("")
 
         # Test network resilience - stop one node and see what happens
@@ -164,7 +184,9 @@ async def test_five_node_network():
                     remaining_connections += connections
                     logger.info(f"Node {i} now has {connections} connections")
 
-            logger.info(f"Network maintained {remaining_connections} connections after node failure")
+            logger.info(
+                f"Network maintained {remaining_connections} connections after node failure"
+            )
 
         # Final assessment
         logger.info("\n=== FINAL ASSESSMENT ===")
@@ -181,7 +203,9 @@ async def test_five_node_network():
             logger.info(f"{criterion}: {status}")
 
         overall_success = all(success_criteria.values())
-        logger.info(f"\nOVERALL RESULT: {'SUCCESS' if overall_success else 'PARTIAL SUCCESS'}")
+        logger.info(
+            f"\nOVERALL RESULT: {'SUCCESS' if overall_success else 'PARTIAL SUCCESS'}"
+        )
 
         if overall_success:
             logger.info("✓ 5-node P2P network functionality confirmed")

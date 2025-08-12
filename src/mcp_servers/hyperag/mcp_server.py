@@ -45,9 +45,13 @@ class HypeRAGMCPServer:
             jwt_secret = os.getenv("MCP_SERVER_SECRET")
             if not jwt_secret or len(jwt_secret) < 32:
                 logger.warning("Using default MCP secret - CHANGE IN PRODUCTION!")
-                jwt_secret = "INSECURE_DEFAULT_MCP_SECRET_CHANGE_IMMEDIATELY_IN_PRODUCTION"
+                jwt_secret = (
+                    "INSECURE_DEFAULT_MCP_SECRET_CHANGE_IMMEDIATELY_IN_PRODUCTION"
+                )
 
-            self.permission_manager = PermissionManager(jwt_secret=jwt_secret, enable_audit=False)
+            self.permission_manager = PermissionManager(
+                jwt_secret=jwt_secret, enable_audit=False
+            )
 
             # Initialize model registry
             self.model_registry = ModelRegistry()
@@ -168,7 +172,11 @@ class HypeRAGMCPServer:
                 return {
                     "jsonrpc": "2.0",
                     "id": request_id,
-                    "result": {"content": [{"type": "text", "text": json.dumps(result, indent=2)}]},
+                    "result": {
+                        "content": [
+                            {"type": "text", "text": json.dumps(result, indent=2)}
+                        ]
+                    },
                 }
 
             if method == "resources/list":
@@ -208,7 +216,9 @@ class HypeRAGMCPServer:
                 "error": {"code": -32000, "message": f"Server error: {e!s}"},
             }
 
-    async def _handle_query(self, arguments: dict[str, Any], context: AuthContext) -> dict[str, Any]:
+    async def _handle_query(
+        self, arguments: dict[str, Any], context: AuthContext
+    ) -> dict[str, Any]:
         """Handle hyperag_query tool call."""
         query = arguments.get("query", "")
         additional_context = arguments.get("context", "")
@@ -224,7 +234,9 @@ class HypeRAGMCPServer:
 
         return result
 
-    async def _handle_memory(self, arguments: dict[str, Any], context: AuthContext) -> dict[str, Any]:
+    async def _handle_memory(
+        self, arguments: dict[str, Any], context: AuthContext
+    ) -> dict[str, Any]:
         """Handle hyperag_memory tool call."""
         action = arguments.get("action")
         content = arguments.get("content", "")

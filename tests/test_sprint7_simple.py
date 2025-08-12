@@ -4,9 +4,9 @@ Tests the distributed inference system components without external dependencies.
 """
 
 import asyncio
+import os
 from dataclasses import dataclass
 from enum import Enum
-import os
 
 print("=== Sprint 7 Distributed Inference System Tests ===")
 print()
@@ -191,7 +191,9 @@ try:
 
     print(f"  PASS: {total_files} Python files analyzed")
     print(f"  PASS: {total_lines} total lines of code")
-    print(f"  PASS: Average {total_lines // total_files if total_files > 0 else 0} lines per file")
+    print(
+        f"  PASS: Average {total_lines // total_files if total_files > 0 else 0} lines per file"
+    )
 
 except Exception as e:
     print(f"  FAIL: Code quality metrics - {e}")

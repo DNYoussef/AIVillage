@@ -12,11 +12,11 @@ Tests:
 
 import json
 import os
-from pathlib import Path
 import random
 import sqlite3
 import sys
 import time
+from pathlib import Path
 
 # Add parent directories to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
@@ -292,14 +292,18 @@ def test_flush_threshold():
 
     # Add metrics up to threshold
     for i in range(4):
-        m = EvolutionMetricsData(agent_id=f"threshold_test_{i}", fitness_score=random.random())
+        m = EvolutionMetricsData(
+            agent_id=f"threshold_test_{i}", fitness_score=random.random()
+        )
         metrics.record_metric(m)
 
     buffer_before = len(metrics.metrics_buffer)
     print(f"Buffer size after 4 metrics: {buffer_before}")
 
     # Add one more to trigger flush
-    m = EvolutionMetricsData(agent_id="threshold_trigger", fitness_score=random.random())
+    m = EvolutionMetricsData(
+        agent_id="threshold_trigger", fitness_score=random.random()
+    )
     metrics.record_metric(m)
 
     # Buffer should be empty or very small after auto-flush
@@ -391,7 +395,9 @@ def test_concurrent_metrics():
     thread_count = 5
     metrics_per_thread = 20
 
-    print(f"Starting {thread_count} threads, each recording {metrics_per_thread} metrics...")
+    print(
+        f"Starting {thread_count} threads, each recording {metrics_per_thread} metrics..."
+    )
 
     for i in range(thread_count):
         t = threading.Thread(target=record_metrics_thread, args=(i, metrics_per_thread))
@@ -452,7 +458,9 @@ def test_agent_integration():
             # Report multiple KPIs
             record_kpi(self.agent_id, KPIType.TASK_COMPLETION, 1.0 if success else 0.0)
             record_kpi(self.agent_id, KPIType.RESPONSE_TIME, duration * 1000)
-            record_kpi(self.agent_id, KPIType.PERFORMANCE_SCORE, random.uniform(0.6, 1.0))
+            record_kpi(
+                self.agent_id, KPIType.PERFORMANCE_SCORE, random.uniform(0.6, 1.0)
+            )
 
             return success
 

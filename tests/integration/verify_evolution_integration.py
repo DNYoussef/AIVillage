@@ -10,12 +10,12 @@ This script verifies that all CODEX requirements are met:
 6. Agent system integration
 """
 
-from datetime import datetime
 import json
 import os
-from pathlib import Path
 import sqlite3
 import sys
+from datetime import datetime
+from pathlib import Path
 
 
 def print_header(title):
@@ -202,7 +202,9 @@ def verify_api_endpoints():
         "timestamp": datetime.now().isoformat(),
         "database": {"connected": os.path.exists(db_path), "path": db_path},
         "redis": {"available": False, "connected": False},
-        "metrics": {"flush_threshold": int(os.getenv("AIVILLAGE_METRICS_FLUSH_THRESHOLD", "50"))},
+        "metrics": {
+            "flush_threshold": int(os.getenv("AIVILLAGE_METRICS_FLUSH_THRESHOLD", "50"))
+        },
         "port": port,
     }
 
