@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+import json
 import logging
 import lzma
 from pathlib import Path
-import pickle
 import struct
+import zlib
+from typing import Any
 
 import torch
 
@@ -64,7 +66,7 @@ class AdvancedCompressionPipeline:
             s2_w = self.stage2_seedlm.decompress(s2)
             # Stage 3
             s3 = self.stage3_vptq.compress(s2_w)
-            s3_bytes = pickle.dumps(s3)
+            s3_bytes = self._serialize_stage3(s3)
             # Stage 4 with effectiveness check
             s4_bytes = self.stage4_hyper.encode(s3_bytes)
             if len(s4_bytes) >= len(s3_bytes) * 0.9:
@@ -81,7 +83,15 @@ class AdvancedCompressionPipeline:
     # ------------------------------------------------------------------
     def decompress_model(self, data: bytes) -> dict[str, torch.Tensor]:
         payload = lzma.decompress(data)
-        view = memoryview(payload)
+        if len(payload) < 8:
+            raise ValueError("Corrupted payload: header missing")
+        (length, checksum) = struct.unpack_from("II", payload, 0)
+        raw = payload[8:]
+        if len(raw) != length:
+            raise ValueError("Length mismatch in compressed data")
+        if zlib.adler32(raw) & 0xFFFFFFFF != checksum:
+            raise ValueError("Checksum mismatch in compressed data")
+        view = memoryview(raw)
         offset = 0
         params: dict[str, tuple[tuple[int, ...], bytes]] = {}
         count = view[offset]
@@ -104,13 +114,16 @@ class AdvancedCompressionPipeline:
             offset += length
             params[name] = (tuple(shape), s4_bytes)
 
+        if offset != len(view):
+            raise ValueError("Trailing data after parameter payload")
+
         result: dict[str, torch.Tensor] = {}
         for name, (shape, s4_bytes) in params.items():
             try:
                 s3_bytes = self.stage4_hyper.decode(s4_bytes)
             except Exception:
                 s3_bytes = s4_bytes
-            s3 = pickle.loads(s3_bytes)
+            s3 = self._deserialize_stage3(s3_bytes)
             w = self.stage3_vptq.decompress(s3).reshape(shape)
             result[name] = w
         return result
@@ -129,7 +142,45 @@ class AdvancedCompressionPipeline:
                 blob.extend(struct.pack("I", dim))
             blob.extend(struct.pack("I", len(data)))
             blob.extend(data)
-        return lzma.compress(bytes(blob), preset=9)
+        raw = bytes(blob)
+        checksum = zlib.adler32(raw) & 0xFFFFFFFF
+        header = struct.pack("II", len(raw), checksum)
+        return lzma.compress(header + raw, preset=9)
+
+    # ------------------------------------------------------------------
+    def _serialize_stage3(self, data: dict[str, object]) -> bytes:
+        """Safely serialise stage3 output using JSON."""
+
+        def _tensor_to_dict(t: torch.Tensor) -> dict[str, object]:
+            return {"dtype": str(t.dtype).split(".")[-1], "data": t.tolist()}
+
+        safe: dict[str, object] = {}
+        for k, v in data.items():
+            if isinstance(v, torch.Tensor):
+                safe[k] = _tensor_to_dict(v)
+            elif isinstance(v, tuple):
+                safe[k] = list(v)
+            else:
+                safe[k] = v
+        return json.dumps(safe).encode("utf-8")
+
+    def _deserialize_stage3(self, data: bytes) -> dict[str, object]:
+        """Reverse of :meth:`_serialize_stage3`."""
+
+        def _tensor_from_dict(d: dict[str, Any]) -> torch.Tensor:
+            dtype = getattr(torch, str(d["dtype"]))
+            return torch.tensor(d["data"], dtype=dtype)
+
+        raw = json.loads(data.decode("utf-8"))
+        result: dict[str, object] = {}
+        for k, v in raw.items():
+            if isinstance(v, dict) and "dtype" in v:
+                result[k] = _tensor_from_dict(v)
+            elif k == "original_shape":
+                result[k] = tuple(v)
+            else:
+                result[k] = v
+        return result
 
     # ------------------------------------------------------------------
     def _load_model(self, model: torch.nn.Module | str | Path) -> torch.nn.Module:

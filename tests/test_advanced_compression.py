@@ -105,3 +105,23 @@ class TestAdvancedPipeline:
         blob = pipe.compress_model(model)
         ratio = params * 4 / len(blob)
         assert ratio > 50
+
+    def test_round_trip_decompression(self) -> None:
+        model = nn.Linear(16, 8)
+        pipe = AdvancedCompressionPipeline()
+        blob = pipe.compress_model(model)
+        params = pipe.decompress_model(blob)
+        names = {name for name, p in model.named_parameters() if p.requires_grad}
+        assert set(params) == names
+        for name, p in model.named_parameters():
+            if p.requires_grad:
+                assert params[name].shape == p.shape
+
+    def test_checksum_validation(self) -> None:
+        model = nn.Linear(16, 8)
+        pipe = AdvancedCompressionPipeline()
+        blob = pipe.compress_model(model)
+        tampered = bytearray(blob)
+        tampered[-1] ^= 0xFF
+        with pytest.raises(ValueError):
+            pipe.decompress_model(bytes(tampered))
