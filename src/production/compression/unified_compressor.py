@@ -13,11 +13,12 @@ Features:
 """
 
 import asyncio
+import json
+import logging
+import time
 from dataclasses import dataclass
 from enum import Enum
-import logging
 from pathlib import Path
-import time
 from typing import Any
 
 import torch
@@ -203,13 +204,30 @@ class UnifiedCompressor:
     async def _apply_simple_compression(self, model: nn.Module) -> nn.Module:
         """Apply simple 4x quantization."""
         logger.info("Applying simple 4x quantization...")
-        return bitnet_compress(model)
+        original_size = self._estimate_model_size(model)
+        compressed = bitnet_compress(model)
+        compressed_size = self._estimate_model_size(compressed)
+        ratio = original_size / compressed_size if compressed_size else float("inf")
+        try:
+            with open("compression_actual_ratio.json", "w", encoding="utf-8") as f:
+                json.dump({"actual_ratio": ratio}, f)
+        except OSError as e:
+            logger.warning(f"Failed to write compression ratio: {e}")
+        return compressed
 
     async def _apply_mobile_compression(self, model: nn.Module) -> nn.Module:
         """Apply mobile-optimized compression."""
         logger.info("Applying mobile-optimized compression...")
         # Stage 1: BitNet quantization
+        original_size = self._estimate_model_size(model)
         compressed = bitnet_compress(model)
+        compressed_size = self._estimate_model_size(compressed)
+        ratio = original_size / compressed_size if compressed_size else float("inf")
+        try:
+            with open("compression_actual_ratio.json", "w", encoding="utf-8") as f:
+                json.dump({"actual_ratio": ratio}, f)
+        except OSError as e:
+            logger.warning(f"Failed to write compression ratio: {e}")
 
         # Stage 2: SeedLM if still too large
         current_size = self._estimate_model_size(compressed)
