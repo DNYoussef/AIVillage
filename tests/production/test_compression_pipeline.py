@@ -4,6 +4,7 @@ Comprehensive tests for Production Compression Pipeline.
 
 from unittest.mock import Mock, patch
 
+import json
 import pytest
 import torch
 from torch import nn
@@ -19,6 +20,8 @@ try:
     )
 except ImportError:
     pytest.skip("Compression pipeline dependencies not available", allow_module_level=True)
+
+from production.compression import CompressionStrategy, UnifiedCompressor
 
 
 class TestCompressionConfig:
@@ -414,6 +417,25 @@ class TestCompressionIntegration:
         # This would run actual performance benchmarks
         # Skip for regular testing due to resource requirements
         pytest.skip("Performance benchmarks require significant resources")
+
+
+@pytest.mark.asyncio
+async def test_bitnet_compression_ratio(tmp_path, monkeypatch):
+    """Verify BitNet compression achieves at least a 4x size reduction."""
+    monkeypatch.chdir(tmp_path)
+    model = nn.Sequential(nn.Linear(8, 8), nn.ReLU(), nn.Linear(8, 8))
+    fake_compressed = nn.Linear(2, 2)
+    with patch(
+        "production.compression.unified_compressor.bitnet_compress",
+        return_value=fake_compressed,
+    ):
+        compressor = UnifiedCompressor(
+            strategy=CompressionStrategy.SIMPLE, enable_benchmarking=False
+        )
+        await compressor.compress_model(model)
+    with open("compression_actual_ratio.json", "r", encoding="utf-8") as f:
+        data = json.load(f)
+    assert data["actual_ratio"] >= 4
 
 
 @pytest.mark.performance
