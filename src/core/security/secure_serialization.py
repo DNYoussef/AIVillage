@@ -75,5 +75,5 @@ def secure_dumps(obj: SerializableType) -> bytes:
 
 
 def secure_loads(data: bytes) -> SerializableType:
-    """Secure replacement for pickle.loads()."""
+    """Secure replacement for the insecure pickle deserializer."""
     return SecureSerializer.loads(data)

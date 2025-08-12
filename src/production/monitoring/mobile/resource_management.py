@@ -74,6 +74,7 @@ except ImportError:
                 "device_type": self.device_type,
             }
 
+
     @dataclass
     class ResourceAllocation:
         """Mock ResourceAllocation for safe importing"""
@@ -116,6 +117,26 @@ class TransportPreference(Enum):
     BALANCED = "balanced"
     BETANET_PREFERRED = "betanet_preferred"
     BETANET_ONLY = "betanet_only"
+
+
+DEFAULT_CHUNK_SIZE = 1024
+LOW_RESOURCE_CHUNK_SIZE = 256
+
+
+def evaluate_policy_from_env() -> dict[str, Any]:
+    """Evaluate resource policy using environment variables."""
+    battery = int(os.getenv("BATTERY", "100"))
+    profile_name = os.getenv("AIV_MOBILE_PROFILE", "normal")
+    low_ram_flag = profile_name == "low_ram"
+    low_power = battery < 20
+    low_ram = low_ram_flag
+    chunk = LOW_RESOURCE_CHUNK_SIZE if low_power or low_ram else DEFAULT_CHUNK_SIZE
+    transport = (
+        TransportPreference.BITCHAT_PREFERRED
+        if low_power or low_ram
+        else TransportPreference.BALANCED
+    )
+    return {"chunk_size": chunk, "transport": transport}
 
 
 @dataclass

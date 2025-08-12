@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
@@ -128,22 +129,25 @@ class RAGPipeline:
 
     def _init_vector_store(self) -> None:
         """Initialize vector store with FAISS fallback."""
-        try:
-            if VectorStore is not None:
+        use_advanced = (
+            VectorStore is not None and os.getenv("RAG_USE_ADVANCED_STORE") == "1"
+        )
+        if use_advanced:
+            try:
                 self.vector_store = VectorStore(
                     config=self.config,
                     dimension=getattr(self.config, "embedding_dimension", 768),
                 )
                 logger.info("Vector store initialized successfully")
-            else:
-                # Fallback: minimal in-memory store
-                self.vector_store = self._create_fallback_vector_store()
+                return
+            except Exception as e:  # pragma: no cover - best effort
                 logger.warning(
-                    "VectorStore not available, using fallback implementation"
+                    f"Failed to initialize advanced VectorStore: {e}, using fallback"
                 )
-        except Exception as e:
-            logger.warning(f"Failed to initialize VectorStore: {e}, using fallback")
-            self.vector_store = self._create_fallback_vector_store()
+
+        # Fallback: minimal in-memory store
+        self.vector_store = self._create_fallback_vector_store()
+        logger.info("Using fallback in-memory vector store")
 
     def _init_graph_store(self, enable_graph: bool) -> None:
         """Initialize graph store with optional fallback."""
@@ -250,9 +254,9 @@ class RAGPipeline:
                         }
                     )
 
-            async def retrieve(
-                self, query_vector: list[float], k: int, **kwargs
-            ) -> list[RetrievalResult]:
+            async def retrieve(self, *args, **kwargs) -> list[RetrievalResult]:
+                query_vector = args[0] if args else []
+                k = args[1] if len(args) > 1 else kwargs.get("k", 5)
                 # Simple text matching fallback - search for query terms in content
                 results = []
                 query_terms = kwargs.get("query_terms", [])
@@ -364,7 +368,7 @@ class RAGPipeline:
                 query_vector = [0.1] * 768  # Simple fallback vector
                 query_terms = query.split()  # Simple tokenization
                 results = await self.vector_store.retrieve(
-                    query_vector, top_k, query_terms=query_terms
+                    query_vector, k=top_k, query_terms=query_terms
                 )
 
             # Cache results if caching is enabled

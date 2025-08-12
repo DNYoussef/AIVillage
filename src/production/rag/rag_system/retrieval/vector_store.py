@@ -2,6 +2,12 @@ import os
 from datetime import datetime
 from typing import Any
 
+import base64
+import json
+import uuid
+import os
+from urllib.parse import urlparse
+
 import faiss
 import numpy as np
 
@@ -11,9 +17,6 @@ if USE_QDRANT:
         from qdrant_client import QdrantClient
     except Exception:  # pragma: no cover - optional
         QdrantClient = None
-import base64
-import json
-import uuid
 
 from ..core.config import UnifiedConfig
 from ..core.structures import RetrievalResult
@@ -25,11 +28,11 @@ def _get_qdrant_url() -> str:
     default_url = (
         "https://qdrant.aivillage.internal:6333"
         if os.getenv("AIVILLAGE_ENV") == "production"
-        else "http://localhost:6333"
+        else "https://localhost:6333"
     )
     url = os.getenv("QDRANT_URL", default_url)
 
-    if os.getenv("AIVILLAGE_ENV") == "production" and url.startswith("http://"):
+    if os.getenv("AIVILLAGE_ENV") == "production" and urlparse(url).scheme == "http":
         msg = "QDRANT_URL must use https:// in production environment"
         raise ValueError(msg)
     return url

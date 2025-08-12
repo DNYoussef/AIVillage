@@ -321,6 +321,10 @@ class AgentForge:
             logger.exception(f"Error loading manifest: {e}")
             return None
 
+    def create_manifest(self) -> AgentManifest:
+        """Create a manifest representing current agents."""
+        return self._create_default_manifest()
+
     def run_kpi_cycle(
         self,
         manifest: AgentManifest | None = None,
