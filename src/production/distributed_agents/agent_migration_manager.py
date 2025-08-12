@@ -12,9 +12,9 @@ import time
 from typing import Any
 import uuid
 
-import msgpack
-
 from AIVillage.src.core.p2p.p2p_node import P2PNode
+
+from .serialization import deserialize_checkpoint, serialize_checkpoint
 
 from .distributed_agent_orchestrator import AgentInstance, AgentType, DeviceProfile
 
@@ -415,7 +415,7 @@ class AgentMigrationManager:
             agent_instance = self.agent_orchestrator.active_agents[agent_instance_id]
 
             # Create checkpoint quickly
-            checkpoint = await self._create_agent_checkpoint(agent_instance)
+            checkpoint = await self._create_checkpoint(agent_instance)
 
             # Stop agent on source device
             downtime_start = time.time()
@@ -482,7 +482,7 @@ class AgentMigrationManager:
             )
 
             # Create comprehensive checkpoint
-            checkpoint = await self._create_agent_checkpoint(
+            checkpoint = await self._create_checkpoint(
                 agent_instance, comprehensive=True
             )
 
@@ -558,7 +558,7 @@ class AgentMigrationManager:
         # Execute as graceful migration
         return await self._execute_graceful_migration(migration_event)
 
-    async def _create_agent_checkpoint(
+    async def _create_checkpoint(
         self, agent_instance: AgentInstance, comprehensive: bool = False
     ) -> AgentCheckpoint:
         """Create checkpoint of agent state."""
@@ -578,7 +578,7 @@ class AgentMigrationManager:
             "checkpoint_comprehensive": comprehensive,
         }
 
-        serialized_state = msgpack.dumps(state_data)
+        serialized_state = serialize_checkpoint(state_data)
 
         checkpoint = AgentCheckpoint(
             instance_id=agent_instance.instance_id,
@@ -695,10 +695,7 @@ class AgentMigrationManager:
                 f"Untrusted checkpoint source: {checkpoint.source_device_id}"
             )
 
-        try:
-            state = msgpack.loads(checkpoint.state_data, raw=False)
-        except Exception as e:  # pragma: no cover - msgpack error path
-            raise ValueError("Invalid checkpoint payload") from e
+        state = deserialize_checkpoint(checkpoint.state_data)
 
         required_fields = {
             "instance_id",
@@ -899,7 +896,7 @@ class AgentMigrationManager:
                 ) in self.agent_orchestrator.active_agents.items():
                     if agent_instance.status == "running":
                         try:
-                            await self._create_agent_checkpoint(agent_instance)
+                            await self._create_checkpoint(agent_instance)
                         except Exception as e:
                             logger.exception(
                                 f"Failed to create checkpoint for {instance_id}: {e}"

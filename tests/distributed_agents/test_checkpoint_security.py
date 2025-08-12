@@ -1,5 +1,6 @@
 from unittest.mock import patch
 
+import json
 import msgpack
 import pytest
 
@@ -9,6 +10,10 @@ from src.production.distributed_agents.agent_migration_manager import (
     AgentMigrationManager,
 )
 from src.production.distributed_agents.distributed_agent_orchestrator import AgentType
+from src.production.distributed_agents.serialization import (
+    deserialize_checkpoint,
+    serialize_checkpoint,
+)
 
 
 class DummyAgent:
@@ -90,3 +95,42 @@ async def test_malicious_payload_raises_value_error() -> None:
 
     with pytest.raises(ValueError):  # noqa: PT011
         await manager._start_agent_locally_from_checkpoint(checkpoint)  # noqa: SLF001
+
+
+def test_serialization_round_trip() -> None:
+    data = {"foo": "bar"}
+    payload = serialize_checkpoint(data)
+    assert isinstance(payload, bytes)
+    assert deserialize_checkpoint(payload) == data
+
+
+@pytest.mark.asyncio
+async def test_legacy_json_checkpoint_supported() -> None:
+    p2p = DummyP2P()
+    orchestrator = DummyOrchestrator()
+    agent = DummyAgent("agent1")
+    orchestrator.active_agents["agent1"] = agent
+    with patch.object(
+        AgentMigrationManager, "_start_background_tasks", lambda _self: None
+    ):
+        manager = AgentMigrationManager(p2p, orchestrator)
+
+    legacy_payload = json.dumps(
+        {
+            "instance_id": "agent1",
+            "agent_type": AgentType.KING.value,
+            "configuration": {},
+            "runtime_state": {},
+            "checkpoint_comprehensive": False,
+        }
+    ).encode("utf-8")
+
+    checkpoint = AgentCheckpoint(
+        instance_id="agent1",
+        agent_type=AgentType.KING,
+        state_data=legacy_payload,
+        source_device_id="trusted",
+    )
+
+    assert await manager._start_agent_locally_from_checkpoint(checkpoint)  # noqa: SLF001
+    assert agent.status == "running"
