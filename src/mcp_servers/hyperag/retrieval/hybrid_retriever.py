@@ -12,9 +12,9 @@ import logging
 import time
 from typing import Any
 
-from AIVillage.src.mcp_servers.hyperag.memory.hippo_index import HippoIndex
-from AIVillage.src.mcp_servers.hyperag.memory.hypergraph_kg import HypergraphKG
-from AIVillage.src.mcp_servers.hyperag.models import QueryPlan
+from ..memory.hippo_index import HippoIndex
+from ..memory.hypergraph_kg import HypergraphKG
+from ..models import QueryPlan
 
 from .ppr_retriever import AlphaProfileStore, PersonalizedPageRank, PPRResults
 

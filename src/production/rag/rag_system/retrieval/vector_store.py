@@ -15,8 +15,8 @@ import base64
 import json
 import uuid
 
-from AIVillage.src.production.rag.rag_system.core.config import UnifiedConfig
-from AIVillage.src.production.rag.rag_system.core.structures import RetrievalResult
+from ..core.config import UnifiedConfig
+from ..core.structures import RetrievalResult
 
 
 def _get_qdrant_url() -> str:
