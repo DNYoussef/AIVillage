@@ -17,6 +17,7 @@ import lz4.frame
 
 # For tensor operations
 import numpy as np
+import torch
 
 from .p2p_node import MessageType, P2PMessage, P2PNode
 
@@ -74,6 +75,8 @@ class TensorMetadata:
     timestamp: float = field(default_factory=time.time)
     source_node: str = ""
     tags: dict[str, Any] = field(default_factory=dict)
+    device: str = "cpu"
+    is_torch: bool = False
 
 
 @dataclass
@@ -132,14 +135,18 @@ class TensorStreaming:
 
         # Transfer tracking
         self.active_transfers: dict[str, TransferProgress] = {}
-        self.pending_chunks: dict[str, dict[int, TensorChunk]] = {}  # tensor_id -> chunk_index -> chunk
+        self.pending_chunks: dict[
+            str, dict[int, TensorChunk]
+        ] = {}  # tensor_id -> chunk_index -> chunk
         self.tensor_metadata: dict[str, TensorMetadata] = {}
 
         # Bandwidth management
         self.bandwidth_tracker = BandwidthTracker(self.config.bandwidth_limit_kbps)
 
         # Priority queue for chunk requests
-        self.priority_queue: list[tuple[float, str, int]] = []  # (priority, tensor_id, chunk_index)
+        self.priority_queue: list[
+            tuple[float, str, int]
+        ] = []  # (priority, tensor_id, chunk_index)
 
         # Statistics
         self.stats = {
@@ -183,7 +190,9 @@ class TensorStreaming:
 
             # Compress if configured
             if self.config.compression != CompressionType.NONE:
-                compressed_data = await self._compress_tensor(serialized_data, self.config.compression)
+                compressed_data = await self._compress_tensor(
+                    serialized_data, self.config.compression
+                )
                 compression_ratio = len(serialized_data) / len(compressed_data)
                 logger.info(f"Compression ratio: {compression_ratio:.2f}x")
             else:
@@ -192,7 +201,8 @@ class TensorStreaming:
 
             # Update stats
             self.stats["compression_ratio"] = (
-                self.stats["compression_ratio"] * self.stats["tensors_sent"] + compression_ratio
+                self.stats["compression_ratio"] * self.stats["tensors_sent"]
+                + compression_ratio
             ) / (self.stats["tensors_sent"] + 1)
 
             # Split into chunks
@@ -226,21 +236,28 @@ class TensorStreaming:
                             self.stats["chunks_sent"] += 1
                             break
                     else:
-                        logger.error(f"Failed to send chunk {chunk.chunk_index} after retries")
+                        logger.error(
+                            f"Failed to send chunk {chunk.chunk_index} after retries"
+                        )
                         self.stats["failed_transfers"] += 1
                         return tensor_id
 
             # Calculate transfer rate
             transfer_time = time.time() - start_time
-            transfer_rate = (bytes_sent / 1024) / transfer_time if transfer_time > 0 else 0
+            transfer_rate = (
+                (bytes_sent / 1024) / transfer_time if transfer_time > 0 else 0
+            )
 
             self.stats["tensors_sent"] += 1
             self.stats["bytes_sent"] += bytes_sent
             self.stats["avg_transfer_rate_kbps"] = (
-                self.stats["avg_transfer_rate_kbps"] * (self.stats["tensors_sent"] - 1) + transfer_rate
+                self.stats["avg_transfer_rate_kbps"] * (self.stats["tensors_sent"] - 1)
+                + transfer_rate
             ) / self.stats["tensors_sent"]
 
-            logger.info(f"Tensor {tensor_name} sent successfully in {transfer_time:.2f}s at {transfer_rate:.2f} KB/s")
+            logger.info(
+                f"Tensor {tensor_name} sent successfully in {transfer_time:.2f}s at {transfer_rate:.2f} KB/s"
+            )
             return tensor_id
 
         except Exception as e:
@@ -273,7 +290,9 @@ class TensorStreaming:
         progress = self.active_transfers[tensor_id]
         start_time = time.time()
 
-        logger.info(f"Receiving tensor {metadata.name} ({metadata.total_chunks} chunks)")
+        logger.info(
+            f"Receiving tensor {metadata.name} ({metadata.total_chunks} chunks)"
+        )
 
         try:
             # Wait for all chunks with timeout
@@ -331,7 +350,9 @@ class TensorStreaming:
             "chunk_indices": missing_chunks,
         }
 
-        return await self.node.send_message(source_peer, MessageType.DATA, request_payload)
+        return await self.node.send_message(
+            source_peer, MessageType.DATA, request_payload
+        )
 
     def get_transfer_progress(self, tensor_id: str) -> TransferProgress | None:
         """Get progress information for an active transfer."""
@@ -346,7 +367,9 @@ class TensorStreaming:
         return {
             **self.stats,
             "active_transfers": len(self.active_transfers),
-            "cached_chunks": sum(len(chunks) for chunks in self.pending_chunks.values()),
+            "cached_chunks": sum(
+                len(chunks) for chunks in self.pending_chunks.values()
+            ),
             "bandwidth_limit_kbps": self.config.bandwidth_limit_kbps,
             "compression_type": self.config.compression.value,
         }
@@ -377,6 +400,31 @@ class TensorStreaming:
                     checksum=hashlib.sha256(serialized).hexdigest(),
                     source_node=self.node.node_id,
                     tags=tags,
+                    device="cpu",
+                )
+
+                return serialized, metadata
+            if isinstance(tensor_data, torch.Tensor):
+                np_array = tensor_data.detach().cpu().numpy()
+                buffer = io.BytesIO()
+                np.save(buffer, np_array)
+                serialized = buffer.getvalue()
+
+                dtype_str = str(tensor_data.dtype).split(".")[-1]
+                metadata = TensorMetadata(
+                    tensor_id=tensor_id,
+                    name=tensor_name,
+                    shape=tuple(np_array.shape),
+                    dtype=dtype_str,
+                    size_bytes=len(serialized),
+                    total_chunks=0,
+                    compression=self.config.compression,
+                    format=self.config.tensor_format,
+                    checksum=hashlib.sha256(serialized).hexdigest(),
+                    source_node=self.node.node_id,
+                    tags=tags,
+                    device=str(tensor_data.device),
+                    is_torch=True,
                 )
 
                 return serialized, metadata
@@ -441,7 +489,9 @@ class TensorStreaming:
     def _split_into_chunks(self, data: bytes, tensor_id: str) -> list[TensorChunk]:
         """Split tensor data into chunks."""
         chunks = []
-        total_chunks = (len(data) + self.config.chunk_size - 1) // self.config.chunk_size
+        total_chunks = (
+            len(data) + self.config.chunk_size - 1
+        ) // self.config.chunk_size
 
         for i in range(total_chunks):
             start_idx = i * self.config.chunk_size
@@ -483,6 +533,8 @@ class TensorStreaming:
                 "timestamp": metadata.timestamp,
                 "source_node": metadata.source_node,
                 "tags": metadata.tags,
+                "device": metadata.device,
+                "is_torch": metadata.is_torch,
             },
         }
 
@@ -507,12 +559,16 @@ class TensorStreaming:
                 "checksum": chunk.checksum,
                 "timestamp": chunk.timestamp,
                 "is_compressed": chunk.is_compressed,
-                "compression_type": (chunk.compression_type.value if chunk.compression_type else None),
+                "compression_type": (
+                    chunk.compression_type.value if chunk.compression_type else None
+                ),
             },
         )
 
         # Send through P2P node
-        return await self.node.send_message(destination, MessageType.TENSOR_CHUNK, chunk_message.payload)
+        return await self.node.send_message(
+            destination, MessageType.TENSOR_CHUNK, chunk_message.payload
+        )
 
     async def _handle_tensor_chunk(
         self,
@@ -547,12 +603,16 @@ class TensorStreaming:
             timestamp=metadata_dict["timestamp"],
             source_node=metadata_dict["source_node"],
             tags=metadata_dict["tags"],
+            device=metadata_dict.get("device", "cpu"),
+            is_torch=metadata_dict.get("is_torch", False),
         )
 
         self.tensor_metadata[tensor_id] = metadata
         self.pending_chunks[tensor_id] = {}
 
-        logger.info(f"Received metadata for tensor {metadata.name} ({metadata.total_chunks} chunks)")
+        logger.info(
+            f"Received metadata for tensor {metadata.name} ({metadata.total_chunks} chunks)"
+        )
 
     async def _handle_chunk_data(self, payload: dict[str, Any]) -> None:
         """Handle incoming chunk data."""
@@ -568,7 +628,9 @@ class TensorStreaming:
             actual_checksum = hashlib.md5(chunk_data).hexdigest()
 
             if expected_checksum != actual_checksum:
-                logger.error(f"Checksum mismatch for chunk {chunk_index} of tensor {tensor_id}")
+                logger.error(
+                    f"Checksum mismatch for chunk {chunk_index} of tensor {tensor_id}"
+                )
                 return
 
         # Create chunk object
@@ -580,7 +642,11 @@ class TensorStreaming:
             checksum=payload["checksum"],
             timestamp=payload["timestamp"],
             is_compressed=payload["is_compressed"],
-            compression_type=(CompressionType(payload["compression_type"]) if payload["compression_type"] else None),
+            compression_type=(
+                CompressionType(payload["compression_type"])
+                if payload["compression_type"]
+                else None
+            ),
         )
 
         # Store chunk
@@ -599,11 +665,15 @@ class TensorStreaming:
             # Calculate transfer rate
             elapsed = progress.last_update - progress.start_time
             if elapsed > 0:
-                progress.transfer_rate_kbps = (progress.bytes_transferred / 1024) / elapsed
+                progress.transfer_rate_kbps = (
+                    progress.bytes_transferred / 1024
+                ) / elapsed
 
         self.stats["chunks_received"] += 1
 
-        logger.debug(f"Received chunk {chunk_index}/{chunk.total_chunks} for tensor {tensor_id}")
+        logger.debug(
+            f"Received chunk {chunk_index}/{chunk.total_chunks} for tensor {tensor_id}"
+        )
 
     async def _handle_chunk_request(
         self,
@@ -614,7 +684,9 @@ class TensorStreaming:
         tensor_id = payload["tensor_id"]
         chunk_indices = payload["chunk_indices"]
 
-        logger.info(f"Received request for {len(chunk_indices)} chunks of tensor {tensor_id}")
+        logger.info(
+            f"Received request for {len(chunk_indices)} chunks of tensor {tensor_id}"
+        )
 
         # This would require caching sent tensors to respond to requests
         # For now, just log the request
@@ -622,7 +694,10 @@ class TensorStreaming:
 
     async def _reconstruct_tensor(self, tensor_id: str) -> Any | None:
         """Reconstruct tensor from received chunks."""
-        if tensor_id not in self.pending_chunks or tensor_id not in self.tensor_metadata:
+        if (
+            tensor_id not in self.pending_chunks
+            or tensor_id not in self.tensor_metadata
+        ):
             return None
 
         chunks = self.pending_chunks[tensor_id]
@@ -630,7 +705,9 @@ class TensorStreaming:
 
         # Check if all chunks are received
         if len(chunks) != metadata.total_chunks:
-            logger.error(f"Missing chunks for tensor {tensor_id}: {len(chunks)}/{metadata.total_chunks}")
+            logger.error(
+                f"Missing chunks for tensor {tensor_id}: {len(chunks)}/{metadata.total_chunks}"
+            )
             return None
 
         # Sort chunks by index
@@ -641,7 +718,9 @@ class TensorStreaming:
 
         # Decompress if needed
         if metadata.compression != CompressionType.NONE:
-            combined_data = await self._decompress_tensor(combined_data, metadata.compression)
+            combined_data = await self._decompress_tensor(
+                combined_data, metadata.compression
+            )
 
         # Verify overall checksum
         if self.config.checksum_verification:
@@ -653,7 +732,16 @@ class TensorStreaming:
         # Deserialize tensor
         if metadata.format == TensorFormat.NUMPY:
             buffer = io.BytesIO(combined_data)
-            tensor_data = np.load(buffer)
+            np_array = np.load(buffer)
+            if metadata.is_torch:
+                torch_tensor = torch.from_numpy(np_array)
+                torch_dtype = getattr(torch, metadata.dtype, None)
+                if torch_dtype is not None:
+                    torch_tensor = torch_tensor.to(torch_dtype)
+                torch_tensor = torch_tensor.to(metadata.device)
+                tensor_data = torch_tensor
+            else:
+                tensor_data = np_array
         elif metadata.format == TensorFormat.JSON:
             tensor_data = json.loads(combined_data.decode("utf-8"))
         else:
@@ -664,7 +752,10 @@ class TensorStreaming:
 
     def _find_missing_chunks(self, tensor_id: str) -> list[int]:
         """Find missing chunk indices for a tensor."""
-        if tensor_id not in self.pending_chunks or tensor_id not in self.tensor_metadata:
+        if (
+            tensor_id not in self.pending_chunks
+            or tensor_id not in self.tensor_metadata
+        ):
             return []
 
         chunks = self.pending_chunks[tensor_id]
