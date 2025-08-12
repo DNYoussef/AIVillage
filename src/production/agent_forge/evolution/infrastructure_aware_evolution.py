@@ -7,8 +7,8 @@ import time
 from typing import Any
 
 # Import P2P and resource management components
-from AIVillage.src.core.p2p import P2PNode
-from AIVillage.src.core.resources import (
+from ...core.p2p import P2PNode
+from ...core.resources import (
     AdaptiveLoader,
     ConstraintManager,
     DeviceProfiler,
@@ -514,7 +514,7 @@ class InfrastructureAwareEvolution:
             return
 
         # Create loading context based on evolution plan
-        from AIVillage.src.core.resources.adaptive_loader import LoadingContext
+        from ...core.resources.adaptive_loader import LoadingContext
 
         context = LoadingContext(
             task_type=plan.evolution_type,

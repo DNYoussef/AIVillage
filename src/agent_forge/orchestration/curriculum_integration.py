@@ -10,8 +10,8 @@ from typing import Any
 
 import torch
 
-from AIVillage.src.agent_forge.training.curriculum import CurriculumGenerator, Question
-from AIVillage.src.agent_forge.training.magi_specialization import (
+from ..training.curriculum import CurriculumGenerator, Question
+from ..training.magi_specialization import (
     FrontierQuestionGenerator,
     MagiConfig,
 )

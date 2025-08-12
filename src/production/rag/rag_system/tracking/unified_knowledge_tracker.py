@@ -5,7 +5,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from AIVillage.src.production.rag.rag_system.core.structures import RetrievalResult
+    from ..core.structures import RetrievalResult
 
 
 @dataclass

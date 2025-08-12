@@ -9,13 +9,13 @@ import time
 from typing import Any
 
 # Import resource management and dual evolution
-from AIVillage.src.core.resources import (
+from ...core.resources import (
     AdaptiveLoader,
     ConstraintManager,
     DeviceProfiler,
     ResourceMonitor,
 )
-from AIVillage.src.core.resources.constraint_manager import (
+from ...core.resources.constraint_manager import (
     ConstraintSeverity,
     ConstraintViolation,
 )
@@ -587,7 +587,7 @@ class ResourceConstrainedEvolution(DualEvolutionSystem):
         if not self.adaptive_loader:
             return
 
-        from AIVillage.src.core.resources.adaptive_loader import LoadingContext
+        from ...core.resources.adaptive_loader import LoadingContext
 
         # Create context based on evolution type and current resources
         quality_preferences = {

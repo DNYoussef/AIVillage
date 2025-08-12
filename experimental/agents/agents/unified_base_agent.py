@@ -19,13 +19,13 @@ from agents.utils import (
     MonteCarloTreeSearch,
 )
 from agents.utils.task import Task as LangroidTask
-from core.communication import (
+from AIVillage.core.communication import (
     Message,
     MessageType,
     Priority,
     StandardCommunicationProtocol,
 )
-from core.error_handling import (
+from AIVillage.core.error_handling import (
     AIVillageException,
     ErrorCategory,
     ErrorSeverity,

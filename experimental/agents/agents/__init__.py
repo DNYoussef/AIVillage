@@ -1,15 +1,15 @@
 from .orchestration import main
-from .unified_base_agent import (
-    SelfEvolvingSystem,
-    UnifiedAgentConfig,
-    UnifiedBaseAgent,
-    create_agent,
-)
+
+try:  # pragma: no cover - optional dependency
+    from .unified_base_agent import (
+        SelfEvolvingSystem,
+        UnifiedAgentConfig,
+        UnifiedBaseAgent,
+        create_agent,
+    )
+except ModuleNotFoundError:  # pragma: no cover - core package not installed
+    pass
 
 __all__ = [
-    "SelfEvolvingSystem",
-    "UnifiedAgentConfig",
-    "UnifiedBaseAgent",
-    "create_agent",
     "main",
 ]

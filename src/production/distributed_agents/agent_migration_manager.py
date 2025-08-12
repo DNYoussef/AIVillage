@@ -14,7 +14,7 @@ import uuid
 
 import msgpack
 
-from AIVillage.src.core.p2p.p2p_node import P2PNode
+from ...core.p2p.p2p_node import P2PNode
 
 from .distributed_agent_orchestrator import AgentInstance, AgentType, DeviceProfile
 
