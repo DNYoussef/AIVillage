@@ -13,7 +13,7 @@ from typing import Any
 import requests
 
 # from chromadb import PersistentClient  # TODO: Fix attrs dependency issue
-from AIVillage.src.ingestion import add_text
+from .. import add_text
 
 logger = logging.getLogger(__name__)
 

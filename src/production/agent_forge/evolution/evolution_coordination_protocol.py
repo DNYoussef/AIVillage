@@ -8,8 +8,8 @@ import time
 from typing import Any
 import uuid
 
-from AIVillage.src.core.p2p import P2PNode
-from AIVillage.src.core.p2p.message_protocol import (
+from ....core.p2p import P2PNode
+from ....core.p2p.message_protocol import (
     EvolutionMessage,
     MessagePriority,
     MessageType,

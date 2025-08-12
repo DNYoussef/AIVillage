@@ -3,8 +3,8 @@
 from datetime import datetime
 from typing import Any
 
-from AIVillage.src.production.rag.rag_system.core.config import RAGConfig
-from AIVillage.src.production.rag.rag_system.core.structures import RetrievalResult
+from ..core.config import RAGConfig
+from ..core.structures import RetrievalResult
 
 
 class DefaultKnowledgeConstructor:

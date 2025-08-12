@@ -16,8 +16,8 @@ import json
 import os
 import uuid
 
-from AIVillage.src.production.rag.rag_system.core.config import UnifiedConfig
-from AIVillage.src.production.rag.rag_system.core.structures import RetrievalResult
+from ..core.config import UnifiedConfig
+from ..core.structures import RetrievalResult
 
 DEFAULT_DIMENSION = 768
 

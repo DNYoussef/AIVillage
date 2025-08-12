@@ -2,9 +2,9 @@
 
 from typing import Any
 
-from AIVillage.src.production.rag.rag_system.core.agent_interface import AgentInterface
-from AIVillage.src.production.rag.rag_system.core.interface import ReasoningEngine
-from AIVillage.src.production.rag.rag_system.processing.self_referential_query_processor import (
+from ..core.agent_interface import AgentInterface
+from ..core.interface import ReasoningEngine
+from .self_referential_query_processor import (
     SelfReferentialQueryProcessor,
 )
 

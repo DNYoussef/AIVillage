@@ -8,7 +8,7 @@ import logging
 import time
 from typing import Any
 
-from AIVillage.src.mcp_servers.hyperag.guardian.gate import GuardianGate
+from ..guardian.gate import GuardianGate
 
 from .plan_structures import (
     ExecutionStatus,
@@ -554,7 +554,7 @@ class QueryPlanner:
 
             # Create a mock creative bridge for validation
             # In a real implementation, this would be more sophisticated
-            from AIVillage.src.mcp_servers.hyperag.guardian.gate import CreativeBridge
+            from ..guardian.gate import CreativeBridge
 
             bridge = CreativeBridge(
                 id=f"query_answer_{hash(answer) % 10000}",

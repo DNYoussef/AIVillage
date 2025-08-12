@@ -17,9 +17,9 @@ from typing import Any
 
 import yaml
 
-from AIVillage.src.mcp_servers.hyperag.memory.hippo_index import HippoIndex
-from AIVillage.src.mcp_servers.hyperag.memory.hypergraph_kg import HypergraphKG
-from AIVillage.src.mcp_servers.hyperag.models import QueryPlan
+from ..memory.hippo_index import HippoIndex
+from ..memory.hypergraph_kg import HypergraphKG
+from ..models import QueryPlan
 
 logger = logging.getLogger(__name__)
 
