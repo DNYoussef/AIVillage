@@ -77,7 +77,7 @@ class TensorStreamer:
     def _serialize_tensor(self, tensor: Any) -> bytes:
         """Serialize tensor with metadata."""
         if TORCH_AVAILABLE and isinstance(tensor, torch.Tensor):
-            np_array = tensor.cpu().numpy()
+            np_array = tensor.detach().cpu().numpy()
             metadata = {
                 "shape": list(np_array.shape),
                 "dtype": str(np_array.dtype),
@@ -119,6 +119,7 @@ class TensorStreamer:
 
         if TORCH_AVAILABLE and metadata.get("is_torch_tensor", False):
             tensor = torch.from_numpy(np_array)
+            tensor = tensor.to(metadata.get("device", "cpu"))
             if metadata.get("requires_grad", False):
                 tensor.requires_grad_(True)
             return tensor
