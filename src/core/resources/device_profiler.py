@@ -171,6 +171,11 @@ class DeviceProfile:
     cpu_cores: int
     cpu_model: str
 
+    # Power characteristics
+    battery_capacity_wh: float | None = None
+    battery_percent: float | None = None
+    power_plugged: bool | None = None
+
     # Feature support
     supports_gpu: bool = False
     supports_bluetooth: bool = False
@@ -340,6 +345,7 @@ class DeviceProfiler:
         # Set evolution constraints based on device type and performance
         max_evolution_memory = self._calculate_max_evolution_memory(memory.total, device_type)
         max_evolution_cpu = self._calculate_max_evolution_cpu(device_type)
+        battery_percent, power_plugged, _power_state = self._get_power_info()
 
         return DeviceProfile(
             device_id=self.device_id,
@@ -350,6 +356,8 @@ class DeviceProfiler:
             total_memory_gb=memory.total / (1024**3),
             cpu_cores=psutil.cpu_count(logical=True),
             cpu_model=cpu_info.get("model", "Unknown"),
+            battery_percent=battery_percent,
+            power_plugged=power_plugged,
             supports_gpu=self._detect_gpu_support(),
             supports_bluetooth=self._detect_bluetooth_support(),
             supports_wifi=self._detect_wifi_support(),
