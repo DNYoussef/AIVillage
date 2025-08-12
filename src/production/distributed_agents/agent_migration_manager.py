@@ -8,10 +8,12 @@ import asyncio
 from dataclasses import dataclass, field
 from enum import Enum
 import logging
-import pickle
 import time
 from typing import Any
 import uuid
+import pickle
+
+import msgpack
 
 from AIVillage.src.core.p2p.p2p_node import P2PNode
 
@@ -517,7 +519,7 @@ class AgentMigrationManager:
             "checkpoint_comprehensive": comprehensive,
         }
 
-        serialized_state = pickle.dumps(state_data)
+        serialized_state = msgpack.packb(state_data, use_bin_type=True)
 
         checkpoint = AgentCheckpoint(
             instance_id=agent_instance.instance_id,
@@ -611,8 +613,11 @@ class AgentMigrationManager:
     async def _start_agent_locally_from_checkpoint(self, checkpoint: AgentCheckpoint) -> bool:
         """Start agent locally from checkpoint."""
         try:
-            # Deserialize state
-            pickle.loads(checkpoint.state_data)
+            # Deserialize state using msgpack, fallback to pickle for backward compatibility
+            try:
+                msgpack.unpackb(checkpoint.state_data, raw=False)
+            except Exception:
+                pickle.loads(checkpoint.state_data)
 
             # Simulate agent restart with state
             if checkpoint.instance_id in self.agent_orchestrator.active_agents:

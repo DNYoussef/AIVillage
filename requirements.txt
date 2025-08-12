@@ -108,6 +108,7 @@ bandit>=1.7.7
 # Compression & Serialization
 bitarray>=3.6.0
 lz4>=4.4.4
+msgpack>=1.0.8
 
 # Blockchain & Wallet
 bittensor-wallet>=4.0.0
