@@ -1,0 +1,22 @@
+name: betanet-lint-example
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      - uses: ./betanet-lint
+        with:
+          binary: ./target/release/betanet-client
+          report: tmp_submission/lint/report.json
+          sbom: tmp_submission/lint/sbom.cdx.json
+      - uses: actions/upload-artifact@v3
+        with:
+          name: betanet-lint
+          path: tmp_submission/lint/
