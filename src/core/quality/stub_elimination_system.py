@@ -15,12 +15,12 @@ Quality & Security Integration Point: Stub elimination with system integrity
 """
 
 import ast
-from dataclasses import dataclass, field
-from enum import Enum
 import json
 import logging
-from pathlib import Path
 import re
+from dataclasses import dataclass, field
+from enum import Enum
+from pathlib import Path
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -153,7 +153,9 @@ class StubDetector:
                     for pattern in patterns:
                         match = re.search(pattern, line, re.IGNORECASE)
                         if match:
-                            stub = self._create_stub_analysis(file_path, line_num, line, stub_type, lines)
+                            stub = self._create_stub_analysis(
+                                file_path, line_num, line, stub_type, lines
+                            )
                             if stub:
                                 stubs.append(stub)
 
@@ -172,7 +174,12 @@ class StubDetector:
             return []
 
     def _create_stub_analysis(
-        self, file_path: Path, line_num: int, line: str, stub_type: StubType, all_lines: list[str]
+        self,
+        file_path: Path,
+        line_num: int,
+        line: str,
+        stub_type: StubType,
+        all_lines: list[str],
     ) -> StubAnalysis | None:
         """Create stub analysis from detected pattern."""
 
@@ -206,14 +213,18 @@ class StubDetector:
 
         return stub
 
-    def _detect_ast_stubs(self, file_path: Path, tree: ast.AST, lines: list[str]) -> list[StubAnalysis]:
+    def _detect_ast_stubs(
+        self, file_path: Path, tree: ast.AST, lines: list[str]
+    ) -> list[StubAnalysis]:
         """Detect stubs using AST analysis."""
         stubs = []
 
         for node in ast.walk(tree):
             # Empty functions
             if isinstance(node, ast.FunctionDef):
-                if len(node.body) == 1 and isinstance(node.body[0], (ast.Pass, ast.Ellipsis)):
+                if len(node.body) == 1 and isinstance(
+                    node.body[0], (ast.Pass, ast.Ellipsis)
+                ):
                     stub = StubAnalysis(
                         stub_id="",
                         location=StubLocation(file_path, node.lineno),
@@ -245,16 +256,23 @@ class StubDetector:
 
         return stubs
 
-    def _calculate_priority(self, line: str, file_path: Path, context: list[str]) -> StubPriority:
+    def _calculate_priority(
+        self, line: str, file_path: Path, context: list[str]
+    ) -> StubPriority:
         """Calculate elimination priority for a stub."""
         line_lower = line.lower()
 
         # Critical indicators
-        if any(word in line_lower for word in ["critical", "blocker", "broken", "crash"]):
+        if any(
+            word in line_lower for word in ["critical", "blocker", "broken", "crash"]
+        ):
             return StubPriority.CRITICAL
 
         # High priority indicators
-        if any(word in line_lower for word in ["important", "integration", "security", "performance"]):
+        if any(
+            word in line_lower
+            for word in ["important", "integration", "security", "performance"]
+        ):
             return StubPriority.HIGH
 
         # Check file importance
@@ -268,7 +286,9 @@ class StubDetector:
 
         return StubPriority.MEDIUM
 
-    def _calculate_function_priority(self, node: ast.FunctionDef, file_path: Path) -> StubPriority:
+    def _calculate_function_priority(
+        self, node: ast.FunctionDef, file_path: Path
+    ) -> StubPriority:
         """Calculate priority for empty functions."""
         # Special function names
         if node.name in ["__init__", "__call__", "main", "setup", "run"]:
@@ -280,7 +300,11 @@ class StubDetector:
 
         # Check decorators for importance
         for decorator in node.decorator_list:
-            if isinstance(decorator, ast.Name) and decorator.id in ["property", "classmethod", "staticmethod"]:
+            if isinstance(decorator, ast.Name) and decorator.id in [
+                "property",
+                "classmethod",
+                "staticmethod",
+            ]:
                 return StubPriority.MEDIUM
 
         return StubPriority.MEDIUM
@@ -303,7 +327,9 @@ class StubDetector:
 
         return min(5.0, complexity)
 
-    def _estimate_elimination_effort(self, stub_type: StubType, line: str, context: list[str]) -> float:
+    def _estimate_elimination_effort(
+        self, stub_type: StubType, line: str, context: list[str]
+    ) -> float:
         """Estimate effort to eliminate stub (1.0 = trivial, 5.0 = major work)."""
         base_effort = {
             StubType.TODO_COMMENT: 1.0,
@@ -315,14 +341,18 @@ class StubDetector:
         }.get(stub_type, 2.0)
 
         # Adjust based on complexity indicators
-        if any(word in line.lower() for word in ["complex", "algorithm", "optimization"]):
+        if any(
+            word in line.lower() for word in ["complex", "algorithm", "optimization"]
+        ):
             base_effort += 1.5
         if any(word in line.lower() for word in ["simple", "basic", "trivial"]):
             base_effort -= 0.5
 
         return max(1.0, min(5.0, base_effort))
 
-    def _estimate_risk(self, stub_type: StubType, file_path: Path, context: list[str]) -> float:
+    def _estimate_risk(
+        self, stub_type: StubType, file_path: Path, context: list[str]
+    ) -> float:
         """Estimate risk of eliminating stub (0.0 = safe, 1.0 = risky)."""
         risk = 0.3  # Base risk
 
@@ -336,7 +366,10 @@ class StubDetector:
 
         # Integration points are risky
         context_str = " ".join(context).lower()
-        if any(word in context_str for word in ["integration", "interface", "api", "protocol"]):
+        if any(
+            word in context_str
+            for word in ["integration", "interface", "api", "protocol"]
+        ):
             risk += 0.2
 
         return min(1.0, risk)
@@ -364,7 +397,9 @@ class StubEliminationPlanner:
         self.all_stubs: dict[str, StubAnalysis] = {}
         self.elimination_plan: list[str] = []  # Ordered list of stub_ids
 
-    def scan_project(self, exclude_patterns: list[str] = None) -> dict[str, list[StubAnalysis]]:
+    def scan_project(
+        self, exclude_patterns: list[str] = None
+    ) -> dict[str, list[StubAnalysis]]:
         """Scan entire project for stubs."""
         exclude_patterns = exclude_patterns or [
             "**/test_*",
@@ -380,7 +415,9 @@ class StubEliminationPlanner:
 
         for file_path in python_files:
             # Check exclusions
-            should_exclude = any(file_path.match(pattern) for pattern in exclude_patterns)
+            should_exclude = any(
+                file_path.match(pattern) for pattern in exclude_patterns
+            )
             if should_exclude:
                 continue
 
@@ -412,7 +449,9 @@ class StubEliminationPlanner:
             integration_bonus = 2.0 if stub.integration_critical else 0.0
 
             # Composite score (lower is higher priority)
-            composite_score = priority_score + risk_penalty - benefit_score - integration_bonus
+            composite_score = (
+                priority_score + risk_penalty - benefit_score - integration_bonus
+            )
 
             scored_stubs.append((composite_score, stub))
 
@@ -428,7 +467,9 @@ class StubEliminationPlanner:
         logger.info(f"Created elimination plan for top {len(top_stubs)} stubs")
         return top_stubs
 
-    def generate_elimination_report(self, top_stubs: list[StubAnalysis]) -> dict[str, Any]:
+    def generate_elimination_report(
+        self, top_stubs: list[StubAnalysis]
+    ) -> dict[str, Any]:
         """Generate comprehensive elimination report."""
 
         # Categorize by type and priority
@@ -457,10 +498,16 @@ class StubEliminationPlanner:
 
         # Calculate metrics
         total_effort = sum(stub.elimination_effort for stub in top_stubs)
-        avg_risk = sum(stub.risk_score for stub in top_stubs) / len(top_stubs) if top_stubs else 0.0
+        avg_risk = (
+            sum(stub.risk_score for stub in top_stubs) / len(top_stubs)
+            if top_stubs
+            else 0.0
+        )
 
         # Most problematic files
-        problematic_files = sorted(by_file.items(), key=lambda x: len(x[1]), reverse=True)[:10]
+        problematic_files = sorted(
+            by_file.items(), key=lambda x: len(x[1]), reverse=True
+        )[:10]
 
         return {
             "total_stubs": len(self.all_stubs),
@@ -469,7 +516,10 @@ class StubEliminationPlanner:
             "by_priority": {k: len(v) for k, v in by_priority.items()},
             "estimated_total_effort": total_effort,
             "average_risk_score": avg_risk,
-            "most_problematic_files": [{"file": file, "stub_count": len(stubs)} for file, stubs in problematic_files],
+            "most_problematic_files": [
+                {"file": file, "stub_count": len(stubs)}
+                for file, stubs in problematic_files
+            ],
             "top_eliminations": [
                 {
                     "stub_id": stub.stub_id,
@@ -497,7 +547,9 @@ class StubEliminationPlanner:
 
         logger.info(f"Exported elimination plan to {output_path}")
 
-    def _export_markdown_report(self, output_path: Path, report: dict[str, Any], top_stubs: list[StubAnalysis]) -> None:
+    def _export_markdown_report(
+        self, output_path: Path, report: dict[str, Any], top_stubs: list[StubAnalysis]
+    ) -> None:
         """Export detailed markdown report."""
         with open(output_path, "w") as f:
             f.write("# Stub Elimination Plan\n\n")
@@ -505,7 +557,9 @@ class StubEliminationPlanner:
             f.write("## Summary\n\n")
             f.write(f"- **Total Stubs Found**: {report['total_stubs']}\n")
             f.write(f"- **Planned Eliminations**: {report['planned_eliminations']}\n")
-            f.write(f"- **Estimated Effort**: {report['estimated_total_effort']:.1f} points\n")
+            f.write(
+                f"- **Estimated Effort**: {report['estimated_total_effort']:.1f} points\n"
+            )
             f.write(f"- **Average Risk**: {report['average_risk_score']:.2f}\n\n")
 
             f.write("## By Stub Type\n\n")
@@ -529,7 +583,9 @@ class StubEliminationPlanner:
                 f.write(f"- **Effort**: {stub.elimination_effort:.1f}/5.0\n")
                 f.write(f"- **Risk**: {stub.risk_score:.2f}/1.0\n")
                 if stub.suggested_implementation:
-                    f.write(f"- **Suggested Implementation**: {stub.suggested_implementation}\n")
+                    f.write(
+                        f"- **Suggested Implementation**: {stub.suggested_implementation}\n"
+                    )
                 f.write(f"\n```python\n{stub.content}\n```\n\n")
 
 
@@ -554,7 +610,9 @@ def scan_and_plan_elimination(
     if output_dir:
         output_dir.mkdir(parents=True, exist_ok=True)
         planner.export_elimination_plan(output_dir / "stub_elimination_plan.json")
-        planner.export_elimination_plan(output_dir / "stub_elimination_plan.md", format="markdown")
+        planner.export_elimination_plan(
+            output_dir / "stub_elimination_plan.md", format="markdown"
+        )
 
     return report, top_stubs
 
@@ -568,7 +626,9 @@ def get_elimination_metrics(project_root: Path) -> dict[str, Any]:
     by_type = {}
 
     for file_path in python_files:
-        if any(exclude in str(file_path) for exclude in ["test_", "__pycache__", ".git"]):
+        if any(
+            exclude in str(file_path) for exclude in ["test_", "__pycache__", ".git"]
+        ):
             continue
 
         stubs = detector.detect_file_stubs(file_path)
@@ -578,4 +638,8 @@ def get_elimination_metrics(project_root: Path) -> dict[str, Any]:
             type_key = stub.stub_type.value
             by_type[type_key] = by_type.get(type_key, 0) + 1
 
-    return {"total_stubs": total_stubs, "by_type": by_type, "files_scanned": len(python_files)}
+    return {
+        "total_stubs": total_stubs,
+        "by_type": by_type,
+        "files_scanned": len(python_files),
+    }

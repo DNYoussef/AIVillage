@@ -31,7 +31,9 @@ from src.core.p2p.libp2p_mesh import (
     MeshMessageType,
 )
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 
@@ -76,12 +78,16 @@ class MeshNetworkTester:
             except Exception as e:
                 logger.exception(f"Failed to start node {i}: {e}")
 
-    async def register_test_handlers(self, node: LibP2PMeshNetwork, node_index: int) -> None:
+    async def register_test_handlers(
+        self, node: LibP2PMeshNetwork, node_index: int
+    ) -> None:
         """Register message handlers for testing."""
 
         async def handle_test_message(message: MeshMessage) -> None:
             self.message_stats["received"] += 1
-            logger.debug(f"Node {node_index} received {message.type.value} from {message.sender}")
+            logger.debug(
+                f"Node {node_index} received {message.type.value} from {message.sender}"
+            )
 
             # Echo back for ping-pong tests
             if message.type == MeshMessageType.DATA_MESSAGE:
@@ -131,12 +137,16 @@ class MeshNetworkTester:
 
         async def handle_parameter_update(message: MeshMessage) -> None:
             self.message_stats["received"] += 1
-            logger.debug(f"Node {node_index} received parameter update from {message.sender}")
+            logger.debug(
+                f"Node {node_index} received parameter update from {message.sender}"
+            )
 
             # Simulate parameter processing
             try:
                 params = json.loads(message.payload.decode())
-                logger.debug(f"Node {node_index} updated parameters: {list(params.keys())}")
+                logger.debug(
+                    f"Node {node_index} updated parameters: {list(params.keys())}"
+                )
             except Exception as e:
                 logger.debug(f"Error processing parameters: {e}")
 
@@ -150,8 +160,12 @@ class MeshNetworkTester:
         # Register handlers
         node.register_message_handler(MeshMessageType.DATA_MESSAGE, handle_test_message)
         node.register_message_handler(MeshMessageType.AGENT_TASK, handle_agent_task)
-        node.register_message_handler(MeshMessageType.PARAMETER_UPDATE, handle_parameter_update)
-        node.register_message_handler(MeshMessageType.GRADIENT_SHARING, handle_gradient_sharing)
+        node.register_message_handler(
+            MeshMessageType.PARAMETER_UPDATE, handle_parameter_update
+        )
+        node.register_message_handler(
+            MeshMessageType.GRADIENT_SHARING, handle_gradient_sharing
+        )
 
     async def wait_for_network_convergence(self, timeout: float = 60.0) -> bool:
         """Wait for network to converge (all nodes connected)."""
@@ -167,7 +181,9 @@ class MeshNetworkTester:
                     break
 
             if all_connected:
-                logger.info(f"Network converged in {time.time() - start_time:.2f} seconds")
+                logger.info(
+                    f"Network converged in {time.time() - start_time:.2f} seconds"
+                )
                 return True
 
             await asyncio.sleep(2)
@@ -183,7 +199,9 @@ class MeshNetworkTester:
             # Check if all nodes have peers
             for i, node in enumerate(self.nodes):
                 peer_count = len(node.connected_peers)
-                logger.info(f"Node {i} has {peer_count} peers: {list(node.connected_peers.keys())}")
+                logger.info(
+                    f"Node {i} has {peer_count} peers: {list(node.connected_peers.keys())}"
+                )
 
                 if peer_count == 0:
                     logger.error(f"Node {i} has no peers")
@@ -229,8 +247,12 @@ class MeshNetworkTester:
             # Wait for responses
             await asyncio.sleep(5)
 
-            success_rate = success_count / (len(self.nodes) - 1) if len(self.nodes) > 1 else 0
-            logger.info(f"Message routing success rate: {success_rate:.2f} ({success_count}/{len(self.nodes) - 1})")
+            success_rate = (
+                success_count / (len(self.nodes) - 1) if len(self.nodes) > 1 else 0
+            )
+            logger.info(
+                f"Message routing success rate: {success_rate:.2f} ({success_count}/{len(self.nodes) - 1})"
+            )
 
             if success_rate >= 0.8:  # 80% success rate
                 logger.info("✅ Message routing test passed")
@@ -301,7 +323,9 @@ class MeshNetworkTester:
 
             # Test store
             test_key = "test-key"
-            test_value = json.dumps({"test_data": "hello world", "timestamp": time.time()}).encode()
+            test_value = json.dumps(
+                {"test_data": "hello world", "timestamp": time.time()}
+            ).encode()
 
             store_success = await dht_node.dht_store(test_key, test_value)
             if not store_success:
@@ -323,7 +347,9 @@ class MeshNetworkTester:
                 if retrieved_value and retrieved_value == test_value:
                     logger.info("✅ DHT functionality test passed")
                     return True
-                logger.error(f"❌ DHT retrieve failed: expected {test_value}, got {retrieved_value}")
+                logger.error(
+                    f"❌ DHT retrieve failed: expected {test_value}, got {retrieved_value}"
+                )
                 return False
             logger.warning("Only one DHT node available, cannot test retrieve")
             return True
@@ -342,7 +368,9 @@ class MeshNetworkTester:
                 return True
 
             # Remove a random node
-            node_to_remove = random.choice(self.nodes[1:])  # Don't remove the first node
+            node_to_remove = random.choice(
+                self.nodes[1:]
+            )  # Don't remove the first node
             logger.info(f"Removing node: {node_to_remove.node_id}")
 
             await node_to_remove.stop()
@@ -394,7 +422,9 @@ class MeshNetworkTester:
 
             self.message_stats["sent"] += message_count
 
-            logger.info(f"High-load messaging success rate: {success_rate:.2f} ({success_count}/{message_count})")
+            logger.info(
+                f"High-load messaging success rate: {success_rate:.2f} ({success_count}/{message_count})"
+            )
 
             # Wait for message processing
             await asyncio.sleep(10)
@@ -470,7 +500,11 @@ class MeshNetworkTester:
 
         print("-" * 60)
         print(f"Overall: {passed}/{total} tests passed")
-        print(f"Success Rate: {(passed / total * 100):.1f}%" if total > 0 else "No tests run")
+        print(
+            f"Success Rate: {(passed / total * 100):.1f}%"
+            if total > 0
+            else "No tests run"
+        )
 
         print("\nMessage Statistics:")
         print(f"  Sent: {self.message_stats['sent']}")
@@ -483,7 +517,9 @@ class MeshNetworkTester:
             if hasattr(node, "get_mesh_status"):
                 status = node.get_mesh_status()
                 peer_count = status.get("connected_peers", 0)
-                print(f"  Node {i}: {peer_count} peers, status: {status.get('status', 'unknown')}")
+                print(
+                    f"  Node {i}: {peer_count} peers, status: {status.get('status', 'unknown')}"
+                )
 
         print("=" * 60)
 
@@ -519,9 +555,13 @@ def main() -> None:
     """Main test function."""
     parser = argparse.ArgumentParser(description="Test LibP2P Mesh Network")
     parser.add_argument("--nodes", type=int, default=5, help="Number of test nodes")
-    parser.add_argument("--test-routing", action="store_true", help="Focus on routing tests")
+    parser.add_argument(
+        "--test-routing", action="store_true", help="Focus on routing tests"
+    )
     parser.add_argument("--test-dht", action="store_true", help="Focus on DHT tests")
-    parser.add_argument("--android-bridge", action="store_true", help="Test Android bridge")
+    parser.add_argument(
+        "--android-bridge", action="store_true", help="Test Android bridge"
+    )
     parser.add_argument("--verbose", "-v", action="store_true", help="Verbose logging")
 
     args = parser.parse_args()
@@ -541,13 +581,19 @@ def main() -> None:
                 # Focus on routing tests
                 await tester.setup_nodes()
                 await tester.wait_for_network_convergence()
-                tester.test_results["message_routing"] = await tester.test_message_routing()
-                tester.test_results["network_resilience"] = await tester.test_network_resilience()
+                tester.test_results[
+                    "message_routing"
+                ] = await tester.test_message_routing()
+                tester.test_results[
+                    "network_resilience"
+                ] = await tester.test_network_resilience()
             elif args.test_dht:
                 # Focus on DHT tests
                 await tester.setup_nodes()
                 await tester.wait_for_network_convergence()
-                tester.test_results["dht_functionality"] = await tester.test_dht_functionality()
+                tester.test_results[
+                    "dht_functionality"
+                ] = await tester.test_dht_functionality()
             else:
                 # Run all tests
                 await tester.run_all_tests()

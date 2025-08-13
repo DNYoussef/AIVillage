@@ -9,13 +9,13 @@ This module provides Redis connection management with automatic fallbacks to:
 from __future__ import annotations
 
 import asyncio
-from contextlib import asynccontextmanager
-from dataclasses import dataclass
 import json
 import logging
-from pathlib import Path
 import sqlite3
 import time
+from contextlib import asynccontextmanager
+from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 try:
@@ -50,7 +50,9 @@ class RedisConfig:
 class RedisFallbackStorage:
     """Fallback storage implementation for Redis operations."""
 
-    def __init__(self, storage_type: str, storage_path: str = "./data/redis_fallback") -> None:
+    def __init__(
+        self, storage_type: str, storage_path: str = "./data/redis_fallback"
+    ) -> None:
         self.storage_type = storage_type
         self.storage_path = Path(storage_path)
         self._memory_store: dict[str, Any] = {}
@@ -342,7 +344,9 @@ class RedisManager:
 
         # Check if we're in development mode with Redis disabled
         env = self.config_manager.get("AIVILLAGE_ENV", "development")
-        disable_redis = self.config_manager.get("DISABLE_REDIS", "false").lower() == "true"
+        disable_redis = (
+            self.config_manager.get("DISABLE_REDIS", "false").lower() == "true"
+        )
 
         if env == "development" and disable_redis:
             logger.info("Redis disabled in development mode, using fallbacks only")
@@ -360,8 +364,16 @@ class RedisManager:
                         return f"{protocol}://:{redis_password}@{rest}"
             return base_url
 
-        base_redis_host = self.config_manager.get("REDIS_HOST", "localhost") if self.config_manager else "localhost"
-        base_redis_port = self.config_manager.get("REDIS_PORT", "6379") if self.config_manager else "6379"
+        base_redis_host = (
+            self.config_manager.get("REDIS_HOST", "localhost")
+            if self.config_manager
+            else "localhost"
+        )
+        base_redis_port = (
+            self.config_manager.get("REDIS_PORT", "6379")
+            if self.config_manager
+            else "6379"
+        )
 
         redis_configs = {
             "evolution_metrics": RedisConfig(
@@ -433,7 +445,9 @@ class RedisManager:
                         f"Redis pool {pool_name} requires authentication but none provided, using fallback storage"
                     )
                 elif "Connection refused" in error_msg:
-                    logger.warning(f"Redis server not running for {pool_name}, using fallback storage")
+                    logger.warning(
+                        f"Redis server not running for {pool_name}, using fallback storage"
+                    )
                 else:
                     logger.warning(f"Failed to initialize Redis pool {pool_name}: {e}")
 
@@ -459,7 +473,9 @@ class RedisManager:
                 self.fallback_stores[store_name] = fallback_store
                 logger.info(f"Fallback store {store_name} ({storage_type}) initialized")
             except Exception as e:
-                logger.exception(f"Failed to initialize fallback store {store_name}: {e}")
+                logger.exception(
+                    f"Failed to initialize fallback store {store_name}: {e}"
+                )
 
     @asynccontextmanager
     async def get_connection(self, pool_name: str):
@@ -532,9 +548,13 @@ class RedisManager:
                 expired_count = await fallback_store.cleanup_expired()
                 cleanup_results[store_name] = expired_count
                 if expired_count > 0:
-                    logger.info(f"Cleaned up {expired_count} expired keys from {store_name}")
+                    logger.info(
+                        f"Cleaned up {expired_count} expired keys from {store_name}"
+                    )
             except Exception as e:
-                logger.exception(f"Failed to cleanup expired keys from {store_name}: {e}")
+                logger.exception(
+                    f"Failed to cleanup expired keys from {store_name}: {e}"
+                )
                 cleanup_results[store_name] = 0
 
         return cleanup_results

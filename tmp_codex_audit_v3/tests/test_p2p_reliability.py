@@ -1,27 +1,31 @@
 """
 Test C1: P2P Network Reliability - Verify 0% → 100% connection success claim
 """
+
 import json
 import os
-from pathlib import Path
 import random
 import sys
+from pathlib import Path
 
 # Add src to path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'src')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
+sys.path.insert(
+    0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "src"))
+)
+
 
 def test_p2p_imports():
     """Test that all P2P modules can be imported"""
     results = {}
 
     modules_to_test = [
-        ('bitchat_transport', 'core.p2p.bitchat_transport'),
-        ('betanet_transport', 'core.p2p.betanet_transport'),
-        ('dual_path_transport', 'core.p2p.dual_path_transport'),
-        ('libp2p_mesh', 'core.p2p.libp2p_mesh'),
-        ('fallback_transports', 'core.p2p.fallback_transports'),
-        ('mdns_discovery', 'core.p2p.mdns_discovery'),
+        ("bitchat_transport", "core.p2p.bitchat_transport"),
+        ("betanet_transport", "core.p2p.betanet_transport"),
+        ("dual_path_transport", "core.p2p.dual_path_transport"),
+        ("libp2p_mesh", "core.p2p.libp2p_mesh"),
+        ("fallback_transports", "core.p2p.fallback_transports"),
+        ("mdns_discovery", "core.p2p.mdns_discovery"),
     ]
 
     for name, module_path in modules_to_test:
@@ -37,6 +41,7 @@ def test_p2p_imports():
             print(f"[ERROR] {name}: Unexpected error - {e}")
 
     return results
+
 
 def simulate_mesh_network(num_nodes: int = 10, packet_loss: float = 0.3) -> dict:
     """Simulate a mesh network with packet loss"""
@@ -106,12 +111,13 @@ def simulate_mesh_network(num_nodes: int = 10, packet_loss: float = 0.3) -> dict
     success_rate = total_delivered / total_sent if total_sent > 0 else 0
 
     return {
-        'num_nodes': num_nodes,
-        'packet_loss': packet_loss,
-        'messages_sent': total_sent,
-        'average_delivery_rate': success_rate,
-        'success': success_rate >= 0.90
+        "num_nodes": num_nodes,
+        "packet_loss": packet_loss,
+        "messages_sent": total_sent,
+        "average_delivery_rate": success_rate,
+        "success": success_rate >= 0.90,
     }
+
 
 def test_store_and_forward():
     """Test store-and-forward queue functionality"""
@@ -129,18 +135,19 @@ def test_store_and_forward():
         delivered.append(msg)
 
     return {
-        'queued_messages': 5,
-        'delivered_messages': len(delivered),
-        'success': len(delivered) == 5
+        "queued_messages": 5,
+        "delivered_messages": len(delivered),
+        "success": len(delivered) == 5,
     }
+
 
 def main():
     """Run all P2P reliability tests"""
     results = {
-        'imports': {},
-        'mesh_simulations': [],
-        'store_and_forward': {},
-        'overall_success': False
+        "imports": {},
+        "mesh_simulations": [],
+        "store_and_forward": {},
+        "overall_success": False,
     }
 
     print("=" * 60)
@@ -149,43 +156,48 @@ def main():
 
     # Test imports
     print("\n1. Testing P2P Module Imports...")
-    results['imports'] = test_p2p_imports()
+    results["imports"] = test_p2p_imports()
 
     # Test mesh reliability
     print("\n2. Testing Mesh Network Reliability...")
     loss_rates = [0.2, 0.3, 0.4]  # 20%, 30%, 40% packet loss
 
     for loss_rate in loss_rates:
-        print(f"\n   Testing with {loss_rate*100:.0f}% packet loss...")
+        print(f"\n   Testing with {loss_rate * 100:.0f}% packet loss...")
         sim_result = simulate_mesh_network(num_nodes=10, packet_loss=loss_rate)
-        results['mesh_simulations'].append(sim_result)
-        print(f"   Delivery rate: {sim_result['average_delivery_rate']*100:.1f}%")
+        results["mesh_simulations"].append(sim_result)
+        print(f"   Delivery rate: {sim_result['average_delivery_rate'] * 100:.1f}%")
         print(f"   Status: {'PASS' if sim_result['success'] else 'FAIL'}")
 
     # Test store-and-forward
     print("\n3. Testing Store-and-Forward Queue...")
-    results['store_and_forward'] = test_store_and_forward()
-    print(f"   Queue test: {'PASS' if results['store_and_forward']['success'] else 'FAIL'}")
+    results["store_and_forward"] = test_store_and_forward()
+    print(
+        f"   Queue test: {'PASS' if results['store_and_forward']['success'] else 'FAIL'}"
+    )
 
     # Calculate overall success
-    import_success = all(v == "PASS" for v in results['imports'].values())
-    mesh_success = any(sim['success'] for sim in results['mesh_simulations'])
-    queue_success = results['store_and_forward']['success']
+    import_success = all(v == "PASS" for v in results["imports"].values())
+    mesh_success = any(sim["success"] for sim in results["mesh_simulations"])
+    queue_success = results["store_and_forward"]["success"]
 
-    results['overall_success'] = import_success and mesh_success and queue_success
+    results["overall_success"] = import_success and mesh_success and queue_success
 
     # Save results
-    output_path = Path(__file__).parent.parent / 'artifacts' / 'p2p_reliability.json'
+    output_path = Path(__file__).parent.parent / "artifacts" / "p2p_reliability.json"
     output_path.parent.mkdir(exist_ok=True)
 
-    with open(output_path, 'w') as f:
+    with open(output_path, "w") as f:
         json.dump(results, f, indent=2)
 
     print("\n" + "=" * 60)
-    print(f"Overall P2P Test Result: {'PASS' if results['overall_success'] else 'FAIL'}")
+    print(
+        f"Overall P2P Test Result: {'PASS' if results['overall_success'] else 'FAIL'}"
+    )
     print(f"Results saved to: {output_path}")
 
-    return results['overall_success']
+    return results["overall_success"]
+
 
 if __name__ == "__main__":
     success = main()

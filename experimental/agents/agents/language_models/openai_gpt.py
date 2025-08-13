@@ -1,10 +1,9 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 import os
+from dataclasses import dataclass
 
 import openai
-
 from rag_system.utils.logging import setup_logger as get_logger
 from rag_system.utils.tokenizer import get_cl100k_encoding
 

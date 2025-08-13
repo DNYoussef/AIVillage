@@ -3,8 +3,8 @@ import os
 import shutil
 
 import psutil
-from pydantic import BaseModel
 import torch
+from pydantic import BaseModel
 from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer
 
 logger = logging.getLogger(__name__)

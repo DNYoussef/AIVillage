@@ -3,9 +3,9 @@
 Focused Stub Elimination for AIVillage Source - Prompt 9
 """
 
+import re
 from collections import defaultdict
 from pathlib import Path
-import re
 
 
 def find_stubs_in_file(file_path: Path) -> list[tuple[int, str, str]]:
@@ -23,7 +23,11 @@ def find_stubs_in_file(file_path: Path) -> list[tuple[int, str, str]]:
             line_stripped = line.strip()
 
             # Skip empty lines and imports
-            if not line_stripped or line_stripped.startswith("import") or line_stripped.startswith("from"):
+            if (
+                not line_stripped
+                or line_stripped.startswith("import")
+                or line_stripped.startswith("from")
+            ):
                 continue
 
             # TODO/FIXME patterns
@@ -47,7 +51,9 @@ def find_stubs_in_file(file_path: Path) -> list[tuple[int, str, str]]:
                 # Check if this is just a placeholder
                 prev_line = lines[line_num - 2].strip() if line_num > 1 else ""
                 if prev_line.endswith(":") and not prev_line.startswith("#"):
-                    stubs.append((line_num, "EMPTY_PASS", f"{prev_line} / {line_stripped}"))
+                    stubs.append(
+                        (line_num, "EMPTY_PASS", f"{prev_line} / {line_stripped}")
+                    )
 
     except Exception as e:
         print(f"    Error analyzing {file_path}: {e}")
@@ -64,7 +70,14 @@ def execute_focused_stub_elimination():
     # Define scan directories (exclude virtual env and external deps)
     scan_dirs = ["src", "scripts", "benchmarks", "jobs", "bin"]
 
-    exclude_patterns = ["test_*.py", "*_test.py", "__pycache__", ".git", "new_env", ".claude"]
+    exclude_patterns = [
+        "test_*.py",
+        "*_test.py",
+        "__pycache__",
+        ".git",
+        "new_env",
+        ".claude",
+    ]
 
     print(f"\n[1] Scanning AIVillage source directories: {scan_dirs}")
 
@@ -83,7 +96,9 @@ def execute_focused_stub_elimination():
 
         for py_file in dir_path.rglob("*.py"):
             # Check exclusions
-            should_exclude = any(pattern in str(py_file) for pattern in exclude_patterns)
+            should_exclude = any(
+                pattern in str(py_file) for pattern in exclude_patterns
+            )
             if should_exclude:
                 continue
 
@@ -103,12 +118,16 @@ def execute_focused_stub_elimination():
 
     # Step 2: Categorize and prioritize
     print("\n[2] Stub categorization:")
-    for stub_type, count in sorted(stub_counts.items(), key=lambda x: x[1], reverse=True):
+    for stub_type, count in sorted(
+        stub_counts.items(), key=lambda x: x[1], reverse=True
+    ):
         print(f"    {stub_type}: {count}")
 
     # Step 3: Most problematic files
     print("\n[3] Most problematic files (top 15):")
-    problematic_files = sorted(all_stubs.items(), key=lambda x: len(x[1]), reverse=True)[:15]
+    problematic_files = sorted(
+        all_stubs.items(), key=lambda x: len(x[1]), reverse=True
+    )[:15]
 
     for file_path, stubs in problematic_files:
         print(f"    {file_path}: {len(stubs)} stubs")
@@ -134,7 +153,10 @@ def execute_focused_stub_elimination():
                 priority_score += 1.0
 
             # Higher priority for main functions
-            if any(word in content.lower() for word in ["def main", "def __init__", "def setup"]):
+            if any(
+                word in content.lower()
+                for word in ["def main", "def __init__", "def setup"]
+            ):
                 priority_score += 1.0
 
             # Quick wins (simple TODO comments)
@@ -148,14 +170,18 @@ def execute_focused_stub_elimination():
             else:
                 effort = 2.0
 
-            priority_stubs.append((priority_score, effort, file_path, line_num, stub_type, content))
+            priority_stubs.append(
+                (priority_score, effort, file_path, line_num, stub_type, content)
+            )
 
     # Sort by priority (descending) then effort (ascending)
     priority_stubs.sort(key=lambda x: (-x[0], x[1]))
 
     # Show top 30 targets
     print("    Top 30 elimination targets:")
-    for i, (priority, effort, file_path, line_num, stub_type, content) in enumerate(priority_stubs[:30], 1):
+    for i, (priority, effort, file_path, line_num, stub_type, content) in enumerate(
+        priority_stubs[:30], 1
+    ):
         print(f"    {i:2d}. [{stub_type}] {file_path}:{line_num}")
         print(f"        Priority: {priority:.1f}, Effort: {effort:.1f}")
         print(f"        {content[:70]}...")
@@ -166,7 +192,9 @@ def execute_focused_stub_elimination():
     quick_wins = [stub for stub in priority_stubs if stub[1] <= 2.0]  # Low effort
 
     high_impact = [
-        stub for stub in priority_stubs if stub[0] >= 3.0 and stub[1] <= 4.0  # High priority, reasonable effort
+        stub
+        for stub in priority_stubs
+        if stub[0] >= 3.0 and stub[1] <= 4.0  # High priority, reasonable effort
     ]
 
     print("\n[5] Elimination strategy:")
@@ -179,10 +207,21 @@ def execute_focused_stub_elimination():
     integration_files = [
         file_path
         for file_path in all_stubs.keys()
-        if any(keyword in file_path for keyword in ["integration", "transport", "agent_forge", "navigation", "rag"])
+        if any(
+            keyword in file_path
+            for keyword in [
+                "integration",
+                "transport",
+                "agent_forge",
+                "navigation",
+                "rag",
+            ]
+        )
     ]
 
-    integration_stub_count = sum(len(all_stubs[file_path]) for file_path in integration_files)
+    integration_stub_count = sum(
+        len(all_stubs[file_path]) for file_path in integration_files
+    )
 
     print("\n[6] Integration-critical analysis:")
     print(f"    Integration-related files: {len(integration_files)}")
@@ -204,10 +243,14 @@ def execute_focused_stub_elimination():
     print(f"    Batch 1 (Quick wins): {len(batch1_quick)} stubs")
     print(f"    Batch 2 (Medium effort): {len(batch2_medium)} stubs")
     print(f"    Batch 3 (Complex): {len(batch3_complex)} stubs")
-    print(f"    Total planned: {len(batch1_quick) + len(batch2_medium) + len(batch3_complex)} stubs")
+    print(
+        f"    Total planned: {len(batch1_quick) + len(batch2_medium) + len(batch3_complex)} stubs"
+    )
 
     # Step 8: Quality improvement calculation
-    improvement_percent = min(50, total_stubs) / total_stubs * 100 if total_stubs > 0 else 0
+    improvement_percent = (
+        min(50, total_stubs) / total_stubs * 100 if total_stubs > 0 else 0
+    )
 
     print("\n[8] Quality improvement projection:")
     print(f"    Current stub count: {total_stubs}")
@@ -242,7 +285,9 @@ if __name__ == "__main__":
         print(f"  - Medium effort targets: {result['medium_effort']}")
         print(f"  - Complex eliminations: {result['complex']}")
         print(f"  - Integration-critical stubs: {result['integration_critical']}")
-        print(f"  - Projected quality improvement: {result['quality_improvement']:.1f}%")
+        print(
+            f"  - Projected quality improvement: {result['quality_improvement']:.1f}%"
+        )
 
     except Exception as e:
         print(f"\n[FAIL] Stub elimination FAILED: {e}")

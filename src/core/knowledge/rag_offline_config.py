@@ -1,12 +1,12 @@
 """
 RAG Defaults Offline Validated Config - Prompt 6
 
-Offline-validated RAG system configuration with verified defaults for reliable 
+Offline-validated RAG system configuration with verified defaults for reliable
 knowledge retrieval and reasoning without dependency on external services.
 
 Key Features:
 - Pre-validated configuration templates for common RAG scenarios
-- Offline embedding model specifications and fallbacks  
+- Offline embedding model specifications and fallbacks
 - Resource-aware chunk sizing and retrieval parameters
 - Mobile/constrained-device optimized configurations
 - Validation framework for config integrity
@@ -14,11 +14,11 @@ Key Features:
 Knowledge & Data Integration Point: Validated RAG system defaults
 """
 
-from dataclasses import asdict, dataclass, field
-from enum import Enum
 import hashlib
 import json
 import logging
+from dataclasses import asdict, dataclass, field
+from enum import Enum
 from pathlib import Path
 from typing import Any
 
@@ -197,7 +197,9 @@ class OfflineRAGConfig:
     # Component configurations
     embedding: EmbeddingConfig = field(
         default_factory=lambda: EmbeddingConfig(
-            provider=EmbeddingProvider.SENTENCE_TRANSFORMERS, model_name="all-MiniLM-L6-v2", dimensions=384
+            provider=EmbeddingProvider.SENTENCE_TRANSFORMERS,
+            model_name="all-MiniLM-L6-v2",
+            dimensions=384,
         )
     )
     chunking: ChunkingConfig = field(default_factory=ChunkingConfig)
@@ -245,7 +247,10 @@ class OfflineRAGConfig:
                 device="cpu",
             ),
             chunking=ChunkingConfig(
-                chunk_size=256, chunk_overlap=25, mobile_chunk_size=128, mobile_overlap=12  # Smaller chunks
+                chunk_size=256,
+                chunk_overlap=25,
+                mobile_chunk_size=128,
+                mobile_overlap=12,  # Smaller chunks
             ),
             retrieval=RetrievalConfig(
                 top_k=3,  # Fewer results
@@ -260,7 +265,9 @@ class OfflineRAGConfig:
                 enable_context_compression=True,
             ),
             cache=CacheConfig(
-                max_size_mb=50, ttl_seconds=1800, compression_enabled=True  # Smaller cache  # Shorter TTL
+                max_size_mb=50,
+                ttl_seconds=1800,
+                compression_enabled=True,  # Smaller cache  # Shorter TTL
             ),
             # Mobile-specific settings
             vector_store_type=VectorStoreType.SQLITE_VSS,  # More efficient for mobile
@@ -282,7 +289,10 @@ class OfflineRAGConfig:
         if self.embedding.dimensions <= 0:
             errors.append("Embedding dimensions must be positive")
 
-        if self.embedding.provider == EmbeddingProvider.LOCAL_ONNX and not self.embedding.model_path:
+        if (
+            self.embedding.provider == EmbeddingProvider.LOCAL_ONNX
+            and not self.embedding.model_path
+        ):
             errors.append("Local ONNX provider requires model_path")
 
         # Validate chunking configuration
@@ -320,7 +330,9 @@ class OfflineRAGConfig:
         if self.validated:
             # Calculate validation checksum
             config_str = json.dumps(asdict(self), sort_keys=True, default=str)
-            self.validation_checksum = hashlib.sha256(config_str.encode()).hexdigest()[:16]
+            self.validation_checksum = hashlib.sha256(config_str.encode()).hexdigest()[
+                :16
+            ]
             logger.info(f"Config validation passed: {self.name}")
         else:
             logger.warning(f"Config validation failed: {self.name}, errors: {errors}")
@@ -340,7 +352,9 @@ class OfflineRAGConfigRegistry:
         self._initialize_default_configs()
         self._validate_all_configs()
 
-        logger.info(f"OfflineRAGConfigRegistry initialized with {len(self.validated_configs)} validated configs")
+        logger.info(
+            f"OfflineRAGConfigRegistry initialized with {len(self.validated_configs)} validated configs"
+        )
 
     def _initialize_default_configs(self):
         """Initialize default RAG configurations for common scenarios."""
@@ -356,7 +370,9 @@ class OfflineRAGConfigRegistry:
                 dimensions=384,
                 batch_size=32,
             ),
-            retrieval=RetrievalConfig(top_k=5, similarity_threshold=0.7, enable_reranking=True),
+            retrieval=RetrievalConfig(
+                top_k=5, similarity_threshold=0.7, enable_reranking=True
+            ),
             vector_store_type=VectorStoreType.FAISS,
             retriever_type=RetrieverType.HYBRID,
         )
@@ -374,7 +390,12 @@ class OfflineRAGConfigRegistry:
                 batch_size=16,
             ),
             chunking=ChunkingConfig(chunk_size=1024, chunk_overlap=100),
-            retrieval=RetrievalConfig(top_k=10, similarity_threshold=0.6, enable_reranking=True, rerank_top_k=20),
+            retrieval=RetrievalConfig(
+                top_k=10,
+                similarity_threshold=0.6,
+                enable_reranking=True,
+                rerank_top_k=20,
+            ),
             vector_store_type=VectorStoreType.CHROMA,
             retriever_type=RetrieverType.GRAPH_ENHANCED,
             max_memory_mb=2048,
@@ -414,9 +435,13 @@ class OfflineRAGConfigRegistry:
             description="Hybrid RAG that prefers offline but can fallback to online",
             mode=RAGMode.HYBRID_OFFLINE_FIRST,
             embedding=EmbeddingConfig(
-                provider=EmbeddingProvider.SENTENCE_TRANSFORMERS, model_name="all-MiniLM-L6-v2", dimensions=384
+                provider=EmbeddingProvider.SENTENCE_TRANSFORMERS,
+                model_name="all-MiniLM-L6-v2",
+                dimensions=384,
             ),
-            retrieval=RetrievalConfig(top_k=7, similarity_threshold=0.75, enable_reranking=True),
+            retrieval=RetrievalConfig(
+                top_k=7, similarity_threshold=0.75, enable_reranking=True
+            ),
             vector_store_type=VectorStoreType.CHROMA,
             retriever_type=RetrieverType.CONTEXTUAL,
         )
@@ -429,9 +454,13 @@ class OfflineRAGConfigRegistry:
                 self.validated_configs[name] = config
                 logger.info(f"Config '{name}' validated successfully")
             else:
-                logger.warning(f"Config '{name}' failed validation: {config.validation_errors}")
+                logger.warning(
+                    f"Config '{name}' failed validation: {config.validation_errors}"
+                )
 
-    def get_config(self, name: str, validated_only: bool = True) -> OfflineRAGConfig | None:
+    def get_config(
+        self, name: str, validated_only: bool = True
+    ) -> OfflineRAGConfig | None:
         """Get configuration by name."""
         if validated_only:
             return self.validated_configs.get(name)
@@ -445,7 +474,9 @@ class OfflineRAGConfigRegistry:
         else:
             return list(self.configs.keys())
 
-    def get_config_for_device(self, device_type: str, memory_mb: int) -> OfflineRAGConfig:
+    def get_config_for_device(
+        self, device_type: str, memory_mb: int
+    ) -> OfflineRAGConfig:
         """Get optimal configuration for device constraints."""
         if device_type in ["mobile", "tablet"] or memory_mb < 512:
             return self.validated_configs["mobile_optimized"]
@@ -486,7 +517,10 @@ class OfflineRAGConfigRegistry:
         """Import configuration from file."""
         try:
             with open(file_path) as f:
-                if file_path.suffix.lower() == ".yaml" or file_path.suffix.lower() == ".yml":
+                if (
+                    file_path.suffix.lower() == ".yaml"
+                    or file_path.suffix.lower() == ".yml"
+                ):
                     config_dict = yaml.safe_load(f)
                 elif file_path.suffix.lower() == ".json":
                     config_dict = json.load(f)
@@ -496,7 +530,9 @@ class OfflineRAGConfigRegistry:
             config = OfflineRAGConfig(**config_dict)
 
             if validate and not config.validate_config():
-                logger.error(f"Imported config failed validation: {config.validation_errors}")
+                logger.error(
+                    f"Imported config failed validation: {config.validation_errors}"
+                )
                 return None
 
             # Use filename as config name if not specified
@@ -519,14 +555,27 @@ class OfflineRAGConfigRegistry:
             "total_configs": len(self.configs),
             "validated_configs": len(self.validated_configs),
             "available_configs": list(self.validated_configs.keys()),
-            "config_modes": list(set(config.mode.value for config in self.validated_configs.values())),
+            "config_modes": list(
+                set(config.mode.value for config in self.validated_configs.values())
+            ),
             "embedding_providers": list(
-                set(config.embedding.provider.value for config in self.validated_configs.values())
+                set(
+                    config.embedding.provider.value
+                    for config in self.validated_configs.values()
+                )
             ),
             "vector_store_types": list(
-                set(config.vector_store_type.value for config in self.validated_configs.values())
+                set(
+                    config.vector_store_type.value
+                    for config in self.validated_configs.values()
+                )
             ),
-            "retriever_types": list(set(config.retriever_type.value for config in self.validated_configs.values())),
+            "retriever_types": list(
+                set(
+                    config.retriever_type.value
+                    for config in self.validated_configs.values()
+                )
+            ),
         }
 
 
@@ -556,13 +605,19 @@ def get_mobile_rag_config() -> OfflineRAGConfig:
 
 
 def create_custom_rag_config(
-    name: str, embedding_model: str = "all-MiniLM-L6-v2", chunk_size: int = 512, top_k: int = 5, **kwargs
+    name: str,
+    embedding_model: str = "all-MiniLM-L6-v2",
+    chunk_size: int = 512,
+    top_k: int = 5,
+    **kwargs,
 ) -> OfflineRAGConfig:
     """Create custom RAG configuration with validated defaults."""
     config = OfflineRAGConfig(
         name=name,
         description=f"Custom RAG config: {name}",
-        embedding=EmbeddingConfig(provider=EmbeddingProvider.SENTENCE_TRANSFORMERS, model_name=embedding_model),
+        embedding=EmbeddingConfig(
+            provider=EmbeddingProvider.SENTENCE_TRANSFORMERS, model_name=embedding_model
+        ),
         chunking=ChunkingConfig(chunk_size=chunk_size),
         retrieval=RetrievalConfig(top_k=top_k),
         **kwargs,

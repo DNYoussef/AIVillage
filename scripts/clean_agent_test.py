@@ -163,7 +163,9 @@ class SimpleAuditorAgent(MockAgentInterface):
             "verified": True,
         }
 
-    async def generate_audit_report(self, report_type: str, time_range, agents: list[str] = None):
+    async def generate_audit_report(
+        self, report_type: str, time_range, agents: list[str] = None
+    ):
         class AuditReport:
             def __init__(self):
                 self.total_receipts = 15
@@ -179,7 +181,9 @@ class SimpleTutorAgent(MockAgentInterface):
         self.specialization = "education"
         self.capabilities = ["learning", "assessment"]
 
-    async def create_learner_profile(self, learner_data: dict[str, Any]) -> dict[str, Any]:
+    async def create_learner_profile(
+        self, learner_data: dict[str, Any]
+    ) -> dict[str, Any]:
         learner_id = f"learner_{int(time.time())}"
         return {
             "status": "success",
@@ -213,7 +217,9 @@ class SimpleHorticulturistAgent(MockAgentInterface):
         self.specialization = "agriculture"
         self.capabilities = ["crop_planning", "soil_assessment"]
 
-    async def assess_soil(self, location_id: str, soil_data: dict[str, Any]) -> dict[str, Any]:
+    async def assess_soil(
+        self, location_id: str, soil_data: dict[str, Any]
+    ) -> dict[str, Any]:
         return {
             "status": "success",
             "soil_condition": "GOOD",
@@ -300,17 +306,23 @@ async def main():
 
     tomato_plan = await agents["horticulturist"].plan_crop({"name": "tomato"})
     lettuce_plan = await agents["horticulturist"].plan_crop({"name": "lettuce"})
-    print(f"   Crops planned: {tomato_plan['crop_profile'].name}, {lettuce_plan['crop_profile'].name}")
+    print(
+        f"   Crops planned: {tomato_plan['crop_profile'].name}, {lettuce_plan['crop_profile'].name}"
+    )
     receipts.extend([tomato_plan["receipt"], lettuce_plan["receipt"]])
 
     # Step 3: Sustainer - Resource optimization
     print("\nStep 3: Sustainer Agent - Resource Monitoring")
     device_spec = {"device_id": "mobile_garden_app", "cpu_cores": 4}
     profile_result = await agents["sustainer"].profile_device(device_spec)
-    print(f"   Device profiled: {profile_result['device_profile'].device_class.value} class")
+    print(
+        f"   Device profiled: {profile_result['device_profile'].device_class.value} class"
+    )
 
     efficiency_result = await agents["sustainer"].optimize_efficiency("mobile")
-    print(f"   Efficiency improvement: {efficiency_result['efficiency_improvement']:.1f}%")
+    print(
+        f"   Efficiency improvement: {efficiency_result['efficiency_improvement']:.1f}%"
+    )
     receipts.extend([profile_result["receipt"], efficiency_result["receipt"]])
 
     # Step 4: Tutor - Educational content
@@ -319,20 +331,26 @@ async def main():
     profile = await agents["tutor"].create_learner_profile(learner_data)
     print(f"   Learner profile created: {profile['learner_id']}")
 
-    lesson = await agents["tutor"].deliver_lesson(profile["learner_id"], "gardening_basics")
+    lesson = await agents["tutor"].deliver_lesson(
+        profile["learner_id"], "gardening_basics"
+    )
     print(f"   Lesson delivered: {lesson['content']['title']}")
     receipts.extend([profile["receipt"], lesson["receipt"]])
 
     # Step 5: Polyglot - Translation
     print("\nStep 5: Polyglot Agent - Translation Support")
-    translation = await agents["polyglot"].translate_text("Quiero aprender jardinería", "es", "en")
+    translation = await agents["polyglot"].translate_text(
+        "Quiero aprender jardinería", "es", "en"
+    )
     print(f"   Translation: '{translation.translated_text}'")
     print(f"   Confidence: {translation.confidence_score:.2f}")
     receipts.append(translation.receipt)
 
     # Step 6: Shield - Security check
     print("\nStep 6: Shield Agent - Security Compliance")
-    policy_check = await agents["shield"].enforce_policy("Garden planning with mobile app", "garden_system")
+    policy_check = await agents["shield"].enforce_policy(
+        "Garden planning with mobile app", "garden_system"
+    )
     print(f"   Policy compliance: {'APPROVED' if policy_check.approved else 'DENIED'}")
     print(f"   Compliance score: {policy_check.compliance_score:.2f}")
 
@@ -340,12 +358,18 @@ async def main():
     print("\nStep 7: Auditor Agent - Audit Trail Collection")
     for i, receipt in enumerate(receipts):
         result = await agents["auditor"].record_receipt(receipt)
-        print(f"   Receipt {i + 1} recorded: {result['receipt_id'][:20]}... from {receipt['agent']}")
+        print(
+            f"   Receipt {i + 1} recorded: {result['receipt_id'][:20]}... from {receipt['agent']}"
+        )
 
     # Generate audit report
     time_range = (time.time() - 3600, time.time())
-    audit_report = await agents["auditor"].generate_audit_report("garden_planning", time_range)
-    print(f"   Audit report: {audit_report.total_receipts} receipts, ${audit_report.total_cost_usd:.2f}")
+    audit_report = await agents["auditor"].generate_audit_report(
+        "garden_planning", time_range
+    )
+    print(
+        f"   Audit report: {audit_report.total_receipts} receipts, ${audit_report.total_cost_usd:.2f}"
+    )
 
     # Final coordination summary
     print("\nStep 8: King Agent - Final Coordination Summary")
@@ -363,7 +387,9 @@ async def main():
     print(f"   - Audit report cost: ${audit_report.total_cost_usd:.2f}")
 
     print("\n[SUCCESS] Multi-Agent System Operational")
-    print(f"   - Total capabilities: {sum(len(a.capabilities) for a in agents.values())}")
+    print(
+        f"   - Total capabilities: {sum(len(a.capabilities) for a in agents.values())}"
+    )
     print("   - All agents initialized and registered")
     print("   - Complete audit trail maintained")
     print("   - Cross-domain specialization demonstrated")

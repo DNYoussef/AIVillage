@@ -1,8 +1,8 @@
-from numba import jit
 import numpy as np
 import torch
-from torch import nn
 import torch.nn.functional as F
+from numba import jit
+from torch import nn
 
 try:
     import cupy as cp  # type: ignore

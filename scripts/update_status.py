@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 """Generate repository statistics and update docs/status.md."""
 
-from datetime import date
 import json
-from pathlib import Path
 import subprocess
+from datetime import date
+from pathlib import Path
 
 
 def collect_stats() -> tuple[int, int]:

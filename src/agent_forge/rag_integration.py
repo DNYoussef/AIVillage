@@ -8,22 +8,22 @@ Integrates the top-performing Agent Forge model into the HyperRAG retrieval pipe
 """
 
 import asyncio
-from dataclasses import asdict, dataclass
 import json
 import logging
-from pathlib import Path
 import sys
 import time
+from dataclasses import asdict, dataclass
+from pathlib import Path
 from typing import Any
 
 import faiss
 import numpy as np
-from sentence_transformers import SentenceTransformer
 import torch
+from sentence_transformers import SentenceTransformer
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-from agent_forge.results_analyzer import ResultsAnalyzer
 import wandb
+from agent_forge.results_analyzer import ResultsAnalyzer
 
 logger = logging.getLogger(__name__)
 

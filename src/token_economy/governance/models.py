@@ -1,8 +1,8 @@
 """Core data models for DAO governance system."""
 
+import time
 from dataclasses import dataclass, field
 from enum import Enum
-import time
 
 
 class ProposalStatus(Enum):

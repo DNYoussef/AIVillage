@@ -1,6 +1,6 @@
-from pathlib import Path
 import sys
 import unittest
+from pathlib import Path
 
 from rag_system.utils.named_entity_recognition import NamedEntityRecognizer
 

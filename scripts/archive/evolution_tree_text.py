@@ -61,7 +61,9 @@ def create_text_tree() -> None:
 
                 if "benchmark_results" in individual:
                     benchmarks = individual["benchmark_results"]
-                    bench_str = ", ".join([f"{k}={v:.3f}" for k, v in benchmarks.items()])
+                    bench_str = ", ".join(
+                        [f"{k}={v:.3f}" for k, v in benchmarks.items()]
+                    )
                     print(f"    │   Benchmarks: {bench_str}")
 
     print("\n" + "-" * 60)

@@ -2,8 +2,8 @@
 This allows imports using the `AIVillage` prefix without requiring an install.
 """
 
-from pathlib import Path
 import sys
+from pathlib import Path
 
 _src = Path(__file__).resolve().parent.parent / "src"
 if str(_src) not in sys.path:

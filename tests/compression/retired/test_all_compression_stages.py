@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Test ALL compression stages with real running code to prove they work."""
 
-from pathlib import Path
 import sys
 import time
+from pathlib import Path
 
 import torch
 

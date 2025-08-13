@@ -6,7 +6,7 @@ Specialist Agent Registry + Configs Integration Test - Prompt 5
 import os
 import sys
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
 
 import asyncio
 
@@ -30,11 +30,15 @@ async def test_specialist_agent_registry():
     registry = SpecialistAgentRegistry()
     status = registry.get_registry_status()
 
-    assert status['total_agent_types'] == 18, f"Expected 18 agent types, got {status['total_agent_types']}"
+    assert status["total_agent_types"] == 18, (
+        f"Expected 18 agent types, got {status['total_agent_types']}"
+    )
     assert len(registry.specifications) == 18
     assert len(registry.capability_index) > 0
     assert len(registry.role_index) > 0
-    print(f"    [PASS] Registry initialized with {status['total_agent_types']} agent types")
+    print(
+        f"    [PASS] Registry initialized with {status['total_agent_types']} agent types"
+    )
     print(f"    [PASS] Capability index: {len(registry.capability_index)} capabilities")
     print(f"    [PASS] Role index: {len(registry.role_index)} roles")
 
@@ -42,7 +46,16 @@ async def test_specialist_agent_registry():
     print("\n[2] Testing agent specifications...")
 
     # Test core agents exist
-    core_agents = ["King", "Sage", "Magi", "Navigator", "Sword", "Shield", "Builder", "Herald"]
+    core_agents = [
+        "King",
+        "Sage",
+        "Magi",
+        "Navigator",
+        "Sword",
+        "Shield",
+        "Builder",
+        "Herald",
+    ]
     for agent in core_agents:
         assert agent in registry.specifications, f"Missing core agent: {agent}"
         spec = registry.specifications[agent]
@@ -70,7 +83,9 @@ async def test_specialist_agent_registry():
     print("\n[3] Testing capability-based agent discovery...")
 
     # Find agents with decision making capability
-    decision_agents = registry.find_agents_by_capability(AgentCapability.DECISION_MAKING)
+    decision_agents = registry.find_agents_by_capability(
+        AgentCapability.DECISION_MAKING
+    )
     assert "King" in decision_agents
     print(f"    [PASS] Decision making agents: {decision_agents}")
 
@@ -109,8 +124,12 @@ async def test_specialist_agent_registry():
     print("\n[5] Testing agent instance registration...")
 
     # Register some test instances
-    king_instance = registry.register_instance("King", "device_001", endpoint="https://device001:8443")
-    nav_instance = registry.register_instance("Navigator", "device_002", transport_preferences=["bitchat", "betanet"])
+    king_instance = registry.register_instance(
+        "King", "device_001", endpoint="https://device001:8443"
+    )
+    nav_instance = registry.register_instance(
+        "Navigator", "device_002", transport_preferences=["bitchat", "betanet"]
+    )
     sword_instance = registry.register_instance("Sword", "device_003")
     # Register additional instances for delegation testing
     shield_instance = registry.register_instance("Shield", "device_004")
@@ -139,12 +158,14 @@ async def test_specialist_agent_registry():
         "task_id": "task_001",
         "required_capability": "decision_making",
         "priority": 2.0,
-        "description": "Strategic decision required"
+        "description": "Strategic decision required",
     }
 
     assigned_agent = registry.route_task_to_agent(decision_task)
     assert assigned_agent is not None
-    assert assigned_agent.agent_type == "King"  # Should route to King for decision making
+    assert (
+        assigned_agent.agent_type == "King"
+    )  # Should route to King for decision making
     assert "task_001" in assigned_agent.current_tasks
     print(f"    [PASS] Decision task routed to {assigned_agent.agent_type}")
 
@@ -152,7 +173,7 @@ async def test_specialist_agent_registry():
     nav_task = {
         "task_id": "task_002",
         "agent_type_preference": "Navigator",
-        "description": "Path optimization needed"
+        "description": "Path optimization needed",
     }
 
     assigned_nav = registry.route_task_to_agent(nav_task)
@@ -164,14 +185,24 @@ async def test_specialist_agent_registry():
     # Test 7: Capability Discovery API
     print("\n[7] Testing capability discovery API...")
 
-    path_optimization_agents = await discover_agent_capabilities(AgentCapability.PATH_OPTIMIZATION)
+    path_optimization_agents = await discover_agent_capabilities(
+        AgentCapability.PATH_OPTIMIZATION
+    )
     assert len(path_optimization_agents) >= 1
 
-    nav_info = next(agent for agent in path_optimization_agents if agent['agent_type'] == 'Navigator')
-    assert nav_info['display_name'] == "Navigator Agent - Path Optimization"
+    nav_info = next(
+        agent
+        for agent in path_optimization_agents
+        if agent["agent_type"] == "Navigator"
+    )
+    assert nav_info["display_name"] == "Navigator Agent - Path Optimization"
     # Note: available_instances might be 0 if agent was assigned tasks above
-    print(f"    [PASS] Discovered {len(path_optimization_agents)} path optimization agents")
-    print(f"    [DEBUG] Navigator available instances: {nav_info['available_instances']} (may be 0 if busy with tasks)")
+    print(
+        f"    [PASS] Discovered {len(path_optimization_agents)} path optimization agents"
+    )
+    print(
+        f"    [DEBUG] Navigator available instances: {nav_info['available_instances']} (may be 0 if busy with tasks)"
+    )
 
     # Test 8: Task Delegation API
     print("\n[8] Testing task delegation API...")
@@ -180,7 +211,7 @@ async def test_specialist_agent_registry():
         "task_id": "task_003",
         "required_capability": "threat_detection",
         "priority": 1.5,
-        "description": "Analyze potential security threats"
+        "description": "Analyze potential security threats",
     }
 
     # Debug: Check what agents are available for threat detection
@@ -204,24 +235,32 @@ async def test_specialist_agent_registry():
 
     delegated_instance = registry.instances[delegated_instance_id]
     assert "task_003" in delegated_instance.current_tasks
-    print(f"    [PASS] Task delegated to {delegated_instance.agent_type} instance {delegated_instance_id}")
+    print(
+        f"    [PASS] Task delegated to {delegated_instance.agent_type} instance {delegated_instance_id}"
+    )
 
     # Test 9: Registry Status and Monitoring
     print("\n[9] Testing registry status monitoring...")
 
     final_status = registry.get_registry_status()
-    assert final_status['total_instances'] == 5
-    assert final_status['instances_by_status']['available'] >= 0  # Some might be busy now
-    assert final_status['instances_by_status'].get('busy', 0) >= 0
+    assert final_status["total_instances"] == 5
+    assert (
+        final_status["instances_by_status"]["available"] >= 0
+    )  # Some might be busy now
+    assert final_status["instances_by_status"].get("busy", 0) >= 0
 
     # Check capability coverage
-    decision_coverage = final_status['capability_coverage']['decision_making']
-    assert decision_coverage['agent_types'] >= 1
-    assert decision_coverage['available_instances'] >= 0
+    decision_coverage = final_status["capability_coverage"]["decision_making"]
+    assert decision_coverage["agent_types"] >= 1
+    assert decision_coverage["available_instances"] >= 0
 
     print(f"    [PASS] Registry status: {final_status['total_instances']} instances")
-    print(f"    [PASS] Capability coverage tracked for {len(final_status['capability_coverage'])} capabilities")
-    print(f"    [PASS] Role coverage tracked for {len(final_status['role_coverage'])} roles")
+    print(
+        f"    [PASS] Capability coverage tracked for {len(final_status['capability_coverage'])} capabilities"
+    )
+    print(
+        f"    [PASS] Role coverage tracked for {len(final_status['role_coverage'])} roles"
+    )
 
     # Test 10: Global Registry Access
     print("\n[10] Testing global registry singleton...")
@@ -249,8 +288,9 @@ async def test_specialist_agent_registry():
         "delegation_api": True,
         "status_monitoring": True,
         "global_access": True,
-        "prompt_5_status": "COMPLETED"
+        "prompt_5_status": "COMPLETED",
     }
+
 
 if __name__ == "__main__":
     try:
@@ -270,5 +310,6 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"\n[FAIL] Specialist agent registry test FAILED: {e}")
         import traceback
+
         traceback.print_exc()
         exit(1)

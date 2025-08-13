@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 import logging
 import random
 import time
-from trace import Trace
 import traceback
+from dataclasses import dataclass, field
+from trace import Trace
 from typing import TYPE_CHECKING, Any, ClassVar
 
 if TYPE_CHECKING:

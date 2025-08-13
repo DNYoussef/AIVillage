@@ -1,9 +1,9 @@
 """Creative Agent - Content Generation and Artistic Task Specialist"""
 
-from dataclasses import dataclass
 import hashlib
 import logging
 import random
+from dataclasses import dataclass
 from typing import Any
 
 from src.production.rag.rag_system.core.agent_interface import AgentInterface
@@ -69,7 +69,9 @@ class CreativeAgent(AgentInterface):
         hash_value = int(hashlib.md5(text.encode()).hexdigest(), 16)
         return [(hash_value % 1000) / 1000.0] * 384
 
-    async def rerank(self, query: str, results: list[dict[str, Any]], k: int) -> list[dict[str, Any]]:
+    async def rerank(
+        self, query: str, results: list[dict[str, Any]], k: int
+    ) -> list[dict[str, Any]]:
         """Rerank results based on creative relevance"""
         keywords = [
             "creative",
@@ -89,7 +91,9 @@ class CreativeAgent(AgentInterface):
                 score += text.lower().count(keyword)
             result["creative_relevance_score"] = score
 
-        return sorted(results, key=lambda x: x.get("creative_relevance_score", 0), reverse=True)[:k]
+        return sorted(
+            results, key=lambda x: x.get("creative_relevance_score", 0), reverse=True
+        )[:k]
 
     async def introspect(self) -> dict[str, Any]:
         """Return agent capabilities and status"""
@@ -110,7 +114,11 @@ class CreativeAgent(AgentInterface):
 
     async def activate_latent_space(self, query: str) -> tuple[str, str]:
         """Activate latent space for creative generation"""
-        creative_type = "visual" if any(word in query.lower() for word in ["design", "art", "visual"]) else "narrative"
+        creative_type = (
+            "visual"
+            if any(word in query.lower() for word in ["design", "art", "visual"])
+            else "narrative"
+        )
         latent_representation = f"CREATIVE[{creative_type}:{query[:50]}]"
         return creative_type, latent_representation
 
@@ -441,8 +449,12 @@ class CreativeAgent(AgentInterface):
                     "outro": "8 bars",
                 },
                 "chord_progression": [
-                    "I - vi - IV - V" if "major" in suggested_key else "i - VI - III - VII",
-                    "vi - IV - I - V" if "major" in suggested_key else "VI - iv - i - V",
+                    "I - vi - IV - V"
+                    if "major" in suggested_key
+                    else "i - VI - III - VII",
+                    "vi - IV - I - V"
+                    if "major" in suggested_key
+                    else "VI - iv - i - V",
                 ],
                 "melodic_elements": [
                     f"Emphasizes {theme} through recurring motifs",
@@ -458,7 +470,9 @@ class CreativeAgent(AgentInterface):
             logger.error(f"Music composition failed: {e}")
             return {"error": str(e)}
 
-    async def develop_character(self, character_brief: dict[str, Any]) -> dict[str, Any]:
+    async def develop_character(
+        self, character_brief: dict[str, Any]
+    ) -> dict[str, Any]:
         """Develop detailed character profile"""
         try:
             name = character_brief.get("name", "Unnamed Character")
@@ -484,13 +498,19 @@ class CreativeAgent(AgentInterface):
 
             if role == "protagonist":
                 primary_trait = random.choice(protagonist_traits)
-                secondary_traits = random.sample([t for t in protagonist_traits if t != primary_trait], 2)
+                secondary_traits = random.sample(
+                    [t for t in protagonist_traits if t != primary_trait], 2
+                )
             elif role == "antagonist":
                 primary_trait = random.choice(antagonist_traits)
-                secondary_traits = random.sample([t for t in antagonist_traits if t != primary_trait], 2)
+                secondary_traits = random.sample(
+                    [t for t in antagonist_traits if t != primary_trait], 2
+                )
             else:  # mentor or supporting
                 primary_trait = random.choice(mentor_traits)
-                secondary_traits = random.sample([t for t in mentor_traits if t != primary_trait], 2)
+                secondary_traits = random.sample(
+                    [t for t in mentor_traits if t != primary_trait], 2
+                )
 
             # Background elements
             professions = [
@@ -519,9 +539,15 @@ class CreativeAgent(AgentInterface):
                 "personality": {
                     "primary_trait": primary_trait,
                     "secondary_traits": secondary_traits,
-                    "fatal_flaw": "overconfidence" if role == "protagonist" else "underestimating others",
-                    "greatest_fear": "failure" if role == "protagonist" else "losing control",
-                    "core_desire": "to protect others" if role == "protagonist" else "to achieve power",
+                    "fatal_flaw": "overconfidence"
+                    if role == "protagonist"
+                    else "underestimating others",
+                    "greatest_fear": "failure"
+                    if role == "protagonist"
+                    else "losing control",
+                    "core_desire": "to protect others"
+                    if role == "protagonist"
+                    else "to achieve power",
                 },
                 "background": {
                     "profession": random.choice(professions),
@@ -569,7 +595,9 @@ class CreativeAgent(AgentInterface):
                 },
                 "dialogue_style": {
                     "speaking_pattern": f"Speaks in a {primary_trait} manner",
-                    "vocabulary": "Complex" if primary_trait in ["intelligent", "wise"] else "Direct",
+                    "vocabulary": "Complex"
+                    if primary_trait in ["intelligent", "wise"]
+                    else "Direct",
                     "catchphrase": f"A phrase that embodies {primary_trait}",
                     "internal_thoughts": f"Often contemplates {character_profile.get('personality', {}).get('core_desire', 'their goals')}",
                 },

@@ -12,8 +12,8 @@ import asyncio
 # Direct module loading
 import importlib.util
 import json
-from pathlib import Path
 import sys
+from pathlib import Path
 
 
 def load_module_direct(name, path):
@@ -23,6 +23,7 @@ def load_module_direct(name, path):
     sys.modules[name] = module
     spec.loader.exec_module(module)
     return module
+
 
 # Load modules
 src_path = Path(__file__).parent.parent / "src"
@@ -36,7 +37,7 @@ print("\n1. Onion Cryptography (Real X25519 + ChaCha20-Poly1305)")
 print("-" * 50)
 
 try:
-    onion = load_module_direct('onion', src_path / "core/p2p/crypto/onion.py")
+    onion = load_module_direct("onion", src_path / "core/p2p/crypto/onion.py")
 
     print(f"[OK] Crypto available: {onion.CRYPTO_AVAILABLE}")
 
@@ -68,7 +69,7 @@ print("\n2. Cover Traffic & Padding")
 print("-" * 50)
 
 try:
-    cover = load_module_direct('cover', src_path / "core/p2p/betanet_cover.py")
+    cover = load_module_direct("cover", src_path / "core/p2p/betanet_cover.py")
 
     print("[OK] Cover traffic module loaded")
 
@@ -76,9 +77,11 @@ try:
     config = cover.CoverTrafficConfig(
         mode=cover.CoverTrafficMode.CONSTANT_RATE,
         base_rate_pps=1.0,
-        max_bandwidth_bps=10000
+        max_bandwidth_bps=10000,
     )
-    print(f"[OK] Config created: mode={config.mode.value}, rate={config.base_rate_pps}pps")
+    print(
+        f"[OK] Config created: mode={config.mode.value}, rate={config.base_rate_pps}pps"
+    )
 
     # Test stats tracking
     stats = cover.CoverTrafficStats()
@@ -96,6 +99,7 @@ except Exception as e:
 print("\n3. Betanet Transport Integration")
 print("-" * 50)
 
+
 async def test_integration():
     try:
         # Load betanet transport (may fail due to imports, that's OK)
@@ -107,17 +111,20 @@ async def test_integration():
         # Simulate what the transport would do
 
         # Test: Does it have onion crypto?
-        onion_available = onion.CRYPTO_AVAILABLE if 'onion' in locals() else False
+        onion_available = onion.CRYPTO_AVAILABLE if "onion" in locals() else False
         print(f"[INFO] Onion crypto available: {onion_available}")
 
         # Test: Does it have cover traffic?
-        cover_available = 'cover' in locals()
+        cover_available = "cover" in locals()
         print(f"[INFO] Cover traffic available: {cover_available}")
 
         # Test: Can we create sample encrypted traffic?
         if onion_available:
             sample_payload = b"Sample Betanet message"
-            sample_hops = [("node1", onion.generate_keypair()[1]), ("node2", onion.generate_keypair()[1])]
+            sample_hops = [
+                ("node1", onion.generate_keypair()[1]),
+                ("node2", onion.generate_keypair()[1]),
+            ]
             encrypted_sample = onion.build_onion_layers(sample_payload, sample_hops)
 
             # Check: No plaintext visible
@@ -135,6 +142,7 @@ async def test_integration():
         print(f"[WARN] Integration test limited due to: {e}")
         return True  # Non-critical
 
+
 # Run async test
 integration_ok = asyncio.run(test_integration())
 
@@ -143,8 +151,8 @@ print("\n4. Sample Indistinguishability Metrics")
 print("-" * 50)
 
 sample_metrics = {
-    "onion_crypto_available": onion.CRYPTO_AVAILABLE if 'onion' in locals() else False,
-    "cover_traffic_available": True if 'cover' in locals() else False,
+    "onion_crypto_available": onion.CRYPTO_AVAILABLE if "onion" in locals() else False,
+    "cover_traffic_available": True if "cover" in locals() else False,
     "cipher_presence_on_wire": True,
     "cover_cadence_pps": 1.5,
     "average_padded_size_bytes": 384,
@@ -173,8 +181,11 @@ print("VERIFICATION SUMMARY")
 print("=" * 60)
 
 checks = [
-    ("Real X25519+ChaCha20 onion routing", onion.CRYPTO_AVAILABLE if 'onion' in locals() else False),
-    ("Cover traffic implementation", 'cover' in locals()),
+    (
+        "Real X25519+ChaCha20 onion routing",
+        onion.CRYPTO_AVAILABLE if "onion" in locals() else False,
+    ),
+    ("Cover traffic implementation", "cover" in locals()),
     ("Integration paths working", integration_ok),
     ("Metrics export functional", True),
 ]
@@ -196,7 +207,9 @@ if total_passed >= 3:
     print("- No plaintext payloads leak to wire")
     print("- Traffic appears as normal HTTPS web activity")
 else:
-    print(f"\n[PARTIAL] {total_tests - total_passed} checks failed, but core crypto working")
+    print(
+        f"\n[PARTIAL] {total_tests - total_passed} checks failed, but core crypto working"
+    )
 
 print("\nKEY ACHIEVEMENTS:")
 print("+ Real layered encryption using X25519 + ChaCha20-Poly1305")

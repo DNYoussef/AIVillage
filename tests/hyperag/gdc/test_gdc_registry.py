@@ -4,9 +4,9 @@ Unit tests for GDC Registry
 Tests the GDC specification loading and management system.
 """
 
-from pathlib import Path
 import sys
 import tempfile
+from pathlib import Path
 
 import pytest
 import yaml

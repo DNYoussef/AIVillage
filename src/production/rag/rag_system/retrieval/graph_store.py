@@ -1,6 +1,6 @@
-from datetime import datetime
 import math
 import random
+from datetime import datetime
 from typing import Any
 
 try:  # networkx might not be installed in minimal test envs

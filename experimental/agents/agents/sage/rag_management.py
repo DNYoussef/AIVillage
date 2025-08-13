@@ -18,14 +18,31 @@ class KingRAGManagement:
             logger.exception(f"Error performing health check: {e!s}")
             return {"error": str(e)}
 
-    async def handle_rag_health_issue(self, health_check_result: dict[str, Any]) -> None:
+    async def handle_rag_health_issue(
+        self, health_check_result: dict[str, Any]
+    ) -> None:
         try:
-            if health_check_result.get("index_health", {}).get("healthy", True) is False:
+            if (
+                health_check_result.get("index_health", {}).get("healthy", True)
+                is False
+            ):
                 await self._handle_index_issue(health_check_result["index_health"])
-            if health_check_result.get("performance_metrics", {}).get("acceptable", True) is False:
-                await self._handle_performance_issue(health_check_result["performance_metrics"])
-            if health_check_result.get("data_consistency", {}).get("consistent", True) is False:
-                await self._handle_consistency_issue(health_check_result["data_consistency"])
+            if (
+                health_check_result.get("performance_metrics", {}).get(
+                    "acceptable", True
+                )
+                is False
+            ):
+                await self._handle_performance_issue(
+                    health_check_result["performance_metrics"]
+                )
+            if (
+                health_check_result.get("data_consistency", {}).get("consistent", True)
+                is False
+            ):
+                await self._handle_consistency_issue(
+                    health_check_result["data_consistency"]
+                )
         except Exception as e:
             logger.exception(f"Error handling RAG health issue: {e!s}")
 
@@ -48,7 +65,11 @@ class KingRAGManagement:
         await self._reconcile_data()
         await self._validate_data()
 
-    async def _notify_administrators(self, health_check_result: dict[str, Any], handling_plan: dict[str, Any]) -> None:
-        logger.info(f"Notifying administrators about RAG health issues: {health_check_result}")
+    async def _notify_administrators(
+        self, health_check_result: dict[str, Any], handling_plan: dict[str, Any]
+    ) -> None:
+        logger.info(
+            f"Notifying administrators about RAG health issues: {health_check_result}"
+        )
         logger.info(f"Handling plan: {handling_plan}")
         # In a real-world scenario, you would send this notification via email, Slack, etc.

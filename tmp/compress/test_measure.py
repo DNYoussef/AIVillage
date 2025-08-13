@@ -5,8 +5,8 @@ This test suite validates that the compression algorithms work correctly
 and that measurements are accurate without requiring GPU resources.
 """
 
-from pathlib import Path
 import sys
+from pathlib import Path
 
 import pytest
 import torch

@@ -5,10 +5,10 @@ enabling compressed model shards to be distributed efficiently across devices.
 """
 
 import asyncio
-from dataclasses import dataclass, field
 import logging
-from pathlib import Path
 import time
+from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any
 
 import torch

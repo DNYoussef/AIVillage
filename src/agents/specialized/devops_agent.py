@@ -1,8 +1,8 @@
 """DevOps Agent - CI/CD and Infrastructure Management Specialist"""
 
 import asyncio
-from dataclasses import dataclass
 import logging
+from dataclasses import dataclass
 from typing import Any
 
 from src.production.rag.rag_system.core.agent_interface import AgentInterface
@@ -51,9 +51,7 @@ class DevOpsAgent(AgentInterface):
     async def generate(self, prompt: str) -> str:
         """Generate DevOps operation responses"""
         if "deploy" in prompt.lower():
-            return (
-                "I can handle deployments to dev, staging, or production environments. Specify the service and version."
-            )
+            return "I can handle deployments to dev, staging, or production environments. Specify the service and version."
         if "pipeline" in prompt.lower():
             return "I manage CI/CD pipelines with automated testing, building, and deployment stages."
         if "infrastructure" in prompt.lower():
@@ -69,7 +67,9 @@ class DevOpsAgent(AgentInterface):
         hash_value = int(hashlib.md5(text.encode()).hexdigest(), 16)
         return [(hash_value % 1000) / 1000.0] * 384
 
-    async def rerank(self, query: str, results: list[dict[str, Any]], k: int) -> list[dict[str, Any]]:
+    async def rerank(
+        self, query: str, results: list[dict[str, Any]], k: int
+    ) -> list[dict[str, Any]]:
         """Rerank results based on DevOps relevance"""
         keywords = [
             "deploy",
@@ -88,7 +88,9 @@ class DevOpsAgent(AgentInterface):
                 score += text.lower().count(keyword)
             result["devops_relevance_score"] = score
 
-        return sorted(results, key=lambda x: x.get("devops_relevance_score", 0), reverse=True)[:k]
+        return sorted(
+            results, key=lambda x: x.get("devops_relevance_score", 0), reverse=True
+        )[:k]
 
     async def introspect(self) -> dict[str, Any]:
         """Return agent capabilities and status"""
@@ -125,7 +127,9 @@ class DevOpsAgent(AgentInterface):
         }
 
         try:
-            logger.info(f"Deploying {request.service} v{request.version} to {request.environment}")
+            logger.info(
+                f"Deploying {request.service} v{request.version} to {request.environment}"
+            )
 
             # Simulate deployment steps
             deployment_steps = [
@@ -163,7 +167,9 @@ class DevOpsAgent(AgentInterface):
             result["error"] = str(e)
 
             if request.rollback_on_failure:
-                result["rollback"] = await self.rollback_deployment(result["deployment_id"])
+                result["rollback"] = await self.rollback_deployment(
+                    result["deployment_id"]
+                )
 
         return result
 
@@ -202,7 +208,9 @@ class DevOpsAgent(AgentInterface):
         }
 
         self.pipelines[pipeline_id] = pipeline
-        logger.info(f"Pipeline {pipeline_id} configured with {len(pipeline['stages'])} stages")
+        logger.info(
+            f"Pipeline {pipeline_id} configured with {len(pipeline['stages'])} stages"
+        )
 
         return pipeline
 

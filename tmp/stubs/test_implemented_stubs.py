@@ -2,9 +2,9 @@
 """Unit tests for newly implemented stub functionality."""
 
 import asyncio
-from pathlib import Path
 import sys
 import unittest
+from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
 # Add src to path for testing

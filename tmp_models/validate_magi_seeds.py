@@ -2,11 +2,11 @@
 """Validate downloaded Magi seed models with smoke tests"""
 
 import json
-from pathlib import Path
 import re
 import sys
 import time
 import traceback
+from pathlib import Path
 
 try:
     import torch

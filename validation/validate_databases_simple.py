@@ -3,11 +3,11 @@
 Checks database existence, schemas, and basic integrity
 """
 
-from datetime import datetime
 import json
-from pathlib import Path
 import sqlite3
 import sys
+from datetime import datetime
+from pathlib import Path
 
 
 class DatabaseValidator:

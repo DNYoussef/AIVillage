@@ -8,9 +8,9 @@ The supreme orchestrator of AIVillage, responsible for:
 - Resource allocation and priority management
 """
 
+import logging
 from dataclasses import dataclass
 from enum import Enum
-import logging
 from typing import Any
 
 from src.production.rag.rag_system.core.agent_interface import AgentInterface
@@ -119,7 +119,9 @@ class KingAgent(AgentInterface):
         hash_value = int(hashlib.md5(text.encode()).hexdigest(), 16)
         return [(hash_value % 1000) / 1000.0] * 768  # Larger embedding for King
 
-    async def rerank(self, query: str, results: list[dict[str, Any]], k: int) -> list[dict[str, Any]]:
+    async def rerank(
+        self, query: str, results: list[dict[str, Any]], k: int
+    ) -> list[dict[str, Any]]:
         """Rerank based on orchestration relevance"""
         orchestration_keywords = [
             "task",
@@ -144,7 +146,9 @@ class KingAgent(AgentInterface):
 
             result["orchestration_score"] = score
 
-        return sorted(results, key=lambda x: x.get("orchestration_score", 0), reverse=True)[:k]
+        return sorted(
+            results, key=lambda x: x.get("orchestration_score", 0), reverse=True
+        )[:k]
 
     async def introspect(self) -> dict[str, Any]:
         """Return King agent status and metrics"""
@@ -191,12 +195,16 @@ class KingAgent(AgentInterface):
         latent_repr = f"KING[{space_type}:{query[:50]}]"
         return space_type, latent_repr
 
-    async def decompose_task(self, task_description: str, constraints: dict[str, Any] = None) -> Task:
+    async def decompose_task(
+        self, task_description: str, constraints: dict[str, Any] = None
+    ) -> Task:
         """Decompose a complex task into manageable components"""
         task_id = f"task_{len(self.active_tasks) + 1}"
 
         # Analyze task complexity and requirements
-        required_capabilities = await self._analyze_required_capabilities(task_description)
+        required_capabilities = await self._analyze_required_capabilities(
+            task_description
+        )
         complexity = await self._estimate_complexity(task_description)
         priority = await self._determine_priority(task_description, constraints or {})
 
@@ -278,12 +286,16 @@ class KingAgent(AgentInterface):
         # Adjust based on task characteristics
         if len(description.split()) > 50:
             base_complexity += 1
-        if any(word in description_lower for word in ["multi", "integrate", "coordinate"]):
+        if any(
+            word in description_lower for word in ["multi", "integrate", "coordinate"]
+        ):
             base_complexity += 1
 
         return min(10, base_complexity)
 
-    async def _determine_priority(self, description: str, constraints: dict[str, Any]) -> Priority:
+    async def _determine_priority(
+        self, description: str, constraints: dict[str, Any]
+    ) -> Priority:
         """Determine task priority based on description and constraints"""
         if constraints.get("urgent") or "emergency" in description.lower():
             return Priority.CRITICAL
@@ -293,7 +305,9 @@ class KingAgent(AgentInterface):
             return Priority.LOW
         return Priority.MEDIUM
 
-    async def assign_optimal_agents(self, task: Task, config: OptimizationConfig = None) -> dict[str, Any]:
+    async def assign_optimal_agents(
+        self, task: Task, config: OptimizationConfig = None
+    ) -> dict[str, Any]:
         """Optimally assign agents to task based on multi-objective optimization"""
         if not config:
             config = self.default_optimization
@@ -309,7 +323,9 @@ class KingAgent(AgentInterface):
             }
 
         # Perform multi-objective optimization
-        optimal_assignment = await self._optimize_assignment(task, candidate_agents, config)
+        optimal_assignment = await self._optimize_assignment(
+            task, candidate_agents, config
+        )
 
         # Update task with assignment
         task.assigned_agents = optimal_assignment["agents"]
@@ -331,10 +347,14 @@ class KingAgent(AgentInterface):
             "status": "success",
             "task_id": task.task_id,
             "assignment": optimal_assignment,
-            "estimated_completion": optimal_assignment.get("completion_time", "unknown"),
+            "estimated_completion": optimal_assignment.get(
+                "completion_time", "unknown"
+            ),
         }
 
-    async def _find_candidate_agents(self, required_capabilities: list[str]) -> list[dict[str, Any]]:
+    async def _find_candidate_agents(
+        self, required_capabilities: list[str]
+    ) -> list[dict[str, Any]]:
         """Find agents that can handle the required capabilities"""
         candidates = []
 
@@ -373,7 +393,9 @@ class KingAgent(AgentInterface):
                     {
                         "agent_id": agent_id,
                         **agent_info,
-                        "capability_match": len(set(required_capabilities) & set(agent_info["capabilities"])),
+                        "capability_match": len(
+                            set(required_capabilities) & set(agent_info["capabilities"])
+                        ),
                     }
                 )
 
@@ -391,7 +413,9 @@ class KingAgent(AgentInterface):
 
         for r in range(1, min(len(candidates) + 1, config.max_agents + 1)):
             for agent_combo in combinations(candidates, r):
-                score = await self._calculate_assignment_score(task, list(agent_combo), config)
+                score = await self._calculate_assignment_score(
+                    task, list(agent_combo), config
+                )
 
                 if score > best_score:
                     best_score = score
@@ -403,9 +427,13 @@ class KingAgent(AgentInterface):
 
         # Calculate objectives met
         if best_assignment:
-            objectives = await self._calculate_objectives(task, best_assignment["details"], config)
+            objectives = await self._calculate_objectives(
+                task, best_assignment["details"], config
+            )
             best_assignment["objectives"] = objectives
-            best_assignment["completion_time"] = f"{task.estimated_complexity * 2} hours"
+            best_assignment["completion_time"] = (
+                f"{task.estimated_complexity * 2} hours"
+            )
 
         return best_assignment or {"agents": [], "score": 0, "objectives": {}}
 
@@ -421,7 +449,11 @@ class KingAgent(AgentInterface):
             all_agent_caps.update(agent["capabilities"])
 
         required_caps = set(task.required_capabilities)
-        coverage = len(required_caps & all_agent_caps) / len(required_caps) if required_caps else 1
+        coverage = (
+            len(required_caps & all_agent_caps) / len(required_caps)
+            if required_caps
+            else 1
+        )
         score += coverage * 40  # Up to 40 points for capability coverage
 
         # Performance score
@@ -510,7 +542,9 @@ class KingAgent(AgentInterface):
             "total_decisions": len(self.decision_log),
             "recent_decisions": self.decision_log[-10:],  # Last 10 decisions
             "decision_types": {
-                decision_type: len([d for d in self.decision_log if d["type"] == decision_type])
+                decision_type: len(
+                    [d for d in self.decision_log if d["type"] == decision_type]
+                )
                 for decision_type in {d["type"] for d in self.decision_log}
             },
             "transparency_policy": "All King decisions are logged and auditable",
@@ -541,7 +575,9 @@ class KingAgent(AgentInterface):
             )
 
             self.initialized = True
-            logger.info(f"King Agent {self.agent_id} initialized - Ready to orchestrate the village")
+            logger.info(
+                f"King Agent {self.agent_id} initialized - Ready to orchestrate the village"
+            )
 
         except Exception as e:
             logger.error(f"Failed to initialize King Agent: {e}")

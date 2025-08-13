@@ -1,7 +1,7 @@
 """Specialized Agent Registry - Central management for all specialized sub-agents"""
 
-from dataclasses import dataclass
 import logging
+from dataclasses import dataclass
 from typing import Any
 
 from src.production.rag.rag_system.core.agent_interface import AgentInterface
@@ -350,7 +350,9 @@ class SpecializedAgentRegistry:
 
         return capable_agents
 
-    async def route_request(self, request_type: str, request_data: dict[str, Any]) -> dict[str, Any]:
+    async def route_request(
+        self, request_type: str, request_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """Route request to most appropriate agent"""
         try:
             # Simple routing logic based on request type
@@ -444,7 +446,9 @@ class SpecializedAgentRegistry:
                 "required_capabilities": required_capabilities,
                 "participating_agents": list(task_agents.keys()),
                 "results": results,
-                "coordination_success": len([r for r in results.values() if "error" not in str(r)])
+                "coordination_success": len(
+                    [r for r in results.values() if "error" not in str(r)]
+                )
                 == len(required_capabilities),
             }
 
@@ -483,8 +487,12 @@ class SpecializedAgentRegistry:
             documentation["agent_types"][agent_type] = {
                 "description": f"{agent_type.title()} specialist agent",
                 "capabilities": [cap.capability_name for cap in capabilities],
-                "input_types": list(set().union(*[cap.input_types for cap in capabilities])),
-                "output_types": list(set().union(*[cap.output_types for cap in capabilities])),
+                "input_types": list(
+                    set().union(*[cap.input_types for cap in capabilities])
+                ),
+                "output_types": list(
+                    set().union(*[cap.output_types for cap in capabilities])
+                ),
             }
 
         # Group capabilities by domain
@@ -501,7 +509,9 @@ class SpecializedAgentRegistry:
             domain_capabilities = []
             for agent_type in agent_types:
                 if agent_type in self.capabilities:
-                    domain_capabilities.extend([cap.capability_name for cap in self.capabilities[agent_type]])
+                    domain_capabilities.extend(
+                        [cap.capability_name for cap in self.capabilities[agent_type]]
+                    )
             documentation["capabilities_by_domain"][domain] = domain_capabilities
 
         # Add integration examples

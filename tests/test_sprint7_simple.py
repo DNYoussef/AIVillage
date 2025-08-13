@@ -4,9 +4,9 @@ Tests the distributed inference system components without external dependencies.
 """
 
 import asyncio
+import os
 from dataclasses import dataclass
 from enum import Enum
-import os
 
 print("=== Sprint 7 Distributed Inference System Tests ===")
 print()

@@ -2,9 +2,9 @@
 """Integration tests for RAG pipeline functionality."""
 
 import asyncio
-from pathlib import Path
 import sys
 import time
+from pathlib import Path
 
 import pytest
 

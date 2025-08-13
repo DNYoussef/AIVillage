@@ -3,9 +3,9 @@
 
 from __future__ import annotations
 
-from mobile_device_simulator import DEVICE_PROFILES, MobileSimulator
 import psutil
 import torch
+from mobile_device_simulator import DEVICE_PROFILES, MobileSimulator
 from torch import nn
 
 

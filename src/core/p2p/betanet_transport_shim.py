@@ -1,7 +1,7 @@
 """
 Betanet Transport Compatibility Shim
 
-Provides backward compatibility for v1 imports while redirecting to the 
+Provides backward compatibility for v1 imports while redirecting to the
 production-ready v2 implementation.
 """
 

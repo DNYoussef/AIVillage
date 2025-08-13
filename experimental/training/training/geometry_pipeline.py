@@ -12,7 +12,9 @@ from .svf_ops import apply_svf
 Batch = tuple[torch.Tensor, torch.Tensor, str]
 
 
-def train_geometry_model(model: torch.nn.Module, dataset: Iterable[Batch], *, epochs: int = 1) -> None:
+def train_geometry_model(
+    model: torch.nn.Module, dataset: Iterable[Batch], *, epochs: int = 1
+) -> None:
     """Simple geometry-aware training loop for demonstration.
 
     Parameters
@@ -36,7 +38,9 @@ def train_geometry_model(model: torch.nn.Module, dataset: Iterable[Batch], *, ep
             loss = torch.nn.functional.mse_loss(out, y)
             loss.backward()
             G = snapshot(out.detach())
-            geom_vec = torch.tensor([G[k] for k in ["ID_nl", "ID_lin", "ratio", "entropy"]])
+            geom_vec = torch.tensor(
+                [G[k] for k in ["ID_nl", "ID_lin", "ratio", "entropy"]]
+            )
             z = geo2z(geom_vec)
             for m in model.modules():
                 if isinstance(m, torch.nn.Linear):

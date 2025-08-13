@@ -3,22 +3,22 @@
 Verifies all SQLite databases exist with correct schemas and data integrity
 """
 
-from dataclasses import dataclass
-from datetime import datetime
 import json
 import logging
 import os
-from pathlib import Path
 import sqlite3
 import subprocess
 import sys
 import threading
 import time
+from dataclasses import dataclass
+from datetime import datetime
+from pathlib import Path
 
 try:
+    import numpy as np
     from colorama import Fore, Style, init
     from cryptography.fernet import Fernet
-    import numpy as np
 except ImportError as e:
     print(f"Missing dependencies: {e}")
     print("Installing required packages...")

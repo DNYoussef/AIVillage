@@ -4,13 +4,13 @@ Provides high-level interface to the Betanet Gateway for SCION packet tunneling.
 """
 
 import asyncio
-from dataclasses import dataclass
 import json
 import logging
 import os
-from pathlib import Path
 import subprocess
 import time
+from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 import aiohttp

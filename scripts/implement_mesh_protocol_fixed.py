@@ -9,14 +9,14 @@ CRITICAL FIXES:
 """
 
 import asyncio
-from collections.abc import Callable
-from dataclasses import dataclass, field
-from enum import Enum, auto
 import hashlib
 import json
 import logging
 import struct
 import time
+from collections.abc import Callable
+from dataclasses import dataclass, field
+from enum import Enum, auto
 from typing import Any
 
 import numpy as np
@@ -135,13 +135,17 @@ class MeshProtocol:
         """Initialize mesh protocol with node ID."""
         self.node_id = node_id
         self.neighbors: dict[str, MeshNode] = {}
-        self.routing_table: dict[str, tuple[str, int]] = {}  # destination -> (next_hop, distance)
+        self.routing_table: dict[
+            str, tuple[str, int]
+        ] = {}  # destination -> (next_hop, distance)
         self.message_cache: set[str] = set()  # Prevent duplicate forwarding
         self.pending_messages: asyncio.Queue = asyncio.Queue()
         self.received_messages: asyncio.Queue = asyncio.Queue()
 
         # Callbacks
-        self.message_handlers: dict[MessageType, list[Callable]] = {msg_type: [] for msg_type in MessageType}
+        self.message_handlers: dict[MessageType, list[Callable]] = {
+            msg_type: [] for msg_type in MessageType
+        }
 
         # Network statistics
         self.stats = {
@@ -203,7 +207,9 @@ class MeshProtocol:
 
         # Create message
         message = MeshMessage(
-            message_id=hashlib.sha256(f"{self.node_id}{time.time()}{len(payload_bytes)}".encode()).hexdigest()[:32],
+            message_id=hashlib.sha256(
+                f"{self.node_id}{time.time()}{len(payload_bytes)}".encode()
+            ).hexdigest()[:32],
             message_type=message_type,
             sender_id=self.node_id,
             recipient_id=recipient_id,
@@ -242,7 +248,9 @@ class MeshProtocol:
         """Broadcast message to all neighbors."""
         for neighbor_id, neighbor in self.neighbors.items():
             connection_threshold = 0.3
-            if neighbor.connection_quality > connection_threshold:  # Only send if connection is decent
+            if (
+                neighbor.connection_quality > connection_threshold
+            ):  # Only send if connection is decent
                 await self._send_to_neighbor(neighbor_id, message)
 
     async def _route_message(self, message: MeshMessage) -> None:
@@ -280,7 +288,9 @@ class MeshProtocol:
             if neighbor_id != message.sender_id:
                 await self._send_to_neighbor(neighbor_id, message)
 
-        self.stats["messages_forwarded"] += len(self.neighbors) - (1 if message.sender_id in self.neighbors else 0)
+        self.stats["messages_forwarded"] += len(self.neighbors) - (
+            1 if message.sender_id in self.neighbors else 0
+        )
 
     async def _send_to_neighbor(self, neighbor_id: str, message: MeshMessage) -> None:
         """FIXED: Send message to a specific neighbor with proper delivery."""
@@ -302,7 +312,9 @@ class MeshProtocol:
             try:
                 await neighbor_node.receive_message(message_bytes, self.node_id)
             except Exception as e:
-                self.logger.debug("Failed to deliver message to %s: %s", neighbor_id[:8], e)
+                self.logger.debug(
+                    "Failed to deliver message to %s: %s", neighbor_id[:8], e
+                )
                 return
 
         self.logger.debug("Sent %s to %s", message.message_type.name, neighbor_id[:8])
@@ -375,7 +387,9 @@ class MeshProtocol:
         except Exception:
             self.logger.exception("Error receiving message")
 
-    async def _handle_routing_update(self, message: MeshMessage, sender_id: str) -> None:
+    async def _handle_routing_update(
+        self, message: MeshMessage, sender_id: str
+    ) -> None:
         """Handle routing update messages to learn new routes."""
         try:
             payload = json.loads(message.payload.decode())
@@ -387,7 +401,8 @@ class MeshProtocol:
 
                 # Only update if we don't have a route or this is shorter
                 if (
-                    destination not in self.routing_table or self.routing_table[destination][1] > distance
+                    destination not in self.routing_table
+                    or self.routing_table[destination][1] > distance
                 ) and sender_id in self.neighbors:
                     self.routing_table[destination] = (sender_id, distance)
 
@@ -403,7 +418,8 @@ class MeshProtocol:
             if discovered_node_id and discovered_node_id != self.node_id:
                 # Update routing table if this is a new or better route
                 if (
-                    discovered_node_id not in self.routing_table or self.routing_table[discovered_node_id][1] > 2
+                    discovered_node_id not in self.routing_table
+                    or self.routing_table[discovered_node_id][1] > 2
                 ) and sender_id in self.neighbors:
                     distance = 1 if discovered_node_id == sender_id else 2
                     self.routing_table[discovered_node_id] = (sender_id, distance)
@@ -450,7 +466,9 @@ class MeshProtocol:
                 ],
             }
 
-            await self.send_message(MessageType.ROUTING_UPDATE, routing_update, priority=4)
+            await self.send_message(
+                MessageType.ROUTING_UPDATE, routing_update, priority=4
+            )
 
     async def _neighbor_discovery(self) -> None:
         """Discover nearby mesh nodes."""
@@ -523,9 +541,13 @@ class MeshNetworkSimulator:
                     neighbor = MeshNode(
                         node_id=other_id,
                         device_capabilities={"simulated": True},
-                        location_hash=hashlib.sha256(f"loc_{j}".encode()).hexdigest()[:16],
+                        location_hash=hashlib.sha256(f"loc_{j}".encode()).hexdigest()[
+                            :16
+                        ],
                         agent_roles=["test"],
-                        connection_quality=rng.uniform(0.7, 1.0),  # Higher quality connections
+                        connection_quality=rng.uniform(
+                            0.7, 1.0
+                        ),  # Higher quality connections
                     )
                     node.neighbors[other_id] = neighbor
 
@@ -534,7 +556,9 @@ class MeshNetworkSimulator:
                     reverse_neighbor = MeshNode(
                         node_id=node_id,
                         device_capabilities={"simulated": True},
-                        location_hash=hashlib.sha256(f"loc_{i}".encode()).hexdigest()[:16],
+                        location_hash=hashlib.sha256(f"loc_{i}".encode()).hexdigest()[
+                            :16
+                        ],
                         agent_roles=["test"],
                         connection_quality=rng.uniform(0.7, 1.0),
                     )
@@ -625,7 +649,9 @@ async def test_mesh_network() -> bool:
     sender = nodes[0]
     recipient = nodes[2]
 
-    print(f"\nTesting direct message delivery from {sender.node_id[:8]} to {recipient.node_id[:8]}")
+    print(
+        f"\nTesting direct message delivery from {sender.node_id[:8]} to {recipient.node_id[:8]}"
+    )
 
     initial_received = recipient.stats["messages_received"]
     await sender.send_message(

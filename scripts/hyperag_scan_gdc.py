@@ -13,11 +13,11 @@ Usage:
 import argparse
 import asyncio
 import csv
-from datetime import datetime, timezone
 import json
 import logging
-from pathlib import Path
 import sys
+from datetime import datetime, timezone
+from pathlib import Path
 
 from mcp_servers.hyperag.gdc.extractor import GDCExtractorContext
 from mcp_servers.hyperag.gdc.registry import GDC_REGISTRY, validate_registry
@@ -35,7 +35,9 @@ def setup_logging(level: str = "INFO") -> None:
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
         handlers=[
             logging.StreamHandler(sys.stdout),
-            logging.FileHandler(f"gdc_scan_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"),
+            logging.FileHandler(
+                f"gdc_scan_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
+            ),
         ],
     )
 
@@ -155,7 +157,9 @@ async def run_scan(args: argparse.Namespace) -> None:
         if args.verbose:
             stats = await extractor.get_graph_stats()
             if stats and "total_nodes" in stats:
-                print(f"📊 Graph stats: {stats['total_nodes']} nodes, {stats['total_relationships']} relationships")
+                print(
+                    f"📊 Graph stats: {stats['total_nodes']} nodes, {stats['total_relationships']} relationships"
+                )
 
         # Execute scan
         print("🔍 Starting GDC scan...")
@@ -264,7 +268,9 @@ Examples:
         choices=["low", "medium", "high"],
         help="Only scan GDCs with specified severity",
     )
-    parser.add_argument("--include-disabled", action="store_true", help="Include disabled GDCs in scan")
+    parser.add_argument(
+        "--include-disabled", action="store_true", help="Include disabled GDCs in scan"
+    )
 
     # Scan parameters
     parser.add_argument(
@@ -286,7 +292,9 @@ Examples:
         default="bolt://localhost:7687",
         help="Neo4j connection URI (default: bolt://localhost:7687)",
     )
-    parser.add_argument("--neo4j-user", default="neo4j", help="Neo4j username (default: neo4j)")
+    parser.add_argument(
+        "--neo4j-user", default="neo4j", help="Neo4j username (default: neo4j)"
+    )
     parser.add_argument(
         "--neo4j-password",
         default="password",
@@ -308,7 +316,9 @@ Examples:
         action="store_true",
         help="Exit with error code if violations found",
     )
-    parser.add_argument("--list-gdcs", action="store_true", help="List all available GDCs and exit")
+    parser.add_argument(
+        "--list-gdcs", action="store_true", help="List all available GDCs and exit"
+    )
     parser.add_argument("--verbose", "-v", action="store_true", help="Verbose output")
     parser.add_argument(
         "--log-level",

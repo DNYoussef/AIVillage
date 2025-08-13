@@ -4,8 +4,8 @@ Final comprehensive test of RAG system with realistic questions.
 """
 
 import asyncio
-from pathlib import Path
 import sys
+from pathlib import Path
 
 sys.path.insert(0, str(Path("src/production/rag/rag_system/core")))
 

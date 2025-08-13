@@ -6,10 +6,10 @@ when network conditions change.
 """
 
 import asyncio
-from dataclasses import dataclass, field
-from enum import Enum
 import logging
 import time
+from dataclasses import dataclass, field
+from enum import Enum
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 
 class PathProtocol(Enum):
     """Available transport protocols"""
+
     BITCHAT = "bitchat"
     BETANET = "betanet"
     HTX = "htx"
@@ -27,6 +28,7 @@ class PathProtocol(Enum):
 @dataclass
 class AdaptiveNetworkConditions:
     """Network conditions enhanced with real metrics"""
+
     # Traditional fields
     estimated_latency_ms: float = 200.0
     estimated_bandwidth_kbps: float = 1000.0
@@ -48,7 +50,10 @@ class AdaptiveNetworkConditions:
 
     def is_measurements_fresh(self, max_age_seconds: float = 10.0) -> bool:
         """Check if measurements are recent enough for decisions"""
-        return self.measurement_age_seconds <= max_age_seconds and self.measurement_count > 0
+        return (
+            self.measurement_age_seconds <= max_age_seconds
+            and self.measurement_count > 0
+        )
 
     def get_effective_latency(self) -> float:
         """Get effective latency (measured if available, estimated otherwise)"""
@@ -64,25 +69,37 @@ class AdaptiveNetworkConditions:
             return max(0.0, 1.0 - (self.measured_loss_rate * 2.0))  # Loss penalty
         return self.reliability_score
 
-    def needs_path_switch(self,
-                         rtt_threshold_ms: float = 1000,
-                         loss_threshold: float = 0.2,
-                         quality_threshold: float = 0.3) -> bool:
+    def needs_path_switch(
+        self,
+        rtt_threshold_ms: float = 1000,
+        loss_threshold: float = 0.2,
+        quality_threshold: float = 0.3,
+    ) -> bool:
         """Determine if path should be switched based on conditions"""
         if not self.is_measurements_fresh():
             return False
 
         # Switch if RTT too high, loss too high, or quality too low
         return (
-            (self.measured_rtt_ms is not None and self.measured_rtt_ms > rtt_threshold_ms) or
-            (self.measured_loss_rate is not None and self.measured_loss_rate > loss_threshold) or
-            (self.quality_score is not None and self.quality_score < quality_threshold)
+            (
+                self.measured_rtt_ms is not None
+                and self.measured_rtt_ms > rtt_threshold_ms
+            )
+            or (
+                self.measured_loss_rate is not None
+                and self.measured_loss_rate > loss_threshold
+            )
+            or (
+                self.quality_score is not None
+                and self.quality_score < quality_threshold
+            )
         )
 
 
 @dataclass
 class MessageContext:
     """Enhanced message context for path selection"""
+
     sender: str = ""
     recipient: str = ""
     payload_size: int = 0
@@ -107,7 +124,10 @@ class AdaptiveNavigator:
             PathProtocol.HTXQUIC: {"latency_max": 100, "reliability_min": 0.9},
             PathProtocol.BETANET: {"latency_max": 1000, "reliability_min": 0.7},
             PathProtocol.BITCHAT: {"latency_max": 2000, "reliability_min": 0.5},
-            PathProtocol.STORE_FORWARD: {"latency_max": float('inf'), "reliability_min": 0.0}
+            PathProtocol.STORE_FORWARD: {
+                "latency_max": float("inf"),
+                "reliability_min": 0.0,
+            },
         }
 
         # Path switching state
@@ -124,28 +144,33 @@ class AdaptiveNavigator:
             peer_metrics = self.metrics_collector.peer_metrics[peer_id]
 
             # Populate with live measurements
-            conditions.measured_rtt_ms = peer_metrics.rtt_ewma_ms if peer_metrics.rtt_ewma_ms > 0 else None
+            conditions.measured_rtt_ms = (
+                peer_metrics.rtt_ewma_ms if peer_metrics.rtt_ewma_ms > 0 else None
+            )
             conditions.measured_jitter_ms = peer_metrics.jitter_ms
             conditions.measured_loss_rate = peer_metrics.loss_rate
             conditions.quality_score = peer_metrics.quality_score
             conditions.optimal_chunk_size = peer_metrics.optimal_chunk_size
             conditions.recommended_protocol = peer_metrics.recommended_protocol
-            conditions.measurement_age_seconds = time.time() - peer_metrics.last_measurement_time
+            conditions.measurement_age_seconds = (
+                time.time() - peer_metrics.last_measurement_time
+            )
             conditions.measurement_count = peer_metrics.packets_sent
 
-            logger.debug(f"Live conditions for {peer_id}: RTT={conditions.measured_rtt_ms:.1f}ms, "
-                        f"jitter={conditions.measured_jitter_ms:.1f}ms, "
-                        f"loss={conditions.measured_loss_rate:.3f}, "
-                        f"quality={conditions.quality_score:.3f}")
+            logger.debug(
+                f"Live conditions for {peer_id}: RTT={conditions.measured_rtt_ms:.1f}ms, "
+                f"jitter={conditions.measured_jitter_ms:.1f}ms, "
+                f"loss={conditions.measured_loss_rate:.3f}, "
+                f"quality={conditions.quality_score:.3f}"
+            )
         else:
             logger.debug(f"No live metrics for {peer_id}, using estimated conditions")
 
         return conditions
 
-    async def select_optimal_protocol(self,
-                                    peer_id: str,
-                                    context: MessageContext,
-                                    available_protocols: list[str]) -> tuple[str, dict[str, Any]]:
+    async def select_optimal_protocol(
+        self, peer_id: str, context: MessageContext, available_protocols: list[str]
+    ) -> tuple[str, dict[str, Any]]:
         """Select optimal protocol based on live network conditions"""
         start_time = time.time()
         conditions = self.get_network_conditions(peer_id)
@@ -153,12 +178,17 @@ class AdaptiveNavigator:
         # Check if we need to switch paths due to poor conditions
         force_switch = conditions.needs_path_switch()
         if force_switch:
-            logger.info(f"Path switch triggered for {peer_id} due to poor conditions: "
-                       f"RTT={conditions.measured_rtt_ms}ms, loss={conditions.measured_loss_rate}")
+            logger.info(
+                f"Path switch triggered for {peer_id} due to poor conditions: "
+                f"RTT={conditions.measured_rtt_ms}ms, loss={conditions.measured_loss_rate}"
+            )
 
         # Check switch cooldown to avoid flapping
         last_switch = self.last_switch_time.get(peer_id, 0)
-        if time.time() - last_switch < self.switch_cooldown_seconds and not force_switch:
+        if (
+            time.time() - last_switch < self.switch_cooldown_seconds
+            and not force_switch
+        ):
             # Use recommended protocol from measurements if available
             if conditions.recommended_protocol in available_protocols:
                 protocol = conditions.recommended_protocol
@@ -169,11 +199,13 @@ class AdaptiveNavigator:
             protocol = self._rank_protocols(conditions, available_protocols, context)
 
             # Update switch time if we're switching
-            current_best = getattr(self, f'_last_best_{peer_id}', None)
+            current_best = getattr(self, f"_last_best_{peer_id}", None)
             if current_best != protocol:
                 self.last_switch_time[peer_id] = time.time()
-                setattr(self, f'_last_best_{peer_id}', protocol)
-                logger.info(f"Protocol switch for {peer_id}: {current_best} → {protocol}")
+                setattr(self, f"_last_best_{peer_id}", protocol)
+                logger.info(
+                    f"Protocol switch for {peer_id}: {current_best} → {protocol}"
+                )
 
         # Build metadata
         metadata = {
@@ -191,16 +223,20 @@ class AdaptiveNavigator:
         # Ensure decision time is under 500ms target
         decision_time_ms = metadata["decision_time_ms"]
         if decision_time_ms > 500:
-            logger.warning(f"Path selection took {decision_time_ms:.1f}ms (>500ms target)")
+            logger.warning(
+                f"Path selection took {decision_time_ms:.1f}ms (>500ms target)"
+            )
         else:
             logger.debug(f"Path selection completed in {decision_time_ms:.1f}ms")
 
         return protocol, metadata
 
-    def _rank_protocols(self,
-                       conditions: AdaptiveNetworkConditions,
-                       available_protocols: list[str],
-                       context: MessageContext) -> str:
+    def _rank_protocols(
+        self,
+        conditions: AdaptiveNetworkConditions,
+        available_protocols: list[str],
+        context: MessageContext,
+    ) -> str:
         """Rank available protocols by suitability for current conditions"""
         if not available_protocols:
             return "htx"  # Default fallback
@@ -224,7 +260,12 @@ class AdaptiveNavigator:
             if effective_latency > prefs["latency_max"]:
                 score *= 0.5  # Heavy penalty for exceeding latency threshold
             else:
-                score *= 1.0 + (prefs["latency_max"] - effective_latency) / prefs["latency_max"] * 0.2
+                score *= (
+                    1.0
+                    + (prefs["latency_max"] - effective_latency)
+                    / prefs["latency_max"]
+                    * 0.2
+                )
 
             # Reliability bonus
             if effective_reliability >= prefs["reliability_min"]:
@@ -233,11 +274,17 @@ class AdaptiveNavigator:
                 score *= 0.7  # Penalty for low reliability
 
             # Priority boost for measured recommended protocol
-            if conditions.recommended_protocol == protocol_str and conditions.is_measurements_fresh():
+            if (
+                conditions.recommended_protocol == protocol_str
+                and conditions.is_measurements_fresh()
+            ):
                 score *= 1.5
 
             # Context-specific adjustments
-            if context.privacy_required and protocol in [PathProtocol.BETANET, PathProtocol.BITCHAT]:
+            if context.privacy_required and protocol in [
+                PathProtocol.BETANET,
+                PathProtocol.BITCHAT,
+            ]:
                 score *= 1.3  # Privacy protocols get bonus
 
             if context.priority >= 8 and protocol == PathProtocol.HTXQUIC:
@@ -283,7 +330,9 @@ class AdaptiveNavigator:
         """Export navigator metrics for monitoring"""
         return {
             "switch_times": dict(self.last_switch_time),
-            "protocol_preferences": {k.value: v for k, v in self.protocol_preferences.items()},
+            "protocol_preferences": {
+                k.value: v for k, v in self.protocol_preferences.items()
+            },
             "switch_cooldown_seconds": self.switch_cooldown_seconds,
             "metrics_collector_available": self.metrics_collector is not None,
         }
@@ -322,13 +371,17 @@ async def test_adaptive_selection():
     context = MessageContext(recipient=peer_id, payload_size=2048, priority=7)
     available = ["htx", "htxquic", "betanet", "bitchat"]
 
-    protocol, metadata = await navigator.select_optimal_protocol(peer_id, context, available)
+    protocol, metadata = await navigator.select_optimal_protocol(
+        peer_id, context, available
+    )
 
     print(f"Selected protocol: {protocol}")
     print(f"Decision metadata: {metadata}")
     print(f"Network conditions: {navigator.get_network_conditions(peer_id).__dict__}")
 
-    return protocol == "betanet" or protocol == "bitchat"  # Should prefer robust protocols for high RTT
+    return (
+        protocol == "betanet" or protocol == "bitchat"
+    )  # Should prefer robust protocols for high RTT
 
 
 if __name__ == "__main__":

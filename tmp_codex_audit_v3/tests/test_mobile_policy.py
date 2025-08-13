@@ -1,24 +1,29 @@
 """
 Test C5: Mobile Policy - Verify cross-platform import + env-driven policies
 """
+
 import json
 import os
-from pathlib import Path
 import sys
+from pathlib import Path
 
 # Add paths
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'src')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
+sys.path.insert(
+    0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "src"))
+)
+
 
 def test_mobile_imports():
     """Test mobile resource management imports"""
-    results = {'import': False, 'policy_test': False}
+    results = {"import": False, "policy_test": False}
 
     try:
         from production.monitoring.mobile.resource_management import (
             BatteryThermalResourceManager,
         )
-        results['import'] = True
+
+        results["import"] = True
         print("[PASS] Mobile resource management imported")
 
         # Test basic instantiation
@@ -26,12 +31,12 @@ def test_mobile_imports():
         print("[PASS] Resource manager instantiated")
 
         # Test env-driven policy changes
-        os.environ['BATTERY'] = '15'  # Low battery
-        os.environ['THERMAL'] = '65'  # Hot
+        os.environ["BATTERY"] = "15"  # Low battery
+        os.environ["THERMAL"] = "65"  # Hot
 
         status = manager.get_status()
-        if 'power_mode' in status or 'battery' in status:
-            results['policy_test'] = True
+        if "power_mode" in status or "battery" in status:
+            results["policy_test"] = True
             print("[PASS] Policy adaptation detected")
         else:
             print("[INFO] Policy status not fully testable")
@@ -43,17 +48,19 @@ def test_mobile_imports():
 
     return results
 
+
 def main():
     results = test_mobile_imports()
-    overall_success = results['import']
+    overall_success = results["import"]
 
     # Save results
-    output_path = Path(__file__).parent.parent / 'artifacts' / 'mobile_test.json'
-    with open(output_path, 'w') as f:
-        json.dump({'results': results, 'overall_success': overall_success}, f, indent=2)
+    output_path = Path(__file__).parent.parent / "artifacts" / "mobile_test.json"
+    with open(output_path, "w") as f:
+        json.dump({"results": results, "overall_success": overall_success}, f, indent=2)
 
     print(f"Mobile Test Result: {'PASS' if overall_success else 'FAIL'}")
     return overall_success
+
 
 if __name__ == "__main__":
     success = main()

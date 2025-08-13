@@ -6,9 +6,9 @@ indistinguishable from normal web activity.
 
 import asyncio
 import os
-from pathlib import Path
 import sys
 import time
+from pathlib import Path
 
 import pytest
 
@@ -27,11 +27,11 @@ def load_module_direct(name, path):
     spec.loader.exec_module(module)
     return module
 
+
 # Load cover traffic module
 src_path = Path(__file__).parent.parent.parent / "src"
 betanet_cover = load_module_direct(
-    'betanet_cover',
-    src_path / "core/p2p/betanet_cover.py"
+    "betanet_cover", src_path / "core/p2p/betanet_cover.py"
 )
 
 # Import classes
@@ -56,11 +56,13 @@ class MockCoverTrafficSender:
         success = len(self.sent_messages) % 10 < 9  # 90% success rate
 
         if success:
-            self.sent_messages.append({
-                "payload_size": len(payload),
-                "recipient": recipient,
-                "timestamp": time.time()
-            })
+            self.sent_messages.append(
+                {
+                    "payload_size": len(payload),
+                    "recipient": recipient,
+                    "timestamp": time.time(),
+                }
+            )
 
         return success
 
@@ -92,8 +94,12 @@ class TestBetanetCover:
 
         finally:
             # Clean up environment
-            for key in ["BETANET_COVER_MODE", "BETANET_COVER_RATE",
-                       "BETANET_COVER_BANDWIDTH", "BETANET_COVER_DAILY_MB"]:
+            for key in [
+                "BETANET_COVER_MODE",
+                "BETANET_COVER_RATE",
+                "BETANET_COVER_BANDWIDTH",
+                "BETANET_COVER_DAILY_MB",
+            ]:
                 os.environ.pop(key, None)
 
     @pytest.mark.asyncio
@@ -130,7 +136,9 @@ class TestBetanetCover:
 
         # Check message sizes are reasonable
         sizes = [msg["payload_size"] for msg in sender.sent_messages]
-        assert all(64 <= size <= 1024 for size in sizes), "Message sizes should be in range"
+        assert all(64 <= size <= 1024 for size in sizes), (
+            "Message sizes should be in range"
+        )
 
         # Check stats
         stats = cover_traffic.get_stats_summary()
@@ -169,7 +177,9 @@ class TestBetanetCover:
         # Check message sizes match web distribution
         sizes = [msg["payload_size"] for msg in sender.sent_messages]
         web_sizes = config.web_size_distribution
-        assert all(size in web_sizes for size in sizes), "Sizes should match web distribution"
+        assert all(size in web_sizes for size in sizes), (
+            "Sizes should match web distribution"
+        )
 
         print("✓ Web burst pattern working")
 
@@ -282,7 +292,9 @@ class TestBetanetCover:
         print(f"Cover messages sent: {cover_sent}")
 
         # Overall delivery should still be >= 95%
-        assert overall_delivery_ratio >= 0.95, f"Delivery ratio {overall_delivery_ratio:.1%} below 95%"
+        assert overall_delivery_ratio >= 0.95, (
+            f"Delivery ratio {overall_delivery_ratio:.1%} below 95%"
+        )
 
         # User delivery should not be significantly impacted
         assert user_delivery_ratio >= 0.85, "User message delivery should remain high"
@@ -313,8 +325,12 @@ class TestBetanetCover:
 
         # Check required metric fields
         required_fields = [
-            "packets_sent", "bytes_sent", "budget_used_mb",
-            "current_rate_pps", "config_mode", "runtime_seconds"
+            "packets_sent",
+            "bytes_sent",
+            "budget_used_mb",
+            "current_rate_pps",
+            "config_mode",
+            "runtime_seconds",
         ]
 
         for field in required_fields:
@@ -337,7 +353,9 @@ class TestBetanetCover:
         sender = MockCoverTrafficSender()
 
         # Test constant rate
-        config = CoverTrafficConfig(mode=CoverTrafficMode.CONSTANT_RATE, base_rate_pps=4.0)
+        config = CoverTrafficConfig(
+            mode=CoverTrafficMode.CONSTANT_RATE, base_rate_pps=4.0
+        )
         cover = BetanetCoverTraffic(config, sender)
         delay = cover._calculate_next_delay()
         expected_pps = 1.0 / delay
@@ -419,6 +437,7 @@ async def run_cover_tests():
     except Exception as e:
         print(f"\n❌ Test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 

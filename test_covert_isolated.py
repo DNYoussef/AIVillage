@@ -7,17 +7,17 @@ Isolated test for Betanet covert transport - no dependencies on other modules
 import os
 import sys
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
 
 # Directly import only what we need, avoiding problematic imports
 import asyncio
-from dataclasses import dataclass
-from enum import Enum
 import json
 import random
 import time
-from typing import Any
 import uuid
+from dataclasses import dataclass
+from enum import Enum
+from typing import Any
 
 
 # Copy core classes to avoid import issues
@@ -28,6 +28,7 @@ class CovertTransportMode(Enum):
     WEBSOCKET = "websocket"
     SERVER_SENT_EVENTS = "sse"
     AUTO = "auto"
+
 
 @dataclass
 class CovertTrafficProfile:
@@ -40,7 +41,7 @@ class CovertTrafficProfile:
     compression_enabled: bool = True
 
     @classmethod
-    def create_browser_profile(cls) -> 'CovertTrafficProfile':
+    def create_browser_profile(cls) -> "CovertTrafficProfile":
         return cls(
             user_agents=[
                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
@@ -53,22 +54,36 @@ class CovertTrafficProfile:
                 "application/x-www-form-urlencoded",
                 "multipart/form-data",
                 "text/plain",
-                "application/octet-stream"
+                "application/octet-stream",
             ],
             request_paths=[
-                "/api/v1/data", "/api/v2/sync", "/graphql", "/rest/endpoint",
-                "/cdn/assets", "/static/resources", "/upload", "/download",
-                "/metrics", "/health", "/status", "/ping", "/analytics"
+                "/api/v1/data",
+                "/api/v2/sync",
+                "/graphql",
+                "/rest/endpoint",
+                "/cdn/assets",
+                "/static/resources",
+                "/upload",
+                "/download",
+                "/metrics",
+                "/health",
+                "/status",
+                "/ping",
+                "/analytics",
             ],
             referrer_patterns=[
-                "https://example.com/", "https://cdn.example.com/",
-                "https://api.example.com/", "https://app.example.com/",
-                "https://www.google.com/", "https://github.com/"
+                "https://example.com/",
+                "https://cdn.example.com/",
+                "https://api.example.com/",
+                "https://app.example.com/",
+                "https://www.google.com/",
+                "https://github.com/",
             ],
             timing_intervals=(0.5, 5.0),
             payload_size_range=(128, 8192),
-            compression_enabled=True
+            compression_enabled=True,
         )
+
 
 class SimpleBetanetCovertTransport:
     """Simplified covert transport for testing."""
@@ -87,7 +102,7 @@ class SimpleBetanetCovertTransport:
             "session_id": str(uuid.uuid4()),
             "user_agent": random.choice(self.profile.user_agents),
             "data": "x" * max(1, size - 200),
-            "checksum": "dummy_checksum"
+            "checksum": "dummy_checksum",
         }
         return json.dumps(dummy_data).encode()
 
@@ -122,8 +137,9 @@ class SimpleBetanetCovertTransport:
             "cover_traffic_enabled": self.cover_traffic_enabled,
             "http2_available": False,
             "http3_available": False,
-            "channels_established": len(self.active_channels)
+            "channels_established": len(self.active_channels),
         }
+
 
 async def test_covert_transport_isolated():
     """Test covert transport in isolation."""
@@ -135,7 +151,9 @@ async def test_covert_transport_isolated():
     assert len(profile.user_agents) >= 4
     assert len(profile.content_types) >= 3
     assert len(profile.request_paths) >= 5
-    print(f"    [PASS] Profile: {len(profile.user_agents)} UAs, {len(profile.content_types)} content types")
+    print(
+        f"    [PASS] Profile: {len(profile.user_agents)} UAs, {len(profile.content_types)} content types"
+    )
 
     # Test 2: Transport Initialization
     print("\n[2] Testing transport initialization...")
@@ -148,7 +166,9 @@ async def test_covert_transport_isolated():
     status = transport.get_status()
     assert "mode" in status
     assert "active_channels" in status
-    print(f"    [PASS] Status: mode={status['mode']}, channels={status['channels_established']}")
+    print(
+        f"    [PASS] Status: mode={status['mode']}, channels={status['channels_established']}"
+    )
 
     # Test 4: Cover Payload Generation
     print("\n[4] Testing cover traffic generation...")
@@ -185,13 +205,18 @@ async def test_covert_transport_isolated():
 
     return True
 
+
 if __name__ == "__main__":
     try:
         result = asyncio.run(test_covert_transport_isolated())
-        print("\n[SUCCESS] Prompt 2 (Betanet HTX/H2/H3 Covert Transport): INTEGRATION COMPLETED")
+        print(
+            "\n[SUCCESS] Prompt 2 (Betanet HTX/H2/H3 Covert Transport): INTEGRATION COMPLETED"
+        )
         print("\n[VALIDATED] Key Capabilities:")
         print("  - CovertTrafficProfile with realistic browser patterns [OK]")
-        print("  - Multi-protocol transport architecture (HTTP/2, HTTP/3, WebSocket, SSE) [OK]")
+        print(
+            "  - Multi-protocol transport architecture (HTTP/2, HTTP/3, WebSocket, SSE) [OK]"
+        )
         print("  - Cover traffic generation with authentic payloads [OK]")
         print("  - Protocol auto-negotiation and fallback system [OK]")
         print("  - Status reporting and lifecycle management [OK]")
@@ -201,5 +226,6 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"\n[FAIL] Covert transport test FAILED: {e}")
         import traceback
+
         traceback.print_exc()
         exit(1)

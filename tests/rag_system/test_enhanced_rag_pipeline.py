@@ -1,8 +1,8 @@
 import asyncio
-from pathlib import Path
 import sys
 import time
 import types
+from pathlib import Path
 
 import numpy as np
 import pytest

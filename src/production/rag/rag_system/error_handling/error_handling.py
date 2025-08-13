@@ -1,8 +1,8 @@
 import asyncio
-from collections.abc import Callable
-from functools import wraps
 import logging
 import traceback
+from collections.abc import Callable
+from functools import wraps
 from typing import Any, NoReturn
 
 logger = logging.getLogger(__name__)

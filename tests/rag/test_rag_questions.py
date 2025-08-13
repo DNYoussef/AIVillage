@@ -4,9 +4,9 @@ Test the RAG system with real questions to see if it provides meaningful answers
 """
 
 import asyncio
-from pathlib import Path
 import sys
 import time
+from pathlib import Path
 
 sys.path.insert(0, str(Path("src/production/rag/rag_system/core")))
 

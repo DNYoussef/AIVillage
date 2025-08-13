@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Generate comprehensive test dashboard for AIVillage project."""
 
-from datetime import datetime
 import json
 import subprocess
 import time
+from datetime import datetime
 
 
 class TestDashboard:

@@ -3,10 +3,10 @@
 This creates honest, accurate documentation.
 """
 
-from datetime import datetime
 import json
-from pathlib import Path
 import re
+from datetime import datetime
+from pathlib import Path
 
 
 class DocumentationAligner:

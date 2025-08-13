@@ -109,7 +109,9 @@ class MultiAgentCoordinator:
             "organic_matter_percent": 4.2,
         }
 
-        soil_assessment = await self.agents["horticulturist"].assess_soil("backyard_plot", soil_data)
+        soil_assessment = await self.agents["horticulturist"].assess_soil(
+            "backyard_plot", soil_data
+        )
         print(
             f"Soil condition: {soil_assessment['soil_condition']} ({len(soil_assessment['recommendations'])} recommendations)"
         )
@@ -118,8 +120,12 @@ class MultiAgentCoordinator:
         tomato_plan = await self.agents["horticulturist"].plan_crop(
             {"name": "tomato", "type": "vegetable", "variety": "cherry"}
         )
-        lettuce_plan = await self.agents["horticulturist"].plan_crop({"name": "lettuce", "type": "vegetable"})
-        print(f"Planned 2 crops: {tomato_plan['crop_profile'].name}, {lettuce_plan['crop_profile'].name}")
+        lettuce_plan = await self.agents["horticulturist"].plan_crop(
+            {"name": "lettuce", "type": "vegetable"}
+        )
+        print(
+            f"Planned 2 crops: {tomato_plan['crop_profile'].name}, {lettuce_plan['crop_profile'].name}"
+        )
 
         # Step 3: Sustainer monitors resource efficiency
         print("\n3️⃣ RESOURCE EFFICIENCY MONITORING (Sustainer Agent)")
@@ -132,10 +138,14 @@ class MultiAgentCoordinator:
         }
 
         device_profile = await self.agents["sustainer"].profile_device(device_spec)
-        print(f"Device profiled: {device_profile['device_profile'].device_class.value} class")
+        print(
+            f"Device profiled: {device_profile['device_profile'].device_class.value} class"
+        )
 
         efficiency_result = await self.agents["sustainer"].optimize_efficiency("mobile")
-        print(f"Efficiency optimized: {efficiency_result['efficiency_improvement']:.1f}% improvement")
+        print(
+            f"Efficiency optimized: {efficiency_result['efficiency_improvement']:.1f}% improvement"
+        )
 
         # Step 4: Tutor creates learning path
         print("\n4️⃣ EDUCATIONAL GUIDANCE (Tutor Agent)")
@@ -147,7 +157,9 @@ class MultiAgentCoordinator:
             "mobile_optimized": True,
         }
 
-        learner_profile = await self.agents["tutor"].create_learner_profile(learner_data)
+        learner_profile = await self.agents["tutor"].create_learner_profile(
+            learner_data
+        )
         print(f"Learner profile created: {learner_profile['learner_id']}")
 
         # Create educational content
@@ -157,7 +169,9 @@ class MultiAgentCoordinator:
             lesson_delivery = await self.agents["tutor"].deliver_lesson(
                 learner_profile["learner_id"], gardening_content_id
             )
-            print(f"Educational lesson delivered: {lesson_delivery['content']['title']}")
+            print(
+                f"Educational lesson delivered: {lesson_delivery['content']['title']}"
+            )
 
         # Step 5: Shield performs security and compliance check
         print("\n5️⃣ SECURITY & COMPLIANCE MONITORING (Shield Agent)")
@@ -191,7 +205,9 @@ class MultiAgentCoordinator:
 
         # Generate audit report
         time_range = (time.time() - 3600, time.time())  # Last hour
-        audit_report = await self.agents["auditor"].generate_audit_report("garden_planning", time_range)
+        audit_report = await self.agents["auditor"].generate_audit_report(
+            "garden_planning", time_range
+        )
         print(
             f"Audit report generated: {audit_report.total_receipts} receipts, ${audit_report.total_cost_usd:.2f} total cost"
         )
@@ -211,7 +227,9 @@ class MultiAgentCoordinator:
 
         print("Agent coordination summary:")
         for name, status in agent_statuses.items():
-            print(f"   {status['agent_type']}: {'✅' if status['initialized'] else '❌'} ({status['specialization']})")
+            print(
+                f"   {status['agent_type']}: {'✅' if status['initialized'] else '❌'} ({status['specialization']})"
+            )
 
         # Final recommendations from King
         final_recommendations = [
@@ -254,7 +272,9 @@ class MultiAgentCoordinator:
         )
 
         # Record translation receipt
-        translation_receipt = await self.agents["auditor"].record_receipt(translation_result.receipt)
+        translation_receipt = await self.agents["auditor"].record_receipt(
+            translation_result.receipt
+        )
 
         print("\n2️⃣ EDUCATIONAL CONTENT ADAPTATION (Tutor + Polyglot)")
 
@@ -270,10 +290,14 @@ class MultiAgentCoordinator:
         )
 
         # Audit the education workflow
-        education_receipt = await self.agents["auditor"].record_receipt(spanish_learner["receipt"])
+        education_receipt = await self.agents["auditor"].record_receipt(
+            spanish_learner["receipt"]
+        )
 
         print("Spanish learner profile created with translation support")
-        print(f"Receipts recorded: {translation_receipt['receipt_id']}, {education_receipt['receipt_id']}")
+        print(
+            f"Receipts recorded: {translation_receipt['receipt_id']}, {education_receipt['receipt_id']}"
+        )
 
         return {
             "status": "success",
@@ -307,7 +331,9 @@ class MultiAgentCoordinator:
         print("\n🏗️ INFRASTRUCTURE STATUS:")
         print(f"   Total Agents: {len(self.agents)}")
         print(f"   Total Capabilities: {total_capabilities}")
-        print(f"   All Initialized: {'✅' if all(s['initialized'] for s in agent_summary.values()) else '❌'}")
+        print(
+            f"   All Initialized: {'✅' if all(s['initialized'] for s in agent_summary.values()) else '❌'}"
+        )
 
         print("\n🎯 COORDINATION CAPABILITIES:")
         coordination_features = [
@@ -330,9 +356,15 @@ class MultiAgentCoordinator:
 
         print("\n📈 SYSTEM METRICS:")
         print(f"   Total Receipts: {dashboard['receipt_metrics']['total_receipts']}")
-        print(f"   Verification Rate: {dashboard['receipt_metrics']['verification_rate']:.1%}")
-        print(f"   Agents Monitored: {dashboard['compliance_metrics']['agents_monitored']}")
-        print(f"   Total Cost Tracked: ${dashboard['financial_metrics']['total_costs_usd']:.2f}")
+        print(
+            f"   Verification Rate: {dashboard['receipt_metrics']['verification_rate']:.1%}"
+        )
+        print(
+            f"   Agents Monitored: {dashboard['compliance_metrics']['agents_monitored']}"
+        )
+        print(
+            f"   Total Cost Tracked: ${dashboard['financial_metrics']['total_costs_usd']:.2f}"
+        )
 
         return {
             "agents": len(self.agents),
@@ -376,10 +408,14 @@ async def main():
         print(f"   - Total cost: ${garden_result['audit_report'].total_cost_usd:.2f}")
 
         print(f"✅ Translation Workflow: {translation_result['status']}")
-        print(f"   - Translation confidence: {translation_result['translation_confidence']:.2f}")
+        print(
+            f"   - Translation confidence: {translation_result['translation_confidence']:.2f}"
+        )
         print(f"   - Languages supported: {translation_result['languages_supported']}")
 
-        print(f"✅ System Coordination: {'SUCCESS' if summary['coordination_success'] else 'FAILED'}")
+        print(
+            f"✅ System Coordination: {'SUCCESS' if summary['coordination_success'] else 'FAILED'}"
+        )
         print(f"   - Total agents: {summary['agents']}")
         print(f"   - Total capabilities: {summary['total_capabilities']}")
 

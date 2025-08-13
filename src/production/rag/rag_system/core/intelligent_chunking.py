@@ -7,10 +7,10 @@ Implements idea-aware document chunking that:
 - Handles edge cases like short paragraphs, lists, and code blocks
 """
 
-from dataclasses import dataclass
-from enum import Enum
 import logging
 import re
+from dataclasses import dataclass
+from enum import Enum
 from typing import Any
 
 import numpy as np

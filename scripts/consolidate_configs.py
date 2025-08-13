@@ -9,9 +9,9 @@ This script consolidates the configuration directories and updates all reference
 """
 
 import json
-from pathlib import Path
 import re
 import shutil
+from pathlib import Path
 
 import yaml
 

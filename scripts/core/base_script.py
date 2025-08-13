@@ -10,12 +10,12 @@ should inherit from. It provides:
 - Resource monitoring
 """
 
-from abc import ABC, abstractmethod
-from datetime import datetime
 import json
 import logging
-from pathlib import Path
 import time
+from abc import ABC, abstractmethod
+from datetime import datetime
+from pathlib import Path
 from typing import Any
 
 from .common_utils import (
@@ -210,7 +210,11 @@ class BaseScript(ABC):
             success=False,
             message=error_message,
             errors=[str(error)],
-            metrics=(self.resource_monitor.get_summary() if hasattr(self, "resource_monitor") else {}),
+            metrics=(
+                self.resource_monitor.get_summary()
+                if hasattr(self, "resource_monitor")
+                else {}
+            ),
         )
 
     def validate_configuration(self) -> list[str]:
@@ -372,7 +376,9 @@ class SimpleScript(BaseScript):
     the execution function as a parameter.
     """
 
-    def __init__(self, name: str, execute_func: callable, description: str = "", **kwargs) -> None:
+    def __init__(
+        self, name: str, execute_func: callable, description: str = "", **kwargs
+    ) -> None:
         """Initialize simple script.
 
         Args:
@@ -394,7 +400,9 @@ class SimpleScript(BaseScript):
 
 
 # Utility function for creating simple scripts
-def create_script(name: str, execute_func: callable, description: str = "", **kwargs) -> SimpleScript:
+def create_script(
+    name: str, execute_func: callable, description: str = "", **kwargs
+) -> SimpleScript:
     """Create a simple script.
 
     Args:

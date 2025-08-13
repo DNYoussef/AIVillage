@@ -16,9 +16,9 @@ import asyncio
 import json
 import logging
 import os
-from pathlib import Path
 import statistics
 import time
+from pathlib import Path
 from typing import Any
 
 import aiohttp
@@ -220,9 +220,9 @@ class TestSCIONGatewayConnectivity:
                 result = sock.connect_ex((host, int(port)))
                 sock.close()
 
-                assert (
-                    result == 0
-                ), f"Cannot connect to SCION sidecar at {gateway_config.sidecar_address}"
+                assert result == 0, (
+                    f"Cannot connect to SCION sidecar at {gateway_config.sidecar_address}"
+                )
 
             except Exception as e:
                 pytest.fail(f"SCION sidecar connectivity test failed: {e}")
@@ -420,9 +420,9 @@ class TestSCIONPerformance:
             if test_metrics.throughput_samples
             else 0
         )
-        assert (
-            max_throughput >= TARGET_THROUGHPUT_PPM * 0.8
-        ), f"Throughput target not achieved: {max_throughput:.0f} < {TARGET_THROUGHPUT_PPM}"
+        assert max_throughput >= TARGET_THROUGHPUT_PPM * 0.8, (
+            f"Throughput target not achieved: {max_throughput:.0f} < {TARGET_THROUGHPUT_PPM}"
+        )
 
     @pytest.mark.asyncio
     async def test_concurrent_connections(self, gateway_config, test_metrics):
@@ -476,9 +476,9 @@ class TestSCIONPerformance:
 
         # At least 80% success rate expected
         success_rate = test_metrics.packets_sent / expected_packets
-        assert (
-            success_rate >= 0.8
-        ), f"Low success rate in concurrent test: {success_rate:.2%}"
+        assert success_rate >= 0.8, (
+            f"Low success rate in concurrent test: {success_rate:.2%}"
+        )
 
 
 class TestSCIONAntiReplay:
@@ -511,9 +511,9 @@ class TestSCIONAntiReplay:
 
         # Verify false reject rate
         false_reject_rate = test_metrics.false_rejects / test_metrics.anti_replay_tests
-        assert (
-            false_reject_rate <= TARGET_FALSE_REJECT_RATE
-        ), f"Anti-replay false reject rate too high: {false_reject_rate:.2%}"
+        assert false_reject_rate <= TARGET_FALSE_REJECT_RATE, (
+            f"Anti-replay false reject rate too high: {false_reject_rate:.2%}"
+        )
 
     @pytest.mark.asyncio
     async def test_duplicate_packet_detection(self, scion_gateway):
@@ -581,9 +581,9 @@ class TestSCIONFailover:
                 assert backup_id is not None
 
                 # Verify failover time meets target
-                assert (
-                    failover_time <= TARGET_P95_RECOVERY_MS
-                ), f"Failover too slow: {failover_time}ms > {TARGET_P95_RECOVERY_MS}ms"
+                assert failover_time <= TARGET_P95_RECOVERY_MS, (
+                    f"Failover too slow: {failover_time}ms > {TARGET_P95_RECOVERY_MS}ms"
+                )
 
             except SCIONGatewayError as backup_error:
                 pytest.fail(

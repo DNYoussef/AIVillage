@@ -6,8 +6,8 @@ Tests the distributed inference system components without external dependencies.
 import asyncio
 import os
 import sys
-from unittest.mock import AsyncMock, Mock
 import uuid
+from unittest.mock import AsyncMock, Mock
 
 # Add project root to path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))

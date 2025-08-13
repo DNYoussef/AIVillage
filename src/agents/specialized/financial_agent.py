@@ -1,8 +1,8 @@
 """Financial Agent - Economic Modeling and Financial Analysis Specialist"""
 
-from dataclasses import dataclass
 import logging
 import math
+from dataclasses import dataclass
 from typing import Any
 
 from src.production.rag.rag_system.core.agent_interface import AgentInterface
@@ -66,7 +66,9 @@ class FinancialAgent(AgentInterface):
         hash_value = int(hashlib.md5(text.encode()).hexdigest(), 16)
         return [(hash_value % 1000) / 1000.0] * 384
 
-    async def rerank(self, query: str, results: list[dict[str, Any]], k: int) -> list[dict[str, Any]]:
+    async def rerank(
+        self, query: str, results: list[dict[str, Any]], k: int
+    ) -> list[dict[str, Any]]:
         """Rerank results based on financial relevance"""
         keywords = [
             "portfolio",
@@ -86,7 +88,9 @@ class FinancialAgent(AgentInterface):
                 score += text.lower().count(keyword)
             result["financial_relevance_score"] = score
 
-        return sorted(results, key=lambda x: x.get("financial_relevance_score", 0), reverse=True)[:k]
+        return sorted(
+            results, key=lambda x: x.get("financial_relevance_score", 0), reverse=True
+        )[:k]
 
     async def introspect(self) -> dict[str, Any]:
         """Return agent capabilities and status"""
@@ -111,7 +115,9 @@ class FinancialAgent(AgentInterface):
         latent_representation = f"FINANCE[{analysis_type}:{query[:50]}]"
         return analysis_type, latent_representation
 
-    async def optimize_portfolio(self, assets: list[str], constraints: dict[str, Any]) -> dict[str, Any]:
+    async def optimize_portfolio(
+        self, assets: list[str], constraints: dict[str, Any]
+    ) -> dict[str, Any]:
         """Optimize portfolio allocation using modern portfolio theory"""
         try:
             # Simulate expected returns and covariance matrix
@@ -133,12 +139,20 @@ class FinancialAgent(AgentInterface):
             weights = [1.0 / n_assets] * n_assets
 
             # Calculate portfolio metrics
-            portfolio_return = sum(w * r for w, r in zip(weights, expected_returns, strict=False))
+            portfolio_return = sum(
+                w * r for w, r in zip(weights, expected_returns, strict=False)
+            )
             portfolio_variance = sum(
-                weights[i] * weights[j] * covariance_matrix[i][j] for i in range(n_assets) for j in range(n_assets)
+                weights[i] * weights[j] * covariance_matrix[i][j]
+                for i in range(n_assets)
+                for j in range(n_assets)
             )
             portfolio_volatility = math.sqrt(portfolio_variance)
-            sharpe_ratio = portfolio_return / portfolio_volatility if portfolio_volatility > 0 else 0
+            sharpe_ratio = (
+                portfolio_return / portfolio_volatility
+                if portfolio_volatility > 0
+                else 0
+            )
 
             result = {
                 "assets": assets,
@@ -156,7 +170,9 @@ class FinancialAgent(AgentInterface):
             logger.error(f"Portfolio optimization failed: {e}")
             return {"error": str(e)}
 
-    async def calculate_risk_metrics(self, portfolio_data: dict[str, Any]) -> dict[str, Any]:
+    async def calculate_risk_metrics(
+        self, portfolio_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """Calculate comprehensive risk metrics"""
         try:
             # Simulate portfolio returns
@@ -170,14 +186,20 @@ class FinancialAgent(AgentInterface):
 
             # Calculate CVaR (Conditional Value at Risk)
             cvar_95 = (
-                sum(r for r in returns_sorted if r <= returns_sorted[int(0.05 * len(returns))])
+                sum(
+                    r
+                    for r in returns_sorted
+                    if r <= returns_sorted[int(0.05 * len(returns))]
+                )
                 / int(0.05 * len(returns))
                 * portfolio_value
             )
 
             # Calculate other metrics
             mean_return = sum(returns) / len(returns)
-            volatility = math.sqrt(sum((r - mean_return) ** 2 for r in returns) / len(returns))
+            volatility = math.sqrt(
+                sum((r - mean_return) ** 2 for r in returns) / len(returns)
+            )
 
             # Beta calculation (simplified)
             market_returns = [
@@ -216,7 +238,9 @@ class FinancialAgent(AgentInterface):
             logger.error(f"Risk calculation failed: {e}")
             return {"error": str(e)}
 
-    def _calculate_beta(self, asset_returns: list[float], market_returns: list[float]) -> float:
+    def _calculate_beta(
+        self, asset_returns: list[float], market_returns: list[float]
+    ) -> float:
         """Calculate beta coefficient"""
         if len(asset_returns) != len(market_returns):
             return 1.0
@@ -225,13 +249,18 @@ class FinancialAgent(AgentInterface):
         market_mean = sum(market_returns) / len(market_returns)
 
         covariance = sum(
-            (a - asset_mean) * (m - market_mean) for a, m in zip(asset_returns, market_returns, strict=False)
+            (a - asset_mean) * (m - market_mean)
+            for a, m in zip(asset_returns, market_returns, strict=False)
         ) / len(asset_returns)
-        market_variance = sum((m - market_mean) ** 2 for m in market_returns) / len(market_returns)
+        market_variance = sum((m - market_mean) ** 2 for m in market_returns) / len(
+            market_returns
+        )
 
         return covariance / market_variance if market_variance > 0 else 1.0
 
-    async def perform_dcf_valuation(self, company_data: dict[str, Any]) -> dict[str, Any]:
+    async def perform_dcf_valuation(
+        self, company_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """Perform Discounted Cash Flow valuation"""
         try:
             # Extract key financial data
@@ -296,7 +325,9 @@ class FinancialAgent(AgentInterface):
             logger.error(f"DCF valuation failed: {e}")
             return {"error": str(e)}
 
-    async def forecast_market_trends(self, market_data: dict[str, Any]) -> dict[str, Any]:
+    async def forecast_market_trends(
+        self, market_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """Forecast market trends using time series analysis"""
         try:
             # Simulate historical data
@@ -313,7 +344,9 @@ class FinancialAgent(AgentInterface):
 
             for i in range(forecast_periods):
                 # Simple trend + noise forecast
-                forecast_price = last_price + trend * (i + 1) + 2 * math.sin((i + 1) / 3)
+                forecast_price = (
+                    last_price + trend * (i + 1) + 2 * math.sin((i + 1) / 3)
+                )
                 confidence_interval = 0.1 * forecast_price  # 10% CI
 
                 forecasts.append(
@@ -328,7 +361,8 @@ class FinancialAgent(AgentInterface):
 
             # Market regime analysis
             volatility = sum(
-                abs(historical_prices[i] - historical_prices[i - 1]) for i in range(1, len(historical_prices))
+                abs(historical_prices[i] - historical_prices[i - 1])
+                for i in range(1, len(historical_prices))
             ) / len(historical_prices)
 
             if volatility < 2:
@@ -359,7 +393,9 @@ class FinancialAgent(AgentInterface):
             logger.error(f"Market forecast failed: {e}")
             return {"error": str(e)}
 
-    async def analyze_credit_risk(self, borrower_data: dict[str, Any]) -> dict[str, Any]:
+    async def analyze_credit_risk(
+        self, borrower_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """Analyze credit risk using financial ratios and scoring"""
         try:
             # Extract financial metrics
@@ -404,7 +440,8 @@ class FinancialAgent(AgentInterface):
                 "credit_risk_score": base_score,
                 "risk_category": risk_category,
                 "default_probability": default_probability,
-                "recommended_rate": 0.05 + default_probability * 3,  # Base rate + risk premium
+                "recommended_rate": 0.05
+                + default_probability * 3,  # Base rate + risk premium
                 "key_factors": {
                     "debt_to_income_ratio": debt_to_income,
                     "credit_score": credit_score,
@@ -414,7 +451,9 @@ class FinancialAgent(AgentInterface):
                 "recommendations": [
                     "Verify income documentation",
                     "Review credit history details",
-                    "Consider collateral requirements" if base_score < 70 else "Standard terms acceptable",
+                    "Consider collateral requirements"
+                    if base_score < 70
+                    else "Standard terms acceptable",
                 ],
             }
 

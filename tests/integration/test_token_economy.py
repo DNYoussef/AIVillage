@@ -1,7 +1,6 @@
 import pytest
-from web3 import Web3
-
 from contracts.VILLAGEToken import VILLAGEToken
+from web3 import Web3
 
 
 @pytest.mark.asyncio

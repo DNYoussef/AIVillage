@@ -866,7 +866,9 @@ class AgentFactory:
         class_name = f"{spec['name'].replace(' ', '').replace('&', 'And')}Agent"
         factory_code += f"        # {spec['name']} Agent\n"
         factory_code += "        try:\n"
-        factory_code += f"            from production.agents.{agent_id} import {class_name}\n"
+        factory_code += (
+            f"            from production.agents.{agent_id} import {class_name}\n"
+        )
         factory_code += f'            agent_classes["{agent_id}"] = {class_name}\n'
         factory_code += "        except ImportError:\n"
         factory_code += "            # Use generic agent if specialized not available\n"

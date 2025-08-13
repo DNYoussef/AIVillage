@@ -6,8 +6,8 @@ using the new test fixtures for complete isolation.
 
 from unittest.mock import AsyncMock, MagicMock
 
-from fastapi import UploadFile
 import pytest
+from fastapi import UploadFile
 
 from services.core.business_logic import (
     ChatBusinessLogic,

@@ -3,14 +3,14 @@
 Tests basic connectivity to all required services
 """
 
-from datetime import datetime
 import json
-from pathlib import Path
 import socket
 import sys
 import time
 import urllib.error
 import urllib.request
+from datetime import datetime
+from pathlib import Path
 
 # Service definitions based on CODEX requirements
 SERVICES = [

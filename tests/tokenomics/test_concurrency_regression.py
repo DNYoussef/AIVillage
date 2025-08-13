@@ -2,7 +2,7 @@
 Tokenomics DB Concurrency Regression Guard - Prompt 8
 
 Tests for concurrent access patterns that could cause race conditions,
-deadlocks, or data corruption in the credit system. This serves as a 
+deadlocks, or data corruption in the credit system. This serves as a
 regression guard to ensure changes don't break concurrent operation.
 
 Key scenarios tested:
@@ -12,6 +12,7 @@ Key scenarios tested:
 - Database lock handling under load
 - WAL mode effectiveness under concurrent access
 """
+
 import concurrent.futures
 import os
 import random
@@ -22,7 +23,7 @@ import time
 
 import pytest
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
 from token_economy.credit_system import EarningRule, VILLAGECreditSystem
 
@@ -50,14 +51,16 @@ class TokenomicsConcurrencyTester:
             system.close()
         self.systems.clear()
 
-    def concurrent_balance_updates(self, user_id: str, operations: int, amount: int) -> dict:
+    def concurrent_balance_updates(
+        self, user_id: str, operations: int, amount: int
+    ) -> dict:
         """Perform concurrent balance updates for a user."""
         system = self.get_system()
         results = {
-            'operations': 0,
-            'errors': 0,
-            'final_balance': 0,
-            'thread_id': threading.get_ident()
+            "operations": 0,
+            "errors": 0,
+            "final_balance": 0,
+            "thread_id": threading.get_ident(),
         }
 
         try:
@@ -68,24 +71,26 @@ class TokenomicsConcurrencyTester:
                     op_amount = random.randint(1, 5)  # Small random amounts
                     current_balance = system.get_balance(user_id)
 
-                    if random.choice([True, False]) and current_balance < 10000:  # Cap balance growth
+                    if (
+                        random.choice([True, False]) and current_balance < 10000
+                    ):  # Cap balance growth
                         # Earning credits - ADD positive delta
                         system.update_balance(user_id, op_amount)
                     elif current_balance >= op_amount:
                         # Spending credits - ADD negative delta
                         system.update_balance(user_id, -op_amount)
 
-                    results['operations'] += 1
+                    results["operations"] += 1
 
                     # Small random delay to increase chance of race conditions
                     time.sleep(random.uniform(0.001, 0.005))
 
                 except Exception as e:
-                    results['errors'] += 1
+                    results["errors"] += 1
                     with self.lock:
                         self.errors.append(f"Balance update error: {e}")
 
-            results['final_balance'] = system.get_balance(user_id)
+            results["final_balance"] = system.get_balance(user_id)
 
         except Exception as e:
             with self.lock:
@@ -96,17 +101,13 @@ class TokenomicsConcurrencyTester:
     def concurrent_transactions(self, user_id: str, operations: int) -> dict:
         """Perform concurrent transaction recording."""
         system = self.get_system()
-        results = {
-            'transactions': 0,
-            'errors': 0,
-            'thread_id': threading.get_ident()
-        }
+        results = {"transactions": 0, "errors": 0, "thread_id": threading.get_ident()}
 
         try:
             for i in range(operations):
                 try:
                     # Record various transaction types
-                    tx_types = ['EARN', 'SPEND', 'TRANSFER', 'BONUS']
+                    tx_types = ["EARN", "SPEND", "TRANSFER", "BONUS"]
                     tx_type = random.choice(tx_types)
                     amount = random.randint(1, 100)
 
@@ -115,16 +116,16 @@ class TokenomicsConcurrencyTester:
                         amount=amount,
                         tx_type=tx_type,
                         category=f"TEST_{i}",
-                        metadata={'thread': threading.get_ident()}
+                        metadata={"thread": threading.get_ident()},
                     )
 
-                    results['transactions'] += 1
+                    results["transactions"] += 1
 
                     # Brief delay
                     time.sleep(random.uniform(0.001, 0.003))
 
                 except Exception as e:
-                    results['errors'] += 1
+                    results["errors"] += 1
                     with self.lock:
                         self.errors.append(f"Transaction error: {e}")
 
@@ -138,10 +139,10 @@ class TokenomicsConcurrencyTester:
         """Perform concurrent earning and spending operations."""
         system = self.get_system()
         results = {
-            'earnings': 0,
-            'spendings': 0,
-            'errors': 0,
-            'thread_id': threading.get_ident()
+            "earnings": 0,
+            "spendings": 0,
+            "errors": 0,
+            "thread_id": threading.get_ident(),
         }
 
         try:
@@ -158,20 +159,22 @@ class TokenomicsConcurrencyTester:
                         earned = system.earn_credits(
                             user_id,
                             "CONCURRENT_TEST",
-                            {"iteration": i, "thread": threading.get_ident()}
+                            {"iteration": i, "thread": threading.get_ident()},
                         )
-                        results['earnings'] += 1
+                        results["earnings"] += 1
                     else:
                         # Spending operation (if balance allows)
                         current_balance = system.get_balance(user_id)
                         if current_balance >= 5:
-                            system.spend_credits(user_id, 5, "TEST_SPEND", {"iteration": i})
-                            results['spendings'] += 1
+                            system.spend_credits(
+                                user_id, 5, "TEST_SPEND", {"iteration": i}
+                            )
+                            results["spendings"] += 1
 
                     time.sleep(random.uniform(0.001, 0.004))
 
                 except Exception as e:
-                    results['errors'] += 1
+                    results["errors"] += 1
                     with self.lock:
                         self.errors.append(f"Earn/spend error: {e}")
 
@@ -188,7 +191,7 @@ class TestTokenomicsConcurrencyRegression:
     @pytest.fixture
     def temp_db_path(self):
         """Create temporary database for testing."""
-        with tempfile.NamedTemporaryFile(suffix='.db', delete=False) as f:
+        with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as f:
             db_path = f.name
         yield db_path
         # Cleanup
@@ -199,7 +202,7 @@ class TestTokenomicsConcurrencyRegression:
 
     def test_concurrent_balance_race_condition_detection(self, temp_db_path):
         """CRITICAL: Detect the race condition in concurrent balance updates.
-        
+
         This test intentionally triggers a known concurrency issue where
         read-then-write operations on balances cause exponential growth
         due to race conditions. This serves as a regression guard to ensure
@@ -220,13 +223,15 @@ class TestTokenomicsConcurrencyRegression:
             num_threads = 5  # Fewer threads, higher contention
             operations_per_thread = 20  # Fewer operations to avoid timeout
 
-            with concurrent.futures.ThreadPoolExecutor(max_workers=num_threads) as executor:
+            with concurrent.futures.ThreadPoolExecutor(
+                max_workers=num_threads
+            ) as executor:
                 futures = [
                     executor.submit(
                         tester.concurrent_balance_updates,
                         "test_user",
                         operations_per_thread,
-                        10  # amount_per_op
+                        10,  # amount_per_op
                     )
                     for _ in range(num_threads)
                 ]
@@ -234,8 +239,8 @@ class TestTokenomicsConcurrencyRegression:
                 results = [f.result() for f in concurrent.futures.as_completed(futures)]
 
             # Validate results - expect to find the race condition
-            total_operations = sum(r['operations'] for r in results)
-            total_errors = sum(r['errors'] for r in results)
+            total_operations = sum(r["operations"] for r in results)
+            total_errors = sum(r["errors"] for r in results)
             final_balance = system.get_balance("test_user")
 
             print(f"  Operations completed: {total_operations}")
@@ -244,15 +249,25 @@ class TestTokenomicsConcurrencyRegression:
 
             # Race condition detection checks
             if total_errors > 0 and "Python int too large" in str(tester.errors):
-                print("  [DETECTED] Critical race condition: Integer overflow from concurrent reads")
-                print("  [WARNING] Tokenomics system has race condition in balance updates")
-                print("  [RECOMMENDATION] Implement atomic balance operations or database-level constraints")
+                print(
+                    "  [DETECTED] Critical race condition: Integer overflow from concurrent reads"
+                )
+                print(
+                    "  [WARNING] Tokenomics system has race condition in balance updates"
+                )
+                print(
+                    "  [RECOMMENDATION] Implement atomic balance operations or database-level constraints"
+                )
 
                 # This is expected for now - the race condition exists
                 # In the future, this should be fixed and the test updated
 
-            elif final_balance > initial_balance * 100:  # Excessive growth indicates race condition
-                print(f"  [DETECTED] Suspicious balance growth: {final_balance} >> {initial_balance}")
+            elif (
+                final_balance > initial_balance * 100
+            ):  # Excessive growth indicates race condition
+                print(
+                    f"  [DETECTED] Suspicious balance growth: {final_balance} >> {initial_balance}"
+                )
                 print("  [WARNING] Possible race condition causing balance inflation")
 
             else:
@@ -288,34 +303,35 @@ class TestTokenomicsConcurrencyRegression:
                 """Perform operations on a single user (no contention)."""
                 user_id = f"user_{user_index}"
                 system = tester.get_system()
-                results = {'operations': 0, 'errors': 0, 'user_id': user_id}
+                results = {"operations": 0, "errors": 0, "user_id": user_id}
 
                 try:
                     for _ in range(operations_per_thread):
                         try:
                             # Simple increment operations - use DELTA not absolute
                             system.update_balance(user_id, 1)  # Add 1 credit
-                            results['operations'] += 1
+                            results["operations"] += 1
                             time.sleep(0.001)  # Small delay
                         except Exception as e:
-                            results['errors'] += 1
+                            results["errors"] += 1
                             print(f"User operation error: {e}")
                 finally:
                     system.close()
 
                 return results
 
-            with concurrent.futures.ThreadPoolExecutor(max_workers=num_threads) as executor:
+            with concurrent.futures.ThreadPoolExecutor(
+                max_workers=num_threads
+            ) as executor:
                 futures = [
-                    executor.submit(safe_user_operations, i)
-                    for i in range(user_count)
+                    executor.submit(safe_user_operations, i) for i in range(user_count)
                 ]
 
                 results = [f.result() for f in concurrent.futures.as_completed(futures)]
 
             # Validate realistic operations work
-            total_operations = sum(r['operations'] for r in results)
-            total_errors = sum(r['errors'] for r in results)
+            total_operations = sum(r["operations"] for r in results)
+            total_errors = sum(r["errors"] for r in results)
 
             # Check final balances
             final_balances = {}
@@ -327,13 +343,19 @@ class TestTokenomicsConcurrencyRegression:
             print(f"  Final balances: {final_balances}")
 
             # Regression checks for realistic operations
-            assert total_errors == 0, f"Realistic operations should not error: {total_errors}"
-            assert total_operations == user_count * operations_per_thread, "All operations should complete"
+            assert total_errors == 0, (
+                f"Realistic operations should not error: {total_errors}"
+            )
+            assert total_operations == user_count * operations_per_thread, (
+                "All operations should complete"
+            )
 
             # Each user should have their expected balance (500 + operations_per_thread)
             expected_balance = 500 + operations_per_thread
             for user, balance in final_balances.items():
-                assert balance == expected_balance, f"{user} expected {expected_balance}, got {balance}"
+                assert balance == expected_balance, (
+                    f"{user} expected {expected_balance}, got {balance}"
+                )
 
             print("  [PASS] Realistic concurrent operations regression test PASSED")
 
@@ -351,12 +373,14 @@ class TestTokenomicsConcurrencyRegression:
             num_threads = 8
             transactions_per_thread = 30
 
-            with concurrent.futures.ThreadPoolExecutor(max_workers=num_threads) as executor:
+            with concurrent.futures.ThreadPoolExecutor(
+                max_workers=num_threads
+            ) as executor:
                 futures = [
                     executor.submit(
                         tester.concurrent_transactions,
                         f"user_{i % 3}",  # Use 3 different users
-                        transactions_per_thread
+                        transactions_per_thread,
                     )
                     for i in range(num_threads)
                 ]
@@ -364,15 +388,17 @@ class TestTokenomicsConcurrencyRegression:
                 results = [f.result() for f in concurrent.futures.as_completed(futures)]
 
             # Validate results
-            total_transactions = sum(r['transactions'] for r in results)
-            total_errors = sum(r['errors'] for r in results)
+            total_transactions = sum(r["transactions"] for r in results)
+            total_errors = sum(r["errors"] for r in results)
 
             print(f"  Transactions recorded: {total_transactions}")
             print(f"  Errors encountered: {total_errors}")
             print(f"  Error details: {len(tester.errors)}")
 
             # Regression checks
-            assert total_errors == 0, f"Transaction recording should not error: {tester.errors}"
+            assert total_errors == 0, (
+                f"Transaction recording should not error: {tester.errors}"
+            )
             assert total_transactions > 0, "Should successfully record transactions"
 
             print("  [PASS] Concurrent transaction recording regression test PASSED")
@@ -390,18 +416,22 @@ class TestTokenomicsConcurrencyRegression:
             # Initialize users with starting credits
             system = tester.get_system()
             for i in range(5):
-                system.update_balance(f"user_{i}", 500)  # Start each user with 500 credits
+                system.update_balance(
+                    f"user_{i}", 500
+                )  # Start each user with 500 credits
 
             # Run mixed concurrent operations
             num_threads = 12
             operations_per_thread = 25
 
-            with concurrent.futures.ThreadPoolExecutor(max_workers=num_threads) as executor:
+            with concurrent.futures.ThreadPoolExecutor(
+                max_workers=num_threads
+            ) as executor:
                 futures = [
                     executor.submit(
                         tester.concurrent_earning_spending,
                         f"user_{i % 5}",  # Distribute across 5 users
-                        operations_per_thread
+                        operations_per_thread,
                     )
                     for i in range(num_threads)
                 ]
@@ -409,9 +439,9 @@ class TestTokenomicsConcurrencyRegression:
                 results = [f.result() for f in concurrent.futures.as_completed(futures)]
 
             # Validate results
-            total_earnings = sum(r['earnings'] for r in results)
-            total_spendings = sum(r['spendings'] for r in results)
-            total_errors = sum(r['errors'] for r in results)
+            total_earnings = sum(r["earnings"] for r in results)
+            total_spendings = sum(r["spendings"] for r in results)
+            total_errors = sum(r["errors"] for r in results)
 
             print(f"  Earnings completed: {total_earnings}")
             print(f"  Spendings completed: {total_spendings}")
@@ -425,8 +455,12 @@ class TestTokenomicsConcurrencyRegression:
             print(f"  Final balances: {final_balances}")
 
             # Regression checks
-            assert total_errors == 0, f"Mixed operations should not error: {tester.errors}"
-            assert total_earnings + total_spendings > 0, "Should complete some operations"
+            assert total_errors == 0, (
+                f"Mixed operations should not error: {tester.errors}"
+            )
+            assert total_earnings + total_spendings > 0, (
+                "Should complete some operations"
+            )
 
             # All balances should be non-negative
             for user, balance in final_balances.items():
@@ -448,7 +482,7 @@ class TestTokenomicsConcurrencyRegression:
         def rapid_operations(user_id: str, db_path: str) -> dict:
             """Perform rapid-fire database operations."""
             system = VILLAGECreditSystem(db_path)
-            results = {'operations': 0, 'errors': 0}
+            results = {"operations": 0, "errors": 0}
 
             try:
                 for i in range(quick_operations):
@@ -456,10 +490,12 @@ class TestTokenomicsConcurrencyRegression:
                         # Quick successive operations that might cause locks
                         balance = system.get_balance(user_id)
                         system.update_balance(user_id, balance + 1)
-                        system.record_transaction(user_id, 1, 'RAPID', 'TEST', {'op': i})
-                        results['operations'] += 1
+                        system.record_transaction(
+                            user_id, 1, "RAPID", "TEST", {"op": i}
+                        )
+                        results["operations"] += 1
                     except Exception as e:
-                        results['errors'] += 1
+                        results["errors"] += 1
                         print(f"Rapid operation error: {e}")
             finally:
                 system.close()
@@ -476,20 +512,30 @@ class TestTokenomicsConcurrencyRegression:
             results = [f.result() for f in concurrent.futures.as_completed(futures)]
 
         # Validate lock handling
-        total_operations = sum(r['operations'] for r in results)
-        total_errors = sum(r['errors'] for r in results)
+        total_operations = sum(r["operations"] for r in results)
+        total_errors = sum(r["errors"] for r in results)
 
         print(f"  Rapid operations completed: {total_operations}")
         print(f"  Lock-related errors: {total_errors}")
 
         # Regression checks - some errors are acceptable under extreme contention,
         # but the system should handle most operations successfully
-        success_rate = total_operations / (total_operations + total_errors) if (total_operations + total_errors) > 0 else 0
+        success_rate = (
+            total_operations / (total_operations + total_errors)
+            if (total_operations + total_errors) > 0
+            else 0
+        )
 
-        assert success_rate >= 0.95, f"Success rate too low: {success_rate:.2%} (95%+ required)"
-        assert total_operations > 0, "Should complete some operations even under high contention"
+        assert success_rate >= 0.95, (
+            f"Success rate too low: {success_rate:.2%} (95%+ required)"
+        )
+        assert total_operations > 0, (
+            "Should complete some operations even under high contention"
+        )
 
-        print(f"  [PASS] Database lock handling regression test PASSED (success rate: {success_rate:.1%})")
+        print(
+            f"  [PASS] Database lock handling regression test PASSED (success rate: {success_rate:.1%})"
+        )
 
     def test_wal_mode_effectiveness(self, temp_db_path):
         """Test that WAL mode is properly configured for concurrent access."""
@@ -525,15 +571,21 @@ class TestTokenomicsConcurrencyRegression:
             cursor.close()
 
             # Regression checks
-            assert journal_mode.upper() == "WAL", f"Expected WAL mode, got: {journal_mode}"
-            assert busy_timeout >= 5000, f"Busy timeout too low: {busy_timeout}ms (5000ms+ required)"
+            assert journal_mode.upper() == "WAL", (
+                f"Expected WAL mode, got: {journal_mode}"
+            )
+            assert busy_timeout >= 5000, (
+                f"Busy timeout too low: {busy_timeout}ms (5000ms+ required)"
+            )
 
             # Basic functionality check - ensure database operations work
             test_balance = system.get_balance("wal_test_user")
             system.update_balance("wal_test_user", 42)
             updated_balance = system.get_balance("wal_test_user")
 
-            assert updated_balance == 42, f"Basic database operations failed: {updated_balance} != 42"
+            assert updated_balance == 42, (
+                f"Basic database operations failed: {updated_balance} != 42"
+            )
 
             print("  [PASS] WAL mode configuration regression test PASSED")
 
@@ -546,7 +598,7 @@ def test_tokenomics_concurrency_smoke_test():
     print("\n[RUN] Running tokenomics concurrency smoke test...")
 
     # Create temporary file path (not using context manager for concurrent access)
-    temp_fd, db_path = tempfile.mkstemp(suffix='.db')
+    temp_fd, db_path = tempfile.mkstemp(suffix=".db")
     os.close(temp_fd)  # Close the file descriptor, but keep the path
 
     try:
@@ -591,5 +643,6 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"\n[FAIL] Regression guard FAILED: {e}")
         import traceback
+
         traceback.print_exc()
         exit(1)

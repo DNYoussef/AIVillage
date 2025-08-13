@@ -6,15 +6,15 @@ Main server implementation for HypeRAG Model Context Protocol server.
 import asyncio
 import json
 import logging
-from pathlib import Path
 import signal
 import sys
 import time
+from pathlib import Path
 from typing import Any
 
 import websockets
-from websockets.server import WebSocketServerProtocol
 import yaml
+from websockets.server import WebSocketServerProtocol
 
 from .auth import AuthContext, AuthenticationError, PermissionManager
 from .models import ModelRegistry

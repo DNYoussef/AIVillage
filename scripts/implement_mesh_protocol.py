@@ -45,7 +45,9 @@ try:
     if choice not in ["y", "yes"]:
         print("Switching to fixed version...")
         # Try to run the fixed version
-        fixed_script = os.path.join(os.path.dirname(__file__), "implement_mesh_protocol_fixed.py")
+        fixed_script = os.path.join(
+            os.path.dirname(__file__), "implement_mesh_protocol_fixed.py"
+        )
         if os.path.exists(fixed_script):
             os.system(f"python {fixed_script}")
         else:

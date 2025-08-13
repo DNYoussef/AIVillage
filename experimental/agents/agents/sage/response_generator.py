@@ -10,7 +10,9 @@ class ResponseGenerator:
         self.model = None
         logger.debug("ResponseGenerator initialized")
 
-    async def generate_response(self, query: str, rag_result: dict[str, Any], intent: dict[str, Any]) -> str:
+    async def generate_response(
+        self, query: str, rag_result: dict[str, Any], intent: dict[str, Any]
+    ) -> str:
         """Generate a response based on the RAG result and interpreted user intent.
 
         Args:

@@ -12,10 +12,10 @@ import os
 import sys
 import time
 
+import httpx
 from cachetools import TTLCache
 from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-import httpx
 from prometheus_client import (
     CONTENT_TYPE_LATEST,
     REGISTRY,
@@ -59,7 +59,9 @@ app.add_middleware(
 from fastapi.exceptions import RequestValidationError
 
 app.add_exception_handler(Exception, gateway_error_handler.http_exception_handler)
-app.add_exception_handler(RequestValidationError, gateway_error_handler.http_exception_handler)
+app.add_exception_handler(
+    RequestValidationError, gateway_error_handler.http_exception_handler
+)
 
 
 class SecurityHeaders(BaseHTTPMiddleware):
@@ -80,8 +82,12 @@ app.add_middleware(SecurityHeaders)
 rl_cache: TTLCache = TTLCache(maxsize=10000, ttl=RATE_LIMIT_WINDOW)
 
 # ─── Prometheus -------------------------------------------------------------
-G_REQS = Counter("gw_requests_total", "Gateway HTTP requests", ["path"], registry=REGISTRY)
-G_RL = Counter("gw_rate_limited_total", "Requests dropped by rate-limit", registry=REGISTRY)
+G_REQS = Counter(
+    "gw_requests_total", "Gateway HTTP requests", ["path"], registry=REGISTRY
+)
+G_RL = Counter(
+    "gw_rate_limited_total", "Requests dropped by rate-limit", registry=REGISTRY
+)
 G_LAT = Histogram(
     "gw_latency_seconds",
     "Gateway latency",

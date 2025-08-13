@@ -2,8 +2,8 @@
 """Simple script to test agent implementations."""
 
 import os
-from pathlib import Path
 import sys
+from pathlib import Path
 
 # Set up paths
 sys.path.insert(0, str(Path(__file__).parent))

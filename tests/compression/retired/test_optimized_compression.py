@@ -2,9 +2,9 @@
 """Test the optimized compression pipelines for improved efficiency."""
 
 import logging
-from pathlib import Path
 import sys
 import time
+from pathlib import Path
 
 import torch
 from torch import nn

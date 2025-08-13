@@ -7,11 +7,11 @@ and saves their aggregated metrics to ``performance_comparison.json``.
 
 import argparse
 import asyncio
-from dataclasses import asdict
 import json
 import logging
-from pathlib import Path
 import sys
+from dataclasses import asdict
+from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
@@ -38,7 +38,9 @@ async def run_all(output_file: Path) -> dict:
     # Personalization benchmark
     personalization = PersonalizationBenchmark()
     personalization_results = await personalization.run_full_benchmark()
-    results["personalization"] = {name: asdict(metrics) for name, metrics in personalization_results.items()}
+    results["personalization"] = {
+        name: asdict(metrics) for name, metrics in personalization_results.items()
+    }
 
     # Repair test suite
     repair_suite = RepairTestSuite()
@@ -53,7 +55,9 @@ async def run_all(output_file: Path) -> dict:
 
 
 async def main() -> None:
-    parser = argparse.ArgumentParser(description="Run all sprint benchmarks and aggregate results")
+    parser = argparse.ArgumentParser(
+        description="Run all sprint benchmarks and aggregate results"
+    )
     parser.add_argument(
         "--output",
         type=Path,

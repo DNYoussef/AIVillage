@@ -8,13 +8,13 @@ Implements:
 """
 
 import asyncio
-from collections import OrderedDict, defaultdict
-from dataclasses import asdict, dataclass
 import hashlib
 import json
 import logging
-from pathlib import Path
 import time
+from collections import OrderedDict, defaultdict
+from dataclasses import asdict, dataclass
+from pathlib import Path
 from typing import Any
 
 import faiss

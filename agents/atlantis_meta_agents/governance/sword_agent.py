@@ -8,10 +8,10 @@ The offensive security specialist of AIVillage, responsible for:
 - Continuous penetration testing
 """
 
-from dataclasses import dataclass
-from enum import Enum
 import logging
 import random
+from dataclasses import dataclass
+from enum import Enum
 from typing import Any
 
 from src.production.rag.rag_system.core.agent_interface import AgentInterface
@@ -97,7 +97,9 @@ class SwordAgent(AgentInterface):
         if "attack" in prompt.lower() or "penetration" in prompt.lower():
             return "I conduct controlled attacks to test our defenses and discover vulnerabilities."
         if "vulnerability" in prompt.lower() or "exploit" in prompt.lower():
-            return "I probe for security weaknesses and develop proof-of-concept exploits."
+            return (
+                "I probe for security weaknesses and develop proof-of-concept exploits."
+            )
         if "chaos" in prompt.lower():
             return "I run chaos engineering drills to test system resilience under adverse conditions."
         if "zero-day" in prompt.lower():
@@ -111,7 +113,9 @@ class SwordAgent(AgentInterface):
         hash_value = int(hashlib.md5(text.encode()).hexdigest(), 16)
         return [(hash_value % 1000) / 1000.0] * 512  # Attack-focused embedding
 
-    async def rerank(self, query: str, results: list[dict[str, Any]], k: int) -> list[dict[str, Any]]:
+    async def rerank(
+        self, query: str, results: list[dict[str, Any]], k: int
+    ) -> list[dict[str, Any]]:
         """Rerank based on offensive security relevance"""
         attack_keywords = [
             "vulnerability",
@@ -134,12 +138,16 @@ class SwordAgent(AgentInterface):
                 score += content.lower().count(keyword) * 1.5
 
             # Boost security research content
-            if any(term in content.lower() for term in ["security", "research", "testing"]):
+            if any(
+                term in content.lower() for term in ["security", "research", "testing"]
+            ):
                 score *= 1.3
 
             result["attack_relevance_score"] = score
 
-        return sorted(results, key=lambda x: x.get("attack_relevance_score", 0), reverse=True)[:k]
+        return sorted(
+            results, key=lambda x: x.get("attack_relevance_score", 0), reverse=True
+        )[:k]
 
     async def introspect(self) -> dict[str, Any]:
         """Return Sword agent status and offensive metrics"""
@@ -203,17 +211,25 @@ class SwordAgent(AgentInterface):
         for target in target_systems:
             target_results = await self._attack_target_system(target)
             attack_session["attack_vectors_used"].extend(target_results["vectors_used"])
-            attack_session["vulnerabilities_discovered"].extend(target_results["vulnerabilities"])
-            attack_session["exploits_successful"] += target_results["successful_exploits"]
+            attack_session["vulnerabilities_discovered"].extend(
+                target_results["vulnerabilities"]
+            )
+            attack_session["exploits_successful"] += target_results[
+                "successful_exploits"
+            ]
 
         # Generate recommendations
-        attack_session["recommendations"] = await self._generate_security_recommendations(
+        attack_session[
+            "recommendations"
+        ] = await self._generate_security_recommendations(
             attack_session["vulnerabilities_discovered"]
         )
 
         # Update statistics
         self.attacks_launched += 1
-        self.vulnerabilities_discovered += len(attack_session["vulnerabilities_discovered"])
+        self.vulnerabilities_discovered += len(
+            attack_session["vulnerabilities_discovered"]
+        )
         self.systems_tested += len(target_systems)
 
         # Store results
@@ -223,7 +239,9 @@ class SwordAgent(AgentInterface):
             vulnerabilities_found=attack_session["vulnerabilities_discovered"],
             exploits_successful=attack_session["exploits_successful"],
             recommendations=attack_session["recommendations"],
-            risk_score=self._calculate_risk_score(attack_session["vulnerabilities_discovered"]),
+            risk_score=self._calculate_risk_score(
+                attack_session["vulnerabilities_discovered"]
+            ),
         )
 
         self.test_results[attack_session["session_id"]] = test_result
@@ -343,12 +361,18 @@ class SwordAgent(AgentInterface):
         avg_cvss = total_cvss / len(vulnerabilities)
 
         # Weight by number of critical vulnerabilities
-        critical_count = sum(1 for vuln in vulnerabilities if vuln.get("severity") == VulnerabilityLevel.CRITICAL)
+        critical_count = sum(
+            1
+            for vuln in vulnerabilities
+            if vuln.get("severity") == VulnerabilityLevel.CRITICAL
+        )
         critical_weight = critical_count * 0.2
 
         return min(10.0, avg_cvss + critical_weight)
 
-    async def _generate_security_recommendations(self, vulnerabilities: list[dict[str, Any]]) -> list[str]:
+    async def _generate_security_recommendations(
+        self, vulnerabilities: list[dict[str, Any]]
+    ) -> list[str]:
         """Generate security recommendations based on discovered vulnerabilities"""
         recommendations = []
 
@@ -359,7 +383,9 @@ class SwordAgent(AgentInterface):
         vuln_types = {vuln["type"] for vuln in vulnerabilities}
 
         if any("Injection" in vtype for vtype in vuln_types):
-            recommendations.append("Implement input validation and parameterized queries")
+            recommendations.append(
+                "Implement input validation and parameterized queries"
+            )
             recommendations.append("Deploy Web Application Firewall (WAF)")
 
         if any("Privilege Escalation" in vtype for vtype in vuln_types):
@@ -371,9 +397,15 @@ class SwordAgent(AgentInterface):
             recommendations.append("Conduct code review for unsafe functions")
 
         # Risk-based recommendations
-        critical_vulns = [v for v in vulnerabilities if v.get("severity") == VulnerabilityLevel.CRITICAL]
+        critical_vulns = [
+            v
+            for v in vulnerabilities
+            if v.get("severity") == VulnerabilityLevel.CRITICAL
+        ]
         if critical_vulns:
-            recommendations.append("URGENT: Address critical vulnerabilities immediately")
+            recommendations.append(
+                "URGENT: Address critical vulnerabilities immediately"
+            )
             recommendations.append("Implement emergency patches for critical systems")
 
         recommendations.append("Schedule regular penetration testing")
@@ -438,7 +470,9 @@ class SwordAgent(AgentInterface):
             )
 
             # Calculate resilience score
-            chaos_experiment["resilience_score"] = self._calculate_resilience_score(chaos_experiment["system_response"])
+            chaos_experiment["resilience_score"] = self._calculate_resilience_score(
+                chaos_experiment["system_response"]
+            )
 
         self.chaos_scenarios.append(chaos_experiment)
 
@@ -455,7 +489,9 @@ class SwordAgent(AgentInterface):
 
         failure_impacts = {
             "packet_loss": {"network_requests_failed": random.randint(10, 100)},
-            "latency_spike": {"response_time_increase": f"{random.randint(100, 1000)}ms"},
+            "latency_spike": {
+                "response_time_increase": f"{random.randint(100, 1000)}ms"
+            },
             "connection_drop": {"connections_dropped": random.randint(5, 50)},
             "cpu_spike": {"cpu_usage_peak": f"{random.randint(80, 100)}%"},
             "memory_leak": {"memory_usage_increase": f"{random.randint(20, 60)}MB"},
@@ -470,13 +506,17 @@ class SwordAgent(AgentInterface):
             "impact": failure_impacts.get(failure_mode, {"unknown_impact": "measured"}),
         }
 
-    async def _monitor_chaos_response(self, affected_systems: list[str]) -> dict[str, Any]:
+    async def _monitor_chaos_response(
+        self, affected_systems: list[str]
+    ) -> dict[str, Any]:
         """Monitor how systems respond to chaos"""
         response_metrics = {}
 
         for system in affected_systems:
             response_metrics[system] = {
-                "availability": random.uniform(0.7, 0.99),  # System availability during chaos
+                "availability": random.uniform(
+                    0.7, 0.99
+                ),  # System availability during chaos
                 "response_time": random.uniform(100, 2000),  # Response time in ms
                 "error_rate": random.uniform(0.01, 0.2),  # Error rate during chaos
                 "recovery_time": random.uniform(30, 300),  # Time to recover in seconds
@@ -496,7 +536,8 @@ class SwordAgent(AgentInterface):
                 metrics["availability"] * 0.4
                 + (1 - min(metrics["error_rate"], 1)) * 0.3
                 + (1 - min(metrics["recovery_time"] / 600, 1)) * 0.2
-                + (0.1 if metrics["graceful_degradation"] else 0) * 0.1  # Normalize recovery time
+                + (0.1 if metrics["graceful_degradation"] else 0)
+                * 0.1  # Normalize recovery time
             )
             total_score += system_score
 
@@ -511,10 +552,15 @@ class SwordAgent(AgentInterface):
             "summary": {
                 "total_vulnerabilities": len(self.discovered_vulnerabilities),
                 "critical_vulnerabilities": len(
-                    [v for v in self.discovered_vulnerabilities if v.get("severity") == VulnerabilityLevel.CRITICAL]
+                    [
+                        v
+                        for v in self.discovered_vulnerabilities
+                        if v.get("severity") == VulnerabilityLevel.CRITICAL
+                    ]
                 ),
                 "systems_tested": self.systems_tested,
-                "attack_success_rate": self.vulnerabilities_discovered / max(1, self.attacks_launched),
+                "attack_success_rate": self.vulnerabilities_discovered
+                / max(1, self.attacks_launched),
             },
             "key_findings": [],
             "urgent_recommendations": [],
@@ -523,7 +569,9 @@ class SwordAgent(AgentInterface):
 
         # Highlight critical findings
         critical_vulns = [
-            v for v in self.discovered_vulnerabilities if v.get("severity") == VulnerabilityLevel.CRITICAL
+            v
+            for v in self.discovered_vulnerabilities
+            if v.get("severity") == VulnerabilityLevel.CRITICAL
         ]
 
         if critical_vulns:
@@ -551,7 +599,9 @@ class SwordAgent(AgentInterface):
                     "type": "resilience_assessment",
                     "resilience_score": latest_chaos["resilience_score"],
                     "weakest_systems": [
-                        sys for sys, metrics in latest_chaos["system_response"].items() if metrics["availability"] < 0.9
+                        sys
+                        for sys, metrics in latest_chaos["system_response"].items()
+                        if metrics["availability"] < 0.9
                     ],
                 }
             )
@@ -559,7 +609,9 @@ class SwordAgent(AgentInterface):
         # Generate proposed fixes
         security_report["proposed_fixes"] = await self._generate_proposed_fixes()
 
-        logger.info(f"Security report generated: {len(security_report['key_findings'])} key findings")
+        logger.info(
+            f"Security report generated: {len(security_report['key_findings'])} key findings"
+        )
 
         return security_report
 
@@ -582,7 +634,11 @@ class SwordAgent(AgentInterface):
                 "affected_count": len(vulns),
                 "proposed_solution": self._get_fix_template(vuln_type),
                 "implementation_priority": (
-                    "high" if any(v.get("severity") == VulnerabilityLevel.CRITICAL for v in vulns) else "medium"
+                    "high"
+                    if any(
+                        v.get("severity") == VulnerabilityLevel.CRITICAL for v in vulns
+                    )
+                    else "medium"
                 ),
                 "estimated_effort": f"{len(vulns) * 2} hours",
                 "testing_required": True,
@@ -634,7 +690,9 @@ class SwordAgent(AgentInterface):
             self.chaos_scenarios = []
 
             self.initialized = True
-            logger.info(f"Sword Agent {self.agent_id} initialized - Red Team operations ready")
+            logger.info(
+                f"Sword Agent {self.agent_id} initialized - Red Team operations ready"
+            )
 
         except Exception as e:
             logger.error(f"Failed to initialize Sword Agent: {e}")

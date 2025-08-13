@@ -1,5 +1,5 @@
-from pathlib import Path
 import tempfile
+from pathlib import Path
 
 from token_economy.credit_system import EarningRule, VILLAGECreditSystem
 

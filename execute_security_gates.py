@@ -7,8 +7,8 @@ policy enforcement, and integration validation.
 """
 
 import os
-from pathlib import Path
 import sys
+from pathlib import Path
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
 
@@ -29,7 +29,9 @@ def execute_security_gates():
     print("\n[1] Running security gates validation...")
 
     try:
-        results = run_security_gates(project_root=project_root, security_level=SecurityLevel.PRODUCTION)
+        results = run_security_gates(
+            project_root=project_root, security_level=SecurityLevel.PRODUCTION
+        )
 
         print("\n[RESULTS] Security Gates Summary:")
         print(f"  Total gates run: {results['total_gates']}")
@@ -54,7 +56,9 @@ def execute_security_gates():
         # Show critical issues
         critical_issues = security_summary["critical_issues"]
         if critical_issues:
-            print(f"\n[CRITICAL] {len(critical_issues)} critical security issues found:")
+            print(
+                f"\n[CRITICAL] {len(critical_issues)} critical security issues found:"
+            )
             for issue in critical_issues[:5]:  # Show first 5
                 print(f"  - {issue.category}: {issue.description}")
                 print(f"    Location: {issue.location}")
@@ -86,9 +90,15 @@ def execute_security_gates():
             serialization_works = deserialized == test_data
 
             print("  SecureSerializer import: SUCCESS")
-            print(f"  Basic serialization test: {'PASS' if serialization_works else 'FAIL'}")
-            print(f"  Pickle replacement functions available: {'PASS' if callable(dumps) else 'FAIL'}")
-            print(f"  Legacy pickle rejection: {'PASS' if LegacyPickleRejector else 'FAIL'}")
+            print(
+                f"  Basic serialization test: {'PASS' if serialization_works else 'FAIL'}"
+            )
+            print(
+                f"  Pickle replacement functions available: {'PASS' if callable(dumps) else 'FAIL'}"
+            )
+            print(
+                f"  Legacy pickle rejection: {'PASS' if LegacyPickleRejector else 'FAIL'}"
+            )
 
             # Test pickle rejection
             try:
@@ -98,7 +108,9 @@ def execute_security_gates():
             except Exception:
                 pickle_rejection_works = True  # Correctly rejected pickle
 
-            print(f"  Pickle data rejection: {'PASS' if pickle_rejection_works else 'FAIL'}")
+            print(
+                f"  Pickle data rejection: {'PASS' if pickle_rejection_works else 'FAIL'}"
+            )
 
         except ImportError as e:
             print(f"  SecureSerializer import: FAIL - {e}")
@@ -139,13 +151,21 @@ def execute_security_gates():
         # Calculate overall security score
         total_possible_points = results["total_gates"] * 100
         points_lost = results["failed"] * 100 + results["warnings"] * 30
-        security_score = max(0, (total_possible_points - points_lost) / total_possible_points * 100)
+        security_score = max(
+            0, (total_possible_points - points_lost) / total_possible_points * 100
+        )
 
         print("\n[6] Security assessment:")
         print(f"  Security score: {security_score:.1f}%")
-        print(f"  SecureSerializer: {'[OPERATIONAL]' if serialization_works else '[ISSUES]'}")
-        print(f"  Pickle rejection: {'[ACTIVE]' if pickle_rejection_works else '[ISSUES]'}")
-        print(f"  Critical vulnerabilities: {len(security_summary.get('critical_issues', []))}")
+        print(
+            f"  SecureSerializer: {'[OPERATIONAL]' if serialization_works else '[ISSUES]'}"
+        )
+        print(
+            f"  Pickle rejection: {'[ACTIVE]' if pickle_rejection_works else '[ISSUES]'}"
+        )
+        print(
+            f"  Critical vulnerabilities: {len(security_summary.get('critical_issues', []))}"
+        )
 
         success = (
             results["all_passed"]
@@ -199,7 +219,9 @@ if __name__ == "__main__":
         print(f"  - Pickle rejection active: {result['pickle_rejection_working']}")
         print(f"  - Critical vulnerabilities: {result['critical_issues']}")
         print(f"  - Total security issues: {result['total_issues']}")
-        print(f"  - Integration points validated: {result['integration_points_validated']}")
+        print(
+            f"  - Integration points validated: {result['integration_points_validated']}"
+        )
         print(f"  - Overall success: {result['success']}")
 
         if result["success"]:

@@ -5,9 +5,9 @@ Tests core functionality to ensure the system is working properly.
 """
 
 import json
-from pathlib import Path
 import sys
 import traceback
+from pathlib import Path
 
 
 def test_imports():

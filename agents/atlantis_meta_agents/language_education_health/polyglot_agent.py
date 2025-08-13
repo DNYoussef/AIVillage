@@ -8,11 +8,11 @@ The translation and linguistics specialist of AIVillage, responsible for:
 - Cultural localization and context adaptation
 """
 
-from dataclasses import dataclass
-from enum import Enum
 import hashlib
 import logging
 import time
+from dataclasses import dataclass
+from enum import Enum
 from typing import Any
 
 from src.production.rag.rag_system.core.agent_interface import AgentInterface
@@ -152,7 +152,9 @@ class PolyglotAgent(AgentInterface):
         # Multilingual embeddings capture cross-language semantic similarity
         return [(hash_value % 1000) / 1000.0] * 384
 
-    async def rerank(self, query: str, results: list[dict[str, Any]], k: int) -> list[dict[str, Any]]:
+    async def rerank(
+        self, query: str, results: list[dict[str, Any]], k: int
+    ) -> list[dict[str, Any]]:
         """Rerank based on linguistic and cultural relevance"""
         linguistic_keywords = [
             "translation",
@@ -175,12 +177,17 @@ class PolyglotAgent(AgentInterface):
                 score += content.lower().count(keyword) * 2
 
             # Boost content with cultural and contextual information
-            if any(term in content.lower() for term in ["cultural", "context", "adaptation"]):
+            if any(
+                term in content.lower()
+                for term in ["cultural", "context", "adaptation"]
+            ):
                 score *= 1.7
 
             result["linguistic_relevance"] = score
 
-        return sorted(results, key=lambda x: x.get("linguistic_relevance", 0), reverse=True)[:k]
+        return sorted(
+            results, key=lambda x: x.get("linguistic_relevance", 0), reverse=True
+        )[:k]
 
     async def introspect(self) -> dict[str, Any]:
         """Return Polyglot agent status and translation metrics"""
@@ -189,12 +196,16 @@ class PolyglotAgent(AgentInterface):
             "agent_type": self.agent_type,
             "capabilities": self.capabilities,
             "supported_languages": [lang.value for lang in SupportedLanguage],
-            "loaded_models": len([m for m in self.language_models.values() if m.loaded]),
+            "loaded_models": len(
+                [m for m in self.language_models.values() if m.loaded]
+            ),
             "translations_completed": self.translations_completed,
             "average_confidence": self.average_confidence,
             "average_latency_ms": self.average_latency_ms,
             "cache_hit_rate": self.cache_hit_rate,
-            "total_model_size_mb": sum(m.size_mb for m in self.language_models.values()),
+            "total_model_size_mb": sum(
+                m.size_mb for m in self.language_models.values()
+            ),
             "cultural_contexts_available": len(self.cultural_context_db),
             "specialization": "translation_and_linguistics",
             "mobile_optimized": True,
@@ -210,10 +221,14 @@ class PolyglotAgent(AgentInterface):
             # Check if message contains non-English content
             detected_lang = await self._detect_language(message)
             if detected_lang and detected_lang != SupportedLanguage.ENGLISH.value:
-                translation_result = await self.translate_text(message, detected_lang, "en")
+                translation_result = await self.translate_text(
+                    message, detected_lang, "en"
+                )
                 message = f"{translation_context} Original ({detected_lang}): {message[:30]}... Translated: {translation_result.translated_text}"
 
-            response = await recipient.generate(f"Polyglot Agent communicates: {message}")
+            response = await recipient.generate(
+                f"Polyglot Agent communicates: {message}"
+            )
             return f"Cross-language communication: {response[:50]}..."
         return "No recipient for translation services"
 
@@ -249,7 +264,9 @@ class PolyglotAgent(AgentInterface):
 
         # Validate language support
         if not await self._validate_language_pair(source_lang, target_lang):
-            raise ValueError(f"Language pair {source_lang}->{target_lang} not supported")
+            raise ValueError(
+                f"Language pair {source_lang}->{target_lang} not supported"
+            )
 
         # Auto-detect source language if not specified or uncertain
         if source_lang == "auto":
@@ -263,7 +280,9 @@ class PolyglotAgent(AgentInterface):
             source_language=source_lang,
             target_language=target_lang,
             translation_type=(
-                TranslationType.CULTURAL_ADAPTED if preserve_cultural_context else TranslationType.DIRECT
+                TranslationType.CULTURAL_ADAPTED
+                if preserve_cultural_context
+                else TranslationType.DIRECT
             ),
             context=context,
             max_length=len(text) * 2,  # Allow expansion
@@ -272,7 +291,9 @@ class PolyglotAgent(AgentInterface):
         )
 
         # Check cache first
-        cache_key = f"{source_lang}_{target_lang}_{hashlib.md5(text.encode()).hexdigest()}"
+        cache_key = (
+            f"{source_lang}_{target_lang}_{hashlib.md5(text.encode()).hexdigest()}"
+        )
         if cache_key in self.language_pairs_cache:
             cached_result = self.language_pairs_cache[cache_key]
             logger.info(f"Translation cache hit: {request_id}")
@@ -287,10 +308,14 @@ class PolyglotAgent(AgentInterface):
             (
                 translated_text,
                 cultural_adaptations,
-            ) = await self._apply_cultural_adaptations(translated_text, source_lang, target_lang, context)
+            ) = await self._apply_cultural_adaptations(
+                translated_text, source_lang, target_lang, context
+            )
 
         # Calculate confidence score
-        confidence_score = await self._calculate_translation_confidence(text, translated_text, source_lang, target_lang)
+        confidence_score = await self._calculate_translation_confidence(
+            text, translated_text, source_lang, target_lang
+        )
 
         processing_time = (time.time() - start_time) * 1000  # Convert to ms
 
@@ -303,7 +328,9 @@ class PolyglotAgent(AgentInterface):
             "source_language": source_lang,
             "target_language": target_lang,
             "source_text_hash": hashlib.sha256(text.encode()).hexdigest(),
-            "translated_text_hash": hashlib.sha256(translated_text.encode()).hexdigest(),
+            "translated_text_hash": hashlib.sha256(
+                translated_text.encode()
+            ).hexdigest(),
             "character_count": len(text),
             "confidence_score": confidence_score,
             "processing_time_ms": processing_time,
@@ -317,7 +344,9 @@ class PolyglotAgent(AgentInterface):
             request_id=request_id,
             translated_text=translated_text,
             confidence_score=confidence_score,
-            detected_source_lang=(source_lang if source_lang != request.source_language else None),
+            detected_source_lang=(
+                source_lang if source_lang != request.source_language else None
+            ),
             cultural_adaptations=cultural_adaptations,
             processing_time_ms=processing_time,
             model_used=receipt["model_used"],
@@ -331,10 +360,12 @@ class PolyglotAgent(AgentInterface):
         # Update metrics
         self.translations_completed += 1
         self.average_latency_ms = (
-            self.average_latency_ms * (self.translations_completed - 1) + processing_time
+            self.average_latency_ms * (self.translations_completed - 1)
+            + processing_time
         ) / self.translations_completed
         self.average_confidence = (
-            self.average_confidence * (self.translations_completed - 1) + confidence_score
+            self.average_confidence * (self.translations_completed - 1)
+            + confidence_score
         ) / self.translations_completed
 
         logger.info(
@@ -570,7 +601,9 @@ class PolyglotAgent(AgentInterface):
             greetings = self.cultural_adaptations["greetings"][target_lang]
             # Replace generic greetings with culturally appropriate ones
             if "hello" in adapted_text.lower():
-                adapted_text = adapted_text.lower().replace("hello", greetings[0].lower())
+                adapted_text = adapted_text.lower().replace(
+                    "hello", greetings[0].lower()
+                )
                 adaptations.append(f"greeting_localized:{greetings[0]}")
 
         # Time-based adaptations (morning/evening greetings)
@@ -609,15 +642,23 @@ class PolyglotAgent(AgentInterface):
 
         # Script consistency confidence
         script_confidence = 0.0
-        if (target_lang == "ar" and any("\u0600" <= char <= "\u06ff" for char in translated_text)) or (
-            target_lang == "hi" and any("\u0900" <= char <= "\u097f" for char in translated_text)
+        if (
+            target_lang == "ar"
+            and any("\u0600" <= char <= "\u06ff" for char in translated_text)
+        ) or (
+            target_lang == "hi"
+            and any("\u0900" <= char <= "\u097f" for char in translated_text)
         ):
             script_confidence = 0.1
 
-        final_confidence = base_confidence + length_confidence + lang_confidence + script_confidence
+        final_confidence = (
+            base_confidence + length_confidence + lang_confidence + script_confidence
+        )
         return max(0.0, min(1.0, final_confidence))
 
-    async def detect_language_and_translate(self, text: str, target_lang: str) -> TranslationResult:
+    async def detect_language_and_translate(
+        self, text: str, target_lang: str
+    ) -> TranslationResult:
         """Auto-detect source language and translate - MVP function"""
         detected_lang = await self._detect_language(text)
 
@@ -654,19 +695,33 @@ class PolyglotAgent(AgentInterface):
                 "language_pairs": len(self.language_models),
                 "average_confidence": self.average_confidence,
                 "average_latency_ms": self.average_latency_ms,
-                "cache_hit_rate": len(self.language_pairs_cache) / max(1, self.translations_completed),
+                "cache_hit_rate": len(self.language_pairs_cache)
+                / max(1, self.translations_completed),
             },
             "model_metrics": {
-                "loaded_models": len([m for m in self.language_models.values() if m.loaded]),
-                "total_model_size_mb": sum(m.size_mb for m in self.language_models.values()),
-                "mobile_optimized": all(m.size_mb <= self.max_model_size_mb for m in self.language_models.values()),
-                "average_model_accuracy": sum(m.accuracy_score for m in self.language_models.values())
+                "loaded_models": len(
+                    [m for m in self.language_models.values() if m.loaded]
+                ),
+                "total_model_size_mb": sum(
+                    m.size_mb for m in self.language_models.values()
+                ),
+                "mobile_optimized": all(
+                    m.size_mb <= self.max_model_size_mb
+                    for m in self.language_models.values()
+                ),
+                "average_model_accuracy": sum(
+                    m.accuracy_score for m in self.language_models.values()
+                )
                 / max(1, len(self.language_models)),
             },
             "cultural_adaptation_stats": {
-                "adaptations_available": sum(len(adaptations) for adaptations in self.cultural_adaptations.values()),
+                "adaptations_available": sum(
+                    len(adaptations)
+                    for adaptations in self.cultural_adaptations.values()
+                ),
                 "recent_adaptations_applied": sum(
-                    len(result.cultural_adaptations) for result in self.translation_history[-10:]
+                    len(result.cultural_adaptations)
+                    for result in self.translation_history[-10:]
                 ),
                 "cultural_contexts": len(self.cultural_context_db),
             },
@@ -696,7 +751,9 @@ class PolyglotAgent(AgentInterface):
             await self._load_translation_model("en", "es")
 
             self.initialized = True
-            logger.info(f"Polyglot Agent {self.agent_id} initialized - {self.languages_supported} languages supported")
+            logger.info(
+                f"Polyglot Agent {self.agent_id} initialized - {self.languages_supported} languages supported"
+            )
 
         except Exception as e:
             logger.error(f"Failed to initialize Polyglot Agent: {e}")
@@ -709,7 +766,9 @@ class PolyglotAgent(AgentInterface):
 
             # Generate final translation report
             final_report = await self.get_translation_report()
-            logger.info(f"Polyglot Agent final report: {final_report['translation_metrics']}")
+            logger.info(
+                f"Polyglot Agent final report: {final_report['translation_metrics']}"
+            )
 
             # Unload language models to free memory
             for model in self.language_models.values():

@@ -1,7 +1,7 @@
 """Simple configuration validation test."""
 
-from pathlib import Path
 import sys
+from pathlib import Path
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent / "src"))
@@ -36,7 +36,9 @@ def test_basic_validation():
         print("✅ Created development validator")
 
         report = validator.validate_all(test_env)
-        print(f"✅ Validation completed - Errors: {report.errors}, Warnings: {report.warnings}")
+        print(
+            f"✅ Validation completed - Errors: {report.errors}, Warnings: {report.warnings}"
+        )
 
         # Show first few issues if any
         if report.issues:
@@ -117,7 +119,9 @@ def test_template_completeness() -> bool | None:
 
         # Count variables
         variable_lines = [
-            line for line in template_content.split("\n") if "=" in line and not line.strip().startswith("#")
+            line
+            for line in template_content.split("\n")
+            if "=" in line and not line.strip().startswith("#")
         ]
 
         print(f"✅ .env.template has {len(variable_lines)} configuration variables")

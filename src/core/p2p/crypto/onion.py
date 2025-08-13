@@ -11,10 +11,10 @@ Architecture:
 - Final hop gets the original payload
 """
 
-from dataclasses import dataclass
 import logging
 import os
 import struct
+from dataclasses import dataclass
 
 # Cryptographic primitives
 try:
@@ -29,7 +29,9 @@ try:
     CRYPTO_AVAILABLE = True
 except ImportError:
     CRYPTO_AVAILABLE = False
-    logging.warning("Cryptography library not available. Onion routing will be disabled.")
+    logging.warning(
+        "Cryptography library not available. Onion routing will be disabled."
+    )
 
 logger = logging.getLogger(__name__)
 
@@ -102,9 +104,13 @@ class OnionCrypto:
 
             # Encrypt this layer
             current_payload = self._encrypt_layer(inner_data, hop.public_key)
-            logger.debug(f"Built layer {i+1} for hop {hop.hop_id}, size: {len(current_payload)}")
+            logger.debug(
+                f"Built layer {i + 1} for hop {hop.hop_id}, size: {len(current_payload)}"
+            )
 
-        logger.info(f"Built onion with {len(hop_route)} layers, final size: {len(current_payload)}")
+        logger.info(
+            f"Built onion with {len(hop_route)} layers, final size: {len(current_payload)}"
+        )
         return current_payload
 
     def peel_layer(
@@ -129,7 +135,9 @@ class OnionCrypto:
             # Try to unpack as intermediate layer (next_hop + payload)
             try:
                 next_hop, inner_payload = self._unpack_layer_data(inner_data)
-                logger.debug(f"Peeled layer, next hop: {next_hop}, payload size: {len(inner_payload)}")
+                logger.debug(
+                    f"Peeled layer, next hop: {next_hop}, payload size: {len(inner_payload)}"
+                )
                 return next_hop, inner_payload
             except ValueError:
                 # Not an intermediate layer, must be the final payload
@@ -170,7 +178,9 @@ class OnionCrypto:
 
         return ephemeral_pubkey_bytes + nonce + ciphertext
 
-    def _decrypt_layer(self, encrypted_data: bytes, our_private_key: X25519PrivateKey) -> bytes:
+    def _decrypt_layer(
+        self, encrypted_data: bytes, our_private_key: X25519PrivateKey
+    ) -> bytes:
         """Decrypt a layer using our private key"""
         if len(encrypted_data) < 32 + 12 + 16:  # pubkey + nonce + min_ciphertext
             raise ValueError("Invalid encrypted layer format")
@@ -291,7 +301,9 @@ def generate_keypair() -> tuple[bytes, bytes]:
         encryption_algorithm=serialization.NoEncryption(),
     )
 
-    public_bytes = public_key.public_bytes(encoding=serialization.Encoding.Raw, format=serialization.PublicFormat.Raw)
+    public_bytes = public_key.public_bytes(
+        encoding=serialization.Encoding.Raw, format=serialization.PublicFormat.Raw
+    )
 
     return private_bytes, public_bytes
 

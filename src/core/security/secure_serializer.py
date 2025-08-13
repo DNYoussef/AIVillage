@@ -2,23 +2,23 @@
 Secure Serializer Shim - Prompt 11
 
 Secure replacement for unsafe pickle usage with comprehensive data validation,
-type safety, and tamper detection. Provides backward-compatible API for 
+type safety, and tamper detection. Provides backward-compatible API for
 existing code while eliminating security vulnerabilities.
 
 Security Integration Point: Component serialization with integrity validation
 """
 
 import base64
-from dataclasses import asdict, is_dataclass
-from enum import Enum
 import hashlib
 import hmac
 import json
 import logging
-from pathlib import Path
 import time
-from typing import Any
 import zlib
+from dataclasses import asdict, is_dataclass
+from enum import Enum
+from pathlib import Path
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -54,7 +54,12 @@ class SecureSerializer:
     - Backward compatibility with existing pickle interfaces
     """
 
-    def __init__(self, secret_key: bytes | None = None, max_size_mb: int = 10, compression_threshold: int = 1024):
+    def __init__(
+        self,
+        secret_key: bytes | None = None,
+        max_size_mb: int = 10,
+        compression_threshold: int = 1024,
+    ):
         """
         Initialize secure serializer.
 
@@ -68,7 +73,18 @@ class SecureSerializer:
         self.compression_threshold = compression_threshold
 
         # Track allowed types for security
-        self.allowed_types = {str, int, float, bool, list, dict, tuple, type(None), bytes, Path}
+        self.allowed_types = {
+            str,
+            int,
+            float,
+            bool,
+            list,
+            dict,
+            tuple,
+            type(None),
+            bytes,
+            Path,
+        }
 
         # Track custom serializers
         self.custom_serializers = {}
@@ -80,7 +96,9 @@ class SecureSerializer:
 
         return secrets.token_bytes(32)
 
-    def register_custom_type(self, type_class: type, serializer: callable, deserializer: callable):
+    def register_custom_type(
+        self, type_class: type, serializer: callable, deserializer: callable
+    ):
         """
         Register custom type serialization handlers.
 
@@ -97,11 +115,20 @@ class SecureSerializer:
         """Validate data for security concerns."""
         if isinstance(data, (str, bytes)):
             if len(data) > self.max_size_bytes:
-                raise SecurityViolationError(f"Data size exceeds limit: {len(data)} > {self.max_size_bytes}")
+                raise SecurityViolationError(
+                    f"Data size exceeds limit: {len(data)} > {self.max_size_bytes}"
+                )
 
         # Check for suspicious patterns
         if isinstance(data, str):
-            suspicious_patterns = ["__", "exec", "eval", "import ", "subprocess", "os.system"]
+            suspicious_patterns = [
+                "__",
+                "exec",
+                "eval",
+                "import ",
+                "subprocess",
+                "os.system",
+            ]
             for pattern in suspicious_patterns:
                 if pattern in data.lower():
                     logger.warning(f"Suspicious pattern detected in data: {pattern}")
@@ -115,7 +142,10 @@ class SecureSerializer:
             elif isinstance(item, (str, int, float, bool)):
                 return {"__type__": type(item).__name__, "__value__": item}
             elif isinstance(item, bytes):
-                return {"__type__": "bytes", "__value__": base64.b64encode(item).decode("ascii")}
+                return {
+                    "__type__": "bytes",
+                    "__value__": base64.b64encode(item).decode("ascii"),
+                }
             elif isinstance(item, Path):
                 return {"__type__": "Path", "__value__": str(item)}
             elif isinstance(item, Enum):
@@ -131,23 +161,37 @@ class SecureSerializer:
                     "__value__": {k: convert_item(v) for k, v in asdict(item).items()},
                 }
             elif isinstance(item, dict):
-                return {"__type__": "dict", "__value__": {k: convert_item(v) for k, v in item.items()}}
+                return {
+                    "__type__": "dict",
+                    "__value__": {k: convert_item(v) for k, v in item.items()},
+                }
             elif isinstance(item, (list, tuple)):
-                return {"__type__": type(item).__name__, "__value__": [convert_item(v) for v in item]}
+                return {
+                    "__type__": type(item).__name__,
+                    "__value__": [convert_item(v) for v in item],
+                }
             elif type(item) in self.custom_serializers:
                 serialized = self.custom_serializers[type(item)](item)
-                return {"__type__": "custom", "__class__": type(item).__name__, "__value__": convert_item(serialized)}
+                return {
+                    "__type__": "custom",
+                    "__class__": type(item).__name__,
+                    "__value__": convert_item(serialized),
+                }
             else:
                 # Try to serialize as dict if it has __dict__
                 if hasattr(item, "__dict__"):
                     return {
                         "__type__": "object",
                         "__class__": item.__class__.__name__,
-                        "__value__": {k: convert_item(v) for k, v in item.__dict__.items()},
+                        "__value__": {
+                            k: convert_item(v) for k, v in item.__dict__.items()
+                        },
                     }
                 else:
                     # Fallback to string representation
-                    logger.warning(f"Unsupported type {type(item)}, converting to string")
+                    logger.warning(
+                        f"Unsupported type {type(item)}, converting to string"
+                    )
                     return {"__type__": "str", "__value__": str(item)}
 
         return convert_item(obj)
@@ -175,7 +219,9 @@ class SecureSerializer:
             return obj_value
         elif obj_type == "dataclass":
             # Would need dataclass registry for full restoration
-            logger.warning(f"Dataclass deserialization not fully implemented: {data.get('__class__')}")
+            logger.warning(
+                f"Dataclass deserialization not fully implemented: {data.get('__class__')}"
+            )
             return {k: self._restore_data(v) for k, v in obj_value.items()}
         elif obj_type == "dict":
             return {k: self._restore_data(v) for k, v in obj_value.items()}
@@ -199,7 +245,9 @@ class SecureSerializer:
             logger.error(f"Unknown type: {obj_type}")
             return obj_value
 
-    def dumps(self, obj: Any, serialization_type: SerializationType = SerializationType.JSON) -> bytes:
+    def dumps(
+        self, obj: Any, serialization_type: SerializationType = SerializationType.JSON
+    ) -> bytes:
         """
         Serialize object to secure byte format.
 
@@ -230,7 +278,9 @@ class SecureSerializer:
             }
 
             # Convert to JSON
-            json_data = json.dumps(serialized_obj, ensure_ascii=True, separators=(",", ":"))
+            json_data = json.dumps(
+                serialized_obj, ensure_ascii=True, separators=(",", ":")
+            )
             json_bytes = json_data.encode("utf-8")
 
             # Apply compression if needed
@@ -241,9 +291,14 @@ class SecureSerializer:
 
             # Apply signature if needed
             if serialization_type == SerializationType.SIGNED_JSON:
-                signature = hmac.new(self.secret_key, json_bytes, hashlib.sha256).hexdigest()
+                signature = hmac.new(
+                    self.secret_key, json_bytes, hashlib.sha256
+                ).hexdigest()
 
-                signed_data = {"signature": signature, "data": base64.b64encode(json_bytes).decode("ascii")}
+                signed_data = {
+                    "signature": signature,
+                    "data": base64.b64encode(json_bytes).decode("ascii"),
+                }
                 json_bytes = json.dumps(signed_data).encode("utf-8")
 
             return json_bytes
@@ -279,7 +334,9 @@ class SecureSerializer:
                 signed_data = base64.b64decode(parsed_data["data"])
 
                 # Verify signature
-                expected_signature = hmac.new(self.secret_key, signed_data, hashlib.sha256).hexdigest()
+                expected_signature = hmac.new(
+                    self.secret_key, signed_data, hashlib.sha256
+                ).hexdigest()
 
                 if not hmac.compare_digest(signature, expected_signature):
                     raise SecurityViolationError("Invalid signature")
@@ -367,7 +424,8 @@ class LegacyPickleRejector:
         """Raise error if data appears to be pickle format."""
         if cls.is_pickle_data(data):
             raise SecurityViolationError(
-                "Legacy pickle data detected and rejected for security. " "Please re-serialize with SecureSerializer."
+                "Legacy pickle data detected and rejected for security. "
+                "Please re-serialize with SecureSerializer."
             )
 
 

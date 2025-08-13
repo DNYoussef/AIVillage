@@ -8,11 +8,11 @@ The capacity and efficiency specialist of AIVillage, responsible for:
 - Performance monitoring and system sustainability
 """
 
-from dataclasses import dataclass
-from enum import Enum
 import hashlib
 import logging
 import time
+from dataclasses import dataclass
+from enum import Enum
 from typing import Any
 
 import psutil
@@ -151,7 +151,9 @@ class SustainerAgent(AgentInterface):
         # Efficiency embeddings focus on optimization patterns
         return [(hash_value % 1000) / 1000.0] * 320
 
-    async def rerank(self, query: str, results: list[dict[str, Any]], k: int) -> list[dict[str, Any]]:
+    async def rerank(
+        self, query: str, results: list[dict[str, Any]], k: int
+    ) -> list[dict[str, Any]]:
         """Rerank based on efficiency relevance"""
         efficiency_keywords = [
             "efficiency",
@@ -175,12 +177,17 @@ class SustainerAgent(AgentInterface):
                 score += content.lower().count(keyword) * 1.8
 
             # Boost optimization and performance content
-            if any(term in content.lower() for term in ["optimize", "efficient", "performance"]):
+            if any(
+                term in content.lower()
+                for term in ["optimize", "efficient", "performance"]
+            ):
                 score *= 1.6
 
             result["efficiency_relevance"] = score
 
-        return sorted(results, key=lambda x: x.get("efficiency_relevance", 0), reverse=True)[:k]
+        return sorted(
+            results, key=lambda x: x.get("efficiency_relevance", 0), reverse=True
+        )[:k]
 
     async def introspect(self) -> dict[str, Any]:
         """Return Sustainer agent status and efficiency metrics"""
@@ -206,12 +213,17 @@ class SustainerAgent(AgentInterface):
     async def communicate(self, message: str, recipient: "AgentInterface") -> str:
         """Communicate efficiency insights and recommendations"""
         # Add efficiency context to communications
-        if any(keyword in message.lower() for keyword in ["resource", "optimize", "efficiency"]):
+        if any(
+            keyword in message.lower()
+            for keyword in ["resource", "optimize", "efficiency"]
+        ):
             efficiency_context = "[EFFICIENCY INSIGHT]"
             message = f"{efficiency_context} {message}"
 
         if recipient:
-            response = await recipient.generate(f"Sustainer Agent provides efficiency insight: {message}")
+            response = await recipient.generate(
+                f"Sustainer Agent provides efficiency insight: {message}"
+            )
             return f"Efficiency recommendation delivered: {response[:50]}..."
         return "No recipient for efficiency insight"
 
@@ -252,7 +264,9 @@ class SustainerAgent(AgentInterface):
             power_capacity_watts=device_spec.get("power_watts", 15.0),
             battery_hours=device_spec.get("battery_hours"),
             gpu_available=device_spec.get("gpu_available", False),
-            constraints=await self._determine_device_constraints(device_class, device_spec),
+            constraints=await self._determine_device_constraints(
+                device_class, device_spec
+            ),
             performance_tier=await self._determine_performance_tier(device_spec),
         )
 
@@ -307,7 +321,9 @@ class SustainerAgent(AgentInterface):
             return DeviceClass.IOT
         return DeviceClass.DESKTOP
 
-    async def _determine_device_constraints(self, device_class: DeviceClass, spec: dict[str, Any]) -> dict[str, Any]:
+    async def _determine_device_constraints(
+        self, device_class: DeviceClass, spec: dict[str, Any]
+    ) -> dict[str, Any]:
         """Determine optimization constraints based on device class"""
         constraints = {}
 
@@ -366,7 +382,9 @@ class SustainerAgent(AgentInterface):
             return "basic"
         return "minimal"
 
-    async def _generate_device_recommendations(self, profile: DeviceProfile) -> list[str]:
+    async def _generate_device_recommendations(
+        self, profile: DeviceProfile
+    ) -> list[str]:
         """Generate optimization recommendations for device"""
         recommendations = []
 
@@ -400,9 +418,13 @@ class SustainerAgent(AgentInterface):
 
         # General recommendations based on performance tier
         if profile.performance_tier == "minimal":
-            recommendations.append("Consider offloading heavy tasks to cloud/edge nodes")
+            recommendations.append(
+                "Consider offloading heavy tasks to cloud/edge nodes"
+            )
         elif profile.performance_tier == "high_performance":
-            recommendations.append("Utilize full system capacity for parallel processing")
+            recommendations.append(
+                "Utilize full system capacity for parallel processing"
+            )
 
         return recommendations
 
@@ -420,8 +442,10 @@ class SustainerAgent(AgentInterface):
         threshold_violations = await self._check_threshold_violations(current_usage)
 
         # Generate optimization recommendations
-        optimization_recommendations = await self._generate_optimization_recommendations(
-            current_usage, threshold_violations
+        optimization_recommendations = (
+            await self._generate_optimization_recommendations(
+                current_usage, threshold_violations
+            )
         )
 
         # Store usage data
@@ -453,7 +477,9 @@ class SustainerAgent(AgentInterface):
             "signature": f"sustainer_monitor_{monitoring_id}",
         }
 
-        logger.info(f"Resource monitoring completed: {monitoring_id} - {len(threshold_violations)} violations found")
+        logger.info(
+            f"Resource monitoring completed: {monitoring_id} - {len(threshold_violations)} violations found"
+        )
 
         return {
             "status": "success",
@@ -472,9 +498,15 @@ class SustainerAgent(AgentInterface):
                 "cpu_percent": psutil.cpu_percent(interval=1),
                 "memory_percent": psutil.virtual_memory().percent,
                 "storage_percent": (
-                    psutil.disk_usage("/").percent if hasattr(psutil.disk_usage("/"), "percent") else 50.0
+                    psutil.disk_usage("/").percent
+                    if hasattr(psutil.disk_usage("/"), "percent")
+                    else 50.0
                 ),
-                "network_io": (psutil.net_io_counters()._asdict() if psutil.net_io_counters() else {}),
+                "network_io": (
+                    psutil.net_io_counters()._asdict()
+                    if psutil.net_io_counters()
+                    else {}
+                ),
                 "timestamp": time.time(),
             }
         except Exception as e:
@@ -488,7 +520,9 @@ class SustainerAgent(AgentInterface):
                 "timestamp": time.time(),
             }
 
-    async def _analyze_usage_patterns(self, current_usage: dict[str, Any]) -> dict[str, str]:
+    async def _analyze_usage_patterns(
+        self, current_usage: dict[str, Any]
+    ) -> dict[str, str]:
         """Analyze resource usage trends"""
         analysis = {}
 
@@ -496,7 +530,11 @@ class SustainerAgent(AgentInterface):
         if len(self.resource_usage_history) >= 3:
             recent_history = self.resource_usage_history[-3:]
             for resource in [ResourceType.CPU, ResourceType.MEMORY]:
-                resource_history = [r.utilization_percent for r in recent_history if r.resource_type == resource]
+                resource_history = [
+                    r.utilization_percent
+                    for r in recent_history
+                    if r.resource_type == resource
+                ]
                 if len(resource_history) >= 2:
                     if resource_history[-1] > resource_history[-2] + 5:
                         analysis[f"{resource.value}_percent"] = "increasing"
@@ -507,7 +545,9 @@ class SustainerAgent(AgentInterface):
 
         return analysis
 
-    async def _check_threshold_violations(self, usage: dict[str, Any]) -> list[dict[str, Any]]:
+    async def _check_threshold_violations(
+        self, usage: dict[str, Any]
+    ) -> list[dict[str, Any]]:
         """Check for resource threshold violations"""
         violations = []
 
@@ -582,13 +622,19 @@ class SustainerAgent(AgentInterface):
         for violation in violations:
             if violation["level"] == "critical":
                 if violation["resource"] == "cpu":
-                    recommendations.append("CRITICAL: Immediately reduce CPU load or scale horizontally")
+                    recommendations.append(
+                        "CRITICAL: Immediately reduce CPU load or scale horizontally"
+                    )
                 elif violation["resource"] == "memory":
-                    recommendations.append("CRITICAL: Emergency memory cleanup required")
+                    recommendations.append(
+                        "CRITICAL: Emergency memory cleanup required"
+                    )
 
         return recommendations
 
-    async def optimize_efficiency(self, optimization_target: str = "balanced") -> dict[str, Any]:
+    async def optimize_efficiency(
+        self, optimization_target: str = "balanced"
+    ) -> dict[str, Any]:
         """Apply efficiency optimizations based on target - MVP function"""
         optimization_id = f"optimize_{int(time.time())}"
 
@@ -597,7 +643,9 @@ class SustainerAgent(AgentInterface):
         current_efficiency = await self._calculate_efficiency_score()
 
         # Apply optimizations based on target
-        optimizations_applied = await self._apply_efficiency_optimizations(optimization_target, current_usage)
+        optimizations_applied = await self._apply_efficiency_optimizations(
+            optimization_target, current_usage
+        )
 
         # Measure improvement
         await self._get_current_resource_usage()
@@ -605,7 +653,9 @@ class SustainerAgent(AgentInterface):
         improvement = new_efficiency - current_efficiency
 
         # Estimate savings
-        estimated_savings = await self._calculate_estimated_savings(optimizations_applied, improvement)
+        estimated_savings = await self._calculate_estimated_savings(
+            optimizations_applied, improvement
+        )
 
         # Create receipt
         receipt = {
@@ -629,7 +679,9 @@ class SustainerAgent(AgentInterface):
         self.cost_savings_usd += estimated_savings.get("cost_usd", 0.0)
         self.efficiency_improvements += 1
 
-        logger.info(f"Efficiency optimization completed: {improvement * 100:.1f}% improvement")
+        logger.info(
+            f"Efficiency optimization completed: {improvement * 100:.1f}% improvement"
+        )
 
         return {
             "status": "success",
@@ -640,7 +692,9 @@ class SustainerAgent(AgentInterface):
             "receipt": receipt,
         }
 
-    async def _apply_efficiency_optimizations(self, target: str, usage: dict[str, Any]) -> list[str]:
+    async def _apply_efficiency_optimizations(
+        self, target: str, usage: dict[str, Any]
+    ) -> list[str]:
         """Apply specific efficiency optimizations"""
         optimizations = []
 
@@ -702,13 +756,19 @@ class SustainerAgent(AgentInterface):
             storage_efficiency = 1.0 - (current_usage.get("storage_percent", 0) / 100.0)
 
             # Weighted efficiency score
-            overall_efficiency = cpu_efficiency * 0.4 + memory_efficiency * 0.4 + storage_efficiency * 0.2
+            overall_efficiency = (
+                cpu_efficiency * 0.4
+                + memory_efficiency * 0.4
+                + storage_efficiency * 0.2
+            )
 
             return max(0.0, min(1.0, overall_efficiency))
         except Exception:
             return 0.7  # Default efficiency score
 
-    async def _calculate_estimated_savings(self, optimizations: list[str], improvement: float) -> dict[str, float]:
+    async def _calculate_estimated_savings(
+        self, optimizations: list[str], improvement: float
+    ) -> dict[str, float]:
         """Calculate estimated savings from optimizations"""
         base_energy_usage = 100.0  # kWh per day
         base_cost = 50.0  # USD per day
@@ -752,7 +812,11 @@ class SustainerAgent(AgentInterface):
                 "cost_savings_usd": self.cost_savings_usd,
                 "device_profiles_managed": len(self.device_profiles),
                 "mobile_optimized_devices": len(
-                    [p for p in self.device_profiles.values() if p.device_class == DeviceClass.MOBILE]
+                    [
+                        p
+                        for p in self.device_profiles.values()
+                        if p.device_class == DeviceClass.MOBILE
+                    ]
                 ),
             },
             "performance_stats": {
@@ -784,7 +848,9 @@ class SustainerAgent(AgentInterface):
             }
 
             system_profile_result = await self.profile_device(current_system)
-            logger.info(f"System profile created: {system_profile_result['device_profile'].performance_tier}")
+            logger.info(
+                f"System profile created: {system_profile_result['device_profile'].performance_tier}"
+            )
 
             # Initialize resource monitoring
             initial_usage = await self._get_current_resource_usage()
@@ -793,7 +859,9 @@ class SustainerAgent(AgentInterface):
             )
 
             self.initialized = True
-            logger.info(f"Sustainer Agent {self.agent_id} initialized - Capacity monitoring active")
+            logger.info(
+                f"Sustainer Agent {self.agent_id} initialized - Capacity monitoring active"
+            )
 
         except Exception as e:
             logger.error(f"Failed to initialize Sustainer Agent: {e}")
@@ -806,7 +874,9 @@ class SustainerAgent(AgentInterface):
 
             # Generate final sustainability report
             final_report = await self.get_sustainability_report()
-            logger.info(f"Sustainer Agent final report: {final_report['efficiency_metrics']}")
+            logger.info(
+                f"Sustainer Agent final report: {final_report['efficiency_metrics']}"
+            )
 
             # Clear monitoring data
             self.resource_usage_history.clear()

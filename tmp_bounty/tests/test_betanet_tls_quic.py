@@ -6,8 +6,8 @@ instead of plain JSON sockets on port 4001.
 
 import asyncio
 import json
-from pathlib import Path
 import sys
+from pathlib import Path
 
 import pytest
 
@@ -61,9 +61,7 @@ class TestBetanetTLSQUIC:
         async def echo_handler(message: BetanetMessage):
             # Echo back to sender
             await server_transport.send_message(
-                message.sender,
-                message.payload,
-                protocol="htx/1.1"
+                message.sender, message.payload, protocol="htx/1.1"
             )
 
         server_transport.register_handler("test/echo", echo_handler)
@@ -84,9 +82,7 @@ class TestBetanetTLSQUIC:
             # Send test message
             test_payload = b"Hello HTX over TLS!"
             success = await client_transport.send_message(
-                "server_node",
-                test_payload,
-                protocol="htx/1.1"
+                "server_node", test_payload, protocol="htx/1.1"
             )
 
             # Note: In a real test, we'd wait for the echo response
@@ -101,7 +97,7 @@ class TestBetanetTLSQUIC:
 
         finally:
             await server_transport.stop()
-            if 'client_transport' in locals():
+            if "client_transport" in locals():
                 await client_transport.stop()
 
     @pytest.mark.asyncio
@@ -137,14 +133,14 @@ class TestBetanetTLSQUIC:
             recipient="target_node",
             payload=b"Test payload",
             protocol="htx/1.1",
-            priority=7
+            priority=7,
         )
 
         # Wrap in HTTP envelope
         wrapped = transport._wrap_in_http_envelope(message)
 
         # Verify HTTP-like structure
-        wrapped_str = wrapped.decode('utf-8', errors='ignore')
+        wrapped_str = wrapped.decode("utf-8", errors="ignore")
         assert "POST /api/v1/data HTTP/1.1" in wrapped_str, "Missing HTTP method line"
         assert "Host: cdn.example.com" in wrapped_str, "Missing Host header"
         assert "User-Agent: Mozilla" in wrapped_str, "Missing User-Agent"
@@ -208,7 +204,7 @@ class TestBetanetTLSQUIC:
         from core.p2p.betanet_link import TLSStream
 
         # Verify backpressure handling methods exist
-        assert hasattr(TLSStream, 'write'), "Stream should have write method"
+        assert hasattr(TLSStream, "write"), "Stream should have write method"
 
         await link.close()
 

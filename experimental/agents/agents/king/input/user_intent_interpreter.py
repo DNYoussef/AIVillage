@@ -56,7 +56,9 @@ class UserIntentInterpreter:
             raise AIVillageException(msg)
 
     @error_handler.handle_error
-    async def extract_key_concepts(self, interpreted_intent: dict[str, Any]) -> list[str]:
+    async def extract_key_concepts(
+        self, interpreted_intent: dict[str, Any]
+    ) -> list[str]:
         """Extract key concepts from the interpreted intent.
 
         Args:
@@ -117,7 +119,9 @@ if __name__ == "__main__":
         llm_config = OpenAIGPTConfig(chat_model="gpt-4")
         interpreter = UserIntentInterpreter(llm_config)
 
-        user_input = "I need help organizing my team's project deadlines for the next quarter."
+        user_input = (
+            "I need help organizing my team's project deadlines for the next quarter."
+        )
         result = await interpreter.process_user_input(user_input)
 
         print("Interpreted Intent:")

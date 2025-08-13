@@ -2,9 +2,9 @@
 """Comprehensive validation of the unified compression system."""
 
 import logging
-from pathlib import Path
 import sys
 import time
+from pathlib import Path
 
 import torch
 from torch import nn

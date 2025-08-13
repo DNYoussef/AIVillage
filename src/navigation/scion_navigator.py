@@ -4,10 +4,10 @@ Integrates SCION paths into the Navigator's transport decision-making process.
 """
 
 import asyncio
-from dataclasses import dataclass, field
-from enum import Enum
 import logging
 import time
+from dataclasses import dataclass, field
+from enum import Enum
 from typing import Any
 
 from ..core.message_types import Message

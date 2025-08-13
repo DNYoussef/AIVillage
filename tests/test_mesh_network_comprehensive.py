@@ -11,12 +11,12 @@ Tests all aspects of the mesh network including:
 """
 
 import asyncio
-from datetime import datetime
 import json
-from pathlib import Path
 import statistics
 import sys
 import time
+from datetime import datetime
+from pathlib import Path
 
 from implement_mesh_protocol import MeshMessage, MeshNetworkSimulator, MessageType
 

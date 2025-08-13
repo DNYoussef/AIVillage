@@ -5,16 +5,16 @@ ensuring continuous inference operation without interruption.
 """
 
 import asyncio
-from collections.abc import Callable
 import contextlib
-from dataclasses import dataclass, field
-from enum import Enum
 import json
 import logging
 import os
 import time
-from typing import Any
 import uuid
+from collections.abc import Callable
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import Any
 
 from ..communications.p2p.p2p_node import P2PNode
 from .model_sharding_engine import ModelShard, ModelShardingEngine, ShardingPlan

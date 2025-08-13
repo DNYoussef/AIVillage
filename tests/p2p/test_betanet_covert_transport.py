@@ -3,7 +3,7 @@ Betanet HTX/H2/H3 Covert Transport Tests - Prompt 2
 
 Tests for the covert transport capabilities including:
 - HTTP/2 multiplexed channels
-- HTTP/3 QUIC streams  
+- HTTP/3 QUIC streams
 - WebSocket persistent connections
 - Server-Sent Events streaming
 - Cover traffic generation
@@ -15,7 +15,7 @@ import sys
 from unittest.mock import MagicMock, patch
 
 # Add src to path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
 from core.p2p.betanet_covert_transport import (
     BetanetCovertTransport,
@@ -36,7 +36,9 @@ class TestCovertTrafficProfile:
         """Test creating realistic browser traffic profile."""
         profile = CovertTrafficProfile.create_browser_profile()
 
-        assert len(profile.user_agents) >= 4, "Should have multiple realistic user agents"
+        assert len(profile.user_agents) >= 4, (
+            "Should have multiple realistic user agents"
+        )
         assert len(profile.content_types) >= 3, "Should have multiple content types"
         assert len(profile.request_paths) >= 5, "Should have multiple API paths"
 
@@ -51,7 +53,12 @@ class TestCovertTrafficProfile:
 
         # Check timing and payload ranges are reasonable
         assert 0.1 <= profile.timing_intervals[0] <= profile.timing_intervals[1] <= 10.0
-        assert 64 <= profile.payload_size_range[0] <= profile.payload_size_range[1] <= 16384
+        assert (
+            64
+            <= profile.payload_size_range[0]
+            <= profile.payload_size_range[1]
+            <= 16384
+        )
 
 
 class TestHTTP2CovertChannel:
@@ -75,23 +82,23 @@ class TestHTTP2CovertChannel:
         headers = channel._generate_realistic_headers(1024)
 
         # Check required HTTP/2 pseudo-headers
-        pseudo_headers = {name for name, value in headers if name.startswith(':')}
-        assert ':method' in pseudo_headers
-        assert ':path' in pseudo_headers
-        assert ':scheme' in pseudo_headers
-        assert ':authority' in pseudo_headers
+        pseudo_headers = {name for name, value in headers if name.startswith(":")}
+        assert ":method" in pseudo_headers
+        assert ":path" in pseudo_headers
+        assert ":scheme" in pseudo_headers
+        assert ":authority" in pseudo_headers
 
         # Check realistic headers
         header_dict = dict(headers)
-        assert 'user-agent' in header_dict
-        assert 'content-type' in header_dict
-        assert header_dict['content-length'] == '1024'
+        assert "user-agent" in header_dict
+        assert "content-type" in header_dict
+        assert header_dict["content-length"] == "1024"
 
         # Verify user agent is from profile
-        assert header_dict['user-agent'] in profile.user_agents
+        assert header_dict["user-agent"] in profile.user_agents
 
-    @patch('core.p2p.betanet_covert_transport.HTTP2_AVAILABLE', True)
-    @patch('h2.connection.H2Connection')
+    @patch("core.p2p.betanet_covert_transport.HTTP2_AVAILABLE", True)
+    @patch("h2.connection.H2Connection")
     async def test_connection_establishment(self, mock_h2_connection):
         """Test HTTP/2 connection establishment."""
         profile = CovertTrafficProfile.create_browser_profile()
@@ -130,11 +137,11 @@ class TestHTTP3CovertChannel:
         # Check binary pseudo-headers for HTTP/3
         header_dict = {name.decode(): value.decode() for name, value in headers}
 
-        assert ':method' in header_dict
-        assert ':path' in header_dict
-        assert ':scheme' in header_dict
-        assert ':authority' in header_dict
-        assert header_dict['content-length'] == '2048'
+        assert ":method" in header_dict
+        assert ":path" in header_dict
+        assert ":scheme" in header_dict
+        assert ":authority" in header_dict
+        assert header_dict["content-length"] == "2048"
 
 
 class TestWebSocketCovertChannel:
@@ -221,7 +228,9 @@ class TestBetanetCovertTransport:
         transport = BetanetCovertTransport(CovertTransportMode.WEBSOCKET)
 
         # Establish WebSocket channel first
-        await transport._establish_channel(CovertTransportMode.WEBSOCKET, "example.com", 443)
+        await transport._establish_channel(
+            CovertTransportMode.WEBSOCKET, "example.com", 443
+        )
 
         test_data = b"covert message payload"
         result = await transport.send_covert_data(test_data)
@@ -279,9 +288,9 @@ class TestBetanetIntegration:
         )
 
         assert enhanced == mock_transport
-        assert hasattr(mock_transport, 'covert_transport')
-        assert hasattr(mock_transport, 'send_covert_message')
-        assert hasattr(mock_transport, 'start_covert_mode')
+        assert hasattr(mock_transport, "covert_transport")
+        assert hasattr(mock_transport, "send_covert_message")
+        assert hasattr(mock_transport, "start_covert_mode")
         assert isinstance(mock_transport.covert_transport, BetanetCovertTransport)
 
 
@@ -327,8 +336,9 @@ class TestCovertTransportIntegration:
         transport = BetanetCovertTransport()
 
         # Generate multiple payloads
-        payloads = [transport._generate_dummy_payload(size)
-                   for size in [512, 1024, 2048, 4096]]
+        payloads = [
+            transport._generate_dummy_payload(size) for size in [512, 1024, 2048, 4096]
+        ]
 
         # Check they vary appropriately
         assert len(set(payloads)) == len(payloads), "Payloads should be unique"

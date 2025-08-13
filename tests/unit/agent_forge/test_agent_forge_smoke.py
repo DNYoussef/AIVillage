@@ -1,6 +1,6 @@
-from pathlib import Path
 import sys
 import tempfile
+from pathlib import Path
 
 # Ensure the top-level package is preferred over the similarly named one under src/
 ROOT = Path(__file__).resolve().parents[2]

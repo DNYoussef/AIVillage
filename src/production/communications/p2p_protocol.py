@@ -1,10 +1,10 @@
 """Enhanced Communication Protocol with P2P Integration."""
 
 import asyncio
+import logging
 from collections.abc import Callable, Coroutine
 from dataclasses import dataclass
 from enum import Enum
-import logging
 from typing import Any
 
 from src.communications.message import Message, MessageType, Priority

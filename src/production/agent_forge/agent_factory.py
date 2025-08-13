@@ -5,8 +5,8 @@ Auto-generated from agent specifications.
 
 import json
 import os
-from pathlib import Path
 import sys
+from pathlib import Path
 from typing import Any
 
 # Add the parent directory to the path to import our modules
@@ -18,13 +18,15 @@ from scripts.refactor_agent_forge import AgentRole, AgentSpecialization, BaseMet
 class TemplateNotFoundError(Exception):
     """Exception raised when agent template cannot be found."""
 
-    def __init__(self, agent_type: str, searched_paths: list[Path], available_types: list[str]):
+    def __init__(
+        self, agent_type: str, searched_paths: list[Path], available_types: list[str]
+    ):
         self.agent_type = agent_type
         self.searched_paths = searched_paths
         self.available_types = available_types
 
-        paths_str = '\n  - '.join(str(p) for p in searched_paths)
-        available_str = ', '.join(available_types)
+        paths_str = "\n  - ".join(str(p) for p in searched_paths)
+        available_str = ", ".join(available_types)
 
         super().__init__(
             f"Template for agent type '{agent_type}' not found.\n"
@@ -61,7 +63,7 @@ class AgentFactory:
 
     def _load_templates(self) -> dict[str, dict[str, Any]]:
         """Load all agent templates with backward-compatible search order.
-        
+
         Search order:
         1. templates/agents/*.json (legacy location)
         2. templates/*_template.json (current location)
@@ -92,7 +94,9 @@ class AgentFactory:
                                 template = json.load(f)
                             templates[agent_id] = template
                             loaded_templates.add(agent_id)
-                            print(f"Loaded template {agent_id} from legacy location: {template_file}")
+                            print(
+                                f"Loaded template {agent_id} from legacy location: {template_file}"
+                            )
                         except Exception as e:
                             print(f"Error loading template {template_file}: {e}")
 
@@ -100,7 +104,7 @@ class AgentFactory:
             else:
                 for template_file in search_dir.glob("*_template.json"):
                     # Extract agent_id from filename (remove '_template.json')
-                    agent_id = template_file.stem.replace('_template', '')
+                    agent_id = template_file.stem.replace("_template", "")
                     if agent_id not in loaded_templates:
                         try:
                             with open(template_file) as f:
@@ -286,16 +290,33 @@ class AgentFactory:
 
         return agent_classes
 
-    def _validate_required_templates(self, templates: dict[str, dict[str, Any]]) -> None:
+    def _validate_required_templates(
+        self, templates: dict[str, dict[str, Any]]
+    ) -> None:
         """Validate that all required agent templates are present."""
         try:
             required_types = self.required_agent_types()
         except Exception:
             # If master_config is not available, use expected 18 agent types
             required_types = [
-                "king", "magi", "sage", "gardener", "sword_shield", "legal",
-                "shaman", "oracle", "maker", "ensemble", "curator", "auditor",
-                "medic", "sustainer", "navigator", "tutor", "polyglot", "strategist"
+                "king",
+                "magi",
+                "sage",
+                "gardener",
+                "sword_shield",
+                "legal",
+                "shaman",
+                "oracle",
+                "maker",
+                "ensemble",
+                "curator",
+                "auditor",
+                "medic",
+                "sustainer",
+                "navigator",
+                "tutor",
+                "polyglot",
+                "strategist",
             ]
 
         missing_templates = []
@@ -314,10 +335,12 @@ class AgentFactory:
             raise TemplateNotFoundError(
                 f"Missing templates: {', '.join(missing_templates)}",
                 search_paths,
-                available_types
+                available_types,
             )
 
-        print(f"[PASS] All {len(required_types)} required agent templates loaded successfully")
+        print(
+            f"[PASS] All {len(required_types)} required agent templates loaded successfully"
+        )
 
     def _create_generic_agent_class(self, agent_id: str) -> type:
         """Create a generic agent class for the given agent ID."""
@@ -471,4 +494,4 @@ class AgentFactory:
             return agent_types
 
         # Fallback: derive from loaded templates.
-        return sorted(getattr(self, 'templates', {}).keys())
+        return sorted(getattr(self, "templates", {}).keys())

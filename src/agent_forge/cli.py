@@ -7,9 +7,9 @@ Combines all Agent Forge commands into a single interface:
 """
 
 import logging
-from pathlib import Path
 import subprocess
 import sys
+from pathlib import Path
 
 import click
 import torch
@@ -104,7 +104,9 @@ def status() -> None:
     click.echo("=" * 40)
 
     # Check Python version
-    python_version = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
+    python_version = (
+        f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
+    )
     click.echo(f"Python: {python_version}")
 
     # Check PyTorch

@@ -4,10 +4,10 @@ Maintains git history and updates all imports automatically.
 """
 
 import ast
-from datetime import datetime
 import json
-from pathlib import Path
 import subprocess
+from datetime import datetime
+from pathlib import Path
 
 
 class ProductionOrganizer:
@@ -77,12 +77,15 @@ class ProductionOrganizer:
                     # Count docstrings
                     tree = ast.parse(content)
                     total_funcs = sum(
-                        1 for n in ast.walk(tree) if isinstance(n, ast.FunctionDef | ast.AsyncFunctionDef)
+                        1
+                        for n in ast.walk(tree)
+                        if isinstance(n, ast.FunctionDef | ast.AsyncFunctionDef)
                     )
                     with_docs = sum(
                         1
                         for n in ast.walk(tree)
-                        if isinstance(n, ast.FunctionDef | ast.AsyncFunctionDef) and ast.get_docstring(n)
+                        if isinstance(n, ast.FunctionDef | ast.AsyncFunctionDef)
+                        and ast.get_docstring(n)
                     )
 
                     if total_funcs > 0:
@@ -136,7 +139,9 @@ class ProductionOrganizer:
             if not dir_path.endswith("tests"):
                 init_file = Path(dir_path) / "__init__.py"
                 if not init_file.exists():
-                    init_file.write_text('"""Production/experimental code organized by Sprint 2."""\n')
+                    init_file.write_text(
+                        '"""Production/experimental code organized by Sprint 2."""\n'
+                    )
 
     def move_with_git_history(self, src: str, dst: str) -> bool:
         """Move files preserving git history."""
@@ -162,8 +167,18 @@ class ProductionOrganizer:
 
             # Track for import updates
             if src_path.suffix == ".py":
-                old_module = str(src_path).replace("/", ".").replace("\\", ".").replace(".py", "")
-                new_module = str(dst_path).replace("/", ".").replace("\\", ".").replace(".py", "")
+                old_module = (
+                    str(src_path)
+                    .replace("/", ".")
+                    .replace("\\", ".")
+                    .replace(".py", "")
+                )
+                new_module = (
+                    str(dst_path)
+                    .replace("/", ".")
+                    .replace("\\", ".")
+                    .replace(".py", "")
+                )
                 self.import_mappings[old_module] = new_module
 
             self.moves_performed.append((src, dst))
@@ -219,7 +234,9 @@ class ProductionOrganizer:
             for old_import, new_import in self.import_mappings.items():
                 # Handle various import patterns
                 content = content.replace(f"from {old_import}", f"from {new_import}")
-                content = content.replace(f"import {old_import}", f"import {new_import}")
+                content = content.replace(
+                    f"import {old_import}", f"import {new_import}"
+                )
 
                 # Handle relative imports within moved modules
                 old_parts = old_import.split(".")
@@ -231,7 +248,9 @@ class ProductionOrganizer:
                         old_submodule = ".".join(old_parts[: i + 1])
                         if old_submodule in self.import_mappings:
                             new_submodule = self.import_mappings[old_submodule]
-                            content = content.replace(f"from {old_submodule}", f"from {new_submodule}")
+                            content = content.replace(
+                                f"from {old_submodule}", f"from {new_submodule}"
+                            )
 
             if content != original:
                 filepath.write_text(content, encoding="utf-8")

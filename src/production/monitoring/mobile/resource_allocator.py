@@ -1,9 +1,9 @@
 """Dynamic resource allocation for mobile devices - Sprint 6 Enhanced."""
 
-from dataclasses import dataclass
 import logging
 import os
 import platform
+from dataclasses import dataclass
 from typing import Any
 
 # Handle cross-platform resource module import

@@ -5,9 +5,9 @@ This script tests actual compression ratios across different algorithms and mode
 to verify the 2-16x claims made in the documentation.
 """
 
-from pathlib import Path
 import sys
 import traceback
+from pathlib import Path
 from typing import Any
 
 import numpy as np

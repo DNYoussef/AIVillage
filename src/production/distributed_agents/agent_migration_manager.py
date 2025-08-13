@@ -5,12 +5,12 @@ resource availability, and network conditions.
 """
 
 import asyncio
-from dataclasses import dataclass, field
-from enum import Enum
 import logging
 import time
-from typing import Any
 import uuid
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import Any
 
 from src.production.communications.p2p.p2p_node import P2PNode
 

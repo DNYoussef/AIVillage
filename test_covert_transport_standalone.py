@@ -6,7 +6,7 @@ Standalone test for Betanet HTX/H2/H3 covert transport (Prompt 2)
 import os
 import sys
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
 
 import asyncio
 
@@ -27,7 +27,9 @@ async def test_covert_transport_integration():
     assert len(profile.user_agents) >= 4, "Should have multiple user agents"
     assert len(profile.content_types) >= 3, "Should have multiple content types"
     assert len(profile.request_paths) >= 5, "Should have multiple request paths"
-    print(f"    ✓ Profile created: {len(profile.user_agents)} UAs, {len(profile.content_types)} types")
+    print(
+        f"    ✓ Profile created: {len(profile.user_agents)} UAs, {len(profile.content_types)} types"
+    )
 
     # Test 2: Transport Initialization
     print("\n[2] Testing transport initialization...")
@@ -42,7 +44,9 @@ async def test_covert_transport_integration():
     assert "mode" in status
     assert "active_channels" in status
     assert "channels_established" in status
-    print(f"    ✓ Status: {status['channels_established']} channels, HTTP2={status['http2_available']}, HTTP3={status['http3_available']}")
+    print(
+        f"    ✓ Status: {status['channels_established']} channels, HTTP2={status['http2_available']}, HTTP3={status['http3_available']}"
+    )
 
     # Test 4: Dummy Payload Generation
     print("\n[4] Testing cover traffic generation...")
@@ -59,23 +63,31 @@ async def test_covert_transport_integration():
     if transport.websocket_channel:
         try:
             # Test connection establishment (will use mock in test env)
-            result = await transport.websocket_channel.establish_connection("wss://example.com/ws")
-            print(f"    ✓ WebSocket channel test: {'CONNECTED' if result else 'MOCK_OK'}")
+            result = await transport.websocket_channel.establish_connection(
+                "wss://example.com/ws"
+            )
+            print(
+                f"    ✓ WebSocket channel test: {'CONNECTED' if result else 'MOCK_OK'}"
+            )
         except Exception as e:
             print(f"    ! WebSocket test exception (expected): {type(e).__name__}")
 
     # Test 6: Integration with Transport Enhancement
     print("\n[6] Testing Betanet integration...")
+
     class MockBetanetTransport:
         pass
 
     mock_transport = MockBetanetTransport()
     from core.p2p.betanet_covert_transport import enhance_betanet_with_covert_transport
-    enhanced = enhance_betanet_with_covert_transport(mock_transport, CovertTransportMode.HTTP2)
 
-    assert hasattr(enhanced, 'covert_transport')
-    assert hasattr(enhanced, 'send_covert_message')
-    assert hasattr(enhanced, 'start_covert_mode')
+    enhanced = enhance_betanet_with_covert_transport(
+        mock_transport, CovertTransportMode.HTTP2
+    )
+
+    assert hasattr(enhanced, "covert_transport")
+    assert hasattr(enhanced, "send_covert_message")
+    assert hasattr(enhanced, "start_covert_mode")
     print("    ✓ Enhanced transport with covert capabilities")
 
     # Test 7: Cover Traffic Lifecycle
@@ -98,8 +110,9 @@ async def test_covert_transport_integration():
         "channel_testing": True,
         "betanet_integration": True,
         "cover_traffic": True,
-        "prompt_2_status": "COMPLETED"
+        "prompt_2_status": "COMPLETED",
     }
+
 
 if __name__ == "__main__":
     try:
@@ -117,5 +130,6 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"\n❌ Covert transport test FAILED: {e}")
         import traceback
+
         traceback.print_exc()
         exit(1)

@@ -8,12 +8,12 @@ The routing and data movement specialist of AIVillage, responsible for:
 - Data movement and synchronization
 """
 
-from dataclasses import dataclass
-from enum import Enum
 import hashlib
 import json
 import logging
 import time
+from dataclasses import dataclass
+from enum import Enum
 from typing import Any
 
 from src.production.rag.rag_system.core.agent_interface import AgentInterface
@@ -134,11 +134,15 @@ class NavigatorAgent(AgentInterface):
         if "bandwidth" in prompt_lower or "optimize" in prompt_lower:
             return "I optimize bandwidth usage and load balance traffic across network paths."
         if "sync" in prompt_lower or "data" in prompt_lower:
-            return "I handle data synchronization and movement between distributed nodes."
+            return (
+                "I handle data synchronization and movement between distributed nodes."
+            )
         if "discovery" in prompt_lower:
             return "I discover and monitor network nodes, tracking their capabilities and status."
 
-        return "I am Navigator Agent, managing routing and data movement across AIVillage."
+        return (
+            "I am Navigator Agent, managing routing and data movement across AIVillage."
+        )
 
     async def get_embedding(self, text: str) -> list[float]:
         """Generate network-focused embeddings"""
@@ -146,7 +150,9 @@ class NavigatorAgent(AgentInterface):
         # Network embeddings focus on connectivity patterns
         return [(hash_value % 1000) / 1000.0] * 256
 
-    async def rerank(self, query: str, results: list[dict[str, Any]], k: int) -> list[dict[str, Any]]:
+    async def rerank(
+        self, query: str, results: list[dict[str, Any]], k: int
+    ) -> list[dict[str, Any]]:
         """Rerank based on network relevance"""
         network_keywords = [
             "route",
@@ -170,12 +176,17 @@ class NavigatorAgent(AgentInterface):
                 score += content.lower().count(keyword) * 1.5
 
             # Boost networking and distributed system content
-            if any(term in content.lower() for term in ["distributed", "p2p", "communication"]):
+            if any(
+                term in content.lower()
+                for term in ["distributed", "p2p", "communication"]
+            ):
                 score *= 1.4
 
             result["network_relevance"] = score
 
-        return sorted(results, key=lambda x: x.get("network_relevance", 0), reverse=True)[:k]
+        return sorted(
+            results, key=lambda x: x.get("network_relevance", 0), reverse=True
+        )[:k]
 
     async def introspect(self) -> dict[str, Any]:
         """Return Navigator agent status and network metrics"""
@@ -205,8 +216,12 @@ class NavigatorAgent(AgentInterface):
 
         if recipient:
             # Simulate routing through mesh network
-            routing_info = await self._find_optimal_route("navigator", recipient.__class__.__name__)
-            response = await recipient.generate(f"Navigator Agent routes message: {message}")
+            routing_info = await self._find_optimal_route(
+                "navigator", recipient.__class__.__name__
+            )
+            response = await recipient.generate(
+                f"Navigator Agent routes message: {message}"
+            )
             return f"Message routed via {routing_info}: {response[:50]}..."
         return "No recipient for routing"
 
@@ -325,7 +340,9 @@ class NavigatorAgent(AgentInterface):
         # Return subset based on search radius
         return base_nodes[:search_radius]
 
-    async def route_message(self, message: dict[str, Any], destination: str) -> dict[str, Any]:
+    async def route_message(
+        self, message: dict[str, Any], destination: str
+    ) -> dict[str, Any]:
         """Route message to destination through optimal path - MVP function"""
         message_id = f"msg_{int(time.time())}_{len(self.message_queue)}"
 
@@ -381,7 +398,9 @@ class NavigatorAgent(AgentInterface):
             "receipt": receipt,
         }
 
-    async def _find_optimal_route(self, source: str, destination: str) -> dict[str, Any]:
+    async def _find_optimal_route(
+        self, source: str, destination: str
+    ) -> dict[str, Any]:
         """Find optimal route using network topology"""
         # Simple routing algorithm for MVP
         if destination in self.network_nodes:
@@ -407,7 +426,9 @@ class NavigatorAgent(AgentInterface):
                 "bandwidth_mbps": direct_route.bandwidth_mbps,
             }
         # Multi-hop route needed
-        intermediate_nodes = list(self.network_nodes.keys())[:2]  # Use first 2 nodes as hops
+        intermediate_nodes = list(self.network_nodes.keys())[
+            :2
+        ]  # Use first 2 nodes as hops
         multi_hop_path = [source] + intermediate_nodes + [destination]
 
         return {
@@ -419,7 +440,9 @@ class NavigatorAgent(AgentInterface):
             "bandwidth_mbps": 100.0,  # Conservative estimate
         }
 
-    async def _route_message_via_path(self, message: Message, route: dict[str, Any]) -> dict[str, Any]:
+    async def _route_message_via_path(
+        self, message: Message, route: dict[str, Any]
+    ) -> dict[str, Any]:
         """Route message through specified path"""
         # Simulate message routing
         path = route["path"]
@@ -428,12 +451,17 @@ class NavigatorAgent(AgentInterface):
         # Check if all nodes in path are reachable
         reachable_nodes = 0
         for node in path[1:-1]:  # Skip source and destination
-            if node in self.network_nodes and self.network_nodes[node].status == NodeStatus.ONLINE:
+            if (
+                node in self.network_nodes
+                and self.network_nodes[node].status == NodeStatus.ONLINE
+            ):
                 reachable_nodes += 1
 
         # Determine success based on path reachability
         0.95 - (0.1 * len(path))  # Success decreases with path length
-        routing_success = reachable_nodes >= (len(path) - 2) * 0.8  # 80% of intermediate nodes must be reachable
+        routing_success = (
+            reachable_nodes >= (len(path) - 2) * 0.8
+        )  # 80% of intermediate nodes must be reachable
 
         return {
             "success": routing_success,
@@ -444,7 +472,9 @@ class NavigatorAgent(AgentInterface):
             "bandwidth_used_mbps": min(100.0, route["bandwidth_mbps"]),
         }
 
-    async def optimize_bandwidth(self, target_utilization: float = 0.8) -> dict[str, Any]:
+    async def optimize_bandwidth(
+        self, target_utilization: float = 0.8
+    ) -> dict[str, Any]:
         """Optimize network bandwidth usage - MVP function"""
         optimization_id = f"bw_opt_{int(time.time())}"
 
@@ -454,7 +484,9 @@ class NavigatorAgent(AgentInterface):
         # Apply optimization strategies
         optimizations_applied = []
         if current_usage["utilization"] > target_utilization:
-            optimizations_applied = await self._apply_bandwidth_optimizations(current_usage)
+            optimizations_applied = await self._apply_bandwidth_optimizations(
+                current_usage
+            )
 
         # Calculate new metrics
         optimized_usage = await self._analyze_bandwidth_usage()
@@ -476,7 +508,9 @@ class NavigatorAgent(AgentInterface):
 
         self.bandwidth_utilization = optimized_usage["utilization"]
 
-        logger.info(f"Bandwidth optimization completed: {improvement * 100:.1f}% improvement")
+        logger.info(
+            f"Bandwidth optimization completed: {improvement * 100:.1f}% improvement"
+        )
 
         return {
             "status": "success",
@@ -490,18 +524,29 @@ class NavigatorAgent(AgentInterface):
     async def _analyze_bandwidth_usage(self) -> dict[str, Any]:
         """Analyze current bandwidth usage patterns"""
         # Simulate bandwidth analysis
-        total_bandwidth = sum(node.bandwidth_mbps for node in self.network_nodes.values())
-        used_bandwidth = sum(node.bandwidth_mbps * node.load_factor for node in self.network_nodes.values())
+        total_bandwidth = sum(
+            node.bandwidth_mbps for node in self.network_nodes.values()
+        )
+        used_bandwidth = sum(
+            node.bandwidth_mbps * node.load_factor
+            for node in self.network_nodes.values()
+        )
 
         return {
             "total_bandwidth_mbps": total_bandwidth,
             "used_bandwidth_mbps": used_bandwidth,
             "utilization": used_bandwidth / max(1, total_bandwidth),
-            "peak_usage_nodes": [node.node_id for node in self.network_nodes.values() if node.load_factor > 0.8],
+            "peak_usage_nodes": [
+                node.node_id
+                for node in self.network_nodes.values()
+                if node.load_factor > 0.8
+            ],
             "bottleneck_links": [],  # Would identify congested network links
         }
 
-    async def _apply_bandwidth_optimizations(self, usage_info: dict[str, Any]) -> list[str]:
+    async def _apply_bandwidth_optimizations(
+        self, usage_info: dict[str, Any]
+    ) -> list[str]:
         """Apply bandwidth optimization strategies"""
         optimizations = []
 
@@ -532,7 +577,9 @@ class NavigatorAgent(AgentInterface):
         sync_type = data_spec.get("type", "incremental")  # full or incremental
 
         # Execute synchronization
-        sync_results = await self._execute_data_sync(sync_nodes, data_size_mb, sync_type)
+        sync_results = await self._execute_data_sync(
+            sync_nodes, data_size_mb, sync_type
+        )
 
         # Create receipt
         receipt = {
@@ -548,7 +595,9 @@ class NavigatorAgent(AgentInterface):
             "signature": f"navigator_sync_{sync_id}",
         }
 
-        logger.info(f"Data sync completed: {sync_id} - {len(sync_results['successful_nodes'])}/{len(sync_nodes)} nodes")
+        logger.info(
+            f"Data sync completed: {sync_id} - {len(sync_results['successful_nodes'])}/{len(sync_nodes)} nodes"
+        )
 
         return {
             "status": "success",
@@ -557,7 +606,9 @@ class NavigatorAgent(AgentInterface):
             "receipt": receipt,
         }
 
-    async def _execute_data_sync(self, nodes: list[str], size_mb: float, sync_type: str) -> dict[str, Any]:
+    async def _execute_data_sync(
+        self, nodes: list[str], size_mb: float, sync_type: str
+    ) -> dict[str, Any]:
         """Execute data synchronization across specified nodes"""
         successful_nodes = []
         failed_nodes = []
@@ -565,10 +616,15 @@ class NavigatorAgent(AgentInterface):
         start_time = time.time()
 
         for node_id in nodes:
-            if node_id in self.network_nodes and self.network_nodes[node_id].status == NodeStatus.ONLINE:
+            if (
+                node_id in self.network_nodes
+                and self.network_nodes[node_id].status == NodeStatus.ONLINE
+            ):
                 # Simulate sync based on node bandwidth and load
                 node = self.network_nodes[node_id]
-                (size_mb * 8) / node.bandwidth_mbps  # Convert MB to Mbits, then divide by bandwidth
+                (
+                    size_mb * 8
+                ) / node.bandwidth_mbps  # Convert MB to Mbits, then divide by bandwidth
 
                 if node.load_factor < 0.8:  # Node not overloaded
                     successful_nodes.append(node_id)
@@ -588,8 +644,12 @@ class NavigatorAgent(AgentInterface):
 
     async def get_network_health_report(self) -> dict[str, Any]:
         """Generate comprehensive network health report"""
-        online_nodes = [n for n in self.network_nodes.values() if n.status == NodeStatus.ONLINE]
-        avg_latency = sum(n.latency_ms for n in online_nodes) / max(1, len(online_nodes))
+        online_nodes = [
+            n for n in self.network_nodes.values() if n.status == NodeStatus.ONLINE
+        ]
+        avg_latency = sum(n.latency_ms for n in online_nodes) / max(
+            1, len(online_nodes)
+        )
 
         return {
             "agent": "Navigator",
@@ -602,12 +662,15 @@ class NavigatorAgent(AgentInterface):
                 "average_latency_ms": avg_latency,
                 "total_bandwidth_mbps": sum(n.bandwidth_mbps for n in online_nodes),
                 "messages_routed": self.messages_routed,
-                "routing_success_rate": self.messages_routed / max(1, self.messages_routed + self.routing_failures),
+                "routing_success_rate": self.messages_routed
+                / max(1, self.messages_routed + self.routing_failures),
             },
             "performance_stats": {
                 "bytes_transferred": self.bytes_transferred,
                 "discovery_events": self.discovery_events,
-                "active_routes": sum(len(routes) for routes in self.routing_table.values()),
+                "active_routes": sum(
+                    len(routes) for routes in self.routing_table.values()
+                ),
                 "queue_size": len(self.message_queue),
             },
             "recommendations": [
@@ -641,7 +704,9 @@ class NavigatorAgent(AgentInterface):
             self.routing_table = {}
 
             self.initialized = True
-            logger.info(f"Navigator Agent {self.agent_id} initialized - Network ready for routing")
+            logger.info(
+                f"Navigator Agent {self.agent_id} initialized - Network ready for routing"
+            )
 
         except Exception as e:
             logger.error(f"Failed to initialize Navigator Agent: {e}")
@@ -654,7 +719,9 @@ class NavigatorAgent(AgentInterface):
 
             # Generate final network report
             final_report = await self.get_network_health_report()
-            logger.info(f"Navigator Agent final report: {final_report['network_metrics']}")
+            logger.info(
+                f"Navigator Agent final report: {final_report['network_metrics']}"
+            )
 
             # Clear message queue
             self.message_queue.clear()

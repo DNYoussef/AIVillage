@@ -1,10 +1,10 @@
 import base64
-from datetime import datetime
 import json
 import os
+import uuid
+from datetime import datetime
 from typing import Any
 from urllib.parse import urlparse
-import uuid
 
 import faiss
 import numpy as np
@@ -89,7 +89,9 @@ class VectorStore:
             try:  # pragma: no cover - network side effects
                 self.qdrant.upsert(collection_name=self.collection, points=payload)
             except Exception as e:
-                logger.warning(f"Failed to upsert to Qdrant: {e}. Falling back to local index.")
+                logger.warning(
+                    f"Failed to upsert to Qdrant: {e}. Falling back to local index."
+                )
         else:
             self.index.add(np.array(vectors).astype("float32"))
         self.documents.extend(documents)

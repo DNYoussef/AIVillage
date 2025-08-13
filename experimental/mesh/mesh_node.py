@@ -5,11 +5,11 @@ import json
 import logging
 
 import grpc
+import nacl.utils
 from libp2p import new_node
 from libp2p.pubsub import FloodSub
 from libp2p.security.noise.transport import NoiseSecureTransport
 from nacl.public import Box, PrivateKey, PublicKey
-import nacl.utils
 
 from communications.message import Message
 
@@ -59,7 +59,9 @@ class MeshNode:
 
     async def start(self) -> None:
         # 1) start libp2p host with Noise
-        self.node = await new_node(transport_opt=[NoiseSecureTransport(self.priv)], muxer_opt=[], sec_opt=[])
+        self.node = await new_node(
+            transport_opt=[NoiseSecureTransport(self.priv)], muxer_opt=[], sec_opt=[]
+        )
         await self.node.get_network().listen(self.listen_addr)
 
         # 2) dial bootstrap peers
@@ -127,7 +129,9 @@ class MeshNode:
         if target_id not in self.peer_keys:
             msg = f"unknown peer {target_id}"
             raise KeyError(msg)
-        enc = SecureEnvelope(self.priv, self.peer_keys[target_id]).encode(message.to_json().encode())
+        enc = SecureEnvelope(self.priv, self.peer_keys[target_id]).encode(
+            message.to_json().encode()
+        )
         await self.pubsub.publish(target_id, enc)
         import os
 
@@ -141,7 +145,9 @@ class MeshNode:
     # --------------------------------------------------------------------------
     # Fallback MCP tool call via gRPC+TLS
     # --------------------------------------------------------------------------
-    async def mcp_call(self, service_addr: str, stub_class, request, timeout: float = 5.0):
+    async def mcp_call(
+        self, service_addr: str, stub_class, request, timeout: float = 5.0
+    ):
         """service_addr: "host:port"; stub_class: generated gRPC Stub; request: Protobuf request."""
         creds = grpc.ssl_channel_credentials()
         async with grpc.aio.secure_channel(service_addr, creds) as ch:

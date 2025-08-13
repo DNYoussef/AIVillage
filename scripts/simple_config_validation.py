@@ -4,10 +4,10 @@
 Validates configuration files without complex dependencies.
 """
 
-from datetime import datetime
 import json
-from pathlib import Path
 import sys
+from datetime import datetime
+from pathlib import Path
 
 import yaml
 
@@ -98,67 +98,93 @@ def check_codex_requirements():
             # Main configuration checks
             (
                 "integration.evolution_metrics.enabled",
-                main_config.get("integration", {}).get("evolution_metrics", {}).get("enabled"),
+                main_config.get("integration", {})
+                .get("evolution_metrics", {})
+                .get("enabled"),
                 True,
             ),
             (
                 "integration.evolution_metrics.backend",
-                main_config.get("integration", {}).get("evolution_metrics", {}).get("backend"),
+                main_config.get("integration", {})
+                .get("evolution_metrics", {})
+                .get("backend"),
                 "sqlite",
             ),
             (
                 "integration.rag_pipeline.enabled",
-                main_config.get("integration", {}).get("rag_pipeline", {}).get("enabled"),
+                main_config.get("integration", {})
+                .get("rag_pipeline", {})
+                .get("enabled"),
                 True,
             ),
             (
                 "integration.rag_pipeline.embedding_model",
-                main_config.get("integration", {}).get("rag_pipeline", {}).get("embedding_model"),
+                main_config.get("integration", {})
+                .get("rag_pipeline", {})
+                .get("embedding_model"),
                 "paraphrase-MiniLM-L3-v2",
             ),
             (
                 "integration.rag_pipeline.chunk_size",
-                main_config.get("integration", {}).get("rag_pipeline", {}).get("chunk_size"),
+                main_config.get("integration", {})
+                .get("rag_pipeline", {})
+                .get("chunk_size"),
                 512,
             ),
             (
                 "integration.p2p_networking.enabled",
-                main_config.get("integration", {}).get("p2p_networking", {}).get("enabled"),
+                main_config.get("integration", {})
+                .get("p2p_networking", {})
+                .get("enabled"),
                 True,
             ),
             (
                 "integration.p2p_networking.transport",
-                main_config.get("integration", {}).get("p2p_networking", {}).get("transport"),
+                main_config.get("integration", {})
+                .get("p2p_networking", {})
+                .get("transport"),
                 "libp2p",
             ),
             (
                 "integration.p2p_networking.discovery_method",
-                main_config.get("integration", {}).get("p2p_networking", {}).get("discovery_method"),
+                main_config.get("integration", {})
+                .get("p2p_networking", {})
+                .get("discovery_method"),
                 "mdns",
             ),
             (
                 "integration.p2p_networking.max_peers",
-                main_config.get("integration", {}).get("p2p_networking", {}).get("max_peers"),
+                main_config.get("integration", {})
+                .get("p2p_networking", {})
+                .get("max_peers"),
                 50,
             ),
             (
                 "integration.digital_twin.enabled",
-                main_config.get("integration", {}).get("digital_twin", {}).get("enabled"),
+                main_config.get("integration", {})
+                .get("digital_twin", {})
+                .get("enabled"),
                 True,
             ),
             (
                 "integration.digital_twin.encryption_enabled",
-                main_config.get("integration", {}).get("digital_twin", {}).get("encryption_enabled"),
+                main_config.get("integration", {})
+                .get("digital_twin", {})
+                .get("encryption_enabled"),
                 True,
             ),
             (
                 "integration.digital_twin.privacy_mode",
-                main_config.get("integration", {}).get("digital_twin", {}).get("privacy_mode"),
+                main_config.get("integration", {})
+                .get("digital_twin", {})
+                .get("privacy_mode"),
                 "strict",
             ),
             (
                 "integration.digital_twin.max_profiles",
-                main_config.get("integration", {}).get("digital_twin", {}).get("max_profiles"),
+                main_config.get("integration", {})
+                .get("digital_twin", {})
+                .get("max_profiles"),
                 10000,
             ),
             # P2P configuration checks
@@ -253,7 +279,9 @@ def check_codex_requirements():
 
         # Generate recommendations
         if failed_checks:
-            results["recommendations"].append(f"Fix {len(failed_checks)} CODEX compliance issues")
+            results["recommendations"].append(
+                f"Fix {len(failed_checks)} CODEX compliance issues"
+            )
             for failure in failed_checks[:3]:  # Show top 3
                 results["recommendations"].append(
                     f"Set {failure['path']} to {failure['expected']} (currently {failure['actual']})"
@@ -296,12 +324,16 @@ def main():
     if "codex_compliance" in results:
         compliance = results["codex_compliance"]
         print(f"\nCODEX Compliance: {compliance.get('compliance_score', 0):.1f}%")
-        print(f"  Passed: {compliance.get('passed_checks', 0)}/{compliance.get('total_checks', 0)}")
+        print(
+            f"  Passed: {compliance.get('passed_checks', 0)}/{compliance.get('total_checks', 0)}"
+        )
 
         if compliance.get("failed_checks"):
             print("  Failed Requirements:")
             for failure in compliance["failed_checks"][:5]:  # Show top 5
-                print(f"    {failure['path']}: expected {failure['expected']}, got {failure['actual']}")
+                print(
+                    f"    {failure['path']}: expected {failure['expected']}, got {failure['actual']}"
+                )
 
     # Recommendations
     if results.get("recommendations"):

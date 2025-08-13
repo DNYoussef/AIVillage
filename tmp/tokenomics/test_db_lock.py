@@ -4,13 +4,13 @@ This test validates that the SQLite database improvements resolve the
 WinError 32 file locking issues and provide cross-platform reliability.
 """
 
-from concurrent.futures import ThreadPoolExecutor
 import os
-from pathlib import Path
 import tempfile
 import threading
 import time
 import unittest
+from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
 
 
 class TestDatabaseLocking(unittest.TestCase):

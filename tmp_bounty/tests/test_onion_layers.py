@@ -4,8 +4,8 @@ Tests the real X25519 + ChaCha20-Poly1305 onion routing implementation
 that replaces the JSON placeholder encryption.
 """
 
-from pathlib import Path
 import sys
+from pathlib import Path
 
 import pytest
 
@@ -24,12 +24,10 @@ def load_module_direct(name, path):
     spec.loader.exec_module(module)
     return module
 
+
 # Load onion crypto module
 src_path = Path(__file__).parent.parent.parent / "src"
-onion_crypto = load_module_direct(
-    'onion_crypto',
-    src_path / "core/p2p/crypto/onion.py"
-)
+onion_crypto = load_module_direct("onion_crypto", src_path / "core/p2p/crypto/onion.py")
 
 # Import classes
 OnionCrypto = onion_crypto.OnionCrypto
@@ -94,7 +92,9 @@ class TestOnionLayers:
         print(f"Built onion: {len(onion)} bytes")
 
         # Verify onion is larger than original (due to encryption overhead)
-        assert len(onion) > len(original_payload), "Onion should be larger than original payload"
+        assert len(onion) > len(original_payload), (
+            "Onion should be larger than original payload"
+        )
 
         # Peel layers one by one
         current_onion = onion
@@ -108,12 +108,16 @@ class TestOnionLayers:
                 # Intermediate hop
                 expected_next_hop = hop_keys[i + 1][0]
                 assert next_hop == expected_next_hop, f"Next hop mismatch at layer {i}"
-                print(f"Hop {i} ({hop_id}): next_hop={next_hop}, payload_size={len(inner_payload)}")
+                print(
+                    f"Hop {i} ({hop_id}): next_hop={next_hop}, payload_size={len(inner_payload)}"
+                )
                 current_onion = inner_payload
             else:
                 # Final destination
                 assert next_hop is None, "Final hop should have no next hop"
-                assert inner_payload == original_payload, "Final payload should match original"
+                assert inner_payload == original_payload, (
+                    "Final payload should match original"
+                )
                 print("Final destination: payload matches original ✓")
 
         print("3-hop onion routing test passed! ✓")
@@ -131,7 +135,7 @@ class TestOnionLayers:
 
         hop_keys = [
             ("hop1", crypto1.get_public_key_bytes()),
-            ("hop2", crypto2.get_public_key_bytes())
+            ("hop2", crypto2.get_public_key_bytes()),
         ]
 
         original_payload = b"Tamper test message"
@@ -177,20 +181,25 @@ class TestOnionLayers:
         # Each hop should only see the next hop
         current_onion = onion
 
-        for i, (hop_name, crypto) in enumerate(zip(hop_names, crypto_instances, strict=False)):
+        for i, (hop_name, crypto) in enumerate(
+            zip(hop_names, crypto_instances, strict=False)
+        ):
             next_hop, inner = crypto.peel_layer(current_onion)
 
             if i < len(hop_names) - 1:
                 expected_next = hop_names[i + 1]
-                assert next_hop == expected_next, f"Hop {hop_name} should only see next hop"
+                assert next_hop == expected_next, (
+                    f"Hop {hop_name} should only see next hop"
+                )
 
                 # Verify this hop can't see beyond next hop
                 # (The inner payload should be encrypted for subsequent hops)
                 if i < len(hop_names) - 2:
                     # Try to decode inner as if it were a direct message
                     # It should not contain readable route information
-                    assert hop_names[i + 2].encode() not in inner, \
+                    assert hop_names[i + 2].encode() not in inner, (
                         f"Hop {hop_name} should not see beyond next hop"
+                    )
 
                 print(f"Hop {hop_name}: can only see next hop {next_hop} ✓")
                 current_onion = inner
@@ -214,7 +223,7 @@ class TestOnionLayers:
         crypto2 = OnionCrypto()
         hop_keys = [
             ("hop1", crypto1.get_public_key_bytes()),
-            ("hop2", crypto2.get_public_key_bytes())
+            ("hop2", crypto2.get_public_key_bytes()),
         ]
 
         # Test different payload sizes
@@ -289,6 +298,7 @@ def run_onion_tests():
     except Exception as e:
         print(f"\n❌ Test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 

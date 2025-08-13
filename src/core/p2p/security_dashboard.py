@@ -4,10 +4,10 @@ Real-time security monitoring and alerting for the P2P mesh network.
 Provides web interface for security events, peer reputation, and threat detection.
 """
 
-from datetime import datetime, timedelta
-from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
 import logging
+from datetime import datetime, timedelta
+from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 from typing import Any
 from urllib.parse import parse_qs, urlparse
@@ -20,7 +20,9 @@ logger = logging.getLogger(__name__)
 class SecurityDashboardHandler(BaseHTTPRequestHandler):
     """HTTP handler for security dashboard."""
 
-    def __init__(self, request, client_address, server, security_monitor: SecurityMonitor) -> None:
+    def __init__(
+        self, request, client_address, server, security_monitor: SecurityMonitor
+    ) -> None:
         self.security_monitor = security_monitor
         super().__init__(request, client_address, server)
 
@@ -62,11 +64,19 @@ class SecurityDashboardHandler(BaseHTTPRequestHandler):
         now = datetime.now()
         recent_threshold = now - timedelta(hours=1)
 
-        recent_events = [log for log in self.security_monitor.security_logs if log.timestamp >= recent_threshold]
+        recent_events = [
+            log
+            for log in self.security_monitor.security_logs
+            if log.timestamp >= recent_threshold
+        ]
 
-        critical_events = [log for log in recent_events if log.severity == SecurityLevel.CRITICAL]
+        critical_events = [
+            log for log in recent_events if log.severity == SecurityLevel.CRITICAL
+        ]
 
-        high_severity_events = [log for log in recent_events if log.severity == SecurityLevel.HIGH]
+        high_severity_events = [
+            log for log in recent_events if log.severity == SecurityLevel.HIGH
+        ]
 
         enhanced_summary = {
             **summary,
@@ -151,7 +161,8 @@ class SecurityDashboardHandler(BaseHTTPRequestHandler):
                 "peer_reputations": reputations,
                 "total_peers": len(reputations),
                 "blocked_peers": len(self.security_monitor.blocked_peers),
-                "avg_trust_score": sum(r["trust_score"] for r in reputations) / max(1, len(reputations)),
+                "avg_trust_score": sum(r["trust_score"] for r in reputations)
+                / max(1, len(reputations)),
             }
         )
 
@@ -166,7 +177,10 @@ class SecurityDashboardHandler(BaseHTTPRequestHandler):
         recent_blocks = [
             log
             for log in self.security_monitor.security_logs
-            if (log.event_type == SecurityEvent.PEER_BLOCKED and (now - log.timestamp).total_seconds() < 3600)
+            if (
+                log.event_type == SecurityEvent.PEER_BLOCKED
+                and (now - log.timestamp).total_seconds() < 3600
+            )
         ]
 
         if len(recent_blocks) > 5:
@@ -185,7 +199,10 @@ class SecurityDashboardHandler(BaseHTTPRequestHandler):
         auth_failures = [
             log
             for log in self.security_monitor.security_logs
-            if (log.event_type == SecurityEvent.AUTH_FAILURE and (now - log.timestamp).total_seconds() < 3600)
+            if (
+                log.event_type == SecurityEvent.AUTH_FAILURE
+                and (now - log.timestamp).total_seconds() < 3600
+            )
         ]
 
         if len(auth_failures) > 20:
@@ -202,9 +219,9 @@ class SecurityDashboardHandler(BaseHTTPRequestHandler):
 
         # Low average trust score
         if self.security_monitor.peer_reputations:
-            avg_trust = sum(r.trust_score for r in self.security_monitor.peer_reputations.values()) / len(
-                self.security_monitor.peer_reputations
-            )
+            avg_trust = sum(
+                r.trust_score for r in self.security_monitor.peer_reputations.values()
+            ) / len(self.security_monitor.peer_reputations)
 
             if avg_trust < 0.4:
                 alerts.append(
@@ -222,7 +239,10 @@ class SecurityDashboardHandler(BaseHTTPRequestHandler):
         replay_attacks = [
             log
             for log in self.security_monitor.security_logs
-            if (log.event_type == SecurityEvent.REPLAY_ATTACK_DETECTED and (now - log.timestamp).total_seconds() < 3600)
+            if (
+                log.event_type == SecurityEvent.REPLAY_ATTACK_DETECTED
+                and (now - log.timestamp).total_seconds() < 3600
+            )
         ]
 
         if replay_attacks:
@@ -258,15 +278,18 @@ class SecurityDashboardHandler(BaseHTTPRequestHandler):
         recent_critical = [
             log
             for log in self.security_monitor.security_logs
-            if (log.severity == SecurityLevel.CRITICAL and (now - log.timestamp).total_seconds() < 3600)
+            if (
+                log.severity == SecurityLevel.CRITICAL
+                and (now - log.timestamp).total_seconds() < 3600
+            )
         ]
         score -= min(0.4, len(recent_critical) * 0.05)
 
         # Reduce score based on low average trust
         if self.security_monitor.peer_reputations:
-            avg_trust = sum(r.trust_score for r in self.security_monitor.peer_reputations.values()) / len(
-                self.security_monitor.peer_reputations
-            )
+            avg_trust = sum(
+                r.trust_score for r in self.security_monitor.peer_reputations.values()
+            ) / len(self.security_monitor.peer_reputations)
             if avg_trust < 0.5:
                 score -= 0.5 - avg_trust
 
@@ -677,7 +700,9 @@ class SecurityDashboardServer:
         # Create custom handler with security monitor
         class CustomHandler(SecurityDashboardHandler):
             def __init__(self, request, client_address, server) -> None:
-                super().__init__(request, client_address, server, server.security_monitor)
+                super().__init__(
+                    request, client_address, server, server.security_monitor
+                )
 
         # Create server
         self.server = HTTPServer(("localhost", self.port), CustomHandler)
@@ -720,8 +745,8 @@ def start_security_dashboard(security_monitor: SecurityMonitor, port: int = 8083
 
 # Standalone server for testing
 if __name__ == "__main__":
-    from pathlib import Path
     import sys
+    from pathlib import Path
 
     # Add parent directory to path
     sys.path.insert(0, str(Path(__file__).parent.parent.parent))

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Test unified compressor intelligence and mobile deployment."""
 
-from pathlib import Path
 import sys
+from pathlib import Path
 
 import torch
 from torch import nn

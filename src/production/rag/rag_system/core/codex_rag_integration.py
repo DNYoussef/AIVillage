@@ -5,20 +5,20 @@ with exact configuration values, models, and performance targets.
 """
 
 import asyncio
-from collections import OrderedDict
 import contextlib
-from dataclasses import dataclass
 import hashlib
 import json
 import logging
 import os
-from pathlib import Path
 import time
+from collections import OrderedDict
+from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
-from diskcache import Cache as DiskCache
 import faiss
 import numpy as np
+from diskcache import Cache as DiskCache
 
 try:  # pragma: no cover - handle optional dependency
     from rank_bm25 import BM25Okapi

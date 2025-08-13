@@ -14,14 +14,14 @@ Key Responsibilities:
 - Privacy-aware mixnode selection
 """
 
-from collections import defaultdict
-from dataclasses import dataclass, field
-from enum import Enum
 import logging
 import socket
 import time
-from typing import Any
 import uuid
+from collections import defaultdict
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import Any
 
 # SCION Gateway import
 try:
@@ -125,14 +125,20 @@ class LinkChangeDetector:
                 "changes": changes_detected,
                 "switch_required": True,
                 "evaluation_time_ms": current_time
-                - (changes_detected[0]["timestamp"] if changes_detected else current_time),
+                - (
+                    changes_detected[0]["timestamp"]
+                    if changes_detected
+                    else current_time
+                ),
             }
 
             self.change_events.append(event)
             if len(self.change_events) > self.max_events:
                 self.change_events.pop(0)
 
-            logger.info(f"Link change detected requiring path switch: {[c['field'] for c in changes_detected]}")
+            logger.info(
+                f"Link change detected requiring path switch: {[c['field'] for c in changes_detected]}"
+            )
 
         return requires_switch
 
@@ -190,7 +196,10 @@ class LinkChangeDetector:
 
         if state.get("internet_available") and state.get("wifi_connected"):
             # High-quality internet - prefer Betanet
-            if state.get("bandwidth_mbps", 0) > 10 and state.get("latency_ms", 999) < 100:
+            if (
+                state.get("bandwidth_mbps", 0) > 10
+                and state.get("latency_ms", 999) < 100
+            ):
                 return (
                     True,
                     "betanet",
@@ -214,10 +223,14 @@ class LinkChangeDetector:
         if not self.change_events:
             return {"events": 0}
 
-        recent_events = [e for e in self.change_events if time.time() * 1000 - e["timestamp"] < 60000]  # Last minute
+        recent_events = [
+            e for e in self.change_events if time.time() * 1000 - e["timestamp"] < 60000
+        ]  # Last minute
 
         evaluation_times = [e.get("evaluation_time_ms", 0) for e in recent_events]
-        avg_evaluation_time = sum(evaluation_times) / len(evaluation_times) if evaluation_times else 0
+        avg_evaluation_time = (
+            sum(evaluation_times) / len(evaluation_times) if evaluation_times else 0
+        )
 
         return {
             "total_events": len(self.change_events),
@@ -358,7 +371,9 @@ class PeerInfo:
         return (
             self.hop_distance <= 3
             and (self.bluetooth_rssi is None or self.bluetooth_rssi > -60)
-            and (self.geographic_distance_km is None or self.geographic_distance_km < 1.0)
+            and (
+                self.geographic_distance_km is None or self.geographic_distance_km < 1.0
+            )
         )
 
     def supports_protocol(self, protocol: str) -> bool:
@@ -440,7 +455,9 @@ class NavigatorAgent:
         self.privacy_aware = True
         self.mixnode_preferences = ["tor", "i2p", "betanet_mixnode"]
 
-        logger.info(f"Navigator initialized: {self.agent_id} (priority={routing_priority.value})")
+        logger.info(
+            f"Navigator initialized: {self.agent_id} (priority={routing_priority.value})"
+        )
 
     async def select_path(
         self,
@@ -469,11 +486,15 @@ class NavigatorAgent:
         scion_available = False
         scion_paths = []
         if self.scion_enabled:
-            scion_available, scion_paths = await self._check_scion_availability(destination)
+            scion_available, scion_paths = await self._check_scion_availability(
+                destination
+            )
 
         # Check for link changes requiring fast switching (500ms target)
         if self.fast_switch_enabled:
-            link_change_detected = await self._check_fast_switching(destination, message_context)
+            link_change_detected = await self._check_fast_switching(
+                destination, message_context
+            )
             if link_change_detected:
                 # Fast path switch detected - use optimized decision with SCION preference
                 protocol, metadata = await self._fast_path_selection_with_scion(
@@ -494,7 +515,9 @@ class NavigatorAgent:
                 return protocol, metadata
 
         # Check decision cache
-        cache_key = f"{destination}_{message_context.priority}_{message_context.size_bytes}"
+        cache_key = (
+            f"{destination}_{message_context.priority}_{message_context.size_bytes}"
+        )
         if cache_key in self.routing_decisions:
             cached_decision, cache_time = self.routing_decisions[cache_key]
             if time.time() - cache_time < self.decision_cache_ttl:
@@ -507,7 +530,9 @@ class NavigatorAgent:
                     scion_available,
                     len(scion_paths),
                 )
-                return cached_decision, self._get_routing_metadata(cached_decision, destination)
+                return cached_decision, self._get_routing_metadata(
+                    cached_decision, destination
+                )
 
         # Core routing decision logic with SCION preference and path scoring
         (
@@ -526,7 +551,9 @@ class NavigatorAgent:
 
         # Calculate switch latency and emit receipt
         switch_latency_ms = time.time() * 1000 - start_time
-        reason = self._determine_selection_reason(selected_protocol, scion_available, path_scores)
+        reason = self._determine_selection_reason(
+            selected_protocol, scion_available, path_scores
+        )
         self._emit_receipt(
             selected_protocol.value,
             switch_latency_ms,
@@ -550,7 +577,9 @@ class NavigatorAgent:
 
         return selected_protocol, routing_metadata
 
-    async def _check_scion_availability(self, destination: str) -> tuple[bool, list[SCIONPath]]:
+    async def _check_scion_availability(
+        self, destination: str
+    ) -> tuple[bool, list[SCIONPath]]:
         """Check SCION availability via gateway health/cache"""
         if not self.scion_enabled:
             return False, []
@@ -591,9 +620,13 @@ class NavigatorAgent:
                 path_key = f"scion_{path.path_id}"
                 old_rtt = self.path_rtt_ewma[path_key]
                 new_rtt = path.rtt_us / 1000.0  # Convert to ms
-                self.path_rtt_ewma[path_key] = self.rtt_ewma_alpha * new_rtt + (1 - self.rtt_ewma_alpha) * old_rtt
+                self.path_rtt_ewma[path_key] = (
+                    self.rtt_ewma_alpha * new_rtt + (1 - self.rtt_ewma_alpha) * old_rtt
+                )
 
-            logger.debug(f"SCION availability check: {len(paths)} paths to {destination}")
+            logger.debug(
+                f"SCION availability check: {len(paths)} paths to {destination}"
+            )
             return len(paths) > 0, paths
 
         except SCIONConnectionError as e:
@@ -620,7 +653,9 @@ class NavigatorAgent:
         ]
 
         # Calculate path scores using RTT EWMA + loss + policy
-        path_scores = self._calculate_path_scores(destination, context, available, scion_available, scion_paths)
+        path_scores = self._calculate_path_scores(
+            destination, context, available, scion_available, scion_paths
+        )
 
         # PRIORITY 1: SCION preference when available and high-performance desired
         if scion_available and "scion" in available:
@@ -635,18 +670,30 @@ class NavigatorAgent:
                 or self.scion_prefer_high_performance
             ):
                 # Check if SCION has good performance (RTT < 100ms, loss < 5%)
-                best_scion_path = min(scion_paths, key=lambda p: p.rtt_us) if scion_paths else None
-                if best_scion_path and best_scion_path.rtt_us < 100000 and best_scion_path.loss_rate < 0.05:
-                    logger.debug(f"SCION selected for high-performance (RTT={best_scion_path.rtt_us / 1000:.1f}ms)")
+                best_scion_path = (
+                    min(scion_paths, key=lambda p: p.rtt_us) if scion_paths else None
+                )
+                if (
+                    best_scion_path
+                    and best_scion_path.rtt_us < 100000
+                    and best_scion_path.loss_rate < 0.05
+                ):
+                    logger.debug(
+                        f"SCION selected for high-performance (RTT={best_scion_path.rtt_us / 1000:.1f}ms)"
+                    )
                     return PathProtocol.SCION, path_scores
 
             # Also prefer SCION if it has the highest score overall
             if scion_score == max(path_scores.values()):
-                logger.debug(f"SCION selected as highest scored path (score={scion_score:.3f})")
+                logger.debug(
+                    f"SCION selected as highest scored path (score={scion_score:.3f})"
+                )
                 return PathProtocol.SCION, path_scores
 
         # Continue with existing priority logic
-        return await self._evaluate_routing_options_fallback(destination, context, available, path_scores)
+        return await self._evaluate_routing_options_fallback(
+            destination, context, available, path_scores
+        )
 
     def _calculate_path_scores(
         self,
@@ -683,14 +730,18 @@ class NavigatorAgent:
             if protocol == "scion" and scion_available:
                 # SCION scoring using actual path data
                 if scion_paths:
-                    best_path = min(scion_paths, key=lambda p: p.rtt_us + p.loss_rate * 100000)
+                    best_path = min(
+                        scion_paths, key=lambda p: p.rtt_us + p.loss_rate * 100000
+                    )
 
                     # RTT score (lower is better, normalize to 0-1)
                     rtt_ms = best_path.rtt_us / 1000.0
                     rtt_score = max(0, 1.0 - rtt_ms / 200.0)  # 200ms = score of 0
 
                     # Loss score (lower is better)
-                    loss_score = max(0, 1.0 - best_path.loss_rate / 0.1)  # 10% loss = score of 0
+                    loss_score = max(
+                        0, 1.0 - best_path.loss_rate / 0.1
+                    )  # 10% loss = score of 0
 
                     # Policy score - SCION gets bonus for performance/privacy
                     policy_score = 0.9
@@ -699,7 +750,11 @@ class NavigatorAgent:
                     elif context.privacy_required:
                         policy_score = 0.8  # Good for privacy (multipath)
 
-                    score = rtt_weight * rtt_score + loss_weight * loss_score + policy_weight * policy_score
+                    score = (
+                        rtt_weight * rtt_score
+                        + loss_weight * loss_score
+                        + policy_weight * policy_score
+                    )
                 else:
                     score = 0.5  # Default score when paths unknown
 
@@ -715,7 +770,11 @@ class NavigatorAgent:
                 elif self.conditions.is_low_resource_environment():
                     policy_score = 0.3  # Poor for low-resource
 
-                score = rtt_weight * rtt_score + loss_weight * loss_score + policy_weight * policy_score
+                score = (
+                    rtt_weight * rtt_score
+                    + loss_weight * loss_score
+                    + policy_weight * policy_score
+                )
 
             elif protocol == "bitchat":
                 # BitChat scoring
@@ -724,17 +783,30 @@ class NavigatorAgent:
                 loss_score = 0.85  # Bluetooth can be lossy
 
                 policy_score = 0.6
-                if self.global_south_mode or self.conditions.is_low_resource_environment():
+                if (
+                    self.global_south_mode
+                    or self.conditions.is_low_resource_environment()
+                ):
                     policy_score = 0.95  # Excellent for offline/low-resource
-                elif destination not in self.discovered_peers or not self.discovered_peers[destination].is_nearby():
+                elif (
+                    destination not in self.discovered_peers
+                    or not self.discovered_peers[destination].is_nearby()
+                ):
                     policy_score = 0.1  # Poor if no nearby peer
 
-                score = rtt_weight * rtt_score + loss_weight * loss_score + policy_weight * policy_score
+                score = (
+                    rtt_weight * rtt_score
+                    + loss_weight * loss_score
+                    + policy_weight * policy_score
+                )
 
             elif protocol == "store_forward":
                 # Store-and-forward scoring
                 score = 0.3  # Low score due to delay
-                if not self.conditions.internet_available and not self.conditions.bluetooth_available:
+                if (
+                    not self.conditions.internet_available
+                    and not self.conditions.bluetooth_available
+                ):
                     score = 1.0  # Perfect when no other option
 
             scores[protocol] = max(0.0, min(1.0, score))  # Clamp to [0,1]
@@ -766,7 +838,9 @@ class NavigatorAgent:
         if len(self.receipts) > self.max_receipts:
             self.receipts = self.receipts[-self.max_receipts :]
 
-        logger.info(f"Receipt emitted: {chosen_path} ({switch_latency_ms:.1f}ms) - {reason}")
+        logger.info(
+            f"Receipt emitted: {chosen_path} ({switch_latency_ms:.1f}ms) - {reason}"
+        )
 
     def _determine_selection_reason(
         self,
@@ -824,7 +898,9 @@ class NavigatorAgent:
                     )
 
         # Fallback to existing fast path selection
-        return await self._fast_path_selection(destination, context, available_protocols)
+        return await self._fast_path_selection(
+            destination, context, available_protocols
+        )
 
     async def _evaluate_routing_options_fallback(
         self,
@@ -859,7 +935,10 @@ class NavigatorAgent:
                     return PathProtocol.BITCHAT
 
         # PRIORITY 2: Offline-first for Global South scenarios
-        if self.routing_priority == RoutingPriority.OFFLINE_FIRST or self.global_south_mode:
+        if (
+            self.routing_priority == RoutingPriority.OFFLINE_FIRST
+            or self.global_south_mode
+        ):
             # Check for nearby peers via BitChat
             if (
                 self.conditions.bluetooth_available
@@ -867,7 +946,10 @@ class NavigatorAgent:
                 and await self._is_peer_nearby(destination)
             ):
                 # BitChat preferred for local/offline scenarios
-                if self.energy_mode == EnergyMode.POWERSAVE or self.conditions.is_low_resource_environment():
+                if (
+                    self.energy_mode == EnergyMode.POWERSAVE
+                    or self.conditions.is_low_resource_environment()
+                ):
                     logger.debug("Offline-first: selecting BitChat (energy efficient)")
                     return PathProtocol.BITCHAT
 
@@ -910,20 +992,32 @@ class NavigatorAgent:
 
         # PRIORITY 6: Performance-first routing
         if self.routing_priority == RoutingPriority.PERFORMANCE_FIRST:
-            if self.conditions.internet_available and "betanet" in available and not self._is_data_expensive():
+            if (
+                self.conditions.internet_available
+                and "betanet" in available
+                and not self._is_data_expensive()
+            ):
                 logger.debug("Performance-first - selecting Betanet")
                 return PathProtocol.BETANET
 
         # PRIORITY 7: Bandwidth optimization
         if self.routing_priority == RoutingPriority.BANDWIDTH_FIRST:
-            if self.conditions.internet_available and "betanet" in available and self.conditions.bandwidth_mbps > 10.0:
+            if (
+                self.conditions.internet_available
+                and "betanet" in available
+                and self.conditions.bandwidth_mbps > 10.0
+            ):
                 logger.debug("Bandwidth-first - selecting Betanet")
                 return PathProtocol.BETANET
 
         # FALLBACK LOGIC: Select best available option
 
         # Try BitChat if peer is reachable
-        if self.conditions.bluetooth_available and "bitchat" in available and await self._is_peer_nearby(destination):
+        if (
+            self.conditions.bluetooth_available
+            and "bitchat" in available
+            and await self._is_peer_nearby(destination)
+        ):
             logger.debug("Fallback - selecting BitChat (peer nearby)")
             return PathProtocol.BITCHAT
 
@@ -958,7 +1052,9 @@ class NavigatorAgent:
         self.conditions.battery_percent = await self._get_battery_level()
 
         # Update nearby peer count
-        self.conditions.nearby_peers = len([peer for peer in self.discovered_peers.values() if peer.is_nearby()])
+        self.conditions.nearby_peers = len(
+            [peer for peer in self.discovered_peers.values() if peer.is_nearby()]
+        )
 
         # Update bandwidth estimate
         self.conditions.bandwidth_mbps = await self._estimate_bandwidth()
@@ -1057,7 +1153,9 @@ class NavigatorAgent:
             return False
         return self.conditions.battery_percent < self.battery_conservation_threshold
 
-    def _get_routing_metadata(self, protocol: PathProtocol, destination: str) -> dict[str, Any]:
+    def _get_routing_metadata(
+        self, protocol: PathProtocol, destination: str
+    ) -> dict[str, Any]:
         """Generate routing metadata for selected protocol"""
         metadata = {
             "protocol": protocol.value,
@@ -1074,7 +1172,9 @@ class NavigatorAgent:
                     "store_forward_enabled": True,
                     "energy_efficient": True,
                     "offline_capable": True,
-                    "estimated_latency_ms": self.protocol_performance["bitchat"]["latency"],
+                    "estimated_latency_ms": self.protocol_performance["bitchat"][
+                        "latency"
+                    ],
                 }
             )
 
@@ -1085,7 +1185,9 @@ class NavigatorAgent:
                     "mixnode_hops": 2 if self.conditions.is_privacy_sensitive() else 0,
                     "bandwidth_adaptive": True,
                     "global_reach": True,
-                    "estimated_latency_ms": self.protocol_performance["betanet"]["latency"],
+                    "estimated_latency_ms": self.protocol_performance["betanet"][
+                        "latency"
+                    ],
                 }
             )
 
@@ -1097,7 +1199,9 @@ class NavigatorAgent:
                     "high_performance": True,
                     "global_reach": True,
                     "failover_support": True,
-                    "estimated_latency_ms": self.protocol_performance["scion"]["latency"],
+                    "estimated_latency_ms": self.protocol_performance["scion"][
+                        "latency"
+                    ],
                 }
             )
 
@@ -1121,9 +1225,13 @@ class NavigatorAgent:
         cache_key = f"nearby_{peer_id}"
         self.peer_proximity_cache.pop(cache_key, None)
 
-        logger.debug(f"Updated peer info: {peer_id} (hop_distance={peer_info.hop_distance})")
+        logger.debug(
+            f"Updated peer info: {peer_id} (hop_distance={peer_info.hop_distance})"
+        )
 
-    def update_routing_success(self, protocol: str, destination: str, success: bool) -> None:
+    def update_routing_success(
+        self, protocol: str, destination: str, success: bool
+    ) -> None:
         """Update routing success statistics for learning"""
         key = f"{protocol}_{destination}"
         current_rate = self.route_success_rates[key]
@@ -1153,7 +1261,9 @@ class NavigatorAgent:
             self.routing_priority = RoutingPriority.OFFLINE_FIRST
             self.energy_mode = EnergyMode.BALANCED
             self.data_cost_threshold = 0.005  # Sensitive to data costs
-            logger.info("Global South mode enabled - prioritizing offline-first routing")
+            logger.info(
+                "Global South mode enabled - prioritizing offline-first routing"
+            )
         else:
             logger.info("Global South mode disabled")
 
@@ -1219,10 +1329,15 @@ class NavigatorAgent:
             # Betanet optimizations
             optimizations.update(
                 {
-                    "use_mixnodes": context.privacy_required or self.conditions.is_privacy_sensitive(),
+                    "use_mixnodes": context.privacy_required
+                    or self.conditions.is_privacy_sensitive(),
                     "mixnode_hops": 2 if context.privacy_required else 0,
-                    "bandwidth_tier": "high" if context.is_large_message() else "standard",
-                    "reliability_level": "guaranteed" if context.priority > 7 else "best_effort",
+                    "bandwidth_tier": "high"
+                    if context.is_large_message()
+                    else "standard",
+                    "reliability_level": "guaranteed"
+                    if context.priority > 7
+                    else "best_effort",
                     "chunking_enabled": context.size_bytes > 32768,
                 }
             )
@@ -1253,7 +1368,9 @@ class NavigatorAgent:
 
         # Clean old peer info
         expired_peers = [
-            peer_id for peer_id, peer in self.discovered_peers.items() if current_time - peer.last_seen > 3600  # 1 hour
+            peer_id
+            for peer_id, peer in self.discovered_peers.items()
+            if current_time - peer.last_seen > 3600  # 1 hour
         ]
         for peer_id in expired_peers:
             del self.discovered_peers[peer_id]
@@ -1263,7 +1380,9 @@ class NavigatorAgent:
             f"{len(expired_proximity)} proximity entries, {len(expired_peers)} peers"
         )
 
-    async def _check_fast_switching(self, destination: str, context: MessageContext) -> bool:
+    async def _check_fast_switching(
+        self, destination: str, context: MessageContext
+    ) -> bool:
         """Check if link changes require fast path switching (500ms target)"""
         current_time = time.time() * 1000  # milliseconds
 
@@ -1272,7 +1391,8 @@ class NavigatorAgent:
             "bluetooth_available": self.conditions.bluetooth_available,
             "internet_available": self.conditions.internet_available,
             "wifi_connected": self.conditions.wifi_connected,
-            "cellular_connected": not self.conditions.wifi_connected and self.conditions.internet_available,
+            "cellular_connected": not self.conditions.wifi_connected
+            and self.conditions.internet_available,
             "bandwidth_mbps": self.conditions.bandwidth_mbps,
             "latency_ms": self.conditions.latency_ms,
         }
@@ -1285,7 +1405,9 @@ class NavigatorAgent:
             time_since_last_switch = current_time - self.last_path_switch_time
             if time_since_last_switch > self.path_switch_threshold_ms:
                 self.last_path_switch_time = current_time
-                logger.info(f"Fast switching triggered for {destination} after {time_since_last_switch:.0f}ms")
+                logger.info(
+                    f"Fast switching triggered for {destination} after {time_since_last_switch:.0f}ms"
+                )
                 return True
 
         return False
@@ -1310,27 +1432,37 @@ class NavigatorAgent:
             # Use recommendation if protocol is available
             if recommended_path == "bitchat" and "bitchat" in available:
                 logger.debug(f"Fast switch to BitChat: {rationale['reasons']}")
-                return PathProtocol.BITCHAT, self._get_fast_routing_metadata(PathProtocol.BITCHAT, rationale)
+                return PathProtocol.BITCHAT, self._get_fast_routing_metadata(
+                    PathProtocol.BITCHAT, rationale
+                )
 
             elif recommended_path == "betanet" and "betanet" in available:
                 logger.debug(f"Fast switch to Betanet: {rationale['reasons']}")
-                return PathProtocol.BETANET, self._get_fast_routing_metadata(PathProtocol.BETANET, rationale)
+                return PathProtocol.BETANET, self._get_fast_routing_metadata(
+                    PathProtocol.BETANET, rationale
+                )
 
         # Fallback to emergency fast selection based on connectivity
         if self.conditions.bluetooth_available and "bitchat" in available:
             # BitChat available - use for fast switching
-            return PathProtocol.BITCHAT, self._get_fast_routing_metadata(PathProtocol.BITCHAT, {"fast_switch": True})
+            return PathProtocol.BITCHAT, self._get_fast_routing_metadata(
+                PathProtocol.BITCHAT, {"fast_switch": True}
+            )
 
         if self.conditions.internet_available and "betanet" in available:
             # Internet available - use Betanet for fast switching
-            return PathProtocol.BETANET, self._get_fast_routing_metadata(PathProtocol.BETANET, {"fast_switch": True})
+            return PathProtocol.BETANET, self._get_fast_routing_metadata(
+                PathProtocol.BETANET, {"fast_switch": True}
+            )
 
         # Last resort - store and forward
         return PathProtocol.STORE_FORWARD, self._get_fast_routing_metadata(
             PathProtocol.STORE_FORWARD, {"emergency": True}
         )
 
-    def _get_fast_routing_metadata(self, protocol: PathProtocol, rationale: dict) -> dict[str, Any]:
+    def _get_fast_routing_metadata(
+        self, protocol: PathProtocol, rationale: dict
+    ) -> dict[str, Any]:
         """Generate metadata for fast-switched routing"""
         metadata = {
             "protocol": protocol.value,
@@ -1388,7 +1520,9 @@ class NavigatorAgent:
             "link_change_detector": detector_metrics,
             "switch_performance": {
                 "within_target": detector_metrics.get("within_target", False),
-                "avg_evaluation_time": detector_metrics.get("avg_evaluation_time_ms", 0),
+                "avg_evaluation_time": detector_metrics.get(
+                    "avg_evaluation_time_ms", 0
+                ),
                 "recent_events": detector_metrics.get("recent_events", 0),
             },
         }
@@ -1407,7 +1541,11 @@ class NavigatorAgent:
             "scion_gateway_initialized": self.scion_gateway is not None,
             "scion_path_cache_entries": len(self.scion_path_cache),
             "scion_prefer_high_performance": self.scion_prefer_high_performance,
-            "path_rtt_ewma_entries": len([k for k in self.path_rtt_ewma.keys() if k.startswith("scion_")]),
+            "path_rtt_ewma_entries": len(
+                [k for k in self.path_rtt_ewma.keys() if k.startswith("scion_")]
+            ),
             "receipts_with_scion": len([r for r in self.receipts if r.scion_available]),
-            "scion_selections": len([r for r in self.receipts if r.chosen_path == "scion"]),
+            "scion_selections": len(
+                [r for r in self.receipts if r.chosen_path == "scion"]
+            ),
         }

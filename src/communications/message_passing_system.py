@@ -42,7 +42,9 @@ class MessagePassingSystem:
 
         await self.protocol.start_server()
         self.running = True
-        logger.info(f"Message passing system started for {self.agent_id} on port {self.port}")
+        logger.info(
+            f"Message passing system started for {self.agent_id} on port {self.port}"
+        )
 
     async def stop(self) -> None:
         """Stop the message passing system."""
@@ -78,7 +80,9 @@ class MessagePassingSystem:
                     break
 
             if not target_service:
-                logger.warning(f"Could not find service info for agent: {target_agent_id}")
+                logger.warning(
+                    f"Could not find service info for agent: {target_agent_id}"
+                )
                 # Try direct connection with default assumptions
                 target_url = "ws://localhost:8000/ws"  # Default fallback
             else:
@@ -122,7 +126,9 @@ class MessagePassingSystem:
             sent_count = 0
             for service in services:
                 if service.agent_id != self.agent_id:  # Don't send to self
-                    success = await self.send_message(service.agent_id, message_type, payload, metadata)
+                    success = await self.send_message(
+                        service.agent_id, message_type, payload, metadata
+                    )
                     if success:
                         sent_count += 1
 
@@ -149,15 +155,17 @@ class MessagePassingSystem:
             correlation_id = str(uuid.uuid4())
 
             request_metadata = metadata or {}
-            request_metadata.update({"correlation_id": correlation_id, "expects_response": True})
+            request_metadata.update(
+                {"correlation_id": correlation_id, "expects_response": True}
+            )
 
             # Set up response handler
             response_future = asyncio.Future()
 
             def response_handler(message: Message) -> None:
-                if message.metadata.get("correlation_id") == correlation_id and message.metadata.get(
-                    "is_response", False
-                ):
+                if message.metadata.get(
+                    "correlation_id"
+                ) == correlation_id and message.metadata.get("is_response", False):
                     if not response_future.done():
                         response_future.set_result(message)
 
@@ -167,7 +175,9 @@ class MessagePassingSystem:
 
             try:
                 # Send request
-                success = await self.send_message(target_agent_id, request_type, payload, request_metadata)
+                success = await self.send_message(
+                    target_agent_id, request_type, payload, request_metadata
+                )
 
                 if not success:
                     return None
@@ -203,7 +213,9 @@ class MessagePassingSystem:
                 return False
 
             response_metadata = metadata or {}
-            response_metadata.update({"correlation_id": correlation_id, "is_response": True})
+            response_metadata.update(
+                {"correlation_id": correlation_id, "is_response": True}
+            )
 
             response_type = f"{request_message.message_type}_response"
 
@@ -231,7 +243,9 @@ class MessagePassingSystem:
 
 
 # Convenience functions
-async def create_message_system(agent_id: str, port: int | None = None) -> MessagePassingSystem:
+async def create_message_system(
+    agent_id: str, port: int | None = None
+) -> MessagePassingSystem:
     """Create and start a message passing system."""
     system = MessagePassingSystem(agent_id, port)
     await system.start()

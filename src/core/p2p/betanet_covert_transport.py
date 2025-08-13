@@ -6,7 +6,7 @@ protocols to blend with legitimate web traffic for censorship resistance.
 
 Key Features:
 - HTTP/2 multiplexing for efficient covert channels
-- HTTP/3 QUIC streams for low-latency covert transport  
+- HTTP/3 QUIC streams for low-latency covert transport
 - Real browser traffic mimicry with authentic headers
 - WebSocket upgrade paths for persistent connections
 - Server-Sent Events (SSE) for streaming data
@@ -15,22 +15,22 @@ Key Features:
 
 import asyncio
 import base64
-from dataclasses import dataclass
-from enum import Enum
 import json
 import logging
 import random
 import time
-from typing import Any
 import uuid
 import zlib
+from dataclasses import dataclass
+from enum import Enum
+from typing import Any
 
 # HTTP/2 and HTTP/3 support
 try:
-    from h2.config import H2Configuration
     import h2.connection
     import h2.events
     import httpx
+    from h2.config import H2Configuration
 
     HTTP2_AVAILABLE = True
 except ImportError:
@@ -146,7 +146,9 @@ class HTTP2CovertChannel:
             logger.error(f"Failed to establish HTTP/2 connection: {e}")
             return False
 
-    async def send_covert_message(self, data: bytes, stream_id: int | None = None) -> bool:
+    async def send_covert_message(
+        self, data: bytes, stream_id: int | None = None
+    ) -> bool:
         """Send data via HTTP/2 covert channel."""
         if not self.connection:
             logger.error("No HTTP/2 connection established")
@@ -164,7 +166,11 @@ class HTTP2CovertChannel:
             self.connection.send_headers(stream_id, headers)
 
             # Compress data if enabled
-            payload = self._compress_payload(data) if self.profile.compression_enabled else data
+            payload = (
+                self._compress_payload(data)
+                if self.profile.compression_enabled
+                else data
+            )
 
             # Send data
             self.connection.send_data(stream_id, payload, end_stream=True)
@@ -224,7 +230,9 @@ class HTTP3CovertChannel:
             logger.error(f"Failed to establish HTTP/3 connection: {e}")
             return False
 
-    async def send_covert_stream(self, data: bytes, stream_type: str = "request") -> bool:
+    async def send_covert_stream(
+        self, data: bytes, stream_type: str = "request"
+    ) -> bool:
         """Send data via HTTP/3 QUIC stream."""
         try:
             # Create QUIC stream for covert data
@@ -331,8 +339,12 @@ class BetanetCovertTransport:
         self.profile = CovertTrafficProfile.create_browser_profile()
 
         # Initialize channels based on availability
-        self.http2_channel = HTTP2CovertChannel(self.profile) if HTTP2_AVAILABLE else None
-        self.http3_channel = HTTP3CovertChannel(self.profile) if HTTP3_AVAILABLE else None
+        self.http2_channel = (
+            HTTP2CovertChannel(self.profile) if HTTP2_AVAILABLE else None
+        )
+        self.http3_channel = (
+            HTTP3CovertChannel(self.profile) if HTTP3_AVAILABLE else None
+        )
         self.websocket_channel = WebSocketCovertChannel(self.profile)
         self.sse_channel = ServerSentEventsCovertChannel(self.profile)
 
@@ -351,7 +363,11 @@ class BetanetCovertTransport:
 
         if self.mode == CovertTransportMode.AUTO:
             # Try protocols in order of preference
-            for mode in [CovertTransportMode.HTTP3, CovertTransportMode.HTTP2, CovertTransportMode.WEBSOCKET]:
+            for mode in [
+                CovertTransportMode.HTTP3,
+                CovertTransportMode.HTTP2,
+                CovertTransportMode.WEBSOCKET,
+            ]:
                 if await self._establish_channel(mode, target_host, port):
                     self.mode = mode
                     success = True
@@ -366,7 +382,9 @@ class BetanetCovertTransport:
 
         return success
 
-    async def _establish_channel(self, mode: CovertTransportMode, host: str, port: int) -> bool:
+    async def _establish_channel(
+        self, mode: CovertTransportMode, host: str, port: int
+    ) -> bool:
         """Establish specific covert channel type."""
         try:
             if mode == CovertTransportMode.HTTP2 and self.http2_channel:
@@ -508,7 +526,9 @@ def enhance_betanet_with_covert_transport(
         return await betanet_transport.covert_transport.send_covert_data(data)
 
     async def start_covert_mode(host: str, port: int = 443) -> bool:
-        return await betanet_transport.covert_transport.start_covert_transport(host, port)
+        return await betanet_transport.covert_transport.start_covert_transport(
+            host, port
+        )
 
     # Bind methods to transport instance
     betanet_transport.send_covert_message = send_covert_message

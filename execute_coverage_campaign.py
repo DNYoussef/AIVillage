@@ -6,8 +6,8 @@ Run comprehensive test coverage analysis and improvement campaign.
 """
 
 import os
-from pathlib import Path
 import sys
+from pathlib import Path
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
 
@@ -39,7 +39,9 @@ def execute_coverage_campaign():
 
         print("\n[IMPROVEMENTS] Test Generation:")
         print(f"  Strategic tests generated: {results['tests_generated']}")
-        print(f"  Coverage improvements implemented: {results['improvements_implemented']}")
+        print(
+            f"  Coverage improvements implemented: {results['improvements_implemented']}"
+        )
         print(f"  Monitoring enabled: {results['monitoring_enabled']}")
 
         success = results["target_achieved"] or results["projected_coverage"] >= 25.0
@@ -100,7 +102,9 @@ if __name__ == "__main__":
     print(f"  Target achieved: {result['target_achieved']}")
     print(f"  Tests generated: {result['tests_generated']}")
     print(f"  Improvements implemented: {result['improvements_implemented']}")
-    print(f"  Coverage monitoring: {'ENABLED' if result['monitoring_enabled'] else 'DISABLED'}")
+    print(
+        f"  Coverage monitoring: {'ENABLED' if result['monitoring_enabled'] else 'DISABLED'}"
+    )
 
     if result["target_achieved"]:
         print("\n🎯 30%+ coverage target ACHIEVED!")

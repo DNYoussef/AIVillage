@@ -1,9 +1,9 @@
 """Core DAO governance system implementation."""
 
-from collections.abc import Callable
 import logging
 import time
 import uuid
+from collections.abc import Callable
 
 from ..credit_system import VILLAGECreditSystem
 from .config import GovernanceConfig

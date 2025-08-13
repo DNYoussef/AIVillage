@@ -8,15 +8,15 @@ Tests the Navigator's SCION preference implementation with measurable ≤500ms s
 """
 
 import asyncio
-from dataclasses import asdict, dataclass
 import json
-from pathlib import Path
 
 # Test imports
 import sys
 import time
 import types
 import unittest
+from dataclasses import asdict, dataclass
+from pathlib import Path
 from unittest.mock import patch
 
 import pytest
@@ -28,7 +28,9 @@ stub_message_types = types.ModuleType("src.core.message_types")
 
 
 class _DummyMessage:
-    def __init__(self, content: bytes = b"", metadata: dict | None = None, timestamp: float = 0.0):
+    def __init__(
+        self, content: bytes = b"", metadata: dict | None = None, timestamp: float = 0.0
+    ):
         self.content = content
         self.metadata = metadata or {}
         self.timestamp = timestamp
@@ -185,7 +187,9 @@ class TestSCIONPreference(unittest.TestCase):
         # Setup: SCION available with good performance
         destination = "1-ff00:0:110"
         context = MessageContext(
-            size_bytes=1024, priority=8, requires_realtime=True  # High priority
+            size_bytes=1024,
+            priority=8,
+            requires_realtime=True,  # High priority
         )
 
         self.mock_gateway.set_connectivity(healthy=True, scion_connected=True)
@@ -225,7 +229,9 @@ class TestSCIONPreference(unittest.TestCase):
         # Setup: SCION unavailable, Betanet available
         destination = "peer_node_42"
         context = MessageContext(
-            size_bytes=5120, priority=6, requires_realtime=False  # 5KB
+            size_bytes=5120,
+            priority=6,
+            requires_realtime=False,  # 5KB
         )
 
         self.mock_gateway.set_connectivity(healthy=False, scion_connected=False)
@@ -400,9 +406,7 @@ class TestSCIONPreference(unittest.TestCase):
 
         self.assertTrue((artifact_dir / "switch_receipts.json").exists())
 
-        print(
-            f"✅ Link flap switch test passed (switch_time={switch_time:.1f}ms)"
-        )
+        print(f"✅ Link flap switch test passed (switch_time={switch_time:.1f}ms)")
 
     async def test_path_scoring_rtt_ewma_loss(self):
         """Test path scoring using RTT EWMA + loss + policy"""

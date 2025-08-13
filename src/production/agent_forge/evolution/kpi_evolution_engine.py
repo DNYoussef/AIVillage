@@ -1,15 +1,15 @@
 """KPI-based evolution engine with retirement and evolution logic."""
 
 import asyncio
+import json
+import logging
+import threading
+import time
 from collections import defaultdict
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
-import json
-import logging
 from pathlib import Path
-import threading
-import time
 from typing import Any
 
 logger = logging.getLogger(__name__)

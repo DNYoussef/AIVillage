@@ -7,8 +7,8 @@ and reasoning strategies.
 
 import asyncio
 import logging
-from pathlib import Path
 import sys
+from pathlib import Path
 
 # Add project root to path
 project_root = Path(__file__).parent.parent
@@ -54,7 +54,9 @@ async def demo_query_classification() -> None:
         print(f"   Complexity: {analysis['complexity_score']:.3f}")
 
         if analysis["pattern_matches"]:
-            patterns = ", ".join(f"{k}({v:.2f})" for k, v in analysis["pattern_matches"].items())
+            patterns = ", ".join(
+                f"{k}({v:.2f})" for k, v in analysis["pattern_matches"].items()
+            )
             print(f"   Patterns: {patterns}")
 
         strategy = classifier.suggest_strategy(query_type, analysis["complexity_score"])
@@ -140,7 +142,9 @@ async def demo_plan_adaptation() -> None:
         },
     )
 
-    query = "Analyze the causal relationships between economic inequality and social unrest"
+    query = (
+        "Analyze the causal relationships between economic inequality and social unrest"
+    )
 
     # Create initial plan
     print("📋 Creating initial plan...")
@@ -204,7 +208,10 @@ async def demo_strategy_comparison() -> None:
 
             requirements = selector.get_strategy_requirements(strategy)
 
-            print(f"   {query_type.value:20} -> {strategy.value:20} " f"(~{requirements['estimated_time_ms']}ms)")
+            print(
+                f"   {query_type.value:20} -> {strategy.value:20} "
+                f"(~{requirements['estimated_time_ms']}ms)"
+            )
 
 
 async def demo_plan_dsl() -> None:
@@ -311,7 +318,9 @@ async def demo_learning_system() -> None:
     # Record feedback
     for feedback in feedback_examples:
         # Create dummy plan for feedback
-        plan = QueryPlan(query_type=feedback.query_type, reasoning_strategy=feedback.strategy)
+        plan = QueryPlan(
+            query_type=feedback.query_type, reasoning_strategy=feedback.strategy
+        )
 
         learner.record_execution_feedback(plan, feedback)
 
@@ -325,7 +334,9 @@ async def demo_learning_system() -> None:
     ]
 
     for query_type, complexity in test_scenarios:
-        strategy, confidence = learner.get_strategy_recommendation(query_type, complexity)
+        strategy, confidence = learner.get_strategy_recommendation(
+            query_type, complexity
+        )
         print(
             f"   {query_type.value:15} (complexity {complexity:.1f}) -> "
             f"{strategy.value:20} (confidence: {confidence:.3f})"
@@ -335,7 +346,9 @@ async def demo_learning_system() -> None:
     insights = learner.get_learning_insights()
     print("\n📊 Learning Statistics:")
     print(f"   Total Feedback: {insights['learning_stats']['total_feedback_received']}")
-    print(f"   Successful Adaptations: {insights['learning_stats']['successful_adaptations']}")
+    print(
+        f"   Successful Adaptations: {insights['learning_stats']['successful_adaptations']}"
+    )
 
     if insights["top_performing_strategies"]:
         print("\n🏆 Top Performing Strategies:")

@@ -7,10 +7,10 @@ performance baselines that can be used for regression detection.
 
 import argparse
 import json
-from pathlib import Path
 import statistics
 import subprocess
 import sys
+from pathlib import Path
 
 
 def run_benchmarks(iterations: int = 5) -> dict[str, list[float]]:
@@ -37,7 +37,9 @@ def run_benchmarks(iterations: int = 5) -> dict[str, list[float]]:
 
         try:
             # Run the tests
-            result = subprocess.run(cmd, check=False, capture_output=True, text=True, timeout=300)
+            result = subprocess.run(
+                cmd, check=False, capture_output=True, text=True, timeout=300
+            )
 
             if result.returncode == 0:
                 print(f"✅ Iteration {i + 1} completed successfully")
@@ -112,7 +114,9 @@ def calculate_baselines(results: dict[str, list[float]]) -> dict[str, dict[str, 
         print(f"{test_name}:")
         print(f"  Baseline: {baseline:.4f}s")
         print(
-            f"  Mean: {mean_duration:.4f}s ± {stdev:.4f}s" if len(durations) >= 3 else f"  Mean: {mean_duration:.4f}s"
+            f"  Mean: {mean_duration:.4f}s ± {stdev:.4f}s"
+            if len(durations) >= 3
+            else f"  Mean: {mean_duration:.4f}s"
         )
         print(f"  Range: {min_duration:.4f}s - {max_duration:.4f}s")
 
@@ -157,7 +161,9 @@ def load_existing_baselines(baselines_file: Path) -> dict[str, float]:
         return {}
 
 
-def compare_with_existing(new_baselines: dict[str, dict[str, float]], existing_baselines: dict[str, float]) -> None:
+def compare_with_existing(
+    new_baselines: dict[str, dict[str, float]], existing_baselines: dict[str, float]
+) -> None:
     """Compare new baselines with existing ones."""
     if not existing_baselines:
         print("\nNo existing baselines to compare with.")
@@ -206,7 +212,9 @@ def main() -> int | None:
         default=Path("tests/benchmarks/baselines.json"),
         help="Output file for baselines",
     )
-    parser.add_argument("--compare", action="store_true", help="Compare with existing baselines")
+    parser.add_argument(
+        "--compare", action="store_true", help="Compare with existing baselines"
+    )
 
     args = parser.parse_args()
 

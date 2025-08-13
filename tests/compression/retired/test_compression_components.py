@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """Test compression components directly to avoid import dependencies."""
 
-from collections import Counter
 import gzip
 import lzma
-from pathlib import Path
 import struct
 import sys
 import time
+from collections import Counter
+from pathlib import Path
 
 import torch
 from torch import nn

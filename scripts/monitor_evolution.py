@@ -2,8 +2,8 @@
 """Monitor the 50-generation evolution progress."""
 
 import json
-from pathlib import Path
 import time
+from pathlib import Path
 
 
 def monitor_progress() -> None:
@@ -52,7 +52,9 @@ def monitor_progress() -> None:
 
                     # Show fitness bar
                     bar_length = 30
-                    filled_length = int(bar_length * best_fitness / 1.5)  # Assume max 1.5
+                    filled_length = int(
+                        bar_length * best_fitness / 1.5
+                    )  # Assume max 1.5
                     bar = "█" * filled_length + "░" * (bar_length - filled_length)
                     print(f"  Fitness Bar:   [{bar}] {best_fitness:.3f}")
                     print("-" * 50)

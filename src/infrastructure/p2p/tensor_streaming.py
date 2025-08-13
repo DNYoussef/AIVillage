@@ -2,12 +2,12 @@
 
 import asyncio
 import base64
-from collections.abc import Iterator
 import hashlib
 import io
 import json
 import logging
 import time
+from collections.abc import Iterator
 from typing import Any
 
 # Import compression

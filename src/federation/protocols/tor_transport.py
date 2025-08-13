@@ -9,21 +9,21 @@ Implements Tor integration for anonymous communication with:
 """
 
 import asyncio
-from dataclasses import dataclass
 import logging
 import os
 import tempfile
 import time
-from typing import Any
 import uuid
+from dataclasses import dataclass
+from typing import Any
 
 # Tor control and management
 try:
     import stem
-    from stem import Signal
     import stem.control
     import stem.descriptor.hidden_service
     import stem.process
+    from stem import Signal
 
     TOR_AVAILABLE = True
 except ImportError:
@@ -124,7 +124,9 @@ class TorTransport:
 
         self.is_running = False
 
-        logger.info(f"TorTransport initialized: SOCKS={socks_port}, Control={control_port}")
+        logger.info(
+            f"TorTransport initialized: SOCKS={socks_port}, Control={control_port}"
+        )
 
     async def start(self) -> bool:
         """Start Tor transport with hidden service"""
@@ -198,7 +200,9 @@ class TorTransport:
 
         logger.info("Tor transport stopped")
 
-    async def send_message(self, recipient_onion: str, payload: dict[str, Any], timeout: int = 30) -> bool:
+    async def send_message(
+        self, recipient_onion: str, payload: dict[str, Any], timeout: int = 30
+    ) -> bool:
         """Send message to Tor hidden service"""
         if not self.is_running:
             return False
@@ -234,7 +238,9 @@ class TorTransport:
             logger.error(f"Tor message send failed: {e}")
             return False
 
-    async def create_circuit(self, purpose: str = "general", min_hops: int | None = None) -> str | None:
+    async def create_circuit(
+        self, purpose: str = "general", min_hops: int | None = None
+    ) -> str | None:
         """Create new Tor circuit with specified parameters"""
         if not self.tor_controller:
             return None
@@ -251,7 +257,9 @@ class TorTransport:
 
             if circuit_info and circuit_info.status == "BUILT":
                 # Store circuit information
-                path = [relay[0] for relay in circuit_info.path]  # Extract relay fingerprints
+                path = [
+                    relay[0] for relay in circuit_info.path
+                ]  # Extract relay fingerprints
 
                 circuit = TorCircuit(
                     circuit_id=circuit_id,
@@ -284,7 +292,9 @@ class TorTransport:
 
     def get_active_circuits(self) -> list[TorCircuit]:
         """Get all active circuits"""
-        return [circuit for circuit in self.circuits.values() if circuit.is_established()]
+        return [
+            circuit for circuit in self.circuits.values() if circuit.is_established()
+        ]
 
     def register_message_handler(self, message_type: str, handler):
         """Register handler for incoming messages"""
@@ -338,7 +348,9 @@ class TorTransport:
         """Connect to Tor control port"""
         try:
             # Connect to control port
-            self.tor_controller = stem.control.Controller.from_port(port=self.control_port)
+            self.tor_controller = stem.control.Controller.from_port(
+                port=self.control_port
+            )
             self.tor_controller.authenticate()
 
             logger.info("Connected to Tor control port")
@@ -420,7 +432,9 @@ class TorTransport:
         )
 
         # Configure SOCKS proxy (simplified - would need proper SOCKS implementation)
-        logger.info(f"Created client session with Tor SOCKS proxy on port {self.socks_port}")
+        logger.info(
+            f"Created client session with Tor SOCKS proxy on port {self.socks_port}"
+        )
 
     async def _handle_http_message(self, request: web.Request) -> web.Response:
         """Handle incoming HTTP message"""
@@ -480,7 +494,9 @@ class TorTransport:
 
                     # Remove closed circuits
                     closed_circuits = [
-                        cid for cid, circuit in self.circuits.items() if circuit.status in ["CLOSED", "FAILED"]
+                        cid
+                        for cid, circuit in self.circuits.items()
+                        if circuit.status in ["CLOSED", "FAILED"]
                     ]
 
                     for cid in closed_circuits:
@@ -547,7 +563,9 @@ class TorFederationExtension:
         self.federation_peers[device_id] = onion_address
         logger.info(f"Registered federation peer {device_id}: {onion_address[:16]}...")
 
-    async def send_federation_message(self, device_id: str, message_type: str, payload: dict[str, Any]) -> bool:
+    async def send_federation_message(
+        self, device_id: str, message_type: str, payload: dict[str, Any]
+    ) -> bool:
         """Send message to federation peer via Tor"""
         if device_id not in self.federation_peers:
             logger.error(f"Unknown federation peer: {device_id}")
@@ -563,7 +581,9 @@ class TorFederationExtension:
 
         return await self.tor_transport.send_message(onion_address, federation_message)
 
-    async def broadcast_to_federation(self, message_type: str, payload: dict[str, Any]) -> int:
+    async def broadcast_to_federation(
+        self, message_type: str, payload: dict[str, Any]
+    ) -> int:
         """Broadcast message to all federation peers"""
         success_count = 0
 

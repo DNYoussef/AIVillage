@@ -9,17 +9,17 @@ Provides centralized configuration management with:
 """
 
 import copy
-from datetime import datetime
 import json
 import logging
 import os
-from pathlib import Path
 import threading
+from datetime import datetime
+from pathlib import Path
 from typing import Any
 
+import yaml
 from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
-import yaml
 
 from .security import HTTPSecurityError, validate_config_dict_for_production
 
@@ -38,7 +38,10 @@ class ConfigWatcher(FileSystemEventHandler):
 
     def on_modified(self, event) -> None:
         """Handle file modification events."""
-        if not event.is_directory and event.src_path in self.config_manager.watched_files:
+        if (
+            not event.is_directory
+            and event.src_path in self.config_manager.watched_files
+        ):
             logger.info(f"Configuration file changed: {event.src_path}")
             self.config_manager.reload_config()
 
@@ -46,7 +49,9 @@ class ConfigWatcher(FileSystemEventHandler):
 class CODEXConfigManager:
     """Comprehensive configuration manager for CODEX integration."""
 
-    def __init__(self, config_dir: str = "config", enable_hot_reload: bool = True) -> None:
+    def __init__(
+        self, config_dir: str = "config", enable_hot_reload: bool = True
+    ) -> None:
         self.config_dir = Path(config_dir)
         self.enable_hot_reload = enable_hot_reload
         self.config_data = {}
@@ -220,7 +225,9 @@ class CODEXConfigManager:
                     converted_value = env_value
 
                 self.set_nested_value(config_copy, config_path, converted_value)
-                logger.info(f"Applied environment override: {env_var} -> {config_path} = {converted_value}")
+                logger.info(
+                    f"Applied environment override: {env_var} -> {config_path} = {converted_value}"
+                )
 
         return config_copy
 
@@ -253,7 +260,9 @@ class CODEXConfigManager:
                     validate_config_dict_for_production(final_config)
                 except HTTPSecurityError as e:
                     logger.error(f"HTTPS validation failed: {e}")
-                    raise ConfigurationError(f"Production security validation failed: {e}")
+                    raise ConfigurationError(
+                        f"Production security validation failed: {e}"
+                    )
 
                 # Update instance configuration
                 self.config_data = final_config
@@ -289,7 +298,9 @@ class CODEXConfigManager:
             # Check if database path parent directory exists
             db_path_obj = Path(db_path)
             if not db_path_obj.parent.exists():
-                warnings.append(f"Evolution metrics database directory does not exist: {db_path_obj.parent}")
+                warnings.append(
+                    f"Evolution metrics database directory does not exist: {db_path_obj.parent}"
+                )
 
         # RAG pipeline validation
         if integration.get("rag_pipeline", {}).get("enabled"):
@@ -308,7 +319,9 @@ class CODEXConfigManager:
             if cache_dir:
                 cache_path = Path(cache_dir)
                 if not cache_path.parent.exists():
-                    warnings.append(f"RAG cache directory parent does not exist: {cache_path.parent}")
+                    warnings.append(
+                        f"RAG cache directory parent does not exist: {cache_path.parent}"
+                    )
 
         # P2P networking validation
         if integration.get("p2p_networking", {}).get("enabled"):
@@ -324,14 +337,20 @@ class CODEXConfigManager:
             # Check required P2P settings match CODEX requirements
             expected_port = 4001
             if port != expected_port:
-                warnings.append(f"P2P port {port} differs from CODEX requirement: {expected_port}")
+                warnings.append(
+                    f"P2P port {port} differs from CODEX requirement: {expected_port}"
+                )
 
         # Digital twin validation
         if integration.get("digital_twin", {}).get("enabled"):
             dt_config = integration["digital_twin"]
 
-            if dt_config.get("encryption_enabled") and not dt_config.get("encryption_key"):
-                errors.append("Digital twin encryption enabled but no encryption_key provided")
+            if dt_config.get("encryption_enabled") and not dt_config.get(
+                "encryption_key"
+            ):
+                errors.append(
+                    "Digital twin encryption enabled but no encryption_key provided"
+                )
 
             max_profiles = dt_config.get("max_profiles", 10000)
             if not isinstance(max_profiles, int) or max_profiles <= 0:
@@ -413,7 +432,11 @@ class CODEXConfigManager:
             "hot_reload_enabled": self.enable_hot_reload,
             "watched_files": list(self.watched_files),
             "environment_overrides_applied": len(
-                [env_var for env_var in self.env_mappings if os.getenv(env_var) is not None]
+                [
+                    env_var
+                    for env_var in self.env_mappings
+                    if os.getenv(env_var) is not None
+                ]
             ),
         }
 

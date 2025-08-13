@@ -11,11 +11,11 @@ Features:
 - Answer synthesis that respects idea boundaries and maintains context
 """
 
-from dataclasses import dataclass, field
-from enum import Enum
 import logging
 import re
 import time
+from dataclasses import dataclass, field
+from enum import Enum
 from typing import Any
 
 from bayesian_trust_graph import RelationshipType

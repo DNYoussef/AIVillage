@@ -1,5 +1,5 @@
-from concurrent.futures import ProcessPoolExecutor
 import logging
+from concurrent.futures import ProcessPoolExecutor
 
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer

@@ -8,10 +8,10 @@ Validates all deliverables and runs integration tests to ensure 7-hop relay func
 
 import argparse
 import os
-from pathlib import Path
 import subprocess
 import sys
 import time
+from pathlib import Path
 
 
 class Colors:

@@ -5,10 +5,10 @@ and that no unsafe deserialization occurs in the codebase.
 """
 
 import json
-from pathlib import Path
 import re
 import subprocess
 import unittest
+from pathlib import Path
 
 
 class TestSecureSerialization(unittest.TestCase):

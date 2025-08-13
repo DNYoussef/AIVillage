@@ -9,28 +9,28 @@ This server is for development and testing purposes only.
 WARNING: This server is NOT production-ready despite being shown in quick start guides.
 """
 
-from collections import defaultdict
 import html
 import mimetypes
 import os
-from pathlib import Path
 import re
 import tempfile
 import time
 import warnings
+from collections import defaultdict
+from pathlib import Path
 
 from fastapi import FastAPI, File, Request, UploadFile
 from fastapi.middleware import Middleware
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field, ValidationError, field_validator
-from starlette.middleware.base import BaseHTTPMiddleware
-
-from core.evidence import Chunk, ConfidenceTier, EvidencePack
 from rag_system.core.pipeline import EnhancedRAGPipeline
 from rag_system.graph_explain import MAX_HOPS, explain_path
 from rag_system.tracking.unified_knowledge_tracker import UnifiedKnowledgeTracker
 from rag_system.utils.logging import setup_logger as get_logger
+from starlette.middleware.base import BaseHTTPMiddleware
+
+from core.evidence import Chunk, ConfidenceTier, EvidencePack
 
 logger = get_logger(__name__)
 
@@ -46,7 +46,8 @@ if not IS_DEV_MODE:
         stacklevel=2,
     )
     logger.warning(
-        "server.py started without AIVILLAGE_DEV_MODE=true. " "This service is deprecated for production use."
+        "server.py started without AIVILLAGE_DEV_MODE=true. "
+        "This service is deprecated for production use."
     )
 
 # Validate required environment variables
@@ -69,7 +70,9 @@ class RateLimiter:
         """Check if client is within rate limits."""
         now = time.time()
         self.requests[client_id] = [
-            req_time for req_time in self.requests[client_id] if now - req_time < self.window_seconds
+            req_time
+            for req_time in self.requests[client_id]
+            if now - req_time < self.window_seconds
         ]
         if len(self.requests[client_id]) >= self.max_requests:
             return False
@@ -136,7 +139,9 @@ class SecurityMiddleware(BaseHTTPMiddleware):
 
         if request.url.path.startswith(("/query", "/upload")):
             if not rate_limiter.is_allowed(client_id):
-                return JSONResponse(status_code=429, content={"detail": "Rate limit exceeded"})
+                return JSONResponse(
+                    status_code=429, content={"detail": "Rate limit exceeded"}
+                )
 
         if API_KEY and request.url.path not in (
             "/",
@@ -152,15 +157,21 @@ class SecurityMiddleware(BaseHTTPMiddleware):
             response = await call_next(request)
         except ValidationError:
             logger.warning(f"Validation error from {client_id}")
-            return JSONResponse(status_code=400, content={"detail": "Invalid request format"})
+            return JSONResponse(
+                status_code=400, content={"detail": "Invalid request format"}
+            )
         except Exception as e:
             logger.exception(f"Server error from {client_id}: {e}")
-            return JSONResponse(status_code=500, content={"detail": "Internal server error"})
+            return JSONResponse(
+                status_code=500, content={"detail": "Internal server error"}
+            )
 
         return response
 
 
-app = FastAPI(middleware=[Middleware(SecurityMiddleware), Middleware(DeprecationMiddleware)])
+app = FastAPI(
+    middleware=[Middleware(SecurityMiddleware), Middleware(DeprecationMiddleware)]
+)
 app.mount("/ui", StaticFiles(directory="ui"), name="ui")
 
 rag_pipeline = EnhancedRAGPipeline()
@@ -286,7 +297,9 @@ async def query_endpoint(request: SecureQueryRequest):
         return result
     except Exception as e:
         logger.exception(f"Query processing failed: {e}")
-        return JSONResponse(status_code=500, content={"detail": "Query processing failed"})
+        return JSONResponse(
+            status_code=500, content={"detail": "Query processing failed"}
+        )
 
 
 @app.post("/upload")
@@ -311,7 +324,9 @@ async def upload_endpoint(file: UploadFile = File(...)):
         return JSONResponse(status_code=400, content={"detail": str(e)})
     except Exception as e:
         logger.exception(f"Upload endpoint error: {e}")
-        return JSONResponse(status_code=500, content={"detail": "Internal server error"})
+        return JSONResponse(
+            status_code=500, content={"detail": "Internal server error"}
+        )
 
 
 @app.get("/")
@@ -338,7 +353,9 @@ async def healthz_endpoint():
         }
     except Exception as e:
         logger.exception(f"Health check failed: {e}")
-        return JSONResponse(status_code=503, content={"status": "unhealthy", "error": str(e)})
+        return JSONResponse(
+            status_code=503, content={"status": "unhealthy", "error": str(e)}
+        )
 
 
 @app.get("/bayes")
@@ -366,7 +383,9 @@ async def v1_explanation_endpoint(chat_id: str):
             return app.state.evidence_cache[chat_id]
 
         # Return minimal placeholder for backward compatibility
-        logger.info(f"No evidence found for chat_id: {chat_id}, using minimal placeholder")
+        logger.info(
+            f"No evidence found for chat_id: {chat_id}, using minimal placeholder"
+        )
         placeholder_packs = [
             EvidencePack(
                 query=f"query_for_{chat_id}",

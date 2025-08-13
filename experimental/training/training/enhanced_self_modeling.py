@@ -4,14 +4,14 @@ This module implements comprehensive self-modeling with temperature sweeps,
 deeper self-reflection, and integration with the Agent Forge pipeline.
 """
 
-from dataclasses import dataclass
 import logging
 import math
 import random
+from dataclasses import dataclass
 
 import torch
-from torch import nn
 import torch.nn.functional as F
+from torch import nn
 from tqdm import tqdm
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
@@ -93,18 +93,25 @@ class EnhancedSelfModeling:
 
         # Optimizer for self-modeling components
         self.optimizer = torch.optim.AdamW(
-            list(self.self_predictor.parameters()) + list(self.reflection_network.parameters()),
+            list(self.self_predictor.parameters())
+            + list(self.reflection_network.parameters()),
             lr=1e-4,
         )
 
         # GrokFast optimizer for main model
         if self.config.enable_grokfast:
-            self.grokfast_optimizer = GrokFastOptimizer(self.model.parameters(), lr=2e-5, alpha=0.98, lamb=2.0)
+            self.grokfast_optimizer = GrokFastOptimizer(
+                self.model.parameters(), lr=2e-5, alpha=0.98, lamb=2.0
+            )
         else:
-            self.grokfast_optimizer = torch.optim.AdamW(self.model.parameters(), lr=2e-5)
+            self.grokfast_optimizer = torch.optim.AdamW(
+                self.model.parameters(), lr=2e-5
+            )
 
         # Expert vector manager
-        self.expert_vectors = ExpertVectorManager(model_dim=hidden_size, num_experts=8, expert_dim=hidden_size // 4)
+        self.expert_vectors = ExpertVectorManager(
+            model_dim=hidden_size, num_experts=8, expert_dim=hidden_size // 4
+        )
 
         # Tracking metrics
         self.temperature_metrics = {}
@@ -121,7 +128,9 @@ class EnhancedSelfModeling:
 
         for _ in range(num_samples):
             # Sample temperature from range
-            temp = random.uniform(temperature_range.min_temp, temperature_range.max_temp)
+            temp = random.uniform(
+                temperature_range.min_temp, temperature_range.max_temp
+            )
 
             # Generate text
             inputs = self.tokenizer(
@@ -141,7 +150,9 @@ class EnhancedSelfModeling:
                     pad_token_id=self.tokenizer.eos_token_id,
                 )
 
-            generated_text = self.tokenizer.decode(outputs[0][inputs.input_ids.size(1) :], skip_special_tokens=True)
+            generated_text = self.tokenizer.decode(
+                outputs[0][inputs.input_ids.size(1) :], skip_special_tokens=True
+            )
 
             # Calculate generation metrics
             metrics = self._calculate_generation_metrics(outputs[0], temp)
@@ -150,7 +161,9 @@ class EnhancedSelfModeling:
 
         return samples
 
-    def _calculate_generation_metrics(self, output_ids: torch.Tensor, temperature: float) -> dict:
+    def _calculate_generation_metrics(
+        self, output_ids: torch.Tensor, temperature: float
+    ) -> dict:
         """Calculate metrics for generated text."""
         # Convert to text for analysis
         text = self.tokenizer.decode(output_ids, skip_special_tokens=True)
@@ -192,7 +205,9 @@ class EnhancedSelfModeling:
 
         return entropy
 
-    def perform_self_reflection(self, generated_samples: list[tuple[str, float, dict]], prompt: str) -> dict:
+    def perform_self_reflection(
+        self, generated_samples: list[tuple[str, float, dict]], prompt: str
+    ) -> dict:
         """Perform deep self-reflection on generated samples."""
         logger.info(f"Performing self-reflection on {len(generated_samples)} samples")
 
@@ -239,11 +254,15 @@ class EnhancedSelfModeling:
         return {
             "reflection_text": reflection_text,
             "temperature_analysis": temp_analysis,
-            "best_temperature_range": self._find_best_temperature_range(generated_samples),
+            "best_temperature_range": self._find_best_temperature_range(
+                generated_samples
+            ),
             "coherence_scores": self._calculate_coherence_scores(generated_samples),
         }
 
-    def _analyze_temperature_effects(self, samples: list[tuple[str, float, dict]]) -> dict:
+    def _analyze_temperature_effects(
+        self, samples: list[tuple[str, float, dict]]
+    ) -> dict:
         """Analyze how temperature affects generation quality."""
         temp_buckets = {
             "low": (0.0, 0.3),
@@ -258,9 +277,15 @@ class EnhancedSelfModeling:
             bucket_samples = [s for s in samples if min_temp <= s[1] < max_temp]
 
             if bucket_samples:
-                avg_diversity = sum(s[2]["diversity"] for s in bucket_samples) / len(bucket_samples)
-                avg_repetition = sum(s[2]["repetition"] for s in bucket_samples) / len(bucket_samples)
-                avg_entropy = sum(s[2]["entropy"] for s in bucket_samples) / len(bucket_samples)
+                avg_diversity = sum(s[2]["diversity"] for s in bucket_samples) / len(
+                    bucket_samples
+                )
+                avg_repetition = sum(s[2]["repetition"] for s in bucket_samples) / len(
+                    bucket_samples
+                )
+                avg_entropy = sum(s[2]["entropy"] for s in bucket_samples) / len(
+                    bucket_samples
+                )
 
                 analysis[bucket_name] = {
                     "count": len(bucket_samples),
@@ -272,13 +297,17 @@ class EnhancedSelfModeling:
 
         return analysis
 
-    def _find_best_temperature_range(self, samples: list[tuple[str, float, dict]]) -> dict:
+    def _find_best_temperature_range(
+        self, samples: list[tuple[str, float, dict]]
+    ) -> dict:
         """Find the temperature range that produces best results."""
         best_temp = 0.7
         best_score = -float("inf")
 
         for _text, temp, metrics in samples:
-            score = metrics["diversity"] - metrics["repetition"] + metrics["entropy"] * 0.1
+            score = (
+                metrics["diversity"] - metrics["repetition"] + metrics["entropy"] * 0.1
+            )
             if score > best_score:
                 best_score = score
                 best_temp = temp
@@ -297,9 +326,13 @@ class EnhancedSelfModeling:
             return "Use moderate temperature for balanced creativity and coherence"
         if temp < 1.0:
             return "Use high temperature for creative tasks"
-        return "Use very high temperature for maximum creativity (may sacrifice coherence)"
+        return (
+            "Use very high temperature for maximum creativity (may sacrifice coherence)"
+        )
 
-    def _calculate_coherence_scores(self, samples: list[tuple[str, float, dict]]) -> list[float]:
+    def _calculate_coherence_scores(
+        self, samples: list[tuple[str, float, dict]]
+    ) -> list[float]:
         """Calculate coherence scores for generated samples."""
         coherence_scores = []
 
@@ -310,7 +343,9 @@ class EnhancedSelfModeling:
 
         return coherence_scores
 
-    def mask_and_predict(self, text: str, num_masks: int | None = None) -> tuple[torch.Tensor, torch.Tensor, list[int]]:
+    def mask_and_predict(
+        self, text: str, num_masks: int | None = None
+    ) -> tuple[torch.Tensor, torch.Tensor, list[int]]:
         """Create masked version of text for self-modeling."""
         if num_masks is None:
             num_masks = self.config.num_mask_tokens
@@ -359,7 +394,9 @@ class EnhancedSelfModeling:
             masked_input, labels, mask_positions = self.mask_and_predict(text)
 
             # Forward pass through model
-            outputs = self.model(input_ids=masked_input, labels=labels, output_hidden_states=True)
+            outputs = self.model(
+                input_ids=masked_input, labels=labels, output_hidden_states=True
+            )
 
             # Self-modeling loss
             hidden_states = outputs.hidden_states[-1]
@@ -377,7 +414,9 @@ class EnhancedSelfModeling:
 
             # Combined loss
             total_loss_sample = (
-                outputs.loss + self.config.self_modeling_weight * self_modeling_loss + 0.05 * reflection_loss
+                outputs.loss
+                + self.config.self_modeling_weight * self_modeling_loss
+                + 0.05 * reflection_loss
             )
 
             # Backward pass
@@ -398,7 +437,9 @@ class EnhancedSelfModeling:
             "samples_processed": num_samples,
         }
 
-    def run_self_modeling_cycle(self, prompts: list[str], num_cycles: int = 100) -> dict:
+    def run_self_modeling_cycle(
+        self, prompts: list[str], num_cycles: int = 100
+    ) -> dict:
         """Run complete self-modeling cycle."""
         logger.info(f"Starting self-modeling cycle with {len(prompts)} prompts")
 
@@ -418,8 +459,12 @@ class EnhancedSelfModeling:
                 # Generate samples across temperature ranges
                 all_samples = []
                 for temp_range in self.config.temperature_ranges:
-                    samples_per_range = self.config.num_temperature_samples // len(self.config.temperature_ranges)
-                    samples = self.generate_temperature_samples(prompt, temp_range, samples_per_range)
+                    samples_per_range = self.config.num_temperature_samples // len(
+                        self.config.temperature_ranges
+                    )
+                    samples = self.generate_temperature_samples(
+                        prompt, temp_range, samples_per_range
+                    )
                     all_samples.extend(samples)
 
                 # Perform self-reflection
@@ -435,8 +480,12 @@ class EnhancedSelfModeling:
                 cycle_samples += training_results["samples_processed"]
 
                 # Store insights
-                cycle_results["temperature_insights"][prompt] = reflection_results["temperature_analysis"]
-                cycle_results["reflection_insights"][prompt] = reflection_results["reflection_text"]
+                cycle_results["temperature_insights"][prompt] = reflection_results[
+                    "temperature_analysis"
+                ]
+                cycle_results["reflection_insights"][prompt] = reflection_results[
+                    "reflection_text"
+                ]
 
             # Record cycle metrics
             cycle_results["training_metrics"].append(
@@ -453,18 +502,26 @@ class EnhancedSelfModeling:
             if self.config.save_checkpoints and cycle % 10 == 0:
                 self._save_checkpoint(cycle)
 
-        logger.info(f"Self-modeling cycle completed: {cycle_results['cycles_completed']} cycles")
+        logger.info(
+            f"Self-modeling cycle completed: {cycle_results['cycles_completed']} cycles"
+        )
 
         return cycle_results
 
-    def _update_expert_vectors(self, samples: list[tuple[str, float, dict]], reflection_results: dict) -> None:
+    def _update_expert_vectors(
+        self, samples: list[tuple[str, float, dict]], reflection_results: dict
+    ) -> None:
         """Update expert vectors based on best performing samples."""
         # Find best samples
-        best_samples = sorted(samples, key=lambda x: x[2]["diversity"] - x[2]["repetition"])[-5:]
+        best_samples = sorted(
+            samples, key=lambda x: x[2]["diversity"] - x[2]["repetition"]
+        )[-5:]
 
         # Extract features from best samples
         for text, _temp, _metrics in best_samples:
-            inputs = self.tokenizer(text, return_tensors="pt", truncation=True).to(self.device)
+            inputs = self.tokenizer(text, return_tensors="pt", truncation=True).to(
+                self.device
+            )
 
             with torch.no_grad():
                 outputs = self.model(inputs.input_ids, output_hidden_states=True)
@@ -479,7 +536,9 @@ class EnhancedSelfModeling:
         checkpoint = {
             "cycle": cycle,
             "self_predictor_state": self.self_predictor.state_dict(),
-            "reflection_network_state": [layer.state_dict() for layer in self.reflection_network],
+            "reflection_network_state": [
+                layer.state_dict() for layer in self.reflection_network
+            ],
             "optimizer_state": self.optimizer.state_dict(),
             "expert_vectors": self.expert_vectors.get_all_experts(),
             "temperature_metrics": self.temperature_metrics,
@@ -514,10 +573,14 @@ class EnhancedSelfModeling:
 
         # Analyze reflection patterns
         if self.reflection_metrics:
-            recommendations.append("Self-reflection improved coherence in creative tasks")
+            recommendations.append(
+                "Self-reflection improved coherence in creative tasks"
+            )
 
         # Expert vector insights
-        recommendations.append(f"Developed {self.expert_vectors.num_experts} expert vectors")
+        recommendations.append(
+            f"Developed {self.expert_vectors.num_experts} expert vectors"
+        )
 
         return recommendations
 

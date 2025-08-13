@@ -9,12 +9,12 @@ The auditing and compliance specialist of AIVillage, responsible for:
 - Risk assessment based on activity patterns
 """
 
-from collections import defaultdict
-from dataclasses import dataclass
-from enum import Enum
 import hashlib
 import logging
 import time
+from collections import defaultdict
+from dataclasses import dataclass
+from enum import Enum
 from typing import Any
 
 from src.production.rag.rag_system.core.agent_interface import AgentInterface
@@ -105,7 +105,9 @@ class AuditorAgent(AgentInterface):
         self.receipts: dict[str, Receipt] = {}
         self.receipts_by_agent: dict[str, list[str]] = defaultdict(list)
         self.receipts_by_type: dict[ReceiptType, list[str]] = defaultdict(list)
-        self.receipts_by_date: dict[str, list[str]] = defaultdict(list)  # YYYY-MM-DD format
+        self.receipts_by_date: dict[str, list[str]] = defaultdict(
+            list
+        )  # YYYY-MM-DD format
 
         # Financial tracking
         self.total_costs_usd = 0.0
@@ -163,7 +165,9 @@ class AuditorAgent(AgentInterface):
         # Audit embeddings focus on compliance and accountability patterns
         return [(hash_value % 1000) / 1000.0] * 448
 
-    async def rerank(self, query: str, results: list[dict[str, Any]], k: int) -> list[dict[str, Any]]:
+    async def rerank(
+        self, query: str, results: list[dict[str, Any]], k: int
+    ) -> list[dict[str, Any]]:
         """Rerank based on audit and compliance relevance"""
         audit_keywords = [
             "receipt",
@@ -187,12 +191,17 @@ class AuditorAgent(AgentInterface):
                 score += content.lower().count(keyword) * 1.8
 
             # Boost compliance and accountability content
-            if any(term in content.lower() for term in ["compliance", "accountability", "transparency"]):
+            if any(
+                term in content.lower()
+                for term in ["compliance", "accountability", "transparency"]
+            ):
                 score *= 1.6
 
             result["audit_relevance"] = score
 
-        return sorted(results, key=lambda x: x.get("audit_relevance", 0), reverse=True)[:k]
+        return sorted(results, key=lambda x: x.get("audit_relevance", 0), reverse=True)[
+            :k
+        ]
 
     async def introspect(self) -> dict[str, Any]:
         """Return Auditor agent status and metrics"""
@@ -217,7 +226,9 @@ class AuditorAgent(AgentInterface):
     async def communicate(self, message: str, recipient: "AgentInterface") -> str:
         """Communicate audit findings and compliance status"""
         # Add audit context to communications
-        if any(keyword in message.lower() for keyword in ["receipt", "audit", "compliance"]):
+        if any(
+            keyword in message.lower() for keyword in ["receipt", "audit", "compliance"]
+        ):
             audit_context = "[AUDIT VERIFIED]"
             message = f"{audit_context} {message}"
 
@@ -246,7 +257,9 @@ class AuditorAgent(AgentInterface):
 
     async def record_receipt(self, receipt_data: dict[str, Any]) -> dict[str, Any]:
         """Record a new receipt from an agent - MVP function"""
-        receipt_id = receipt_data.get("receipt_id", f"receipt_{int(time.time())}_{len(self.receipts)}")
+        receipt_id = receipt_data.get(
+            "receipt_id", f"receipt_{int(time.time())}_{len(self.receipts)}"
+        )
 
         # Create receipt object
         receipt = Receipt(
@@ -314,7 +327,9 @@ class AuditorAgent(AgentInterface):
         if self.auto_compliance_check:
             await self._check_receipt_compliance(receipt)
 
-        logger.info(f"Receipt recorded: {receipt_id} from {receipt.agent_id} - ${receipt.cost_usd or 0}")
+        logger.info(
+            f"Receipt recorded: {receipt_id} from {receipt.agent_id} - ${receipt.cost_usd or 0}"
+        )
 
         # Create audit receipt for this action
         audit_receipt = {
@@ -337,7 +352,9 @@ class AuditorAgent(AgentInterface):
             "audit_receipt": audit_receipt,
         }
 
-    async def _verify_receipt(self, receipt: Receipt, original_data: dict[str, Any]) -> dict[str, Any]:
+    async def _verify_receipt(
+        self, receipt: Receipt, original_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """Verify receipt authenticity and integrity"""
         verification_start = time.time()
         verification_issues = []
@@ -350,7 +367,9 @@ class AuditorAgent(AgentInterface):
 
         # Verify signature if present
         if receipt.signature:
-            expected_signature = f"{receipt.agent_id}_{receipt.action}_{int(receipt.timestamp)}"
+            expected_signature = (
+                f"{receipt.agent_id}_{receipt.action}_{int(receipt.timestamp)}"
+            )
             if expected_signature not in receipt.signature:
                 verification_issues.append("Invalid signature format")
 
@@ -370,7 +389,8 @@ class AuditorAgent(AgentInterface):
 
         verification_time = (time.time() - verification_start) * 1000
         self.average_verification_time_ms = (
-            self.average_verification_time_ms * self.receipts_verified + verification_time
+            self.average_verification_time_ms * self.receipts_verified
+            + verification_time
         ) / (self.receipts_verified + 1)
 
         return {
@@ -397,7 +417,8 @@ class AuditorAgent(AgentInterface):
         recent_receipts = [
             r
             for r in self.receipts.values()
-            if r.agent_id == receipt.agent_id and r.timestamp > time.time() - 3600  # Last hour
+            if r.agent_id == receipt.agent_id
+            and r.timestamp > time.time() - 3600  # Last hour
         ]
 
         if len(recent_receipts) > 100:  # More than 100 actions per hour
@@ -430,7 +451,9 @@ class AuditorAgent(AgentInterface):
         self.compliance_alerts[alert_id] = alert
         self.compliance_violations_found += 1
 
-        logger.warning(f"Compliance alert {alert_id}: {description} (Severity: {severity})")
+        logger.warning(
+            f"Compliance alert {alert_id}: {description} (Severity: {severity})"
+        )
 
     async def search_receipts(self, search_criteria: dict[str, Any]) -> list[Receipt]:
         """Search receipts based on criteria - MVP function"""
@@ -453,17 +476,29 @@ class AuditorAgent(AgentInterface):
             matches = True
 
             # Agent ID filter
-            if "agent_id" in search_criteria and receipt.agent_id != search_criteria["agent_id"]:
+            if (
+                "agent_id" in search_criteria
+                and receipt.agent_id != search_criteria["agent_id"]
+            ):
                 matches = False
 
             # Action filter
-            if "action" in search_criteria and search_criteria["action"].lower() not in receipt.action.lower():
+            if (
+                "action" in search_criteria
+                and search_criteria["action"].lower() not in receipt.action.lower()
+            ):
                 matches = False
 
             # Time range filter
-            if "start_time" in search_criteria and receipt.timestamp < search_criteria["start_time"]:
+            if (
+                "start_time" in search_criteria
+                and receipt.timestamp < search_criteria["start_time"]
+            ):
                 matches = False
-            if "end_time" in search_criteria and receipt.timestamp > search_criteria["end_time"]:
+            if (
+                "end_time" in search_criteria
+                and receipt.timestamp > search_criteria["end_time"]
+            ):
                 matches = False
 
             # Cost range filter
@@ -471,11 +506,17 @@ class AuditorAgent(AgentInterface):
                 not receipt.cost_usd or receipt.cost_usd < search_criteria["min_cost"]
             ):
                 matches = False
-            if "max_cost" in search_criteria and (receipt.cost_usd and receipt.cost_usd > search_criteria["max_cost"]):
+            if "max_cost" in search_criteria and (
+                receipt.cost_usd and receipt.cost_usd > search_criteria["max_cost"]
+            ):
                 matches = False
 
             # Verification status filter
-            if "verified_only" in search_criteria and search_criteria["verified_only"] and not receipt.verified:
+            if (
+                "verified_only" in search_criteria
+                and search_criteria["verified_only"]
+                and not receipt.verified
+            ):
                 matches = False
 
             # Compliance status filter
@@ -494,7 +535,9 @@ class AuditorAgent(AgentInterface):
         if "limit" in search_criteria:
             matching_receipts = matching_receipts[: search_criteria["limit"]]
 
-        logger.info(f"Receipt search returned {len(matching_receipts)} results from {len(candidate_ids)} candidates")
+        logger.info(
+            f"Receipt search returned {len(matching_receipts)} results from {len(candidate_ids)} candidates"
+        )
 
         return matching_receipts
 
@@ -510,7 +553,9 @@ class AuditorAgent(AgentInterface):
 
         # Filter receipts for the time range
         relevant_receipts = [
-            receipt for receipt in self.receipts.values() if start_time <= receipt.timestamp <= end_time
+            receipt
+            for receipt in self.receipts.values()
+            if start_time <= receipt.timestamp <= end_time
         ]
 
         # Filter by agents if specified
@@ -526,13 +571,25 @@ class AuditorAgent(AgentInterface):
 
         # Compliance summary
         compliance_summary = {
-            "compliant": sum(1 for r in relevant_receipts if r.compliance_status == ComplianceStatus.COMPLIANT),
-            "non_compliant": sum(1 for r in relevant_receipts if r.compliance_status == ComplianceStatus.NON_COMPLIANT),
+            "compliant": sum(
+                1
+                for r in relevant_receipts
+                if r.compliance_status == ComplianceStatus.COMPLIANT
+            ),
+            "non_compliant": sum(
+                1
+                for r in relevant_receipts
+                if r.compliance_status == ComplianceStatus.NON_COMPLIANT
+            ),
             "pending_review": sum(
-                1 for r in relevant_receipts if r.compliance_status == ComplianceStatus.PENDING_REVIEW
+                1
+                for r in relevant_receipts
+                if r.compliance_status == ComplianceStatus.PENDING_REVIEW
             ),
             "requires_attention": sum(
-                1 for r in relevant_receipts if r.compliance_status == ComplianceStatus.REQUIRES_ATTENTION
+                1
+                for r in relevant_receipts
+                if r.compliance_status == ComplianceStatus.REQUIRES_ATTENTION
             ),
         }
 
@@ -545,14 +602,18 @@ class AuditorAgent(AgentInterface):
             agent_activity[receipt.agent_id] += 1
         if agent_activity:
             most_active = max(agent_activity.items(), key=lambda x: x[1])
-            key_findings.append(f"Most active agent: {most_active[0]} with {most_active[1]} actions")
+            key_findings.append(
+                f"Most active agent: {most_active[0]} with {most_active[1]} actions"
+            )
 
         # Highest cost operations
         if relevant_receipts:
             receipts_with_costs = [r for r in relevant_receipts if r.cost_usd]
             if receipts_with_costs:
                 highest_cost = max(receipts_with_costs, key=lambda r: r.cost_usd)
-                key_findings.append(f"Highest cost operation: ${highest_cost.cost_usd} for {highest_cost.action}")
+                key_findings.append(
+                    f"Highest cost operation: ${highest_cost.cost_usd} for {highest_cost.action}"
+                )
 
         # Compliance rate
         if total_receipts > 0:
@@ -569,21 +630,33 @@ class AuditorAgent(AgentInterface):
         recommendations = []
 
         if compliance_summary["non_compliant"] > 0:
-            recommendations.append(f"Address {compliance_summary['non_compliant']} non-compliant receipts")
+            recommendations.append(
+                f"Address {compliance_summary['non_compliant']} non-compliant receipts"
+            )
 
         if compliance_summary["requires_attention"] > 0:
-            recommendations.append(f"Review {compliance_summary['requires_attention']} receipts requiring attention")
+            recommendations.append(
+                f"Review {compliance_summary['requires_attention']} receipts requiring attention"
+            )
 
         if total_cost > 500:
-            recommendations.append("Monitor high operational costs - consider optimization")
+            recommendations.append(
+                "Monitor high operational costs - consider optimization"
+            )
 
         if len(self.compliance_alerts) > 0:
-            active_alerts = sum(1 for alert in self.compliance_alerts.values() if not alert.resolved)
+            active_alerts = sum(
+                1 for alert in self.compliance_alerts.values() if not alert.resolved
+            )
             if active_alerts > 0:
-                recommendations.append(f"Resolve {active_alerts} active compliance alerts")
+                recommendations.append(
+                    f"Resolve {active_alerts} active compliance alerts"
+                )
 
         if not recommendations:
-            recommendations.append("System appears to be operating within normal parameters")
+            recommendations.append(
+                "System appears to be operating within normal parameters"
+            )
 
         # Create audit report
         report = AuditReport(
@@ -603,7 +676,9 @@ class AuditorAgent(AgentInterface):
         self.audit_reports[report_id] = report
         self.audit_reports_generated += 1
 
-        logger.info(f"Audit report generated: {report_id} - {total_receipts} receipts, ${total_cost:.2f} total cost")
+        logger.info(
+            f"Audit report generated: {report_id} - {total_receipts} receipts, ${total_cost:.2f} total cost"
+        )
 
         return report
 
@@ -612,10 +687,16 @@ class AuditorAgent(AgentInterface):
         current_time = time.time()
 
         # Recent activity (last 24 hours)
-        recent_receipts = [r for r in self.receipts.values() if r.timestamp > current_time - (24 * 3600)]
+        recent_receipts = [
+            r
+            for r in self.receipts.values()
+            if r.timestamp > current_time - (24 * 3600)
+        ]
 
         # Active compliance alerts
-        active_alerts = [alert for alert in self.compliance_alerts.values() if not alert.resolved]
+        active_alerts = [
+            alert for alert in self.compliance_alerts.values() if not alert.resolved
+        ]
 
         return {
             "agent": "Auditor",
@@ -624,14 +705,17 @@ class AuditorAgent(AgentInterface):
             "receipt_metrics": {
                 "total_receipts": len(self.receipts),
                 "recent_24h": len(recent_receipts),
-                "verification_rate": self.receipts_verified / max(1, self.receipts_processed),
+                "verification_rate": self.receipts_verified
+                / max(1, self.receipts_processed),
                 "average_verification_time_ms": self.average_verification_time_ms,
             },
             "financial_metrics": {
                 "total_costs_usd": self.total_costs_usd,
                 "daily_average": self.total_costs_usd / max(1, len(self.daily_costs)),
                 "highest_cost_agent": (
-                    max(self.costs_by_agent.items(), key=lambda x: x[1]) if self.costs_by_agent else ("none", 0)
+                    max(self.costs_by_agent.items(), key=lambda x: x[1])
+                    if self.costs_by_agent
+                    else ("none", 0)
                 ),
                 "cost_distribution": dict(self.costs_by_agent),
             },
@@ -645,7 +729,8 @@ class AuditorAgent(AgentInterface):
                 "reports_generated": self.audit_reports_generated,
                 "receipt_types_tracked": len(self.receipts_by_type),
                 "oldest_receipt_days": (
-                    (current_time - min(r.timestamp for r in self.receipts.values())) / (24 * 3600)
+                    (current_time - min(r.timestamp for r in self.receipts.values()))
+                    / (24 * 3600)
                     if self.receipts
                     else 0
                 ),
@@ -685,7 +770,9 @@ class AuditorAgent(AgentInterface):
             await self.record_receipt(startup_receipt)
 
             self.initialized = True
-            logger.info(f"Auditor Agent {self.agent_id} initialized - Receipt system active")
+            logger.info(
+                f"Auditor Agent {self.agent_id} initialized - Receipt system active"
+            )
 
         except Exception as e:
             logger.error(f"Failed to initialize Auditor Agent: {e}")
@@ -698,7 +785,9 @@ class AuditorAgent(AgentInterface):
 
             # Generate final audit report
             final_report = await self.get_compliance_dashboard()
-            logger.info(f"Auditor Agent final dashboard: {final_report['receipt_metrics']}")
+            logger.info(
+                f"Auditor Agent final dashboard: {final_report['receipt_metrics']}"
+            )
 
             # Create shutdown receipt
             {

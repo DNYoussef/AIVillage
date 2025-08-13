@@ -70,7 +70,9 @@ async def test_message_delivery_rate_and_latency() -> None:
     server_protocol = MessageProtocol(server_node)
     await server_protocol.start_protocol()
 
-    async def handle_client(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
+    async def handle_client(
+        reader: asyncio.StreamReader, writer: asyncio.StreamWriter
+    ) -> None:
         while True:
             data = await server_protocol.read_message(reader)
             if data is None:

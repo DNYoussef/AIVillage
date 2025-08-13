@@ -10,8 +10,8 @@ import asyncio
 import importlib.util
 import json
 import os
-from pathlib import Path
 import sys
+from pathlib import Path
 
 
 def load_module_direct(name, path):
@@ -22,12 +22,10 @@ def load_module_direct(name, path):
     spec.loader.exec_module(module)
     return module
 
+
 # Load HTXLink module
 src_path = Path(__file__).parent.parent / "src"
-betanet_link = load_module_direct(
-    'betanet_link',
-    src_path / "core/p2p/betanet_link.py"
-)
+betanet_link = load_module_direct("betanet_link", src_path / "core/p2p/betanet_link.py")
 
 HTXLink = betanet_link.HTXLink
 HTXCalibrationMetrics = betanet_link.HTXCalibrationMetrics
@@ -164,7 +162,7 @@ async def test_http_envelope():
         envelope += json.dumps(message.to_dict()).encode()
 
         # Verify structure
-        envelope_str = envelope.decode('utf-8', errors='ignore')
+        envelope_str = envelope.decode("utf-8", errors="ignore")
 
         checks = [
             ("POST /api/v1/data HTTP/1.1" in envelope_str, "HTTP method line"),
@@ -217,7 +215,7 @@ async def test_metrics_export():
         "sessions_quic_443",
         "alpn_negotiated",
         "cipher_suites",
-        "stream_success_rate"
+        "stream_success_rate",
     ]
 
     print("\nMetrics structure:")

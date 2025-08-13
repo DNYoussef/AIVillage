@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """Monitor test performance and track regressions."""
 
-from datetime import datetime
 import json
-from pathlib import Path
 import subprocess
 import sys
 import time
+from datetime import datetime
+from pathlib import Path
 
 
 class PerformanceMonitor:

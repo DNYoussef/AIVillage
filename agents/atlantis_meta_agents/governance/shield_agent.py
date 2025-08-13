@@ -8,12 +8,12 @@ The guardian of AIVillage, responsible for:
 - Constitutional adherence validation
 """
 
-from dataclasses import dataclass
-from enum import Enum
 import hashlib
 import logging
 import os
 import time
+from dataclasses import dataclass
+from enum import Enum
 from typing import Any
 
 from src.production.rag.rag_system.core.agent_interface import AgentInterface
@@ -156,7 +156,9 @@ class ShieldAgent(AgentInterface):
             return "I review and approve risky actions, ensuring they meet our safety standards."
         if "monitor" in prompt.lower():
             return "I continuously monitor operations for compliance and security violations."
-        return "I am Shield Agent, the constitutional guardian and defender of AIVillage."
+        return (
+            "I am Shield Agent, the constitutional guardian and defender of AIVillage."
+        )
 
     async def get_embedding(self, text: str) -> list[float]:
         """Get embedding for security/policy text"""
@@ -165,7 +167,9 @@ class ShieldAgent(AgentInterface):
         hash_value = int(hashlib.md5(text.encode()).hexdigest(), 16)
         return [(hash_value % 1000) / 1000.0] * 512  # Security-focused embedding
 
-    async def rerank(self, query: str, results: list[dict[str, Any]], k: int) -> list[dict[str, Any]]:
+    async def rerank(
+        self, query: str, results: list[dict[str, Any]], k: int
+    ) -> list[dict[str, Any]]:
         """Rerank based on security/policy relevance"""
         security_keywords = [
             "security",
@@ -184,15 +188,21 @@ class ShieldAgent(AgentInterface):
             score = 0
             content = str(result.get("content", ""))
             for keyword in security_keywords:
-                score += content.lower().count(keyword) * 2  # Higher weight for security
+                score += (
+                    content.lower().count(keyword) * 2
+                )  # Higher weight for security
 
             # Critical security boost
-            if any(term in content.lower() for term in ["critical", "emergency", "breach"]):
+            if any(
+                term in content.lower() for term in ["critical", "emergency", "breach"]
+            ):
                 score *= 3
 
             result["security_score"] = score
 
-        return sorted(results, key=lambda x: x.get("security_score", 0), reverse=True)[:k]
+        return sorted(results, key=lambda x: x.get("security_score", 0), reverse=True)[
+            :k
+        ]
 
     async def introspect(self) -> dict[str, Any]:
         """Return Shield agent status and security metrics"""
@@ -217,7 +227,9 @@ class ShieldAgent(AgentInterface):
         if not self.active_alerts:
             return "green"
 
-        max_threat = max(alert.threat_level.value for alert in self.active_alerts.values())
+        max_threat = max(
+            alert.threat_level.value for alert in self.active_alerts.values()
+        )
 
         if max_threat >= 4:
             return "red"
@@ -270,7 +282,9 @@ class ShieldAgent(AgentInterface):
         latent_repr = f"SHIELD[{space_type}:{query[:50]}]"
         return space_type, latent_repr
 
-    async def detect_threat(self, source: str, activity: dict[str, Any]) -> SecurityAlert:
+    async def detect_threat(
+        self, source: str, activity: dict[str, Any]
+    ) -> SecurityAlert:
         """Detect and classify security threats"""
         threat_indicators = {
             "unauthorized_access": ThreatLevel.HIGH,
@@ -302,7 +316,9 @@ class ShieldAgent(AgentInterface):
         self.active_alerts[alert_id] = alert
         self.threats_detected += 1
 
-        logger.warning(f"SHIELD ALERT {alert_id}: {threat_type} - Level {threat_level.name}")
+        logger.warning(
+            f"SHIELD ALERT {alert_id}: {threat_type} - Level {threat_level.name}"
+        )
 
         # Auto-mitigate if critical
         if threat_level == ThreatLevel.CRITICAL:
@@ -370,7 +386,9 @@ class ShieldAgent(AgentInterface):
         result = action_results.get(action, f"Unknown action: {action}")
         logger.info(f"Mitigation action {action}: {result}")
 
-    async def enforce_policy(self, action_description: str, agent_id: str) -> PolicyCheck:
+    async def enforce_policy(
+        self, action_description: str, agent_id: str
+    ) -> PolicyCheck:
         """Enforce constitutional and security policies"""
         policy_id = f"policy_check_{len(self.approved_actions) + 1}"
 
@@ -379,7 +397,9 @@ class ShieldAgent(AgentInterface):
         compliance_score = 1.0
 
         # Constitutional principles check
-        constitutional_violations = await self._check_constitutional_compliance(action_description)
+        constitutional_violations = await self._check_constitutional_compliance(
+            action_description
+        )
         if constitutional_violations:
             violations.extend(constitutional_violations)
             compliance_score -= 0.3
@@ -469,7 +489,9 @@ class ShieldAgent(AgentInterface):
 
         for dangerous in dangerous_actions:
             if dangerous in action_lower:
-                violations.append(f"Security violation: Dangerous action '{dangerous}' detected")
+                violations.append(
+                    f"Security violation: Dangerous action '{dangerous}' detected"
+                )
 
         return violations
 
@@ -489,15 +511,21 @@ class ShieldAgent(AgentInterface):
         ]
 
         if any(sensitive in action_lower for sensitive in privacy_sensitive):
-            if not any(protect in action_lower for protect in ["encrypt", "secure", "protect"]):
-                violations.append("Privacy violation: Sensitive data handling without protection")
+            if not any(
+                protect in action_lower for protect in ["encrypt", "secure", "protect"]
+            ):
+                violations.append(
+                    "Privacy violation: Sensitive data handling without protection"
+                )
 
         return violations
 
     async def approve_risky_action(self, action: dict[str, Any]) -> dict[str, Any]:
         """Review and approve risky actions"""
         risk_assessment = await self._assess_risk_level(action)
-        policy_check = await self.enforce_policy(action["description"], action.get("requesting_agent", "unknown"))
+        policy_check = await self.enforce_policy(
+            action["description"], action.get("requesting_agent", "unknown")
+        )
 
         approval_decision = {
             "action_id": action.get("id", f"action_{len(self.approved_actions) + 1}"),
@@ -513,10 +541,15 @@ class ShieldAgent(AgentInterface):
         # Decision logic
         if risk_assessment["level"] == "low" and policy_check.approved:
             approval_decision["approved"] = True
-        elif risk_assessment["level"] == "medium" and policy_check.compliance_score >= 0.8:
+        elif (
+            risk_assessment["level"] == "medium"
+            and policy_check.compliance_score >= 0.8
+        ):
             approval_decision["approved"] = True
             approval_decision["conditions"] = ["enhanced_monitoring", "periodic_review"]
-        elif risk_assessment["level"] == "high" and policy_check.compliance_score >= 0.9:
+        elif (
+            risk_assessment["level"] == "high" and policy_check.compliance_score >= 0.9
+        ):
             approval_decision["approved"] = True
             approval_decision["conditions"] = [
                 "continuous_monitoring",
@@ -548,11 +581,15 @@ class ShieldAgent(AgentInterface):
             risk_factors.append("data_destruction_risk")
             risk_score += 3
 
-        if any(keyword in description for keyword in ["network", "internet", "external"]):
+        if any(
+            keyword in description for keyword in ["network", "internet", "external"]
+        ):
             risk_factors.append("external_communication_risk")
             risk_score += 2
 
-        if any(keyword in description for keyword in ["system", "core", "infrastructure"]):
+        if any(
+            keyword in description for keyword in ["system", "core", "infrastructure"]
+        ):
             risk_factors.append("system_modification_risk")
             risk_score += 2
 
@@ -570,7 +607,9 @@ class ShieldAgent(AgentInterface):
 
         return {"level": level, "score": risk_score, "factors": risk_factors}
 
-    async def monitor_compliance(self, agent_id: str, activity: dict[str, Any]) -> dict[str, Any]:
+    async def monitor_compliance(
+        self, agent_id: str, activity: dict[str, Any]
+    ) -> dict[str, Any]:
         """Monitor ongoing operations for compliance"""
         compliance_report = {
             "agent_id": agent_id,
@@ -591,13 +630,17 @@ class ShieldAgent(AgentInterface):
         # Check data access patterns
         if activity.get("data_access", {}).get("sensitive_data", False):
             if not activity.get("authorization", {}).get("privacy_approved", False):
-                violations.append("Privacy violation: Unauthorized sensitive data access")
+                violations.append(
+                    "Privacy violation: Unauthorized sensitive data access"
+                )
 
         # Check communication patterns
         if activity.get("communications", []):
             for comm in activity["communications"]:
                 if comm.get("external", False) and not comm.get("encrypted", False):
-                    violations.append("Security violation: Unencrypted external communication")
+                    violations.append(
+                        "Security violation: Unencrypted external communication"
+                    )
 
         if violations:
             compliance_report["compliance_status"] = "violation"
@@ -615,7 +658,9 @@ class ShieldAgent(AgentInterface):
 
     # ========== Q1 MVP SECURITY SCAN SERVICE ==========
 
-    async def scan_file(self, file_path: str, scan_options: dict[str, Any] = None) -> SecurityScanResult:
+    async def scan_file(
+        self, file_path: str, scan_options: dict[str, Any] = None
+    ) -> SecurityScanResult:
         """Malware detection and file security scan - Q1 MVP function"""
         scan_id = f"scan_{int(time.time())}_{len(self.scan_results)}"
         start_time = time.time()
@@ -636,7 +681,9 @@ class ShieldAgent(AgentInterface):
 
         try:
             # Mobile-optimized file analysis
-            file_analysis = await self._analyze_file_mobile_optimized(file_path, file_hash)
+            file_analysis = await self._analyze_file_mobile_optimized(
+                file_path, file_hash
+            )
             findings.extend(file_analysis["findings"])
             risk_score += file_analysis["risk_contribution"]
 
@@ -674,7 +721,9 @@ class ShieldAgent(AgentInterface):
         risk_score = min(100, max(0, risk_score))
 
         # Generate recommendations
-        recommendations = await self._generate_scan_recommendations(threats_detected, findings, risk_score)
+        recommendations = await self._generate_scan_recommendations(
+            threats_detected, findings, risk_score
+        )
 
         scan_duration = (time.time() - start_time) * 1000  # Convert to ms
 
@@ -687,7 +736,9 @@ class ShieldAgent(AgentInterface):
             "timestamp": time.time(),
             "target_file": file_path,
             "file_hash": file_hash,
-            "file_size_bytes": (os.path.getsize(file_path) if os.path.exists(file_path) else 0),
+            "file_size_bytes": (
+                os.path.getsize(file_path) if os.path.exists(file_path) else 0
+            ),
             "risk_score": risk_score,
             "threats_detected": len(threats_detected),
             "findings_count": len(findings),
@@ -752,14 +803,18 @@ class ShieldAgent(AgentInterface):
 
         return hash_obj.hexdigest()
 
-    async def _analyze_file_mobile_optimized(self, file_path: str, file_hash: str) -> dict[str, Any]:
+    async def _analyze_file_mobile_optimized(
+        self, file_path: str, file_hash: str
+    ) -> dict[str, Any]:
         """Mobile-optimized file analysis with memory constraints"""
         findings = []
         risk_contribution = 0
 
         if not os.path.exists(file_path):
             return {
-                "findings": [{"type": "file_not_found", "description": "File does not exist"}],
+                "findings": [
+                    {"type": "file_not_found", "description": "File does not exist"}
+                ],
                 "risk_contribution": 10,
             }
 
@@ -839,14 +894,18 @@ class ShieldAgent(AgentInterface):
 
         return {"findings": findings, "risk_contribution": risk_contribution}
 
-    async def _scan_malware_signatures(self, file_path: str, file_hash: str) -> dict[str, Any]:
+    async def _scan_malware_signatures(
+        self, file_path: str, file_hash: str
+    ) -> dict[str, Any]:
         """Scan file against cached malware signatures"""
         threats_found = []
         signature_matches = []
 
         # Check hash against known malware hashes
         if file_hash in self.malware_signatures:
-            threats_found.append(f"Known malware hash: {self.malware_signatures[file_hash]}")
+            threats_found.append(
+                f"Known malware hash: {self.malware_signatures[file_hash]}"
+            )
             signature_matches.append(f"hash:{file_hash[:16]}...")
 
         # Simple pattern-based scanning for mobile optimization
@@ -871,7 +930,9 @@ class ShieldAgent(AgentInterface):
 
                     for pattern in malware_patterns:
                         if pattern in content.lower():
-                            threats_found.append(f"Suspicious pattern detected: {pattern.decode()}")
+                            threats_found.append(
+                                f"Suspicious pattern detected: {pattern.decode()}"
+                            )
                             signature_matches.append(f"pattern:{pattern.decode()}")
 
         except Exception:
@@ -889,7 +950,9 @@ class ShieldAgent(AgentInterface):
         try:
             with open(apk_path, "rb") as f:
                 # Look for AndroidManifest.xml patterns (simplified)
-                content = f.read(min(10 * 1024 * 1024, os.path.getsize(apk_path)))  # Max 10MB
+                content = f.read(
+                    min(10 * 1024 * 1024, os.path.getsize(apk_path))
+                )  # Max 10MB
 
                 # Check for dangerous permissions (simplified pattern matching)
                 dangerous_perms = [
@@ -907,7 +970,9 @@ class ShieldAgent(AgentInterface):
 
                 for perm in dangerous_perms:
                     if perm in content:
-                        malicious_permissions.append(f"Dangerous permission: {perm.decode()}")
+                        malicious_permissions.append(
+                            f"Dangerous permission: {perm.decode()}"
+                        )
                         risk_contribution += 5
 
                 # Check for suspicious package names
@@ -939,7 +1004,9 @@ class ShieldAgent(AgentInterface):
             "malicious_permissions": malicious_permissions,
         }
 
-    async def _check_file_integrity(self, file_path: str, file_hash: str) -> dict[str, Any]:
+    async def _check_file_integrity(
+        self, file_path: str, file_hash: str
+    ) -> dict[str, Any]:
         """Check file integrity and suspicious patterns"""
         findings = []
         risk_contribution = 0
@@ -970,7 +1037,9 @@ class ShieldAgent(AgentInterface):
 
         return {"findings": findings, "risk_contribution": risk_contribution}
 
-    async def scan_privacy_policy(self, policy_text: str, context: str = None) -> SecurityScanResult:
+    async def scan_privacy_policy(
+        self, policy_text: str, context: str = None
+    ) -> SecurityScanResult:
         """Privacy policy analysis - Q1 MVP function"""
         scan_id = f"privacy_{int(time.time())}_{len(self.scan_results)}"
         start_time = time.time()
@@ -1000,7 +1069,9 @@ class ShieldAgent(AgentInterface):
         risk_score = min(100, max(0, risk_score))
 
         # Generate recommendations
-        recommendations = await self._generate_privacy_recommendations(findings, risk_score)
+        recommendations = await self._generate_privacy_recommendations(
+            findings, risk_score
+        )
 
         scan_duration = (time.time() - start_time) * 1000
 
@@ -1154,7 +1225,9 @@ class ShieldAgent(AgentInterface):
         recommendations = []
 
         if risk_score >= 80:
-            recommendations.append("CRITICAL: Do not use this file/service - high security risk")
+            recommendations.append(
+                "CRITICAL: Do not use this file/service - high security risk"
+            )
             recommendations.append("Consider reporting to security authorities")
         elif risk_score >= 60:
             recommendations.append("HIGH RISK: Use extreme caution")
@@ -1189,12 +1262,16 @@ class ShieldAgent(AgentInterface):
 
         return recommendations
 
-    async def _generate_privacy_recommendations(self, findings: list[dict], risk_score: int) -> list[str]:
+    async def _generate_privacy_recommendations(
+        self, findings: list[dict], risk_score: int
+    ) -> list[str]:
         """Generate privacy-specific recommendations"""
         recommendations = []
 
         if risk_score >= 70:
-            recommendations.append("AVOID: Privacy policy contains concerning practices")
+            recommendations.append(
+                "AVOID: Privacy policy contains concerning practices"
+            )
             recommendations.append("Consider alternative services with better privacy")
         elif risk_score >= 50:
             recommendations.append("CAUTION: Review privacy practices carefully")
@@ -1242,7 +1319,9 @@ class ShieldAgent(AgentInterface):
             }
 
             self.initialized = True
-            logger.info(f"Shield Agent {self.agent_id} initialized - Village defenses active")
+            logger.info(
+                f"Shield Agent {self.agent_id} initialized - Village defenses active"
+            )
 
         except Exception as e:
             logger.error(f"Failed to initialize Shield Agent: {e}")
@@ -1258,7 +1337,8 @@ class ShieldAgent(AgentInterface):
                 "threats_detected": self.threats_detected,
                 "threats_mitigated": self.threats_mitigated,
                 "policies_enforced": self.policies_enforced,
-                "compliance_rate": self.compliance_checks / max(1, self.policies_enforced),
+                "compliance_rate": self.compliance_checks
+                / max(1, self.policies_enforced),
                 "active_alerts": len(self.active_alerts),
                 "shutdown_timestamp": "2024-01-01T12:00:00Z",
             }

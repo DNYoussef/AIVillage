@@ -11,13 +11,13 @@ Used by Navigator for intelligent path selection and adaptive chunking policies.
 """
 
 import asyncio
+import logging
+import statistics
+import time
 from collections import defaultdict, deque
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
-import logging
-import statistics
-import time
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -80,7 +80,10 @@ class PeerMetrics:
             self.rtt_ewma_ms = rtt_ms
         else:
             # EWMA: new_avg = alpha * new_sample + (1 - alpha) * old_avg
-            self.rtt_ewma_ms = self.rtt_ewma_alpha * rtt_ms + (1 - self.rtt_ewma_alpha) * self.rtt_ewma_ms
+            self.rtt_ewma_ms = (
+                self.rtt_ewma_alpha * rtt_ms
+                + (1 - self.rtt_ewma_alpha) * self.rtt_ewma_ms
+            )
 
         # Track samples for jitter calculation
         self.rtt_samples.append(rtt_ms)
@@ -125,7 +128,9 @@ class PeerMetrics:
         rtt_factor = max(0.0, 1.0 - (self.rtt_ewma_ms / 2000.0))  # 2s = 0 score
 
         # Jitter factor (penalty for high jitter)
-        jitter_factor = max(0.0, 1.0 - (self.jitter_ms / 500.0))  # 500ms jitter = 0 score
+        jitter_factor = max(
+            0.0, 1.0 - (self.jitter_ms / 500.0)
+        )  # 500ms jitter = 0 score
 
         # Loss factor (penalty for packet loss)
         loss_factor = max(0.0, 1.0 - (self.loss_rate * 2.0))  # 50% loss = 0 score
@@ -210,7 +215,9 @@ class NetworkMetricsCollector:
             self.peer_metrics[peer_id] = PeerMetrics(peer_id=peer_id)
         return self.peer_metrics[peer_id]
 
-    def record_message_sent(self, peer_id: str, message_id: str, payload_size: int = 0) -> str:
+    def record_message_sent(
+        self, peer_id: str, message_id: str, payload_size: int = 0
+    ) -> str:
         """Record that a message was sent, return sequence ID for RTT tracking"""
         sequence_id = f"{peer_id}_{self.ping_sequence}_{message_id}"
         self.ping_sequence += 1
@@ -231,7 +238,9 @@ class NetworkMetricsCollector:
 
         return sequence_id
 
-    def record_message_acked(self, sequence_id: str, success: bool = True) -> float | None:
+    def record_message_acked(
+        self, sequence_id: str, success: bool = True
+    ) -> float | None:
         """Record that a message was ACKed, return RTT in ms"""
         if sequence_id not in self.pending_measurements:
             logger.debug(f"No pending measurement for sequence {sequence_id}")
@@ -253,10 +262,14 @@ class NetworkMetricsCollector:
         # Notify callbacks
         self._notify_callbacks(sample.peer_id, rtt_ms, success)
 
-        logger.debug(f"Recorded RTT: {sample.peer_id} -> {rtt_ms:.1f}ms (success={success})")
+        logger.debug(
+            f"Recorded RTT: {sample.peer_id} -> {rtt_ms:.1f}ms (success={success})"
+        )
         return rtt_ms
 
-    async def send_control_ping(self, peer_id: str, ping_sender: Callable[[str, bytes], bool]) -> bool:
+    async def send_control_ping(
+        self, peer_id: str, ping_sender: Callable[[str, bytes], bool]
+    ) -> bool:
         """Send a control ping to measure RTT"""
         sequence_id = f"ping_{peer_id}_{self.ping_sequence}"
         self.ping_sequence += 1
@@ -303,7 +316,9 @@ class NetworkMetricsCollector:
             self.pending_measurements.pop(sequence_id, None)
             return False
 
-    def handle_control_pong(self, peer_id: str, pong_data: dict[str, Any]) -> float | None:
+    def handle_control_pong(
+        self, peer_id: str, pong_data: dict[str, Any]
+    ) -> float | None:
         """Handle received control pong, return RTT"""
         sequence_id = pong_data.get("sequence_id")
         if not sequence_id or sequence_id not in self.pending_measurements:
@@ -312,7 +327,9 @@ class NetworkMetricsCollector:
         # Calculate RTT and update metrics
         return self.record_message_acked(sequence_id, success=True)
 
-    async def start_control_ping_loop(self, peer_id: str, ping_sender: Callable[[str, bytes], bool]) -> None:
+    async def start_control_ping_loop(
+        self, peer_id: str, ping_sender: Callable[[str, bytes], bool]
+    ) -> None:
         """Start background control ping loop for a peer"""
         if peer_id in self.ping_tasks:
             return  # Already running
@@ -343,7 +360,9 @@ class NetworkMetricsCollector:
         for peer_id in list(self.ping_tasks.keys()):
             self.stop_control_ping_loop(peer_id)
 
-    def register_callback(self, peer_id: str, callback: Callable[[str, float, bool], None]) -> None:
+    def register_callback(
+        self, peer_id: str, callback: Callable[[str, float, bool], None]
+    ) -> None:
         """Register callback for measurement updates"""
         self.measurement_callbacks[peer_id].append(callback)
 
@@ -384,7 +403,9 @@ class NetworkMetricsCollector:
 
         return metrics.optimal_chunk_size
 
-    def get_recommended_protocol(self, peer_id: str, default_protocol: str = "htx") -> str:
+    def get_recommended_protocol(
+        self, peer_id: str, default_protocol: str = "htx"
+    ) -> str:
         """Get recommended protocol for a peer based on network conditions"""
         if peer_id not in self.peer_metrics:
             return default_protocol
@@ -395,7 +416,9 @@ class NetworkMetricsCollector:
 
         return metrics.recommended_protocol
 
-    def should_switch_path(self, peer_id: str, rtt_threshold_ms: float = 1000, loss_threshold: float = 0.2) -> bool:
+    def should_switch_path(
+        self, peer_id: str, rtt_threshold_ms: float = 1000, loss_threshold: float = 0.2
+    ) -> bool:
         """Determine if path should be switched based on metrics"""
         if peer_id not in self.peer_metrics:
             return False
@@ -420,7 +443,10 @@ class NetworkMetricsCollector:
                 "active_ping_loops": len(self.ping_tasks),
                 "pending_measurements": len(self.pending_measurements),
             },
-            "peer_metrics": {peer_id: metrics.to_dict() for peer_id, metrics in self.peer_metrics.items()},
+            "peer_metrics": {
+                peer_id: metrics.to_dict()
+                for peer_id, metrics in self.peer_metrics.items()
+            },
         }
 
 

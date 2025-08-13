@@ -11,15 +11,15 @@ Implements actual model evaluation on standard benchmarks:
 No simulations - all evaluations are performed on real models with real data.
 """
 
-from datetime import datetime
 import logging
 import re
 import time
+from datetime import datetime
 from typing import Any
 
-from datasets import load_dataset
 import numpy as np
 import torch
+from datasets import load_dataset
 from tqdm import tqdm
 
 from .memory_manager import (

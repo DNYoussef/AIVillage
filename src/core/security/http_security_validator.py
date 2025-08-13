@@ -66,7 +66,9 @@ def validate_config_dict_for_production(config: dict[str, Any], path: str = "") 
         elif isinstance(value, list):
             for i, item in enumerate(value):
                 if isinstance(item, str) and item.startswith("http://"):
-                    validate_url_for_production(item, f"config key '{current_path}[{i}]'")
+                    validate_url_for_production(
+                        item, f"config key '{current_path}[{i}]'"
+                    )
                 elif isinstance(item, dict):
                     validate_config_dict_for_production(item, f"{current_path}[{i}]")
 
@@ -146,7 +148,9 @@ def require_https_in_production(func):
             # Check keyword arguments for HTTP URLs
             for key, value in kwargs.items():
                 if isinstance(value, str) and value.startswith("http://"):
-                    validate_url_for_production(value, f"function {func.__name__} parameter '{key}'")
+                    validate_url_for_production(
+                        value, f"function {func.__name__} parameter '{key}'"
+                    )
 
         return func(*args, **kwargs)
 

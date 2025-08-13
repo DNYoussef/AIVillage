@@ -7,15 +7,17 @@ evaluation, and the complete evolution process.
 """
 
 import asyncio
-from pathlib import Path
 import shutil
 
 # Import our pipeline components
 import sys
 import tempfile
 import unittest
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+import pytest
+import torch
 from evomerge_pipeline import (
     BaseModelConfig,
     CodeEvaluator,
@@ -26,8 +28,6 @@ from evomerge_pipeline import (
     MergeOperators,
     ModelCandidate,
 )
-import pytest
-import torch
 from transformers import AutoConfig, AutoModelForCausalLM
 
 sys.path.append(str(Path(__file__).parent.parent / "agent_forge"))
@@ -136,7 +136,9 @@ class TestEvoMergePipeline(unittest.TestCase):
         # Mock tokenizer
         mock_tokenizer = MagicMock()
         mock_tokenizer.encode.return_value = [1, 2, 3]
-        mock_tokenizer.decode.return_value = "def factorial(n): return 1 if n <= 1 else n * factorial(n-1)"
+        mock_tokenizer.decode.return_value = (
+            "def factorial(n): return 1 if n <= 1 else n * factorial(n-1)"
+        )
         mock_tokenizer.eos_token_id = 0
         mock_tokenizer_cls.from_pretrained.return_value = mock_tokenizer
 
@@ -271,7 +273,9 @@ class TestEvoMergePipeline(unittest.TestCase):
         pipeline.save_checkpoint()
 
         # Verify checkpoint file exists
-        checkpoint_files = list(self.config.checkpoint_dir.glob("evolution_checkpoint_*.json"))
+        checkpoint_files = list(
+            self.config.checkpoint_dir.glob("evolution_checkpoint_*.json")
+        )
         assert len(checkpoint_files) > 0
 
         # Create new pipeline and load checkpoint
@@ -416,13 +420,17 @@ async def main() -> int:
     print(f"Integration Test: {'✅ PASSED' if integration_success else '❌ FAILED'}")
 
     overall_success = unit_success and cli_success and integration_success
-    print(f"\nOverall: {'✅ ALL TESTS PASSED' if overall_success else '❌ SOME TESTS FAILED'}")
+    print(
+        f"\nOverall: {'✅ ALL TESTS PASSED' if overall_success else '❌ SOME TESTS FAILED'}"
+    )
 
     if overall_success:
         print("\n🎉 EvoMerge pipeline is ready for production!")
         print("\nNext steps:")
         print("1. Install package: pip install -e .")
-        print("2. Run evolution: forge evo --gens 10 --base-models deepseek,nemotron,qwen2")
+        print(
+            "2. Run evolution: forge evo --gens 10 --base-models deepseek,nemotron,qwen2"
+        )
         print("3. Monitor progress with W&B dashboard")
 
     return 0 if overall_success else 1

@@ -191,7 +191,9 @@ class SimpleAuditorAgent(MockAgentInterface):
             "verified": True,
         }
 
-    async def generate_audit_report(self, report_type: str, time_range, agents: list[str] = None):
+    async def generate_audit_report(
+        self, report_type: str, time_range, agents: list[str] = None
+    ):
         """Generate audit report"""
 
         class AuditReport:
@@ -222,7 +224,9 @@ class SimpleTutorAgent(MockAgentInterface):
         self.specialization = "education_and_assessment"
         self.capabilities = ["personalized_learning", "learner_assessment"]
 
-    async def create_learner_profile(self, learner_data: dict[str, Any]) -> dict[str, Any]:
+    async def create_learner_profile(
+        self, learner_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """Create learner profile"""
         learner_id = f"learner_{int(time.time())}"
         return {
@@ -267,7 +271,9 @@ class SimpleHorticulturistAgent(MockAgentInterface):
         self.specialization = "agriculture_and_permaculture"
         self.capabilities = ["crop_planning", "soil_assessment"]
 
-    async def assess_soil(self, location_id: str, soil_data: dict[str, Any]) -> dict[str, Any]:
+    async def assess_soil(
+        self, location_id: str, soil_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """Assess soil conditions"""
         return {
             "status": "success",
@@ -368,16 +374,24 @@ class SimpleMultiAgentCoordinator:
         # Step 2: Horticulturist assessment
         print("\n2️⃣ SOIL ASSESSMENT & CROP PLANNING (Horticulturist Agent)")
         soil_data = {"ph": 6.8, "nitrogen_ppm": 45, "organic_matter_percent": 4.2}
-        soil_assessment = await self.agents["horticulturist"].assess_soil("backyard_plot", soil_data)
+        soil_assessment = await self.agents["horticulturist"].assess_soil(
+            "backyard_plot", soil_data
+        )
         print(
             f"Soil condition: {soil_assessment['soil_condition']} ({len(soil_assessment['recommendations'])} recommendations)"
         )
         receipts_collected.append(soil_assessment["receipt"])
 
         # Plan crops
-        tomato_plan = await self.agents["horticulturist"].plan_crop({"name": "tomato", "variety": "cherry"})
-        lettuce_plan = await self.agents["horticulturist"].plan_crop({"name": "lettuce"})
-        print(f"Planned 2 crops: {tomato_plan['crop_profile'].name}, {lettuce_plan['crop_profile'].name}")
+        tomato_plan = await self.agents["horticulturist"].plan_crop(
+            {"name": "tomato", "variety": "cherry"}
+        )
+        lettuce_plan = await self.agents["horticulturist"].plan_crop(
+            {"name": "lettuce"}
+        )
+        print(
+            f"Planned 2 crops: {tomato_plan['crop_profile'].name}, {lettuce_plan['crop_profile'].name}"
+        )
         receipts_collected.extend([tomato_plan["receipt"], lettuce_plan["receipt"]])
 
         # Step 3: Sustainer resource monitoring
@@ -388,11 +402,15 @@ class SimpleMultiAgentCoordinator:
             "memory_gb": 4,
         }
         device_profile = await self.agents["sustainer"].profile_device(device_spec)
-        print(f"Device profiled: {device_profile['device_profile'].device_class.value} class")
+        print(
+            f"Device profiled: {device_profile['device_profile'].device_class.value} class"
+        )
         receipts_collected.append(device_profile["receipt"])
 
         efficiency_result = await self.agents["sustainer"].optimize_efficiency("mobile")
-        print(f"Efficiency optimized: {efficiency_result['efficiency_improvement']:.1f}% improvement")
+        print(
+            f"Efficiency optimized: {efficiency_result['efficiency_improvement']:.1f}% improvement"
+        )
         receipts_collected.append(efficiency_result["receipt"])
 
         # Step 4: Tutor educational guidance
@@ -402,7 +420,9 @@ class SimpleMultiAgentCoordinator:
             "level": "beginner",
             "interests": ["organic_gardening"],
         }
-        learner_profile = await self.agents["tutor"].create_learner_profile(learner_data)
+        learner_profile = await self.agents["tutor"].create_learner_profile(
+            learner_data
+        )
         print(f"Learner profile created: {learner_profile['learner_id']}")
         receipts_collected.append(learner_profile["receipt"])
 
@@ -411,7 +431,9 @@ class SimpleMultiAgentCoordinator:
             lesson_delivery = await self.agents["tutor"].deliver_lesson(
                 learner_profile["learner_id"], learner_profile["learning_path"][0]
             )
-            print(f"Educational lesson delivered: {lesson_delivery['content']['title']}")
+            print(
+                f"Educational lesson delivered: {lesson_delivery['content']['title']}"
+            )
             receipts_collected.append(lesson_delivery["receipt"])
 
         # Step 5: Shield security check
@@ -428,12 +450,18 @@ class SimpleMultiAgentCoordinator:
         print("\n6️⃣ AUDIT TRAIL COLLECTION (Auditor Agent)")
         for i, receipt in enumerate(receipts_collected):
             result = await self.agents["auditor"].record_receipt(receipt)
-            print(f"Receipt {i + 1} recorded: {result['receipt_id']} from {receipt['agent']}")
+            print(
+                f"Receipt {i + 1} recorded: {result['receipt_id']} from {receipt['agent']}"
+            )
 
         # Generate audit report
         time_range = (time.time() - 3600, time.time())
-        audit_report = await self.agents["auditor"].generate_audit_report("garden_planning", time_range)
-        print(f"Audit report: {audit_report.total_receipts} receipts, ${audit_report.total_cost_usd:.2f} total cost")
+        audit_report = await self.agents["auditor"].generate_audit_report(
+            "garden_planning", time_range
+        )
+        print(
+            f"Audit report: {audit_report.total_receipts} receipts, ${audit_report.total_cost_usd:.2f} total cost"
+        )
 
         # Step 7: King final coordination
         print("\n7️⃣ FINAL COORDINATION (King Agent)")
@@ -537,9 +565,15 @@ class SimpleMultiAgentCoordinator:
 
         print("\n📈 SYSTEM METRICS:")
         print(f"   Total Receipts: {dashboard['receipt_metrics']['total_receipts']}")
-        print(f"   Verification Rate: {dashboard['receipt_metrics']['verification_rate']:.1%}")
-        print(f"   Agents Monitored: {dashboard['compliance_metrics']['agents_monitored']}")
-        print(f"   Total Cost Tracked: ${dashboard['financial_metrics']['total_costs_usd']:.2f}")
+        print(
+            f"   Verification Rate: {dashboard['receipt_metrics']['verification_rate']:.1%}"
+        )
+        print(
+            f"   Agents Monitored: {dashboard['compliance_metrics']['agents_monitored']}"
+        )
+        print(
+            f"   Total Cost Tracked: ${dashboard['financial_metrics']['total_costs_usd']:.2f}"
+        )
 
         return {
             "agents": len(self.agents),
@@ -582,10 +616,14 @@ async def main():
         print(f"   - Total cost: ${garden_result['audit_report'].total_cost_usd:.2f}")
 
         print(f"✅ Translation Workflow: {translation_result['status']}")
-        print(f"   - Translation confidence: {translation_result['translation_confidence']:.2f}")
+        print(
+            f"   - Translation confidence: {translation_result['translation_confidence']:.2f}"
+        )
         print(f"   - Languages supported: {translation_result['languages_supported']}")
 
-        print(f"✅ System Coordination: {'SUCCESS' if summary['coordination_success'] else 'FAILED'}")
+        print(
+            f"✅ System Coordination: {'SUCCESS' if summary['coordination_success'] else 'FAILED'}"
+        )
         print(f"   - Total agents: {summary['agents']}")
         print(f"   - Total capabilities: {summary['total_capabilities']}")
 
@@ -620,7 +658,9 @@ async def main():
 
 if __name__ == "__main__":
     print("Starting Atlantis Meta-Agent Q1 MVP Coordination Test...")
-    print("This demonstrates all 9 Q1 MVP agents working together on complex scenarios.")
+    print(
+        "This demonstrates all 9 Q1 MVP agents working together on complex scenarios."
+    )
     print()
 
     # Run the coordination test

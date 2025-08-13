@@ -1,6 +1,6 @@
+import sys
 from datetime import datetime, timedelta
 from pathlib import Path
-import sys
 
 import pytest
 import pytest_asyncio

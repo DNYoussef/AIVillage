@@ -6,7 +6,7 @@ RAG Defaults Offline Validated Config Integration Test - Prompt 6
 import os
 import sys
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
 
 from core.knowledge.rag_offline_config import (
     EmbeddingProvider,
@@ -30,10 +30,16 @@ def test_rag_offline_config():
     registry = OfflineRAGConfigRegistry()
     status = registry.get_registry_status()
 
-    assert status['total_configs'] >= 5, f"Expected >=5 default configs, got {status['total_configs']}"
-    assert status['validated_configs'] >= 4, f"Expected >=4 validated configs, got {status['validated_configs']}"
-    assert len(status['available_configs']) >= 4
-    print(f"    [PASS] Registry initialized: {status['total_configs']} total, {status['validated_configs']} validated")
+    assert status["total_configs"] >= 5, (
+        f"Expected >=5 default configs, got {status['total_configs']}"
+    )
+    assert status["validated_configs"] >= 4, (
+        f"Expected >=4 validated configs, got {status['validated_configs']}"
+    )
+    assert len(status["available_configs"]) >= 4
+    print(
+        f"    [PASS] Registry initialized: {status['total_configs']} total, {status['validated_configs']} validated"
+    )
     print(f"    [PASS] Available configs: {status['available_configs']}")
 
     # Test 2: Default Configuration Validation
@@ -47,7 +53,9 @@ def test_rag_offline_config():
     assert standard_config.embedding.provider == EmbeddingProvider.SENTENCE_TRANSFORMERS
     assert standard_config.vector_store_type == VectorStoreType.FAISS
     assert len(standard_config.validation_errors) == 0
-    print(f"    [PASS] Standard config: {standard_config.name} - {standard_config.validation_checksum}")
+    print(
+        f"    [PASS] Standard config: {standard_config.name} - {standard_config.validation_checksum}"
+    )
 
     # Test performance config
     performance_config = registry.get_config("performance_offline")
@@ -55,7 +63,9 @@ def test_rag_offline_config():
     assert performance_config.validated is True
     assert performance_config.max_memory_mb >= 2048
     assert performance_config.embedding.dimensions == 768  # Larger model
-    print(f"    [PASS] Performance config: {performance_config.max_memory_mb}MB memory, {performance_config.embedding.dimensions}D embeddings")
+    print(
+        f"    [PASS] Performance config: {performance_config.max_memory_mb}MB memory, {performance_config.embedding.dimensions}D embeddings"
+    )
 
     # Test memory-efficient config
     memory_config = registry.get_config("memory_efficient")
@@ -64,7 +74,9 @@ def test_rag_offline_config():
     assert memory_config.max_memory_mb <= 128
     assert memory_config.chunking.chunk_size <= 256
     assert memory_config.retrieval.top_k <= 3
-    print(f"    [PASS] Memory-efficient config: {memory_config.max_memory_mb}MB, {memory_config.chunking.chunk_size}-char chunks")
+    print(
+        f"    [PASS] Memory-efficient config: {memory_config.max_memory_mb}MB, {memory_config.chunking.chunk_size}-char chunks"
+    )
 
     # Test 3: Mobile Configuration Optimization
     print("\n[3] Testing mobile configuration optimization...")
@@ -83,8 +95,12 @@ def test_rag_offline_config():
     assert mobile_config.max_cpu_threads == 1
     assert mobile_config.cache.max_size_mb <= 50
 
-    print(f"    [PASS] Mobile config optimized: {mobile_config.max_memory_mb}MB memory, {mobile_config.chunking.chunk_size}-char chunks")
-    print(f"    [PASS] Mobile constraints: top_k={mobile_config.retrieval.top_k}, threads={mobile_config.max_cpu_threads}")
+    print(
+        f"    [PASS] Mobile config optimized: {mobile_config.max_memory_mb}MB memory, {mobile_config.chunking.chunk_size}-char chunks"
+    )
+    print(
+        f"    [PASS] Mobile constraints: top_k={mobile_config.retrieval.top_k}, threads={mobile_config.max_cpu_threads}"
+    )
 
     # Test 4: Device-Specific Configuration Selection
     print("\n[4] Testing device-specific configuration selection...")
@@ -92,7 +108,9 @@ def test_rag_offline_config():
     # Test device selection logic
     mobile_device_config = registry.get_config_for_device("mobile", 256)
     print(f"    [DEBUG] Mobile device config name: {mobile_device_config.name}")
-    assert mobile_device_config.is_mobile_optimized is True  # Check the key property instead
+    assert (
+        mobile_device_config.is_mobile_optimized is True
+    )  # Check the key property instead
     print(f"    [PASS] Mobile device (256MB) -> {mobile_device_config.name}")
 
     low_memory_config = registry.get_config_for_device("laptop", 512)
@@ -116,42 +134,46 @@ def test_rag_offline_config():
         EmbeddingConfig,
         RetrievalConfig,
     )
+
     valid_config = OfflineRAGConfig(
         name="test_valid",
         chunking=ChunkingConfig(chunk_size=512, chunk_overlap=50),
         retrieval=RetrievalConfig(top_k=5, max_results=10),
         embedding=EmbeddingConfig(
-            provider=EmbeddingProvider.SENTENCE_TRANSFORMERS,
-            model_name="test-model"
+            provider=EmbeddingProvider.SENTENCE_TRANSFORMERS, model_name="test-model"
         ),
-        max_memory_mb=256
+        max_memory_mb=256,
     )
     assert valid_config.validate_config() is True
     assert len(valid_config.validation_errors) == 0
     assert valid_config.validation_checksum is not None
-    print(f"    [PASS] Valid config validation: checksum {valid_config.validation_checksum}")
+    print(
+        f"    [PASS] Valid config validation: checksum {valid_config.validation_checksum}"
+    )
 
     # Test invalid configuration detection
     invalid_config = OfflineRAGConfig(
         name="test_invalid",
         embedding=EmbeddingConfig(
             provider=EmbeddingProvider.LOCAL_ONNX,
-            model_name="test-model"
+            model_name="test-model",
             # Missing model_path for ONNX
         ),
         chunking=ChunkingConfig(
             chunk_size=100,
-            chunk_overlap=200  # Overlap > chunk_size
+            chunk_overlap=200,  # Overlap > chunk_size
         ),
         retrieval=RetrievalConfig(
             top_k=15,
-            max_results=10  # top_k > max_results
+            max_results=10,  # top_k > max_results
         ),
-        max_memory_mb=-50  # Negative memory
+        max_memory_mb=-50,  # Negative memory
     )
     assert invalid_config.validate_config() is False
     assert len(invalid_config.validation_errors) >= 3
-    print(f"    [PASS] Invalid config detected: {len(invalid_config.validation_errors)} errors")
+    print(
+        f"    [PASS] Invalid config detected: {len(invalid_config.validation_errors)} errors"
+    )
 
     # Test 6: Mobile Adaptation
     print("\n[6] Testing mobile adaptation...")
@@ -165,33 +187,42 @@ def test_rag_offline_config():
     assert adapted_config.max_memory_mb <= 256
     assert adapted_config.chunking.chunk_size <= 256
     assert adapted_config.retrieval.enable_reranking is False  # Disabled for efficiency
-    assert adapted_config.vector_store_type == VectorStoreType.SQLITE_VSS  # More efficient
+    assert (
+        adapted_config.vector_store_type == VectorStoreType.SQLITE_VSS
+    )  # More efficient
 
     # Validate the adapted config
     assert adapted_config.validate_config() is True
     print(f"    [PASS] Mobile adaptation: {base_config.name} -> {adapted_config.name}")
-    print(f"    [PASS] Adapted settings: {adapted_config.chunking.chunk_size} chars, {adapted_config.max_memory_mb}MB")
+    print(
+        f"    [PASS] Adapted settings: {adapted_config.chunking.chunk_size} chars, {adapted_config.max_memory_mb}MB"
+    )
 
     # Test 7: Configuration Templates and Modes
     print("\n[7] Testing configuration templates and modes...")
 
     # Test all supported modes are represented
-    available_modes = status['config_modes']
-    expected_modes = ['offline_only', 'mobile_optimized', 'performance_first', 'hybrid_offline_first']
+    available_modes = status["config_modes"]
+    expected_modes = [
+        "offline_only",
+        "mobile_optimized",
+        "performance_first",
+        "hybrid_offline_first",
+    ]
     for mode in expected_modes:
         assert mode in available_modes, f"Missing mode: {mode}"
     print(f"    [PASS] All expected modes available: {available_modes}")
 
     # Test embedding provider diversity
-    embedding_providers = status['embedding_providers']
-    assert 'sentence_transformers' in embedding_providers
-    assert 'local_onnx' in embedding_providers
+    embedding_providers = status["embedding_providers"]
+    assert "sentence_transformers" in embedding_providers
+    assert "local_onnx" in embedding_providers
     print(f"    [PASS] Embedding providers: {embedding_providers}")
 
     # Test vector store diversity
-    vector_stores = status['vector_store_types']
-    assert 'faiss' in vector_stores
-    assert 'chroma' in vector_stores
+    vector_stores = status["vector_store_types"]
+    assert "faiss" in vector_stores
+    assert "chroma" in vector_stores
     print(f"    [PASS] Vector stores: {vector_stores}")
 
     # Test 8: Global Registry Access
@@ -211,7 +242,9 @@ def test_rag_offline_config():
     assert mobile_rag.is_mobile_optimized is True
 
     print("    [PASS] Global registry access working")
-    print("    [PASS] Convenience functions: get_offline_rag_config, get_mobile_rag_config")
+    print(
+        "    [PASS] Convenience functions: get_offline_rag_config, get_mobile_rag_config"
+    )
 
     # Test 9: Custom Configuration Creation
     print("\n[9] Testing custom configuration creation...")
@@ -221,7 +254,7 @@ def test_rag_offline_config():
         embedding_model="all-MiniLM-L12-v2",
         chunk_size=768,
         top_k=7,
-        max_memory_mb=1024
+        max_memory_mb=1024,
     )
 
     assert custom_config is not None
@@ -232,7 +265,9 @@ def test_rag_offline_config():
     assert custom_config.validated is True  # Should auto-validate
 
     print(f"    [PASS] Custom config created: {custom_config.name}")
-    print(f"    [PASS] Custom settings: {custom_config.embedding.model_name}, {custom_config.chunking.chunk_size} chars")
+    print(
+        f"    [PASS] Custom settings: {custom_config.embedding.model_name}, {custom_config.chunking.chunk_size} chars"
+    )
 
     # Test 10: Resource-Aware Configuration
     print("\n[10] Testing resource-aware configuration features...")
@@ -242,14 +277,18 @@ def test_rag_offline_config():
     mobile_chunk_size = mobile_chunking.get_effective_chunk_size(is_mobile=True)
     desktop_chunk_size = mobile_chunking.get_effective_chunk_size(is_mobile=False)
     assert mobile_chunk_size <= desktop_chunk_size
-    print(f"    [PASS] Adaptive chunking: mobile={mobile_chunk_size}, desktop={desktop_chunk_size}")
+    print(
+        f"    [PASS] Adaptive chunking: mobile={mobile_chunk_size}, desktop={desktop_chunk_size}"
+    )
 
     # Test retrieval adaptation
     mobile_retrieval = mobile_config.retrieval
     mobile_top_k = mobile_retrieval.get_effective_top_k(is_mobile=True)
     desktop_top_k = mobile_retrieval.get_effective_top_k(is_mobile=False)
     assert mobile_top_k <= desktop_top_k
-    print(f"    [PASS] Adaptive retrieval: mobile_top_k={mobile_top_k}, desktop_top_k={desktop_top_k}")
+    print(
+        f"    [PASS] Adaptive retrieval: mobile_top_k={mobile_top_k}, desktop_top_k={desktop_top_k}"
+    )
 
     print("\n=== RAG Offline Configuration: ALL TESTS PASSED ===")
 
@@ -264,8 +303,9 @@ def test_rag_offline_config():
         "global_access": True,
         "custom_configs": True,
         "resource_awareness": True,
-        "prompt_6_status": "COMPLETED"
+        "prompt_6_status": "COMPLETED",
     }
+
 
 if __name__ == "__main__":
     try:
@@ -285,5 +325,6 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"\n[FAIL] RAG offline config test FAILED: {e}")
         import traceback
+
         traceback.print_exc()
         exit(1)

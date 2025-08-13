@@ -10,18 +10,18 @@ Complete implementation of Jack Dorsey's BitChat specification with:
 """
 
 import asyncio
-from collections import defaultdict
-from collections.abc import Callable
-from dataclasses import dataclass, field
-from enum import Enum
 import json
 import logging
 import os
 import random
 import struct
 import time
-from typing import Any, Optional
 import uuid
+from collections import defaultdict
+from collections.abc import Callable
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import Any, Optional
 
 import lz4.frame
 

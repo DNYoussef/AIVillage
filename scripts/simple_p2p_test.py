@@ -4,8 +4,8 @@ Test the basic functionality of the P2P protocol compatibility fix.
 """
 
 import asyncio
-from pathlib import Path
 import sys
+from pathlib import Path
 
 # Add paths
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -17,7 +17,14 @@ def test_code_changes_present() -> bool:
     print("[CODE CHECK] Validating P2P protocol fixes...")
 
     # Check p2p_node.py for our changes
-    p2p_node_path = Path(__file__).parent.parent / "src" / "production" / "communications" / "p2p" / "p2p_node.py"
+    p2p_node_path = (
+        Path(__file__).parent.parent
+        / "src"
+        / "production"
+        / "communications"
+        / "p2p"
+        / "p2p_node.py"
+    )
 
     if not p2p_node_path.exists():
         print("ERROR: p2p_node.py not found")
@@ -129,7 +136,9 @@ async def test_basic_p2p_node() -> bool | None:
         suitable_peers = node.get_suitable_evolution_peers(min_count=1)
 
         if len(suitable_peers) == 8:
-            print(f"  [OK] Evolution peer selection returns all {len(suitable_peers)} peers (5-peer limit removed)")
+            print(
+                f"  [OK] Evolution peer selection returns all {len(suitable_peers)} peers (5-peer limit removed)"
+            )
         else:
             print(f"  [ERROR] Expected 8 peers, got {len(suitable_peers)}")
             return False
