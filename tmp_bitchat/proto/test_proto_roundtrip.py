@@ -6,12 +6,12 @@ Validates the protobuf schema by testing serialization/deserialization
 and cross-platform compatibility scenarios for Android/iOS interchange.
 """
 
+from dataclasses import dataclass
 import hashlib
 import json
 import time
-import uuid
-from dataclasses import dataclass
 from typing import Any
+import uuid
 
 
 # Mock protobuf classes for testing (in production would use generated protobuf)

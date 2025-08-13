@@ -6,10 +6,10 @@ Analyzes import usage and dependencies for all duplicate files to assess
 migration risk and effort required for consolidation.
 """
 
-import json
-import re
 from collections import defaultdict
+import json
 from pathlib import Path
+import re
 
 
 class ImportImpactAnalyzer:
@@ -25,9 +25,7 @@ class ImportImpactAnalyzer:
         duplicates_path = self.repo_root / duplicates_file
         with open(duplicates_path, encoding="utf-8") as f:
             self.duplicates_data = json.load(f)
-        print(
-            f"Loaded {len(self.duplicates_data.get('duplicates', []))} duplicate groups"
-        )
+        print(f"Loaded {len(self.duplicates_data.get('duplicates', []))} duplicate groups")
 
     def extract_all_duplicate_files(self) -> list[dict]:
         """Extract all individual files from duplicate groups."""
@@ -87,10 +85,7 @@ class ImportImpactAnalyzer:
         for py_file in self.repo_root.rglob("*.py"):
             try:
                 # Skip virtual environment directories
-                if any(
-                    part in str(py_file)
-                    for part in ["new_env", "old_env", "venv", "__pycache__"]
-                ):
+                if any(part in str(py_file) for part in ["new_env", "old_env", "venv", "__pycache__"]):
                     continue
 
                 with open(py_file, encoding="utf-8", errors="ignore") as f:
@@ -153,9 +148,7 @@ class ImportImpactAnalyzer:
 
                 # Look for function definitions (excluding private ones)
                 func_matches = re.findall(r"def\s+([a-zA-Z][a-zA-Z0-9_]*)", content)
-                public_apis["function_apis"] = [
-                    f for f in func_matches if not f.startswith("_")
-                ]
+                public_apis["function_apis"] = [f for f in func_matches if not f.startswith("_")]
 
             # Check if this module is re-exported in parent __init__.py
             parent_dir = full_path.parent
@@ -179,9 +172,7 @@ class ImportImpactAnalyzer:
             all_dependents.update(files)
         return len(all_dependents)
 
-    def assess_migration_risk(
-        self, file_info: dict, import_results: dict, api_info: dict
-    ) -> dict:
+    def assess_migration_risk(self, file_info: dict, import_results: dict, api_info: dict) -> dict:
         """Assess the migration risk for consolidating this file."""
         dependent_count = self.count_dependents(import_results)
 
@@ -211,11 +202,7 @@ class ImportImpactAnalyzer:
             "risk_level": risk_level,
             "dependent_count": dependent_count,
             "risk_factors": risk_factors,
-            "migration_complexity": "HIGH"
-            if dependent_count > 10
-            else "MEDIUM"
-            if dependent_count > 3
-            else "LOW",
+            "migration_complexity": "HIGH" if dependent_count > 10 else "MEDIUM" if dependent_count > 3 else "LOW",
         }
 
     def generate_migration_strategy(self, file_info: dict, risk_info: dict) -> dict:
@@ -297,21 +284,9 @@ class ImportImpactAnalyzer:
 
         # Summary statistics
         total_files = len(analysis_results)
-        high_impact = sum(
-            1
-            for r in analysis_results.values()
-            if r["risk_assessment"]["risk_level"] == "HIGH"
-        )
-        medium_impact = sum(
-            1
-            for r in analysis_results.values()
-            if r["risk_assessment"]["risk_level"] == "MEDIUM"
-        )
-        low_impact = sum(
-            1
-            for r in analysis_results.values()
-            if r["risk_assessment"]["risk_level"] == "LOW"
-        )
+        high_impact = sum(1 for r in analysis_results.values() if r["risk_assessment"]["risk_level"] == "HIGH")
+        medium_impact = sum(1 for r in analysis_results.values() if r["risk_assessment"]["risk_level"] == "MEDIUM")
+        low_impact = sum(1 for r in analysis_results.values() if r["risk_assessment"]["risk_level"] == "LOW")
 
         report.append(f"- **Total Files Analyzed**: {total_files}")
         report.append(f"- **High Impact Files**: {high_impact} (>10 dependents)")
@@ -326,21 +301,15 @@ class ImportImpactAnalyzer:
         report.append("|------|------------|--------------|-------------------|")
 
         high_impact_files = [
-            (path, data)
-            for path, data in analysis_results.items()
-            if data["risk_assessment"]["risk_level"] == "HIGH"
+            (path, data) for path, data in analysis_results.items() if data["risk_assessment"]["risk_level"] == "HIGH"
         ]
-        high_impact_files.sort(
-            key=lambda x: x[1]["risk_assessment"]["dependent_count"], reverse=True
-        )
+        high_impact_files.sort(key=lambda x: x[1]["risk_assessment"]["dependent_count"], reverse=True)
 
         for file_path, data in high_impact_files:
             dependents = data["risk_assessment"]["dependent_count"]
             risk_factors = ", ".join(data["risk_assessment"]["risk_factors"])
             strategy = data["migration_strategy"]["action"]
-            report.append(
-                f"| `{file_path}` | {dependents} | {risk_factors} | {strategy} |"
-            )
+            report.append(f"| `{file_path}` | {dependents} | {risk_factors} | {strategy} |")
 
         report.append("")
 
@@ -351,13 +320,9 @@ class ImportImpactAnalyzer:
         report.append("|------|------------|-------|----------|")
 
         medium_impact_files = [
-            (path, data)
-            for path, data in analysis_results.items()
-            if data["risk_assessment"]["risk_level"] == "MEDIUM"
+            (path, data) for path, data in analysis_results.items() if data["risk_assessment"]["risk_level"] == "MEDIUM"
         ]
-        medium_impact_files.sort(
-            key=lambda x: x[1]["risk_assessment"]["dependent_count"], reverse=True
-        )
+        medium_impact_files.sort(key=lambda x: x[1]["risk_assessment"]["dependent_count"], reverse=True)
 
         for file_path, data in medium_impact_files[:20]:  # Limit to top 20
             dependents = data["risk_assessment"]["dependent_count"]
@@ -399,9 +364,7 @@ class ImportImpactAnalyzer:
         report.append("```bash")
         report.append("# Verify current import structure")
         for file_path, data in high_impact_files[:5]:
-            report.append(
-                f"rg 'from.*{Path(file_path).stem}|import.*{Path(file_path).stem}' --type py"
-            )
+            report.append(f"rg 'from.*{Path(file_path).stem}|import.*{Path(file_path).stem}' --type py")
         report.append("")
         report.append("# Run baseline tests")
         report.append("python -m pytest tests/ -v")
@@ -439,10 +402,7 @@ class ImportImpactAnalyzer:
             canonical_data = None
 
             for file_path, data in files:
-                if (
-                    data["file_info"]["role"] == "canonical"
-                    or data["migration_strategy"]["action"] == "keep"
-                ):
+                if data["file_info"]["role"] == "canonical" or data["migration_strategy"]["action"] == "keep":
                     canonical_file = file_path
                     canonical_data = data
                     break
@@ -460,12 +420,8 @@ class ImportImpactAnalyzer:
                         "canonical": canonical_file,
                         "shim_strategy": data["migration_strategy"]["shim_strategy"],
                         "dependents_count": data["risk_assessment"]["dependent_count"],
-                        "migration_priority": data["migration_strategy"][
-                            "migration_priority"
-                        ],
-                        "breaking_changes": data["migration_strategy"][
-                            "breaking_changes"
-                        ],
+                        "migration_priority": data["migration_strategy"]["migration_priority"],
+                        "breaking_changes": data["migration_strategy"]["breaking_changes"],
                         "group_label": group_label,
                         "risk_level": data["risk_assessment"]["risk_level"],
                     }
@@ -499,14 +455,8 @@ class ImportImpactAnalyzer:
 
         # Generate summary
         total_files = len(analysis_results)
-        high_risk = sum(
-            1
-            for r in analysis_results.values()
-            if r["risk_assessment"]["risk_level"] == "HIGH"
-        )
-        total_dependents = sum(
-            r["risk_assessment"]["dependent_count"] for r in analysis_results.values()
-        )
+        high_risk = sum(1 for r in analysis_results.values() if r["risk_assessment"]["risk_level"] == "HIGH")
+        total_dependents = sum(r["risk_assessment"]["dependent_count"] for r in analysis_results.values())
 
         print("\n=== Analysis Complete ===")
         print(f"Files analyzed: {total_files}")

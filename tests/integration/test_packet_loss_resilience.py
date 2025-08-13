@@ -6,17 +6,17 @@ Tests the Mesh↔FL handshake under extreme network conditions as required by Sp
 """
 
 import asyncio
+from pathlib import Path
 import random
 import sys
-from pathlib import Path
 
-import pytest
-import torch
 from implement_federated_learning import (
     FederatedLearningClient,
     FederatedLearningServer,
 )
 from implement_mesh_protocol import MeshNetworkSimulator, MessageType
+import pytest
+import torch
 
 # Add scripts to path for module resolution
 sys.path.append(str(Path(__file__).parent.parent.parent / "scripts"))

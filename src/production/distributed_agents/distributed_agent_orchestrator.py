@@ -5,14 +5,15 @@ building on Sprint 6's P2P infrastructure and resource management.
 """
 
 import asyncio
-import logging
-import time
-import uuid
 from dataclasses import dataclass, field
 from enum import Enum
+import logging
+import time
 from typing import Any
+import uuid
 
-from ...core.p2p.p2p_node import P2PNode
+from src.production.communications.p2p.p2p_node import P2PNode
+
 from ...core.resources.resource_monitor import ResourceMonitor
 from ..distributed_inference.model_sharding_engine import (
     DeviceProfile,

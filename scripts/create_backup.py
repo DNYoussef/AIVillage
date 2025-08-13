@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Create a backup of the current codebase structure before restructuring."""
 
+from datetime import datetime
 import json
 import os
-from datetime import datetime
 from pathlib import Path
 
 
@@ -83,9 +83,7 @@ def main():
     backup_info = {
         "timestamp": timestamp,
         "important_files": [str(f.relative_to(base_path)) for f in file_list],
-        "directory_count": len(
-            [k for k, v in structure.items() if v.get("type") == "directory"]
-        ),
+        "directory_count": len([k for k, v in structure.items() if v.get("type") == "directory"]),
         "note": "Backup created before codebase restructuring",
     }
 

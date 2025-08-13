@@ -1,16 +1,14 @@
 #!/usr/bin/env python3
 """Verify Sprints 8-9 are actually complete."""
 
+from pathlib import Path
 import subprocess
 import sys
-from pathlib import Path
 
 
 def run_command(cmd):
     try:
-        result = subprocess.run(
-            cmd, shell=True, capture_output=True, text=True, check=False
-        )
+        result = subprocess.run(cmd, shell=True, capture_output=True, text=True, check=False)
         return result.returncode == 0, result.stdout, result.stderr
     except Exception as e:
         return False, "", str(e)
@@ -53,9 +51,7 @@ def verify_sprint_9():
         checks.append(("SimpleQuantizer imports", True))
     except Exception:
         checks.append(("SimpleQuantizer imports", False))
-    success, _, _ = run_command(
-        "PYTHONPATH=src python -m pytest tests/test_compression.py -v"
-    )
+    success, _, _ = run_command("PYTHONPATH=src python -m pytest tests/test_compression.py -v")
     checks.append(("Compression tests pass", success))
     success, out, _ = run_command("python scripts/benchmark_compression.py")
     checks.append(("Achieves 4x compression", "4." in out))
@@ -72,12 +68,8 @@ def main() -> int:
     print("\n" + "=" * 50)
     print("FINAL VERIFICATION")
     print("=" * 50)
-    print(
-        f"Sprint 8 (Emergency Stabilization): {'✓ COMPLETE' if sprint8_done else '✗ INCOMPLETE'}"
-    )
-    print(
-        f"Sprint 9 (Working Compression): {'✓ COMPLETE' if sprint9_done else '✗ INCOMPLETE'}"
-    )
+    print(f"Sprint 8 (Emergency Stabilization): {'✓ COMPLETE' if sprint8_done else '✗ INCOMPLETE'}")
+    print(f"Sprint 9 (Working Compression): {'✓ COMPLETE' if sprint9_done else '✗ INCOMPLETE'}")
     if sprint8_done and sprint9_done:
         print("\n🎉 Both sprints successfully completed!")
         return 0

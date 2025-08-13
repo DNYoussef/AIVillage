@@ -3,10 +3,10 @@
 
 import gzip
 import lzma
+from pathlib import Path
 import pickle
 import struct
 import sys
-from pathlib import Path
 
 # Add source paths
 sys.path.insert(0, str(Path("src").resolve()))

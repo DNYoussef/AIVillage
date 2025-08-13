@@ -7,12 +7,12 @@ The engineering and model R&D specialist of AIVillage, responsible for:
 - Neural architecture search and experimentation
 """
 
+from dataclasses import dataclass
+from enum import Enum
 import hashlib
 import json
 import logging
 import time
-from dataclasses import dataclass
-from enum import Enum
 from typing import Any
 
 from src.production.rag.rag_system.core.agent_interface import AgentInterface
@@ -116,9 +116,7 @@ class MagiAgent(AgentInterface):
         if "optimize" in prompt_lower:
             return "I optimize models and systems for latency, memory usage, and energy efficiency."
 
-        return (
-            "I am Magi Agent, the engineering and model R&D specialist for AIVillage."
-        )
+        return "I am Magi Agent, the engineering and model R&D specialist for AIVillage."
 
     async def get_embedding(self, text: str) -> list[float]:
         """Generate engineering-focused embeddings"""
@@ -126,9 +124,7 @@ class MagiAgent(AgentInterface):
         # Engineering embeddings are larger and more detailed
         return [(hash_value % 1000) / 1000.0] * 512
 
-    async def rerank(
-        self, query: str, results: list[dict[str, Any]], k: int
-    ) -> list[dict[str, Any]]:
+    async def rerank(self, query: str, results: list[dict[str, Any]], k: int) -> list[dict[str, Any]]:
         """Rerank based on engineering relevance"""
         engineering_keywords = [
             "code",
@@ -151,17 +147,12 @@ class MagiAgent(AgentInterface):
                 score += content.lower().count(keyword) * 2
 
             # Boost technical and implementation-focused content
-            if any(
-                term in content.lower()
-                for term in ["implementation", "technical", "development"]
-            ):
+            if any(term in content.lower() for term in ["implementation", "technical", "development"]):
                 score *= 1.5
 
             result["engineering_relevance"] = score
 
-        return sorted(
-            results, key=lambda x: x.get("engineering_relevance", 0), reverse=True
-        )[:k]
+        return sorted(results, key=lambda x: x.get("engineering_relevance", 0), reverse=True)[:k]
 
     async def introspect(self) -> dict[str, Any]:
         """Return Magi agent status and engineering metrics"""
@@ -184,16 +175,12 @@ class MagiAgent(AgentInterface):
     async def communicate(self, message: str, recipient: "AgentInterface") -> str:
         """Communicate engineering solutions and technical details"""
         # Add technical context to communications
-        if any(
-            keyword in message.lower() for keyword in ["model", "code", "architecture"]
-        ):
+        if any(keyword in message.lower() for keyword in ["model", "code", "architecture"]):
             technical_context = "[ENGINEERING SOLUTION]"
             message = f"{technical_context} {message}"
 
         if recipient:
-            response = await recipient.generate(
-                f"Magi Agent provides technical solution: {message}"
-            )
+            response = await recipient.generate(f"Magi Agent provides technical solution: {message}")
             return f"Technical implementation delivered: {response[:50]}..."
         return "No recipient for engineering solution"
 
@@ -236,9 +223,7 @@ class MagiAgent(AgentInterface):
         language = specification.get("language", "python")
         component_type = specification.get("type", "api")
 
-        generated_code = await self._generate_code_artifact(
-            language, component_type, specification
-        )
+        generated_code = await self._generate_code_artifact(language, component_type, specification)
 
         # Create receipt
         receipt = {
@@ -246,9 +231,7 @@ class MagiAgent(AgentInterface):
             "action": "code_generation",
             "task_id": task_id,
             "timestamp": time.time(),
-            "input_spec_hash": hashlib.sha256(
-                json.dumps(specification, sort_keys=True).encode()
-            ).hexdigest(),
+            "input_spec_hash": hashlib.sha256(json.dumps(specification, sort_keys=True).encode()).hexdigest(),
             "output_hash": hashlib.sha256(generated_code.encode()).hexdigest(),
             "lines_of_code": len(generated_code.split("\n")),
             "language": language,
@@ -270,9 +253,7 @@ class MagiAgent(AgentInterface):
         self.code_artifacts_generated += 1
         self.tasks_completed += 1
 
-        logger.info(
-            f"Code generation completed: {task_id} - {len(generated_code)} chars"
-        )
+        logger.info(f"Code generation completed: {task_id} - {len(generated_code)} chars")
 
         return {
             "status": "success",
@@ -282,9 +263,7 @@ class MagiAgent(AgentInterface):
             "metadata": task.result["metadata"],
         }
 
-    async def _generate_code_artifact(
-        self, language: str, component_type: str, spec: dict[str, Any]
-    ) -> str:
+    async def _generate_code_artifact(self, language: str, component_type: str, spec: dict[str, Any]) -> str:
         """Generate actual code artifact"""
         if language == "python" and component_type == "api":
             return f'''# Generated API Component - {spec.get("description", "API Service")}
@@ -377,9 +356,7 @@ class {spec.get("class_name", "APIComponent")}:
         self.models_trained += 1
         self.tasks_completed += 1
 
-        logger.info(
-            f"Model training completed: {task_id} - {trained_model['size_mb']}MB"
-        )
+        logger.info(f"Model training completed: {task_id} - {trained_model['size_mb']}MB")
 
         return {
             "status": "success",
@@ -403,9 +380,7 @@ class {spec.get("class_name", "APIComponent")}:
             }
 
             self.initialized = True
-            logger.info(
-                f"Magi Agent {self.agent_id} initialized - Engineering systems ready"
-            )
+            logger.info(f"Magi Agent {self.agent_id} initialized - Engineering systems ready")
 
         except Exception as e:
             logger.error(f"Failed to initialize Magi Agent: {e}")

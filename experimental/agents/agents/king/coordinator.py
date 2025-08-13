@@ -2,8 +2,6 @@ from asyncio.log import logger
 from typing import TYPE_CHECKING, Any
 
 from agents.utils.task import Task as LangroidTask
-from rag_system.core.config import UnifiedConfig
-
 from AIVillage.experimental.agents.agents.magi.magi_agent import MagiAgent
 from AIVillage.experimental.agents.agents.sage.sage_agent import SageAgent
 from core.error_handling import (
@@ -13,6 +11,7 @@ from core.error_handling import (
     StandardCommunicationProtocol,
     error_handler,
 )
+from rag_system.core.config import UnifiedConfig
 
 from .analytics.unified_analytics import UnifiedAnalytics
 
@@ -61,9 +60,7 @@ class KingCoordinator:
                 enable_betanet=config.get("enable_betanet", True),
             )
             # Register P2P message handler
-            self.dual_path_transport.register_message_handler(
-                "agent_message", self._handle_p2p_message
-            )
+            self.dual_path_transport.register_message_handler("agent_message", self._handle_p2p_message)
 
     @error_handler.handle_error
     async def coordinate_task(self, task: dict[str, Any]) -> dict[str, Any]:
@@ -82,9 +79,7 @@ class KingCoordinator:
         self.unified_analytics.record_task_completion(
             task.get("id", "unknown"), execution_time, result.get("success", False)
         )
-        self.unified_analytics.record_metric(
-            f"task_type_{task.get('type', 'general')}_execution_time", execution_time
-        )
+        self.unified_analytics.record_metric(f"task_type_{task.get('type', 'general')}_execution_time", execution_time)
 
         return result
 
@@ -92,22 +87,14 @@ class KingCoordinator:
     async def _delegate_task(self, task: LangroidTask) -> dict[str, Any]:
         if task.type == "research":
             sage_agent = next(
-                (
-                    agent
-                    for agent in self.agents.values()
-                    if isinstance(agent, SageAgent)
-                ),
+                (agent for agent in self.agents.values() if isinstance(agent, SageAgent)),
                 None,
             )
             if sage_agent:
                 return await sage_agent.execute_task(task)
         elif task.type in ["coding", "debugging", "code_review"]:
             magi_agent = next(
-                (
-                    agent
-                    for agent in self.agents.values()
-                    if isinstance(agent, MagiAgent)
-                ),
+                (agent for agent in self.agents.values() if isinstance(agent, MagiAgent)),
                 None,
             )
             if magi_agent:
@@ -149,9 +136,7 @@ class KingCoordinator:
             if success:
                 logger.info("Dual-path P2P transport started successfully")
                 # Enable Global South optimizations for offline-first routing
-                if hasattr(
-                    self.dual_path_transport.navigator, "enable_global_south_mode"
-                ):
+                if hasattr(self.dual_path_transport.navigator, "enable_global_south_mode"):
                     self.dual_path_transport.navigator.enable_global_south_mode(True)
             return success
         except Exception as e:
@@ -223,9 +208,7 @@ class KingCoordinator:
             }
 
             # Broadcast via dual-path transport
-            peer_count = await self.dual_path_transport.broadcast_message(
-                payload=broadcast_message, priority=priority
-            )
+            peer_count = await self.dual_path_transport.broadcast_message(payload=broadcast_message, priority=priority)
 
             logger.info(f"Broadcast message to {peer_count} peers in mesh network")
             return peer_count
@@ -245,34 +228,24 @@ class KingCoordinator:
             else:
                 message_data = dual_path_msg.payload
 
-            logger.info(
-                f"Received P2P message via {source_protocol} from {dual_path_msg.sender}"
-            )
+            logger.info(f"Received P2P message via {source_protocol} from {dual_path_msg.sender}")
 
             # Handle different message types
             msg_type = message_data.get("type", "unknown")
 
             if msg_type == "agent_coordination":
-                await self._handle_agent_coordination_message(
-                    message_data, dual_path_msg.sender
-                )
+                await self._handle_agent_coordination_message(message_data, dual_path_msg.sender)
             elif msg_type == "agent_broadcast":
-                await self._handle_agent_broadcast_message(
-                    message_data, dual_path_msg.sender
-                )
+                await self._handle_agent_broadcast_message(message_data, dual_path_msg.sender)
             elif msg_type == "task_delegation":
-                await self._handle_task_delegation_message(
-                    message_data, dual_path_msg.sender
-                )
+                await self._handle_task_delegation_message(message_data, dual_path_msg.sender)
             else:
                 logger.warning(f"Unknown P2P message type: {msg_type}")
 
         except Exception as e:
             logger.exception(f"Error handling P2P message: {e}")
 
-    async def _handle_agent_coordination_message(
-        self, message_data: dict, sender: str
-    ) -> None:
+    async def _handle_agent_coordination_message(self, message_data: dict, sender: str) -> None:
         """Handle agent coordination message"""
         content = message_data.get("content", {})
 
@@ -298,9 +271,7 @@ class KingCoordinator:
             self.unified_analytics.record_metric(f"agent_{sender}_status", agent_status)
             logger.info(f"Status update from agent {sender}: {agent_status}")
 
-    async def _handle_agent_broadcast_message(
-        self, message_data: dict, sender: str
-    ) -> None:
+    async def _handle_agent_broadcast_message(self, message_data: dict, sender: str) -> None:
         """Handle agent broadcast message"""
         content = message_data.get("content", {})
 
@@ -323,9 +294,7 @@ class KingCoordinator:
             }
             await self.coordinate_task(emergency_task)
 
-    async def _handle_task_delegation_message(
-        self, message_data: dict, sender: str
-    ) -> None:
+    async def _handle_task_delegation_message(self, message_data: dict, sender: str) -> None:
         """Handle task delegation from other agents"""
         task = message_data.get("task", {})
 
@@ -359,9 +328,7 @@ class KingCoordinator:
             plan = decision_result["plan"]
             suggested_agent = decision_result["suggested_agent"]
 
-            task = await self.task_manager.create_task(
-                description=chosen_alternative, agent=suggested_agent
-            )
+            task = await self.task_manager.create_task(description=chosen_alternative, agent=suggested_agent)
             await self.task_manager.assign_task(task)
 
             # Implement the plan
@@ -405,9 +372,7 @@ class KingCoordinator:
             await self.king_agent.update(task, result)
 
             # Record analytics
-            self.unified_analytics.record_metric(
-                f"task_type_{task['type']}_success", int(result.get("success", False))
-            )
+            self.unified_analytics.record_metric(f"task_type_{task['type']}_success", int(result.get("success", False)))
             self.unified_analytics.record_metric(
                 f"agent_{task['assigned_agents'][0]}_performance",
                 result.get("performance", 0.5),

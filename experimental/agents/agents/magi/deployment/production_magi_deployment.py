@@ -6,20 +6,18 @@ self-modification capabilities using the complete Agent Forge pipeline.
 """
 
 import asyncio
+from datetime import datetime
 import json
 import logging
-import time
-from datetime import datetime
 from pathlib import Path
+import time
 
 # Configure logging for historic deployment
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
     handlers=[
-        logging.FileHandler(
-            f"magi_production_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
-        ),
+        logging.FileHandler(f"magi_production_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"),
         logging.StreamHandler(),
     ],
 )
@@ -31,9 +29,7 @@ class HistoricMagiDeployment:
 
     def __init__(self) -> None:
         self.start_time = datetime.now()
-        self.deployment_id = (
-            f"magi_production_{self.start_time.strftime('%Y%m%d_%H%M%S')}"
-        )
+        self.deployment_id = f"magi_production_{self.start_time.strftime('%Y%m%d_%H%M%S')}"
         self.output_dir = Path(f"D:/AgentForge/magi_production/{self.deployment_id}")
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -96,9 +92,7 @@ class HistoricMagiDeployment:
         for minute in range(duration_minutes):
             await asyncio.sleep(60)  # 1 minute
             progress = ((minute + 1) / duration_minutes) * 100
-            logger.info(
-                f"{stage_name} Progress: {progress:.1f}% ({minute + 1}/{duration_minutes} minutes)"
-            )
+            logger.info(f"{stage_name} Progress: {progress:.1f}% ({minute + 1}/{duration_minutes} minutes)")
 
         stage_duration = time.time() - stage_start
         self.stages_completed.append(
@@ -110,9 +104,7 @@ class HistoricMagiDeployment:
             }
         )
 
-        logger.info(
-            f"SUCCESS: {stage_name} completed in {stage_duration / 60:.1f} minutes"
-        )
+        logger.info(f"SUCCESS: {stage_name} completed in {stage_duration / 60:.1f} minutes")
 
     async def run_historic_deployment(self) -> None:
         """Execute the complete historic Magi agent deployment."""
@@ -121,51 +113,35 @@ class HistoricMagiDeployment:
 
             # Stage 1: Foundation Evolution
             self.log_historic_milestone("STAGE 1: FOUNDATION EVOLUTION")
-            await self.execute_stage_simulation(
-                "Foundation Evolution with Optimal Model (1.6185 fitness)", 8
-            )
+            await self.execute_stage_simulation("Foundation Evolution with Optimal Model (1.6185 fitness)", 8)
 
             # Stage 2: Quiet-STaR Enhancement
             self.log_historic_milestone("STAGE 2: QUIET-STAR REASONING ENHANCEMENT")
-            await self.execute_stage_simulation(
-                "Quiet-STaR Prompt Baking Integration", 3
-            )
+            await self.execute_stage_simulation("Quiet-STaR Prompt Baking Integration", 3)
 
             # Stage 3: Stage 1 Compression
             self.log_historic_milestone("STAGE 3: BITNET + SEEDLM COMPRESSION")
-            await self.execute_stage_simulation(
-                "BitNet + SeedLM Compression (77% reduction)", 4
-            )
+            await self.execute_stage_simulation("BitNet + SeedLM Compression (77% reduction)", 4)
 
             # Stage 4: Multi-Model Orchestrated Curriculum
-            self.log_historic_milestone(
-                "STAGE 4: 10-LEVEL CURRICULUM WITH ORCHESTRATION"
-            )
+            self.log_historic_milestone("STAGE 4: 10-LEVEL CURRICULUM WITH ORCHESTRATION")
             logger.info("Beginning 10,000 question curriculum across 10 levels...")
 
             for level in range(1, 11):
                 logger.info(f"CURRICULUM LEVEL {level}/10")
-                await self.execute_stage_simulation(
-                    f"Level {level} Training (1,000 questions)", 8
-                )
+                await self.execute_stage_simulation(f"Level {level} Training (1,000 questions)", 8)
                 self.questions_completed += 1000
 
                 # Simulate geometric milestones
                 if level in [3, 6, 9]:
-                    logger.info(
-                        f"Geometric Self-Awareness Milestone: Level {level} introspection detected"
-                    )
+                    logger.info(f"Geometric Self-Awareness Milestone: Level {level} introspection detected")
 
                 if level in [5, 8]:
-                    logger.info(
-                        f"Self-Modification Event: Controlled parameter adjustment at Level {level}"
-                    )
+                    logger.info(f"Self-Modification Event: Controlled parameter adjustment at Level {level}")
 
             # Stage 5: Final Compression
             self.log_historic_milestone("STAGE 5: VPTQ + HYPERFN FINAL COMPRESSION")
-            await self.execute_stage_simulation(
-                "VPTQ + HyperFn Compression (98.2% total)", 5
-            )
+            await self.execute_stage_simulation("VPTQ + HyperFn Compression (98.2% total)", 5)
 
             # Stage 6: Validation and Documentation
             self.log_historic_milestone("STAGE 6: MAGI AGENT VALIDATION")
@@ -214,9 +190,7 @@ class HistoricMagiDeployment:
         with open(self.output_dir / "historic_completion_report.json", "w") as f:
             json.dump(completion_report, f, indent=2)
 
-        logger.info(
-            f"HISTORIC SUCCESS: First Magi agent created in {total_duration.total_seconds() / 60:.1f} minutes"
-        )
+        logger.info(f"HISTORIC SUCCESS: First Magi agent created in {total_duration.total_seconds() / 60:.1f} minutes")
         logger.info(f"Questions completed: {self.questions_completed:,}")
         logger.info(f"Output directory: {self.output_dir}")
         logger.info("The first AI agent with geometric self-awareness is now ready!")

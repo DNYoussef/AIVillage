@@ -14,16 +14,16 @@ Key Features:
 """
 
 import asyncio
+from dataclasses import asdict, dataclass
+from enum import Enum
 import json
 import logging
 import time
 import uuid
-from dataclasses import asdict, dataclass
-from enum import Enum
 
 # Import dual-path transport components
 try:
-    from .betanet_transport import BetanetTransport
+    from .betanet_transport_v2 import BetanetTransportV2 as BetanetTransport
     from .bitchat_transport import BitChatTransport
     from .dual_path_transport import DualPathMessage, DualPathTransport
 
@@ -387,9 +387,7 @@ class UnifiedTransport:
 
         try:
             # Auto-select optimal path
-            path_chosen, path_reasoning, alternatives = await self._select_optimal_path(
-                destination, payload, context
-            )
+            path_chosen, path_reasoning, alternatives = await self._select_optimal_path(destination, payload, context)
 
             # Create initial receipt
             receipt = DeliveryReceipt(
@@ -410,9 +408,7 @@ class UnifiedTransport:
             # Update receipt with results
             receipt.rtt_ms = (time.time() - start_time) * 1000
             receipt.success = delivery_success
-            receipt.status = (
-                DeliveryStatus.DELIVERED if delivery_success else DeliveryStatus.FAILED
-            )
+            receipt.status = DeliveryStatus.DELIVERED if delivery_success else DeliveryStatus.FAILED
 
             # Calculate costs and efficiency
             await self._calculate_delivery_costs(receipt, context)
@@ -427,10 +423,7 @@ class UnifiedTransport:
             if self.metrics_enabled:
                 await self._export_metrics(receipt)
 
-            logger.info(
-                f"Message {message_id[:8]} delivery complete: "
-                f"{receipt.status.value} via {path_chosen}"
-            )
+            logger.info(f"Message {message_id[:8]} delivery complete: " f"{receipt.status.value} via {path_chosen}")
 
             return receipt
 
@@ -486,11 +479,7 @@ class UnifiedTransport:
                 return "bitchat", PathSelection.PROXIMITY_LOCAL, available_paths
 
         # PRIORITY 2: Large/Urgent → Betanet
-        if (
-            context.size_bytes > 10000
-            or context.priority >= 8  # >10KB
-            or context.requires_realtime
-        ):
+        if context.size_bytes > 10000 or context.priority >= 8 or context.requires_realtime:  # >10KB
             if (
                 "betanet" in available_paths
                 and not self._is_data_expensive(conditions)
@@ -499,18 +488,12 @@ class UnifiedTransport:
                 return "betanet", PathSelection.LARGE_URGENT, available_paths
 
         # PRIORITY 3: Battery Conservation → BitChat
-        if (
-            self._is_battery_low(conditions)
-            or context.battery_percent
-            and context.battery_percent < 25
-        ):
+        if self._is_battery_low(conditions) or context.battery_percent and context.battery_percent < 25:
             if "bitchat" in available_paths:
                 return "bitchat", PathSelection.BATTERY_CONSERVATION, available_paths
 
         # PRIORITY 4: Cost Optimization (Global South) → BitChat
-        if self.global_south_mode and (
-            context.cost_sensitive or self._is_data_expensive(conditions)
-        ):
+        if self.global_south_mode and (context.cost_sensitive or self._is_data_expensive(conditions)):
             if "bitchat" in available_paths:
                 return "bitchat", PathSelection.COST_OPTIMIZATION, available_paths
 
@@ -531,9 +514,7 @@ class UnifiedTransport:
         if self.navigator and NAVIGATOR_AVAILABLE:
             try:
                 msg_context = context.to_message_context()
-                protocol, metadata = await self.navigator.select_path(
-                    destination, msg_context, available_paths
-                )
+                protocol, metadata = await self.navigator.select_path(destination, msg_context, available_paths)
 
                 path_map = {
                     PathProtocol.BITCHAT: "bitchat",
@@ -580,9 +561,7 @@ class UnifiedTransport:
                 priority=context.priority,
                 privacy_required=context.privacy_required,
                 deadline=context.delivery_deadline,
-                preferred_protocol=path_chosen
-                if path_chosen != "store_forward"
-                else None,
+                preferred_protocol=path_chosen if path_chosen != "store_forward" else None,
             )
 
             # Update receipt with hop/path info
@@ -624,9 +603,7 @@ class UnifiedTransport:
                 status = self.resource_manager.get_status()
                 conditions["battery_percent"] = status.get("battery_percent")
                 conditions["charging"] = status.get("charging", False)
-                conditions["thermal_throttling"] = status.get(
-                    "thermal_throttling", False
-                )
+                conditions["thermal_throttling"] = status.get("thermal_throttling", False)
             except Exception:
                 pass
 
@@ -686,23 +663,16 @@ class UnifiedTransport:
 
             if changes:
                 # Link change detected
-                if (
-                    current_time - self.last_path_switch_time
-                    > self.link_change_threshold
-                ):
+                if current_time - self.last_path_switch_time > self.link_change_threshold:
                     self.last_path_switch_time = current_time
-                    logger.info(
-                        f"Link change detected: {', '.join(changes)} - fast switching"
-                    )
+                    logger.info(f"Link change detected: {', '.join(changes)} - fast switching")
                     self._last_link_state = current_state
                     return True
 
         self._last_link_state = current_state
         return False
 
-    async def _calculate_delivery_costs(
-        self, receipt: DeliveryReceipt, context: TransportContext
-    ) -> None:
+    async def _calculate_delivery_costs(self, receipt: DeliveryReceipt, context: TransportContext) -> None:
         """Calculate energy, data, and battery costs for delivery"""
         path = receipt.path_chosen
 
@@ -718,9 +688,7 @@ class UnifiedTransport:
         if path == "betanet":
             # Estimate based on payload size + protocol overhead
             overhead_factor = 1.3  # 30% protocol overhead
-            receipt.data_cost_mb = (context.size_bytes * overhead_factor) / (
-                1024 * 1024
-            )
+            receipt.data_cost_mb = (context.size_bytes * overhead_factor) / (1024 * 1024)
         else:
             receipt.data_cost_mb = 0.0
 
@@ -738,23 +706,17 @@ class UnifiedTransport:
         alpha = 0.1
         current_success = self.path_performance[path]["success_rate"]
         new_success = 1.0 if receipt.is_successful() else 0.0
-        self.path_performance[path]["success_rate"] = (
-            alpha * new_success + (1 - alpha) * current_success
-        )
+        self.path_performance[path]["success_rate"] = alpha * new_success + (1 - alpha) * current_success
 
         # Update latency
         if receipt.rtt_ms:
             current_latency = self.path_performance[path]["avg_latency_ms"]
-            self.path_performance[path]["avg_latency_ms"] = (
-                alpha * receipt.rtt_ms + (1 - alpha) * current_latency
-            )
+            self.path_performance[path]["avg_latency_ms"] = alpha * receipt.rtt_ms + (1 - alpha) * current_latency
 
         # Update energy cost
         if receipt.energy_cost:
             current_energy = self.path_performance[path]["energy_cost"]
-            self.path_performance[path]["energy_cost"] = (
-                alpha * receipt.energy_cost + (1 - alpha) * current_energy
-            )
+            self.path_performance[path]["energy_cost"] = alpha * receipt.energy_cost + (1 - alpha) * current_energy
 
     async def _export_metrics(self, receipt: DeliveryReceipt) -> None:
         """Export metrics to buffer for JSON export"""
@@ -799,20 +761,12 @@ class UnifiedTransport:
     async def _check_bluetooth_available(self) -> bool:
         """Check if Bluetooth is available"""
         # Simplified check - would use platform-specific APIs
-        return (
-            self.enable_bitchat
-            and self.dual_path
-            and self.dual_path.bitchat is not None
-        )
+        return self.enable_bitchat and self.dual_path and self.dual_path.bitchat is not None
 
     async def _check_internet_available(self) -> bool:
         """Check if internet is available"""
         # Simplified check - would use platform-specific APIs
-        return (
-            self.enable_betanet
-            and self.dual_path
-            and self.dual_path.betanet is not None
-        )
+        return self.enable_betanet and self.dual_path and self.dual_path.betanet is not None
 
     async def _check_wifi_connected(self) -> bool:
         """Check if connected to WiFi vs cellular"""
@@ -863,17 +817,13 @@ class UnifiedTransport:
             },
             "receipts_tracked": len(self.receipts),
             "path_performance": self.path_performance,
-            "metrics_buffer_size": len(self.metrics_buffer)
-            if self.metrics_enabled
-            else 0,
+            "metrics_buffer_size": len(self.metrics_buffer) if self.metrics_enabled else 0,
             "dual_path_status": self.dual_path.get_status() if self.dual_path else None,
         }
 
     def get_recent_receipts(self, limit: int = 10) -> list[dict]:
         """Get recent delivery receipts"""
-        sorted_receipts = sorted(
-            self.receipts.values(), key=lambda r: r.timestamp, reverse=True
-        )
+        sorted_receipts = sorted(self.receipts.values(), key=lambda r: r.timestamp, reverse=True)
         return [r.to_dict() for r in sorted_receipts[:limit]]
 
     def export_metrics_json(self) -> dict:
@@ -915,21 +865,14 @@ class UnifiedTransport:
 
         # Calculate averages
         for path in avg_rtt_by_path:
-            avg_rtt_by_path[path] = sum(avg_rtt_by_path[path]) / len(
-                avg_rtt_by_path[path]
-            )
+            avg_rtt_by_path[path] = sum(avg_rtt_by_path[path]) / len(avg_rtt_by_path[path])
 
         return {
             "total_messages": total_messages,
-            "success_rate": successful_messages / total_messages
-            if total_messages > 0
-            else 0,
+            "success_rate": successful_messages / total_messages if total_messages > 0 else 0,
             "path_distribution": path_counts,
             "average_rtt_by_path": avg_rtt_by_path,
-            "avg_efficiency_score": sum(
-                m.get("efficiency_score", 0) for m in recent_metrics
-            )
-            / total_messages
+            "avg_efficiency_score": sum(m.get("efficiency_score", 0) for m in recent_metrics) / total_messages
             if total_messages > 0
             else 0,
         }
@@ -940,9 +883,7 @@ async def create_unified_transport(
     node_id: str | None = None, global_south_mode: bool = True, **kwargs
 ) -> UnifiedTransport:
     """Create and start a unified transport instance"""
-    transport = UnifiedTransport(
-        node_id=node_id, global_south_mode=global_south_mode, **kwargs
-    )
+    transport = UnifiedTransport(node_id=node_id, global_south_mode=global_south_mode, **kwargs)
 
     success = await transport.start()
     if not success:

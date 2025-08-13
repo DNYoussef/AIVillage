@@ -13,13 +13,13 @@ import asyncio
 import importlib.util
 import logging
 import os
+from pathlib import Path
 import shutil
 import sys
 import tempfile
 import time
 import types
 import unittest
-from pathlib import Path
 from unittest.mock import AsyncMock, Mock, patch
 
 import numpy as np

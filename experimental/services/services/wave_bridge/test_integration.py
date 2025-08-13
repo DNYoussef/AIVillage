@@ -5,12 +5,12 @@ Tests core functionality and performance requirements.
 import time
 from unittest.mock import Mock, patch
 
-import httpx
-import pytest
 from app import app
+import httpx
 from language_support import auto_translate_flow, detect_language
 from metrics import ResponseMetrics
 from prompt_tuning import ABTestManager, PromptTuner
+import pytest
 from tutor_engine import AITutor
 
 # Test configuration
@@ -40,9 +40,9 @@ class TestWhatsAppIntegration:
         response_time = time.time() - start_time
 
         # Assert response time meets target
-        assert response_time < PERFORMANCE_TARGET, (
-            f"Response took {response_time:.2f}s, target is {PERFORMANCE_TARGET}s"
-        )
+        assert (
+            response_time < PERFORMANCE_TARGET
+        ), f"Response took {response_time:.2f}s, target is {PERFORMANCE_TARGET}s"
         assert response.status_code == 200
         assert "application/xml" in response.headers["content-type"]
 

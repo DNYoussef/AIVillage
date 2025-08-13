@@ -13,10 +13,10 @@ DoD: All scenarios pass; receipts recorded; metrics exported JSON.
 
 import asyncio
 import json
-import time
-import uuid
 from pathlib import Path
+import time
 from unittest.mock import AsyncMock, Mock, patch
+import uuid
 
 import pytest
 

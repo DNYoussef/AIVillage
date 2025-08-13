@@ -5,21 +5,21 @@ coordinates between components, and ensures stable autonomous improvement.
 """
 
 import asyncio
-import json
-import logging
-import signal
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import asynccontextmanager
 from dataclasses import asdict, dataclass
 from datetime import datetime
+import json
+import logging
 from pathlib import Path
+import signal
 from typing import Any
 
-import numpy as np
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.interval import IntervalTrigger
+import numpy as np
 
 from .agent_evolution_engine import AgentEvolutionEngine, AgentGenome, AgentKPIs
 from .evolution_dashboard import EvolutionDashboard, PerformanceAnalyzer
@@ -82,9 +82,7 @@ class HealthMonitor:
 
         try:
             # Check evolution engine health
-            dashboard_data = (
-                await self.orchestrator.evolution_engine.get_evolution_dashboard_data()
-            )
+            dashboard_data = await self.orchestrator.evolution_engine.get_evolution_dashboard_data()
 
             # Fitness health
             current_fitness = dashboard_data["population_stats"]["avg_fitness"]
@@ -117,11 +115,7 @@ class HealthMonitor:
 
             # Active modifications
             active_mods = len(
-                [
-                    mod
-                    for mod in self.orchestrator.code_modifier.modifications.values()
-                    if not mod.applied
-                ]
+                [mod for mod in self.orchestrator.code_modifier.modifications.values() if not mod.applied]
             )
             if active_mods > self.orchestrator.config.max_concurrent_modifications:
                 health_status["alerts"].append(
@@ -140,9 +134,7 @@ class HealthMonitor:
                 "diversity": diversity,
                 "total_agents": dashboard_data["population_stats"]["total_agents"],
                 "active_modifications": active_mods,
-                "current_generation": dashboard_data["population_stats"][
-                    "current_generation"
-                ],
+                "current_generation": dashboard_data["population_stats"]["current_generation"],
             }
 
         except Exception as e:
@@ -171,9 +163,7 @@ class HealthMonitor:
         if alert["type"] == "fitness_drop" and alert["severity"] == "high":
             # Emergency rollback
             logger.info("Triggering emergency rollback due to fitness drop")
-            success = await self.orchestrator.evolution_engine.emergency_rollback(
-                generations_back=1
-            )
+            success = await self.orchestrator.evolution_engine.emergency_rollback(generations_back=1)
 
             if success:
                 logger.info("Emergency rollback successful")
@@ -207,9 +197,7 @@ class TaskScheduler:
         if self.orchestrator.config.auto_evolution_enabled:
             evolution_job = self.scheduler.add_job(
                 self.orchestrator._run_scheduled_evolution,
-                IntervalTrigger(
-                    hours=self.orchestrator.config.evolution_interval_hours
-                ),
+                IntervalTrigger(hours=self.orchestrator.config.evolution_interval_hours),
                 id="evolution_cycle",
                 name="Evolution Cycle",
             )
@@ -218,9 +206,7 @@ class TaskScheduler:
         # Health monitoring
         health_job = self.scheduler.add_job(
             self.orchestrator._run_health_check,
-            IntervalTrigger(
-                minutes=self.orchestrator.config.monitoring_interval_minutes
-            ),
+            IntervalTrigger(minutes=self.orchestrator.config.monitoring_interval_minutes),
             id="health_check",
             name="Health Check",
         )
@@ -289,13 +275,9 @@ class EvolutionOrchestrator:
             population_size=self.config.max_population_size,
         )
 
-        self.code_modifier = SafeCodeModifier(
-            backup_path=str(self.storage_path / "backups")
-        )
+        self.code_modifier = SafeCodeModifier(backup_path=str(self.storage_path / "backups"))
 
-        self.meta_learning_engine = MetaLearningEngine(
-            storage_path=str(self.storage_path / "meta_learning")
-        )
+        self.meta_learning_engine = MetaLearningEngine(storage_path=str(self.storage_path / "meta_learning"))
 
         self.dashboard = EvolutionDashboard(self.evolution_engine, port=5000)
 
@@ -375,9 +357,7 @@ class EvolutionOrchestrator:
 
         logger.info("Evolution Orchestrator stopped")
 
-    async def trigger_evolution(
-        self, generations: int = 1, force: bool = False
-    ) -> dict[str, Any]:
+    async def trigger_evolution(self, generations: int = 1, force: bool = False) -> dict[str, Any]:
         """Manually trigger evolution cycle."""
         if not self.state.is_running and not force:
             msg = "Orchestrator is not running"
@@ -408,9 +388,7 @@ class EvolutionOrchestrator:
             # Update performance trend
             self._update_performance_trend(results)
 
-            logger.info(
-                f"Evolution cycle completed. Best fitness: {max(results['best_fitness_history']):.4f}"
-            )
+            logger.info(f"Evolution cycle completed. Best fitness: {max(results['best_fitness_history']):.4f}")
 
             return {
                 "success": True,
@@ -457,19 +435,11 @@ class EvolutionOrchestrator:
             )
 
             # Test modification
-            test_results = await self.code_modifier.test_modification(
-                modification.modification_id
-            )
+            test_results = await self.code_modifier.test_modification(modification.modification_id)
 
             # Apply if safe
-            if (
-                modification.safety_score >= 0.8
-                and test_results.get("success", False)
-                and not self.config.safety_mode
-            ):
-                success = await self.code_modifier.apply_modification(
-                    modification.modification_id
-                )
+            if modification.safety_score >= 0.8 and test_results.get("success", False) and not self.config.safety_mode:
+                success = await self.code_modifier.apply_modification(modification.modification_id)
 
                 if success:
                     logger.info(f"Applied modification {modification.modification_id}")
@@ -491,9 +461,7 @@ class EvolutionOrchestrator:
             }
 
         finally:
-            self.state.active_modifications = max(
-                0, self.state.active_modifications - 1
-            )
+            self.state.active_modifications = max(0, self.state.active_modifications - 1)
 
     async def get_orchestration_status(self) -> dict[str, Any]:
         """Get comprehensive orchestration status."""
@@ -501,11 +469,7 @@ class EvolutionOrchestrator:
         uptime = (datetime.now() - self.start_time).total_seconds()
 
         # Get latest health status
-        latest_health = (
-            self.health_monitor.health_history[-1]
-            if self.health_monitor.health_history
-            else None
-        )
+        latest_health = self.health_monitor.health_history[-1] if self.health_monitor.health_history else None
 
         # Get evolution status
         dashboard_data = await self.evolution_engine.get_evolution_dashboard_data()
@@ -519,9 +483,7 @@ class EvolutionOrchestrator:
                 "uptime_seconds": uptime,
                 "emergency_mode": self.state.emergency_mode,
                 "last_evolution": (
-                    self.state.last_evolution_time.isoformat()
-                    if self.state.last_evolution_time
-                    else None
+                    self.state.last_evolution_time.isoformat() if self.state.last_evolution_time else None
                 ),
                 "current_generation": self.state.current_generation,
                 "active_modifications": self.state.active_modifications,
@@ -557,9 +519,7 @@ class EvolutionOrchestrator:
         while self.state.is_running:
             try:
                 # Monitor agent performance
-                dashboard_data = (
-                    await self.evolution_engine.get_evolution_dashboard_data()
-                )
+                dashboard_data = await self.evolution_engine.get_evolution_dashboard_data()
 
                 # Record KPIs for agents with low performance
                 for agent_id, fitness in dashboard_data["fitness_scores"].items():
@@ -586,15 +546,12 @@ class EvolutionOrchestrator:
         while self.state.is_running:
             try:
                 # Optimize learning for active agents
-                dashboard_data = (
-                    await self.evolution_engine.get_evolution_dashboard_data()
-                )
+                dashboard_data = await self.evolution_engine.get_evolution_dashboard_data()
 
                 for agent_id, fitness in dashboard_data["fitness_scores"].items():
                     # Optimize learning strategy
                     task_characteristics = {
-                        "difficulty": 1.0
-                        - fitness,  # Higher difficulty for lower fitness
+                        "difficulty": 1.0 - fitness,  # Higher difficulty for lower fitness
                         "data_size": 1000,
                         "task_complexity": "medium",
                     }
@@ -623,9 +580,7 @@ class EvolutionOrchestrator:
                 await self.code_modifier.sandbox.cleanup_old_sandboxes(max_age_hours=24)
 
                 # Cleanup old backups
-                await self.code_modifier.cleanup_old_backups(
-                    max_age_days=self.config.backup_retention_days
-                )
+                await self.code_modifier.cleanup_old_backups(max_age_days=self.config.backup_retention_days)
 
                 await asyncio.sleep(3600)  # 1 hour
 
@@ -661,18 +616,13 @@ class EvolutionOrchestrator:
             report = await self.performance_analyzer.generate_evolution_report()
 
             # Save report
-            report_file = (
-                self.storage_path
-                / f"daily_report_{datetime.now().strftime('%Y%m%d')}.json"
-            )
+            report_file = self.storage_path / f"daily_report_{datetime.now().strftime('%Y%m%d')}.json"
             with open(report_file, "w") as f:
                 json.dump(report, f, indent=2, default=str)
 
             # Optimize agent population
             if report["performance_analysis"]["performance_distribution"]["mean"] < 0.4:
-                logger.info(
-                    "Low performance detected - triggering optimization evolution"
-                )
+                logger.info("Low performance detected - triggering optimization evolution")
                 await self.trigger_evolution(generations=2, force=True)
 
         except Exception as e:
@@ -681,9 +631,7 @@ class EvolutionOrchestrator:
     async def _cleanup_old_backups(self) -> None:
         """Weekly backup cleanup."""
         logger.info("Running weekly backup cleanup")
-        await self.code_modifier.cleanup_old_backups(
-            max_age_days=self.config.backup_retention_days
-        )
+        await self.code_modifier.cleanup_old_backups(max_age_days=self.config.backup_retention_days)
 
     async def _create_evaluation_tasks(self) -> list[Callable]:
         """Create evaluation tasks for evolution."""
@@ -692,12 +640,8 @@ class EvolutionOrchestrator:
             """Evaluate agent fitness."""
             try:
                 # Get recent performance data
-                fitness_scores = self.evolution_engine.kpi_tracker.get_fitness_scores(
-                    [genome.agent_id]
-                )
-                return fitness_scores.get(
-                    genome.agent_id, 0.5
-                )  # Default to medium fitness
+                fitness_scores = self.evolution_engine.kpi_tracker.get_fitness_scores([genome.agent_id])
+                return fitness_scores.get(genome.agent_id, 0.5)  # Default to medium fitness
             except Exception:
                 return 0.5
 
@@ -721,9 +665,7 @@ class EvolutionOrchestrator:
 
         return [fitness_evaluation_task, specialization_task, collaboration_task]
 
-    async def _analyze_evolution_results(
-        self, results: dict[str, Any]
-    ) -> dict[str, Any]:
+    async def _analyze_evolution_results(self, results: dict[str, Any]) -> dict[str, Any]:
         """Analyze evolution results."""
         analysis = {
             "improvement": 0.0,
@@ -738,25 +680,17 @@ class EvolutionOrchestrator:
 
             if len(fitness_history) > 1:
                 analysis["improvement"] = fitness_history[-1] - fitness_history[0]
-                analysis["convergence_rate"] = analysis["improvement"] / len(
-                    fitness_history
-                )
+                analysis["convergence_rate"] = analysis["improvement"] / len(fitness_history)
 
             if len(diversity_history) > 1:
-                analysis["diversity_change"] = (
-                    diversity_history[-1] - diversity_history[0]
-                )
+                analysis["diversity_change"] = diversity_history[-1] - diversity_history[0]
 
             # Generate recommendations
             if analysis["improvement"] < 0.05:
-                analysis["recommendations"].append(
-                    "Low improvement - consider increasing mutation rate"
-                )
+                analysis["recommendations"].append("Low improvement - consider increasing mutation rate")
 
             if analysis["diversity_change"] < -0.1:
-                analysis["recommendations"].append(
-                    "Diversity decreasing - add diversity preservation"
-                )
+                analysis["recommendations"].append("Diversity decreasing - add diversity preservation")
 
         except Exception as e:
             logger.exception(f"Evolution analysis failed: {e}")
@@ -780,9 +714,7 @@ class EvolutionOrchestrator:
         except Exception:
             self.state.performance_trend = "unknown"
 
-    async def _record_modification_outcome(
-        self, modification: CodeModification, success: bool
-    ) -> None:
+    async def _record_modification_outcome(self, modification: CodeModification, success: bool) -> None:
         """Record modification outcome for meta-learning."""
         try:
             # Record learning outcome
@@ -800,9 +732,7 @@ class EvolutionOrchestrator:
 
     async def _cancel_pending_modifications(self) -> None:
         """Cancel excessive pending modifications."""
-        pending_mods = [
-            mod for mod in self.code_modifier.modifications.values() if not mod.applied
-        ]
+        pending_mods = [mod for mod in self.code_modifier.modifications.values() if not mod.applied]
 
         # Keep only the highest priority modifications
         sorted_mods = sorted(pending_mods, key=lambda x: x.safety_score, reverse=True)
@@ -812,9 +742,7 @@ class EvolutionOrchestrator:
             if mod.modification_id in self.code_modifier.modifications:
                 del self.code_modifier.modifications[mod.modification_id]
 
-        logger.info(
-            f"Cancelled {len(sorted_mods) - self.config.max_concurrent_modifications} pending modifications"
-        )
+        logger.info(f"Cancelled {len(sorted_mods) - self.config.max_concurrent_modifications} pending modifications")
 
     def _setup_signal_handlers(self) -> None:
         """Setup graceful shutdown signal handlers."""
@@ -853,12 +781,8 @@ class EvolutionOrchestrator:
 
                 # Restore state (selective restore to avoid conflicts)
                 if "state" in state_data:
-                    self.state.current_generation = state_data["state"].get(
-                        "current_generation", 0
-                    )
-                    self.state.performance_trend = state_data["state"].get(
-                        "performance_trend", "stable"
-                    )
+                    self.state.current_generation = state_data["state"].get("current_generation", 0)
+                    self.state.performance_trend = state_data["state"].get("performance_trend", "stable")
 
         except Exception as e:
             logger.exception(f"Failed to load orchestration state: {e}")

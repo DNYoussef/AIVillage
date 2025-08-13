@@ -1,0 +1,23 @@
+# P2P Network Dependencies for BitChat and Betanet
+# Install with: pip install -r setup/requirements_p2p.txt
+
+# BitChat Bluetooth Requirements
+PyBluez>=0.23
+lz4>=4.3.2
+cryptography>=41.0.0
+
+# Betanet QUIC/HTTP Requirements
+aioquic>=0.9.21
+h2>=4.1.0
+h11>=0.14.0
+pyNaCl>=1.5.0
+
+# Common dependencies
+aiofiles>=23.1.0
+msgpack>=1.0.5
+
+# Mobile/Android Bridge
+pybluez-android>=0.1.0; platform_system=="Android"
+
+# Optional but recommended
+uvloop>=0.17.0; platform_system!="Windows"

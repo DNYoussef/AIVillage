@@ -5,20 +5,21 @@ Sprint 6's evolution system and P2P infrastructure.
 """
 
 import asyncio
+from dataclasses import dataclass, field
+from enum import Enum
 import logging
 import random
 import time
-import uuid
-from dataclasses import dataclass, field
-from enum import Enum
 from typing import Any
+import uuid
 
 import numpy as np
 import torch
 from torch import nn
 from torch.utils.data import DataLoader, Dataset
 
-from ...core.p2p.p2p_node import P2PNode, PeerCapabilities
+from src.production.communications.p2p.p2p_node import P2PNode, PeerCapabilities
+
 from ..evolution.infrastructure_aware_evolution import (
     InfrastructureAwareEvolution,
 )

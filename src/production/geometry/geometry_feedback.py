@@ -8,23 +8,23 @@ Provides comprehensive geometric analysis and feedback for training:
 - Adaptive learning rate suggestions based on geometry
 """
 
+from dataclasses import asdict, dataclass
 import json
 import logging
 import math
-import time
-from dataclasses import asdict, dataclass
 from pathlib import Path
+import time
 from typing import Any
 
 import matplotlib.pyplot as plt
 import numpy as np
+from scipy.stats import entropy
 import seaborn as sns
 import torch
-from scipy.stats import entropy
 from torch import nn
 
-import wandb
 from src.production.geometry.geometry.id_twonn import twonn
+import wandb
 
 logger = logging.getLogger(__name__)
 
@@ -722,8 +722,8 @@ async def run_geometry(config: dict[str, Any]) -> "PhaseResult":
     Returns:
         PhaseResult with status, artifacts, and metrics
     """
-    import time
     from datetime import datetime
+    import time
 
     from src.agent_forge.forge_orchestrator import (
         PhaseArtifact,

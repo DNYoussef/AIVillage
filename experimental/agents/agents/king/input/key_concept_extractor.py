@@ -2,9 +2,9 @@ import io
 import logging
 from typing import Any
 
+from langroid.language_models.openai_gpt import OpenAIGPTConfig
 import matplotlib.pyplot as plt
 import networkx as nx
-from langroid.language_models.openai_gpt import OpenAIGPTConfig
 
 from core.error_handling import AIVillageException, error_handler, safe_execute
 
@@ -16,9 +16,7 @@ class KeyConceptExtractor:
         self.llm = llm_config.create()
 
     @error_handler.handle_error
-    async def extract_key_concepts(
-        self, user_input: str, interpreted_intent: dict[str, Any]
-    ) -> dict[str, Any]:
+    async def extract_key_concepts(self, user_input: str, interpreted_intent: dict[str, Any]) -> dict[str, Any]:
         """Extract key concepts from the user input and interpreted intent.
 
         Args:
@@ -34,9 +32,7 @@ class KeyConceptExtractor:
         concept_graph = self._build_concept_graph(extracted_concepts)
         return {"concepts": extracted_concepts, "graph": concept_graph}
 
-    def _create_concept_extraction_prompt(
-        self, user_input: str, interpreted_intent: dict[str, Any]
-    ) -> str:
+    def _create_concept_extraction_prompt(self, user_input: str, interpreted_intent: dict[str, Any]) -> str:
         return f"""
         Analyze the following user input and interpreted intent to extract key concepts:
 
@@ -73,9 +69,7 @@ class KeyConceptExtractor:
         return G
 
     @error_handler.handle_error
-    async def analyze_concept_importance(
-        self, concepts: dict[str, Any]
-    ) -> dict[str, float]:
+    async def analyze_concept_importance(self, concepts: dict[str, Any]) -> dict[str, float]:
         """Analyze the importance of each extracted concept.
 
         Args:
@@ -118,9 +112,7 @@ class KeyConceptExtractor:
             raise AIVillageException(msg)
 
     @safe_execute
-    async def process_input(
-        self, user_input: str, interpreted_intent: dict[str, Any]
-    ) -> dict[str, Any]:
+    async def process_input(self, user_input: str, interpreted_intent: dict[str, Any]) -> dict[str, Any]:
         """Process the user input and interpreted intent to extract and analyze key concepts.
 
         Args:
@@ -130,12 +122,8 @@ class KeyConceptExtractor:
         Returns:
             Dict[str, Any]: A dictionary containing the extracted concepts, their relationships, and importance scores.
         """
-        extraction_result = await self.extract_key_concepts(
-            user_input, interpreted_intent
-        )
-        importance_scores = await self.analyze_concept_importance(
-            extraction_result["concepts"]
-        )
+        extraction_result = await self.extract_key_concepts(user_input, interpreted_intent)
+        importance_scores = await self.analyze_concept_importance(extraction_result["concepts"])
 
         # Add importance scores to the concept graph
         for node, score in importance_scores.items():
@@ -189,9 +177,7 @@ if __name__ == "__main__":
         llm_config = OpenAIGPTConfig(chat_model="gpt-4")
         extractor = KeyConceptExtractor(llm_config)
 
-        user_input = (
-            "I need to improve my team's productivity and communication skills."
-        )
+        user_input = "I need to improve my team's productivity and communication skills."
         interpreted_intent = {
             "primary_intent": "Improve team performance",
             "secondary_intents": [

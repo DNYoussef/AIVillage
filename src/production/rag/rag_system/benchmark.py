@@ -7,9 +7,9 @@ across the FAISS and Qdrant backends and writes the results to a CSV file.
 from __future__ import annotations
 
 import csv
+from dataclasses import dataclass
 import os
 import time
-from dataclasses import dataclass
 
 import numpy as np
 

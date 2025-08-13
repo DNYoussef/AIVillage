@@ -19,9 +19,7 @@ class RAGPromptBaker:
             print(f"Loading tokenizer for {self.model_name}...")
             self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
 
-            print(
-                f"Loading model {self.model_name}. This may take a while for large models..."
-            )
+            print(f"Loading model {self.model_name}. This may take a while for large models...")
             self.model = AutoModelForCausalLM.from_pretrained(
                 self.model_name,
                 device_map="auto",
@@ -33,9 +31,7 @@ class RAGPromptBaker:
             print(f"Error loading model: {e!s}")
             raise
 
-    def bake_prompts(
-        self, prompts: list[str], num_iterations: int = 1000, lr: float = 1e-5
-    ) -> None:
+    def bake_prompts(self, prompts: list[str], num_iterations: int = 1000, lr: float = 1e-5) -> None:
         if self.model is None:
             self.load_model()
 
@@ -55,9 +51,7 @@ class RAGPromptBaker:
             optimizer.zero_grad()
 
             if iteration % 100 == 0:
-                print(
-                    f"Iteration {iteration}, Average Loss: {total_loss / len(prompts)}"
-                )
+                print(f"Iteration {iteration}, Average Loss: {total_loss / len(prompts)}")
 
         print("Prompt baking completed.")
 
@@ -118,9 +112,7 @@ def get_rag_prompts() -> list[str]:
     ]
 
 
-def deep_bake_rag_prompts(
-    model_name: str, num_rounds: int = 5, save_path: str = "./rag_baked_model"
-) -> None:
+def deep_bake_rag_prompts(model_name: str, num_rounds: int = 5, save_path: str = "./rag_baked_model") -> None:
     baker = RAGPromptBaker(model_name)
     prompts = get_rag_prompts()
 

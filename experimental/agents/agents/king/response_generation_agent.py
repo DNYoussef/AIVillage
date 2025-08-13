@@ -16,9 +16,7 @@ class ResponseGenerationAgent:
         self.model = None
 
     @error_handler.handle_error
-    async def generate_response(
-        self, input_data: dict[str, Any], user_preferences: dict[str, Any]
-    ) -> str:
+    async def generate_response(self, input_data: dict[str, Any], user_preferences: dict[str, Any]) -> str:
         """Generate a response based on input data and user preferences.
 
         Args:
@@ -32,9 +30,7 @@ class ResponseGenerationAgent:
         response = await self.llm.complete(prompt)
         return self._post_process_response(response.text, user_preferences)
 
-    def _create_response_prompt(
-        self, input_data: dict[str, Any], user_preferences: dict[str, Any]
-    ) -> str:
+    def _create_response_prompt(self, input_data: dict[str, Any], user_preferences: dict[str, Any]) -> str:
         return f"""
         Given the following input data and user preferences, generate an appropriate response:
 
@@ -61,9 +57,7 @@ class ResponseGenerationAgent:
         Generate the response in a natural, conversational style that matches the user's preferences.
         """
 
-    def _post_process_response(
-        self, response: str, user_preferences: dict[str, Any]
-    ) -> str:
+    def _post_process_response(self, response: str, user_preferences: dict[str, Any]) -> str:
         # Implement any post-processing steps here, such as:
         # - Adjusting response length
         # - Adding or removing technical details
@@ -121,13 +115,9 @@ class ResponseGenerationAgent:
         responses = {}
 
         for format_type in formats:
-            prompt = self._create_multi_format_prompt(
-                input_data, user_preferences, format_type
-            )
+            prompt = self._create_multi_format_prompt(input_data, user_preferences, format_type)
             response = await self.llm.complete(prompt)
-            responses[format_type] = self._post_process_response(
-                response.text, user_preferences
-            )
+            responses[format_type] = self._post_process_response(response.text, user_preferences)
 
         return responses
 
@@ -166,20 +156,14 @@ class ResponseGenerationAgent:
         Returns:
             Dict[str, Any]: A dictionary containing the generated responses and any additional information.
         """
-        standard_response = await self.generate_response(
-            reasoning_result, user_preferences
-        )
-        multi_format_responses = await self.generate_multi_format_response(
-            reasoning_result, user_preferences
-        )
+        standard_response = await self.generate_response(reasoning_result, user_preferences)
+        multi_format_responses = await self.generate_multi_format_response(reasoning_result, user_preferences)
 
         return {
             "standard_response": standard_response,
             "multi_format_responses": multi_format_responses,
             "input_summary": self._summarize_input(reasoning_result),
-            "response_metadata": self._generate_response_metadata(
-                reasoning_result, user_preferences
-            ),
+            "response_metadata": self._generate_response_metadata(reasoning_result, user_preferences),
         }
 
     def _summarize_input(self, reasoning_result: dict[str, Any]) -> str:
@@ -239,9 +223,7 @@ if __name__ == "__main__":
             "response_formats": ["text", "bullet_points", "eli5"],
         }
 
-        result = await response_agent.process_and_respond(
-            reasoning_result, user_preferences
-        )
+        result = await response_agent.process_and_respond(reasoning_result, user_preferences)
 
         print("Standard Response:")
         print(result["standard_response"])

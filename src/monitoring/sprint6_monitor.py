@@ -7,13 +7,13 @@ monitoring for P2P, Resource Management, and Evolution systems.
 """
 
 import asyncio
-import json
-import logging
-import subprocess
-import sys
 from dataclasses import asdict, dataclass
 from datetime import datetime
+import json
+import logging
 from pathlib import Path
+import subprocess
+import sys
 from typing import Any
 
 # Configure logging
@@ -207,7 +207,7 @@ class Sprint6Monitor:
         """Check P2P system health."""
         try:
             # Try to import and basic check P2P components
-            from src.core.p2p.p2p_node import P2PNode
+            from src.production.communications.p2p.p2p_node import P2PNode
 
             # Create a test node (without starting it)
             test_node = P2PNode(node_id="health_check_node")

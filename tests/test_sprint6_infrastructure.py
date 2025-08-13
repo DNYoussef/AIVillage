@@ -5,8 +5,6 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
-# Import the components we're testing
-from src.core.p2p.p2p_node import P2PNode
 from src.core.resources.adaptive_loader import AdaptiveLoader
 from src.core.resources.constraint_manager import ConstraintManager
 from src.core.resources.device_profiler import DeviceProfiler, DeviceType
@@ -17,6 +15,9 @@ from src.production.agent_forge.evolution.infrastructure_aware_evolution import 
 from src.production.agent_forge.evolution.resource_constrained_evolution import (
     ResourceConstrainedEvolution,
 )
+
+# Import the components we're testing
+from src.production.communications.p2p.p2p_node import P2PNode
 
 
 @pytest.fixture

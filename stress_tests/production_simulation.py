@@ -10,10 +10,10 @@ written to a JSON file for reproducibility.
 from __future__ import annotations
 
 import argparse
-import json
-import random
 from dataclasses import asdict, dataclass
+import json
 from pathlib import Path
+import random
 
 
 @dataclass

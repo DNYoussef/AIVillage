@@ -5,8 +5,8 @@ Test suite for deployment system components
 import hashlib
 import json
 import os
-import tempfile
 from pathlib import Path
+import tempfile
 from unittest.mock import patch
 
 import pytest

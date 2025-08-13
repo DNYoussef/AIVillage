@@ -2,8 +2,8 @@
 Unit tests for Query Classification System
 """
 
-import sys
 from pathlib import Path
+import sys
 
 import pytest
 

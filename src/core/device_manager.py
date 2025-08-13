@@ -82,9 +82,7 @@ def _detect_device_capabilities() -> dict:
             # Get GPU memory info
             try:
                 for i in range(capabilities["cuda_device_count"]):
-                    memory_total = (
-                        torch.cuda.get_device_properties(i).total_memory / 1024**3
-                    )  # GB
+                    memory_total = torch.cuda.get_device_properties(i).total_memory / 1024**3  # GB
                     memory_allocated = torch.cuda.memory_allocated(i) / 1024**3  # GB
                     capabilities["device_memory"][f"cuda:{i}"] = {
                         "total_gb": round(memory_total, 2),
@@ -98,8 +96,9 @@ def _detect_device_capabilities() -> dict:
         try:
             if hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
                 capabilities["mps_available"] = True
-        except:
-            pass
+        except Exception as e:
+            logger.debug(f"MPS availability check failed: {e}")
+            capabilities["mps_available"] = False
 
         # Determine recommended device
         if capabilities["cuda_available"]:
@@ -125,9 +124,7 @@ def get_device_info() -> dict:
     return _device_info_cache.copy()
 
 
-def configure_device_for_component(
-    component_name: str, config_device: str | None = None
-) -> str:
+def configure_device_for_component(component_name: str, config_device: str | None = None) -> str:
     """Configure device for a specific component with appropriate fallbacks.
 
     Args:
@@ -144,9 +141,7 @@ def configure_device_for_component(
     actual_device = get_available_device(device)
 
     if device not in (actual_device, "auto"):
-        logger.info(
-            f"{component_name}: Requested device '{device}' not available, using '{actual_device}'"
-        )
+        logger.info(f"{component_name}: Requested device '{device}' not available, using '{actual_device}'")
     else:
         logger.info(f"{component_name}: Using device '{actual_device}'")
 
@@ -220,9 +215,7 @@ def log_device_status() -> None:
         logger.info(f"CUDA version: {info['cuda_version']}")
 
         for device, memory in info["device_memory"].items():
-            logger.info(
-                f"{device}: {memory['available_gb']:.1f}GB available / {memory['total_gb']:.1f}GB total"
-            )
+            logger.info(f"{device}: {memory['available_gb']:.1f}GB available / {memory['total_gb']:.1f}GB total")
 
     logger.info(f"MPS available: {info['mps_available']}")
     logger.info(f"Recommended device: {info['recommended_device']}")
@@ -287,12 +280,6 @@ if __name__ == "__main__":
 
     # Test batch size recommendations
     device = get_available_device("auto")
-    print(
-        f"Optimal batch size (small model): {get_optimal_batch_size(device, 'small')}"
-    )
-    print(
-        f"Optimal batch size (medium model): {get_optimal_batch_size(device, 'medium')}"
-    )
-    print(
-        f"Optimal batch size (large model): {get_optimal_batch_size(device, 'large')}"
-    )
+    print(f"Optimal batch size (small model): {get_optimal_batch_size(device, 'small')}")
+    print(f"Optimal batch size (medium model): {get_optimal_batch_size(device, 'medium')}")
+    print(f"Optimal batch size (large model): {get_optimal_batch_size(device, 'large')}")

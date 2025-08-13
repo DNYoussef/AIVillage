@@ -10,12 +10,12 @@ Implements intelligent resource management with:
 Priority: P2 - Mobile Resource Optimization
 """
 
+from dataclasses import dataclass, field
+from enum import Enum
 import logging
 import os
 import sys
 import time
-from dataclasses import dataclass, field
-from enum import Enum
 from typing import Any
 
 # Handle cross-platform import - add current directory to path for safe imports

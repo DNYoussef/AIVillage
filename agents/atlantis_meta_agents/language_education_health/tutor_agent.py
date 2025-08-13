@@ -9,12 +9,12 @@ The education and learning specialist of AIVillage, responsible for:
 - Mobile-optimized educational experiences
 """
 
+from dataclasses import dataclass
+from enum import Enum
 import hashlib
 import logging
 import random
 import time
-from dataclasses import dataclass
-from enum import Enum
 from typing import Any
 
 from src.production.rag.rag_system.core.agent_interface import AgentInterface
@@ -134,9 +134,7 @@ class TutorAgent(AgentInterface):
         self.learning_content: dict[str, LearningContent] = {}
         self.assessments: dict[str, Assessment] = {}
         self.learning_sessions: dict[str, LearningSession] = {}
-        self.learning_paths: dict[
-            str, list[str]
-        ] = {}  # learner_id -> ordered content_ids
+        self.learning_paths: dict[str, list[str]] = {}  # learner_id -> ordered content_ids
 
         # Content database by topic and level
         self.content_by_topic: dict[str, list[str]] = {}
@@ -193,9 +191,7 @@ class TutorAgent(AgentInterface):
         # Education embeddings focus on learning patterns and content relationships
         return [(hash_value % 1000) / 1000.0] * 512
 
-    async def rerank(
-        self, query: str, results: list[dict[str, Any]], k: int
-    ) -> list[dict[str, Any]]:
+    async def rerank(self, query: str, results: list[dict[str, Any]], k: int) -> list[dict[str, Any]]:
         """Rerank based on educational relevance"""
         education_keywords = [
             "learn",
@@ -220,17 +216,12 @@ class TutorAgent(AgentInterface):
                 score += content.lower().count(keyword) * 1.5
 
             # Boost educational and instructional content
-            if any(
-                term in content.lower()
-                for term in ["educational", "instructional", "pedagogical"]
-            ):
+            if any(term in content.lower() for term in ["educational", "instructional", "pedagogical"]):
                 score *= 1.4
 
             result["education_relevance"] = score
 
-        return sorted(
-            results, key=lambda x: x.get("education_relevance", 0), reverse=True
-        )[:k]
+        return sorted(results, key=lambda x: x.get("education_relevance", 0), reverse=True)[:k]
 
     async def introspect(self) -> dict[str, Any]:
         """Return Tutor agent status and educational metrics"""
@@ -255,16 +246,12 @@ class TutorAgent(AgentInterface):
     async def communicate(self, message: str, recipient: "AgentInterface") -> str:
         """Communicate educational insights and recommendations"""
         # Add educational context to communications
-        if any(
-            keyword in message.lower() for keyword in ["learn", "teach", "education"]
-        ):
+        if any(keyword in message.lower() for keyword in ["learn", "teach", "education"]):
             educational_context = "[EDUCATIONAL INSIGHT]"
             message = f"{educational_context} {message}"
 
         if recipient:
-            response = await recipient.generate(
-                f"Tutor Agent provides educational guidance: {message}"
-            )
+            response = await recipient.generate(f"Tutor Agent provides educational guidance: {message}")
             return f"Educational insight delivered: {response[:50]}..."
         return "No recipient for educational guidance"
 
@@ -286,9 +273,7 @@ class TutorAgent(AgentInterface):
         latent_repr = f"TUTOR[{space_type}:{query[:50]}]"
         return space_type, latent_repr
 
-    async def create_learner_profile(
-        self, learner_data: dict[str, Any]
-    ) -> dict[str, Any]:
+    async def create_learner_profile(self, learner_data: dict[str, Any]) -> dict[str, Any]:
         """Create a personalized learner profile - MVP function"""
         learner_id = learner_data.get("learner_id", f"learner_{int(time.time())}")
 
@@ -334,9 +319,7 @@ class TutorAgent(AgentInterface):
             "signature": f"tutor_profile_{learner_id}",
         }
 
-        logger.info(
-            f"Learner profile created: {learner_id} - {profile.learning_level.value} level"
-        )
+        logger.info(f"Learner profile created: {learner_id} - {profile.learning_level.value} level")
 
         return {
             "status": "success",
@@ -356,28 +339,21 @@ class TutorAgent(AgentInterface):
             matching_content = [
                 content_id
                 for content_id, content in self.learning_content.items()
-                if content.topic == interest
-                and content.difficulty_level == profile.learning_level
+                if content.topic == interest and content.difficulty_level == profile.learning_level
             ]
-            learning_path.extend(
-                matching_content[:3]
-            )  # Add up to 3 pieces per interest
+            learning_path.extend(matching_content[:3])  # Add up to 3 pieces per interest
 
         # If no existing content matches, generate basic path
         if not learning_path:
             basic_topics = ["programming_basics", "digital_literacy"]
             for topic in basic_topics:
-                content_id = await self._create_basic_content(
-                    topic, profile.learning_level
-                )
+                content_id = await self._create_basic_content(topic, profile.learning_level)
                 if content_id:
                     learning_path.append(content_id)
 
         return learning_path[:5]  # Limit to 5 initial items
 
-    async def _create_basic_content(
-        self, topic: str, level: LearningLevel
-    ) -> str | None:
+    async def _create_basic_content(self, topic: str, level: LearningLevel) -> str | None:
         """Create basic content for common topics"""
         content_id = f"content_{topic}_{level.value}_{int(time.time())}"
 
@@ -523,9 +499,7 @@ Practice organizing files on your device and learn keyboard shortcuts.""",
             "receipt": receipt,
         }
 
-    async def _adapt_content_for_learner(
-        self, content: LearningContent, learner: LearnerProfile
-    ) -> dict[str, Any]:
+    async def _adapt_content_for_learner(self, content: LearningContent, learner: LearnerProfile) -> dict[str, Any]:
         """Adapt content based on learner's profile and preferences"""
         adapted_content = {
             "content_id": content.content_id,
@@ -617,13 +591,9 @@ Practice organizing files on your device and learn keyboard shortcuts.""",
         else:
             self._assessment_scores = [performance_score]
 
-        self.average_mastery_score = sum(self._assessment_scores) / len(
-            self._assessment_scores
-        )
+        self.average_mastery_score = sum(self._assessment_scores) / len(self._assessment_scores)
 
-        logger.info(
-            f"Assessment completed: {learner_id} - {performance_score:.1f}% on {topic}"
-        )
+        logger.info(f"Assessment completed: {learner_id} - {performance_score:.1f}% on {topic}")
 
         return {
             "status": "success",
@@ -635,9 +605,7 @@ Practice organizing files on your device and learn keyboard shortcuts.""",
             "receipt": receipt,
         }
 
-    async def _generate_assessment(
-        self, topic: str, level: LearningLevel
-    ) -> Assessment:
+    async def _generate_assessment(self, topic: str, level: LearningLevel) -> Assessment:
         """Generate assessment for specific topic and level"""
         assessment_id = f"assess_{topic}_{level.value}_{int(time.time())}"
 
@@ -740,9 +708,7 @@ Practice organizing files on your device and learn keyboard shortcuts.""",
         self.assessments[assessment_id] = assessment
         return assessment
 
-    async def _execute_assessment(
-        self, assessment: Assessment, learner: LearnerProfile
-    ) -> dict[str, Any]:
+    async def _execute_assessment(self, assessment: Assessment, learner: LearnerProfile) -> dict[str, Any]:
         """Execute assessment and calculate results"""
         # Simulate learner performance based on their profile
         base_performance = 0.6  # Base 60% performance
@@ -763,19 +729,14 @@ Practice organizing files on your device and learn keyboard shortcuts.""",
 
         final_score = min(
             1.0,
-            base_performance
-            + performance_adjustment
-            + (topic_mastery * 0.2)
-            + random_factor,
+            base_performance + performance_adjustment + (topic_mastery * 0.2) + random_factor,
         )
 
         return {
             "score": final_score * 100,  # Convert to percentage
             "answers_correct": int(len(assessment.questions) * final_score),
             "total_questions": len(assessment.questions),
-            "time_taken_minutes": random.uniform(
-                10, assessment.time_limit_minutes or 30
-            ),
+            "time_taken_minutes": random.uniform(10, assessment.time_limit_minutes or 30),
         }
 
     def _calculate_mastery_level(self, performance_score: float) -> float:
@@ -794,58 +755,36 @@ Practice organizing files on your device and learn keyboard shortcuts.""",
             return 0.65
         return max(0.1, mastery)
 
-    async def _generate_assessment_feedback(
-        self, results: dict[str, Any], learner: LearnerProfile
-    ) -> list[str]:
+    async def _generate_assessment_feedback(self, results: dict[str, Any], learner: LearnerProfile) -> list[str]:
         """Generate personalized feedback based on assessment results"""
         feedback = []
         score = results["score"]
 
         # Performance feedback
         if score >= 90:
-            feedback.append(
-                "Excellent work! You demonstrate strong mastery of this topic."
-            )
+            feedback.append("Excellent work! You demonstrate strong mastery of this topic.")
         elif score >= 80:
-            feedback.append(
-                "Great job! You have a solid understanding with room for minor improvements."
-            )
+            feedback.append("Great job! You have a solid understanding with room for minor improvements.")
         elif score >= 70:
-            feedback.append(
-                "Good progress! You meet the learning objectives with some areas to strengthen."
-            )
+            feedback.append("Good progress! You meet the learning objectives with some areas to strengthen.")
         elif score >= 60:
-            feedback.append(
-                "You're making progress. Consider reviewing the material and practicing more."
-            )
+            feedback.append("You're making progress. Consider reviewing the material and practicing more.")
         else:
-            feedback.append(
-                "This topic needs more attention. Let's focus on building stronger foundations."
-            )
+            feedback.append("This topic needs more attention. Let's focus on building stronger foundations.")
 
         # Learning style specific feedback
         if learner.learning_style == LearningStyle.VISUAL:
-            feedback.append(
-                "Try using diagrams and visual aids to reinforce your understanding."
-            )
+            feedback.append("Try using diagrams and visual aids to reinforce your understanding.")
         elif learner.learning_style == LearningStyle.KINESTHETIC:
-            feedback.append(
-                "Practice with hands-on exercises to deepen your knowledge."
-            )
+            feedback.append("Practice with hands-on exercises to deepen your knowledge.")
         elif learner.learning_style == LearningStyle.AUDITORY:
-            feedback.append(
-                "Consider listening to educational podcasts or explaining concepts aloud."
-            )
+            feedback.append("Consider listening to educational podcasts or explaining concepts aloud.")
 
         # Next steps
         if score >= 80:
-            feedback.append(
-                "Ready to advance to more challenging material in this area."
-            )
+            feedback.append("Ready to advance to more challenging material in this area.")
         else:
-            feedback.append(
-                "Recommended: Review foundational concepts before moving forward."
-            )
+            feedback.append("Recommended: Review foundational concepts before moving forward.")
 
         return feedback
 
@@ -857,24 +796,12 @@ Practice organizing files on your device and learn keyboard shortcuts.""",
         learner = self.learner_profiles[learner_id]
 
         # Calculate learning sessions for this learner
-        learner_sessions = [
-            session
-            for session in self.learning_sessions.values()
-            if session.learner_id == learner_id
-        ]
+        learner_sessions = [session for session in self.learning_sessions.values() if session.learner_id == learner_id]
 
         # Calculate metrics
-        total_time_spent = sum(
-            session.time_spent_minutes for session in learner_sessions
-        )
-        completed_sessions = sum(
-            1
-            for session in learner_sessions
-            if session.completion_status == "completed"
-        )
-        average_mastery = sum(learner.mastery_scores.values()) / max(
-            1, len(learner.mastery_scores)
-        )
+        total_time_spent = sum(session.time_spent_minutes for session in learner_sessions)
+        completed_sessions = sum(1 for session in learner_sessions if session.completion_status == "completed")
+        average_mastery = sum(learner.mastery_scores.values()) / max(1, len(learner.mastery_scores))
 
         return {
             "agent": "Tutor",
@@ -891,17 +818,14 @@ Practice organizing files on your device and learn keyboard shortcuts.""",
                 "completed_sessions": completed_sessions,
                 "completion_rate": completed_sessions / max(1, len(learner_sessions)),
                 "total_time_hours": total_time_spent / 60,
-                "average_session_time": total_time_spent
-                / max(1, len(learner_sessions)),
+                "average_session_time": total_time_spent / max(1, len(learner_sessions)),
                 "topics_studied": len(learner.current_topics),
                 "mastery_scores": learner.mastery_scores,
                 "average_mastery": average_mastery,
             },
             "progress_indicators": {
                 "learning_velocity": "steady" if completed_sessions > 0 else "starting",
-                "knowledge_retention": (
-                    "good" if average_mastery > 0.7 else "needs_improvement"
-                ),
+                "knowledge_retention": ("good" if average_mastery > 0.7 else "needs_improvement"),
                 "engagement_level": "high" if total_time_spent > 60 else "moderate",
             },
             "recommendations": [
@@ -932,9 +856,7 @@ Practice organizing files on your device and learn keyboard shortcuts.""",
                         self.content_by_level[level].append(content_id)
 
             self.initialized = True
-            logger.info(
-                f"Tutor Agent {self.agent_id} initialized - Educational system ready"
-            )
+            logger.info(f"Tutor Agent {self.agent_id} initialized - Educational system ready")
 
         except Exception as e:
             logger.error(f"Failed to initialize Tutor Agent: {e}")

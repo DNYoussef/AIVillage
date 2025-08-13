@@ -57,9 +57,7 @@ def create_evolutionary_tree():
                     zorder=5,
                 )
 
-            ax1.scatter(
-                x, y, s=size, c=color, alpha=0.7, edgecolors="white", linewidth=1
-            )
+            ax1.scatter(x, y, s=size, c=color, alpha=0.7, edgecolors="white", linewidth=1)
 
             # Add fitness label
             ax1.annotate(
@@ -114,9 +112,7 @@ def create_evolutionary_tree():
     ax2.grid(True, alpha=0.3)
 
     # 3. Method Distribution
-    ax3.set_title(
-        "🔧 Merge Method Usage", fontsize=14, fontweight="bold", color="white"
-    )
+    ax3.set_title("🔧 Merge Method Usage", fontsize=14, fontweight="bold", color="white")
 
     method_counts = {}
     for gen_data in generations:
@@ -128,9 +124,7 @@ def create_evolutionary_tree():
     counts = list(method_counts.values())
     pie_colors = [colors.get(method, "#CCCCCC") for method in methods]
 
-    wedges, texts, autotexts = ax3.pie(
-        counts, labels=methods, colors=pie_colors, autopct="%1.1f%%", startangle=90
-    )
+    wedges, texts, autotexts = ax3.pie(counts, labels=methods, colors=pie_colors, autopct="%1.1f%%", startangle=90)
 
     for autotext in autotexts:
         autotext.set_color("white")
@@ -170,9 +164,7 @@ def create_evolutionary_tree():
     thresholds = {"mmlu": 0.60, "gsm8k": 0.40, "humaneval": 0.25}
     for metric, threshold in thresholds.items():
         if metric in benchmark_data:
-            ax4.axhline(
-                y=threshold, color="red", linestyle="--", alpha=0.7, linewidth=1
-            )
+            ax4.axhline(y=threshold, color="red", linestyle="--", alpha=0.7, linewidth=1)
 
     ax4.set_xlabel("Generation", color="white", fontweight="bold")
     ax4.set_ylabel("Score", color="white", fontweight="bold")
@@ -199,9 +191,7 @@ def create_evolutionary_tree():
 
     # Save the plot
     output_file = "D:/AgentForge/results/evolution_tree.png"
-    plt.savefig(
-        output_file, dpi=300, bbox_inches="tight", facecolor="black", edgecolor="none"
-    )
+    plt.savefig(output_file, dpi=300, bbox_inches="tight", facecolor="black", edgecolor="none")
 
     print(f"✅ Evolutionary tree saved to: {output_file}")
 

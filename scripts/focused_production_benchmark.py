@@ -3,12 +3,12 @@
 Tests the actual working components post-cleanup.
 """
 
+from datetime import datetime
 import json
 import logging
+from pathlib import Path
 import sys
 import time
-from datetime import datetime
-from pathlib import Path
 from typing import Any
 
 import psutil
@@ -16,9 +16,7 @@ import psutil
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -141,15 +139,9 @@ class ProductionBenchmark:
                     "tournament_time_ms": round(tournament_time * 1000, 3),
                     "crossover_time_ms": round(crossover_time * 1000, 3),
                     "selection_pressure": len(selected) / population_size,
-                    "avg_fitness_before": round(
-                        np.mean([p["fitness"] for p in population]), 3
-                    ),
-                    "avg_fitness_selected": round(
-                        np.mean([s["fitness"] for s in selected]), 3
-                    ),
-                    "avg_fitness_offspring": round(
-                        np.mean([o["fitness"] for o in offspring]), 3
-                    ),
+                    "avg_fitness_before": round(np.mean([p["fitness"] for p in population]), 3),
+                    "avg_fitness_selected": round(np.mean([s["fitness"] for s in selected]), 3),
+                    "avg_fitness_offspring": round(np.mean([o["fitness"] for o in offspring]), 3),
                     "status": "success",
                 }
             )
@@ -172,8 +164,8 @@ class ProductionBenchmark:
 
         try:
             # Test basic text processing
-            import re
             from collections import Counter
+            import re
 
             # Sample documents
             docs = [
@@ -233,9 +225,7 @@ class ProductionBenchmark:
                     "index_size": len(index),
                     "index_time_ms": round(index_time * 1000, 3),
                     "queries_processed": len(queries),
-                    "avg_query_time_ms": round(
-                        (total_query_time / len(queries)) * 1000, 3
-                    ),
+                    "avg_query_time_ms": round((total_query_time / len(queries)) * 1000, 3),
                     "total_query_time_ms": round(total_query_time * 1000, 3),
                     "query_results": query_results,
                     "status": "success",
@@ -284,12 +274,8 @@ class ProductionBenchmark:
                 "cpu_increase": round(workload_cpu - baseline_cpu, 2),
                 "baseline_memory_mb": round(baseline_memory.used / (1024 * 1024), 2),
                 "workload_memory_mb": round(workload_memory.used / (1024 * 1024), 2),
-                "memory_increase_mb": round(
-                    (workload_memory.used - baseline_memory.used) / (1024 * 1024), 2
-                ),
-                "available_memory_gb": round(
-                    baseline_memory.available / (1024 * 1024 * 1024), 2
-                ),
+                "memory_increase_mb": round((workload_memory.used - baseline_memory.used) / (1024 * 1024), 2),
+                "available_memory_gb": round(baseline_memory.available / (1024 * 1024 * 1024), 2),
                 "disk_free_gb": round(baseline_disk.free / (1024 * 1024 * 1024), 2),
                 "workload_time_seconds": round(elapsed, 3),
                 "status": "success",
@@ -312,9 +298,7 @@ class ProductionBenchmark:
             "platform": sys.platform,
             "cpu_count": psutil.cpu_count(),
             "total_memory_gb": round(psutil.virtual_memory().total / (1024**3), 2),
-            "available_memory_gb": round(
-                psutil.virtual_memory().available / (1024**3), 2
-            ),
+            "available_memory_gb": round(psutil.virtual_memory().available / (1024**3), 2),
         }
 
         results = {"system_info": system_info, "benchmarks": {}}
@@ -372,9 +356,7 @@ class ProductionBenchmark:
         sys_info = results["system_info"]
         print(f"\nSystem: {sys_info['platform']}")
         print(f"Python: {sys_info['python_version']}")
-        print(
-            f"Memory: {sys_info['available_memory_gb']:.1f}GB available / {sys_info['total_memory_gb']:.1f}GB total"
-        )
+        print(f"Memory: {sys_info['available_memory_gb']:.1f}GB available / {sys_info['total_memory_gb']:.1f}GB total")
         print(f"CPUs: {sys_info['cpu_count']}")
 
         benchmarks = results["benchmarks"]
@@ -391,9 +373,7 @@ class ProductionBenchmark:
                 else:
                     print(f"  {method}: FAILED")
         else:
-            print(
-                f"\nCOMPRESSION PIPELINE: FAILED - {comp.get('error', 'Unknown error')}"
-            )
+            print(f"\nCOMPRESSION PIPELINE: FAILED - {comp.get('error', 'Unknown error')}")
 
         # Evolution results
         evo = benchmarks.get("evolution", {})
@@ -402,9 +382,7 @@ class ProductionBenchmark:
             print(f"  Population: {evo['population_size']} individuals")
             print(f"  Tournament: {evo['tournament_time_ms']:.1f}ms")
             print(f"  Crossover: {evo['crossover_time_ms']:.1f}ms")
-            print(
-                f"  Fitness improvement: {evo['avg_fitness_before']:.3f} -> {evo['avg_fitness_selected']:.3f}"
-            )
+            print(f"  Fitness improvement: {evo['avg_fitness_before']:.3f} -> {evo['avg_fitness_selected']:.3f}")
         else:
             print(f"\nEVOLUTION SYSTEM: FAILED - {evo.get('error', 'Unknown error')}")
 
@@ -460,13 +438,9 @@ def main() -> int | None:
                 failed_systems.append(system)
 
         if failed_systems:
-            print(
-                f"\nWARNING: {len(failed_systems)} systems failed: {', '.join(failed_systems)}"
-            )
+            print(f"\nWARNING: {len(failed_systems)} systems failed: {', '.join(failed_systems)}")
             return 1
-        print(
-            f"\nSUCCESS: All {len(results['benchmarks'])} systems tested successfully"
-        )
+        print(f"\nSUCCESS: All {len(results['benchmarks'])} systems tested successfully")
         return 0
 
     except Exception as e:

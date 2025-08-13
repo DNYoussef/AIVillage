@@ -3,9 +3,9 @@
 Based on feasibility report: 2-4GB RAM devices with MediaTek Helio processors.
 """
 
-import time
 from contextlib import contextmanager
 from dataclasses import dataclass
+import time
 from typing import Any
 
 import psutil
@@ -89,9 +89,7 @@ class MobileSimulator:
         """Restore original resource limits (Windows compatible)."""
         # On Windows, we'll simulate constraints differently
 
-    def measure_inference(
-        self, model: torch.nn.Module, input_tensor: torch.Tensor
-    ) -> dict[str, Any]:
+    def measure_inference(self, model: torch.nn.Module, input_tensor: torch.Tensor) -> dict[str, Any]:
         """Measure inference performance under constraints."""
         model.eval()
 
@@ -127,13 +125,10 @@ class MobileSimulator:
             "memory_peak_mb": mem_after,
             "output_shape": output.shape,
             "device_profile": self.profile.name,
-            "within_constraints": mem_after
-            < self.profile.ram_mb * 0.8,  # 80% threshold
+            "within_constraints": mem_after < self.profile.ram_mb * 0.8,  # 80% threshold
         }
 
-    def benchmark_compression_methods(
-        self, model: torch.nn.Module
-    ) -> dict[str, dict[str, Any]]:
+    def benchmark_compression_methods(self, model: torch.nn.Module) -> dict[str, dict[str, Any]]:
         """Benchmark different compression methods on this device."""
         # Import compression methods (using mock implementations for now)
 
@@ -155,9 +150,7 @@ class MobileSimulator:
             # Look for the first actual layer (skip Sequential containers)
             first_layer = None
             for module in model.modules():
-                if isinstance(
-                    module, torch.nn.Conv2d | torch.nn.Linear | torch.nn.Embedding
-                ):
+                if isinstance(module, torch.nn.Conv2d | torch.nn.Linear | torch.nn.Embedding):
                     first_layer = module
                     break
 
@@ -184,23 +177,13 @@ class MobileSimulator:
         # Test basic quantization (simplified for now)
         try:
             # Dynamic quantization
-            quantized_model = torch.quantization.quantize_dynamic(
-                model, {torch.nn.Linear}, dtype=torch.qint8
-            )
-            results["dynamic_quant"] = self.measure_inference(
-                quantized_model, test_input
-            )
+            quantized_model = torch.quantization.quantize_dynamic(model, {torch.nn.Linear}, dtype=torch.qint8)
+            results["dynamic_quant"] = self.measure_inference(quantized_model, test_input)
 
             # Add compression-specific metrics
-            original_size = sum(
-                p.numel() * p.element_size() for p in model.parameters()
-            )
-            compressed_size = sum(
-                p.numel() * p.element_size() for p in quantized_model.parameters()
-            )
-            results["dynamic_quant"]["compression_ratio"] = (
-                original_size / compressed_size
-            )
+            original_size = sum(p.numel() * p.element_size() for p in model.parameters())
+            compressed_size = sum(p.numel() * p.element_size() for p in quantized_model.parameters())
+            results["dynamic_quant"]["compression_ratio"] = original_size / compressed_size
             results["dynamic_quant"]["model_size_mb"] = compressed_size / (1024 * 1024)
         except Exception as e:
             results["dynamic_quant"] = {"error": str(e)}
@@ -256,9 +239,7 @@ def create_mobile_benchmark_suite():
         with simulator.simulate():
             for model_name, model in test_models.items():
                 print(f"Testing {model_name}...")
-                results[f"{device_name}_{model_name}"] = (
-                    simulator.benchmark_compression_methods(model)
-                )
+                results[f"{device_name}_{model_name}"] = simulator.benchmark_compression_methods(model)
 
     return results
 
@@ -290,9 +271,7 @@ def generate_mobile_optimization_report(results: dict[str, Any]) -> None:
 
             for method, metrics in result_set.items():
                 if "error" not in metrics:
-                    status = (
-                        "PASS" if metrics.get("within_constraints", False) else "FAIL"
-                    )
+                    status = "PASS" if metrics.get("within_constraints", False) else "FAIL"
                     report += f"| {model_name} | {method} | "
                     inference_time = metrics.get("inference_time_ms", 0)
                     memory_peak = metrics.get("memory_peak_mb", 0)

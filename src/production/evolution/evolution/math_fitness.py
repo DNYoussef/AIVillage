@@ -3,12 +3,12 @@ Sprint R-4+AF1: Agent Forge Phase 1 - Task B.3.
 """
 
 import asyncio
-import logging
-import re
-import statistics
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import datetime, timezone
+import logging
+import re
+import statistics
 from typing import Any
 
 import torch

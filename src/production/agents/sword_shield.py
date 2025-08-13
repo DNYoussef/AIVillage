@@ -1,11 +1,11 @@
 from __future__ import annotations
 
+from dataclasses import dataclass, field
 import logging
 import random
 import time
-import traceback
-from dataclasses import dataclass, field
 from trace import Trace
+import traceback
 from typing import TYPE_CHECKING, Any, ClassVar
 
 if TYPE_CHECKING:
@@ -171,8 +171,9 @@ class ShieldAgent:
 class SwordAndShieldAgent:
     """Composite agent combining Sword and Shield capabilities."""
 
-    def __init__(self) -> None:
+    def __init__(self, spec=None) -> None:
         """Instantiate both Sword and Shield agents."""
+        self.spec = spec  # Store specification for compatibility
         self.sandbox = WasiSandbox()
         self.sword = SwordAgent(self.sandbox)
         self.shield = ShieldAgent(self.sandbox)

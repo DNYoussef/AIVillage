@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Simple compression measurement script to validate claims quickly."""
 
-import sys
 from pathlib import Path
+import sys
 
 import torch
 from torch import nn

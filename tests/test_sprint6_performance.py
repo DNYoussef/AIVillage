@@ -7,11 +7,11 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from src.core.p2p.p2p_node import P2PNode
 from src.core.resources.adaptive_loader import AdaptiveLoader
 from src.core.resources.constraint_manager import ConstraintManager
 from src.core.resources.device_profiler import DeviceProfiler, DeviceType
 from src.core.resources.resource_monitor import ResourceMonitor
+from src.production.communications.p2p.p2p_node import P2PNode
 
 
 @pytest.mark.benchmark

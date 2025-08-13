@@ -4,8 +4,8 @@
 Creates the complete roster of 25 Atlantis meta-agents with proper stubs and organization.
 """
 
-import sys
 from pathlib import Path
+import sys
 from typing import Any
 
 # Base directory for agents
@@ -972,9 +972,7 @@ def generate_agent_file(domain: str, agent_key: str, agent_config: dict[str, Any
         "keywords": agent_config["keywords"],
         "relevance_key": f"{agent_config['class'].lower()}_relevance",
         "embedding_size": 384,  # Standard embedding size
-        "specialized_methods": agent_config.get(
-            "specialized_methods", "# No specialized methods defined"
-        ),
+        "specialized_methods": agent_config.get("specialized_methods", "# No specialized methods defined"),
         "specific_attributes": f"# {agent_config['class']}-specific state and data structures",
         "introspection_fields": "'domain': '" + domain + "',",
         "generate_logic": f"""# Context-specific responses for {agent_config["class"]}
@@ -1020,9 +1018,7 @@ def create_all_agents():
         for agent_key, agent_config in agents.items():
             generate_agent_file(domain, agent_key, agent_config)
 
-    print(
-        f"\\nSuccessfully created {sum(len(agents) for agents in ATLANTIS_AGENTS.values())} Atlantis meta-agents!"
-    )
+    print(f"\\nSuccessfully created {sum(len(agents) for agents in ATLANTIS_AGENTS.values())} Atlantis meta-agents!")
 
 
 def create_master_registry():
@@ -1134,9 +1130,7 @@ if __name__ == "__main__":
 
         print("\\n" + "=" * 50)
         print("ATLANTIS AGENT CREATION COMPLETE!")
-        print(
-            f"Total agents created: {sum(len(agents) for agents in ATLANTIS_AGENTS.values())} meta-agents"
-        )
+        print(f"Total agents created: {sum(len(agents) for agents in ATLANTIS_AGENTS.values())} meta-agents")
         print("Plus 8 existing specialized sub-agents")
         print("Total AIVillage ecosystem: 31 agents")
         print("\\nYour Atlantis civilization is ready!")

@@ -37,9 +37,7 @@ class P2PServer:
                     logger.info(f"New peer connected from {addr}")
 
                     # Handle peer in thread
-                    threading.Thread(
-                        target=self.handle_peer, args=(client, addr)
-                    ).start()
+                    threading.Thread(target=self.handle_peer, args=(client, addr)).start()
                 except TimeoutError:
                     continue
                 except Exception as e:

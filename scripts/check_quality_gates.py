@@ -4,10 +4,10 @@ Run this before committing to ensure quality standards.
 """
 
 import json
+from pathlib import Path
 import re
 import subprocess
 import sys
-from pathlib import Path
 
 
 class QualityGateChecker:
@@ -52,15 +52,11 @@ class QualityGateChecker:
                     content = f.read()
 
                 # Check for experimental imports (only actual import statements)
-                if re.search(
-                    r"^(from experimental|import experimental)", content, re.MULTILINE
-                ):
+                if re.search(r"^(from experimental|import experimental)", content, re.MULTILINE):
                     forbidden_imports.append(f"{py_file}: imports experimental")
 
                 # Check for deprecated imports (only actual import statements)
-                if re.search(
-                    r"^(from deprecated|import deprecated)", content, re.MULTILINE
-                ):
+                if re.search(r"^(from deprecated|import deprecated)", content, re.MULTILINE):
                     forbidden_imports.append(f"{py_file}: imports deprecated")
 
             except Exception as e:
@@ -120,14 +116,10 @@ class QualityGateChecker:
                     content = f.read()
 
                 # Check for warning patterns
-                if re.search(
-                    r"warnings\.warn|ExperimentalWarning|warn_experimental", content
-                ):
+                if re.search(r"warnings\.warn|ExperimentalWarning|warn_experimental", content):
                     files_with_warnings += 1
                 else:
-                    files_without_warnings.append(
-                        str(py_file.relative_to(self.experimental_dir))
-                    )
+                    files_without_warnings.append(str(py_file.relative_to(self.experimental_dir)))
 
             except Exception as e:
                 self.log_warning(f"Could not read {py_file}: {e}")
@@ -136,9 +128,7 @@ class QualityGateChecker:
             for file in files_without_warnings[:10]:  # Show first 10
                 self.log_warning(f"Experimental file missing warning: {file}")
             if len(files_without_warnings) > 10:
-                self.log_warning(
-                    f"... and {len(files_without_warnings) - 10} more files"
-                )
+                self.log_warning(f"... and {len(files_without_warnings) - 10} more files")
 
         self.log_success(f"Found warnings in {files_with_warnings} experimental files")
 
@@ -161,9 +151,7 @@ class QualityGateChecker:
         if len(test_files) == 0:
             self.log_issue("No test files found in production/tests/")
         else:
-            self.log_success(
-                f"Found {len(test_files)} test files for {len(production_modules)} production modules"
-            )
+            self.log_success(f"Found {len(test_files)} test files for {len(production_modules)} production modules")
 
     def run_tests(self) -> None:
         """Run production tests."""
@@ -234,9 +222,7 @@ class QualityGateChecker:
                 if "production" in content.lower():
                     self.log_success("Pre-commit hooks include production checks")
                 else:
-                    self.log_warning(
-                        "Pre-commit hooks may need production quality gates"
-                    )
+                    self.log_warning("Pre-commit hooks may need production quality gates")
 
             except Exception as e:
                 self.log_warning(f"Could not read pre-commit config: {e}")

@@ -7,8 +7,8 @@ Focuses on high-priority items from the consolidation plan.
 """
 
 import json
-import re
 from pathlib import Path
+import re
 
 
 class FocusedImportAnalyzer:
@@ -82,9 +82,7 @@ class FocusedImportAnalyzer:
                         for line in lines:
                             line = line.strip()
                             if pattern in line:
-                                if line.startswith(
-                                    ("import ", "from ")
-                                ) and not line.strip().startswith("#"):
+                                if line.startswith(("import ", "from ")) and not line.strip().startswith("#"):
                                     import_count += 1
                                 else:
                                     string_count += 1
@@ -105,12 +103,8 @@ class FocusedImportAnalyzer:
             except Exception:
                 continue
 
-        results["total_references"] = (
-            results["import_statements"] + results["string_references"]
-        )
-        print(
-            f"    Found {results['total_references']} references in {len(results['referencing_files'])} files"
-        )
+        results["total_references"] = results["import_statements"] + results["string_references"]
+        print(f"    Found {results['total_references']} references in {len(results['referencing_files'])} files")
 
         return results
 
@@ -129,9 +123,7 @@ class FocusedImportAnalyzer:
                 apis["classes"] = class_matches
 
                 # Extract public functions (not starting with _)
-                func_matches = re.findall(
-                    r"^def\s+([a-zA-Z][a-zA-Z0-9_]*)", content, re.MULTILINE
-                )
+                func_matches = re.findall(r"^def\s+([a-zA-Z][a-zA-Z0-9_]*)", content, re.MULTILINE)
                 apis["functions"] = [f for f in func_matches if not f.startswith("_")]
 
                 # Extract __all__ exports if present
@@ -141,9 +133,7 @@ class FocusedImportAnalyzer:
                     apis["exports"] = exports
 
                 # Extract key imports
-                import_lines = re.findall(
-                    r"^(import\s+\w+|from\s+\w+.*import.*)", content, re.MULTILINE
-                )
+                import_lines = re.findall(r"^(import\s+\w+|from\s+\w+.*import.*)", content, re.MULTILINE)
                 apis["imports"] = import_lines[:10]  # Limit to first 10
 
         except Exception as e:
@@ -241,20 +231,12 @@ class FocusedImportAnalyzer:
 
         # Count by risk level
         high_risk = sum(
-            1
-            for r in analysis_results.values()
-            if r.get("risk_assessment", {}).get("risk_level") == "HIGH"
+            1 for r in analysis_results.values() if r.get("risk_assessment", {}).get("risk_level") == "HIGH"
         )
         medium_risk = sum(
-            1
-            for r in analysis_results.values()
-            if r.get("risk_assessment", {}).get("risk_level") == "MEDIUM"
+            1 for r in analysis_results.values() if r.get("risk_assessment", {}).get("risk_level") == "MEDIUM"
         )
-        low_risk = sum(
-            1
-            for r in analysis_results.values()
-            if r.get("risk_assessment", {}).get("risk_level") == "LOW"
-        )
+        low_risk = sum(1 for r in analysis_results.values() if r.get("risk_assessment", {}).get("risk_level") == "LOW")
 
         report.append(f"- **High-Priority Files Analyzed**: {len(analysis_results)}")
         report.append(f"- **High Risk**: {high_risk} files")
@@ -302,27 +284,17 @@ class FocusedImportAnalyzer:
             report.append("")
 
             # Group-specific recommendations
-            group_files_data = [
-                analysis_results[f] for f in file_list if f in analysis_results
-            ]
+            group_files_data = [analysis_results[f] for f in file_list if f in analysis_results]
             if group_files_data:
-                max_refs = max(
-                    d["references"]["total_references"] for d in group_files_data
-                )
+                max_refs = max(d["references"]["total_references"] for d in group_files_data)
                 canonical_file = None
                 for f in file_list:
-                    if (
-                        f in analysis_results
-                        and analysis_results[f]["references"]["total_references"]
-                        == max_refs
-                    ):
+                    if f in analysis_results and analysis_results[f]["references"]["total_references"] == max_refs:
                         canonical_file = f
                         break
 
                 if canonical_file:
-                    report.append(
-                        f"**Recommended Canonical**: `{canonical_file}` (most referenced)"
-                    )
+                    report.append(f"**Recommended Canonical**: `{canonical_file}` (most referenced)")
                     report.append("")
 
         # Migration strategy
@@ -420,16 +392,12 @@ class FocusedImportAnalyzer:
                     if file_path != canonical and file_path in analysis_results:
                         data = analysis_results[file_path]
                         migration_map[file_path] = {
-                            "action": "deprecate"
-                            if data["risk_assessment"]["risk_level"] == "HIGH"
-                            else "merge",
+                            "action": "deprecate" if data["risk_assessment"]["risk_level"] == "HIGH" else "merge",
                             "canonical": canonical,
                             "group": group_name,
                             "dependents_count": data["references"]["total_references"],
                             "risk_level": data["risk_assessment"]["risk_level"],
-                            "migration_priority": data["risk_assessment"][
-                                "risk_level"
-                            ].lower(),
+                            "migration_priority": data["risk_assessment"]["risk_level"].lower(),
                             "shim_strategy": "import_redirect"
                             if data["references"]["total_references"] > 5
                             else "warning",
@@ -461,14 +429,8 @@ class FocusedImportAnalyzer:
         print(f"Generated: {map_file}")
 
         # Summary
-        total_refs = sum(
-            r["references"]["total_references"] for r in analysis_results.values()
-        )
-        high_risk_count = sum(
-            1
-            for r in analysis_results.values()
-            if r["risk_assessment"]["risk_level"] == "HIGH"
-        )
+        total_refs = sum(r["references"]["total_references"] for r in analysis_results.values())
+        high_risk_count = sum(1 for r in analysis_results.values() if r["risk_assessment"]["risk_level"] == "HIGH")
 
         print("\n=== Analysis Complete ===")
         print(f"Files analyzed: {len(analysis_results)}")

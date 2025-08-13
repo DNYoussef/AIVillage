@@ -1,7 +1,6 @@
+from nlp.named_entity_recognition import NamedEntityRecognizer
 from rag_system.core.agent_interface import AgentInterface
 from rag_system.utils.embedding import BERTEmbeddingModel
-
-from nlp.named_entity_recognition import NamedEntityRecognizer
 
 
 class KeyConceptExtractorAgent(AgentInterface):

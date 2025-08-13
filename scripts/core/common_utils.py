@@ -10,15 +10,15 @@ This module provides shared functionality including:
 """
 
 import argparse
+from collections.abc import Callable
+from datetime import datetime
 import functools
 import logging
 import os
+from pathlib import Path
 import signal
 import sys
 import time
-from collections.abc import Callable
-from datetime import datetime
-from pathlib import Path
 from typing import Any, NoReturn, TypeVar
 
 import psutil
@@ -295,9 +295,7 @@ def monitor_resources(log_interval: int = 30) -> Callable[[F], F]:
                 )
 
             monitor.start()
-            logger.info(
-                f"Starting execution of {func.__name__} with resource monitoring"
-            )
+            logger.info(f"Starting execution of {func.__name__} with resource monitoring")
 
             try:
                 # Set up periodic resource logging
@@ -363,9 +361,7 @@ def timeout_handler(timeout_seconds: int) -> Callable[[F], F]:
             signal.alarm(timeout_seconds)
 
             try:
-                logger.debug(
-                    f"Starting {func.__name__} with {timeout_seconds}s timeout"
-                )
+                logger.debug(f"Starting {func.__name__} with {timeout_seconds}s timeout")
                 result = func(*args, **kwargs)
                 logger.debug(f"Completed {func.__name__} within timeout")
                 return result
@@ -476,9 +472,7 @@ def get_system_info() -> dict[str, Any]:
             "disk_total_gb": disk.total / (1024**3),
             "disk_free_gb": disk.free / (1024**3),
             "disk_percent": (disk.used / disk.total) * 100,
-            "load_average": (
-                list(os.getloadavg()) if hasattr(os, "getloadavg") else None
-            ),
+            "load_average": (list(os.getloadavg()) if hasattr(os, "getloadavg") else None),
         }
     except Exception as e:
         logging.getLogger(__name__).warning(f"Failed to get system info: {e}")

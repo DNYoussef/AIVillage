@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 import datetime as dt
+from datetime import timezone
 import json
 import logging
 import pathlib
-from datetime import timezone
 from typing import TYPE_CHECKING
 
 import torch
@@ -64,7 +64,5 @@ def bake(
         "steps": step,
     }
     pathlib.Path("prompt_baking").mkdir(exist_ok=True)
-    (pathlib.Path("prompt_baking") / f"{ANCHOR_NS}.json").write_text(
-        json.dumps(meta, indent=2)
-    )
+    (pathlib.Path("prompt_baking") / f"{ANCHOR_NS}.json").write_text(json.dumps(meta, indent=2))
     return meta

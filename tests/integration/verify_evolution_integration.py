@@ -10,12 +10,12 @@ This script verifies that all CODEX requirements are met:
 6. Agent system integration
 """
 
+from datetime import datetime
 import json
 import os
+from pathlib import Path
 import sqlite3
 import sys
-from datetime import datetime
-from pathlib import Path
 
 
 def print_header(title):

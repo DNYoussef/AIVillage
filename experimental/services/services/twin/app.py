@@ -7,31 +7,29 @@
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
 import logging
 import os
+from pathlib import Path
 
 # Import unified error handling and configuration
 import sys
-from datetime import datetime, timezone
-from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parents[3]))
 import time
-import uuid
 from typing import Any
+import uuid
 
-import uvicorn
 from cachetools import LRUCache
 from fastapi import Depends, FastAPI, File, HTTPException, UploadFile
 from prometheus_client import REGISTRY, Counter, Histogram, generate_latest
 from pydantic import BaseModel, Field
+import uvicorn
 
 from core.chat_engine import ChatEngine
 
 # Add the production RAG system to the path
-sys.path.insert(
-    0, str(Path(__file__).resolve().parents[4] / "src" / "production" / "rag")
-)
+sys.path.insert(0, str(Path(__file__).resolve().parents[4] / "src" / "production" / "rag"))
 from rag_system.graph_explain import MAX_HOPS, explain_path
 
 from .schemas import ChatRequest, ChatResponse, HealthResponse
@@ -95,9 +93,7 @@ LATENCY = Histogram(
 )
 
 # Metrics for the graph explainer
-EXPLAIN_REQS = Counter(
-    "explain_requests_total", "Path explanation requests", ["status"], registry=REGISTRY
-)
+EXPLAIN_REQS = Counter("explain_requests_total", "Path explanation requests", ["status"], registry=REGISTRY)
 EXPLAIN_LATENCY = Histogram(
     "explain_latency_seconds",
     "Path explanation latency",
@@ -120,18 +116,14 @@ class TwinAgent:
             history = []
             self._conversations[conv_id] = history
 
-        history.append(
-            {"role": "user", "content": req.message, "ts": datetime.now(timezone.utc)}
-        )
+        history.append({"role": "user", "content": req.message, "ts": datetime.now(timezone.utc)})
 
         recent_msgs = "\n".join(m["content"] for m in history[-6:])
         prompt = f"Context:\n{recent_msgs}\nUser: {req.message}\nAssistant:"
 
         answer = self._model.infer(prompt)
 
-        history.append(
-            {"role": "assistant", "content": answer, "ts": datetime.now(timezone.utc)}
-        )
+        history.append({"role": "assistant", "content": answer, "ts": datetime.now(timezone.utc)})
 
         raw_prob = 0.5
         calibrated = None
@@ -156,11 +148,7 @@ class TwinAgent:
 
     async def delete_user_data(self, user_id: str):
         """Erase all conversations for `user_id` – used by privacy tests."""
-        to_del = [
-            cid
-            for cid, msgs in list(self._conversations.items())
-            if msgs and msgs[0].get("user_id") == user_id
-        ]
+        to_del = [cid for cid, msgs in list(self._conversations.items()) if msgs and msgs[0].get("user_id") == user_id]
         for cid in to_del:
             del self._conversations[cid]
         return {"deleted_conversations": len(to_del)}
@@ -205,9 +193,7 @@ health_adapter = adapter_factory.create_health_adapter()
 from fastapi.exceptions import RequestValidationError
 
 app.add_exception_handler(Exception, twin_error_handler.http_exception_handler)
-app.add_exception_handler(
-    RequestValidationError, twin_error_handler.http_exception_handler
-)
+app.add_exception_handler(RequestValidationError, twin_error_handler.http_exception_handler)
 
 
 @app.post("/v1/chat", response_model=ChatResponse)
@@ -216,9 +202,7 @@ async def chat_endpoint(req: ChatRequest):
     started = time.time()
 
     # Use the new architecture
-    payload = await chat_adapter.handle_chat_request(
-        {"message": req.message, "conversation_id": req.conversation_id}
-    )
+    payload = await chat_adapter.handle_chat_request({"message": req.message, "conversation_id": req.conversation_id})
 
     payload["processing_time_ms"] = int((time.time() - started) * 1000)
     return ChatResponse(**payload)
@@ -366,9 +350,7 @@ async def query_endpoint(req: QueryRequest):
     started = time.time()
 
     # Use the new architecture
-    payload = await query_adapter.handle_query_request(
-        {"query": req.query, "limit": 10}
-    )
+    payload = await query_adapter.handle_query_request({"query": req.query, "limit": 10})
 
     LATENCY.observe(time.time() - started)
     return QueryResponse(

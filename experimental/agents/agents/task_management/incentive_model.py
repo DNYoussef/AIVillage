@@ -1,12 +1,12 @@
-import logging
 from collections import deque
+import logging
 from typing import Any
 
 import numpy as np
-import torch
 from scipy.stats import linregress
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
+import torch
 
 logger = logging.getLogger(__name__)
 
@@ -23,9 +23,7 @@ class IncentiveModel:
         self.num_actions = num_actions
         self.learning_rate = learning_rate
         self.incentive_matrix = np.zeros((num_agents, num_actions))
-        self.performance_history = {
-            i: deque(maxlen=history_length) for i in range(num_agents)
-        }
+        self.performance_history = {i: deque(maxlen=history_length) for i in range(num_agents)}
         self.task_difficulty_history = deque(maxlen=history_length)
         self.long_term_performance = np.zeros(num_agents)
         self.agent_specialization = np.zeros((num_agents, num_actions))
@@ -34,9 +32,7 @@ class IncentiveModel:
         self.scaler = StandardScaler()
         self.pca = PCA(n_components=5)  # Adjust the number of components as needed
 
-    def calculate_incentive(
-        self, task: dict[str, Any], agent_performance: dict[str, float]
-    ) -> dict[str, float]:
+    def calculate_incentive(self, task: dict[str, Any], agent_performance: dict[str, float]) -> dict[str, float]:
         agent_id = self._get_agent_id(task["assigned_agent"])
         action_id = self._map_task_to_action(task)
         base_incentive = self.incentive_matrix[agent_id, action_id]
@@ -92,9 +88,7 @@ class IncentiveModel:
         self.task_difficulty_history.append(task_difficulty)
 
         # Update long-term performance
-        self.long_term_performance[agent_id] = np.mean(
-            self.performance_history[agent_id]
-        )
+        self.long_term_performance[agent_id] = np.mean(self.performance_history[agent_id])
 
         # Update agent specialization
         self.agent_specialization[agent_id, action_id] += 0.1 * reward
@@ -126,13 +120,9 @@ class IncentiveModel:
         if analytics is not None:
             try:
                 analytics.update_performance_history(agent_performance[agent])
-            except (
-                Exception
-            ) as e:  # pragma: no cover - analytics failures shouldn't break
+            except Exception as e:  # pragma: no cover - analytics failures shouldn't break
                 logger.exception(f"Analytics update failed: {e}")
-        logger.info(
-            f"Updated performance for agent {agent}: {agent_performance[agent]}"
-        )
+        logger.info(f"Updated performance for agent {agent}: {agent_performance[agent]}")
         return agent_performance[agent]
 
     def _get_agent_id(self, agent_name: str) -> int:
@@ -161,21 +151,13 @@ class IncentiveModel:
     def _calculate_reward(self, result: dict[str, Any]) -> float:
         # Enhanced reward calculation
         base_reward = result.get("success", 0) * 10
-        time_factor = max(
-            0, 1 - result.get("time_taken", 0) / result.get("expected_time", 1)
-        )
+        time_factor = max(0, 1 - result.get("time_taken", 0) / result.get("expected_time", 1))
         quality_factor = result.get("quality", 0.5)
         cost_factor = max(0, 1 - result.get("cost", 0) / result.get("budget", 1))
         innovation_factor = 1 + (0.5 if result.get("innovative_solution", False) else 0)
         collaboration_factor = 1 + (0.3 * len(result.get("collaborators", [])))
 
-        return (
-            base_reward
-            * (time_factor + quality_factor + cost_factor)
-            / 3
-            * innovation_factor
-            * collaboration_factor
-        )
+        return base_reward * (time_factor + quality_factor + cost_factor) / 3 * innovation_factor * collaboration_factor
 
     def _calculate_task_difficulty(self, task: dict[str, Any]) -> float:
         # Implement logic to calculate task difficulty
@@ -185,9 +167,7 @@ class IncentiveModel:
         required_skills = len(task.get("required_skills", []))
         priority = task.get("priority", 1)
 
-        difficulty = (
-            complexity * estimated_time * (1 + required_skills * 0.1) * priority
-        ) / 100
+        difficulty = (complexity * estimated_time * (1 + required_skills * 0.1) * priority) / 100
         return min(max(difficulty, 0), 1)  # Normalize to [0, 1]
 
     def _calculate_performance_trend(self, agent_id: int) -> float:
@@ -280,10 +260,7 @@ class IncentiveModel:
 
     def reset(self) -> None:
         self.incentive_matrix = np.zeros((self.num_agents, self.num_actions))
-        self.performance_history = {
-            i: deque(maxlen=self.performance_history[0].maxlen)
-            for i in range(self.num_agents)
-        }
+        self.performance_history = {i: deque(maxlen=self.performance_history[0].maxlen) for i in range(self.num_agents)}
         self.task_difficulty_history.clear()
         self.long_term_performance = np.zeros(self.num_agents)
         self.agent_specialization = np.zeros((self.num_agents, self.num_actions))

@@ -1,10 +1,10 @@
 """Mobile metrics collection and Prometheus integration."""
 
+from collections import defaultdict, deque
+from dataclasses import dataclass, field
 import logging
 import threading
 import time
-from collections import defaultdict, deque
-from dataclasses import dataclass, field
 from typing import Any
 
 # Prometheus client

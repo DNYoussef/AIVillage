@@ -12,10 +12,10 @@ Features:
 - Multiple relationship types (CONTINUES, ELABORATES, CONTRASTS, etc.)
 """
 
-import logging
-import time
 from dataclasses import asdict, dataclass
 from enum import Enum
+import logging
+import time
 from typing import Any
 
 import networkx as nx

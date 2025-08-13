@@ -1,15 +1,13 @@
 import re
 
+from langroid import ChatAgent, ChatAgentConfig, Task
 import numpy as np
 import torch
-from langroid import ChatAgent, ChatAgentConfig, Task
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 
 class MetacognitiveEvaluatorTask(Task):
-    def __init__(
-        self, agent: ChatAgent, model: AutoModelForCausalLM, tokenizer: AutoTokenizer
-    ) -> None:
+    def __init__(self, agent: ChatAgent, model: AutoModelForCausalLM, tokenizer: AutoTokenizer) -> None:
         super().__init__(agent)
         self.model = model
         self.tokenizer = tokenizer
@@ -45,9 +43,7 @@ class MetacognitiveEvaluatorTask(Task):
         inputs = self.tokenizer(input_text, return_tensors="pt").to(self.device)
 
         with torch.no_grad():
-            outputs = self.model.generate(
-                **inputs, max_length=300, num_return_sequences=1, temperature=0.7
-            )
+            outputs = self.model.generate(**inputs, max_length=300, num_return_sequences=1, temperature=0.7)
 
         response = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
         return response.split("Response:")[-1].strip()
@@ -59,9 +55,7 @@ class MetacognitiveEvaluatorTask(Task):
         depth_score = await self.evaluate_depth(response)
         clarity_score = await self.evaluate_clarity(response)
 
-        overall_score = np.mean(
-            [length_score, relevance_score, structure_score, depth_score, clarity_score]
-        )
+        overall_score = np.mean([length_score, relevance_score, structure_score, depth_score, clarity_score])
 
         return overall_score, {
             "length": length_score,
@@ -81,13 +75,9 @@ class MetacognitiveEvaluatorTask(Task):
         sentences = response.split(".")
         if len(sentences) < 3:
             return 0.5
-        has_intro = any(
-            s.strip().lower().startswith(("first", "to begin", "initially"))
-            for s in sentences[:2]
-        )
+        has_intro = any(s.strip().lower().startswith(("first", "to begin", "initially")) for s in sentences[:2])
         has_conclusion = any(
-            s.strip().lower().startswith(("finally", "in conclusion", "to summarize"))
-            for s in sentences[-2:]
+            s.strip().lower().startswith(("finally", "in conclusion", "to summarize")) for s in sentences[-2:]
         )
         return (1 + has_intro + has_conclusion) / 3
 
@@ -103,18 +93,14 @@ class MetacognitiveEvaluatorTask(Task):
             "specifically",
             "alternatively",
         ]
-        indicator_count = sum(
-            response.lower().count(indicator) for indicator in depth_indicators
-        )
+        indicator_count = sum(response.lower().count(indicator) for indicator in depth_indicators)
         return min(indicator_count / 5, 1)
 
     async def evaluate_clarity(self, response: str) -> float:
         words = response.split()
         avg_word_length = sum(len(word) for word in words) / len(words)
         long_words = sum(1 for word in words if len(word) > 10)
-        clarity_score = (
-            1 - (avg_word_length / 10) * 0.5 - (long_words / len(words)) * 0.5
-        )
+        clarity_score = 1 - (avg_word_length / 10) * 0.5 - (long_words / len(words)) * 0.5
         return max(clarity_score, 0)
 
     async def run(self, prompt: str):
@@ -134,9 +120,7 @@ if __name__ == "__main__":
             llm=OpenAIGPTConfig(chat_model="gpt-3.5-turbo"),
         )
         agent = ChatAgent(config)
-        model = AutoModelForCausalLM.from_pretrained(
-            "gpt2"
-        )  # Replace with your preferred model
+        model = AutoModelForCausalLM.from_pretrained("gpt2")  # Replace with your preferred model
         tokenizer = AutoTokenizer.from_pretrained("gpt2")
         task = MetacognitiveEvaluatorTask(agent, model, tokenizer)
 

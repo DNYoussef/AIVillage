@@ -5,12 +5,12 @@ This script analyzes the chunked documents and identifies gaps in the knowledge 
 that need to be filled, providing the analysis the user requested.
 """
 
+from collections import Counter, defaultdict
 import json
 import logging
+from pathlib import Path
 import re
 import time
-from collections import Counter, defaultdict
-from pathlib import Path
 
 # Configure logging
 logging.basicConfig(
@@ -47,9 +47,7 @@ class GraphRagAnalyzer:
         full_text_files = list(self.ingested_papers_dir.glob("*_full.txt"))
         chunk_files = list(self.ingested_papers_dir.glob("*_chunks.txt"))
 
-        logger.info(
-            f"Found {len(full_text_files)} full text files and {len(chunk_files)} chunk files"
-        )
+        logger.info(f"Found {len(full_text_files)} full text files and {len(chunk_files)} chunk files")
 
         for full_file in full_text_files:
             doc_id = full_file.stem.replace("_full", "")
@@ -66,11 +64,7 @@ class GraphRagAnalyzer:
                     with open(chunk_file, encoding="utf-8") as f:
                         chunk_text = f.read()
                         # Split by common chunk separators
-                        chunks = [
-                            c.strip()
-                            for c in re.split(r"\n\s*\n\s*---+\s*\n\s*\n", chunk_text)
-                            if c.strip()
-                        ]
+                        chunks = [c.strip() for c in re.split(r"\n\s*\n\s*---+\s*\n\s*\n", chunk_text) if c.strip()]
 
                 # Analyze document
                 self.documents[doc_id] = {
@@ -82,9 +76,7 @@ class GraphRagAnalyzer:
                     "topics": self._extract_topics(full_text),
                     "entities": self._extract_entities(full_text),
                     "quality_score": self._calculate_quality_score(full_text),
-                    "credibility_score": self._calculate_credibility_score(
-                        doc_id, full_text
-                    ),
+                    "credibility_score": self._calculate_credibility_score(doc_id, full_text),
                 }
 
                 # Store chunks for analysis
@@ -103,9 +95,7 @@ class GraphRagAnalyzer:
                 logger.exception(f"Failed to process {full_file}: {e}")
                 continue
 
-        logger.info(
-            f"Loaded {len(self.documents)} documents with {len(self.chunks)} total chunks"
-        )
+        logger.info(f"Loaded {len(self.documents)} documents with {len(self.chunks)} total chunks")
 
     def _extract_title(self, text: str, doc_id: str) -> str:
         """Extract document title from text or filename."""
@@ -114,10 +104,7 @@ class GraphRagAnalyzer:
         for line in lines:
             line = line.strip()
             if len(line) > 10 and len(line) < 200 and not line.startswith("Abstract"):
-                if any(
-                    word in line.upper()
-                    for word in ["ABSTRACT", "INTRODUCTION", "TITLE"]
-                ):
+                if any(word in line.upper() for word in ["ABSTRACT", "INTRODUCTION", "TITLE"]):
                     continue
                 return line
 
@@ -230,9 +217,7 @@ class GraphRagAnalyzer:
             score += 0.1
 
         # Citation bonus (has references)
-        if any(
-            word in text_lower for word in ["references", "bibliography", "citation"]
-        ):
+        if any(word in text_lower for word in ["references", "bibliography", "citation"]):
             score += 0.1
 
         return min(score, 1.0)
@@ -301,9 +286,7 @@ class GraphRagAnalyzer:
 
         isolated_entities = []
         for entity in all_entities:
-            if (
-                len(entity_cooccurrence[entity]) < 2
-            ):  # Connected to fewer than 2 other entities
+            if len(entity_cooccurrence[entity]) < 2:  # Connected to fewer than 2 other entities
                 isolated_entities.append(entity)
 
         if isolated_entities:
@@ -365,20 +348,14 @@ class GraphRagAnalyzer:
         # Find topics with poor cross-document connectivity
         poorly_connected_topics = []
         for topic, connections in cross_doc_connections.items():
-            if (
-                topic in topic_coverage and topic_coverage[topic] > 3
-            ):  # Topic appears in multiple docs
-                connection_ratio = len(connections) / (
-                    topic_coverage[topic] * (topic_coverage[topic] - 1) / 2
-                )
+            if topic in topic_coverage and topic_coverage[topic] > 3:  # Topic appears in multiple docs
+                connection_ratio = len(connections) / (topic_coverage[topic] * (topic_coverage[topic] - 1) / 2)
                 if connection_ratio < 0.3:  # Less than 30% of potential connections
                     poorly_connected_topics.append(
                         {
                             "topic": topic,
                             "connection_ratio": connection_ratio,
-                            "potential_connections": topic_coverage[topic]
-                            * (topic_coverage[topic] - 1)
-                            // 2,
+                            "potential_connections": topic_coverage[topic] * (topic_coverage[topic] - 1) // 2,
                             "actual_connections": len(connections),
                             "severity": "medium",
                         }
@@ -409,9 +386,7 @@ class GraphRagAnalyzer:
                         "priority": "high" if gap["severity"] == "high" else "medium",
                         "action": "ADD_CONTENT",
                         "description": f"Add more documents covering {gap['topic']} (currently only {gap['document_count']} documents)",
-                        "suggested_sources": self._suggest_sources_for_topic(
-                            gap["topic"]
-                        ),
+                        "suggested_sources": self._suggest_sources_for_topic(gap["topic"]),
                         "estimated_effort": "high",
                     }
                 )
@@ -485,60 +460,20 @@ class GraphRagAnalyzer:
         doc_stats = {
             "total_documents": len(self.documents),
             "total_chunks": len(self.chunks),
-            "avg_chunks_per_document": len(self.chunks) / len(self.documents)
-            if self.documents
-            else 0,
-            "topic_distribution": dict(
-                Counter(
-                    [
-                        topic
-                        for doc in self.documents.values()
-                        for topic in doc["topics"]
-                    ]
-                )
-            ),
+            "avg_chunks_per_document": len(self.chunks) / len(self.documents) if self.documents else 0,
+            "topic_distribution": dict(Counter([topic for doc in self.documents.values() for topic in doc["topics"]])),
             "entity_distribution": dict(
-                Counter(
-                    [
-                        entity
-                        for doc in self.documents.values()
-                        for entity in doc["entities"]
-                    ]
-                )
+                Counter([entity for doc in self.documents.values() for entity in doc["entities"]])
             ),
             "quality_distribution": {
-                "high_quality": len(
-                    [d for d in self.documents.values() if d["quality_score"] > 0.8]
-                ),
-                "medium_quality": len(
-                    [
-                        d
-                        for d in self.documents.values()
-                        if 0.6 < d["quality_score"] <= 0.8
-                    ]
-                ),
-                "low_quality": len(
-                    [d for d in self.documents.values() if d["quality_score"] <= 0.6]
-                ),
+                "high_quality": len([d for d in self.documents.values() if d["quality_score"] > 0.8]),
+                "medium_quality": len([d for d in self.documents.values() if 0.6 < d["quality_score"] <= 0.8]),
+                "low_quality": len([d for d in self.documents.values() if d["quality_score"] <= 0.6]),
             },
             "credibility_distribution": {
-                "high_credibility": len(
-                    [d for d in self.documents.values() if d["credibility_score"] > 0.8]
-                ),
-                "medium_credibility": len(
-                    [
-                        d
-                        for d in self.documents.values()
-                        if 0.6 < d["credibility_score"] <= 0.8
-                    ]
-                ),
-                "low_credibility": len(
-                    [
-                        d
-                        for d in self.documents.values()
-                        if d["credibility_score"] <= 0.6
-                    ]
-                ),
+                "high_credibility": len([d for d in self.documents.values() if d["credibility_score"] > 0.8]),
+                "medium_credibility": len([d for d in self.documents.values() if 0.6 < d["credibility_score"] <= 0.8]),
+                "low_credibility": len([d for d in self.documents.values() if d["credibility_score"] <= 0.6]),
             },
         }
 
@@ -548,9 +483,7 @@ class GraphRagAnalyzer:
         # Knowledge gaps
         gap_analysis = {
             "total_gaps_identified": len(self.knowledge_gaps),
-            "gaps_by_severity": Counter(
-                [gap.get("severity", "unknown") for gap in self.knowledge_gaps]
-            ),
+            "gaps_by_severity": Counter([gap.get("severity", "unknown") for gap in self.knowledge_gaps]),
             "gaps_by_type": Counter([gap["type"] for gap in self.knowledge_gaps]),
             "detailed_gaps": self.knowledge_gaps,
         }
@@ -562,12 +495,8 @@ class GraphRagAnalyzer:
         recommendations = self.generate_repair_recommendations()
         repair_analysis = {
             "total_recommendations": len(recommendations),
-            "recommendations_by_priority": Counter(
-                [r["priority"] for r in recommendations]
-            ),
-            "recommendations_by_action": Counter(
-                [r["action"] for r in recommendations]
-            ),
+            "recommendations_by_priority": Counter([r["priority"] for r in recommendations]),
+            "recommendations_by_action": Counter([r["action"] for r in recommendations]),
             "detailed_recommendations": recommendations,
         }
 
@@ -578,9 +507,7 @@ class GraphRagAnalyzer:
         sample_chunks = {}
         for _i, (chunk_id, chunk) in enumerate(list(self.chunks.items())[:20]):
             sample_chunks[chunk_id] = {
-                "text": chunk["text"][:200] + "..."
-                if len(chunk["text"]) > 200
-                else chunk["text"],
+                "text": chunk["text"][:200] + "..." if len(chunk["text"]) > 200 else chunk["text"],
                 "topics": chunk["topics"],
                 "entities": chunk["entities"],
                 "word_count": chunk["word_count"],
@@ -595,44 +522,20 @@ class GraphRagAnalyzer:
             "processing_summary": {
                 "documents_processed": len(self.documents),
                 "chunks_created": len(self.chunks),
-                "topics_identified": len(
-                    {
-                        topic
-                        for doc in self.documents.values()
-                        for topic in doc["topics"]
-                    }
-                ),
-                "entities_extracted": len(
-                    {
-                        entity
-                        for doc in self.documents.values()
-                        for entity in doc["entities"]
-                    }
-                ),
+                "topics_identified": len({topic for doc in self.documents.values() for topic in doc["topics"]}),
+                "entities_extracted": len({entity for doc in self.documents.values() for entity in doc["entities"]}),
             },
             "gap_analysis_summary": {
                 "total_gaps": len(self.knowledge_gaps),
-                "high_severity_gaps": len(
-                    [g for g in self.knowledge_gaps if g.get("severity") == "high"]
-                ),
-                "medium_severity_gaps": len(
-                    [g for g in self.knowledge_gaps if g.get("severity") == "medium"]
-                ),
-                "low_severity_gaps": len(
-                    [g for g in self.knowledge_gaps if g.get("severity") == "low"]
-                ),
+                "high_severity_gaps": len([g for g in self.knowledge_gaps if g.get("severity") == "high"]),
+                "medium_severity_gaps": len([g for g in self.knowledge_gaps if g.get("severity") == "medium"]),
+                "low_severity_gaps": len([g for g in self.knowledge_gaps if g.get("severity") == "low"]),
             },
             "repair_recommendations_summary": {
                 "total_recommendations": len(recommendations),
-                "high_priority": len(
-                    [r for r in recommendations if r["priority"] == "high"]
-                ),
-                "medium_priority": len(
-                    [r for r in recommendations if r["priority"] == "medium"]
-                ),
-                "low_priority": len(
-                    [r for r in recommendations if r["priority"] == "low"]
-                ),
+                "high_priority": len([r for r in recommendations if r["priority"] == "high"]),
+                "medium_priority": len([r for r in recommendations if r["priority"] == "medium"]),
+                "low_priority": len([r for r in recommendations if r["priority"] == "low"]),
             },
         }
 
@@ -667,32 +570,20 @@ def main() -> None:
     print("\n" + "=" * 70)
     print("GRAPH RAG ANALYSIS COMPLETE")
     print("=" * 70)
-    print(
-        f"Documents processed: {summary['processing_summary']['documents_processed']}"
-    )
+    print(f"Documents processed: {summary['processing_summary']['documents_processed']}")
     print(f"Chunks created: {summary['processing_summary']['chunks_created']}")
     print(f"Topics identified: {summary['processing_summary']['topics_identified']}")
     print(f"Entities extracted: {summary['processing_summary']['entities_extracted']}")
     print("\nKnowledge Gap Analysis:")
     print(f"  Total gaps identified: {summary['gap_analysis_summary']['total_gaps']}")
     print(f"  High severity: {summary['gap_analysis_summary']['high_severity_gaps']}")
-    print(
-        f"  Medium severity: {summary['gap_analysis_summary']['medium_severity_gaps']}"
-    )
+    print(f"  Medium severity: {summary['gap_analysis_summary']['medium_severity_gaps']}")
     print(f"  Low severity: {summary['gap_analysis_summary']['low_severity_gaps']}")
     print("\nRepair Recommendations:")
-    print(
-        f"  Total recommendations: {summary['repair_recommendations_summary']['total_recommendations']}"
-    )
-    print(
-        f"  High priority: {summary['repair_recommendations_summary']['high_priority']}"
-    )
-    print(
-        f"  Medium priority: {summary['repair_recommendations_summary']['medium_priority']}"
-    )
-    print(
-        f"  Low priority: {summary['repair_recommendations_summary']['low_priority']}"
-    )
+    print(f"  Total recommendations: {summary['repair_recommendations_summary']['total_recommendations']}")
+    print(f"  High priority: {summary['repair_recommendations_summary']['high_priority']}")
+    print(f"  Medium priority: {summary['repair_recommendations_summary']['medium_priority']}")
+    print(f"  Low priority: {summary['repair_recommendations_summary']['low_priority']}")
     print(f"\nResults saved to: {results_dir}")
     print("=" * 70)
 

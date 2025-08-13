@@ -15,10 +15,9 @@ if torch_spec is None:
 from agents.king.king_agent import KingAgent
 from agents.unified_base_agent import UnifiedAgentConfig as KingAgentConfig
 from agents.utils.task import Task as LangroidTask
+from core.error_handling import StandardCommunicationProtocol
 from rag_system.core.pipeline import EnhancedRAGPipeline
 from rag_system.retrieval.vector_store import VectorStore
-
-from core.error_handling import StandardCommunicationProtocol
 
 
 class TestIntegration(unittest.IsolatedAsyncioTestCase):
@@ -61,9 +60,7 @@ class TestIntegration(unittest.IsolatedAsyncioTestCase):
             "Alternative 1",
             "Alternative 2",
         ]
-        self.communication_protocol.send_and_wait.return_value.content = {
-            "analysis": "Test analysis"
-        }
+        self.communication_protocol.send_and_wait.return_value.content = {"analysis": "Test analysis"}
         self.king_agent.llm.complete.return_value.text = "Test decision"
 
         # Create a test task
@@ -103,9 +100,7 @@ class TestIntegration(unittest.IsolatedAsyncioTestCase):
         await self.king_agent.learn_from_feedback(feedback)
 
         # Check if the continuous learner's learning rate has been adjusted
-        assert (
-            self.king_agent.continuous_learner.learning_rate != 0.01
-        )  # 0.01 is the default value
+        assert self.king_agent.continuous_learner.learning_rate != 0.01  # 0.01 is the default value
 
     @patch("agents.king.quality_assurance_layer.EudaimoniaTriangulator.get_embedding")
     async def test_evolve(self, mock_get_embedding) -> None:
@@ -133,29 +128,17 @@ class TestIntegration(unittest.IsolatedAsyncioTestCase):
         self.king_agent.save_models(path)
 
         # Assert that save methods were called
-        self.king_agent.coordinator.save_models.assert_called_once_with(
-            f"{path}/coordinator"
-        )
-        self.king_agent.problem_analyzer.save_models.assert_called_once_with(
-            f"{path}/problem_analyzer"
-        )
-        self.king_agent.task_manager.save_models.assert_called_once_with(
-            f"{path}/task_manager"
-        )
+        self.king_agent.coordinator.save_models.assert_called_once_with(f"{path}/coordinator")
+        self.king_agent.problem_analyzer.save_models.assert_called_once_with(f"{path}/problem_analyzer")
+        self.king_agent.task_manager.save_models.assert_called_once_with(f"{path}/task_manager")
 
         # Load models
         self.king_agent.load_models(path)
 
         # Assert that load methods were called
-        self.king_agent.coordinator.load_models.assert_called_once_with(
-            f"{path}/coordinator"
-        )
-        self.king_agent.problem_analyzer.load_models.assert_called_once_with(
-            f"{path}/problem_analyzer"
-        )
-        self.king_agent.task_manager.load_models.assert_called_once_with(
-            f"{path}/task_manager"
-        )
+        self.king_agent.coordinator.load_models.assert_called_once_with(f"{path}/coordinator")
+        self.king_agent.problem_analyzer.load_models.assert_called_once_with(f"{path}/problem_analyzer")
+        self.king_agent.task_manager.load_models.assert_called_once_with(f"{path}/task_manager")
 
 
 if __name__ == "__main__":

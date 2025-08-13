@@ -70,11 +70,7 @@ def approve(path: pathlib.Path) -> None:
 
 def fetch() -> None:
     """Download wheels and regenerate the manifest."""
-    lines = [
-        line.strip()
-        for line in REQ_FILE.read_text().splitlines()
-        if line.strip() and not line.startswith("#")
-    ]
+    lines = [line.strip() for line in REQ_FILE.read_text().splitlines() if line.strip() and not line.startswith("#")]
     subprocess.check_call(
         [
             "pip",

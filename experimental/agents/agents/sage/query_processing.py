@@ -2,11 +2,10 @@ import asyncio
 import logging
 from typing import Any
 
+from agent_forge.adas.technique_archive import ChainOfThought, TreeOfThoughts
 from rag_system.utils.embedding import BERTEmbeddingModel
 from rag_system.utils.named_entity_recognition import NamedEntityRecognizer
 from rag_system.utils.relation_extraction import RelationExtractor
-
-from agent_forge.adas.technique_archive import ChainOfThought, TreeOfThoughts
 
 logger = logging.getLogger(__name__)
 
@@ -55,9 +54,7 @@ class QueryProcessor:
             embeddings = self.embedding_model.encode(content)
             entities = self.named_entity_recognizer.recognize(content)
             relations = self.relation_extractor.extract(content)
-            return await self.latent_space_activation.activate(
-                content, embeddings, entities, relations
-            )
+            return await self.latent_space_activation.activate(content, embeddings, entities, relations)
         except Exception as e:
             logger.exception(f"Error activating latent space: {e!s}")
             return ""
@@ -74,9 +71,7 @@ class QueryProcessor:
     async def apply_advanced_reasoning(self, task: dict[str, Any]) -> str:
         try:
             chain_of_thought_result = self.chain_of_thought.process(task["content"])
-            tree_of_thoughts_result = await self.tree_of_thoughts.process(
-                task["content"]
-            )
+            tree_of_thoughts_result = await self.tree_of_thoughts.process(task["content"])
 
             combined_reasoning = f"Chain of Thought: {chain_of_thought_result}\n"
             combined_reasoning += f"Tree of Thoughts: {tree_of_thoughts_result}"

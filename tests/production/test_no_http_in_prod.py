@@ -5,9 +5,9 @@ HTTP URLs that could create security vulnerabilities.
 """
 
 import os
+from pathlib import Path
 import re
 import unittest
-from pathlib import Path
 
 import yaml
 

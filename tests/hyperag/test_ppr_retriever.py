@@ -8,8 +8,8 @@ Test cases:
 4. Performance targets: ≤ 150ms latency, < 10MB memory overhead
 """
 
-import time
 from datetime import datetime
+import time
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest

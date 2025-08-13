@@ -12,9 +12,7 @@ import time
 import aiohttp
 
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -32,9 +30,7 @@ class HealthChecker:
         try:
             # Get all pods
             cmd = ["kubectl", "get", "pods", "-n", self.namespace, "-o", "json"]
-            result = subprocess.run(
-                cmd, capture_output=True, text=True, timeout=30, check=False
-            )
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30, check=False)
 
             if result.returncode != 0:
                 return {
@@ -51,17 +47,12 @@ class HealthChecker:
                 ready = False
 
                 if "containerStatuses" in pod["status"]:
-                    ready = all(
-                        cs["ready"] for cs in pod["status"]["containerStatuses"]
-                    )
+                    ready = all(cs["ready"] for cs in pod["status"]["containerStatuses"])
 
                 pod_health[pod_name] = {
                     "phase": phase,
                     "ready": ready,
-                    "restarts": sum(
-                        cs.get("restartCount", 0)
-                        for cs in pod["status"].get("containerStatuses", [])
-                    ),
+                    "restarts": sum(cs.get("restartCount", 0) for cs in pod["status"].get("containerStatuses", [])),
                 }
 
                 if phase != "Running" or not ready:
@@ -69,26 +60,14 @@ class HealthChecker:
 
             # Get services
             cmd = ["kubectl", "get", "services", "-n", self.namespace, "-o", "json"]
-            result = subprocess.run(
-                cmd, capture_output=True, text=True, timeout=30, check=False
-            )
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30, check=False)
 
-            services_data = (
-                json.loads(result.stdout) if result.returncode == 0 else {"items": []}
-            )
-            service_health = {
-                svc["metadata"]["name"]: {"type": svc["spec"]["type"]}
-                for svc in services_data["items"]
-            }
+            services_data = json.loads(result.stdout) if result.returncode == 0 else {"items": []}
+            service_health = {svc["metadata"]["name"]: {"type": svc["spec"]["type"]} for svc in services_data["items"]}
 
             return {
                 "status": (
-                    "PASS"
-                    if all(
-                        p["phase"] == "Running" and p["ready"]
-                        for p in pod_health.values()
-                    )
-                    else "FAIL"
+                    "PASS" if all(p["phase"] == "Running" and p["ready"] for p in pod_health.values()) else "FAIL"
                 ),
                 "pods": pod_health,
                 "services": service_health,
@@ -119,9 +98,7 @@ class HealthChecker:
                 "-p",
                 "5432",
             ]
-            result = subprocess.run(
-                cmd, capture_output=True, text=True, timeout=30, check=False
-            )
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30, check=False)
             db_results["postgres"] = {
                 "status": "PASS" if result.returncode == 0 else "FAIL",
                 "details": result.stdout if result.returncode == 0 else result.stderr,
@@ -142,15 +119,9 @@ class HealthChecker:
                 "redis-cli",
                 "ping",
             ]
-            result = subprocess.run(
-                cmd, capture_output=True, text=True, timeout=30, check=False
-            )
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30, check=False)
             db_results["redis"] = {
-                "status": (
-                    "PASS"
-                    if result.returncode == 0 and "PONG" in result.stdout
-                    else "FAIL"
-                ),
+                "status": ("PASS" if result.returncode == 0 and "PONG" in result.stdout else "FAIL"),
                 "details": result.stdout if result.returncode == 0 else result.stderr,
             }
         except Exception as e:
@@ -173,9 +144,7 @@ class HealthChecker:
                 "test_password",
                 "RETURN 1",
             ]
-            result = subprocess.run(
-                cmd, capture_output=True, text=True, timeout=30, check=False
-            )
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30, check=False)
             db_results["neo4j"] = {
                 "status": "PASS" if result.returncode == 0 else "FAIL",
                 "details": result.stdout if result.returncode == 0 else result.stderr,
@@ -195,17 +164,13 @@ class HealthChecker:
                 "statefulset/aivillage-qdrant",
                 "6333:6333",
             ]
-            proc = subprocess.Popen(
-                port_forward_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE
-            )
+            proc = subprocess.Popen(port_forward_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
             await asyncio.sleep(2)  # Wait for port forward
 
             async with (
                 aiohttp.ClientSession() as session,
-                session.get(
-                    "http://localhost:6333/", timeout=aiohttp.ClientTimeout(total=10)
-                ) as response,
+                session.get("http://localhost:6333/", timeout=aiohttp.ClientTimeout(total=10)) as response,
             ):
                 if response.status == 200:
                     db_results["qdrant"] = {
@@ -253,9 +218,7 @@ class HealthChecker:
                     f"service/{k8s_service}",
                     f"{port}:{port}",
                 ]
-                proc = subprocess.Popen(
-                    port_forward_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE
-                )
+                proc = subprocess.Popen(port_forward_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
                 await asyncio.sleep(2)  # Wait for port forward
 
@@ -263,9 +226,7 @@ class HealthChecker:
                     url = f"http://localhost:{port}{path}"
                     start_time = time.time()
 
-                    async with session.get(
-                        url, timeout=aiohttp.ClientTimeout(total=10)
-                    ) as response:
+                    async with session.get(url, timeout=aiohttp.ClientTimeout(total=10)) as response:
                         response_time = (time.time() - start_time) * 1000  # ms
 
                         if response.status == 200:
@@ -299,9 +260,7 @@ class HealthChecker:
         try:
             # Get node metrics if metrics-server is available
             cmd = ["kubectl", "top", "nodes"]
-            result = subprocess.run(
-                cmd, capture_output=True, text=True, timeout=30, check=False
-            )
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30, check=False)
 
             node_metrics = {}
             if result.returncode == 0:
@@ -319,9 +278,7 @@ class HealthChecker:
 
             # Get pod metrics
             cmd = ["kubectl", "top", "pods", "-n", self.namespace]
-            result = subprocess.run(
-                cmd, capture_output=True, text=True, timeout=30, check=False
-            )
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30, check=False)
 
             pod_metrics = {}
             if result.returncode == 0:
@@ -348,9 +305,7 @@ class HealthChecker:
 
     async def run_comprehensive_health_check(self) -> dict:
         """Run all health checks."""
-        logger.info(
-            f"Starting comprehensive health check for {self.environment} environment..."
-        )
+        logger.info(f"Starting comprehensive health check for {self.environment} environment...")
 
         start_time = time.time()
 
@@ -398,14 +353,8 @@ class HealthChecker:
         print("📦 Kubernetes Resources:")
         if "pods" in k8s:
             for pod_name, pod_info in k8s["pods"].items():
-                status_icon = (
-                    "🟢"
-                    if pod_info["phase"] == "Running" and pod_info["ready"]
-                    else "🔴"
-                )
-                print(
-                    f"  {status_icon} {pod_name}: {pod_info['phase']} (Restarts: {pod_info['restarts']})"
-                )
+                status_icon = "🟢" if pod_info["phase"] == "Running" and pod_info["ready"] else "🔴"
+                print(f"  {status_icon} {pod_name}: {pod_info['phase']} (Restarts: {pod_info['restarts']})")
         print()
 
         # Databases
@@ -422,9 +371,7 @@ class HealthChecker:
         for service_name, service_info in endpoints.items():
             status_icon = "🟢" if service_info["status"] == "PASS" else "🔴"
             response_time = service_info.get("response_time_ms", "N/A")
-            print(
-                f"  {status_icon} {service_name}: {service_info['status']} ({response_time}ms)"
-            )
+            print(f"  {status_icon} {service_name}: {service_info['status']} ({response_time}ms)")
         print()
 
         print(f"{'=' * 60}")
@@ -437,18 +384,14 @@ class HealthChecker:
 
 
 async def main() -> None:
-    parser = argparse.ArgumentParser(
-        description="Run comprehensive health check for AIVillage deployment"
-    )
+    parser = argparse.ArgumentParser(description="Run comprehensive health check for AIVillage deployment")
     parser.add_argument(
         "--environment",
         required=True,
         choices=["staging", "production"],
         help="Environment to check",
     )
-    parser.add_argument(
-        "--output", default="health_check_results.json", help="Output file for results"
-    )
+    parser.add_argument("--output", default="health_check_results.json", help="Output file for results")
     parser.add_argument("--quiet", action="store_true", help="Suppress detailed output")
 
     args = parser.parse_args()

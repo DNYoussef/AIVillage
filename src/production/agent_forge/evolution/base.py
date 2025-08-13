@@ -1,11 +1,11 @@
 """Base class for evolvable agents - Sprint 6 Enhanced."""
 
-import logging
-import time
-import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
+import logging
+import time
 from typing import Any
+import uuid
 
 try:
     import numpy as np

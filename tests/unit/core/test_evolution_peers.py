@@ -1,11 +1,12 @@
-import sys
 from pathlib import Path
+import sys
 
 # Ensure src package is importable
 project_root = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from src.core.p2p.p2p_node import P2PNode, PeerCapabilities
+from src.production.communications.p2p.p2p_node import P2PNode
+from src.production.communications.p2p.p2p_node import PeerInfo as PeerCapabilities
 
 
 def create_peer(idx: int) -> PeerCapabilities:

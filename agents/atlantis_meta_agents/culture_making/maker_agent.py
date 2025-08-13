@@ -31,9 +31,7 @@ class MakerAgent(AgentInterface):
         hash_value = int(hashlib.md5(text.encode()).hexdigest(), 16)
         return [(hash_value % 1000) / 1000.0] * 384
 
-    async def rerank(
-        self, query: str, results: list[dict[str, Any]], k: int
-    ) -> list[dict[str, Any]]:
+    async def rerank(self, query: str, results: list[dict[str, Any]], k: int) -> list[dict[str, Any]]:
         return results[:k]
 
     async def introspect(self) -> dict[str, Any]:

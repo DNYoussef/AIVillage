@@ -2,8 +2,8 @@
 Unit tests for Planning Data Structures
 """
 
-import sys
 from pathlib import Path
+import sys
 
 import pytest
 

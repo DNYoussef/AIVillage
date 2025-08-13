@@ -7,8 +7,8 @@ and provides specific recommendations for each duplicate group.
 """
 
 import json
-import re
 from pathlib import Path
+import re
 
 
 class EnhancedImportAnalyzer:
@@ -38,10 +38,7 @@ class EnhancedImportAnalyzer:
 
         for py_file in self.repo_root.rglob("*.py"):
             try:
-                if any(
-                    part in str(py_file)
-                    for part in ["new_env", "old_env", "venv", "__pycache__"]
-                ):
+                if any(part in str(py_file) for part in ["new_env", "old_env", "venv", "__pycache__"]):
                     continue
 
                 if str(py_file.relative_to(self.repo_root)) == target_file:
@@ -61,30 +58,18 @@ class EnhancedImportAnalyzer:
                             # Classify the import type
                             if line.startswith("import ") and term in line:
                                 if " as " in line:
-                                    patterns["alias_imports"].append(
-                                        f"{file_rel_path}:{line_num}: {line}"
-                                    )
+                                    patterns["alias_imports"].append(f"{file_rel_path}:{line_num}: {line}")
                                 else:
-                                    patterns["direct_imports"].append(
-                                        f"{file_rel_path}:{line_num}: {line}"
-                                    )
+                                    patterns["direct_imports"].append(f"{file_rel_path}:{line_num}: {line}")
                             elif line.startswith("from ") and term in line:
                                 if "import *" in line:
-                                    patterns["star_imports"].append(
-                                        f"{file_rel_path}:{line_num}: {line}"
-                                    )
+                                    patterns["star_imports"].append(f"{file_rel_path}:{line_num}: {line}")
                                 elif line.startswith("from ."):
-                                    patterns["relative_imports"].append(
-                                        f"{file_rel_path}:{line_num}: {line}"
-                                    )
+                                    patterns["relative_imports"].append(f"{file_rel_path}:{line_num}: {line}")
                                 else:
-                                    patterns["from_imports"].append(
-                                        f"{file_rel_path}:{line_num}: {line}"
-                                    )
+                                    patterns["from_imports"].append(f"{file_rel_path}:{line_num}: {line}")
                             elif not line.startswith("#") and term in line:
-                                patterns["string_references"].append(
-                                    f"{file_rel_path}:{line_num}: {line}"
-                                )
+                                patterns["string_references"].append(f"{file_rel_path}:{line_num}: {line}")
 
             except Exception:
                 continue
@@ -111,9 +96,7 @@ class EnhancedImportAnalyzer:
 
                 # Check for decorators
                 if "@" in content and re.search(r"@\w+", content):
-                    breaking_changes.append(
-                        "Decorators present - behavior changes possible"
-                    )
+                    breaking_changes.append("Decorators present - behavior changes possible")
 
                 # Check for async/await
                 if "async def" in content or "await " in content:
@@ -121,9 +104,7 @@ class EnhancedImportAnalyzer:
 
                 # Check for global variables
                 if re.search(r"^[A-Z_][A-Z0-9_]*\s*=", content, re.MULTILINE):
-                    breaking_changes.append(
-                        "Module-level constants - value changes possible"
-                    )
+                    breaking_changes.append("Module-level constants - value changes possible")
 
         except Exception:
             pass
@@ -140,18 +121,12 @@ class EnhancedImportAnalyzer:
             rename_map = {}
 
         report = []
-        report.append(
-            "# Comprehensive Import Impact Analysis for AIVillage Consolidation"
-        )
+        report.append("# Comprehensive Import Impact Analysis for AIVillage Consolidation")
         report.append("")
         report.append("## Executive Summary")
         report.append("")
-        report.append(
-            "This analysis examines the import usage and migration impact for all files identified in the"
-        )
-        report.append(
-            "consolidation plan. The assessment includes direct imports, string references, and potential"
-        )
+        report.append("This analysis examines the import usage and migration impact for all files identified in the")
+        report.append("consolidation plan. The assessment includes direct imports, string references, and potential")
         report.append("breaking changes to provide a complete migration strategy.")
         report.append("")
 
@@ -249,14 +224,10 @@ class EnhancedImportAnalyzer:
 
                     report.append(f"- **Import Statements**: {total_imports}")
                     report.append(f"- **String References**: {total_refs}")
-                    report.append(
-                        f"- **Star Imports**: {len(patterns['star_imports'])}"
-                    )
+                    report.append(f"- **Star Imports**: {len(patterns['star_imports'])}")
 
                     if breaking_changes:
-                        report.append(
-                            f"- **Breaking Change Risks**: {len(breaking_changes)}"
-                        )
+                        report.append(f"- **Breaking Change Risks**: {len(breaking_changes)}")
                         for change in breaking_changes:
                             report.append(f"  - {change}")
 
@@ -265,9 +236,7 @@ class EnhancedImportAnalyzer:
                     # Migration strategy for this file
                     if file_path in rename_map:
                         strategy = rename_map[file_path]
-                        report.append(
-                            f"**Migration Strategy**: {strategy['action'].title()}"
-                        )
+                        report.append(f"**Migration Strategy**: {strategy['action'].title()}")
                         report.append(f"**Risk Level**: {strategy['risk_level']}")
                         report.append(f"**Shim Strategy**: {strategy['shim_strategy']}")
                         report.append("")
@@ -303,12 +272,8 @@ class EnhancedImportAnalyzer:
         # Phase 3: High risk items
         report.append("### Phase 3: High-Risk Consolidations (Week 4-6)")
         report.append("")
-        report.append(
-            "- **P2P Implementation**: Critical infrastructure - requires careful planning"
-        )
-        report.append(
-            "- **Device Profiler**: Mobile subsystem core - extensive testing needed"
-        )
+        report.append("- **P2P Implementation**: Critical infrastructure - requires careful planning")
+        report.append("- **Device Profiler**: Mobile subsystem core - extensive testing needed")
         report.append("- **Implement gradual deprecation with import redirects**")
         report.append("- **Maintain backwards compatibility for 1-2 releases**")
         report.append("")
@@ -439,12 +404,8 @@ class EnhancedImportAnalyzer:
 
         report.append("---")
         report.append("")
-        report.append(
-            "*This analysis provides a comprehensive roadmap for safely implementing*"
-        )
-        report.append(
-            "*the AIVillage consolidation plan while minimizing risk and maintaining*"
-        )
+        report.append("*This analysis provides a comprehensive roadmap for safely implementing*")
+        report.append("*the AIVillage consolidation plan while minimizing risk and maintaining*")
         report.append("*system functionality throughout the migration process.*")
 
         return "\n".join(report)
@@ -473,9 +434,7 @@ class EnhancedImportAnalyzer:
                     "5. Remove after grace period",
                 ]
                 enhanced_mapping["timeline"] = "4-6 weeks"
-                enhanced_mapping["testing_requirements"] = (
-                    "Comprehensive integration testing"
-                )
+                enhanced_mapping["testing_requirements"] = "Comprehensive integration testing"
             elif mapping["risk_level"] == "MEDIUM":
                 enhanced_mapping["migration_steps"] = [
                     "1. Add compatibility shims",
@@ -484,9 +443,7 @@ class EnhancedImportAnalyzer:
                     "4. Remove old module",
                 ]
                 enhanced_mapping["timeline"] = "2-3 weeks"
-                enhanced_mapping["testing_requirements"] = (
-                    "Unit and integration testing"
-                )
+                enhanced_mapping["testing_requirements"] = "Unit and integration testing"
             else:
                 enhanced_mapping["migration_steps"] = [
                     "1. Direct replacement",
@@ -498,12 +455,8 @@ class EnhancedImportAnalyzer:
 
             # Add rollback strategy
             enhanced_mapping["rollback_strategy"] = {
-                "method": "Git revert"
-                if mapping["risk_level"] == "LOW"
-                else "Restore deprecated modules",
-                "recovery_time": "1 hour"
-                if mapping["risk_level"] == "LOW"
-                else "4 hours",
+                "method": "Git revert" if mapping["risk_level"] == "LOW" else "Restore deprecated modules",
+                "recovery_time": "1 hour" if mapping["risk_level"] == "LOW" else "4 hours",
                 "data_loss_risk": "None",
             }
 

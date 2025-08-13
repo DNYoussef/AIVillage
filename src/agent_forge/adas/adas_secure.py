@@ -1,19 +1,20 @@
 from __future__ import annotations
 
 import ast
+from contextlib import contextmanager
 import json
 import os
 import signal
 import subprocess
 import sys
 import tempfile
-from contextlib import contextmanager
 from typing import Any, NoReturn
 
 from langroid.agent.chat_agent import ChatAgent, ChatAgentConfig
 from langroid.agent.task import Task
 from langroid.agent.tool_message import ToolMessage
 from langroid.language_models.openai_gpt import OpenAIGPTConfig
+
 from rag_system.utils.logging import setup_logger as get_logger
 
 from .technique_archive import PROMPT_TECHNIQUE_ARCHIVE
@@ -29,11 +30,7 @@ class ADASTask(Task):
         task_content: str,
         metadata: dict[str, Any] | None = None,
     ) -> None:
-        if (
-            not isinstance(task_id, str)
-            or not isinstance(task_type, str)
-            or not isinstance(task_content, str)
-        ):
+        if not isinstance(task_id, str) or not isinstance(task_type, str) or not isinstance(task_content, str):
             msg = "task_id, task_type and task_content must be strings"
             raise TypeError(msg)
         if metadata is not None and not isinstance(metadata, dict):
@@ -301,9 +298,7 @@ class AgentTechnique(ToolMessage):
                 break
 
         if not has_run_function:
-            self.logger.error(
-                "Code must define a run(model_path, work_dir, params) function"
-            )
+            self.logger.error("Code must define a run(model_path, work_dir, params) function")
             return False
 
         # No obvious malicious patterns
@@ -321,9 +316,7 @@ class AgentTechnique(ToolMessage):
 
         for pattern in dangerous_patterns:
             if pattern in code:
-                self.logger.error(
-                    f"Code contains potentially dangerous pattern: {pattern}"
-                )
+                self.logger.error(f"Code contains potentially dangerous pattern: {pattern}")
                 return False
 
         return True
@@ -339,12 +332,8 @@ class AgentTechnique(ToolMessage):
             return 0.0
 
         try:
-            score = self.runner.run_code_sandbox(
-                self.code, model_path, params, timeout=30, memory_limit_mb=512
-            )
-            self.logger.info(
-                "ADAS | %s completed with score %.4f", self.technique_name, score
-            )
+            score = self.runner.run_code_sandbox(self.code, model_path, params, timeout=30, memory_limit_mb=512)
+            self.logger.info("ADAS | %s completed with score %.4f", self.technique_name, score)
             return score
         except Exception as e:
             self.logger.exception(f"Failed to run technique {self.technique_name}: {e}")
@@ -353,12 +342,8 @@ class AgentTechnique(ToolMessage):
 
 # Example usage
 if __name__ == "__main__":
-    task_description = (
-        "Design an agent that can solve abstract reasoning tasks in the ARC challenge."
-    )
-    adas_task = ADASTask(
-        task_id="demo", task_type="research", task_content=task_description
-    )
+    task_description = "Design an agent that can solve abstract reasoning tasks in the ARC challenge."
+    adas_task = ADASTask(task_id="demo", task_type="research", task_content=task_description)
     best_agent = adas_task.run()
 
     print("Best Agent:")

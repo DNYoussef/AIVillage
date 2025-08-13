@@ -6,14 +6,12 @@ and performance optimizations according to CODEX Integration Requirements.
 """
 
 import logging
+from pathlib import Path
 import sqlite3
 import sys
-from pathlib import Path
 
 # Setup logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 # Database configurations from CODEX Integration Requirements
@@ -277,9 +275,7 @@ class DatabaseSetup:
                     logger.info(f"Database {db_name} integrity check: PASSED")
                 else:
                     results[db_name] = False
-                    logger.error(
-                        f"Database {db_name} integrity check: FAILED - {result}"
-                    )
+                    logger.error(f"Database {db_name} integrity check: FAILED - {result}")
 
             except Exception as e:
                 results[db_name] = False
@@ -293,9 +289,7 @@ class DatabaseSetup:
 
         for db_name, conn in self.connections.items():
             try:
-                cursor = conn.execute(
-                    "SELECT name FROM sqlite_master WHERE type='table'"
-                )
+                cursor = conn.execute("SELECT name FROM sqlite_master WHERE type='table'")
                 tables = [row[0] for row in cursor.fetchall()]
 
                 cursor = conn.execute("PRAGMA page_count")
@@ -307,9 +301,7 @@ class DatabaseSetup:
                 size_bytes = page_count * page_size
 
                 info[db_name] = {
-                    "path": str(
-                        self.data_dir / Path(DATABASE_CONFIGS[db_name]["path"]).name
-                    ),
+                    "path": str(self.data_dir / Path(DATABASE_CONFIGS[db_name]["path"]).name),
                     "tables": tables,
                     "size_bytes": size_bytes,
                     "size_mb": round(size_bytes / (1024 * 1024), 2),
@@ -358,9 +350,7 @@ def main() -> bool | None:
                 print(f"  Tables: {len(info['tables'])}")
                 print(f"  Size: {info['size_mb']} MB")
                 print(f"  Tables: {', '.join(info['tables'])}")
-                print(
-                    f"  Integrity: {'✅ PASSED' if integrity_results.get(db_name) else '❌ FAILED'}"
-                )
+                print(f"  Integrity: {'✅ PASSED' if integrity_results.get(db_name) else '❌ FAILED'}")
             else:
                 print(f"\n{db_name.upper()} DATABASE: ❌ ERROR - {info['error']}")
 

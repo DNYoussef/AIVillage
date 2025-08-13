@@ -10,9 +10,9 @@ Usage:
 """
 
 import importlib
+from pathlib import Path
 import subprocess
 import sys
-from pathlib import Path
 
 try:
     import toml
@@ -210,9 +210,7 @@ def generate_requirements_txt() -> None:
 
         filename = f"requirements-{group}.txt"
         with open(filename, "w", encoding="utf-8") as f:
-            f.write(
-                f"# Generated from pyproject.toml [{group}] - do not edit manually\n"
-            )
+            f.write(f"# Generated from pyproject.toml [{group}] - do not edit manually\n")
             f.write(f"# Use 'pip install -e \".[{group}]\"' for installation\n\n")
             for dep in deps:
                 f.write(f"{dep}\n")
@@ -289,9 +287,7 @@ def main() -> int:
         success_rate = len(successful) / len(all_packages) * 100 if all_packages else 0
         print(f"  Import success rate: {success_rate:.1f}%")
         print(f"  Version conflicts: {'None' if conflicts_ok else 'Found'}")
-        print(
-            f"  Status: {'PASS' if len(failed) == 0 and conflicts_ok else 'ISSUES FOUND'}"
-        )
+        print(f"  Status: {'PASS' if len(failed) == 0 and conflicts_ok else 'ISSUES FOUND'}")
 
         if failed or not conflicts_ok:
             return 1

@@ -1,6 +1,6 @@
 import importlib.util
-import unittest
 from pathlib import Path
+import unittest
 
 # Load the interpreter directly to avoid importing heavy dependencies from the
 # parent `agents` package during test collection.

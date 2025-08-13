@@ -10,13 +10,13 @@ and visualization generation.
 """
 
 import argparse
+from datetime import datetime, timedelta
 import json
 import logging
 import os
+from pathlib import Path
 import sys
 import time
-from datetime import datetime, timedelta
-from pathlib import Path
 from typing import Any
 
 try:
@@ -136,9 +136,7 @@ class CompressionMonitor:
             try:
                 with open(self.data_file, encoding="utf-8") as f:
                     data = json.load(f)
-                    self.metrics_history = [
-                        CompressionMetrics.from_dict(item) for item in data
-                    ]
+                    self.metrics_history = [CompressionMetrics.from_dict(item) for item in data]
                 logger.info(f"Loaded {len(self.metrics_history)} historical metrics")
             except Exception as e:
                 logger.exception(f"Failed to load metrics history: {e}")
@@ -154,9 +152,7 @@ class CompressionMonitor:
             data = [metrics.to_dict() for metrics in self.metrics_history]
             with open(self.data_file, "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2)
-            logger.info(
-                f"Saved {len(self.metrics_history)} metrics to {self.data_file}"
-            )
+            logger.info(f"Saved {len(self.metrics_history)} metrics to {self.data_file}")
         except Exception as e:
             logger.exception(f"Failed to save metrics history: {e}")
 
@@ -211,22 +207,16 @@ class CompressionMonitor:
 
             # Calculate metrics
             metrics.compression_time = compression_time
-            metrics.relative_error = (
-                torch.norm(test_weight - reconstructed) / torch.norm(test_weight)
-            ).item()
+            metrics.relative_error = (torch.norm(test_weight - reconstructed) / torch.norm(test_weight)).item()
             metrics.model_size = test_weight.numel()
 
             # Handle different compressed data formats safely
             if isinstance(compressed, dict):
-                metrics.compression_ratio = compressed.get("data", {}).get(
-                    "compression_ratio", 4.0
-                )
+                metrics.compression_ratio = compressed.get("data", {}).get("compression_ratio", 4.0)
             else:
                 # Estimate compression ratio based on size reduction
                 original_size = test_weight.numel() * 4  # 4 bytes per float32
-                compressed_size = getattr(
-                    compressed, "numel", lambda: original_size // 4
-                )()
+                compressed_size = getattr(compressed, "numel", lambda: original_size // 4)()
                 metrics.compression_ratio = original_size / (compressed_size * 4)
 
             metrics.config = {
@@ -259,9 +249,7 @@ class CompressionMonitor:
         self.metrics_history.append(metrics)
         self.save_history()
 
-    def check_regression(
-        self, current_metrics: CompressionMetrics, lookback_days: int = 7
-    ) -> list[str]:
+    def check_regression(self, current_metrics: CompressionMetrics, lookback_days: int = 7) -> list[str]:
         """Check for performance regressions.
 
         Args:
@@ -276,9 +264,7 @@ class CompressionMonitor:
         # Get recent metrics for comparison
         cutoff_date = datetime.now() - timedelta(days=lookback_days)
         recent_metrics = [
-            m
-            for m in self.metrics_history[-20:]
-            if datetime.fromisoformat(m.timestamp) > cutoff_date  # Last 20 runs
+            m for m in self.metrics_history[-20:] if datetime.fromisoformat(m.timestamp) > cutoff_date  # Last 20 runs
         ]
 
         if not recent_metrics:
@@ -291,15 +277,9 @@ class CompressionMonitor:
         baseline_time = np.mean([m.compression_time for m in recent_metrics])
 
         # Check for regressions
-        ratio_regression = (
-            baseline_ratio - current_metrics.compression_ratio
-        ) / baseline_ratio
-        error_regression = (
-            current_metrics.relative_error - baseline_error
-        ) / baseline_error
-        time_regression = (
-            current_metrics.compression_time - baseline_time
-        ) / baseline_time
+        ratio_regression = (baseline_ratio - current_metrics.compression_ratio) / baseline_ratio
+        error_regression = (current_metrics.relative_error - baseline_error) / baseline_error
+        time_regression = (current_metrics.compression_time - baseline_time) / baseline_time
 
         threshold = self.thresholds["regression_threshold"]
 
@@ -345,11 +325,7 @@ class CompressionMonitor:
     def generate_report(self, days: int = 30) -> str:
         """Generate performance report."""
         cutoff_date = datetime.now() - timedelta(days=days)
-        recent_metrics = [
-            m
-            for m in self.metrics_history
-            if datetime.fromisoformat(m.timestamp) > cutoff_date
-        ]
+        recent_metrics = [m for m in self.metrics_history if datetime.fromisoformat(m.timestamp) > cutoff_date]
 
         if not recent_metrics:
             return "No metrics available for the specified time period."
@@ -416,11 +392,7 @@ class CompressionMonitor:
         cutoff_date = datetime.now() - timedelta(days=days_to_keep)
         original_count = len(self.metrics_history)
 
-        self.metrics_history = [
-            m
-            for m in self.metrics_history
-            if datetime.fromisoformat(m.timestamp) > cutoff_date
-        ]
+        self.metrics_history = [m for m in self.metrics_history if datetime.fromisoformat(m.timestamp) > cutoff_date]
 
         removed_count = original_count - len(self.metrics_history)
         if removed_count > 0:
@@ -429,9 +401,7 @@ class CompressionMonitor:
 
         return removed_count
 
-    def create_visualizations(
-        self, output_dir: str = "compression_plots"
-    ) -> Path | None:
+    def create_visualizations(self, output_dir: str = "compression_plots") -> Path | None:
         """Create performance visualization plots.
 
         Args:
@@ -487,9 +457,7 @@ class CompressionMonitor:
         cbar.set_label("Compression Ratio (x)")
 
         plt.tight_layout()
-        plt.savefig(
-            output_path / "compression_performance.png", dpi=150, bbox_inches="tight"
-        )
+        plt.savefig(output_path / "compression_performance.png", dpi=150, bbox_inches="tight")
         plt.close()
 
         logger.info(f"Visualizations saved to {output_path}")
@@ -512,9 +480,7 @@ Examples:
   python compression_monitor.py --create-plots
 """,
     )
-    parser.add_argument(
-        "--run-benchmark", action="store_true", help="Run benchmark and add to history"
-    )
+    parser.add_argument("--run-benchmark", action="store_true", help="Run benchmark and add to history")
     parser.add_argument(
         "--check-regression",
         action="store_true",
@@ -536,9 +502,7 @@ Examples:
         default="compression_metrics.json",
         help="Path to metrics data file",
     )
-    parser.add_argument(
-        "--method", default="SeedLM", help="Compression method to benchmark"
-    )
+    parser.add_argument("--method", default="SeedLM", help="Compression method to benchmark")
 
     args = parser.parse_args()
 
@@ -564,9 +528,7 @@ Examples:
         report = monitor.generate_report(days=args.generate_report)
 
         # Save report
-        report_file = (
-            f"compression_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
-        )
+        report_file = f"compression_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
         with open(report_file, "w") as f:
             f.write(report)
 

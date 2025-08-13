@@ -5,13 +5,13 @@ Migrates evolution metrics from JSON files to SQLite as noted in
 CODEX Integration Requirements Migration Notes.
 """
 
+from datetime import datetime
 import hashlib
 import json
 import logging
+from pathlib import Path
 import sqlite3
 import sys
-from datetime import datetime
-from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -104,9 +104,7 @@ class DataMigrator:
                                 fitness_data.get("fitness_score", 0.0),
                                 json.dumps(fitness_data.get("performance_metrics", {})),
                                 json.dumps(fitness_data.get("resource_usage", {})),
-                                fitness_data.get(
-                                    "timestamp", datetime.now().isoformat()
-                                ),
+                                fitness_data.get("timestamp", datetime.now().isoformat()),
                             ),
                         )
 
@@ -149,12 +147,8 @@ class DataMigrator:
                     sha256_chunks.append(chunk_id)
 
             if sha256_chunks:
-                logger.warning(
-                    f"Found {len(sha256_chunks)} chunks with SHA256 embeddings"
-                )
-                logger.info(
-                    "Note: Real embedding vectors will be generated during RAG system initialization"
-                )
+                logger.warning(f"Found {len(sha256_chunks)} chunks with SHA256 embeddings")
+                logger.info("Note: Real embedding vectors will be generated during RAG system initialization")
 
                 # Mark these for re-processing
                 for chunk_id in sha256_chunks:
@@ -241,9 +235,7 @@ class DataMigrator:
 
         for db_name, conn in self.databases.items():
             try:
-                cursor = conn.execute(
-                    "SELECT name FROM sqlite_master WHERE type='table'"
-                )
+                cursor = conn.execute("SELECT name FROM sqlite_master WHERE type='table'")
                 tables = [row[0] for row in cursor.fetchall()]
 
                 table_counts = {}

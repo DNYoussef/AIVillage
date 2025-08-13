@@ -13,16 +13,16 @@ Replaces:
 - Previous mobile-specific implementation (platform features retained)
 """
 
+from collections.abc import Callable
+from dataclasses import dataclass, field
+from enum import Enum
 import logging
 import platform
 import queue
 import threading
 import time
-import uuid
-from collections.abc import Callable
-from dataclasses import dataclass, field
-from enum import Enum
 from typing import Any
+import uuid
 
 # System monitoring
 import psutil
@@ -46,11 +46,11 @@ if platform.system() == "Android":
         ThermalManager = autoclass("android.os.ThermalManager")
         ANDROID_AVAILABLE = True
     except ImportError:
-        pass
+        logger.debug("Android platform modules not available")
 elif platform.system() == "Darwin":  # iOS/macOS
     try:
-        import objc  # type: ignore
         from Foundation import NSBundle, NSProcessInfo  # type: ignore
+        import objc  # type: ignore
 
         MACOS_AVAILABLE = True
     except ImportError:

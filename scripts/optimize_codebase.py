@@ -15,9 +15,9 @@ Usage:
 import argparse
 import ast
 import logging
+from pathlib import Path
 import subprocess
 import sys
-from pathlib import Path
 
 # Configure logging
 logging.basicConfig(
@@ -139,9 +139,7 @@ class CodeQualityAnalyzer:
                     # Check for missing argument type annotations
                     for arg in node.args.args:
                         if not arg.annotation and arg.arg != "self":
-                            issues.append(
-                                f"Function {node.name} argument {arg.arg} missing type hint"
-                            )
+                            issues.append(f"Function {node.name} argument {arg.arg} missing type hint")
 
         except Exception as e:
             issues.append(f"Failed to check type hints: {e}")
@@ -162,9 +160,7 @@ class CodeQualityAnalyzer:
             if self.fix_issues:
                 cmd.append("--fix")
 
-            result = subprocess.run(
-                cmd, capture_output=True, text=True, timeout=300, check=False
-            )
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=300, check=False)
 
             if result.stdout:
                 results["ruff"] = result.stdout.strip().split("\n")
@@ -189,9 +185,7 @@ class CodeQualityAnalyzer:
                         "--show-error-codes",
                     ]
 
-                    result = subprocess.run(
-                        cmd, capture_output=True, text=True, timeout=180, check=False
-                    )
+                    result = subprocess.run(cmd, capture_output=True, text=True, timeout=180, check=False)
 
                     if result.stdout:
                         results[f"mypy-{dir_name}"] = result.stdout.strip().split("\n")
@@ -284,9 +278,7 @@ class CodeQualityAnalyzer:
                     report_lines.append(f"- {result}")
 
                 if len(tool_results) > 10:
-                    report_lines.append(
-                        f"- ... and {len(tool_results) - 10} more issues"
-                    )
+                    report_lines.append(f"- ... and {len(tool_results) - 10} more issues")
 
                 report_lines.append("")
 
@@ -378,9 +370,7 @@ Examples:
             analyzer.discover_files()
             quick_issues = 0
 
-            for file_path in analyzer.python_files[
-                :10
-            ]:  # Quick check of first 10 files
+            for file_path in analyzer.python_files[:10]:  # Quick check of first 10 files
                 try:
                     analyzer.analyze_file(file_path)
                     if str(file_path.relative_to(args.path)) in analyzer.issues:

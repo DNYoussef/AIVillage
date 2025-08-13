@@ -10,29 +10,22 @@ if importlib.util.find_spec("torch") is None:
 
 from agents.king.king_agent import KingAgent, UnifiedAgentConfig
 from agents.utils.task import Task as LangroidTask
-from rag_system.retrieval.vector_store import VectorStore
-
 from core.error_handling import StandardCommunicationProtocol
+from rag_system.retrieval.vector_store import VectorStore
 
 
 class TestKingAgent(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self) -> None:
         self.communication_protocol = Mock(spec=StandardCommunicationProtocol)
         self.vector_store = Mock(spec=VectorStore)
-        config = UnifiedAgentConfig(
-            name="TestKingAgent", description="Test King Agent", model="gpt-4"
-        )
-        self.king_agent = KingAgent(
-            config, self.communication_protocol, self.vector_store
-        )
+        config = UnifiedAgentConfig(name="TestKingAgent", description="Test King Agent", model="gpt-4")
+        self.king_agent = KingAgent(config, self.communication_protocol, self.vector_store)
 
     @patch("agents.king.unified_task_manager.UnifiedTaskManager.create_task")
     @patch("agents.king.unified_task_manager.UnifiedTaskManager.assign_task")
     @patch("agents.king.unified_task_manager.UnifiedTaskManager.get_task_status")
     @patch("agents.king.unified_task_manager.UnifiedTaskManager.get_task_result")
-    async def test_execute_task(
-        self, mock_get_result, mock_get_status, mock_assign_task, mock_create_task
-    ) -> None:
+    async def test_execute_task(self, mock_get_result, mock_get_status, mock_assign_task, mock_create_task) -> None:
         mock_create_task.return_value = Mock(id="task_1")
         mock_get_status.side_effect = ["IN_PROGRESS", "IN_PROGRESS", "COMPLETED"]
         mock_get_result.return_value = {"success": True, "result": "Task completed"}
@@ -57,9 +50,7 @@ class TestKingAgent(unittest.IsolatedAsyncioTestCase):
         tasks = [{"description": "Task 1"}, {"description": "Task 2"}]
         dependencies = {"task_2": ["task_1"]}
 
-        workflow = await self.king_agent.create_workflow(
-            "Test Workflow", tasks, dependencies
-        )
+        workflow = await self.king_agent.create_workflow("Test Workflow", tasks, dependencies)
         assert workflow["workflow_id"] == "workflow_1"
 
         result = await self.king_agent.execute_workflow("workflow_1")
@@ -89,9 +80,7 @@ class TestKingAgent(unittest.IsolatedAsyncioTestCase):
 
         await self.king_agent.execute_task(task)
 
-        mock_create_complex_task.assert_called_once_with(
-            "Complex task", {"some": "context"}
-        )
+        mock_create_complex_task.assert_called_once_with("Complex task", {"some": "context"})
         mock_create_workflow.assert_called_once()
         mock_execute_workflow.assert_called_once()
 
@@ -102,9 +91,7 @@ class TestKingAgent(unittest.IsolatedAsyncioTestCase):
 
     async def test_update_config(self) -> None:
         new_config = {"batch_size": 10}
-        with patch.object(
-            self.king_agent.task_manager, "set_batch_size"
-        ) as mock_set_batch_size:
+        with patch.object(self.king_agent.task_manager, "set_batch_size") as mock_set_batch_size:
             await self.king_agent.update_config(new_config)
             mock_set_batch_size.assert_called_once_with(10)
 

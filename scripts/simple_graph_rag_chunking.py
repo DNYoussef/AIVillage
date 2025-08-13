@@ -10,13 +10,13 @@ This script processes all ingested PDFs and creates a knowledge graph with:
 """
 
 import asyncio
-import json
-import logging
-import re
-import time
 from collections import Counter, defaultdict
 from dataclasses import asdict, dataclass
+import json
+import logging
 from pathlib import Path
+import re
+import time
 from typing import Any
 
 import numpy as np
@@ -164,9 +164,7 @@ class SimpleGraphRAGChunker:
         # Statistics
         self.stats = ProcessingStats()
 
-    async def process_all_documents(
-        self, papers_dir: str = "data/ingested_papers"
-    ) -> ProcessingStats:
+    async def process_all_documents(self, papers_dir: str = "data/ingested_papers") -> ProcessingStats:
         """Process all ingested documents."""
         start_time = time.perf_counter()
         logger.info("Starting document processing...")
@@ -209,12 +207,8 @@ class SimpleGraphRAGChunker:
         self.stats.processing_time = processing_time
 
         if self.chunks:
-            self.stats.avg_chunk_quality = sum(
-                c.quality_score for c in self.chunks.values()
-            ) / len(self.chunks)
-            self.stats.avg_trust_score = sum(
-                c.trust_score for c in self.chunks.values()
-            ) / len(self.chunks)
+            self.stats.avg_chunk_quality = sum(c.quality_score for c in self.chunks.values()) / len(self.chunks)
+            self.stats.avg_trust_score = sum(c.trust_score for c in self.chunks.values()) / len(self.chunks)
 
         logger.info(f"Processing completed in {processing_time:.1f}s")
         return self.stats
@@ -243,9 +237,7 @@ class SimpleGraphRAGChunker:
             # Document information
             doc_id = file_path.stem.replace("_full", "")
             doc_type = self._classify_document_type(text_content, doc_id)
-            base_credibility = self._calculate_base_credibility(
-                metadata, doc_type, text_content
-            )
+            base_credibility = self._calculate_base_credibility(metadata, doc_type, text_content)
 
             self.document_info[doc_id] = {
                 "title": metadata.get("title", doc_id.replace("_", " ").title()),
@@ -256,9 +248,7 @@ class SimpleGraphRAGChunker:
             }
 
             # Create chunks
-            chunks = self._create_intelligent_chunks(
-                text_content, doc_id, base_credibility
-            )
+            chunks = self._create_intelligent_chunks(text_content, doc_id, base_credibility)
 
             # Store chunks
             for chunk in chunks:
@@ -273,9 +263,7 @@ class SimpleGraphRAGChunker:
             logger.exception(f"Failed to process document {file_path}: {e}")
             raise
 
-    def _create_intelligent_chunks(
-        self, text: str, doc_id: str, base_credibility: float
-    ) -> list[SimpleChunk]:
+    def _create_intelligent_chunks(self, text: str, doc_id: str, base_credibility: float) -> list[SimpleChunk]:
         """Create intelligent chunks from text."""
         chunks = []
 
@@ -288,21 +276,14 @@ class SimpleGraphRAGChunker:
 
         for sentence in sentences:
             # Check if adding this sentence would exceed chunk size
-            if (
-                len(current_chunk_text) + len(sentence) > self.chunk_size
-                and current_chunk_text
-            ):
+            if len(current_chunk_text) + len(sentence) > self.chunk_size and current_chunk_text:
                 # Create chunk from accumulated sentences
-                chunk = self._create_chunk_from_text(
-                    current_chunk_text, doc_id, chunk_position, base_credibility
-                )
+                chunk = self._create_chunk_from_text(current_chunk_text, doc_id, chunk_position, base_credibility)
                 chunks.append(chunk)
 
                 # Start new chunk with overlap
                 overlap_sentences = (
-                    current_chunk_sentences[-2:]
-                    if len(current_chunk_sentences) > 2
-                    else current_chunk_sentences
+                    current_chunk_sentences[-2:] if len(current_chunk_sentences) > 2 else current_chunk_sentences
                 )
                 current_chunk_text = " ".join(overlap_sentences)
                 current_chunk_sentences = overlap_sentences[:]
@@ -314,16 +295,12 @@ class SimpleGraphRAGChunker:
 
         # Create final chunk if there's remaining text
         if current_chunk_text.strip():
-            chunk = self._create_chunk_from_text(
-                current_chunk_text, doc_id, chunk_position, base_credibility
-            )
+            chunk = self._create_chunk_from_text(current_chunk_text, doc_id, chunk_position, base_credibility)
             chunks.append(chunk)
 
         return chunks
 
-    def _create_chunk_from_text(
-        self, text: str, doc_id: str, position: int, base_credibility: float
-    ) -> SimpleChunk:
+    def _create_chunk_from_text(self, text: str, doc_id: str, position: int, base_credibility: float) -> SimpleChunk:
         """Create a chunk from text with analysis."""
         # Generate unique chunk ID
         chunk_id = f"{doc_id}_chunk_{position}_{hash(text) % 10000}"
@@ -382,13 +359,9 @@ class SimpleGraphRAGChunker:
                         continue
 
                     # Check if relationship should be created
-                    relationship = await self._analyze_chunk_relationship(
-                        chunk1, chunk2
-                    )
+                    relationship = await self._analyze_chunk_relationship(chunk1, chunk2)
                     if relationship:
-                        self.relationships[(chunk1.chunk_id, chunk2.chunk_id)] = (
-                            relationship
-                        )
+                        self.relationships[(chunk1.chunk_id, chunk2.chunk_id)] = relationship
                         relationships_created += 1
 
                         # Add to graph if available
@@ -402,22 +375,15 @@ class SimpleGraphRAGChunker:
                 total_comparisons += 1
 
                 if total_comparisons % 100 == 0:
-                    logger.debug(
-                        f"Processed {total_comparisons} chunks for relationships"
-                    )
+                    logger.debug(f"Processed {total_comparisons} chunks for relationships")
 
         self.stats.total_relationships = relationships_created
         logger.info(f"Created {relationships_created} relationships between chunks")
 
-    async def _analyze_chunk_relationship(
-        self, chunk1: SimpleChunk, chunk2: SimpleChunk
-    ) -> SimpleRelationship | None:
+    async def _analyze_chunk_relationship(self, chunk1: SimpleChunk, chunk2: SimpleChunk) -> SimpleRelationship | None:
         """Analyze potential relationship between two chunks."""
         # Sequential relationship (same document, adjacent positions)
-        if (
-            chunk1.document_id == chunk2.document_id
-            and abs(chunk1.position - chunk2.position) == 1
-        ):
+        if chunk1.document_id == chunk2.document_id and abs(chunk1.position - chunk2.position) == 1:
             return SimpleRelationship(
                 source_chunk=chunk1.chunk_id,
                 target_chunk=chunk2.chunk_id,
@@ -429,9 +395,7 @@ class SimpleGraphRAGChunker:
 
         # Semantic similarity relationship
         if chunk1.embedding is not None and chunk2.embedding is not None:
-            similarity = self._calculate_cosine_similarity(
-                chunk1.embedding, chunk2.embedding
-            )
+            similarity = self._calculate_cosine_similarity(chunk1.embedding, chunk2.embedding)
 
             if similarity > self.similarity_threshold:
                 # Classify relationship type based on content
@@ -479,9 +443,7 @@ class SimpleGraphRAGChunker:
         convergence_threshold = 0.001
 
         for iteration in range(max_iterations):
-            previous_scores = {
-                chunk_id: chunk.trust_score for chunk_id, chunk in self.chunks.items()
-            }
+            previous_scores = {chunk_id: chunk.trust_score for chunk_id, chunk in self.chunks.items()}
 
             # Update trust scores based on relationships
             for chunk_id, chunk in self.chunks.items():
@@ -498,9 +460,7 @@ class SimpleGraphRAGChunker:
                         edge_data = self.graph.get_edge_data(predecessor, chunk_id)
 
                         weight = edge_data.get("weight", 0.5)
-                        transferred_trust = (
-                            pred_chunk.trust_score * weight * self.trust_decay
-                        )
+                        transferred_trust = pred_chunk.trust_score * weight * self.trust_decay
 
                         incoming_trust += transferred_trust
                         total_weight += weight
@@ -511,24 +471,16 @@ class SimpleGraphRAGChunker:
                     propagated_trust = incoming_trust / total_weight
 
                     # Update trust score
-                    original_trust = self.document_info[chunk.document_id][
-                        "base_credibility"
-                    ]
-                    chunk.trust_score = (
-                        original_trust * (1 - evidence_weight)
-                        + propagated_trust * evidence_weight
-                    )
+                    original_trust = self.document_info[chunk.document_id]["base_credibility"]
+                    chunk.trust_score = original_trust * (1 - evidence_weight) + propagated_trust * evidence_weight
 
             # Check for convergence
             max_change = max(
-                abs(chunk.trust_score - previous_scores[chunk_id])
-                for chunk_id, chunk in self.chunks.items()
+                abs(chunk.trust_score - previous_scores[chunk_id]) for chunk_id, chunk in self.chunks.items()
             )
 
             if max_change < convergence_threshold:
-                logger.info(
-                    f"Trust propagation converged after {iteration + 1} iterations"
-                )
+                logger.info(f"Trust propagation converged after {iteration + 1} iterations")
                 break
 
         logger.info("Trust propagation completed")
@@ -542,9 +494,7 @@ class SimpleGraphRAGChunker:
         # Gap 1: Isolated chunks (no relationships)
         isolated_chunks = []
         for chunk_id, chunk in self.chunks.items():
-            if chunk_id not in [
-                rel.source_chunk for rel in self.relationships.values()
-            ] and chunk_id not in [
+            if chunk_id not in [rel.source_chunk for rel in self.relationships.values()] and chunk_id not in [
                 rel.target_chunk for rel in self.relationships.values()
             ]:
                 isolated_chunks.append(chunk_id)
@@ -558,14 +508,10 @@ class SimpleGraphRAGChunker:
         for chunk in self.chunks.values():
             topic_coverage[chunk.topic_category].append(chunk.chunk_id)
 
-        low_coverage_topics = [
-            topic for topic, chunks in topic_coverage.items() if len(chunks) < 3
-        ]
+        low_coverage_topics = [topic for topic, chunks in topic_coverage.items() if len(chunks) < 3]
         if low_coverage_topics:
             gaps_detected += len(low_coverage_topics)
-            logger.info(
-                f"Found {len(low_coverage_topics)} low coverage topics: {low_coverage_topics}"
-            )
+            logger.info(f"Found {len(low_coverage_topics)} low coverage topics: {low_coverage_topics}")
 
         # Gap 3: Trust score distribution issues
         trust_scores = [chunk.trust_score for chunk in self.chunks.values()]
@@ -587,8 +533,7 @@ class SimpleGraphRAGChunker:
         isolated_chunks = []
         for chunk_id, chunk in self.chunks.items():
             has_relationships = any(
-                chunk_id in (rel.source_chunk, rel.target_chunk)
-                for rel in self.relationships.values()
+                chunk_id in (rel.source_chunk, rel.target_chunk) for rel in self.relationships.values()
             )
             if not has_relationships:
                 isolated_chunks.append(chunk)
@@ -606,9 +551,7 @@ class SimpleGraphRAGChunker:
                 ):
                     continue
 
-                similarity = self._calculate_cosine_similarity(
-                    isolated_chunk.embedding, other_chunk.embedding
-                )
+                similarity = self._calculate_cosine_similarity(isolated_chunk.embedding, other_chunk.embedding)
 
                 if similarity > best_similarity:
                     best_similarity = similarity
@@ -625,9 +568,7 @@ class SimpleGraphRAGChunker:
                     semantic_similarity=best_similarity,
                 )
 
-                self.relationships[(isolated_chunk.chunk_id, best_match.chunk_id)] = (
-                    relationship
-                )
+                self.relationships[(isolated_chunk.chunk_id, best_match.chunk_id)] = relationship
                 repairs_applied += 1
 
         # Repair 2: Boost quality scores for low coverage topics
@@ -645,9 +586,7 @@ class SimpleGraphRAGChunker:
         self.stats.repairs_applied = repairs_applied
         logger.info(f"Applied {repairs_applied} basic repairs")
 
-    def export_results(
-        self, output_dir: str = "data/graph_rag_results"
-    ) -> dict[str, str]:
+    def export_results(self, output_dir: str = "data/graph_rag_results") -> dict[str, str]:
         """Export results to files."""
         output_path = Path(output_dir)
         output_path.mkdir(parents=True, exist_ok=True)
@@ -666,9 +605,7 @@ class SimpleGraphRAGChunker:
                     "document_id": chunk.document_id,
                     "position": chunk.position,
                     "text_length": len(chunk.text),
-                    "text_preview": chunk.text[:200] + "..."
-                    if len(chunk.text) > 200
-                    else chunk.text,
+                    "text_preview": chunk.text[:200] + "..." if len(chunk.text) > 200 else chunk.text,
                     "keywords": chunk.keywords,
                     "entities": chunk.entities,
                     "topic_category": chunk.topic_category,
@@ -676,9 +613,7 @@ class SimpleGraphRAGChunker:
                     "trust_score": chunk.trust_score,
                     "quality_score": chunk.quality_score,
                 }
-                for chunk_id, chunk in list(self.chunks.items())[
-                    :100
-                ]  # First 100 chunks
+                for chunk_id, chunk in list(self.chunks.items())[:100]  # First 100 chunks
             }
 
             with open(output_path / "chunk_sample.json", "w") as f:
@@ -688,9 +623,7 @@ class SimpleGraphRAGChunker:
             # Export relationships
             relationships_data = {
                 f"{rel.source_chunk}_{rel.target_chunk}": rel.to_dict()
-                for rel in list(self.relationships.values())[
-                    :500
-                ]  # First 500 relationships
+                for rel in list(self.relationships.values())[:500]  # First 500 relationships
             }
 
             with open(output_path / "relationships.json", "w") as f:
@@ -705,9 +638,7 @@ class SimpleGraphRAGChunker:
                         "title": info["title"],
                         "doc_type": info["doc_type"],
                         "base_credibility": info["base_credibility"],
-                        "chunk_count": len(
-                            [c for c in self.chunks.values() if c.document_id == doc_id]
-                        ),
+                        "chunk_count": len([c for c in self.chunks.values() if c.document_id == doc_id]),
                     }
                     for doc_id, info in self.document_info.items()
                 },
@@ -724,9 +655,7 @@ class SimpleGraphRAGChunker:
                     "edges": len(self.graph.edges()),
                     "density": nx.density(self.graph),
                     "is_connected": nx.is_weakly_connected(self.graph),
-                    "connected_components": nx.number_weakly_connected_components(
-                        self.graph
-                    ),
+                    "connected_components": nx.number_weakly_connected_components(self.graph),
                 }
 
                 with open(output_path / "graph_summary.json", "w") as f:
@@ -800,9 +729,7 @@ class SimpleGraphRAGChunker:
                     "-" * 18,
                 ]
             )
-            for topic, count in sorted(
-                topic_dist.items(), key=lambda x: x[1], reverse=True
-            ):
+            for topic, count in sorted(topic_dist.items(), key=lambda x: x[1], reverse=True):
                 report_lines.append(f"{topic}: {count} chunks")
             report_lines.append("")
 
@@ -864,9 +791,7 @@ class SimpleGraphRAGChunker:
             "should",
         }
 
-        filtered_words = [
-            word for word in words if word not in stop_words and len(word) > 3
-        ]
+        filtered_words = [word for word in words if word not in stop_words and len(word) > 3]
 
         # Get most frequent words
         word_counts = Counter(filtered_words)
@@ -902,34 +827,17 @@ class SimpleGraphRAGChunker:
         text_lower = text.lower()
 
         # Topic classification based on keywords and content
-        if any(
-            term in text_lower
-            for term in ["neural", "network", "model", "training", "learning"]
-        ):
+        if any(term in text_lower for term in ["neural", "network", "model", "training", "learning"]):
             return "machine_learning"
-        if any(
-            term in text_lower
-            for term in ["calculus", "mathematical", "equation", "theorem"]
-        ):
+        if any(term in text_lower for term in ["calculus", "mathematical", "equation", "theorem"]):
             return "mathematics"
-        if any(
-            term in text_lower
-            for term in ["agent", "multi-agent", "autonomous", "behavior"]
-        ):
+        if any(term in text_lower for term in ["agent", "multi-agent", "autonomous", "behavior"]):
             return "agents"
-        if any(
-            term in text_lower
-            for term in ["graph", "knowledge", "semantic", "ontology"]
-        ):
+        if any(term in text_lower for term in ["graph", "knowledge", "semantic", "ontology"]):
             return "knowledge_systems"
-        if any(
-            term in text_lower for term in ["language", "nlp", "text", "linguistic"]
-        ):
+        if any(term in text_lower for term in ["language", "nlp", "text", "linguistic"]):
             return "natural_language"
-        if any(
-            term in text_lower
-            for term in ["compression", "quantization", "optimization"]
-        ):
+        if any(term in text_lower for term in ["compression", "quantization", "optimization"]):
             return "optimization"
         return "general"
 
@@ -989,15 +897,11 @@ class SimpleGraphRAGChunker:
             "framework",
         ]
 
-        indicator_count = sum(
-            1 for indicator in quality_indicators if indicator in text.lower()
-        )
+        indicator_count = sum(1 for indicator in quality_indicators if indicator in text.lower())
         indicator_score = min(1.0, indicator_count / 3)
 
         # Combine scores
-        quality_score = (
-            coherence_score * 0.4 + length_score * 0.3 + indicator_score * 0.3
-        )
+        quality_score = coherence_score * 0.4 + length_score * 0.3 + indicator_score * 0.3
 
         return quality_score
 
@@ -1007,30 +911,20 @@ class SimpleGraphRAGChunker:
         doc_id_lower = doc_id.lower()
 
         # Check for academic indicators
-        if any(
-            term in content_lower
-            for term in ["abstract", "introduction", "methodology", "arxiv"]
-        ):
+        if any(term in content_lower for term in ["abstract", "introduction", "methodology", "arxiv"]):
             return "academic"
 
         # Check for mathematical content
-        if "grossman" in doc_id_lower or any(
-            term in content_lower for term in ["calculus", "theorem", "mathematical"]
-        ):
+        if "grossman" in doc_id_lower or any(term in content_lower for term in ["calculus", "theorem", "mathematical"]):
             return "mathematical"
 
         # Check for technical content
-        if any(
-            term in content_lower
-            for term in ["system", "algorithm", "implementation", "framework"]
-        ):
+        if any(term in content_lower for term in ["system", "algorithm", "implementation", "framework"]):
             return "technical"
 
         return "general"
 
-    def _calculate_base_credibility(
-        self, metadata: dict[str, Any], doc_type: str, content: str
-    ) -> float:
+    def _calculate_base_credibility(self, metadata: dict[str, Any], doc_type: str, content: str) -> float:
         """Calculate base credibility score."""
         base_score = 0.7
 
@@ -1052,17 +946,12 @@ class SimpleGraphRAGChunker:
             base_score += 0.03
 
         # Content quality indicators
-        if any(
-            term in content.lower()
-            for term in ["peer-reviewed", "published", "journal"]
-        ):
+        if any(term in content.lower() for term in ["peer-reviewed", "published", "journal"]):
             base_score += 0.05
 
         return max(0.1, min(1.0, base_score))
 
-    def _classify_relationship_type(
-        self, chunk1: SimpleChunk, chunk2: SimpleChunk, similarity: float
-    ) -> str:
+    def _classify_relationship_type(self, chunk1: SimpleChunk, chunk2: SimpleChunk, similarity: float) -> str:
         """Classify the type of relationship between chunks."""
         # Same document relationships
         if chunk1.document_id == chunk2.document_id:
@@ -1082,9 +971,7 @@ class SimpleGraphRAGChunker:
 
         return "references"
 
-    def _calculate_cosine_similarity(
-        self, embedding1: np.ndarray, embedding2: np.ndarray
-    ) -> float:
+    def _calculate_cosine_similarity(self, embedding1: np.ndarray, embedding2: np.ndarray) -> float:
         """Calculate cosine similarity between embeddings."""
         if embedding1 is None or embedding2 is None:
             return 0.0

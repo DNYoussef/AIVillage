@@ -13,28 +13,28 @@ Integrates all training components:
 
 import asyncio
 import contextlib
+from dataclasses import dataclass
 import json
 import logging
+from pathlib import Path
 import random
 import sys
 import time
-from dataclasses import dataclass
-from pathlib import Path
 from typing import Any
 
-import torch
 from langroid import ChatAgent, ChatAgentConfig
 from langroid.language_models.openai_gpt import OpenAIGPTConfig
+import torch
 from tqdm import tqdm
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-import wandb
 from src.agent_forge.geometry.id_twonn import twonn
 from src.agent_forge.training.grokfast import GrokFastTask
 from src.agent_forge.training.self_modeling import SelfModelingTask
 
 # Import existing training components
 from src.agent_forge.training.sleep_and_dream import SleepAndDreamTask
+import wandb
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -82,9 +82,7 @@ class TaskGenerator:
         self.config = config
         self.agent = agent
 
-    async def generate_calibration_tasks(
-        self, domain: str, count: int = 100
-    ) -> list[Task]:
+    async def generate_calibration_tasks(self, domain: str, count: int = 100) -> list[Task]:
         """Generate 100 tasks with difficulties 1-100 for calibration."""
         tasks = []
 
@@ -119,9 +117,7 @@ Return JSON format:
                 tasks.append(task)
 
             except Exception as e:
-                logger.warning(
-                    "Failed to generate task for difficulty %s: %s", difficulty, e
-                )
+                logger.warning("Failed to generate task for difficulty %s: %s", difficulty, e)
                 # Fallback task
                 task = Task(
                     prompt=f"Solve this {domain} problem (difficulty {difficulty}): What is {difficulty} + {difficulty}?",
@@ -146,9 +142,7 @@ class MasteryEvaluator:
         """Evaluate a single task. Returns (success, response, confidence)."""
         try:
             # Prepare input with metadata
-            geom_info = (
-                f"<geom idnl={state['G']['ID_nl']:.2f} level={state['mastery_level']}/>"
-            )
+            geom_info = f"<geom idnl={state['G']['ID_nl']:.2f} level={state['mastery_level']}/>"
             prompt = f"{geom_info}\n{task.prompt}\n\nAnswer:"
 
             inputs = self.tokenizer.encode(prompt, return_tensors="pt").to(self.device)
@@ -164,9 +158,7 @@ class MasteryEvaluator:
                     output_scores=True,
                 )
 
-            response = self.tokenizer.decode(
-                outputs.sequences[0], skip_special_tokens=True
-            )
+            response = self.tokenizer.decode(outputs.sequences[0], skip_special_tokens=True)
             response = response[len(prompt) :].strip()
 
             # Simple success detection (could be enhanced with semantic similarity)
@@ -238,12 +230,7 @@ class GeometryFeedback:
                 # Detect grokking patterns
                 if len(self.id_history) > 10:
                     recent_trend = self.id_history[-5:]
-                    if all(
-                        a > b
-                        for a, b in zip(
-                            recent_trend[1:], recent_trend[:-1], strict=False
-                        )
-                    ):
+                    if all(a > b for a, b in zip(recent_trend[1:], recent_trend[:-1], strict=False)):
                         state["pre_grok"] = True
                     else:
                         state["pre_grok"] = False
@@ -277,9 +264,7 @@ class MasteryLoop:
         # Initialize agent for task generation
         agent_config = ChatAgentConfig(
             name="MasteryAgent",
-            llm=OpenAIGPTConfig(
-                chat_model="gpt-4-turbo-preview", api_key=config.frontier_api_key
-            ),
+            llm=OpenAIGPTConfig(chat_model="gpt-4-turbo-preview", api_key=config.frontier_api_key),
         )
         self.agent = ChatAgent(agent_config)
         self.task_generator = TaskGenerator(config, self.agent)
@@ -306,9 +291,7 @@ class MasteryLoop:
         log_dir.mkdir(parents=True, exist_ok=True)
 
         handler = logging.FileHandler(log_dir / "mastery_loop.log")
-        handler.setFormatter(
-            logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-        )
+        handler.setFormatter(logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s"))
         logger.addHandler(handler)
 
     async def initialize_model(self) -> None:
@@ -321,9 +304,7 @@ class MasteryLoop:
 
         self.model = AutoModelForCausalLM.from_pretrained(
             self.config.model_path,
-            torch_dtype=(
-                torch.float16 if self.config.device == "cuda" else torch.float32
-            ),
+            torch_dtype=(torch.float16 if self.config.device == "cuda" else torch.float32),
             device_map="auto" if self.config.device == "cuda" else None,
         )
 
@@ -331,20 +312,14 @@ class MasteryLoop:
             self.model = self.model.to(self.config.device)
 
         # Initialize components
-        self.evaluator = MasteryEvaluator(
-            self.model, self.tokenizer, self.config.device
-        )
+        self.evaluator = MasteryEvaluator(self.model, self.tokenizer, self.config.device)
         self.geometry = GeometryFeedback(self.model)
 
         # Initialize training modules
         hidden_size = self.model.config.hidden_size
-        self.sleep_dream_task = SleepAndDreamTask(
-            self.agent, hidden_size, hidden_size, 3, 3, pretrained=False
-        )
+        self.sleep_dream_task = SleepAndDreamTask(self.agent, hidden_size, hidden_size, 3, 3, pretrained=False)
 
-        self.self_modeling_task = SelfModelingTask(
-            self.agent, self.config.model_path, self.config.device
-        )
+        self.self_modeling_task = SelfModelingTask(self.agent, self.config.model_path, self.config.device)
 
         self.grokfast_task = GrokFastTask(self.agent, self.model)
 
@@ -428,11 +403,7 @@ class MasteryLoop:
         # Generate tasks for each mastery level
         for level, difficulty in level_mapping.items():
             # Use calibration tasks near this difficulty
-            level_tasks = [
-                task
-                for task in self.calibration_tasks
-                if abs(task.difficulty - difficulty) <= 5
-            ]
+            level_tasks = [task for task in self.calibration_tasks if abs(task.difficulty - difficulty) <= 5]
 
             # Generate additional tasks if needed
             if len(level_tasks) < 20:
@@ -517,9 +488,7 @@ class MasteryLoop:
             if self.attempt_count % self.config.geometry_update_interval == 0:
                 # Get hidden states from last forward pass
                 with torch.no_grad():
-                    inputs = self.tokenizer.encode(task.prompt, return_tensors="pt").to(
-                        self.config.device
-                    )
+                    inputs = self.tokenizer.encode(task.prompt, return_tensors="pt").to(self.config.device)
                     outputs = self.model(inputs, output_hidden_states=True)
                     await self.geometry.update_geometry(outputs.hidden_states[-1])
 
@@ -546,9 +515,7 @@ class MasteryLoop:
             # Extract hidden states for consolidation
             with torch.no_grad():
                 # Use a representative input
-                dummy_input = torch.randn(1, self.model.config.hidden_size).to(
-                    self.config.device
-                )
+                dummy_input = torch.randn(1, self.model.config.hidden_size).to(self.config.device)
                 dream_output = await self.sleep_dream_task.run(dummy_input)
 
             # Apply dream output as weight update
@@ -557,11 +524,7 @@ class MasteryLoop:
                     if param.requires_grad and param.dim() >= 2:
                         # Apply small update based on dream output
                         update_scale = 0.001
-                        param.data += (
-                            update_scale
-                            * torch.randn_like(param)
-                            * dream_output.mean().item()
-                        )
+                        param.data += update_scale * torch.randn_like(param) * dream_output.mean().item()
 
             logger.info("Sleep/dream cycle completed")
             wandb.log({"sleep_dream/cycle_completed": self.attempt_count})
@@ -616,9 +579,7 @@ class MasteryLoop:
                 mastery_results[level] = mastery_achieved
 
                 if not mastery_achieved:
-                    logger.info(
-                        "Mastery not achieved for level %s, stopping progression", level
-                    )
+                    logger.info("Mastery not achieved for level %s, stopping progression", level)
                     break
 
                 # Save checkpoint
@@ -679,9 +640,7 @@ class MasteryLoop:
         checkpoint_path = checkpoint_dir / f"mastery_level_{level}.json"
 
         # Save non-tensor data
-        serializable_checkpoint = {
-            k: v for k, v in checkpoint.items() if k != "model_state_dict"
-        }
+        serializable_checkpoint = {k: v for k, v in checkpoint.items() if k != "model_state_dict"}
 
         with open(checkpoint_path, "w") as f:
             json.dump(serializable_checkpoint, f, indent=2)
@@ -704,9 +663,7 @@ async def main() -> None:
     parser.add_argument("--output-dir", required=True, help="Output directory")
     parser.add_argument("--domain", default="math", help="Training domain")
     parser.add_argument("--frontier-api-key", help="OpenAI API key for task generation")
-    parser.add_argument(
-        "--max-levels", type=int, default=10, help="Maximum mastery levels"
-    )
+    parser.add_argument("--max-levels", type=int, default=10, help="Maximum mastery levels")
     parser.add_argument("--device", default="cuda", help="Device (cuda/cpu)")
 
     args = parser.parse_args()
@@ -745,8 +702,8 @@ async def run_self_modeling(config: dict[str, Any]) -> "PhaseResult":
     Returns:
         PhaseResult with status, artifacts, and metrics
     """
-    import time
     from datetime import datetime
+    import time
 
     from src.agent_forge.forge_orchestrator import (
         PhaseArtifact,
@@ -776,15 +733,11 @@ async def run_self_modeling(config: dict[str, Any]) -> "PhaseResult":
                     phase_type=PhaseType.SELF_MODELING,
                     artifact_type="trained_model",
                     data={
-                        "model_path": results.get(
-                            "final_model_path", mastery_config.output_dir
-                        ),
+                        "model_path": results.get("final_model_path", mastery_config.output_dir),
                         "levels_mastered": results.get("levels_mastered", 0),
                         "total_attempts": results.get("total_attempts", 0),
                         "mastery_progression": results.get("mastery_progression", []),
-                        "self_modeling_metrics": results.get(
-                            "self_modeling_metrics", {}
-                        ),
+                        "self_modeling_metrics": results.get("self_modeling_metrics", {}),
                     },
                     metadata={
                         "mastery_config": mastery_config.dict(),
@@ -812,15 +765,9 @@ async def run_self_modeling(config: dict[str, Any]) -> "PhaseResult":
                 sm_metrics = results["self_modeling_metrics"]
                 metrics.update(
                     {
-                        "self_awareness_score": sm_metrics.get(
-                            "self_awareness_score", 0.0
-                        ),
-                        "metacognitive_accuracy": sm_metrics.get(
-                            "metacognitive_accuracy", 0.0
-                        ),
-                        "udaimonic_compass_direction": sm_metrics.get(
-                            "compass_direction", "unknown"
-                        ),
+                        "self_awareness_score": sm_metrics.get("self_awareness_score", 0.0),
+                        "metacognitive_accuracy": sm_metrics.get("metacognitive_accuracy", 0.0),
+                        "udaimonic_compass_direction": sm_metrics.get("compass_direction", "unknown"),
                     }
                 )
 

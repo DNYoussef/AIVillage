@@ -4,10 +4,10 @@ Provides full LibP2P integration with proper configuration and peer discovery.
 """
 
 import asyncio
+from dataclasses import dataclass, field
 import json
 import logging
 import time
-from dataclasses import dataclass, field
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -46,9 +46,7 @@ class PeerInfo:
     addresses: list[str]
     protocols: list[str]
     agent_metadata: dict[str, Any] = field(default_factory=dict)
-    connection_state: str = (
-        "discovered"  # discovered, connecting, connected, disconnected
-    )
+    connection_state: str = "discovered"  # discovered, connecting, connected, disconnected
     last_seen: float = field(default_factory=time.time)
     connection_quality: float = 0.0  # 0-1 rating
 
@@ -164,9 +162,7 @@ class LibP2PMeshNetwork:
                 "status": "initialized",
             }
 
-            logger.info(
-                f"LibP2P node initialized with peer ID: {self.libp2p_node['peer_id']}"
-            )
+            logger.info(f"LibP2P node initialized with peer ID: {self.libp2p_node['peer_id']}")
             return True
 
         except Exception as e:
@@ -270,9 +266,7 @@ class LibP2PMeshNetwork:
                     peer_id = parts[-1]
                     await self.connect_to_peer(peer_id, bootstrap_peer)
             except Exception as e:
-                logger.exception(
-                    f"Failed to connect to bootstrap peer {bootstrap_peer}: {e}"
-                )
+                logger.exception(f"Failed to connect to bootstrap peer {bootstrap_peer}: {e}")
 
     async def connect_to_peer(self, peer_id: str, address: str | None = None) -> bool:
         """Connect to a specific peer."""
@@ -315,9 +309,7 @@ class LibP2PMeshNetwork:
                 # Update peer info
                 if peer_id in self.discovered_peers:
                     self.discovered_peers[peer_id].connection_state = "connected"
-                    self.discovered_peers[peer_id].connection_quality = random.uniform(
-                        0.7, 1.0
-                    )
+                    self.discovered_peers[peer_id].connection_quality = random.uniform(0.7, 1.0)
 
                 logger.info(f"Successfully connected to peer {peer_id}")
                 return True
@@ -423,9 +415,7 @@ class LibP2PMeshNetwork:
             pass
         return messages
 
-    def subscribe_to_topic(
-        self, topic: str, handler: callable | None = None
-    ) -> bool | None:
+    def subscribe_to_topic(self, topic: str, handler: callable | None = None) -> bool | None:
         """Subscribe to a GossipSub topic."""
         if not self.pubsub:
             return False
@@ -537,9 +527,7 @@ class LibP2PMeshNetwork:
                     "from": peer_id,
                     "to": self.node_id,
                     "timestamp": time.time(),
-                    "message_type": random.choice(
-                        ["heartbeat", "data", "query", "response"]
-                    ),
+                    "message_type": random.choice(["heartbeat", "data", "query", "response"]),
                     "data": {"content": f"Simulated message from {peer_id}"},
                 }
 
@@ -569,9 +557,7 @@ class LibP2PMeshNetwork:
 
     def get_network_stats(self) -> dict:
         """Get comprehensive network statistics."""
-        uptime = (
-            time.time() - self.stats["start_time"] if self.stats["start_time"] else 0
-        )
+        uptime = time.time() - self.stats["start_time"] if self.stats["start_time"] else 0
 
         return {
             **self.stats,
@@ -582,17 +568,13 @@ class LibP2PMeshNetwork:
             "connection_success_rate": (
                 self.stats["successful_connections"]
                 / max(
-                    self.stats["successful_connections"]
-                    + self.stats["failed_connections"],
+                    self.stats["successful_connections"] + self.stats["failed_connections"],
                     1,
                 )
             ),
-            "libp2p_node_status": self.libp2p_node["status"]
-            if self.libp2p_node
-            else "not_initialized",
+            "libp2p_node_status": self.libp2p_node["status"] if self.libp2p_node else "not_initialized",
             "dht_enabled": self.dht is not None and self.dht.get("enabled", False),
-            "pubsub_enabled": self.pubsub is not None
-            and self.pubsub.get("enabled", False),
+            "pubsub_enabled": self.pubsub is not None and self.pubsub.get("enabled", False),
         }
 
 
@@ -626,9 +608,7 @@ async def test_complete_libp2p_mesh():
         discovered = mesh.get_discovered_peers()
         print(f"Discovered peers: {len(discovered)}")
         for peer_id, peer_info in discovered.items():
-            print(
-                f"  - {peer_id}: {peer_info.connection_state}, Quality: {peer_info.connection_quality:.2f}"
-            )
+            print(f"  - {peer_id}: {peer_info.connection_state}, Quality: {peer_info.connection_quality:.2f}")
 
         # Check connected peers
         connected = mesh.get_connected_peers()
@@ -642,9 +622,7 @@ async def test_complete_libp2p_mesh():
             print(f"Test message sent to {test_peer}: {sent}")
 
             # Test broadcasting
-            broadcast_count = await mesh.broadcast_message(
-                {"type": "broadcast", "content": "Hello everyone!"}
-            )
+            broadcast_count = await mesh.broadcast_message({"type": "broadcast", "content": "Hello everyone!"})
             print(f"Broadcast message sent to {broadcast_count} peers")
 
         # Let the network run for a bit

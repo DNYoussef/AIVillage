@@ -3,9 +3,9 @@ import json
 import logging
 from typing import Any
 
+from langroid.language_models.openai_gpt import OpenAIGPTConfig
 import matplotlib.pyplot as plt
 import networkx as nx
-from langroid.language_models.openai_gpt import OpenAIGPTConfig
 
 from core.error_handling import AIVillageException, error_handler, safe_execute
 
@@ -55,9 +55,7 @@ class UnifiedInputProcessor:
         response = await self.llm.complete(prompt)
         return self._parse_json_response(response.text)
 
-    async def _extract_key_concepts(
-        self, user_input: str, interpreted_intent: dict[str, Any]
-    ) -> dict[str, Any]:
+    async def _extract_key_concepts(self, user_input: str, interpreted_intent: dict[str, Any]) -> dict[str, Any]:
         prompt = f"""
         Based on the following user input and interpreted intent, extract the key concepts:
 
@@ -93,9 +91,7 @@ class UnifiedInputProcessor:
             raise AIVillageException(msg)
 
     @safe_execute
-    async def analyze_input_importance(
-        self, processed_input: dict[str, Any]
-    ) -> dict[str, float]:
+    async def analyze_input_importance(self, processed_input: dict[str, Any]) -> dict[str, float]:
         """Analyze the importance of each extracted concept and intent.
 
         Args:

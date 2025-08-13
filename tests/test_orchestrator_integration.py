@@ -7,8 +7,8 @@ with their new entry points, and that they return valid PhaseResult objects.
 """
 
 import asyncio
-import sys
 from pathlib import Path
+import sys
 from unittest.mock import MagicMock, patch
 
 import pytest

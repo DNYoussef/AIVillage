@@ -5,9 +5,9 @@ This script demonstrates that our compression is REAL, not fake.
 We'll create a real model, compress it, and prove it works.
 """
 
+from pathlib import Path
 import sys
 import tempfile
-from pathlib import Path
 
 print("[FIRE] PROVING REAL PYTORCH COMPRESSION WORKS")
 print("=" * 60)

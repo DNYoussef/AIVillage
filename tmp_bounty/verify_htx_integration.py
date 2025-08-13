@@ -4,8 +4,8 @@
 # Direct module loading to avoid import chain issues
 import importlib.util
 import os
-import sys
 from pathlib import Path
+import sys
 
 
 def load_module_direct(name, path):

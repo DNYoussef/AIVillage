@@ -9,9 +9,9 @@ Tests the complete RAG pipeline with:
 """
 
 import asyncio
+from pathlib import Path
 import sys
 import time
-from pathlib import Path
 
 # Add current directory and src to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))

@@ -11,8 +11,8 @@ The generated agents provide a minimal interface used in tests:
 from __future__ import annotations
 
 import time
-import uuid
 from typing import Any
+import uuid
 
 # ---------------------------------------------------------------------------
 # Base agent
@@ -111,6 +111,4 @@ AGENT_SPECS = {
 for _name, _role in AGENT_SPECS.items():
     globals()[f"{_name}Agent"] = create_agent_class(_name, _role)
 
-__all__ = ["BaseGeneratedAgent", "create_agent_class", "AGENT_REGISTRY"] + [
-    f"{name}Agent" for name in AGENT_SPECS
-]
+__all__ = ["BaseGeneratedAgent", "create_agent_class", "AGENT_REGISTRY"] + [f"{name}Agent" for name in AGENT_SPECS]

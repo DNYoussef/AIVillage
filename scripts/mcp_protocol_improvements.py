@@ -5,11 +5,11 @@ This script contains the implementations to replace the TODO items in
 mcp_servers/hyperag/protocol.py with actual functionality.
 """
 
-import logging
-import uuid
 from dataclasses import asdict
 from datetime import datetime
+import logging
 from typing import Any
+import uuid
 
 logger = logging.getLogger(__name__)
 
@@ -44,12 +44,8 @@ class RetrievalImplementation:
                 from .retrieval.hybrid_retriever import HybridRetriever
 
                 protocol_handler._retriever = HybridRetriever(
-                    vector_store=getattr(
-                        protocol_handler.storage_backend, "vector_store", None
-                    ),
-                    graph_store=getattr(
-                        protocol_handler.storage_backend, "graph_store", None
-                    ),
+                    vector_store=getattr(protocol_handler.storage_backend, "vector_store", None),
+                    graph_store=getattr(protocol_handler.storage_backend, "graph_store", None),
                 )
                 retriever = protocol_handler._retriever
             else:
@@ -111,9 +107,7 @@ class RetrievalImplementation:
 
         except ImportError as e:
             logger.exception(f"Failed to import retrieval components: {e}")
-            return self._create_fallback_response(
-                query, plan, error_msg=f"Import error: {e}"
-            )
+            return self._create_fallback_response(query, plan, error_msg=f"Import error: {e}")
         except Exception as e:
             logger.exception(f"Unexpected error in retrieval: {e}")
             from .protocol import MCPError
@@ -121,9 +115,7 @@ class RetrievalImplementation:
             msg = "RETRIEVAL_ERROR"
             raise MCPError(msg, f"Failed to retrieve information: {e}")
 
-    def _create_fallback_response(
-        self, query: str, plan: dict, error_msg: str | None = None
-    ) -> dict[str, Any]:
+    def _create_fallback_response(self, query: str, plan: dict, error_msg: str | None = None) -> dict[str, Any]:
         """Create fallback response when retrieval fails."""
         from .models import Node
 
@@ -197,9 +189,7 @@ class RetrievalImplementation:
             return f"This appears to be a question about '{query}'. While I cannot access the full knowledge base right now, this type of query typically requires specific domain knowledge to answer accurately."
         if any(word in query_lower for word in ["define", "explain", "describe"]):
             return f"You're asking for an explanation of concepts related to '{query}'. This would normally be answered using retrieved documentation or knowledge base entries."
-        if any(
-            word in query_lower for word in ["compare", "difference", "vs", "versus"]
-        ):
+        if any(word in query_lower for word in ["compare", "difference", "vs", "versus"]):
             return f"This appears to be a comparison query about '{query}'. Such queries typically require accessing detailed information about multiple concepts."
         return f"Your query '{query}' has been received but cannot be fully processed without access to the retrieval system. The query appears to be seeking information or analysis."
 
@@ -237,9 +227,7 @@ class StorageImplementation:
 
             # Try to use storage backend
             if protocol_handler.storage_backend:
-                storage_result = await self._store_with_backend(
-                    protocol_handler.storage_backend, node_data
-                )
+                storage_result = await self._store_with_backend(protocol_handler.storage_backend, node_data)
 
                 return {
                     "node_id": node_id,
@@ -260,16 +248,11 @@ class StorageImplementation:
                 "error_details": str(e),
             }
 
-    async def _store_with_backend(
-        self, storage_backend, node_data: dict[str, Any]
-    ) -> dict[str, Any]:
+    async def _store_with_backend(self, storage_backend, node_data: dict[str, Any]) -> dict[str, Any]:
         """Store data using the storage backend."""
         try:
             # Add to vector store if available
-            if (
-                hasattr(storage_backend, "vector_store")
-                and storage_backend.vector_store
-            ):
+            if hasattr(storage_backend, "vector_store") and storage_backend.vector_store:
                 await storage_backend.vector_store.add_document(
                     doc_id=node_data["id"],
                     content=node_data["content"],
@@ -278,9 +261,7 @@ class StorageImplementation:
 
             # Add to graph store if available
             if hasattr(storage_backend, "graph_store") and storage_backend.graph_store:
-                await storage_backend.graph_store.add_node(
-                    node_id=node_data["id"], properties=node_data
-                )
+                await storage_backend.graph_store.add_node(node_id=node_data["id"], properties=node_data)
 
             return {
                 "vector_stored": hasattr(storage_backend, "vector_store"),
@@ -292,9 +273,7 @@ class StorageImplementation:
             logger.exception(f"Backend storage failed: {e}")
             raise
 
-    async def _store_in_memory(
-        self, protocol_handler, node_data: dict[str, Any]
-    ) -> dict[str, Any]:
+    async def _store_in_memory(self, protocol_handler, node_data: dict[str, Any]) -> dict[str, Any]:
         """Fallback in-memory storage."""
         if not hasattr(protocol_handler, "_memory_storage"):
             protocol_handler._memory_storage = {}
@@ -340,9 +319,7 @@ class StorageImplementation:
 
             # Try backend update
             if protocol_handler.storage_backend:
-                update_result = await self._update_with_backend(
-                    protocol_handler.storage_backend, node_id, update_data
-                )
+                update_result = await self._update_with_backend(protocol_handler.storage_backend, node_id, update_data)
 
                 return {
                     "node_id": node_id,
@@ -363,18 +340,13 @@ class StorageImplementation:
                 "error_details": str(e),
             }
 
-    async def _update_with_backend(
-        self, storage_backend, node_id: str, update_data: dict[str, Any]
-    ) -> dict[str, Any]:
+    async def _update_with_backend(self, storage_backend, node_id: str, update_data: dict[str, Any]) -> dict[str, Any]:
         """Update using storage backend."""
         try:
             results = {}
 
             # Update in vector store
-            if (
-                hasattr(storage_backend, "vector_store")
-                and storage_backend.vector_store
-            ) and "content" in update_data:
+            if (hasattr(storage_backend, "vector_store") and storage_backend.vector_store) and "content" in update_data:
                 await storage_backend.vector_store.update_document(
                     doc_id=node_id,
                     content=update_data["content"],
@@ -384,9 +356,7 @@ class StorageImplementation:
 
             # Update in graph store
             if hasattr(storage_backend, "graph_store") and storage_backend.graph_store:
-                await storage_backend.graph_store.update_node(
-                    node_id=node_id, properties=update_data
-                )
+                await storage_backend.graph_store.update_node(node_id=node_id, properties=update_data)
                 results["graph_updated"] = True
 
             return results
@@ -395,9 +365,7 @@ class StorageImplementation:
             logger.exception(f"Backend update failed: {e}")
             raise
 
-    async def _update_in_memory(
-        self, protocol_handler, node_id: str, update_data: dict[str, Any]
-    ) -> dict[str, Any]:
+    async def _update_in_memory(self, protocol_handler, node_id: str, update_data: dict[str, Any]) -> dict[str, Any]:
         """Fallback in-memory update."""
         if not hasattr(protocol_handler, "_memory_storage"):
             protocol_handler._memory_storage = {}
@@ -420,18 +388,14 @@ class StorageImplementation:
             },
         }
 
-    async def implement_actual_deletion(
-        self, protocol_handler, context, node_id: str
-    ) -> dict[str, Any]:
+    async def implement_actual_deletion(self, protocol_handler, context, node_id: str) -> dict[str, Any]:
         """Replace TODO in handle_delete_knowledge with actual deletion implementation."""
         timestamp = datetime.now().isoformat()
 
         try:
             # Try backend deletion
             if protocol_handler.storage_backend:
-                deletion_result = await self._delete_with_backend(
-                    protocol_handler.storage_backend, node_id
-                )
+                deletion_result = await self._delete_with_backend(protocol_handler.storage_backend, node_id)
 
                 return {
                     "node_id": node_id,
@@ -445,9 +409,7 @@ class StorageImplementation:
                     },
                 }
             # Fallback deletion
-            return await self._delete_in_memory(
-                protocol_handler, node_id, timestamp, context.user_id
-            )
+            return await self._delete_in_memory(protocol_handler, node_id, timestamp, context.user_id)
 
         except Exception as e:
             logger.exception(f"Failed to delete knowledge: {e}")
@@ -458,18 +420,13 @@ class StorageImplementation:
                 "error_details": str(e),
             }
 
-    async def _delete_with_backend(
-        self, storage_backend, node_id: str
-    ) -> dict[str, Any]:
+    async def _delete_with_backend(self, storage_backend, node_id: str) -> dict[str, Any]:
         """Delete using storage backend."""
         try:
             results = {}
 
             # Delete from vector store
-            if (
-                hasattr(storage_backend, "vector_store")
-                and storage_backend.vector_store
-            ):
+            if hasattr(storage_backend, "vector_store") and storage_backend.vector_store:
                 await storage_backend.vector_store.delete_document(node_id)
                 results["vector_deleted"] = True
 
@@ -484,9 +441,7 @@ class StorageImplementation:
             logger.exception(f"Backend deletion failed: {e}")
             raise
 
-    async def _delete_in_memory(
-        self, protocol_handler, node_id: str, timestamp: str, user_id: str
-    ) -> dict[str, Any]:
+    async def _delete_in_memory(self, protocol_handler, node_id: str, timestamp: str, user_id: str) -> dict[str, Any]:
         """Fallback in-memory deletion."""
         if not hasattr(protocol_handler, "_memory_storage"):
             protocol_handler._memory_storage = {}
@@ -534,12 +489,10 @@ class ModelRegistrationImplementation:
 
             # Register with model registry
             if protocol_handler.model_registry:
-                registration_result = (
-                    await protocol_handler.model_registry.register_model(
-                        agent_id=agent_id,
-                        config=model_config,
-                        registration_id=registration_id,
-                    )
+                registration_result = await protocol_handler.model_registry.register_model(
+                    agent_id=agent_id,
+                    config=model_config,
+                    registration_id=registration_id,
                 )
 
                 return {
@@ -573,9 +526,7 @@ class ModelRegistrationImplementation:
                 "error_details": str(e),
             }
 
-    async def _validate_model_config(
-        self, model_config: Dictionary[str, Any]
-    ) -> dict[str, Any]:
+    async def _validate_model_config(self, model_config: Dictionary[str, Any]) -> dict[str, Any]:
         """Validate model configuration."""
         required_fields = ["model_name", "model_type"]
 

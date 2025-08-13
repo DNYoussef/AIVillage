@@ -3,8 +3,8 @@
 These tests verify basic functionality and import capabilities.
 """
 
-import sys
 from pathlib import Path
+import sys
 
 import pytest
 

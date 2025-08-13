@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Validate compression with REAL measured values from actual implementations."""
 
+from pathlib import Path
 import sys
 import time
-from pathlib import Path
 
 import torch
 from torch import nn

@@ -4,17 +4,18 @@ This module implements intelligent model partitioning across heterogeneous devic
 building on Sprint 6's P2P communication and resource management systems.
 """
 
-import logging
-import time
-import uuid
 from dataclasses import dataclass, field
 from enum import Enum
+import logging
+import time
 from typing import Any
+import uuid
 
 from transformers import AutoConfig, AutoTokenizer
 
 # Import Sprint 6 infrastructure
-from ...core.p2p.p2p_node import P2PNode, PeerCapabilities
+from src.production.communications.p2p.p2p_node import P2PNode, PeerCapabilities
+
 from ...core.resources.device_profiler import DeviceProfiler
 from ...core.resources.resource_monitor import ResourceMonitor
 

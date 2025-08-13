@@ -340,9 +340,7 @@ data class FLConfiguration(
 )
 """
 
-    config_path = (
-        sdk_root / "app/src/main/java/ai/atlantis/aivillage/core/Configuration.kt"
-    )
+    config_path = sdk_root / "app/src/main/java/ai/atlantis/aivillage/core/Configuration.kt"
     with open(config_path, "w", encoding="utf-8") as f:
         f.write(config_class)
 
@@ -674,9 +672,7 @@ data class TranslationResult(
 )
 """
 
-    agent_path = (
-        sdk_root / "app/src/main/java/ai/atlantis/aivillage/agents/AgentManager.kt"
-    )
+    agent_path = sdk_root / "app/src/main/java/ai/atlantis/aivillage/agents/AgentManager.kt"
     with open(agent_path, "w", encoding="utf-8") as f:
         f.write(agent_manager)
 
@@ -822,10 +818,7 @@ data class TrainingMetrics(
 )
 """
 
-    fl_path = (
-        sdk_root
-        / "app/src/main/java/ai/atlantis/aivillage/fl/FederatedLearningClient.kt"
-    )
+    fl_path = sdk_root / "app/src/main/java/ai/atlantis/aivillage/fl/FederatedLearningClient.kt"
     with open(fl_path, "w", encoding="utf-8") as f:
         f.write(fl_client)
 
@@ -944,9 +937,7 @@ class SampleActivity : AppCompatActivity() {
 }
 """
 
-    sample_path = (
-        sdk_root / "app/src/main/java/ai/atlantis/aivillage/sample/SampleActivity.kt"
-    )
+    sample_path = sdk_root / "app/src/main/java/ai/atlantis/aivillage/sample/SampleActivity.kt"
     sample_path.parent.mkdir(parents=True, exist_ok=True)
     with open(sample_path, "w", encoding="utf-8") as f:
         f.write(sample_activity)

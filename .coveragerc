@@ -1,25 +1,10 @@
 [run]
-source = .
-omit =
-    */tests/*
-    */test_*
-    */__pycache__/*
-    */node_modules/*
-    */evomerge_env/*
-    */new_env/*
-    */migrations/*
-    setup.py
-    */deprecated/*
+source = src/
+omit = */tests/*, */test_*, */__pycache__/*, */new_env/*
 
 [report]
-precision = 2
-show_missing = True
-skip_covered = False
 exclude_lines =
     pragma: no cover
-
-[html]
-directory = htmlcov
-
-[xml]
-output = coverage.xml
+    def __repr__
+    raise AssertionError
+    raise NotImplementedError

@@ -2,11 +2,10 @@
 Tests for HypeRAG LoRA Registry
 """
 
-import sys
-import tempfile
-
 # Import the registry module
 from pathlib import Path
+import sys
+import tempfile
 
 import pytest
 

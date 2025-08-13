@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
+from dataclasses import asdict, dataclass
 import json
+from pathlib import Path
 import threading
 import time
-import uuid
-from dataclasses import asdict, dataclass
-from pathlib import Path
 from typing import Any
+import uuid
 
 # Optional dependencies -----------------------------------------------------
 try:  # pragma: no cover - import guard

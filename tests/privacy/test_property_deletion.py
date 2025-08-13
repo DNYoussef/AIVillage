@@ -1,10 +1,10 @@
 import os
 import uuid
 
-import pytest
-import requests
 from hypothesis import given
 from hypothesis import strategies as st
+import pytest
+import requests
 
 GW = os.getenv("GW_URL", "http://localhost:8000")
 

@@ -142,9 +142,7 @@ async def run_task(
     return combined_result
 
 
-async def orchestrate_agents(
-    agents: list[UnifiedBaseAgent], task: dict[str, Any]
-) -> dict[str, Any]:
+async def orchestrate_agents(agents: list[UnifiedBaseAgent], task: dict[str, Any]) -> dict[str, Any]:
     king_agent = next(agent for agent in agents if isinstance(agent, KingAgent))
     langroid_task = LangroidTask(
         king_agent,
@@ -171,9 +169,7 @@ async def main() -> None:
 
     # Add some initial tasks to the queue
     await task_queue.add_task({"content": "Analyze market trends", "type": "research"})
-    await task_queue.add_task(
-        {"content": "Debug login functionality", "type": "coding"}
-    )
+    await task_queue.add_task({"content": "Debug login functionality", "type": "coding"})
     await task_queue.add_task(
         {
             "type": "research",

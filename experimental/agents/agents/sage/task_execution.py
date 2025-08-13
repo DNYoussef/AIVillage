@@ -16,9 +16,7 @@ class TaskExecutor:
             task = await self.agent.foundational_layer.process_task(task)
 
             # Streamlined query processing pipeline
-            processed_task = await self.agent.query_processor.process_query(
-                task["content"]
-            )
+            processed_task = await self.agent.query_processor.process_query(task["content"])
             task["content"] = processed_task
 
             # Check if the task is complex and needs to be broken down into subgoals
@@ -127,9 +125,7 @@ class TaskExecutor:
             logger.exception(f"Error generating subgoals: {e!s}")
             return []
 
-    async def summarize_results(
-        self, task, subgoals: list[str], results: list[dict[str, Any]]
-    ) -> dict[str, Any]:
+    async def summarize_results(self, task, subgoals: list[str], results: list[dict[str, Any]]) -> dict[str, Any]:
         summary_prompt = f"""
         Original task: {task["content"]}
         Subgoals and their results:
@@ -139,9 +135,7 @@ class TaskExecutor:
         summary = await self.agent.generate(summary_prompt)
         return {"summary": summary, "subgoal_results": results}
 
-    def _format_subgoals_and_results(
-        self, subgoals: list[str], results: list[dict[str, Any]]
-    ) -> str:
+    def _format_subgoals_and_results(self, subgoals: list[str], results: list[dict[str, Any]]) -> str:
         formatted = ""
         for subgoal, result in zip(subgoals, results, strict=False):
             formatted += f"Subgoal: {subgoal}\nResult: {result}\n\n"

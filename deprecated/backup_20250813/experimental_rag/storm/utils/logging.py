@@ -6,8 +6,7 @@ import logging
 import warnings
 
 warnings.warn(
-    "rag_system.utils.logging is a stub implementation. "
-    "Replace with actual implementation before production use.",
+    "rag_system.utils.logging is a stub implementation. " "Replace with actual implementation before production use.",
     UserWarning,
     stacklevel=2,
 )
@@ -20,9 +19,7 @@ def setup_logger(name: str = "rag_system", level: str = "INFO"):
 
     if not logger.handlers:
         handler = logging.StreamHandler()
-        formatter = logging.Formatter(
-            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-        )
+        formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
         handler.setFormatter(formatter)
         logger.addHandler(handler)
 

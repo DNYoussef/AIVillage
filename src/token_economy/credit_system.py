@@ -1,11 +1,11 @@
+from dataclasses import dataclass
 import json
 import logging
 import os
+from pathlib import Path
 import sqlite3
 import threading
 import time
-from dataclasses import dataclass
-from pathlib import Path
 
 try:
     import portalocker

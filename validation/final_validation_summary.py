@@ -2,8 +2,8 @@
 
 import asyncio
 import logging
-import sys
 from pathlib import Path
+import sys
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
@@ -74,7 +74,7 @@ async def test_completed_components():
     # 3. Test Complete LibP2P Mesh
     print("\n3. Complete LibP2P Mesh...")
     try:
-        from src.core.p2p.libp2p_mesh_complete import (
+        from src.core.p2p.libp2p_mesh import (
             LibP2PMeshNetwork,
             MeshConfiguration,
         )

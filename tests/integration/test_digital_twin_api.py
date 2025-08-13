@@ -1,9 +1,9 @@
-import sys
 from pathlib import Path
+import sys
 
 sys.path.append(str(Path(__file__).resolve().parents[2]))
-import pytest
 from fastapi.testclient import TestClient
+import pytest
 
 from experimental.services.services.twin.app import app
 

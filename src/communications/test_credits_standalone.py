@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Standalone test script for credits ledger functionality."""
 
+from datetime import datetime, timezone
 import os
 import sys
 import tempfile
-from datetime import datetime, timezone
 
 # Add the current directory to the path so we can import our modules
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -167,9 +167,7 @@ def test_api_endpoints() -> bool | None:
 
             # Test 2: Create user
             print("+ Testing user creation...")
-            response = client.post(
-                "/users", json={"username": "testuser", "node_id": "node_123"}
-            )
+            response = client.post("/users", json={"username": "testuser", "node_id": "node_123"})
             assert response.status_code == 201
             data = response.json()
             assert data["username"] == "testuser"

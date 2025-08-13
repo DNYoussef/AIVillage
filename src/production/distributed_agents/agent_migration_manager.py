@@ -5,14 +5,15 @@ resource availability, and network conditions.
 """
 
 import asyncio
-import logging
-import time
-import uuid
 from dataclasses import dataclass, field
 from enum import Enum
+import logging
+import time
 from typing import Any
+import uuid
 
-from ...core.p2p.p2p_node import P2PNode
+from src.production.communications.p2p.p2p_node import P2PNode
+
 from .distributed_agent_orchestrator import AgentInstance, AgentType, DeviceProfile
 from .serialization import deserialize_checkpoint, serialize_checkpoint
 

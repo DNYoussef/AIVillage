@@ -41,9 +41,7 @@ class SimpleDevOpsAgent(MockAgentInterface):
 
     async def generate(self, prompt: str) -> str:
         if "deploy" in prompt.lower():
-            return (
-                "I can handle deployments to dev, staging, or production environments."
-            )
+            return "I can handle deployments to dev, staging, or production environments."
         if "pipeline" in prompt.lower():
             return "I manage CI/CD pipelines with automated testing and deployment."
         return "I'm a DevOps Agent specialized in infrastructure and deployment automation."
@@ -62,9 +60,7 @@ class SimpleDevOpsAgent(MockAgentInterface):
             for keyword in keywords:
                 score += text.lower().count(keyword)
             result["devops_relevance_score"] = score
-        return sorted(
-            results, key=lambda x: x.get("devops_relevance_score", 0), reverse=True
-        )[:k]
+        return sorted(results, key=lambda x: x.get("devops_relevance_score", 0), reverse=True)[:k]
 
     async def introspect(self) -> dict:
         return {
@@ -90,9 +86,7 @@ class SimpleDevOpsAgent(MockAgentInterface):
         self.initialized = True
         print(f"{self.agent_type} Agent {self.agent_id} initialized successfully")
 
-    async def deploy_service(
-        self, environment: str, service: str, version: str
-    ) -> dict:
+    async def deploy_service(self, environment: str, service: str, version: str) -> dict:
         """Simulate service deployment"""
         print(f"Deploying {service} v{version} to {environment}")
 
@@ -190,18 +184,14 @@ async def test_simple_agents():
 
     # Test deployment
     deployment = await devops.deploy_service("staging", "web-app", "v1.2.3")
-    print(
-        f"   Deployment result: {deployment['status']} - {deployment['deployment_id']}"
-    )
+    print(f"   Deployment result: {deployment['status']} - {deployment['deployment_id']}")
 
     # Test embedding
     embedding = await devops.get_embedding("deploy kubernetes service")
     print(f"   Embedding length: {len(embedding)}")
 
     # Test latent space
-    space_type, representation = await devops.activate_latent_space(
-        "deploy new service"
-    )
+    space_type, representation = await devops.activate_latent_space("deploy new service")
     print(f"   Latent space: {space_type} - {representation[:50]}...")
 
     print("   Status: DevOps Agent - OK\\n")
@@ -228,9 +218,7 @@ async def test_simple_agents():
 
     # Test inter-agent communication
     print("3. Testing Inter-agent Communication...")
-    comm_result = await devops.communicate(
-        "Need creative assets for deployment dashboard", creative
-    )
+    comm_result = await devops.communicate("Need creative assets for deployment dashboard", creative)
     print(f"   Communication result: {comm_result}")
 
     # Test reranking
@@ -282,9 +270,7 @@ async def test_agent_registry_pattern():
                 )
             if request_type == "create_story":
                 agent = await self.get_agent("creative")
-                return await agent.generate_story(
-                    data.get("theme", "adventure"), data.get("style", "fantasy")
-                )
+                return await agent.generate_story(data.get("theme", "adventure"), data.get("style", "fantasy"))
 
             return {"error": "Unknown request type"}
 
@@ -295,14 +281,10 @@ async def test_agent_registry_pattern():
         "deploy",
         {"environment": "production", "service": "user-api", "version": "v2.1.0"},
     )
-    print(
-        f"   Deployment via registry: {deploy_result['status']} - {deploy_result['service']}"
-    )
+    print(f"   Deployment via registry: {deploy_result['status']} - {deploy_result['service']}")
 
     # Test creative request
-    story_result = await registry.route_request(
-        "create_story", {"theme": "mystery", "style": "noir"}
-    )
+    story_result = await registry.route_request("create_story", {"theme": "mystery", "style": "noir"})
     print(f"   Story via registry: {story_result['title']} - {story_result['genre']}")
 
     print("   Status: Agent Registry Pattern - OK\\n")

@@ -1,7 +1,7 @@
 """Task router for intelligent model selection based on task characteristics."""
 
-import logging
 from dataclasses import dataclass
+import logging
 from typing import Any
 
 from .model_config import MODEL_ROUTING_CONFIG, TaskType
@@ -35,9 +35,7 @@ class TaskRouter:
         self.client = openrouter_client or OpenRouterClient()
         self.performance_history: dict[tuple[TaskType, str], list[float]] = {}
 
-    def classify_task(
-        self, prompt: str, context: TaskContext | None = None
-    ) -> TaskType:
+    def classify_task(self, prompt: str, context: TaskContext | None = None) -> TaskType:
         """Classify a task based on prompt and context.
 
         Args:
@@ -122,9 +120,7 @@ class TaskRouter:
         # Default to problem generation
         return TaskType.PROBLEM_GENERATION
 
-    def select_model_for_task(
-        self, task_type: TaskType, context: TaskContext | None = None
-    ) -> str:
+    def select_model_for_task(self, task_type: TaskType, context: TaskContext | None = None) -> str:
         """Select the best model for a task based on type and context.
 
         Args:
@@ -221,9 +217,7 @@ class TaskRouter:
 
         return response
 
-    def _update_performance(
-        self, task_type: TaskType, model: str, score: float
-    ) -> None:
+    def _update_performance(self, task_type: TaskType, model: str, score: float) -> None:
         """Update performance history for a model on a task type."""
         key = (task_type, model)
 
@@ -291,9 +285,7 @@ Create variation #{
                 quality_priority=False,
             )
 
-            variation_response = await self.route_task(
-                variation_prompt, variation_context
-            )
+            variation_response = await self.route_task(variation_prompt, variation_context)
             variations.append(variation_response)
 
         # Calculate total cost and collect models used
@@ -302,9 +294,7 @@ Create variation #{
 
         return {
             "original": original_problem,
-            "variations": [
-                v.content for v in variations
-            ],  # Extract content for variations
+            "variations": [v.content for v in variations],  # Extract content for variations
             "domain": domain,
             "difficulty": difficulty,
             "total_cost": original_response.cost + total_variation_cost,
@@ -314,9 +304,7 @@ Create variation #{
             },
         }
 
-    async def evaluate_with_explanation(
-        self, question: str, answer: str, expected_answer: str
-    ) -> dict[str, Any]:
+    async def evaluate_with_explanation(self, question: str, answer: str, expected_answer: str) -> dict[str, Any]:
         """Evaluate an answer with detailed explanation.
 
         Args:

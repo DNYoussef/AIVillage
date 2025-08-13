@@ -62,9 +62,7 @@ class AgentForgeTrainingLoop:
             "quiet_star_activations": 0,
         }
 
-    def generate_curriculum_level(
-        self, level: int, num_tasks: int = 100
-    ) -> CurriculumLevel:
+    def generate_curriculum_level(self, level: int, num_tasks: int = 100) -> CurriculumLevel:
         """Generate curriculum for a specific level."""
         logger.info(f"Generating curriculum level {level} with {num_tasks} tasks")
 
@@ -79,12 +77,8 @@ class AgentForgeTrainingLoop:
             level=level,
             difficulty=level,
             organic_data=[q.text for q in level_questions[: num_tasks // 4]],
-            synthetic_data=[
-                q.text for q in level_questions[num_tasks // 4 : num_tasks // 2]
-            ],
-            rag_data=[
-                q.text for q in level_questions[num_tasks // 2 : 3 * num_tasks // 4]
-            ],
+            synthetic_data=[q.text for q in level_questions[num_tasks // 4 : num_tasks // 2]],
+            rag_data=[q.text for q in level_questions[num_tasks // 2 : 3 * num_tasks // 4]],
             interaction_data=[q.text for q in level_questions[3 * num_tasks // 4 :]],
         )
 
@@ -98,9 +92,7 @@ class AgentForgeTrainingLoop:
             return self.model(input_ids, attention_mask=attention_mask), None
 
         # Generate thoughts using Quiet-STaR
-        logits, thought_logits = self.quiet_star_model(
-            input_ids, attention_mask=attention_mask, generate_thoughts=True
-        )
+        logits, thought_logits = self.quiet_star_model(input_ids, attention_mask=attention_mask, generate_thoughts=True)
 
         self.training_metrics["quiet_star_activations"] += 1
 
@@ -118,41 +110,26 @@ class AgentForgeTrainingLoop:
         task_accuracy = (logits.argmax(-1) == target).float().mean().item()
 
         # Gradient flow reward
-        gslow = (
-            self.optimizer._grad_window.abs().mean().item()
-            if self.optimizer._grad_window is not None
-            else 0.0
-        )
+        gslow = self.optimizer._grad_window.abs().mean().item() if self.optimizer._grad_window is not None else 0.0
 
         # Geometry reward (intrinsic dimensionality improvement)
         geom_reward = 0.0
         if step > 0 and self.state["G_prev"] is not None:
-            geom_reward = max(
-                0, self.state["G_prev"]["ID_nl"] - self.state["G"]["ID_nl"]
-            )
+            geom_reward = max(0, self.state["G_prev"]["ID_nl"] - self.state["G"]["ID_nl"])
 
         # Thought coherence reward (if Quiet-STaR is enabled)
         thought_reward = 0.0
         if thought_logits is not None:
             # Reward coherent thought generation
-            thought_entropy = (
-                torch.distributions.Categorical(logits=thought_logits).entropy().mean()
-            )
+            thought_entropy = torch.distributions.Categorical(logits=thought_logits).entropy().mean()
             thought_reward = 0.1 * (1.0 - torch.clamp(thought_entropy, 0, 1))
 
         # Combined reward
-        reward = (
-            0.3 * task_accuracy
-            + 0.4 * math.tanh(gslow)
-            + 0.2 * geom_reward
-            + 0.1 * thought_reward
-        )
+        reward = 0.3 * task_accuracy + 0.4 * math.tanh(gslow) + 0.2 * geom_reward + 0.1 * thought_reward
 
         return reward
 
-    def run_level(
-        self, curriculum_level: CurriculumLevel, max_steps: int = 1000
-    ) -> dict[str, Any]:
+    def run_level(self, curriculum_level: CurriculumLevel, max_steps: int = 1000) -> dict[str, Any]:
         """Run training for a specific curriculum level."""
         logger.info(f"Starting training for level {curriculum_level.level}")
 
@@ -178,9 +155,7 @@ class AgentForgeTrainingLoop:
 
         for step, text in enumerate(all_data[:max_steps]):
             # Tokenize input
-            inputs = self.tokenizer(
-                text, return_tensors="pt", truncation=True, max_length=512, padding=True
-            )
+            inputs = self.tokenizer(text, return_tensors="pt", truncation=True, max_length=512, padding=True)
 
             input_ids = inputs["input_ids"]
             attention_mask = inputs.get("attention_mask", None)
@@ -193,14 +168,10 @@ class AgentForgeTrainingLoop:
                 continue
 
             # Forward pass with optional Quiet-STaR
-            logits, thought_logits = self.process_quiet_star_thoughts(
-                input_ids, attention_mask
-            )
+            logits, thought_logits = self.process_quiet_star_thoughts(input_ids, attention_mask)
 
             # Calculate loss
-            loss_task = torch.nn.functional.cross_entropy(
-                logits.reshape(-1, logits.size(-1)), target.reshape(-1)
-            )
+            loss_task = torch.nn.functional.cross_entropy(logits.reshape(-1, logits.size(-1)), target.reshape(-1))
             loss_task.backward()
 
             # Geometry snapshot
@@ -223,11 +194,7 @@ class AgentForgeTrainingLoop:
                     apply_svf(m, z)
 
             # Grokfast filter & optimizer
-            gslow = (
-                self.optimizer._grad_window.abs().mean().item()
-                if self.optimizer._grad_window is not None
-                else 0.0
-            )
+            gslow = self.optimizer._grad_window.abs().mean().item() if self.optimizer._grad_window is not None else 0.0
 
             self.state["pre_grok"] = gslow > 0.03 and self.state["G"]["ratio"] < 0.1
             lr_gain = self.pid.update(self.state["G"]["ratio"])
@@ -271,12 +238,8 @@ class AgentForgeTrainingLoop:
             self.training_metrics["total_reward"] += reward
 
         # Calculate final level accuracy
-        level_metrics["accuracy"] = (
-            correct_predictions / total_predictions if total_predictions > 0 else 0.0
-        )
-        level_metrics["reward"] /= (
-            level_metrics["steps"] if level_metrics["steps"] > 0 else 1
-        )
+        level_metrics["accuracy"] = correct_predictions / total_predictions if total_predictions > 0 else 0.0
+        level_metrics["reward"] /= level_metrics["steps"] if level_metrics["steps"] > 0 else 1
 
         # Store level accuracy
         self.level_accuracy[curriculum_level.level] = level_metrics["accuracy"]
@@ -290,9 +253,7 @@ class AgentForgeTrainingLoop:
 
         return level_metrics
 
-    def run_curriculum(
-        self, max_levels: int = 10, tasks_per_level: int = 100
-    ) -> dict[str, Any]:
+    def run_curriculum(self, max_levels: int = 10, tasks_per_level: int = 100) -> dict[str, Any]:
         """Run complete curriculum training."""
         logger.info(f"Starting curriculum training with {max_levels} levels")
 
@@ -340,9 +301,7 @@ class AgentForgeTrainingLoop:
 # Legacy compatibility
 def run_level(dataset) -> None:
     """Legacy function for backward compatibility."""
-    logger.warning(
-        "Using legacy run_level function. Consider migrating to AgentForgeTrainingLoop."
-    )
+    logger.warning("Using legacy run_level function. Consider migrating to AgentForgeTrainingLoop.")
 
     # Initialize basic components for legacy support
     global state, optimizer, pid, geo2z, replay, model
@@ -355,11 +314,7 @@ def run_level(dataset) -> None:
 
         # geometry
         state["G"] = snapshot(H.view(-1, H.size(-1)))
-        gslow = (
-            optimizer._grad_window.abs().mean().item()
-            if optimizer._grad_window is not None
-            else 0.0
-        )
+        gslow = optimizer._grad_window.abs().mean().item() if optimizer._grad_window is not None else 0.0
 
         # RL reward shaping
         reward = (
@@ -421,11 +376,7 @@ def run_level(dataset) -> None:
 
         # geometry
         state["G"] = snapshot(H.view(-1, H.size(-1)))
-        gslow = (
-            optimizer._grad_window.abs().mean().item()
-            if optimizer._grad_window is not None
-            else 0.0
-        )
+        gslow = optimizer._grad_window.abs().mean().item() if optimizer._grad_window is not None else 0.0
 
         # RL reward shaping
         reward = (

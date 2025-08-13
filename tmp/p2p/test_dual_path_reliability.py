@@ -13,13 +13,13 @@ requiring actual Bluetooth or network hardware.
 """
 
 import asyncio
+from dataclasses import dataclass
 import logging
 import os
 import random
 import time
-import uuid
-from dataclasses import dataclass
 from typing import Any
+import uuid
 
 import pytest
 

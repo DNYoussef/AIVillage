@@ -10,9 +10,9 @@ Tests the P2 Mobile Resource Optimization features:
 """
 
 import asyncio
+from dataclasses import dataclass
 import os
 import sys
-from dataclasses import dataclass
 
 # Add parent directories to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))

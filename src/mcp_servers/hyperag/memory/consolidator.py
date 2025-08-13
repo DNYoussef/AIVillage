@@ -5,10 +5,10 @@ Consolidates episodic memories into semantic knowledge during 'sleep' cycles.
 """
 
 import asyncio
-import logging
-import time
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
+import logging
+import time
 from typing import Any
 
 import numpy as np

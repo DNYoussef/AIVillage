@@ -4,10 +4,10 @@
 Validates configuration files without external dependencies.
 """
 
-import json
-import sys
 from datetime import datetime
+import json
 from pathlib import Path
+import sys
 
 
 def validate_json_file(file_path):
@@ -91,11 +91,7 @@ def main():
         results["validation_results"][filename] = file_result
 
     # Determine overall status
-    success_rate = (
-        (results["files_passed"] / results["files_checked"]) * 100
-        if results["files_checked"] > 0
-        else 0
-    )
+    success_rate = (results["files_passed"] / results["files_checked"]) * 100 if results["files_checked"] > 0 else 0
 
     if success_rate >= 100:
         results["overall_status"] = "EXCELLENT"
@@ -119,9 +115,7 @@ def main():
     print("\nFile Validation Results:")
     for filename, file_result in results["validation_results"].items():
         status = "✅" if file_result["valid"] else "❌"
-        size_info = (
-            f" ({file_result['size_bytes']} bytes)" if file_result["exists"] else ""
-        )
+        size_info = f" ({file_result['size_bytes']} bytes)" if file_result["exists"] else ""
         print(f"  {filename}: {status}{size_info}")
 
         if file_result["errors"]:
@@ -183,8 +177,7 @@ def main():
             checks = [
                 (
                     "Embedding model is paraphrase-MiniLM-L3-v2",
-                    rag_config.get("embedder", {}).get("model_name")
-                    == "paraphrase-MiniLM-L3-v2",
+                    rag_config.get("embedder", {}).get("model_name") == "paraphrase-MiniLM-L3-v2",
                 ),
                 (
                     "Vector top-k is 20",
@@ -217,9 +210,7 @@ def main():
 
     if results["overall_status"] in ["EXCELLENT", "GOOD"]:
         print("✅ Basic configuration validation passed!")
-        print(
-            "Configuration files are syntactically valid and meet basic CODEX requirements."
-        )
+        print("Configuration files are syntactically valid and meet basic CODEX requirements.")
     else:
         print("❌ Configuration validation found issues!")
         print("Review and fix the issues above before proceeding.")

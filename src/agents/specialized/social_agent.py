@@ -1,8 +1,8 @@
 """Social Agent - Community Management and Human Interaction Specialist"""
 
+from dataclasses import dataclass
 import hashlib
 import logging
-from dataclasses import dataclass
 from typing import Any
 
 from src.production.rag.rag_system.core.agent_interface import AgentInterface
@@ -14,9 +14,7 @@ logger = logging.getLogger(__name__)
 class SocialInteraction:
     """Social interaction request"""
 
-    interaction_type: (
-        str  # 'moderation', 'engagement', 'conflict_resolution', 'community_building'
-    )
+    interaction_type: (str)  # 'moderation', 'engagement', 'conflict_resolution', 'community_building'
     context: dict[str, Any]
     participants: list[str]
     urgency: str = "normal"
@@ -62,9 +60,7 @@ class SocialAgent(AgentInterface):
         hash_value = int(hashlib.md5(text.encode()).hexdigest(), 16)
         return [(hash_value % 1000) / 1000.0] * 384
 
-    async def rerank(
-        self, query: str, results: list[dict[str, Any]], k: int
-    ) -> list[dict[str, Any]]:
+    async def rerank(self, query: str, results: list[dict[str, Any]], k: int) -> list[dict[str, Any]]:
         keywords = [
             "social",
             "community",
@@ -74,13 +70,9 @@ class SocialAgent(AgentInterface):
             "relationship",
         ]
         for result in results:
-            score = sum(
-                str(result.get("content", "")).lower().count(kw) for kw in keywords
-            )
+            score = sum(str(result.get("content", "")).lower().count(kw) for kw in keywords)
             result["social_relevance_score"] = score
-        return sorted(
-            results, key=lambda x: x.get("social_relevance_score", 0), reverse=True
-        )[:k]
+        return sorted(results, key=lambda x: x.get("social_relevance_score", 0), reverse=True)[:k]
 
     async def introspect(self) -> dict[str, Any]:
         return {
@@ -100,9 +92,7 @@ class SocialAgent(AgentInterface):
         social_type = "moderation" if "moderate" in query.lower() else "engagement"
         return social_type, f"SOCIAL[{social_type}:{query[:50]}]"
 
-    async def moderate_community(
-        self, content: str, context: dict[str, Any]
-    ) -> dict[str, Any]:
+    async def moderate_community(self, content: str, context: dict[str, Any]) -> dict[str, Any]:
         """Moderate community content and interactions"""
         try:
             moderation_result = {
@@ -115,9 +105,7 @@ class SocialAgent(AgentInterface):
 
             # Check for harmful content patterns
             harmful_patterns = ["spam", "harassment", "hate speech", "misinformation"]
-            flagged_patterns = [
-                pattern for pattern in harmful_patterns if pattern in content.lower()
-            ]
+            flagged_patterns = [pattern for pattern in harmful_patterns if pattern in content.lower()]
 
             if flagged_patterns:
                 moderation_result.update(
@@ -148,9 +136,7 @@ class SocialAgent(AgentInterface):
             logger.error(f"Moderation failed: {e}")
             return {"error": str(e)}
 
-    async def resolve_conflict(
-        self, participants: list[str], issue: str
-    ) -> dict[str, Any]:
+    async def resolve_conflict(self, participants: list[str], issue: str) -> dict[str, Any]:
         """Mediate conflicts between community members"""
         try:
             resolution_steps = [
@@ -182,9 +168,7 @@ class SocialAgent(AgentInterface):
             logger.error(f"Conflict resolution failed: {e}")
             return {"error": str(e)}
 
-    async def develop_engagement_strategy(
-        self, community_data: dict[str, Any]
-    ) -> dict[str, Any]:
+    async def develop_engagement_strategy(self, community_data: dict[str, Any]) -> dict[str, Any]:
         """Develop community engagement strategies"""
         try:
             community_size = community_data.get("member_count", 100)
@@ -243,9 +227,7 @@ class SocialAgent(AgentInterface):
             logger.error(f"Engagement strategy failed: {e}")
             return {"error": str(e)}
 
-    async def monitor_sentiment(
-        self, interactions: list[dict[str, Any]]
-    ) -> dict[str, Any]:
+    async def monitor_sentiment(self, interactions: list[dict[str, Any]]) -> dict[str, Any]:
         """Monitor community sentiment and health"""
         try:
             sentiment_scores = []
@@ -269,11 +251,7 @@ class SocialAgent(AgentInterface):
 
                 sentiment_scores.append(sentiment)
 
-            avg_sentiment = (
-                sum(sentiment_scores) / len(sentiment_scores)
-                if sentiment_scores
-                else 0.5
-            )
+            avg_sentiment = sum(sentiment_scores) / len(sentiment_scores) if sentiment_scores else 0.5
 
             return {
                 "overall_sentiment": avg_sentiment,
@@ -296,9 +274,7 @@ class SocialAgent(AgentInterface):
                     "Continue current engagement strategies"
                     if avg_sentiment > 0.6
                     else "Implement sentiment improvement initiatives",
-                    "Monitor for emerging issues"
-                    if avg_sentiment < 0.5
-                    else "Celebrate positive momentum",
+                    "Monitor for emerging issues" if avg_sentiment < 0.5 else "Celebrate positive momentum",
                 ],
             }
 

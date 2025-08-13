@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Analyze GitHub Actions workflows for issues."""
 
-import sys
 from pathlib import Path
+import sys
 
 import yaml
 
@@ -44,9 +44,7 @@ def analyze_workflow(workflow_path) -> bool | None:
             for issue in issues:
                 print(f"    - {issue}")
             return False
-        print(
-            f"  VALID: {workflow.get('name', 'Unnamed')} - {len(workflow.get('jobs', {}))} jobs"
-        )
+        print(f"  VALID: {workflow.get('name', 'Unnamed')} - {len(workflow.get('jobs', {}))} jobs")
         return True
 
     except yaml.YAMLError as e:

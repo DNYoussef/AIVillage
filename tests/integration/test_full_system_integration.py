@@ -12,12 +12,12 @@ pytest.skip(
 
 # Correcting the import path for the RAG system
 from AIVillage.rag_system.wikipedia_storm_pipeline import WikipediaSTORMPipeline
-from src.digital_twin.api.service import DigitalTwinService
 
 # Import the real components
-from src.production.agent_forge.evolution.evolution_metrics import (
-    EvolutionMetricsCollector,
+from src.core.evolution_metrics_integrated import (
+    IntegratedEvolutionMetrics as EvolutionMetricsCollector,
 )
+from src.digital_twin.api.service import DigitalTwinService
 from src.token_economy.credit_system import EarningRule, VILLAGECreditSystem
 
 

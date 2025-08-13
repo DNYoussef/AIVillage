@@ -10,10 +10,10 @@ This script validates the complete configuration system including:
 
 import base64
 import os
+from pathlib import Path
 import secrets
 import sys
 import tempfile
-from pathlib import Path
 
 # Add src to path for imports
 script_dir = Path(__file__).parent
@@ -105,9 +105,7 @@ def test_environment_validator():
         validator = EnvironmentValidator("development")
         dev_report = validator.validate_all(test_env)
 
-        print(
-            f"Validation Result: {'✅ VALID' if dev_report.is_valid else '❌ INVALID'}"
-        )
+        print(f"Validation Result: {'✅ VALID' if dev_report.is_valid else '❌ INVALID'}")
         print(f"Errors: {dev_report.errors}")
         print(f"Warnings: {dev_report.warnings}")
         print(f"Total Variables: {dev_report.total_variables}")
@@ -116,25 +114,19 @@ def test_environment_validator():
         if dev_report.issues:
             print("\nFirst 3 issues:")
             for issue in dev_report.issues[:3]:
-                print(
-                    f"  {issue.level.value.upper()}: {issue.variable} - {issue.message}"
-                )
+                print(f"  {issue.level.value.upper()}: {issue.variable} - {issue.message}")
 
         # Test production profile validation (should be stricter)
         print("\n--- Testing Production Profile ---")
         validator_prod = EnvironmentValidator("production")
         prod_report = validator_prod.validate_all(test_env)
 
-        print(
-            f"Validation Result: {'✅ VALID' if prod_report.is_valid else '❌ INVALID'}"
-        )
+        print(f"Validation Result: {'✅ VALID' if prod_report.is_valid else '❌ INVALID'}")
         print(f"Errors: {prod_report.errors}")
         print(f"Warnings: {prod_report.warnings}")
 
         if prod_report.errors > dev_report.errors:
-            print(
-                "✓ Production validation is stricter (more errors) - Expected behavior"
-            )
+            print("✓ Production validation is stricter (more errors) - Expected behavior")
 
         return dev_report.is_valid
 
@@ -227,12 +219,8 @@ def test_configuration_profiles():
     # Validate profile progression (dev -> staging -> production should be more secure)
     print("\n--- Profile Security Progression ---")
     if all(results[p].get("loaded", False) for p in profiles):
-        dev_secure = sum(
-            [results["development"]["is_secure"], results["development"]["has_auth"]]
-        )
-        prod_secure = sum(
-            [results["production"]["is_secure"], results["production"]["has_auth"]]
-        )
+        dev_secure = sum([results["development"]["is_secure"], results["development"]["has_auth"]])
+        prod_secure = sum([results["production"]["is_secure"], results["production"]["has_auth"]])
 
         if prod_secure > dev_secure:
             print("✅ Security increases from development to production")
@@ -274,10 +262,7 @@ def test_security_validation() -> bool:
     security_issues = [
         issue
         for issue in report.issues
-        if any(
-            keyword in issue.message.lower()
-            for keyword in ["security", "insecure", "compliant", "encryption"]
-        )
+        if any(keyword in issue.message.lower() for keyword in ["security", "insecure", "compliant", "encryption"])
     ]
 
     print("\nSecurity issues found:")
@@ -305,10 +290,7 @@ def test_security_validation() -> bool:
             issue
             for issue in secure_report.issues
             if issue.level.value == "error"
-            and any(
-                keyword in issue.message.lower()
-                for keyword in ["security", "insecure", "compliant"]
-            )
+            and any(keyword in issue.message.lower() for keyword in ["security", "insecure", "compliant"])
         ]
     )
 
@@ -348,11 +330,7 @@ def test_path_validation():
     validator = EnvironmentValidator("development")
     report = validator.validate_all(path_env)
 
-    path_issues = [
-        issue
-        for issue in report.issues
-        if any(var in issue.variable for var in path_env)
-    ]
+    path_issues = [issue for issue in report.issues if any(var in issue.variable for var in path_env)]
 
     print(f"Path-related issues: {len(path_issues)}")
 
@@ -369,9 +347,7 @@ def test_path_validation():
     except Exception as e:
         print(f"⚠️  Cleanup warning: {e}")
 
-    return len(path_issues) == 0 or all(
-        issue.level.value != "error" for issue in path_issues
-    )
+    return len(path_issues) == 0 or all(issue.level.value != "error" for issue in path_issues)
 
 
 def run_all_tests() -> bool:

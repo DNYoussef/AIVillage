@@ -73,9 +73,7 @@ async def test_basic_functionality():
             docs = registry.get_capability_documentation()
 
             print("   ✅ Registry initialization: OK")
-            print(
-                f"      - Available agent types: {len(status['available_agent_types'])}"
-            )
+            print(f"      - Available agent types: {len(status['available_agent_types'])}")
             print(f"      - Documentation sections: {len(docs)}")
 
             # Test agent creation
@@ -98,9 +96,7 @@ async def test_basic_functionality():
 
             from agents.specialized.creative_agent import CreativeRequest
 
-            request = CreativeRequest(
-                content_type="story", theme="adventure", style="fantasy"
-            )
+            request = CreativeRequest(content_type="story", theme="adventure", style="fantasy")
 
             result = await creative.generate_story(request)
             if "title" in result and "genre" in result:
@@ -118,9 +114,7 @@ async def test_basic_functionality():
 
             from agents.specialized.devops_agent import DeploymentRequest
 
-            request = DeploymentRequest(
-                environment="staging", service="test-service", version="v1.0.0"
-            )
+            request = DeploymentRequest(environment="staging", service="test-service", version="v1.0.0")
 
             result = await devops.deploy_service(request)
             if "deployment_id" in result and "status" in result:
@@ -138,9 +132,7 @@ async def test_basic_functionality():
 
             from agents.specialized.translator_agent import TranslationRequest
 
-            request = TranslationRequest(
-                source_text="Hello world", source_language="en", target_language="es"
-            )
+            request = TranslationRequest(source_text="Hello world", source_language="en", target_language="es")
 
             result = await translator.translate_text(request)
             if "translated_text" in result and "confidence_score" in result:
@@ -155,9 +147,7 @@ async def test_basic_functionality():
         print("✅ Basic imports and initialization: PASSED")
         print("✅ Agent registry functionality: PASSED")
         print("✅ Core agent capabilities: PASSED")
-        print(
-            "\nNote: Advanced features requiring pandas/sklearn/etc will need those libraries installed."
-        )
+        print("\nNote: Advanced features requiring pandas/sklearn/etc will need those libraries installed.")
 
         return True
 
@@ -205,9 +195,7 @@ if __name__ == "__main__":
         await test_data_science_fallback()
 
         if success:
-            print(
-                "\n🎉 All basic tests PASSED! Specialized agents are working correctly."
-            )
+            print("\n🎉 All basic tests PASSED! Specialized agents are working correctly.")
             print("\nTo test advanced data science features, install:")
             print("pip install pandas numpy scikit-learn matplotlib statsmodels")
         else:

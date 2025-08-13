@@ -6,16 +6,16 @@ Part B: Agent Forge Phase 4 - Comprehensive Testing
 import sys
 import time
 
+from app import app
 import httpx
 import pytest
-from app import app
 
-import wandb
 from agent_forge.prompt_engineering.ab_testing import PromptABTest
 from agent_forge.prompt_engineering.prompt_baker import PromptBaker
 
 # Import modules from the WhatsApp Wave Bridge
 from agent_forge.prompt_engineering.tutor_prompts import TutorPromptEngineer
+import wandb
 
 sys.path.append("services/wave_bridge")
 

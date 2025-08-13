@@ -371,12 +371,7 @@ def create_init_files():
     for domain, agents in domains.items():
         init_path = BASE_DIR / domain / "__init__.py"
 
-        imports = "\\n".join(
-            [
-                f"from .{agent.lower().replace('agent', '_agent')} import {agent}"
-                for agent in agents
-            ]
-        )
+        imports = "\\n".join([f"from .{agent.lower().replace('agent', '_agent')} import {agent}" for agent in agents])
         content = f'"""{domain.replace("_", " ").title()} Agents"""\\n\\n{imports}\\n\\n__all__ = {agents}'
 
         init_path.write_text(content)

@@ -10,11 +10,11 @@ This test runs independently to verify the core logic and generates metrics JSON
 """
 
 import asyncio
+from dataclasses import asdict, dataclass
+from enum import Enum
 import json
 import time
 import uuid
-from dataclasses import asdict, dataclass
-from enum import Enum
 
 
 class DeliveryStatus(Enum):

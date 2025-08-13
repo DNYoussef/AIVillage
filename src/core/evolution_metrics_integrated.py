@@ -8,17 +8,17 @@ This module provides comprehensive evolution metrics tracking with:
 - API endpoints for health monitoring
 """
 
-import json
-import logging
-import os
-import sqlite3
-import threading
-import time
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from enum import Enum
+import json
+import logging
+import os
 from pathlib import Path
 from queue import Empty, Queue
+import sqlite3
+import threading
+import time
 from typing import Any
 
 # Try to import Redis with graceful fallback
@@ -140,9 +140,7 @@ class IntegratedEvolutionMetrics:
         self.db_path = os.getenv("AIVILLAGE_DB_PATH", "./data/evolution_metrics.db")
         self.storage_backend = os.getenv("AIVILLAGE_STORAGE_BACKEND", "sqlite")
         self.flush_threshold = int(os.getenv("AIVILLAGE_METRICS_FLUSH_THRESHOLD", "50"))
-        self.metrics_file = os.getenv(
-            "AIVILLAGE_METRICS_FILE", "evolution_metrics.json"
-        )
+        self.metrics_file = os.getenv("AIVILLAGE_METRICS_FILE", "evolution_metrics.json")
         self.log_dir = os.getenv("AIVILLAGE_LOG_DIR", "./evolution_logs")
 
         # Redis configuration
@@ -213,9 +211,7 @@ class IntegratedEvolutionMetrics:
             )
             # Test connection
             self.redis_client.ping()
-            logger.info(
-                f"Redis connection established at {self.redis_host}:{self.redis_port}"
-            )
+            logger.info(f"Redis connection established at {self.redis_host}:{self.redis_port}")
         except Exception as e:
             logger.warning(f"Redis connection failed, falling back to SQLite: {e}")
             self.redis_client = None
@@ -340,9 +336,7 @@ class IntegratedEvolutionMetrics:
             value: KPI value
             metadata: Optional metadata
         """
-        metrics = EvolutionMetricsData(
-            agent_id=agent_id, timestamp=time.time(), metadata=metadata or {}
-        )
+        metrics = EvolutionMetricsData(agent_id=agent_id, timestamp=time.time(), metadata=metadata or {})
 
         # Set the specific KPI value
         setattr(metrics, kpi_type.value, value)
@@ -478,17 +472,13 @@ class IntegratedEvolutionMetrics:
         try:
             # Store in sorted set by timestamp
             key = f"evolution:metrics:{metrics.agent_id}"
-            self.redis_client.zadd(
-                key, {json.dumps(metrics.to_dict()): metrics.timestamp}
-            )
+            self.redis_client.zadd(key, {json.dumps(metrics.to_dict()): metrics.timestamp})
 
             # Set expiry (1 hour)
             self.redis_client.expire(key, 3600)
 
             # Update real-time leaderboard
-            self.redis_client.zadd(
-                "evolution:leaderboard", {metrics.agent_id: metrics.fitness_score}
-            )
+            self.redis_client.zadd("evolution:leaderboard", {metrics.agent_id: metrics.fitness_score})
 
             # Publish to pub/sub channel
             self.redis_client.publish(
@@ -519,21 +509,15 @@ class IntegratedEvolutionMetrics:
         # Add leaderboard from Redis if available
         if self.redis_client:
             try:
-                top_agents = self.redis_client.zrevrange(
-                    "evolution:leaderboard", 0, 9, withscores=True
-                )
-                summary["top_agents"] = [
-                    {"agent_id": agent, "fitness_score": score}
-                    for agent, score in top_agents
-                ]
-            except:
-                pass
+                top_agents = self.redis_client.zrevrange("evolution:leaderboard", 0, 9, withscores=True)
+                summary["top_agents"] = [{"agent_id": agent, "fitness_score": score} for agent, score in top_agents]
+            except Exception as e:
+                logger.warning(f"Failed to get top agents: {e}")
+                summary["top_agents"] = []
 
         return summary
 
-    def get_agent_history(
-        self, agent_id: str, limit: int = 100
-    ) -> list[dict[str, Any]]:
+    def get_agent_history(self, agent_id: str, limit: int = 100) -> list[dict[str, Any]]:
         """Get historical metrics for an agent."""
         if not self.db_conn:
             return []
@@ -599,7 +583,8 @@ class IntegratedEvolutionMetrics:
             try:
                 self.redis_client.ping()
                 status["redis"]["connected"] = True
-            except:
+            except Exception as e:
+                logger.debug(f"Redis connection check failed: {e}")
                 status["redis"]["connected"] = False
 
         # Check database integrity
@@ -609,8 +594,10 @@ class IntegratedEvolutionMetrics:
                 cursor.execute("SELECT COUNT(*) FROM fitness_metrics")
                 count = cursor.fetchone()[0]
                 status["database"]["total_records"] = count
-            except:
+            except Exception as e:
+                logger.warning(f"Database integrity check failed: {e}")
                 status["status"] = "degraded"
+                status["database"]["error"] = str(e)
 
         return status
 
@@ -639,9 +626,7 @@ class IntegratedEvolutionMetrics:
                 metrics.disk_io_kb = (disk.read_bytes + disk.write_bytes) / 1024
 
                 # Energy efficiency estimate (simplified)
-                metrics.energy_efficiency = (
-                    metrics.cpu_efficiency * 0.7 + metrics.memory_efficiency * 0.3
-                )
+                metrics.energy_efficiency = metrics.cpu_efficiency * 0.7 + metrics.memory_efficiency * 0.3
 
             except Exception as e:
                 logger.debug(f"Failed to collect system metrics: {e}")
@@ -675,9 +660,7 @@ def stop_metrics() -> None:
     instance.stop()
 
 
-def record_kpi(
-    agent_id: str, kpi_type: KPIType, value: float, metadata: dict | None = None
-) -> None:
+def record_kpi(agent_id: str, kpi_type: KPIType, value: float, metadata: dict | None = None) -> None:
     """Record a KPI value."""
     instance = get_metrics_instance()
     instance.record_kpi(agent_id, kpi_type, value, metadata)

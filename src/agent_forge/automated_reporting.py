@@ -9,21 +9,21 @@ Generates professional reports from Agent Forge benchmark results:
 """
 
 import asyncio
+from dataclasses import dataclass
+from datetime import datetime
 import json
 import logging
 import os
+from pathlib import Path
 import subprocess
 import sys
 import time
-from dataclasses import dataclass
-from datetime import datetime
-from pathlib import Path
 from typing import Any
 
+from jinja2 import Template
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
-from jinja2 import Template
 
 from src.agent_forge.results_analyzer import ResultsAnalyzer
 
@@ -71,14 +71,10 @@ class PublicationReportGenerator:
         report_files = {}
 
         # 1. Executive Summary
-        report_files["executive_summary"] = await self._generate_executive_summary(
-            analysis
-        )
+        report_files["executive_summary"] = await self._generate_executive_summary(analysis)
 
         # 2. Technical Report (Markdown)
-        report_files["technical_report"] = await self._generate_technical_report(
-            analysis
-        )
+        report_files["technical_report"] = await self._generate_technical_report(analysis)
 
         # 3. LaTeX Academic Paper
         if self.config.include_latex:
@@ -98,9 +94,7 @@ class PublicationReportGenerator:
         report_files.update(data_files)
 
         # 7. README for GitHub
-        report_files["readme"] = await self._generate_github_readme(
-            analysis, report_files
-        )
+        report_files["readme"] = await self._generate_github_readme(analysis, report_files)
 
         logger.info(f"Generated {len(report_files)} report files")
         return report_files
@@ -164,25 +158,18 @@ No significant performance jumps detected across pipeline phases.
 
         # Extract data for template
         best_model = insights.get("best_performing_phase", "Unknown")
-        performance_trends = analysis.get("json_analysis", {}).get(
-            "performance_trends", {}
-        )
+        performance_trends = analysis.get("json_analysis", {}).get("performance_trends", {})
         performance_score = performance_trends.get("best_score", 0.0)
 
         highlights = [
             f"Achieved {performance_score:.3f} overall performance score",
-            (
-                f"Successfully evaluated across "
-                f"{len(analysis.get('phase_analysis', {}))} pipeline phases"
-            ),
+            (f"Successfully evaluated across " f"{len(analysis.get('phase_analysis', {}))} pipeline phases"),
             "Comprehensive statistical analysis with significance testing",
             "Production-ready deployment recommendations",
         ]
 
         if insights.get("top_benchmarks"):
-            highlights.append(
-                f"Strong performance in {', '.join(insights['top_benchmarks'][:3])}"
-            )
+            highlights.append(f"Strong performance in {', '.join(insights['top_benchmarks'][:3])}")
 
         content = template.render(
             title=self.config.report_title,
@@ -377,18 +364,12 @@ accompanying data files.
 
         key_insights = [
             "Pipeline approach yields consistent improvements across benchmarks",
-            f"Best performing phase: "
-            f"{insights.get('best_performing_phase', 'Unknown')}",
+            f"Best performing phase: " f"{insights.get('best_performing_phase', 'Unknown')}",
             "Statistical significance achieved in key benchmark comparisons",
         ]
 
         if insights.get("concerning_trends"):
-            key_insights.extend(
-                [
-                    f"Concerning trend: {trend}"
-                    for trend in insights["concerning_trends"]
-                ]
-            )
+            key_insights.extend([f"Concerning trend: {trend}" for trend in insights["concerning_trends"]])
 
         content = template.render(
             title=self.config.report_title,
@@ -402,9 +383,7 @@ accompanying data files.
             hardware_info=hardware_info,
             biggest_jump=insights.get("biggest_performance_jump"),
             best_model=insights.get("best_performing_phase"),
-            best_score=analysis.get("json_analysis", {})
-            .get("performance_trends", {})
-            .get("best_score", 0.0),
+            best_score=analysis.get("json_analysis", {}).get("performance_trends", {}).get("best_score", 0.0),
             key_insights=key_insights,
             recommendations=analysis.get("recommendations", []),
         )
@@ -536,9 +515,7 @@ achieves optimal performance and is recommended for production deployment.
         # Count significant benchmarks
         statistical_analysis = analysis.get("statistical_analysis", {})
         significant_benchmarks = sum(
-            1
-            for stats in statistical_analysis.values()
-            if stats.get("baseline_ttest", {}).get("significant", False)
+            1 for stats in statistical_analysis.values() if stats.get("baseline_ttest", {}).get("significant", False)
         )
 
         content = template.render(
@@ -546,9 +523,7 @@ achieves optimal performance and is recommended for production deployment.
             author=self.config.author,
             institution=self.config.institution,
             date=datetime.now().strftime("%B %d, %Y"),
-            best_score=analysis.get("json_analysis", {})
-            .get("performance_trends", {})
-            .get("best_score", 0.0),
+            best_score=analysis.get("json_analysis", {}).get("performance_trends", {}).get("best_score", 0.0),
             models_evaluated=len(phase_analysis),
             total_benchmarks=5,
             phase_names=list(phase_analysis.keys()),
@@ -726,17 +701,11 @@ else "❌" }}
         statistical_analysis = analysis.get("statistical_analysis", {})
 
         # Get performance score for insights
-        best_score = (
-            analysis.get("json_analysis", {})
-            .get("performance_trends", {})
-            .get("best_score", 0.0)
-        )
+        best_score = analysis.get("json_analysis", {}).get("performance_trends", {}).get("best_score", 0.0)
 
         # Count significant benchmarks
         significant_count = sum(
-            1
-            for s in statistical_analysis.values()
-            if s.get("baseline_ttest", {}).get("significant", False)
+            1 for s in statistical_analysis.values() if s.get("baseline_ttest", {}).get("significant", False)
         )
 
         key_insights = [
@@ -752,9 +721,7 @@ else "❌" }}
             institution=self.config.institution,
             date=datetime.now().strftime("%B %d, %Y"),
             best_model=insights.get("best_performing_phase", "Unknown"),
-            best_score=analysis.get("json_analysis", {})
-            .get("performance_trends", {})
-            .get("best_score", 0.0),
+            best_score=analysis.get("json_analysis", {}).get("performance_trends", {}).get("best_score", 0.0),
             deployment_rec=insights.get("deployment_recommendation", "Review required"),
             phase_names=list(phase_analysis.keys()),
             hardware=("CUDA GPU" if os.environ.get("CUDA_VISIBLE_DEVICES") else "CPU"),
@@ -772,9 +739,7 @@ else "❌" }}
 
         return str(slides_file)
 
-    async def _generate_visualizations(
-        self, analysis: dict[str, Any]
-    ) -> dict[str, str]:
+    async def _generate_visualizations(self, analysis: dict[str, Any]) -> dict[str, str]:
         """Generate performance visualizations."""
         logger.info("Generating performance visualizations")
 
@@ -869,9 +834,7 @@ else "❌" }}
                     fontweight="bold",
                 )
 
-        ax.set_title(
-            "Performance Heatmap Across Benchmarks", fontsize=16, fontweight="bold"
-        )
+        ax.set_title("Performance Heatmap Across Benchmarks", fontsize=16, fontweight="bold")
         plt.tight_layout()
 
         heatmap_file = viz_dir / "benchmark_heatmap.png"
@@ -907,9 +870,7 @@ else "❌" }}
             ax.set_xlabel("Pipeline Phase", fontsize=12)
             ax.set_ylabel("Performance Score", fontsize=12)
             ax.set_xticks(range(len(phases)))
-            ax.set_xticklabels(
-                [p.replace("_", " ").title() for p in phases], rotation=45, ha="right"
-            )
+            ax.set_xticklabels([p.replace("_", " ").title() for p in phases], rotation=45, ha="right")
             ax.legend(bbox_to_anchor=(1.05, 1), loc="upper left")
             ax.grid(True, alpha=0.3)
             ax.set_ylim(0, 1.0)
@@ -967,9 +928,7 @@ else "❌" }}
                     "Target_Score": stats.get("target_score", 0.0),
                     "Baseline_Mean": stats.get("baseline_mean", 0.0),
                     "Baseline_Percentile": stats.get("baseline_percentile", 0.0),
-                    "Statistical_Significant": (
-                        stats.get("baseline_ttest", {}).get("significant", False)
-                    ),
+                    "Statistical_Significant": (stats.get("baseline_ttest", {}).get("significant", False)),
                 }
                 stats_rows.append(row)
 
@@ -981,9 +940,7 @@ else "❌" }}
 
         return data_files
 
-    async def _generate_github_readme(
-        self, analysis: dict[str, Any], report_files: dict[str, str]
-    ) -> str:
+    async def _generate_github_readme(self, analysis: dict[str, Any], report_files: dict[str, str]) -> str:
         """Generate GitHub README with results."""
         template = Template(
             """# {{ title }}
@@ -1116,9 +1073,7 @@ python agent_forge/automated_reporting.py \\
             institution=self.config.institution,
             date=datetime.now().strftime("%Y-%m-%d"),
             deployment_rec=insights.get("deployment_recommendation", "Review required"),
-            best_score=analysis.get("json_analysis", {})
-            .get("performance_trends", {})
-            .get("best_score", 0.0),
+            best_score=analysis.get("json_analysis", {}).get("performance_trends", {}).get("best_score", 0.0),
             best_model=insights.get("best_performing_phase", "Unknown"),
             confidence=insights.get("confidence_level", "medium"),
             phase_analysis=phase_analysis,
@@ -1144,18 +1099,12 @@ async def main() -> int:
     import argparse
 
     parser = argparse.ArgumentParser(description="Automated Publication Reporting")
-    parser.add_argument(
-        "--results-dir", default="./benchmark_results", help="Results directory"
-    )
+    parser.add_argument("--results-dir", default="./benchmark_results", help="Results directory")
     parser.add_argument("--output-dir", default="./reports", help="Output directory")
-    parser.add_argument(
-        "--title", default="Agent Forge Performance Analysis", help="Report title"
-    )
+    parser.add_argument("--title", default="Agent Forge Performance Analysis", help="Report title")
     parser.add_argument("--author", default="Agent Forge Team", help="Author name")
     parser.add_argument("--institution", default="AI Village", help="Institution")
-    parser.add_argument(
-        "--no-slides", action="store_true", help="Skip slide generation"
-    )
+    parser.add_argument("--no-slides", action="store_true", help="Skip slide generation")
     parser.add_argument("--no-latex", action="store_true", help="Skip LaTeX generation")
     parser.add_argument("--no-viz", action="store_true", help="Skip visualizations")
 

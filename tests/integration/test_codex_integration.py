@@ -5,10 +5,10 @@ with the existing AIVillage codebase without conflicts or data format mismatches
 """
 
 import json
+from pathlib import Path
 import sqlite3
 import tempfile
 import time
-from pathlib import Path
 from typing import Any
 from unittest.mock import patch
 
@@ -16,10 +16,14 @@ import pytest
 
 # Test imports for integration components
 try:
-    from src.production.agent_forge.evolution.evolution_metrics import (
-        EvolutionMetrics,
-        EvolutionMetricsCollector,
-        SQLiteMetricsBackend,
+    from src.core.evolution_metrics_integrated import (
+        EvolutionMetricsData as EvolutionMetrics,
+    )
+    from src.core.evolution_metrics_integrated import (
+        IntegratedEvolutionMetrics as EvolutionMetricsCollector,
+    )
+    from src.core.evolution_metrics_integrated import (
+        IntegratedEvolutionMetrics as SQLiteMetricsBackend,
     )
 
     EVOLUTION_AVAILABLE = True

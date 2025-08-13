@@ -4,8 +4,8 @@ Tests the real X25519 + ChaCha20-Poly1305 onion routing implementation
 that replaces the JSON placeholder encryption.
 """
 
-import sys
 from pathlib import Path
+import sys
 
 import pytest
 

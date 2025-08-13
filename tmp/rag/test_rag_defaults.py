@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Tests for RAG Pipeline default configuration and safe instantiation."""
 
-import sys
 from pathlib import Path
+import sys
 
 import pytest
 

@@ -8,17 +8,18 @@ Tests the Navigator's SCION preference implementation with measurable ≤500ms s
 """
 
 import asyncio
+from dataclasses import asdict, dataclass
 import json
-import types
-import pytest
+from pathlib import Path
 
 # Test imports
 import sys
 import time
+import types
 import unittest
-from dataclasses import dataclass, asdict
-from pathlib import Path
 from unittest.mock import patch
+
+import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "experimental" / "agents"))
 

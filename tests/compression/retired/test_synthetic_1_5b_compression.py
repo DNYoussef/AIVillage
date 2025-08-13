@@ -2,9 +2,9 @@
 """Test 4-stage compression on a synthetic 1.5B parameter model."""
 
 import gc
+from pathlib import Path
 import sys
 import time
-from pathlib import Path
 
 from torch import nn
 

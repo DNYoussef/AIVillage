@@ -85,8 +85,8 @@ class ResourceMonitor:
                     "memory_allocated_gb": torch.cuda.memory_allocated() / (1024**3),
                     "memory_reserved_gb": torch.cuda.memory_reserved() / (1024**3),
                 }
-        except:
-            pass
+        except Exception as e:
+            logger.debug(f"Failed to get GPU memory info: {e}")
         return None
 
     def get_battery(self) -> dict[str, Any] | None:
@@ -150,9 +150,7 @@ class ResourceMonitor:
             return False
         if disk["free_gb"] * 1024 < size_mb * 2:
             return False
-        return not (
-            battery and battery["percent"] is not None and battery["percent"] < 20
-        )
+        return not (battery and battery["percent"] is not None and battery["percent"] < 20)
 
 
 # Module-level functions

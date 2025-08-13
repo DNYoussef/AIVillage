@@ -10,18 +10,18 @@ Extends existing BitChatTransport with Jack Dorsey's BitChat specification:
 """
 
 import asyncio
+from collections import defaultdict
+from collections.abc import Callable
+from dataclasses import dataclass, field
+from enum import Enum
 import json
 import logging
 import os
 import random
 import struct
 import time
-import uuid
-from collections import defaultdict
-from collections.abc import Callable
-from dataclasses import dataclass, field
-from enum import Enum
 from typing import Any, Optional
+import uuid
 
 # Import existing BitChat implementation
 from core.p2p.bitchat_transport import BitChatMessage, BitChatPeer, BitChatTransport
@@ -186,9 +186,7 @@ class EnhancedBitChatMessage(BitChatMessage):
             logger.error(f"LZ4 decompression failed: {e}")
             return False
 
-    def encrypt_payload(
-        self, recipient_public_key: bytes, sender_private_key: bytes
-    ) -> bool:
+    def encrypt_payload(self, recipient_public_key: bytes, sender_private_key: bytes) -> bool:
         """Encrypt payload using X25519"""
         if not CRYPTO_AVAILABLE or self.encrypted:
             return False
@@ -206,9 +204,7 @@ class EnhancedBitChatMessage(BitChatMessage):
             logger.error(f"X25519 encryption failed: {e}")
             return False
 
-    def decrypt_payload(
-        self, sender_public_key: bytes, recipient_private_key: bytes
-    ) -> bool:
+    def decrypt_payload(self, sender_public_key: bytes, recipient_private_key: bytes) -> bool:
         """Decrypt payload using X25519"""
         if not CRYPTO_AVAILABLE or not self.encrypted:
             return False
@@ -316,9 +312,7 @@ class EnhancedBitChatMessage(BitChatMessage):
         return fragments
 
     @classmethod
-    def reassemble_from_fragments(
-        cls, fragments: list[BitChatFragment]
-    ) -> Optional["EnhancedBitChatMessage"]:
+    def reassemble_from_fragments(cls, fragments: list[BitChatFragment]) -> Optional["EnhancedBitChatMessage"]:
         """Reassemble message from fragments"""
         if not fragments:
             return None
@@ -329,18 +323,14 @@ class EnhancedBitChatMessage(BitChatMessage):
         # Verify we have all fragments
         expected_count = fragments[0].total_fragments
         if len(fragments) != expected_count:
-            logger.warning(
-                f"Missing fragments: have {len(fragments)}, need {expected_count}"
-            )
+            logger.warning(f"Missing fragments: have {len(fragments)}, need {expected_count}")
             return None
 
         # Verify fragment sequence and checksums
         payload = b""
         for i, fragment in enumerate(fragments):
             if fragment.fragment_index != i:
-                logger.error(
-                    f"Fragment sequence error: expected {i}, got {fragment.fragment_index}"
-                )
+                logger.error(f"Fragment sequence error: expected {i}, got {fragment.fragment_index}")
                 return None
 
             # Verify checksum
@@ -353,9 +343,7 @@ class EnhancedBitChatMessage(BitChatMessage):
         # Create reassembled message
         message = cls(id=fragments[0].fragment_id, payload=payload, is_fragmented=True)
 
-        logger.debug(
-            f"Reassembled message {message.id[:8]} from {len(fragments)} fragments"
-        )
+        logger.debug(f"Reassembled message {message.id[:8]} from {len(fragments)} fragments")
         return message
 
     def _get_signable_data(self) -> bytes:
@@ -416,14 +404,10 @@ class EnhancedBitChatTransport(BitChatTransport):
 
         # Enhanced message handling
         self.enhanced_handlers: dict[BitChatMessageType, Callable] = {}
-        self.pending_fragments: dict[str, dict[int, BitChatFragment]] = defaultdict(
-            dict
-        )
+        self.pending_fragments: dict[str, dict[int, BitChatFragment]] = defaultdict(dict)
 
         # Store-and-forward with 12-hour TTL
-        self.store_forward_cache: dict[str, list[EnhancedBitChatMessage]] = defaultdict(
-            list
-        )
+        self.store_forward_cache: dict[str, list[EnhancedBitChatMessage]] = defaultdict(list)
         self.cache_max_messages = 1000
 
         # IRC-style channels
@@ -435,9 +419,7 @@ class EnhancedBitChatTransport(BitChatTransport):
         self.dummy_traffic_task: asyncio.Task | None = None
 
         # Peer key exchange
-        self.peer_keys: dict[
-            str, dict[str, bytes]
-        ] = {}  # device_id -> {public_key, verify_key}
+        self.peer_keys: dict[str, dict[str, bytes]] = {}  # device_id -> {public_key, verify_key}
 
         # Enhanced statistics
         self.enhanced_stats = {
@@ -513,9 +495,7 @@ class EnhancedBitChatTransport(BitChatTransport):
         if encrypt and self.enable_crypto and recipient:
             peer_keys = self.peer_keys.get(recipient)
             if peer_keys and "public_key" in peer_keys:
-                if message.encrypt_payload(
-                    peer_keys["public_key"], self.crypto_keys.private_key
-                ):
+                if message.encrypt_payload(peer_keys["public_key"], self.crypto_keys.private_key):
                     self.enhanced_stats["messages_encrypted"] += 1
 
         # Sign message if crypto is enabled
@@ -604,9 +584,7 @@ class EnhancedBitChatTransport(BitChatTransport):
                 "crypto_enabled": self.enable_crypto,
                 "peer_keys_exchanged": len(self.peer_keys),
                 "channels_joined": list(self.joined_channels),
-                "store_forward_cache_size": sum(
-                    len(msgs) for msgs in self.store_forward_cache.values()
-                ),
+                "store_forward_cache_size": sum(len(msgs) for msgs in self.store_forward_cache.values()),
                 "pending_fragments": len(self.pending_fragments),
                 "enhanced_stats": self.enhanced_stats.copy(),
             }
@@ -631,9 +609,7 @@ class EnhancedBitChatTransport(BitChatTransport):
             )
 
             # Use parent class transmission
-            success = await super().send_message(
-                message.recipient, message.payload, message.priority, message.ttl
-            )
+            success = await super().send_message(message.recipient, message.payload, message.priority, message.ttl)
 
             if success:
                 logger.debug(f"Transmitted enhanced message {message.id[:8]}")
@@ -644,9 +620,7 @@ class EnhancedBitChatTransport(BitChatTransport):
             logger.error(f"Enhanced message transmission failed: {e}")
             return False
 
-    async def _send_fragments(
-        self, fragments: list[BitChatFragment], recipient: str
-    ) -> bool:
+    async def _send_fragments(self, fragments: list[BitChatFragment], recipient: str) -> bool:
         """Send message fragments"""
         success_count = 0
 
@@ -670,15 +644,9 @@ class EnhancedBitChatTransport(BitChatTransport):
         self.enhanced_handlers[BitChatMessageType.DATA] = self._handle_enhanced_data
         self.enhanced_handlers[BitChatMessageType.FRAGMENT] = self._handle_fragment
         self.enhanced_handlers[BitChatMessageType.HELLO] = self._handle_crypto_hello
-        self.enhanced_handlers[BitChatMessageType.CHANNEL_JOIN] = (
-            self._handle_channel_join
-        )
-        self.enhanced_handlers[BitChatMessageType.CHANNEL_LEAVE] = (
-            self._handle_channel_leave
-        )
-        self.enhanced_handlers[BitChatMessageType.CHANNEL_MSG] = (
-            self._handle_channel_message
-        )
+        self.enhanced_handlers[BitChatMessageType.CHANNEL_JOIN] = self._handle_channel_join
+        self.enhanced_handlers[BitChatMessageType.CHANNEL_LEAVE] = self._handle_channel_leave
+        self.enhanced_handlers[BitChatMessageType.CHANNEL_MSG] = self._handle_channel_message
         self.enhanced_handlers[BitChatMessageType.DUMMY] = self._handle_dummy_traffic
 
     async def _handle_enhanced_data(self, message: EnhancedBitChatMessage):
@@ -696,9 +664,7 @@ class EnhancedBitChatTransport(BitChatTransport):
         if message.encrypted:
             peer_keys = self.peer_keys.get(message.sender)
             if peer_keys and "public_key" in peer_keys:
-                message.decrypt_payload(
-                    peer_keys["public_key"], self.crypto_keys.private_key
-                )
+                message.decrypt_payload(peer_keys["public_key"], self.crypto_keys.private_key)
 
         # Decompress if compressed
         message.decompress_payload()
@@ -711,21 +677,15 @@ class EnhancedBitChatTransport(BitChatTransport):
             fragment = BitChatFragment.from_bytes(message.payload)
 
             # Store fragment
-            self.pending_fragments[fragment.fragment_id][fragment.fragment_index] = (
-                fragment
-            )
+            self.pending_fragments[fragment.fragment_id][fragment.fragment_index] = fragment
             self.enhanced_stats["fragments_received"] += 1
 
             # Check if we have all fragments
             fragments_dict = self.pending_fragments[fragment.fragment_id]
             if len(fragments_dict) == fragment.total_fragments:
                 # Attempt reassembly
-                fragments_list = [
-                    fragments_dict[i] for i in range(fragment.total_fragments)
-                ]
-                reassembled = EnhancedBitChatMessage.reassemble_from_fragments(
-                    fragments_list
-                )
+                fragments_list = [fragments_dict[i] for i in range(fragment.total_fragments)]
+                reassembled = EnhancedBitChatMessage.reassemble_from_fragments(fragments_list)
 
                 if reassembled:
                     # Handle reassembled message
@@ -767,9 +727,7 @@ class EnhancedBitChatTransport(BitChatTransport):
         channel_name = message.channel
         if channel_name:
             if channel_name not in self.channels:
-                self.channels[channel_name] = BitChatChannel(
-                    channel_name, message.sender
-                )
+                self.channels[channel_name] = BitChatChannel(channel_name, message.sender)
 
             self.channels[channel_name].add_member(message.sender)
 
@@ -798,12 +756,8 @@ class EnhancedBitChatTransport(BitChatTransport):
             {
                 "device_id": self.device_id,
                 "device_name": f"BitChat_{self.device_id[:8]}",
-                "public_key": self.crypto_keys.public_key.hex()
-                if self.crypto_keys.public_key
-                else "",
-                "verify_key": bytes(self.crypto_keys.verify_key).hex()
-                if self.crypto_keys.verify_key
-                else "",
+                "public_key": self.crypto_keys.public_key.hex() if self.crypto_keys.public_key else "",
+                "verify_key": bytes(self.crypto_keys.verify_key).hex() if self.crypto_keys.verify_key else "",
                 "timestamp": time.time(),
                 "capabilities": ["bitchat", "crypto", "channels", "fragmentation"],
                 "channels": list(self.joined_channels),
@@ -879,11 +833,7 @@ class EnhancedBitChatTransport(BitChatTransport):
 
         for recipient, messages in list(self.store_forward_cache.items()):
             # Filter out messages older than 12 hours
-            valid_messages = [
-                msg
-                for msg in messages
-                if msg.expires_at and msg.expires_at > current_time
-            ]
+            valid_messages = [msg for msg in messages if msg.expires_at and msg.expires_at > current_time]
 
             cleaned = len(messages) - len(valid_messages)
             if cleaned > 0:

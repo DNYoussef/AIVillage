@@ -12,22 +12,37 @@ resistance with:
 """
 
 import asyncio
+from collections import defaultdict, deque
+from dataclasses import dataclass, field
 import json
 import logging
 import time
-import uuid
-from collections import defaultdict, deque
-from dataclasses import dataclass, field
 from typing import Any
+import uuid
 
-# Bluetooth imports with fallback
+# Hard dependencies for production BitChat
 try:
     import bluetooth
+    from cryptography.hazmat.backends import default_backend
+    from cryptography.hazmat.primitives import hashes
+    from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+    import lz4.frame
 
     BLUETOOTH_AVAILABLE = True
-except ImportError:
+    LZ4_AVAILABLE = True
+    CRYPTO_AVAILABLE = True
+except ImportError as e:
     BLUETOOTH_AVAILABLE = False
-    logging.warning("PyBluez not available - BitChat will use simulation mode")
+    LZ4_AVAILABLE = False
+    CRYPTO_AVAILABLE = False
+    if "bluetooth" in str(e):
+        logging.error("PyBluez not available - BitChat requires Bluetooth support for production")
+    elif "lz4" in str(e):
+        logging.error("lz4 not available - BitChat requires compression support")
+    elif "cryptography" in str(e):
+        logging.error("cryptography not available - BitChat requires encryption support")
+    else:
+        logging.error(f"Missing dependency for BitChat: {e}")
 
 logger = logging.getLogger(__name__)
 
@@ -57,9 +72,7 @@ class BitChatMessage:
             "id": self.id,
             "sender": self.sender,
             "recipient": self.recipient,
-            "payload": self.payload.hex()
-            if isinstance(self.payload, bytes)
-            else self.payload,
+            "payload": self.payload.hex() if isinstance(self.payload, bytes) else self.payload,
             "ttl": self.ttl,
             "hop_count": self.hop_count,
             "timestamp": self.timestamp,
@@ -135,7 +148,7 @@ class BitChatTransport:
         self.store_forward_cache: dict[str, list[BitChatMessage]] = defaultdict(list)
         self.message_queue: deque = deque(maxlen=1000)
 
-        # Statistics and monitoring
+        # Statistics and monitoring with detailed metrics
         self.stats = {
             "messages_sent": 0,
             "messages_received": 0,
@@ -143,7 +156,18 @@ class BitChatTransport:
             "peers_discovered": 0,
             "store_forward_deliveries": 0,
             "routing_updates": 0,
+            "deliveries_total": 0,
+            "duplicates_dropped_total": 0,
+            "hops_histogram": defaultdict(int),
+            "compression_ratio": 0.0,
+            "crypto_operations": 0,
         }
+
+        # Compression and encryption settings
+        self.compress_threshold = 100  # bytes
+        self.max_payload_size = 500  # BLE MTU limit
+        self.enable_compression = LZ4_AVAILABLE
+        self.enable_encryption = CRYPTO_AVAILABLE
 
         # Control flags
         self.is_running = False
@@ -203,9 +227,33 @@ class BitChatTransport:
         self.message_handlers[message_type] = handler
         logger.debug(f"Registered handler for {message_type}")
 
-    async def send_message(
-        self, recipient: str, payload: bytes, priority: int = 5, ttl: int = 7
-    ) -> bool:
+    def _compress_payload(self, payload: bytes) -> tuple[bytes, bool]:
+        """Compress payload if beneficial and available"""
+        if not self.enable_compression or len(payload) < self.compress_threshold:
+            return payload, False
+
+        try:
+            compressed = lz4.frame.compress(payload)
+            # Only use compression if it's beneficial
+            if len(compressed) < len(payload) * 0.9:  # At least 10% reduction
+                return compressed, True
+            return payload, False
+        except Exception as e:
+            logger.warning(f"Compression failed: {e}")
+            return payload, False
+
+    def _decompress_payload(self, payload: bytes, is_compressed: bool) -> bytes:
+        """Decompress payload if needed"""
+        if not is_compressed or not self.enable_compression:
+            return payload
+
+        try:
+            return lz4.frame.decompress(payload)
+        except Exception as e:
+            logger.error(f"Decompression failed: {e}")
+            return payload
+
+    async def send_message(self, recipient: str, payload: bytes, priority: int = 5, ttl: int = 7) -> bool:
         """Send message via BitChat mesh
 
         Args:
@@ -224,14 +272,23 @@ class BitChatTransport:
         # Enforce BitChat TTL limits
         ttl = min(ttl, self.max_hops)
 
+        # Compress payload if beneficial
+        compressed_payload, is_compressed = self._compress_payload(payload)
+        if is_compressed:
+            self.stats["compression_ratio"] = len(compressed_payload) / len(payload)
+
         message = BitChatMessage(
             sender=self.device_id,
             recipient=recipient,
-            payload=payload,
+            payload=compressed_payload,
             ttl=ttl,
             priority=priority,
             route_path=[self.device_id],
         )
+
+        # Add compression flag to message metadata
+        if is_compressed:
+            message.route_path.append("compressed")
 
         # Check if recipient is directly reachable
         if recipient and recipient in self.active_connections:
@@ -252,15 +309,11 @@ class BitChatTransport:
 
         # Store-and-forward for offline peers
         if recipient:
-            logger.info(
-                f"Peer {recipient} offline - storing message for later delivery"
-            )
+            logger.info(f"Peer {recipient} offline - storing message for later delivery")
             self.store_forward_cache[recipient].append(message)
             # Limit stored messages per peer
             if len(self.store_forward_cache[recipient]) > 50:
-                self.store_forward_cache[recipient] = self.store_forward_cache[
-                    recipient
-                ][-50:]
+                self.store_forward_cache[recipient] = self.store_forward_cache[recipient][-50:]
             return True
 
         # Broadcast to all connected peers
@@ -307,9 +360,7 @@ class BitChatTransport:
         if BLUETOOTH_AVAILABLE:
             try:
                 # Real BLE discovery implementation
-                nearby_devices = bluetooth.discover_devices(
-                    duration=8, lookup_names=True, flush_cache=True
-                )
+                nearby_devices = bluetooth.discover_devices(duration=8, lookup_names=True, flush_cache=True)
 
                 for addr, name in nearby_devices:
                     # Skip if already discovered recently
@@ -433,9 +484,7 @@ class BitChatTransport:
         # Clean store-and-forward cache (remove messages older than 24h)
         for peer_id in list(self.store_forward_cache.keys()):
             messages = self.store_forward_cache[peer_id]
-            fresh_messages = [
-                msg for msg in messages if current_time - msg.timestamp < 86400
-            ]  # 24 hours
+            fresh_messages = [msg for msg in messages if current_time - msg.timestamp < 86400]  # 24 hours
 
             if fresh_messages:
                 self.store_forward_cache[peer_id] = fresh_messages
@@ -491,9 +540,7 @@ class BitChatTransport:
             except Exception as e:
                 logger.exception(f"Error in message handler: {e}")
         else:
-            logger.info(
-                f"Received BitChat message: {message.id[:8]} from {message.sender}"
-            )
+            logger.info(f"Received BitChat message: {message.id[:8]} from {message.sender}")
 
     async def _relay_message(self, message: BitChatMessage, received_from: str) -> None:
         """Relay message to next hop in mesh"""
@@ -537,9 +584,7 @@ class BitChatTransport:
             "discovered_peers": len(self.discovered_peers),
             "active_connections": len(self.active_connections),
             "routing_table_size": len(self.routing_table),
-            "queued_messages": sum(
-                len(msgs) for msgs in self.store_forward_cache.values()
-            ),
+            "queued_messages": sum(len(msgs) for msgs in self.store_forward_cache.values()),
             "message_cache_size": len(self.message_cache),
             "statistics": self.stats.copy(),
             "peer_details": [

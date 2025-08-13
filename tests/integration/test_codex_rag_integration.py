@@ -5,10 +5,10 @@ Tests all components according to CODEX Integration Requirements.
 
 import asyncio
 import os
+from pathlib import Path
 import shutil
 import sqlite3
 import tempfile
-from pathlib import Path
 
 import pytest
 

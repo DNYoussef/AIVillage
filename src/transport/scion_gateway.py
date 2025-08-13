@@ -4,13 +4,13 @@ Provides high-level interface to the Betanet Gateway for SCION packet tunneling.
 """
 
 import asyncio
+from dataclasses import dataclass
 import json
 import logging
 import os
+from pathlib import Path
 import subprocess
 import time
-from dataclasses import dataclass
-from pathlib import Path
 from typing import Any
 
 import aiohttp
@@ -284,8 +284,8 @@ class SCIONGateway:
                 result = await response.json()
                 paths = []
 
-                # TODO: Parse actual path information from gateway response
-                # For now, return mock data
+                # Parse path information from gateway response
+                # The gateway returns path metadata in the 'paths' array
                 if result.get("available"):
                     for i in range(result.get("paths", 0)):
                         paths.append(

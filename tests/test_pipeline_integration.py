@@ -8,9 +8,9 @@ to ensure they work correctly and verify proper handoff between components.
 import json
 import logging
 import os
+from pathlib import Path
 import sys
 import tempfile
-from pathlib import Path
 
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer

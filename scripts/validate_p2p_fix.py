@@ -9,10 +9,10 @@ This script validates that the P2P integration bug has been fixed by testing:
 import asyncio
 import json
 import logging
+from pathlib import Path
 import socket
 import sys
 import time
-from pathlib import Path
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -49,9 +49,7 @@ async def test_discovery_protocol_compatibility() -> bool | None:
         }
 
     # Create and start P2P node
-    node = P2PNode(
-        node_id="test_node", listen_port=9300, resource_monitor=mock_resource_monitor
-    )
+    node = P2PNode(node_id="test_node", listen_port=9300, resource_monitor=mock_resource_monitor)
 
     try:
         await node.start()
@@ -84,13 +82,9 @@ async def test_discovery_protocol_compatibility() -> bool | None:
 
             # Read response with timeout
             try:
-                resp_length_data = await asyncio.wait_for(
-                    reader.readexactly(4), timeout=5.0
-                )
+                resp_length_data = await asyncio.wait_for(reader.readexactly(4), timeout=5.0)
                 resp_length = int.from_bytes(resp_length_data, "big")
-                resp_data = await asyncio.wait_for(
-                    reader.readexactly(resp_length), timeout=5.0
-                )
+                resp_data = await asyncio.wait_for(reader.readexactly(resp_length), timeout=5.0)
 
                 response = json.loads(resp_data.decode("utf-8"))
 
@@ -271,9 +265,7 @@ async def validate_code_changes() -> bool | None:
         if has_read_discovery and has_handle_discovery:
             print("   ✅ Protocol adapter methods present")
         else:
-            print(
-                f"   ❌ Missing methods: read_discovery={has_read_discovery}, handle_discovery={has_handle_discovery}"
-            )
+            print(f"   ❌ Missing methods: read_discovery={has_read_discovery}, handle_discovery={has_handle_discovery}")
             return False
 
         # Check the evolution peer selection method

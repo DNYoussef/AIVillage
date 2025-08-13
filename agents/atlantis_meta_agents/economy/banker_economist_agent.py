@@ -31,9 +31,7 @@ class BankerEconomistAgent(AgentInterface):
         hash_value = int(hashlib.md5(text.encode()).hexdigest(), 16)
         return [(hash_value % 1000) / 1000.0] * 384
 
-    async def rerank(
-        self, query: str, results: list[dict[str, Any]], k: int
-    ) -> list[dict[str, Any]]:
+    async def rerank(self, query: str, results: list[dict[str, Any]], k: int) -> list[dict[str, Any]]:
         return results[:k]
 
     async def introspect(self) -> dict[str, Any]:
@@ -46,9 +44,7 @@ class BankerEconomistAgent(AgentInterface):
 
     async def communicate(self, message: str, recipient: "AgentInterface") -> str:
         if recipient:
-            response = await recipient.generate(
-                f"Banker/Economist Agent says: {message}"
-            )
+            response = await recipient.generate(f"Banker/Economist Agent says: {message}")
             return f"Response: {response[:50]}"
         return "No recipient"
 

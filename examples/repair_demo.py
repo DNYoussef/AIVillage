@@ -6,11 +6,11 @@ Shows template encoding, LLM integration, and repair operation generation.
 """
 
 import asyncio
+from datetime import datetime
 import json
 import logging
-import sys
-from datetime import datetime
 from pathlib import Path
+import sys
 
 # Add project root to path
 project_root = Path(__file__).parent.parent
@@ -144,9 +144,7 @@ Respond with a single JSON repair operation:"""
         system_prompt = "You are a medical knowledge graph repair assistant. Always respond with valid JSON."
 
         try:
-            response = await driver.generate(
-                prompt=test_prompt, system_prompt=system_prompt, max_tokens=256
-            )
+            response = await driver.generate(prompt=test_prompt, system_prompt=system_prompt, max_tokens=256)
 
             print("\n🎯 Test Generation:")
             print(f"   Latency: {response.latency_ms:.1f}ms")
@@ -182,9 +180,7 @@ Respond with a single JSON repair operation:"""
         if await lmstudio_driver.is_ready():
             print("✅ LMStudio is available")
         else:
-            print(
-                "❌ LMStudio not available (make sure LMStudio is running on port 1234)"
-            )
+            print("❌ LMStudio not available (make sure LMStudio is running on port 1234)")
     else:
         print("❌ Ollama not available (make sure Ollama is running with llama3.2:3b)")
         print("   To install: ollama pull llama3.2:3b")
@@ -240,9 +236,7 @@ async def demo_repair_proposals() -> None:
 
     try:
         # Create Innovator Agent
-        agent = await InnovatorAgent.create_default(
-            model_name="llama3.2:3b", domain="medical"
-        )
+        agent = await InnovatorAgent.create_default(model_name="llama3.2:3b", domain="medical")
 
         # Check if ready
         if await agent.llm_driver.is_ready():
@@ -295,9 +289,7 @@ async def demo_repair_proposals() -> None:
             if high_conf_ops:
                 print(f"\n🏆 High Confidence Operations (≥0.8): {len(high_conf_ops)}")
                 for op in high_conf_ops:
-                    print(
-                        f"   - {op.operation_type.value} on {op.target_id} ({op.confidence:.2f})"
-                    )
+                    print(f"   - {op.operation_type.value} on {op.target_id} ({op.confidence:.2f})")
 
         else:
             print("❌ LLM not available for proposal generation")
@@ -422,22 +414,14 @@ async def demo_domain_specialization() -> None:
 
     # Medical encoding
     medical_template = medical_encoder.encode_node(medical_node)
-    print(
-        f"   Medical Domain Critical Fields: {[f.value for f in medical_template.critical_fields]}"
-    )
+    print(f"   Medical Domain Critical Fields: {[f.value for f in medical_template.critical_fields]}")
 
     # General encoding
     general_template = general_encoder.encode_node(medical_node)
-    print(
-        f"   General Domain Critical Fields: {[f.value for f in general_template.critical_fields]}"
-    )
+    print(f"   General Domain Critical Fields: {[f.value for f in general_template.critical_fields]}")
 
-    print(
-        f"\n   Medical template focuses on: {', '.join(f.value for f in medical_template.critical_fields)}"
-    )
-    print(
-        f"   General template focuses on: {', '.join(f.value for f in general_template.critical_fields)}"
-    )
+    print(f"\n   Medical template focuses on: {', '.join(f.value for f in medical_template.critical_fields)}")
+    print(f"   General template focuses on: {', '.join(f.value for f in general_template.critical_fields)}")
 
 
 async def main() -> None:

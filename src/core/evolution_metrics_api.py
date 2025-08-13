@@ -5,13 +5,13 @@ Provides HTTP API endpoints for evolution metrics system on port 8081.
 
 import builtins
 import contextlib
-import json
-import os
-import sqlite3
-import sys
 from datetime import datetime
 from http.server import BaseHTTPRequestHandler, HTTPServer
+import json
+import os
 from pathlib import Path
+import sqlite3
+import sys
 
 # Add parent to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -102,11 +102,7 @@ class EvolutionMetricsHandler(BaseHTTPRequestHandler):
                 "wal_mode": False,
             },
             "redis": {"available": False, "connected": False},
-            "metrics": {
-                "flush_threshold": int(
-                    os.getenv("AIVILLAGE_METRICS_FLUSH_THRESHOLD", "50")
-                )
-            },
+            "metrics": {"flush_threshold": int(os.getenv("AIVILLAGE_METRICS_FLUSH_THRESHOLD", "50"))},
             "api": {
                 "port": 8081,
                 "endpoints": [
@@ -134,9 +130,7 @@ class EvolutionMetricsHandler(BaseHTTPRequestHandler):
                 health["metrics"]["total_collected"] = cursor.fetchone()[0]
 
                 # Get current round
-                cursor.execute(
-                    "SELECT id, status FROM evolution_rounds ORDER BY id DESC LIMIT 1"
-                )
+                cursor.execute("SELECT id, status FROM evolution_rounds ORDER BY id DESC LIMIT 1")
                 row = cursor.fetchone()
                 if row:
                     health["database"]["current_round"] = row[0]

@@ -6,9 +6,7 @@ from .expert_vectors import ExpertVector, ExpertVectorSystem
 class PromptBakingManager:
     """Wrapper around RAG prompt baking with optional expert vectors."""
 
-    def __init__(
-        self, model_name: str, expert_vectors: dict[str, ExpertVector] | None = None
-    ) -> None:
+    def __init__(self, model_name: str, expert_vectors: dict[str, ExpertVector] | None = None) -> None:
         self.baker = rag_prompt_baker.RAGPromptBaker(model_name)
         self.expert_vectors = expert_vectors or {}
         self._vectors_applied = False

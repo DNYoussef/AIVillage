@@ -181,9 +181,7 @@ class TestCompressionIntegration:
             assert fmt in supported_formats  # Placeholder test
 '''
 
-    with open(
-        "production/tests/compression/test_compression_comprehensive.py", "w"
-    ) as f:
+    with open("production/tests/compression/test_compression_comprehensive.py", "w") as f:
         f.write(compression_test)
 
     # Generate evolution tests
@@ -681,9 +679,7 @@ class TestBenchmarkIntegration:
         assert len(all_benchmarks) == 5
 '''
 
-    with open(
-        "production/tests/benchmarking/test_benchmark_comprehensive.py", "w"
-    ) as f:
+    with open("production/tests/benchmarking/test_benchmark_comprehensive.py", "w") as f:
         f.write(benchmark_test)
 
     # Generate geometry tests

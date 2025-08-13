@@ -6,8 +6,8 @@ This module tests the unified error handling system for FastAPI services.
 
 from unittest.mock import MagicMock, patch
 
-import pytest
 from fastapi.testclient import TestClient
+import pytest
 
 from core.error_handling import (
     AIVillageException,

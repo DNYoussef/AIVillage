@@ -1,12 +1,12 @@
 """Evolution Coordination Protocol for Future Distributed Operation."""
 
 import asyncio
-import logging
-import time
-import uuid
 from dataclasses import dataclass, field
 from enum import Enum
+import logging
+import time
 from typing import Any
+import uuid
 
 from ....core.p2p import P2PNode
 from ....core.p2p.message_protocol import (

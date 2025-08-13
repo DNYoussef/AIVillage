@@ -2,10 +2,10 @@ import argparse
 import asyncio
 import importlib.util
 import json
+from pathlib import Path
 import sys
 import time
 import types
-from pathlib import Path
 
 # Stub external dependencies required by the sharding modules
 sys.modules.setdefault("wandb", types.ModuleType("wandb"))
@@ -49,7 +49,7 @@ ShardingStrategy = mse.ShardingStrategy
 DeviceProfile = mse.DeviceProfile
 ShardingPlan = mse.ShardingPlan
 
-from src.core.p2p.p2p_node import PeerCapabilities
+from src.production.communications.p2p.p2p_node import PeerCapabilities
 
 
 class DummyP2PNode:
