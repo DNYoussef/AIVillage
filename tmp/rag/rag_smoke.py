@@ -128,7 +128,7 @@ async def test_document_indexing(pipeline: RAGPipeline):
     total_start_time = time.perf_counter()
     indexing_times = []
 
-    for i, doc in enumerate(TEST_DOCUMENTS):
+    for _i, doc in enumerate(TEST_DOCUMENTS):
         doc_start_time = time.perf_counter()
         try:
             await pipeline.add_document(doc)
@@ -180,7 +180,7 @@ async def test_retrieval_quality(pipeline: RAGPipeline):
 
             # Count matches with expected documents
             matches = sum(1 for doc_id in expected_docs if doc_id in retrieved_ids)
-            avoided = sum(1 for doc_id in should_avoid if doc_id not in retrieved_ids)
+            sum(1 for doc_id in should_avoid if doc_id not in retrieved_ids)
 
             if matches > 0 or (not expected_docs and len(results) >= 0):
                 successful_queries += 1
@@ -280,12 +280,12 @@ async def test_cache_functionality(pipeline: RAGPipeline):
 
     # First query (cache miss)
     start_time = time.perf_counter()
-    results1 = await pipeline.retrieve(test_query, top_k=3, use_cache=True)
+    await pipeline.retrieve(test_query, top_k=3, use_cache=True)
     first_query_time = (time.perf_counter() - start_time) * 1000
 
     # Second query (should be cache hit if caching works)
     start_time = time.perf_counter()
-    results2 = await pipeline.retrieve(test_query, top_k=3, use_cache=True)
+    await pipeline.retrieve(test_query, top_k=3, use_cache=True)
     second_query_time = (time.perf_counter() - start_time) * 1000
 
     print(f"   First query: {first_query_time:.2f}ms")

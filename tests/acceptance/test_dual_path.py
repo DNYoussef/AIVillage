@@ -313,7 +313,7 @@ class TestProximityLocalScenario:
         mock_dual_path.bitchat.set_peer_reachable(peer_id, False)
         mock_dual_path.betanet.send_success = False
 
-        receipt1 = await transport.send(
+        await transport.send(
             peer_id, "Offline message", TransportContext(proximity_hint="local")
         )
 
@@ -456,7 +456,7 @@ class TestLinkChangeScenario:
             "wifi_connected": False,
             "bandwidth_mbps": 0.1,
         }
-        change1 = detector.update_link_state(state1)
+        detector.update_link_state(state1)
 
         # Simulate link change
         await asyncio.sleep(0.1)  # 100ms delay

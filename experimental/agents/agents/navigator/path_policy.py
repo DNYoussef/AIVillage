@@ -23,6 +23,20 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
+# SCION Gateway import
+try:
+    from src.transport.scion_gateway import (
+        GatewayConfig,
+        SCIONConnectionError,
+        SCIONGateway,
+        SCIONPath,
+    )
+
+    SCION_AVAILABLE = True
+except ImportError:
+    SCION_AVAILABLE = False
+    logger.warning("SCION Gateway not available - SCION transport disabled")
+
 # Bluetooth imports with fallback
 try:
     import bluetooth
@@ -233,6 +247,7 @@ class PathProtocol(Enum):
 
     BITCHAT = "bitchat"  # Bluetooth mesh, offline
     BETANET = "betanet"  # HTX/HTXQUIC, online
+    SCION = "scion"  # SCION multipath network
     STORE_FORWARD = "dtm"  # Delay-tolerant messaging
     FALLBACK = "fallback"  # Legacy P2P fallback
 
@@ -295,6 +310,19 @@ class NetworkConditions:
     def is_privacy_sensitive(self) -> bool:
         """Check if privacy routing is needed"""
         return self.censorship_risk > 0.3
+
+
+@dataclass
+class Receipt:
+    """Receipt for bounty reviewers with switch latency tracking"""
+
+    chosen_path: str
+    switch_latency_ms: float
+    reason: str
+    timestamp: float = field(default_factory=time.time)
+    scion_available: bool = False
+    scion_paths: int = 0
+    path_scores: dict[str, float] = field(default_factory=dict)
 
 
 @dataclass
@@ -384,13 +412,29 @@ class NavigatorAgent:
         self.peer_proximity_cache: dict[str, bool] = {}
         self.peer_cache_ttl = 300.0  # 5 minutes
 
+        # SCION Gateway integration
+        self.scion_gateway: SCIONGateway | None = None
+        self.scion_enabled = SCION_AVAILABLE
+        self.scion_path_cache: dict[str, list[SCIONPath]] = {}
+        self.scion_cache_ttl = 60.0  # 1 minute cache for SCION paths
+        self.scion_prefer_high_performance = True
+
+        # RTT EWMA tracking for path scoring
+        self.path_rtt_ewma: dict[str, float] = defaultdict(lambda: 50.0)  # Default 50ms
+        self.rtt_ewma_alpha = 0.3  # EWMA smoothing factor
+
         # Routing statistics and learning
         self.route_success_rates: dict[str, float] = defaultdict(lambda: 0.8)
         self.protocol_performance: dict[str, dict[str, float]] = {
             "bitchat": {"latency": 200.0, "reliability": 0.85, "energy_cost": 0.2},
             "betanet": {"latency": 100.0, "reliability": 0.95, "energy_cost": 0.8},
+            "scion": {"latency": 50.0, "reliability": 0.98, "energy_cost": 0.6},
             "store_forward": {"latency": 0.0, "reliability": 1.0, "energy_cost": 0.1},
         }
+
+        # Receipt tracking for bounty reviewers
+        self.receipts: list[Receipt] = []
+        self.max_receipts = 1000
 
         # Decision caching
         self.routing_decisions: dict[str, tuple[PathProtocol, float]] = {}
@@ -421,18 +465,30 @@ class NavigatorAgent:
         message_context: MessageContext,
         available_protocols: list[str] | None = None,
     ) -> tuple[PathProtocol, dict[str, Any]]:
-        """Core path selection algorithm implementing AIVillage routing priorities:
+        """Core path selection algorithm with SCION preference and measurable ≤500ms switch time:
 
-        1. BitChat-first for Global South (offline/low-power)
-        2. Betanet for wide-area/high-bandwidth needs
-        3. Store-and-forward when neither available
-        4. Adaptive based on energy, privacy, and performance
+        1. Check SCION availability via gateway health/cache
+        2. Score paths using RTT EWMA + loss + policy (privacy/perf)
+        3. Emit Receipt {chosen_path, switch_latency_ms, reason} for bounty reviewers
+        4. BitChat-first for Global South (offline/low-power)
+        5. Betanet for wide-area/high-bandwidth needs
+        6. Store-and-forward when neither available
 
         Returns:
             Tuple of (selected_protocol, routing_metadata)
         """
+        start_time = time.time() * 1000  # milliseconds for latency tracking
+
         # Update network conditions
         await self._update_network_conditions()
+
+        # Check SCION availability first (preferred protocol)
+        scion_available = False
+        scion_paths = []
+        if self.scion_enabled:
+            scion_available, scion_paths = await self._check_scion_availability(
+                destination
+            )
 
         # Check for link changes requiring fast switching (500ms target)
         if self.fast_switch_enabled:
@@ -440,10 +496,23 @@ class NavigatorAgent:
                 destination, message_context
             )
             if link_change_detected:
-                # Fast path switch detected - use optimized decision
-                return await self._fast_path_selection(
-                    destination, message_context, available_protocols
+                # Fast path switch detected - use optimized decision with SCION preference
+                protocol, metadata = await self._fast_path_selection_with_scion(
+                    destination,
+                    message_context,
+                    available_protocols,
+                    scion_available,
+                    scion_paths,
                 )
+                switch_latency_ms = time.time() * 1000 - start_time
+                self._emit_receipt(
+                    protocol.value,
+                    switch_latency_ms,
+                    "fast_link_change",
+                    scion_available,
+                    len(scion_paths),
+                )
+                return protocol, metadata
 
         # Check decision cache
         cache_key = (
@@ -453,27 +522,397 @@ class NavigatorAgent:
             cached_decision, cache_time = self.routing_decisions[cache_key]
             if time.time() - cache_time < self.decision_cache_ttl:
                 logger.debug(f"Using cached routing decision: {cached_decision.value}")
+                switch_latency_ms = time.time() * 1000 - start_time
+                self._emit_receipt(
+                    cached_decision.value,
+                    switch_latency_ms,
+                    "cache_hit",
+                    scion_available,
+                    len(scion_paths),
+                )
                 return cached_decision, self._get_routing_metadata(
                     cached_decision, destination
                 )
 
-        # Core routing decision logic
-        selected_protocol = await self._evaluate_routing_options(
-            destination, message_context, available_protocols
+        # Core routing decision logic with SCION preference and path scoring
+        (
+            selected_protocol,
+            path_scores,
+        ) = await self._evaluate_routing_options_with_scion(
+            destination,
+            message_context,
+            available_protocols,
+            scion_available,
+            scion_paths,
         )
 
         # Cache decision
         self.routing_decisions[cache_key] = (selected_protocol, time.time())
 
+        # Calculate switch latency and emit receipt
+        switch_latency_ms = time.time() * 1000 - start_time
+        reason = self._determine_selection_reason(
+            selected_protocol, scion_available, path_scores
+        )
+        self._emit_receipt(
+            selected_protocol.value,
+            switch_latency_ms,
+            reason,
+            scion_available,
+            len(scion_paths),
+            path_scores,
+        )
+
         # Generate routing metadata
         routing_metadata = self._get_routing_metadata(selected_protocol, destination)
+        routing_metadata["path_scores"] = path_scores
+        routing_metadata["scion_available"] = scion_available
+        routing_metadata["scion_paths"] = len(scion_paths)
 
         logger.info(
             f"Selected route for {destination}: {selected_protocol.value} "
-            f"(size={message_context.size_bytes}, priority={message_context.priority})"
+            f"(size={message_context.size_bytes}, priority={message_context.priority}, "
+            f"switch_time={switch_latency_ms:.1f}ms, scion_available={scion_available})"
         )
 
         return selected_protocol, routing_metadata
+
+    async def _check_scion_availability(
+        self, destination: str
+    ) -> tuple[bool, list[SCIONPath]]:
+        """Check SCION availability via gateway health/cache"""
+        if not self.scion_enabled:
+            return False, []
+
+        # Check cache first
+        cache_key = f"scion_paths_{destination}"
+        if cache_key in self.scion_path_cache:
+            cached_paths, cache_time = self.scion_path_cache[cache_key]
+            if time.time() - cache_time < self.scion_cache_ttl:
+                return len(cached_paths) > 0, cached_paths
+
+        # Initialize SCION gateway if needed
+        if self.scion_gateway is None:
+            try:
+                config = GatewayConfig()
+                self.scion_gateway = SCIONGateway(config)
+                await self.scion_gateway.start()
+                logger.info("SCION Gateway initialized for Navigator")
+            except Exception as e:
+                logger.warning(f"Failed to initialize SCION Gateway: {e}")
+                return False, []
+
+        try:
+            # Check gateway health
+            health = await self.scion_gateway.health_check()
+            if health.get("status") != "healthy" or not health.get("scion_connected"):
+                logger.debug(f"SCION Gateway unhealthy: {health}")
+                return False, []
+
+            # Query available paths to destination
+            paths = await self.scion_gateway.query_paths(destination)
+
+            # Cache results
+            self.scion_path_cache[cache_key] = (paths, time.time())
+
+            # Update RTT EWMA for discovered paths
+            for path in paths:
+                path_key = f"scion_{path.path_id}"
+                old_rtt = self.path_rtt_ewma[path_key]
+                new_rtt = path.rtt_us / 1000.0  # Convert to ms
+                self.path_rtt_ewma[path_key] = (
+                    self.rtt_ewma_alpha * new_rtt + (1 - self.rtt_ewma_alpha) * old_rtt
+                )
+
+            logger.debug(
+                f"SCION availability check: {len(paths)} paths to {destination}"
+            )
+            return len(paths) > 0, paths
+
+        except SCIONConnectionError as e:
+            logger.warning(f"SCION connectivity error for {destination}: {e}")
+            return False, []
+        except Exception as e:
+            logger.error(f"SCION availability check failed for {destination}: {e}")
+            return False, []
+
+    async def _evaluate_routing_options_with_scion(
+        self,
+        destination: str,
+        context: MessageContext,
+        available_protocols: list[str] | None,
+        scion_available: bool,
+        scion_paths: list[SCIONPath],
+    ) -> tuple[PathProtocol, dict[str, float]]:
+        """Evaluate and select optimal routing protocol with SCION preference and path scoring"""
+        available = available_protocols or [
+            "bitchat",
+            "betanet",
+            "scion",
+            "store_forward",
+        ]
+
+        # Calculate path scores using RTT EWMA + loss + policy
+        path_scores = self._calculate_path_scores(
+            destination, context, available, scion_available, scion_paths
+        )
+
+        # PRIORITY 1: SCION preference when available and high-performance desired
+        if scion_available and "scion" in available:
+            # Check if SCION is the best choice based on scores
+            scion_score = path_scores.get("scion", 0.0)
+
+            # Prefer SCION for high-priority or performance-sensitive messages
+            if (
+                context.priority >= 7
+                or context.requires_realtime
+                or self.routing_priority == RoutingPriority.PERFORMANCE_FIRST
+                or self.scion_prefer_high_performance
+            ):
+                # Check if SCION has good performance (RTT < 100ms, loss < 5%)
+                best_scion_path = (
+                    min(scion_paths, key=lambda p: p.rtt_us) if scion_paths else None
+                )
+                if (
+                    best_scion_path
+                    and best_scion_path.rtt_us < 100000
+                    and best_scion_path.loss_rate < 0.05
+                ):
+                    logger.debug(
+                        f"SCION selected for high-performance (RTT={best_scion_path.rtt_us / 1000:.1f}ms)"
+                    )
+                    return PathProtocol.SCION, path_scores
+
+            # Also prefer SCION if it has the highest score overall
+            if scion_score == max(path_scores.values()):
+                logger.debug(
+                    f"SCION selected as highest scored path (score={scion_score:.3f})"
+                )
+                return PathProtocol.SCION, path_scores
+
+        # Continue with existing priority logic
+        return await self._evaluate_routing_options_fallback(
+            destination, context, available, path_scores
+        )
+
+    def _calculate_path_scores(
+        self,
+        destination: str,
+        context: MessageContext,
+        available_protocols: list[str],
+        scion_available: bool,
+        scion_paths: list[SCIONPath],
+    ) -> dict[str, float]:
+        """Score paths using RTT EWMA + loss + policy (privacy/perf)"""
+        scores = {}
+
+        # Base scoring weights
+        rtt_weight = 0.4  # RTT EWMA importance
+        loss_weight = 0.3  # Packet loss importance
+        policy_weight = 0.3  # Policy preference importance
+
+        # Adjust weights based on message context
+        if context.requires_realtime:
+            rtt_weight = 0.6
+            loss_weight = 0.3
+            policy_weight = 0.1
+        elif context.privacy_required:
+            rtt_weight = 0.2
+            loss_weight = 0.2
+            policy_weight = 0.6
+
+        for protocol in available_protocols:
+            if protocol not in available_protocols:
+                continue
+
+            score = 0.0
+
+            if protocol == "scion" and scion_available:
+                # SCION scoring using actual path data
+                if scion_paths:
+                    best_path = min(
+                        scion_paths, key=lambda p: p.rtt_us + p.loss_rate * 100000
+                    )
+
+                    # RTT score (lower is better, normalize to 0-1)
+                    rtt_ms = best_path.rtt_us / 1000.0
+                    rtt_score = max(0, 1.0 - rtt_ms / 200.0)  # 200ms = score of 0
+
+                    # Loss score (lower is better)
+                    loss_score = max(
+                        0, 1.0 - best_path.loss_rate / 0.1
+                    )  # 10% loss = score of 0
+
+                    # Policy score - SCION gets bonus for performance/privacy
+                    policy_score = 0.9
+                    if context.requires_realtime:
+                        policy_score = 1.0  # Perfect for real-time
+                    elif context.privacy_required:
+                        policy_score = 0.8  # Good for privacy (multipath)
+
+                    score = (
+                        rtt_weight * rtt_score
+                        + loss_weight * loss_score
+                        + policy_weight * policy_score
+                    )
+                else:
+                    score = 0.5  # Default score when paths unknown
+
+            elif protocol == "betanet":
+                # Betanet scoring
+                betanet_rtt = self.path_rtt_ewma.get("betanet", 100.0)
+                rtt_score = max(0, 1.0 - betanet_rtt / 200.0)
+                loss_score = 0.95  # Assume low loss for internet
+
+                policy_score = 0.8
+                if context.privacy_required:
+                    policy_score = 0.9  # Good for privacy with mixnodes
+                elif self.conditions.is_low_resource_environment():
+                    policy_score = 0.3  # Poor for low-resource
+
+                score = (
+                    rtt_weight * rtt_score
+                    + loss_weight * loss_score
+                    + policy_weight * policy_score
+                )
+
+            elif protocol == "bitchat":
+                # BitChat scoring
+                bitchat_rtt = self.path_rtt_ewma.get("bitchat", 200.0)
+                rtt_score = max(0, 1.0 - bitchat_rtt / 300.0)
+                loss_score = 0.85  # Bluetooth can be lossy
+
+                policy_score = 0.6
+                if (
+                    self.global_south_mode
+                    or self.conditions.is_low_resource_environment()
+                ):
+                    policy_score = 0.95  # Excellent for offline/low-resource
+                elif (
+                    destination not in self.discovered_peers
+                    or not self.discovered_peers[destination].is_nearby()
+                ):
+                    policy_score = 0.1  # Poor if no nearby peer
+
+                score = (
+                    rtt_weight * rtt_score
+                    + loss_weight * loss_score
+                    + policy_weight * policy_score
+                )
+
+            elif protocol == "store_forward":
+                # Store-and-forward scoring
+                score = 0.3  # Low score due to delay
+                if (
+                    not self.conditions.internet_available
+                    and not self.conditions.bluetooth_available
+                ):
+                    score = 1.0  # Perfect when no other option
+
+            scores[protocol] = max(0.0, min(1.0, score))  # Clamp to [0,1]
+
+        return scores
+
+    def _emit_receipt(
+        self,
+        chosen_path: str,
+        switch_latency_ms: float,
+        reason: str,
+        scion_available: bool = False,
+        scion_paths: int = 0,
+        path_scores: dict[str, float] = None,
+    ) -> None:
+        """Emit receipt for bounty reviewers with switch latency tracking"""
+        receipt = Receipt(
+            chosen_path=chosen_path,
+            switch_latency_ms=switch_latency_ms,
+            reason=reason,
+            scion_available=scion_available,
+            scion_paths=scion_paths,
+            path_scores=path_scores or {},
+        )
+
+        self.receipts.append(receipt)
+
+        # Limit receipt history
+        if len(self.receipts) > self.max_receipts:
+            self.receipts = self.receipts[-self.max_receipts :]
+
+        logger.info(
+            f"Receipt emitted: {chosen_path} ({switch_latency_ms:.1f}ms) - {reason}"
+        )
+
+    def _determine_selection_reason(
+        self,
+        protocol: PathProtocol,
+        scion_available: bool,
+        path_scores: dict[str, float],
+    ) -> str:
+        """Determine reason for path selection for receipt"""
+        if protocol == PathProtocol.SCION:
+            if scion_available:
+                return "scion_high_performance"
+            else:
+                return "scion_fallback"
+        elif protocol == PathProtocol.BETANET:
+            if scion_available:
+                return "betanet_over_scion"
+            else:
+                return "betanet_internet_available"
+        elif protocol == PathProtocol.BITCHAT:
+            if self.global_south_mode:
+                return "bitchat_offline_first"
+            else:
+                return "bitchat_peer_nearby"
+        elif protocol == PathProtocol.STORE_FORWARD:
+            return "store_forward_fallback"
+        else:
+            return f"{protocol.value}_selected"
+
+    async def _fast_path_selection_with_scion(
+        self,
+        destination: str,
+        context: MessageContext,
+        available_protocols: list[str] | None,
+        scion_available: bool,
+        scion_paths: list[SCIONPath],
+    ) -> tuple[PathProtocol, dict[str, Any]]:
+        """Fast path selection with SCION preference optimized for 500ms switching target"""
+        available = available_protocols or [
+            "bitchat",
+            "betanet",
+            "scion",
+            "store_forward",
+        ]
+
+        # Quick SCION check for fast switching
+        if scion_available and "scion" in available:
+            # Use SCION if it has low latency paths
+            if scion_paths:
+                best_path = min(scion_paths, key=lambda p: p.rtt_us)
+                if best_path.rtt_us < 100000:  # < 100ms RTT
+                    logger.debug("Fast switch to SCION (low latency available)")
+                    return PathProtocol.SCION, self._get_fast_routing_metadata(
+                        PathProtocol.SCION,
+                        {"fast_scion": True, "rtt_ms": best_path.rtt_us / 1000},
+                    )
+
+        # Fallback to existing fast path selection
+        return await self._fast_path_selection(
+            destination, context, available_protocols
+        )
+
+    async def _evaluate_routing_options_fallback(
+        self,
+        destination: str,
+        context: MessageContext,
+        available: list[str],
+        path_scores: dict[str, float],
+    ) -> tuple[PathProtocol, dict[str, float]]:
+        """Fallback to original routing logic when SCION not selected"""
+        # Use the original routing logic but return the highest scored available protocol
+        protocol = await self._evaluate_routing_options(destination, context, available)
+        return protocol, path_scores
 
     async def _evaluate_routing_options(
         self,
@@ -752,6 +1191,20 @@ class NavigatorAgent:
                 }
             )
 
+        elif protocol == PathProtocol.SCION:
+            metadata.update(
+                {
+                    "multipath": True,
+                    "path_aware": True,
+                    "high_performance": True,
+                    "global_reach": True,
+                    "failover_support": True,
+                    "estimated_latency_ms": self.protocol_performance["scion"][
+                        "latency"
+                    ],
+                }
+            )
+
         elif protocol == PathProtocol.STORE_FORWARD:
             metadata.update(
                 {
@@ -969,9 +1422,11 @@ class NavigatorAgent:
         available = available_protocols or ["bitchat", "betanet", "store_forward"]
 
         # Get fast switching recommendation from link change detector
-        should_switch, recommended_path, rationale = (
-            self.link_change_detector.get_switch_recommendation()
-        )
+        (
+            should_switch,
+            recommended_path,
+            rationale,
+        ) = self.link_change_detector.get_switch_recommendation()
 
         if should_switch and recommended_path != "maintain":
             # Use recommendation if protocol is available
@@ -1034,6 +1489,15 @@ class NavigatorAgent:
                     "fast_switch_reason": "internet_connectivity_optimization",
                 }
             )
+        elif protocol == PathProtocol.SCION:
+            metadata.update(
+                {
+                    "multipath": True,
+                    "path_aware": True,
+                    "high_performance": True,
+                    "fast_switch_reason": "scion_multipath_optimization",
+                }
+            )
         elif protocol == PathProtocol.STORE_FORWARD:
             metadata.update(
                 {
@@ -1061,4 +1525,27 @@ class NavigatorAgent:
                 ),
                 "recent_events": detector_metrics.get("recent_events", 0),
             },
+        }
+
+    def get_receipts(self, count: int = 100) -> list[Receipt]:
+        """Get recent receipts for bounty reviewers"""
+        return self.receipts[-count:] if count < len(self.receipts) else self.receipts
+
+    def get_scion_statistics(self) -> dict[str, Any]:
+        """Get SCION-specific statistics"""
+        if not self.scion_enabled:
+            return {"scion_enabled": False}
+
+        return {
+            "scion_enabled": True,
+            "scion_gateway_initialized": self.scion_gateway is not None,
+            "scion_path_cache_entries": len(self.scion_path_cache),
+            "scion_prefer_high_performance": self.scion_prefer_high_performance,
+            "path_rtt_ewma_entries": len(
+                [k for k in self.path_rtt_ewma.keys() if k.startswith("scion_")]
+            ),
+            "receipts_with_scion": len([r for r in self.receipts if r.scion_available]),
+            "scion_selections": len(
+                [r for r in self.receipts if r.chosen_path == "scion"]
+            ),
         }

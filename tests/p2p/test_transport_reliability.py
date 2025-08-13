@@ -315,7 +315,7 @@ class ReliabilityTestHarness:
 
         delivery_times = []
 
-        for i in range(message_count):
+        for _i in range(message_count):
             start_time = time.time()
             payload = b"x" * payload_size  # Test payload
 
@@ -369,7 +369,7 @@ class ReliabilityTestHarness:
         queue = [(sender, message, 0)]  # (node_id, message, hop_count)
         max_attempts = 3  # Try multiple paths
 
-        for attempt in range(max_attempts):
+        for _attempt in range(max_attempts):
             current_queue = queue.copy()
             queue.clear()
 
@@ -522,7 +522,7 @@ class ReliabilityTestHarness:
         current_node_id = linear_nodes[0]
 
         while current_hop < 7 and current_hop < len(linear_nodes) - 1:
-            current_node = self.nodes[current_node_id]
+            self.nodes[current_node_id]
             next_node_id = linear_nodes[current_hop + 1]
             next_node = self.nodes[next_node_id]
 

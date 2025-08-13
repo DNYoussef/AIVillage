@@ -50,7 +50,7 @@ class TestP2PNetworkSecurity(unittest.TestCase):
         legitimate_peer = "peer_legitimate_12345"
 
         # Create fake message from legitimate peer with wrong signature
-        fake_message = {
+        {
             "id": "msg123",
             "sender": legitimate_peer,
             "recipient": "target_peer",
@@ -395,7 +395,7 @@ class TestP2PNetworkSecurity(unittest.TestCase):
         monitor = SecurityMonitor(self.config)
 
         # Set up Alice's sequence number
-        legitimate_msg = SecureMessage(sender=alice_id, sequence_number=5)
+        SecureMessage(sender=alice_id, sequence_number=5)
         monitor.sequence_numbers[alice_id] = 5
 
         # Eve tries to replay old message with lower sequence
@@ -516,11 +516,11 @@ class TestP2PNetworkSecurity(unittest.TestCase):
                 monitor.update_peer_reputation(attacker, -0.3, "Authentication failed")
 
         # Phase 3: Message flooding
-        crypto = MessageCrypto(self.config.encryption_key)
+        MessageCrypto(self.config.encryption_key)
         for attacker in attacking_peers[10:]:  # Last 10 attackers
             for i in range(15):
                 # Simulate invalid messages
-                fake_msg = SecureMessage(
+                SecureMessage(
                     sender=attacker,
                     encrypted_payload=b"spam_message",
                     sequence_number=i,
@@ -530,7 +530,7 @@ class TestP2PNetworkSecurity(unittest.TestCase):
                 monitor.update_peer_reputation(attacker, -0.1, "Invalid message")
 
         # Analyze network state after attack
-        summary = monitor.get_security_summary()
+        monitor.get_security_summary()
 
         # Count peers with low reputation
         low_reputation_peers = sum(

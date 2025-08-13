@@ -20,7 +20,7 @@ class _DummyTokenizer:
     """
 
     def encode(self, text: str) -> list[int]:  # pragma: no cover - trivial
-        return [b for b in text.encode("utf-8")]
+        return list(text.encode("utf-8"))
 
 
 def get_cl100k_encoding() -> _DummyTokenizer:

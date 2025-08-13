@@ -112,7 +112,7 @@ class CompressionMeasurement:
         )
 
         # Initialize parameters with realistic values
-        for name, model in models.items():
+        for _name, model in models.items():
             for param in model.parameters():
                 if param.dim() > 1:
                     nn.init.xavier_uniform_(param)
@@ -168,7 +168,7 @@ class CompressionMeasurement:
                 compressed_bytes = len(compressed_data)
 
                 # Test decompression
-                reconstructed_model = compressor.decompress_model(compressed_data)
+                compressor.decompress_model(compressed_data)
                 success = True
 
             elif compressor_name == "Unified":
@@ -238,7 +238,7 @@ class CompressionMeasurement:
                     compressed_bytes = len(compressed_data)
 
                     # Test decompression
-                    reconstructed = compressor.decompress_model(compressed_data)
+                    compressor.decompress_model(compressed_data)
                     success = True
                 else:  # Unified
                     compressed_data = compressor.compress(model)
@@ -247,7 +247,7 @@ class CompressionMeasurement:
                     )  # Rough estimate
 
                     # Test decompression
-                    reconstructed = compressor.decompress(compressed_data)
+                    compressor.decompress(compressed_data)
                     success = True
             else:
                 # For tensor compressors, compress each parameter
@@ -292,16 +292,16 @@ class CompressionMeasurement:
     def _estimate_compressed_size(self, compressed_data: dict[str, Any]) -> int:
         """Estimate the size of compressed data in bytes."""
         size = 0
-        for key, value in compressed_data.items():
+        for _key, value in compressed_data.items():
             if isinstance(value, torch.Tensor):
                 size += value.numel() * value.element_size()
             elif isinstance(value, np.ndarray):
                 size += value.nbytes
             elif isinstance(value, bytes):
                 size += len(value)
-            elif isinstance(value, (int, float)):
+            elif isinstance(value, int | float):
                 size += 8
-            elif isinstance(value, (list, tuple)):
+            elif isinstance(value, list | tuple):
                 size += len(value) * 8  # Rough estimate
             elif isinstance(value, str):
                 size += len(value.encode())

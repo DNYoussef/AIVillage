@@ -419,7 +419,7 @@ class DatabaseIntegrityValidator:
                 conn = sqlite3.connect(schema.path, timeout=30)
                 cursor = conn.cursor()
 
-                for i in range(iterations):
+                for _i in range(iterations):
                     table_name = list(schema.tables.keys())[0]
                     cursor.execute(f"SELECT COUNT(*) FROM {table_name}")
                     _ = cursor.fetchone()

@@ -30,7 +30,7 @@ class IntegrationAuditor:
 
             # Test instantiation
             try:
-                pipeline = RAGPipeline()
+                RAGPipeline()
                 section["tests"].append({"name": "Pipeline creation", "status": "PASS"})
                 section["score"] += 50
             except Exception as e:
@@ -154,7 +154,7 @@ class IntegrationAuditor:
         try:
             from core.p2p.dual_path_transport import DualPathTransport
 
-            transport = DualPathTransport()
+            DualPathTransport()
             section["tests"].append({"name": "Dual-path integration", "status": "PASS"})
             section["score"] += 40
         except Exception as e:

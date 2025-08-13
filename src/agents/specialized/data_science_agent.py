@@ -547,7 +547,7 @@ class DataScienceAgent(AgentInterface):
         """Cleanup resources"""
         try:
             # Save models if needed
-            for model_id, model_data in self.models_cache.items():
+            for model_id, _model_data in self.models_cache.items():
                 logger.info(f"Saving model {model_id}")
                 # Implement model persistence if needed
 

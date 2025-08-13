@@ -344,7 +344,7 @@ class CleanupAndCommitAgent:
 
                 # Fix missing __init__.py imports
                 lines = content.split("\n")
-                has_init_import = any("__init__" in line for line in lines[:10])
+                any("__init__" in line for line in lines[:10])
 
                 if content != original_content:
                     with open(file_path, "w", encoding="utf-8") as f:

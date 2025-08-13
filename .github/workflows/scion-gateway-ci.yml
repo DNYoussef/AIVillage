@@ -1,0 +1,696 @@
+# SCION Gateway CI/CD Pipeline
+# Production-ready CI with comprehensive testing, security validation, and deployment
+
+name: SCION Gateway CI/CD
+
+on:
+  push:
+    branches: [ main, develop, 'feature/scion-*' ]
+    paths:
+      - 'proto/**'
+      - 'scion-sidecar/**'
+      - 'betanet-gateway/**'
+      - 'src/transport/scion_gateway.py'
+      - 'src/navigation/scion_navigator.py'
+      - 'tests/e2e/test_scion_gateway.py'
+      - 'docker/scion-gateway/**'
+      - '.github/workflows/scion-gateway-ci.yml'
+  
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'proto/**'
+      - 'scion-sidecar/**'
+      - 'betanet-gateway/**'
+      - 'src/transport/scion_gateway.py'
+      - 'src/navigation/scion_navigator.py'
+      - 'tests/e2e/test_scion_gateway.py'
+      - 'docker/scion-gateway/**'
+
+  workflow_dispatch:
+    inputs:
+      run_performance_tests:
+        description: 'Run performance tests'
+        required: false
+        default: 'false'
+        type: boolean
+      run_security_scan:
+        description: 'Run security scans'
+        required: false
+        default: 'true'
+        type: boolean
+
+env:
+  CARGO_TERM_COLOR: always
+  GO_VERSION: '1.21'
+  RUST_VERSION: '1.75'
+  PYTHON_VERSION: '3.11'
+  NODE_VERSION: '18'
+
+jobs:
+  # Pre-flight checks and validation
+  validate-no-placeholders:
+    name: Validate No Placeholders
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check for TODO placeholders in production code
+        run: |
+          echo "🔍 Scanning for placeholder patterns in production code..."
+          
+          # Define placeholder patterns
+          PLACEHOLDER_PATTERNS=(
+            "TODO:"
+            "FIXME:"
+            "XXX:"
+            "HACK:"
+            "NOTE:"
+            "placeholder"
+            "not implemented"
+            "stub"
+            "mock"
+            "fake"
+            "dummy"
+            "temporary"
+            "temp implementation"
+            "coming soon"
+            "to be implemented"
+          )
+          
+          # Files to check (exclude test files and docs)
+          FILES_TO_CHECK=$(find . -type f \( \
+            -name "*.go" -o \
+            -name "*.rs" -o \
+            -name "*.py" -o \
+            -name "*.proto" \
+            \) \
+            ! -path "./tests/*" \
+            ! -path "./*test*" \
+            ! -path "./docs/*" \
+            ! -path "./examples/*" \
+            ! -path "./.git/*" \
+            ! -path "./target/*" \
+            ! -path "./vendor/*")
+          
+          VIOLATIONS_FOUND=false
+          
+          for pattern in "${PLACEHOLDER_PATTERNS[@]}"; do
+            echo "Checking for pattern: '$pattern'"
+            
+            if echo "$FILES_TO_CHECK" | xargs grep -l -i "$pattern" 2>/dev/null; then
+              echo "❌ Found placeholder pattern '$pattern' in production code:"
+              echo "$FILES_TO_CHECK" | xargs grep -n -i "$pattern" 2>/dev/null || true
+              VIOLATIONS_FOUND=true
+            fi
+          done
+          
+          if [ "$VIOLATIONS_FOUND" = true ]; then
+            echo ""
+            echo "❌ PLACEHOLDER VALIDATION FAILED"
+            echo "Production code contains placeholder patterns that must be removed."
+            echo "Please implement all functionality before merging."
+            exit 1
+          else
+            echo "✅ PLACEHOLDER VALIDATION PASSED"
+            echo "No placeholder patterns found in production code."
+          fi
+
+      - name: Validate gRPC contracts completeness
+        run: |
+          echo "🔍 Validating gRPC service completeness..."
+          
+          PROTO_FILE="proto/betanet_gateway.proto"
+          
+          if [ ! -f "$PROTO_FILE" ]; then
+            echo "❌ Proto file not found: $PROTO_FILE"
+            exit 1
+          fi
+          
+          # Check for required service methods
+          REQUIRED_METHODS=(
+            "SendScionPacket"
+            "RecvScionPacket"
+            "RegisterPath"
+            "QueryPaths"
+            "Health"
+            "Stats"
+            "ValidateSequence"
+          )
+          
+          for method in "${REQUIRED_METHODS[@]}"; do
+            if ! grep -q "rpc $method" "$PROTO_FILE"; then
+              echo "❌ Required gRPC method '$method' not found in $PROTO_FILE"
+              exit 1
+            fi
+          done
+          
+          echo "✅ All required gRPC methods found in proto definition"
+
+  # Go SCION Sidecar Build and Test
+  scion-sidecar:
+    name: SCION Sidecar (Go)
+    runs-on: ubuntu-latest
+    needs: validate-no-placeholders
+    defaults:
+      run:
+        working-directory: scion-sidecar
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      
+      - name: Cache Go modules
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('scion-sidecar/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+      
+      - name: Install protobuf compiler
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y protobuf-compiler
+      
+      - name: Download dependencies
+        run: go mod download
+      
+      - name: Generate protobuf code
+        run: make proto
+      
+      - name: Run go vet
+        run: go vet ./...
+      
+      - name: Run staticcheck
+        uses: dominikh/staticcheck-action@v1.3.0
+        with:
+          version: "2023.1.6"
+          working-directory: scion-sidecar
+      
+      - name: Run tests
+        run: go test -v -race -coverprofile=coverage.out ./...
+      
+      - name: Check test coverage
+        run: |
+          COVERAGE=$(go tool cover -func=coverage.out | grep total | awk '{print $3}' | sed 's/%//')
+          echo "Test coverage: $COVERAGE%"
+          
+          if (( $(echo "$COVERAGE < 80" | bc -l) )); then
+            echo "❌ Test coverage below 80%: $COVERAGE%"
+            exit 1
+          else
+            echo "✅ Test coverage meets requirement: $COVERAGE%"
+          fi
+      
+      - name: Build binary
+        run: make build
+      
+      - name: Verify binary functionality
+        run: |
+          ./bin/scion_sidecar --help
+          ./bin/scion_sidecar --version
+      
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          file: scion-sidecar/coverage.out
+          flags: go-sidecar
+      
+      - name: Upload sidecar binary
+        uses: actions/upload-artifact@v3
+        with:
+          name: scion-sidecar-binary
+          path: scion-sidecar/bin/scion_sidecar
+
+  # Rust Betanet Gateway Build and Test
+  betanet-gateway:
+    name: Betanet Gateway (Rust)
+    runs-on: ubuntu-latest
+    needs: validate-no-placeholders
+    defaults:
+      run:
+        working-directory: betanet-gateway
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+          components: rustfmt, clippy
+      
+      - name: Cache Rust dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            betanet-gateway/target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('betanet-gateway/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+      
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            protobuf-compiler \
+            libprotobuf-dev \
+            pkg-config \
+            libssl-dev
+      
+      - name: Check code formatting
+        run: cargo fmt -- --check
+      
+      - name: Run Clippy linting
+        run: cargo clippy --all-targets --all-features -- -D warnings
+      
+      - name: Run tests
+        run: cargo test --verbose
+      
+      - name: Run tests with all features
+        run: cargo test --all-features --verbose
+      
+      - name: Check documentation
+        run: cargo doc --no-deps --document-private-items
+      
+      - name: Build in release mode
+        run: cargo build --release
+      
+      - name: Verify binary functionality
+        run: |
+          ./target/release/betanet-gateway --help
+      
+      - name: Run security audit
+        run: |
+          cargo install cargo-audit
+          cargo audit
+      
+      - name: Upload gateway binary
+        uses: actions/upload-artifact@v3
+        with:
+          name: betanet-gateway-binary
+          path: betanet-gateway/target/release/betanet-gateway
+
+  # Python Integration Tests
+  python-integration:
+    name: Python Integration
+    runs-on: ubuntu-latest
+    needs: validate-no-placeholders
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Cache Python dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+      
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-asyncio pytest-cov aiohttp
+      
+      - name: Run Python linting
+        run: |
+          pip install ruff black isort
+          ruff check src/transport/scion_gateway.py src/navigation/scion_navigator.py
+          black --check src/transport/scion_gateway.py src/navigation/scion_navigator.py
+          isort --check-only src/transport/scion_gateway.py src/navigation/scion_navigator.py
+      
+      - name: Run Python type checking
+        run: |
+          pip install mypy
+          mypy src/transport/scion_gateway.py src/navigation/scion_navigator.py --ignore-missing-imports
+      
+      - name: Run unit tests
+        run: |
+          python -m pytest tests/transport/ tests/navigation/ \
+            -v --cov=src/transport --cov=src/navigation \
+            --cov-report=xml --cov-report=term
+      
+      - name: Upload Python coverage
+        uses: codecov/codecov-action@v3
+        with:
+          file: coverage.xml
+          flags: python-integration
+
+  # Security Scanning
+  security-scan:
+    name: Security Scanning
+    runs-on: ubuntu-latest
+    needs: validate-no-placeholders
+    if: github.event.inputs.run_security_scan != 'false'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+      
+      - name: Upload Trivy scan results
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: 'trivy-results.sarif'
+      
+      - name: Run Bandit security linter (Python)
+        run: |
+          pip install bandit
+          bandit -r src/transport/scion_gateway.py src/navigation/scion_navigator.py \
+            -f json -o bandit-report.json || true
+      
+      - name: Run Semgrep security analysis
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: >-
+            p/security-audit
+            p/secrets
+            p/owasp-top-ten
+
+  # Docker Build and Test
+  docker-build:
+    name: Docker Build & Test
+    runs-on: ubuntu-latest
+    needs: [scion-sidecar, betanet-gateway]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Download sidecar binary
+        uses: actions/download-artifact@v3
+        with:
+          name: scion-sidecar-binary
+          path: scion-sidecar/bin/
+      
+      - name: Download gateway binary
+        uses: actions/download-artifact@v3
+        with:
+          name: betanet-gateway-binary
+          path: betanet-gateway/target/release/
+      
+      - name: Build SCION sidecar image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: docker/scion-gateway/Dockerfile.scion-sidecar
+          tags: scion-sidecar:test
+          load: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      
+      - name: Build Betanet gateway image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: docker/scion-gateway/Dockerfile.betanet-gateway
+          tags: betanet-gateway:test
+          load: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      
+      - name: Test Docker images
+        run: |
+          echo "Testing SCION sidecar image..."
+          docker run --rm scion-sidecar:test --help
+          
+          echo "Testing Betanet gateway image..."
+          docker run --rm betanet-gateway:test --help
+
+  # End-to-End Integration Tests
+  e2e-tests:
+    name: E2E Integration Tests
+    runs-on: ubuntu-latest
+    needs: [docker-build]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Docker Compose
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y docker-compose-plugin
+      
+      - name: Create test certificates
+        run: |
+          mkdir -p docker/scion-gateway/certs
+          cd docker/scion-gateway/certs
+          
+          # Create self-signed certificate for testing
+          openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem \
+            -days 365 -nodes -subj "/CN=localhost"
+      
+      - name: Create SCION configuration
+        run: |
+          mkdir -p docker/scion-gateway/scion-config
+          
+          # Create minimal SCION configuration for testing
+          cat > docker/scion-gateway/scion-config/dispatcher.toml << EOF
+          [dispatcher]
+          id = "br1-ff00_0_110-1"
+          socket_file_mode = "0777"
+          
+          [dispatcher.metrics]
+          prometheus = "127.0.0.1:30441"
+          EOF
+          
+          cat > docker/scion-gateway/scion-config/sd.toml << EOF
+          [sd]
+          address = "127.0.0.1:30255"
+          
+          [sd.metrics]
+          prometheus = "127.0.0.1:30455"
+          EOF
+      
+      - name: Create monitoring configuration
+        run: |
+          mkdir -p docker/scion-gateway/monitoring
+          
+          # Prometheus configuration
+          cat > docker/scion-gateway/monitoring/prometheus.yml << EOF
+          global:
+            scrape_interval: 15s
+            evaluation_interval: 15s
+          
+          scrape_configs:
+            - job_name: 'scion-sidecar'
+              static_configs:
+                - targets: ['scion-sidecar:8081']
+            
+            - job_name: 'betanet-gateway'
+              static_configs:
+                - targets: ['betanet-gateway:9090']
+          EOF
+      
+      - name: Start test environment
+        run: |
+          cd docker/scion-gateway
+          docker compose up -d scion-dispatcher scion-daemon scion-sidecar betanet-gateway prometheus
+          
+          # Wait for services to start
+          sleep 30
+      
+      - name: Wait for services to be healthy
+        run: |
+          cd docker/scion-gateway
+          
+          # Wait for health checks to pass
+          timeout 120 bash -c 'until docker compose ps | grep -E "(healthy|running)"; do sleep 5; done'
+      
+      - name: Run E2E tests
+        run: |
+          cd docker/scion-gateway
+          docker compose run --rm test-client
+      
+      - name: Collect service logs
+        if: always()
+        run: |
+          cd docker/scion-gateway
+          
+          mkdir -p ../../test-logs
+          
+          docker compose logs scion-sidecar > ../../test-logs/scion-sidecar.log
+          docker compose logs betanet-gateway > ../../test-logs/betanet-gateway.log
+          docker compose logs test-client > ../../test-logs/test-client.log
+      
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: e2e-test-results
+          path: |
+            test-logs/
+            docker/scion-gateway/test-results/
+      
+      - name: Stop test environment
+        if: always()
+        run: |
+          cd docker/scion-gateway
+          docker compose down -v
+
+  # Performance Tests (optional)
+  performance-tests:
+    name: Performance Tests
+    runs-on: ubuntu-latest
+    needs: [e2e-tests]
+    if: github.event.inputs.run_performance_tests == 'true'
+    timeout-minutes: 30
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Start performance test environment
+        run: |
+          cd docker/scion-gateway
+          docker compose --profile load-test up -d
+          
+          # Wait for services
+          sleep 60
+      
+      - name: Run throughput tests
+        run: |
+          cd docker/scion-gateway
+          docker compose run --rm load-test
+      
+      - name: Validate KPI targets
+        run: |
+          cd docker/scion-gateway
+          
+          # Check if performance targets were met
+          if [ -f test-results/load_test.json ]; then
+            THROUGHPUT=$(jq '.throughput_ppm.max' test-results/load_test.json)
+            P95_LATENCY=$(jq '.latency_ms.p95' test-results/load_test.json)
+            
+            echo "Max throughput: $THROUGHPUT packets/minute"
+            echo "P95 latency: $P95_LATENCY ms"
+            
+            # Validate targets
+            if (( $(echo "$THROUGHPUT >= 500000" | bc -l) )); then
+              echo "✅ Throughput target met: $THROUGHPUT >= 500,000"
+            else
+              echo "❌ Throughput target missed: $THROUGHPUT < 500,000"
+              exit 1
+            fi
+            
+            if (( $(echo "$P95_LATENCY <= 750" | bc -l) )); then
+              echo "✅ Latency target met: $P95_LATENCY <= 750ms"
+            else
+              echo "❌ Latency target missed: $P95_LATENCY > 750ms"
+              exit 1
+            fi
+          else
+            echo "❌ Load test results not found"
+            exit 1
+          fi
+      
+      - name: Upload performance results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: performance-test-results
+          path: docker/scion-gateway/test-results/
+
+  # Release and Deployment
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    needs: [scion-sidecar, betanet-gateway, python-integration, e2e-tests]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for changelog
+      
+      - name: Generate changelog
+        id: changelog
+        run: |
+          # Simple changelog from commit messages
+          echo "## Changes" > CHANGELOG.md
+          git log --oneline --since="7 days ago" >> CHANGELOG.md
+      
+      - name: Create release tag
+        id: tag
+        run: |
+          TAG="v1.0.0-$(date +%Y%m%d-%H%M%S)"
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          git tag $TAG
+          git push origin $TAG
+      
+      - name: Download all artifacts
+        uses: actions/download-artifact@v3
+      
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.tag.outputs.tag }}
+          name: SCION Gateway Release ${{ steps.tag.outputs.tag }}
+          body_path: CHANGELOG.md
+          files: |
+            scion-sidecar-binary/scion_sidecar
+            betanet-gateway-binary/betanet-gateway
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Notification
+  notify:
+    name: Notification
+    runs-on: ubuntu-latest
+    needs: [scion-sidecar, betanet-gateway, python-integration, e2e-tests]
+    if: always()
+    
+    steps:
+      - name: Notify success
+        if: needs.scion-sidecar.result == 'success' && needs.betanet-gateway.result == 'success' && needs.python-integration.result == 'success' && needs.e2e-tests.result == 'success'
+        run: |
+          echo "✅ SCION Gateway CI Pipeline Completed Successfully"
+          echo "All components built, tested, and validated:"
+          echo "  • Go SCION Sidecar: ✅ Built and tested"
+          echo "  • Rust Betanet Gateway: ✅ Built and tested"  
+          echo "  • Python Integration: ✅ Tested and validated"
+          echo "  • E2E Tests: ✅ All scenarios passed"
+          echo "  • No placeholders detected: ✅ Production ready"
+          echo ""
+          echo "🎉 Ready for deployment!"
+      
+      - name: Notify failure
+        if: failure()
+        run: |
+          echo "❌ SCION Gateway CI Pipeline Failed"
+          echo "Check the failed jobs above for details."
+          exit 1

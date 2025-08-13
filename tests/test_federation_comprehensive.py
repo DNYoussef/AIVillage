@@ -152,7 +152,7 @@ class TestDeviceFederationComplete:
                 )
 
                 success = await registry.register_device(profile)
-                assert success == True
+                assert success
 
         # Verify regional clustering
         for region in regions:
@@ -264,14 +264,14 @@ class TestEnhancedBitChatComplete:
             )
 
             if encrypted:
-                assert message.encrypted == True
+                assert message.encrypted
                 assert message.payload != test_payload
 
                 # Test decryption
                 decrypted = message.decrypt_payload(
                     alice.crypto_keys.public_key, bob.crypto_keys.private_key
                 )
-                assert decrypted == True
+                assert decrypted
                 assert message.payload == test_payload
 
     def test_message_fragmentation_edge_cases(self):
@@ -294,11 +294,11 @@ class TestEnhancedBitChatComplete:
 
             if case["expected_fragments"] == 0:
                 assert len(fragments) == 0
-                assert message.is_fragmented == False
+                assert not message.is_fragmented
             else:
                 assert len(fragments) >= case["expected_fragments"] - 1
                 assert len(fragments) <= case["expected_fragments"] + 1
-                assert message.is_fragmented == True
+                assert message.is_fragmented
 
                 # Test reassembly
                 reassembled = EnhancedBitChatMessage.reassemble_from_fragments(
@@ -345,7 +345,7 @@ class TestEnhancedBitChatComplete:
         channels = ["general", "tech", "random"]
         for channel in channels:
             success = await transport.join_channel(channel)
-            assert success == True
+            assert success
             assert channel in transport.joined_channels
 
         # Test channel membership
@@ -359,12 +359,12 @@ class TestEnhancedBitChatComplete:
                 success = await transport.send_channel_message(
                     channel, f"Hello {channel}!"
                 )
-                assert success == True
+                assert success
 
         # Leave channels
         for channel in channels:
             success = await transport.leave_channel(channel)
-            assert success == True
+            assert success
             assert channel not in transport.joined_channels
 
     @pytest.mark.asyncio
@@ -455,7 +455,7 @@ class TestTorTransportComplete:
             circuit = transport.get_circuit_info(circuit_id)
             if circuit:
                 assert circuit.hop_count() >= 3
-                assert circuit.is_established() == True
+                assert circuit.is_established()
 
     @pytest.mark.asyncio
     async def test_tor_message_routing(self):
@@ -482,7 +482,7 @@ class TestTorTransportComplete:
         )
 
         # Send message
-        success = await transport.send_message(
+        await transport.send_message(
             recipient_onion="recipient456.onion",
             payload={"test": "message"},
             timeout=30,
@@ -568,8 +568,8 @@ class TestMultiProtocolRouting:
     async def test_cross_protocol_message_delivery(self):
         """Test message delivery across protocol boundaries"""
         # Create nodes with different protocols
-        bitchat_node = EnhancedBitChatTransport("bitchat_node")
-        tor_node = TorTransport()
+        EnhancedBitChatTransport("bitchat_node")
+        TorTransport()
 
         # Create federation manager to coordinate
         manager = FederationManager("coordinator")
@@ -597,7 +597,7 @@ class TestMultiProtocolRouting:
                 privacy_level=PrivacyLevel.PRIVATE,
             )
 
-            assert success == True or success == False  # Depends on mocking
+            assert success or not success  # Depends on mocking
 
     @pytest.mark.asyncio
     async def test_protocol_fallback_cascade(self):
@@ -625,7 +625,7 @@ class TestMultiProtocolRouting:
 
                 # Attempt to send message
                 manager.is_running = True
-                success = await manager.send_federated_message(
+                await manager.send_federated_message(
                     recipient="unreachable_node",
                     payload={"test": "fallback"},
                     privacy_level=PrivacyLevel.ANONYMOUS,
@@ -685,7 +685,7 @@ class TestPrivacyAndVPN:
                     privacy_level=test["level"],
                 )
 
-                assert success == True
+                assert success
 
     @pytest.mark.asyncio
     async def test_privacy_tunnel_creation(self):
@@ -872,8 +872,8 @@ class TestPerformanceAndScalability:
             start = time.time()
 
             # Switch from one protocol to another
-            from_protocol = random.choice(list(protocol_latencies.keys()))
-            to_protocol = random.choice(list(protocol_latencies.keys()))
+            random.choice(list(protocol_latencies.keys()))
+            random.choice(list(protocol_latencies.keys()))
 
             # Simulate switch delay
             await asyncio.sleep(0.001)  # Minimal switching overhead
@@ -937,16 +937,16 @@ class TestSecurityValidation:
 
             # Sign message
             message.sign_message(signing_key)
-            assert message.signed == True
+            assert message.signed
 
             # Verify with correct key
             valid = message.verify_signature(verify_key)
-            assert valid == True
+            assert valid
 
             # Try to verify with wrong key
             wrong_key = nacl.signing.SigningKey.generate().verify_key
             invalid = message.verify_signature(wrong_key)
-            assert invalid == False
+            assert not invalid
 
         except ImportError:
             # Skip if crypto not available
@@ -962,27 +962,27 @@ class TestSecurityValidation:
         # Time correct comparison
         start = time.perf_counter()
         result1 = secret == b"secret_key_12345"
-        time1 = time.perf_counter() - start
+        time.perf_counter() - start
 
         # Time incorrect comparison (different at start)
         start = time.perf_counter()
         result2 = secret == b"wrong_key_123456"
-        time2 = time.perf_counter() - start
+        time.perf_counter() - start
 
         # Time incorrect comparison (different at end)
         start = time.perf_counter()
         result3 = secret == b"secret_key_12346"
-        time3 = time.perf_counter() - start
+        time.perf_counter() - start
 
         # Times should be similar (constant-time)
         # In practice, use hmac.compare_digest
-        assert result1 == True
-        assert result2 == False
-        assert result3 == False
+        assert result1
+        assert not result2
+        assert not result3
 
     def test_dos_protection(self):
         """Test DoS protection mechanisms"""
-        registry = DeviceRegistry("coordinator")
+        DeviceRegistry("coordinator")
 
         # Simulate DoS attempt with many requests
         spam_messages = []
@@ -996,7 +996,7 @@ class TestSecurityValidation:
         rate_limit = 100  # Max 100 per second
 
         start_time = time.time()
-        for msg in spam_messages:
+        for _msg in spam_messages:
             # Simple rate limiting
             if processed < rate_limit:
                 processed += 1
@@ -1081,7 +1081,7 @@ class TestEndToEndIntegration:
                 recipient="mesh_node_4", payload=test_message
             )
 
-            assert success == True
+            assert success
 
         # Stop all nodes
         for node in nodes:
@@ -1111,7 +1111,7 @@ class TestEndToEndIntegration:
             )
 
             # Should handle gracefully even if fails
-            assert success == True or success == False
+            assert success or not success
 
     @pytest.mark.asyncio
     async def test_global_south_optimization(self):

@@ -86,7 +86,7 @@ class TestDualPathComponents:
         assert message.sender == "test_sender"
         assert message.recipient == "test_recipient"
         assert message.priority == 7
-        assert message.privacy_required == True
+        assert message.privacy_required
         assert isinstance(message.payload, bytes)
         assert message.context.size_bytes > 0
         assert message.context.priority == 7
@@ -103,7 +103,7 @@ class TestDualPathComponents:
         assert nav.agent_id == "test_nav"
         assert nav.routing_priority == RoutingPriority.OFFLINE_FIRST
         assert nav.energy_mode == EnergyMode.BALANCED
-        assert nav.global_south_mode == True
+        assert nav.global_south_mode
         assert nav.data_cost_threshold == 0.005  # Sensitive to data costs
         assert nav.battery_conservation_threshold == 25
 
@@ -136,8 +136,8 @@ class TestDualPathComponents:
         )
 
         assert transport.node_id == "test_node"
-        assert transport.enable_bitchat == True
-        assert transport.enable_betanet == True
+        assert transport.enable_bitchat
+        assert transport.enable_betanet
         assert not transport.is_running
         assert transport.routing_stats["routing_decisions"] == 0
 
@@ -149,8 +149,8 @@ class TestDualPathComponents:
         success = await transport.start()
 
         # Should start successfully (even in simulation mode)
-        assert success == True
-        assert transport.is_running == True
+        assert success
+        assert transport.is_running
         assert transport.device_id == "test_bitchat"
 
         await transport.stop()
@@ -219,8 +219,8 @@ class TestDualPathComponents:
 
             # Should select BitChat for nearby peer
             assert protocol == PathProtocol.BITCHAT
-            assert metadata["offline_capable"] == True
-            assert metadata["energy_efficient"] == True
+            assert metadata["offline_capable"]
+            assert metadata["energy_efficient"]
 
     @pytest.mark.asyncio
     async def test_navigator_energy_conservation(self):
@@ -254,7 +254,7 @@ class TestDualPathComponents:
         # Should prefer BitChat or store-and-forward to conserve energy
         assert protocol in [PathProtocol.BITCHAT, PathProtocol.STORE_FORWARD]
         if protocol == PathProtocol.BITCHAT:
-            assert metadata["energy_efficient"] == True
+            assert metadata["energy_efficient"]
 
     @pytest.mark.asyncio
     async def test_dual_path_startup_with_mocked_transports(self):
@@ -267,8 +267,8 @@ class TestDualPathComponents:
         with patch.object(transport, "_sync_peer_information", new_callable=AsyncMock):
             success = await transport.start()
 
-            assert success == True
-            assert transport.is_running == True
+            assert success
+            assert transport.is_running
 
             # Verify components were created (even if using fallback)
             assert transport.bitchat is not None
@@ -350,8 +350,8 @@ class TestNavigatorPathLogic:
 
         # Should select Betanet for performance
         assert protocol == PathProtocol.BETANET
-        assert metadata["global_reach"] == True
-        assert metadata["bandwidth_adaptive"] == True
+        assert metadata["global_reach"]
+        assert metadata["bandwidth_adaptive"]
 
     @pytest.mark.asyncio
     async def test_privacy_routing_selection(self):
@@ -376,7 +376,7 @@ class TestNavigatorPathLogic:
 
         # Should prefer Betanet with privacy routing for sensitive content
         if protocol == PathProtocol.BETANET:
-            assert metadata.get("privacy_routing") == True
+            assert metadata.get("privacy_routing")
             assert metadata.get("mixnode_hops", 0) >= 2
 
 

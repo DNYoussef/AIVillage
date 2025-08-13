@@ -143,7 +143,7 @@ def verify_data_persistence():
     row = cursor.fetchone()
     if row and row[0]:
         metrics = json.loads(row[0])
-        kpi_count = len(metrics)
+        len(metrics)
 
         expected_kpis = [
             "performance_score",

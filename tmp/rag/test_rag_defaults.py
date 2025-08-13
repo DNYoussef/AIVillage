@@ -39,7 +39,7 @@ class TestRAGPipelineDefaults:
         pipeline = RAGPipeline()
 
         assert pipeline is not None
-        assert isinstance(pipeline.config, (RAGConfig, UnifiedConfig))
+        assert isinstance(pipeline.config, RAGConfig | UnifiedConfig)
         assert pipeline.documents == []
         assert pipeline._document_count == 0
 
@@ -108,7 +108,7 @@ class TestRAGPipelineDefaults:
         assert pipeline.chunker is not None
 
         # Cache might be None, dict, or advanced cache
-        assert pipeline.cache is None or isinstance(pipeline.cache, (dict, object))
+        assert pipeline.cache is None or isinstance(pipeline.cache, dict | object)
 
     @pytest.mark.asyncio
     async def test_fallback_vector_store_functionality(self):
@@ -227,11 +227,11 @@ class TestRetrievalFunctionality:
         await pipeline.add_document(doc)
 
         # First query (should be cache miss)
-        results1 = await pipeline.retrieve("test query", use_cache=True)
+        await pipeline.retrieve("test query", use_cache=True)
         metrics1 = pipeline.get_metrics()
 
         # Second identical query (might be cache hit)
-        results2 = await pipeline.retrieve("test query", use_cache=True)
+        await pipeline.retrieve("test query", use_cache=True)
         metrics2 = pipeline.get_metrics()
 
         # Check that metrics are updated

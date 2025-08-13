@@ -34,7 +34,7 @@ class TestDataScienceAgent:
         """Test agent initializes correctly"""
         assert agent.agent_id == "data_science_agent"
         assert agent.agent_type == "DataScience"
-        assert agent.initialized == True
+        assert agent.initialized
         assert len(agent.capabilities) == 8
 
     async def test_generate_response(self, agent):
@@ -418,7 +418,7 @@ class TestSpecializedAgentRegistry:
 
     async def test_registry_initialization(self, registry):
         """Test registry initializes correctly"""
-        assert registry.initialized == True
+        assert registry.initialized
         assert len(registry.agent_classes) == 8
         assert len(registry.capabilities) == 8
 
@@ -471,7 +471,7 @@ async def test_global_registry():
     """Test global registry functionality"""
     registry = await get_global_registry()
     assert registry is not None
-    assert registry.initialized == True
+    assert registry.initialized
 
     # Test agent creation
     agent = await registry.get_or_create_agent("data_science")
@@ -479,7 +479,7 @@ async def test_global_registry():
 
     # Test status
     status = await registry.get_agent_status()
-    assert status["registry_initialized"] == True
+    assert status["registry_initialized"]
 
 
 if __name__ == "__main__":
@@ -502,7 +502,7 @@ if __name__ == "__main__":
         for agent in agents:
             try:
                 await agent.initialize()
-                response = await agent.generate("Test prompt")
+                await agent.generate("Test prompt")
                 status = await agent.introspect()
 
                 print(f"✅ {agent.agent_type} agent: OK")

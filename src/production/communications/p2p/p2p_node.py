@@ -922,7 +922,7 @@ class P2PNode:
     ) -> None:
         """Handle evolution consensus message."""
         sender_id = message.get("sender_id")
-        consensus_data = message.get("consensus", {})
+        message.get("consensus", {})
 
         logger.info(f"Received evolution consensus from {sender_id}")
 

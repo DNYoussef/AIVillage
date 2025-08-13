@@ -156,10 +156,7 @@ class FinancialAgent(AgentInterface):
 
             result = {
                 "assets": assets,
-                "weights": {
-                    asset: weight
-                    for asset, weight in zip(assets, weights, strict=False)
-                },
+                "weights": dict(zip(assets, weights, strict=False)),
                 "expected_return": portfolio_return,
                 "volatility": portfolio_volatility,
                 "sharpe_ratio": sharpe_ratio,

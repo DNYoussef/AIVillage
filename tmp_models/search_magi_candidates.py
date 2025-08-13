@@ -50,20 +50,6 @@ def search_models_by_category():
     api = HfApi()
 
     # Define search parameters for each category
-    categories = {
-        "coding": {
-            "search_terms": ["code", "coder", "coding", "instruct", "python"],
-            "models": [],
-        },
-        "math": {
-            "search_terms": ["math", "mathematics", "gsm", "reasoning", "num"],
-            "models": [],
-        },
-        "tools": {
-            "search_terms": ["instruct", "function", "tool", "structured", "json"],
-            "models": [],
-        },
-    }
 
     # Search for models
     try:

@@ -255,7 +255,7 @@ class RAGPipeline:
                     )
 
             async def retrieve(self, *args, **kwargs) -> list[RetrievalResult]:
-                query_vector = args[0] if args else []
+                args[0] if args else []
                 k = args[1] if len(args) > 1 else kwargs.get("k", 5)
                 # Simple text matching fallback - search for query terms in content
                 results = []

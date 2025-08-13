@@ -108,25 +108,31 @@ def test_model(model_path: Path, category: str) -> dict:
         # Define category-specific tests
         if category == "coding":
             prompt = "Write a Python function to check if a string is a palindrome."
-            expected_check = lambda x: "def " in x and (
-                "palindrome" in x.lower() or "return" in x
-            )
+
+            def expected_check(x):
+                return "def " in x and ("palindrome" in x.lower() or "return" in x)
 
         elif category == "math":
             prompt = "If a train travels 60 km in 1.5 hours, what is its average speed in km/h? Show reasoning briefly."
-            expected_check = lambda x: any(str(i) in x for i in [40, "40"]) and (
-                "km/h" in x or "speed" in x.lower()
-            )
+
+            def expected_check(x):
+                return any(str(i) in x for i in [40, "40"]) and (
+                    "km/h" in x or "speed" in x.lower()
+                )
 
         elif category == "tools":
             prompt = """You are a tool-use model. Call the function in JSON only.
 Function: {"name":"get_weather","parameters":{"city":"string","unit":"string"}}
 Task: Get weather for Paris in Celsius.
 Return JSON: {"tool_call":{"name":"get_weather","arguments":{"city":"Paris","unit":"C"}}}"""
-            expected_check = lambda x: validate_json_output(x)["correct_function"]
+
+            def expected_check(x):
+                return validate_json_output(x)["correct_function"]
         else:
             prompt = "Hello, how are you?"
-            expected_check = lambda x: len(x.strip()) > 0
+
+            def expected_check(x):
+                return len(x.strip()) > 0
 
         # Run generation test
         print(f"  Testing {category} generation...")
@@ -207,7 +213,7 @@ def main():
     models_base_path = Path("../models/seeds/magi")
     results = {}
 
-    for category, expected_dir in expected_models.items():
+    for category, _expected_dir in expected_models.items():
         print(f"\n=== Testing {category.upper()} Model ===")
 
         # Find the model directory

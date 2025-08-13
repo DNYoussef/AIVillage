@@ -1,0 +1,68 @@
+# Multi-stage build for Betanet Gateway (Rust)
+FROM rust:1.75-slim-bookworm AS builder
+
+# Install build dependencies
+RUN apt-get update && apt-get install -y \
+    pkg-config \
+    libssl-dev \
+    protobuf-compiler \
+    libclang-dev \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set working directory
+WORKDIR /app
+
+# Copy Cargo files first for better caching
+COPY betanet-gateway/Cargo.toml betanet-gateway/Cargo.lock ./
+COPY proto/ ../proto/
+
+# Create dummy main.rs for dependency caching
+RUN mkdir src && echo "fn main() {}" > src/main.rs
+
+# Download and compile dependencies
+RUN cargo build --release && rm -rf src/
+
+# Copy source code
+COPY betanet-gateway/src/ src/
+COPY betanet-gateway/build.rs ./
+
+# Build the binary
+RUN cargo build --release
+
+# Production image
+FROM debian:bookworm-slim
+
+# Install runtime dependencies
+RUN apt-get update && apt-get install -y \
+    ca-certificates \
+    curl \
+    netcat-traditional \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create non-root user
+RUN groupadd -r betanet && useradd -r -g betanet betanet
+
+# Create directories
+RUN mkdir -p /var/lib/betanet-gateway /var/log/betanet-gateway && \
+    chown -R betanet:betanet /var/lib/betanet-gateway /var/log/betanet-gateway
+
+# Copy binary from builder
+COPY --from=builder /app/target/release/betanet-gateway /app/betanet-gateway
+RUN chmod +x /app/betanet-gateway
+
+# Switch to non-root user
+USER betanet
+
+# Health check
+HEALTHCHECK --interval=15s --timeout=10s --start-period=30s --retries=3 \
+    CMD curl -k -f https://localhost:8443/health || exit 1
+
+# Expose ports
+EXPOSE 8443 9090
+
+# Default command
+CMD ["/app/betanet-gateway", \
+     "--htx-bind=0.0.0.0:8443", \
+     "--metrics-addr=0.0.0.0:9090", \
+     "--log-level=info"]

@@ -283,7 +283,7 @@ class SwordAgent(AgentInterface):
         ]
 
         for vector_name, attack_type, success_prob in attack_vectors:
-            vector_id = f"{target}_{vector_name.replace(' ', '_')}"
+            f"{target}_{vector_name.replace(' ', '_')}"
 
             # Simulate attack
             attack_successful = random.random() < success_prob
@@ -380,7 +380,7 @@ class SwordAgent(AgentInterface):
             return ["No vulnerabilities discovered - maintain current security posture"]
 
         # Generic recommendations based on vulnerability types
-        vuln_types = set(vuln["type"] for vuln in vulnerabilities)
+        vuln_types = {vuln["type"] for vuln in vulnerabilities}
 
         if any("Injection" in vtype for vtype in vuln_types):
             recommendations.append(
@@ -531,7 +531,7 @@ class SwordAgent(AgentInterface):
             return 0.0
 
         total_score = 0
-        for system, metrics in system_response.items():
+        for _system, metrics in system_response.items():
             system_score = (
                 metrics["availability"] * 0.4
                 + (1 - min(metrics["error_rate"], 1)) * 0.3

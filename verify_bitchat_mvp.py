@@ -678,10 +678,6 @@ dependencies {
     def check_ios_build(self) -> bool:
         """Check iOS build configuration"""
         # Check for iOS project structure
-        ios_files = [
-            "ios/Bitchat/Package.swift",
-            "ios/Bitchat/Sources/Bitchat/BitChatManager.swift",
-        ]
 
         has_package = (self.project_root / "ios/Bitchat/Package.swift").exists()
         has_source = (

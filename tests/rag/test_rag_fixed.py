@@ -345,7 +345,6 @@ def test_actual_performance():
 
             # Check against claimed targets
             target_uncached = 100  # <100ms claimed
-            target_cached = 10  # <10ms claimed
 
             meets_uncached_target = avg_latency < target_uncached
             print(f"Meets <100ms target: {meets_uncached_target}")

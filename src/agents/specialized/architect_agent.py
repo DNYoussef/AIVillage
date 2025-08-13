@@ -221,7 +221,7 @@ class ArchitectAgent(AgentInterface):
     def _design_data_layer(self, requirements: dict[str, Any]) -> dict[str, Any]:
         """Design data architecture"""
         data_volume = requirements.get("data_volume", "medium")
-        consistency_req = requirements.get("consistency", "eventual")
+        requirements.get("consistency", "eventual")
 
         if data_volume == "large":
             return {

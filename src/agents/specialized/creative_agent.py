@@ -445,9 +445,7 @@ class CreativeAgent(AgentInterface):
                     "verse_a": "16 bars",
                     "chorus": "16 bars",
                     "verse_b": "16 bars",
-                    "chorus": "16 bars",
                     "bridge": "8 bars",
-                    "chorus": "16 bars",
                     "outro": "8 bars",
                 },
                 "chord_progression": [

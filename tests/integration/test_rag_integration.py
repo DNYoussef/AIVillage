@@ -147,14 +147,14 @@ class TestRAGIntegration:
         # First query - should not be cached
         start_time = time.perf_counter()
         results1, metrics1 = await rag_pipeline.retrieve(query, use_cache=True)
-        first_latency = time.perf_counter() - start_time
+        time.perf_counter() - start_time
 
         assert not metrics1.get("cache_hit", False)
 
         # Second query - should use cache
         start_time = time.perf_counter()
         results2, metrics2 = await rag_pipeline.retrieve(query, use_cache=True)
-        second_latency = time.perf_counter() - start_time
+        time.perf_counter() - start_time
 
         # Cache hit should be faster (though with small dataset difference might be minimal)
         assert len(results1) == len(results2)

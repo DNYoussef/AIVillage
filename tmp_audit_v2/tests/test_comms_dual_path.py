@@ -61,11 +61,11 @@ async def test_ttl_bounded_relay():
     # Should accept up to 7 hops
     for i in range(7):
         message["hops"].append(f"hop{i}")
-        assert transport._should_relay(message) == True
+        assert transport._should_relay(message)
 
     # Should reject at 8 hops
     message["hops"].append("hop7")
-    assert transport._should_relay(message) == False
+    assert not transport._should_relay(message)
 
 
 @pytest.mark.asyncio

@@ -85,7 +85,7 @@ def test_database_connection():
         ("temp_store", "2"),  # 2 = MEMORY
     ]
 
-    for pragma_name, expected in pragmas:
+    for pragma_name, _expected in pragmas:
         cursor.execute(f"PRAGMA {pragma_name}")
         value = str(cursor.fetchone()[0])
         print(f"  PRAGMA {pragma_name} = {value}")
@@ -353,7 +353,7 @@ def test_flush_threshold():
 
     # Count records before
     cursor.execute("SELECT COUNT(*) FROM fitness_metrics")
-    before_count = cursor.fetchone()[0]
+    cursor.fetchone()[0]
 
     # Start new round for testing
     cursor.execute(

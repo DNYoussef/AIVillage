@@ -4,9 +4,9 @@ Convenient wrapper for running comprehensive style checks on automation scripts.
 """
 
 import argparse
-from pathlib import Path
 import subprocess
 import sys
+from pathlib import Path
 
 
 def run_style_check(

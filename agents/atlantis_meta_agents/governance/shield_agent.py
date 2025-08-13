@@ -456,13 +456,6 @@ class ShieldAgent(AgentInterface):
         action_lower = action.lower()
 
         # Core constitutional principles
-        constitutional_rules = {
-            "transparency": "All actions must be transparent and auditable",
-            "privacy": "Personal data must be protected",
-            "autonomy": "Agent autonomy must be respected",
-            "beneficence": "Actions must benefit the village",
-            "non_maleficence": "Actions must not harm others",
-        }
 
         # Simple compliance checks
         if "secret" in action_lower or "hidden" in action_lower:

@@ -60,7 +60,7 @@ def download_and_pin_model(repo_id: str, category: str) -> dict:
         downloaded_files = []
         total_size = 0
 
-        for root, dirs, files in os.walk(local_path):
+        for root, _dirs, files in os.walk(local_path):
             for file in files:
                 filepath = Path(root) / file
                 size = filepath.stat().st_size

@@ -36,7 +36,7 @@ def get_known_candidates():
 
 def analyze_specific_model(repo_id: str) -> dict:
     """Get detailed info for a specific model"""
-    api = HfApi()
+    HfApi()
 
     try:
         model = model_info(repo_id, files_metadata=True)

@@ -159,7 +159,7 @@ class TestEnhancedBitChat:
         transport = EnhancedBitChatTransport("test_device", enable_crypto=True)
 
         assert transport.device_id == "test_device"
-        assert transport.enable_crypto == True
+        assert transport.enable_crypto
         assert transport.crypto_keys is not None
         assert len(transport.channels) == 0
 
@@ -174,12 +174,12 @@ class TestEnhancedBitChat:
         compressed = message.compress_payload()
 
         if compressed:  # If LZ4 is available
-            assert message.compressed == True
+            assert message.compressed
             assert len(message.payload) < original_size
 
             # Test decompression
             message.decompress_payload()
-            assert message.compressed == False
+            assert not message.compressed
             assert len(message.payload) == original_size
 
     def test_message_fragmentation(self):
@@ -191,7 +191,7 @@ class TestEnhancedBitChat:
         fragments = message.fragment_message(max_fragment_size=400)
 
         assert len(fragments) > 1
-        assert message.is_fragmented == True
+        assert message.is_fragmented
 
         # Test reassembly
         reassembled = EnhancedBitChatMessage.reassemble_from_fragments(fragments)
@@ -205,7 +205,7 @@ class TestEnhancedBitChat:
 
         # Join channel
         success = await transport.join_channel("general")
-        assert success == True
+        assert success
         assert "general" in transport.joined_channels
         assert "general" in transport.channels
 
@@ -216,7 +216,7 @@ class TestEnhancedBitChat:
         # Send channel message
         with patch.object(transport, "_transmit_enhanced_message", return_value=True):
             success = await transport.send_channel_message("general", "Hello channel!")
-            assert success == True
+            assert success
 
         # Leave channel
         await transport.leave_channel("general")
@@ -237,12 +237,12 @@ class TestEnhancedBitChat:
 
             # Sign message
             success = message.sign_message(signing_key)
-            assert success == True or message.signed == False  # May not have crypto
+            assert success or not message.signed  # May not have crypto
 
             if message.signed:
                 # Verify signature
                 valid = message.verify_signature(verify_key)
-                assert valid == True
+                assert valid
 
         except ImportError:
             # Skip if crypto not available
@@ -262,7 +262,7 @@ class TestTorTransport:
         assert transport.control_port == 9051
         assert transport.hidden_service_port == 80
         assert transport.target_port == 8080
-        assert transport.is_running == False
+        assert not transport.is_running
 
     @pytest.mark.asyncio
     async def test_tor_circuit_creation(self):
@@ -316,7 +316,7 @@ class TestTorTransport:
         assert "active_circuits" in status
         assert "stats" in status
 
-        assert status["is_running"] == False
+        assert not status["is_running"]
         assert status["active_circuits"] == 0
 
 
@@ -335,7 +335,7 @@ class TestFederationManager:
 
         assert manager.device_id == "test_federation_node"
         assert manager.region == "test_region"
-        assert manager.is_running == False
+        assert not manager.is_running
 
     @pytest.mark.asyncio
     async def test_federation_startup_sequence(self):
@@ -366,8 +366,8 @@ class TestFederationManager:
                 # Start federation
                 success = await manager.start()
 
-                assert success == True
-                assert manager.is_running == True
+                assert success
+                assert manager.is_running
                 assert manager.federation_role == DeviceRole.EDGE
 
     @pytest.mark.asyncio
@@ -395,7 +395,7 @@ class TestFederationManager:
                     privacy_level=privacy_level,
                 )
 
-                assert success == True
+                assert success
 
     @pytest.mark.asyncio
     async def test_ai_service_request_routing(self):
@@ -471,10 +471,10 @@ class TestMultiProtocolIntegration:
     @pytest.mark.asyncio
     async def test_protocol_fallback_sequence(self):
         """Test fallback from BitChat -> Betanet -> Tor"""
-        manager = FederationManager("test_node", enable_tor=True)
+        FederationManager("test_node", enable_tor=True)
 
         # Mock protocol availability
-        mock_navigator = Mock()
+        Mock()
 
         # Test protocol selection under different conditions
         test_scenarios = [
@@ -505,10 +505,10 @@ class TestMultiProtocolIntegration:
         # Test that a message can be sent via BitChat and received via Tor
 
         # Source: BitChat node
-        bitchat_transport = EnhancedBitChatTransport("bitchat_node")
+        EnhancedBitChatTransport("bitchat_node")
 
         # Destination: Tor node
-        tor_transport = TorTransport()
+        TorTransport()
 
         # Create test message
         test_message = {
@@ -590,8 +590,8 @@ class TestFederationPerformance:
         manager = FederationManager("test_node")
 
         # Add many devices to registry
-        for i in range(1000):
-            device_id = f"device_{i}"
+        for _i in range(1000):
+            pass
             # In practice, would test actual memory usage
 
         # Verify basic functionality still works

@@ -89,7 +89,6 @@ class TestSystemIntegration:
         # assert twin.encryption_key is not None
 
         # 3. Voice query triggers RAG
-        query = "What is photosynthesis?"
 
         # 4. RAG retrieves from Wikipedia
         # This is a simplified call, the real one has more complex inputs

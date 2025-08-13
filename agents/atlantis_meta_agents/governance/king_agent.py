@@ -545,7 +545,7 @@ class KingAgent(AgentInterface):
                 decision_type: len(
                     [d for d in self.decision_log if d["type"] == decision_type]
                 )
-                for decision_type in set(d["type"] for d in self.decision_log)
+                for decision_type in {d["type"] for d in self.decision_log}
             },
             "transparency_policy": "All King decisions are logged and auditable",
             "oversight_level": "full_village_transparency",

@@ -494,7 +494,7 @@ class TestBitChatProtocolRoundtrip:
                     message_type="MESSAGE_TYPE_DATA",
                     ciphertext_blob=payload,
                 )
-                serialized = envelope.serialize()
+                envelope.serialize()
 
             serialization_time = time.time() - start_time
 
@@ -512,7 +512,7 @@ class TestBitChatProtocolRoundtrip:
 
             start_time = time.time()
             for i in range(message_count):
-                deserialized = MockEnvelope.deserialize(test_serialized)
+                MockEnvelope.deserialize(test_serialized)
             deserialization_time = time.time() - start_time
 
             # Calculate rates

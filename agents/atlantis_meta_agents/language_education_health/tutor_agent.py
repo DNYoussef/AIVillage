@@ -578,7 +578,7 @@ Practice organizing files on your device and learn keyboard shortcuts.""",
         assessment = await self._generate_assessment(topic, learner.learning_level)
 
         # Create assessment session
-        start_time = time.time()
+        time.time()
 
         # Simulate assessment execution (in real implementation, this would be interactive)
         assessment_results = await self._execute_assessment(assessment, learner)

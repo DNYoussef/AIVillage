@@ -336,7 +336,7 @@ class HardwareProbe:
             # Determine P2P readiness
             has_wifi = self.results["wifi"]["available"]
             has_bluetooth = self.results["bluetooth"].get("available", False)
-            has_interfaces = len(interfaces) > 0
+            len(interfaces) > 0
 
             self.results["network"]["p2p_ready"] = has_wifi or has_bluetooth
             self.results["network"]["interface_count"] = len(interfaces)
@@ -515,7 +515,7 @@ def print_detailed_report(results: dict[str, Any]):
     interfaces = network.get("interfaces", [])
     if interfaces:
         print(f"   ✅ {len(interfaces)} interfaces detected")
-        for i, iface in enumerate(interfaces[:3]):  # Show first 3
+        for _i, iface in enumerate(interfaces[:3]):  # Show first 3
             name = iface.get("name", "Unknown")[:30]
             print(f"   📡 {name}")
     else:

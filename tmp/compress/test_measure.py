@@ -146,7 +146,7 @@ class TestCompressionAlgorithms:
             else:
                 nn.init.zeros_(param)
 
-        original_bytes = sum(p.numel() * 4 for p in model.parameters())
+        sum(p.numel() * 4 for p in model.parameters())
 
         # Compress
         compressed_data = compressor.quantize_model(model)
@@ -239,7 +239,7 @@ class TestCompressionRatios:
         weights = torch.randn(100, 100) * 0.1
         original_bytes = weights.numel() * 4
 
-        compressed = compressor.compress(weights)
+        compressor.compress(weights)
         # Each weight uses 2 bits + overhead
         expected_compressed = weights.numel() // 4 + 20  # Rough estimate
 

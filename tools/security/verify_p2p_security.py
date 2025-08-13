@@ -350,7 +350,7 @@ def test_rate_limiting():
 
     # Normal connection attempts (within limits)
     successful_connections = 0
-    for i in range(max_connections_per_minute):
+    for _i in range(max_connections_per_minute):
         if check_rate_limits(normal_peer, "connection"):
             successful_connections += 1
 
@@ -366,7 +366,7 @@ def test_rate_limiting():
     allowed_connections = 0
     blocked_connections = 0
 
-    for i in range(max_connections_per_minute * 2):  # Try double the limit
+    for _i in range(max_connections_per_minute * 2):  # Try double the limit
         if check_rate_limits(attacker_peer, "connection"):
             allowed_connections += 1
         else:
@@ -388,7 +388,7 @@ def test_rate_limiting():
     allowed_messages = 0
     blocked_messages = 0
 
-    for i in range(max_messages_per_minute * 2):  # Try double the limit
+    for _i in range(max_messages_per_minute * 2):  # Try double the limit
         if check_rate_limits(spam_peer, "message"):
             allowed_messages += 1
         else:
@@ -424,7 +424,7 @@ def test_replay_attack_prevention():
 
         # Check sequence number
         if peer_id in peer_sequences:
-            expected_seq = peer_sequences[peer_id] + 1
+            peer_sequences[peer_id] + 1
             if sequence_num <= peer_sequences[peer_id]:
                 print(
                     f"    [DETECTED] Old sequence number: {sequence_num} <= {peer_sequences[peer_id]}"

@@ -295,7 +295,7 @@ class OriginCalibrator:
                     logger.debug(f"Calibration fetch: {url} -> {response.status}")
 
                     # Read response to measure timing
-                    content = await response.read()
+                    await response.read()
 
             except Exception as e:
                 logger.debug(f"Calibration fetch failed (expected): {e}")
@@ -676,7 +676,7 @@ async def test_betanet_v2():
         recipient="peer123", payload=b"Hello Betanet V2!", mobile_optimized=True
     )
 
-    assert result == True
+    assert result
     assert transport.stats["key_rotations"] >= 0
 
     await transport.stop()

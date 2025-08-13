@@ -4,13 +4,13 @@
 Analyzes the codebase for linting issues and provides automated fixes where possible.
 """
 
-from collections import defaultdict
-from dataclasses import dataclass, field
 import json
-from pathlib import Path
 import re
 import subprocess
 import sys
+from collections import defaultdict
+from dataclasses import dataclass, field
+from pathlib import Path
 
 
 @dataclass

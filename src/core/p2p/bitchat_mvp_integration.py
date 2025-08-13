@@ -453,7 +453,7 @@ class BitChatMVPIntegrationBridge:
 
         try:
             # Convert to dual-path format
-            dual_path_message = DualPathMessage(
+            DualPathMessage(
                 id=message.msg_id,
                 sender=message.original_sender,
                 payload=message.ciphertext_blob,

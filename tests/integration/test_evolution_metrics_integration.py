@@ -86,7 +86,7 @@ def test_redis_integration():
     print("TEST 2: REDIS INTEGRATION WITH FALLBACK")
     print("=" * 60)
 
-    metrics = IntegratedEvolutionMetrics()
+    IntegratedEvolutionMetrics()
 
     # Check Redis availability
     try:
@@ -332,7 +332,7 @@ def test_api_health_endpoint():
     print("TEST 6: API HEALTH ENDPOINT VERIFICATION")
     print("=" * 60)
 
-    metrics = start_metrics()
+    start_metrics()
 
     # Get health status
     health = get_health_status()

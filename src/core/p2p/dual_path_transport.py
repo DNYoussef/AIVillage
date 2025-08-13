@@ -541,7 +541,7 @@ class DualPathTransport:
             return False
 
         try:
-            bitchat_msg = message.to_bitchat_message()
+            message.to_bitchat_message()
 
             # Apply BitChat optimizations from metadata
             if metadata.get("store_forward_enabled", True):
@@ -758,7 +758,7 @@ class DualPathTransport:
 
         # Update Navigator with BitChat peers
         if self.enable_bitchat and self.bitchat:
-            for peer_addr, peer in self.bitchat.discovered_peers.items():
+            for _peer_addr, peer in self.bitchat.discovered_peers.items():
                 peer_info = self.navigator.PeerInfo(
                     peer_id=peer.device_id,
                     protocols={"bitchat"},
@@ -826,9 +826,9 @@ class DualPathTransport:
         betanet_peers = set()
 
         if self.bitchat:
-            bitchat_peers = set(
+            bitchat_peers = {
                 peer.device_id for peer in self.bitchat.discovered_peers.values()
-            )
+            }
             peers["bitchat"] = list(bitchat_peers)
 
         if self.betanet:

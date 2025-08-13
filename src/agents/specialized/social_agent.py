@@ -249,7 +249,6 @@ class SocialAgent(AgentInterface):
         """Monitor community sentiment and health"""
         try:
             sentiment_scores = []
-            topics = []
 
             for interaction in interactions:
                 content = interaction.get("content", "")

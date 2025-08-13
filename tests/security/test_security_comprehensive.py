@@ -191,7 +191,7 @@ class TestSecureDigitalTwinDB(unittest.TestCase):
         """Test GDPR data export functionality."""
         # Create profile
         profile_data = {"user_id": "gdpr_test_user", "learning_style": "visual"}
-        profile_id = self.secure_db.create_learning_profile(profile_data)
+        self.secure_db.create_learning_profile(profile_data)
 
         # Export data
         user_hash = self.secure_db.encryption.hash_user_id("gdpr_test_user")

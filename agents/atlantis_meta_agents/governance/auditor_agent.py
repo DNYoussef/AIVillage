@@ -563,7 +563,7 @@ class AuditorAgent(AgentInterface):
             relevant_receipts = [r for r in relevant_receipts if r.agent_id in agents]
             agent_coverage = agents
         else:
-            agent_coverage = list(set(r.agent_id for r in relevant_receipts))
+            agent_coverage = list({r.agent_id for r in relevant_receipts})
 
         # Calculate metrics
         total_receipts = len(relevant_receipts)
@@ -790,7 +790,7 @@ class AuditorAgent(AgentInterface):
             )
 
             # Create shutdown receipt
-            shutdown_receipt = {
+            {
                 "agent": "Auditor",
                 "action": "system_shutdown",
                 "timestamp": time.time(),

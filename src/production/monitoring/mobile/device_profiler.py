@@ -487,7 +487,7 @@ class DeviceProfile:
 
             # Get highest temperature
             max_temp = 0.0
-            for name, entries in temps.items():
+            for _name, entries in temps.items():
                 for entry in entries:
                     if entry.current and entry.current > max_temp:
                         max_temp = entry.current

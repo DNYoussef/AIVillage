@@ -648,7 +648,7 @@ class SustainerAgent(AgentInterface):
         )
 
         # Measure improvement
-        new_usage = await self._get_current_resource_usage()
+        await self._get_current_resource_usage()
         new_efficiency = await self._calculate_efficiency_score()
         improvement = new_efficiency - current_efficiency
 

@@ -456,7 +456,7 @@ class LintingOrchestrator:
         failed_tools = 0
         skipped_tools = 0
 
-        for tool, result in results.items():
+        for _tool, result in results.items():
             if result["status"] == "completed":
                 completed_tools += 1
                 if "issues_found" in result:

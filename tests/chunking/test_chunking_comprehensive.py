@@ -790,7 +790,7 @@ class ChunkingQualityAnalyzer:
             start_time = time.perf_counter()
 
             # Structure analysis
-            structure_analysis = pipeline.analyze_document_structure(large_document)
+            pipeline.analyze_document_structure(large_document)
             analysis_time = time.perf_counter() - start_time
 
             # Chunking
@@ -800,7 +800,7 @@ class ChunkingQualityAnalyzer:
 
             # Indexing
             index_start = time.perf_counter()
-            indexing_stats = pipeline.index_documents([large_document])
+            pipeline.index_documents([large_document])
             indexing_time = time.perf_counter() - index_start
 
             total_time = time.perf_counter() - start_time

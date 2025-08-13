@@ -18,10 +18,11 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 
-import docker
 import requests
 from kubernetes import client
 from kubernetes import config as k8s_config
+
+import docker
 
 logger = logging.getLogger(__name__)
 

@@ -259,7 +259,7 @@ class EnhancedMockTransport:
         peer_count = random.randint(2, 5)
         new_peers = []
 
-        for i in range(peer_count):
+        for _i in range(peer_count):
             peer_id = f"{self.transport_type}_peer_{uuid.uuid4().hex[:8]}"
             self.discovered_peers.add(peer_id)
             new_peers.append(peer_id)
@@ -581,11 +581,7 @@ class DualPathReliabilityTester:
                     results["routing_decisions"] += 1
 
                     # Check if adaptation occurred
-                    status = (
-                        transport.get_status()
-                        if hasattr(transport, "get_status")
-                        else {}
-                    )
+                    (transport.get_status() if hasattr(transport, "get_status") else {})
 
                     if profile.battery_level < 20:
                         results["low_battery_adaptations"] += 1

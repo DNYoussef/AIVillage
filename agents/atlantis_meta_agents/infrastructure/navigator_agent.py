@@ -458,7 +458,7 @@ class NavigatorAgent(AgentInterface):
                 reachable_nodes += 1
 
         # Determine success based on path reachability
-        success_rate = 0.95 - (0.1 * len(path))  # Success decreases with path length
+        0.95 - (0.1 * len(path))  # Success decreases with path length
         routing_success = (
             reachable_nodes >= (len(path) - 2) * 0.8
         )  # 80% of intermediate nodes must be reachable
@@ -622,7 +622,7 @@ class NavigatorAgent(AgentInterface):
             ):
                 # Simulate sync based on node bandwidth and load
                 node = self.network_nodes[node_id]
-                sync_time = (
+                (
                     size_mb * 8
                 ) / node.bandwidth_mbps  # Convert MB to Mbits, then divide by bandwidth
 

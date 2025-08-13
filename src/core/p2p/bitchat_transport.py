@@ -405,7 +405,7 @@ class BitChatTransport:
     async def _maintain_connections(self) -> None:
         """Check and maintain active connections"""
         stale_connections = set()
-        current_time = time.time()
+        time.time()
 
         for peer_addr, peer in list(self.discovered_peers.items()):
             if not peer.is_reachable(max_age_seconds=300):  # 5 minutes

@@ -618,7 +618,7 @@ class EnhancedBitChatTransport(BitChatTransport):
         """Transmit enhanced message"""
         try:
             # Convert to base BitChatMessage for transmission
-            base_message = BitChatMessage(
+            BitChatMessage(
                 id=message.id,
                 sender=message.sender,
                 recipient=message.recipient,
@@ -899,7 +899,7 @@ class EnhancedBitChatTransport(BitChatTransport):
 
     async def _cleanup_stale_fragments(self):
         """Clean up incomplete fragments older than 5 minutes"""
-        current_time = time.time()
+        time.time()
         stale_fragments = []
 
         # Remove fragment sets that haven't been updated in 5 minutes

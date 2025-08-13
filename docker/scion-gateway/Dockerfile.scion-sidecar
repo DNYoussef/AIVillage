@@ -1,0 +1,63 @@
+# Multi-stage build for SCION Sidecar (Go)
+FROM golang:1.21-alpine AS builder
+
+# Install build dependencies
+RUN apk add --no-cache git make bash build-base
+
+# Set working directory
+WORKDIR /app
+
+# Copy Go mod files first for better caching
+COPY scion-sidecar/go.mod scion-sidecar/go.sum ./
+
+# Download dependencies
+RUN go mod download
+
+# Copy source code
+COPY scion-sidecar/ ./
+
+# Generate protobuf files
+RUN make proto
+
+# Build the binary
+RUN make build
+
+# Production image
+FROM alpine:3.18
+
+# Install runtime dependencies
+RUN apk add --no-cache \
+    ca-certificates \
+    curl \
+    netcat-openbsd \
+    && rm -rf /var/cache/apk/*
+
+# Install grpc_health_probe for health checks
+RUN curl -L https://github.com/grpc-ecosystem/grpc-health-probe/releases/download/v0.4.19/grpc_health_probe-linux-amd64 \
+    -o /usr/local/bin/grpc_health_probe && \
+    chmod +x /usr/local/bin/grpc_health_probe
+
+# Create non-root user
+RUN addgroup -g 1001 scion && \
+    adduser -D -u 1001 -G scion scion
+
+# Create directories
+RUN mkdir -p /var/lib/scion-sidecar /var/log/scion-sidecar && \
+    chown -R scion:scion /var/lib/scion-sidecar /var/log/scion-sidecar
+
+# Copy binary from builder
+COPY --from=builder /app/bin/scion_sidecar /app/scion_sidecar
+RUN chmod +x /app/scion_sidecar
+
+# Switch to non-root user
+USER scion
+
+# Health check
+HEALTHCHECK --interval=15s --timeout=10s --start-period=30s --retries=3 \
+    CMD grpc_health_probe -addr=localhost:8080 || exit 1
+
+# Expose ports
+EXPOSE 8080 8081
+
+# Default command
+CMD ["/app/scion_sidecar", "--bind=0.0.0.0:8080", "--metrics-addr=0.0.0.0:8081"]

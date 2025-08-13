@@ -175,7 +175,7 @@ class ImportImpactAnalyzer:
     def count_dependents(self, import_results: dict[str, list[str]]) -> int:
         """Count total number of files that depend on this file."""
         all_dependents = set()
-        for result_type, files in import_results.items():
+        for _result_type, files in import_results.items():
             all_dependents.update(files)
         return len(all_dependents)
 

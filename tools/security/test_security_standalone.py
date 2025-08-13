@@ -148,7 +148,7 @@ class TestInputValidation(unittest.TestCase):
                     raise ValueError(f"Invalid length: must be {min_len}-{max_len}")
 
             # Numeric range check
-            if isinstance(value, (int, float)):
+            if isinstance(value, int | float):
                 min_val = field_rules.get("min_value")
                 max_val = field_rules.get("max_value")
                 if min_val is not None and value < min_val:
@@ -212,7 +212,7 @@ class TestInputValidation(unittest.TestCase):
             "-dash": "file_-dash",
         }
 
-        for dangerous, expected_safe in dangerous_filenames.items():
+        for dangerous, _expected_safe in dangerous_filenames.items():
             sanitized = self.sanitize_filename(dangerous)
 
             # Should not contain dangerous patterns
@@ -275,7 +275,7 @@ class TestRateLimiting(unittest.TestCase):
         client_id = "window_test_client"
 
         # Fill up the rate limit with very short window
-        for i in range(3):
+        for _i in range(3):
             is_limited = self.is_rate_limited(
                 client_id, max_requests=3, window_seconds=1
             )

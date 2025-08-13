@@ -536,7 +536,7 @@ class SimpleMultiAgentCoordinator:
         print("=" * 60)
 
         total_capabilities = 0
-        for name, agent in self.agents.items():
+        for _name, agent in self.agents.items():
             status = await agent.introspect()
             total_capabilities += len(status["capabilities"])
 
