@@ -1,4 +1,26 @@
-"""P2P node implementation with discovery and routing."""
+"""DEPRECATED: P2P node implementation with discovery and routing.
+
+This module has been consolidated into src/production/communications/p2p/p2p_node.py
+
+All infrastructure features from this module have been merged into the production version.
+
+Please update your imports to use:
+  from src.production.communications.p2p.p2p_node import P2PNode, PeerInfo, NodeStatus
+
+This file will be removed in a future version.
+"""
+
+# Import from the consolidated production implementation
+import warnings
+
+from src.production.communications.p2p.p2p_node_deprecated import *
+
+warnings.warn(
+    "src.infrastructure.p2p.p2p_node is deprecated and has been consolidated. "
+    "Use src.production.communications.p2p.p2p_node instead.",
+    DeprecationWarning,
+    stacklevel=2,
+)
 
 import asyncio
 import json

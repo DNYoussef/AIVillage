@@ -6,8 +6,6 @@ from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from enum import Enum
 
-# ruff: noqa: S104,TRY300,PERF203
-
 logger = logging.getLogger(__name__)
 
 
@@ -75,7 +73,7 @@ class NATTraversal:
             self._nat_info = NATInfo(
                 external_ip or "0.0.0.0", int(external_port or 0), nat_enum
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.debug("STUN detection failed: %s", exc)
             self._nat_info = NATInfo("0.0.0.0", 0, NATType.UNKNOWN)
         return self._nat_info

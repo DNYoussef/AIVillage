@@ -31,7 +31,7 @@ def load_latest_benchmark() -> dict | None:
     return None
 
 
-def generate_report() -> None:  # noqa: PLR0912
+def generate_report() -> None:
     """Generate final benchmark report."""
     results = load_latest_benchmark()
 

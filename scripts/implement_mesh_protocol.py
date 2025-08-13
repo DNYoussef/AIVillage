@@ -1,524 +1,78 @@
-#!/usr/bin/env python3
-"""Implement Bluetooth mesh networking protocol for offline agent communication.
+"""DEPRECATED: Mesh Protocol Implementation Script.
 
-Based on Bluetooth 5.0+ mesh specifications adapted for AI parameter sharing.
+This script has been superseded by implement_mesh_protocol_fixed.py which
+contains bug fixes and improvements.
+
+The fixed version provides:
+- Corrected routing table initialization
+- Better message handling
+- Improved error handling
+- Enhanced simulation capabilities
+
+Please use the fixed version instead:
+  python scripts/implement_mesh_protocol_fixed.py
+
+This script has been archived to deprecated/scripts/implement_mesh_protocol_archived.py
 """
 
-import asyncio
-import hashlib
-import json
-import logging
-import struct
-import time
-from collections.abc import Callable
-from dataclasses import dataclass, field
-from enum import Enum, auto
-from typing import Any
+import os
+import sys
+import warnings
 
-import numpy as np
+warnings.warn(
+    "scripts/implement_mesh_protocol.py is deprecated. "
+    "Use scripts/implement_mesh_protocol_fixed.py instead. "
+    "This script will be removed in a future version.",
+    DeprecationWarning,
+    stacklevel=2,
+)
 
-# Use the global random number generator
-rng = np.random.default_rng()
+print("=" * 60)
+print("DEPRECATED SCRIPT WARNING")
+print("=" * 60)
+print("This script (implement_mesh_protocol.py) is deprecated.")
+print("")
+print("Please use the improved version instead:")
+print("  python scripts/implement_mesh_protocol_fixed.py")
+print("")
+print("The fixed version contains important bug fixes and improvements.")
+print("=" * 60)
+print("")
 
-
-class MessageType(Enum):
-    """Types of messages in the mesh network."""
-
-    DISCOVERY = auto()  # Node discovery
-    HEARTBEAT = auto()  # Keep-alive
-    PARAMETER_UPDATE = auto()  # Model parameter delta
-    GRADIENT_SHARE = auto()  # Federated learning gradient
-    AGENT_TASK = auto()  # Agent task delegation
-    SYNC_REQUEST = auto()  # Request full sync
-    SYNC_RESPONSE = auto()  # Full sync data
-    ROUTING_UPDATE = auto()  # Mesh routing table update
-    EMERGENCY = auto()  # High-priority message
-
-
-@dataclass
-class MeshNode:
-    """Represents a node in the mesh network."""
-
-    node_id: str
-    device_capabilities: dict[str, Any]
-    location_hash: str  # Privacy-preserving location
-    agent_roles: list[str]
-    last_seen: float = field(default_factory=time.time)
-    reliability_score: float = 0.8
-    battery_level: float = 1.0
-    available_storage_mb: int = 100
-    connection_quality: float = 1.0
-
-
-@dataclass
-class MeshMessage:
-    """Message structure for mesh communication."""
-
-    message_id: str
-    message_type: MessageType
-    sender_id: str
-    recipient_id: str | None  # None for broadcast
-    payload: bytes
-    ttl: int = 5  # Time to live (hop count)
-    priority: int = 5  # 1-10, higher is more important
-    timestamp: float = field(default_factory=time.time)
-    signature: bytes | None = None
-
-    def to_bytes(self) -> bytes:
-        """Serialize message for transmission."""
-        header = struct.pack(
-            "!16s B 16s 16s H B f",
-            bytes.fromhex(self.message_id.ljust(32, "0")[:32]),
-            self.message_type.value,
-            bytes.fromhex(self.sender_id.ljust(32, "0")[:32]),
-            bytes.fromhex((self.recipient_id or "0" * 32).ljust(32, "0")[:32]),
-            len(self.payload),
-            (self.ttl << 4) | self.priority,
-            self.timestamp,
+# Ask user if they want to continue with deprecated version or switch
+try:
+    choice = input("Continue with deprecated version? (y/N): ").strip().lower()
+    if choice not in ["y", "yes"]:
+        print("Switching to fixed version...")
+        # Try to run the fixed version
+        fixed_script = os.path.join(
+            os.path.dirname(__file__), "implement_mesh_protocol_fixed.py"
         )
-        return header + self.payload + (self.signature or b"")
-
-    @classmethod
-    def from_bytes(cls, data: bytes) -> "MeshMessage":
-        """Deserialize message from bytes."""
-        header_size = struct.calcsize("!16s B 16s 16s H B f")
-        if len(data) < header_size:
-            msg = "Data too short for mesh message"
-            raise ValueError(msg)
-
-        header = data[:header_size]
-
-        (
-            msg_id,
-            msg_type,
-            sender,
-            recipient,
-            payload_len,
-            ttl_priority,
-            timestamp,
-        ) = struct.unpack("!16s B 16s 16s H B f", header)
-
-        ttl = ttl_priority >> 4
-        priority = ttl_priority & 0x0F
-
-        payload_start = header_size
-        payload_end = payload_start + payload_len
-
-        if len(data) < payload_end:
-            msg = "Data too short for payload"
-            raise ValueError(msg)
-
-        payload = data[payload_start:payload_end]
-        signature = data[payload_end:] if len(data) > payload_end else None
-
-        return cls(
-            message_id=msg_id.hex(),
-            message_type=MessageType(msg_type),
-            sender_id=sender.hex(),
-            recipient_id=recipient.hex() if recipient != b"\x00" * 16 else None,
-            payload=payload,
-            ttl=ttl,
-            priority=priority,
-            timestamp=timestamp,
-            signature=signature,
-        )
-
-
-class MeshProtocol:
-    """Bluetooth mesh networking protocol implementation."""
-
-    def __init__(self, node_id: str) -> None:
-        """Initialize mesh protocol with node ID."""
-        self.node_id = node_id
-        self.neighbors: dict[str, MeshNode] = {}
-        self.routing_table: dict[
-            str, tuple[str, int]
-        ] = {}  # destination -> (next_hop, distance)
-        self.message_cache: set[str] = set()  # Prevent duplicate forwarding
-        self.pending_messages: asyncio.Queue = asyncio.Queue()
-        self.received_messages: asyncio.Queue = asyncio.Queue()
-
-        # Callbacks
-        self.message_handlers: dict[MessageType, list[Callable]] = {
-            msg_type: [] for msg_type in MessageType
-        }
-
-        # Network statistics
-        self.stats = {
-            "messages_sent": 0,
-            "messages_received": 0,
-            "messages_forwarded": 0,
-            "bytes_sent": 0,
-            "bytes_received": 0,
-            "packet_loss_rate": 0.0,
-        }
-
-        self.logger = logging.getLogger(f"MeshNode-{node_id[:8]}")
-
-    async def start(self) -> None:
-        """Start the mesh protocol services."""
-        self.logger.info("Starting mesh node %s", self.node_id[:8])
-
-        # Start background tasks
-        self._background_tasks = []
-        self._background_tasks.append(asyncio.create_task(self._heartbeat_loop()))
-        self._background_tasks.append(asyncio.create_task(self._routing_update_loop()))
-        self._background_tasks.append(asyncio.create_task(self._message_processor()))
-        self._background_tasks.append(asyncio.create_task(self._neighbor_discovery()))
-
-    async def send_message(
-        self,
-        message_type: MessageType,
-        payload: Any,
-        recipient_id: str | None = None,
-        priority: int = 5,
-    ) -> str:
-        """Send a message through the mesh network."""
-        # Serialize payload
-        if isinstance(payload, dict | list):
-            payload_bytes = json.dumps(payload).encode()
-        elif isinstance(payload, np.ndarray):
-            payload_bytes = payload.tobytes()
-        elif isinstance(payload, bytes):
-            payload_bytes = payload
+        if os.path.exists(fixed_script):
+            os.system(f"python {fixed_script}")
         else:
-            payload_bytes = str(payload).encode()
+            print("ERROR: Fixed version not found!")
+            print("Please run: python scripts/implement_mesh_protocol_fixed.py")
+        sys.exit(0)
+    else:
+        print("WARNING: Running deprecated version with known issues...")
+        print("")
+except KeyboardInterrupt:
+    print("\nOperation cancelled.")
+    sys.exit(0)
 
-        # Create message
-        message = MeshMessage(
-            message_id=hashlib.sha256(
-                f"{self.node_id}{time.time()}{len(payload_bytes)}".encode()
-            ).hexdigest()[:32],
-            message_type=message_type,
-            sender_id=self.node_id,
-            recipient_id=recipient_id,
-            payload=payload_bytes,
-            priority=priority,
-        )
-
-        # Queue for sending
-        await self.pending_messages.put(message)
-        self.stats["messages_sent"] += 1
-
-        return message.message_id
-
-    async def _message_processor(self) -> None:
-        """Process outgoing messages."""
-        while True:
-            try:
-                message = await self.pending_messages.get()
-
-                # Check if broadcast or unicast
-                if message.recipient_id is None:
-                    # Broadcast to all neighbors
-                    await self._broadcast_message(message)
-                else:
-                    # Route to specific recipient
-                    await self._route_message(message)
-
-                self.stats["bytes_sent"] += len(message.to_bytes())
-
-            except Exception:
-                self.logger.exception("Error processing message")
-
-            await asyncio.sleep(0.01)  # Small delay to prevent CPU spinning
-
-    async def _broadcast_message(self, message: MeshMessage) -> None:
-        """Broadcast message to all neighbors."""
-        for neighbor_id, neighbor in self.neighbors.items():
-            connection_threshold = 0.3
-            if (
-                neighbor.connection_quality > connection_threshold
-            ):  # Only send if connection is decent
-                await self._send_to_neighbor(neighbor_id, message)
-
-    async def _route_message(self, message: MeshMessage) -> None:
-        """Route message to specific recipient."""
-        if message.recipient_id in self.neighbors:
-            # Direct neighbor
-            await self._send_to_neighbor(message.recipient_id, message)
-        elif message.recipient_id in self.routing_table:
-            # Route through mesh
-            next_hop, _ = self.routing_table[message.recipient_id]
-            if next_hop in self.neighbors:
-                await self._send_to_neighbor(next_hop, message)
-            else:
-                self.logger.warning("Next hop %s not in neighbors", next_hop[:8])
-        else:
-            self.logger.warning("No route to %s", message.recipient_id[:8])
-
-    async def _send_to_neighbor(self, neighbor_id: str, message: MeshMessage) -> None:
-        """Send message to a specific neighbor (simulated for now)."""
-        # In real implementation, this would use Bluetooth API
-        # For now, simulate with some packet loss
-        packet_loss_factor = 0.3
-        if (
-            rng.random()
-            > self.neighbors[neighbor_id].connection_quality * packet_loss_factor
-        ):
-            # Simulate successful transmission
-            self.logger.debug(
-                "Sent %s to %s", message.message_type.name, neighbor_id[:8]
-            )
-        else:
-            # Simulate packet loss
-            # Update packet loss rate with exponential smoothing
-            smoothing_factor = 0.9
-            loss_increment = 0.1
-            self.stats["packet_loss_rate"] = (
-                self.stats["packet_loss_rate"] * smoothing_factor + loss_increment
-            )
-
-    async def receive_message(self, data: bytes, sender_id: str = "") -> None:
-        """Receive a message from the mesh network."""
-        try:
-            message = MeshMessage.from_bytes(data)
-
-            # Check if we've seen this message before
-            if message.message_id in self.message_cache:
-                return  # Duplicate, ignore
-
-            self.message_cache.add(message.message_id)
-            self.stats["messages_received"] += 1
-            self.stats["bytes_received"] += len(data)
-
-            # Check if message is for us
-            if message.recipient_id is None or message.recipient_id == self.node_id:
-                # Process message
-                await self.received_messages.put(message)
-
-                # Call handlers
-                for handler in self.message_handlers.get(message.message_type, []):
-                    task = asyncio.create_task(handler(message))
-                    self._background_tasks.append(task)
-
-            # Forward if necessary
-            if message.ttl > 0 and (message.recipient_id != self.node_id):
-                message.ttl -= 1
-                await self.pending_messages.put(message)
-                self.stats["messages_forwarded"] += 1
-
-        except Exception:
-            self.logger.exception("Error receiving message")
-
-    def register_handler(self, message_type: MessageType, handler: Callable) -> None:
-        """Register a message handler."""
-        self.message_handlers[message_type].append(handler)
-
-    async def _heartbeat_loop(self) -> None:
-        """Send periodic heartbeats to maintain neighbor connections."""
-        while True:
-            await asyncio.sleep(30)  # Every 30 seconds
-
-            heartbeat_data = {
-                "node_id": self.node_id,
-                "timestamp": time.time(),
-                "battery_level": self._get_battery_level(),
-                "available_storage_mb": self._get_available_storage(),
-                "active_agents": self._get_active_agents(),
-            }
-
-            await self.send_message(MessageType.HEARTBEAT, heartbeat_data, priority=3)
-
-    async def _routing_update_loop(self) -> None:
-        """Periodically update routing tables."""
-        while True:
-            await asyncio.sleep(60)  # Every minute
-
-            # Build routing update
-            routing_update = {
-                "node_id": self.node_id,
-                "neighbors": [
-                    {"node_id": n_id, "distance": 1, "quality": n.connection_quality}
-                    for n_id, n in self.neighbors.items()
-                ],
-                "routes": [
-                    {"destination": dest, "distance": dist, "next_hop": next_hop}
-                    for dest, (next_hop, dist) in self.routing_table.items()
-                ],
-            }
-
-            await self.send_message(
-                MessageType.ROUTING_UPDATE, routing_update, priority=4
-            )
-
-    async def _neighbor_discovery(self) -> None:
-        """Discover nearby mesh nodes."""
-        while True:
-            await asyncio.sleep(10)  # Every 10 seconds
-
-            discovery_data = {
-                "node_id": self.node_id,
-                "capabilities": self._get_device_capabilities(),
-                "agent_roles": self._get_active_agents(),
-                "mesh_version": "1.0.0",
-            }
-
-            await self.send_message(MessageType.DISCOVERY, discovery_data, priority=6)
-
-    def _get_battery_level(self) -> float:
-        """Get current battery level (0-1)."""
-        # In real implementation, query system battery
-        return 0.75
-
-    def _get_available_storage(self) -> int:
-        """Get available storage in MB."""
-        # In real implementation, query filesystem
-        return 256
-
-    def _get_active_agents(self) -> list[str]:
-        """Get list of active agent roles on this node."""
-        # In real implementation, query agent system
-        return ["magi", "polyglot"]
-
-    def _get_device_capabilities(self) -> dict[str, Any]:
-        """Get device capabilities."""
-        return {
-            "cpu_cores": 4,
-            "ram_mb": 2048,
-            "has_gpu": False,
-            "bluetooth_version": "5.0",
-            "mesh_roles": ["relay", "edge"],
-        }
-
-
-class MeshNetworkSimulator:
-    """Simulate a mesh network for testing."""
-
-    def __init__(self, num_nodes: int = 10, connectivity: float = 0.3) -> None:
-        """Initialize mesh network simulator."""
-        self.nodes: dict[str, MeshProtocol] = {}
-        self.num_nodes = num_nodes
-        self.connectivity = connectivity
-        self.running = False
-
-    async def create_network(self) -> None:
-        """Create a simulated mesh network."""
-        # Create nodes
-        for i in range(self.num_nodes):
-            node_id = hashlib.sha256(f"node_{i}".encode()).hexdigest()[:32]
-            node = MeshProtocol(node_id)
-            self.nodes[node_id] = node
-
-        # Create connections
-        node_ids = list(self.nodes.keys())
-        for i, node_id in enumerate(node_ids):
-            node = self.nodes[node_id]
-
-            # Connect to random subset of other nodes
-            for j, other_id in enumerate(node_ids):
-                if i != j and rng.random() < self.connectivity:
-                    # Create bidirectional connection
-                    neighbor = MeshNode(
-                        node_id=other_id,
-                        device_capabilities={"simulated": True},
-                        location_hash=hashlib.sha256(f"loc_{j}".encode()).hexdigest()[
-                            :16
-                        ],
-                        agent_roles=["test"],
-                        connection_quality=rng.uniform(0.5, 1.0),
-                    )
-                    node.neighbors[other_id] = neighbor
-
-        # Start all nodes
-        for node in self.nodes.values():
-            await node.start()
-
-        self.running = True
-        logging.info("Created mesh network with %d nodes", self.num_nodes)
-
-    async def simulate_traffic(self, duration: int = 60) -> None:
-        """Simulate network traffic for testing."""
-        start_time = time.time()
-
-        while time.time() - start_time < duration and self.running:
-            # Random node sends random message
-            sender_id = rng.choice(list(self.nodes.keys()))
-            sender = self.nodes[sender_id]
-
-            message_type = rng.choice(list(MessageType))
-
-            # Send test message
-            await sender.send_message(
-                message_type,
-                {"test_data": f"Message from {sender_id[:8]}"},
-                priority=rng.integers(1, 10),
-            )
-
-            await asyncio.sleep(rng.exponential(1.0))  # Random delays
-
-        logging.info("Traffic simulation complete")
-
-    def get_network_stats(self) -> dict[str, Any]:
-        """Get aggregate network statistics."""
-        stats = {
-            "total_messages_sent": 0,
-            "total_messages_received": 0,
-            "total_messages_forwarded": 0,
-            "total_bytes_sent": 0,
-            "total_bytes_received": 0,
-            "average_packet_loss": 0.0,
-            "node_stats": {},
-        }
-
-        for node_id, node in self.nodes.items():
-            stats["total_messages_sent"] += node.stats["messages_sent"]
-            stats["total_messages_received"] += node.stats["messages_received"]
-            stats["total_messages_forwarded"] += node.stats["messages_forwarded"]
-            stats["total_bytes_sent"] += node.stats["bytes_sent"]
-            stats["total_bytes_received"] += node.stats["bytes_received"]
-            stats["average_packet_loss"] += node.stats["packet_loss_rate"]
-
-            stats["node_stats"][node_id[:8]] = {
-                "neighbors": len(node.neighbors),
-                "routes": len(node.routing_table),
-                "messages_sent": node.stats["messages_sent"],
-            }
-
-        if len(self.nodes) > 0:
-            stats["average_packet_loss"] /= len(self.nodes)
-
-        return stats
-
-
-async def test_mesh_network() -> bool:
-    """Test the mesh networking implementation."""
-    logging.basicConfig(level=logging.INFO)
-    print("Testing Mesh Network Implementation...")
-
-    # Create simulator
-    simulator = MeshNetworkSimulator(num_nodes=5, connectivity=0.4)
-    await simulator.create_network()
-
-    print(f"\nCreated mesh network with {simulator.num_nodes} nodes")
-
-    # Simulate traffic
-    print("\nSimulating network traffic for 10 seconds...")
-    await simulator.simulate_traffic(duration=10)
-
-    # Get statistics
-    stats = simulator.get_network_stats()
-
-    print("\n=== Network Statistics ===")
-    print(f"Total messages sent: {stats['total_messages_sent']}")
-    print(f"Total messages received: {stats['total_messages_received']}")
-    print(f"Total messages forwarded: {stats['total_messages_forwarded']}")
-    print(f"Total bytes transmitted: {stats['total_bytes_sent'] / 1024:.2f} KB")
-    print(f"Average packet loss: {stats['average_packet_loss']:.2%}")
-
-    print("\n=== Per-Node Stats ===")
-    for node_id, node_stats in stats["node_stats"].items():
-        print(
-            f"Node {node_id}: {node_stats['neighbors']} neighbors, "
-            f"{node_stats['messages_sent']} messages sent"
-        )
-
-    print("\n✅ Mesh network testing complete!")
-    return True
-
-
-if __name__ == "__main__":
-    # Run tests
-    asyncio.run(test_mesh_network())
-
-    print("\n✅ Mesh protocol implementation complete!")
+# If user insists on running deprecated version, load the archived code
+archived_script = os.path.join(
+    os.path.dirname(__file__),
+    "..",
+    "deprecated",
+    "scripts",
+    "implement_mesh_protocol_archived.py",
+)
+if os.path.exists(archived_script):
+    print(f"Loading archived implementation from: {archived_script}")
+    exec(open(archived_script).read())
+else:
+    print("ERROR: Archived script not found!")
+    print("Please use: python scripts/implement_mesh_protocol_fixed.py")
+    sys.exit(1)

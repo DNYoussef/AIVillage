@@ -30,7 +30,7 @@ class WasiSandbox:
         info: dict[str, Any] = {}
         try:
             tracer.runfunc(func, data)
-        except Exception as exc:  # noqa: BLE001  # pragma: no cover - emulate crash
+        except Exception as exc:  # pragma: no cover - emulate crash
             crashed = True
             info["error"] = str(exc)
             info["traceback"] = traceback.format_exc()
@@ -42,7 +42,7 @@ class WasiSandbox:
 def _bitflip(data: bytearray) -> bytearray:
     if not data:
         return bytearray(b"\x00")
-    idx = random.randrange(len(data))  # noqa: S311
+    idx = random.randrange(len(data))
     data[idx] ^= 0xFF
     return data
 
@@ -50,7 +50,7 @@ def _bitflip(data: bytearray) -> bytearray:
 def _byte_duplicate(data: bytearray) -> bytearray:
     if not data:
         return bytearray(b"A")
-    idx = random.randrange(len(data))  # noqa: S311
+    idx = random.randrange(len(data))
     data.insert(idx, data[idx])
     return data
 
@@ -76,7 +76,7 @@ class SwordAgent:
 
     def mutate(self, seed: bytes) -> bytes:
         data = bytearray(seed)
-        mutator = random.choice(MUTATORS)  # noqa: S311
+        mutator = random.choice(MUTATORS)
         return bytes(mutator(data))
 
     def fuzz(
@@ -88,7 +88,7 @@ class SwordAgent:
         """Run a very small AFL style fuzzing loop."""
         start = time.time()
         for _ in range(iterations):
-            seed = random.choice(seeds)  # noqa: S311
+            seed = random.choice(seeds)
             candidate = self.mutate(seed)
             crashed, cov, info = self.sandbox.run(target, candidate)
             self.coverage.update(cov)
@@ -108,7 +108,7 @@ class SwordAgent:
             payload = self.mutate(b"test")
             try:
                 api_client.request(payload.decode("utf-8", "ignore"))
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 # pragma: no cover - fuzzing expects errors
                 findings.append(str(exc))
         return findings

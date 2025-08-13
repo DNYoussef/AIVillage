@@ -74,7 +74,6 @@ except ImportError:
                 "device_type": self.device_type,
             }
 
-
     @dataclass
     class ResourceAllocation:
         """Mock ResourceAllocation for safe importing"""

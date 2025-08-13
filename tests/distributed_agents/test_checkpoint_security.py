@@ -72,7 +72,7 @@ async def test_untrusted_checkpoint_rejected() -> None:
     )
 
     with pytest.raises(PermissionError):
-        await manager._start_agent_locally_from_checkpoint(checkpoint)  # noqa: SLF001
+        await manager._start_agent_locally_from_checkpoint(checkpoint)
 
 
 @pytest.mark.asyncio
@@ -93,8 +93,8 @@ async def test_malicious_payload_raises_value_error() -> None:
         source_device_id="trusted",
     )
 
-    with pytest.raises(ValueError):  # noqa: PT011
-        await manager._start_agent_locally_from_checkpoint(checkpoint)  # noqa: SLF001
+    with pytest.raises(ValueError):
+        await manager._start_agent_locally_from_checkpoint(checkpoint)
 
 
 def test_serialization_round_trip() -> None:
@@ -132,5 +132,5 @@ async def test_legacy_json_checkpoint_supported() -> None:
         source_device_id="trusted",
     )
 
-    assert await manager._start_agent_locally_from_checkpoint(checkpoint)  # noqa: SLF001
+    assert await manager._start_agent_locally_from_checkpoint(checkpoint)
     assert agent.status == "running"

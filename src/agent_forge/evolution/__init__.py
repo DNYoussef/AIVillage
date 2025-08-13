@@ -1,4 +1,3 @@
-# ruff: noqa: N999,RUF022
 """Agent Evolution System - Self-Evolving 18-Agent Ecosystem.
 
 The core differentiator of the Atlantis vision - a fully autonomous, self-improving

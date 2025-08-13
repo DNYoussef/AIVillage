@@ -1,11 +1,11 @@
 import asyncio
-from pathlib import Path
 import sys
+from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.append(str(ROOT))
 
-from src.production.rag.rag_system.core.pipeline import RAGPipeline, Document
+from src.production.rag.rag_system.core.pipeline import Document, RAGPipeline
 
 
 async def setup_pipeline():

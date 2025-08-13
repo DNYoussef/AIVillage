@@ -1,0 +1,15 @@
+=== REPOSITORY STATE CAPTURE ===
+Date: Tue, Aug 12, 2025  7:26:31 PM
+Commit SHA: bf84e107d8e3cfecc3ab22941d3c74c3dc88cef0
+Branch: main
+Status: ?? tmp_codex_audit_v3/
+
+=== Recent Commits ===
+bf84e10 Merge pull request #318 from DNYoussef/codex/conduct-zero-trust-post-orchestration-audit
+7cbdff8 Merge pull request #319 from DNYoussef/codex/conduct-repository-bloat-audit
+1d30b99 chore: simplify package inits
+3d866d1 chore: move tests and drop audit artifacts
+92c8e7c feat(linting): Complete comprehensive code cleanup and infrastructure fixes
+
+=== Working Directory ===
+/c/Users/17175/Desktop/AIVillage

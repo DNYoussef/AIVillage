@@ -9,35 +9,47 @@ from pathlib import Path
 def check_agent_templates():
     """Check what agent templates exist."""
     print("=" * 60)
-    print("CHECKING AGENT TEMPLATES")
+    print("CHECKING AGENT TEMPLATES (CANONICAL)")
     print("=" * 60)
 
-    template_path = Path("src/production/agent_forge/templates/agents")
+    # Use canonical template directory (agents subdirectory has been consolidated)
+    template_path = Path("src/production/agent_forge/templates")
     if not template_path.exists():
         print(f"Template directory not found: {template_path}")
         return []
 
     templates = []
-    for template_file in template_path.glob("*.json"):
+    for template_file in template_path.glob("*_template.json"):
         try:
             with open(template_file) as f:
                 data = json.load(f)
 
-            agent_id = template_file.stem
+            # Extract agent_id from filename (remove _template.json suffix)
+            agent_id = template_file.stem.replace("_template", "")
+
+            # Extract information from canonical format
+            spec = data.get("specification", {})
+            name = spec.get("name", agent_id)
+            description = spec.get("description", "")
+            primary_caps = spec.get("primary_capabilities", [])
+
             templates.append(
                 {
                     "id": agent_id,
-                    "name": data.get("name", agent_id),
-                    "role": data.get("role", ""),
+                    "name": name,
+                    "description": description,
+                    "capabilities": primary_caps,
                     "file": str(template_file),
                 }
             )
-            print(f"  {agent_id}: {data.get('name', 'Unnamed')}")
-            print(f"    Role: {data.get('role', 'No role defined')}")
+            print(f"  {agent_id}: {name}")
+            print(f"    Description: {description}")
+            print(f"    Primary Capabilities: {', '.join(primary_caps)}")
 
         except Exception as e:
             print(f"  ERROR loading {template_file}: {e}")
 
+    print(f"\nFound {len(templates)} canonical agent templates")
     return templates
 
 

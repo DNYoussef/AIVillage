@@ -1,11 +1,9 @@
-import os
-from datetime import datetime
-from typing import Any
-
 import base64
 import json
-import uuid
 import os
+import uuid
+from datetime import datetime
+from typing import Any
 from urllib.parse import urlparse
 
 import faiss

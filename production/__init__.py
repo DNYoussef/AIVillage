@@ -2,6 +2,7 @@
 
 Use :mod:`src.production` instead.
 """
+
 import warnings as _w
 
 _w.warn(
@@ -10,4 +11,4 @@ _w.warn(
     stacklevel=2,
 )
 
-from src.production import *  # noqa: F401,F403
+from src.production import *  # noqa: F403

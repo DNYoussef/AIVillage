@@ -3,17 +3,17 @@ from typing import Any
 
 try:  # pragma: no cover - best effort imports for optional dependencies
     from agents.king.king_agent import KingAgent
-except Exception:  # noqa: BLE001 - broad to handle missing deps
+except Exception:
     KingAgent = object  # type: ignore[misc,assignment]
 
 try:  # pragma: no cover - best effort imports for optional dependencies
     from agents.magi.magi_agent import MagiAgent
-except Exception:  # noqa: BLE001 - broad to handle missing deps
+except Exception:
     MagiAgent = object  # type: ignore[misc,assignment]
 
 try:  # pragma: no cover - best effort imports for optional dependencies
     from agents.sage.sage_agent import SageAgent
-except Exception:  # noqa: BLE001 - broad to handle missing deps
+except Exception:
     SageAgent = object  # type: ignore[misc,assignment]
 
 try:  # pragma: no cover - best effort imports for optional dependencies
@@ -22,24 +22,24 @@ try:  # pragma: no cover - best effort imports for optional dependencies
         UnifiedAgentConfig,
         UnifiedBaseAgent,
     )
-except Exception:  # noqa: BLE001 - broad to handle missing deps
+except Exception:
     SelfEvolvingSystem = UnifiedAgentConfig = UnifiedBaseAgent = object  # type: ignore[misc,assignment]
 
 try:  # pragma: no cover - best effort imports for optional dependencies
     from agents.utils.task import Task as LangroidTask
-except Exception:  # noqa: BLE001 - broad to handle missing deps
+except Exception:
     LangroidTask = object  # type: ignore[misc,assignment]
 
 try:  # pragma: no cover - best effort imports for optional dependencies
     from core.error_handling import StandardCommunicationProtocol
-except Exception:  # noqa: BLE001 - broad to handle missing deps
+except Exception:
     StandardCommunicationProtocol = object  # type: ignore[misc,assignment]
 
 try:  # pragma: no cover - best effort imports for optional dependencies
     from rag_system.core.config import UnifiedConfig
     from rag_system.core.pipeline import EnhancedRAGPipeline
     from rag_system.retrieval.vector_store import VectorStore
-except Exception:  # noqa: BLE001 - broad to handle missing deps
+except Exception:
     UnifiedConfig = EnhancedRAGPipeline = VectorStore = object  # type: ignore[misc,assignment]
 
 

@@ -1,5 +1,0 @@
-{
-  "name": "Ensemble Agent",
-  "role": "Combines outputs from multiple agents.",
-  "default_params": {}
-}

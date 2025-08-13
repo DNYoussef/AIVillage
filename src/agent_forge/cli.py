@@ -72,7 +72,7 @@ def dashboard(port: int, host: str) -> None:
 
         click.echo(f"🚀 Launching Agent Forge Dashboard at http://{host}:{port}")
 
-        subprocess.run(  # noqa: S603
+        subprocess.run(
             [
                 sys.executable,
                 str(dashboard_script),
@@ -86,7 +86,7 @@ def dashboard(port: int, host: str) -> None:
 
     except KeyboardInterrupt:
         click.echo("\n👋 Dashboard stopped by user")
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         click.echo(f"❌ Dashboard error: {e}")
         sys.exit(1)
 

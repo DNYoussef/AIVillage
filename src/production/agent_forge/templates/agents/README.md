@@ -1,57 +1,94 @@
-# Agent Templates
+# DEPRECATED: Agent Template Subdirectory
 
-This directory contains minimal configuration templates for each agent type.
+⚠️ **This subdirectory has been consolidated for repository cleanup.**
 
-## King
-Coordinates overall system strategy.
+## What Changed
 
-## Magi
-Provides insights and wisdom.
+The agent templates in this subdirectory contained simplified versions of the comprehensive templates available in the parent directory. To eliminate duplication and maintain a single source of truth, all agent templates have been consolidated.
 
-## Sage
-Offers guidance based on past knowledge.
+## Migration Guide
 
-## Gardener
-Maintains and nurtures system growth.
+### Old Path (Deprecated):
+```
+src/production/agent_forge/templates/agents/{name}.json
+```
 
-## Sword Shield
-Defends the system from threats.
+### New Path (Canonical):
+```
+src/production/agent_forge/templates/{name}_template.json
+```
 
-## Legal
-Manages legal compliance and policies.
+## Template Format Differences
 
-## Shaman
-Handles ritualistic or healing tasks.
+**Old Format (agents/*.json):**
+```json
+{
+  "name": "King Agent",
+  "role": "Coordinates overall system strategy.",
+  "default_params": {}
+}
+```
 
-## Oracle
-Predicts outcomes based on data.
+**New Format (*_template.json):**
+```json
+{
+  "agent_id": "king",
+  "specification": {
+    "name": "King",
+    "description": "Task orchestration and job scheduling leader",
+    "primary_capabilities": ["task_orchestration", "resource_allocation", "decision_making"],
+    "secondary_capabilities": ["strategic_planning", "conflict_resolution"],
+    "behavioral_traits": {
+      "leadership_style": "collaborative",
+      "decision_speed": "balanced",
+      "delegation_preference": "high"
+    },
+    "resource_requirements": {
+      "cpu": "high",
+      "memory": "medium",
+      "network": "high",
+      "storage": "low"
+    }
+  }
+}
+```
 
-## Maker
-Builds new components or artifacts.
+## Benefits
 
-## Ensemble
-Combines outputs from multiple agents.
+1. **Single Source of Truth**: One comprehensive template per agent
+2. **Rich Specifications**: Full capability and behavioral trait definitions
+3. **Resource Planning**: Detailed resource requirement specifications
+4. **Consistency**: Standardized format across all agent types
+5. **Reduced Duplication**: 288 lines of code savings
 
-## Curator
-Organizes and manages content.
+## Available Agent Templates
 
-## Auditor
-Ensures accountability and performs audits.
+All 18 agent types are available in the parent directory:
+- auditor_template.json
+- curator_template.json
+- ensemble_template.json
+- gardener_template.json
+- king_template.json
+- legal_template.json
+- magi_template.json
+- maker_template.json
+- medic_template.json
+- navigator_template.json
+- oracle_template.json
+- polyglot_template.json
+- sage_template.json
+- shaman_template.json
+- strategist_template.json
+- sustainer_template.json
+- sword_shield_template.json
+- tutor_template.json
 
-## Medic
-Monitors system health.
+## Backup Location
 
-## Sustainer
-Maintains resource sustainability.
+Original simplified templates have been preserved at:
+```
+deprecated/agent_templates/agents_subdirectory_backup/
+```
 
-## Navigator
-Guides decision paths.
-
-## Tutor
-Teaches and trains users.
-
-## Polyglot
-Handles multilingual communication.
-
-## Strategist
-Plans and optimizes long-term actions.
+---
+*Consolidated on 2025-01-26 as part of repository bloat cleanup initiative*

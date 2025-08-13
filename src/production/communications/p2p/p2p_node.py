@@ -1,4 +1,17 @@
-"""P2P Node Implementation with Fallback for Windows Development."""
+"""P2P Node Implementation with Enhanced Features.
+
+This is the canonical P2P node implementation for AIVillage, consolidating
+features from multiple implementations:
+- Production-ready Windows compatibility
+- Evolution-aware peer coordination
+- Enhanced discovery and routing capabilities
+- Comprehensive message validation
+- Mobile optimization support
+
+Replaces:
+- src/core/p2p/p2p_node.py (evolution features merged)
+- src/infrastructure/p2p/p2p_node.py (infrastructure features merged)
+"""
 
 import asyncio
 import json
@@ -20,6 +33,14 @@ from pydantic import (
     field_validator,
 )
 
+# Optional system monitoring for capability reporting
+try:
+    import psutil
+
+    PSUTIL_AVAILABLE = True
+except ImportError:
+    PSUTIL_AVAILABLE = False
+
 logger = logging.getLogger(__name__)
 
 
@@ -34,7 +55,7 @@ class NodeStatus(Enum):
 
 @dataclass
 class PeerInfo:
-    """Information about a peer node."""
+    """Enhanced information about a peer node with evolution capabilities."""
 
     peer_id: str
     address: str
@@ -44,9 +65,57 @@ class PeerInfo:
     capabilities: dict[str, Any] = field(default_factory=dict)
     latency_ms: float | None = None
 
+    # Evolution-specific attributes
+    can_evolve: bool = True
+    evolution_capacity: float = 1.0  # 0-1 scale of evolution participation ability
+    available_for_evolution: bool = True
+    current_evolution_load: float = 0.0  # Current evolution workload (0-1)
+
+    # Resource tracking
+    cpu_cores: int = 1
+    ram_mb: int = 1024
+    battery_percent: int | None = None
+    network_type: str = "unknown"
+    trust_score: float = 0.5
+    bandwidth_kbps: int | None = None
+
+    def is_suitable_for_evolution(self) -> bool:
+        """Check if peer is suitable for evolution tasks."""
+        return (
+            self.can_evolve
+            and self.available_for_evolution
+            and self.status == NodeStatus.CONNECTED
+            and self.current_evolution_load < 0.8
+            and self.trust_score > 0.3
+        )
+
+    def get_evolution_priority(self) -> float:
+        """Calculate evolution priority score for this peer."""
+        base_score = self.evolution_capacity * 0.4
+
+        # Adjust for resources
+        if self.cpu_cores >= 4:
+            base_score += 0.1
+        if self.ram_mb >= 4096:
+            base_score += 0.1
+        if self.battery_percent and self.battery_percent > 50:
+            base_score += 0.1
+
+        # Adjust for current load
+        base_score -= self.current_evolution_load * 0.3
+
+        # Adjust for latency
+        if self.latency_ms and self.latency_ms < 100:
+            base_score += 0.1
+
+        # Adjust for trust
+        base_score += (self.trust_score - 0.5) * 0.2
+
+        return max(0.0, min(1.0, base_score))
+
 
 class MessageType(Enum):
-    """P2P message types."""
+    """Enhanced P2P message types with evolution support."""
 
     HANDSHAKE = "handshake"
     HEARTBEAT = "heartbeat"
@@ -55,6 +124,20 @@ class MessageType(Enum):
     SYNC_REQUEST = "sync_request"
     DISCOVERY = "discovery"
     ERROR = "error"
+
+    # Evolution-specific message types
+    EVOLUTION_START = "evolution_start"
+    EVOLUTION_PROGRESS = "evolution_progress"
+    EVOLUTION_COMPLETE = "evolution_complete"
+    EVOLUTION_REQUEST_HELP = "evolution_request_help"
+    EVOLUTION_OFFER_HELP = "evolution_offer_help"
+    EVOLUTION_CONSENSUS = "evolution_consensus"
+    EVOLUTION_METRICS_SHARE = "evolution_metrics_share"
+
+    # Mobile optimization
+    CAPABILITY_UPDATE = "capability_update"
+    PING = "ping"
+    PONG = "pong"
 
 
 class HandshakePayload(BaseModel):
@@ -197,6 +280,10 @@ class P2PNode:
         self.message_handlers: dict[MessageType, Callable] = {}
         self.pending_responses: dict[str, asyncio.Future] = {}
 
+        # Evolution coordination
+        self.evolution_handlers: dict[str, Callable] = {}
+        self.evolution_results: dict[str, Any] = {}
+
         # Network components
         self.server: asyncio.Server | None = None
         self.discovery_task: asyncio.Task | None = None
@@ -210,6 +297,8 @@ class P2PNode:
             "bytes_received": 0,
             "connections_established": 0,
             "discovery_rounds": 0,
+            "evolution_messages": 0,
+            "evolution_tasks_completed": 0,
         }
 
         # Configuration
@@ -223,12 +312,32 @@ class P2PNode:
 
         # Register default handlers
         self._register_default_handlers()
+        self._register_evolution_handlers()
 
     def _register_default_handlers(self) -> None:
         """Register default message handlers."""
         self.message_handlers[MessageType.HANDSHAKE] = self._handle_handshake
         self.message_handlers[MessageType.HEARTBEAT] = self._handle_heartbeat
         self.message_handlers[MessageType.DISCOVERY] = self._handle_discovery
+        self.message_handlers[MessageType.PING] = self._handle_ping
+        self.message_handlers[MessageType.PONG] = self._handle_pong
+        self.message_handlers[MessageType.CAPABILITY_UPDATE] = (
+            self._handle_capability_update
+        )
+
+    def _register_evolution_handlers(self) -> None:
+        """Register evolution-specific message handlers."""
+        self.evolution_handlers.update(
+            {
+                "EVOLUTION_START": self._handle_evolution_start,
+                "EVOLUTION_PROGRESS": self._handle_evolution_progress,
+                "EVOLUTION_COMPLETE": self._handle_evolution_complete,
+                "EVOLUTION_REQUEST_HELP": self._handle_evolution_request_help,
+                "EVOLUTION_OFFER_HELP": self._handle_evolution_offer_help,
+                "EVOLUTION_CONSENSUS": self._handle_evolution_consensus,
+                "EVOLUTION_METRICS_SHARE": self._handle_evolution_metrics_share,
+            }
+        )
 
     async def start(self) -> None:
         """Start the P2P node."""
@@ -444,7 +553,7 @@ class P2PNode:
         ]
 
     def get_stats(self) -> dict[str, Any]:
-        """Get node statistics."""
+        """Get enhanced node statistics including evolution metrics."""
         return {
             **self.stats,
             "node_id": self.node_id,
@@ -452,6 +561,12 @@ class P2PNode:
             "connected_peers": len(self.get_connected_peers()),
             "total_peers": len(self.peers),
             "uptime": time.time() - self.stats.get("start_time", time.time()),
+            "suitable_evolution_peers": len(self.get_suitable_evolution_peers()),
+            "evolution_results": len(self.evolution_results),
+            "average_peer_latency": sum(p.latency_ms or 0 for p in self.peers.values())
+            / len(self.peers)
+            if self.peers
+            else 0,
         }
 
     async def _handle_connection(
@@ -578,6 +693,16 @@ class P2PNode:
                 self.pending_responses[response_id].set_result(message.payload)
                 return
 
+        # Handle evolution messages
+        msg_type = message.payload.get("type")
+        if msg_type in self.evolution_handlers:
+            try:
+                await self.evolution_handlers[msg_type](message.payload, writer)
+                self.stats["evolution_messages"] += 1
+                return
+            except Exception as e:
+                logger.exception(f"Error in evolution handler for {msg_type}: {e}")
+
         # Route to appropriate handler
         handler = self.message_handlers.get(message.message_type)
         if handler:
@@ -646,6 +771,170 @@ class P2PNode:
             if address and port:
                 self.add_known_address(address, port)
 
+    async def _handle_ping(
+        self, message: P2PMessage, writer: asyncio.StreamWriter | None = None
+    ) -> None:
+        """Handle ping message with pong response."""
+        if writer:
+            response = P2PMessage(
+                message_type=MessageType.PONG,
+                sender_id=self.node_id,
+                receiver_id=message.sender_id,
+                payload={
+                    "timestamp": time.time(),
+                    "original_timestamp": message.payload.get("timestamp"),
+                },
+            )
+            await self._send_message_to_writer(writer, response)
+
+    async def _handle_pong(
+        self, message: P2PMessage, writer: asyncio.StreamWriter | None = None
+    ) -> None:
+        """Handle pong message and update latency."""
+        sender_id = message.sender_id
+        if sender_id in self.peers:
+            original_timestamp = message.payload.get("original_timestamp")
+            if original_timestamp:
+                latency = (time.time() - original_timestamp) * 1000  # Convert to ms
+                self.peers[sender_id].latency_ms = latency
+
+    async def _handle_capability_update(
+        self, message: P2PMessage, writer: asyncio.StreamWriter | None = None
+    ) -> None:
+        """Handle capability update from peer."""
+        sender_id = message.sender_id
+        if sender_id in self.peers:
+            capabilities = message.payload.get("capabilities", {})
+            self.peers[sender_id].capabilities.update(capabilities)
+
+            # Update evolution-specific attributes
+            peer = self.peers[sender_id]
+            peer.can_evolve = capabilities.get("can_evolve", peer.can_evolve)
+            peer.evolution_capacity = capabilities.get(
+                "evolution_capacity", peer.evolution_capacity
+            )
+            peer.available_for_evolution = capabilities.get(
+                "available_for_evolution", peer.available_for_evolution
+            )
+            peer.cpu_cores = capabilities.get("cpu_cores", peer.cpu_cores)
+            peer.ram_mb = capabilities.get("ram_mb", peer.ram_mb)
+            peer.battery_percent = capabilities.get(
+                "battery_percent", peer.battery_percent
+            )
+            peer.network_type = capabilities.get("network_type", peer.network_type)
+
+    # Evolution handler methods
+    async def _handle_evolution_start(
+        self, message: dict[str, Any], writer: asyncio.StreamWriter | None = None
+    ) -> None:
+        """Handle evolution start notification."""
+        sender_id = message.get("sender_id")
+        evolution_type = message.get("evolution_type", "unknown")
+
+        logger.info(f"Peer {sender_id} started {evolution_type} evolution")
+
+        # Update peer evolution status
+        if sender_id and sender_id in self.peers:
+            self.peers[sender_id].current_evolution_load = 1.0
+
+        self.stats["evolution_messages"] += 1
+
+    async def _handle_evolution_progress(
+        self, message: dict[str, Any], writer: asyncio.StreamWriter | None = None
+    ) -> None:
+        """Handle evolution progress update."""
+        sender_id = message.get("sender_id")
+        progress = message.get("progress", 0.0)
+
+        if sender_id and sender_id in self.peers:
+            self.peers[sender_id].current_evolution_load = progress
+
+        self.stats["evolution_messages"] += 1
+
+    async def _handle_evolution_complete(
+        self, message: dict[str, Any], writer: asyncio.StreamWriter | None = None
+    ) -> None:
+        """Handle evolution completion notification."""
+        sender_id = message.get("sender_id")
+
+        logger.info(f"Peer {sender_id} completed evolution")
+
+        # Reset peer evolution status
+        if sender_id and sender_id in self.peers:
+            self.peers[sender_id].current_evolution_load = 0.0
+
+        # Store results
+        self.evolution_results[sender_id] = {
+            "completed_at": time.time(),
+            "type": message.get("evolution_type"),
+            "results": message.get("results", {}),
+        }
+
+        self.stats["evolution_tasks_completed"] += 1
+
+    async def _handle_evolution_request_help(
+        self, message: dict[str, Any], writer: asyncio.StreamWriter | None = None
+    ) -> None:
+        """Handle request for evolution assistance."""
+        sender_id = message.get("sender_id")
+
+        # Check if we can help
+        if self.status == NodeStatus.CONNECTED:
+            suitable_peers = self.get_suitable_evolution_peers(
+                exclude=[sender_id] if sender_id else []
+            )
+
+            if suitable_peers:
+                # Offer help if we have capacity
+                response_data = {
+                    "type": "EVOLUTION_OFFER_HELP",
+                    "sender_id": self.node_id,
+                    "available_capacity": 1.0
+                    - sum(p.current_evolution_load for p in self.peers.values())
+                    / len(self.peers)
+                    if self.peers
+                    else 1.0,
+                    "capabilities": self._get_capabilities(),
+                }
+
+                if sender_id in self.peers and writer:
+                    response = P2PMessage(
+                        message_type=MessageType.EVOLUTION_OFFER_HELP,
+                        sender_id=self.node_id,
+                        receiver_id=sender_id,
+                        payload=response_data,
+                    )
+                    await self._send_message_to_writer(writer, response)
+
+    async def _handle_evolution_offer_help(
+        self, message: dict[str, Any], writer: asyncio.StreamWriter | None = None
+    ) -> None:
+        """Handle offer of evolution assistance."""
+        sender_id = message.get("sender_id")
+        capacity = message.get("available_capacity", 0.0)
+
+        logger.info(
+            f"Peer {sender_id} offered evolution help with {capacity:.2f} capacity"
+        )
+
+    async def _handle_evolution_consensus(
+        self, message: dict[str, Any], writer: asyncio.StreamWriter | None = None
+    ) -> None:
+        """Handle evolution consensus message."""
+        sender_id = message.get("sender_id")
+        consensus_data = message.get("consensus", {})
+
+        logger.info(f"Received evolution consensus from {sender_id}")
+
+    async def _handle_evolution_metrics_share(
+        self, message: dict[str, Any], writer: asyncio.StreamWriter | None = None
+    ) -> None:
+        """Handle shared evolution metrics."""
+        sender_id = message.get("sender_id")
+        metrics = message.get("metrics", {})
+
+        logger.debug(f"Received evolution metrics from {sender_id}: {metrics}")
+
     async def _discovery_loop(self) -> None:
         """Background task for peer discovery."""
         while self.status == NodeStatus.CONNECTED:
@@ -713,10 +1002,96 @@ class P2PNode:
                 await asyncio.sleep(10)
 
     def _get_capabilities(self) -> dict[str, Any]:
-        """Get node capabilities."""
+        """Get enhanced node capabilities including evolution features."""
+        if PSUTIL_AVAILABLE:
+            try:
+                # Get system info for capability reporting
+                cpu_count = psutil.cpu_count()
+                memory = psutil.virtual_memory()
+                battery = psutil.sensors_battery()
+            except Exception:
+                # Fallback values if psutil fails
+                cpu_count = 1
+                memory = type("Memory", (), {"total": 1024 * 1024 * 1024})()
+                battery = None
+        else:
+            # Fallback values when psutil not available
+            cpu_count = 1
+            memory = type("Memory", (), {"total": 1024 * 1024 * 1024})()
+            battery = None
+
         return {
-            "version": "1.0.0",
-            "protocols": ["tensor_streaming", "mesh_routing"],
+            "version": "2.0.0",  # Updated version for consolidated implementation
+            "protocols": ["tensor_streaming", "mesh_routing", "evolution_coordination"],
             "max_message_size": self.config["max_message_size"],
             "encryption": "fernet",
+            # Evolution capabilities
+            "can_evolve": True,
+            "evolution_capacity": 1.0,
+            "available_for_evolution": True,
+            # Resource information
+            "cpu_cores": cpu_count or 1,
+            "ram_mb": int(
+                (memory.total if memory else 1024 * 1024 * 1024) / (1024 * 1024)
+            ),
+            "battery_percent": battery.percent if battery else None,
+            "network_type": "ethernet",  # Default assumption
+            "trust_score": 0.8,  # Start with good trust for own node
         }
+
+    def get_suitable_evolution_peers(
+        self, exclude: list[str] | None = None
+    ) -> list[PeerInfo]:
+        """Get peers suitable for evolution tasks."""
+        exclude = exclude or []
+        suitable_peers = []
+
+        for peer_id, peer in self.peers.items():
+            if peer_id not in exclude and peer.is_suitable_for_evolution():
+                suitable_peers.append(peer)
+
+        # Sort by evolution priority
+        suitable_peers.sort(key=lambda p: p.get_evolution_priority(), reverse=True)
+        return suitable_peers
+
+    async def broadcast_evolution_event(
+        self, event_type: str, data: dict[str, Any]
+    ) -> int:
+        """Broadcast an evolution event to all suitable peers."""
+        payload = {
+            "type": event_type,
+            "sender_id": self.node_id,
+            "timestamp": time.time(),
+            **data,
+        }
+
+        suitable_peers = self.get_suitable_evolution_peers()
+        successful_sends = 0
+
+        for peer in suitable_peers:
+            if await self.send_message(peer.peer_id, MessageType.DATA, payload):
+                successful_sends += 1
+
+        self.stats["evolution_messages"] += successful_sends
+        return successful_sends
+
+    async def request_evolution_assistance(
+        self, evolution_type: str, requirements: dict[str, Any]
+    ) -> list[str]:
+        """Request assistance from suitable peers for evolution task."""
+        payload = {
+            "evolution_type": evolution_type,
+            "requirements": requirements,
+            "timestamp": time.time(),
+        }
+
+        helpers = []
+        suitable_peers = self.get_suitable_evolution_peers()
+
+        for peer in suitable_peers[:5]:  # Limit to top 5 candidates
+            if await self.send_message(
+                peer.peer_id, MessageType.EVOLUTION_REQUEST_HELP, payload
+            ):
+                helpers.append(peer.peer_id)
+
+        return helpers

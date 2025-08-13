@@ -233,7 +233,7 @@ def test_quiet_star_integration():
     tokens = tokenizer.encode("Hello", return_tensors="pt")
     try:
         logits, thought_logits = ses.quiet_star(tokens, generate_thoughts=False)
-    except Exception as e:  # noqa: BLE001 - diagnostic for broken module
+    except Exception as e:
         pytest.fail(f"Quiet-STaR execution failed: {e}")
     assert logits.shape[0] == 1
     assert thought_logits is None

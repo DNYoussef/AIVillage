@@ -66,7 +66,7 @@ async def test_try_bluetooth_connect(monkeypatch):
     monkeypatch.setattr(DeviceMesh, "_check_wifi_direct", lambda _: False)
 
     mesh = DeviceMesh(P2PNode())
-    result = await mesh._try_bluetooth_connect("AA:BB:CC:DD:EE:FF")  # noqa: SLF001
+    result = await mesh._try_bluetooth_connect("AA:BB:CC:DD:EE:FF")
     assert result == "bluetooth"
 
 
@@ -85,5 +85,5 @@ async def test_try_wifi_direct_connect(monkeypatch):
     monkeypatch.setattr(DeviceMesh, "_check_bluetooth", lambda _: False)
 
     mesh = DeviceMesh(P2PNode())
-    result = await mesh._try_wifi_direct_connect("test-ssid")  # noqa: SLF001
+    result = await mesh._try_wifi_direct_connect("test-ssid")
     assert result == "wifi_direct"

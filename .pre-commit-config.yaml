@@ -14,7 +14,7 @@ repos:
     rev: v0.12.8
     hooks:
       - id: ruff
-        args: [--fix, --select, E,W,F,I]
+        args: [--fix, --exit-non-zero-on-fix]
         exclude: ^(scripts/archived/|\.github/workflows/archived/|deprecated/)
       - id: ruff-format
         exclude: ^(scripts/archived/|\.github/workflows/archived/|deprecated/)

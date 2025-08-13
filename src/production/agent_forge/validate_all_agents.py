@@ -95,7 +95,7 @@ def validate_all_agents(full_test: bool = False) -> dict[str, dict[str, bool]]:
             output = asyncio.run(_exercise_agent(agent))
             status["communication"] = output.get("status") == "completed"
             status["kpi"] = bool(agent.kpi_scores)
-        except Exception:  # noqa: BLE001
+        except Exception:
             pass
 
         results[agent_id] = status

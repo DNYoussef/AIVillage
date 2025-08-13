@@ -1,4 +1,26 @@
-"""Enhanced Device Profiler for Sprint 6 Resource Management."""
+"""DEPRECATED: Enhanced Device Profiler for Sprint 6 Resource Management.
+
+This module has been consolidated into src/production/monitoring/mobile/device_profiler.py
+
+All features have been merged into the production version with additional mobile platform support.
+
+Please update your imports to use:
+  from src.production.monitoring.mobile.device_profiler import DeviceProfiler, DeviceProfile
+
+This file will be removed in a future version.
+"""
+
+# Import from the consolidated production implementation
+import warnings
+
+from src.production.monitoring.mobile.device_profiler import *
+
+warnings.warn(
+    "src.core.resources.device_profiler is deprecated and has been consolidated. "
+    "Use src.production.monitoring.mobile.device_profiler instead.",
+    DeprecationWarning,
+    stacklevel=2,
+)
 
 import contextlib
 import logging
