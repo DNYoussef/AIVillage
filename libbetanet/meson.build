@@ -1,0 +1,5 @@
+project('libbetanet_c', 'c')
+cc = meson.get_compiler('c')
+betanet_dep = dependency('betanet')
+executable('echo_server', '../examples/echo_server.c', dependencies: betanet_dep)
+executable('echo_client', '../examples/echo_client.c', dependencies: betanet_dep)

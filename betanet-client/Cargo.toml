@@ -87,6 +87,7 @@ http3 = ["h3", "h3-quinn"]
 noise = ["snow"]
 chrome-fingerprint = []
 cbor-gateway = ["ciborium", "ed25519-dalek"]
+cffi = []
 
 # Benchmarks
 [[bench]]
