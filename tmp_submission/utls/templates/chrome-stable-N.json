@@ -1,0 +1,36 @@
+{
+  "cipher_order": [
+    4865,
+    4866,
+    4867,
+    49195
+  ],
+  "extensions": [
+    0,
+    11,
+    10,
+    35,
+    16
+  ],
+  "alpn": [
+    "h2",
+    "http/1.1"
+  ],
+  "h2_settings": [
+    [
+      1,
+      0
+    ],
+    [
+      2,
+      0
+    ]
+  ],
+  "elliptic_curves": [
+    23,
+    24
+  ],
+  "ec_point_formats": [
+    0
+  ]
+}
