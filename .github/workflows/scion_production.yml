@@ -1,0 +1,57 @@
+name: Scion Production
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  scion-prod:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: stable
+
+      - name: Build Rust
+        run: cargo build --locked --all-targets
+
+      - name: Test Rust
+        run: cargo test --locked --all-targets
+
+      - name: Build Go
+        run: go build ./...
+
+      - name: Test Go
+        run: go test ./...
+
+      - name: Short fuzz
+        run: |
+          if [ -f fuzz/Cargo.toml ]; then
+            cargo install cargo-fuzz >/dev/null 2>&1
+            cargo fuzz run fuzz_target -- -runs=100
+          else
+            echo 'No fuzz targets; skipping.'
+          fi
+
+      - name: Check for forbidden terms
+        run: tools/linting/forbidden_checks.sh
+
+      - name: Deny insecure feature
+        run: |
+          if rustc tools/security/deny_insecure.rs --cfg feature="insecure" 2>&1 | tee /tmp/deny.log; then
+            echo "Insecure feature flag compiled" >&2
+            exit 1
+          else
+            echo "Insecure feature blocked"
+          fi
