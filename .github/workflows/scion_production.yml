@@ -22,6 +22,19 @@ jobs:
         uses: actions/setup-go@v4
         with:
           go-version: stable
+      - name: Run Rust clippy
+        run: cargo clippy --message-format=json > clippy.json
+
+      - name: Run Go vet
+        run: go vet ./... 2>&1 | tee govet.txt
+
+      - name: Upload lint reports
+        uses: actions/upload-artifact@v3
+        with:
+          name: lint-reports
+          path: |
+            clippy.json
+            govet.txt
 
       - name: Build Rust
         run: cargo build --locked --all-targets
@@ -34,6 +47,24 @@ jobs:
 
       - name: Test Go
         run: go test ./...
+
+      - name: Generate metrics snapshot
+        run: python scripts/monitor_performance.py
+
+      - name: Upload metrics snapshot
+        uses: actions/upload-artifact@v3
+        with:
+          name: metrics-snapshot
+          path: test_performance_summary.json
+
+      - name: Run benches
+        run: bash ops/bench/run_bench.sh > bench.log
+
+      - name: Upload bench results
+        uses: actions/upload-artifact@v3
+        with:
+          name: bench-results
+          path: bench.log
 
       - name: Short fuzz
         run: |
