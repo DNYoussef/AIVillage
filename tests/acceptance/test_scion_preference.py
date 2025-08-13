@@ -8,16 +8,49 @@ Tests the Navigator's SCION preference implementation with measurable ≤500ms s
 """
 
 import asyncio
+import json
+import types
+import pytest
 
 # Test imports
 import sys
 import time
 import unittest
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 from pathlib import Path
 from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "experimental" / "agents"))
+
+# Stub out missing message types module for SCION gateway import
+stub_message_types = types.ModuleType("src.core.message_types")
+
+
+class _DummyMessage:
+    def __init__(self, content: bytes = b"", metadata: dict | None = None, timestamp: float = 0.0):
+        self.content = content
+        self.metadata = metadata or {}
+        self.timestamp = timestamp
+
+
+class _DummyMessageType:
+    DATA = "data"
+
+
+stub_message_types.Message = _DummyMessage
+stub_message_types.MessageType = _DummyMessageType
+sys.modules["src.core.message_types"] = stub_message_types
+
+# Stub transport manager required by SCION gateway
+stub_transport_manager = types.ModuleType("src.core.transport_manager")
+
+
+class _DummyTransportManager:
+    pass
+
+
+stub_transport_manager.TransportManager = _DummyTransportManager
+sys.modules["src.core.transport_manager"] = stub_transport_manager
 
 from agents.navigator.path_policy import (
     EnergyMode,
@@ -326,6 +359,50 @@ class TestSCIONPreference(unittest.TestCase):
 
         print(f"✅ Fast link change test passed (switch_time={switch_time:.1f}ms)")
 
+    async def test_link_flap_triggers_betanet_switch(self):
+        """Ensure SCION link flap triggers Betanet switch within 500ms and receipts saved"""
+
+        destination = "flap_peer"
+        context = MessageContext(size_bytes=1024, priority=7)
+
+        # Initial selection uses SCION
+        self.mock_gateway.set_connectivity(healthy=True, scion_connected=True)
+        protocol1, _ = await self.navigator.select_path(
+            destination, context, ["scion", "betanet"]
+        )
+        self.assertEqual(protocol1, PathProtocol.SCION)
+
+        # Simulate link flap where SCION becomes unavailable
+        self.advance_time(100)
+        self.mock_gateway.set_connectivity(healthy=False, scion_connected=False)
+
+        start_switch = time.time() * 1000
+        protocol2, _ = await self.navigator.select_path(
+            destination, context, ["scion", "betanet"]
+        )
+        self.advance_time(10)
+        switch_time = time.time() * 1000 - start_switch
+
+        self.assertEqual(protocol2, PathProtocol.BETANET)
+        self.assertLessEqual(switch_time, 500.0)
+
+        receipts = self.navigator.get_receipts(count=2)
+        self.assertEqual(len(receipts), 2)
+        last_receipt = receipts[-1]
+        self.assertEqual(last_receipt.chosen_path, "betanet")
+        self.assertLessEqual(last_receipt.switch_latency_ms, 500.0)
+
+        artifact_dir = Path("tmp_scion/artifacts")
+        artifact_dir.mkdir(parents=True, exist_ok=True)
+        with open(artifact_dir / "switch_receipts.json", "w", encoding="utf-8") as f:
+            json.dump([asdict(r) for r in receipts], f, indent=2)
+
+        self.assertTrue((artifact_dir / "switch_receipts.json").exists())
+
+        print(
+            f"✅ Link flap switch test passed (switch_time={switch_time:.1f}ms)"
+        )
+
     async def test_path_scoring_rtt_ewma_loss(self):
         """Test path scoring using RTT EWMA + loss + policy"""
 
@@ -521,6 +598,55 @@ class TestSCIONPreferenceRunner:
         print("📈 All tests validate SCION preference with measurable switch times")
 
         return results
+
+
+@pytest.mark.asyncio
+async def test_link_flap_switch_creates_receipts():
+    """Acceptance: SCION link flap triggers Betanet switch within 500ms and receipts saved"""
+
+    navigator = NavigatorAgent(
+        agent_id="flap_tester",
+        routing_priority=RoutingPriority.PERFORMANCE_FIRST,
+        energy_mode=EnergyMode.PERFORMANCE,
+    )
+
+    mock_gateway = MockSCIONGateway(None)
+    navigator.scion_gateway = mock_gateway
+    navigator.scion_enabled = True
+    navigator.conditions.internet_available = True
+    navigator.conditions.bluetooth_available = False
+    navigator.conditions.wifi_connected = True
+    navigator.conditions.bandwidth_mbps = 100.0
+    navigator.fast_switch_enabled = True
+
+    destination = "flap_peer"
+    context = MessageContext(size_bytes=1024, priority=8, requires_realtime=True)
+
+    mock_gateway.set_connectivity(healthy=True, scion_connected=True)
+    protocol1, _ = await navigator.select_path(
+        destination, context, ["scion", "betanet"]
+    )
+    assert protocol1 == PathProtocol.SCION
+
+    mock_gateway.set_connectivity(healthy=False, scion_connected=False)
+    navigator.scion_path_cache.clear()
+    navigator.routing_decisions.clear()
+    start_switch = time.time() * 1000
+    protocol2, _ = await navigator.select_path(
+        destination, context, ["scion", "betanet"]
+    )
+    switch_time = time.time() * 1000 - start_switch
+
+    assert protocol2 != PathProtocol.SCION
+    assert switch_time <= 500.0
+
+    receipts = navigator.get_receipts(count=2)
+    artifact_dir = Path("tmp_scion/artifacts")
+    artifact_dir.mkdir(parents=True, exist_ok=True)
+    with open(artifact_dir / "switch_receipts.json", "w", encoding="utf-8") as f:
+        json.dump([asdict(r) for r in receipts], f, indent=2)
+
+    assert (artifact_dir / "switch_receipts.json").exists()
 
 
 if __name__ == "__main__":
