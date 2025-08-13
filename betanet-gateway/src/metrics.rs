@@ -12,8 +12,10 @@ use prometheus::{
 };
 use std::collections::HashMap;
 use std::net::SocketAddr;
+use std::path::Path;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
+use std::fs;
 use tokio::sync::RwLock;
 use tracing::{debug, error, info, warn};
 use hyper::{Body, Method, Request, Response, Server, StatusCode};
@@ -608,7 +610,7 @@ impl MetricsCollector {
     pub fn update_performance_kpis(
         &self,
         throughput_ppm: f64,
-        p95_latency_ms: f64, 
+        p95_latency_ms: f64,
         availability_percent: f64,
         error_rate_percent: f64,
     ) {
@@ -617,7 +619,23 @@ impl MetricsCollector {
         self.availability_percent.set(availability_percent);
         self.error_rate_percent.set(error_rate_percent);
     }
-    
+
+    /// Export all metrics to the given path in Prometheus text format
+    pub fn export_to_file<P: AsRef<Path>>(&self, path: P) -> Result<()> {
+        let metric_families = self.registry.gather();
+        let mut buffer = Vec::new();
+        let encoder = TextEncoder::new();
+        encoder
+            .encode(&metric_families, &mut buffer)
+            .context("Failed to encode metrics")?;
+
+        if let Some(parent) = path.as_ref().parent() {
+            fs::create_dir_all(parent).context("Failed to create metrics directory")?;
+        }
+        fs::write(path, buffer).context("Failed to write metrics snapshot")?;
+        Ok(())
+    }
+
     /// Get uptime in seconds
     pub fn uptime_seconds(&self) -> f64 {
         self.start_time.elapsed().as_secs_f64()
