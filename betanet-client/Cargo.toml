@@ -7,29 +7,19 @@ description = "Betanet Rust client with HTX covert transport, Noise XK tunneling
 license = "MIT"
 repository = "https://github.com/aivillage/betanet-client"
 
-[workspace]
-members = [
-    ".",
-    "crates/htx-transport",
-    "crates/noise-tunnel",
-    "crates/chrome-fingerprint",
-    "crates/cbor-gateway",
-    "crates/quic-fallback"
-]
-
 [dependencies]
 # Async runtime and networking
 tokio = { version = "1.35", features = ["full"] }
-quinn = "0.10"
+quinn = { version = "0.10", optional = true }
 hyper = { version = "0.14", features = ["full"] }
-h3 = "0.0.4"
-h3-quinn = "0.0.4"
+h3 = { version = "0.0.4", optional = true }
+h3-quinn = { version = "0.0.4", optional = true }
 
 # TLS and cryptography
 rustls = { version = "0.21", features = ["dangerous_configuration"] }
 rustls-pemfile = "1.0"
-snow = "0.9"
-ed25519-dalek = { version = "2.0", features = ["rand_core"] }
+snow = { version = "0.9", optional = true }
+ed25519-dalek = { version = "2.0", features = ["rand_core"], optional = true }
 x25519-dalek = "2.0"
 aes-gcm = "0.10"
 sha2 = "0.10"
@@ -43,7 +33,7 @@ reqwest = { version = "0.11", features = ["json", "rustls-tls"] }
 hex = "0.4"
 
 # Serialization
-ciborium = "0.2"
+ciborium = { version = "0.2", optional = true }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 serde_cbor = "0.11"
@@ -87,15 +77,6 @@ http3 = ["h3", "h3-quinn"]
 noise = ["snow"]
 chrome-fingerprint = []
 cbor-gateway = ["ciborium", "ed25519-dalek"]
-
-# Benchmarks
-[[bench]]
-name = "transport_performance"
-harness = false
-
-[[bench]]
-name = "encryption_overhead"
-harness = false
 
 # Binary targets
 [[bin]]
