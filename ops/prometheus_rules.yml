@@ -1,0 +1,30 @@
+groups:
+  - name: scion-sidecar
+    rules:
+      - alert: AEADAuthFailures
+        expr: increase(aead_auth_failures_total[5m]) > 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: AEAD authentication failures detected
+      - alert: ReplayDropsSpike
+        expr: increase(antireplay_blocks_total[5m]) > 100
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: High rate of replay-protected packet drops
+      - alert: KeyRotationStall
+        expr: time() - key_rotation_timestamp_seconds > 24 * 3600
+        labels:
+          severity: critical
+        annotations:
+          summary: No key rotation in the last 24h
+      - alert: DecryptLatencyHigh
+        expr: histogram_quantile(0.95, rate(decrypt_latency_seconds_bucket[5m])) > 2 * decrypt_latency_baseline_seconds
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: Decryption latency p95 above twice baseline

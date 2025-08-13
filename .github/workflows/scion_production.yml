@@ -1,0 +1,69 @@
+name: scion-production
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install ruff mypy
+
+      - name: Run linters
+        run: |
+          ruff check . > lint.txt || true
+          mypy . > mypy.txt || true
+
+      - name: Upload linter reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: lint-reports
+          path: |
+            lint.txt
+            mypy.txt
+
+      - name: Metrics snapshot
+        run: |
+          cd scion-sidecar
+          cat <<'GO' > snapshot.go
+package main
+import (
+  "encoding/json"
+  "os"
+  "github.com/aivillage/scion-sidecar/internal/metrics"
+)
+func main() {
+  m := metrics.NewMetricsCollector()
+  snap := m.GetSnapshot()
+  b, _ := json.MarshalIndent(snap, "", "  ")
+  os.WriteFile("metrics_snapshot.json", b, 0o644)
+}
+GO
+          go run snapshot.go
+
+      - name: Upload metrics snapshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: metrics-snapshot
+          path: scion-sidecar/metrics_snapshot.json
+
+      - name: Run benchmarks
+        run: |
+          python benchmarks/p2p_network_benchmark.py
+          python benchmarks/rag_latency_benchmark.py
+
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v4
+        with:
+          name: bench-results
+          path: docs/benchmarks
