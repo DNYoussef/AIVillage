@@ -31,6 +31,9 @@ pub use error::BetanetError;
 #[cfg(feature = "python-ffi")]
 pub mod python_ffi;
 
+#[cfg(feature = "cffi")]
+pub mod cffi;
+
 /// Core Betanet client result type
 pub type BetanetResult<T> = Result<T, BetanetError>;
 
