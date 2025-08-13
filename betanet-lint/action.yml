@@ -1,0 +1,19 @@
+name: betanet-lint
+description: Lint Betanet binaries for MUST/SHALL compliance and generate SBOM
+inputs:
+  binary:
+    description: Path to Betanet binary
+    required: true
+  report:
+    description: Path to JSON report output
+    required: true
+  sbom:
+    description: Path to CycloneDX SBOM output
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: Run Betanet linter
+      shell: bash
+      run: |
+        cargo run --manifest-path "${{ github.action_path }}/Cargo.toml" -- "${{ inputs.binary }}" --report "${{ inputs.report }}" --sbom "${{ inputs.sbom }}"
