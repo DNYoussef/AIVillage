@@ -34,6 +34,200 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 
+class LinkChangeDetector:
+    """Detects network link changes for fast path switching (500ms target)"""
+
+    def __init__(self, target_switch_time_ms: int = 500):
+        self.target_switch_time_ms = target_switch_time_ms
+        self.link_state_history: list[dict] = []
+        self.max_history = 10
+        self.last_check_time = 0.0
+        self.check_interval_ms = 100  # Check every 100ms
+
+        # Current link state
+        self.current_state = {
+            "bluetooth_available": False,
+            "internet_available": False,
+            "wifi_connected": False,
+            "cellular_connected": False,
+            "bandwidth_mbps": 0.0,
+            "latency_ms": 0.0,
+        }
+
+        # Change detection
+        self.change_events: list[dict] = []
+        self.max_events = 50
+
+    def update_link_state(self, new_state: dict) -> bool:
+        """Update link state and detect changes
+
+        Returns:
+            True if significant change detected requiring path switch
+        """
+        current_time = time.time() * 1000  # milliseconds
+
+        # Rate limit checks to target interval
+        if current_time - self.last_check_time < self.check_interval_ms:
+            return False
+
+        self.last_check_time = current_time
+
+        # Detect changes from current state
+        changes_detected = []
+
+        for key, new_value in new_state.items():
+            old_value = self.current_state.get(key)
+            if old_value != new_value:
+                changes_detected.append(
+                    {
+                        "field": key,
+                        "old_value": old_value,
+                        "new_value": new_value,
+                        "timestamp": current_time,
+                    }
+                )
+
+        # Update current state
+        self.current_state.update(new_state)
+
+        # Add to history
+        state_snapshot = {
+            "timestamp": current_time,
+            "state": self.current_state.copy(),
+            "changes": changes_detected,
+        }
+
+        self.link_state_history.append(state_snapshot)
+        if len(self.link_state_history) > self.max_history:
+            self.link_state_history.pop(0)
+
+        # Determine if changes require path switching
+        requires_switch = self._evaluate_change_significance(changes_detected)
+
+        if requires_switch:
+            # Record change event
+            event = {
+                "timestamp": current_time,
+                "changes": changes_detected,
+                "switch_required": True,
+                "evaluation_time_ms": current_time
+                - (
+                    changes_detected[0]["timestamp"]
+                    if changes_detected
+                    else current_time
+                ),
+            }
+
+            self.change_events.append(event)
+            if len(self.change_events) > self.max_events:
+                self.change_events.pop(0)
+
+            logger.info(
+                f"Link change detected requiring path switch: {[c['field'] for c in changes_detected]}"
+            )
+
+        return requires_switch
+
+    def _evaluate_change_significance(self, changes: list[dict]) -> bool:
+        """Evaluate if changes are significant enough to require path switching"""
+        if not changes:
+            return False
+
+        # High-priority changes that require immediate switching
+        critical_changes = [
+            "bluetooth_available",
+            "internet_available",
+            "wifi_connected",
+            "cellular_connected",
+        ]
+
+        for change in changes:
+            field = change["field"]
+
+            # Critical connectivity changes
+            if field in critical_changes:
+                return True
+
+            # Significant bandwidth changes (>50% change)
+            if field == "bandwidth_mbps":
+                old_val = change["old_value"] or 0
+                new_val = change["new_value"] or 0
+                if old_val > 0:
+                    change_ratio = abs(new_val - old_val) / old_val
+                    if change_ratio > 0.5:  # >50% bandwidth change
+                        return True
+
+            # Significant latency changes (>100ms change)
+            if field == "latency_ms":
+                old_val = change["old_value"] or 0
+                new_val = change["new_value"] or 0
+                if abs(new_val - old_val) > 100:  # >100ms latency change
+                    return True
+
+        return False
+
+    def get_switch_recommendation(self) -> tuple[bool, str, dict]:
+        """Get path switch recommendation based on current state
+
+        Returns:
+            (should_switch, recommended_path, rationale)
+        """
+        state = self.current_state
+        rationale = {"reasons": [], "metrics": state.copy()}
+
+        # Prefer paths based on current connectivity
+        if state.get("bluetooth_available") and not state.get("internet_available"):
+            # Offline scenario - prefer BitChat
+            return True, "bitchat", {**rationale, "reasons": ["offline_scenario"]}
+
+        if state.get("internet_available") and state.get("wifi_connected"):
+            # High-quality internet - prefer Betanet
+            if (
+                state.get("bandwidth_mbps", 0) > 10
+                and state.get("latency_ms", 999) < 100
+            ):
+                return (
+                    True,
+                    "betanet",
+                    {**rationale, "reasons": ["high_quality_internet"]},
+                )
+
+        if state.get("cellular_connected") and not state.get("wifi_connected"):
+            # Cellular only - consider cost and battery
+            if state.get("bandwidth_mbps", 0) < 2:
+                return (
+                    True,
+                    "bitchat",
+                    {**rationale, "reasons": ["cellular_low_bandwidth"]},
+                )
+
+        # No strong preference - maintain current path
+        return False, "maintain", rationale
+
+    def get_performance_metrics(self) -> dict:
+        """Get performance metrics for the link change detector"""
+        if not self.change_events:
+            return {"events": 0}
+
+        recent_events = [
+            e for e in self.change_events if time.time() * 1000 - e["timestamp"] < 60000
+        ]  # Last minute
+
+        evaluation_times = [e.get("evaluation_time_ms", 0) for e in recent_events]
+        avg_evaluation_time = (
+            sum(evaluation_times) / len(evaluation_times) if evaluation_times else 0
+        )
+
+        return {
+            "total_events": len(self.change_events),
+            "recent_events": len(recent_events),
+            "avg_evaluation_time_ms": avg_evaluation_time,
+            "target_switch_time_ms": self.target_switch_time_ms,
+            "within_target": avg_evaluation_time <= self.target_switch_time_ms,
+            "current_state": self.current_state.copy(),
+        }
+
+
 class PathProtocol(Enum):
     """Available routing protocols"""
 
@@ -202,6 +396,12 @@ class NavigatorAgent:
         self.routing_decisions: dict[str, tuple[PathProtocol, float]] = {}
         self.decision_cache_ttl = 60.0  # 1 minute
 
+        # Fast path switching for link changes (500ms target)
+        self.link_change_detector = LinkChangeDetector(target_switch_time_ms=500)
+        self.last_path_switch_time = 0.0
+        self.path_switch_threshold_ms = 500  # 500ms target for path switching
+        self.fast_switch_enabled = True
+
         # Global South optimizations
         self.global_south_mode = True  # Prioritize offline-first
         self.data_cost_threshold = 0.005  # $0.005/MB threshold
@@ -233,6 +433,17 @@ class NavigatorAgent:
         """
         # Update network conditions
         await self._update_network_conditions()
+
+        # Check for link changes requiring fast switching (500ms target)
+        if self.fast_switch_enabled:
+            link_change_detected = await self._check_fast_switching(
+                destination, message_context
+            )
+            if link_change_detected:
+                # Fast path switch detected - use optimized decision
+                return await self._fast_path_selection(
+                    destination, message_context, available_protocols
+                )
 
         # Check decision cache
         cache_key = (
@@ -715,3 +926,139 @@ class NavigatorAgent:
             f"Cache cleanup: removed {len(expired_decisions)} decisions, "
             f"{len(expired_proximity)} proximity entries, {len(expired_peers)} peers"
         )
+
+    async def _check_fast_switching(
+        self, destination: str, context: MessageContext
+    ) -> bool:
+        """Check if link changes require fast path switching (500ms target)"""
+        current_time = time.time() * 1000  # milliseconds
+
+        # Build current link state for change detection
+        link_state = {
+            "bluetooth_available": self.conditions.bluetooth_available,
+            "internet_available": self.conditions.internet_available,
+            "wifi_connected": self.conditions.wifi_connected,
+            "cellular_connected": not self.conditions.wifi_connected
+            and self.conditions.internet_available,
+            "bandwidth_mbps": self.conditions.bandwidth_mbps,
+            "latency_ms": self.conditions.latency_ms,
+        }
+
+        # Update link change detector
+        change_detected = self.link_change_detector.update_link_state(link_state)
+
+        if change_detected:
+            # Check if enough time has passed since last switch to avoid thrashing
+            time_since_last_switch = current_time - self.last_path_switch_time
+            if time_since_last_switch > self.path_switch_threshold_ms:
+                self.last_path_switch_time = current_time
+                logger.info(
+                    f"Fast switching triggered for {destination} after {time_since_last_switch:.0f}ms"
+                )
+                return True
+
+        return False
+
+    async def _fast_path_selection(
+        self,
+        destination: str,
+        context: MessageContext,
+        available_protocols: list[str] | None,
+    ) -> tuple[PathProtocol, dict[str, Any]]:
+        """Fast path selection optimized for 500ms switching target"""
+        available = available_protocols or ["bitchat", "betanet", "store_forward"]
+
+        # Get fast switching recommendation from link change detector
+        should_switch, recommended_path, rationale = (
+            self.link_change_detector.get_switch_recommendation()
+        )
+
+        if should_switch and recommended_path != "maintain":
+            # Use recommendation if protocol is available
+            if recommended_path == "bitchat" and "bitchat" in available:
+                logger.debug(f"Fast switch to BitChat: {rationale['reasons']}")
+                return PathProtocol.BITCHAT, self._get_fast_routing_metadata(
+                    PathProtocol.BITCHAT, rationale
+                )
+
+            elif recommended_path == "betanet" and "betanet" in available:
+                logger.debug(f"Fast switch to Betanet: {rationale['reasons']}")
+                return PathProtocol.BETANET, self._get_fast_routing_metadata(
+                    PathProtocol.BETANET, rationale
+                )
+
+        # Fallback to emergency fast selection based on connectivity
+        if self.conditions.bluetooth_available and "bitchat" in available:
+            # BitChat available - use for fast switching
+            return PathProtocol.BITCHAT, self._get_fast_routing_metadata(
+                PathProtocol.BITCHAT, {"fast_switch": True}
+            )
+
+        if self.conditions.internet_available and "betanet" in available:
+            # Internet available - use Betanet for fast switching
+            return PathProtocol.BETANET, self._get_fast_routing_metadata(
+                PathProtocol.BETANET, {"fast_switch": True}
+            )
+
+        # Last resort - store and forward
+        return PathProtocol.STORE_FORWARD, self._get_fast_routing_metadata(
+            PathProtocol.STORE_FORWARD, {"emergency": True}
+        )
+
+    def _get_fast_routing_metadata(
+        self, protocol: PathProtocol, rationale: dict
+    ) -> dict[str, Any]:
+        """Generate metadata for fast-switched routing"""
+        metadata = {
+            "protocol": protocol.value,
+            "fast_switch": True,
+            "switch_time_target_ms": self.path_switch_threshold_ms,
+            "timestamp": time.time(),
+            "rationale": rationale,
+        }
+
+        if protocol == PathProtocol.BITCHAT:
+            metadata.update(
+                {
+                    "max_hops": 7,
+                    "energy_efficient": True,
+                    "offline_capable": True,
+                    "fast_switch_reason": "bluetooth_mesh_optimization",
+                }
+            )
+        elif protocol == PathProtocol.BETANET:
+            metadata.update(
+                {
+                    "global_reach": True,
+                    "high_bandwidth": True,
+                    "fast_switch_reason": "internet_connectivity_optimization",
+                }
+            )
+        elif protocol == PathProtocol.STORE_FORWARD:
+            metadata.update(
+                {
+                    "delay_tolerant": True,
+                    "guaranteed_delivery": True,
+                    "fast_switch_reason": "emergency_fallback",
+                }
+            )
+
+        return metadata
+
+    def get_fast_switching_metrics(self) -> dict[str, Any]:
+        """Get metrics for fast switching performance"""
+        detector_metrics = self.link_change_detector.get_performance_metrics()
+
+        return {
+            "fast_switch_enabled": self.fast_switch_enabled,
+            "target_switch_time_ms": self.path_switch_threshold_ms,
+            "last_switch_time": self.last_path_switch_time,
+            "link_change_detector": detector_metrics,
+            "switch_performance": {
+                "within_target": detector_metrics.get("within_target", False),
+                "avg_evaluation_time": detector_metrics.get(
+                    "avg_evaluation_time_ms", 0
+                ),
+                "recent_events": detector_metrics.get("recent_events", 0),
+            },
+        }
