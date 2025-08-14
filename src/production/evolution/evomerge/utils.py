@@ -1,7 +1,6 @@
 import logging
 import os
 import shutil
-from concurrent.futures import ProcessPoolExecutor
 
 import psutil
 import torch
@@ -133,35 +132,6 @@ def generate_text(model: torch.nn.Module, tokenizer: AutoTokenizer, prompt: str,
         logger.exception(f"Error during text generation: {e!s}")
         msg = f"Error generating text: {e!s}"
         raise EvoMergeException(msg)
-
-
-def evaluate_model(model_path: str) -> dict[str, float | str]:
-    try:
-        # Load model and tokenizer from the provided path
-        model = AutoModelForCausalLM.from_pretrained(model_path)
-        tokenizer = AutoTokenizer.from_pretrained(model_path)
-
-        # Simple perplexity evaluation on a short example text
-        test_text = "The quick brown fox jumps over the lazy dog"
-        inputs = tokenizer(test_text, return_tensors="pt")
-        with torch.no_grad():
-            outputs = model(**inputs, labels=inputs["input_ids"])
-            perplexity = torch.exp(outputs.loss).item()
-
-        # Derive a basic overall score using the inverse of perplexity
-        overall_score = 1 / perplexity if perplexity != 0 else float("inf")
-
-        return {"perplexity": perplexity, "overall_score": overall_score}
-
-    except Exception as e:
-        logger.exception(f"Error during model evaluation: {e!s}")
-        msg = f"Error evaluating model: {e!s}"
-        raise EvoMergeException(msg)
-
-
-def parallel_evaluate_models(model_paths: list[str], max_workers: int | None = None) -> list[dict[str, float | str]]:
-    with ProcessPoolExecutor(max_workers=max_workers) as executor:
-        return list(executor.map(evaluate_model, model_paths))
 
 
 def mask_model_weights(

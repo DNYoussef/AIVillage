@@ -4,7 +4,7 @@ import torch
 from transformers import AutoTokenizer
 
 from .config import MergeSettings, ModelDomain
-from .evaluation import (
+from agent_forge.evaluation.evaluator import (
     evaluate_coding,
     evaluate_mathematics,
     evaluate_writing,

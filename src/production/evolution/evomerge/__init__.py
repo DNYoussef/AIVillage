@@ -11,13 +11,12 @@ from .merging.merge_techniques import MERGE_TECHNIQUES
 from .merging.merger import AdvancedModelMerger
 from .utils import (
     clean_up_models,
-    evaluate_model,
     generate_text,
     load_models,
-    parallel_evaluate_models,
     save_model,
     setup_gpu_if_available,
 )
+from agent_forge.evaluation.evaluator import evaluate_model, parallel_evaluate_models
 from .visualization import (
     generate_html_report,
     plot_benchmark_comparison,
