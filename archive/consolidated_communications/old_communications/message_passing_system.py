@@ -11,8 +11,9 @@ import asyncio
 import logging
 from typing import Any
 
+from src.communications.protocol import StandardCommunicationProtocol
+
 from .message import Message
-from .protocol import StandardCommunicationProtocol
 from .service_discovery import discover_services
 
 logger = logging.getLogger(__name__)
