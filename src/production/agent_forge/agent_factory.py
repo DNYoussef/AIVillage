@@ -12,7 +12,7 @@ from typing import Any
 # Add the parent directory to the path to import our modules
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from scripts.refactor_agent_forge import AgentRole, AgentSpecialization, BaseMetaAgent
+from .base import AgentRole, AgentSpecialization, BaseMetaAgent
 
 
 class TemplateNotFoundError(Exception):

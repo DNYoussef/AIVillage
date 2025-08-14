@@ -484,8 +484,10 @@ class BleakAdapter:
         logger.warning("Bleak does not support BLE advertising (client-only)")
 
     async def stop_advertising(self):
-        """Stop BLE advertising."""
-        pass
+        """Stop BLE advertising (not supported by Bleak - client only)."""
+        logger.debug(
+            "Stop advertising called - Bleak does not support BLE advertising (client-only)"
+        )
 
 
 # Placeholder for platform-specific adapters

@@ -13,10 +13,18 @@ Key Components:
 from .adaptive_resharding import AdaptiveReshardingManager
 from .compression_integration import DistributedCompressionManager
 from .model_sharding_engine import ModelShardingEngine, ShardingStrategy
+from .tokenomics_receipts import (
+    TokenomicsConfig,
+    TokenomicsReceipt,
+    TokenomicsReceiptManager,
+)
 
 __all__ = [
     "AdaptiveReshardingManager",
     "DistributedCompressionManager",
     "ModelShardingEngine",
     "ShardingStrategy",
+    "TokenomicsReceiptManager",
+    "TokenomicsReceipt",
+    "TokenomicsConfig",
 ]

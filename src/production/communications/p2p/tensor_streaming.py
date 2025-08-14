@@ -278,6 +278,11 @@ class TensorStreaming:
             # Send metadata first
             await self._send_tensor_metadata(destination, tensor_metadata)
 
+            # Initialize sent tensor cache for re-requests
+            if not hasattr(self, "_sent_tensor_cache"):
+                self._sent_tensor_cache: dict[str, dict[int, TensorChunk]] = {}
+            self._sent_tensor_cache[tensor_id] = {}
+
             # Send chunks with bandwidth throttling
             start_time = time.time()
             bytes_sent = 0
@@ -293,6 +298,8 @@ class TensorStreaming:
                 if success:
                     bytes_sent += len(chunk.data)
                     self.stats["chunks_sent"] += 1
+                    # Cache sent chunk for potential re-requests
+                    self._sent_tensor_cache[tensor_id][chunk.chunk_index] = chunk
                 else:
                     # Retry failed chunks
                     for retry in range(self.config.max_retries):
@@ -300,6 +307,10 @@ class TensorStreaming:
                         if await self._send_tensor_chunk(destination, chunk):
                             bytes_sent += len(chunk.data)
                             self.stats["chunks_sent"] += 1
+                            # Cache sent chunk for potential re-requests
+                            self._sent_tensor_cache[tensor_id][chunk.chunk_index] = (
+                                chunk
+                            )
                             break
                     else:
                         logger.error(
@@ -779,9 +790,39 @@ class TensorStreaming:
             f"Received request for {len(chunk_indices)} chunks of tensor {tensor_id}"
         )
 
-        # This would require caching sent tensors to respond to requests
-        # For now, just log the request
-        logger.warning("Chunk re-request functionality not yet implemented")
+        # Check if we have the requested tensor in our sent cache
+        if not hasattr(self, "_sent_tensor_cache"):
+            self._sent_tensor_cache: dict[str, dict[int, TensorChunk]] = {}
+
+        if tensor_id not in self._sent_tensor_cache:
+            logger.warning(
+                f"Cannot re-send chunks for tensor {tensor_id}: not in cache"
+            )
+            return
+
+        sent_chunks = self._sent_tensor_cache[tensor_id]
+
+        # Re-send requested chunks
+        for chunk_index in chunk_indices:
+            if chunk_index in sent_chunks:
+                chunk = sent_chunks[chunk_index]
+                success = await self._send_tensor_chunk(requester, chunk)
+                if success:
+                    logger.debug(
+                        f"Re-sent chunk {chunk_index} of tensor {tensor_id} to {requester}"
+                    )
+                else:
+                    logger.error(
+                        f"Failed to re-send chunk {chunk_index} of tensor {tensor_id}"
+                    )
+            else:
+                logger.warning(
+                    f"Chunk {chunk_index} not found in cache for tensor {tensor_id}"
+                )
+
+        logger.info(
+            f"Completed re-send of {len(chunk_indices)} chunks for tensor {tensor_id}"
+        )
 
     async def _reconstruct_tensor(self, tensor_id: str) -> Any | None:
         """Reconstruct tensor from received chunks."""

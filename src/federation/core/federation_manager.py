@@ -63,6 +63,12 @@ class FederationManager:
         self.enable_tor = enable_tor
         self.enable_i2p = enable_i2p
 
+        # Protocol state tracking
+        self.tor_enabled = False
+        self.i2p_enabled = False
+        self.tor_onion_address: str | None = None
+        self.i2p_destination: str | None = None
+
         # Federation state
         self.is_running = False
         self.local_profile: DeviceProfile | None = None
@@ -715,7 +721,47 @@ class FederationManager:
     async def _start_tor_transport(self):
         """Start Tor hidden service transport"""
         logger.info("Starting Tor transport...")
-        # TODO: Implement Tor integration
+
+        if not self.enable_tor:
+            logger.info("Tor transport disabled")
+            return
+
+        try:
+            # Try to import Tor dependencies
+            import socket
+
+            import socks
+            from stem import Signal
+            from stem.control import Controller
+
+            # Configure SOCKS proxy for Tor
+            socks.set_default_proxy(socks.SOCKS5, "127.0.0.1", 9050)
+            socket.socket = socks.socksocket
+
+            # Connect to Tor control port
+            with Controller.from_port(port=9051) as controller:
+                controller.authenticate()
+
+                # Create hidden service if needed
+                response = controller.create_ephemeral_hidden_service(
+                    {8080: 8080}, await_publication=True
+                )
+                self.tor_onion_address = f"{response.service_id}.onion"
+
+                logger.info(
+                    f"Tor hidden service available at: {self.tor_onion_address}"
+                )
+                self.tor_enabled = True
+
+        except ImportError:
+            logger.warning(
+                "Tor dependencies not available (stem, PySocks). Install with: pip install stem PySocks"
+            )
+            self.tor_enabled = False
+        except Exception as e:
+            logger.error(f"Failed to start Tor transport: {e}")
+            logger.info("Ensure Tor is running: systemctl start tor")
+            self.tor_enabled = False
 
     async def _stop_tor_transport(self):
         """Stop Tor transport"""
@@ -724,7 +770,69 @@ class FederationManager:
     async def _start_i2p_transport(self):
         """Start I2P transport"""
         logger.info("Starting I2P transport...")
-        # TODO: Implement I2P integration
+
+        if not self.enable_i2p:
+            logger.info("I2P transport disabled")
+            return
+
+        try:
+            # I2P integration via SAM (Simple Anonymous Messaging) bridge
+            import asyncio
+
+            import aiohttp
+
+            # Connect to I2P SAM bridge (default port 7656)
+            sam_host = "127.0.0.1"
+            sam_port = 7656
+
+            # Create I2P destination (like an address)
+            reader, writer = await asyncio.open_connection(sam_host, sam_port)
+
+            # SAM protocol handshake
+            writer.write(b"HELLO VERSION MIN=3.0 MAX=3.0\n")
+            await writer.drain()
+
+            response = await reader.readline()
+            if b"HELLO REPLY RESULT=OK" in response:
+                # Generate new destination keypair
+                writer.write(b"DEST GENERATE\n")
+                await writer.drain()
+
+                dest_response = await reader.readline()
+                if b"DEST REPLY" in dest_response:
+                    # Extract destination from response
+                    dest_parts = dest_response.decode().split(" ")
+                    for part in dest_parts:
+                        if (
+                            "=" in part and len(part) > 50
+                        ):  # I2P destinations are long base64 strings
+                            self.i2p_destination = part.split("=")[1]
+                            break
+
+                    logger.info(
+                        f"I2P destination created: {self.i2p_destination[:32]}..."
+                    )
+                    self.i2p_enabled = True
+                else:
+                    raise Exception("Failed to create I2P destination")
+            else:
+                raise Exception("I2P SAM handshake failed")
+
+            writer.close()
+            await writer.wait_closed()
+
+        except ImportError:
+            logger.warning(
+                "I2P dependencies not available. Ensure aiohttp is installed"
+            )
+            self.i2p_enabled = False
+        except (ConnectionRefusedError, OSError):
+            logger.error(f"Cannot connect to I2P SAM bridge on {sam_host}:{sam_port}")
+            logger.info("Ensure I2P router is running with SAM bridge enabled")
+            self.i2p_enabled = False
+        except Exception as e:
+            logger.error(f"Failed to start I2P transport: {e}")
+            self.i2p_enabled = False
 
     async def _stop_i2p_transport(self):
         """Stop I2P transport"""

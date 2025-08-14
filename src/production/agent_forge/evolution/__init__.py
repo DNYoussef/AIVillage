@@ -9,18 +9,22 @@ from .base import EvolvableAgent
 
 # Evolution engines
 from .dual_evolution_system import DualEvolutionSystem
-from .evolution_metrics import EvolutionMetrics
 from .evolution_scheduler import EvolutionScheduler
+from .kpi_evolution_engine import KPIEvolutionEngine
 from .magi_architectural_evolution import MagiArchitecturalEvolution
+from .metrics import EvolutionMetricsRecorder
 from .nightly_evolution_orchestrator import NightlyEvolutionOrchestrator
+from .resource_constrained_evolution import ResourceConstrainedEvolution
 
 __all__ = [
     "DualEvolutionSystem",
-    "EvolutionMetrics",
     "EvolutionScheduler",
     "EvolvableAgent",
+    "KPIEvolutionEngine",
     "MagiArchitecturalEvolution",
+    "EvolutionMetricsRecorder",
     "NightlyEvolutionOrchestrator",
+    "ResourceConstrainedEvolution",
 ]
 
 __version__ = "1.0.0"

@@ -1,13 +1,27 @@
 import base64
 import json
+import logging
 import os
 import uuid
 from datetime import datetime
 from typing import Any
 from urllib.parse import urlparse
 
-import faiss
-import numpy as np
+try:
+    import faiss
+
+    FAISS_AVAILABLE = True
+except ImportError:
+    FAISS_AVAILABLE = False
+    faiss = None  # type: ignore
+
+try:
+    import numpy as np
+
+    NUMPY_AVAILABLE = True
+except ImportError:
+    NUMPY_AVAILABLE = False
+    np = None  # type: ignore
 
 USE_QDRANT = os.getenv("RAG_USE_QDRANT") == "1"
 if USE_QDRANT:
@@ -73,7 +87,15 @@ class VectorStore:
                 )
             self.index = None
         else:
-            self.index = faiss.IndexFlatL2(self.dimension)
+            if FAISS_AVAILABLE and faiss is not None:
+                self.index = faiss.IndexFlatL2(self.dimension)
+            else:
+                # Fallback when FAISS is not available
+                self.index = None
+                logger = logging.getLogger(__name__)
+                logger.warning(
+                    "FAISS not available, using basic vector storage fallback"
+                )
 
     def add_documents(self, documents: list[dict[str, Any]]) -> None:
         vectors = [doc["embedding"] for doc in documents]
@@ -93,7 +115,9 @@ class VectorStore:
                     f"Failed to upsert to Qdrant: {e}. Falling back to local index."
                 )
         else:
-            self.index.add(np.array(vectors).astype("float32"))
+            if FAISS_AVAILABLE and NUMPY_AVAILABLE and self.index is not None:
+                self.index.add(np.array(vectors).astype("float32"))
+            # If FAISS/numpy not available, just store documents without indexing
         self.documents.extend(documents)
 
     async def add_texts(self, texts: list[str]) -> None:

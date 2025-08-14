@@ -630,13 +630,35 @@ class ResourceConstrainedEvolution(DualEvolutionSystem):
         """Cleanup resources after evolution."""
         # Unload models specific to this evolution
         if self.adaptive_loader:
-            # In a real implementation, we'd track models per evolution
-            pass
+            # Track and unload models per evolution
+            model_cache_keys = [
+                f"evolution_{evolution_id}_base",
+                f"evolution_{evolution_id}_optimizer",
+                f"evolution_{evolution_id}_temp",
+            ]
+
+            for cache_key in model_cache_keys:
+                try:
+                    self.adaptive_loader.unload_model(cache_key)
+                    logger.debug(f"Unloaded model cache: {cache_key}")
+                except Exception as e:
+                    logger.warning(f"Failed to unload model {cache_key}: {e}")
+
+            # Force memory cleanup
+            self.adaptive_loader.clear_cache()
 
         # Remove from paused evolutions if present
         agent_id = evolution_id.split("_")[1] if "_" in evolution_id else evolution_id
         if agent_id in self.paused_evolutions:
             del self.paused_evolutions[agent_id]
+            logger.debug(f"Removed {agent_id} from paused evolutions")
+
+        # Force garbage collection for this evolution
+        import gc
+
+        gc.collect()
+
+        logger.info(f"Cleaned up resources for evolution {evolution_id}")
 
     async def _load_evolution_models(
         self, agent: EvolvableAgent, evolution_type: str

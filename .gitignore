@@ -288,3 +288,63 @@ magi_production_*.log
 cleanup_*.log
 *.tmp
 temp_env/
+
+# Root directory organization - files should be in appropriate subdirectories
+/*_analyzer.py
+/execute_*.py
+/validate_*.py
+/verify_*.py
+/test_*.py
+/enhanced_*.py
+/focused_*.py
+/simple_*.py
+!src/
+!tests/
+!scripts/
+!validation/
+
+# Temporary analysis and audit directories
+tmp_*/
+*_audit*/
+*_analysis*/
+CUsers*/
+DAIVillage*/
+
+# Archive and backup directories in root
+docs/archived_reports/
+logs/archived/
+tmp/analysis_scripts/
+tmp/database_files/
+
+# Knowledge graph and visualization files
+knowledge_graph.png
+*.png
+*.jpg
+*.jpeg
+*.gif
+!docs/images/
+
+# Additional database patterns
+test_*.db
+*_test.db
+governance.db
+edge_deployment.db
+shield_validation.db
+
+# Additional log patterns
+graph_rag_*.log
+stem_textbook_*.log
+evomerge_*.log
+pipeline_*.log
+
+# Configuration and analysis JSON files
+*_kpi_report.json
+*_integration_readiness*.json
+*_codex_audit*.json
+bitchat_*.json
+test_dual_path_*.json
+ruff_results.json
+
+# Text analysis and cleanup files
+comprehensive_lint_cleanup.txt
+INTEGRATION_SETUP_COMPLETE.txt

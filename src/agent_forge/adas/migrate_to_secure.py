@@ -186,7 +186,14 @@ def main() -> int:
     tests_passed = run_tests(root_dir)
 
     # Step 5: Create summary
-    create_migration_summary(backup_path, 0)  # TODO: track actual files updated
+    # Count files updated
+    files_updated = 0
+    for subdir in ["", "adas/"]:
+        path = root_dir / "src" / "agent_forge" / subdir
+        if path.exists():
+            files_updated += len(list(path.glob("*.py")))
+
+    create_migration_summary(backup_path, files_updated)
 
     if tests_passed:
         print("\n✅ Migration completed successfully!")

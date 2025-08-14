@@ -23,6 +23,8 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
+logger = logging.getLogger(__name__)
+
 # SCION Gateway import
 try:
     from src.transport.scion_gateway import (
@@ -36,6 +38,31 @@ try:
 except ImportError:
     SCION_AVAILABLE = False
     logger.warning("SCION Gateway not available - SCION transport disabled")
+
+    # Define placeholder types when SCION is not available
+    class SCIONPath:
+        """Placeholder for SCIONPath when SCION not available."""
+
+        def __init__(self, *args, **kwargs):
+            pass
+
+    class SCIONGateway:
+        """Placeholder for SCIONGateway when SCION not available."""
+
+        def __init__(self, *args, **kwargs):
+            pass
+
+    class GatewayConfig:
+        """Placeholder for GatewayConfig when SCION not available."""
+
+        def __init__(self, *args, **kwargs):
+            pass
+
+    class SCIONConnectionError(Exception):
+        """Placeholder for SCIONConnectionError when SCION not available."""
+
+        pass
+
 
 # Bluetooth imports with fallback
 try:
@@ -137,7 +164,8 @@ class LinkChangeDetector:
                 self.change_events.pop(0)
 
             logger.info(
-                f"Link change detected requiring path switch: {[c['field'] for c in changes_detected]}"
+                f"Link change detected requiring path switch: "
+                f"{[c['field'] for c in changes_detected]}"
             )
 
         return requires_switch
@@ -456,7 +484,8 @@ class NavigatorAgent:
         self.mixnode_preferences = ["tor", "i2p", "betanet_mixnode"]
 
         logger.info(
-            f"Navigator initialized: {self.agent_id} (priority={routing_priority.value})"
+            f"Navigator initialized: {self.agent_id} "
+            f"(priority={routing_priority.value})"
         )
 
     async def select_path(
@@ -465,7 +494,8 @@ class NavigatorAgent:
         message_context: MessageContext,
         available_protocols: list[str] | None = None,
     ) -> tuple[PathProtocol, dict[str, Any]]:
-        """Core path selection algorithm with SCION preference and measurable ≤500ms switch time:
+        """Core path selection algorithm with SCION preference and measurable
+        ≤500ms switch time:
 
         1. Check SCION availability via gateway health/cache
         2. Score paths using RTT EWMA + loss + policy (privacy/perf)
@@ -496,7 +526,7 @@ class NavigatorAgent:
                 destination, message_context
             )
             if link_change_detected:
-                # Fast path switch detected - use optimized decision with SCION preference
+                # Fast path switch detected - use optimized decision with SCION pref
                 protocol, metadata = await self._fast_path_selection_with_scion(
                     destination,
                     message_context,
@@ -644,7 +674,8 @@ class NavigatorAgent:
         scion_available: bool,
         scion_paths: list[SCIONPath],
     ) -> tuple[PathProtocol, dict[str, float]]:
-        """Evaluate and select optimal routing protocol with SCION preference and path scoring"""
+        """Evaluate and select optimal routing protocol with SCION preference
+        and path scoring"""
         available = available_protocols or [
             "bitchat",
             "betanet",
@@ -679,7 +710,8 @@ class NavigatorAgent:
                     and best_scion_path.loss_rate < 0.05
                 ):
                     logger.debug(
-                        f"SCION selected for high-performance (RTT={best_scion_path.rtt_us / 1000:.1f}ms)"
+                        f"SCION selected for high-performance "
+                        f"(RTT={best_scion_path.rtt_us / 1000:.1f}ms)"
                     )
                     return PathProtocol.SCION, path_scores
 
@@ -877,7 +909,8 @@ class NavigatorAgent:
         scion_available: bool,
         scion_paths: list[SCIONPath],
     ) -> tuple[PathProtocol, dict[str, Any]]:
-        """Fast path selection with SCION preference optimized for 500ms switching target"""
+        """Fast path selection with SCION preference optimized for 500ms
+        switching target"""
         available = available_protocols or [
             "bitchat",
             "betanet",
@@ -910,7 +943,7 @@ class NavigatorAgent:
         path_scores: dict[str, float],
     ) -> tuple[PathProtocol, dict[str, float]]:
         """Fallback to original routing logic when SCION not selected"""
-        # Use the original routing logic but return the highest scored available protocol
+        # Use the original routing logic but return the highest scored protocol
         protocol = await self._evaluate_routing_options(destination, context, available)
         return protocol, path_scores
 
@@ -1406,7 +1439,8 @@ class NavigatorAgent:
             if time_since_last_switch > self.path_switch_threshold_ms:
                 self.last_path_switch_time = current_time
                 logger.info(
-                    f"Fast switching triggered for {destination} after {time_since_last_switch:.0f}ms"
+                    f"Fast switching triggered for {destination} after "
+                    f"{time_since_last_switch:.0f}ms"
                 )
                 return True
 

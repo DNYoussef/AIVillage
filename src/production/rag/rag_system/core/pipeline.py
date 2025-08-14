@@ -24,7 +24,7 @@ except ImportError:
     GraphStore = None  # type: ignore
 
 try:
-    from ..retrieval.hybrid_retriever import HybridRetriever
+    from .implementations import HybridRetriever
 except ImportError:
     HybridRetriever = None  # type: ignore
 

@@ -22,14 +22,23 @@ try:
 except ImportError:
     TORCH_AVAILABLE = False
 
-    # Create dummy classes for type hints
+    # Create dummy classes for type hints when torch is not available
     class torch:
         class Tensor:
-            pass
+            """Dummy torch.Tensor for type hints when PyTorch is not available."""
+
+            def __init__(self) -> None:
+                self.device = "cpu"
+                self.requires_grad = False
+                self.dtype = None
 
     class np:
         class ndarray:
-            pass
+            """Dummy numpy.ndarray for type hints."""
+
+            def __init__(self) -> None:
+                self.shape = ()
+                self.dtype = None
 
 
 logger = logging.getLogger(__name__)

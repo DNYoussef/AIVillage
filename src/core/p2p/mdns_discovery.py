@@ -459,8 +459,8 @@ class mDNSDiscovery:
                 local_ip = socket.gethostbyname(hostname)
                 if local_ip and not local_ip.startswith("127."):
                     addresses.add(local_ip)
-            except:
-                pass
+            except Exception as e:
+                logger.debug(f"Failed to get local IP via hostname lookup: {e}")
 
         # Always include loopback as fallback
         if not addresses:

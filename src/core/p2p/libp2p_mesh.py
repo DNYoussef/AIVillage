@@ -42,13 +42,44 @@ except ImportError:
 
     # Define placeholder types for when LibP2P is not available
     class INetStream:  # type: ignore
-        pass
+        """Placeholder for libp2p stream interface when not available."""
+
+        def __init__(self, *args, **kwargs):
+            pass
+
+        async def read(self, size: int) -> bytes:
+            return b""
+
+        async def write(self, data: bytes) -> None:
+            pass
+
+        async def close(self) -> None:
+            pass
 
     class Pubsub:  # type: ignore
-        pass
+        """Placeholder for libp2p pubsub when not available."""
+
+        def __init__(self, *args, **kwargs):
+            pass
+
+        async def subscribe(self, topic: str) -> None:
+            logger.warning(f"LibP2P not available - cannot subscribe to {topic}")
+
+        async def publish(self, topic: str, data: bytes) -> None:
+            logger.warning(f"LibP2P not available - cannot publish to {topic}")
 
     class KadDHT:  # type: ignore
-        pass
+        """Placeholder for libp2p Kademlia DHT when not available."""
+
+        def __init__(self, *args, **kwargs):
+            pass
+
+        async def provide(self, key: str) -> None:
+            logger.warning(f"LibP2P not available - cannot provide key {key}")
+
+        async def get_providers(self, key: str) -> list:
+            logger.warning(f"LibP2P not available - cannot get providers for {key}")
+            return []
 
 
 from .fallback_transports import (
@@ -563,8 +594,17 @@ class LibP2PMeshNetwork:
 
         # Fallback to existing mechanism if needed
         if self.fallback_node:
-            # Use existing discovery mechanism
-            pass
+            # Use fallback discovery mechanism
+            try:
+                await self.fallback_node.discover_peers()
+                fallback_peers = self.fallback_node.get_active_peers()
+                for peer_id in fallback_peers:
+                    if peer_id not in self.connected_peers:
+                        # Add discovered peer to our mesh
+                        self.connected_peers[peer_id] = time.time()
+                        logger.debug(f"Added fallback peer to mesh: {peer_id}")
+            except Exception as e:
+                logger.debug(f"Fallback discovery error: {e}")
 
     async def _heartbeat_loop(self) -> None:
         """Send periodic heartbeats."""

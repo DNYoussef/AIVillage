@@ -547,7 +547,14 @@ class DualPathTransport:
             # Apply BitChat optimizations from metadata
             if metadata.get("store_forward_enabled", True):
                 # BitChat handles store-and-forward automatically
-                pass
+                # Set message priority based on urgency for better routing
+                if metadata.get("urgent", False):
+                    message.priority = 10  # Highest priority for urgent messages
+                elif metadata.get("background", False):
+                    message.priority = 1  # Lowest priority for background messages
+
+                # Log store-and-forward capability for debugging
+                logger.debug(f"Store-and-forward enabled for message {message.id[:8]}")
 
             success = await self.bitchat.send_message(
                 message.recipient,

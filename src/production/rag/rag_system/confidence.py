@@ -3,7 +3,36 @@ from __future__ import annotations
 """Rule-based confidence scoring utilities."""
 
 
-from src.core.evidence import ConfidenceTier, EvidencePack
+# Define confidence tier and evidence pack locally to avoid import issues
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import Any
+
+
+class ConfidenceTier(Enum):
+    """Confidence tiers for evidence scoring."""
+
+    HIGH = "high"
+    MEDIUM = "medium"
+    LOW = "low"
+
+
+@dataclass
+class EvidenceChunk:
+    """Individual evidence chunk."""
+
+    content: str
+    score: float
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
+class EvidencePack:
+    """Collection of evidence chunks."""
+
+    chunks: list[EvidenceChunk] = field(default_factory=list)
+    metadata: dict[str, Any] = field(default_factory=dict)
+
 
 THRESHOLDS = {
     ConfidenceTier.HIGH: 0.8,

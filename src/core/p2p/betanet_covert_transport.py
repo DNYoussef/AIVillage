@@ -18,6 +18,7 @@ import base64
 import json
 import logging
 import random
+import ssl
 import time
 import uuid
 import zlib
@@ -138,9 +139,18 @@ class HTTP2CovertChannel:
             self.connection = h2.connection.H2Connection(config=config)
             self.connection.initiate_connection()
 
-            # TODO: Implement actual TLS connection
-            logger.info(f"HTTP/2 covert channel established to {host}:{port}")
-            return True
+            # Establish TLS connection using httpx for HTTP/2
+            async with httpx.AsyncClient(http2=True, verify=False) as client:
+                # Test connection with a small request
+                response = await client.get(f"https://{host}:{port}/")
+                if response.status_code < 500:  # Accept any non-server-error response
+                    logger.info(f"HTTP/2 covert channel established to {host}:{port}")
+                    return True
+                else:
+                    logger.error(
+                        f"HTTP/2 connection test failed with status {response.status_code}"
+                    )
+                    return False
 
         except Exception as e:
             logger.error(f"Failed to establish HTTP/2 connection: {e}")
@@ -222,9 +232,18 @@ class HTTP3CovertChannel:
             return False
 
         try:
-            # TODO: Implement QUIC connection using aioquic
-            logger.info(f"HTTP/3 covert channel established to {host}:{port}")
-            return True
+            # Implement QUIC connection using aioquic
+            from aioquic.asyncio.client import connect
+            from aioquic.quic.configuration import QuicConfiguration
+
+            configuration = QuicConfiguration(is_client=True)
+            configuration.verify_mode = ssl.CERT_NONE  # For testing/covert use
+
+            async with connect(host, port, configuration=configuration) as protocol:
+                self.quic_connection = protocol
+                self.connection = H3Connection(protocol._quic)
+                logger.info(f"HTTP/3 covert channel established to {host}:{port}")
+                return True
 
         except Exception as e:
             logger.error(f"Failed to establish HTTP/3 connection: {e}")
@@ -238,9 +257,25 @@ class HTTP3CovertChannel:
             # Create QUIC stream for covert data
             headers = self._generate_h3_headers(len(data))
 
-            # TODO: Send via QUIC stream
-            logger.debug(f"Sent {len(data)} bytes via HTTP/3 stream")
-            return True
+            # Send via QUIC stream
+            if self.connection and self.quic_connection:
+                stream_id = self.quic_connection._quic.get_next_available_stream_id()
+
+                # Send headers and data
+                self.connection.send_headers(stream_id, headers)
+                self.connection.send_data(stream_id, data, end_stream=True)
+
+                # Transmit to network
+                events = self.connection.next_event()
+                for event in events:
+                    if hasattr(event, "data"):
+                        self.quic_connection.transmit()
+
+                logger.debug(f"Sent {len(data)} bytes via HTTP/3 stream {stream_id}")
+                return True
+            else:
+                logger.error("No active QUIC connection for HTTP/3 stream")
+                return False
 
         except Exception as e:
             logger.error(f"Failed to send HTTP/3 covert stream: {e}")
@@ -270,11 +305,32 @@ class WebSocketCovertChannel:
     async def establish_connection(self, uri: str) -> bool:
         """Establish WebSocket connection for persistent covert channel."""
         try:
-            # TODO: Implement WebSocket connection
-            # This would use websockets library or similar
-            self.is_connected = True
-            logger.info(f"WebSocket covert channel established to {uri}")
-            return True
+            # Implement WebSocket connection using websockets library
+            import ssl
+
+            import websockets
+
+            # Create SSL context that accepts self-signed certificates for covert use
+            ssl_context = ssl.create_default_context()
+            ssl_context.check_hostname = False
+            ssl_context.verify_mode = ssl.CERT_NONE
+
+            try:
+                self.websocket = await websockets.connect(
+                    uri,
+                    ssl=ssl_context,
+                    extra_headers={
+                        "User-Agent": random.choice(self.profile.user_agents),
+                        "Origin": random.choice(self.profile.referrer_patterns),
+                    },
+                )
+                self.is_connected = True
+                logger.info(f"WebSocket covert channel established to {uri}")
+                return True
+            except Exception as e:
+                logger.error(f"WebSocket connection failed: {e}")
+                self.is_connected = False
+                return False
 
         except Exception as e:
             logger.error(f"Failed to establish WebSocket connection: {e}")
@@ -288,9 +344,20 @@ class WebSocketCovertChannel:
 
         try:
             # Encode data in WebSocket frame
-            # TODO: Send via WebSocket
-            logger.debug(f"Sent {len(data)} bytes via WebSocket {frame_type} frame")
-            return True
+            # Send via WebSocket
+            if self.websocket and not self.websocket.closed:
+                if frame_type == "binary":
+                    await self.websocket.send(data)
+                else:  # text frame
+                    # Encode binary data as base64 for text frame
+                    encoded_data = base64.b64encode(data).decode("ascii")
+                    await self.websocket.send(encoded_data)
+
+                logger.debug(f"Sent {len(data)} bytes via WebSocket {frame_type} frame")
+                return True
+            else:
+                logger.error("WebSocket connection not available")
+                return False
 
         except Exception as e:
             logger.error(f"Failed to send WebSocket covert frame: {e}")
@@ -307,9 +374,35 @@ class ServerSentEventsCovertChannel:
     async def establish_stream(self, endpoint: str) -> bool:
         """Establish SSE stream for covert data transmission."""
         try:
-            # TODO: Implement SSE connection
-            logger.info(f"SSE covert stream established to {endpoint}")
-            return True
+            # Implement SSE connection using httpx streaming
+            import httpx
+
+            try:
+                # Create persistent HTTP client for SSE
+                self.client = httpx.AsyncClient(
+                    headers={
+                        "Accept": "text/event-stream",
+                        "Cache-Control": "no-cache",
+                        "User-Agent": random.choice(self.profile.user_agents),
+                    },
+                    timeout=None,  # SSE connections are long-lived
+                )
+
+                # Test connection by sending a HEAD request
+                response = await self.client.head(endpoint)
+                if response.status_code < 400:
+                    self.event_stream = endpoint
+                    logger.info(f"SSE covert stream established to {endpoint}")
+                    return True
+                else:
+                    logger.error(
+                        f"SSE endpoint test failed with status {response.status_code}"
+                    )
+                    return False
+
+            except Exception as e:
+                logger.error(f"SSE connection setup failed: {e}")
+                return False
 
         except Exception as e:
             logger.error(f"Failed to establish SSE stream: {e}")
@@ -322,9 +415,34 @@ class ServerSentEventsCovertChannel:
             encoded_data = base64.b64encode(data).decode("ascii")
             sse_event = f"event: {event_type}\\ndata: {encoded_data}\\n\\n"
 
-            # TODO: Send via SSE stream
-            logger.debug(f"Sent {len(data)} bytes via SSE event")
-            return True
+            # Send via SSE stream (POST the event data to endpoint)
+            if self.client and self.event_stream:
+                try:
+                    # POST the SSE event to the endpoint
+                    response = await self.client.post(
+                        self.event_stream,
+                        content=sse_event,
+                        headers={
+                            "Content-Type": "text/plain",
+                            "X-Event-Type": event_type,
+                        },
+                    )
+
+                    if response.status_code < 400:
+                        logger.debug(f"Sent {len(data)} bytes via SSE event")
+                        return True
+                    else:
+                        logger.error(
+                            f"SSE send failed with status {response.status_code}"
+                        )
+                        return False
+
+                except Exception as e:
+                    logger.error(f"SSE send error: {e}")
+                    return False
+            else:
+                logger.error("SSE stream not established")
+                return False
 
         except Exception as e:
             logger.error(f"Failed to send SSE covert event: {e}")
@@ -477,7 +595,28 @@ class BetanetCovertTransport:
 
                 # Send via active channel (marked as cover traffic)
                 if self.active_channels:
-                    # TODO: Mark as cover traffic to avoid processing
+                    # Mark as cover traffic and send via active channel
+                    # Add cover traffic marker to payload
+                    marked_payload = dummy_payload + b"\x00COVER_TRAFFIC\x00"
+
+                    # Send via first available channel
+                    channel = list(self.active_channels.values())[0]
+                    mode = list(self.active_channels.keys())[0]
+
+                    try:
+                        if mode == CovertTransportMode.HTTP2:
+                            await channel.send_covert_message(marked_payload)
+                        elif mode == CovertTransportMode.HTTP3:
+                            await channel.send_covert_stream(marked_payload)
+                        elif mode == CovertTransportMode.WEBSOCKET:
+                            await channel.send_covert_frame(marked_payload)
+                        elif mode == CovertTransportMode.SERVER_SENT_EVENTS:
+                            await channel.send_covert_event(marked_payload)
+                    except Exception as send_error:
+                        logger.debug(
+                            f"Cover traffic send failed (non-critical): {send_error}"
+                        )
+
                     logger.debug(f"Generated {payload_size} bytes of cover traffic")
 
             except Exception as e:

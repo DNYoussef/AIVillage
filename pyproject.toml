@@ -145,6 +145,21 @@ dev = [
     "ruff>=0.1.0",
     "mypy>=1.0.0",
 ]
+
+p2p = [
+    # P2P Transport Dependencies - CPU-optimized wheels
+    "cryptography>=42,<44",
+    "pynacl>=1.5",
+    "pybluez>=0.24",
+    "aioquic>=1.2",
+    "h2>=4.1",
+    "lz4>=4.3.2",
+    "aiohttp>=3.9.0",
+    "netifaces>=0.11.0",
+    "msgpack>=1.0.5",
+    "aiofiles>=23.1.0",
+    "uvloop>=0.17.0; platform_system!='Windows'",
+]
 [project.urls]
 Homepage = "https://github.com/aivillage/aivillage"
 Documentation = "https://aivillage.readthedocs.io/"

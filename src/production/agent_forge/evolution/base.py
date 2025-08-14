@@ -29,7 +29,23 @@ except ImportError:
     LZ4_AVAILABLE = False
 
 # Import secure serialization
-from core.security.secure_serialization import SecureSerializer
+try:
+    from src.core.security.secure_serialization import SecureSerializer
+except ImportError:
+    # Fallback to standard library if secure serialization not available
+    import json
+
+    class SecureSerializer:
+        @staticmethod
+        def dumps(obj):
+            return json.dumps(obj).encode("utf-8")
+
+        @staticmethod
+        def loads(data):
+            if isinstance(data, bytes):
+                data = data.decode("utf-8")
+            return json.loads(data)
+
 
 logger = logging.getLogger(__name__)
 

@@ -372,10 +372,64 @@ class PeerDiscovery:
         targets = []
 
         try:
-            # This would implement mDNS/DNS-SD discovery
-            # For now, return empty list
-            # In production, this would use libraries like zeroconf
-            pass
+            # Implement mDNS/DNS-SD discovery using zeroconf
+            try:
+                import threading
+                import time
+
+                from zeroconf import ServiceBrowser, ServiceListener, Zeroconf
+
+                discovered_services = []
+
+                class P2PServiceListener(ServiceListener):
+                    def update_service(
+                        self, zc: Zeroconf, type_: str, name: str
+                    ) -> None:
+                        info = zc.get_service_info(type_, name)
+                        if info and info.addresses:
+                            for addr in info.addresses:
+                                addr_str = (
+                                    socket.inet_ntoa(addr)
+                                    if len(addr) == 4
+                                    else str(addr)
+                                )
+                                discovered_services.append((addr_str, info.port))
+
+                    def remove_service(
+                        self, zc: Zeroconf, type_: str, name: str
+                    ) -> None:
+                        pass
+
+                    def add_service(self, zc: Zeroconf, type_: str, name: str) -> None:
+                        self.update_service(zc, type_, name)
+
+                # Look for AIVillage P2P services
+                zeroconf = Zeroconf()
+                listener = P2PServiceListener()
+                browser = ServiceBrowser(zeroconf, "_aivillage._tcp.local.", listener)
+
+                # Wait briefly for discovery
+                await asyncio.sleep(2.0)
+
+                targets.extend(discovered_services[:10])  # Limit to 10 services
+
+                browser.cancel()
+                zeroconf.close()
+
+                logger.debug(f"mDNS discovered {len(discovered_services)} P2P services")
+
+            except ImportError:
+                logger.debug("zeroconf library not available for mDNS discovery")
+                # Fallback to common P2P ports on local network
+                local_nets = ["192.168.1.", "192.168.0.", "10.0.0.", "172.16.0."]
+                for net in local_nets:
+                    # Try a few common hosts on each network
+                    for host_num in [1, 2, 10, 100]:
+                        targets.append((f"{net}{host_num}", 4001))  # Common libp2p port
+                        if len(targets) >= 20:  # Limit fallback targets
+                            break
+                    if len(targets) >= 20:
+                        break
 
         except Exception as e:
             logger.debug(f"mDNS discovery failed: {e}")

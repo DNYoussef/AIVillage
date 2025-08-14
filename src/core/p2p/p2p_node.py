@@ -13,7 +13,7 @@ This file will be removed in a future version.
 # Import from the consolidated production implementation
 import warnings
 
-from src.production.communications.p2p.p2p_node_deprecated import *
+from src.production.communications.p2p.p2p_node import *
 
 warnings.warn(
     "src.core.p2p.p2p_node is deprecated and has been consolidated. "
