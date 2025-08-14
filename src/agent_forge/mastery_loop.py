@@ -35,9 +35,8 @@ from src.agent_forge.training.self_modeling import SelfModelingTask
 
 # Import existing training components
 from src.agent_forge.training.sleep_and_dream import SleepAndDreamTask
+from common.logging import setup_logging
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Global state for geometry feedback
@@ -250,7 +249,9 @@ class MasteryLoop:
 
     def __init__(self, config: MasteryConfig) -> None:
         self.config = config
-        self.setup_logging()
+        log_dir = Path(self.config.output_dir) / "logs"
+        log_dir.mkdir(parents=True, exist_ok=True)
+        setup_logging(log_file=log_dir / "mastery_loop.log")
 
         # Initialize components
         self.model = None
@@ -284,15 +285,6 @@ class MasteryLoop:
                 config=config.__dict__,
                 job_type="mastery_loop",
             )
-
-    def setup_logging(self) -> None:
-        """Configure enhanced logging."""
-        log_dir = Path(self.config.output_dir) / "logs"
-        log_dir.mkdir(parents=True, exist_ok=True)
-
-        handler = logging.FileHandler(log_dir / "mastery_loop.log")
-        handler.setFormatter(logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s"))
-        logger.addHandler(handler)
 
     async def initialize_model(self) -> None:
         """Load and initialize the model for training."""

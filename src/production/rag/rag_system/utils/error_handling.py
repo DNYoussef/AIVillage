@@ -3,6 +3,9 @@ from collections.abc import Callable
 from functools import wraps
 from typing import Any
 
+# Re-export shared logging setup for consumers
+from common.logging import setup_logging
+
 logger = logging.getLogger(__name__)
 
 
@@ -40,19 +43,3 @@ def log_and_handle_errors(func: Callable) -> Callable:
             raise RAGSystemError(msg)
 
     return wrapper
-
-
-def setup_logging(log_file: str = "rag_system.log", log_level: int = logging.INFO) -> None:
-    """Set up logging for the RAG system."""
-    logging.basicConfig(
-        filename=log_file,
-        level=log_level,
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    )
-
-    # Also log to console
-    console = logging.StreamHandler()
-    console.setLevel(log_level)
-    formatter = logging.Formatter("%(name)-12s: %(levelname)-8s %(message)s")
-    console.setFormatter(formatter)
-    logging.getLogger("").addHandler(console)

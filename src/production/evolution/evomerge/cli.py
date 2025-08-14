@@ -2,7 +2,7 @@ import argparse
 import logging
 
 from .config import ModelReference, create_default_config
-from .logging_config import setup_logging
+from common.logging import setup_logging
 from .merging.merger import AdvancedModelMerger
 from .utils import EvoMergeException, check_system_resources, load_models
 
@@ -137,8 +137,10 @@ def main() -> None:
     parser.add_argument("--verbose", action="store_true", help="Enable verbose output")
     args = parser.parse_args()
 
-    logger = setup_logging(log_file="evomerge.log")
-    logger.setLevel(logging.DEBUG if args.verbose else logging.INFO)
+    logger = setup_logging(
+        level=logging.DEBUG if args.verbose else logging.INFO,
+        log_file="evomerge.log",
+    )
 
     logger.info("Starting EvoMerge CLI")
 

@@ -23,6 +23,8 @@ from typing import Any, NoReturn, TypeVar
 
 import psutil
 
+from common.logging import setup_logging
+
 # Type variable for decorated functions
 F = TypeVar("F", bound=Callable[..., Any])
 
@@ -93,62 +95,6 @@ class ResourceMonitor:
             "memory_increase_gb": final_stats["memory_delta_gb"],
             "peak_cpu_usage_percent": self.peak_cpu,
         }
-
-
-def setup_logging(
-    level: int | str = logging.INFO,
-    format_string: str | None = None,
-    log_file: str | Path | None = None,
-    include_console: bool = True,
-) -> logging.Logger:
-    """Set up standardized logging for scripts.
-
-    Args:
-        level: Logging level (e.g., logging.INFO, "INFO")
-        format_string: Custom log message format
-        log_file: Optional file to write logs to
-        include_console: Whether to include console output
-
-    Returns:
-        Configured logger instance
-    """
-    if format_string is None:
-        format_string = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-
-    # Convert string level to int
-    if isinstance(level, str):
-        level = getattr(logging, level.upper())
-
-    # Create logger
-    logger = logging.getLogger()
-    logger.setLevel(level)
-
-    # Clear existing handlers
-    logger.handlers.clear()
-
-    # Create formatter
-    formatter = logging.Formatter(format_string)
-
-    # Add console handler
-    if include_console:
-        console_handler = logging.StreamHandler(sys.stdout)
-        console_handler.setLevel(level)
-        console_handler.setFormatter(formatter)
-        logger.addHandler(console_handler)
-
-    # Add file handler if specified
-    if log_file:
-        log_path = Path(log_file)
-        log_path.parent.mkdir(parents=True, exist_ok=True)
-
-        file_handler = logging.FileHandler(log_path, encoding="utf-8")
-        file_handler.setLevel(level)
-        file_handler.setFormatter(formatter)
-        logger.addHandler(file_handler)
-
-    return logger
-
-
 def create_argument_parser(
     description: str,
     add_common_args: bool = True,

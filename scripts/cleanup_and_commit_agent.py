@@ -26,6 +26,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from common.logging import setup_logging
+
 
 class CleanupAndCommitAgent:
     """Sub-agent for comprehensive code cleanup and git operations."""
@@ -33,7 +35,7 @@ class CleanupAndCommitAgent:
     def __init__(self, work_dir: str = None):
         """Initialize the cleanup and commit agent."""
         self.work_dir = Path(work_dir) if work_dir else Path.cwd()
-        self.setup_logging()
+        self.logger = setup_logging(log_file=self.work_dir / "cleanup_agent.log")
         self.results = {
             "linting": {},
             "cleanup": {},
@@ -41,16 +43,6 @@ class CleanupAndCommitAgent:
             "errors": [],
             "warnings": [],
         }
-
-    def setup_logging(self):
-        """Setup comprehensive logging."""
-        log_file = self.work_dir / "cleanup_agent.log"
-        logging.basicConfig(
-            level=logging.INFO,
-            format="%(asctime)s - %(levelname)s - %(message)s",
-            handlers=[logging.FileHandler(log_file), logging.StreamHandler(sys.stdout)],
-        )
-        self.logger = logging.getLogger(__name__)
 
     def run_command(
         self, cmd: list[str], cwd: str = None, ignore_errors: bool = False

@@ -23,23 +23,11 @@ from mcp_servers.hyperag.gdc.extractor import GDCExtractorContext
 from mcp_servers.hyperag.gdc.registry import GDC_REGISTRY, validate_registry
 from mcp_servers.hyperag.gdc.specs import Violation
 
+from common.logging import setup_logging
+
 # Add project root to path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
-
-
-def setup_logging(level: str = "INFO") -> None:
-    """Configure logging for the CLI."""
-    logging.basicConfig(
-        level=getattr(logging, level.upper()),
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        handlers=[
-            logging.StreamHandler(sys.stdout),
-            logging.FileHandler(
-                f"gdc_scan_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
-            ),
-        ],
-    )
 
 
 def format_violation_summary(violations: list[Violation]) -> str:
@@ -330,7 +318,10 @@ Examples:
     args = parser.parse_args()
 
     # Set up logging
-    setup_logging(args.log_level)
+    setup_logging(
+        level=args.log_level,
+        log_file=f"gdc_scan_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log",
+    )
 
     # Handle list command
     if args.list_gdcs:
