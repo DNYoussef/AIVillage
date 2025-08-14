@@ -39,7 +39,7 @@ class TwinRuntimeChat:
 
         try:
             # Try our compression pipeline first
-            from src.core.compression.unified_compressor import UnifiedCompressor
+            from compression.pipeline import UnifiedCompressor
 
             # Look for pre-compressed model
             model_path = Path("models/compressed/chat_model.bin")
