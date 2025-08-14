@@ -1,15 +1,14 @@
 """Architect Agent - System Design and Planning Specialist"""
 
-import hashlib
 import logging
 from typing import Any
 
-from src.core.agent_interface import AgentInterface
+from src.agents.base import BaseAgent
 
 logger = logging.getLogger(__name__)
 
 
-class ArchitectAgent(AgentInterface):
+class ArchitectAgent(BaseAgent):
     """Specialized agent for system architecture and design including:
     - System architecture design and planning
     - Microservices and distributed system patterns
@@ -19,9 +18,7 @@ class ArchitectAgent(AgentInterface):
     """
 
     def __init__(self, agent_id: str = "architect_agent"):
-        self.agent_id = agent_id
-        self.agent_type = "Architect"
-        self.capabilities = [
+        capabilities = [
             "system_architecture",
             "microservices_design",
             "database_modeling",
@@ -31,10 +28,10 @@ class ArchitectAgent(AgentInterface):
             "integration_patterns",
             "technology_selection",
         ]
+        super().__init__(agent_id, "Architect", capabilities)
         self.architecture_patterns = {}
         self.design_principles = []
         self.technology_stack = {}
-        self.initialized = False
 
     async def generate(self, prompt: str) -> str:
         if "architecture" in prompt.lower():
@@ -46,10 +43,6 @@ class ArchitectAgent(AgentInterface):
                 "I design RESTful APIs, GraphQL endpoints, and integration patterns for seamless system communication."
             )
         return "I'm an Architect Agent specialized in system design, architecture planning, and technology strategy."
-
-    async def get_embedding(self, text: str) -> list[float]:
-        hash_value = int(hashlib.md5(text.encode()).hexdigest(), 16)
-        return [(hash_value % 1000) / 1000.0] * 384
 
     async def rerank(self, query: str, results: list[dict[str, Any]], k: int) -> list[dict[str, Any]]:
         keywords = [
@@ -71,18 +64,14 @@ class ArchitectAgent(AgentInterface):
         )[:k]
 
     async def introspect(self) -> dict[str, Any]:
-        return {
-            "agent_id": self.agent_id,
-            "agent_type": self.agent_type,
-            "capabilities": self.capabilities,
-            "architecture_patterns": len(self.architecture_patterns),
-            "design_principles": len(self.design_principles),
-            "initialized": self.initialized,
-        }
-
-    async def communicate(self, message: str, recipient: "AgentInterface") -> str:
-        response = await recipient.generate(f"Architect Agent says: {message}")
-        return f"Received response: {response}"
+        info = await super().introspect()
+        info.update(
+            {
+                "architecture_patterns": len(self.architecture_patterns),
+                "design_principles": len(self.design_principles),
+            }
+        )
+        return info
 
     async def activate_latent_space(self, query: str) -> tuple[str, str]:
         arch_type = "microservices" if "microservice" in query.lower() else "monolith"

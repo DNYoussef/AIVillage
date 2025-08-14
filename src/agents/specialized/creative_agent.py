@@ -1,12 +1,11 @@
 """Creative Agent - Content Generation and Artistic Task Specialist"""
 
-import hashlib
 import logging
 import random
 from dataclasses import dataclass
 from typing import Any
 
-from src.core.agent_interface import AgentInterface
+from src.agents.base import BaseAgent
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +21,7 @@ class CreativeRequest:
     constraints: dict[str, Any] = None
 
 
-class CreativeAgent(AgentInterface):
+class CreativeAgent(BaseAgent):
     """Specialized agent for creative tasks including:
     - Story and narrative generation
     - Poetry and creative writing
@@ -33,9 +32,7 @@ class CreativeAgent(AgentInterface):
     """
 
     def __init__(self, agent_id: str = "creative_agent"):
-        self.agent_id = agent_id
-        self.agent_type = "Creative"
-        self.capabilities = [
+        capabilities = [
             "story_generation",
             "poetry_writing",
             "visual_design",
@@ -45,10 +42,10 @@ class CreativeAgent(AgentInterface):
             "character_development",
             "world_building",
         ]
+        super().__init__(agent_id, "Creative", capabilities)
         self.creative_projects = {}
         self.style_library = {}
         self.inspiration_sources = []
-        self.initialized = False
 
     async def generate(self, prompt: str) -> str:
         """Generate creative content based on prompt"""
@@ -63,11 +60,6 @@ class CreativeAgent(AgentInterface):
         if "art" in prompt.lower():
             return "I offer art direction, conceptual ideas, and aesthetic guidance for visual projects."
         return "I'm a Creative Agent specialized in generating original content across multiple artistic mediums."
-
-    async def get_embedding(self, text: str) -> list[float]:
-        """Get embedding for creative text"""
-        hash_value = int(hashlib.md5(text.encode()).hexdigest(), 16)
-        return [(hash_value % 1000) / 1000.0] * 384
 
     async def rerank(self, query: str, results: list[dict[str, Any]], k: int) -> list[dict[str, Any]]:
         """Rerank results based on creative relevance"""
@@ -93,20 +85,15 @@ class CreativeAgent(AgentInterface):
 
     async def introspect(self) -> dict[str, Any]:
         """Return agent capabilities and status"""
-        return {
-            "agent_id": self.agent_id,
-            "agent_type": self.agent_type,
-            "capabilities": self.capabilities,
-            "active_projects": len(self.creative_projects),
-            "style_library_size": len(self.style_library),
-            "inspiration_sources": len(self.inspiration_sources),
-            "initialized": self.initialized,
-        }
-
-    async def communicate(self, message: str, recipient: "AgentInterface") -> str:
-        """Communicate with other agents"""
-        response = await recipient.generate(f"Creative Agent says: {message}")
-        return f"Received response: {response}"
+        info = await super().introspect()
+        info.update(
+            {
+                "active_projects": len(self.creative_projects),
+                "style_library_size": len(self.style_library),
+                "inspiration_sources": len(self.inspiration_sources),
+            }
+        )
+        return info
 
     async def activate_latent_space(self, query: str) -> tuple[str, str]:
         """Activate latent space for creative generation"""
