@@ -16,11 +16,11 @@ from .utils import (
     EvoMergeException,
     check_system_resources,
     clean_up_models,
-    evaluate_model,
     load_models,
     mask_model_weights,
     save_model,
 )
+from agent_forge.evaluation.evaluator import evaluate_model
 
 logger = logging.getLogger(__name__)
 

@@ -10,11 +10,11 @@ from tqdm import tqdm
 from transformers import AutoModelForCausalLM
 
 from .config import Configuration, ModelReference
-from .evaluation import evaluate_model
 from .merging.merger import AdvancedModelMerger
 from .model_tracker import model_tracker
 from .multi_objective import calculate_pareto_front, nsga2_select
-from .utils import EvoMergeException, clean_up_models, parallel_evaluate_models
+from .utils import EvoMergeException, clean_up_models
+from agent_forge.evaluation.evaluator import evaluate_model, parallel_evaluate_models
 from .visualization import (
     plot_evolution_progress,
     plot_fitness_over_generations,
