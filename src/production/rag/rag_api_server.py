@@ -3,6 +3,8 @@
 Provides REST API endpoints on port 8082 as specified in CODEX requirements.
 """
 
+# isort: skip_file
+
 import json
 import logging
 import os
@@ -12,22 +14,42 @@ from typing import Any
 
 import uvicorn
 from fastapi import FastAPI, HTTPException, Query
+from fastapi.middleware import Middleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 from rag_system.core.codex_rag_integration import CODEXRAGPipeline, Document
 
+from servers.common.config import load_config
+from servers.common.middleware import RateLimiter, SecurityMiddleware
+
 # Configure logging
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 # CODEX-specified port
 RAG_API_PORT = int(os.getenv("RAG_API_PORT", "8082"))
+
+# Shared configuration and middleware
+CONFIG = load_config()
+rate_limiter = RateLimiter(
+    max_requests=CONFIG["RATE_LIMIT_REQUESTS"],
+    window_seconds=CONFIG["RATE_LIMIT_WINDOW"],
+)
 
 # Initialize FastAPI app
 app = FastAPI(
     title="CODEX RAG Pipeline API",
     description="CODEX-compliant RAG system with <100ms retrieval target",
     version="1.0.0",
+    middleware=[
+        Middleware(
+            SecurityMiddleware,
+            api_key=CONFIG["API_KEY"],
+            rate_limiter=rate_limiter,
+        ),
+    ],
 )
 
 # Global pipeline instance
@@ -40,8 +62,12 @@ class DocumentInput(BaseModel):
     id: str = Field(..., description="Unique document identifier")
     title: str = Field(..., description="Document title")
     content: str = Field(..., description="Document content")
-    source_type: str = Field("wikipedia", description="Source type (wikipedia, educational, etc.)")
-    metadata: dict[str, Any] | None = Field(default_factory=dict, description="Additional metadata")
+    source_type: str = Field(
+        "wikipedia", description="Source type (wikipedia, educational, etc.)"
+    )
+    metadata: dict[str, Any] | None = Field(
+        default_factory=dict, description="Additional metadata"
+    )
 
 
 class QueryRequest(BaseModel):
@@ -144,7 +170,9 @@ async def query_documents(request: QueryRequest):
         start_time = time.perf_counter()
 
         # Perform retrieval
-        results, metrics = await pipeline.retrieve(query=request.query, k=request.k, use_cache=request.use_cache)
+        results, metrics = await pipeline.retrieve(
+            query=request.query, k=request.k, use_cache=request.use_cache
+        )
 
         # Format results
         formatted_results = [
@@ -165,7 +193,10 @@ async def query_documents(request: QueryRequest):
 
         # Log slow queries
         if total_latency > 100:
-            logger.warning(f"Slow query detected: '{request.query[:50]}...' " f"took {total_latency:.2f}ms")
+            logger.warning(
+                f"Slow query detected: '{request.query[:50]}...' "
+                f"took {total_latency:.2f}ms"
+            )
 
         return QueryResponse(
             query=request.query,
@@ -176,7 +207,7 @@ async def query_documents(request: QueryRequest):
 
     except Exception as e:
         logger.exception(f"Query error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @app.post("/index")
@@ -201,11 +232,13 @@ async def index_documents(request: IndexRequest):
         # Index documents
         stats = pipeline.index_documents(documents)
 
-        return JSONResponse(content={"status": "success", "stats": stats, "timestamp": time.time()})
+        return JSONResponse(
+            content={"status": "success", "stats": stats, "timestamp": time.time()}
+        )
 
     except Exception as e:
         logger.exception(f"Indexing error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @app.get("/metrics")
@@ -255,11 +288,11 @@ async def clear_cache():
 
     except Exception as e:
         logger.exception(f"Cache clear error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @app.post("/warm_cache")
-async def warm_cache(queries: list[str] = Query(...)):
+async def warm_cache(queries: list[str] = Query(...)):  # noqa: B008
     """Warm the cache with common queries."""
     if pipeline is None:
         raise HTTPException(status_code=503, detail="Pipeline not initialized")
@@ -286,7 +319,7 @@ async def warm_cache(queries: list[str] = Query(...)):
 
     except Exception as e:
         logger.exception(f"Cache warming error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @app.get("/")
@@ -306,7 +339,9 @@ def run_server() -> None:
     """Run the RAG API server."""
     logger.info(f"Starting RAG API server on port {RAG_API_PORT}...")
 
-    uvicorn.run(app, host="0.0.0.0", port=RAG_API_PORT, log_level="info", access_log=True)
+    uvicorn.run(
+        app, host="0.0.0.0", port=RAG_API_PORT, log_level="info", access_log=True
+    )
 
 
 if __name__ == "__main__":
