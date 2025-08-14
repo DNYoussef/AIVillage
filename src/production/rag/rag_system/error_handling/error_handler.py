@@ -1,7 +1,12 @@
 import logging
 import traceback
 from functools import wraps
+import logging
+import traceback
+from functools import wraps
 from typing import Any
+
+from common.logging import setup_logging
 
 
 class AIVillageException(Exception):
@@ -11,15 +16,7 @@ class AIVillageException(Exception):
 class ErrorHandler:
     def __init__(self) -> None:
         self.logger = logging.getLogger(__name__)
-        self.setup_logging()
-
-    def setup_logging(self) -> None:
-        """Set up logging configuration."""
-        logging.basicConfig(
-            level=logging.INFO,
-            format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-            filename="ai_village.log",
-        )
+        setup_logging(log_file="ai_village.log")
 
     def log_error(self, error: Exception, context: dict[str, Any] | None = None) -> None:
         """Log an error with optional context."""

@@ -15,22 +15,12 @@ from typing import Any
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
+from common.logging import setup_logging
+
 from .eval_utils import CompressionEvaluator
 from .seedlm import SeedLMCompressor
 from .stage1_bitnet import convert_to_bitnet
 from .stage1_config import DEFAULT_STAGE1_CONFIG, Stage1Config
-
-
-def setup_logging(log_level: str = "INFO") -> None:
-    """Setup logging configuration."""
-    logging.basicConfig(
-        level=getattr(logging, log_level.upper()),
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        handlers=[
-            logging.StreamHandler(sys.stdout),
-            logging.FileHandler("stage1_compression.log"),
-        ],
-    )
 
 
 def load_model_and_tokenizer(model_path: str):
@@ -206,7 +196,7 @@ def main() -> None:
     args = parser.parse_args()
 
     # Setup logging
-    setup_logging(args.log_level)
+    setup_logging(log_level=args.log_level, log_file="stage1_compression.log")
     logger = logging.getLogger(__name__)
 
     # Load configuration

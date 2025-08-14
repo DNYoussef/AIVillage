@@ -1,8 +1,9 @@
 import argparse
 import logging
 
+from common.logging import setup_logging
+
 from .config import ModelReference, create_default_config
-from .logging_config import setup_logging
 from .merging.merger import AdvancedModelMerger
 from .utils import EvoMergeException, check_system_resources, load_models
 

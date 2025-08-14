@@ -9,6 +9,8 @@ import torch
 from tqdm import tqdm
 from transformers import AutoModelForCausalLM
 
+from common.logging import setup_logging
+
 from .config import Configuration, ModelReference
 from .merging.merger import AdvancedModelMerger
 from .model_tracker import model_tracker
@@ -34,15 +36,9 @@ class EvolutionaryTournament:
         os.makedirs(self.checkpoint_dir, exist_ok=True)
         self.population_size = self.config.evolution_settings.population_size
         self.objectives = self.config.evolution_settings.objectives
-        self.setup_logging()
 
-    def setup_logging(self) -> None:
-        self.log_file = os.path.join(self.config.merge_settings.custom_dir, "evolution_log.txt")
-        file_handler = logging.FileHandler(self.log_file)
-        file_handler.setLevel(logging.DEBUG)
-        formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-        file_handler.setFormatter(formatter)
-        logger.addHandler(file_handler)
+        log_file = os.path.join(self.config.merge_settings.custom_dir, "evolution_log.txt")
+        setup_logging(log_file=log_file, log_level=logging.DEBUG)
 
     def log_generation_info(self, generation: int, population: list[str], scores: list[dict[str, float]]) -> None:
         logger.info(f"Generation {generation} completed")
