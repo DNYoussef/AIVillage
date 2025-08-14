@@ -4,7 +4,7 @@ import hashlib
 import logging
 from typing import Any
 
-from src.production.rag.rag_system.core.agent_interface import AgentInterface
+from src.core.agent_interface import AgentInterface
 
 logger = logging.getLogger(__name__)
 

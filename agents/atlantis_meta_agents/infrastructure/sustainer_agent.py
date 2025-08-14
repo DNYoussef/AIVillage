@@ -17,7 +17,7 @@ from typing import Any
 
 import psutil
 
-from src.production.rag.rag_system.core.agent_interface import AgentInterface
+from src.core.agent_interface import AgentInterface
 
 logger = logging.getLogger(__name__)
 

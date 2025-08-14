@@ -10,7 +10,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Any
 
-from core import ErrorContext
+from src.core import ErrorContext
 
 
 class AgentStatus(Enum):
