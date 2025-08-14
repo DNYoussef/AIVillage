@@ -16,12 +16,12 @@ These agents are designed to work together through the SpecializedAgentRegistry
 for complex multi-agent tasks and specialized domain expertise.
 """
 
-from .agent_registry import (
-    AgentCapability,
-    SpecializedAgentRegistry,
-    get_global_registry,
-    shutdown_global_registry,
+from agents.core.agent_interface import AgentCapability
+from src.core.agents.specialist_agent_registry import (
+    SpecialistAgentRegistry,
+    get_specialist_registry,
 )
+
 from .architect_agent import ArchitectAgent
 from .creative_agent import CreativeAgent, CreativeRequest
 from .data_science_agent import DataAnalysisRequest, DataScienceAgent
@@ -30,6 +30,15 @@ from .financial_agent import FinancialAgent, FinancialAnalysisRequest
 from .social_agent import SocialAgent, SocialInteraction
 from .tester_agent import TesterAgent, TestRequest
 from .translator_agent import TranslationRequest, TranslatorAgent
+
+SpecializedAgentRegistry = SpecialistAgentRegistry
+get_global_registry = get_specialist_registry
+
+
+def shutdown_global_registry() -> None:  # pragma: no cover - backward compatibility
+    """Compatibility no-op for legacy API."""
+    return None
+
 
 __all__ = [
     # Agent Classes
