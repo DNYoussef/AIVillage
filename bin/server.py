@@ -9,28 +9,74 @@ This server is for development and testing purposes only.
 WARNING: This server is NOT production-ready despite being shown in quick start guides.
 """
 
+# isort: skip_file
+
 import html
 import mimetypes
 import os
+from pathlib import Path
 import re
 import tempfile
-import time
 import warnings
-from collections import defaultdict
-from pathlib import Path
 
 from fastapi import FastAPI, File, Request, UploadFile
 from fastapi.middleware import Middleware
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel, Field, ValidationError, field_validator
-from rag_system.core.pipeline import EnhancedRAGPipeline
-from rag_system.graph_explain import MAX_HOPS, explain_path
-from rag_system.tracking.unified_knowledge_tracker import UnifiedKnowledgeTracker
-from rag_system.utils.logging import setup_logger as get_logger
+from pydantic import BaseModel, Field, field_validator
+
+try:  # Optional rag_system components
+    from rag_system.core.pipeline import EnhancedRAGPipeline
+    from rag_system.utils.logging import setup_logger as get_logger
+    from rag_system.graph_explain import MAX_HOPS, explain_path
+    from rag_system.tracking.unified_knowledge_tracker import (
+        UnifiedKnowledgeTracker,
+    )
+except ModuleNotFoundError:  # pragma: no cover - optional dependency
+
+    class EnhancedRAGPipeline:  # type: ignore[too-few-public-methods]
+        def __init__(self) -> None:
+            class DummyRetriever:
+                def __init__(self) -> None:
+                    self.vector_store = None
+                    self.graph_store = None
+
+            self.hybrid_retriever = DummyRetriever()
+            self.knowledge_tracker = None
+
+        async def initialize(self) -> None:
+            """Fallback pipeline initializer."""
+            return
+
+        async def shutdown(self) -> None:
+            """Fallback pipeline shutdown."""
+            return
+
+        async def process(self, _query: str) -> dict[str, str]:
+            """Fallback query processor."""
+            return {"answer": ""}
+
+    def get_logger(name: str):  # type: ignore[return-any]
+        import logging
+
+        return logging.getLogger(name)
+
+    MAX_HOPS = 0
+
+    def explain_path(*_args, **_kwargs):
+        return []
+
+    class UnifiedKnowledgeTracker:  # type: ignore[too-few-public-methods]
+        def __init__(self, *_args, **_kwargs) -> None:
+            return
+
+
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from core.evidence import Chunk, ConfidenceTier, EvidencePack
+from servers.common.config import load_config
+from servers.common.middleware import RateLimiter, SecurityMiddleware
+
 
 logger = get_logger(__name__)
 
@@ -50,44 +96,11 @@ if not IS_DEV_MODE:
         "This service is deprecated for production use."
     )
 
-# Validate required environment variables
-API_KEY = os.getenv("API_KEY")
+# Load configuration and security components
+CONFIG = load_config()
+API_KEY = CONFIG["API_KEY"]
 if not API_KEY:
     logger.warning("API_KEY not set - running without authentication")
-
-
-# Rate limiting configuration - should use Redis in production
-class RateLimiter:
-    """Simple in-memory rate limiter - use Redis for production."""
-
-    def __init__(self, max_requests: int = 100, window_seconds: int = 60) -> None:
-        self.max_requests = max_requests
-        self.window_seconds = window_seconds
-        self.requests = defaultdict(list)
-        logger.warning("Using in-memory rate limiter - consider Redis for production")
-
-    def is_allowed(self, client_id: str) -> bool:
-        """Check if client is within rate limits."""
-        now = time.time()
-        self.requests[client_id] = [
-            req_time
-            for req_time in self.requests[client_id]
-            if now - req_time < self.window_seconds
-        ]
-        if len(self.requests[client_id]) >= self.max_requests:
-            return False
-        self.requests[client_id].append(now)
-        return True
-
-
-# Configuration - should be moved to config file
-CONFIG = {
-    "MAX_FILE_SIZE": int(os.getenv("MAX_FILE_SIZE", 50 * 1024 * 1024)),  # 50MB default
-    "ALLOWED_EXTENSIONS": {".txt", ".md", ".pdf", ".docx", ".html"},
-    "CHUNK_SIZE": int(os.getenv("CHUNK_SIZE", 8192)),  # 8KB default
-    "RATE_LIMIT_REQUESTS": int(os.getenv("RATE_LIMIT_REQUESTS", 100)),
-    "RATE_LIMIT_WINDOW": int(os.getenv("RATE_LIMIT_WINDOW", 60)),
-}
 
 MAX_FILE_SIZE = CONFIG["MAX_FILE_SIZE"]
 ALLOWED_EXTENSIONS = CONFIG["ALLOWED_EXTENSIONS"]
@@ -130,49 +143,16 @@ class DeprecationMiddleware(BaseHTTPMiddleware):
         return response
 
 
-class SecurityMiddleware(BaseHTTPMiddleware):
-    """Enhanced security middleware with rate limiting."""
-
-    async def dispatch(self, request: Request, call_next):
-        client_ip = request.client.host if request.client else "unknown"
-        client_id = request.headers.get("x-forwarded-for", client_ip)
-
-        if request.url.path.startswith(("/query", "/upload")):
-            if not rate_limiter.is_allowed(client_id):
-                return JSONResponse(
-                    status_code=429, content={"detail": "Rate limit exceeded"}
-                )
-
-        if API_KEY and request.url.path not in (
-            "/",
-            "/ui",
-            "/ui/index.html",
-            "/status",
-        ):
-            key = request.headers.get("x-api-key")
-            if key != API_KEY:
-                return JSONResponse(status_code=401, content={"detail": "Unauthorized"})
-
-        try:
-            response = await call_next(request)
-        except ValidationError:
-            logger.warning(f"Validation error from {client_id}")
-            return JSONResponse(
-                status_code=400, content={"detail": "Invalid request format"}
-            )
-        except Exception as e:
-            logger.exception(f"Server error from {client_id}: {e}")
-            return JSONResponse(
-                status_code=500, content={"detail": "Internal server error"}
-            )
-
-        return response
-
-
 app = FastAPI(
-    middleware=[Middleware(SecurityMiddleware), Middleware(DeprecationMiddleware)]
+    middleware=[
+        Middleware(SecurityMiddleware, api_key=API_KEY, rate_limiter=rate_limiter),
+        Middleware(DeprecationMiddleware),
+    ]
 )
-app.mount("/ui", StaticFiles(directory="ui"), name="ui")
+if Path("ui").exists():
+    app.mount("/ui", StaticFiles(directory="ui"), name="ui")
+else:  # pragma: no cover - development convenience
+    logger.warning("UI directory not found; static interface disabled")
 
 rag_pipeline = EnhancedRAGPipeline()
 vector_store = rag_pipeline.hybrid_retriever.vector_store
@@ -277,7 +257,7 @@ async def stream_file_safely(file: UploadFile) -> str:
     except Exception as e:
         logger.exception(f"File upload failed: {e}")
         msg = f"Failed to process file: {e}"
-        raise ValueError(msg)
+        raise ValueError(msg) from e
 
 
 @app.on_event("startup")
@@ -303,7 +283,7 @@ async def query_endpoint(request: SecureQueryRequest):
 
 
 @app.post("/upload")
-async def upload_endpoint(file: UploadFile = File(...)):
+async def upload_endpoint(file: UploadFile = File(...)):  # noqa: B008
     """Secure file upload with streaming and validation."""
     try:
         if not file.filename:
