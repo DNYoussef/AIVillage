@@ -1,43 +1,18 @@
-#!/usr/bin/env python3
-"""RAG System Entry Point.
+# isort: skip_file
+"""RAG System Entry Point."""
 
-This module provides the entry point for the RAG (Retrieval-Augmented Generation) system,
-handling document indexing, querying, and knowledge management.
-"""
+from __future__ import annotations
 
-import argparse
 import asyncio
 import sys
+from collections.abc import Sequence
+
+from src.cli.base import run_cli
 
 try:  # pragma: no cover - import guard for optional dependencies
     from rag_system.core.pipeline import EnhancedRAGPipeline
 except Exception:  # pragma: no cover - import guard
     EnhancedRAGPipeline = None
-
-
-def create_parser():
-    """Create argument parser for RAG system."""
-    parser = argparse.ArgumentParser(description="Experimental RAG System Service")
-
-    parser.add_argument(
-        "action",
-        choices=["query", "index", "status", "config", "search"],
-        help="Action to perform",
-    )
-
-    parser.add_argument("--question", help="Question to query")
-
-    parser.add_argument("--document", help="Document to index")
-
-    parser.add_argument("--config", "-c", help="Configuration file path")
-
-    parser.add_argument("--input", help="Input file or directory")
-
-    parser.add_argument("--output", help="Output file or directory")
-
-    parser.add_argument("--verbose", "-v", action="store_true", help="Enable verbose output")
-
-    return parser
 
 
 def query_system(args) -> int:
@@ -101,27 +76,34 @@ def configure_service(args) -> int:
     return 1
 
 
-def main(args=None):
+def _configure(parser) -> None:
+    parser.add_argument("--question", help="Question to query")
+    parser.add_argument("--document", help="Document to index")
+    parser.add_argument("--config", "-c", help="Configuration file path")
+    parser.add_argument("--input", help="Input file or directory")
+    parser.add_argument("--output", help="Output file or directory")
+    parser.add_argument(
+        "--verbose", "-v", action="store_true", help="Enable verbose output"
+    )
+
+
+actions = {
+    "query": query_system,
+    "index": index_document,
+    "search": search_documents,
+    "status": get_status,
+    "config": configure_service,
+}
+
+
+def main(args: Sequence[str] | None = None) -> int:
     """Main entry point for RAG system."""
-    parser = create_parser()
-    args = parser.parse_args() if args is None else parser.parse_args(args)
-
-    if args.verbose:
-        print(f"RAG System: {args.action}")
-
-    actions = {
-        "query": query_system,
-        "index": index_document,
-        "search": search_documents,
-        "status": get_status,
-        "config": configure_service,
-    }
-
-    handler = actions.get(args.action)
-    if handler:
-        return handler(args)
-    print(f"Error: Unknown action '{args.action}'")
-    return 1
+    return run_cli(
+        "Experimental RAG System Service",
+        actions,
+        _configure,
+        args,
+    )
 
 
 if __name__ == "__main__":

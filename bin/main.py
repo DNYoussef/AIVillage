@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# isort: skip_file
 """Unified Entry Point for AIVillage Platform.
 
 This is the main entry point for the AIVillage platform, providing a unified
@@ -14,75 +15,44 @@ Usage:
         core: Core utilities and configuration
 
 Examples:
-        python main.py --mode agent-forge --action train --config config.yaml
-        python main.py --mode king --action run --task "analyze data"
-        python main.py --mode rag --action query --question "What is AI?"
-        python main.py --mode core --action status
+    python main.py --mode agent-forge --action train --config config.yaml
+    python main.py --mode king --action run --task "analyze data"
+    python main.py --mode rag --action query --question "What is AI?"
+    python main.py --mode core --action status
 """
 
-import argparse
 import sys
 from pathlib import Path
+
+from src.cli.base import build_parser, dispatch
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent))
 
 
-def create_parser():
-    """Create the unified argument parser."""
-    parser = argparse.ArgumentParser(
-        description="AIVillage Unified Entry Point",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
-Examples:
-  %(prog)s --mode agent-forge --action train --config config.yaml
-  %(prog)s --mode king --action run --task "analyze data"
-  %(prog)s --mode rag --action query --question "What is AI?"
-  %(prog)s --mode core --action status
-        """,
-    )
-
-    parser.add_argument(
-        "--mode",
-        "-m",
-        choices=["agent-forge", "king", "rag", "core"],
-        required=True,
-        help="Service mode to run",
-    )
-
+def _configure(parser) -> None:
     parser.add_argument(
         "--action", "-a", required=True, help="Action to perform (depends on mode)"
     )
-
     parser.add_argument("--config", "-c", help="Configuration file path")
-
     parser.add_argument(
         "--verbose", "-v", action="store_true", help="Enable verbose output"
     )
-
     parser.add_argument("--debug", action="store_true", help="Enable debug mode")
 
     # Mode-specific arguments
     parser.add_argument("--task", help="Task description (for king mode)")
-
     parser.add_argument("--question", help="Question to query (for rag mode)")
-
     parser.add_argument("--document", help="Document to index (for rag mode)")
-
     parser.add_argument(
         "--agent-type",
         choices=["king", "sage", "magi", "base"],
         default="base",
         help="Type of agent to create/train (for agent-forge mode)",
     )
-
     parser.add_argument("--name", help="Agent name (for agent-forge mode)")
-
     parser.add_argument("--input", help="Input file or directory")
-
     parser.add_argument("--output", help="Output file or directory")
-
-    return parser
 
 
 def run_agent_forge_mode(args):
@@ -90,7 +60,6 @@ def run_agent_forge_mode(args):
     try:
         from agent_forge.main import main as agent_forge_main
 
-        # Convert unified args to agent-forge format
         agent_args = [args.action]
         if args.config:
             agent_args.extend(["--config", args.config])
@@ -112,7 +81,6 @@ def run_king_mode(args):
     try:
         from agents.king.main import main as king_main
 
-        # Convert unified args to king format
         king_args = [args.action]
         if args.config:
             king_args.extend(["--config", args.config])
@@ -136,7 +104,6 @@ def run_rag_mode(args):
     try:
         from rag_system.main import main as rag_main
 
-        # Convert unified args to rag format
         rag_args = [args.action]
         if args.config:
             rag_args.extend(["--config", args.config])
@@ -162,7 +129,6 @@ def run_core_mode(args):
     try:
         from agent_forge.core.main import main as core_main
 
-        # Core service uses click and expects config_file and out_path
         if args.action == "merge":
             if not args.config:
                 print("Error: --config is required for core merge action")
@@ -174,33 +140,31 @@ def run_core_mode(args):
             return core_main([args.config, args.output])
         print("Core mode supports: merge")
         return 1
-
     except ImportError as e:
         print(f"Error: Core module not found: {e}")
         return 1
 
 
-def main():
-    """Main entry point."""
-    parser = create_parser()
-    args = parser.parse_args()
+mode_handlers = {
+    "agent-forge": run_agent_forge_mode,
+    "king": run_king_mode,
+    "rag": run_rag_mode,
+    "core": run_core_mode,
+}
 
+
+def main() -> int:
+    parser = build_parser(
+        "AIVillage Unified Entry Point",
+        mode_handlers.keys(),
+        _configure,
+        command_name="mode",
+        command_help="Service mode to run",
+    )
+    args = parser.parse_args()
     if args.verbose:
         print(f"Running in {args.mode} mode with action: {args.action}")
-
-    # Route to appropriate mode handler
-    mode_handlers = {
-        "agent-forge": run_agent_forge_mode,
-        "king": run_king_mode,
-        "rag": run_rag_mode,
-        "core": run_core_mode,
-    }
-
-    handler = mode_handlers.get(args.mode)
-    if handler:
-        return handler(args)
-    print(f"Error: Unknown mode '{args.mode}'")
-    return 1
+    return dispatch(mode_handlers, args, attr="mode")
 
 
 if __name__ == "__main__":
