@@ -1,12 +1,11 @@
 """Tester Agent - Automated Testing and Quality Assurance Specialist"""
 
-import hashlib
 import logging
 import random
 from dataclasses import dataclass
 from typing import Any
 
-from src.core.agent_interface import AgentInterface
+from src.agents.base import BaseAgent
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +20,7 @@ class TestRequest:
     coverage_threshold: float = 0.8
 
 
-class TesterAgent(AgentInterface):
+class TesterAgent(BaseAgent):
     """Specialized agent for testing and QA including:
     - Automated test generation and execution
     - Test strategy planning and implementation
@@ -31,9 +30,7 @@ class TesterAgent(AgentInterface):
     """
 
     def __init__(self, agent_id: str = "tester_agent"):
-        self.agent_id = agent_id
-        self.agent_type = "Tester"
-        self.capabilities = [
+        capabilities = [
             "test_automation",
             "test_strategy_planning",
             "performance_testing",
@@ -43,10 +40,10 @@ class TesterAgent(AgentInterface):
             "api_testing",
             "ui_testing",
         ]
+        super().__init__(agent_id, "Tester", capabilities)
         self.test_suites = {}
         self.test_results = {}
         self.coverage_reports = {}
-        self.initialized = False
 
     async def generate(self, prompt: str) -> str:
         if "test" in prompt.lower() and ("unit" in prompt.lower() or "integration" in prompt.lower()):
@@ -58,10 +55,6 @@ class TesterAgent(AgentInterface):
         if "coverage" in prompt.lower():
             return "I analyze test coverage and generate detailed coverage reports with improvement recommendations."
         return "I'm a Tester Agent specialized in automated testing, quality assurance, and test strategy planning."
-
-    async def get_embedding(self, text: str) -> list[float]:
-        hash_value = int(hashlib.md5(text.encode()).hexdigest(), 16)
-        return [(hash_value % 1000) / 1000.0] * 384
 
     async def rerank(self, query: str, results: list[dict[str, Any]], k: int) -> list[dict[str, Any]]:
         keywords = [
@@ -80,19 +73,15 @@ class TesterAgent(AgentInterface):
         return sorted(results, key=lambda x: x.get("testing_relevance_score", 0), reverse=True)[:k]
 
     async def introspect(self) -> dict[str, Any]:
-        return {
-            "agent_id": self.agent_id,
-            "agent_type": self.agent_type,
-            "capabilities": self.capabilities,
-            "test_suites": len(self.test_suites),
-            "test_executions": len(self.test_results),
-            "coverage_reports": len(self.coverage_reports),
-            "initialized": self.initialized,
-        }
-
-    async def communicate(self, message: str, recipient: "AgentInterface") -> str:
-        response = await recipient.generate(f"Tester Agent says: {message}")
-        return f"Received response: {response}"
+        info = await super().introspect()
+        info.update(
+            {
+                "test_suites": len(self.test_suites),
+                "test_executions": len(self.test_results),
+                "coverage_reports": len(self.coverage_reports),
+            }
+        )
+        return info
 
     async def activate_latent_space(self, query: str) -> tuple[str, str]:
         test_type = "performance" if "performance" in query.lower() else "functional"

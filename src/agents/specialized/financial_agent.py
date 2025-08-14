@@ -5,7 +5,7 @@ import math
 from dataclasses import dataclass
 from typing import Any
 
-from src.core.agent_interface import AgentInterface
+from src.agents.base import BaseAgent
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +20,7 @@ class FinancialAnalysisRequest:
     time_horizon: str = "1Y"
 
 
-class FinancialAgent(AgentInterface):
+class FinancialAgent(BaseAgent):
     """Specialized agent for financial analysis including:
     - Portfolio optimization and risk analysis
     - Financial modeling and forecasting
@@ -30,9 +30,7 @@ class FinancialAgent(AgentInterface):
     """
 
     def __init__(self, agent_id: str = "financial_agent"):
-        self.agent_id = agent_id
-        self.agent_type = "Financial"
-        self.capabilities = [
+        capabilities = [
             "portfolio_optimization",
             "risk_analysis",
             "financial_modeling",
@@ -42,10 +40,10 @@ class FinancialAgent(AgentInterface):
             "economic_indicators",
             "regulatory_compliance",
         ]
+        super().__init__(agent_id, "Financial", capabilities)
         self.portfolios = {}
         self.market_data = {}
         self.analysis_history = []
-        self.initialized = False
 
     async def generate(self, prompt: str) -> str:
         """Generate financial analysis responses"""
@@ -58,13 +56,6 @@ class FinancialAgent(AgentInterface):
         if "valuation" in prompt.lower():
             return "I perform asset valuation using DCF, comparables, and options pricing models."
         return "I'm a Financial Agent specialized in quantitative finance, risk management, and economic analysis."
-
-    async def get_embedding(self, text: str) -> list[float]:
-        """Get embedding for financial text"""
-        import hashlib
-
-        hash_value = int(hashlib.md5(text.encode()).hexdigest(), 16)
-        return [(hash_value % 1000) / 1000.0] * 384
 
     async def rerank(self, query: str, results: list[dict[str, Any]], k: int) -> list[dict[str, Any]]:
         """Rerank results based on financial relevance"""
@@ -90,20 +81,15 @@ class FinancialAgent(AgentInterface):
 
     async def introspect(self) -> dict[str, Any]:
         """Return agent capabilities and status"""
-        return {
-            "agent_id": self.agent_id,
-            "agent_type": self.agent_type,
-            "capabilities": self.capabilities,
-            "portfolios_managed": len(self.portfolios),
-            "market_data_points": len(self.market_data),
-            "analyses_performed": len(self.analysis_history),
-            "initialized": self.initialized,
-        }
-
-    async def communicate(self, message: str, recipient: "AgentInterface") -> str:
-        """Communicate with other agents"""
-        response = await recipient.generate(f"Financial Agent says: {message}")
-        return f"Received response: {response}"
+        info = await super().introspect()
+        info.update(
+            {
+                "portfolios_managed": len(self.portfolios),
+                "market_data_points": len(self.market_data),
+                "analyses_performed": len(self.analysis_history),
+            }
+        )
+        return info
 
     async def activate_latent_space(self, query: str) -> tuple[str, str]:
         """Activate latent space for financial analysis"""

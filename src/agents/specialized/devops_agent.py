@@ -5,7 +5,7 @@ import logging
 from dataclasses import dataclass
 from typing import Any
 
-from src.core.agent_interface import AgentInterface
+from src.agents.base import BaseAgent
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +21,7 @@ class DeploymentRequest:
     health_check_timeout: int = 300
 
 
-class DevOpsAgent(AgentInterface):
+class DevOpsAgent(BaseAgent):
     """Specialized agent for DevOps operations including:
     - CI/CD pipeline management
     - Infrastructure provisioning and monitoring
@@ -31,9 +31,7 @@ class DevOpsAgent(AgentInterface):
     """
 
     def __init__(self, agent_id: str = "devops_agent"):
-        self.agent_id = agent_id
-        self.agent_type = "DevOps"
-        self.capabilities = [
+        capabilities = [
             "ci_cd_management",
             "infrastructure_provisioning",
             "container_orchestration",
@@ -43,10 +41,10 @@ class DevOpsAgent(AgentInterface):
             "configuration_management",
             "security_scanning",
         ]
+        super().__init__(agent_id, "DevOps", capabilities)
         self.deployments = {}
         self.pipelines = {}
         self.infrastructure = {}
-        self.initialized = False
 
     async def generate(self, prompt: str) -> str:
         """Generate DevOps operation responses"""
@@ -61,13 +59,6 @@ class DevOpsAgent(AgentInterface):
         if "monitor" in prompt.lower():
             return "I provide monitoring, alerting, and observability for distributed systems."
         return "I'm a DevOps Agent specialized in CI/CD, infrastructure, and deployment automation."
-
-    async def get_embedding(self, text: str) -> list[float]:
-        """Get embedding for DevOps text"""
-        import hashlib
-
-        hash_value = int(hashlib.md5(text.encode()).hexdigest(), 16)
-        return [(hash_value % 1000) / 1000.0] * 384
 
     async def rerank(self, query: str, results: list[dict[str, Any]], k: int) -> list[dict[str, Any]]:
         """Rerank results based on DevOps relevance"""
@@ -92,20 +83,15 @@ class DevOpsAgent(AgentInterface):
 
     async def introspect(self) -> dict[str, Any]:
         """Return agent capabilities and status"""
-        return {
-            "agent_id": self.agent_id,
-            "agent_type": self.agent_type,
-            "capabilities": self.capabilities,
-            "active_deployments": len(self.deployments),
-            "pipeline_count": len(self.pipelines),
-            "infrastructure_resources": len(self.infrastructure),
-            "initialized": self.initialized,
-        }
-
-    async def communicate(self, message: str, recipient: "AgentInterface") -> str:
-        """Communicate with other agents"""
-        response = await recipient.generate(f"DevOps Agent says: {message}")
-        return f"Received response: {response}"
+        info = await super().introspect()
+        info.update(
+            {
+                "active_deployments": len(self.deployments),
+                "pipeline_count": len(self.pipelines),
+                "infrastructure_resources": len(self.infrastructure),
+            }
+        )
+        return info
 
     async def activate_latent_space(self, query: str) -> tuple[str, str]:
         """Activate latent space for DevOps operations"""

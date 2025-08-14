@@ -1,11 +1,10 @@
 """Social Agent - Community Management and Human Interaction Specialist"""
 
-import hashlib
 import logging
 from dataclasses import dataclass
 from typing import Any
 
-from src.core.agent_interface import AgentInterface
+from src.agents.base import BaseAgent
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +19,7 @@ class SocialInteraction:
     urgency: str = "normal"
 
 
-class SocialAgent(AgentInterface):
+class SocialAgent(BaseAgent):
     """Specialized agent for social interactions including:
     - Community moderation and management
     - Conflict resolution and mediation
@@ -30,9 +29,7 @@ class SocialAgent(AgentInterface):
     """
 
     def __init__(self, agent_id: str = "social_agent"):
-        self.agent_id = agent_id
-        self.agent_type = "Social"
-        self.capabilities = [
+        capabilities = [
             "community_moderation",
             "conflict_resolution",
             "engagement_strategies",
@@ -42,10 +39,10 @@ class SocialAgent(AgentInterface):
             "crisis_communication",
             "inclusive_practices",
         ]
+        super().__init__(agent_id, "Social", capabilities)
         self.community_health = {}
         self.interaction_history = []
         self.engagement_metrics = {}
-        self.initialized = False
 
     async def generate(self, prompt: str) -> str:
         if "moderate" in prompt.lower() or "community" in prompt.lower():
@@ -55,10 +52,6 @@ class SocialAgent(AgentInterface):
         if "engage" in prompt.lower():
             return "I can develop engagement strategies to build active, healthy online communities."
         return "I'm a Social Agent specialized in community management and human interaction facilitation."
-
-    async def get_embedding(self, text: str) -> list[float]:
-        hash_value = int(hashlib.md5(text.encode()).hexdigest(), 16)
-        return [(hash_value % 1000) / 1000.0] * 384
 
     async def rerank(self, query: str, results: list[dict[str, Any]], k: int) -> list[dict[str, Any]]:
         keywords = [
@@ -75,18 +68,14 @@ class SocialAgent(AgentInterface):
         return sorted(results, key=lambda x: x.get("social_relevance_score", 0), reverse=True)[:k]
 
     async def introspect(self) -> dict[str, Any]:
-        return {
-            "agent_id": self.agent_id,
-            "agent_type": self.agent_type,
-            "capabilities": self.capabilities,
-            "active_communities": len(self.community_health),
-            "interactions_handled": len(self.interaction_history),
-            "initialized": self.initialized,
-        }
-
-    async def communicate(self, message: str, recipient: "AgentInterface") -> str:
-        response = await recipient.generate(f"Social Agent says: {message}")
-        return f"Received response: {response}"
+        info = await super().introspect()
+        info.update(
+            {
+                "active_communities": len(self.community_health),
+                "interactions_handled": len(self.interaction_history),
+            }
+        )
+        return info
 
     async def activate_latent_space(self, query: str) -> tuple[str, str]:
         social_type = "moderation" if "moderate" in query.lower() else "engagement"

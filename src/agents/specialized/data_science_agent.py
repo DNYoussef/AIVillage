@@ -14,7 +14,7 @@ try:
 except ImportError:
     SKLEARN_AVAILABLE = False
 
-from src.core.agent_interface import AgentInterface
+from src.agents.base import BaseAgent
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +30,7 @@ class DataAnalysisRequest:
     priority: int = 5
 
 
-class DataScienceAgent(AgentInterface):
+class DataScienceAgent(BaseAgent):
     """Specialized agent for data science tasks including:
     - Statistical analysis and hypothesis testing
     - Machine learning model training and evaluation
@@ -40,9 +40,7 @@ class DataScienceAgent(AgentInterface):
     """
 
     def __init__(self, agent_id: str = "data_science_agent"):
-        self.agent_id = agent_id
-        self.agent_type = "DataScience"
-        self.capabilities = [
+        capabilities = [
             "statistical_analysis",
             "ml_model_training",
             "data_preprocessing",
@@ -52,9 +50,9 @@ class DataScienceAgent(AgentInterface):
             "time_series_analysis",
             "anomaly_detection",
         ]
+        super().__init__(agent_id, "DataScience", capabilities)
         self.models_cache = {}
         self.analysis_history = []
-        self.initialized = False
 
     async def generate(self, prompt: str) -> str:
         """Generate data analysis insights from prompt"""
@@ -65,14 +63,6 @@ class DataScienceAgent(AgentInterface):
         if "anomaly detection" in prompt.lower():
             return "I can detect anomalies in your data using isolation forest or other methods."
         return "I'm a Data Science Agent specialized in statistical analysis, ML training, and data insights."
-
-    async def get_embedding(self, text: str) -> list[float]:
-        """Get embedding for data science text"""
-        # Simple hash-based embedding for demo
-        import hashlib
-
-        hash_value = int(hashlib.md5(text.encode()).hexdigest(), 16)
-        return [(hash_value % 1000) / 1000.0] * 384
 
     async def rerank(self, query: str, results: list[dict[str, Any]], k: int) -> list[dict[str, Any]]:
         """Rerank results based on data science relevance"""
@@ -98,20 +88,15 @@ class DataScienceAgent(AgentInterface):
 
     async def introspect(self) -> dict[str, Any]:
         """Return agent capabilities and status"""
-        return {
-            "agent_id": self.agent_id,
-            "agent_type": self.agent_type,
-            "capabilities": self.capabilities,
-            "models_cached": len(self.models_cache),
-            "analyses_performed": len(self.analysis_history),
-            "initialized": self.initialized,
-            "status": "active" if self.initialized else "initializing",
-        }
-
-    async def communicate(self, message: str, recipient: "AgentInterface") -> str:
-        """Communicate with other agents"""
-        response = await recipient.generate(f"Data Science Agent says: {message}")
-        return f"Received response: {response}"
+        info = await super().introspect()
+        info.update(
+            {
+                "models_cached": len(self.models_cache),
+                "analyses_performed": len(self.analysis_history),
+                "status": "active" if self.initialized else "initializing",
+            }
+        )
+        return info
 
     async def activate_latent_space(self, query: str) -> tuple[str, str]:
         """Activate latent space for data analysis"""

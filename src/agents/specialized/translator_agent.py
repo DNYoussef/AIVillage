@@ -1,11 +1,10 @@
 """Translator Agent - Advanced Multi-language Processing Specialist"""
 
-import hashlib
 import logging
 from dataclasses import dataclass
 from typing import Any
 
-from src.core.agent_interface import AgentInterface
+from src.agents.base import BaseAgent
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +20,7 @@ class TranslationRequest:
     domain: str = "general"
 
 
-class TranslatorAgent(AgentInterface):
+class TranslatorAgent(BaseAgent):
     """Specialized agent for language processing including:
     - Real-time translation between 100+ languages
     - Context-aware translation with domain expertise
@@ -31,9 +30,7 @@ class TranslatorAgent(AgentInterface):
     """
 
     def __init__(self, agent_id: str = "translator_agent"):
-        self.agent_id = agent_id
-        self.agent_type = "Translator"
-        self.capabilities = [
+        capabilities = [
             "real_time_translation",
             "language_detection",
             "cultural_localization",
@@ -43,6 +40,7 @@ class TranslatorAgent(AgentInterface):
             "conversation_translation",
             "document_translation",
         ]
+        super().__init__(agent_id, "Translator", capabilities)
         self.supported_languages = {
             "en": "English",
             "es": "Spanish",
@@ -59,7 +57,6 @@ class TranslatorAgent(AgentInterface):
         }
         self.translation_cache = {}
         self.domain_glossaries = {}
-        self.initialized = False
 
     async def generate(self, prompt: str) -> str:
         if "translate" in prompt.lower():
@@ -69,10 +66,6 @@ class TranslatorAgent(AgentInterface):
         if "localize" in prompt.lower():
             return "I provide cultural localization services for global content adaptation."
         return "I'm a Translator Agent specialized in multilingual processing and cross-cultural communication."
-
-    async def get_embedding(self, text: str) -> list[float]:
-        hash_value = int(hashlib.md5(text.encode()).hexdigest(), 16)
-        return [(hash_value % 1000) / 1000.0] * 384
 
     async def rerank(self, query: str, results: list[dict[str, Any]], k: int) -> list[dict[str, Any]]:
         keywords = [
@@ -89,19 +82,15 @@ class TranslatorAgent(AgentInterface):
         return sorted(results, key=lambda x: x.get("translation_relevance_score", 0), reverse=True)[:k]
 
     async def introspect(self) -> dict[str, Any]:
-        return {
-            "agent_id": self.agent_id,
-            "agent_type": self.agent_type,
-            "capabilities": self.capabilities,
-            "supported_languages": len(self.supported_languages),
-            "cached_translations": len(self.translation_cache),
-            "domain_glossaries": len(self.domain_glossaries),
-            "initialized": self.initialized,
-        }
-
-    async def communicate(self, message: str, recipient: "AgentInterface") -> str:
-        response = await recipient.generate(f"Translator Agent says: {message}")
-        return f"Received response: {response}"
+        info = await super().introspect()
+        info.update(
+            {
+                "supported_languages": len(self.supported_languages),
+                "cached_translations": len(self.translation_cache),
+                "domain_glossaries": len(self.domain_glossaries),
+            }
+        )
+        return info
 
     async def activate_latent_space(self, query: str) -> tuple[str, str]:
         translation_type = "document" if "document" in query.lower() else "conversation"
