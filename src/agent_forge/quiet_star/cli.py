@@ -130,7 +130,9 @@ def run(
     help="Config file path",
 )
 @click.option("--model-name", default="gpt2", help="Base model name")
-@click.option("--output-dir", default="./quiet_star_training", help="Training output directory")
+@click.option(
+    "--output-dir", default="./quiet_star_training", help="Training output directory"
+)
 @click.option("--num-epochs", type=int, default=3, help="Number of training epochs")
 @click.option("--batch-size", type=int, default=4, help="Training batch size")
 @click.option("--learning-rate", type=float, default=5e-5, help="Learning rate")
@@ -175,7 +177,9 @@ def train(
         config.update_token_ids(tokenizer)
 
         # Wrap with Quiet-STaR
-        quiet_model = QuietSTaRModelWrapper(base_model=model, config=config, special_token_ids=config.special_token_ids)
+        quiet_model = QuietSTaRModelWrapper(
+            base_model=model, config=config, special_token_ids=config.special_token_ids
+        )
 
         # Create training components
         loss_fn = QuietSTaRLoss(config)
@@ -199,7 +203,9 @@ def train(
 
 
 @quiet_star.command()
-@click.option("--text", prompt="Enter text to analyze", help="Text to check for thought leaks")
+@click.option(
+    "--text", prompt="Enter text to analyze", help="Text to check for thought leaks"
+)
 @click.option("--config-path", type=click.Path(), help="Path to config file")
 def check_leaks(text: str, config_path: str | None):
     """Check text for thought token leakage."""
@@ -243,7 +249,9 @@ def check_leaks(text: str, config_path: str | None):
     required=True,
     help="Input JSON file with prompts",
 )
-@click.option("--output-file", type=click.Path(), required=True, help="Output JSON file")
+@click.option(
+    "--output-file", type=click.Path(), required=True, help="Output JSON file"
+)
 @click.option("--model-name", default="gpt2", help="Model to use")
 @click.option("--config-path", type=click.Path(), help="Config file path")
 @click.option("--max-samples", type=int, help="Maximum samples to process")
@@ -288,7 +296,9 @@ def generate(
         config.update_token_ids(tokenizer)
 
         # Create Quiet-STaR wrapper
-        quiet_model = QuietSTaRModelWrapper(base_model=model, config=config, special_token_ids=config.special_token_ids)
+        quiet_model = QuietSTaRModelWrapper(
+            base_model=model, config=config, special_token_ids=config.special_token_ids
+        )
 
         quiet_model.eval()
         sampler = ThoughtSampler(config, tokenizer)
@@ -305,7 +315,9 @@ def generate(
             prompt = item.get("prompt", item.get("text", ""))
 
             # Tokenize input
-            inputs = tokenizer(prompt, return_tensors="pt", truncation=True, max_length=512)
+            inputs = tokenizer(
+                prompt, return_tensors="pt", truncation=True, max_length=512
+            )
 
             # Generate with thoughts
             with torch.no_grad():
@@ -321,10 +333,14 @@ def generate(
             # Decode results
             if generation_result.stripped_ids is not None:
                 # Use stripped version for production
-                output_text = tokenizer.decode(generation_result.stripped_ids[0], skip_special_tokens=True)
+                output_text = tokenizer.decode(
+                    generation_result.stripped_ids[0], skip_special_tokens=True
+                )
             else:
                 # Fallback to full generation
-                output_text = tokenizer.decode(generation_result.generated_ids[0], skip_special_tokens=True)
+                output_text = tokenizer.decode(
+                    generation_result.generated_ids[0], skip_special_tokens=True
+                )
 
             # Remove original prompt from output
             if output_text.startswith(prompt):
@@ -363,7 +379,9 @@ def generate(
         click.echo("✅ Generation complete")
         click.echo(f"   Samples processed: {len(results)}")
         click.echo(f"   Leaks detected: {leak_count}")
-        click.echo(f"   Leak rate: {leak_count / len(results) * 100:.1f}%" if results else "0%")
+        click.echo(
+            f"   Leak rate: {leak_count / len(results) * 100:.1f}%" if results else "0%"
+        )
         click.echo(f"   Results saved to: {output_file}")
 
         return 0 if leak_count == 0 else 1
@@ -386,8 +404,12 @@ def generate(
     default="./teacher_data",
     help="Output directory for training data",
 )
-@click.option("--num-pairs", type=int, default=100, help="Number of training pairs to generate")
-@click.option("--model-name", default="microsoft/DialoGPT-small", help="Base model for generation")
+@click.option(
+    "--num-pairs", type=int, default=100, help="Number of training pairs to generate"
+)
+@click.option(
+    "--model-name", default="microsoft/DialoGPT-small", help="Base model for generation"
+)
 def generate_teacher_data(questions_file, output_dir, num_pairs, model_name):
     """Generate teacher training data with hidden reflections."""
     config = get_training_config()
@@ -403,7 +425,9 @@ def generate_teacher_data(questions_file, output_dir, num_pairs, model_name):
     else:
         # Use sample questions and repeat/extend as needed
         base_questions = load_sample_questions()
-        questions = (base_questions * ((num_pairs // len(base_questions)) + 1))[:num_pairs]
+        questions = (base_questions * ((num_pairs // len(base_questions)) + 1))[
+            :num_pairs
+        ]
 
     click.echo(f"Generating {min(num_pairs, len(questions))} teacher training pairs...")
 
@@ -418,8 +442,12 @@ def generate_teacher_data(questions_file, output_dir, num_pairs, model_name):
 
     click.echo("\n=== Teacher Data Generation Results ===")
     click.echo(f"Total pairs generated: {validation_results['total_pairs']}")
-    click.echo(f"Average reflection length: {validation_results['avg_reflection_length']:.1f} tokens")
-    click.echo(f"Average answer length: {validation_results['avg_answer_length']:.1f} tokens")
+    click.echo(
+        f"Average reflection length: {validation_results['avg_reflection_length']:.1f} tokens"
+    )
+    click.echo(
+        f"Average answer length: {validation_results['avg_answer_length']:.1f} tokens"
+    )
 
     if validation_results["quality_issues"]:
         click.echo(f"Quality issues found: {len(validation_results['quality_issues'])}")
@@ -448,11 +476,15 @@ def generate_teacher_data(questions_file, output_dir, num_pairs, model_name):
     default="./student_model",
     help="Output directory for trained student",
 )
-@click.option("--base-model", default="microsoft/DialoGPT-small", help="Base model for student")
+@click.option(
+    "--base-model", default="microsoft/DialoGPT-small", help="Base model for student"
+)
 @click.option("--epochs", type=int, default=3, help="Number of training epochs")
 @click.option("--batch-size", type=int, default=4, help="Training batch size")
 @click.option("--learning-rate", type=float, default=5e-5, help="Learning rate")
-def train_student(teacher_data, output_dir, base_model, epochs, batch_size, learning_rate):
+def train_student(
+    teacher_data, output_dir, base_model, epochs, batch_size, learning_rate
+):
     """Train student model using teacher-generated data."""
     config = get_training_config()
 
@@ -476,7 +508,9 @@ def train_student(teacher_data, output_dir, base_model, epochs, batch_size, lear
     ]
 
     # Initialize student with custom config
-    distill_config = DistillationConfig(num_epochs=epochs, batch_size=batch_size, learning_rate=learning_rate)
+    distill_config = DistillationConfig(
+        num_epochs=epochs, batch_size=batch_size, learning_rate=learning_rate
+    )
 
     student = QuietReasoningStudent(config, distill_config, base_model)
 
@@ -501,7 +535,9 @@ def train_student(teacher_data, output_dir, base_model, epochs, batch_size, lear
     required=True,
     help="Trained student model directory",
 )
-@click.option("--test-questions", type=click.Path(exists=True), help="Test questions file")
+@click.option(
+    "--test-questions", type=click.Path(exists=True), help="Test questions file"
+)
 @click.option(
     "--output-file",
     type=click.Path(),
@@ -520,15 +556,23 @@ def evaluate_student(student_model, test_questions, output_file):
 
     # Create special token mapping
     special_token_ids = {
-        config.start_of_thought_token: tokenizer.convert_tokens_to_ids(config.start_of_thought_token),
-        config.end_of_thought_token: tokenizer.convert_tokens_to_ids(config.end_of_thought_token),
-        config.no_thought_token: tokenizer.convert_tokens_to_ids(config.no_thought_token),
+        config.start_of_thought_token: tokenizer.convert_tokens_to_ids(
+            config.start_of_thought_token
+        ),
+        config.end_of_thought_token: tokenizer.convert_tokens_to_ids(
+            config.end_of_thought_token
+        ),
+        config.no_thought_token: tokenizer.convert_tokens_to_ids(
+            config.no_thought_token
+        ),
     }
 
     # Wrap with Quiet-STaR
     from .model import QuietSTaRModelWrapper
 
-    student_wrapper = QuietSTaRModelWrapper(base_model=base_model, config=config, special_token_ids=special_token_ids)
+    student_wrapper = QuietSTaRModelWrapper(
+        base_model=base_model, config=config, special_token_ids=special_token_ids
+    )
 
     # Load test questions
     if test_questions:
@@ -550,8 +594,12 @@ def evaluate_student(student_model, test_questions, output_file):
 
     click.echo("\n=== Evaluation Results ===")
     click.echo(f"Total questions: {results['total_questions']}")
-    click.echo(f"Thoughts properly hidden: {results['thoughts_properly_hidden']} ({results['success_rate']:.1%})")
-    click.echo(f"Has internal reasoning: {results['has_internal_reasoning']} ({results['reasoning_rate']:.1%})")
+    click.echo(
+        f"Thoughts properly hidden: {results['thoughts_properly_hidden']} ({results['success_rate']:.1%})"
+    )
+    click.echo(
+        f"Has internal reasoning: {results['has_internal_reasoning']} ({results['reasoning_rate']:.1%})"
+    )
 
     if results["success_rate"] >= 0.9:
         click.echo("✓ EXCELLENT: Student successfully hides thoughts from users")
@@ -571,14 +619,20 @@ def evaluate_student(student_model, test_questions, output_file):
 
 
 @quiet_star.command()
-@click.option("--test-name", default="reflection_optimization", help="Name for this A/B test")
+@click.option(
+    "--test-name", default="reflection_optimization", help="Name for this A/B test"
+)
 @click.option(
     "--variants",
     multiple=True,
     help="Variant names to test (or use --standard-variants)",
 )
-@click.option("--standard-variants", is_flag=True, help="Use standard predefined variants")
-@click.option("--questions-file", type=click.Path(exists=True), help="File with test questions")
+@click.option(
+    "--standard-variants", is_flag=True, help="Use standard predefined variants"
+)
+@click.option(
+    "--questions-file", type=click.Path(exists=True), help="File with test questions"
+)
 @click.option(
     "--output-dir",
     type=click.Path(),
@@ -655,7 +709,9 @@ def run_ab_test(
     # Display results
     if test_suite.results:
         click.echo("\n📊 A/B Test Results:")
-        sorted_results = sorted(test_suite.results, key=lambda r: r.overall_score(), reverse=True)
+        sorted_results = sorted(
+            test_suite.results, key=lambda r: r.overall_score(), reverse=True
+        )
 
         for i, result in enumerate(sorted_results, 1):
             click.echo(f"{i}. {result.variant.name}:")
@@ -713,7 +769,9 @@ def bake_variants(test_results, min_confidence, output_config):
     with open(results_path / "ab_test_results.json") as f:
         results_data = json.load(f)
 
-    click.echo(f"🔥 Baking variants from {len(results_data['test_suites'])} test suites...")
+    click.echo(
+        f"🔥 Baking variants from {len(results_data['test_suites'])} test suites..."
+    )
 
     # Reconstruct test suites
     for suite_data in results_data["test_suites"]:
@@ -813,7 +871,9 @@ def bake_variants(test_results, min_confidence, output_config):
     default=100,
     help="Number of training samples to generate",
 )
-def generate_optimized_data(baked_config, variant_name, questions_file, output_data, num_samples):
+def generate_optimized_data(
+    baked_config, variant_name, questions_file, output_data, num_samples
+):
     """Generate training data using baked A/B test winners."""
     config = get_training_config()
 
@@ -858,7 +918,9 @@ def generate_optimized_data(baked_config, variant_name, questions_file, output_d
 
     # Generate training data with optimized variant
     baker = ThoughtTokenABBaker(config)
-    training_pairs = baker.generate_training_data_for_variant(optimized_variant, questions, num_samples_per_question=1)
+    training_pairs = baker.generate_training_data_for_variant(
+        optimized_variant, questions, num_samples_per_question=1
+    )
 
     # Convert to JSON format
     training_data = [
@@ -882,7 +944,9 @@ def generate_optimized_data(baked_config, variant_name, questions_file, output_d
 
     # Quick quality check
     leak_count = sum(
-        1 for item in training_data if "<SoT>" in item["inference_text"] or "</SoT>" in item["inference_text"]
+        1
+        for item in training_data
+        if "<SoT>" in item["inference_text"] or "</SoT>" in item["inference_text"]
     )
 
     if leak_count == 0:
@@ -938,14 +1002,20 @@ def analyze_temperature(question, context, strategy, use_case):
     click.echo()
 
     # Get temperature recommendation
-    recommendation = temp_recognizer.recommend_temperature(question=question, context=context)
+    recommendation = temp_recognizer.recommend_temperature(
+        question=question, context=context
+    )
 
     # Display results
     click.echo("📊 Analysis Results:")
     click.echo(f"  Confidence Level: {recommendation.confidence_level.value}")
-    click.echo(f"  Confidence Score: {recommendation.confidence_signals.overall_confidence():.3f}")
+    click.echo(
+        f"  Confidence Score: {recommendation.confidence_signals.overall_confidence():.3f}"
+    )
     click.echo(f"  Complexity Level: {recommendation.complexity_level.value}")
-    click.echo(f"  Complexity Score: {recommendation.complexity_signals.overall_complexity():.3f}")
+    click.echo(
+        f"  Complexity Score: {recommendation.complexity_signals.overall_complexity():.3f}"
+    )
     click.echo()
 
     click.echo("🌡️  Temperature Recommendation:")
@@ -975,7 +1045,9 @@ def analyze_temperature(question, context, strategy, use_case):
 
 
 @quiet_star.command()
-@click.option("--questions-file", type=click.Path(exists=True), help="File with test questions")
+@click.option(
+    "--questions-file", type=click.Path(exists=True), help="File with test questions"
+)
 @click.option(
     "--output-dir",
     type=click.Path(),
@@ -989,8 +1061,12 @@ def analyze_temperature(question, context, strategy, use_case):
     default="balanced",
     help="Temperature strategy to use",
 )
-@click.option("--num-samples", type=int, default=3, help="Number of samples per question")
-def test_adaptive_temperature(questions_file, output_dir, model_name, strategy, num_samples):
+@click.option(
+    "--num-samples", type=int, default=3, help="Number of samples per question"
+)
+def test_adaptive_temperature(
+    questions_file, output_dir, model_name, strategy, num_samples
+):
     """Test adaptive temperature system with actual model sampling."""
     config = get_training_config()
     output_path = Path(output_dir)
@@ -1029,10 +1105,16 @@ def test_adaptive_temperature(questions_file, output_dir, model_name, strategy, 
         results = []
 
         for i, question in enumerate(test_questions, 1):
-            click.echo(f"Processing question {i}/{len(test_questions)}: {question[:60]}...")
+            click.echo(
+                f"Processing question {i}/{len(test_questions)}: {question[:60]}..."
+            )
 
             # Get temperature recommendation
-            temp_recommendation = adaptive_sampler.temp_recognition.recommend_temperature(question=question)
+            temp_recommendation = (
+                adaptive_sampler.temp_recognition.recommend_temperature(
+                    question=question
+                )
+            )
 
             question_result = {
                 "question": question,
@@ -1124,7 +1206,9 @@ def test_adaptive_temperature(questions_file, output_dir, model_name, strategy, 
     default="balanced",
     help="Temperature strategy to use",
 )
-@click.option("--enable-alignment", is_flag=True, help="Enable alignment prelude integration")
+@click.option(
+    "--enable-alignment", is_flag=True, help="Enable alignment prelude integration"
+)
 def create_enhanced_config(config_file, output_config, strategy, enable_alignment):
     """Create enhanced configuration with temperature recognition and alignment features."""
 
@@ -1202,7 +1286,9 @@ def create_enhanced_config(config_file, output_config, strategy, enable_alignmen
 )
 @click.option("--question", required=True, help="Question to make prediction about")
 @click.option("--prediction", required=True, help="Your prediction for the outcome")
-@click.option("--confidence", type=float, required=True, help="Confidence in prediction (0.0-1.0)")
+@click.option(
+    "--confidence", type=float, required=True, help="Confidence in prediction (0.0-1.0)"
+)
 @click.option("--reasoning", default="", help="Reasoning behind the prediction")
 def make_prediction(journal_db, question, prediction, confidence, reasoning):
     """Make a prediction and record it in the journal."""
@@ -1255,7 +1341,9 @@ def record_outcome(journal_db, prediction_id, outcome):
     journal = SurpriseMemoryJournal(config, journal_db)
 
     try:
-        outcome_id = journal.record_outcome(prediction_id=prediction_id, actual_outcome=outcome)
+        outcome_id = journal.record_outcome(
+            prediction_id=prediction_id, actual_outcome=outcome
+        )
 
         if not outcome_id:
             click.echo(f"❌ Prediction {prediction_id} not found")
@@ -1297,7 +1385,9 @@ def record_outcome(journal_db, prediction_id, outcome):
     default="medium",
     help="Minimum surprise level to analyze",
 )
-@click.option("--limit", type=int, default=10, help="Maximum number of insights to show")
+@click.option(
+    "--limit", type=int, default=10, help="Maximum number of insights to show"
+)
 def analyze_surprises(journal_db, min_surprise, limit):
     """Analyze surprising outcomes and extract insights."""
 
@@ -1313,7 +1403,9 @@ def analyze_surprises(journal_db, min_surprise, limit):
 
         click.echo("🔍 Surprise Analysis Results")
         click.echo(f"   Minimum surprise level: {min_surprise}")
-        click.echo(f"   Total surprising entries: {insights['total_surprising_entries']}")
+        click.echo(
+            f"   Total surprising entries: {insights['total_surprising_entries']}"
+        )
         click.echo(f"   Average learning value: {insights['avg_learning_value']:.3f}")
         click.echo()
 
@@ -1321,7 +1413,9 @@ def analyze_surprises(journal_db, min_surprise, limit):
             click.echo("   No surprising entries found at this level.")
             return 0
 
-        click.echo(f"📚 Top {min(limit, len(insights['top_insights']))} Surprising Insights:")
+        click.echo(
+            f"📚 Top {min(limit, len(insights['top_insights']))} Surprising Insights:"
+        )
 
         for i, insight in enumerate(insights["top_insights"][:limit], 1):
             click.echo(f"\n   {i}. {insight['surprise_level'].upper()} Surprise")
@@ -1350,7 +1444,9 @@ def analyze_surprises(journal_db, min_surprise, limit):
 )
 @click.option(
     "--pattern-type",
-    type=click.Choice(["prediction_error", "confidence_mismatch", "context_similarity"]),
+    type=click.Choice(
+        ["prediction_error", "confidence_mismatch", "context_similarity"]
+    ),
     help="Specific pattern type to analyze",
 )
 def discover_patterns(journal_db, pattern_type):
@@ -1374,7 +1470,9 @@ def discover_patterns(journal_db, pattern_type):
 
         if not analysis["patterns"]:
             click.echo("   No patterns discovered yet.")
-            click.echo("   Patterns emerge as more predictions and outcomes are recorded.")
+            click.echo(
+                "   Patterns emerge as more predictions and outcomes are recorded."
+            )
             return 0
 
         click.echo("📈 Discovered Patterns:")
@@ -1483,7 +1581,9 @@ def journal_summary(journal_db):
 
         click.echo("\n📈 Performance Metrics:")
         click.echo(f"   Average accuracy: {summary['average_accuracy']:.3f}")
-        click.echo(f"   Average learning value: {summary['average_learning_value']:.3f}")
+        click.echo(
+            f"   Average learning value: {summary['average_learning_value']:.3f}"
+        )
         click.echo(f"   Discovered patterns: {summary['discovered_patterns']}")
 
         # Recent activity
@@ -1571,12 +1671,17 @@ def demo_mcp_system(journal_db, output_file):
 
         for pred_id, outcome in zip(prediction_ids, outcomes, strict=False):
             result = await mcp.record_outcome(pred_id, outcome)
-            click.echo(f"   ✓ Surprise level: {result['surprise_level']} " f"(accuracy: {result['accuracy']:.2f})")
+            click.echo(
+                f"   ✓ Surprise level: {result['surprise_level']} "
+                f"(accuracy: {result['accuracy']:.2f})"
+            )
             demo_data.append({"step": "outcome", "data": result})
 
         click.echo("\n3. Analyzing Surprises...")
         surprises = await mcp.get_surprise_insights("low")
-        click.echo(f"   ✓ Found {surprises['total_surprising_entries']} surprising entries")
+        click.echo(
+            f"   ✓ Found {surprises['total_surprising_entries']} surprising entries"
+        )
         demo_data.append({"step": "surprise_analysis", "data": surprises})
 
         click.echo("\n4. Discovering Patterns...")
@@ -1586,7 +1691,9 @@ def demo_mcp_system(journal_db, output_file):
 
         click.echo("\n5. Journal Search...")
         search_result = await mcp.search_journal("challenge")
-        click.echo(f"   ✓ Found {search_result['results_count']} entries matching 'challenge'")
+        click.echo(
+            f"   ✓ Found {search_result['results_count']} entries matching 'challenge'"
+        )
         demo_data.append({"step": "search", "data": search_result})
 
         # Save demo results
@@ -1600,7 +1707,9 @@ def demo_mcp_system(journal_db, output_file):
         click.echo(f"   Total journal entries: {summary['total_entries']}")
         click.echo(f"   Patterns discovered: {summary['discovered_patterns']}")
         click.echo(f"   Average accuracy: {summary['average_accuracy']:.3f}")
-        click.echo(f"   Average learning value: {summary['average_learning_value']:.3f}")
+        click.echo(
+            f"   Average learning value: {summary['average_learning_value']:.3f}"
+        )
         click.echo(f"   Results saved to: {output_file}")
 
         return 0
@@ -1612,7 +1721,9 @@ def demo_mcp_system(journal_db, output_file):
         journal.close()
 
 
-def run_smoke_test(model_name: str, config: QuietSTaRConfig, num_samples: int, output_dir: Path) -> dict[str, Any]:
+def run_smoke_test(
+    model_name: str, config: QuietSTaRConfig, num_samples: int, output_dir: Path
+) -> dict[str, Any]:
     """
     Run smoke test to verify Quiet-STaR functionality.
 
@@ -1637,7 +1748,9 @@ def run_smoke_test(model_name: str, config: QuietSTaRConfig, num_samples: int, o
     ]
 
     # Extend prompts to reach num_samples
-    extended_prompts = (test_prompts * ((num_samples // len(test_prompts)) + 1))[:num_samples]
+    extended_prompts = (test_prompts * ((num_samples // len(test_prompts)) + 1))[
+        :num_samples
+    ]
 
     # Load model
     model = AutoModelForCausalLM.from_pretrained(model_name)
@@ -1652,7 +1765,9 @@ def run_smoke_test(model_name: str, config: QuietSTaRConfig, num_samples: int, o
     config.update_token_ids(tokenizer)
 
     # Create Quiet-STaR components
-    quiet_model = QuietSTaRModelWrapper(base_model=model, config=config, special_token_ids=config.special_token_ids)
+    quiet_model = QuietSTaRModelWrapper(
+        base_model=model, config=config, special_token_ids=config.special_token_ids
+    )
 
     sampler = ThoughtSampler(config, tokenizer)
     detector = ThoughtLeakDetector(config)
@@ -1683,7 +1798,9 @@ def run_smoke_test(model_name: str, config: QuietSTaRConfig, num_samples: int, o
 
         try:
             # Tokenize
-            inputs = tokenizer(prompt, return_tensors="pt", truncation=True, max_length=256)
+            inputs = tokenizer(
+                prompt, return_tensors="pt", truncation=True, max_length=256
+            )
 
             # Test with thoughts (training mode)
             quiet_model.train()
@@ -1708,7 +1825,9 @@ def run_smoke_test(model_name: str, config: QuietSTaRConfig, num_samples: int, o
             )
 
             # Decode results
-            training_text = tokenizer.decode(generation_result.generated_ids[0], skip_special_tokens=False)
+            training_text = tokenizer.decode(
+                generation_result.generated_ids[0], skip_special_tokens=False
+            )
             inference_text = tokenizer.decode(
                 inference_result.stripped_ids[0]
                 if inference_result.stripped_ids is not None
@@ -1753,7 +1872,9 @@ def run_smoke_test(model_name: str, config: QuietSTaRConfig, num_samples: int, o
 
             # Track statistics
             if generation_result.generation_stats:
-                results["total_thought_tokens"] += generation_result.generation_stats.get("total_thought_tokens", 0)
+                results["total_thought_tokens"] += (
+                    generation_result.generation_stats.get("total_thought_tokens", 0)
+                )
 
             # Store sample result
             sample_result = {
@@ -1774,12 +1895,16 @@ def run_smoke_test(model_name: str, config: QuietSTaRConfig, num_samples: int, o
             results["tests_passed"]["generation_successful"] = False
 
             # Add failed sample
-            results["samples"].append({"prompt": prompt, "error": str(e), "failed": True})
+            results["samples"].append(
+                {"prompt": prompt, "error": str(e), "failed": True}
+            )
 
     # Compute final statistics
     results["end_time"] = time.time()
     results["total_time"] = results["end_time"] - results["start_time"]
-    results["avg_generation_time"] = sum(generation_times) / len(generation_times) if generation_times else 0
+    results["avg_generation_time"] = (
+        sum(generation_times) / len(generation_times) if generation_times else 0
+    )
     results["leak_rate"] = results["leak_count"] / num_samples
 
     # Overall pass/fail

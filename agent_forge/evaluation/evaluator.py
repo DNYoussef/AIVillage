@@ -5,6 +5,7 @@ from src.agent_forge.evaluation import evaluator as _impl
 # Allow tests or callers to monkeypatch evaluate_thought_quality on this module
 # and ensure the underlying implementation uses the patched version.
 
+
 def evaluate_thought_quality(model, eval_data):
     return _impl.evaluate_thought_quality(model, eval_data)
 
@@ -16,6 +17,7 @@ def evaluate_model(model_or_path, eval_data=None):
         return _impl.evaluate_model(model_or_path, eval_data)
     finally:
         _impl.evaluate_thought_quality = original
+
 
 # expose all other helpers directly
 for _name in [

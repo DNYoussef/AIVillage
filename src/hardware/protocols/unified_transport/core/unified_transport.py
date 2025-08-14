@@ -112,7 +112,9 @@ class WebSocketTransport(TransportInterface):
     async def connect(self, target_id: str, target_info: dict[str, Any]) -> bool:
         """Real WebSocket connection (consolidated from original)"""
         try:
-            target_url = target_info.get("url", f"ws://localhost:{target_info.get('port', 8888)}")
+            target_url = target_info.get(
+                "url", f"ws://localhost:{target_info.get('port', 8888)}"
+            )
             websocket = await websockets.connect(target_url)
             self.connections[target_id] = websocket
 
@@ -139,7 +141,9 @@ class WebSocketTransport(TransportInterface):
             # Serialize and encrypt if needed
             data = message.__dict__
             if message.encrypted and message.receiver_id in self.encryption_keys:
-                encrypted_data = self.encryption_keys[message.receiver_id].encrypt(str(data).encode())
+                encrypted_data = self.encryption_keys[message.receiver_id].encrypt(
+                    str(data).encode()
+                )
                 data = {"encrypted": encrypted_data.decode()}
 
             await self.connections[message.receiver_id].send(str(data))
@@ -225,7 +229,9 @@ class UnifiedCommunicationHub:
 
         return success
 
-    def _select_optimal_transport(self, peer_id: str, peer_info: dict[str, Any]) -> TransportType:
+    def _select_optimal_transport(
+        self, peer_id: str, peer_info: dict[str, Any]
+    ) -> TransportType:
         """Smart transport selection (consolidated from Navigator logic)"""
 
         # Factors from various implementations:

@@ -58,7 +58,10 @@ class MoralPrinciple:
             MoralComplexity.SYSTEMIC: 4,
         }
 
-        return complexity_order[context_complexity] <= complexity_order[self.complexity_level]
+        return (
+            complexity_order[context_complexity]
+            <= complexity_order[self.complexity_level]
+        )
 
 
 @dataclass
@@ -222,7 +225,9 @@ class AlignmentPrelude:
             EudaimoniaVirtue.RESPONSIBILITY: 1.0,  # Balanced importance
         }
 
-    def analyze_ethical_context(self, question: str, context: dict[str, Any] = None) -> dict[str, Any]:
+    def analyze_ethical_context(
+        self, question: str, context: dict[str, Any] = None
+    ) -> dict[str, Any]:
         """Analyze the ethical dimensions of a question or situation."""
 
         if context is None:
@@ -287,10 +292,13 @@ class AlignmentPrelude:
             "relevant_virtues": list(relevant_virtues),
             "complexity": detected_complexity,
             "applicable_principles": applicable_principles,
-            "requires_ethical_reasoning": len(relevant_virtues) > 0 or detected_complexity != MoralComplexity.SIMPLE,
+            "requires_ethical_reasoning": len(relevant_virtues) > 0
+            or detected_complexity != MoralComplexity.SIMPLE,
         }
 
-    def create_alignment_prelude(self, question: str, context: dict[str, Any] = None) -> str:
+    def create_alignment_prelude(
+        self, question: str, context: dict[str, Any] = None
+    ) -> str:
         """Create an alignment prelude that primes ethical reasoning."""
 
         ethical_analysis = self.analyze_ethical_context(question, context)
@@ -325,16 +333,27 @@ class AlignmentPrelude:
         prelude_parts = []
 
         # Complexity acknowledgment
-        if complexity == MoralComplexity.COMPLEX or complexity == MoralComplexity.SYSTEMIC:
-            prelude_parts.append("This appears to be a complex ethical situation that requires careful consideration.")
+        if (
+            complexity == MoralComplexity.COMPLEX
+            or complexity == MoralComplexity.SYSTEMIC
+        ):
+            prelude_parts.append(
+                "This appears to be a complex ethical situation that requires careful consideration."
+            )
         elif complexity == MoralComplexity.MODERATE:
-            prelude_parts.append("This question involves ethical considerations that merit thoughtful analysis.")
+            prelude_parts.append(
+                "This question involves ethical considerations that merit thoughtful analysis."
+            )
 
         # Virtue guidance
         if relevant_virtues:
-            virtue_names = [virtue.value for virtue in relevant_virtues[:3]]  # Limit to top 3
+            virtue_names = [
+                virtue.value for virtue in relevant_virtues[:3]
+            ]  # Limit to top 3
             if len(virtue_names) == 1:
-                prelude_parts.append(f"I should approach this with particular attention to {virtue_names[0]}.")
+                prelude_parts.append(
+                    f"I should approach this with particular attention to {virtue_names[0]}."
+                )
             else:
                 prelude_parts.append(
                     f"I should approach this with attention to {', '.join(virtue_names[:-1])} and {virtue_names[-1]}."
@@ -367,18 +386,24 @@ class AlignmentPrelude:
             return base_reflection
 
         # Add ethical reasoning to the reflection
-        alignment_enhancement = self._create_ethical_reasoning_enhancement(ethical_analysis, base_reflection)
+        alignment_enhancement = self._create_ethical_reasoning_enhancement(
+            ethical_analysis, base_reflection
+        )
 
         return f"{base_reflection} {alignment_enhancement}"
 
-    def _create_ethical_reasoning_enhancement(self, ethical_analysis: dict[str, Any], base_reflection: str) -> str:
+    def _create_ethical_reasoning_enhancement(
+        self, ethical_analysis: dict[str, Any], base_reflection: str
+    ) -> str:
         """Create ethical reasoning enhancement for reflections."""
 
         enhancements = []
 
         # Add virtue-specific considerations
         for virtue in ethical_analysis["relevant_virtues"]:
-            virtue_guidance = self._get_virtue_guidance(virtue, ethical_analysis["complexity"])
+            virtue_guidance = self._get_virtue_guidance(
+                virtue, ethical_analysis["complexity"]
+            )
             if virtue_guidance:
                 enhancements.append(virtue_guidance)
 
@@ -386,19 +411,29 @@ class AlignmentPrelude:
         applicable_principles = ethical_analysis["applicable_principles"]
         if applicable_principles:
             # Select relevant principle
-            principle = random.choice(applicable_principles[:2])  # Top 2 most applicable
-            enhancements.append(f"From a {principle.virtue.value} perspective: {principle.guidance}")
+            principle = random.choice(
+                applicable_principles[:2]
+            )  # Top 2 most applicable
+            enhancements.append(
+                f"From a {principle.virtue.value} perspective: {principle.guidance}"
+            )
 
         # Add meta-ethical consideration
         if ethical_analysis["complexity"] in [
             MoralComplexity.COMPLEX,
             MoralComplexity.SYSTEMIC,
         ]:
-            enhancements.append("I should acknowledge the complexity and avoid oversimplifying this ethical situation.")
+            enhancements.append(
+                "I should acknowledge the complexity and avoid oversimplifying this ethical situation."
+            )
 
-        return " ".join(enhancements[:2])  # Limit to 2 enhancements to avoid overwhelming
+        return " ".join(
+            enhancements[:2]
+        )  # Limit to 2 enhancements to avoid overwhelming
 
-    def _get_virtue_guidance(self, virtue: EudaimoniaVirtue, complexity: MoralComplexity) -> str | None:
+    def _get_virtue_guidance(
+        self, virtue: EudaimoniaVirtue, complexity: MoralComplexity
+    ) -> str | None:
         """Get specific guidance for a virtue in a given context."""
 
         virtue_guidance = {
@@ -519,7 +554,9 @@ def create_aligned_training_pair(
     prelude = alignment_system.create_alignment_prelude(question, context)
 
     # Enhance reflection with ethical reasoning
-    enhanced_reflection = alignment_system.enhance_reflection_with_alignment(question, base_reflection, context)
+    enhanced_reflection = alignment_system.enhance_reflection_with_alignment(
+        question, base_reflection, context
+    )
 
     # Combine prelude and enhanced reflection
     full_reflection = f"{prelude} {enhanced_reflection}"
@@ -533,7 +570,9 @@ def create_aligned_training_pair(
             "prelude": prelude,
             "base_reflection": base_reflection,
             "enhanced_reflection": enhanced_reflection,
-            "alignment_quality": alignment_system.evaluate_alignment_quality(full_reflection),
+            "alignment_quality": alignment_system.evaluate_alignment_quality(
+                full_reflection
+            ),
         },
     )
 
@@ -594,7 +633,9 @@ if __name__ == "__main__":
     config = get_training_config()
     alignment_system = AlignmentPrelude(config)
 
-    print(f"Initialized alignment system with {len(alignment_system.moral_principles)} moral principles")
+    print(
+        f"Initialized alignment system with {len(alignment_system.moral_principles)} moral principles"
+    )
     print(f"Covering {len(alignment_system.virtue_weights)} core virtues")
     print()
 
@@ -603,14 +644,22 @@ if __name__ == "__main__":
         print(f"Scenario {i}: {scenario['question']}")
 
         # Analyze ethical context
-        ethical_analysis = alignment_system.analyze_ethical_context(scenario["question"], scenario["context"])
+        ethical_analysis = alignment_system.analyze_ethical_context(
+            scenario["question"], scenario["context"]
+        )
 
         print(f"  Complexity: {ethical_analysis['complexity'].value}")
-        print(f"  Relevant virtues: {[v.value for v in ethical_analysis['relevant_virtues']]}")
-        print(f"  Requires ethical reasoning: {ethical_analysis['requires_ethical_reasoning']}")
+        print(
+            f"  Relevant virtues: {[v.value for v in ethical_analysis['relevant_virtues']]}"
+        )
+        print(
+            f"  Requires ethical reasoning: {ethical_analysis['requires_ethical_reasoning']}"
+        )
 
         # Create alignment prelude
-        prelude = alignment_system.create_alignment_prelude(scenario["question"], scenario["context"])
+        prelude = alignment_system.create_alignment_prelude(
+            scenario["question"], scenario["context"]
+        )
         print(f"  Prelude: {prelude}")
 
         # Test enhancement
@@ -623,7 +672,9 @@ if __name__ == "__main__":
 
         # Evaluate alignment quality
         quality = alignment_system.evaluate_alignment_quality(enhanced_reflection)
-        print(f"  Alignment quality: {quality['alignment_strength']} (score: {quality['overall_alignment']:.2f})")
+        print(
+            f"  Alignment quality: {quality['alignment_strength']} (score: {quality['overall_alignment']:.2f})"
+        )
         print()
 
     print("✅ Alignment prelude integration demonstrated successfully")

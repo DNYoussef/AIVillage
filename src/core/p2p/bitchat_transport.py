@@ -36,11 +36,15 @@ except ImportError as e:
     LZ4_AVAILABLE = False
     CRYPTO_AVAILABLE = False
     if "bluetooth" in str(e):
-        logging.error("PyBluez not available - BitChat requires Bluetooth support for production")
+        logging.error(
+            "PyBluez not available - BitChat requires Bluetooth support for production"
+        )
     elif "lz4" in str(e):
         logging.error("lz4 not available - BitChat requires compression support")
     elif "cryptography" in str(e):
-        logging.error("cryptography not available - BitChat requires encryption support")
+        logging.error(
+            "cryptography not available - BitChat requires encryption support"
+        )
     else:
         logging.error(f"Missing dependency for BitChat: {e}")
 
@@ -72,7 +76,9 @@ class BitChatMessage:
             "id": self.id,
             "sender": self.sender,
             "recipient": self.recipient,
-            "payload": self.payload.hex() if isinstance(self.payload, bytes) else self.payload,
+            "payload": self.payload.hex()
+            if isinstance(self.payload, bytes)
+            else self.payload,
             "ttl": self.ttl,
             "hop_count": self.hop_count,
             "timestamp": self.timestamp,
@@ -253,7 +259,9 @@ class BitChatTransport:
             logger.error(f"Decompression failed: {e}")
             return payload
 
-    async def send_message(self, recipient: str, payload: bytes, priority: int = 5, ttl: int = 7) -> bool:
+    async def send_message(
+        self, recipient: str, payload: bytes, priority: int = 5, ttl: int = 7
+    ) -> bool:
         """Send message via BitChat mesh
 
         Args:
@@ -309,11 +317,15 @@ class BitChatTransport:
 
         # Store-and-forward for offline peers
         if recipient:
-            logger.info(f"Peer {recipient} offline - storing message for later delivery")
+            logger.info(
+                f"Peer {recipient} offline - storing message for later delivery"
+            )
             self.store_forward_cache[recipient].append(message)
             # Limit stored messages per peer
             if len(self.store_forward_cache[recipient]) > 50:
-                self.store_forward_cache[recipient] = self.store_forward_cache[recipient][-50:]
+                self.store_forward_cache[recipient] = self.store_forward_cache[
+                    recipient
+                ][-50:]
             return True
 
         # Broadcast to all connected peers
@@ -360,7 +372,9 @@ class BitChatTransport:
         if BLUETOOTH_AVAILABLE:
             try:
                 # Real BLE discovery implementation
-                nearby_devices = bluetooth.discover_devices(duration=8, lookup_names=True, flush_cache=True)
+                nearby_devices = bluetooth.discover_devices(
+                    duration=8, lookup_names=True, flush_cache=True
+                )
 
                 for addr, name in nearby_devices:
                     # Skip if already discovered recently
@@ -484,7 +498,9 @@ class BitChatTransport:
         # Clean store-and-forward cache (remove messages older than 24h)
         for peer_id in list(self.store_forward_cache.keys()):
             messages = self.store_forward_cache[peer_id]
-            fresh_messages = [msg for msg in messages if current_time - msg.timestamp < 86400]  # 24 hours
+            fresh_messages = [
+                msg for msg in messages if current_time - msg.timestamp < 86400
+            ]  # 24 hours
 
             if fresh_messages:
                 self.store_forward_cache[peer_id] = fresh_messages
@@ -540,7 +556,9 @@ class BitChatTransport:
             except Exception as e:
                 logger.exception(f"Error in message handler: {e}")
         else:
-            logger.info(f"Received BitChat message: {message.id[:8]} from {message.sender}")
+            logger.info(
+                f"Received BitChat message: {message.id[:8]} from {message.sender}"
+            )
 
     async def _relay_message(self, message: BitChatMessage, received_from: str) -> None:
         """Relay message to next hop in mesh"""
@@ -584,7 +602,9 @@ class BitChatTransport:
             "discovered_peers": len(self.discovered_peers),
             "active_connections": len(self.active_connections),
             "routing_table_size": len(self.routing_table),
-            "queued_messages": sum(len(msgs) for msgs in self.store_forward_cache.values()),
+            "queued_messages": sum(
+                len(msgs) for msgs in self.store_forward_cache.values()
+            ),
             "message_cache_size": len(self.message_cache),
             "statistics": self.stats.copy(),
             "peer_details": [

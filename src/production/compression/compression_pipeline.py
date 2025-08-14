@@ -35,7 +35,9 @@ from .compression.stage1_bitnet import (
     convert_to_bitnet,
 )
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 # ============================================================================
@@ -58,11 +60,15 @@ class CompressionConfig(BaseModel):
     bitnet_warmup_ratio: float = Field(default=0.4, ge=0.0, le=1.0)
 
     # Calibration dataset
-    calibration_dataset: str = Field(default="wikitext", description="Dataset for calibration")
+    calibration_dataset: str = Field(
+        default="wikitext", description="Dataset for calibration"
+    )
     calibration_samples: int = Field(default=1000, ge=100, le=10000)
 
     # Evaluation configuration
-    eval_before_after: bool = Field(default=True, description="Evaluate before/after compression")
+    eval_before_after: bool = Field(
+        default=True, description="Evaluate before/after compression"
+    )
     eval_samples: int = Field(default=100, ge=10, le=500)
     eval_datasets: list[str] = Field(default_factory=lambda: ["gsm8k"])
 
@@ -79,7 +85,11 @@ class CompressionConfig(BaseModel):
     @classmethod
     def validate_device(cls, v: str) -> str:
         """Resolve ``"auto"`` to an actual device string."""
-        return "cuda" if v == "auto" and torch.cuda.is_available() else ("cpu" if v == "auto" else v)
+        return (
+            "cuda"
+            if v == "auto" and torch.cuda.is_available()
+            else ("cpu" if v == "auto" else v)
+        )
 
 
 # ============================================================================
@@ -128,7 +138,9 @@ class ModelAnalyzer:
         # Estimate compression potential (linear layers compress best)
         if analysis["total_parameters"] > 0:
             linear_ratio = analysis["linear_parameters"] / analysis["total_parameters"]
-            analysis["compression_potential"] = linear_ratio * 0.8  # ~80% reduction for linear layers
+            analysis["compression_potential"] = (
+                linear_ratio * 0.8
+            )  # ~80% reduction for linear layers
 
         logger.info("Model Analysis:")
         logger.info("  Total Parameters: %s", f"{analysis['total_parameters']:,}")
@@ -137,7 +149,9 @@ class ModelAnalyzer:
             f"{analysis['linear_parameters']:,}",
             f"{analysis['linear_parameters'] / analysis['total_parameters'] * 100:.1f}",
         )
-        logger.info("  Compression Potential: %.1f%%", analysis["compression_potential"] * 100)
+        logger.info(
+            "  Compression Potential: %.1f%%", analysis["compression_potential"] * 100
+        )
 
         return analysis
 
@@ -198,7 +212,9 @@ class CompressionEvaluator:
         self.config = config
         self.device = torch.device(config.device)
 
-    async def evaluate_model(self, model: nn.Module, tokenizer, model_name: str = "model") -> dict[str, float]:
+    async def evaluate_model(
+        self, model: nn.Module, tokenizer, model_name: str = "model"
+    ) -> dict[str, float]:
         """Evaluate model on configured datasets."""
         model.eval()
         results = {}
@@ -332,7 +348,9 @@ class CompressionEvaluator:
 class CalibrationDataset:
     """Creates calibration dataset for compression."""
 
-    def __init__(self, dataset_name: str, num_samples: int, tokenizer, max_length: int = 512) -> None:
+    def __init__(
+        self, dataset_name: str, num_samples: int, tokenizer, max_length: int = 512
+    ) -> None:
         self.tokenizer = tokenizer
         self.max_length = max_length
 
@@ -465,7 +483,9 @@ class CompressionPipeline:
 
             model = AutoModelForCausalLM.from_pretrained(
                 self.config.input_model_path,
-                torch_dtype=(torch.float16 if self.config.device == "cuda" else torch.float32),
+                torch_dtype=(
+                    torch.float16 if self.config.device == "cuda" else torch.float32
+                ),
             ).to(self.device)
 
             # Analyze model structure
@@ -479,10 +499,14 @@ class CompressionPipeline:
                     {
                         "model_parameters": model_analysis["total_parameters"],
                         "linear_parameters": model_analysis["linear_parameters"],
-                        "compression_potential": model_analysis["compression_potential"],
+                        "compression_potential": model_analysis[
+                            "compression_potential"
+                        ],
                         "original_size_mb": memory_analysis["fp16_mb"],
                         "estimated_compressed_mb": memory_analysis["bitnet_mb"],
-                        "estimated_compression_ratio": memory_analysis["compression_ratio"],
+                        "estimated_compression_ratio": memory_analysis[
+                            "compression_ratio"
+                        ],
                     }
                 )
 
@@ -490,7 +514,9 @@ class CompressionPipeline:
             pre_compression_results = {}
             if self.config.eval_before_after:
                 evaluator = CompressionEvaluator(self.config)
-                pre_compression_results = await evaluator.evaluate_model(model, tokenizer, "pre_compression")
+                pre_compression_results = await evaluator.evaluate_model(
+                    model, tokenizer, "pre_compression"
+                )
 
                 if self.wandb_run:
                     for metric, value in pre_compression_results.items():
@@ -534,7 +560,9 @@ class CompressionPipeline:
                 "timestamp": datetime.now().isoformat(),
             }
 
-            metadata_path = Path(self.config.output_model_path) / "compression_metadata.json"
+            metadata_path = (
+                Path(self.config.output_model_path) / "compression_metadata.json"
+            )
             with open(metadata_path, "w") as f:
                 json.dump(compression_metadata, f, indent=2, default=str)
 
@@ -544,11 +572,18 @@ class CompressionPipeline:
                 if pre_compression_results and post_compression_results:
                     for dataset in self.config.eval_datasets:
                         metric_name = f"{dataset}_accuracy"
-                        if metric_name in pre_compression_results and metric_name in post_compression_results:
+                        if (
+                            metric_name in pre_compression_results
+                            and metric_name in post_compression_results
+                        ):
                             pre_score = pre_compression_results[metric_name]
                             post_score = post_compression_results[metric_name]
-                            retention = (post_score / pre_score * 100) if pre_score > 0 else 0
-                            self.wandb_run.log({f"{dataset}_performance_retention": retention})
+                            retention = (
+                                (post_score / pre_score * 100) if pre_score > 0 else 0
+                            )
+                            self.wandb_run.log(
+                                {f"{dataset}_performance_retention": retention}
+                            )
 
                 self.wandb_run.log(actual_memory)
 
@@ -586,7 +621,9 @@ class CompressionPipeline:
         logger.info("Converting model to BitNet...")
 
         # Convert model to BitNet
-        compressed_model = convert_to_bitnet(model, threshold=self.config.bitnet_zero_threshold)
+        compressed_model = convert_to_bitnet(
+            model, threshold=self.config.bitnet_zero_threshold
+        )
 
         # Prepare calibration dataset
         calibration_dataset = CalibrationDataset(
@@ -607,12 +644,16 @@ class CompressionPipeline:
         mock_config = MockConfig(self.config)
 
         # Apply fine-tuning
-        compressed_model = apply_hf_bitnet_finetune(compressed_model, torch_dataset, mock_config)
+        compressed_model = apply_hf_bitnet_finetune(
+            compressed_model, torch_dataset, mock_config
+        )
 
         logger.info("BitNet compression completed")
         return compressed_model
 
-    def calculate_actual_compression(self, original_model: nn.Module, compressed_model: nn.Module) -> dict[str, float]:
+    def calculate_actual_compression(
+        self, original_model: nn.Module, compressed_model: nn.Module
+    ) -> dict[str, float]:
         """Calculate actual compression metrics."""
         # Count parameters
         original_params = sum(p.numel() for p in original_model.parameters())
@@ -641,7 +682,11 @@ class CompressionPipeline:
             + (regular_params * 2)  # Regular params in FP16
         ) / (1024**2)
 
-        compression_ratio = original_memory_mb / compressed_memory_mb if compressed_memory_mb > 0 else 1.0
+        compression_ratio = (
+            original_memory_mb / compressed_memory_mb
+            if compressed_memory_mb > 0
+            else 1.0
+        )
         memory_savings = original_memory_mb - compressed_memory_mb
 
         metrics = {
@@ -653,7 +698,11 @@ class CompressionPipeline:
             "compressed_memory_mb": compressed_memory_mb,
             "compression_ratio": compression_ratio,
             "memory_savings_mb": memory_savings,
-            "compression_efficiency": ((memory_savings / original_memory_mb * 100) if original_memory_mb > 0 else 0),
+            "compression_efficiency": (
+                (memory_savings / original_memory_mb * 100)
+                if original_memory_mb > 0
+                else 0
+            ),
         }
 
         logger.info("Actual Compression Metrics:")
@@ -687,7 +736,9 @@ def forge() -> None:
     default="wikitext",
     help="Calibration dataset (wikitext, openwebtext)",
 )
-@click.option("--calibration-samples", default=1000, help="Number of calibration samples")
+@click.option(
+    "--calibration-samples", default=1000, help="Number of calibration samples"
+)
 @click.option("--eval-samples", default=100, help="Number of evaluation samples")
 @click.option("--device", default="auto", help="Device to use (auto, cuda, cpu)")
 @click.option("--config", help="Configuration JSON file")

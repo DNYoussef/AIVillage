@@ -327,7 +327,9 @@ class MathFitnessEvaluator:
             }
         )
 
-        logger.info(f"Test suite initialized with {total_problems} problems across {len(self.test_suite)} categories")
+        logger.info(
+            f"Test suite initialized with {total_problems} problems across {len(self.test_suite)} categories"
+        )
 
     async def evaluate(
         self,
@@ -344,7 +346,10 @@ class MathFitnessEvaluator:
         # Check cache
         if individual_id and individual_id in self.model_performance_cache:
             cached_result = self.model_performance_cache[individual_id]
-            if (datetime.now(timezone.utc) - datetime.fromisoformat(cached_result["timestamp"])).seconds < 3600:
+            if (
+                datetime.now(timezone.utc)
+                - datetime.fromisoformat(cached_result["timestamp"])
+            ).seconds < 3600:
                 logger.info(f"Using cached evaluation for {individual_id}")
                 self.kpi_scores = {
                     "fitness_score": cached_result["fitness_score"],
@@ -352,14 +357,18 @@ class MathFitnessEvaluator:
                     "avg_response_time": cached_result["avg_response_time"],
                     **{
                         f"{category}_score": score
-                        for category, score in cached_result.get("category_scores", {}).items()
+                        for category, score in cached_result.get(
+                            "category_scores", {}
+                        ).items()
                     },
                 }
                 return cached_result["fitness_score"]
 
         category_scores: dict[str, float] = {}
         all_evaluations: list[EvaluationResult] = []
-        category_evaluations: defaultdict[str, list[EvaluationResult]] = defaultdict(list)
+        category_evaluations: defaultdict[str, list[EvaluationResult]] = defaultdict(
+            list
+        )
         semaphore = asyncio.Semaphore(self.max_concurrent_evaluations)
 
         async def evaluate_with_limit(
@@ -369,7 +378,9 @@ class MathFitnessEvaluator:
                 try:
                     evaluation = await self.evaluate_problem(model, tokenizer, problem)
                 except Exception as e:
-                    logger.exception(f"Error evaluating problem {problem.problem_id}: {e}")
+                    logger.exception(
+                        f"Error evaluating problem {problem.problem_id}: {e}"
+                    )
                     evaluation = EvaluationResult(
                         problem_id=problem.problem_id,
                         model_response="Error in evaluation",
@@ -409,7 +420,9 @@ class MathFitnessEvaluator:
         for category in self.test_suite.keys():
             evaluations = category_evaluations.get(category, [])
             category_scores[category] = (
-                statistics.mean([eval.total_score for eval in evaluations]) if evaluations else 0.0
+                statistics.mean([eval.total_score for eval in evaluations])
+                if evaluations
+                else 0.0
             )
 
         # Calculate weighted fitness score
@@ -418,7 +431,9 @@ class MathFitnessEvaluator:
         # Calculate additional metrics
         evaluation_time = asyncio.get_event_loop().time() - start_time
         avg_response_time = (
-            statistics.mean([eval.response_time for eval in all_evaluations]) if all_evaluations else 0.0
+            statistics.mean([eval.response_time for eval in all_evaluations])
+            if all_evaluations
+            else 0.0
         )
 
         # Store in cache
@@ -436,7 +451,10 @@ class MathFitnessEvaluator:
             "fitness_score": fitness_score,
             "evaluation_time": evaluation_time,
             "avg_response_time": avg_response_time,
-            **{f"{category}_score": score for category, score in category_scores.items()},
+            **{
+                f"{category}_score": score
+                for category, score in category_scores.items()
+            },
         }
 
         # Log comprehensive results
@@ -446,17 +464,24 @@ class MathFitnessEvaluator:
                     "fitness/total_score": fitness_score,
                     "fitness/evaluation_time": evaluation_time,
                     "fitness/avg_response_time": avg_response_time,
-                    **{f"fitness/{category}": score for category, score in category_scores.items()},
+                    **{
+                        f"fitness/{category}": score
+                        for category, score in category_scores.items()
+                    },
                     "model_id": individual_id or "unknown",
                     "problems_evaluated": len(all_evaluations),
                 }
             )
 
-        logger.info(f"Model evaluation complete: fitness={fitness_score:.3f}, time={evaluation_time:.2f}s")
+        logger.info(
+            f"Model evaluation complete: fitness={fitness_score:.3f}, time={evaluation_time:.2f}s"
+        )
 
         return fitness_score
 
-    async def evaluate_problem(self, model, tokenizer, problem: MathProblem) -> EvaluationResult:
+    async def evaluate_problem(
+        self, model, tokenizer, problem: MathProblem
+    ) -> EvaluationResult:
         """Evaluate model performance on a single math problem."""
         start_time = asyncio.get_event_loop().time()
 
@@ -465,16 +490,22 @@ class MathFitnessEvaluator:
 
         try:
             # Generate model response
-            model_response = await self.generate_model_response(model, tokenizer, prompt)
+            model_response = await self.generate_model_response(
+                model, tokenizer, prompt
+            )
 
             response_time = asyncio.get_event_loop().time() - start_time
 
             # Evaluate different aspects
             correctness_score = self.evaluate_correctness(model_response, problem)
             step_by_step_score = self.evaluate_step_by_step(model_response, problem)
-            explanation_quality = self.evaluate_explanation_quality(model_response, problem)
+            explanation_quality = self.evaluate_explanation_quality(
+                model_response, problem
+            )
             encouragement_score = self.evaluate_encouragement(model_response)
-            cultural_sensitivity = self.evaluate_cultural_sensitivity(model_response, problem)
+            cultural_sensitivity = self.evaluate_cultural_sensitivity(
+                model_response, problem
+            )
 
             # Calculate total score
             total_score = (
@@ -554,17 +585,25 @@ Your response:"""
             return (
                 f"a {grade_level}rd grade student"
                 if grade_level == 3
-                else (f"a {grade_level}st grade student" if grade_level == 1 else f"a {grade_level}nd grade student")
+                else (
+                    f"a {grade_level}st grade student"
+                    if grade_level == 1
+                    else f"a {grade_level}nd grade student"
+                )
             )
         if grade_level <= 5 or grade_level <= 8:
             return f"a {grade_level}th grade student"
         return "a student"
 
-    async def generate_model_response(self, model, tokenizer, prompt: str, max_length: int = 200) -> str:
+    async def generate_model_response(
+        self, model, tokenizer, prompt: str, max_length: int = 200
+    ) -> str:
         """Generate response from model."""
         try:
             # Tokenize input
-            inputs = tokenizer(prompt, return_tensors="pt", truncation=True, max_length=512)
+            inputs = tokenizer(
+                prompt, return_tensors="pt", truncation=True, max_length=512
+            )
 
             # Move to model device
             if hasattr(model, "device"):
@@ -582,7 +621,9 @@ Your response:"""
                 )
 
             # Decode response (only new tokens)
-            response = tokenizer.decode(outputs[0][inputs["input_ids"].shape[1] :], skip_special_tokens=True).strip()
+            response = tokenizer.decode(
+                outputs[0][inputs["input_ids"].shape[1] :], skip_special_tokens=True
+            ).strip()
 
             return response
 
@@ -648,7 +689,9 @@ Your response:"""
             "now",
         ]
 
-        step_count = sum(1 for indicator in step_indicators if indicator in response_lower)
+        step_count = sum(
+            1 for indicator in step_indicators if indicator in response_lower
+        )
         if step_count >= 2:
             score += 0.4
         elif step_count >= 1:
@@ -689,7 +732,9 @@ Your response:"""
 
         return min(1.0, score)
 
-    def evaluate_explanation_quality(self, response: str, problem: MathProblem) -> float:
+    def evaluate_explanation_quality(
+        self, response: str, problem: MathProblem
+    ) -> float:
         """Evaluate overall quality of explanation."""
         response_lower = response.lower()
         score = 0.0
@@ -737,11 +782,16 @@ Your response:"""
 
         # Engagement elements
         engagement_indicators = ["you", "your", "we", "let's", "try", "can you"]
-        engagement_count = sum(1 for phrase in engagement_indicators if phrase in response_lower)
+        engagement_count = sum(
+            1 for phrase in engagement_indicators if phrase in response_lower
+        )
         score += min(0.2, engagement_count * 0.05)
 
         # Completeness (addresses the problem fully)
-        if len(response_lower) > 50 and problem.problem_text.lower()[:20] in response_lower:
+        if (
+            len(response_lower) > 50
+            and problem.problem_text.lower()[:20] in response_lower
+        ):
             score += 0.1
 
         return min(1.0, score)
@@ -785,7 +835,9 @@ Your response:"""
             "i'm here to help",
         ]
 
-        encouraging_count = sum(1 for phrase in encouraging_phrases if phrase in response_lower)
+        encouraging_count = sum(
+            1 for phrase in encouraging_phrases if phrase in response_lower
+        )
         score += min(0.3, encouraging_count * 0.15)
 
         # Growth mindset language
@@ -810,7 +862,9 @@ Your response:"""
 
         return min(1.0, score)
 
-    def evaluate_cultural_sensitivity(self, response: str, problem: MathProblem) -> float:
+    def evaluate_cultural_sensitivity(
+        self, response: str, problem: MathProblem
+    ) -> float:
         """Evaluate cultural sensitivity and inclusiveness."""
         response_lower = response.lower()
         score = 0.8  # Start with high baseline
@@ -960,17 +1014,29 @@ Your response:"""
         all_scores = [eval.total_score for eval in self.evaluation_history]
         analytics["average_scores"] = {
             "overall": statistics.mean(all_scores),
-            "correctness": statistics.mean([eval.correctness_score for eval in self.evaluation_history]),
-            "step_by_step": statistics.mean([eval.step_by_step_score for eval in self.evaluation_history]),
-            "explanation": statistics.mean([eval.explanation_quality for eval in self.evaluation_history]),
-            "encouragement": statistics.mean([eval.encouragement_score for eval in self.evaluation_history]),
-            "cultural_sensitivity": statistics.mean([eval.cultural_sensitivity for eval in self.evaluation_history]),
+            "correctness": statistics.mean(
+                [eval.correctness_score for eval in self.evaluation_history]
+            ),
+            "step_by_step": statistics.mean(
+                [eval.step_by_step_score for eval in self.evaluation_history]
+            ),
+            "explanation": statistics.mean(
+                [eval.explanation_quality for eval in self.evaluation_history]
+            ),
+            "encouragement": statistics.mean(
+                [eval.encouragement_score for eval in self.evaluation_history]
+            ),
+            "cultural_sensitivity": statistics.mean(
+                [eval.cultural_sensitivity for eval in self.evaluation_history]
+            ),
         }
 
         # Performance distribution
         for threshold_name, threshold_value in self.performance_thresholds.items():
             count = sum(1 for score in all_scores if score >= threshold_value)
-            analytics["performance_distribution"][threshold_name] = count / len(all_scores)
+            analytics["performance_distribution"][threshold_name] = count / len(
+                all_scores
+            )
 
         return analytics
 

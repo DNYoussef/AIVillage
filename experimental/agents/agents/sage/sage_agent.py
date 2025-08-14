@@ -5,9 +5,6 @@ from datetime import datetime
 from typing import Any
 
 import requests
-from agents.unified_base_agent import SelfEvolvingSystem, UnifiedBaseAgent
-from agents.utils.evidence_helpers import wrap_in_pack
-from agents.utils.task import Task as LangroidTask
 from bs4 import BeautifulSoup
 from rag_system.core.cognitive_nexus import CognitiveNexus
 from rag_system.core.config import UnifiedConfig
@@ -19,6 +16,9 @@ from rag_system.processing.confidence_estimator import ConfidenceEstimator
 from rag_system.retrieval.vector_store import VectorStore
 from rag_system.tracking.unified_knowledge_tracker import UnifiedKnowledgeTracker
 
+from agents.unified_base_agent import SelfEvolvingSystem, UnifiedBaseAgent
+from agents.utils.evidence_helpers import wrap_in_pack
+from agents.utils.task import Task as LangroidTask
 from core.error_handling import Message, MessageType, StandardCommunicationProtocol
 from core.evidence import EvidencePack
 

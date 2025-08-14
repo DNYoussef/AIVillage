@@ -140,28 +140,34 @@ class TestTestCoverageAnalyzer:
             test_dir.mkdir()
 
             # Create some source files
-            (source_dir / "module1.py").write_text("""
+            (source_dir / "module1.py").write_text(
+                """
 def function1():
     return "hello"
 
 def function2():
     return "world"
-""")
+"""
+            )
 
-            (source_dir / "module2.py").write_text("""
+            (source_dir / "module2.py").write_text(
+                """
 class TestClass:
     def method1(self):
         pass
-""")
+"""
+            )
 
             # Create some test files
-            (test_dir / "test_module1.py").write_text("""
+            (test_dir / "test_module1.py").write_text(
+                """
 def test_function1():
     pass
 
 def test_function2():
     pass
-""")
+"""
+            )
 
             analyzer = TestCoverageAnalyzer(str(source_dir), str(test_dir))
             metrics = analyzer._manual_coverage_analysis()
@@ -177,7 +183,8 @@ def test_function2():
             test_dir.mkdir()
 
             # Create test files
-            (test_dir / "test_module1.py").write_text("""
+            (test_dir / "test_module1.py").write_text(
+                """
 def test_function1():
     pass
 
@@ -187,17 +194,22 @@ def test_function2():
 class TestClass:
     def test_method1(self):
         pass
-""")
+"""
+            )
 
-            (test_dir / "test_integration_module.py").write_text("""
+            (test_dir / "test_integration_module.py").write_text(
+                """
 def test_integration_flow():
     pass
-""")
+"""
+            )
 
-            (test_dir / "test_e2e_scenario.py").write_text("""
+            (test_dir / "test_e2e_scenario.py").write_text(
+                """
 def test_e2e_workflow():
     pass
-""")
+"""
+            )
 
             analyzer = TestCoverageAnalyzer(test_dir="test_dir")
             analyzer.test_dir = test_dir  # Override for test

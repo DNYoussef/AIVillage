@@ -154,8 +154,12 @@ class ResourceConstrainedEvolution(DualEvolutionSystem):
 
     def _register_constraint_callbacks(self) -> None:
         """Register callbacks for constraint violations."""
-        self.constraint_manager.register_violation_callback(self._handle_constraint_violation)
-        self.constraint_manager.register_enforcement_callback(self._handle_constraint_enforcement)
+        self.constraint_manager.register_violation_callback(
+            self._handle_constraint_violation
+        )
+        self.constraint_manager.register_enforcement_callback(
+            self._handle_constraint_enforcement
+        )
 
     async def start_system(self) -> None:
         """Start resource-constrained evolution system."""
@@ -195,7 +199,9 @@ class ResourceConstrainedEvolution(DualEvolutionSystem):
 
         # Register evolution task with constraint manager
         if not self.constraint_manager.register_task(evolution_id, "nightly"):
-            logger.warning(f"Failed to register nightly evolution task for agent {agent.agent_id}")
+            logger.warning(
+                f"Failed to register nightly evolution task for agent {agent.agent_id}"
+            )
             return False
 
         try:
@@ -207,7 +213,9 @@ class ResourceConstrainedEvolution(DualEvolutionSystem):
                 await self._load_evolution_models(agent, "nightly")
 
             # Execute evolution with resource monitoring
-            result = await self._execute_monitored_evolution(agent, "nightly", super()._evolve_agent_nightly)
+            result = await self._execute_monitored_evolution(
+                agent, "nightly", super()._evolve_agent_nightly
+            )
 
             return result
 
@@ -222,11 +230,15 @@ class ResourceConstrainedEvolution(DualEvolutionSystem):
 
         # Breakthrough evolution has higher resource requirements
         if not await self._check_evolution_feasibility("breakthrough", agent):
-            logger.warning(f"Breakthrough evolution not feasible for agent {agent.agent_id}")
+            logger.warning(
+                f"Breakthrough evolution not feasible for agent {agent.agent_id}"
+            )
             return False
 
         if not self.constraint_manager.register_task(evolution_id, "breakthrough"):
-            logger.warning(f"Failed to register breakthrough evolution task for agent {agent.agent_id}")
+            logger.warning(
+                f"Failed to register breakthrough evolution task for agent {agent.agent_id}"
+            )
             return False
 
         try:
@@ -237,7 +249,9 @@ class ResourceConstrainedEvolution(DualEvolutionSystem):
                 await self._load_evolution_models(agent, "breakthrough")
 
             # Execute with enhanced monitoring
-            result = await self._execute_monitored_evolution(agent, "breakthrough", super()._evolve_agent_breakthrough)
+            result = await self._execute_monitored_evolution(
+                agent, "breakthrough", super()._evolve_agent_breakthrough
+            )
 
             return result
 
@@ -251,11 +265,15 @@ class ResourceConstrainedEvolution(DualEvolutionSystem):
 
         # Emergency evolution gets priority but still needs basic resources
         if not await self._check_evolution_feasibility("emergency", agent):
-            logger.warning(f"Emergency evolution not feasible for agent {agent.agent_id}")
+            logger.warning(
+                f"Emergency evolution not feasible for agent {agent.agent_id}"
+            )
             return False
 
         if not self.constraint_manager.register_task(evolution_id, "emergency"):
-            logger.warning(f"Failed to register emergency evolution task for agent {agent.agent_id}")
+            logger.warning(
+                f"Failed to register emergency evolution task for agent {agent.agent_id}"
+            )
             return False
 
         try:
@@ -266,7 +284,9 @@ class ResourceConstrainedEvolution(DualEvolutionSystem):
                 await self._load_evolution_models(agent, "emergency")
 
             # Execute with priority handling
-            result = await self._execute_monitored_evolution(agent, "emergency", super()._evolve_agent_emergency)
+            result = await self._execute_monitored_evolution(
+                agent, "emergency", super()._evolve_agent_emergency
+            )
 
             return result
 
@@ -274,7 +294,9 @@ class ResourceConstrainedEvolution(DualEvolutionSystem):
             self.constraint_manager.unregister_task(evolution_id)
             await self._cleanup_evolution_resources(evolution_id)
 
-    async def _check_evolution_feasibility(self, evolution_type: str, agent: EvolvableAgent) -> bool:
+    async def _check_evolution_feasibility(
+        self, evolution_type: str, agent: EvolvableAgent
+    ) -> bool:
         """Check if evolution is feasible given current resources."""
         # Check device capability
         if not self.device_profiler.profile.evolution_capable:
@@ -298,7 +320,9 @@ class ResourceConstrainedEvolution(DualEvolutionSystem):
         required_suitability = thresholds.get(evolution_type, 0.5)
 
         if suitability < required_suitability:
-            logger.debug(f"Evolution suitability {suitability:.2f} below threshold {required_suitability:.2f}")
+            logger.debug(
+                f"Evolution suitability {suitability:.2f} below threshold {required_suitability:.2f}"
+            )
             return False
 
         # Check specific constraints
@@ -343,10 +367,14 @@ class ResourceConstrainedEvolution(DualEvolutionSystem):
 
             # Execute evolution with periodic monitoring
             evolution_task = asyncio.create_task(evolution_func(agent))
-            monitoring_task = asyncio.create_task(self._monitor_evolution_resources(agent.agent_id, evolution_type))
+            monitoring_task = asyncio.create_task(
+                self._monitor_evolution_resources(agent.agent_id, evolution_type)
+            )
 
             # Wait for evolution to complete or resource constraints
-            done, pending = await asyncio.wait([evolution_task, monitoring_task], return_when=asyncio.FIRST_COMPLETED)
+            done, pending = await asyncio.wait(
+                [evolution_task, monitoring_task], return_when=asyncio.FIRST_COMPLETED
+            )
 
             # Cancel remaining tasks
             for task in pending:
@@ -355,28 +383,41 @@ class ResourceConstrainedEvolution(DualEvolutionSystem):
             # Check results
             if evolution_task in done:
                 result = evolution_task.result()
-                logger.info(f"Evolution completed successfully for agent {agent.agent_id}")
+                logger.info(
+                    f"Evolution completed successfully for agent {agent.agent_id}"
+                )
                 return result
             # Evolution was interrupted by resource constraints
-            logger.warning(f"Evolution interrupted by resource constraints for agent {agent.agent_id}")
+            logger.warning(
+                f"Evolution interrupted by resource constraints for agent {agent.agent_id}"
+            )
             return False
 
         except Exception as e:
             logger.exception(f"Error in monitored evolution: {e}")
             return False
 
-    async def _monitor_evolution_resources(self, agent_id: str, evolution_type: str) -> None:
+    async def _monitor_evolution_resources(
+        self, agent_id: str, evolution_type: str
+    ) -> None:
         """Monitor resources during evolution."""
         while True:
             try:
-                await asyncio.sleep(self.config.target_evolution_time_minutes / 10)  # Check 10 times during evolution
+                await asyncio.sleep(
+                    self.config.target_evolution_time_minutes / 10
+                )  # Check 10 times during evolution
 
                 # Update resource state
                 await self._update_resource_state()
 
                 # Check if we need to adapt
-                if self.current_resource_state and self.current_resource_state.is_constrained:
-                    strategy = await self._determine_adaptation_strategy(agent_id, evolution_type)
+                if (
+                    self.current_resource_state
+                    and self.current_resource_state.is_constrained
+                ):
+                    strategy = await self._determine_adaptation_strategy(
+                        agent_id, evolution_type
+                    )
                     if strategy:
                         await self._apply_adaptation_strategy(agent_id, strategy)
 
@@ -394,7 +435,9 @@ class ResourceConstrainedEvolution(DualEvolutionSystem):
 
         # Calculate resource usage
         memory_used_mb = snapshot.memory_used / (1024 * 1024)
-        memory_allocated_mb = int(snapshot.memory_total / (1024 * 1024) * self.config.memory_limit_multiplier)
+        memory_allocated_mb = int(
+            snapshot.memory_total / (1024 * 1024) * self.config.memory_limit_multiplier
+        )
 
         cpu_used = snapshot.cpu_percent
         cpu_allocated = 100 * self.config.cpu_limit_multiplier
@@ -411,11 +454,17 @@ class ResourceConstrainedEvolution(DualEvolutionSystem):
             constraint_types.append("cpu")
             is_constrained = True
 
-        if snapshot.battery_percent and snapshot.battery_percent < self.config.battery_pause_threshold:
+        if (
+            snapshot.battery_percent
+            and snapshot.battery_percent < self.config.battery_pause_threshold
+        ):
             constraint_types.append("battery")
             is_constrained = True
 
-        if snapshot.cpu_temp and snapshot.cpu_temp > self.config.thermal_throttle_temperature:
+        if (
+            snapshot.cpu_temp
+            and snapshot.cpu_temp > self.config.thermal_throttle_temperature
+        ):
             constraint_types.append("thermal")
             is_constrained = True
 
@@ -443,14 +492,16 @@ class ResourceConstrainedEvolution(DualEvolutionSystem):
         if (
             "thermal" in constraint_types
             and self.current_resource_state.temperature_celsius
-            and self.current_resource_state.temperature_celsius > self.config.thermal_pause_temperature
+            and self.current_resource_state.temperature_celsius
+            > self.config.thermal_pause_temperature
         ):
             return ResourceAdaptationStrategy.EMERGENCY_STOP
 
         if (
             "battery" in constraint_types
             and self.current_resource_state.battery_percent
-            and self.current_resource_state.battery_percent < self.config.battery_minimum_percent
+            and self.current_resource_state.battery_percent
+            < self.config.battery_minimum_percent
         ):
             return ResourceAdaptationStrategy.EMERGENCY_STOP
 
@@ -481,11 +532,15 @@ class ResourceConstrainedEvolution(DualEvolutionSystem):
 
         return None
 
-    async def _apply_adaptation_strategy(self, agent_id: str, strategy: ResourceAdaptationStrategy) -> None:
+    async def _apply_adaptation_strategy(
+        self, agent_id: str, strategy: ResourceAdaptationStrategy
+    ) -> None:
         """Apply resource adaptation strategy."""
         self.resource_stats["adaptations_triggered"] += 1
 
-        logger.info(f"Applying adaptation strategy {strategy.value} for agent {agent_id}")
+        logger.info(
+            f"Applying adaptation strategy {strategy.value} for agent {agent_id}"
+        )
 
         if strategy == ResourceAdaptationStrategy.PAUSE_AND_RETRY:
             await self._pause_evolution(agent_id)
@@ -528,7 +583,9 @@ class ResourceConstrainedEvolution(DualEvolutionSystem):
             paused_info["resume_attempts"] += 1
 
             # Check if we can resume
-            if await self._check_evolution_feasibility("nightly", None):  # Simplified check
+            if await self._check_evolution_feasibility(
+                "nightly", None
+            ):  # Simplified check
                 del self.paused_evolutions[agent_id]
                 self.resource_stats["evolutions_resumed"] += 1
                 logger.info(f"Resumed evolution for agent {agent_id}")
@@ -603,7 +660,9 @@ class ResourceConstrainedEvolution(DualEvolutionSystem):
 
         logger.info(f"Cleaned up resources for evolution {evolution_id}")
 
-    async def _load_evolution_models(self, agent: EvolvableAgent, evolution_type: str) -> None:
+    async def _load_evolution_models(
+        self, agent: EvolvableAgent, evolution_type: str
+    ) -> None:
         """Load models for evolution with resource awareness."""
         if not self.adaptive_loader:
             return
@@ -628,20 +687,26 @@ class ResourceConstrainedEvolution(DualEvolutionSystem):
             priority_level=3 if evolution_type == "breakthrough" else 2,
             max_loading_time_seconds=max_loading_times.get(evolution_type, 120.0),
             quality_preference=quality_preferences.get(evolution_type, 0.7),
-            resource_constraints=self.constraint_manager.get_constraint_template(evolution_type),
+            resource_constraints=self.constraint_manager.get_constraint_template(
+                evolution_type
+            ),
             allow_degraded_quality=True,
             cache_enabled=True,
         )
 
         # Load evolution model
-        model, loading_info = await self.adaptive_loader.load_model_adaptive("base_evolution_model", context)
+        model, loading_info = await self.adaptive_loader.load_model_adaptive(
+            "base_evolution_model", context
+        )
 
         if model:
             logger.info(f"Loaded evolution model for {evolution_type}: {loading_info}")
         else:
             logger.warning(f"Failed to load evolution model for {evolution_type}")
 
-    async def _handle_constraint_violation(self, task_id: str, violation: ConstraintViolation) -> None:
+    async def _handle_constraint_violation(
+        self, task_id: str, violation: ConstraintViolation
+    ) -> None:
         """Handle constraint violation during evolution."""
         self.resource_stats["resource_violations"] += 1
 
@@ -667,7 +732,9 @@ class ResourceConstrainedEvolution(DualEvolutionSystem):
         elif action == "interrupt":
             await self._emergency_stop_evolution(agent_id)
 
-    async def _handle_resource_event(self, event_type: str, event_data: dict[str, Any]) -> None:
+    async def _handle_resource_event(
+        self, event_type: str, event_data: dict[str, Any]
+    ) -> None:
         """Handle resource events from resource monitor."""
         logger.info(f"Resource event: {event_type} - {event_data}")
 
@@ -688,7 +755,9 @@ class ResourceConstrainedEvolution(DualEvolutionSystem):
             {
                 "resource_config": self.config.to_dict(),
                 "current_resource_state": (
-                    self.current_resource_state.__dict__ if self.current_resource_state else None
+                    self.current_resource_state.__dict__
+                    if self.current_resource_state
+                    else None
                 ),
                 "paused_evolutions": len(self.paused_evolutions),
                 "resource_stats": self.resource_stats.copy(),

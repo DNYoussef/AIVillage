@@ -25,10 +25,8 @@ class MockModel(nn.Module):
                         nn.ModuleDict(
                             {
                                 "attn": nn.ModuleDict(
-                                    {
-                                        "c_attn": nn.Linear(64, 192)  # QKV projection
-                                    }
-                                ),
+                                    {"c_attn": nn.Linear(64, 192)}
+                                ),  # QKV projection
                                 "mlp": nn.ModuleDict({"c_fc": nn.Linear(64, 256)}),
                             }
                         )

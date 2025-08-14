@@ -101,7 +101,9 @@ class ZKPSystem:
 
         # Challenge (Fiat-Shamir heuristic for non-interactive)
         challenge_data = commitment.to_bytes(32, "big") + message
-        challenge = int.from_bytes(hashlib.sha256(challenge_data).digest(), "big") % self.P
+        challenge = (
+            int.from_bytes(hashlib.sha256(challenge_data).digest(), "big") % self.P
+        )
 
         # Response
         response = (r + challenge * self.private_key) % (self.P - 1)
@@ -122,7 +124,9 @@ class ZKPSystem:
 
             # Recreate challenge
             challenge_data = proof.commitment + message
-            challenge = int.from_bytes(hashlib.sha256(challenge_data).digest(), "big") % self.P
+            challenge = (
+                int.from_bytes(hashlib.sha256(challenge_data).digest(), "big") % self.P
+            )
 
             # Verify: g^response = commitment * public_key^challenge
             left = pow(self.G, response, self.P)
@@ -177,7 +181,9 @@ class ZKPSystem:
             return False
 
     # Range Proof - Prove value is in range without revealing it
-    def create_range_proof(self, value: int, min_val: int, max_val: int) -> ProofResponse:
+    def create_range_proof(
+        self, value: int, min_val: int, max_val: int
+    ) -> ProofResponse:
         """
         Create range proof that min_val <= value <= max_val.
 
@@ -246,7 +252,9 @@ class ZKPSystem:
             return False
 
     # Membership Proof - Prove membership without revealing which member
-    def create_membership_proof(self, member_value: int, group: list[int]) -> ProofResponse:
+    def create_membership_proof(
+        self, member_value: int, group: list[int]
+    ) -> ProofResponse:
         """
         Prove that member_value is in group without revealing which one.
 
@@ -292,7 +300,9 @@ class ZKPSystem:
                 return False
 
             # Verify proof hash
-            expected_hash = hashlib.sha256(json.dumps(ring_sig["commitments"]).encode()).hexdigest()
+            expected_hash = hashlib.sha256(
+                json.dumps(ring_sig["commitments"]).encode()
+            ).hexdigest()
 
             return ring_sig["proof"] == expected_hash
 
@@ -301,7 +311,9 @@ class ZKPSystem:
             return False
 
     # Equality Proof - Prove two commitments hide same value
-    def create_equality_proof(self, commitment1: bytes, commitment2: bytes) -> ProofResponse:
+    def create_equality_proof(
+        self, commitment1: bytes, commitment2: bytes
+    ) -> ProofResponse:
         """
         Prove two commitments hide the same value.
 
@@ -324,7 +336,9 @@ class ZKPSystem:
         proof_data = {
             "commitment1": commitment1.hex(),
             "commitment2": commitment2.hex(),
-            "proof": hashlib.sha256(commitment1 + commitment2 + str(value1).encode()).hexdigest(),
+            "proof": hashlib.sha256(
+                commitment1 + commitment2 + str(value1).encode()
+            ).hexdigest(),
         }
 
         return ProofResponse(
@@ -366,7 +380,9 @@ class PrivacyPreservingReputation:
         self.reputation_commitments[peer_id] = (commitment, opening, reputation)
         return commitment
 
-    def prove_minimum_reputation(self, peer_id: str, threshold: int) -> ProofResponse | None:
+    def prove_minimum_reputation(
+        self, peer_id: str, threshold: int
+    ) -> ProofResponse | None:
         """Prove reputation >= threshold without revealing exact value."""
         if peer_id not in self.reputation_commitments:
             return None
@@ -379,7 +395,9 @@ class PrivacyPreservingReputation:
 
         # Create range proof that reputation >= threshold
         # We use a large max value to hide the upper bound
-        return self.zkp.create_range_proof(reputation, threshold, 1000000)  # Arbitrary large max
+        return self.zkp.create_range_proof(
+            reputation, threshold, 1000000
+        )  # Arbitrary large max
 
     def verify_reputation_threshold(self, proof: ProofResponse, threshold: int) -> bool:
         """Verify that a peer meets reputation threshold."""
@@ -407,7 +425,9 @@ class AnonymousCredentials:
     def issue_credential(self, user_id: str, attributes: dict[str, Any]) -> bytes:
         """Issue an anonymous credential with attributes."""
         # Create commitment to attributes
-        attr_hash = hashlib.sha256(json.dumps(attributes, sort_keys=True).encode()).digest()
+        attr_hash = hashlib.sha256(
+            json.dumps(attributes, sort_keys=True).encode()
+        ).digest()
 
         attr_value = int.from_bytes(attr_hash[:8], "big")
         commitment, opening = self.zkp.create_pedersen_commitment(attr_value)
@@ -422,7 +442,9 @@ class AnonymousCredentials:
 
         return commitment
 
-    def prove_attribute(self, user_id: str, attribute: str, value: Any) -> ProofResponse | None:
+    def prove_attribute(
+        self, user_id: str, attribute: str, value: Any
+    ) -> ProofResponse | None:
         """Prove possession of an attribute without revealing identity."""
         if user_id not in self.credentials:
             return None
@@ -522,7 +544,9 @@ def example_zkp_usage():
 
     # 4. Anonymous credentials
     credentials = AnonymousCredentials(zkp)
-    credentials.issue_credential("user1", {"role": "validator", "level": 5, "region": "us-west"})
+    credentials.issue_credential(
+        "user1", {"role": "validator", "level": 5, "region": "us-west"}
+    )
 
     attr_proof = credentials.prove_attribute("user1", "role", "validator")
     attr_verified = credentials.verify_attribute(attr_proof, "role")

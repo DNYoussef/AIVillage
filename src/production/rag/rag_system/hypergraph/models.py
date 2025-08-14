@@ -23,11 +23,15 @@ class Hyperedge(BaseModel):
     """
 
     id: str = Field(default_factory=lambda: f"edge_{uuid.uuid4().hex[:8]}")
-    entities: list[str] = Field(min_items=2, description="List of entity IDs (minimum 2)")
+    entities: list[str] = Field(
+        min_items=2, description="List of entity IDs (minimum 2)"
+    )
     relation: str = Field(description="Relationship type connecting the entities")
     confidence: float = Field(ge=0.0, le=1.0, description="Confidence score [0.0, 1.0]")
     timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    source_docs: list[str] = Field(default_factory=list, description="Source document IDs")
+    source_docs: list[str] = Field(
+        default_factory=list, description="Source document IDs"
+    )
     embedding: np.ndarray | None = Field(default=None, description="Vector embedding")
 
     # Additional metadata fields for different domains
@@ -129,21 +133,29 @@ class HippoNode(BaseModel):
     episodic: bool = Field(default=True, description="Whether this is episodic memory")
     created: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     last_accessed: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    access_pattern: np.ndarray | None = Field(default=None, description="Access pattern for PPR")
+    access_pattern: np.ndarray | None = Field(
+        default=None, description="Access pattern for PPR"
+    )
 
     # Session and context tracking
     session_id: str | None = Field(default=None, description="User session ID")
     user_id: str | None = Field(default=None, description="User identifier")
-    context_type: str = Field(default="general", description="Type of context (query, response, etc.)")
+    context_type: str = Field(
+        default="general", description="Type of context (query, response, etc.)"
+    )
 
     # Consolidation tracking
     consolidation_score: float = Field(default=0.0, ge=0.0, le=1.0)
-    consolidated: bool = Field(default=False, description="Whether consolidated to semantic memory")
+    consolidated: bool = Field(
+        default=False, description="Whether consolidated to semantic memory"
+    )
     consolidation_timestamp: datetime | None = Field(default=None)
 
     # Performance tracking
     access_count: int = Field(default=1, ge=1, description="Number of accesses")
-    relevance_decay: float = Field(default=1.0, ge=0.0, le=1.0, description="Time-based relevance decay")
+    relevance_decay: float = Field(
+        default=1.0, ge=0.0, le=1.0, description="Time-based relevance decay"
+    )
 
     model_config = ConfigDict(
         arbitrary_types_allowed=True,
@@ -206,7 +218,9 @@ class HippoNode(BaseModel):
         relevance_score = self.relevance_decay
 
         # Weighted combination
-        self.consolidation_score = 0.4 * frequency_score + 0.3 * age_score + 0.3 * relevance_score
+        self.consolidation_score = (
+            0.4 * frequency_score + 0.3 * age_score + 0.3 * relevance_score
+        )
 
         return self.consolidation_score
 

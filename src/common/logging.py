@@ -1,7 +1,6 @@
 import logging
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
-from typing import Any
 
 
 def setup_logging(
@@ -33,7 +32,9 @@ def setup_logging(
     logging.Logger
         The root logger configured with the specified handlers.
     """
-    level = getattr(logging, log_level.upper()) if isinstance(log_level, str) else log_level
+    level = (
+        getattr(logging, log_level.upper()) if isinstance(log_level, str) else log_level
+    )
 
     logger = logging.getLogger()
     logger.setLevel(level)

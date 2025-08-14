@@ -299,7 +299,9 @@ class FastAgentOrchestrator:
         health_time = time.time() * 1000 - health_start
 
         # Analyze health
-        healthy_agents = sum(1 for r in results if not isinstance(r, Exception) and r.success)
+        healthy_agents = sum(
+            1 for r in results if not isinstance(r, Exception) and r.success
+        )
         total_agents = len(self.agents)
 
         return {

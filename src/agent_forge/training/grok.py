@@ -85,7 +85,9 @@ class GrokController:
         if self.state.ema_grad is None:
             self.state.ema_grad = grad.clone()
         else:
-            self.state.ema_grad = self.ema_alpha * self.state.ema_grad + (1 - self.ema_alpha) * grad
+            self.state.ema_grad = (
+                self.ema_alpha * self.state.ema_grad + (1 - self.ema_alpha) * grad
+            )
 
         # Compute cosine similarity
         cos_sim = self._compute_cosine_similarity(grad, self.state.ema_grad)
@@ -111,13 +113,17 @@ class GrokController:
             "active": is_active,
         }
 
-    def _compute_cosine_similarity(self, grad: torch.Tensor, ema_grad: torch.Tensor) -> float:
+    def _compute_cosine_similarity(
+        self, grad: torch.Tensor, ema_grad: torch.Tensor
+    ) -> float:
         """Compute cosine similarity between gradient and EMA gradient."""
         with torch.no_grad():
             grad_flat = grad.flatten()
             ema_flat = ema_grad.flatten()
 
-            cos_sim = torch.nn.functional.cosine_similarity(grad_flat.unsqueeze(0), ema_flat.unsqueeze(0)).item()
+            cos_sim = torch.nn.functional.cosine_similarity(
+                grad_flat.unsqueeze(0), ema_flat.unsqueeze(0)
+            ).item()
 
         return cos_sim
 
@@ -173,7 +179,9 @@ class GrokController:
 
         return self.state.phase
 
-    def _adjust_lambda(self, phase: str, cos_sim: float, telemetry: "TelemetryFrame") -> float:
+    def _adjust_lambda(
+        self, phase: str, cos_sim: float, telemetry: "TelemetryFrame"
+    ) -> float:
         """
         Adjust lambda parameter based on phase and signals.
 
@@ -228,9 +236,15 @@ class GrokController:
         stats = {
             "current_lambda": self.state.lambda_current,
             "current_phase": self.state.phase,
-            "avg_cos_sim": np.mean(self.cos_history[-100:]) if self.cos_history else 0.0,
-            "activation_rate": np.mean(self.activation_history[-100:]) if self.activation_history else 0.0,
-            "lambda_range": (min(self.lambda_history), max(self.lambda_history)) if self.lambda_history else (0, 0),
+            "avg_cos_sim": np.mean(self.cos_history[-100:])
+            if self.cos_history
+            else 0.0,
+            "activation_rate": np.mean(self.activation_history[-100:])
+            if self.activation_history
+            else 0.0,
+            "lambda_range": (min(self.lambda_history), max(self.lambda_history))
+            if self.lambda_history
+            else (0, 0),
         }
         return stats
 
@@ -251,7 +265,9 @@ class GrokController:
 
     def reset(self):
         """Reset controller state."""
-        self.state = GrokfastState(lambda_current=self.lam_init, ema_alpha=self.ema_alpha)
+        self.state = GrokfastState(
+            lambda_current=self.lam_init, ema_alpha=self.ema_alpha
+        )
         self.lambda_history = [self.lam_init]
         self.cos_history = []
         self.activation_history = []
@@ -296,7 +312,9 @@ class GrokfastScheduler:
         if result["phase"] == "post_grok" and self.grokking_end_step is None:
             self.grokking_end_step = self.step_count
             logger.info(f"Grokking complete at step {self.step_count}")
-            logger.info(f"Grokking duration: {self.grokking_end_step - self.grokking_start_step} steps")
+            logger.info(
+                f"Grokking duration: {self.grokking_end_step - self.grokking_start_step} steps"
+            )
 
         return result
 

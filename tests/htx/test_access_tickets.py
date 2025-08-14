@@ -215,15 +215,11 @@ class TestAccessTicket:
         now = time.time()
 
         # Create expired ticket
-        expired_ticket = AccessTicket(
-            expires_at=now - 3600  # 1 hour ago
-        )
+        expired_ticket = AccessTicket(expires_at=now - 3600)  # 1 hour ago
         assert expired_ticket.is_expired() is True
 
         # Create valid ticket
-        valid_ticket = AccessTicket(
-            expires_at=now + 3600  # 1 hour from now
-        )
+        valid_ticket = AccessTicket(expires_at=now + 3600)  # 1 hour from now
         assert valid_ticket.is_expired() is False
 
     def test_ticket_time_remaining(self):

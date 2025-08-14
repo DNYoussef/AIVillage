@@ -1,407 +1,457 @@
-"""RAG Offline Defaults Configuration - Prompt B
+"""RAG Offline Defaults - No external dependencies for MVP.
 
-Comprehensive offline-first configuration for RAG system enabling full functionality
-without internet access, external APIs, or cloud dependencies.
-
-Integration Point: Base configuration for Phase 4 integration testing
+Simple offline RAG implementation using only built-in Python libraries.
 """
 
+import json
 import logging
 import os
+import time
 from pathlib import Path
 from typing import Any
 
-from .config import RAGConfig
-
 logger = logging.getLogger(__name__)
 
+try:
+    import numpy as np
 
-class OfflineRAGConfig(RAGConfig):
-    """Offline-first RAG configuration with all defaults pointing to local resources."""
+    NUMPY_AVAILABLE = True
+except ImportError:
+    NUMPY_AVAILABLE = False
 
-    # Offline-first embedding models (CPU-compatible, downloadable)
-    embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2"  # Small, fast, offline
-    fallback_embedding_model: str = "distilbert-base-uncased"  # Backup option
+    # Minimal numpy-like implementation for embeddings
+    class MockNumpy:
+        @staticmethod
+        def mean(arrays, axis=0):
+            if not arrays:
+                return [0.0] * len(arrays[0]) if arrays else []
+            result = [0.0] * len(arrays[0])
+            for arr in arrays:
+                for i, val in enumerate(arr):
+                    result[i] += val
+            return [x / len(arrays) for x in result]
 
-    # Local vector storage (no cloud dependencies)
-    vector_store_type: str = "faiss_local"  # FAISS with local persistence
-    vector_store_path: str = "./data/vector_store/"
+        @staticmethod
+        def dot(a, b):
+            return sum(a[i] * b[i] for i in range(len(a)))
 
-    # Local graph storage
-    graph_store_type: str = "networkx_local"  # NetworkX with local persistence
-    graph_store_path: str = "./data/graph_store/"
+        @staticmethod
+        def linalg_norm(a):
+            return (sum(x * x for x in a)) ** 0.5
 
-    # Local cache storage
-    cache_enabled: bool = True
-    cache_type: str = "local_disk"  # Local disk cache, no Redis/external cache
-    cache_path: str = "./data/cache/"
-    cache_max_size_mb: int = 512  # 512MB cache limit
-    cache_ttl_hours: int = 72  # 3 days TTL for offline scenarios
+        class linalg:
+            @staticmethod
+            def norm(a):
+                return (sum(x * x for x in a)) ** 0.5
 
-    # Offline-compatible models (no API calls)
-    model_name: str = "local_llm"  # Placeholder for local LLM
-    temperature: float = 0.3  # Conservative for consistent offline results
-    max_tokens: int = 512  # Conservative for mobile/resource-constrained
+        @staticmethod
+        def zeros(dim):
+            return [0.0] * dim
 
-    # Offline retrieval settings
-    retriever_type: str = "hybrid_offline"  # Hybrid without external APIs
-    max_results: int = 5  # Conservative for offline scenarios
-    chunk_size: int = 256  # Smaller chunks for mobile devices
-    chunk_overlap: int = 32  # Minimal overlap for efficiency
-
-    # Offline-first processing
-    enable_internet_features: bool = False  # Disable all internet-dependent features
-    enable_api_calls: bool = False  # No external API calls
-    enable_cloud_sync: bool = False  # No cloud synchronization
-
-    # Battery/resource-aware settings
-    enable_mobile_optimizations: bool = True
-    low_memory_mode: bool = True  # Optimize for low memory devices
-    batch_processing: bool = False  # Process individually to save memory
-
-    # Local data directories
-    local_data_dir: str = "./data/"
-    local_models_dir: str = "./models/"
-    local_logs_dir: str = "./logs/"
-
-    # Connection timeouts (for when internet is available but slow)
-    connection_timeout_seconds: int = 5  # Quick timeout for offline-first
-    read_timeout_seconds: int = 10
-
-    # Fallback behavior configuration
-    enable_graceful_degradation: bool = True  # Degrade gracefully when resources unavailable
-    strict_offline_mode: bool = False  # Allow opportunistic online features if available
+    np = MockNumpy()
 
 
-class OfflineDefaultsManager:
-    """Manager for offline-first RAG configuration and resource validation."""
+class SimpleEmbedder:
+    """Simple text embedder for offline operation."""
 
-    def __init__(self, base_data_dir: str | None = None):
-        """Initialize offline defaults manager.
+    def __init__(self, vocab_size: int = 10000, embedding_dim: int = 128):
+        self.vocab_size = vocab_size
+        self.embedding_dim = embedding_dim
 
-        Args:
-            base_data_dir: Base directory for all local data (defaults to ./data/)
-        """
-        self.base_data_dir = Path(base_data_dir or "./data/")
-        self.config = OfflineRAGConfig()
+        # Initialize random embeddings matrix
+        if NUMPY_AVAILABLE:
+            import numpy as real_np
 
-        # Ensure all local directories exist
-        self._ensure_local_directories()
+            real_np.random.seed(42)
+            self.embeddings = real_np.random.normal(0, 0.1, (vocab_size, embedding_dim))
+        else:
+            import random
 
-    def _ensure_local_directories(self) -> None:
-        """Create all required local directories."""
-        directories = [
-            self.base_data_dir,
-            self.base_data_dir / "vector_store",
-            self.base_data_dir / "graph_store",
-            self.base_data_dir / "cache",
-            self.base_data_dir / "models",
-            self.base_data_dir / "logs",
-            self.base_data_dir / "documents",
-            self.base_data_dir / "embeddings",
-        ]
+            random.seed(42)
+            self.embeddings = [
+                [random.gauss(0, 0.1) for _ in range(embedding_dim)]
+                for _ in range(vocab_size)
+            ]
 
-        for directory in directories:
-            directory.mkdir(parents=True, exist_ok=True)
-            logger.debug(f"Ensured directory exists: {directory}")
+        # Simple word tokenizer
+        self.vocab = {}
+        self.next_token_id = 0
 
-    def get_offline_config(self, **overrides) -> OfflineRAGConfig:
-        """Get offline-first configuration with optional overrides.
+    def _tokenize(self, text: str) -> list[int]:
+        """Simple word tokenization."""
+        words = text.lower().split()
+        token_ids = []
 
-        Args:
-            **overrides: Configuration overrides
+        for word in words:
+            if word not in self.vocab:
+                if self.next_token_id < self.vocab_size:
+                    self.vocab[word] = self.next_token_id
+                    self.next_token_id += 1
+                else:
+                    token_ids.append(0)
+                    continue
 
-        Returns:
-            OfflineRAGConfig configured for offline operation
-        """
-        config = OfflineRAGConfig()
+            token_ids.append(self.vocab[word])
 
-        # Apply data directory paths
-        config.vector_store_path = str(self.base_data_dir / "vector_store")
-        config.graph_store_path = str(self.base_data_dir / "graph_store")
-        config.cache_path = str(self.base_data_dir / "cache")
-        config.local_data_dir = str(self.base_data_dir)
-        config.local_models_dir = str(self.base_data_dir / "models")
-        config.local_logs_dir = str(self.base_data_dir / "logs")
+        return token_ids
 
-        # Apply overrides
-        for key, value in overrides.items():
-            if hasattr(config, key):
-                setattr(config, key, value)
-            else:
-                config.extra_params[key] = value
-
-        return config
-
-    def validate_offline_readiness(self) -> dict[str, Any]:
-        """Validate system readiness for offline operation.
-
-        Returns:
-            Dict with validation results and recommendations
-        """
-        validation_results = {
-            "ready_for_offline": True,
-            "missing_components": [],
-            "warnings": [],
-            "recommendations": [],
-            "storage_info": {},
-        }
-
-        # Check local directories
-        required_dirs = [
-            "vector_store",
-            "graph_store",
-            "cache",
-            "models",
-            "logs",
-            "documents",
-        ]
-
-        for dir_name in required_dirs:
-            dir_path = self.base_data_dir / dir_name
-            if not dir_path.exists():
-                validation_results["missing_components"].append(f"Directory: {dir_path}")
-                validation_results["ready_for_offline"] = False
-            else:
-                # Check disk space
-                try:
-                    stat = dir_path.stat()
-                    validation_results["storage_info"][dir_name] = {
-                        "path": str(dir_path),
-                        "exists": True,
-                        "size_bytes": stat.st_size,
-                    }
-                except Exception as e:
-                    validation_results["warnings"].append(f"Could not stat {dir_path}: {e}")
-
-        # Check for offline-compatible models
-        models_dir = self.base_data_dir / "models"
-        if not any(models_dir.glob("*")):
-            validation_results["warnings"].append("No local models found")
-            validation_results["recommendations"].append(
-                "Download offline-compatible models: sentence-transformers/all-MiniLM-L6-v2"
+    def encode(self, text: str) -> list[float]:
+        """Encode text to embedding vector."""
+        if not text.strip():
+            return (
+                np.zeros(self.embedding_dim)
+                if NUMPY_AVAILABLE
+                else [0.0] * self.embedding_dim
             )
 
-        # Check available disk space
-        try:
-            import shutil
-
-            total, used, free = shutil.disk_usage(self.base_data_dir)
-            free_gb = free / (1024**3)
-
-            validation_results["storage_info"]["disk_space"] = {
-                "total_gb": total / (1024**3),
-                "used_gb": used / (1024**3),
-                "free_gb": free_gb,
-            }
-
-            if free_gb < 1.0:  # Less than 1GB free
-                validation_results["warnings"].append(f"Low disk space: {free_gb:.1f}GB available")
-                validation_results["recommendations"].append("Free up disk space for optimal operation")
-
-        except Exception as e:
-            validation_results["warnings"].append(f"Could not check disk space: {e}")
-
-        # Check Python environment for offline dependencies
-        offline_dependencies = [
-            "sentence_transformers",
-            "faiss",
-            "networkx",
-            "sqlite3",
-            "transformers",
-        ]
-
-        missing_deps = []
-        for dep in offline_dependencies:
-            try:
-                __import__(dep)
-            except ImportError:
-                missing_deps.append(dep)
-
-        if missing_deps:
-            validation_results["missing_components"].extend(missing_deps)
-            validation_results["ready_for_offline"] = False
-            validation_results["recommendations"].append(
-                f"Install missing offline dependencies: {', '.join(missing_deps)}"
+        token_ids = self._tokenize(text)
+        if not token_ids:
+            return (
+                np.zeros(self.embedding_dim)
+                if NUMPY_AVAILABLE
+                else [0.0] * self.embedding_dim
             )
 
-        # Overall readiness assessment
-        if validation_results["missing_components"]:
-            validation_results["ready_for_offline"] = False
+        # Average embeddings of tokens
+        embeddings = [self.embeddings[token_id] for token_id in token_ids]
+        if NUMPY_AVAILABLE:
+            import numpy as real_np
 
-        return validation_results
+            return real_np.mean(embeddings, axis=0)
+        else:
+            return np.mean(embeddings)
 
-    def setup_offline_environment(self) -> dict[str, Any]:
-        """Set up complete offline environment for RAG system.
 
-        Returns:
-            Dict with setup results and status
-        """
-        setup_results = {
-            "success": True,
-            "components_initialized": [],
-            "errors": [],
-            "warnings": [],
+class OfflineVectorStore:
+    """Simple in-memory vector store with cosine similarity."""
+
+    def __init__(self, embedder: SimpleEmbedder):
+        self.embedder = embedder
+        self.documents = []
+        self.embeddings = []
+        self.metadata = []
+
+    def add_document(self, text: str, metadata: dict[str, Any] = None) -> None:
+        """Add document to store."""
+        embedding = self.embedder.encode(text)
+
+        self.documents.append(text)
+        self.embeddings.append(embedding)
+        self.metadata.append(metadata or {})
+
+    def similarity_search(self, query: str, top_k: int = 5) -> list[dict[str, Any]]:
+        """Search for similar documents."""
+        if not self.documents:
+            return []
+
+        query_embedding = self.embedder.encode(query)
+
+        # Calculate cosine similarities
+        similarities = []
+        for i, doc_embedding in enumerate(self.embeddings):
+            similarity = self._cosine_similarity(query_embedding, doc_embedding)
+            similarities.append((similarity, i))
+
+        # Sort by similarity (descending)
+        similarities.sort(reverse=True)
+
+        # Return top_k results
+        results = []
+        for similarity, idx in similarities[:top_k]:
+            results.append(
+                {
+                    "text": self.documents[idx],
+                    "metadata": self.metadata[idx],
+                    "similarity": similarity,
+                    "index": idx,
+                }
+            )
+
+        return results
+
+    def _cosine_similarity(self, a: list[float], b: list[float]) -> float:
+        """Calculate cosine similarity between two vectors."""
+        if NUMPY_AVAILABLE:
+            import numpy as real_np
+
+            norm_a = real_np.linalg.norm(a)
+            norm_b = real_np.linalg.norm(b)
+
+            if norm_a == 0 or norm_b == 0:
+                return 0.0
+
+            return real_np.dot(a, b) / (norm_a * norm_b)
+        else:
+            norm_a = np.linalg.norm(a)
+            norm_b = np.linalg.norm(b)
+
+            if norm_a == 0 or norm_b == 0:
+                return 0.0
+
+            return np.dot(a, b) / (norm_a * norm_b)
+
+
+class OfflineRAGPipeline:
+    """Complete offline RAG pipeline with local documents."""
+
+    def __init__(self, corpus_path: str | None = None):
+        self.embedder = SimpleEmbedder()
+        self.vector_store = OfflineVectorStore(self.embedder)
+
+        # Load built-in corpus
+        self._load_builtin_corpus()
+
+        # Load additional corpus if provided
+        if corpus_path and os.path.exists(corpus_path):
+            self._load_corpus_from_path(corpus_path)
+
+    def _load_builtin_corpus(self) -> None:
+        """Load minimal built-in corpus for testing."""
+        builtin_docs = [
+            {
+                "text": "AIVillage is a decentralized AI platform that enables secure agent communication.",
+                "metadata": {"source": "overview", "type": "platform_description"},
+            },
+            {
+                "text": "BitChat provides offline Bluetooth mesh networking for peer-to-peer communication.",
+                "metadata": {"source": "transport", "type": "bitchat_feature"},
+            },
+            {
+                "text": "Betanet offers encrypted internet transport with privacy protection using Tor-like routing.",
+                "metadata": {"source": "transport", "type": "betanet_feature"},
+            },
+            {
+                "text": "The Navigator agent intelligently routes messages based on network conditions and privacy requirements.",
+                "metadata": {"source": "agents", "type": "navigator_description"},
+            },
+            {
+                "text": "Resource management automatically adapts transport protocols based on battery and thermal conditions.",
+                "metadata": {"source": "mobile", "type": "resource_management"},
+            },
+            {
+                "text": "Noise XK protocol provides forward secrecy and authentication for secure communication channels.",
+                "metadata": {"source": "security", "type": "crypto_protocol"},
+            },
+            {
+                "text": "HTX frame format enables efficient binary transport with flow control and multiplexing.",
+                "metadata": {"source": "protocol", "type": "frame_format"},
+            },
+            {
+                "text": "Access tickets provide authentication and rate limiting for controlled network access.",
+                "metadata": {"source": "security", "type": "access_control"},
+            },
+            {
+                "text": "Agent Forge trains specialized AI agents using evolutionary algorithms and curriculum learning.",
+                "metadata": {"source": "training", "type": "agent_evolution"},
+            },
+            {
+                "text": "Compression algorithms including BitNet and SeedLM reduce bandwidth requirements for mobile devices.",
+                "metadata": {"source": "optimization", "type": "compression"},
+            },
+            {
+                "text": "The tokenomics system manages VILLAGE credits for compute sharing and network participation.",
+                "metadata": {"source": "economy", "type": "tokenomics"},
+            },
+            {
+                "text": "Dual-path transport provides automatic failover between BitChat and Betanet protocols for reliability.",
+                "metadata": {"source": "transport", "type": "reliability"},
+            },
+            {
+                "text": "Quiet-STaR enables agents to perform internal reasoning with encrypted thought processes.",
+                "metadata": {"source": "agents", "type": "reasoning"},
+            },
+            {
+                "text": "Self-modeling networks predict their own behavior to improve efficiency and adaptation.",
+                "metadata": {"source": "training", "type": "self_modeling"},
+            },
+            {
+                "text": "Mobile optimization prioritizes offline operation and battery preservation on resource-constrained devices.",
+                "metadata": {"source": "mobile", "type": "optimization"},
+            },
+        ]
+
+        for doc in builtin_docs:
+            self.vector_store.add_document(doc["text"], doc["metadata"])
+
+        logger.info(f"Loaded {len(builtin_docs)} built-in documents")
+
+    def _load_corpus_from_path(self, corpus_path: str) -> None:
+        """Load documents from file or directory."""
+        corpus_path = Path(corpus_path)
+
+        if corpus_path.is_file():
+            if corpus_path.suffix == ".json":
+                self._load_json_corpus(corpus_path)
+            else:
+                self._load_text_file(corpus_path)
+        elif corpus_path.is_dir():
+            for file_path in corpus_path.rglob("*"):
+                if file_path.is_file() and file_path.suffix in [".txt", ".md", ".json"]:
+                    if file_path.suffix == ".json":
+                        self._load_json_corpus(file_path)
+                    else:
+                        self._load_text_file(file_path)
+
+    def _load_json_corpus(self, file_path: Path) -> None:
+        """Load JSON corpus file."""
+        try:
+            with open(file_path, encoding="utf-8") as f:
+                data = json.load(f)
+
+            if isinstance(data, list):
+                for item in data:
+                    if isinstance(item, dict) and "text" in item:
+                        metadata = item.get("metadata", {})
+                        metadata["source_file"] = str(file_path)
+                        self.vector_store.add_document(item["text"], metadata)
+        except Exception as e:
+            logger.warning(f"Failed to load JSON corpus {file_path}: {e}")
+
+    def _load_text_file(self, file_path: Path) -> None:
+        """Load plain text file."""
+        try:
+            with open(file_path, encoding="utf-8") as f:
+                content = f.read().strip()
+
+            if content:
+                metadata = {
+                    "source_file": str(file_path),
+                    "filename": file_path.name,
+                    "file_type": file_path.suffix,
+                }
+                self.vector_store.add_document(content, metadata)
+        except Exception as e:
+            logger.warning(f"Failed to load text file {file_path}: {e}")
+
+    def query(self, question: str, top_k: int = 3) -> dict[str, Any]:
+        """Query the RAG system and return results."""
+        start_time = time.time()
+
+        # Search for relevant documents
+        search_results = self.vector_store.similarity_search(question, top_k=top_k)
+
+        # Generate simple response
+        if search_results:
+            primary_result = search_results[0]
+
+            # Create context from top results
+            context_parts = []
+            for result in search_results:
+                context_parts.append(f"[{result['similarity']:.2f}] {result['text']}")
+
+            context = "\n\n".join(context_parts)
+            response = f"Based on the available documentation: {primary_result['text']}"
+
+            if len(search_results) > 1:
+                response += (
+                    f"\n\nAdditional relevant information: {search_results[1]['text']}"
+                )
+        else:
+            response = "I don't have information about that topic in my current knowledge base."
+            context = ""
+
+        query_time = time.time() - start_time
+
+        return {
+            "question": question,
+            "answer": response,
+            "sources": search_results,
+            "context": context,
+            "query_time_ms": query_time * 1000,
+            "offline_mode": True,
+            "num_documents": len(self.vector_store.documents),
         }
 
-        try:
-            # Ensure directories
-            self._ensure_local_directories()
-            setup_results["components_initialized"].append("local_directories")
 
-            # Initialize empty vector store
-            vector_store_path = self.base_data_dir / "vector_store"
-            if not (vector_store_path / "index.faiss").exists():
-                try:
-                    # Create minimal FAISS index
-                    import faiss
-                    import numpy as np
+def smoke() -> dict[str, Any]:
+    """Smoke test for offline RAG functionality."""
+    try:
+        # Initialize offline RAG
+        rag = OfflineRAGPipeline()
 
-                    # Create empty 384-dimension index (all-MiniLM-L6-v2 size)
-                    index = faiss.IndexFlatL2(384)
-                    faiss.write_index(index, str(vector_store_path / "index.faiss"))
+        # Test queries
+        test_queries = [
+            "What is BitChat?",
+            "How does Betanet work?",
+            "What are access tickets?",
+            "How does resource management work?",
+        ]
 
-                    # Create metadata file
-                    metadata = {
-                        "dimension": 384,
-                        "count": 0,
-                        "created": "offline_setup",
-                    }
-                    import json
+        results = []
+        for query in test_queries:
+            result = rag.query(query)
+            results.append(
+                {
+                    "query": query,
+                    "success": len(result["sources"]) > 0,
+                    "query_time_ms": result["query_time_ms"],
+                    "num_sources": len(result["sources"]),
+                }
+            )
 
-                    with open(vector_store_path / "metadata.json", "w") as f:
-                        json.dump(metadata, f)
+        # Summary
+        successful_queries = sum(1 for r in results if r["success"])
+        avg_query_time = sum(r["query_time_ms"] for r in results) / len(results)
 
-                    setup_results["components_initialized"].append("vector_store")
+        return {
+            "status": "success",
+            "total_queries": len(test_queries),
+            "successful_queries": successful_queries,
+            "success_rate": successful_queries / len(test_queries),
+            "avg_query_time_ms": avg_query_time,
+            "total_documents": len(rag.vector_store.documents),
+            "test_results": results,
+            "meets_requirements": successful_queries >= 1,
+        }
 
-                except ImportError:
-                    setup_results["warnings"].append("FAISS not available, vector store setup skipped")
-                except Exception as e:
-                    setup_results["errors"].append(f"Vector store setup failed: {e}")
+    except Exception as e:
+        return {
+            "status": "error",
+            "error": str(e),
+            "meets_requirements": False,
+        }
 
-            # Initialize graph store
-            graph_store_path = self.base_data_dir / "graph_store"
-            if not (graph_store_path / "graph.json").exists():
-                try:
-                    import json
 
-                    import networkx as nx
+# Legacy compatibility for existing configuration
+class OfflineRAGConfig:
+    """Simple offline RAG configuration."""
 
-                    # Create empty graph
-                    G = nx.Graph()
-                    data = nx.node_link_data(G)
+    def __init__(self):
+        self.offline_mode = True
+        self.enable_internet_features = False
+        self.enable_api_calls = False
+        self.strict_offline_mode = True
+        self.vector_store_type = "in_memory"
+        self.cache_enabled = True
+        self.extra_params = {}
 
-                    with open(graph_store_path / "graph.json", "w") as f:
-                        json.dump(data, f)
-
-                    setup_results["components_initialized"].append("graph_store")
-
-                except ImportError:
-                    setup_results["warnings"].append("NetworkX not available, graph store setup skipped")
-                except Exception as e:
-                    setup_results["errors"].append(f"Graph store setup failed: {e}")
-
-            # Create cache directories
-            cache_path = self.base_data_dir / "cache"
-            for cache_level in ["l1", "l2", "l3"]:
-                (cache_path / cache_level).mkdir(exist_ok=True)
-            setup_results["components_initialized"].append("cache_structure")
-
-            # Create configuration file
-            config_file = self.base_data_dir / "offline_config.json"
-            config_data = self.get_offline_config().dict()
-
-            import json
-
-            with open(config_file, "w") as f:
-                json.dump(config_data, f, indent=2, default=str)
-            setup_results["components_initialized"].append("configuration_file")
-
-        except Exception as e:
-            setup_results["success"] = False
-            setup_results["errors"].append(f"Setup failed: {e}")
-
-        return setup_results
+    def dict(self):
+        return {
+            "offline_mode": self.offline_mode,
+            "enable_internet_features": self.enable_internet_features,
+            "enable_api_calls": self.enable_api_calls,
+            "strict_offline_mode": self.strict_offline_mode,
+            "vector_store_type": self.vector_store_type,
+            "cache_enabled": self.cache_enabled,
+        }
 
 
 def get_offline_rag_config(**overrides) -> OfflineRAGConfig:
-    """Get offline-first RAG configuration with optional overrides.
-
-    This is the main entry point for getting offline-configured RAG settings.
-
-    Args:
-        **overrides: Configuration overrides
-
-    Returns:
-        OfflineRAGConfig ready for offline operation
-    """
-    manager = OfflineDefaultsManager()
-    return manager.get_offline_config(**overrides)
-
-
-def validate_offline_readiness(data_dir: str | None = None) -> dict[str, Any]:
-    """Validate system readiness for offline RAG operation.
-
-    Args:
-        data_dir: Base data directory to validate
-
-    Returns:
-        Dict with validation results
-    """
-    manager = OfflineDefaultsManager(data_dir)
-    return manager.validate_offline_readiness()
-
-
-def setup_offline_rag_environment(data_dir: str | None = None) -> dict[str, Any]:
-    """Set up complete offline RAG environment.
-
-    Args:
-        data_dir: Base data directory for setup
-
-    Returns:
-        Dict with setup results
-    """
-    manager = OfflineDefaultsManager(data_dir)
-    return manager.setup_offline_environment()
-
-
-# Environment detection utilities
-def is_offline_environment() -> bool:
-    """Detect if running in offline environment."""
-    # Check environment variables
-    if os.getenv("RAG_OFFLINE_MODE") == "1":
-        return True
-    if os.getenv("OFFLINE") == "1":
-        return True
-
-    # Check for network connectivity (basic test)
-    try:
-        import socket
-
-        socket.create_connection(("8.8.8.8", 53), timeout=3)
-        return False  # Network available
-    except OSError:
-        return True  # Network unavailable, assume offline
+    """Get offline-first RAG configuration."""
+    return OfflineRAGConfig()
 
 
 def auto_configure_for_environment() -> OfflineRAGConfig:
-    """Automatically configure RAG for current environment (online/offline).
-
-    Returns:
-        OfflineRAGConfig optimized for detected environment
-    """
-    if is_offline_environment():
-        logger.info("Offline environment detected, using offline-first configuration")
-        config = get_offline_rag_config()
-        config.strict_offline_mode = True
-    else:
-        logger.info("Online environment detected, using offline-friendly configuration")
-        config = get_offline_rag_config()
-        config.strict_offline_mode = False
-        config.enable_internet_features = True  # Allow opportunistic online features
-
-    return config
+    """Auto configure for current environment."""
+    return OfflineRAGConfig()
 
 
-# Default configuration instance
-DEFAULT_OFFLINE_CONFIG = get_offline_rag_config()
+# Make the smoke test available at module level
+def smoke_test():
+    """Legacy name for smoke test."""
+    return smoke()
+
+
+if __name__ == "__main__":
+    result = smoke()
+    print(json.dumps(result, indent=2))

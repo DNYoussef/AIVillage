@@ -48,7 +48,9 @@ def get_recent_records(hours: int = 24, limit: int = 100) -> list:
         List of audit records sorted by timestamp (newest first)
     """
     records = []
-    cutoff_time = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(hours=hours)
+    cutoff_time = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(
+        hours=hours
+    )
 
     # Read from individual JSON files
     for json_file in _AUDIT_PATH.glob("*.json"):
@@ -60,7 +62,9 @@ def get_recent_records(hours: int = 24, limit: int = 100) -> list:
                 record = json.load(f)
 
             # Check timestamp
-            record_time = datetime.datetime.fromisoformat(record.get("timestamp", "1970-01-01T00:00:00"))
+            record_time = datetime.datetime.fromisoformat(
+                record.get("timestamp", "1970-01-01T00:00:00")
+            )
 
             if record_time >= cutoff_time:
                 records.append(record)
@@ -75,7 +79,9 @@ def get_recent_records(hours: int = 24, limit: int = 100) -> list:
             with open(fallback_path, encoding="utf-8") as f:
                 for line in f:
                     record = json.loads(line.strip())
-                    record_time = datetime.datetime.fromisoformat(record.get("timestamp", "1970-01-01T00:00:00"))
+                    record_time = datetime.datetime.fromisoformat(
+                        record.get("timestamp", "1970-01-01T00:00:00")
+                    )
 
                     if record_time >= cutoff_time:
                         records.append(record)
@@ -140,7 +146,9 @@ def cleanup_old_records(days: int = 30):
     Args:
         days: Records older than this will be deleted
     """
-    cutoff_time = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=days)
+    cutoff_time = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(
+        days=days
+    )
     deleted_count = 0
 
     # Clean individual JSON files
@@ -152,7 +160,9 @@ def cleanup_old_records(days: int = 30):
             with open(json_file, encoding="utf-8") as f:
                 record = json.load(f)
 
-            record_time = datetime.datetime.fromisoformat(record.get("timestamp", "1970-01-01T00:00:00"))
+            record_time = datetime.datetime.fromisoformat(
+                record.get("timestamp", "1970-01-01T00:00:00")
+            )
 
             if record_time < cutoff_time:
                 json_file.unlink()

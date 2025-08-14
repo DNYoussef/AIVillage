@@ -1,5 +1,5 @@
-import re
 import logging
+import re
 from concurrent.futures import ProcessPoolExecutor
 
 import torch
@@ -52,7 +52,9 @@ def evaluate_model(model_or_path, eval_data=None):
             try:
                 tokenizer = AutoTokenizer.from_pretrained(model.config._name_or_path)
             except Exception:  # pragma: no cover - best effort
-                logger.warning("Unable to infer tokenizer from model; some metrics may fail")
+                logger.warning(
+                    "Unable to infer tokenizer from model; some metrics may fail"
+                )
 
     metrics = {}
     if eval_data is not None:
@@ -88,7 +90,9 @@ def evaluate_model(model_or_path, eval_data=None):
                     "coding": evaluate_coding(model, tokenizer),
                     "mathematics": evaluate_mathematics(model, tokenizer),
                     "writing": evaluate_writing(model, tokenizer),
-                    "zero_shot_classification": evaluate_zero_shot_classification(model, tokenizer),
+                    "zero_shot_classification": evaluate_zero_shot_classification(
+                        model, tokenizer
+                    ),
                     "zero_shot_qa": evaluate_zero_shot_qa(model, tokenizer),
                     "coherence": evaluate_story_coherence(model, tokenizer),
                 }
@@ -123,7 +127,9 @@ def measure_relevance(text: str, query: str) -> float:
 # --- EvoMerge specialised metrics -------------------------------------------------
 
 
-def evaluate_perplexity(model, tokenizer, test_text="The quick brown fox jumps over the lazy dog"):
+def evaluate_perplexity(
+    model, tokenizer, test_text="The quick brown fox jumps over the lazy dog"
+):
     inputs = tokenizer(test_text, return_tensors="pt")
     with torch.no_grad():
         outputs = model(**inputs, labels=inputs["input_ids"])
@@ -191,7 +197,10 @@ def evaluate_writing(model, tokenizer):
         score += 0.3
     if "renewable energy" in generated_text.lower():
         score += 0.2
-    if any(word in generated_text.lower() for word in ["solar", "wind", "hydro", "geothermal"]):
+    if any(
+        word in generated_text.lower()
+        for word in ["solar", "wind", "hydro", "geothermal"]
+    ):
         score += 0.2
     if "environment" in generated_text.lower() or "climate" in generated_text.lower():
         score += 0.2
@@ -239,7 +248,9 @@ def evaluate_zero_shot_qa(model, tokenizer):
         inputs = tokenizer(f"Question: {question} Answer:", return_tensors="pt")
         with torch.no_grad():
             outputs = model.generate(**inputs, max_length=50)
-        generated_answer = tokenizer.decode(outputs[0], skip_special_tokens=True).lower()
+        generated_answer = tokenizer.decode(
+            outputs[0], skip_special_tokens=True
+        ).lower()
 
         if answer.lower() in generated_answer:
             score += 1
@@ -262,7 +273,9 @@ def evaluate_story_coherence(model, tokenizer):
         score += 0.2
     if len(set(generated_story.split())) / len(generated_story.split()) > 0.7:
         score += 0.2
-    if any(word in generated_story.lower() for word in ["past", "future", "history", "era"]):
+    if any(
+        word in generated_story.lower() for word in ["past", "future", "history", "era"]
+    ):
         score += 0.2
     if "the end" in generated_story.lower() or "conclusion" in generated_story.lower():
         score += 0.1
@@ -291,6 +304,8 @@ def calculate_overall_score(results: dict[str, float]) -> float:
     return overall_score
 
 
-def parallel_evaluate_models(model_paths: list[str], max_workers: int | None = None) -> list[dict[str, float | str]]:
+def parallel_evaluate_models(
+    model_paths: list[str], max_workers: int | None = None
+) -> list[dict[str, float | str]]:
     with ProcessPoolExecutor(max_workers=max_workers) as executor:
         return list(executor.map(evaluate_model, model_paths))

@@ -3,11 +3,12 @@ import time
 import psutil
 import torch
 
+from agent_forge.evaluation.evaluator import evaluate_model
+
 from .config import create_default_config
 from .evolutionary_tournament import run_evolutionary_tournament
 from .merger import AdvancedModelMerger
 from .utils import load_models
-from agent_forge.evaluation.evaluator import evaluate_model
 from .visualization import generate_html_report, plot_benchmark_comparison
 
 

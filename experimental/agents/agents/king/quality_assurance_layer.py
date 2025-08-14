@@ -5,9 +5,10 @@ from typing import Any
 
 import numpy as np
 import torch
-from agents.utils.task import Task as LangroidTask
 from scipy.spatial.distance import cosine
 from transformers import AutoModel, AutoTokenizer
+
+from agents.utils.task import Task as LangroidTask
 
 logger = logging.getLogger(__name__)
 

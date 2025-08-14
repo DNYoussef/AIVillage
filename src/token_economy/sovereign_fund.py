@@ -70,7 +70,9 @@ class DigitalSovereignWealthFund:
     def get_eligible_users(self) -> list["DigitalSovereignWealthFund.User"]:
         return []
 
-    def calculate_contribution_multiplier(self, _user: "DigitalSovereignWealthFund.User") -> float:
+    def calculate_contribution_multiplier(
+        self, _user: "DigitalSovereignWealthFund.User"
+    ) -> float:
         return 1.0
 
     def distribute_ubi(self) -> None:

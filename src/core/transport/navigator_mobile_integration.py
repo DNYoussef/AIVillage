@@ -85,7 +85,9 @@ except ImportError:
         active_policies: list[str] = field(default_factory=list)
 
     class SCIONAwareNavigator:
-        async def get_available_transports(self, target: str) -> list[TransportCandidate]:
+        async def get_available_transports(
+            self, target: str
+        ) -> list[TransportCandidate]:
             return []
 
     class BatteryThermalResourceManager:
@@ -197,17 +199,25 @@ class MobileResourceNavigator:
         available_transports = []
         if self.base_navigator:
             try:
-                available_transports = await self.base_navigator.get_available_transports(target)
+                available_transports = (
+                    await self.base_navigator.get_available_transports(target)
+                )
             except Exception as e:
                 logger.warning(f"Failed to get base transports: {e}")
 
         # Step 3: Add mobile-optimized transport options
-        mobile_transports = self._generate_mobile_transport_candidates(target, message_size_bytes, constraints)
+        mobile_transports = self._generate_mobile_transport_candidates(
+            target, message_size_bytes, constraints
+        )
         all_transports = available_transports + mobile_transports
 
         # Step 4: Apply constraint-based filtering and scoring
-        filtered_transports = self._apply_constraint_filtering(all_transports, constraints)
-        scored_transports = self._score_transports_for_constraints(filtered_transports, constraints, message_size_bytes)
+        filtered_transports = self._apply_constraint_filtering(
+            all_transports, constraints
+        )
+        scored_transports = self._score_transports_for_constraints(
+            filtered_transports, constraints, message_size_bytes
+        )
 
         # Step 5: Select optimal transport with mobile considerations
         if not scored_transports:
@@ -218,16 +228,26 @@ class MobileResourceNavigator:
             confidence_score = 0.3
         else:
             # Sort by composite score (includes power efficiency)
-            scored_transports.sort(key=lambda x: x.metadata.get("composite_score", 0), reverse=True)
+            scored_transports.sort(
+                key=lambda x: x.metadata.get("composite_score", 0), reverse=True
+            )
             primary_transport = scored_transports[0]
             backup_transports = scored_transports[1:3]  # Top 2 backups
-            decision_reason = self._generate_decision_reason(constraints, primary_transport)
+            decision_reason = self._generate_decision_reason(
+                constraints, primary_transport
+            )
             confidence_score = primary_transport.metadata.get("confidence", 0.8)
 
         # Step 6: Calculate mobile-specific metrics
-        power_efficiency = self._calculate_power_efficiency(primary_transport, message_size_bytes)
-        data_usage_estimate = self._estimate_data_usage(primary_transport, message_size_bytes)
-        battery_drain = self._estimate_battery_drain(primary_transport, message_size_bytes, constraints)
+        power_efficiency = self._calculate_power_efficiency(
+            primary_transport, message_size_bytes
+        )
+        data_usage_estimate = self._estimate_data_usage(
+            primary_transport, message_size_bytes
+        )
+        battery_drain = self._estimate_battery_drain(
+            primary_transport, message_size_bytes, constraints
+        )
 
         return MobileAwareRoutingDecision(
             primary_transport=primary_transport,
@@ -236,7 +256,9 @@ class MobileResourceNavigator:
             confidence_score=confidence_score,
             estimated_total_time_ms=primary_transport.estimated_latency_ms,
             route_metadata={
-                "constraints_applied": [c.value for c in constraints.active_constraints],
+                "constraints_applied": [
+                    c.value for c in constraints.active_constraints
+                ],
                 "resource_optimization": True,
                 "mobile_aware": True,
             },
@@ -285,7 +307,9 @@ class MobileResourceNavigator:
                     # Get current resource metrics from resource manager
                     metrics = self.resource_manager.get_current_metrics()
                     if metrics.get("memory_pressure", 0) > 0.8:
-                        active_constraints.append(MobileConstraintType.MEMORY_CONSTRAINED)
+                        active_constraints.append(
+                            MobileConstraintType.MEMORY_CONSTRAINED
+                        )
                     if metrics.get("battery_level", 1.0) < 0.3:
                         active_constraints.append(MobileConstraintType.BATTERY_SAVER)
                 except Exception as e:
@@ -372,19 +396,25 @@ class MobileResourceNavigator:
             if ConstraintType.BATTERY_CRITICAL in constraints.active_constraints:
                 if transport.transport_type not in ["bitchat", "ble"]:
                     should_include = False
-                    logger.debug(f"Filtered out {transport.transport_type} due to critical battery")
+                    logger.debug(
+                        f"Filtered out {transport.transport_type} due to critical battery"
+                    )
 
             # High thermal: avoid CPU-intensive transports
             if ConstraintType.THERMAL_CRITICAL in constraints.active_constraints:
                 if transport.transport_type in ["websocket", "http2"]:
                     should_include = False
-                    logger.debug(f"Filtered out {transport.transport_type} due to thermal critical")
+                    logger.debug(
+                        f"Filtered out {transport.transport_type} due to thermal critical"
+                    )
 
             # Cellular data: prefer low-cost transports
             if ConstraintType.CELLULAR_DATA in constraints.active_constraints:
                 if transport.cost_factor > 0.5:  # High data usage
                     should_include = False
-                    logger.debug(f"Filtered out {transport.transport_type} due to cellular data cost")
+                    logger.debug(
+                        f"Filtered out {transport.transport_type} due to cellular data cost"
+                    )
 
             if should_include:
                 filtered.append(transport)
@@ -430,7 +460,9 @@ class MobileResourceNavigator:
 
         return transports
 
-    def _get_fallback_transport(self, target: str, constraints: TransportConstraints) -> TransportCandidate:
+    def _get_fallback_transport(
+        self, target: str, constraints: TransportConstraints
+    ) -> TransportCandidate:
         """Get fallback transport when no others are suitable."""
         # Always fallback to BitChat for maximum compatibility
         return TransportCandidate(
@@ -443,26 +475,34 @@ class MobileResourceNavigator:
             metadata={"fallback": True, "reason": "no_suitable_transports"},
         )
 
-    def _calculate_power_efficiency(self, transport: TransportCandidate, message_size: int) -> float:
+    def _calculate_power_efficiency(
+        self, transport: TransportCandidate, message_size: int
+    ) -> float:
         """Calculate power efficiency score for transport."""
         transport_type = transport.transport_type
         if transport_type in self.transport_efficiency:
             base_efficiency = self.transport_efficiency[transport_type]["power_factor"]
 
             # Adjust for message size (larger messages reduce per-byte efficiency)
-            size_factor = min(1.0, 1024.0 / max(message_size, 64))  # Normalize to 1KB baseline
+            size_factor = min(
+                1.0, 1024.0 / max(message_size, 64)
+            )  # Normalize to 1KB baseline
 
             return min(1.0, base_efficiency * (1.0 + size_factor * 0.2))
 
         return 0.5  # Default efficiency
 
-    def _estimate_data_usage(self, transport: TransportCandidate, message_size: int) -> float:
+    def _estimate_data_usage(
+        self, transport: TransportCandidate, message_size: int
+    ) -> float:
         """Estimate data usage in MB."""
         transport_type = transport.transport_type
         if transport_type in self.transport_efficiency:
             efficiency = self.transport_efficiency[transport_type]["data_efficiency"]
             # Account for protocol overhead
-            overhead_factor = 1.2 if transport_type in ["betanet", "websocket"] else 1.05
+            overhead_factor = (
+                1.2 if transport_type in ["betanet", "websocket"] else 1.05
+            )
             estimated_bytes = message_size * overhead_factor / efficiency
             return estimated_bytes / (1024 * 1024)  # Convert to MB
 
@@ -556,9 +596,13 @@ async def create_mobile_aware_navigator(
 
             resource_manager = BatteryThermalResourceManager()
     except ImportError:
-        logger.warning("Mobile resource manager not available, using constraint-only routing")
+        logger.warning(
+            "Mobile resource manager not available, using constraint-only routing"
+        )
 
-    navigator = MobileResourceNavigator(base_navigator=base_navigator, resource_manager=resource_manager)
+    navigator = MobileResourceNavigator(
+        base_navigator=base_navigator, resource_manager=resource_manager
+    )
 
     logger.info("Mobile-aware navigator created successfully")
     return navigator
@@ -570,8 +614,12 @@ def enhance_navigator_with_mobile_constraints(navigator: Any) -> Any:
         navigator._mobile_resource_navigator = MobileResourceNavigator()
 
         # Add method to original navigator
-        async def route_with_mobile_constraints(target: str, message_size: int, priority=TransportPriority.NORMAL):
-            return await navigator._mobile_resource_navigator.route_with_constraints(target, message_size, priority)
+        async def route_with_mobile_constraints(
+            target: str, message_size: int, priority=TransportPriority.NORMAL
+        ):
+            return await navigator._mobile_resource_navigator.route_with_constraints(
+                target, message_size, priority
+            )
 
         navigator.route_with_mobile_constraints = route_with_mobile_constraints
         logger.info("Enhanced navigator with mobile resource management capabilities")

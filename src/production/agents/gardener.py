@@ -114,7 +114,9 @@ class GardenerAgent:
         workloads = request.get("workloads", [])
         optimization_criteria = request.get("criteria", ["latency", "cost"])
 
-        placement_plan = self._calculate_optimal_placement(workloads, optimization_criteria)
+        placement_plan = self._calculate_optimal_placement(
+            workloads, optimization_criteria
+        )
 
         return {
             "status": "completed",
@@ -124,7 +126,9 @@ class GardenerAgent:
             "expected_improvement": "15% efficiency gain",
         }
 
-    def _find_optimal_allocation(self, requirements: dict[str, Any], priority: str) -> dict[str, Any]:
+    def _find_optimal_allocation(
+        self, requirements: dict[str, Any], priority: str
+    ) -> dict[str, Any]:
         """Find optimal resource allocation."""
         return {
             "allocated_nodes": ["node_1", "node_2"],
@@ -146,11 +150,15 @@ class GardenerAgent:
             "estimated_cost_change": "+15%" if direction == "up" else "-10%",
         }
 
-    def _calculate_optimal_placement(self, workloads: list[Any], criteria: list[str]) -> dict[str, Any]:
+    def _calculate_optimal_placement(
+        self, workloads: list[Any], criteria: list[str]
+    ) -> dict[str, Any]:
         """Calculate optimal workload placement."""
         return {
             "placement_strategy": "latency_optimized",
-            "workload_assignments": {f"workload_{i}": f"node_{i % 3 + 1}" for i in range(len(workloads))},
+            "workload_assignments": {
+                f"workload_{i}": f"node_{i % 3 + 1}" for i in range(len(workloads))
+            },
             "optimization_score": 0.89,
             "criteria_satisfied": criteria,
         }

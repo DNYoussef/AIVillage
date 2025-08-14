@@ -300,8 +300,12 @@ class DatabaseValidator:
                     count = cursor.fetchone()[0]
 
                     # Cleanup test data
-                    cursor.execute("DELETE FROM fitness_metrics WHERE round_id = ?", (round_id,))
-                    cursor.execute("DELETE FROM evolution_rounds WHERE id = ?", (round_id,))
+                    cursor.execute(
+                        "DELETE FROM fitness_metrics WHERE round_id = ?", (round_id,)
+                    )
+                    cursor.execute(
+                        "DELETE FROM evolution_rounds WHERE id = ?", (round_id,)
+                    )
 
                     conn.commit()
 
@@ -337,7 +341,9 @@ class DatabaseValidator:
                     conn.commit()
 
                     passed = result and result[0] == "Test Student"
-                    message = f"CRUD operations successful, profile test passed: {passed}"
+                    message = (
+                        f"CRUD operations successful, profile test passed: {passed}"
+                    )
 
                 elif database == "rag_index":
                     # Test document creation
@@ -361,11 +367,15 @@ class DatabaseValidator:
                     result = cursor.fetchone()
 
                     # Cleanup
-                    cursor.execute("DELETE FROM documents WHERE document_id = ?", (test_doc_id,))
+                    cursor.execute(
+                        "DELETE FROM documents WHERE document_id = ?", (test_doc_id,)
+                    )
                     conn.commit()
 
                     passed = result and result[0] == "Test Document"
-                    message = f"CRUD operations successful, document test passed: {passed}"
+                    message = (
+                        f"CRUD operations successful, document test passed: {passed}"
+                    )
 
                 else:
                     passed = True
@@ -605,7 +615,9 @@ class DatabaseValidator:
 
                 total_rows = sum(table_stats.values())
                 if total_rows > 10000 and len(indexes) < 3:
-                    recommendations.append("Consider adding more indexes for better query performance")
+                    recommendations.append(
+                        "Consider adding more indexes for better query performance"
+                    )
 
                 self.results.append(
                     ValidationResult(
@@ -665,7 +677,9 @@ class DatabaseValidator:
                     )
                     orphaned_metrics = cursor.fetchone()[0]
                     if orphaned_metrics > 0:
-                        consistency_issues.append(f"{orphaned_metrics} orphaned fitness metrics")
+                        consistency_issues.append(
+                            f"{orphaned_metrics} orphaned fitness metrics"
+                        )
 
                 elif database == "digital_twin":
                     # Check that all learning_sessions have valid student_ids
@@ -678,7 +692,9 @@ class DatabaseValidator:
                     )
                     orphaned_sessions = cursor.fetchone()[0]
                     if orphaned_sessions > 0:
-                        consistency_issues.append(f"{orphaned_sessions} orphaned learning sessions")
+                        consistency_issues.append(
+                            f"{orphaned_sessions} orphaned learning sessions"
+                        )
 
                 elif database == "rag_index":
                     # Check that all chunks have valid document_ids
@@ -851,21 +867,31 @@ class DatabaseValidator:
         # Check for slow operations
         slow_operations = [m for m in self.performance_metrics if m.duration_ms > 1000]
         if slow_operations:
-            recommendations.append(f"Found {len(slow_operations)} slow operations (>1s) - consider optimization")
+            recommendations.append(
+                f"Found {len(slow_operations)} slow operations (>1s) - consider optimization"
+            )
 
         # Check for failed tests
-        failed_critical = [r for r in self.results if not r.passed and r.severity == "error"]
+        failed_critical = [
+            r for r in self.results if not r.passed and r.severity == "error"
+        ]
         if failed_critical:
-            recommendations.append(f"{len(failed_critical)} critical tests failed - immediate attention required")
+            recommendations.append(
+                f"{len(failed_critical)} critical tests failed - immediate attention required"
+            )
 
         # Check database sizes
         large_dbs = [
             r
             for r in self.results
-            if r.test_name == "optimization_analysis" and r.value and r.value.get("size_mb", 0) > 100
+            if r.test_name == "optimization_analysis"
+            and r.value
+            and r.value.get("size_mb", 0) > 100
         ]
         if large_dbs:
-            recommendations.append("Large databases detected - consider maintenance and optimization")
+            recommendations.append(
+                "Large databases detected - consider maintenance and optimization"
+            )
 
         summary["recommendations"] = recommendations
 
@@ -880,13 +906,21 @@ class DatabaseValidator:
         summary["health_status"] = (
             "excellent"
             if health_score >= 95
-            else ("good" if health_score >= 85 else "fair" if health_score >= 70 else "poor")
+            else (
+                "good"
+                if health_score >= 85
+                else "fair"
+                if health_score >= 70
+                else "poor"
+            )
         )
 
         return summary
 
 
-async def validate_aivillage_databases(database_manager, redis_manager=None) -> dict[str, Any]:
+async def validate_aivillage_databases(
+    database_manager, redis_manager=None
+) -> dict[str, Any]:
     """Run comprehensive validation on AIVillage databases."""
     validator = DatabaseValidator(database_manager, redis_manager)
     return await validator.validate_all_databases()
@@ -908,7 +942,9 @@ if __name__ == "__main__":
 
         # Print summary
         print("Database Validation Results")
-        print(f"Health Score: {results['health_score']}/100 ({results['health_status']})")
+        print(
+            f"Health Score: {results['health_score']}/100 ({results['health_status']})"
+        )
         print(f"Tests: {results['passed_tests']}/{results['total_tests']} passed")
         print(f"Duration: {results['total_duration_ms']:.2f}ms")
 

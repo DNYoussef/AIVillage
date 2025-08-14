@@ -100,7 +100,9 @@ class FederationManager:
             "privacy_tunnels_active": 0,
         }
 
-        logger.info(f"FederationManager initialized: {self.device_id} (region: {region})")
+        logger.info(
+            f"FederationManager initialized: {self.device_id} (region: {region})"
+        )
 
     async def start(
         self,
@@ -118,7 +120,9 @@ class FederationManager:
             if not capabilities:
                 capabilities = {DeviceCapability.BLUETOOTH, DeviceCapability.WIFI}
 
-            self.local_profile = await self.device_registry.initialize_local_device(capabilities, self.region)
+            self.local_profile = await self.device_registry.initialize_local_device(
+                capabilities, self.region
+            )
             self.federation_role = self.local_profile.role
 
             logger.info(f"Device role determined: {self.federation_role.value}")
@@ -129,12 +133,22 @@ class FederationManager:
             )
 
             # Enhanced navigator configuration for federation
-            if hasattr(self.dual_path_transport, "navigator") and self.dual_path_transport.navigator:
+            if (
+                hasattr(self.dual_path_transport, "navigator")
+                and self.dual_path_transport.navigator
+            ):
                 # Configure for federation priorities
                 if self.federation_role == DeviceRole.BEACON:
-                    self.dual_path_transport.navigator.set_routing_priority(RoutingPriority.PERFORMANCE_FIRST)
-                elif self.local_profile.battery_percent and self.local_profile.battery_percent < 30:
-                    self.dual_path_transport.navigator.set_routing_priority(RoutingPriority.OFFLINE_FIRST)
+                    self.dual_path_transport.navigator.set_routing_priority(
+                        RoutingPriority.PERFORMANCE_FIRST
+                    )
+                elif (
+                    self.local_profile.battery_percent
+                    and self.local_profile.battery_percent < 30
+                ):
+                    self.dual_path_transport.navigator.set_routing_priority(
+                        RoutingPriority.OFFLINE_FIRST
+                    )
 
             # Start dual-path transport
             if not await self.dual_path_transport.start():
@@ -142,7 +156,9 @@ class FederationManager:
                 return False
 
             # Step 3: Register P2P message handlers for federation
-            self.dual_path_transport.register_message_handler("federation", self._handle_federation_message)
+            self.dual_path_transport.register_message_handler(
+                "federation", self._handle_federation_message
+            )
 
             # Step 4: Start extended protocols if enabled
             if self.enable_tor:
@@ -169,7 +185,9 @@ class FederationManager:
             asyncio.create_task(self._load_balancing_loop())
 
             self.is_running = True
-            logger.info(f"Federation Manager started successfully as {self.federation_role.value}")
+            logger.info(
+                f"Federation Manager started successfully as {self.federation_role.value}"
+            )
 
             # Step 7: Announce presence to federation
             await self._announce_to_federation()
@@ -213,7 +231,9 @@ class FederationManager:
         federation_msg = {
             "type": "federated_message",
             "service_type": service_type,
-            "sender_role": self.federation_role.value if self.federation_role else "unknown",
+            "sender_role": self.federation_role.value
+            if self.federation_role
+            else "unknown",
             "privacy_level": privacy_level,
             "timestamp": time.time(),
             "payload": payload,
@@ -251,7 +271,9 @@ class FederationManager:
             return None
 
         # Select best node based on load, proximity, and privacy requirements
-        selected_node = await self._select_optimal_service_node(suitable_nodes, privacy_level)
+        selected_node = await self._select_optimal_service_node(
+            suitable_nodes, privacy_level
+        )
 
         # Create service request
         service_request = {
@@ -298,7 +320,9 @@ class FederationManager:
         logger.info(f"Accepted compute task: {len(self.task_queue)} tasks in queue")
         return True
 
-    async def create_privacy_tunnel(self, destination: str, privacy_level: int = PrivacyLevel.ANONYMOUS) -> str | None:
+    async def create_privacy_tunnel(
+        self, destination: str, privacy_level: int = PrivacyLevel.ANONYMOUS
+    ) -> str | None:
         """Create VPN-like privacy tunnel through federation"""
         if privacy_level < PrivacyLevel.ANONYMOUS:
             return None  # No tunnel needed for lower privacy levels
@@ -328,7 +352,9 @@ class FederationManager:
 
         self.federation_stats["privacy_tunnels_active"] = len(self.active_tunnels)
 
-        logger.info(f"Created privacy tunnel {tunnel_id[:8]} with {len(circuit_path)} hops")
+        logger.info(
+            f"Created privacy tunnel {tunnel_id[:8]} with {len(circuit_path)} hops"
+        )
         return tunnel_id
 
     def get_federation_status(self) -> dict[str, Any]:
@@ -338,7 +364,9 @@ class FederationManager:
         # Add federation-specific information
         status.update(
             {
-                "federation_role": self.federation_role.value if self.federation_role else None,
+                "federation_role": self.federation_role.value
+                if self.federation_role
+                else None,
                 "privacy_tunnels": len(self.active_tunnels),
                 "task_queue_size": len(self.task_queue),
                 "coordinated_devices": len(self.coordinated_devices),
@@ -393,7 +421,9 @@ class FederationManager:
             # Create or update device profile
             # (This would normally involve cryptographic verification)
 
-            logger.info(f"Device announcement from {sender}: role={device_info.get('role')}")
+            logger.info(
+                f"Device announcement from {sender}: role={device_info.get('role')}"
+            )
 
         except Exception as e:
             logger.error(f"Error handling device announcement: {e}")
@@ -441,7 +471,9 @@ class FederationManager:
                         else:
                             result = {"error": "No prompt provided for AI service"}
                 except Exception as e:
-                    logger.exception(f"Error processing AI service with agent {agent_type}: {e}")
+                    logger.exception(
+                        f"Error processing AI service with agent {agent_type}: {e}"
+                    )
                     result = {"error": f"Failed to process request: {e!s}"}
             else:
                 logger.warning(f"Unsupported service: {service_name}")
@@ -501,7 +533,9 @@ class FederationManager:
         }
 
         # Broadcast to federation
-        await self.dual_path_transport.broadcast_message(payload=announcement, priority=6)
+        await self.dual_path_transport.broadcast_message(
+            payload=announcement, priority=6
+        )
 
         logger.info("Announced presence to federation")
 
@@ -550,7 +584,9 @@ class FederationManager:
 
         if len(regional_workers) > 1:
             # Implement simple round-robin task distribution
-            logger.debug(f"Coordinating {len(regional_workers)} workers in region {self.region}")
+            logger.debug(
+                f"Coordinating {len(regional_workers)} workers in region {self.region}"
+            )
 
     async def _find_service_providers(self, service_name: str) -> list[str]:
         """Find nodes capable of providing specific AI service"""
@@ -563,7 +599,9 @@ class FederationManager:
 
         return providers[:5]  # Limit to 5 candidates
 
-    async def _select_optimal_service_node(self, candidates: list[str], privacy_level: int) -> str:
+    async def _select_optimal_service_node(
+        self, candidates: list[str], privacy_level: int
+    ) -> str:
         """Select optimal node for service request"""
         if not candidates:
             return None
@@ -581,7 +619,9 @@ class FederationManager:
 
         return candidates[0]
 
-    async def _build_privacy_circuit(self, destination: str, min_hops: int = 3) -> list[str] | None:
+    async def _build_privacy_circuit(
+        self, destination: str, min_hops: int = 3
+    ) -> list[str] | None:
         """Build privacy circuit through relay nodes"""
         relay_nodes = self.device_registry.get_devices_by_role(DeviceRole.RELAY)
 
@@ -613,7 +653,9 @@ class FederationManager:
     async def _send_via_privacy_circuit(self, destination: str, message: dict) -> bool:
         """Send message through privacy circuit"""
         # Create tunnel if needed
-        tunnel_id = await self.create_privacy_tunnel(destination, PrivacyLevel.ANONYMOUS)
+        tunnel_id = await self.create_privacy_tunnel(
+            destination, PrivacyLevel.ANONYMOUS
+        )
 
         if not tunnel_id:
             return False
@@ -701,14 +743,20 @@ class FederationManager:
                 controller.authenticate()
 
                 # Create hidden service if needed
-                response = controller.create_ephemeral_hidden_service({8080: 8080}, await_publication=True)
+                response = controller.create_ephemeral_hidden_service(
+                    {8080: 8080}, await_publication=True
+                )
                 self.tor_onion_address = f"{response.service_id}.onion"
 
-                logger.info(f"Tor hidden service available at: {self.tor_onion_address}")
+                logger.info(
+                    f"Tor hidden service available at: {self.tor_onion_address}"
+                )
                 self.tor_enabled = True
 
         except ImportError:
-            logger.warning("Tor dependencies not available (stem, PySocks). Install with: pip install stem PySocks")
+            logger.warning(
+                "Tor dependencies not available (stem, PySocks). Install with: pip install stem PySocks"
+            )
             self.tor_enabled = False
         except Exception as e:
             logger.error(f"Failed to start Tor transport: {e}")
@@ -755,11 +803,15 @@ class FederationManager:
                     # Extract destination from response
                     dest_parts = dest_response.decode().split(" ")
                     for part in dest_parts:
-                        if "=" in part and len(part) > 50:  # I2P destinations are long base64 strings
+                        if (
+                            "=" in part and len(part) > 50
+                        ):  # I2P destinations are long base64 strings
                             self.i2p_destination = part.split("=")[1]
                             break
 
-                    logger.info(f"I2P destination created: {self.i2p_destination[:32]}...")
+                    logger.info(
+                        f"I2P destination created: {self.i2p_destination[:32]}..."
+                    )
                     self.i2p_enabled = True
                 else:
                     raise Exception("Failed to create I2P destination")
@@ -770,7 +822,9 @@ class FederationManager:
             await writer.wait_closed()
 
         except ImportError:
-            logger.warning("I2P dependencies not available. Ensure aiohttp is installed")
+            logger.warning(
+                "I2P dependencies not available. Ensure aiohttp is installed"
+            )
             self.i2p_enabled = False
         except (ConnectionRefusedError, OSError):
             logger.error(f"Cannot connect to I2P SAM bridge on {sam_host}:{sam_port}")

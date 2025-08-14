@@ -93,7 +93,8 @@ except ImportError:
         """Mock ResourceAllocator for safe importing"""
 
         def __init__(self):
-            pass
+            """Initialize mock resource allocator."""
+            self.allocated_resources = {}
 
 
 logger = logging.getLogger(__name__)
@@ -130,7 +131,11 @@ def evaluate_policy_from_env() -> dict[str, Any]:
     low_power = battery < 20
     low_ram = low_ram_flag
     chunk = LOW_RESOURCE_CHUNK_SIZE if low_power or low_ram else DEFAULT_CHUNK_SIZE
-    transport = TransportPreference.BITCHAT_PREFERRED if low_power or low_ram else TransportPreference.BALANCED
+    transport = (
+        TransportPreference.BITCHAT_PREFERRED
+        if low_power or low_ram
+        else TransportPreference.BALANCED
+    )
     return {"chunk_size": chunk, "transport": transport}
 
 
@@ -177,7 +182,10 @@ class ChunkingConfig:
     def effective_chunk_size(self) -> int:
         """Calculate effective chunk size based on scaling factors"""
         effective_size = int(
-            self.base_chunk_size * self.memory_scale_factor * self.thermal_scale_factor * self.battery_scale_factor
+            self.base_chunk_size
+            * self.memory_scale_factor
+            * self.thermal_scale_factor
+            * self.battery_scale_factor
         )
         return max(self.min_chunk_size, min(self.max_chunk_size, effective_size))
 
@@ -378,7 +386,9 @@ class BatteryThermalResourceManager:
 
         return profile
 
-    async def evaluate_and_adapt(self, profile: DeviceProfile | None = None) -> ResourceState:
+    async def evaluate_and_adapt(
+        self, profile: DeviceProfile | None = None
+    ) -> ResourceState:
         """Main entry point: evaluate device state and adapt policies
 
         Args:
@@ -445,7 +455,8 @@ class BatteryThermalResourceManager:
         state_changed = (
             new_power_mode != self.state.power_mode
             or new_transport_pref != self.state.transport_preference
-            or new_chunking_config.effective_chunk_size() != self.state.chunking_config.effective_chunk_size()
+            or new_chunking_config.effective_chunk_size()
+            != self.state.chunking_config.effective_chunk_size()
         )
 
         if state_changed:
@@ -488,17 +499,26 @@ class BatteryThermalResourceManager:
     def _evaluate_power_mode(self, profile: DeviceProfile) -> PowerMode:
         """Evaluate appropriate power mode based on device state"""
         # Critical battery - always use critical mode
-        if profile.battery_percent and profile.battery_percent <= self.policy.battery_critical:
+        if (
+            profile.battery_percent
+            and profile.battery_percent <= self.policy.battery_critical
+        ):
             self.stats["battery_saves"] += 1
             return PowerMode.CRITICAL
 
         # Critical thermal - always use critical mode
-        if profile.cpu_temp_celsius and profile.cpu_temp_celsius >= self.policy.thermal_critical:
+        if (
+            profile.cpu_temp_celsius
+            and profile.cpu_temp_celsius >= self.policy.thermal_critical
+        ):
             self.stats["thermal_throttles"] += 1
             return PowerMode.CRITICAL
 
         # Hot thermal or low battery (not charging) - power save
-        thermal_hot = profile.cpu_temp_celsius and profile.cpu_temp_celsius >= self.policy.thermal_hot
+        thermal_hot = (
+            profile.cpu_temp_celsius
+            and profile.cpu_temp_celsius >= self.policy.thermal_hot
+        )
         battery_low_not_charging = (
             profile.battery_percent
             and profile.battery_percent <= self.policy.battery_low
@@ -509,7 +529,10 @@ class BatteryThermalResourceManager:
             return PowerMode.POWER_SAVE
 
         # Warm thermal or conservative battery - balanced
-        thermal_warm = profile.cpu_temp_celsius and profile.cpu_temp_celsius >= self.policy.thermal_warm
+        thermal_warm = (
+            profile.cpu_temp_celsius
+            and profile.cpu_temp_celsius >= self.policy.thermal_warm
+        )
         battery_conservative = (
             profile.battery_percent
             and profile.battery_percent <= self.policy.battery_conservative
@@ -522,10 +545,15 @@ class BatteryThermalResourceManager:
         # Otherwise, performance mode is fine
         return PowerMode.PERFORMANCE
 
-    def _evaluate_transport_preference(self, profile: DeviceProfile) -> TransportPreference:
+    def _evaluate_transport_preference(
+        self, profile: DeviceProfile
+    ) -> TransportPreference:
         """Evaluate transport preference based on battery, network costs, and performance needs"""
         # Critical battery - BitChat only (offline-first)
-        if profile.battery_percent and profile.battery_percent <= self.policy.battery_critical:
+        if (
+            profile.battery_percent
+            and profile.battery_percent <= self.policy.battery_critical
+        ):
             return TransportPreference.BITCHAT_ONLY
 
         # Low battery not charging - prefer BitChat
@@ -640,12 +668,21 @@ class BatteryThermalResourceManager:
         """Get human-readable reason for current policy decisions"""
         reasons = []
 
-        if profile.battery_percent and profile.battery_percent <= self.policy.battery_critical:
+        if (
+            profile.battery_percent
+            and profile.battery_percent <= self.policy.battery_critical
+        ):
             reasons.append(f"critical_battery_{profile.battery_percent}%")
-        elif profile.battery_percent and profile.battery_percent <= self.policy.battery_low:
+        elif (
+            profile.battery_percent
+            and profile.battery_percent <= self.policy.battery_low
+        ):
             reasons.append(f"low_battery_{profile.battery_percent}%")
 
-        if profile.cpu_temp_celsius and profile.cpu_temp_celsius >= self.policy.thermal_hot:
+        if (
+            profile.cpu_temp_celsius
+            and profile.cpu_temp_celsius >= self.policy.thermal_hot
+        ):
             reasons.append(f"thermal_throttle_{profile.cpu_temp_celsius:.1f}C")
 
         available_gb = profile.ram_available_mb / 1024.0
@@ -657,7 +694,9 @@ class BatteryThermalResourceManager:
 
         return "|".join(reasons) if reasons else "normal_operation"
 
-    async def get_transport_routing_decision(self, message_size_bytes: int, priority: int = 5) -> dict[str, Any]:
+    async def get_transport_routing_decision(
+        self, message_size_bytes: int, priority: int = 5
+    ) -> dict[str, Any]:
         """Get routing decision for a specific message
 
         Args:
@@ -719,7 +758,9 @@ class BatteryThermalResourceManager:
         recommendations = {
             "tensor": {
                 "chunk_size": base_chunk_size,
-                "overlap": int(base_chunk_size * self.state.chunking_config.overlap_ratio),
+                "overlap": int(
+                    base_chunk_size * self.state.chunking_config.overlap_ratio
+                ),
                 "batch_size": max(1, base_chunk_size // 128),
             },
             "text": {

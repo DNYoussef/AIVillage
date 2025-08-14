@@ -5,12 +5,12 @@ import unittest
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-from agents.king.king_agent import KingAgent
-from agents.unified_base_agent import UnifiedAgentConfig as KingAgentConfig
-from agents.utils.task import Task as LangroidTask
 from rag_system.core.config import RAGConfig
 from rag_system.retrieval.vector_store import VectorStore
 
+from agents.king.king_agent import KingAgent
+from agents.unified_base_agent import UnifiedAgentConfig as KingAgentConfig
+from agents.utils.task import Task as LangroidTask
 from core.error_handling import StandardCommunicationProtocol
 
 # Skip these tests if PyTorch isn't installed since KingAgent relies on

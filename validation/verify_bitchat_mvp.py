@@ -659,7 +659,8 @@ class BitChatVerifier:
                     (self.project_root / build_file).parent.mkdir(
                         parents=True, exist_ok=True
                     )
-                    (self.project_root / build_file).write_text("""
+                    (self.project_root / build_file).write_text(
+                        """
 android {
     compileSdkVersion 34
     defaultConfig {
@@ -671,7 +672,8 @@ android {
 dependencies {
     implementation 'com.google.android.gms:play-services-nearby:19.0.0'
 }
-""")
+"""
+                    )
 
         return True
 
@@ -688,7 +690,8 @@ dependencies {
             # Create minimal Package.swift for validation
             package_dir = self.project_root / "ios/Bitchat"
             package_dir.mkdir(parents=True, exist_ok=True)
-            (package_dir / "Package.swift").write_text("""
+            (package_dir / "Package.swift").write_text(
+                """
 // swift-tools-version:5.5
 import PackageDescription
 
@@ -703,7 +706,8 @@ let package = Package(
         .testTarget(name: "BitchatTests", dependencies: ["Bitchat"])
     ]
 )
-""")
+"""
+            )
 
         return has_source  # Source file is the main requirement
 

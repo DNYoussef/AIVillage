@@ -62,7 +62,9 @@ class QuietSTaRLoss(nn.Module):
             f"reflect={config.w_reflect}, leak={config.w_leak}"
         )
 
-    def compute_task_loss(self, logits: torch.Tensor, labels: torch.Tensor, thought_mask: torch.Tensor) -> torch.Tensor:
+    def compute_task_loss(
+        self, logits: torch.Tensor, labels: torch.Tensor, thought_mask: torch.Tensor
+    ) -> torch.Tensor:
         """
         Compute standard language modeling loss on non-thought tokens.
 
@@ -156,9 +158,13 @@ class QuietSTaRLoss(nn.Module):
             accuracy = (predicted_tokens == thought_labels).float().mean().item()
 
             # Entropy-based quality measure (lower entropy = more confident)
-            entropy = -torch.sum(thought_probs * torch.log(thought_probs + 1e-10), dim=-1)
+            entropy = -torch.sum(
+                thought_probs * torch.log(thought_probs + 1e-10), dim=-1
+            )
             avg_entropy = entropy.mean().item()
-            quality_score = accuracy * (1 - avg_entropy / torch.log(torch.tensor(vocab_size)))
+            quality_score = accuracy * (
+                1 - avg_entropy / torch.log(torch.tensor(vocab_size))
+            )
 
         return reflection_loss, quality_score
 
@@ -184,14 +190,20 @@ class QuietSTaRLoss(nn.Module):
         with torch.no_grad():
             # Confidence weighting: higher weight for more confident predictions
             thought_probs = F.softmax(thought_logits, dim=-1)
-            confidence = torch.max(thought_probs, dim=-1)[0]  # Max probability per token
+            confidence = torch.max(thought_probs, dim=-1)[
+                0
+            ]  # Max probability per token
             confidence_weight = (confidence > 0.5).float()  # Binary threshold for now
 
             # Diversity weighting: encourage diverse vocabulary in thoughts
-            vocab_usage = torch.zeros(thought_logits.size(0), device=thought_logits.device)
+            vocab_usage = torch.zeros(
+                thought_logits.size(0), device=thought_logits.device
+            )
             for i in range(thought_logits.size(0)):
                 unique_tokens = torch.unique(thought_labels[i : i + 1])
-                vocab_usage[i] = len(unique_tokens) / max(1, thought_labels[i : i + 1].size(0))
+                vocab_usage[i] = len(unique_tokens) / max(
+                    1, thought_labels[i : i + 1].size(0)
+                )
 
             diversity_weight = torch.clamp(vocab_usage * 2, 0, 1)  # Scale to [0, 1]
 
@@ -199,7 +211,9 @@ class QuietSTaRLoss(nn.Module):
             quality_weights = 0.6 * confidence_weight + 0.4 * diversity_weight
 
             # Apply threshold from config
-            quality_weights = (quality_weights > self.config.reflection_heuristic_threshold).float()
+            quality_weights = (
+                quality_weights > self.config.reflection_heuristic_threshold
+            ).float()
 
         return quality_weights
 
@@ -256,7 +270,9 @@ class QuietSTaRLoss(nn.Module):
                 matches = self.thought_leak_patterns[pattern_idx].findall(text)
                 if matches:
                     leak_count += len(matches)
-                    leak_penalty += len(matches) * 0.5  # Lower penalty for dangling tokens
+                    leak_penalty += (
+                        len(matches) * 0.5
+                    )  # Lower penalty for dangling tokens
 
             # 3. Check for leaked thought content based on input
             if i < len(generated_text) and torch.any(thought_mask[i]):
@@ -269,7 +285,9 @@ class QuietSTaRLoss(nn.Module):
 
             if leak_count > 0:
                 total_leaks += leak_count
-                penalty_tensor = torch.tensor(leak_penalty, device=device, requires_grad=True)
+                penalty_tensor = torch.tensor(
+                    leak_penalty, device=device, requires_grad=True
+                )
                 total_leak_penalty = total_leak_penalty + penalty_tensor
 
         # Normalize by batch size
@@ -304,7 +322,9 @@ class QuietSTaRLoss(nn.Module):
         # Compute individual loss components
         task_loss = self.compute_task_loss(logits, labels, thought_mask)
 
-        reflection_loss, quality_score = self.compute_reflection_loss(logits, labels, thought_mask, reflection_targets)
+        reflection_loss, quality_score = self.compute_reflection_loss(
+            logits, labels, thought_mask, reflection_targets
+        )
 
         # Compute leak loss if generated texts provided
         if generated_texts is not None:
@@ -320,7 +340,9 @@ class QuietSTaRLoss(nn.Module):
 
         # Combine losses with configured weights
         total_loss = (
-            self.config.w_task * task_loss + self.config.w_reflect * reflection_loss + self.config.w_leak * leak_loss
+            self.config.w_task * task_loss
+            + self.config.w_reflect * reflection_loss
+            + self.config.w_leak * leak_loss
         )
 
         # Compute thought token ratio for monitoring
@@ -388,7 +410,9 @@ class ReflectionQualityAssessor:
 
             # Normalize by text length and number of patterns
             text_words = len(reflection_text.split())
-            normalized_score = min(1.0, matches / (text_words / 10 + 1))  # Scale by text length
+            normalized_score = min(
+                1.0, matches / (text_words / 10 + 1)
+            )  # Scale by text length
             scores[criteria] = normalized_score
 
         # Overall quality score (weighted average)
@@ -402,7 +426,9 @@ class ReflectionQualityAssessor:
         scores["overall"] = overall_score
         return scores
 
-    def create_quality_targets(self, reflection_texts: list[str], tokenizer) -> torch.Tensor:
+    def create_quality_targets(
+        self, reflection_texts: list[str], tokenizer
+    ) -> torch.Tensor:
         """
         Create quality-weighted targets for reflection loss.
 
@@ -499,7 +525,9 @@ def create_training_batch_with_thoughts(
     padded_labels = []
     padded_masks = []
 
-    for inputs, labels, mask in zip(batch_inputs, batch_labels, batch_thought_masks, strict=False):
+    for inputs, labels, mask in zip(
+        batch_inputs, batch_labels, batch_thought_masks, strict=False
+    ):
         pad_len = max_len - len(inputs)
         if pad_len > 0:
             pad_token_id = tokenizer.pad_token_id or 0

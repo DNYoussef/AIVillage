@@ -45,7 +45,9 @@ class TrustMetrics:
         context_factor = (self.temporal_relevance + self.geographic_relevance) / 2
 
         # Combine with cross-reference bonus
-        trust = (prior * likelihood * context_factor) + (self.cross_reference_weight * 0.2)
+        trust = (prior * likelihood * context_factor) + (
+            self.cross_reference_weight * 0.2
+        )
 
         return min(1.0, trust)
 
@@ -122,7 +124,9 @@ class BayesRAGEnhancedPipeline(CODEXRAGPipeline):
                             source_quality=row[3] if row[3] else 0.5,
                         )
 
-                logger.info(f"Loaded trust scores for {len(self.trust_cache)} documents")
+                logger.info(
+                    f"Loaded trust scores for {len(self.trust_cache)} documents"
+                )
             except Exception as e:
                 logger.warning(f"Failed to load trust scores: {e}")
 
@@ -153,7 +157,9 @@ class BayesRAGEnhancedPipeline(CODEXRAGPipeline):
                             }
                         )
 
-                logger.info(f"Loaded hierarchical context for {len(self.hierarchy_index)} documents")
+                logger.info(
+                    f"Loaded hierarchical context for {len(self.hierarchy_index)} documents"
+                )
             except Exception as e:
                 logger.warning(f"Failed to load hierarchical context: {e}")
 
@@ -181,7 +187,9 @@ class BayesRAGEnhancedPipeline(CODEXRAGPipeline):
                             }
                         )
 
-                logger.info(f"Loaded cross-reference graph with {len(self.cross_reference_graph)} nodes")
+                logger.info(
+                    f"Loaded cross-reference graph with {len(self.cross_reference_graph)} nodes"
+                )
             except Exception as e:
                 logger.warning(f"Failed to load cross-reference graph: {e}")
 
@@ -273,7 +281,9 @@ class BayesRAGEnhancedPipeline(CODEXRAGPipeline):
 
         return context
 
-    def _build_hierarchical_context(self, document_id: str, chunk_metadata: dict[str, Any]) -> HierarchicalContext:
+    def _build_hierarchical_context(
+        self, document_id: str, chunk_metadata: dict[str, Any]
+    ) -> HierarchicalContext:
         """Build hierarchical context for a retrieval result."""
         parent_title = chunk_metadata.get("parent_title", "")
 
@@ -332,14 +342,18 @@ class BayesRAGEnhancedPipeline(CODEXRAGPipeline):
         query_context = self._extract_query_context(query)
 
         # Get base retrieval results
-        base_results, base_metrics = await super().retrieve(query, k=k * 2, use_cache=use_cache)
+        base_results, base_metrics = await super().retrieve(
+            query, k=k * 2, use_cache=use_cache
+        )
 
         # Enhance results with trust metrics and hierarchical context
         enhanced_results = []
 
         for result in base_results:
             # Get trust metrics
-            doc_title = result.metadata.get("parent_title", "") if result.metadata else ""
+            doc_title = (
+                result.metadata.get("parent_title", "") if result.metadata else ""
+            )
             trust_metrics = self.trust_cache.get(
                 doc_title,
                 TrustMetrics(base_score=0.5, citation_count=0, source_quality=0.5),
@@ -360,21 +374,33 @@ class BayesRAGEnhancedPipeline(CODEXRAGPipeline):
 
             # Check for cross-references
             if doc_title in self.cross_reference_graph:
-                trust_metrics.cross_reference_weight = len(self.cross_reference_graph[doc_title]) / 10
+                trust_metrics.cross_reference_weight = (
+                    len(self.cross_reference_graph[doc_title]) / 10
+                )
 
             # Calculate Bayesian score
-            bayesian_score = self._calculate_bayesian_score(result.score, trust_metrics, query_context)
+            bayesian_score = self._calculate_bayesian_score(
+                result.score, trust_metrics, query_context
+            )
 
             # Build hierarchical context
             hierarchical_context = None
             if result.metadata:
-                hierarchical_context = self._build_hierarchical_context(result.document_id, result.metadata)
+                hierarchical_context = self._build_hierarchical_context(
+                    result.document_id, result.metadata
+                )
 
             # Determine context type
             context_type = "standard"
-            if query_context["temporal_filter"] and trust_metrics.temporal_relevance > 1.0:
+            if (
+                query_context["temporal_filter"]
+                and trust_metrics.temporal_relevance > 1.0
+            ):
                 context_type = "temporal"
-            elif query_context["geographic_filter"] and trust_metrics.geographic_relevance > 1.0:
+            elif (
+                query_context["geographic_filter"]
+                and trust_metrics.geographic_relevance > 1.0
+            ):
                 context_type = "geographic"
             elif trust_metrics.cross_reference_weight > 0.5:
                 context_type = "cross-reference"
@@ -409,7 +435,13 @@ class BayesRAGEnhancedPipeline(CODEXRAGPipeline):
             "latency_ms": latency,
             "trust_weighted": True,
             "query_context": query_context,
-            "avg_trust_score": np.mean([r.trust_metrics.trust_score for r in enhanced_results if r.trust_metrics]),
+            "avg_trust_score": np.mean(
+                [
+                    r.trust_metrics.trust_score
+                    for r in enhanced_results
+                    if r.trust_metrics
+                ]
+            ),
             "context_types": list({r.context_type for r in enhanced_results}),
         }
 
@@ -438,14 +470,24 @@ class BayesRAGEnhancedPipeline(CODEXRAGPipeline):
         response_parts.append("## Relevant Information (Trust-Weighted)")
 
         for i, result in enumerate(results[:5], 1):
-            trust_indicator = "⭐" * min(5, int(result.trust_metrics.trust_score * 5)) if result.trust_metrics else ""
+            trust_indicator = (
+                "⭐" * min(5, int(result.trust_metrics.trust_score * 5))
+                if result.trust_metrics
+                else ""
+            )
 
             response_parts.append(f"\n### Result {i} {trust_indicator}")
-            response_parts.append(f"**Source**: {result.metadata.get('parent_title', 'Unknown')}")
+            response_parts.append(
+                f"**Source**: {result.metadata.get('parent_title', 'Unknown')}"
+            )
 
             if result.trust_metrics:
-                response_parts.append(f"**Trust Score**: {result.trust_metrics.trust_score:.2f}")
-                response_parts.append(f"**Citations**: {result.trust_metrics.citation_count}")
+                response_parts.append(
+                    f"**Trust Score**: {result.trust_metrics.trust_score:.2f}"
+                )
+                response_parts.append(
+                    f"**Citations**: {result.trust_metrics.citation_count}"
+                )
 
             if result.context_type != "standard":
                 response_parts.append(f"**Context Type**: {result.context_type}")
@@ -455,22 +497,37 @@ class BayesRAGEnhancedPipeline(CODEXRAGPipeline):
             # Add hierarchical context details
             if result.hierarchical_context:
                 if result.hierarchical_context.temporal_context:
-                    response_parts.append(f"**Time Period**: {result.hierarchical_context.temporal_context}")
+                    response_parts.append(
+                        f"**Time Period**: {result.hierarchical_context.temporal_context}"
+                    )
 
                 if result.hierarchical_context.geographic_context:
-                    response_parts.append(f"**Location**: {result.hierarchical_context.geographic_context}")
+                    response_parts.append(
+                        f"**Location**: {result.hierarchical_context.geographic_context}"
+                    )
 
                 if result.hierarchical_context.cross_references:
-                    refs = ", ".join([ref.get("title", "") for ref in result.hierarchical_context.cross_references[:3]])
+                    refs = ", ".join(
+                        [
+                            ref.get("title", "")
+                            for ref in result.hierarchical_context.cross_references[:3]
+                        ]
+                    )
                     response_parts.append(f"**Related Topics**: {refs}")
 
         # Add cross-reference network if available
-        if any(r.hierarchical_context and r.hierarchical_context.cross_references for r in results):
+        if any(
+            r.hierarchical_context and r.hierarchical_context.cross_references
+            for r in results
+        ):
             response_parts.append("\n## Related Topics Network")
 
             all_refs = set()
             for result in results:
-                if result.hierarchical_context and result.hierarchical_context.cross_references:
+                if (
+                    result.hierarchical_context
+                    and result.hierarchical_context.cross_references
+                ):
                     for ref in result.hierarchical_context.cross_references:
                         all_refs.add(ref.get("title", ""))
 
@@ -493,7 +550,9 @@ class SemanticCache(CODEXCompliantCache):
         super().__init__()
 
         # Use same embedding model as pipeline
-        self.embedder = embedding_model or SentenceTransformer("paraphrase-MiniLM-L3-v2")
+        self.embedder = embedding_model or SentenceTransformer(
+            "paraphrase-MiniLM-L3-v2"
+        )
 
         # Semantic cache for embedding-based matching
         self.semantic_cache = {}
@@ -503,7 +562,9 @@ class SemanticCache(CODEXCompliantCache):
         # Trust-weighted priority queue
         self.priority_scores = {}
 
-    async def get_semantic(self, query: str, similarity_threshold: float = 0.85) -> list[RetrievalResult] | None:
+    async def get_semantic(
+        self, query: str, similarity_threshold: float = 0.85
+    ) -> list[RetrievalResult] | None:
         """Get cached results using semantic similarity matching.
 
         Args:
@@ -541,12 +602,16 @@ class SemanticCache(CODEXCompliantCache):
 
             if result:
                 latency = (time.perf_counter() - start_time) * 1000
-                logger.debug(f"Semantic cache hit (similarity: {max_similarity:.3f}, latency: {latency:.2f}ms)")
+                logger.debug(
+                    f"Semantic cache hit (similarity: {max_similarity:.3f}, latency: {latency:.2f}ms)"
+                )
                 return result
 
         return None
 
-    async def set_with_priority(self, query: str, results: list[RetrievalResult], trust_score: float = 0.5) -> None:
+    async def set_with_priority(
+        self, query: str, results: list[RetrievalResult], trust_score: float = 0.5
+    ) -> None:
         """Store results with trust-based priority for cache eviction.
 
         Higher trust content stays in cache longer.
@@ -609,7 +674,9 @@ async def test_enhanced_pipeline() -> bool:
         print("-" * 50)
 
         # Retrieve with trust weighting
-        results, metrics = await pipeline.retrieve_with_trust(query=query, k=3, trust_weight=0.4)
+        results, metrics = await pipeline.retrieve_with_trust(
+            query=query, k=3, trust_weight=0.4
+        )
 
         print(f"Results: {len(results)}")
         print(f"Latency: {metrics['latency_ms']:.2f}ms")
@@ -629,10 +696,15 @@ async def test_enhanced_pipeline() -> bool:
                 print(f"  Citations: {top.trust_metrics.citation_count}")
 
             if top.hierarchical_context:
-                print(f"  Global Summary: {top.hierarchical_context.global_summary[:100]}...")
+                print(
+                    f"  Global Summary: {top.hierarchical_context.global_summary[:100]}..."
+                )
 
                 if top.hierarchical_context.cross_references:
-                    refs = [r.get("title", "") for r in top.hierarchical_context.cross_references[:3]]
+                    refs = [
+                        r.get("title", "")
+                        for r in top.hierarchical_context.cross_references[:3]
+                    ]
                     print(f"  Cross References: {', '.join(refs)}")
 
         print("\n")

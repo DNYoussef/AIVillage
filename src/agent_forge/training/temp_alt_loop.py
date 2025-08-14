@@ -174,7 +174,9 @@ class TempAlternationTrainer:
     def _setup_components(self):
         """Initialize all training components."""
         # Temperature curriculum
-        self.scheduler = create_nonoverlap_scheduler(temp_range=self.config.temp_range, bin_width=self.config.bin_width)
+        self.scheduler = create_nonoverlap_scheduler(
+            temp_range=self.config.temp_range, bin_width=self.config.bin_width
+        )
 
         # Multi-head self-model
         self.self_model = MultiHeadSelfModel(
@@ -206,7 +208,9 @@ class TempAlternationTrainer:
         )
 
         # Telemetry tracking
-        self.telemetry_tracker = TelemetryTracker(nn.ModuleList([self.model, self.self_model]))
+        self.telemetry_tracker = TelemetryTracker(
+            nn.ModuleList([self.model, self.self_model])
+        )
 
         # Telemetry encoding
         self.telemetry_encoder = create_telemetry_encoder(
@@ -216,24 +220,32 @@ class TempAlternationTrainer:
         ).to(self.device)
 
         # Telemetry predictor (optional future enhancement)
-        self.telemetry_predictor = create_telemetry_predictor(input_dim=self.telemetry_encoder.output_dim).to(
-            self.device
-        )
+        self.telemetry_predictor = create_telemetry_predictor(
+            input_dim=self.telemetry_encoder.output_dim
+        ).to(self.device)
 
         # Anomaly detector
-        self.anomaly_detector = create_anomaly_detector(input_dim=self.telemetry_encoder.output_dim).to(self.device)
+        self.anomaly_detector = create_anomaly_detector(
+            input_dim=self.telemetry_encoder.output_dim
+        ).to(self.device)
 
         # Teacher consistency (for KL loss)
         self.teacher_consistency = TeacherConsistency()
 
         logger.info("Initialized temperature alternation trainer:")
-        logger.info(f"  Model parameters: {sum(p.numel() for p in self.model.parameters()):,}")
-        logger.info(f"  Self-model parameters: {sum(p.numel() for p in self.self_model.parameters()):,}")
+        logger.info(
+            f"  Model parameters: {sum(p.numel() for p in self.model.parameters()):,}"
+        )
+        logger.info(
+            f"  Self-model parameters: {sum(p.numel() for p in self.self_model.parameters()):,}"
+        )
         logger.info(f"  Temperature bins: {len(self.scheduler.get_bins())}")
         logger.info(f"  Tap layers: {self.config.tap_layers}")
         logger.info(f"  Device: {self.device}")
 
-    def _get_model_activations(self, input_ids: torch.Tensor) -> dict[int, torch.Tensor]:
+    def _get_model_activations(
+        self, input_ids: torch.Tensor
+    ) -> dict[int, torch.Tensor]:
         """Extract activations from tapped layers."""
         activations = {}
 
@@ -264,7 +276,9 @@ class TempAlternationTrainer:
             for hook in hooks:
                 hook.remove()
 
-    def _compute_task_loss(self, input_ids: torch.Tensor, labels: torch.Tensor, temperature: float) -> torch.Tensor:
+    def _compute_task_loss(
+        self, input_ids: torch.Tensor, labels: torch.Tensor, temperature: float
+    ) -> torch.Tensor:
         """Compute main task loss with temperature scaling."""
         logits = self.model(input_ids)
 
@@ -275,7 +289,9 @@ class TempAlternationTrainer:
         scaled_logits = logits / max(temperature, 0.01)
 
         # Standard cross-entropy loss
-        loss = F.cross_entropy(scaled_logits.view(-1, scaled_logits.size(-1)), labels.view(-1))
+        loss = F.cross_entropy(
+            scaled_logits.view(-1, scaled_logits.size(-1)), labels.view(-1)
+        )
 
         return loss, scaled_logits
 
@@ -288,8 +304,12 @@ class TempAlternationTrainer:
 
         input_ids = batch["input_ids"].to(self.device)
         attention_mask = batch["attention_mask"].to(self.device)
-        temp_labels = batch.get("temp_label", torch.zeros(input_ids.size(0), dtype=torch.long)).to(self.device)
-        stage_labels = batch.get("stage_label", torch.zeros(input_ids.size(0), dtype=torch.long)).to(self.device)
+        temp_labels = batch.get(
+            "temp_label", torch.zeros(input_ids.size(0), dtype=torch.long)
+        ).to(self.device)
+        stage_labels = batch.get(
+            "stage_label", torch.zeros(input_ids.size(0), dtype=torch.long)
+        ).to(self.device)
 
         # Sample temperature from current bin
         temperature = np.random.uniform(current_bin.low, current_bin.high)
@@ -297,7 +317,9 @@ class TempAlternationTrainer:
 
         # Forward pass
         labels = input_ids[:, 1:]  # Shift for language modeling
-        task_loss, logits = self._compute_task_loss(input_ids[:, :-1], labels, temperature)
+        task_loss, logits = self._compute_task_loss(
+            input_ids[:, :-1], labels, temperature
+        )
 
         # Get model activations for self-modeling
         tap_activations = self._get_model_activations(input_ids)
@@ -331,7 +353,9 @@ class TempAlternationTrainer:
         accuracy = (preds == labels).float().mean().item()
 
         # Update telemetry
-        telemetry_state = self.telemetry_tracker.update(loss=total_loss.item(), accuracy=accuracy, step=self.state.step)
+        telemetry_state = self.telemetry_tracker.update(
+            loss=total_loss.item(), accuracy=accuracy, step=self.state.step
+        )
 
         # Optimization step with Grokfast
         step_stats = self.optimizer.step(telemetry_state)
@@ -341,8 +365,12 @@ class TempAlternationTrainer:
         self.state.loss = total_loss.item()
         self.state.accuracy = accuracy
         self.state.self_model_loss = self_model_results["self_model_loss"].item()
-        self.state.temp_bin_loss = self_model_results.get("temp_bin_loss", torch.tensor(0.0)).item()
-        self.state.stage_loss = self_model_results.get("stage_loss", torch.tensor(0.0)).item()
+        self.state.temp_bin_loss = self_model_results.get(
+            "temp_bin_loss", torch.tensor(0.0)
+        ).item()
+        self.state.stage_loss = self_model_results.get(
+            "stage_loss", torch.tensor(0.0)
+        ).item()
         self.state.grokfast_enabled = step_stats["grokfast_enabled"]
         self.state.grok_detected = step_stats["grok_detected"]
         self.state.lambda_value = step_stats["lambda"]
@@ -397,7 +425,11 @@ class TempAlternationTrainer:
     def _log_progress(self, step_result: dict[str, Any]):
         """Log training progress."""
         if self.state.step % 100 == 0:
-            grok_status = "🎯" if self.state.grok_detected else ("⚡" if self.state.grokfast_enabled else "⭕")
+            grok_status = (
+                "🎯"
+                if self.state.grok_detected
+                else ("⚡" if self.state.grokfast_enabled else "⭕")
+            )
 
             logger.info(
                 f"Step {self.state.step:>6} | Round {self.state.round} | "
@@ -427,7 +459,9 @@ class TempAlternationTrainer:
                 if hasattr(logits, "logits"):
                     logits = logits.logits
 
-                loss = F.cross_entropy(logits.view(-1, logits.size(-1)), labels.view(-1))
+                loss = F.cross_entropy(
+                    logits.view(-1, logits.size(-1)), labels.view(-1)
+                )
 
                 preds = torch.argmax(logits, dim=-1)
                 accuracy = (preds == labels).float().mean().item()
@@ -470,7 +504,9 @@ class TempAlternationTrainer:
             self.best_step = self.state.step
             best_path = self.save_dir / "best_checkpoint.pt"
             torch.save(checkpoint, best_path)
-            logger.info(f"💾 New best checkpoint saved: accuracy={self.best_accuracy:.4f}")
+            logger.info(
+                f"💾 New best checkpoint saved: accuracy={self.best_accuracy:.4f}"
+            )
 
         logger.info(f"💾 Checkpoint saved at step {self.state.step}")
 
@@ -547,7 +583,9 @@ class TempAlternationTrainer:
         logger.info("🎉 Training completed!")
         logger.info(f"   Total steps: {self.state.step:,}")
         logger.info(f"   Final accuracy: {self.state.accuracy:.4f}")
-        logger.info(f"   Best accuracy: {self.best_accuracy:.4f} (step {self.best_step})")
+        logger.info(
+            f"   Best accuracy: {self.best_accuracy:.4f} (step {self.best_step})"
+        )
         logger.info(f"   Total time: {elapsed / 3600:.1f} hours")
         logger.info(f"   Grok detected: {self.state.grok_detected}")
 
@@ -637,7 +675,12 @@ if __name__ == "__main__":
             super().__init__()
             self.embedding = nn.Embedding(vocab_size, hidden_dim)
             self.layers = nn.ModuleList(
-                [nn.TransformerEncoderLayer(d_model=hidden_dim, nhead=8, batch_first=True) for _ in range(num_layers)]
+                [
+                    nn.TransformerEncoderLayer(
+                        d_model=hidden_dim, nhead=8, batch_first=True
+                    )
+                    for _ in range(num_layers)
+                ]
             )
             self.output = nn.Linear(hidden_dim, vocab_size)
 
@@ -693,7 +736,9 @@ if __name__ == "__main__":
             }
 
     dataset = MockDataset(size=200)
-    dataloader = torch.utils.data.DataLoader(dataset, batch_size=config.batch_size, shuffle=True)
+    dataloader = torch.utils.data.DataLoader(
+        dataset, batch_size=config.batch_size, shuffle=True
+    )
 
     print("📊 Starting training demo...")
     print()
@@ -709,10 +754,16 @@ if __name__ == "__main__":
         print("✅ Temperature Alternation Training Demo Complete")
         print()
         print("Key Features Demonstrated:")
-        print("  • Temperature bin curriculum with non-overlapping → overlapping progression")
-        print("  • Multi-head self-modeling (activation prediction, temp inference, stage classification)")
+        print(
+            "  • Temperature bin curriculum with non-overlapping → overlapping progression"
+        )
+        print(
+            "  • Multi-head self-modeling (activation prediction, temp inference, stage classification)"
+        )
         print("  • Grokfast optimization with telemetry-based lambda gating")
-        print("  • Comprehensive telemetry tracking (ID, S_slow, EMA cosine similarity)")
+        print(
+            "  • Comprehensive telemetry tracking (ID, S_slow, EMA cosine similarity)"
+        )
         print("  • Automatic round advancement based on performance thresholds")
         print("  • Complete checkpoint/resume system with metrics export")
         print("  • Integration-ready training loop for production use")

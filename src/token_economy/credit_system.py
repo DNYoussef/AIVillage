@@ -69,8 +69,8 @@ class SQLiteDatabase:
         # Enable WAL mode for better concurrency
         cursor.execute("PRAGMA journal_mode=WAL")
 
-        # Set busy timeout to handle locked database files
-        cursor.execute("PRAGMA busy_timeout=5000")  # 5 seconds
+        # Set busy timeout to handle locked database files (BN requirement: 3000ms minimum)
+        cursor.execute("PRAGMA busy_timeout=3000")  # 3 seconds as specified
 
         # Additional optimizations
         cursor.execute("PRAGMA synchronous=NORMAL")  # Balance safety/performance
@@ -82,26 +82,53 @@ class SQLiteDatabase:
         logger.debug("SQLite configured with WAL mode and 5s busy timeout")
 
     def execute(self, query: str, params: tuple | None = None) -> sqlite3.Cursor:
+        import random
+
         params = params or ()
         logger.debug("Executing SQL: %s | Params: %s", query, params)
 
         with self._lock:  # Thread-safe execution
-            cur = self.conn.cursor()
-            try:
-                if params:
-                    cur.execute(query, params)
-                else:
-                    cur.executescript(query)
-                self.conn.commit()
-                return cur
-            except sqlite3.OperationalError as e:
-                if "database is locked" in str(e).lower():
-                    logger.warning("Database locked, retrying after brief delay: %s", e)
-                    time.sleep(0.1)  # Brief retry for locked database
-                    cur.execute(query, params) if params else cur.executescript(query)
+            max_retries = 3
+            retry_delays = [0.1, 0.3, 0.5]  # Progressive backoff
+
+            for attempt in range(max_retries + 1):
+                cur = self.conn.cursor()
+                try:
+                    if params:
+                        cur.execute(query, params)
+                    else:
+                        cur.executescript(query)
                     self.conn.commit()
                     return cur
-                raise
+                except sqlite3.OperationalError as e:
+                    if (
+                        "database is locked" in str(e).lower()
+                        or "busy" in str(e).lower()
+                    ):
+                        if attempt < max_retries:
+                            # Jittered exponential backoff
+                            base_delay = retry_delays[
+                                min(attempt, len(retry_delays) - 1)
+                            ]
+                            jitter = random.uniform(0.8, 1.2)  # ±20% jitter
+                            delay = base_delay * jitter
+
+                            logger.warning(
+                                f"Database locked/busy (attempt {attempt + 1}/{max_retries + 1}), retrying in {delay:.2f}s: {e}"
+                            )
+                            time.sleep(delay)
+                            continue
+                        else:
+                            logger.error(
+                                f"Database locked/busy after {max_retries + 1} attempts, giving up: {e}"
+                            )
+                            raise
+                    else:
+                        # Non-locking error, don't retry
+                        raise
+
+            # Should never reach here, but just in case
+            raise sqlite3.OperationalError("Maximum retries exceeded")
 
     def close(self) -> None:
         logger.debug("Closing SQLite connection")
@@ -184,7 +211,10 @@ class VILLAGECreditSystem:
 
     def get_earning_rule(self, action: str) -> EarningRule:
         cur = self.db.execute(
-            ("SELECT action, base_credits, multipliers, conditions " "FROM earning_rules WHERE action = ?"),
+            (
+                "SELECT action, base_credits, multipliers, conditions "
+                "FROM earning_rules WHERE action = ?"
+            ),
             (action,),
         )
         row = cur.fetchone()
@@ -201,7 +231,10 @@ class VILLAGECreditSystem:
 
     def is_first_time(self, user_id: str, action: str) -> bool:
         cur = self.db.execute(
-            ("SELECT COUNT(*) as cnt FROM transactions " "WHERE user_id = ? AND category = ?"),
+            (
+                "SELECT COUNT(*) as cnt FROM transactions "
+                "WHERE user_id = ? AND category = ?"
+            ),
             (user_id, action),
         )
         count = cur.fetchone()["cnt"]
@@ -211,7 +244,9 @@ class VILLAGECreditSystem:
     def adjust_for_ppp(self, credit_amount: int, country: str | None) -> int:
         if country and country in PPP_ADJUSTMENTS:
             adjusted = int(credit_amount * PPP_ADJUSTMENTS[country])
-            logger.debug("PPP adjustment for %s: %d -> %d", country, credit_amount, adjusted)
+            logger.debug(
+                "PPP adjustment for %s: %d -> %d", country, credit_amount, adjusted
+            )
             return adjusted
         return credit_amount
 
@@ -295,8 +330,12 @@ class VILLAGECreditSystem:
         self.update_balance(user_id, credit_amount)
         return credit_amount
 
-    def spend_credits(self, user_id: str, amount: int, category: str, metadata: dict[str, str]) -> None:
-        cur = self.db.execute("SELECT balance FROM balances WHERE user_id = ?", (user_id,))
+    def spend_credits(
+        self, user_id: str, amount: int, category: str, metadata: dict[str, str]
+    ) -> None:
+        cur = self.db.execute(
+            "SELECT balance FROM balances WHERE user_id = ?", (user_id,)
+        )
         row = cur.fetchone()
         if row is None or row["balance"] < amount:
             logger.error("User %s has insufficient balance", user_id)
@@ -306,7 +345,9 @@ class VILLAGECreditSystem:
         self.update_balance(user_id, -amount)
 
     def get_balance(self, user_id: str) -> int:
-        cur = self.db.execute("SELECT balance FROM balances WHERE user_id = ?", (user_id,))
+        cur = self.db.execute(
+            "SELECT balance FROM balances WHERE user_id = ?", (user_id,)
+        )
         row = cur.fetchone()
         return row["balance"] if row else 0
 

@@ -62,7 +62,10 @@ class LoRARegistry:
         try:
             with open(self.registry_path, encoding="utf-8") as f:
                 data = json.load(f)
-                self.entries = {k: AdapterEntry.from_dict(v) for k, v in data.get("adapters", {}).items()}
+                self.entries = {
+                    k: AdapterEntry.from_dict(v)
+                    for k, v in data.get("adapters", {}).items()
+                }
             logger.info(f"Loaded {len(self.entries)} adapters from registry")
         except Exception as e:
             logger.exception(f"Failed to load registry: {e}")
@@ -120,10 +123,14 @@ class LoRARegistry:
 
             if decision["decision"] == "REJECT":
                 entry.status = "rejected"
-                logger.warning(f"Guardian rejected adapter {entry.adapter_id}: {decision['reason']}")
+                logger.warning(
+                    f"Guardian rejected adapter {entry.adapter_id}: {decision['reason']}"
+                )
             elif decision["decision"] == "QUARANTINE":
                 entry.status = "quarantine"
-                logger.info(f"Guardian quarantined adapter {entry.adapter_id}: {decision['reason']}")
+                logger.info(
+                    f"Guardian quarantined adapter {entry.adapter_id}: {decision['reason']}"
+                )
             else:  # APPLY
                 entry.status = "approved"
                 entry.guardian_signature = decision.get("signature")
@@ -138,14 +145,18 @@ class LoRARegistry:
         self.entries[entry.adapter_id] = entry
         self._save_registry()
 
-        logger.info(f"Registered adapter {entry.adapter_id} with status: {entry.status}")
+        logger.info(
+            f"Registered adapter {entry.adapter_id} with status: {entry.status}"
+        )
         return entry.adapter_id
 
     def get_adapter(self, adapter_id: str) -> AdapterEntry | None:
         """Get adapter by ID."""
         return self.entries.get(adapter_id)
 
-    def list_adapters(self, domain: str | None = None, status: str | None = None) -> list[AdapterEntry]:
+    def list_adapters(
+        self, domain: str | None = None, status: str | None = None
+    ) -> list[AdapterEntry]:
         """List adapters with optional filtering."""
         adapters = list(self.entries.values())
 
@@ -172,7 +183,9 @@ class LoRARegistry:
 
         # Verify hash matches
         if current_hash != entry.sha256:
-            logger.error(f"Adapter {adapter_id} hash mismatch: expected {entry.sha256}, got {current_hash}")
+            logger.error(
+                f"Adapter {adapter_id} hash mismatch: expected {entry.sha256}, got {current_hash}"
+            )
             return False
 
         # Verify Guardian signature if present
@@ -199,9 +212,15 @@ class LoRARegistry:
         logger.warning(f"Revoked adapter {adapter_id}: {reason}")
         return True
 
-    def get_best_adapter(self, domain: str, metric: str = "accuracy") -> AdapterEntry | None:
+    def get_best_adapter(
+        self, domain: str, metric: str = "accuracy"
+    ) -> AdapterEntry | None:
         """Get the best performing approved adapter for a domain."""
-        domain_adapters = [a for a in self.entries.values() if a.domain == domain and a.status == "approved"]
+        domain_adapters = [
+            a
+            for a in self.entries.values()
+            if a.domain == domain and a.status == "approved"
+        ]
 
         if not domain_adapters:
             return None
@@ -216,7 +235,9 @@ class LoRARegistry:
         sha256_hash = hashlib.sha256()
 
         # Hash all weight files
-        weight_files = list(adapter_path.glob("*.bin")) + list(adapter_path.glob("*.safetensors"))
+        weight_files = list(adapter_path.glob("*.bin")) + list(
+            adapter_path.glob("*.safetensors")
+        )
 
         for weight_file in sorted(weight_files):
             with open(weight_file, "rb") as f:

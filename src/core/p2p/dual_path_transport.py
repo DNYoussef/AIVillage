@@ -192,7 +192,9 @@ class DualPathTransport:
         }
 
         # Store-and-forward queue for offline scenarios
-        self.offline_queue: list[tuple[DualPathMessage, float]] = []  # (message, queued_time)
+        self.offline_queue: list[
+            tuple[DualPathMessage, float]
+        ] = []  # (message, queued_time)
         self.max_queue_size = 1000
 
         # Control
@@ -298,15 +300,24 @@ class DualPathTransport:
 
         try:
             # Evaluate and adapt resource policies
-            old_state = self.resource_manager.state.to_dict() if self.resource_manager.state else {}
+            old_state = (
+                self.resource_manager.state.to_dict()
+                if self.resource_manager.state
+                else {}
+            )
             new_state = await self.resource_manager.evaluate_and_adapt(profile)
 
             # Track resource adaptations
             if old_state.get("power_mode") != new_state.power_mode.value:
                 self.routing_stats["resource_adaptations"] += 1
-                logger.info(f"Power mode changed: {old_state.get('power_mode')} → {new_state.power_mode.value}")
+                logger.info(
+                    f"Power mode changed: {old_state.get('power_mode')} → {new_state.power_mode.value}"
+                )
 
-            if old_state.get("transport_preference") != new_state.transport_preference.value:
+            if (
+                old_state.get("transport_preference")
+                != new_state.transport_preference.value
+            ):
                 self.routing_stats["transport_switches"] += 1
                 logger.info(
                     f"Transport preference changed: {old_state.get('transport_preference')} → {new_state.transport_preference.value}"
@@ -365,8 +376,10 @@ class DualPathTransport:
         # Get resource-aware routing decision
         resource_routing_decision = None
         if self.enable_resource_management and self.resource_manager:
-            resource_routing_decision = await self.resource_manager.get_transport_routing_decision(
-                len(message.payload), priority
+            resource_routing_decision = (
+                await self.resource_manager.get_transport_routing_decision(
+                    len(message.payload), priority
+                )
             )
 
         # Select optimal path via Navigator with resource constraints
@@ -387,19 +400,194 @@ class DualPathTransport:
 
         self.routing_stats["routing_decisions"] += 1
 
-        # Route message via selected protocol
-        success = await self._route_message(message, selected_protocol, routing_metadata)
+        # Route message via selected protocol with reliability mechanisms
+        success = await self._route_message_with_reliability(
+            message, selected_protocol, routing_metadata
+        )
 
         if not success:
             self.routing_stats["delivery_failures"] += 1
 
             # Fallback to store-and-forward
-            logger.info(f"Routing failed for {message.id[:8]} - queuing for later delivery")
+            logger.info(
+                f"Routing failed for {message.id[:8]} - queuing for later delivery"
+            )
             await self._queue_for_store_forward(message)
 
         return success
 
-    async def broadcast_message(self, payload: bytes | str | dict, priority: int = 5, max_hops: int = 5) -> int:
+    async def _route_message_with_reliability(
+        self,
+        message: DualPathMessage,
+        selected_protocol: "PathProtocol",
+        routing_metadata: dict,
+    ) -> bool:
+        """Route message with retry logic and fast failover for ≥0.90 reliability."""
+        max_retries = 3
+        retry_backoff = [0.1, 0.5, 1.0]  # Exponential backoff
+
+        # Track protocol performance for adaptive routing
+        protocols_to_try = [selected_protocol]
+
+        # Add fallback protocols based on message requirements
+        if message.priority >= 8:  # High priority - try all protocols
+            if selected_protocol != PathProtocol.BETANET:
+                protocols_to_try.append(PathProtocol.BETANET)
+            if selected_protocol != PathProtocol.BITCHAT:
+                protocols_to_try.append(PathProtocol.BITCHAT)
+        elif message.privacy_required:  # Privacy required - prefer BitChat
+            if selected_protocol != PathProtocol.BITCHAT:
+                protocols_to_try.append(PathProtocol.BITCHAT)
+        else:  # Standard message - add one fallback
+            fallback = (
+                PathProtocol.BITCHAT
+                if selected_protocol == PathProtocol.BETANET
+                else PathProtocol.BETANET
+            )
+            protocols_to_try.append(fallback)
+
+        for protocol in protocols_to_try:
+            for retry in range(max_retries):
+                try:
+                    # Measure RTT for adaptive routing
+                    start_time = time.time()
+                    success = await self._route_message(
+                        message, protocol, routing_metadata
+                    )
+                    rtt = (time.time() - start_time) * 1000  # Convert to ms
+
+                    if success:
+                        # Update performance metrics
+                        self._update_protocol_performance(protocol, True, rtt)
+                        logger.debug(
+                            f"Message {message.id[:8]} delivered via {protocol.value} (attempt {retry + 1}, RTT: {rtt:.1f}ms)"
+                        )
+                        return True
+
+                    # Failed - update metrics and retry with backoff
+                    self._update_protocol_performance(protocol, False, rtt)
+
+                    if retry < max_retries - 1:  # Don't wait after last retry
+                        await asyncio.sleep(retry_backoff[retry])
+                        logger.debug(
+                            f"Retry {retry + 1} for {message.id[:8]} via {protocol.value}"
+                        )
+
+                except Exception as e:
+                    logger.warning(
+                        f"Exception routing message {message.id[:8]} via {protocol.value}: {e}"
+                    )
+                    # Still count as failure for metrics
+                    self._update_protocol_performance(
+                        protocol, False, 5000
+                    )  # High latency penalty
+
+                    if retry < max_retries - 1:
+                        await asyncio.sleep(retry_backoff[retry])
+
+            # If we get here, all retries for this protocol failed
+            logger.warning(
+                f"All retries failed for {message.id[:8]} via {protocol.value}"
+            )
+
+        # All protocols and retries failed
+        logger.error(f"Message {message.id[:8]} failed on all protocols")
+        return False
+
+    def _update_protocol_performance(
+        self, protocol: "PathProtocol", success: bool, rtt_ms: float
+    ) -> None:
+        """Update protocol performance metrics for adaptive routing."""
+        if not hasattr(self, "_protocol_metrics"):
+            self._protocol_metrics = {
+                "BITCHAT": {
+                    "success_count": 0,
+                    "total_count": 0,
+                    "avg_rtt": 0,
+                    "ewma_rtt": 0,
+                },
+                "BETANET": {
+                    "success_count": 0,
+                    "total_count": 0,
+                    "avg_rtt": 0,
+                    "ewma_rtt": 0,
+                },
+            }
+
+        protocol_name = protocol.value.upper()
+        if protocol_name not in self._protocol_metrics:
+            protocol_name = "BETANET"  # Default fallback
+
+        metrics = self._protocol_metrics[protocol_name]
+        metrics["total_count"] += 1
+
+        if success:
+            metrics["success_count"] += 1
+
+        # Update RTT metrics with EWMA (α=0.3 for responsiveness)
+        alpha = 0.3
+        if metrics["ewma_rtt"] == 0:
+            metrics["ewma_rtt"] = rtt_ms
+        else:
+            metrics["ewma_rtt"] = alpha * rtt_ms + (1 - alpha) * metrics["ewma_rtt"]
+
+        # Update average RTT
+        total_measurements = getattr(self, "_rtt_measurements", {})
+        if protocol_name not in total_measurements:
+            total_measurements[protocol_name] = []
+        total_measurements[protocol_name].append(rtt_ms)
+
+        # Keep only last 100 measurements
+        if len(total_measurements[protocol_name]) > 100:
+            total_measurements[protocol_name] = total_measurements[protocol_name][-100:]
+
+        metrics["avg_rtt"] = sum(total_measurements[protocol_name]) / len(
+            total_measurements[protocol_name]
+        )
+        self._rtt_measurements = total_measurements
+
+        # Log poor performance for debugging
+        success_rate = metrics["success_count"] / metrics["total_count"]
+        if metrics["total_count"] > 10 and success_rate < 0.8:
+            logger.warning(
+                f"Poor performance on {protocol_name}: {success_rate:.2f} success rate, {metrics['ewma_rtt']:.1f}ms RTT"
+            )
+
+    def get_reliability_metrics(self) -> dict:
+        """Get current reliability metrics for testing."""
+        if not hasattr(self, "_protocol_metrics"):
+            return {"overall_success_rate": 0.0, "protocols": {}}
+
+        total_success = 0
+        total_attempts = 0
+        protocols = {}
+
+        for protocol_name, metrics in self._protocol_metrics.items():
+            if metrics["total_count"] > 0:
+                success_rate = metrics["success_count"] / metrics["total_count"]
+                protocols[protocol_name.lower()] = {
+                    "success_rate": success_rate,
+                    "total_attempts": metrics["total_count"],
+                    "avg_rtt_ms": metrics["avg_rtt"],
+                    "ewma_rtt_ms": metrics["ewma_rtt"],
+                }
+                total_success += metrics["success_count"]
+                total_attempts += metrics["total_count"]
+
+        overall_success_rate = (
+            total_success / total_attempts if total_attempts > 0 else 0.0
+        )
+
+        return {
+            "overall_success_rate": overall_success_rate,
+            "protocols": protocols,
+            "total_messages": total_attempts,
+            "meets_requirement": overall_success_rate >= 0.90,
+        }
+
+    async def broadcast_message(
+        self, payload: bytes | str | dict, priority: int = 5, max_hops: int = 5
+    ) -> int:
         """Broadcast message to all reachable peers
 
         Returns:
@@ -422,7 +610,9 @@ class DualPathTransport:
             bitchat_msg = message.to_bitchat_message()
             bitchat_msg.ttl = min(max_hops, 7)  # BitChat limit
 
-            if await self.bitchat.send_message("", bitchat_msg.payload, priority, bitchat_msg.ttl):
+            if await self.bitchat.send_message(
+                "", bitchat_msg.payload, priority, bitchat_msg.ttl
+            ):
                 sent_count += self.bitchat.get_peer_count()
                 self.routing_stats["bitchat_sent"] += 1
 
@@ -472,7 +662,11 @@ class DualPathTransport:
 
         if not self.enable_navigator or not self.navigator:
             # Fallback path selection without Navigator
-            if self.enable_bitchat and self.bitchat and self.bitchat.is_peer_reachable(destination):
+            if (
+                self.enable_bitchat
+                and self.bitchat
+                and self.bitchat.is_peer_reachable(destination)
+            ):
                 return PathProtocol.BITCHAT, {"fallback": True}
             if self.enable_betanet:
                 return PathProtocol.BETANET, {"fallback": True}
@@ -487,9 +681,13 @@ class DualPathTransport:
         available_protocols.append("store_forward")
 
         # Use Navigator for intelligent selection
-        return await self.navigator.select_path(destination, context, available_protocols)
+        return await self.navigator.select_path(
+            destination, context, available_protocols
+        )
 
-    async def _route_message(self, message: DualPathMessage, protocol: PathProtocol, metadata: dict[str, Any]) -> bool:
+    async def _route_message(
+        self, message: DualPathMessage, protocol: PathProtocol, metadata: dict[str, Any]
+    ) -> bool:
         """Route message via selected protocol"""
         if protocol == PathProtocol.BITCHAT:
             return await self._send_via_bitchat(message, metadata)
@@ -504,7 +702,9 @@ class DualPathTransport:
         logger.error(f"Unknown protocol: {protocol}")
         return False
 
-    async def _send_via_bitchat(self, message: DualPathMessage, metadata: dict[str, Any]) -> bool:
+    async def _send_via_bitchat(
+        self, message: DualPathMessage, metadata: dict[str, Any]
+    ) -> bool:
         """Send message via BitChat transport"""
         if not self.enable_bitchat or not self.bitchat:
             logger.warning("BitChat not available")
@@ -542,7 +742,9 @@ class DualPathTransport:
             logger.exception(f"BitChat send failed: {e}")
             return False
 
-    async def _send_via_betanet(self, message: DualPathMessage, metadata: dict[str, Any]) -> bool:
+    async def _send_via_betanet(
+        self, message: DualPathMessage, metadata: dict[str, Any]
+    ) -> bool:
         """Send message via Betanet transport"""
         if not self.enable_betanet or not self.betanet:
             logger.warning("Betanet not available")
@@ -624,7 +826,9 @@ class DualPathTransport:
         except Exception as e:
             logger.exception(f"Error handling Betanet message: {e}")
 
-    async def _process_received_message(self, message: DualPathMessage, source_protocol: str) -> None:
+    async def _process_received_message(
+        self, message: DualPathMessage, source_protocol: str
+    ) -> None:
         """Process received message from any protocol"""
         logger.info(f"Received message {message.id[:8]} via {source_protocol}")
 
@@ -676,8 +880,14 @@ class DualPathTransport:
                 # Check if recipient is now reachable
                 can_deliver = False
 
-                if (self.enable_bitchat and self.bitchat and self.bitchat.is_peer_reachable(message.recipient)) or (
-                    self.enable_betanet and self.betanet and message.recipient in self.betanet.discovered_peers
+                if (
+                    self.enable_bitchat
+                    and self.bitchat
+                    and self.bitchat.is_peer_reachable(message.recipient)
+                ) or (
+                    self.enable_betanet
+                    and self.betanet
+                    and message.recipient in self.betanet.discovered_peers
                 ):
                     can_deliver = True
 
@@ -701,7 +911,9 @@ class DualPathTransport:
                     remaining_queue.append((message, queued_time))
             else:
                 # Broadcast message - try delivery
-                sent_count = await self.broadcast_message(message.payload, message.priority)
+                sent_count = await self.broadcast_message(
+                    message.payload, message.priority
+                )
                 if sent_count > 0:
                     delivered += 1
                 else:
@@ -712,7 +924,8 @@ class DualPathTransport:
 
         if delivered > 0 or failed > 0:
             logger.info(
-                f"Store-and-forward: delivered {delivered}, expired {failed}, " f"queued {len(self.offline_queue)}"
+                f"Store-and-forward: delivered {delivered}, expired {failed}, "
+                f"queued {len(self.offline_queue)}"
             )
 
     async def _sync_peer_information(self) -> None:
@@ -790,7 +1003,9 @@ class DualPathTransport:
         betanet_peers = set()
 
         if self.bitchat:
-            bitchat_peers = {peer.device_id for peer in self.bitchat.discovered_peers.values()}
+            bitchat_peers = {
+                peer.device_id for peer in self.bitchat.discovered_peers.values()
+            }
             peers["bitchat"] = list(bitchat_peers)
 
         if self.betanet:

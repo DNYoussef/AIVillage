@@ -104,7 +104,9 @@ class CurriculumOrchestrator:
         logger.info(f"Initializing curriculum for domain: {domain}")
 
         if constraints is None:
-            constraints = EdgeConstraints(target_low=0.55, target_high=0.75, problem_budget=1000)
+            constraints = EdgeConstraints(
+                target_low=0.55, target_high=0.75, problem_budget=1000
+            )
 
         try:
             # Find initial edge
@@ -126,7 +128,9 @@ class CurriculumOrchestrator:
 
             self.problem_queue.extend(problem_response.problems)
 
-            logger.info(f"Curriculum initialized with {len(self.problem_queue)} problems")
+            logger.info(
+                f"Curriculum initialized with {len(self.problem_queue)} problems"
+            )
 
             return {
                 "success": True,
@@ -135,7 +139,10 @@ class CurriculumOrchestrator:
                     "low": self.current_edge.low,
                     "high": self.current_edge.high,
                 },
-                "topic_mix": [{"topic": t.topic, "weight": t.weight} for t in edge_response.topic_mix],
+                "topic_mix": [
+                    {"topic": t.topic, "weight": t.weight}
+                    for t in edge_response.topic_mix
+                ],
                 "initial_problems": len(self.problem_queue),
                 "generation_plan": {
                     "total_planned": edge_response.generation_plan.n_total,
@@ -172,7 +179,9 @@ class CurriculumOrchestrator:
             logger.error(f"Failed to get mastery stats: {e}")
             return MasteryStats(learning=0, understood=0, stalled=0)
 
-    async def execute_batch_plan(self, batch_plan: list[BatchItem], domain: str) -> dict[str, Any]:
+    async def execute_batch_plan(
+        self, batch_plan: list[BatchItem], domain: str
+    ) -> dict[str, Any]:
         """Execute a batch plan from the conductor.
 
         Args:
@@ -224,7 +233,9 @@ class CurriculumOrchestrator:
 
         return results
 
-    async def _execute_generate_batch(self, batch_item: BatchItem, domain: str, results: dict[str, Any]) -> None:
+    async def _execute_generate_batch(
+        self, batch_item: BatchItem, domain: str, results: dict[str, Any]
+    ) -> None:
         """Execute problem generation batch."""
 
         if not self.current_edge:
@@ -257,7 +268,9 @@ class CurriculumOrchestrator:
             }
         )
 
-    async def _execute_variant_batch(self, batch_item: BatchItem, results: dict[str, Any]) -> None:
+    async def _execute_variant_batch(
+        self, batch_item: BatchItem, results: dict[str, Any]
+    ) -> None:
         """Execute variant generation batch."""
 
         if not self.problem_queue:
@@ -266,7 +279,9 @@ class CurriculumOrchestrator:
         from .schemas import NumericJitterPolicy, VariantPolicy
 
         # Default variant policy
-        variant_policy = VariantPolicy(paraphrase=True, numeric_jitter=NumericJitterPolicy(enabled=True, pct=10))
+        variant_policy = VariantPolicy(
+            paraphrase=True, numeric_jitter=NumericJitterPolicy(enabled=True, pct=10)
+        )
 
         # Select problems for variant generation
         problems_to_vary = self.problem_queue[: batch_item.n]
@@ -294,7 +309,9 @@ class CurriculumOrchestrator:
             }
         )
 
-    async def _execute_hint_variant_batch(self, batch_item: BatchItem, results: dict[str, Any]) -> None:
+    async def _execute_hint_variant_batch(
+        self, batch_item: BatchItem, results: dict[str, Any]
+    ) -> None:
         """Execute hint variant generation batch."""
 
         # For hint variants, we'd typically identify problems where students are struggling
@@ -334,7 +351,9 @@ class CurriculumOrchestrator:
             }
         )
 
-    async def _execute_promote_batch(self, batch_item: BatchItem, results: dict[str, Any]) -> None:
+    async def _execute_promote_batch(
+        self, batch_item: BatchItem, results: dict[str, Any]
+    ) -> None:
         """Execute student promotion batch."""
 
         # In a real implementation, this would:
@@ -345,9 +364,13 @@ class CurriculumOrchestrator:
         # For demo, just log the operation
         logger.info(f"Promoting {batch_item.n} students to harder problems")
 
-        results["details"].append({"operation": "promote", "status": "success", "items": batch_item.n})
+        results["details"].append(
+            {"operation": "promote", "status": "success", "items": batch_item.n}
+        )
 
-    async def _execute_drop_batch(self, batch_item: BatchItem, results: dict[str, Any]) -> None:
+    async def _execute_drop_batch(
+        self, batch_item: BatchItem, results: dict[str, Any]
+    ) -> None:
         """Execute problem drop batch."""
 
         # Remove ineffective or surplus problems
@@ -360,7 +383,9 @@ class CurriculumOrchestrator:
 
             logger.info(f"Dropped {len(dropped)} problems from queue")
 
-        results["details"].append({"operation": "drop", "status": "success", "items": items_to_drop})
+        results["details"].append(
+            {"operation": "drop", "status": "success", "items": items_to_drop}
+        )
 
     async def conduct_batch_planning(
         self,
@@ -440,7 +465,9 @@ class CurriculumOrchestrator:
 
         # Priority 1: Hint variants for stalled students (30% of capacity)
         if mastery_stats.stalled > 0 and remaining_capacity > 0:
-            hint_capacity = min(int(capacity * 0.3), mastery_stats.stalled, remaining_capacity)
+            hint_capacity = min(
+                int(capacity * 0.3), mastery_stats.stalled, remaining_capacity
+            )
             if hint_capacity > 0:
                 batch_items.append(
                     BatchItem(
@@ -482,7 +509,9 @@ class CurriculumOrchestrator:
 
         # Priority 4: Promote successful students (10% of capacity)
         if mastery_stats.understood > 0 and remaining_capacity > 0:
-            promote_capacity = min(int(capacity * 0.1), mastery_stats.understood, remaining_capacity)
+            promote_capacity = min(
+                int(capacity * 0.1), mastery_stats.understood, remaining_capacity
+            )
             if promote_capacity > 0:
                 batch_items.append(
                     BatchItem(
@@ -499,7 +528,9 @@ class CurriculumOrchestrator:
             queue=batch_items,
         )
 
-    async def run_curriculum_cycle(self, domain: str, num_cycles: int = 5, cycle_capacity: int = 50) -> dict[str, Any]:
+    async def run_curriculum_cycle(
+        self, domain: str, num_cycles: int = 5, cycle_capacity: int = 50
+    ) -> dict[str, Any]:
         """Run multiple curriculum cycles for continuous adaptation.
 
         Args:
@@ -519,14 +550,18 @@ class CurriculumOrchestrator:
 
             try:
                 # Plan batch operations
-                conductor_response = await self.conduct_batch_planning(capacity=cycle_capacity)
+                conductor_response = await self.conduct_batch_planning(
+                    capacity=cycle_capacity
+                )
 
                 if not conductor_response.ok or not conductor_response.queue:
                     logger.warning(f"Cycle {cycle + 1}: No operations planned")
                     continue
 
                 # Execute batch plan
-                execution_results = await self.execute_batch_plan(conductor_response.queue, domain)
+                execution_results = await self.execute_batch_plan(
+                    conductor_response.queue, domain
+                )
 
                 # Record cycle results
                 cycle_result = {
@@ -543,14 +578,18 @@ class CurriculumOrchestrator:
                 }
 
                 cycle_results.append(cycle_result)
-                logger.info(f"Cycle {cycle + 1} completed: {execution_results['operations_completed']} operations")
+                logger.info(
+                    f"Cycle {cycle + 1} completed: {execution_results['operations_completed']} operations"
+                )
 
                 # Brief pause between cycles
                 await asyncio.sleep(0.1)
 
             except Exception as e:
                 logger.error(f"Cycle {cycle + 1} failed: {e}")
-                cycle_results.append({"cycle": cycle + 1, "error": str(e), "status": "failed"})
+                cycle_results.append(
+                    {"cycle": cycle + 1, "error": str(e), "status": "failed"}
+                )
 
         # Calculate summary statistics
         total_operations = sum(r.get("completed_operations", 0) for r in cycle_results)
@@ -581,28 +620,38 @@ class CurriculumOrchestrator:
             "current_edge": {
                 "low": self.current_edge.low if self.current_edge else None,
                 "high": self.current_edge.high if self.current_edge else None,
-                "width": (self.current_edge.high - self.current_edge.low) if self.current_edge else None,
+                "width": (self.current_edge.high - self.current_edge.low)
+                if self.current_edge
+                else None,
             },
             "queues": {
                 "fresh_problems": backlog.fresh,
                 "variants": backlog.variants,
                 "hint_variants": backlog.hint_variants,
-                "total_queued": backlog.fresh + backlog.variants + backlog.hint_variants,
+                "total_queued": backlog.fresh
+                + backlog.variants
+                + backlog.hint_variants,
             },
             "student_distribution": {
                 "learning": mastery_stats.learning,
                 "understood": mastery_stats.understood,
                 "stalled": mastery_stats.stalled,
-                "total": mastery_stats.learning + mastery_stats.understood + mastery_stats.stalled,
+                "total": mastery_stats.learning
+                + mastery_stats.understood
+                + mastery_stats.stalled,
             },
             "system_health": self._assess_system_health(backlog, mastery_stats),
             "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
-    def _assess_system_health(self, backlog: QueueBacklog, mastery_stats: MasteryStats) -> str:
+    def _assess_system_health(
+        self, backlog: QueueBacklog, mastery_stats: MasteryStats
+    ) -> str:
         """Assess overall curriculum system health."""
 
-        total_students = mastery_stats.learning + mastery_stats.understood + mastery_stats.stalled
+        total_students = (
+            mastery_stats.learning + mastery_stats.understood + mastery_stats.stalled
+        )
         total_queued = backlog.fresh + backlog.variants + backlog.hint_variants
 
         # Check for critical issues
@@ -650,7 +699,9 @@ async def run_full_curriculum_pipeline(
         orchestrator = CurriculumOrchestrator(client, **kwargs)
 
         # Initialize curriculum
-        init_result = await orchestrator.initialize_curriculum(domain, initial_telemetry)
+        init_result = await orchestrator.initialize_curriculum(
+            domain, initial_telemetry
+        )
 
         if not init_result["success"]:
             return init_result
@@ -691,7 +742,11 @@ if __name__ == "__main__":
                 correct_prob = 0.50  # Transition zones
 
             correct = random.random() < correct_prob
-            telemetry.append(TelemetryEntry(task_id=f"demo_task_{i:03d}", difficulty=difficulty, correct=correct))
+            telemetry.append(
+                TelemetryEntry(
+                    task_id=f"demo_task_{i:03d}", difficulty=difficulty, correct=correct
+                )
+            )
 
         api_key = os.getenv("OPENROUTER_API_KEY", "demo-key")
 
@@ -716,7 +771,9 @@ if __name__ == "__main__":
             )
 
             # Plan batch
-            response = orchestrator._plan_batch_locally(backlog, mastery_stats, capacity=20)
+            response = orchestrator._plan_batch_locally(
+                backlog, mastery_stats, capacity=20
+            )
 
             print(f"\n🎯 Local Batch Plan ({len(response.queue)} operations):")
             for item in response.queue:
@@ -736,9 +793,15 @@ if __name__ == "__main__":
             )
 
             print("✅ Pipeline execution complete")
-            print(f"   Initialization: {'✅' if result['initialization']['success'] else '❌'}")
-            print(f"   Cycles run: {result['cycles']['successful_cycles']}/{result['cycles']['total_cycles']}")
-            print(f"   Operations completed: {result['cycles']['total_operations_completed']}")
+            print(
+                f"   Initialization: {'✅' if result['initialization']['success'] else '❌'}"
+            )
+            print(
+                f"   Cycles run: {result['cycles']['successful_cycles']}/{result['cycles']['total_cycles']}"
+            )
+            print(
+                f"   Operations completed: {result['cycles']['total_operations_completed']}"
+            )
             print(f"   Items processed: {result['cycles']['total_items_processed']}")
             print(f"   Final queues: {result['final_status']['queues']}")
             print(f"   System health: {result['final_status']['system_health']}")

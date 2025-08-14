@@ -189,7 +189,9 @@ class ChunkContext:
     previous_chunk_id: str | None = None
     next_chunk_id: str | None = None
     related_chunk_ids: list[str] = field(default_factory=list)
-    discourse_markers: list[str] = field(default_factory=list)  # "however", "furthermore"
+    discourse_markers: list[str] = field(
+        default_factory=list
+    )  # "however", "furthermore"
 
     # Book-specific
     character_appearances: list[str] = field(default_factory=list)
@@ -230,7 +232,9 @@ class ContextualTagger:
                 self.nlp = spacy.load(spacy_model)
                 logger.info(f"Loaded spaCy model: {spacy_model}")
             except OSError:
-                logger.warning(f"spaCy model {spacy_model} not found, entity extraction limited")
+                logger.warning(
+                    f"spaCy model {spacy_model} not found, entity extraction limited"
+                )
 
         # Domain classification keywords
         self.domain_keywords = {
@@ -465,7 +469,9 @@ class ContextualTagger:
             quality_indicators=quality_indicators,
         )
 
-        logger.info(f"Document context extracted: {doc_type.value}, {domain.value}, {reading_level.value}")
+        logger.info(
+            f"Document context extracted: {doc_type.value}, {domain.value}, {reading_level.value}"
+        )
         return doc_context
 
     def extract_chunk_context(
@@ -483,13 +489,17 @@ class ContextualTagger:
         logger.debug(f"Extracting chunk context for: {chunk_id}")
 
         # Analyze chunk structure and position
-        structural_info = self._analyze_chunk_structure(chunk_text, full_document_text, start_char, end_char)
+        structural_info = self._analyze_chunk_structure(
+            chunk_text, full_document_text, start_char, end_char
+        )
 
         # Generate local summary
         local_summary = self._generate_chunk_summary(chunk_text)
 
         # Classify chunk type
-        chunk_type = self._classify_chunk_type(chunk_text, chunk_position, document_context)
+        chunk_type = self._classify_chunk_type(
+            chunk_text, chunk_position, document_context
+        )
 
         # Extract local entities and keywords
         local_entities = self._extract_entities(chunk_text, context_type="chunk")
@@ -499,7 +509,9 @@ class ContextualTagger:
         discourse_markers = self._detect_discourse_markers(chunk_text)
 
         # Content-specific analysis
-        content_analysis = self._analyze_chunk_content(chunk_text, document_context, chunk_type)
+        content_analysis = self._analyze_chunk_content(
+            chunk_text, document_context, chunk_type
+        )
 
         # Quality metrics
         coherence_score = self._calculate_chunk_coherence(chunk_text)
@@ -507,8 +519,12 @@ class ContextualTagger:
         completeness_score = self._assess_chunk_completeness(chunk_text)
 
         # Context inheritance
-        inherited_context = self._create_inherited_context(document_context, previous_chunk_context)
-        context_overrides = self._detect_context_overrides(chunk_text, inherited_context)
+        inherited_context = self._create_inherited_context(
+            document_context, previous_chunk_context
+        )
+        context_overrides = self._detect_context_overrides(
+            chunk_text, inherited_context
+        )
 
         # Create chunk context
         chunk_context = ChunkContext(
@@ -525,7 +541,9 @@ class ContextualTagger:
             chunk_type=chunk_type,
             key_entities=local_entities,
             local_keywords=local_keywords,
-            previous_chunk_id=(previous_chunk_context.chunk_id if previous_chunk_context else None),
+            previous_chunk_id=(
+                previous_chunk_context.chunk_id if previous_chunk_context else None
+            ),
             discourse_markers=discourse_markers,
             character_appearances=content_analysis.get("character_appearances", []),
             concept_type=content_analysis.get("concept_type", "elaboration"),
@@ -542,7 +560,9 @@ class ContextualTagger:
 
         return chunk_context
 
-    def _classify_document_type(self, title: str, content: str, metadata: dict[str, Any]) -> DocumentType:
+    def _classify_document_type(
+        self, title: str, content: str, metadata: dict[str, Any]
+    ) -> DocumentType:
         """Classify document type based on content and metadata."""
         # Check explicit metadata first
         if "document_type" in metadata:
@@ -552,7 +572,9 @@ class ContextualTagger:
                 pass
 
         # Image detection
-        if any(ext in title.lower() for ext in [".jpg", ".png", ".gif", ".svg", ".pdf"]):
+        if any(
+            ext in title.lower() for ext in [".jpg", ".png", ".gif", ".svg", ".pdf"]
+        ):
             return DocumentType.IMAGE
 
         # Length-based classification
@@ -684,7 +706,9 @@ class ContextualTagger:
 
         return summary
 
-    def _extract_entities(self, text: str, context_type: str = "document") -> list[ContextualEntity]:
+    def _extract_entities(
+        self, text: str, context_type: str = "document"
+    ) -> list[ContextualEntity]:
         """Extract named entities with contextual information."""
         entities = []
 
@@ -713,7 +737,9 @@ class ContextualTagger:
 
         return entities
 
-    def _extract_entities_fallback(self, text: str, context_type: str) -> list[ContextualEntity]:
+    def _extract_entities_fallback(
+        self, text: str, context_type: str
+    ) -> list[ContextualEntity]:
         """Fallback entity extraction using patterns."""
         entities = []
 
@@ -808,7 +834,9 @@ class ContextualTagger:
 
         return chapter_count, section_count
 
-    def _extract_themes(self, content: str, entities: list[ContextualEntity]) -> list[str]:
+    def _extract_themes(
+        self, content: str, entities: list[ContextualEntity]
+    ) -> list[str]:
         """Extract main themes from document content."""
         themes = []
 
@@ -844,7 +872,9 @@ class ContextualTagger:
 
         return themes[:5]  # Limit to top 5 themes
 
-    def _extract_key_concepts(self, content: str, entities: list[ContextualEntity]) -> list[str]:
+    def _extract_key_concepts(
+        self, content: str, entities: list[ContextualEntity]
+    ) -> list[str]:
         """Extract key concepts from document."""
         concepts = []
 
@@ -861,7 +891,9 @@ class ContextualTagger:
         # Remove duplicates and return
         return list(set(concepts))[:10]
 
-    def _assess_document_quality(self, content: str, entities: list[ContextualEntity]) -> dict[str, float]:
+    def _assess_document_quality(
+        self, content: str, entities: list[ContextualEntity]
+    ) -> dict[str, float]:
         """Assess various quality indicators of the document."""
         quality = {}
 
@@ -872,7 +904,9 @@ class ContextualTagger:
         sentences = re.split(r"[.!?]+", content)
         sentence_lengths = [len(s.split()) for s in sentences if s.strip()]
         if sentence_lengths:
-            quality["sentence_variety"] = np.std(sentence_lengths) / np.mean(sentence_lengths)
+            quality["sentence_variety"] = np.std(sentence_lengths) / np.mean(
+                sentence_lengths
+            )
         else:
             quality["sentence_variety"] = 0.0
 
@@ -884,7 +918,9 @@ class ContextualTagger:
             quality["vocabulary_richness"] = 0.0
 
         # Structure quality (presence of headers, formatting)
-        structure_indicators = len(re.findall(r"^[#*-]\s+|^\d+\.", content, re.MULTILINE))
+        structure_indicators = len(
+            re.findall(r"^[#*-]\s+|^\d+\.", content, re.MULTILINE)
+        )
         quality["structural_quality"] = min(1.0, structure_indicators / 10)
 
         return quality
@@ -927,7 +963,9 @@ class ContextualTagger:
         structural_info["section_hierarchy"] = section_hierarchy
 
         # Extract chapter information
-        chapter_match = re.search(r"Chapter\s+(\d+)(?:\s*:\s*(.+?))?", preceding_text, re.IGNORECASE)
+        chapter_match = re.search(
+            r"Chapter\s+(\d+)(?:\s*:\s*(.+?))?", preceding_text, re.IGNORECASE
+        )
         if chapter_match:
             structural_info["chapter_number"] = int(chapter_match.group(1))
             if chapter_match.group(2):
@@ -971,16 +1009,24 @@ class ContextualTagger:
             return ChunkType.INTRODUCTION
 
         # Content-based classification
-        if any(word in text_lower for word in ["for example", "for instance", "such as"]):
+        if any(
+            word in text_lower for word in ["for example", "for instance", "such as"]
+        ):
             return ChunkType.EXAMPLE
 
-        if any(word in text_lower for word in ["definition", "defined as", "refers to"]):
+        if any(
+            word in text_lower for word in ["definition", "defined as", "refers to"]
+        ):
             return ChunkType.DEFINITION
 
-        if any(word in text_lower for word in ["first", "then", "next", "finally", "step"]):
+        if any(
+            word in text_lower for word in ["first", "then", "next", "finally", "step"]
+        ):
             return ChunkType.PROCEDURE
 
-        if any(word in text_lower for word in ["said", "replied", "asked", "exclaimed"]):
+        if any(
+            word in text_lower for word in ["said", "replied", "asked", "exclaimed"]
+        ):
             return ChunkType.DIALOGUE
 
         if re.search(r"```|<code>|def\s+\w+|function\s+\w+", chunk_text):
@@ -1018,13 +1064,18 @@ class ContextualTagger:
                 potential_characters = re.findall(r"\b[A-Z][a-z]+\b", chunk_text)
                 # Filter common words
                 common_words = {"The", "This", "That", "When", "Where", "How", "Why"}
-                characters = [name for name in potential_characters if name not in common_words]
+                characters = [
+                    name for name in potential_characters if name not in common_words
+                ]
                 analysis["character_appearances"] = list(set(characters))[:5]
 
             # Determine concept type
             if chunk_type == ChunkType.EXAMPLE:
                 analysis["concept_type"] = "example"
-            elif any(word in chunk_text.lower() for word in ["introduce", "first mention", "new concept"]):
+            elif any(
+                word in chunk_text.lower()
+                for word in ["introduce", "first mention", "new concept"]
+            ):
                 analysis["concept_type"] = "introduction"
             else:
                 analysis["concept_type"] = "elaboration"
@@ -1064,7 +1115,9 @@ class ContextualTagger:
             logger.warning(f"Coherence calculation failed: {e}")
             return 0.5
 
-    def _calculate_chunk_relevance(self, chunk_text: str, document_context: DocumentContext) -> float:
+    def _calculate_chunk_relevance(
+        self, chunk_text: str, document_context: DocumentContext
+    ) -> float:
         """Calculate relevance of chunk to document themes."""
         chunk_keywords = set(self._extract_keywords(chunk_text, limit=10))
         document_keywords = set(document_context.document_keywords)
@@ -1124,7 +1177,9 @@ class ContextualTagger:
 
         return inherited
 
-    def _detect_context_overrides(self, chunk_text: str, inherited_context: dict[str, Any]) -> dict[str, Any]:
+    def _detect_context_overrides(
+        self, chunk_text: str, inherited_context: dict[str, Any]
+    ) -> dict[str, Any]:
         """Detect when chunk context overrides inherited context."""
         overrides = {}
 
@@ -1242,7 +1297,9 @@ class ContextualTagger:
                 "relevance_score": chunk_context.relevance_score,
                 "completeness_score": chunk_context.completeness_score,
                 "overall_quality": (
-                    chunk_context.coherence_score + chunk_context.relevance_score + chunk_context.completeness_score
+                    chunk_context.coherence_score
+                    + chunk_context.relevance_score
+                    + chunk_context.completeness_score
                 )
                 / 3,
             },
@@ -1349,8 +1406,12 @@ async def test_contextual_tagging():
         print(f"  Type: {contextual_chunk['chunk_context']['chunk_type']}")
         print(f"  Summary: {contextual_chunk['chunk_context']['local_summary']}")
         print(f"  Keywords: {contextual_chunk['chunk_context']['local_keywords'][:3]}")
-        print(f"  Quality: {contextual_chunk['quality_metrics']['overall_quality']:.3f}")
-        print(f"  Coherence: {contextual_chunk['quality_metrics']['coherence_score']:.3f}")
+        print(
+            f"  Quality: {contextual_chunk['quality_metrics']['overall_quality']:.3f}"
+        )
+        print(
+            f"  Coherence: {contextual_chunk['quality_metrics']['coherence_score']:.3f}"
+        )
         print(f"  Text: {sentence[:100]}...")
 
     print(f"\n{'=' * 50}")

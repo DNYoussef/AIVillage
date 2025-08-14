@@ -94,7 +94,9 @@ class DeviceMesh:
 
         # Mesh networking
         self.routing_table: dict[str, MeshRoute] = {}
-        self.network_topology: dict[str, set[str]] = {}  # node_id -> connected neighbors
+        self.network_topology: dict[
+            str, set[str]
+        ] = {}  # node_id -> connected neighbors
         self.connection_types: dict[str, ConnectionType] = {}
         self.network_metrics: dict[str, NetworkMetrics] = {}
 
@@ -102,7 +104,9 @@ class DeviceMesh:
         self.flooding_cache: set[str] = set()  # Message IDs for flood prevention
         self.tree_parent: str | None = None
         self.tree_children: set[str] = set()
-        self.link_state_db: dict[str, dict[str, float]] = {}  # node -> {neighbor -> cost}
+        self.link_state_db: dict[
+            str, dict[str, float]
+        ] = {}  # node -> {neighbor -> cost}
 
         # Background tasks
         self.routing_task: asyncio.Task | None = None
@@ -263,7 +267,9 @@ class DeviceMesh:
         message_id = str(uuid.uuid4())
 
         if self.protocol == MeshProtocol.FLOODING:
-            return await self._flood_broadcast(data, message_id, max_hops, exclude_nodes)
+            return await self._flood_broadcast(
+                data, message_id, max_hops, exclude_nodes
+            )
         if self.protocol == MeshProtocol.TREE_ROUTING:
             return await self._tree_broadcast(data, message_id, max_hops, exclude_nodes)
         # Default to direct broadcast to neighbors
@@ -309,10 +315,16 @@ class DeviceMesh:
                 "supports_bluetooth": self.device_capabilities.supports_bluetooth,
                 "supports_wifi_direct": self.device_capabilities.supports_wifi_direct,
             },
-            "network_topology": {node: list(neighbors) for node, neighbors in self.network_topology.items()},
+            "network_topology": {
+                node: list(neighbors)
+                for node, neighbors in self.network_topology.items()
+            },
             "routing_table_size": len(self.routing_table),
             "reachable_nodes": len(self.routing_table),
-            "connection_types": {peer: conn_type.value for peer, conn_type in self.connection_types.items()},
+            "connection_types": {
+                peer: conn_type.value
+                for peer, conn_type in self.connection_types.items()
+            },
             "stored_messages": sum(len(msgs) for msgs in self.message_store.values()),
             "metrics": {
                 "avg_latency": self._calculate_average_latency(),
@@ -342,7 +354,9 @@ class DeviceMesh:
         for dest in stale_routes:
             del self.routing_table[dest]
 
-        logger.info(f"Routing optimization complete, {len(stale_routes)} stale routes removed")
+        logger.info(
+            f"Routing optimization complete, {len(stale_routes)} stale routes removed"
+        )
 
     def _find_route(self, destination: str) -> MeshRoute | None:
         """Find best route to destination."""
@@ -457,7 +471,9 @@ class DeviceMesh:
         # Limit stored messages per destination
         max_stored = 100
         if len(self.message_store[destination]) > max_stored:
-            self.message_store[destination] = self.message_store[destination][-max_stored:]
+            self.message_store[destination] = self.message_store[destination][
+                -max_stored:
+            ]
 
     async def _deliver_stored_messages(self, peer_id: str) -> None:
         """Deliver stored messages when peer comes online."""
@@ -465,7 +481,9 @@ class DeviceMesh:
             messages = self.message_store.pop(peer_id)
 
             for message in messages:
-                await self.node.send_message(peer_id, message.message_type, message.payload)
+                await self.node.send_message(
+                    peer_id, message.message_type, message.payload
+                )
 
             logger.info(f"Delivered {len(messages)} stored messages to {peer_id}")
 
@@ -525,7 +543,9 @@ class DeviceMesh:
             "route_path": route_path,
         }
 
-        await self.node.send_message(route.next_hop, MessageType.DATA, forwarded_payload)
+        await self.node.send_message(
+            route.next_hop, MessageType.DATA, forwarded_payload
+        )
 
     async def _flood_broadcast(
         self,
@@ -558,7 +578,9 @@ class DeviceMesh:
         successful_sends = 0
         for peer_id in self.node.peers:
             if peer_id not in exclude_nodes:
-                if await self.node.send_message(peer_id, MessageType.DATA, flood_payload):
+                if await self.node.send_message(
+                    peer_id, MessageType.DATA, flood_payload
+                ):
                     successful_sends += 1
 
         return successful_sends
@@ -581,7 +603,9 @@ class DeviceMesh:
 
         # Send to parent if not the source
         if self.tree_parent and self.tree_parent not in exclude_nodes:
-            if await self.node.send_message(self.tree_parent, MessageType.DATA, tree_payload):
+            if await self.node.send_message(
+                self.tree_parent, MessageType.DATA, tree_payload
+            ):
                 successful_sends += 1
 
         # Send to all children
@@ -648,7 +672,9 @@ class DeviceMesh:
             try:
                 # Simple latency measurement
                 start_time = time.time()
-                success = await self.node.send_message(peer_id, MessageType.HEARTBEAT, {"ping": True})
+                success = await self.node.send_message(
+                    peer_id, MessageType.HEARTBEAT, {"ping": True}
+                )
 
                 if success:
                     latency = (time.time() - start_time) * 1000  # Convert to ms
@@ -665,7 +691,9 @@ class DeviceMesh:
                         # Update with exponential moving average
                         alpha = 0.3
                         current = self.network_metrics[peer_id]
-                        current.latency_ms = alpha * latency + (1 - alpha) * current.latency_ms
+                        current.latency_ms = (
+                            alpha * latency + (1 - alpha) * current.latency_ms
+                        )
                         current.last_updated = time.time()
 
             except Exception as e:

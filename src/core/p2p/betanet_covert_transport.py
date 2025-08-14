@@ -147,14 +147,18 @@ class HTTP2CovertChannel:
                     logger.info(f"HTTP/2 covert channel established to {host}:{port}")
                     return True
                 else:
-                    logger.error(f"HTTP/2 connection test failed with status {response.status_code}")
+                    logger.error(
+                        f"HTTP/2 connection test failed with status {response.status_code}"
+                    )
                     return False
 
         except Exception as e:
             logger.error(f"Failed to establish HTTP/2 connection: {e}")
             return False
 
-    async def send_covert_message(self, data: bytes, stream_id: int | None = None) -> bool:
+    async def send_covert_message(
+        self, data: bytes, stream_id: int | None = None
+    ) -> bool:
         """Send data via HTTP/2 covert channel."""
         if not self.connection:
             logger.error("No HTTP/2 connection established")
@@ -172,7 +176,11 @@ class HTTP2CovertChannel:
             self.connection.send_headers(stream_id, headers)
 
             # Compress data if enabled
-            payload = self._compress_payload(data) if self.profile.compression_enabled else data
+            payload = (
+                self._compress_payload(data)
+                if self.profile.compression_enabled
+                else data
+            )
 
             # Send data
             self.connection.send_data(stream_id, payload, end_stream=True)
@@ -241,7 +249,9 @@ class HTTP3CovertChannel:
             logger.error(f"Failed to establish HTTP/3 connection: {e}")
             return False
 
-    async def send_covert_stream(self, data: bytes, stream_type: str = "request") -> bool:
+    async def send_covert_stream(
+        self, data: bytes, stream_type: str = "request"
+    ) -> bool:
         """Send data via HTTP/3 QUIC stream."""
         try:
             # Create QUIC stream for covert data
@@ -385,7 +395,9 @@ class ServerSentEventsCovertChannel:
                     logger.info(f"SSE covert stream established to {endpoint}")
                     return True
                 else:
-                    logger.error(f"SSE endpoint test failed with status {response.status_code}")
+                    logger.error(
+                        f"SSE endpoint test failed with status {response.status_code}"
+                    )
                     return False
 
             except Exception as e:
@@ -420,7 +432,9 @@ class ServerSentEventsCovertChannel:
                         logger.debug(f"Sent {len(data)} bytes via SSE event")
                         return True
                     else:
-                        logger.error(f"SSE send failed with status {response.status_code}")
+                        logger.error(
+                            f"SSE send failed with status {response.status_code}"
+                        )
                         return False
 
                 except Exception as e:
@@ -443,8 +457,12 @@ class BetanetCovertTransport:
         self.profile = CovertTrafficProfile.create_browser_profile()
 
         # Initialize channels based on availability
-        self.http2_channel = HTTP2CovertChannel(self.profile) if HTTP2_AVAILABLE else None
-        self.http3_channel = HTTP3CovertChannel(self.profile) if HTTP3_AVAILABLE else None
+        self.http2_channel = (
+            HTTP2CovertChannel(self.profile) if HTTP2_AVAILABLE else None
+        )
+        self.http3_channel = (
+            HTTP3CovertChannel(self.profile) if HTTP3_AVAILABLE else None
+        )
         self.websocket_channel = WebSocketCovertChannel(self.profile)
         self.sse_channel = ServerSentEventsCovertChannel(self.profile)
 
@@ -482,7 +500,9 @@ class BetanetCovertTransport:
 
         return success
 
-    async def _establish_channel(self, mode: CovertTransportMode, host: str, port: int) -> bool:
+    async def _establish_channel(
+        self, mode: CovertTransportMode, host: str, port: int
+    ) -> bool:
         """Establish specific covert channel type."""
         try:
             if mode == CovertTransportMode.HTTP2 and self.http2_channel:
@@ -593,7 +613,9 @@ class BetanetCovertTransport:
                         elif mode == CovertTransportMode.SERVER_SENT_EVENTS:
                             await channel.send_covert_event(marked_payload)
                     except Exception as send_error:
-                        logger.debug(f"Cover traffic send failed (non-critical): {send_error}")
+                        logger.debug(
+                            f"Cover traffic send failed (non-critical): {send_error}"
+                        )
 
                     logger.debug(f"Generated {payload_size} bytes of cover traffic")
 
@@ -643,7 +665,9 @@ def enhance_betanet_with_covert_transport(
         return await betanet_transport.covert_transport.send_covert_data(data)
 
     async def start_covert_mode(host: str, port: int = 443) -> bool:
-        return await betanet_transport.covert_transport.start_covert_transport(host, port)
+        return await betanet_transport.covert_transport.start_covert_transport(
+            host, port
+        )
 
     # Bind methods to transport instance
     betanet_transport.send_covert_message = send_covert_message

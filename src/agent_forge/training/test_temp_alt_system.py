@@ -76,7 +76,9 @@ class TestTempCurriculum:
         for i in range(10):
             snippet = GeneratedSnippet(
                 id=f"test_{i}",
-                tau_bin=TempBin(0.1 * i, 0.1 * (i + 1), 0.1 * i + 0.05, TempBinType.LOW),
+                tau_bin=TempBin(
+                    0.1 * i, 0.1 * (i + 1), 0.1 * i + 0.05, TempBinType.LOW
+                ),
                 domain="test",
                 topic="testing",
                 text=f"Test snippet {i}",
@@ -130,11 +132,14 @@ class TestSelfModeling:
 
     def test_self_model_head(self):
         """Test basic self-modeling head."""
-        head = SelfModelHead(tap_layers=self.tap_layers, hidden_dim=self.hidden_dim, projection_dim=32)
+        head = SelfModelHead(
+            tap_layers=self.tap_layers, hidden_dim=self.hidden_dim, projection_dim=32
+        )
 
         # Create mock activations
         tap_activations = {
-            layer: torch.randn(self.batch_size, self.seq_len, self.hidden_dim) for layer in self.tap_layers
+            layer: torch.randn(self.batch_size, self.seq_len, self.hidden_dim)
+            for layer in self.tap_layers
         }
 
         predictions, loss = head(tap_activations)
@@ -145,7 +150,9 @@ class TestSelfModeling:
 
     def test_temp_infer_head(self):
         """Test temperature inference head."""
-        head = TempInferHead(hidden_dim=self.hidden_dim, num_temp_bins=6, projection_dim=32)
+        head = TempInferHead(
+            hidden_dim=self.hidden_dim, num_temp_bins=6, projection_dim=32
+        )
 
         # Test with sequence input
         hidden_states = torch.randn(self.batch_size, self.seq_len, self.hidden_dim)
@@ -183,7 +190,8 @@ class TestSelfModeling:
         )
 
         tap_activations = {
-            layer: torch.randn(self.batch_size, self.seq_len, self.hidden_dim) for layer in self.tap_layers
+            layer: torch.randn(self.batch_size, self.seq_len, self.hidden_dim)
+            for layer in self.tap_layers
         }
 
         # Test forward pass with labels
@@ -323,7 +331,9 @@ class TestTelemetryEncoding:
         ]
 
         for encoding_type in encodings:
-            encoder = create_telemetry_encoder(encoding_type=encoding_type, feature_dim=32, num_bins=5)
+            encoder = create_telemetry_encoder(
+                encoding_type=encoding_type, feature_dim=32, num_bins=5
+            )
 
             encoded = encoder(mock_telemetry)
 
@@ -387,7 +397,9 @@ class TestOpenRouterIntegration:
         assert len(manager.categories) > 0
 
         # Test template retrieval by category
-        coding_templates = manager.get_templates_by_category(PromptCategory.CODING_PYTHON)
+        coding_templates = manager.get_templates_by_category(
+            PromptCategory.CODING_PYTHON
+        )
         assert len(coding_templates) > 0
 
         # Test temperature-based filtering
@@ -430,7 +442,9 @@ class TestOpenRouterIntegration:
 
         # Test temperature consistency evaluation
         test_prompt = "Write a simple function."
-        analysis = await system.evaluate_temperature_consistency(prompt=test_prompt, temperature_points=[0.1, 0.5, 0.9])
+        analysis = await system.evaluate_temperature_consistency(
+            prompt=test_prompt, temperature_points=[0.1, 0.5, 0.9]
+        )
 
         assert "success_rate" in analysis
         assert "results" in analysis
@@ -442,7 +456,9 @@ class TestOpenRouterIntegration:
             TempBin(0.4, 0.6, 0.5, TempBinType.MID),
         ]
 
-        training_data = await system.generate_training_data(temp_bins=temp_bins, samples_per_bin=2)
+        training_data = await system.generate_training_data(
+            temp_bins=temp_bins, samples_per_bin=2
+        )
 
         assert len(training_data) <= 4  # Up to 2 samples per 2 bins
 
@@ -476,7 +492,9 @@ class TestTempAlternationTrainer:
     def test_trainer_initialization(self):
         """Test trainer initialization."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            trainer = TempAlternationTrainer(model=self.model, config=self.config, device="cpu", save_dir=tmpdir)
+            trainer = TempAlternationTrainer(
+                model=self.model, config=self.config, device="cpu", save_dir=tmpdir
+            )
 
             assert trainer.model is not None
             assert trainer.config == self.config
@@ -487,7 +505,9 @@ class TestTempAlternationTrainer:
     def test_training_step(self):
         """Test single training step."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            trainer = TempAlternationTrainer(model=self.model, config=self.config, device="cpu", save_dir=tmpdir)
+            trainer = TempAlternationTrainer(
+                model=self.model, config=self.config, device="cpu", save_dir=tmpdir
+            )
 
             # Create mock batch
             batch = {
@@ -513,7 +533,9 @@ class TestTempAlternationTrainer:
     def test_round_advancement(self):
         """Test curriculum round advancement."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            trainer = TempAlternationTrainer(model=self.model, config=self.config, device="cpu", save_dir=tmpdir)
+            trainer = TempAlternationTrainer(
+                model=self.model, config=self.config, device="cpu", save_dir=tmpdir
+            )
 
             # Set up for round advancement
             trainer.state.step = self.config.round2_min_steps
@@ -529,7 +551,9 @@ class TestTempAlternationTrainer:
     def test_checkpoint_save_load(self):
         """Test checkpoint saving and loading."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            trainer = TempAlternationTrainer(model=self.model, config=self.config, device="cpu", save_dir=tmpdir)
+            trainer = TempAlternationTrainer(
+                model=self.model, config=self.config, device="cpu", save_dir=tmpdir
+            )
 
             # Set some state
             trainer.state.step = 50
@@ -591,11 +615,15 @@ class TestSystemIntegration:
         )
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            trainer = TempAlternationTrainer(model=model, config=config, device="cpu", save_dir=tmpdir)
+            trainer = TempAlternationTrainer(
+                model=model, config=config, device="cpu", save_dir=tmpdir
+            )
 
             # Create mock dataset
             dataset = MockDataset(size=20, seq_len=8, vocab_size=5)
-            dataloader = torch.utils.data.DataLoader(dataset, batch_size=config.batch_size, shuffle=True)
+            dataloader = torch.utils.data.DataLoader(
+                dataset, batch_size=config.batch_size, shuffle=True
+            )
 
             # Run training
             trainer.train(train_dataloader=dataloader)

@@ -34,7 +34,9 @@ class ComputeMiningSystem:
             return True
         return False
 
-    def track_compute_contribution(self, device_id: str, session: ComputeSession) -> int:
+    def track_compute_contribution(
+        self, device_id: str, session: ComputeSession
+    ) -> int:
         if not self.verify_computation(session.proof):
             return 0
         if self.detect_gaming(device_id, session):

@@ -13,16 +13,18 @@ import hashlib
 import logging
 import secrets
 import struct
+import time
 from dataclasses import dataclass
 from enum import Enum
 
 # Try to import cryptography for production use
 try:
     from cryptography.hazmat.backends import default_backend
-    from cryptography.hazmat.primitives import hashes
+    from cryptography.hazmat.primitives import hashes, serialization
     from cryptography.hazmat.primitives.asymmetric import x25519
     from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
     from cryptography.hazmat.primitives.ciphers.aead import ChaCha20Poly1305
+    from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 
     CRYPTO_AVAILABLE = True
 except ImportError:
@@ -69,6 +71,18 @@ class NoiseKeys:
     sending_nonce: int = 0
     receiving_nonce: int = 0
 
+    # Rekey tracking (BN-5.3)
+    bytes_sent: int = 0
+    bytes_received: int = 0
+    frames_sent: int = 0
+    frames_received: int = 0
+    key_creation_time: float = 0.0
+    pending_key_update: bool = False
+
+    # Per-direction nonce salts (BN-5.3)
+    sending_nonce_salt: bytes = None
+    receiving_nonce_salt: bytes = None
+
 
 class NoiseXKProtocol:
     """Noise XK protocol implementation for HTX inner security.
@@ -91,6 +105,11 @@ class NoiseXKProtocol:
     HASH_LEN = 32  # BLAKE2s hash length
     TAGLEN = 16  # ChaCha20-Poly1305 tag length
 
+    # BN-5.3 Rekey thresholds
+    REKEY_BYTES_THRESHOLD = 8 * 1024 * 1024 * 1024  # 8 GiB
+    REKEY_FRAMES_THRESHOLD = 2**16  # 65536 frames
+    REKEY_TIME_THRESHOLD = 3600  # 1 hour in seconds
+
     def __init__(self, is_initiator: bool, known_remote_static: bytes = None):
         """Initialize Noise XK protocol.
 
@@ -103,12 +122,16 @@ class NoiseXKProtocol:
         self.keys = NoiseKeys()
 
         if not CRYPTO_AVAILABLE:
-            logger.warning("Cryptography library not available, using simplified implementation")
+            logger.warning(
+                "Cryptography library not available, using simplified implementation"
+            )
 
         # XK requires known remote static key
         if known_remote_static:
             if len(known_remote_static) != self.DH_LEN:
-                raise ValueError(f"Invalid remote static key length: {len(known_remote_static)}")
+                raise ValueError(
+                    f"Invalid remote static key length: {len(known_remote_static)}"
+                )
             self.keys.remote_static = known_remote_static
         elif not is_initiator:
             # Responder needs static key pair
@@ -127,7 +150,9 @@ class NoiseXKProtocol:
 
         # Mix in remote static key (XK pattern requirement)
         if self.keys.remote_static:
-            self.keys.handshake_hash = self._hash(self.keys.handshake_hash + self.keys.remote_static)
+            self.keys.handshake_hash = self._hash(
+                self.keys.handshake_hash + self.keys.remote_static
+            )
 
         self.state = NoiseHandshakeState.INITIALIZED
         logger.info(f"Noise XK handshake initialized (initiator: {self.is_initiator})")
@@ -152,7 +177,9 @@ class NoiseXKProtocol:
             raise RuntimeError("Remote static key required for XK pattern")
 
         # Generate ephemeral key pair
-        self.keys.ephemeral_private, self.keys.ephemeral_public = self._generate_keypair()
+        self.keys.ephemeral_private, self.keys.ephemeral_public = (
+            self._generate_keypair()
+        )
 
         # Start building message
         message = bytearray()
@@ -161,11 +188,15 @@ class NoiseXKProtocol:
         message.extend(self.keys.ephemeral_public)
 
         # Mix ephemeral public key into handshake hash
-        self.keys.handshake_hash = self._hash(self.keys.handshake_hash + self.keys.ephemeral_public)
+        self.keys.handshake_hash = self._hash(
+            self.keys.handshake_hash + self.keys.ephemeral_public
+        )
 
         # Perform DH(e, rs) - ephemeral with remote static
         dh_result = self._dh(self.keys.ephemeral_private, self.keys.remote_static)
-        self.keys.chaining_key, temp_key = self._hkdf(self.keys.chaining_key, dh_result, 2)
+        self.keys.chaining_key, temp_key = self._hkdf(
+            self.keys.chaining_key, dh_result, 2
+        )
 
         self.state = NoiseHandshakeState.MESSAGE_SENT
         logger.debug(f"Created Noise XK message 1 ({len(message)} bytes)")
@@ -191,14 +222,18 @@ class NoiseXKProtocol:
         self.keys.remote_ephemeral = message[: self.DH_LEN]
 
         # Mix remote ephemeral public key into handshake hash
-        self.keys.handshake_hash = self._hash(self.keys.handshake_hash + self.keys.remote_ephemeral)
+        self.keys.handshake_hash = self._hash(
+            self.keys.handshake_hash + self.keys.remote_ephemeral
+        )
 
         # Perform DH(e, rs) - use our static key with remote ephemeral
         if not self.keys.static_private:
             raise RuntimeError("Static private key required")
 
         dh_result = self._dh(self.keys.static_private, self.keys.remote_ephemeral)
-        self.keys.chaining_key, temp_key = self._hkdf(self.keys.chaining_key, dh_result, 2)
+        self.keys.chaining_key, temp_key = self._hkdf(
+            self.keys.chaining_key, dh_result, 2
+        )
 
         self.state = NoiseHandshakeState.MESSAGE_RECEIVED
         logger.debug("Processed Noise XK message 1")
@@ -220,7 +255,9 @@ class NoiseXKProtocol:
             raise RuntimeError(f"Cannot send message 2 from state: {self.state}")
 
         # Generate ephemeral key pair
-        self.keys.ephemeral_private, self.keys.ephemeral_public = self._generate_keypair()
+        self.keys.ephemeral_private, self.keys.ephemeral_public = (
+            self._generate_keypair()
+        )
 
         # Start building message
         message = bytearray()
@@ -229,11 +266,15 @@ class NoiseXKProtocol:
         message.extend(self.keys.ephemeral_public)
 
         # Mix ephemeral public key into handshake hash
-        self.keys.handshake_hash = self._hash(self.keys.handshake_hash + self.keys.ephemeral_public)
+        self.keys.handshake_hash = self._hash(
+            self.keys.handshake_hash + self.keys.ephemeral_public
+        )
 
         # Perform DH(e, e) - ephemeral with remote ephemeral
         dh_result = self._dh(self.keys.ephemeral_private, self.keys.remote_ephemeral)
-        self.keys.chaining_key, temp_key = self._hkdf(self.keys.chaining_key, dh_result, 2)
+        self.keys.chaining_key, temp_key = self._hkdf(
+            self.keys.chaining_key, dh_result, 2
+        )
 
         self.state = NoiseHandshakeState.MESSAGE_SENT
         logger.debug(f"Created Noise XK message 2 ({len(message)} bytes)")
@@ -259,11 +300,15 @@ class NoiseXKProtocol:
         self.keys.remote_ephemeral = message[: self.DH_LEN]
 
         # Mix remote ephemeral public key into handshake hash
-        self.keys.handshake_hash = self._hash(self.keys.handshake_hash + self.keys.remote_ephemeral)
+        self.keys.handshake_hash = self._hash(
+            self.keys.handshake_hash + self.keys.remote_ephemeral
+        )
 
         # Perform DH(e, e) - our ephemeral with remote ephemeral
         dh_result = self._dh(self.keys.ephemeral_private, self.keys.remote_ephemeral)
-        self.keys.chaining_key, temp_key = self._hkdf(self.keys.chaining_key, dh_result, 2)
+        self.keys.chaining_key, temp_key = self._hkdf(
+            self.keys.chaining_key, dh_result, 2
+        )
 
         self.state = NoiseHandshakeState.MESSAGE_RECEIVED
         logger.debug("Processed Noise XK message 2")
@@ -293,15 +338,21 @@ class NoiseXKProtocol:
 
         # Encrypt and authenticate static public key
         temp_key1, temp_key2 = self._hkdf(self.keys.chaining_key, b"", 2)
-        encrypted_static = self._encrypt(temp_key1, 0, self.keys.handshake_hash, self.keys.static_public)
+        encrypted_static = self._encrypt(
+            temp_key1, 0, self.keys.handshake_hash, self.keys.static_public
+        )
         message.extend(encrypted_static)
 
         # Mix encrypted static key into handshake hash
-        self.keys.handshake_hash = self._hash(self.keys.handshake_hash + encrypted_static)
+        self.keys.handshake_hash = self._hash(
+            self.keys.handshake_hash + encrypted_static
+        )
 
         # Perform DH(s, e) - our static with remote ephemeral
         dh_result = self._dh(self.keys.static_private, self.keys.remote_ephemeral)
-        self.keys.chaining_key, temp_key = self._hkdf(self.keys.chaining_key, dh_result, 2)
+        self.keys.chaining_key, temp_key = self._hkdf(
+            self.keys.chaining_key, dh_result, 2
+        )
 
         # Handshake complete - derive transport keys
         self._derive_transport_keys()
@@ -331,18 +382,24 @@ class NoiseXKProtocol:
         encrypted_static = message[: self.DH_LEN + self.TAGLEN]
 
         try:
-            decrypted_static = self._decrypt(temp_key1, 0, self.keys.handshake_hash, encrypted_static)
+            decrypted_static = self._decrypt(
+                temp_key1, 0, self.keys.handshake_hash, encrypted_static
+            )
             self.keys.remote_static = decrypted_static
         except Exception as e:
             self.state = NoiseHandshakeState.HANDSHAKE_FAILED
             raise ValueError(f"Failed to decrypt remote static key: {e}")
 
         # Mix encrypted static key into handshake hash
-        self.keys.handshake_hash = self._hash(self.keys.handshake_hash + encrypted_static)
+        self.keys.handshake_hash = self._hash(
+            self.keys.handshake_hash + encrypted_static
+        )
 
         # Perform DH(s, e) - remote static with our ephemeral
         dh_result = self._dh(self.keys.ephemeral_private, self.keys.remote_static)
-        self.keys.chaining_key, temp_key = self._hkdf(self.keys.chaining_key, dh_result, 2)
+        self.keys.chaining_key, temp_key = self._hkdf(
+            self.keys.chaining_key, dh_result, 2
+        )
 
         # Handshake complete - derive transport keys
         self._derive_transport_keys()
@@ -365,15 +422,23 @@ class NoiseXKProtocol:
         if not self.keys.sending_key:
             raise RuntimeError("Sending key not available")
 
-        # Encrypt with nonce and increment
-        ciphertext = self._encrypt(
+        # Check if rekey is needed before sending (BN-5.3)
+        if self._should_rekey_send():
+            raise RuntimeError("Rekey required before sending")
+
+        # Encrypt with nonce salt (BN-5.3)
+        ciphertext = self._encrypt_with_salt(
             self.keys.sending_key,
             self.keys.sending_nonce,
+            self.keys.sending_nonce_salt,
             b"",
-            plaintext,  # No additional data for transport
+            plaintext,
         )
 
+        # Update counters
         self.keys.sending_nonce += 1
+        self.keys.frames_sent += 1
+        self.keys.bytes_sent += len(ciphertext)
 
         # Check for nonce overflow (security requirement)
         if self.keys.sending_nonce >= 2**64 - 1:
@@ -396,15 +461,19 @@ class NoiseXKProtocol:
         if not self.keys.receiving_key:
             raise RuntimeError("Receiving key not available")
 
-        # Decrypt with nonce and increment
-        plaintext = self._decrypt(
+        # Decrypt with nonce salt (BN-5.3)
+        plaintext = self._decrypt_with_salt(
             self.keys.receiving_key,
             self.keys.receiving_nonce,
+            self.keys.receiving_nonce_salt,
             b"",
-            ciphertext,  # No additional data for transport
+            ciphertext,
         )
 
+        # Update counters
         self.keys.receiving_nonce += 1
+        self.keys.frames_received += 1
+        self.keys.bytes_received += len(ciphertext)
 
         # Check for nonce overflow
         if self.keys.receiving_nonce >= 2**64 - 1:
@@ -414,25 +483,214 @@ class NoiseXKProtocol:
 
     def _derive_transport_keys(self) -> None:
         """Derive transport encryption keys from handshake state."""
-        # Split chaining key into two transport keys
-        self.keys.sending_key, self.keys.receiving_key = self._hkdf(self.keys.chaining_key, b"", 2)
+        # Split chaining key into transport keys and nonce salts (BN-5.3)
+        key_material = self._hkdf(self.keys.chaining_key, b"", 4)
+        sending_key, receiving_key, sending_salt, receiving_salt = key_material
 
         # For XK pattern, initiator sends with first key, receives with second
         if self.is_initiator:
-            # Keys are correct as-is
-            pass
+            self.keys.sending_key = sending_key
+            self.keys.receiving_key = receiving_key
+            self.keys.sending_nonce_salt = sending_salt[:12]  # ChaCha20 nonce size
+            self.keys.receiving_nonce_salt = receiving_salt[:12]
         else:
             # Swap keys for responder
-            self.keys.sending_key, self.keys.receiving_key = (
-                self.keys.receiving_key,
-                self.keys.sending_key,
-            )
+            self.keys.sending_key = receiving_key
+            self.keys.receiving_key = sending_key
+            self.keys.sending_nonce_salt = receiving_salt[:12]
+            self.keys.receiving_nonce_salt = sending_salt[:12]
 
-        # Initialize nonces
+        # Initialize nonces and tracking
         self.keys.sending_nonce = 0
         self.keys.receiving_nonce = 0
+        self.keys.bytes_sent = 0
+        self.keys.bytes_received = 0
+        self.keys.frames_sent = 0
+        self.keys.frames_received = 0
+        self.keys.key_creation_time = time.time()
+        self.keys.pending_key_update = False
 
-        logger.debug("Transport keys derived")
+        logger.debug("Transport keys and nonce salts derived")
+
+    def _should_rekey_send(self) -> bool:
+        """Check if rekey is needed before sending (BN-5.3)."""
+        current_time = time.time()
+
+        return (
+            self.keys.bytes_sent >= self.REKEY_BYTES_THRESHOLD
+            or self.keys.frames_sent >= self.REKEY_FRAMES_THRESHOLD
+            or (current_time - self.keys.key_creation_time) >= self.REKEY_TIME_THRESHOLD
+        )
+
+    def _should_rekey_receive(self) -> bool:
+        """Check if rekey is needed based on received data (BN-5.3)."""
+        current_time = time.time()
+
+        return (
+            self.keys.bytes_received >= self.REKEY_BYTES_THRESHOLD
+            or self.keys.frames_received >= self.REKEY_FRAMES_THRESHOLD
+            or (current_time - self.keys.key_creation_time) >= self.REKEY_TIME_THRESHOLD
+        )
+
+    def initiate_key_update(self) -> bytes:
+        """Initiate key update process (BN-5.3).
+
+        Returns:
+            KEY_UPDATE message to send to peer
+        """
+        if self.keys.pending_key_update:
+            raise RuntimeError("Key update already in progress")
+
+        # Generate new ephemeral key for rekey
+        new_ephemeral_private, new_ephemeral_public = self._generate_keypair()
+
+        # Store for completion
+        self.keys.pending_key_update = True
+        self._new_ephemeral_private = new_ephemeral_private
+
+        logger.info("Initiated key update")
+        return new_ephemeral_public
+
+    def process_key_update(self, key_update_data: bytes) -> bool:
+        """Process received KEY_UPDATE message (BN-5.3).
+
+        Args:
+            key_update_data: Peer's new ephemeral public key
+
+        Returns:
+            True if update should be accepted, False otherwise
+        """
+        if len(key_update_data) != self.DH_LEN:
+            logger.warning(f"Invalid key update data length: {len(key_update_data)}")
+            return False
+
+        try:
+            # Perform DH with received ephemeral key
+            if hasattr(self, "_new_ephemeral_private"):
+                # We initiated the update
+                dh_result = self._dh(self._new_ephemeral_private, key_update_data)
+            else:
+                # Peer initiated, generate our ephemeral
+                our_ephemeral_private, our_ephemeral_public = self._generate_keypair()
+                dh_result = self._dh(our_ephemeral_private, key_update_data)
+                self._new_ephemeral_private = our_ephemeral_private
+
+            # Derive new transport keys from DH result
+            new_key_material = self._hkdf(dh_result, b"rekey", 4)
+            new_sending_key, new_receiving_key, new_sending_salt, new_receiving_salt = (
+                new_key_material
+            )
+
+            # Update keys but keep old keys until acked
+            self._old_sending_key = self.keys.sending_key
+            self._old_receiving_key = self.keys.receiving_key
+
+            if self.is_initiator:
+                self.keys.sending_key = new_sending_key
+                self.keys.receiving_key = new_receiving_key
+                self.keys.sending_nonce_salt = new_sending_salt[:12]
+                self.keys.receiving_nonce_salt = new_receiving_salt[:12]
+            else:
+                self.keys.sending_key = new_receiving_key
+                self.keys.receiving_key = new_sending_key
+                self.keys.sending_nonce_salt = new_receiving_salt[:12]
+                self.keys.receiving_nonce_salt = new_sending_salt[:12]
+
+            # Reset counters
+            self.keys.sending_nonce = 0
+            self.keys.receiving_nonce = 0
+            self.keys.bytes_sent = 0
+            self.keys.bytes_received = 0
+            self.keys.frames_sent = 0
+            self.keys.frames_received = 0
+            self.keys.key_creation_time = time.time()
+
+            logger.info("Key update processed successfully")
+            return True
+
+        except Exception as e:
+            logger.error(f"Key update failed: {e}")
+            return False
+
+    def finalize_key_update(self) -> None:
+        """Finalize key update after receiving ack (BN-5.3)."""
+        if hasattr(self, "_old_sending_key"):
+            delattr(self, "_old_sending_key")
+        if hasattr(self, "_old_receiving_key"):
+            delattr(self, "_old_receiving_key")
+        if hasattr(self, "_new_ephemeral_private"):
+            delattr(self, "_new_ephemeral_private")
+
+        self.keys.pending_key_update = False
+        logger.info("Key update finalized")
+
+    def _encrypt_with_salt(
+        self,
+        key: bytes,
+        nonce: int,
+        nonce_salt: bytes,
+        associated_data: bytes,
+        plaintext: bytes,
+    ) -> bytes:
+        """ChaCha20-Poly1305 AEAD encryption with nonce salt (BN-5.3)."""
+        if CRYPTO_AVAILABLE:
+            cipher = ChaCha20Poly1305(key)
+            # XOR counter with salt for per-direction nonces (BN-5.3)
+            nonce_bytes = struct.pack("<Q", nonce).ljust(12, b"\x00")[:12]
+            final_nonce = bytes(
+                a ^ b for a, b in zip(nonce_bytes, nonce_salt, strict=False)
+            )
+            return cipher.encrypt(final_nonce, plaintext, associated_data)
+        else:
+            # Simplified fallback
+            combined_nonce = struct.pack("<Q", nonce) + nonce_salt
+            xor_key = hashlib.sha256(key + combined_nonce + associated_data).digest()
+            encrypted = bytes(
+                a ^ b
+                for a, b in zip(
+                    plaintext, xor_key * ((len(plaintext) // 32) + 1), strict=False
+                )
+            )
+            tag = hashlib.sha256(encrypted + key).digest()[:16]
+            return encrypted + tag
+
+    def _decrypt_with_salt(
+        self,
+        key: bytes,
+        nonce: int,
+        nonce_salt: bytes,
+        associated_data: bytes,
+        ciphertext: bytes,
+    ) -> bytes:
+        """ChaCha20-Poly1305 AEAD decryption with nonce salt (BN-5.3)."""
+        if CRYPTO_AVAILABLE:
+            cipher = ChaCha20Poly1305(key)
+            nonce_bytes = struct.pack("<Q", nonce).ljust(12, b"\x00")[:12]
+            final_nonce = bytes(
+                a ^ b for a, b in zip(nonce_bytes, nonce_salt, strict=False)
+            )
+            return cipher.decrypt(final_nonce, ciphertext, associated_data)
+        else:
+            # Simplified fallback
+            if len(ciphertext) < 16:
+                raise ValueError("Ciphertext too short")
+
+            encrypted = ciphertext[:-16]
+            tag = ciphertext[-16:]
+
+            expected_tag = hashlib.sha256(encrypted + key).digest()[:16]
+            if tag != expected_tag:
+                raise ValueError("Authentication tag verification failed")
+
+            combined_nonce = struct.pack("<Q", nonce) + nonce_salt
+            xor_key = hashlib.sha256(key + combined_nonce + associated_data).digest()
+            plaintext = bytes(
+                a ^ b
+                for a, b in zip(
+                    encrypted, xor_key * ((len(encrypted) // 32) + 1), strict=False
+                )
+            )
+            return plaintext
 
     def _generate_keypair(self) -> tuple[bytes, bytes]:
         """Generate X25519 key pair."""
@@ -475,7 +733,9 @@ class NoiseXKProtocol:
         # Using SHA-256 as fallback since BLAKE2s may not be available
         return hashlib.sha256(data).digest()[:32]
 
-    def _hkdf(self, chaining_key: bytes, input_key_material: bytes, num_outputs: int) -> tuple[bytes, ...]:
+    def _hkdf(
+        self, chaining_key: bytes, input_key_material: bytes, num_outputs: int
+    ) -> tuple[bytes, ...]:
         """HKDF key derivation (simplified)."""
         if CRYPTO_AVAILABLE:
             hkdf = HKDF(
@@ -490,7 +750,9 @@ class NoiseXKProtocol:
             # Simplified HKDF using HMAC-SHA256
             derived = b""
             for i in range(num_outputs):
-                derived += hashlib.sha256(chaining_key + input_key_material + bytes([i])).digest()[:32]
+                derived += hashlib.sha256(
+                    chaining_key + input_key_material + bytes([i])
+                ).digest()[:32]
 
         # Split into requested number of 32-byte keys
         keys = []
@@ -499,7 +761,9 @@ class NoiseXKProtocol:
 
         return tuple(keys)
 
-    def _encrypt(self, key: bytes, nonce: int, associated_data: bytes, plaintext: bytes) -> bytes:
+    def _encrypt(
+        self, key: bytes, nonce: int, associated_data: bytes, plaintext: bytes
+    ) -> bytes:
         """ChaCha20-Poly1305 AEAD encryption."""
         if CRYPTO_AVAILABLE:
             cipher = ChaCha20Poly1305(key)
@@ -508,13 +772,22 @@ class NoiseXKProtocol:
             return cipher.encrypt(nonce_bytes, plaintext, associated_data)
         else:
             # Simplified fallback - not secure, just for testing
-            xor_key = hashlib.sha256(key + struct.pack("<Q", nonce) + associated_data).digest()
-            encrypted = bytes(a ^ b for a, b in zip(plaintext, xor_key * ((len(plaintext) // 32) + 1), strict=False))
+            xor_key = hashlib.sha256(
+                key + struct.pack("<Q", nonce) + associated_data
+            ).digest()
+            encrypted = bytes(
+                a ^ b
+                for a, b in zip(
+                    plaintext, xor_key * ((len(plaintext) // 32) + 1), strict=False
+                )
+            )
             # Fake authentication tag
             tag = hashlib.sha256(encrypted + key).digest()[:16]
             return encrypted + tag
 
-    def _decrypt(self, key: bytes, nonce: int, associated_data: bytes, ciphertext: bytes) -> bytes:
+    def _decrypt(
+        self, key: bytes, nonce: int, associated_data: bytes, ciphertext: bytes
+    ) -> bytes:
         """ChaCha20-Poly1305 AEAD decryption."""
         if CRYPTO_AVAILABLE:
             cipher = ChaCha20Poly1305(key)
@@ -534,8 +807,15 @@ class NoiseXKProtocol:
                 raise ValueError("Authentication tag verification failed")
 
             # Decrypt
-            xor_key = hashlib.sha256(key + struct.pack("<Q", nonce) + associated_data).digest()
-            plaintext = bytes(a ^ b for a, b in zip(encrypted, xor_key * ((len(encrypted) // 32) + 1), strict=False))
+            xor_key = hashlib.sha256(
+                key + struct.pack("<Q", nonce) + associated_data
+            ).digest()
+            plaintext = bytes(
+                a ^ b
+                for a, b in zip(
+                    encrypted, xor_key * ((len(encrypted) // 32) + 1), strict=False
+                )
+            )
             return plaintext
 
     def get_handshake_hash(self) -> bytes:

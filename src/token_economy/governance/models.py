@@ -74,17 +74,25 @@ class Proposal:
     @property
     def yes_votes(self) -> int:
         """Total YES voting power."""
-        return sum(vote.voting_power for vote in self.votes if vote.choice == VoteChoice.YES)
+        return sum(
+            vote.voting_power for vote in self.votes if vote.choice == VoteChoice.YES
+        )
 
     @property
     def no_votes(self) -> int:
         """Total NO voting power."""
-        return sum(vote.voting_power for vote in self.votes if vote.choice == VoteChoice.NO)
+        return sum(
+            vote.voting_power for vote in self.votes if vote.choice == VoteChoice.NO
+        )
 
     @property
     def abstain_votes(self) -> int:
         """Total ABSTAIN voting power."""
-        return sum(vote.voting_power for vote in self.votes if vote.choice == VoteChoice.ABSTAIN)
+        return sum(
+            vote.voting_power
+            for vote in self.votes
+            if vote.choice == VoteChoice.ABSTAIN
+        )
 
     def get_vote_by_user(self, voter_id: str) -> Vote | None:
         """Get vote by specific user."""

@@ -66,7 +66,9 @@ class JournalEntry:
     def __post_init__(self):
         if not self.id:
             # Generate unique ID from content hash and timestamp
-            content_hash = hashlib.md5(f"{self.content}{self.timestamp}".encode()).hexdigest()[:8]
+            content_hash = hashlib.md5(
+                f"{self.content}{self.timestamp}".encode()
+            ).hexdigest()[:8]
             self.id = f"journal_{content_hash}"
 
 
@@ -90,7 +92,9 @@ class SurpriseMemoryJournal:
     Implements surprise-driven memory consolidation for improved reasoning.
     """
 
-    def __init__(self, config: QuietSTaRConfig, journal_db_path: str = "quiet_star_journal.db"):
+    def __init__(
+        self, config: QuietSTaRConfig, journal_db_path: str = "quiet_star_journal.db"
+    ):
         self.config = config
         self.journal_db_path = journal_db_path
         self.db_connection = None
@@ -157,9 +161,15 @@ class SurpriseMemoryJournal:
         )
 
         # Create indices for better query performance
-        cursor.execute("CREATE INDEX IF NOT EXISTS idx_timestamp ON journal_entries(timestamp)")
-        cursor.execute("CREATE INDEX IF NOT EXISTS idx_surprise_level ON journal_entries(surprise_level)")
-        cursor.execute("CREATE INDEX IF NOT EXISTS idx_reflection_type ON journal_entries(reflection_type)")
+        cursor.execute(
+            "CREATE INDEX IF NOT EXISTS idx_timestamp ON journal_entries(timestamp)"
+        )
+        cursor.execute(
+            "CREATE INDEX IF NOT EXISTS idx_surprise_level ON journal_entries(surprise_level)"
+        )
+        cursor.execute(
+            "CREATE INDEX IF NOT EXISTS idx_reflection_type ON journal_entries(reflection_type)"
+        )
 
         self.db_connection.commit()
 
@@ -185,7 +195,9 @@ class SurpriseMemoryJournal:
 
         return self._save_entry(entry)
 
-    def record_outcome(self, prediction_id: str, actual_outcome: str, context: dict[str, Any] = None) -> str | None:
+    def record_outcome(
+        self, prediction_id: str, actual_outcome: str, context: dict[str, Any] = None
+    ) -> str | None:
         """Record the actual outcome for a prediction and analyze surprise."""
 
         # Retrieve the original prediction
@@ -252,7 +264,9 @@ class SurpriseMemoryJournal:
 
         # Calculate surprise metrics
         outcome_deviation = 1 - semantic_similarity
-        confidence_factor = predicted_confidence  # Higher confidence = more surprise when wrong
+        confidence_factor = (
+            predicted_confidence  # Higher confidence = more surprise when wrong
+        )
 
         surprise_score = outcome_deviation * confidence_factor
 
@@ -298,7 +312,9 @@ class SurpriseMemoryJournal:
             return
 
         # Generate learning reflection
-        learning_content = self._generate_learning_reflection(prediction_entry, outcome_entry)
+        learning_content = self._generate_learning_reflection(
+            prediction_entry, outcome_entry
+        )
 
         learning_entry = JournalEntry(
             reflection_type=ReflectionType.LEARNING,
@@ -323,7 +339,9 @@ class SurpriseMemoryJournal:
         # Look for patterns
         self._update_patterns_from_surprise(prediction_entry, outcome_entry)
 
-    def _generate_learning_reflection(self, prediction_entry: JournalEntry, outcome_entry: JournalEntry) -> str:
+    def _generate_learning_reflection(
+        self, prediction_entry: JournalEntry, outcome_entry: JournalEntry
+    ) -> str:
         """Generate a learning reflection from surprising outcomes."""
 
         reflection_parts = []
@@ -333,10 +351,15 @@ class SurpriseMemoryJournal:
         reflection_parts.append(f"Actual: {outcome_entry.actual_outcome}")
 
         # Why this was surprising
-        reflection_parts.append(f"Surprise analysis: {outcome_entry.surprise_reasoning}")
+        reflection_parts.append(
+            f"Surprise analysis: {outcome_entry.surprise_reasoning}"
+        )
 
         # Confidence analysis
-        if prediction_entry.confidence_score > 0.7 and outcome_entry.accuracy_score < 0.5:
+        if (
+            prediction_entry.confidence_score > 0.7
+            and outcome_entry.accuracy_score < 0.5
+        ):
             reflection_parts.append(
                 f"High confidence ({prediction_entry.confidence_score:.2f}) led to greater surprise. "
                 f"Consider factors that might cause confidence miscalibration."
@@ -359,7 +382,9 @@ class SurpriseMemoryJournal:
 
         return " ".join(reflection_parts)
 
-    def _find_similar_contexts(self, target_context: dict[str, Any], limit: int = 5) -> list[JournalEntry]:
+    def _find_similar_contexts(
+        self, target_context: dict[str, Any], limit: int = 5
+    ) -> list[JournalEntry]:
         """Find journal entries with similar contexts."""
 
         if not target_context:
@@ -399,13 +424,17 @@ class SurpriseMemoryJournal:
         for entry in recent_entries:
             entry_keys = set(entry.context.keys())
             if target_keys and entry_keys:
-                similarity = len(target_keys & entry_keys) / len(target_keys | entry_keys)
+                similarity = len(target_keys & entry_keys) / len(
+                    target_keys | entry_keys
+                )
                 if similarity > 0.3:  # At least 30% key overlap
                     similar_entries.append(entry)
 
         return similar_entries[:limit]
 
-    def _update_patterns_from_surprise(self, prediction_entry: JournalEntry, outcome_entry: JournalEntry):
+    def _update_patterns_from_surprise(
+        self, prediction_entry: JournalEntry, outcome_entry: JournalEntry
+    ):
         """Update memory patterns based on surprising outcomes."""
 
         # Look for prediction error patterns
@@ -413,14 +442,18 @@ class SurpriseMemoryJournal:
             self._detect_prediction_error_pattern(prediction_entry, outcome_entry)
 
         # Look for confidence miscalibration patterns
-        confidence_error = abs(prediction_entry.confidence_score - outcome_entry.accuracy_score)
+        confidence_error = abs(
+            prediction_entry.confidence_score - outcome_entry.accuracy_score
+        )
         if confidence_error > self.surprise_thresholds["confidence_mismatch"]:
             self._detect_confidence_pattern(prediction_entry, outcome_entry)
 
         # Look for context-based patterns
         self._detect_context_patterns(prediction_entry, outcome_entry)
 
-    def _detect_prediction_error_pattern(self, prediction_entry: JournalEntry, outcome_entry: JournalEntry):
+    def _detect_prediction_error_pattern(
+        self, prediction_entry: JournalEntry, outcome_entry: JournalEntry
+    ):
         """Detect patterns in prediction errors."""
 
         # Find similar prediction errors
@@ -451,7 +484,9 @@ class SurpriseMemoryJournal:
 
             self._save_pattern(pattern)
 
-    def _detect_confidence_pattern(self, prediction_entry: JournalEntry, outcome_entry: JournalEntry):
+    def _detect_confidence_pattern(
+        self, prediction_entry: JournalEntry, outcome_entry: JournalEntry
+    ):
         """Detect patterns in confidence miscalibration."""
 
         # Find entries with similar confidence vs accuracy gaps
@@ -484,10 +519,14 @@ class SurpriseMemoryJournal:
 
             self._save_pattern(pattern)
 
-    def _detect_context_patterns(self, prediction_entry: JournalEntry, outcome_entry: JournalEntry):
+    def _detect_context_patterns(
+        self, prediction_entry: JournalEntry, outcome_entry: JournalEntry
+    ):
         """Detect patterns based on context similarities."""
 
-        similar_contexts = self._find_similar_contexts(prediction_entry.context, limit=10)
+        similar_contexts = self._find_similar_contexts(
+            prediction_entry.context, limit=10
+        )
 
         if len(similar_contexts) >= self.min_pattern_support:
             # Check if similar contexts tend to have similar surprise levels
@@ -497,7 +536,9 @@ class SurpriseMemoryJournal:
                 if hasattr(entry, "surprise_level") and entry.surprise_level
             ]
 
-            if surprise_levels and len(set(surprise_levels)) <= 2:  # Consistent surprise pattern
+            if (
+                surprise_levels and len(set(surprise_levels)) <= 2
+            ):  # Consistent surprise pattern
                 pattern = MemoryPattern(
                     pattern_id=f"context_pattern_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
                     description=f"Context pattern: Similar contexts tend to produce {surprise_levels[0].value} surprise",
@@ -594,14 +635,18 @@ class SurpriseMemoryJournal:
                 confidence_score=row["confidence_score"] or 0.0,
                 accuracy_score=row["accuracy_score"] or 0.0,
                 learning_value=row["learning_value"] or 0.0,
-                related_entries=json.loads(row["related_entries"]) if row["related_entries"] else [],
+                related_entries=json.loads(row["related_entries"])
+                if row["related_entries"]
+                else [],
                 tags=json.loads(row["tags"]) if row["tags"] else [],
             )
         except (ValueError, json.JSONDecodeError) as e:
             self.logger.error(f"Error parsing journal entry {entry_id}: {e}")
             return None
 
-    def get_recent_entries(self, limit: int = 50, entry_type: ReflectionType | None = None) -> list[JournalEntry]:
+    def get_recent_entries(
+        self, limit: int = 50, entry_type: ReflectionType | None = None
+    ) -> list[JournalEntry]:
         """Get recent journal entries."""
 
         cursor = self.db_connection.cursor()
@@ -634,7 +679,9 @@ class SurpriseMemoryJournal:
 
         return entries
 
-    def get_surprise_entries(self, min_level: SurpriseLevel = SurpriseLevel.MEDIUM) -> list[JournalEntry]:
+    def get_surprise_entries(
+        self, min_level: SurpriseLevel = SurpriseLevel.MEDIUM
+    ) -> list[JournalEntry]:
         """Get entries with surprise level at or above threshold."""
 
         surprise_levels = [
@@ -712,11 +759,15 @@ class SurpriseMemoryJournal:
 
         # Update entry1 to reference entry2
         cursor = self.db_connection.cursor()
-        cursor.execute("SELECT related_entries FROM journal_entries WHERE id = ?", (entry1_id,))
+        cursor.execute(
+            "SELECT related_entries FROM journal_entries WHERE id = ?", (entry1_id,)
+        )
         row = cursor.fetchone()
 
         if row:
-            related = json.loads(row["related_entries"]) if row["related_entries"] else []
+            related = (
+                json.loads(row["related_entries"]) if row["related_entries"] else []
+            )
             if entry2_id not in related:
                 related.append(entry2_id)
                 cursor.execute(
@@ -725,11 +776,15 @@ class SurpriseMemoryJournal:
                 )
 
         # Update entry2 to reference entry1
-        cursor.execute("SELECT related_entries FROM journal_entries WHERE id = ?", (entry2_id,))
+        cursor.execute(
+            "SELECT related_entries FROM journal_entries WHERE id = ?", (entry2_id,)
+        )
         row = cursor.fetchone()
 
         if row:
-            related = json.loads(row["related_entries"]) if row["related_entries"] else []
+            related = (
+                json.loads(row["related_entries"]) if row["related_entries"] else []
+            )
             if entry1_id not in related:
                 related.append(entry1_id)
                 cursor.execute(
@@ -748,16 +803,28 @@ class SurpriseMemoryJournal:
         cursor.execute("SELECT COUNT(*) as total FROM journal_entries")
         total_entries = cursor.fetchone()["total"]
 
-        cursor.execute("SELECT reflection_type, COUNT(*) as count FROM journal_entries GROUP BY reflection_type")
-        type_counts = {row["reflection_type"]: row["count"] for row in cursor.fetchall()}
+        cursor.execute(
+            "SELECT reflection_type, COUNT(*) as count FROM journal_entries GROUP BY reflection_type"
+        )
+        type_counts = {
+            row["reflection_type"]: row["count"] for row in cursor.fetchall()
+        }
 
-        cursor.execute("SELECT surprise_level, COUNT(*) as count FROM journal_entries GROUP BY surprise_level")
-        surprise_counts = {row["surprise_level"]: row["count"] for row in cursor.fetchall()}
+        cursor.execute(
+            "SELECT surprise_level, COUNT(*) as count FROM journal_entries GROUP BY surprise_level"
+        )
+        surprise_counts = {
+            row["surprise_level"]: row["count"] for row in cursor.fetchall()
+        }
 
-        cursor.execute("SELECT AVG(accuracy_score) as avg_accuracy FROM journal_entries WHERE accuracy_score > 0")
+        cursor.execute(
+            "SELECT AVG(accuracy_score) as avg_accuracy FROM journal_entries WHERE accuracy_score > 0"
+        )
         avg_accuracy = cursor.fetchone()["avg_accuracy"] or 0
 
-        cursor.execute("SELECT AVG(learning_value) as avg_learning FROM journal_entries WHERE learning_value > 0")
+        cursor.execute(
+            "SELECT AVG(learning_value) as avg_learning FROM journal_entries WHERE learning_value > 0"
+        )
         avg_learning = cursor.fetchone()["avg_learning"] or 0
 
         cursor.execute("SELECT COUNT(*) as pattern_count FROM memory_patterns")
@@ -912,7 +979,9 @@ class MCPIntegration:
             "pattern_types": list(set(p.pattern_type for p in patterns)),
         }
 
-    async def get_surprise_insights(self, min_surprise: str = "medium") -> dict[str, Any]:
+    async def get_surprise_insights(
+        self, min_surprise: str = "medium"
+    ) -> dict[str, Any]:
         """Get insights from surprising outcomes."""
 
         surprise_level = SurpriseLevel(min_surprise)
@@ -937,12 +1006,15 @@ class MCPIntegration:
             "surprise_threshold": min_surprise,
             "total_surprising_entries": len(surprise_entries),
             "top_insights": insights,
-            "avg_learning_value": sum(e.learning_value for e in surprise_entries) / len(surprise_entries)
+            "avg_learning_value": sum(e.learning_value for e in surprise_entries)
+            / len(surprise_entries)
             if surprise_entries
             else 0,
         }
 
-    async def search_journal(self, query: str, entry_type: str | None = None, limit: int = 20) -> dict[str, Any]:
+    async def search_journal(
+        self, query: str, entry_type: str | None = None, limit: int = 20
+    ) -> dict[str, Any]:
         """Search journal entries."""
 
         # Simple text search in content and questions
@@ -978,7 +1050,9 @@ class MCPIntegration:
                     {
                         "entry_id": entry.id,
                         "type": entry.reflection_type.value,
-                        "content": entry.content[:200] + "..." if len(entry.content) > 200 else entry.content,
+                        "content": entry.content[:200] + "..."
+                        if len(entry.content) > 200
+                        else entry.content,
                         "question": entry.question,
                         "surprise_level": entry.surprise_level.value,
                         "timestamp": entry.timestamp.isoformat(),
@@ -1078,7 +1152,9 @@ if __name__ == "__main__":
         for outcome in outcomes:
             result = await mcp.record_outcome(**outcome)
             print(f"   Recorded outcome: {result['surprise_level']} surprise")
-            print(f"   Accuracy: {result['accuracy']:.2f}, Learning value: {result['learning_value']:.2f}")
+            print(
+                f"   Accuracy: {result['accuracy']:.2f}, Learning value: {result['learning_value']:.2f}"
+            )
 
         print()
 
@@ -1089,7 +1165,9 @@ if __name__ == "__main__":
         print(f"   Average learning value: {insights['avg_learning_value']:.2f}")
 
         for insight in insights["top_insights"][:3]:
-            print(f"   • {insight['surprise_level']} surprise: {insight['question'][:60]}...")
+            print(
+                f"   • {insight['surprise_level']} surprise: {insight['question'][:60]}..."
+            )
             print(f"     Predicted: {insight['predicted'][:50]}...")
             print(f"     Actual: {insight['actual'][:50]}...")
 
@@ -1103,7 +1181,9 @@ if __name__ == "__main__":
         if pattern_analysis["patterns"]:
             for pattern in pattern_analysis["patterns"][:3]:
                 print(f"   • {pattern['type']}: {pattern['description'][:60]}...")
-                print(f"     Confidence: {pattern['confidence']:.2f}, Support: {pattern['support_count']} entries")
+                print(
+                    f"     Confidence: {pattern['confidence']:.2f}, Support: {pattern['support_count']} entries"
+                )
 
         print()
 

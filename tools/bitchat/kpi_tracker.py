@@ -93,7 +93,8 @@ class BitChatKPITracker:
         cursor = self.conn.cursor()
 
         # Message metrics table
-        cursor.execute("""
+        cursor.execute(
+            """
             CREATE TABLE IF NOT EXISTS message_metrics (
                 message_id TEXT PRIMARY KEY,
                 timestamp REAL,
@@ -107,10 +108,12 @@ class BitChatKPITracker:
                 delivery_time REAL,
                 transport_type TEXT
             )
-        """)
+        """
+        )
 
         # Peer metrics table
-        cursor.execute("""
+        cursor.execute(
+            """
             CREATE TABLE IF NOT EXISTS peer_metrics (
                 peer_id TEXT PRIMARY KEY,
                 platform TEXT,
@@ -123,10 +126,12 @@ class BitChatKPITracker:
                 battery_level REAL,
                 is_active INTEGER
             )
-        """)
+        """
+        )
 
         # Network snapshots table
-        cursor.execute("""
+        cursor.execute(
+            """
             CREATE TABLE IF NOT EXISTS network_snapshots (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 timestamp REAL,
@@ -140,7 +145,8 @@ class BitChatKPITracker:
                 network_density REAL,
                 battery_impact REAL
             )
-        """)
+        """
+        )
 
         self.conn.commit()
 
@@ -253,11 +259,13 @@ class BitChatKPITracker:
 
         # Estimate based on average connections per peer
         cursor = self.conn.cursor()
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT AVG(messages_sent + messages_received) as avg_messages
             FROM peer_metrics
             WHERE is_active = 1
-        """)
+        """
+        )
 
         row = cursor.fetchone()
         if row and row["avg_messages"]:
@@ -373,11 +381,13 @@ class BitChatKPITracker:
         """Estimate battery impact from peer reports"""
         cursor = self.conn.cursor()
 
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT AVG(battery_level) as avg_battery
             FROM peer_metrics
             WHERE is_active = 1 AND battery_level IS NOT NULL
-        """)
+        """
+        )
 
         row = cursor.fetchone()
         return row["avg_battery"] if row and row["avg_battery"] else None
@@ -388,11 +398,13 @@ class BitChatKPITracker:
 
         # Get historical data for trends
         cursor = self.conn.cursor()
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT * FROM network_snapshots
             ORDER BY timestamp DESC
             LIMIT 100
-        """)
+        """
+        )
 
         history = [dict(row) for row in cursor.fetchall()]
 

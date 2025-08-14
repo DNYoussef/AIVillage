@@ -41,7 +41,9 @@ class SecureFileUploadValidator:
 
         # File size limits (in bytes)
         self.max_file_size = self.config.get("max_file_size", 10 * 1024 * 1024)  # 10MB
-        self.max_total_size = self.config.get("max_total_size", 100 * 1024 * 1024)  # 100MB
+        self.max_total_size = self.config.get(
+            "max_total_size", 100 * 1024 * 1024
+        )  # 100MB
 
         # Allowed file types and extensions
         self.allowed_extensions = set(
@@ -273,7 +275,9 @@ class SecureFileUploadValidator:
                 self._validate_archive(content, validation_result)
 
             # 9. Calculate file hash
-            validation_result["metadata"]["sha256"] = hashlib.sha256(content).hexdigest()
+            validation_result["metadata"]["sha256"] = hashlib.sha256(
+                content
+            ).hexdigest()
             validation_result["metadata"]["md5"] = hashlib.md5(content).hexdigest()
 
             # Determine overall safety
@@ -285,7 +289,8 @@ class SecureFileUploadValidator:
 
             if validation_result["warnings"]:
                 logger.warning(
-                    f"File validation warnings for {filename}: " f"{'; '.join(validation_result['warnings'])}"
+                    f"File validation warnings for {filename}: "
+                    f"{'; '.join(validation_result['warnings'])}"
                 )
 
             return validation_result
@@ -302,7 +307,9 @@ class SecureFileUploadValidator:
         file_size = len(content)
 
         if file_size > self.max_file_size:
-            result["errors"].append(f"File size {file_size} exceeds maximum allowed {self.max_file_size}")
+            result["errors"].append(
+                f"File size {file_size} exceeds maximum allowed {self.max_file_size}"
+            )
 
         if file_size == 0:
             result["errors"].append("File is empty")
@@ -368,11 +375,15 @@ class SecureFileUploadValidator:
 
         # Check if extension is in allowed list (if specified)
         if self.allowed_extensions and extension not in self.allowed_extensions:
-            result["warnings"].append(f"File extension '{extension}' is not in allowed list")
+            result["warnings"].append(
+                f"File extension '{extension}' is not in allowed list"
+            )
 
         result["metadata"]["extension"] = extension
 
-    def _validate_mime_type(self, content: bytes, filename: str, result: dict[str, Any]) -> None:
+    def _validate_mime_type(
+        self, content: bytes, filename: str, result: dict[str, Any]
+    ) -> None:
         """Validate MIME type."""
         # Get MIME type from python-magic
         try:
@@ -388,11 +399,15 @@ class SecureFileUploadValidator:
 
         # Check if detected MIME type is allowed
         if self.allowed_mime_types and detected_mime not in self.allowed_mime_types:
-            result["warnings"].append(f"MIME type '{detected_mime}' is not in allowed list")
+            result["warnings"].append(
+                f"MIME type '{detected_mime}' is not in allowed list"
+            )
 
         # Check for MIME type mismatch
         if guessed_mime and detected_mime != guessed_mime:
-            result["warnings"].append(f"MIME type mismatch: detected '{detected_mime}', expected '{guessed_mime}'")
+            result["warnings"].append(
+                f"MIME type mismatch: detected '{detected_mime}', expected '{guessed_mime}'"
+            )
 
     def _validate_magic_numbers(self, content: bytes, result: dict[str, Any]) -> None:
         """Validate file magic numbers (signatures)."""
@@ -409,15 +424,20 @@ class SecureFileUploadValidator:
         detected_mime = result["metadata"]["detected_mime_type"]
         if detected_signature and detected_signature != detected_mime:
             result["warnings"].append(
-                f"File signature mismatch: signature '{detected_signature}', " f"MIME type '{detected_mime}'"
+                f"File signature mismatch: signature '{detected_signature}', "
+                f"MIME type '{detected_mime}'"
             )
 
-    def _analyze_file_content(self, content: bytes, filename: str, result: dict[str, Any]) -> None:
+    def _analyze_file_content(
+        self, content: bytes, filename: str, result: dict[str, Any]
+    ) -> None:
         """Analyze file content for dangerous patterns."""
         # Check for dangerous patterns
         for pattern in self.dangerous_patterns:
             if re.search(pattern, content, re.IGNORECASE):
-                result["errors"].append(f"File contains dangerous pattern: {pattern.decode('utf-8', errors='ignore')}")
+                result["errors"].append(
+                    f"File contains dangerous pattern: {pattern.decode('utf-8', errors='ignore')}"
+                )
 
         # Check for embedded executables in images
         if result["metadata"]["detected_mime_type"].startswith("image/"):
@@ -437,7 +457,9 @@ class SecureFileUploadValidator:
         url_pattern = rb'https?://[^\s<>"{}|\\^`\[\]]+'
         urls = re.findall(url_pattern, content)
         if urls:
-            result["metadata"]["embedded_urls"] = [url.decode("utf-8", errors="ignore") for url in urls[:10]]
+            result["metadata"]["embedded_urls"] = [
+                url.decode("utf-8", errors="ignore") for url in urls[:10]
+            ]
             if len(urls) > 5:
                 result["warnings"].append(f"File contains {len(urls)} URLs")
 
@@ -448,7 +470,11 @@ class SecureFileUploadValidator:
 
             if scan_result:
                 # File is infected
-                virus_name = scan_result[str(file_path)][1] if str(file_path) in scan_result else "Unknown"
+                virus_name = (
+                    scan_result[str(file_path)][1]
+                    if str(file_path) in scan_result
+                    else "Unknown"
+                )
                 result["errors"].append(f"Virus detected: {virus_name}")
 
             result["metadata"]["virus_scanned"] = True
@@ -481,7 +507,9 @@ class SecureFileUploadValidator:
         except Exception as e:
             result["warnings"].append(f"Archive validation failed: {e}")
 
-    def _validate_zip_archive(self, zip_file: zipfile.ZipFile, result: dict[str, Any]) -> None:
+    def _validate_zip_archive(
+        self, zip_file: zipfile.ZipFile, result: dict[str, Any]
+    ) -> None:
         """Validate ZIP archive contents."""
         file_count = 0
         total_uncompressed_size = 0
@@ -494,24 +522,32 @@ class SecureFileUploadValidator:
             if info.compress_size > 0:
                 compression_ratio = info.file_size / info.compress_size
                 if compression_ratio > 100:  # Suspicious compression ratio
-                    result["warnings"].append(f"Suspicious compression ratio in archive: {compression_ratio:.1f}")
+                    result["warnings"].append(
+                        f"Suspicious compression ratio in archive: {compression_ratio:.1f}"
+                    )
 
             # Check for path traversal in archive
             if ".." in info.filename or info.filename.startswith("/"):
-                result["errors"].append(f"Archive contains path traversal: {info.filename}")
+                result["errors"].append(
+                    f"Archive contains path traversal: {info.filename}"
+                )
 
             # Check individual file names
             try:
                 self._validate_filename(info.filename, {"errors": [], "warnings": []})
             except Exception:
-                result["warnings"].append(f"Archive contains file with invalid name: {info.filename}")
+                result["warnings"].append(
+                    f"Archive contains file with invalid name: {info.filename}"
+                )
 
         # Check for zip bomb indicators
         if file_count > 1000:
             result["warnings"].append(f"Archive contains many files: {file_count}")
 
         if total_uncompressed_size > 100 * 1024 * 1024:  # 100MB
-            result["warnings"].append(f"Archive uncompressed size is large: {total_uncompressed_size}")
+            result["warnings"].append(
+                f"Archive uncompressed size is large: {total_uncompressed_size}"
+            )
 
         result["metadata"]["archive_file_count"] = file_count
         result["metadata"]["archive_uncompressed_size"] = total_uncompressed_size
@@ -535,7 +571,9 @@ class SecureFileUploadValidator:
 
         return filename
 
-    def get_safe_upload_path(self, base_dir: str, filename: str, create_subdirs: bool = True) -> Path:
+    def get_safe_upload_path(
+        self, base_dir: str, filename: str, create_subdirs: bool = True
+    ) -> Path:
         """Get safe path for file upload.
 
         Args:
@@ -556,7 +594,9 @@ class SecureFileUploadValidator:
             from datetime import datetime
 
             now = datetime.now()
-            subdir = base_path / now.strftime("%Y") / now.strftime("%m") / now.strftime("%d")
+            subdir = (
+                base_path / now.strftime("%Y") / now.strftime("%m") / now.strftime("%d")
+            )
             subdir.mkdir(parents=True, exist_ok=True)
             base_path = subdir
         else:
@@ -580,7 +620,9 @@ if __name__ == "__main__":
     import tempfile
 
     # Create test files
-    with tempfile.NamedTemporaryFile(mode="w+b", suffix=".txt", delete=False) as test_file:
+    with tempfile.NamedTemporaryFile(
+        mode="w+b", suffix=".txt", delete=False
+    ) as test_file:
         test_content = b"This is a test file content."
         test_file.write(test_content)
         test_file_path = test_file.name

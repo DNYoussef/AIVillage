@@ -118,8 +118,12 @@ class LibP2PMeshBridge:
                 self.mesh_network = LibP2PMeshNetwork(mesh_config)
 
                 # Register message handlers
-                self.mesh_network.register_message_handler(MeshMessageType.DATA_MESSAGE, self._handle_android_message)
-                self.mesh_network.register_message_handler(MeshMessageType.AGENT_TASK, self._handle_android_message)
+                self.mesh_network.register_message_handler(
+                    MeshMessageType.DATA_MESSAGE, self._handle_android_message
+                )
+                self.mesh_network.register_message_handler(
+                    MeshMessageType.AGENT_TASK, self._handle_android_message
+                )
                 self.mesh_network.register_message_handler(
                     MeshMessageType.PARAMETER_UPDATE, self._handle_android_message
                 )
@@ -231,7 +235,9 @@ class LibP2PMeshBridge:
             return {
                 "discovery_enabled": True,
                 "service_name": self.mesh_network.mdns_discovery.service_name,
-                "discovered_peers": len(self.mesh_network.mdns_discovery.discovered_peers),
+                "discovered_peers": len(
+                    self.mesh_network.mdns_discovery.discovered_peers
+                ),
                 "status": self.mesh_network.mdns_discovery.get_status(),
             }
 
@@ -298,7 +304,9 @@ class LibP2PMeshBridge:
                         await self._handle_websocket_send(websocket, message_data)
                     elif msg_type == "ping":
                         # Respond to ping
-                        await websocket.send_text(json.dumps({"type": "pong", "timestamp": time.time()}))
+                        await websocket.send_text(
+                            json.dumps({"type": "pong", "timestamp": time.time()})
+                        )
                     elif msg_type == "subscribe":
                         # Subscribe to message types
                         await self._handle_websocket_subscribe(websocket, message_data)
@@ -311,11 +319,15 @@ class LibP2PMeshBridge:
                 if websocket in self.websocket_connections:
                     self.websocket_connections.remove(websocket)
 
-    async def _handle_websocket_send(self, websocket: WebSocket, message_data: dict[str, Any]) -> None:
+    async def _handle_websocket_send(
+        self, websocket: WebSocket, message_data: dict[str, Any]
+    ) -> None:
         """Handle WebSocket mesh send request."""
         try:
             if not self.mesh_network:
-                await websocket.send_text(json.dumps({"type": "error", "message": "Mesh not started"}))
+                await websocket.send_text(
+                    json.dumps({"type": "error", "message": "Mesh not started"})
+                )
                 return
 
             # Create and send mesh message
@@ -352,11 +364,17 @@ class LibP2PMeshBridge:
                 )
             )
 
-    async def _handle_websocket_subscribe(self, websocket: WebSocket, message_data: dict[str, Any]) -> None:
+    async def _handle_websocket_subscribe(
+        self, websocket: WebSocket, message_data: dict[str, Any]
+    ) -> None:
         """Handle WebSocket subscription request."""
         # Store subscription info with websocket
         # This would be used to filter which messages to send to which clients
-        await websocket.send_text(json.dumps({"type": "subscribed", "request_id": message_data.get("request_id")}))
+        await websocket.send_text(
+            json.dumps(
+                {"type": "subscribed", "request_id": message_data.get("request_id")}
+            )
+        )
 
     async def _handle_android_message(self, message: MeshMessage) -> None:
         """Handle incoming mesh messages and forward to Android clients."""
@@ -434,7 +452,8 @@ class LibP2PMeshBridge:
             },
             "message_types": [t.value for t in MeshMessageType],
             "running": self.running,
-            "mesh_active": self.mesh_network is not None and self.mesh_network.status.value == "active",
+            "mesh_active": self.mesh_network is not None
+            and self.mesh_network.status.value == "active",
         }
 
 
@@ -516,7 +535,9 @@ def send_message_via_bridge(message_json: str) -> bool:
         )
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-        result = loop.run_until_complete(_bridge_instance.mesh_network.send_message(message))
+        result = loop.run_until_complete(
+            _bridge_instance.mesh_network.send_message(message)
+        )
         return bool(result)
     except Exception as e:
         logger.exception(f"JNI send_message failed: {e}")

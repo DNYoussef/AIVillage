@@ -26,7 +26,8 @@ except ImportError:
     # Mock DeviceProfiler for safe importing
     class DeviceProfiler:
         def __init__(self, *args, **kwargs):
-            pass
+            """Initialize mock device profiler."""
+            self.device_info = {}
 
 
 try:
@@ -35,7 +36,8 @@ except ImportError:
     # Mock ResourceAllocator for safe importing
     class ResourceAllocator:
         def __init__(self, *args, **kwargs):
-            pass
+            """Initialize mock resource allocator."""
+            self.resources = {}
 
 
 logger = logging.getLogger(__name__)
@@ -368,7 +370,9 @@ class MetricsCollector:
             return
 
         self.collecting = True
-        self.collection_thread = threading.Thread(target=self._collection_loop, daemon=True)
+        self.collection_thread = threading.Thread(
+            target=self._collection_loop, daemon=True
+        )
         self.collection_thread.start()
 
         logger.info("Metrics collection started")
@@ -420,7 +424,9 @@ class MetricsCollector:
         self.cpu_cores.labels(*labels).set(snapshot.cpu_cores)
 
         if snapshot.cpu_freq_current:
-            self.cpu_frequency.labels(*labels).set(snapshot.cpu_freq_current * 1000000)  # Convert to Hz
+            self.cpu_frequency.labels(*labels).set(
+                snapshot.cpu_freq_current * 1000000
+            )  # Convert to Hz
 
         if snapshot.cpu_temp:
             self.cpu_temperature.labels(*labels).set(snapshot.cpu_temp)
@@ -462,7 +468,9 @@ class MetricsCollector:
 
         # Performance metrics
         self.performance_score.labels(*labels).set(snapshot.performance_score)
-        self.resource_constrained.labels(*labels).set(1 if snapshot.is_resource_constrained else 0)
+        self.resource_constrained.labels(*labels).set(
+            1 if snapshot.is_resource_constrained else 0
+        )
 
         # Process metrics
         self.process_count.labels(*labels).set(snapshot.process_count)
@@ -521,9 +529,13 @@ class MetricsCollector:
             denied_delta = max(0, current_denied - self._prev_denied)
 
             if granted_delta > 0:
-                self.allocation_requests.labels(device_id, "any", "granted").inc(granted_delta)
+                self.allocation_requests.labels(device_id, "any", "granted").inc(
+                    granted_delta
+                )
             if denied_delta > 0:
-                self.allocation_requests.labels(device_id, "any", "denied").inc(denied_delta)
+                self.allocation_requests.labels(device_id, "any", "denied").inc(
+                    denied_delta
+                )
 
             self._prev_requests = current_requests
             self._prev_granted = current_granted
@@ -536,7 +548,9 @@ class MetricsCollector:
         else:
             preemptions_delta = max(0, current_preemptions - self._prev_preemptions)
             if preemptions_delta > 0:
-                self.preemptions.labels(device_id, "resource_pressure").inc(preemptions_delta)
+                self.preemptions.labels(device_id, "resource_pressure").inc(
+                    preemptions_delta
+                )
             self._prev_preemptions = current_preemptions
 
     def register_custom_metric(self, definition: MetricDefinition) -> Any:
@@ -658,7 +672,9 @@ class MetricsCollector:
 
             # Calculate basic statistics
             values = list(history)
-            recent_values = values[-min(len(values), duration_minutes // (self.collection_interval / 60)) :]
+            recent_values = values[
+                -min(len(values), duration_minutes // (self.collection_interval / 60)) :
+            ]
 
             if recent_values:
                 trends[metric_name] = {
@@ -666,7 +682,11 @@ class MetricsCollector:
                     "avg": sum(recent_values) / len(recent_values),
                     "min": min(recent_values),
                     "max": max(recent_values),
-                    "trend": ("increasing" if recent_values[-1] > recent_values[0] else "decreasing"),
+                    "trend": (
+                        "increasing"
+                        if recent_values[-1] > recent_values[0]
+                        else "decreasing"
+                    ),
                     "samples": len(recent_values),
                 }
 
@@ -824,7 +844,9 @@ class MobileMetrics:
         """Push metrics to gateway periodically."""
         while self.push_active:
             try:
-                job_name = f"aivillage_mobile_{self.device_profiler.profile.device_type.value}"
+                job_name = (
+                    f"aivillage_mobile_{self.device_profiler.profile.device_type.value}"
+                )
                 self.collector.push_to_gateway(self.prometheus_gateway, job_name)
 
                 time.sleep(self.push_interval)

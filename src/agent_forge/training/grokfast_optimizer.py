@@ -223,7 +223,9 @@ class GrokfastAdamW(Optimizer):
                         ema_norm = torch.norm(ema_grad)
 
                         if grad_norm > 1e-10 and ema_norm > 1e-10:
-                            alignment = torch.sum(grad * ema_grad) / (grad_norm * ema_norm)
+                            alignment = torch.sum(grad * ema_grad) / (
+                                grad_norm * ema_norm
+                            )
                             total_grad_ema_alignment += alignment.item()
                             num_params_with_grad += 1
 
@@ -231,7 +233,11 @@ class GrokfastAdamW(Optimizer):
 
                 total_params += p.numel()
 
-        avg_alignment = total_grad_ema_alignment / num_params_with_grad if num_params_with_grad > 0 else 0.0
+        avg_alignment = (
+            total_grad_ema_alignment / num_params_with_grad
+            if num_params_with_grad > 0
+            else 0.0
+        )
 
         return {
             "total_params": total_params,
@@ -314,7 +320,9 @@ class GrokfastSGD(Optimizer):
                     if "ema_grad" not in state:
                         state["ema_grad"] = grad.clone()
                     else:
-                        state["ema_grad"].mul_(ema_alpha).add_(grad, alpha=1 - ema_alpha)
+                        state["ema_grad"].mul_(ema_alpha).add_(
+                            grad, alpha=1 - ema_alpha
+                        )
 
                     # Filter gradient
                     ema_grad = state["ema_grad"]

@@ -126,7 +126,9 @@ class TestModelShardingEngine(ModelShardingEngine):
         self.active_shards = {s.shard_id: s for s in plan.shards}
         self.device_assignments = {}
         for shard in plan.shards:
-            self.device_assignments.setdefault(shard.device_id, []).append(shard.shard_id)
+            self.device_assignments.setdefault(shard.device_id, []).append(
+                shard.shard_id
+            )
 
 
 def main() -> None:
@@ -139,7 +141,9 @@ def main() -> None:
     engine = TestModelShardingEngine(args.device_count, args.constraint)
 
     start = time.time()
-    plan = asyncio.run(engine.shard_model("dummy-model", strategy=ShardingStrategy.HYBRID))
+    plan = asyncio.run(
+        engine.shard_model("dummy-model", strategy=ShardingStrategy.HYBRID)
+    )
     duration = time.time() - start
 
     report = {

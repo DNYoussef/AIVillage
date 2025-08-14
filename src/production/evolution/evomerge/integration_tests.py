@@ -3,10 +3,11 @@ import unittest
 
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
+from agent_forge.evaluation.evaluator import evaluate_model
+
 from .config import create_default_config
 from .evolutionary_tournament import run_evolutionary_tournament
 from .utils import clean_up_models, generate_text
-from agent_forge.evaluation.evaluator import evaluate_model
 
 
 class TestEvoMergeIntegration(unittest.TestCase):

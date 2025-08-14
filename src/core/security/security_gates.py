@@ -65,13 +65,17 @@ class GateReport:
 
     @property
     def critical_issues(self) -> list[SecurityIssue]:
-        return [issue for issue in self.issues if issue.severity in ["CRITICAL", "HIGH"]]
+        return [
+            issue for issue in self.issues if issue.severity in ["CRITICAL", "HIGH"]
+        ]
 
 
 class SecurityGate(ABC):
     """Abstract base class for security gates."""
 
-    def __init__(self, name: str, security_level: SecurityLevel = SecurityLevel.PRODUCTION):
+    def __init__(
+        self, name: str, security_level: SecurityLevel = SecurityLevel.PRODUCTION
+    ):
         self.name = name
         self.security_level = security_level
         self.enabled = True
@@ -123,7 +127,10 @@ class HttpsEnforcementGate(SecurityGate):
                     if matches:
                         for match in matches:
                             # Skip common safe patterns
-                            if any(safe in match.lower() for safe in ["localhost", "127.0.0.1", "example.com"]):
+                            if any(
+                                safe in match.lower()
+                                for safe in ["localhost", "127.0.0.1", "example.com"]
+                            ):
                                 continue
 
                             issues.append(
@@ -225,7 +232,10 @@ class PickleSecurityGate(SecurityGate):
                         content = f.read()
 
                     # Check for safe patterns first
-                    has_safe_pattern = any(re.search(pattern, content, re.IGNORECASE) for pattern in safe_patterns)
+                    has_safe_pattern = any(
+                        re.search(pattern, content, re.IGNORECASE)
+                        for pattern in safe_patterns
+                    )
 
                     for pattern, description in unsafe_patterns:
                         matches = re.finditer(pattern, content, re.IGNORECASE)
@@ -411,10 +421,14 @@ class SecretScanningGate(SecurityGate):
                     for pattern, description in self.secret_patterns:
                         matches = re.finditer(pattern, content, re.IGNORECASE)
                         for match in matches:
-                            matched_text = match.group(1) if match.groups() else match.group(0)
+                            matched_text = (
+                                match.group(1) if match.groups() else match.group(0)
+                            )
 
                             # Skip if looks like safe placeholder
-                            if any(safe in matched_text.lower() for safe in safe_indicators):
+                            if any(
+                                safe in matched_text.lower() for safe in safe_indicators
+                            ):
                                 continue
 
                             # Skip very common/simple patterns
@@ -443,7 +457,11 @@ class SecretScanningGate(SecurityGate):
         execution_time = time.time() - start_time
 
         # High severity issues = fail
-        result = GateResult.FAIL if any(issue.severity == "HIGH" for issue in issues) else GateResult.PASS
+        result = (
+            GateResult.FAIL
+            if any(issue.severity == "HIGH" for issue in issues)
+            else GateResult.PASS
+        )
 
         return GateReport(
             gate_name=self.name,
@@ -477,7 +495,9 @@ class SecurityGateRunner:
         if context is None:
             context = {"project_root": Path.cwd()}
 
-        print(f"\n=== Security Gates Validation - {self.security_level.value.title()} ===")
+        print(
+            f"\n=== Security Gates Validation - {self.security_level.value.title()} ==="
+        )
 
         self.reports = []
         passed = 0
@@ -497,10 +517,14 @@ class SecurityGateRunner:
                 print(f"  [PASS] - {report.execution_time:.2f}s")
             elif report.result == GateResult.WARN:
                 warnings += 1
-                print(f"  [WARN] - {len(report.issues)} issues - {report.execution_time:.2f}s")
+                print(
+                    f"  [WARN] - {len(report.issues)} issues - {report.execution_time:.2f}s"
+                )
             elif report.result == GateResult.FAIL:
                 failed += 1
-                print(f"  [FAIL] - {len(report.critical_issues)} critical issues - {report.execution_time:.2f}s")
+                print(
+                    f"  [FAIL] - {len(report.critical_issues)} critical issues - {report.execution_time:.2f}s"
+                )
 
                 # Show critical issues
                 for issue in report.critical_issues[:3]:  # Show first 3
@@ -551,7 +575,9 @@ class SecurityGateRunner:
             "total_issues": len(all_issues),
             "by_severity": {k: len(v) for k, v in issues_by_severity.items()},
             "by_category": {k: len(v) for k, v in issues_by_category.items()},
-            "critical_issues": [issue for issue in all_issues if issue.severity == "CRITICAL"],
+            "critical_issues": [
+                issue for issue in all_issues if issue.severity == "CRITICAL"
+            ],
             "recommendations": list({issue.recommendation for issue in all_issues}),
         }
 
@@ -566,7 +592,9 @@ def run_security_gates(
     return runner.run_all_gates(context)
 
 
-def validate_component_security(component_path: Path, security_level: SecurityLevel = SecurityLevel.PRODUCTION) -> bool:
+def validate_component_security(
+    component_path: Path, security_level: SecurityLevel = SecurityLevel.PRODUCTION
+) -> bool:
     """Validate security for a specific component."""
     context = {"project_root": component_path.parent, "component_path": component_path}
     runner = SecurityGateRunner(security_level)

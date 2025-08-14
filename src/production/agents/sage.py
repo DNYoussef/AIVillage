@@ -181,7 +181,9 @@ class SageAgent:
         """Synthesize knowledge from multiple sources or domains."""
         concepts = request.get("concepts", [])
         domains = request.get("domains", [])
-        synthesis_type = request.get("type", "comparative")  # comparative, integrative, meta
+        synthesis_type = request.get(
+            "type", "comparative"
+        )  # comparative, integrative, meta
 
         # Gather relevant knowledge nodes
         relevant_nodes = self._gather_relevant_nodes(concepts, domains)
@@ -276,7 +278,9 @@ class SageAgent:
         constraints = request.get("constraints", {})
 
         # Analyze question to determine best methodology
-        methodology = self._determine_methodology(research_question, domain, constraints)
+        methodology = self._determine_methodology(
+            research_question, domain, constraints
+        )
 
         return {
             "status": "completed",
@@ -349,11 +353,15 @@ class SageAgent:
         findings["overall_confidence"] *= domain_expertise
 
         # Add domain-specific insights
-        findings["domain_insights"] = self._generate_domain_insights(query.domain, query.question)
+        findings["domain_insights"] = self._generate_domain_insights(
+            query.domain, query.question
+        )
 
         return findings
 
-    def _generate_domain_insights(self, domain: ResearchDomain, question: str) -> list[str]:
+    def _generate_domain_insights(
+        self, domain: ResearchDomain, question: str
+    ) -> list[str]:
         """Generate domain-specific insights."""
         insights = []
 
@@ -395,7 +403,9 @@ class SageAgent:
 
         return insights
 
-    def _update_knowledge_graph(self, findings: dict[str, Any], domain: ResearchDomain) -> None:
+    def _update_knowledge_graph(
+        self, findings: dict[str, Any], domain: ResearchDomain
+    ) -> None:
         """Update knowledge graph with new findings."""
         # Extract key concepts from findings
         concepts = findings.get("key_points", [])
@@ -430,7 +440,12 @@ class SageAgent:
                     or new_node.domain == ResearchDomain.INTERDISCIPLINARY
                 ):
                     # Simple keyword-based similarity
-                    if self._calculate_concept_similarity(new_node.concept, existing_node.concept) > 0.3:
+                    if (
+                        self._calculate_concept_similarity(
+                            new_node.concept, existing_node.concept
+                        )
+                        > 0.3
+                    ):
                         new_node.connections.add(node_id)
                         existing_node.connections.add(new_node.node_id)
 
@@ -448,7 +463,9 @@ class SageAgent:
 
         return intersection / union if union > 0 else 0.0
 
-    def _gather_relevant_nodes(self, concepts: list[str], domains: list[str]) -> list[KnowledgeNode]:
+    def _gather_relevant_nodes(
+        self, concepts: list[str], domains: list[str]
+    ) -> list[KnowledgeNode]:
         """Gather relevant knowledge nodes for synthesis."""
         relevant_nodes = []
 
@@ -463,7 +480,9 @@ class SageAgent:
 
         return relevant_nodes
 
-    def _perform_synthesis(self, nodes: list[KnowledgeNode], synthesis_type: str) -> dict[str, Any]:
+    def _perform_synthesis(
+        self, nodes: list[KnowledgeNode], synthesis_type: str
+    ) -> dict[str, Any]:
         """Perform knowledge synthesis."""
         synthesis = {
             "type": synthesis_type,
@@ -475,9 +494,9 @@ class SageAgent:
         }
 
         if synthesis_type == "comparative":
-            synthesis[
-                "synthesis_result"
-            ] = "Comparative analysis reveals similarities and differences across knowledge domains"
+            synthesis["synthesis_result"] = (
+                "Comparative analysis reveals similarities and differences across knowledge domains"
+            )
             synthesis["novel_insights"] = [
                 "Cross-domain patterns identified",
                 "Methodological convergences observed",
@@ -485,7 +504,9 @@ class SageAgent:
             ]
 
         elif synthesis_type == "integrative":
-            synthesis["synthesis_result"] = "Integrative synthesis creates unified understanding"
+            synthesis["synthesis_result"] = (
+                "Integrative synthesis creates unified understanding"
+            )
             synthesis["novel_insights"] = [
                 "Unified theoretical framework developed",
                 "Contradictions resolved through higher-level synthesis",
@@ -493,7 +514,9 @@ class SageAgent:
             ]
 
         elif synthesis_type == "meta":
-            synthesis["synthesis_result"] = "Meta-analysis reveals overarching patterns and principles"
+            synthesis["synthesis_result"] = (
+                "Meta-analysis reveals overarching patterns and principles"
+            )
             synthesis["novel_insights"] = [
                 "Universal principles identified",
                 "Boundary conditions clarified",
@@ -505,7 +528,9 @@ class SageAgent:
         synthesis["connections_found"] = total_connections
 
         # Adjust confidence based on node quality and connections
-        avg_confidence = sum(node.confidence for node in nodes) / len(nodes) if nodes else 0.5
+        avg_confidence = (
+            sum(node.confidence for node in nodes) / len(nodes) if nodes else 0.5
+        )
         synthesis["confidence"] = min(0.95, avg_confidence + (total_connections * 0.01))
 
         return synthesis
@@ -546,10 +571,14 @@ class SageAgent:
 
         if support_strength > contradict_strength * 2:
             validity = "likely_true"
-            confidence = min(0.9, support_strength / (support_strength + contradict_strength))
+            confidence = min(
+                0.9, support_strength / (support_strength + contradict_strength)
+            )
         elif contradict_strength > support_strength * 2:
             validity = "likely_false"
-            confidence = min(0.9, contradict_strength / (support_strength + contradict_strength))
+            confidence = min(
+                0.9, contradict_strength / (support_strength + contradict_strength)
+            )
         else:
             validity = "uncertain"
             confidence = 0.5
@@ -566,7 +595,9 @@ class SageAgent:
             ],
         }
 
-    def _perform_expert_analysis(self, topic: str, domain: ResearchDomain, analysis_type: str) -> dict[str, Any]:
+    def _perform_expert_analysis(
+        self, topic: str, domain: ResearchDomain, analysis_type: str
+    ) -> dict[str, Any]:
         """Perform expert-level analysis."""
         expertise = self.domain_expertise.get(domain, 0.7)
 
@@ -620,7 +651,9 @@ class SageAgent:
 
         return analysis
 
-    def _search_knowledge_graph(self, query: str, max_results: int, min_confidence: float) -> list[dict[str, Any]]:
+    def _search_knowledge_graph(
+        self, query: str, max_results: int, min_confidence: float
+    ) -> list[dict[str, Any]]:
         """Search the knowledge graph."""
         results = []
 
@@ -645,7 +678,9 @@ class SageAgent:
 
         return results[:max_results]
 
-    def _determine_methodology(self, question: str, domain: str, constraints: dict[str, Any]) -> dict[str, Any]:
+    def _determine_methodology(
+        self, question: str, domain: str, constraints: dict[str, Any]
+    ) -> dict[str, Any]:
         """Determine the best research methodology."""
         # Analyze question type
         if "compare" in question.lower() or "vs" in question.lower():
@@ -763,7 +798,9 @@ class SageAgent:
         # Calculate KPIs
         if self.performance_history:
             recent_performance = self.performance_history[-10:]
-            success_rate = sum(1 for p in recent_performance if p.get("success", False)) / len(recent_performance)
+            success_rate = sum(
+                1 for p in recent_performance if p.get("success", False)
+            ) / len(recent_performance)
 
             self.kpi_scores = {
                 "research_accuracy": success_rate,
@@ -778,11 +815,17 @@ class SageAgent:
         if not self.knowledge_graph:
             return 0.7
 
-        total_confidence = sum(node.confidence for node in self.knowledge_graph.values())
+        total_confidence = sum(
+            node.confidence for node in self.knowledge_graph.values()
+        )
         avg_confidence = total_confidence / len(self.knowledge_graph)
 
-        total_connections = sum(len(node.connections) for node in self.knowledge_graph.values())
-        connectivity = total_connections / len(self.knowledge_graph) if self.knowledge_graph else 0
+        total_connections = sum(
+            len(node.connections) for node in self.knowledge_graph.values()
+        )
+        connectivity = (
+            total_connections / len(self.knowledge_graph) if self.knowledge_graph else 0
+        )
 
         return min(1.0, (avg_confidence * 0.7) + (min(connectivity / 5, 1.0) * 0.3))
 

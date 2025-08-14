@@ -45,7 +45,9 @@ class VariantMaker:
         self.temperature = temperature
 
         # Load template
-        template_path = Path(__file__).parent / "templates" / "variant_synthesizer.jinja"
+        template_path = (
+            Path(__file__).parent / "templates" / "variant_synthesizer.jinja"
+        )
         with open(template_path, encoding="utf-8") as f:
             self.template = f.read()
 
@@ -113,7 +115,9 @@ class VariantMaker:
             },
         ]
 
-    def _apply_numeric_jitter(self, text: str, jitter_policy: NumericJitterPolicy) -> str:
+    def _apply_numeric_jitter(
+        self, text: str, jitter_policy: NumericJitterPolicy
+    ) -> str:
         """Apply numeric jittering to text according to policy."""
 
         if not jitter_policy.enabled:
@@ -126,7 +130,9 @@ class VariantMaker:
 
             # Calculate jitter amount
             jitter_amount = abs(original) * (jitter_policy.pct / 100.0)
-            min_jitter = max(1, int(jitter_amount * 0.5))  # At least 1, up to half the jitter
+            min_jitter = max(
+                1, int(jitter_amount * 0.5)
+            )  # At least 1, up to half the jitter
             max_jitter = max(1, int(jitter_amount * 1.5))  # Up to 1.5x the jitter
 
             # Apply random jitter
@@ -179,8 +185,13 @@ class VariantMaker:
                         )
 
             # Apply numeric jittering
-            statement = self._apply_numeric_jitter(statement, variant_policy.numeric_jitter)
-            unit_tests = [self._apply_numeric_jitter(test, variant_policy.numeric_jitter) for test in unit_tests]
+            statement = self._apply_numeric_jitter(
+                statement, variant_policy.numeric_jitter
+            )
+            unit_tests = [
+                self._apply_numeric_jitter(test, variant_policy.numeric_jitter)
+                for test in unit_tests
+            ]
 
             # Simple variable name changes in canonical answer
             if variant_policy.paraphrase:
@@ -262,7 +273,9 @@ class VariantMaker:
         # Try LLM generation first
         if n_variants > 1:  # Use LLM for multiple variants
             try:
-                request = VariantRequest(base_problem=base_problem, variant_policy=variant_policy)
+                request = VariantRequest(
+                    base_problem=base_problem, variant_policy=variant_policy
+                )
 
                 # Render prompt
                 prompt = self.llm_client.render_template(
@@ -300,10 +313,14 @@ class VariantMaker:
         remaining_needed = n_variants - len(variants)
 
         if remaining_needed > 0 and use_local_fallback:
-            logger.info(f"Generating {remaining_needed} variants using local transformations")
+            logger.info(
+                f"Generating {remaining_needed} variants using local transformations"
+            )
 
             for _ in range(remaining_needed):
-                local_variant = self._apply_local_transformations(base_problem, variant_policy)
+                local_variant = self._apply_local_transformations(
+                    base_problem, variant_policy
+                )
                 if local_variant:
                     processed = self._post_process_variant(local_variant, base_problem)
                     if processed:
@@ -313,12 +330,16 @@ class VariantMaker:
             raise RuntimeError("Failed to generate any variants")
 
         # Create response
-        final_response = VariantResponse(ok=True, msg=f"variants ({len(variants)} generated)", variants=variants)
+        final_response = VariantResponse(
+            ok=True, msg=f"variants ({len(variants)} generated)", variants=variants
+        )
 
         logger.info(f"Successfully created {len(variants)} variants")
         return final_response
 
-    def _post_process_variant(self, variant: ProblemVariant, base_problem: Problem) -> ProblemVariant | None:
+    def _post_process_variant(
+        self, variant: ProblemVariant, base_problem: Problem
+    ) -> ProblemVariant | None:
         """Post-process and validate a generated variant."""
 
         try:
@@ -332,7 +353,9 @@ class VariantMaker:
                 return None
 
             # Check for reasonable changes from base
-            statement_similarity = self._calculate_similarity(base_problem.statement, variant.statement)
+            statement_similarity = self._calculate_similarity(
+                base_problem.statement, variant.statement
+            )
 
             # Should be similar but not identical
             if statement_similarity > 0.95:
@@ -394,18 +417,24 @@ class VariantMaker:
         for problem in problems:
             try:
                 logger.info(f"Creating variants for problem {problem.id}")
-                response = await self.create_variants(problem, variant_policy, variants_per_problem)
+                response = await self.create_variants(
+                    problem, variant_policy, variants_per_problem
+                )
                 results[problem.id] = response
 
             except Exception as e:
                 logger.error(f"Failed to create variants for {problem.id}: {e}")
                 # Create empty response for consistency
-                results[problem.id] = VariantResponse(ok=False, msg=f"failed: {e}", variants=[])
+                results[problem.id] = VariantResponse(
+                    ok=False, msg=f"failed: {e}", variants=[]
+                )
 
         logger.info(f"Completed variant generation for {len(problems)} problems")
         return results
 
-    def assess_variant_quality(self, base_problem: Problem, variants: list[ProblemVariant]) -> dict[str, float]:
+    def assess_variant_quality(
+        self, base_problem: Problem, variants: list[ProblemVariant]
+    ) -> dict[str, float]:
         """Assess quality of generated variants (0-1 scores)."""
 
         quality_scores = {}
@@ -414,7 +443,9 @@ class VariantMaker:
             score = 0.0
 
             # Diversity check (should be different from base)
-            similarity = self._calculate_similarity(base_problem.statement, variant.statement)
+            similarity = self._calculate_similarity(
+                base_problem.statement, variant.statement
+            )
             if 0.3 <= similarity <= 0.8:  # Sweet spot
                 score += 0.3
             elif similarity < 0.9:  # At least some difference
@@ -464,7 +495,9 @@ async def create_problem_variants(
     """
     async with OpenRouterLLM(api_key=api_key) as client:
         maker = VariantMaker(client, model=model)
-        return await maker.create_variants(base_problem, variant_policy, n_variants, **kwargs)
+        return await maker.create_variants(
+            base_problem, variant_policy, n_variants, **kwargs
+        )
 
 
 if __name__ == "__main__":
@@ -520,7 +553,9 @@ if __name__ == "__main__":
             ],
         )
 
-        policy = VariantPolicy(paraphrase=True, numeric_jitter=NumericJitterPolicy(enabled=True, pct=15))
+        policy = VariantPolicy(
+            paraphrase=True, numeric_jitter=NumericJitterPolicy(enabled=True, pct=15)
+        )
 
         try:
             result = await create_problem_variants(

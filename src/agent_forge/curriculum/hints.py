@@ -103,10 +103,18 @@ class HintGenerator:
         if "print" in wrong_lower and "return" in problem_lower:
             return "wrong_return_type"
 
-        if ("empty" in problem_lower or "none" in problem_lower) and "if" not in wrong_lower:
+        if (
+            "empty" in problem_lower or "none" in problem_lower
+        ) and "if" not in wrong_lower:
             return "empty_input"
 
-        if any(word in problem_lower for word in ["maximum", "minimum", "first", "last"]) and "range" in wrong_lower:
+        if (
+            any(
+                word in problem_lower
+                for word in ["maximum", "minimum", "first", "last"]
+            )
+            and "range" in wrong_lower
+        ):
             return "off_by_one"
 
         if ("for" in wrong_lower or "while" in wrong_lower) and len(wrong_answer) < 50:
@@ -153,7 +161,9 @@ class HintGenerator:
             if len(customized_hint) > 100:  # ~25 tokens
                 customized_hint = customized_hint[:97] + "..."
 
-            return HintResponse(ok=True, msg="hint", hint=customized_hint, hint_type=hint_type)
+            return HintResponse(
+                ok=True, msg="hint", hint=customized_hint, hint_type=hint_type
+            )
 
         except Exception as e:
             logger.warning(f"Local hint generation failed: {e}")
@@ -275,7 +285,9 @@ class HintGenerator:
 
             # Add hint type preference if specified
             if preferred_hint_type:
-                prompt += f"\n\nPrefer generating a {preferred_hint_type.value} type hint."
+                prompt += (
+                    f"\n\nPrefer generating a {preferred_hint_type.value} type hint."
+                )
 
             response = await self.llm_client.invoke_with_schema(
                 prompt=prompt,
@@ -299,7 +311,9 @@ class HintGenerator:
         # Fallback to local patterns
         if use_local_fallback:
             logger.info("Falling back to pattern-based hint generation")
-            local_hint = self._generate_local_hint(problem, wrong_answer, preferred_hint_type)
+            local_hint = self._generate_local_hint(
+                problem, wrong_answer, preferred_hint_type
+            )
 
             if local_hint:
                 logger.info(f"Local hint generated: {local_hint.hint}")
@@ -349,7 +363,9 @@ class HintGenerator:
 
         return results
 
-    def analyze_hint_effectiveness(self, hints: list[HintResponse], follow_up_results: list[bool]) -> dict[str, Any]:
+    def analyze_hint_effectiveness(
+        self, hints: list[HintResponse], follow_up_results: list[bool]
+    ) -> dict[str, Any]:
         """Analyze effectiveness of hints based on follow-up success.
 
         Args:
@@ -395,7 +411,9 @@ class HintGenerator:
             "successful_hints": successful,
             "by_type": type_stats,
             "average_hint_length_words": avg_length,
-            "length_range": [min(hint_lengths), max(hint_lengths)] if hint_lengths else [0, 0],
+            "length_range": [min(hint_lengths), max(hint_lengths)]
+            if hint_lengths
+            else [0, 0],
         }
 
     def get_hint_templates_by_type(self, hint_type: HintType) -> list[str]:
@@ -501,7 +519,9 @@ if __name__ == "__main__":
             print(f"💡 Generated Hint: {result.hint}")
             print(f"🏷️  Hint Type: {result.hint_type.value}")
             print(f"📏 Length: {len(result.hint.split())} words")
-            print(f"✅ Quality: {'Pass' if len(result.hint.split()) <= 25 else 'Fail (too long)'}")
+            print(
+                f"✅ Quality: {'Pass' if len(result.hint.split()) <= 25 else 'Fail (too long)'}"
+            )
 
         except Exception as e:
             print(f"❌ Demo failed: {e}")

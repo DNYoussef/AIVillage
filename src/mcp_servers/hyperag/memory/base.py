@@ -175,7 +175,9 @@ class Edge:
     def update_bayesian_confidence(self, prior: float, likelihood: float) -> None:
         """Update confidence using Bayesian inference."""
         # Simple Bayesian update: posterior ∝ likelihood × prior
-        posterior = (likelihood * prior) / ((likelihood * prior) + ((1 - likelihood) * (1 - prior)))
+        posterior = (likelihood * prior) / (
+            (likelihood * prior) + ((1 - likelihood) * (1 - prior))
+        )
         self.confidence = posterior
 
     def is_hyperedge(self) -> bool:
@@ -266,7 +268,9 @@ class EmbeddingManager:
             return 0.0
         return dot_product / (norm_a * norm_b)
 
-    def find_similar(self, query_embedding: np.ndarray, candidates: list[np.ndarray], top_k: int = 10) -> list[tuple]:
+    def find_similar(
+        self, query_embedding: np.ndarray, candidates: list[np.ndarray], top_k: int = 10
+    ) -> list[tuple]:
         """Find most similar embeddings."""
         if not candidates:
             return []
@@ -281,7 +285,9 @@ class EmbeddingManager:
         return similarities[:top_k]
 
 
-def create_episodic_node(content: str, user_id: str | None = None, ttl_hours: int = 168) -> Node:  # 7 days default
+def create_episodic_node(
+    content: str, user_id: str | None = None, ttl_hours: int = 168
+) -> Node:  # 7 days default
     """Create a new episodic memory node."""
     return Node(
         id=str(uuid.uuid4()),

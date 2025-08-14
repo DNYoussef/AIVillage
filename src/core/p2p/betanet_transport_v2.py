@@ -105,7 +105,9 @@ class BetanetMessageV2:
     def compute_nonce(self) -> bytes:
         """Compute AEAD nonce: NS XOR (LE64(counter) ‖ LE32(0))"""
         counter_bytes = struct.pack("<Q", self.frame_counter) + b"\x00" * 4
-        return bytes(a ^ b for a, b in zip(self.nonce_salt, counter_bytes, strict=False))
+        return bytes(
+            a ^ b for a, b in zip(self.nonce_salt, counter_bytes, strict=False)
+        )
 
     def validate_frame_limits(self) -> bool:
         """Validate frame counter limits to prevent nonce reuse"""
@@ -116,9 +118,13 @@ class BetanetMessageV2:
 class AccessTicket:
     """Enhanced access ticket with 16-byte keyID and collision detection"""
 
-    ticket_key_id: bytes = field(default_factory=lambda: random.randbytes(16))  # Upgraded from 8B
+    ticket_key_id: bytes = field(
+        default_factory=lambda: random.randbytes(16)
+    )  # Upgraded from 8B
     client_public: bytes = field(
-        default_factory=lambda: x25519.X25519PrivateKey.generate().public_key().public_bytes_raw()
+        default_factory=lambda: x25519.X25519PrivateKey.generate()
+        .public_key()
+        .public_bytes_raw()
     )
     server_public: bytes = b""
     hour_salt: int = field(default_factory=lambda: int(time.time()) // 3600)
@@ -126,7 +132,9 @@ class AccessTicket:
     padding_length: int = 0
     origin_specific_name: str = ""  # Site-specific cookie name
 
-    def generate_shared_secret(self, server_private_key: x25519.X25519PrivateKey) -> bytes:
+    def generate_shared_secret(
+        self, server_private_key: x25519.X25519PrivateKey
+    ) -> bytes:
         """Generate ECDH shared secret with hour salt"""
         client_key = x25519.X25519PublicKey.from_public_bytes_raw(self.client_public)
         shared = server_private_key.exchange(client_key)
@@ -229,7 +237,9 @@ class OriginCalibrator:
     def __init__(self, mobile_budget: MobileBudgetManager):
         self.origins = {}  # hostname -> OriginFingerprint
         self.mobile_budget = mobile_budget
-        self.calibration_semaphore = asyncio.Semaphore(3)  # Limit concurrent calibrations
+        self.calibration_semaphore = asyncio.Semaphore(
+            3
+        )  # Limit concurrent calibrations
 
     async def get_origin_fingerprint(self, hostname: str) -> OriginFingerprint:
         """Get origin fingerprint, calibrating if needed"""
@@ -278,7 +288,9 @@ class OriginCalibrator:
             url = f"https://{hostname}{path}"
 
             try:
-                async with session.get(url, timeout=aiohttp.ClientTimeout(total=10)) as response:
+                async with session.get(
+                    url, timeout=aiohttp.ClientTimeout(total=10)
+                ) as response:
                     # Record timing and headers
                     logger.debug(f"Calibration fetch: {url} -> {response.status}")
 
@@ -492,7 +504,9 @@ class BetanetTransportV2:
 
         # Check mobile budget
         cover_bytes_needed = random.randint(50 * 1024, 100 * 1024)  # 50-100KB
-        if not self.mobile_budget.can_create_cover_traffic(message.recipient, cover_bytes_needed):
+        if not self.mobile_budget.can_create_cover_traffic(
+            message.recipient, cover_bytes_needed
+        ):
             self.stats["mobile_budget_hits"] += 1
             logger.debug("Mobile budget exceeded - skipping cover traffic")
             return await self._send_direct(message)
@@ -518,7 +532,9 @@ class BetanetTransportV2:
             tasks = []
             for cover_origin in cover_origins:
                 task = asyncio.create_task(
-                    self._create_single_cover_connection(cover_origin, bytes_budget // len(cover_origins))
+                    self._create_single_cover_connection(
+                        cover_origin, bytes_budget // len(cover_origins)
+                    )
                 )
                 tasks.append(task)
 
@@ -546,7 +562,9 @@ class BetanetTransportV2:
             async with aiohttp.ClientSession() as session:
                 # Fetch a realistic resource
                 url = f"https://{origin}/favicon.ico"
-                async with session.get(url, timeout=aiohttp.ClientTimeout(total=5)) as response:
+                async with session.get(
+                    url, timeout=aiohttp.ClientTimeout(total=5)
+                ) as response:
                     content = await response.read()
                     logger.debug(f"Cover connection to {origin}: {len(content)} bytes")
 
@@ -557,7 +575,9 @@ class BetanetTransportV2:
         hold_time = random.uniform(3, 15)  # 3-15 seconds
         await asyncio.sleep(hold_time)
 
-    async def _select_cover_origins(self, actual_origin: str, count: int = 2) -> list[str]:
+    async def _select_cover_origins(
+        self, actual_origin: str, count: int = 2
+    ) -> list[str]:
         """Select unrelated origins for cover traffic"""
 
         # In production, would use a curated list of popular sites
@@ -652,7 +672,9 @@ async def test_betanet_v2():
     await transport.start()
 
     # Test mobile-optimized send
-    result = await transport.send_message_v2(recipient="peer123", payload=b"Hello Betanet V2!", mobile_optimized=True)
+    result = await transport.send_message_v2(
+        recipient="peer123", payload=b"Hello Betanet V2!", mobile_optimized=True
+    )
 
     assert result
     assert transport.stats["key_rotations"] >= 0

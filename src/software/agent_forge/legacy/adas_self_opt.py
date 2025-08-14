@@ -103,7 +103,9 @@ class OptimizationResult:
 class ArchitectureGenerator:
     """Generates and evolves model architectures."""
 
-    def __init__(self, base_config: ArchitectureConfig, mutation_rate: float = 0.1) -> None:
+    def __init__(
+        self, base_config: ArchitectureConfig, mutation_rate: float = 0.1
+    ) -> None:
         self.base_config = base_config
         self.mutation_rate = mutation_rate
         self.architecture_history = []
@@ -137,25 +139,41 @@ class ArchitectureGenerator:
 
         # Randomly mutate parameters
         if random.random() < self.mutation_rate:
-            new_config.num_layers = max(1, min(48, config.num_layers + random.randint(-2, 2)))
+            new_config.num_layers = max(
+                1, min(48, config.num_layers + random.randint(-2, 2))
+            )
 
         if random.random() < self.mutation_rate:
             hidden_sizes = [256, 384, 512, 768, 1024]
-            current_idx = hidden_sizes.index(config.hidden_size) if config.hidden_size in hidden_sizes else 2
-            new_idx = max(0, min(len(hidden_sizes) - 1, current_idx + random.randint(-1, 1)))
+            current_idx = (
+                hidden_sizes.index(config.hidden_size)
+                if config.hidden_size in hidden_sizes
+                else 2
+            )
+            new_idx = max(
+                0, min(len(hidden_sizes) - 1, current_idx + random.randint(-1, 1))
+            )
             new_config.hidden_size = hidden_sizes[new_idx]
 
         if random.random() < self.mutation_rate:
             heads = [4, 6, 8, 12, 16]
-            current_idx = heads.index(config.num_attention_heads) if config.num_attention_heads in heads else 2
+            current_idx = (
+                heads.index(config.num_attention_heads)
+                if config.num_attention_heads in heads
+                else 2
+            )
             new_idx = max(0, min(len(heads) - 1, current_idx + random.randint(-1, 1)))
             new_config.num_attention_heads = heads[new_idx]
 
         if random.random() < self.mutation_rate:
-            new_config.dropout_rate = max(0.0, min(0.5, config.dropout_rate + random.uniform(-0.1, 0.1)))
+            new_config.dropout_rate = max(
+                0.0, min(0.5, config.dropout_rate + random.uniform(-0.1, 0.1))
+            )
 
         if random.random() < self.mutation_rate:
-            new_config.activation_function = random.choice(["gelu", "relu", "swish", "mish"])
+            new_config.activation_function = random.choice(
+                ["gelu", "relu", "swish", "mish"]
+            )
 
         # Update intermediate size
         new_config.intermediate_size = new_config.hidden_size * random.choice([2, 3, 4])
@@ -166,18 +184,28 @@ class ArchitectureGenerator:
 
         return new_config
 
-    def crossover_architectures(self, config1: ArchitectureConfig, config2: ArchitectureConfig) -> ArchitectureConfig:
+    def crossover_architectures(
+        self, config1: ArchitectureConfig, config2: ArchitectureConfig
+    ) -> ArchitectureConfig:
         """Create offspring architecture by crossing over two parents."""
         # Random crossover of parameters
         new_config = ArchitectureConfig(
             num_layers=random.choice([config1.num_layers, config2.num_layers]),
             hidden_size=random.choice([config1.hidden_size, config2.hidden_size]),
-            num_attention_heads=random.choice([config1.num_attention_heads, config2.num_attention_heads]),
+            num_attention_heads=random.choice(
+                [config1.num_attention_heads, config2.num_attention_heads]
+            ),
             intermediate_size=0,  # Will be set below
             dropout_rate=(config1.dropout_rate + config2.dropout_rate) / 2,
-            activation_function=random.choice([config1.activation_function, config2.activation_function]),
-            layer_norm_eps=random.choice([config1.layer_norm_eps, config2.layer_norm_eps]),
-            position_embedding_type=random.choice([config1.position_embedding_type, config2.position_embedding_type]),
+            activation_function=random.choice(
+                [config1.activation_function, config2.activation_function]
+            ),
+            layer_norm_eps=random.choice(
+                [config1.layer_norm_eps, config2.layer_norm_eps]
+            ),
+            position_embedding_type=random.choice(
+                [config1.position_embedding_type, config2.position_embedding_type]
+            ),
             use_cache=random.choice([config1.use_cache, config2.use_cache]),
         )
 
@@ -199,7 +227,9 @@ class TrainingStrategyOptimizer:
         self.performance_history = []
         self.gp_regressor = None
 
-    def suggest_training_config(self, geometry_feedback: dict[str, float] | None = None) -> TrainingConfig:
+    def suggest_training_config(
+        self, geometry_feedback: dict[str, float] | None = None
+    ) -> TrainingConfig:
         """Suggest optimal training configuration."""
         if len(self.strategy_history) < 5:
             # Random exploration for first few trials
@@ -215,12 +245,16 @@ class TrainingStrategyOptimizer:
             gradient_accumulation_steps=random.choice([1, 2, 4, 8]),
             warmup_steps=random.randint(100, 1000),
             weight_decay=random.uniform(0.0, 0.1),
-            lr_scheduler_type=random.choice(["linear", "cosine", "polynomial", "constant"]),
+            lr_scheduler_type=random.choice(
+                ["linear", "cosine", "polynomial", "constant"]
+            ),
             optimizer_type=random.choice(["adamw", "sgd", "adafactor"]),
             max_grad_norm=random.uniform(0.5, 2.0),
         )
 
-    def _bayesian_suggest_training_config(self, geometry_feedback: dict[str, float] | None = None) -> TrainingConfig:
+    def _bayesian_suggest_training_config(
+        self, geometry_feedback: dict[str, float] | None = None
+    ) -> TrainingConfig:
         """Use Bayesian optimization to suggest training config."""
         if self.gp_regressor is None:
             self._initialize_gp_regressor()
@@ -279,7 +313,9 @@ class TrainingStrategyOptimizer:
         X = []
         y = []
 
-        for strategy, performance in zip(self.strategy_history, self.performance_history, strict=False):
+        for strategy, performance in zip(
+            self.strategy_history, self.performance_history, strict=False
+        ):
             x_vec = [
                 strategy.learning_rate,
                 strategy.batch_size,
@@ -296,7 +332,9 @@ class TrainingStrategyOptimizer:
 
         # Initialize and fit GP
         kernel = Matern(length_scale=1.0, nu=2.5)
-        self.gp_regressor = GaussianProcessRegressor(kernel=kernel, alpha=1e-6, n_restarts_optimizer=10)
+        self.gp_regressor = GaussianProcessRegressor(
+            kernel=kernel, alpha=1e-6, n_restarts_optimizer=10
+        )
         self.gp_regressor.fit(X, y)
 
     def update_performance(self, config: TrainingConfig, performance: float) -> None:
@@ -313,7 +351,9 @@ class ModelBuilder:
     """Builds models from architecture configurations."""
 
     @staticmethod
-    def build_model(arch_config: ArchitectureConfig, vocab_size: int = 32000) -> nn.Module:
+    def build_model(
+        arch_config: ArchitectureConfig, vocab_size: int = 32000
+    ) -> nn.Module:
         """Build a model from architecture configuration."""
         # Create transformer config
         config = AutoConfig.from_pretrained("microsoft/DialoGPT-small")
@@ -373,8 +413,14 @@ class PerformanceEvaluator:
 
         # Get compass direction
         compass_direction = "Unknown"
-        if geometry_metrics and hasattr(geometry_tracker, "compass_history") and geometry_tracker.compass_history:
-            compass_direction = geometry_tracker.compass_history[-1].get_primary_direction()
+        if (
+            geometry_metrics
+            and hasattr(geometry_tracker, "compass_history")
+            and geometry_tracker.compass_history
+        ):
+            compass_direction = geometry_tracker.compass_history[
+                -1
+            ].get_primary_direction()
 
         return OptimizationResult(
             architecture_config=arch_config,
@@ -387,7 +433,9 @@ class PerformanceEvaluator:
             convergence_steps=convergence_steps,
         )
 
-    async def _evaluate_performance(self, model: nn.Module, test_data: Any = None) -> float:
+    async def _evaluate_performance(
+        self, model: nn.Module, test_data: Any = None
+    ) -> float:
         """Evaluate model performance (placeholder implementation)."""
         # Placeholder: run forward passes and calculate metrics
         model.eval()
@@ -402,7 +450,9 @@ class PerformanceEvaluator:
                 seq_len = 64
                 vocab_size = 32000
 
-                input_ids = torch.randint(0, vocab_size, (batch_size, seq_len)).to(self.device)
+                input_ids = torch.randint(0, vocab_size, (batch_size, seq_len)).to(
+                    self.device
+                )
                 labels = input_ids.clone()
 
                 try:
@@ -491,14 +541,21 @@ class ADASOptimizer:
                     model = ModelBuilder.build_model(arch_config)
 
                     # Evaluate
-                    result = await self.evaluator.evaluate_model(model, arch_config, training_config)
+                    result = await self.evaluator.evaluate_model(
+                        model, arch_config, training_config
+                    )
                     results.append(result)
 
                     # Update training optimizer
-                    self.training_optimizer.update_performance(training_config, result.performance_score)
+                    self.training_optimizer.update_performance(
+                        training_config, result.performance_score
+                    )
 
                     # Track best result
-                    if self.best_result is None or result.performance_score > self.best_result.performance_score:
+                    if (
+                        self.best_result is None
+                        or result.performance_score > self.best_result.performance_score
+                    ):
                         self.best_result = result
 
                     # Log to W&B
@@ -541,13 +598,19 @@ class ADASOptimizer:
             # Save checkpoint
             self._save_checkpoint(generation, results)
 
-        logger.info(f"ADAS optimization complete. Best score: {self.best_result.performance_score:.4f}")
+        logger.info(
+            f"ADAS optimization complete. Best score: {self.best_result.performance_score:.4f}"
+        )
         return self.best_result
 
-    def _evolve_population(self, results: list[OptimizationResult]) -> list[tuple[ArchitectureConfig, TrainingConfig]]:
+    def _evolve_population(
+        self, results: list[OptimizationResult]
+    ) -> list[tuple[ArchitectureConfig, TrainingConfig]]:
         """Evolve population for next generation."""
         # Sort by performance
-        sorted_results = sorted(results, key=lambda x: x.performance_score, reverse=True)
+        sorted_results = sorted(
+            results, key=lambda x: x.performance_score, reverse=True
+        )
 
         # Select top performers (elitism)
         elite_size = self.population_size // 4
@@ -575,19 +638,27 @@ class ADASOptimizer:
                 offspring_arch = self.arch_generator.mutate_architecture(offspring_arch)
 
             # Generate new training config (with Bayesian optimization)
-            geometry_feedback = parent1.geometry_metrics if parent1.geometry_metrics else None
-            offspring_training = self.training_optimizer.suggest_training_config(geometry_feedback)
+            geometry_feedback = (
+                parent1.geometry_metrics if parent1.geometry_metrics else None
+            )
+            offspring_training = self.training_optimizer.suggest_training_config(
+                geometry_feedback
+            )
 
             new_population.append((offspring_arch, offspring_training))
 
         return new_population
 
-    def _tournament_selection(self, results: list[OptimizationResult], tournament_size: int = 3) -> OptimizationResult:
+    def _tournament_selection(
+        self, results: list[OptimizationResult], tournament_size: int = 3
+    ) -> OptimizationResult:
         """Tournament selection for parent selection."""
         tournament = random.sample(results, min(tournament_size, len(results)))
         return max(tournament, key=lambda x: x.performance_score)
 
-    def _save_checkpoint(self, generation: int, results: list[OptimizationResult]) -> None:
+    def _save_checkpoint(
+        self, generation: int, results: list[OptimizationResult]
+    ) -> None:
         """Save optimization checkpoint."""
         checkpoint = {
             "generation": generation,
@@ -608,14 +679,22 @@ class ADASOptimizer:
         if not self.optimization_history:
             return {"status": "not_started"}
 
-        all_results = [result for generation in self.optimization_history for result in generation]
+        all_results = [
+            result for generation in self.optimization_history for result in generation
+        ]
 
         return {
             "total_evaluations": len(all_results),
             "best_performance": max(r.performance_score for r in all_results),
             "average_performance": np.mean([r.performance_score for r in all_results]),
-            "best_architecture": (self.best_result.architecture_config.to_dict() if self.best_result else None),
-            "best_training_config": (self.best_result.training_config.to_dict() if self.best_result else None),
+            "best_architecture": (
+                self.best_result.architecture_config.to_dict()
+                if self.best_result
+                else None
+            ),
+            "best_training_config": (
+                self.best_result.training_config.to_dict() if self.best_result else None
+            ),
             "compass_directions": [r.compass_direction for r in all_results],
             "memory_usage_range": (
                 min(r.memory_usage for r in all_results),
@@ -631,7 +710,9 @@ async def main() -> None:
 
     parser = argparse.ArgumentParser(description="ADAS Self-Optimization")
     parser.add_argument("--output-dir", required=True, help="Output directory")
-    parser.add_argument("--generations", type=int, default=20, help="Number of generations")
+    parser.add_argument(
+        "--generations", type=int, default=20, help="Number of generations"
+    )
     parser.add_argument("--population", type=int, default=10, help="Population size")
     parser.add_argument("--device", default="cuda", help="Device (cuda/cpu)")
 

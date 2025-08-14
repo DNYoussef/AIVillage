@@ -183,7 +183,9 @@ class ConfigurationManager:
         ),
     }
 
-    def __init__(self, profile: str | None = None, config_dir: str | None = None) -> None:
+    def __init__(
+        self, profile: str | None = None, config_dir: str | None = None
+    ) -> None:
         """Initialize configuration manager."""
         self.profile_name = profile or os.environ.get("AIVILLAGE_ENV", "development")
         self.config_dir = Path(config_dir) if config_dir else Path("./config")
@@ -199,7 +201,9 @@ class ConfigurationManager:
 
         self.profile = self.PROFILES[self.profile_name]
 
-    def load_configuration(self, cli_args: dict[str, Any] | None = None, validate: bool = True) -> dict[str, str]:
+    def load_configuration(
+        self, cli_args: dict[str, Any] | None = None, validate: bool = True
+    ) -> dict[str, str]:
         """Load configuration from all sources in priority order.
 
         Priority order (highest to lowest):
@@ -249,7 +253,9 @@ class ConfigurationManager:
                 priority=1,
             )
         )
-        logger.debug(f"Loaded {len(self.profile.defaults)} default values for profile '{self.profile_name}'")
+        logger.debug(
+            f"Loaded {len(self.profile.defaults)} default values for profile '{self.profile_name}'"
+        )
 
     def _load_env_file(self) -> None:
         """Load .env file if available."""
@@ -268,7 +274,11 @@ class ConfigurationManager:
                                 key, value = line.split("=", 1)
                                 env_vars[key.strip()] = value.strip().strip("\"'")
 
-                    self.sources.append(ConfigurationSource(name=f"env_file_{env_file}", data=env_vars, priority=2))
+                    self.sources.append(
+                        ConfigurationSource(
+                            name=f"env_file_{env_file}", data=env_vars, priority=2
+                        )
+                    )
                     logger.debug(f"Loaded {len(env_vars)} variables from {env_file}")
                 else:
                     logger.warning(f"Found {env_file} but python-dotenv not available")
@@ -284,7 +294,9 @@ class ConfigurationManager:
                             if YAML_AVAILABLE:
                                 data = yaml.safe_load(f)
                             else:
-                                logger.warning(f"Found {config_path} but PyYAML not available")
+                                logger.warning(
+                                    f"Found {config_path} but PyYAML not available"
+                                )
                                 continue
                         else:  # json
                             data = json.load(f)
@@ -300,7 +312,9 @@ class ConfigurationManager:
                             priority=priority,
                         )
                     )
-                    logger.debug(f"Loaded {len(flat_data)} variables from {config_path}")
+                    logger.debug(
+                        f"Loaded {len(flat_data)} variables from {config_path}"
+                    )
                     break
                 except Exception as e:
                     logger.exception(f"Error loading config file {config_path}: {e}")
@@ -356,7 +370,11 @@ class ConfigurationManager:
             if any(key.startswith(prefix) for prefix in aivillage_prefixes):
                 relevant_vars[key] = value
 
-        self.sources.append(ConfigurationSource(name="environment_variables", data=relevant_vars, priority=5))
+        self.sources.append(
+            ConfigurationSource(
+                name="environment_variables", data=relevant_vars, priority=5
+            )
+        )
         logger.debug(f"Loaded {len(relevant_vars)} environment variables")
 
     def _load_cli_args(self, cli_args: dict[str, Any]) -> None:
@@ -370,7 +388,9 @@ class ConfigurationManager:
                     env_key = f"AIVILLAGE_{env_key}"
                 env_format_args[env_key] = str(value)
 
-        self.sources.append(ConfigurationSource(name="cli_arguments", data=env_format_args, priority=6))
+        self.sources.append(
+            ConfigurationSource(name="cli_arguments", data=env_format_args, priority=6)
+        )
         logger.debug(f"Loaded {len(env_format_args)} command line arguments")
 
     def _merge_sources(self) -> None:
@@ -393,7 +413,13 @@ class ConfigurationManager:
         self.validation_report = validator.validate_all(self.final_config)
 
         if not self.validation_report.is_valid:
-            error_count = len([i for i in self.validation_report.issues if i.level == ValidationLevel.ERROR])
+            error_count = len(
+                [
+                    i
+                    for i in self.validation_report.issues
+                    if i.level == ValidationLevel.ERROR
+                ]
+            )
             logger.error(f"Configuration validation failed with {error_count} errors")
 
             # Print validation report
@@ -414,7 +440,9 @@ class ConfigurationManager:
         try:
             return int(value)
         except ValueError:
-            logger.warning(f"Invalid integer value for {key}: {value}, using default {default}")
+            logger.warning(
+                f"Invalid integer value for {key}: {value}, using default {default}"
+            )
             return default
 
     def get_float(self, key: str, default: float = 0.0) -> float:
@@ -423,7 +451,9 @@ class ConfigurationManager:
         try:
             return float(value)
         except ValueError:
-            logger.warning(f"Invalid float value for {key}: {value}, using default {default}")
+            logger.warning(
+                f"Invalid float value for {key}: {value}, using default {default}"
+            )
             return default
 
     def get_bool(self, key: str, default: bool = False) -> bool:
@@ -431,7 +461,9 @@ class ConfigurationManager:
         value = self.get(key, str(default)).lower()
         return value in ["true", "1", "yes", "on", "enabled"]
 
-    def get_list(self, key: str, separator: str = ",", default: list[str] | None = None) -> list[str]:
+    def get_list(
+        self, key: str, separator: str = ",", default: list[str] | None = None
+    ) -> list[str]:
         """Get configuration value as list."""
         if default is None:
             default = []
@@ -492,7 +524,9 @@ class ConfigurationManager:
         port = self.get_int(port_map[component], 8080)
 
         # Use HTTPS in production
-        protocol = "https" if self.is_production() and self.get_bool("TLS_ENABLED") else "http"
+        protocol = (
+            "https" if self.is_production() and self.get_bool("TLS_ENABLED") else "http"
+        )
 
         return f"{protocol}://{host}:{port}"
 
@@ -529,7 +563,9 @@ class ConfigurationManager:
         lines.append("CONFIGURATION SOURCES:")
         lines.append("-" * 40)
         for source in sorted(self.sources, key=lambda s: s.priority, reverse=True):
-            lines.append(f"  {source.priority}. {source.name} ({len(source.data)} variables)")
+            lines.append(
+                f"  {source.priority}. {source.name} ({len(source.data)} variables)"
+            )
         lines.append("")
 
         # Validation summary
@@ -557,7 +593,11 @@ class ConfigurationManager:
         lines.append("-" * 40)
 
         for component in components:
-            component_vars = [k for k in self.final_config if self._is_component_variable(k, component)]
+            component_vars = [
+                k
+                for k in self.final_config
+                if self._is_component_variable(k, component)
+            ]
             lines.append(f"  {component}: {len(component_vars)} variables configured")
 
         return "\n".join(lines)
@@ -633,7 +673,9 @@ if __name__ == "__main__":
 
     try:
         # Setup configuration
-        config = setup_configuration(profile=args.profile, config_dir=args.config_dir, validate=args.validate)
+        config = setup_configuration(
+            profile=args.profile, config_dir=args.config_dir, validate=args.validate
+        )
 
         # Print report
         print(config.generate_report())

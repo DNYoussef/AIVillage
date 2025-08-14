@@ -143,7 +143,8 @@ class ResourceSnapshot:
             or self.cpu_percent > 90
             or self.storage_percent > 90
             or self.power_state in [PowerState.BATTERY_LOW, PowerState.BATTERY_CRITICAL]
-            or self.thermal_state in [ThermalState.HOT, ThermalState.CRITICAL, ThermalState.THROTTLING]
+            or self.thermal_state
+            in [ThermalState.HOT, ThermalState.CRITICAL, ThermalState.THROTTLING]
         )
 
     @property
@@ -240,7 +241,8 @@ class DeviceProfile:
     def get_evolution_constraints(self) -> dict[str, Any]:
         """Get constraints for evolution tasks."""
         return {
-            "max_memory_mb": self.max_evolution_memory_mb or int(self.total_memory_gb * 1024 * 0.5),
+            "max_memory_mb": self.max_evolution_memory_mb
+            or int(self.total_memory_gb * 1024 * 0.5),
             "max_cpu_percent": self.max_evolution_cpu_percent or 70.0,
             "evolution_capable": self.evolution_capable,
             "preferred_types": self.preferred_evolution_types,
@@ -312,7 +314,9 @@ class DeviceProfiler:
 
         # Callbacks for resource events
         self.alert_callbacks: list[Callable[[str, ResourceSnapshot], None]] = []
-        self.threshold_callbacks: dict[str, list[Callable[[ResourceSnapshot], None]]] = {}
+        self.threshold_callbacks: dict[
+            str, list[Callable[[ResourceSnapshot], None]]
+        ] = {}
 
         # Configurable thresholds
         self.thresholds = {
@@ -336,7 +340,9 @@ class DeviceProfiler:
             "resource_constraints_hit": 0,
         }
 
-        logger.info(f"Enhanced device profiler initialized for {self.profile.device_type.value} device")
+        logger.info(
+            f"Enhanced device profiler initialized for {self.profile.device_type.value} device"
+        )
 
     def _generate_device_id(self) -> str:
         """Generate unique device ID."""
@@ -365,7 +371,9 @@ class DeviceProfiler:
         performance_tier = self._calculate_performance_tier()
 
         # Set evolution constraints based on device type and performance
-        max_evolution_memory = self._calculate_max_evolution_memory(memory.total, device_type)
+        max_evolution_memory = self._calculate_max_evolution_memory(
+            memory.total, device_type
+        )
         max_evolution_cpu = self._calculate_max_evolution_cpu(device_type)
         battery_percent, power_plugged, _power_state = self._get_power_info()
 
@@ -388,7 +396,9 @@ class DeviceProfiler:
             max_evolution_memory_mb=max_evolution_memory,
             max_evolution_cpu_percent=max_evolution_cpu,
             evolution_capable=self._is_evolution_capable(device_type, memory.total),
-            preferred_evolution_types=self._get_preferred_evolution_types(device_type, performance_tier),
+            preferred_evolution_types=self._get_preferred_evolution_types(
+                device_type, performance_tier
+            ),
             battery_optimization=device_type in [DeviceType.PHONE, DeviceType.TABLET],
             monitoring_interval=self.monitoring_interval,
         )
@@ -404,7 +414,11 @@ class DeviceProfiler:
             return DeviceType.PHONE if memory_gb < 6 else DeviceType.TABLET
         if system == "darwin":
             if platform.machine().startswith("iP"):
-                return DeviceType.PHONE if "iPhone" in platform.machine() else DeviceType.TABLET
+                return (
+                    DeviceType.PHONE
+                    if "iPhone" in platform.machine()
+                    else DeviceType.TABLET
+                )
             return DeviceType.LAPTOP if memory_gb < 16 else DeviceType.DESKTOP
         if system in ["linux", "windows"]:
             if memory_gb < 2:
@@ -435,7 +449,9 @@ class DeviceProfiler:
             return "medium"
         return "low"
 
-    def _calculate_max_evolution_memory(self, total_memory: int, device_type: DeviceType) -> int:
+    def _calculate_max_evolution_memory(
+        self, total_memory: int, device_type: DeviceType
+    ) -> int:
         """Calculate maximum memory for evolution tasks."""
         total_gb = total_memory / (1024**3)
 
@@ -482,7 +498,9 @@ class DeviceProfiler:
 
         return True
 
-    def _get_preferred_evolution_types(self, device_type: DeviceType, performance_tier: str) -> list[str]:
+    def _get_preferred_evolution_types(
+        self, device_type: DeviceType, performance_tier: str
+    ) -> list[str]:
         """Get preferred evolution types for this device."""
         preferences = []
 
@@ -496,7 +514,9 @@ class DeviceProfiler:
             if performance_tier in ["high", "premium"]:
                 preferences.append("experimental")
         elif device_type == DeviceType.SERVER:
-            preferences.extend(["nightly", "breakthrough", "experimental", "distributed"])
+            preferences.extend(
+                ["nightly", "breakthrough", "experimental", "distributed"]
+            )
 
         return preferences
 
@@ -534,7 +554,9 @@ class DeviceProfiler:
         try:
             import subprocess
 
-            result = subprocess.run(["nvidia-smi", "-L"], check=False, capture_output=True, text=True)
+            result = subprocess.run(
+                ["nvidia-smi", "-L"], check=False, capture_output=True, text=True
+            )
             return result.returncode == 0
         except:
             return False
@@ -656,7 +678,13 @@ class DeviceProfiler:
             temps = psutil.sensors_temperatures()
             if temps:
                 for sensor_name, sensor_list in temps.items():
-                    if any(keyword in sensor_name.lower() for keyword in ["cpu", "core", "processor"]) and sensor_list:
+                    if (
+                        any(
+                            keyword in sensor_name.lower()
+                            for keyword in ["cpu", "core", "processor"]
+                        )
+                        and sensor_list
+                    ):
                         return sensor_list[0].current
         except:
             pass
@@ -689,7 +717,9 @@ class DeviceProfiler:
 
         return battery_percent, power_plugged, power_state
 
-    def _determine_thermal_state(self, cpu_temp: float | None, cpu_percent: float) -> ThermalState:
+    def _determine_thermal_state(
+        self, cpu_temp: float | None, cpu_percent: float
+    ) -> ThermalState:
         """Determine thermal state."""
         if cpu_temp is None:
             # Estimate based on CPU usage
@@ -762,7 +792,9 @@ class DeviceProfiler:
         self.stats["alerts_triggered"] += 1
         self.stats["last_alert_time"] = time.time()
 
-        logger.warning(f"Resource alert: {alert_type} - {self._format_alert_message(alert_type, snapshot)}")
+        logger.warning(
+            f"Resource alert: {alert_type} - {self._format_alert_message(alert_type, snapshot)}"
+        )
 
         # Call registered callbacks
         for callback in self.alert_callbacks:
@@ -799,7 +831,9 @@ class DeviceProfiler:
         self.monitoring_active = True
 
         if self.enable_background_monitoring:
-            self.monitoring_thread = threading.Thread(target=self._monitoring_loop, daemon=True)
+            self.monitoring_thread = threading.Thread(
+                target=self._monitoring_loop, daemon=True
+            )
             self.monitoring_thread.start()
 
         logger.info("Enhanced device monitoring started")
@@ -836,7 +870,10 @@ class DeviceProfiler:
             return False
 
         # Check if evolution type is preferred
-        if evolution_type not in self.profile.preferred_evolution_types and evolution_type != "emergency":
+        if (
+            evolution_type not in self.profile.preferred_evolution_types
+            and evolution_type != "emergency"
+        ):
             return False
 
         # Get evolution suitability score
@@ -880,11 +917,15 @@ class DeviceProfiler:
             "current_constraints": current_usage.is_resource_constrained,
         }
 
-    def register_alert_callback(self, callback: Callable[[str, ResourceSnapshot], None]) -> None:
+    def register_alert_callback(
+        self, callback: Callable[[str, ResourceSnapshot], None]
+    ) -> None:
         """Register callback for all alerts."""
         self.alert_callbacks.append(callback)
 
-    def register_threshold_callback(self, threshold: str, callback: Callable[[ResourceSnapshot], None]) -> None:
+    def register_threshold_callback(
+        self, threshold: str, callback: Callable[[ResourceSnapshot], None]
+    ) -> None:
         """Register callback for specific threshold."""
         if threshold not in self.threshold_callbacks:
             self.threshold_callbacks[threshold] = []

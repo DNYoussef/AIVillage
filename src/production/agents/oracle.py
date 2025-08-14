@@ -130,7 +130,9 @@ class OracleAgent:
         variables = request.get("variables", [])
 
         # Perform prediction
-        predictions = self._calculate_predictions(system_state, prediction_horizon, variables)
+        predictions = self._calculate_predictions(
+            system_state, prediction_horizon, variables
+        )
 
         return {
             "status": "completed",
@@ -238,7 +240,9 @@ class OracleAgent:
             "energy_levels": energy_levels,
             "state_probabilities": probabilities,
             "ground_state_energy": energy_levels[0],
-            "average_energy": sum(e * p for e, p in zip(energy_levels, probabilities, strict=False)),
+            "average_energy": sum(
+                e * p for e, p in zip(energy_levels, probabilities, strict=False)
+            ),
             "quantum_properties": {
                 "zero_point_energy": frequency / 2,
                 "level_spacing": frequency,
@@ -309,7 +313,9 @@ class OracleAgent:
             "model_type": "linear_extrapolation",
         }
 
-    def _perform_system_analysis(self, system: dict[str, Any], analysis_type: str) -> dict[str, Any]:
+    def _perform_system_analysis(
+        self, system: dict[str, Any], analysis_type: str
+    ) -> dict[str, Any]:
         """Perform system analysis."""
         if analysis_type == "stability":
             return self._stability_analysis(system)
@@ -335,7 +341,9 @@ class OracleAgent:
         # Interactions can increase or decrease stability
         interaction_factor = 1.0 + len(interactions) * 0.02
 
-        stability_score = min(0.95, base_stability * component_factor * interaction_factor)
+        stability_score = min(
+            0.95, base_stability * component_factor * interaction_factor
+        )
 
         return {
             "stability_score": stability_score,
@@ -359,15 +367,23 @@ class OracleAgent:
             sensitivity = abs(value) * 0.1 + 0.05  # Simple heuristic
             sensitivity_map[param] = {
                 "coefficient": sensitivity,
-                "impact": "high" if sensitivity > 0.2 else "medium" if sensitivity > 0.1 else "low",
+                "impact": "high"
+                if sensitivity > 0.2
+                else "medium"
+                if sensitivity > 0.1
+                else "low",
             }
 
         return {
             "sensitivity_map": sensitivity_map,
-            "most_sensitive": max(sensitivity_map.keys(), key=lambda k: sensitivity_map[k]["coefficient"])
+            "most_sensitive": max(
+                sensitivity_map.keys(), key=lambda k: sensitivity_map[k]["coefficient"]
+            )
             if sensitivity_map
             else None,
-            "least_sensitive": min(sensitivity_map.keys(), key=lambda k: sensitivity_map[k]["coefficient"])
+            "least_sensitive": min(
+                sensitivity_map.keys(), key=lambda k: sensitivity_map[k]["coefficient"]
+            )
             if sensitivity_map
             else None,
             "insights": [
@@ -524,7 +540,9 @@ class OracleAgent:
 
         if self.performance_history:
             recent_performance = self.performance_history[-10:]
-            success_rate = sum(1 for p in recent_performance if p.get("success", False)) / len(recent_performance)
+            success_rate = sum(
+                1 for p in recent_performance if p.get("success", False)
+            ) / len(recent_performance)
 
             self.kpi_scores = {
                 "simulation_accuracy": success_rate,

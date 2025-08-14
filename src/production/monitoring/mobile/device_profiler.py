@@ -163,7 +163,8 @@ class ResourceSnapshot:
             or self.cpu_percent > 90
             or self.storage_percent > 90
             or self.power_state in [PowerState.BATTERY_LOW, PowerState.BATTERY_CRITICAL]
-            or self.thermal_state in [ThermalState.HOT, ThermalState.CRITICAL, ThermalState.THROTTLING]
+            or self.thermal_state
+            in [ThermalState.HOT, ThermalState.CRITICAL, ThermalState.THROTTLING]
         )
 
     @property
@@ -263,7 +264,9 @@ class DeviceProfile:
     _monitoring_thread: threading.Thread | None = field(default=None, init=False)
     _monitoring_active: bool = field(default=False, init=False)
     _snapshot_queue: queue.Queue = field(default_factory=queue.Queue, init=False)
-    _callbacks: list[Callable[[ResourceSnapshot], None]] = field(default_factory=list, init=False)
+    _callbacks: list[Callable[[ResourceSnapshot], None]] = field(
+        default_factory=list, init=False
+    )
 
     def __post_init__(self):
         """Initialize device profile after creation."""
@@ -356,7 +359,9 @@ class DeviceProfile:
             return
 
         self._monitoring_active = True
-        self._monitoring_thread = threading.Thread(target=self._monitoring_loop, args=(interval,), daemon=True)
+        self._monitoring_thread = threading.Thread(
+            target=self._monitoring_loop, args=(interval,), daemon=True
+        )
         self._monitoring_thread.start()
         logger.info(f"Started resource monitoring for device {self.device_id}")
 
@@ -456,7 +461,9 @@ class DeviceProfile:
             process_count=process_count,
         )
 
-    def _determine_power_state(self, battery_percent: float | None, power_plugged: bool | None) -> PowerState:
+    def _determine_power_state(
+        self, battery_percent: float | None, power_plugged: bool | None
+    ) -> PowerState:
         """Determine power state from battery info."""
         if power_plugged:
             return PowerState.PLUGGED_IN
@@ -537,11 +544,17 @@ class DeviceProfile:
         snapshot = self.current_snapshot
         constraints = {
             "available": True,
-            "max_memory_gb": max(0.5, snapshot.memory_available_gb * 0.7),  # Use 70% of available
-            "max_cpu_percent": max(10, 100 - snapshot.cpu_percent - 20),  # Leave 20% headroom
+            "max_memory_gb": max(
+                0.5, snapshot.memory_available_gb * 0.7
+            ),  # Use 70% of available
+            "max_cpu_percent": max(
+                10, 100 - snapshot.cpu_percent - 20
+            ),  # Leave 20% headroom
             "max_duration_minutes": 60,  # Default 1 hour limit
-            "power_sensitive": snapshot.power_state in [PowerState.BATTERY_LOW, PowerState.BATTERY_CRITICAL],
-            "thermal_sensitive": snapshot.thermal_state in [ThermalState.HOT, ThermalState.CRITICAL],
+            "power_sensitive": snapshot.power_state
+            in [PowerState.BATTERY_LOW, PowerState.BATTERY_CRITICAL],
+            "thermal_sensitive": snapshot.thermal_state
+            in [ThermalState.HOT, ThermalState.CRITICAL],
         }
 
         # Adjust based on constraints
@@ -555,11 +568,15 @@ class DeviceProfile:
 
         return constraints
 
-    def add_monitoring_callback(self, callback: Callable[[ResourceSnapshot], None]) -> None:
+    def add_monitoring_callback(
+        self, callback: Callable[[ResourceSnapshot], None]
+    ) -> None:
         """Add callback for monitoring updates."""
         self._callbacks.append(callback)
 
-    def remove_monitoring_callback(self, callback: Callable[[ResourceSnapshot], None]) -> None:
+    def remove_monitoring_callback(
+        self, callback: Callable[[ResourceSnapshot], None]
+    ) -> None:
         """Remove monitoring callback."""
         if callback in self._callbacks:
             self._callbacks.remove(callback)
@@ -576,7 +593,9 @@ class DeviceProfile:
             "cpu_brand": self.cpu_brand,
             "memory_total_gb": self.memory_total_gb,
             "storage_total_gb": self.storage_total_gb,
-            "current_snapshot": self.current_snapshot.__dict__ if self.current_snapshot else None,
+            "current_snapshot": self.current_snapshot.__dict__
+            if self.current_snapshot
+            else None,
             "supports_gpu": self.supports_gpu,
             "supports_neural_engine": self.supports_neural_engine,
             "supports_background_processing": self.supports_background_processing,
@@ -643,7 +662,9 @@ class DeviceProfiler:
             self.profile.update_profile(snapshot)
 
             self._initialized = True
-            logger.info(f"Initialized device profiler for {self.profile.device_type.value} device")
+            logger.info(
+                f"Initialized device profiler for {self.profile.device_type.value} device"
+            )
 
         return self.profile
 

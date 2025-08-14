@@ -1,4 +1,3 @@
-# noqa: D400 - short summary handled in extended description below
 """Unified compression pipeline entry points.
 
 This module consolidates all compression interfaces in the repository into a
@@ -12,25 +11,29 @@ advanced pipeline so that callers only need to import from this file.
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Callable
+from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, Field
 
+from src.agent_forge.compression.bitnet import BITNETCompressor
+from src.agent_forge.compression.bitnet import compress as bitnet_compress
+from src.agent_forge.compression.seedlm import (
+    LinearFeedbackShiftRegister,
+    SEEDLMCompressor,
+)
+from src.agent_forge.compression.seedlm import compress as seedlm_compress
+from src.agent_forge.compression.vptq import VPTQCompressor
+from src.agent_forge.compression.vptq import compress as vptq_compress
 from src.core.compression.unified_compressor import (
     UnifiedCompressor as _CoreUnifiedCompressor,
-)
-from src.agent_forge.compression.bitnet import BITNETCompressor, compress as bitnet_compress
-from src.agent_forge.compression.vptq import VPTQCompressor, compress as vptq_compress
-from src.agent_forge.compression.seedlm import (
-    SEEDLMCompressor,
-    LinearFeedbackShiftRegister,
-    compress as seedlm_compress,
 )
 
 logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:  # pragma: no cover - used for type checkers only
     from pathlib import Path
+
     import torch
 
 
@@ -72,7 +75,7 @@ class UnifiedCompressor(_CoreUnifiedCompressor):
         )
 
     # ------------------------------------------------------------------
-    def compress(self, model: "torch.nn.Module | str | Path") -> dict[str, object]:
+    def compress(self, model: torch.nn.Module | str | Path) -> dict[str, object]:
         """Compress ``model`` with optional evaluation callbacks."""
 
         metrics_before = None
@@ -85,14 +88,17 @@ class UnifiedCompressor(_CoreUnifiedCompressor):
         if self.config.eval_before_after and self.eval_hook is not None:
             try:  # pragma: no cover - defensive
                 metrics_after = self.eval_hook(result, "after")
-                result["evaluation"] = {"before": metrics_before, "after": metrics_after}
+                result["evaluation"] = {
+                    "before": metrics_before,
+                    "after": metrics_after,
+                }
             except Exception:  # pragma: no cover - evaluation failures shouldn't abort
                 logger.warning("Post-compression evaluation hook failed", exc_info=True)
         return result
 
 
 def compress(
-    model: "torch.nn.Module | str | Path",
+    model: torch.nn.Module | str | Path,
     *,
     target_device: str = "mobile",
     memory_limit_mb: int = 2048,
@@ -116,7 +122,7 @@ def compress(
 
 def decompress(
     compressed: dict[str, object],
-) -> "torch.nn.Module | dict[str, torch.Tensor]":
+) -> torch.nn.Module | dict[str, torch.Tensor]:
     """Decompress data produced by :func:`compress`."""
 
     compressor = UnifiedCompressor()
@@ -136,4 +142,3 @@ __all__ = [
     "vptq_compress",
     "seedlm_compress",
 ]
-

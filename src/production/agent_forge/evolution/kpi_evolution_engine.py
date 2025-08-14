@@ -87,7 +87,9 @@ class AgentKPI:
         }
 
         # Normalize response time (invert and normalize)
-        normalized_response_time = max(0, 1 - (self.response_time_ms / 10000))  # 10s = 0 score
+        normalized_response_time = max(
+            0, 1 - (self.response_time_ms / 10000)
+        )  # 10s = 0 score
 
         # Calculate resource efficiency
         resource_efficiency = 0.0
@@ -95,14 +97,16 @@ class AgentKPI:
             # Higher throughput, lower resource usage = higher efficiency
             resource_efficiency = min(
                 1.0,
-                self.throughput_tps / (self.memory_usage_mb / 1000 + self.cpu_utilization),
+                self.throughput_tps
+                / (self.memory_usage_mb / 1000 + self.cpu_utilization),
             )
 
         score = (
             self.accuracy * weights["accuracy"]
             + self.success_rate * weights["success_rate"]
             + normalized_response_time * weights["response_time"]
-            + min(1.0, self.throughput_tps / 10) * weights["throughput"]  # Normalize to reasonable range
+            + min(1.0, self.throughput_tps / 10)
+            * weights["throughput"]  # Normalize to reasonable range
             + resource_efficiency * weights["resource_efficiency"]
             + self.output_quality * weights["quality"]
             + self.reliability * weights["reliability"]
@@ -217,7 +221,9 @@ class KnowledgeDistiller:
     """Distills knowledge from retiring agents."""
 
     @staticmethod
-    def distill_knowledge(agent_kpis: list[AgentKPI], agent_data: dict[str, Any]) -> dict[str, Any]:
+    def distill_knowledge(
+        agent_kpis: list[AgentKPI], agent_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """Extract valuable knowledge from agent before retirement."""
         knowledge = {
             "performance_patterns": {},
@@ -231,27 +237,42 @@ class KnowledgeDistiller:
         if agent_kpis:
             latest_kpi = agent_kpis[-1]
             knowledge["performance_patterns"] = {
-                "peak_performance": max(kpi.overall_performance() for kpi in agent_kpis),
-                "average_performance": sum(kpi.overall_performance() for kpi in agent_kpis) / len(agent_kpis),
+                "peak_performance": max(
+                    kpi.overall_performance() for kpi in agent_kpis
+                ),
+                "average_performance": sum(
+                    kpi.overall_performance() for kpi in agent_kpis
+                )
+                / len(agent_kpis),
                 "improvement_areas": latest_kpi.get_improvement_areas(),
                 "strengths": KnowledgeDistiller._identify_strengths(latest_kpi),
             }
 
         # Extract successful strategies
-        high_performing_periods = [kpi for kpi in agent_kpis if kpi.overall_performance() > 0.7]
+        high_performing_periods = [
+            kpi for kpi in agent_kpis if kpi.overall_performance() > 0.7
+        ]
         if high_performing_periods:
             knowledge["successful_strategies"] = [
-                "high_accuracy_period" if kpi.accuracy > 0.8 else None for kpi in high_performing_periods
+                "high_accuracy_period" if kpi.accuracy > 0.8 else None
+                for kpi in high_performing_periods
             ]
-            knowledge["successful_strategies"] = [s for s in knowledge["successful_strategies"] if s]
+            knowledge["successful_strategies"] = [
+                s for s in knowledge["successful_strategies"] if s
+            ]
 
         # Common failure patterns
-        poor_performing_periods = [kpi for kpi in agent_kpis if kpi.overall_performance() < 0.5]
+        poor_performing_periods = [
+            kpi for kpi in agent_kpis if kpi.overall_performance() < 0.5
+        ]
         if poor_performing_periods:
             knowledge["common_failures"] = [
-                "memory_pressure" if kpi.memory_usage_mb > 1500 else None for kpi in poor_performing_periods
+                "memory_pressure" if kpi.memory_usage_mb > 1500 else None
+                for kpi in poor_performing_periods
             ]
-            knowledge["common_failures"] = [f for f in knowledge["common_failures"] if f]
+            knowledge["common_failures"] = [
+                f for f in knowledge["common_failures"] if f
+            ]
 
         return knowledge
 
@@ -300,9 +321,13 @@ class KPIEvolutionEngine:
 
         # Agent management
         self.active_agents: dict[str, dict[str, Any]] = {}  # agent_id -> agent_info
-        self.agent_kpis: dict[str, list[AgentKPI]] = defaultdict(list)  # agent_id -> KPI history
+        self.agent_kpis: dict[str, list[AgentKPI]] = defaultdict(
+            list
+        )  # agent_id -> KPI history
         self.retired_agents: dict[str, dict[str, Any]] = {}  # Retired agent archive
-        self.expert_knowledge: dict[str, dict[str, Any]] = {}  # Distilled knowledge from experts
+        self.expert_knowledge: dict[
+            str, dict[str, Any]
+        ] = {}  # Distilled knowledge from experts
 
         # Evolution tracking
         self.evolution_history: list[EvolutionResult] = []
@@ -323,7 +348,9 @@ class KPIEvolutionEngine:
         self.retirement_callbacks: list[Callable[[str, RetirementReason], None]] = []
         self.evolution_callbacks: list[Callable[[EvolutionResult], None]] = []
 
-        logger.info(f"KPI Evolution Engine initialized with population range {population_size_range}")
+        logger.info(
+            f"KPI Evolution Engine initialized with population range {population_size_range}"
+        )
 
     def register_agent(
         self,
@@ -365,7 +392,9 @@ class KPIEvolutionEngine:
         if len(self.agent_kpis[agent_id]) > max_history:
             self.agent_kpis[agent_id] = self.agent_kpis[agent_id][-max_history:]
 
-        logger.debug(f"Updated KPI for agent {agent_id}: performance={kpi.overall_performance():.3f}")
+        logger.debug(
+            f"Updated KPI for agent {agent_id}: performance={kpi.overall_performance():.3f}"
+        )
 
     def evaluate_population(self) -> dict[str, Any]:
         """Evaluate all agents and trigger evolution/retirement."""
@@ -388,7 +417,9 @@ class KPIEvolutionEngine:
             # Check for retirement
             if self._should_retire_agent(agent_id, latest_kpi, agent_info):
                 evaluation_results["retirement_candidates"].append(agent_id)
-                retirement_reason = self._determine_retirement_reason(latest_kpi, agent_info)
+                retirement_reason = self._determine_retirement_reason(
+                    latest_kpi, agent_info
+                )
 
                 # Retire agent
                 asyncio.create_task(self.retire_agent(agent_id, retirement_reason))
@@ -466,7 +497,9 @@ class KPIEvolutionEngine:
             logger.exception(f"Error retiring agent {agent_id}: {e}")
             return False
 
-    async def evolve_agent(self, agent_id: str, strategy: EvolutionStrategy) -> EvolutionResult:
+    async def evolve_agent(
+        self, agent_id: str, strategy: EvolutionStrategy
+    ) -> EvolutionResult:
         """Evolve an agent using specified strategy."""
         start_time = time.time()
 
@@ -484,16 +517,26 @@ class KPIEvolutionEngine:
 
         try:
             agent_info = self.active_agents[agent_id]
-            latest_kpi = self.agent_kpis[agent_id][-1] if self.agent_kpis[agent_id] else None
+            latest_kpi = (
+                self.agent_kpis[agent_id][-1] if self.agent_kpis[agent_id] else None
+            )
 
             if strategy == EvolutionStrategy.HOT_SWAP:
-                result = await self._hot_swap_evolution(agent_id, agent_info, latest_kpi)
+                result = await self._hot_swap_evolution(
+                    agent_id, agent_info, latest_kpi
+                )
             elif strategy == EvolutionStrategy.GENERATIONAL:
-                result = await self._generational_evolution(agent_id, agent_info, latest_kpi)
+                result = await self._generational_evolution(
+                    agent_id, agent_info, latest_kpi
+                )
             elif strategy == EvolutionStrategy.KNOWLEDGE_DISTILLATION:
-                result = await self._knowledge_distillation_evolution(agent_id, agent_info, latest_kpi)
+                result = await self._knowledge_distillation_evolution(
+                    agent_id, agent_info, latest_kpi
+                )
             elif strategy == EvolutionStrategy.ARCHITECTURAL:
-                result = await self._architectural_evolution(agent_id, agent_info, latest_kpi)
+                result = await self._architectural_evolution(
+                    agent_id, agent_info, latest_kpi
+                )
             else:
                 result.error_message = f"Unsupported strategy: {strategy}"
 
@@ -506,7 +549,9 @@ class KPIEvolutionEngine:
 
                 logger.info(f"Successfully evolved agent {agent_id}")
             else:
-                logger.warning(f"Evolution failed for agent {agent_id}: {result.error_message}")
+                logger.warning(
+                    f"Evolution failed for agent {agent_id}: {result.error_message}"
+                )
 
             # Record evolution
             self.evolution_history.append(result)
@@ -532,7 +577,9 @@ class KPIEvolutionEngine:
             return
 
         self.evolution_active = True
-        self.evolution_thread = threading.Thread(target=self._evolution_loop, daemon=True)
+        self.evolution_thread = threading.Thread(
+            target=self._evolution_loop, daemon=True
+        )
         self.evolution_thread.start()
 
         logger.info("Evolution scheduler started")
@@ -553,7 +600,9 @@ class KPIEvolutionEngine:
                 current_time = time.time()
 
                 # Check if it's time for evolution
-                time_since_last = (current_time - self.last_evolution_time) / 3600  # hours
+                time_since_last = (
+                    current_time - self.last_evolution_time
+                ) / 3600  # hours
 
                 if time_since_last >= self.evolution_interval_hours:
                     logger.info("Starting scheduled evolution cycle")
@@ -573,7 +622,9 @@ class KPIEvolutionEngine:
                 logger.exception(f"Error in evolution loop: {e}")
                 time.sleep(3600)
 
-    def _should_retire_agent(self, agent_id: str, kpi: AgentKPI, agent_info: dict[str, Any]) -> bool:
+    def _should_retire_agent(
+        self, agent_id: str, kpi: AgentKPI, agent_info: dict[str, Any]
+    ) -> bool:
         """Determine if agent should be retired."""
         # Performance-based retirement
         if kpi.should_retire(self.retirement_criteria.performance_threshold):
@@ -590,22 +641,39 @@ class KPIEvolutionEngine:
                 return True
 
         # Consecutive poor performance
-        recent_kpis = self.agent_kpis[agent_id][-self.retirement_criteria.consecutive_poor_performance :]
+        recent_kpis = self.agent_kpis[agent_id][
+            -self.retirement_criteria.consecutive_poor_performance :
+        ]
         if len(recent_kpis) >= self.retirement_criteria.consecutive_poor_performance:
             poor_performance_count = sum(
-                1 for k in recent_kpis if k.overall_performance() < self.retirement_criteria.performance_threshold
+                1
+                for k in recent_kpis
+                if k.overall_performance()
+                < self.retirement_criteria.performance_threshold
             )
-            if poor_performance_count >= self.retirement_criteria.consecutive_poor_performance:
+            if (
+                poor_performance_count
+                >= self.retirement_criteria.consecutive_poor_performance
+            ):
                 return True
 
         # Resource efficiency
-        return kpi.energy_efficiency < self.retirement_criteria.resource_efficiency_threshold
+        return (
+            kpi.energy_efficiency
+            < self.retirement_criteria.resource_efficiency_threshold
+        )
 
-    def _should_evolve_agent(self, agent_id: str, kpi: AgentKPI, agent_info: dict[str, Any]) -> bool:
+    def _should_evolve_agent(
+        self, agent_id: str, kpi: AgentKPI, agent_info: dict[str, Any]
+    ) -> bool:
         """Determine if agent should evolve."""
-        return kpi.should_evolve() and not self._should_retire_agent(agent_id, kpi, agent_info)
+        return kpi.should_evolve() and not self._should_retire_agent(
+            agent_id, kpi, agent_info
+        )
 
-    def _determine_retirement_reason(self, kpi: AgentKPI, agent_info: dict[str, Any]) -> RetirementReason:
+    def _determine_retirement_reason(
+        self, kpi: AgentKPI, agent_info: dict[str, Any]
+    ) -> RetirementReason:
         """Determine primary reason for retirement."""
         if kpi.overall_performance() < 0.3:
             return RetirementReason.LOW_PERFORMANCE
@@ -620,7 +688,10 @@ class KPIEvolutionEngine:
         improvement_areas = kpi.get_improvement_areas()
 
         # Strategy selection logic
-        if "response_time" in improvement_areas or "cpu_utilization" in improvement_areas:
+        if (
+            "response_time" in improvement_areas
+            or "cpu_utilization" in improvement_areas
+        ):
             return EvolutionStrategy.HOT_SWAP  # Quick optimization
         if "accuracy" in improvement_areas or "output_quality" in improvement_areas:
             return EvolutionStrategy.KNOWLEDGE_DISTILLATION  # Learn from experts
@@ -632,7 +703,9 @@ class KPIEvolutionEngine:
         self, agent_id: str, agent_info: dict[str, Any], kpi: AgentKPI | None
     ) -> EvolutionResult:
         """Perform hot-swap evolution (in-place optimization)."""
-        result = EvolutionResult(agent_id=agent_id, strategy_used=EvolutionStrategy.HOT_SWAP, success=True)
+        result = EvolutionResult(
+            agent_id=agent_id, strategy_used=EvolutionStrategy.HOT_SWAP, success=True
+        )
 
         # Simulate code optimization
         improvements = {}
@@ -662,7 +735,9 @@ class KPIEvolutionEngine:
         )
 
         # Create new agent ID
-        new_agent_id = f"{agent_id}_gen{agent_info['generation'] + 1}_{int(time.time())}"
+        new_agent_id = (
+            f"{agent_id}_gen{agent_info['generation'] + 1}_{int(time.time())}"
+        )
 
         # Simulate creating new generation
         new_config = agent_info["config"].copy()
@@ -695,7 +770,9 @@ class KPIEvolutionEngine:
         # Find expert knowledge to transfer
         relevant_experts = []
         for expert_id, knowledge in self.expert_knowledge.items():
-            if agent_info["agent_type"] in expert_id or "general" in knowledge.get("applicable_types", []):
+            if agent_info["agent_type"] in expert_id or "general" in knowledge.get(
+                "applicable_types", []
+            ):
                 relevant_experts.append((expert_id, knowledge))
 
         if relevant_experts:
@@ -724,7 +801,9 @@ class KPIEvolutionEngine:
 
         return result
 
-    async def _create_successor(self, agent_info: dict[str, Any], knowledge: dict[str, Any]) -> str:
+    async def _create_successor(
+        self, agent_info: dict[str, Any], knowledge: dict[str, Any]
+    ) -> str:
         """Create successor agent with inherited knowledge."""
         successor_id = f"successor_{agent_info['agent_id']}_{int(time.time())}"
 
@@ -742,7 +821,9 @@ class KPIEvolutionEngine:
             agent_info.get("template_path"),
         )
 
-        logger.info(f"Created successor {successor_id} for retired agent {agent_info['agent_id']}")
+        logger.info(
+            f"Created successor {successor_id} for retired agent {agent_info['agent_id']}"
+        )
         return successor_id
 
     def _update_lifespan_stats(self, lifespan_hours: float) -> None:
@@ -759,7 +840,9 @@ class KPIEvolutionEngine:
         """Save evolution state to disk."""
         state = {
             "active_agents": self.active_agents,
-            "retired_agents": dict(list(self.retired_agents.items())[-100:]),  # Keep last 100
+            "retired_agents": dict(
+                list(self.retired_agents.items())[-100:]
+            ),  # Keep last 100
             "expert_knowledge": self.expert_knowledge,
             "evolution_history": self.evolution_history[-100:],  # Keep last 100
             "population_stats": self.population_stats,
@@ -774,11 +857,15 @@ class KPIEvolutionEngine:
         except Exception as e:
             logger.exception(f"Failed to save evolution state: {e}")
 
-    def register_retirement_callback(self, callback: Callable[[str, RetirementReason], None]) -> None:
+    def register_retirement_callback(
+        self, callback: Callable[[str, RetirementReason], None]
+    ) -> None:
         """Register callback for agent retirement events."""
         self.retirement_callbacks.append(callback)
 
-    def register_evolution_callback(self, callback: Callable[[EvolutionResult], None]) -> None:
+    def register_evolution_callback(
+        self, callback: Callable[[EvolutionResult], None]
+    ) -> None:
         """Register callback for agent evolution events."""
         self.evolution_callbacks.append(callback)
 
@@ -790,9 +877,15 @@ class KPIEvolutionEngine:
         current_performances = []
         for agent_id in self.active_agents:
             if self.agent_kpis[agent_id]:
-                current_performances.append(self.agent_kpis[agent_id][-1].overall_performance())
+                current_performances.append(
+                    self.agent_kpis[agent_id][-1].overall_performance()
+                )
 
-        avg_performance = sum(current_performances) / len(current_performances) if current_performances else 0.0
+        avg_performance = (
+            sum(current_performances) / len(current_performances)
+            if current_performances
+            else 0.0
+        )
 
         return {
             "active_agents": active_count,
@@ -800,10 +893,13 @@ class KPIEvolutionEngine:
             "expert_knowledge_bases": len(self.expert_knowledge),
             "avg_performance": avg_performance,
             "population_range": self.population_size_range,
-            "within_range": self.population_size_range[0] <= active_count <= self.population_size_range[1],
+            "within_range": self.population_size_range[0]
+            <= active_count
+            <= self.population_size_range[1],
             "evolution_active": self.evolution_active,
             "last_evolution": self.last_evolution_time,
-            "next_evolution": self.last_evolution_time + (self.evolution_interval_hours * 3600),
+            "next_evolution": self.last_evolution_time
+            + (self.evolution_interval_hours * 3600),
             "statistics": self.population_stats,
         }
 

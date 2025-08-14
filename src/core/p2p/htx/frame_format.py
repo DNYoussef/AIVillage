@@ -12,6 +12,7 @@ This module is focused solely on frame encoding/decoding.
 
 import logging
 import struct
+import time
 from dataclasses import dataclass
 from enum import IntEnum
 
@@ -95,7 +96,9 @@ class HTXFrameCodec:
         frame_content_length = len(stream_bytes) + 1 + len(payload)
 
         if frame_content_length > HTXFrameCodec.MAX_FRAME_SIZE:
-            raise ValueError(f"Frame too large: {frame_content_length} > {HTXFrameCodec.MAX_FRAME_SIZE}")
+            raise ValueError(
+                f"Frame too large: {frame_content_length} > {HTXFrameCodec.MAX_FRAME_SIZE}"
+            )
 
         # Encode uint24 length (big-endian)
         length_bytes = struct.pack(">I", frame_content_length)[1:]  # Take last 3 bytes
@@ -130,7 +133,9 @@ class HTXFrameCodec:
         length = struct.unpack(">I", b"\x00" + data[:3])[0]
 
         if length > HTXFrameCodec.MAX_FRAME_SIZE:
-            raise ValueError(f"Frame too large: {length} > {HTXFrameCodec.MAX_FRAME_SIZE}")
+            raise ValueError(
+                f"Frame too large: {length} > {HTXFrameCodec.MAX_FRAME_SIZE}"
+            )
 
         # Check if we have the complete frame
         total_frame_size = 3 + length  # 3-byte length + content
@@ -160,7 +165,10 @@ class HTXFrameCodec:
 
         frame = HTXFrame(frame_type=frame_type, stream_id=stream_id, payload=payload)
 
-        logger.debug(f"Decoded HTX frame: type={frame_type.name}, stream={stream_id}, " f"payload_len={len(payload)}")
+        logger.debug(
+            f"Decoded HTX frame: type={frame_type.name}, stream={stream_id}, "
+            f"payload_len={len(payload)}"
+        )
 
         return frame, total_frame_size
 
@@ -239,7 +247,9 @@ class HTXFrameBuffer:
     def append_data(self, data: bytes) -> None:
         """Append new data to buffer."""
         if len(self.buffer) + len(data) > self.max_buffer_size:
-            raise ValueError(f"Buffer overflow: {len(self.buffer) + len(data)} > {self.max_buffer_size}")
+            raise ValueError(
+                f"Buffer overflow: {len(self.buffer) + len(data)} > {self.max_buffer_size}"
+            )
 
         self.buffer.extend(data)
 

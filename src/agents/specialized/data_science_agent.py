@@ -64,7 +64,9 @@ class DataScienceAgent(BaseAgent):
             return "I can detect anomalies in your data using isolation forest or other methods."
         return "I'm a Data Science Agent specialized in statistical analysis, ML training, and data insights."
 
-    async def rerank(self, query: str, results: list[dict[str, Any]], k: int) -> list[dict[str, Any]]:
+    async def rerank(
+        self, query: str, results: list[dict[str, Any]], k: int
+    ) -> list[dict[str, Any]]:
         """Rerank results based on data science relevance"""
         # Simple relevance scoring based on data science keywords
         keywords = [
@@ -84,7 +86,9 @@ class DataScienceAgent(BaseAgent):
                 score += text.lower().count(keyword)
             result["ds_relevance_score"] = score
 
-        return sorted(results, key=lambda x: x.get("ds_relevance_score", 0), reverse=True)[:k]
+        return sorted(
+            results, key=lambda x: x.get("ds_relevance_score", 0), reverse=True
+        )[:k]
 
     async def introspect(self) -> dict[str, Any]:
         """Return agent capabilities and status"""
@@ -121,7 +125,9 @@ class DataScienceAgent(BaseAgent):
             # Load standard models for common tasks
             self.models_cache["sentiment"] = {
                 "tokenizer": AutoTokenizer.from_pretrained("distilbert-base-uncased"),
-                "model": AutoModelForSequenceClassification.from_pretrained("distilbert-base-uncased"),
+                "model": AutoModelForSequenceClassification.from_pretrained(
+                    "distilbert-base-uncased"
+                ),
             }
         except Exception as e:
             logger.warning(f"Could not load pretrained models: {e}")
@@ -135,7 +141,9 @@ class DataScienceAgent(BaseAgent):
             "parallel_processing": True,
         }
 
-    async def perform_statistical_analysis(self, data: Any, config: dict[str, Any]) -> dict[str, Any]:
+    async def perform_statistical_analysis(
+        self, data: Any, config: dict[str, Any]
+    ) -> dict[str, Any]:
         """Perform comprehensive statistical analysis"""
         results = {
             "descriptive_stats": {},
@@ -146,7 +154,9 @@ class DataScienceAgent(BaseAgent):
 
         try:
             if not SKLEARN_AVAILABLE:
-                return {"error": "Required data science libraries not available. Install pandas, numpy, scikit-learn."}
+                return {
+                    "error": "Required data science libraries not available. Install pandas, numpy, scikit-learn."
+                }
 
             # Descriptive statistics
             results["descriptive_stats"] = {
@@ -179,7 +189,9 @@ class DataScienceAgent(BaseAgent):
                     value_col = config["hypothesis_test"]["value"]
                     groups = data.groupby(group_col)[value_col].apply(list)
                     if len(groups) == 2:
-                        t_stat, p_value = stats.ttest_ind(groups.iloc[0], groups.iloc[1])
+                        t_stat, p_value = stats.ttest_ind(
+                            groups.iloc[0], groups.iloc[1]
+                        )
                         results["hypothesis_tests"]["t_test"] = {
                             "t_statistic": float(t_stat),
                             "p_value": float(p_value),
@@ -203,7 +215,9 @@ class DataScienceAgent(BaseAgent):
 
         try:
             if not SKLEARN_AVAILABLE:
-                return {"error": "Required data science libraries not available. Install pandas, numpy, scikit-learn."}
+                return {
+                    "error": "Required data science libraries not available. Install pandas, numpy, scikit-learn."
+                }
 
             # Prepare data
             target_col = config.get("target_column")
@@ -216,7 +230,9 @@ class DataScienceAgent(BaseAgent):
             X = pd.get_dummies(X, drop_first=True)
 
             # Split data
-            X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+            X_train, X_test, y_train, y_test = train_test_split(
+                X, y, test_size=0.2, random_state=42
+            )
 
             # Scale features
             scaler = StandardScaler()
@@ -241,7 +257,9 @@ class DataScienceAgent(BaseAgent):
             else:
                 # Use specified model
                 model = self._get_model_by_type(model_type)
-                task_type = "classification" if "Classifier" in model_type else "regression"
+                task_type = (
+                    "classification" if "Classifier" in model_type else "regression"
+                )
 
             # Train model
             model.fit(X_train_scaled, y_train)
@@ -258,7 +276,9 @@ class DataScienceAgent(BaseAgent):
                 y_pred = model.predict(X_test_scaled)
                 results["metrics"] = {
                     "accuracy": float(accuracy_score(y_test, y_pred)),
-                    "precision": float(precision_score(y_test, y_pred, average="weighted")),
+                    "precision": float(
+                        precision_score(y_test, y_pred, average="weighted")
+                    ),
                     "recall": float(recall_score(y_test, y_pred, average="weighted")),
                     "f1_score": float(f1_score(y_test, y_pred, average="weighted")),
                 }
@@ -279,9 +299,13 @@ class DataScienceAgent(BaseAgent):
 
             # Feature importance for tree-based models
             if hasattr(model, "feature_importances_"):
-                importance_dict = dict(zip(X.columns, model.feature_importances_, strict=False))
+                importance_dict = dict(
+                    zip(X.columns, model.feature_importances_, strict=False)
+                )
                 results["feature_importance"] = dict(
-                    sorted(importance_dict.items(), key=lambda x: x[1], reverse=True)[:20]
+                    sorted(importance_dict.items(), key=lambda x: x[1], reverse=True)[
+                        :20
+                    ]
                 )  # Top 20 features
 
             # Store model
@@ -301,7 +325,9 @@ class DataScienceAgent(BaseAgent):
 
         return results
 
-    async def perform_anomaly_detection(self, data: Any, config: dict[str, Any]) -> dict[str, Any]:
+    async def perform_anomaly_detection(
+        self, data: Any, config: dict[str, Any]
+    ) -> dict[str, Any]:
         """Detect anomalies in the dataset"""
         results = {
             "anomalies": [],
@@ -347,7 +373,9 @@ class DataScienceAgent(BaseAgent):
 
         return results
 
-    async def perform_time_series_analysis(self, data: Any, config: dict[str, Any]) -> dict[str, Any]:
+    async def perform_time_series_analysis(
+        self, data: Any, config: dict[str, Any]
+    ) -> dict[str, Any]:
         """Perform time series analysis and forecasting"""
         results = {"trend": {}, "seasonality": {}, "forecast": {}, "metrics": {}}
 
@@ -363,7 +391,9 @@ class DataScienceAgent(BaseAgent):
             ts_data = ts_data.sort_index()
 
             # Decomposition
-            decomposition = seasonal_decompose(ts_data, model="additive", period=config.get("period", 12))
+            decomposition = seasonal_decompose(
+                ts_data, model="additive", period=config.get("period", 12)
+            )
 
             results["trend"] = {
                 "direction": "increasing"
@@ -436,13 +466,17 @@ class DataScienceAgent(BaseAgent):
 
             # Route to appropriate handler
             if request.task_type == "statistical":
-                result = await self.perform_statistical_analysis(data, request.parameters)
+                result = await self.perform_statistical_analysis(
+                    data, request.parameters
+                )
             elif request.task_type == "ml_training":
                 result = await self.train_ml_model(data, request.parameters)
             elif request.task_type == "anomaly_detection":
                 result = await self.perform_anomaly_detection(data, request.parameters)
             elif request.task_type == "time_series":
-                result = await self.perform_time_series_analysis(data, request.parameters)
+                result = await self.perform_time_series_analysis(
+                    data, request.parameters
+                )
             else:
                 result = {"error": f"Unknown task type: {request.task_type}"}
 
@@ -481,10 +515,14 @@ class DataScienceAgent(BaseAgent):
         if "anomalies" in result:
             summary["anomaly_count"] = len(result["anomalies"])
         if "descriptive_stats" in result:
-            summary["analyzed_columns"] = len(result["descriptive_stats"].get("summary", {}))
+            summary["analyzed_columns"] = len(
+                result["descriptive_stats"].get("summary", {})
+            )
         return summary
 
-    async def collaborate_with_agent(self, agent_id: str, task: dict[str, Any]) -> dict[str, Any]:
+    async def collaborate_with_agent(
+        self, agent_id: str, task: dict[str, Any]
+    ) -> dict[str, Any]:
         """Collaborate with other agents for complex tasks"""
         logger.info(f"Collaborating with {agent_id} on task: {task}")
         # Simplified collaboration without message bus dependency

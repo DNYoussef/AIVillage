@@ -182,7 +182,9 @@ class KingAgent:
         if selected_agent:
             task.assigned_agent = selected_agent
             task.status = TaskStatus.ASSIGNED
-            self.agent_workloads[selected_agent] = self.agent_workloads.get(selected_agent, 0) + 1
+            self.agent_workloads[selected_agent] = (
+                self.agent_workloads.get(selected_agent, 0) + 1
+            )
 
             return {
                 "status": "completed",
@@ -201,9 +203,19 @@ class KingAgent:
             "agent": "king",
             "result": {
                 "total_tasks": len(self.tasks),
-                "queued_tasks": len([t for t in self.tasks.values() if t.status == TaskStatus.PENDING]),
-                "active_tasks": len([t for t in self.tasks.values() if t.status == TaskStatus.IN_PROGRESS]),
-                "completed_tasks": len([t for t in self.tasks.values() if t.status == TaskStatus.COMPLETED]),
+                "queued_tasks": len(
+                    [t for t in self.tasks.values() if t.status == TaskStatus.PENDING]
+                ),
+                "active_tasks": len(
+                    [
+                        t
+                        for t in self.tasks.values()
+                        if t.status == TaskStatus.IN_PROGRESS
+                    ]
+                ),
+                "completed_tasks": len(
+                    [t for t in self.tasks.values() if t.status == TaskStatus.COMPLETED]
+                ),
                 "registered_agents": len(self.registered_agents),
                 "resource_utilization": self._calculate_resource_utilization(),
                 "average_task_completion_time": self._calculate_average_completion_time(),
@@ -272,7 +284,9 @@ class KingAgent:
         conflict_type = request.get("conflict_type", "resource")
         involved_parties = request.get("parties", [])
 
-        resolution_strategy = self._determine_conflict_resolution(conflict_type, involved_parties)
+        resolution_strategy = self._determine_conflict_resolution(
+            conflict_type, involved_parties
+        )
 
         return {
             "status": "completed",
@@ -359,7 +373,9 @@ class KingAgent:
         total_time = sum(t.duration() or 0 for t in completed)
         return total_time / len(completed)
 
-    def _determine_conflict_resolution(self, conflict_type: str, parties: list[str]) -> str:
+    def _determine_conflict_resolution(
+        self, conflict_type: str, parties: list[str]
+    ) -> str:
         """Determine conflict resolution strategy."""
         if self.leadership_style == "collaborative":
             return "mediated_negotiation"
@@ -370,7 +386,9 @@ class KingAgent:
         else:
             return "direct_arbitration"
 
-    def register_agent(self, agent_id: str, capabilities: list[str], resources: dict[str, Any]) -> None:
+    def register_agent(
+        self, agent_id: str, capabilities: list[str], resources: dict[str, Any]
+    ) -> None:
         """Register an agent with the orchestration system."""
         self.registered_agents[agent_id] = {
             "capabilities": capabilities,
@@ -386,7 +404,9 @@ class KingAgent:
         # Calculate KPIs
         if self.performance_history:
             recent_performance = self.performance_history[-10:]  # Last 10 records
-            success_rate = sum(1 for p in recent_performance if p.get("success", False)) / len(recent_performance)
+            success_rate = sum(
+                1 for p in recent_performance if p.get("success", False)
+            ) / len(recent_performance)
 
             self.kpi_scores = {
                 "task_completion_rate": success_rate,
@@ -398,7 +418,9 @@ class KingAgent:
     def _calculate_resource_efficiency(self) -> float:
         """Calculate resource utilization efficiency."""
         utilization = self._calculate_resource_utilization()
-        avg_utilization = sum(utilization.values()) / len(utilization) if utilization else 0
+        avg_utilization = (
+            sum(utilization.values()) / len(utilization) if utilization else 0
+        )
 
         # Optimal utilization is around 70-80%
         if 70 <= avg_utilization <= 80:
@@ -414,8 +436,12 @@ class KingAgent:
             return 0.7  # Default score
 
         # Factor in task completion times and resource conflicts
-        on_time_tasks = sum(1 for t in self.completed_tasks if (t.duration() or 0) <= 600)  # 10 minutes
-        coordination_score = on_time_tasks / len(self.completed_tasks) if self.completed_tasks else 0.7
+        on_time_tasks = sum(
+            1 for t in self.completed_tasks if (t.duration() or 0) <= 600
+        )  # 10 minutes
+        coordination_score = (
+            on_time_tasks / len(self.completed_tasks) if self.completed_tasks else 0.7
+        )
 
         return min(1.0, coordination_score)
 

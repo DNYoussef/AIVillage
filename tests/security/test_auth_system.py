@@ -251,10 +251,12 @@ class TestAuthenticationManager:
 
         # Check database tables exist
         with self.auth_manager._get_db() as conn:
-            cursor = conn.execute("""
+            cursor = conn.execute(
+                """
                 SELECT name FROM sqlite_master
                 WHERE type='table' AND name IN ('users', 'api_keys', 'audit_logs')
-            """)
+            """
+            )
             tables = [row[0] for row in cursor.fetchall()]
 
         assert "users" in tables

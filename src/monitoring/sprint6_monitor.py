@@ -104,7 +104,8 @@ class Sprint6Monitor:
                 with open(health_file) as f:
                     data = json.load(f)
                     self.health_history = [
-                        InfrastructureHealth(**item) for item in data[-100:]  # Keep last 100 records
+                        InfrastructureHealth(**item)
+                        for item in data[-100:]  # Keep last 100 records
                     ]
 
             # Load performance history
@@ -113,7 +114,8 @@ class Sprint6Monitor:
                 with open(perf_file) as f:
                     data = json.load(f)
                     self.performance_history = [
-                        PerformanceMetrics(**item) for item in data[-100:]  # Keep last 100 records
+                        PerformanceMetrics(**item)
+                        for item in data[-100:]  # Keep last 100 records
                     ]
 
             # Load active alerts
@@ -121,7 +123,11 @@ class Sprint6Monitor:
             if alerts_file.exists():
                 with open(alerts_file) as f:
                     data = json.load(f)
-                    self.active_alerts = [AlertInfo(**item) for item in data if not item.get("resolved", False)]
+                    self.active_alerts = [
+                        AlertInfo(**item)
+                        for item in data
+                        if not item.get("resolved", False)
+                    ]
 
             logger.info(
                 f"Loaded monitoring data: {len(self.health_history)} health records, {len(self.performance_history)} performance records, {len(self.active_alerts)} active alerts"
@@ -141,7 +147,9 @@ class Sprint6Monitor:
             # Save performance history
             perf_file = self.data_dir / "performance_history.json"
             with open(perf_file, "w") as f:
-                json.dump([asdict(p) for p in self.performance_history[-100:]], f, indent=2)
+                json.dump(
+                    [asdict(p) for p in self.performance_history[-100:]], f, indent=2
+                )
 
             # Save all alerts (resolved and active)
             alerts_file = self.data_dir / "active_alerts.json"
@@ -173,7 +181,9 @@ class Sprint6Monitor:
             status_scores.get(evolution_status, 0),
         )
 
-        overall_health = next(status for status, score in status_scores.items() if score == min_score)
+        overall_health = next(
+            status for status, score in status_scores.items() if score == min_score
+        )
 
         # Get validation status
         validation_time, validation_success = await self._check_last_validation()
@@ -312,7 +322,9 @@ class Sprint6Monitor:
                 evolution_throughput=await self._measure_evolution_throughput(),
                 system_load=cpu_percent,
                 memory_pressure=memory.percent,
-                disk_io_rate=(disk_io.read_bytes + disk_io.write_bytes if disk_io else 0.0),
+                disk_io_rate=(
+                    disk_io.read_bytes + disk_io.write_bytes if disk_io else 0.0
+                ),
             )
 
             return metrics
@@ -344,7 +356,9 @@ class Sprint6Monitor:
         # Mock implementation - would measure actual evolution operations
         return 1.5
 
-    def check_alerts(self, health: InfrastructureHealth, metrics: PerformanceMetrics) -> None:
+    def check_alerts(
+        self, health: InfrastructureHealth, metrics: PerformanceMetrics
+    ) -> None:
         """Check for alert conditions and create alerts."""
         current_alerts = []
 
@@ -377,7 +391,10 @@ class Sprint6Monitor:
             )
 
         # Resource utilization alerts
-        if health.resource_utilization > self.thresholds["resource_utilization_critical"]:
+        if (
+            health.resource_utilization
+            > self.thresholds["resource_utilization_critical"]
+        ):
             current_alerts.append(
                 self._create_alert(
                     "resource_utilization_critical",
@@ -390,7 +407,10 @@ class Sprint6Monitor:
                     },
                 )
             )
-        elif health.resource_utilization > self.thresholds["resource_utilization_warning"]:
+        elif (
+            health.resource_utilization
+            > self.thresholds["resource_utilization_warning"]
+        ):
             current_alerts.append(
                 self._create_alert(
                     "resource_utilization_warning",
@@ -447,7 +467,10 @@ class Sprint6Monitor:
                             f"Sprint 6 validation is {age_seconds / 3600:.1f} hours old",
                             {
                                 "age_hours": age_seconds / 3600,
-                                "threshold_hours": self.thresholds["validation_age_critical"] / 3600,
+                                "threshold_hours": self.thresholds[
+                                    "validation_age_critical"
+                                ]
+                                / 3600,
                             },
                         )
                     )
@@ -460,7 +483,10 @@ class Sprint6Monitor:
                             f"Sprint 6 validation is {age_seconds / 3600:.1f} hours old",
                             {
                                 "age_hours": age_seconds / 3600,
-                                "threshold_hours": self.thresholds["validation_age_warning"] / 3600,
+                                "threshold_hours": self.thresholds[
+                                    "validation_age_warning"
+                                ]
+                                / 3600,
                             },
                         )
                     )
@@ -499,7 +525,9 @@ class Sprint6Monitor:
                 logger.info(f"Resolved alert: {alert.alert_id}")
 
         # Add new alerts
-        existing_alert_ids = {alert.alert_id for alert in self.active_alerts if not alert.resolved}
+        existing_alert_ids = {
+            alert.alert_id for alert in self.active_alerts if not alert.resolved
+        }
 
         for alert in current_alerts:
             if alert.alert_id not in existing_alert_ids:
@@ -564,7 +592,9 @@ class Sprint6Monitor:
                 self.save_monitoring_data()
 
                 # Run validation periodically (every 30 minutes)
-                if len(self.health_history) % 60 == 0:  # Every 60 checks = ~30 minutes at 30sec interval
+                if (
+                    len(self.health_history) % 60 == 0
+                ):  # Every 60 checks = ~30 minutes at 30sec interval
                     await self.run_sprint6_validation()
 
                 await asyncio.sleep(self.monitoring_interval)
@@ -594,22 +624,38 @@ class Sprint6Monitor:
     def get_status_summary(self) -> dict[str, Any]:
         """Get current status summary."""
         latest_health = self.health_history[-1] if self.health_history else None
-        latest_metrics = self.performance_history[-1] if self.performance_history else None
+        latest_metrics = (
+            self.performance_history[-1] if self.performance_history else None
+        )
         active_alerts = [a for a in self.active_alerts if not a.resolved]
 
         return {
             "timestamp": datetime.now().isoformat(),
             "monitoring_active": self.is_monitoring,
-            "overall_health": (latest_health.overall_health if latest_health else "unknown"),
+            "overall_health": (
+                latest_health.overall_health if latest_health else "unknown"
+            ),
             "components": {
                 "p2p": latest_health.p2p_status if latest_health else "unknown",
-                "resources": (latest_health.resource_management_status if latest_health else "unknown"),
-                "evolution": (latest_health.evolution_system_status if latest_health else "unknown"),
+                "resources": (
+                    latest_health.resource_management_status
+                    if latest_health
+                    else "unknown"
+                ),
+                "evolution": (
+                    latest_health.evolution_system_status
+                    if latest_health
+                    else "unknown"
+                ),
             },
             "metrics": {
                 "system_load": latest_metrics.system_load if latest_metrics else 0,
-                "memory_pressure": (latest_metrics.memory_pressure if latest_metrics else 0),
-                "p2p_latency": (latest_metrics.avg_p2p_latency_ms if latest_metrics else 0),
+                "memory_pressure": (
+                    latest_metrics.memory_pressure if latest_metrics else 0
+                ),
+                "p2p_latency": (
+                    latest_metrics.avg_p2p_latency_ms if latest_metrics else 0
+                ),
             },
             "alerts": {
                 "critical": len([a for a in active_alerts if a.severity == "critical"]),
@@ -617,8 +663,12 @@ class Sprint6Monitor:
                 "total": len(active_alerts),
             },
             "validation": {
-                "last_run": (latest_health.last_validation_time if latest_health else None),
-                "success": (latest_health.last_validation_success if latest_health else False),
+                "last_run": (
+                    latest_health.last_validation_time if latest_health else None
+                ),
+                "success": (
+                    latest_health.last_validation_success if latest_health else False
+                ),
             },
         }
 

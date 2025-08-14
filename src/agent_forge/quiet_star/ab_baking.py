@@ -36,7 +36,9 @@ class PromptFormat(Enum):
     EXPLICIT = "explicit"  # Question Let me think: <SoT>reflection</SoT> Answer
     MINIMAL = "minimal"  # Question <SoT>reflection</SoT> Answer (shorter reflections)
     CHAIN_OF_THOUGHT = "cot"  # Question <SoT>Step 1: ... Step 2: ...</SoT> Answer
-    SELF_CORRECTION = "correction"  # Question <SoT>Initial thought... Actually, ...</SoT> Answer
+    SELF_CORRECTION = (
+        "correction"  # Question <SoT>Initial thought... Actually, ...</SoT> Answer
+    )
 
 
 @dataclass
@@ -97,7 +99,10 @@ class ABTestResult:
             "efficiency": normalized_efficiency,
         }
 
-        weighted_score = sum(weights.get(component, 0) * value for component, value in score_components.items())
+        weighted_score = sum(
+            weights.get(component, 0) * value
+            for component, value in score_components.items()
+        )
 
         return weighted_score
 
@@ -119,11 +124,15 @@ class ABTestSuite:
             return None
 
         # Sort by overall score
-        sorted_results = sorted(self.results, key=lambda r: r.overall_score(), reverse=True)
+        sorted_results = sorted(
+            self.results, key=lambda r: r.overall_score(), reverse=True
+        )
 
         # Calculate confidence based on score differences
         best_score = sorted_results[0].overall_score()
-        second_best_score = sorted_results[1].overall_score() if len(sorted_results) > 1 else 0
+        second_best_score = (
+            sorted_results[1].overall_score() if len(sorted_results) > 1 else 0
+        )
 
         # Confidence is based on the relative difference
         if second_best_score > 0:
@@ -146,13 +155,17 @@ class ThoughtTokenABBaker:
     Bakes the best performing variants into optimized configurations.
     """
 
-    def __init__(self, config: QuietSTaRConfig, base_model_name: str = "microsoft/DialoGPT-small"):
+    def __init__(
+        self, config: QuietSTaRConfig, base_model_name: str = "microsoft/DialoGPT-small"
+    ):
         self.config = config
         self.base_model_name = base_model_name
         self.test_suites: list[ABTestSuite] = []
         self.baked_variants: dict[str, ABVariant] = {}
 
-    def create_reflection_prompts_for_variant(self, variant: ABVariant) -> list[ReflectionPrompt]:
+    def create_reflection_prompts_for_variant(
+        self, variant: ABVariant
+    ) -> list[ReflectionPrompt]:
         """Create reflection prompts tailored to the A/B variant."""
 
         style_templates = {
@@ -190,7 +203,9 @@ class ThoughtTokenABBaker:
             ],
         }
 
-        templates = style_templates.get(variant.reflection_style, style_templates[ReflectionStyle.STEP_BY_STEP])
+        templates = style_templates.get(
+            variant.reflection_style, style_templates[ReflectionStyle.STEP_BY_STEP]
+        )
 
         return [
             ReflectionPrompt(
@@ -226,7 +241,9 @@ class ThoughtTokenABBaker:
                     )
 
                     # Apply prompt format transformation
-                    formatted_pair = self._apply_prompt_format(pair, variant.prompt_format)
+                    formatted_pair = self._apply_prompt_format(
+                        pair, variant.prompt_format
+                    )
                     formatted_pair.metadata.update(
                         {
                             "variant_name": variant.name,
@@ -239,12 +256,16 @@ class ThoughtTokenABBaker:
                     training_pairs.append(formatted_pair)
 
                 except Exception as e:
-                    print(f"Warning: Failed to generate training pair for variant {variant.name}: {e}")
+                    print(
+                        f"Warning: Failed to generate training pair for variant {variant.name}: {e}"
+                    )
                     continue
 
         return training_pairs
 
-    def _apply_prompt_format(self, pair: TrainingPair, prompt_format: PromptFormat) -> TrainingPair:
+    def _apply_prompt_format(
+        self, pair: TrainingPair, prompt_format: PromptFormat
+    ) -> TrainingPair:
         """Apply specific prompt formatting to a training pair."""
 
         if prompt_format == PromptFormat.STANDARD:
@@ -323,7 +344,9 @@ class ThoughtTokenABBaker:
         start_time = time.time()
 
         # Generate training data for this variant
-        training_pairs = self.generate_training_data_for_variant(variant, test_questions, num_samples_per_question=1)
+        training_pairs = self.generate_training_data_for_variant(
+            variant, test_questions, num_samples_per_question=1
+        )
 
         if not training_pairs:
             return ABTestResult(
@@ -355,7 +378,10 @@ class ThoughtTokenABBaker:
 
         # Calculate success and leak rates
         leak_count = sum(
-            1 for pair in training_pairs if "<SoT>" in pair.to_inference_text() or "</SoT>" in pair.to_inference_text()
+            1
+            for pair in training_pairs
+            if "<SoT>" in pair.to_inference_text()
+            or "</SoT>" in pair.to_inference_text()
         )
         leak_rate = leak_count / len(training_pairs) if training_pairs else 1.0
         success_rate = 1.0 - leak_rate
@@ -373,7 +399,9 @@ class ThoughtTokenABBaker:
             quality_score=quality_score,
         )
 
-    def _calculate_variant_metrics(self, training_pairs: list[TrainingPair]) -> dict[str, float]:
+    def _calculate_variant_metrics(
+        self, training_pairs: list[TrainingPair]
+    ) -> dict[str, float]:
         """Calculate detailed metrics for variant evaluation."""
         if not training_pairs:
             return {"error": 1.0}
@@ -383,25 +411,33 @@ class ThoughtTokenABBaker:
         # Reflection length statistics
         reflection_lengths = [len(pair.reflection.split()) for pair in training_pairs]
         metrics["avg_reflection_length"] = statistics.mean(reflection_lengths)
-        metrics["reflection_length_std"] = statistics.stdev(reflection_lengths) if len(reflection_lengths) > 1 else 0
+        metrics["reflection_length_std"] = (
+            statistics.stdev(reflection_lengths) if len(reflection_lengths) > 1 else 0
+        )
 
         # Answer length statistics
         answer_lengths = [len(pair.answer.split()) for pair in training_pairs]
         metrics["avg_answer_length"] = statistics.mean(answer_lengths)
 
         # Quality indicators
-        metrics["reflection_complexity"] = self._calculate_reflection_complexity(training_pairs)
+        metrics["reflection_complexity"] = self._calculate_reflection_complexity(
+            training_pairs
+        )
         metrics["answer_coherence"] = self._calculate_answer_coherence(training_pairs)
         metrics["question_answer_relevance"] = self._calculate_relevance(training_pairs)
 
         # Format consistency
         training_texts = [pair.to_training_text() for pair in training_pairs]
         inference_texts = [pair.to_inference_text() for pair in training_pairs]
-        metrics["format_consistency"] = self._calculate_format_consistency(training_texts, inference_texts)
+        metrics["format_consistency"] = self._calculate_format_consistency(
+            training_texts, inference_texts
+        )
 
         return metrics
 
-    def _calculate_reflection_complexity(self, training_pairs: list[TrainingPair]) -> float:
+    def _calculate_reflection_complexity(
+        self, training_pairs: list[TrainingPair]
+    ) -> float:
         """Calculate complexity score for reflections (0-1 scale)."""
         complexity_indicators = [
             "because",
@@ -420,7 +456,11 @@ class ThoughtTokenABBaker:
         total_score = 0
         for pair in training_pairs:
             reflection_lower = pair.reflection.lower()
-            indicator_count = sum(1 for indicator in complexity_indicators if indicator in reflection_lower)
+            indicator_count = sum(
+                1
+                for indicator in complexity_indicators
+                if indicator in reflection_lower
+            )
             # Normalize by reflection length and max possible indicators
             length_factor = min(len(pair.reflection.split()) / 50, 1.0)
             indicator_factor = min(indicator_count / 5, 1.0)
@@ -465,7 +505,8 @@ class ThoughtTokenABBaker:
             question_words = set(
                 word.lower().strip("?.,")
                 for word in pair.question.split()
-                if len(word) > 3 and word.lower() not in {"what", "how", "why", "when", "where", "which"}
+                if len(word) > 3
+                and word.lower() not in {"what", "how", "why", "when", "where", "which"}
             )
 
             # Check overlap with answer
@@ -479,14 +520,20 @@ class ThoughtTokenABBaker:
 
         return relevance_score / len(training_pairs)
 
-    def _calculate_format_consistency(self, training_texts: list[str], inference_texts: list[str]) -> float:
+    def _calculate_format_consistency(
+        self, training_texts: list[str], inference_texts: list[str]
+    ) -> float:
         """Calculate format consistency score (0-1 scale)."""
         consistency_score = 0
 
-        for training_text, inference_text in zip(training_texts, inference_texts, strict=False):
+        for training_text, inference_text in zip(
+            training_texts, inference_texts, strict=False
+        ):
             # Training should have thought tokens, inference should not
             has_training_tokens = "<SoT>" in training_text and "</SoT>" in training_text
-            has_inference_tokens = "<SoT>" in inference_text or "</SoT>" in inference_text
+            has_inference_tokens = (
+                "<SoT>" in inference_text or "</SoT>" in inference_text
+            )
 
             if has_training_tokens and not has_inference_tokens:
                 consistency_score += 1.0
@@ -497,7 +544,9 @@ class ThoughtTokenABBaker:
 
         return consistency_score / len(training_texts)
 
-    def _calculate_quality_score(self, training_pairs: list[TrainingPair], metrics: dict[str, float]) -> float:
+    def _calculate_quality_score(
+        self, training_pairs: list[TrainingPair], metrics: dict[str, float]
+    ) -> float:
         """Calculate overall quality score combining multiple metrics."""
         quality_components = {
             "reflection_complexity": metrics.get("reflection_complexity", 0) * 0.3,
@@ -518,7 +567,9 @@ class ThoughtTokenABBaker:
     ) -> ABTestSuite:
         """Run a complete A/B test suite comparing multiple variants."""
 
-        test_suite = ABTestSuite(test_name=test_name, variants=variants, test_questions=test_questions)
+        test_suite = ABTestSuite(
+            test_name=test_name, variants=variants, test_questions=test_questions
+        )
 
         print(f"🧪 Running A/B test suite: {test_name}")
         print(f"   Variants: {len(variants)}")
@@ -528,7 +579,10 @@ class ThoughtTokenABBaker:
             # Run variants in parallel for faster testing
             with ThreadPoolExecutor(max_workers=max_workers) as executor:
                 future_to_variant = {
-                    executor.submit(self.evaluate_variant, variant, test_questions): variant for variant in variants
+                    executor.submit(
+                        self.evaluate_variant, variant, test_questions
+                    ): variant
+                    for variant in variants
                 }
 
                 for future in as_completed(future_to_variant):
@@ -536,7 +590,9 @@ class ThoughtTokenABBaker:
                     try:
                         result = future.result()
                         test_suite.results.append(result)
-                        print(f"   ✓ Completed variant: {variant.name} (score: {result.overall_score():.3f})")
+                        print(
+                            f"   ✓ Completed variant: {variant.name} (score: {result.overall_score():.3f})"
+                        )
                     except Exception as e:
                         print(f"   ✗ Failed variant: {variant.name} - {e}")
         else:
@@ -553,14 +609,18 @@ class ThoughtTokenABBaker:
         # Determine winner
         winner = test_suite.get_winner()
         if winner:
-            print(f"🏆 Winner: {winner.name} (confidence: {test_suite.confidence_level:.1%})")
+            print(
+                f"🏆 Winner: {winner.name} (confidence: {test_suite.confidence_level:.1%})"
+            )
         else:
             print("🤷 No clear winner - results too close")
 
         self.test_suites.append(test_suite)
         return test_suite
 
-    def bake_winning_variants(self, min_confidence: float = 0.8) -> dict[str, ABVariant]:
+    def bake_winning_variants(
+        self, min_confidence: float = 0.8
+    ) -> dict[str, ABVariant]:
         """Bake winning variants from all test suites into optimized configurations."""
 
         baked_variants = {}
@@ -602,7 +662,9 @@ class ThoughtTokenABBaker:
                             "quality_score": result.quality_score,
                             "execution_time": result.execution_time,
                             "metrics": result.metrics,
-                            "sample_outputs": result.sample_outputs[:2],  # Limit samples
+                            "sample_outputs": result.sample_outputs[
+                                :2
+                            ],  # Limit samples
                         }
                         for result in suite.results
                     ],
@@ -719,7 +781,9 @@ if __name__ == "__main__":
 
     print(f"Testing {len(variants)} variants with {len(test_questions)} questions:")
     for variant in variants:
-        print(f"  • {variant.name}: {variant.reflection_style.value} + {variant.prompt_format.value}")
+        print(
+            f"  • {variant.name}: {variant.reflection_style.value} + {variant.prompt_format.value}"
+        )
     print()
 
     # Run A/B test suite
@@ -732,7 +796,9 @@ if __name__ == "__main__":
 
     # Show results
     print("\n📊 A/B Test Results:")
-    sorted_results = sorted(test_suite.results, key=lambda r: r.overall_score(), reverse=True)
+    sorted_results = sorted(
+        test_suite.results, key=lambda r: r.overall_score(), reverse=True
+    )
 
     for i, result in enumerate(sorted_results, 1):
         print(f"{i}. {result.variant.name}:")

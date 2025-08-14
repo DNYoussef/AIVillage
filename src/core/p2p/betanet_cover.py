@@ -49,7 +49,9 @@ class CoverTrafficConfig:
     # Padding controls
     min_padding_bytes: int = 64  # Minimum dummy message size
     max_padding_bytes: int = 1024  # Maximum dummy message size
-    web_size_distribution: list[int] = field(default_factory=lambda: [128, 256, 512, 768, 1024])
+    web_size_distribution: list[int] = field(
+        default_factory=lambda: [128, 256, 512, 768, 1024]
+    )
 
     # Budget controls
     max_bandwidth_bps: int = 10000  # Max bandwidth for cover traffic (10KB/s)
@@ -97,14 +99,17 @@ class CoverTrafficStats:
             "paused_time_sec": self.paused_time_sec,
             "current_rate_pps": self.current_rate_pps,
             "avg_packet_size": self.avg_packet_size,
-            "efficiency": self.packets_sent / max(1, self.packets_sent + self.user_traffic_detected),
+            "efficiency": self.packets_sent
+            / max(1, self.packets_sent + self.user_traffic_detected),
         }
 
 
 class CoverTrafficSender(Protocol):
     """Protocol for sending cover traffic"""
 
-    async def send_cover_message(self, payload: bytes, recipient: str | None = None) -> bool:
+    async def send_cover_message(
+        self, payload: bytes, recipient: str | None = None
+    ) -> bool:
         """Send a cover traffic message"""
         ...
 
@@ -232,7 +237,9 @@ class BetanetCoverTraffic:
         current_time = time.time()
 
         # Remove old entries
-        self.recent_user_traffic = [t for t in self.recent_user_traffic if current_time - t < 5.0]  # 5 second window
+        self.recent_user_traffic = [
+            t for t in self.recent_user_traffic if current_time - t < 5.0
+        ]  # 5 second window
 
         # If we've seen user traffic recently, pause
         return len(self.recent_user_traffic) > 0
@@ -272,7 +279,9 @@ class BetanetCoverTraffic:
 
                 # Update average packet size
                 if self.stats.packets_sent > 0:
-                    self.stats.avg_packet_size = self.stats.bytes_sent / self.stats.packets_sent
+                    self.stats.avg_packet_size = (
+                        self.stats.bytes_sent / self.stats.packets_sent
+                    )
 
                 logger.debug(f"Sent cover message: {len(payload)} bytes to {recipient}")
 
@@ -282,7 +291,9 @@ class BetanetCoverTraffic:
     def _choose_message_size(self) -> int:
         """Choose message size based on current pattern"""
         if self.config.mode == CoverTrafficMode.CONSTANT_RATE:
-            return random.randint(self.config.min_padding_bytes, self.config.max_padding_bytes)
+            return random.randint(
+                self.config.min_padding_bytes, self.config.max_padding_bytes
+            )
 
         elif self.config.mode == CoverTrafficMode.WEB_BURST:
             # Use realistic web traffic sizes
@@ -299,7 +310,9 @@ class BetanetCoverTraffic:
             (self.config.min_padding_bytes + self.config.max_padding_bytes) // 2
             size = max(
                 self.config.min_padding_bytes,
-                min(self.config.max_padding_bytes, int(random.lognormvariate(6.0, 0.5))),
+                min(
+                    self.config.max_padding_bytes, int(random.lognormvariate(6.0, 0.5))
+                ),
             )  # ~400 bytes mean
             return size
 
@@ -324,7 +337,9 @@ class BetanetCoverTraffic:
             import base64
 
             random_bytes = os.urandom(padding_needed // 4 * 3)  # Base64 expansion
-            base_structure["data"] = base64.b64encode(random_bytes).decode()[:padding_needed]
+            base_structure["data"] = base64.b64encode(random_bytes).decode()[
+                :padding_needed
+            ]
 
         payload = json.dumps(base_structure).encode()
 
@@ -360,7 +375,11 @@ class BetanetCoverTraffic:
             # Burst pattern: alternate between bursts and quiet periods
             current_time = time.time()
 
-            if self.burst_start_time == 0 or (current_time - self.burst_start_time) > self.config.burst_duration_sec:
+            if (
+                self.burst_start_time == 0
+                or (current_time - self.burst_start_time)
+                > self.config.burst_duration_sec
+            ):
                 # Start new burst or quiet period
                 if random.random() < 0.3:  # 30% chance of burst
                     self.burst_start_time = current_time
@@ -380,7 +399,9 @@ class BetanetCoverTraffic:
             base_delay = 1.0 / self.config.base_rate_pps
 
         # Add jitter
-        jitter = random.uniform(-self.config.jitter_ms / 1000, self.config.jitter_ms / 1000)
+        jitter = random.uniform(
+            -self.config.jitter_ms / 1000, self.config.jitter_ms / 1000
+        )
         delay = max(0.1, base_delay + jitter)  # Minimum 100ms delay
 
         # Update current rate

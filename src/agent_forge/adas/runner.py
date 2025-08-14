@@ -67,7 +67,9 @@ class TaskSuite:
         for output, task in zip(model_outputs, self.tasks, strict=False):
             output_lower = output.lower()
             keyword_score = sum(
-                1 for kw in task["expected_keywords"] if any(k.lower() in output_lower for k in kw.split())
+                1
+                for kw in task["expected_keywords"]
+                if any(k.lower() in output_lower for k in kw.split())
             )
             keyword_score /= len(task["expected_keywords"])
 
@@ -86,7 +88,11 @@ class ADASRunner:
     def __init__(self, base_model, tokenizer, archive_path: Path, device: str = "auto"):
         self.base_model = base_model
         self.tokenizer = tokenizer
-        self.device = device if device != "auto" else ("cuda" if torch.cuda.is_available() else "cpu")
+        self.device = (
+            device
+            if device != "auto"
+            else ("cuda" if torch.cuda.is_available() else "cpu")
+        )
 
         # Initialize components
         self.archive = ADASArchive(archive_path)
@@ -119,7 +125,10 @@ class ADASRunner:
         self.trial_start_time = time.time()
         time_budget_seconds = time_budget_minutes * 60
 
-        logger.info(f"Starting ADAS specialization with {n_trials} trials, " f"{time_budget_minutes}min budget")
+        logger.info(
+            f"Starting ADAS specialization with {n_trials} trials, "
+            f"{time_budget_minutes}min budget"
+        )
 
         # Initialize task suite
         tasks = TaskSuite(task_suite)
@@ -164,12 +173,15 @@ class ADASRunner:
         summary = self._generate_summary(all_results)
 
         logger.info(
-            f"Specialization complete: {self.total_trials} trials in " f"{time.time() - self.trial_start_time:.1f}s"
+            f"Specialization complete: {self.total_trials} trials in "
+            f"{time.time() - self.trial_start_time:.1f}s"
         )
 
         return summary
 
-    def _evaluate_batch(self, proposals: list[dict[str, Any]], tasks: TaskSuite) -> list[ExperimentResult]:
+    def _evaluate_batch(
+        self, proposals: list[dict[str, Any]], tasks: TaskSuite
+    ) -> list[ExperimentResult]:
         """Evaluate a batch of proposals."""
         results = []
 
@@ -181,7 +193,10 @@ class ADASRunner:
                 result = self._evaluate_single_proposal(proposal, tasks, trial_id)
                 results.append(result)
 
-                logger.info(f"{trial_id} complete: score={result.score:.4f}, " f"latency={result.latency_ms:.1f}ms")
+                logger.info(
+                    f"{trial_id} complete: score={result.score:.4f}, "
+                    f"latency={result.latency_ms:.1f}ms"
+                )
 
             except Exception as e:
                 logger.error(f"{trial_id} failed: {e}")
@@ -199,7 +214,9 @@ class ADASRunner:
 
         return results
 
-    def _evaluate_single_proposal(self, proposal: dict[str, Any], tasks: TaskSuite, trial_id: str) -> ExperimentResult:
+    def _evaluate_single_proposal(
+        self, proposal: dict[str, Any], tasks: TaskSuite, trial_id: str
+    ) -> ExperimentResult:
         """Evaluate a single expert configuration proposal."""
         start_time = time.time()
 
@@ -221,9 +238,9 @@ class ADASRunner:
             task_start = time.time()
 
             # Tokenize input
-            inputs = self.tokenizer(task["prompt"], return_tensors="pt", max_length=256, truncation=True).to(
-                self.device
-            )
+            inputs = self.tokenizer(
+                task["prompt"], return_tensors="pt", max_length=256, truncation=True
+            ).to(self.device)
 
             # Extract features for dispatch
             prompt_stats = self.feature_extractor.extract_prompt_stats(task["prompt"])
@@ -231,7 +248,9 @@ class ADASRunner:
             # Generate with expert mixing
             with torch.no_grad():
                 # Compute dispatch weights
-                weights = mixer.dispatch(prompt_stats, {})  # Empty activation sketch for now
+                weights = mixer.dispatch(
+                    prompt_stats, {}
+                )  # Empty activation sketch for now
 
                 # Apply expert patches and generate
                 with mixer.patch(self.base_model, weights):
@@ -294,7 +313,9 @@ class ADASRunner:
             "total_trials": len(results),
             "successful_trials": len(successful),
             "success_rate": len(successful) / len(results) if results else 0,
-            "total_time_s": time.time() - self.trial_start_time if self.trial_start_time else 0,
+            "total_time_s": time.time() - self.trial_start_time
+            if self.trial_start_time
+            else 0,
         }
 
         if successful:
@@ -337,9 +358,7 @@ class ADASRunner:
 
     def _get_proposal_motivation(self, result: ExperimentResult) -> str:
         """Extract motivation from result (would be stored with proposal)."""
-        return (
-            f"Expert on {result.expert_spec.get('layers', 'unknown')} with rank {result.expert_spec.get('rank', '?')}"
-        )
+        return f"Expert on {result.expert_spec.get('layers', 'unknown')} with rank {result.expert_spec.get('rank', '?')}"
 
 
 # CLI Integration
@@ -390,7 +409,9 @@ def run(
     )
 
     # Run specialization
-    results = runner.run_specialization(n_trials=trials, time_budget_minutes=time_budget_min, task_suite=tasks)
+    results = runner.run_specialization(
+        n_trials=trials, time_budget_minutes=time_budget_min, task_suite=tasks
+    )
 
     # Print results
     print("\n" + "=" * 80)
@@ -402,7 +423,9 @@ def run(
 
     if "leaderboard" in results:
         print("\nTop configurations:")
-        print(f"{'Rank':<4} {'Score':<8} {'Latency':<10} {'VRAM':<8} {'Trial ID':<12} {'Description'}")
+        print(
+            f"{'Rank':<4} {'Score':<8} {'Latency':<10} {'VRAM':<8} {'Trial ID':<12} {'Description'}"
+        )
         print("-" * 70)
 
         for entry in results["leaderboard"][:5]:
@@ -420,7 +443,9 @@ def run(
         json.dump(results, f, indent=2, default=str)
 
     # Export top configs
-    config_exports = runner.archive.export_yaml_configs(output_dir=output_path / "top_configs", top_k=5)
+    config_exports = runner.archive.export_yaml_configs(
+        output_dir=output_path / "top_configs", top_k=5
+    )
 
     print(f"\nResults saved to: {output_path}")
     print(f"Archive: {archive_path}")
@@ -444,7 +469,9 @@ def analyze(archive_path: str, top_k: int):
         leaderboard = archive.get_leaderboard(top_k=top_k)
 
         print(f"\nTop {len(leaderboard)} Configurations:")
-        print(f"{'Rank':<4} {'Score':<8} {'Latency':<10} {'VRAM':<8} {'Layers':<15} {'Rank':<4}")
+        print(
+            f"{'Rank':<4} {'Score':<8} {'Latency':<10} {'VRAM':<8} {'Layers':<15} {'Rank':<4}"
+        )
         print("-" * 70)
 
         for i, result in enumerate(leaderboard):

@@ -204,7 +204,9 @@ class AgentForgeOrchestrator:
             logger.error(f"❌ Agent Forge failed for {request.domain}: {e}")
             progress.stage_status[progress.current_stage] = ForgeStatus.FAILED
 
-    async def _execute_stage_1_model_selection(self, request: ForgeRequest, progress: ForgeProgress):
+    async def _execute_stage_1_model_selection(
+        self, request: ForgeRequest, progress: ForgeProgress
+    ):
         """Stage 1: Sage finds 3 suitable models from Hugging Face"""
         progress.current_stage = ForgeStage.MODEL_SELECTION
         progress.stage_status[ForgeStage.MODEL_SELECTION] = ForgeStatus.IN_PROGRESS
@@ -226,9 +228,13 @@ class AgentForgeOrchestrator:
         }
 
         progress.stage_status[ForgeStage.MODEL_SELECTION] = ForgeStatus.COMPLETED
-        logger.info(f"✅ Stage 1 completed: Selected {len(candidates)} model candidates")
+        logger.info(
+            f"✅ Stage 1 completed: Selected {len(candidates)} model candidates"
+        )
 
-    async def _execute_stage_2_evomerge(self, request: ForgeRequest, progress: ForgeProgress):
+    async def _execute_stage_2_evomerge(
+        self, request: ForgeRequest, progress: ForgeProgress
+    ):
         """Stage 2: 50-generation EvoMerge evolution process"""
         progress.current_stage = ForgeStage.EVOMERGE_PIPELINE
         progress.stage_status[ForgeStage.EVOMERGE_PIPELINE] = ForgeStatus.IN_PROGRESS
@@ -250,7 +256,9 @@ class AgentForgeOrchestrator:
         progress.stage_status[ForgeStage.EVOMERGE_PIPELINE] = ForgeStatus.COMPLETED
         logger.info("✅ Stage 2 completed: 50-generation evolution finished")
 
-    async def _execute_stage_3_compression(self, request: ForgeRequest, progress: ForgeProgress):
+    async def _execute_stage_3_compression(
+        self, request: ForgeRequest, progress: ForgeProgress
+    ):
         """Stage 3: BitNet + VPTQ compression"""
         progress.current_stage = ForgeStage.COMPRESSION_STAGE1
         progress.stage_status[ForgeStage.COMPRESSION_STAGE1] = ForgeStatus.IN_PROGRESS
@@ -272,7 +280,9 @@ class AgentForgeOrchestrator:
         progress.stage_status[ForgeStage.COMPRESSION_STAGE1] = ForgeStatus.COMPLETED
         logger.info("✅ Stage 3 completed: Model compressed 4:1 ratio")
 
-    async def _execute_stage_4_prompt_baking(self, request: ForgeRequest, progress: ForgeProgress):
+    async def _execute_stage_4_prompt_baking(
+        self, request: ForgeRequest, progress: ForgeProgress
+    ):
         """Stage 4: Quiet-STaR integration with thought bubbles"""
         progress.current_stage = ForgeStage.PROMPT_BAKING
         progress.stage_status[ForgeStage.PROMPT_BAKING] = ForgeStatus.IN_PROGRESS
@@ -302,9 +312,13 @@ class AgentForgeOrchestrator:
         }
 
         progress.stage_status[ForgeStage.PROMPT_BAKING] = ForgeStatus.COMPLETED
-        logger.info("✅ Stage 4 completed: Quiet-STaR integrated with encrypted thought bubbles")
+        logger.info(
+            "✅ Stage 4 completed: Quiet-STaR integrated with encrypted thought bubbles"
+        )
 
-    async def _execute_stage_5_final_compression(self, request: ForgeRequest, progress: ForgeProgress):
+    async def _execute_stage_5_final_compression(
+        self, request: ForgeRequest, progress: ForgeProgress
+    ):
         """Stage 5: Final compression for mobile deployment"""
         progress.current_stage = ForgeStage.COMPRESSION_STAGE2
         progress.stage_status[ForgeStage.COMPRESSION_STAGE2] = ForgeStatus.IN_PROGRESS
@@ -326,16 +340,22 @@ class AgentForgeOrchestrator:
         progress.stage_status[ForgeStage.COMPRESSION_STAGE2] = ForgeStatus.COMPLETED
         logger.info("✅ Stage 5 completed: Mobile-ready compression finished")
 
-    async def _execute_stage_6_skill_analysis(self, request: ForgeRequest, progress: ForgeProgress):
+    async def _execute_stage_6_skill_analysis(
+        self, request: ForgeRequest, progress: ForgeProgress
+    ):
         """Stage 6: Intelligence at the Edge of Chaos Training"""
         progress.current_stage = ForgeStage.SKILL_ANALYSIS
         progress.stage_status[ForgeStage.SKILL_ANALYSIS] = ForgeStatus.IN_PROGRESS
 
-        logger.info("Stage 6: Intelligence at the Edge of Chaos analysis and problem generation")
+        logger.info(
+            "Stage 6: Intelligence at the Edge of Chaos analysis and problem generation"
+        )
 
         # Implement "Intelligence at the Edge of Chaos" training approach
         edge_chaos_analysis = await self._analyze_model_complexity_edge(request)
-        training_problems = await self._generate_edge_complexity_problems(request, edge_chaos_analysis)
+        training_problems = await self._generate_edge_complexity_problems(
+            request, edge_chaos_analysis
+        )
 
         await asyncio.sleep(1)  # Simulate 1 hour
 
@@ -352,9 +372,13 @@ class AgentForgeOrchestrator:
         }
 
         progress.stage_status[ForgeStage.SKILL_ANALYSIS] = ForgeStatus.COMPLETED
-        logger.info(f"✅ Stage 6 completed: {len(training_problems)} edge-of-chaos training problems generated")
+        logger.info(
+            f"✅ Stage 6 completed: {len(training_problems)} edge-of-chaos training problems generated"
+        )
 
-    async def _execute_stage_7_geometric_training(self, request: ForgeRequest, progress: ForgeProgress):
+    async def _execute_stage_7_geometric_training(
+        self, request: ForgeRequest, progress: ForgeProgress
+    ):
         """Stage 7: Geometric self-awareness + Grokfast acceleration"""
         progress.current_stage = ForgeStage.GEOMETRIC_TRAINING
         progress.stage_status[ForgeStage.GEOMETRIC_TRAINING] = ForgeStatus.IN_PROGRESS
@@ -387,7 +411,9 @@ class AgentForgeOrchestrator:
             f"✅ Stage 7 completed: Geometric awareness + {grokfast_results['speedup_factor']}x grokking acceleration"
         )
 
-    async def _execute_stage_8_sleep_dream(self, request: ForgeRequest, progress: ForgeProgress):
+    async def _execute_stage_8_sleep_dream(
+        self, request: ForgeRequest, progress: ForgeProgress
+    ):
         """Stage 8: Sleep and dream cycle to avoid local minimums"""
         progress.current_stage = ForgeStage.SLEEP_DREAM_CYCLE
         progress.stage_status[ForgeStage.SLEEP_DREAM_CYCLE] = ForgeStatus.IN_PROGRESS
@@ -408,7 +434,9 @@ class AgentForgeOrchestrator:
         progress.stage_status[ForgeStage.SLEEP_DREAM_CYCLE] = ForgeStatus.COMPLETED
         logger.info("✅ Stage 8 completed: 5 sleep/dream cycles finished")
 
-    async def _execute_stage_9_self_modeling(self, request: ForgeRequest, progress: ForgeProgress):
+    async def _execute_stage_9_self_modeling(
+        self, request: ForgeRequest, progress: ForgeProgress
+    ):
         """Stage 9: Self-modeling and temperature understanding"""
         progress.current_stage = ForgeStage.SELF_MODELING
         progress.stage_status[ForgeStage.SELF_MODELING] = ForgeStatus.IN_PROGRESS
@@ -430,7 +458,9 @@ class AgentForgeOrchestrator:
         progress.stage_status[ForgeStage.SELF_MODELING] = ForgeStatus.COMPLETED
         logger.info("✅ Stage 9 completed: Self-modeling achieved")
 
-    async def _execute_stage_10_integration(self, request: ForgeRequest, progress: ForgeProgress):
+    async def _execute_stage_10_integration(
+        self, request: ForgeRequest, progress: ForgeProgress
+    ):
         """Stage 10: Final integration, testing, and deployment"""
         progress.current_stage = ForgeStage.FINAL_INTEGRATION
         progress.stage_status[ForgeStage.FINAL_INTEGRATION] = ForgeStatus.IN_PROGRESS
@@ -475,7 +505,8 @@ class AgentForgeOrchestrator:
                 "completion_time": time.time(),
                 "total_duration_hours": total_duration / 3600,
                 "all_stages_completed": all(
-                    status == ForgeStatus.COMPLETED for status in progress.stage_status.values()
+                    status == ForgeStatus.COMPLETED
+                    for status in progress.stage_status.values()
                 ),
             }
         )
@@ -483,9 +514,13 @@ class AgentForgeOrchestrator:
         # Cleanup active forge
         del self.active_forges[request.request_id]
 
-        logger.info(f"🎉 Agent Forge completed: {progress.final_agent_name} is now available!")
+        logger.info(
+            f"🎉 Agent Forge completed: {progress.final_agent_name} is now available!"
+        )
 
-    async def _search_suitable_models(self, request: ForgeRequest) -> list[dict[str, Any]]:
+    async def _search_suitable_models(
+        self, request: ForgeRequest
+    ) -> list[dict[str, Any]]:
         """Search Hugging Face for suitable model candidates"""
         # Would integrate with actual Hugging Face search
         return [
@@ -511,7 +546,11 @@ class AgentForgeOrchestrator:
         if request_id in self.active_forges:
             progress = self.active_forges[request_id]
 
-            completed_stages = sum(1 for status in progress.stage_status.values() if status == ForgeStatus.COMPLETED)
+            completed_stages = sum(
+                1
+                for status in progress.stage_status.values()
+                if status == ForgeStatus.COMPLETED
+            )
             total_stages = len(ForgeStage)
 
             return {
@@ -546,7 +585,9 @@ class AgentForgeOrchestrator:
 
     # Research-backed implementation helpers
 
-    async def _analyze_model_complexity_edge(self, request: ForgeRequest) -> dict[str, Any]:
+    async def _analyze_model_complexity_edge(
+        self, request: ForgeRequest
+    ) -> dict[str, Any]:
         """Analyze model's current complexity level to find edge of chaos"""
         return {
             "skill_level": 0.75,
@@ -569,7 +610,9 @@ class AgentForgeOrchestrator:
             for i in range(45)
         ]
 
-    async def _apply_grokfast_acceleration(self, request: ForgeRequest) -> dict[str, Any]:
+    async def _apply_grokfast_acceleration(
+        self, request: ForgeRequest
+    ) -> dict[str, Any]:
         """Apply Grokfast algorithm for 50x grokking acceleration"""
         return {
             "amplification_factor": 50,
@@ -579,7 +622,9 @@ class AgentForgeOrchestrator:
             "spectral_decomposition": "complete",
         }
 
-    async def _train_geometric_self_awareness(self, request: ForgeRequest) -> dict[str, Any]:
+    async def _train_geometric_self_awareness(
+        self, request: ForgeRequest
+    ) -> dict[str, Any]:
         """Train model to visualize its own weight space geometry"""
         return {
             "hypergeometry_learning": True,
@@ -587,7 +632,9 @@ class AgentForgeOrchestrator:
             "self_awareness_score": 0.91,
         }
 
-    async def _configure_quiet_star_system(self, request: ForgeRequest) -> dict[str, Any]:
+    async def _configure_quiet_star_system(
+        self, request: ForgeRequest
+    ) -> dict[str, Any]:
         """Configure Quiet-STaR thinking system"""
         return {
             "tokenwise_parallel": True,
@@ -596,7 +643,9 @@ class AgentForgeOrchestrator:
             "extended_teacher_forcing": True,
         }
 
-    async def _bake_thought_bubble_system(self, request: ForgeRequest, config: dict[str, Any]) -> dict[str, Any]:
+    async def _bake_thought_bubble_system(
+        self, request: ForgeRequest, config: dict[str, Any]
+    ) -> dict[str, Any]:
         """Bake thought bubble system into model"""
         return {
             "thought_system_integrated": True,

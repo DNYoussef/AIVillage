@@ -94,7 +94,9 @@ class ModelFeatures:
 class FeatureExtractionConfig:
     """Configuration for feature extraction."""
 
-    feature_types: list[FeatureType] = field(default_factory=lambda: [FeatureType.WEIGHTS])
+    feature_types: list[FeatureType] = field(
+        default_factory=lambda: [FeatureType.WEIGHTS]
+    )
     extraction_method: ExtractionMethod = ExtractionMethod.DIRECT
     max_features: int | None = None
     normalize: bool = True
@@ -174,7 +176,9 @@ class FeatureExtractor:
 
         model_features = ModelFeatures(
             model_id=model_id,
-            feature_type=FeatureType.WEIGHTS if len(self.config.feature_types) == 1 else FeatureType.STATISTICS,
+            feature_type=FeatureType.WEIGHTS
+            if len(self.config.feature_types) == 1
+            else FeatureType.STATISTICS,
             features=features,
             metadata=self._get_extraction_metadata(model),
             extraction_method=self.config.extraction_method,
@@ -246,8 +250,12 @@ class FeatureExtractor:
             features["weight_statistics"] = np.array(weight_stats, dtype=np.float32)
 
             # Weight distribution features
-            all_weights = np.concatenate([w.flatten() for w in weights.values() if isinstance(w, np.ndarray)])
-            features["weight_distribution"] = self._compute_distribution_features(all_weights)
+            all_weights = np.concatenate(
+                [w.flatten() for w in weights.values() if isinstance(w, np.ndarray)]
+            )
+            features["weight_distribution"] = self._compute_distribution_features(
+                all_weights
+            )
 
             # Sparsity features
             features["sparsity"] = np.array(
@@ -296,7 +304,9 @@ class FeatureExtractor:
 
         return features
 
-    def _apply_extraction_method(self, features: dict[str, np.ndarray]) -> dict[str, np.ndarray]:
+    def _apply_extraction_method(
+        self, features: dict[str, np.ndarray]
+    ) -> dict[str, np.ndarray]:
         """Apply specified extraction method to features."""
         if self.config.extraction_method == ExtractionMethod.POOLING:
             return self._apply_pooling(features)
@@ -331,7 +341,9 @@ class FeatureExtractor:
 
         return pooled_features
 
-    def _apply_projection(self, features: dict[str, np.ndarray]) -> dict[str, np.ndarray]:
+    def _apply_projection(
+        self, features: dict[str, np.ndarray]
+    ) -> dict[str, np.ndarray]:
         """Apply dimensionality reduction via projection."""
         if not self.config.projection_dim:
             return features
@@ -341,8 +353,12 @@ class FeatureExtractor:
         for name, array in features.items():
             if array.size > self.config.projection_dim:
                 # Simple random projection
-                projection_matrix = np.random.randn(self.config.projection_dim, array.size)
-                projection_matrix /= np.linalg.norm(projection_matrix, axis=1, keepdims=True)
+                projection_matrix = np.random.randn(
+                    self.config.projection_dim, array.size
+                )
+                projection_matrix /= np.linalg.norm(
+                    projection_matrix, axis=1, keepdims=True
+                )
                 projected = projection_matrix @ array.flatten()
                 projected_features[name] = projected
             else:
@@ -365,7 +381,9 @@ class FeatureExtractor:
 
         return sampled_features
 
-    def _apply_aggregation(self, features: dict[str, np.ndarray]) -> dict[str, np.ndarray]:
+    def _apply_aggregation(
+        self, features: dict[str, np.ndarray]
+    ) -> dict[str, np.ndarray]:
         """Apply aggregation to combine features."""
         # Concatenate all features into single vector
         all_features = []
@@ -380,7 +398,9 @@ class FeatureExtractor:
 
         return {"aggregated": aggregated}
 
-    def _apply_compression(self, features: dict[str, np.ndarray]) -> dict[str, np.ndarray]:
+    def _apply_compression(
+        self, features: dict[str, np.ndarray]
+    ) -> dict[str, np.ndarray]:
         """Apply compression to reduce feature memory."""
         compressed_features = {}
 
@@ -400,7 +420,9 @@ class FeatureExtractor:
 
         return compressed_features
 
-    def _normalize_features(self, features: dict[str, np.ndarray]) -> dict[str, np.ndarray]:
+    def _normalize_features(
+        self, features: dict[str, np.ndarray]
+    ) -> dict[str, np.ndarray]:
         """Normalize feature vectors."""
         normalized_features = {}
 
@@ -454,8 +476,12 @@ class FeatureExtractor:
             # Encode basic connectivity patterns
             connectivity[0] = 1.0 if self._has_skip_connections(model) else 0.0
             connectivity[1] = 1.0 if self._has_attention(model) else 0.0
-            connectivity[2] = float(self._compute_depth(model)) / 100  # Normalized depth
-            connectivity[3] = float(self._compute_width(model)) / 1000  # Normalized width
+            connectivity[2] = (
+                float(self._compute_depth(model)) / 100
+            )  # Normalized depth
+            connectivity[3] = (
+                float(self._compute_width(model)) / 1000
+            )  # Normalized width
 
         return connectivity
 
@@ -474,7 +500,10 @@ class FeatureExtractor:
         layer_count = 0
         if hasattr(model, "__dict__"):
             for attr_name in dir(model):
-                if any(layer_type in attr_name.lower() for layer_type in ["conv", "linear", "fc"]):
+                if any(
+                    layer_type in attr_name.lower()
+                    for layer_type in ["conv", "linear", "fc"]
+                ):
                     layer_count += 1
         return layer_count
 
@@ -592,7 +621,9 @@ class FeatureExtractor:
             if isinstance(weight, np.ndarray):
                 # Check initialization patterns
                 is_zero = np.allclose(weight, 0)
-                is_uniform = np.allclose(np.std(weight), np.std(np.random.uniform(-1, 1, weight.shape)))
+                is_uniform = np.allclose(
+                    np.std(weight), np.std(np.random.uniform(-1, 1, weight.shape))
+                )
                 is_normal = np.allclose(np.std(weight), 1.0, rtol=0.3)
 
                 stats.extend([float(is_zero), float(is_uniform), float(is_normal)])
@@ -727,7 +758,10 @@ class ModelComparator:
         # Compute feature differences
         for feature_name in features_a.features.keys():
             if feature_name in features_b.features:
-                diff = features_a.features[feature_name] - features_b.features[feature_name]
+                diff = (
+                    features_a.features[feature_name]
+                    - features_b.features[feature_name]
+                )
                 feature_differences[feature_name] = diff
 
         comparison = ModelComparison(
@@ -735,8 +769,12 @@ class ModelComparator:
             model_b_id=model_b_id,
             similarity_scores=similarity_scores,
             feature_differences=feature_differences,
-            structural_similarity=similarity_scores.get(SimilarityMetric.STRUCTURAL.value, 0.0),
-            semantic_similarity=similarity_scores.get(SimilarityMetric.SEMANTIC.value, 0.0),
+            structural_similarity=similarity_scores.get(
+                SimilarityMetric.STRUCTURAL.value, 0.0
+            ),
+            semantic_similarity=similarity_scores.get(
+                SimilarityMetric.SEMANTIC.value, 0.0
+            ),
             metadata={
                 "features_compared": list(features_a.features.keys()),
                 "extraction_method": features_a.extraction_method.value,
@@ -748,7 +786,9 @@ class ModelComparator:
 
         return comparison
 
-    def _compute_cosine_similarity(self, features_a: ModelFeatures, features_b: ModelFeatures) -> float:
+    def _compute_cosine_similarity(
+        self, features_a: ModelFeatures, features_b: ModelFeatures
+    ) -> float:
         """Compute cosine similarity between feature sets."""
         similarities = []
 
@@ -768,7 +808,9 @@ class ModelComparator:
 
         return np.mean(similarities) if similarities else 0.0
 
-    def _compute_euclidean_similarity(self, features_a: ModelFeatures, features_b: ModelFeatures) -> float:
+    def _compute_euclidean_similarity(
+        self, features_a: ModelFeatures, features_b: ModelFeatures
+    ) -> float:
         """Compute Euclidean distance-based similarity."""
         distances = []
 
@@ -785,7 +827,9 @@ class ModelComparator:
 
         return np.mean(distances) if distances else 0.0
 
-    def _compute_manhattan_similarity(self, features_a: ModelFeatures, features_b: ModelFeatures) -> float:
+    def _compute_manhattan_similarity(
+        self, features_a: ModelFeatures, features_b: ModelFeatures
+    ) -> float:
         """Compute Manhattan distance-based similarity."""
         distances = []
 
@@ -802,7 +846,9 @@ class ModelComparator:
 
         return np.mean(distances) if distances else 0.0
 
-    def _compute_structural_similarity(self, features_a: ModelFeatures, features_b: ModelFeatures) -> float:
+    def _compute_structural_similarity(
+        self, features_a: ModelFeatures, features_b: ModelFeatures
+    ) -> float:
         """Compute structural similarity based on architecture features."""
         # Compare feature dimensions
         dims_a = features_a.get_feature_dimensions()
@@ -819,13 +865,18 @@ class ModelComparator:
                 shape_similarities.append(1.0)
             else:
                 # Partial similarity based on dimension differences
-                dim_diff = sum(abs(a - b) for a, b in zip(dims_a[feature], dims_b[feature], strict=False))
+                dim_diff = sum(
+                    abs(a - b)
+                    for a, b in zip(dims_a[feature], dims_b[feature], strict=False)
+                )
                 similarity = 1.0 / (1.0 + dim_diff)
                 shape_similarities.append(similarity)
 
         return np.mean(shape_similarities)
 
-    def _compute_feature_similarity(self, features_a: ModelFeatures, features_b: ModelFeatures) -> float:
+    def _compute_feature_similarity(
+        self, features_a: ModelFeatures, features_b: ModelFeatures
+    ) -> float:
         """Compute feature-level similarity."""
         stats_a = features_a.get_feature_statistics()
         stats_b = features_b.get_feature_statistics()
@@ -851,7 +902,9 @@ class ModelComparator:
 
         return np.mean(similarities) if similarities else 0.0
 
-    def _compute_semantic_similarity(self, features_a: ModelFeatures, features_b: ModelFeatures) -> float:
+    def _compute_semantic_similarity(
+        self, features_a: ModelFeatures, features_b: ModelFeatures
+    ) -> float:
         """Compute semantic similarity (placeholder for advanced similarity)."""
         # For now, use average of other similarities
         cosine_sim = self._compute_cosine_similarity(features_a, features_b)
@@ -886,7 +939,9 @@ class FeatureVisualizer:
 
         # Create visualization for each feature
         for feature_name, feature_array in model_features.features.items():
-            viz_data["feature_plots"][feature_name] = self._create_feature_plot(feature_name, feature_array)
+            viz_data["feature_plots"][feature_name] = self._create_feature_plot(
+                feature_name, feature_array
+            )
 
         return viz_data
 
@@ -902,18 +957,30 @@ class FeatureVisualizer:
         viz_data = {
             "model_a": comparison.model_a_id,
             "model_b": comparison.model_b_id,
-            "similarity_chart": self._create_similarity_chart(comparison.similarity_scores),
-            "difference_heatmap": self._create_difference_heatmap(comparison.feature_differences),
+            "similarity_chart": self._create_similarity_chart(
+                comparison.similarity_scores
+            ),
+            "difference_heatmap": self._create_difference_heatmap(
+                comparison.feature_differences
+            ),
             "summary": {
-                "overall_similarity": np.mean(list(comparison.similarity_scores.values())),
-                "most_similar": max(comparison.similarity_scores.items(), key=lambda x: x[1]),
-                "least_similar": min(comparison.similarity_scores.items(), key=lambda x: x[1]),
+                "overall_similarity": np.mean(
+                    list(comparison.similarity_scores.values())
+                ),
+                "most_similar": max(
+                    comparison.similarity_scores.items(), key=lambda x: x[1]
+                ),
+                "least_similar": min(
+                    comparison.similarity_scores.items(), key=lambda x: x[1]
+                ),
             },
         }
 
         return viz_data
 
-    def _create_feature_plot(self, feature_name: str, feature_array: np.ndarray) -> dict[str, Any]:
+    def _create_feature_plot(
+        self, feature_name: str, feature_array: np.ndarray
+    ) -> dict[str, Any]:
         """Create plot data for a single feature."""
         flat_array = feature_array.flatten()
 
@@ -931,7 +998,9 @@ class FeatureVisualizer:
             },
         }
 
-    def _create_similarity_chart(self, similarity_scores: dict[str, float]) -> dict[str, Any]:
+    def _create_similarity_chart(
+        self, similarity_scores: dict[str, float]
+    ) -> dict[str, Any]:
         """Create chart data for similarity scores."""
         return {
             "type": "bar_chart",
@@ -945,7 +1014,9 @@ class FeatureVisualizer:
             },
         }
 
-    def _create_difference_heatmap(self, feature_differences: dict[str, np.ndarray]) -> dict[str, Any]:
+    def _create_difference_heatmap(
+        self, feature_differences: dict[str, np.ndarray]
+    ) -> dict[str, Any]:
         """Create heatmap data for feature differences."""
         # Sample differences for visualization
         sampled_diffs = {}
@@ -1035,4 +1106,6 @@ def compare_model_files(
     model_b = DummyModel(model_path_b)
 
     comparator = ModelComparator()
-    return comparator.compare_models(model_a, model_b, Path(model_path_a).stem, Path(model_path_b).stem, metrics)
+    return comparator.compare_models(
+        model_a, model_b, Path(model_path_a).stem, Path(model_path_b).stem, metrics
+    )

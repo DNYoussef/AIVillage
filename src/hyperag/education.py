@@ -146,7 +146,9 @@ class CurriculumGraph:
                 if prereq_id in self.concepts:
                     self.graph.add_edge(prereq_id, concept.concept_id)
                 else:
-                    logger.warning(f"Prerequisite {prereq_id} not found for concept {concept.concept_id}")
+                    logger.warning(
+                        f"Prerequisite {prereq_id} not found for concept {concept.concept_id}"
+                    )
 
             self._update_stats()
             logger.debug(f"Added concept: {concept.name} ({concept.concept_id})")
@@ -238,8 +240,12 @@ class CurriculumGraph:
         """
         try:
             # Get learner profile for personalization
-            learner_profile = self.learner_profiles.get(learner_id, self._create_default_profile())
-            preferred_style = LearningStyle(learner_profile.get("learning_style", "multimodal"))
+            learner_profile = self.learner_profiles.get(
+                learner_id, self._create_default_profile()
+            )
+            preferred_style = LearningStyle(
+                learner_profile.get("learning_style", "multimodal")
+            )
 
             # Find shortest paths to all targets
             all_concepts = set()
@@ -283,17 +289,23 @@ class CurriculumGraph:
                 sorted_concepts = sorted_concepts[:max_concepts]
 
             # Create ConceptNode list
-            concept_list = [self.concepts[cid] for cid in sorted_concepts if cid in self.concepts]
+            concept_list = [
+                self.concepts[cid] for cid in sorted_concepts if cid in self.concepts
+            ]
 
             # Calculate estimated duration
-            total_minutes = sum(concept.estimated_time_minutes for concept in concept_list)
+            total_minutes = sum(
+                concept.estimated_time_minutes for concept in concept_list
+            )
             estimated_hours = total_minutes / 60.0
 
             # Determine difficulty progression
             difficulty_progression = [concept.difficulty for concept in concept_list]
 
             # Generate unique path ID
-            path_id = hashlib.md5(f"{learner_id}_{target_concepts}_{datetime.now()}".encode()).hexdigest()[:12]
+            path_id = hashlib.md5(
+                f"{learner_id}_{target_concepts}_{datetime.now()}".encode()
+            ).hexdigest()[:12]
 
             # Create learning path
             learning_path = LearningPath(
@@ -309,14 +321,18 @@ class CurriculumGraph:
             self.learning_paths[path_id] = learning_path
             self.stats["learning_paths_generated"] += 1
 
-            logger.info(f"Generated learning path {path_id} with {len(concept_list)} concepts")
+            logger.info(
+                f"Generated learning path {path_id} with {len(concept_list)} concepts"
+            )
             return learning_path
 
         except Exception as e:
             logger.error(f"Failed to find learning path: {e}")
             return None
 
-    def update_learner_progress(self, learner_id: str, path_id: str, completed_concepts: list[str]) -> bool:
+    def update_learner_progress(
+        self, learner_id: str, path_id: str, completed_concepts: list[str]
+    ) -> bool:
         """
         Update learner progress on a learning path.
 
@@ -336,13 +352,23 @@ class CurriculumGraph:
             learning_path = self.learning_paths[path_id]
 
             if learning_path.learner_id != learner_id:
-                logger.warning(f"Learning path {path_id} does not belong to learner {learner_id}")
+                logger.warning(
+                    f"Learning path {path_id} does not belong to learner {learner_id}"
+                )
                 return False
 
             # Calculate completion percentage
             total_concepts = len(learning_path.concepts)
-            completed_count = len([c for c in learning_path.concepts if c.concept_id in completed_concepts])
-            completion_percentage = (completed_count / total_concepts) * 100 if total_concepts > 0 else 0
+            completed_count = len(
+                [
+                    c
+                    for c in learning_path.concepts
+                    if c.concept_id in completed_concepts
+                ]
+            )
+            completion_percentage = (
+                (completed_count / total_concepts) * 100 if total_concepts > 0 else 0
+            )
 
             # Update learning path
             learning_path.completion_percentage = completion_percentage
@@ -352,19 +378,29 @@ class CurriculumGraph:
                 self.learner_profiles[learner_id] = self._create_default_profile()
 
             profile = self.learner_profiles[learner_id]
-            profile["completed_concepts"] = profile.get("completed_concepts", []) + completed_concepts
-            profile["total_learning_time"] = profile.get("total_learning_time", 0) + sum(
-                c.estimated_time_minutes for c in learning_path.concepts if c.concept_id in completed_concepts
+            profile["completed_concepts"] = (
+                profile.get("completed_concepts", []) + completed_concepts
+            )
+            profile["total_learning_time"] = profile.get(
+                "total_learning_time", 0
+            ) + sum(
+                c.estimated_time_minutes
+                for c in learning_path.concepts
+                if c.concept_id in completed_concepts
             )
 
-            logger.info(f"Updated progress for learner {learner_id}: {completion_percentage:.1f}% complete")
+            logger.info(
+                f"Updated progress for learner {learner_id}: {completion_percentage:.1f}% complete"
+            )
             return True
 
         except Exception as e:
             logger.error(f"Failed to update learner progress: {e}")
             return False
 
-    def get_recommended_next_concepts(self, learner_id: str, max_recommendations: int = 5) -> list[ConceptNode]:
+    def get_recommended_next_concepts(
+        self, learner_id: str, max_recommendations: int = 5
+    ) -> list[ConceptNode]:
         """
         Get recommended next concepts for a learner based on their progress.
 
@@ -395,7 +431,9 @@ class CurriculumGraph:
                     available_concepts.append(concept)
 
             # Sort by difficulty and estimated time
-            available_concepts.sort(key=lambda c: (c.difficulty.value, c.estimated_time_minutes))
+            available_concepts.sort(
+                key=lambda c: (c.difficulty.value, c.estimated_time_minutes)
+            )
 
             # Return top recommendations
             return available_concepts[:max_recommendations]
@@ -424,7 +462,9 @@ class CurriculumGraph:
         except nx.NetworkXError:
             # Fallback: sort by difficulty if graph has cycles
             concept_difficulty = [
-                (cid, self.concepts[cid].difficulty.value) for cid in concept_ids if cid in self.concepts
+                (cid, self.concepts[cid].difficulty.value)
+                for cid in concept_ids
+                if cid in self.concepts
             ]
             concept_difficulty.sort(key=lambda x: x[1])
             return [cid for cid, _ in concept_difficulty]
@@ -452,12 +492,16 @@ class CurriculumGraph:
                     for target in self.graph.nodes():
                         if source != target:
                             try:
-                                length = nx.shortest_path_length(self.graph, source, target)
+                                length = nx.shortest_path_length(
+                                    self.graph, source, target
+                                )
                                 path_lengths.append(length)
                             except nx.NetworkXNoPath:
                                 pass
 
-                self.stats["average_depth"] = sum(path_lengths) / len(path_lengths) if path_lengths else 0.0
+                self.stats["average_depth"] = (
+                    sum(path_lengths) / len(path_lengths) if path_lengths else 0.0
+                )
             except Exception:
                 self.stats["average_depth"] = 0.0
 
@@ -544,11 +588,15 @@ class ELI5Chain:
 
         try:
             # Generate explanation components
-            explanation = self._generate_core_explanation(concept, difficulty_level, target_age)
+            explanation = self._generate_core_explanation(
+                concept, difficulty_level, target_age
+            )
             analogies = self._generate_analogies(concept, target_age)
             examples = self._generate_examples(concept, target_age)
             key_points = self._extract_key_points(concept, difficulty_level)
-            follow_up_questions = self._generate_follow_up_questions(concept, target_age)
+            follow_up_questions = self._generate_follow_up_questions(
+                concept, target_age
+            )
 
             # Check age appropriateness
             age_appropriate = self._check_age_appropriateness(explanation, target_age)
@@ -585,7 +633,9 @@ class ELI5Chain:
                 age_appropriate=True,
             )
 
-    def generate_progressive_explanations(self, concept: str, levels: list[DifficultyLevel]) -> list[ELI5Explanation]:
+    def generate_progressive_explanations(
+        self, concept: str, levels: list[DifficultyLevel]
+    ) -> list[ELI5Explanation]:
         """
         Generate explanations at multiple difficulty levels.
 
@@ -613,7 +663,9 @@ class ELI5Chain:
 
         return explanations
 
-    def _generate_core_explanation(self, concept: str, difficulty_level: DifficultyLevel, target_age: int) -> str:
+    def _generate_core_explanation(
+        self, concept: str, difficulty_level: DifficultyLevel, target_age: int
+    ) -> str:
         """Generate the core explanation text."""
         # This would be replaced with actual AI/NLP explanation generation
         # For now, provide structured explanation templates
@@ -663,7 +715,9 @@ class ELI5Chain:
 
         return examples[:3]
 
-    def _extract_key_points(self, concept: str, difficulty_level: DifficultyLevel) -> list[str]:
+    def _extract_key_points(
+        self, concept: str, difficulty_level: DifficultyLevel
+    ) -> list[str]:
         """Extract key points for the concept."""
         point_counts = {
             DifficultyLevel.BEGINNER: 2,
@@ -700,7 +754,9 @@ class ELI5Chain:
     def _check_age_appropriateness(self, explanation: str, target_age: int) -> bool:
         """Check if explanation is age-appropriate."""
         # Simple heuristics for age appropriateness
-        guidelines = self.age_guidelines.get(str(target_age), self.age_guidelines.get("default", {}))
+        guidelines = self.age_guidelines.get(
+            str(target_age), self.age_guidelines.get("default", {})
+        )
 
         max_sentence_length = guidelines.get("max_sentence_length", 20)
         forbidden_words = guidelines.get("forbidden_words", [])
@@ -831,7 +887,10 @@ def generate_learning_path_for_topic(
     # Find concepts related to the topic
     related_concepts = []
     for concept_id, concept in curriculum_graph.concepts.items():
-        if topic.lower() in concept.name.lower() or topic.lower() in concept.description.lower():
+        if (
+            topic.lower() in concept.name.lower()
+            or topic.lower() in concept.description.lower()
+        ):
             related_concepts.append(concept_id)
 
     if not related_concepts:

@@ -91,7 +91,9 @@ class BitChatMVPMessage:
         return LegacyBitChatMessage(
             id=self.msg_id,
             sender=self.original_sender,
-            recipient=self.routing_metadata.get("target_peer_id", "") if self.routing_metadata else "",
+            recipient=self.routing_metadata.get("target_peer_id", "")
+            if self.routing_metadata
+            else "",
             payload=self.ciphertext_blob,
             ttl=self.ttl,
             hop_count=self.hop_count,
@@ -166,10 +168,14 @@ class BitChatMVPIntegrationBridge:
         try:
             # Initialize legacy BitChat transport if enabled
             if self.enable_legacy_bridge and BitChatTransport:
-                self.legacy_transport = BitChatTransport(device_id=f"legacy_{self.peer_id}")
+                self.legacy_transport = BitChatTransport(
+                    device_id=f"legacy_{self.peer_id}"
+                )
 
                 # Register message handler for legacy transport
-                self.legacy_transport.register_handler("default", self._handle_legacy_message)
+                self.legacy_transport.register_handler(
+                    "default", self._handle_legacy_message
+                )
                 await self.legacy_transport.start()
 
                 logger.info("Legacy BitChat transport bridge enabled")
@@ -225,9 +231,13 @@ class BitChatMVPIntegrationBridge:
             "connection_quality": peer_info.get("connection_quality", 1.0),
         }
 
-        logger.info(f"Registered mobile peer: {peer_id} ({peer_info.get('platform', 'unknown')})")
+        logger.info(
+            f"Registered mobile peer: {peer_id} ({peer_info.get('platform', 'unknown')})"
+        )
 
-    async def send_to_mobile_peer(self, peer_id: str, message: BitChatMVPMessage, transport_hint: str = None) -> bool:
+    async def send_to_mobile_peer(
+        self, peer_id: str, message: BitChatMVPMessage, transport_hint: str = None
+    ) -> bool:
         """Send message to mobile peer (Android/iOS)
 
         Args:
@@ -253,32 +263,42 @@ class BitChatMVPIntegrationBridge:
                 await self._apply_resource_optimizations(message, peer)
 
             # Determine best transport based on navigator logic
-            chosen_transport = await self._select_transport_for_mobile(message, peer, transport_hint)
+            chosen_transport = await self._select_transport_for_mobile(
+                message, peer, transport_hint
+            )
 
             # Convert message to mobile format
             mobile_data = message.to_protobuf_dict()
 
             # In production, this would send to actual mobile transport
             # For now, simulate successful transmission
-            await self._simulate_mobile_transmission(peer_id, mobile_data, chosen_transport)
+            await self._simulate_mobile_transmission(
+                peer_id, mobile_data, chosen_transport
+            )
 
             self.stats["messages_bridged"] += 1
             self.routing_decisions[message.msg_id] = chosen_transport
 
-            logger.debug(f"Sent message {message.msg_id[:8]} to mobile peer {peer_id} via {chosen_transport}")
+            logger.debug(
+                f"Sent message {message.msg_id[:8]} to mobile peer {peer_id} via {chosen_transport}"
+            )
             return True
 
         except Exception as e:
             logger.error(f"Failed to send message to mobile peer {peer_id}: {e}")
             return False
 
-    async def receive_from_mobile_peer(self, peer_id: str, message_data: dict[str, Any]) -> None:
+    async def receive_from_mobile_peer(
+        self, peer_id: str, message_data: dict[str, Any]
+    ) -> None:
         """Receive message from mobile peer and route appropriately"""
         try:
             # Convert from mobile format
             message = BitChatMVPMessage.from_protobuf_dict(message_data)
 
-            logger.debug(f"Received message {message.msg_id[:8]} from mobile peer {peer_id}")
+            logger.debug(
+                f"Received message {message.msg_id[:8]} from mobile peer {peer_id}"
+            )
 
             # Update peer last seen
             if peer_id in self.mobile_peers:
@@ -307,7 +327,9 @@ class BitChatMVPIntegrationBridge:
         except Exception as e:
             logger.error(f"Error processing message from mobile peer {peer_id}: {e}")
 
-    async def _apply_resource_optimizations(self, message: BitChatMVPMessage, peer: dict[str, Any]) -> None:
+    async def _apply_resource_optimizations(
+        self, message: BitChatMVPMessage, peer: dict[str, Any]
+    ) -> None:
         """Apply resource management optimizations"""
         if not self.resource_manager:
             return
@@ -323,7 +345,9 @@ class BitChatMVPIntegrationBridge:
             )
 
             # Get resource state and optimization
-            resource_state = await self.resource_manager.evaluate_and_adapt(device_profile)
+            resource_state = await self.resource_manager.evaluate_and_adapt(
+                device_profile
+            )
 
             # Apply optimizations based on resource state
             if resource_state.transport_preference == TransportPreference.BITCHAT_ONLY:
@@ -350,7 +374,10 @@ class BitChatMVPIntegrationBridge:
             return transport_hint
 
         # Check resource management constraints
-        if message.routing_metadata and message.routing_metadata.get("transport_preference") == "bitchat_only":
+        if (
+            message.routing_metadata
+            and message.routing_metadata.get("transport_preference") == "bitchat_only"
+        ):
             return "bitchat_mesh"
 
         # Consider peer capabilities
@@ -368,7 +395,9 @@ class BitChatMVPIntegrationBridge:
         else:
             return "bitchat_mesh"  # Fallback
 
-    async def _make_routing_decision(self, message: BitChatMVPMessage, source_peer: str) -> str:
+    async def _make_routing_decision(
+        self, message: BitChatMVPMessage, source_peer: str
+    ) -> str:
         """Make intelligent routing decision for received message"""
 
         # Check message type and routing metadata
@@ -383,7 +412,9 @@ class BitChatMVPIntegrationBridge:
                 if target_peer in self.mobile_peers:
                     return "mobile_relay"
                 # Check if target is accessible via legacy transport
-                elif self.legacy_transport and self.legacy_transport.is_peer_reachable(target_peer):
+                elif self.legacy_transport and self.legacy_transport.is_peer_reachable(
+                    target_peer
+                ):
                     return "legacy_bridge"
                 # Route via dual-path for unknown targets
                 else:
@@ -438,9 +469,13 @@ class BitChatMVPIntegrationBridge:
         except Exception as e:
             logger.error(f"Failed to route to dual-path transport: {e}")
 
-    async def _route_to_mobile_peers(self, message: BitChatMVPMessage, exclude_peer: str = None) -> None:
+    async def _route_to_mobile_peers(
+        self, message: BitChatMVPMessage, exclude_peer: str = None
+    ) -> None:
         """Route message to other mobile peers"""
-        target_peers = [peer_id for peer_id in self.mobile_peers.keys() if peer_id != exclude_peer]
+        target_peers = [
+            peer_id for peer_id in self.mobile_peers.keys() if peer_id != exclude_peer
+        ]
 
         for peer_id in target_peers:
             try:
@@ -448,7 +483,9 @@ class BitChatMVPIntegrationBridge:
             except Exception as e:
                 logger.error(f"Failed to route to mobile peer {peer_id}: {e}")
 
-    async def _simulate_mobile_transmission(self, peer_id: str, message_data: dict[str, Any], transport: str) -> None:
+    async def _simulate_mobile_transmission(
+        self, peer_id: str, message_data: dict[str, Any], transport: str
+    ) -> None:
         """Simulate transmission to mobile device (for testing)"""
         # In production, this would use actual mobile communication channels
         # For now, just simulate delay based on transport type
@@ -464,30 +501,43 @@ class BitChatMVPIntegrationBridge:
         delay = delay_map.get(transport, 0.1)
         await asyncio.sleep(delay)
 
-        logger.debug(f"[SIM] Transmitted to {peer_id} via {transport} (delay: {delay}s)")
+        logger.debug(
+            f"[SIM] Transmitted to {peer_id} via {transport} (delay: {delay}s)"
+        )
 
-    async def _handle_legacy_message(self, legacy_message: "LegacyBitChatMessage") -> None:
+    async def _handle_legacy_message(
+        self, legacy_message: "LegacyBitChatMessage"
+    ) -> None:
         """Handle message received from legacy BitChat transport"""
         try:
             # Convert legacy message to MVP format
             mvp_message = BitChatMVPMessage(
                 msg_id=legacy_message.id,
-                created_at=int(legacy_message.timestamp * 1000),  # Convert to milliseconds
+                created_at=int(
+                    legacy_message.timestamp * 1000
+                ),  # Convert to milliseconds
                 hop_count=legacy_message.hop_count,
                 ttl=legacy_message.ttl,
                 original_sender=legacy_message.sender,
                 message_type="MESSAGE_TYPE_DATA",
                 ciphertext_blob=legacy_message.payload,
-                routing_metadata={"target_peer_id": legacy_message.recipient} if legacy_message.recipient else None,
+                routing_metadata={"target_peer_id": legacy_message.recipient}
+                if legacy_message.recipient
+                else None,
                 priority=self._convert_int_priority_to_string(legacy_message.priority),
             )
 
             # Route to mobile peers if appropriate
-            if not legacy_message.recipient or legacy_message.recipient in self.mobile_peers:
+            if (
+                not legacy_message.recipient
+                or legacy_message.recipient in self.mobile_peers
+            ):
                 await self._route_to_mobile_peers(mvp_message)
 
             self.stats["mobile_to_legacy"] += 1
-            logger.debug(f"Bridged legacy message {legacy_message.id[:8]} to mobile peers")
+            logger.debug(
+                f"Bridged legacy message {legacy_message.id[:8]} to mobile peers"
+            )
 
         except Exception as e:
             logger.error(f"Error handling legacy message: {e}")
@@ -523,12 +573,15 @@ class BitChatMVPIntegrationBridge:
             "peer_id": self.peer_id,
             "is_running": self.is_running,
             "mobile_peers_connected": len(self.mobile_peers),
-            "legacy_transport_active": self.legacy_transport is not None and self.legacy_transport.is_running,
+            "legacy_transport_active": self.legacy_transport is not None
+            and self.legacy_transport.is_running,
             "dual_path_available": DUAL_PATH_AVAILABLE,
             "resource_management_active": self.resource_manager is not None,
             "statistics": self.stats.copy(),
             "mobile_peers": list(self.mobile_peers.keys()),
-            "recent_routing_decisions": dict(list(self.routing_decisions.items())[-10:]),  # Last 10
+            "recent_routing_decisions": dict(
+                list(self.routing_decisions.items())[-10:]
+            ),  # Last 10
         }
 
     def get_mobile_peer_info(self) -> list[dict[str, Any]]:

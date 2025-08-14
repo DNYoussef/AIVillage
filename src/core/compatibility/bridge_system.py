@@ -101,7 +101,9 @@ class CompatibilityBridge:
                     migration_notes=mapping.migration_guide or "Update import path",
                 )
 
-            logger.debug(f"Registered compatibility mapping: {mapping.old_module} -> {mapping.new_module}")
+            logger.debug(
+                f"Registered compatibility mapping: {mapping.old_module} -> {mapping.new_module}"
+            )
             return True
 
         except Exception as e:
@@ -193,10 +195,14 @@ warnings.warn(
             return True
 
         except Exception as e:
-            logger.error(f"Failed to create import bridge {old_module} -> {new_module}: {e}")
+            logger.error(
+                f"Failed to create import bridge {old_module} -> {new_module}: {e}"
+            )
             return False
 
-    def create_class_wrapper(self, old_class: type, new_class: type, deprecated_since: str = "1.0.0") -> type:
+    def create_class_wrapper(
+        self, old_class: type, new_class: type, deprecated_since: str = "1.0.0"
+    ) -> type:
         """
         Create a wrapper class that provides backward compatibility.
 
@@ -251,7 +257,8 @@ warnings.warn(
         def wrapper(*args, **kwargs):
             # Issue deprecation warning
             warnings.warn(
-                f"{old_func.__name__} is deprecated since v{deprecated_since}. " f"Use {new_func.__name__} instead.",
+                f"{old_func.__name__} is deprecated since v{deprecated_since}. "
+                f"Use {new_func.__name__} instead.",
                 DeprecationWarning,
                 stacklevel=2,
             )
@@ -334,9 +341,15 @@ Example migration:
 
         # Statistics
         report.append("Migration Statistics:")
-        report.append(f"  Total Import Redirects: {self.migration_stats['total_redirects']}")
-        report.append(f"  Active Deprecations: {self.migration_stats['active_deprecations']}")
-        report.append(f"  Completed Migrations: {self.migration_stats['completed_migrations']}")
+        report.append(
+            f"  Total Import Redirects: {self.migration_stats['total_redirects']}"
+        )
+        report.append(
+            f"  Active Deprecations: {self.migration_stats['active_deprecations']}"
+        )
+        report.append(
+            f"  Completed Migrations: {self.migration_stats['completed_migrations']}"
+        )
         report.append("")
 
         # Active deprecations
@@ -510,7 +523,9 @@ def get_migration_help(api_name: str) -> str | None:
     return compatibility_bridge.get_migration_guidance(api_name)
 
 
-def deprecated_api(deprecated_since: str, replacement: str, removal_version: str = "2.0.0"):
+def deprecated_api(
+    deprecated_since: str, replacement: str, removal_version: str = "2.0.0"
+):
     """
     Decorator to mark APIs as deprecated.
 
@@ -583,7 +598,9 @@ def setup_aivillage_bridges():
                 if create_legacy_import_bridge(old_module, new_module):
                     bridges_created += 1
             except Exception as e:
-                logger.debug(f"Could not create bridge {old_module} -> {new_module}: {e}")
+                logger.debug(
+                    f"Could not create bridge {old_module} -> {new_module}: {e}"
+                )
 
         if bridges_created > 0:
             logger.info(f"Created {bridges_created} compatibility bridges")

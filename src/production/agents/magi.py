@@ -151,7 +151,9 @@ class MagiAgent:
             )
 
             # Generate code based on language and requirements
-            generated_code = self._perform_code_generation(code_lang, description, requirements)
+            generated_code = self._perform_code_generation(
+                code_lang, description, requirements
+            )
 
             # Analyze code quality
             quality_score = self._analyze_code_quality(generated_code, quality_level)
@@ -170,7 +172,9 @@ class MagiAgent:
                 "generated_code": generated_code,
                 "quality_score": quality_score,
                 "language": language,
-                "lines_of_code": len(generated_code.split("\n")) if generated_code else 0,
+                "lines_of_code": len(generated_code.split("\n"))
+                if generated_code
+                else 0,
             }
 
         except ValueError as e:
@@ -258,7 +262,9 @@ class MagiAgent:
         """Perform comprehensive code review."""
         code = request.get("code", "")
         language = request.get("language", "python")
-        review_criteria = request.get("criteria", ["security", "performance", "maintainability"])
+        review_criteria = request.get(
+            "criteria", ["security", "performance", "maintainability"]
+        )
 
         review_results = {}
         overall_score = 0.0
@@ -277,7 +283,9 @@ class MagiAgent:
             "overall_score": overall_score,
             "review_results": review_results,
             "recommendations": self._generate_review_recommendations(review_results),
-            "approval_status": "approved" if overall_score >= 0.8 else "needs_improvement",
+            "approval_status": "approved"
+            if overall_score >= 0.8
+            else "needs_improvement",
         }
 
     def _generate_documentation(self, request: dict[str, Any]) -> dict[str, Any]:
@@ -298,7 +306,9 @@ class MagiAgent:
             "sections": ["overview", "installation", "usage", "api", "examples"],
         }
 
-    def _perform_code_generation(self, language: CodeLanguage, description: str, requirements: dict[str, Any]) -> str:
+    def _perform_code_generation(
+        self, language: CodeLanguage, description: str, requirements: dict[str, Any]
+    ) -> str:
         """Perform actual code generation."""
         if language == CodeLanguage.PYTHON:
             return self._generate_python_code(description, requirements)
@@ -309,7 +319,9 @@ class MagiAgent:
         else:
             return self._generate_generic_code(language, description, requirements)
 
-    def _generate_python_code(self, description: str, requirements: dict[str, Any]) -> str:
+    def _generate_python_code(
+        self, description: str, requirements: dict[str, Any]
+    ) -> str:
         """Generate Python code."""
         # Simple template-based code generation
         class_name = requirements.get("class_name", "GeneratedClass")
@@ -350,7 +362,9 @@ class MagiAgent:
 
         return "\n".join(code_lines)
 
-    def _generate_javascript_code(self, description: str, requirements: dict[str, Any]) -> str:
+    def _generate_javascript_code(
+        self, description: str, requirements: dict[str, Any]
+    ) -> str:
         """Generate JavaScript code."""
         class_name = requirements.get("class_name", "GeneratedClass")
 
@@ -413,7 +427,9 @@ module.exports = {class_name};
 
         return "\n".join(sql_lines)
 
-    def _generate_generic_code(self, language: CodeLanguage, description: str, requirements: dict[str, Any]) -> str:
+    def _generate_generic_code(
+        self, language: CodeLanguage, description: str, requirements: dict[str, Any]
+    ) -> str:
         """Generate generic code template."""
         return f"""// Generated {language.value} code for: {description}
 // This is a template implementation
@@ -440,7 +456,9 @@ function main() {{
         score = 0.8  # Base score
 
         # Check for comments and documentation
-        comment_ratio = len([line for line in code.split("\n") if line.strip().startswith("#")]) / len(code.split("\n"))
+        comment_ratio = len(
+            [line for line in code.split("\n") if line.strip().startswith("#")]
+        ) / len(code.split("\n"))
         score += comment_ratio * 0.1
 
         # Check for proper structure
@@ -486,7 +504,9 @@ function main() {{
                 )
 
             # Check for unused variables
-            if re.search(r"^\s*\w+\s*=.*$", line) and not re.search(r"self\.|return|print|log", line):
+            if re.search(r"^\s*\w+\s*=.*$", line) and not re.search(
+                r"self\.|return|print|log", line
+            ):
                 var_name = re.search(r"^\s*(\w+)\s*=", line)
                 if var_name and var_name.group(1) not in code[code.find(line) :]:
                     issues.append(
@@ -500,7 +520,9 @@ function main() {{
 
         return issues
 
-    def _generate_fixes(self, code: str, issues: list[dict[str, Any]], error_description: str) -> list[dict[str, Any]]:
+    def _generate_fixes(
+        self, code: str, issues: list[dict[str, Any]], error_description: str
+    ) -> list[dict[str, Any]]:
         """Generate fixes for identified issues."""
         fixes = []
 
@@ -548,12 +570,16 @@ function main() {{
                 if issue["line"] <= len(lines):
                     line_content = lines[issue["line"] - 1]
                     if re.search(r"^\s*\w+\s*=.*$", line_content):
-                        lines[issue["line"] - 1] = f"# {line_content}  # Commented out unused variable"
+                        lines[issue["line"] - 1] = (
+                            f"# {line_content}  # Commented out unused variable"
+                        )
                         fixed_code = "\n".join(lines)
 
         return fixed_code
 
-    def _analyze_optimizations(self, code: str, language: str, goals: list[str]) -> list[dict[str, Any]]:
+    def _analyze_optimizations(
+        self, code: str, language: str, goals: list[str]
+    ) -> list[dict[str, Any]]:
         """Analyze potential optimizations."""
         optimizations = []
 
@@ -608,7 +634,9 @@ function main() {{
 
         return optimizations
 
-    def _apply_optimizations(self, code: str, optimizations: list[dict[str, Any]]) -> str:
+    def _apply_optimizations(
+        self, code: str, optimizations: list[dict[str, Any]]
+    ) -> str:
         """Apply optimizations to code."""
         # Simplified optimization application
         optimized_code = code
@@ -624,7 +652,9 @@ function main() {{
 
         return "\n".join(optimization_comments) + "\n\n" + optimized_code
 
-    def _estimate_performance_gain(self, original_code: str, optimized_code: str) -> dict[str, float]:
+    def _estimate_performance_gain(
+        self, original_code: str, optimized_code: str
+    ) -> dict[str, float]:
         """Estimate performance improvement."""
         # Simple heuristic-based estimation
         original_complexity = len(original_code.split("\n"))
@@ -633,7 +663,9 @@ function main() {{
         return {
             "estimated_speed_improvement": 1.1,  # 10% improvement
             "estimated_memory_reduction": 0.95,  # 5% reduction
-            "code_complexity_change": optimized_complexity / original_complexity if original_complexity > 0 else 1.0,
+            "code_complexity_change": optimized_complexity / original_complexity
+            if original_complexity > 0
+            else 1.0,
         }
 
     def _generate_deployment_artifacts(self, config: DeploymentConfig) -> list[str]:
@@ -672,7 +704,9 @@ function main() {{
             f"{base_url}/traces",
         ]
 
-    def _review_criteria(self, code: str, language: str, criteria: str) -> tuple[float, list[str]]:
+    def _review_criteria(
+        self, code: str, language: str, criteria: str
+    ) -> tuple[float, list[str]]:
         """Review code against specific criteria."""
         score = 0.7  # Base score
         comments = []
@@ -683,7 +717,9 @@ function main() {{
                 score += 0.2
                 comments.append("No obvious security vulnerabilities found")
             else:
-                comments.append("Security risks detected - avoid eval/exec/system calls")
+                comments.append(
+                    "Security risks detected - avoid eval/exec/system calls"
+                )
 
             if "password" in code.lower() and "hash" in code.lower():
                 score += 0.1
@@ -701,9 +737,9 @@ function main() {{
 
         elif criteria == "maintainability":
             # Check for maintainability factors
-            comment_ratio = len([line for line in code.split("\n") if line.strip().startswith("#")]) / len(
-                code.split("\n")
-            )
+            comment_ratio = len(
+                [line for line in code.split("\n") if line.strip().startswith("#")]
+            ) / len(code.split("\n"))
             if comment_ratio > 0.1:
                 score += 0.2
                 comments.append("Well documented code")
@@ -714,14 +750,18 @@ function main() {{
 
         return min(1.0, score), comments
 
-    def _generate_review_recommendations(self, review_results: dict[str, Any]) -> list[str]:
+    def _generate_review_recommendations(
+        self, review_results: dict[str, Any]
+    ) -> list[str]:
         """Generate recommendations based on review results."""
         recommendations = []
 
         for criteria, result in review_results.items():
             score = result["score"]
             if score < 0.7:
-                recommendations.append(f"Improve {criteria} - current score: {score:.2f}")
+                recommendations.append(
+                    f"Improve {criteria} - current score: {score:.2f}"
+                )
             elif score >= 0.9:
                 recommendations.append(f"Excellent {criteria} implementation")
 
@@ -910,7 +950,9 @@ print(result)
         # Calculate KPIs
         if self.performance_history:
             recent_performance = self.performance_history[-10:]
-            success_rate = sum(1 for p in recent_performance if p.get("success", False)) / len(recent_performance)
+            success_rate = sum(
+                1 for p in recent_performance if p.get("success", False)
+            ) / len(recent_performance)
 
             self.kpi_scores = {
                 "code_generation_success_rate": success_rate,
@@ -930,7 +972,9 @@ print(result)
 
     def _calculate_code_quality_score(self) -> float:
         """Calculate average code quality score."""
-        quality_scores = [g.quality_score for g in self.code_generations.values() if g.quality_score]
+        quality_scores = [
+            g.quality_score for g in self.code_generations.values() if g.quality_score
+        ]
         if not quality_scores:
             return 0.7  # Default score
 
@@ -939,11 +983,15 @@ print(result)
     def _calculate_debugging_efficiency(self) -> float:
         """Calculate debugging efficiency."""
         # Simple metric based on performance history
-        debugging_tasks = [p for p in self.performance_history if p.get("task_type") == "debug_code"]
+        debugging_tasks = [
+            p for p in self.performance_history if p.get("task_type") == "debug_code"
+        ]
         if not debugging_tasks:
             return 0.75  # Default score
 
-        avg_time = sum(p.get("execution_time", 300) for p in debugging_tasks) / len(debugging_tasks)
+        avg_time = sum(p.get("execution_time", 300) for p in debugging_tasks) / len(
+            debugging_tasks
+        )
         return max(0.1, 1.0 - (avg_time / 600))  # Normalize against 10-minute baseline
 
     def evaluate_kpi(self) -> dict[str, float]:

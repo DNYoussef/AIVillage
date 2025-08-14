@@ -55,7 +55,9 @@ class BeliefNode:
     # Network connections
     parent_beliefs: list[str] = field(default_factory=list)  # Influences this belief
     child_beliefs: list[str] = field(default_factory=list)  # This belief influences
-    semantic_connections: list[tuple[str, float]] = field(default_factory=list)  # (id, strength)
+    semantic_connections: list[tuple[str, float]] = field(
+        default_factory=list
+    )  # (id, strength)
 
     # Metadata from RAG system
     source_documents: list[str] = field(default_factory=list)
@@ -192,10 +194,14 @@ class BayesianBeliefEngine:
             if belief_id in self.beliefs:
                 await self._update_belief_from_evidence(belief_id, evidence_id)
 
-        logger.info(f"Added evidence: {evidence_id} affecting {len(affected_beliefs)} beliefs")
+        logger.info(
+            f"Added evidence: {evidence_id} affecting {len(affected_beliefs)} beliefs"
+        )
         return evidence_id
 
-    async def update_belief_probability(self, belief_id: str, new_evidence_id: str = None):
+    async def update_belief_probability(
+        self, belief_id: str, new_evidence_id: str = None
+    ):
         """Update belief probability based on all evidence"""
 
         if belief_id not in self.beliefs:
@@ -217,7 +223,9 @@ class BayesianBeliefEngine:
             # Queue for propagation to connected beliefs
             self.propagation_queue.append((belief_id, old_probability, new_probability))
 
-            logger.info(f"Updated belief {belief_id}: {old_probability:.3f} → {new_probability:.3f}")
+            logger.info(
+                f"Updated belief {belief_id}: {old_probability:.3f} → {new_probability:.3f}"
+            )
 
     async def _calculate_bayesian_probability(self, belief_id: str) -> float:
         """Calculate probability using Bayesian inference"""
@@ -245,7 +253,9 @@ class BayesianBeliefEngine:
             if parent_id in self.beliefs:
                 parent = self.beliefs[parent_id]
                 influence_strength = 0.3  # Could be learned
-                log_odds += influence_strength * np.log(parent.probability / (1 - parent.probability + 1e-10))
+                log_odds += influence_strength * np.log(
+                    parent.probability / (1 - parent.probability + 1e-10)
+                )
 
         # Convert back to probability
         probability = 1 / (1 + np.exp(-log_odds))
@@ -264,7 +274,9 @@ class BayesianBeliefEngine:
                 continue
 
             # Calculate semantic similarity
-            similarity = await self._calculate_semantic_similarity(new_belief.content, existing_belief.content)
+            similarity = await self._calculate_semantic_similarity(
+                new_belief.content, existing_belief.content
+            )
 
             if similarity > 0.7:  # Strong semantic connection
                 new_belief.semantic_connections.append((existing_id, similarity))
@@ -274,7 +286,9 @@ class BayesianBeliefEngine:
                 self.semantic_graph[belief_id].append((existing_id, similarity))
                 self.semantic_graph[existing_id].append((belief_id, similarity))
 
-    async def _calculate_semantic_similarity(self, content1: str, content2: str) -> float:
+    async def _calculate_semantic_similarity(
+        self, content1: str, content2: str
+    ) -> float:
         """Calculate semantic similarity between content (simplified)"""
         # Would use actual embedding similarity
         common_words = set(content1.lower().split()) & set(content2.lower().split())
@@ -318,7 +332,9 @@ class BayesianBeliefEngine:
             except Exception as e:
                 logger.error(f"Error in propagation queue: {e}")
 
-    async def _propagate_belief_change(self, belief_id: str, old_prob: float, new_prob: float, depth: int = 0):
+    async def _propagate_belief_change(
+        self, belief_id: str, old_prob: float, new_prob: float, depth: int = 0
+    ):
         """Propagate probability changes to connected beliefs"""
 
         if depth >= self.max_propagation_depth:
@@ -343,7 +359,9 @@ class BayesianBeliefEngine:
                     child.last_updated = time.time()
 
                     # Continue propagation
-                    await self._propagate_belief_change(child_id, old_child_prob, new_child_prob, depth + 1)
+                    await self._propagate_belief_change(
+                        child_id, old_child_prob, new_child_prob, depth + 1
+                    )
 
     async def _periodic_belief_maintenance(self):
         """Periodic maintenance of belief network"""
@@ -399,8 +417,12 @@ class BayesianBeliefEngine:
                             "book_context": belief.book_summary_tag,
                             "chapter_context": belief.chapter_summary_tag,
                             "last_updated": belief.last_updated,
-                            "supporting_evidence_count": len(belief.supporting_evidence),
-                            "contradicting_evidence_count": len(belief.contradicting_evidence),
+                            "supporting_evidence_count": len(
+                                belief.supporting_evidence
+                            ),
+                            "contradicting_evidence_count": len(
+                                belief.contradicting_evidence
+                            ),
                         }
                     )
 
@@ -427,6 +449,8 @@ class BayesianBeliefEngine:
             "high_confidence_beliefs": sum(1 for c in confidences if c > 0.8),
             "uncertain_beliefs": sum(1 for p in probabilities if 0.3 <= p <= 0.7),
             "strong_beliefs": sum(1 for p in probabilities if p > 0.8 or p < 0.2),
-            "total_connections": sum(len(b.semantic_connections) for b in self.beliefs.values()),
+            "total_connections": sum(
+                len(b.semantic_connections) for b in self.beliefs.values()
+            ),
             "updates_processed": sum(b.update_count for b in self.beliefs.values()),
         }

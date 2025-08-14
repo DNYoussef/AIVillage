@@ -71,7 +71,9 @@ class MagiArchitecturalEvolution:
         # Evolution parameters
         self.breakthrough_threshold = self.config.get("breakthrough_threshold", 0.3)
         self.max_generation_jump = self.config.get("max_generation_jump", 5)
-        self.consensus_required = self.config.get("consensus_required", 2)  # 2 of 3 MAGI agree
+        self.consensus_required = self.config.get(
+            "consensus_required", 2
+        )  # 2 of 3 MAGI agree
 
         # Discovery history
         self.breakthrough_history: list[BreakthroughResult] = []
@@ -93,15 +95,25 @@ class MagiArchitecturalEvolution:
             pre_kpis = agent.evaluate_kpi()
 
             # Generate breakthrough candidates from each MAGI
-            melchior_candidates = await self.melchior.analyze_breakthrough_opportunities(agent)
-            balthasar_candidates = await self.balthasar.discover_intuitive_breakthroughs(agent)
-            casper_candidates = await self.casper.synthesize_emergent_breakthroughs(agent)
+            melchior_candidates = (
+                await self.melchior.analyze_breakthrough_opportunities(agent)
+            )
+            balthasar_candidates = (
+                await self.balthasar.discover_intuitive_breakthroughs(agent)
+            )
+            casper_candidates = await self.casper.synthesize_emergent_breakthroughs(
+                agent
+            )
 
             # Combine and evaluate all candidates
-            all_candidates = melchior_candidates + balthasar_candidates + casper_candidates
+            all_candidates = (
+                melchior_candidates + balthasar_candidates + casper_candidates
+            )
 
             if not all_candidates:
-                logger.info(f"No breakthrough candidates identified for agent {agent_id}")
+                logger.info(
+                    f"No breakthrough candidates identified for agent {agent_id}"
+                )
                 return {"success": False, "reason": "no_candidates", "insights": []}
 
             # MAGI consensus evaluation
@@ -119,18 +131,24 @@ class MagiArchitecturalEvolution:
             )
 
             # Apply breakthrough evolution
-            breakthrough_result = await self._apply_breakthrough(agent, selected_breakthrough)
+            breakthrough_result = await self._apply_breakthrough(
+                agent, selected_breakthrough
+            )
 
             # Validate results
             post_kpis = agent.evaluate_kpi()
             impact = self._calculate_breakthrough_impact(pre_kpis, post_kpis)
 
             breakthrough_result.impact_achieved = impact
-            breakthrough_result.generation_increase = self._calculate_generation_increase(impact)
+            breakthrough_result.generation_increase = (
+                self._calculate_generation_increase(impact)
+            )
 
             # Update agent generation
             if breakthrough_result.success:
-                agent.evolution_memory.generation += breakthrough_result.generation_increase
+                agent.evolution_memory.generation += (
+                    breakthrough_result.generation_increase
+                )
                 agent.evolution_memory.breakthrough_contributions.append(
                     {
                         "timestamp": time.time(),
@@ -144,7 +162,9 @@ class MagiArchitecturalEvolution:
             self.breakthrough_history.append(breakthrough_result)
 
             # Update knowledge base
-            await self._update_knowledge_base(agent, selected_breakthrough, breakthrough_result)
+            await self._update_knowledge_base(
+                agent, selected_breakthrough, breakthrough_result
+            )
 
             return {
                 "success": breakthrough_result.success,
@@ -156,12 +176,16 @@ class MagiArchitecturalEvolution:
             }
 
         except Exception as e:
-            logger.exception(f"MAGI breakthrough evolution failed for agent {agent_id}: {e}")
+            logger.exception(
+                f"MAGI breakthrough evolution failed for agent {agent_id}: {e}"
+            )
             return {"success": False, "error": str(e), "insights": []}
 
         finally:
             duration = time.time() - start_time
-            logger.info(f"MAGI evolution completed for agent {agent_id} in {duration:.1f}s")
+            logger.info(
+                f"MAGI evolution completed for agent {agent_id} in {duration:.1f}s"
+            )
 
     async def _magi_consensus_selection(
         self,
@@ -176,7 +200,9 @@ class MagiArchitecturalEvolution:
         # Each MAGI evaluates all candidates
         evaluations = {}
         for candidate in candidates:
-            candidate_id = f"{candidate.breakthrough_type.value}_{candidate.description[:20]}"
+            candidate_id = (
+                f"{candidate.breakthrough_type.value}_{candidate.description[:20]}"
+            )
             evaluations[candidate_id] = {"candidate": candidate, "votes": []}
 
             # Get evaluation from each MAGI
@@ -201,11 +227,16 @@ class MagiArchitecturalEvolution:
         consensus_candidates.sort(key=lambda x: x[1], reverse=True)
         selected_candidate, score = consensus_candidates[0]
 
-        logger.info(f"MAGI consensus selected {selected_candidate.breakthrough_type.value} " f"with score {score:.2f}")
+        logger.info(
+            f"MAGI consensus selected {selected_candidate.breakthrough_type.value} "
+            f"with score {score:.2f}"
+        )
 
         return selected_candidate
 
-    async def _apply_breakthrough(self, agent: EvolvableAgent, candidate: BreakthroughCandidate) -> BreakthroughResult:
+    async def _apply_breakthrough(
+        self, agent: EvolvableAgent, candidate: BreakthroughCandidate
+    ) -> BreakthroughResult:
         """Apply breakthrough evolution to agent."""
         try:
             # Create rollback data
@@ -222,15 +253,25 @@ class MagiArchitecturalEvolution:
 
             # Apply breakthrough based on type
             if candidate.breakthrough_type == BreakthroughType.ARCHITECTURAL:
-                success, insights = await self._apply_architectural_breakthrough(agent, candidate)
+                success, insights = await self._apply_architectural_breakthrough(
+                    agent, candidate
+                )
             elif candidate.breakthrough_type == BreakthroughType.ALGORITHMIC:
-                success, insights = await self._apply_algorithmic_breakthrough(agent, candidate)
+                success, insights = await self._apply_algorithmic_breakthrough(
+                    agent, candidate
+                )
             elif candidate.breakthrough_type == BreakthroughType.REPRESENTATIONAL:
-                success, insights = await self._apply_representational_breakthrough(agent, candidate)
+                success, insights = await self._apply_representational_breakthrough(
+                    agent, candidate
+                )
             elif candidate.breakthrough_type == BreakthroughType.BEHAVIORAL:
-                success, insights = await self._apply_behavioral_breakthrough(agent, candidate)
+                success, insights = await self._apply_behavioral_breakthrough(
+                    agent, candidate
+                )
             elif candidate.breakthrough_type == BreakthroughType.EMERGENT:
-                success, insights = await self._apply_emergent_breakthrough(agent, candidate)
+                success, insights = await self._apply_emergent_breakthrough(
+                    agent, candidate
+                )
             else:
                 success, insights = (
                     False,
@@ -441,7 +482,9 @@ class MagiArchitecturalEvolution:
             insights.append(f"Emergent breakthrough failed: {e!s}")
             return False, insights
 
-    def _calculate_breakthrough_impact(self, pre_kpis: dict[str, float], post_kpis: dict[str, float]) -> float:
+    def _calculate_breakthrough_impact(
+        self, pre_kpis: dict[str, float], post_kpis: dict[str, float]
+    ) -> float:
         """Calculate the impact of a breakthrough evolution."""
         # Weight different KPIs for breakthrough assessment
         weights = {
@@ -477,7 +520,9 @@ class MagiArchitecturalEvolution:
             return 2  # Moderate breakthrough
         if impact < 0.6:
             return 3  # Major breakthrough
-        return min(self.max_generation_jump, int(impact * 10))  # Exceptional breakthrough
+        return min(
+            self.max_generation_jump, int(impact * 10)
+        )  # Exceptional breakthrough
 
     async def _update_knowledge_base(
         self,
@@ -545,7 +590,11 @@ class MagiArchitecturalEvolution:
             "average_impact_by_type": impact_by_type,
             "knowledge_base_entries": len(self.knowledge_base),
             "recent_breakthroughs": len(
-                [r for r in self.breakthrough_history if time.time() - r.timestamp < 86400 and r.success]
+                [
+                    r
+                    for r in self.breakthrough_history
+                    if time.time() - r.timestamp < 86400 and r.success
+                ]
             ),
         }
 
@@ -557,7 +606,9 @@ class MelchiorAnalytical:
         self.config = config
         self.knowledge = []
 
-    async def analyze_breakthrough_opportunities(self, agent: EvolvableAgent) -> list[BreakthroughCandidate]:
+    async def analyze_breakthrough_opportunities(
+        self, agent: EvolvableAgent
+    ) -> list[BreakthroughCandidate]:
         """Systematically analyze potential breakthrough opportunities."""
         candidates = []
 
@@ -594,7 +645,9 @@ class MelchiorAnalytical:
 
         return candidates
 
-    async def evaluate_candidate(self, agent: EvolvableAgent, candidate: BreakthroughCandidate) -> float:
+    async def evaluate_candidate(
+        self, agent: EvolvableAgent, candidate: BreakthroughCandidate
+    ) -> float:
         """Evaluate breakthrough candidate analytically."""
         score = 0.5  # Base score
 
@@ -602,13 +655,19 @@ class MelchiorAnalytical:
         kpis = agent.evaluate_kpi()
 
         # Boost score if candidate addresses clear deficiencies
-        if (candidate.breakthrough_type == BreakthroughType.ARCHITECTURAL and kpis.get("adaptability", 0.5) < 0.4) or (
-            candidate.breakthrough_type == BreakthroughType.ALGORITHMIC and kpis.get("efficiency", 0.5) < 0.6
+        if (
+            candidate.breakthrough_type == BreakthroughType.ARCHITECTURAL
+            and kpis.get("adaptability", 0.5) < 0.4
+        ) or (
+            candidate.breakthrough_type == BreakthroughType.ALGORITHMIC
+            and kpis.get("efficiency", 0.5) < 0.6
         ):
             score += 0.2
 
         # Adjust for risk vs reward
-        risk_reward_ratio = candidate.estimated_impact / (candidate.risk_assessment + 0.1)
+        risk_reward_ratio = candidate.estimated_impact / (
+            candidate.risk_assessment + 0.1
+        )
         score += min(0.3, risk_reward_ratio * 0.1)
 
         return min(1.0, score)
@@ -625,7 +684,9 @@ class BalthasarIntuitive:
         self.config = config
         self.knowledge = []
 
-    async def discover_intuitive_breakthroughs(self, agent: EvolvableAgent) -> list[BreakthroughCandidate]:
+    async def discover_intuitive_breakthroughs(
+        self, agent: EvolvableAgent
+    ) -> list[BreakthroughCandidate]:
         """Discover breakthroughs through intuitive pattern recognition."""
         candidates = []
 
@@ -634,7 +695,9 @@ class BalthasarIntuitive:
 
         if len(performance_history) > 100:
             # Look for intuitive patterns in performance
-            recent_patterns = self._detect_behavioral_patterns(performance_history[-100:])
+            recent_patterns = self._detect_behavioral_patterns(
+                performance_history[-100:]
+            )
 
             if "inconsistent_confidence" in recent_patterns:
                 candidates.append(
@@ -672,7 +735,10 @@ class BalthasarIntuitive:
 
         # Analyze confidence patterns
         confidence_values = [r.confidence for r in history if r.confidence is not None]
-        if confidence_values and len(set(confidence_values)) > len(confidence_values) * 0.8:
+        if (
+            confidence_values
+            and len(set(confidence_values)) > len(confidence_values) * 0.8
+        ):
             patterns.append("inconsistent_confidence")
 
         # Look for creative potential indicators
@@ -682,7 +748,9 @@ class BalthasarIntuitive:
 
         return patterns
 
-    async def evaluate_candidate(self, agent: EvolvableAgent, candidate: BreakthroughCandidate) -> float:
+    async def evaluate_candidate(
+        self, agent: EvolvableAgent, candidate: BreakthroughCandidate
+    ) -> float:
         """Evaluate candidate intuitively."""
         score = 0.5
 
@@ -710,7 +778,9 @@ class CasperSynthetic:
         self.config = config
         self.knowledge = []
 
-    async def synthesize_emergent_breakthroughs(self, agent: EvolvableAgent) -> list[BreakthroughCandidate]:
+    async def synthesize_emergent_breakthroughs(
+        self, agent: EvolvableAgent
+    ) -> list[BreakthroughCandidate]:
         """Synthesize breakthrough opportunities from combination of existing capabilities."""
         candidates = []
 
@@ -764,7 +834,9 @@ class CasperSynthetic:
 
         return capabilities
 
-    async def evaluate_candidate(self, agent: EvolvableAgent, candidate: BreakthroughCandidate) -> float:
+    async def evaluate_candidate(
+        self, agent: EvolvableAgent, candidate: BreakthroughCandidate
+    ) -> float:
         """Evaluate candidate synthetically."""
         score = 0.5
 

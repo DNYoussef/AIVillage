@@ -138,7 +138,9 @@ class DreamBuffer:
                 age = idx - i
                 self.priority_weights[i] = decay_factor**age
 
-    def sample(self, k: int, strategy: str = "balanced", stage_filter: str | None = None) -> list[DreamExample]:
+    def sample(
+        self, k: int, strategy: str = "balanced", stage_filter: str | None = None
+    ) -> list[DreamExample]:
         """
         Sample k examples from the buffer.
 
@@ -194,7 +196,9 @@ class DreamBuffer:
         elif strategy == "near_threshold":
             # Focus on near-threshold examples
             near_threshold = [
-                ex for ex in candidates if self.near_threshold_min <= ex.accuracy <= self.near_threshold_max
+                ex
+                for ex in candidates
+                if self.near_threshold_min <= ex.accuracy <= self.near_threshold_max
             ]
 
             if len(near_threshold) >= k:
@@ -202,7 +206,9 @@ class DreamBuffer:
             else:
                 # Fill with other examples
                 others = [ex for ex in candidates if ex not in near_threshold]
-                return near_threshold + random.sample(others, min(k - len(near_threshold), len(others)))
+                return near_threshold + random.sample(
+                    others, min(k - len(near_threshold), len(others))
+                )
 
         elif strategy == "edge_cases":
             # Prioritize edge cases
@@ -211,14 +217,18 @@ class DreamBuffer:
                 return random.sample(edge_cases, k)
             else:
                 others = [ex for ex in candidates if ex not in edge_cases]
-                return edge_cases + random.sample(others, min(k - len(edge_cases), len(others)))
+                return edge_cases + random.sample(
+                    others, min(k - len(edge_cases), len(others))
+                )
 
         elif strategy == "priority":
             # Weighted sampling by priority
             weights = self.priority_weights[: len(candidates)]
             weights = weights / weights.sum()
 
-            indices = np.random.choice(len(candidates), size=k, replace=False, p=weights)
+            indices = np.random.choice(
+                len(candidates), size=k, replace=False, p=weights
+            )
 
             return [candidates[i] for i in indices]
 
@@ -566,7 +576,9 @@ class DreamCycleManager:
         # Sample from buffer
         examples = self.buffer.sample(
             self.replay_batch_size,
-            strategy="balanced" if self.current_cycle_step < self.dream_duration // 2 else "edge_cases",
+            strategy="balanced"
+            if self.current_cycle_step < self.dream_duration // 2
+            else "edge_cases",
             stage_filter=stage,
         )
 

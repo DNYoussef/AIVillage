@@ -44,7 +44,8 @@ class EdgeController:
 
         # Current difficulty settings
         self.current_difficulty = {
-            param: (min_val + max_val) / 2 for param, (min_val, max_val) in self.difficulty_params.items()
+            param: (min_val + max_val) / 2
+            for param, (min_val, max_val) in self.difficulty_params.items()
         }
 
         # Multi-armed bandit state
@@ -118,7 +119,9 @@ class EdgeController:
                 target = current + random.gauss(0, 0.05 * range_size)
 
             # Apply momentum
-            self.velocity[param] = self.momentum * self.velocity[param] + (1 - self.momentum) * (target - current)
+            self.velocity[param] = self.momentum * self.velocity[param] + (
+                1 - self.momentum
+            ) * (target - current)
 
             # Update value with velocity
             new_value = current + self.velocity[param]
@@ -134,7 +137,9 @@ class EdgeController:
         if self.target_min <= success_rate <= self.target_max:
             # In target zone - high reward
             distance_from_center = abs(success_rate - self.target_center)
-            return 1.0 - 0.5 * (distance_from_center / (self.target_max - self.target_min))
+            return 1.0 - 0.5 * (
+                distance_from_center / (self.target_max - self.target_min)
+            )
         elif success_rate < self.target_min:
             # Too hard - negative reward
             return -2 * (self.target_min - success_rate)
@@ -200,7 +205,9 @@ class EdgeController:
         return {
             "success_rate": current_rate,
             "in_target_zone": self.target_min <= current_rate <= self.target_max,
-            "distance_from_target": min(abs(current_rate - self.target_min), abs(current_rate - self.target_max))
+            "distance_from_target": min(
+                abs(current_rate - self.target_min), abs(current_rate - self.target_max)
+            )
             if not (self.target_min <= current_rate <= self.target_max)
             else 0.0,
             "total_samples": len(self.success_history),
@@ -222,7 +229,9 @@ class ComplexityEstimator:
 
         counts = Counter(text)
         total = len(text)
-        entropy = -sum((count / total) * math.log2(count / total) for count in counts.values())
+        entropy = -sum(
+            (count / total) * math.log2(count / total) for count in counts.values()
+        )
         return entropy
 
     @staticmethod
@@ -261,7 +270,10 @@ class ComplexityEstimator:
                 "With": 2,
             }
 
-            complexity = sum(node_counts.get(node_type, 0) * weight for node_type, weight in weights.items())
+            complexity = sum(
+                node_counts.get(node_type, 0) * weight
+                for node_type, weight in weights.items()
+            )
 
             return complexity
         except:

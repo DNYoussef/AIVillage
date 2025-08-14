@@ -128,7 +128,9 @@ class QuietSTaRConfig:
         kwargs = {
             "enable_quiet_star": config_dict.get("enable_quiet_star", True),
             "enable_training": config_dict.get("enable_training", True),
-            "enable_inference_stripping": config_dict.get("enable_inference_stripping", True),
+            "enable_inference_stripping": config_dict.get(
+                "enable_inference_stripping", True
+            ),
         }
 
         # Extract special tokens
@@ -168,7 +170,9 @@ class QuietSTaRConfig:
             kwargs.update(
                 {
                     "reflection_teacher_model": settings.get("teacher_model"),
-                    "reflection_heuristic_threshold": settings.get("heuristic_threshold", 0.7),
+                    "reflection_heuristic_threshold": settings.get(
+                        "heuristic_threshold", 0.7
+                    ),
                 }
             )
 
@@ -176,8 +180,12 @@ class QuietSTaRConfig:
             leak_settings = config_dict["leak_prevention"]
             kwargs.update(
                 {
-                    "leak_penalty_type": leak_settings.get("penalty_type", "exponential"),
-                    "leak_detection_threshold": leak_settings.get("detection_threshold", 0.01),
+                    "leak_penalty_type": leak_settings.get(
+                        "penalty_type", "exponential"
+                    ),
+                    "leak_detection_threshold": leak_settings.get(
+                        "detection_threshold", 0.01
+                    ),
                 }
             )
 
@@ -186,7 +194,9 @@ class QuietSTaRConfig:
             kwargs.update(
                 {
                     "thought_temperature": gen_params.get("thought_temperature", 0.8),
-                    "strip_thoughts_in_inference": gen_params.get("strip_thoughts_in_inference", True),
+                    "strip_thoughts_in_inference": gen_params.get(
+                        "strip_thoughts_in_inference", True
+                    ),
                 }
             )
 
@@ -223,7 +233,9 @@ def get_training_config(stage: str = "intermediate") -> QuietSTaRConfig:
 
     if stage_config:
         config.thought_ratio = stage_config.get("thought_ratio", config.thought_ratio)
-        config.max_thought_tokens = stage_config.get("max_tokens", config.max_thought_tokens)
+        config.max_thought_tokens = stage_config.get(
+            "max_tokens", config.max_thought_tokens
+        )
 
     return config
 

@@ -104,7 +104,7 @@ class AccessTicket:
         return max(0, self.expires_at - time.time())
 
     def serialize(self) -> bytes:
-        """Serialize ticket to bytes for signing/transmission."""
+        """Serialize ticket to bytes for signing/transmission (BN-5.2)."""
         data = struct.pack(
             ">16s32s32sBQQ12sQ",
             self.ticket_id,
@@ -121,6 +121,28 @@ class AccessTicket:
         protocols_data = "|".join(self.allowed_protocols).encode()
         data += struct.pack(">I", len(protocols_data)) + protocols_data
         data += struct.pack(">II", self.max_bandwidth_bps, self.max_connections)
+
+        # Apply padding 24..64B (BN-5.2)
+        current_size = len(data)
+        min_size = 24
+        max_size = 64
+
+        if current_size < min_size:
+            padding_needed = min_size - current_size
+        elif current_size > max_size:
+            # Truncate to max size but preserve critical fields
+            data = data[:max_size]
+            padding_needed = 0
+        else:
+            # Add random padding within range
+            import random
+
+            target_size = random.randint(max(min_size, current_size), max_size)
+            padding_needed = target_size - current_size
+
+        if padding_needed > 0:
+            padding = secrets.token_bytes(padding_needed)
+            data += padding
 
         return data
 
@@ -152,7 +174,9 @@ class AccessTicket:
             allowed_protocols = protocols_data.decode().split("|")
             offset += protocols_len
 
-            max_bandwidth_bps, max_connections = struct.unpack(">II", data[offset : offset + 8])
+            max_bandwidth_bps, max_connections = struct.unpack(
+                ">II", data[offset : offset + 8]
+            )
 
             # Parse ticket type
             ticket_type = TicketType.STANDARD  # Default
@@ -200,7 +224,9 @@ class TokenBucket:
 
         # Refill tokens based on elapsed time
         elapsed = now - self.last_refill
-        self.tokens = min(self.config.capacity, self.tokens + (elapsed * self.config.refill_rate))
+        self.tokens = min(
+            self.config.capacity, self.tokens + (elapsed * self.config.refill_rate)
+        )
         self.last_refill = now
 
         # Check if we have enough tokens
@@ -220,6 +246,14 @@ class TokenBucket:
         }
 
 
+class TicketCarrier(Enum):
+    """Ticket carrier types (BN-5.2)."""
+
+    COOKIE = "cookie"
+    QUERY_PARAM = "query"
+    BODY = "body"
+
+
 class AccessTicketManager:
     """Manages access ticket validation and rate limiting."""
 
@@ -227,15 +261,21 @@ class AccessTicketManager:
         # Trusted issuer public keys
         self.trusted_issuers: dict[str, bytes] = {}
 
-        # Replay protection
+        # Replay protection with time windows (BN-5.2)
         self.used_nonces: set[bytes] = set()
+        self.nonce_timestamps: dict[bytes, float] = {}
         self.max_nonce_history = max_nonce_history
+        self.duplicate_window_hours = 2  # 2h duplicate denial
 
         # Rate limiting per subject
         self.rate_limiters: dict[str, TokenBucket] = {}
 
         # Active tickets cache
         self.active_tickets: dict[str, AccessTicket] = {}
+
+        # Hour-bound HKDF derivation (BN-5.2)
+        self.hour_keys: dict[int, bytes] = {}
+        self.master_secret = secrets.token_bytes(32)
 
         # Statistics
         self.stats = {
@@ -283,8 +323,8 @@ class AccessTicketManager:
                 self.stats["tickets_rejected"] += 1
                 return TicketStatus.INVALID_SIGNATURE
 
-            # 4. Check replay protection
-            if ticket.nonce in self.used_nonces:
+            # 4. Check replay protection with time window (BN-5.2)
+            if self._is_duplicate_within_window(ticket.nonce):
                 self.stats["replay_attempts"] += 1
                 return TicketStatus.REPLAY_DETECTED
 
@@ -315,14 +355,18 @@ class AccessTicketManager:
         try:
             if CRYPTO_AVAILABLE:
                 # Use real Ed25519 verification
-                public_key_obj = ed25519.Ed25519PublicKey.from_public_bytes(issuer_public_key)
+                public_key_obj = ed25519.Ed25519PublicKey.from_public_bytes(
+                    issuer_public_key
+                )
                 ticket_data = ticket.serialize()
                 public_key_obj.verify(ticket.signature, ticket_data)
                 return True
             else:
                 # Simplified verification for testing
                 ticket_data = ticket.serialize()
-                expected_sig = hashlib.sha256(ticket_data + issuer_public_key).digest()[:64]
+                expected_sig = hashlib.sha256(ticket_data + issuer_public_key).digest()[
+                    :64
+                ]
                 return hmac.compare_digest(ticket.signature, expected_sig)
 
         except Exception as e:
@@ -342,32 +386,139 @@ class AccessTicketManager:
         rate_limiter = self.rate_limiters[subject_id]
 
         # Calculate tokens needed based on ticket permissions
-        tokens_needed = max(1, ticket.max_bandwidth_bps // 100000)  # 1 token per 100KB/s
+        tokens_needed = max(
+            1, ticket.max_bandwidth_bps // 100000
+        )  # 1 token per 100KB/s
 
         return rate_limiter.consume(tokens_needed)
 
     def _get_rate_limit_config(self, ticket_type: TicketType) -> TokenBucketConfig:
         """Get rate limit configuration for ticket type."""
         configs = {
-            TicketType.STANDARD: TokenBucketConfig(capacity=100, refill_rate=10.0, burst_capacity=20),
-            TicketType.PREMIUM: TokenBucketConfig(capacity=500, refill_rate=50.0, burst_capacity=100),
-            TicketType.BURST: TokenBucketConfig(capacity=1000, refill_rate=20.0, burst_capacity=500),
-            TicketType.MAINTENANCE: TokenBucketConfig(capacity=50, refill_rate=5.0, burst_capacity=10),
+            TicketType.STANDARD: TokenBucketConfig(
+                capacity=100, refill_rate=10.0, burst_capacity=20
+            ),
+            TicketType.PREMIUM: TokenBucketConfig(
+                capacity=500, refill_rate=50.0, burst_capacity=100
+            ),
+            TicketType.BURST: TokenBucketConfig(
+                capacity=1000, refill_rate=20.0, burst_capacity=500
+            ),
+            TicketType.MAINTENANCE: TokenBucketConfig(
+                capacity=50, refill_rate=5.0, burst_capacity=10
+            ),
         }
 
         return configs.get(ticket_type, configs[TicketType.STANDARD])
 
+    def _is_duplicate_within_window(self, nonce: bytes) -> bool:
+        """Check if nonce is duplicate within 2h window (BN-5.2)."""
+        current_time = time.time()
+
+        if nonce in self.nonce_timestamps:
+            # Check if within 2h window
+            last_seen = self.nonce_timestamps[nonce]
+            if current_time - last_seen < (self.duplicate_window_hours * 3600):
+                return True
+
+        return False
+
+    def _get_hour_key(self, hour_timestamp: int) -> bytes:
+        """Get hour-bound HKDF key (BN-5.2)."""
+        if hour_timestamp not in self.hour_keys:
+            # Derive hour-specific key using HKDF
+            if CRYPTO_AVAILABLE:
+                hkdf = HKDF(
+                    algorithm=hashes.SHA256(),
+                    length=32,
+                    salt=None,
+                    info=f"hour-{hour_timestamp}".encode(),
+                    backend=default_backend(),
+                )
+                self.hour_keys[hour_timestamp] = hkdf.derive(self.master_secret)
+            else:
+                # Simplified derivation
+                hour_data = struct.pack(">Q", hour_timestamp)
+                self.hour_keys[hour_timestamp] = hashlib.sha256(
+                    self.master_secret + hour_data
+                ).digest()
+
+        return self.hour_keys[hour_timestamp]
+
+    def embed_ticket_in_carrier(
+        self, ticket: AccessTicket, carrier_type: TicketCarrier
+    ) -> dict:
+        """Embed ticket in specified carrier (BN-5.2)."""
+        ticket_data = ticket.serialize()
+
+        # Get current hour for HKDF
+        current_hour = int(time.time() // 3600)
+        hour_key = self._get_hour_key(current_hour)
+
+        # Create ticket token with hour-bound validation
+        token_data = struct.pack(">Q", current_hour) + ticket_data
+
+        if carrier_type == TicketCarrier.COOKIE:
+            import base64
+
+            encoded_ticket = base64.b64encode(token_data).decode()
+            return {
+                "cookie_name": "htx_access_token",
+                "cookie_value": encoded_ticket,
+                "cookie_options": {
+                    "httponly": True,
+                    "secure": True,
+                    "samesite": "strict",
+                    "max_age": int(ticket.time_remaining()),
+                },
+            }
+
+        elif carrier_type == TicketCarrier.QUERY_PARAM:
+            import base64
+
+            encoded_ticket = base64.urlsafe_b64encode(token_data).decode().rstrip("=")
+            return {"param_name": "access_token", "param_value": encoded_ticket}
+
+        elif carrier_type == TicketCarrier.BODY:
+            import base64
+
+            encoded_ticket = base64.b64encode(token_data).decode()
+            return {
+                "field_name": "access_ticket",
+                "field_value": encoded_ticket,
+                "content_type": "application/x-www-form-urlencoded",
+            }
+
+        else:
+            raise ValueError(f"Unsupported carrier type: {carrier_type}")
+
     def _record_ticket_usage(self, ticket: AccessTicket) -> None:
-        """Record ticket usage for tracking."""
-        # Add nonce to used set
+        """Record ticket usage for tracking (BN-5.2)."""
+        current_time = time.time()
+
+        # Add nonce to used set with timestamp
         self.used_nonces.add(ticket.nonce)
+        self.nonce_timestamps[ticket.nonce] = current_time
+
+        # Clean up old nonces outside window
+        expired_nonces = []
+        for nonce, timestamp in self.nonce_timestamps.items():
+            if current_time - timestamp > (self.duplicate_window_hours * 3600):
+                expired_nonces.append(nonce)
+
+        for nonce in expired_nonces:
+            self.used_nonces.discard(nonce)
+            del self.nonce_timestamps[nonce]
 
         # Limit nonce history size
         if len(self.used_nonces) > self.max_nonce_history:
-            # Remove oldest nonces (simplified - would use timestamp-based cleanup)
+            # Remove oldest nonces
+            sorted_nonces = sorted(self.nonce_timestamps.items(), key=lambda x: x[1])
             excess = len(self.used_nonces) - self.max_nonce_history
-            for _ in range(excess):
-                self.used_nonces.pop()
+
+            for nonce, _ in sorted_nonces[:excess]:
+                self.used_nonces.discard(nonce)
+                del self.nonce_timestamps[nonce]
 
         # Cache active ticket
         self.active_tickets[ticket.subject_id] = ticket

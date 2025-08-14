@@ -1,3 +1,6 @@
+from agent_forge.evaluation.evaluator import evaluate_model, parallel_evaluate_models
+from common.logging import setup_logging
+
 from .config import (
     Configuration,
     EvolutionSettings,
@@ -6,7 +9,6 @@ from .config import (
     create_default_config,
 )
 from .evolutionary_tournament import EvolutionaryTournament, run_evolutionary_tournament
-from common.logging import setup_logging
 from .merging.merge_techniques import MERGE_TECHNIQUES
 from .merging.merger import AdvancedModelMerger
 from .utils import (
@@ -16,7 +18,6 @@ from .utils import (
     save_model,
     setup_gpu_if_available,
 )
-from agent_forge.evaluation.evaluator import evaluate_model, parallel_evaluate_models
 from .visualization import (
     generate_html_report,
     plot_benchmark_comparison,

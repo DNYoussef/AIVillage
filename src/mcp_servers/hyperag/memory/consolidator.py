@@ -106,7 +106,10 @@ class PatternDetector:
         for (relation, source, target), data in relation_counts.items():
             support = data["count"] / total_edges if total_edges > 0 else 0
 
-            if support >= min_support and data["count"] >= self.config.frequency_threshold:
+            if (
+                support >= min_support
+                and data["count"] >= self.config.frequency_threshold
+            ):
                 avg_confidence = data["confidence_sum"] / data["count"]
                 total_evidence = data["evidence_sum"]
 
@@ -124,12 +127,16 @@ class PatternDetector:
                 )
 
         # Sort by frequency and confidence
-        frequent_patterns.sort(key=lambda x: (x["frequency"], x["avg_confidence"]), reverse=True)
+        frequent_patterns.sort(
+            key=lambda x: (x["frequency"], x["avg_confidence"]), reverse=True
+        )
 
         logger.debug(f"Detected {len(frequent_patterns)} frequent relation patterns")
         return frequent_patterns
 
-    async def detect_concept_clusters(self, nodes: list[Node], similarity_threshold: float = 0.8) -> list[list[str]]:
+    async def detect_concept_clusters(
+        self, nodes: list[Node], similarity_threshold: float = 0.8
+    ) -> list[list[str]]:
         """Detect clusters of similar concept nodes for merging."""
         if not nodes:
             return []
@@ -152,7 +159,8 @@ class PatternDetector:
                 # Calculate similarity (content-based for now)
                 if node_a.embedding is not None and node_b.embedding is not None:
                     similarity = np.dot(node_a.embedding, node_b.embedding) / (
-                        np.linalg.norm(node_a.embedding) * np.linalg.norm(node_b.embedding)
+                        np.linalg.norm(node_a.embedding)
+                        * np.linalg.norm(node_b.embedding)
                     )
                 else:
                     # Fallback to simple text similarity
@@ -222,7 +230,9 @@ class MemoryConsolidator:
         """Number of consolidation batches waiting to be processed."""
         return self.pending_batches.qsize()
 
-    async def run_consolidation_cycle(self, user_id: str | None = None, force: bool = False) -> ConsolidationResult:
+    async def run_consolidation_cycle(
+        self, user_id: str | None = None, force: bool = False
+    ) -> ConsolidationResult:
         """Run a complete consolidation cycle.
 
         Args:
@@ -240,13 +250,19 @@ class MemoryConsolidator:
         try:
             # Check if consolidation is needed
             if not force and not await self._should_consolidate():
-                return ConsolidationResult(batch_id=batch_id, metadata={"skipped": "consolidation not needed"})
+                return ConsolidationResult(
+                    batch_id=batch_id, metadata={"skipped": "consolidation not needed"}
+                )
 
             # Get episodic memories for consolidation
-            candidate_nodes, candidate_edges = await self._get_consolidation_candidates(user_id)
+            candidate_nodes, candidate_edges = await self._get_consolidation_candidates(
+                user_id
+            )
 
             if not candidate_nodes and not candidate_edges:
-                return ConsolidationResult(batch_id=batch_id, metadata={"skipped": "no candidates found"})
+                return ConsolidationResult(
+                    batch_id=batch_id, metadata={"skipped": "no candidates found"}
+                )
 
             result = ConsolidationResult(batch_id=batch_id)
 
@@ -265,7 +281,9 @@ class MemoryConsolidator:
                 await self._update_communities(result)
 
             # Step 5: Clean up consolidated episodic memories
-            await self._cleanup_consolidated_memories(candidate_nodes, candidate_edges, result)
+            await self._cleanup_consolidated_memories(
+                candidate_nodes, candidate_edges, result
+            )
 
             # Update consolidation tracking
             self.last_consolidation = datetime.now()
@@ -306,7 +324,9 @@ class MemoryConsolidator:
                 result = await self.run_consolidation_cycle()
 
                 if result.errors:
-                    logger.warning(f"Consolidation completed with errors: {result.errors}")
+                    logger.warning(
+                        f"Consolidation completed with errors: {result.errors}"
+                    )
                 else:
                     logger.info("Scheduled consolidation completed successfully")
 
@@ -326,11 +346,18 @@ class MemoryConsolidator:
             semantic_stats = await self.semantic.get_memory_stats()
 
             return {
-                "last_consolidation": (self.last_consolidation.isoformat() if self.last_consolidation else None),
+                "last_consolidation": (
+                    self.last_consolidation.isoformat()
+                    if self.last_consolidation
+                    else None
+                ),
                 "pending_consolidations": self.pending_consolidations,
                 "consolidation_interval_hours": self.config.consolidation_interval_hours,
                 "next_consolidation": (
-                    (self.last_consolidation + timedelta(hours=self.config.consolidation_interval_hours)).isoformat()
+                    (
+                        self.last_consolidation
+                        + timedelta(hours=self.config.consolidation_interval_hours)
+                    ).isoformat()
                     if self.last_consolidation
                     else "pending"
                 ),
@@ -365,9 +392,13 @@ class MemoryConsolidator:
             return True
 
         time_since_last = datetime.now() - self.last_consolidation
-        return time_since_last.total_seconds() >= (self.config.consolidation_interval_hours * 3600)
+        return time_since_last.total_seconds() >= (
+            self.config.consolidation_interval_hours * 3600
+        )
 
-    async def _get_consolidation_candidates(self, user_id: str | None = None) -> tuple[list[Node], list[Edge]]:
+    async def _get_consolidation_candidates(
+        self, user_id: str | None = None
+    ) -> tuple[list[Node], list[Edge]]:
         """Get episodic memories eligible for consolidation."""
         try:
             # Get recent episodic nodes with sufficient confidence
@@ -380,23 +411,33 @@ class MemoryConsolidator:
             )
 
             # Filter by uncertainty threshold
-            filtered_nodes = [node for node in candidate_nodes.nodes if node.uncertainty <= self.config.max_uncertainty]
+            filtered_nodes = [
+                node
+                for node in candidate_nodes.nodes
+                if node.uncertainty <= self.config.max_uncertainty
+            ]
 
             # Get edges for consolidation (would need to implement in HippoIndex)
             # For now, return empty list
             candidate_edges = []
 
-            logger.debug(f"Found {len(filtered_nodes)} candidate nodes, {len(candidate_edges)} candidate edges")
+            logger.debug(
+                f"Found {len(filtered_nodes)} candidate nodes, {len(candidate_edges)} candidate edges"
+            )
             return filtered_nodes, candidate_edges
 
         except Exception as e:
             logger.exception(f"Failed to get consolidation candidates: {e!s}")
             return [], []
 
-    async def _consolidate_patterns(self, edges: list[Edge], result: ConsolidationResult) -> None:
+    async def _consolidate_patterns(
+        self, edges: list[Edge], result: ConsolidationResult
+    ) -> None:
         """Consolidate frequent patterns into semantic hyperedges."""
         try:
-            frequent_patterns = await self.pattern_detector.detect_frequent_relations(edges)
+            frequent_patterns = await self.pattern_detector.detect_frequent_relations(
+                edges
+            )
 
             for pattern in frequent_patterns:
                 # Skip patterns with insufficient evidence
@@ -405,7 +446,9 @@ class MemoryConsolidator:
 
                 # Apply uncertainty penalty
                 adjusted_confidence = pattern["avg_confidence"] * (
-                    1 - self.config.uncertainty_penalty * np.mean([0.1])  # Placeholder uncertainty calculation
+                    1
+                    - self.config.uncertainty_penalty
+                    * np.mean([0.1])  # Placeholder uncertainty calculation
                 )
 
                 if adjusted_confidence < self.config.confidence_threshold:
@@ -445,16 +488,22 @@ class MemoryConsolidator:
                         result.created_hyperedges += 1
                         result.processed_edges += pattern["frequency"]
                     else:
-                        result.errors.append(f"Failed to store hyperedge for pattern {pattern['relation']}")
+                        result.errors.append(
+                            f"Failed to store hyperedge for pattern {pattern['relation']}"
+                        )
                 else:
-                    result.errors.append(f"Guardian blocked hyperedge for pattern {pattern['relation']}")
+                    result.errors.append(
+                        f"Guardian blocked hyperedge for pattern {pattern['relation']}"
+                    )
 
         except Exception as e:
             error_msg = f"Pattern consolidation failed: {e!s}"
             logger.exception(error_msg)
             result.errors.append(error_msg)
 
-    async def _consolidate_nodes(self, nodes: list[Node], result: ConsolidationResult) -> None:
+    async def _consolidate_nodes(
+        self, nodes: list[Node], result: ConsolidationResult
+    ) -> None:
         """Consolidate high-confidence episodic nodes into semantic nodes."""
         try:
             for node in nodes:
@@ -472,7 +521,9 @@ class MemoryConsolidator:
 
                 # Transfer relevant properties
                 semantic_node.user_id = node.user_id
-                semantic_node.importance_score = min(1.0, node.importance_score * 1.2)  # Boost for consolidation
+                semantic_node.importance_score = min(
+                    1.0, node.importance_score * 1.2
+                )  # Boost for consolidation
                 semantic_node.consolidation_count = 1
 
                 # Add consolidation metadata
@@ -497,9 +548,13 @@ class MemoryConsolidator:
                         result.created_semantic_nodes += 1
                         result.processed_nodes += 1
                     else:
-                        result.errors.append(f"Failed to store semantic node for {node.id}")
+                        result.errors.append(
+                            f"Failed to store semantic node for {node.id}"
+                        )
                 else:
-                    result.errors.append(f"Guardian blocked semantic node for {node.id}")
+                    result.errors.append(
+                        f"Guardian blocked semantic node for {node.id}"
+                    )
 
         except Exception as e:
             error_msg = f"Node consolidation failed: {e!s}"
@@ -589,10 +644,14 @@ class MemoryConsolidator:
                 bridge_id = f"consolidation_{consolidation_type}_{item.relation}_{hash(str(item.participants)) % 10000}"
                 confidence = getattr(item, "confidence", 0.7)
             else:  # Semantic node
-                bridge_id = f"consolidation_{consolidation_type}_{hash(item.content) % 10000}"
+                bridge_id = (
+                    f"consolidation_{consolidation_type}_{hash(item.content) % 10000}"
+                )
                 confidence = getattr(item, "confidence", 0.7)
 
-            bridge = CreativeBridge(id=bridge_id, confidence=confidence, bridge_type=consolidation_type)
+            bridge = CreativeBridge(
+                id=bridge_id, confidence=confidence, bridge_type=consolidation_type
+            )
 
             # Add consolidation metadata to bridge if available
             if hasattr(bridge, "metadata"):
@@ -612,7 +671,9 @@ class MemoryConsolidator:
                 return True
             if decision == "QUARANTINE":
                 self.consolidation_stats["guardian_quarantines"] += 1
-                logger.warning(f"Guardian quarantined {consolidation_type} for {bridge_id}")
+                logger.warning(
+                    f"Guardian quarantined {consolidation_type} for {bridge_id}"
+                )
                 return False  # Don't store quarantined items automatically
             # REJECT
             self.consolidation_stats["guardian_rejections"] += 1
@@ -637,4 +698,6 @@ def create_memory_consolidator(
     if config is None:
         config = ConsolidationConfig()
 
-    return MemoryConsolidator(hippo_index=hippo_index, hypergraph_kg=hypergraph_kg, config=config)
+    return MemoryConsolidator(
+        hippo_index=hippo_index, hypergraph_kg=hypergraph_kg, config=config
+    )

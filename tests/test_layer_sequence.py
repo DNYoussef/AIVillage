@@ -10,7 +10,6 @@ from agents.unified_base_agent import (
     UnifiedBaseAgent,
 )
 from agents.utils.task import Task as LangroidTask
-
 from core.error_handling import StandardCommunicationProtocol
 
 # Skip if torch is unavailable since underlying agents rely on transformer models.

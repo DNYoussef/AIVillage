@@ -93,7 +93,9 @@ class ExpertAdapter:
                 f"shape=({rows}x{cols}), init={self.init_method}"
             )
 
-    def _pca_init(self, rows: int, cols: int, rank: int) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    def _pca_init(
+        self, rows: int, cols: int, rank: int
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """PCA-based initialization (simplified version)."""
         # Generate correlated random data to simulate PCA-like structure
         base_dim = min(rank * 2, min(rows, cols))
@@ -106,7 +108,9 @@ class ExpertAdapter:
 
         return U[:, :rank], S[:rank] * 0.1, Vt[:rank, :].T
 
-    def _fisher_init(self, rows: int, cols: int, rank: int) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    def _fisher_init(
+        self, rows: int, cols: int, rank: int
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """Fisher information-based initialization."""
         # Simulate Fisher-informed initialization with higher values for "important" directions
         U = torch.randn(rows, rank) * 0.01
@@ -118,7 +122,9 @@ class ExpertAdapter:
 
         return U, S, V
 
-    def get_delta_weight(self, layer_name: str, activation_weight: float = 1.0) -> torch.Tensor:
+    def get_delta_weight(
+        self, layer_name: str, activation_weight: float = 1.0
+    ) -> torch.Tensor:
         """
         Compute the delta weight for a layer: activation_weight * U @ diag(S) @ V^T
 
@@ -189,7 +195,9 @@ class T2Mixer:
                 model_shapes=self.model_shapes,
             )
 
-            logger.debug(f"Initialized expert '{expert_name}' for layers {resolved_layers}")
+            logger.debug(
+                f"Initialized expert '{expert_name}' for layers {resolved_layers}"
+            )
 
     def _resolve_layer_names(self, layer_specs: list[str]) -> list[str]:
         """
@@ -296,7 +304,9 @@ class T2Mixer:
             return {}
 
         # Extract and combine features
-        feature_vector = self._combine_features(prompt_stats, activation_sketch, logits_entropy)
+        feature_vector = self._combine_features(
+            prompt_stats, activation_sketch, logits_entropy
+        )
 
         # Compute raw logits
         with torch.no_grad():
@@ -323,13 +333,17 @@ class T2Mixer:
         budget = min(4, len(expert_names))  # Max 4 active experts
         if len(weight_dict) > budget:
             # Keep top-k experts, zero out others
-            sorted_experts = sorted(weight_dict.items(), key=lambda x: x[1], reverse=True)
+            sorted_experts = sorted(
+                weight_dict.items(), key=lambda x: x[1], reverse=True
+            )
             active_experts = dict(sorted_experts[:budget])
 
             # Renormalize active weights
             total_weight = sum(active_experts.values())
             if total_weight > 0:
-                active_experts = {k: v / total_weight for k, v in active_experts.items()}
+                active_experts = {
+                    k: v / total_weight for k, v in active_experts.items()
+                }
 
             weight_dict = active_experts
 
@@ -358,7 +372,8 @@ class T2Mixer:
                 prompt_stats.get("question_ratio", 0),
                 prompt_stats.get("imperative_ratio", 0),
                 prompt_stats.get("complexity_score", 0),
-                len(prompt_stats.get("api_keywords", [])) / 10,  # Normalize keyword count
+                len(prompt_stats.get("api_keywords", []))
+                / 10,  # Normalize keyword count
                 prompt_stats.get("avg_word_length", 0) / 10,  # Normalize
             ]
             features.extend(prompt_features)
@@ -446,7 +461,8 @@ class T2Mixer:
                         modified_params[layer_name] += delta
                     else:
                         logger.warning(
-                            f"Shape mismatch for {layer_name}: " f"param {param.shape} vs delta {delta.shape}"
+                            f"Shape mismatch for {layer_name}: "
+                            f"param {param.shape} vs delta {delta.shape}"
                         )
 
             # Apply all modifications
@@ -454,7 +470,9 @@ class T2Mixer:
                 param = dict(model.named_parameters())[layer_name]
                 param.data.copy_(new_data)
 
-            logger.debug(f"Applied {len(expert_weights)} expert patches to {len(modified_params)} layers")
+            logger.debug(
+                f"Applied {len(expert_weights)} expert patches to {len(modified_params)} layers"
+            )
 
             yield model
 
@@ -484,7 +502,11 @@ class T2Mixer:
 
     def update_model_shapes(self, model: nn.Module):
         """Update model shapes from actual model parameters."""
-        self.model_shapes = {name: param.shape for name, param in model.named_parameters() if param.requires_grad}
+        self.model_shapes = {
+            name: param.shape
+            for name, param in model.named_parameters()
+            if param.requires_grad
+        }
 
         # Reinitialize experts with correct shapes
         self._initialize_experts()

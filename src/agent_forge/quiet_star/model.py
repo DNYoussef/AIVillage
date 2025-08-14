@@ -51,7 +51,9 @@ class ThoughtMixingHead(nn.Module):
         self.base_lm_head = base_lm_head
 
         # Thought-aware processing layers
-        self.thought_detector = nn.Linear(hidden_size, 3)  # [no_thought, start_thought, end_thought]
+        self.thought_detector = nn.Linear(
+            hidden_size, 3
+        )  # [no_thought, start_thought, end_thought]
         self.thought_encoder = nn.TransformerEncoderLayer(
             d_model=hidden_size,
             nhead=8,
@@ -62,7 +64,9 @@ class ThoughtMixingHead(nn.Module):
 
         # Mixing and projection layers
         self.thought_gate = nn.Linear(hidden_size, 1)  # Controls thought influence
-        self.context_mixer = nn.Linear(hidden_size * 2, hidden_size)  # Mix thought + regular context
+        self.context_mixer = nn.Linear(
+            hidden_size * 2, hidden_size
+        )  # Mix thought + regular context
         self.output_projection = nn.Linear(hidden_size, vocab_size)
 
         # Initialize with small weights to start conservative
@@ -83,7 +87,10 @@ class ThoughtMixingHead(nn.Module):
         if self.base_lm_head is not None and hasattr(self.base_lm_head, "weight"):
             with torch.no_grad():
                 self.output_projection.weight.copy_(self.base_lm_head.weight)
-                if hasattr(self.base_lm_head, "bias") and self.base_lm_head.bias is not None:
+                if (
+                    hasattr(self.base_lm_head, "bias")
+                    and self.base_lm_head.bias is not None
+                ):
                     self.output_projection.bias.copy_(self.base_lm_head.bias)
 
     def parse_thought_segments(
@@ -176,7 +183,9 @@ class ThoughtMixingHead(nn.Module):
 
         return batch_segments
 
-    def create_thought_mask(self, input_ids: torch.Tensor, special_token_ids: dict[str, int]) -> torch.Tensor:
+    def create_thought_mask(
+        self, input_ids: torch.Tensor, special_token_ids: dict[str, int]
+    ) -> torch.Tensor:
         """
         Create mask indicating which tokens are inside thought segments.
 
@@ -186,7 +195,9 @@ class ThoughtMixingHead(nn.Module):
         batch_segments = self.parse_thought_segments(input_ids, special_token_ids)
         batch_size, seq_len = input_ids.shape
 
-        thought_mask = torch.zeros(batch_size, seq_len, dtype=torch.bool, device=input_ids.device)
+        thought_mask = torch.zeros(
+            batch_size, seq_len, dtype=torch.bool, device=input_ids.device
+        )
 
         for b, segments in enumerate(batch_segments):
             for segment in segments:
@@ -195,7 +206,9 @@ class ThoughtMixingHead(nn.Module):
 
         return thought_mask
 
-    def encode_thoughts(self, hidden_states: torch.Tensor, thought_mask: torch.Tensor) -> torch.Tensor:
+    def encode_thoughts(
+        self, hidden_states: torch.Tensor, thought_mask: torch.Tensor
+    ) -> torch.Tensor:
         """
         Apply thought-specific encoding to thought regions.
 
@@ -220,10 +233,14 @@ class ThoughtMixingHead(nn.Module):
                 thought_indices = batch_mask.nonzero(as_tuple=True)[0]
 
                 if len(thought_indices) > 0:
-                    thought_hidden = hidden_states[b, thought_indices].unsqueeze(0)  # [1, n_thought, hidden]
+                    thought_hidden = hidden_states[b, thought_indices].unsqueeze(
+                        0
+                    )  # [1, n_thought, hidden]
 
                     # Apply transformer encoder to thought sequence
-                    thought_encoded = self.thought_encoder(thought_hidden)  # [1, n_thought, hidden]
+                    thought_encoded = self.thought_encoder(
+                        thought_hidden
+                    )  # [1, n_thought, hidden]
 
                     # Put encoded thoughts back
                     encoded_states[b, thought_indices] = thought_encoded.squeeze(0)
@@ -252,14 +269,20 @@ class ThoughtMixingHead(nn.Module):
         thought_gate = torch.sigmoid(gate_logits)
 
         # Mix regular and thought contexts
-        concatenated = torch.cat([regular_hidden, thought_hidden], dim=-1)  # [..., 2*hidden_size]
+        concatenated = torch.cat(
+            [regular_hidden, thought_hidden], dim=-1
+        )  # [..., 2*hidden_size]
         mixed_context = self.context_mixer(concatenated)  # [..., hidden_size]
 
         # Apply gating - stronger mixing in thought regions
         gate_mask = thought_mask.float().unsqueeze(-1)  # [batch_size, seq_len, 1]
-        effective_gate = thought_gate * gate_mask + (1 - gate_mask) * 0.1  # Low mixing outside thoughts
+        effective_gate = (
+            thought_gate * gate_mask + (1 - gate_mask) * 0.1
+        )  # Low mixing outside thoughts
 
-        mixed_hidden = (1 - effective_gate) * regular_hidden + effective_gate * mixed_context
+        mixed_hidden = (
+            1 - effective_gate
+        ) * regular_hidden + effective_gate * mixed_context
 
         return mixed_hidden
 
@@ -453,7 +476,9 @@ class QuietSTaRModelWrapper(nn.Module):
             hidden_states = base_outputs.last_hidden_state
         else:
             # Fallback for different model types
-            hidden_states = base_outputs[0] if isinstance(base_outputs, tuple) else base_outputs
+            hidden_states = (
+                base_outputs[0] if isinstance(base_outputs, tuple) else base_outputs
+            )
 
         # Apply thought mixing head
         if self.config.enable_quiet_star:
@@ -504,7 +529,11 @@ class QuietSTaRModelWrapper(nn.Module):
         device = input_ids.device
         batch_size = input_ids.size(0)
 
-        thought_prob = thought_probability if thought_probability is not None else self.config.thought_ratio
+        thought_prob = (
+            thought_probability
+            if thought_probability is not None
+            else self.config.thought_ratio
+        )
         sot_id = self.special_token_ids.get(self.config.start_of_thought_token, -1)
         eot_id = self.special_token_ids.get(self.config.end_of_thought_token, -1)
         not_id = self.special_token_ids.get(self.config.no_thought_token, -1)
@@ -532,7 +561,9 @@ class QuietSTaRModelWrapper(nn.Module):
             # Decide whether to insert thoughts (during training)
             if self.training and torch.rand(1).item() < thought_prob and sot_id >= 0:
                 # Insert start of thought
-                current_ids = torch.cat([current_ids, torch.full_like(next_tokens, sot_id)], dim=1)
+                current_ids = torch.cat(
+                    [current_ids, torch.full_like(next_tokens, sot_id)], dim=1
+                )
 
                 # Generate thought content (limited length)
                 thought_start = current_ids.size(1)
@@ -541,30 +572,41 @@ class QuietSTaRModelWrapper(nn.Module):
                     thought_logits = thought_outputs["logits"][:, -1, :]
 
                     if temperature != 1.0:
-                        thought_logits = thought_logits / self.config.thought_temperature
+                        thought_logits = (
+                            thought_logits / self.config.thought_temperature
+                        )
 
                     if do_sample:
                         thought_probs = F.softmax(thought_logits, dim=-1)
                         thought_token = torch.multinomial(thought_probs, num_samples=1)
                     else:
-                        thought_token = torch.argmax(thought_logits, dim=-1, keepdim=True)
+                        thought_token = torch.argmax(
+                            thought_logits, dim=-1, keepdim=True
+                        )
 
                     current_ids = torch.cat([current_ids, thought_token], dim=1)
 
                     # Stop if we generate end of thought or hit max length
-                    if thought_token.item() == eot_id or current_ids.size(1) >= max_length:
+                    if (
+                        thought_token.item() == eot_id
+                        or current_ids.size(1) >= max_length
+                    ):
                         break
 
                 # Add end of thought if not already present
                 if current_ids[:, -1].item() != eot_id and eot_id >= 0:
-                    current_ids = torch.cat([current_ids, torch.full_like(next_tokens, eot_id)], dim=1)
+                    current_ids = torch.cat(
+                        [current_ids, torch.full_like(next_tokens, eot_id)], dim=1
+                    )
 
                 thought_end = current_ids.size(1)
                 thought_segments.append(
                     {
                         "start": thought_start - 1,  # Include SoT token
                         "end": thought_end,
-                        "tokens": current_ids[0, thought_start - 1 : thought_end].tolist(),
+                        "tokens": current_ids[
+                            0, thought_start - 1 : thought_end
+                        ].tolist(),
                     }
                 )
 

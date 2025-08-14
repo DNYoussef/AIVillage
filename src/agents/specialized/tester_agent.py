@@ -46,7 +46,9 @@ class TesterAgent(BaseAgent):
         self.coverage_reports = {}
 
     async def generate(self, prompt: str) -> str:
-        if "test" in prompt.lower() and ("unit" in prompt.lower() or "integration" in prompt.lower()):
+        if "test" in prompt.lower() and (
+            "unit" in prompt.lower() or "integration" in prompt.lower()
+        ):
             return "I can generate and execute comprehensive test suites including unit, integration, and E2E tests."
         if "performance" in prompt.lower():
             return "I conduct performance testing, load testing, and stress testing to ensure system reliability."
@@ -56,7 +58,9 @@ class TesterAgent(BaseAgent):
             return "I analyze test coverage and generate detailed coverage reports with improvement recommendations."
         return "I'm a Tester Agent specialized in automated testing, quality assurance, and test strategy planning."
 
-    async def rerank(self, query: str, results: list[dict[str, Any]], k: int) -> list[dict[str, Any]]:
+    async def rerank(
+        self, query: str, results: list[dict[str, Any]], k: int
+    ) -> list[dict[str, Any]]:
         keywords = [
             "test",
             "testing",
@@ -68,9 +72,13 @@ class TesterAgent(BaseAgent):
             "security",
         ]
         for result in results:
-            score = sum(str(result.get("content", "")).lower().count(kw) for kw in keywords)
+            score = sum(
+                str(result.get("content", "")).lower().count(kw) for kw in keywords
+            )
             result["testing_relevance_score"] = score
-        return sorted(results, key=lambda x: x.get("testing_relevance_score", 0), reverse=True)[:k]
+        return sorted(
+            results, key=lambda x: x.get("testing_relevance_score", 0), reverse=True
+        )[:k]
 
     async def introspect(self) -> dict[str, Any]:
         info = await super().introspect()
@@ -220,7 +228,9 @@ class TesterAgent(BaseAgent):
             "concurrent_users": concurrent_users,
             "duration_minutes": duration_minutes,
             "total_requests": int(throughput * duration_minutes * 60),
-            "successful_requests": int(throughput * duration_minutes * 60 * (1 - error_rate)),
+            "successful_requests": int(
+                throughput * duration_minutes * 60 * (1 - error_rate)
+            ),
             "metrics": {
                 "average_response_time_ms": avg_response_time,
                 "median_response_time_ms": avg_response_time * 0.9,
@@ -239,7 +249,9 @@ class TesterAgent(BaseAgent):
             "bottlenecks_identified": [
                 "Database connection pool exhaustion" if error_rate > 0.02 else None,
                 "High memory usage in service X" if random.random() > 0.7 else None,
-                "Network latency spikes" if max_response_time > avg_response_time * 4 else None,
+                "Network latency spikes"
+                if max_response_time > avg_response_time * 4
+                else None,
             ],
         }
 
@@ -284,16 +296,22 @@ class TesterAgent(BaseAgent):
                 "authentication_strength": random.choice(["Weak", "Medium", "Strong"]),
                 "encryption_grade": random.choice(["B", "A", "A+"]),
                 "access_control_rating": random.choice(["Basic", "Good", "Excellent"]),
-                "data_protection_level": random.choice(["Minimal", "Standard", "Enhanced"]),
+                "data_protection_level": random.choice(
+                    ["Minimal", "Standard", "Enhanced"]
+                ),
             },
             "compliance_checks": {
                 "OWASP_Top_10": f"{random.randint(7, 10)}/10 checks passed",
                 "GDPR_compliance": random.choice(["Partial", "Good", "Excellent"]),
-                "PCI_DSS": random.choice(["Not Applicable", "Compliant", "Non-Compliant"]),
+                "PCI_DSS": random.choice(
+                    ["Not Applicable", "Compliant", "Non-Compliant"]
+                ),
             },
         }
 
-    async def generate_test_strategy(self, project_requirements: dict[str, Any]) -> dict[str, Any]:
+    async def generate_test_strategy(
+        self, project_requirements: dict[str, Any]
+    ) -> dict[str, Any]:
         """Generate comprehensive test strategy"""
         try:
             project_type = project_requirements.get("type", "web_application")

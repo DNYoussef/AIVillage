@@ -131,7 +131,11 @@ class DeviceProfile:
         uptime_bonus = min(0.2, self.uptime_hours / (24 * 30))  # 30 days for max
 
         # Resource contribution bonus (up to 0.3)
-        resource_score = (self.cpu_cores / 8) * 0.1 + (self.memory_gb / 16) * 0.1 + (self.bandwidth_mbps / 100) * 0.1
+        resource_score = (
+            (self.cpu_cores / 8) * 0.1
+            + (self.memory_gb / 16) * 0.1
+            + (self.bandwidth_mbps / 100) * 0.1
+        )
         resource_bonus = min(0.3, resource_score)
 
         return min(1.0, base_score + uptime_bonus + resource_bonus)
@@ -146,7 +150,10 @@ class DeviceProfile:
             )
 
         if role == DeviceRole.WORKER:
-            return DeviceCapability.HIGH_COMPUTE in self.capabilities and self.cpu_cores >= 2
+            return (
+                DeviceCapability.HIGH_COMPUTE in self.capabilities
+                and self.cpu_cores >= 2
+            )
 
         if role == DeviceRole.RELAY:
             return (
@@ -155,7 +162,10 @@ class DeviceProfile:
             )
 
         if role == DeviceRole.STORAGE:
-            return DeviceCapability.STORAGE_LARGE in self.capabilities and self.storage_gb >= 100
+            return (
+                DeviceCapability.STORAGE_LARGE in self.capabilities
+                and self.storage_gb >= 100
+            )
 
         if role == DeviceRole.EDGE:
             return True  # Any device can be an edge node
@@ -265,11 +275,19 @@ class DeviceRegistry:
 
     def get_devices_by_region(self, region: str) -> list[DeviceProfile]:
         """Get all devices in specific region"""
-        return [profile for profile in self.devices.values() if profile.region == region]
+        return [
+            profile for profile in self.devices.values() if profile.region == region
+        ]
 
-    def get_devices_by_capability(self, capability: DeviceCapability) -> list[DeviceProfile]:
+    def get_devices_by_capability(
+        self, capability: DeviceCapability
+    ) -> list[DeviceProfile]:
         """Get all devices with specific capability"""
-        return [profile for profile in self.devices.values() if capability in profile.capabilities]
+        return [
+            profile
+            for profile in self.devices.values()
+            if capability in profile.capabilities
+        ]
 
     def find_best_beacon(self, region: str = None) -> DeviceProfile | None:
         """Find the best beacon node for coordination"""
@@ -282,7 +300,9 @@ class DeviceRegistry:
             return None
 
         # Sort by device score and uptime
-        beacons.sort(key=lambda x: (x.calculate_device_score(), x.uptime_hours), reverse=True)
+        beacons.sort(
+            key=lambda x: (x.calculate_device_score(), x.uptime_hours), reverse=True
+        )
 
         return beacons[0]
 
@@ -310,8 +330,12 @@ class DeviceRegistry:
         return {
             "total_devices": len(self.devices),
             "role_distribution": role_counts,
-            "regional_distribution": {region: len(devices) for region, devices in self.region_devices.items()},
-            "active_beacons": len([b for b, t in self.known_beacons.items() if time.time() - t < 300]),  # 5 minutes
+            "regional_distribution": {
+                region: len(devices) for region, devices in self.region_devices.items()
+            },
+            "active_beacons": len(
+                [b for b, t in self.known_beacons.items() if time.time() - t < 300]
+            ),  # 5 minutes
             "total_resources": {
                 "cpu_cores": self.total_cpu_cores,
                 "storage_gb": self.total_storage_gb,
@@ -320,7 +344,9 @@ class DeviceRegistry:
             "local_device": {
                 "id": self.local_device_id,
                 "role": self.local_profile.role.value if self.local_profile else None,
-                "score": self.local_profile.calculate_device_score() if self.local_profile else 0,
+                "score": self.local_profile.calculate_device_score()
+                if self.local_profile
+                else 0,
             },
         }
 
@@ -446,7 +472,9 @@ class DeviceRegistry:
 
         return resources
 
-    def _determine_optimal_role(self, capabilities: set[DeviceCapability], resources: dict[str, Any]) -> DeviceRole:
+    def _determine_optimal_role(
+        self, capabilities: set[DeviceCapability], resources: dict[str, Any]
+    ) -> DeviceRole:
         """Determine optimal role for device based on capabilities"""
         # Check beacon suitability (highest priority)
         if (
@@ -457,15 +485,24 @@ class DeviceRegistry:
             return DeviceRole.BEACON
 
         # Check storage node suitability
-        if DeviceCapability.STORAGE_LARGE in capabilities and resources.get("storage_gb", 0) >= 100:
+        if (
+            DeviceCapability.STORAGE_LARGE in capabilities
+            and resources.get("storage_gb", 0) >= 100
+        ):
             return DeviceRole.STORAGE
 
         # Check worker node suitability
-        if DeviceCapability.HIGH_COMPUTE in capabilities and resources.get("cpu_cores", 1) >= 2:
+        if (
+            DeviceCapability.HIGH_COMPUTE in capabilities
+            and resources.get("cpu_cores", 1) >= 2
+        ):
             return DeviceRole.WORKER
 
         # Check relay node suitability
-        if DeviceCapability.BANDWIDTH_HIGH in capabilities and resources.get("bandwidth_mbps", 0) >= 50:
+        if (
+            DeviceCapability.BANDWIDTH_HIGH in capabilities
+            and resources.get("bandwidth_mbps", 0) >= 50
+        ):
             return DeviceRole.RELAY
 
         # Default to edge node

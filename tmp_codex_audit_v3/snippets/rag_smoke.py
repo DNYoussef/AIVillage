@@ -8,6 +8,9 @@ import sys
 import time
 from pathlib import Path
 
+# Set RAG_LOCAL_MODE for testing
+os.environ["RAG_LOCAL_MODE"] = "1"
+
 # Add paths
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 sys.path.insert(

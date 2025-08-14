@@ -81,11 +81,14 @@ class OpenRouterLLM:
         self.rpm_limit = rpm_limit
 
         # Multi-model pool for diversity
-        self.model_pool = model_pool or [
-            "openai/gpt-4o",  # GPT-4o (closest to GPT-5 available)
-            "anthropic/claude-3-5-sonnet-20241022",  # Claude Opus 4.1 (closest available)
-            "google/gemini-pro-1.5",  # Gemini 2.5 Pro (closest available)
-        ]
+        self.model_pool = (
+            model_pool
+            or [
+                "openai/gpt-4o",  # GPT-4o (closest to GPT-5 available)
+                "anthropic/claude-3-5-sonnet-20241022",  # Claude Opus 4.1 (closest available)
+                "google/gemini-pro-1.5",  # Gemini 2.5 Pro (closest available)
+            ]
+        )
         self.use_model_pool = len(self.model_pool) > 1
 
         # Setup cache directory
@@ -103,12 +106,16 @@ class OpenRouterLLM:
         self._request_times: list[float] = []
 
         # Jinja2 environment
-        self.jinja_env = jinja2.Environment(loader=jinja2.BaseLoader(), undefined=jinja2.StrictUndefined)
+        self.jinja_env = jinja2.Environment(
+            loader=jinja2.BaseLoader(), undefined=jinja2.StrictUndefined
+        )
 
         # Session for HTTP requests
         self._session: aiohttp.ClientSession | None = None
 
-        logger.info(f"Initialized OpenRouter client with model {model}, cache at {self.cache_dir}")
+        logger.info(
+            f"Initialized OpenRouter client with model {model}, cache at {self.cache_dir}"
+        )
 
     def _init_cache_db(self) -> None:
         """Initialize SQLite cache database."""
@@ -130,10 +137,14 @@ class OpenRouterLLM:
                 )
             """
             )
-            conn.execute("CREATE INDEX IF NOT EXISTS idx_created_at ON cache(created_at)")
+            conn.execute(
+                "CREATE INDEX IF NOT EXISTS idx_created_at ON cache(created_at)"
+            )
             conn.execute("CREATE INDEX IF NOT EXISTS idx_model ON cache(model)")
 
-    def _hash_request(self, prompt: str, model: str, temperature: float, max_tokens: int) -> str:
+    def _hash_request(
+        self, prompt: str, model: str, temperature: float, max_tokens: int
+    ) -> str:
         """Generate deterministic hash for request caching."""
         request_data = {
             "prompt": prompt,
@@ -299,11 +310,15 @@ class OpenRouterLLM:
                                 self.base_delay * (2**attempt) + random.uniform(0, 1),
                                 self.max_delay,
                             )
-                            logger.warning(f"Rate limited, retrying in {delay:.1f}s (attempt {attempt + 1})")
+                            logger.warning(
+                                f"Rate limited, retrying in {delay:.1f}s (attempt {attempt + 1})"
+                            )
                             await asyncio.sleep(delay)
                             continue
                         else:
-                            raise OpenRouterRateLimitError("Rate limit exceeded after all retries")
+                            raise OpenRouterRateLimitError(
+                                "Rate limit exceeded after all retries"
+                            )
                     elif response.status >= 500:
                         # Server error - exponential backoff
                         if attempt < self.max_retries:
@@ -311,15 +326,23 @@ class OpenRouterLLM:
                                 self.base_delay * (2**attempt) + random.uniform(0, 1),
                                 self.max_delay,
                             )
-                            logger.warning(f"Server error {response.status}, retrying in {delay:.1f}s")
+                            logger.warning(
+                                f"Server error {response.status}, retrying in {delay:.1f}s"
+                            )
                             await asyncio.sleep(delay)
                             continue
                         else:
-                            raise OpenRouterError(f"Server error after all retries: {response.status}")
+                            raise OpenRouterError(
+                                f"Server error after all retries: {response.status}"
+                            )
                     else:
                         # Other error - no retry
-                        error_detail = response_data.get("error", {}).get("message", "Unknown error")
-                        raise OpenRouterError(f"API error {response.status}: {error_detail}")
+                        error_detail = response_data.get("error", {}).get(
+                            "message", "Unknown error"
+                        )
+                        raise OpenRouterError(
+                            f"API error {response.status}: {error_detail}"
+                        )
 
             except asyncio.TimeoutError:
                 if attempt < self.max_retries:
@@ -433,7 +456,9 @@ class OpenRouterLLM:
             cached=False,
         )
 
-        logger.info(f"OpenRouter response: {len(response_text)} chars, {total_tokens or 0} tokens")
+        logger.info(
+            f"OpenRouter response: {len(response_text)} chars, {total_tokens or 0} tokens"
+        )
         return response_text
 
     def render_template(self, template: str, **kwargs) -> str:
@@ -483,16 +508,22 @@ class OpenRouterLLM:
         """
         for attempt in range(max_schema_retries + 1):
             try:
-                response_text = await self.invoke(prompt, model, temperature, max_tokens)
+                response_text = await self.invoke(
+                    prompt, model, temperature, max_tokens
+                )
                 return strict_load(response_text, schema_class)
             except Exception as e:
                 if attempt < max_schema_retries:
-                    logger.warning(f"Schema validation failed (attempt {attempt + 1}): {e}")
+                    logger.warning(
+                        f"Schema validation failed (attempt {attempt + 1}): {e}"
+                    )
                     # Add instruction to be more careful with JSON format
                     prompt += "\n\nIMPORTANT: Respond with valid JSON only, no additional text."
                     continue
                 else:
-                    logger.error(f"Schema validation failed after {max_schema_retries} retries")
+                    logger.error(
+                        f"Schema validation failed after {max_schema_retries} retries"
+                    )
                     raise OpenRouterError(f"Schema validation failed: {e}")
 
     def get_model_stats(self) -> dict[str, Any]:
@@ -524,7 +555,9 @@ class OpenRouterLLM:
                 "model_usage": model_usage,
                 "model_pool": self.model_pool,
                 "model_pool_enabled": self.use_model_pool,
-                "diversity_score": len(model_usage) / len(self.model_pool) if self.model_pool else 0.0,
+                "diversity_score": len(model_usage) / len(self.model_pool)
+                if self.model_pool
+                else 0.0,
             }
 
         except Exception as e:
@@ -582,7 +615,9 @@ class OpenRouterLLM:
                         }
                         for row in by_model
                     ],
-                    "recent_activity": [{"date": row[0], "count": row[1]} for row in recent_activity],
+                    "recent_activity": [
+                        {"date": row[0], "count": row[1]} for row in recent_activity
+                    ],
                 }
         except Exception as e:
             logger.error(f"Failed to get cache stats: {e}")

@@ -11,9 +11,9 @@ from torch import nn
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
+from compression.pipeline import UnifiedCompressor
 from core.compression.advanced_pipeline import AdvancedCompressionPipeline
 from core.compression.simple_quantizer import SimpleQuantizer
-from compression.pipeline import UnifiedCompressor
 
 
 def create_test_models():

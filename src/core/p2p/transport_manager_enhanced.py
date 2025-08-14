@@ -112,7 +112,9 @@ class WebSocketTransport(BaseTransport):
     async def start(self) -> bool:
         """Start WebSocket server."""
         try:
-            self.server = await websockets.serve(self._handle_client_connection, self.host, self.port)
+            self.server = await websockets.serve(
+                self._handle_client_connection, self.host, self.port
+            )
             self.is_active = True
             logger.info(f"WebSocket transport started on {self.host}:{self.port}")
             return True
@@ -165,7 +167,9 @@ class WebSocketTransport(BaseTransport):
             logger.exception(f"Peer authentication failed: {e}")
             return None
 
-    async def _process_incoming_message(self, message_data: str, sender_id: str) -> None:
+    async def _process_incoming_message(
+        self, message_data: str, sender_id: str
+    ) -> None:
         """Process incoming message."""
         try:
             data = json.loads(message_data)
@@ -249,13 +253,17 @@ class TCPTransport(BaseTransport):
         self.host = config.get("host", "localhost")
         self.port = config.get("port", 8766)
         self.server = None
-        self.connections: dict[str, tuple[asyncio.StreamReader, asyncio.StreamWriter]] = {}
+        self.connections: dict[
+            str, tuple[asyncio.StreamReader, asyncio.StreamWriter]
+        ] = {}
         self.message_queue: asyncio.Queue = asyncio.Queue()
 
     async def start(self) -> bool:
         """Start TCP server."""
         try:
-            self.server = await asyncio.start_server(self._handle_client_connection, self.host, self.port)
+            self.server = await asyncio.start_server(
+                self._handle_client_connection, self.host, self.port
+            )
             self.is_active = True
             logger.info(f"TCP transport started on {self.host}:{self.port}")
             return True
@@ -277,7 +285,9 @@ class TCPTransport(BaseTransport):
         self.is_active = False
         logger.info("TCP transport stopped")
 
-    async def _handle_client_connection(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
+    async def _handle_client_connection(
+        self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter
+    ) -> None:
         """Handle incoming TCP connection."""
         peer_address = writer.get_extra_info("peername")
         logger.info(f"TCP connection from {peer_address}")
@@ -332,7 +342,9 @@ class TCPTransport(BaseTransport):
             logger.exception(f"Failed to read TCP message: {e}")
             return None
 
-    async def _process_incoming_message(self, message_data: str, sender_id: str) -> None:
+    async def _process_incoming_message(
+        self, message_data: str, sender_id: str
+    ) -> None:
         """Process incoming TCP message."""
         try:
             data = json.loads(message_data)
@@ -397,7 +409,9 @@ class TCPTransport(BaseTransport):
             reader, writer = await asyncio.open_connection(host, port)
 
             # Send peer ID
-            peer_data = json.dumps({"peer_id": self.config.get("node_id", "unknown")}).encode("utf-8")
+            peer_data = json.dumps(
+                {"peer_id": self.config.get("node_id", "unknown")}
+            ).encode("utf-8")
             length = len(peer_data)
             writer.write(length.to_bytes(4, "big"))
             writer.write(peer_data)
@@ -602,7 +616,9 @@ class EnhancedTransportManager:
             self.running = True
             # Start message processing loop
             asyncio.create_task(self._message_processing_loop())
-            logger.info(f"Transport manager started with {len(self.stats['active_transports'])} active transports")
+            logger.info(
+                f"Transport manager started with {len(self.stats['active_transports'])} active transports"
+            )
             return True
         logger.error("No transports could be started")
         return False
@@ -646,14 +662,19 @@ class EnhancedTransportManager:
         transports_to_try = self._get_transport_priority(peer_id, preferred_transport)
 
         for transport_name in transports_to_try:
-            if transport_name in self.transports and transport_name in self.stats["active_transports"]:
+            if (
+                transport_name in self.transports
+                and transport_name in self.stats["active_transports"]
+            ):
                 transport = self.transports[transport_name]
 
                 try:
                     success = await transport.send_message(peer_id, message)
                     if success:
                         self.stats["total_messages_sent"] += 1
-                        self.routing_table[peer_id] = transport_name  # Remember successful transport
+                        self.routing_table[peer_id] = (
+                            transport_name  # Remember successful transport
+                        )
                         logger.debug(f"Message sent to {peer_id} via {transport_name}")
                         return True
                 except Exception as e:
@@ -663,7 +684,9 @@ class EnhancedTransportManager:
         logger.error(f"Failed to send message to {peer_id} via any transport")
         return False
 
-    def _get_transport_priority(self, peer_id: str, preferred_transport: str | None = None) -> list[str]:
+    def _get_transport_priority(
+        self, peer_id: str, preferred_transport: str | None = None
+    ) -> list[str]:
         """Get ordered list of transports to try for a peer."""
         # Start with preferred transport
         if preferred_transport and preferred_transport in self.transports:
@@ -679,7 +702,10 @@ class EnhancedTransportManager:
 
         # Add remaining transports by preference
         for transport_name in self.transport_preferences:
-            if transport_name not in priority_list and transport_name in self.transports:
+            if (
+                transport_name not in priority_list
+                and transport_name in self.transports
+            ):
                 priority_list.append(transport_name)
 
         return priority_list
@@ -695,7 +721,10 @@ class EnhancedTransportManager:
         success = False
 
         for transport_name, address in addresses.items():
-            if transport_name in self.transports and transport_name in self.stats["active_transports"]:
+            if (
+                transport_name in self.transports
+                and transport_name in self.stats["active_transports"]
+            ):
                 try:
                     transport = self.transports[transport_name]
                     connected = await transport.connect_to_peer(peer_id, address)
@@ -703,7 +732,9 @@ class EnhancedTransportManager:
                         success = True
                         logger.info(f"Connected to {peer_id} via {transport_name}")
                 except Exception as e:
-                    logger.warning(f"Failed to connect to {peer_id} via {transport_name}: {e}")
+                    logger.warning(
+                        f"Failed to connect to {peer_id} via {transport_name}: {e}"
+                    )
 
         return success
 

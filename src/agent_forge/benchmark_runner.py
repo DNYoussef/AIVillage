@@ -131,7 +131,9 @@ class BenchmarkRunner:
             logger.exception(f"Benchmark failed for {model_name}: {e}")
             return {"status": "failed", "model_name": model_name, "error": str(e)}
 
-    async def benchmark_pipeline_outputs(self, quick_mode: bool = False) -> dict[str, Any]:
+    async def benchmark_pipeline_outputs(
+        self, quick_mode: bool = False
+    ) -> dict[str, Any]:
         """Benchmark all Agent Forge pipeline outputs."""
         logger.info("Benchmarking all Agent Forge pipeline outputs")
 
@@ -164,7 +166,9 @@ class BenchmarkRunner:
 
         return results
 
-    async def _save_comprehensive_results(self, comparison_report: ComparisonReport, output_dir: Path) -> None:
+    async def _save_comprehensive_results(
+        self, comparison_report: ComparisonReport, output_dir: Path
+    ) -> None:
         """Save comprehensive benchmark results."""
         # Save detailed JSON report
         report_file = output_dir / "comprehensive_report.json"
@@ -173,15 +177,20 @@ class BenchmarkRunner:
             report_dict = {
                 "target_model": comparison_report.target_model,
                 "baseline_results": {
-                    model: {bench: result.__dict__ for bench, result in benchmarks.items()}
+                    model: {
+                        bench: result.__dict__ for bench, result in benchmarks.items()
+                    }
                     for model, benchmarks in comparison_report.baseline_results.items()
                 },
                 "frontier_results": {
-                    model: {bench: result.__dict__ for bench, result in benchmarks.items()}
+                    model: {
+                        bench: result.__dict__ for bench, result in benchmarks.items()
+                    }
                     for model, benchmarks in comparison_report.frontier_results.items()
                 },
                 "target_results": {
-                    bench: result.__dict__ for bench, result in comparison_report.target_results.items()
+                    bench: result.__dict__
+                    for bench, result in comparison_report.target_results.items()
                 },
                 "statistical_analysis": comparison_report.statistical_analysis,
                 "performance_summary": comparison_report.performance_summary,
@@ -191,7 +200,9 @@ class BenchmarkRunner:
 
         logger.info(f"Comprehensive report saved: {report_file}")
 
-    async def _generate_publication_report(self, comparison_report: ComparisonReport, output_dir: Path) -> None:
+    async def _generate_publication_report(
+        self, comparison_report: ComparisonReport, output_dir: Path
+    ) -> None:
         """Generate publication-ready performance report."""
         model_name = comparison_report.target_model
         performance = comparison_report.performance_summary
@@ -221,7 +232,13 @@ The **{model_name}** model has been evaluated across multiple standardized bench
 
         # Add benchmark scores
         for benchmark_name, score in performance["benchmark_scores"].items():
-            performance_level = "🟢 Excellent" if score > 0.8 else "🟡 Good" if score > 0.6 else "🔴 Needs Improvement"
+            performance_level = (
+                "🟢 Excellent"
+                if score > 0.8
+                else "🟡 Good"
+                if score > 0.6
+                else "🔴 Needs Improvement"
+            )
             category = self._get_benchmark_category(benchmark_name)
             report_content += f"| {benchmark_name} | {score:.3f} | {category} | {performance_level} |\n"
 
@@ -349,9 +366,15 @@ python agent_forge/benchmark_runner.py --model-path {model_name} --output-dir {o
 
         for benchmark_name, analysis in comparison_report.statistical_analysis.items():
             if analysis["baseline_percentile"] > 75:
-                strengths.append(f"- Strong {benchmark_name} performance ({analysis['target_score']:.3f})")
+                strengths.append(
+                    f"- Strong {benchmark_name} performance ({analysis['target_score']:.3f})"
+                )
 
-        return "\n".join(strengths) if strengths else "- Consistent performance across benchmarks"
+        return (
+            "\n".join(strengths)
+            if strengths
+            else "- Consistent performance across benchmarks"
+        )
 
     def _extract_weaknesses(self, comparison_report: ComparisonReport) -> str:
         """Extract areas for improvement from report."""
@@ -359,17 +382,25 @@ python agent_forge/benchmark_runner.py --model-path {model_name} --output-dir {o
 
         for benchmark_name, analysis in comparison_report.statistical_analysis.items():
             if analysis["target_score"] < 0.5:
-                weaknesses.append(f"- {benchmark_name} below average ({analysis['target_score']:.3f})")
+                weaknesses.append(
+                    f"- {benchmark_name} below average ({analysis['target_score']:.3f})"
+                )
 
-        return "\n".join(weaknesses) if weaknesses else "- No major weaknesses identified"
+        return (
+            "\n".join(weaknesses) if weaknesses else "- No major weaknesses identified"
+        )
 
-    async def _generate_cross_stage_comparison(self, stage_results: dict[str, Any]) -> None:
+    async def _generate_cross_stage_comparison(
+        self, stage_results: dict[str, Any]
+    ) -> None:
         """Generate comparison across pipeline stages."""
         logger.info("Generating cross-stage comparison")
 
         # Extract successful results
         successful_results = {
-            stage: result for stage, result in stage_results.items() if result.get("status") == "success"
+            stage: result
+            for stage, result in stage_results.items()
+            if result.get("status") == "success"
         }
 
         if len(successful_results) < 2:
@@ -382,7 +413,9 @@ python agent_forge/benchmark_runner.py --model-path {model_name} --output-dir {o
         benchmarks = set()
         for stage_result in successful_results.values():
             if "comparison_report" in stage_result:
-                benchmarks.update(stage_result["comparison_report"].target_results.keys())
+                benchmarks.update(
+                    stage_result["comparison_report"].target_results.keys()
+                )
 
         # Build comparison table
         for benchmark in benchmarks:
@@ -469,14 +502,28 @@ The Agent Forge pipeline shows the following performance evolution across stages
                 first_score = None
                 last_score = None
 
-                if benchmark in successful_results[first_stage]["comparison_report"].target_results:
+                if (
+                    benchmark
+                    in successful_results[first_stage][
+                        "comparison_report"
+                    ].target_results
+                ):
                     first_score = (
-                        successful_results[first_stage]["comparison_report"].target_results[benchmark].overall_score
+                        successful_results[first_stage]["comparison_report"]
+                        .target_results[benchmark]
+                        .overall_score
                     )
 
-                if benchmark in successful_results[last_stage]["comparison_report"].target_results:
+                if (
+                    benchmark
+                    in successful_results[last_stage][
+                        "comparison_report"
+                    ].target_results
+                ):
                     last_score = (
-                        successful_results[last_stage]["comparison_report"].target_results[benchmark].overall_score
+                        successful_results[last_stage]["comparison_report"]
+                        .target_results[benchmark]
+                        .overall_score
                     )
 
                 if first_score is not None and last_score is not None:
@@ -534,15 +581,25 @@ async def main() -> int:
     parser.add_argument("--model-name", help="Name for the model")
 
     # Run modes
-    parser.add_argument("--pipeline", action="store_true", help="Benchmark all pipeline outputs")
-    parser.add_argument("--quick", action="store_true", help="Quick benchmark mode (limited samples)")
+    parser.add_argument(
+        "--pipeline", action="store_true", help="Benchmark all pipeline outputs"
+    )
+    parser.add_argument(
+        "--quick", action="store_true", help="Quick benchmark mode (limited samples)"
+    )
 
     # Output settings
-    parser.add_argument("--output-dir", default="./benchmark_results", help="Output directory")
+    parser.add_argument(
+        "--output-dir", default="./benchmark_results", help="Output directory"
+    )
 
     # Comparison settings
-    parser.add_argument("--skip-baselines", action="store_true", help="Skip baseline model comparisons")
-    parser.add_argument("--skip-frontier", action="store_true", help="Skip frontier model comparisons")
+    parser.add_argument(
+        "--skip-baselines", action="store_true", help="Skip baseline model comparisons"
+    )
+    parser.add_argument(
+        "--skip-frontier", action="store_true", help="Skip frontier model comparisons"
+    )
 
     args = parser.parse_args()
 
@@ -564,7 +621,9 @@ async def main() -> int:
                 report = result["comparison_report"]
                 avg_score = report.performance_summary["average_score"]
                 print(f"  ✅ Average Score: {avg_score:.3f}")
-                print(f"  📊 Benchmarks: {report.performance_summary['total_benchmarks']}")
+                print(
+                    f"  📊 Benchmarks: {report.performance_summary['total_benchmarks']}"
+                )
             else:
                 print(f"  ❌ Status: {result['status']}")
                 if "error" in result:
@@ -609,7 +668,9 @@ async def main() -> int:
             print(f"❌ Benchmark failed: {result.get('error', 'Unknown error')}")
 
     else:
-        print("Error: Must specify either --pipeline or both --model-path and --model-name")
+        print(
+            "Error: Must specify either --pipeline or both --model-path and --model-name"
+        )
         parser.print_help()
         return 1
 

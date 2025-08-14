@@ -20,9 +20,13 @@ class ExpertSpec(BaseModel):
     """YAML schema for expert configuration specification."""
 
     layers: list[str] = Field(..., description="Target layers: attn_qkv, mlp, block_N")
-    rank: int = Field(..., ge=1, le=64, description="SVD rank for low-rank approximation")
+    rank: int = Field(
+        ..., ge=1, le=64, description="SVD rank for low-rank approximation"
+    )
     svd_scope: str = Field(..., description="Scope: per-matrix or per-block")
-    init: str = Field(..., description="Initialization: random, pca_activations, fisher")
+    init: str = Field(
+        ..., description="Initialization: random, pca_activations, fisher"
+    )
     activation_rule: str = Field(..., description="Activation: always or gated")
     budget: dict[str, int] = Field(..., description="Resource constraints")
 
@@ -133,7 +137,10 @@ class ADASArchive:
                 json.dump(asdict(result), f)
                 f.write("\n")
 
-            logger.debug(f"Added result to archive: score={result.score:.4f}, " f"latency={result.latency_ms:.1f}ms")
+            logger.debug(
+                f"Added result to archive: score={result.score:.4f}, "
+                f"latency={result.latency_ms:.1f}ms"
+            )
 
         except Exception as e:
             logger.error(f"Failed to write result to archive: {e}")
@@ -160,7 +167,9 @@ class ADASArchive:
 
         return results[:top_k]
 
-    def get_pareto_frontier(self, metrics: list[str] = ["score", "latency_ms"]) -> list[ExperimentResult]:
+    def get_pareto_frontier(
+        self, metrics: list[str] = ["score", "latency_ms"]
+    ) -> list[ExperimentResult]:
         """Get Pareto-optimal results across multiple objectives."""
         if len(metrics) != 2:
             raise ValueError("Pareto frontier requires exactly 2 metrics")
