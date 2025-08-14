@@ -13,7 +13,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from core.compression.advanced_pipeline import AdvancedCompressionPipeline
 from core.compression.simple_quantizer import SimpleQuantizer
-from core.compression.unified_compressor import UnifiedCompressor
+from compression.pipeline import UnifiedCompressor
 
 
 def create_test_models():

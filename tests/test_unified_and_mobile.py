@@ -16,7 +16,7 @@ def test_unified_compressor_decision_logic():
     print("=== Testing Unified Compressor Intelligence ===")
 
     try:
-        from src.core.compression.unified_compressor import UnifiedCompressor
+        from compression.pipeline import UnifiedCompressor
 
         # Test 1: Very small model should use simple
         print("\nTest 1: Tiny model (should use simple)")
@@ -168,7 +168,7 @@ def test_fallback_mechanism():
     print("\n=== Testing Fallback Mechanism ===")
 
     try:
-        from src.core.compression.unified_compressor import UnifiedCompressor
+        from compression.pipeline import UnifiedCompressor
 
         # Create a scenario that might trigger fallback
         print("Creating challenging compression scenario...")
