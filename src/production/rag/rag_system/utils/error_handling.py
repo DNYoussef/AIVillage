@@ -3,7 +3,18 @@ from collections.abc import Callable
 from functools import wraps
 from typing import Any
 
+from common.logging import setup_logging
+
+import logging
+from collections.abc import Callable
+from functools import wraps
+from typing import Any
+
+from common.logging import setup_logging
+
+
 logger = logging.getLogger(__name__)
+setup_logging(log_file="rag_system.log")
 
 
 class RAGSystemError(Exception):
@@ -19,7 +30,7 @@ class ProcessingError(RAGSystemError):
 
 
 class RetrievalError(RAGSystemError):
-    """Raised when there's an error during information retrieval."""
+    ""Raised when there's an error during information retrieval."""
 
 
 def log_and_handle_errors(func: Callable) -> Callable:
@@ -30,29 +41,20 @@ def log_and_handle_errors(func: Callable) -> Callable:
         try:
             return await func(*args, **kwargs)
         except RAGSystemError as e:
-            logger.exception(f"RAG System Error in {func.__name__}: {e!s}")
-            # Here you can add custom error handling logic
+            logger.exception(f"RAG System Error in {func.__name__}: {e\!s}")
             raise
         except Exception as e:
-            logger.exception(f"Unexpected error in {func.__name__}: {e!s}")
-            # Here you can add custom error handling logic
-            msg = f"An unexpected error occurred: {e!s}"
+            logger.exception(f"Unexpected error in {func.__name__}: {e\!s}")
+            msg = f"An unexpected error occurred: {e\!s}"
             raise RAGSystemError(msg)
 
     return wrapper
 
 
-def setup_logging(log_file: str = "rag_system.log", log_level: int = logging.INFO) -> None:
-    """Set up logging for the RAG system."""
-    logging.basicConfig(
-        filename=log_file,
-        level=log_level,
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    )
-
-    # Also log to console
-    console = logging.StreamHandler()
-    console.setLevel(log_level)
-    formatter = logging.Formatter("%(name)-12s: %(levelname)-8s %(message)s")
-    console.setFormatter(formatter)
-    logging.getLogger("").addHandler(console)
+__all__ = [
+    "ConfigurationError",
+    "ProcessingError",
+    "RAGSystemError",
+    "RetrievalError",
+    "log_and_handle_errors",
+]
