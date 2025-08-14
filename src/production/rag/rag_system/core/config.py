@@ -1,9 +1,9 @@
 from datetime import timedelta
-from pathlib import Path
 from typing import Any
 
-import yaml
 from pydantic import BaseModel, Field
+
+from common.config import load_config
 
 
 class UnifiedConfig(BaseModel):
@@ -19,7 +19,10 @@ class UnifiedConfig(BaseModel):
 
     # SageAgent configuration
     agent_name: str = "SageAgent"
-    agent_description: str = "A research and analysis agent equipped with advanced reasoning and NLP capabilities."
+    agent_description: str = (
+        "A research and analysis agent equipped with advanced reasoning "
+        "and NLP capabilities."
+    )
 
     # Retrieval configuration
     MAX_RESULTS: int = 10
@@ -64,22 +67,10 @@ class RAGConfig(UnifiedConfig):
 # You can add more specific config classes as needed
 
 
-def load_from_yaml(config_path: str) -> RAGConfig:
-    """Load configuration from a YAML file.
+_DEFAULTS = RAGConfig().model_dump()
 
-    Parameters
-    ----------
-    config_path: str
-        Path to the YAML configuration file.
 
-    Returns:
-    -------
-    RAGConfig
-        Configuration populated with values from the YAML file.
-    """
-    path = Path(config_path)
-    data = {}
-    if path.is_file():
-        with open(path, encoding="utf-8") as f:
-            data = yaml.safe_load(f) or {}
+def load_rag_config(config_path: str | None = None) -> RAGConfig:
+    """Load RAG configuration using the shared loader."""
+    data = load_config(_DEFAULTS, config_path, env_prefix="RAG_")
     return RAGConfig(**data)
