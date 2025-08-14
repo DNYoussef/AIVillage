@@ -556,25 +556,25 @@ class OfflineRAGConfigRegistry:
             "validated_configs": len(self.validated_configs),
             "available_configs": list(self.validated_configs.keys()),
             "config_modes": list(
-                set(config.mode.value for config in self.validated_configs.values())
+                {config.mode.value for config in self.validated_configs.values()}
             ),
             "embedding_providers": list(
-                set(
+                {
                     config.embedding.provider.value
                     for config in self.validated_configs.values()
-                )
+                }
             ),
             "vector_store_types": list(
-                set(
+                {
                     config.vector_store_type.value
                     for config in self.validated_configs.values()
-                )
+                }
             ),
             "retriever_types": list(
-                set(
+                {
                     config.retriever_type.value
                     for config in self.validated_configs.values()
-                )
+                }
             ),
         }
 

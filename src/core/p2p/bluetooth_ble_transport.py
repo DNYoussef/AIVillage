@@ -119,8 +119,8 @@ class BLETransport:
         try:
             from jnius import autoclass
 
-            BluetoothAdapter = autoclass("android.bluetooth.BluetoothAdapter")
-            BluetoothManager = autoclass("android.bluetooth.BluetoothManager")
+            autoclass("android.bluetooth.BluetoothAdapter")
+            autoclass("android.bluetooth.BluetoothManager")
 
             self.ble_adapter = AndroidBLEAdapter(self)
             logger.info("Initialized Android BLE adapter")

@@ -531,7 +531,7 @@ class SecurityGateRunner:
                     print(f"    - {issue.severity}: {issue.description}")
 
         # Summary
-        total_gates = len([r for r in self.reports])
+        total_gates = len(list(self.reports))
         all_passed = failed == 0
 
         print("\n=== Security Gates Summary ===")
@@ -578,7 +578,7 @@ class SecurityGateRunner:
             "critical_issues": [
                 issue for issue in all_issues if issue.severity == "CRITICAL"
             ],
-            "recommendations": list(set(issue.recommendation for issue in all_issues)),
+            "recommendations": list({issue.recommendation for issue in all_issues}),
         }
 
 

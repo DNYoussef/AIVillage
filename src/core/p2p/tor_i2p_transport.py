@@ -672,7 +672,6 @@ async def test_privacy_transport():
         logger.info(f"Privacy addresses: {addresses}")
 
         # Test sending a message
-        test_message = b"Hello from AIVillage privacy network!"
 
         # Would need another node's address to actually send
         # await transport.send_message("destination.onion:80", test_message)

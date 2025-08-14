@@ -388,7 +388,7 @@ if __name__ == "__main__":
         # Create streaming instances
         config = StreamingConfig(chunk_size=512, compression=CompressionType.NONE)
         sender_stream = TensorStreaming(sender, config)
-        receiver_stream = TensorStreaming(receiver, config)
+        TensorStreaming(receiver, config)
 
         # Test tensor
         test_tensor = np.random.random((10, 10)).astype(np.float32)

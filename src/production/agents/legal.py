@@ -44,7 +44,7 @@ class LegalAIAgent:
 
     def _compliance_check(self, request: dict[str, Any]) -> dict[str, Any]:
         """Check regulatory compliance."""
-        regulations = request.get("regulations", [])
+        request.get("regulations", [])
 
         return {
             "status": "completed",

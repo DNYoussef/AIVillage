@@ -139,7 +139,7 @@ class TestPeerDiscoveryMDNS:
             # Create a mock that simulates the service listener behavior
             async def mock_mdns_discovery():
                 # Simulate the service listener finding services
-                mock_zeroconf = MockZeroconf()
+                MockZeroconf()
 
                 # Simulate multiple services with different addresses
                 services = [

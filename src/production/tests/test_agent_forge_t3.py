@@ -76,8 +76,8 @@ class TestAgentFactory:
         assert "overall_performance" in kpis or "performance" in kpis
 
         # All KPI values should be between 0 and 1
-        for key, value in kpis.items():
-            assert isinstance(value, (int, float))
+        for _key, value in kpis.items():
+            assert isinstance(value, int | float)
             assert 0 <= value <= 1.0
 
 
@@ -203,7 +203,7 @@ class TestAgentOrchestrator:
 
         start_time = time.time() * 1000
         result = await orchestrator.execute_task(task)
-        execution_time = time.time() * 1000 - start_time
+        time.time() * 1000 - start_time
 
         assert result.success
         assert result.task_id == "test_001"

@@ -638,7 +638,7 @@ class HealthMonitor:
                     # Execute health check with timeout
                     start_time = time.time()
                     result = self._execute_health_check(check)
-                    execution_time = (time.time() - start_time) * 1000
+                    (time.time() - start_time) * 1000
 
                     if result:
                         self.health_status.component_health[name] = HealthStatus.HEALTHY
@@ -789,11 +789,11 @@ class ResilienceManager:
 
     def _determine_error_severity(self, error: Exception) -> ErrorSeverity:
         """Determine error severity based on exception type."""
-        if isinstance(error, (SystemExit, KeyboardInterrupt)):
+        if isinstance(error, SystemExit | KeyboardInterrupt):
             return ErrorSeverity.CRITICAL
-        elif isinstance(error, (ConnectionError, TimeoutError)):
+        elif isinstance(error, ConnectionError | TimeoutError):
             return ErrorSeverity.HIGH
-        elif isinstance(error, (ValueError, TypeError)):
+        elif isinstance(error, ValueError | TypeError):
             return ErrorSeverity.MEDIUM
         else:
             return ErrorSeverity.LOW
@@ -935,7 +935,7 @@ def resilience_context(component: str, operation: str = "context"):
     try:
         yield manager
     except Exception as e:
-        error_id = manager.error_tracker.record_error(
+        manager.error_tracker.record_error(
             component=component,
             operation=operation,
             error=e,

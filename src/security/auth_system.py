@@ -447,7 +447,8 @@ class AuthenticationManager:
     def _init_database(self):
         """Initialize user database."""
         with self._get_db() as conn:
-            conn.execute("""
+            conn.execute(
+                """
                 CREATE TABLE IF NOT EXISTS users (
                     user_id TEXT PRIMARY KEY,
                     username TEXT UNIQUE NOT NULL,
@@ -464,9 +465,11 @@ class AuthenticationManager:
                     mfa_secret TEXT,
                     metadata TEXT DEFAULT '{}'
                 )
-            """)
+            """
+            )
 
-            conn.execute("""
+            conn.execute(
+                """
                 CREATE TABLE IF NOT EXISTS api_keys (
                     key_id TEXT PRIMARY KEY,
                     key_hash TEXT NOT NULL,
@@ -482,9 +485,11 @@ class AuthenticationManager:
                     rate_limit INTEGER,
                     FOREIGN KEY (user_id) REFERENCES users (user_id)
                 )
-            """)
+            """
+            )
 
-            conn.execute("""
+            conn.execute(
+                """
                 CREATE TABLE IF NOT EXISTS audit_logs (
                     log_id TEXT PRIMARY KEY,
                     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -497,7 +502,8 @@ class AuthenticationManager:
                     details TEXT DEFAULT '{}',
                     risk_score REAL DEFAULT 0.0
                 )
-            """)
+            """
+            )
 
     @contextmanager
     def _get_db(self):

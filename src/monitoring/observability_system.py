@@ -161,7 +161,8 @@ class MetricsCollector:
     def _init_storage(self):
         """Initialize metrics storage."""
         with self._get_db() as conn:
-            conn.execute("""
+            conn.execute(
+                """
                 CREATE TABLE IF NOT EXISTS metrics (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     name TEXT NOT NULL,
@@ -170,12 +171,15 @@ class MetricsCollector:
                     metric_type TEXT NOT NULL,
                     labels TEXT DEFAULT '{}'
                 )
-            """)
+            """
+            )
 
-            conn.execute("""
+            conn.execute(
+                """
                 CREATE INDEX IF NOT EXISTS idx_metrics_name_timestamp
                 ON metrics(name, timestamp)
-            """)
+            """
+            )
 
     @contextmanager
     def _get_db(self):
@@ -377,7 +381,8 @@ class DistributedTracer:
     def _init_storage(self):
         """Initialize trace storage."""
         with self._get_db() as conn:
-            conn.execute("""
+            conn.execute(
+                """
                 CREATE TABLE IF NOT EXISTS spans (
                     trace_id TEXT NOT NULL,
                     span_id TEXT NOT NULL,
@@ -393,12 +398,15 @@ class DistributedTracer:
                     events TEXT DEFAULT '[]',
                     PRIMARY KEY (trace_id, span_id)
                 )
-            """)
+            """
+            )
 
-            conn.execute("""
+            conn.execute(
+                """
                 CREATE INDEX IF NOT EXISTS idx_spans_trace_id
                 ON spans(trace_id)
-            """)
+            """
+            )
 
     @contextmanager
     def _get_db(self):
@@ -625,7 +633,8 @@ class LogHandler:
     def _init_storage(self):
         """Initialize log storage."""
         with self._get_db() as conn:
-            conn.execute("""
+            conn.execute(
+                """
                 CREATE TABLE IF NOT EXISTS logs (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     timestamp REAL NOT NULL,
@@ -636,12 +645,15 @@ class LogHandler:
                     span_id TEXT,
                     attributes TEXT DEFAULT '{}'
                 )
-            """)
+            """
+            )
 
-            conn.execute("""
+            conn.execute(
+                """
                 CREATE INDEX IF NOT EXISTS idx_logs_timestamp_level
                 ON logs(timestamp, level)
-            """)
+            """
+            )
 
     @contextmanager
     def _get_db(self):
@@ -772,7 +784,8 @@ class AlertManager:
     def _init_storage(self):
         """Initialize alert storage."""
         with self._get_db() as conn:
-            conn.execute("""
+            conn.execute(
+                """
                 CREATE TABLE IF NOT EXISTS alerts (
                     alert_id TEXT PRIMARY KEY,
                     name TEXT NOT NULL,
@@ -786,7 +799,8 @@ class AlertManager:
                     labels TEXT DEFAULT '{}',
                     metadata TEXT DEFAULT '{}'
                 )
-            """)
+            """
+            )
 
     @contextmanager
     def _get_db(self):
@@ -1176,7 +1190,6 @@ class ObservabilitySystem:
         """
         # Get recent metrics summary
         current_time = time.time()
-        metrics_summary = {}
 
         # Get health status
         health_status = self.health.get_health_status()

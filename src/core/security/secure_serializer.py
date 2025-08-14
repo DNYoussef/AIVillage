@@ -113,7 +113,7 @@ class SecureSerializer:
 
     def _validate_data_security(self, data: Any) -> None:
         """Validate data for security concerns."""
-        if isinstance(data, (str, bytes)):
+        if isinstance(data, str | bytes):
             if len(data) > self.max_size_bytes:
                 raise SecurityViolationError(
                     f"Data size exceeds limit: {len(data)} > {self.max_size_bytes}"
@@ -139,7 +139,7 @@ class SecureSerializer:
         def convert_item(item):
             if item is None:
                 return {"__type__": "NoneType", "__value__": None}
-            elif isinstance(item, (str, int, float, bool)):
+            elif isinstance(item, str | int | float | bool):
                 return {"__type__": type(item).__name__, "__value__": item}
             elif isinstance(item, bytes):
                 return {
@@ -165,7 +165,7 @@ class SecureSerializer:
                     "__type__": "dict",
                     "__value__": {k: convert_item(v) for k, v in item.items()},
                 }
-            elif isinstance(item, (list, tuple)):
+            elif isinstance(item, list | tuple):
                 return {
                     "__type__": type(item).__name__,
                     "__value__": [convert_item(v) for v in item],

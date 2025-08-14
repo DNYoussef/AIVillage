@@ -227,7 +227,7 @@ class MagiAgent:
 
     def _deploy_application(self, request: dict[str, Any]) -> dict[str, Any]:
         """Deploy application to target environment."""
-        application_config = request.get("config", {})
+        request.get("config", {})
         target_environment = request.get("environment", "development")
         deployment_type = request.get("type", "container")
 

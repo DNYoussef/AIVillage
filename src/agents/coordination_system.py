@@ -187,7 +187,8 @@ class AgentRegistry:
     def _init_storage(self):
         """Initialize storage backend."""
         with self._get_db() as conn:
-            conn.execute("""
+            conn.execute(
+                """
                 CREATE TABLE IF NOT EXISTS agents (
                     agent_id TEXT PRIMARY KEY,
                     name TEXT NOT NULL,
@@ -202,7 +203,8 @@ class AgentRegistry:
                     metadata TEXT DEFAULT '{}',
                     performance_metrics TEXT DEFAULT '{}'
                 )
-            """)
+            """
+            )
 
     @contextmanager
     def _get_db(self):
@@ -406,7 +408,8 @@ class TaskScheduler:
     def _init_storage(self):
         """Initialize task storage."""
         with self._get_db() as conn:
-            conn.execute("""
+            conn.execute(
+                """
                 CREATE TABLE IF NOT EXISTS tasks (
                     task_id TEXT PRIMARY KEY,
                     task_type TEXT NOT NULL,
@@ -428,7 +431,8 @@ class TaskScheduler:
                     subtasks TEXT DEFAULT '[]',
                     parent_task_id TEXT
                 )
-            """)
+            """
+            )
 
     @contextmanager
     def _get_db(self):
@@ -918,11 +922,11 @@ class CoordinationEngine:
             Resource("cpu", "compute", capacity=100.0)
         )
         self.resource_manager.register_resource(
-            Resource("memory", "memory", capacity=8192.0)  # MB
-        )
+            Resource("memory", "memory", capacity=8192.0)
+        )  # MB
         self.resource_manager.register_resource(
-            Resource("network", "bandwidth", capacity=1000.0)  # Mbps
-        )
+            Resource("network", "bandwidth", capacity=1000.0)
+        )  # Mbps
 
     def start(self):
         """Start coordination engine."""

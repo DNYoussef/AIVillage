@@ -223,7 +223,7 @@ class StubDetector:
             # Empty functions
             if isinstance(node, ast.FunctionDef):
                 if len(node.body) == 1 and isinstance(
-                    node.body[0], (ast.Pass, ast.Ellipsis)
+                    node.body[0], ast.Pass | ast.Ellipsis
                 ):
                     stub = StubAnalysis(
                         stub_id="",
@@ -598,7 +598,7 @@ def scan_and_plan_elimination(
     planner = StubEliminationPlanner(project_root)
 
     # Scan project
-    scan_results = planner.scan_project()
+    planner.scan_project()
 
     # Create elimination plan
     top_stubs = planner.create_elimination_plan(target_count)

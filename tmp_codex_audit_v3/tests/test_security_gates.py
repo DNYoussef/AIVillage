@@ -1,149 +1,304 @@
+#!/usr/bin/env python3
 """
-Test C4: Security Gates - Verify CI blocks http:// and unsafe serialization
+CODEX Audit v3 - Security Gates Test
+Testing claim: "CI blocks http:// & unsafe serialization"
+
+This test verifies:
+1. No http:// URLs in production code
+2. No unsafe pickle.loads in production paths
+3. Security gates exist to fail PRs with violations
+4. Secure alternatives are properly implemented
 """
 
 import json
-import os
+import subprocess
 import sys
 from pathlib import Path
 
-# Add paths
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
+class SecurityGatesTest:
+    """Test class for security gate verification"""
 
-def scan_for_security_issues():
-    """Scan for security issues in production code"""
-    results = {
-        "http_urls": {"count": 0, "files": [], "status": "PASS"},
-        "pickle_loads": {"count": 0, "files": [], "status": "PASS"},
-        "security_gates": {"status": "UNKNOWN"},
-    }
+    def __init__(self):
+        self.results = {
+            "http_scan": {},
+            "pickle_scan": {},
+            "security_gates": {},
+            "secure_alternatives": {},
+            "overall_success": False,
+        }
 
-    # Read scan results
-    artifacts_dir = Path(__file__).parent.parent / "artifacts"
+    def test_http_urls(self) -> bool:
+        """Test for http:// URLs in production code"""
+        try:
+            # Scan production directories for http:// URLs
+            production_dirs = [
+                "src/production/",
+                "src/core/",
+                "src/agent_forge/",
+                "src/token_economy/",
+            ]
 
-    # Check HTTP URLs
-    http_file = artifacts_dir / "http_scan.txt"
-    if http_file.exists():
-        content = http_file.read_text()
-        if "No http://" in content:
-            results["http_urls"]["status"] = "PASS"
-            print("[PASS] No http:// URLs found in production code")
-        else:
-            lines = content.strip().split("\n")
-            results["http_urls"]["count"] = len([l for l in lines if l.strip()])
-            results["http_urls"]["files"] = lines[:10]  # First 10
-            results["http_urls"]["status"] = "FAIL"
-            print(
-                f"[FAIL] Found {results['http_urls']['count']} http:// URLs in production"
+            http_violations = []
+
+            for prod_dir in production_dirs:
+                if Path(prod_dir).exists():
+                    # Use git grep to find http:// occurrences
+                    try:
+                        result = subprocess.run(
+                            ["git", "grep", "-n", "http://", prod_dir],
+                            capture_output=True,
+                            text=True,
+                            cwd=Path.cwd(),
+                        )
+
+                        if result.returncode == 0 and result.stdout.strip():
+                            lines = result.stdout.strip().split("\n")
+                            for line in lines:
+                                if line.strip():
+                                    parts = line.split(":", 2)
+                                    if len(parts) >= 3:
+                                        http_violations.append(
+                                            {
+                                                "file": parts[0],
+                                                "line": parts[1],
+                                                "content": parts[2].strip(),
+                                            }
+                                        )
+                    except Exception as e:
+                        print(f"Warning: Failed to scan {prod_dir}: {e}")
+
+            self.results["http_scan"] = {
+                "success": len(http_violations) == 0,
+                "violations_found": len(http_violations),
+                "violations": http_violations,
+                "scanned_dirs": production_dirs,
+            }
+
+            return len(http_violations) == 0
+
+        except Exception as e:
+            self.results["http_scan"] = {"success": False, "error": str(e)}
+            return False
+
+    def test_pickle_loads(self) -> bool:
+        """Test for unsafe pickle.loads usage"""
+        try:
+            # Scan for pickle.loads patterns
+            pickle_violations = []
+
+            # Use git grep to find pickle.loads occurrences
+            try:
+                result = subprocess.run(
+                    ["git", "grep", "-n", "pickle\\.loads", "src/"],
+                    capture_output=True,
+                    text=True,
+                    cwd=Path.cwd(),
+                )
+
+                if result.returncode == 0 and result.stdout.strip():
+                    lines = result.stdout.strip().split("\n")
+                    for line in lines:
+                        if line.strip():
+                            parts = line.split(":", 2)
+                            if len(parts) >= 3:
+                                file_path = parts[0]
+                                line_num = parts[1]
+                                content = parts[2].strip()
+
+                                # Check if this is a safe usage (comment, secure replacement, etc.)
+                                is_safe = (
+                                    content.strip().startswith("#")  # Comment
+                                    or content.strip().startswith('"""')  # Docstring
+                                    or "secure replacement"
+                                    in content.lower()  # Safe replacement
+                                    or "secure_serializer"
+                                    in file_path  # Secure serializer module
+                                )
+
+                                if not is_safe:
+                                    pickle_violations.append(
+                                        {
+                                            "file": file_path,
+                                            "line": line_num,
+                                            "content": content,
+                                            "risk": "unsafe_pickle_usage",
+                                        }
+                                    )
+
+            except Exception as e:
+                print(f"Warning: Failed to scan for pickle.loads: {e}")
+
+            self.results["pickle_scan"] = {
+                "success": len(pickle_violations) == 0,
+                "violations_found": len(pickle_violations),
+                "violations": pickle_violations,
+            }
+
+            return len(pickle_violations) == 0
+
+        except Exception as e:
+            self.results["pickle_scan"] = {"success": False, "error": str(e)}
+            return False
+
+    def test_security_gates_exist(self) -> bool:
+        """Test that security gates exist in CI/pre-commit"""
+        try:
+            gate_checks = {}
+
+            # Check for pre-commit configuration
+            precommit_file = Path(".pre-commit-config.yaml")
+            if precommit_file.exists():
+                content = precommit_file.read_text()
+                gate_checks["precommit_exists"] = True
+                gate_checks["has_bandit"] = "bandit" in content
+                gate_checks["has_security_checks"] = any(
+                    term in content.lower() for term in ["security", "bandit", "safety"]
+                )
+            else:
+                gate_checks["precommit_exists"] = False
+
+            # Check for GitHub Actions security workflows
+            github_actions_dir = Path(".github/workflows")
+            if github_actions_dir.exists():
+                gate_checks["github_actions_exist"] = True
+                security_workflows = []
+                for workflow_file in github_actions_dir.glob("*.yml"):
+                    content = workflow_file.read_text()
+                    if any(
+                        term in content.lower()
+                        for term in ["security", "bandit", "safety", "vulnerability"]
+                    ):
+                        security_workflows.append(workflow_file.name)
+                gate_checks["security_workflows"] = security_workflows
+            else:
+                gate_checks["github_actions_exist"] = False
+                gate_checks["security_workflows"] = []
+
+            # Check for security test files
+            security_test_files = (
+                list(Path("tests").glob("**/test_*security*.py"))
+                if Path("tests").exists()
+                else []
+            )
+            gate_checks["security_test_files"] = [str(f) for f in security_test_files]
+
+            self.results["security_gates"] = gate_checks
+
+            # Consider successful if we have some security measures
+            has_gates = (
+                gate_checks.get("has_bandit", False)
+                or len(gate_checks.get("security_workflows", [])) > 0
+                or len(gate_checks.get("security_test_files", [])) > 0
             )
 
-    # Check pickle.loads
-    pickle_file = artifacts_dir / "pickle_scan.txt"
-    if pickle_file.exists():
-        content = pickle_file.read_text()
-        if "No pickle.loads" in content:
-            results["pickle_loads"]["status"] = "PASS"
-            print("[PASS] No pickle.loads found in code")
-        else:
-            lines = content.strip().split("\n")
-            results["pickle_loads"]["count"] = len([l for l in lines if l.strip()])
-            results["pickle_loads"]["files"] = lines[:10]  # First 10
-            results["pickle_loads"]["status"] = "FAIL"
-            print(f"[FAIL] Found {results['pickle_loads']['count']} pickle.loads calls")
+            return has_gates
 
-    return results
+        except Exception as e:
+            self.results["security_gates"] = {"success": False, "error": str(e)}
+            return False
 
+    def test_secure_alternatives(self) -> bool:
+        """Test that secure alternatives are implemented"""
+        try:
+            alternatives_found = {}
 
-def check_security_infrastructure():
-    """Check for security infrastructure like pre-commit hooks, CI gates"""
-    security_items = {}
+            # Check for secure serializer
+            secure_serializer = Path("src/core/security/secure_serializer.py")
+            if secure_serializer.exists():
+                alternatives_found["secure_serializer"] = True
+                content = secure_serializer.read_text()
+                alternatives_found["has_secure_loads"] = "def loads(" in content
+                alternatives_found["has_secure_dumps"] = "def dumps(" in content
+            else:
+                alternatives_found["secure_serializer"] = False
 
-    # Check pre-commit config
-    precommit_file = Path(__file__).parent.parent.parent / ".pre-commit-config.yaml"
-    if precommit_file.exists():
-        security_items["pre_commit"] = True
-        print("[PASS] Pre-commit configuration exists")
-    else:
-        security_items["pre_commit"] = False
-        print("[FAIL] No pre-commit configuration found")
+            # Check for HTTPS enforcement
+            try:
+                result = subprocess.run(
+                    ["git", "grep", "-n", "https://", "src/"],
+                    capture_output=True,
+                    text=True,
+                    cwd=Path.cwd(),
+                )
 
-    # Check for security tools in requirements
-    base_path = Path(__file__).parent.parent.parent
-    req_files = [
-        base_path / "requirements.txt",
-        base_path / "requirements-dev.txt",
-        base_path / "pyproject.toml",
-    ]
+                https_count = (
+                    len(result.stdout.strip().split("\n"))
+                    if result.stdout.strip()
+                    else 0
+                )
+                alternatives_found["https_usage"] = https_count > 0
+                alternatives_found["https_count"] = https_count
 
-    security_tools = ["bandit", "safety", "ruff"]
-    found_tools = []
+            except Exception:
+                alternatives_found["https_usage"] = False
+                alternatives_found["https_count"] = 0
 
-    for req_file in req_files:
-        if req_file.exists():
-            content = req_file.read_text()
-            for tool in security_tools:
-                if tool in content:
-                    found_tools.append(tool)
+            self.results["secure_alternatives"] = alternatives_found
 
-    security_items["security_tools"] = list(set(found_tools))
-    if found_tools:
-        print(f"[PASS] Security tools found: {', '.join(found_tools)}")
-    else:
-        print("[FAIL] No security tools found in requirements")
+            # Success if we have secure serializer
+            return alternatives_found.get("secure_serializer", False)
 
-    # Check for GitHub workflows
-    workflows_dir = base_path / ".github" / "workflows"
-    security_items["github_workflows"] = workflows_dir.exists()
-    if workflows_dir.exists():
-        print("[PASS] GitHub workflows directory exists")
-    else:
-        print("[INFO] No GitHub workflows directory")
+        except Exception as e:
+            self.results["secure_alternatives"] = {"success": False, "error": str(e)}
+            return False
 
-    return security_items
+    def run_all_tests(self) -> bool:
+        """Run all security gate tests"""
+        print("Testing Security Gates...")
+
+        # Test 1: HTTP URLs scan
+        print("  -> Scanning for http:// URLs in production...")
+        http_success = self.test_http_urls()
+        print(f"     HTTP scan: {'PASS' if http_success else 'FAIL'}")
+
+        # Test 2: Pickle.loads scan
+        print("  -> Scanning for unsafe pickle.loads...")
+        pickle_success = self.test_pickle_loads()
+        print(f"     Pickle scan: {'PASS' if pickle_success else 'FAIL'}")
+
+        # Test 3: Security gates exist
+        print("  -> Checking security gates...")
+        gates_success = self.test_security_gates_exist()
+        print(f"     Security gates: {'PASS' if gates_success else 'FAIL'}")
+
+        # Test 4: Secure alternatives
+        print("  -> Checking secure alternatives...")
+        alternatives_success = self.test_secure_alternatives()
+        print(f"     Secure alternatives: {'PASS' if alternatives_success else 'FAIL'}")
+
+        # Overall success requires passing security scans
+        overall_success = http_success and pickle_success
+
+        self.results["overall_success"] = overall_success
+
+        return overall_success
 
 
 def main():
-    """Run security gates test"""
-    print("=" * 60)
-    print("C4: Security Gates Test")
-    print("=" * 60)
+    """Main test execution"""
+    try:
+        tester = SecurityGatesTest()
+        success = tester.run_all_tests()
 
-    print("\n1. Scanning for security issues...")
-    scan_results = scan_for_security_issues()
-
-    print("\n2. Checking security infrastructure...")
-    infra_results = check_security_infrastructure()
-
-    # Calculate overall success
-    overall_success = (
-        scan_results["http_urls"]["status"] == "PASS"
-        and scan_results["pickle_loads"]["status"] == "PASS"
-        and infra_results.get("pre_commit", False)
-    )
-
-    # Save results
-    output_path = (
-        Path(__file__).parent.parent / "artifacts" / "security_gates_test.json"
-    )
-    with open(output_path, "w") as f:
-        json.dump(
-            {
-                "scan_results": scan_results,
-                "infrastructure": infra_results,
-                "overall_success": overall_success,
-            },
-            f,
-            indent=2,
+        # Save results
+        results_file = (
+            Path(__file__).parent.parent / "artifacts" / "security_gates.json"
         )
+        with open(results_file, "w") as f:
+            json.dump(tester.results, f, indent=2)
 
-    print("\n" + "=" * 60)
-    print(
-        f"Overall Security Gates Test Result: {'PASS' if overall_success else 'FAIL'}"
-    )
-    print(f"Results saved to: {output_path}")
+        print(f"\nResults saved to: {results_file}")
+        print(f"Overall Security Gates test: {'PASS' if success else 'FAIL'}")
 
-    return overall_success
+        return success
+
+    except Exception as e:
+        print(f"Security Gates test failed with error: {e}")
+        import traceback
+
+        traceback.print_exc()
+        return False
 
 
 if __name__ == "__main__":

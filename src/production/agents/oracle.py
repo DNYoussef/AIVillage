@@ -184,7 +184,7 @@ class OracleAgent:
         pos = simulation.initial_conditions.get("position", 1.0)
         vel = simulation.initial_conditions.get("velocity", 0.0)
 
-        for step in range(simulation.time_steps):
+        for _step in range(simulation.time_steps):
             # Calculate forces
             force = -spring_constant * pos - damping * vel
             acceleration = force / mass

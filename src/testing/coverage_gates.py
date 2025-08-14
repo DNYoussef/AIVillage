@@ -100,7 +100,7 @@ class TestCoverageAnalyzer:
                 "--collect-only",
             ]
 
-            result = pytest.main(pytest_args)
+            pytest.main(pytest_args)
 
             cov.stop()
             cov.save()
@@ -751,7 +751,7 @@ def run_quality_gates(config_file: str | None = None) -> dict[str, Any]:
 
     # Initialize and run quality gates
     manager = QualityGateManager(config)
-    results = manager.run_all_gates()
+    manager.run_all_gates()
 
     return manager.generate_report()
 

@@ -428,7 +428,7 @@ class CPUQuantizer:
                 original_size += param.numel() * 4  # float32 = 4 bytes
 
                 # Quantize weight
-                quantized_data = self.int8_quantize_tensor(param.data)
+                self.int8_quantize_tensor(param.data)
                 quantized_size += param.numel() * 1  # int8 = 1 byte
                 quantized_size += 4 + 4  # scale and zero_point (float32 each)
 

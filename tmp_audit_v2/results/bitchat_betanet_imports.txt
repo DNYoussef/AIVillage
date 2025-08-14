@@ -1,6 +1,0 @@
-Testing corrected BitChat/Betanet module imports...
-OK DualPathTransport import successful
-FAIL FederationManager import failed: No module named 'core.p2p'
-OK BitChatTransport import successful
-OK BetanetTransport import successful
-Module imports verification complete.

@@ -303,12 +303,28 @@ temp_env/
 !scripts/
 !validation/
 
-# Temporary analysis and audit directories
+# Temporary analysis and audit directories - prevent accumulation
 tmp_*/
+tmp*/
 *_audit*/
 *_analysis*/
+*_tmp/
+*_temp/
+temp_*/
+temporary_*/
 CUsers*/
 DAIVillage*/
+
+# Specific temporary patterns to prevent accumulation
+tmp_audit*/
+tmp_codex*/
+tmp_betanet*/
+tmp_submission*/
+tmp_models*/
+tmp_bounty*/
+tmp_bloat*/
+tmp_scion*/
+tmp_bitchat*/
 
 # Archive and backup directories in root
 docs/archived_reports/
@@ -348,3 +364,18 @@ ruff_results.json
 # Text analysis and cleanup files
 comprehensive_lint_cleanup.txt
 INTEGRATION_SETUP_COMPLETE.txt
+
+# Rust build artifacts
+**/target/
+target/
+Cargo.lock
+*.rlib
+*.rmeta
+*.pdb
+*.dll
+*.exe
+*.exp
+*.lib
+dep-graph.bin
+*.o
+*.obj

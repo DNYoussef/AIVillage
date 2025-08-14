@@ -301,7 +301,7 @@ class KingAgent:
 
     def _determine_strategy(self, request: dict[str, Any]) -> str:
         """Determine orchestration strategy based on request."""
-        task_type = request.get("task_type", "")
+        request.get("task_type", "")
         complexity = request.get("complexity", "medium")
         urgency = request.get("urgency", "medium")
 

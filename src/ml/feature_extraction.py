@@ -235,7 +235,7 @@ class FeatureExtractor:
         if weights:
             # Weight statistics per layer
             weight_stats = []
-            for name, weight in weights.items():
+            for _name, weight in weights.items():
                 if isinstance(weight, np.ndarray):
                     stats = [
                         np.mean(weight),
@@ -451,7 +451,7 @@ class FeatureExtractor:
         # Simplified layer analysis
         if hasattr(model, "__dict__"):
             for attr_name in dir(model):
-                attr = getattr(model, attr_name)
+                getattr(model, attr_name)
                 if "conv" in attr_name.lower():
                     layer_counts["conv"] += 1
                 elif "linear" in attr_name.lower() or "fc" in attr_name.lower():
@@ -656,7 +656,7 @@ class FeatureExtractor:
         """Encode training history as features."""
         features = []
 
-        for metric_name, values in history.items():
+        for _metric_name, values in history.items():
             if values:
                 features.extend(
                     [

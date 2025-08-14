@@ -129,7 +129,8 @@ class TokenomicsReceiptManager:
                 await conn.execute("PRAGMA foreign_keys=ON")
 
                 # Create receipts table
-                await conn.execute("""
+                await conn.execute(
+                    """
                     CREATE TABLE IF NOT EXISTS receipts (
                         receipt_id TEXT PRIMARY KEY,
                         transaction_type TEXT NOT NULL,
@@ -150,7 +151,8 @@ class TokenomicsReceiptManager:
                         created_at REAL DEFAULT (strftime('%s', 'now')),
                         updated_at REAL DEFAULT (strftime('%s', 'now'))
                     )
-                """)
+                """
+                )
 
                 # Create indexes for efficient queries
                 await conn.execute(
@@ -167,7 +169,8 @@ class TokenomicsReceiptManager:
                 )
 
                 # Create summary view for statistics
-                await conn.execute("""
+                await conn.execute(
+                    """
                     CREATE VIEW IF NOT EXISTS receipt_summary AS
                     SELECT
                         transaction_type,
@@ -179,7 +182,8 @@ class TokenomicsReceiptManager:
                         AVG(compute_time_ms) as avg_compute_time
                     FROM receipts
                     GROUP BY transaction_type, status
-                """)
+                """
+                )
 
                 await conn.commit()
                 logger.info("Database schema initialized successfully")

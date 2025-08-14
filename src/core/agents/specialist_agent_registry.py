@@ -496,7 +496,7 @@ class SpecialistAgentRegistry:
         """Route a task to the most suitable available agent."""
         required_capability = task.get("required_capability")
         agent_type_preference = task.get("agent_type_preference")
-        priority = task.get("priority", 1.0)
+        task.get("priority", 1.0)
 
         # Find candidate agents
         candidates = []

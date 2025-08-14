@@ -47,7 +47,7 @@ class TutorAgent:
     def _create_lesson(self, request: dict[str, Any]) -> dict[str, Any]:
         """Create educational lesson plan."""
         topic = request.get("topic", "")
-        level = request.get("level", "intermediate")
+        request.get("level", "intermediate")
 
         return {
             "status": "completed",
@@ -63,7 +63,7 @@ class TutorAgent:
 
     def _assess_learning(self, request: dict[str, Any]) -> dict[str, Any]:
         """Assess learning progress."""
-        student_responses = request.get("responses", [])
+        request.get("responses", [])
 
         return {
             "status": "completed",

@@ -45,7 +45,7 @@ class NavigatorAgent:
     def _optimize_route(self, request: dict[str, Any]) -> dict[str, Any]:
         """Optimize delivery routes."""
         destinations = request.get("destinations", [])
-        constraints = request.get("constraints", {})
+        request.get("constraints", {})
 
         return {
             "status": "completed",
@@ -57,8 +57,8 @@ class NavigatorAgent:
 
     def _manage_inventory(self, request: dict[str, Any]) -> dict[str, Any]:
         """Manage inventory levels."""
-        current_stock = request.get("current_stock", {})
-        demand_forecast = request.get("demand", {})
+        request.get("current_stock", {})
+        request.get("demand", {})
 
         return {
             "status": "completed",
