@@ -42,9 +42,7 @@ except ImportError:
     RAG_SYSTEM_AVAILABLE = False
 
 
-@pytest.mark.skipif(
-    not IMPLEMENTATIONS_AVAILABLE, reason="New implementations not available"
-)
+@pytest.mark.skipif(not IMPLEMENTATIONS_AVAILABLE, reason="New implementations not available")
 class TestNewImplementations:
     """Test the new RAG system implementations."""
 
@@ -81,9 +79,7 @@ class TestNewImplementations:
             assert "score" in result
 
     @pytest.mark.asyncio
-    async def test_contextual_knowledge_constructor(
-        self, config: UnifiedConfig
-    ) -> None:
+    async def test_contextual_knowledge_constructor(self, config: UnifiedConfig) -> None:
         """Test ContextualKnowledgeConstructor functionality."""
         constructor = ContextualKnowledgeConstructor(config)
 
@@ -104,9 +100,7 @@ class TestNewImplementations:
         assert knowledge["query"] == "machine learning"
 
     @pytest.mark.asyncio
-    async def test_uncertainty_aware_reasoning_engine(
-        self, config: UnifiedConfig
-    ) -> None:
+    async def test_uncertainty_aware_reasoning_engine(self, config: UnifiedConfig) -> None:
         """Test UncertaintyAwareReasoningEngine functionality."""
         engine = UncertaintyAwareReasoningEngine(config)
 
@@ -135,9 +129,7 @@ class TestNewImplementations:
         assert "low confidence" in response.lower()
 
 
-@pytest.mark.skipif(
-    not IMPLEMENTATIONS_AVAILABLE, reason="Agent implementations not available"
-)
+@pytest.mark.skipif(not IMPLEMENTATIONS_AVAILABLE, reason="Agent implementations not available")
 class TestAgentImplementations:
     """Test the agent implementations."""
 
@@ -153,9 +145,7 @@ class TestAgentImplementations:
         embedding = await agent.get_embedding("test text")
         assert isinstance(embedding, list)
 
-        reranked = await agent.rerank(
-            "query", [{"id": "1", "content": "test", "score": 0.5}], 1
-        )
+        reranked = await agent.rerank("query", [{"id": "1", "content": "test", "score": 0.5}], 1)
         assert isinstance(reranked, list)
 
         introspection = await agent.introspect()
@@ -177,9 +167,7 @@ class TestAgentImplementations:
         agent = DynamicKnowledgeIntegrationAgent()
 
         # Test knowledge integration
-        relations = {
-            "relations": [{"source": "A", "target": "B", "relation": "related_to"}]
-        }
+        relations = {"relations": [{"source": "A", "target": "B", "relation": "related_to"}]}
         agent.integrate_new_knowledge(relations)
 
         # Test abstract methods
@@ -278,8 +266,7 @@ class TestRAGSystem:
 
         # Calculate cosine similarity (dot product for normalized vectors)
         similarities = [
-            sum(q * d for q, d in zip(query_embedding, doc_emb, strict=False))
-            for doc_emb in doc_embeddings
+            sum(q * d for q, d in zip(query_embedding, doc_emb, strict=False)) for doc_emb in doc_embeddings
         ]
 
         # Find most similar

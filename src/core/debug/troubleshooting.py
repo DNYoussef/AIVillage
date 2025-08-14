@@ -29,9 +29,7 @@ class TroubleshootingTools:
     def __init__(self) -> None:
         self.logger = logging.getLogger(__name__)
 
-    def check_port_conflicts(
-        self, required_ports: list[int] | None = None
-    ) -> dict[str, Any]:
+    def check_port_conflicts(self, required_ports: list[int] | None = None) -> dict[str, Any]:
         """Check for port conflicts using netstat equivalent functionality.
 
         Args:
@@ -62,9 +60,7 @@ class TroubleshootingTools:
             if port_info["in_use"]:
                 results["conflicts_found"] += 1
                 results["conflicted_ports"].append(port)
-                self.logger.warning(
-                    f"Port {port} is in use by: {port_info['process_name']}"
-                )
+                self.logger.warning(f"Port {port} is in use by: {port_info['process_name']}")
             else:
                 results["available_ports"].append(port)
                 self.logger.debug(f"Port {port} is available")
@@ -97,20 +93,13 @@ class TroubleshootingTools:
 
                     # Get process information using psutil
                     for conn in psutil.net_connections():
-                        if (
-                            conn.laddr.port == port
-                            and conn.status == psutil.CONN_LISTEN
-                        ):
+                        if conn.laddr.port == port and conn.status == psutil.CONN_LISTEN:
                             try:
                                 process = psutil.Process(conn.pid)
                                 port_info["process_name"] = process.name()
                                 port_info["process_pid"] = conn.pid
-                                port_info["protocol"] = (
-                                    "TCP" if conn.type == socket.SOCK_STREAM else "UDP"
-                                )
-                                port_info["address"] = (
-                                    f"{conn.laddr.ip}:{conn.laddr.port}"
-                                )
+                                port_info["protocol"] = "TCP" if conn.type == socket.SOCK_STREAM else "UDP"
+                                port_info["address"] = f"{conn.laddr.ip}:{conn.laddr.port}"
                                 break
                             except (psutil.NoSuchProcess, psutil.AccessDenied):
                                 port_info["process_name"] = "Unknown"
@@ -133,9 +122,7 @@ class TroubleshootingTools:
                         port_info = {
                             "port": conn.laddr.port,
                             "address": f"{conn.laddr.ip}:{conn.laddr.port}",
-                            "protocol": (
-                                "TCP" if conn.type == socket.SOCK_STREAM else "UDP"
-                            ),
+                            "protocol": ("TCP" if conn.type == socket.SOCK_STREAM else "UDP"),
                             "process_name": process.name() if process else "Unknown",
                             "process_pid": conn.pid,
                         }
@@ -147,9 +134,7 @@ class TroubleshootingTools:
 
         return listening_ports
 
-    def detect_database_locks(
-        self, db_paths: list[str] | None = None
-    ) -> dict[str, Any]:
+    def detect_database_locks(self, db_paths: list[str] | None = None) -> dict[str, Any]:
         """Detect SQLite database locks and analyze database status.
 
         Args:
@@ -246,9 +231,7 @@ class TroubleshootingTools:
 
         return db_info
 
-    def profile_memory_usage(
-        self, include_faiss_simulation: bool = True
-    ) -> dict[str, Any]:
+    def profile_memory_usage(self, include_faiss_simulation: bool = True) -> dict[str, Any]:
         """Profile memory usage with FAISS memory simulation.
 
         Args:
@@ -285,9 +268,7 @@ class TroubleshootingTools:
             "vms_mb": process_memory.vms / (1024**2),
             "percent": process.memory_percent(),
             "num_threads": process.num_threads(),
-            "open_files": (
-                len(process.open_files()) if hasattr(process, "open_files") else 0
-            ),
+            "open_files": (len(process.open_files()) if hasattr(process, "open_files") else 0),
         }
 
         # FAISS memory simulation (CODEX requirement: keep under 2GB for 100K docs)
@@ -298,28 +279,17 @@ class TroubleshootingTools:
         # Generate recommendations
         recommendations = []
         if memory.percent > 85:
-            recommendations.append(
-                "High system memory usage - consider optimizing memory allocation"
-            )
+            recommendations.append("High system memory usage - consider optimizing memory allocation")
 
         if results["process_memory"]["rss_mb"] > 1000:
-            recommendations.append(
-                "High process memory usage - monitor for memory leaks"
-            )
+            recommendations.append("High process memory usage - monitor for memory leaks")
 
-        if (
-            include_faiss_simulation
-            and results["faiss_simulation"]["estimated_usage_gb"] > 1.8
-        ):
-            recommendations.append(
-                "FAISS memory usage approaching 2GB limit - implement lazy loading"
-            )
+        if include_faiss_simulation and results["faiss_simulation"]["estimated_usage_gb"] > 1.8:
+            recommendations.append("FAISS memory usage approaching 2GB limit - implement lazy loading")
 
         results["recommendations"] = recommendations
 
-        self.logger.debug(
-            f"Memory profiling completed: {memory.percent:.1f}% system usage"
-        )
+        self.logger.debug(f"Memory profiling completed: {memory.percent:.1f}% system usage")
 
         return results
 
@@ -346,8 +316,7 @@ class TroubleshootingTools:
             "document_count": document_count,
             "vector_dimension": vector_dimension,
             "vectors_memory_gb": vectors_memory_bytes / (1024**3),
-            "faiss_overhead_gb": (total_faiss_memory - vectors_memory_bytes)
-            / (1024**3),
+            "faiss_overhead_gb": (total_faiss_memory - vectors_memory_bytes) / (1024**3),
             "metadata_memory_mb": metadata_memory / (1024**2),
             "estimated_usage_gb": total_memory / (1024**3),
             "codex_limit_gb": 2.0,
@@ -449,9 +418,7 @@ class TroubleshootingTools:
 
         return connectivity_tests
 
-    def _test_connection(
-        self, host: str, port: int, timeout: float = 5.0
-    ) -> dict[str, Any]:
+    def _test_connection(self, host: str, port: int, timeout: float = 5.0) -> dict[str, Any]:
         """Test connection to a specific host and port."""
         result = {
             "host": host,
@@ -504,9 +471,7 @@ class TroubleshootingTools:
             "multicast_capable": True,
         }
 
-    def validate_configuration(
-        self, config_files: list[str] | None = None
-    ) -> dict[str, Any]:
+    def validate_configuration(self, config_files: list[str] | None = None) -> dict[str, Any]:
         """Validate system configuration files.
 
         Args:
@@ -692,9 +657,7 @@ class TroubleshootingTools:
 
         diagnosis["duration_seconds"] = time.time() - start_time
 
-        self.logger.info(
-            f"Comprehensive diagnosis completed in {diagnosis['duration_seconds']:.2f}s"
-        )
+        self.logger.info(f"Comprehensive diagnosis completed in {diagnosis['duration_seconds']:.2f}s")
         self.logger.info(f"Overall system health: {diagnosis['overall_health']}")
 
         return diagnosis
@@ -712,20 +675,14 @@ class TroubleshootingTools:
             score -= 0.3
 
         # High memory usage reduces score
-        memory_percent = (
-            diagnosis.get("memory_profile", {})
-            .get("system_memory", {})
-            .get("percent_used", 0)
-        )
+        memory_percent = diagnosis.get("memory_profile", {}).get("system_memory", {}).get("percent_used", 0)
         if memory_percent > 90:
             score -= 0.3
         elif memory_percent > 80:
             score -= 0.1
 
         # Configuration issues reduce score
-        invalid_configs = diagnosis.get("configuration_validation", {}).get(
-            "invalid_files", 0
-        )
+        invalid_configs = diagnosis.get("configuration_validation", {}).get("invalid_files", 0)
         if invalid_configs > 0:
             score -= 0.1 * invalid_configs
 

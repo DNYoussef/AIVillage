@@ -143,9 +143,7 @@ class InfrastructureAwareEvolution:
 
             # Initialize adaptive loader
             if self.config.enable_adaptive_loading and self.constraint_manager:
-                self.adaptive_loader = AdaptiveLoader(
-                    self.device_profiler, self.constraint_manager
-                )
+                self.adaptive_loader = AdaptiveLoader(self.device_profiler, self.constraint_manager)
 
             # Initialize P2P node
             if self.config.enable_p2p:
@@ -174,9 +172,7 @@ class InfrastructureAwareEvolution:
             self.system_initialized = True
             self.infrastructure_status = "active"
 
-            logger.info(
-                "Infrastructure-aware evolution system initialized successfully"
-            )
+            logger.info("Infrastructure-aware evolution system initialized successfully")
 
         except Exception as e:
             logger.exception(f"Failed to initialize infrastructure: {e}")
@@ -214,21 +210,11 @@ class InfrastructureAwareEvolution:
             return
 
         # Register evolution-specific handlers
-        self.p2p_node.register_handler(
-            "EVOLUTION_COORDINATION_REQUEST", self._handle_coordination_request
-        )
-        self.p2p_node.register_handler(
-            "EVOLUTION_COORDINATION_RESPONSE", self._handle_coordination_response
-        )
-        self.p2p_node.register_handler(
-            "EVOLUTION_PEER_STATUS", self._handle_peer_evolution_status
-        )
-        self.p2p_node.register_handler(
-            "EVOLUTION_RESOURCE_OFFER", self._handle_resource_offer
-        )
-        self.p2p_node.register_handler(
-            "EVOLUTION_CONSENSUS_VOTE", self._handle_consensus_vote
-        )
+        self.p2p_node.register_handler("EVOLUTION_COORDINATION_REQUEST", self._handle_coordination_request)
+        self.p2p_node.register_handler("EVOLUTION_COORDINATION_RESPONSE", self._handle_coordination_response)
+        self.p2p_node.register_handler("EVOLUTION_PEER_STATUS", self._handle_peer_evolution_status)
+        self.p2p_node.register_handler("EVOLUTION_RESOURCE_OFFER", self._handle_resource_offer)
+        self.p2p_node.register_handler("EVOLUTION_CONSENSUS_VOTE", self._handle_consensus_vote)
 
     async def _get_resource_status(self) -> dict[str, Any]:
         """Get current resource status for P2P communication."""
@@ -266,14 +252,10 @@ class InfrastructureAwareEvolution:
             self.stats["evolutions_started"] += 1
 
             # Assess current resources and determine evolution mode
-            evolution_mode = await self._determine_evolution_mode(
-                agent, evolution_type, preferred_mode
-            )
+            evolution_mode = await self._determine_evolution_mode(agent, evolution_type, preferred_mode)
 
             # Create coordination plan
-            plan = await self._create_coordination_plan(
-                evolution_id, agent, evolution_type, evolution_mode
-            )
+            plan = await self._create_coordination_plan(evolution_id, agent, evolution_type, evolution_mode)
 
             self.active_coordinations[evolution_id] = plan
 
@@ -313,9 +295,7 @@ class InfrastructureAwareEvolution:
                 "success": False,
                 "error": str(e),
                 "evolution_id": evolution_id,
-                "mode_used": (
-                    evolution_mode.value if "evolution_mode" in locals() else "unknown"
-                ),
+                "mode_used": (evolution_mode.value if "evolution_mode" in locals() else "unknown"),
             }
 
     async def _determine_evolution_mode(
@@ -351,9 +331,7 @@ class InfrastructureAwareEvolution:
                 mode = EvolutionMode.LOCAL_ONLY
                 self.stats["infrastructure_adaptations"] += 1
 
-        logger.info(
-            f"Determined evolution mode: {mode.value} for {evolution_type} evolution"
-        )
+        logger.info(f"Determined evolution mode: {mode.value} for {evolution_type} evolution")
         return mode
 
     async def _check_local_resources_sufficient(self, evolution_type: str) -> bool:
@@ -423,17 +401,13 @@ class InfrastructureAwareEvolution:
             fallback_mode=EvolutionMode.LOCAL_ONLY,
         )
 
-    async def _execute_local_evolution(
-        self, plan: EvolutionCoordinationPlan, agent: EvolvableAgent
-    ) -> dict[str, Any]:
+    async def _execute_local_evolution(self, plan: EvolutionCoordinationPlan, agent: EvolvableAgent) -> dict[str, Any]:
         """Execute evolution locally with resource constraints."""
         logger.info(f"Executing local evolution for agent {agent.agent_id}")
 
         # Register task with constraint manager
         if self.constraint_manager:
-            registered = self.constraint_manager.register_task(
-                plan.evolution_id, plan.evolution_type
-            )
+            registered = self.constraint_manager.register_task(plan.evolution_id, plan.evolution_type)
 
             if not registered:
                 return {
@@ -518,17 +492,13 @@ class InfrastructureAwareEvolution:
 
         # For now, fall back to local execution
         # In future sprints, this would coordinate actual distributed processing
-        logger.info(
-            "Distributed evolution not fully implemented, falling back to local"
-        )
+        logger.info("Distributed evolution not fully implemented, falling back to local")
 
         result = await self._execute_local_evolution(plan, agent)
         result["mode_used"] = "distributed_fallback"
         return result
 
-    async def _execute_hybrid_evolution(
-        self, plan: EvolutionCoordinationPlan, agent: EvolvableAgent
-    ) -> dict[str, Any]:
+    async def _execute_hybrid_evolution(self, plan: EvolutionCoordinationPlan, agent: EvolvableAgent) -> dict[str, Any]:
         """Execute hybrid evolution (local + peer assistance)."""
         logger.info(f"Executing hybrid evolution for agent {agent.agent_id}")
 
@@ -537,9 +507,7 @@ class InfrastructureAwareEvolution:
         result["mode_used"] = "hybrid"
         return result
 
-    async def _load_models_for_evolution(
-        self, agent: EvolvableAgent, plan: EvolutionCoordinationPlan
-    ) -> None:
+    async def _load_models_for_evolution(self, agent: EvolvableAgent, plan: EvolutionCoordinationPlan) -> None:
         """Load models adaptively for evolution."""
         if not self.adaptive_loader:
             return
@@ -560,14 +528,10 @@ class InfrastructureAwareEvolution:
         )
 
         # Load base evolution model
-        model, loading_info = await self.adaptive_loader.load_model_adaptive(
-            "base_evolution_model", context
-        )
+        model, loading_info = await self.adaptive_loader.load_model_adaptive("base_evolution_model", context)
 
         if model:
-            logger.info(
-                f"Loaded evolution model using {loading_info.get('strategy', 'unknown')} strategy"
-            )
+            logger.info(f"Loaded evolution model using {loading_info.get('strategy', 'unknown')} strategy")
         else:
             logger.warning("Failed to load evolution model")
 

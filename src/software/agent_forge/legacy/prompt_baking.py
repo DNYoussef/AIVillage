@@ -86,9 +86,7 @@ class PromptBakingConfig(BaseModel):
 
     # Tool integration
     enable_tool_integration: bool = Field(default=True)
-    available_tools: list[str] = Field(
-        default_factory=lambda: ["calculator", "search", "code_executor"]
-    )
+    available_tools: list[str] = Field(default_factory=lambda: ["calculator", "search", "code_executor"])
 
     # System configuration
     device: str = Field(default="auto")
@@ -98,9 +96,7 @@ class PromptBakingConfig(BaseModel):
     # W&B configuration
     wandb_project: str = Field(default="agent-forge")
     wandb_entity: str | None = None
-    wandb_tags: list[str] = Field(
-        default_factory=lambda: ["prompt_baking", "optimization"]
-    )
+    wandb_tags: list[str] = Field(default_factory=lambda: ["prompt_baking", "optimization"])
 
     @field_validator("device")
     @classmethod
@@ -125,9 +121,7 @@ class ABTestHarness:
 
         # Create prompt variants
         for i, template in enumerate(config.prompt_variants):
-            variant = PromptVariant(
-                id=f"variant_{i}", name=f"Prompt Variant {i + 1}", template=template
-            )
+            variant = PromptVariant(id=f"variant_{i}", name=f"Prompt Variant {i + 1}", template=template)
             self.variants.append(variant)
 
     async def run_ab_test(self, model, tokenizer) -> dict[str, Any]:
@@ -168,9 +162,7 @@ class ABTestHarness:
                 prompt = variant.template.format(task=task)
 
                 # Generate response
-                inputs = tokenizer.encode(prompt, return_tensors="pt").to(
-                    self.config.device
-                )
+                inputs = tokenizer.encode(prompt, return_tensors="pt").to(self.config.device)
 
                 with torch.no_grad():
                     outputs = model.generate(
@@ -193,9 +185,7 @@ class ABTestHarness:
                     variant.success_count += 1
 
             except Exception as e:
-                logger.warning(
-                    f"Test failed for variant {variant.id} on task '{task[:30]}...': {e}"
-                )
+                logger.warning(f"Test failed for variant {variant.id} on task '{task[:30]}...': {e}")
                 variant.test_count += 1
 
         return total_score / max(successful_tests, 1)
@@ -230,10 +220,7 @@ class ABTestHarness:
 
         elif "code" in task.lower():
             # Look for code elements
-            if any(
-                keyword in response
-                for keyword in ["def ", "function", "print", "return"]
-            ):
+            if any(keyword in response for keyword in ["def ", "function", "print", "return"]):
                 score += 0.3
             if "{" in response or "(" in response:
                 score += 0.2
@@ -261,9 +248,7 @@ class PromptWeightBaker:
     def __init__(self, config: PromptBakingConfig) -> None:
         self.config = config
 
-    async def bake_prompt_weights(
-        self, model, tokenizer, best_prompt_template: str
-    ) -> nn.Module:
+    async def bake_prompt_weights(self, model, tokenizer, best_prompt_template: str) -> nn.Module:
         """Bake prompt patterns into model weights."""
         logger.info("Starting prompt weight baking")
 
@@ -279,9 +264,7 @@ class PromptWeightBaker:
                     baking_params.extend(list(layer.parameters()))
 
         if not baking_params:
-            logger.warning(
-                "No suitable layers found for baking, using embedding parameters"
-            )
+            logger.warning("No suitable layers found for baking, using embedding parameters")
             if hasattr(model, "transformer") and hasattr(model.transformer, "wte"):
                 baking_params = list(model.transformer.wte.parameters())
 
@@ -325,9 +308,7 @@ class PromptWeightBaker:
 
             avg_epoch_loss = epoch_loss / len(training_data)
             total_loss += avg_epoch_loss
-            logger.info(
-                f"Baking epoch {epoch + 1} completed, loss: {avg_epoch_loss:.4f}"
-            )
+            logger.info(f"Baking epoch {epoch + 1} completed, loss: {avg_epoch_loss:.4f}")
 
         model.eval()
         avg_total_loss = total_loss / self.config.baking_epochs
@@ -391,9 +372,7 @@ class ToolIntegrationSystem:
         for tool_name in self.config.available_tools:
             if tool_name in self.available_tools:
                 try:
-                    result = await self.test_tool_integration(
-                        tool_name, model, tokenizer
-                    )
+                    result = await self.test_tool_integration(tool_name, model, tokenizer)
                     integration_results[tool_name] = result
                     logger.info(f"Tool '{tool_name}' integration: {result['success']}")
                 except Exception as e:
@@ -402,9 +381,7 @@ class ToolIntegrationSystem:
 
         return integration_results
 
-    async def test_tool_integration(
-        self, tool_name: str, model, tokenizer
-    ) -> dict[str, Any]:
+    async def test_tool_integration(self, tool_name: str, model, tokenizer) -> dict[str, Any]:
         """Test integration with a specific tool."""
         # Create tool-specific test prompt
         test_prompts = {
@@ -505,9 +482,7 @@ class PromptBakingPipeline:
 
             model = AutoModelForCausalLM.from_pretrained(
                 self.config.input_model_path,
-                torch_dtype=(
-                    torch.float16 if self.config.device == "cuda" else torch.float32
-                ),
+                torch_dtype=(torch.float16 if self.config.device == "cuda" else torch.float32),
                 device_map=self.config.device,
             )
 
@@ -523,20 +498,14 @@ class PromptBakingPipeline:
 
             # Phase 2: Bake best prompt into weights
             best_variant_id = ab_results["best_variant"]
-            best_variant = next(
-                v for v in self.ab_harness.variants if v.id == best_variant_id
-            )
+            best_variant = next(v for v in self.ab_harness.variants if v.id == best_variant_id)
 
             logger.info(f"Phase 2: Baking best prompt variant: {best_variant.name}")
-            baked_model = await self.weight_baker.bake_prompt_weights(
-                model, tokenizer, best_variant.template
-            )
+            baked_model = await self.weight_baker.bake_prompt_weights(model, tokenizer, best_variant.template)
 
             # Phase 3: Test tool integration
             logger.info("Phase 3: Testing tool integration")
-            tool_results = await self.tool_integration.integrate_tools(
-                baked_model, tokenizer
-            )
+            tool_results = await self.tool_integration.integrate_tools(baked_model, tokenizer)
             results["tool_integration"] = tool_results
 
             if self.wandb_run:
@@ -649,8 +618,7 @@ async def run_prompt_baking(config: dict[str, Any]) -> "PhaseResult":
                 metrics.update(
                     {
                         "best_variant_id": ab_data.get("best_variant"),
-                        "performance_improvement": ab_data.get("best_performance", 0)
-                        - 0.5,  # vs baseline
+                        "performance_improvement": ab_data.get("best_performance", 0) - 0.5,  # vs baseline
                     }
                 )
 
@@ -672,9 +640,7 @@ async def run_prompt_baking(config: dict[str, Any]) -> "PhaseResult":
             start_time=datetime.fromtimestamp(start_time),
             end_time=datetime.now(),
             duration_seconds=duration,
-            error_message=results.get(
-                "error", "Prompt baking failed with unknown error"
-            ),
+            error_message=results.get("error", "Prompt baking failed with unknown error"),
             metrics={"execution_time": duration},
         )
 
@@ -720,9 +686,7 @@ if __name__ == "__main__":
                 config_data = json.load(f)
             config = PromptBakingConfig(**config_data)
         else:
-            config = PromptBakingConfig(
-                input_model_path=args.input_model, output_model_path=args.output_model
-            )
+            config = PromptBakingConfig(input_model_path=args.input_model, output_model_path=args.output_model)
 
         # Run pipeline
         pipeline = PromptBakingPipeline(config)

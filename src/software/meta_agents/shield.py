@@ -99,9 +99,7 @@ class ShieldAgent(BaseAgent):
         # Initialize with core defensive patterns
         self._initialize_core_defenses()
 
-        self.logger.info(
-            "Shield Agent initialized with defensive security capabilities"
-        )
+        self.logger.info("Shield Agent initialized with defensive security capabilities")
 
     def _initialize_core_defenses(self):
         """Initialize core defensive security patterns."""
@@ -242,9 +240,7 @@ class ShieldAgent(BaseAgent):
         }
 
         # Update defensive patterns with research insights
-        for pattern_name, improvement in research_results[
-            "effectiveness_improvements"
-        ].items():
+        for pattern_name, improvement in research_results["effectiveness_improvements"].items():
             if pattern_name in self.defensive_patterns:
                 old_score = self.defensive_patterns[pattern_name].effectiveness_score
                 new_score = min(0.99, old_score + improvement)
@@ -366,9 +362,7 @@ class ShieldAgent(BaseAgent):
         ]
         return random.sample(measures, random.randint(2, 4))
 
-    async def prepare_battle_defense(
-        self, sword_intelligence: dict = None
-    ) -> dict[str, Any]:
+    async def prepare_battle_defense(self, sword_intelligence: dict = None) -> dict[str, Any]:
         """
         Prepare defensive strategies for mock battle against Sword Agent.
         """
@@ -405,9 +399,7 @@ class ShieldAgent(BaseAgent):
         )
 
         # Select defensive patterns for battle
-        battle_defenses = random.sample(
-            list(self.defensive_patterns.keys()), min(4, len(self.defensive_patterns))
-        )
+        battle_defenses = random.sample(list(self.defensive_patterns.keys()), min(4, len(self.defensive_patterns)))
 
         defense_strategy = {
             "strategy_id": hashlib.md5(str(datetime.now()).encode()).hexdigest()[:8],
@@ -437,9 +429,7 @@ class ShieldAgent(BaseAgent):
         self.defense_strategies[defense_strategy["strategy_id"]] = defense_strategy
         return defense_strategy
 
-    async def engage_battle_defense(
-        self, attack_scenarios: list[dict]
-    ) -> dict[str, Any]:
+    async def engage_battle_defense(self, attack_scenarios: list[dict]) -> dict[str, Any]:
         """
         Execute defensive responses during mock battle with Sword Agent.
         """
@@ -512,20 +502,16 @@ class ShieldAgent(BaseAgent):
         # Calculate battle performance metrics
         detections = [r for r in battle_results["detection_results"] if r["detected"]]
         detection_rate = len(detections) / len(attack_scenarios)
-        avg_detection_time = sum(r["detection_time"] for r in detections) / max(
+        avg_detection_time = sum(r["detection_time"] for r in detections) / max(len(detections), 1)
+        avg_response_time = sum(r["response_time"] for r in detections if "response_time" in r) / max(
             len(detections), 1
         )
-        avg_response_time = sum(
-            r["response_time"] for r in detections if "response_time" in r
-        ) / max(len(detections), 1)
 
         battle_results["battle_metrics"] = {
             "detection_rate": detection_rate,
             "average_detection_time": avg_detection_time,
             "average_response_time": avg_response_time,
-            "successful_containments": sum(
-                1 for r in detections if r.get("containment_success")
-            ),
+            "successful_containments": sum(1 for r in detections if r.get("containment_success")),
             "battle_duration": random.uniform(1800, 7200),  # 30 minutes to 2 hours
         }
 
@@ -573,9 +559,7 @@ class ShieldAgent(BaseAgent):
         )
 
         # Generate improvement recommendations
-        missed_detections = [
-            r for r in battle_results["detection_results"] if not r["detected"]
-        ]
+        missed_detections = [r for r in battle_results["detection_results"] if not r["detected"]]
         improvement_areas = []
 
         if len(missed_detections) > 2:
@@ -591,18 +575,14 @@ class ShieldAgent(BaseAgent):
             "analysis_time": datetime.now().isoformat(),
             "encrypted_analysis": analysis_thoughts,
             "performance_assessment": {
-                "overall_grade": self._calculate_performance_grade(
-                    battle_results["battle_metrics"]
-                ),
+                "overall_grade": self._calculate_performance_grade(battle_results["battle_metrics"]),
                 "strengths": self._identify_strengths(battle_results),
                 "weaknesses": self._identify_weaknesses(battle_results),
                 "improvement_priorities": improvement_areas,
             },
             "tactical_intelligence": {
                 "sword_attack_patterns": self._analyze_attack_patterns(battle_results),
-                "effective_countermeasures": self._identify_effective_countermeasures(
-                    battle_results
-                ),
+                "effective_countermeasures": self._identify_effective_countermeasures(battle_results),
                 "defensive_gaps": missed_detections,
             },
             "next_battle_preparations": self._plan_next_battle_improvements(),
@@ -643,10 +623,7 @@ class ShieldAgent(BaseAgent):
             strengths.append("rapid_threat_detection")
         if metrics["average_response_time"] < 240:
             strengths.append("fast_incident_response")
-        if (
-            metrics["successful_containments"]
-            > len(battle_results["detection_results"]) * 0.8
-        ):
+        if metrics["successful_containments"] > len(battle_results["detection_results"]) * 0.8:
             strengths.append("effective_containment")
 
         return strengths
@@ -663,9 +640,7 @@ class ShieldAgent(BaseAgent):
         if metrics["average_response_time"] > 480:
             weaknesses.append("delayed_incident_response")
 
-        missed_count = len(
-            [r for r in battle_results["detection_results"] if not r["detected"]]
-        )
+        missed_count = len([r for r in battle_results["detection_results"] if not r["detected"]])
         if missed_count > len(battle_results["detection_results"]) * 0.3:
             weaknesses.append("significant_detection_gaps")
 
@@ -690,9 +665,7 @@ class ShieldAgent(BaseAgent):
 
         for result in battle_results["detection_results"]:
             if result["detected"] and result.get("containment_success"):
-                effective_measures.extend(
-                    ["anomaly_detection", "behavioral_analysis", "network_monitoring"]
-                )
+                effective_measures.extend(["anomaly_detection", "behavioral_analysis", "network_monitoring"])
 
         return list(set(effective_measures))
 
@@ -716,9 +689,7 @@ class ShieldAgent(BaseAgent):
         performance_prob = grade_to_prob[performance_grade]
 
         # Update belief in defensive effectiveness
-        self.belief_engine.update_belief_probability(
-            "defensive_effectiveness", performance_prob
-        )
+        self.belief_engine.update_belief_probability("defensive_effectiveness", performance_prob)
 
         # Update beliefs about specific defensive patterns
         for strength in analysis_results["performance_assessment"]["strengths"]:
@@ -727,9 +698,7 @@ class ShieldAgent(BaseAgent):
                 new_prob = min(0.95, current_prob + 0.05)
                 self.belief_engine.update_belief_probability(strength, new_prob)
 
-    async def communicate_with_king(
-        self, message: str, priority: str = "normal"
-    ) -> dict[str, Any]:
+    async def communicate_with_king(self, message: str, priority: str = "normal") -> dict[str, Any]:
         """
         Communicate defensive intelligence to King Agent.
         These communications are unencrypted as specified.
@@ -755,9 +724,7 @@ class ShieldAgent(BaseAgent):
             "status": "active",
             "defensive_patterns_count": len(self.defensive_patterns),
             "threat_intelligence_count": len(self.threat_intelligence),
-            "active_incidents": len(
-                [i for i in self.security_incidents.values() if i.status != "resolved"]
-            ),
+            "active_incidents": len([i for i in self.security_incidents.values() if i.status != "resolved"]),
             "battle_history_count": len(self.battle_history),
             "performance_metrics": {
                 "detection_rate": self.detection_rate,
@@ -777,9 +744,7 @@ class ShieldAgent(BaseAgent):
             self._initialize_default_patterns()
 
             self.initialized = True
-            logger.info(
-                f"Shield Agent {self.agent_id} initialized - Ready for defensive operations"
-            )
+            logger.info(f"Shield Agent {self.agent_id} initialized - Ready for defensive operations")
 
         except Exception as e:
             logger.error(f"Shield Agent initialization failed: {e}")

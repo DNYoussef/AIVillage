@@ -61,9 +61,7 @@ class HybridRetriever:
 
         logger.info("HybridRetriever initialized")
 
-    async def retrieve(
-        self, query: str, user_id: str | None, plan: QueryPlan, limit: int = 50
-    ) -> HybridResults:
+    async def retrieve(self, query: str, user_id: str | None, plan: QueryPlan, limit: int = 50) -> HybridResults:
         """Main retrieval method orchestrating the complete pipeline.
 
         Args:
@@ -86,9 +84,7 @@ class HybridRetriever:
             # Phase 1: Vector similarity search
             reasoning_trace.append("Phase 1: Vector similarity search")
             vector_results = await self._vector_search(query, user_id, limit)
-            reasoning_trace.append(
-                f"Vector search returned {len(vector_results)} results"
-            )
+            reasoning_trace.append(f"Vector search returned {len(vector_results)} results")
 
             # Phase 2: Extract seeds for PPR
             query_seeds = self._extract_seeds(vector_results, plan)
@@ -107,9 +103,7 @@ class HybridRetriever:
             # Phase 4: Result fusion
             reasoning_trace.append("Phase 4: Result fusion")
             fused_results = self._fuse_results(vector_results, ppr_results, limit)
-            reasoning_trace.append(
-                f"Fusion produced {len(fused_results)} final results"
-            )
+            reasoning_trace.append(f"Fusion produced {len(fused_results)} final results")
 
             total_time = (time.time() - start_time) * 1000
             reasoning_trace.append(f"Hybrid retrieval completed in {total_time:.2f}ms")
@@ -157,9 +151,7 @@ class HybridRetriever:
             return getattr(plan, "confidence_hint", 1.0) < self.creative_threshold
         return False
 
-    async def _vector_search(
-        self, query: str, user_id: str | None, limit: int
-    ) -> list[dict[str, Any]]:
+    async def _vector_search(self, query: str, user_id: str | None, limit: int) -> list[dict[str, Any]]:
         """Perform vector similarity search on both memory systems."""
         try:
             vector_results = []
@@ -181,9 +173,7 @@ class HybridRetriever:
                             "source": "episodic",
                             "memory_type": "episodic",
                             "confidence": node.confidence,
-                            "created_at": (
-                                node.created_at.isoformat() if node.created_at else None
-                            ),
+                            "created_at": (node.created_at.isoformat() if node.created_at else None),
                         }
                     )
 
@@ -219,9 +209,7 @@ class HybridRetriever:
             logger.exception(f"Vector search failed: {e!s}")
             return []
 
-    def _extract_seeds(
-        self, vector_results: list[dict[str, Any]], plan: QueryPlan
-    ) -> list[str]:
+    def _extract_seeds(self, vector_results: list[dict[str, Any]], plan: QueryPlan) -> list[str]:
         """Extract seed node IDs for PPR from vector results."""
         try:
             # Use top vector results as seeds
@@ -299,9 +287,7 @@ class HybridRetriever:
                 ppr_score = item.get("ppr_score", 0.0)
 
                 # Weighted fusion
-                fused_score = (
-                    self.vector_weight * vector_score + self.ppr_weight * ppr_score
-                )
+                fused_score = self.vector_weight * vector_score + self.ppr_weight * ppr_score
 
                 # Apply confidence boost
                 confidence = item.get("confidence", 1.0)
@@ -344,9 +330,7 @@ class HybridRetriever:
         if total > 0:
             self.vector_weight = vector_weight / total
             self.ppr_weight = ppr_weight / total
-            logger.info(
-                f"Updated fusion weights: vector={self.vector_weight:.3f}, ppr={self.ppr_weight:.3f}"
-            )
+            logger.info(f"Updated fusion weights: vector={self.vector_weight:.3f}, ppr={self.ppr_weight:.3f}")
 
 
 # Factory function

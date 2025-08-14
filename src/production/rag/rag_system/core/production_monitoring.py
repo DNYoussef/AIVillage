@@ -137,9 +137,7 @@ class CircuitBreaker:
 class ProductionMonitor:
     """Production monitoring system for BayesRAG-CODEX pipeline."""
 
-    def __init__(
-        self, pipeline, cache, metrics_dir: Path = Path("/tmp/rag_metrics")
-    ) -> None:
+    def __init__(self, pipeline, cache, metrics_dir: Path = Path("/tmp/rag_metrics")) -> None:
         self.pipeline = pipeline
         self.cache = cache
         self.metrics_dir = metrics_dir
@@ -172,9 +170,7 @@ class ProductionMonitor:
     def setup_prometheus_metrics(self) -> None:
         """Setup Prometheus metrics for monitoring."""
         # Request metrics
-        self.request_counter = Counter(
-            "rag_requests_total", "Total number of RAG requests", ["method", "status"]
-        )
+        self.request_counter = Counter("rag_requests_total", "Total number of RAG requests", ["method", "status"])
 
         self.latency_histogram = Histogram(
             "rag_request_latency_ms",
@@ -196,9 +192,7 @@ class ProductionMonitor:
         # Performance metrics
         self.p95_latency = Gauge("rag_p95_latency_ms", "P95 request latency")
 
-        self.throughput = Gauge(
-            "rag_throughput_rps", "Request throughput (requests per second)"
-        )
+        self.throughput = Gauge("rag_throughput_rps", "Request throughput (requests per second)")
 
     def _setup_default_health_checks(self) -> None:
         """Setup default health checks."""
@@ -252,19 +246,13 @@ class ProductionMonitor:
     def _setup_circuit_breakers(self) -> None:
         """Setup circuit breakers for services."""
         # Embedding service breaker
-        self.circuit_breakers["embedding"] = CircuitBreaker(
-            name="embedding", failure_threshold=5, recovery_timeout=30
-        )
+        self.circuit_breakers["embedding"] = CircuitBreaker(name="embedding", failure_threshold=5, recovery_timeout=30)
 
         # Cache service breaker
-        self.circuit_breakers["cache"] = CircuitBreaker(
-            name="cache", failure_threshold=10, recovery_timeout=20
-        )
+        self.circuit_breakers["cache"] = CircuitBreaker(name="cache", failure_threshold=10, recovery_timeout=20)
 
         # Index service breaker
-        self.circuit_breakers["index"] = CircuitBreaker(
-            name="index", failure_threshold=3, recovery_timeout=60
-        )
+        self.circuit_breakers["index"] = CircuitBreaker(name="index", failure_threshold=3, recovery_timeout=60)
 
     async def _check_pipeline_ready(self) -> bool:
         """Check if pipeline is ready."""
@@ -277,9 +265,7 @@ class ProductionMonitor:
             if not hasattr(self.pipeline, "index") or self.pipeline.index is None:
                 return False
 
-            return not (
-                not hasattr(self.pipeline, "embedder") or self.pipeline.embedder is None
-            )
+            return not (not hasattr(self.pipeline, "embedder") or self.pipeline.embedder is None)
 
         except Exception as e:
             logger.exception(f"Pipeline health check failed: {e}")
@@ -292,9 +278,7 @@ class ProductionMonitor:
                 return False
 
             # Try a simple search
-            test_embedding = np.random.randn(1, self.pipeline.vector_dim).astype(
-                "float32"
-            )
+            test_embedding = np.random.randn(1, self.pipeline.vector_dim).astype("float32")
             scores, ids = self.pipeline.index.search(test_embedding, 1)
 
             return True
@@ -328,11 +312,7 @@ class ProductionMonitor:
             return True  # No data yet
 
         # Get recent latencies
-        recent_latencies = [
-            p.value
-            for p in list(self.performance_history)[-100:]
-            if p.name == "request_latency"
-        ]
+        recent_latencies = [p.value for p in list(self.performance_history)[-100:] if p.name == "request_latency"]
 
         if not recent_latencies:
             return True
@@ -380,9 +360,7 @@ class ProductionMonitor:
         for name, check in self.health_checks.items():
             try:
                 # Run check with timeout
-                result = await asyncio.wait_for(
-                    check.check_function(), timeout=check.timeout_seconds
-                )
+                result = await asyncio.wait_for(check.check_function(), timeout=check.timeout_seconds)
 
                 results[name] = {
                     "status": "healthy" if result else "unhealthy",
@@ -444,9 +422,7 @@ class ProductionMonitor:
             "timestamp": datetime.now().isoformat(),
         }
 
-    def record_request(
-        self, latency_ms: float, success: bool = True, method: str = "retrieve"
-    ) -> None:
+    def record_request(self, latency_ms: float, success: bool = True, method: str = "retrieve") -> None:
         """Record request metrics."""
         # Update counters
         status = "success" if success else "failure"
@@ -478,11 +454,7 @@ class ProductionMonitor:
             return optimizations
 
         # Calculate current P95 latency
-        latencies = [
-            p.value
-            for p in list(self.performance_history)[-100:]
-            if p.name == "request_latency"
-        ]
+        latencies = [p.value for p in list(self.performance_history)[-100:] if p.name == "request_latency"]
 
         if latencies:
             p95 = np.percentile(latencies, 95)
@@ -496,16 +468,11 @@ class ProductionMonitor:
                 if cache_metrics["hit_rate"] < 0.5:
                     # Increase hot cache size
                     if hasattr(self.cache, "tiers"):
-                        self.cache.tiers["hot"].max_size = min(
-                            256, self.cache.tiers["hot"].max_size * 2
-                        )
+                        self.cache.tiers["hot"].max_size = min(256, self.cache.tiers["hot"].max_size * 2)
                         optimizations["applied"].append("Increased hot cache size")
 
                 # Optimization 2: Enable prefetching if not enabled
-                if (
-                    hasattr(self.cache, "enable_prefetch")
-                    and not self.cache.enable_prefetch
-                ):
+                if hasattr(self.cache, "enable_prefetch") and not self.cache.enable_prefetch:
                     self.cache.enable_prefetch = True
                     optimizations["applied"].append("Enabled cache prefetching")
 
@@ -516,9 +483,7 @@ class ProductionMonitor:
 
                 # Recommendations for manual intervention
                 if p95 > self.latency_target * 2:
-                    optimizations["recommendations"].append(
-                        "Consider scaling horizontally or upgrading hardware"
-                    )
+                    optimizations["recommendations"].append("Consider scaling horizontally or upgrading hardware")
 
                 if cache_metrics["hit_rate"] < 0.3:
                     optimizations["recommendations"].append(
@@ -559,9 +524,7 @@ class ProductionMonitor:
             breaker.record_failure()
             raise
 
-    async def graceful_degradation(
-        self, query: str, normal_k: int = 10
-    ) -> tuple[list[Any], dict[str, Any]]:
+    async def graceful_degradation(self, query: str, normal_k: int = 10) -> tuple[list[Any], dict[str, Any]]:
         """Retrieve with graceful degradation under load.
 
         Reduces quality/features to maintain latency target.
@@ -583,9 +546,7 @@ class ProductionMonitor:
 
         # Try with cache first (fastest)
         try:
-            cached = await self.handle_with_circuit_breaker(
-                "cache", lambda: self.cache.get(query)
-            )
+            cached = await self.handle_with_circuit_breaker("cache", lambda: self.cache.get(query))
 
             if cached:
                 latency = (time.perf_counter() - start_time) * 1000
@@ -648,11 +609,7 @@ class ProductionMonitor:
                             self.cache_size.labels(tier=tier).set(size)
 
                 # Calculate throughput
-                recent_requests = [
-                    p
-                    for p in list(self.performance_history)[-60:]
-                    if p.timestamp > time.time() - 60
-                ]
+                recent_requests = [p for p in list(self.performance_history)[-60:] if p.timestamp > time.time() - 60]
                 throughput = len(recent_requests) / 60
                 self.throughput.set(throughput)
 
@@ -679,29 +636,16 @@ class ProductionMonitor:
     async def _save_metrics(self) -> None:
         """Save metrics to disk."""
         try:
-            metrics_file = (
-                self.metrics_dir
-                / f"metrics_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-            )
+            metrics_file = self.metrics_dir / f"metrics_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
 
             metrics = {
                 "timestamp": datetime.now().isoformat(),
                 "health_status": self.health_status.value,
                 "performance": {
-                    "p95_latency": (
-                        self.p95_latency._value.get()
-                        if hasattr(self.p95_latency, "_value")
-                        else 0
-                    ),
-                    "throughput": (
-                        self.throughput._value.get()
-                        if hasattr(self.throughput, "_value")
-                        else 0
-                    ),
+                    "p95_latency": (self.p95_latency._value.get() if hasattr(self.p95_latency, "_value") else 0),
+                    "throughput": (self.throughput._value.get() if hasattr(self.throughput, "_value") else 0),
                     "cache_hit_rate": (
-                        self.cache_hit_rate._value.get()
-                        if hasattr(self.cache_hit_rate, "_value")
-                        else 0
+                        self.cache_hit_rate._value.get() if hasattr(self.cache_hit_rate, "_value") else 0
                     ),
                 },
                 "circuit_breakers": {
@@ -722,11 +666,7 @@ class ProductionMonitor:
     def get_dashboard_data(self) -> dict[str, Any]:
         """Get data for monitoring dashboard."""
         # Calculate current metrics
-        latencies = [
-            p.value
-            for p in list(self.performance_history)[-100:]
-            if p.name == "request_latency"
-        ]
+        latencies = [p.value for p in list(self.performance_history)[-100:] if p.name == "request_latency"]
 
         if latencies:
             current_p50 = np.percentile(latencies, 50)
@@ -810,9 +750,7 @@ async def test_production_monitoring() -> None:
     # Simulate failures
     for i in range(6):
         try:
-            result = await monitor.handle_with_circuit_breaker(
-                "test_service", failing_operation, fallback_operation
-            )
+            result = await monitor.handle_with_circuit_breaker("test_service", failing_operation, fallback_operation)
             print(f"  Request {i + 1}: {result}")
         except Exception as e:
             print(f"  Request {i + 1}: Failed - {e}")
@@ -823,9 +761,7 @@ async def test_production_monitoring() -> None:
     # Simulate degraded health
     monitor.health_status = HealthStatus.DEGRADED
 
-    results, metrics = await monitor.graceful_degradation(
-        query="test query", normal_k=10
-    )
+    results, metrics = await monitor.graceful_degradation(query="test query", normal_k=10)
 
     print(f"  Degraded: {metrics.get('degraded', False)}")
     print(f"  Reduced K: {metrics.get('reduced_k', 'N/A')}")

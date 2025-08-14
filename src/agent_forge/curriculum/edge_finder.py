@@ -100,20 +100,14 @@ class EdgeFinder:
             },
             "bins": bins,
             "bin_accuracies": bin_accuracies,
-            "edge_candidates": sorted(
-                edge_candidates, key=lambda x: x["sample_size"], reverse=True
-            ),
+            "edge_candidates": sorted(edge_candidates, key=lambda x: x["sample_size"], reverse=True),
             "in_target_range": len(edge_candidates),
-            "recommendations": self._generate_recommendations(
-                bin_accuracies, constraints
-            ),
+            "recommendations": self._generate_recommendations(bin_accuracies, constraints),
         }
 
         return analysis
 
-    def _generate_recommendations(
-        self, bin_accuracies: dict[float, float], constraints: EdgeConstraints
-    ) -> list[str]:
+    def _generate_recommendations(self, bin_accuracies: dict[float, float], constraints: EdgeConstraints) -> list[str]:
         """Generate recommendations based on local analysis."""
         recommendations = []
 
@@ -125,13 +119,9 @@ class EdgeFinder:
         ]
 
         if len(target_bins) == 0:
-            recommendations.append(
-                "No difficulty bins in target accuracy range - need broader sampling"
-            )
+            recommendations.append("No difficulty bins in target accuracy range - need broader sampling")
         elif len(target_bins) < 3:
-            recommendations.append(
-                "Limited coverage in target range - consider more diverse difficulty sampling"
-            )
+            recommendations.append("Limited coverage in target range - consider more diverse difficulty sampling")
 
         # Check for edge-of-chaos indicators
         sorted_bins = sorted(bin_accuracies.items())
@@ -142,21 +132,15 @@ class EdgeFinder:
                 next_diff, next_acc = sorted_bins[i + 1]
 
                 if curr_acc - next_acc > 0.3:  # Steep drop
-                    recommendations.append(
-                        f"Potential chaos edge detected around difficulty {curr_diff:.1f}"
-                    )
+                    recommendations.append(f"Potential chaos edge detected around difficulty {curr_diff:.1f}")
 
         # Sample size recommendations
         low_sample_bins = [
-            bin_key
-            for bin_key, data in bin_accuracies.items()
-            if bin_key in target_bins and len(target_bins) < 5
+            bin_key for bin_key, data in bin_accuracies.items() if bin_key in target_bins and len(target_bins) < 5
         ]
 
         if low_sample_bins:
-            recommendations.append(
-                "Some target bins have low sample sizes - consider more data collection"
-            )
+            recommendations.append("Some target bins have low sample sizes - consider more data collection")
 
         return recommendations[:3]  # Limit to top 3 recommendations
 
@@ -186,18 +170,14 @@ class EdgeFinder:
             raise ValueError("Telemetry data cannot be empty")
 
         if len(telemetry) < 5:
-            raise ValueError(
-                "Need at least 5 telemetry entries for reliable edge detection"
-            )
+            raise ValueError("Need at least 5 telemetry entries for reliable edge detection")
 
         # Set defaults
         if difficulty_scale is None:
             difficulty_scale = DifficultyScale(min=0.0, max=1.0)
 
         if constraints is None:
-            constraints = EdgeConstraints(
-                target_low=0.55, target_high=0.75, problem_budget=1000
-            )
+            constraints = EdgeConstraints(target_low=0.55, target_high=0.75, problem_budget=1000)
 
         # Create request
         request = EdgeAssessmentRequest(
@@ -209,9 +189,7 @@ class EdgeFinder:
 
         # Perform local analysis
         local_analysis = self._analyze_telemetry_locally(telemetry, constraints)
-        logger.info(
-            f"Local analysis: {local_analysis['in_target_range']} bins in target range"
-        )
+        logger.info(f"Local analysis: {local_analysis['in_target_range']} bins in target range")
 
         # Render prompt with telemetry data
         prompt = self.llm_client.render_template(
@@ -222,9 +200,7 @@ class EdgeFinder:
             constraints=request.constraints,
         )
 
-        logger.info(
-            f"Finding edge for {domain} with {len(telemetry)} telemetry entries"
-        )
+        logger.info(f"Finding edge for {domain} with {len(telemetry)} telemetry entries")
 
         # Get LLM assessment
         response = await self.llm_client.invoke_with_schema(
@@ -318,17 +294,13 @@ class EdgeFinder:
                         "generation_plan": response.generation_plan,
                     }
                 )
-                logger.info(
-                    f"Batch {i}: Edge {response.edge.low:.2f}-{response.edge.high:.2f}"
-                )
+                logger.info(f"Batch {i}: Edge {response.edge.low:.2f}-{response.edge.high:.2f}")
             except Exception as e:
                 logger.error(f"Failed to find edge for batch {i}: {e}")
                 continue
 
         if len(edges) < 2:
-            return {
-                "error": "Need at least 2 successful edge detections for stability analysis"
-            }
+            return {"error": "Need at least 2 successful edge detections for stability analysis"}
 
         # Calculate stability metrics
         low_bounds = [edge["edge"].low for edge in edges]
@@ -345,23 +317,18 @@ class EdgeFinder:
                 },
                 "high": {
                     "mean": statistics.mean(high_bounds),
-                    "stdev": statistics.stdev(high_bounds)
-                    if len(high_bounds) > 1
-                    else 0,
+                    "stdev": statistics.stdev(high_bounds) if len(high_bounds) > 1 else 0,
                     "range": max(high_bounds) - min(high_bounds),
                 },
             },
             "width_stability": {
                 "mean": statistics.mean(widths),
                 "stdev": statistics.stdev(widths) if len(widths) > 1 else 0,
-                "coefficient_of_variation": statistics.stdev(widths)
-                / statistics.mean(widths)
+                "coefficient_of_variation": statistics.stdev(widths) / statistics.mean(widths)
                 if len(widths) > 1 and statistics.mean(widths) > 0
                 else 0,
             },
-            "stability_score": self._calculate_stability_score(
-                low_bounds, high_bounds, widths
-            ),
+            "stability_score": self._calculate_stability_score(low_bounds, high_bounds, widths),
             "edges": edges,
         }
 
@@ -373,21 +340,11 @@ class EdgeFinder:
         """Calculate a stability score (0-1, higher is more stable)."""
 
         # Penalize high variance in bounds
-        low_cv = (
-            statistics.stdev(low_bounds) / statistics.mean(low_bounds)
-            if statistics.mean(low_bounds) > 0
-            else 1
-        )
+        low_cv = statistics.stdev(low_bounds) / statistics.mean(low_bounds) if statistics.mean(low_bounds) > 0 else 1
         high_cv = (
-            statistics.stdev(high_bounds) / statistics.mean(high_bounds)
-            if statistics.mean(high_bounds) > 0
-            else 1
+            statistics.stdev(high_bounds) / statistics.mean(high_bounds) if statistics.mean(high_bounds) > 0 else 1
         )
-        width_cv = (
-            statistics.stdev(widths) / statistics.mean(widths)
-            if statistics.mean(widths) > 0
-            else 1
-        )
+        width_cv = statistics.stdev(widths) / statistics.mean(widths) if statistics.mean(widths) > 0 else 1
 
         # Average coefficient of variation (lower is more stable)
         avg_cv = (low_cv + high_cv + width_cv) / 3
@@ -441,11 +398,7 @@ if __name__ == "__main__":
                 correct_prob = 0.45  # Transition zones
 
             correct = random.random() < correct_prob
-            telemetry.append(
-                TelemetryEntry(
-                    task_id=f"demo_task_{i:03d}", difficulty=difficulty, correct=correct
-                )
-            )
+            telemetry.append(TelemetryEntry(task_id=f"demo_task_{i:03d}", difficulty=difficulty, correct=correct))
 
         # Mock API key for demo
         try:
@@ -457,9 +410,7 @@ if __name__ == "__main__":
                 print("🔧 Demo mode: Set OPENROUTER_API_KEY for live API testing")
                 return
 
-            result = await find_model_edge(
-                api_key=api_key, domain="coding-python", telemetry=telemetry
-            )
+            result = await find_model_edge(api_key=api_key, domain="coding-python", telemetry=telemetry)
 
             print(f"✅ Edge found: {result.edge.low:.1%} - {result.edge.high:.1%}")
             print(f"📊 Topics: {len(result.topic_mix)}")

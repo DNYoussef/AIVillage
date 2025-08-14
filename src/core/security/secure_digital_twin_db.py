@@ -28,9 +28,7 @@ class SecureDigitalTwinDB:
         Args:
             db_path: Path to Digital Twin SQLite database
         """
-        self.db_path = db_path or os.getenv(
-            "DIGITAL_TWIN_DB_PATH", "./data/digital_twin.db"
-        )
+        self.db_path = db_path or os.getenv("DIGITAL_TWIN_DB_PATH", "./data/digital_twin.db")
         self.enable_wal = os.getenv("DIGITAL_TWIN_SQLITE_WAL", "true").lower() == "true"
 
         # Initialize encryption system
@@ -266,16 +264,12 @@ class SecureDigitalTwinDB:
         """
         with self.get_connection() as conn:
             # Generate profile ID and hash user ID
-            profile_id = (
-                profile_data.get("profile_id") or f"profile_{os.urandom(8).hex()}"
-            )
+            profile_id = profile_data.get("profile_id") or f"profile_{os.urandom(8).hex()}"
             user_id = profile_data.get("user_id", "")
             user_id_hash = self.encryption.hash_user_id(user_id)
 
             # Calculate TTL expiration
-            ttl_expires_at = datetime.utcnow() + timedelta(
-                days=self.encryption.profile_ttl_days
-            )
+            ttl_expires_at = datetime.utcnow() + timedelta(days=self.encryption.profile_ttl_days)
 
             # Prepare compliance flags
             compliance_flags = json.dumps(
@@ -299,10 +293,8 @@ class SecureDigitalTwinDB:
 
             for field in sensitive_fields:
                 if field in profile_data:
-                    encrypted_data[f"{field}_encrypted"] = (
-                        self.encryption.encrypt_sensitive_field(
-                            profile_data[field], field
-                        )
+                    encrypted_data[f"{field}_encrypted"] = self.encryption.encrypt_sensitive_field(
+                        profile_data[field], field
                     )
 
             # Insert profile
@@ -363,9 +355,7 @@ class SecureDigitalTwinDB:
             logger.info(f"Created encrypted learning profile: {profile_id}")
             return profile_id
 
-    def get_learning_profile(
-        self, profile_id: str, decrypt: bool = True
-    ) -> dict[str, Any] | None:
+    def get_learning_profile(self, profile_id: str, decrypt: bool = True) -> dict[str, Any] | None:
         """Retrieve learning profile with optional decryption.
 
         Args:
@@ -478,9 +468,7 @@ class SecureDigitalTwinDB:
             for field in sensitive_fields:
                 if field in updates:
                     encrypted_field = f"{field}_encrypted"
-                    encrypted_data = self.encryption.encrypt_sensitive_field(
-                        updates[field], field
-                    )
+                    encrypted_data = self.encryption.encrypt_sensitive_field(updates[field], field)
                     set_clauses.append(f"{encrypted_field} = ?")
                     values.append(encrypted_data)
 
@@ -511,9 +499,7 @@ class SecureDigitalTwinDB:
                 additional_data=json.dumps(
                     {
                         "fields_updated": list(updates.keys()),
-                        "encrypted_fields": [
-                            f for f in updates if f in sensitive_fields
-                        ],
+                        "encrypted_fields": [f for f in updates if f in sensitive_fields],
                     }
                 ),
             )
@@ -522,9 +508,7 @@ class SecureDigitalTwinDB:
             logger.info(f"Updated encrypted learning profile: {profile_id}")
             return True
 
-    def delete_learning_profile(
-        self, profile_id: str, reason: str = "user_request"
-    ) -> bool:
+    def delete_learning_profile(self, profile_id: str, reason: str = "user_request") -> bool:
         """Delete learning profile with GDPR compliance.
 
         Args:
@@ -549,9 +533,7 @@ class SecureDigitalTwinDB:
             user_id_hash = row[0]
 
             # Delete profile (cascades to sessions and knowledge states)
-            conn.execute(
-                "DELETE FROM learning_profiles WHERE profile_id = ?", (profile_id,)
-            )
+            conn.execute("DELETE FROM learning_profiles WHERE profile_id = ?", (profile_id,))
 
             # Update retention tracking
             conn.execute(
@@ -604,10 +586,7 @@ class SecureDigitalTwinDB:
                 }
 
         # Check COPPA compliance for minors
-        if (
-            compliance_flags.get("requires_parental_consent")
-            and not self.encryption.coppa_compliant
-        ):
+        if compliance_flags.get("requires_parental_consent") and not self.encryption.coppa_compliant:
             return {
                 "access_allowed": False,
                 "reason": "COPPA compliance required for minor profiles",
@@ -615,10 +594,7 @@ class SecureDigitalTwinDB:
             }
 
         # Check FERPA compliance for educational records
-        if (
-            compliance_flags.get("educational_record")
-            and not self.encryption.ferpa_compliant
-        ):
+        if compliance_flags.get("educational_record") and not self.encryption.ferpa_compliant:
             return {
                 "access_allowed": False,
                 "reason": "FERPA compliance required for educational records",
@@ -707,9 +683,7 @@ class SecureDigitalTwinDB:
         deleted_count = 0
 
         for profile in expired_profiles:
-            success = self.delete_learning_profile(
-                profile["profile_id"], reason="retention_policy_expiry"
-            )
+            success = self.delete_learning_profile(profile["profile_id"], reason="retention_policy_expiry")
             if success:
                 deleted_count += 1
 
@@ -832,9 +806,7 @@ class SecureDigitalTwinDB:
                 GROUP BY compliance_type
             """
             )
-            audit_stats = {
-                row[0]: {"count": row[1], "last_entry": row[2]} for row in cursor
-            }
+            audit_stats = {row[0]: {"count": row[1], "last_entry": row[2]} for row in cursor}
             stats["audit"] = audit_stats
 
             # Encryption status
@@ -865,9 +837,7 @@ if __name__ == "__main__":
     import tempfile
 
     # Set test environment
-    os.environ["DIGITAL_TWIN_ENCRYPTION_KEY"] = (
-        "dGVzdF9rZXlfMzJfYnl0ZXNfZm9yX2VuY3J5cHRpb25fdGVzdGluZ19wdXJwb3Nlcw=="
-    )
+    os.environ["DIGITAL_TWIN_ENCRYPTION_KEY"] = "dGVzdF9rZXlfMzJfYnl0ZXNfZm9yX2VuY3J5cHRpb25fdGVzdGluZ19wdXJwb3Nlcw=="
     os.environ["DIGITAL_TWIN_COPPA_COMPLIANT"] = "true"
     os.environ["DIGITAL_TWIN_FERPA_COMPLIANT"] = "true"
     os.environ["DIGITAL_TWIN_GDPR_COMPLIANT"] = "true"

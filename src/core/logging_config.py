@@ -66,9 +66,7 @@ class StructuredFormatter(logging.Formatter):
 class AIVillageLoggerAdapter(logging.LoggerAdapter):
     """Logger adapter that adds contextual information to all log messages."""
 
-    def __init__(
-        self, logger: logging.Logger, extra: dict[str, Any] | None = None
-    ) -> None:
+    def __init__(self, logger: logging.Logger, extra: dict[str, Any] | None = None) -> None:
         super().__init__(logger, extra or {})
 
     def process(self, msg: str, kwargs: dict[str, Any]) -> tuple:
@@ -130,9 +128,7 @@ def create_logging_config(
             "structured": {"()": StructuredFormatter},
         },
         "handlers": {},
-        "loggers": {
-            "AIVillage": {"level": log_level, "handlers": [], "propagate": False}
-        },
+        "loggers": {"AIVillage": {"level": log_level, "handlers": [], "propagate": False}},
         "root": {"level": "WARNING", "handlers": []},
     }
 
@@ -418,9 +414,7 @@ class PerformanceLogger:
         self.logger.warning(f"Timer for {operation} was not started")
         return None
 
-    def log_metric(
-        self, metric_name: str, value: float, unit: str = "", **metadata
-    ) -> None:
+    def log_metric(self, metric_name: str, value: float, unit: str = "", **metadata) -> None:
         """Log a performance metric."""
         self.logger.info(
             f"Metric: {metric_name}",

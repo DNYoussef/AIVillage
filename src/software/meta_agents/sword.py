@@ -225,9 +225,7 @@ class SwordAgent(AgentInterface):
         relevant_threats = [
             threat
             for threat in self.threat_database.values()
-            if any(
-                term in threat.description.lower() for term in prompt.lower().split()
-            )
+            if any(term in threat.description.lower() for term in prompt.lower().split())
         ]
 
         if relevant_threats:
@@ -514,9 +512,7 @@ class SwordAgent(AgentInterface):
             if result["success"]:
                 battle_results["successful_attacks"].append(attack["name"])
                 if result.get("new_vulnerability"):
-                    battle_results["new_vulnerabilities_found"].append(
-                        result["vulnerability"]
-                    )
+                    battle_results["new_vulnerabilities_found"].append(result["vulnerability"])
             else:
                 battle_results["failed_attacks"].append(attack["name"])
 
@@ -527,9 +523,7 @@ class SwordAgent(AgentInterface):
 
         # Generate battle insights
         sword_insights = await self._generate_battle_insights(battle_results)
-        shield_insights = await self._request_shield_insights(
-            shield_agent, battle_results
-        )
+        shield_insights = await self._request_shield_insights(shield_agent, battle_results)
 
         # Calculate battle scores
         battle_score = self._calculate_battle_scores(battle_results)
@@ -583,17 +577,11 @@ class SwordAgent(AgentInterface):
             "battle_results": {
                 "battle_conducted": latest_battle is not None,
                 "battle_id": latest_battle.battle_id if latest_battle else None,
-                "successful_attacks": len(latest_battle.successful_attacks)
-                if latest_battle
-                else 0,
-                "new_vulnerabilities": len(latest_battle.new_vulnerabilities_found)
-                if latest_battle
-                else 0,
+                "successful_attacks": len(latest_battle.successful_attacks) if latest_battle else 0,
+                "new_vulnerabilities": len(latest_battle.new_vulnerabilities_found) if latest_battle else 0,
                 "battle_score": latest_battle.battle_score if latest_battle else None,
             },
-            "recommendations": latest_battle.recommended_improvements
-            if latest_battle
-            else [],
+            "recommendations": latest_battle.recommended_improvements if latest_battle else [],
             "security_improvements_suggested": await self._generate_security_improvements(),
             "next_day_focus": await self._plan_next_day_research(),
         }
@@ -654,9 +642,7 @@ class SwordAgent(AgentInterface):
         hash_value = int(hashlib.md5(text.encode()).hexdigest(), 16)
         return [(hash_value % 1000) / 1000.0] * 384
 
-    async def rerank(
-        self, query: str, results: list[dict[str, Any]], k: int
-    ) -> list[dict[str, Any]]:
+    async def rerank(self, query: str, results: list[dict[str, Any]], k: int) -> list[dict[str, Any]]:
         """Rerank based on security relevance"""
         security_keywords = [
             "vulnerability",
@@ -680,9 +666,7 @@ class SwordAgent(AgentInterface):
 
             result["security_relevance"] = score
 
-        return sorted(
-            results, key=lambda x: x.get("security_relevance", 0), reverse=True
-        )[:k]
+        return sorted(results, key=lambda x: x.get("security_relevance", 0), reverse=True)[:k]
 
     async def introspect(self) -> dict[str, Any]:
         """Return Sword agent status and security metrics"""
@@ -745,9 +729,7 @@ class SwordAgent(AgentInterface):
             await self._load_threat_database()
 
             self.initialized = True
-            logger.info(
-                f"Sword Agent {self.agent_id} initialized - Ready for red team operations"
-            )
+            logger.info(f"Sword Agent {self.agent_id} initialized - Ready for red team operations")
 
         except Exception as e:
             logger.error(f"Sword Agent initialization failed: {e}")
@@ -789,9 +771,7 @@ class SwordAgent(AgentInterface):
             asyncio.create_task(self._daily_battle_routine())
 
             self.initialized = True
-            logger.info(
-                f"✅ Sword Agent {self.agent_id} initialized - Ready for red team operations"
-            )
+            logger.info(f"✅ Sword Agent {self.agent_id} initialized - Ready for red team operations")
 
         except Exception as e:
             logger.error(f"❌ Sword Agent initialization failed: {e}")

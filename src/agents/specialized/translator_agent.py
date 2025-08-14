@@ -65,9 +65,7 @@ class TranslatorAgent(AgentInterface):
         if "translate" in prompt.lower():
             return "I can translate text between 100+ languages with context awareness and cultural adaptation."
         if "language" in prompt.lower() and "detect" in prompt.lower():
-            return (
-                "I can detect the language of any text and analyze linguistic patterns."
-            )
+            return "I can detect the language of any text and analyze linguistic patterns."
         if "localize" in prompt.lower():
             return "I provide cultural localization services for global content adaptation."
         return "I'm a Translator Agent specialized in multilingual processing and cross-cultural communication."
@@ -76,9 +74,7 @@ class TranslatorAgent(AgentInterface):
         hash_value = int(hashlib.md5(text.encode()).hexdigest(), 16)
         return [(hash_value % 1000) / 1000.0] * 384
 
-    async def rerank(
-        self, query: str, results: list[dict[str, Any]], k: int
-    ) -> list[dict[str, Any]]:
+    async def rerank(self, query: str, results: list[dict[str, Any]], k: int) -> list[dict[str, Any]]:
         keywords = [
             "translate",
             "language",
@@ -88,13 +84,9 @@ class TranslatorAgent(AgentInterface):
             "linguistic",
         ]
         for result in results:
-            score = sum(
-                str(result.get("content", "")).lower().count(kw) for kw in keywords
-            )
+            score = sum(str(result.get("content", "")).lower().count(kw) for kw in keywords)
             result["translation_relevance_score"] = score
-        return sorted(
-            results, key=lambda x: x.get("translation_relevance_score", 0), reverse=True
-        )[:k]
+        return sorted(results, key=lambda x: x.get("translation_relevance_score", 0), reverse=True)[:k]
 
     async def introspect(self) -> dict[str, Any]:
         return {
@@ -132,9 +124,7 @@ class TranslatorAgent(AgentInterface):
                 ("es", "en"): lambda text: f"[EN] {text} [/EN]",
             }
 
-            translator_func = translation_map.get(
-                (request.source_language, request.target_language)
-            )
+            translator_func = translation_map.get((request.source_language, request.target_language))
             if not translator_func:
                 translated_text = f"[AUTO-TRANSLATED to {request.target_language.upper()}] {request.source_text}"
             else:
@@ -192,41 +182,25 @@ class TranslatorAgent(AgentInterface):
                 score = sum(text_lower.count(indicator) for indicator in indicators)
                 language_scores[lang] = score
 
-            detected_language = (
-                max(language_scores, key=language_scores.get)
-                if language_scores
-                else "unknown"
-            )
-            confidence = (
-                language_scores.get(detected_language, 0) / len(text.split())
-                if text.split()
-                else 0
-            )
+            detected_language = max(language_scores, key=language_scores.get) if language_scores else "unknown"
+            confidence = language_scores.get(detected_language, 0) / len(text.split()) if text.split() else 0
 
             return {
                 "detected_language": detected_language,
-                "language_name": self.supported_languages.get(
-                    detected_language, "Unknown"
-                ),
+                "language_name": self.supported_languages.get(detected_language, "Unknown"),
                 "confidence": min(1.0, confidence),
                 "alternative_languages": [
                     {
                         "language": lang,
                         "confidence": score / len(text.split()) if text.split() else 0,
                     }
-                    for lang, score in sorted(
-                        language_scores.items(), key=lambda x: x[1], reverse=True
-                    )[1:4]
+                    for lang, score in sorted(language_scores.items(), key=lambda x: x[1], reverse=True)[1:4]
                 ],
                 "text_statistics": {
                     "character_count": len(text),
                     "word_count": len(text.split()),
-                    "sentence_count": text.count(".")
-                    + text.count("!")
-                    + text.count("?"),
-                    "complexity_score": len(set(text.split())) / len(text.split())
-                    if text.split()
-                    else 0,
+                    "sentence_count": text.count(".") + text.count("!") + text.count("?"),
+                    "complexity_score": len(set(text.split())) / len(text.split()) if text.split() else 0,
                 },
             }
 
@@ -234,9 +208,7 @@ class TranslatorAgent(AgentInterface):
             logger.error(f"Language detection failed: {e}")
             return {"error": str(e)}
 
-    async def localize_content(
-        self, content: str, target_culture: str
-    ) -> dict[str, Any]:
+    async def localize_content(self, content: str, target_culture: str) -> dict[str, Any]:
         """Localize content for specific cultural context"""
         try:
             cultural_adaptations = {
@@ -269,9 +241,7 @@ class TranslatorAgent(AgentInterface):
                 },
             }
 
-            culture_config = cultural_adaptations.get(
-                target_culture, cultural_adaptations["us"]
-            )
+            culture_config = cultural_adaptations.get(target_culture, cultural_adaptations["us"])
 
             # Apply cultural adaptations to content
             localized_content = content
@@ -287,9 +257,7 @@ class TranslatorAgent(AgentInterface):
                     parts = date.split("/")
                     if len(parts) == 3:
                         localized_date = f"{parts[1]}/{parts[0]}/{parts[2]}"
-                        localized_content = localized_content.replace(
-                            date, localized_date
-                        )
+                        localized_content = localized_content.replace(date, localized_date)
 
             return {
                 "original_content": content,

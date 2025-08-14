@@ -99,9 +99,7 @@ class TorTransport:
             # Create hidden service
             self.hidden_service = await self._create_hidden_service()
             if self.hidden_service:
-                logger.info(
-                    f"Tor hidden service created: {self.hidden_service.address}"
-                )
+                logger.info(f"Tor hidden service created: {self.hidden_service.address}")
 
             return True
 
@@ -113,9 +111,7 @@ class TorTransport:
         """Check if Tor SOCKS proxy is accessible."""
         try:
             # Try to connect to SOCKS port
-            reader, writer = await asyncio.open_connection(
-                self.proxy_host, self.proxy_port
-            )
+            reader, writer = await asyncio.open_connection(self.proxy_host, self.proxy_port)
             writer.close()
             await writer.wait_closed()
             return True
@@ -129,9 +125,7 @@ class TorTransport:
             import stem
             from stem.control import Controller
 
-            self.controller = Controller.from_port(
-                address=self.proxy_host, port=self.control_port
-            )
+            self.controller = Controller.from_port(address=self.proxy_host, port=self.control_port)
 
             if self.control_password:
                 self.controller.authenticate(password=self.control_password)
@@ -176,16 +170,12 @@ class TorTransport:
         """Connect to a Tor hidden service."""
         try:
             # Create SOCKS connection through Tor
-            reader, writer = await self._socks_connect(
-                onion_address.address, onion_address.port
-            )
+            reader, writer = await self._socks_connect(onion_address.address, onion_address.port)
 
             self.connections[onion_address.full_address] = writer
 
             # Start receiving messages
-            asyncio.create_task(
-                self._receive_loop(onion_address.full_address, reader, writer)
-            )
+            asyncio.create_task(self._receive_loop(onion_address.full_address, reader, writer))
 
             logger.info(f"Connected to {onion_address.full_address}")
             return True
@@ -194,9 +184,7 @@ class TorTransport:
             logger.error(f"Failed to connect to {onion_address.full_address}: {e}")
             return False
 
-    async def _socks_connect(
-        self, host: str, port: int
-    ) -> tuple[asyncio.StreamReader, asyncio.StreamWriter]:
+    async def _socks_connect(self, host: str, port: int) -> tuple[asyncio.StreamReader, asyncio.StreamWriter]:
         """Connect through Tor SOCKS proxy."""
         # Connect to SOCKS proxy
         reader, writer = await asyncio.open_connection(self.proxy_host, self.proxy_port)
@@ -266,9 +254,7 @@ class TorTransport:
                 del self.connections[destination]
             return False
 
-    async def _receive_loop(
-        self, address: str, reader: asyncio.StreamReader, writer: asyncio.StreamWriter
-    ):
+    async def _receive_loop(self, address: str, reader: asyncio.StreamReader, writer: asyncio.StreamWriter):
         """Receive messages from a connection."""
         try:
             while True:
@@ -309,9 +295,7 @@ class TorTransport:
         # Remove hidden service
         if self.controller and self.hidden_service:
             try:
-                self.controller.remove_ephemeral_hidden_service(
-                    self.hidden_service.address.replace(".onion", "")
-                )
+                self.controller.remove_ephemeral_hidden_service(self.hidden_service.address.replace(".onion", ""))
             except:
                 pass
 
@@ -356,9 +340,7 @@ class I2PTransport:
             # Get our destination
             self.destination = await self._get_destination()
             if self.destination:
-                logger.info(
-                    f"I2P destination created: {self.destination.destination[:20]}..."
-                )
+                logger.info(f"I2P destination created: {self.destination.destination[:20]}...")
 
             return True
 
@@ -392,9 +374,7 @@ class I2PTransport:
             # Create session
             session_id = f"aivillage_{hashlib.md5(str(asyncio.get_event_loop().time()).encode()).hexdigest()[:8]}"
 
-            writer.write(
-                f"SESSION CREATE STYLE=STREAM ID={session_id} DESTINATION=TRANSIENT\n".encode()
-            )
+            writer.write(f"SESSION CREATE STYLE=STREAM ID={session_id} DESTINATION=TRANSIENT\n".encode())
             await writer.drain()
 
             response = await reader.readline()
@@ -445,9 +425,7 @@ class I2PTransport:
             self.connections[destination.full_address] = writer
 
             # Start receiving
-            asyncio.create_task(
-                self._receive_loop(destination.full_address, reader, writer)
-            )
+            asyncio.create_task(self._receive_loop(destination.full_address, reader, writer))
 
             logger.info("Connected to I2P destination")
             return True
@@ -486,9 +464,7 @@ class I2PTransport:
                 del self.connections[destination]
             return False
 
-    async def _receive_loop(
-        self, address: str, reader: asyncio.StreamReader, writer: asyncio.StreamWriter
-    ):
+    async def _receive_loop(self, address: str, reader: asyncio.StreamReader, writer: asyncio.StreamWriter):
         """Receive messages from I2P connection."""
         try:
             while True:
@@ -528,9 +504,7 @@ class I2PTransport:
         # Destroy session
         if self.session_id:
             try:
-                reader, writer = await asyncio.open_connection(
-                    self.sam_host, self.sam_port
-                )
+                reader, writer = await asyncio.open_connection(self.sam_host, self.sam_port)
 
                 writer.write(b"HELLO VERSION MIN=3.0 MAX=3.3\n")
                 await writer.drain()

@@ -169,9 +169,7 @@ class CanaryMonitor:
 
             # Check for status changes
             if canary.last_seen_status and canary.last_seen_status != current_status:
-                alert_level = self._determine_alert_level(
-                    canary, canary.last_seen_status, current_status
-                )
+                alert_level = self._determine_alert_level(canary, canary.last_seen_status, current_status)
 
                 change = CanaryChange(
                     timestamp=timestamp,
@@ -227,9 +225,7 @@ class CanaryMonitor:
             return "xpass"  # Expected fail but passed - important!
         return outcome
 
-    def _determine_alert_level(
-        self, canary: CanaryTest, old_status: str, new_status: str
-    ) -> str:
+    def _determine_alert_level(self, canary: CanaryTest, old_status: str, new_status: str) -> str:
         """Determine alert level for status changes."""
         # Expected fail → Pass = Critical (architecture changed!)
         if canary.expected_status == "xfail" and new_status == "passed":
@@ -299,16 +295,8 @@ class CanaryMonitor:
         """Get summary of canary test status."""
         summary = {
             "total_canaries": len(self.known_canaries),
-            "recent_changes": len(
-                [
-                    c
-                    for c in self.change_history
-                    if c.alert_level in ["warning", "critical"]
-                ]
-            ),
-            "critical_alerts": len(
-                [c for c in self.change_history if c.alert_level == "critical"]
-            ),
+            "recent_changes": len([c for c in self.change_history if c.alert_level in ["warning", "critical"]]),
+            "critical_alerts": len([c for c in self.change_history if c.alert_level == "critical"]),
             "canary_status": {},
         }
 
@@ -372,9 +360,7 @@ def main() -> None:
         print(f"  Critical alerts: {summary['critical_alerts']}")
         print("\nCanary Status:")
         for name, status in summary["canary_status"].items():
-            print(
-                f"  {status['emoji']} {name}: {status['status']} (expected: {status['expected']})"
-            )
+            print(f"  {status['emoji']} {name}: {status['status']} (expected: {status['expected']})")
 
     elif args.history:
         if monitor.change_history:

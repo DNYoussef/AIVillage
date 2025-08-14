@@ -48,9 +48,7 @@ class ProblemGenerator:
 
         logger.info(f"ProblemGenerator initialized with model {model}")
 
-    def _validate_generation_request(
-        self, domain: str, edge: EdgeWindow, topic_mix: list[TopicMix], n: int
-    ) -> None:
+    def _validate_generation_request(self, domain: str, edge: EdgeWindow, topic_mix: list[TopicMix], n: int) -> None:
         """Validate problem generation request parameters."""
 
         if not domain:
@@ -73,9 +71,7 @@ class ProblemGenerator:
         if n > 200:  # Practical limit for single batch
             raise ValueError(f"Too many problems requested in single batch: {n}")
 
-    def _allocate_problems_by_topic(
-        self, topic_mix: list[TopicMix], n_total: int
-    ) -> dict[str, int]:
+    def _allocate_problems_by_topic(self, topic_mix: list[TopicMix], n_total: int) -> dict[str, int]:
         """Allocate problem counts by topic based on weights."""
 
         allocations = {}
@@ -87,17 +83,13 @@ class ProblemGenerator:
                 allocations[topic.topic] = remaining
             else:
                 allocated = max(1, round(topic.weight * n_total))
-                allocations[topic.topic] = min(
-                    allocated, remaining - (len(topic_mix) - i - 1)
-                )
+                allocations[topic.topic] = min(allocated, remaining - (len(topic_mix) - i - 1))
                 remaining -= allocations[topic.topic]
 
         logger.debug(f"Topic allocation: {allocations}")
         return allocations
 
-    def _distribute_difficulties(
-        self, edge: EdgeWindow, n_problems: int
-    ) -> list[float]:
+    def _distribute_difficulties(self, edge: EdgeWindow, n_problems: int) -> list[float]:
         """Generate difficulty values distributed across edge window."""
 
         difficulties = []
@@ -154,9 +146,7 @@ class ProblemGenerator:
         """
         self._validate_generation_request(domain, edge, topic_mix, n)
 
-        logger.info(
-            f"Generating {n} problems for {domain} in difficulty {edge.low:.2f}-{edge.high:.2f}"
-        )
+        logger.info(f"Generating {n} problems for {domain} in difficulty {edge.low:.2f}-{edge.high:.2f}")
 
         # Allocate problems by topic
         topic_allocations = self._allocate_problems_by_topic(topic_mix, n)
@@ -201,9 +191,7 @@ class ProblemGenerator:
                     style=request.style,
                 )
 
-                logger.debug(
-                    f"Generating batch {i // batch_size + 1} for {topic}: {batch_count} problems"
-                )
+                logger.debug(f"Generating batch {i // batch_size + 1} for {topic}: {batch_count} problems")
 
                 # Get LLM response
                 try:
@@ -217,20 +205,14 @@ class ProblemGenerator:
                     )
 
                     # Post-process problems
-                    processed_problems = self._post_process_problems(
-                        response.problems, batch_difficulties, topic
-                    )
+                    processed_problems = self._post_process_problems(response.problems, batch_difficulties, topic)
 
                     all_problems.extend(processed_problems)
 
-                    logger.debug(
-                        f"Generated {len(processed_problems)} problems for {topic}"
-                    )
+                    logger.debug(f"Generated {len(processed_problems)} problems for {topic}")
 
                 except Exception as e:
-                    logger.error(
-                        f"Failed to generate problems for {topic} batch {i // batch_size + 1}: {e}"
-                    )
+                    logger.error(f"Failed to generate problems for {topic} batch {i // batch_size + 1}: {e}")
                     # Continue with other batches
                     continue
 
@@ -268,9 +250,7 @@ class ProblemGenerator:
 
             # Ensure topic matches
             if problem.topic != expected_topic:
-                logger.debug(
-                    f"Correcting topic from {problem.topic} to {expected_topic}"
-                )
+                logger.debug(f"Correcting topic from {problem.topic} to {expected_topic}")
                 problem.topic = expected_topic
 
             # Validate unit tests format
@@ -295,9 +275,7 @@ class ProblemGenerator:
             test = test.strip()
 
             # Ensure it looks like a test assertion
-            if not any(
-                keyword in test.lower() for keyword in ["assert", "test", "check", "=="]
-            ):
+            if not any(keyword in test.lower() for keyword in ["assert", "test", "check", "=="]):
                 logger.debug(f"Suspicious unit test: {test}")
 
             # Basic syntax validation (very permissive)
@@ -365,9 +343,7 @@ class ProblemGenerator:
         best_quality = 0.0
 
         for iteration in range(max_iterations):
-            logger.info(
-                f"Problem generation iteration {iteration + 1}/{max_iterations}"
-            )
+            logger.info(f"Problem generation iteration {iteration + 1}/{max_iterations}")
 
             try:
                 response = await self.generate_problems(domain, edge, topic_mix, n)

@@ -21,17 +21,13 @@ class ReflectionPrompt:
 
     template: str
     context_type: str = "general"  # general, reasoning, coding, creative
-    reflection_style: str = (
-        "step_by_step"  # step_by_step, critical, exploratory, analytical
-    )
+    reflection_style: str = "step_by_step"  # step_by_step, critical, exploratory, analytical
     max_reflection_tokens: int = 128
     metadata: dict[str, Any] = field(default_factory=dict)
 
     def format(self, question: str, context: str = "") -> str:
         """Format the template with the question and context."""
-        return self.template.format(
-            question=question, context=context, start_token="<SoT>", end_token="</SoT>"
-        )
+        return self.template.format(question=question, context=context, start_token="<SoT>", end_token="</SoT>")
 
 
 @dataclass
@@ -85,17 +81,13 @@ class TeacherPromptGenerator:
                 self.config.end_of_thought_token,
                 self.config.no_thought_token,
             ]
-            added_tokens = self.tokenizer.add_tokens(
-                special_tokens, special_tokens=True
-            )
+            added_tokens = self.tokenizer.add_tokens(special_tokens, special_tokens=True)
             if added_tokens > 0:
                 self.model.resize_token_embeddings(len(self.tokenizer))
 
             self._model_loaded = True
 
-    def _load_reflection_prompts(
-        self, prompts_path: Path | None
-    ) -> list[ReflectionPrompt]:
+    def _load_reflection_prompts(self, prompts_path: Path | None) -> list[ReflectionPrompt]:
         """Load reflection prompt templates."""
         default_prompts = [
             ReflectionPrompt(
@@ -145,9 +137,7 @@ class TeacherPromptGenerator:
     ) -> str:
         """Generate a reflection for a given question."""
         # Select appropriate prompt template
-        suitable_prompts = [
-            p for p in self.reflection_prompts if p.reflection_style == style
-        ]
+        suitable_prompts = [p for p in self.reflection_prompts if p.reflection_style == style]
 
         if not suitable_prompts:
             suitable_prompts = self.reflection_prompts
@@ -229,9 +219,7 @@ class TeacherPromptGenerator:
         ]
         return random.choice(step_templates)
 
-    def generate_answer_from_reflection(
-        self, question: str, reflection: str, max_tokens: int = 256
-    ) -> str:
+    def generate_answer_from_reflection(self, question: str, reflection: str, max_tokens: int = 256) -> str:
         """Generate an answer based on the question and reflection."""
         self._load_model()
 
@@ -258,9 +246,7 @@ class TeacherPromptGenerator:
             answer = full_response.split("Answer:")[-1].strip()
         else:
             # Fallback: use generated text after prompt
-            answer = self.tokenizer.decode(
-                outputs[0][inputs.shape[1] :], skip_special_tokens=True
-            ).strip()
+            answer = self.tokenizer.decode(outputs[0][inputs.shape[1] :], skip_special_tokens=True).strip()
 
         return answer
 
@@ -326,9 +312,7 @@ class TeacherPromptGenerator:
                     )
                     training_pairs.append(pair)
                 except Exception as e:
-                    print(
-                        f"Warning: Failed to generate pair for question '{question[:50]}...': {e}"
-                    )
+                    print(f"Warning: Failed to generate pair for question '{question[:50]}...': {e}")
                     continue
 
         # Save dataset
@@ -350,9 +334,7 @@ class TeacherPromptGenerator:
         print(f"Generated {len(training_pairs)} training pairs saved to {output_path}")
         return training_pairs
 
-    def validate_training_pairs(
-        self, training_pairs: list[TrainingPair]
-    ) -> dict[str, Any]:
+    def validate_training_pairs(self, training_pairs: list[TrainingPair]) -> dict[str, Any]:
         """Validate the quality of generated training pairs."""
 
         validation_results = {
@@ -370,12 +352,8 @@ class TeacherPromptGenerator:
         reflection_lengths = [len(pair.reflection.split()) for pair in training_pairs]
         answer_lengths = [len(pair.answer.split()) for pair in training_pairs]
 
-        validation_results["avg_reflection_length"] = sum(reflection_lengths) / len(
-            reflection_lengths
-        )
-        validation_results["avg_answer_length"] = sum(answer_lengths) / len(
-            answer_lengths
-        )
+        validation_results["avg_reflection_length"] = sum(reflection_lengths) / len(reflection_lengths)
+        validation_results["avg_answer_length"] = sum(answer_lengths) / len(answer_lengths)
 
         # Token distribution
         for length in reflection_lengths:
@@ -387,26 +365,18 @@ class TeacherPromptGenerator:
         # Style distribution
         for pair in training_pairs:
             style = pair.metadata.get("style", "unknown")
-            validation_results["style_distribution"][style] = (
-                validation_results["style_distribution"].get(style, 0) + 1
-            )
+            validation_results["style_distribution"][style] = validation_results["style_distribution"].get(style, 0) + 1
 
         # Quality checks
         for i, pair in enumerate(training_pairs):
             if len(pair.reflection.strip()) < 10:
-                validation_results["quality_issues"].append(
-                    f"Pair {i}: Reflection too short"
-                )
+                validation_results["quality_issues"].append(f"Pair {i}: Reflection too short")
 
             if len(pair.answer.strip()) < 5:
-                validation_results["quality_issues"].append(
-                    f"Pair {i}: Answer too short"
-                )
+                validation_results["quality_issues"].append(f"Pair {i}: Answer too short")
 
             if pair.question.lower() in pair.reflection.lower():
-                validation_results["quality_issues"].append(
-                    f"Pair {i}: Reflection repeats question"
-                )
+                validation_results["quality_issues"].append(f"Pair {i}: Reflection repeats question")
 
         return validation_results
 

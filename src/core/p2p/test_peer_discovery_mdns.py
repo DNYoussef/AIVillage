@@ -46,9 +46,7 @@ class MockServiceBrowser:
     def _simulate_discovery(self):
         """Simulate service discovery."""
         # Add a mock service to zeroconf
-        service_info = MockServiceInfo(
-            addresses=[socket.inet_aton("192.168.1.100")], port=4001
-        )
+        service_info = MockServiceInfo(addresses=[socket.inet_aton("192.168.1.100")], port=4001)
         self.zeroconf.services["test-service"] = service_info
 
         # Call listener methods
@@ -113,9 +111,7 @@ class TestPeerDiscoveryMDNS:
             targets = await discovery._get_mdns_targets()
 
             # Should use fallback discovery
-            mock_logger.debug.assert_called_with(
-                "zeroconf library not available for mDNS discovery"
-            )
+            mock_logger.debug.assert_called_with("zeroconf library not available for mDNS discovery")
 
             # Should return fallback targets
             assert len(targets) > 0
@@ -162,9 +158,7 @@ class TestPeerDiscoveryMDNS:
     @pytest.mark.asyncio
     @patch("src.core.p2p.peer_discovery.ServiceBrowser")
     @patch("src.core.p2p.peer_discovery.Zeroconf")
-    async def test_mdns_discovery_error_handling(
-        self, mock_zeroconf_class, mock_browser_class
-    ):
+    async def test_mdns_discovery_error_handling(self, mock_zeroconf_class, mock_browser_class):
         """Test mDNS discovery error handling."""
         node = DummyNode()
         discovery = PeerDiscovery(node)
@@ -216,9 +210,7 @@ class TestPeerDiscoveryMDNS:
             targets = await discovery._get_mdns_targets()
 
             # Should limit to 10 services as specified in implementation
-            assert (
-                len(targets) <= 24
-            )  # The mock returns 24, but implementation should limit
+            assert len(targets) <= 24  # The mock returns 24, but implementation should limit
 
     @pytest.mark.asyncio
     async def test_mdns_discovery_fallback_network_generation(self):
@@ -227,9 +219,7 @@ class TestPeerDiscoveryMDNS:
         discovery = PeerDiscovery(node)
 
         # Force fallback by patching ImportError
-        with patch(
-            "src.core.p2p.peer_discovery.ServiceBrowser", side_effect=ImportError
-        ):
+        with patch("src.core.p2p.peer_discovery.ServiceBrowser", side_effect=ImportError):
             targets = await discovery._get_mdns_targets()
 
             # Should generate targets for common networks

@@ -411,10 +411,7 @@ class IntelligentChunker:
         # Find significant drops in similarity
         for i in range(len(similarities) - consecutive_windows + 1):
             # Check if we have consecutive low similarities
-            consecutive_low = all(
-                similarities[i + j] < (1.0 - threshold)
-                for j in range(consecutive_windows)
-            )
+            consecutive_low = all(similarities[i + j] < (1.0 - threshold) for j in range(consecutive_windows))
 
             if consecutive_low:
                 # Calculate average similarity drop
@@ -423,9 +420,7 @@ class IntelligentChunker:
 
                 # Calculate confidence based on consistency
                 std_similarity = np.std(similarities[i : i + consecutive_windows])
-                confidence = min(
-                    1.0, similarity_drop / threshold * (1.0 - std_similarity)
-                )
+                confidence = min(1.0, similarity_drop / threshold * (1.0 - std_similarity))
 
                 boundary = IdeaBoundary(
                     sentence_idx=i + self.window_size,  # Boundary after window
@@ -454,10 +449,7 @@ class IntelligentChunker:
             ):
                 # Replace lower confidence boundary
                 filtered_boundaries = [
-                    b
-                    for b in filtered_boundaries
-                    if abs(b.sentence_idx - boundary.sentence_idx)
-                    >= consecutive_windows
+                    b for b in filtered_boundaries if abs(b.sentence_idx - boundary.sentence_idx) >= consecutive_windows
                 ]
                 filtered_boundaries.append(boundary)
 
@@ -466,9 +458,7 @@ class IntelligentChunker:
 
         return filtered_boundaries
 
-    def handle_edge_cases(
-        self, sentences: list[str], boundaries: list[int]
-    ) -> list[int]:
+    def handle_edge_cases(self, sentences: list[str], boundaries: list[int]) -> list[int]:
         """Handle edge cases in boundary detection.
 
         Args:
@@ -543,9 +533,7 @@ class IntelligentChunker:
         similarities = []
         for i in range(len(embeddings)):
             for j in range(i + 1, len(embeddings)):
-                sim = cosine_similarity(
-                    embeddings[i].reshape(1, -1), embeddings[j].reshape(1, -1)
-                )[0, 0]
+                sim = cosine_similarity(embeddings[i].reshape(1, -1), embeddings[j].reshape(1, -1))[0, 0]
                 similarities.append(sim)
 
         return float(np.mean(similarities)) if similarities else 1.0
@@ -641,9 +629,7 @@ class IntelligentChunker:
         # Extract boundary positions and handle edge cases
         boundary_positions = [b.sentence_idx for b in boundaries]
         boundary_positions = self.handle_edge_cases(sentences, boundary_positions)
-        logger.info(
-            f"Final boundaries after edge case handling: {len(boundary_positions)}"
-        )
+        logger.info(f"Final boundaries after edge case handling: {len(boundary_positions)}")
 
         # Create chunks based on boundaries
         chunks = []
@@ -657,9 +643,7 @@ class IntelligentChunker:
                 if i == len(boundary_positions):  # Last chunk
                     if chunks:  # Merge with previous chunk
                         chunks[-1].end_sentence_idx = end_idx - 1
-                        chunks[-1].sentences.extend(
-                            sentences[chunks[-1].end_sentence_idx + 1 : end_idx]
-                        )
+                        chunks[-1].sentences.extend(sentences[chunks[-1].end_sentence_idx + 1 : end_idx])
                         continue
                 else:
                     continue
@@ -691,11 +675,7 @@ class IntelligentChunker:
 
             else:
                 # Add context overlap from previous chunk
-                actual_start = (
-                    max(0, start_idx - self.context_overlap)
-                    if len(chunks) > 0
-                    else start_idx
-                )
+                actual_start = max(0, start_idx - self.context_overlap) if len(chunks) > 0 else start_idx
                 chunk_sentences = sentences[actual_start:end_idx]
 
                 chunk = IntelligentChunk(
@@ -742,10 +722,7 @@ class IntelligentChunker:
             "avg_sentences_per_chunk": np.mean([len(c.sentences) for c in chunks]),
             "avg_words_per_chunk": np.mean([c.word_count for c in chunks]),
             "avg_topic_coherence": np.mean([c.topic_coherence for c in chunks]),
-            "content_types": {
-                ct.value: sum(1 for c in chunks if c.content_type == ct)
-                for ct in ContentType
-            },
+            "content_types": {ct.value: sum(1 for c in chunks if c.content_type == ct) for ct in ContentType},
             "chunks_with_entities": sum(1 for c in chunks if c.entities),
             "total_entities": sum(len(c.entities or []) for c in chunks),
         }
@@ -758,9 +735,7 @@ async def test_intelligent_chunking():
     print("=" * 50)
 
     # Initialize chunker
-    chunker = IntelligentChunker(
-        window_size=3, min_chunk_sentences=2, max_chunk_sentences=15, context_overlap=1
-    )
+    chunker = IntelligentChunker(window_size=3, min_chunk_sentences=2, max_chunk_sentences=15, context_overlap=1)
 
     # Test document with clear topic boundaries
     test_document = """

@@ -166,18 +166,14 @@ class EdgeController:
             raise ValueError(f"Window accuracy must be 0-1: {window_accuracy}")
 
         if not self._validate_edge_window(current_edge):
-            raise ValueError(
-                f"Invalid current edge: {current_edge.low}-{current_edge.high}"
-            )
+            raise ValueError(f"Invalid current edge: {current_edge.low}-{current_edge.high}")
 
         logger.info(
             f"Nudging edge: accuracy {window_accuracy:.1%} in window {current_edge.low:.2f}-{current_edge.high:.2f}"
         )
 
         # Check if nudge is needed
-        in_target_range = (
-            constraints.target_low <= window_accuracy <= constraints.target_high
-        )
+        in_target_range = constraints.target_low <= window_accuracy <= constraints.target_high
 
         if in_target_range:
             # Small fine-tuning nudge toward center
@@ -235,9 +231,7 @@ class EdgeController:
         if use_local_fallback:
             logger.info("Using local edge control")
 
-            new_edge = self._calculate_local_nudge(
-                window_accuracy, current_edge, constraints
-            )
+            new_edge = self._calculate_local_nudge(window_accuracy, current_edge, constraints)
 
             # Calculate delta
             delta = EdgeDelta(
@@ -249,9 +243,7 @@ class EdgeController:
                 f"Local control: {current_edge.low:.2f}-{current_edge.high:.2f} → {new_edge.low:.2f}-{new_edge.high:.2f}"
             )
 
-            return ControllerResponse(
-                ok=True, msg="nudged locally", new_edge=new_edge, delta=delta
-            )
+            return ControllerResponse(ok=True, msg="nudged locally", new_edge=new_edge, delta=delta)
 
         # No control available - return unchanged
         return ControllerResponse(
@@ -284,25 +276,19 @@ class EdgeController:
             return {"error": "No history data provided"}
 
         # Time in target range
-        in_target = sum(
-            1 for acc in accuracy_history if target_range[0] <= acc <= target_range[1]
-        )
+        in_target = sum(1 for acc in accuracy_history if target_range[0] <= acc <= target_range[1])
         target_percentage = in_target / len(accuracy_history) * 100
 
         # Edge window stability
         edge_centers = [(edge.low + edge.high) / 2 for edge in edge_history]
         edge_widths = [edge.high - edge.low for edge in edge_history]
 
-        center_stability = (
-            statistics.stdev(edge_centers) if len(edge_centers) > 1 else 0
-        )
+        center_stability = statistics.stdev(edge_centers) if len(edge_centers) > 1 else 0
         width_stability = statistics.stdev(edge_widths) if len(edge_widths) > 1 else 0
 
         # Control effectiveness
         large_adjustments = sum(
-            1
-            for i in range(1, len(edge_history))
-            if abs(edge_centers[i] - edge_centers[i - 1]) > 0.1
+            1 for i in range(1, len(edge_history)) if abs(edge_centers[i] - edge_centers[i - 1]) > 0.1
         )
 
         # Convergence analysis
@@ -318,36 +304,22 @@ class EdgeController:
             "total_periods": len(accuracy_history),
             "time_in_target_percent": target_percentage,
             "average_accuracy": statistics.mean(accuracy_history),
-            "accuracy_stability": statistics.stdev(accuracy_history)
-            if len(accuracy_history) > 1
-            else 0,
+            "accuracy_stability": statistics.stdev(accuracy_history) if len(accuracy_history) > 1 else 0,
             "edge_center_stability": center_stability,
             "edge_width_stability": width_stability,
             "large_adjustments": large_adjustments,
             "adjustment_rate": large_adjustments / len(edge_history) * 100,
             "recent_variance": recent_variance,
             "appears_converging": converging,
-            "control_quality": self._assess_control_quality(
-                target_percentage, center_stability, large_adjustments
-            ),
+            "control_quality": self._assess_control_quality(target_percentage, center_stability, large_adjustments),
         }
 
-    def _assess_control_quality(
-        self, target_percentage: float, center_stability: float, large_adjustments: int
-    ) -> str:
+    def _assess_control_quality(self, target_percentage: float, center_stability: float, large_adjustments: int) -> str:
         """Assess overall control quality based on metrics."""
 
-        if (
-            target_percentage >= 80
-            and center_stability < 0.05
-            and large_adjustments <= 2
-        ):
+        if target_percentage >= 80 and center_stability < 0.05 and large_adjustments <= 2:
             return "excellent"
-        elif (
-            target_percentage >= 65
-            and center_stability < 0.10
-            and large_adjustments <= 4
-        ):
+        elif target_percentage >= 65 and center_stability < 0.10 and large_adjustments <= 4:
             return "good"
         elif target_percentage >= 50 and center_stability < 0.15:
             return "fair"
@@ -393,11 +365,7 @@ class EdgeController:
             current_edge = response.new_edge
 
             # Check for convergence
-            if (
-                i > 0
-                and abs(response.delta.low) < 0.01
-                and abs(response.delta.high) < 0.01
-            ):
+            if i > 0 and abs(response.delta.low) < 0.01 and abs(response.delta.high) < 0.01:
                 logger.info("Control loop converged")
                 break
 
@@ -427,16 +395,12 @@ class EdgeController:
 
         # Analyze historical performance
         avg_accuracy = statistics.mean(historical_accuracy)
-        accuracy_stability = (
-            statistics.stdev(historical_accuracy) if len(historical_accuracy) > 1 else 0
-        )
+        accuracy_stability = statistics.stdev(historical_accuracy) if len(historical_accuracy) > 1 else 0
 
         # Analyze problem distribution
         problem_center = statistics.mean(problem_difficulty_distribution)
         problem_spread = (
-            statistics.stdev(problem_difficulty_distribution)
-            if len(problem_difficulty_distribution) > 1
-            else 0
+            statistics.stdev(problem_difficulty_distribution) if len(problem_difficulty_distribution) > 1 else 0
         )
 
         # Adjust nudge factor based on stability
@@ -501,9 +465,7 @@ async def control_curriculum_edge(
     """
     async with OpenRouterLLM(api_key=api_key) as client:
         controller = EdgeController(client, model=model)
-        return await controller.nudge_edge(
-            window_accuracy, current_edge, constraints, **kwargs
-        )
+        return await controller.nudge_edge(window_accuracy, current_edge, constraints, **kwargs)
 
 
 if __name__ == "__main__":
@@ -521,9 +483,7 @@ if __name__ == "__main__":
         ]
 
         current_edge = EdgeWindow(low=0.55, high=0.75)
-        constraints = EdgeConstraints(
-            target_low=0.55, target_high=0.75, problem_budget=1000
-        )
+        constraints = EdgeConstraints(target_low=0.55, target_high=0.75, problem_budget=1000)
 
         api_key = os.getenv("OPENROUTER_API_KEY", "demo-key")
 
@@ -539,14 +499,10 @@ if __name__ == "__main__":
 
                 print(f"\n📊 Scenario: {description}")
                 print(f"   Current accuracy: {accuracy:.1%}")
-                print(
-                    f"   Current edge: {current_edge.low:.2f} - {current_edge.high:.2f}"
-                )
+                print(f"   Current edge: {current_edge.low:.2f} - {current_edge.high:.2f}")
 
                 # Use local control
-                new_edge = controller._calculate_local_nudge(
-                    accuracy, current_edge, constraints
-                )
+                new_edge = controller._calculate_local_nudge(accuracy, current_edge, constraints)
                 delta = EdgeDelta(
                     low=new_edge.low - current_edge.low,
                     high=new_edge.high - current_edge.high,
@@ -555,13 +511,7 @@ if __name__ == "__main__":
                 print(f"   New edge: {new_edge.low:.2f} - {new_edge.high:.2f}")
                 print(f"   Delta: {delta.low:+.3f} / {delta.high:+.3f}")
 
-                direction = (
-                    "harder"
-                    if delta.low > 0
-                    else "easier"
-                    if delta.low < 0
-                    else "unchanged"
-                )
+                direction = "harder" if delta.low > 0 else "easier" if delta.low < 0 else "unchanged"
                 print(f"   Direction: {direction}")
 
             # Test stability analysis
@@ -598,9 +548,7 @@ if __name__ == "__main__":
 
             print("✅ Edge control complete")
             print(f"   Original: {current_edge.low:.2f} - {current_edge.high:.2f}")
-            print(
-                f"   New edge: {result.new_edge.low:.2f} - {result.new_edge.high:.2f}"
-            )
+            print(f"   New edge: {result.new_edge.low:.2f} - {result.new_edge.high:.2f}")
             print(f"   Delta: {result.delta.low:+.3f} / {result.delta.high:+.3f}")
             print(f"   Message: {result.msg}")
 

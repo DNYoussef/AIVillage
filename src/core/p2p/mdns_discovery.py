@@ -101,9 +101,7 @@ class mDNSDiscovery:
 
         # Discovery state
         self.discovered_peers: dict[str, PeerInfo] = {}
-        self.peer_callbacks: list[
-            Callable[[PeerInfo, str], None]
-        ] = []  # (peer_info, event_type)
+        self.peer_callbacks: list[Callable[[PeerInfo, str], None]] = []  # (peer_info, event_type)
         self.running = False
 
         # Network monitoring
@@ -201,9 +199,7 @@ class mDNSDiscovery:
         )
 
         await self.zeroconf.async_register_service(self.service_info)
-        logger.debug(
-            f"Registered service: {self.service_name} on port {self.listen_port}"
-        )
+        logger.debug(f"Registered service: {self.service_name} on port {self.listen_port}")
 
     async def _start_browsing(self) -> None:
         """Start browsing for peer services."""
@@ -216,17 +212,13 @@ class mDNSDiscovery:
                 asyncio.create_task(self.discovery._on_service_removed(name))
 
             def add_service(self, zeroconf, service_type, name) -> None:
-                asyncio.create_task(
-                    self.discovery._on_service_discovered(zeroconf, name)
-                )
+                asyncio.create_task(self.discovery._on_service_discovered(zeroconf, name))
 
             def update_service(self, zeroconf, service_type, name) -> None:
                 asyncio.create_task(self.discovery._on_service_updated(zeroconf, name))
 
         listener = ServiceListener(self)
-        self.service_browser = AsyncServiceBrowser(
-            self.zeroconf.zeroconf, self.SERVICE_TYPE, listener
-        )
+        self.service_browser = AsyncServiceBrowser(self.zeroconf.zeroconf, self.SERVICE_TYPE, listener)
 
     async def _on_service_discovered(self, zeroconf, service_name: str) -> None:
         """Handle newly discovered service."""
@@ -252,9 +244,7 @@ class mDNSDiscovery:
             self.discovered_peers[peer_info.peer_id] = peer_info
 
             event_type = "discovered" if not old_peer else "updated"
-            logger.info(
-                f"Peer {event_type}: {peer_info.peer_id} at {peer_info.addresses}"
-            )
+            logger.info(f"Peer {event_type}: {peer_info.peer_id} at {peer_info.addresses}")
 
             # Notify callbacks
             for callback in self.peer_callbacks:
@@ -299,9 +289,7 @@ class mDNSDiscovery:
     async def _get_service_info(self, service_name: str) -> ServiceInfo | None:
         """Get detailed info for a service."""
         try:
-            return await self.zeroconf.async_get_service_info(
-                self.SERVICE_TYPE, service_name
-            )
+            return await self.zeroconf.async_get_service_info(self.SERVICE_TYPE, service_name)
         except Exception as e:
             logger.debug(f"Failed to get service info for {service_name}: {e}")
             return None
@@ -396,9 +384,7 @@ class mDNSDiscovery:
                 current_addresses = await self._get_local_addresses()
 
                 if current_addresses != self.local_addresses:
-                    logger.info(
-                        "Network addresses changed, updating service registration"
-                    )
+                    logger.info("Network addresses changed, updating service registration")
                     self.local_addresses = current_addresses
 
                     # Re-register service with new addresses
@@ -442,11 +428,7 @@ class mDNSDiscovery:
                     if netifaces.AF_INET6 in addrs:
                         for addr_info in addrs[netifaces.AF_INET6]:
                             addr = addr_info.get("addr")
-                            if (
-                                addr
-                                and not addr.startswith("::1")
-                                and not addr.startswith("fe80")
-                            ):
+                            if addr and not addr.startswith("::1") and not addr.startswith("fe80"):
                                 addresses.add(addr)
 
                 except:

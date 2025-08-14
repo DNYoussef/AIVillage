@@ -129,9 +129,7 @@ class RAGPipeline:
 
     def _init_vector_store(self) -> None:
         """Initialize vector store with FAISS fallback."""
-        use_advanced = (
-            VectorStore is not None and os.getenv("RAG_USE_ADVANCED_STORE") == "1"
-        )
+        use_advanced = VectorStore is not None and os.getenv("RAG_USE_ADVANCED_STORE") == "1"
         if use_advanced:
             try:
                 self.vector_store = VectorStore(
@@ -141,9 +139,7 @@ class RAGPipeline:
                 logger.info("Vector store initialized successfully")
                 return
             except Exception as e:  # pragma: no cover - best effort
-                logger.warning(
-                    f"Failed to initialize advanced VectorStore: {e}, using fallback"
-                )
+                logger.warning(f"Failed to initialize advanced VectorStore: {e}, using fallback")
 
         # Fallback: minimal in-memory store
         self.vector_store = self._create_fallback_vector_store()
@@ -164,9 +160,7 @@ class RAGPipeline:
             else:
                 logger.warning("GraphStore not available, graph features disabled")
         except Exception as e:
-            logger.warning(
-                f"Failed to initialize GraphStore: {e}, graph features disabled"
-            )
+            logger.warning(f"Failed to initialize GraphStore: {e}, graph features disabled")
 
     def _init_cache(self, enable_cache: bool) -> None:
         """Initialize multi-tier caching system."""
@@ -178,18 +172,14 @@ class RAGPipeline:
 
         try:
             if SemanticMultiTierCache is not None:
-                self.cache = SemanticMultiTierCache(
-                    cache_dir=self.cache_dir, enable_prefetch=True
-                )
+                self.cache = SemanticMultiTierCache(cache_dir=self.cache_dir, enable_prefetch=True)
                 logger.info("Multi-tier cache initialized successfully")
             else:
                 # Simple in-memory cache fallback
                 self.cache = {}
                 logger.warning("Advanced caching not available, using simple cache")
         except Exception as e:
-            logger.warning(
-                f"Failed to initialize advanced cache: {e}, using simple cache"
-            )
+            logger.warning(f"Failed to initialize advanced cache: {e}, using simple cache")
             self.cache = {}
 
     def _init_chunker(self) -> None:
@@ -222,18 +212,12 @@ class RAGPipeline:
                     logger.info("Hybrid retriever initialized")
                 else:
                     self.retriever = None
-                    logger.warning(
-                        "HybridRetriever missing retrieve method, using direct vector search"
-                    )
+                    logger.warning("HybridRetriever missing retrieve method, using direct vector search")
             else:
                 self.retriever = None
-                logger.warning(
-                    "HybridRetriever not available, using direct vector search"
-                )
+                logger.warning("HybridRetriever not available, using direct vector search")
         except Exception as e:
-            logger.warning(
-                f"Failed to initialize retriever: {e}, using direct vector search"
-            )
+            logger.warning(f"Failed to initialize retriever: {e}, using direct vector search")
             self.retriever = None
 
     def _create_fallback_vector_store(self) -> Any:
@@ -265,9 +249,7 @@ class RAGPipeline:
                 if query_terms:
                     for doc in self.documents:
                         content_lower = doc["content"].lower()
-                        score = sum(
-                            1 for term in query_terms if term.lower() in content_lower
-                        )
+                        score = sum(1 for term in query_terms if term.lower() in content_lower)
                         if score > 0:
                             results.append(
                                 RetrievalResult(
@@ -367,9 +349,7 @@ class RAGPipeline:
                 # Fallback to direct vector search
                 query_vector = [0.1] * 768  # Simple fallback vector
                 query_terms = query.split()  # Simple tokenization
-                results = await self.vector_store.retrieve(
-                    query_vector, k=top_k, query_terms=query_terms
-                )
+                results = await self.vector_store.retrieve(query_vector, k=top_k, query_terms=query_terms)
 
             # Cache results if caching is enabled
             if use_cache and self.cache is not None:
@@ -380,9 +360,7 @@ class RAGPipeline:
             self.metrics["queries_processed"] += 1
             self._update_avg_query_time(processing_time)
 
-            logger.debug(
-                f"Retrieved {len(results)} results for query in {processing_time:.2f}ms"
-            )
+            logger.debug(f"Retrieved {len(results)} results for query in {processing_time:.2f}ms")
             return results
 
         except Exception as e:
@@ -476,9 +454,7 @@ class RAGPipeline:
 
         # Simple concatenation with truncation
         combined_text = " ".join([source.content[:200] for source in sources])
-        return (
-            combined_text[:500] + "..." if len(combined_text) > 500 else combined_text
-        )
+        return combined_text[:500] + "..." if len(combined_text) > 500 else combined_text
 
     def _calculate_confidence(self, results: list[RetrievalResult]) -> float:
         """Calculate confidence score based on retrieval quality."""
@@ -498,9 +474,7 @@ class RAGPipeline:
             self.metrics["avg_query_time_ms"] = new_time
         else:
             current_avg = self.metrics["avg_query_time_ms"]
-            self.metrics["avg_query_time_ms"] = (
-                current_avg * (queries_count - 1) + new_time
-            ) / queries_count
+            self.metrics["avg_query_time_ms"] = (current_avg * (queries_count - 1) + new_time) / queries_count
 
     def get_metrics(self) -> dict[str, Any]:
         """Get pipeline performance metrics."""
@@ -613,8 +587,7 @@ class EnhancedRAGPipeline(RAGPipeline):
         # Enhanced response with metadata
         response_time = time.time() - start_time
         self.performance_metrics["avg_response_time"] = (
-            self.performance_metrics["avg_response_time"]
-            * (self.performance_metrics["total_queries"] - 1)
+            self.performance_metrics["avg_response_time"] * (self.performance_metrics["total_queries"] - 1)
             + response_time
         ) / self.performance_metrics["total_queries"]
         self.performance_metrics["last_query_time"] = response_time
@@ -668,9 +641,7 @@ class EnhancedRAGPipeline(RAGPipeline):
         return {
             **self.performance_metrics,
             "cache_hit_rate": (
-                self.performance_metrics["cache_hits"]
-                / max(self.performance_metrics["total_queries"], 1)
-                * 100
+                self.performance_metrics["cache_hits"] / max(self.performance_metrics["total_queries"], 1) * 100
             ),
             "recent_queries": len(self.query_history),
             "status": "active",
@@ -701,18 +672,11 @@ class EnhancedRAGPipeline(RAGPipeline):
         if self.performance_metrics["total_queries"] > 100:
             avg_time = self.performance_metrics["avg_response_time"]
             if avg_time > 2.0:  # Slow responses
-                results["recommendations"].append(
-                    "Consider increasing cache size or optimizing document chunking"
-                )
+                results["recommendations"].append("Consider increasing cache size or optimizing document chunking")
 
-            cache_rate = (
-                self.performance_metrics["cache_hits"]
-                / self.performance_metrics["total_queries"]
-            )
+            cache_rate = self.performance_metrics["cache_hits"] / self.performance_metrics["total_queries"]
             if cache_rate < 0.3:  # Low cache hit rate
-                results["recommendations"].append(
-                    "Low cache hit rate - consider adjusting cache strategy"
-                )
+                results["recommendations"].append("Low cache hit rate - consider adjusting cache strategy")
 
         return results
 

@@ -84,10 +84,7 @@ class QuietReasoningStudent:
             self.base_model.resize_token_embeddings(len(self.tokenizer))
 
         # Create special token IDs mapping
-        self.special_token_ids = {
-            token: self.tokenizer.convert_tokens_to_ids(token)
-            for token in special_tokens
-        }
+        self.special_token_ids = {token: self.tokenizer.convert_tokens_to_ids(token) for token in special_tokens}
 
         # Wrap with Quiet-STaR architecture
         self.student_model = QuietSTaRModelWrapper(
@@ -142,7 +139,9 @@ class QuietReasoningStudent:
             return f"{example.input_text} {example.target_text}"
         else:
             # Answer with hidden thoughts (for training only)
-            thought_section = f"{self.config.start_of_thought_token}{example.teacher_thoughts}{self.config.end_of_thought_token}"
+            thought_section = (
+                f"{self.config.start_of_thought_token}{example.teacher_thoughts}{self.config.end_of_thought_token}"
+            )
             return f"{example.input_text} {thought_section} {example.target_text}"
 
     def create_inference_prompt(self, example: StudentExample) -> str:
@@ -160,28 +159,20 @@ class QuietReasoningStudent:
 
         # Standard cross-entropy loss for student
         student_loss_fn = nn.CrossEntropyLoss(ignore_index=-100)
-        student_loss = student_loss_fn(
-            student_logits.view(-1, student_logits.size(-1)), labels.view(-1)
-        )
+        student_loss = student_loss_fn(student_logits.view(-1, student_logits.size(-1)), labels.view(-1))
 
         # Knowledge distillation loss (only where teacher has thoughts)
         if teacher_logits is not None and thought_mask.any():
             # Apply temperature scaling
-            teacher_soft = nn.functional.log_softmax(
-                teacher_logits / self.distill_config.temperature, dim=-1
-            )
-            student_soft = nn.functional.log_softmax(
-                student_logits / self.distill_config.temperature, dim=-1
-            )
+            teacher_soft = nn.functional.log_softmax(teacher_logits / self.distill_config.temperature, dim=-1)
+            student_soft = nn.functional.log_softmax(student_logits / self.distill_config.temperature, dim=-1)
 
             # KL divergence loss on thought regions
             kl_loss_fn = nn.KLDivLoss(reduction="none", log_target=True)
             kl_loss = kl_loss_fn(student_soft, teacher_soft).sum(dim=-1)
 
             # Apply thought mask to focus on reasoning regions
-            thought_kl_loss = (
-                kl_loss * thought_mask.float()
-            ).sum() / thought_mask.float().sum()
+            thought_kl_loss = (kl_loss * thought_mask.float()).sum() / thought_mask.float().sum()
         else:
             thought_kl_loss = torch.tensor(0.0, device=student_logits.device)
 
@@ -234,9 +225,7 @@ class QuietReasoningStudent:
         train_dataset = {
             "input_ids": tokenized_data["input_ids"][:num_train],
             "attention_mask": tokenized_data["attention_mask"][:num_train],
-            "labels": tokenized_data["input_ids"][
-                :num_train
-            ].clone(),  # For language modeling
+            "labels": tokenized_data["input_ids"][:num_train].clone(),  # For language modeling
         }
 
         eval_dataset = (
@@ -283,9 +272,7 @@ class QuietReasoningStudent:
                 shift_labels = labels[..., 1:].contiguous()
 
                 loss_fct = nn.CrossEntropyLoss()
-                loss = loss_fct(
-                    shift_logits.view(-1, shift_logits.size(-1)), shift_labels.view(-1)
-                )
+                loss = loss_fct(shift_logits.view(-1, shift_logits.size(-1)), shift_labels.view(-1))
 
                 return (loss, outputs) if return_outputs else loss
 
@@ -326,9 +313,7 @@ class QuietReasoningStudent:
 
         print(f"Student model saved to {output_dir}")
 
-    def evaluate_quiet_reasoning(
-        self, test_questions: list[str], output_file: Path | None = None
-    ) -> dict[str, Any]:
+    def evaluate_quiet_reasoning(self, test_questions: list[str], output_file: Path | None = None) -> dict[str, Any]:
         """Evaluate the student's quiet reasoning abilities."""
 
         self.student_model.eval()
@@ -372,10 +357,8 @@ class QuietReasoningStudent:
                     "question": question,
                     "response_with_thoughts": response_with_thoughts,
                     "response_inference": response_inference,
-                    "thoughts_hidden": self.config.start_of_thought_token
-                    not in response_inference,
-                    "has_internal_reasoning": self.config.start_of_thought_token
-                    in response_with_thoughts,
+                    "thoughts_hidden": self.config.start_of_thought_token not in response_inference,
+                    "has_internal_reasoning": self.config.start_of_thought_token in response_with_thoughts,
                 }
 
                 results.append(result)
@@ -386,8 +369,7 @@ class QuietReasoningStudent:
             "thoughts_properly_hidden": sum(r["thoughts_hidden"] for r in results),
             "has_internal_reasoning": sum(r["has_internal_reasoning"] for r in results),
             "success_rate": sum(r["thoughts_hidden"] for r in results) / len(results),
-            "reasoning_rate": sum(r["has_internal_reasoning"] for r in results)
-            / len(results),
+            "reasoning_rate": sum(r["has_internal_reasoning"] for r in results) / len(results),
             "detailed_results": results,
         }
 

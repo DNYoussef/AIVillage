@@ -167,9 +167,7 @@ def test_api_endpoints() -> bool | None:
 
             # Test 2: Create user
             print("+ Testing user creation...")
-            response = client.post(
-                "/users", json={"username": "testuser", "node_id": "node_123"}
-            )
+            response = client.post("/users", json={"username": "testuser", "node_id": "node_123"})
             assert response.status_code == 201
             data = response.json()
             assert data["username"] == "testuser"

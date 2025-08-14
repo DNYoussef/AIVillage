@@ -142,9 +142,7 @@ class OpenRouterClient:
         }
 
         try:
-            async with self.session.post(
-                f"{self.base_url}/chat/completions", json=payload
-            ) as response:
+            async with self.session.post(f"{self.base_url}/chat/completions", json=payload) as response:
                 if response.status == 200:
                     data = await response.json()
                     return {
@@ -165,9 +163,7 @@ class OpenRouterClient:
         except Exception as e:
             return {"success": False, "error": str(e), "temperature": temperature}
 
-    async def _mock_completion(
-        self, prompt: str, temperature: float, max_tokens: int
-    ) -> dict[str, Any]:
+    async def _mock_completion(self, prompt: str, temperature: float, max_tokens: int) -> dict[str, Any]:
         """Generate mock completion for demo purposes."""
 
         # Simple mock based on prompt type
@@ -175,7 +171,9 @@ class OpenRouterClient:
             if temperature < 0.3:
                 completion = "def solution():\n    return 42"
             elif temperature < 0.7:
-                completion = "def solution():\n    # Implementation here\n    result = process_data()\n    return result"
+                completion = (
+                    "def solution():\n    # Implementation here\n    result = process_data()\n    return result"
+                )
             else:
                 completion = "def solution():\n    # Creative approach\n    import random\n    magic = random.choice(['creativity', 'innovation'])\n    return f'Solution with {magic}!'"
 
@@ -194,13 +192,7 @@ class OpenRouterClient:
                 "high": "What an intriguing question! Let me explore this from multiple angles and dive deep into the creative possibilities:",
             }
 
-            temp_key = (
-                "low"
-                if temperature < 0.3
-                else "medium"
-                if temperature < 0.7
-                else "high"
-            )
+            temp_key = "low" if temperature < 0.3 else "medium" if temperature < 0.7 else "high"
             completion = base_responses[temp_key]
 
         # Simulate processing delay
@@ -456,9 +448,7 @@ class PromptSuiteManager:
         ]
 
         # Store templates by category
-        all_templates = (
-            coding_templates + math_templates + logic_templates + creative_templates
-        )
+        all_templates = coding_templates + math_templates + logic_templates + creative_templates
 
         for template in all_templates:
             self.templates[template.id] = template
@@ -467,9 +457,7 @@ class PromptSuiteManager:
                 self.categories[template.category] = []
             self.categories[template.category].append(template)
 
-        logger.info(
-            f"Initialized {len(all_templates)} prompt templates across {len(self.categories)} categories"
-        )
+        logger.info(f"Initialized {len(all_templates)} prompt templates across {len(self.categories)} categories")
 
     def get_templates_for_temp_bin(self, temp_bin: TempBin) -> list[PromptTemplate]:
         """Get templates suitable for a given temperature bin."""
@@ -481,9 +469,7 @@ class PromptSuiteManager:
 
         return suitable_templates
 
-    def get_templates_by_category(
-        self, category: PromptCategory
-    ) -> list[PromptTemplate]:
+    def get_templates_by_category(self, category: PromptCategory) -> list[PromptTemplate]:
         """Get all templates for a specific category."""
         return self.categories.get(category, [])
 
@@ -503,14 +489,10 @@ class PromptSuiteManager:
         suitable_templates = self.get_templates_for_temp_bin(temp_bin)
 
         if category_filter:
-            suitable_templates = [
-                t for t in suitable_templates if t.category == category_filter
-            ]
+            suitable_templates = [t for t in suitable_templates if t.category == category_filter]
 
         if not suitable_templates:
-            logger.warning(
-                f"No suitable templates found for temperature bin {temp_bin.center}"
-            )
+            logger.warning(f"No suitable templates found for temperature bin {temp_bin.center}")
             return []
 
         # Generate batch
@@ -547,9 +529,7 @@ class OpenRouterTempAltSystem:
 
         async with OpenRouterClient(api_key=self.api_key) as client:
             for temp_bin in temp_bins:
-                logger.info(
-                    f"Generating {samples_per_bin} samples for temp bin {temp_bin.center:.2f}"
-                )
+                logger.info(f"Generating {samples_per_bin} samples for temp bin {temp_bin.center:.2f}")
 
                 # Generate prompts for this temperature bin
                 prompts_batch = self.prompt_manager.generate_prompt_batch(
@@ -579,9 +559,7 @@ class OpenRouterTempAltSystem:
                         }
                         training_data.append(training_sample)
                     else:
-                        logger.warning(
-                            f"Failed to generate completion: {result['error']}"
-                        )
+                        logger.warning(f"Failed to generate completion: {result['error']}")
 
         logger.info(f"Generated {len(training_data)} training samples")
         return training_data
@@ -598,9 +576,7 @@ class OpenRouterTempAltSystem:
 
         async with OpenRouterClient(api_key=self.api_key) as client:
             for temp in temperature_points:
-                result = await client.generate_completion(
-                    prompt=prompt, temperature=temp, max_tokens=150
-                )
+                result = await client.generate_completion(prompt=prompt, temperature=temp, max_tokens=150)
                 results.append(
                     {
                         "temperature": temp,
@@ -622,12 +598,8 @@ class OpenRouterTempAltSystem:
             "results": results,
             "analysis": {
                 "length_variance": self._analyze_length_variance(successful_results),
-                "content_diversity": self._analyze_content_diversity(
-                    successful_results
-                ),
-                "temperature_sensitivity": self._analyze_temperature_sensitivity(
-                    successful_results
-                ),
+                "content_diversity": self._analyze_content_diversity(successful_results),
+                "temperature_sensitivity": self._analyze_temperature_sensitivity(successful_results),
             },
         }
 
@@ -668,9 +640,7 @@ class OpenRouterTempAltSystem:
                 words2 = set(comp2.lower().split())
 
                 if len(words1.union(words2)) > 0:
-                    similarity = len(words1.intersection(words2)) / len(
-                        words1.union(words2)
-                    )
+                    similarity = len(words1.intersection(words2)) / len(words1.union(words2))
                     similarities.append(similarity)
 
         return {
@@ -699,9 +669,7 @@ class OpenRouterTempAltSystem:
 
         # Check for monotonic trend
         length_diffs = [lengths[i + 1] - lengths[i] for i in range(len(lengths) - 1)]
-        monotonic_trend = all(d >= 0 for d in length_diffs) or all(
-            d <= 0 for d in length_diffs
-        )
+        monotonic_trend = all(d >= 0 for d in length_diffs) or all(d <= 0 for d in length_diffs)
 
         return {
             "sensitivity_score": sensitivity_score,
@@ -712,14 +680,8 @@ class OpenRouterTempAltSystem:
     def export_templates(self, filepath: str):
         """Export all templates to JSON file."""
         templates_data = {
-            "templates": {
-                tid: template.to_dict()
-                for tid, template in self.prompt_manager.templates.items()
-            },
-            "categories": {
-                cat.value: len(templates)
-                for cat, templates in self.prompt_manager.categories.items()
-            },
+            "templates": {tid: template.to_dict() for tid, template in self.prompt_manager.templates.items()},
+            "categories": {cat.value: len(templates) for cat, templates in self.prompt_manager.categories.items()},
             "total_templates": len(self.prompt_manager.templates),
         }
 
@@ -727,9 +689,7 @@ class OpenRouterTempAltSystem:
         with open(filepath, "w") as f:
             json.dump(templates_data, f, indent=2)
 
-        logger.info(
-            f"Exported {len(templates_data['templates'])} templates to {filepath}"
-        )
+        logger.info(f"Exported {len(templates_data['templates'])} templates to {filepath}")
 
 
 # Factory functions
@@ -754,9 +714,7 @@ if __name__ == "__main__":
         # Create system (without API key for demo)
         system = create_openrouter_system(api_key=None)  # Will use mock completions
 
-        print(
-            f"Created OpenRouter system with {len(system.prompt_manager.templates)} templates"
-        )
+        print(f"Created OpenRouter system with {len(system.prompt_manager.templates)} templates")
         print()
 
         # Show template categories
@@ -776,21 +734,15 @@ if __name__ == "__main__":
 
         print(f"🌡️ Testing with {len(temp_bins)} temperature bins:")
         for bin in temp_bins:
-            print(
-                f"   {bin.bin_type.value:10} | [{bin.low:.1f}, {bin.high:.1f}] center={bin.center:.1f}"
-            )
+            print(f"   {bin.bin_type.value:10} | [{bin.low:.1f}, {bin.high:.1f}] center={bin.center:.1f}")
         print()
 
         # Generate sample prompts for each temperature bin
         print("📋 Sample Prompts by Temperature Bin:")
 
         for temp_bin in temp_bins:
-            suitable_templates = system.prompt_manager.get_templates_for_temp_bin(
-                temp_bin
-            )
-            print(
-                f"\n   {temp_bin.bin_type.value.upper()} Temperature (τ={temp_bin.center:.1f}):"
-            )
+            suitable_templates = system.prompt_manager.get_templates_for_temp_bin(temp_bin)
+            print(f"\n   {temp_bin.bin_type.value.upper()} Temperature (τ={temp_bin.center:.1f}):")
             print(f"   Suitable templates: {len(suitable_templates)}")
 
             if suitable_templates:
@@ -798,9 +750,7 @@ if __name__ == "__main__":
                 template = suitable_templates[0]
                 sample_prompt = template.generate()
                 print(f"   Sample: {sample_prompt[:80]}...")
-                print(
-                    f"   Category: {template.category.value}, Complexity: {template.complexity.value}"
-                )
+                print(f"   Category: {template.category.value}, Complexity: {template.complexity.value}")
 
         print()
 
@@ -814,12 +764,8 @@ if __name__ == "__main__":
 
         print(f"   Test prompt: {test_prompt}")
         print(f"   Success rate: {consistency_analysis['success_rate']:.1%}")
-        print(
-            f"   Length variance: {consistency_analysis['analysis']['length_variance']['variance']:.2f}"
-        )
-        print(
-            f"   Content diversity: {consistency_analysis['analysis']['content_diversity']['unique_ratio']:.2f}"
-        )
+        print(f"   Length variance: {consistency_analysis['analysis']['length_variance']['variance']:.2f}")
+        print(f"   Content diversity: {consistency_analysis['analysis']['content_diversity']['unique_ratio']:.2f}")
         print(
             f"   Temperature sensitivity: {consistency_analysis['analysis']['temperature_sensitivity']['sensitivity_score']:.2f}"
         )
@@ -832,9 +778,7 @@ if __name__ == "__main__":
             if result["success"]:
                 temp = result["temperature"]
                 completion = (
-                    result["completion"][:60] + "..."
-                    if len(result["completion"]) > 60
-                    else result["completion"]
+                    result["completion"][:60] + "..." if len(result["completion"]) > 60 else result["completion"]
                 )
                 print(f"   τ={temp:.1f}: {completion}")
 
@@ -873,9 +817,7 @@ if __name__ == "__main__":
         print("  • OpenRouter API integration with async support")
         print("  • Temperature consistency analysis and evaluation")
         print("  • Automated training data generation across temperature bins")
-        print(
-            "  • Template categorization by domain, complexity, and optimal temperature"
-        )
+        print("  • Template categorization by domain, complexity, and optimal temperature")
         print("  • Content diversity and sensitivity analysis")
         print("  • JSON export/import for template management")
         print("  • Production-ready integration with temperature alternation system")

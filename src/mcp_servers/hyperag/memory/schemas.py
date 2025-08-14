@@ -115,78 +115,27 @@ class HippoSchema:
         """Get SQL statements to create indexes for performance."""
         return [
             # Node indexes
-            (
-                "CREATE INDEX IF NOT EXISTS idx_hippo_nodes_embedding "
-                "ON hippo_nodes USING HNSW(embedding)"
-            ),
-            (
-                "CREATE INDEX IF NOT EXISTS idx_hippo_nodes_user_time "
-                "ON hippo_nodes(user_id, created_at DESC)"
-            ),
-            (
-                "CREATE INDEX IF NOT EXISTS idx_hippo_nodes_confidence "
-                "ON hippo_nodes(confidence DESC)"
-            ),
-            (
-                "CREATE INDEX IF NOT EXISTS idx_hippo_nodes_importance "
-                "ON hippo_nodes(importance_score DESC)"
-            ),
-            (
-                "CREATE INDEX IF NOT EXISTS idx_hippo_nodes_type "
-                "ON hippo_nodes(node_type, memory_type)"
-            ),
-            (
-                "CREATE INDEX IF NOT EXISTS idx_hippo_nodes_ttl "
-                "ON hippo_nodes(created_at, ttl) WHERE ttl IS NOT NULL"
-            ),
-            (
-                "CREATE INDEX IF NOT EXISTS idx_hippo_nodes_gdc "
-                "ON hippo_nodes USING GIN(gdc_flags)"
-            ),
+            ("CREATE INDEX IF NOT EXISTS idx_hippo_nodes_embedding " "ON hippo_nodes USING HNSW(embedding)"),
+            ("CREATE INDEX IF NOT EXISTS idx_hippo_nodes_user_time " "ON hippo_nodes(user_id, created_at DESC)"),
+            ("CREATE INDEX IF NOT EXISTS idx_hippo_nodes_confidence " "ON hippo_nodes(confidence DESC)"),
+            ("CREATE INDEX IF NOT EXISTS idx_hippo_nodes_importance " "ON hippo_nodes(importance_score DESC)"),
+            ("CREATE INDEX IF NOT EXISTS idx_hippo_nodes_type " "ON hippo_nodes(node_type, memory_type)"),
+            ("CREATE INDEX IF NOT EXISTS idx_hippo_nodes_ttl " "ON hippo_nodes(created_at, ttl) WHERE ttl IS NOT NULL"),
+            ("CREATE INDEX IF NOT EXISTS idx_hippo_nodes_gdc " "ON hippo_nodes USING GIN(gdc_flags)"),
             # Edge indexes
-            (
-                "CREATE INDEX IF NOT EXISTS idx_hippo_edges_source "
-                "ON hippo_edges(source_id)"
-            ),
-            (
-                "CREATE INDEX IF NOT EXISTS idx_hippo_edges_target "
-                "ON hippo_edges(target_id)"
-            ),
-            (
-                "CREATE INDEX IF NOT EXISTS idx_hippo_edges_relation "
-                "ON hippo_edges(relation)"
-            ),
-            (
-                "CREATE INDEX IF NOT EXISTS idx_hippo_edges_confidence "
-                "ON hippo_edges(confidence DESC)"
-            ),
+            ("CREATE INDEX IF NOT EXISTS idx_hippo_edges_source " "ON hippo_edges(source_id)"),
+            ("CREATE INDEX IF NOT EXISTS idx_hippo_edges_target " "ON hippo_edges(target_id)"),
+            ("CREATE INDEX IF NOT EXISTS idx_hippo_edges_relation " "ON hippo_edges(relation)"),
+            ("CREATE INDEX IF NOT EXISTS idx_hippo_edges_confidence " "ON hippo_edges(confidence DESC)"),
             "CREATE INDEX IF NOT EXISTS idx_hippo_edges_user ON hippo_edges(user_id)",
-            (
-                "CREATE INDEX IF NOT EXISTS idx_hippo_edges_participants "
-                "ON hippo_edges USING GIN(participants)"
-            ),
-            (
-                "CREATE INDEX IF NOT EXISTS idx_hippo_edges_popularity "
-                "ON hippo_edges(popularity_rank DESC)"
-            ),
+            ("CREATE INDEX IF NOT EXISTS idx_hippo_edges_participants " "ON hippo_edges USING GIN(participants)"),
+            ("CREATE INDEX IF NOT EXISTS idx_hippo_edges_popularity " "ON hippo_edges(popularity_rank DESC)"),
             # Document indexes
-            (
-                "CREATE INDEX IF NOT EXISTS idx_hippo_docs_type "
-                "ON hippo_documents(doc_type)"
-            ),
-            (
-                "CREATE INDEX IF NOT EXISTS idx_hippo_docs_user_time "
-                "ON hippo_documents(user_id, created_at DESC)"
-            ),
-            (
-                "CREATE INDEX IF NOT EXISTS idx_hippo_docs_embedding "
-                "ON hippo_documents USING HNSW(embedding)"
-            ),
+            ("CREATE INDEX IF NOT EXISTS idx_hippo_docs_type " "ON hippo_documents(doc_type)"),
+            ("CREATE INDEX IF NOT EXISTS idx_hippo_docs_user_time " "ON hippo_documents(user_id, created_at DESC)"),
+            ("CREATE INDEX IF NOT EXISTS idx_hippo_docs_embedding " "ON hippo_documents USING HNSW(embedding)"),
             # Consolidation indexes
-            (
-                "CREATE INDEX IF NOT EXISTS idx_consolidation_status "
-                "ON consolidation_batches(status, created_at)"
-            ),
+            ("CREATE INDEX IF NOT EXISTS idx_consolidation_status " "ON consolidation_batches(status, created_at)"),
         ]
 
     @staticmethod
@@ -242,26 +191,11 @@ class HypergraphSchema:
     def get_node_constraints() -> list[str]:
         """Get Cypher statements to create node constraints."""
         return [
-            (
-                "CREATE CONSTRAINT semantic_node_id IF NOT EXISTS "
-                "FOR (n:SemanticNode) REQUIRE n.id IS UNIQUE"
-            ),
-            (
-                "CREATE CONSTRAINT entity_id IF NOT EXISTS "
-                "FOR (e:Entity) REQUIRE e.id IS UNIQUE"
-            ),
-            (
-                "CREATE CONSTRAINT hyperedge_id IF NOT EXISTS "
-                "FOR (h:Hyperedge) REQUIRE h.id IS UNIQUE"
-            ),
-            (
-                "CREATE CONSTRAINT user_id IF NOT EXISTS "
-                "FOR (u:User) REQUIRE u.id IS UNIQUE"
-            ),
-            (
-                "CREATE CONSTRAINT document_id IF NOT EXISTS "
-                "FOR (d:Document) REQUIRE d.id IS UNIQUE"
-            ),
+            ("CREATE CONSTRAINT semantic_node_id IF NOT EXISTS " "FOR (n:SemanticNode) REQUIRE n.id IS UNIQUE"),
+            ("CREATE CONSTRAINT entity_id IF NOT EXISTS " "FOR (e:Entity) REQUIRE e.id IS UNIQUE"),
+            ("CREATE CONSTRAINT hyperedge_id IF NOT EXISTS " "FOR (h:Hyperedge) REQUIRE h.id IS UNIQUE"),
+            ("CREATE CONSTRAINT user_id IF NOT EXISTS " "FOR (u:User) REQUIRE u.id IS UNIQUE"),
+            ("CREATE CONSTRAINT document_id IF NOT EXISTS " "FOR (d:Document) REQUIRE d.id IS UNIQUE"),
         ]
 
     @staticmethod
@@ -287,79 +221,31 @@ class HypergraphSchema:
         """Get Cypher statements to create indexes."""
         return [
             # Node property indexes
-            (
-                "CREATE INDEX semantic_node_confidence IF NOT EXISTS "
-                "FOR (n:SemanticNode) ON (n.confidence)"
-            ),
-            (
-                "CREATE INDEX semantic_node_created IF NOT EXISTS "
-                "FOR (n:SemanticNode) ON (n.created_at)"
-            ),
-            (
-                "CREATE INDEX semantic_node_importance IF NOT EXISTS "
-                "FOR (n:SemanticNode) ON (n.importance_score)"
-            ),
-            (
-                "CREATE INDEX semantic_node_type IF NOT EXISTS "
-                "FOR (n:SemanticNode) ON (n.node_type)"
-            ),
-            (
-                "CREATE INDEX semantic_node_user IF NOT EXISTS "
-                "FOR (n:SemanticNode) ON (n.user_id)"
-            ),
+            ("CREATE INDEX semantic_node_confidence IF NOT EXISTS " "FOR (n:SemanticNode) ON (n.confidence)"),
+            ("CREATE INDEX semantic_node_created IF NOT EXISTS " "FOR (n:SemanticNode) ON (n.created_at)"),
+            ("CREATE INDEX semantic_node_importance IF NOT EXISTS " "FOR (n:SemanticNode) ON (n.importance_score)"),
+            ("CREATE INDEX semantic_node_type IF NOT EXISTS " "FOR (n:SemanticNode) ON (n.node_type)"),
+            ("CREATE INDEX semantic_node_user IF NOT EXISTS " "FOR (n:SemanticNode) ON (n.user_id)"),
             # Entity indexes
             "CREATE INDEX entity_type IF NOT EXISTS FOR (e:Entity) ON (e.entity_type)",
-            (
-                "CREATE INDEX entity_popularity IF NOT EXISTS "
-                "FOR (e:Entity) ON (e.popularity_rank)"
-            ),
+            ("CREATE INDEX entity_popularity IF NOT EXISTS " "FOR (e:Entity) ON (e.popularity_rank)"),
             # Hyperedge indexes
-            (
-                "CREATE INDEX hyperedge_relation IF NOT EXISTS "
-                "FOR (h:Hyperedge) ON (h.relation)"
-            ),
-            (
-                "CREATE INDEX hyperedge_confidence IF NOT EXISTS "
-                "FOR (h:Hyperedge) ON (h.confidence)"
-            ),
-            (
-                "CREATE INDEX hyperedge_created IF NOT EXISTS "
-                "FOR (h:Hyperedge) ON (h.created_at)"
-            ),
-            (
-                "CREATE INDEX hyperedge_popularity IF NOT EXISTS "
-                "FOR (h:Hyperedge) ON (h.popularity_rank)"
-            ),
+            ("CREATE INDEX hyperedge_relation IF NOT EXISTS " "FOR (h:Hyperedge) ON (h.relation)"),
+            ("CREATE INDEX hyperedge_confidence IF NOT EXISTS " "FOR (h:Hyperedge) ON (h.confidence)"),
+            ("CREATE INDEX hyperedge_created IF NOT EXISTS " "FOR (h:Hyperedge) ON (h.created_at)"),
+            ("CREATE INDEX hyperedge_popularity IF NOT EXISTS " "FOR (h:Hyperedge) ON (h.popularity_rank)"),
             # User indexes
             "CREATE INDEX user_created IF NOT EXISTS FOR (u:User) ON (u.created_at)",
             # Document indexes
             "CREATE INDEX document_type IF NOT EXISTS FOR (d:Document) ON (d.doc_type)",
-            (
-                "CREATE INDEX document_created IF NOT EXISTS "
-                "FOR (d:Document) ON (d.created_at)"
-            ),
+            ("CREATE INDEX document_created IF NOT EXISTS " "FOR (d:Document) ON (d.created_at)"),
             # Composite indexes for common queries
-            (
-                "CREATE INDEX node_user_confidence IF NOT EXISTS "
-                "FOR (n:SemanticNode) ON (n.user_id, n.confidence)"
-            ),
-            (
-                "CREATE INDEX edge_relation_confidence IF NOT EXISTS "
-                "FOR (h:Hyperedge) ON (h.relation, h.confidence)"
-            ),
+            ("CREATE INDEX node_user_confidence IF NOT EXISTS " "FOR (n:SemanticNode) ON (n.user_id, n.confidence)"),
+            ("CREATE INDEX edge_relation_confidence IF NOT EXISTS " "FOR (h:Hyperedge) ON (h.relation, h.confidence)"),
             # Full-text search indexes
-            (
-                "CREATE FULLTEXT INDEX semantic_content IF NOT EXISTS "
-                "FOR (n:SemanticNode) ON EACH [n.content]"
-            ),
-            (
-                "CREATE FULLTEXT INDEX entity_content IF NOT EXISTS "
-                "FOR (e:Entity) ON EACH [e.content]"
-            ),
-            (
-                "CREATE FULLTEXT INDEX document_content IF NOT EXISTS "
-                "FOR (d:Document) ON EACH [d.content]"
-            ),
+            ("CREATE FULLTEXT INDEX semantic_content IF NOT EXISTS " "FOR (n:SemanticNode) ON EACH [n.content]"),
+            ("CREATE FULLTEXT INDEX entity_content IF NOT EXISTS " "FOR (e:Entity) ON EACH [e.content]"),
+            ("CREATE FULLTEXT INDEX document_content IF NOT EXISTS " "FOR (d:Document) ON EACH [d.content]"),
         ]
 
     @staticmethod

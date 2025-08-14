@@ -28,26 +28,20 @@ class AmazonOrdersConnector:
         self.access_key = os.environ.get("AMAZON_ACCESS_KEY", "")
         self.secret_key = os.environ.get("AMAZON_SECRET_KEY", "")
         self.associate_tag = os.environ.get("AMAZON_ASSOCIATE_TAG", "")
-        self.marketplace = os.environ.get(
-            "AMAZON_MARKETPLACE", "webservices.amazon.com"
-        )
+        self.marketplace = os.environ.get("AMAZON_MARKETPLACE", "webservices.amazon.com")
 
         # Amazon Order History API (if available)
         self.order_api_token = os.environ.get("AMAZON_ORDER_TOKEN", "")
 
         # Session for requests
         self.session = requests.Session()
-        self.session.headers.update(
-            {"User-Agent": "AIVillage-OrderConnector/1.0 (Personal Knowledge Graph)"}
-        )
+        self.session.headers.update({"User-Agent": "AIVillage-OrderConnector/1.0 (Personal Knowledge Graph)"})
 
         # Cache for fallback data
         self.orders_cache = []
         self.last_fetch_time = 0
 
-        logger.info(
-            f"Amazon connector initialized with API key: {'✓' if self.access_key else '✗'}"
-        )
+        logger.info(f"Amazon connector initialized with API key: {'✓' if self.access_key else '✗'}")
 
     def get_order_count(self) -> int:
         """Get actual order count from Amazon
@@ -147,9 +141,7 @@ class AmazonOrdersConnector:
                     products = self._simulate_product_search(search_term)
 
                     # Convert products to order format
-                    for j, product in enumerate(
-                        products[: limit // len(popular_searches)]
-                    ):
+                    for j, product in enumerate(products[: limit // len(popular_searches)]):
                         order = self._create_order_from_product(product, i * 10 + j)
                         orders.append(order)
 
@@ -248,9 +240,7 @@ class AmazonOrdersConnector:
 
         return enhanced_products
 
-    def _create_order_from_product(
-        self, product: dict, order_index: int
-    ) -> dict[str, Any]:
+    def _create_order_from_product(self, product: dict, order_index: int) -> dict[str, Any]:
         """Convert product data to order format."""
         # Generate realistic order date (within past year)
         days_ago = random.randint(1, 365)
@@ -405,9 +395,7 @@ class AmazonOrdersConnector:
                 "quantity": quantity,
                 "total_price": round(price * quantity, 2),
                 "order_date": order_date.isoformat(),
-                "delivery_date": (
-                    order_date + timedelta(days=random.randint(1, 7))
-                ).isoformat(),
+                "delivery_date": (order_date + timedelta(days=random.randint(1, 7))).isoformat(),
                 "status": random.choice(["Delivered"] * 8 + ["Shipped", "Processing"]),
                 "rating": random.choice([None, None, 4, 5, 5, 5]),  # Some items unrated
                 "source": "realistic_test_data",
@@ -480,20 +468,14 @@ class AmazonOrdersConnector:
 
             # Monthly spending
             try:
-                order_date = datetime.fromisoformat(
-                    order["order_date"].replace("Z", "+00:00")
-                )
+                order_date = datetime.fromisoformat(order["order_date"].replace("Z", "+00:00"))
                 month_key = f"{order_date.year}-{order_date.month:02d}"
-                monthly_spending[month_key] = (
-                    monthly_spending.get(month_key, 0) + order["total_price"]
-                )
+                monthly_spending[month_key] = monthly_spending.get(month_key, 0) + order["total_price"]
             except:
                 pass
 
         # Find top categories and brands
-        top_categories = sorted(
-            categories.items(), key=lambda x: x[1]["total_spent"], reverse=True
-        )[:5]
+        top_categories = sorted(categories.items(), key=lambda x: x[1]["total_spent"], reverse=True)[:5]
         top_brands = sorted(brands.items(), key=lambda x: x[1], reverse=True)[:5]
 
         # Calculate average order value
@@ -567,9 +549,7 @@ def run(user_id: str, chroma_client) -> int:
                     n += 1
 
             except Exception as e:
-                logger.warning(
-                    f"Error processing order {order.get('order_id', 'unknown')}: {e}"
-                )
+                logger.warning(f"Error processing order {order.get('order_id', 'unknown')}: {e}")
                 continue
 
         logger.info(f"Amazon connector processed {n} orders for user {user_id}")
@@ -600,8 +580,6 @@ if __name__ == "__main__":
         print(f"Total orders: {analysis['total_orders']}")
         print(f"Total spent: ${analysis['total_spent']}")
         print(f"Average order: ${analysis['average_order_value']}")
-        print(
-            f"Top category: {analysis['top_categories'][0][0] if analysis['top_categories'] else 'None'}"
-        )
+        print(f"Top category: {analysis['top_categories'][0][0] if analysis['top_categories'] else 'None'}")
 
     asyncio.run(test_connector())

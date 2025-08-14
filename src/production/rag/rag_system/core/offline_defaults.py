@@ -20,9 +20,7 @@ class OfflineRAGConfig(RAGConfig):
     """Offline-first RAG configuration with all defaults pointing to local resources."""
 
     # Offline-first embedding models (CPU-compatible, downloadable)
-    embedding_model: str = (
-        "sentence-transformers/all-MiniLM-L6-v2"  # Small, fast, offline
-    )
+    embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2"  # Small, fast, offline
     fallback_embedding_model: str = "distilbert-base-uncased"  # Backup option
 
     # Local vector storage (no cloud dependencies)
@@ -71,12 +69,8 @@ class OfflineRAGConfig(RAGConfig):
     read_timeout_seconds: int = 10
 
     # Fallback behavior configuration
-    enable_graceful_degradation: bool = (
-        True  # Degrade gracefully when resources unavailable
-    )
-    strict_offline_mode: bool = (
-        False  # Allow opportunistic online features if available
-    )
+    enable_graceful_degradation: bool = True  # Degrade gracefully when resources unavailable
+    strict_offline_mode: bool = False  # Allow opportunistic online features if available
 
 
 class OfflineDefaultsManager:
@@ -166,9 +160,7 @@ class OfflineDefaultsManager:
         for dir_name in required_dirs:
             dir_path = self.base_data_dir / dir_name
             if not dir_path.exists():
-                validation_results["missing_components"].append(
-                    f"Directory: {dir_path}"
-                )
+                validation_results["missing_components"].append(f"Directory: {dir_path}")
                 validation_results["ready_for_offline"] = False
             else:
                 # Check disk space
@@ -180,9 +172,7 @@ class OfflineDefaultsManager:
                         "size_bytes": stat.st_size,
                     }
                 except Exception as e:
-                    validation_results["warnings"].append(
-                        f"Could not stat {dir_path}: {e}"
-                    )
+                    validation_results["warnings"].append(f"Could not stat {dir_path}: {e}")
 
         # Check for offline-compatible models
         models_dir = self.base_data_dir / "models"
@@ -206,12 +196,8 @@ class OfflineDefaultsManager:
             }
 
             if free_gb < 1.0:  # Less than 1GB free
-                validation_results["warnings"].append(
-                    f"Low disk space: {free_gb:.1f}GB available"
-                )
-                validation_results["recommendations"].append(
-                    "Free up disk space for optimal operation"
-                )
+                validation_results["warnings"].append(f"Low disk space: {free_gb:.1f}GB available")
+                validation_results["recommendations"].append("Free up disk space for optimal operation")
 
         except Exception as e:
             validation_results["warnings"].append(f"Could not check disk space: {e}")
@@ -289,9 +275,7 @@ class OfflineDefaultsManager:
                     setup_results["components_initialized"].append("vector_store")
 
                 except ImportError:
-                    setup_results["warnings"].append(
-                        "FAISS not available, vector store setup skipped"
-                    )
+                    setup_results["warnings"].append("FAISS not available, vector store setup skipped")
                 except Exception as e:
                     setup_results["errors"].append(f"Vector store setup failed: {e}")
 
@@ -313,9 +297,7 @@ class OfflineDefaultsManager:
                     setup_results["components_initialized"].append("graph_store")
 
                 except ImportError:
-                    setup_results["warnings"].append(
-                        "NetworkX not available, graph store setup skipped"
-                    )
+                    setup_results["warnings"].append("NetworkX not available, graph store setup skipped")
                 except Exception as e:
                     setup_results["errors"].append(f"Graph store setup failed: {e}")
 

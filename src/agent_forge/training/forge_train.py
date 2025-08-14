@@ -126,16 +126,12 @@ class ForgeTrainer:
 
         # Edge controller
         if self.config.enable_edge_control:
-            self.edge_controller = EdgeController(
-                target_range=self.config.target_success_range, window_size=100
-            )
+            self.edge_controller = EdgeController(target_range=self.config.target_success_range, window_size=100)
         else:
             self.edge_controller = None
 
         # Geometry probe
-        self.geometry_probe = GeometryProbe(
-            layer_ids=self.config.geometry_layers, sample_size=1024
-        )
+        self.geometry_probe = GeometryProbe(layer_ids=self.config.geometry_layers, sample_size=1024)
 
         # Grokfast controller
         if self.config.enable_grokfast:
@@ -255,10 +251,7 @@ class ForgeTrainer:
                 # This would modify task sampling or generation
 
             # Temperature curriculum check
-            if (
-                self.temp_curriculum
-                and self.global_step % self.config.temp_curriculum_interval == 0
-            ):
+            if self.temp_curriculum and self.global_step % self.config.temp_curriculum_interval == 0:
                 self.run_temperature_curriculum()
 
             self.global_step += 1
@@ -338,9 +331,7 @@ class ForgeTrainer:
             "grokfast_lambda": grokfast_lambda,
         }
 
-    def forward_with_activations(
-        self, batch: dict[str, torch.Tensor]
-    ) -> tuple[Any, dict[int, torch.Tensor]]:
+    def forward_with_activations(self, batch: dict[str, torch.Tensor]) -> tuple[Any, dict[int, torch.Tensor]]:
         """Forward pass with activation collection."""
         activations = {}
 
@@ -381,9 +372,7 @@ class ForgeTrainer:
         elif "labels" in batch:
             # Classification/generation loss
             logits = outputs.logits if hasattr(outputs, "logits") else outputs
-            return F.cross_entropy(
-                logits.reshape(-1, logits.size(-1)), batch["labels"].reshape(-1)
-            )
+            return F.cross_entropy(logits.reshape(-1, logits.size(-1)), batch["labels"].reshape(-1))
         else:
             raise NotImplementedError("Task loss computation not implemented")
 
@@ -461,9 +450,7 @@ class ForgeTrainer:
         # For now, return a placeholder
         return np.random.random() * 0.5 + 0.25  # Placeholder
 
-    def store_dream_example(
-        self, batch: dict[str, torch.Tensor], outputs, telemetry: TelemetryFrame
-    ):
+    def store_dream_example(self, batch: dict[str, torch.Tensor], outputs, telemetry: TelemetryFrame):
         """Store example in dream buffer."""
         # Extract first example from batch
         # This is task-specific - adjust based on your data format
@@ -480,9 +467,7 @@ class ForgeTrainer:
             stage=telemetry.stage,
             grad_norm=telemetry.grad_norm,
             ema_cos=telemetry.ema_cos,
-            id_value=np.mean(list(telemetry.id_by_layer.values()))
-            if telemetry.id_by_layer
-            else 0.0,
+            id_value=np.mean(list(telemetry.id_by_layer.values())) if telemetry.id_by_layer else 0.0,
         )
 
         self.dream_buffer.push(example)
@@ -495,9 +480,7 @@ class ForgeTrainer:
         while self.dream_manager.is_dreaming:
             # Get dream batch
             dream_examples = self.dream_manager.get_dream_batch(
-                stage=self.stage_classifier.stage_history[-1]
-                if self.stage_classifier.stage_history
-                else None
+                stage=self.stage_classifier.stage_history[-1] if self.stage_classifier.stage_history else None
             )
 
             if not dream_examples:
@@ -512,9 +495,7 @@ class ForgeTrainer:
 
         logger.info("Dream cycle complete")
 
-    def examples_to_batch(
-        self, examples: list[DreamExample]
-    ) -> dict[str, torch.Tensor]:
+    def examples_to_batch(self, examples: list[DreamExample]) -> dict[str, torch.Tensor]:
         """Convert dream examples to batch format."""
         # This is task-specific - implement based on your data format
         # For now, return empty batch
@@ -533,9 +514,7 @@ class ForgeTrainer:
             "Implement",
             "Create a class",
         ]  # Task-specific
-        samples = self.temp_curriculum.generate_samples(
-            self.model, self.tokenizer, prompts, self.device
-        )
+        samples = self.temp_curriculum.generate_samples(self.model, self.tokenizer, prompts, self.device)
 
         # Train on temperature samples
         for sample in samples:
@@ -590,13 +569,9 @@ class ForgeTrainer:
 
         if self.self_model_head:
             checkpoint["self_model_state_dict"] = self.self_model_head.state_dict()
-            checkpoint["self_model_optimizer_state_dict"] = (
-                self.self_model_optimizer.state_dict()
-            )
+            checkpoint["self_model_optimizer_state_dict"] = self.self_model_optimizer.state_dict()
 
-        checkpoint_path = (
-            self.config.checkpoint_dir / f"checkpoint_step_{self.global_step}.pt"
-        )
+        checkpoint_path = self.config.checkpoint_dir / f"checkpoint_step_{self.global_step}.pt"
         torch.save(checkpoint, checkpoint_path)
 
         logger.info(f"Checkpoint saved to {checkpoint_path}")

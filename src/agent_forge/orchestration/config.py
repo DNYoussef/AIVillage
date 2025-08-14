@@ -27,8 +27,7 @@ class OrchestrationConfig:
         config = {
             # API Configuration
             "openrouter_api_key": os.getenv("OPENROUTER_API_KEY"),
-            "openrouter_enabled": os.getenv("OPENROUTER_ENABLED", "true").lower()
-            == "true",
+            "openrouter_enabled": os.getenv("OPENROUTER_ENABLED", "true").lower() == "true",
             # Cost Management
             "daily_budget_usd": float(os.getenv("DAILY_BUDGET_USD", "50.0")),
             "cost_tracking_enabled": True,
@@ -38,8 +37,7 @@ class OrchestrationConfig:
             "cache_ttl_seconds": 3600,
             "parallel_requests": int(os.getenv("PARALLEL_REQUESTS", "5")),
             # Model Selection
-            "prefer_opensource": os.getenv("PREFER_OPENSOURCE", "false").lower()
-            == "true",
+            "prefer_opensource": os.getenv("PREFER_OPENSOURCE", "false").lower() == "true",
             "quality_threshold": float(os.getenv("QUALITY_THRESHOLD", "0.8")),
             # Monitoring
             "wandb_enabled": os.getenv("WANDB_ENABLED", "true").lower() == "true",
@@ -104,10 +102,8 @@ class OrchestrationConfig:
         # Return defaults
         return {
             "enabled": True,
-            "quality_priority": task_type.value
-            in ["problem_generation", "mathematical_reasoning"],
-            "cost_sensitive": task_type.value
-            in ["evaluation_grading", "content_variation"],
+            "quality_priority": task_type.value in ["problem_generation", "mathematical_reasoning"],
+            "cost_sensitive": task_type.value in ["evaluation_grading", "content_variation"],
         }
 
     def validate(self) -> bool:

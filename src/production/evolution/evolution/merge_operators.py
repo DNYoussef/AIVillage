@@ -134,15 +134,11 @@ class MergeOperator:
             # Choose merge strategy based on performance history
             strategy = self.select_optimal_strategy(parent1, parent2)
 
-            logger.info(
-                f"Merging {parent1['individual_id'][:8]} + {parent2['individual_id'][:8]} using {strategy}"
-            )
+            logger.info(f"Merging {parent1['individual_id'][:8]} + {parent2['individual_id'][:8]} using {strategy}")
 
             try:
                 # Perform merge
-                merge_result = await self.perform_merge(
-                    parent1, parent2, strategy, merge_config, generation
-                )
+                merge_result = await self.perform_merge(parent1, parent2, strategy, merge_config, generation)
 
                 if merge_result.success:
                     offspring_results.append(merge_result)
@@ -160,9 +156,7 @@ class MergeOperator:
                         }
                     )
 
-                    logger.info(
-                        f"Successful merge: quality={merge_result.merge_quality_score:.3f}"
-                    )
+                    logger.info(f"Successful merge: quality={merge_result.merge_quality_score:.3f}")
 
                 else:
                     # Log merge failure
@@ -190,30 +184,22 @@ class MergeOperator:
                 f"generation/{generation}/merges_attempted": len(parent_pairs),
                 f"generation/{generation}/merges_successful": len(offspring_results),
                 f"generation/{generation}/avg_merge_quality": (
-                    np.mean([r.merge_quality_score for r in offspring_results])
-                    if offspring_results
-                    else 0
+                    np.mean([r.merge_quality_score for r in offspring_results]) if offspring_results else 0
                 ),
                 "generation": generation,
             }
         )
 
-        logger.info(
-            f"Generation {generation} merging complete: {len(offspring_results)} successful merges"
-        )
+        logger.info(f"Generation {generation} merging complete: {len(offspring_results)} successful merges")
 
         return offspring_results
 
-    def select_merge_pairs(
-        self, population: list[dict[str, Any]]
-    ) -> list[tuple[dict[str, Any], dict[str, Any]]]:
+    def select_merge_pairs(self, population: list[dict[str, Any]]) -> list[tuple[dict[str, Any], dict[str, Any]]]:
         """Select optimal pairs for merging based on fitness and diversity."""
         pairs = []
 
         # Sort population by fitness
-        sorted_pop = sorted(
-            population, key=lambda x: x.get("fitness_score", 0), reverse=True
-        )
+        sorted_pop = sorted(population, key=lambda x: x.get("fitness_score", 0), reverse=True)
 
         # Strategy 1: Best with diverse partners
         best_individual = sorted_pop[0]
@@ -238,9 +224,7 @@ class MergeOperator:
 
         return pairs
 
-    def select_optimal_strategy(
-        self, parent1: dict[str, Any], parent2: dict[str, Any]
-    ) -> str:
+    def select_optimal_strategy(self, parent1: dict[str, Any], parent2: dict[str, Any]) -> str:
         """Select optimal merge strategy based on parent characteristics and history."""
         # Get strategy performance history
         strategy_scores = {}
@@ -258,24 +242,12 @@ class MergeOperator:
         # Strategy selection logic
         if fitness_gap < 0.1:
             # Similar fitness - use linear or evolutionary
-            return (
-                "linear"
-                if strategy_scores["linear"] > strategy_scores["evolutionary"]
-                else "evolutionary"
-            )
+            return "linear" if strategy_scores["linear"] > strategy_scores["evolutionary"] else "evolutionary"
         if fitness_gap > 0.3:
             # Very different fitness - use DARE or attention-guided
-            return (
-                "dare"
-                if strategy_scores["dare"] > strategy_scores["attention_guided"]
-                else "attention_guided"
-            )
+            return "dare" if strategy_scores["dare"] > strategy_scores["attention_guided"] else "attention_guided"
         # Moderate difference - use SLERP or layer-wise
-        return (
-            "slerp"
-            if strategy_scores["slerp"] > strategy_scores["layer_wise"]
-            else "layer_wise"
-        )
+        return "slerp" if strategy_scores["slerp"] > strategy_scores["layer_wise"] else "layer_wise"
 
     async def perform_merge(
         self,
@@ -321,21 +293,13 @@ class MergeOperator:
                     merge_time = asyncio.get_event_loop().time() - start_time
 
                     # Estimate model size
-                    model_size_mb = (
-                        sum(p.numel() for p in merged_model.parameters())
-                        * 4
-                        / (1024 * 1024)
-                    )
+                    model_size_mb = sum(p.numel() for p in merged_model.parameters()) * 4 / (1024 * 1024)
 
                     # Calculate quality score
-                    quality_score = await self.calculate_merge_quality(
-                        merged_model, model1, model2, parent1, parent2
-                    )
+                    quality_score = await self.calculate_merge_quality(merged_model, model1, model2, parent1, parent2)
 
                     # Count changed parameters
-                    parameters_changed = await self.count_parameter_changes(
-                        merged_model, model1, model2
-                    )
+                    parameters_changed = await self.count_parameter_changes(merged_model, model1, model2)
 
                     # Update result
                     result.success = True
@@ -407,9 +371,7 @@ class MergeOperator:
                         norm_product = torch.norm(p1_flat) * torch.norm(p2_flat)
 
                         if norm_product > 1e-8:
-                            cos_angle = torch.clamp(
-                                dot_product / norm_product, -1.0, 1.0
-                            )
+                            cos_angle = torch.clamp(dot_product / norm_product, -1.0, 1.0)
                             angle = torch.acos(cos_angle)
 
                             if angle > 1e-6:  # Avoid division by zero
@@ -498,12 +460,8 @@ class MergeOperator:
 
                         # Add evolutionary mutation
                         if mutation_strength > 0:
-                            mutation = (
-                                torch.randn_like(merged_param) * mutation_strength
-                            )
-                            mutation_mask = (
-                                torch.rand_like(merged_param) < 0.1
-                            )  # Sparse mutation
+                            mutation = torch.randn_like(merged_param) * mutation_strength
+                            mutation_mask = torch.rand_like(merged_param) < 0.1  # Sparse mutation
                             merged_param += mutation * mutation_mask.float()
 
                         merged_model.state_dict()[name1].copy_(merged_param)
@@ -590,9 +548,7 @@ class MergeOperator:
             quality_score = 0.0
 
             # 1. Parameter diversity score (how different from parents)
-            diversity_score = await self.calculate_parameter_diversity(
-                merged_model, model1, model2
-            )
+            diversity_score = await self.calculate_parameter_diversity(merged_model, model1, model2)
             quality_score += 0.3 * diversity_score
 
             # 2. Stability score (gradients and norms)
@@ -611,9 +567,7 @@ class MergeOperator:
             logger.exception(f"Error calculating merge quality: {e}")
             return 0.5
 
-    async def calculate_parameter_diversity(
-        self, merged_model, model1, model2
-    ) -> float:
+    async def calculate_parameter_diversity(self, merged_model, model1, model2) -> float:
         """Calculate how diverse the merged model is from its parents."""
         try:
             total_similarity = 0.0
@@ -633,21 +587,14 @@ class MergeOperator:
                     model2.named_parameters(),
                     strict=False,
                 ):
-                    if (
-                        merged_name == name1 == name2
-                        and merged_param.shape == param1.shape == param2.shape
-                    ):
+                    if merged_name == name1 == name2 and merged_param.shape == param1.shape == param2.shape:
                         # Calculate cosine similarity with both parents
                         merged_flat = merged_param.flatten()
                         param1_flat = param1.flatten()
                         param2_flat = param2.flatten()
 
-                        sim1 = F.cosine_similarity(
-                            merged_flat.unsqueeze(0), param1_flat.unsqueeze(0)
-                        ).item()
-                        sim2 = F.cosine_similarity(
-                            merged_flat.unsqueeze(0), param2_flat.unsqueeze(0)
-                        ).item()
+                        sim1 = F.cosine_similarity(merged_flat.unsqueeze(0), param1_flat.unsqueeze(0)).item()
+                        sim2 = F.cosine_similarity(merged_flat.unsqueeze(0), param2_flat.unsqueeze(0)).item()
 
                         # Diversity is inverse of maximum similarity
                         max_similarity = max(sim1, sim2)
@@ -727,9 +674,7 @@ class MergeOperator:
         for result in merge_results:
             # Update strategy performance
             if result.success:
-                self.strategy_performance[result.merge_strategy].append(
-                    result.merge_quality_score
-                )
+                self.strategy_performance[result.merge_strategy].append(result.merge_quality_score)
 
             # Update global analytics
             self.merge_analytics["total_merges"] += 1
@@ -739,9 +684,7 @@ class MergeOperator:
                 # Update averages
                 current_avg_time = self.merge_analytics["avg_merge_time"]
                 total_successful = self.merge_analytics["successful_merges"]
-                new_avg_time = (
-                    (current_avg_time * (total_successful - 1)) + result.merge_time
-                ) / total_successful
+                new_avg_time = ((current_avg_time * (total_successful - 1)) + result.merge_time) / total_successful
                 self.merge_analytics["avg_merge_time"] = new_avg_time
 
                 # Update best quality
@@ -750,9 +693,7 @@ class MergeOperator:
                     result.merge_quality_score,
                 )
 
-    async def merge_models(
-        self, model1, model2, strategy: str, generation: int
-    ) -> Any | None:
+    async def merge_models(self, model1, model2, strategy: str, generation: int) -> Any | None:
         """Simple interface for merging two models."""
         config = MergeConfig()
 
@@ -768,9 +709,7 @@ class MergeOperator:
             "model": model2,
         }
 
-        result = await self.perform_merge(
-            parent1_info, parent2_info, strategy, config, generation
-        )
+        result = await self.perform_merge(parent1_info, parent2_info, strategy, config, generation)
 
         return result.merged_model if result.success else None
 
@@ -785,13 +724,7 @@ class MergeOperator:
                     "best_quality": max(scores) if scores else 0.0,
                     "success_rate": len(scores)
                     / max(
-                        len(
-                            [
-                                r
-                                for r in self.merge_history
-                                if r.merge_strategy == strategy
-                            ]
-                        ),
+                        len([r for r in self.merge_history if r.merge_strategy == strategy]),
                         1,
                     ),
                 }
@@ -811,7 +744,9 @@ class MergeOperator:
                 [r for r in self.merge_history if r.success],
                 key=lambda x: x.merge_quality_score,
                 reverse=True,
-            )[:5],  # Top 5 merges
+            )[
+                :5
+            ],  # Top 5 merges
         }
 
         return analytics

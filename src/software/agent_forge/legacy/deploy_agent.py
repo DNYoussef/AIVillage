@@ -390,9 +390,7 @@ pydantic>=2.0.0
             image_tag = f"{self.config.deployment_name}:latest"
 
             logger.info("Building Docker image...")
-            image, logs = self.docker_client.images.build(
-                path=str(model_dir), tag=image_tag, rm=True, forcerm=True
-            )
+            image, logs = self.docker_client.images.build(path=str(model_dir), tag=image_tag, rm=True, forcerm=True)
 
             # Log build output
             for log_line in logs:
@@ -493,9 +491,7 @@ class KubernetesDeployer:
             },
             "spec": {
                 "selector": {"app": self.config.deployment_name},
-                "ports": [
-                    {"port": 80, "targetPort": self.config.port, "protocol": "TCP"}
-                ],
+                "ports": [{"port": 80, "targetPort": self.config.port, "protocol": "TCP"}],
                 "type": "LoadBalancer",
             },
         }
@@ -509,9 +505,7 @@ class KubernetesDeployer:
             deployment_manifest = self.create_deployment_manifest(image_tag)
 
             try:
-                self.apps_v1.create_namespaced_deployment(
-                    namespace=self.config.namespace, body=deployment_manifest
-                )
+                self.apps_v1.create_namespaced_deployment(namespace=self.config.namespace, body=deployment_manifest)
             except client.ApiException as e:
                 if e.status == 409:  # Already exists
                     self.apps_v1.patch_namespaced_deployment(
@@ -526,9 +520,7 @@ class KubernetesDeployer:
             service_manifest = self.create_service_manifest()
 
             try:
-                self.core_v1.create_namespaced_service(
-                    namespace=self.config.namespace, body=service_manifest
-                )
+                self.core_v1.create_namespaced_service(namespace=self.config.namespace, body=service_manifest)
             except client.ApiException as e:
                 if e.status != 409:  # Ignore if already exists
                     raise
@@ -589,10 +581,7 @@ class KubernetesDeployer:
             if deployment.status.ready_replicas == self.config.replicas:
                 status = "running"
                 health_status = "healthy"
-            elif (
-                deployment.status.ready_replicas
-                and deployment.status.ready_replicas > 0
-            ):
+            elif deployment.status.ready_replicas and deployment.status.ready_replicas > 0:
                 status = "partially_running"
                 health_status = "degraded"
             else:
@@ -652,9 +641,7 @@ class DockerDeployer:
         try:
             # Stop existing container if running
             try:
-                existing = self.docker_client.containers.get(
-                    self.config.deployment_name
-                )
+                existing = self.docker_client.containers.get(self.config.deployment_name)
                 existing.stop()
                 existing.remove()
                 logger.info("Stopped existing container")
@@ -673,11 +660,7 @@ class DockerDeployer:
                     "PORT": str(self.config.port),
                     "BATCH_SIZE": str(self.config.batch_size),
                 },
-                mem_limit=(
-                    self.config.memory_limit
-                    if self.config.memory_limit != "4Gi"
-                    else "4g"
-                ),
+                mem_limit=(self.config.memory_limit if self.config.memory_limit != "4Gi" else "4g"),
             )
 
             # Wait for container to be healthy
@@ -728,9 +711,7 @@ class DockerDeployer:
             stats = container.stats(stream=False)
             return {
                 "memory_usage": stats["memory_stats"].get("usage", 0),
-                "cpu_usage": stats["cpu_stats"]
-                .get("cpu_usage", {})
-                .get("total_usage", 0),
+                "cpu_usage": stats["cpu_stats"].get("cpu_usage", {}).get("total_usage", 0),
                 "network_rx": stats["networks"].get("eth0", {}).get("rx_bytes", 0),
                 "network_tx": stats["networks"].get("eth0", {}).get("tx_bytes", 0),
             }
@@ -774,9 +755,7 @@ class DeploymentOrchestrator:
             # Save deployment info
             await self._save_deployment_info(deployment_status, image_tag)
 
-            logger.info(
-                f"Deployment completed successfully: {deployment_status.status}"
-            )
+            logger.info(f"Deployment completed successfully: {deployment_status.status}")
             return deployment_status
 
         except Exception as e:
@@ -804,9 +783,7 @@ class DeploymentOrchestrator:
         logger.info(f"Model prepared in {model_dst}")
         return model_dst.parent
 
-    async def _save_deployment_info(
-        self, status: DeploymentStatus, image_tag: str
-    ) -> None:
+    async def _save_deployment_info(self, status: DeploymentStatus, image_tag: str) -> None:
         """Save deployment information."""
         deployment_info = {
             "deployment_config": self.config.to_dict(),

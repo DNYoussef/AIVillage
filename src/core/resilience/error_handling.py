@@ -209,26 +209,15 @@ class ErrorTracker:
         """Automatically categorize error based on type."""
         error_type = type(error).__name__.lower()
 
-        if any(
-            net_error in error_type for net_error in ["connection", "network", "socket"]
-        ):
+        if any(net_error in error_type for net_error in ["connection", "network", "socket"]):
             return ErrorCategory.NETWORK
-        elif any(
-            auth_error in error_type
-            for auth_error in ["auth", "permission", "unauthorized"]
-        ):
+        elif any(auth_error in error_type for auth_error in ["auth", "permission", "unauthorized"]):
             return ErrorCategory.AUTHENTICATION
-        elif any(
-            val_error in error_type for val_error in ["validation", "value", "type"]
-        ):
+        elif any(val_error in error_type for val_error in ["validation", "value", "type"]):
             return ErrorCategory.VALIDATION
-        elif any(
-            res_error in error_type for res_error in ["memory", "resource", "limit"]
-        ):
+        elif any(res_error in error_type for res_error in ["memory", "resource", "limit"]):
             return ErrorCategory.RESOURCE
-        elif any(
-            timeout_error in error_type for timeout_error in ["timeout", "deadline"]
-        ):
+        elif any(timeout_error in error_type for timeout_error in ["timeout", "deadline"]):
             return ErrorCategory.TIMEOUT
         else:
             return ErrorCategory.INTERNAL
@@ -248,29 +237,21 @@ class ErrorTracker:
     def get_error_stats(self) -> dict[str, Any]:
         """Get error statistics."""
         with self._lock:
-            recent_errors = [
-                e for e in self.errors if time.time() - e.timestamp < 3600
-            ]  # Last hour
+            recent_errors = [e for e in self.errors if time.time() - e.timestamp < 3600]  # Last hour
 
             return {
                 "total_errors": len(self.errors),
                 "recent_errors": len(recent_errors),
                 "error_by_severity": {
-                    severity.value: len(
-                        [e for e in recent_errors if e.severity == severity]
-                    )
+                    severity.value: len([e for e in recent_errors if e.severity == severity])
                     for severity in ErrorSeverity
                 },
                 "error_by_category": {
-                    category.value: len(
-                        [e for e in recent_errors if e.category == category]
-                    )
+                    category.value: len([e for e in recent_errors if e.category == category])
                     for category in ErrorCategory
                 },
                 "component_health": dict(self.component_health),
-                "top_error_sources": sorted(
-                    self.error_counts.items(), key=lambda x: x[1], reverse=True
-                )[:10],
+                "top_error_sources": sorted(self.error_counts.items(), key=lambda x: x[1], reverse=True)[:10],
             }
 
 
@@ -309,18 +290,14 @@ class CircuitBreaker:
 
             if self.state == CircuitBreakerState.OPEN:
                 if time.time() - self.last_failure_time < self.config.timeout_ms / 1000:
-                    raise CircuitBreakerOpenError(
-                        f"Circuit breaker {self.name} is OPEN"
-                    )
+                    raise CircuitBreakerOpenError(f"Circuit breaker {self.name} is OPEN")
                 else:
                     # Transition to half-open
                     self._change_state(CircuitBreakerState.HALF_OPEN)
 
             if self.state == CircuitBreakerState.HALF_OPEN:
                 if self.half_open_calls >= self.config.half_open_max_calls:
-                    raise CircuitBreakerOpenError(
-                        f"Circuit breaker {self.name} half-open call limit exceeded"
-                    )
+                    raise CircuitBreakerOpenError(f"Circuit breaker {self.name} half-open call limit exceeded")
                 self.half_open_calls += 1
 
         try:
@@ -410,9 +387,7 @@ class RetryHandler:
             try:
                 result = func(*args, **kwargs)
                 if attempt > 0:
-                    logging.info(
-                        f"Function {func.__name__} succeeded on attempt {attempt + 1}"
-                    )
+                    logging.info(f"Function {func.__name__} succeeded on attempt {attempt + 1}")
                 return result
 
             except Exception as e:
@@ -426,31 +401,21 @@ class RetryHandler:
                 # Don't delay on last attempt
                 if attempt < self.config.max_attempts - 1:
                     delay = self._calculate_delay(attempt)
-                    logging.warning(
-                        f"Attempt {attempt + 1} failed for {func.__name__}: {e}. Retrying in {delay:.2f}s"
-                    )
+                    logging.warning(f"Attempt {attempt + 1} failed for {func.__name__}: {e}. Retrying in {delay:.2f}s")
                     time.sleep(delay)
 
         # All attempts failed
-        logging.error(
-            f"All {self.config.max_attempts} attempts failed for {func.__name__}"
-        )
+        logging.error(f"All {self.config.max_attempts} attempts failed for {func.__name__}")
         raise last_exception
 
     def _is_retryable(self, exception: Exception) -> bool:
         """Check if exception is retryable."""
         if self.config.non_retryable_exceptions:
-            if any(
-                isinstance(exception, exc_type)
-                for exc_type in self.config.non_retryable_exceptions
-            ):
+            if any(isinstance(exception, exc_type) for exc_type in self.config.non_retryable_exceptions):
                 return False
 
         if self.config.retryable_exceptions:
-            return any(
-                isinstance(exception, exc_type)
-                for exc_type in self.config.retryable_exceptions
-            )
+            return any(isinstance(exception, exc_type) for exc_type in self.config.retryable_exceptions)
 
         # Default retryable exceptions
         retryable_types = (
@@ -470,14 +435,10 @@ class RetryHandler:
             delay = (self.config.initial_delay_ms * (attempt + 1)) / 1000
 
         elif self.config.strategy == RetryStrategy.EXPONENTIAL_BACKOFF:
-            delay = (
-                self.config.initial_delay_ms * (self.config.backoff_multiplier**attempt)
-            ) / 1000
+            delay = (self.config.initial_delay_ms * (self.config.backoff_multiplier**attempt)) / 1000
 
         elif self.config.strategy == RetryStrategy.JITTERED_BACKOFF:
-            base_delay = (
-                self.config.initial_delay_ms * (self.config.backoff_multiplier**attempt)
-            ) / 1000
+            base_delay = (self.config.initial_delay_ms * (self.config.backoff_multiplier**attempt)) / 1000
             jitter = random.uniform(0.1, 0.3) * base_delay
             delay = base_delay + jitter
 
@@ -548,14 +509,10 @@ class GracefulDegradation:
 
         return cached_item["data"]
 
-    def fallback_response(
-        self, service_name: str, operation: str, default_response: Any = None
-    ) -> Any:
+    def fallback_response(self, service_name: str, operation: str, default_response: Any = None) -> Any:
         """Generate fallback response for degraded service."""
         if not self.config.enable_fallback:
-            raise ServiceDegradedError(
-                f"Service {service_name} is degraded and fallback disabled"
-            )
+            raise ServiceDegradedError(f"Service {service_name} is degraded and fallback disabled")
 
         # Try cached data first
         cache_key = f"{service_name}:{operation}"
@@ -577,9 +534,7 @@ class GracefulDegradation:
                 "timestamp": time.time(),
             }
 
-        raise ServiceDegradedError(
-            f"No fallback available for {service_name}:{operation}"
-        )
+        raise ServiceDegradedError(f"No fallback available for {service_name}:{operation}")
 
 
 class HealthMonitor:
@@ -602,9 +557,7 @@ class HealthMonitor:
             return
 
         self.monitoring_active = True
-        self._monitor_thread = threading.Thread(
-            target=self._monitoring_loop, args=(interval_ms,), daemon=True
-        )
+        self._monitor_thread = threading.Thread(target=self._monitoring_loop, args=(interval_ms,), daemon=True)
         self._monitor_thread.start()
 
     def stop_monitoring(self):
@@ -644,14 +597,10 @@ class HealthMonitor:
                         self.health_status.component_health[name] = HealthStatus.HEALTHY
                     else:
                         if check.critical:
-                            self.health_status.component_health[name] = (
-                                HealthStatus.CRITICAL
-                            )
+                            self.health_status.component_health[name] = HealthStatus.CRITICAL
                             self.health_status.critical_failures.append(name)
                         else:
-                            self.health_status.component_health[name] = (
-                                HealthStatus.DEGRADED
-                            )
+                            self.health_status.component_health[name] = HealthStatus.DEGRADED
                             self.health_status.degraded_services.append(name)
 
                 except Exception as e:
@@ -688,10 +637,7 @@ class HealthMonitor:
         return {
             "overall_status": self.health_status.overall_status.value,
             "last_check": self.health_status.last_check,
-            "component_health": {
-                name: status.value
-                for name, status in self.health_status.component_health.items()
-            },
+            "component_health": {name: status.value for name, status in self.health_status.component_health.items()},
             "degraded_services": self.health_status.degraded_services,
             "critical_failures": self.health_status.critical_failures,
             "total_checks": len(self.health_checks),
@@ -712,17 +658,13 @@ class ResilienceManager:
         # Register default health checks
         self._register_default_health_checks()
 
-    def get_circuit_breaker(
-        self, name: str, config: CircuitBreakerConfig | None = None
-    ) -> CircuitBreaker:
+    def get_circuit_breaker(self, name: str, config: CircuitBreakerConfig | None = None) -> CircuitBreaker:
         """Get or create circuit breaker."""
         if name not in self.circuit_breakers:
             self.circuit_breakers[name] = CircuitBreaker(name, config)
         return self.circuit_breakers[name]
 
-    def get_retry_handler(
-        self, name: str, config: RetryConfig | None = None
-    ) -> RetryHandler:
+    def get_retry_handler(self, name: str, config: RetryConfig | None = None) -> RetryHandler:
         """Get or create retry handler."""
         if name not in self.retry_handlers:
             self.retry_handlers[name] = RetryHandler(config)
@@ -767,9 +709,7 @@ class ResilienceManager:
             # Try fallback if available
             if fallback_func:
                 try:
-                    logging.warning(
-                        f"Using fallback for {component}:{operation} (error: {error_id})"
-                    )
+                    logging.warning(f"Using fallback for {component}:{operation} (error: {error_id})")
                     return fallback_func(*args, **kwargs)
                 except Exception as fallback_error:
                     self.error_tracker.record_error(
@@ -781,9 +721,7 @@ class ResilienceManager:
 
             # Check if service should be degraded
             if circuit_breaker.state == CircuitBreakerState.OPEN:
-                self.degradation.degrade_service(
-                    component, f"Circuit breaker open: {error_id}"
-                )
+                self.degradation.degrade_service(component, f"Circuit breaker open: {error_id}")
 
             raise
 
@@ -833,15 +771,9 @@ class ResilienceManager:
                 return False
 
         # Register health checks
-        self.health_monitor.register_health_check(
-            HealthCheck("memory_usage", check_memory_usage, critical=False)
-        )
-        self.health_monitor.register_health_check(
-            HealthCheck("disk_space", check_disk_space, critical=False)
-        )
-        self.health_monitor.register_health_check(
-            HealthCheck("python_imports", check_python_import, critical=True)
-        )
+        self.health_monitor.register_health_check(HealthCheck("memory_usage", check_memory_usage, critical=False))
+        self.health_monitor.register_health_check(HealthCheck("disk_space", check_disk_space, critical=False))
+        self.health_monitor.register_health_check(HealthCheck("python_imports", check_python_import, critical=True))
 
     def start_monitoring(self):
         """Start health monitoring."""
@@ -855,9 +787,7 @@ class ResilienceManager:
         """Get comprehensive resilience report."""
         return {
             "error_stats": self.error_tracker.get_error_stats(),
-            "circuit_breakers": {
-                name: cb.get_stats() for name, cb in self.circuit_breakers.items()
-            },
+            "circuit_breakers": {name: cb.get_stats() for name, cb in self.circuit_breakers.items()},
             "degraded_services": self.degradation.degraded_services,
             "offline_mode": self.degradation.offline_mode,
             "health_status": self.health_monitor.get_health_report(),

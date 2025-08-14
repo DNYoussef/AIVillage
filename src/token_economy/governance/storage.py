@@ -98,9 +98,7 @@ class SQLiteGovernanceStorage:
 
     def load_proposal(self, proposal_id: str) -> Proposal | None:
         """Load a proposal by ID."""
-        cursor = self.conn.execute(
-            "SELECT * FROM proposals WHERE id = ?", (proposal_id,)
-        )
+        cursor = self.conn.execute("SELECT * FROM proposals WHERE id = ?", (proposal_id,))
         row = cursor.fetchone()
         if not row:
             return None

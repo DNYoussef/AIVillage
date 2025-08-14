@@ -61,12 +61,8 @@ class GuardianGate:
         self.metrics.set_policy_info(
             {
                 "version": "1.0",
-                "confidence_threshold": self.policies.get("thresholds", {}).get(
-                    "apply", 0.8
-                ),
-                "quarantine_threshold": self.policies.get("thresholds", {}).get(
-                    "quarantine", 0.4
-                ),
+                "confidence_threshold": self.policies.get("thresholds", {}).get("apply", 0.8),
+                "quarantine_threshold": self.policies.get("thresholds", {}).get("quarantine", 0.4),
             }
         )
 
@@ -91,9 +87,7 @@ class GuardianGate:
                 },
             }
 
-    async def evaluate_repair(
-        self, proposals: list[RepairOperation], violation: Violation
-    ) -> Decision:
+    async def evaluate_repair(self, proposals: list[RepairOperation], violation: Violation) -> Decision:
         """Validate Innovator Repair set and return decision."""
         time.time()
         getattr(violation, "domain", "general")
@@ -124,9 +118,7 @@ class GuardianGate:
         decision = self._apply_thresholds(score, severity)
 
         # 6. Generate rationale and log audit record
-        rationale = self._generate_rationale(
-            decision, score, structural_fix, domain_veracity, evidence_strength
-        )
+        rationale = self._generate_rationale(decision, score, structural_fix, domain_veracity, evidence_strength)
 
         # 7. Log audit record
         audit_record = {
@@ -161,9 +153,7 @@ class GuardianGate:
         )
 
         decision = self._apply_thresholds(score, "medium")
-        rationale = (
-            f"Creative bridge plausibility: {domain_veracity:.2f}, score: {score:.2f}"
-        )
+        rationale = f"Creative bridge plausibility: {domain_veracity:.2f}, score: {score:.2f}"
 
         # Log audit record
         audit_record = {
@@ -182,9 +172,7 @@ class GuardianGate:
 
         return decision
 
-    async def _calculate_structural_fix(
-        self, proposals: list[Any], violation: Any
-    ) -> float:
+    async def _calculate_structural_fix(self, proposals: list[Any], violation: Any) -> float:
         """Calculate how well proposals fix the structural issue."""
         # Apply proposals in-memory to a copy of the violating subgraph
         original_subgraph = getattr(violation, "subgraph", {"nodes": [], "edges": []})
@@ -247,10 +235,7 @@ class GuardianGate:
             graph["edges"] = [
                 e
                 for e in edges
-                if (
-                    e.get("startNode") != proposal.target_id
-                    and e.get("endNode") != proposal.target_id
-                )
+                if (e.get("startNode") != proposal.target_id and e.get("endNode") != proposal.target_id)
             ]
 
         elif operation == "add_edge":
@@ -404,9 +389,7 @@ class GuardianGate:
                 rationale_bonus = min(0.3, len(proposal.rationale) / 100.0)
                 strength_factors.append(rationale_bonus)
 
-        return (
-            sum(strength_factors) / len(strength_factors) if strength_factors else 0.5
-        )
+        return sum(strength_factors) / len(strength_factors) if strength_factors else 0.5
 
     def _apply_thresholds(self, score: float, severity: str) -> Decision:
         """Apply decision thresholds based on score and severity."""
@@ -480,16 +463,8 @@ class GuardianGate:
         perplexity = metrics.get("perplexity", float("inf"))
 
         # Domain-specific thresholds
-        min_accuracy = (
-            self.policies.get("adapter_thresholds", {})
-            .get(domain, {})
-            .get("min_accuracy", 0.7)
-        )
-        max_perplexity = (
-            self.policies.get("adapter_thresholds", {})
-            .get(domain, {})
-            .get("max_perplexity", 100)
-        )
+        min_accuracy = self.policies.get("adapter_thresholds", {}).get(domain, {}).get("min_accuracy", 0.7)
+        max_perplexity = self.policies.get("adapter_thresholds", {}).get(domain, {}).get("max_perplexity", 100)
 
         # Make decision
         if accuracy < min_accuracy or perplexity > max_perplexity:
@@ -535,17 +510,13 @@ class GuardianGate:
         expected_signature = self._generate_signature(data)
         return signature == expected_signature
 
-    async def validate_query_result(
-        self, query_context: dict[str, Any], result: dict[str, Any]
-    ) -> Decision:
+    async def validate_query_result(self, query_context: dict[str, Any], result: dict[str, Any]) -> Decision:
         """Validate query results before returning to user."""
         domain = query_context.get("domain", "general")
         confidence = result.get("confidence", 0.5)
 
         # High-risk domains require higher confidence
-        high_risk_domains = self.policies.get(
-            "high_risk_domains", ["medical", "financial"]
-        )
+        high_risk_domains = self.policies.get("high_risk_domains", ["medical", "financial"])
 
         if domain in high_risk_domains and confidence < 0.7:
             decision = "QUARANTINE"

@@ -339,9 +339,7 @@ class DatabaseManager:
         databases = {
             "evolution_metrics": {
                 "path": (
-                    self.config_manager.get(
-                        "AIVILLAGE_DB_PATH", "./data/evolution_metrics.db"
-                    )
+                    self.config_manager.get("AIVILLAGE_DB_PATH", "./data/evolution_metrics.db")
                     if self.config_manager
                     else "./data/evolution_metrics.db"
                 ),
@@ -350,9 +348,7 @@ class DatabaseManager:
             },
             "digital_twin": {
                 "path": (
-                    self.config_manager.get(
-                        "DIGITAL_TWIN_DB_PATH", "./data/digital_twin.db"
-                    )
+                    self.config_manager.get("DIGITAL_TWIN_DB_PATH", "./data/digital_twin.db")
                     if self.config_manager
                     else "./data/digital_twin.db"
                 ),
@@ -411,9 +407,7 @@ class DatabaseManager:
             # Store connection
             self.connections[name] = conn
 
-            logger.info(
-                f"Database {name} initialized successfully with schema version {schema_version}"
-            )
+            logger.info(f"Database {name} initialized successfully with schema version {schema_version}")
 
         except Exception as e:
             conn.close()
@@ -431,16 +425,12 @@ class DatabaseManager:
 
         redis_configs = {
             "evolution_metrics": {
-                "url": self.config_manager.get(
-                    "AIVILLAGE_REDIS_URL", "redis://localhost:6379/0"
-                ),
+                "url": self.config_manager.get("AIVILLAGE_REDIS_URL", "redis://localhost:6379/0"),
                 "db": 0,
                 "description": "Evolution metrics real-time data",
             },
             "rag_cache": {
-                "url": self.config_manager.get(
-                    "RAG_REDIS_URL", "redis://localhost:6379/1"
-                ),
+                "url": self.config_manager.get("RAG_REDIS_URL", "redis://localhost:6379/1"),
                 "db": 1,
                 "description": "RAG pipeline caching",
             },
@@ -477,9 +467,7 @@ class DatabaseManager:
                 await redis_client.close()
 
                 self.redis_pools[pool_name] = pool
-                logger.info(
-                    f"Redis pool {pool_name} initialized: {config['description']}"
-                )
+                logger.info(f"Redis pool {pool_name} initialized: {config['description']}")
 
             except Exception as e:
                 logger.warning(f"Failed to initialize Redis pool {pool_name}: {e}")
@@ -496,10 +484,7 @@ class DatabaseManager:
 
         # Digital Twin encryption
         encryption_key = self.config_manager.get("DIGITAL_TWIN_ENCRYPTION_KEY")
-        if (
-            encryption_key
-            and encryption_key != "REPLACE_WITH_BASE64_ENCODED_32_BYTE_KEY"
-        ):
+        if encryption_key and encryption_key != "REPLACE_WITH_BASE64_ENCODED_32_BYTE_KEY":
             try:
                 self.encryption_keys["digital_twin"] = Fernet(encryption_key.encode())
                 logger.info("Digital Twin encryption enabled")
@@ -546,9 +531,7 @@ class DatabaseManager:
         fernet = self.encryption_keys[encryption_type]
         return fernet.encrypt(data.encode()).decode()
 
-    def decrypt_data(
-        self, encrypted_data: str, encryption_type: str = "digital_twin"
-    ) -> str:
+    def decrypt_data(self, encrypted_data: str, encryption_type: str = "digital_twin") -> str:
         """Decrypt sensitive data."""
         if encryption_type not in self.encryption_keys:
             logger.warning(f"Encryption key {encryption_type} not available")
@@ -572,9 +555,7 @@ class DatabaseManager:
                 cursor.execute("PRAGMA integrity_check")
                 result = cursor.fetchone()
                 results[f"sqlite_{db_name}"] = result[0] == "ok" if result else False
-                logger.info(
-                    f"Database {db_name} integrity: {results[f'sqlite_{db_name}']}"
-                )
+                logger.info(f"Database {db_name} integrity: {results[f'sqlite_{db_name}']}")
             except Exception as e:
                 logger.exception(f"Integrity check failed for {db_name}: {e}")
                 results[f"sqlite_{db_name}"] = False
@@ -670,12 +651,7 @@ class DatabaseManager:
                         total_rows += count
 
                 # Get database size
-                if (
-                    self.connections[db_name]
-                    .execute("PRAGMA database_list")
-                    .fetchone()[2]
-                    != ":memory:"
-                ):
+                if self.connections[db_name].execute("PRAGMA database_list").fetchone()[2] != ":memory:":
                     cursor.execute("PRAGMA page_count")
                     page_count = cursor.fetchone()[0]
                     cursor.execute("PRAGMA page_size")

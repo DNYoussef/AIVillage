@@ -41,9 +41,7 @@ class P2PMTLSConfig:
 
         # TLS configuration
         self.tls_version = ssl.TLSVersion.TLSv1_3
-        self.ciphers = (
-            "TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256:TLS_AES_128_GCM_SHA256"
-        )
+        self.ciphers = "TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256:TLS_AES_128_GCM_SHA256"
 
         # Initialize certificates
         self._ensure_certificates()
@@ -75,9 +73,7 @@ class P2PMTLSConfig:
                 x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "Virtual"),
                 x509.NameAttribute(NameOID.LOCALITY_NAME, "AIVillage"),
                 x509.NameAttribute(NameOID.ORGANIZATION_NAME, "AIVillage P2P Network"),
-                x509.NameAttribute(
-                    NameOID.ORGANIZATIONAL_UNIT_NAME, "Certificate Authority"
-                ),
+                x509.NameAttribute(NameOID.ORGANIZATIONAL_UNIT_NAME, "Certificate Authority"),
                 x509.NameAttribute(NameOID.COMMON_NAME, "AIVillage P2P CA"),
             ]
         )
@@ -89,9 +85,7 @@ class P2PMTLSConfig:
             .public_key(ca_private_key.public_key())
             .serial_number(x509.random_serial_number())
             .not_valid_before(datetime.utcnow())
-            .not_valid_after(
-                datetime.utcnow() + timedelta(days=3650)
-            )  # 10 years for CA
+            .not_valid_after(datetime.utcnow() + timedelta(days=3650))  # 10 years for CA
             .add_extension(
                 x509.BasicConstraints(ca=True, path_length=0),
                 critical=True,
@@ -174,9 +168,7 @@ class P2PMTLSConfig:
             .public_key(node_private_key.public_key())
             .serial_number(x509.random_serial_number())
             .not_valid_before(datetime.utcnow())
-            .not_valid_after(
-                datetime.utcnow() + timedelta(days=365)
-            )  # 1 year for node certs
+            .not_valid_after(datetime.utcnow() + timedelta(days=365))  # 1 year for node certs
             .add_extension(
                 x509.BasicConstraints(ca=False, path_length=None),
                 critical=True,
@@ -391,8 +383,7 @@ class P2PMTLSConfig:
                     "not_valid_before": cert.not_valid_before.isoformat(),
                     "not_valid_after": cert.not_valid_after.isoformat(),
                     "is_valid": (
-                        datetime.utcnow() >= cert.not_valid_before
-                        and datetime.utcnow() <= cert.not_valid_after
+                        datetime.utcnow() >= cert.not_valid_before and datetime.utcnow() <= cert.not_valid_after
                     ),
                     "fingerprint_sha256": cert.fingerprint(hashes.SHA256()).hex(),
                 }

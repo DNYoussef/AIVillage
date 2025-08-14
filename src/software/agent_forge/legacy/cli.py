@@ -104,9 +104,7 @@ def status() -> None:
     click.echo("=" * 40)
 
     # Check Python version
-    python_version = (
-        f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
-    )
+    python_version = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
     click.echo(f"Python: {python_version}")
 
     # Check PyTorch

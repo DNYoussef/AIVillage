@@ -71,9 +71,7 @@ class VectorStore:
         self.config = config or UnifiedConfig()
         self.embedding_model = embedding_model
         self.dimension = (
-            getattr(embedding_model, "hidden_size", dimension)
-            if embedding_model is not None
-            else dimension
+            getattr(embedding_model, "hidden_size", dimension) if embedding_model is not None else dimension
         )
         self.documents: list[dict[str, Any]] = []
         if USE_QDRANT and QdrantClient is not None:
@@ -82,9 +80,7 @@ class VectorStore:
             try:  # pragma: no cover - network side effects
                 self.qdrant.get_collection(self.collection)
             except Exception:
-                self.qdrant.recreate_collection(
-                    self.collection, vector_size=self.dimension, distance="Cosine"
-                )
+                self.qdrant.recreate_collection(self.collection, vector_size=self.dimension, distance="Cosine")
             self.index = None
         else:
             if FAISS_AVAILABLE and faiss is not None:
@@ -93,9 +89,7 @@ class VectorStore:
                 # Fallback when FAISS is not available
                 self.index = None
                 logger = logging.getLogger(__name__)
-                logger.warning(
-                    "FAISS not available, using basic vector storage fallback"
-                )
+                logger.warning("FAISS not available, using basic vector storage fallback")
 
     def add_documents(self, documents: list[dict[str, Any]]) -> None:
         vectors = [doc["embedding"] for doc in documents]
@@ -111,9 +105,7 @@ class VectorStore:
             try:  # pragma: no cover - network side effects
                 self.qdrant.upsert(collection_name=self.collection, points=payload)
             except Exception as e:
-                logger.warning(
-                    f"Failed to upsert to Qdrant: {e}. Falling back to local index."
-                )
+                logger.warning(f"Failed to upsert to Qdrant: {e}. Falling back to local index.")
         else:
             if FAISS_AVAILABLE and NUMPY_AVAILABLE and self.index is not None:
                 self.index.add(np.array(vectors).astype("float32"))
@@ -169,9 +161,7 @@ class VectorStore:
     ) -> list[RetrievalResult]:
         if USE_QDRANT and QdrantClient is not None:
             try:  # pragma: no cover - network side effects
-                resp = self.qdrant.search(
-                    collection_name=self.collection, query_vector=query_vector, limit=k
-                )
+                resp = self.qdrant.search(collection_name=self.collection, query_vector=query_vector, limit=k)
                 entries = [(p.payload.get("content", ""), p.score, p.id) for p in resp]
             except Exception:
                 entries = []
@@ -191,19 +181,15 @@ class VectorStore:
             distances, indices = self.index.search(query_vector_np, k)
 
         results = []
-        for i, idx in enumerate(
-            indices[0] if isinstance(indices, np.ndarray) else indices
-        ):
+        for i, idx in enumerate(indices[0] if isinstance(indices, np.ndarray) else indices):
             doc = self.documents[idx]
             if (timestamp is None or doc["timestamp"] <= timestamp) and (
-                metadata_filter is None
-                or all(doc.get(key) == value for key, value in metadata_filter.items())
+                metadata_filter is None or all(doc.get(key) == value for key, value in metadata_filter.items())
             ):
                 result = RetrievalResult(
                     id=doc["id"],
                     content=doc["content"],
-                    score=1
-                    / (1 + distances[0][i]),  # Convert distance to similarity score
+                    score=1 / (1 + distances[0][i]),  # Convert distance to similarity score
                     timestamp=doc["timestamp"],
                 )
                 results.append(result)
@@ -224,9 +210,7 @@ class VectorStore:
         return len(self.documents)
 
     def save(self, file_path: str) -> None:
-        index_bytes = (
-            faiss.serialize_index(self.index) if self.index is not None else b""
-        )
+        index_bytes = faiss.serialize_index(self.index) if self.index is not None else b""
         data = {
             "index": base64.b64encode(index_bytes).decode("utf-8"),
             "documents": self.documents,

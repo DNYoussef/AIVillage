@@ -61,15 +61,14 @@ class MasteryTracker:
         # Initialize database
         self._init_database()
 
-        logger.info(
-            f"MasteryTracker initialized with {mastery_threshold}-variant threshold"
-        )
+        logger.info(f"MasteryTracker initialized with {mastery_threshold}-variant threshold")
 
     def _init_database(self) -> None:
         """Initialize SQLite database for mastery tracking."""
 
         with sqlite3.connect(self.storage_path) as conn:
-            conn.execute("""
+            conn.execute(
+                """
                 CREATE TABLE IF NOT EXISTS mastery_records (
                     student_id TEXT NOT NULL,
                     problem_id TEXT NOT NULL,
@@ -86,18 +85,23 @@ class MasteryTracker:
                     created_at TEXT,
                     PRIMARY KEY (student_id, problem_id)
                 )
-            """)
+            """
+            )
 
             # Index for efficient queries
-            conn.execute("""
+            conn.execute(
+                """
                 CREATE INDEX IF NOT EXISTS idx_student_status
                 ON mastery_records(student_id, current_status)
-            """)
+            """
+            )
 
-            conn.execute("""
+            conn.execute(
+                """
                 CREATE INDEX IF NOT EXISTS idx_problem_status
                 ON mastery_records(problem_id, current_status)
-            """)
+            """
+            )
 
     def _serialize_list(self, lst: list[str]) -> str:
         """Serialize list to JSON string for database storage."""
@@ -138,9 +142,7 @@ class MasteryTracker:
                     attempts=row["attempts"],
                     correct_count=row["correct_count"],
                     variant_ids_seen=self._deserialize_list(row["variant_ids_seen"]),
-                    variant_ids_correct=self._deserialize_list(
-                        row["variant_ids_correct"]
-                    ),
+                    variant_ids_correct=self._deserialize_list(row["variant_ids_correct"]),
                 )
             else:
                 # Create new record
@@ -152,9 +154,7 @@ class MasteryTracker:
                     variant_ids_correct=[],
                 )
 
-    def record_attempt(
-        self, student_id: str, problem_id: str, variant_id: str, correct: bool
-    ) -> None:
+    def record_attempt(self, student_id: str, problem_id: str, variant_id: str, correct: bool) -> None:
         """Record a new attempt for tracking.
 
         Args:
@@ -245,13 +245,9 @@ class MasteryTracker:
                     ),
                 )
 
-        logger.debug(
-            f"Recorded attempt: {student_id}/{problem_id}/{variant_id} = {correct}"
-        )
+        logger.debug(f"Recorded attempt: {student_id}/{problem_id}/{variant_id} = {correct}")
 
-    def _evaluate_mastery_locally(
-        self, record: AttemptRecord, last_result: LastResult
-    ) -> MasteryResponse:
+    def _evaluate_mastery_locally(self, record: AttemptRecord, last_result: LastResult) -> MasteryResponse:
         """Evaluate mastery using local rules without LLM."""
 
         # Check for mastery (3+ distinct variants correct)
@@ -280,11 +276,7 @@ class MasteryTracker:
                 )
 
         # Check for repeated failures on same concept
-        if (
-            not last_result.correct
-            and record.attempts >= 3
-            and record.correct_count == 0
-        ):
+        if not last_result.correct and record.attempts >= 3 and record.correct_count == 0:
             return MasteryResponse(
                 ok=True,
                 msg="struggling - needs hint",
@@ -359,9 +351,7 @@ class MasteryTracker:
                 # Update database with new status
                 self._update_mastery_status(student_id, problem_id, response)
 
-                logger.info(
-                    f"LLM mastery evaluation: {response.status.value} -> {response.next_action.value}"
-                )
+                logger.info(f"LLM mastery evaluation: {response.status.value} -> {response.next_action.value}")
                 return response
 
             except Exception as e:
@@ -375,9 +365,7 @@ class MasteryTracker:
             # Update database
             self._update_mastery_status(student_id, problem_id, response)
 
-            logger.info(
-                f"Local mastery evaluation: {response.status.value} -> {response.next_action.value}"
-            )
+            logger.info(f"Local mastery evaluation: {response.status.value} -> {response.next_action.value}")
             return response
 
         # Ultimate fallback
@@ -389,9 +377,7 @@ class MasteryTracker:
             needs_hint=False,
         )
 
-    def _update_mastery_status(
-        self, student_id: str, problem_id: str, response: MasteryResponse
-    ) -> None:
+    def _update_mastery_status(self, student_id: str, problem_id: str, response: MasteryResponse) -> None:
         """Update mastery status in database."""
 
         now = datetime.now(timezone.utc).isoformat()
@@ -553,9 +539,7 @@ class MasteryTracker:
 
             students = []
             for row in cursor.fetchall():
-                accuracy = (
-                    row["correct_count"] / row["attempts"] if row["attempts"] > 0 else 0
-                )
+                accuracy = row["correct_count"] / row["attempts"] if row["attempts"] > 0 else 0
                 students.append(
                     {
                         "student_id": row["student_id"],
@@ -594,13 +578,15 @@ class MasteryTracker:
         with sqlite3.connect(self.storage_path) as conn:
             conn.row_factory = sqlite3.Row
 
-            cursor = conn.execute("""
+            cursor = conn.execute(
+                """
                 SELECT student_id, problem_id, current_status, attempts,
                        correct_count, needs_hint, last_updated
                 FROM mastery_records
                 WHERE current_status = 'stalled' OR needs_hint = TRUE
                 ORDER BY last_updated ASC
-            """)
+            """
+            )
 
             interventions = []
             for row in cursor.fetchall():
@@ -610,22 +596,16 @@ class MasteryTracker:
                         "problem_id": row["problem_id"],
                         "status": row["current_status"],
                         "attempts": row["attempts"],
-                        "success_rate": row["correct_count"] / row["attempts"]
-                        if row["attempts"] > 0
-                        else 0,
+                        "success_rate": row["correct_count"] / row["attempts"] if row["attempts"] > 0 else 0,
                         "needs_hint": bool(row["needs_hint"]),
-                        "priority": "high"
-                        if row["current_status"] == "stalled"
-                        else "medium",
+                        "priority": "high" if row["current_status"] == "stalled" else "medium",
                         "last_updated": row["last_updated"],
                     }
                 )
 
             return interventions
 
-    def reset_student_progress(
-        self, student_id: str, problem_id: str | None = None
-    ) -> int:
+    def reset_student_progress(self, student_id: str, problem_id: str | None = None) -> int:
         """Reset progress for student (useful for testing or fresh starts).
 
         Args:
@@ -683,9 +663,7 @@ async def track_student_mastery(
     """
     async with OpenRouterLLM(api_key=api_key) as client:
         tracker = MasteryTracker(client, model=model, storage_path=storage_path)
-        return await tracker.evaluate_mastery(
-            student_id, problem_id, variant_id, correct, **kwargs
-        )
+        return await tracker.evaluate_mastery(student_id, problem_id, variant_id, correct, **kwargs)
 
 
 if __name__ == "__main__":
@@ -722,9 +700,7 @@ if __name__ == "__main__":
                 ]
 
                 for i, (variant_id, correct) in enumerate(attempts):
-                    print(
-                        f"\n📝 Attempt {i + 1}: {variant_id} = {'✅' if correct else '❌'}"
-                    )
+                    print(f"\n📝 Attempt {i + 1}: {variant_id} = {'✅' if correct else '❌'}")
 
                     # Use local evaluation
                     response = await tracker.evaluate_mastery(

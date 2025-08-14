@@ -31,12 +31,8 @@ def forge():
 @click.option("--learning-rate", default=1e-4, type=float, help="Learning rate")
 @click.option("--max-steps", default=10000, type=int, help="Maximum training steps")
 @click.option("--enable-grokfast/--no-grokfast", default=True, help="Enable Grokfast")
-@click.option(
-    "--enable-edge/--no-edge", default=True, help="Enable edge-of-chaos control"
-)
-@click.option(
-    "--enable-self-model/--no-self-model", default=True, help="Enable self-modeling"
-)
+@click.option("--enable-edge/--no-edge", default=True, help="Enable edge-of-chaos control")
+@click.option("--enable-self-model/--no-self-model", default=True, help="Enable self-modeling")
 @click.option("--enable-dreams/--no-dreams", default=True, help="Enable dream cycles")
 @click.option("--wandb-project", default="forge-train", help="W&B project name")
 @click.option("--resume", type=str, help="Resume from checkpoint")

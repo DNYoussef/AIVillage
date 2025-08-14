@@ -118,9 +118,7 @@ class SCIONAwareNavigator:
                 await self._initialize_scion()
 
             # Start background tasks
-            self._path_discovery_task = asyncio.create_task(
-                self._path_discovery_worker()
-            )
+            self._path_discovery_task = asyncio.create_task(self._path_discovery_worker())
 
             self._is_running = True
             logger.info("SCION-aware Navigator started")
@@ -180,9 +178,7 @@ class SCIONAwareNavigator:
         logger.debug(f"Finding optimal route to {destination}")
 
         # Gather all available transport candidates
-        candidates = await self._gather_transport_candidates(
-            destination, message, constraints
-        )
+        candidates = await self._gather_transport_candidates(destination, message, constraints)
 
         if not candidates:
             # Fallback decision
@@ -195,9 +191,7 @@ class SCIONAwareNavigator:
             )
 
         # Score and rank candidates
-        scored_candidates = await self._score_transport_candidates(
-            candidates, destination, message, constraints
-        )
+        scored_candidates = await self._score_transport_candidates(candidates, destination, message, constraints)
 
         # Select primary and backup transports
         primary = scored_candidates[0]
@@ -223,16 +217,11 @@ class SCIONAwareNavigator:
         # Record decision for analysis
         self._record_decision(decision)
 
-        logger.debug(
-            f"Route decision: {primary.transport_type} to {destination} "
-            f"(confidence: {confidence:.2f})"
-        )
+        logger.debug(f"Route decision: {primary.transport_type} to {destination} " f"(confidence: {confidence:.2f})")
 
         return decision
 
-    async def get_scion_paths(
-        self, destination: str, force_refresh: bool = False
-    ) -> list[SCIONPath]:
+    async def get_scion_paths(self, destination: str, force_refresh: bool = False) -> list[SCIONPath]:
         """Get available SCION paths to destination."""
         if not self._scion_gateway:
             return []
@@ -270,9 +259,7 @@ class SCIONAwareNavigator:
             route_decision = await self.find_optimal_route(destination, message)
 
         # Attempt primary transport first
-        success = await self._attempt_transport_send(
-            message, destination, route_decision.primary_transport
-        )
+        success = await self._attempt_transport_send(message, destination, route_decision.primary_transport)
 
         if success:
             self._record_transport_success(route_decision.primary_transport)
@@ -280,13 +267,9 @@ class SCIONAwareNavigator:
 
         # Try backup transports
         for backup_transport in route_decision.backup_transports:
-            logger.info(
-                f"Primary transport failed, trying backup: {backup_transport.transport_type}"
-            )
+            logger.info(f"Primary transport failed, trying backup: {backup_transport.transport_type}")
 
-            success = await self._attempt_transport_send(
-                message, destination, backup_transport
-            )
+            success = await self._attempt_transport_send(message, destination, backup_transport)
 
             if success:
                 self._record_transport_success(backup_transport)
@@ -348,9 +331,7 @@ class SCIONAwareNavigator:
             candidates.extend(scion_candidates)
 
         # Add traditional transport candidates
-        traditional_candidates = await self._get_traditional_transport_candidates(
-            destination, message, constraints
-        )
+        traditional_candidates = await self._get_traditional_transport_candidates(destination, message, constraints)
         candidates.extend(traditional_candidates)
 
         return candidates
@@ -380,9 +361,7 @@ class SCIONAwareNavigator:
                 candidate = TransportCandidate(
                     transport_type="scion",
                     endpoint=destination,
-                    priority=TransportPriority.HIGH
-                    if path.is_active
-                    else TransportPriority.NORMAL,
+                    priority=TransportPriority.HIGH if path.is_active else TransportPriority.NORMAL,
                     estimated_latency_ms=latency_ms,
                     reliability_score=min(1.0, reliability_score),
                     cost_factor=cost_factor,
@@ -495,14 +474,10 @@ class SCIONAwareNavigator:
             composite_score *= priority_multiplier
 
             # Apply constraint penalties
-            composite_score = await self._apply_constraint_penalties(
-                composite_score, candidate, constraints
-            )
+            composite_score = await self._apply_constraint_penalties(composite_score, candidate, constraints)
 
             # Apply historical performance adjustments
-            composite_score = self._apply_historical_adjustments(
-                composite_score, candidate
-            )
+            composite_score = self._apply_historical_adjustments(composite_score, candidate)
 
             # Store final score in metadata
             candidate.metadata["composite_score"] = composite_score
@@ -540,9 +515,7 @@ class SCIONAwareNavigator:
 
         return max(0.0, score - penalty)
 
-    def _apply_historical_adjustments(
-        self, score: float, candidate: TransportCandidate
-    ) -> float:
+    def _apply_historical_adjustments(self, score: float, candidate: TransportCandidate) -> float:
         """Apply adjustments based on historical performance."""
         transport_type = candidate.transport_type
 
@@ -556,17 +529,13 @@ class SCIONAwareNavigator:
         score *= 0.5 + 0.5 * success_rate  # Adjust by 50-100% based on success rate
 
         # Recent performance adjustment
-        recent_latency = stats.get(
-            "recent_avg_latency_ms", candidate.estimated_latency_ms
-        )
+        recent_latency = stats.get("recent_avg_latency_ms", candidate.estimated_latency_ms)
         if recent_latency > candidate.estimated_latency_ms * 1.5:
             score *= 0.9  # Penalty for recently poor performance
 
         return score
 
-    def _calculate_decision_confidence(
-        self, scored_candidates: list[TransportCandidate]
-    ) -> float:
+    def _calculate_decision_confidence(self, scored_candidates: list[TransportCandidate]) -> float:
         """Calculate confidence in the routing decision."""
         if len(scored_candidates) < 2:
             return 0.5  # Low confidence with limited options
@@ -614,9 +583,7 @@ class SCIONAwareNavigator:
             metadata={"fallback": True},
         )
 
-    async def _attempt_transport_send(
-        self, message: Message, destination: str, transport: TransportCandidate
-    ) -> bool:
+    async def _attempt_transport_send(self, message: Message, destination: str, transport: TransportCandidate) -> bool:
         """Attempt to send message via specified transport."""
         try:
             if transport.transport_type == "scion" and self.scion_transport:
@@ -628,9 +595,7 @@ class SCIONAwareNavigator:
             )
 
         except Exception as e:
-            logger.error(
-                f"Failed to send via {transport.transport_type} to {destination}: {e}"
-            )
+            logger.error(f"Failed to send via {transport.transport_type} to {destination}: {e}")
             return False
 
     def _record_transport_success(self, transport: TransportCandidate) -> None:
@@ -654,9 +619,7 @@ class SCIONAwareNavigator:
         # Update latency tracking
         latency = transport.estimated_latency_ms
         stats["total_latency_ms"] += latency
-        stats["recent_avg_latency_ms"] = (
-            0.8 * stats.get("recent_avg_latency_ms", latency) + 0.2 * latency
-        )
+        stats["recent_avg_latency_ms"] = 0.8 * stats.get("recent_avg_latency_ms", latency) + 0.2 * latency
 
     def _record_transport_failure(self, transport: TransportCandidate) -> None:
         """Record failed transport attempt."""
@@ -707,13 +670,9 @@ class SCIONAwareNavigator:
                         await self.get_scion_paths(destination, force_refresh=True)
                         await asyncio.sleep(1.0)  # Rate limiting
                     except Exception as e:
-                        logger.warning(
-                            f"Failed to refresh paths for {destination}: {e}"
-                        )
+                        logger.warning(f"Failed to refresh paths for {destination}: {e}")
 
-                logger.debug(
-                    f"Refreshed paths for {len(destinations_to_refresh)} destinations"
-                )
+                logger.debug(f"Refreshed paths for {len(destinations_to_refresh)} destinations")
 
             except asyncio.CancelledError:
                 break

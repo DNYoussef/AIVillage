@@ -192,9 +192,7 @@ class DualPathTransport:
         }
 
         # Store-and-forward queue for offline scenarios
-        self.offline_queue: list[
-            tuple[DualPathMessage, float]
-        ] = []  # (message, queued_time)
+        self.offline_queue: list[tuple[DualPathMessage, float]] = []  # (message, queued_time)
         self.max_queue_size = 1000
 
         # Control
@@ -300,24 +298,15 @@ class DualPathTransport:
 
         try:
             # Evaluate and adapt resource policies
-            old_state = (
-                self.resource_manager.state.to_dict()
-                if self.resource_manager.state
-                else {}
-            )
+            old_state = self.resource_manager.state.to_dict() if self.resource_manager.state else {}
             new_state = await self.resource_manager.evaluate_and_adapt(profile)
 
             # Track resource adaptations
             if old_state.get("power_mode") != new_state.power_mode.value:
                 self.routing_stats["resource_adaptations"] += 1
-                logger.info(
-                    f"Power mode changed: {old_state.get('power_mode')} → {new_state.power_mode.value}"
-                )
+                logger.info(f"Power mode changed: {old_state.get('power_mode')} → {new_state.power_mode.value}")
 
-            if (
-                old_state.get("transport_preference")
-                != new_state.transport_preference.value
-            ):
+            if old_state.get("transport_preference") != new_state.transport_preference.value:
                 self.routing_stats["transport_switches"] += 1
                 logger.info(
                     f"Transport preference changed: {old_state.get('transport_preference')} → {new_state.transport_preference.value}"
@@ -376,10 +365,8 @@ class DualPathTransport:
         # Get resource-aware routing decision
         resource_routing_decision = None
         if self.enable_resource_management and self.resource_manager:
-            resource_routing_decision = (
-                await self.resource_manager.get_transport_routing_decision(
-                    len(message.payload), priority
-                )
+            resource_routing_decision = await self.resource_manager.get_transport_routing_decision(
+                len(message.payload), priority
             )
 
         # Select optimal path via Navigator with resource constraints
@@ -401,24 +388,18 @@ class DualPathTransport:
         self.routing_stats["routing_decisions"] += 1
 
         # Route message via selected protocol
-        success = await self._route_message(
-            message, selected_protocol, routing_metadata
-        )
+        success = await self._route_message(message, selected_protocol, routing_metadata)
 
         if not success:
             self.routing_stats["delivery_failures"] += 1
 
             # Fallback to store-and-forward
-            logger.info(
-                f"Routing failed for {message.id[:8]} - queuing for later delivery"
-            )
+            logger.info(f"Routing failed for {message.id[:8]} - queuing for later delivery")
             await self._queue_for_store_forward(message)
 
         return success
 
-    async def broadcast_message(
-        self, payload: bytes | str | dict, priority: int = 5, max_hops: int = 5
-    ) -> int:
+    async def broadcast_message(self, payload: bytes | str | dict, priority: int = 5, max_hops: int = 5) -> int:
         """Broadcast message to all reachable peers
 
         Returns:
@@ -441,9 +422,7 @@ class DualPathTransport:
             bitchat_msg = message.to_bitchat_message()
             bitchat_msg.ttl = min(max_hops, 7)  # BitChat limit
 
-            if await self.bitchat.send_message(
-                "", bitchat_msg.payload, priority, bitchat_msg.ttl
-            ):
+            if await self.bitchat.send_message("", bitchat_msg.payload, priority, bitchat_msg.ttl):
                 sent_count += self.bitchat.get_peer_count()
                 self.routing_stats["bitchat_sent"] += 1
 
@@ -493,11 +472,7 @@ class DualPathTransport:
 
         if not self.enable_navigator or not self.navigator:
             # Fallback path selection without Navigator
-            if (
-                self.enable_bitchat
-                and self.bitchat
-                and self.bitchat.is_peer_reachable(destination)
-            ):
+            if self.enable_bitchat and self.bitchat and self.bitchat.is_peer_reachable(destination):
                 return PathProtocol.BITCHAT, {"fallback": True}
             if self.enable_betanet:
                 return PathProtocol.BETANET, {"fallback": True}
@@ -512,13 +487,9 @@ class DualPathTransport:
         available_protocols.append("store_forward")
 
         # Use Navigator for intelligent selection
-        return await self.navigator.select_path(
-            destination, context, available_protocols
-        )
+        return await self.navigator.select_path(destination, context, available_protocols)
 
-    async def _route_message(
-        self, message: DualPathMessage, protocol: PathProtocol, metadata: dict[str, Any]
-    ) -> bool:
+    async def _route_message(self, message: DualPathMessage, protocol: PathProtocol, metadata: dict[str, Any]) -> bool:
         """Route message via selected protocol"""
         if protocol == PathProtocol.BITCHAT:
             return await self._send_via_bitchat(message, metadata)
@@ -533,9 +504,7 @@ class DualPathTransport:
         logger.error(f"Unknown protocol: {protocol}")
         return False
 
-    async def _send_via_bitchat(
-        self, message: DualPathMessage, metadata: dict[str, Any]
-    ) -> bool:
+    async def _send_via_bitchat(self, message: DualPathMessage, metadata: dict[str, Any]) -> bool:
         """Send message via BitChat transport"""
         if not self.enable_bitchat or not self.bitchat:
             logger.warning("BitChat not available")
@@ -573,9 +542,7 @@ class DualPathTransport:
             logger.exception(f"BitChat send failed: {e}")
             return False
 
-    async def _send_via_betanet(
-        self, message: DualPathMessage, metadata: dict[str, Any]
-    ) -> bool:
+    async def _send_via_betanet(self, message: DualPathMessage, metadata: dict[str, Any]) -> bool:
         """Send message via Betanet transport"""
         if not self.enable_betanet or not self.betanet:
             logger.warning("Betanet not available")
@@ -657,9 +624,7 @@ class DualPathTransport:
         except Exception as e:
             logger.exception(f"Error handling Betanet message: {e}")
 
-    async def _process_received_message(
-        self, message: DualPathMessage, source_protocol: str
-    ) -> None:
+    async def _process_received_message(self, message: DualPathMessage, source_protocol: str) -> None:
         """Process received message from any protocol"""
         logger.info(f"Received message {message.id[:8]} via {source_protocol}")
 
@@ -711,14 +676,8 @@ class DualPathTransport:
                 # Check if recipient is now reachable
                 can_deliver = False
 
-                if (
-                    self.enable_bitchat
-                    and self.bitchat
-                    and self.bitchat.is_peer_reachable(message.recipient)
-                ) or (
-                    self.enable_betanet
-                    and self.betanet
-                    and message.recipient in self.betanet.discovered_peers
+                if (self.enable_bitchat and self.bitchat and self.bitchat.is_peer_reachable(message.recipient)) or (
+                    self.enable_betanet and self.betanet and message.recipient in self.betanet.discovered_peers
                 ):
                     can_deliver = True
 
@@ -742,9 +701,7 @@ class DualPathTransport:
                     remaining_queue.append((message, queued_time))
             else:
                 # Broadcast message - try delivery
-                sent_count = await self.broadcast_message(
-                    message.payload, message.priority
-                )
+                sent_count = await self.broadcast_message(message.payload, message.priority)
                 if sent_count > 0:
                     delivered += 1
                 else:
@@ -755,8 +712,7 @@ class DualPathTransport:
 
         if delivered > 0 or failed > 0:
             logger.info(
-                f"Store-and-forward: delivered {delivered}, expired {failed}, "
-                f"queued {len(self.offline_queue)}"
+                f"Store-and-forward: delivered {delivered}, expired {failed}, " f"queued {len(self.offline_queue)}"
             )
 
     async def _sync_peer_information(self) -> None:
@@ -834,9 +790,7 @@ class DualPathTransport:
         betanet_peers = set()
 
         if self.bitchat:
-            bitchat_peers = {
-                peer.device_id for peer in self.bitchat.discovered_peers.values()
-            }
+            bitchat_peers = {peer.device_id for peer in self.bitchat.discovered_peers.values()}
             peers["bitchat"] = list(bitchat_peers)
 
         if self.betanet:

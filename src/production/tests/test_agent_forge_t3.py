@@ -197,9 +197,7 @@ class TestAgentOrchestrator:
         orchestrator = FastAgentOrchestrator(factory)
         await orchestrator.initialize_agents()
 
-        task = TaskRequest(
-            task_id="test_001", task_type="ping", payload={"task": "ping"}
-        )
+        task = TaskRequest(task_id="test_001", task_type="ping", payload={"task": "ping"})
 
         start_time = time.time() * 1000
         result = await orchestrator.execute_task(task)
@@ -221,12 +219,7 @@ class TestAgentOrchestrator:
         await orchestrator.initialize_agents()
 
         # Create batch of tasks
-        tasks = [
-            TaskRequest(
-                task_id=f"batch_{i}", task_type="ping", payload={"task": "ping"}
-            )
-            for i in range(10)
-        ]
+        tasks = [TaskRequest(task_id=f"batch_{i}", task_type="ping", payload={"task": "ping"}) for i in range(10)]
 
         start_time = time.time() * 1000
         results = await orchestrator.process_batch(tasks)
@@ -411,9 +404,7 @@ class TestPerformanceRequirements:
         avg_overhead = metrics["average_orchestration_overhead_ms"]
 
         print(f"Average orchestration overhead: {avg_overhead:.2f}ms")
-        assert avg_overhead < 100.0, (
-            f"Orchestration overhead {avg_overhead:.2f}ms exceeds 100ms requirement"
-        )
+        assert avg_overhead < 100.0, f"Orchestration overhead {avg_overhead:.2f}ms exceeds 100ms requirement"
 
     @pytest.mark.asyncio
     async def test_agent_initialization_speed(self):
@@ -435,9 +426,7 @@ class TestPerformanceRequirements:
         validation_time = time.time() * 1000 - start_time
 
         print(f"Validation time: {validation_time:.1f}ms")
-        assert validation_time < 10000, (
-            f"Validation time {validation_time:.1f}ms too slow"
-        )
+        assert validation_time < 10000, f"Validation time {validation_time:.1f}ms too slow"
         assert len(results) == 18
 
 
@@ -459,12 +448,8 @@ if __name__ == "__main__":
 
         # Test 3: Validation
         validation_results = validate_all_agents()
-        passed_validations = sum(
-            1 for checks in validation_results.values() if all(checks.values())
-        )
-        print(
-            f"✅ Validation completed: {passed_validations}/{len(validation_results)} agents passed"
-        )
+        passed_validations = sum(1 for checks in validation_results.values() if all(checks.values()))
+        print(f"✅ Validation completed: {passed_validations}/{len(validation_results)} agents passed")
 
         print("\n🎉 T3 Agent Forge smoke test PASSED!")
         print("All major stub replacements are working correctly.")

@@ -107,9 +107,7 @@ class GeneratedSnippet:
             "unit_tests": self.unit_tests,
             "telemetry": self.telemetry,
             "stage_label": self.stage_label.value if self.stage_label else None,
-            "temp_bin_label": self.temp_bin_label.value
-            if self.temp_bin_label
-            else None,
+            "temp_bin_label": self.temp_bin_label.value if self.temp_bin_label else None,
             "confidence": self.confidence,
         }
 
@@ -125,12 +123,8 @@ class GeneratedSnippet:
             rubric=data["rubric"],
             unit_tests=data.get("unit_tests", []),
             telemetry=data.get("telemetry"),
-            stage_label=GrokStage(data["stage_label"])
-            if data.get("stage_label")
-            else None,
-            temp_bin_label=TempBinType(data["temp_bin_label"])
-            if data.get("temp_bin_label")
-            else None,
+            stage_label=GrokStage(data["stage_label"]) if data.get("stage_label") else None,
+            temp_bin_label=TempBinType(data["temp_bin_label"]) if data.get("temp_bin_label") else None,
             confidence=data.get("confidence", 0.0),
         )
 
@@ -177,9 +171,7 @@ class TempBinScheduler:
                 else:
                     bin_type = TempBinType.HIGH
 
-                bins.append(
-                    TempBin(low=current, high=high, center=center, bin_type=bin_type)
-                )
+                bins.append(TempBin(low=current, high=high, center=center, bin_type=bin_type))
 
                 # Skip gap for non-overlapping
                 current = high + self.bin_width
@@ -202,9 +194,7 @@ class TempBinScheduler:
                 else:
                     bin_type = TempBinType.OVERLAP_HIGH
 
-                bins.append(
-                    TempBin(low=current, high=high, center=center, bin_type=bin_type)
-                )
+                bins.append(TempBin(low=current, high=high, center=center, bin_type=bin_type))
 
                 current += step
 
@@ -346,25 +336,19 @@ class SnippetDataset(data.Dataset):
         """Create filtered dataset by domain."""
         indices = self.domain_index.get(domain, [])
         filtered_snippets = [self.snippets[i] for i in indices]
-        return SnippetDataset(
-            filtered_snippets, self.tokenizer, self.max_length, self.include_telemetry
-        )
+        return SnippetDataset(filtered_snippets, self.tokenizer, self.max_length, self.include_telemetry)
 
     def filter_by_bin_type(self, bin_type: TempBinType) -> "SnippetDataset":
         """Create filtered dataset by temperature bin type."""
         indices = self.bin_index.get(bin_type, [])
         filtered_snippets = [self.snippets[i] for i in indices]
-        return SnippetDataset(
-            filtered_snippets, self.tokenizer, self.max_length, self.include_telemetry
-        )
+        return SnippetDataset(filtered_snippets, self.tokenizer, self.max_length, self.include_telemetry)
 
     def filter_by_stage(self, stage: GrokStage) -> "SnippetDataset":
         """Create filtered dataset by grokking stage."""
         indices = self.stage_index.get(stage, [])
         filtered_snippets = [self.snippets[i] for i in indices]
-        return SnippetDataset(
-            filtered_snippets, self.tokenizer, self.max_length, self.include_telemetry
-        )
+        return SnippetDataset(filtered_snippets, self.tokenizer, self.max_length, self.include_telemetry)
 
     def get_domain_distribution(self) -> dict[str, int]:
         """Get distribution of samples by domain."""
@@ -372,15 +356,11 @@ class SnippetDataset(data.Dataset):
 
     def get_bin_distribution(self) -> dict[str, int]:
         """Get distribution of samples by temperature bin."""
-        return {
-            bin_type.value: len(indices) for bin_type, indices in self.bin_index.items()
-        }
+        return {bin_type.value: len(indices) for bin_type, indices in self.bin_index.items()}
 
     def get_stage_distribution(self) -> dict[str, int]:
         """Get distribution of samples by grokking stage."""
-        return {
-            stage.value: len(indices) for stage, indices in self.stage_index.items()
-        }
+        return {stage.value: len(indices) for stage, indices in self.stage_index.items()}
 
 
 @dataclass
@@ -408,9 +388,7 @@ class TeacherConsistency:
     Provides canonical answers at specific temperature centers.
     """
 
-    def __init__(
-        self, model=None, tokenizer=None, max_length: int = 256, cache_size: int = 1000
-    ):
+    def __init__(self, model=None, tokenizer=None, max_length: int = 256, cache_size: int = 1000):
         self.model = model
         self.tokenizer = tokenizer
         self.max_length = max_length
@@ -424,9 +402,7 @@ class TeacherConsistency:
         content = f"{prompt}|{tau_center:.3f}|{domain}"
         return hashlib.md5(content.encode()).hexdigest()[:12]
 
-    def build_reference(
-        self, prompt: str, tau_center: float, domain: str, use_cache: bool = True
-    ) -> TeacherReference:
+    def build_reference(self, prompt: str, tau_center: float, domain: str, use_cache: bool = True) -> TeacherReference:
         """Build teacher reference distribution at tau_center."""
 
         cache_key = self.get_cache_key(prompt, tau_center, domain)
@@ -448,15 +424,11 @@ class TeacherConsistency:
 
         return reference
 
-    def _generate_model_reference(
-        self, prompt: str, tau_center: float, domain: str
-    ) -> TeacherReference:
+    def _generate_model_reference(self, prompt: str, tau_center: float, domain: str) -> TeacherReference:
         """Generate reference using actual model."""
 
         # Tokenize prompt
-        inputs = self.tokenizer(
-            prompt, return_tensors="pt", truncation=True, max_length=self.max_length
-        )
+        inputs = self.tokenizer(prompt, return_tensors="pt", truncation=True, max_length=self.max_length)
 
         # Generate with specific temperature
         with torch.no_grad():
@@ -472,9 +444,7 @@ class TeacherConsistency:
 
         # Decode generated text
         generated_ids = outputs.sequences[0][inputs.input_ids.shape[1] :]
-        canonical_answer = self.tokenizer.decode(
-            generated_ids, skip_special_tokens=True
-        )
+        canonical_answer = self.tokenizer.decode(generated_ids, skip_special_tokens=True)
 
         # Compute n-gram statistics
         tokens = canonical_answer.split()
@@ -482,17 +452,13 @@ class TeacherConsistency:
 
         for n in [2, 3]:
             if len(tokens) >= n:
-                ngrams = [
-                    " ".join(tokens[i : i + n]) for i in range(len(tokens) - n + 1)
-                ]
+                ngrams = [" ".join(tokens[i : i + n]) for i in range(len(tokens) - n + 1)]
                 ngram_counts = {}
                 for ngram in ngrams:
                     ngram_counts[ngram] = ngram_counts.get(ngram, 0) + 1
 
                 # Top n-grams
-                top_ngrams = sorted(
-                    ngram_counts.items(), key=lambda x: x[1], reverse=True
-                )[:5]
+                top_ngrams = sorted(ngram_counts.items(), key=lambda x: x[1], reverse=True)[:5]
                 ngram_stats.append(
                     {
                         "n": n,
@@ -512,9 +478,7 @@ class TeacherConsistency:
             logit_distribution=logit_distribution,
         )
 
-    def _generate_heuristic_reference(
-        self, prompt: str, tau_center: float, domain: str
-    ) -> TeacherReference:
+    def _generate_heuristic_reference(self, prompt: str, tau_center: float, domain: str) -> TeacherReference:
         """Generate heuristic reference when model unavailable."""
 
         # Domain-specific canonical answers
@@ -535,10 +499,7 @@ class TeacherConsistency:
         ngram_stats = [
             {
                 "n": 2,
-                "top": [
-                    {"ngram": " ".join(tokens[i : i + 2]), "count": 1}
-                    for i in range(min(3, len(tokens) - 1))
-                ],
+                "top": [{"ngram": " ".join(tokens[i : i + 2]), "count": 1} for i in range(min(3, len(tokens) - 1))],
             }
         ]
 
@@ -548,9 +509,7 @@ class TeacherConsistency:
             ngram_stats=ngram_stats,
         )
 
-    def compute_kl_target(
-        self, student_logits: torch.Tensor, reference: TeacherReference
-    ) -> torch.Tensor:
+    def compute_kl_target(self, student_logits: torch.Tensor, reference: TeacherReference) -> torch.Tensor:
         """Compute KL divergence target for consistency training."""
 
         if reference.logit_distribution is not None:
@@ -590,9 +549,7 @@ def create_nonoverlap_scheduler(
     temp_range: tuple[float, float] = (0.0, 1.5), bin_width: float = 0.1
 ) -> TempBinScheduler:
     """Create non-overlapping temperature bin scheduler."""
-    return TempBinScheduler(
-        round_type=TempRound.NONOVERLAP, temp_range=temp_range, bin_width=bin_width
-    )
+    return TempBinScheduler(round_type=TempRound.NONOVERLAP, temp_range=temp_range, bin_width=bin_width)
 
 
 def create_overlap_scheduler(

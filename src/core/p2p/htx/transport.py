@@ -189,9 +189,7 @@ class HTXTransport:
 
         logger.info("HTX Transport stopped")
 
-    async def connect(
-        self, target_address: str, access_ticket: AccessTicket = None
-    ) -> str | None:
+    async def connect(self, target_address: str, access_ticket: AccessTicket = None) -> str | None:
         """Establish HTX connection to target.
 
         Args:
@@ -217,9 +215,7 @@ class HTXTransport:
             )
 
             # 2. Initialize Noise XK protocol (client side)
-            connection.noise_protocol = NoiseXKProtocol(
-                is_initiator=True, known_remote_static=self.known_server_key
-            )
+            connection.noise_protocol = NoiseXKProtocol(is_initiator=True, known_remote_static=self.known_server_key)
             connection.noise_protocol.initialize_handshake()
 
             # Store connection
@@ -243,9 +239,7 @@ class HTXTransport:
             if "connection_established" in self.connection_handlers:
                 await self.connection_handlers["connection_established"](connection_id)
 
-            logger.info(
-                f"HTX connection established: {connection_id} -> {target_address}"
-            )
+            logger.info(f"HTX connection established: {connection_id} -> {target_address}")
             return connection_id
 
         except Exception as e:
@@ -254,9 +248,7 @@ class HTXTransport:
                 await self.close_connection(connection_id)
             return None
 
-    async def send_message(
-        self, connection_id: str, data: bytes, stream_id: int = None
-    ) -> bool:
+    async def send_message(self, connection_id: str, data: bytes, stream_id: int = None) -> bool:
         """Send data over HTX connection.
 
         Args:
@@ -282,9 +274,7 @@ class HTXTransport:
 
             # Check flow control
             if len(data) > stream.flow_control_window:
-                logger.warning(
-                    f"Data size exceeds flow control window: {len(data)} > {stream.flow_control_window}"
-                )
+                logger.warning(f"Data size exceeds flow control window: {len(data)} > {stream.flow_control_window}")
                 return False
 
             # Create DATA frame
@@ -292,9 +282,7 @@ class HTXTransport:
 
             # Encrypt with Noise protocol
             if connection.noise_protocol:
-                encrypted_frame = connection.noise_protocol.encrypt_transport_message(
-                    frame_data
-                )
+                encrypted_frame = connection.noise_protocol.encrypt_transport_message(frame_data)
             else:
                 encrypted_frame = frame_data
 
@@ -405,14 +393,10 @@ class HTXTransport:
         await asyncio.sleep(0.05)  # Simulate network RTT
 
         # Validate fingerprint match (simplified)
-        if not self.fingerprint_calibrator.validate_fingerprint_match(
-            client_hello, connection.fingerprint
-        ):
+        if not self.fingerprint_calibrator.validate_fingerprint_match(client_hello, connection.fingerprint):
             raise RuntimeError("TLS fingerprint validation failed")
 
-        logger.debug(
-            f"TLS handshake completed with JA3: {connection.fingerprint.ja3_hash[:8]}..."
-        )
+        logger.debug(f"TLS handshake completed with JA3: {connection.fingerprint.ja3_hash[:8]}...")
 
     async def _perform_noise_handshake(self, connection: HTXConnection) -> None:
         """Perform Noise XK handshake."""
@@ -452,14 +436,10 @@ class HTXTransport:
 
         # Send ticket to server (create ACCESS_TICKET frame)
         ticket_data = ticket.serialize()
-        frame_data = HTXFrameCodec.encode_frame(
-            HTXFrameType.ACCESS_TICKET, 0, ticket_data
-        )
+        frame_data = HTXFrameCodec.encode_frame(HTXFrameType.ACCESS_TICKET, 0, ticket_data)
 
         # Encrypt and send
-        encrypted_frame = connection.noise_protocol.encrypt_transport_message(
-            frame_data
-        )
+        encrypted_frame = connection.noise_protocol.encrypt_transport_message(frame_data)
         await self._send_frame_data(connection, encrypted_frame)
 
         # Wait for response (simplified)
@@ -467,9 +447,7 @@ class HTXTransport:
 
         logger.debug("Access ticket authentication completed")
 
-    def _get_or_create_stream(
-        self, connection: HTXConnection, stream_id: int
-    ) -> HTXStream:
+    def _get_or_create_stream(self, connection: HTXConnection, stream_id: int) -> HTXStream:
         """Get existing stream or create new one."""
         if stream_id not in connection.streams:
             stream = HTXStream(stream_id=stream_id, state=HTXStreamState.OPEN)
@@ -483,9 +461,7 @@ class HTXTransport:
         # This is where frame parsing and processing would happen
         pass
 
-    async def _send_frame_data(
-        self, connection: HTXConnection, frame_data: bytes
-    ) -> bool:
+    async def _send_frame_data(self, connection: HTXConnection, frame_data: bytes) -> bool:
         """Send frame data over connection."""
         # Simulate sending (would write to actual socket)
         await asyncio.sleep(0.001)  # Simulate write latency
@@ -496,9 +472,7 @@ class HTXTransport:
         # Simulate sending
         await asyncio.sleep(0.005)
 
-    async def _receive_raw_data(
-        self, connection: HTXConnection, expected_min_size: int
-    ) -> bytes:
+    async def _receive_raw_data(self, connection: HTXConnection, expected_min_size: int) -> bytes:
         """Receive raw data during handshake."""
         # Simulate receiving (would read from actual socket)
         await asyncio.sleep(0.005)
@@ -546,11 +520,8 @@ class HTXTransport:
             "frames_sent": connection.frames_sent,
             "frames_received": connection.frames_received,
             "uptime_seconds": time.time() - connection.created_at,
-            "fingerprint": connection.fingerprint.ja3_hash[:8] + "..."
-            if connection.fingerprint
-            else None,
-            "noise_ready": connection.noise_protocol.state
-            == NoiseHandshakeState.HANDSHAKE_COMPLETE
+            "fingerprint": connection.fingerprint.ja3_hash[:8] + "..." if connection.fingerprint else None,
+            "noise_ready": connection.noise_protocol.state == NoiseHandshakeState.HANDSHAKE_COMPLETE
             if connection.noise_protocol
             else False,
             "has_ticket": connection.access_ticket is not None,
@@ -561,9 +532,7 @@ class HTXTransport:
         active_connections = len(self.connections)
         total_streams = sum(len(conn.streams) for conn in self.connections.values())
         total_bytes_sent = sum(conn.bytes_sent for conn in self.connections.values())
-        total_bytes_received = sum(
-            conn.bytes_received for conn in self.connections.values()
-        )
+        total_bytes_received = sum(conn.bytes_received for conn in self.connections.values())
 
         return {
             "transport_running": self.is_running,

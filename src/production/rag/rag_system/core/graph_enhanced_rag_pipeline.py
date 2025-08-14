@@ -87,9 +87,7 @@ class GraphEnhancedRAGPipeline(ContextualRAGPipeline):
             "avg_graph_retrieval_time": 0.0,
         }
 
-    def chunk_document_with_graph_integration(
-        self, document: Document, force_traditional: bool = False
-    ) -> list[Chunk]:
+    def chunk_document_with_graph_integration(self, document: Document, force_traditional: bool = False) -> list[Chunk]:
         """Chunk document with full graph integration.
 
         Performs contextual chunking and adds chunks to the knowledge graph
@@ -103,15 +101,11 @@ class GraphEnhancedRAGPipeline(ContextualRAGPipeline):
             logger.info(f"Processing document with graph integration: {document.id}")
 
             # Step 1: Perform contextual chunking
-            contextual_chunks = self.chunk_document_with_context(
-                document, force_traditional
-            )
+            contextual_chunks = self.chunk_document_with_context(document, force_traditional)
 
             # Step 2: Add chunks to knowledge graph
             document_context = self.document_contexts.get(document.id)
-            base_credibility = (
-                document_context.source_credibility_score if document_context else 0.7
-            )
+            base_credibility = document_context.source_credibility_score if document_context else 0.7
 
             for chunk in contextual_chunks:
                 # Add chunk to graph
@@ -127,9 +121,7 @@ class GraphEnhancedRAGPipeline(ContextualRAGPipeline):
                 )
 
                 # Detect semantic relationships
-                relationships = self.trust_graph.detect_semantic_relationships(
-                    semantic_chunk_node, context_window=5
-                )
+                relationships = self.trust_graph.detect_semantic_relationships(semantic_chunk_node, context_window=5)
 
                 # Update chunk metadata with graph information
                 if chunk.metadata is None:
@@ -142,18 +134,14 @@ class GraphEnhancedRAGPipeline(ContextualRAGPipeline):
                         "trust_score": semantic_chunk_node.trust_score,
                         "centrality_score": semantic_chunk_node.centrality_score,
                         "relationships_detected": len(relationships),
-                        "relationship_types": [
-                            rel.relationship_type.value for rel in relationships
-                        ],
+                        "relationship_types": [rel.relationship_type.value for rel in relationships],
                     }
                 )
 
                 self.graph_stats["chunks_added_to_graph"] += 1
                 self.graph_stats["relationships_detected"] += len(relationships)
 
-            logger.info(
-                f"Added {len(contextual_chunks)} chunks to knowledge graph for {document.id}"
-            )
+            logger.info(f"Added {len(contextual_chunks)} chunks to knowledge graph for {document.id}")
 
             return contextual_chunks
 
@@ -186,9 +174,7 @@ class GraphEnhancedRAGPipeline(ContextualRAGPipeline):
             logger.info("Performing trust propagation across knowledge graph...")
 
             start_time = time.perf_counter()
-            trust_scores = self.trust_graph.propagate_trust(
-                max_iterations=15, convergence_threshold=0.0005
-            )
+            trust_scores = self.trust_graph.propagate_trust(max_iterations=15, convergence_threshold=0.0005)
             propagation_time = (time.perf_counter() - start_time) * 1000
 
             self.graph_stats["trust_propagations_performed"] += 1
@@ -201,13 +187,9 @@ class GraphEnhancedRAGPipeline(ContextualRAGPipeline):
                 {
                     "graph_integration_enabled": True,
                     "chunks_in_graph": len(self.trust_graph.chunk_nodes),
-                    "relationships_detected": self.graph_stats[
-                        "relationships_detected"
-                    ],
+                    "relationships_detected": self.graph_stats["relationships_detected"],
                     "trust_propagation_time_ms": propagation_time,
-                    "trust_propagations_performed": self.graph_stats[
-                        "trust_propagations_performed"
-                    ],
+                    "trust_propagations_performed": self.graph_stats["trust_propagations_performed"],
                 }
             )
         else:
@@ -283,9 +265,7 @@ class GraphEnhancedRAGPipeline(ContextualRAGPipeline):
                 try:
                     # Try to get from base retrieval system
                     base_results, _ = await super().retrieve_with_content_analysis(
-                        query=graph_metadata["text"][
-                            :100
-                        ],  # Use chunk text as mini-query
+                        query=graph_metadata["text"][:100],  # Use chunk text as mini-query
                         k=1,
                         use_cache=False,
                     )
@@ -295,22 +275,16 @@ class GraphEnhancedRAGPipeline(ContextualRAGPipeline):
                         result = base_results[0]
 
                         # Enhance metadata with graph information
-                        enhanced_metadata = (
-                            result.metadata.copy() if result.metadata else {}
-                        )
+                        enhanced_metadata = result.metadata.copy() if result.metadata else {}
                         enhanced_metadata.update(
                             {
                                 "graph_enhanced": True,
                                 "graph_score": score,
                                 "trust_score": graph_metadata["trust_score"],
                                 "centrality_score": graph_metadata["centrality_score"],
-                                "traversal_depth": graph_metadata.get(
-                                    "traversal_depth", 0
-                                ),
+                                "traversal_depth": graph_metadata.get("traversal_depth", 0),
                                 "parent_chunk": graph_metadata.get("parent_chunk"),
-                                "relationship_type": graph_metadata.get(
-                                    "relationship_type"
-                                ),
+                                "relationship_type": graph_metadata.get("relationship_type"),
                             }
                         )
 
@@ -330,9 +304,7 @@ class GraphEnhancedRAGPipeline(ContextualRAGPipeline):
                         metadata={
                             "graph_enhanced": True,
                             "graph_score": score,
-                            "semantic_similarity": graph_metadata[
-                                "semantic_similarity"
-                            ],
+                            "semantic_similarity": graph_metadata["semantic_similarity"],
                             "trust_score": graph_metadata["trust_score"],
                             "centrality_score": graph_metadata["centrality_score"],
                             "base_credibility": graph_metadata["base_credibility"],
@@ -341,9 +313,7 @@ class GraphEnhancedRAGPipeline(ContextualRAGPipeline):
                             "position": graph_metadata["position"],
                             "traversal_depth": graph_metadata.get("traversal_depth", 0),
                             "parent_chunk": graph_metadata.get("parent_chunk"),
-                            "relationship_type": graph_metadata.get(
-                                "relationship_type", "direct"
-                            ),
+                            "relationship_type": graph_metadata.get("relationship_type", "direct"),
                         },
                     )
                     retrieval_results.append(result)
@@ -408,8 +378,7 @@ class GraphEnhancedRAGPipeline(ContextualRAGPipeline):
             retrieval_time = (time.perf_counter() - start_time) * 1000
             self.graph_stats["graph_retrievals"] += 1
             self.graph_stats["avg_graph_retrieval_time"] = (
-                self.graph_stats["avg_graph_retrieval_time"]
-                * (self.graph_stats["graph_retrievals"] - 1)
+                self.graph_stats["avg_graph_retrieval_time"] * (self.graph_stats["graph_retrievals"] - 1)
                 + retrieval_time
             ) / self.graph_stats["graph_retrievals"]
 
@@ -426,15 +395,9 @@ class GraphEnhancedRAGPipeline(ContextualRAGPipeline):
                 # Include parent metrics
                 "contextual_filtering": True,
                 "domain_filter": domain_filter.value if domain_filter else None,
-                "reading_level_filter": (
-                    reading_level_filter.value if reading_level_filter else None
-                ),
-                "document_type_filter": (
-                    document_type_filter.value if document_type_filter else None
-                ),
-                "chunk_type_filter": (
-                    chunk_type_filter.value if chunk_type_filter else None
-                ),
+                "reading_level_filter": (reading_level_filter.value if reading_level_filter else None),
+                "document_type_filter": (document_type_filter.value if document_type_filter else None),
+                "chunk_type_filter": (chunk_type_filter.value if chunk_type_filter else None),
                 "min_credibility": min_credibility,
                 "min_quality": min_quality,
             }
@@ -469,15 +432,11 @@ class GraphEnhancedRAGPipeline(ContextualRAGPipeline):
         graph_metrics = {
             "graph_integration": {
                 "enabled": self.enable_trust_graph,
-                "chunks_in_graph": (
-                    len(self.trust_graph.chunk_nodes) if self.trust_graph else 0
-                ),
+                "chunks_in_graph": (len(self.trust_graph.chunk_nodes) if self.trust_graph else 0),
                 "relationships_detected": self.graph_stats["relationships_detected"],
                 "trust_propagations": self.graph_stats["trust_propagations_performed"],
                 "graph_retrievals": self.graph_stats["graph_retrievals"],
-                "avg_graph_retrieval_time": self.graph_stats[
-                    "avg_graph_retrieval_time"
-                ],
+                "avg_graph_retrieval_time": self.graph_stats["avg_graph_retrieval_time"],
             }
         }
 
@@ -538,12 +497,8 @@ class GraphEnhancedRAGPipeline(ContextualRAGPipeline):
                     "total_incoming": len(incoming_relationships),
                 },
                 "relationship_types": {
-                    "outgoing_types": list(
-                        {rel["relationship_type"] for rel in outgoing_relationships}
-                    ),
-                    "incoming_types": list(
-                        {rel["relationship_type"] for rel in incoming_relationships}
-                    ),
+                    "outgoing_types": list({rel["relationship_type"] for rel in outgoing_relationships}),
+                    "incoming_types": list({rel["relationship_type"] for rel in incoming_relationships}),
                 },
             },
         }
@@ -578,13 +533,8 @@ class GraphEnhancedRAGPipeline(ContextualRAGPipeline):
                     next_chunk = path[i + 1]
 
                     if (current_chunk, next_chunk) in self.trust_graph.relationships:
-                        relationship = self.trust_graph.relationships[
-                            (current_chunk, next_chunk)
-                        ]
-                        path_trust *= (
-                            relationship.trust_transfer_rate
-                            * self.trust_graph.trust_decay_factor
-                        )
+                        relationship = self.trust_graph.relationships[(current_chunk, next_chunk)]
+                        path_trust *= relationship.trust_transfer_rate * self.trust_graph.trust_decay_factor
 
                         path_relationships.append(
                             {
@@ -744,9 +694,7 @@ async def test_graph_enhanced_rag_pipeline() -> bool:
         ),
     ]
 
-    print(
-        f"[PROCESS] Processing {len(test_documents)} documents with graph integration..."
-    )
+    print(f"[PROCESS] Processing {len(test_documents)} documents with graph integration...")
 
     # Index documents with graph integration
     start_time = time.perf_counter()
@@ -758,9 +706,7 @@ async def test_graph_enhanced_rag_pipeline() -> bool:
     print(f"  - Chunks: {indexing_stats['chunks_created']}")
     print(f"  - Graph nodes: {indexing_stats.get('chunks_in_graph', 0)}")
     print(f"  - Relationships: {indexing_stats.get('relationships_detected', 0)}")
-    print(
-        f"  - Trust propagation time: {indexing_stats.get('trust_propagation_time_ms', 0):.1f}ms"
-    )
+    print(f"  - Trust propagation time: {indexing_stats.get('trust_propagation_time_ms', 0):.1f}ms")
 
     # Test graph-enhanced retrieval
     test_queries = [
@@ -853,13 +799,9 @@ async def test_graph_enhanced_rag_pipeline() -> bool:
                 print(f"  Incoming Relationships: {relationships['total_incoming']}")
 
                 if relationships["outgoing"]:
-                    print(
-                        f"  Relationship Types Out: {graph_info['relationship_types']['outgoing_types']}"
-                    )
+                    print(f"  Relationship Types Out: {graph_info['relationship_types']['outgoing_types']}")
                 if relationships["incoming"]:
-                    print(
-                        f"  Relationship Types In: {graph_info['relationship_types']['incoming_types']}"
-                    )
+                    print(f"  Relationship Types In: {graph_info['relationship_types']['incoming_types']}")
 
     # Get comprehensive metrics
     performance_metrics = pipeline.get_comprehensive_performance_metrics()
@@ -873,13 +815,9 @@ async def test_graph_enhanced_rag_pipeline() -> bool:
     print("Graph Integration:")
     print(f"  - Enabled: {graph_integration.get('enabled', False)}")
     print(f"  - Chunks in Graph: {graph_integration.get('chunks_in_graph', 0)}")
-    print(
-        f"  - Relationships Detected: {graph_integration.get('relationships_detected', 0)}"
-    )
+    print(f"  - Relationships Detected: {graph_integration.get('relationships_detected', 0)}")
     print(f"  - Trust Propagations: {graph_integration.get('trust_propagations', 0)}")
-    print(
-        f"  - Avg Graph Retrieval Time: {graph_integration.get('avg_graph_retrieval_time', 0):.1f}ms"
-    )
+    print(f"  - Avg Graph Retrieval Time: {graph_integration.get('avg_graph_retrieval_time', 0):.1f}ms")
 
     # Graph statistics
     graph_stats = performance_metrics.get("graph_statistics", {})
@@ -903,22 +841,16 @@ async def test_graph_enhanced_rag_pipeline() -> bool:
         rel_dist = graph_stats.get("relationship_distribution", {})
         if rel_dist:
             print("\nRelationship Types:")
-            for rel_type, count in sorted(
-                rel_dist.items(), key=lambda x: x[1], reverse=True
-            ):
+            for rel_type, count in sorted(rel_dist.items(), key=lambda x: x[1], reverse=True):
                 print(f"  - {rel_type}: {count}")
 
     # Overall performance
     contextual_quality = performance_metrics.get("contextual_quality", {})
     print("\nOverall Performance:")
     print(f"  - Average Latency: {performance_metrics.get('avg_latency_ms', 0):.1f}ms")
-    print(
-        f"  - Context Richness: {contextual_quality.get('avg_context_richness', 0):.3f}"
-    )
+    print(f"  - Context Richness: {contextual_quality.get('avg_context_richness', 0):.3f}")
     print(f"  - Context Coverage: {contextual_quality.get('context_coverage', 0):.2%}")
-    print(
-        f"  - Cache Hit Rate: {performance_metrics.get('cache_metrics', {}).get('hit_rate', 0):.2%}"
-    )
+    print(f"  - Cache Hit Rate: {performance_metrics.get('cache_metrics', {}).get('hit_rate', 0):.2%}")
 
     print("\n[ASSESSMENT] Final Assessment:")
 
@@ -946,9 +878,7 @@ async def test_graph_enhanced_rag_pipeline() -> bool:
         print("  ✅ Intelligent chunking with semantic boundaries")
         print("  ✅ Performance targets met (<100ms latency)")
     elif graph_enabled and chunks_in_graph:
-        print(
-            "✅ GOOD: Graph-Enhanced RAG Pipeline operational with room for optimization"
-        )
+        print("✅ GOOD: Graph-Enhanced RAG Pipeline operational with room for optimization")
         print("  - Graph integration active")
         print("  - Trust propagation functional")
         print("  - Performance within acceptable ranges")

@@ -40,49 +40,29 @@ class CPUOnlyCompressionConfig(BaseModel):
     # CPU-optimized settings
     num_cpu_threads: int = Field(default=1, description="Number of CPU threads")
     cpu_memory_limit_gb: int = Field(default=4, description="CPU memory limit in GB")
-    enable_cpu_optimizations: bool = Field(
-        default=True, description="Enable CPU-specific optimizations"
-    )
+    enable_cpu_optimizations: bool = Field(default=True, description="Enable CPU-specific optimizations")
 
     # Disable GPU-dependent features
-    mixed_precision: bool = Field(
-        default=False, description="Disable mixed precision (GPU feature)"
-    )
+    mixed_precision: bool = Field(default=False, description="Disable mixed precision (GPU feature)")
     use_cuda_kernels: bool = Field(default=False, description="Disable CUDA kernels")
-    enable_flash_attention: bool = Field(
-        default=False, description="Disable Flash Attention (GPU feature)"
-    )
+    enable_flash_attention: bool = Field(default=False, description="Disable Flash Attention (GPU feature)")
     use_triton: bool = Field(default=False, description="Disable Triton optimizations")
 
     # CPU-friendly quantization settings
-    quantization_method: str = Field(
-        default="cpu_int8", description="CPU-compatible quantization"
-    )
+    quantization_method: str = Field(default="cpu_int8", description="CPU-compatible quantization")
     bitnet_cpu_mode: bool = Field(default=True, description="Use CPU-compatible BitNet")
-    avoid_bitsandbytes: bool = Field(
-        default=True, description="Avoid bitsandbytes (GPU library)"
-    )
+    avoid_bitsandbytes: bool = Field(default=True, description="Avoid bitsandbytes (GPU library)")
 
     # Conservative batch sizes for CPU
     batch_size: int = Field(default=1, description="Small batch size for CPU")
     eval_batch_size: int = Field(default=1, description="Small eval batch size for CPU")
-    gradient_accumulation_steps: int = Field(
-        default=8, description="Accumulate gradients to simulate larger batches"
-    )
+    gradient_accumulation_steps: int = Field(default=8, description="Accumulate gradients to simulate larger batches")
 
     # CPU-friendly model loading
-    low_cpu_mem_usage: bool = Field(
-        default=True, description="Use low CPU memory loading"
-    )
-    torch_dtype: str = Field(
-        default="float32", description="Use float32 for CPU compatibility"
-    )
-    load_in_8bit: bool = Field(
-        default=False, description="Disable 8-bit loading (GPU feature)"
-    )
-    load_in_4bit: bool = Field(
-        default=False, description="Disable 4-bit loading (GPU feature)"
-    )
+    low_cpu_mem_usage: bool = Field(default=True, description="Use low CPU memory loading")
+    torch_dtype: str = Field(default="float32", description="Use float32 for CPU compatibility")
+    load_in_8bit: bool = Field(default=False, description="Disable 8-bit loading (GPU feature)")
+    load_in_4bit: bool = Field(default=False, description="Disable 4-bit loading (GPU feature)")
 
     # Conservative learning settings
     learning_rate: float = Field(default=1e-5, description="Conservative learning rate")
@@ -90,34 +70,18 @@ class CPUOnlyCompressionConfig(BaseModel):
     warmup_steps: int = Field(default=10, description="Short warmup for CPU")
 
     # CPU-optimized data loading
-    dataloader_num_workers: int = Field(
-        default=0, description="Disable multiprocessing for stability"
-    )
-    dataloader_pin_memory: bool = Field(
-        default=False, description="Disable pin memory (GPU feature)"
-    )
-    dataloader_prefetch_factor: int = Field(
-        default=1, description="Minimal prefetching"
-    )
+    dataloader_num_workers: int = Field(default=0, description="Disable multiprocessing for stability")
+    dataloader_pin_memory: bool = Field(default=False, description="Disable pin memory (GPU feature)")
+    dataloader_prefetch_factor: int = Field(default=1, description="Minimal prefetching")
 
     # Fallback configurations
-    use_pure_python: bool = Field(
-        default=True, description="Use pure Python implementations"
-    )
-    avoid_compiled_kernels: bool = Field(
-        default=True, description="Avoid compiled CUDA kernels"
-    )
-    enable_gradient_checkpointing: bool = Field(
-        default=True, description="Save CPU memory"
-    )
+    use_pure_python: bool = Field(default=True, description="Use pure Python implementations")
+    avoid_compiled_kernels: bool = Field(default=True, description="Avoid compiled CUDA kernels")
+    enable_gradient_checkpointing: bool = Field(default=True, description="Save CPU memory")
 
     # Validation and safety
-    validate_cpu_compatibility: bool = Field(
-        default=True, description="Validate CPU compatibility"
-    )
-    strict_cpu_mode: bool = Field(
-        default=True, description="Fail if GPU operations detected"
-    )
+    validate_cpu_compatibility: bool = Field(default=True, description="Validate CPU compatibility")
+    strict_cpu_mode: bool = Field(default=True, description="Fail if GPU operations detected")
 
 
 class CPUOnlyEnvironment:
@@ -156,9 +120,7 @@ class CPUOnlyEnvironment:
         os.environ["TORCH_USE_CUDA_DSA"] = "0"
         os.environ["CUDA_LAUNCH_BLOCKING"] = "0"
 
-        logger.info(
-            f"CPU-only environment configured with {self.config.num_cpu_threads} threads"
-        )
+        logger.info(f"CPU-only environment configured with {self.config.num_cpu_threads} threads")
 
     def validate_cpu_compatibility(self) -> dict[str, Any]:
         """Validate that environment is properly configured for CPU-only operation.
@@ -176,9 +138,7 @@ class CPUOnlyEnvironment:
 
         # Check environment variables
         if os.environ.get("CUDA_VISIBLE_DEVICES") != "":
-            validation_results["issues"].append(
-                "CUDA_VISIBLE_DEVICES not set to empty string"
-            )
+            validation_results["issues"].append("CUDA_VISIBLE_DEVICES not set to empty string")
             validation_results["cpu_only"] = False
 
         # Check PyTorch availability and settings
@@ -187,16 +147,12 @@ class CPUOnlyEnvironment:
                 "available": True,
                 "version": torch.__version__,
                 "cuda_available": torch.cuda.is_available(),
-                "cuda_device_count": torch.cuda.device_count()
-                if torch.cuda.is_available()
-                else 0,
+                "cuda_device_count": torch.cuda.device_count() if torch.cuda.is_available() else 0,
                 "cpu_count": torch.get_num_threads(),
             }
 
             if torch.cuda.is_available():
-                validation_results["warnings"].append(
-                    "PyTorch reports CUDA as available"
-                )
+                validation_results["warnings"].append("PyTorch reports CUDA as available")
 
         else:
             validation_results["torch_info"] = {"available": False}
@@ -237,9 +193,7 @@ class CPUOnlyEnvironment:
                 )
 
         except ImportError:
-            validation_results["warnings"].append(
-                "psutil not available for system info"
-            )
+            validation_results["warnings"].append("psutil not available for system info")
 
         return validation_results
 
@@ -366,9 +320,7 @@ class CPUQuantizer:
         zero_point = torch.clamp(zero_point, 0, 255).round().int()
 
         # Quantize
-        quantized = torch.clamp((tensor / scale + zero_point).round(), 0, 255).to(
-            torch.uint8
-        )
+        quantized = torch.clamp((tensor / scale + zero_point).round(), 0, 255).to(torch.uint8)
 
         return {
             "quantized_tensor": quantized,
@@ -422,9 +374,7 @@ class CPUQuantizer:
         quantized_size = 0
 
         for name, param in model.named_parameters():
-            if (
-                param.requires_grad and len(param.shape) >= 2
-            ):  # Only quantize weight matrices
+            if param.requires_grad and len(param.shape) >= 2:  # Only quantize weight matrices
                 original_size += param.numel() * 4  # float32 = 4 bytes
 
                 # Quantize weight

@@ -21,16 +21,12 @@ class VPTQQuantizer:
 
     def _reshape_vectors(self, weight_matrix: torch.Tensor) -> torch.Tensor:
         flat = weight_matrix.flatten()
-        pad = (
-            self.vector_length - flat.numel() % self.vector_length
-        ) % self.vector_length
+        pad = (self.vector_length - flat.numel() % self.vector_length) % self.vector_length
         if pad:
             flat = torch.cat([flat, torch.zeros(pad)])
         return flat.reshape(-1, self.vector_length)
 
-    def _compute_hessian(
-        self, vectors: torch.Tensor, method: str = "fisher"
-    ) -> torch.Tensor:
+    def _compute_hessian(self, vectors: torch.Tensor, method: str = "fisher") -> torch.Tensor:
         """Compute Hessian approximation for weighting the quantization error.
 
         Args:
@@ -64,16 +60,12 @@ class VPTQQuantizer:
         """Backward compatibility wrapper."""
         return self._compute_hessian(vectors, method="diagonal")
 
-    def _weighted_distance(
-        self, vectors: torch.Tensor, centroids: torch.Tensor, h: torch.Tensor
-    ) -> torch.Tensor:
+    def _weighted_distance(self, vectors: torch.Tensor, centroids: torch.Tensor, h: torch.Tensor) -> torch.Tensor:
         h_diag = torch.diag(h)
         diff = vectors.unsqueeze(1) - centroids.unsqueeze(0)
         return torch.sum(diff**2 * h_diag, dim=2)
 
-    def _assignment(
-        self, vectors: torch.Tensor, centroids: torch.Tensor, h: torch.Tensor
-    ) -> torch.Tensor:
+    def _assignment(self, vectors: torch.Tensor, centroids: torch.Tensor, h: torch.Tensor) -> torch.Tensor:
         d = self._weighted_distance(vectors, centroids, h)
         return torch.argmin(d, dim=1)
 
@@ -124,9 +116,7 @@ class VPTQQuantizer:
                 break
 
             # Calculate loss for monitoring
-            current_loss = self._calculate_quantization_loss(
-                vectors, new_codebook, assignments, hessian
-            )
+            current_loss = self._calculate_quantization_loss(vectors, new_codebook, assignments, hessian)
             if current_loss > prev_loss:
                 logger.debug(f"Loss increased at iteration {iteration}, stopping")
                 break
@@ -149,14 +139,10 @@ class VPTQQuantizer:
             + res_codebook.numel() * 32  # residual codebook
             + res_idx.numel() * 4  # residual indices
         )
-        compression_ratio = (
-            original_bits / compressed_bits if compressed_bits > 0 else 0
-        )
+        compression_ratio = original_bits / compressed_bits if compressed_bits > 0 else 0
 
         # Calculate reconstruction error
-        reconstructed = self._reconstruct_from_quantization(
-            codebook, assignments, res_codebook, res_idx
-        )
+        reconstructed = self._reconstruct_from_quantization(codebook, assignments, res_codebook, res_idx)
         reconstruction_error = torch.norm(original_vectors - reconstructed).item()
 
         return {
@@ -172,9 +158,7 @@ class VPTQQuantizer:
             "bits_per_vector": self.bits_per_vector,
         }
 
-    def _quantize_residuals(
-        self, residuals: torch.Tensor
-    ) -> tuple[torch.Tensor, torch.Tensor]:
+    def _quantize_residuals(self, residuals: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         flat = residuals.flatten()
         if flat.numel() == 0:
             return torch.zeros(1), torch.zeros_like(flat, dtype=torch.long)
@@ -183,9 +167,7 @@ class VPTQQuantizer:
         idx = torch.clamp(torch.round((flat - flat.min()) / step), 0, 15).long()
         return codebook, idx.reshape(residuals.shape)
 
-    def _initialize_codebook_kmeans_plus(
-        self, vectors: torch.Tensor, hessian: torch.Tensor
-    ) -> torch.Tensor:
+    def _initialize_codebook_kmeans_plus(self, vectors: torch.Tensor, hessian: torch.Tensor) -> torch.Tensor:
         """Initialize codebook using k-means++ algorithm with Hessian weighting."""
         n_vectors = vectors.size(0)
         codebook = torch.zeros(self.codebook_size, self.vector_length)
@@ -255,9 +237,7 @@ class VPTQQuantizer:
         res_idx = data["residual_idx"]
 
         # Reconstruct vectors
-        vectors = self._reconstruct_from_quantization(
-            codebook, assignments, res_codebook, res_idx
-        )
+        vectors = self._reconstruct_from_quantization(codebook, assignments, res_codebook, res_idx)
 
         # Reshape back to original shape
         flat = vectors.flatten()

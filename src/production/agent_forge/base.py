@@ -125,9 +125,7 @@ class BaseMetaAgent(ABC):
         return {
             "agent_id": self.agent_id,
             "name": self.name,
-            "role": getattr(
-                self.specialization.role, "value", str(self.specialization.role)
-            ),
+            "role": getattr(self.specialization.role, "value", str(self.specialization.role)),
             "capabilities": self.get_capabilities(),
             "performance_records": len(self.performance_history),
             "current_kpis": self.kpi_scores,

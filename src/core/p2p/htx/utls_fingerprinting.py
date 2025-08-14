@@ -287,9 +287,7 @@ class uTLSFingerprintCalibrator:
         template_name = random.choice(list(self.templates.keys()))
         return self.calibrate_fingerprint(template_name)
 
-    def calibrate_fingerprint(
-        self, template_name: str, randomize: bool = True
-    ) -> ClientHelloFingerprint:
+    def calibrate_fingerprint(self, template_name: str, randomize: bool = True) -> ClientHelloFingerprint:
         """Calibrate fingerprint based on template with optional randomization.
 
         Args:
@@ -325,28 +323,20 @@ class uTLSFingerprintCalibrator:
         fingerprint.ja3_hash = hashlib.md5(fingerprint.ja3_string.encode()).hexdigest()
 
         fingerprint.ja4_string = self._generate_ja4_string(fingerprint)
-        fingerprint.ja4_hash = hashlib.sha256(
-            fingerprint.ja4_string.encode()
-        ).hexdigest()[:36]
+        fingerprint.ja4_hash = hashlib.sha256(fingerprint.ja4_string.encode()).hexdigest()[:36]
 
-        logger.info(
-            f"Calibrated fingerprint: {template_name}, JA3={fingerprint.ja3_hash[:8]}..."
-        )
+        logger.info(f"Calibrated fingerprint: {template_name}, JA3={fingerprint.ja3_hash[:8]}...")
 
         return fingerprint
 
-    def _apply_randomization(
-        self, fingerprint: ClientHelloFingerprint
-    ) -> ClientHelloFingerprint:
+    def _apply_randomization(self, fingerprint: ClientHelloFingerprint) -> ClientHelloFingerprint:
         """Apply subtle randomization to avoid perfect fingerprint correlation."""
 
         # Randomly shuffle extension order (maintaining functionality)
         if len(fingerprint.extensions) > 3:
             # Only shuffle non-critical extensions
             critical_extensions = [0, 23, 35, 13]  # SNI, session_ticket, etc.
-            non_critical = [
-                ext for ext in fingerprint.extensions if ext not in critical_extensions
-            ]
+            non_critical = [ext for ext in fingerprint.extensions if ext not in critical_extensions]
 
             if len(non_critical) > 1:
                 random.shuffle(non_critical)
@@ -362,14 +352,8 @@ class uTLSFingerprintCalibrator:
             fingerprint.extensions = new_extensions
 
         # Minor cipher suite reordering (keeping TLS 1.3 suites first)
-        tls13_suites = [
-            suite
-            for suite in fingerprint.cipher_suites
-            if suite in [0x1301, 0x1302, 0x1303]
-        ]
-        other_suites = [
-            suite for suite in fingerprint.cipher_suites if suite not in tls13_suites
-        ]
+        tls13_suites = [suite for suite in fingerprint.cipher_suites if suite in [0x1301, 0x1302, 0x1303]]
+        other_suites = [suite for suite in fingerprint.cipher_suites if suite not in tls13_suites]
 
         if len(other_suites) > 2:
             # Shuffle middle portion only
@@ -395,9 +379,7 @@ class uTLSFingerprintCalibrator:
         curves_str = "-".join(str(curve) for curve in fingerprint.elliptic_curves)
         sig_algs_str = "-".join(str(alg) for alg in fingerprint.signature_algorithms)
 
-        ja3_string = (
-            f"{version_str},{ciphers_str},{extensions_str},{curves_str},{sig_algs_str}"
-        )
+        ja3_string = f"{version_str},{ciphers_str},{extensions_str},{curves_str},{sig_algs_str}"
         return ja3_string
 
     def _generate_ja4_string(self, fingerprint: ClientHelloFingerprint) -> str:
@@ -411,25 +393,13 @@ class uTLSFingerprintCalibrator:
         ext_count = f"{len(fingerprint.extensions):02d}"
 
         # First and last cipher suites
-        first_cipher = (
-            f"{fingerprint.cipher_suites[0]:04x}"
-            if fingerprint.cipher_suites
-            else "0000"
-        )
-        last_cipher = (
-            f"{fingerprint.cipher_suites[-1]:04x}"
-            if fingerprint.cipher_suites
-            else "0000"
-        )
+        first_cipher = f"{fingerprint.cipher_suites[0]:04x}" if fingerprint.cipher_suites else "0000"
+        last_cipher = f"{fingerprint.cipher_suites[-1]:04x}" if fingerprint.cipher_suites else "0000"
 
-        ja4_string = (
-            f"q{version_hex}{cipher_count}{ext_count}_{first_cipher}_{last_cipher}"
-        )
+        ja4_string = f"q{version_hex}{cipher_count}{ext_count}_{first_cipher}_{last_cipher}"
         return ja4_string
 
-    def generate_client_hello(
-        self, fingerprint: ClientHelloFingerprint, server_name: str = "example.com"
-    ) -> bytes:
+    def generate_client_hello(self, fingerprint: ClientHelloFingerprint, server_name: str = "example.com") -> bytes:
         """Generate TLS ClientHello message matching the fingerprint.
 
         Args:
@@ -456,9 +426,7 @@ class uTLSFingerprintCalibrator:
         client_hello.extend([0x00])  # Session ID length = 0
 
         # Cipher suites
-        cipher_suites_data = b"".join(
-            struct.pack(">H", suite) for suite in fingerprint.cipher_suites
-        )
+        cipher_suites_data = b"".join(struct.pack(">H", suite) for suite in fingerprint.cipher_suites)
         client_hello.extend(struct.pack(">H", len(cipher_suites_data)))
         client_hello.extend(cipher_suites_data)
 
@@ -476,9 +444,7 @@ class uTLSFingerprintCalibrator:
 
         return bytes(client_hello)
 
-    def _build_extensions(
-        self, fingerprint: ClientHelloFingerprint, server_name: str
-    ) -> bytes:
+    def _build_extensions(self, fingerprint: ClientHelloFingerprint, server_name: str) -> bytes:
         """Build TLS extensions matching fingerprint."""
         extensions = []
 
@@ -508,18 +474,14 @@ class uTLSFingerprintCalibrator:
             return struct.pack(">HBH", list_length, 0, name_length) + server_name_bytes
 
         elif ext_type == 10:  # Supported Groups (Elliptic Curves)
-            curves_data = b"".join(
-                struct.pack(">H", curve) for curve in fingerprint.elliptic_curves
-            )
+            curves_data = b"".join(struct.pack(">H", curve) for curve in fingerprint.elliptic_curves)
             return struct.pack(">H", len(curves_data)) + curves_data
 
         elif ext_type == 11:  # EC Point Formats
             return b"\x01\x00"  # Support uncompressed points only
 
         elif ext_type == 13:  # Signature Algorithms
-            sig_algs_data = b"".join(
-                struct.pack(">H", alg) for alg in fingerprint.signature_algorithms
-            )
+            sig_algs_data = b"".join(struct.pack(">H", alg) for alg in fingerprint.signature_algorithms)
             return struct.pack(">H", len(sig_algs_data)) + sig_algs_data
 
         elif ext_type == 16:  # ALPN (Application Layer Protocol Negotiation)
@@ -545,17 +507,13 @@ class uTLSFingerprintCalibrator:
             secrets.token_bytes(32)
             # This would normally do X25519 scalar multiplication
             public_key = secrets.token_bytes(32)  # Simplified for now
-            return (
-                struct.pack(">HHH", 36, 29, 32) + public_key
-            )  # 36=length, 29=X25519, 32=key_length
+            return struct.pack(">HHH", 36, 29, 32) + public_key  # 36=length, 29=X25519, 32=key_length
 
         else:
             # Default empty extension for unknown types
             return b""
 
-    def validate_fingerprint_match(
-        self, generated_hello: bytes, target_fingerprint: ClientHelloFingerprint
-    ) -> bool:
+    def validate_fingerprint_match(self, generated_hello: bytes, target_fingerprint: ClientHelloFingerprint) -> bool:
         """Validate that generated ClientHello matches target fingerprint."""
         try:
             # This would parse the generated ClientHello and verify it produces

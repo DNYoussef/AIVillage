@@ -184,10 +184,7 @@ class VILLAGECreditSystem:
 
     def get_earning_rule(self, action: str) -> EarningRule:
         cur = self.db.execute(
-            (
-                "SELECT action, base_credits, multipliers, conditions "
-                "FROM earning_rules WHERE action = ?"
-            ),
+            ("SELECT action, base_credits, multipliers, conditions " "FROM earning_rules WHERE action = ?"),
             (action,),
         )
         row = cur.fetchone()
@@ -204,10 +201,7 @@ class VILLAGECreditSystem:
 
     def is_first_time(self, user_id: str, action: str) -> bool:
         cur = self.db.execute(
-            (
-                "SELECT COUNT(*) as cnt FROM transactions "
-                "WHERE user_id = ? AND category = ?"
-            ),
+            ("SELECT COUNT(*) as cnt FROM transactions " "WHERE user_id = ? AND category = ?"),
             (user_id, action),
         )
         count = cur.fetchone()["cnt"]
@@ -217,9 +211,7 @@ class VILLAGECreditSystem:
     def adjust_for_ppp(self, credit_amount: int, country: str | None) -> int:
         if country and country in PPP_ADJUSTMENTS:
             adjusted = int(credit_amount * PPP_ADJUSTMENTS[country])
-            logger.debug(
-                "PPP adjustment for %s: %d -> %d", country, credit_amount, adjusted
-            )
+            logger.debug("PPP adjustment for %s: %d -> %d", country, credit_amount, adjusted)
             return adjusted
         return credit_amount
 
@@ -303,12 +295,8 @@ class VILLAGECreditSystem:
         self.update_balance(user_id, credit_amount)
         return credit_amount
 
-    def spend_credits(
-        self, user_id: str, amount: int, category: str, metadata: dict[str, str]
-    ) -> None:
-        cur = self.db.execute(
-            "SELECT balance FROM balances WHERE user_id = ?", (user_id,)
-        )
+    def spend_credits(self, user_id: str, amount: int, category: str, metadata: dict[str, str]) -> None:
+        cur = self.db.execute("SELECT balance FROM balances WHERE user_id = ?", (user_id,))
         row = cur.fetchone()
         if row is None or row["balance"] < amount:
             logger.error("User %s has insufficient balance", user_id)
@@ -318,9 +306,7 @@ class VILLAGECreditSystem:
         self.update_balance(user_id, -amount)
 
     def get_balance(self, user_id: str) -> int:
-        cur = self.db.execute(
-            "SELECT balance FROM balances WHERE user_id = ?", (user_id,)
-        )
+        cur = self.db.execute("SELECT balance FROM balances WHERE user_id = ?", (user_id,))
         row = cur.fetchone()
         return row["balance"] if row else 0
 

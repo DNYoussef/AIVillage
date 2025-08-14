@@ -64,9 +64,7 @@ class DynamicKnowledgeIntegrationAgent(AgentInterface):
             rng = random.Random(seed)
             return [rng.random() for _ in range(self.embedding_model.hidden_size)]
 
-    async def rerank(
-        self, query: str, results: list[dict[str, Any]], k: int
-    ) -> list[dict[str, Any]]:
+    async def rerank(self, query: str, results: list[dict[str, Any]], k: int) -> list[dict[str, Any]]:
         """Rerank results based on knowledge graph connectivity."""
         for result in results:
             # Boost score if result mentions entities in our graph

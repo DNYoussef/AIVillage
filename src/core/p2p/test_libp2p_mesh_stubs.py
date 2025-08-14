@@ -100,9 +100,7 @@ class TestLibP2PMeshNetworkFallback:
 
     def test_mesh_network_initialization(self):
         """Test mesh network initialization."""
-        config = MeshConfiguration(
-            node_id="test_node", listen_port=4001, mdns_enabled=True, dht_enabled=True
-        )
+        config = MeshConfiguration(node_id="test_node", listen_port=4001, mdns_enabled=True, dht_enabled=True)
 
         network = LibP2PMeshNetwork(config)
         assert network.config == config
@@ -111,9 +109,7 @@ class TestLibP2PMeshNetworkFallback:
     @pytest.mark.asyncio
     async def test_fallback_discovery_mechanism(self):
         """Test fallback discovery when LibP2P is not available."""
-        config = MeshConfiguration(
-            node_id="test_node", listen_port=4001, mdns_enabled=True, dht_enabled=True
-        )
+        config = MeshConfiguration(node_id="test_node", listen_port=4001, mdns_enabled=True, dht_enabled=True)
 
         network = LibP2PMeshNetwork(config)
 
@@ -138,9 +134,7 @@ class TestLibP2PMeshNetworkFallback:
     @pytest.mark.asyncio
     async def test_fallback_discovery_error_handling(self):
         """Test error handling in fallback discovery."""
-        config = MeshConfiguration(
-            node_id="test_node", listen_port=4001, mdns_enabled=True, dht_enabled=True
-        )
+        config = MeshConfiguration(node_id="test_node", listen_port=4001, mdns_enabled=True, dht_enabled=True)
 
         network = LibP2PMeshNetwork(config)
 
@@ -157,9 +151,7 @@ class TestLibP2PMeshNetworkFallback:
     @pytest.mark.asyncio
     async def test_fallback_discovery_no_fallback_node(self):
         """Test fallback discovery when no fallback node is available."""
-        config = MeshConfiguration(
-            node_id="test_node", listen_port=4001, mdns_enabled=True, dht_enabled=True
-        )
+        config = MeshConfiguration(node_id="test_node", listen_port=4001, mdns_enabled=True, dht_enabled=True)
 
         network = LibP2PMeshNetwork(config)
         network.fallback_node = None
@@ -173,9 +165,7 @@ class TestLibP2PMeshNetworkFallback:
     @pytest.mark.asyncio
     async def test_fallback_discovery_duplicate_peers(self):
         """Test fallback discovery handles duplicate peers correctly."""
-        config = MeshConfiguration(
-            node_id="test_node", listen_port=4001, mdns_enabled=True, dht_enabled=True
-        )
+        config = MeshConfiguration(node_id="test_node", listen_port=4001, mdns_enabled=True, dht_enabled=True)
 
         network = LibP2PMeshNetwork(config)
 

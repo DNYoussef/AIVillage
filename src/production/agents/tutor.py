@@ -15,9 +15,7 @@ class TutorAgent:
         """Initialize Tutor Agent."""
         self.spec = spec
         self.name = "Tutor"
-        self.role_description = (
-            "Educational guidance and learning facilitation specialist"
-        )
+        self.role_description = "Educational guidance and learning facilitation specialist"
         self.performance_history: list[dict[str, Any]] = []
         self.kpi_scores: dict[str, float] = {}
 

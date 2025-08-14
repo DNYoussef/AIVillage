@@ -41,9 +41,7 @@ class ThoughtSampler:
         # Get special token IDs
         self.special_token_ids = self._get_special_token_ids()
 
-        logger.info(
-            f"Initialized ThoughtSampler with thought_ratio={config.thought_ratio}"
-        )
+        logger.info(f"Initialized ThoughtSampler with thought_ratio={config.thought_ratio}")
 
     def _get_special_token_ids(self) -> dict[str, int]:
         """Get special token IDs from tokenizer."""
@@ -63,9 +61,7 @@ class ThoughtSampler:
 
         return special_tokens
 
-    def should_generate_thoughts(
-        self, training_mode: bool = True, step: int | None = None
-    ) -> bool:
+    def should_generate_thoughts(self, training_mode: bool = True, step: int | None = None) -> bool:
         """
         Decide whether to generate thoughts based on policy.
 
@@ -83,9 +79,7 @@ class ThoughtSampler:
         # Training mode: sample based on thought_ratio
         return torch.rand(1).item() < self.config.thought_ratio
 
-    def sample_thought_insertion_points(
-        self, input_ids: torch.Tensor, max_insertions: int = 3
-    ) -> list[int]:
+    def sample_thought_insertion_points(self, input_ids: torch.Tensor, max_insertions: int = 3) -> list[int]:
         """
         Sample positions where thoughts should be inserted.
 
@@ -147,9 +141,7 @@ class ThoughtSampler:
             return {"thought_tokens": [], "thought_text": "", "success": False}
 
         # Start with SoT token
-        current_ids = torch.cat(
-            [context_ids, torch.full((batch_size, 1), sot_id, device=device)], dim=1
-        )
+        current_ids = torch.cat([context_ids, torch.full((batch_size, 1), sot_id, device=device)], dim=1)
 
         generated_tokens = [sot_id]
 
@@ -180,10 +172,7 @@ class ThoughtSampler:
                     break
 
                 # Stop at EOS or other stopping criteria
-                if (
-                    hasattr(self.tokenizer, "eos_token_id")
-                    and next_token.item() == self.tokenizer.eos_token_id
-                ):
+                if hasattr(self.tokenizer, "eos_token_id") and next_token.item() == self.tokenizer.eos_token_id:
                     # Add explicit end-of-thought
                     current_ids = torch.cat(
                         [
@@ -197,22 +186,16 @@ class ThoughtSampler:
 
         # Ensure we end with EoT token
         if generated_tokens[-1] != eot_id:
-            current_ids = torch.cat(
-                [current_ids, torch.full((batch_size, 1), eot_id, device=device)], dim=1
-            )
+            current_ids = torch.cat([current_ids, torch.full((batch_size, 1), eot_id, device=device)], dim=1)
             generated_tokens.append(eot_id)
 
         # Decode thought text
-        thought_text = self.tokenizer.decode(
-            generated_tokens, skip_special_tokens=False
-        )
+        thought_text = self.tokenizer.decode(generated_tokens, skip_special_tokens=False)
 
         return {
             "thought_tokens": generated_tokens,
             "thought_text": thought_text,
-            "thought_ids": current_ids[
-                :, context_ids.size(1) :
-            ],  # Just the thought part
+            "thought_ids": current_ids[:, context_ids.size(1) :],  # Just the thought part
             "success": True,
             "length": len(generated_tokens),
         }
@@ -245,9 +228,7 @@ class ThoughtSampler:
 
         # Decide whether to generate thoughts
         generate_thoughts = (
-            force_thoughts
-            if force_thoughts is not None
-            else self.should_generate_thoughts(model.training)
+            force_thoughts if force_thoughts is not None else self.should_generate_thoughts(model.training)
         )
 
         current_ids = input_ids.clone()
@@ -262,9 +243,7 @@ class ThoughtSampler:
 
         # If not generating thoughts, add NoT token
         if not generate_thoughts and not_id >= 0:
-            current_ids = torch.cat(
-                [current_ids, torch.full((batch_size, 1), not_id, device=device)], dim=1
-            )
+            current_ids = torch.cat([current_ids, torch.full((batch_size, 1), not_id, device=device)], dim=1)
 
         # Generate tokens
         for step in range(max_new_tokens):
@@ -328,10 +307,7 @@ class ThoughtSampler:
                 current_ids = torch.cat([current_ids, next_token], dim=1)
 
                 # Check for early stopping
-                if (
-                    hasattr(self.tokenizer, "eos_token_id")
-                    and next_token.item() == self.tokenizer.eos_token_id
-                ):
+                if hasattr(self.tokenizer, "eos_token_id") and next_token.item() == self.tokenizer.eos_token_id:
                     break
 
                 # Check max length
@@ -339,11 +315,7 @@ class ThoughtSampler:
                     break
 
         # Create stripped version for inference
-        stripped_ids = (
-            self.strip_thoughts_from_sequence(current_ids)
-            if not model.training
-            else None
-        )
+        stripped_ids = self.strip_thoughts_from_sequence(current_ids) if not model.training else None
 
         return SamplingResult(
             generated_ids=current_ids,
@@ -418,9 +390,7 @@ class ThoughtSampler:
             # All sequences were empty after stripping
             return torch.empty((batch_size, 0), device=device, dtype=input_ids.dtype)
 
-    def decode_with_thought_annotation(
-        self, input_ids: torch.Tensor, skip_special_tokens: bool = False
-    ) -> list[str]:
+    def decode_with_thought_annotation(self, input_ids: torch.Tensor, skip_special_tokens: bool = False) -> list[str]:
         """
         Decode sequences with thought annotation preserved or stripped.
 
@@ -438,10 +408,7 @@ class ThoughtSampler:
             sequence = input_ids[b]
 
             # Remove padding tokens
-            if (
-                hasattr(self.tokenizer, "pad_token_id")
-                and self.tokenizer.pad_token_id is not None
-            ):
+            if hasattr(self.tokenizer, "pad_token_id") and self.tokenizer.pad_token_id is not None:
                 non_pad_mask = sequence != self.tokenizer.pad_token_id
                 sequence = sequence[non_pad_mask]
 
@@ -479,9 +446,7 @@ class ThoughtLeakDetector:
 
         # Semantic leak patterns (thoughts that might leak without explicit tokens)
         self.semantic_leak_patterns = [
-            re.compile(
-                r"let me think|thinking about|my thought|I think", re.IGNORECASE
-            ),
+            re.compile(r"let me think|thinking about|my thought|I think", re.IGNORECASE),
             re.compile(r"step \d+|first,|second,|third,", re.IGNORECASE),
             re.compile(r"reasoning|analysis|conclusion", re.IGNORECASE),
         ]

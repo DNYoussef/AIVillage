@@ -117,9 +117,7 @@ class DigitalTwinConcierge:
     async def initialize(self):
         """Initialize the digital twin concierge"""
         try:
-            logger.info(
-                f"Initializing Digital Twin on {self.device_type.value} device {self.device_id}"
-            )
+            logger.info(f"Initializing Digital Twin on {self.device_type.value} device {self.device_id}")
 
             # Initialize local AI model
             await self._initialize_local_model()
@@ -229,17 +227,12 @@ class DigitalTwinConcierge:
             "model_version": self.model_version,
         }
 
-    async def _route_to_meta_agents(
-        self, request: dict[str, Any], request_id: str
-    ) -> dict[str, Any]:
+    async def _route_to_meta_agents(self, request: dict[str, Any], request_id: str) -> dict[str, Any]:
         """Route complex requests to meta-agent system"""
         logger.info(f"Routing request {request_id} to meta-agent system")
 
         # Choose communication protocol based on network/privacy needs
-        if (
-            self.resources.network_type == "offline"
-            or request.get("privacy_level") == "high"
-        ):
+        if self.resources.network_type == "offline" or request.get("privacy_level") == "high":
             transport = "bitchat"  # Use Bluetooth mesh
         else:
             transport = "betanet"  # Use encrypted internet

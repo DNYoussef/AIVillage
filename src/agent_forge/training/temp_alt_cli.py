@@ -27,9 +27,7 @@ from .temp_alt_loop import TempAltConfig, create_temp_alt_trainer
 from .test_temp_alt_system import MockDataset, run_tests
 
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -84,9 +82,7 @@ def train(
         config = TempAltConfig(**config_dict)
         click.echo(f"✅ Loaded config from {config_path}")
     else:
-        config = TempAltConfig(
-            max_steps=max_steps, batch_size=batch_size, learning_rate=learning_rate
-        )
+        config = TempAltConfig(max_steps=max_steps, batch_size=batch_size, learning_rate=learning_rate)
         click.echo("✅ Using default config")
 
     # Load or create model
@@ -105,9 +101,7 @@ def train(
         click.echo("✅ Created demo model")
 
     # Create trainer
-    trainer = create_temp_alt_trainer(
-        model=model, config=config, device=device, save_dir=str(output_path)
-    )
+    trainer = create_temp_alt_trainer(model=model, config=config, device=device, save_dir=str(output_path))
 
     # Create dataset
     if demo or not data_path:
@@ -155,9 +149,7 @@ def train(
 )
 @click.option("--data-path", type=click.Path(), help="Path to evaluation data")
 @click.option("--device", default="cuda", help="Device to use")
-@click.option(
-    "--output-file", default="evaluation_results.json", help="Output file for results"
-)
+@click.option("--output-file", default="evaluation_results.json", help="Output file for results")
 @click.option("--demo", is_flag=True, help="Use demo data")
 def evaluate(
     checkpoint_path: str,
@@ -179,9 +171,7 @@ def evaluate(
     config = TempAltConfig(**config_dict)
 
     # Reconstruct model (simplified for demo)
-    model = nn.Sequential(
-        nn.Linear(10, config.hidden_dim), nn.ReLU(), nn.Linear(config.hidden_dim, 100)
-    )
+    model = nn.Sequential(nn.Linear(10, config.hidden_dim), nn.ReLU(), nn.Linear(config.hidden_dim, 100))
     model.load_state_dict(checkpoint["model_state_dict"])
     model.eval()
 
@@ -215,9 +205,7 @@ def evaluate(
             labels = input_ids[:, 1:]  # Shift for language modeling
 
             logits = model(input_ids[:, :-1])
-            loss = nn.functional.cross_entropy(
-                logits.view(-1, logits.size(-1)), labels.view(-1)
-            )
+            loss = nn.functional.cross_entropy(logits.view(-1, logits.size(-1)), labels.view(-1))
 
             preds = torch.argmax(logits, dim=-1)
             accuracy = (preds == labels).float().mean().item()
@@ -254,9 +242,7 @@ def evaluate(
     required=True,
     help="Training results directory",
 )
-@click.option(
-    "--output-file", default="analysis_report.html", help="Output analysis report"
-)
+@click.option("--output-file", default="analysis_report.html", help="Output analysis report")
 def analyze(results_dir: str, output_file: str):
     """Analyze training results and generate report."""
 
@@ -397,9 +383,7 @@ def analyze(results_dir: str, output_file: str):
 )
 @click.option("--prompt", help="Test prompt (or use default)")
 @click.option("--output-file", default="temperature_analysis.json", help="Output file")
-def test_temperatures(
-    api_key: str | None, temperature_points: str, prompt: str | None, output_file: str
-):
+def test_temperatures(api_key: str | None, temperature_points: str, prompt: str | None, output_file: str):
     """Test temperature consistency using OpenRouter."""
 
     click.echo("🌡️ Testing Temperature Consistency")
@@ -418,9 +402,7 @@ def test_temperatures(
     # Run temperature consistency test
     async def run_test():
         system = create_openrouter_system(api_key=api_key)
-        analysis = await system.evaluate_temperature_consistency(
-            prompt=prompt, temperature_points=temps
-        )
+        analysis = await system.evaluate_temperature_consistency(prompt=prompt, temperature_points=temps)
         return analysis
 
     try:
@@ -432,12 +414,8 @@ def test_temperatures(
 
         click.echo("\n📊 Temperature Analysis Results:")
         click.echo(f"   Success Rate: {analysis['success_rate']:.1%}")
-        click.echo(
-            f"   Length Variance: {analysis['analysis']['length_variance']['variance']:.2f}"
-        )
-        click.echo(
-            f"   Content Diversity: {analysis['analysis']['content_diversity']['unique_ratio']:.2f}"
-        )
+        click.echo(f"   Length Variance: {analysis['analysis']['length_variance']['variance']:.2f}")
+        click.echo(f"   Content Diversity: {analysis['analysis']['content_diversity']['unique_ratio']:.2f}")
         click.echo(
             f"   Temperature Sensitivity: {analysis['analysis']['temperature_sensitivity']['sensitivity_score']:.2f}"
         )

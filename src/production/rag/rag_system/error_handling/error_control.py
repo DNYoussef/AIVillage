@@ -39,9 +39,7 @@ class ErrorController:
 
         self._attempt_recovery(exception, context)
 
-    def _attempt_recovery(
-        self, exception: Exception, context: dict[str, Any] | None = None
-    ):
+    def _attempt_recovery(self, exception: Exception, context: dict[str, Any] | None = None):
         """Attempt to recover from the error and update error statistics."""
         error_type = type(exception).__name__
         self.total_errors += 1
@@ -54,9 +52,7 @@ class ErrorController:
                 self.logger.info("Using fallback value provided in context.")
                 return context["fallback"]
         elif isinstance(exception, IOError):
-            self.logger.info(
-                "Attempting basic recovery from IOError by retrying callback if available..."
-            )
+            self.logger.info("Attempting basic recovery from IOError by retrying callback if available...")
             retry_cb = context.get("retry_callback") if context else None
             if callable(retry_cb):
                 try:
@@ -67,9 +63,7 @@ class ErrorController:
             self.logger.warning("No specific recovery mechanism for this error type.")
         return None
 
-    def log_warning(
-        self, warning_message: str, context: dict[str, Any] | None = None
-    ) -> None:
+    def log_warning(self, warning_message: str, context: dict[str, Any] | None = None) -> None:
         """Log a warning message with optional context.
 
         :param warning_message: The warning message to log

@@ -166,9 +166,7 @@ class AgentForge:
             # KPI Evolution Engine
             if KPIEvolutionEngine is not None:
                 try:
-                    self.kpi_engine = KPIEvolutionEngine(
-                        **self.evolution_config.get("kpi", {})
-                    )
+                    self.kpi_engine = KPIEvolutionEngine(**self.evolution_config.get("kpi", {}))
                     logger.info("KPIEvolutionEngine initialized successfully")
                 except Exception as e:
                     logger.warning(f"Failed to initialize KPIEvolutionEngine: {e}")
@@ -176,9 +174,7 @@ class AgentForge:
             # Dual Evolution System
             if DualEvolutionSystem is not None:
                 try:
-                    self.dual_evolution = DualEvolutionSystem(
-                        self.evolution_config.get("dual", {})
-                    )
+                    self.dual_evolution = DualEvolutionSystem(self.evolution_config.get("dual", {}))
                     logger.info("DualEvolutionSystem initialized successfully")
                 except Exception as e:
                     logger.warning(f"Failed to initialize DualEvolutionSystem: {e}")
@@ -228,9 +224,7 @@ class AgentForge:
                 raise ValueError(f"Unsupported spec type: {type(spec)}")
 
             # Create agent using factory
-            agent = self.agent_factory.create_agent(
-                agent_spec.agent_type, config=agent_spec.config
-            )
+            agent = self.agent_factory.create_agent(agent_spec.agent_type, config=agent_spec.config)
 
             if agent:
                 # Track created agent
@@ -250,9 +244,7 @@ class AgentForge:
                             agent_spec.config,
                             None,  # template_path
                         )
-                        logger.info(
-                            f"Registered agent {agent_id} with KPI evolution engine"
-                        )
+                        logger.info(f"Registered agent {agent_id} with KPI evolution engine")
                     except Exception as e:
                         logger.warning(f"Failed to register agent with KPI engine: {e}")
 
@@ -265,9 +257,7 @@ class AgentForge:
             logger.exception(f"Error creating agent: {e}")
             return None
 
-    def save_manifest(
-        self, path: str | Path, manifest: AgentManifest | None = None
-    ) -> bool:
+    def save_manifest(self, path: str | Path, manifest: AgentManifest | None = None) -> bool:
         """Save deployment manifest to file.
 
         Args:
@@ -367,9 +357,7 @@ class AgentForge:
                                 kpi = AgentKPI(
                                     agent_id=agent_id,
                                     accuracy=kpi_data.get("accuracy", 0.7),
-                                    response_time_ms=kpi_data.get(
-                                        "response_time_ms", 1000.0
-                                    ),
+                                    response_time_ms=kpi_data.get("response_time_ms", 1000.0),
                                     success_rate=kpi_data.get("success_rate", 0.8),
                                     throughput_tps=kpi_data.get("throughput_tps", 1.0),
                                 )

@@ -252,9 +252,7 @@ class OpenRouterClient:
 
         return (total_tokens / 1000) * rate
 
-    def _update_metrics(
-        self, model: str, usage: dict[str, int], cost: float, latency: float
-    ) -> None:
+    def _update_metrics(self, model: str, usage: dict[str, int], cost: float, latency: float) -> None:
         """Update model performance metrics."""
         if model not in self.model_metrics:
             self.model_metrics[model] = ModelMetrics()
@@ -270,9 +268,7 @@ class OpenRouterClient:
         """Get summary of all metrics."""
         summary = {
             "total_cost": self.total_cost,
-            "cost_by_task": {
-                task.value: cost for task, cost in self.cost_by_task.items()
-            },
+            "cost_by_task": {task.value: cost for task, cost in self.cost_by_task.items()},
             "model_performance": {},
         }
 

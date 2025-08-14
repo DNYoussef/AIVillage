@@ -38,9 +38,7 @@ def check_system_resources(model_paths: list[str]) -> bool:
     for path in model_paths:
         if os.path.exists(path):
             for root, _dirs, files in os.walk(path):
-                total_model_size += sum(
-                    os.path.getsize(os.path.join(root, file)) for file in files
-                )
+                total_model_size += sum(os.path.getsize(os.path.join(root, file)) for file in files)
 
     if total_model_size > 0:
         free_disk_space = shutil.disk_usage(
@@ -59,9 +57,7 @@ def check_system_resources(model_paths: list[str]) -> bool:
         logger.error("Not enough disk space to store merged models!")
         return False
     if total_model_size > available_ram:
-        logger.warning(
-            "Available RAM might not be sufficient to load all models simultaneously!"
-        )
+        logger.warning("Available RAM might not be sufficient to load all models simultaneously!")
         # We'll continue with a warning, but you might want to implement a more sophisticated
         # memory management strategy if this is a common issue
     return True
@@ -88,9 +84,7 @@ def clean_up_models(model_paths: list[str]) -> None:
                     shutil.rmtree(path, ignore_errors=True)
         except Exception as e:
             logger.warning(f"Failed to remove model {path}: {e!s}")
-            logger.warning(
-                "This is not a critical error, but you may want to manually remove the file or directory."
-            )
+            logger.warning("This is not a critical error, but you may want to manually remove the file or directory.")
 
 
 def load_models(
@@ -113,9 +107,7 @@ def load_models(
             tokenizers.append(tokenizer)
             logger.info(f"Successfully loaded model and tokenizer: {model_ref.name}")
         except Exception as e:
-            logger.exception(
-                f"Failed to load model or tokenizer {model_ref.name}: {e!s}"
-            )
+            logger.exception(f"Failed to load model or tokenizer {model_ref.name}: {e!s}")
     return models, tokenizers
 
 
@@ -132,9 +124,7 @@ def save_model(model: torch.nn.Module, path: str) -> None:
         raise EvoMergeException(msg)
 
 
-def generate_text(
-    model: torch.nn.Module, tokenizer: AutoTokenizer, prompt: str, max_length: int = 100
-) -> str:
+def generate_text(model: torch.nn.Module, tokenizer: AutoTokenizer, prompt: str, max_length: int = 100) -> str:
     try:
         inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
         outputs = model.generate(**inputs, max_length=max_length)
@@ -169,9 +159,7 @@ def evaluate_model(model_path: str) -> dict[str, float | str]:
         raise EvoMergeException(msg)
 
 
-def parallel_evaluate_models(
-    model_paths: list[str], max_workers: int | None = None
-) -> list[dict[str, float | str]]:
+def parallel_evaluate_models(model_paths: list[str], max_workers: int | None = None) -> list[dict[str, float | str]]:
     with ProcessPoolExecutor(max_workers=max_workers) as executor:
         return list(executor.map(evaluate_model, model_paths))
 
@@ -202,13 +190,9 @@ def mask_model_weights(
             input_param_names=list(param_dict.keys()),
             exclude_param_names_regex=exclude_param_names_regex,
         )
-        model_param_dict = {
-            param_name: param_dict[param_name] for param_name in param_names_to_merge
-        }
+        model_param_dict = {param_name: param_dict[param_name] for param_name in param_names_to_merge}
     else:
-        assert weight_format == "delta_weight", (
-            f"Unsupported weight_format: {weight_format}"
-        )
+        assert weight_format == "delta_weight", f"Unsupported weight_format: {weight_format}"
         task_vector = TaskVector(
             pretrained_model=pretrained_model,
             finetuned_model=finetuned_model,
@@ -218,9 +202,7 @@ def mask_model_weights(
 
     with torch.no_grad():
         masked_param_dict = {}
-        for param_name, param_value in tqdm(
-            model_param_dict.items(), desc="Masking weights"
-        ):
+        for param_name, param_value in tqdm(model_param_dict.items(), desc="Masking weights"):
             masked_param_dict[param_name] = mask_input_with_mask_rate(
                 input_tensor=param_value,
                 mask_rate=weight_mask_rate,
@@ -237,9 +219,7 @@ def mask_model_weights(
     return masked_param_dict
 
 
-def get_param_names_to_merge(
-    input_param_names: list[str], exclude_param_names_regex: list[str]
-) -> list[str]:
+def get_param_names_to_merge(input_param_names: list[str], exclude_param_names_regex: list[str]) -> list[str]:
     """Get the list of parameter names to merge, excluding those that match the given regex patterns.
 
     :param input_param_names: List of all parameter names

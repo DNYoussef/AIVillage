@@ -169,15 +169,11 @@ class CognitiveNexus:
         results = []
         start_time = time.time()
 
-        logger.info(
-            f"Analyzing {len(retrieved_info)} sources for query: '{query[:50]}...'"
-        )
+        logger.info(f"Analyzing {len(retrieved_info)} sources for query: '{query[:50]}...'")
 
         for analysis_type in analysis_types:
             try:
-                result = await self._perform_analysis(
-                    query, retrieved_info, analysis_type
-                )
+                result = await self._perform_analysis(query, retrieved_info, analysis_type)
                 result.analysis_duration_ms = (time.time() - start_time) * 1000
                 results.append(result)
 
@@ -215,29 +211,19 @@ class CognitiveNexus:
 
         # Perform analysis if not provided
         if not analysis_results:
-            analysis_results = await self.analyze_retrieved_information(
-                query, retrieved_info
-            )
+            analysis_results = await self.analyze_retrieved_information(query, retrieved_info)
 
         # Extract key insights from analysis
-        factual_score = self._extract_analysis_score(
-            analysis_results, AnalysisType.FACTUAL_VERIFICATION
-        )
-        consistency_score = self._extract_analysis_score(
-            analysis_results, AnalysisType.CONSISTENCY_CHECK
-        )
-        relevance_score = self._extract_analysis_score(
-            analysis_results, AnalysisType.RELEVANCE_ASSESSMENT
-        )
+        factual_score = self._extract_analysis_score(analysis_results, AnalysisType.FACTUAL_VERIFICATION)
+        consistency_score = self._extract_analysis_score(analysis_results, AnalysisType.CONSISTENCY_CHECK)
+        relevance_score = self._extract_analysis_score(analysis_results, AnalysisType.RELEVANCE_ASSESSMENT)
 
         # Find contradictions and uncertainties
         contradictions = self._find_contradictions(retrieved_info)
         uncertainties = self._identify_uncertainties(analysis_results)
 
         # Synthesize answer
-        synthesized_text = await self._generate_synthesized_text(
-            query, retrieved_info, analysis_results
-        )
+        synthesized_text = await self._generate_synthesized_text(query, retrieved_info, analysis_results)
 
         # Calculate overall confidence
         confidence = self._calculate_synthesis_confidence(
@@ -245,9 +231,7 @@ class CognitiveNexus:
         )
 
         # Calculate completeness
-        completeness = await self._assess_answer_completeness(
-            query, synthesized_text, retrieved_info
-        )
+        completeness = await self._assess_answer_completeness(query, synthesized_text, retrieved_info)
 
         # Create synthesized answer
         answer = SynthesizedAnswer(
@@ -269,9 +253,7 @@ class CognitiveNexus:
         self.synthesis_requests += 1
 
         duration = (time.time() - start_time) * 1000
-        logger.info(
-            f"Synthesis completed in {duration:.1f}ms (confidence: {confidence:.3f})"
-        )
+        logger.info(f"Synthesis completed in {duration:.1f}ms (confidence: {confidence:.3f})")
 
         return answer
 
@@ -296,9 +278,7 @@ class CognitiveNexus:
         else:
             raise ValueError(f"Unknown analysis type: {analysis_type}")
 
-    async def _verify_factual_accuracy(
-        self, query: str, retrieved_info: list[RetrievedInformation]
-    ) -> AnalysisResult:
+    async def _verify_factual_accuracy(self, query: str, retrieved_info: list[RetrievedInformation]) -> AnalysisResult:
         """Verify factual accuracy of retrieved information"""
 
         # Cross-reference sources for factual consistency
@@ -316,9 +296,7 @@ class CognitiveNexus:
             fact_scores.append(fact_score)
 
         avg_accuracy = np.mean(fact_scores) if fact_scores else 0.0
-        confidence = (
-            ConfidenceLevel.HIGH if avg_accuracy > 0.8 else ConfidenceLevel.MODERATE
-        )
+        confidence = ConfidenceLevel.HIGH if avg_accuracy > 0.8 else ConfidenceLevel.MODERATE
 
         return AnalysisResult(
             analysis_type=AnalysisType.FACTUAL_VERIFICATION,
@@ -332,9 +310,7 @@ class CognitiveNexus:
             sources_analyzed=[info.id for info in retrieved_info],
         )
 
-    async def _check_consistency(
-        self, retrieved_info: list[RetrievedInformation]
-    ) -> AnalysisResult:
+    async def _check_consistency(self, retrieved_info: list[RetrievedInformation]) -> AnalysisResult:
         """Check consistency between different sources"""
 
         inconsistencies = []
@@ -343,9 +319,7 @@ class CognitiveNexus:
         # Compare each source with every other source
         for i, info1 in enumerate(retrieved_info):
             for _j, info2 in enumerate(retrieved_info[i + 1 :], i + 1):
-                consistency = await self._calculate_content_consistency(
-                    info1.content, info2.content
-                )
+                consistency = await self._calculate_content_consistency(info1.content, info2.content)
                 consistency_scores.append(consistency)
 
                 if consistency < self.contradiction_sensitivity:
@@ -359,9 +333,7 @@ class CognitiveNexus:
                     )
 
         avg_consistency = np.mean(consistency_scores) if consistency_scores else 1.0
-        confidence = (
-            ConfidenceLevel.HIGH if avg_consistency > 0.7 else ConfidenceLevel.MODERATE
-        )
+        confidence = ConfidenceLevel.HIGH if avg_consistency > 0.7 else ConfidenceLevel.MODERATE
 
         if inconsistencies:
             self.contradictions_detected += len(inconsistencies)
@@ -379,9 +351,7 @@ class CognitiveNexus:
             sources_analyzed=[info.id for info in retrieved_info],
         )
 
-    async def _assess_relevance(
-        self, query: str, retrieved_info: list[RetrievedInformation]
-    ) -> AnalysisResult:
+    async def _assess_relevance(self, query: str, retrieved_info: list[RetrievedInformation]) -> AnalysisResult:
         """Assess relevance of retrieved information to query"""
 
         relevance_scores = []
@@ -395,19 +365,13 @@ class CognitiveNexus:
             context_relevance = self._assess_context_relevance(query, info)
 
             # Combined relevance
-            enhanced_relevance = (
-                base_relevance + query_overlap + context_relevance
-            ) / 3
+            enhanced_relevance = (base_relevance + query_overlap + context_relevance) / 3
             relevance_scores.append(enhanced_relevance)
 
         avg_relevance = np.mean(relevance_scores)
-        high_relevance_count = sum(
-            1 for score in relevance_scores if score > self.relevance_threshold
-        )
+        high_relevance_count = sum(1 for score in relevance_scores if score > self.relevance_threshold)
 
-        confidence = (
-            ConfidenceLevel.HIGH if avg_relevance > 0.7 else ConfidenceLevel.MODERATE
-        )
+        confidence = ConfidenceLevel.HIGH if avg_relevance > 0.7 else ConfidenceLevel.MODERATE
 
         return AnalysisResult(
             analysis_type=AnalysisType.RELEVANCE_ASSESSMENT,
@@ -422,9 +386,7 @@ class CognitiveNexus:
             sources_analyzed=[info.id for info in retrieved_info],
         )
 
-    async def _quantify_uncertainties(
-        self, retrieved_info: list[RetrievedInformation]
-    ) -> AnalysisResult:
+    async def _quantify_uncertainties(self, retrieved_info: list[RetrievedInformation]) -> AnalysisResult:
         """Identify and quantify uncertainties in the information"""
 
         uncertainty_indicators = []
@@ -435,9 +397,7 @@ class CognitiveNexus:
                 uncertainty_indicators.extend(uncertainties)
 
         uncertainty_score = len(uncertainty_indicators) / max(len(retrieved_info), 1)
-        confidence = (
-            ConfidenceLevel.MODERATE
-        )  # Uncertainty analysis is inherently uncertain
+        confidence = ConfidenceLevel.MODERATE  # Uncertainty analysis is inherently uncertain
 
         if uncertainty_indicators:
             self.uncertainties_identified += len(uncertainty_indicators)
@@ -455,9 +415,7 @@ class CognitiveNexus:
             sources_analyzed=[info.id for info in retrieved_info],
         )
 
-    async def _detect_contradictions(
-        self, retrieved_info: list[RetrievedInformation]
-    ) -> AnalysisResult:
+    async def _detect_contradictions(self, retrieved_info: list[RetrievedInformation]) -> AnalysisResult:
         """Detect explicit contradictions between sources"""
 
         contradictions = []
@@ -465,9 +423,7 @@ class CognitiveNexus:
         # Simple contradiction detection (would be more sophisticated in practice)
         for i, info1 in enumerate(retrieved_info):
             for _j, info2 in enumerate(retrieved_info[i + 1 :], i + 1):
-                contradiction_score = await self._detect_content_contradiction(
-                    info1.content, info2.content
-                )
+                contradiction_score = await self._detect_content_contradiction(info1.content, info2.content)
 
                 if contradiction_score > 0.7:  # High contradiction
                     contradictions.append(
@@ -479,9 +435,7 @@ class CognitiveNexus:
                         }
                     )
 
-        confidence = (
-            ConfidenceLevel.HIGH if not contradictions else ConfidenceLevel.MODERATE
-        )
+        confidence = ConfidenceLevel.HIGH if not contradictions else ConfidenceLevel.MODERATE
 
         return AnalysisResult(
             analysis_type=AnalysisType.CONTRADICTION_DETECTION,
@@ -503,10 +457,7 @@ class CognitiveNexus:
         base_score = info.retrieval_confidence
 
         # Boost for academic/authoritative sources
-        if any(
-            term in info.source.lower()
-            for term in ["academic", "journal", "university", "gov"]
-        ):
+        if any(term in info.source.lower() for term in ["academic", "journal", "university", "gov"]):
             base_score += 0.2
 
         return min(1.0, base_score)
@@ -526,14 +477,10 @@ class CognitiveNexus:
             "experiment",
         ]
 
-        count = sum(
-            1 for indicator in factual_indicators if indicator in content.lower()
-        )
+        count = sum(1 for indicator in factual_indicators if indicator in content.lower())
         return min(1.0, count / 5)  # Normalize to 0-1
 
-    async def _calculate_content_consistency(
-        self, content1: str, content2: str
-    ) -> float:
+    async def _calculate_content_consistency(self, content1: str, content2: str) -> float:
         """Calculate consistency between two content pieces"""
         # Simplified consistency calculation
         words1 = set(content1.lower().split())
@@ -552,22 +499,16 @@ class CognitiveNexus:
         overlap = len(query_words & content_words)
         return overlap / max(len(query_words), 1)
 
-    def _assess_context_relevance(
-        self, query: str, info: RetrievedInformation
-    ) -> float:
+    def _assess_context_relevance(self, query: str, info: RetrievedInformation) -> float:
         """Assess relevance using dual context tags"""
         relevance = 0.0
 
         # Check book summary relevance
-        if info.book_summary and any(
-            word in info.book_summary.lower() for word in query.lower().split()
-        ):
+        if info.book_summary and any(word in info.book_summary.lower() for word in query.lower().split()):
             relevance += 0.3
 
         # Check chapter summary relevance
-        if info.chapter_summary and any(
-            word in info.chapter_summary.lower() for word in query.lower().split()
-        ):
+        if info.chapter_summary and any(word in info.chapter_summary.lower() for word in query.lower().split()):
             relevance += 0.4
 
         # Graph connections boost relevance
@@ -601,9 +542,7 @@ class CognitiveNexus:
 
         return found
 
-    async def _detect_content_contradiction(
-        self, content1: str, content2: str
-    ) -> float:
+    async def _detect_content_contradiction(self, content1: str, content2: str) -> float:
         """Detect contradictions between content"""
         # Simplified contradiction detection
         contradictory_pairs = [
@@ -628,16 +567,12 @@ class CognitiveNexus:
 
         return min(1.0, contradiction_score)
 
-    def _find_contradictions(
-        self, retrieved_info: list[RetrievedInformation]
-    ) -> list[str]:
+    def _find_contradictions(self, retrieved_info: list[RetrievedInformation]) -> list[str]:
         """Find contradictory information across sources"""
         # Would use more sophisticated contradiction detection
         return ["Example contradiction detected between sources A and B"]
 
-    def _identify_uncertainties(
-        self, analysis_results: list[AnalysisResult]
-    ) -> list[str]:
+    def _identify_uncertainties(self, analysis_results: list[AnalysisResult]) -> list[str]:
         """Extract uncertainties from analysis results"""
         uncertainties = []
 
@@ -656,9 +591,7 @@ class CognitiveNexus:
         """Generate synthesized answer text"""
 
         # Extract key information from most reliable sources
-        reliable_sources = [
-            info for info in retrieved_info if info.retrieval_confidence > 0.7
-        ]
+        reliable_sources = [info for info in retrieved_info if info.retrieval_confidence > 0.7]
 
         if not reliable_sources:
             reliable_sources = retrieved_info[:3]  # Fallback to top 3
@@ -668,31 +601,20 @@ class CognitiveNexus:
 
         # Add confidence qualifiers based on analysis
         consistency_result = next(
-            (
-                r
-                for r in analysis_results
-                if r.analysis_type == AnalysisType.CONSISTENCY_CHECK
-            ),
+            (r for r in analysis_results if r.analysis_type == AnalysisType.CONSISTENCY_CHECK),
             None,
         )
 
-        if (
-            consistency_result
-            and consistency_result.result.get("consistency_score", 0) < 0.5
-        ):
+        if consistency_result and consistency_result.result.get("consistency_score", 0) < 0.5:
             synthesis += "while sources show some inconsistency, "
 
         synthesis += f"the information suggests: {reliable_sources[0].content[:200]}..."
 
         return synthesis
 
-    def _extract_analysis_score(
-        self, analysis_results: list[AnalysisResult], analysis_type: AnalysisType
-    ) -> float:
+    def _extract_analysis_score(self, analysis_results: list[AnalysisResult], analysis_type: AnalysisType) -> float:
         """Extract specific analysis score"""
-        result = next(
-            (r for r in analysis_results if r.analysis_type == analysis_type), None
-        )
+        result = next((r for r in analysis_results if r.analysis_type == analysis_type), None)
 
         if not result:
             return 0.5  # Default moderate score
@@ -757,9 +679,7 @@ class CognitiveNexus:
                     del self.synthesis_cache[key]
 
                 if expired_keys:
-                    logger.info(
-                        f"Cleaned up {len(expired_keys)} expired synthesis cache entries"
-                    )
+                    logger.info(f"Cleaned up {len(expired_keys)} expired synthesis cache entries")
 
             except Exception as e:
                 logger.error(f"Error in cache cleanup: {e}")
@@ -774,9 +694,7 @@ class CognitiveNexus:
             "uncertainties_identified": self.uncertainties_identified,
             "cached_syntheses": len(self.synthesis_cache),
             "analysis_history_size": len(self.analysis_history),
-            "average_confidence": np.mean(
-                [r.confidence.value for r in self.analysis_history[-100:]]
-            )
+            "average_confidence": np.mean([r.confidence.value for r in self.analysis_history[-100:]])
             if self.analysis_history
             else 0.0,
             "system_status": "operational" if self.initialized else "initializing",

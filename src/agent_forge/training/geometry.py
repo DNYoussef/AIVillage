@@ -41,9 +41,7 @@ class GeometryProbe:
             "d": {layer: [] for layer in self.layer_ids},
         }
 
-    def compute(
-        self, activations: dict[int, torch.Tensor]
-    ) -> tuple[dict[int, float], dict[int, float]]:
+    def compute(self, activations: dict[int, torch.Tensor]) -> tuple[dict[int, float], dict[int, float]]:
         """
         Compute ID and d for specified layers.
 
@@ -289,9 +287,7 @@ class GeometryProbe:
             d_history = self.history["d"][layer_id][-20:]
 
             # Compute rate of change
-            id_change = abs(id_history[-1] - id_history[-10]) / (
-                id_history[-10] + 1e-10
-            )
+            id_change = abs(id_history[-1] - id_history[-10]) / (id_history[-10] + 1e-10)
             d_change = abs(d_history[-1] - d_history[-10]) / (d_history[-10] + 1e-10)
 
             # Phase transition indicators:

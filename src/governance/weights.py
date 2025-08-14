@@ -48,9 +48,7 @@ class VoteWeightManager:
         self.organizations: dict[str, set[str]] = {}  # Org -> node_ids
         self.participation_history: dict[str, list[float]] = {}  # node_id -> timestamps
 
-    def register_node(
-        self, node_id: str, as_group: str, organization: str, base_weight: float
-    ) -> bool:
+    def register_node(self, node_id: str, as_group: str, organization: str, base_weight: float) -> bool:
         """Register a node with initial weight."""
         try:
             # Validate inputs
@@ -83,9 +81,7 @@ class VoteWeightManager:
             # Initialize participation history
             self.participation_history[node_id] = []
 
-            logger.info(
-                f"Registered node {node_id} in AS {as_group}, Org {organization}"
-            )
+            logger.info(f"Registered node {node_id} in AS {as_group}, Org {organization}")
             return True
 
         except Exception as e:
@@ -105,9 +101,7 @@ class VoteWeightManager:
 
             # Keep only last 14 days of history
             cutoff = now - (self.caps.min_participation_days * 24 * 3600)
-            self.participation_history[node_id] = [
-                ts for ts in self.participation_history[node_id] if ts >= cutoff
-            ]
+            self.participation_history[node_id] = [ts for ts in self.participation_history[node_id] if ts >= cutoff]
 
             # Recalculate participation score
             self._update_participation_score(node_id)
@@ -137,16 +131,12 @@ class VoteWeightManager:
         if history:
             most_recent = max(history)
             hours_since_last = (now - most_recent) / 3600
-            recency_factor = max(
-                0.0, 1.0 - (hours_since_last / (24 * 7))
-            )  # Decay over 7 days
+            recency_factor = max(0.0, 1.0 - (hours_since_last / (24 * 7)))  # Decay over 7 days
         else:
             recency_factor = 0.0
 
         # Combined score
-        weight_record.participation_score = (daily_participation * 0.7) + (
-            recency_factor * 0.3
-        )
+        weight_record.participation_score = (daily_participation * 0.7) + (recency_factor * 0.3)
 
     def calculate_effective_weights(self) -> dict[str, float]:
         """Calculate effective weights with cap enforcement."""
@@ -154,13 +144,8 @@ class VoteWeightManager:
         active_nodes = {}
         for node_id, weight_record in self.weights.items():
             # Only count nodes with minimum participation
-            if (
-                weight_record.participation_score
-                >= self.caps.min_participation_threshold
-            ):
-                effective = (
-                    weight_record.base_weight * weight_record.participation_score
-                )
+            if weight_record.participation_score >= self.caps.min_participation_threshold:
+                effective = weight_record.base_weight * weight_record.participation_score
                 active_nodes[node_id] = effective
                 weight_record.effective_weight = effective
             else:
@@ -185,9 +170,7 @@ class VoteWeightManager:
 
         return active_nodes
 
-    def _enforce_as_caps(
-        self, weights: dict[str, float], total_weight: float
-    ) -> dict[str, float]:
+    def _enforce_as_caps(self, weights: dict[str, float], total_weight: float) -> dict[str, float]:
         """Enforce per-AS weight caps."""
         max_as_weight = total_weight * self.caps.per_as_cap
 
@@ -202,18 +185,14 @@ class VoteWeightManager:
             # Apply cap if exceeded
             if as_weight > max_as_weight:
                 scale_factor = max_as_weight / as_weight
-                logger.warning(
-                    f"AS {as_group} exceeds cap, scaling by {scale_factor:.3f}"
-                )
+                logger.warning(f"AS {as_group} exceeds cap, scaling by {scale_factor:.3f}")
 
                 for node_id in as_nodes:
                     weights[node_id] *= scale_factor
 
         return weights
 
-    def _enforce_org_caps(
-        self, weights: dict[str, float], total_weight: float
-    ) -> dict[str, float]:
+    def _enforce_org_caps(self, weights: dict[str, float], total_weight: float) -> dict[str, float]:
         """Enforce per-Organization weight caps."""
         max_org_weight = total_weight * self.caps.per_org_cap
 
@@ -228,9 +207,7 @@ class VoteWeightManager:
             # Apply cap if exceeded
             if org_weight > max_org_weight:
                 scale_factor = max_org_weight / org_weight
-                logger.warning(
-                    f"Org {organization} exceeds cap, scaling by {scale_factor:.3f}"
-                )
+                logger.warning(f"Org {organization} exceeds cap, scaling by {scale_factor:.3f}")
 
                 for node_id in org_nodes:
                     weights[node_id] *= scale_factor
@@ -260,9 +237,7 @@ class VoteWeightManager:
                 as_distribution[as_group] = {
                     "weight": as_weight,
                     "percentage": (as_weight / total_weight) * 100,
-                    "node_count": len(
-                        [nid for nid in node_ids if nid in effective_weights]
-                    ),
+                    "node_count": len([nid for nid in node_ids if nid in effective_weights]),
                 }
 
         # Organization distribution
@@ -273,24 +248,18 @@ class VoteWeightManager:
                 org_distribution[organization] = {
                     "weight": org_weight,
                     "percentage": (org_weight / total_weight) * 100,
-                    "node_count": len(
-                        [nid for nid in node_ids if nid in effective_weights]
-                    ),
+                    "node_count": len([nid for nid in node_ids if nid in effective_weights]),
                 }
 
         # Check for violations
         violations = []
         for as_group, stats in as_distribution.items():
             if stats["percentage"] > self.caps.per_as_cap * 100:
-                violations.append(
-                    f"AS {as_group}: {stats['percentage']:.1f}% > {self.caps.per_as_cap * 100}%"
-                )
+                violations.append(f"AS {as_group}: {stats['percentage']:.1f}% > {self.caps.per_as_cap * 100}%")
 
         for org, stats in org_distribution.items():
             if stats["percentage"] > self.caps.per_org_cap * 100:
-                violations.append(
-                    f"Org {org}: {stats['percentage']:.1f}% > {self.caps.per_org_cap * 100}%"
-                )
+                violations.append(f"Org {org}: {stats['percentage']:.1f}% > {self.caps.per_org_cap * 100}%")
 
         return {
             "total_weight": total_weight,

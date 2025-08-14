@@ -1,9 +1,7 @@
 import torch
 
 
-def find_best_seed(
-    block: torch.Tensor, candidate_seeds: list[int]
-) -> tuple[int, torch.Tensor]:
+def find_best_seed(block: torch.Tensor, candidate_seeds: list[int]) -> tuple[int, torch.Tensor]:
     best_err, best_seed, best_c = float("inf"), None, None
     flat = block.view(-1, 1)
     for seed in candidate_seeds:

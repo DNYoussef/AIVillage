@@ -54,9 +54,7 @@ class Grader:
         # Error classification patterns
         self.error_patterns = self._load_error_patterns()
 
-        logger.info(
-            f"Grader initialized with model {model}, execution: {enable_code_execution}"
-        )
+        logger.info(f"Grader initialized with model {model}, execution: {enable_code_execution}")
 
     def _load_error_patterns(self) -> dict[str, list[str]]:
         """Load patterns for classifying common errors."""
@@ -146,9 +144,7 @@ class Grader:
         except Exception:
             return None
 
-    def _execute_code_safely(
-        self, code: str, test_cases: list[str]
-    ) -> tuple[bool, str]:
+    def _execute_code_safely(self, code: str, test_cases: list[str]) -> tuple[bool, str]:
         """Safely execute code with test cases (if enabled)."""
 
         if not self.enable_code_execution:
@@ -267,9 +263,7 @@ class Grader:
             # Check if problem keywords appear in code
             problem_keywords = self._extract_problem_keywords(problem.statement)
             code_lower = code.lower()
-            keyword_matches = sum(
-                1 for kw in problem_keywords if kw.lower() in code_lower
-            )
+            keyword_matches = sum(1 for kw in problem_keywords if kw.lower() in code_lower)
             if keyword_matches > 0:
                 correctness += 0.3 * (keyword_matches / len(problem_keywords))
 
@@ -360,17 +354,13 @@ class Grader:
         static_analysis = None
         if use_static_analysis:
             static_analysis = self._perform_static_analysis(model_answer, problem)
-            logger.debug(
-                f"Static analysis: {static_analysis.get('estimated_correctness', 0):.2f} correctness"
-            )
+            logger.debug(f"Static analysis: {static_analysis.get('estimated_correctness', 0):.2f} correctness")
 
         # Try code execution if enabled
         execution_result = None
         if self.enable_code_execution and problem.unit_tests:
             try:
-                success, details = self._execute_code_safely(
-                    model_answer, problem.unit_tests
-                )
+                success, details = self._execute_code_safely(model_answer, problem.unit_tests)
                 execution_result = {"success": success, "details": details}
                 logger.debug(f"Execution result: {success}")
             except Exception as e:
@@ -404,13 +394,9 @@ class Grader:
                 logger.error(f"LLM grading failed: {e}")
 
         # Synthesize final result
-        final_response = self._synthesize_grading_result(
-            static_analysis, execution_result, llm_response, model_answer
-        )
+        final_response = self._synthesize_grading_result(static_analysis, execution_result, llm_response, model_answer)
 
-        logger.info(
-            f"Final grade: {'CORRECT' if final_response.correct else 'INCORRECT'}"
-        )
+        logger.info(f"Final grade: {'CORRECT' if final_response.correct else 'INCORRECT'}")
         return final_response
 
     def _synthesize_grading_result(
@@ -496,9 +482,7 @@ class Grader:
             normalizer_notes=final_notes,
         )
 
-    async def grade_batch(
-        self, problems: list[Problem], model_answers: list[str], **kwargs
-    ) -> list[GradingResponse]:
+    async def grade_batch(self, problems: list[Problem], model_answers: list[str], **kwargs) -> list[GradingResponse]:
         """Grade multiple solutions efficiently.
 
         Args:
@@ -533,9 +517,7 @@ class Grader:
 
         return results
 
-    def calculate_accuracy(
-        self, grading_results: list[GradingResponse]
-    ) -> dict[str, float]:
+    def calculate_accuracy(self, grading_results: list[GradingResponse]) -> dict[str, float]:
         """Calculate accuracy statistics from grading results."""
 
         if not grading_results:
@@ -631,9 +613,7 @@ if __name__ == "__main__":
                 print(f"   Syntax valid: {analysis['syntax_valid']}")
                 print(f"   Has function: {analysis['has_function']}")
                 print(f"   Has return: {analysis['has_return']}")
-                print(
-                    f"   Estimated correctness: {analysis['estimated_correctness']:.2f}"
-                )
+                print(f"   Estimated correctness: {analysis['estimated_correctness']:.2f}")
 
             return
 
@@ -642,9 +622,7 @@ if __name__ == "__main__":
 
         for i, answer in enumerate(test_answers[:2]):  # Test first 2 to save API calls
             try:
-                result = await grade_code_solution(
-                    api_key=api_key, problem=problem, model_answer=answer
-                )
+                result = await grade_code_solution(api_key=api_key, problem=problem, model_answer=answer)
 
                 print(f"\n📝 Solution {i + 1}")
                 print(f"   Correct: {'✅' if result.correct else '❌'}")

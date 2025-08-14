@@ -57,9 +57,7 @@ class KeyConceptExtractorAgent(AgentInterface):
         import torch.nn.functional as F
 
         sentence_emb = token_embeddings.mean(dim=0)
-        similarities = F.cosine_similarity(
-            token_embeddings, sentence_emb.unsqueeze(0), dim=1
-        )
+        similarities = F.cosine_similarity(token_embeddings, sentence_emb.unsqueeze(0), dim=1)
         topk = similarities.topk(min(5, len(tokens))).indices.tolist()
 
         keywords = []
@@ -104,9 +102,7 @@ class KeyConceptExtractorAgent(AgentInterface):
             rng = random.Random(seed)
             return [rng.random() for _ in range(self.embedding_model.hidden_size)]
 
-    async def rerank(
-        self, query: str, results: list[dict[str, Any]], k: int
-    ) -> list[dict[str, Any]]:
+    async def rerank(self, query: str, results: list[dict[str, Any]], k: int) -> list[dict[str, Any]]:
         """Rerank results based on key concept relevance."""
         query_concepts = self.extract_key_concepts(query)
         query_entities = set(query_concepts.get("entities", []))
@@ -119,12 +115,8 @@ class KeyConceptExtractorAgent(AgentInterface):
             content_keywords = set(content_concepts.get("keywords", []))
 
             # Calculate concept overlap boost
-            entity_overlap = len(query_entities & content_entities) / max(
-                len(query_entities), 1
-            )
-            keyword_overlap = len(query_keywords & content_keywords) / max(
-                len(query_keywords), 1
-            )
+            entity_overlap = len(query_entities & content_entities) / max(len(query_entities), 1)
+            keyword_overlap = len(query_keywords & content_keywords) / max(len(query_keywords), 1)
             concept_boost = (entity_overlap + keyword_overlap) * 0.2
 
             result["score"] = result.get("score", 0.0) + concept_boost
@@ -161,7 +153,5 @@ class KeyConceptExtractorAgent(AgentInterface):
         background = f"Concept analysis: Identified {len(entities)} entities and {len(keywords)} keywords. "
         background += f"Key entities: {', '.join(entities[:3])}. Key terms: {', '.join(keywords[:3])}."
 
-        refined_query = (
-            f"Concept-enhanced query: {query} [Entities: {', '.join(entities[:2])}]"
-        )
+        refined_query = f"Concept-enhanced query: {query} [Entities: {', '.join(entities[:2])}]"
         return background, refined_query

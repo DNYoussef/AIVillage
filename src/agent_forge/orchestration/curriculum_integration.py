@@ -54,17 +54,13 @@ class EnhancedFrontierQuestionGenerator(FrontierQuestionGenerator):
                 # If we're in an async context, create a task
                 loop.create_task(self._generate_with_openrouter(area, difficulty))
                 # For now, fall back to sync generation to avoid blocking
-                logger.info(
-                    "Async context detected, falling back to local generation for now"
-                )
+                logger.info("Async context detected, falling back to local generation for now")
                 return super()._generate_single_question(area, difficulty)
             except RuntimeError:
                 # Not in async context, safe to use asyncio.run
                 return asyncio.run(self._generate_with_openrouter(area, difficulty))
         except Exception as e:
-            logger.warning(
-                f"OpenRouter generation failed: {e}. Falling back to local generation."
-            )
+            logger.warning(f"OpenRouter generation failed: {e}. Falling back to local generation.")
             return super()._generate_single_question(area, difficulty)
 
     async def _generate_with_openrouter(self, area: str, difficulty: int) -> Question:
@@ -124,9 +120,7 @@ Make the problem specific, unambiguous, and educational."""
 
         return prompt
 
-    def _parse_response_to_question(
-        self, response: str, area: str, difficulty: int
-    ) -> Question:
+    def _parse_response_to_question(self, response: str, area: str, difficulty: int) -> Question:
         """Parse OpenRouter response into Question object."""
         # Simple parsing - in production would use more sophisticated parsing
         parts = response.split("Answer:", 1)
@@ -155,9 +149,7 @@ Make the problem specific, unambiguous, and educational."""
             # Add variations for higher difficulty levels
             if self.use_openrouter and level >= 5:
                 logger.info(f"Generating variations for level {level}")
-                variations = asyncio.run(
-                    self._generate_variations_batch(base_questions[:10])
-                )
+                variations = asyncio.run(self._generate_variations_batch(base_questions[:10]))
                 level_questions.extend(variations)
 
             questions.extend(level_questions)
@@ -165,9 +157,7 @@ Make the problem specific, unambiguous, and educational."""
 
         return questions
 
-    async def _generate_variations_batch(
-        self, base_questions: list[Question]
-    ) -> list[Question]:
+    async def _generate_variations_batch(self, base_questions: list[Question]) -> list[Question]:
         """Generate variations of questions in batch."""
         variations = []
 
@@ -214,9 +204,7 @@ The variation should:
 class EnhancedCurriculumGenerator(CurriculumGenerator):
     """Enhanced curriculum generator with OpenRouter integration."""
 
-    def __init__(
-        self, frontier_model: str, domain: str, use_openrouter: bool = True
-    ) -> None:
+    def __init__(self, frontier_model: str, domain: str, use_openrouter: bool = True) -> None:
         """Initialize enhanced curriculum generator.
 
         Args:
@@ -277,13 +265,9 @@ class MultiModelOrchestrator:
             logger.info("Multi-model orchestration enabled")
 
         # Initialize enhanced generators
-        self.question_generator = EnhancedFrontierQuestionGenerator(
-            config, use_openrouter=enable_openrouter
-        )
+        self.question_generator = EnhancedFrontierQuestionGenerator(config, use_openrouter=enable_openrouter)
 
-    async def evaluate_answer_with_explanation(
-        self, question: Question, generated_answer: str
-    ) -> dict[str, Any]:
+    async def evaluate_answer_with_explanation(self, question: Question, generated_answer: str) -> dict[str, Any]:
         """Evaluate an answer using OpenRouter for better accuracy."""
         if not self.enable_openrouter:
             # Fall back to simple evaluation
@@ -294,9 +278,7 @@ class MultiModelOrchestrator:
             }
 
         # Use router for sophisticated evaluation
-        result = await self.router.evaluate_with_explanation(
-            question.text, generated_answer, question.answer
-        )
+        result = await self.router.evaluate_with_explanation(question.text, generated_answer, question.answer)
 
         return result
 
@@ -308,9 +290,7 @@ class MultiModelOrchestrator:
         overlap = len(set(expected_keywords) & set(answer_keywords))
         return overlap / len(expected_keywords) > 0.5 if expected_keywords else False
 
-    async def generate_research_context(
-        self, topic: str, max_length: int = 4000
-    ) -> str:
+    async def generate_research_context(self, topic: str, max_length: int = 4000) -> str:
         """Generate research context for a topic using long-context model."""
         if not self.enable_openrouter:
             return f"Research context for {topic}"

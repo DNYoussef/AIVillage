@@ -152,9 +152,7 @@ class AccessTicket:
             allowed_protocols = protocols_data.decode().split("|")
             offset += protocols_len
 
-            max_bandwidth_bps, max_connections = struct.unpack(
-                ">II", data[offset : offset + 8]
-            )
+            max_bandwidth_bps, max_connections = struct.unpack(">II", data[offset : offset + 8])
 
             # Parse ticket type
             ticket_type = TicketType.STANDARD  # Default
@@ -202,9 +200,7 @@ class TokenBucket:
 
         # Refill tokens based on elapsed time
         elapsed = now - self.last_refill
-        self.tokens = min(
-            self.config.capacity, self.tokens + (elapsed * self.config.refill_rate)
-        )
+        self.tokens = min(self.config.capacity, self.tokens + (elapsed * self.config.refill_rate))
         self.last_refill = now
 
         # Check if we have enough tokens
@@ -319,18 +315,14 @@ class AccessTicketManager:
         try:
             if CRYPTO_AVAILABLE:
                 # Use real Ed25519 verification
-                public_key_obj = ed25519.Ed25519PublicKey.from_public_bytes(
-                    issuer_public_key
-                )
+                public_key_obj = ed25519.Ed25519PublicKey.from_public_bytes(issuer_public_key)
                 ticket_data = ticket.serialize()
                 public_key_obj.verify(ticket.signature, ticket_data)
                 return True
             else:
                 # Simplified verification for testing
                 ticket_data = ticket.serialize()
-                expected_sig = hashlib.sha256(ticket_data + issuer_public_key).digest()[
-                    :64
-                ]
+                expected_sig = hashlib.sha256(ticket_data + issuer_public_key).digest()[:64]
                 return hmac.compare_digest(ticket.signature, expected_sig)
 
         except Exception as e:
@@ -350,27 +342,17 @@ class AccessTicketManager:
         rate_limiter = self.rate_limiters[subject_id]
 
         # Calculate tokens needed based on ticket permissions
-        tokens_needed = max(
-            1, ticket.max_bandwidth_bps // 100000
-        )  # 1 token per 100KB/s
+        tokens_needed = max(1, ticket.max_bandwidth_bps // 100000)  # 1 token per 100KB/s
 
         return rate_limiter.consume(tokens_needed)
 
     def _get_rate_limit_config(self, ticket_type: TicketType) -> TokenBucketConfig:
         """Get rate limit configuration for ticket type."""
         configs = {
-            TicketType.STANDARD: TokenBucketConfig(
-                capacity=100, refill_rate=10.0, burst_capacity=20
-            ),
-            TicketType.PREMIUM: TokenBucketConfig(
-                capacity=500, refill_rate=50.0, burst_capacity=100
-            ),
-            TicketType.BURST: TokenBucketConfig(
-                capacity=1000, refill_rate=20.0, burst_capacity=500
-            ),
-            TicketType.MAINTENANCE: TokenBucketConfig(
-                capacity=50, refill_rate=5.0, burst_capacity=10
-            ),
+            TicketType.STANDARD: TokenBucketConfig(capacity=100, refill_rate=10.0, burst_capacity=20),
+            TicketType.PREMIUM: TokenBucketConfig(capacity=500, refill_rate=50.0, burst_capacity=100),
+            TicketType.BURST: TokenBucketConfig(capacity=1000, refill_rate=20.0, burst_capacity=500),
+            TicketType.MAINTENANCE: TokenBucketConfig(capacity=50, refill_rate=5.0, burst_capacity=10),
         }
 
         return configs.get(ticket_type, configs[TicketType.STANDARD])

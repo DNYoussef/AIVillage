@@ -123,9 +123,7 @@ class GeometryTracker:
 
         try:
             # Calculate core metrics
-            metrics = self._calculate_metrics(
-                hidden_states, gradients, loss, learning_rate
-            )
+            metrics = self._calculate_metrics(hidden_states, gradients, loss, learning_rate)
 
             # Update UDaimonic compass
             compass = self._update_compass(hidden_states, metrics)
@@ -146,10 +144,7 @@ class GeometryTracker:
             self._log_metrics(metrics, compass)
 
             # Generate visualizations
-            if (
-                self.save_visualizations
-                and self.step_count % (self.update_interval * 10) == 0
-            ):
+            if self.save_visualizations and self.step_count % (self.update_interval * 10) == 0:
                 self._generate_visualizations()
 
             return metrics
@@ -206,9 +201,7 @@ class GeometryTracker:
         phase_score = self.phase_analyzer.update(id_estimate, embedding_norm)
 
         # Learning efficiency
-        efficiency = self._calculate_learning_efficiency(
-            id_estimate, loss, learning_rate
-        )
+        efficiency = self._calculate_learning_efficiency(id_estimate, loss, learning_rate)
 
         return GeometryMetrics(
             intrinsic_dimensionality=id_estimate,
@@ -224,9 +217,7 @@ class GeometryTracker:
             timestamp=time.time(),
         )
 
-    def _update_compass(
-        self, hidden_states: torch.Tensor, metrics: GeometryMetrics
-    ) -> UDaimonicCompass:
+    def _update_compass(self, hidden_states: torch.Tensor, metrics: GeometryMetrics) -> UDaimonicCompass:
         """Update UDaimonic compass based on model geometry."""
         # Truth seeking: Higher when ID is stable and gradients are meaningful
         truth_seeking = self._calculate_truth_seeking(metrics)
@@ -238,9 +229,7 @@ class GeometryTracker:
         goodness_orientation = self._calculate_goodness_orientation(metrics)
 
         # Unity understanding: Holistic patterns in hidden representations
-        unity_understanding = self._calculate_unity_understanding(
-            hidden_states, metrics
-        )
+        unity_understanding = self._calculate_unity_understanding(hidden_states, metrics)
 
         compass = UDaimonicCompass(
             truth_seeking=truth_seeking,
@@ -258,12 +247,8 @@ class GeometryTracker:
     def _calculate_truth_seeking(self, metrics: GeometryMetrics) -> float:
         """Calculate truth-seeking orientation."""
         # Truth seeking increases with stable ID and meaningful gradients
-        id_stability = 1.0 - abs(
-            metrics.intrinsic_dimensionality - self.baseline_id
-        ) / max(self.baseline_id, 1.0)
-        gradient_meaningfulness = min(
-            1.0, metrics.gradient_norm / 10.0
-        )  # Normalize gradient norm
+        id_stability = 1.0 - abs(metrics.intrinsic_dimensionality - self.baseline_id) / max(self.baseline_id, 1.0)
+        gradient_meaningfulness = min(1.0, metrics.gradient_norm / 10.0)  # Normalize gradient norm
 
         return (id_stability + gradient_meaningfulness) / 2.0
 
@@ -283,15 +268,11 @@ class GeometryTracker:
 
         recent_efficiency = [m.learning_efficiency for m in self.metrics_history[-5:]]
         consistency = 1.0 - np.std(recent_efficiency)  # Lower std = more consistent
-        improvement = (
-            recent_efficiency[-1] - recent_efficiency[0]
-        ) / 5.0  # Rate of improvement
+        improvement = (recent_efficiency[-1] - recent_efficiency[0]) / 5.0  # Rate of improvement
 
         return max(0.0, min(1.0, (consistency + improvement) / 2.0))
 
-    def _calculate_unity_understanding(
-        self, hidden_states: torch.Tensor, metrics: GeometryMetrics
-    ) -> float:
+    def _calculate_unity_understanding(self, hidden_states: torch.Tensor, metrics: GeometryMetrics) -> float:
         """Calculate unity/holistic understanding."""
         # Unity correlates with coherent representations across dimensions
         if hidden_states.size(0) < 10:
@@ -328,11 +309,7 @@ class GeometryTracker:
         # Calculate entropy across feature dimension
         entropies = []
         for i in range(min(activations.shape[-1], 100)):  # Sample features
-            feature_vals = (
-                activations[:, i]
-                if activations.ndim == 2
-                else activations[:, :, i].flatten()
-            )
+            feature_vals = activations[:, i] if activations.ndim == 2 else activations[:, :, i].flatten()
             hist, _ = np.histogram(feature_vals, bins=30, density=True)
             hist = hist + 1e-8
             entropies.append(entropy(hist))
@@ -374,15 +351,11 @@ class GeometryTracker:
         if len(recent_ids) >= 5:
             recent_trend = np.polyfit(range(len(recent_ids)), recent_ids, 1)[0]
             if recent_trend > 0.1:  # Rapid increase
-                logger.info(
-                    f"Potential grokking detected! ID trend: {recent_trend:.3f}"
-                )
+                logger.info(f"Potential grokking detected! ID trend: {recent_trend:.3f}")
 
         # Check for phase transitions
         if len(self.metrics_history) >= 20:
-            phase_scores = [
-                m.phase_transition_score for m in self.metrics_history[-20:]
-            ]
+            phase_scores = [m.phase_transition_score for m in self.metrics_history[-20:]]
             if max(phase_scores) > 0.8:
                 logger.info("Phase transition detected!")
 
@@ -425,9 +398,7 @@ class GeometryTracker:
             ids = [m.intrinsic_dimensionality for m in self.metrics_history]
 
             axes[0, 0].plot(steps, ids, linewidth=2, label="ID_nl")
-            axes[0, 0].axhline(
-                y=self.baseline_id, color="red", linestyle="--", label="Baseline"
-            )
+            axes[0, 0].axhline(y=self.baseline_id, color="red", linestyle="--", label="Baseline")
             axes[0, 0].set_title("Intrinsic Dimensionality Evolution")
             axes[0, 0].set_xlabel("Time")
             axes[0, 0].set_ylabel("ID_nl")
@@ -435,11 +406,7 @@ class GeometryTracker:
             axes[0, 0].grid(True, alpha=0.3)
 
             # Plot 2: UDaimonic Compass
-            compass_data = (
-                self.compass_history[-50:]
-                if len(self.compass_history) >= 50
-                else self.compass_history
-            )
+            compass_data = self.compass_history[-50:] if len(self.compass_history) >= 50 else self.compass_history
 
             truth_vals = [c.truth_seeking for c in compass_data]
             beauty_vals = [c.beauty_appreciation for c in compass_data]
@@ -461,9 +428,7 @@ class GeometryTracker:
             # Plot 3: Grokking Detection
             grok_probs = [m.grok_probability for m in self.metrics_history]
             axes[0, 2].plot(steps, grok_probs, color="purple", linewidth=2)
-            axes[0, 2].axhline(
-                y=0.7, color="red", linestyle="--", label="Grokking Threshold"
-            )
+            axes[0, 2].axhline(y=0.7, color="red", linestyle="--", label="Grokking Threshold")
             axes[0, 2].set_title("Grokking Probability")
             axes[0, 2].set_xlabel("Time")
             axes[0, 2].set_ylabel("Probability")
@@ -483,9 +448,7 @@ class GeometryTracker:
             activation_entropy = [m.activation_entropy for m in self.metrics_history]
 
             axes[1, 1].plot(steps, weight_entropy, label="Weight Entropy", alpha=0.8)
-            axes[1, 1].plot(
-                steps, activation_entropy, label="Activation Entropy", alpha=0.8
-            )
+            axes[1, 1].plot(steps, activation_entropy, label="Activation Entropy", alpha=0.8)
             axes[1, 1].set_title("Entropy Evolution")
             axes[1, 1].set_xlabel("Time")
             axes[1, 1].set_ylabel("Entropy")
@@ -495,9 +458,7 @@ class GeometryTracker:
             # Plot 6: Phase Transition Analysis
             phase_scores = [m.phase_transition_score for m in self.metrics_history]
             axes[1, 2].plot(steps, phase_scores, color="orange", linewidth=2)
-            axes[1, 2].axhline(
-                y=0.5, color="blue", linestyle="--", label="Transition Threshold"
-            )
+            axes[1, 2].axhline(y=0.5, color="blue", linestyle="--", label="Transition Threshold")
             axes[1, 2].set_title("Phase Transition Score")
             axes[1, 2].set_xlabel("Time")
             axes[1, 2].set_ylabel("Score")
@@ -559,9 +520,7 @@ class GeometryTracker:
             )
 
         # Training strategy recommendations
-        recent_id_trend = np.polyfit(
-            range(len(recent)), [m.intrinsic_dimensionality for m in recent], 1
-        )[0]
+        recent_id_trend = np.polyfit(range(len(recent)), [m.intrinsic_dimensionality for m in recent], 1)[0]
 
         if recent_id_trend > 0.2:
             recommendations["recommendations"].append(
@@ -696,14 +655,10 @@ class PhaseTransitionAnalyzer:
         id_change_ratio = recent_id_change / (historical_id_change + 1e-6)
 
         # 2. Embedding norm instability
-        norm_var = (
-            np.var(self.norm_history[-10:]) if len(self.norm_history) >= 10 else 0
-        )
+        norm_var = np.var(self.norm_history[-10:]) if len(self.norm_history) >= 10 else 0
 
         # Combine signals
-        transition_score = (
-            min(1.0, id_change_ratio / 3.0) * 0.6 + min(1.0, norm_var / 10.0) * 0.4
-        )
+        transition_score = min(1.0, id_change_ratio / 3.0) * 0.6 + min(1.0, norm_var / 10.0) * 0.4
 
         return max(0.0, min(1.0, transition_score))
 
@@ -765,9 +720,7 @@ async def run_geometry(config: dict[str, Any]) -> "PhaseResult":
             logger.warning("Using mock model for geometry analysis")
 
         # Initialize geometry tracker
-        tracker = GeometryTracker(
-            model=model, update_interval=update_interval, output_dir=output_dir
-        )
+        tracker = GeometryTracker(model=model, update_interval=update_interval, output_dir=output_dir)
 
         # Perform geometry analysis
         geometry_metrics = []
@@ -923,9 +876,7 @@ if __name__ == "__main__":
 
         # Simulate gradients
         loss = torch.randn(1).item()
-        gradients = {
-            name: torch.randn_like(param) for name, param in model.named_parameters()
-        }
+        gradients = {name: torch.randn_like(param) for name, param in model.named_parameters()}
 
         # Update geometry
         metrics = tracker.update(hidden, gradients, loss, 0.001)

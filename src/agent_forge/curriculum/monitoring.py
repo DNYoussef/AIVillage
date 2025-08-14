@@ -136,7 +136,8 @@ class CurriculumMonitor:
         Path(self.db_path).parent.mkdir(parents=True, exist_ok=True)
 
         conn = sqlite3.connect(self.db_path)
-        conn.executescript("""
+        conn.executescript(
+            """
             CREATE TABLE IF NOT EXISTS metrics (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT NOT NULL,
@@ -174,7 +175,8 @@ class CurriculumMonitor:
                 response_time_ms REAL NOT NULL,
                 details TEXT
             );
-        """)
+        """
+        )
         conn.commit()
         conn.close()
 
@@ -233,11 +235,7 @@ class CurriculumMonitor:
         start_time = time.time()
 
         try:
-            result = (
-                await check_func()
-                if asyncio.iscoroutinefunction(check_func)
-                else check_func()
-            )
+            result = await check_func() if asyncio.iscoroutinefunction(check_func) else check_func()
             response_time = (time.time() - start_time) * 1000  # ms
 
             if isinstance(result, dict):
@@ -341,30 +339,19 @@ class CurriculumMonitor:
         now = datetime.utcnow()
 
         # Recent metrics (last 5 minutes)
-        recent_metrics = [
-            m for m in self.metrics if (now - m.timestamp).total_seconds() < 300
-        ]
+        recent_metrics = [m for m in self.metrics if (now - m.timestamp).total_seconds() < 300]
 
         # Active alerts
         active_alerts = [a for a in self.alerts if not a.resolved]
-        critical_alerts = [
-            a for a in active_alerts if a.severity == AlertSeverity.CRITICAL
-        ]
+        critical_alerts = [a for a in active_alerts if a.severity == AlertSeverity.CRITICAL]
 
         # Component health
-        unhealthy_components = [
-            name
-            for name, health in self.health_checks.items()
-            if health.status == "unhealthy"
-        ]
+        unhealthy_components = [name for name, health in self.health_checks.items() if health.status == "unhealthy"]
 
         # Overall status
         if critical_alerts or unhealthy_components:
             overall_status = "critical"
-        elif any(
-            a.severity in [AlertSeverity.ERROR, AlertSeverity.WARNING]
-            for a in active_alerts
-        ):
+        elif any(a.severity in [AlertSeverity.ERROR, AlertSeverity.WARNING] for a in active_alerts):
             overall_status = "warning"
         else:
             overall_status = "healthy"
@@ -379,37 +366,23 @@ class CurriculumMonitor:
             "alerts": {
                 "active_total": len(active_alerts),
                 "critical": len(critical_alerts),
-                "error": len(
-                    [a for a in active_alerts if a.severity == AlertSeverity.ERROR]
-                ),
-                "warning": len(
-                    [a for a in active_alerts if a.severity == AlertSeverity.WARNING]
-                ),
+                "error": len([a for a in active_alerts if a.severity == AlertSeverity.ERROR]),
+                "warning": len([a for a in active_alerts if a.severity == AlertSeverity.WARNING]),
             },
             "health_checks": {
                 "total_components": len(self.health_checks),
-                "healthy": len(
-                    [h for h in self.health_checks.values() if h.status == "healthy"]
-                ),
-                "degraded": len(
-                    [h for h in self.health_checks.values() if h.status == "degraded"]
-                ),
+                "healthy": len([h for h in self.health_checks.values() if h.status == "healthy"]),
+                "degraded": len([h for h in self.health_checks.values() if h.status == "degraded"]),
                 "unhealthy": len(unhealthy_components),
             },
         }
 
-    def get_metrics_summary(
-        self, component: str | None = None, hours: int = 24
-    ) -> dict[str, Any]:
+    def get_metrics_summary(self, component: str | None = None, hours: int = 24) -> dict[str, Any]:
         """Get metrics summary for analysis."""
         cutoff = datetime.utcnow() - timedelta(hours=hours)
 
         if component:
-            metrics = [
-                m
-                for m in self.metrics
-                if m.component == component and m.timestamp > cutoff
-            ]
+            metrics = [m for m in self.metrics if m.component == component and m.timestamp > cutoff]
         else:
             metrics = [m for m in self.metrics if m.timestamp > cutoff]
 
@@ -465,9 +438,7 @@ class CurriculumMonitor:
                     )
                     break
 
-    def _threshold_exceeded(
-        self, metric_name: str, value: float, threshold: float
-    ) -> bool:
+    def _threshold_exceeded(self, metric_name: str, value: float, threshold: float) -> bool:
         """Check if threshold is exceeded based on metric type."""
         # Metrics where lower values are bad
         if metric_name in ["success_rate", "cache_hit_rate"]:
@@ -785,15 +756,11 @@ def monitor_operation(component: str = "curriculum", metric_name: str | None = N
                     return async_wrapper()
                 else:
                     result = func(*args, **kwargs)
-                    monitor.record_metric(
-                        f"{operation_name}_success", 1, MetricType.COUNTER, component
-                    )
+                    monitor.record_metric(f"{operation_name}_success", 1, MetricType.COUNTER, component)
                     return result
 
             except Exception:
-                monitor.record_metric(
-                    f"{operation_name}_error", 1, MetricType.COUNTER, component
-                )
+                monitor.record_metric(f"{operation_name}_error", 1, MetricType.COUNTER, component)
                 raise
             finally:
                 if not asyncio.iscoroutinefunction(func):

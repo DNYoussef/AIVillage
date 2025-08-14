@@ -18,9 +18,7 @@ from .base import AgentRole, AgentSpecialization, BaseMetaAgent
 class TemplateNotFoundError(Exception):
     """Exception raised when agent template cannot be found."""
 
-    def __init__(
-        self, agent_type: str, searched_paths: list[Path], available_types: list[str]
-    ):
+    def __init__(self, agent_type: str, searched_paths: list[Path], available_types: list[str]):
         self.agent_type = agent_type
         self.searched_paths = searched_paths
         self.available_types = available_types
@@ -94,9 +92,7 @@ class AgentFactory:
                                 template = json.load(f)
                             templates[agent_id] = template
                             loaded_templates.add(agent_id)
-                            print(
-                                f"Loaded template {agent_id} from legacy location: {template_file}"
-                            )
+                            print(f"Loaded template {agent_id} from legacy location: {template_file}")
                         except Exception as e:
                             print(f"Error loading template {template_file}: {e}")
 
@@ -167,9 +163,7 @@ class AgentFactory:
             agent_classes["sword_shield"] = SwordAndShieldAgent
         except ImportError:
             # Use generic agent if specialized not available
-            agent_classes["sword_shield"] = self._create_generic_agent_class(
-                "sword_shield"
-            )
+            agent_classes["sword_shield"] = self._create_generic_agent_class("sword_shield")
 
         # Legal AI Agent
         try:
@@ -290,9 +284,7 @@ class AgentFactory:
 
         return agent_classes
 
-    def _validate_required_templates(
-        self, templates: dict[str, dict[str, Any]]
-    ) -> None:
+    def _validate_required_templates(self, templates: dict[str, dict[str, Any]]) -> None:
         """Validate that all required agent templates are present."""
         try:
             required_types = self.required_agent_types()
@@ -338,9 +330,7 @@ class AgentFactory:
                 available_types,
             )
 
-        print(
-            f"[PASS] All {len(required_types)} required agent templates loaded successfully"
-        )
+        print(f"[PASS] All {len(required_types)} required agent templates loaded successfully")
 
     def _create_generic_agent_class(self, agent_id: str) -> type:
         """Create a generic agent class for the given agent ID."""
@@ -364,9 +354,9 @@ class AgentFactory:
                 if not self.performance_history:
                     return {"performance": 0.7}
 
-                success_rate = sum(
-                    1 for p in self.performance_history if p.get("success", False)
-                ) / len(self.performance_history)
+                success_rate = sum(1 for p in self.performance_history if p.get("success", False)) / len(
+                    self.performance_history
+                )
 
                 return {
                     "success_rate": success_rate,
@@ -375,9 +365,7 @@ class AgentFactory:
 
         return GenericAgent
 
-    def create_agent(
-        self, agent_spec: str | dict[str, Any], config: dict[str, Any] | None = None
-    ) -> BaseMetaAgent:
+    def create_agent(self, agent_spec: str | dict[str, Any], config: dict[str, Any] | None = None) -> BaseMetaAgent:
         """Create an agent of the specified type.
 
         Parameters
@@ -487,8 +475,7 @@ class AgentFactory:
             expected_total = data.get("total_agents")
             if expected_total is not None and len(agent_types) != expected_total:
                 msg = (
-                    f"master_config.json declares {expected_total} agents but "
-                    f"{len(agent_types)} types were listed"
+                    f"master_config.json declares {expected_total} agents but " f"{len(agent_types)} types were listed"
                 )
                 raise ValueError(msg)
             return agent_types

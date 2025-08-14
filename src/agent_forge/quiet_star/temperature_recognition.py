@@ -57,13 +57,9 @@ class ConfidenceSignals:
     def overall_confidence(self) -> float:
         """Calculate overall confidence score (0-1)."""
         # Combine signals with weights
-        entropy_factor = max(
-            0, 1 - (self.entropy_score / 3.0)
-        )  # Lower entropy = higher confidence
+        entropy_factor = max(0, 1 - (self.entropy_score / 3.0))  # Lower entropy = higher confidence
         consistency_factor = self.consistency_score
-        language_penalty = min(
-            (self.uncertainty_markers + self.hedging_language) * 0.1, 0.5
-        )
+        language_penalty = min((self.uncertainty_markers + self.hedging_language) * 0.1, 0.5)
         reflection_factor = self.reflection_confidence
         variance_penalty = min(self.token_probability_variance * 2, 0.3)
 
@@ -99,9 +95,7 @@ class ComplexitySignals:
         word_factor = min(self.question_word_count / 50, 1.0)
 
         # Structural complexity
-        structure_factor = min(
-            (self.nested_clauses + self.conditional_statements) * 0.2, 1.0
-        )
+        structure_factor = min((self.nested_clauses + self.conditional_statements) * 0.2, 1.0)
 
         # Content complexity
         content_factor = min(
@@ -115,12 +109,7 @@ class ComplexitySignals:
             1.0,
         )
 
-        complexity = (
-            length_factor * 0.2
-            + word_factor * 0.15
-            + structure_factor * 0.25
-            + content_factor * 0.4
-        )
+        complexity = length_factor * 0.2 + word_factor * 0.15 + structure_factor * 0.25 + content_factor * 0.4
 
         return max(0.0, min(1.0, complexity))
 
@@ -289,18 +278,15 @@ class TemperatureSelfRecognition:
         combined_text = f"{generated_text} {reflection_text}".lower()
 
         signals.uncertainty_markers = sum(
-            combined_text.count(marker)
-            for marker in self.confidence_patterns["uncertainty_markers"]
+            combined_text.count(marker) for marker in self.confidence_patterns["uncertainty_markers"]
         )
 
         signals.hedging_language = sum(
-            combined_text.count(hedge)
-            for hedge in self.confidence_patterns["hedging_language"]
+            combined_text.count(hedge) for hedge in self.confidence_patterns["hedging_language"]
         )
 
         confidence_markers = sum(
-            combined_text.count(marker)
-            for marker in self.confidence_patterns["confidence_markers"]
+            combined_text.count(marker) for marker in self.confidence_patterns["confidence_markers"]
         )
 
         # Consistency assessment from multiple samples
@@ -311,15 +297,11 @@ class TemperatureSelfRecognition:
 
         # Reflection confidence (if reflection available)
         if reflection_text:
-            signals.reflection_confidence = self._assess_reflection_confidence(
-                reflection_text
-            )
+            signals.reflection_confidence = self._assess_reflection_confidence(reflection_text)
 
         return signals
 
-    def assess_context_complexity(
-        self, question: str, context: str = ""
-    ) -> ComplexitySignals:
+    def assess_context_complexity(self, question: str, context: str = "") -> ComplexitySignals:
         """Assess the complexity of the current context."""
 
         signals = ComplexitySignals()
@@ -330,40 +312,27 @@ class TemperatureSelfRecognition:
         signals.question_word_count = len(question.split())
 
         # Pattern-based complexity assessment
-        signals.technical_terms = sum(
-            combined_text.count(term)
-            for term in self.complexity_patterns["technical_terms"]
-        )
+        signals.technical_terms = sum(combined_text.count(term) for term in self.complexity_patterns["technical_terms"])
 
         signals.analysis_requests = sum(
-            combined_text.count(req)
-            for req in self.complexity_patterns["analysis_requests"]
+            combined_text.count(req) for req in self.complexity_patterns["analysis_requests"]
         )
 
         signals.comparison_requests = sum(
-            combined_text.count(req)
-            for req in self.complexity_patterns["comparison_requests"]
+            combined_text.count(req) for req in self.complexity_patterns["comparison_requests"]
         )
 
         signals.causal_relationships = sum(
-            combined_text.count(rel)
-            for rel in self.complexity_patterns["causal_relationships"]
+            combined_text.count(rel) for rel in self.complexity_patterns["causal_relationships"]
         )
 
         signals.conditional_statements = sum(
-            combined_text.count(cond)
-            for cond in self.complexity_patterns["conditional_statements"]
+            combined_text.count(cond) for cond in self.complexity_patterns["conditional_statements"]
         )
 
         # Structural complexity heuristics
         signals.nested_clauses = combined_text.count(",") + combined_text.count(";")
-        signals.multiple_concepts = len(
-            set(
-                word
-                for word in combined_text.split()
-                if len(word) > 6 and word.isalpha()
-            )
-        )
+        signals.multiple_concepts = len(set(word for word in combined_text.split() if len(word) > 6 and word.isalpha()))
 
         return signals
 
@@ -392,24 +361,17 @@ class TemperatureSelfRecognition:
 
         # Positive indicators
         structured_thinking = sum(
-            reflection_lower.count(word)
-            for word in ["step", "first", "then", "therefore", "because"]
+            reflection_lower.count(word) for word in ["step", "first", "then", "therefore", "because"]
         )
         definitive_language = sum(
-            reflection_lower.count(word)
-            for word in ["clear", "obvious", "definitely", "certain"]
+            reflection_lower.count(word) for word in ["clear", "obvious", "definitely", "certain"]
         )
 
         # Negative indicators
-        uncertainty = sum(
-            reflection_lower.count(word)
-            for word in ["unsure", "unclear", "complex", "difficult"]
-        )
+        uncertainty = sum(reflection_lower.count(word) for word in ["unsure", "unclear", "complex", "difficult"])
 
         # Calculate confidence score
-        positive_score = min(
-            structured_thinking * 0.1 + definitive_language * 0.15, 0.5
-        )
+        positive_score = min(structured_thinking * 0.1 + definitive_language * 0.15, 0.5)
         negative_score = min(uncertainty * 0.2, 0.3)
 
         return max(0.0, min(1.0, 0.5 + positive_score - negative_score))
@@ -426,9 +388,7 @@ class TemperatureSelfRecognition:
         """Generate temperature recommendation based on current context."""
 
         # Assess confidence and complexity
-        confidence_signals = self.assess_confidence(
-            logits, generated_text, reflection_text, multiple_samples
-        )
+        confidence_signals = self.assess_confidence(logits, generated_text, reflection_text, multiple_samples)
         complexity_signals = self.assess_context_complexity(question, context)
 
         # Determine confidence and complexity levels
@@ -439,10 +399,8 @@ class TemperatureSelfRecognition:
         complexity_level = self._score_to_complexity_level(complexity_score)
 
         # Calculate temperature adjustment
-        adjusted_temperature, adjustment_factor, reasoning = (
-            self._calculate_temperature_adjustment(
-                confidence_score, complexity_score, confidence_level, complexity_level
-            )
+        adjusted_temperature, adjustment_factor, reasoning = self._calculate_temperature_adjustment(
+            confidence_score, complexity_score, confidence_level, complexity_level
         )
 
         return TemperatureRecommendation(
@@ -516,14 +474,10 @@ class TemperatureSelfRecognition:
                     ConfidenceLevel.HIGH,
                     ConfidenceLevel.VERY_HIGH,
                 ]:
-                    adjustment_factor = (
-                        0.8  # High conf + complex = lower temp for precision
-                    )
+                    adjustment_factor = 0.8  # High conf + complex = lower temp for precision
                     reasoning = "High confidence on complex topic: lowering temperature for precision"
                 else:
-                    adjustment_factor = (
-                        1.3  # Low conf + complex = higher temp for exploration
-                    )
+                    adjustment_factor = 1.3  # Low conf + complex = higher temp for exploration
                     reasoning = "Low confidence on complex topic: raising temperature for exploration"
             else:
                 if confidence_level in [
@@ -531,14 +485,10 @@ class TemperatureSelfRecognition:
                     ConfidenceLevel.VERY_HIGH,
                 ]:
                     adjustment_factor = 0.9  # High conf + simple = slightly lower temp
-                    reasoning = (
-                        "High confidence on simple topic: slightly lower temperature"
-                    )
+                    reasoning = "High confidence on simple topic: slightly lower temperature"
                 else:
                     adjustment_factor = 1.1  # Low conf + simple = slightly higher temp
-                    reasoning = (
-                        "Low confidence on simple topic: slightly higher temperature"
-                    )
+                    reasoning = "Low confidence on simple topic: slightly higher temperature"
 
         else:  # BALANCED strategy (default)
             # Balanced approach: inverse relationship between confidence and temperature
@@ -555,9 +505,7 @@ class TemperatureSelfRecognition:
 
         return adjusted_temperature, adjustment_factor, reasoning
 
-    def update_calibration(
-        self, recommendation: TemperatureRecommendation, outcome_quality: float
-    ):
+    def update_calibration(self, recommendation: TemperatureRecommendation, outcome_quality: float):
         """Update calibration based on outcome quality feedback."""
         calibration_entry = {
             "confidence_score": recommendation.confidence_signals.overall_confidence(),
@@ -653,29 +601,21 @@ class AdaptiveTemperatureSampler(ThoughtSampler):
 
         if not self.adaptive_enabled:
             # Fall back to standard sampling
-            return self.sample_with_thoughts(
-                model, input_ids, max_new_tokens, force_thoughts
-            )
+            return self.sample_with_thoughts(model, input_ids, max_new_tokens, force_thoughts)
 
         # Get initial temperature recommendation
-        initial_recommendation = self.temp_recognition.recommend_temperature(
-            question=question, context=context
-        )
+        initial_recommendation = self.temp_recognition.recommend_temperature(question=question, context=context)
 
         # Use recommended temperature for sampling
         original_temperature = getattr(self, "temperature", 0.7)
         self.temperature = initial_recommendation.adjusted_temperature
 
         # Sample with thoughts using adaptive temperature
-        result = self.sample_with_thoughts(
-            model, input_ids, max_new_tokens, force_thoughts
-        )
+        result = self.sample_with_thoughts(model, input_ids, max_new_tokens, force_thoughts)
 
         # Post-generation analysis for further calibration
         if hasattr(result, "generated_ids") and collect_calibration_data:
-            generated_text = self.tokenizer.decode(
-                result.generated_ids[0], skip_special_tokens=True
-            )
+            generated_text = self.tokenizer.decode(result.generated_ids[0], skip_special_tokens=True)
 
             # Get final recommendation with generated text
             final_recommendation = self.temp_recognition.recommend_temperature(
@@ -717,9 +657,7 @@ TEMPERATURE_STRATEGIES = {
 }
 
 
-def create_temperature_recognizer(
-    config: QuietSTaRConfig, use_case: str = "general"
-) -> TemperatureSelfRecognition:
+def create_temperature_recognizer(config: QuietSTaRConfig, use_case: str = "general") -> TemperatureSelfRecognition:
     """Create temperature recognizer for specific use case."""
     strategy = TEMPERATURE_STRATEGIES.get(use_case, TemperatureStrategy.BALANCED)
     return TemperatureSelfRecognition(config, strategy)
@@ -738,9 +676,7 @@ if __name__ == "__main__":
 
     print(f"Initialized with base temperature: {temp_recognizer.base_temperature}")
     print(f"Strategy: {temp_recognizer.strategy.value}")
-    print(
-        f"Temperature bounds: {temp_recognizer.min_temperature} - {temp_recognizer.max_temperature}"
-    )
+    print(f"Temperature bounds: {temp_recognizer.min_temperature} - {temp_recognizer.max_temperature}")
     print()
 
     # Test scenarios
@@ -777,9 +713,7 @@ if __name__ == "__main__":
 
     for i, scenario in enumerate(test_scenarios, 1):
         print(f"Scenario {i}: {scenario['description']}")
-        print(
-            f"  Question: {scenario['question'][:80]}{'...' if len(scenario['question']) > 80 else ''}"
-        )
+        print(f"  Question: {scenario['question'][:80]}{'...' if len(scenario['question']) > 80 else ''}")
 
         # Get temperature recommendation
         recommendation = temp_recognizer.recommend_temperature(
@@ -815,13 +749,9 @@ if __name__ == "__main__":
 
     for strategy in strategies:
         recognizer = TemperatureSelfRecognition(config, strategy)
-        recommendation = recognizer.recommend_temperature(
-            complex_question, complex_context
-        )
+        recommendation = recognizer.recommend_temperature(complex_question, complex_context)
 
-        print(
-            f"  {strategy.value:15}: {recommendation.adjusted_temperature:.2f} - {recommendation.reasoning[:80]}..."
-        )
+        print(f"  {strategy.value:15}: {recommendation.adjusted_temperature:.2f} - {recommendation.reasoning[:80]}...")
 
     print()
     print("✅ Temperature Self-Recognition System Demo Complete")

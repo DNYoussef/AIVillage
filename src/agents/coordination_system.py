@@ -320,9 +320,7 @@ class AgentRegistry:
             if metrics:
                 agent.performance_metrics.update(metrics)
 
-    def find_agents_by_capability(
-        self, task_type: str, status_filter: list[AgentStatus] = None
-    ) -> list[Agent]:
+    def find_agents_by_capability(self, task_type: str, status_filter: list[AgentStatus] = None) -> list[Agent]:
         """Find agents by capability.
 
         Args:
@@ -369,17 +367,13 @@ class AgentRegistry:
         if status_filter is None:
             return list(self.agents.values())
 
-        return [
-            agent for agent in self.agents.values() if agent.status in status_filter
-        ]
+        return [agent for agent in self.agents.values() if agent.status in status_filter]
 
 
 class TaskScheduler:
     """Task scheduling and distribution system."""
 
-    def __init__(
-        self, agent_registry: AgentRegistry, storage_backend: str = ":memory:"
-    ):
+    def __init__(self, agent_registry: AgentRegistry, storage_backend: str = ":memory:"):
         """Initialize task scheduler.
 
         Args:
@@ -390,17 +384,13 @@ class TaskScheduler:
         self.storage_backend = storage_backend
 
         # Task queues (priority queues)
-        self.pending_tasks: list[
-            tuple[int, float, Task]
-        ] = []  # (priority, timestamp, task)
+        self.pending_tasks: list[tuple[int, float, Task]] = []  # (priority, timestamp, task)
         self.running_tasks: dict[str, Task] = {}
         self.completed_tasks: dict[str, Task] = {}
         self.failed_tasks: dict[str, Task] = {}
 
         # Agent assignment tracking
-        self.agent_assignments: dict[str, set[str]] = defaultdict(
-            set
-        )  # agent_id -> task_ids
+        self.agent_assignments: dict[str, set[str]] = defaultdict(set)  # agent_id -> task_ids
 
         self._lock = threading.Lock()
         self._init_storage()
@@ -502,18 +492,14 @@ class TaskScheduler:
                 # Check dependencies
                 if not self._are_dependencies_satisfied(task):
                     # Re-queue task
-                    heapq.heappush(
-                        self.pending_tasks, (-task.priority, task.created_at, task)
-                    )
+                    heapq.heappush(self.pending_tasks, (-task.priority, task.created_at, task))
                     continue
 
                 # Find suitable agent
                 agent = self._find_best_agent(task)
                 if agent is None:
                     # No suitable agent available, re-queue
-                    heapq.heappush(
-                        self.pending_tasks, (-task.priority, task.created_at, task)
-                    )
+                    heapq.heappush(self.pending_tasks, (-task.priority, task.created_at, task))
                     return None
 
                 # Assign task to agent
@@ -580,9 +566,7 @@ class TaskScheduler:
             performance_score = agent.performance_metrics.get("success_rate", 0.5)
             availability_score = 1.0 if agent.status == AgentStatus.IDLE else 0.5
 
-            total_score = (
-                load_score * 0.4 + performance_score * 0.4 + availability_score * 0.2
-            )
+            total_score = load_score * 0.4 + performance_score * 0.4 + availability_score * 0.2
 
             if total_score > best_score:
                 best_score = total_score
@@ -590,9 +574,7 @@ class TaskScheduler:
 
         return best_agent
 
-    def complete_task(
-        self, task_id: str, result: dict[str, Any] = None, error: str = None
-    ) -> bool:
+    def complete_task(self, task_id: str, result: dict[str, Any] = None, error: str = None) -> bool:
         """Mark a task as completed.
 
         Args:
@@ -628,15 +610,10 @@ class TaskScheduler:
                 # Update agent load
                 agent = self.agent_registry.get_agent(task.assigned_agent_id)
                 if agent:
-                    new_load = (
-                        len(self.agent_assignments[task.assigned_agent_id])
-                        / agent.max_load
-                    )
+                    new_load = len(self.agent_assignments[task.assigned_agent_id]) / agent.max_load
                     new_status = AgentStatus.IDLE if new_load == 0 else AgentStatus.BUSY
 
-                    self.agent_registry.update_agent_status(
-                        task.assigned_agent_id, new_status, load=new_load
-                    )
+                    self.agent_registry.update_agent_status(task.assigned_agent_id, new_status, load=new_load)
 
         return True
 
@@ -695,15 +672,11 @@ class MessageBroker:
         """Initialize message broker."""
         self.message_queues: dict[str, deque] = defaultdict(lambda: deque(maxlen=1000))
         self.broadcast_queue: deque = deque(maxlen=1000)
-        self.message_handlers: dict[str, dict[MessageType, Callable]] = defaultdict(
-            dict
-        )
+        self.message_handlers: dict[str, dict[MessageType, Callable]] = defaultdict(dict)
 
         self._lock = threading.Lock()
 
-    def register_handler(
-        self, agent_id: str, message_type: MessageType, handler: Callable
-    ):
+    def register_handler(self, agent_id: str, message_type: MessageType, handler: Callable):
         """Register message handler for agent.
 
         Args:
@@ -755,8 +728,7 @@ class MessageBroker:
 
                 for message in broadcast_messages:
                     if (
-                        self._is_message_valid(message)
-                        and message.sender_id != agent_id
+                        self._is_message_valid(message) and message.sender_id != agent_id
                     ):  # Don't send own broadcasts back
                         messages.append(message)
 
@@ -797,9 +769,7 @@ class ResourceManager:
     def __init__(self):
         """Initialize resource manager."""
         self.resources: dict[str, Resource] = {}
-        self.allocations: dict[str, dict[str, float]] = defaultdict(
-            dict
-        )  # resource_id -> {agent_id: amount}
+        self.allocations: dict[str, dict[str, float]] = defaultdict(dict)  # resource_id -> {agent_id: amount}
         self._lock = threading.Lock()
 
     def register_resource(self, resource: Resource):
@@ -849,10 +819,7 @@ class ResourceManager:
             True if release successful
         """
         with self._lock:
-            if (
-                resource_id not in self.resources
-                or agent_id not in self.allocations[resource_id]
-            ):
+            if resource_id not in self.resources or agent_id not in self.allocations[resource_id]:
                 return False
 
             resource = self.resources[resource_id]
@@ -878,9 +845,7 @@ class ResourceManager:
                     "capacity": resource.capacity,
                     "allocated": resource.allocated,
                     "available": resource.available,
-                    "utilization": resource.allocated / resource.capacity
-                    if resource.capacity > 0
-                    else 0,
+                    "utilization": resource.allocated / resource.capacity if resource.capacity > 0 else 0,
                 }
         return usage
 
@@ -918,15 +883,9 @@ class CoordinationEngine:
 
     def _setup_default_resources(self):
         """Setup default system resources."""
-        self.resource_manager.register_resource(
-            Resource("cpu", "compute", capacity=100.0)
-        )
-        self.resource_manager.register_resource(
-            Resource("memory", "memory", capacity=8192.0)
-        )  # MB
-        self.resource_manager.register_resource(
-            Resource("network", "bandwidth", capacity=1000.0)
-        )  # Mbps
+        self.resource_manager.register_resource(Resource("cpu", "compute", capacity=100.0))
+        self.resource_manager.register_resource(Resource("memory", "memory", capacity=8192.0))  # MB
+        self.resource_manager.register_resource(Resource("network", "bandwidth", capacity=1000.0))  # Mbps
 
     def start(self):
         """Start coordination engine."""
@@ -934,14 +893,10 @@ class CoordinationEngine:
             return
 
         self.running = True
-        self._coordination_thread = threading.Thread(
-            target=self._coordination_loop, daemon=True
-        )
+        self._coordination_thread = threading.Thread(target=self._coordination_loop, daemon=True)
         self._coordination_thread.start()
 
-        logging.info(
-            f"Coordination engine started with strategy: {self.strategy.value}"
-        )
+        logging.info(f"Coordination engine started with strategy: {self.strategy.value}")
 
     def stop(self):
         """Stop coordination engine."""
@@ -1010,9 +965,7 @@ class CoordinationEngine:
         for agent in self.agent_registry.list_agents():
             if current_time - agent.last_heartbeat > timeout_threshold:
                 # Agent timeout - mark as offline
-                self.agent_registry.update_agent_status(
-                    agent.agent_id, AgentStatus.OFFLINE
-                )
+                self.agent_registry.update_agent_status(agent.agent_id, AgentStatus.OFFLINE)
 
                 # Reassign tasks from offline agent
                 self._reassign_agent_tasks(agent.agent_id)
@@ -1122,10 +1075,7 @@ class CoordinationEngine:
             "agents": {
                 "total": len(agents),
                 "active": active_agents,
-                "by_status": {
-                    status.value: len([a for a in agents if a.status == status])
-                    for status in AgentStatus
-                },
+                "by_status": {status.value: len([a for a in agents if a.status == status]) for status in AgentStatus},
             },
             "tasks": {
                 "pending": len(self.task_scheduler.pending_tasks),
@@ -1134,10 +1084,7 @@ class CoordinationEngine:
                 "failed": len(self.task_scheduler.failed_tasks),
             },
             "resources": self.resource_manager.get_resource_usage(),
-            "message_queues": {
-                agent_id: len(queue)
-                for agent_id, queue in self.message_broker.message_queues.items()
-            },
+            "message_queues": {agent_id: len(queue) for agent_id, queue in self.message_broker.message_queues.items()},
         }
 
 
@@ -1250,9 +1197,7 @@ class BaseAgent:
             self._agent_thread.join(timeout=5.0)
 
         if self.agent_info:
-            self.coordination_engine.agent_registry.unregister_agent(
-                self.agent_info.agent_id
-            )
+            self.coordination_engine.agent_registry.unregister_agent(self.agent_info.agent_id)
 
     def _agent_loop(self):
         """Main agent loop."""
@@ -1264,9 +1209,7 @@ class BaseAgent:
                 )
 
                 # Process messages
-                self.coordination_engine.message_broker.process_messages(
-                    self.agent_info.agent_id
-                )
+                self.coordination_engine.message_broker.process_messages(self.agent_info.agent_id)
 
                 time.sleep(5.0)  # Agent cycle interval
 
@@ -1286,15 +1229,11 @@ class BaseAgent:
             result = self.execute_task(task_data)
 
             # Report completion
-            self.coordination_engine.task_scheduler.complete_task(
-                task_data["task_id"], result
-            )
+            self.coordination_engine.task_scheduler.complete_task(task_data["task_id"], result)
 
         except Exception as e:
             # Report failure
-            self.coordination_engine.task_scheduler.complete_task(
-                task_data["task_id"], error=str(e)
-            )
+            self.coordination_engine.task_scheduler.complete_task(task_data["task_id"], error=str(e))
 
     def execute_task(self, task_data: dict[str, Any]) -> dict[str, Any]:
         """Execute a task. Override in subclasses.

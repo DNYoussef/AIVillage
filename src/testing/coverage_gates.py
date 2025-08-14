@@ -116,9 +116,7 @@ class TestCoverageAnalyzer:
                 covered_lines += len(analysis[1]) - len(analysis[2])  # covered lines
                 missing_lines.extend(analysis[2])  # missing lines
 
-            line_coverage = (
-                (covered_lines / total_lines * 100) if total_lines > 0 else 0.0
-            )
+            line_coverage = (covered_lines / total_lines * 100) if total_lines > 0 else 0.0
 
             return CoverageMetrics(
                 line_coverage=line_coverage,
@@ -143,11 +141,7 @@ class TestCoverageAnalyzer:
                     with open(py_file, encoding="utf-8", errors="ignore") as f:
                         lines = f.readlines()
                         # Count non-empty, non-comment lines
-                        code_lines = [
-                            line
-                            for line in lines
-                            if line.strip() and not line.strip().startswith("#")
-                        ]
+                        code_lines = [line for line in lines if line.strip() and not line.strip().startswith("#")]
                         total_lines += len(code_lines)
                 except Exception:
                     continue
@@ -157,9 +151,7 @@ class TestCoverageAnalyzer:
         test_count = len(test_files)
 
         # Rough estimate: assume 50% coverage if we have reasonable test count
-        estimated_coverage = (
-            min(50.0, (test_count / 50) * 100) if test_count > 0 else 0.0
-        )
+        estimated_coverage = min(50.0, (test_count / 50) * 100) if test_count > 0 else 0.0
 
         return CoverageMetrics(
             line_coverage=estimated_coverage,
@@ -206,21 +198,13 @@ class TestCoverageAnalyzer:
 
                 # Categorize test types
                 if "integration" in str(test_file).lower():
-                    distribution["by_type"]["integration"] = (
-                        distribution["by_type"].get("integration", 0) + 1
-                    )
+                    distribution["by_type"]["integration"] = distribution["by_type"].get("integration", 0) + 1
                 elif "unit" in str(test_file).lower():
-                    distribution["by_type"]["unit"] = (
-                        distribution["by_type"].get("unit", 0) + 1
-                    )
+                    distribution["by_type"]["unit"] = distribution["by_type"].get("unit", 0) + 1
                 elif "e2e" in str(test_file).lower():
-                    distribution["by_type"]["e2e"] = (
-                        distribution["by_type"].get("e2e", 0) + 1
-                    )
+                    distribution["by_type"]["e2e"] = distribution["by_type"].get("e2e", 0) + 1
                 else:
-                    distribution["by_type"]["other"] = (
-                        distribution["by_type"].get("other", 0) + 1
-                    )
+                    distribution["by_type"]["other"] = distribution["by_type"].get("other", 0) + 1
 
             except Exception:
                 continue
@@ -454,14 +438,10 @@ class QualityGateManager:
 
             issues = []
             if coverage.line_coverage < min_line_coverage:
-                issues.append(
-                    f"Line coverage {coverage.line_coverage:.1f}% < {min_line_coverage}%"
-                )
+                issues.append(f"Line coverage {coverage.line_coverage:.1f}% < {min_line_coverage}%")
 
             if coverage.branch_coverage < min_branch_coverage:
-                issues.append(
-                    f"Branch coverage {coverage.branch_coverage:.1f}% < {min_branch_coverage}%"
-                )
+                issues.append(f"Branch coverage {coverage.branch_coverage:.1f}% < {min_branch_coverage}%")
 
             if issues:
                 return QualityGateResult(
@@ -519,9 +499,7 @@ class QualityGateManager:
                             syntax_errors += 1
 
                 if syntax_errors > 0:
-                    quality_issues.append(
-                        f"{syntax_errors} critical files have syntax errors"
-                    )
+                    quality_issues.append(f"{syntax_errors} critical files have syntax errors")
 
             if quality_issues:
                 return QualityGateResult(
@@ -607,9 +585,7 @@ class QualityGateManager:
                 config = get_offline_rag_config()
 
                 if config.enable_internet_features:
-                    security_checks.append(
-                        "FAIL: Offline config allows internet features"
-                    )
+                    security_checks.append("FAIL: Offline config allows internet features")
                 else:
                     security_checks.append("PASS: Offline config properly secured")
 
@@ -660,21 +636,11 @@ class QualityGateManager:
             "overall_status": self.get_overall_status().value,
             "execution_summary": {
                 "total_gates": len(self.results),
-                "passed": len(
-                    [r for r in self.results if r.status == QualityGateStatus.PASS]
-                ),
-                "failed": len(
-                    [r for r in self.results if r.status == QualityGateStatus.FAIL]
-                ),
-                "warnings": len(
-                    [r for r in self.results if r.status == QualityGateStatus.WARNING]
-                ),
-                "skipped": len(
-                    [r for r in self.results if r.status == QualityGateStatus.SKIP]
-                ),
-                "total_execution_time_ms": sum(
-                    r.execution_time_ms for r in self.results
-                ),
+                "passed": len([r for r in self.results if r.status == QualityGateStatus.PASS]),
+                "failed": len([r for r in self.results if r.status == QualityGateStatus.FAIL]),
+                "warnings": len([r for r in self.results if r.status == QualityGateStatus.WARNING]),
+                "skipped": len([r for r in self.results if r.status == QualityGateStatus.SKIP]),
+                "total_execution_time_ms": sum(r.execution_time_ms for r in self.results),
             },
             "gate_results": [
                 {
@@ -694,42 +660,24 @@ class QualityGateManager:
         recommendations = []
 
         failed_gates = [r for r in self.results if r.status == QualityGateStatus.FAIL]
-        warning_gates = [
-            r for r in self.results if r.status == QualityGateStatus.WARNING
-        ]
+        warning_gates = [r for r in self.results if r.status == QualityGateStatus.WARNING]
 
         if failed_gates:
-            recommendations.append(
-                f"Address {len(failed_gates)} critical failures before deployment"
-            )
+            recommendations.append(f"Address {len(failed_gates)} critical failures before deployment")
 
         if warning_gates:
-            recommendations.append(
-                f"Investigate {len(warning_gates)} warnings to improve quality"
-            )
+            recommendations.append(f"Investigate {len(warning_gates)} warnings to improve quality")
 
         # Specific recommendations based on gate results
         for result in self.results:
-            if (
-                result.gate_name == "coverage_analysis"
-                and result.status == QualityGateStatus.WARNING
-            ):
-                recommendations.append(
-                    "Increase test coverage by adding unit tests for uncovered modules"
-                )
+            if result.gate_name == "coverage_analysis" and result.status == QualityGateStatus.WARNING:
+                recommendations.append("Increase test coverage by adding unit tests for uncovered modules")
 
-            if (
-                result.gate_name == "critical_tests"
-                and result.status != QualityGateStatus.PASS
-            ):
-                recommendations.append(
-                    "Fix critical test failures - these are essential for system functionality"
-                )
+            if result.gate_name == "critical_tests" and result.status != QualityGateStatus.PASS:
+                recommendations.append("Fix critical test failures - these are essential for system functionality")
 
         if not recommendations:
-            recommendations.append(
-                "All quality gates passed - system ready for deployment"
-            )
+            recommendations.append("All quality gates passed - system ready for deployment")
 
         return recommendations
 

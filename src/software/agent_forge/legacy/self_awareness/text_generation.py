@@ -58,9 +58,7 @@ class TextGenerationTask(Task):
             return "Analyze your own reasoning process, identifying potential biases or limitations in your approach."
         return "Engage in deep self-reflection, evaluating your cognitive strategies, considering alternative approaches, and proposing improvements to your own thought processes."
 
-    async def run(
-        self, temp_range: tuple[float, float], complexity: int, curriculum_level: int
-    ) -> list[str]:
+    async def run(self, temp_range: tuple[float, float], complexity: int, curriculum_level: int) -> list[str]:
         return await self.generate_texts(temp_range, complexity, curriculum_level)
 
 

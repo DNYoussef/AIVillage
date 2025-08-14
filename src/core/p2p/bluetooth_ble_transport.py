@@ -176,9 +176,7 @@ class BLETransport:
         self.state = BLEState.ADVERTISING
 
         if self.ble_adapter:
-            await self.ble_adapter.start_advertising(
-                service_uuid=AIVILLAGE_SERVICE_UUID, device_name=self.device_name
-            )
+            await self.ble_adapter.start_advertising(service_uuid=AIVILLAGE_SERVICE_UUID, device_name=self.device_name)
 
         logger.info(f"Advertising as {self.device_name}")
 
@@ -201,16 +199,12 @@ class BLETransport:
             return
 
         try:
-            devices = await self.ble_adapter.scan(
-                duration=self.scan_duration, service_filter=AIVILLAGE_SERVICE_UUID
-            )
+            devices = await self.ble_adapter.scan(duration=self.scan_duration, service_filter=AIVILLAGE_SERVICE_UUID)
 
             for device in devices:
                 if device.address not in self.discovered_devices:
                     self.discovered_devices[device.address] = device
-                    logger.info(
-                        f"Discovered new device: {device.name} ({device.address})"
-                    )
+                    logger.info(f"Discovered new device: {device.name} ({device.address})")
 
                     # Auto-connect if we have capacity
                     if len(self.connected_devices) < self.max_connections:
@@ -285,9 +279,7 @@ class BLETransport:
             try:
                 for chunk in chunks:
                     if self.ble_adapter:
-                        await self.ble_adapter.write_characteristic(
-                            device_address, MESSAGE_CHARACTERISTIC_UUID, chunk
-                        )
+                        await self.ble_adapter.write_characteristic(device_address, MESSAGE_CHARACTERISTIC_UUID, chunk)
 
                 success_count += 1
                 logger.debug(f"Sent message to {device_address}")
@@ -322,13 +314,9 @@ class BLETransport:
         if not self.pending_messages:
             return
 
-        logger.info(
-            f"Flushing {len(self.pending_messages)} pending messages to {target}"
-        )
+        logger.info(f"Flushing {len(self.pending_messages)} pending messages to {target}")
 
-        for message in self.pending_messages[
-            :
-        ]:  # Copy list to avoid modification during iteration
+        for message in self.pending_messages[:]:  # Copy list to avoid modification during iteration
             if await self.send_message(message, target):
                 self.pending_messages.remove(message)
 
@@ -343,9 +331,7 @@ class BLETransport:
 
             if total_chunks > 1:
                 # Handle multi-chunk message
-                self._handle_chunked_message(
-                    sender, chunk_index, total_chunks, data[2:]
-                )
+                self._handle_chunked_message(sender, chunk_index, total_chunks, data[2:])
                 return
             else:
                 # Single chunk message
@@ -400,9 +386,7 @@ class BLETransport:
             "connected_devices": len(self.connected_devices),
             "pending_messages": len(self.pending_messages),
             "max_connections": self.max_connections,
-            "adapter": self.ble_adapter.__class__.__name__
-            if self.ble_adapter
-            else None,
+            "adapter": self.ble_adapter.__class__.__name__ if self.ble_adapter else None,
         }
 
 
@@ -455,9 +439,7 @@ class BleakAdapter:
             # Set up notification handler
             await client.start_notify(
                 MESSAGE_CHARACTERISTIC_UUID,
-                lambda sender, data: self.transport.handle_received_message(
-                    address, data
-                ),
+                lambda sender, data: self.transport.handle_received_message(address, data),
             )
 
             return True
@@ -485,9 +467,7 @@ class BleakAdapter:
 
     async def stop_advertising(self):
         """Stop BLE advertising (not supported by Bleak - client only)."""
-        logger.debug(
-            "Stop advertising called - Bleak does not support BLE advertising (client-only)"
-        )
+        logger.debug("Stop advertising called - Bleak does not support BLE advertising (client-only)")
 
 
 # Placeholder for platform-specific adapters

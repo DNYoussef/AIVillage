@@ -66,9 +66,7 @@ class QuorumValidator:
         """Set the weight manager for quorum calculations."""
         self.weight_manager = weight_manager
 
-    def validate_quorum(
-        self, votes: list[VoteRecord], proposal_id: str = None
-    ) -> QuorumResult:
+    def validate_quorum(self, votes: list[VoteRecord], proposal_id: str = None) -> QuorumResult:
         """Validate that votes meet quorum requirements."""
         if not self.weight_manager:
             return QuorumResult(
@@ -124,11 +122,7 @@ class QuorumValidator:
             participating_nodes = len(valid_ack_votes)
 
             # Calculate weight percentage
-            weight_percentage = (
-                (total_ack_weight / total_eligible_weight)
-                if total_eligible_weight > 0
-                else 0
-            )
+            weight_percentage = (total_ack_weight / total_eligible_weight) if total_eligible_weight > 0 else 0
 
             # Validate requirements
             violations = []
@@ -143,16 +137,12 @@ class QuorumValidator:
 
             # AS diversity check
             if len(as_groups) < self.requirements.min_as_groups:
-                violations.append(
-                    f"Insufficient AS diversity: {len(as_groups)} < {self.requirements.min_as_groups}"
-                )
+                violations.append(f"Insufficient AS diversity: {len(as_groups)} < {self.requirements.min_as_groups}")
                 is_valid = False
 
             # ISD diversity check
             if len(isds) < self.requirements.min_isds:
-                violations.append(
-                    f"Insufficient ISD diversity: {len(isds)} < {self.requirements.min_isds}"
-                )
+                violations.append(f"Insufficient ISD diversity: {len(isds)} < {self.requirements.min_isds}")
                 is_valid = False
 
             # Minimum nodes check
@@ -203,9 +193,7 @@ class QuorumValidator:
                 violations=[f"Validation error: {str(e)}"],
             )
 
-    def check_partition_safety(
-        self, votes: list[VoteRecord]
-    ) -> tuple[bool, dict[str, any]]:
+    def check_partition_safety(self, votes: list[VoteRecord]) -> tuple[bool, dict[str, any]]:
         """Check for network partition safety indicators."""
         if not votes:
             return False, {"error": "No votes to analyze"}
@@ -237,27 +225,17 @@ class QuorumValidator:
             # Single AS dominance check (>40% indicates risk)
             max_as_weight = max(stats["weight"] for stats in as_participation.values())
             if total_weight > 0 and (max_as_weight / total_weight) > 0.40:
-                partition_risks.append(
-                    f"AS weight concentration: {max_as_weight / total_weight:.1%}"
-                )
+                partition_risks.append(f"AS weight concentration: {max_as_weight / total_weight:.1%}")
 
             # Single ISD dominance check (>50% indicates risk)
-            max_isd_weight = max(
-                stats["weight"] for stats in isd_participation.values()
-            )
+            max_isd_weight = max(stats["weight"] for stats in isd_participation.values())
             if total_weight > 0 and (max_isd_weight / total_weight) > 0.50:
-                partition_risks.append(
-                    f"ISD weight concentration: {max_isd_weight / total_weight:.1%}"
-                )
+                partition_risks.append(f"ISD weight concentration: {max_isd_weight / total_weight:.1%}")
 
             # Geographic diversity check (heuristic based on AS distribution)
-            unique_as_prefixes = {
-                as_group.split("-")[0] for as_group in as_participation.keys()
-            }
+            unique_as_prefixes = {as_group.split("-")[0] for as_group in as_participation.keys()}
             if len(unique_as_prefixes) < 3:  # Less than 3 major regions
-                partition_risks.append(
-                    f"Limited geographic diversity: {len(unique_as_prefixes)} regions"
-                )
+                partition_risks.append(f"Limited geographic diversity: {len(unique_as_prefixes)} regions")
 
             is_safe = len(partition_risks) == 0
 
@@ -270,12 +248,8 @@ class QuorumValidator:
                     "as_count": len(as_participation),
                     "isd_count": len(isd_participation),
                     "geographic_regions": len(unique_as_prefixes),
-                    "max_as_concentration": max_as_weight / total_weight
-                    if total_weight > 0
-                    else 0,
-                    "max_isd_concentration": max_isd_weight / total_weight
-                    if total_weight > 0
-                    else 0,
+                    "max_as_concentration": max_as_weight / total_weight if total_weight > 0 else 0,
+                    "max_isd_concentration": max_isd_weight / total_weight if total_weight > 0 else 0,
                 },
             }
 
@@ -314,9 +288,7 @@ class QuorumValidator:
         # Scenario 2: Minimum threshold - exactly 67%
         sorted_votes = sorted(all_ack_votes, key=lambda x: x.weight, reverse=True)
         cumulative_weight = 0
-        target_weight = (
-            sum(effective_weights.values()) * self.requirements.min_weight_threshold
-        )
+        target_weight = sum(effective_weights.values()) * self.requirements.min_weight_threshold
 
         min_threshold_votes = []
         for vote in sorted_votes:
@@ -325,15 +297,11 @@ class QuorumValidator:
             if cumulative_weight >= target_weight:
                 break
 
-        scenarios["min_threshold"] = self.validate_quorum(
-            min_threshold_votes, "scenario_min_threshold"
-        )
+        scenarios["min_threshold"] = self.validate_quorum(min_threshold_votes, "scenario_min_threshold")
 
         # Scenario 3: Insufficient diversity - only 2 ISDs
         limited_isd_votes = [v for v in all_ack_votes if v.isd in ["1", "2"]]
-        scenarios["limited_isd"] = self.validate_quorum(
-            limited_isd_votes, "scenario_limited_isd"
-        )
+        scenarios["limited_isd"] = self.validate_quorum(limited_isd_votes, "scenario_limited_isd")
 
         return {
             "scenarios": scenarios,

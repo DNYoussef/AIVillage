@@ -96,9 +96,7 @@ class SecureSerializer:
 
         return secrets.token_bytes(32)
 
-    def register_custom_type(
-        self, type_class: type, serializer: callable, deserializer: callable
-    ):
+    def register_custom_type(self, type_class: type, serializer: callable, deserializer: callable):
         """
         Register custom type serialization handlers.
 
@@ -115,9 +113,7 @@ class SecureSerializer:
         """Validate data for security concerns."""
         if isinstance(data, str | bytes):
             if len(data) > self.max_size_bytes:
-                raise SecurityViolationError(
-                    f"Data size exceeds limit: {len(data)} > {self.max_size_bytes}"
-                )
+                raise SecurityViolationError(f"Data size exceeds limit: {len(data)} > {self.max_size_bytes}")
 
         # Check for suspicious patterns
         if isinstance(data, str):
@@ -183,15 +179,11 @@ class SecureSerializer:
                     return {
                         "__type__": "object",
                         "__class__": item.__class__.__name__,
-                        "__value__": {
-                            k: convert_item(v) for k, v in item.__dict__.items()
-                        },
+                        "__value__": {k: convert_item(v) for k, v in item.__dict__.items()},
                     }
                 else:
                     # Fallback to string representation
-                    logger.warning(
-                        f"Unsupported type {type(item)}, converting to string"
-                    )
+                    logger.warning(f"Unsupported type {type(item)}, converting to string")
                     return {"__type__": "str", "__value__": str(item)}
 
         return convert_item(obj)
@@ -219,9 +211,7 @@ class SecureSerializer:
             return obj_value
         elif obj_type == "dataclass":
             # Would need dataclass registry for full restoration
-            logger.warning(
-                f"Dataclass deserialization not fully implemented: {data.get('__class__')}"
-            )
+            logger.warning(f"Dataclass deserialization not fully implemented: {data.get('__class__')}")
             return {k: self._restore_data(v) for k, v in obj_value.items()}
         elif obj_type == "dict":
             return {k: self._restore_data(v) for k, v in obj_value.items()}
@@ -245,9 +235,7 @@ class SecureSerializer:
             logger.error(f"Unknown type: {obj_type}")
             return obj_value
 
-    def dumps(
-        self, obj: Any, serialization_type: SerializationType = SerializationType.JSON
-    ) -> bytes:
+    def dumps(self, obj: Any, serialization_type: SerializationType = SerializationType.JSON) -> bytes:
         """
         Serialize object to secure byte format.
 
@@ -278,9 +266,7 @@ class SecureSerializer:
             }
 
             # Convert to JSON
-            json_data = json.dumps(
-                serialized_obj, ensure_ascii=True, separators=(",", ":")
-            )
+            json_data = json.dumps(serialized_obj, ensure_ascii=True, separators=(",", ":"))
             json_bytes = json_data.encode("utf-8")
 
             # Apply compression if needed
@@ -291,9 +277,7 @@ class SecureSerializer:
 
             # Apply signature if needed
             if serialization_type == SerializationType.SIGNED_JSON:
-                signature = hmac.new(
-                    self.secret_key, json_bytes, hashlib.sha256
-                ).hexdigest()
+                signature = hmac.new(self.secret_key, json_bytes, hashlib.sha256).hexdigest()
 
                 signed_data = {
                     "signature": signature,
@@ -334,9 +318,7 @@ class SecureSerializer:
                 signed_data = base64.b64decode(parsed_data["data"])
 
                 # Verify signature
-                expected_signature = hmac.new(
-                    self.secret_key, signed_data, hashlib.sha256
-                ).hexdigest()
+                expected_signature = hmac.new(self.secret_key, signed_data, hashlib.sha256).hexdigest()
 
                 if not hmac.compare_digest(signature, expected_signature):
                     raise SecurityViolationError("Invalid signature")
@@ -424,8 +406,7 @@ class LegacyPickleRejector:
         """Raise error if data appears to be pickle format."""
         if cls.is_pickle_data(data):
             raise SecurityViolationError(
-                "Legacy pickle data detected and rejected for security. "
-                "Please re-serialize with SecureSerializer."
+                "Legacy pickle data detected and rejected for security. " "Please re-serialize with SecureSerializer."
             )
 
 

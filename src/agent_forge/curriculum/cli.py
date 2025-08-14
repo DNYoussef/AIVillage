@@ -34,9 +34,7 @@ def curriculum_cli():
 
 @curriculum_cli.command()
 @click.option("--config", type=click.Path(exists=True), help="Config file path")
-@click.option(
-    "--api-key", help="OpenRouter API key (or use OPENROUTER_API_KEY env var)"
-)
+@click.option("--api-key", help="OpenRouter API key (or use OPENROUTER_API_KEY env var)")
 @click.option(
     "--model",
     default="anthropic/claude-3-5-sonnet-20241022",
@@ -46,12 +44,8 @@ def curriculum_cli():
 @click.option("--target-low", default=0.55, help="Target accuracy lower bound")
 @click.option("--target-high", default=0.75, help="Target accuracy upper bound")
 @click.option("--budget", default=1000, help="Problem generation budget")
-@click.option(
-    "--telemetry-file", type=click.Path(exists=True), help="Telemetry data JSON file"
-)
-@click.option(
-    "--output-file", default="edge_assessment.json", help="Output file for results"
-)
+@click.option("--telemetry-file", type=click.Path(exists=True), help="Telemetry data JSON file")
+@click.option("--output-file", default="edge_assessment.json", help="Output file for results")
 def find_edge(
     config: str | None,
     api_key: str | None,
@@ -80,9 +74,7 @@ def find_edge(
     if not api_key:
         api_key = os.getenv("OPENROUTER_API_KEY")
         if not api_key:
-            click.echo(
-                "❌ OpenRouter API key required (use --api-key or OPENROUTER_API_KEY env var)"
-            )
+            click.echo("❌ OpenRouter API key required (use --api-key or OPENROUTER_API_KEY env var)")
             sys.exit(1)
 
     # Load or generate sample telemetry data
@@ -90,9 +82,7 @@ def find_edge(
         with open(telemetry_file) as f:
             telemetry_data = json.load(f)
         telemetry_entries = [TelemetryEntry(**entry) for entry in telemetry_data]
-        click.echo(
-            f"✅ Loaded {len(telemetry_entries)} telemetry entries from {telemetry_file}"
-        )
+        click.echo(f"✅ Loaded {len(telemetry_entries)} telemetry entries from {telemetry_file}")
     else:
         # Generate sample telemetry for demo
         import random
@@ -109,11 +99,7 @@ def find_edge(
                 correct_prob = 0.45
 
             correct = random.random() < correct_prob
-            telemetry_entries.append(
-                TelemetryEntry(
-                    task_id=f"task_{i:03d}", difficulty=difficulty, correct=correct
-                )
-            )
+            telemetry_entries.append(TelemetryEntry(task_id=f"task_{i:03d}", difficulty=difficulty, correct=correct))
         click.echo(f"✅ Generated {len(telemetry_entries)} sample telemetry entries")
 
     # Create assessment request
@@ -121,9 +107,7 @@ def find_edge(
         domain=domain,
         telemetry=telemetry_entries,
         difficulty_scale=DifficultyScale(min=0.0, max=1.0),
-        constraints=EdgeConstraints(
-            target_low=target_low, target_high=target_high, problem_budget=budget
-        ),
+        constraints=EdgeConstraints(target_low=target_low, target_high=target_high, problem_budget=budget),
     )
 
     # Run edge assessment
@@ -173,9 +157,7 @@ def find_edge(
         if len(response.topic_mix) > 3:
             click.echo(f"     ... and {len(response.topic_mix) - 3} more")
         click.echo(f"   Distribution: {len(response.distribution)} difficulty levels")
-        click.echo(
-            f"   Generation Plan: {response.generation_plan.n_total} problems total"
-        )
+        click.echo(f"   Generation Plan: {response.generation_plan.n_total} problems total")
         click.echo(f"   Results saved to: {output_file}")
 
     except Exception as e:
@@ -186,18 +168,14 @@ def find_edge(
 
 @curriculum_cli.command()
 @click.option("--api-key", help="OpenRouter API key")
-@click.option(
-    "--model", default="anthropic/claude-3-5-sonnet-20241022", help="Model to use"
-)
+@click.option("--model", default="anthropic/claude-3-5-sonnet-20241022", help="Model to use")
 @click.option(
     "--temperature-points",
     default="0.1,0.3,0.5,0.7,0.9",
     help="Temperature points to test",
 )
 @click.option("--prompt", help="Test prompt")
-@click.option(
-    "--output-file", default="temperature_test.json", help="Output results file"
-)
+@click.option("--output-file", default="temperature_test.json", help="Output results file")
 def test_temperatures(
     api_key: str | None,
     model: str,
@@ -245,9 +223,7 @@ Provide ONLY the function code, no explanation."""
                 # Get 3 responses at each temperature
                 for i in range(3):
                     try:
-                        response = await client.invoke(
-                            prompt=prompt, model=model, temperature=temp, max_tokens=512
-                        )
+                        response = await client.invoke(prompt=prompt, model=model, temperature=temp, max_tokens=512)
                         responses.append(response)
                         click.echo(f"   Response {i + 1}: {len(response)} chars")
                     except Exception as e:
@@ -257,19 +233,13 @@ Provide ONLY the function code, no explanation."""
                 # Analyze consistency
                 lengths = [len(r) for r in responses if not r.startswith("ERROR")]
                 avg_length = sum(lengths) / len(lengths) if lengths else 0
-                length_variance = (
-                    sum((l - avg_length) ** 2 for l in lengths) / len(lengths)
-                    if lengths
-                    else 0
-                )
+                length_variance = sum((l - avg_length) ** 2 for l in lengths) / len(lengths) if lengths else 0
 
                 results[str(temp)] = {
                     "responses": responses,
                     "avg_length": avg_length,
                     "length_variance": length_variance,
-                    "success_count": len(
-                        [r for r in responses if not r.startswith("ERROR")]
-                    ),
+                    "success_count": len([r for r in responses if not r.startswith("ERROR")]),
                 }
 
         return results
@@ -287,9 +257,7 @@ Provide ONLY the function code, no explanation."""
             success_rate = data["success_count"] / 3 * 100
             avg_len = data["avg_length"]
             variance = data["length_variance"]
-            click.echo(
-                f"   T={temp}: {success_rate:.0f}% success, {avg_len:.0f}±{variance:.0f} chars"
-            )
+            click.echo(f"   T={temp}: {success_rate:.0f}% success, {avg_len:.0f}±{variance:.0f} chars")
 
         click.echo(f"\n💾 Detailed results saved to: {output_file}")
 
@@ -330,9 +298,7 @@ def cache_stats(api_key: str | None, cache_dir: str):
                 count = model_stats["count"]
                 tokens = model_stats["total_tokens"]
                 cost = model_stats["total_cost_usd"]
-                click.echo(
-                    f"     {model}: {count} requests, {tokens:,} tokens, ${cost:.3f}"
-                )
+                click.echo(f"     {model}: {count} requests, {tokens:,} tokens, ${cost:.3f}")
 
         if stats["recent_activity"]:
             click.echo("   Recent Activity:")
@@ -362,18 +328,12 @@ def cache_stats(api_key: str | None, cache_dir: str):
                     except:
                         continue
 
-            cache_hit_rate = (
-                (cached_requests / total_requests * 100) if total_requests else 0
-            )
+            cache_hit_rate = (cached_requests / total_requests * 100) if total_requests else 0
 
             click.echo(f"   Total Requests: {total_requests:,}")
-            click.echo(
-                f"   Cached Requests: {cached_requests:,} ({cache_hit_rate:.1f}%)"
-            )
+            click.echo(f"   Cached Requests: {cached_requests:,} ({cache_hit_rate:.1f}%)")
             click.echo(f"   Total Cost: ${total_cost:.4f}")
-            click.echo(
-                f"   Average Cost/Request: ${total_cost / max(total_requests - cached_requests, 1):.5f}"
-            )
+            click.echo(f"   Average Cost/Request: ${total_cost / max(total_requests - cached_requests, 1):.5f}")
         else:
             click.echo(f"\n💸 No cost log found at {cost_log_path}")
 

@@ -65,9 +65,7 @@ class DeepSystemBakerTask(Task):
         self.tokenizer.add_special_tokens(special_tokens_dict)
         self.model.resize_token_embeddings(len(self.tokenizer))
 
-    async def deep_bake_system(
-        self, max_iterations=50, consistency_threshold=0.95
-    ) -> None:
+    async def deep_bake_system(self, max_iterations=50, consistency_threshold=0.95) -> None:
         system_prompt = """
         You are an AI that uses the Quiet-STaR and IoT framework for reasoning, enhanced with advanced cognitive strategies. Always follow this process and thinking framework:
 
@@ -139,9 +137,7 @@ class DeepSystemBakerTask(Task):
         inputs = self.tokenizer(prompt, return_tensors="pt").to(self.device)
         with torch.no_grad():
             outputs = self.model(**inputs)
-        loss = F.cross_entropy(
-            outputs.logits.view(-1, outputs.logits.size(-1)), inputs.input_ids.view(-1)
-        )
+        loss = F.cross_entropy(outputs.logits.view(-1, outputs.logits.size(-1)), inputs.input_ids.view(-1))
         loss.backward()
 
         optimizer = torch.optim.AdamW(self.model.parameters(), lr=1e-5)
@@ -167,9 +163,7 @@ class DeepSystemBakerTask(Task):
 
     async def generate_response(self, prompt):
         inputs = self.tokenizer(prompt, return_tensors="pt").to(self.device)
-        outputs = self.model.generate(
-            **inputs, max_length=500, num_return_sequences=1, do_sample=True
-        )
+        outputs = self.model.generate(**inputs, max_length=500, num_return_sequences=1, do_sample=True)
         return self.tokenizer.decode(outputs[0], skip_special_tokens=False)
 
     async def score_response(self, response):

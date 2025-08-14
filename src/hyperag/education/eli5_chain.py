@@ -71,9 +71,7 @@ class CulturallyAwareELI5:
 
     def __init__(self, project_name: str = "aivillage-education") -> None:
         self.project_name = project_name
-        self.cultural_examples = defaultdict(
-            list
-        )  # (region, concept) -> List[CulturalExample]
+        self.cultural_examples = defaultdict(list)  # (region, concept) -> List[CulturalExample]
         self.explanation_templates = {}  # template_id -> ExplanationTemplate
         self.regional_contexts = {}  # region -> context data
         self.language_adaptations = {}  # language -> adaptation rules
@@ -530,12 +528,8 @@ class CulturallyAwareELI5:
 
             # Calculate metrics
             generation_time = asyncio.get_event_loop().time() - start_time
-            readability_score = self.calculate_readability_score(
-                adapted_explanation, age
-            )
-            cultural_relevance_score = self.calculate_cultural_relevance(
-                adapted_explanation, region
-            )
+            readability_score = self.calculate_readability_score(adapted_explanation, age)
+            cultural_relevance_score = self.calculate_cultural_relevance(adapted_explanation, region)
             engagement_score = self.calculate_engagement_score(adapted_explanation, age)
 
             # Create result
@@ -574,9 +568,7 @@ class CulturallyAwareELI5:
                 }
             )
 
-            logger.info(
-                f"Generated ELI5 explanation for '{concept}' (age {age}, {language}, {region})"
-            )
+            logger.info(f"Generated ELI5 explanation for '{concept}' (age {age}, {language}, {region})")
 
             return result
 
@@ -584,9 +576,7 @@ class CulturallyAwareELI5:
             logger.exception(f"Error generating ELI5 explanation: {e}")
 
             # Return fallback explanation
-            fallback_explanation = await self.get_fallback_explanation(
-                concept, age, language
-            )
+            fallback_explanation = await self.get_fallback_explanation(concept, age, language)
 
             return ExplanationResult(
                 concept=concept,
@@ -660,19 +650,13 @@ class CulturallyAwareELI5:
             return "a high school student"
         return "a young adult"
 
-    def get_cultural_examples(
-        self, region: str, concept: str, age: int, language: str
-    ) -> list[CulturalExample]:
+    def get_cultural_examples(self, region: str, concept: str, age: int, language: str) -> list[CulturalExample]:
         """Get relevant cultural examples for the concept."""
         # Direct match
         direct_examples = self.cultural_examples.get((region, concept), [])
 
         # Filter by age appropriateness and language
-        suitable_examples = [
-            ex
-            for ex in direct_examples
-            if ex.age_appropriateness <= age and ex.language == language
-        ]
+        suitable_examples = [ex for ex in direct_examples if ex.age_appropriateness <= age and ex.language == language]
 
         # If no direct examples, look for related concepts
         if not suitable_examples:
@@ -681,11 +665,7 @@ class CulturallyAwareELI5:
             for (r, _c), examples in self.cultural_examples.items():
                 if r == region:
                     region_examples.extend(
-                        [
-                            ex
-                            for ex in examples
-                            if ex.age_appropriateness <= age and ex.language == language
-                        ]
+                        [ex for ex in examples if ex.age_appropriateness <= age and ex.language == language]
                     )
 
             # Select most relevant ones (simple heuristic)
@@ -696,18 +676,13 @@ class CulturallyAwareELI5:
 
         return suitable_examples[:3]  # Return top 3 examples
 
-    def select_explanation_template(
-        self, age: int, language: str, concept: str
-    ) -> ExplanationTemplate | None:
+    def select_explanation_template(self, age: int, language: str, concept: str) -> ExplanationTemplate | None:
         """Select most appropriate explanation template."""
         # Filter templates by age range and language
         suitable_templates = [
             template
             for template in self.explanation_templates.values()
-            if (
-                template.age_range[0] <= age <= template.age_range[1]
-                and template.language == language
-            )
+            if (template.age_range[0] <= age <= template.age_range[1] and template.language == language)
         ]
 
         if not suitable_templates:
@@ -715,10 +690,7 @@ class CulturallyAwareELI5:
             suitable_templates = [
                 template
                 for template in self.explanation_templates.values()
-                if (
-                    template.age_range[0] <= age <= template.age_range[1]
-                    and template.language == "en"
-                )
+                if (template.age_range[0] <= age <= template.age_range[1] and template.language == "en")
             ]
 
         if not suitable_templates:
@@ -782,13 +754,9 @@ class CulturallyAwareELI5:
 
             # Post-process for learning style
             if learning_style == "visual":
-                adapted_explanation = await self.add_visual_elements(
-                    adapted_explanation, concept
-                )
+                adapted_explanation = await self.add_visual_elements(adapted_explanation, concept)
             elif learning_style == "kinesthetic":
-                adapted_explanation = await self.add_hands_on_activities(
-                    adapted_explanation, concept, age
-                )
+                adapted_explanation = await self.add_hands_on_activities(adapted_explanation, concept, age)
 
             return adapted_explanation
 
@@ -813,9 +781,7 @@ class CulturallyAwareELI5:
 
         return explanation + visual_element
 
-    async def add_hands_on_activities(
-        self, explanation: str, concept: str, age: int
-    ) -> str:
+    async def add_hands_on_activities(self, explanation: str, concept: str, age: int) -> str:
         """Add kinesthetic learning activities."""
         if age <= 8:
             activity_starters = [
@@ -857,9 +823,7 @@ class CulturallyAwareELI5:
         # Score based on how close to ideal
         score = max(
             0.0,
-            1.0
-            - abs(avg_words_per_sentence - ideal_words_per_sentence)
-            / ideal_words_per_sentence,
+            1.0 - abs(avg_words_per_sentence - ideal_words_per_sentence) / ideal_words_per_sentence,
         )
 
         return score
@@ -929,25 +893,17 @@ class CulturallyAwareELI5:
                         example.usage_count += 1
                         # Update effectiveness score (simple moving average)
                         alpha = 0.1  # Learning rate
-                        new_score = (
-                            result.engagement_score + result.cultural_relevance_score
-                        ) / 2
-                        example.effectiveness_score = (
-                            1 - alpha
-                        ) * example.effectiveness_score + alpha * new_score
+                        new_score = (result.engagement_score + result.cultural_relevance_score) / 2
+                        example.effectiveness_score = (1 - alpha) * example.effectiveness_score + alpha * new_score
 
         # Update template effectiveness
         if result.template_used in self.explanation_templates:
             template = self.explanation_templates[result.template_used]
             alpha = 0.05
-            template.effectiveness_metrics["comprehension"] = (
-                1 - alpha
-            ) * template.effectiveness_metrics.get(
+            template.effectiveness_metrics["comprehension"] = (1 - alpha) * template.effectiveness_metrics.get(
                 "comprehension", 0.5
             ) + alpha * result.readability_score
-            template.effectiveness_metrics["engagement"] = (
-                1 - alpha
-            ) * template.effectiveness_metrics.get(
+            template.effectiveness_metrics["engagement"] = (1 - alpha) * template.effectiveness_metrics.get(
                 "engagement", 0.5
             ) + alpha * result.engagement_score
 
@@ -966,9 +922,7 @@ class CulturallyAwareELI5:
             }
         )
 
-    async def get_fallback_explanation(
-        self, concept: str, age: int, language: str
-    ) -> str:
+    async def get_fallback_explanation(self, concept: str, age: int, language: str) -> str:
         """Generate simple fallback explanation."""
         fallback_templates = {
             "en": f"Let me explain {concept} in a simple way for someone who is {age} years old. This is an important topic that helps us understand the world around us.",
@@ -1032,18 +986,16 @@ class CulturallyAwareELI5:
             analytics["average_scores"]["cultural_relevance"] = sum(
                 r.cultural_relevance_score for r in self.explanation_history
             ) / len(self.explanation_history)
-            analytics["average_scores"]["engagement"] = sum(
-                r.engagement_score for r in self.explanation_history
-            ) / len(self.explanation_history)
+            analytics["average_scores"]["engagement"] = sum(r.engagement_score for r in self.explanation_history) / len(
+                self.explanation_history
+            )
 
         # Top cultural examples by usage
         all_examples = []
         for examples_list in self.cultural_examples.values():
             all_examples.extend(examples_list)
 
-        top_examples = sorted(all_examples, key=lambda x: x.usage_count, reverse=True)[
-            :10
-        ]
+        top_examples = sorted(all_examples, key=lambda x: x.usage_count, reverse=True)[:10]
         analytics["top_cultural_examples"] = [
             {
                 "example_id": ex.example_id,

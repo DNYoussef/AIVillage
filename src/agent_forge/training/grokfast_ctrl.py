@@ -141,9 +141,7 @@ class GrokSignalDetector:
 
         return self.grok_detected
 
-    def get_gating_decision(
-        self, telemetry: TelemetryState, config: GrokfastConfig
-    ) -> bool:
+    def get_gating_decision(self, telemetry: TelemetryState, config: GrokfastConfig) -> bool:
         """
         Make gating decision based on current telemetry.
 
@@ -209,9 +207,7 @@ class GrokfastOptimizer:
                 self.slow_grads[name] = torch.zeros_like(param.grad)
 
         self.initialized = True
-        logger.info(
-            f"Initialized Grokfast slow gradients for {len(self.slow_grads)} parameters"
-        )
+        logger.info(f"Initialized Grokfast slow gradients for {len(self.slow_grads)} parameters")
 
     def _update_slow_grads(self):
         """Update slow gradient EMA."""
@@ -221,10 +217,7 @@ class GrokfastOptimizer:
                     self.slow_grads[name] = torch.zeros_like(param.grad)
 
                 # EMA update: slow_grad = α * slow_grad + (1-α) * grad
-                self.slow_grads[name] = (
-                    self.config.alpha * self.slow_grads[name]
-                    + (1 - self.config.alpha) * param.grad
-                )
+                self.slow_grads[name] = self.config.alpha * self.slow_grads[name] + (1 - self.config.alpha) * param.grad
 
     def _compute_lambda(self, step: int) -> float:
         """Compute lambda value based on schedule."""
@@ -234,17 +227,13 @@ class GrokfastOptimizer:
         elif self.config.lambda_schedule == "linear":
             if step < self.config.lambda_warmup_steps:
                 progress = step / self.config.lambda_warmup_steps
-                return self.config.lambda_min + progress * (
-                    self.config.lambda_max - self.config.lambda_min
-                )
+                return self.config.lambda_min + progress * (self.config.lambda_max - self.config.lambda_min)
             return self.config.lambda_max
 
         elif self.config.lambda_schedule == "exponential":
             if step < self.config.lambda_warmup_steps:
                 progress = step / self.config.lambda_warmup_steps
-                return self.config.lambda_min * (
-                    (self.config.lambda_max / self.config.lambda_min) ** progress
-                )
+                return self.config.lambda_min * ((self.config.lambda_max / self.config.lambda_min) ** progress)
             return self.config.lambda_max
 
         return self.config.lamb
@@ -268,9 +257,7 @@ class GrokfastOptimizer:
         # Make gating decision
         if self.config.enabled:
             if self.detector:
-                grokfast_enabled = self.detector.get_gating_decision(
-                    telemetry, self.config
-                )
+                grokfast_enabled = self.detector.get_gating_decision(telemetry, self.config)
             else:
                 grokfast_enabled = True
         else:
@@ -296,11 +283,7 @@ class GrokfastOptimizer:
             fast_grad_norm = 0.0
 
             for name, param in self.model.named_parameters():
-                if (
-                    param.requires_grad
-                    and param.grad is not None
-                    and name in self.slow_grads
-                ):
+                if param.requires_grad and param.grad is not None and name in self.slow_grads:
                     slow_grad = self.slow_grads[name]
                     fast_grad = param.grad - slow_grad  # Fast component
 
@@ -347,9 +330,7 @@ class GrokfastOptimizer:
             "total_steps": total_steps,
             "grokfast_steps": grokfast_steps,
             "grokfast_ratio": grokfast_steps / total_steps if total_steps > 0 else 0,
-            "avg_lambda": np.mean(self.stats["lambda_values"])
-            if self.stats["lambda_values"]
-            else 0,
+            "avg_lambda": np.mean(self.stats["lambda_values"]) if self.stats["lambda_values"] else 0,
             "grok_detected": self.detector.grok_detected,
             "detection_step": self.detector.detection_step,
             "current_confidence": self.detector.confidence_score,
@@ -418,9 +399,7 @@ class TelemetryTracker:
                 if name not in self.grad_ema:
                     self.grad_ema[name] = torch.zeros_like(grad)
 
-                self.grad_ema[name] = (
-                    self.ema_decay * self.grad_ema[name] + (1 - self.ema_decay) * grad
-                )
+                self.grad_ema[name] = self.ema_decay * self.grad_ema[name] + (1 - self.ema_decay) * grad
 
                 slow_norm = self.grad_ema[name].norm().item()
                 fast_norm = (grad - self.grad_ema[name]).norm().item()
@@ -563,9 +542,7 @@ def create_grokfast_optimizer(
     config = GrokfastConfig(alpha=alpha, lamb=lamb, enabled=True)
     detector = GrokSignalDetector() if auto_gated else None
 
-    return GrokfastOptimizer(
-        model=model, base_optimizer=base_optimizer, config=config, detector=detector
-    )
+    return GrokfastOptimizer(model=model, base_optimizer=base_optimizer, config=config, detector=detector)
 
 
 def create_telemetry_tracker(model: nn.Module) -> TelemetryTracker:
@@ -646,9 +623,7 @@ if __name__ == "__main__":
     export = telemetry.export_telemetry()
     print(f"   Exported {len(export['step'])} telemetry records")
     print(f"   ID range: [{min(export['id']):.3f}, {max(export['id']):.3f}]")
-    print(
-        f"   S_slow range: [{min(export['s_slow']):.3f}, {max(export['s_slow']):.3f}]"
-    )
+    print(f"   S_slow range: [{min(export['s_slow']):.3f}, {max(export['s_slow']):.3f}]")
 
     print()
     print("✅ Grokfast Controller Demo Complete")

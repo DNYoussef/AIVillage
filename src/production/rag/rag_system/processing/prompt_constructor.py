@@ -37,9 +37,7 @@ def construct_key_concept_extraction_prompt(text: str) -> str:
     return prompt
 
 
-def construct_task_planning_prompt(
-    intent: dict[str, Any], concepts: dict[str, Any]
-) -> str:
+def construct_task_planning_prompt(intent: dict[str, Any], concepts: dict[str, Any]) -> str:
     """Construct a prompt for the Task Planning Agent.
 
     Args:
@@ -95,9 +93,7 @@ def construct_knowledge_integration_prompt(new_relations: dict[str, Any]) -> str
     return prompt
 
 
-def construct_extrapolation_prompt(
-    entity1: str, relation: str, entity2: str, known_facts: list[str]
-) -> str:
+def construct_extrapolation_prompt(entity1: str, relation: str, entity2: str, known_facts: list[str]) -> str:
     """Construct a prompt for the LLM to extrapolate the veracity of the relation.
 
     Args:

@@ -195,14 +195,10 @@ class PasswordManager:
             Hashed password with salt
         """
         salt = secrets.token_bytes(self.salt_length)
-        hash_bytes = hashlib.pbkdf2_hmac(
-            "sha256", password.encode("utf-8"), salt, self.iterations
-        )
+        hash_bytes = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, self.iterations)
 
         # Store salt + hash + iterations
-        return base64.b64encode(
-            salt + hash_bytes + self.iterations.to_bytes(4, "big")
-        ).decode("ascii")
+        return base64.b64encode(salt + hash_bytes + self.iterations.to_bytes(4, "big")).decode("ascii")
 
     def verify_password(self, password: str, password_hash: str) -> bool:
         """Verify password against hash.
@@ -220,18 +216,14 @@ class PasswordManager:
             stored_hash = decoded[self.salt_length : -4]
             iterations = int.from_bytes(decoded[-4:], "big")
 
-            new_hash = hashlib.pbkdf2_hmac(
-                "sha256", password.encode("utf-8"), salt, iterations
-            )
+            new_hash = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, iterations)
 
             return hmac.compare_digest(stored_hash, new_hash)
 
         except Exception:
             return False
 
-    def validate_password_strength(
-        self, password: str, config: AuthConfig
-    ) -> tuple[bool, list[str]]:
+    def validate_password_strength(self, password: str, config: AuthConfig) -> tuple[bool, list[str]]:
         """Validate password strength.
 
         Args:
@@ -244,9 +236,7 @@ class PasswordManager:
         errors = []
 
         if len(password) < config.password_min_length:
-            errors.append(
-                f"Password must be at least {config.password_min_length} characters"
-            )
+            errors.append(f"Password must be at least {config.password_min_length} characters")
 
         if config.password_require_uppercase and not any(c.isupper() for c in password):
             errors.append("Password must contain uppercase letters")
@@ -257,9 +247,7 @@ class PasswordManager:
         if config.password_require_numbers and not any(c.isdigit() for c in password):
             errors.append("Password must contain numbers")
 
-        if config.password_require_symbols and not any(
-            c in "!@#$%^&*()_+-=[]{}|;:,.<>?" for c in password
-        ):
+        if config.password_require_symbols and not any(c in "!@#$%^&*()_+-=[]{}|;:,.<>?" for c in password):
             errors.append("Password must contain special characters")
 
         return len(errors) == 0, errors
@@ -276,9 +264,7 @@ class TokenManager:
         """
         self.secret_key = secret_key or secrets.token_urlsafe(32)
 
-    def create_token(
-        self, user_id: str, permissions: list[str], expires_in_hours: int = 24
-    ) -> str:
+    def create_token(self, user_id: str, permissions: list[str], expires_in_hours: int = 24) -> str:
         """Create authentication token.
 
         Args:
@@ -341,9 +327,7 @@ class TokenManager:
         Returns:
             Signature
         """
-        signature = hmac.new(
-            self.secret_key.encode(), payload.encode(), hashlib.sha256
-        ).hexdigest()
+        signature = hmac.new(self.secret_key.encode(), payload.encode(), hashlib.sha256).hexdigest()
 
         return signature
 
@@ -536,9 +520,7 @@ class AuthenticationManager:
             Created user
         """
         # Validate password
-        is_valid, errors = self.password_manager.validate_password_strength(
-            password, self.config
-        )
+        is_valid, errors = self.password_manager.validate_password_strength(password, self.config)
         if not is_valid:
             raise ValueError(f"Password validation failed: {', '.join(errors)}")
 
@@ -660,9 +642,7 @@ class AuthenticationManager:
                 locked_until = None
 
                 if failed_attempts >= self.config.max_failed_attempts:
-                    locked_until = datetime.now() + timedelta(
-                        minutes=self.config.lockout_duration_minutes
-                    )
+                    locked_until = datetime.now() + timedelta(minutes=self.config.lockout_duration_minutes)
 
                 conn.execute(
                     """
@@ -732,9 +712,7 @@ class AuthenticationManager:
 
             return True, user, session_token
 
-    def authenticate_api_key(
-        self, api_key: str, ip_address: str = "unknown"
-    ) -> tuple[bool, User | None]:
+    def authenticate_api_key(self, api_key: str, ip_address: str = "unknown") -> tuple[bool, User | None]:
         """Authenticate using API key.
 
         Args:
@@ -769,10 +747,7 @@ class AuthenticationManager:
                 return False, None
 
             # Check expiry
-            if (
-                row["expires_at"]
-                and datetime.fromisoformat(row["expires_at"]) < datetime.now()
-            ):
+            if row["expires_at"] and datetime.fromisoformat(row["expires_at"]) < datetime.now():
                 self._audit_log(
                     action="api_auth_failed",
                     resource="api_key",
@@ -1063,13 +1038,9 @@ class AuthenticationManager:
             security_level=SecurityLevel(row["security_level"]),
             enabled=bool(row["enabled"]),
             created_at=datetime.fromisoformat(row["created_at"]),
-            last_login=datetime.fromisoformat(row["last_login"])
-            if row["last_login"]
-            else None,
+            last_login=datetime.fromisoformat(row["last_login"]) if row["last_login"] else None,
             failed_login_attempts=row["failed_login_attempts"],
-            locked_until=datetime.fromisoformat(row["locked_until"])
-            if row["locked_until"]
-            else None,
+            locked_until=datetime.fromisoformat(row["locked_until"]) if row["locked_until"] else None,
             mfa_enabled=bool(row["mfa_enabled"]),
             mfa_secret=row["mfa_secret"],
             metadata=json.loads(row["metadata"]),

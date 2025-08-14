@@ -32,9 +32,7 @@ class AdvancedAnalytics:
         return report
 
     def visualize_metrics(self) -> bytes:
-        fig, axs = plt.subplots(
-            len(self.metrics), 1, figsize=(10, 5 * len(self.metrics))
-        )
+        fig, axs = plt.subplots(len(self.metrics), 1, figsize=(10, 5 * len(self.metrics)))
         for i, (metric_name, values) in enumerate(self.metrics.items()):
             ax = axs[i] if len(self.metrics) > 1 else axs
             ax.plot(values)
@@ -70,9 +68,7 @@ class AdvancedAnalytics:
 
     def generate_heatmap(self, data: list[list[float]], labels: list[str]) -> bytes:
         plt.figure(figsize=(10, 8))
-        sns.heatmap(
-            data, annot=True, cmap="YlGnBu", xticklabels=labels, yticklabels=labels
-        )
+        sns.heatmap(data, annot=True, cmap="YlGnBu", xticklabels=labels, yticklabels=labels)
         plt.title("Correlation Heatmap")
         buf = io.BytesIO()
         plt.savefig(buf, format="png")
@@ -93,9 +89,7 @@ class AdvancedAnalytics:
         plt.close()
         return buf.getvalue()
 
-    def generate_scatter_plot(
-        self, x: list[float], y: list[float], labels: list[str], title: str
-    ) -> bytes:
+    def generate_scatter_plot(self, x: list[float], y: list[float], labels: list[str], title: str) -> bytes:
         plt.figure(figsize=(10, 6))
         plt.scatter(x, y)
         for i, label in enumerate(labels):
@@ -121,9 +115,7 @@ class AdvancedAnalytics:
             }
         return pd.DataFrame(summary).T
 
-    def perform_correlation_analysis(
-        self, data: dict[str, list[float]]
-    ) -> pd.DataFrame:
+    def perform_correlation_analysis(self, data: dict[str, list[float]]) -> pd.DataFrame:
         df = pd.DataFrame(data)
         return df.corr()
 

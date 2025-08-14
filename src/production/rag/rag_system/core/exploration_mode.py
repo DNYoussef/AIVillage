@@ -22,9 +22,7 @@ class ExplorationMode:
         self.llm = llm_config.create()
         self.advanced_nlp = advanced_nlp
 
-    async def explore_knowledge_graph(
-        self, start_node: str, depth: int = 3
-    ) -> dict[str, Any]:
+    async def explore_knowledge_graph(self, start_node: str, depth: int = 3) -> dict[str, Any]:
         """Explore the knowledge graph starting from a given node.
 
         Args:
@@ -37,9 +35,7 @@ class ExplorationMode:
         explored_nodes = set()
         exploration_results = []
 
-        await self._explore_recursive(
-            start_node, depth, explored_nodes, exploration_results
-        )
+        await self._explore_recursive(start_node, depth, explored_nodes, exploration_results)
 
         return {
             "start_node": start_node,
@@ -66,19 +62,13 @@ class ExplorationMode:
 
         for connection in connections:
             if connection["target"] not in explored_nodes:
-                relation = await self._analyze_relation(
-                    node, connection["target"], connection["type"]
-                )
+                relation = await self._analyze_relation(node, connection["target"], connection["type"])
                 exploration_results.append(relation)
 
                 # Recursively explore connected nodes
-                await self._explore_recursive(
-                    connection["target"], depth - 1, explored_nodes, exploration_results
-                )
+                await self._explore_recursive(connection["target"], depth - 1, explored_nodes, exploration_results)
 
-    async def _analyze_relation(
-        self, source: str, target: str, relation_type: str
-    ) -> dict[str, Any]:
+    async def _analyze_relation(self, source: str, target: str, relation_type: str) -> dict[str, Any]:
         """Analyze the relation between two nodes.
 
         Args:
@@ -123,9 +113,7 @@ class ExplorationMode:
             logger.exception(f"Failed to parse JSON response: {response}")
             return {"error": "Failed to parse response"}
 
-    async def discover_new_relations(
-        self, num_attempts: int = 10
-    ) -> list[dict[str, Any]]:
+    async def discover_new_relations(self, num_attempts: int = 10) -> list[dict[str, Any]]:
         """Attempt to discover new relations in the knowledge graph.
 
         Args:
@@ -217,9 +205,7 @@ class ExplorationMode:
         # Use advanced NLP to analyze the semantic similarity between the source and target
         source_embedding = self.advanced_nlp.get_embeddings([relation["source"]])[0]
         target_embedding = self.advanced_nlp.get_embeddings([relation["target"]])[0]
-        semantic_similarity = self.advanced_nlp.calculate_similarity(
-            source_embedding, target_embedding
-        )
+        semantic_similarity = self.advanced_nlp.calculate_similarity(source_embedding, target_embedding)
 
         # Combine LLM validation with semantic similarity
         is_valid = validation["is_valid"] and semantic_similarity > 0.5
@@ -251,9 +237,7 @@ class ExplorationMode:
             else:
                 logger.info(f"Rejected invalid relation: {relation}")
 
-    async def generate_exploration_report(
-        self, exploration_results: dict[str, Any]
-    ) -> str:
+    async def generate_exploration_report(self, exploration_results: dict[str, Any]) -> str:
         """Generate a human-readable report of the exploration results.
 
         Args:
@@ -279,9 +263,7 @@ class ExplorationMode:
 
         return report
 
-    async def find_causal_paths(
-        self, start_node: str, end_node: str, max_depth: int = 5
-    ) -> list[list[str]]:
+    async def find_causal_paths(self, start_node: str, end_node: str, max_depth: int = 5) -> list[list[str]]:
         """Find the most direct causal path between two nodes in the knowledge graph.
 
         Args:
@@ -342,9 +324,7 @@ class ExplorationMode:
         excluded_graph = graph.copy()
         excluded_graph.remove_nodes_from(excluded_nodes)
 
-        paths = list(
-            nx.all_simple_paths(excluded_graph, start_node, end_node, cutoff=max_depth)
-        )
+        paths = list(nx.all_simple_paths(excluded_graph, start_node, end_node, cutoff=max_depth))
 
         if not paths:
             return []
@@ -354,10 +334,7 @@ class ExplorationMode:
             creativity_score = await self._calculate_creativity_score(path)
             creative_paths.append((path, creativity_score))
 
-        return [
-            path
-            for path, score in sorted(creative_paths, key=lambda x: x[1], reverse=True)
-        ]
+        return [path for path, score in sorted(creative_paths, key=lambda x: x[1], reverse=True)]
 
     async def _calculate_creativity_score(self, path: list[str]) -> float:
         """Calculate a creativity score for a given path.
@@ -378,9 +355,7 @@ class ExplorationMode:
             return total / (len(path) - 1)
         return 0.0
 
-    async def generate_new_ideas(
-        self, start_node: str, end_node: str
-    ) -> list[dict[str, Any]]:
+    async def generate_new_ideas(self, start_node: str, end_node: str) -> list[dict[str, Any]]:
         """Generate new ideas by finding causal paths and creative connections.
 
         Args:
@@ -398,9 +373,7 @@ class ExplorationMode:
         main_causal_path = causal_paths[0]
         excluded_nodes = {node for path in causal_paths for node in path[1:-1]}
 
-        creative_paths = await self.find_creative_connections(
-            start_node, end_node, list(excluded_nodes)
-        )
+        creative_paths = await self.find_creative_connections(start_node, end_node, list(excluded_nodes))
 
         new_ideas = []
         for path in creative_paths:
@@ -409,9 +382,7 @@ class ExplorationMode:
 
         return new_ideas
 
-    async def _generate_idea_from_path(
-        self, creative_path: list[str], causal_path: list[str]
-    ) -> dict[str, Any]:
+    async def _generate_idea_from_path(self, creative_path: list[str], causal_path: list[str]) -> dict[str, Any]:
         """Generate a new idea based on a creative path and the main causal path.
 
         Args:
@@ -450,9 +421,7 @@ class ExplorationMode:
         response = await self.llm.complete(prompt)
         return self._parse_json_response(response.text)
 
-    async def update_graph_with_new_ideas(
-        self, new_ideas: list[dict[str, Any]]
-    ) -> None:
+    async def update_graph_with_new_ideas(self, new_ideas: list[dict[str, Any]]) -> None:
         """Update the knowledge graph with new ideas and connections.
 
         Args:
@@ -461,9 +430,7 @@ class ExplorationMode:
         for idea in new_ideas:
             # Add new nodes
             for node in idea["nodes_to_add"]:
-                await self.graph_store.add_node(
-                    node, {"type": "concept", "description": ""}
-                )
+                await self.graph_store.add_node(node, {"type": "concept", "description": ""})
 
             # Add new edges
             for edge in idea["edges_to_add"]:
@@ -481,9 +448,7 @@ class ExplorationMode:
 
         logger.info(f"Added {len(new_ideas)} new ideas to the knowledge graph")
 
-    async def creative_exploration(
-        self, start_node: str, end_node: str
-    ) -> dict[str, Any]:
+    async def creative_exploration(self, start_node: str, end_node: str) -> dict[str, Any]:
         """Perform a creative exploration between two nodes in the knowledge graph.
 
         Args:

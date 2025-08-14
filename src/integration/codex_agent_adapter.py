@@ -31,9 +31,7 @@ class CODEXAgentAdapter:
             self.p2p_config = {"host": "0.0.0.0", "port": 4001}
 
     # RAG Integration Methods
-    async def query_knowledge(
-        self, query: str, context: str = "", k: int = 5
-    ) -> list[dict[str, Any]]:
+    async def query_knowledge(self, query: str, context: str = "", k: int = 5) -> list[dict[str, Any]]:
         """Query RAG system with context."""
         try:
             full_query = f"{context} {query}" if context else query
@@ -57,16 +55,12 @@ class CODEXAgentAdapter:
         """Check RAG system health."""
         try:
             response = requests.get(f"{self.rag_base_url}/health/rag", timeout=5)
-            return response.status_code == 200 and response.json().get(
-                "pipeline_ready", False
-            )
+            return response.status_code == 200 and response.json().get("pipeline_ready", False)
         except:
             return False
 
     # Evolution Metrics Methods
-    def log_agent_fitness(
-        self, round_id: int, fitness_score: float, performance_data: dict[str, Any]
-    ) -> bool:
+    def log_agent_fitness(self, round_id: int, fitness_score: float, performance_data: dict[str, Any]) -> bool:
         """Log agent fitness to evolution metrics database."""
         try:
             conn = sqlite3.connect(self.evolution_db_path)
@@ -136,9 +130,7 @@ class CODEXAgentAdapter:
             return []
 
     # P2P Communication Methods
-    async def send_agent_message(
-        self, target_agent: str, message_type: str, data: dict[str, Any]
-    ) -> bool:
+    async def send_agent_message(self, target_agent: str, message_type: str, data: dict[str, Any]) -> bool:
         """Send message to another agent via P2P network."""
         try:
             {
@@ -191,9 +183,7 @@ class CODEXAgentAdapter:
         ready = all(health.values())
 
         if ready:
-            logger.info(
-                f"Agent {self.agent_id} successfully integrated with CODEX systems"
-            )
+            logger.info(f"Agent {self.agent_id} successfully integrated with CODEX systems")
         else:
             logger.warning(f"Agent {self.agent_id} integration incomplete: {health}")
 

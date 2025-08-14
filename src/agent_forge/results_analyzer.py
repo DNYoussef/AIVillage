@@ -66,9 +66,7 @@ class InsightSummary:
 class WandBDashboardAnalyzer:
     """Analyzes W&B dashboard data for insights."""
 
-    def __init__(
-        self, project_name: str = "agent-forge-comprehensive-benchmark"
-    ) -> None:
+    def __init__(self, project_name: str = "agent-forge-comprehensive-benchmark") -> None:
         self.project_name = project_name
         self.api = wandb.Api()
 
@@ -77,9 +75,7 @@ class WandBDashboardAnalyzer:
         logger.info(f"Extracting data from W&B project: {self.project_name}")
 
         try:
-            runs = self.api.runs(
-                f"{entity}/{self.project_name}" if entity else self.project_name
-            )
+            runs = self.api.runs(f"{entity}/{self.project_name}" if entity else self.project_name)
 
             dashboard_data = {
                 "runs": [],
@@ -236,8 +232,7 @@ class ResultsAnalyzer:
                 "best_score": max(model_averages.values()),
                 "worst_model": min(model_averages, key=model_averages.get),
                 "worst_score": min(model_averages.values()),
-                "score_range": max(model_averages.values())
-                - min(model_averages.values()),
+                "score_range": max(model_averages.values()) - min(model_averages.values()),
                 "model_count": len(model_averages),
             }
 
@@ -268,26 +263,15 @@ class ResultsAnalyzer:
                         "average": stats["mean"],
                         "variability": stats["std"],
                         "best_performance": stats["max"],
-                        "stability": (
-                            1 - (stats["std"] / stats["mean"])
-                            if stats["mean"] > 0
-                            else 0
-                        ),
+                        "stability": (1 - (stats["std"] / stats["mean"]) if stats["mean"] > 0 else 0),
                     }
 
             # Detect anomalies (scores outside 2 standard deviations)
             for run in dashboard_data["runs"]:
                 for metric, value in run["summary"].items():
-                    if (
-                        isinstance(value, int | float)
-                        and metric in dashboard_data["summary_metrics"]
-                    ):
+                    if isinstance(value, int | float) and metric in dashboard_data["summary_metrics"]:
                         stats_data = dashboard_data["summary_metrics"][metric]
-                        z_score = (
-                            abs((value - stats_data["mean"]) / stats_data["std"])
-                            if stats_data["std"] > 0
-                            else 0
-                        )
+                        z_score = abs((value - stats_data["mean"]) / stats_data["std"]) if stats_data["std"] > 0 else 0
 
                         if z_score > 2:  # Outlier detection
                             analysis["anomalies"].append(
@@ -296,11 +280,7 @@ class ResultsAnalyzer:
                                     "metric": metric,
                                     "value": value,
                                     "z_score": z_score,
-                                    "type": (
-                                        "outlier_high"
-                                        if value > stats_data["mean"]
-                                        else "outlier_low"
-                                    ),
+                                    "type": ("outlier_high" if value > stats_data["mean"] else "outlier_low"),
                                 }
                             )
 
@@ -355,17 +335,11 @@ class ResultsAnalyzer:
                     avg_score = phase_scores.mean()
 
                     if avg_score > 0.75:
-                        recommendations.append(
-                            "Excellent performance - ready for production"
-                        )
+                        recommendations.append("Excellent performance - ready for production")
                     elif avg_score > 0.6:
-                        recommendations.append(
-                            "Good performance with room for improvement"
-                        )
+                        recommendations.append("Good performance with room for improvement")
                     else:
-                        recommendations.append(
-                            "Below average - requires additional training"
-                        )
+                        recommendations.append("Below average - requires additional training")
 
                     if len(weaknesses) > 0:
                         recommendations.append(
@@ -421,9 +395,7 @@ class ResultsAnalyzer:
                         relative_improvement = (improvement / score1) * 100
 
                         # Consider significant if improvement > 5% or absolute improvement > 0.05
-                        is_significant = (
-                            abs(improvement) > 0.05 or abs(relative_improvement) > 5
-                        )
+                        is_significant = abs(improvement) > 0.05 or abs(relative_improvement) > 5
 
                         if is_significant:
                             # Statistical significance test (simplified)
@@ -542,19 +514,11 @@ class ResultsAnalyzer:
         # Performance-based recommendations
         if insights.confidence_level == "high":
             if "excellent" in insights.deployment_recommendation:
-                recommendations.append(
-                    "🚀 **Ready for Production**: Deploy immediately with confidence"
-                )
-                recommendations.append(
-                    "📊 **Monitor Closely**: Set up production monitoring to track performance"
-                )
+                recommendations.append("🚀 **Ready for Production**: Deploy immediately with confidence")
+                recommendations.append("📊 **Monitor Closely**: Set up production monitoring to track performance")
             elif "improvements needed" in insights.deployment_recommendation:
-                recommendations.append(
-                    "🔧 **Training Required**: Additional training cycles needed before deployment"
-                )
-                recommendations.append(
-                    "📈 **Focus Areas**: Prioritize weak benchmark improvements"
-                )
+                recommendations.append("🔧 **Training Required**: Additional training cycles needed before deployment")
+                recommendations.append("📈 **Focus Areas**: Prioritize weak benchmark improvements")
 
         # Phase-specific recommendations
         if insights.biggest_performance_jump:
@@ -574,13 +538,9 @@ class ResultsAnalyzer:
         # Concerning trend recommendations
         for trend in insights.concerning_trends:
             if "variance" in trend:
-                recommendations.append(
-                    "🎯 **Stabilize Pipeline**: High variance suggests inconsistent training"
-                )
+                recommendations.append("🎯 **Stabilize Pipeline**: High variance suggests inconsistent training")
             elif "below expectations" in trend:
-                recommendations.append(
-                    "📚 **Review Training Data**: Performance suggests data quality issues"
-                )
+                recommendations.append("📚 **Review Training Data**: Performance suggests data quality issues")
 
         # Technical recommendations
         recommendations.extend(
@@ -657,10 +617,7 @@ class ResultsAnalyzer:
 ### Model Performance Summary
 """
 
-        if (
-            "json_analysis" in analysis
-            and "performance_trends" in analysis["json_analysis"]
-        ):
+        if "json_analysis" in analysis and "performance_trends" in analysis["json_analysis"]:
             trends = analysis["json_analysis"]["performance_trends"]
             briefing += f"""
 - **Best Model**: {trends.get("best_model", "Unknown")}
@@ -802,17 +759,13 @@ async def main() -> None:
         default="./benchmark_results",
         help="Benchmark results directory",
     )
-    parser.add_argument(
-        "--sample", action="store_true", help="Run sample analysis for demonstration"
-    )
+    parser.add_argument("--sample", action="store_true", help="Run sample analysis for demonstration")
     parser.add_argument(
         "--wandb-project",
         default="agent-forge-comprehensive-benchmark",
         help="W&B project name",
     )
-    parser.add_argument(
-        "--generate-briefing", action="store_true", help="Generate executive briefing"
-    )
+    parser.add_argument("--generate-briefing", action="store_true", help="Generate executive briefing")
 
     args = parser.parse_args()
 
@@ -839,9 +792,7 @@ async def main() -> None:
             print(f"  {insight}")
 
         print("\n📋 Model Rankings:")
-        sorted_models = sorted(
-            results["model_averages"].items(), key=lambda x: x[1], reverse=True
-        )
+        sorted_models = sorted(results["model_averages"].items(), key=lambda x: x[1], reverse=True)
         for i, (model, score) in enumerate(sorted_models, 1):
             print(f"  {i}. {model}: {score:.3f}")
 
@@ -870,13 +821,9 @@ async def main() -> None:
                     jump = insights["biggest_performance_jump"]
                     print("\n📈 Biggest Jump:")
                     print(f"  {jump['from_phase']} → {jump['to_phase']}")
-                    print(
-                        f"  {jump['benchmark']}: +{jump['relative_improvement']:.1f}%"
-                    )
+                    print(f"  {jump['benchmark']}: +{jump['relative_improvement']:.1f}%")
 
-            print(
-                f"\nFull analysis saved to: {args.results_dir}/comprehensive_analysis.json"
-            )
+            print(f"\nFull analysis saved to: {args.results_dir}/comprehensive_analysis.json")
 
 
 if __name__ == "__main__":

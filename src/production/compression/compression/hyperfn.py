@@ -13,9 +13,7 @@ class HyperCompressionEncoder:
     achieving additional compression beyond VPTQ quantization.
     """
 
-    def __init__(
-        self, num_clusters: int = 16, trajectory_types: list[str] | None = None
-    ) -> None:
+    def __init__(self, num_clusters: int = 16, trajectory_types: list[str] | None = None) -> None:
         self.num_clusters = num_clusters
         self.trajectory_types = trajectory_types or ["sinusoidal", "spiral", "chaotic"]
         self.max_search_iterations = 100
@@ -34,29 +32,19 @@ class HyperCompressionEncoder:
             clusters.append({"weights": cluster, "indices": indices})
         return clusters
 
-    def _generate_sinusoidal_trajectory(
-        self, length: int, params: dict
-    ) -> torch.Tensor:
+    def _generate_sinusoidal_trajectory(self, length: int, params: dict) -> torch.Tensor:
         """Generate sinusoidal trajectory: A*sin(2π*α*t) + B*cos(2π*α*t) + D."""
         t = torch.arange(length, dtype=torch.float32)
         alpha = params["an"] / params["ad"]
         theta = 2 * math.pi * alpha * t
-        return (
-            params["A"] * torch.sin(theta)
-            + params["B"] * torch.cos(theta)
-            + params["D"]
-        )
+        return params["A"] * torch.sin(theta) + params["B"] * torch.cos(theta) + params["D"]
 
     def _generate_spiral_trajectory(self, length: int, params: dict) -> torch.Tensor:
         """Generate spiral trajectory: A*t*sin(2π*α*t) + B*t*cos(2π*α*t) + D."""
         t = torch.arange(length, dtype=torch.float32) / length  # Normalize to [0,1]
         alpha = params["an"] / params["ad"]
         theta = 2 * math.pi * alpha * t
-        return (
-            params["A"] * t * torch.sin(theta)
-            + params["B"] * t * torch.cos(theta)
-            + params["D"]
-        )
+        return params["A"] * t * torch.sin(theta) + params["B"] * t * torch.cos(theta) + params["D"]
 
     def _generate_chaotic_trajectory(self, length: int, params: dict) -> torch.Tensor:
         """Generate chaotic trajectory using logistic map: x_{n+1} = r*x_n*(1-x_n)."""
@@ -70,9 +58,7 @@ class HyperCompressionEncoder:
 
         return trajectory
 
-    def _search_params(
-        self, w: torch.Tensor, trajectory_type: str = "sinusoidal"
-    ) -> dict:
+    def _search_params(self, w: torch.Tensor, trajectory_type: str = "sinusoidal") -> dict:
         """Search for optimal parameters for the specified trajectory type."""
         mean = w.mean().item()
         std = w.std().item()
@@ -140,9 +126,7 @@ class HyperCompressionEncoder:
 
         return best
 
-    def compress_weight_matrix(
-        self, weight_matrix: torch.Tensor, trajectory_type: str = "auto"
-    ) -> dict:
+    def compress_weight_matrix(self, weight_matrix: torch.Tensor, trajectory_type: str = "auto") -> dict:
         """Compress weight matrix using hyper-function representation.
 
         Args:
@@ -152,9 +136,7 @@ class HyperCompressionEncoder:
         Returns:
             Dictionary containing compression data
         """
-        logger.debug(
-            f"Compressing matrix of shape {weight_matrix.shape} with hyper-function"
-        )
+        logger.debug(f"Compressing matrix of shape {weight_matrix.shape} with hyper-function")
 
         clusters = self._cluster(weight_matrix)
         params = []
@@ -178,17 +160,13 @@ class HyperCompressionEncoder:
         else:
             # Use specified trajectory type for all clusters
             for cluster in clusters:
-                cluster_params = self._search_params(
-                    cluster["weights"], trajectory_type
-                )
+                cluster_params = self._search_params(cluster["weights"], trajectory_type)
                 params.append(cluster_params)
 
         # Calculate compression statistics
         original_bits = weight_matrix.numel() * 32  # float32
         compressed_bits = len(params) * 8 * 4  # 8 parameters per cluster, 4 bytes each
-        compression_ratio = (
-            original_bits / compressed_bits if compressed_bits > 0 else 0
-        )
+        compression_ratio = original_bits / compressed_bits if compressed_bits > 0 else 0
 
         # Calculate total reconstruction error
         total_error = sum(p["err"] for p in params)
@@ -225,11 +203,7 @@ class HyperCompressionEncoder:
             Reconstructed weight matrix
         """
         shape = data["original_shape"]
-        total = (
-            shape.numel()
-            if isinstance(shape, torch.Size)
-            else int(torch.prod(torch.tensor(shape)))
-        )
+        total = shape.numel() if isinstance(shape, torch.Size) else int(torch.prod(torch.tensor(shape)))
 
         # Reconstruct clusters
         out = torch.zeros(total)

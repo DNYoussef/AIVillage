@@ -177,8 +177,7 @@ class BitChatMessage:
                     self.payload = compressed
                     self.compressed = True
                     logger.debug(
-                        f"Compressed message {self.id[:8]}: "
-                        f"{len(self.payload)} -> {len(compressed)} bytes"
+                        f"Compressed message {self.id[:8]}: " f"{len(self.payload)} -> {len(compressed)} bytes"
                     )
                     return True
             except Exception as e:
@@ -197,9 +196,7 @@ class BitChatMessage:
                 return False
         return True
 
-    def encrypt_payload(
-        self, recipient_public_key: bytes, sender_private_key: bytes
-    ) -> bool:
+    def encrypt_payload(self, recipient_public_key: bytes, sender_private_key: bytes) -> bool:
         """Encrypt payload with X25519"""
         if not CRYPTO_AVAILABLE or self.encrypted:
             return False
@@ -218,9 +215,7 @@ class BitChatMessage:
             logger.error(f"Encryption failed: {e}")
             return False
 
-    def decrypt_payload(
-        self, sender_public_key: bytes, recipient_private_key: bytes
-    ) -> bool:
+    def decrypt_payload(self, sender_public_key: bytes, recipient_private_key: bytes) -> bool:
         """Decrypt payload with X25519"""
         if not CRYPTO_AVAILABLE or not self.encrypted:
             return False
@@ -333,9 +328,7 @@ class BitChatMessage:
         return fragments
 
     @classmethod
-    def reassemble_from_fragments(
-        cls, fragments: list[BitChatFragment]
-    ) -> Optional["BitChatMessage"]:
+    def reassemble_from_fragments(cls, fragments: list[BitChatFragment]) -> Optional["BitChatMessage"]:
         """Reassemble message from fragments"""
         if not fragments:
             return None
@@ -346,17 +339,13 @@ class BitChatMessage:
         # Verify we have all fragments
         expected_count = fragments[0].total_fragments
         if len(fragments) != expected_count:
-            logger.warning(
-                f"Missing fragments: have {len(fragments)}, need {expected_count}"
-            )
+            logger.warning(f"Missing fragments: have {len(fragments)}, need {expected_count}")
             return None
 
         # Verify fragment sequence
         for i, fragment in enumerate(fragments):
             if fragment.fragment_index != i:
-                logger.error(
-                    f"Fragment sequence error: expected {i}, got {fragment.fragment_index}"
-                )
+                logger.error(f"Fragment sequence error: expected {i}, got {fragment.fragment_index}")
                 return None
 
         # Reassemble payload
@@ -371,9 +360,7 @@ class BitChatMessage:
         # Create reassembled message
         message = cls(id=fragments[0].fragment_id, payload=payload, is_fragmented=True)
 
-        logger.debug(
-            f"Reassembled message {message.id[:8]} from {len(fragments)} fragments"
-        )
+        logger.debug(f"Reassembled message {message.id[:8]} from {len(fragments)} fragments")
         return message
 
     def to_dict(self) -> dict[str, Any]:
@@ -384,9 +371,7 @@ class BitChatMessage:
             "recipient": self.recipient,
             "channel": self.channel,
             "message_type": self.message_type.value,
-            "payload": self.payload.hex()
-            if isinstance(self.payload, bytes)
-            else self.payload,
+            "payload": self.payload.hex() if isinstance(self.payload, bytes) else self.payload,
             "compressed": self.compressed,
             "encrypted": self.encrypted,
             "signed": self.signed,
@@ -408,9 +393,7 @@ class BitChatMessage:
             recipient=data.get("recipient", ""),
             channel=data.get("channel", ""),
             message_type=BitChatMessageType(data.get("message_type", 1)),
-            payload=bytes.fromhex(data["payload"])
-            if isinstance(data["payload"], str)
-            else data["payload"],
+            payload=bytes.fromhex(data["payload"]) if isinstance(data["payload"], str) else data["payload"],
             compressed=data.get("compressed", False),
             encrypted=data.get("encrypted", False),
             signed=data.get("signed", False),
@@ -485,9 +468,7 @@ class EnhancedBitChatTransport:
         # Message handling
         self.message_handlers: dict[BitChatMessageType, Callable] = {}
         self.sent_messages: set[str] = set()  # Deduplication
-        self.pending_fragments: dict[str, dict[int, BitChatFragment]] = defaultdict(
-            dict
-        )
+        self.pending_fragments: dict[str, dict[int, BitChatFragment]] = defaultdict(dict)
 
         # Store-and-forward cache
         self.store_forward_cache: dict[str, list[BitChatMessage]] = defaultdict(list)
@@ -572,10 +553,7 @@ class EnhancedBitChatTransport:
             except asyncio.CancelledError:
                 pass
 
-        if (
-            hasattr(self, "bluetooth_advertising_task")
-            and self.bluetooth_advertising_task
-        ):
+        if hasattr(self, "bluetooth_advertising_task") and self.bluetooth_advertising_task:
             self.bluetooth_advertising_task.cancel()
             try:
                 await self.bluetooth_advertising_task
@@ -707,9 +685,7 @@ class EnhancedBitChatTransport:
 
     def get_status(self) -> dict[str, Any]:
         """Get transport status"""
-        self.stats["cache_size"] = sum(
-            len(msgs) for msgs in self.store_forward_cache.values()
-        )
+        self.stats["cache_size"] = sum(len(msgs) for msgs in self.store_forward_cache.values())
         self.stats["active_channels"] = len(self.joined_channels)
 
         return {
@@ -734,11 +710,7 @@ class EnhancedBitChatTransport:
                 message.route_path.append(self.device_id)
 
             # Actual Bluetooth transmission
-            if (
-                BLUETOOTH_AVAILABLE
-                and hasattr(self, "bluetooth_socket")
-                and self.bluetooth_socket
-            ):
+            if BLUETOOTH_AVAILABLE and hasattr(self, "bluetooth_socket") and self.bluetooth_socket:
                 try:
                     # Serialize message for Bluetooth transmission
                     message_data = json.dumps(
@@ -756,27 +728,18 @@ class EnhancedBitChatTransport:
 
                     # Fragment if necessary (BLE has ~500 byte limit)
                     if len(message_data) > 500:
-                        fragments = [
-                            message_data[i : i + 500]
-                            for i in range(0, len(message_data), 500)
-                        ]
+                        fragments = [message_data[i : i + 500] for i in range(0, len(message_data), 500)]
                         for i, fragment in enumerate(fragments):
-                            fragment_header = struct.pack(
-                                "<HHH", len(fragments), i, len(fragment)
-                            )
+                            fragment_header = struct.pack("<HHH", len(fragments), i, len(fragment))
                             self.bluetooth_socket.send(fragment_header + fragment)
                             await asyncio.sleep(0.01)  # Small delay between fragments
                     else:
                         self.bluetooth_socket.send(message_data)
 
-                    logger.debug(
-                        f"Bluetooth transmission of message {message.id[:8]} completed"
-                    )
+                    logger.debug(f"Bluetooth transmission of message {message.id[:8]} completed")
 
                 except Exception as e:
-                    logger.warning(
-                        f"Bluetooth transmission failed, falling back to simulation: {e}"
-                    )
+                    logger.warning(f"Bluetooth transmission failed, falling back to simulation: {e}")
                     await asyncio.sleep(0.001)  # Simulate transmission delay
             else:
                 # Simulation mode when Bluetooth not available
@@ -790,9 +753,7 @@ class EnhancedBitChatTransport:
             logger.error(f"Message transmission failed: {e}")
             return False
 
-    async def _send_fragments(
-        self, fragments: list[BitChatFragment], recipient: str
-    ) -> bool:
+    async def _send_fragments(self, fragments: list[BitChatFragment], recipient: str) -> bool:
         """Send message fragments"""
         success_count = 0
 
@@ -815,15 +776,9 @@ class EnhancedBitChatTransport:
         self.message_handlers[BitChatMessageType.DATA] = self._handle_data_message
         self.message_handlers[BitChatMessageType.FRAGMENT] = self._handle_fragment
         self.message_handlers[BitChatMessageType.HELLO] = self._handle_hello
-        self.message_handlers[BitChatMessageType.CHANNEL_JOIN] = (
-            self._handle_channel_join
-        )
-        self.message_handlers[BitChatMessageType.CHANNEL_LEAVE] = (
-            self._handle_channel_leave
-        )
-        self.message_handlers[BitChatMessageType.CHANNEL_MSG] = (
-            self._handle_channel_message
-        )
+        self.message_handlers[BitChatMessageType.CHANNEL_JOIN] = self._handle_channel_join
+        self.message_handlers[BitChatMessageType.CHANNEL_LEAVE] = self._handle_channel_leave
+        self.message_handlers[BitChatMessageType.CHANNEL_MSG] = self._handle_channel_message
         self.message_handlers[BitChatMessageType.DUMMY] = self._handle_dummy_traffic
 
     async def _handle_data_message(self, message: BitChatMessage):
@@ -846,17 +801,13 @@ class EnhancedBitChatTransport:
             fragment = BitChatFragment.from_bytes(message.payload)
 
             # Store fragment
-            self.pending_fragments[fragment.fragment_id][fragment.fragment_index] = (
-                fragment
-            )
+            self.pending_fragments[fragment.fragment_id][fragment.fragment_index] = fragment
 
             # Check if we have all fragments
             fragments_dict = self.pending_fragments[fragment.fragment_id]
             if len(fragments_dict) == fragment.total_fragments:
                 # Attempt reassembly
-                fragments_list = [
-                    fragments_dict[i] for i in range(fragment.total_fragments)
-                ]
+                fragments_list = [fragments_dict[i] for i in range(fragment.total_fragments)]
                 reassembled = BitChatMessage.reassemble_from_fragments(fragments_list)
 
                 if reassembled:
@@ -889,9 +840,7 @@ class EnhancedBitChatTransport:
         channel_name = message.channel
         if channel_name:
             if channel_name not in self.channels:
-                self.channels[channel_name] = BitChatChannel(
-                    channel_name, message.sender
-                )
+                self.channels[channel_name] = BitChatChannel(channel_name, message.sender)
 
             self.channels[channel_name].add_member(message.sender)
             logger.debug(f"{message.sender} joined channel {channel_name}")
@@ -971,11 +920,7 @@ class EnhancedBitChatTransport:
 
         for recipient, messages in list(self.store_forward_cache.items()):
             # Filter out expired messages
-            valid_messages = [
-                msg
-                for msg in messages
-                if msg.expires_at and msg.expires_at > current_time
-            ]
+            valid_messages = [msg for msg in messages if msg.expires_at and msg.expires_at > current_time]
 
             if len(valid_messages) != len(messages):
                 cleaned_count += len(messages) - len(valid_messages)
@@ -1009,12 +954,8 @@ class EnhancedBitChatTransport:
         hello_payload = json.dumps(
             {
                 "device_id": self.device_id,
-                "public_key": self.keys.public_key.hex()
-                if self.keys.public_key
-                else "",
-                "verify_key": bytes(self.keys.verify_key).hex()
-                if self.keys.verify_key
-                else "",
+                "public_key": self.keys.public_key.hex() if self.keys.public_key else "",
+                "verify_key": bytes(self.keys.verify_key).hex() if self.keys.verify_key else "",
                 "timestamp": time.time(),
                 "capabilities": ["bitchat", "crypto"],
                 "channels": list(self.joined_channels),
@@ -1050,9 +991,7 @@ class EnhancedBitChatTransport:
                 # This is a simplified implementation for classic Bluetooth discovery
 
                 # Discover nearby devices
-                nearby_devices = bluetooth.discover_devices(
-                    lookup_names=True, duration=8
-                )
+                nearby_devices = bluetooth.discover_devices(lookup_names=True, duration=8)
 
                 for addr, name in nearby_devices:
                     # Look for BitChat-compatible devices
@@ -1066,18 +1005,12 @@ class EnhancedBitChatTransport:
                         logger.info(f"Discovered BitChat peer: {name} ({addr})")
 
                 # Start advertising our own service
-                self.bluetooth_advertising_task = asyncio.create_task(
-                    self._bluetooth_advertising_loop()
-                )
+                self.bluetooth_advertising_task = asyncio.create_task(self._bluetooth_advertising_loop())
 
                 # Start discovery monitoring loop
-                self.bluetooth_discovery_task = asyncio.create_task(
-                    self._bluetooth_discovery_loop()
-                )
+                self.bluetooth_discovery_task = asyncio.create_task(self._bluetooth_discovery_loop())
 
-                logger.info(
-                    f"Bluetooth discovery started, found {len(nearby_devices)} devices"
-                )
+                logger.info(f"Bluetooth discovery started, found {len(nearby_devices)} devices")
                 return True
 
             except bluetooth.BluetoothError as e:
@@ -1098,9 +1031,7 @@ class EnhancedBitChatTransport:
                 if BLUETOOTH_AVAILABLE:
                     import bluetooth
 
-                    nearby_devices = bluetooth.discover_devices(
-                        lookup_names=True, duration=5
-                    )
+                    nearby_devices = bluetooth.discover_devices(lookup_names=True, duration=5)
 
                     for addr, name in nearby_devices:
                         if addr not in self.discovered_peers:
@@ -1111,9 +1042,7 @@ class EnhancedBitChatTransport:
                                     "discovered_at": time.time(),
                                     "type": "bluetooth",
                                 }
-                                logger.info(
-                                    f"New BitChat peer discovered: {name} ({addr})"
-                                )
+                                logger.info(f"New BitChat peer discovered: {name} ({addr})")
 
             except Exception as e:
                 logger.warning(f"Bluetooth discovery loop error: {e}")

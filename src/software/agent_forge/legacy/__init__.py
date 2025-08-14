@@ -80,9 +80,7 @@ class AgentForge:
             try:
                 from .evolution import evolution_orchestrator
 
-                self._evolution_tournament = (
-                    evolution_orchestrator.EvolutionOrchestrator(self.config)
-                )
+                self._evolution_tournament = evolution_orchestrator.EvolutionOrchestrator(self.config)
             except ImportError:
                 msg = "evolution module not available"
                 raise ImportError(msg)

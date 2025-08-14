@@ -88,13 +88,9 @@ class ReshardingConfig:
 
     enable_auto_resharding: bool = True
     min_resharding_interval_seconds: float = 30.0
-    performance_threshold: float = (
-        0.7  # Trigger resharding if performance drops below this
-    )
+    performance_threshold: float = 0.7  # Trigger resharding if performance drops below this
     load_imbalance_threshold: float = 0.3  # Max acceptable load imbalance
-    device_stability_window_seconds: float = (
-        60.0  # Wait time before considering device stable
-    )
+    device_stability_window_seconds: float = 60.0  # Wait time before considering device stable
     max_concurrent_resharding: int = 1
     graceful_handoff_timeout_seconds: float = 30.0
     emergency_resharding_threshold: float = 0.5  # Critical performance threshold
@@ -193,14 +189,10 @@ class AdaptiveReshardingManager:
         """Replay any resharding events that were incomplete before restart."""
         pending = [e for e in self.resharding_history if not e.success]
         for event in pending:
-            strategy_name = event.metadata.get(
-                "strategy", ReshardingStrategy.OPTIMAL_REBALANCE.value
-            )
+            strategy_name = event.metadata.get("strategy", ReshardingStrategy.OPTIMAL_REBALANCE.value)
             strategy = ReshardingStrategy(strategy_name)
             logger.info(f"Replaying incomplete resharding event {event.event_id}")
-            await self.trigger_resharding(
-                event.reason, event.trigger_device_id, strategy=strategy
-            )
+            await self.trigger_resharding(event.reason, event.trigger_device_id, strategy=strategy)
             event.success = True
         if pending:
             self._save_history_to_disk()
@@ -242,10 +234,7 @@ class AdaptiveReshardingManager:
                 current_devices.add(peer_id)
 
         # Add local device if suitable
-        if (
-            self.p2p_node.local_capabilities
-            and self.p2p_node.local_capabilities.is_suitable_for_evolution()
-        ):
+        if self.p2p_node.local_capabilities and self.p2p_node.local_capabilities.is_suitable_for_evolution():
             current_devices.add(self.p2p_node.node_id)
 
         # Compare with devices in current sharding plan
@@ -273,9 +262,7 @@ class AdaptiveReshardingManager:
         current_performance = await self._get_current_performance()
 
         if current_performance < self.config.performance_threshold:
-            logger.warning(
-                f"Performance degradation detected: {current_performance:.3f}"
-            )
+            logger.warning(f"Performance degradation detected: {current_performance:.3f}")
 
             if current_performance < self.config.emergency_resharding_threshold:
                 await self.trigger_resharding(
@@ -293,15 +280,11 @@ class AdaptiveReshardingManager:
         if not self.sharding_engine.current_sharding_plan:
             return
 
-        current_balance = (
-            self.sharding_engine.current_sharding_plan.compute_balance_score
-        )
+        current_balance = self.sharding_engine.current_sharding_plan.compute_balance_score
 
         if current_balance < (1.0 - self.config.load_imbalance_threshold):
             logger.info(f"Load imbalance detected: {current_balance:.3f}")
-            await self.trigger_resharding(
-                ReshardingReason.LOAD_IMBALANCE, strategy=ReshardingStrategy.INCREMENTAL
-            )
+            await self.trigger_resharding(ReshardingReason.LOAD_IMBALANCE, strategy=ReshardingStrategy.INCREMENTAL)
 
     async def _handle_device_joined(self, device_id: str) -> None:
         """Handle new device joining the network."""
@@ -321,10 +304,7 @@ class AdaptiveReshardingManager:
         self.stats["device_failures_handled"] += 1
 
         # Check if this device has active shards
-        has_shards = any(
-            shard.device_id == device_id
-            for _, shard in self.sharding_engine.active_shards.items()
-        )
+        has_shards = any(shard.device_id == device_id for _, shard in self.sharding_engine.active_shards.items())
 
         if has_shards:
             # Immediate resharding needed
@@ -380,9 +360,7 @@ class AdaptiveReshardingManager:
         self._save_history_to_disk()
 
         try:
-            logger.info(
-                f"Starting resharding: reason={reason.value}, strategy={strategy.value}"
-            )
+            logger.info(f"Starting resharding: reason={reason.value}, strategy={strategy.value}")
             self.resharding_active = True
             start_time = time.time()
 
@@ -395,9 +373,7 @@ class AdaptiveReshardingManager:
             event.new_plan = self.sharding_engine.current_sharding_plan
 
             # Calculate disruption score
-            event.disruption_score = self._calculate_disruption_score(
-                event.old_plan, event.new_plan
-            )
+            event.disruption_score = self._calculate_disruption_score(event.old_plan, event.new_plan)
 
             # Update statistics
             self.stats["total_resharding_events"] += 1
@@ -406,19 +382,13 @@ class AdaptiveReshardingManager:
             else:
                 self.stats["failed_resharding"] += 1
 
-            self.stats["avg_resharding_time"] = (
-                self.stats["avg_resharding_time"] + event.duration_seconds
-            ) / 2
-            self.stats["avg_disruption_score"] = (
-                self.stats["avg_disruption_score"] + event.disruption_score
-            ) / 2
+            self.stats["avg_resharding_time"] = (self.stats["avg_resharding_time"] + event.duration_seconds) / 2
+            self.stats["avg_disruption_score"] = (self.stats["avg_disruption_score"] + event.disruption_score) / 2
 
             self.last_resharding_time = time.time()
             self._save_history_to_disk()
 
-            logger.info(
-                f"Resharding completed: success={success}, duration={event.duration_seconds:.2f}s"
-            )
+            logger.info(f"Resharding completed: success={success}, duration={event.duration_seconds:.2f}s")
             return success
 
         except Exception as e:
@@ -440,18 +410,13 @@ class AdaptiveReshardingManager:
 
         # Check minimum interval
         current_time = time.time()
-        if (
-            current_time - self.last_resharding_time
-            < self.config.min_resharding_interval_seconds
-        ):
+        if current_time - self.last_resharding_time < self.config.min_resharding_interval_seconds:
             return False
 
         # Check if model is currently sharded
         return self.sharding_engine.current_sharding_plan
 
-    async def _execute_resharding(
-        self, event: ReshardingEvent, strategy: ReshardingStrategy
-    ) -> bool:
+    async def _execute_resharding(self, event: ReshardingEvent, strategy: ReshardingStrategy) -> bool:
         """Execute the actual resharding process."""
         try:
             # Choose resharding strategy
@@ -484,9 +449,7 @@ class AdaptiveReshardingManager:
 
         for shard in event.old_plan.shards:
             # Check if shard's device is still available
-            device_available = any(
-                d.device_id == shard.device_id for d in device_profiles
-            )
+            device_available = any(d.device_id == shard.device_id for d in device_profiles)
 
             if not device_available:
                 shards_to_move.append(shard)
@@ -498,11 +461,7 @@ class AdaptiveReshardingManager:
             return True
 
         # Find new homes for shards that need to move
-        available_devices = [
-            d
-            for d in device_profiles
-            if not any(s.device_id == d.device_id for s in stable_shards)
-        ]
+        available_devices = [d for d in device_profiles if not any(s.device_id == d.device_id for s in stable_shards)]
 
         if len(available_devices) < len(shards_to_move):
             logger.warning("Not enough available devices for minimal disruption")
@@ -532,12 +491,8 @@ class AdaptiveReshardingManager:
             total_shards=len(new_shards),
             shards=new_shards,
             activation_routing=event.old_plan.activation_routing.copy(),  # Keep same routing
-            memory_efficiency=self.sharding_engine._calculate_memory_efficiency(
-                new_shards, device_profiles
-            ),
-            compute_balance_score=self.sharding_engine._calculate_compute_balance(
-                new_shards, device_profiles
-            ),
+            memory_efficiency=self.sharding_engine._calculate_memory_efficiency(new_shards, device_profiles),
+            compute_balance_score=self.sharding_engine._calculate_compute_balance(new_shards, device_profiles),
         )
 
         # Activate new plan
@@ -552,18 +507,12 @@ class AdaptiveReshardingManager:
             return False
 
         # Create completely new sharding plan
-        model_analysis = await self.sharding_engine._analyze_model(
-            event.old_plan.model_name
-        )
+        model_analysis = await self.sharding_engine._analyze_model(event.old_plan.model_name)
         device_profiles = await self.sharding_engine._get_device_profiles()
 
         # Use hybrid strategy for best results
-        new_plan = await self.sharding_engine._create_hybrid_plan(
-            model_analysis, device_profiles
-        )
-        optimized_plan = await self.sharding_engine._optimize_sharding_plan(
-            new_plan, device_profiles
-        )
+        new_plan = await self.sharding_engine._create_hybrid_plan(model_analysis, device_profiles)
+        optimized_plan = await self.sharding_engine._optimize_sharding_plan(new_plan, device_profiles)
 
         # Activate new plan
         self.sharding_engine.current_sharding_plan = optimized_plan
@@ -591,12 +540,8 @@ class AdaptiveReshardingManager:
             return False
 
         # Use simple sequential strategy for speed
-        model_analysis = await self.sharding_engine._analyze_model(
-            event.old_plan.model_name
-        )
-        new_plan = await self.sharding_engine._create_sequential_plan(
-            model_analysis, device_profiles
-        )
+        model_analysis = await self.sharding_engine._analyze_model(event.old_plan.model_name)
+        new_plan = await self.sharding_engine._create_sequential_plan(model_analysis, device_profiles)
 
         # Skip optimization for speed
         self.sharding_engine.current_sharding_plan = new_plan
@@ -604,20 +549,14 @@ class AdaptiveReshardingManager:
 
         return True
 
-    def _calculate_disruption_score(
-        self, old_plan: ShardingPlan | None, new_plan: ShardingPlan | None
-    ) -> float:
+    def _calculate_disruption_score(self, old_plan: ShardingPlan | None, new_plan: ShardingPlan | None) -> float:
         """Calculate how disruptive the resharding was (0=no disruption, 1=complete change)."""
         if not old_plan or not new_plan:
             return 1.0
 
         # Count shards that moved to different devices
-        old_assignments = {
-            shard.device_id: shard.layer_indices for shard in old_plan.shards
-        }
-        new_assignments = {
-            shard.device_id: shard.layer_indices for shard in new_plan.shards
-        }
+        old_assignments = {shard.device_id: shard.layer_indices for shard in old_plan.shards}
+        new_assignments = {shard.device_id: shard.layer_indices for shard in new_plan.shards}
 
         total_layers = sum(len(indices) for indices in old_assignments.values())
         moved_layers = 0
@@ -681,8 +620,7 @@ class AdaptiveReshardingManager:
             ],
             "pending_changes": len(self.pending_device_changes),
             "device_stability": {
-                device_id: time.time() - join_time
-                for device_id, join_time in self.device_stability_tracker.items()
+                device_id: time.time() - join_time for device_id, join_time in self.device_stability_tracker.items()
             },
         }
 
@@ -690,10 +628,6 @@ class AdaptiveReshardingManager:
         """Register callback for network change events."""
         self.network_change_callbacks.append(callback)
 
-    async def force_resharding(
-        self, strategy: ReshardingStrategy = ReshardingStrategy.OPTIMAL_REBALANCE
-    ) -> bool:
+    async def force_resharding(self, strategy: ReshardingStrategy = ReshardingStrategy.OPTIMAL_REBALANCE) -> bool:
         """Force immediate resharding (for testing/manual intervention)."""
-        return await self.trigger_resharding(
-            ReshardingReason.MANUAL_TRIGGER, strategy=strategy
-        )
+        return await self.trigger_resharding(ReshardingReason.MANUAL_TRIGGER, strategy=strategy)

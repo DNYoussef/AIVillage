@@ -21,9 +21,7 @@ except Exception:  # pragma: no cover - import guard
     class _DummyMetric:
         """Fallback metric when prometheus_client isn't installed."""
 
-        def __init__(
-            self, *args: Any, **kwargs: Any
-        ) -> None:  # pragma: no cover - trivial
+        def __init__(self, *args: Any, **kwargs: Any) -> None:  # pragma: no cover - trivial
             pass
 
         def labels(self, **_labels: Any) -> _DummyMetric:  # type: ignore[override]
@@ -121,9 +119,7 @@ class EvolutionMetricsRecorder:
         mutation_id = str(uuid.uuid4())
         start_time = time.time()
         cpu_percent = psutil.cpu_percent(interval=None) if PSUTIL_AVAILABLE else 0.0
-        mem_mb = (
-            psutil.Process().memory_info().rss / (1024**2) if PSUTIL_AVAILABLE else 0.0
-        )
+        mem_mb = psutil.Process().memory_info().rss / (1024**2) if PSUTIL_AVAILABLE else 0.0
 
         with self.lock:
             self.active[mutation_id] = MutationMetrics(
@@ -135,9 +131,7 @@ class EvolutionMetricsRecorder:
                 memory_mb=mem_mb,
             )
 
-        self.EVOLUTION_ROUNDS.labels(
-            mutation_type=mutation_type, node_type=node_type
-        ).inc()
+        self.EVOLUTION_ROUNDS.labels(mutation_type=mutation_type, node_type=node_type).inc()
         return mutation_id
 
     def record_fitness(self, mutation_id: str, fitness: float) -> None:
@@ -151,15 +145,11 @@ class EvolutionMetricsRecorder:
                     node_type=metrics.node_type,
                 ).set(fitness)
 
-    def record_evolution_end(
-        self, mutation_id: str, selected: bool, compression_ratio: float
-    ) -> None:
+    def record_evolution_end(self, mutation_id: str, selected: bool, compression_ratio: float) -> None:
         """Finalize mutation metrics and persist them."""
         end_time = time.time()
         cpu_percent = psutil.cpu_percent(interval=None) if PSUTIL_AVAILABLE else 0.0
-        mem_mb = (
-            psutil.Process().memory_info().rss / (1024**2) if PSUTIL_AVAILABLE else 0.0
-        )
+        mem_mb = psutil.Process().memory_info().rss / (1024**2) if PSUTIL_AVAILABLE else 0.0
 
         with self.lock:
             metrics = self.active.pop(mutation_id, None)
@@ -191,9 +181,7 @@ class EvolutionMetricsRecorder:
                 return {"total_rounds": 0, "avg_fitness": 0.0, "avg_efficiency": 0.0}
 
             avg_fitness = sum(m.fitness_score or 0.0 for m in self.completed) / total
-            avg_eff = (
-                sum(m.resource_efficiency() or 0.0 for m in self.completed) / total
-            )
+            avg_eff = sum(m.resource_efficiency() or 0.0 for m in self.completed) / total
             return {
                 "total_rounds": total,
                 "avg_fitness": avg_fitness,

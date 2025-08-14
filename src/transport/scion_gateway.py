@@ -167,9 +167,7 @@ class SCIONGateway:
 
         logger.info("SCION Gateway stopped")
 
-    async def send_message(
-        self, message: Message, destination: str, path_preference: str | None = None
-    ) -> str:
+    async def send_message(self, message: Message, destination: str, path_preference: str | None = None) -> str:
         """Send message via SCION."""
         if not self._is_running:
             raise SCIONConnectionError("SCION Gateway not running")
@@ -183,9 +181,7 @@ class SCIONGateway:
         self.stats["packets_sent"] += 1
         return packet_id
 
-    async def send_packet(
-        self, packet_data: bytes, destination: str, path_preference: str | None = None
-    ) -> str:
+    async def send_packet(self, packet_data: bytes, destination: str, path_preference: str | None = None) -> str:
         """Send raw packet via SCION."""
         async with self._request_semaphore:
             start_time = time.time()
@@ -205,9 +201,7 @@ class SCIONGateway:
                 ) as response:
                     if response.status != 200:
                         error_text = await response.text()
-                        raise SCIONPacketError(
-                            f"Send failed: {response.status} {error_text}"
-                        )
+                        raise SCIONPacketError(f"Send failed: {response.status} {error_text}")
 
                     result = await response.json()
                     packet_id = result["packet_id"]
@@ -216,9 +210,7 @@ class SCIONGateway:
                     latency = (time.time() - start_time) * 1000  # ms
                     self._update_latency_stats(latency)
 
-                    logger.debug(
-                        f"Sent packet {packet_id} to {destination} (size: {len(packet_data)})"
-                    )
+                    logger.debug(f"Sent packet {packet_id} to {destination} (size: {len(packet_data)})")
                     return packet_id
 
             except Exception as e:
@@ -226,9 +218,7 @@ class SCIONGateway:
                 logger.error(f"Failed to send packet to {destination}: {e}")
                 raise SCIONPacketError(f"Failed to send packet: {e}") from e
 
-    async def receive_packets(
-        self, timeout_ms: int = 5000, max_packets: int = 10
-    ) -> list[tuple[bytes, str]]:
+    async def receive_packets(self, timeout_ms: int = 5000, max_packets: int = 10) -> list[tuple[bytes, str]]:
         """Receive packets from SCION (polling interface)."""
         if not self._is_running:
             raise SCIONConnectionError("SCION Gateway not running")
@@ -241,9 +231,7 @@ class SCIONGateway:
             ) as response:
                 if response.status != 200:
                     error_text = await response.text()
-                    raise SCIONPacketError(
-                        f"Receive failed: {response.status} {error_text}"
-                    )
+                    raise SCIONPacketError(f"Receive failed: {response.status} {error_text}")
 
                 result = await response.json()
                 packets = []
@@ -277,9 +265,7 @@ class SCIONGateway:
             ) as response:
                 if response.status != 200:
                     error_text = await response.text()
-                    raise SCIONPacketError(
-                        f"Path query failed: {response.status} {error_text}"
-                    )
+                    raise SCIONPacketError(f"Path query failed: {response.status} {error_text}")
 
                 result = await response.json()
                 paths = []
@@ -363,12 +349,7 @@ class SCIONGateway:
             sidecar_path = Path(self.config.sidecar_binary_path)
         else:
             # Look for sidecar in relative path
-            sidecar_path = (
-                Path(__file__).parent.parent.parent
-                / "scion-sidecar"
-                / "bin"
-                / "scion_sidecar"
-            )
+            sidecar_path = Path(__file__).parent.parent.parent / "scion-sidecar" / "bin" / "scion_sidecar"
             if not sidecar_path.exists():
                 # Try in current directory
                 sidecar_path = Path("scion_sidecar")
@@ -376,9 +357,7 @@ class SCIONGateway:
                     sidecar_path = sidecar_path.with_suffix(".exe")
 
         if not sidecar_path.exists():
-            raise SCIONConnectionError(
-                f"SCION sidecar binary not found: {sidecar_path}"
-            )
+            raise SCIONConnectionError(f"SCION sidecar binary not found: {sidecar_path}")
 
         # Sidecar command line arguments
         sidecar_args = [
@@ -421,9 +400,7 @@ class SCIONGateway:
             self._sidecar_process.terminate()
 
             try:
-                await asyncio.wait_for(
-                    asyncio.create_task(self._wait_for_process_exit()), timeout=5.0
-                )
+                await asyncio.wait_for(asyncio.create_task(self._wait_for_process_exit()), timeout=5.0)
             except asyncio.TimeoutError:
                 logger.warning("Sidecar didn't stop gracefully, killing")
                 self._sidecar_process.kill()
@@ -453,9 +430,7 @@ class SCIONGateway:
         )
 
         # Create session
-        timeout = aiohttp.ClientTimeout(
-            total=self.config.request_timeout, connect=self.config.connection_timeout
-        )
+        timeout = aiohttp.ClientTimeout(total=self.config.request_timeout, connect=self.config.connection_timeout)
 
         self._http_session = aiohttp.ClientSession(
             connector=connector,
@@ -545,9 +520,7 @@ class SCIONGateway:
         # Simple JSON serialization for demo
         # In production, use more efficient binary format
         message_data = {
-            "type": message.type.value
-            if hasattr(message.type, "value")
-            else str(message.type),
+            "type": message.type.value if hasattr(message.type, "value") else str(message.type),
             "content": message.content,
             "metadata": message.metadata,
             "timestamp": message.timestamp,
@@ -579,9 +552,7 @@ class SCIONGateway:
         else:
             # Exponential moving average
             alpha = 0.1
-            self.stats["avg_latency_ms"] = (
-                alpha * latency_ms + (1 - alpha) * current_avg
-            )
+            self.stats["avg_latency_ms"] = alpha * latency_ms + (1 - alpha) * current_avg
 
 
 # Integration with existing transport system
@@ -631,9 +602,7 @@ class SCIONTransport:
         """Handle received message from SCION."""
         if self._transport_manager:
             # Forward to transport manager for processing
-            await self._transport_manager.handle_received_message(
-                message, source, "scion"
-            )
+            await self._transport_manager.handle_received_message(message, source, "scion")
 
 
 # Utility functions for integration
@@ -645,9 +614,7 @@ def create_scion_transport(
     **kwargs,
 ) -> SCIONTransport:
     """Create SCION transport with default configuration."""
-    config = GatewayConfig(
-        htx_endpoint=htx_endpoint, sidecar_address=sidecar_address, **kwargs
-    )
+    config = GatewayConfig(htx_endpoint=htx_endpoint, sidecar_address=sidecar_address, **kwargs)
 
     return SCIONTransport(config)
 

@@ -80,13 +80,9 @@ class ADASProposer:
             List of proposal dictionaries with expert, dispatch, and motivation
         """
         if self.use_llm and previous_results:
-            return self._propose_with_llm(
-                n_proposals, target_latency_ms, previous_results
-            )
+            return self._propose_with_llm(n_proposals, target_latency_ms, previous_results)
         else:
-            return self._propose_heuristic(
-                n_proposals, target_latency_ms, previous_results
-            )
+            return self._propose_heuristic(n_proposals, target_latency_ms, previous_results)
 
     def _propose_heuristic(
         self,
@@ -111,9 +107,7 @@ class ADASProposer:
         n_archive = max(1, n_proposals // 4)
         if previous_results:
             for _ in range(n_archive):
-                proposals.append(
-                    self._mutate_from_archive(previous_results, target_latency_ms)
-                )
+                proposals.append(self._mutate_from_archive(previous_results, target_latency_ms))
         else:
             # Fallback to template if no archive
             for _ in range(n_archive):
@@ -123,9 +117,7 @@ class ADASProposer:
         remaining = n_proposals - len(proposals)
         for _ in range(remaining):
             if random.random() < 0.5:
-                proposals.append(
-                    self._generate_diverse_proposal(target_latency_ms, proposals)
-                )
+                proposals.append(self._generate_diverse_proposal(target_latency_ms, proposals))
             else:
                 proposals.append(self._generate_random_proposal(target_latency_ms))
 
@@ -134,9 +126,7 @@ class ADASProposer:
     def _generate_random_proposal(self, target_latency_ms: int) -> dict[str, Any]:
         """Generate a completely random proposal."""
         # Adjust rank based on latency budget
-        max_rank = (
-            16 if target_latency_ms > 200 else 8 if target_latency_ms > 100 else 4
-        )
+        max_rank = 16 if target_latency_ms > 200 else 8 if target_latency_ms > 100 else 4
 
         expert = {
             "layers": random.choice(self.layer_options),
@@ -233,9 +223,7 @@ class ADASProposer:
         # Add small mutations
         if random.random() < 0.3:  # 30% chance of rank mutation
             current_rank = template["expert"]["rank"]
-            new_rank = random.choice(
-                [max(1, current_rank - 1), current_rank, min(8, current_rank + 1)]
-            )
+            new_rank = random.choice([max(1, current_rank - 1), current_rank, min(8, current_rank + 1)])
             template["expert"]["rank"] = new_rank
 
         if random.random() < 0.2:  # 20% chance of feature mutation
@@ -243,9 +231,7 @@ class ADASProposer:
 
         return template
 
-    def _mutate_from_archive(
-        self, previous_results: list[ExperimentResult], target_latency_ms: int
-    ) -> dict[str, Any]:
+    def _mutate_from_archive(self, previous_results: list[ExperimentResult], target_latency_ms: int) -> dict[str, Any]:
         """Generate proposal by mutating successful configurations from archive."""
         # Select parent configuration (prefer successful, high-scoring ones)
         successful = [r for r in previous_results if r.success and r.score > 0]
@@ -268,9 +254,7 @@ class ADASProposer:
         if random.random() < 0.4:
             old_rank = expert.get("rank", 2)
             # Smart rank adjustment based on performance
-            if (
-                parent.latency_ms > target_latency_ms * 0.8
-            ):  # High latency -> reduce rank
+            if parent.latency_ms > target_latency_ms * 0.8:  # High latency -> reduce rank
                 new_rank = max(1, old_rank - 1)
             else:  # Low latency -> can increase rank
                 new_rank = min(16, old_rank + random.choice([1, 2]))
@@ -332,10 +316,7 @@ class ADASProposer:
 
             # Compute diversity score (minimum distance to existing)
             if existing_features:
-                diversity = min(
-                    self._feature_distance(candidate_features, existing)
-                    for existing in existing_features
-                )
+                diversity = min(self._feature_distance(candidate_features, existing) for existing in existing_features)
             else:
                 diversity = 1.0
 
@@ -353,11 +334,7 @@ class ADASProposer:
 
         # Layer overlap
         layers_a, layers_b = set(features_a[0]), set(features_b[0])
-        layer_jaccard = (
-            len(layers_a & layers_b) / len(layers_a | layers_b)
-            if layers_a | layers_b
-            else 0
-        )
+        layer_jaccard = len(layers_a & layers_b) / len(layers_a | layers_b) if layers_a | layers_b else 0
         distance += 1 - layer_jaccard
 
         # Rank difference
@@ -370,9 +347,7 @@ class ADASProposer:
 
         # Feature overlap
         feat_a, feat_b = set(features_a[3]), set(features_b[3])
-        feat_jaccard = (
-            len(feat_a & feat_b) / len(feat_a | feat_b) if feat_a | feat_b else 0
-        )
+        feat_jaccard = len(feat_a & feat_b) / len(feat_a | feat_b) if feat_a | feat_b else 0
         distance += 1 - feat_jaccard
 
         return distance / 5  # Normalize by number of components
@@ -386,9 +361,7 @@ class ADASProposer:
         """Generate proposals using LLM planner (requires API access)."""
         # This would integrate with an LLM API to generate proposals
         # For now, fall back to heuristic approach
-        logger.warning(
-            "LLM proposal generation not implemented, using heuristic approach"
-        )
+        logger.warning("LLM proposal generation not implemented, using heuristic approach")
         return self._propose_heuristic(n_proposals, target_latency_ms, previous_results)
 
     def get_search_statistics(self) -> dict[str, Any]:
@@ -406,9 +379,7 @@ class ADASProposer:
                 * len(self.activation_rule_options)
             ),
             "total_dispatch_configs": (
-                len(self.feature_combinations)
-                * len(self.mix_fn_options)
-                * len(self.granularity_options)
+                len(self.feature_combinations) * len(self.mix_fn_options) * len(self.granularity_options)
             ),
         }
 

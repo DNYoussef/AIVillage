@@ -54,9 +54,7 @@ class TaskPlanningAgent(AgentInterface):
 
         return {"intent": intent, "concepts": concepts, "tasks": tasks}
 
-    def _generate_task_plan(
-        self, intent: dict[str, Any], concepts: dict[str, Any]
-    ) -> dict[str, Any]:
+    def _generate_task_plan(self, intent: dict[str, Any], concepts: dict[str, Any]) -> dict[str, Any]:
         """Generate a task plan based on interpreted intent and extracted concepts.
 
         Args:
@@ -68,18 +66,12 @@ class TaskPlanningAgent(AgentInterface):
         """
         # Collate search terms from both keywords and entity texts
         keywords = concepts.get("keywords", [])
-        entities = [
-            e.get("text") for e in concepts.get("entities", []) if isinstance(e, dict)
-        ]
+        entities = [e.get("text") for e in concepts.get("entities", []) if isinstance(e, dict)]
         search_terms = [t for t in keywords + entities if t]
 
         # Fall back to intent information if no explicit concepts were found
         if not search_terms:
-            topic = (
-                intent.get("topic")
-                or intent.get("primary_intent")
-                or intent.get("type")
-            )
+            topic = intent.get("topic") or intent.get("primary_intent") or intent.get("type")
             if topic:
                 search_terms.append(topic)
 
@@ -115,9 +107,7 @@ class TaskPlanningAgent(AgentInterface):
         steps = task_plan.get("tasks", {}).get("steps", [])
         if steps:
             response += f" Planned {len(steps)} steps: "
-            response += " -> ".join(
-                [step.get("action", "unknown") for step in steps[:3]]
-            )
+            response += " -> ".join([step.get("action", "unknown") for step in steps[:3]])
 
         return response
 
@@ -137,14 +127,10 @@ class TaskPlanningAgent(AgentInterface):
             rng = random.Random(seed)
             return [rng.random() for _ in range(self.embedding_model.hidden_size)]
 
-    async def rerank(
-        self, query: str, results: list[dict[str, Any]], k: int
-    ) -> list[dict[str, Any]]:
+    async def rerank(self, query: str, results: list[dict[str, Any]], k: int) -> list[dict[str, Any]]:
         """Rerank results based on task relevance."""
         task_plan = self.plan_tasks(query)
-        search_terms = (
-            task_plan.get("tasks", {}).get("analysis", {}).get("search_terms", [])
-        )
+        search_terms = task_plan.get("tasks", {}).get("analysis", {}).get("search_terms", [])
 
         for result in results:
             content = result.get("content", "").lower()

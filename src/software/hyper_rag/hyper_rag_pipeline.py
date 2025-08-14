@@ -131,14 +131,10 @@ class HyperRAGPipeline:
         import hashlib
 
         # Generate unique item ID
-        item_id = hashlib.md5(
-            f"{content}_{datetime.now().isoformat()}".encode()
-        ).hexdigest()[:16]
+        item_id = hashlib.md5(f"{content}_{datetime.now().isoformat()}".encode()).hexdigest()[:16]
 
         # Create context tags
-        tag_id = hashlib.md5(f"{book_summary}_{chapter_summary}".encode()).hexdigest()[
-            :12
-        ]
+        tag_id = hashlib.md5(f"{book_summary}_{chapter_summary}".encode()).hexdigest()[:12]
         context_tag = ContextTag(
             book_summary=book_summary,
             chapter_summary=chapter_summary,
@@ -172,18 +168,14 @@ class HyperRAGPipeline:
             self.context_hierarchy[book_summary].append(tag_id)
 
         # Add belief to Bayesian engine
-        belief_description = (
-            f"Knowledge from {book_summary}/{chapter_summary}: {content[:100]}..."
-        )
+        belief_description = f"Knowledge from {book_summary}/{chapter_summary}: {content[:100]}..."
         self.belief_engine.add_belief(item_id, belief_description, source_confidence)
 
         # Update semantic connections
         await self._update_semantic_connections(knowledge_item)
 
         logger = logging.getLogger(__name__)
-        logger.info(
-            f"Ingested knowledge item {item_id} with {source_confidence:.2f} confidence"
-        )
+        logger.info(f"Ingested knowledge item {item_id} with {source_confidence:.2f} confidence")
 
         return item_id
 
@@ -261,9 +253,7 @@ class HyperRAGPipeline:
 
         # Filter items by context if specified
         candidate_items = (
-            self._apply_context_filter(context_filter)
-            if context_filter
-            else list(self.knowledge_items.values())
+            self._apply_context_filter(context_filter) if context_filter else list(self.knowledge_items.values())
         )
 
         # Perform retrieval based on type
@@ -276,9 +266,7 @@ class HyperRAGPipeline:
             self.retrieval_stats["graph_retrievals"] += 1
 
         elif retrieval_type == RAGType.BAYESIAN:
-            results = await self._bayesian_retrieval(
-                query, candidate_items, max_results
-            )
+            results = await self._bayesian_retrieval(query, candidate_items, max_results)
             self.retrieval_stats["bayesian_retrievals"] += 1
 
         else:  # HYBRID
@@ -294,9 +282,7 @@ class HyperRAGPipeline:
         # Update performance stats
         response_time = (datetime.now() - start_time).total_seconds()
         self.retrieval_stats["avg_response_time"] = (
-            self.retrieval_stats["avg_response_time"]
-            * (self.retrieval_stats["total_queries"] - 1)
-            + response_time
+            self.retrieval_stats["avg_response_time"] * (self.retrieval_stats["total_queries"] - 1) + response_time
         ) / self.retrieval_stats["total_queries"]
 
         return results
@@ -316,9 +302,7 @@ class HyperRAGPipeline:
             bayesian_scores = {}
             for item in matching_items:
                 belief = self.belief_engine.beliefs.get(item.item_id)
-                bayesian_scores[item.item_id] = (
-                    belief.probability if belief else item.belief_probability
-                )
+                bayesian_scores[item.item_id] = belief.probability if belief else item.belief_probability
 
             return RetrievalResult(
                 items=matching_items[:5],  # Top 5 cached results
@@ -332,21 +316,14 @@ class HyperRAGPipeline:
 
         return None
 
-    def _apply_context_filter(
-        self, context_filter: dict[str, str]
-    ) -> list[KnowledgeItem]:
+    def _apply_context_filter(self, context_filter: dict[str, str]) -> list[KnowledgeItem]:
         """Filter knowledge items by context tags."""
         filtered_items = []
 
         for item in self.knowledge_items.values():
             for tag in item.context_tags:
-                book_match = (
-                    context_filter.get("book", "").lower() in tag.book_summary.lower()
-                )
-                chapter_match = (
-                    context_filter.get("chapter", "").lower()
-                    in tag.chapter_summary.lower()
-                )
+                book_match = context_filter.get("book", "").lower() in tag.book_summary.lower()
+                chapter_match = context_filter.get("chapter", "").lower() in tag.chapter_summary.lower()
 
                 if book_match or chapter_match:
                     filtered_items.append(item)
@@ -354,9 +331,7 @@ class HyperRAGPipeline:
 
         return filtered_items
 
-    async def _vector_retrieval(
-        self, query: str, candidates: list[KnowledgeItem], max_results: int
-    ) -> RetrievalResult:
+    async def _vector_retrieval(self, query: str, candidates: list[KnowledgeItem], max_results: int) -> RetrievalResult:
         """Perform vector-based semantic similarity retrieval."""
         query_embedding = self._generate_embedding(query)
 
@@ -375,25 +350,19 @@ class HyperRAGPipeline:
         bayesian_scores = {}
         for item in top_items:
             belief = self.belief_engine.beliefs.get(item.item_id)
-            bayesian_scores[item.item_id] = (
-                belief.probability if belief else item.belief_probability
-            )
+            bayesian_scores[item.item_id] = belief.probability if belief else item.belief_probability
 
         return RetrievalResult(
             items=top_items,
             retrieval_method=RAGType.VECTOR,
-            confidence_score=np.mean([sim for _, sim in similarities[:max_results]])
-            if similarities
-            else 0.0,
+            confidence_score=np.mean([sim for _, sim in similarities[:max_results]]) if similarities else 0.0,
             bayesian_scores=bayesian_scores,
             semantic_coherence=self._calculate_semantic_coherence(top_items),
             context_relevance=0.8,  # Vector retrieval generally has good context relevance
             total_items_considered=len(candidates),
         )
 
-    async def _graph_retrieval(
-        self, query: str, candidates: list[KnowledgeItem], max_results: int
-    ) -> RetrievalResult:
+    async def _graph_retrieval(self, query: str, candidates: list[KnowledgeItem], max_results: int) -> RetrievalResult:
         """Perform graph-based relationship traversal retrieval."""
         # Find initial seed items that match query
         query_lower = query.lower()
@@ -414,9 +383,7 @@ class HyperRAGPipeline:
         # Score items by connection strength and belief probability
         scored_items = []
         for item in expanded_items:
-            connection_score = (
-                1.0 if item in seed_items else 0.7
-            )  # Direct matches score higher
+            connection_score = 1.0 if item in seed_items else 0.7  # Direct matches score higher
             belief = self.belief_engine.beliefs.get(item.item_id)
             belief_score = belief.probability if belief else item.belief_probability
 
@@ -431,16 +398,12 @@ class HyperRAGPipeline:
         bayesian_scores = {}
         for item in top_items:
             belief = self.belief_engine.beliefs.get(item.item_id)
-            bayesian_scores[item.item_id] = (
-                belief.probability if belief else item.belief_probability
-            )
+            bayesian_scores[item.item_id] = belief.probability if belief else item.belief_probability
 
         return RetrievalResult(
             items=top_items,
             retrieval_method=RAGType.GRAPH,
-            confidence_score=np.mean([score for _, score in scored_items[:max_results]])
-            if scored_items
-            else 0.0,
+            confidence_score=np.mean([score for _, score in scored_items[:max_results]]) if scored_items else 0.0,
             bayesian_scores=bayesian_scores,
             semantic_coherence=self._calculate_semantic_coherence(top_items),
             context_relevance=0.9,  # Graph retrieval has excellent context relevance
@@ -470,12 +433,8 @@ class HyperRAGPipeline:
                     connected_belief = self.belief_engine.beliefs[connected_id]
                     # Propagate 50% of the belief increase
                     propagated_increase = (updated_prob - item.belief_probability) * 0.5
-                    new_connected_prob = min(
-                        0.95, connected_belief.probability + propagated_increase
-                    )
-                    self.belief_engine.update_belief_probability(
-                        connected_id, new_connected_prob
-                    )
+                    new_connected_prob = min(0.95, connected_belief.probability + propagated_increase)
+                    self.belief_engine.update_belief_probability(connected_id, new_connected_prob)
 
         # Rank items by updated belief probabilities
         belief_ranked = []
@@ -492,34 +451,24 @@ class HyperRAGPipeline:
         bayesian_scores = {}
         for item in top_items:
             belief = self.belief_engine.beliefs.get(item.item_id)
-            bayesian_scores[item.item_id] = (
-                belief.probability if belief else item.belief_probability
-            )
+            bayesian_scores[item.item_id] = belief.probability if belief else item.belief_probability
 
         return RetrievalResult(
             items=top_items,
             retrieval_method=RAGType.BAYESIAN,
-            confidence_score=np.mean([prob for _, prob in belief_ranked[:max_results]])
-            if belief_ranked
-            else 0.0,
+            confidence_score=np.mean([prob for _, prob in belief_ranked[:max_results]]) if belief_ranked else 0.0,
             bayesian_scores=bayesian_scores,
             semantic_coherence=self._calculate_semantic_coherence(top_items),
             context_relevance=0.7,  # Bayesian retrieval may be less context-specific
             total_items_considered=len(candidates),
         )
 
-    async def _hybrid_retrieval(
-        self, query: str, candidates: list[KnowledgeItem], max_results: int
-    ) -> RetrievalResult:
+    async def _hybrid_retrieval(self, query: str, candidates: list[KnowledgeItem], max_results: int) -> RetrievalResult:
         """Perform hybrid retrieval combining vector, graph, and Bayesian approaches."""
         # Get results from all methods
-        vector_results = await self._vector_retrieval(
-            query, candidates, max_results * 2
-        )
+        vector_results = await self._vector_retrieval(query, candidates, max_results * 2)
         graph_results = await self._graph_retrieval(query, candidates, max_results * 2)
-        bayesian_results = await self._bayesian_retrieval(
-            query, candidates, max_results * 2
-        )
+        bayesian_results = await self._bayesian_retrieval(query, candidates, max_results * 2)
 
         # Combine and score results
         item_scores = {}
@@ -529,51 +478,29 @@ class HyperRAGPipeline:
 
         # Score vector results
         for i, item in enumerate(vector_results.items):
-            position_score = 1.0 - (
-                i / len(vector_results.items)
-            )  # Higher score for earlier positions
-            item_scores[item.item_id] = (
-                item_scores.get(item.item_id, 0)
-                + weights[RAGType.VECTOR] * position_score
-            )
+            position_score = 1.0 - (i / len(vector_results.items))  # Higher score for earlier positions
+            item_scores[item.item_id] = item_scores.get(item.item_id, 0) + weights[RAGType.VECTOR] * position_score
 
         # Score graph results
         for i, item in enumerate(graph_results.items):
             position_score = 1.0 - (i / len(graph_results.items))
-            item_scores[item.item_id] = (
-                item_scores.get(item.item_id, 0)
-                + weights[RAGType.GRAPH] * position_score
-            )
+            item_scores[item.item_id] = item_scores.get(item.item_id, 0) + weights[RAGType.GRAPH] * position_score
 
         # Score Bayesian results
         for i, item in enumerate(bayesian_results.items):
             position_score = 1.0 - (i / len(bayesian_results.items))
-            item_scores[item.item_id] = (
-                item_scores.get(item.item_id, 0)
-                + weights[RAGType.BAYESIAN] * position_score
-            )
+            item_scores[item.item_id] = item_scores.get(item.item_id, 0) + weights[RAGType.BAYESIAN] * position_score
 
         # Get top items by combined score
-        all_items = {
-            item.item_id: item
-            for item in vector_results.items
-            + graph_results.items
-            + bayesian_results.items
-        }
+        all_items = {item.item_id: item for item in vector_results.items + graph_results.items + bayesian_results.items}
         sorted_items = sorted(item_scores.items(), key=lambda x: x[1], reverse=True)
-        top_items = [
-            all_items[item_id]
-            for item_id, score in sorted_items[:max_results]
-            if item_id in all_items
-        ]
+        top_items = [all_items[item_id] for item_id, score in sorted_items[:max_results] if item_id in all_items]
 
         # Generate combined Bayesian scores
         bayesian_scores = {}
         for item in top_items:
             belief = self.belief_engine.beliefs.get(item.item_id)
-            bayesian_scores[item.item_id] = (
-                belief.probability if belief else item.belief_probability
-            )
+            bayesian_scores[item.item_id] = belief.probability if belief else item.belief_probability
 
         # Calculate combined confidence
         combined_confidence = (
@@ -588,10 +515,7 @@ class HyperRAGPipeline:
             confidence_score=combined_confidence,
             bayesian_scores=bayesian_scores,
             semantic_coherence=self._calculate_semantic_coherence(top_items),
-            context_relevance=(
-                vector_results.context_relevance + graph_results.context_relevance
-            )
-            / 2,
+            context_relevance=(vector_results.context_relevance + graph_results.context_relevance) / 2,
             total_items_considered=len(candidates),
         )
 
@@ -610,9 +534,7 @@ class HyperRAGPipeline:
 
         return np.mean(similarities) if similarities else 0.5
 
-    async def analyze_with_cognitive_nexus(
-        self, retrieval_result: RetrievalResult, query: str
-    ) -> dict[str, Any]:
+    async def analyze_with_cognitive_nexus(self, retrieval_result: RetrievalResult, query: str) -> dict[str, Any]:
         """
         Analyze retrieval results using the Cognitive Nexus for multi-perspective reasoning.
 
@@ -630,12 +552,9 @@ class HyperRAGPipeline:
                 {
                     "content": item.content,
                     "item_id": item.item_id,
-                    "belief_probability": retrieval_result.bayesian_scores.get(
-                        item.item_id, 0.5
-                    ),
+                    "belief_probability": retrieval_result.bayesian_scores.get(item.item_id, 0.5),
                     "context_tags": [
-                        {"book": tag.book_summary, "chapter": tag.chapter_summary}
-                        for tag in item.context_tags
+                        {"book": tag.book_summary, "chapter": tag.chapter_summary} for tag in item.context_tags
                     ],
                 }
             )
@@ -650,9 +569,7 @@ class HyperRAGPipeline:
     def get_system_stats(self) -> dict[str, Any]:
         """Get comprehensive system statistics."""
         # Calculate belief distribution
-        belief_probs = [
-            belief.probability for belief in self.belief_engine.beliefs.values()
-        ]
+        belief_probs = [belief.probability for belief in self.belief_engine.beliefs.values()]
         belief_stats = {
             "total_beliefs": len(belief_probs),
             "avg_probability": np.mean(belief_probs) if belief_probs else 0.0,
@@ -663,29 +580,17 @@ class HyperRAGPipeline:
         # Calculate context distribution
         context_stats = {
             "total_context_books": len(self.context_hierarchy),
-            "total_context_chapters": sum(
-                len(chapters) for chapters in self.context_hierarchy.values()
-            ),
-            "avg_chapters_per_book": np.mean(
-                [len(chapters) for chapters in self.context_hierarchy.values()]
-            )
+            "total_context_chapters": sum(len(chapters) for chapters in self.context_hierarchy.values()),
+            "avg_chapters_per_book": np.mean([len(chapters) for chapters in self.context_hierarchy.values()])
             if self.context_hierarchy
             else 0.0,
         }
 
         # Calculate semantic graph stats
         graph_stats = {
-            "total_semantic_connections": sum(
-                len(connections) for connections in self.semantic_graph.values()
-            ),
-            "highly_connected_items": sum(
-                1
-                for connections in self.semantic_graph.values()
-                if len(connections) > 5
-            ),
-            "avg_connections_per_item": np.mean(
-                [len(connections) for connections in self.semantic_graph.values()]
-            )
+            "total_semantic_connections": sum(len(connections) for connections in self.semantic_graph.values()),
+            "highly_connected_items": sum(1 for connections in self.semantic_graph.values() if len(connections) > 5),
+            "avg_connections_per_item": np.mean([len(connections) for connections in self.semantic_graph.values()])
             if self.semantic_graph
             else 0.0,
         }

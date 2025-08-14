@@ -33,10 +33,7 @@ class GrokfastAdam(Adam):
 
                 grad = p.grad
                 if p in self._slow_cache:
-                    self._slow_cache[p] = (
-                        self._slow_cache[p] * (1 - self.slow_freq)
-                        + grad * self.slow_freq
-                    )
+                    self._slow_cache[p] = self._slow_cache[p] * (1 - self.slow_freq) + grad * self.slow_freq
                 else:
                     self._slow_cache[p] = grad.clone()
 
