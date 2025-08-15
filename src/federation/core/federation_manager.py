@@ -72,7 +72,11 @@ class FederationManager:
         # Federation state
         self.is_running = False
         self.local_profile: DeviceProfile | None = None
+        # Basic device profile placeholder until registry initialization
+        self.device_profile: dict[str, Any] = {"device_id": self.device_id}
         self.federation_role: DeviceRole | None = None
+        # Agent coordination and lookup
+        self.agent_registry: Any | None = None
 
         # VPN-like privacy tunnels
         self.active_tunnels: dict[str, dict[str, Any]] = {}
@@ -89,6 +93,7 @@ class FederationManager:
         # Anonymous credentials and reputation
         self.reputation_proofs: dict[str, bytes] = {}
         self.credential_store: dict[str, Any] = {}
+        self.peer_reputation: dict[str, float] = {}
 
         # Statistics
         self.federation_stats = {
@@ -463,10 +468,15 @@ class FederationManager:
                         # Process request with the agent
                         prompt = request_data.get("prompt", "")
                         if prompt:
+                            processed_by = (
+                                self.local_profile.identity.device_id
+                                if self.local_profile
+                                else self.device_id
+                            )
                             result = {
                                 "response": await agent.generate(prompt),
                                 "agent_type": agent_type,
-                                "processed_by": f"{self.device_profile.get('device_id', 'unknown')}",
+                                "processed_by": processed_by,
                             }
                         else:
                             result = {"error": "No prompt provided for AI service"}
