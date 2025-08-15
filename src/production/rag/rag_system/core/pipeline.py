@@ -38,6 +38,11 @@ try:
 except ImportError:
     IntelligentChunker = None  # type: ignore
 
+try:
+    from ..factory import ComponentFactory
+except Exception:  # pragma: no cover - factory optional
+    ComponentFactory = None  # type: ignore
+
 from .config import RAGConfig, UnifiedConfig
 from .local_mode import LocalModeRAG, is_local_mode
 from .structures import RetrievalResult
@@ -123,6 +128,18 @@ class RAGPipeline:
 
         self.cache_dir = cache_dir or Path("/tmp/rag_cache")
         self.cache_dir.mkdir(parents=True, exist_ok=True)
+
+        # Initialize minimal components via factory if available
+        if ComponentFactory is not None:
+            self.embedding_model = ComponentFactory.create_embedding_model()
+            self.knowledge_constructor = (
+                ComponentFactory.create_knowledge_constructor()
+            )
+            self.reasoning_engine = ComponentFactory.create_reasoning_engine()
+        else:
+            self.embedding_model = None
+            self.knowledge_constructor = None
+            self.reasoning_engine = None
 
         # Initialize components with safe defaults
         self._init_vector_store()
@@ -255,6 +272,11 @@ class RAGPipeline:
             )
             self.retriever = None
 
+        if self.retriever is None and ComponentFactory is not None:
+            self.retriever = ComponentFactory.create_retriever(
+                embedding_model=self.embedding_model
+            )
+
     def _create_fallback_vector_store(self) -> Any:
         """Create minimal fallback vector store."""
 
@@ -338,6 +360,14 @@ class RAGPipeline:
             # Add chunks to vector store
             await self.vector_store.add_texts(chunks)
 
+            # Add original document to retriever if it supports ingestion
+            if self.retriever is not None and hasattr(self.retriever, "add_documents"):
+                add_fn = getattr(self.retriever, "add_documents")
+                if asyncio.iscoroutinefunction(add_fn):
+                    await add_fn([doc.text])
+                else:  # pragma: no cover - sync function
+                    add_fn([doc.text])
+
             # Add to graph store if available
             if self.graph_store is not None:
                 graph_doc = {
@@ -407,6 +437,25 @@ class RAGPipeline:
         except Exception as e:
             logger.error(f"Failed to retrieve results for query '{query}': {e}")
             return []
+
+    async def run_basic_rag(self, query: str, top_k: int = 5) -> str:
+        """Run a simple RAG cycle returning a text answer."""
+        results = await self.retrieve_async(query, top_k)
+        if not results:
+            return f"No results for {query}"
+        if self.knowledge_constructor is None or self.reasoning_engine is None:
+            synth = await self.synthesize_answer(query, results)
+            return synth.answer_text
+        docs = [
+            {
+                "id": getattr(r, "id", r.get("id")),
+                "content": getattr(r, "content", r.get("content", "")),
+                "score": getattr(r, "score", r.get("score", 0.0)),
+            }
+            for r in results
+        ]
+        knowledge = await self.knowledge_constructor.construct(query, docs)
+        return await self.reasoning_engine.reason(query, knowledge)
 
     async def synthesize_answer(
         self,
