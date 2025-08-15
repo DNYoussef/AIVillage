@@ -1,284 +1,174 @@
-"""RAG Offline Defaults - No external dependencies for MVP.
-
-Simple offline RAG implementation using only built-in Python libraries.
-"""
+"""RAG Offline Defaults - Deterministic and dependency-light."""
 
 import json
 import logging
 import os
-import time
 from pathlib import Path
+import time
 from typing import Any
+
+from .embedders import SimHashEmbedder, TFIDFHelper
 
 logger = logging.getLogger(__name__)
 
-try:
-    import numpy as np
-
-    NUMPY_AVAILABLE = True
-except ImportError:
-    NUMPY_AVAILABLE = False
-
-    # Minimal numpy-like implementation for embeddings
-    class MockNumpy:
-        @staticmethod
-        def mean(arrays, axis=0):
-            if not arrays:
-                return [0.0] * len(arrays[0]) if arrays else []
-            result = [0.0] * len(arrays[0])
-            for arr in arrays:
-                for i, val in enumerate(arr):
-                    result[i] += val
-            return [x / len(arrays) for x in result]
-
-        @staticmethod
-        def dot(a, b):
-            return sum(a[i] * b[i] for i in range(len(a)))
-
-        @staticmethod
-        def linalg_norm(a):
-            return (sum(x * x for x in a)) ** 0.5
-
-        class linalg:
-            @staticmethod
-            def norm(a):
-                return (sum(x * x for x in a)) ** 0.5
-
-        @staticmethod
-        def zeros(dim):
-            return [0.0] * dim
-
-    np = MockNumpy()
-
-
-class SimpleEmbedder:
-    """Simple text embedder for offline operation."""
-
-    def __init__(self, vocab_size: int = 10000, embedding_dim: int = 128):
-        self.vocab_size = vocab_size
-        self.embedding_dim = embedding_dim
-
-        # Initialize random embeddings matrix
-        if NUMPY_AVAILABLE:
-            import numpy as real_np
-
-            real_np.random.seed(42)
-            self.embeddings = real_np.random.normal(0, 0.1, (vocab_size, embedding_dim))
-        else:
-            import random
-
-            random.seed(42)
-            self.embeddings = [
-                [random.gauss(0, 0.1) for _ in range(embedding_dim)]
-                for _ in range(vocab_size)
-            ]
-
-        # Simple word tokenizer
-        self.vocab = {}
-        self.next_token_id = 0
-
-    def _tokenize(self, text: str) -> list[int]:
-        """Simple word tokenization."""
-        words = text.lower().split()
-        token_ids = []
-
-        for word in words:
-            if word not in self.vocab:
-                if self.next_token_id < self.vocab_size:
-                    self.vocab[word] = self.next_token_id
-                    self.next_token_id += 1
-                else:
-                    token_ids.append(0)
-                    continue
-
-            token_ids.append(self.vocab[word])
-
-        return token_ids
-
-    def encode(self, text: str) -> list[float]:
-        """Encode text to embedding vector."""
-        if not text.strip():
-            return (
-                np.zeros(self.embedding_dim)
-                if NUMPY_AVAILABLE
-                else [0.0] * self.embedding_dim
-            )
-
-        token_ids = self._tokenize(text)
-        if not token_ids:
-            return (
-                np.zeros(self.embedding_dim)
-                if NUMPY_AVAILABLE
-                else [0.0] * self.embedding_dim
-            )
-
-        # Average embeddings of tokens
-        embeddings = [self.embeddings[token_id] for token_id in token_ids]
-        if NUMPY_AVAILABLE:
-            import numpy as real_np
-
-            return real_np.mean(embeddings, axis=0)
-        else:
-            return np.mean(embeddings)
-
 
 class OfflineVectorStore:
-    """Simple in-memory vector store with cosine similarity."""
+    """In-memory store combining SimHash and optional TF-IDF."""
 
-    def __init__(self, embedder: SimpleEmbedder):
+    def __init__(self, embedder: SimHashEmbedder, tfidf_threshold: int = 50) -> None:
         self.embedder = embedder
-        self.documents = []
-        self.embeddings = []
-        self.metadata = []
+        self.documents: list[str] = []
+        self.embeddings: list[list[int]] = []
+        self.metadata: list[dict[str, Any]] = []
+        self.tfidf_threshold = tfidf_threshold
+        self.tfidf: TFIDFHelper | None = None
 
-    def add_document(self, text: str, metadata: dict[str, Any] = None) -> None:
-        """Add document to store."""
-        embedding = self.embedder.encode(text)
-
+    def add_document(self, text: str, metadata: dict[str, Any] | None = None) -> None:
         self.documents.append(text)
-        self.embeddings.append(embedding)
+        self.embeddings.append(self.embedder.embed(text))
         self.metadata.append(metadata or {})
+        if len(self.documents) <= self.tfidf_threshold:
+            self._rebuild_tfidf()
+
+    def _rebuild_tfidf(self) -> None:
+        self.tfidf = TFIDFHelper()
+        self.tfidf.build(self.documents)
 
     def similarity_search(self, query: str, top_k: int = 5) -> list[dict[str, Any]]:
-        """Search for similar documents."""
         if not self.documents:
             return []
-
-        query_embedding = self.embedder.encode(query)
-
-        # Calculate cosine similarities
-        similarities = []
-        for i, doc_embedding in enumerate(self.embeddings):
-            similarity = self._cosine_similarity(query_embedding, doc_embedding)
-            similarities.append((similarity, i))
-
-        # Sort by similarity (descending)
-        similarities.sort(reverse=True)
-
-        # Return top_k results
+        query_emb = self.embedder.embed(query)
+        simhash_scores = [
+            self.embedder.cosine_similarity(query_emb, emb) for emb in self.embeddings
+        ]
+        combined = simhash_scores
+        if self.tfidf is not None:
+            q_vec, q_norm = self.tfidf.query_vector(query)
+            tfidf_scores = [
+                self.tfidf.cosine(q_vec, q_norm, doc_vec, doc_norm)
+                for doc_vec, doc_norm in zip(
+                    self.tfidf.doc_vectors, self.tfidf.doc_norms, strict=False
+                )
+            ]
+            combined = [
+                0.7 * sh + 0.3 * tf
+                for sh, tf in zip(simhash_scores, tfidf_scores, strict=False)
+            ]
+        ranked = sorted(enumerate(combined), key=lambda x: x[1], reverse=True)[:top_k]
         results = []
-        for similarity, idx in similarities[:top_k]:
+        for idx, score in ranked:
             results.append(
                 {
                     "text": self.documents[idx],
                     "metadata": self.metadata[idx],
-                    "similarity": similarity,
+                    "similarity": score,
                     "index": idx,
                 }
             )
-
         return results
-
-    def _cosine_similarity(self, a: list[float], b: list[float]) -> float:
-        """Calculate cosine similarity between two vectors."""
-        if NUMPY_AVAILABLE:
-            import numpy as real_np
-
-            norm_a = real_np.linalg.norm(a)
-            norm_b = real_np.linalg.norm(b)
-
-            if norm_a == 0 or norm_b == 0:
-                return 0.0
-
-            return real_np.dot(a, b) / (norm_a * norm_b)
-        else:
-            norm_a = np.linalg.norm(a)
-            norm_b = np.linalg.norm(b)
-
-            if norm_a == 0 or norm_b == 0:
-                return 0.0
-
-            return np.dot(a, b) / (norm_a * norm_b)
 
 
 class OfflineRAGPipeline:
     """Complete offline RAG pipeline with local documents."""
 
-    def __init__(self, corpus_path: str | None = None):
-        self.embedder = SimpleEmbedder()
+    def __init__(
+        self, corpus_path: str | None = None, load_builtin: bool = True
+    ) -> None:
+        self.embedder = SimHashEmbedder()
         self.vector_store = OfflineVectorStore(self.embedder)
-
-        # Load built-in corpus
-        self._load_builtin_corpus()
-
-        # Load additional corpus if provided
+        if load_builtin:
+            self._load_builtin_corpus()
+        if os.environ.get("OFFLINE_RAG_SEED") == "1":
+            self._load_seed_corpus()
         if corpus_path and os.path.exists(corpus_path):
             self._load_corpus_from_path(corpus_path)
 
+    def _load_seed_corpus(self) -> None:
+        docs_dir = Path("docs")
+        count = 0
+        for md_file in docs_dir.rglob("*.md"):
+            try:
+                with open(md_file, encoding="utf-8") as f:
+                    content = f.read().strip()
+                if content:
+                    self.vector_store.add_document(
+                        content, {"source_file": str(md_file)}
+                    )
+                    count += 1
+                if count >= 20:
+                    break
+            except Exception as exc:  # pragma: no cover - log only
+                logger.warning("Failed to load seed doc %s: %s", md_file, exc)
+
     def _load_builtin_corpus(self) -> None:
-        """Load minimal built-in corpus for testing."""
         builtin_docs = [
             {
-                "text": "AIVillage is a decentralized AI platform that enables secure agent communication.",
+                "text": "AIVillage is a decentralized AI platform that enables secure agent communication.",  # noqa: E501
                 "metadata": {"source": "overview", "type": "platform_description"},
             },
             {
-                "text": "BitChat provides offline Bluetooth mesh networking for peer-to-peer communication.",
+                "text": "BitChat provides offline Bluetooth mesh networking for peer-to-peer communication.",  # noqa: E501
                 "metadata": {"source": "transport", "type": "bitchat_feature"},
             },
             {
-                "text": "Betanet offers encrypted internet transport with privacy protection using Tor-like routing.",
+                "text": "Betanet offers encrypted internet transport with privacy protection using Tor-like routing.",  # noqa: E501
                 "metadata": {"source": "transport", "type": "betanet_feature"},
             },
             {
-                "text": "The Navigator agent intelligently routes messages based on network conditions and privacy requirements.",
+                "text": "The Navigator agent intelligently routes messages based on network conditions and privacy requirements.",  # noqa: E501
                 "metadata": {"source": "agents", "type": "navigator_description"},
             },
             {
-                "text": "Resource management automatically adapts transport protocols based on battery and thermal conditions.",
+                "text": "Resource management automatically adapts transport protocols based on battery and thermal conditions.",  # noqa: E501
                 "metadata": {"source": "mobile", "type": "resource_management"},
             },
             {
-                "text": "Noise XK protocol provides forward secrecy and authentication for secure communication channels.",
+                "text": "Noise XK protocol provides forward secrecy and authentication for secure communication channels.",  # noqa: E501
                 "metadata": {"source": "security", "type": "crypto_protocol"},
             },
             {
-                "text": "HTX frame format enables efficient binary transport with flow control and multiplexing.",
+                "text": "HTX frame format enables efficient binary transport with flow control and multiplexing.",  # noqa: E501
                 "metadata": {"source": "protocol", "type": "frame_format"},
             },
             {
-                "text": "Access tickets provide authentication and rate limiting for controlled network access.",
+                "text": "Access tickets provide authentication and rate limiting for controlled network access.",  # noqa: E501
                 "metadata": {"source": "security", "type": "access_control"},
             },
             {
-                "text": "Agent Forge trains specialized AI agents using evolutionary algorithms and curriculum learning.",
+                "text": "Agent Forge trains specialized AI agents using evolutionary algorithms and curriculum learning.",  # noqa: E501
                 "metadata": {"source": "training", "type": "agent_evolution"},
             },
             {
-                "text": "Compression algorithms including BitNet and SeedLM reduce bandwidth requirements for mobile devices.",
+                "text": "Compression algorithms including BitNet and SeedLM reduce bandwidth requirements for mobile devices.",  # noqa: E501
                 "metadata": {"source": "optimization", "type": "compression"},
             },
             {
-                "text": "The tokenomics system manages VILLAGE credits for compute sharing and network participation.",
+                "text": "The tokenomics system manages VILLAGE credits for compute sharing and network participation.",  # noqa: E501
                 "metadata": {"source": "economy", "type": "tokenomics"},
             },
             {
-                "text": "Dual-path transport provides automatic failover between BitChat and Betanet protocols for reliability.",
+                "text": "Dual-path transport provides automatic failover between BitChat and Betanet protocols for reliability.",  # noqa: E501
                 "metadata": {"source": "transport", "type": "reliability"},
             },
             {
-                "text": "Quiet-STaR enables agents to perform internal reasoning with encrypted thought processes.",
+                "text": "Quiet-STaR enables agents to perform internal reasoning with encrypted thought processes.",  # noqa: E501
                 "metadata": {"source": "agents", "type": "reasoning"},
             },
             {
-                "text": "Self-modeling networks predict their own behavior to improve efficiency and adaptation.",
+                "text": "Self-modeling networks predict their own behavior to improve efficiency and adaptation.",  # noqa: E501
                 "metadata": {"source": "training", "type": "self_modeling"},
             },
             {
-                "text": "Mobile optimization prioritizes offline operation and battery preservation on resource-constrained devices.",
+                "text": "Mobile optimization prioritizes offline operation and battery preservation on resource-constrained devices.",  # noqa: E501
                 "metadata": {"source": "mobile", "type": "optimization"},
             },
         ]
-
         for doc in builtin_docs:
             self.vector_store.add_document(doc["text"], doc["metadata"])
-
-        logger.info(f"Loaded {len(builtin_docs)} built-in documents")
+        logger.info("Loaded %d built-in documents", len(builtin_docs))
 
     def _load_corpus_from_path(self, corpus_path: str) -> None:
-        """Load documents from file or directory."""
         corpus_path = Path(corpus_path)
-
         if corpus_path.is_file():
             if corpus_path.suffix == ".json":
                 self._load_json_corpus(corpus_path)
@@ -293,26 +183,22 @@ class OfflineRAGPipeline:
                         self._load_text_file(file_path)
 
     def _load_json_corpus(self, file_path: Path) -> None:
-        """Load JSON corpus file."""
         try:
             with open(file_path, encoding="utf-8") as f:
                 data = json.load(f)
-
             if isinstance(data, list):
                 for item in data:
                     if isinstance(item, dict) and "text" in item:
                         metadata = item.get("metadata", {})
                         metadata["source_file"] = str(file_path)
                         self.vector_store.add_document(item["text"], metadata)
-        except Exception as e:
-            logger.warning(f"Failed to load JSON corpus {file_path}: {e}")
+        except Exception as exc:  # pragma: no cover - log only
+            logger.warning("Failed to load JSON corpus %s: %s", file_path, exc)
 
     def _load_text_file(self, file_path: Path) -> None:
-        """Load plain text file."""
         try:
             with open(file_path, encoding="utf-8") as f:
                 content = f.read().strip()
-
             if content:
                 metadata = {
                     "source_file": str(file_path),
@@ -320,38 +206,33 @@ class OfflineRAGPipeline:
                     "file_type": file_path.suffix,
                 }
                 self.vector_store.add_document(content, metadata)
-        except Exception as e:
-            logger.warning(f"Failed to load text file {file_path}: {e}")
+        except Exception as exc:  # pragma: no cover - log only
+            logger.warning("Failed to load text file %s: %s", file_path, exc)
 
-    def query(self, question: str, top_k: int = 3) -> dict[str, Any]:
-        """Query the RAG system and return results."""
+    def query(
+        self, question: str, top_k: int = 3, max_tokens: int = 80
+    ) -> dict[str, Any]:
         start_time = time.time()
-
-        # Search for relevant documents
         search_results = self.vector_store.similarity_search(question, top_k=top_k)
-
-        # Generate simple response
         if search_results:
-            primary_result = search_results[0]
-
-            # Create context from top results
-            context_parts = []
-            for result in search_results:
-                context_parts.append(f"[{result['similarity']:.2f}] {result['text']}")
-
-            context = "\n\n".join(context_parts)
-            response = f"Based on the available documentation: {primary_result['text']}"
-
-            if len(search_results) > 1:
-                response += (
-                    f"\n\nAdditional relevant information: {search_results[1]['text']}"
-                )
+            snippets = []
+            remaining = max_tokens
+            for i, result in enumerate(search_results, 1):
+                words = result["text"].split()
+                snippet_words = words[:remaining]
+                remaining -= len(snippet_words)
+                snippet = " ".join(snippet_words)
+                snippets.append(f"[{i}] {snippet}")
+                if remaining <= 0:
+                    break
+            response = f"{search_results[0]['text']}\n\nSources:\n" + "\n".join(
+                snippets
+            )
+            context = "\n\n".join(snippets)
         else:
-            response = "I don't have information about that topic in my current knowledge base."
+            response = "I don't have information about that topic in my current knowledge base."  # noqa: E501
             context = ""
-
         query_time = time.time() - start_time
-
         return {
             "question": question,
             "answer": response,
@@ -364,19 +245,14 @@ class OfflineRAGPipeline:
 
 
 def smoke() -> dict[str, Any]:
-    """Smoke test for offline RAG functionality."""
     try:
-        # Initialize offline RAG
         rag = OfflineRAGPipeline()
-
-        # Test queries
         test_queries = [
             "What is BitChat?",
             "How does Betanet work?",
             "What are access tickets?",
             "How does resource management work?",
         ]
-
         results = []
         for query in test_queries:
             result = rag.query(query)
@@ -388,70 +264,15 @@ def smoke() -> dict[str, Any]:
                     "num_sources": len(result["sources"]),
                 }
             )
-
-        # Summary
         successful_queries = sum(1 for r in results if r["success"])
         avg_query_time = sum(r["query_time_ms"] for r in results) / len(results)
-
         return {
             "status": "success",
             "total_queries": len(test_queries),
             "successful_queries": successful_queries,
             "success_rate": successful_queries / len(test_queries),
-            "avg_query_time_ms": avg_query_time,
-            "total_documents": len(rag.vector_store.documents),
-            "test_results": results,
-            "meets_requirements": successful_queries >= 1,
+            "average_query_time_ms": avg_query_time,
+            "results": results,
         }
-
-    except Exception as e:
-        return {
-            "status": "error",
-            "error": str(e),
-            "meets_requirements": False,
-        }
-
-
-# Legacy compatibility for existing configuration
-class OfflineRAGConfig:
-    """Simple offline RAG configuration."""
-
-    def __init__(self):
-        self.offline_mode = True
-        self.enable_internet_features = False
-        self.enable_api_calls = False
-        self.strict_offline_mode = True
-        self.vector_store_type = "in_memory"
-        self.cache_enabled = True
-        self.extra_params = {}
-
-    def dict(self):
-        return {
-            "offline_mode": self.offline_mode,
-            "enable_internet_features": self.enable_internet_features,
-            "enable_api_calls": self.enable_api_calls,
-            "strict_offline_mode": self.strict_offline_mode,
-            "vector_store_type": self.vector_store_type,
-            "cache_enabled": self.cache_enabled,
-        }
-
-
-def get_offline_rag_config(**overrides) -> OfflineRAGConfig:
-    """Get offline-first RAG configuration."""
-    return OfflineRAGConfig()
-
-
-def auto_configure_for_environment() -> OfflineRAGConfig:
-    """Auto configure for current environment."""
-    return OfflineRAGConfig()
-
-
-# Make the smoke test available at module level
-def smoke_test():
-    """Legacy name for smoke test."""
-    return smoke()
-
-
-if __name__ == "__main__":
-    result = smoke()
-    print(json.dumps(result, indent=2))
+    except Exception as exc:  # pragma: no cover - log only
+        return {"status": "error", "error": str(exc)}
