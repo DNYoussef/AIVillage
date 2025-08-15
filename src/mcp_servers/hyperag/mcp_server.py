@@ -18,6 +18,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 from mcp_servers.hyperag.auth import AuthContext, PermissionManager
 from mcp_servers.hyperag.models import ModelRegistry
 from mcp_servers.hyperag.protocol import MCPProtocolHandler
+from software.hyper_rag.hyper_rag_pipeline import HyperRAGPipeline
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -32,6 +33,8 @@ class HypeRAGMCPServer:
         self.model_registry = None
         self.protocol_handler = None
         self.initialized = False
+        # Local HyperRAG pipeline used for all queries and memory operations
+        self.pipeline = HyperRAGPipeline()
 
     async def initialize(self) -> None:
         """Initialize server components."""
@@ -221,35 +224,40 @@ class HypeRAGMCPServer:
     ) -> dict[str, Any]:
         """Handle hyperag_query tool call."""
         query = arguments.get("query", "")
-        additional_context = arguments.get("context", "")
 
-        # Simulate query processing
-        result = {
-            "query": query,
-            "context": additional_context,
-            "response": "HypeRAG query processing not fully implemented yet",
-            "sources": [],
-            "confidence": 0.5,
-        }
+        retrieval = await self.pipeline.search(query)
+        answer = retrieval.items[0].content if retrieval.items else ""
+        sources = [
+            {"id": item.item_id, "content": item.content}
+            for item in retrieval.items
+        ]
 
-        return result
+        return {"answer": answer, "sources": sources, "metrics": retrieval.metrics}
 
     async def _handle_memory(
         self, arguments: dict[str, Any], context: AuthContext
     ) -> dict[str, Any]:
         """Handle hyperag_memory tool call."""
         action = arguments.get("action")
-        content = arguments.get("content", "")
-        tags = arguments.get("tags", [])
 
-        result = {
-            "action": action,
-            "content": content,
-            "tags": tags,
-            "status": "Memory operations not fully implemented yet",
-        }
+        if action == "store":
+            content = arguments.get("content", "")
+            belief = float(arguments.get("belief", 0.0))
+            item_id = await self.pipeline.ingest_knowledge(
+                content, source_confidence=belief
+            )
+            return {"status": "stored", "item_id": item_id}
 
-        return result
+        if action == "search":
+            query = arguments.get("content", "")
+            retrieval = await self.pipeline.search(query)
+            return {
+                "results": [
+                    {"id": i.item_id, "content": i.content} for i in retrieval.items
+                ]
+            }
+
+        return {"status": "unknown action"}
 
     async def run(self) -> None:
         """Run the MCP server using stdio transport."""
