@@ -27,6 +27,8 @@ class CanaryTest:
     last_seen_status: str | None = None
     last_change: str | None = None
     monitored_since: str | None = None
+    failure_threshold: int = 1
+    consecutive_failures: int = 0
 
 
 @dataclass
@@ -85,6 +87,7 @@ class CanaryMonitor:
                 "expected_status": "xfail",
                 "reason": "BitNet quantization not implemented - architectural canary",
                 "monitored_since": datetime.now(timezone.utc).isoformat(),
+                "failure_threshold": 1,
             },
             {
                 "name": "evo_merge_tests",
@@ -92,6 +95,7 @@ class CanaryMonitor:
                 "expected_status": "collection_error",
                 "reason": "EvoMerge architecture not available - architectural canary",
                 "monitored_since": datetime.now(timezone.utc).isoformat(),
+                "failure_threshold": 1,
             },
         ]
 
@@ -167,8 +171,21 @@ class CanaryMonitor:
             # Determine current status
             current_status = self._normalize_test_status(outcome, test)
 
+            # Track consecutive failures
+            if current_status == "failed":
+                canary.consecutive_failures += 1
+            else:
+                canary.consecutive_failures = 0
+
             # Check for status changes
             if canary.last_seen_status and canary.last_seen_status != current_status:
+                if (
+                    canary.last_seen_status == "passed"
+                    and current_status == "failed"
+                    and canary.consecutive_failures < canary.failure_threshold
+                ):
+                    continue
+
                 alert_level = self._determine_alert_level(
                     canary, canary.last_seen_status, current_status
                 )
@@ -192,10 +209,10 @@ class CanaryMonitor:
                 # First time seeing this status
                 canary.last_seen_status = current_status
 
-        # Save changes
+        # Save changes and persist config
         if changes:
             self._save_change_history()
-            self._update_canary_config()
+        self._update_canary_config()
 
         return changes
 
@@ -263,6 +280,8 @@ class CanaryMonitor:
                         "last_seen_status": canary.last_seen_status,
                         "last_change": canary.last_change,
                         "monitored_since": canary.monitored_since,
+                        "failure_threshold": canary.failure_threshold,
+                        "consecutive_failures": canary.consecutive_failures,
                     }
                     for canary in self.known_canaries.values()
                 ],
