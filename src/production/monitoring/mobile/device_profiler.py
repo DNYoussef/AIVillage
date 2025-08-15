@@ -350,8 +350,8 @@ class DeviceProfile:
                 )
                 if "nvidia" in result.stdout.lower() or "amd" in result.stdout.lower():
                     self.supports_gpu = True
-        except:
-            pass
+        except Exception as exc:  # pragma: no cover - platform specific
+            logger.debug("GPU detection failed: %s", exc)
 
     def start_monitoring(self, interval: float = 5.0) -> None:
         """Start real-time resource monitoring."""
@@ -521,8 +521,8 @@ class DeviceProfile:
                 # ARM/Mobile CPUs
                 for entry in temps["cpu_thermal"]:
                     return entry.current
-        except:
-            pass
+        except Exception as exc:  # pragma: no cover - platform specific
+            logger.debug("Temperature read failed: %s", exc)
         return None
 
     def update_profile(self, snapshot: ResourceSnapshot) -> None:
@@ -629,8 +629,8 @@ class DeviceProfiler:
             try:
                 identifiers.append(Build.SERIAL)
                 identifiers.append(Build.MODEL)
-            except:
-                pass
+            except Exception as exc:  # pragma: no cover - android only
+                logger.debug("Android ID fetch failed: %s", exc)
         elif MACOS_AVAILABLE:
             try:
                 # Use system profiler for Mac hardware UUID
@@ -645,8 +645,8 @@ class DeviceProfiler:
                     if "Hardware UUID" in line:
                         identifiers.append(line.split(":")[1].strip())
                         break
-            except:
-                pass
+            except Exception as exc:  # pragma: no cover - mac only
+                logger.debug("macOS UUID lookup failed: %s", exc)
 
         # Create hash from identifiers
         combined = "".join(str(i) for i in identifiers if i)

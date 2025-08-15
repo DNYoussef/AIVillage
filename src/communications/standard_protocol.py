@@ -2,8 +2,12 @@
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Callable
 from typing import Any
+
+
+logger = logging.getLogger(__name__)
 
 
 class StandardCommunicationProtocol:
@@ -28,9 +32,8 @@ class StandardCommunicationProtocol:
             handler = self._subscribers[receiver]
             try:
                 await handler(message)
-            except Exception:
-                # Ignore handler errors in test protocol
-                pass
+            except Exception as exc:  # pragma: no cover - debug path
+                logger.exception("Handler error for %s: %s", receiver, exc)
 
         # Also queue for manual retrieval
         if receiver:

@@ -7,7 +7,7 @@ from typing import Any
 class Retriever(ABC):
     @abstractmethod
     async def retrieve(self, query: str, k: int) -> list[dict[str, Any]]:
-        pass
+        raise RuntimeError("Retriever.retrieve must be implemented by subclasses")
 
 
 class KnowledgeConstructor(ABC):
@@ -15,16 +15,16 @@ class KnowledgeConstructor(ABC):
     async def construct(
         self, query: str, retrieved_docs: list[dict[str, Any]]
     ) -> dict[str, Any]:
-        pass
+        raise RuntimeError("KnowledgeConstructor.construct must be implemented by subclasses")
 
 
 class ReasoningEngine(ABC):
     @abstractmethod
     async def reason(self, query: str, constructed_knowledge: dict[str, Any]) -> str:
-        pass
+        raise RuntimeError("ReasoningEngine.reason must be implemented by subclasses")
 
 
 class EmbeddingModel(ABC):
     @abstractmethod
     async def get_embedding(self, text: str) -> list[float]:
-        pass
+        raise RuntimeError("EmbeddingModel.get_embedding must be implemented by subclasses")
