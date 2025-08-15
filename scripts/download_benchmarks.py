@@ -176,51 +176,107 @@ and provides standardized metrics for evolutionary comparison.
 import json
 import argparse
 from pathlib import Path
-from typing import Dict, List, Any
+from typing import Dict, List
 
-def evaluate_on_gsm8k(model, dataset_path: Path) -> Dict[str, float]:
-    """Evaluate model on GSM8K dataset"""
-    # TODO: Implement GSM8K evaluation
-    # Load test set from dataset_path / "test.json"
-    # Run model inference
-    # Calculate accuracy metrics
-    return {"accuracy": 0.0, "step_accuracy": 0.0}
 
-def evaluate_on_math(model, dataset_path: Path) -> Dict[str, float]:
-    """Evaluate model on MATH dataset"""
-    # TODO: Implement MATH evaluation
-    # Load test set from dataset_path / "test.json"
-    # Run model inference with subject breakdown
-    # Calculate accuracy metrics
-    return {"accuracy": 0.0, "subject_accuracy": 0.0}
+def _load_json(path: Path) -> List[Dict[str, str]]:
+    with open(path) as f:
+        return json.load(f)
 
-def evaluate_on_mathqa(model, dataset_path: Path) -> Dict[str, float]:
-    """Evaluate model on MathQA dataset"""
-    # TODO: Implement MathQA evaluation
-    # Load test set from dataset_path / "test.json"
-    # Run model inference
-    # Calculate accuracy metrics
-    return {"accuracy": 0.0, "category_accuracy": 0.0}
+
+def evaluate_on_gsm8k(predictions_path: str, dataset_path: Path) -> Dict[str, float]:
+    """Evaluate predictions on GSM8K dataset."""
+    data = _load_json(dataset_path / "test.json")
+    preds = _load_json(Path(predictions_path))
+    correct = 0
+    for item, pred in zip(data, preds):
+        if str(pred).strip() == str(item.get("answer", "")).strip():
+            correct += 1
+    accuracy = correct / len(data) if data else 0.0
+    return {"accuracy": accuracy, "step_accuracy": accuracy}
+
+
+def evaluate_on_math(predictions_path: str, dataset_path: Path) -> Dict[str, float]:
+    """Evaluate predictions on MATH dataset."""
+    data = _load_json(dataset_path / "test.json")
+    preds = _load_json(Path(predictions_path))
+    correct = 0
+    subject_totals: Dict[str, int] = {}
+    subject_correct: Dict[str, int] = {}
+    for item, pred in zip(data, preds):
+        subject = item.get("subject", "unknown")
+        subject_totals[subject] = subject_totals.get(subject, 0) + 1
+        if str(pred).strip() == str(item.get("solution", "")).strip():
+            correct += 1
+            subject_correct[subject] = subject_correct.get(subject, 0) + 1
+    accuracy = correct / len(data) if data else 0.0
+    subject_accs = [
+        subject_correct.get(sub, 0) / total for sub, total in subject_totals.items()
+    ]
+    subject_accuracy = sum(subject_accs) / len(subject_accs) if subject_accs else 0.0
+    return {"accuracy": accuracy, "subject_accuracy": subject_accuracy}
+
+
+def evaluate_on_mathqa(predictions_path: str, dataset_path: Path) -> Dict[str, float]:
+    """Evaluate predictions on MathQA dataset."""
+    data = _load_json(dataset_path / "test.json")
+    preds = _load_json(Path(predictions_path))
+    correct = 0
+    category_totals: Dict[str, int] = {}
+    category_correct: Dict[str, int] = {}
+    for item, pred in zip(data, preds):
+        category = item.get("category", "unknown")
+        category_totals[category] = category_totals.get(category, 0) + 1
+        if str(pred).strip().lower() == str(item.get("correct", "")).strip().lower():
+            correct += 1
+            category_correct[category] = category_correct.get(category, 0) + 1
+    accuracy = correct / len(data) if data else 0.0
+    category_accs = [
+        category_correct.get(cat, 0) / total for cat, total in category_totals.items()
+    ]
+    category_accuracy = sum(category_accs) / len(category_accs) if category_accs else 0.0
+    return {"accuracy": accuracy, "category_accuracy": category_accuracy}
+
 
 def main():
-    parser = argparse.ArgumentParser(description="Evaluate model on math benchmarks")
-    parser.add_argument("--model-path", required=True, help="Path to model")
-    parser.add_argument("--benchmarks-dir", default="./benchmarks", help="Benchmarks directory")
-    parser.add_argument("--output", default="evaluation_results.json", help="Output file")
+    parser = argparse.ArgumentParser(
+        description="Evaluate predictions on math benchmarks"
+    )
+    parser.add_argument(
+        "--model-path", required=True, help="Path to predictions file"
+    )
+    parser.add_argument(
+        "--benchmarks-dir", default="./benchmarks", help="Benchmarks directory"
+    )
+    parser.add_argument(
+        "--output", default="evaluation_results.json", help="Output file"
+    )
+    parser.add_argument(
+        "--benchmarks",
+        nargs="+",
+        choices=["gsm8k", "math", "mathqa", "all"],
+        default=["all"],
+        help="Benchmarks to evaluate",
+    )
 
     args = parser.parse_args()
 
     benchmarks_dir = Path(args.benchmarks_dir)
     results = {}
 
-    # Evaluate on each benchmark
     evaluators = {
         "gsm8k": evaluate_on_gsm8k,
         "math": evaluate_on_math,
-        "mathqa": evaluate_on_mathqa
+        "mathqa": evaluate_on_mathqa,
     }
 
-    for benchmark_name, evaluator in evaluators.items():
+    if "all" in args.benchmarks:
+        to_run = list(evaluators.keys())
+    else:
+        to_run = args.benchmarks
+
+    for benchmark_name in to_run:
+        evaluator = evaluators[benchmark_name]
         benchmark_path = benchmarks_dir / benchmark_name
         if benchmark_path.exists():
             print(f"Evaluating on {benchmark_name}...")
@@ -228,11 +284,11 @@ def main():
         else:
             print(f"Benchmark {benchmark_name} not found, skipping...")
 
-    # Save results
-    with open(args.output, 'w') as f:
+    with open(args.output, "w") as f:
         json.dump(results, f, indent=2)
 
     print(f"Evaluation results saved to {args.output}")
+
 
 if __name__ == "__main__":
     main()
