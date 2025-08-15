@@ -165,19 +165,144 @@ class HTXTransport:
             encoding=serialization.Encoding.Raw, format=serialization.PublicFormat.Raw
         )
 
+    def _capture_client_hello(self, host: str, port: int):
+        """Perform a raw TLS ClientHello using Scapy and return the message."""
+        from scapy.layers.tls.handshake import TLSClientHello
+        from scapy.layers.tls.extensions import (
+            TLS_Ext_ALPN,
+            TLS_Ext_ServerName,
+            TLS_Ext_SignatureAlgorithms,
+            TLS_Ext_SupportedGroups,
+            TLS_Ext_SupportedPointFormat,
+            ServerName,
+            ProtocolName,
+        )
+        from scapy.layers.tls.all import TLS
+        import socket
+        import os
+
+        hello = TLSClientHello(
+            version=0x0303,
+            sid=b"",
+            ciphers=[
+                0x1301,
+                0x1302,
+                0x1303,
+                0xC02B,
+                0xC02F,
+                0xC02C,
+                0xC030,
+            ],
+            ext=[
+                TLS_Ext_ServerName(servernames=[ServerName(servername=host.encode())]),
+                TLS_Ext_SupportedGroups(groups=[29, 23, 24]),
+                TLS_Ext_SupportedPointFormat(ecpl=[0]),
+                TLS_Ext_SignatureAlgorithms(sig_algs=[0x0403, 0x0503, 0x0203]),
+                TLS_Ext_ALPN(
+                    protocols=[
+                        ProtocolName(_pkt=b"\x02h2"),
+                        ProtocolName(_pkt=b"\x08http/1.1"),
+                    ]
+                ),
+            ],
+        )
+
+        proxy = os.environ.get("HTTPS_PROXY") or os.environ.get("https_proxy")
+        if proxy:
+            proxy = proxy.replace("http://", "")
+            phost, pport = proxy.split(":")
+            s = socket.create_connection((phost, int(pport)))
+            connect_req = (
+                f"CONNECT {host}:{port} HTTP/1.1\r\nHost: {host}:{port}\r\n\r\n".encode()
+            )
+            s.sendall(connect_req)
+            try:
+                s.recv(4096)
+            except OSError:
+                pass
+        else:
+            s = socket.create_connection((host, port))
+
+        try:
+            s.sendall(bytes(TLS() / hello))
+            try:
+                s.recv(4096)
+            except OSError:
+                pass
+        finally:
+            s.close()
+
+        return hello
+
+    def _calculate_ja3(self, hello) -> tuple[str, str]:
+        """Calculate JA3 string and hash from a ClientHello."""
+        version = hello.version
+        ciphers = "-".join(str(c) for c in hello.ciphers)
+        extensions = [ext.type for ext in (hello.ext or [])]
+        exts = "-".join(str(e) for e in extensions)
+        groups: list[int] = []
+        formats: list[int] = []
+        for ext in (hello.ext or []):
+            if ext.type == 10:
+                groups = list(ext.groups)
+            elif ext.type == 11:
+                formats = list(ext.ecpl)
+        curves = "-".join(str(g) for g in groups)
+        ec_fmt = "-".join(str(f) for f in formats)
+        ja3_string = f"{version},{ciphers},{exts},{curves},{ec_fmt}"
+        ja3_hash = hashlib.md5(ja3_string.encode()).hexdigest()
+        return ja3_string, ja3_hash
+
+    def _calculate_ja4(self, hello) -> tuple[str, str]:
+        """Calculate JA4 string and hash from a ClientHello."""
+        version_hex = f"{hello.version:04x}"[-2:]
+        sni = "d" if any(ext.type == 0 for ext in (hello.ext or [])) else "i"
+        num_ciphers = f"{len(hello.ciphers):02d}"
+        num_ext = f"{len(hello.ext or []):02d}"
+        alpn = "h2" if any(
+            ext.type == 16 and any(p.protocol == b"h2" for p in ext.protocols)
+            for ext in (hello.ext or [])
+        ) else "h1"
+        cipher_hash = hashlib.sha256(
+            ",".join(str(c) for c in hello.ciphers).encode()
+        ).hexdigest()[:12]
+        ext_hash = hashlib.sha256(
+            ",".join(str(ext.type) for ext in (hello.ext or [])).encode()
+        ).hexdigest()[:12]
+        ja4_string = (
+            f"t{version_hex}{sni}{num_ciphers}{num_ext}{alpn}_{cipher_hash}_{ext_hash}"
+        )
+        ja4_hash = hashlib.sha256(ja4_string.encode()).hexdigest()[:16]
+        return ja4_string, ja4_hash
+
     async def calibrate_origin(
         self, origin_host: str, origin_port: int = 443
     ) -> HTXCalibration:
         """Calibrate uTLS parameters from origin server."""
         logger.info(f"Calibrating TLS fingerprint for {origin_host}:{origin_port}")
 
-        # TODO: Actual TLS handshake capture would require lower-level access
-        # For now, return realistic Chrome fingerprint data
+        hello = await asyncio.to_thread(
+            self._capture_client_hello, origin_host, origin_port
+        )
+
+        ja3_string, ja3_hash = self._calculate_ja3(hello)
+        ja4_string, ja4_hash = self._calculate_ja4(hello)
+
+        alpn_ext = next((ext for ext in (hello.ext or []) if ext.type == 16), None)
+        alpn_protocols = (
+            [p.protocol.decode() for p in alpn_ext.protocols] if alpn_ext else []
+        )
+
+        extensions_order = [ext.type for ext in (hello.ext or [])]
+        grease_positions = [
+            i for i, val in enumerate(extensions_order) if val & 0x0F0F == 0x0A0A
+        ]
+
         calibration = HTXCalibration(
             origin_host=origin_host,
-            ja3_fingerprint="771,4865-4866-4867-49195-49199-49196-49200-52393-52392-49171-49172-156-157-47-53,0-23-65281-10-11-35-16-5-13-18-51-45-43-27-21,29-23-24,0",
-            ja4_fingerprint="t13d1516h2_8daaf6152771_e5627efa2ab1",
-            alpn_protocols=["h2", "http/1.1"],
+            ja3_fingerprint=ja3_hash,
+            ja4_fingerprint=ja4_hash,
+            alpn_protocols=alpn_protocols,
             h2_settings={
                 "SETTINGS_HEADER_TABLE_SIZE": 65536,
                 "SETTINGS_ENABLE_PUSH": 0,
@@ -186,29 +311,12 @@ class HTXTransport:
                 "SETTINGS_MAX_FRAME_SIZE": 16384,
                 "SETTINGS_MAX_HEADER_LIST_SIZE": 262144,
             },
-            cipher_suites=[0x1301, 0x1302, 0x1303, 0xC02B, 0xC02F, 0xC02C, 0xC030],
-            extensions_order=[
-                0,
-                23,
-                65281,
-                10,
-                11,
-                35,
-                16,
-                5,
-                13,
-                18,
-                51,
-                45,
-                43,
-                27,
-                21,
-            ],
-            grease_positions=[0, 2, 4],
+            cipher_suites=list(hello.ciphers),
+            extensions_order=extensions_order,
+            grease_positions=grease_positions,
             timestamp=time.time(),
         )
 
-        # Save calibration
         self.calibration = calibration
         await self._save_calibration(calibration)
 
