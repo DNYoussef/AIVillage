@@ -662,15 +662,31 @@ class SecureAPIServer:
     # Health check
     async def _health_check(self, request: web_request.Request) -> web.Response:
         """Health check endpoint."""
+
+        # Default database health info
+        db_health: dict[str, Any] = {"status": "operational"}
+
+        # Measure database connectivity latency and capture failures
+        start_time = time.perf_counter()
+        try:
+            # Execute a lightweight query to ensure the connection is healthy
+            with self.profile_db.get_connection() as conn:
+                conn.execute("SELECT 1")
+            db_health["latency_ms"] = (time.perf_counter() - start_time) * 1000
+        except Exception as exc:  # pragma: no cover - defensive, errors handled below
+            db_health["status"] = "degraded"
+            db_health["error"] = str(exc)
+            db_health["latency_ms"] = (time.perf_counter() - start_time) * 1000
+
         health_status = {
-            "status": "healthy",
+            "status": "healthy" if db_health["status"] == "operational" else "degraded",
             "timestamp": datetime.utcnow().isoformat(),
             "version": "1.0.0",
             "services": {
                 "authentication": "operational",
                 "rate_limiting": "operational",
                 "encryption": "operational",
-                "database": "operational",  # TODO: Check actual database
+                "database": db_health,
             },
             "security": {
                 "tls_enabled": self.tls_enabled,
