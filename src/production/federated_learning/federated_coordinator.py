@@ -4,6 +4,8 @@ Coordinates federated learning across distributed devices, integrating with
 Sprint 6's evolution system and P2P infrastructure.
 """
 
+# isort: skip_file
+
 import asyncio
 import logging
 import random
@@ -18,7 +20,12 @@ import torch
 from torch import nn
 from torch.utils.data import DataLoader, Dataset
 
-from src.production.communications.p2p.p2p_node import P2PNode, PeerCapabilities
+from src.production.communications.p2p.p2p_node import (
+    MessageType,
+    P2PMessage,
+    P2PNode,
+    PeerCapabilities,
+)
 
 from ..evolution.infrastructure_aware_evolution import (
     InfrastructureAwareEvolution,
@@ -178,7 +185,77 @@ class DistributedFederatedLearning:
 
     def _register_p2p_handlers(self) -> None:
         """Register P2P message handlers for federated learning."""
-        # These would be registered with the P2P node's message handling system
+        previous_handler = self.p2p_node.message_handlers.get(MessageType.DATA)
+
+        async def _fl_dispatcher(
+            message: P2PMessage, writer: asyncio.StreamWriter | None = None
+        ) -> None:
+            """Dispatch FL-related messages while preserving existing handler."""
+            msg_type = message.payload.get("type")
+
+            if msg_type == "FL_CAPABILITY_ANNOUNCEMENT":
+                await self._handle_capability_announcement(message)
+            elif msg_type == "FL_GRADIENTS":
+                await self._handle_gradient_submission(message)
+            elif msg_type == "FL_GRADIENT_COLLECTION":
+                await self._handle_gradient_collection_request(message)
+            elif previous_handler:
+                await previous_handler(message, writer)
+
+        self.p2p_node.register_handler(MessageType.DATA, _fl_dispatcher)
+
+    async def _handle_capability_announcement(
+        self, message: P2PMessage, writer: asyncio.StreamWriter | None = None
+    ) -> None:
+        """Handle federated learning capability announcements from peers."""
+        device_id = message.sender_id
+        if device_id not in self.available_participants:
+            cap_data = message.payload.get("capabilities", {})
+            try:
+                capabilities = PeerCapabilities(**cap_data)
+            except Exception:
+                capabilities = cap_data
+
+            self.available_participants[device_id] = TrainingParticipant(
+                device_id=device_id, capabilities=capabilities
+            )
+        self.participant_pool.add(device_id)
+
+    async def _handle_gradient_collection_request(
+        self, message: P2PMessage, writer: asyncio.StreamWriter | None = None
+    ) -> None:
+        """Respond to gradient collection requests from coordinator."""
+        participant = self.available_participants.get(self.p2p_node.node_id)
+        if not participant or not participant.gradients:
+            return
+
+        gradient_payload = {
+            name: tensor.tolist() for name, tensor in participant.gradients.items()
+        }
+        response = {
+            "type": "FL_GRADIENTS",
+            "round_id": message.payload.get("round_id"),
+            "gradients": gradient_payload,
+        }
+
+        try:
+            await self.p2p_node.send_to_peer(message.sender_id, response)
+        except AttributeError:
+            await self.p2p_node.send_message(
+                message.sender_id, MessageType.DATA, response
+            )
+
+    async def _handle_gradient_submission(
+        self, message: P2PMessage, writer: asyncio.StreamWriter | None = None
+    ) -> None:
+        """Store gradients submitted by participants."""
+        participant = self.available_participants.get(message.sender_id)
+        if not participant:
+            return
+        grad_payload = message.payload.get("gradients", {})
+        participant.gradients = {
+            name: torch.tensor(val) for name, val in grad_payload.items()
+        }
 
     async def initialize_federated_learning(
         self, model: nn.Module, is_coordinator: bool = True
@@ -198,16 +275,26 @@ class DistributedFederatedLearning:
 
             # Setup secure aggregation if enabled
             if self.config.secure_aggregation_enabled:
-                from .secure_aggregation import SecureAggregationProtocol
+                try:
+                    from .secure_aggregation import SecureAggregationProtocol
 
-                self.secure_aggregation = SecureAggregationProtocol(self.p2p_node)
-                await self.secure_aggregation.initialize()
+                    self.secure_aggregation = SecureAggregationProtocol(self.p2p_node)
+                    await self.secure_aggregation.initialize()
+                except ModuleNotFoundError:
+                    logger.warning(
+                        "Secure aggregation module not found. Continuing without it."
+                    )
+                    self.secure_aggregation = None
+                except Exception as e:
+                    logger.warning("Secure aggregation initialization failed: %s", e)
+                    self.secure_aggregation = None
 
             # Announce federated learning capability
             await self._announce_fl_capability()
 
             logger.info(
-                f"Federated learning initialized with {len(self.available_participants)} potential participants"
+                "Federated learning initialized with "
+                f"{len(self.available_participants)} potential participants"
             )
             return True
 
@@ -298,9 +385,9 @@ class DistributedFederatedLearning:
 
         for device_id in self.available_participants:
             self.privacy_budgets[device_id] = initial_budget
-            self.available_participants[
-                device_id
-            ].privacy_budget_remaining = initial_budget
+            self.available_participants[device_id].privacy_budget_remaining = (
+                initial_budget
+            )
 
     async def _announce_fl_capability(self) -> None:
         """Announce federated learning capability to network."""
@@ -364,7 +451,11 @@ class DistributedFederatedLearning:
 
             if len(selected_participants) < self.config.min_participants_per_round:
                 training_round.status = TrainingRoundStatus.FAILED
-                msg = f"Insufficient participants: {len(selected_participants)} < {self.config.min_participants_per_round}"
+                msg = (
+                    "Insufficient participants: "
+                    f"{len(selected_participants)} < "
+                    f"{self.config.min_participants_per_round}"
+                )
                 raise ValueError(msg)
 
             training_round.participants = selected_participants
@@ -594,7 +685,9 @@ class DistributedFederatedLearning:
             results = await asyncio.gather(*distribution_tasks, return_exceptions=True)
             successful_distributions = sum(1 for r in results if r is True)
             logger.info(
-                f"Model distributed to {successful_distributions}/{len(distribution_tasks)} remote participants"
+                "Model distributed to "
+                f"{successful_distributions}/{len(distribution_tasks)} "
+                "remote participants"
             )
 
     async def _coordinate_local_training(
@@ -859,7 +952,10 @@ class DistributedFederatedLearning:
         ]
 
         if len(participants_with_gradients) < self.config.min_participants_per_round:
-            msg = f"Insufficient gradients for aggregation: {len(participants_with_gradients)}"
+            msg = (
+                "Insufficient gradients for aggregation: "
+                f"{len(participants_with_gradients)}"
+            )
             raise ValueError(msg)
 
         # Perform aggregation
@@ -926,7 +1022,8 @@ class DistributedFederatedLearning:
     ) -> dict[str, torch.Tensor]:
         """Apply Byzantine robustness to aggregated gradients."""
         # Simplified Byzantine robustness using gradient norms
-        # In practice, this would use more sophisticated methods like Krum or trimmed mean
+        # In practice, this would use more sophisticated methods like Krum or
+        # trimmed mean
 
         gradient_norms = []
         for participant in participants:
