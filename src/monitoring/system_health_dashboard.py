@@ -6,9 +6,11 @@ ACTUALLY WORKS - NOT A STUB!
 Tracks the progress from 40% to >60% completion after stub replacement sprint.
 """
 
+import ast
 import asyncio
 import json
 import logging
+import subprocess
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -117,40 +119,26 @@ class ComponentHealthChecker:
             "__init__",
         ]
 
-        # Negative indicators (stubs)
-        negative_patterns = [
-            "pass",
-            "NotImplementedError",
-            "TODO",
-            "STUB",
-            "# TODO",
-            "raise NotImplementedError",
-            "return None",
-            "return []",
-            "return {}",
-        ]
-
         positive_count = sum(
             1 for line in lines for pattern in positive_patterns if pattern in line
         )
-        negative_count = sum(
-            1 for line in lines for pattern in negative_patterns if pattern in line
-        )
 
-        # Score based on ratio of positive to total indicators
-        total_indicators = positive_count + negative_count
-        if total_indicators == 0:
+        if not lines:
             return 0.0
 
-        implementation_ratio = positive_count / total_indicators
+        base_score = positive_count / len(lines)
 
-        # Bonus for substantial implementations
-        if len(lines) > 100:
-            implementation_ratio += 0.1
-        if len(lines) > 300:
-            implementation_ratio += 0.1
+        # Penalize based on runtime diagnostics
+        diagnostics = self._get_runtime_metrics()
+        runtime_factor = diagnostics.get("ping_success", 1.0) * (
+            1 - diagnostics.get("error_rate", 0.0)
+        )
 
-        return min(1.0, implementation_ratio)
+        # Penalize based on proportion of stubbed functions
+        stub_ratio = self._get_stub_ratio(content)
+
+        implementation_score = base_score * runtime_factor * (1 - stub_ratio)
+        return max(0.0, min(1.0, implementation_score))
 
     def _calculate_functionality_score(self, content: str) -> float:
         """Calculate how much real functionality exists."""
@@ -186,17 +174,85 @@ class ComponentHealthChecker:
             "STUB",
             "# TODO",
             "raise NotImplementedError",
-            "return None  # TODO",
-            "return []  # TODO",
-            "return {}  # TODO",
         ]
 
-        found_stubs = []
-        for pattern in stub_patterns:
-            if pattern in content:
-                found_stubs.append(pattern)
+        found_stubs = [pattern for pattern in stub_patterns if pattern in content]
+
+        # Use AST to detect common stub return patterns
+        try:
+            tree = ast.parse(content)
+            for node in ast.walk(tree):
+                if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                    stub_type = self._get_stub_type(node)
+                    if stub_type and stub_type not in found_stubs:
+                        found_stubs.append(stub_type)
+        except SyntaxError:
+            pass
 
         return found_stubs
+
+    def _get_stub_type(self, node: ast.AST) -> str | None:
+        """Determine if a function node represents a stub."""
+        if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            return None
+        if len(node.body) != 1:
+            return None
+        stmt = node.body[0]
+        if isinstance(stmt, ast.Pass):
+            return "pass"
+        if (
+            isinstance(stmt, ast.Raise)
+            and isinstance(stmt.exc, ast.Call)
+            and isinstance(stmt.exc.func, ast.Name)
+            and stmt.exc.func.id == "NotImplementedError"
+        ):
+            return "NotImplementedError"
+        if (
+            isinstance(stmt, ast.Expr)
+            and isinstance(stmt.value, ast.Constant)
+            and isinstance(stmt.value.value, str)
+        ):
+            return "docstring_only"
+        if isinstance(stmt, ast.Return):
+            val = stmt.value
+            if isinstance(val, ast.Constant) and val.value is None:
+                return "return None"
+            if isinstance(val, ast.List) and len(val.elts) == 0:
+                return "return []"
+            if isinstance(val, ast.Dict) and len(val.keys) == 0:
+                return "return {}"
+        return None
+
+    def _get_stub_ratio(self, content: str) -> float:
+        """Calculate ratio of stub functions using AST analysis."""
+        try:
+            tree = ast.parse(content)
+        except SyntaxError:
+            return 1.0
+        total = 0
+        stubbed = 0
+        for node in ast.walk(tree):
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                total += 1
+                if self._get_stub_type(node):
+                    stubbed += 1
+        if total == 0:
+            return 0.0
+        return stubbed / total
+
+    def _get_runtime_metrics(self) -> dict[str, float]:
+        """Gather simple runtime diagnostics for scoring."""
+        metrics = {"ping_success": 1.0, "error_rate": 0.0}
+        try:
+            result = subprocess.run(
+                ["ping", "-c", "1", "localhost"],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+            metrics["ping_success"] = 1.0 if result.returncode == 0 else 0.0
+        except Exception:
+            metrics["ping_success"] = 0.0
+        return metrics
 
     def _check_for_working_code(self, content: str) -> list[str]:
         """Check for indicators of working, non-stub code."""
