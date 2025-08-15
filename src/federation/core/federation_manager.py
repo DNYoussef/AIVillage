@@ -18,7 +18,13 @@ from navigator.path_policy import RoutingPriority
 from core.p2p.dual_path_transport import DualPathTransport
 
 # Import our new federation components
-from .device_registry import DeviceCapability, DeviceProfile, DeviceRegistry, DeviceRole
+from .device_registry import (
+    DeviceCapability,
+    DeviceIdentity,
+    DeviceProfile,
+    DeviceRegistry,
+    DeviceRole,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -441,11 +447,85 @@ class FederationManager:
             # Extract device profile from announcement
             device_info = message_data.get("device_info", {})
 
-            # Create or update device profile
-            # (This would normally involve cryptographic verification)
+            # Build device identity
+            identity = DeviceIdentity(
+                device_id=device_info.get("device_id", sender),
+                public_key=(
+                    bytes.fromhex(device_info.get("public_key", ""))
+                    if device_info.get("public_key")
+                    else b""
+                ),
+                signing_key_public=(
+                    bytes.fromhex(device_info.get("signing_key_public", ""))
+                    if device_info.get("signing_key_public")
+                    else b""
+                ),
+            )
+
+            # Reputation check if provided
+            reputation = device_info.get("reputation_score")
+            if reputation is not None:
+                identity.reputation_score = reputation
+                if not 0.0 <= reputation <= 1.0:
+                    logger.warning(
+                        f"Invalid reputation score from {sender}: {reputation}"
+                    )
+                    return
+
+            # Verify signature if provided
+            signature = device_info.get("signature")
+            if signature and identity.signing_key_public:
+                try:
+                    msg_copy = {k: v for k, v in device_info.items() if k != "signature"}
+                    message_bytes = json.dumps(msg_copy, sort_keys=True).encode()
+                    sig_bytes = (
+                        bytes.fromhex(signature) if isinstance(signature, str) else signature
+                    )
+                    if not identity.verify_signature(message_bytes, sig_bytes):
+                        logger.warning(
+                            f"Invalid signature in device announcement from {sender}"
+                        )
+                        return
+                except Exception:
+                    logger.warning(
+                        f"Error verifying signature in device announcement from {sender}"
+                    )
+                    return
+
+            # Convert capabilities and role
+            capabilities = set()
+            for cap in device_info.get("capabilities", []):
+                try:
+                    capabilities.add(DeviceCapability(cap))
+                except ValueError:
+                    logger.debug(f"Unknown capability {cap} from {sender}")
+
+            role_value = device_info.get("role", DeviceRole.EDGE.value)
+            try:
+                role = DeviceRole(role_value)
+            except ValueError:
+                role = DeviceRole.EDGE
+
+            # Construct device profile
+            profile = DeviceProfile(
+                identity=identity,
+                role=role,
+                capabilities=capabilities,
+                protocols=set(device_info.get("protocols", [])),
+                region=device_info.get("region"),
+                resources=device_info.get("resources", {}),
+                cpu_cores=device_info.get("cpu_cores", 1),
+                memory_gb=device_info.get("memory_gb", 1.0),
+                storage_gb=device_info.get("storage_gb", 10.0),
+                bandwidth_mbps=device_info.get("bandwidth_mbps", 1.0),
+                battery_percent=device_info.get("battery_percent"),
+            )
+
+            # Register device in registry
+            await self.device_registry.register_device(profile)
 
             logger.info(
-                f"Device announcement from {sender}: role={device_info.get('role')}"
+                f"Device announcement from {sender}: role={profile.role.value}"
             )
 
         except Exception as e:
