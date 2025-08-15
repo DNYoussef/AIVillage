@@ -97,3 +97,30 @@ def test_get_or_retrieve_latency() -> None:
     cache.get_or_retrieve("a", emb, retrieve)
     elapsed = (time.perf_counter() - start) * 1000
     assert elapsed < 10
+
+
+def test_metrics_track_hits_and_misses() -> None:
+    cache = HippoCache(max_size=10)
+    emb = np.random.rand(64).astype("float32")
+    cache.set("a", _make_entry(emb))
+
+    # First lookup is a hit
+    assert cache.get(emb) is not None
+    metrics = cache.metrics()
+    assert metrics["hit_rate"] == 1.0
+
+    # Second lookup is a miss
+    cache.get(np.random.rand(64).astype("float32"))
+    metrics = cache.metrics()
+    assert metrics["hit_rate"] == 0.5
+
+
+def test_metrics_expired_entry_counts_as_miss() -> None:
+    cache = HippoCache(max_size=10, ttl_hours=0.0001)  # ~0.36s TTL
+    emb = np.random.rand(64).astype("float32")
+    cache.set("a", _make_entry(emb))
+    time.sleep(0.5)  # ensure expiration
+    assert cache.get(emb) is None
+    metrics = cache.metrics()
+    assert metrics["hit_rate"] == 0.0
+    assert metrics["size"] == 0

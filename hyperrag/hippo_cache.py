@@ -1,4 +1,16 @@
-"""High-performance RAG cache with semantic similarity search."""
+"""High-performance RAG cache with semantic similarity search.
+
+The cache stores query embeddings alongside retrieved documents. Entries are
+evicted using a least-recently-used policy and also expire after a configurable
+time-to-live (TTL). Lookups report metrics that capture cache effectiveness:
+
+* ``hit_rate`` – fraction of queries that returned an unexpired entry above the
+  similarity threshold
+* ``avg_latency_ms`` – average time spent per lookup
+* ``size`` – number of live cache entries
+
+Expired entries are removed and counted as misses in the hit rate.
+"""
 
 from __future__ import annotations
 
@@ -92,8 +104,8 @@ class HippoCache:
             key = self._keys[idx]
             entry = self._cache.get(key)
             if entry is None or self._is_expired(entry):
+                # Treat missing or expired entries as cache misses
                 self._cache.pop(key, None)
-                self._hits += 0
                 self._misses += 1
                 return None
             entry.access_count += 1
