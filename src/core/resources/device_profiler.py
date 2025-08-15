@@ -590,8 +590,8 @@ class DeviceProfiler:
             freq = psutil.cpu_freq()
             if freq:
                 cpu_freq = freq.current
-        except:
-            pass
+        except Exception as exc:  # pragma: no cover - platform specific
+            logger.debug("cpu_freq unavailable: %s", exc)
 
         # Get CPU temperature
         cpu_temp = self._get_cpu_temperature()
@@ -606,8 +606,8 @@ class DeviceProfiler:
             storage_used = disk.used
             storage_free = disk.free
             storage_percent = (disk.used / disk.total) * 100
-        except:
-            pass
+        except Exception as exc:  # pragma: no cover - platform specific
+            logger.debug("disk usage unavailable: %s", exc)
 
         # Battery and power information
         battery_percent, power_plugged, power_state = self._get_power_info()
@@ -686,8 +686,8 @@ class DeviceProfiler:
                         and sensor_list
                     ):
                         return sensor_list[0].current
-        except:
-            pass
+        except Exception as exc:  # pragma: no cover - platform specific
+            logger.debug("cpu temperature unavailable: %s", exc)
         return None
 
     def _get_power_info(self) -> tuple[float | None, bool | None, PowerState]:
@@ -712,8 +712,8 @@ class DeviceProfiler:
                     power_state = PowerState.BATTERY_LOW
                 else:
                     power_state = PowerState.BATTERY_CRITICAL
-        except:
-            pass
+        except Exception as exc:  # pragma: no cover - platform specific
+            logger.debug("battery info unavailable: %s", exc)
 
         return battery_percent, power_plugged, power_state
 
@@ -739,10 +739,15 @@ class DeviceProfiler:
     def _get_gpu_info(self) -> tuple[int | None, int | None, float | None]:
         """Get GPU information if available."""
         try:
-            # This would use nvidia-ml-py or similar for NVIDIA GPUs
-            # For now, return None values
-            return None, None, None
-        except:
+            import pynvml
+
+            pynvml.nvmlInit()
+            handle = pynvml.nvmlDeviceGetHandleByIndex(0)
+            mem = pynvml.nvmlDeviceGetMemoryInfo(handle)
+            util = pynvml.nvmlDeviceGetUtilizationRates(handle)
+            return mem.used, mem.total, float(util.gpu)
+        except Exception as exc:  # pragma: no cover - optional dependency
+            logger.debug("GPU info unavailable: %s", exc)
             return None, None, None
 
     def _check_thresholds(self, snapshot: ResourceSnapshot) -> None:

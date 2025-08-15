@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from typing import Any
+import logging
 
 
 class StandardCommunicationProtocol:
@@ -28,9 +29,10 @@ class StandardCommunicationProtocol:
             handler = self._subscribers[receiver]
             try:
                 await handler(message)
-            except Exception:
-                # Ignore handler errors in test protocol
-                pass
+            except Exception as exc:  # pragma: no cover - test helper
+                logging.getLogger(__name__).exception(
+                    "Handler error for %s: %s", receiver, exc
+                )
 
         # Also queue for manual retrieval
         if receiver:

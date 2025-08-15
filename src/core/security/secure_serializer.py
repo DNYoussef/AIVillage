@@ -47,13 +47,9 @@ logger = logging.getLogger(__name__)
 class SerializationError(Exception):
     """Raised when serialization/deserialization fails."""
 
-    pass
-
 
 class SecurityViolationError(Exception):
     """Raised when security validation fails."""
-
-    pass
 
 
 class SerializationType(Enum):

@@ -412,9 +412,9 @@ class ResourceAllocator:
             memory_bytes = allocation.memory_limit_mb * 1024 * 1024
             try:
                 sys_resource.setrlimit(sys_resource.RLIMIT_AS, (memory_bytes, -1))
-            except:
+            except Exception as exc:
                 # macOS may not support RLIMIT_AS
-                pass
+                logger.debug("RLIMIT_AS not supported: %s", exc)
 
             return True
         except Exception as e:
