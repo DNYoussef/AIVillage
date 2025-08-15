@@ -100,6 +100,9 @@ class FederationManager:
             "privacy_tunnels_active": 0,
         }
 
+        # Request/response correlation tracking
+        self.pending_responses: dict[str, asyncio.Future] = {}
+
         logger.info(
             f"FederationManager initialized: {self.device_id} (region: {region})"
         )
@@ -256,6 +259,22 @@ class FederationManager:
 
         return success
 
+    async def _wait_for_correlated_response(
+        self, request_id: str, timeout: float = 5.0
+    ) -> dict[str, Any] | None:
+        """Wait for a response matching the given request ID."""
+        future: asyncio.Future = asyncio.get_event_loop().create_future()
+        self.pending_responses[request_id] = future
+        try:
+            return await asyncio.wait_for(future, timeout)
+        except asyncio.TimeoutError:
+            logger.warning(
+                f"Timeout waiting for response to request {request_id}"
+            )
+            return None
+        finally:
+            self.pending_responses.pop(request_id, None)
+
     async def request_ai_service(
         self,
         service_name: str,
@@ -295,12 +314,9 @@ class FederationManager:
             return None
 
         # Wait for response with correlation tracking
-        request_id = message.get("id", "unknown")
+        request_id = service_request["request_id"]
         response = await self._wait_for_correlated_response(request_id, timeout=5.0)
-        if not response:
-            await asyncio.sleep(1)  # Fallback timeout for testing
-
-        return {"status": "simulated_response", "data": "placeholder"}
+        return response
 
     async def contribute_compute_task(self, task_data: dict[str, Any]) -> bool:
         """Contribute compute task to federation"""
@@ -400,6 +416,8 @@ class FederationManager:
                 await self._handle_device_announcement(message_data, sender)
             elif msg_type == "ai_service_request":
                 await self._handle_ai_service_request(message_data, sender)
+            elif msg_type == "ai_service_response":
+                await self._handle_ai_service_response(message_data, sender)
             elif msg_type == "compute_task":
                 await self._handle_compute_task(message_data, sender)
             elif msg_type == "beacon_coordination":
@@ -492,6 +510,21 @@ class FederationManager:
         }
 
         await self.send_federated_message(sender, response)
+
+    async def _handle_ai_service_response(self, message_data: dict, sender: str):
+        """Handle AI service response messages"""
+        request_id = message_data.get("request_id")
+        if not request_id:
+            logger.warning("Received AI service response without request_id")
+            return
+
+        future = self.pending_responses.get(request_id)
+        if future and not future.done():
+            future.set_result(message_data)
+        else:
+            logger.debug(
+                f"No pending request for AI service response {request_id} from {sender}"
+            )
 
     async def _handle_compute_task(self, message_data: dict, sender: str):
         """Handle distributed compute task"""
