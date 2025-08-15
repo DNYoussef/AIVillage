@@ -79,7 +79,10 @@ class TelemetryEncoder(nn.Module):
         if encoding_type == TelemetryEncoding.EMBEDDING:
             # Learned embeddings for each binned feature
             self.embeddings = nn.ModuleDict(
-                {name: nn.Embedding(num_bins, feature_dim // self.num_features) for name in self.feature_names}
+                {
+                    name: nn.Embedding(num_bins, feature_dim // self.num_features)
+                    for name in self.feature_names
+                }
             )
             self.output_dim = feature_dim
 
@@ -132,7 +135,9 @@ class TelemetryEncoder(nn.Module):
         # Stack into tensor [num_features, num_bins + 1]
         return torch.stack(boundaries)
 
-    def _extract_features(self, telemetry: TelemetryState, max_step: int = 100000) -> torch.Tensor:
+    def _extract_features(
+        self, telemetry: TelemetryState, max_step: int = 100000
+    ) -> torch.Tensor:
         """Extract raw feature vector from telemetry."""
         features = torch.tensor(
             [
@@ -168,7 +173,9 @@ class TelemetryEncoder(nn.Module):
         if n > 0:
             delta = batch_mean - self.feature_means
             self.feature_stds = torch.sqrt(
-                (1 - alpha) * self.feature_stds**2 + alpha * batch_var + alpha * (1 - alpha) * delta**2
+                (1 - alpha) * self.feature_stds**2
+                + alpha * batch_var
+                + alpha * (1 - alpha) * delta**2
             )
         else:
             self.feature_stds = torch.sqrt(batch_var + 1e-8)
@@ -188,7 +195,9 @@ class TelemetryEncoder(nn.Module):
         # bin_boundaries: [num_features, num_bins + 1]
 
         batch_size = features.shape[0]
-        bin_indices = torch.zeros((batch_size, self.num_features), dtype=torch.long, device=features.device)
+        bin_indices = torch.zeros(
+            (batch_size, self.num_features), dtype=torch.long, device=features.device
+        )
 
         for i, feature_vals in enumerate(features.t()):
             # Find bin for each feature value
@@ -234,7 +243,9 @@ class TelemetryEncoder(nn.Module):
         # Concatenate all feature encodings
         return torch.cat(encodings, dim=1)  # [batch_size, feature_dim]
 
-    def forward(self, telemetry_batch: list[TelemetryState], update_stats: bool = True) -> EncodedTelemetry:
+    def forward(
+        self, telemetry_batch: list[TelemetryState], update_stats: bool = True
+    ) -> EncodedTelemetry:
         """
         Encode batch of telemetry states.
 
@@ -248,7 +259,9 @@ class TelemetryEncoder(nn.Module):
         batch_size = len(telemetry_batch)
 
         # Extract raw features
-        raw_features = torch.stack([self._extract_features(t) for t in telemetry_batch])  # [batch_size, num_features]
+        raw_features = torch.stack(
+            [self._extract_features(t) for t in telemetry_batch]
+        )  # [batch_size, num_features]
 
         # Update normalization statistics if in training mode
         if self.training and update_stats:
@@ -263,19 +276,29 @@ class TelemetryEncoder(nn.Module):
 
         elif self.encoding_type == TelemetryEncoding.BINNED:
             # Bin features and create one-hot encoding
-            bin_indices = self._bin_features(normalized_features)  # [batch_size, num_features]
+            bin_indices = self._bin_features(
+                normalized_features
+            )  # [batch_size, num_features]
 
-            one_hot = F.one_hot(bin_indices, num_classes=self.num_bins)  # [batch_size, num_features, num_bins]
-            encoded = one_hot.reshape(batch_size, -1).float()  # [batch_size, num_features * num_bins]
+            one_hot = F.one_hot(
+                bin_indices, num_classes=self.num_bins
+            )  # [batch_size, num_features, num_bins]
+            encoded = one_hot.reshape(
+                batch_size, -1
+            ).float()  # [batch_size, num_features * num_bins]
 
         elif self.encoding_type == TelemetryEncoding.EMBEDDING:
             # Bin features and get embeddings
-            bin_indices = self._bin_features(normalized_features)  # [batch_size, num_features]
+            bin_indices = self._bin_features(
+                normalized_features
+            )  # [batch_size, num_features]
 
             embeddings = []
             for i, feature_name in enumerate(self.feature_names):
                 feat_bins = bin_indices[:, i]  # [batch_size]
-                feat_emb = self.embeddings[feature_name](feat_bins)  # [batch_size, emb_dim]
+                feat_emb = self.embeddings[feature_name](
+                    feat_bins
+                )  # [batch_size, emb_dim]
                 embeddings.append(feat_emb)
 
             encoded = torch.cat(embeddings, dim=1)  # [batch_size, feature_dim]
@@ -337,7 +360,9 @@ class TelemetryPredictor(nn.Module):
             nn.Sigmoid(),
         )
 
-    def forward(self, encoded_telemetry: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+    def forward(
+        self, encoded_telemetry: torch.Tensor
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """
         Predict future telemetry states.
 
@@ -352,7 +377,9 @@ class TelemetryPredictor(nn.Module):
         batch_size = encoded_telemetry.shape[0]
 
         # Predict future values
-        pred_flat = self.predictor(encoded_telemetry)  # [batch_size, 7 * num_steps_ahead]
+        pred_flat = self.predictor(
+            encoded_telemetry
+        )  # [batch_size, 7 * num_steps_ahead]
         predictions = pred_flat.reshape(batch_size, self.num_steps_ahead, 7)
 
         # Predict confidence
@@ -423,7 +450,9 @@ class TelemetryAnomalyDetector(nn.Module):
 
         # Update threshold to percentile
         if len(new_errors) > 10:
-            self.anomaly_threshold = torch.quantile(new_errors, self.threshold_percentile / 100.0)
+            self.anomaly_threshold = torch.quantile(
+                new_errors, self.threshold_percentile / 100.0
+            )
 
     def detect_anomalies(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         """
@@ -462,9 +491,13 @@ def create_telemetry_encoder(
     )
 
 
-def create_telemetry_predictor(input_dim: int, hidden_dim: int = 128) -> TelemetryPredictor:
+def create_telemetry_predictor(
+    input_dim: int, hidden_dim: int = 128
+) -> TelemetryPredictor:
     """Create telemetry predictor."""
-    return TelemetryPredictor(input_dim=input_dim, hidden_dim=hidden_dim, num_steps_ahead=10)
+    return TelemetryPredictor(
+        input_dim=input_dim, hidden_dim=hidden_dim, num_steps_ahead=10
+    )
 
 
 def create_anomaly_detector(input_dim: int) -> TelemetryAnomalyDetector:
@@ -504,7 +537,8 @@ if __name__ == "__main__":
         print(f"   Output shape: {encoded.features.shape}")
         print(f"   Feature names: {encoded.feature_names[:3]}...")
         print(
-            f"   Raw values (first): ID={encoded.raw_values['id']:.3f}, " f"S_slow={encoded.raw_values['s_slow']:.3f}"
+            f"   Raw values (first): ID={encoded.raw_values['id']:.3f}, "
+            f"S_slow={encoded.raw_values['s_slow']:.3f}"
         )
 
     print()

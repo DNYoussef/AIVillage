@@ -108,7 +108,8 @@ class QueryClassifier:
         if type_scores:
             # Weight scores by pattern reliability
             weighted_scores = {
-                qtype: score * self.pattern_weights.get(qtype, 0.5) for qtype, score in type_scores.items()
+                qtype: score * self.pattern_weights.get(qtype, 0.5)
+                for qtype, score in type_scores.items()
             }
 
             best_type = max(weighted_scores.items(), key=lambda x: x[1])
@@ -125,11 +126,16 @@ class QueryClassifier:
         analysis["final_type"] = query_type.value
         analysis["final_confidence"] = confidence
 
-        logger.debug(f"Classified query '{query[:50]}...' as {query_type.value} " f"with confidence {confidence:.3f}")
+        logger.debug(
+            f"Classified query '{query[:50]}...' as {query_type.value} "
+            f"with confidence {confidence:.3f}"
+        )
 
         return query_type, confidence, analysis
 
-    def suggest_strategy(self, query_type: QueryType, complexity_score: float) -> ReasoningStrategy:
+    def suggest_strategy(
+        self, query_type: QueryType, complexity_score: float
+    ) -> ReasoningStrategy:
         """Suggest reasoning strategy based on query type and complexity."""
         strategy_map = {
             QueryType.SIMPLE_FACT: ReasoningStrategy.DIRECT_RETRIEVAL,
@@ -284,7 +290,9 @@ class QueryClassifier:
 
         return min(density + coverage, 1.0)
 
-    def _calculate_complexity(self, query: str, type_scores: dict[QueryType, float]) -> float:
+    def _calculate_complexity(
+        self, query: str, type_scores: dict[QueryType, float]
+    ) -> float:
         """Calculate overall query complexity score."""
         base_complexity = 0.1
 
@@ -315,7 +323,10 @@ class QueryClassifier:
         }
 
         if type_scores:
-            max_type_complexity = max(type_complexity.get(qtype, 0.3) * score for qtype, score in type_scores.items())
+            max_type_complexity = max(
+                type_complexity.get(qtype, 0.3) * score
+                for qtype, score in type_scores.items()
+            )
             base_complexity += max_type_complexity
 
         # Complexity indicators

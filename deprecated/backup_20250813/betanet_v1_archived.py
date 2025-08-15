@@ -103,7 +103,9 @@ class BetanetMessage:
             "protocol": self.protocol,
             "sender": self.sender,
             "recipient": self.recipient,
-            "payload": self.payload.hex() if isinstance(self.payload, bytes) else self.payload,
+            "payload": self.payload.hex()
+            if isinstance(self.payload, bytes)
+            else self.payload,
             "content_type": self.content_type,
             "content_hash": self.content_hash,
             "chunk_index": self.chunk_index,
@@ -381,7 +383,9 @@ class BetanetTransport:
         except Exception as e:
             logger.error(f"Failed to export metrics: {e}")
 
-    async def _export_indistinguishability_metrics(self, metrics: dict[str, Any]) -> None:
+    async def _export_indistinguishability_metrics(
+        self, metrics: dict[str, Any]
+    ) -> None:
         """Export cover traffic and indistinguishability metrics"""
         import os
 
@@ -411,7 +415,9 @@ class BetanetTransport:
         return not (ONION_CRYPTO_AVAILABLE and self.use_htx_link)
 
     # Cover traffic sender interface implementation
-    async def send_cover_message(self, payload: bytes, recipient: str | None = None) -> bool:
+    async def send_cover_message(
+        self, payload: bytes, recipient: str | None = None
+    ) -> bool:
         """Send a cover traffic message (implements CoverTrafficSender protocol)"""
         if not recipient:
             # Choose random peer for cover traffic
@@ -509,7 +515,9 @@ class BetanetTransport:
 
         return success
 
-    async def _send_message_ack(self, sender_id: str, message_id: str, success: bool = True) -> None:
+    async def _send_message_ack(
+        self, sender_id: str, message_id: str, success: bool = True
+    ) -> None:
         """Send ACK back to sender for RTT measurement"""
         try:
             # Look up pending sequence ID for this message
@@ -540,9 +548,13 @@ class BetanetTransport:
 
             if sequence_id and self.metrics_collector:
                 # Record ACK timestamp to calculate RTT
-                rtt_ms = self.metrics_collector.record_message_acked(sequence_id, success)
+                rtt_ms = self.metrics_collector.record_message_acked(
+                    sequence_id, success
+                )
                 if rtt_ms is not None:
-                    logger.debug(f"Recorded RTT for message {message_id}: {rtt_ms:.1f}ms")
+                    logger.debug(
+                        f"Recorded RTT for message {message_id}: {rtt_ms:.1f}ms"
+                    )
 
                 # Clean up pending message tracking
                 self.pending_message_ids.pop(message_id, None)
@@ -661,9 +673,13 @@ class BetanetTransport:
                     await asyncio.sleep(1)
             else:
                 # Fallback to legacy JSON socket server
-                server = await asyncio.start_server(self._handle_client_connection, "0.0.0.0", self.listen_port)
+                server = await asyncio.start_server(
+                    self._handle_client_connection, "0.0.0.0", self.listen_port
+                )
 
-                logger.info(f"Betanet HTX server listening on port {self.listen_port} (legacy mode)")
+                logger.info(
+                    f"Betanet HTX server listening on port {self.listen_port} (legacy mode)"
+                )
 
                 async with server:
                     await server.serve_forever()
@@ -671,7 +687,9 @@ class BetanetTransport:
         except Exception as e:
             logger.exception(f"HTX server error: {e}")
 
-    async def _handle_client_connection(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
+    async def _handle_client_connection(
+        self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter
+    ) -> None:
         """Handle incoming HTX connection"""
         client_addr = writer.get_extra_info("peername")
         logger.debug(f"New Betanet connection from {client_addr}")
@@ -698,7 +716,9 @@ class BetanetTransport:
             writer.close()
             await writer.wait_closed()
 
-    async def _handle_received_message(self, raw_data: bytes, sender_addr: tuple[str, int]) -> None:
+    async def _handle_received_message(
+        self, raw_data: bytes, sender_addr: tuple[str, int]
+    ) -> None:
         """Handle incoming Betanet message"""
         try:
             data = json.loads(raw_data.decode())
@@ -787,7 +807,9 @@ class BetanetTransport:
             self.stats["content_cached"] += 1
 
         # Call handler
-        handler = self.message_handlers.get(message.content_type) or self.message_handlers.get("default")
+        handler = self.message_handlers.get(
+            message.content_type
+        ) or self.message_handlers.get("default")
         if handler:
             try:
                 if asyncio.iscoroutinefunction(handler):
@@ -797,7 +819,9 @@ class BetanetTransport:
             except Exception as e:
                 logger.exception(f"Error in message handler: {e}")
         else:
-            logger.info(f"Received Betanet message: {message.id[:8]} from {message.sender}")
+            logger.info(
+                f"Received Betanet message: {message.id[:8]} from {message.sender}"
+            )
 
     async def _send_chunked_message(self, message: BetanetMessage) -> bool:
         """Send large message in chunks"""
@@ -962,7 +986,9 @@ class BetanetTransport:
                     logger.warning(f"Using dummy public key for hop {hop_id}")
 
             # Add final destination
-            hop_pubkeys.append((message.recipient, self.onion_public_key or b"dummy_key"))
+            hop_pubkeys.append(
+                (message.recipient, self.onion_public_key or b"dummy_key")
+            )
 
             # Build onion layers
             encrypted_payload = build_onion_layers(message.payload, hop_pubkeys)
@@ -996,7 +1022,9 @@ class BetanetTransport:
 
         # Select random mixnodes
         available_mixnodes = [
-            peer_id for peer_id, peer in self.discovered_peers.items() if peer.is_mixnode and peer.is_available()
+            peer_id
+            for peer_id, peer in self.discovered_peers.items()
+            if peer.is_mixnode and peer.is_available()
         ]
 
         if len(available_mixnodes) < self.min_mixnode_hops:
@@ -1041,7 +1069,9 @@ class BetanetTransport:
         # Add some simulated peers
         if len(self.discovered_peers) < 10:
             for _i in range(3):
-                peer_id = f"betanet_peer_{len(self.discovered_peers)}_{uuid.uuid4().hex[:8]}"
+                peer_id = (
+                    f"betanet_peer_{len(self.discovered_peers)}_{uuid.uuid4().hex[:8]}"
+                )
                 peer = BetanetPeer(
                     peer_id=peer_id,
                     multiaddr=f"/ip4/10.0.{random.randint(1, 255)}.{random.randint(1, 255)}/tcp/4001/betanet/{peer_id}",
@@ -1062,7 +1092,9 @@ class BetanetTransport:
     async def _update_mixnode_pool(self) -> None:
         """Update available mixnode pool"""
         self.mixnode_pool = [
-            peer_id for peer_id, peer in self.discovered_peers.items() if peer.is_mixnode and peer.is_available()
+            peer_id
+            for peer_id, peer in self.discovered_peers.items()
+            if peer.is_mixnode and peer.is_available()
         ]
 
         logger.debug(f"Available mixnodes: {len(self.mixnode_pool)}")
@@ -1088,7 +1120,9 @@ class BetanetTransport:
 
         # Clean routing cache (5 minute TTL)
         expired_routes = [
-            dest for dest in self.routing_cache if current_time - self.routing_cache.get(f"{dest}_timestamp", 0) > 300
+            dest
+            for dest in self.routing_cache
+            if current_time - self.routing_cache.get(f"{dest}_timestamp", 0) > 300
         ]
         for dest in expired_routes:
             self.routing_cache.pop(dest, None)
@@ -1148,7 +1182,9 @@ class BetanetTransport:
         self.stats["dht_lookups"] += 1
         return self.discovered_peers.get(peer_id)
 
-    async def _connect_and_send(self, peer: BetanetPeer, message: BetanetMessage) -> bool:
+    async def _connect_and_send(
+        self, peer: BetanetPeer, message: BetanetMessage
+    ) -> bool:
         """Connect to peer and send message"""
         try:
             if self.use_htx_link and self.htx_link:

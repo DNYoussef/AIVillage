@@ -396,7 +396,10 @@ class SimpleIntelligentChunker:
         # Find significant drops in similarity
         for i in range(len(similarities) - consecutive_windows + 1):
             # Check if we have consecutive low similarities
-            consecutive_low = all(similarities[i + j] < (1.0 - threshold) for j in range(consecutive_windows))
+            consecutive_low = all(
+                similarities[i + j] < (1.0 - threshold)
+                for j in range(consecutive_windows)
+            )
 
             if consecutive_low:
                 # Calculate average similarity drop
@@ -405,7 +408,9 @@ class SimpleIntelligentChunker:
 
                 # Calculate confidence based on consistency
                 std_similarity = np.std(similarities[i : i + consecutive_windows])
-                confidence = min(1.0, similarity_drop / threshold * (1.0 - std_similarity))
+                confidence = min(
+                    1.0, similarity_drop / threshold * (1.0 - std_similarity)
+                )
 
                 boundary = IdeaBoundary(
                     sentence_idx=i + self.window_size,  # Boundary after window
@@ -451,7 +456,9 @@ class SimpleIntelligentChunker:
         similarities = []
         for i in range(len(embeddings)):
             for j in range(i + 1, len(embeddings)):
-                sim = cosine_similarity(embeddings[i].reshape(1, -1), embeddings[j].reshape(1, -1))[0, 0]
+                sim = cosine_similarity(
+                    embeddings[i].reshape(1, -1), embeddings[j].reshape(1, -1)
+                )[0, 0]
                 similarities.append(sim)
 
         return float(np.mean(similarities)) if similarities else 1.0
@@ -559,7 +566,9 @@ class SimpleIntelligentChunker:
             if end_idx - start_idx < self.min_chunk_sentences:
                 if chunks:  # Merge with previous chunk
                     chunks[-1].end_sentence_idx = end_idx - 1
-                    chunks[-1].sentences.extend(sentences[chunks[-1].end_sentence_idx + 1 : end_idx])
+                    chunks[-1].sentences.extend(
+                        sentences[chunks[-1].end_sentence_idx + 1 : end_idx]
+                    )
                     continue
                 continue
 
@@ -590,7 +599,11 @@ class SimpleIntelligentChunker:
 
             else:
                 # Add context overlap from previous chunk
-                actual_start = max(0, start_idx - self.context_overlap) if len(chunks) > 0 else start_idx
+                actual_start = (
+                    max(0, start_idx - self.context_overlap)
+                    if len(chunks) > 0
+                    else start_idx
+                )
                 chunk_sentences = sentences[actual_start:end_idx]
 
                 chunk = IntelligentChunk(
@@ -638,7 +651,10 @@ class SimpleIntelligentChunker:
             "avg_sentences_per_chunk": np.mean([len(c.sentences) for c in chunks]),
             "avg_words_per_chunk": np.mean([c.word_count for c in chunks]),
             "avg_topic_coherence": np.mean([c.topic_coherence for c in chunks]),
-            "content_types": {ct.value: sum(1 for c in chunks if c.content_type == ct) for ct in ContentType},
+            "content_types": {
+                ct.value: sum(1 for c in chunks if c.content_type == ct)
+                for ct in ContentType
+            },
         }
 
 
@@ -649,7 +665,9 @@ async def test_simple_intelligent_chunking():
     print("=" * 50)
 
     # Initialize chunker
-    chunker = SimpleIntelligentChunker(window_size=3, min_chunk_sentences=2, max_chunk_sentences=15, context_overlap=1)
+    chunker = SimpleIntelligentChunker(
+        window_size=3, min_chunk_sentences=2, max_chunk_sentences=15, context_overlap=1
+    )
 
     # Test document with clear topic boundaries
     test_document = """
@@ -671,7 +689,9 @@ async def test_simple_intelligent_chunking():
 
     for i, chunk in enumerate(chunks):
         print(f"\nChunk {i + 1}: {chunk.id}")
-        print(f"Sentences: {chunk.start_sentence_idx}-{chunk.end_sentence_idx} ({len(chunk.sentences)} total)")
+        print(
+            f"Sentences: {chunk.start_sentence_idx}-{chunk.end_sentence_idx} ({len(chunk.sentences)} total)"
+        )
         print(f"Content Type: {chunk.content_type.value}")
         print(f"Word Count: {chunk.word_count}")
         print(f"Topic Coherence: {chunk.topic_coherence:.3f}")

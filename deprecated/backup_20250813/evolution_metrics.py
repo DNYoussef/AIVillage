@@ -139,7 +139,9 @@ class MetricsBackend:
     async def stop(self) -> None:  # pragma: no cover - interface
         raise NotImplementedError
 
-    async def save_metrics(self, metrics: list[EvolutionMetrics]) -> None:  # pragma: no cover - interface
+    async def save_metrics(
+        self, metrics: list[EvolutionMetrics]
+    ) -> None:  # pragma: no cover - interface
         raise NotImplementedError
 
     async def load_historical_metrics(
@@ -264,7 +266,9 @@ class SQLiteMetricsBackend(MetricsBackend):
             )
         self._conn.commit()
 
-    async def load_historical_metrics(self, limit: int | None = None) -> list[dict[str, Any]]:
+    async def load_historical_metrics(
+        self, limit: int | None = None
+    ) -> list[dict[str, Any]]:
         conn = self._conn or sqlite3.connect(self.db_path)
         cur = conn.cursor()
         query = "SELECT agent_id, fitness_score, timestamp FROM fitness_metrics ORDER BY timestamp DESC"
@@ -324,7 +328,9 @@ class FileMetricsBackend(MetricsBackend):
             self._compress_current()
             self._open_new_file()
 
-    async def load_historical_metrics(self, limit: int | None = None) -> list[dict[str, Any]]:
+    async def load_historical_metrics(
+        self, limit: int | None = None
+    ) -> list[dict[str, Any]]:
         records: list[dict[str, Any]] = []
         files = sorted(self.log_dir.glob("metrics_*.jsonl*"))
         for path in files:
@@ -364,7 +370,9 @@ class RedisMetricsBackend(MetricsBackend):
 
         # Create secure Redis client
         if create_secure_redis_client:
-            self._redis = create_secure_redis_client(self.redis_url, decode_responses=True)
+            self._redis = create_secure_redis_client(
+                self.redis_url, decode_responses=True
+            )
         else:
             # Fallback to basic Redis client
             self._redis = redis.Redis.from_url(self.redis_url, decode_responses=True)
@@ -395,7 +403,9 @@ class RedisMetricsBackend(MetricsBackend):
         # Persist to SQLite for durability
         await self.sqlite_backend.save_metrics(metrics)
 
-    async def load_historical_metrics(self, limit: int | None = None) -> list[dict[str, Any]]:
+    async def load_historical_metrics(
+        self, limit: int | None = None
+    ) -> list[dict[str, Any]]:
         return await self.sqlite_backend.load_historical_metrics(limit)
 
 
@@ -409,7 +419,9 @@ class EvolutionMetricsCollector:
         self.active_collections: dict[str, dict[str, Any]] = {}
         self.system_events: list[dict[str, Any]] = []
         self.system_metrics_history: list[dict[str, Any]] = []
-        self.mutation_recorder = EvolutionMetricsRecorder(self.config.get("metrics_file", "evolution_metrics.json"))
+        self.mutation_recorder = EvolutionMetricsRecorder(
+            self.config.get("metrics_file", "evolution_metrics.json")
+        )
 
         self.db_path = self.config.get("db_path", "evolution_metrics.db")
         backend_type = self.config.get("storage_backend", "sqlite").lower()
@@ -504,8 +516,12 @@ class EvolutionMetricsCollector:
             cpu_percent_avg=cpu_now,
             duration_minutes=evolution_event.duration_seconds / 60,
             success=evolution_event.success,
-            error_count=sum(1 for msg in evolution_event.insights if msg.lower().startswith("error")),
-            warning_count=sum(1 for msg in evolution_event.insights if msg.lower().startswith("warn")),
+            error_count=sum(
+                1 for msg in evolution_event.insights if msg.lower().startswith("error")
+            ),
+            warning_count=sum(
+                1 for msg in evolution_event.insights if msg.lower().startswith("warn")
+            ),
             metadata={
                 "trigger_reason": evolution_event.trigger_reason,
                 "generation_change": evolution_event.generation_change,
@@ -546,7 +562,9 @@ class EvolutionMetricsCollector:
         if len(self.metrics_history) >= threshold:
             await self._flush_metrics()
 
-    async def load_historical_metrics(self, limit: int | None = None) -> list[dict[str, Any]]:
+    async def load_historical_metrics(
+        self, limit: int | None = None
+    ) -> list[dict[str, Any]]:
         """Load historical metrics from the configured backend."""
         await self._flush_metrics()
         return await self._backend.load_historical_metrics(limit)
@@ -572,7 +590,9 @@ class EvolutionMetricsCollector:
         plateau = abs(improvement_rate) < 0.01
         suggestions: list[str] = []
         if plateau:
-            suggestions.append("Performance plateau detected; consider exploring new mutation strategies.")
+            suggestions.append(
+                "Performance plateau detected; consider exploring new mutation strategies."
+            )
 
         return EvolutionAnalysis(
             improvement_rate=improvement_rate,

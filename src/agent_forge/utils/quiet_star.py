@@ -6,7 +6,9 @@ class QuietSTAR:
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
         self.model = AutoModelForCausalLM.from_pretrained(model_name)
 
-    def generate(self, prompt: str, max_length: int = 256, thought_tokens: bool = True) -> str:
+    def generate(
+        self, prompt: str, max_length: int = 256, thought_tokens: bool = True
+    ) -> str:
         inputs = self.tokenizer(prompt, return_tensors="pt").input_ids
         outputs = self.model.generate(
             inputs,

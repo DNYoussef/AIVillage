@@ -92,7 +92,9 @@ class EnhancedCODEXRAGPipeline(CODEXRAGPipeline):
             "content_type_distribution": {},
         }
 
-    def chunk_document_intelligently(self, document: Document, force_traditional: bool = False) -> list[Chunk]:
+    def chunk_document_intelligently(
+        self, document: Document, force_traditional: bool = False
+    ) -> list[Chunk]:
         """Chunk document using intelligent or traditional method.
 
         Args:
@@ -121,7 +123,9 @@ class EnhancedCODEXRAGPipeline(CODEXRAGPipeline):
 
             for i, ichunk in enumerate(intelligent_chunks):
                 # Create enhanced metadata combining original and intelligent chunking data
-                enhanced_metadata = document.metadata.copy() if document.metadata else {}
+                enhanced_metadata = (
+                    document.metadata.copy() if document.metadata else {}
+                )
 
                 # Add intelligent chunking metadata
                 enhanced_metadata.update(
@@ -140,7 +144,11 @@ class EnhancedCODEXRAGPipeline(CODEXRAGPipeline):
                         "sentence_count": len(ichunk.sentences),
                         # Document context
                         "document_type": doc_type.value,
-                        "chunk_position_ratio": (i / len(intelligent_chunks) if len(intelligent_chunks) > 1 else 0.0),
+                        "chunk_position_ratio": (
+                            i / len(intelligent_chunks)
+                            if len(intelligent_chunks) > 1
+                            else 0.0
+                        ),
                     }
                 )
 
@@ -161,8 +169,12 @@ class EnhancedCODEXRAGPipeline(CODEXRAGPipeline):
             self.chunking_stats["intelligent_chunks_created"] += len(codex_chunks)
 
             if intelligent_chunks:
-                avg_coherence = np.mean([ic.topic_coherence for ic in intelligent_chunks])
-                total_entities = sum(len(ic.entities or []) for ic in intelligent_chunks)
+                avg_coherence = np.mean(
+                    [ic.topic_coherence for ic in intelligent_chunks]
+                )
+                total_entities = sum(
+                    len(ic.entities or []) for ic in intelligent_chunks
+                )
 
                 # Update running averages
                 total_chunks = (
@@ -172,7 +184,8 @@ class EnhancedCODEXRAGPipeline(CODEXRAGPipeline):
 
                 if total_chunks > 0:
                     self.chunking_stats["avg_chunk_coherence"] = (
-                        self.chunking_stats["avg_chunk_coherence"] * (total_chunks - len(codex_chunks))
+                        self.chunking_stats["avg_chunk_coherence"]
+                        * (total_chunks - len(codex_chunks))
                         + avg_coherence * len(codex_chunks)
                     ) / total_chunks
 
@@ -182,16 +195,25 @@ class EnhancedCODEXRAGPipeline(CODEXRAGPipeline):
                 for ichunk in intelligent_chunks:
                     content_type = ichunk.content_type.value
                     self.chunking_stats["content_type_distribution"][content_type] = (
-                        self.chunking_stats["content_type_distribution"].get(content_type, 0) + 1
+                        self.chunking_stats["content_type_distribution"].get(
+                            content_type, 0
+                        )
+                        + 1
                     )
 
-            logger.info(f"Created {len(codex_chunks)} intelligent chunks for document {document.id}")
-            logger.debug(f"Average coherence: {avg_coherence:.3f}, Total entities: {total_entities}")
+            logger.info(
+                f"Created {len(codex_chunks)} intelligent chunks for document {document.id}"
+            )
+            logger.debug(
+                f"Average coherence: {avg_coherence:.3f}, Total entities: {total_entities}"
+            )
 
             return codex_chunks
 
         except Exception as e:
-            logger.warning(f"Intelligent chunking failed for document {document.id}: {e}")
+            logger.warning(
+                f"Intelligent chunking failed for document {document.id}: {e}"
+            )
             logger.info("Falling back to traditional chunking")
 
             # Fall back to traditional chunking
@@ -252,18 +274,27 @@ class EnhancedCODEXRAGPipeline(CODEXRAGPipeline):
             **base_stats,  # Include all base stats
             # Intelligent chunking stats
             "intelligent_chunking_enabled": self.enable_intelligent_chunking,
-            "intelligent_chunks_created": self.chunking_stats["intelligent_chunks_created"],
-            "traditional_chunks_created": self.chunking_stats["traditional_chunks_created"],
+            "intelligent_chunks_created": self.chunking_stats[
+                "intelligent_chunks_created"
+            ],
+            "traditional_chunks_created": self.chunking_stats[
+                "traditional_chunks_created"
+            ],
             "total_chunks_all_time": (
-                self.chunking_stats["intelligent_chunks_created"] + self.chunking_stats["traditional_chunks_created"]
+                self.chunking_stats["intelligent_chunks_created"]
+                + self.chunking_stats["traditional_chunks_created"]
             ),
             # Quality metrics
             "avg_chunk_coherence": self.chunking_stats["avg_chunk_coherence"],
             "total_entities_extracted": self.chunking_stats["total_entities_extracted"],
-            "content_type_distribution": dict(self.chunking_stats["content_type_distribution"]),
+            "content_type_distribution": dict(
+                self.chunking_stats["content_type_distribution"]
+            ),
             # This batch specific
             "chunks_this_batch": total_chunks_this_batch,
-            "chunking_method": ("intelligent" if self.enable_intelligent_chunking else "traditional"),
+            "chunking_method": (
+                "intelligent" if self.enable_intelligent_chunking else "traditional"
+            ),
         }
 
         logger.info(f"Enhanced indexing complete: {enhanced_stats}")
@@ -314,7 +345,9 @@ class EnhancedCODEXRAGPipeline(CODEXRAGPipeline):
                 # Enhance result with entity information if requested
                 if include_entities and "entities" in result.metadata:
                     result.metadata["entity_types"] = result.metadata["entities"]
-                    result.metadata["entity_count"] = len(result.metadata.get("entities", []))
+                    result.metadata["entity_count"] = len(
+                        result.metadata.get("entities", [])
+                    )
 
                 filtered_results.append(result)
 
@@ -324,7 +357,9 @@ class EnhancedCODEXRAGPipeline(CODEXRAGPipeline):
             metrics.update(
                 {
                     "content_filtered": True,
-                    "content_type_filter": (content_type_filter.value if content_type_filter else None),
+                    "content_type_filter": (
+                        content_type_filter.value if content_type_filter else None
+                    ),
                     "min_coherence_filter": min_coherence,
                     "results_after_filtering": len(results),
                 }
@@ -342,13 +377,17 @@ class EnhancedCODEXRAGPipeline(CODEXRAGPipeline):
 
         # Add chunking-specific metrics
         chunking_metrics = {
-            "chunking_method": ("intelligent" if self.enable_intelligent_chunking else "traditional"),
+            "chunking_method": (
+                "intelligent" if self.enable_intelligent_chunking else "traditional"
+            ),
             "chunking_statistics": self.chunking_stats.copy(),
             # Chunking quality metrics
             "chunking_quality": {
                 "avg_coherence": self.chunking_stats["avg_chunk_coherence"],
                 "total_entities": self.chunking_stats["total_entities_extracted"],
-                "content_diversity": len(self.chunking_stats["content_type_distribution"]),
+                "content_diversity": len(
+                    self.chunking_stats["content_type_distribution"]
+                ),
             },
         }
 
@@ -376,13 +415,17 @@ class EnhancedCODEXRAGPipeline(CODEXRAGPipeline):
             # Create sliding windows for boundary detection
             windows = self.intelligent_chunker.create_sliding_windows(sentences)
             similarities = self.intelligent_chunker.calculate_similarity_scores(windows)
-            boundaries = self.intelligent_chunker.detect_idea_boundaries(similarities, doc_type)
+            boundaries = self.intelligent_chunker.detect_idea_boundaries(
+                similarities, doc_type
+            )
 
             # Content type analysis
             content_types = {}
             for sentence in sentences[:10]:  # Sample first 10 sentences
                 content_type = self.intelligent_chunker.detect_content_type(sentence)
-                content_types[content_type.value] = content_types.get(content_type.value, 0) + 1
+                content_types[content_type.value] = (
+                    content_types.get(content_type.value, 0) + 1
+                )
 
             return {
                 "document_id": document.id,
@@ -490,7 +533,9 @@ async def test_enhanced_rag() -> bool:
             best_result = results[0]
             print("Best match:")
             print(f"- Chunk ID: {best_result.chunk_id}")
-            print(f"- Content Type: {best_result.metadata.get('chunk_type', 'unknown')}")
+            print(
+                f"- Content Type: {best_result.metadata.get('chunk_type', 'unknown')}"
+            )
             print(f"- Coherence: {best_result.metadata.get('topic_coherence', 0):.3f}")
             print(f"- Entities: {best_result.metadata.get('entities', [])}")
             print(f"- Summary: {best_result.metadata.get('summary', 'N/A')}")

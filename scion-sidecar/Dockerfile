@@ -71,8 +71,8 @@ RUN mkdir -p /var/log/scion-sidecar && \
 USER scion-sidecar
 
 # Expose ports
-EXPOSE 8080/tcp   
-EXPOSE 8081/tcp   
+EXPOSE 8080/tcp
+EXPOSE 8081/tcp
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \

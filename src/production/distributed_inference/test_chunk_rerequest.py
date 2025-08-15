@@ -77,7 +77,9 @@ async def test_chunk_caching_during_send(streaming_instances):
     test_tensor = np.random.random((10, 10)).astype(np.float32)
 
     # Send tensor
-    tensor_id = await sender_stream.send_tensor(test_tensor, "test_tensor", receiver_node.node_id)
+    tensor_id = await sender_stream.send_tensor(
+        test_tensor, "test_tensor", receiver_node.node_id
+    )
 
     # Verify that sent chunks are cached
     assert hasattr(sender_stream, "_sent_tensor_cache")
@@ -99,7 +101,9 @@ async def test_chunk_re_request_handling(streaming_instances):
 
     # Create and send test tensor to populate cache
     test_tensor = np.random.random((5, 5)).astype(np.float32)
-    tensor_id = await sender_stream.send_tensor(test_tensor, "test_tensor", receiver_node.node_id)
+    tensor_id = await sender_stream.send_tensor(
+        test_tensor, "test_tensor", receiver_node.node_id
+    )
 
     # Simulate chunk re-request
     request_payload = {
@@ -122,7 +126,11 @@ async def test_chunk_re_request_handling(streaming_instances):
     await sender_stream._handle_tensor_chunk(request_message)
 
     # Verify that chunks were re-sent
-    chunk_messages = [msg for msg in sender_node.sent_messages if msg["message_type"] == MessageType.TENSOR_CHUNK]
+    chunk_messages = [
+        msg
+        for msg in sender_node.sent_messages
+        if msg["message_type"] == MessageType.TENSOR_CHUNK
+    ]
 
     assert len(chunk_messages) == 2  # Should have re-sent 2 chunks
 
@@ -157,7 +165,11 @@ async def test_missing_tensor_in_cache(streaming_instances):
     await sender_stream._handle_tensor_chunk(request_message)
 
     # Should not send any chunks
-    chunk_messages = [msg for msg in sender_node.sent_messages if msg["message_type"] == MessageType.TENSOR_CHUNK]
+    chunk_messages = [
+        msg
+        for msg in sender_node.sent_messages
+        if msg["message_type"] == MessageType.TENSOR_CHUNK
+    ]
 
     assert len(chunk_messages) == 0
 
@@ -210,7 +222,11 @@ async def test_missing_chunks_in_cache(streaming_instances):
     await sender_stream._handle_tensor_chunk(request_message)
 
     # Should only send available chunks (0 and 2)
-    chunk_messages = [msg for msg in sender_node.sent_messages if msg["message_type"] == MessageType.TENSOR_CHUNK]
+    chunk_messages = [
+        msg
+        for msg in sender_node.sent_messages
+        if msg["message_type"] == MessageType.TENSOR_CHUNK
+    ]
 
     assert len(chunk_messages) == 2
     sent_indices = {msg["payload"]["chunk_index"] for msg in chunk_messages}
@@ -224,7 +240,9 @@ async def test_chunk_re_request_with_failures(streaming_instances):
 
     # Create and send test tensor to populate cache
     test_tensor = np.random.random((3, 3)).astype(np.float32)
-    tensor_id = await sender_stream.send_tensor(test_tensor, "test_tensor", receiver_node.node_id)
+    tensor_id = await sender_stream.send_tensor(
+        test_tensor, "test_tensor", receiver_node.node_id
+    )
 
     # Make sending fail
     sender_node.should_fail_send = True
@@ -262,7 +280,9 @@ async def test_end_to_end_chunk_re_request_scenario(streaming_instances):
     test_tensor = np.random.random((8, 8)).astype(np.float32)
 
     # 1. Send tensor from sender to receiver
-    tensor_id = await sender_stream.send_tensor(test_tensor, "test_tensor", receiver_node.node_id)
+    tensor_id = await sender_stream.send_tensor(
+        test_tensor, "test_tensor", receiver_node.node_id
+    )
 
     # 2. Simulate that receiver got metadata but missed some chunks
     # Manually add metadata to receiver
@@ -318,12 +338,18 @@ async def test_end_to_end_chunk_re_request_scenario(streaming_instances):
     await receiver_stream._handle_tensor_chunk(chunk_message)
 
     # 4. Receiver requests missing chunks
-    success = await receiver_stream.request_missing_chunks(tensor_id, sender_node.node_id)
+    success = await receiver_stream.request_missing_chunks(
+        tensor_id, sender_node.node_id
+    )
 
     assert success is True
 
     # 5. Verify request was sent
-    request_messages = [msg for msg in receiver_node.sent_messages if msg["payload"].get("action") == "request_chunks"]
+    request_messages = [
+        msg
+        for msg in receiver_node.sent_messages
+        if msg["payload"].get("action") == "request_chunks"
+    ]
 
     assert len(request_messages) == 1
     request_payload = request_messages[0]["payload"]
@@ -368,10 +394,14 @@ if __name__ == "__main__":
         test_tensor = np.random.random((10, 10)).astype(np.float32)
 
         # Send tensor
-        tensor_id = await sender_stream.send_tensor(test_tensor, "test_tensor", "receiver")
+        tensor_id = await sender_stream.send_tensor(
+            test_tensor, "test_tensor", "receiver"
+        )
 
         print(f"Sent tensor with ID: {tensor_id}")
-        print(f"Cached chunks: {len(sender_stream._sent_tensor_cache.get(tensor_id, {}))}")
+        print(
+            f"Cached chunks: {len(sender_stream._sent_tensor_cache.get(tensor_id, {}))}"
+        )
 
         # Test chunk re-request
         request_payload = {
@@ -390,7 +420,11 @@ if __name__ == "__main__":
         sender.sent_messages.clear()
         await sender_stream._handle_tensor_chunk(request_message)
 
-        chunk_messages = [msg for msg in sender.sent_messages if msg["message_type"] == MessageType.TENSOR_CHUNK]
+        chunk_messages = [
+            msg
+            for msg in sender.sent_messages
+            if msg["message_type"] == MessageType.TENSOR_CHUNK
+        ]
 
         print(f"Re-sent {len(chunk_messages)} chunks")
         print("Chunk re-request test completed successfully!")

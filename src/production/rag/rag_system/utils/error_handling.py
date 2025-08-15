@@ -5,14 +5,6 @@ from typing import Any
 
 from common.logging import setup_logging
 
-import logging
-from collections.abc import Callable
-from functools import wraps
-from typing import Any
-
-from common.logging import setup_logging
-
-
 logger = logging.getLogger(__name__)
 setup_logging(log_file="rag_system.log")
 

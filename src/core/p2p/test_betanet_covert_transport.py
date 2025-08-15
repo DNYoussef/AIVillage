@@ -66,7 +66,9 @@ class TestHTTP2CovertChannel:
         # Setup mock
         mock_response = MagicMock()
         mock_response.status_code = 200
-        mock_client.return_value.__aenter__.return_value.get.return_value = mock_response
+        mock_client.return_value.__aenter__.return_value.get.return_value = (
+            mock_response
+        )
 
         profile = CovertTrafficProfile.create_browser_profile()
         channel = HTTP2CovertChannel(profile)
@@ -81,7 +83,9 @@ class TestHTTP2CovertChannel:
         # Setup mock for server error
         mock_response = MagicMock()
         mock_response.status_code = 500
-        mock_client.return_value.__aenter__.return_value.get.return_value = mock_response
+        mock_client.return_value.__aenter__.return_value.get.return_value = (
+            mock_response
+        )
 
         profile = CovertTrafficProfile.create_browser_profile()
         channel = HTTP2CovertChannel(profile)

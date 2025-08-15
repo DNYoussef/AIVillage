@@ -78,13 +78,17 @@ class TelemetryLogger:
         if self.ema_grad_norm is None:
             self.ema_grad_norm = grad_norm
         else:
-            self.ema_grad_norm = self.ema_alpha * self.ema_grad_norm + (1 - self.ema_alpha) * grad_norm
+            self.ema_grad_norm = (
+                self.ema_alpha * self.ema_grad_norm + (1 - self.ema_alpha) * grad_norm
+            )
 
         if grad is not None:
             if self.ema_grad is None:
                 self.ema_grad = grad.clone()
             else:
-                self.ema_grad = self.ema_alpha * self.ema_grad + (1 - self.ema_alpha) * grad
+                self.ema_grad = (
+                    self.ema_alpha * self.ema_grad + (1 - self.ema_alpha) * grad
+                )
 
         return self.ema_grad_norm
 
@@ -162,6 +166,8 @@ class TelemetryLogger:
 
         # Count stage distribution
         for frame in self.frames:
-            stats["stage_distribution"][frame.stage] = stats["stage_distribution"].get(frame.stage, 0) + 1
+            stats["stage_distribution"][frame.stage] = (
+                stats["stage_distribution"].get(frame.stage, 0) + 1
+            )
 
         return stats

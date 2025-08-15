@@ -29,24 +29,34 @@ class LatentSpaceAgent(AgentInterface):
                 "Consider computational complexity, training data requirements, "
                 "and model interpretability."
             )
-        elif any(term in query_lower for term in ["programming", "code", "software", "development"]):
+        elif any(
+            term in query_lower
+            for term in ["programming", "code", "software", "development"]
+        ):
             background_knowledge += (
                 "This query relates to software development. "
                 "Consider best practices, code quality, testing, "
                 "and maintainability."
             )
-        elif any(term in query_lower for term in ["science", "research", "study", "experiment"]):
+        elif any(
+            term in query_lower
+            for term in ["science", "research", "study", "experiment"]
+        ):
             background_knowledge += (
                 "This query relates to scientific research. "
                 "Consider methodology, evidence, peer review, "
                 "and reproducibility."
             )
         else:
-            background_knowledge += "General query requiring comprehensive analysis " "and evidence-based reasoning."
+            background_knowledge += (
+                "General query requiring comprehensive analysis "
+                "and evidence-based reasoning."
+            )
 
         # Create refined query with semantic enhancement
         refined_query = (
-            f"Enhanced query: {query} " f"(with semantic context: {len(query_embedding)} dimensions analyzed)"
+            f"Enhanced query: {query} "
+            f"(with semantic context: {len(query_embedding)} dimensions analyzed)"
         )
 
         return background_knowledge, refined_query
@@ -57,16 +67,26 @@ class LatentSpaceAgent(AgentInterface):
         prompt_lower = prompt.lower()
 
         if "background knowledge" in prompt_lower or "context" in prompt_lower:
-            return "Based on the available information, here is a comprehensive " f"analysis of: {prompt[:100]}..."
+            return (
+                "Based on the available information, here is a comprehensive "
+                f"analysis of: {prompt[:100]}..."
+            )
         elif "summarize" in prompt_lower or "summary" in prompt_lower:
             return f"Summary: {prompt[:200]}... (Analysis complete)"
-        elif "question" in prompt_lower or "what" in prompt_lower or "how" in prompt_lower:
+        elif (
+            "question" in prompt_lower
+            or "what" in prompt_lower
+            or "how" in prompt_lower
+        ):
             return (
                 f"In response to your question: {prompt[:100]}... "
                 "This requires detailed analysis of the available information."
             )
         else:
-            return f"Processing request: {prompt[:100]}... " "(Template-based response generated)"
+            return (
+                f"Processing request: {prompt[:100]}... "
+                "(Template-based response generated)"
+            )
 
     async def get_embedding(self, text: str) -> list[float]:
         """Get embedding vector for text using BERT model."""
@@ -85,7 +105,9 @@ class LatentSpaceAgent(AgentInterface):
             rng = random.Random(seed)
             return [rng.random() for _ in range(self.embedding_model.hidden_size)]
 
-    async def rerank(self, query: str, results: list[dict[str, Any]], k: int) -> list[dict[str, Any]]:
+    async def rerank(
+        self, query: str, results: list[dict[str, Any]], k: int
+    ) -> list[dict[str, Any]]:
         for result in results:
             result["score"] = await self._calculate_similarity(query, result["content"])
 

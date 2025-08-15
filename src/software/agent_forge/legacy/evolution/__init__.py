@@ -119,7 +119,9 @@ if EVOLUTION_AVAILABLE:
         )
 
         # Initialize orchestrator
-        orchestrator = EvolutionOrchestrator(config=config, storage_path=evolution_data_path)
+        orchestrator = EvolutionOrchestrator(
+            config=config, storage_path=evolution_data_path
+        )
 
         logger.info(f"Evolution system initialized with {population_size} agents")
         return orchestrator

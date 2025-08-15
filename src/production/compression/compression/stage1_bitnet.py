@@ -1,4 +1,3 @@
-import bitsandbytes as bnb
 import torch
 import torch.nn.functional as F
 from torch import nn
@@ -19,7 +18,7 @@ class RMSNorm(nn.Module):
 
 
 class BitNetLinear(nn.Module):
-    """BitNet Linear layer with ternary quantization."""
+    """BitNet Linear layer with ternary quantization and gradual λ schedule."""
 
     def __init__(self, in_features: int, out_features: int, bias: bool = True) -> None:
         super().__init__()
@@ -34,15 +33,15 @@ class BitNetLinear(nn.Module):
             self.register_parameter("bias", None)
 
         # Quantization parameters
-        self.lambda_val = 0.0  # Interpolation parameter
+        self.lambda_val = 0.0  # Interpolation parameter (0=fp, 1=ternary)
         self.alpha = nn.Parameter(torch.ones(1))  # Scaling factor
 
     def quantize_weights(self, weights: torch.Tensor) -> torch.Tensor:
-        """Quantize weights to ternary {-1, 0, 1}."""
-        # Calculate threshold for sparsity
+        """Quantize weights to ternary {-1, 0, 1} with threshold-based sparsity."""
+        # Calculate threshold for sparsity (consistent with bitnet.py compressor)
         threshold = weights.abs().mean()
 
-        # Ternary quantization
+        # Ternary quantization: zero if below threshold, sign if above
         mask = weights.abs() > threshold
         quantized = torch.sign(weights) * mask.float()
 
@@ -50,16 +49,16 @@ class BitNetLinear(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         if self.training:
-            # During training, interpolate between full precision and quantized
+            # Gradual λ interpolation: (1-λ)*fp + λ*quantized
             quantized_weights = self.quantize_weights(self.weight_fp)
             effective_weights = (
                 1 - self.lambda_val
             ) * self.weight_fp + self.lambda_val * quantized_weights
         else:
-            # During inference, use quantized weights
+            # During inference, use pure ternary weights (λ=1.0 path)
             effective_weights = self.quantize_weights(self.weight_fp)
 
-        # Scale weights
+        # Apply learned scaling factor
         effective_weights = effective_weights * self.alpha
 
         return F.linear(x, effective_weights, self.bias)
@@ -69,8 +68,14 @@ class BitNetLinear(nn.Module):
         return self.quantize_weights(self.weight_fp) * self.alpha
 
 
-def convert_to_bitnet(model, threshold: float = 0.02):
-    """In-place replace every nn.Linear with BitNet implementation."""
+def convert_to_bitnet(model, threshold: float = 0.02, rmsnorm_post_attn: bool = True):
+    """In-place replace every nn.Linear with BitNet implementation.
+
+    Args:
+        model: Model to convert
+        threshold: Quantization threshold for sparsity (deprecated, now calculated dynamically)
+        rmsnorm_post_attn: Whether to add RMSNorm after attention layers for stability
+    """
     # Handle case where model itself is a Linear layer
     if isinstance(model, nn.Linear):
         bitnet_layer = BitNetLinear(
@@ -105,11 +110,12 @@ def convert_to_bitnet(model, threshold: float = 0.02):
                     child, f"{name}.{child_name}" if name else child_name
                 )
 
-    # Use custom implementation directly since bitsandbytes doesn't have LinearBitNet
+    # Replace all Linear layers with BitNet equivalents
     replace_linear_recursive(model)
 
-    # Add RMSNorm after attention layers for stability
-    add_rmsnorm_to_attention(model)
+    # Add RMSNorm after attention layers for stability if enabled
+    if rmsnorm_post_attn:
+        add_rmsnorm_to_attention(model)
 
     return model
 
@@ -136,17 +142,40 @@ def add_rmsnorm_to_attention(model) -> None:
 
 
 class GradualBitnetCallback(TrainerCallback):
-    """Lambda schedule ramping 0->1 over first 40% of steps."""
+    """Lambda schedule ramping λ: 0→1 over first 40% of training steps."""
 
     def __init__(self, total_steps: int, warmup_ratio: float = 0.4) -> None:
         self.total_steps = total_steps
         self.warmup_steps = int(total_steps * warmup_ratio)
+        self.warmup_ratio = warmup_ratio
+        self.current_lambda = 0.0
+
+        print(
+            f"[BitNet λ Schedule] Warmup steps: {self.warmup_steps}/{total_steps} ({warmup_ratio:.1%})"
+        )
 
     def on_step_begin(self, args, state, control, **kwargs):
-        lam = min(state.global_step / self.warmup_steps, 1.0)
-        for m in kwargs["model"].modules():
-            if isinstance(m, bnb.nn.LinearBitNet | BitNetLinear):
-                m.lambda_val = lam
+        if state.global_step <= self.warmup_steps:
+            # Gradual λ ramp from 0 to 1 over warmup period
+            self.current_lambda = (
+                state.global_step / self.warmup_steps if self.warmup_steps > 0 else 1.0
+            )
+        else:
+            # After warmup, keep λ=1.0 for pure ternary training
+            self.current_lambda = 1.0
+
+        # Update lambda_val for all BitNetLinear layers
+        for module in kwargs["model"].modules():
+            if isinstance(module, BitNetLinear):
+                module.lambda_val = self.current_lambda
+
+        return control
+
+    def on_log(self, args, state, control, logs=None, **kwargs):
+        # Log current lambda value for W&B monitoring
+        if logs is not None:
+            logs["lambda_val"] = self.current_lambda
+            logs["bitnet_phase"] = "warmup" if self.current_lambda < 1.0 else "ternary"
         return control
 
 

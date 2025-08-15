@@ -10,7 +10,7 @@ import (
 
 	"github.com/aivillage/scion-sidecar/internal/metrics"
 	log "github.com/sirupsen/logrus"
-	
+
 	// Using BadgerDB for persistence (lightweight alternative to RocksDB)
 	"github.com/dgraph-io/badger/v3"
 )
@@ -30,18 +30,18 @@ type AntiReplayManager struct {
 	ctx     context.Context
 	cancel  context.CancelFunc
 	metrics *metrics.MetricsCollector
-	
+
 	// Database for persistence
 	db *badger.DB
-	
+
 	// In-memory window cache for performance
 	windows     map[string]*SequenceWindow // peer_id -> window
 	windowMutex sync.RWMutex
-	
+
 	// Cleanup and sync
 	cleanupTicker *time.Ticker
 	syncTicker    *time.Ticker
-	
+
 	// Statistics
 	stats struct {
 		sync.RWMutex
@@ -102,9 +102,9 @@ func NewAntiReplayManager(config *Config, metricsCollector *metrics.MetricsColle
 	if config.SyncInterval == 0 {
 		config.SyncInterval = 5 * time.Minute
 	}
-	
+
 	ctx, cancel := context.WithCancel(context.Background())
-	
+
 	manager := &AntiReplayManager{
 		config:        config,
 		ctx:           ctx,
@@ -114,23 +114,23 @@ func NewAntiReplayManager(config *Config, metricsCollector *metrics.MetricsColle
 		cleanupTicker: time.NewTicker(config.CleanupInterval),
 		syncTicker:    time.NewTicker(config.SyncInterval),
 	}
-	
+
 	// Initialize database
 	if err := manager.initDatabase(); err != nil {
 		cancel()
 		return nil, fmt.Errorf("failed to initialize database: %w", err)
 	}
-	
+
 	// Load existing windows from database
 	if err := manager.loadWindows(); err != nil {
 		cancel()
 		return nil, fmt.Errorf("failed to load windows: %w", err)
 	}
-	
+
 	// Start background tasks
 	go manager.cleanupWorker()
 	go manager.syncWorker()
-	
+
 	log.WithFields(log.Fields{
 		"window_size":      config.WindowSize,
 		"db_path":         config.DBPath,
@@ -138,7 +138,7 @@ func NewAntiReplayManager(config *Config, metricsCollector *metrics.MetricsColle
 		"cleanup_interval": config.CleanupInterval,
 		"sync_interval":   config.SyncInterval,
 	}).Info("Anti-replay manager initialized")
-	
+
 	return manager, nil
 }
 
@@ -146,12 +146,12 @@ func NewAntiReplayManager(config *Config, metricsCollector *metrics.MetricsColle
 func (arm *AntiReplayManager) initDatabase() error {
 	opts := badger.DefaultOptions(arm.config.DBPath)
 	opts.Logger = &badgerLogger{} // Custom logger to reduce verbosity
-	
+
 	db, err := badger.Open(opts)
 	if err != nil {
 		return fmt.Errorf("failed to open BadgerDB at %s: %w", arm.config.DBPath, err)
 	}
-	
+
 	arm.db = db
 	log.WithField("db_path", arm.config.DBPath).Info("BadgerDB initialized for anti-replay persistence")
 	return nil
@@ -160,46 +160,46 @@ func (arm *AntiReplayManager) initDatabase() error {
 // loadWindows loads existing sequence windows from database
 func (arm *AntiReplayManager) loadWindows() error {
 	log.Info("Loading sequence windows from database")
-	
+
 	loadCount := 0
 	err := arm.db.View(func(txn *badger.Txn) error {
 		opts := badger.DefaultIteratorOptions
 		opts.PrefetchSize = 10
-		
+
 		it := txn.NewIterator(opts)
 		defer it.Close()
-		
+
 		for it.Rewind(); it.Valid(); it.Next() {
 			item := it.Item()
 			key := item.Key()
-			
+
 			err := item.Value(func(val []byte) error {
 				window, err := arm.deserializeWindow(key, val)
 				if err != nil {
 					log.WithError(err).WithField("key", string(key)).Error("Failed to deserialize window")
 					return nil // Continue loading other windows
 				}
-				
+
 				arm.windowMutex.Lock()
 				arm.windows[window.PeerID] = window
 				arm.windowMutex.Unlock()
-				
+
 				loadCount++
 				return nil
 			})
-			
+
 			if err != nil {
 				log.WithError(err).Error("Error processing window item")
 			}
 		}
-		
+
 		return nil
 	})
-	
+
 	if err != nil {
 		return fmt.Errorf("failed to load windows from database: %w", err)
 	}
-	
+
 	log.WithField("windows_loaded", loadCount).Info("Sequence windows loaded from database")
 	return nil
 }
@@ -208,18 +208,18 @@ func (arm *AntiReplayManager) loadWindows() error {
 func (arm *AntiReplayManager) ValidateSequence(peerID string, sequenceNumber uint64, timestampNs int64, updateWindow bool) *ValidationResult {
 	start := time.Now()
 	arm.recordValidationAttempt()
-	
+
 	// Get or create window for peer
 	window := arm.getOrCreateWindow(peerID)
-	
+
 	window.mutex.Lock()
 	defer window.mutex.Unlock()
-	
+
 	// Validate sequence number
 	result := &ValidationResult{
 		ValidationTimeUs: 0, // Will be set at the end
 	}
-	
+
 	// Check if sequence is too old (before window)
 	if sequenceNumber < window.WindowBase {
 		result.Valid = false
@@ -292,7 +292,7 @@ func (arm *AntiReplayManager) ValidateSequence(peerID string, sequenceNumber uin
 			}).Debug("Sequence accepted within window")
 		}
 	}
-	
+
 	// Update window metadata
 	if updateWindow && result.Valid {
 		if sequenceNumber > window.HighestReceived {
@@ -304,15 +304,15 @@ func (arm *AntiReplayManager) ValidateSequence(peerID string, sequenceNumber uin
 	} else {
 		window.Stats.TotalProcessed++
 	}
-	
+
 	// Record timing and metrics
 	validationTime := time.Since(start)
 	result.ValidationTimeUs = uint64(validationTime.Microseconds())
 	result.WindowState = arm.copyWindowState(window)
-	
+
 	arm.recordValidationTime(validationTime)
 	arm.recordWindowUpdate()
-	
+
 	return result
 }
 
@@ -324,16 +324,16 @@ func (arm *AntiReplayManager) getOrCreateWindow(peerID string) *SequenceWindow {
 		return window
 	}
 	arm.windowMutex.RUnlock()
-	
+
 	// Need to create new window
 	arm.windowMutex.Lock()
 	defer arm.windowMutex.Unlock()
-	
+
 	// Check again in case another goroutine created it
 	if window, exists := arm.windows[peerID]; exists {
 		return window
 	}
-	
+
 	// Create new window
 	bitmapSize := (arm.config.WindowSize + 7) / 8 // Round up to nearest byte
 	window := &SequenceWindow{
@@ -346,15 +346,15 @@ func (arm *AntiReplayManager) getOrCreateWindow(peerID string) *SequenceWindow {
 		Stats:           WindowStats{},
 		dirty:           true,
 	}
-	
+
 	arm.windows[peerID] = window
-	
+
 	log.WithFields(log.Fields{
 		"peer_id":     peerID,
 		"window_size": arm.config.WindowSize,
 		"bitmap_size": bitmapSize,
 	}).Info("Created new sequence window")
-	
+
 	return window
 }
 
@@ -363,15 +363,15 @@ func (arm *AntiReplayManager) slideWindow(window *SequenceWindow, newSequence ui
 	if newSequence < window.WindowBase+uint64(window.WindowSize) {
 		return // No need to slide
 	}
-	
+
 	oldBase := window.WindowBase
 	slideAmount := newSequence - (window.WindowBase + uint64(window.WindowSize) - 1)
-	
+
 	// Slide window forward
 	window.WindowBase += slideAmount
 	window.Stats.WindowSlides++
 	arm.recordWindowSlide()
-	
+
 	// Clear bitmap bits that are now outside the window
 	if slideAmount >= uint64(window.WindowSize) {
 		// Complete slide - clear entire bitmap
@@ -382,9 +382,9 @@ func (arm *AntiReplayManager) slideWindow(window *SequenceWindow, newSequence ui
 		// Partial slide - shift bitmap
 		arm.shiftBitmap(window.WindowBitmap, int(slideAmount))
 	}
-	
+
 	window.dirty = true
-	
+
 	log.WithFields(log.Fields{
 		"peer_id":       window.PeerID,
 		"old_base":      oldBase,
@@ -403,10 +403,10 @@ func (arm *AntiReplayManager) shiftBitmap(bitmap []byte, bits int) {
 		}
 		return
 	}
-	
+
 	byteShift := bits / 8
 	bitShift := bits % 8
-	
+
 	// Shift by whole bytes first
 	if byteShift > 0 {
 		copy(bitmap, bitmap[byteShift:])
@@ -415,7 +415,7 @@ func (arm *AntiReplayManager) shiftBitmap(bitmap []byte, bits int) {
 			bitmap[i] = 0
 		}
 	}
-	
+
 	// Shift remaining bits
 	if bitShift > 0 {
 		carry := byte(0)
@@ -432,15 +432,15 @@ func (arm *AntiReplayManager) getBit(window *SequenceWindow, sequence uint64) bo
 	if sequence < window.WindowBase || sequence >= window.WindowBase+uint64(window.WindowSize) {
 		return false
 	}
-	
+
 	bitIndex := sequence - window.WindowBase
 	byteIndex := bitIndex / 8
 	bitPos := bitIndex % 8
-	
+
 	if int(byteIndex) >= len(window.WindowBitmap) {
 		return false
 	}
-	
+
 	return (window.WindowBitmap[byteIndex] & (1 << bitPos)) != 0
 }
 
@@ -449,15 +449,15 @@ func (arm *AntiReplayManager) setBit(window *SequenceWindow, sequence uint64) {
 	if sequence < window.WindowBase || sequence >= window.WindowBase+uint64(window.WindowSize) {
 		return
 	}
-	
+
 	bitIndex := sequence - window.WindowBase
 	byteIndex := bitIndex / 8
 	bitPos := bitIndex % 8
-	
+
 	if int(byteIndex) >= len(window.WindowBitmap) {
 		return
 	}
-	
+
 	window.WindowBitmap[byteIndex] |= (1 << bitPos)
 	window.Stats.BitmapUpdates++
 	window.dirty = true
@@ -467,7 +467,7 @@ func (arm *AntiReplayManager) setBit(window *SequenceWindow, sequence uint64) {
 func (arm *AntiReplayManager) copyWindowState(window *SequenceWindow) *SequenceWindow {
 	bitmapCopy := make([]byte, len(window.WindowBitmap))
 	copy(bitmapCopy, window.WindowBitmap)
-	
+
 	return &SequenceWindow{
 		PeerID:          window.PeerID,
 		WindowBase:      window.WindowBase,
@@ -483,7 +483,7 @@ func (arm *AntiReplayManager) copyWindowState(window *SequenceWindow) *SequenceW
 func (arm *AntiReplayManager) cleanupWorker() {
 	log.Info("Starting anti-replay cleanup worker")
 	defer log.Info("Anti-replay cleanup worker stopped")
-	
+
 	for {
 		select {
 		case <-arm.ctx.Done():
@@ -497,10 +497,10 @@ func (arm *AntiReplayManager) cleanupWorker() {
 // performCleanup removes old unused sequence windows
 func (arm *AntiReplayManager) performCleanup() {
 	arm.recordCleanupOperation()
-	
+
 	cutoff := time.Now().Add(-arm.config.CleanupTTL)
 	toDelete := make([]string, 0)
-	
+
 	arm.windowMutex.RLock()
 	for peerID, window := range arm.windows {
 		window.mutex.RLock()
@@ -510,19 +510,19 @@ func (arm *AntiReplayManager) performCleanup() {
 		window.mutex.RUnlock()
 	}
 	arm.windowMutex.RUnlock()
-	
+
 	if len(toDelete) == 0 {
 		return
 	}
-	
+
 	log.WithField("windows_to_delete", len(toDelete)).Info("Cleaning up old sequence windows")
-	
+
 	// Delete from memory and database
 	for _, peerID := range toDelete {
 		arm.windowMutex.Lock()
 		delete(arm.windows, peerID)
 		arm.windowMutex.Unlock()
-		
+
 		// Delete from database
 		err := arm.db.Update(func(txn *badger.Txn) error {
 			return txn.Delete([]byte(peerID))
@@ -538,7 +538,7 @@ func (arm *AntiReplayManager) performCleanup() {
 func (arm *AntiReplayManager) syncWorker() {
 	log.Info("Starting anti-replay sync worker")
 	defer log.Info("Anti-replay sync worker stopped")
-	
+
 	for {
 		select {
 		case <-arm.ctx.Done():
@@ -552,7 +552,7 @@ func (arm *AntiReplayManager) syncWorker() {
 // syncDirtyWindows syncs dirty windows to database
 func (arm *AntiReplayManager) syncDirtyWindows() {
 	dirtyWindows := make([]*SequenceWindow, 0)
-	
+
 	arm.windowMutex.RLock()
 	for _, window := range arm.windows {
 		window.mutex.RLock()
@@ -562,13 +562,13 @@ func (arm *AntiReplayManager) syncDirtyWindows() {
 		window.mutex.RUnlock()
 	}
 	arm.windowMutex.RUnlock()
-	
+
 	if len(dirtyWindows) == 0 {
 		return
 	}
-	
+
 	log.WithField("dirty_windows", len(dirtyWindows)).Debug("Syncing dirty windows to database")
-	
+
 	// Batch write to database
 	err := arm.db.Update(func(txn *badger.Txn) error {
 		for _, window := range dirtyWindows {
@@ -579,19 +579,19 @@ func (arm *AntiReplayManager) syncDirtyWindows() {
 					window.mutex.Unlock()
 					return fmt.Errorf("failed to serialize window for %s: %w", window.PeerID, err)
 				}
-				
+
 				if err := txn.Set([]byte(window.PeerID), data); err != nil {
 					window.mutex.Unlock()
 					return fmt.Errorf("failed to write window for %s: %w", window.PeerID, err)
 				}
-				
+
 				window.dirty = false
 			}
 			window.mutex.Unlock()
 		}
 		return nil
 	})
-	
+
 	if err != nil {
 		log.WithError(err).Error("Failed to sync dirty windows")
 		arm.recordPersistenceError()
@@ -602,7 +602,7 @@ func (arm *AntiReplayManager) syncDirtyWindows() {
 func (arm *AntiReplayManager) serializeWindow(window *SequenceWindow) ([]byte, error) {
 	// Simple binary format:
 	// 8 bytes: WindowBase
-	// 4 bytes: WindowSize  
+	// 4 bytes: WindowSize
 	// 8 bytes: HighestReceived
 	// 8 bytes: LastUpdate (Unix nano)
 	// 8 bytes: Stats.TotalProcessed
@@ -611,10 +611,10 @@ func (arm *AntiReplayManager) serializeWindow(window *SequenceWindow) ([]byte, e
 	// 8 bytes: Stats.WindowSlides
 	// 8 bytes: Stats.BitmapUpdates
 	// N bytes: WindowBitmap
-	
+
 	headerSize := 8 + 4 + 8 + 8 + 8 + 8 + 8 + 8 + 8 // 72 bytes
 	data := make([]byte, headerSize+len(window.WindowBitmap))
-	
+
 	offset := 0
 	binary.BigEndian.PutUint64(data[offset:], window.WindowBase)
 	offset += 8
@@ -634,9 +634,9 @@ func (arm *AntiReplayManager) serializeWindow(window *SequenceWindow) ([]byte, e
 	offset += 8
 	binary.BigEndian.PutUint64(data[offset:], window.Stats.BitmapUpdates)
 	offset += 8
-	
+
 	copy(data[offset:], window.WindowBitmap)
-	
+
 	return data, nil
 }
 
@@ -645,10 +645,10 @@ func (arm *AntiReplayManager) deserializeWindow(key, data []byte) (*SequenceWind
 	if len(data) < 72 { // Minimum header size
 		return nil, fmt.Errorf("data too short for window header")
 	}
-	
+
 	peerID := string(key)
 	offset := 0
-	
+
 	windowBase := binary.BigEndian.Uint64(data[offset:])
 	offset += 8
 	windowSize := binary.BigEndian.Uint32(data[offset:])
@@ -667,10 +667,10 @@ func (arm *AntiReplayManager) deserializeWindow(key, data []byte) (*SequenceWind
 	offset += 8
 	bitmapUpdates := binary.BigEndian.Uint64(data[offset:])
 	offset += 8
-	
+
 	bitmapData := make([]byte, len(data)-offset)
 	copy(bitmapData, data[offset:])
-	
+
 	window := &SequenceWindow{
 		PeerID:          peerID,
 		WindowBase:      windowBase,
@@ -687,7 +687,7 @@ func (arm *AntiReplayManager) deserializeWindow(key, data []byte) (*SequenceWind
 		},
 		dirty: false,
 	}
-	
+
 	return window, nil
 }
 
@@ -695,18 +695,18 @@ func (arm *AntiReplayManager) deserializeWindow(key, data []byte) (*SequenceWind
 func (arm *AntiReplayManager) GetStats() AntiReplayStats {
 	arm.stats.RLock()
 	defer arm.stats.RUnlock()
-	
+
 	arm.windowMutex.RLock()
 	windowCount := uint64(len(arm.windows))
 	arm.windowMutex.RUnlock()
-	
+
 	falsePositiveRate := 0.0
 	if arm.stats.TotalValidated > 0 {
 		// False positives are legitimate packets incorrectly rejected
 		// This is hard to measure accurately without ground truth
 		falsePositiveRate = float64(arm.stats.ExpiredRejections) / float64(arm.stats.TotalValidated) * 0.01 // Estimate
 	}
-	
+
 	return AntiReplayStats{
 		TotalValidated:         arm.stats.TotalValidated,
 		ReplaysBlocked:         arm.stats.ReplayBlocks,
@@ -723,21 +723,21 @@ func (arm *AntiReplayManager) GetStats() AntiReplayStats {
 // Stop gracefully stops the anti-replay manager
 func (arm *AntiReplayManager) Stop() error {
 	log.Info("Stopping anti-replay manager")
-	
+
 	arm.cancel()
 	arm.cleanupTicker.Stop()
 	arm.syncTicker.Stop()
-	
+
 	// Final sync of dirty windows
 	arm.syncDirtyWindows()
-	
+
 	// Close database
 	if arm.db != nil {
 		if err := arm.db.Close(); err != nil {
 			log.WithError(err).Error("Failed to close anti-replay database")
 		}
 	}
-	
+
 	log.Info("Anti-replay manager stopped")
 	return nil
 }

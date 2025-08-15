@@ -20,7 +20,7 @@ import (
 type Config struct {
 	LocalIA          string        // Local ISD-AS (e.g., "1-ff00:0:110")
 	DispatcherAddr   string        // SCION dispatcher address
-	SCIONDAddr       string        // SCION daemon address  
+	SCIONDAddr       string        // SCION daemon address
 	PacketBufferSize int           // Maximum packet size
 	WorkerPoolSize   int           // Number of worker goroutines
 	ReadTimeout      time.Duration // Socket read timeout
@@ -33,17 +33,17 @@ type ScionIOHandler struct {
 	ctx      context.Context
 	cancel   context.CancelFunc
 	metrics  *metrics.MetricsCollector
-	
+
 	// SCION components
 	localIA    addr.IA
 	dispatcher reliable.Dispatcher
 	daemon     daemon.Connector
 	conn       snet.PacketConn
-	
+
 	// Worker management
 	workerWG   sync.WaitGroup
 	packetChan chan *snet.Packet
-	
+
 	// Statistics
 	stats struct {
 		sync.RWMutex
@@ -71,15 +71,15 @@ func NewScionIOHandler(ctx context.Context, config *Config, metricsCollector *me
 	if config.WorkerPoolSize == 0 {
 		config.WorkerPoolSize = 10
 	}
-	
+
 	// Parse local IA
 	localIA, err := addr.ParseIA(config.LocalIA)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse local IA %s: %w", config.LocalIA, err)
 	}
-	
+
 	ctx, cancel := context.WithCancel(ctx)
-	
+
 	handler := &ScionIOHandler{
 		config:     config,
 		ctx:        ctx,
@@ -88,19 +88,19 @@ func NewScionIOHandler(ctx context.Context, config *Config, metricsCollector *me
 		localIA:    localIA,
 		packetChan: make(chan *snet.Packet, config.WorkerPoolSize*2),
 	}
-	
+
 	// Initialize SCION components
 	if err := handler.initScionComponents(); err != nil {
 		cancel()
 		return nil, fmt.Errorf("failed to initialize SCION components: %w", err)
 	}
-	
+
 	// Start worker goroutines
 	handler.startWorkers()
-	
+
 	// Start packet receiver
 	go handler.packetReceiver()
-	
+
 	log.WithFields(log.Fields{
 		"local_ia":     config.LocalIA,
 		"dispatcher":   config.DispatcherAddr,
@@ -108,51 +108,51 @@ func NewScionIOHandler(ctx context.Context, config *Config, metricsCollector *me
 		"buffer_size":  config.PacketBufferSize,
 		"workers":      config.WorkerPoolSize,
 	}).Info("SCION I/O handler initialized")
-	
+
 	return handler, nil
 }
 
 // initScionComponents initializes SCION networking components
 func (h *ScionIOHandler) initScionComponents() error {
 	log.Info("Initializing SCION networking components")
-	
+
 	// Connect to SCION dispatcher
 	dispatcher := reliable.NewDispatcher(h.config.DispatcherAddr)
-	
+
 	// Connect to SCION daemon
 	daemonConn, err := daemon.NewService(h.config.SCIONDAddr).Connect(h.ctx)
 	if err != nil {
 		return fmt.Errorf("failed to connect to SCION daemon at %s: %w", h.config.SCIONDAddr, err)
 	}
-	
+
 	// Create local address
 	localAddr := &snet.UDPAddr{
 		IA:   h.localIA,
 		Host: &net.UDPAddr{IP: net.IPv4(0, 0, 0, 0), Port: 0}, // Bind to any port
 	}
-	
+
 	// Create SCION packet connection
 	conn, err := snet.Listen(h.ctx, "udp", localAddr, addr.SvcNone)
 	if err != nil {
 		return fmt.Errorf("failed to create SCION connection: %w", err)
 	}
-	
+
 	h.dispatcher = dispatcher
 	h.daemon = daemonConn
 	h.conn = conn
-	
+
 	log.WithFields(log.Fields{
 		"local_addr": conn.LocalAddr(),
 		"bound_port": conn.LocalAddr().(*snet.UDPAddr).Host.(*net.UDPAddr).Port,
 	}).Info("SCION networking components initialized")
-	
+
 	return nil
 }
 
 // startWorkers starts worker goroutines for packet processing
 func (h *ScionIOHandler) startWorkers() {
 	log.WithField("workers", h.config.WorkerPoolSize).Info("Starting SCION I/O workers")
-	
+
 	for i := 0; i < h.config.WorkerPoolSize; i++ {
 		h.workerWG.Add(1)
 		go h.packetWorker(i)
@@ -162,10 +162,10 @@ func (h *ScionIOHandler) startWorkers() {
 // packetWorker processes packets from the channel
 func (h *ScionIOHandler) packetWorker(workerID int) {
 	defer h.workerWG.Done()
-	
+
 	logger := log.WithField("worker_id", workerID)
 	logger.Debug("SCION packet worker started")
-	
+
 	for {
 		select {
 		case <-h.ctx.Done():
@@ -175,7 +175,7 @@ func (h *ScionIOHandler) packetWorker(workerID int) {
 			if packet == nil {
 				continue
 			}
-			
+
 			// Process received packet
 			if err := h.processReceivedPacket(packet); err != nil {
 				logger.WithError(err).Error("Failed to process received packet")
@@ -189,9 +189,9 @@ func (h *ScionIOHandler) packetWorker(workerID int) {
 func (h *ScionIOHandler) packetReceiver() {
 	log.Info("Starting SCION packet receiver")
 	defer log.Info("SCION packet receiver stopped")
-	
+
 	buffer := make([]byte, h.config.PacketBufferSize)
-	
+
 	for {
 		select {
 		case <-h.ctx.Done():
@@ -202,7 +202,7 @@ func (h *ScionIOHandler) packetReceiver() {
 				log.WithError(err).Error("Failed to set read deadline")
 				continue
 			}
-			
+
 			// Read packet
 			packet, err := h.conn.ReadFrom(buffer)
 			if err != nil {
@@ -212,7 +212,7 @@ func (h *ScionIOHandler) packetReceiver() {
 				}
 				continue
 			}
-			
+
 			// Queue packet for processing
 			select {
 			case h.packetChan <- packet:
@@ -228,49 +228,49 @@ func (h *ScionIOHandler) packetReceiver() {
 // SendPacket sends a SCION packet to the specified destination
 func (h *ScionIOHandler) SendPacket(ctx context.Context, rawPacket []byte, dstIA string, dstAddr *net.UDPAddr) error {
 	start := time.Now()
-	
+
 	// Parse destination IA
 	dstIAAddr, err := addr.ParseIA(dstIA)
 	if err != nil {
 		return fmt.Errorf("failed to parse destination IA %s: %w", dstIA, err)
 	}
-	
+
 	// Create destination address
 	destination := &snet.UDPAddr{
 		IA:   dstIAAddr,
 		Host: dstAddr,
 	}
-	
+
 	// Set write deadline
 	deadline := time.Now().Add(h.config.WriteTimeout)
 	if ctxDeadline, ok := ctx.Deadline(); ok && ctxDeadline.Before(deadline) {
 		deadline = ctxDeadline
 	}
-	
+
 	if err := h.conn.SetWriteDeadline(deadline); err != nil {
 		return fmt.Errorf("failed to set write deadline: %w", err)
 	}
-	
+
 	// Send packet
 	n, err := h.conn.WriteTo(rawPacket, destination)
 	if err != nil {
 		h.recordError()
 		return fmt.Errorf("failed to send SCION packet: %w", err)
 	}
-	
+
 	// Record metrics
 	h.recordPacketSent(n)
-	
+
 	// Record timing
 	h.metrics.RecordScionPacketSent(time.Since(start), len(rawPacket), dstIA)
-	
+
 	log.WithFields(log.Fields{
 		"dst_ia":    dstIA,
 		"dst_addr":  dstAddr,
 		"bytes":     n,
 		"duration":  time.Since(start),
 	}).Debug("SCION packet sent")
-	
+
 	return nil
 }
 
@@ -279,24 +279,24 @@ func (h *ScionIOHandler) processReceivedPacket(packet *snet.Packet) error {
 	if packet == nil {
 		return fmt.Errorf("received nil packet")
 	}
-	
+
 	// Extract packet information
 	srcIA := packet.Source.IA.String()
 	srcAddr := packet.Source.Host
 	packetData := packet.Bytes
-	
+
 	log.WithFields(log.Fields{
 		"src_ia":   srcIA,
 		"src_addr": srcAddr,
 		"bytes":    len(packetData),
 	}).Debug("Processing received SCION packet")
-	
+
 	// Record metrics
 	h.metrics.RecordScionPacketReceived(len(packetData), srcIA)
-	
+
 	// TODO: Forward packet to Betanet Gateway via callback or queue
 	// For now, we just log the packet receipt
-	
+
 	return nil
 }
 
@@ -312,7 +312,7 @@ func (h *ScionIOHandler) GetLocalAddr() net.Addr {
 func (h *ScionIOHandler) GetStats() IOStats {
 	h.stats.RLock()
 	defer h.stats.RUnlock()
-	
+
 	return IOStats{
 		PacketsSent:     h.stats.PacketsSent,
 		PacketsReceived: h.stats.PacketsReceived,
@@ -327,29 +327,29 @@ func (h *ScionIOHandler) GetStats() IOStats {
 // Stop gracefully stops the SCION I/O handler
 func (h *ScionIOHandler) Stop() error {
 	log.Info("Stopping SCION I/O handler")
-	
+
 	// Cancel context to stop all operations
 	h.cancel()
-	
+
 	// Close packet channel
 	close(h.packetChan)
-	
+
 	// Wait for workers to finish
 	h.workerWG.Wait()
-	
+
 	// Close connections
 	if h.conn != nil {
 		if err := h.conn.Close(); err != nil {
 			log.WithError(err).Error("Failed to close SCION connection")
 		}
 	}
-	
+
 	if h.daemon != nil {
 		if err := h.daemon.Close(); err != nil {
 			log.WithError(err).Error("Failed to close SCION daemon connection")
 		}
 	}
-	
+
 	log.Info("SCION I/O handler stopped")
 	return nil
 }

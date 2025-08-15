@@ -39,12 +39,12 @@ class ArchitectAgent(BaseAgent):
         if "database" in prompt.lower():
             return "I can design optimal database schemas, choose appropriate database technologies, and plan data architecture."
         if "api" in prompt.lower():
-            return (
-                "I design RESTful APIs, GraphQL endpoints, and integration patterns for seamless system communication."
-            )
+            return "I design RESTful APIs, GraphQL endpoints, and integration patterns for seamless system communication."
         return "I'm an Architect Agent specialized in system design, architecture planning, and technology strategy."
 
-    async def rerank(self, query: str, results: list[dict[str, Any]], k: int) -> list[dict[str, Any]]:
+    async def rerank(
+        self, query: str, results: list[dict[str, Any]], k: int
+    ) -> list[dict[str, Any]]:
         keywords = [
             "architecture",
             "design",
@@ -55,7 +55,9 @@ class ArchitectAgent(BaseAgent):
             "scalability",
         ]
         for result in results:
-            score = sum(str(result.get("content", "")).lower().count(kw) for kw in keywords)
+            score = sum(
+                str(result.get("content", "")).lower().count(kw) for kw in keywords
+            )
             result["architecture_relevance_score"] = score
         return sorted(
             results,
@@ -77,7 +79,9 @@ class ArchitectAgent(BaseAgent):
         arch_type = "microservices" if "microservice" in query.lower() else "monolith"
         return arch_type, f"ARCHITECT[{arch_type}:{query[:50]}]"
 
-    async def design_system_architecture(self, requirements: dict[str, Any]) -> dict[str, Any]:
+    async def design_system_architecture(
+        self, requirements: dict[str, Any]
+    ) -> dict[str, Any]:
         """Design comprehensive system architecture"""
         try:
             scale = requirements.get("scale", "medium")

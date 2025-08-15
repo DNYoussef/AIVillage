@@ -8,7 +8,7 @@
 **Real-time RTT, jitter, and loss measurement with EWMA estimation**
 
 - **RTT Tracking**: EWMA (Exponentially Weighted Moving Average) with α=0.125
-- **Jitter Calculation**: p95-p50 difference of RTT deviation samples  
+- **Jitter Calculation**: p95-p50 difference of RTT deviation samples
 - **Loss Rate Tracking**: Packet acknowledgment success/failure ratio
 - **Control Ping System**: Proactive measurement via background ping loops
 - **Quality Scoring**: Combined metric (0.0-1.0) factoring RTT, jitter, and loss
@@ -108,7 +108,7 @@ should_switch = metrics_collector.should_switch_path(peer_id)
 
 ### Measurement Accuracy
 - **RTT Accuracy**: ±5ms typical (EWMA smoothing reduces noise)
-- **Jitter Detection**: Captures p95-p50 spread effectively  
+- **Jitter Detection**: Captures p95-p50 spread effectively
 - **Loss Sensitivity**: Detects >1% loss within 10 messages
 - **Convergence Time**: 3-5 measurements for stable metrics
 
@@ -130,7 +130,7 @@ should_switch = metrics_collector.should_switch_path(peer_id)
 
 ### Fault Injection Tests
 - ✅ **Delay Response**: Switches to robust protocols under >800ms RTT
-- ✅ **Loss Adaptation**: Prefers reliable transports with >10% loss  
+- ✅ **Loss Adaptation**: Prefers reliable transports with >10% loss
 - ✅ **Jitter Handling**: Reduces chunk sizes with >150ms jitter
 - ✅ **Recovery**: Restores optimal protocols when conditions improve
 - ✅ **Delivery SLA**: Maintains >80% success rate under moderate faults
@@ -138,7 +138,7 @@ should_switch = metrics_collector.should_switch_path(peer_id)
 ### 500ms Switch Benchmark
 ```
 high_rtt    :   45.2ms avg,   67.1ms max - ✅ PASS
-packet_loss :   52.8ms avg,   71.3ms max - ✅ PASS  
+packet_loss :   52.8ms avg,   71.3ms max - ✅ PASS
 high_jitter :   38.9ms avg,   59.2ms max - ✅ PASS
 
 Overall Performance:
@@ -159,7 +159,7 @@ export NETWORK_METRICS_ENABLED=true
 # Control ping interval (seconds)
 export METRICS_PING_INTERVAL=5.0
 
-# Measurement timeout (seconds)  
+# Measurement timeout (seconds)
 export METRICS_TIMEOUT=10.0
 
 # Switch threshold RTT (milliseconds)
@@ -209,7 +209,7 @@ success = await transport.send_message(
 # Get current network conditions
 conditions = navigator.get_network_conditions("bob")
 print(f"RTT: {conditions.measured_rtt_ms:.1f}ms")
-print(f"Jitter: {conditions.measured_jitter_ms:.1f}ms") 
+print(f"Jitter: {conditions.measured_jitter_ms:.1f}ms")
 print(f"Loss: {conditions.measured_loss_rate:.1%}")
 print(f"Quality: {conditions.quality_score:.3f}")
 
@@ -249,7 +249,7 @@ python tmp_bounty/tests/test_net_faults.py --demo
 transport = BetanetTransport(
     peer_id="node_001",
     use_htx_link=True,           # TLS/QUIC transport
-    enable_cover_traffic=True,   # Indistinguishability  
+    enable_cover_traffic=True,   # Indistinguishability
     enable_network_metrics=True, # Live measurement
     enable_adaptive_routing=True # Protocol adaptation
 )
@@ -260,7 +260,7 @@ transport = BetanetTransport(
 # Test fault injection framework
 python tmp_bounty/tests/test_net_faults.py
 
-# Validate 500ms switching requirement  
+# Validate 500ms switching requirement
 python tmp_bounty/verify_500ms_switching.py
 
 # Run comprehensive integration test
@@ -275,7 +275,7 @@ python tmp_bounty/test_integration_complete.py
 
 ### Key Achievements:
 - 📊 **Live Measurements**: Real RTT/jitter/loss tracking with EWMA estimation
-- ⚡ **Fast Switching**: Sub-500ms protocol selection with quality-based decisions  
+- ⚡ **Fast Switching**: Sub-500ms protocol selection with quality-based decisions
 - 🔄 **Adaptive Chunking**: Dynamic chunk sizing based on jitter conditions
 - 🧪 **Comprehensive Testing**: Fault injection framework with delivery thresholds
 - 📈 **Quality Scoring**: Combined metric for intelligent path selection

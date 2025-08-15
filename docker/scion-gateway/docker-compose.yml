@@ -9,7 +9,7 @@ networks:
     ipam:
       config:
         - subnet: 172.20.0.0/16
-  
+
   monitoring-net:
     driver: bridge
 
@@ -172,9 +172,9 @@ services:
       sh -c "
         echo 'Waiting for gateway to be ready...' &&
         sleep 30 &&
-        python -m pytest /app/tests/e2e/test_scion_gateway.py 
-          --verbose 
-          --tb=short 
+        python -m pytest /app/tests/e2e/test_scion_gateway.py
+          --verbose
+          --tb=short
           --junitxml=/test-results/results.xml
           --html=/test-results/report.html
           --capture=no

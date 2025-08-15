@@ -31,20 +31,20 @@ type PathManager struct {
 	ctx     context.Context
 	cancel  context.CancelFunc
 	metrics *metrics.MetricsCollector
-	
+
 	// SCION components
 	localIA addr.IA
 	daemon  daemon.Connector
-	
+
 	// Path cache and management
 	pathCache  map[string]*CachedPathSet // dst_ia -> paths
 	pathMutex  sync.RWMutex
 	refreshTicker *time.Ticker
-	
+
 	// Path quality tracking
 	qualityTracker map[string]*PathQuality // path_id -> quality
 	qualityMutex   sync.RWMutex
-	
+
 	// Statistics
 	stats struct {
 		sync.RWMutex
@@ -118,15 +118,15 @@ func NewPathManager(ctx context.Context, config *Config, metricsCollector *metri
 	if config.MaxPathAge == 0 {
 		config.MaxPathAge = 5 * time.Minute
 	}
-	
+
 	// Parse local IA
 	localIA, err := addr.ParseIA(config.LocalIA)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse local IA %s: %w", config.LocalIA, err)
 	}
-	
+
 	ctx, cancel := context.WithCancel(ctx)
-	
+
 	manager := &PathManager{
 		config:         config,
 		ctx:            ctx,
@@ -137,23 +137,23 @@ func NewPathManager(ctx context.Context, config *Config, metricsCollector *metri
 		qualityTracker: make(map[string]*PathQuality),
 		refreshTicker:  time.NewTicker(config.RefreshInterval),
 	}
-	
+
 	// Connect to SCION daemon
 	if err := manager.connectDaemon(); err != nil {
 		cancel()
 		return nil, fmt.Errorf("failed to connect to SCION daemon: %w", err)
 	}
-	
+
 	// Start background refresh
 	go manager.backgroundRefresh()
-	
+
 	log.WithFields(log.Fields{
 		"local_ia":         config.LocalIA,
 		"refresh_interval": config.RefreshInterval,
 		"cache_size":       config.CacheSize,
 		"max_path_age":     config.MaxPathAge,
 	}).Info("Path manager initialized")
-	
+
 	return manager, nil
 }
 
@@ -163,7 +163,7 @@ func (pm *PathManager) connectDaemon() error {
 	if err != nil {
 		return fmt.Errorf("failed to connect to daemon at %s: %w", pm.config.SCIONDAddr, err)
 	}
-	
+
 	pm.daemon = daemonConn
 	log.WithField("sciond_addr", pm.config.SCIONDAddr).Info("Connected to SCION daemon")
 	return nil
@@ -173,59 +173,59 @@ func (pm *PathManager) connectDaemon() error {
 func (pm *PathManager) QueryPaths(dstIA string) ([]*PathInfo, error) {
 	start := time.Now()
 	pm.recordPathQuery()
-	
+
 	// Parse destination IA
 	dstIAAddr, err := addr.ParseIA(dstIA)
 	if err != nil {
 		pm.recordError()
 		return nil, fmt.Errorf("failed to parse destination IA %s: %w", dstIA, err)
 	}
-	
+
 	// Check cache first
 	pm.pathMutex.RLock()
 	if cachedSet, exists := pm.pathCache[dstIA]; exists && !pm.isStale(cachedSet) {
 		pm.pathMutex.RUnlock()
 		pm.recordCacheHit()
-		
+
 		// Update usage statistics
 		pm.pathMutex.Lock()
 		cachedSet.QueryCount++
 		pm.pathMutex.Unlock()
-		
+
 		log.WithFields(log.Fields{
 			"dst_ia":    dstIA,
 			"paths":     len(cachedSet.Paths),
 			"duration":  time.Since(start),
 			"source":    "cache",
 		}).Debug("Returned cached paths")
-		
+
 		return cachedSet.Paths, nil
 	}
 	pm.pathMutex.RUnlock()
 	pm.recordCacheMiss()
-	
+
 	// Query fresh paths from daemon
 	paths, err := pm.queryFreshPaths(dstIAAddr)
 	if err != nil {
 		pm.recordError()
 		return nil, fmt.Errorf("failed to query fresh paths: %w", err)
 	}
-	
+
 	// Convert and cache paths
 	pathInfos := pm.convertPaths(paths, dstIAAddr)
 	pm.cachePaths(dstIA, pathInfos)
-	
+
 	// Record metrics
 	pm.recordPathsDiscovered(len(pathInfos))
 	pm.metrics.RecordPathQuery(time.Since(start), len(pathInfos), dstIA)
-	
+
 	log.WithFields(log.Fields{
 		"dst_ia":    dstIA,
 		"paths":     len(pathInfos),
 		"duration":  time.Since(start),
 		"source":    "fresh",
 	}).Debug("Returned fresh paths")
-	
+
 	return pathInfos, nil
 }
 
@@ -233,32 +233,32 @@ func (pm *PathManager) QueryPaths(dstIA string) ([]*PathInfo, error) {
 func (pm *PathManager) queryFreshPaths(dstIA addr.IA) ([]snet.Path, error) {
 	ctx, cancel := context.WithTimeout(pm.ctx, pm.config.QueryTimeout)
 	defer cancel()
-	
+
 	log.WithField("dst_ia", dstIA).Debug("Querying fresh paths from SCION daemon")
-	
+
 	// Query paths from daemon
 	pathReply, err := pm.daemon.Paths(ctx, dstIA, pm.localIA, daemon.PathReqFlags{})
 	if err != nil {
 		return nil, fmt.Errorf("daemon path query failed: %w", err)
 	}
-	
+
 	if len(pathReply.Paths) == 0 {
 		log.WithField("dst_ia", dstIA).Warn("No paths found to destination")
 		return nil, fmt.Errorf("no paths available to %s", dstIA)
 	}
-	
+
 	log.WithFields(log.Fields{
 		"dst_ia": dstIA,
 		"paths":  len(pathReply.Paths),
 	}).Debug("Received paths from SCION daemon")
-	
+
 	return pathReply.Paths, nil
 }
 
 // convertPaths converts SCION paths to PathInfo objects
 func (pm *PathManager) convertPaths(paths []snet.Path, dstIA addr.IA) []*PathInfo {
 	pathInfos := make([]*PathInfo, 0, len(paths))
-	
+
 	for i, path := range paths {
 		pathInfo := &PathInfo{
 			ID:             pm.generatePathID(path, i),
@@ -271,7 +271,7 @@ func (pm *PathManager) convertPaths(paths []snet.Path, dstIA addr.IA) []*PathInf
 			Expiry:         time.Now().Add(pm.config.MaxPathAge),
 			SelectionScore: 0.5, // Default neutral score
 		}
-		
+
 		// Initialize or get quality tracking
 		pm.qualityMutex.Lock()
 		if quality, exists := pm.qualityTracker[pathInfo.ID]; exists {
@@ -291,18 +291,18 @@ func (pm *PathManager) convertPaths(paths []snet.Path, dstIA addr.IA) []*PathInf
 			pm.qualityTracker[pathInfo.ID] = pathInfo.Quality
 		}
 		pm.qualityMutex.Unlock()
-		
+
 		// Calculate initial selection score
 		pathInfo.SelectionScore = pm.calculateSelectionScore(pathInfo)
-		
+
 		pathInfos = append(pathInfos, pathInfo)
 	}
-	
+
 	// Sort paths by selection score (highest first)
 	sort.Slice(pathInfos, func(i, j int) bool {
 		return pathInfos[i].SelectionScore > pathInfos[j].SelectionScore
 	})
-	
+
 	return pathInfos
 }
 
@@ -318,7 +318,7 @@ func (pm *PathManager) generatePathID(path snet.Path, index int) string {
 // extractHops extracts hop information from a SCION path
 func (pm *PathManager) extractHops(path snet.Path) []HopInfo {
 	var hops []HopInfo
-	
+
 	// Extract hop information from path metadata
 	if pathMeta := path.Metadata(); pathMeta != nil {
 		// TODO: Extract detailed hop information from path metadata
@@ -331,31 +331,31 @@ func (pm *PathManager) extractHops(path snet.Path) []HopInfo {
 			Latency:   0,
 		})
 	}
-	
+
 	return hops
 }
 
 // calculateSelectionScore calculates a selection score for path ranking
 func (pm *PathManager) calculateSelectionScore(pathInfo *PathInfo) float64 {
 	score := 0.5 // Base score
-	
+
 	// Factor in path quality if available
 	if pathInfo.Quality != nil {
 		quality := pathInfo.Quality
-		
+
 		// RTT factor (lower is better)
 		if quality.RTT_EWMA > 0 {
 			rttScore := 1.0 - (float64(quality.RTT_EWMA.Milliseconds()) / 1000.0)
 			score += 0.3 * max(0.0, min(1.0, rttScore))
 		}
-		
+
 		// Loss rate factor (lower is better)
 		lossScore := 1.0 - quality.LossRate
 		score += 0.3 * max(0.0, min(1.0, lossScore))
-		
+
 		// Stability factor
 		score += 0.2 * quality.Stability
-		
+
 		// Recency factor
 		if !quality.LastMeasurement.IsZero() {
 			age := time.Since(quality.LastMeasurement)
@@ -363,14 +363,14 @@ func (pm *PathManager) calculateSelectionScore(pathInfo *PathInfo) float64 {
 			score += 0.2 * max(0.0, min(1.0, recencyScore))
 		}
 	}
-	
+
 	// Path length factor (shorter is generally better)
 	hopCount := len(pathInfo.Hops)
 	if hopCount > 0 {
 		hopScore := 1.0 - (float64(hopCount-1) / 10.0) // Penalty for long paths
 		score += 0.1 * max(0.0, min(1.0, hopScore))
 	}
-	
+
 	return max(0.0, min(1.0, score))
 }
 
@@ -378,12 +378,12 @@ func (pm *PathManager) calculateSelectionScore(pathInfo *PathInfo) float64 {
 func (pm *PathManager) cachePaths(dstIA string, pathInfos []*PathInfo) {
 	pm.pathMutex.Lock()
 	defer pm.pathMutex.Unlock()
-	
+
 	// Check cache size limit
 	if len(pm.pathCache) >= pm.config.CacheSize {
 		pm.evictOldestCache()
 	}
-	
+
 	pm.pathCache[dstIA] = &CachedPathSet{
 		DstIA:       pathInfos[0].DstIA,
 		Paths:       pathInfos,
@@ -402,14 +402,14 @@ func (pm *PathManager) isStale(cachedSet *CachedPathSet) bool {
 func (pm *PathManager) evictOldestCache() {
 	var oldestKey string
 	var oldestTime time.Time
-	
+
 	for key, pathSet := range pm.pathCache {
 		if oldestTime.IsZero() || pathSet.LastRefresh.Before(oldestTime) {
 			oldestTime = pathSet.LastRefresh
 			oldestKey = key
 		}
 	}
-	
+
 	if oldestKey != "" {
 		delete(pm.pathCache, oldestKey)
 		log.WithField("evicted_dst", oldestKey).Debug("Evicted oldest path cache entry")
@@ -420,7 +420,7 @@ func (pm *PathManager) evictOldestCache() {
 func (pm *PathManager) backgroundRefresh() {
 	log.Info("Starting background path refresh")
 	defer log.Info("Background path refresh stopped")
-	
+
 	for {
 		select {
 		case <-pm.ctx.Done():
@@ -434,23 +434,23 @@ func (pm *PathManager) backgroundRefresh() {
 // performBackgroundRefresh refreshes stale cached paths
 func (pm *PathManager) performBackgroundRefresh() {
 	pm.recordRefreshOperation()
-	
+
 	pm.pathMutex.RLock()
 	staleDestinations := make([]string, 0)
-	
+
 	for dstIA, pathSet := range pm.pathCache {
 		if pm.isStale(pathSet) {
 			staleDestinations = append(staleDestinations, dstIA)
 		}
 	}
 	pm.pathMutex.RUnlock()
-	
+
 	if len(staleDestinations) == 0 {
 		return
 	}
-	
+
 	log.WithField("stale_destinations", len(staleDestinations)).Debug("Refreshing stale path cache entries")
-	
+
 	for _, dstIA := range staleDestinations {
 		// Refresh paths asynchronously
 		go func(dst string) {
@@ -467,19 +467,19 @@ func (pm *PathManager) SelectBestPath(dstIA string, preferences *PathPreferences
 	if err != nil {
 		return nil, err
 	}
-	
+
 	if len(paths) == 0 {
 		return nil, fmt.Errorf("no paths available to %s", dstIA)
 	}
-	
+
 	// Apply preferences and re-score if needed
 	if preferences != nil {
 		paths = pm.applyPreferences(paths, preferences)
 	}
-	
+
 	// Return the best path (first in sorted list)
 	bestPath := paths[0]
-	
+
 	// Update usage statistics
 	pm.pathMutex.Lock()
 	if cachedSet, exists := pm.pathCache[dstIA]; exists {
@@ -488,9 +488,9 @@ func (pm *PathManager) SelectBestPath(dstIA string, preferences *PathPreferences
 		bestPath.UsageCount++
 	}
 	pm.pathMutex.Unlock()
-	
+
 	pm.recordPathUsed()
-	
+
 	return bestPath, nil
 }
 
@@ -498,7 +498,7 @@ func (pm *PathManager) SelectBestPath(dstIA string, preferences *PathPreferences
 func (pm *PathManager) applyPreferences(paths []*PathInfo, prefs *PathPreferences) []*PathInfo {
 	// Filter and re-score paths based on preferences
 	filtered := make([]*PathInfo, 0, len(paths))
-	
+
 	for _, path := range paths {
 		// Apply filters
 		if pm.matchesPreferences(path, prefs) {
@@ -507,12 +507,12 @@ func (pm *PathManager) applyPreferences(paths []*PathInfo, prefs *PathPreference
 			filtered = append(filtered, path)
 		}
 	}
-	
+
 	// Re-sort by preference-adjusted score
 	sort.Slice(filtered, func(i, j int) bool {
 		return filtered[i].SelectionScore > filtered[j].SelectionScore
 	})
-	
+
 	return filtered
 }
 
@@ -521,14 +521,14 @@ func (pm *PathManager) matchesPreferences(path *PathInfo, prefs *PathPreferences
 	if prefs == nil {
 		return true
 	}
-	
+
 	// Check RTT constraint
 	if prefs.MaxRTTMs > 0 && path.Quality != nil {
 		if path.Quality.RTT_EWMA.Milliseconds() > int64(prefs.MaxRTTMs) {
 			return false
 		}
 	}
-	
+
 	// Check bandwidth constraint
 	if prefs.MinBandwidthMbps > 0 && path.Quality != nil {
 		mbps := float64(path.Quality.Bandwidth) / (1024 * 1024)
@@ -536,41 +536,41 @@ func (pm *PathManager) matchesPreferences(path *PathInfo, prefs *PathPreferences
 			return false
 		}
 	}
-	
+
 	// Check hop count constraint
 	if prefs.MaxHops > 0 && len(path.Hops) > int(prefs.MaxHops) {
 		return false
 	}
-	
+
 	// Check avoid/prefer AS lists
 	// TODO: Implement AS filtering based on path hops
-	
+
 	return true
 }
 
 // calculatePreferenceScore calculates score with preferences applied
 func (pm *PathManager) calculatePreferenceScore(path *PathInfo, prefs *PathPreferences) float64 {
 	score := pm.calculateSelectionScore(path)
-	
+
 	if prefs == nil {
 		return score
 	}
-	
+
 	// Apply preference bonuses/penalties
 	if prefs.PreferLowLatency && path.Quality != nil && path.Quality.RTT_EWMA > 0 {
 		latencyBonus := 1.0 - (float64(path.Quality.RTT_EWMA.Milliseconds()) / 1000.0)
 		score += 0.1 * max(0.0, min(1.0, latencyBonus))
 	}
-	
+
 	if prefs.PreferHighBandwidth && path.Quality != nil && path.Quality.Bandwidth > 0 {
 		bandwidthBonus := float64(path.Quality.Bandwidth) / (100 * 1024 * 1024) // Normalize to 100Mbps
 		score += 0.1 * max(0.0, min(1.0, bandwidthBonus))
 	}
-	
+
 	if prefs.PreferStable && path.Quality != nil {
 		score += 0.1 * path.Quality.Stability
 	}
-	
+
 	return max(0.0, min(1.0, score))
 }
 
@@ -578,7 +578,7 @@ func (pm *PathManager) calculatePreferenceScore(path *PathInfo, prefs *PathPrefe
 func (pm *PathManager) UpdatePathQuality(pathID string, rtt time.Duration, success bool) {
 	pm.qualityMutex.Lock()
 	defer pm.qualityMutex.Unlock()
-	
+
 	quality, exists := pm.qualityTracker[pathID]
 	if !exists {
 		quality = &PathQuality{
@@ -587,7 +587,7 @@ func (pm *PathManager) UpdatePathQuality(pathID string, rtt time.Duration, succe
 		}
 		pm.qualityTracker[pathID] = quality
 	}
-	
+
 	// Update RTT EWMA (exponentially weighted moving average)
 	if quality.RTT_EWMA == 0 {
 		quality.RTT_EWMA = rtt
@@ -595,23 +595,23 @@ func (pm *PathManager) UpdatePathQuality(pathID string, rtt time.Duration, succe
 		alpha := 0.125 // Standard TCP alpha
 		quality.RTT_EWMA = time.Duration(float64(quality.RTT_EWMA)*(1-alpha) + float64(rtt)*alpha)
 	}
-	
+
 	// Update loss rate
 	quality.MeasurementCount++
 	if !success {
 		quality.FailureCount++
 	}
 	quality.LossRate = float64(quality.FailureCount) / float64(quality.MeasurementCount)
-	
+
 	// Update stability (penalize failures)
 	if !success {
 		quality.Stability *= 0.9 // Reduce stability on failure
 	} else {
 		quality.Stability = min(1.0, quality.Stability*1.01) // Slowly increase on success
 	}
-	
+
 	quality.LastMeasurement = time.Now()
-	
+
 	log.WithFields(log.Fields{
 		"path_id":     pathID,
 		"rtt_ewma":    quality.RTT_EWMA,
@@ -625,11 +625,11 @@ func (pm *PathManager) UpdatePathQuality(pathID string, rtt time.Duration, succe
 func (pm *PathManager) GetStats() PathManagerStats {
 	pm.stats.RLock()
 	defer pm.stats.RUnlock()
-	
+
 	pm.pathMutex.RLock()
 	cacheSize := len(pm.pathCache)
 	pm.pathMutex.RUnlock()
-	
+
 	return PathManagerStats{
 		PathsDiscovered:   pm.stats.PathsDiscovered,
 		PathsUsed:         pm.stats.PathsUsed,
@@ -646,16 +646,16 @@ func (pm *PathManager) GetStats() PathManagerStats {
 // Stop gracefully stops the path manager
 func (pm *PathManager) Stop() error {
 	log.Info("Stopping path manager")
-	
+
 	pm.cancel()
 	pm.refreshTicker.Stop()
-	
+
 	if pm.daemon != nil {
 		if err := pm.daemon.Close(); err != nil {
 			log.WithError(err).Error("Failed to close daemon connection")
 		}
 	}
-	
+
 	log.Info("Path manager stopped")
 	return nil
 }

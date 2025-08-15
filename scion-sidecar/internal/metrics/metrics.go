@@ -17,11 +17,11 @@ type MetricsCollector struct {
 	scionBytesSent      *prometheus.CounterVec
 	scionBytesReceived  *prometheus.CounterVec
 	scionPacketErrors   *prometheus.CounterVec
-	
+
 	// SCION packet processing time
 	scionPacketSendDuration    *prometheus.HistogramVec
 	scionPacketReceiveDuration *prometheus.HistogramVec
-	
+
 	// Path management metrics
 	pathQueries            *prometheus.CounterVec
 	pathQueryDuration      *prometheus.HistogramVec
@@ -32,7 +32,7 @@ type MetricsCollector struct {
 	pathQualityRTT         *prometheus.GaugeVec
 	pathQualityLoss        *prometheus.GaugeVec
 	pathQualityStability   *prometheus.GaugeVec
-	
+
 	// Anti-replay metrics
 	antiReplayValidations     prometheus.Counter
 	antiReplayBlocks          prometheus.Counter
@@ -43,13 +43,13 @@ type MetricsCollector struct {
 	antiReplayWindowUpdates   prometheus.Counter
 	antiReplayPersistenceErrors prometheus.Counter
 	antiReplayActiveWindows   prometheus.Gauge
-	
+
 	// Gateway metrics
 	gatewayRequests         *prometheus.CounterVec
 	gatewayRequestDuration  *prometheus.HistogramVec
 	gatewayRequestErrors    *prometheus.CounterVec
 	gatewayActiveConnections prometheus.Gauge
-	
+
 	// System metrics
 	memoryUsage        prometheus.Gauge
 	cpuUtilization     prometheus.Gauge
@@ -70,7 +70,7 @@ func NewMetricsCollector() *MetricsCollector {
 		),
 		scionPacketsReceived: promauto.NewCounterVec(
 			prometheus.CounterOpts{
-				Name: "scion_packets_received_total", 
+				Name: "scion_packets_received_total",
 				Help: "Total number of SCION packets received",
 			},
 			[]string{"src_ia"},
@@ -85,7 +85,7 @@ func NewMetricsCollector() *MetricsCollector {
 		scionBytesReceived: promauto.NewCounterVec(
 			prometheus.CounterOpts{
 				Name: "scion_bytes_received_total",
-				Help: "Total bytes received via SCION", 
+				Help: "Total bytes received via SCION",
 			},
 			[]string{"src_ia"},
 		),
@@ -96,7 +96,7 @@ func NewMetricsCollector() *MetricsCollector {
 			},
 			[]string{"error_type"},
 		),
-		
+
 		// SCION packet processing time
 		scionPacketSendDuration: promauto.NewHistogramVec(
 			prometheus.HistogramOpts{
@@ -114,7 +114,7 @@ func NewMetricsCollector() *MetricsCollector {
 			},
 			[]string{"src_ia"},
 		),
-		
+
 		// Path management metrics
 		pathQueries: promauto.NewCounterVec(
 			prometheus.CounterOpts{
@@ -139,7 +139,7 @@ func NewMetricsCollector() *MetricsCollector {
 		),
 		pathCacheMisses: promauto.NewCounter(
 			prometheus.CounterOpts{
-				Name: "scion_path_cache_misses_total", 
+				Name: "scion_path_cache_misses_total",
 				Help: "Total number of path cache misses",
 			},
 		),
@@ -178,7 +178,7 @@ func NewMetricsCollector() *MetricsCollector {
 			},
 			[]string{"path_id", "dst_ia"},
 		),
-		
+
 		// Anti-replay metrics
 		antiReplayValidations: promauto.NewCounter(
 			prometheus.CounterOpts{
@@ -235,7 +235,7 @@ func NewMetricsCollector() *MetricsCollector {
 				Help: "Number of active anti-replay windows",
 			},
 		),
-		
+
 		// Gateway metrics
 		gatewayRequests: promauto.NewCounterVec(
 			prometheus.CounterOpts{
@@ -265,7 +265,7 @@ func NewMetricsCollector() *MetricsCollector {
 				Help: "Number of active gateway connections",
 			},
 		),
-		
+
 		// System metrics
 		memoryUsage: promauto.NewGauge(
 			prometheus.GaugeOpts{
@@ -292,7 +292,7 @@ func NewMetricsCollector() *MetricsCollector {
 			},
 		),
 	}
-	
+
 	log.Info("Prometheus metrics collector initialized")
 	return mc
 }
@@ -326,10 +326,10 @@ func (mc *MetricsCollector) RecordPathQuery(duration time.Duration, pathCount in
 	if pathCount > 0 {
 		source = "fresh"
 	}
-	
+
 	mc.pathQueries.WithLabelValues(dstIA, "success").Inc()
 	mc.pathQueryDuration.WithLabelValues(dstIA, source).Observe(duration.Seconds())
-	
+
 	if pathCount > 0 {
 		mc.pathsDiscovered.WithLabelValues(dstIA).Add(float64(pathCount))
 	}
@@ -362,7 +362,7 @@ func (mc *MetricsCollector) UpdatePathQuality(pathID, dstIA string, rtt time.Dur
 func (mc *MetricsCollector) RecordAntiReplayValidation(duration time.Duration, result string) {
 	mc.antiReplayValidations.Inc()
 	mc.antiReplayValidationTime.Observe(duration.Seconds())
-	
+
 	switch result {
 	case "replay":
 		mc.antiReplayBlocks.Inc()
@@ -436,7 +436,7 @@ func (mc *MetricsCollector) RecordScionPacketFlow(srcIA, dstIA string, bytes int
 func (mc *MetricsCollector) RecordPathQualityMeasurement(pathID, dstIA string, rtt time.Duration, success bool) {
 	// Update path usage
 	mc.RecordPathUsed(pathID, dstIA)
-	
+
 	// Update quality metrics if we have RTT measurement
 	if rtt > 0 {
 		// Estimate loss rate and stability based on success
@@ -446,7 +446,7 @@ func (mc *MetricsCollector) RecordPathQualityMeasurement(pathID, dstIA string, r
 			lossRate = 0.1 // Estimate some loss on failure
 			stability = 0.8 // Reduce stability score
 		}
-		
+
 		mc.UpdatePathQuality(pathID, dstIA, rtt, lossRate, stability)
 	}
 }
@@ -455,7 +455,7 @@ func (mc *MetricsCollector) RecordPathQualityMeasurement(pathID, dstIA string, r
 
 type BatchMetrics struct {
 	PacketsSent     map[string]int // dst_ia -> count
-	PacketsReceived map[string]int // src_ia -> count  
+	PacketsReceived map[string]int // src_ia -> count
 	BytesSent       map[string]int // dst_ia -> bytes
 	BytesReceived   map[string]int // src_ia -> bytes
 	Errors          map[string]int // error_type -> count
@@ -465,19 +465,19 @@ func (mc *MetricsCollector) RecordBatchMetrics(batch *BatchMetrics) {
 	for dstIA, count := range batch.PacketsSent {
 		mc.scionPacketsSent.WithLabelValues(dstIA, "success").Add(float64(count))
 	}
-	
+
 	for srcIA, count := range batch.PacketsReceived {
 		mc.scionPacketsReceived.WithLabelValues(srcIA).Add(float64(count))
 	}
-	
+
 	for dstIA, bytes := range batch.BytesSent {
 		mc.scionBytesSent.WithLabelValues(dstIA).Add(float64(bytes))
 	}
-	
+
 	for srcIA, bytes := range batch.BytesReceived {
 		mc.scionBytesReceived.WithLabelValues(srcIA).Add(float64(bytes))
 	}
-	
+
 	for errorType, count := range batch.Errors {
 		mc.scionPacketErrors.WithLabelValues(errorType).Add(float64(count))
 	}

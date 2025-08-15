@@ -47,7 +47,9 @@ class GraphPathExplainer:
 
     # ------------------------------------------------------------------ #
     @functools.lru_cache(maxsize=10_000)
-    def explain_path(self, start: str, end: str, max_hops: int = MAX_HOPS) -> dict[str, Any]:
+    def explain_path(
+        self, start: str, end: str, max_hops: int = MAX_HOPS
+    ) -> dict[str, Any]:
         """Return the reasoning path between two nodes if it exists."""
         t0 = time.time()
 
@@ -62,7 +64,9 @@ class GraphPathExplainer:
                 "[r IN relationships(p) | {source: startNode(r).id, target: endNode(r).id, props: properties(r)}] AS rels"
             )
             with self.graph_store.driver.session() as session:
-                rec = session.run(query, start=start, end=end, max_hops=max_hops).single()
+                rec = session.run(
+                    query, start=start, end=end, max_hops=max_hops
+                ).single()
                 if rec:
                     nodes = rec["nodes"]
                     edges = rec["rels"]

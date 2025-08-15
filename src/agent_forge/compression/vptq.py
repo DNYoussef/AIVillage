@@ -50,7 +50,9 @@ class VPTQCompressor:
     # ------------------------------------------------------------------
     def _init_codebook(self, vectors: torch.Tensor) -> torch.Tensor:
         n = vectors.size(0)
-        codebook = torch.empty(self.codebook_size, self.vector_dim, device=vectors.device)
+        codebook = torch.empty(
+            self.codebook_size, self.vector_dim, device=vectors.device
+        )
         idx = torch.randint(0, n, (1,))
         codebook[0] = vectors[idx]
         for i in range(1, self.codebook_size):
@@ -65,7 +67,9 @@ class VPTQCompressor:
             codebook[i] = vectors[idx]
         return codebook
 
-    def _optimize(self, vectors: torch.Tensor, codebook: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+    def _optimize(
+        self, vectors: torch.Tensor, codebook: torch.Tensor
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         for _ in range(self.iterations):
             dist = torch.cdist(vectors, codebook)
             indices = dist.argmin(dim=1)

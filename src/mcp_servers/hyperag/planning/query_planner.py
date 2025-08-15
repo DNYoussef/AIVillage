@@ -126,7 +126,9 @@ class QueryPlanner:
             )
 
             # Step 4: Create strategy-specific plan
-            plan = await self._create_strategy_plan(query, query_type, strategy, adjusted_constraints, analysis)
+            plan = await self._create_strategy_plan(
+                query, query_type, strategy, adjusted_constraints, analysis
+            )
 
             # Step 5: Set plan metadata
             plan.agent_model = agent_model.model_name
@@ -183,7 +185,9 @@ class QueryPlanner:
 
         # Check replan limits
         if original_plan.replan_count >= self.max_replan_attempts:
-            logger.warning(f"Maximum replan attempts ({self.max_replan_attempts}) reached")
+            logger.warning(
+                f"Maximum replan attempts ({self.max_replan_attempts}) reached"
+            )
             return original_plan
 
         try:
@@ -193,23 +197,32 @@ class QueryPlanner:
             )
 
             # Determine new strategy
-            new_strategy = await self._select_replan_strategy(original_plan, replan_analysis)
+            new_strategy = await self._select_replan_strategy(
+                original_plan, replan_analysis
+            )
 
             # Create new plan
-            new_plan = await self._create_replan(original_plan, new_strategy, replan_analysis)
+            new_plan = await self._create_replan(
+                original_plan, new_strategy, replan_analysis
+            )
 
             # Set replan metadata
             new_plan.replan_count = original_plan.replan_count + 1
             new_plan.parent_plan_id = original_plan.plan_id
-            new_plan.adaptation_reason = failure_reason or f"low_confidence_{current_confidence:.2f}"
+            new_plan.adaptation_reason = (
+                failure_reason or f"low_confidence_{current_confidence:.2f}"
+            )
 
             # Transfer useful intermediate results
-            await self._transfer_intermediate_results(original_plan, new_plan, intermediate_results)
+            await self._transfer_intermediate_results(
+                original_plan, new_plan, intermediate_results
+            )
 
             self.performance_metrics["replans_triggered"] += 1
 
             logger.info(
-                f"Created replan with {new_strategy.value} strategy " f"({len(new_plan.execution_steps)} steps)"
+                f"Created replan with {new_strategy.value} strategy "
+                f"({len(new_plan.execution_steps)} steps)"
             )
 
             return new_plan
@@ -219,7 +232,9 @@ class QueryPlanner:
             # Return original plan as fallback
             return original_plan
 
-    async def _classify_query(self, query: str) -> tuple[QueryType, float, dict[str, Any]]:
+    async def _classify_query(
+        self, query: str
+    ) -> tuple[QueryType, float, dict[str, Any]]:
         """Classify query type and complexity."""
         return self.classifier.classify_query(query)
 
@@ -235,7 +250,8 @@ class QueryPlanner:
         # Check agent capabilities
         if complexity_score > agent_model.max_complexity:
             logger.warning(
-                f"Query complexity ({complexity_score:.2f}) exceeds agent limit " f"({agent_model.max_complexity:.2f})"
+                f"Query complexity ({complexity_score:.2f}) exceeds agent limit "
+                f"({agent_model.max_complexity:.2f})"
             )
             # Use simpler strategy
             if query_type in [QueryType.CAUSAL_CHAIN, QueryType.MULTI_HOP]:
@@ -248,7 +264,9 @@ class QueryPlanner:
         context["prefer_fast"] = agent_model.reasoning_speed < 0.5
         context["prefer_accurate"] = agent_model.accuracy > 0.9
 
-        return self.strategy_selector.select_strategy(query_type, complexity_score, constraints, context)
+        return self.strategy_selector.select_strategy(
+            query_type, complexity_score, constraints, context
+        )
 
     def _adjust_constraints_for_agent(
         self,
@@ -260,8 +278,12 @@ class QueryPlanner:
         adjusted = RetrievalConstraints(
             max_depth=min(constraints.max_depth, int(agent_model.max_complexity * 10)),
             max_nodes=min(constraints.max_nodes, int(agent_model.memory_limit_mb / 10)),
-            confidence_threshold=max(constraints.confidence_threshold, 1.0 - agent_model.accuracy),
-            time_budget_ms=int(constraints.time_budget_ms * agent_model.reasoning_speed),
+            confidence_threshold=max(
+                constraints.confidence_threshold, 1.0 - agent_model.accuracy
+            ),
+            time_budget_ms=int(
+                constraints.time_budget_ms * agent_model.reasoning_speed
+            ),
             include_explanations=constraints.include_explanations,
             prefer_recent=constraints.prefer_recent,
             domain_filter=constraints.domain_filter,
@@ -271,7 +293,9 @@ class QueryPlanner:
         # Adjust for complexity
         if complexity_score > 0.8:
             adjusted.time_budget_ms = int(adjusted.time_budget_ms * 1.5)
-            adjusted.confidence_threshold = max(adjusted.confidence_threshold - 0.1, 0.5)
+            adjusted.confidence_threshold = max(
+                adjusted.confidence_threshold - 0.1, 0.5
+            )
 
         return adjusted
 
@@ -288,7 +312,9 @@ class QueryPlanner:
         strategy_instance = self.strategy_selector.create_strategy_instance(strategy)
 
         # Create plan
-        plan = await strategy_instance.create_plan(query, query_type, constraints, analysis)
+        plan = await strategy_instance.create_plan(
+            query, query_type, constraints, analysis
+        )
 
         # Add reasoning hints
         if hasattr(self.classifier, "get_reasoning_hints"):
@@ -298,7 +324,9 @@ class QueryPlanner:
 
         return plan
 
-    async def _validate_and_optimize_plan(self, plan: QueryPlan, agent_model: AgentReasoningModel) -> QueryPlan:
+    async def _validate_and_optimize_plan(
+        self, plan: QueryPlan, agent_model: AgentReasoningModel
+    ) -> QueryPlan:
         """Validate plan feasibility and optimize."""
         # Check time budget
         total_estimated_time = sum(step.timeout_ms for step in plan.execution_steps)
@@ -309,20 +337,29 @@ class QueryPlanner:
             )
 
             # Reduce timeouts proportionally
-            scale_factor = plan.retrieval_constraints.time_budget_ms / total_estimated_time
+            scale_factor = (
+                plan.retrieval_constraints.time_budget_ms / total_estimated_time
+            )
             for step in plan.execution_steps:
                 step.timeout_ms = int(step.timeout_ms * scale_factor)
 
         # Check memory requirements
-        strategy_requirements = self.strategy_selector.get_strategy_requirements(plan.reasoning_strategy)
+        strategy_requirements = self.strategy_selector.get_strategy_requirements(
+            plan.reasoning_strategy
+        )
         required_memory = strategy_requirements.get("min_memory_mb", 100)
 
         if required_memory > agent_model.memory_limit_mb:
-            logger.warning(f"Plan requires {required_memory}MB but agent limit is " f"{agent_model.memory_limit_mb}MB")
+            logger.warning(
+                f"Plan requires {required_memory}MB but agent limit is "
+                f"{agent_model.memory_limit_mb}MB"
+            )
 
             # Reduce node limits
             scale_factor = agent_model.memory_limit_mb / required_memory
-            plan.retrieval_constraints.max_nodes = int(plan.retrieval_constraints.max_nodes * scale_factor)
+            plan.retrieval_constraints.max_nodes = int(
+                plan.retrieval_constraints.max_nodes * scale_factor
+            )
 
         # Optimize step order for better parallelization
         plan = self._optimize_step_dependencies(plan)
@@ -333,19 +370,26 @@ class QueryPlanner:
         """Optimize step dependencies for better execution."""
         # Simple optimization: ensure retrieval steps can run in parallel
         # where possible
-        retrieval_steps = [s for s in plan.execution_steps if s.step_type == "retrieval"]
+        retrieval_steps = [
+            s for s in plan.execution_steps if s.step_type == "retrieval"
+        ]
 
         for step in retrieval_steps:
             # Remove unnecessary dependencies between retrieval steps
             step.dependencies = [
                 dep
                 for dep in step.dependencies
-                if any(s.step_id == dep and s.step_type != "retrieval" for s in plan.execution_steps)
+                if any(
+                    s.step_id == dep and s.step_type != "retrieval"
+                    for s in plan.execution_steps
+                )
             ]
 
         return plan
 
-    async def _create_fallback_plan(self, query: str, constraints: RetrievalConstraints) -> QueryPlan:
+    async def _create_fallback_plan(
+        self, query: str, constraints: RetrievalConstraints
+    ) -> QueryPlan:
         """Create simple fallback plan when planning fails."""
         from .strategies import SimpleFactStrategy
 
@@ -385,7 +429,9 @@ class QueryPlanner:
                     }
                 )
             elif step.status == ExecutionStatus.COMPLETED:
-                analysis["successful_steps"].append({"step_id": step.step_id, "confidence": step.confidence_score})
+                analysis["successful_steps"].append(
+                    {"step_id": step.step_id, "confidence": step.confidence_score}
+                )
 
         # Determine replan strategy
         if len(analysis["failed_steps"]) > len(analysis["successful_steps"]):
@@ -397,12 +443,16 @@ class QueryPlanner:
 
         return analysis
 
-    async def _select_replan_strategy(self, original_plan: QueryPlan, analysis: dict[str, Any]) -> ReasoningStrategy:
+    async def _select_replan_strategy(
+        self, original_plan: QueryPlan, analysis: dict[str, Any]
+    ) -> ReasoningStrategy:
         """Select new strategy for replanning."""
         original_strategy = original_plan.reasoning_strategy
 
         # Try fallback strategy first
-        fallback = self.strategy_selector.recommend_fallback_strategy(original_strategy, original_plan.query_type)
+        fallback = self.strategy_selector.recommend_fallback_strategy(
+            original_strategy, original_plan.query_type
+        )
 
         if fallback and fallback != original_strategy:
             return fallback
@@ -457,7 +507,9 @@ class QueryPlanner:
                 first_step = new_plan.execution_steps[0]
                 first_step.parameters.setdefault("prior_results", intermediate_results)
 
-    def _record_planning_metrics(self, plan: QueryPlan, planning_time_ms: float, success: bool) -> None:
+    def _record_planning_metrics(
+        self, plan: QueryPlan, planning_time_ms: float, success: bool
+    ) -> None:
         """Record planning performance metrics."""
         self.performance_metrics["plans_created"] += 1
         if success:
@@ -466,7 +518,9 @@ class QueryPlanner:
         # Update average confidence
         alpha = 0.1
         current_avg = self.performance_metrics["avg_plan_confidence"]
-        self.performance_metrics["avg_plan_confidence"] = (1 - alpha) * current_avg + alpha * plan.overall_confidence
+        self.performance_metrics["avg_plan_confidence"] = (
+            1 - alpha
+        ) * current_avg + alpha * plan.overall_confidence
 
         # Record in history
         self.planning_history.append(
@@ -503,10 +557,14 @@ class QueryPlanner:
             "replan_rate": replan_rate,
             "avg_confidence": self.performance_metrics["avg_plan_confidence"],
             "recent_avg_complexity": (
-                sum(h["complexity"] for h in recent_history) / len(recent_history) if recent_history else 0
+                sum(h["complexity"] for h in recent_history) / len(recent_history)
+                if recent_history
+                else 0
             ),
             "recent_avg_steps": (
-                sum(h["step_count"] for h in recent_history) / len(recent_history) if recent_history else 0
+                sum(h["step_count"] for h in recent_history) / len(recent_history)
+                if recent_history
+                else 0
             ),
             "strategy_distribution": {},
         }
@@ -520,12 +578,15 @@ class QueryPlanner:
 
             total_recent = len(recent_history)
             stats["strategy_distribution"] = {
-                strategy: count / total_recent for strategy, count in strategy_counts.items()
+                strategy: count / total_recent
+                for strategy, count in strategy_counts.items()
             }
 
         return stats
 
-    async def validate_final_answer(self, answer: str, confidence: float, context: dict[str, Any]) -> tuple[bool, str]:
+    async def validate_final_answer(
+        self, answer: str, confidence: float, context: dict[str, Any]
+    ) -> tuple[bool, str]:
         """Validate final answer through Guardian Gate if confidence is low or domain is high-risk.
 
         Args:
@@ -540,7 +601,8 @@ class QueryPlanner:
             # Check if Guardian validation is needed
             domain = context.get("domain", "general")
             needs_validation = (
-                confidence < self.guardian_confidence_threshold or domain in self.guardian_high_risk_domains
+                confidence < self.guardian_confidence_threshold
+                or domain in self.guardian_high_risk_domains
             )
 
             if not needs_validation:
@@ -549,7 +611,9 @@ class QueryPlanner:
                     "Answer approved: sufficient confidence and low-risk domain",
                 )
 
-            logger.info(f"Triggering Guardian validation for domain '{domain}' with confidence {confidence:.3f}")
+            logger.info(
+                f"Triggering Guardian validation for domain '{domain}' with confidence {confidence:.3f}"
+            )
 
             # Create a mock creative bridge for validation
             # In a real implementation, this would be more sophisticated

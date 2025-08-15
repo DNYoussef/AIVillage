@@ -133,7 +133,9 @@ class HypergraphMigrations:
                 if migration["version"] <= current_version:
                     continue
 
-                logger.info(f"Running migration {migration['version']}: {migration['name']}")
+                logger.info(
+                    f"Running migration {migration['version']}: {migration['name']}"
+                )
                 self._run_migration(session, migration)
                 self._update_version(session, migration["version"])
 
@@ -158,7 +160,9 @@ class HypergraphMigrations:
     def _get_current_version(self, session: Session) -> str:
         """Get current schema version."""
         try:
-            result = session.run("MATCH (v:SchemaVersion) RETURN v.version ORDER BY v.version DESC LIMIT 1").single()
+            result = session.run(
+                "MATCH (v:SchemaVersion) RETURN v.version ORDER BY v.version DESC LIMIT 1"
+            ).single()
             return result["v.version"] if result else "000"
         except Exception:
             # Schema version tracking not yet created

@@ -6,7 +6,9 @@ from torch import nn
 class Geo2Z(nn.Module):
     def __init__(self, in_dim=5, z_dim=64) -> None:
         super().__init__()
-        self.net = nn.Sequential(nn.Linear(in_dim, 128), nn.Tanh(), nn.Linear(128, z_dim), nn.Tanh())
+        self.net = nn.Sequential(
+            nn.Linear(in_dim, 128), nn.Tanh(), nn.Linear(128, z_dim), nn.Tanh()
+        )
 
     def forward(self, geom_vec):
         return 0.05 * self.net(geom_vec)  # bounded ΔΣ

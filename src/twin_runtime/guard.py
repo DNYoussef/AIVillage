@@ -45,7 +45,9 @@ class SecurityRiskGate:
             (r"private[_-]?key", "private_key"),
         ]
 
-    def risk_gate(self, msg: dict[str, Any], risk: float | None = None) -> Literal["allow", "ask", "deny"]:
+    def risk_gate(
+        self, msg: dict[str, Any], risk: float | None = None
+    ) -> Literal["allow", "ask", "deny"]:
         """Assess risk and determine action.
 
         Args:
@@ -70,7 +72,9 @@ class SecurityRiskGate:
         # Check dangerous patterns
         danger = self._contains_dangerous_patterns(content)
         if danger:
-            logger.warning("Dangerous pattern detected: %s in %s", danger, content[:100])
+            logger.warning(
+                "Dangerous pattern detected: %s in %s", danger, content[:100]
+            )
             return "deny"
 
         # Check sensitive data
@@ -150,7 +154,9 @@ def get_gate_instance():
     return _gate_instance
 
 
-def risk_gate(msg: dict[str, Any], risk: float | None = None) -> Literal["allow", "ask", "deny"]:
+def risk_gate(
+    msg: dict[str, Any], risk: float | None = None
+) -> Literal["allow", "ask", "deny"]:
     """Main risk gate function - NO LONGER ALWAYS "allow"!"""
     instance = get_gate_instance()
     return instance.risk_gate(msg, risk)

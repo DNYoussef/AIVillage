@@ -83,7 +83,9 @@ class HybridRetriever(Retriever):
             return combined_results[:k]
 
         except Exception as e:
-            logger.warning(f"Hybrid retrieval failed: {e}, falling back to simple retrieval")
+            logger.warning(
+                f"Hybrid retrieval failed: {e}, falling back to simple retrieval"
+            )
             # Fallback to simple content-based retrieval
             return [
                 {
@@ -103,7 +105,9 @@ class ContextualKnowledgeConstructor(KnowledgeConstructor):
         self.config = config or UnifiedConfig()
         self.embedding_model = BERTEmbeddingModel()
 
-    async def construct(self, query: str, retrieved_docs: list[dict[str, Any]]) -> dict[str, Any]:
+    async def construct(
+        self, query: str, retrieved_docs: list[dict[str, Any]]
+    ) -> dict[str, Any]:
         """Construct knowledge graph from retrieved documents."""
         try:
             if not retrieved_docs:
@@ -131,7 +135,9 @@ class ContextualKnowledgeConstructor(KnowledgeConstructor):
 
                 # Create summary
                 summary = self._create_summary(content)
-                document_summaries.append({"id": doc_id, "summary": summary, "score": doc.get("score", 0.0)})
+                document_summaries.append(
+                    {"id": doc_id, "summary": summary, "score": doc.get("score", 0.0)}
+                )
 
                 # Create relationships between query and document entities
                 for entity in doc_entities:
@@ -145,7 +151,9 @@ class ContextualKnowledgeConstructor(KnowledgeConstructor):
                     )
 
             # Calculate overall confidence
-            avg_score = sum(doc.get("score", 0.0) for doc in retrieved_docs) / len(retrieved_docs)
+            avg_score = sum(doc.get("score", 0.0) for doc in retrieved_docs) / len(
+                retrieved_docs
+            )
             confidence = min(avg_score, 1.0)
 
             return {
@@ -227,7 +235,9 @@ class ContextualKnowledgeConstructor(KnowledgeConstructor):
             return "No information available."
 
         # Sort by score and take top summaries
-        sorted_docs = sorted(document_summaries, key=lambda x: x.get("score", 0.0), reverse=True)
+        sorted_docs = sorted(
+            document_summaries, key=lambda x: x.get("score", 0.0), reverse=True
+        )
         top_summaries = [doc["summary"] for doc in sorted_docs[:3]]
 
         return " | ".join(top_summaries)
@@ -254,7 +264,9 @@ class UncertaintyAwareReasoningEngine(ReasoningEngine):
             response_parts = []
 
             # Add confidence qualifier
-            response_parts.append(f"Based on the available information ({confidence_level}):")
+            response_parts.append(
+                f"Based on the available information ({confidence_level}):"
+            )
 
             # Add main content
             if summary and summary != "No information available.":
@@ -265,7 +277,9 @@ class UncertaintyAwareReasoningEngine(ReasoningEngine):
             # Add entity context if available
             if entities:
                 entity_list = entities[:5]  # Top 5 entities
-                response_parts.append(f"Key entities identified: {', '.join(entity_list)}")
+                response_parts.append(
+                    f"Key entities identified: {', '.join(entity_list)}"
+                )
 
             # Add uncertainty disclaimer for low confidence
             if confidence < 0.5:

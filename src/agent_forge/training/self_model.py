@@ -45,7 +45,9 @@ class SelfModelHead(nn.Module):
         self.projection_dim = projection_dim
 
         # Projection layers for each tapped layer
-        self.projectors = nn.ModuleDict({str(layer): nn.Linear(hidden_dim, projection_dim) for layer in tap_layers})
+        self.projectors = nn.ModuleDict(
+            {str(layer): nn.Linear(hidden_dim, projection_dim) for layer in tap_layers}
+        )
 
         # Prediction networks for each target layer
         self.predictors = nn.ModuleDict()
@@ -85,7 +87,9 @@ class SelfModelHead(nn.Module):
                 if module.bias is not None:
                     nn.init.zeros_(module.bias)
 
-    def forward(self, tap_activations: dict[int, torch.Tensor]) -> tuple[dict[int, torch.Tensor], torch.Tensor]:
+    def forward(
+        self, tap_activations: dict[int, torch.Tensor]
+    ) -> tuple[dict[int, torch.Tensor], torch.Tensor]:
         """
         Predict activations and compute loss.
 
@@ -150,11 +154,15 @@ class SelfModelHead(nn.Module):
             weights = F.softmax(self.layer_weights, dim=0)
             total_loss = sum(w * l for w, l in zip(weights, losses, strict=False))
         else:
-            total_loss = torch.tensor(0.0, device=tap_activations[sorted_layers[0]].device)
+            total_loss = torch.tensor(
+                0.0, device=tap_activations[sorted_layers[0]].device
+            )
 
         return predictions, total_loss
 
-    def loss(self, tap_activations: dict[int, torch.Tensor], reduction: str = "mean") -> torch.Tensor:
+    def loss(
+        self, tap_activations: dict[int, torch.Tensor], reduction: str = "mean"
+    ) -> torch.Tensor:
         """
         Compute self-modeling loss.
 
@@ -226,7 +234,9 @@ class TempCurriculum:
 
         return overlapping
 
-    def generate_samples(self, model, tokenizer, prompts: list[str], device: str = "cuda") -> list[dict]:
+    def generate_samples(
+        self, model, tokenizer, prompts: list[str], device: str = "cuda"
+    ) -> list[dict]:
         """
         Generate samples across temperature bins.
 
@@ -317,7 +327,9 @@ class TempCurriculum:
         if self.current_round < 2:
             self.current_round += 1
             self.current_bin_idx = 0
-            logger.info(f"Advanced to temperature curriculum round {self.current_round}")
+            logger.info(
+                f"Advanced to temperature curriculum round {self.current_round}"
+            )
 
 
 class StageClassifier:
@@ -400,7 +412,9 @@ class StageClassifier:
                     "to": stage,
                 }
             )
-            logger.info(f"Stage transition at step {step}: {self.stage_history[-1]} -> {stage}")
+            logger.info(
+                f"Stage transition at step {step}: {self.stage_history[-1]} -> {stage}"
+            )
 
         self.stage_history.append(stage)
         return stage
@@ -636,7 +650,9 @@ class MultiHeadSelfModel(nn.Module):
         )
 
         # Loss weights
-        self.loss_weights = nn.Parameter(torch.tensor([1.0, 0.5, 0.5]))  # self_model, temp, stage
+        self.loss_weights = nn.Parameter(
+            torch.tensor([1.0, 0.5, 0.5])
+        )  # self_model, temp, stage
 
     def forward(
         self,
@@ -701,7 +717,9 @@ class MultiHeadSelfModel(nn.Module):
             results["temp_value_loss"] = temp_value_loss
             # Add to existing temp loss
             if "temp_bin_loss" in results:
-                results["temp_bin_loss"] = results["temp_bin_loss"] + 0.1 * temp_value_loss
+                results["temp_bin_loss"] = (
+                    results["temp_bin_loss"] + 0.1 * temp_value_loss
+                )
 
         # Combined loss
         weights = F.softmax(self.loss_weights, dim=0)
@@ -710,7 +728,9 @@ class MultiHeadSelfModel(nn.Module):
 
         return results
 
-    def predict_temperature_properties(self, tap_activations: dict[int, torch.Tensor]) -> dict[str, torch.Tensor]:
+    def predict_temperature_properties(
+        self, tap_activations: dict[int, torch.Tensor]
+    ) -> dict[str, torch.Tensor]:
         """Predict temperature-related properties."""
         final_layer = max(tap_activations.keys())
         final_acts = tap_activations[final_layer]
@@ -724,7 +744,9 @@ class MultiHeadSelfModel(nn.Module):
             "temp_bin_probs": F.softmax(temp_bin_logits, dim=-1),
         }
 
-    def predict_grok_stage(self, tap_activations: dict[int, torch.Tensor]) -> dict[str, torch.Tensor]:
+    def predict_grok_stage(
+        self, tap_activations: dict[int, torch.Tensor]
+    ) -> dict[str, torch.Tensor]:
         """Predict grokking stage."""
         final_layer = max(tap_activations.keys())
         final_acts = tap_activations[final_layer]

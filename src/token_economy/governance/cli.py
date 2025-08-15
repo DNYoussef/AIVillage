@@ -101,7 +101,9 @@ def tally_votes(gov: GovernanceSystem, args) -> None:
             print(f"   YES rate: {tally['yes_rate']:.2%}")
 
         print(f"   Quorum met: {'SUCCESS:' if tally['quorum_met'] else 'ERROR:'}")
-        print(f"   Supermajority met: {'SUCCESS:' if tally['supermajority_met'] else 'ERROR:'}")
+        print(
+            f"   Supermajority met: {'SUCCESS:' if tally['supermajority_met'] else 'ERROR:'}"
+        )
         print(f"   Proposal passes: {'SUCCESS:' if tally['passes'] else 'ERROR:'}")
     except Exception as e:
         print(f"ERROR: Error tallying votes: {e}")
@@ -165,7 +167,9 @@ def show_proposal(gov: GovernanceSystem, args) -> None:
     if proposal.votes:
         print("   Vote breakdown:")
         for vote in proposal.votes:
-            print(f"     {vote.voter_id}: {vote.choice.value} ({vote.voting_power} power)")
+            print(
+                f"     {vote.voter_id}: {vote.choice.value} ({vote.voting_power} power)"
+            )
 
 
 def show_balance(gov: GovernanceSystem, args) -> None:
@@ -178,8 +182,12 @@ def show_balance(gov: GovernanceSystem, args) -> None:
 def main() -> None:
     """Main CLI entry point."""
     parser = argparse.ArgumentParser(description="DAO Governance CLI")
-    parser.add_argument("--db", default="governance.db", help="Governance database path")
-    parser.add_argument("--setup-test", action="store_true", help="Setup test environment")
+    parser.add_argument(
+        "--db", default="governance.db", help="Governance database path"
+    )
+    parser.add_argument(
+        "--setup-test", action="store_true", help="Setup test environment"
+    )
 
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
 
@@ -191,14 +199,18 @@ def main() -> None:
     create_parser.add_argument("--type", help="Proposal type")
 
     # Start voting
-    vote_start_parser = subparsers.add_parser("start-voting", help="Start voting on proposal")
+    vote_start_parser = subparsers.add_parser(
+        "start-voting", help="Start voting on proposal"
+    )
     vote_start_parser.add_argument("proposal_id", help="Proposal ID")
 
     # Cast vote
     vote_parser = subparsers.add_parser("vote", help="Cast a vote")
     vote_parser.add_argument("proposal_id", help="Proposal ID")
     vote_parser.add_argument("voter", help="Voter user ID")
-    vote_parser.add_argument("choice", choices=["yes", "no", "abstain"], help="Vote choice")
+    vote_parser.add_argument(
+        "choice", choices=["yes", "no", "abstain"], help="Vote choice"
+    )
 
     # Tally votes
     tally_parser = subparsers.add_parser("tally", help="Tally votes for proposal")
@@ -233,7 +245,9 @@ def main() -> None:
     # Setup systems
     if args.setup_test:
         credit_system = setup_test_credit_system()
-        print("Test credit system setup with test users: alice, bob, charlie, diana, eve")
+        print(
+            "Test credit system setup with test users: alice, bob, charlie, diana, eve"
+        )
     else:
         credit_system = VILLAGECreditSystem("village_credits.db")
 

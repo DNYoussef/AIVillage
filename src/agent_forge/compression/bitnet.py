@@ -17,19 +17,25 @@ class BITNETCompressor:
     weight is mapped to ``{-1, 0, 1}`` and stored using two bits.  A single
     scale value per tensor is retained to reconstruct approximate floating
     point weights.
+
+    Compatible with models trained using the gradual λ schedule in stage1_bitnet.py.
     """
 
     def __init__(self, threshold: float = 0.7) -> None:
         self.threshold = threshold
         self.bits_per_weight = 2  # packed 4 values per byte
-        logger.info("BitNet 1.58-bit quantization initialized")
+        logger.info(f"BitNet 1.58-bit quantization initialized (threshold={threshold})")
 
     # ------------------------------------------------------------------
     def compress(self, weights: torch.Tensor) -> dict[str, object]:
         """Quantize ``weights`` to ternary representation.
 
+        This method is designed to work with weights from models trained using
+        the gradual λ schedule. At λ=1.0 (end of training), the weights are
+        already adapted for ternary quantization with the same threshold logic.
+
         Args:
-            weights: tensor of float32 values
+            weights: tensor of float32 values (typically from BitNetLinear.weight_fp)
 
         Returns:
             dict containing packed bytes and scale information

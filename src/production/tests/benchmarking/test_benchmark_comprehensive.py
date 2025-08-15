@@ -9,7 +9,9 @@ try:
     from src.production.benchmarking.real_benchmark import RealBenchmark as RB
 except ImportError:
     # Handle missing imports gracefully
-    pytest.skip("Production benchmarking modules not available", allow_module_level=True)
+    pytest.skip(
+        "Production benchmarking modules not available", allow_module_level=True
+    )
 
 
 class TestRealBenchmark:
@@ -56,7 +58,9 @@ class TestRealBenchmark:
             "humaneval": 0.35,  # Above threshold
         }
 
-        passed = sum(1 for metric, score in results.items() if score >= thresholds.get(metric, 0))
+        passed = sum(
+            1 for metric, score in results.items() if score >= thresholds.get(metric, 0)
+        )
 
         assert passed == 2  # mmlu and humaneval pass
 
@@ -79,7 +83,9 @@ class TestRealBenchmark:
         }
 
         # Calculate weighted score
-        fitness = sum(scores.get(metric, 0) * weight for metric, weight in weights.items())
+        fitness = sum(
+            scores.get(metric, 0) * weight for metric, weight in weights.items()
+        )
 
         assert 0.0 <= fitness <= 1.0
 
@@ -94,7 +100,11 @@ class TestBenchmarkIntegration:
         correct_answers = ["Answer A", "Answer B", "Answer D"]
 
         # Calculate accuracy
-        correct = sum(1 for pred, true in zip(model_outputs, correct_answers, strict=False) if pred == true)
+        correct = sum(
+            1
+            for pred, true in zip(model_outputs, correct_answers, strict=False)
+            if pred == true
+        )
         accuracy = correct / len(correct_answers)
 
         assert accuracy == 2 / 3  # 2 out of 3 correct

@@ -21,7 +21,9 @@ class VectorRetriever:
         self._next_id += 1
         return vid
 
-    def retrieve(self, query: np.ndarray, top_k: int = 1) -> list[tuple[float, dict[str, Any]]]:
+    def retrieve(
+        self, query: np.ndarray, top_k: int = 1
+    ) -> list[tuple[float, dict[str, Any]]]:
         if not self._store:
             return []
         query_norm = query / np.linalg.norm(query)

@@ -68,7 +68,9 @@ class TestEvolutionSystem:
         scores = [0.1, 0.5, 0.8, 0.3, 0.9]
 
         # Test ranking
-        ranked_indices = sorted(range(len(scores)), key=lambda i: scores[i], reverse=True)
+        ranked_indices = sorted(
+            range(len(scores)), key=lambda i: scores[i], reverse=True
+        )
         assert ranked_indices[0] == 4  # Index of highest score (0.9)
         assert ranked_indices[-1] == 0  # Index of lowest score (0.1)
 

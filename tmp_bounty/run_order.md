@@ -8,7 +8,7 @@
 # File: src/core/p2p/betanet_transport_v2.py
 # Tasks:
 1. Add ssl.SSLContext for TLS 1.3
-2. Integrate aioquic for QUIC support  
+2. Integrate aioquic for QUIC support
 3. Replace JSON serialization with binary HTX frames
 4. Implement frame chunking (16KB max)
 5. Add encryption key rotation (epochs)
@@ -28,7 +28,7 @@
 ### Step 1.3: Python-Rust Bridge (2 days)
 ```bash
 # Use PyO3 or cffi for Rust integration
-# Files: 
+# Files:
 - betanet-client/src/python_bindings.rs (NEW)
 - src/core/p2p/htx_native.py (NEW)
 

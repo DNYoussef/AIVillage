@@ -12,7 +12,9 @@ import subprocess
 import sys
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 
@@ -194,7 +196,9 @@ class StyleGuideEnforcer:
                 if not docstring_found:
                     name = stripped.split("(")[0].split()[1]
                     prefix = "Function" if stripped.startswith("def") else "Class"
-                    issues.append(f"{prefix} '{name}' missing docstring at line {i + 1}")
+                    issues.append(
+                        f"{prefix} '{name}' missing docstring at line {i + 1}"
+                    )
 
         return issues
 
@@ -254,7 +258,9 @@ class StyleGuideEnforcer:
         tool_results = self.run_tool_checks(str(script_path), fix=fix)
 
         # Combine results
-        all_passed = len(structure_result["issues"]) == 0 and all(result["passed"] for result in tool_results.values())
+        all_passed = len(structure_result["issues"]) == 0 and all(
+            result["passed"] for result in tool_results.values()
+        )
 
         return {
             "script": script_path.name,
@@ -301,7 +307,9 @@ class StyleGuideEnforcer:
         report_lines.append(f"Total Scripts: {summary['total']}")
         report_lines.append(f"Passed: {summary['passed']}")
         report_lines.append(f"Failed: {summary['failed']}")
-        report_lines.append(f"Success Rate: {summary['passed'] / summary['total'] * 100:.1f}%")
+        report_lines.append(
+            f"Success Rate: {summary['passed'] / summary['total'] * 100:.1f}%"
+        )
         report_lines.append("")
 
         # Detailed results
@@ -325,7 +333,9 @@ class StyleGuideEnforcer:
 
                 if not tool_result["passed"] and "stdout" in tool_result:
                     if tool_result["stdout"].strip():
-                        report_lines.append(f"  Output: {tool_result['stdout'][:200]}...")
+                        report_lines.append(
+                            f"  Output: {tool_result['stdout'][:200]}..."
+                        )
                 report_lines.append("")
 
         report_content = "\n".join(report_lines)
@@ -341,7 +351,9 @@ class StyleGuideEnforcer:
 def main() -> None:
     parser = argparse.ArgumentParser(description="Automated style guide enforcement")
     parser.add_argument("--script", help="Check specific script")
-    parser.add_argument("--fix", action="store_true", help="Auto-fix issues where possible")
+    parser.add_argument(
+        "--fix", action="store_true", help="Auto-fix issues where possible"
+    )
     parser.add_argument("--report", help="Output report file")
     parser.add_argument("--project-root", help="Project root directory")
 

@@ -11,22 +11,22 @@ option go_package = "github.com/aivillage/scion-sidecar/pkg/gateway";
 service BetanetGateway {
   // Send SCION packet to destination via optimal path
   rpc SendScionPacket(SendScionPacketRequest) returns (SendScionPacketResponse);
-  
+
   // Receive SCION packet from network (async callback)
   rpc RecvScionPacket(RecvScionPacketRequest) returns (RecvScionPacketResponse);
-  
+
   // Register interest in paths to destination AS
   rpc RegisterPath(RegisterPathRequest) returns (RegisterPathResponse);
-  
-  // Query available paths to destination AS  
+
+  // Query available paths to destination AS
   rpc QueryPaths(QueryPathsRequest) returns (QueryPathsResponse);
-  
+
   // Health check and gateway status
   rpc Health(HealthRequest) returns (HealthResponse);
-  
+
   // Gateway statistics and metrics
   rpc GetStats(StatsRequest) returns (StatsResponse);
-  
+
   // Anti-replay sequence validation
   rpc ValidateSequence(ValidateSequenceRequest) returns (ValidateSequenceResponse);
 }
@@ -35,25 +35,25 @@ service BetanetGateway {
 message SendScionPacketRequest {
   // Raw SCION packet bytes (complete packet including headers)
   bytes raw_packet = 1;
-  
+
   // Destination ISD-AS (e.g., "1-ff00:0:110")
   string egress_ia = 2;
-  
+
   // Egress interface ID at destination AS
   string egress_iface = 3;
-  
+
   // Sequence number for anti-replay protection
   uint64 sequence_number = 4;
-  
+
   // Timestamp nanoseconds (for replay window)
   int64 timestamp_ns = 5;
-  
+
   // Priority level (0=bulk, 5=normal, 10=urgent)
   uint32 priority = 6;
-  
+
   // Request path preferences
   PathPreferences preferences = 7;
-  
+
   // Correlation ID for tracking
   string correlation_id = 8;
 }
@@ -61,16 +61,16 @@ message SendScionPacketRequest {
 message SendScionPacketResponse {
   // Success status
   bool success = 1;
-  
+
   // Error message if failed
   string error = 2;
-  
+
   // Selected path information
   PathMeta selected_path = 3;
-  
+
   // Estimated delivery time milliseconds
   uint32 delivery_estimate_ms = 4;
-  
+
   // Gateway processing time microseconds
   uint64 processing_time_us = 5;
 }
@@ -79,22 +79,22 @@ message SendScionPacketResponse {
 message RecvScionPacketRequest {
   // Raw received SCION packet
   bytes raw_packet = 1;
-  
+
   // Source ISD-AS
   string ingress_ia = 2;
-  
+
   // Ingress interface ID
   string ingress_iface = 3;
-  
+
   // Sequence number received
   uint64 sequence_number = 4;
-  
+
   // Reception timestamp
   int64 timestamp_ns = 5;
-  
+
   // Path metadata for received packet
   PathMeta path_info = 6;
-  
+
   // Quality metrics for received path
   PathQuality quality = 7;
 }
@@ -102,7 +102,7 @@ message RecvScionPacketRequest {
 message RecvScionPacketResponse {
   // Acknowledgment
   bool acknowledged = 1;
-  
+
   // Processing result
   string status = 2;
 }
@@ -111,13 +111,13 @@ message RecvScionPacketResponse {
 message RegisterPathRequest {
   // Destination ISD-AS to register interest for
   string dst_ia = 1;
-  
+
   // Registration TTL seconds
   uint32 ttl_seconds = 2;
-  
+
   // Path selection preferences
   PathPreferences preferences = 3;
-  
+
   // Notification callback address
   string callback_addr = 4;
 }
@@ -125,13 +125,13 @@ message RegisterPathRequest {
 message RegisterPathResponse {
   // Registration successful
   bool success = 1;
-  
+
   // Registration ID for later reference
   string registration_id = 2;
-  
+
   // Currently available paths
   repeated PathMeta available_paths = 3;
-  
+
   // Registration expiry timestamp
   int64 expires_at = 4;
 }
@@ -140,13 +140,13 @@ message RegisterPathResponse {
 message QueryPathsRequest {
   // Destination ISD-AS
   string dst_ia = 1;
-  
+
   // Include expired paths in results
   bool include_expired = 2;
-  
+
   // Maximum paths to return
   uint32 limit = 3;
-  
+
   // Path selection criteria
   PathPreferences preferences = 4;
 }
@@ -154,13 +154,13 @@ message QueryPathsRequest {
 message QueryPathsResponse {
   // Available paths
   repeated PathMeta paths = 1;
-  
+
   // Query timestamp
   int64 query_time = 2;
-  
+
   // Next refresh time
   int64 next_refresh = 3;
-  
+
   // Total paths in system (may exceed returned limit)
   uint32 total_count = 4;
 }
@@ -180,19 +180,19 @@ message HealthResponse {
     OFFLINE = 3;
   }
   Status status = 1;
-  
+
   // Component health details
   map<string, string> components = 2;
-  
+
   // Health check timestamp
   int64 timestamp = 3;
-  
+
   // Gateway uptime seconds
   uint64 uptime_seconds = 4;
-  
+
   // SCION daemon connectivity
   bool scion_daemon_connected = 5;
-  
+
   // Active path count
   uint32 active_paths = 6;
 }
@@ -201,10 +201,10 @@ message HealthResponse {
 message StatsRequest {
   // Stats collection period (0=current, >0=historical seconds)
   uint32 period_seconds = 1;
-  
+
   // Include per-path breakdown
   bool include_path_breakdown = 2;
-  
+
   // Include anti-replay statistics
   bool include_anti_replay = 3;
 }
@@ -212,16 +212,16 @@ message StatsRequest {
 message StatsResponse {
   // Gateway statistics
   GatewayStats gateway = 1;
-  
+
   // Per-path statistics
   repeated PathStats paths = 2;
-  
+
   // Anti-replay statistics
   AntiReplayStats anti_replay = 3;
-  
+
   // Collection timestamp
   int64 timestamp = 4;
-  
+
   // Statistics period covered
   uint32 period_seconds = 5;
 }
@@ -230,13 +230,13 @@ message StatsResponse {
 message ValidateSequenceRequest {
   // Peer identifier
   string peer_id = 1;
-  
+
   // Sequence number to validate
   uint64 sequence_number = 2;
-  
+
   // Timestamp for replay window
   int64 timestamp_ns = 3;
-  
+
   // Update window after validation
   bool update_window = 4;
 }
@@ -244,13 +244,13 @@ message ValidateSequenceRequest {
 message ValidateSequenceResponse {
   // Validation result
   bool valid = 1;
-  
+
   // Reason if invalid (replay, future, expired)
   string rejection_reason = 2;
-  
+
   // Current window state
   SequenceWindow window_state = 3;
-  
+
   // Validation time microseconds
   uint64 validation_time_us = 4;
 }
@@ -259,28 +259,28 @@ message ValidateSequenceResponse {
 message PathMeta {
   // Path fingerprint (unique identifier)
   string path_id = 1;
-  
+
   // Source ISD-AS
   string src_ia = 2;
-  
-  // Destination ISD-AS  
+
+  // Destination ISD-AS
   string dst_ia = 3;
-  
+
   // Path expiration timestamp
   int64 expires_at = 4;
-  
+
   // Path hop information
   repeated Hop hops = 5;
-  
+
   // Path quality metrics
   PathQuality quality = 6;
-  
+
   // Path selection score (higher = better)
   float selection_score = 7;
-  
+
   // Last used timestamp
   int64 last_used = 8;
-  
+
   // Usage statistics
   PathUsageStats usage = 9;
 }
@@ -289,13 +289,13 @@ message PathMeta {
 message Hop {
   // AS identifier
   string as_id = 1;
-  
+
   // Interface ID
   uint32 interface_id = 2;
-  
+
   // Hop type (peer, core, etc.)
   string hop_type = 3;
-  
+
   // MTU at this hop
   uint32 mtu = 4;
 }
@@ -304,22 +304,22 @@ message Hop {
 message PathQuality {
   // Round-trip time EWMA milliseconds
   float rtt_ewma_ms = 1;
-  
-  // Jitter p95-p50 difference milliseconds  
+
+  // Jitter p95-p50 difference milliseconds
   float jitter_ms = 2;
-  
+
   // Packet loss rate (0.0-1.0)
   float loss_rate = 3;
-  
+
   // Bandwidth estimate Mbps
   float bandwidth_mbps = 4;
-  
+
   // Path stability score (0.0-1.0)
   float stability_score = 5;
-  
+
   // Last measurement timestamp
   int64 last_measured = 6;
-  
+
   // Number of measurements
   uint64 measurement_count = 7;
 }
@@ -328,25 +328,25 @@ message PathQuality {
 message PathPreferences {
   // Prefer low latency paths
   bool prefer_low_latency = 1;
-  
-  // Prefer high bandwidth paths  
+
+  // Prefer high bandwidth paths
   bool prefer_high_bandwidth = 2;
-  
+
   // Prefer stable/reliable paths
   bool prefer_stable = 3;
-  
+
   // Avoid specific ASes
   repeated string avoid_ases = 4;
-  
+
   // Prefer specific ASes
   repeated string prefer_ases = 5;
-  
+
   // Maximum acceptable RTT milliseconds
   uint32 max_rtt_ms = 6;
-  
+
   // Minimum acceptable bandwidth Mbps
   float min_bandwidth_mbps = 7;
-  
+
   // Maximum path length (hops)
   uint32 max_hops = 8;
 }
@@ -355,19 +355,19 @@ message PathPreferences {
 message PathUsageStats {
   // Packets sent via this path
   uint64 packets_sent = 1;
-  
+
   // Packets received via this path
   uint64 packets_received = 2;
-  
+
   // Bytes transferred
   uint64 bytes_transferred = 3;
-  
+
   // Success rate (0.0-1.0)
   float success_rate = 4;
-  
+
   // First used timestamp
   int64 first_used = 5;
-  
+
   // Total usage duration seconds
   uint64 usage_duration_s = 6;
 }
@@ -376,28 +376,28 @@ message PathUsageStats {
 message GatewayStats {
   // Total packets processed
   uint64 total_packets = 1;
-  
+
   // Total bytes processed
   uint64 total_bytes = 2;
-  
+
   // Processing rate (packets per second)
   float processing_rate_pps = 3;
-  
+
   // Throughput (bytes per second)
   float throughput_bps = 4;
-  
+
   // Active connections
   uint32 active_connections = 5;
-  
+
   // Error count
   uint64 error_count = 6;
-  
+
   // Average processing time microseconds
   float avg_processing_time_us = 7;
-  
+
   // Memory usage bytes
   uint64 memory_usage_bytes = 8;
-  
+
   // CPU utilization (0.0-1.0)
   float cpu_utilization = 9;
 }
@@ -406,16 +406,16 @@ message GatewayStats {
 message PathStats {
   // Path identifier
   string path_id = 1;
-  
+
   // Usage statistics
   PathUsageStats usage = 2;
-  
-  // Quality metrics  
+
+  // Quality metrics
   PathQuality quality = 3;
-  
+
   // Failover events
   uint32 failover_count = 4;
-  
+
   // Last failover timestamp
   int64 last_failover = 5;
 }
@@ -424,25 +424,25 @@ message PathStats {
 message AntiReplayStats {
   // Total packets validated
   uint64 total_validated = 1;
-  
+
   // Replay attacks blocked
   uint64 replays_blocked = 2;
-  
+
   // Future packets rejected
   uint64 future_rejected = 3;
-  
+
   // Expired packets rejected
   uint64 expired_rejected = 4;
-  
+
   // False positive rate
   float false_positive_rate = 5;
-  
+
   // Window maintenance operations
   uint64 window_updates = 6;
-  
+
   // Average validation time microseconds
   float avg_validation_time_us = 7;
-  
+
   // Window persistence errors
   uint64 persistence_errors = 8;
 }
@@ -451,22 +451,22 @@ message AntiReplayStats {
 message SequenceWindow {
   // Peer identifier
   string peer_id = 1;
-  
+
   // Window base sequence number
   uint64 window_base = 2;
-  
+
   // Window size bits
   uint32 window_size = 3;
-  
+
   // Bitmap of received sequences
   bytes window_bitmap = 4;
-  
+
   // Highest received sequence
   uint64 highest_received = 5;
-  
+
   // Window last update time
   int64 last_update = 6;
-  
+
   // Window statistics
   WindowStats stats = 7;
 }
@@ -475,16 +475,16 @@ message SequenceWindow {
 message WindowStats {
   // Total sequences processed
   uint64 total_processed = 1;
-  
+
   // Valid sequences accepted
   uint64 valid_accepted = 2;
-  
+
   // Invalid sequences rejected
   uint64 invalid_rejected = 3;
-  
+
   // Window slides performed
   uint64 window_slides = 4;
-  
+
   // Bitmap updates
   uint64 bitmap_updates = 5;
 }

@@ -31,8 +31,12 @@ class FeatureExtractor:
             "class_def": re.compile(r"\bclass\s+\w+", re.IGNORECASE),
             "api_calls": re.compile(r"\w+\.[a-zA-Z_]\w*\([^)]*\)"),
             "imports": re.compile(r"\b(?:import|from)\s+\w+", re.IGNORECASE),
-            "control_flow": re.compile(r"\b(?:if|for|while|try|except|with)\b", re.IGNORECASE),
-            "data_structures": re.compile(r"\b(?:list|dict|tuple|set|array)\b", re.IGNORECASE),
+            "control_flow": re.compile(
+                r"\b(?:if|for|while|try|except|with)\b", re.IGNORECASE
+            ),
+            "data_structures": re.compile(
+                r"\b(?:list|dict|tuple|set|array)\b", re.IGNORECASE
+            ),
         }
 
         self.math_patterns = {
@@ -40,7 +44,9 @@ class FeatureExtractor:
             "operators": re.compile(r"[+\-*/^√∑∏∫]"),
             "numbers": re.compile(r"\b\d+\.?\d*\b"),
             "variables": re.compile(r"\b[a-zA-Z]\b(?!\w)"),
-            "math_functions": re.compile(r"\b(?:sin|cos|tan|log|exp|sqrt|max|min|sum|mean)\b", re.IGNORECASE),
+            "math_functions": re.compile(
+                r"\b(?:sin|cos|tan|log|exp|sqrt|max|min|sum|mean)\b", re.IGNORECASE
+            ),
         }
 
     def extract_prompt_stats(self, prompt: str) -> dict[str, float]:
@@ -64,7 +70,9 @@ class FeatureExtractor:
         word_count = len(prompt.split())
         char_count = prompt_len
         line_count = len(prompt.splitlines())
-        avg_word_len = np.mean([len(word) for word in prompt.split()]) if word_count > 0 else 0
+        avg_word_len = (
+            np.mean([len(word) for word in prompt.split()]) if word_count > 0 else 0
+        )
 
         # Code-related features
         code_features = self._extract_code_features(prompt)
@@ -197,7 +205,9 @@ class FeatureExtractor:
         for category, pattern in api_patterns.items():
             matches = re.findall(pattern, prompt_lower, re.IGNORECASE)
             if matches:
-                keywords.extend([f"{category}:{match}" for match in set(matches[:3])])  # Limit per category
+                keywords.extend(
+                    [f"{category}:{match}" for match in set(matches[:3])]
+                )  # Limit per category
 
         return keywords[:10]  # Limit total keywords
 

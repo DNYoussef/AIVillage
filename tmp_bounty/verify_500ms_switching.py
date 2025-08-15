@@ -11,7 +11,7 @@ import sys
 import time
 
 # Add path for imports
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../src"))
 
 try:
     from adaptive_navigator import (
@@ -21,6 +21,7 @@ try:
     )
 
     from core.p2p.metrics.net_metrics import NetworkMetricsCollector
+
     IMPORTS_AVAILABLE = True
 except ImportError as e:
     print(f"Import failed: {e}")
@@ -44,6 +45,7 @@ except ImportError as e:
             self.payload_size = payload_size
             self.priority = priority
 
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -64,7 +66,7 @@ class PolicySwitchBenchmark:
 
         # Simulate good baseline measurements
         for i in range(5):
-            if hasattr(self.metrics_collector, 'record_message_sent'):
+            if hasattr(self.metrics_collector, "record_message_sent"):
                 seq_id = self.metrics_collector.record_message_sent(
                     self.test_peer, f"baseline_{i}", 1024
                 )
@@ -81,7 +83,7 @@ class PolicySwitchBenchmark:
         if condition_type == "high_rtt":
             # Simulate high RTT measurements
             for i in range(3):
-                if hasattr(self.metrics_collector, 'record_message_sent'):
+                if hasattr(self.metrics_collector, "record_message_sent"):
                     seq_id = self.metrics_collector.record_message_sent(
                         self.test_peer, f"high_rtt_{i}", 1024
                     )
@@ -93,7 +95,7 @@ class PolicySwitchBenchmark:
         elif condition_type == "packet_loss":
             # Simulate packet loss
             for i in range(5):
-                if hasattr(self.metrics_collector, 'record_message_sent'):
+                if hasattr(self.metrics_collector, "record_message_sent"):
                     seq_id = self.metrics_collector.record_message_sent(
                         self.test_peer, f"loss_{i}", 1024
                     )
@@ -106,7 +108,7 @@ class PolicySwitchBenchmark:
         elif condition_type == "high_jitter":
             # Simulate jittery conditions
             for i in range(4):
-                if hasattr(self.metrics_collector, 'record_message_sent'):
+                if hasattr(self.metrics_collector, "record_message_sent"):
                     seq_id = self.metrics_collector.record_message_sent(
                         self.test_peer, f"jitter_{i}", 1024
                     )
@@ -127,9 +129,7 @@ class PolicySwitchBenchmark:
         for trial in range(10):
             # Create message context
             context = MessageContext(
-                recipient=self.test_peer,
-                payload_size=2048,
-                priority=6
+                recipient=self.test_peer, payload_size=2048, priority=6
             )
             available_protocols = ["htx", "htxquic", "betanet", "bitchat"]
 
@@ -148,17 +148,23 @@ class PolicySwitchBenchmark:
                 switched = protocol != "htx"
                 switch_occurred.append(switched)
 
-                logger.debug(f"  Trial {trial+1}: {protocol} in {decision_time_ms:.2f}ms (switched: {switched})")
+                logger.debug(
+                    f"  Trial {trial + 1}: {protocol} in {decision_time_ms:.2f}ms (switched: {switched})"
+                )
 
             except Exception as e:
-                logger.warning(f"  Trial {trial+1} failed: {e}")
+                logger.warning(f"  Trial {trial + 1} failed: {e}")
                 decision_times.append(999.0)  # Penalty for failure
                 switch_occurred.append(False)
 
         # Calculate statistics
-        avg_decision_time = sum(decision_times) / len(decision_times) if decision_times else 999
+        avg_decision_time = (
+            sum(decision_times) / len(decision_times) if decision_times else 999
+        )
         max_decision_time = max(decision_times) if decision_times else 999
-        switch_rate = sum(switch_occurred) / len(switch_occurred) if switch_occurred else 0
+        switch_rate = (
+            sum(switch_occurred) / len(switch_occurred) if switch_occurred else 0
+        )
 
         result = {
             "condition_type": condition_type,
@@ -167,11 +173,13 @@ class PolicySwitchBenchmark:
             "min_decision_time_ms": min(decision_times) if decision_times else 999,
             "switch_rate": switch_rate,
             "total_trials": len(decision_times),
-            "meets_500ms_requirement": max_decision_time < 500.0
+            "meets_500ms_requirement": max_decision_time < 500.0,
         }
 
-        logger.info(f"✅ {condition_type}: {avg_decision_time:.1f}ms avg, "
-                   f"{max_decision_time:.1f}ms max, {switch_rate:.1%} switch rate")
+        logger.info(
+            f"✅ {condition_type}: {avg_decision_time:.1f}ms avg, "
+            f"{max_decision_time:.1f}ms max, {switch_rate:.1%} switch rate"
+        )
 
         return result
 
@@ -210,8 +218,10 @@ class PolicySwitchBenchmark:
 
         for condition, result in results.items():
             status = "✅ PASS" if result["meets_500ms_requirement"] else "❌ FAIL"
-            print(f"{condition:12}: {result['avg_decision_time_ms']:6.1f}ms avg, "
-                  f"{result['max_decision_time_ms']:6.1f}ms max - {status}")
+            print(
+                f"{condition:12}: {result['avg_decision_time_ms']:6.1f}ms avg, "
+                f"{result['max_decision_time_ms']:6.1f}ms max - {status}"
+            )
 
             all_max_times.append(result["max_decision_time_ms"])
             all_avg_times.append(result["avg_decision_time_ms"])
@@ -229,7 +239,9 @@ class PolicySwitchBenchmark:
 
         overall_pass = overall_max < 500.0
         status_icon = "✅" if overall_pass else "❌"
-        print(f"\n{status_icon} 500ms Requirement: {'PASSED' if overall_pass else 'FAILED'}")
+        print(
+            f"\n{status_icon} 500ms Requirement: {'PASSED' if overall_pass else 'FAILED'}"
+        )
 
         # 4. Implementation recommendations
         if not overall_pass:
@@ -245,7 +257,7 @@ class PolicySwitchBenchmark:
             "overall_avg_ms": overall_avg,
             "condition_results": results,
             "meets_requirement_count": meets_requirement_count,
-            "total_scenarios": len(results)
+            "total_scenarios": len(results),
         }
 
 
