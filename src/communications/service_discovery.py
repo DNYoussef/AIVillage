@@ -7,6 +7,8 @@ Provides automatic discovery and registration of agent services:
 - Network topology mapping
 """
 
+# isort: skip_file
+
 import asyncio
 import contextlib
 import logging
@@ -75,7 +77,6 @@ class ServiceRegistry:
         service_id = f"{agent_id}:{service_type}"
 
         if service_id in self.services:
-            self.services[service_id]
             del self.services[service_id]
 
             # Update service type index
@@ -102,7 +103,6 @@ class ServiceRegistry:
 
     def discover_services(self, service_type: str | None = None) -> list[ServiceInfo]:
         """Discover available services of a specific type or all services."""
-        time.time()
         active_services = []
 
         if service_type:
@@ -131,7 +131,6 @@ class ServiceRegistry:
 
     def cleanup_stale_services(self) -> int:
         """Remove services that haven't sent heartbeats."""
-        time.time()
         stale_services = []
 
         for service_id, service in self.services.items():
