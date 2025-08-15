@@ -57,3 +57,10 @@ try:
 except ImportError:
     HyperCompressor = None
     ModelCompressionTask = None
+
+try:
+    from .report import report_compression
+
+    __all__.append("report_compression")
+except ImportError:
+    report_compression = None
