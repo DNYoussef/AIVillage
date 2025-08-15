@@ -234,6 +234,20 @@ python stress_tests/production_simulation.py --devices 100 --duration 60 --failu
 
 Both utilities emit JSON reports for reproducible performance analysis.
 
+## Math Benchmark Evaluation
+
+Download benchmark datasets and evaluate prediction files:
+
+```bash
+# Download selected benchmarks
+python scripts/download_benchmarks.py --benchmarks gsm8k math
+
+# Evaluate predictions on a benchmark
+python benchmarks/evaluate_model.py --model-path predictions.json --benchmarks gsm8k
+```
+
+Use `--benchmarks` to choose which datasets to download or evaluate.
+
 ## Contributing
 
 We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for:
