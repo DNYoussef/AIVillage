@@ -1,3 +1,4 @@
+# isort: skip_file
 """
 Main Forge Training Loop that integrates all components.
 This is the entry point for the complete training pipeline.
@@ -5,6 +6,7 @@ This is the entry point for the complete training pipeline.
 
 import logging
 import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -69,6 +71,10 @@ class ForgeTrainConfig:
     # Geometry probing
     geometry_probe_interval: int = 100
     geometry_layers: list[int] = field(default_factory=lambda: [4, 8, 12])
+
+    # Task/loss configuration
+    task_type: str = "classification"  # classification, regression, seq2seq
+    custom_loss_fn: Callable[[Any, dict[str, torch.Tensor]], torch.Tensor] | None = None
 
     # Logging configuration
     log_interval: int = 10
@@ -237,7 +243,7 @@ class ForgeTrainer:
         """Train for one epoch."""
         self.model.train()
 
-        for batch_idx, batch in enumerate(self.train_loader):
+        for _batch_idx, batch in enumerate(self.train_loader):
             # Move batch to device
             batch = {k: v.to(self.device) for k, v in batch.items()}
 
@@ -250,7 +256,7 @@ class ForgeTrainer:
 
             # Update difficulty if using edge control
             if self.edge_controller and "accuracy" in metrics:
-                difficulty = self.edge_controller.update([metrics["accuracy"]])
+                self.edge_controller.update([metrics["accuracy"]])
                 # Apply difficulty adjustments to next batch
                 # This would modify task sampling or generation
 
@@ -375,17 +381,38 @@ class ForgeTrainer:
 
     def compute_task_loss(self, outputs, batch) -> torch.Tensor:
         """Compute the main task loss."""
-        # This is task-specific - adjust based on your task
+        # Custom loss override
+        if self.config.custom_loss_fn is not None:
+            return self.config.custom_loss_fn(outputs, batch)
+
         if hasattr(outputs, "loss"):
             return outputs.loss
-        elif "labels" in batch:
-            # Classification/generation loss
-            logits = outputs.logits if hasattr(outputs, "logits") else outputs
+
+        logits = outputs.logits if hasattr(outputs, "logits") else outputs
+        task_type = getattr(self.config, "task_type", "classification")
+
+        if task_type == "regression":
+            if "labels" not in batch:
+                raise ValueError("Regression task requires 'labels' in batch")
+            preds = logits.squeeze(-1)
+            targets = batch["labels"].float()
+            return F.mse_loss(preds.view_as(targets), targets)
+
+        if task_type in {"seq2seq", "generation"}:
+            if "labels" not in batch:
+                raise ValueError("Seq2seq task requires 'labels' in batch")
+            return F.cross_entropy(
+                logits.reshape(-1, logits.size(-1)),
+                batch["labels"].reshape(-1),
+                ignore_index=-100,
+            )
+
+        if "labels" in batch:
             return F.cross_entropy(
                 logits.reshape(-1, logits.size(-1)), batch["labels"].reshape(-1)
             )
-        else:
-            raise NotImplementedError("Task loss computation not implemented")
+
+        raise NotImplementedError("Task loss computation not implemented")
 
     def compute_grad_norm(self) -> float:
         """Compute gradient norm."""
@@ -480,9 +507,11 @@ class ForgeTrainer:
             stage=telemetry.stage,
             grad_norm=telemetry.grad_norm,
             ema_cos=telemetry.ema_cos,
-            id_value=np.mean(list(telemetry.id_by_layer.values()))
-            if telemetry.id_by_layer
-            else 0.0,
+            id_value=(
+                np.mean(list(telemetry.id_by_layer.values()))
+                if telemetry.id_by_layer
+                else 0.0
+            ),
         )
 
         self.dream_buffer.push(example)
@@ -495,9 +524,11 @@ class ForgeTrainer:
         while self.dream_manager.is_dreaming:
             # Get dream batch
             dream_examples = self.dream_manager.get_dream_batch(
-                stage=self.stage_classifier.stage_history[-1]
-                if self.stage_classifier.stage_history
-                else None
+                stage=(
+                    self.stage_classifier.stage_history[-1]
+                    if self.stage_classifier.stage_history
+                    else None
+                )
             )
 
             if not dream_examples:
@@ -538,7 +569,7 @@ class ForgeTrainer:
         )
 
         # Train on temperature samples
-        for sample in samples:
+        for _sample in samples:
             # Convert to batch format and train
             # This is task-specific
             pass
