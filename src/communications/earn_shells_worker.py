@@ -273,11 +273,11 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Earn Shells Worker")
     parser.add_argument(
         "--prometheus-url",
-        default="http://localhost:9090",
+        default="https://localhost:9090",
         help="Prometheus server URL",
     )
     parser.add_argument(
-        "--credits-api-url", default="http://localhost:8002", help="Credits API URL"
+        "--credits-api-url", default="https://localhost:8002", help="Credits API URL"
     )
     parser.add_argument(
         "--interval",

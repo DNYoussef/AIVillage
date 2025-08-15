@@ -317,7 +317,7 @@ class SecureAPIServer:
         # CORS settings
         self.cors_enabled = os.getenv("API_CORS_ENABLED", "true").lower() == "true"
         self.cors_origins = os.getenv(
-            "API_CORS_ORIGINS", "http://localhost:3000"
+            "API_CORS_ORIGINS", "https://localhost:3000"
         ).split(",")
 
         # Apps

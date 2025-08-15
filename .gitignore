@@ -325,6 +325,10 @@ tmp_bounty*/
 tmp_bloat*/
 tmp_scion*/
 tmp_bitchat*/
+!tmp_codex_audit_v3/
+!tmp_codex_audit_v3/tests/
+!tmp_codex_audit_v3/tests/**
+!tmp_codex_audit_v3/tests/**
 
 # Archive and backup directories in root
 docs/archived_reports/

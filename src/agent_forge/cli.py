@@ -100,7 +100,7 @@ def dashboard(port: int, host: str) -> None:
             click.echo(f"Error: Dashboard script not found at {dashboard_script}")
             sys.exit(1)
 
-        click.echo(f"🚀 Launching Agent Forge Dashboard at http://{host}:{port}")
+        click.echo(f"🚀 Launching Agent Forge Dashboard at https://{host}:{port}")
 
         subprocess.run(
             [
