@@ -17,6 +17,8 @@ import websockets
 from cryptography.fernet import Fernet
 
 from .message import Message
+from .service_directory import service_directory
+import uuid
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +28,15 @@ class CommunicationsProtocol:
     No more pass statements - real functionality!
     """
 
-    def __init__(self, agent_id: str, port: int = 8888) -> None:
+    def __init__(
+        self,
+        agent_id: str,
+        port: int = 8888,
+        *,
+        heartbeat_interval: float = 20.0,
+        heartbeat_miss_limit: int = 3,
+        max_queue: int = 50,
+    ) -> None:
         self.agent_id = agent_id
         self.port = port
         self.connections: dict[str, websockets.WebSocketServerProtocol] = {}
@@ -37,27 +47,40 @@ class CommunicationsProtocol:
         self.message_history: dict[str, list[dict]] = {}
         self.pending_messages: dict[str, list[dict]] = {}
         self.connection_info: dict[str, str] = {}
+        self.heartbeat_interval = heartbeat_interval
+        self.heartbeat_miss_limit = heartbeat_miss_limit
+        self.max_queue = max_queue
 
-    async def connect(self, target_url: str, target_agent_id: str) -> bool:
-        """Actually connect to another agent - NOT A STUB!
-        Returns True if connection successful, False otherwise.
-        """
-        self.connection_info[target_agent_id] = target_url
+    async def connect(
+        self, target_agent_id: str, target_url: str | None = None
+    ) -> bool:
+        """Connect to another agent, using the service directory for lookup."""
+        url = target_url or service_directory.lookup(target_agent_id)
+        if url is None:
+            # try port range on localhost
+            host = os.getenv("COMM_DEFAULT_HOST", "localhost")
+            for port in range(43000, 43101):
+                candidate = f"ws://{host}:{port}/ws"
+                if await self.connect(target_agent_id, candidate):
+                    return True
+            return False
+
+        self.connection_info[target_agent_id] = url
         try:
-            logger.info(f"Connecting to {target_agent_id} at {target_url}")
+            logger.info(f"Connecting to {target_agent_id} at {url}")
 
             # Generate or retrieve encryption key for this agent pair
             self._get_or_create_key(target_agent_id)
 
             # Establish WebSocket connection
             ssl_context = None
-            if target_url.startswith("wss"):
+            if url.startswith("wss"):
                 ssl_context = ssl.SSLContext()
                 ssl_context.check_hostname = False
                 ssl_context.verify_mode = ssl.CERT_NONE
 
             websocket = await websockets.connect(
-                target_url, ssl=ssl_context, ping_interval=20, ping_timeout=10
+                url, ssl=ssl_context, ping_interval=20, ping_timeout=10
             )
 
             # Perform handshake
@@ -79,6 +102,7 @@ class CommunicationsProtocol:
 
                 # Start message receiver task
                 asyncio.create_task(self._receive_messages(target_agent_id, websocket))
+                asyncio.create_task(self._start_heartbeat(target_agent_id, websocket))
 
                 # Flush pending messages
                 if target_agent_id in self.pending_messages:
@@ -140,7 +164,10 @@ class CommunicationsProtocol:
             if url:
                 await self._reconnect(agent_id)
             if agent_id not in self.connections:
-                self.pending_messages.setdefault(agent_id, []).append(message_dict)
+                queue = self.pending_messages.setdefault(agent_id, [])
+                queue.append(message_dict)
+                if len(queue) > self.max_queue:
+                    queue.pop(0)
                 logger.info(f"Queued message for {agent_id}")
                 return False
 
@@ -169,7 +196,10 @@ class CommunicationsProtocol:
             logger.exception(f"Failed to send message to {agent_id}: {e}")
             await self.disconnect(agent_id)
             asyncio.create_task(self._reconnect(agent_id))
-            self.pending_messages.setdefault(agent_id, []).append(message_dict)
+            queue = self.pending_messages.setdefault(agent_id, [])
+            queue.append(message_dict)
+            if len(queue) > self.max_queue:
+                queue.pop(0)
             return False
 
     async def broadcast_message(self, message: dict[str, Any] | Message) -> int:
@@ -185,6 +215,48 @@ class CommunicationsProtocol:
             f"Broadcast message sent to {sent_count}/{len(self.connections)} agents"
         )
         return sent_count
+
+    async def rpc(
+        self, agent_id: str, payload: dict, timeout: float = 5.0
+    ) -> dict | None:
+        """Send RPC request and await response."""
+        correlation_id = str(uuid.uuid4())
+        response_type = f"rpc_response_{correlation_id}"
+        future: asyncio.Future | None = asyncio.get_event_loop().create_future()
+
+        def handler(_aid: str, message: dict) -> None:
+            if message.get("correlation_id") == correlation_id and not future.done():
+                future.set_result(message)
+
+        self.register_handler(response_type, handler)
+
+        request = {
+            "type": "rpc_request",
+            "payload": payload,
+            "correlation_id": correlation_id,
+            "response_type": response_type,
+        }
+
+        await self.send_message(agent_id, request)
+
+        try:
+            result = await asyncio.wait_for(future, timeout)
+            return result
+        except asyncio.TimeoutError:
+            return None
+        finally:
+            self.message_handlers.pop(response_type, None)
+
+    async def send_rpc_response(
+        self, agent_id: str, correlation_id: str, payload: dict
+    ) -> bool:
+        """Send RPC response to agent."""
+        message = {
+            "type": f"rpc_response_{correlation_id}",
+            "payload": payload,
+            "correlation_id": correlation_id,
+        }
+        return await self.send_message(agent_id, message)
 
     def _get_or_create_key(self, agent_id: str) -> Fernet:
         """Generate or retrieve encryption key for agent pair."""
@@ -240,6 +312,24 @@ class CommunicationsProtocol:
         finally:
             if agent_id in self.connections:
                 del self.connections[agent_id]
+
+    async def _start_heartbeat(self, agent_id: str, websocket) -> None:
+        """Send ping frames periodically and drop on missed pongs."""
+        misses = 0
+        try:
+            while agent_id in self.connections:
+                try:
+                    waiter = await websocket.ping()
+                    await asyncio.wait_for(waiter, timeout=self.heartbeat_interval)
+                    misses = 0
+                except Exception:
+                    misses += 1
+                    if misses >= self.heartbeat_miss_limit:
+                        await self.disconnect(agent_id)
+                        break
+                await asyncio.sleep(self.heartbeat_interval)
+        except Exception:
+            await self.disconnect(agent_id)
 
     async def _handle_received_message(self, agent_id: str, message: dict) -> None:
         """Handle incoming message."""
@@ -307,6 +397,8 @@ class CommunicationsProtocol:
                     self.connections[agent_id] = websocket
                     logger.info(f"Accepted connection from {agent_id}")
 
+                    asyncio.create_task(self._start_heartbeat(agent_id, websocket))
+
                     # Start receiving messages
                     await self._receive_messages(agent_id, websocket)
                 else:
@@ -341,6 +433,9 @@ class CommunicationsProtocol:
         )
         self.running = True
         logger.info(f"Communications server started on port {self.port}")
+        service_directory.register(
+            self.agent_id, f"ws://localhost:{self.port}/ws"
+        )
 
     async def stop_server(self) -> None:
         """Stop the server and close all connections."""
@@ -371,15 +466,14 @@ class CommunicationsProtocol:
 
     async def _reconnect(self, agent_id: str) -> None:
         """Attempt to reconnect to an agent with backoff."""
-        url = self.connection_info.get(agent_id)
-        if not url:
-            return
         delay = 1
+        self.encryption_keys.pop(agent_id, None)
         for _ in range(5):
             if agent_id in self.connections:
                 return
             await asyncio.sleep(delay)
-            if await self.connect(url, agent_id):
+            url = self.connection_info.get(agent_id) or service_directory.lookup(agent_id)
+            if url and await self.connect(agent_id, url):
                 return
             delay = min(delay * 2, 30)
 
@@ -399,15 +493,14 @@ def get_protocol_instance() -> CommunicationsProtocol:
 
 
 # Backward compatible functions - NOW ACTUALLY WORK!
-def connect(target_url: str, target_agent_id: str) -> bool:
-    """Connect to another agent - ACTUALLY WORKS NOW!"""
+def connect(target_agent_id: str, target_url: str | None = None) -> bool:
+    """Connect to another agent using the global protocol instance."""
     protocol = get_protocol_instance()
     loop = asyncio.get_event_loop()
     if loop.is_running():
-        # If we're in an async context, create a task
-        task = asyncio.create_task(protocol.connect(target_url, target_agent_id))
+        task = asyncio.create_task(protocol.connect(target_agent_id, target_url))
         return task
-    return loop.run_until_complete(protocol.connect(target_url, target_agent_id))
+    return loop.run_until_complete(protocol.connect(target_agent_id, target_url))
 
 
 def disconnect(agent_id: str) -> bool:

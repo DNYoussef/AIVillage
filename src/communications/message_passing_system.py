@@ -98,7 +98,7 @@ class MessagePassingSystem:
             )
 
             # Connect and send
-            connected = await self.protocol.connect(target_url, target_agent_id)
+            connected = await self.protocol.connect(target_agent_id, target_url)
             if connected:
                 success = await self.protocol.send_message(target_agent_id, message)
                 logger.info(f"Message sent to {target_agent_id}: {success}")
