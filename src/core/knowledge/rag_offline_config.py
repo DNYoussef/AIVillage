@@ -17,6 +17,7 @@ Knowledge & Data Integration Point: Validated RAG system defaults
 import hashlib
 import json
 import logging
+import os
 from dataclasses import asdict, dataclass, field
 from enum import Enum
 from pathlib import Path
@@ -25,6 +26,49 @@ from typing import Any
 import yaml
 
 logger = logging.getLogger(__name__)
+
+
+def resolve_model_path(
+    model_name: str,
+    device: str | None = None,
+    base_dir: str | Path | None = None,
+) -> Path:
+    """Resolve model paths using configuration or environment variables.
+
+    Priority order:
+    1. Explicit ``base_dir`` supplied by configuration.
+    2. Environment variable ``RAG_<DEVICE>_MODEL_PATH`` pointing to a file or
+       directory for the specific device.
+    3. Environment variable ``RAG_MODEL_DIR`` as a base directory.
+    4. Default to ``models/<device>/<model_name>`` relative to the working
+       directory.
+    """
+
+    if base_dir:
+        base = Path(base_dir)
+        if base.is_dir():
+            return base / model_name
+        return base
+
+    if device:
+        env_specific = os.getenv(f"RAG_{device.upper()}_MODEL_PATH")
+        if env_specific:
+            specific_path = Path(env_specific)
+            if specific_path.is_dir():
+                return specific_path / model_name
+            return specific_path
+
+    env_base = os.getenv("RAG_MODEL_DIR")
+    if env_base:
+        base = Path(env_base)
+        if device:
+            base = base / device
+        return base / model_name
+
+    base = Path("models")
+    if device:
+        base = base / device
+    return base / model_name
 
 
 class RAGMode(Enum):
@@ -232,6 +276,12 @@ class OfflineRAGConfig:
 
     def adapt_for_mobile(self) -> "OfflineRAGConfig":
         """Create mobile-optimized variant of this config."""
+        base_dir = (
+            Path(self.embedding.model_path).parent
+            if self.embedding.model_path
+            else None
+        )
+
         mobile_config = OfflineRAGConfig(
             mode=RAGMode.MOBILE_OPTIMIZED,
             name=f"{self.name}_mobile",
@@ -241,7 +291,11 @@ class OfflineRAGConfig:
             embedding=EmbeddingConfig(
                 provider=EmbeddingProvider.LOCAL_ONNX,
                 model_name="all-MiniLM-L6-v2-onnx",
-                model_path="models/mobile/all-MiniLM-L6-v2.onnx",  # Mobile-specific path
+                model_path=str(
+                    resolve_model_path(
+                        "all-MiniLM-L6-v2.onnx", device="mobile", base_dir=base_dir
+                    )
+                ),
                 dimensions=384,
                 batch_size=16,  # Smaller batches
                 device="cpu",
@@ -289,11 +343,15 @@ class OfflineRAGConfig:
         if self.embedding.dimensions <= 0:
             errors.append("Embedding dimensions must be positive")
 
-        if (
-            self.embedding.provider == EmbeddingProvider.LOCAL_ONNX
-            and not self.embedding.model_path
-        ):
-            errors.append("Local ONNX provider requires model_path")
+        if self.embedding.provider == EmbeddingProvider.LOCAL_ONNX:
+            if not self.embedding.model_path:
+                errors.append("Local ONNX provider requires model_path")
+            else:
+                model_path = Path(self.embedding.model_path)
+                if not model_path.exists():
+                    errors.append(
+                        f"Local ONNX model path not found: {self.embedding.model_path}"
+                    )
 
         # Validate chunking configuration
         if self.chunking.chunk_size <= self.chunking.chunk_overlap:
@@ -411,7 +469,7 @@ class OfflineRAGConfigRegistry:
             embedding=EmbeddingConfig(
                 provider=EmbeddingProvider.LOCAL_ONNX,
                 model_name="all-MiniLM-L6-v2-onnx",
-                model_path="models/all-MiniLM-L6-v2.onnx",  # Provide default path
+                model_path=str(resolve_model_path("all-MiniLM-L6-v2.onnx")),
                 dimensions=384,
                 batch_size=8,
             ),
