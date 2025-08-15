@@ -1,10 +1,11 @@
 [run]
-source = src/
-omit = */tests/*, */test_*, */__pycache__/*, */new_env/*
+source = src/production/distributed_agents
+omit =
+    */tests/*
+    tmp*
+    */tmp*
 
 [report]
 exclude_lines =
     pragma: no cover
-    def __repr__
-    raise AssertionError
-    raise NotImplementedError
+    if __name__ == "__main__":
