@@ -1038,18 +1038,23 @@ class TestEndToEndIntegration:
                 manager, "_select_optimal_service_node", return_value="edge_node_1"
             ):
                 with patch.object(manager, "send_federated_message", return_value=True):
-                    # Request translation service
-                    result = await manager.request_ai_service(
-                        service_name="translate",
-                        request_data={
-                            "text": "Hello",
-                            "source_lang": "en",
-                            "target_lang": "es",
-                        },
-                        privacy_level=PrivacyLevel.PRIVATE,
-                    )
+                    with patch.object(
+                        manager,
+                        "_wait_for_correlated_response",
+                        AsyncMock(return_value={"result": "ok"}),
+                    ):
+                        # Request translation service
+                        result = await manager.request_ai_service(
+                            service_name="translate",
+                            request_data={
+                                "text": "Hello",
+                                "source_lang": "en",
+                                "target_lang": "es",
+                            },
+                            privacy_level=PrivacyLevel.PRIVATE,
+                        )
 
-                    assert result is not None
+                        assert result is not None
 
     @pytest.mark.asyncio
     async def test_offline_mesh_communication(self):

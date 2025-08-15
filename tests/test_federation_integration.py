@@ -413,14 +413,19 @@ class TestFederationManager:
                 manager, "_select_optimal_service_node", return_value="edge_node_1"
             ):
                 with patch.object(manager, "send_federated_message", return_value=True):
-                    result = await manager.request_ai_service(
-                        service_name="translate",
-                        request_data={"text": "Hello", "target_lang": "es"},
-                        privacy_level=PrivacyLevel.PRIVATE,
-                    )
+                    with patch.object(
+                        manager,
+                        "_wait_for_correlated_response",
+                        AsyncMock(return_value={"result": "ok"}),
+                    ):
+                        result = await manager.request_ai_service(
+                            service_name="translate",
+                            request_data={"text": "Hello", "target_lang": "es"},
+                            privacy_level=PrivacyLevel.PRIVATE,
+                        )
 
-                    # Should return some result (even if mocked)
-                    assert result is not None
+                        # Should return some result (even if mocked)
+                        assert result is not None
 
     @pytest.mark.asyncio
     async def test_privacy_tunnel_creation(self):
