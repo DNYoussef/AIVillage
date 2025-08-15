@@ -19,7 +19,7 @@ AIVillage is a sophisticated multi-agent AI system with self-evolution capabilit
 
 ### Core Infrastructure
 - ✅ **Agent Templates**: ~18 specialized agent types with defined capabilities (validated by [scripts/validate_system.py](scripts/validate_system.py))
-- ✅ **P2P Communication Framework**: Message protocol, encryption layer, and basic networking infrastructure (large-scale testing pending)
+- ✅ **P2P Communication Framework**: Message protocol, encryption layer, and basic networking infrastructure (large-scale testing pending). TLS connections use the system's default trust store; set `COMM_ALLOW_SELF_SIGNED=true` to accept self-signed certificates during testing
 - ✅ **Resource Management**: Device profiling and constraint management system; performance under load is unverified
 - ✅ **Evolution Framework**: Prototype KPI-based evolution engine with retirement and improvement strategies
 - ✅ **Testing Infrastructure**: Behavioral and integration tests available in [tests/](tests/)

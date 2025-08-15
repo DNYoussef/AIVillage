@@ -36,6 +36,7 @@ class CommunicationsProtocol:
         heartbeat_interval: float = 20.0,
         heartbeat_miss_limit: int = 3,
         max_queue: int = 50,
+        allow_self_signed: bool | None = None,
     ) -> None:
         self.agent_id = agent_id
         self.port = port
@@ -50,6 +51,12 @@ class CommunicationsProtocol:
         self.heartbeat_interval = heartbeat_interval
         self.heartbeat_miss_limit = heartbeat_miss_limit
         self.max_queue = max_queue
+        self.allow_self_signed = (
+            allow_self_signed
+            if allow_self_signed is not None
+            else os.getenv("COMM_ALLOW_SELF_SIGNED", "false").lower()
+            in {"1", "true", "yes"}
+        )
 
     async def connect(
         self, target_agent_id: str, target_url: str | None = None
@@ -75,9 +82,10 @@ class CommunicationsProtocol:
             # Establish WebSocket connection
             ssl_context = None
             if url.startswith("wss"):
-                ssl_context = ssl.SSLContext()
-                ssl_context.check_hostname = False
-                ssl_context.verify_mode = ssl.CERT_NONE
+                ssl_context = ssl.create_default_context()
+                if self.allow_self_signed:
+                    ssl_context.check_hostname = False
+                    ssl_context.verify_mode = ssl.CERT_NONE
 
             websocket = await websockets.connect(
                 url, ssl=ssl_context, ping_interval=20, ping_timeout=10
@@ -114,6 +122,11 @@ class CommunicationsProtocol:
             logger.warning(f"Connection rejected by {target_agent_id}")
             return False
 
+        except ssl.SSLCertVerificationError as e:
+            logger.exception(
+                f"SSL certificate verification failed for {target_agent_id}: {e}"
+            )
+            raise
         except Exception as e:
             logger.exception(f"Connection failed to {target_agent_id}: {e}")
             return False
