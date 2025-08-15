@@ -3,11 +3,15 @@ Currently returns None for everything!
 """
 
 import logging
+import os
 import socket
 import time
 from typing import Any
 
-import psutil
+try:  # pragma: no cover
+    import psutil  # type: ignore
+except Exception:  # pragma: no cover
+    psutil = None  # type: ignore
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +27,14 @@ class ResourceMonitor:
 
     def get_cpu_usage(self) -> float:
         """Get current CPU usage percentage."""
-        value = psutil.cpu_percent(interval=0.1)
+        if psutil:
+            value = psutil.cpu_percent(interval=0.1)
+        else:  # Fallback to load average
+            try:
+                load, _, _ = os.getloadavg()
+                value = min(100.0, load * 100 / (os.cpu_count() or 1))
+            except Exception:  # pragma: no cover
+                value = 0.0
         self.cpu_history.append(value)
         if len(self.cpu_history) > 60:
             self.cpu_history.pop(0)
@@ -31,27 +42,69 @@ class ResourceMonitor:
 
     def get_memory_usage(self) -> dict[str, float]:
         """Get memory usage statistics."""
-        mem = psutil.virtual_memory()
+        if psutil:
+            mem = psutil.virtual_memory()
+            total = mem.total
+            available = mem.available
+            used = mem.used
+            percent = mem.percent
+        else:  # pragma: no cover
+            try:
+                with open("/proc/meminfo", "r", encoding="utf-8") as fh:
+                    info: dict[str, int] = {}
+                    for line in fh:
+                        if ":" in line:
+                            key, val = line.split(":", 1)
+                            info[key] = int(val.strip().split()[0]) * 1024
+                total = info.get("MemTotal", 0)
+                available = info.get("MemAvailable", info.get("MemFree", 0))
+                used = total - available
+                percent = (used / total * 100) if total else 0.0
+            except Exception:  # pragma: no cover
+                total = available = used = 0
+                percent = 0.0
         return {
-            "total_gb": mem.total / (1024**3),
-            "available_gb": mem.available / (1024**3),
-            "used_gb": mem.used / (1024**3),
-            "percent": mem.percent,
+            "total_gb": total / (1024**3),
+            "available_gb": available / (1024**3),
+            "used_gb": used / (1024**3),
+            "percent": percent,
         }
 
     def get_disk_usage(self) -> dict[str, float]:
         """Get disk usage statistics."""
-        disk = psutil.disk_usage("/")
+        if psutil:
+            disk = psutil.disk_usage("/")
+            total = disk.total
+            free = disk.free
+            used = disk.used
+            percent = disk.percent
+        else:  # pragma: no cover
+            try:
+                stat = os.statvfs("/")
+                total = stat.f_frsize * stat.f_blocks
+                free = stat.f_frsize * stat.f_bfree
+                used = total - free
+                percent = (used / total * 100) if total else 0.0
+            except Exception:
+                total = free = used = 0
+                percent = 0.0
         return {
-            "total_gb": disk.total / (1024**3),
-            "free_gb": disk.free / (1024**3),
-            "used_gb": disk.used / (1024**3),
-            "percent": disk.percent,
+            "total_gb": total / (1024**3),
+            "free_gb": free / (1024**3),
+            "used_gb": used / (1024**3),
+            "percent": percent,
         }
 
     def get_network_usage(self) -> dict[str, float]:
         """Get network usage statistics and latency."""
-        net = psutil.net_io_counters()
+        if psutil:
+            net = psutil.net_io_counters()
+            bytes_sent = net.bytes_sent
+            bytes_recv = net.bytes_recv
+            packets_sent = net.packets_sent
+            packets_recv = net.packets_recv
+        else:  # pragma: no cover
+            bytes_sent = bytes_recv = packets_sent = packets_recv = 0
 
         # Simple latency check
         latency_ms = None
@@ -66,10 +119,10 @@ class ResourceMonitor:
             latency_ms = None
 
         return {
-            "bytes_sent_mb": net.bytes_sent / (1024**2),
-            "bytes_recv_mb": net.bytes_recv / (1024**2),
-            "packets_sent": net.packets_sent,
-            "packets_recv": net.packets_recv,
+            "bytes_sent_mb": bytes_sent / (1024**2),
+            "bytes_recv_mb": bytes_recv / (1024**2),
+            "packets_sent": packets_sent,
+            "packets_recv": packets_recv,
             "latency_ms": latency_ms,
         }
 
@@ -91,6 +144,15 @@ class ResourceMonitor:
 
     def get_battery(self) -> dict[str, Any] | None:
         """Get battery information if available."""
+        env_batt = os.getenv("BATTERY")
+        if env_batt is not None:
+            try:
+                percent = float(env_batt)
+            except ValueError:
+                percent = None
+            return {"percent": percent, "secsleft": None, "power_plugged": False}
+        if not psutil:  # pragma: no cover
+            return None
         try:
             batt = psutil.sensors_battery()
             if batt is None:

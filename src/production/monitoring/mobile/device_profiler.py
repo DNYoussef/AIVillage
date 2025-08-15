@@ -14,6 +14,7 @@ Replaces:
 """
 
 import logging
+import os
 import platform
 import queue
 import threading
@@ -24,8 +25,11 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
-# System monitoring
-import psutil
+# System monitoring (with graceful fallback)
+try:  # pragma: no cover - import may fail on some platforms
+    import psutil  # type: ignore
+except Exception:  # pragma: no cover
+    psutil = None  # type: ignore
 
 # Platform-specific imports
 ANDROID_AVAILABLE = False
@@ -60,6 +64,37 @@ elif platform.system() == "Darwin":  # iOS/macOS
 logger = logging.getLogger(__name__)
 
 
+def _read_memory_fallback() -> tuple[int, int, int, float]:
+    """Read memory statistics without psutil using /proc or os.sysconf."""
+    try:
+        with open("/proc/meminfo", "r", encoding="utf-8") as fh:
+            info: dict[str, int] = {}
+            for line in fh:
+                if ":" in line:
+                    key, value = line.split(":", 1)
+                    info[key] = int(value.strip().split()[0]) * 1024
+        total = info.get("MemTotal", 0)
+        available = info.get("MemAvailable", info.get("MemFree", 0))
+        used = total - available
+        percent = (used / total * 100) if total else 0.0
+        return total, available, used, percent
+    except Exception:  # pragma: no cover - platform specific
+        return 0, 0, 0, 0.0
+
+
+def _read_storage_fallback() -> tuple[int, int, int, float]:
+    """Read disk usage using os.statvfs for environments without psutil."""
+    try:
+        stat = os.statvfs("/")
+        total = stat.f_frsize * stat.f_blocks
+        free = stat.f_frsize * stat.f_bfree
+        used = total - free
+        percent = (used / total * 100) if total else 0.0
+        return total, used, free, percent
+    except Exception:  # pragma: no cover
+        return 0, 0, 0, 0.0
+
+
 class DeviceType(Enum):
     """Device type classification for resource management."""
 
@@ -92,6 +127,19 @@ class ThermalState(Enum):
     CRITICAL = "critical"  # > 85°C
     THROTTLING = "throttling"  # CPU throttling detected
     UNKNOWN = "unknown"
+
+
+def _state_from_temp(temp: float | None) -> ThermalState:
+    """Determine :class:`ThermalState` from a temperature reading."""
+    if temp is None:
+        return ThermalState.UNKNOWN
+    if temp < 60:
+        return ThermalState.NORMAL
+    if temp < 75:
+        return ThermalState.WARM
+    if temp < 85:
+        return ThermalState.HOT
+    return ThermalState.CRITICAL
 
 
 @dataclass
@@ -318,14 +366,23 @@ class DeviceProfile:
     def _initialize_capabilities(self) -> None:
         """Initialize device capabilities based on platform."""
         # Get basic hardware info
-        self.cpu_cores = psutil.cpu_count() or 1
-        self.memory_total_gb = psutil.virtual_memory().total / (1024**3)
+        if psutil:
+            self.cpu_cores = psutil.cpu_count() or 1
+            self.memory_total_gb = psutil.virtual_memory().total / (1024**3)
+        else:  # pragma: no cover - psutil normally available
+            self.cpu_cores = (os.cpu_count() or 1)
+            mem_total, _, _, _ = _read_memory_fallback()
+            self.memory_total_gb = mem_total / (1024**3)
 
         # Storage info
         try:
-            disk_usage = psutil.disk_usage("/")
-            self.storage_total_gb = disk_usage.total / (1024**3)
-        except:
+            if psutil:
+                disk_usage = psutil.disk_usage("/")
+                self.storage_total_gb = disk_usage.total / (1024**3)
+            else:
+                total, _, _, _ = _read_storage_fallback()
+                self.storage_total_gb = total / (1024**3)
+        except Exception:  # pragma: no cover
             self.storage_total_gb = 0.0
 
         # Platform-specific capabilities
@@ -396,52 +453,114 @@ class DeviceProfile:
         current_time = time.time()
 
         # Memory info
-        memory = psutil.virtual_memory()
+        if psutil:
+            mem = psutil.virtual_memory()
+            memory_total, memory_available, memory_used, memory_percent = (
+                mem.total,
+                mem.available,
+                mem.used,
+                mem.percent,
+            )
+        else:  # pragma: no cover
+            memory_total, memory_available, memory_used, memory_percent = (
+                _read_memory_fallback()
+            )
 
         # CPU info
-        cpu_percent = psutil.cpu_percent(interval=0.1)
-        cpu_freq = psutil.cpu_freq()
+        cpu_percent = psutil.cpu_percent(interval=0.1) if psutil else 0.0
+        cpu_freq = psutil.cpu_freq() if psutil else None
 
         # Storage info
-        try:
-            disk = psutil.disk_usage("/")
-            storage_total = disk.total
-            storage_used = disk.used
-            storage_free = disk.free
-            storage_percent = (storage_used / storage_total) * 100
-        except:
-            storage_total = storage_used = storage_free = 0
-            storage_percent = 0.0
+        if psutil:
+            try:
+                disk = psutil.disk_usage("/")
+                storage_total = disk.total
+                storage_used = disk.used
+                storage_free = disk.free
+                storage_percent = (storage_used / storage_total) * 100
+            except Exception:  # pragma: no cover
+                storage_total = storage_used = storage_free = 0
+                storage_percent = 0.0
+        else:  # pragma: no cover
+            storage_total, storage_used, storage_free, storage_percent = (
+                _read_storage_fallback()
+            )
 
-        # Battery info
-        battery = psutil.sensors_battery()
-        battery_percent = battery.percent if battery else None
-        power_plugged = battery.power_plugged if battery else None
+        # Battery info with environment override
+        battery_env = os.getenv("BATTERY")
+        if battery_env is not None:
+            try:
+                battery_percent = float(battery_env)
+            except ValueError:
+                battery_percent = None
+            power_plugged = False
+        elif psutil:
+            battery = psutil.sensors_battery()
+            battery_percent = battery.percent if battery else None
+            power_plugged = battery.power_plugged if battery else None
+        else:  # pragma: no cover
+            battery_percent = None
+            power_plugged = None
+
+        # CPU temperature (if available)
+        cpu_temp = self._get_cpu_temperature()
+        thermal_env = os.getenv("THERMAL")
+        if thermal_env:
+            try:
+                cpu_temp = float(thermal_env)
+            except ValueError:
+                mapping = {
+                    "normal": 35.0,
+                    "warm": 65.0,
+                    "hot": 80.0,
+                    "critical": 95.0,
+                }
+                cpu_temp = mapping.get(thermal_env.lower(), cpu_temp)
+
+        thermal_state = _state_from_temp(cpu_temp)
+        if not thermal_env and not cpu_temp:
+            # fall back to sensors-based detection
+            thermal_state = self._determine_thermal_state()
 
         # Power state
         power_state = self._determine_power_state(battery_percent, power_plugged)
 
-        # Thermal info
-        thermal_state = self._determine_thermal_state()
-
         # Network info
-        net_io = psutil.net_io_counters()
-        network_sent = net_io.bytes_sent
-        network_received = net_io.bytes_recv
-        network_connections = len(psutil.net_connections())
+        if psutil:
+            net_io = psutil.net_io_counters()
+            network_sent = net_io.bytes_sent
+            network_received = net_io.bytes_recv
+            try:
+                network_connections = len(psutil.net_connections())
+            except Exception:  # pragma: no cover
+                network_connections = 0
+        else:  # pragma: no cover
+            network_sent = network_received = network_connections = 0
 
         # Process count
-        process_count = len(psutil.pids())
+        process_count = len(psutil.pids()) if psutil else 0
 
-        # CPU temperature (if available)
-        cpu_temp = self._get_cpu_temperature()
+        # Apply mobile profile overrides
+        profile_name = os.getenv("AIV_MOBILE_PROFILE", "").lower()
+        if profile_name == "low_ram":
+            memory_total = 2 * 1024**3
+            memory_available = memory_total // 2
+            memory_used = memory_total - memory_available
+            memory_percent = (memory_used / memory_total) * 100
+        elif profile_name == "battery_save" and battery_percent is None:
+            battery_percent = 15.0
+            power_plugged = False
+            power_state = self._determine_power_state(battery_percent, power_plugged)
+        elif profile_name == "thermal_throttle" and not thermal_env:
+            cpu_temp = 80.0
+            thermal_state = _state_from_temp(cpu_temp)
 
         return ResourceSnapshot(
             timestamp=current_time,
-            memory_total=memory.total,
-            memory_available=memory.available,
-            memory_used=memory.used,
-            memory_percent=memory.percent,
+            memory_total=memory_total,
+            memory_available=memory_available,
+            memory_used=memory_used,
+            memory_percent=memory_percent,
             cpu_percent=cpu_percent,
             cpu_cores=self.cpu_cores,
             cpu_freq_current=cpu_freq.current if cpu_freq else None,
@@ -480,6 +599,8 @@ class DeviceProfile:
 
     def _determine_thermal_state(self) -> ThermalState:
         """Determine thermal state from temperature sensors."""
+        if not psutil:  # pragma: no cover
+            return ThermalState.UNKNOWN
         try:
             temps = psutil.sensors_temperatures()
             if not temps:
@@ -492,20 +613,15 @@ class DeviceProfile:
                     if entry.current and entry.current > max_temp:
                         max_temp = entry.current
 
-            if max_temp < 60:
-                return ThermalState.NORMAL
-            elif max_temp < 75:
-                return ThermalState.WARM
-            elif max_temp < 85:
-                return ThermalState.HOT
-            else:
-                return ThermalState.CRITICAL
+            return _state_from_temp(max_temp)
 
-        except:
+        except Exception:  # pragma: no cover
             return ThermalState.UNKNOWN
 
     def _get_cpu_temperature(self) -> float | None:
         """Get CPU temperature if available."""
+        if not psutil:  # pragma: no cover
+            return None
         try:
             temps = psutil.sensors_temperatures()
             if "coretemp" in temps:
@@ -521,7 +637,7 @@ class DeviceProfile:
                 # ARM/Mobile CPUs
                 for entry in temps["cpu_thermal"]:
                     return entry.current
-        except:
+        except Exception:  # pragma: no cover
             pass
         return None
 
