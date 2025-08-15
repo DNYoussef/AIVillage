@@ -125,18 +125,41 @@ LOW_RESOURCE_CHUNK_SIZE = 256
 
 def evaluate_policy_from_env() -> dict[str, Any]:
     """Evaluate resource policy using environment variables."""
-    battery = int(os.getenv("BATTERY", "100"))
-    profile_name = os.getenv("AIV_MOBILE_PROFILE", "normal")
-    low_ram_flag = profile_name == "low_ram"
+    battery_str = os.getenv("BATTERY", "100")
+    thermal_str = os.getenv("THERMAL", "")
+    profile_name = os.getenv("AIV_MOBILE_PROFILE", "normal").lower()
+
+    try:
+        battery = int(battery_str)
+    except ValueError:
+        battery = 100
+
+    low_ram = profile_name == "low_ram"
     low_power = battery < 20
-    low_ram = low_ram_flag
-    chunk = LOW_RESOURCE_CHUNK_SIZE if low_power or low_ram else DEFAULT_CHUNK_SIZE
+    thermal_hot = False
+    if thermal_str:
+        try:
+            thermal_hot = float(thermal_str) >= 60
+        except ValueError:
+            thermal_hot = thermal_str.lower() in {"hot", "critical"}
+
+    constrained = low_ram or low_power or thermal_hot
+    chunk = LOW_RESOURCE_CHUNK_SIZE if constrained else DEFAULT_CHUNK_SIZE
     transport = (
         TransportPreference.BITCHAT_PREFERRED
-        if low_power or low_ram
+        if constrained
         else TransportPreference.BALANCED
     )
-    return {"chunk_size": chunk, "transport": transport}
+    rag_mode = "local" if constrained else "default"
+    policy = {"chunk_size": chunk, "transport": transport, "rag_mode": rag_mode}
+    logger.info(
+        "Env policy: battery=%s, thermal=%s, profile=%s -> %s",
+        battery_str,
+        thermal_str or "n/a",
+        profile_name,
+        policy,
+    )
+    return policy
 
 
 @dataclass
@@ -786,7 +809,7 @@ class BatteryThermalResourceManager:
 
     def get_status(self) -> dict[str, Any]:
         """Get comprehensive status of resource management system"""
-        return {
+        status = {
             "state": self.state.to_dict(),
             "policy": {
                 "battery_thresholds": {
@@ -805,6 +828,15 @@ class BatteryThermalResourceManager:
             "profile_history_size": len(self.profile_history),
             "decision_history_size": len(self.decision_history),
         }
+        status["power_mode"] = self.state.power_mode.value
+        if self.profile_history:
+            status["battery"] = self.profile_history[-1].battery_percent
+        elif os.getenv("BATTERY") is not None:
+            try:
+                status["battery"] = int(os.getenv("BATTERY", "0"))
+            except ValueError:
+                status["battery"] = None
+        return status
 
     async def reset_policies(self) -> None:
         """Reset to default policies (for testing/recovery)"""
