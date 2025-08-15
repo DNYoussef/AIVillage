@@ -77,9 +77,9 @@ class Hyperedge(Edge):
         # Hypergraph-specific properties
         self.hyperedge_type: str = "n-ary" if len(participants) > 2 else "binary"
         self.semantic_role: str | None = None  # Subject, predicate, object, etc.
-        self.consolidation_source: list[
-            str
-        ] = []  # IDs of episodic edges that formed this
+        self.consolidation_source: list[str] = (
+            []
+        )  # IDs of episodic edges that formed this
 
 
 class Subgraph:
@@ -181,6 +181,9 @@ class HypergraphKG(MemoryBackend):
         # Cache settings
         self.cache_ttl = self.redis_schema.get_ttl_configs()
 
+        # Consolidation tracking
+        self.last_consolidation: datetime | None = None
+
         logger.info("HypergraphKG initialized with neo4j_uri=%s", neo4j_uri)
 
     async def initialize(self) -> None:
@@ -199,6 +202,15 @@ class HypergraphKG(MemoryBackend):
             # Initialize Redis
             self.redis_client = redis.from_url(self.redis_url)
             await self.redis_client.ping()
+
+            # Load last consolidation timestamp if available
+            try:
+                key = self.redis_schema.get_key_patterns()["last_consolidation"]
+                value = await self.redis_client.get(key)
+                if value:
+                    self.last_consolidation = datetime.fromisoformat(value.decode())
+            except Exception as e:
+                logger.warning("Failed to load last consolidation: %s", e)
 
             logger.info("HypergraphKG initialization complete")
 
@@ -320,6 +332,9 @@ class HypergraphKG(MemoryBackend):
             # Cache in Redis
             await self._cache_semantic_node(node)
 
+            if getattr(node, "consolidation_count", 0) > 0:
+                await self._record_consolidation_event()
+
             logger.debug("Stored semantic node %s", node.id)
             return True
 
@@ -395,6 +410,9 @@ class HypergraphKG(MemoryBackend):
 
             # Cache the hyperedge
             await self._cache_hyperedge(hyperedge)
+
+            if getattr(hyperedge, "consolidation_source", []):
+                await self._record_consolidation_event()
 
             logger.debug("Stored hyperedge %s", hyperedge.id)
             return True
@@ -813,14 +831,26 @@ class HypergraphKG(MemoryBackend):
 
                 record = await stats_result.single()
 
+                memory_usage_mb = await self._calculate_memory_usage_mb()
+
+                last_consolidation = self.last_consolidation
+                if last_consolidation is None and self.redis_client is not None:
+                    try:
+                        key = self.redis_schema.get_key_patterns()["last_consolidation"]
+                        value = await self.redis_client.get(key)
+                        if value:
+                            last_consolidation = datetime.fromisoformat(value.decode())
+                    except Exception as e:
+                        logger.warning("Failed to fetch last consolidation: %s", e)
+
                 return MemoryStats(
                     total_nodes=record["total_nodes"] or 0,
                     total_edges=record["total_edges"] or 0,
                     episodic_nodes=0,  # HypergraphKG only handles semantic
                     semantic_nodes=record["total_nodes"] or 0,
                     avg_confidence=record["avg_confidence"] or 0.0,
-                    memory_usage_mb=0.0,  # TODO: Calculate actual usage
-                    last_consolidation=None,  # TODO: Track consolidation
+                    memory_usage_mb=memory_usage_mb,
+                    last_consolidation=last_consolidation,
                     pending_consolidations=0,
                 )
 
@@ -833,7 +863,7 @@ class HypergraphKG(MemoryBackend):
                 semantic_nodes=0,
                 avg_confidence=0.0,
                 memory_usage_mb=0.0,
-                last_consolidation=None,
+                last_consolidation=self.last_consolidation,
                 pending_consolidations=0,
             )
 
@@ -953,6 +983,62 @@ class HypergraphKG(MemoryBackend):
 
         except Exception as e:
             logger.warning("Failed to cache hyperedge %s: %s", edge.id, e)
+
+    async def _record_consolidation_event(self) -> None:
+        """Update consolidation timestamp and persist it."""
+        self.last_consolidation = datetime.now()
+        if self.redis_client is not None:
+            try:
+                key = self.redis_schema.get_key_patterns()["last_consolidation"]
+                await self.redis_client.set(key, self.last_consolidation.isoformat())
+            except Exception as e:
+                logger.warning("Failed to record consolidation: %s", e)
+
+    async def _calculate_memory_usage_mb(self) -> float:
+        """Estimate combined storage usage of underlying systems."""
+        total_mb = 0.0
+
+        # Qdrant vector storage
+        try:
+            if self.qdrant_client is not None:
+                collections = self.qdrant_client.get_collections()
+                for c in collections.collections:
+                    try:
+                        info = self.qdrant_client.get_collection(c.name)
+                        vectors = getattr(info, "vectors_count", 0)
+                        total_mb += vectors * self.embedding_dim * 4 / (1024 * 1024)
+                    except Exception:
+                        continue
+        except Exception as e:
+            logger.warning("Failed to calculate Qdrant usage: %s", e)
+
+        # Redis memory usage
+        try:
+            if self.redis_client is not None:
+                info = await self.redis_client.info("memory")
+                used_bytes = info.get("used_memory", 0)
+                total_mb += used_bytes / (1024 * 1024)
+        except Exception as e:
+            logger.warning("Failed to calculate Redis usage: %s", e)
+
+        # Neo4j store sizes
+        try:
+            if self.neo4j_driver is not None:
+                async with self.neo4j_driver.session() as session:
+                    result = await session.run(
+                        """
+                        CALL dbms.queryJMX('org.neo4j:instance=kernel#0,name=StoreSizes')
+                        YIELD attributes RETURN attributes
+                        """
+                    )
+                    record = await result.single()
+                    if record and "attributes" in record:
+                        size_bytes = sum(record["attributes"].values())
+                        total_mb += size_bytes / (1024 * 1024)
+        except Exception as e:
+            logger.warning("Failed to calculate Neo4j usage: %s", e)
+
+        return total_mb
 
 
 # Factory functions for creating semantic memory components
