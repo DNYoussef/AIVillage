@@ -1,14 +1,18 @@
 """AgentForge - Main facade class for the Agent Forge system.
 
-This module provides a thin facade that composes existing evolution and compression engines
-to provide a unified interface for agent creation, management, and evolution.
+This module composes evolution and compression engines to provide a unified
+interface for agent creation, management and evolution.
 """
 
+import argparse
+from dataclasses import dataclass, field
 import json
 import logging
-import time
 from pathlib import Path
+import time
 from typing import Any
+
+from .hooks import Artifact, apply_compression, evolution_step, on_agent_created
 
 # Import existing engines - with graceful fallbacks
 try:
@@ -70,20 +74,33 @@ class AgentSpec:
         }
 
 
+@dataclass
 class AgentManifest:
     """Agent deployment manifest."""
 
-    def __init__(
-        self,
-        agents: list[dict[str, Any]] | None = None,
-        evolution_config: dict[str, Any] | None = None,
-        compression_config: dict[str, Any] | None = None,
-        metadata: dict[str, Any] | None = None,
-    ):
-        self.agents = agents or []
-        self.evolution_config = evolution_config or {}
-        self.compression_config = compression_config or {}
-        self.metadata = metadata or {"version": "1.0.0", "created_at": time.time()}
+    agents: list[dict[str, Any]] = field(default_factory=list)
+    evolution_config: dict[str, Any] = field(default_factory=dict)
+    compression_config: dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(
+        default_factory=lambda: {"version": "1.0.0", "created_at": time.time()}
+    )
+
+    def validate(self) -> None:
+        if not isinstance(self.agents, list):
+            raise TypeError("agents must be a list")
+        for agent in self.agents:
+            if not isinstance(agent, dict):
+                raise TypeError("agent entries must be dictionaries")
+            required = {"id", "type", "name", "config", "created_at"}
+            missing = required - agent.keys()
+            if missing:
+                raise ValueError(f"agent entry missing required fields: {missing}")
+        if not isinstance(self.evolution_config, dict):
+            raise TypeError("evolution_config must be a dict")
+        if not isinstance(self.compression_config, dict):
+            raise TypeError("compression_config must be a dict")
+        if not isinstance(self.metadata, dict):
+            raise TypeError("metadata must be a dict")
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -95,12 +112,14 @@ class AgentManifest:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "AgentManifest":
-        return cls(
+        manifest = cls(
             agents=data.get("agents", []),
             evolution_config=data.get("evolution_config", {}),
             compression_config=data.get("compression_config", {}),
             metadata=data.get("metadata", {}),
         )
+        manifest.validate()
+        return manifest
 
 
 class AgentForge:
@@ -233,6 +252,11 @@ class AgentForge:
             )
 
             if agent:
+                try:
+                    on_agent_created(agent)
+                except Exception as hook_error:  # pragma: no cover - defensive
+                    logger.debug("on_agent_created hook failed: %s", hook_error)
+
                 # Track created agent
                 agent_id = f"{agent_spec.agent_type}_{int(time.time())}"
                 self.created_agents[agent_id] = {
@@ -281,6 +305,8 @@ class AgentForge:
             if manifest is None:
                 manifest = self._create_default_manifest()
 
+            manifest.validate()
+
             manifest_path = Path(path)
             manifest_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -312,6 +338,8 @@ class AgentForge:
 
             with open(manifest_path) as f:
                 data = json.load(f)
+            if not isinstance(data, dict):
+                raise TypeError("Manifest file must contain a JSON object")
 
             manifest = AgentManifest.from_dict(data)
             logger.info(f"Loaded manifest from: {manifest_path}")
@@ -361,6 +389,18 @@ class AgentForge:
                         # Get KPI data from agent if it supports it
                         if hasattr(agent, "evaluate_kpi"):
                             kpi_data = agent.evaluate_kpi()
+                            try:
+                                patch = evolution_step(agent, kpi_data)
+                                if patch:
+                                    logger.debug(
+                                        "evolution_step returned patch for %s: %s",
+                                        agent_id,
+                                        patch,
+                                    )
+                            except Exception as hook_error:  # pragma: no cover
+                                logger.debug(
+                                    "evolution_step hook failed: %s", hook_error
+                                )
 
                             if AgentKPI is not None:
                                 # Create KPI object
@@ -390,6 +430,24 @@ class AgentForge:
                 "agents_evaluated": 0,
                 "actions_taken": [],
             }
+
+    def compress_agent(self, agent_id: str, engine_name: str) -> Artifact | None:
+        """Compress a created agent using the specified engine.
+
+        The actual compression logic is delegated to the ``apply_compression``
+        hook, allowing deployments to provide custom implementations.
+        """
+        if engine_name not in self.compression_engines:
+            raise ValueError(f"Unknown compression engine: {engine_name}")
+        agent_info = self.created_agents.get(agent_id)
+        if not agent_info:
+            raise ValueError(f"Unknown agent id: {agent_id}")
+        agent = agent_info["agent"]
+        try:
+            return apply_compression(agent, engine_name)
+        except Exception as hook_error:  # pragma: no cover - defensive
+            logger.debug("apply_compression hook failed: %s", hook_error)
+            return None
 
     def _create_default_manifest(self) -> AgentManifest:
         """Create a default manifest from currently created agents."""
@@ -520,3 +578,28 @@ class AgentForge:
             f"compression={len(self.compression_engines)} engines"
             f")"
         )
+
+
+def main() -> None:
+    """CLI entry point for basic forge operations."""
+    parser = argparse.ArgumentParser(description="Agent Forge CLI")
+    parser.add_argument("--list", action="store_true", help="List available agents")
+    parser.add_argument("--create", type=str, help="Create agent of given type")
+    parser.add_argument("--manifest", type=str, help="Path to save manifest")
+    args = parser.parse_args()
+
+    forge = AgentForge()
+
+    if args.list:
+        for agent_type in forge.get_available_agent_types():
+            print(agent_type)
+
+    if args.create:
+        forge.create_agent(args.create)
+        if args.manifest:
+            manifest = forge.create_manifest()
+            forge.save_manifest(args.manifest, manifest)
+
+
+if __name__ == "__main__":  # pragma: no cover - CLI utility
+    main()
