@@ -3,6 +3,7 @@ package com.aivillageeducation;
 import androidx.annotation.NonNull;
 
 import com.facebook.react.bridge.Arguments;
+import com.facebook.react.bridge.Callback;
 import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
@@ -27,8 +28,11 @@ public class LibP2PBridge extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void onPeerFound(String peerId) {
-        // Placeholder callback registration
+    public void onPeerFound(Callback callback) {
+        // Placeholder implementation emitting a single peer discovery event
+        WritableMap peer = Arguments.createMap();
+        peer.putString("id", "placeholder-peer");
+        callback.invoke(peer);
     }
 
     @ReactMethod
