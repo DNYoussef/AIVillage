@@ -25,7 +25,7 @@ import requests
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-TWIN_URL = os.getenv("TWIN_URL", "http://twin:8001/v1/chat")
+TWIN_URL = os.getenv("TWIN_URL", "https://twin:8001/v1/chat")
 CALIB_ENABLED = os.getenv("CALIBRATION_ENABLED", "0") == "1"
 
 if CALIB_ENABLED:

@@ -20,8 +20,8 @@ _SHELL_PATTERN = re.compile(
     r"\b(rm|ls|cat|wget|curl|scp|ssh|chmod|chown|kill|ps|systemctl)\b",
     re.IGNORECASE,
 )
-# Detect URLs or other network indicators without embedding a literal
-# ``http://`` string in the source.
+# Detect URLs or other network indicators without embedding insecure
+# URL patterns directly in the source.
 _NETWORK_PATTERN = re.compile(r"https?://", re.IGNORECASE)
 
 # Secrets or credential patterns which always result in a denial.

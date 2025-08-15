@@ -710,10 +710,10 @@ class SecurityDashboardServer:
 
         self.running = True
 
-        logger.info(f"Security dashboard started at http://localhost:{self.port}")
+        logger.info(f"Security dashboard started at https://localhost:{self.port}")
         print(f"\n{'=' * 60}")
         print("P2P SECURITY DASHBOARD STARTED")
-        print(f"URL: http://localhost:{self.port}")
+        print(f"URL: https://localhost:{self.port}")
         print("Features:")
         print("  - Real-time security monitoring")
         print("  - Threat level assessment")
