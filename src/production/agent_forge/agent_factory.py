@@ -3,16 +3,15 @@
 Auto-generated from agent specifications.
 """
 
+from importlib import import_module
 import json
-import os
-import sys
+import logging
 from pathlib import Path
 from typing import Any
 
-# Add the parent directory to the path to import our modules
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
 from .base import AgentRole, AgentSpecialization, BaseMetaAgent
+
+logger = logging.getLogger(__name__)
 
 
 class TemplateNotFoundError(Exception):
@@ -94,9 +93,11 @@ class AgentFactory:
                                 template = json.load(f)
                             templates[agent_id] = template
                             loaded_templates.add(agent_id)
-                            print(
-                                f"Loaded template {agent_id} from legacy location: {template_file}"
+                            msg = (
+                                f"Loaded template {agent_id} from legacy location: "
+                                f"{template_file}"
                             )
+                            print(msg)
                         except Exception as e:
                             print(f"Error loading template {template_file}: {e}")
 
@@ -120,173 +121,41 @@ class AgentFactory:
         return templates
 
     def _initialize_agent_classes(self) -> dict[str, type]:
-        """Initialize specialized agent classes."""
-        # Import specialized implementations
-        agent_classes = {}
+        """Initialize specialized agent classes with graceful fallbacks."""
+        agent_specs = {
+            "king": ("src.production.agents.king", "KingAgent"),
+            "magi": ("src.production.agents.magi", "MagiAgent"),
+            "sage": ("src.production.agents.sage", "SageAgent"),
+            "gardener": ("src.production.agents.gardener", "GardenerAgent"),
+            "sword_shield": (
+                "src.production.agents.sword_shield",
+                "SwordAndShieldAgent",
+            ),
+            "legal": ("src.production.agents.legal", "LegalAIAgent"),
+            "shaman": ("src.production.agents.shaman", "ShamanAgent"),
+            "oracle": ("src.production.agents.oracle", "OracleAgent"),
+            "maker": ("src.production.agents.maker", "MakerAgent"),
+            "ensemble": ("src.production.agents.ensemble", "EnsembleAgent"),
+            "curator": ("src.production.agents.curator", "CuratorAgent"),
+            "auditor": ("src.production.agents.auditor", "AuditorAgent"),
+            "medic": ("src.production.agents.medic", "MedicAgent"),
+            "sustainer": ("src.production.agents.sustainer", "SustainerAgent"),
+            "navigator": ("src.production.agents.navigator", "NavigatorAgent"),
+            "tutor": ("src.production.agents.tutor", "TutorAgent"),
+            "polyglot": ("src.production.agents.polyglot", "PolyglotAgent"),
+            "strategist": ("src.production.agents.strategist", "StrategistAgent"),
+        }
 
-        # King Agent
-        try:
-            from src.production.agents.king import KingAgent
-
-            agent_classes["king"] = KingAgent
-        except ImportError:
-            # Use generic agent if specialized not available
-            agent_classes["king"] = self._create_generic_agent_class("king")
-
-        # Magi Agent
-        try:
-            from src.production.agents.magi import MagiAgent
-
-            agent_classes["magi"] = MagiAgent
-        except ImportError:
-            # Use generic agent if specialized not available
-            agent_classes["magi"] = self._create_generic_agent_class("magi")
-
-        # Sage Agent
-        try:
-            from src.production.agents.sage import SageAgent
-
-            agent_classes["sage"] = SageAgent
-        except ImportError:
-            # Use generic agent if specialized not available
-            agent_classes["sage"] = self._create_generic_agent_class("sage")
-
-        # Gardener Agent
-        try:
-            from src.production.agents.gardener import GardenerAgent
-
-            agent_classes["gardener"] = GardenerAgent
-        except ImportError:
-            # Use generic agent if specialized not available
-            agent_classes["gardener"] = self._create_generic_agent_class("gardener")
-
-        # Sword & Shield Agent
-        try:
-            from src.production.agents.sword_shield import SwordAndShieldAgent
-
-            agent_classes["sword_shield"] = SwordAndShieldAgent
-        except ImportError:
-            # Use generic agent if specialized not available
-            agent_classes["sword_shield"] = self._create_generic_agent_class(
-                "sword_shield"
-            )
-
-        # Legal AI Agent
-        try:
-            from src.production.agents.legal import LegalAIAgent
-
-            agent_classes["legal"] = LegalAIAgent
-        except ImportError:
-            # Use generic agent if specialized not available
-            agent_classes["legal"] = self._create_generic_agent_class("legal")
-
-        # Shaman Agent
-        try:
-            from src.production.agents.shaman import ShamanAgent
-
-            agent_classes["shaman"] = ShamanAgent
-        except ImportError:
-            # Use generic agent if specialized not available
-            agent_classes["shaman"] = self._create_generic_agent_class("shaman")
-
-        # Oracle Agent
-        try:
-            from src.production.agents.oracle import OracleAgent
-
-            agent_classes["oracle"] = OracleAgent
-        except ImportError:
-            # Use generic agent if specialized not available
-            agent_classes["oracle"] = self._create_generic_agent_class("oracle")
-
-        # Maker Agent
-        try:
-            from src.production.agents.maker import MakerAgent
-
-            agent_classes["maker"] = MakerAgent
-        except ImportError:
-            # Use generic agent if specialized not available
-            agent_classes["maker"] = self._create_generic_agent_class("maker")
-
-        # Ensemble Agent
-        try:
-            from src.production.agents.ensemble import EnsembleAgent
-
-            agent_classes["ensemble"] = EnsembleAgent
-        except ImportError:
-            # Use generic agent if specialized not available
-            agent_classes["ensemble"] = self._create_generic_agent_class("ensemble")
-
-        # Curator Agent
-        try:
-            from src.production.agents.curator import CuratorAgent
-
-            agent_classes["curator"] = CuratorAgent
-        except ImportError:
-            # Use generic agent if specialized not available
-            agent_classes["curator"] = self._create_generic_agent_class("curator")
-
-        # Auditor Agent
-        try:
-            from src.production.agents.auditor import AuditorAgent
-
-            agent_classes["auditor"] = AuditorAgent
-        except ImportError:
-            # Use generic agent if specialized not available
-            agent_classes["auditor"] = self._create_generic_agent_class("auditor")
-
-        # Medic Agent
-        try:
-            from src.production.agents.medic import MedicAgent
-
-            agent_classes["medic"] = MedicAgent
-        except ImportError:
-            # Use generic agent if specialized not available
-            agent_classes["medic"] = self._create_generic_agent_class("medic")
-
-        # Sustainer Agent
-        try:
-            from src.production.agents.sustainer import SustainerAgent
-
-            agent_classes["sustainer"] = SustainerAgent
-        except ImportError:
-            # Use generic agent if specialized not available
-            agent_classes["sustainer"] = self._create_generic_agent_class("sustainer")
-
-        # Navigator Agent
-        try:
-            from src.production.agents.navigator import NavigatorAgent
-
-            agent_classes["navigator"] = NavigatorAgent
-        except ImportError:
-            # Use generic agent if specialized not available
-            agent_classes["navigator"] = self._create_generic_agent_class("navigator")
-
-        # Tutor Agent
-        try:
-            from src.production.agents.tutor import TutorAgent
-
-            agent_classes["tutor"] = TutorAgent
-        except ImportError:
-            # Use generic agent if specialized not available
-            agent_classes["tutor"] = self._create_generic_agent_class("tutor")
-
-        # Polyglot Agent
-        try:
-            from src.production.agents.polyglot import PolyglotAgent
-
-            agent_classes["polyglot"] = PolyglotAgent
-        except ImportError:
-            # Use generic agent if specialized not available
-            agent_classes["polyglot"] = self._create_generic_agent_class("polyglot")
-
-        # Strategist Agent
-        try:
-            from src.production.agents.strategist import StrategistAgent
-
-            agent_classes["strategist"] = StrategistAgent
-        except ImportError:
-            # Use generic agent if specialized not available
-            agent_classes["strategist"] = self._create_generic_agent_class("strategist")
+        agent_classes: dict[str, type] = {}
+        for agent_id, (module_path, class_name) in agent_specs.items():
+            try:
+                module = import_module(module_path)
+                agent_classes[agent_id] = getattr(module, class_name)
+            except Exception as e:  # pragma: no cover - import may fail
+                logger.warning(
+                    "Falling back to GenericAgent for %s: %s", agent_id, e
+                )
+                agent_classes[agent_id] = self._create_generic_agent_class(agent_id)
 
         return agent_classes
 
@@ -338,9 +207,11 @@ class AgentFactory:
                 available_types,
             )
 
-        print(
-            f"[PASS] All {len(required_types)} required agent templates loaded successfully"
+        msg = (
+            f"[PASS] All {len(required_types)} required agent templates "
+            f"loaded successfully"
         )
+        print(msg)
 
     def _create_generic_agent_class(self, agent_id: str) -> type:
         """Create a generic agent class for the given agent ID."""
@@ -352,6 +223,7 @@ class AgentFactory:
                 super().__init__(spec)
                 self.agent_type = agent_id
                 self.config = default_params.copy()
+                logger.debug("GenericAgent instantiated for %s", agent_id)
 
             def process(self, task: dict[str, Any]) -> dict[str, Any]:
                 return {
@@ -410,11 +282,23 @@ class AgentFactory:
             raise TypeError(msg)
 
         if agent_type not in self.templates:
-            msg = f"Unknown agent type: {agent_type}. Available: {list(self.templates.keys())}"
+            msg = (
+                f"Unknown agent type: {agent_type}. Available: "
+                f"{list(self.templates.keys())}"
+            )
             raise ValueError(msg)
 
         template = self.templates[agent_type]
         agent_class = self.agent_classes[agent_type]
+
+        if config:
+            unknown = set(config) - set(template.get("default_params", {}))
+            if unknown:
+                msg = (
+                    f"Unknown config parameters for {agent_type}: "
+                    f"{sorted(unknown)}"
+                )
+                raise ValueError(msg)
 
         try:
             role = AgentRole(agent_type)
