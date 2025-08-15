@@ -3,11 +3,16 @@
 Implements Model Context Protocol handlers for HypeRAG server operations.
 """
 
+# isort: skip_file
+
+import asyncio
+import json
 import logging
 import time
 import uuid
 from dataclasses import asdict
 from datetime import datetime
+from pathlib import Path
 from typing import Any
 
 from .auth import (
@@ -123,6 +128,8 @@ class MCPProtocolHandler:
         self.permission_manager = permission_manager
         self.model_registry = model_registry
         self.storage_backend = storage_backend
+        # Path for persisting registered model configurations
+        self.model_registry_path = Path("data/model_registry.json")
 
         # Request handlers
         self.handlers = {
@@ -304,7 +311,10 @@ class MCPProtocolHandler:
                 "relations": ["relates_to", "enables"],
                 "surprise_score": 0.82,
                 "confidence": 0.73,
-                "explanation": f"Creative connection between {source_concept} and {target_concept or 'related concepts'}",
+                "explanation": (
+                    "Creative connection between "
+                    f"{source_concept} and {target_concept or 'related concepts'}"
+                ),
                 "tags": ["creative", "analogy"],
             }
         ]
@@ -334,7 +344,10 @@ class MCPProtocolHandler:
         repair_proposals = [
             {
                 "id": "proposal_001",
-                "description": f"Repair {violation_type}: {details.get('description', 'Unknown issue')}",
+                "description": (
+                    f"Repair {violation_type}: "
+                    f"{details.get('description', 'Unknown issue')}"
+                ),
                 "confidence": 0.92,
                 "impact_analysis": {
                     "affected_nodes": 2,
@@ -629,11 +642,48 @@ class MCPProtocolHandler:
         **kwargs,
     ) -> dict[str, Any]:
         """Handle model registration request."""
-        # TODO: Implement actual model registration
+        # Validate model configuration
+        if not isinstance(model_config, dict):
+            raise InvalidRequest("Model configuration must be a dictionary")
+
+        required_fields = ["model_name", "model_type"]
+        for field in required_fields:
+            if field not in model_config:
+                raise InvalidRequest(f"Missing required field: {field}")
+
+        # Load existing registry from persistent storage
+        def _load_registry() -> dict[str, Any]:
+            if self.model_registry_path.exists():
+                with self.model_registry_path.open("r", encoding="utf-8") as f:
+                    try:
+                        return json.load(f)
+                    except json.JSONDecodeError:
+                        return {}
+            return {}
+
+        registry = await asyncio.to_thread(_load_registry)
+
+        # Prevent duplicate registrations
+        if agent_id in registry:
+            raise InvalidRequest(f"Model already registered for agent {agent_id}")
+
+        # Persist new model configuration
+        timestamp = datetime.now().isoformat()
+        metadata = {"config": model_config, "registered_at": timestamp}
+        registry[agent_id] = metadata
+
+        def _save_registry(data: dict[str, Any]) -> None:
+            self.model_registry_path.parent.mkdir(parents=True, exist_ok=True)
+            with self.model_registry_path.open("w", encoding="utf-8") as f:
+                json.dump(data, f, indent=2)
+
+        await asyncio.to_thread(_save_registry, registry)
+
         return {
             "agent_id": agent_id,
             "status": "registered",
             "message": "Model registered successfully",
+            "model_metadata": metadata,
         }
 
     @require_permission(HypeRAGPermissions.MONITOR)
