@@ -6,8 +6,10 @@ privacy features.
 """
 
 import asyncio
+import base64
 import json
 import logging
+import secrets
 import time
 import uuid
 from typing import Any
@@ -86,7 +88,9 @@ class FederationManager:
 
         # VPN-like privacy tunnels
         self.active_tunnels: dict[str, dict[str, Any]] = {}
-        self.privacy_circuits: dict[str, list[str]] = {}  # destination -> path
+        self.privacy_circuits: dict[
+            str, list[dict[str, str]]
+        ] = {}  # destination -> path
 
         # Beacon coordination (for beacon nodes)
         self.coordinated_devices: set[str] = set()
@@ -744,8 +748,8 @@ class FederationManager:
 
     async def _build_privacy_circuit(
         self, destination: str, min_hops: int = 3
-    ) -> list[str] | None:
-        """Build privacy circuit through relay nodes"""
+    ) -> list[dict[str, str]] | None:
+        """Build privacy circuit through relay nodes with per-hop keys"""
         relay_nodes = self.device_registry.get_devices_by_role(DeviceRole.RELAY)
 
         if len(relay_nodes) < min_hops - 1:
@@ -754,19 +758,37 @@ class FederationManager:
             )
             return None
 
-        # Select random relay nodes for circuit
         import random
 
         selected_relays = random.sample(
-            [r.identity.device_id for r in relay_nodes],
-            min(min_hops - 1, len(relay_nodes)),
+            relay_nodes, min(min_hops - 1, len(relay_nodes))
         )
 
-        # Circuit: source -> relays -> destination
-        circuit = selected_relays + [destination]
+        available_protocols = self._get_available_protocols()
+        circuit: list[dict[str, str]] = []
+
+        for relay in selected_relays:
+            circuit.append(
+                {
+                    "node": relay.identity.device_id,
+                    "key": secrets.token_hex(16),
+                    "protocol": random.choice(available_protocols),
+                }
+            )
+
+        circuit.append(
+            {
+                "node": destination,
+                "key": secrets.token_hex(16),
+                "protocol": random.choice(available_protocols),
+            }
+        )
+
         return circuit
 
-    async def _build_paranoid_circuit(self, destination: str) -> list[str] | None:
+    async def _build_paranoid_circuit(
+        self, destination: str
+    ) -> list[dict[str, str]] | None:
         """Build multi-protocol paranoid circuit"""
         # For PARANOID level, chain different protocols
         # This would involve Tor -> Betanet -> I2P routing
@@ -774,8 +796,7 @@ class FederationManager:
         return await self._build_privacy_circuit(destination, min_hops=5)
 
     async def _send_via_privacy_circuit(self, destination: str, message: dict) -> bool:
-        """Send message through privacy circuit"""
-        # Create tunnel if needed
+        """Send message through privacy circuit using onion routing"""
         tunnel_id = await self.create_privacy_tunnel(
             destination, PrivacyLevel.ANONYMOUS
         )
@@ -786,11 +807,50 @@ class FederationManager:
         tunnel = self.active_tunnels[tunnel_id]
         circuit_path = tunnel["circuit_path"]
 
-        # For now, just send through regular dual-path (would implement onion routing)
+        # Build onion layers from destination backwards
+        onion_payload: Any = message
+        for hop in reversed(circuit_path):
+            key_bytes = bytes.fromhex(hop["key"])
+            raw = json.dumps(onion_payload).encode()
+            encrypted = bytes(
+                b ^ key_bytes[i % len(key_bytes)] for i, b in enumerate(raw)
+            )
+            onion_payload = {
+                "data": base64.b64encode(encrypted).decode(),
+            }
+
+        current_layer = onion_payload
+        for hop in circuit_path:
+            success = await self._send_via_protocol(
+                hop["node"], current_layer, hop.get("protocol", "bitchat")
+            )
+            if not success:
+                return False
+
+            key_bytes = bytes.fromhex(hop["key"])
+            encrypted = base64.b64decode(current_layer["data"])
+            decrypted = bytes(
+                b ^ key_bytes[i % len(key_bytes)] for i, b in enumerate(encrypted)
+            )
+            current_layer = json.loads(decrypted.decode())
+
+        return True
+
+    async def _send_via_protocol(
+        self, recipient: str, payload: Any, protocol: str
+    ) -> bool:
+        """Send payload via specified transport protocol"""
+        if protocol == "tor" and self.tor_transport:
+            return await self.tor_transport.send_message(recipient, payload)
+        if protocol == "i2p" and self.i2p_transport:
+            return await self.i2p_transport.send_message(recipient, payload)
+
+        preferred = protocol if protocol in {"bitchat", "betanet"} else None
         return await self.dual_path_transport.send_message(
-            recipient=circuit_path[0],  # First hop
-            payload=message,
+            recipient=recipient,
+            payload=payload,
             privacy_required=True,
+            preferred_protocol=preferred,
         )
 
     def _update_federation_stats(self):
