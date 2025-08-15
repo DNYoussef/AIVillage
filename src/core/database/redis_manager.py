@@ -6,6 +6,8 @@ This module provides Redis connection management with automatic fallbacks to:
 - File-based storage for queue operations
 """
 
+# isort: skip_file
+
 from __future__ import annotations
 
 import asyncio
@@ -82,7 +84,8 @@ class RedisFallbackStorage:
             created_at REAL DEFAULT (datetime('now','unixepoch'))
         );
 
-        CREATE INDEX IF NOT EXISTS idx_redis_fallback_expires ON redis_fallback(expires_at);
+        CREATE INDEX IF NOT EXISTS idx_redis_fallback_expires
+        ON redis_fallback(expires_at);
 
         CREATE TABLE IF NOT EXISTS redis_lists (
             key TEXT NOT NULL,
@@ -113,7 +116,21 @@ class RedisFallbackStorage:
     async def get(self, key: str) -> Any | None:
         """Get value from fallback storage."""
         if self.storage_type == "memory":
-            return self._memory_store.get(key)
+            item = self._memory_store.get(key)
+            if item is None:
+                return None
+
+            # For memory storage we store tuples of (value, expires_at)
+            if isinstance(item, tuple):
+                value, expires_at = item
+                if expires_at is not None and expires_at < time.time():
+                    # Purge expired keys before returning
+                    self._memory_store.pop(key, None)
+                    return None
+                return value
+
+            # Backward compatibility for pre-tuple values
+            return item
 
         if self.storage_type == "sqlite" and self._sqlite_conn:
             cursor = self._sqlite_conn.cursor()
@@ -171,8 +188,8 @@ class RedisFallbackStorage:
         expires_at = time.time() + ex if ex else None
 
         if self.storage_type == "memory":
-            self._memory_store[key] = value
-            # TODO: Implement expiration for memory storage
+            # Store tuple of (value, expires_at) for memory storage
+            self._memory_store[key] = (value, expires_at)
             return True
 
         if self.storage_type == "sqlite" and self._sqlite_conn:
@@ -193,7 +210,8 @@ class RedisFallbackStorage:
 
                 self._sqlite_conn.execute(
                     """
-                INSERT OR REPLACE INTO redis_fallback (key, value, value_type, expires_at)
+                INSERT OR REPLACE INTO redis_fallback
+                    (key, value, value_type, expires_at)
                 VALUES (?, ?, ?, ?)
                 """,
                     (key, value_blob, value_type, expires_at),
@@ -270,6 +288,16 @@ class RedisFallbackStorage:
 
     async def cleanup_expired(self) -> int:
         """Clean up expired keys."""
+        if self.storage_type == "memory":
+            expired_keys = [
+                key
+                for key, (_, expires_at) in self._memory_store.items()
+                if expires_at is not None and expires_at < time.time()
+            ]
+            for key in expired_keys:
+                self._memory_store.pop(key, None)
+            return len(expired_keys)
+
         if self.storage_type == "sqlite" and self._sqlite_conn:
             cursor = self._sqlite_conn.cursor()
             cursor.execute(
@@ -292,8 +320,12 @@ class RedisFallbackStorage:
                     if "expires_at" in data and data["expires_at"] < time.time():
                         file_path.unlink()
                         expired_count += 1
-                except Exception:
-                    pass  # Skip corrupted files
+                except Exception as e:
+                    logger.debug(
+                        "Skipping corrupted fallback file %s: %s",
+                        file_path,
+                        e,
+                    )
 
             return expired_count
 
@@ -378,12 +410,14 @@ class RedisManager:
         redis_configs = {
             "evolution_metrics": RedisConfig(
                 url=get_redis_url(
-                    self.config_manager.get(
-                        "AIVILLAGE_REDIS_URL",
-                        f"redis://{base_redis_host}:{base_redis_port}/0",
-                    )
-                    if self.config_manager
-                    else "redis://localhost:6379/0",
+                    (
+                        self.config_manager.get(
+                            "AIVILLAGE_REDIS_URL",
+                            f"redis://{base_redis_host}:{base_redis_port}/0",
+                        )
+                        if self.config_manager
+                        else "redis://localhost:6379/0"
+                    ),
                     0,
                 ),
                 db=0,
@@ -391,12 +425,14 @@ class RedisManager:
             ),
             "rag_cache": RedisConfig(
                 url=get_redis_url(
-                    self.config_manager.get(
-                        "RAG_REDIS_URL",
-                        f"redis://{base_redis_host}:{base_redis_port}/1",
-                    )
-                    if self.config_manager
-                    else "redis://localhost:6379/1",
+                    (
+                        self.config_manager.get(
+                            "RAG_REDIS_URL",
+                            f"redis://{base_redis_host}:{base_redis_port}/1",
+                        )
+                        if self.config_manager
+                        else "redis://localhost:6379/1"
+                    ),
                     1,
                 ),
                 db=1,
@@ -442,11 +478,16 @@ class RedisManager:
                 error_msg = str(e)
                 if "Authentication required" in error_msg or "NOAUTH" in error_msg:
                     logger.warning(
-                        f"Redis pool {pool_name} requires authentication but none provided, using fallback storage"
+                        (
+                            "Redis pool %s requires authentication but none provided, "
+                            "using fallback storage"
+                        ),
+                        pool_name,
                     )
                 elif "Connection refused" in error_msg:
                     logger.warning(
-                        f"Redis server not running for {pool_name}, using fallback storage"
+                        ("Redis server not running for %s, using fallback storage"),
+                        pool_name,
                     )
                 else:
                     logger.warning(f"Failed to initialize Redis pool {pool_name}: {e}")
