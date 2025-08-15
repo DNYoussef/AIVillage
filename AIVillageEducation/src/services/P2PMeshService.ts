@@ -26,8 +26,10 @@ export default class P2PMeshService {
   }
 
   startDiscovery() {
-    this.bridge.onPeerFound((peer: Peer) => {
-      this.peers.set(peer.id, peer);
+    this.bridge.onPeerFound((peerId: string) => {
+      if (peerId) {
+        this.peers.set(peerId, { id: peerId });
+      }
     });
   }
 
