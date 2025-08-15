@@ -5,6 +5,8 @@ RAG Defaults Offline Validated Config Integration Test - Prompt 6
 
 import os
 import sys
+import tempfile
+from pathlib import Path
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
 
@@ -24,6 +26,13 @@ from core.knowledge.rag_offline_config import (
 def test_rag_offline_config():
     """Test comprehensive offline RAG configuration system."""
     print("\n=== RAG Defaults Offline Validated Config Integration Test ===")
+    tmp_models = tempfile.TemporaryDirectory()
+    model_dir = Path(tmp_models.name)
+    (model_dir / "all-MiniLM-L6-v2.onnx").touch()
+    mobile_dir = model_dir / "mobile"
+    mobile_dir.mkdir()
+    (mobile_dir / "all-MiniLM-L6-v2.onnx").touch()
+    os.environ["RAG_MODEL_DIR"] = str(model_dir)
 
     # Test 1: Registry Initialization
     print("\n[1] Testing RAG config registry initialization...")
@@ -291,6 +300,9 @@ def test_rag_offline_config():
     )
 
     print("\n=== RAG Offline Configuration: ALL TESTS PASSED ===")
+
+    tmp_models.cleanup()
+    os.environ.pop("RAG_MODEL_DIR", None)
 
     return {
         "registry_initialization": True,
