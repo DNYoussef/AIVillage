@@ -13,7 +13,8 @@
     "react": "^18.2.0",
     "react-native": "^0.73.0",
     "@react-native-async-storage/async-storage": "^1.23.1",
-    "react-native-sqlite-storage": "^6.1.2"
+    "react-native-sqlite-storage": "^6.1.2",
+    "pako": "^2.1.0"
   },
   "devDependencies": {
     "typescript": "^5.4.0"

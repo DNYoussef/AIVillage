@@ -1,4 +1,6 @@
 import { NativeModules } from 'react-native';
+import pako from 'pako';
+import { createHash } from 'crypto';
 
 interface Lesson {
   id: string;
@@ -34,26 +36,26 @@ export default class P2PMeshService {
   }
 
   async compress(lesson: Lesson): Promise<string> {
-    return JSON.stringify(lesson); // placeholder
+    const json = JSON.stringify(lesson);
+    const compressed = pako.deflate(json);
+    return Buffer.from(compressed).toString('base64');
   }
 
   calculateChecksum(data: string): string {
-    let hash = 0;
-    for (let i = 0; i < data.length; i++) {
-      hash = (hash << 5) - hash + data.charCodeAt(i);
-      hash |= 0;
-    }
-    return hash.toString();
+    return createHash('sha256').update(data, 'base64').digest('hex');
   }
 
   async shareLesson(lesson: Lesson) {
     const compressed = await this.compress(lesson);
+    const checksum = this.calculateChecksum(compressed);
     const peers = await this.findNearbyPeers();
     for (const peer of peers) {
       await this.bridge.sendMessage(peer.id, {
         type: 'LESSON_SHARE',
-        payload: compressed,
-        checksum: this.calculateChecksum(compressed)
+        payload: {
+          data: compressed,
+          checksum
+        }
       });
     }
   }
