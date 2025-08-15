@@ -14,6 +14,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from production.monitoring.mobile.device_profiler import DeviceProfiler
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -477,6 +479,35 @@ class SystemHealthDashboard:
     def __init__(self, project_root: Path | None = None) -> None:
         self.health_checker = ComponentHealthChecker(project_root)
         self.project_root = project_root or Path(__file__).parent.parent.parent
+        self.device_profiler = DeviceProfiler()
+        self.device_profiler.initialize()
+
+    def collect_system_metrics(self) -> dict[str, Any]:
+        """Collect CPU, memory, disk, and network stats."""
+        try:
+            snapshot = self.device_profiler.capture_snapshot()
+            return {
+                "cpu": {"percent": snapshot.cpu_percent, "cores": snapshot.cpu_cores},
+                "memory": {
+                    "total": snapshot.memory_total,
+                    "used": snapshot.memory_used,
+                    "percent": snapshot.memory_percent,
+                },
+                "disk": {
+                    "total": snapshot.storage_total,
+                    "used": snapshot.storage_used,
+                    "free": snapshot.storage_free,
+                    "percent": snapshot.storage_percent,
+                },
+                "network": {
+                    "sent": snapshot.network_sent,
+                    "received": snapshot.network_received,
+                    "connections": snapshot.network_connections,
+                },
+            }
+        except Exception as e:  # pragma: no cover - fallback path
+            logger.exception("Failed to collect system metrics: %s", e)
+            return {"error": str(e)}
 
     async def generate_dashboard(self) -> dict[str, Any]:
         """Generate complete system health dashboard."""
@@ -484,6 +515,7 @@ class SystemHealthDashboard:
 
         # Scan all components
         component_results = await self.health_checker.scan_all_components()
+        system_metrics = self.collect_system_metrics()
 
         # Calculate overall health
         overall_health = self.health_checker.calculate_overall_system_health(
@@ -499,6 +531,7 @@ class SystemHealthDashboard:
             "timestamp": datetime.now().isoformat(),
             "overall_health": overall_health,
             "component_results": component_results,
+            "system_metrics": system_metrics,
             "health_report": health_report,
             "sprint_success": overall_health["completion_percentage"] > 60.0,
         }

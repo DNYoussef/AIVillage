@@ -20,6 +20,27 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
+try:  # Optional performant JSON library
+    import orjson as _orjson
+    ORJSON_AVAILABLE = True
+
+    def _json_dumps(obj: Any) -> bytes:
+        return _orjson.dumps(obj)
+
+    def _json_loads(data: bytes) -> Any:
+        return _orjson.loads(data)
+
+except Exception:  # pragma: no cover - fallback path
+    ORJSON_AVAILABLE = False
+
+    def _json_dumps(obj: Any) -> bytes:
+        return json.dumps(obj, ensure_ascii=True, separators=(",", ":")).encode(
+            "utf-8"
+        )
+
+    def _json_loads(data: bytes) -> Any:
+        return json.loads(data.decode("utf-8"))
+
 logger = logging.getLogger(__name__)
 
 
@@ -110,6 +131,18 @@ class SecureSerializer:
         self.allowed_types.add(type_class)
         self.custom_serializers[type_class] = serializer
         self.custom_deserializers[type_class.__name__] = deserializer
+
+    def _validate_schema(self, obj: Any, schema: dict[str, type] | None) -> None:
+        """Validate object against a simple schema."""
+        if not schema:
+            return
+        if not isinstance(obj, dict):
+            raise SerializationError("Schema validation requires dict object")
+        for field, expected_type in schema.items():
+            if field not in obj or not isinstance(obj[field], expected_type):
+                raise SerializationError(
+                    f"Field '{field}' missing or not of type {expected_type.__name__}"
+                )
 
     def _validate_data_security(self, data: Any) -> None:
         """Validate data for security concerns."""
@@ -246,7 +279,10 @@ class SecureSerializer:
             return obj_value
 
     def dumps(
-        self, obj: Any, serialization_type: SerializationType = SerializationType.JSON
+        self,
+        obj: Any,
+        serialization_type: SerializationType = SerializationType.JSON,
+        schema: dict[str, type] | None = None,
     ) -> bytes:
         """
         Serialize object to secure byte format.
@@ -263,8 +299,9 @@ class SecureSerializer:
             SecurityViolationError: If security validation fails
         """
         try:
-            # Security validation
+            # Security and schema validation
             self._validate_data_security(obj)
+            self._validate_schema(obj, schema)
 
             # Prepare data with type information
             prepared_data = self._prepare_data(obj)
@@ -278,10 +315,7 @@ class SecureSerializer:
             }
 
             # Convert to JSON
-            json_data = json.dumps(
-                serialized_obj, ensure_ascii=True, separators=(",", ":")
-            )
-            json_bytes = json_data.encode("utf-8")
+            json_bytes = _json_dumps(serialized_obj)
 
             # Apply compression if needed
             if serialization_type == SerializationType.COMPRESSED_JSON:
@@ -299,14 +333,14 @@ class SecureSerializer:
                     "signature": signature,
                     "data": base64.b64encode(json_bytes).decode("ascii"),
                 }
-                json_bytes = json.dumps(signed_data).encode("utf-8")
+                json_bytes = _json_dumps(signed_data)
 
             return json_bytes
 
         except Exception as e:
             raise SerializationError(f"Serialization failed: {e}") from e
 
-    def loads(self, data: bytes) -> Any:
+    def loads(self, data: bytes, schema: dict[str, type] | None = None) -> Any:
         """
         Deserialize object from secure byte format.
 
@@ -325,8 +359,7 @@ class SecureSerializer:
                 raise SecurityViolationError(f"Data size exceeds limit: {len(data)}")
 
             # Parse initial JSON
-            json_str = data.decode("utf-8")
-            parsed_data = json.loads(json_str)
+            parsed_data = _json_loads(data)
 
             # Handle signed data
             if isinstance(parsed_data, dict) and "signature" in parsed_data:
@@ -341,7 +374,7 @@ class SecureSerializer:
                 if not hmac.compare_digest(signature, expected_signature):
                     raise SecurityViolationError("Invalid signature")
 
-                parsed_data = json.loads(signed_data.decode("utf-8"))
+                parsed_data = _json_loads(signed_data)
 
             # Handle compression
             if parsed_data.get("compressed", False):
@@ -353,32 +386,36 @@ class SecureSerializer:
             if not all(field in parsed_data for field in required_fields):
                 raise SecurityViolationError("Invalid data structure")
 
-            # Restore object
-            return self._restore_data(parsed_data["data"])
+            # Restore object and validate schema
+            obj = self._restore_data(parsed_data["data"])
+            self._validate_schema(obj, schema)
+            return obj
 
-        except json.JSONDecodeError as e:
+        except (json.JSONDecodeError, ValueError) as e:
             raise SerializationError(f"JSON decode error: {e}") from e
         except Exception as e:
             raise SerializationError(f"Deserialization failed: {e}") from e
 
     # Pickle-compatible interface for backward compatibility
-    def dump(self, obj: Any, file):
+    def dump(self, obj: Any, file, schema: dict[str, type] | None = None):
         """Pickle-compatible dump method."""
-        serialized = self.dumps(obj, SerializationType.COMPRESSED_JSON)
+        serialized = self.dumps(
+            obj, SerializationType.COMPRESSED_JSON, schema=schema
+        )
         if hasattr(file, "write"):
             file.write(serialized)
         else:
             with open(file, "wb") as f:
                 f.write(serialized)
 
-    def load(self, file) -> Any:
+    def load(self, file, schema: dict[str, type] | None = None) -> Any:
         """Pickle-compatible load method."""
         if hasattr(file, "read"):
             data = file.read()
         else:
             with open(file, "rb") as f:
                 data = f.read()
-        return self.loads(data)
+        return self.loads(data, schema=schema)
 
 
 # Global instance for backward compatibility
@@ -386,24 +423,30 @@ _default_serializer = SecureSerializer()
 
 
 # Pickle-compatible functions
-def dumps(obj: Any, protocol: int = None) -> bytes:
+def dumps(
+    obj: Any, protocol: int = None, schema: dict[str, type] | None = None
+) -> bytes:
     """Secure replacement for pickle.dumps."""
-    return _default_serializer.dumps(obj, SerializationType.COMPRESSED_JSON)
+    return _default_serializer.dumps(
+        obj, SerializationType.COMPRESSED_JSON, schema=schema
+    )
 
 
-def loads(data: bytes) -> Any:
+def loads(data: bytes, schema: dict[str, type] | None = None) -> Any:
     """Secure replacement for pickle.loads."""
-    return _default_serializer.loads(data)
+    return _default_serializer.loads(data, schema=schema)
 
 
-def dump(obj: Any, file, protocol: int = None) -> None:
+def dump(
+    obj: Any, file, protocol: int = None, schema: dict[str, type] | None = None
+) -> None:
     """Secure replacement for pickle.dump."""
-    _default_serializer.dump(obj, file)
+    _default_serializer.dump(obj, file, schema=schema)
 
 
-def load(file) -> Any:
+def load(file, schema: dict[str, type] | None = None) -> Any:
     """Secure replacement for pickle.load."""
-    return _default_serializer.load(file)
+    return _default_serializer.load(file, schema=schema)
 
 
 # Legacy pickle rejection for security
