@@ -31,8 +31,10 @@ pub mod transport;
 #[cfg(feature = "tcp")]
 pub mod tcp;
 
-// #[cfg(feature = "quic")]
-// pub mod quic;
+#[cfg(feature = "quic")]
+pub mod quic;
+
+pub mod masque;
 
 // Re-export core types
 pub use bootstrap::{
