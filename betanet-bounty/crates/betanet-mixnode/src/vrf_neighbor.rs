@@ -8,7 +8,7 @@
 
 use std::collections::{HashMap, HashSet};
 use std::net::{IpAddr, SocketAddr};
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use std::time::{SystemTime, UNIX_EPOCH};
 
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -33,6 +33,7 @@ pub struct MixnodeInfo {
     pub reliability: f64,
     /// Performance metrics
     pub latency_ms: u16,
+    /// Measured bandwidth in kilobits per second
     pub bandwidth_kbps: u32,
 }
 
@@ -437,11 +438,17 @@ impl VrfNeighborSelector {
 /// Topology statistics
 #[derive(Debug, Clone)]
 pub struct TopologyStats {
+    /// Number of known nodes
     pub total_nodes: usize,
+    /// Number of unique AS numbers
     pub total_as_numbers: usize,
+    /// Nodes considered fresh
     pub fresh_nodes: usize,
+    /// Nodes considered reliable
     pub reliable_nodes: usize,
+    /// Average number of nodes per AS
     pub avg_as_size: f64,
+    /// Number of cached entries
     pub cache_entries: usize,
 }
 
