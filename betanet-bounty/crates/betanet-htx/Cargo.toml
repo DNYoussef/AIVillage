@@ -41,7 +41,6 @@ parking_lot = { workspace = true }
 webpki-roots = { workspace = true }
 base64 = "0.21"
 urlencoding = "2.1"
-trust-dns-resolver = { version = "0.23", features = ["tokio-runtime"] }
 
 [dev-dependencies]
 tokio = { workspace = true, features = ["test-util"] }

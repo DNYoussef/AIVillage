@@ -144,6 +144,16 @@ impl MemoryPool {
         BytesMut::with_capacity(size.max(2048))
     }
 
+    /// Get memory pool hit rate (percentage, 0-100)
+    pub fn hit_rate_percent(&self) -> f64 {
+        let total_requests = self.allocated.load(Ordering::Relaxed) + self.reused.load(Ordering::Relaxed);
+        if total_requests == 0 {
+            return 0.0;
+        }
+        let reused = self.reused.load(Ordering::Relaxed);
+        (reused as f64 / total_requests as f64) * 100.0
+    }
+
     /// Return buffer to pool
     pub fn return_buffer(&self, mut buffer: BytesMut) {
         buffer.clear();
@@ -203,6 +213,19 @@ impl PipelineStats {
     /// Record batch processing
     pub fn record_batch(&self, _batch_size: u64) {
         self.batches_processed.fetch_add(1, Ordering::Relaxed);
+    }
+
+    /// Update memory pool hit rate
+    pub fn update_pool_hit_rate(&self, hit_rate_percent: f64) {
+        // Store as fixed-point percentage (multiply by 100 for precision)
+        let hit_rate_fp = (hit_rate_percent * 100.0) as u64;
+        self.pool_hit_rate.store(hit_rate_fp, Ordering::Relaxed);
+    }
+
+    /// Get memory pool hit rate as percentage
+    pub fn get_pool_hit_rate(&self) -> f64 {
+        let hit_rate_fp = self.pool_hit_rate.load(Ordering::Relaxed);
+        hit_rate_fp as f64 / 100.0
     }
 
     /// Get average processing time per packet (nanoseconds)
@@ -368,6 +391,12 @@ impl PacketPipeline {
                                 stats.record_processed(batch_buffer.len() as u64, processing_time);
                                 stats.record_batch(batch_buffer.len() as u64);
 
+                                // Update memory pool hit rate periodically
+                                if stats.batches_processed.load(Ordering::Relaxed) % 100 == 0 {
+                                    let hit_rate = memory_pool.hit_rate_percent();
+                                    stats.update_pool_hit_rate(hit_rate);
+                                }
+
                                 // Release semaphore permits
                                 processing_semaphore.add_permits(batch_buffer.len());
                             }
@@ -512,6 +541,11 @@ impl PacketPipeline {
         self.memory_pool.stats()
     }
 
+    /// Get memory pool hit rate (percentage)
+    pub fn memory_pool_hit_rate(&self) -> f64 {
+        self.memory_pool.hit_rate_percent()
+    }
+
     /// Get rate limiter queue length
     pub async fn rate_limiter_queue_length(&self) -> usize {
         self.rate_limiter.queue_length().await
@@ -599,6 +633,7 @@ impl PipelineBenchmark {
         let dropped = stats.packets_dropped.load(Ordering::Relaxed);
         let avg_processing_time_ns = stats.avg_processing_time_ns();
         let throughput_pps = stats.throughput_pps(elapsed);
+        let memory_pool_hit_rate = self.pipeline.memory_pool_hit_rate();
 
         self.pipeline.stop().await?;
 
@@ -609,7 +644,7 @@ impl PipelineBenchmark {
             elapsed_secs: elapsed.as_secs_f64(),
             throughput_pps,
             avg_processing_time_ns,
-            memory_pool_hit_rate: 0.0, // TODO: Calculate from pool stats
+            memory_pool_hit_rate,
         })
     }
 }

@@ -421,6 +421,107 @@ impl Default for RateLimitingConfig {
     }
 }
 
+/// Adaptive traffic estimation for zero-traffic scenarios
+#[derive(Debug, Clone)]
+pub struct TrafficEstimator {
+    /// Recent packet intervals (in milliseconds)
+    recent_intervals: VecDeque<u64>,
+    /// Last packet timestamp
+    last_packet_time: Option<Instant>,
+    /// Estimated epsilon (minimum traffic rate)
+    epsilon_estimate: f64,
+    /// Window size for estimation
+    window_size: usize,
+}
+
+impl TrafficEstimator {
+    fn new(window_size: usize) -> Self {
+        Self {
+            recent_intervals: VecDeque::with_capacity(window_size),
+            last_packet_time: None,
+            epsilon_estimate: 0.1, // Default minimum: 0.1 packets/sec
+            window_size,
+        }
+    }
+
+    /// Record packet arrival and update epsilon estimation
+    fn record_packet(&mut self) {
+        let now = Instant::now();
+
+        if let Some(last_time) = self.last_packet_time {
+            let interval_ms = now.duration_since(last_time).as_millis() as u64;
+
+            // Add to window
+            self.recent_intervals.push_back(interval_ms);
+            if self.recent_intervals.len() > self.window_size {
+                self.recent_intervals.pop_front();
+            }
+
+            // Update epsilon estimate
+            self.update_epsilon_estimate();
+        }
+
+        self.last_packet_time = Some(now);
+    }
+
+    /// Handle zero traffic case - use minimum epsilon
+    fn handle_zero_traffic(&mut self, silence_duration: Duration) {
+        if silence_duration.as_secs() > 30 {
+            // Long silence: use conservative minimum rate
+            self.epsilon_estimate = 0.01; // 0.01 packets/sec
+        } else if silence_duration.as_secs() > 10 {
+            // Medium silence: use slightly higher minimum
+            self.epsilon_estimate = 0.05; // 0.05 packets/sec
+        } else {
+            // Short silence: use normal minimum
+            self.epsilon_estimate = 0.1; // 0.1 packets/sec
+        }
+
+        // Clear old intervals since we have zero traffic
+        self.recent_intervals.clear();
+    }
+
+    /// Update epsilon estimate based on recent intervals
+    fn update_epsilon_estimate(&mut self) {
+        if self.recent_intervals.is_empty() {
+            return;
+        }
+
+        // Calculate average interval (harmonic mean for rate estimation)
+        let sum_inverse: f64 = self.recent_intervals
+            .iter()
+            .map(|&interval| if interval > 0 { 1000.0 / interval as f64 } else { 0.0 })
+            .sum();
+
+        if sum_inverse > 0.0 {
+            self.epsilon_estimate = sum_inverse / self.recent_intervals.len() as f64;
+        } else {
+            // All intervals were zero - handle as zero traffic
+            self.epsilon_estimate = 0.01;
+        }
+
+        // Ensure epsilon stays within reasonable bounds
+        self.epsilon_estimate = self.epsilon_estimate.max(0.001).min(1000.0);
+    }
+
+    /// Get current epsilon estimate (packets per second)
+    fn get_epsilon(&self) -> f64 {
+        self.epsilon_estimate
+    }
+
+    /// Check for zero traffic and update estimate accordingly
+    fn check_for_zero_traffic(&mut self) -> bool {
+        if let Some(last_time) = self.last_packet_time {
+            let silence = Instant::now().duration_since(last_time);
+            if silence.as_secs() > 5 {
+                self.handle_zero_traffic(silence);
+                return true;
+            }
+        }
+        false
+    }
+}
+
 /// Integrated rate limiter and traffic shaper
 pub struct RateLimitedTrafficShaper {
     /// Configuration
@@ -429,6 +530,8 @@ pub struct RateLimitedTrafficShaper {
     input_limiter: TokenBucket,
     /// Output traffic shaper
     output_shaper: TrafficShaper,
+    /// Traffic estimator for adaptive epsilon
+    traffic_estimator: Arc<Mutex<TrafficEstimator>>,
 }
 
 impl RateLimitedTrafficShaper {
@@ -436,16 +539,24 @@ impl RateLimitedTrafficShaper {
     pub fn new(config: RateLimitingConfig) -> Self {
         let input_limiter = TokenBucket::new(config.burst_capacity, config.sustained_rate);
         let output_shaper = TrafficShaper::new(config.output_rate, config.shaping_buffer_size);
+        let traffic_estimator = Arc::new(Mutex::new(TrafficEstimator::new(50))); // 50-packet window
 
         Self {
             config,
             input_limiter,
             output_shaper,
+            traffic_estimator,
         }
     }
 
     /// Process packet through rate limiting and shaping
     pub async fn process_packet(&self, packet: Vec<u8>) -> Result<()> {
+        // Record packet for traffic estimation
+        {
+            let mut estimator = self.traffic_estimator.lock().await;
+            estimator.record_packet();
+        }
+
         if !self.config.enabled {
             // Pass through without limiting
             return self.output_shaper.submit_packet(packet).await;
@@ -487,6 +598,24 @@ impl RateLimitedTrafficShaper {
     /// Get current queue length
     pub async fn queue_length(&self) -> usize {
         self.output_shaper.queue_length().await
+    }
+
+    /// Get current epsilon estimate (packets per second)
+    pub async fn get_epsilon_estimate(&self) -> f64 {
+        let estimator = self.traffic_estimator.lock().await;
+        estimator.get_epsilon()
+    }
+
+    /// Check for zero traffic and update epsilon accordingly
+    pub async fn check_zero_traffic(&self) -> bool {
+        let mut estimator = self.traffic_estimator.lock().await;
+        estimator.check_for_zero_traffic()
+    }
+
+    /// Force epsilon update for zero traffic scenario
+    pub async fn handle_zero_traffic_period(&self, silence_duration: Duration) {
+        let mut estimator = self.traffic_estimator.lock().await;
+        estimator.handle_zero_traffic(silence_duration);
     }
 }
 
@@ -597,6 +726,43 @@ mod tests {
         // Should rate limit large packet that exceeds remaining capacity
         let large_packet = vec![0u8; 200]; // 200 bytes > remaining burst capacity
         assert!(shaper.process_packet(large_packet).await.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_zero_traffic_epsilon_estimation() {
+        let config = RateLimitingConfig::default();
+        let shaper = RateLimitedTrafficShaper::new(config);
+
+        // Initial epsilon should be default
+        let initial_epsilon = shaper.get_epsilon_estimate().await;
+        assert!((initial_epsilon - 0.1).abs() < 0.01);
+
+        // Process some packets to establish pattern
+        for _ in 0..5 {
+            let packet = b"test".to_vec();
+            let _ = shaper.process_packet(packet).await;
+            sleep(Duration::from_millis(100)).await; // 10 packets/sec
+        }
+
+        // Wait for epsilon estimation to update
+        sleep(Duration::from_millis(10)).await;
+        let active_epsilon = shaper.get_epsilon_estimate().await;
+        assert!(active_epsilon > 5.0); // Should be around 10 packets/sec
+
+        // Simulate zero traffic period
+        shaper.handle_zero_traffic_period(Duration::from_secs(35)).await;
+        let zero_traffic_epsilon = shaper.get_epsilon_estimate().await;
+        assert!((zero_traffic_epsilon - 0.01).abs() < 0.001); // Should be 0.01 for long silence
+
+        // Test medium silence
+        shaper.handle_zero_traffic_period(Duration::from_secs(15)).await;
+        let medium_silence_epsilon = shaper.get_epsilon_estimate().await;
+        assert!((medium_silence_epsilon - 0.05).abs() < 0.001); // Should be 0.05 for medium silence
+
+        // Test short silence
+        shaper.handle_zero_traffic_period(Duration::from_secs(5)).await;
+        let short_silence_epsilon = shaper.get_epsilon_estimate().await;
+        assert!((short_silence_epsilon - 0.1).abs() < 0.001); // Should be 0.1 for short silence
     }
 
     #[test]
