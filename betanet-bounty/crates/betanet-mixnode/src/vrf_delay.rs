@@ -2,7 +2,7 @@
 
 use std::time::Duration;
 
-use crate::{MixnodeError, Result};
+use crate::Result;
 
 /// Calculate VRF-based delay
 pub async fn calculate_vrf_delay(
@@ -25,7 +25,7 @@ pub async fn calculate_vrf_delay(
 
     #[cfg(not(feature = "vrf"))]
     {
-        Err(MixnodeError::Vrf("VRF feature not enabled".to_string()))
+        Err(crate::MixnodeError::Vrf("VRF feature not enabled".to_string()))
     }
 }
 
