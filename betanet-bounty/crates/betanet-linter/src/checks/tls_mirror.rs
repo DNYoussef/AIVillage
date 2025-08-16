@@ -11,7 +11,44 @@
 use crate::{LintIssue, SeverityLevel, Result};
 use crate::checks::{CheckRule, CheckContext};
 use regex::Regex;
+use once_cell::sync::Lazy;
 use async_trait::async_trait;
+
+static TLS_REUSE_REGEX: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r"stochastic_reuse_probability:\s*([0-9.]+)").unwrap()
+});
+
+static TTL_REGEX: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r"default_ttl:\s*Duration::from_secs\((\d+)\)").unwrap()
+});
+
+static CACHE_SIZE_REGEX: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r"max_cache_size:\s*(\d+)").unwrap()
+});
+
+static HARDCODED_REGEX: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r#"if\s+origin\s*==\s*"([^"]+)""#).unwrap()
+});
+
+static LOGNORMAL_REGEX: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r"mu:\s*([0-9.]+),\s*sigma:\s*([0-9.]+)").unwrap()
+});
+
+static WEIGHT_REGEX: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r"weight:\s*([0-9.]+)").unwrap()
+});
+
+static NUM_ENTRIES_REGEX: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r"gen_range\((\d+)\.\.=?(\d+)\)").unwrap()
+});
+
+static POOL_LIMIT_REGEX: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r"while.*len\(\)\s*>\s*(\d+)").unwrap()
+});
+
+static CHROME_VERSION_REGEX: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r"Chrome[._]?(\d+)").unwrap()
+});
 
 /// TLS mirror template cache compliance
 pub struct TlsTemplateCacheRule;
@@ -37,9 +74,8 @@ impl CheckRule for TlsTemplateCacheRule {
         }
 
         // Check stochastic reuse probability
-        let reuse_regex = Regex::new(r"stochastic_reuse_probability:\s*([0-9.]+)").unwrap();
         for (line_num, line) in context.content.lines().enumerate() {
-            if let Some(captures) = reuse_regex.captures(line) {
+            if let Some(captures) = TLS_REUSE_REGEX.captures(line) {
                 if let Some(prob_str) = captures.get(1) {
                     if let Ok(probability) = prob_str.as_str().parse::<f64>() {
                         if probability < 0.7 || probability > 0.95 {
@@ -65,9 +101,8 @@ impl CheckRule for TlsTemplateCacheRule {
         }
 
         // Check TTL configuration
-        let ttl_regex = Regex::new(r"default_ttl:\s*Duration::from_secs\((\d+)\)").unwrap();
         for (line_num, line) in context.content.lines().enumerate() {
-            if let Some(captures) = ttl_regex.captures(line) {
+            if let Some(captures) = TTL_REGEX.captures(line) {
                 if let Some(ttl_str) = captures.get(1) {
                     if let Ok(ttl_secs) = ttl_str.as_str().parse::<u64>() {
                         if ttl_secs < 600 { // 10 minutes
@@ -103,9 +138,8 @@ impl CheckRule for TlsTemplateCacheRule {
         }
 
         // Check max cache size configuration
-        let cache_size_regex = Regex::new(r"max_cache_size:\s*(\d+)").unwrap();
         for (line_num, line) in context.content.lines().enumerate() {
-            if let Some(captures) = cache_size_regex.captures(line) {
+            if let Some(captures) = CACHE_SIZE_REGEX.captures(line) {
                 if let Some(size_str) = captures.get(1) {
                     if let Ok(cache_size) = size_str.as_str().parse::<u32>() {
                         if cache_size < 100 {
@@ -156,9 +190,8 @@ impl CheckRule for TlsSiteClassificationRule {
         }
 
         // Check for hardcoded site classifications (anti-pattern)
-        let hardcoded_regex = Regex::new(r#"if\s+origin\s*==\s*"([^"]+)""#).unwrap();
         for (line_num, line) in context.content.lines().enumerate() {
-            if hardcoded_regex.is_match(line) {
+            if HARDCODED_REGEX.is_match(line) {
                 issues.push(LintIssue::new(
                     "TLS008".to_string(),
                     SeverityLevel::Warning,
@@ -223,9 +256,8 @@ impl CheckRule for TlsMixtureModelRule {
         }
 
         // Check log-normal parameters for realistic ranges
-        let lognormal_regex = Regex::new(r"mu:\s*([0-9.]+),\s*sigma:\s*([0-9.]+)").unwrap();
         for (line_num, line) in context.content.lines().enumerate() {
-            if let Some(captures) = lognormal_regex.captures(line) {
+            if let Some(captures) = LOGNORMAL_REGEX.captures(line) {
                 if let (Some(mu_str), Some(sigma_str)) = (captures.get(1), captures.get(2)) {
                     if let (Ok(mu), Ok(sigma)) = (mu_str.as_str().parse::<f64>(), sigma_str.as_str().parse::<f64>()) {
                         // Check mu parameter (log-scale location)
@@ -253,12 +285,11 @@ impl CheckRule for TlsMixtureModelRule {
         }
 
         // Check mixture component weights
-        let weight_regex = Regex::new(r"weight:\s*([0-9.]+)").unwrap();
         let mut total_weight = 0.0;
         let mut weight_count = 0;
 
         for line in context.content.lines() {
-            if let Some(captures) = weight_regex.captures(line) {
+            if let Some(captures) = WEIGHT_REGEX.captures(line) {
                 if let Some(weight_str) = captures.get(1) {
                     if let Ok(weight) = weight_str.as_str().parse::<f64>() {
                         total_weight += weight;
@@ -318,10 +349,9 @@ impl CheckRule for TlsCoverTrafficRule {
         }
 
         // Check cover traffic volume configuration
-        let num_entries_regex = Regex::new(r"gen_range\((\d+)\.\.=?(\d+)\)").unwrap();
         for (line_num, line) in context.content.lines().enumerate() {
             if line.contains("cover") && line.contains("entries") {
-                if let Some(captures) = num_entries_regex.captures(line) {
+                if let Some(captures) = NUM_ENTRIES_REGEX.captures(line) {
                     if let (Some(min_str), Some(max_str)) = (captures.get(1), captures.get(2)) {
                         if let (Ok(min_entries), Ok(max_entries)) = (min_str.as_str().parse::<u32>(), max_str.as_str().parse::<u32>()) {
                             if min_entries < 3 {
@@ -357,10 +387,9 @@ impl CheckRule for TlsCoverTrafficRule {
         }
 
         // Check cover pool size limits
-        let pool_limit_regex = Regex::new(r"while.*len\(\)\s*>\s*(\d+)").unwrap();
         for (line_num, line) in context.content.lines().enumerate() {
             if line.contains("cover_pool") {
-                if let Some(captures) = pool_limit_regex.captures(line) {
+                if let Some(captures) = POOL_LIMIT_REGEX.captures(line) {
                     if let Some(limit_str) = captures.get(1) {
                         if let Ok(limit) = limit_str.as_str().parse::<u32>() {
                             if limit < 50 {
@@ -431,10 +460,9 @@ impl CheckRule for TlsAntiFingerprintRule {
         }
 
         // Check for hardcoded Chrome version (anti-pattern)
-        let chrome_version_regex = Regex::new(r"Chrome[._]?(\d+)").unwrap();
         let mut hardcoded_versions = 0;
         for (line_num, line) in context.content.lines().enumerate() {
-            if let Some(captures) = chrome_version_regex.captures(line) {
+            if let Some(captures) = CHROME_VERSION_REGEX.captures(line) {
                 if let Some(version_str) = captures.get(1) {
                     if let Ok(version) = version_str.as_str().parse::<u32>() {
                         hardcoded_versions += 1;

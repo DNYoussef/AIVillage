@@ -2,6 +2,7 @@
 
 use crate::{LintIssue, SeverityLevel, Result};
 use regex::Regex;
+use once_cell::sync::Lazy;
 use async_trait::async_trait;
 
 pub mod bootstrap;
@@ -9,6 +10,35 @@ pub mod tls_mirror;
 pub mod noise_xk;
 pub mod frame_format;
 pub mod scion_bridge;
+
+static TEMPLATE_REUSE_REGEX: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r"stochastic_reuse_probability:\s*([0-9.]+)").unwrap()
+});
+
+static KS_HISTOGRAM_REGEX: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r"histogram.*=.*vec!\[").unwrap()
+});
+
+static KS_LOGNORMAL_REGEX: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r"mu:\s*([0-9.]+).*sigma:\s*([0-9.]+)").unwrap()
+});
+
+static KEY_SIZE_REGEX: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r"key_size.*=.*(\d+)").unwrap()
+});
+
+static SECRET_REGEXES: Lazy<Vec<Regex>> = Lazy::new(|| {
+    vec![
+        Regex::new(r#"password\s*=\s*"[^"]+""#).unwrap(),
+        Regex::new(r#"secret\s*=\s*"[^"]+""#).unwrap(),
+        Regex::new(r#"key\s*=\s*"[^"]+""#).unwrap(),
+        Regex::new(r#"token\s*=\s*"[^"]+""#).unwrap(),
+    ]
+});
+
+static EPSILON_REGEX: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r"epsilon_max.*[:=]\s*([0-9.]+)").unwrap()
+});
 
 /// Check rule trait
 #[async_trait]
@@ -114,10 +144,8 @@ impl CheckRule for TemplateReuseLintRule {
         }
 
         // Look for stochastic_reuse_probability configuration
-        let reuse_regex = Regex::new(r"stochastic_reuse_probability:\s*([0-9.]+)").unwrap();
-
         for (line_num, line) in context.content.lines().enumerate() {
-            if let Some(captures) = reuse_regex.captures(line) {
+            if let Some(captures) = TEMPLATE_REUSE_REGEX.captures(line) {
                 if let Some(prob_str) = captures.get(1) {
                     if let Ok(probability) = prob_str.as_str().parse::<f64>() {
                         // Check if probability is in acceptable range
@@ -170,8 +198,7 @@ impl CheckRule for KSDistanceLintRule {
         }
 
         // Look for histogram or distribution definitions
-        let histogram_regex = Regex::new(r"histogram.*=.*vec!\[").unwrap();
-        let found_histogram = histogram_regex.is_match(&context.content);
+        let found_histogram = KS_HISTOGRAM_REGEX.is_match(&context.content);
 
         if !found_histogram && context.content.contains("sample_") {
             issues.push(LintIssue::new(
@@ -183,10 +210,8 @@ impl CheckRule for KSDistanceLintRule {
         }
 
         // Check for realistic log-normal parameters
-        let lognormal_regex = Regex::new(r"mu:\s*([0-9.]+).*sigma:\s*([0-9.]+)").unwrap();
-
         for (line_num, line) in context.content.lines().enumerate() {
-            if let Some(captures) = lognormal_regex.captures(line) {
+            if let Some(captures) = KS_LOGNORMAL_REGEX.captures(line) {
                 if let (Some(mu_str), Some(sigma_str)) = (captures.get(1), captures.get(2)) {
                     if let (Ok(mu), Ok(sigma)) = (mu_str.as_str().parse::<f64>(), sigma_str.as_str().parse::<f64>()) {
                         // Check if parameters are realistic for web traffic
@@ -304,9 +329,8 @@ impl CheckRule for CryptographyBestPracticesRule {
         }
 
         // Check for proper key sizes
-        let key_size_regex = regex::Regex::new(r"key_size.*=.*(\d+)").unwrap();
         for (line_num, line) in context.content.lines().enumerate() {
-            if let Some(captures) = key_size_regex.captures(line) {
+            if let Some(captures) = KEY_SIZE_REGEX.captures(line) {
                 if let Some(size_str) = captures.get(1) {
                     if let Ok(size) = size_str.as_str().parse::<u32>() {
                         if size < 128 {
@@ -323,15 +347,7 @@ impl CheckRule for CryptographyBestPracticesRule {
         }
 
         // Check for hardcoded secrets/keys
-        let secret_patterns = [
-            r#"password\s*=\s*"[^"]+""#,
-            r#"secret\s*=\s*"[^"]+""#,
-            r#"key\s*=\s*"[^"]+""#,
-            r#"token\s*=\s*"[^"]+""#,
-        ];
-
-        for pattern in &secret_patterns {
-            let regex = regex::Regex::new(pattern).unwrap();
+        for regex in SECRET_REGEXES.iter() {
             for (line_num, line) in context.content.lines().enumerate() {
                 if regex.is_match(line) && !line.contains("example") && !line.contains("test") {
                     issues.push(LintIssue::new(
@@ -370,10 +386,8 @@ impl CheckRule for EpsilonPolicyLintRule {
         }
 
         // Look for epsilon_max configurations
-        let epsilon_regex = Regex::new(r"epsilon_max.*[:=]\s*([0-9.]+)").unwrap();
-
         for (line_num, line) in context.content.lines().enumerate() {
-            if let Some(captures) = epsilon_regex.captures(line) {
+            if let Some(captures) = EPSILON_REGEX.captures(line) {
                 if let Some(eps_str) = captures.get(1) {
                     if let Ok(epsilon) = eps_str.as_str().parse::<f64>() {
                         // Check if epsilon is within acceptable bounds for differential privacy
