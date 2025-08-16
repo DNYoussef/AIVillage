@@ -70,11 +70,17 @@ HTX (Hybrid Transport eXtension) protocol implementation.
 - Frame-based message protocol
 - Async/await throughout
 - Integration with AI Village transport layer
+- Encrypted Client Hello (ECH) support via DNS or file configuration
 
 ```rust
 use betanet_htx::{HtxClient, HtxConfig};
+use betanet_htx::quic::EchConfig;
 
-let config = HtxConfig::default();
+let mut config = HtxConfig::default();
+config.enable_tls_camouflage = true;
+config.camouflage_domain = Some("cloudflare.com".to_string());
+// Load ECH configuration from DNS
+let _ech = EchConfig::from_dns("cloudflare.com").await?;
 let mut client = HtxClient::new(config);
 client.connect("127.0.0.1:9000".parse()?).await?;
 client.send(b"Hello, Betanet!").await?;
