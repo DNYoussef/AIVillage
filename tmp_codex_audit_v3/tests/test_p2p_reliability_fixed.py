@@ -50,7 +50,7 @@ def main():
     }
 
     # Fix the results
-    for test_name, test in policy_tests.items():
+    for _test_name, test in policy_tests.items():
         test["pass"] = test["expected"] == test["actual"]
 
     tester.results["path_policy_tests"] = policy_tests

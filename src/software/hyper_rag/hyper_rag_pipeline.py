@@ -12,7 +12,6 @@ import hashlib
 import time
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List
 
 import numpy as np
 
@@ -37,21 +36,21 @@ class ContextTag:
 class KnowledgeItem:
     content: str
     item_id: str
-    context_tags: List[ContextTag]
+    context_tags: list[ContextTag]
     embedding: np.ndarray
     belief_probability: float = 0.0
 
 
 @dataclass
 class RetrievalResult:
-    items: List[KnowledgeItem]
+    items: list[KnowledgeItem]
     retrieval_method: RAGType
     confidence_score: float
-    bayesian_scores: Dict[str, float]
+    bayesian_scores: dict[str, float]
     semantic_coherence: float
     context_relevance: float
     total_items_considered: int
-    metrics: Dict[str, float] = field(default_factory=dict)
+    metrics: dict[str, float] = field(default_factory=dict)
 
 
 class HyperRAGPipeline:
@@ -59,9 +58,9 @@ class HyperRAGPipeline:
 
     def __init__(self) -> None:
         self.embedder = SimHashEmbedder()
-        self.knowledge_items: Dict[str, KnowledgeItem] = {}
+        self.knowledge_items: dict[str, KnowledgeItem] = {}
         # Belief priors are stored separately so they can be updated
-        self.belief_priors: Dict[str, float] = {}
+        self.belief_priors: dict[str, float] = {}
 
     async def ingest_knowledge(
         self,
@@ -81,7 +80,7 @@ class HyperRAGPipeline:
             self.belief_priors[item_id] = source_confidence
         return item_id
 
-    def _tokenize(self, text: str) -> List[str]:
+    def _tokenize(self, text: str) -> list[str]:
         return [t for t in text.lower().split() if t]
 
     async def search(self, query: str, max_results: int = 5) -> RetrievalResult:
@@ -91,7 +90,7 @@ class HyperRAGPipeline:
         query_vec = self.embedder.embed(query)
         query_tokens = self._tokenize(query)
 
-        scored: List[tuple[float, KnowledgeItem]] = []
+        scored: list[tuple[float, KnowledgeItem]] = []
         for item in self.knowledge_items.values():
             cos = float(np.dot(query_vec, item.embedding))
             overlap = len(set(query_tokens) & set(self._tokenize(item.content)))

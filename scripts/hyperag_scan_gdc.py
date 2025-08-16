@@ -16,7 +16,7 @@ import csv
 import json
 import logging
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from mcp_servers.hyperag.gdc.extractor import GDCExtractorContext
@@ -82,7 +82,7 @@ def format_violation_summary(violations: list[Violation]) -> str:
 def save_violations_json(violations: list[Violation], output_path: Path) -> None:
     """Save violations to JSON file."""
     data = {
-        "scan_timestamp": datetime.now(timezone.utc).isoformat(),
+        "scan_timestamp": datetime.now(UTC).isoformat(),
         "total_violations": len(violations),
         "violations": [v.to_dict() for v in violations],
     }

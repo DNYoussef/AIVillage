@@ -115,7 +115,7 @@ async def test_message_delivery_rate_and_latency() -> None:
         await client_protocol.send_message(msg, writer)
         try:
             await asyncio.wait_for(fut, timeout=1)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             continue
         successes += 1
         latencies.append(time.perf_counter() - start)

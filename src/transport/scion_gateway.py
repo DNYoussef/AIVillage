@@ -424,7 +424,7 @@ class SCIONGateway:
                 await asyncio.wait_for(
                     asyncio.create_task(self._wait_for_process_exit()), timeout=5.0
                 )
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 logger.warning("Sidecar didn't stop gracefully, killing")
                 self._sidecar_process.kill()
                 await asyncio.create_task(self._wait_for_process_exit())

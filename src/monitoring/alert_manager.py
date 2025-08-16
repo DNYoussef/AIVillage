@@ -11,7 +11,7 @@ import logging
 import os
 import smtplib
 from dataclasses import asdict, dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from email.mime.text import MIMEMultipart, MIMEText
 from pathlib import Path
 from typing import Any
@@ -166,7 +166,7 @@ class AlertManager:
     ) -> list[Alert]:
         """Check if any thresholds are breached."""
         alerts = []
-        timestamp = datetime.now(timezone.utc).isoformat()
+        timestamp = datetime.now(UTC).isoformat()
 
         # Check success rate threshold
         success_rate = current_stats.get("success_rate", 0)
@@ -493,7 +493,7 @@ async def main() -> None:
 
     elif args.test_webhook:
         test_alert = Alert(
-            timestamp=datetime.now(timezone.utc).isoformat(),
+            timestamp=datetime.now(UTC).isoformat(),
             severity="medium",
             message="Test webhook alert",
             category="test",

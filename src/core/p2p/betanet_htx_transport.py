@@ -167,19 +167,20 @@ class HTXTransport:
 
     def _capture_client_hello(self, host: str, port: int):
         """Perform a raw TLS ClientHello using Scapy and return the message."""
-        from scapy.layers.tls.handshake import TLSClientHello
+        import os
+        import socket
+
+        from scapy.layers.tls.all import TLS
         from scapy.layers.tls.extensions import (
+            ProtocolName,
+            ServerName,
             TLS_Ext_ALPN,
             TLS_Ext_ServerName,
             TLS_Ext_SignatureAlgorithms,
             TLS_Ext_SupportedGroups,
             TLS_Ext_SupportedPointFormat,
-            ServerName,
-            ProtocolName,
         )
-        from scapy.layers.tls.all import TLS
-        import socket
-        import os
+        from scapy.layers.tls.handshake import TLSClientHello
 
         hello = TLSClientHello(
             version=0x0303,

@@ -8,7 +8,7 @@ import logging
 import traceback
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
 from typing import Any, TypeVar, cast
 
@@ -92,9 +92,9 @@ class Message:
     sender: str
     receiver: str
     timestamp: str = field(
-        default_factory=lambda: datetime.now(timezone.utc).isoformat()
+        default_factory=lambda: datetime.now(UTC).isoformat()
     )
-    id: str = field(default_factory=lambda: str(datetime.now(timezone.utc).timestamp()))
+    id: str = field(default_factory=lambda: str(datetime.now(UTC).timestamp()))
     metadata: dict[str, Any] = field(default_factory=dict)
     priority: Priority = Priority.MEDIUM
     parent_id: str | None = None
@@ -121,8 +121,8 @@ class Message:
             content=data["content"],
             sender=data["sender"],
             receiver=data["receiver"],
-            timestamp=data.get("timestamp", datetime.now(timezone.utc).isoformat()),
-            id=data.get("id", str(datetime.now(timezone.utc).timestamp())),
+            timestamp=data.get("timestamp", datetime.now(UTC).isoformat()),
+            id=data.get("id", str(datetime.now(UTC).timestamp())),
             metadata=data.get("metadata", {}),
             priority=Priority(data.get("priority", Priority.MEDIUM.value)),
             parent_id=data.get("parent_id"),
@@ -259,7 +259,7 @@ class ErrorContext:
 
     def __post_init__(self):
         if self.timestamp is None:
-            self.timestamp = datetime.now(timezone.utc).isoformat()
+            self.timestamp = datetime.now(UTC).isoformat()
         if self.stack_trace is None:
             self.stack_trace = traceback.format_exc()
 
@@ -303,7 +303,7 @@ class AIVillageException(Exception):
             "timestamp": (
                 self.context.timestamp
                 if self.context
-                else datetime.now(timezone.utc).isoformat()
+                else datetime.now(UTC).isoformat()
             ),
             "context": self.context.__dict__ if self.context else None,
             "original_exception": (

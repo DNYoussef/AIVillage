@@ -14,7 +14,7 @@ import re
 import sys
 from collections import Counter, defaultdict
 from dataclasses import asdict, dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -589,7 +589,7 @@ class HyperedgeExtractor:
         """Save extraction metrics report."""
         report = {
             "extraction_metadata": {
-                "extraction_timestamp": datetime.now(timezone.utc).isoformat(),
+                "extraction_timestamp": datetime.now(UTC).isoformat(),
                 "extraction_time_seconds": self.metrics.extraction_time,
                 "documents_per_second": (
                     self.metrics.total_documents_processed
@@ -636,7 +636,7 @@ class HyperedgeExtractor:
                     "source_document": hyperedge.source_document,
                     "extraction_method": hyperedge.extraction_method,
                     "properties": hyperedge.properties,
-                    "created_at": datetime.now(timezone.utc).isoformat(),
+                    "created_at": datetime.now(UTC).isoformat(),
                 },
             )
 

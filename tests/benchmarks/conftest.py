@@ -3,6 +3,7 @@
 import json
 import time
 from dataclasses import asdict, dataclass
+from datetime import UTC
 from pathlib import Path
 from typing import Any
 
@@ -126,12 +127,12 @@ class BenchmarkContext:
         if self.start_time is not None:
             duration = time.perf_counter() - self.start_time
 
-            from datetime import datetime, timezone
+            from datetime import datetime
 
             result = BenchmarkResult(
                 test_name=self.test_name,
                 duration=duration,
-                timestamp=datetime.now(timezone.utc).isoformat(),
+                timestamp=datetime.now(UTC).isoformat(),
                 metadata=self.metadata,
             )
 

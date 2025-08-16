@@ -11,7 +11,7 @@ import secrets
 import sqlite3
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -397,7 +397,7 @@ class SecurePreferenceVault:
         expiry_date = None
         if expiry_hours:
             expiry_date = (
-                datetime.now(timezone.utc) + timedelta(hours=expiry_hours)
+                datetime.now(UTC) + timedelta(hours=expiry_hours)
             ).isoformat()
 
         # Create preference object
@@ -410,8 +410,8 @@ class SecurePreferenceVault:
             value_type=value_type,
             sensitivity_level=sensitivity_level,
             access_permissions=access_permissions,
-            created_at=datetime.now(timezone.utc).isoformat(),
-            last_modified=datetime.now(timezone.utc).isoformat(),
+            created_at=datetime.now(UTC).isoformat(),
+            last_modified=datetime.now(UTC).isoformat(),
             expiry_date=expiry_date,
         )
 
@@ -444,7 +444,7 @@ class SecurePreferenceVault:
                 "vault/sensitivity_level": sensitivity_level,
                 "vault/value_type": value_type,
                 "vault/total_preferences": len(self.preferences),
-                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             }
         )
 
@@ -505,7 +505,7 @@ class SecurePreferenceVault:
         # Check if preference has expired
         if preference.expiry_date:
             expiry = datetime.fromisoformat(preference.expiry_date)
-            if datetime.now(timezone.utc) > expiry:
+            if datetime.now(UTC) > expiry:
                 await self.delete_preference(
                     student_id, preference.preference_id, accessor_token
                 )
@@ -627,7 +627,7 @@ class SecurePreferenceVault:
             # Update preference
             preference.encrypted_value = encrypted_value
             preference.value_type = type(new_value).__name__
-            preference.last_modified = datetime.now(timezone.utc).isoformat()
+            preference.last_modified = datetime.now(UTC).isoformat()
 
             # Save to database
             await self._save_preference_to_db(preference)
@@ -728,14 +728,14 @@ class SecurePreferenceVault:
         token_id = self._generate_secure_id()
 
         expires_at = (
-            datetime.now(timezone.utc) + timedelta(hours=expiry_hours)
+            datetime.now(UTC) + timedelta(hours=expiry_hours)
         ).isoformat()
 
         token = AccessToken(
             token_id=token_id,
             student_id=student_id,
             permissions=permissions,
-            issued_at=datetime.now(timezone.utc).isoformat(),
+            issued_at=datetime.now(UTC).isoformat(),
             expires_at=expires_at,
             issuer=issuer,
             revoked=False,
@@ -840,7 +840,7 @@ class SecurePreferenceVault:
         # Check if account is locked
         if student_id in self.locked_accounts:
             lock_expiry = datetime.fromisoformat(self.locked_accounts[student_id])
-            if datetime.now(timezone.utc) < lock_expiry:
+            if datetime.now(UTC) < lock_expiry:
                 return False
             # Unlock account
             del self.locked_accounts[student_id]
@@ -856,7 +856,7 @@ class SecurePreferenceVault:
 
         # Check if token has expired
         expires_at = datetime.fromisoformat(token.expires_at)
-        if datetime.now(timezone.utc) > expires_at:
+        if datetime.now(UTC) > expires_at:
             token.revoked = True
             return False
 
@@ -910,7 +910,7 @@ class SecurePreferenceVault:
             action=action,
             preference_id=preference_id,
             accessor=accessor,
-            timestamp=datetime.now(timezone.utc).isoformat(),
+            timestamp=datetime.now(UTC).isoformat(),
             ip_address=ip_address,
             success=success,
             details=details,
@@ -935,7 +935,7 @@ class SecurePreferenceVault:
             "event_id": event_id,
             "event_type": event_type,
             "student_id": student_id,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "accessor_token": accessor_token,
             "severity": "high" if event_type.startswith("unauthorized") else "medium",
         }
@@ -1098,7 +1098,7 @@ class SecurePreferenceVault:
     async def _cleanup_expired_tokens(self) -> None:
         """Clean up expired access tokens."""
         expired_tokens = []
-        current_time = datetime.now(timezone.utc)
+        current_time = datetime.now(UTC)
 
         for token_id, token in self.access_tokens.items():
             expires_at = datetime.fromisoformat(token.expires_at)
@@ -1114,7 +1114,7 @@ class SecurePreferenceVault:
     async def _cleanup_expired_preferences(self) -> None:
         """Clean up expired preferences."""
         expired_prefs = []
-        current_time = datetime.now(timezone.utc)
+        current_time = datetime.now(UTC)
 
         for pref_id, pref in self.preferences.items():
             if pref.expiry_date:
@@ -1142,7 +1142,7 @@ class SecurePreferenceVault:
             e
             for e in self.security_alerts
             if (
-                datetime.now(timezone.utc) - datetime.fromisoformat(e["timestamp"])
+                datetime.now(UTC) - datetime.fromisoformat(e["timestamp"])
             ).seconds
             < 3600
         ]
@@ -1158,7 +1158,7 @@ class SecurePreferenceVault:
                 {
                     "security/high_activity_alert": True,
                     "security/events_per_hour": len(recent_events),
-                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "timestamp": datetime.now(UTC).isoformat(),
                 }
             )
 
@@ -1188,7 +1188,7 @@ class SecurePreferenceVault:
 
         report = {
             "student_id": student_id,
-            "report_generated": datetime.now(timezone.utc).isoformat(),
+            "report_generated": datetime.now(UTC).isoformat(),
             "summary": {
                 "total_preferences": len(student_prefs),
                 "active_tokens": len([t for t in student_tokens if not t.revoked]),

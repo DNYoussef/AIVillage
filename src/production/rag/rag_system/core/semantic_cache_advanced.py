@@ -510,7 +510,7 @@ class SemanticMultiTierCache:
                         # Schedule removal after TTL
                         asyncio.create_task(self._remove_from_prefetch(key, 60))
 
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 # Periodic cleanup of old prefetch entries
                 await self._cleanup_prefetch_cache()
 

@@ -10,7 +10,6 @@ package instead.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Dict
 
 try:  # Optional torch dependency
     import torch
@@ -34,7 +33,7 @@ def _dummy_tensor() -> torch.Tensor:
     return torch.randn(128, 128)
 
 
-def report_compression(model_path: str) -> Dict[str, float]:
+def report_compression(model_path: str) -> dict[str, float]:
     """Return simple compression statistics for a given method.
 
     Parameters

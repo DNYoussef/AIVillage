@@ -145,4 +145,3 @@ __all__ = [
     "MeshMessageType",
     "MeshConfiguration",
 ]
-

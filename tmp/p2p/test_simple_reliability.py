@@ -100,7 +100,7 @@ class TestP2PReliability:
             await transport.stop()
             assert transport.is_running is False, "Transport should be stopped"
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             pytest.fail("Transport startup timed out")
         except Exception as e:
             pytest.fail(f"Transport lifecycle failed: {e}")

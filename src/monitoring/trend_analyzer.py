@@ -9,7 +9,7 @@ import json
 import statistics
 from collections import defaultdict
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -77,14 +77,14 @@ class TrendAnalyzer:
 
     def generate_success_trend(self, days: int = 30) -> list[TrendPoint]:
         """Generate success rate trend data for graphing."""
-        cutoff_date = datetime.now(timezone.utc) - timedelta(days=days)
+        cutoff_date = datetime.now(UTC) - timedelta(days=days)
         recent_runs = [run for run in self.runs if run.timestamp >= cutoff_date]
 
         return [TrendPoint(run.timestamp, run.success_rate) for run in recent_runs]
 
     def generate_performance_trend(self, days: int = 30) -> list[TrendPoint]:
         """Generate performance trend data."""
-        cutoff_date = datetime.now(timezone.utc) - timedelta(days=days)
+        cutoff_date = datetime.now(UTC) - timedelta(days=days)
         recent_runs = [run for run in self.runs if run.timestamp >= cutoff_date]
 
         # Calculate average test duration

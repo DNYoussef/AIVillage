@@ -14,9 +14,7 @@ pytest.skip(
 from AIVillage.rag_system.wikipedia_storm_pipeline import WikipediaSTORMPipeline
 
 # Import the real components
-from src.core.evolution_metrics_integrated import (
-    IntegratedEvolutionMetrics as EvolutionMetricsCollector,
-)
+from src.core.evolution_metrics_integrated import IntegratedEvolutionMetrics as EvolutionMetricsCollector
 from src.digital_twin.api.service import DigitalTwinService
 from src.token_economy.credit_system import EarningRule, VILLAGECreditSystem
 

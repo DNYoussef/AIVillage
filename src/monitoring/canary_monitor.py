@@ -8,7 +8,7 @@ architectural changes when they start passing or fail differently.
 import json
 import logging
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -86,7 +86,7 @@ class CanaryMonitor:
                 "path": "tests/compression/test_stage1.py::test_bitnet_quantization_accuracy",
                 "expected_status": "xfail",
                 "reason": "BitNet quantization not implemented - architectural canary",
-                "monitored_since": datetime.now(timezone.utc).isoformat(),
+                "monitored_since": datetime.now(UTC).isoformat(),
                 "failure_threshold": 1,
             },
             {
@@ -94,7 +94,7 @@ class CanaryMonitor:
                 "path": "tests/evo_merge/test_*.py",
                 "expected_status": "collection_error",
                 "reason": "EvoMerge architecture not available - architectural canary",
-                "monitored_since": datetime.now(timezone.utc).isoformat(),
+                "monitored_since": datetime.now(UTC).isoformat(),
                 "failure_threshold": 1,
             },
         ]
@@ -154,7 +154,7 @@ class CanaryMonitor:
     def check_canary_status(self, test_results: dict[str, Any]) -> list[CanaryChange]:
         """Check canary tests for unexpected changes."""
         changes = []
-        timestamp = datetime.now(timezone.utc).isoformat()
+        timestamp = datetime.now(UTC).isoformat()
 
         # Extract test results
         tests = test_results.get("tests", [])

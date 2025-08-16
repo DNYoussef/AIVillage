@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, List
+from typing import Any
 
 import numpy as np
 
@@ -25,7 +25,7 @@ class SimpleEmbeddingModel(EmbeddingModel):
         self._model = BERTEmbeddingModel(model_name)
         self.dimension = getattr(self._model, "hidden_size", 768)
 
-    async def get_embedding(self, text: str) -> List[float]:
+    async def get_embedding(self, text: str) -> list[float]:
         _tokens, emb = self._model.encode(text)
         # Mean pool to a single vector
         return emb.mean(dim=0).detach().cpu().tolist()
@@ -95,4 +95,4 @@ class SimpleReasoningEngine(ReasoningEngine):
         summary = constructed_knowledge.get("summary", "")
         if not summary:
             return f"No information found for: {query}"
-        return f"Based on the documents, {summary}" 
+        return f"Based on the documents, {summary}"

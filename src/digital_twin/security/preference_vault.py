@@ -68,9 +68,8 @@ class PreferenceVault:
 
 # Backwards compatibility for existing imports that expect the previous heavy
 # ``SecurePreferenceVault`` implementation.
-from .secure_preference_vault import (  # noqa: E402,F401 - imported for compat
+from .secure_preference_vault import (  # noqa: E402 - imported for compat
     SecurePreferenceVault,
 )
 
 __all__ = ["PreferenceVault", "SecurePreferenceVault"]
-

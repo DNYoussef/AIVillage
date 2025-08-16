@@ -3,7 +3,7 @@
 
 import json
 import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 COMPRESSION_TARGET_RATIO = 4.0
@@ -48,7 +48,7 @@ def generate_report() -> None:
     benchmarks = results.get("benchmarks", {})
 
     print(
-        f"Report Date: {datetime.now(tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S %Z')}"
+        f"Report Date: {datetime.now(tz=UTC).strftime('%Y-%m-%d %H:%M:%S %Z')}"
     )
     print(f"Benchmark Date: {sys_info.get('timestamp', 'Unknown')}")
     print(

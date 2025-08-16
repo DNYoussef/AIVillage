@@ -7,7 +7,7 @@ import logging
 import random
 from collections import defaultdict
 from dataclasses import asdict, dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
 from typing import Any
 
@@ -343,7 +343,7 @@ class PersonalizedTutorEngine:
             session_id=session_id,
             student_id=student_id,
             tutor_engine_id=strategy.strategy_id,
-            start_time=datetime.now(timezone.utc).isoformat(),
+            start_time=datetime.now(UTC).isoformat(),
             end_time=None,
             mode=mode,
             concepts_target=target_concepts,
@@ -625,7 +625,7 @@ class PersonalizedTutorEngine:
             "interaction_id": f"opening_{int(datetime.now().timestamp())}",
             "type": InteractionType.EXPLANATION.value,
             "content": f"{greeting} {preview}",
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "metadata": {
                 "strategy": strategy.strategy_id,
                 "personalization": {
@@ -657,7 +657,7 @@ class PersonalizedTutorEngine:
             "response_id": f"resp_{int(datetime.now().timestamp())}",
             "content": response_content,
             "type": response_type,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "metadata": response_metadata or {},
         }
 
@@ -925,7 +925,7 @@ class PersonalizedTutorEngine:
             "interaction_id": f"int_{int(datetime.now().timestamp())}",
             "type": interaction_type.value,
             "content": content,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "metadata": {
                 "strategy": strategy.strategy_id,
                 "adaptation_context": (
@@ -1125,7 +1125,7 @@ class PersonalizedTutorEngine:
             raise ValueError(msg)
 
         session = self.active_sessions[session_id]
-        session.end_time = datetime.now(timezone.utc).isoformat()
+        session.end_time = datetime.now(UTC).isoformat()
 
         # Calculate session duration
         start_time = datetime.fromisoformat(session.start_time)

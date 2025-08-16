@@ -394,7 +394,7 @@ class ProductionMonitor:
                     if check.critical:
                         failed_critical = True
 
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 results[name] = {"status": "timeout", "critical": check.critical}
                 failed_count += 1
                 if check.critical:

@@ -2,7 +2,7 @@
 
 import os
 import tempfile
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 from fastapi.testclient import TestClient
@@ -193,7 +193,7 @@ class TestCreditsAPI:
 
     def test_earn_credits_success(self, client, sample_users):
         """Test successful credit earning."""
-        scrape_time = datetime.now(timezone.utc)
+        scrape_time = datetime.now(UTC)
 
         response = client.post(
             "/earn",
@@ -218,7 +218,7 @@ class TestCreditsAPI:
 
     def test_earn_credits_idempotent(self, client, sample_users):
         """Test that earning is idempotent."""
-        scrape_time = datetime.now(timezone.utc)
+        scrape_time = datetime.now(UTC)
 
         # First request
         response1 = client.post(
@@ -257,7 +257,7 @@ class TestCreditsAPI:
 
     def test_earn_credits_user_not_found(self, client):
         """Test earning credits for non-existent user."""
-        scrape_time = datetime.now(timezone.utc)
+        scrape_time = datetime.now(UTC)
 
         response = client.post(
             "/earn",
@@ -276,7 +276,7 @@ class TestCreditsAPI:
 
     def test_earn_credits_invalid_data(self, client, sample_users):
         """Test earning credits with invalid data."""
-        scrape_time = datetime.now(timezone.utc)
+        scrape_time = datetime.now(UTC)
 
         # Negative values
         response = client.post(
@@ -368,7 +368,7 @@ class TestCreditsAPI:
         assert "timestamp" in data
 
         # Add some credits and check again
-        scrape_time = datetime.now(timezone.utc)
+        scrape_time = datetime.now(UTC)
         client.post(
             "/earn",
             json={

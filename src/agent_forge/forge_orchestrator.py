@@ -442,7 +442,7 @@ class ForgeOrchestrator:
             result.artifacts_produced = artifacts
             result.status = PhaseStatus.COMPLETED
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             result.status = PhaseStatus.FAILED
             result.error_message = f"Phase exceeded maximum duration of {self.config.max_phase_duration_minutes} minutes"
 
@@ -862,7 +862,7 @@ class ForgeOrchestrator:
                     )
                     break
 
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 logger.exception(
                     "Phase %s timed out after %d minutes",
                     phase_type.value,

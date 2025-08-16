@@ -1,6 +1,6 @@
-from pathlib import Path
 import sys
 import tempfile
+from pathlib import Path
 from unittest import mock
 
 # Ensure the top-level package is preferred over the similarly named one under src/

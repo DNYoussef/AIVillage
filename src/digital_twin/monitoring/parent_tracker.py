@@ -9,7 +9,7 @@ import logging
 import sqlite3
 from collections import defaultdict, deque
 from dataclasses import asdict, dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from enum import Enum
@@ -350,8 +350,8 @@ class ParentProgressTracker:
                 "include_session_details": True,
                 "anonymize_reports": False,
             },
-            "created_at": datetime.now(timezone.utc).isoformat(),
-            "updated_at": datetime.now(timezone.utc).isoformat(),
+            "created_at": datetime.now(UTC).isoformat(),
+            "updated_at": datetime.now(UTC).isoformat(),
         }
 
         # Store settings
@@ -389,7 +389,7 @@ class ParentProgressTracker:
                 "parent_tracker/notifications_enabled": (
                     notification_preferences.get("email_enabled", False)
                 ),
-                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             }
         )
 
@@ -484,7 +484,7 @@ class ParentProgressTracker:
                 4 if importance == "critical" else 6 if importance == "important" else 8
             )
             estimated_completion = (
-                datetime.now(timezone.utc) + timedelta(weeks=estimated_weeks)
+                datetime.now(UTC) + timedelta(weeks=estimated_weeks)
             ).isoformat()
 
             milestone = ProgressMilestone(
@@ -541,7 +541,7 @@ class ParentProgressTracker:
                     "parent_tracker/session_accuracy": (
                         session_data.get("accuracy", 0)
                     ),
-                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "timestamp": datetime.now(UTC).isoformat(),
                 }
             )
 
@@ -570,7 +570,7 @@ class ParentProgressTracker:
                 # Check if milestone is achieved
                 if milestone.current_mastery_level >= milestone.target_mastery_level:
                     milestone.achieved = True
-                    milestone.achieved_date = datetime.now(timezone.utc).isoformat()
+                    milestone.achieved_date = datetime.now(UTC).isoformat()
 
                     # Create celebration alert
                     await self.create_alert(
@@ -715,7 +715,7 @@ class ParentProgressTracker:
 
             self.learning_velocity[student_id].append(
                 {
-                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "timestamp": datetime.now(UTC).isoformat(),
                     "velocity": velocity,
                     "concepts": concepts_learned,
                     "time_hours": session_time / 60,
@@ -723,7 +723,7 @@ class ParentProgressTracker:
             )
 
             # Keep only recent data (last 30 days)
-            cutoff_date = datetime.now(timezone.utc) - timedelta(days=30)
+            cutoff_date = datetime.now(UTC) - timedelta(days=30)
             self.learning_velocity[student_id] = deque(
                 [
                     entry
@@ -814,7 +814,7 @@ class ParentProgressTracker:
                         ],
                         priority="medium",
                         confidence_score=0.8,
-                        created_at=datetime.now(timezone.utc).isoformat(),
+                        created_at=datetime.now(UTC).isoformat(),
                     )
                 )
 
@@ -852,7 +852,7 @@ class ParentProgressTracker:
                         ],
                         priority="high",
                         confidence_score=0.9,
-                        created_at=datetime.now(timezone.utc).isoformat(),
+                        created_at=datetime.now(UTC).isoformat(),
                     )
                 )
 
@@ -878,7 +878,7 @@ class ParentProgressTracker:
         alert_id = f"alert_{hashlib.md5(message_to_hash.encode()).hexdigest()[:12]}"
 
         expires_at = (
-            datetime.now(timezone.utc) + timedelta(hours=expires_hours)
+            datetime.now(UTC) + timedelta(hours=expires_hours)
         ).isoformat()
 
         alert = LearningAlert(
@@ -888,7 +888,7 @@ class ParentProgressTracker:
             level=level,
             title=title,
             message=message,
-            created_at=datetime.now(timezone.utc).isoformat(),
+            created_at=datetime.now(UTC).isoformat(),
             read=False,
             acknowledged=False,
             action_required=action_required,
@@ -946,7 +946,7 @@ class ParentProgressTracker:
                 a
                 for a in self.parent_alerts[student_id]
                 if (
-                    datetime.now(timezone.utc) - datetime.fromisoformat(a.created_at)
+                    datetime.now(UTC) - datetime.fromisoformat(a.created_at)
                 ).days
                 == 0
             ]
@@ -1072,7 +1072,7 @@ progress updates.
     async def generate_weekly_report(self, student_id: str) -> WeeklyReport:
         """Generate comprehensive weekly progress report."""
         # Calculate week boundaries
-        today = datetime.now(timezone.utc)
+        today = datetime.now(UTC)
         week_start = today - timedelta(days=today.weekday())
         week_end = week_start + timedelta(days=6)
 
@@ -1137,7 +1137,7 @@ progress updates.
             areas_of_strength=areas_of_strength,
             areas_for_improvement=areas_for_improvement,
             recommended_focus=recommended_focus,
-            generated_at=datetime.now(timezone.utc).isoformat(),
+            generated_at=datetime.now(UTC).isoformat(),
         )
 
         # Store report
@@ -1345,7 +1345,7 @@ sessions with {report.total_study_time_minutes} minutes of study time.
 
     async def _check_weekly_report_schedule(self) -> None:
         """Check if it's time to generate weekly reports."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
 
         # Generate reports on Sunday evenings
         if now.weekday() == 6 and now.hour == 20:  # Sunday 8 PM
@@ -1359,7 +1359,7 @@ sessions with {report.total_study_time_minutes} minutes of study time.
 
     async def _cleanup_expired_alerts(self) -> None:
         """Clean up expired alerts."""
-        current_time = datetime.now(timezone.utc)
+        current_time = datetime.now(UTC)
 
         for student_id in list(self.parent_alerts.keys()):
             alerts = self.parent_alerts[student_id]
@@ -1388,7 +1388,7 @@ sessions with {report.total_study_time_minutes} minutes of study time.
         # For now, store basic placeholder data
 
         self.progress_trends[student_id] = {
-            "last_updated": datetime.now(timezone.utc).isoformat(),
+            "last_updated": datetime.now(UTC).isoformat(),
             "learning_velocity_trend": "stable",
             "engagement_trend": "improving",
             "accuracy_trend": "stable",
@@ -1420,7 +1420,7 @@ sessions with {report.total_study_time_minutes} minutes of study time.
                     milestone.difficulty_level,
                     milestone.importance,
                     milestone.celebration_message,
-                    datetime.now(timezone.utc).isoformat(),
+                    datetime.now(UTC).isoformat(),
                 ),
             )
 
@@ -1585,7 +1585,7 @@ sessions with {report.total_study_time_minutes} minutes of study time.
 
         dashboard = {
             "student_id": student_id,
-            "last_updated": datetime.now(timezone.utc).isoformat(),
+            "last_updated": datetime.now(UTC).isoformat(),
             "alerts": {
                 "recent": recent_alerts,
                 "unread_count": len(

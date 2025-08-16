@@ -1,4 +1,5 @@
 from pathlib import Path
+
 from ingestion.connectors.whatsapp import WhatsAppConnector
 
 DATA_DIR = Path(__file__).parent.parent / "data"

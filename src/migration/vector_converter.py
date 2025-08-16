@@ -12,7 +12,7 @@ import logging
 # Import HypeRAG components
 import sys
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -380,7 +380,7 @@ class VectorToHypergraphConverter:
                         else None
                     ),
                     "original_doc_id": document.doc_id,
-                    "migrated_at": datetime.now(timezone.utc).isoformat(),
+                    "migrated_at": datetime.now(UTC).isoformat(),
                     "confidence": 0.9,
                 },
             )
@@ -539,7 +539,7 @@ class VectorToHypergraphConverter:
                 "source_vector_store": str(self.vector_store_path),
                 "store_type": self.store_type,
                 "output_kg_path": str(self.output_kg_path),
-                "conversion_timestamp": datetime.now(timezone.utc).isoformat(),
+                "conversion_timestamp": datetime.now(UTC).isoformat(),
                 "batch_size": self.batch_size,
             },
             "metrics": {

@@ -5,7 +5,7 @@ Core data structures for representing query plans, execution steps, and checkpoi
 
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
 from typing import Any
 
@@ -93,14 +93,14 @@ class ExecutionStep:
     def mark_started(self) -> None:
         """Mark step as started."""
         self.status = ExecutionStatus.IN_PROGRESS
-        self.started_at = datetime.now(timezone.utc)
+        self.started_at = datetime.now(UTC)
 
     def mark_completed(self, output: Any, confidence: float) -> None:
         """Mark step as completed with results."""
         self.status = ExecutionStatus.COMPLETED
         self.actual_output = output
         self.confidence_score = confidence
-        self.completed_at = datetime.now(timezone.utc)
+        self.completed_at = datetime.now(UTC)
 
         if self.started_at:
             delta = self.completed_at - self.started_at
@@ -110,7 +110,7 @@ class ExecutionStep:
         """Mark step as failed."""
         self.status = ExecutionStatus.FAILED
         self.error_message = error
-        self.completed_at = datetime.now(timezone.utc)
+        self.completed_at = datetime.now(UTC)
 
 
 @dataclass
@@ -123,7 +123,7 @@ class PlanCheckpoint:
     intermediate_results: dict[str, Any] = field(default_factory=dict)
     aggregate_confidence: float = 1.0  # Confidence so far
     execution_time_ms: float = 0.0  # Time elapsed
-    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     # State for rollback
     knowledge_graph_state: dict[str, Any] | None = None
@@ -157,7 +157,7 @@ class QueryPlan:
     total_execution_time_ms: float = 0.0
 
     # Planning metadata
-    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     agent_model: str | None = None  # Which agent model created this
     complexity_score: float = 0.5  # Estimated complexity [0,1]
     expected_steps: int = 1  # Expected number of steps

@@ -1,4 +1,5 @@
 import asyncio
+
 import pytest
 
 from src.communications.protocol import CommunicationsProtocol

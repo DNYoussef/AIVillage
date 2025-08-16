@@ -25,7 +25,7 @@ import sys
 import uuid
 from collections import defaultdict
 from dataclasses import asdict, dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -910,12 +910,12 @@ class RepairTestSuite:
             total_proposals_generated=len(proposals),
             total_guardian_rejections=rejections,
             test_suite_name="comprehensive_repair_test",
-            timestamp=datetime.now(timezone.utc).isoformat(),
+            timestamp=datetime.now(UTC).isoformat(),
         )
 
     async def _save_test_results(self, metrics: RepairTestMetrics) -> None:
         """Save test results to files."""
-        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
 
         # Save detailed results
         results_file = self.output_dir / f"repair_test_results_{timestamp}.json"

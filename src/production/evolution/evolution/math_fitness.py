@@ -8,7 +8,7 @@ import re
 import statistics
 from collections import defaultdict
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 import torch
@@ -347,7 +347,7 @@ class MathFitnessEvaluator:
         if individual_id and individual_id in self.model_performance_cache:
             cached_result = self.model_performance_cache[individual_id]
             if (
-                datetime.now(timezone.utc)
+                datetime.now(UTC)
                 - datetime.fromisoformat(cached_result["timestamp"])
             ).seconds < 3600:
                 logger.info(f"Using cached evaluation for {individual_id}")
@@ -443,7 +443,7 @@ class MathFitnessEvaluator:
                 "category_scores": category_scores,
                 "evaluation_time": evaluation_time,
                 "avg_response_time": avg_response_time,
-                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             }
 
         # Expose KPI scores for external consumption
@@ -539,7 +539,7 @@ class MathFitnessEvaluator:
                 total_score=total_score,
                 feedback=feedback,
                 evaluation_time=evaluation_time,
-                timestamp=datetime.now(timezone.utc).isoformat(),
+                timestamp=datetime.now(UTC).isoformat(),
             )
 
         except Exception as e:

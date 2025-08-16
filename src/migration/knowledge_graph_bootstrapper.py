@@ -13,7 +13,7 @@ import logging
 import sys
 from collections import defaultdict
 from dataclasses import asdict, dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -158,7 +158,7 @@ class EntityResolver:
                 "confidence": merged_confidence,
                 "cluster_size": len(cluster_entities),
                 "signature": signature,
-                "resolved_at": datetime.now(timezone.utc).isoformat(),
+                "resolved_at": datetime.now(UTC).isoformat(),
             }
 
         logger.info(
@@ -398,7 +398,7 @@ class ConfidenceBootstrapper:
 
         try:
             entity_time = datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
-            current_time = datetime.now(timezone.utc)
+            current_time = datetime.now(UTC)
             age_days = (current_time - entity_time).days
 
             # Decay confidence for older entities
@@ -654,7 +654,7 @@ class KnowledgeGraphBootstrapper:
                     "confidence": entity_data["confidence"],
                     "sources": entity_data["sources"],
                     "cluster_size": entity_data["cluster_size"],
-                    "bootstrapped_at": datetime.now(timezone.utc).isoformat(),
+                    "bootstrapped_at": datetime.now(UTC).isoformat(),
                     "confidence_components": entity_data.get(
                         "confidence_components", {}
                     ),
@@ -699,7 +699,7 @@ class KnowledgeGraphBootstrapper:
         """Save detailed bootstrapping report."""
         report = {
             "bootstrap_metadata": {
-                "bootstrap_timestamp": datetime.now(timezone.utc).isoformat(),
+                "bootstrap_timestamp": datetime.now(UTC).isoformat(),
                 "config": asdict(self.config),
                 "bootstrap_time_seconds": self.metrics.bootstrap_time,
             },

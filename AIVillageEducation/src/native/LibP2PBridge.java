@@ -175,4 +175,3 @@ public class LibP2PBridge extends ReactContextBaseJavaModule {
         return json;
     }
 }
-

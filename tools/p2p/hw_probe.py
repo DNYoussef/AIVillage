@@ -56,7 +56,7 @@ class HardwareProbe:
             # Run all probes concurrently with timeout
             await asyncio.wait_for(self._run_all_probes(), timeout=self.timeout_seconds)
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.warning(f"Hardware probe timed out after {self.timeout_seconds}s")
             self.results["summary"]["reason"] = "Probe timeout"
 
@@ -365,7 +365,7 @@ class HardwareProbe:
             )
             return None
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.debug(f"Command timed out: {' '.join(command)}")
             try:
                 process.terminate()

@@ -1,5 +1,5 @@
 import hashlib
-from typing import List
+
 import numpy as np
 
 
@@ -27,7 +27,7 @@ class SimHashEmbedder:
             return np.zeros(self.dim, dtype=np.float32)
 
         n = self.ngram_size
-        ngrams: List[str] = [
+        ngrams: list[str] = [
             text[i : i + n] for i in range(max(len(text) - n + 1, 1))
         ]
         accum = np.zeros(self.dim, dtype=np.int32)

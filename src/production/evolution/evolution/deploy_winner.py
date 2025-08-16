@@ -7,7 +7,7 @@ import hashlib
 import json
 import logging
 from dataclasses import asdict, dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -346,7 +346,7 @@ class TutorDeployment:
                         },
                         deployment_ready=compressed_size
                         <= platform_config["max_size_mb"],
-                        timestamp=datetime.now(timezone.utc).isoformat(),
+                        timestamp=datetime.now(UTC).isoformat(),
                     )
 
                     compression_results.append(compression_result)
@@ -714,9 +714,9 @@ class TutorDeployment:
                 "champion_info": champion_info,
                 "compression_results": [asdict(r) for r in compression_results],
                 "platform_config": platform_config,
-                "creation_date": datetime.now(timezone.utc).isoformat(),
+                "creation_date": datetime.now(UTC).isoformat(),
             },
-            created_at=datetime.now(timezone.utc).isoformat(),
+            created_at=datetime.now(UTC).isoformat(),
         )
 
         # Save package metadata
@@ -836,7 +836,7 @@ echo "Installation complete! Model available at ~/.aivillage/models/{package_id}
                 "rank": adapter["rank"],
                 "base_model": adapter["base_model_name"],
                 "deployment_package_id": deployment_package.package_id,
-                "registered_at": datetime.now(timezone.utc).isoformat(),
+                "registered_at": datetime.now(UTC).isoformat(),
             }
 
             # Save registration

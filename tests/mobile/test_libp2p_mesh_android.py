@@ -23,7 +23,6 @@ from src.android.p2p.libp2p_mesh import (
     MeshMessage,
 )
 
-
 pytestmark = pytest.mark.asyncio
 
 
@@ -55,4 +54,3 @@ async def test_peer_discovery_and_message_exchange() -> None:
 
     await mesh_a.close()
     await mesh_b.close()
-

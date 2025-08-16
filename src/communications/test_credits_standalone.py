@@ -4,7 +4,7 @@
 import os
 import sys
 import tempfile
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 # Add the current directory to the path so we can import our modules
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -50,7 +50,7 @@ def test_credits_ledger() -> bool | None:
 
         # Test 3: Earn credits
         print("+ Testing credit earning...")
-        scrape_time = datetime.now(timezone.utc)
+        scrape_time = datetime.now(UTC)
         earning = ledger.earn_credits(
             "alice",
             scrape_time,
@@ -183,7 +183,7 @@ def test_api_endpoints() -> bool | None:
 
             # Test 4: Earn credits
             print("+ Testing credit earning...")
-            scrape_time = datetime.now(timezone.utc)
+            scrape_time = datetime.now(UTC)
             response = client.post(
                 "/earn",
                 json={

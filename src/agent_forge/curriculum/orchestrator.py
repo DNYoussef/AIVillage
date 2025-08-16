@@ -9,7 +9,7 @@ Orchestrates all curriculum components to maintain optimal learning flow:
 
 import asyncio
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -641,7 +641,7 @@ class CurriculumOrchestrator:
                 + mastery_stats.stalled,
             },
             "system_health": self._assess_system_health(backlog, mastery_stats),
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
 
     def _assess_system_health(

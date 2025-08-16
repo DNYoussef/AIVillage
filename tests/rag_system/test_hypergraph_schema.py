@@ -5,7 +5,7 @@ Tests hyperedge creation, Neo4j migrations, and bulk operations.
 """
 
 import asyncio
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from unittest.mock import AsyncMock
 
 import numpy as np
@@ -184,11 +184,11 @@ class TestHippoNode:
 
     def test_hippo_node_timestamps(self):
         """Test timestamp handling"""
-        before_creation = datetime.now(timezone.utc)
+        before_creation = datetime.now(UTC)
 
         node = HippoNode(id="hippo_002", content="Test content")
 
-        after_creation = datetime.now(timezone.utc)
+        after_creation = datetime.now(UTC)
 
         # Check that timestamps are set and reasonable
         if hasattr(node, "created"):

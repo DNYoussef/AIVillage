@@ -6,7 +6,7 @@ import asyncio
 import copy
 import logging
 from dataclasses import asdict, dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 import numpy as np
@@ -299,7 +299,7 @@ class MergeOperator:
             merge_strategy=strategy,
             merge_config=asdict(merge_config),
             success=False,
-            timestamp=datetime.now(timezone.utc).isoformat(),
+            timestamp=datetime.now(UTC).isoformat(),
         )
 
         try:

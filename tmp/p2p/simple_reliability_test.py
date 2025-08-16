@@ -94,7 +94,7 @@ async def test_transport_startup():
 
         try:
             startup_success = await asyncio.wait_for(transport.start(), timeout=5.0)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             startup_success = False
 
         if startup_success:

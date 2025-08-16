@@ -282,7 +282,7 @@ class FederationManager:
         self.pending_responses[request_id] = future
         try:
             return await asyncio.wait_for(future, timeout)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.warning(
                 f"Timeout waiting for response to request {request_id}"
             )

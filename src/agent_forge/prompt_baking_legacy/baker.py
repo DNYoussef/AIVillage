@@ -4,7 +4,6 @@ import datetime as dt
 import json
 import logging
 import pathlib
-from datetime import timezone
 from typing import TYPE_CHECKING
 
 import torch
@@ -59,7 +58,7 @@ def bake(
     meta = {
         "ns": ANCHOR_NS,
         "txt": text[:160] + "…" if len(text) > 160 else text,
-        "dt": dt.datetime.now(timezone.utc).isoformat(),
+        "dt": dt.datetime.now(dt.UTC).isoformat(),
         "loss": float(loss.item()),
         "steps": step,
     }

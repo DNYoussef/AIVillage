@@ -343,7 +343,7 @@ class SecurityMonitor:
             try:
                 event = await asyncio.wait_for(self.event_queue.get(), timeout=1.0)
                 await self._analyze_event(event)
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 continue
             except Exception as e:
                 logger.exception(f"Error processing security event: {e}")

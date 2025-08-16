@@ -25,9 +25,7 @@ from src.agent_forge.compression.seedlm import (
 from src.agent_forge.compression.seedlm import compress as seedlm_compress
 from src.agent_forge.compression.vptq import VPTQCompressor
 from src.agent_forge.compression.vptq import compress as vptq_compress
-from src.core.compression.unified_compressor import (
-    UnifiedCompressor as _CoreUnifiedCompressor,
-)
+from src.core.compression.unified_compressor import UnifiedCompressor as _CoreUnifiedCompressor
 
 logger = logging.getLogger(__name__)
 

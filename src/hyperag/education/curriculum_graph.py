@@ -7,7 +7,7 @@ import hashlib
 import logging
 from collections import defaultdict, deque
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 import wandb
@@ -160,8 +160,8 @@ class CurriculumGraph:
             prerequisites=prerequisites,
             follow_up_concepts=[],
             cultural_adaptations=cultural_adaptations or {},
-            created_at=datetime.now(timezone.utc).isoformat(),
-            updated_at=datetime.now(timezone.utc).isoformat(),
+            created_at=datetime.now(UTC).isoformat(),
+            updated_at=datetime.now(UTC).isoformat(),
         )
 
         # Store concept
@@ -219,7 +219,7 @@ class CurriculumGraph:
                 ),
                 "concept_added": True,
                 "concept_id": concept_id,
-                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             }
         )
 

@@ -78,4 +78,3 @@ def risk_gate(
 
 
 __all__ = ["risk_gate"]
-

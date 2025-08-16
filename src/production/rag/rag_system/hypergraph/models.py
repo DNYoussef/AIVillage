@@ -5,7 +5,7 @@ Implements Hyperedge for n-ary relationships and HippoNode for episodic memory.
 """
 
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 import numpy as np
@@ -28,7 +28,7 @@ class Hyperedge(BaseModel):
     )
     relation: str = Field(description="Relationship type connecting the entities")
     confidence: float = Field(ge=0.0, le=1.0, description="Confidence score [0.0, 1.0]")
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
     source_docs: list[str] = Field(
         default_factory=list, description="Source document IDs"
     )
@@ -131,8 +131,8 @@ class HippoNode(BaseModel):
     id: str = Field(description="Unique node identifier")
     content: str = Field(description="Node content/data")
     episodic: bool = Field(default=True, description="Whether this is episodic memory")
-    created: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    last_accessed: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    last_accessed: datetime = Field(default_factory=lambda: datetime.now(UTC))
     access_pattern: np.ndarray | None = Field(
         default=None, description="Access pattern for PPR"
     )
@@ -199,7 +199,7 @@ class HippoNode(BaseModel):
 
     def update_access(self) -> None:
         """Update access tracking."""
-        self.last_accessed = datetime.now(timezone.utc)
+        self.last_accessed = datetime.now(UTC)
         self.access_count += 1
 
         # Update relevance decay based on time since creation
@@ -210,7 +210,7 @@ class HippoNode(BaseModel):
     def calculate_consolidation_score(self) -> float:
         """Calculate score for consolidating to semantic memory."""
         # Factors: access frequency, age, relevance
-        age_hours = (datetime.now(timezone.utc) - self.created).total_seconds() / 3600.0
+        age_hours = (datetime.now(UTC) - self.created).total_seconds() / 3600.0
 
         # Higher score for frequently accessed, moderately aged content
         frequency_score = min(self.access_count / 10.0, 1.0)  # Normalize to [0,1]
@@ -227,7 +227,7 @@ class HippoNode(BaseModel):
     def mark_consolidated(self) -> None:
         """Mark node as consolidated to semantic memory."""
         self.consolidated = True
-        self.consolidation_timestamp = datetime.now(timezone.utc)
+        self.consolidation_timestamp = datetime.now(UTC)
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for storage."""

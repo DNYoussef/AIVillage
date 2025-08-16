@@ -172,7 +172,7 @@ class DistributedCompressionManager:
             )
             return successful_compressions
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.exception("Compression timeout exceeded")
             raise
         except Exception as e:

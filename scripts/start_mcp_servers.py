@@ -112,7 +112,7 @@ class MCPServerManager:
                     asyncio.create_task(self._wait_for_process(process)), timeout=10
                 )
                 logger.info(f"MCP server {name} stopped gracefully")
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 # Force kill if graceful shutdown failed
                 logger.warning(f"Force killing MCP server: {name}")
                 process.kill()
@@ -178,7 +178,7 @@ class MCPServerManager:
             try:
                 await asyncio.wait_for(self.shutdown_event.wait(), timeout=30)
                 break  # Shutdown requested
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 continue  # Continue monitoring
 
     async def run(self) -> None:

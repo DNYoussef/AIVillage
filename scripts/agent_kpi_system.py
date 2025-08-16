@@ -7,7 +7,7 @@ Enables automatic retirement of underperforming agents.
 import json
 import random
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from enum import Enum
 from pathlib import Path
 from typing import Any
@@ -120,7 +120,7 @@ class AgentKPITracker:
     ) -> None:
         """Record a performance measurement."""
         record = PerformanceRecord(
-            timestamp=datetime.now(timezone.utc),
+            timestamp=datetime.now(UTC),
             task_id=task_id,
             metrics=metrics,
             context=context or {},
@@ -134,7 +134,7 @@ class AgentKPITracker:
 
         # Filter by time window if specified
         if time_window:
-            cutoff = datetime.now(timezone.utc) - time_window
+            cutoff = datetime.now(UTC) - time_window
             records = [r for r in self.performance_history if r.timestamp > cutoff]
         else:
             records = self.performance_history

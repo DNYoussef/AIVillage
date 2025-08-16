@@ -1,6 +1,6 @@
-from collections import Counter
 import hashlib
 import math
+from collections import Counter
 
 
 class SimHashEmbedder:

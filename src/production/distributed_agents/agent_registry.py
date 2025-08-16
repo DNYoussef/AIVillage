@@ -1,9 +1,9 @@
 from __future__ import annotations
 
+import builtins
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Optional
 
 __all__ = ["AgentLocation", "DistributedAgentRegistry"]
 
@@ -35,7 +35,7 @@ class DistributedAgentRegistry:
     def __init__(self, path: Path | None = None) -> None:
         self.path = Path(path) if path else REGISTRY_PATH
         # mapping of {"local": {name: endpoint}, "remote": {...}}
-        self._agents: Dict[str, Dict[str, str]] = {"local": {}, "remote": {}}
+        self._agents: dict[str, dict[str, str]] = {"local": {}, "remote": {}}
         self._load()
 
     # ------------------------------------------------------------------
@@ -79,7 +79,7 @@ class DistributedAgentRegistry:
         self._agents[loc][name] = endpoint
         self._save()
 
-    def resolve(self, name: str) -> Optional[AgentLocation]:
+    def resolve(self, name: str) -> AgentLocation | None:
         """Resolve an agent by name.
 
         Returns ``None`` if the agent is unknown."""
@@ -91,10 +91,10 @@ class DistributedAgentRegistry:
         return None
 
     # Backwards compatibility with older code
-    def lookup(self, name: str) -> Optional[AgentLocation]:
+    def lookup(self, name: str) -> AgentLocation | None:
         return self.resolve(name)
 
-    def list(self, location: str | None = None) -> List[AgentLocation]:
+    def list(self, location: str | None = None) -> builtins.list[AgentLocation]:
         """List registered agents.
 
         Parameters
@@ -110,7 +110,7 @@ class DistributedAgentRegistry:
                 AgentLocation(name, ep, loc)
                 for name, ep in self._agents.get(loc, {}).items()
             ]
-        agents: List[AgentLocation] = []
+        agents: list[AgentLocation] = []
         for loc in ("local", "remote"):
             agents.extend(
                 AgentLocation(name, ep, loc)

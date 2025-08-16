@@ -273,7 +273,7 @@ class EvolutionCoordinationProtocol:
 
             self.stats["proposals_completed"] += 1
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.warning(f"Coordination timeout for proposal {proposal_id}")
             self.stats["coordination_timeouts"] += 1
             await self._abort_coordination(proposal_id, "timeout")

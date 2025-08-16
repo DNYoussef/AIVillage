@@ -167,7 +167,7 @@ class EvolutionDashboard:
                         ),
                         timeout=300.0,  # 5 minute timeout
                     )
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     return (
                         jsonify({"error": "Evolution cycle timed out after 5 minutes"}),
                         408,

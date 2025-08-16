@@ -48,4 +48,3 @@ def test_chat_echo(tmp_path: Path) -> None:
     tokens = list(runner.chat("hello world"))
     joined = "".join(tokens)
     assert "hello" in joined and "world" in joined
-

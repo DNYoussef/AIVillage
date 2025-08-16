@@ -67,7 +67,7 @@ logger = logging.getLogger(__name__)
 def _read_memory_fallback() -> tuple[int, int, int, float]:
     """Read memory statistics without psutil using /proc or os.sysconf."""
     try:
-        with open("/proc/meminfo", "r", encoding="utf-8") as fh:
+        with open("/proc/meminfo", encoding="utf-8") as fh:
             info: dict[str, int] = {}
             for line in fh:
                 if ":" in line:

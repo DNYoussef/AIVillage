@@ -14,8 +14,8 @@ import asyncio
 import json
 import os
 import socket
-from typing import Awaitable, Callable, Dict, List, Protocol
-
+from collections.abc import Awaitable, Callable
+from typing import Protocol
 
 Handler = Callable[[bytes], Awaitable[None]]
 
@@ -32,7 +32,7 @@ class MeshNetwork(Protocol):
     async def subscribe(self, topic: str, handler: Handler) -> None:
         """Subscribe to a topic with an async message handler."""
 
-    def peers(self) -> List[str]:
+    def peers(self) -> list[str]:
         """Return known peer identifiers."""
 
 
@@ -46,8 +46,8 @@ class LocalMeshNetwork(MeshNetwork):
     """
 
     def __init__(self, queue_size: int = 10) -> None:
-        self._queues: Dict[str, List[asyncio.Queue[bytes]]] = {}
-        self._history: Dict[str, List[bytes]] = {}
+        self._queues: dict[str, list[asyncio.Queue[bytes]]] = {}
+        self._history: dict[str, list[bytes]] = {}
         self._queue_size = queue_size
 
     async def join(self, topic: str) -> None:  # pragma: no cover - trivial
@@ -82,7 +82,7 @@ class LocalMeshNetwork(MeshNetwork):
 
         asyncio.create_task(_consumer())
 
-    def peers(self) -> List[str]:  # pragma: no cover - constant
+    def peers(self) -> list[str]:  # pragma: no cover - constant
         return ["local"]
 
 
@@ -107,7 +107,7 @@ class RPCMeshNetwork(MeshNetwork):
         await self.join(topic)
         # Incoming messages handled by external process
 
-    def peers(self) -> List[str]:  # pragma: no cover - placeholder
+    def peers(self) -> list[str]:  # pragma: no cover - placeholder
         return []
 
     async def _send(self, msg: dict) -> None:

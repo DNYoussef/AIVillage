@@ -6,8 +6,8 @@ This package provides a thin wrapper that exposes the production
 import AgentForge`` continue to work without modification.
 """
 
-from importlib import import_module
 import sys
+from importlib import import_module
 
 _core_pkg = import_module("src.production.agent_forge.core")
 # Re-export ``AgentForge`` at the package level for convenience

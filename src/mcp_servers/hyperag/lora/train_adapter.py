@@ -9,7 +9,7 @@ import argparse
 import hashlib
 import json
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -248,7 +248,7 @@ class LoRATrainer:
         adapter_hash = self.compute_adapter_hash(adapter_path)
 
         entry = {
-            "adapter_id": f"{domain}_lora_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}",
+            "adapter_id": f"{domain}_lora_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}",
             "sha256": adapter_hash,
             "domain": domain,
             "base_model": self.base_model_name,
@@ -260,7 +260,7 @@ class LoRATrainer:
                 "target_modules": self.peft_model.peft_config["default"].target_modules,
                 "lora_dropout": self.peft_model.peft_config["default"].lora_dropout,
             },
-            "created_at": datetime.now(timezone.utc).isoformat(),
+            "created_at": datetime.now(UTC).isoformat(),
             "guardian_signature": None,  # To be filled by Guardian
         }
 

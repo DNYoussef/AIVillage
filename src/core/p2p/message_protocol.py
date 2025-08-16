@@ -597,7 +597,7 @@ class MessageProtocol:
 
         try:
             return await asyncio.wait_for(future, timeout=timeout)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             if correlation_id in self.pending_responses:
                 del self.pending_responses[correlation_id]
             return None

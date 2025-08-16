@@ -23,9 +23,7 @@ try:
 
     # Also try direct import as backup
     try:
-        from src.production.compression.compression_pipeline import (
-            CompressionPipeline as CP,
-        )
+        from src.production.compression.compression_pipeline import CompressionPipeline as CP
     except ImportError:
         CP = CompressionPipeline
 

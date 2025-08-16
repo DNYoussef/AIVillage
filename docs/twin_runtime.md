@@ -12,4 +12,3 @@ tokens are generated.  The guard consults encrypted preferences stored in
 
 This minimal loop is enough for tests and demonstrations while remaining fully
 offline by default.
-

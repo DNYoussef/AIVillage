@@ -7,7 +7,7 @@ import logging
 import random
 from collections import defaultdict
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 # Import AI model clients
@@ -334,7 +334,7 @@ class CulturallyAwareELI5:
                 f"cultural_examples/{region}": len(list(examples)),
                 "cultural_database_updated": True,
                 "region": region,
-                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             }
         )
 
@@ -551,7 +551,7 @@ class CulturallyAwareELI5:
                 cultural_relevance_score=cultural_relevance_score,
                 engagement_score=engagement_score,
                 generation_time=generation_time,
-                timestamp=datetime.now(timezone.utc).isoformat(),
+                timestamp=datetime.now(UTC).isoformat(),
             )
 
             # Store result and update metrics
@@ -570,7 +570,7 @@ class CulturallyAwareELI5:
                     "eli5/cultural_relevance": cultural_relevance_score,
                     "eli5/engagement_score": engagement_score,
                     "eli5/generation_time": generation_time,
-                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "timestamp": datetime.now(UTC).isoformat(),
                 }
             )
 
@@ -600,7 +600,7 @@ class CulturallyAwareELI5:
                 cultural_relevance_score=0.3,
                 engagement_score=0.4,
                 generation_time=0.1,
-                timestamp=datetime.now(timezone.utc).isoformat(),
+                timestamp=datetime.now(UTC).isoformat(),
             )
 
     async def get_base_explanation(self, concept: str, age: int, language: str) -> str:

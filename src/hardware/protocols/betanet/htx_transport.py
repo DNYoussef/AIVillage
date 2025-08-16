@@ -545,7 +545,7 @@ class BetanetTransportV2:
             self.mobile_budget.record_cover_traffic(origin, bytes_budget)
             self.stats["cover_traffic_bytes"] += bytes_budget
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.debug("Cover traffic creation timed out")
         except Exception as e:
             logger.debug(f"Cover traffic creation failed: {e}")

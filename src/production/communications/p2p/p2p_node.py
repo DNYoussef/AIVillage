@@ -554,7 +554,7 @@ class P2PNode:
             response = await asyncio.wait_for(response_future, timeout=timeout)
             return response
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.warning(f"Query to peer {peer_id} timed out")
             return None
         except Exception as e:

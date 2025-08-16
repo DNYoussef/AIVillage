@@ -5,11 +5,11 @@ interface for agent creation, management and evolution.
 """
 
 import argparse
-from dataclasses import dataclass, field
 import json
 import logging
-from pathlib import Path
 import time
+from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any
 
 from .hooks import Artifact, apply_compression, evolution_step, on_agent_created

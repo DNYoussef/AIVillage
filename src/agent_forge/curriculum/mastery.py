@@ -7,7 +7,7 @@ determining when students have truly understood a concept.
 import json
 import logging
 import sqlite3
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -169,7 +169,7 @@ class MasteryTracker:
             variant_id: Unique variant identifier
             correct: Whether the attempt was correct
         """
-        now = datetime.now(timezone.utc).isoformat()
+        now = datetime.now(UTC).isoformat()
 
         with sqlite3.connect(self.storage_path) as conn:
             # Get current record
@@ -400,7 +400,7 @@ class MasteryTracker:
     ) -> None:
         """Update mastery status in database."""
 
-        now = datetime.now(timezone.utc).isoformat()
+        now = datetime.now(UTC).isoformat()
 
         with sqlite3.connect(self.storage_path) as conn:
             conn.execute(

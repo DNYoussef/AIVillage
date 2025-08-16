@@ -10,14 +10,13 @@ from __future__ import annotations
 
 import csv
 from pathlib import Path
-from typing import List, Dict
 
 
 class AmazonOrdersConnector:
     """Parser for Amazon order history CSV exports."""
 
     def __init__(self, csv_path: str | None = None) -> None:
-        self._orders: List[Dict[str, str]] = []
+        self._orders: list[dict[str, str]] = []
         if csv_path:
             self.load_export(csv_path)
 
@@ -37,7 +36,7 @@ class AmazonOrdersConnector:
                 self._orders.append(order)
         return len(self._orders)
 
-    def get_orders(self) -> List[Dict[str, str]]:
+    def get_orders(self) -> list[dict[str, str]]:
         return list(self._orders)
 
     def get_order_count(self) -> int:
@@ -46,7 +45,7 @@ class AmazonOrdersConnector:
 
 # Backwards compatibility helpers -------------------------------------------
 
-def get_orders(csv_path: str | Path) -> List[Dict[str, str]]:
+def get_orders(csv_path: str | Path) -> list[dict[str, str]]:
     return AmazonOrdersConnector(csv_path).get_orders()
 
 

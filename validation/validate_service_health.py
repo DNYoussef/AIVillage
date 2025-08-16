@@ -170,7 +170,7 @@ class ServiceHealthValidator:
                 try:
                     response = await asyncio.wait_for(reader.read(1024), timeout=2.0)
                     response_data = {"raw": response.hex()} if response else None
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     response_data = None
             else:
                 response_data = None
@@ -186,7 +186,7 @@ class ServiceHealthValidator:
                 response_data=response_data,
             )
 
-        except (ConnectionRefusedError, asyncio.TimeoutError, OSError) as e:
+        except (TimeoutError, ConnectionRefusedError, OSError) as e:
             latency = (time.time() - start_time) * 1000
             return TestResult(
                 service=endpoint.name, success=False, latency_ms=latency, error=str(e)
@@ -314,7 +314,7 @@ class ServiceHealthValidator:
                             error=f"HTTP {response.status}: {response.reason}",
                         )
 
-        except (aiohttp.ClientError, asyncio.TimeoutError) as e:
+        except (TimeoutError, aiohttp.ClientError) as e:
             latency = (time.time() - start_time) * 1000
             return TestResult(
                 service=endpoint.name, success=False, latency_ms=latency, error=str(e)
@@ -335,7 +335,7 @@ class ServiceHealthValidator:
                     try:
                         response = await asyncio.wait_for(websocket.recv(), timeout=2.0)
                         response_data = json.loads(response) if response else None
-                    except (asyncio.TimeoutError, json.JSONDecodeError):
+                    except (TimeoutError, json.JSONDecodeError):
                         response_data = None
                 else:
                     response_data = None
@@ -349,11 +349,7 @@ class ServiceHealthValidator:
                     response_data=response_data,
                 )
 
-        except (
-            websockets.exceptions.WebSocketException,
-            asyncio.TimeoutError,
-            OSError,
-        ) as e:
+        except (TimeoutError, websockets.exceptions.WebSocketException, OSError) as e:
             latency = (time.time() - start_time) * 1000
             return TestResult(
                 service=endpoint.name, success=False, latency_ms=latency, error=str(e)

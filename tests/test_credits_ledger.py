@@ -2,7 +2,7 @@
 
 import os
 import tempfile
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 
@@ -149,7 +149,7 @@ class TestCreditsLedger:
 
     def test_earn_credits_success(self, ledger, sample_users):
         """Test successful credit earning."""
-        scrape_time = datetime.now(timezone.utc)
+        scrape_time = datetime.now(UTC)
 
         earning = ledger.earn_credits(
             "alice",
@@ -172,7 +172,7 @@ class TestCreditsLedger:
 
     def test_earn_credits_idempotent(self, ledger, sample_users):
         """Test that earning is idempotent for same scrape timestamp."""
-        scrape_time = datetime.now(timezone.utc)
+        scrape_time = datetime.now(UTC)
 
         # First earning
         earning1 = ledger.earn_credits(
@@ -202,7 +202,7 @@ class TestCreditsLedger:
 
     def test_earn_credits_user_not_found(self, ledger):
         """Test earning credits for non-existent user."""
-        scrape_time = datetime.now(timezone.utc)
+        scrape_time = datetime.now(UTC)
 
         with pytest.raises(ValueError, match="User nonexistent not found"):
             ledger.earn_credits(
@@ -249,7 +249,7 @@ class TestCreditsLedger:
         assert total_supply == 0
 
         # Add some credits through earning
-        scrape_time = datetime.now(timezone.utc)
+        scrape_time = datetime.now(UTC)
         ledger.earn_credits("alice", scrape_time, 3600, 1000000000, 1000000000)
 
         total_supply = ledger.get_total_supply()
@@ -325,7 +325,7 @@ class TestCreditsLedger:
 
         # Test unique user_id constraint in earnings
         ledger.get_user("testuser")
-        scrape_time = datetime.now(timezone.utc)
+        scrape_time = datetime.now(UTC)
 
         # First earning should work
         ledger.earn_credits("testuser", scrape_time, 3600, 1000000000, 1000000000)
@@ -342,7 +342,7 @@ class TestCreditsLedger:
         """Test edge cases and boundary conditions."""
         # Test with zero values
         ledger.create_user("edge_user", "node_edge")
-        scrape_time = datetime.now(timezone.utc)
+        scrape_time = datetime.now(UTC)
 
         earning = ledger.earn_credits("edge_user", scrape_time, 0, 0, 0)
         assert earning.credits_earned == 0
@@ -350,7 +350,7 @@ class TestCreditsLedger:
         # Test with very large values
         earning2 = ledger.earn_credits(
             "edge_user",
-            datetime.now(timezone.utc),
+            datetime.now(UTC),
             86400,  # 24 hours
             1000000000000,  # 1 TFLOP
             1000000000000,  # 1 TB

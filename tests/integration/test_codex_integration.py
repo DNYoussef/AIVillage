@@ -16,15 +16,9 @@ import pytest
 
 # Test imports for integration components
 try:
-    from src.core.evolution_metrics_integrated import (
-        EvolutionMetricsData as EvolutionMetrics,
-    )
-    from src.core.evolution_metrics_integrated import (
-        IntegratedEvolutionMetrics as EvolutionMetricsCollector,
-    )
-    from src.core.evolution_metrics_integrated import (
-        IntegratedEvolutionMetrics as SQLiteMetricsBackend,
-    )
+    from src.core.evolution_metrics_integrated import EvolutionMetricsData as EvolutionMetrics
+    from src.core.evolution_metrics_integrated import IntegratedEvolutionMetrics as EvolutionMetricsCollector
+    from src.core.evolution_metrics_integrated import IntegratedEvolutionMetrics as SQLiteMetricsBackend
 
     EVOLUTION_AVAILABLE = True
 except ImportError:

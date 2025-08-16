@@ -64,9 +64,7 @@ async def test_basic_functionality():
         # Test registry
         print("\n4. Testing agent registry...")
         try:
-            from src.core.agents.specialist_agent_registry import (
-                SpecialistAgentRegistry as SpecializedAgentRegistry,
-            )
+            from src.core.agents.specialist_agent_registry import SpecialistAgentRegistry as SpecializedAgentRegistry
 
             registry = SpecializedAgentRegistry()
             await registry.initialize()

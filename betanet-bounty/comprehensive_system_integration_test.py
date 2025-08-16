@@ -51,11 +51,11 @@ Architecture Validation:
 import asyncio
 import json
 import os
+from pathlib import Path
 import shutil
 import subprocess
 import sys
 import tempfile
-from pathlib import Path
 from typing import Any
 
 # Windows console encoding fix
@@ -133,7 +133,8 @@ class SystemIntegrationValidator:
 
         bitchat_status = self._check_components_exist(bitchat_components)
         results["components"]["bitchat_ble"] = bitchat_status
-        print(f"  {'✅' if bitchat_status['all_present'] else '❌'} BitChat BLE Mesh: {bitchat_status['found']}/{bitchat_status['total']}")
+        status_emoji = '✅' if bitchat_status['all_present'] else '❌'
+        print(f"  {status_emoji} BitChat BLE Mesh: {bitchat_status['found']}/{bitchat_status['total']}")
 
         # 2. BetaNet Encrypted Transport
         betanet_components = [
@@ -146,7 +147,8 @@ class SystemIntegrationValidator:
 
         betanet_status = self._check_components_exist(betanet_components)
         results["components"]["betanet_transport"] = betanet_status
-        print(f"  {'✅' if betanet_status['all_present'] else '❌'} BetaNet Transport: {betanet_status['found']}/{betanet_status['total']}")
+        status_emoji = '✅' if betanet_status['all_present'] else '❌'
+        print(f"  {status_emoji} BetaNet Transport: {betanet_status['found']}/{betanet_status['total']}")
 
         # 3. DTN Contact Layer Adaptation
         dtn_components = [
@@ -158,7 +160,8 @@ class SystemIntegrationValidator:
 
         dtn_status = self._check_components_exist(dtn_components)
         results["components"]["dtn_adaptation"] = dtn_status
-        print(f"  {'✅' if dtn_status['all_present'] else '❌'} DTN Adaptation: {dtn_status['found']}/{dtn_status['total']}")
+        status_emoji = '✅' if dtn_status['all_present'] else '❌'
+        print(f"  {status_emoji} DTN Adaptation: {dtn_status['found']}/{dtn_status['total']}")
 
         if not all(comp["all_present"] for comp in results["components"].values()):
             results["status"] = "partial"
@@ -180,7 +183,8 @@ class SystemIntegrationValidator:
 
         htx_status = self._check_components_exist(htx_components)
         results["components"]["htx_protocol"] = htx_status
-        print(f"  {'✅' if htx_status['all_present'] else '❌'} HTX Protocol: {htx_status['found']}/{htx_status['total']}")
+        status_emoji = '✅' if htx_status['all_present'] else '❌'
+        print(f"  {status_emoji} HTX Protocol: {htx_status['found']}/{htx_status['total']}")
 
         # 2. uTLS Fingerprint Mimicry
         utls_components = [
@@ -193,7 +197,8 @@ class SystemIntegrationValidator:
 
         utls_status = self._check_components_exist(utls_components)
         results["components"]["utls_mimicry"] = utls_status
-        print(f"  {'✅' if utls_status['all_present'] else '❌'} uTLS Mimicry: {utls_status['found']}/{utls_status['total']}")
+        status_emoji = '✅' if utls_status['all_present'] else '❌'
+        print(f"  {status_emoji} uTLS Mimicry: {utls_status['found']}/{utls_status['total']}")
 
         # 3. Compilation Test
         compilation_success = await self._test_compilation()
@@ -219,7 +224,8 @@ class SystemIntegrationValidator:
 
         navigator_status = self._check_components_exist(navigator_components)
         results["components"]["navigator"] = navigator_status
-        print(f"  {'✅' if navigator_status['all_present'] else '❌'} Navigator: {navigator_status['found']}/{navigator_status['total']}")
+        status_emoji = '✅' if navigator_status['all_present'] else '❌'
+        print(f"  {status_emoji} Navigator: {navigator_status['found']}/{navigator_status['total']}")
 
         # 2. Mixnode Privacy Routing
         mixnode_components = [
@@ -231,7 +237,8 @@ class SystemIntegrationValidator:
 
         mixnode_status = self._check_components_exist(mixnode_components)
         results["components"]["mixnode"] = mixnode_status
-        print(f"  {'✅' if mixnode_status['all_present'] else '❌'} Mixnode: {mixnode_status['found']}/{mixnode_status['total']}")
+        status_emoji = '✅' if mixnode_status['all_present'] else '❌'
+        print(f"  {status_emoji} Mixnode: {mixnode_status['found']}/{mixnode_status['total']}")
 
         # 3. Test Semiring Properties
         semiring_test = await self._test_semiring_properties()
@@ -258,7 +265,8 @@ class SystemIntegrationValidator:
 
         fabric_status = self._check_components_exist(fabric_components)
         results["components"]["agent_fabric"] = fabric_status
-        print(f"  {'✅' if fabric_status['all_present'] else '❌'} Agent Fabric: {fabric_status['found']}/{fabric_status['total']}")
+        status_emoji = '✅' if fabric_status['all_present'] else '❌'
+        print(f"  {status_emoji} Agent Fabric: {fabric_status['found']}/{fabric_status['total']}")
 
         # 2. Federated Learning System
         federated_components = [
@@ -270,7 +278,8 @@ class SystemIntegrationValidator:
 
         federated_status = self._check_components_exist(federated_components)
         results["components"]["federated_learning"] = federated_status
-        print(f"  {'✅' if federated_status['all_present'] else '❌'} Federated Learning: {federated_status['found']}/{federated_status['total']}")
+        status_emoji = '✅' if federated_status['all_present'] else '❌'
+        print(f"  {status_emoji} Federated Learning: {federated_status['found']}/{federated_status['total']}")
 
         # 3. Twin Vault CRDT
         vault_components = [
@@ -282,7 +291,8 @@ class SystemIntegrationValidator:
 
         vault_status = self._check_components_exist(vault_components)
         results["components"]["twin_vault"] = vault_status
-        print(f"  {'✅' if vault_status['all_present'] else '❌'} Twin Vault: {vault_status['found']}/{vault_status['total']}")
+        status_emoji = '✅' if vault_status['all_present'] else '❌'
+        print(f"  {status_emoji} Twin Vault: {vault_status['found']}/{vault_status['total']}")
 
         # 4. Test Federated Learning Mock Workflow
         fl_test = await self._test_federated_learning_workflow()
@@ -308,7 +318,8 @@ class SystemIntegrationValidator:
 
         privacy_status = self._check_components_exist(privacy_components)
         results["components"]["privacy"] = privacy_status
-        print(f"  {'✅' if privacy_status['all_present'] else '❌'} Privacy Components: {privacy_status['found']}/{privacy_status['total']}")
+        status_emoji = '✅' if privacy_status['all_present'] else '❌'
+        print(f"  {status_emoji} Privacy Components: {privacy_status['found']}/{privacy_status['total']}")
 
         # 2. Security Linting Framework
         linter_components = [
@@ -320,7 +331,8 @@ class SystemIntegrationValidator:
 
         linter_status = self._check_components_exist(linter_components)
         results["components"]["security_linter"] = linter_status
-        print(f"  {'✅' if linter_status['all_present'] else '❌'} Security Linter: {linter_status['found']}/{linter_status['total']}")
+        status_emoji = '✅' if linter_status['all_present'] else '❌'
+        print(f"  {status_emoji} Security Linter: {linter_status['found']}/{linter_status['total']}")
 
         # 3. SBOM Generation Test
         sbom_test = await self._test_sbom_generation()
@@ -375,7 +387,9 @@ class SystemIntegrationValidator:
         # 2. Latency Measurements
         latency_metrics = await self._benchmark_latency()
         results["metrics"]["latency"] = latency_metrics
-        print(f"  ⏱️  Latency: P50={latency_metrics.get('p50_ms', 0):.1f}ms, P99={latency_metrics.get('p99_ms', 0):.1f}ms")
+        p50 = latency_metrics.get('p50_ms', 0)
+        p99 = latency_metrics.get('p99_ms', 0)
+        print(f"  ⏱️  Latency: P50={p50:.1f}ms, P99={p99:.1f}ms")
 
         # 3. Memory Usage Analysis
         memory_metrics = await self._analyze_memory_usage()

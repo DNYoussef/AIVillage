@@ -9,7 +9,7 @@ import logging
 import os
 import shutil
 import sqlite3
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -304,7 +304,7 @@ class EvolutionMetricsMigrator:
             round_number = round_data.get("round", round_data.get("round_number", 0))
             generation = round_data.get("generation", round_data.get("gen", 0))
             timestamp = round_data.get(
-                "timestamp", datetime.now(timezone.utc).isoformat()
+                "timestamp", datetime.now(UTC).isoformat()
             )
 
             # Parse timestamp if it's a string
@@ -312,7 +312,7 @@ class EvolutionMetricsMigrator:
                 try:
                     timestamp = datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
                 except ValueError:
-                    timestamp = datetime.now(timezone.utc)
+                    timestamp = datetime.now(UTC)
 
             # Insert evolution round
             cursor.execute(
@@ -512,7 +512,7 @@ class EvolutionMetricsMigrator:
                     json.dump(
                         {
                             "original_path": str(file_path),
-                            "archived_at": datetime.now(timezone.utc).isoformat(),
+                            "archived_at": datetime.now(UTC).isoformat(),
                             "file_size": file_path.stat().st_size,
                             "file_hash": hashlib.md5(
                                 file_path.read_bytes()

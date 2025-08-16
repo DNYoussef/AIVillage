@@ -7,7 +7,7 @@ import hashlib
 import json
 import logging
 from dataclasses import asdict, dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -290,7 +290,7 @@ class MathTutorEvolution:
                 model_size_mb=model_size_mb,
                 parameters_count=param_count,
                 quantization_config=asdict(quantization_config),
-                created_at=datetime.now(timezone.utc).isoformat(),
+                created_at=datetime.now(UTC).isoformat(),
             )
 
             # Cache model and tokenizer
@@ -425,7 +425,7 @@ class MathTutorEvolution:
                     model_size_mb=base_individual.model_size_mb,
                     parameters_count=base_individual.parameters_count,
                     quantization_config=base_individual.quantization_config,
-                    created_at=datetime.now(timezone.utc).isoformat(),
+                    created_at=datetime.now(UTC).isoformat(),
                 )
 
                 # Cache references (sharing same model for now)
@@ -540,7 +540,7 @@ class MathTutorEvolution:
 
                     # Update individual fitness
                     individual.fitness_score = fitness_score
-                    individual.evaluated_at = datetime.now(timezone.utc).isoformat()
+                    individual.evaluated_at = datetime.now(UTC).isoformat()
                     individual.performance_metrics = fitness_evaluator.kpi_scores.copy()
 
                     # Store in fitness history
@@ -628,7 +628,7 @@ class MathTutorEvolution:
                         // 2,
                         quantization_config=parent1.quantization_config,
                         merge_strategy=strategy,
-                        created_at=datetime.now(timezone.utc).isoformat(),
+                        created_at=datetime.now(UTC).isoformat(),
                     )
 
                     # Cache merged model

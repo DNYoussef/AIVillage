@@ -1,7 +1,7 @@
 """Credits API - REST endpoints for credits ledger operations."""
 
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from fastapi import Depends, FastAPI, HTTPException, Query
 from fastapi.responses import JSONResponse
@@ -111,7 +111,7 @@ async def value_error_handler(request, exc):
         content=ErrorResponse(
             error="validation_error",
             message=str(exc),
-            timestamp=datetime.now(timezone.utc),
+            timestamp=datetime.now(UTC),
         ).model_dump(),
     )
 
@@ -125,7 +125,7 @@ async def general_error_handler(request, exc):
         content=ErrorResponse(
             error="internal_error",
             message="An unexpected error occurred",
-            timestamp=datetime.now(timezone.utc),
+            timestamp=datetime.now(UTC),
         ).model_dump(),
     )
 
@@ -272,7 +272,7 @@ async def get_total_supply(ledger: CreditsLedger = Depends(get_ledger)):
             "total_supply": total_supply,
             "max_supply": ledger.config.fixed_supply,
             "burn_rate": ledger.config.burn_rate,
-            "timestamp": datetime.now(timezone.utc),
+            "timestamp": datetime.now(UTC),
         }
 
 
@@ -282,7 +282,7 @@ async def health_check():
     return {
         "status": "healthy",
         "service": "credits-api",
-        "timestamp": datetime.now(timezone.utc),
+        "timestamp": datetime.now(UTC),
     }
 
 

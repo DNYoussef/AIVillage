@@ -13,9 +13,9 @@ Comprehensive setup script that prepares the environment for Agent Forge:
 import argparse
 import json
 import logging
-from pathlib import Path
 import subprocess
 import sys
+from pathlib import Path
 
 # Configure logging
 logging.basicConfig(

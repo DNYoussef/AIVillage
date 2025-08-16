@@ -15,7 +15,7 @@ import logging
 import random
 import sqlite3
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -187,7 +187,7 @@ class OpenRouterLLM:
         """Cache response in SQLite."""
         try:
             prompt_hash = hashlib.sha256(prompt.encode()).hexdigest()
-            created_at = datetime.now(timezone.utc).isoformat()
+            created_at = datetime.now(UTC).isoformat()
 
             with sqlite3.connect(self.cache_db_path) as conn:
                 conn.execute(
@@ -228,7 +228,7 @@ class OpenRouterLLM:
         """Log cost information to JSONL file."""
         try:
             cost_entry = {
-                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
                 "model": model,
                 "prompt_tokens": prompt_tokens,
                 "completion_tokens": completion_tokens,
@@ -344,7 +344,7 @@ class OpenRouterLLM:
                             f"API error {response.status}: {error_detail}"
                         )
 
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 if attempt < self.max_retries:
                     delay = min(self.base_delay * (2**attempt), self.max_delay)
                     logger.warning(f"Request timeout, retrying in {delay:.1f}s")

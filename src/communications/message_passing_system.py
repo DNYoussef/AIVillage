@@ -192,7 +192,7 @@ class MessagePassingSystem:
                     del self.message_handlers[response_type]
                     self.protocol.unregister_handler(response_type)
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.warning(f"Request to {target_agent_id} timed out after {timeout}s")
             return None
         except Exception as e:

@@ -7,11 +7,11 @@ and other non-functional code patterns that need to be implemented.
 
 import argparse
 import ast
-from dataclasses import dataclass
 import os
-from pathlib import Path
 import re
 import sys
+from dataclasses import dataclass
+from pathlib import Path
 
 
 @dataclass

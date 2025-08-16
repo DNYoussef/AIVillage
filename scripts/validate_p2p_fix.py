@@ -102,7 +102,7 @@ async def test_discovery_protocol_compatibility() -> bool | None:
                 print(f"   ❌ Unexpected response: {response}")
                 return False
 
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 print("   ❌ Timeout waiting for response")
                 return False
 

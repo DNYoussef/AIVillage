@@ -3,8 +3,8 @@
 import json
 import logging
 import os
-from pathlib import Path
 import time
+from pathlib import Path
 from typing import Any
 
 from .embedders import SimHashEmbedder, TFIDFHelper
@@ -103,15 +103,15 @@ class OfflineRAGPipeline:
     def _load_builtin_corpus(self) -> None:
         builtin_docs = [
             {
-                "text": "AIVillage is a decentralized AI platform that enables secure agent communication.",  # noqa: E501
+                "text": "AIVillage is a decentralized AI platform that enables secure agent communication.",
                 "metadata": {"source": "overview", "type": "platform_description"},
             },
             {
-                "text": "BitChat provides offline Bluetooth mesh networking for peer-to-peer communication.",  # noqa: E501
+                "text": "BitChat provides offline Bluetooth mesh networking for peer-to-peer communication.",
                 "metadata": {"source": "transport", "type": "bitchat_feature"},
             },
             {
-                "text": "Betanet offers encrypted internet transport with privacy protection using Tor-like routing.",  # noqa: E501
+                "text": "Betanet offers encrypted internet transport with privacy protection using Tor-like routing.",
                 "metadata": {"source": "transport", "type": "betanet_feature"},
             },
             {
@@ -127,11 +127,11 @@ class OfflineRAGPipeline:
                 "metadata": {"source": "security", "type": "crypto_protocol"},
             },
             {
-                "text": "HTX frame format enables efficient binary transport with flow control and multiplexing.",  # noqa: E501
+                "text": "HTX frame format enables efficient binary transport with flow control and multiplexing.",
                 "metadata": {"source": "protocol", "type": "frame_format"},
             },
             {
-                "text": "Access tickets provide authentication and rate limiting for controlled network access.",  # noqa: E501
+                "text": "Access tickets provide authentication and rate limiting for controlled network access.",
                 "metadata": {"source": "security", "type": "access_control"},
             },
             {
@@ -143,7 +143,7 @@ class OfflineRAGPipeline:
                 "metadata": {"source": "optimization", "type": "compression"},
             },
             {
-                "text": "The tokenomics system manages VILLAGE credits for compute sharing and network participation.",  # noqa: E501
+                "text": "The tokenomics system manages VILLAGE credits for compute sharing and network participation.",
                 "metadata": {"source": "economy", "type": "tokenomics"},
             },
             {
@@ -151,11 +151,11 @@ class OfflineRAGPipeline:
                 "metadata": {"source": "transport", "type": "reliability"},
             },
             {
-                "text": "Quiet-STaR enables agents to perform internal reasoning with encrypted thought processes.",  # noqa: E501
+                "text": "Quiet-STaR enables agents to perform internal reasoning with encrypted thought processes.",
                 "metadata": {"source": "agents", "type": "reasoning"},
             },
             {
-                "text": "Self-modeling networks predict their own behavior to improve efficiency and adaptation.",  # noqa: E501
+                "text": "Self-modeling networks predict their own behavior to improve efficiency and adaptation.",
                 "metadata": {"source": "training", "type": "self_modeling"},
             },
             {
@@ -230,7 +230,7 @@ class OfflineRAGPipeline:
             )
             context = "\n\n".join(snippets)
         else:
-            response = "I don't have information about that topic in my current knowledge base."  # noqa: E501
+            response = "I don't have information about that topic in my current knowledge base."
             context = ""
         query_time = time.time() - start_time
         return {

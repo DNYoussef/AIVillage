@@ -50,7 +50,7 @@ class ResourceMonitor:
             percent = mem.percent
         else:  # pragma: no cover
             try:
-                with open("/proc/meminfo", "r", encoding="utf-8") as fh:
+                with open("/proc/meminfo", encoding="utf-8") as fh:
                     info: dict[str, int] = {}
                     for line in fh:
                         if ":" in line:

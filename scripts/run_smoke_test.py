@@ -121,13 +121,13 @@ class AgentForgeSmokeTest:
                 stdout_lines = stdout.decode("utf-8").splitlines() if stdout else []
                 return_code = self.pipeline_process.returncode
 
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 logger.error(f"Pipeline execution timed out after {self.args.timeout}s")
                 if self.pipeline_process:
                     self.pipeline_process.terminate()
                     try:
                         await asyncio.wait_for(self.pipeline_process.wait(), timeout=10)
-                    except asyncio.TimeoutError:
+                    except TimeoutError:
                         self.pipeline_process.kill()
 
                 return {

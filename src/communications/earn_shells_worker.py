@@ -5,7 +5,7 @@ import argparse
 import logging
 import sys
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from urllib.parse import urljoin
 
@@ -216,7 +216,7 @@ class EarnShellsWorker:
 
     def run_earning_cycle(self) -> None:
         """Run a single earning cycle for all active nodes."""
-        scrape_timestamp = datetime.now(timezone.utc)
+        scrape_timestamp = datetime.now(UTC)
         logger.info("Starting earning cycle at %s", scrape_timestamp)
 
         try:

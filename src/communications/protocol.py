@@ -10,6 +10,7 @@ import logging
 import os
 import ssl
 import time
+import uuid
 from collections.abc import Callable
 from typing import Any
 
@@ -18,7 +19,6 @@ from cryptography.fernet import Fernet
 
 from .message import Message
 from .service_directory import service_directory
-import uuid
 
 logger = logging.getLogger(__name__)
 
@@ -255,7 +255,7 @@ class CommunicationsProtocol:
         try:
             result = await asyncio.wait_for(future, timeout)
             return result
-        except asyncio.TimeoutError:
+        except TimeoutError:
             return None
         finally:
             self.message_handlers.pop(response_type, None)
@@ -417,7 +417,7 @@ class CommunicationsProtocol:
                 else:
                     await websocket.close(code=1002, reason="Invalid handshake")
 
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 logger.warning("Handshake timeout")
                 await websocket.close(code=1002, reason="Handshake timeout")
             except Exception as e:

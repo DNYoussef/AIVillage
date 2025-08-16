@@ -1,4 +1,5 @@
 from pathlib import Path
+
 from ingestion.connectors.amazon_orders import AmazonOrdersConnector
 
 DATA_DIR = Path(__file__).parent.parent / 'data'

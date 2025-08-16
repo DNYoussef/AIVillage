@@ -23,7 +23,7 @@ import statistics
 # Import HypeRAG components
 import sys
 from dataclasses import asdict, dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -655,7 +655,7 @@ class CreativityBenchmark:
             hidden_link_precision=combined_metrics["hidden_link_precision"],
             total_bridges_evaluated=combined_metrics["total_bridges_evaluated"],
             dataset_name="remote_association_and_cross_domain",
-            timestamp=datetime.now(timezone.utc).isoformat(),
+            timestamp=datetime.now(UTC).isoformat(),
         )
 
         # Save detailed results
@@ -701,7 +701,7 @@ class CreativityBenchmark:
         self, rat_results: dict, cd_results: dict, metrics: CreativityMetrics
     ) -> None:
         """Save benchmark results to files."""
-        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
 
         # Save detailed results
         results_file = self.output_dir / f"creativity_results_{timestamp}.json"

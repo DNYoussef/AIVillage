@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Type
+from typing import Any
 
 from .core.interface import (
     EmbeddingModel,
@@ -21,14 +21,14 @@ from .simple_components import (
 class ComponentFactory:
     """Factory for creating RAG system components with defaults."""
 
-    _retrievers: dict[str, Type[Retriever]] = {"default": SimpleRetriever}
-    _constructors: dict[str, Type[KnowledgeConstructor]] = {
+    _retrievers: dict[str, type[Retriever]] = {"default": SimpleRetriever}
+    _constructors: dict[str, type[KnowledgeConstructor]] = {
         "default": SimpleKnowledgeConstructor
     }
-    _reasoners: dict[str, Type[ReasoningEngine]] = {
+    _reasoners: dict[str, type[ReasoningEngine]] = {
         "default": SimpleReasoningEngine
     }
-    _embeddings: dict[str, Type[EmbeddingModel]] = {
+    _embeddings: dict[str, type[EmbeddingModel]] = {
         "default": SimpleEmbeddingModel
     }
 

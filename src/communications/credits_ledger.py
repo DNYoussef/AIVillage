@@ -3,7 +3,7 @@
 import logging
 import os
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlalchemy import (
     Column,
@@ -34,7 +34,7 @@ class User(Base):
     node_id = Column(
         String(128), unique=True, nullable=True
     )  # For Prometheus node identification
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
     # Relationships
     wallet = relationship("Wallet", back_populates="user", uselist=False)
@@ -55,11 +55,11 @@ class Wallet(Base):
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("users.id"), unique=True, nullable=False)
     balance = Column(Integer, default=0, nullable=False)  # Integer credits, no floats
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
     updated_at = Column(
         DateTime,
-        default=lambda: datetime.now(timezone.utc),
-        onupdate=lambda: datetime.now(timezone.utc),
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
     )
 
     # Relationships
@@ -82,7 +82,7 @@ class Transaction(Base):
     status = Column(
         String(32), default="pending", nullable=False
     )  # 'pending', 'completed', 'failed'
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
     completed_at = Column(DateTime, nullable=True)
 
     # Relationships
@@ -111,7 +111,7 @@ class Earning(Base):
     flops = Column(Integer, nullable=False)
     bandwidth_bytes = Column(Integer, nullable=False)
     credits_earned = Column(Integer, nullable=False)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
     # Relationships
     user = relationship("User", back_populates="earnings")
@@ -285,7 +285,7 @@ class CreditsLedger:
 
                 # Complete transaction
                 transaction.status = "completed"
-                transaction.completed_at = datetime.now(timezone.utc)
+                transaction.completed_at = datetime.now(UTC)
 
                 session.commit()
 

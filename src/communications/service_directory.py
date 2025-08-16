@@ -2,7 +2,6 @@ import json
 import os
 from pathlib import Path
 from threading import RLock
-from typing import Dict
 
 _CACHE_PATH = Path('.cache/agents.json')
 
@@ -11,7 +10,7 @@ class ServiceDirectory:
 
     def __init__(self) -> None:
         self._lock = RLock()
-        self._services: Dict[str, str] = {}
+        self._services: dict[str, str] = {}
         self._load()
 
     def _load(self) -> None:

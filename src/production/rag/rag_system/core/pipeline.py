@@ -362,7 +362,7 @@ class RAGPipeline:
 
             # Add original document to retriever if it supports ingestion
             if self.retriever is not None and hasattr(self.retriever, "add_documents"):
-                add_fn = getattr(self.retriever, "add_documents")
+                add_fn = self.retriever.add_documents
                 if asyncio.iscoroutinefunction(add_fn):
                     await add_fn([doc.text])
                 else:  # pragma: no cover - sync function

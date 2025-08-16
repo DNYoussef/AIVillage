@@ -14,14 +14,13 @@ matching this format.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
-from datetime import datetime
 import io
 import re
 import zipfile
+from collections.abc import Iterable
+from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
-from typing import Iterable, List, Dict
-
 
 _LINE_RE = re.compile(
     r"^(\d{1,2}/\d{1,2}/\d{2,4}), (\d{1,2}:\d{2}(?:\s?[AP]M)?) - ([^:]+): (.*)$"
@@ -39,7 +38,7 @@ class WhatsAppConnector:
     """Parser for exported WhatsApp chat histories."""
 
     def __init__(self, export_path: str | None = None) -> None:
-        self._messages: List[Message] = []
+        self._messages: list[Message] = []
         if export_path:
             self.load_export(export_path)
 
@@ -86,7 +85,7 @@ class WhatsAppConnector:
 
     # ------------------------------------------------------------------
     # Accessors
-    def get_messages(self) -> List[Dict[str, str]]:
+    def get_messages(self) -> list[dict[str, str]]:
         """Return parsed messages as dictionaries."""
         return [
             {"timestamp": m.timestamp, "sender": m.sender, "text": m.text}
@@ -106,7 +105,7 @@ def load_export(path: str | Path) -> WhatsAppConnector:
     return conn
 
 
-def get_messages(path: str | Path) -> List[Dict[str, str]]:
+def get_messages(path: str | Path) -> list[dict[str, str]]:
     return load_export(path).get_messages()
 
 

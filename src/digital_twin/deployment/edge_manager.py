@@ -11,7 +11,7 @@ import zipfile
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import asdict, dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from enum import Enum
 from pathlib import Path
 from typing import Any
@@ -344,8 +344,8 @@ class EdgeDeploymentManager:
             always_connected=device_specs["always_connected"],
             parental_controls=device_specs["parental_controls"],
             student_ids=student_ids,
-            last_seen=datetime.now(timezone.utc).isoformat(),
-            created_at=datetime.now(timezone.utc).isoformat(),
+            last_seen=datetime.now(UTC).isoformat(),
+            created_at=datetime.now(UTC).isoformat(),
         )
 
         # Store device profile
@@ -502,7 +502,7 @@ class EdgeDeploymentManager:
                 status=DeploymentStatus.PENDING,
                 model_size_mb=deployment_package["original_size_mb"],
                 compressed_size_mb=deployment_package["compressed_size_mb"],
-                installation_date=datetime.now(timezone.utc).isoformat(),
+                installation_date=datetime.now(UTC).isoformat(),
                 last_used="never",
                 usage_count=0,
                 performance_metrics={},
@@ -644,7 +644,7 @@ class EdgeDeploymentManager:
                     "student_id": student_id,
                     "device_id": device.device_id,
                     "device_type": device.device_type.value,
-                    "deployment_date": datetime.now(timezone.utc).isoformat(),
+                    "deployment_date": datetime.now(UTC).isoformat(),
                     "model_info": {
                         "package_id": deployment_package.package_id,
                         "model_size_mb": deployment_package.deployment_size_mb,
@@ -707,7 +707,7 @@ class EdgeDeploymentManager:
                     "package_version": "1.0.0-fallback",
                     "student_id": student_id,
                     "device_id": device.device_id,
-                    "deployment_date": datetime.now(timezone.utc).isoformat(),
+                    "deployment_date": datetime.now(UTC).isoformat(),
                     "fallback": True,
                     "description": "Minimal tutoring functionality for offline use",
                 }
@@ -952,7 +952,7 @@ class EdgeDeploymentManager:
                     "edge/deployment_id": deployment.deployment_id,
                     "edge/student_id": deployment.student_id,
                     "edge/device_id": deployment.device_id,
-                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "timestamp": datetime.now(UTC).isoformat(),
                 }
             )
 
@@ -970,7 +970,7 @@ class EdgeDeploymentManager:
                     "edge/deployment_failed": True,
                     "edge/deployment_id": deployment.deployment_id,
                     "edge/error": str(e)[:200],
-                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "timestamp": datetime.now(UTC).isoformat(),
                 }
             )
 
@@ -1115,7 +1115,7 @@ class EdgeDeploymentManager:
                     "edge/update_type": update.update_type,
                     "edge/update_size_mb": update.update_size_mb,
                     "edge/deployment_id": deployment.deployment_id,
-                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "timestamp": datetime.now(UTC).isoformat(),
                 }
             )
 
@@ -1130,7 +1130,7 @@ class EdgeDeploymentManager:
                     "edge/update_failed": True,
                     "edge/update_id": update.update_id,
                     "edge/error": str(e)[:200],
-                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "timestamp": datetime.now(UTC).isoformat(),
                 }
             )
 
@@ -1241,7 +1241,7 @@ class EdgeDeploymentManager:
             await self._save_deployment(deployment)
 
             # Record sync performance
-            sync_time = datetime.now(timezone.utc).isoformat()
+            sync_time = datetime.now(UTC).isoformat()
             self.sync_performance[deployment_id].append(
                 {
                     "timestamp": sync_time,
@@ -1308,7 +1308,7 @@ class EdgeDeploymentManager:
                         {
                             "edge/health_check_failed": True,
                             "edge/deployment_id": deployment.deployment_id,
-                            "timestamp": datetime.now(timezone.utc).isoformat(),
+                            "timestamp": datetime.now(UTC).isoformat(),
                         }
                     )
 
@@ -1356,12 +1356,12 @@ class EdgeDeploymentManager:
                 for d in self.deployments.values()
                 if d.device_id == device.device_id
             ):
-                device.last_seen = datetime.now(timezone.utc).isoformat()
+                device.last_seen = datetime.now(UTC).isoformat()
                 await self._save_device_profile(device)
 
     async def _cleanup_old_deployments(self) -> None:
         """Clean up old or unused deployments."""
-        cutoff_date = datetime.now(timezone.utc) - timedelta(days=30)
+        cutoff_date = datetime.now(UTC) - timedelta(days=30)
 
         deployments_to_remove = []
 
@@ -1503,9 +1503,9 @@ class EdgeDeploymentManager:
                     update.update_id,
                     update.deployment_id,
                     json.dumps(update_data),
-                    datetime.now(timezone.utc).isoformat(),
+                    datetime.now(UTC).isoformat(),
                     (
-                        datetime.now(timezone.utc).isoformat()
+                        datetime.now(UTC).isoformat()
                         if update.installed
                         else None
                     ),

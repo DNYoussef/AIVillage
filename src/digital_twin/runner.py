@@ -9,7 +9,8 @@ where more capable models or tools (such as HyperRAG) could be invoked.
 
 from __future__ import annotations
 
-from typing import Iterable, Iterator, Any
+from collections.abc import Iterable, Iterator
+from typing import Any
 
 from . import guard
 
@@ -60,4 +61,3 @@ def chat(prompt: str, **kw: Any) -> Iterable[str]:
 
 
 __all__ = ["chat", "risk_estimator"]
-

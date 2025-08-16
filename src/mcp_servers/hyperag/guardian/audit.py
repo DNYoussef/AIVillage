@@ -21,7 +21,7 @@ def log(record: dict[str, Any]) -> None:
     if "id" not in record:
         record["id"] = str(uuid.uuid4())
     if "timestamp" not in record:
-        record["timestamp"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
+        record["timestamp"] = datetime.datetime.now(datetime.UTC).isoformat()
 
     # Write to individual JSON file
     filename = f"{record['id']}.json"
@@ -48,7 +48,7 @@ def get_recent_records(hours: int = 24, limit: int = 100) -> list:
         List of audit records sorted by timestamp (newest first)
     """
     records = []
-    cutoff_time = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(
+    cutoff_time = datetime.datetime.now(datetime.UTC) - datetime.timedelta(
         hours=hours
     )
 
@@ -146,7 +146,7 @@ def cleanup_old_records(days: int = 30):
     Args:
         days: Records older than this will be deleted
     """
-    cutoff_time = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(
+    cutoff_time = datetime.datetime.now(datetime.UTC) - datetime.timedelta(
         days=days
     )
     deleted_count = 0

@@ -27,7 +27,7 @@ import statistics
 # Import HypeRAG components
 import sys
 from dataclasses import asdict, dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -393,7 +393,7 @@ class BasePPRApproach(PersonalizationApproach):
         self, query: UserQuery, context: PersonalizationContext, top_k: int = 20
     ) -> list[tuple[str, float]]:
         """Retrieve using base PPR only."""
-        start_time = datetime.now(timezone.utc)
+        start_time = datetime.now(UTC)
 
         # Mock PPR retrieval - in reality would use actual PPR algorithm
         all_items = list(query.relevance_scores.keys())
@@ -416,7 +416,7 @@ class BasePPRApproach(PersonalizationApproach):
         results = scored_items[:top_k]
 
         # Track performance
-        retrieval_time = (datetime.now(timezone.utc) - start_time).total_seconds()
+        retrieval_time = (datetime.now(UTC) - start_time).total_seconds()
         self.retrieval_times.append(retrieval_time)
 
         # Calculate token cost
@@ -445,7 +445,7 @@ class AlphaRescoredPPRApproach(PersonalizationApproach):
         self, query: UserQuery, context: PersonalizationContext, top_k: int = 20
     ) -> list[tuple[str, float]]:
         """Retrieve using PPR + α rescoring."""
-        start_time = datetime.now(timezone.utc)
+        start_time = datetime.now(UTC)
 
         # Step 1: Get base PPR results
         base_ppr_approach = BasePPRApproach()
@@ -470,7 +470,7 @@ class AlphaRescoredPPRApproach(PersonalizationApproach):
         results = rescored_items[:top_k]
 
         # Track performance
-        retrieval_time = (datetime.now(timezone.utc) - start_time).total_seconds()
+        retrieval_time = (datetime.now(UTC) - start_time).total_seconds()
         self.retrieval_times.append(retrieval_time)
 
         # Calculate token cost (higher due to α rescoring)
@@ -535,7 +535,7 @@ class ICLEnhancedApproach(PersonalizationApproach):
         self, query: UserQuery, context: PersonalizationContext, top_k: int = 20
     ) -> list[tuple[str, float]]:
         """Retrieve using PPR + α + ICL."""
-        start_time = datetime.now(timezone.utc)
+        start_time = datetime.now(UTC)
 
         # Step 1: Get α rescored results
         alpha_approach = AlphaRescoredPPRApproach()
@@ -558,7 +558,7 @@ class ICLEnhancedApproach(PersonalizationApproach):
         results = icl_enhanced_items[:top_k]
 
         # Track performance
-        retrieval_time = (datetime.now(timezone.utc) - start_time).total_seconds()
+        retrieval_time = (datetime.now(UTC) - start_time).total_seconds()
         self.retrieval_times.append(retrieval_time)
 
         # Calculate token cost (highest due to ICL processing)
@@ -725,7 +725,7 @@ class PersonalizationBenchmark:
             total_queries=len(queries),
             avg_retrieval_time=avg_retrieval_time,
             dataset_name="movielens_and_doc_clicks",
-            timestamp=datetime.now(timezone.utc).isoformat(),
+            timestamp=datetime.now(UTC).isoformat(),
         )
 
     def _calculate_map(
@@ -801,14 +801,14 @@ class PersonalizationBenchmark:
         self, results: dict[str, PersonalizationMetrics]
     ) -> None:
         """Save benchmark results to files."""
-        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
 
         # Save detailed results
         results_file = self.output_dir / f"personalization_results_{timestamp}.json"
         detailed_results = {
             "metadata": {
                 "benchmark_version": "1.0",
-                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
                 "approaches_evaluated": list(results.keys()),
             },
             "results": {name: asdict(metrics) for name, metrics in results.items()},

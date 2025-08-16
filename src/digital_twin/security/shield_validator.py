@@ -10,7 +10,7 @@ import re
 import sqlite3
 from collections import defaultdict
 from dataclasses import asdict, dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from enum import Enum
 from typing import Any
 
@@ -607,7 +607,7 @@ class ShieldValidator:
             content_hash=content_hash,
             student_id=student_id,
             content_type=content_type,
-            timestamp=datetime.now(timezone.utc).isoformat(),
+            timestamp=datetime.now(UTC).isoformat(),
             passed=passed,
             violations=violations,
             warnings=warnings,
@@ -1220,7 +1220,7 @@ class ShieldValidator:
     ) -> dict[str, Any]:
         """Get validation analytics."""
         # Filter results by student and time period
-        cutoff_date = datetime.now(timezone.utc) - timedelta(days=days)
+        cutoff_date = datetime.now(UTC) - timedelta(days=days)
 
         filtered_results = [
             result
@@ -1294,7 +1294,7 @@ class ShieldValidator:
 
         report = {
             "student_id": student_id,
-            "report_generated": datetime.now(timezone.utc).isoformat(),
+            "report_generated": datetime.now(UTC).isoformat(),
             "total_validations": len(student_results),
             "validation_history": [
                 asdict(result) for result in student_results[-50:]
@@ -1326,7 +1326,7 @@ class ShieldValidator:
                 "avg_processing_time_ms": self.metrics.avg_processing_time,
                 "cache_size": len(self.performance_cache),
             },
-            "last_updated": datetime.now(timezone.utc).isoformat(),
+            "last_updated": datetime.now(UTC).isoformat(),
         }
 
 
