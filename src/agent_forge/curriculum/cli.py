@@ -8,8 +8,8 @@ import asyncio
 import json
 import logging
 import os
-import sys
 from pathlib import Path
+import sys
 
 import click
 import yaml
@@ -27,12 +27,12 @@ logger = logging.getLogger(__name__)
 
 
 @click.group()
-def curriculum_cli():
+def forge_curriculum():
     """Frontier Curriculum Engine - Edge-of-chaos curriculum design."""
     pass
 
 
-@curriculum_cli.command()
+@forge_curriculum.command()
 @click.option("--config", type=click.Path(exists=True), help="Config file path")
 @click.option(
     "--api-key", help="OpenRouter API key (or use OPENROUTER_API_KEY env var)"
@@ -184,7 +184,7 @@ def find_edge(
         sys.exit(1)
 
 
-@curriculum_cli.command()
+@forge_curriculum.command()
 @click.option("--api-key", help="OpenRouter API key")
 @click.option(
     "--model", default="anthropic/claude-3-5-sonnet-20241022", help="Model to use"
@@ -298,7 +298,7 @@ Provide ONLY the function code, no explanation."""
         sys.exit(1)
 
 
-@curriculum_cli.command()
+@forge_curriculum.command()
 @click.option("--api-key", help="OpenRouter API key")
 @click.option("--cache-dir", default=".forge/cache", help="Cache directory")
 def cache_stats(api_key: str | None, cache_dir: str):
@@ -384,7 +384,7 @@ def cache_stats(api_key: str | None, cache_dir: str):
         sys.exit(1)
 
 
-@curriculum_cli.command()
+@forge_curriculum.command()
 def demo():
     """Run curriculum engine demonstration."""
 
@@ -436,4 +436,4 @@ def demo():
 
 
 if __name__ == "__main__":
-    curriculum_cli()
+    forge_curriculum()

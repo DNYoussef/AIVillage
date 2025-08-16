@@ -22,7 +22,7 @@ I've successfully integrated **BitNet compression** (Phase 1 of the compression 
 - **W&B Integration**: Unified experiment tracking
 
 ### 3. **Enhanced CLI** (`cli.py` updated)
-- **Individual Commands**: `evo`, `bake-quietstar`, `compress`
+- **Commands**: `evo`, `bake-quietstar`, `compression`
 - **Unified Command**: `run-pipeline` for complete workflow
 - **Status Checking**: System validation and health checks
 
@@ -50,7 +50,7 @@ forge bake-quietstar \
   --out ./quietstar_enhanced
 
 # 3. BitNet compression (15-30 minutes)
-forge compress \
+forge compression compress \
   --input-model ./quietstar_enhanced \
   --output-model ./final_compressed_model
 ```

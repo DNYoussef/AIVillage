@@ -11,21 +11,20 @@ Pipeline: EvoMerge → Quiet-STaR → BitNet → Deployment
 """
 
 import asyncio
+from datetime import datetime
 import json
 import logging
-import time
-from datetime import datetime
 from pathlib import Path
+import time
 from typing import Any
 
 import click
-import torch
 from datasets import load_dataset
 from pydantic import BaseModel, Field, field_validator
+import torch
 from torch import nn
 from tqdm import tqdm
 from transformers import AutoModelForCausalLM, AutoTokenizer
-
 import wandb
 
 # Import compression modules
@@ -724,11 +723,11 @@ class CompressionPipeline:
 
 
 @click.group()
-def forge() -> None:
-    """Agent Forge CLI."""
+def forge_compression() -> None:
+    """Agent Forge compression CLI."""
 
 
-@forge.command()
+@forge_compression.command()
 @click.option("--input-model", required=True, help="Path to Quiet-STaR baked model")
 @click.option("--output-model", required=True, help="Path for compressed model output")
 @click.option(
@@ -925,4 +924,4 @@ run = run_compression  # Alias for orchestrator discovery
 execute = run_compression  # Alternative alias
 
 if __name__ == "__main__":
-    forge()
+    forge_compression()

@@ -70,10 +70,10 @@ I have successfully implemented a comprehensive **Forge Training Loop** that int
     - Comprehensive checkpoint and resume functionality
 
 12. **CLI Integration** (`agent_forge/training/cli_commands.py`)
-    - `forge train` - Complete training with all enhancements
-    - `forge analyze` - Training checkpoint analysis
-    - `forge test` - Model testing interface
-    - `forge validate` - Configuration validation
+    - `forge training train` - Complete training with all enhancements
+    - `forge training analyze` - Training checkpoint analysis
+    - `forge training test` - Model testing interface
+    - `forge training validate` - Configuration validation
 
 ## 🎯 Key Features & Research Implementation
 
@@ -148,12 +148,12 @@ for epoch in training:
 
 ### Basic Training
 ```bash
-forge train --model-name gpt2 --dataset openai_humaneval --max-steps 10000
+forge training train --model-name gpt2 --dataset openai_humaneval --max-steps 10000
 ```
 
 ### Full Enhancement Suite
 ```bash
-forge train \
+forge training train \
   --model-name deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B \
   --dataset mbpp \
   --enable-grokfast \
@@ -251,7 +251,7 @@ A complete working example is provided in `examples/forge_train_example.py` that
 - Phase 1: Core infrastructure (telemetry, edge control, geometry, Grokfast)
 - Phase 2: Self-modeling + temperature curriculum
 - Phase 3: Dream/sleep consolidation system
-- CLI integration with `forge train` commands
+- CLI integration with `forge training` commands
 - Example scripts and documentation
 
 ### 🔄 Ready for Extension
