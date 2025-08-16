@@ -19,7 +19,7 @@ int main() {
     }
 
     printf("Library version: %s\n", betanet_version());
-    printf("Linter support: %s\n", betanet_feature_supported("linter") ? "Yes" : "No");
+    printf("Linter support: %s\n", betanet_feature_supported("linter") == BETANET_SUCCESS ? "Yes" : "No");
     printf("\n");
 
     // Configure linter

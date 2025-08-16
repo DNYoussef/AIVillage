@@ -19,8 +19,8 @@ int main() {
     }
 
     printf("Library version: %s\n", betanet_version());
-    printf("Mixnode support: %s\n", betanet_feature_supported("mixnode") ? "Yes" : "No");
-    printf("Sphinx support: %s\n", betanet_feature_supported("sphinx") ? "Yes" : "No");
+    printf("Mixnode support: %s\n", betanet_feature_supported("mixnode") == BETANET_SUCCESS ? "Yes" : "No");
+    printf("Sphinx support: %s\n", betanet_feature_supported("sphinx") == BETANET_SUCCESS ? "Yes" : "No");
     printf("\n");
 
     // Configure mixnode

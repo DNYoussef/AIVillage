@@ -10,7 +10,7 @@ description = "C FFI bindings for Betanet core components"
 
 [lib]
 name = "betanet_ffi"
-crate-type = ["cdylib", "staticlib"]
+crate-type = ["cdylib", "staticlib", "rlib"]
 
 # Minimal dependencies for Day 8-9 deliverable
 [dependencies]

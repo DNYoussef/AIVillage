@@ -19,7 +19,7 @@ int main() {
     }
 
     printf("Library version: %s\n", betanet_version());
-    printf("HTX support: %s\n", betanet_feature_supported("htx") ? "Yes" : "No");
+    printf("HTX support: %s\n", betanet_feature_supported("htx") == BETANET_SUCCESS ? "Yes" : "No");
     printf("\n");
 
     // Create a DATA frame

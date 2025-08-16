@@ -19,10 +19,10 @@ int main() {
     }
 
     printf("Library version: %s\n", betanet_version());
-    printf("FFI demo support: %s\n", betanet_feature_supported("ffi_demo") ? "Yes" : "No");
-    printf("Buffer management: %s\n", betanet_feature_supported("buffer_management") ? "Yes" : "No");
-    printf("Version info: %s\n", betanet_feature_supported("version_info") ? "Yes" : "No");
-    printf("Unknown feature: %s\n", betanet_feature_supported("unknown") ? "Yes" : "No");
+    printf("FFI demo support: %s\n", betanet_feature_supported("ffi_demo") == BETANET_SUCCESS ? "Yes" : "No");
+    printf("Buffer management: %s\n", betanet_feature_supported("buffer_management") == BETANET_SUCCESS ? "Yes" : "No");
+    printf("Version info: %s\n", betanet_feature_supported("version_info") == BETANET_SUCCESS ? "Yes" : "No");
+    printf("Unknown feature: %s\n", betanet_feature_supported("unknown") == BETANET_SUCCESS ? "Yes" : "No");
     printf("\n");
 
     // Test echo function

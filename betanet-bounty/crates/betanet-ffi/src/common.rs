@@ -4,8 +4,8 @@ use std::os::raw::{c_char, c_int, c_uint, c_void};
 use std::ptr;
 
 /// Result codes for Betanet FFI functions
-#[repr(C)]
-#[derive(Debug, Clone, Copy)]
+#[repr(i32)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum BetanetResult {
     /// Operation completed successfully
     Success = 0,
