@@ -24,12 +24,22 @@ test:
 	cargo test --all-features
 	@echo "✅ Tests complete"
 
-# Run tests with coverage
+# Run tests with coverage (legacy tarpaulin)
 test-coverage:
 	@echo "📊 Running tests with coverage..."
 	cargo install cargo-tarpaulin || true
 	cargo tarpaulin --all-features --out Html
 	@echo "✅ Coverage report generated in tarpaulin-report.html"
+
+# HTX coverage with cargo-llvm-cov (≥80% target)
+coverage:
+	@echo "📊 Running cargo-llvm-cov on betanet-htx..."
+	@cargo install cargo-llvm-cov || true
+	@mkdir -p artifacts/coverage/htx
+	cargo llvm-cov --package betanet-htx --html --output-dir artifacts/coverage/htx
+	@echo "🎯 Checking coverage threshold (≥80% lines+branches)..."
+	@cargo llvm-cov --package betanet-htx --summary-only | tee artifacts/coverage/htx/summary.txt
+	@echo "✅ Coverage report: artifacts/coverage/htx/index.html"
 
 # Lint all code
 lint:

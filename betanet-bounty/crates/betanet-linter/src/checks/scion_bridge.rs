@@ -10,10 +10,12 @@
 use crate::{LintIssue, SeverityLevel, Result};
 use crate::checks::{CheckRule, CheckContext};
 use regex::Regex;
+use async_trait::async_trait;
 
 /// SCION gateway infrastructure compliance
 pub struct ScionGatewayRule;
 
+#[async_trait]
 impl CheckRule for ScionGatewayRule {
     fn name(&self) -> &str {
         "scion-gateway-infrastructure"
@@ -121,6 +123,7 @@ impl CheckRule for ScionGatewayRule {
 /// SCION path selection compliance
 pub struct ScionPathSelectionRule;
 
+#[async_trait]
 impl CheckRule for ScionPathSelectionRule {
     fn name(&self) -> &str {
         "scion-path-selection"
@@ -209,6 +212,7 @@ impl CheckRule for ScionPathSelectionRule {
 /// SCION security compliance
 pub struct ScionSecurityRule;
 
+#[async_trait]
 impl CheckRule for ScionSecurityRule {
     fn name(&self) -> &str {
         "scion-security"
@@ -320,6 +324,7 @@ impl CheckRule for ScionSecurityRule {
 /// SCION integration compliance
 pub struct ScionIntegrationRule;
 
+#[async_trait]
 impl CheckRule for ScionIntegrationRule {
     fn name(&self) -> &str {
         "scion-integration"
@@ -427,6 +432,7 @@ impl CheckRule for ScionIntegrationRule {
 /// SCION container deployment compliance
 pub struct ScionDeploymentRule;
 
+#[async_trait]
 impl CheckRule for ScionDeploymentRule {
     fn name(&self) -> &str {
         "scion-deployment"

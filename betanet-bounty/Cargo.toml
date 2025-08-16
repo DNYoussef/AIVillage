@@ -12,6 +12,7 @@ members = [
     "crates/agent-fabric",
     "crates/twin-vault",
     "crates/federated",
+    "crates/betanet-ffi",
     "ffi/betanet-c",
 ]
 exclude = [

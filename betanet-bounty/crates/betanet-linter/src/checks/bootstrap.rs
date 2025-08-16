@@ -5,10 +5,12 @@
 use crate::{LintIssue, SeverityLevel, Result};
 use crate::checks::{CheckContext, CheckRule};
 use regex::Regex;
+use async_trait::async_trait;
 
 /// Check that Argon2id is properly advertised and configured
 pub struct Argon2idAdvertisementRule;
 
+#[async_trait]
 impl CheckRule for Argon2idAdvertisementRule {
     fn name(&self) -> &str {
         "argon2id-advertisement"
@@ -79,6 +81,7 @@ impl CheckRule for Argon2idAdvertisementRule {
 /// Check Argon2id parameters are sane for different device classes
 pub struct Argon2idParameterRule;
 
+#[async_trait]
 impl CheckRule for Argon2idParameterRule {
     fn name(&self) -> &str {
         "argon2id-parameters"
@@ -243,6 +246,7 @@ impl Argon2idParameterRule {
 /// Check for proper CPU PoW fallback with rate limiting
 pub struct CpuPoWFallbackRule;
 
+#[async_trait]
 impl CheckRule for CpuPoWFallbackRule {
     fn name(&self) -> &str {
         "cpu-pow-fallback"
@@ -312,6 +316,7 @@ impl CheckRule for CpuPoWFallbackRule {
 /// Check for proper negotiation protocol implementation
 pub struct BootstrapNegotiationRule;
 
+#[async_trait]
 impl CheckRule for BootstrapNegotiationRule {
     fn name(&self) -> &str {
         "bootstrap-negotiation"
@@ -385,6 +390,7 @@ impl CheckRule for BootstrapNegotiationRule {
 /// Check for abuse tracking and progressive difficulty scaling
 pub struct AbuseTrackingRule;
 
+#[async_trait]
 impl CheckRule for AbuseTrackingRule {
     fn name(&self) -> &str {
         "abuse-tracking"

@@ -207,6 +207,147 @@ impl CheckRule for KSDistanceLintRule {
     }
 }
 
+/// Check for dependency vulnerabilities
+pub struct DependencySecurityRule;
+
+#[async_trait]
+impl CheckRule for DependencySecurityRule {
+    fn name(&self) -> &str {
+        "dependency-security"
+    }
+
+    fn description(&self) -> &str {
+        "Check for known vulnerable dependencies and security advisories"
+    }
+
+    async fn check(&self, context: &CheckContext) -> Result<Vec<LintIssue>> {
+        let mut issues = vec![];
+
+        // Check Cargo.toml files for known vulnerable versions
+        if context.file_path.to_string_lossy().contains("Cargo.toml") {
+            // Look for common vulnerable dependency patterns
+            let vulnerable_deps = [
+                ("chrono", "0.4.19", "Segmentation fault vulnerability"),
+                ("openssl", "0.10.38", "Security vulnerabilities in OpenSSL"),
+                ("regex", "1.5.4", "ReDoS vulnerability patterns"),
+                ("serde_yaml", "0.8.23", "Stack overflow vulnerability"),
+                ("time", "0.1.44", "Potential for incorrect time calculations"),
+            ];
+
+            for (dep_name, vuln_version, description) in &vulnerable_deps {
+                let dep_regex = regex::Regex::new(&format!(r#"{}\s*=\s*"({})""#, dep_name, vuln_version)).unwrap();
+                for (line_num, line) in context.content.lines().enumerate() {
+                    if dep_regex.is_match(line) {
+                        issues.push(LintIssue::new(
+                            "SEC001".to_string(),
+                            SeverityLevel::Critical,
+                            format!("Vulnerable dependency {} version {} detected: {}", dep_name, vuln_version, description),
+                            self.name().to_string(),
+                        ).with_location(context.file_path.clone(), line_num + 1, 0));
+                    }
+                }
+            }
+
+            // Check for dev-dependencies that shouldn't be in production
+            let dev_only_deps = ["proptest", "criterion", "quickcheck"];
+            for dep in &dev_only_deps {
+                if context.content.contains(&format!("dependencies]\n{}", dep)) ||
+                   context.content.contains(&format!("dependencies.{}", dep)) {
+                    issues.push(LintIssue::new(
+                        "SEC002".to_string(),
+                        SeverityLevel::Warning,
+                        format!("Development dependency '{}' found in main dependencies - should be dev-dependency", dep),
+                        self.name().to_string(),
+                    ));
+                }
+            }
+        }
+
+        Ok(issues)
+    }
+}
+
+/// Check for crypto implementation best practices
+pub struct CryptographyBestPracticesRule;
+
+#[async_trait]
+impl CheckRule for CryptographyBestPracticesRule {
+    fn name(&self) -> &str {
+        "cryptography-best-practices"
+    }
+
+    fn description(&self) -> &str {
+        "Check for cryptographic implementation best practices and common pitfalls"
+    }
+
+    async fn check(&self, context: &CheckContext) -> Result<Vec<LintIssue>> {
+        let mut issues = vec![];
+
+        // Check for weak crypto patterns
+        let weak_patterns = [
+            ("MD5", "MD5 is cryptographically broken"),
+            ("SHA1", "SHA1 is cryptographically weak"),
+            ("RC4", "RC4 is insecure"),
+            ("DES", "DES has insufficient key length"),
+            ("rand::thread_rng", "Consider using ChaCha20Rng for reproducible randomness"),
+        ];
+
+        for (pattern, warning) in &weak_patterns {
+            if context.content.contains(pattern) {
+                issues.push(LintIssue::new(
+                    "CRYPTO001".to_string(),
+                    SeverityLevel::Warning,
+                    format!("Weak cryptography detected: {} - {}", pattern, warning),
+                    self.name().to_string(),
+                ));
+            }
+        }
+
+        // Check for proper key sizes
+        let key_size_regex = regex::Regex::new(r"key_size.*=.*(\d+)").unwrap();
+        for (line_num, line) in context.content.lines().enumerate() {
+            if let Some(captures) = key_size_regex.captures(line) {
+                if let Some(size_str) = captures.get(1) {
+                    if let Ok(size) = size_str.as_str().parse::<u32>() {
+                        if size < 128 {
+                            issues.push(LintIssue::new(
+                                "CRYPTO002".to_string(),
+                                SeverityLevel::Error,
+                                format!("Key size {} bits too small - use at least 128 bits", size),
+                                self.name().to_string(),
+                            ).with_location(context.file_path.clone(), line_num + 1, 0));
+                        }
+                    }
+                }
+            }
+        }
+
+        // Check for hardcoded secrets/keys
+        let secret_patterns = [
+            r#"password\s*=\s*"[^"]+""#,
+            r#"secret\s*=\s*"[^"]+""#,
+            r#"key\s*=\s*"[^"]+""#,
+            r#"token\s*=\s*"[^"]+""#,
+        ];
+
+        for pattern in &secret_patterns {
+            let regex = regex::Regex::new(pattern).unwrap();
+            for (line_num, line) in context.content.lines().enumerate() {
+                if regex.is_match(line) && !line.contains("example") && !line.contains("test") {
+                    issues.push(LintIssue::new(
+                        "CRYPTO003".to_string(),
+                        SeverityLevel::Critical,
+                        "Hardcoded secret detected - use environment variables or secure vault".to_string(),
+                        self.name().to_string(),
+                    ).with_location(context.file_path.clone(), line_num + 1, 0));
+                }
+            }
+        }
+
+        Ok(issues)
+    }
+}
+
 /// Check epsilon privacy policy compliance
 pub struct EpsilonPolicyLintRule;
 

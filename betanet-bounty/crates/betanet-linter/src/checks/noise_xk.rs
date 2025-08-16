@@ -11,10 +11,12 @@
 use crate::{LintIssue, SeverityLevel, Result};
 use crate::checks::{CheckRule, CheckContext};
 use regex::Regex;
+use async_trait::async_trait;
 
 /// Noise XK handshake pattern compliance
 pub struct NoiseXkHandshakeRule;
 
+#[async_trait]
 impl CheckRule for NoiseXkHandshakeRule {
     fn name(&self) -> &str {
         "noise-xk-handshake"
@@ -157,6 +159,7 @@ impl CheckRule for NoiseXkHandshakeRule {
 /// Noise XK key rotation compliance
 pub struct NoiseXkKeyRotationRule;
 
+#[async_trait]
 impl CheckRule for NoiseXkKeyRotationRule {
     fn name(&self) -> &str {
         "noise-xk-key-rotation"
@@ -273,6 +276,7 @@ impl CheckRule for NoiseXkKeyRotationRule {
 /// Noise XK fragmentation compliance
 pub struct NoiseXkFragmentationRule;
 
+#[async_trait]
 impl CheckRule for NoiseXkFragmentationRule {
     fn name(&self) -> &str {
         "noise-xk-fragmentation"
@@ -389,6 +393,7 @@ impl CheckRule for NoiseXkFragmentationRule {
 /// Noise XK security compliance
 pub struct NoiseXkSecurityRule;
 
+#[async_trait]
 impl CheckRule for NoiseXkSecurityRule {
     fn name(&self) -> &str {
         "noise-xk-security"
@@ -544,6 +549,7 @@ impl CheckRule for NoiseXkSecurityRule {
 /// Noise XK transport state compliance
 pub struct NoiseXkTransportRule;
 
+#[async_trait]
 impl CheckRule for NoiseXkTransportRule {
     fn name(&self) -> &str {
         "noise-xk-transport"

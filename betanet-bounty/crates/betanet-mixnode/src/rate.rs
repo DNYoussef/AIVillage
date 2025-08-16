@@ -5,101 +5,171 @@
 
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
-use std::time::{Duration, Instant};
+use std::time::Duration;
+
 
 use tokio::sync::{Mutex, Semaphore};
+use std::collections::VecDeque;
 use tokio::time::sleep;
 use tracing::{debug, warn};
 
 use crate::{MixnodeError, Result};
 
-/// Token bucket rate limiter
+/// High-performance token bucket rate limiter
 pub struct TokenBucket {
     /// Maximum number of tokens
     capacity: u64,
-    /// Current number of tokens
+    /// Current number of tokens (fixed-point: actual_tokens = tokens / PRECISION)
     tokens: AtomicU64,
-    /// Rate of token refill (tokens per second)
-    refill_rate: f64,
-    /// Last refill timestamp
-    last_refill: Mutex<Instant>,
+    /// Rate of token refill (tokens per second, fixed-point)
+    refill_rate_fp: u64,
+    /// Last refill timestamp (microseconds since epoch)
+    last_refill_us: AtomicU64,
     /// Statistics
     stats: Arc<RateLimiterStats>,
 }
 
+const TOKEN_PRECISION: u64 = 1_000_000; // 1 million = 1.0 token
+
 impl TokenBucket {
     /// Create new token bucket
     pub fn new(capacity: u64, refill_rate: f64) -> Self {
+        let now_us = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_micros() as u64;
+
         Self {
             capacity,
-            tokens: AtomicU64::new(capacity),
-            refill_rate,
-            last_refill: Mutex::new(Instant::now()),
+            tokens: AtomicU64::new(capacity * TOKEN_PRECISION),
+            refill_rate_fp: (refill_rate * TOKEN_PRECISION as f64) as u64,
+            last_refill_us: AtomicU64::new(now_us),
             stats: Arc::new(RateLimiterStats::new()),
         }
     }
 
-    /// Try to consume tokens (non-blocking)
+    /// Try to consume tokens (non-blocking, lock-free)
     pub async fn try_consume(&self, tokens: u64) -> bool {
-        self.refill().await;
+        let tokens_fp = tokens * TOKEN_PRECISION;
 
-        let current = self.tokens.load(Ordering::Relaxed);
-        if current >= tokens {
-            let remaining = self.tokens.fetch_sub(tokens, Ordering::Relaxed);
-            if remaining >= tokens {
-                self.stats.tokens_consumed.fetch_add(tokens, Ordering::Relaxed);
-                self.stats.requests_allowed.fetch_add(1, Ordering::Relaxed);
-                return true;
-            } else {
-                // Rollback if we went negative
-                self.tokens.fetch_add(tokens, Ordering::Relaxed);
+        // Fast path: lock-free refill and consume
+        self.refill_lockfree();
+
+        // Use compare-and-swap loop for atomic token consumption
+        loop {
+            let current = self.tokens.load(Ordering::Acquire);
+            if current < tokens_fp {
+                self.stats.requests_denied.fetch_add(1, Ordering::Relaxed);
+                return false;
+            }
+
+            let new_value = current - tokens_fp;
+            match self.tokens.compare_exchange_weak(
+                current,
+                new_value,
+                Ordering::Release,
+                Ordering::Relaxed,
+            ) {
+                Ok(_) => {
+                    self.stats.tokens_consumed.fetch_add(tokens, Ordering::Relaxed);
+                    self.stats.requests_allowed.fetch_add(1, Ordering::Relaxed);
+                    return true;
+                }
+                Err(_) => {
+                    // Retry on CAS failure
+                    std::hint::spin_loop();
+                }
             }
         }
-
-        self.stats.requests_denied.fetch_add(1, Ordering::Relaxed);
-        false
     }
 
-    /// Consume tokens (blocking until available)
+    /// Consume tokens (optimized blocking)
     pub async fn consume(&self, tokens: u64) -> Result<()> {
+        let mut backoff = 1u64;
+        const MAX_BACKOFF: u64 = 64;
+
         loop {
             if self.try_consume(tokens).await {
                 return Ok(());
             }
 
-            // Calculate wait time based on refill rate
-            let wait_time = Duration::from_secs_f64(tokens as f64 / self.refill_rate);
-            let max_wait = Duration::from_millis(100); // Cap wait time
-            let actual_wait = wait_time.min(max_wait);
+            // Adaptive backoff instead of fixed sleep
+            if backoff <= 8 {
+                // Spin for very short waits
+                for _ in 0..backoff * 100 {
+                    std::hint::spin_loop();
+                }
+            } else {
+                // Use async sleep for longer waits
+                let wait_time = Duration::from_micros(backoff * 10);
+                sleep(wait_time).await;
+            }
 
-            debug!("Rate limited, waiting {:?} for {} tokens", actual_wait, tokens);
-            sleep(actual_wait).await;
+            backoff = (backoff * 2).min(MAX_BACKOFF);
         }
     }
 
-    /// Refill tokens based on elapsed time
-    async fn refill(&self) {
-        let now = Instant::now();
-        let mut last_refill = self.last_refill.lock().await;
-        let elapsed = now.duration_since(*last_refill);
+    /// Lock-free token refill using atomic operations
+    fn refill_lockfree(&self) {
+        let now_us = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_micros() as u64;
 
-        if elapsed >= Duration::from_millis(10) { // Minimum refill interval
-            let tokens_to_add = (elapsed.as_secs_f64() * self.refill_rate) as u64;
-            if tokens_to_add > 0 {
-                let current = self.tokens.load(Ordering::Relaxed);
-                let new_tokens = (current + tokens_to_add).min(self.capacity);
-                self.tokens.store(new_tokens, Ordering::Relaxed);
-                *last_refill = now;
+        let last_refill = self.last_refill_us.load(Ordering::Acquire);
+        let elapsed_us = now_us.saturating_sub(last_refill);
 
-                self.stats.tokens_added.fetch_add(tokens_to_add, Ordering::Relaxed);
-                debug!("Refilled {} tokens, current: {}", tokens_to_add, new_tokens);
+        // Only refill if enough time has passed (reduce contention)
+        if elapsed_us < 1000 { // 1ms minimum
+            return;
+        }
+
+        // Try to update the timestamp atomically
+        if self.last_refill_us.compare_exchange_weak(
+            last_refill,
+            now_us,
+            Ordering::Release,
+            Ordering::Relaxed,
+        ).is_ok() {
+            // We won the race to update timestamp, now add tokens
+            let tokens_to_add_fp = (elapsed_us * self.refill_rate_fp) / 1_000_000;
+
+            if tokens_to_add_fp > 0 {
+                let capacity_fp = self.capacity * TOKEN_PRECISION;
+
+                // Atomic add with saturation at capacity
+                loop {
+                    let current = self.tokens.load(Ordering::Acquire);
+                    let new_tokens = (current + tokens_to_add_fp).min(capacity_fp);
+
+                    if current == new_tokens {
+                        break; // Already at capacity
+                    }
+
+                    match self.tokens.compare_exchange_weak(
+                        current,
+                        new_tokens,
+                        Ordering::Release,
+                        Ordering::Relaxed,
+                    ) {
+                        Ok(_) => {
+                            let added = (tokens_to_add_fp / TOKEN_PRECISION) as u64;
+                            self.stats.tokens_added.fetch_add(added, Ordering::Relaxed);
+                            break;
+                        }
+                        Err(_) => {
+                            std::hint::spin_loop();
+                        }
+                    }
+                }
             }
         }
     }
 
     /// Get current token count
     pub fn available_tokens(&self) -> u64 {
-        self.tokens.load(Ordering::Relaxed)
+        self.refill_lockfree();
+        self.tokens.load(Ordering::Relaxed) / TOKEN_PRECISION
     }
 
     /// Get statistics
@@ -110,32 +180,35 @@ impl TokenBucket {
     /// Update rate parameters
     pub fn update_rate(&mut self, capacity: u64, refill_rate: f64) {
         self.capacity = capacity;
-        self.refill_rate = refill_rate;
+        self.refill_rate_fp = (refill_rate * TOKEN_PRECISION as f64) as u64;
 
         // Adjust current tokens if new capacity is smaller
+        let capacity_fp = capacity * TOKEN_PRECISION;
         let current = self.tokens.load(Ordering::Relaxed);
-        if current > capacity {
-            self.tokens.store(capacity, Ordering::Relaxed);
+        if current > capacity_fp {
+            self.tokens.store(capacity_fp, Ordering::Relaxed);
         }
     }
 }
 
-/// Traffic shaper for constant-rate output
+/// High-performance traffic shaper for constant-rate output
 pub struct TrafficShaper {
     /// Target output rate (packets per second)
     target_rate: f64,
-    /// Packet queue with rate limiting
-    packet_queue: Arc<Mutex<Vec<Vec<u8>>>>,
+    /// High-performance packet queue (FIFO with VecDeque)
+    packet_queue: Arc<Mutex<VecDeque<Vec<u8>>>>,
     /// Rate limiter
     rate_limiter: TokenBucket,
     /// Shaping buffer
     buffer: Arc<Semaphore>,
     /// Statistics
     stats: Arc<TrafficShaperStats>,
+    /// Queue size limit
+    max_queue_size: usize,
 }
 
 impl TrafficShaper {
-    /// Create new traffic shaper
+    /// Create new high-performance traffic shaper
     pub fn new(target_rate: f64, buffer_capacity: usize) -> Self {
         let rate_limiter = TokenBucket::new(
             (target_rate * 2.0) as u64, // 2 second burst capacity
@@ -144,28 +217,40 @@ impl TrafficShaper {
 
         Self {
             target_rate,
-            packet_queue: Arc::new(Mutex::new(Vec::new())),
+            packet_queue: Arc::new(Mutex::new(VecDeque::with_capacity(buffer_capacity))),
             rate_limiter,
             buffer: Arc::new(Semaphore::new(buffer_capacity)),
             stats: Arc::new(TrafficShaperStats::new()),
+            max_queue_size: buffer_capacity.max(10000),
         }
     }
 
-    /// Submit packet for shaped output
+    /// Submit packet for shaped output (optimized)
     pub async fn submit_packet(&self, packet: Vec<u8>) -> Result<()> {
-        // Acquire buffer slot
+        // Fast path: check queue size without locking first
+        {
+            let queue = self.packet_queue.lock().await;
+            if queue.len() >= self.max_queue_size {
+                drop(queue);
+                self.stats.packets_dropped.fetch_add(1, Ordering::Relaxed);
+                return Err(MixnodeError::Network("Traffic shaper queue full".to_string()));
+            }
+        }
+
+        // Acquire buffer slot only after queue check
         let _permit = self.buffer.acquire().await.map_err(|_| {
             MixnodeError::Network("Traffic shaper buffer closed".to_string())
         })?;
 
-        // Add to queue
+        // Add to queue with optimized VecDeque
         {
             let mut queue = self.packet_queue.lock().await;
-            if queue.len() >= 10000 {
+            // Double-check size since queue could have grown
+            if queue.len() >= self.max_queue_size {
                 self.stats.packets_dropped.fetch_add(1, Ordering::Relaxed);
                 return Err(MixnodeError::Network("Traffic shaper queue full".to_string()));
             }
-            queue.push(packet);
+            queue.push_back(packet);
             self.stats.packets_queued.fetch_add(1, Ordering::Relaxed);
         }
 
@@ -174,15 +259,15 @@ impl TrafficShaper {
         Ok(())
     }
 
-    /// Get next shaped packet (rate-limited)
+    /// Get next shaped packet (rate-limited, optimized)
     pub async fn next_packet(&self) -> Result<Option<Vec<u8>>> {
-        // Rate limit to target rate (1 token per packet)
+        // Rate limit to target rate (1 token per packet) - now much faster
         self.rate_limiter.consume(1).await?;
 
-        // Get packet from queue
+        // Get packet from queue with optimized FIFO operations
         let packet = {
             let mut queue = self.packet_queue.lock().await;
-            queue.pop()
+            queue.pop_front() // VecDeque::pop_front() is O(1) vs Vec::pop() being O(n)
         };
 
         if packet.is_some() {
@@ -453,7 +538,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_traffic_shaper_basic() {
-        let shaper = TrafficShaper::new(10.0, 100); // 10 pkt/s
+        let shaper = TrafficShaper::new(2.0, 100); // 2 pkt/s (4 token burst capacity)
 
         // Submit packets
         for i in 0..5 {
@@ -463,36 +548,37 @@ mod tests {
 
         assert_eq!(shaper.queue_length().await, 5);
 
-        // Get packet (should be rate limited)
-        let _start = Instant::now();
-        let packet = shaper.next_packet().await.unwrap();
-        assert!(packet.is_some());
+        // Get first few packets (should use burst capacity)
+        for _ in 0..4 {
+            let packet = shaper.next_packet().await.unwrap();
+            assert!(packet.is_some());
+        }
 
-        // Second packet should be delayed
-        let packet2 = timeout(Duration::from_millis(50), shaper.next_packet()).await;
-        assert!(packet2.is_err()); // Should timeout due to rate limiting
+        // Next packet should be rate limited
+        let packet_delayed = timeout(Duration::from_millis(300), shaper.next_packet()).await;
+        assert!(packet_delayed.is_err()); // Should timeout due to rate limiting
     }
 
     #[tokio::test]
     async fn test_rate_limited_traffic_shaper() {
         let config = RateLimitingConfig {
             enabled: true,
-            burst_capacity: 5,
-            sustained_rate: 2.0,
+            burst_capacity: 100, // 100 bytes burst
+            sustained_rate: 50.0, // 50 bytes/sec
             shaping_buffer_size: 10,
             output_rate: 1.0,
         };
 
         let shaper = RateLimitedTrafficShaper::new(config);
 
-        // Should accept initial burst
+        // Should accept small packets within burst capacity
         for i in 0..3 {
-            let packet = format!("packet_{}", i).into_bytes();
+            let packet = format!("packet_{}", i).into_bytes(); // ~8 bytes each
             assert!(shaper.process_packet(packet).await.is_ok());
         }
 
-        // Should rate limit further packets
-        let large_packet = vec![0u8; 1000];
+        // Should rate limit large packet that exceeds remaining capacity
+        let large_packet = vec![0u8; 200]; // 200 bytes > remaining burst capacity
         assert!(shaper.process_packet(large_packet).await.is_err());
     }
 

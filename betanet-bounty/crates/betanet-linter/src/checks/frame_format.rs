@@ -11,10 +11,12 @@
 use crate::{LintIssue, SeverityLevel, Result};
 use crate::checks::{CheckRule, CheckContext};
 use regex::Regex;
+use async_trait::async_trait;
 
 /// HTX frame structure compliance
 pub struct FrameStructureRule;
 
+#[async_trait]
 impl CheckRule for FrameStructureRule {
     fn name(&self) -> &str {
         "frame-structure"
@@ -128,6 +130,7 @@ impl CheckRule for FrameStructureRule {
 /// HTX frame type compliance
 pub struct FrameTypeRule;
 
+#[async_trait]
 impl CheckRule for FrameTypeRule {
     fn name(&self) -> &str {
         "frame-type"
@@ -234,6 +237,7 @@ impl CheckRule for FrameTypeRule {
 /// HTX varint encoding compliance
 pub struct VarintEncodingRule;
 
+#[async_trait]
 impl CheckRule for VarintEncodingRule {
     fn name(&self) -> &str {
         "varint-encoding"
@@ -338,6 +342,7 @@ impl CheckRule for VarintEncodingRule {
 /// HTX frame buffer management compliance
 pub struct FrameBufferRule;
 
+#[async_trait]
 impl CheckRule for FrameBufferRule {
     fn name(&self) -> &str {
         "frame-buffer"
@@ -438,6 +443,7 @@ impl CheckRule for FrameBufferRule {
 /// HTX frame validation compliance
 pub struct FrameValidationRule;
 
+#[async_trait]
 impl CheckRule for FrameValidationRule {
     fn name(&self) -> &str {
         "frame-validation"

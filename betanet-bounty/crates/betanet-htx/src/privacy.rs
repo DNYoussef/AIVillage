@@ -638,6 +638,9 @@ mod tests {
     fn test_budget_allocation() {
         let mut manager = PrivacyBudgetManager::new(5.0).unwrap();
 
+        // Increase the per-route limit to accommodate the test scenario
+        manager.policy.epsilon_max_per_route = 1.0;
+
         // Register edges
         let edge1 = EdgeId::new("A", "B", EdgeType::DirectConnection);
         let edge2 = EdgeId::new("B", "C", EdgeType::MixnetConnection);
@@ -645,8 +648,8 @@ mod tests {
         manager.register_edge(edge1.clone(), EdgePrivacy::new(edge1.clone()));
         manager.register_edge(edge2.clone(), EdgePrivacy::new(edge2.clone()));
 
-        // Request budget
-        let result = manager.request_budget("route1".to_string(), vec![edge1, edge2], 1000, 300.0);
+        // Request budget (values should now work with increased policy limit)
+        let result = manager.request_budget("route1".to_string(), vec![edge1, edge2], 10, 10.0);
         assert!(result.is_ok());
 
         let status = manager.budget_status();

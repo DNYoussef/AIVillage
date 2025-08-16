@@ -22,9 +22,13 @@ rand = { workspace = true }
 md5 = "0.7"
 hex = "0.4"
 
+# CLI
+clap = { workspace = true }
+
 # Async runtime for refresh
-tokio = { version = "1.0", features = ["time", "rt", "macros"] }
-tracing = "0.1"
+tokio = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
 
 [dev-dependencies]
 proptest = { workspace = true }

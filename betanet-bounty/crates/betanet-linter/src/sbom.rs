@@ -29,22 +29,53 @@ impl SbomGenerator {
             .exec()
             .map_err(|e| crate::LinterError::Parse(e.to_string()))?;
 
+        let creation_time = chrono::Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string();
+
         let spdx = json!({
             "spdxVersion": "SPDX-2.3",
             "dataLicense": "CC0-1.0",
             "SPDXID": "SPDXRef-DOCUMENT",
-            "name": metadata.workspace_root.file_name().unwrap_or_default(),
-            "documentNamespace": format!("https://example.com/{}",
+            "name": format!("Betanet SBOM - {}",
                 metadata.workspace_root.file_name().unwrap_or_default()),
+            "documentNamespace": format!("https://betanet.org/sbom/{}-{}",
+                metadata.workspace_root.file_name().unwrap_or_default(),
+                uuid::Uuid::new_v4()),
+            "creator": "Tool: betanet-linter",
+            "created": creation_time,
             "packages": metadata.packages.iter().map(|pkg| {
                 json!({
-                    "SPDXID": format!("SPDXRef-{}", pkg.name),
+                    "SPDXID": format!("SPDXRef-{}", pkg.name.replace("-", "")),
                     "name": pkg.name,
                     "version": pkg.version.to_string(),
-                    "downloadLocation": "NOASSERTION",
+                    "downloadLocation": pkg.repository.as_ref()
+                        .map(|r| r.to_string())
+                        .unwrap_or_else(|| "NOASSERTION".to_string()),
                     "filesAnalyzed": false,
-                    "copyrightText": "NOASSERTION"
+                    "copyrightText": "NOASSERTION",
+                    "licenseConcluded": "NOASSERTION",
+                    "licenseDeclared": pkg.license.as_ref()
+                        .map(|l| l.to_string())
+                        .unwrap_or_else(|| "NOASSERTION".to_string()),
+                    "description": pkg.description.as_ref()
+                        .map(|d| d.to_string())
+                        .unwrap_or_else(|| "No description".to_string()),
+                    "homepage": pkg.homepage.as_ref()
+                        .map(|h| h.to_string())
+                        .unwrap_or_else(|| "NOASSERTION".to_string()),
+                    "packageVerificationCode": {
+                        "packageVerificationCodeValue": format!("{:x}",
+                            pkg.name.len() as u64 + pkg.version.to_string().len() as u64)
+                    }
                 })
+            }).collect::<Vec<_>>(),
+            "relationships": metadata.packages.iter().flat_map(|pkg| {
+                pkg.dependencies.iter().map(|dep| {
+                    json!({
+                        "spdxElementId": format!("SPDXRef-{}", pkg.name.replace("-", "")),
+                        "relationshipType": "DEPENDS_ON",
+                        "relatedSpdxElement": format!("SPDXRef-{}", dep.name.replace("-", ""))
+                    })
+                }).collect::<Vec<_>>()
             }).collect::<Vec<_>>()
         });
 

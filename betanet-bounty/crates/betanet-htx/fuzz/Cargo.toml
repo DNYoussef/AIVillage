@@ -1,0 +1,39 @@
+[package]
+name = "betanet-htx-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2021"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+bytes = "1.0"
+
+[dependencies.betanet-htx]
+path = ".."
+
+# HTX Frame parsing fuzzer
+[[bin]]
+name = "htx_frame_fuzz"
+path = "fuzz_targets/htx_frame_fuzz.rs"
+test = false
+doc = false
+bench = false
+
+# HTX Multiplexing/Session fuzzer
+[[bin]]
+name = "htx_mux_fuzz"
+path = "fuzz_targets/htx_mux_fuzz.rs"
+test = false
+doc = false
+bench = false
+
+# Noise XK protocol fuzzer
+[[bin]]
+name = "htx_noise_fuzz"
+path = "fuzz_targets/htx_noise_fuzz.rs"
+test = false
+doc = false
+bench = false

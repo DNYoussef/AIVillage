@@ -11,10 +11,12 @@
 use crate::{LintIssue, SeverityLevel, Result};
 use crate::checks::{CheckRule, CheckContext};
 use regex::Regex;
+use async_trait::async_trait;
 
 /// TLS mirror template cache compliance
 pub struct TlsTemplateCacheRule;
 
+#[async_trait]
 impl CheckRule for TlsTemplateCacheRule {
     fn name(&self) -> &str {
         "tls-template-cache"
@@ -135,6 +137,7 @@ impl CheckRule for TlsTemplateCacheRule {
 /// TLS mirror site classification compliance
 pub struct TlsSiteClassificationRule;
 
+#[async_trait]
 impl CheckRule for TlsSiteClassificationRule {
     fn name(&self) -> &str {
         "tls-site-classification"
@@ -200,6 +203,7 @@ impl CheckRule for TlsSiteClassificationRule {
 /// TLS mirror mixture model compliance
 pub struct TlsMixtureModelRule;
 
+#[async_trait]
 impl CheckRule for TlsMixtureModelRule {
     fn name(&self) -> &str {
         "tls-mixture-model"
@@ -293,6 +297,7 @@ impl CheckRule for TlsMixtureModelRule {
 /// TLS mirror cover traffic compliance
 pub struct TlsCoverTrafficRule;
 
+#[async_trait]
 impl CheckRule for TlsCoverTrafficRule {
     fn name(&self) -> &str {
         "tls-cover-traffic"
@@ -404,6 +409,7 @@ impl CheckRule for TlsCoverTrafficRule {
 /// TLS mirror anti-fingerprinting compliance
 pub struct TlsAntiFingerprintRule;
 
+#[async_trait]
 impl CheckRule for TlsAntiFingerprintRule {
     fn name(&self) -> &str {
         "tls-anti-fingerprint"

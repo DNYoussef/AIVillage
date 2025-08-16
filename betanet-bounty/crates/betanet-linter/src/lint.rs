@@ -2,7 +2,7 @@
 
 use walkdir::WalkDir;
 use crate::{LinterConfig, LintResults, LintIssue, SeverityLevel, Result};
-use crate::checks::{CheckRule, CheckContext, UnsafeCodeRule, BlockingCallRule, TemplateReuseLintRule, KSDistanceLintRule, EpsilonPolicyLintRule};
+use crate::checks::{CheckRule, CheckContext, UnsafeCodeRule, BlockingCallRule, TemplateReuseLintRule, KSDistanceLintRule, EpsilonPolicyLintRule, DependencySecurityRule, CryptographyBestPracticesRule};
 use crate::checks::bootstrap::{Argon2idAdvertisementRule, Argon2idParameterRule, CpuPoWFallbackRule, BootstrapNegotiationRule, AbuseTrackingRule};
 use crate::checks::tls_mirror::{TlsTemplateCacheRule, TlsSiteClassificationRule, TlsMixtureModelRule, TlsCoverTrafficRule, TlsAntiFingerprintRule};
 use crate::checks::noise_xk::{NoiseXkHandshakeRule, NoiseXkKeyRotationRule, NoiseXkFragmentationRule, NoiseXkSecurityRule, NoiseXkTransportRule};
@@ -26,6 +26,8 @@ impl Linter {
         rules.push(Box::new(TemplateReuseLintRule));
         rules.push(Box::new(KSDistanceLintRule));
         rules.push(Box::new(EpsilonPolicyLintRule));
+        rules.push(Box::new(DependencySecurityRule));
+        rules.push(Box::new(CryptographyBestPracticesRule));
 
         // Bootstrap rules
         rules.push(Box::new(Argon2idAdvertisementRule));
@@ -174,6 +176,7 @@ impl Linter {
             // Only run certain rules on TOML files
             match rule.name() {
                 "template-cache-reuse-ratio" | "ks-distance-distribution" | "epsilon-privacy-policy" |
+                "dependency-security" | "cryptography-best-practices" |
                 "argon2id-advertisement" | "argon2id-parameters" | "cpu-pow-fallback" |
                 "bootstrap-negotiation" | "abuse-tracking" |
                 "tls-template-cache" | "tls-site-classification" | "tls-mixture-model" |

@@ -25,6 +25,7 @@ toml = "0.8"
 walkdir = "2.5"
 cargo_metadata = "0.18"
 uuid = { version = "1.10", features = ["v4"] }
+chrono = { version = "0.4", features = ["serde"] }
 
 [dev-dependencies]
 tempfile = { workspace = true }
