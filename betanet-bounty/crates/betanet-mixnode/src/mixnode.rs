@@ -272,10 +272,8 @@ impl Mixnode for StandardMixnode {
         Ok(Some(packet.to_vec()))
     }
 
-    fn stats(&self) -> &MixnodeStats {
-        // This is a placeholder - in a real implementation, we'd need to
-        // handle the async nature of the stats access differently
-        unimplemented!("Use async stats access instead")
+    fn stats(&self) -> Arc<RwLock<MixnodeStats>> {
+        Arc::clone(&self.stats)
     }
 
     fn address(&self) -> SocketAddr {
@@ -302,5 +300,15 @@ mod tests {
         let delay = mixnode.calculate_delay().await;
         assert!(delay >= mixnode.config.min_delay);
         assert!(delay <= mixnode.config.max_delay);
+    }
+
+    #[tokio::test]
+    async fn test_stats_access() {
+        let config = MixnodeConfig::default();
+        let mixnode = StandardMixnode::new(config).unwrap();
+
+        let stats_handle = mixnode.stats();
+        let stats = stats_handle.read().await;
+        assert_eq!(stats.packets_processed, 0);
     }
 }
