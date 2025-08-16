@@ -3,6 +3,8 @@
 #[cfg(feature = "quic")]
 use std::net::SocketAddr;
 #[cfg(feature = "quic")]
+use std::path::Path;
+#[cfg(feature = "quic")]
 use std::sync::Arc;
 
 #[cfg(feature = "quic")]
@@ -17,6 +19,11 @@ use bytes::Bytes;
 #[cfg(feature = "quic")]
 use crate::{transport::TransportStats, HtxConfig, HtxError, Result, Frame};
 
+#[cfg(feature = "quic")]
+use base64;
+#[cfg(feature = "quic")]
+use trust_dns_resolver::{TokioAsyncResolver, config::{ResolverConfig, ResolverOpts}};
+
 /// QUIC transport with DATAGRAM support
 #[cfg(feature = "quic")]
 pub struct QuicTransport {
@@ -26,7 +33,7 @@ pub struct QuicTransport {
     ech_config: Option<EchConfig>,
 }
 
-/// ECH (Encrypted Client Hello) configuration stub
+/// ECH (Encrypted Client Hello) configuration
 #[cfg(feature = "quic")]
 #[derive(Debug, Clone)]
 pub struct EchConfig {
@@ -50,6 +57,106 @@ impl Default for EchConfig {
             maximum_name_length: 64,
             extensions: vec![],
         }
+    }
+}
+
+#[cfg(feature = "quic")]
+impl EchConfig {
+    fn from_bytes(data: &[u8], public_name: String) -> Result<Self> {
+        let mut idx = 0;
+        if data.len() < 7 {
+            return Err(HtxError::Config("ECH config too short".into()));
+        }
+        let config_id = data[idx];
+        idx += 1;
+        let kem_id = u16::from_be_bytes([data[idx], data[idx + 1]]);
+        idx += 2;
+        let pk_len = u16::from_be_bytes([data[idx], data[idx + 1]]) as usize;
+        idx += 2;
+        if data.len() < idx + pk_len {
+            return Err(HtxError::Config("Invalid ECH public key length".into()));
+        }
+        let public_key = data[idx..idx + pk_len].to_vec();
+        idx += pk_len;
+        if data.len() < idx + 2 {
+            return Err(HtxError::Config("Missing cipher suites length".into()));
+        }
+        let suites_len = u16::from_be_bytes([data[idx], data[idx + 1]]) as usize;
+        idx += 2;
+        if data.len() < idx + suites_len || suites_len % 2 != 0 {
+            return Err(HtxError::Config("Invalid cipher suites".into()));
+        }
+        let mut cipher_suites = Vec::new();
+        for chunk in data[idx..idx + suites_len].chunks(2) {
+            cipher_suites.push(u16::from_be_bytes([chunk[0], chunk[1]]));
+        }
+        idx += suites_len;
+        if data.len() < idx + 2 {
+            return Err(HtxError::Config("Missing maximum name length".into()));
+        }
+        let maximum_name_length = u16::from_be_bytes([data[idx], data[idx + 1]]) as u8;
+        idx += 2;
+        if data.len() < idx + 2 {
+            return Err(HtxError::Config("Missing extensions length".into()));
+        }
+        let ext_len = u16::from_be_bytes([data[idx], data[idx + 1]]) as usize;
+        idx += 2;
+        if data.len() < idx + ext_len {
+            return Err(HtxError::Config("Invalid extensions".into()));
+        }
+        let extensions = data[idx..idx + ext_len].to_vec();
+
+        let cfg = Self {
+            public_name,
+            config_id,
+            kem_id,
+            public_key,
+            cipher_suites,
+            maximum_name_length,
+            extensions,
+        };
+        cfg.validate()?;
+        Ok(cfg)
+    }
+
+    pub fn from_file<P: AsRef<Path>>(path: P, public_name: String) -> Result<Self> {
+        let contents = std::fs::read_to_string(path)
+            .map_err(|e| HtxError::Config(format!("failed to read ECH config file: {}", e)))?;
+        let data = base64::decode(contents.trim())
+            .map_err(|e| HtxError::Config(format!("invalid ECH base64: {}", e)))?;
+        Self::from_bytes(&data, public_name)
+    }
+
+    pub async fn from_dns(domain: &str) -> Result<Self> {
+        let resolver = TokioAsyncResolver::tokio(ResolverConfig::default(), ResolverOpts::default())
+            .map_err(|e| HtxError::Config(format!("DNS resolver init failed: {}", e)))?;
+        let name = format!("_echconfig.{}", domain);
+        let response = resolver
+            .txt_lookup(name)
+            .await
+            .map_err(|e| HtxError::Config(format!("ECH DNS lookup failed: {}", e)))?;
+        let record = response
+            .iter()
+            .flat_map(|txt| txt.txt_data().iter())
+            .map(|d| String::from_utf8_lossy(d).into_owned())
+            .next()
+            .ok_or_else(|| HtxError::Config("ECH DNS record not found".to_string()))?;
+        let data = base64::decode(record.trim())
+            .map_err(|e| HtxError::Config(format!("invalid ECH base64: {}", e)))?;
+        Self::from_bytes(&data, domain.to_string())
+    }
+
+    pub fn validate(&self) -> Result<()> {
+        if self.public_name.is_empty() {
+            return Err(HtxError::Config("ECH public name missing".into()));
+        }
+        if self.public_key.is_empty() {
+            return Err(HtxError::Config("ECH public key missing".into()));
+        }
+        if self.cipher_suites.is_empty() {
+            return Err(HtxError::Config("ECH cipher suites missing".into()));
+        }
+        Ok(())
     }
 }
 
@@ -109,15 +216,27 @@ impl QuicTransport {
             warn!("QUIC DATAGRAM not supported by peer");
         }
 
-        // Configure ECH stub if requested
+        // Configure ECH if requested
         let ech_config = if config.enable_tls_camouflage {
-            Some(EchConfig::default())
+            let ech = if let Some(ref path) = config.ech_config_path {
+                EchConfig::from_file(path, config.camouflage_domain.clone().unwrap_or_default())
+                    .map_err(|e| HtxError::Config(format!("Failed to load ECH config: {}", e)))?
+            } else if let Some(ref domain) = config.camouflage_domain {
+                EchConfig::from_dns(domain)
+                    .await
+                    .map_err(|e| HtxError::Config(format!("Failed to load ECH config: {}", e)))?
+            } else {
+                return Err(HtxError::Config(
+                    "ECH requested but no configuration source provided".to_string(),
+                ));
+            };
+            Some(ech)
         } else {
             None
         };
 
         if let Some(ref ech) = ech_config {
-            info!("ECH stub configured with public name: {}", ech.public_name);
+            info!("ECH configured with public name: {}", ech.public_name);
         }
 
         Ok(Self {

@@ -3,7 +3,7 @@
 //! Shows HTX protocol working over QUIC with:
 //! - H3 ALPN negotiation
 //! - QUIC DATAGRAM for small frames
-//! - ECH stub configuration
+//! - ECH configuration from DNS
 //! - Fallback to streams for large frames
 
 use betanet_htx::{HtxConfig, Frame, FrameType, HtxError};
@@ -31,7 +31,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     #[cfg(feature = "quic")]
     {
-        // Configure HTX with TLS camouflage enabled
+        // Configure HTX with TLS camouflage enabled. If `ech_config_path` is not
+        // set, the ECH configuration will be fetched via DNS using the
+        // `camouflage_domain` value.
         let mut config = HtxConfig::default();
         config.enable_quic = true;
         config.enable_tls_camouflage = true;
@@ -80,14 +82,20 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 async fn run_echo_server(config: HtxConfig, addr: SocketAddr) -> Result<(), HtxError> {
     info!("🔧 Starting QUIC echo server on {}", addr);
 
-    // This is a simplified server demo - in practice you'd use QuicTransport::listen
-    // For now, just demonstrate the configuration
-    let ech_config = EchConfig::default();
-    info!("🔒 ECH stub configured:");
-    info!("  - Public name: {}", ech_config.public_name);
-    info!("  - Config ID: {}", ech_config.config_id);
-    info!("  - KEM ID: 0x{:04x}", ech_config.kem_id);
-    info!("  - Cipher suites: {:?}", ech_config.cipher_suites);
+    // This is a simplified server demo - in practice you'd use QuicTransport::listen.
+    // Demonstrate loading an ECH configuration from DNS.
+    match EchConfig::from_dns("cloudflare.com").await {
+        Ok(ech_config) => {
+            info!("🔒 ECH configuration:");
+            info!("  - Public name: {}", ech_config.public_name);
+            info!("  - Config ID: {}", ech_config.config_id);
+            info!("  - KEM ID: 0x{:04x}", ech_config.kem_id);
+            info!("  - Cipher suites: {:?}", ech_config.cipher_suites);
+        }
+        Err(e) => {
+            warn!("⚠️ Failed to load ECH config: {}", e);
+        }
+    }
 
     // Simulate server running
     sleep(Duration::from_millis(500)).await;

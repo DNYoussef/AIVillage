@@ -12,6 +12,7 @@
 
 use std::io;
 use std::net::SocketAddr;
+use std::path::PathBuf;
 
 use bytes::{Bytes, BytesMut};
 use thiserror::Error;
@@ -35,15 +36,16 @@ pub mod tcp;
 
 // Re-export core types
 pub use bootstrap::{
-    BootstrapManager, BootstrapMessage, BootstrapError, DeviceClass,
-    PoWChallenge, PoWSolution, Argon2Params, Argon2PoW, CpuPoW, CpuPoWParams,
-    AbuseTracker,
+    AbuseTracker, Argon2Params, Argon2PoW, BootstrapError, BootstrapManager, BootstrapMessage,
+    CpuPoW, CpuPoWParams, DeviceClass, PoWChallenge, PoWSolution,
 };
-pub use frame::{Frame, FrameBuffer, FrameError, FrameType, parse_frame};
-pub use noise::{NoiseXK, NoiseError, HandshakePhase, NoiseStatus, generate_keypair, HandshakeFragment};
+pub use frame::{parse_frame, Frame, FrameBuffer, FrameError, FrameType};
+pub use noise::{
+    generate_keypair, HandshakeFragment, HandshakePhase, NoiseError, NoiseStatus, NoiseXK,
+};
 pub use privacy::{
-    PrivacyBudgetManager, EdgePrivacy, RoutePrivacy, EdgeId, EdgeType,
-    PrivacyPolicy, BudgetStatus, PrivacyError, CompositionMethod,
+    BudgetStatus, CompositionMethod, EdgeId, EdgePrivacy, EdgeType, PrivacyBudgetManager,
+    PrivacyError, PrivacyPolicy, RoutePrivacy,
 };
 // pub use ticket::{
 //     AccessTicket, AccessTicketManager, TicketError, TicketStatus, TicketType,
@@ -58,13 +60,13 @@ pub use privacy::{
 //     BackgroundCalibrator, MixtureModel, SiteClass, FallbackReducer,
 // };
 pub use transport::{
-    Transport, TransportConnection, TransportListener, TransportStream,
-    TransportConfig, TransportStats, TransportError, StreamId, ConnectionId,
+    ConnectionId, StreamId, Transport, TransportConfig, TransportConnection, TransportError,
+    TransportListener, TransportStats, TransportStream,
 };
 
 // Re-export transport implementations
 #[cfg(feature = "tcp")]
-pub use tcp::{TcpTransport, TcpConnection, TcpListener443, TcpMultiplexedStream};
+pub use tcp::{TcpConnection, TcpListener443, TcpMultiplexedStream, TcpTransport};
 
 /// HTX protocol version
 pub const HTX_VERSION: u8 = 1;
@@ -123,7 +125,6 @@ pub enum HtxError {
 /// Result type for HTX operations
 pub type Result<T> = std::result::Result<T, HtxError>;
 
-
 /// HTX configuration
 #[derive(Debug, Clone)]
 pub struct HtxConfig {
@@ -141,6 +142,18 @@ pub struct HtxConfig {
 
     /// Enable access ticket authentication
     pub enable_tickets: bool,
+
+    /// Enable TLS camouflage using Encrypted Client Hello
+    pub enable_tls_camouflage: bool,
+
+    /// Domain name used when fetching ECH configuration via DNS
+    pub camouflage_domain: Option<String>,
+
+    /// Optional path to a base64-encoded ECH config file
+    pub ech_config_path: Option<PathBuf>,
+
+    /// ALPN protocols to advertise
+    pub alpn_protocols: Vec<String>,
 
     /// Static private key for Noise protocol (32 bytes)
     pub static_private_key: Option<Bytes>,
@@ -169,6 +182,10 @@ impl Default for HtxConfig {
             enable_quic: false,
             enable_noise_xk: true,
             enable_tickets: true,
+            enable_tls_camouflage: false,
+            camouflage_domain: None,
+            ech_config_path: None,
+            alpn_protocols: vec!["htx/1.1".to_string()],
             static_private_key: None,
             remote_static_key: None,
             max_connections: 1000,
@@ -348,7 +365,9 @@ impl HtxSession {
     /// A production implementation would handle all fragments properly
     pub async fn begin_handshake(&mut self) -> Result<Option<Bytes>> {
         if !matches!(self.state, SessionState::Initialize) {
-            return Err(HtxError::Protocol("Invalid state for handshake".to_string()));
+            return Err(HtxError::Protocol(
+                "Invalid state for handshake".to_string(),
+            ));
         }
 
         self.state = SessionState::Handshaking;
@@ -406,11 +425,15 @@ impl HtxSession {
     /// Send data on a stream
     pub async fn send_data(&mut self, stream_id: u32, data: &[u8]) -> Result<Bytes> {
         if !matches!(self.state, SessionState::Transport) {
-            return Err(HtxError::Protocol("Session not in transport state".to_string()));
+            return Err(HtxError::Protocol(
+                "Session not in transport state".to_string(),
+            ));
         }
 
         // Get or create stream
-        self.streams.entry(stream_id).or_insert_with(|| HtxStream::new(stream_id));
+        self.streams
+            .entry(stream_id)
+            .or_insert_with(|| HtxStream::new(stream_id));
 
         let stream = self.streams.get_mut(&stream_id).unwrap();
         if !stream.can_send() {
@@ -475,7 +498,9 @@ impl HtxSession {
                     }
 
                     // Get or create stream
-                    if let std::collections::hash_map::Entry::Vacant(e) = self.streams.entry(frame.stream_id) {
+                    if let std::collections::hash_map::Entry::Vacant(e) =
+                        self.streams.entry(frame.stream_id)
+                    {
                         e.insert(HtxStream::new(frame.stream_id));
                     }
 
@@ -485,7 +510,9 @@ impl HtxSession {
                 }
                 FrameType::WindowUpdate => {
                     if frame.payload.len() < 4 {
-                        return Err(HtxError::Protocol("Invalid WINDOW_UPDATE payload".to_string()));
+                        return Err(HtxError::Protocol(
+                            "Invalid WINDOW_UPDATE payload".to_string(),
+                        ));
                     }
 
                     let window_delta = u32::from_be_bytes([
@@ -577,10 +604,7 @@ pub async fn dial_tcp(addr: SocketAddr, config: HtxConfig) -> Result<HtxTcpConne
 }
 
 /// Accept TCP connection for HTX server
-pub async fn accept_tcp(
-    listener: &TcpListener,
-    config: HtxConfig,
-) -> Result<HtxTcpConnection> {
+pub async fn accept_tcp(listener: &TcpListener, config: HtxConfig) -> Result<HtxTcpConnection> {
     let (stream, _addr) = listener.accept().await?;
     let session = HtxSession::new(config, false)?; // Server is not initiator
     Ok(HtxTcpConnection::new(stream, session))
