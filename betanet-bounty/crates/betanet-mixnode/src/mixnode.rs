@@ -5,8 +5,7 @@ use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 use tokio::net::{TcpListener, TcpStream};
-use tokio::sync::{mpsc, RwLock};
-use tokio::time::sleep;
+use tokio::sync::{broadcast, RwLock};
 use tracing::{debug, error, info, warn};
 
 use crate::{
@@ -20,7 +19,7 @@ pub struct StandardMixnode {
     stats: Arc<RwLock<MixnodeStats>>,
     delay_queue: Arc<RwLock<DelayQueue>>,
     routing_table: Arc<RwLock<RoutingTable>>,
-    shutdown_tx: Option<mpsc::Sender<()>>,
+    shutdown_tx: Option<broadcast::Sender<()>>,
 }
 
 impl StandardMixnode {
@@ -44,12 +43,7 @@ impl StandardMixnode {
         let mut buffer = vec![0u8; self.config.buffer_size];
 
         loop {
-            match tokio::time::timeout(
-                self.config.connection_timeout,
-                stream.readable(),
-            )
-            .await
-            {
+            match tokio::time::timeout(self.config.connection_timeout, stream.readable()).await {
                 Ok(Ok(())) => {
                     match stream.try_read(&mut buffer) {
                         Ok(0) => {
@@ -113,9 +107,8 @@ impl StandardMixnode {
         // Fallback to random delay
         use rand::Rng;
         let mut rng = rand::thread_rng();
-        let delay_ms = rng.gen_range(
-            self.config.min_delay.as_millis()..=self.config.max_delay.as_millis()
-        );
+        let delay_ms =
+            rng.gen_range(self.config.min_delay.as_millis()..=self.config.max_delay.as_millis());
         Duration::from_millis(delay_ms as u64)
     }
 
@@ -144,39 +137,46 @@ impl StandardMixnode {
     }
 
     /// Process packets from delay queue
-    async fn process_delay_queue(&self) {
+    async fn process_delay_queue(&self, mut shutdown_rx: broadcast::Receiver<()>) {
         let delay_queue = Arc::clone(&self.delay_queue);
         let routing_table = Arc::clone(&self.routing_table);
         let stats = Arc::clone(&self.stats);
 
         tokio::spawn(async move {
+            let mut ticker = tokio::time::interval(Duration::from_millis(10));
             loop {
-                sleep(Duration::from_millis(10)).await;
+                tokio::select! {
+                    _ = ticker.tick() => {
+                        let packet = {
+                            let mut queue = delay_queue.write().await;
+                            queue.pop_ready().await
+                        };
 
-                let packet = {
-                    let mut queue = delay_queue.write().await;
-                    queue.pop_ready().await
-                };
+                        if let Some(packet) = packet {
+                            // Forward the packet
+                            debug!("Forwarding delayed packet");
 
-                if let Some(packet) = packet {
-                    // Forward the packet
-                    debug!("Forwarding delayed packet");
+                            // Parse packet to get routing info
+                            if let Ok(parsed_packet) = Packet::parse(&packet) {
+                                let routing = routing_table.read().await;
+                                if let Some(next_hop) = routing.get_next_hop(&parsed_packet).await {
+                                    // Forward to next hop
+                                    debug!("Forwarding to {}", next_hop);
 
-                    // Parse packet to get routing info
-                    if let Ok(parsed_packet) = Packet::parse(&packet) {
-                        let routing = routing_table.read().await;
-                        if let Some(next_hop) = routing.get_next_hop(&parsed_packet).await {
-                            // Forward to next hop
-                            debug!("Forwarding to {}", next_hop);
+                                    let mut stats = stats.write().await;
+                                    stats.record_forwarded();
+                                } else {
+                                    warn!("No route found for packet");
 
-                            let mut stats = stats.write().await;
-                            stats.record_forwarded();
-                        } else {
-                            warn!("No route found for packet");
-
-                            let mut stats = stats.write().await;
-                            stats.record_dropped();
+                                    let mut stats = stats.write().await;
+                                    stats.record_dropped();
+                                }
+                            }
                         }
+                    }
+                    _ = shutdown_rx.recv() => {
+                        debug!("Delay queue processor shutting down");
+                        break;
                     }
                 }
             }
@@ -193,14 +193,14 @@ impl Mixnode for StandardMixnode {
             .await
             .map_err(MixnodeError::Io)?;
 
-        let (shutdown_tx, mut shutdown_rx) = mpsc::channel(1);
-        self.shutdown_tx = Some(shutdown_tx);
+        let (shutdown_tx, _) = broadcast::channel(1);
+        self.shutdown_tx = Some(shutdown_tx.clone());
 
         // Start cover traffic generation
         self.start_cover_traffic().await;
 
         // Start delay queue processor
-        self.process_delay_queue().await;
+        self.process_delay_queue(shutdown_tx.subscribe()).await;
 
         // Accept connections
         tokio::spawn({
@@ -208,6 +208,7 @@ impl Mixnode for StandardMixnode {
             let stats = Arc::clone(&self.stats);
             let delay_queue = Arc::clone(&self.delay_queue);
             let routing_table = Arc::clone(&self.routing_table);
+            let mut shutdown_rx = shutdown_tx.subscribe();
 
             async move {
                 loop {
@@ -252,7 +253,7 @@ impl Mixnode for StandardMixnode {
         info!("Stopping mixnode");
 
         if let Some(tx) = self.shutdown_tx.take() {
-            let _ = tx.send(()).await;
+            let _ = tx.send(());
         }
 
         Ok(())
