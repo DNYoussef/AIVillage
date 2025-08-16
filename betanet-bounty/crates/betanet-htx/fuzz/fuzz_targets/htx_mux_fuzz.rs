@@ -109,7 +109,7 @@ fuzz_target!(|data: &[u8]| {
 
     // Test configuration edge cases
     let mut test_config = HtxConfig::default();
-    test_config.max_connections = (stream_id % 10000).max(1);
+    test_config.max_connections = ((stream_id % 10000) as usize).max(1);
     test_config.connection_timeout_secs = (frame_data[0] as u64 % 3600).max(1);
     test_config.frame_buffer_size = ((stream_id % 1048576).max(1024)) as usize;
 
