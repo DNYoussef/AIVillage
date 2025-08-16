@@ -598,16 +598,33 @@ def run_pipeline(
             )
 
         # Handle resume
+        resume_state = None
         if resume and Path(resume).exists():
             logger.info(f"Resuming from checkpoint: {resume}")
-            # Implementation would load state and continue
+            resume_path = Path(resume)
+            resume_state = PipelineState.load_checkpoint(resume_path)
+            completed = set(resume_state.completed_phases)
+
+            if "evomerge" in completed:
+                pipeline_config.enable_evomerge = False
+            if "quietstar" in completed:
+                pipeline_config.enable_quietstar = False
+            if "compression" in completed:
+                pipeline_config.enable_compression = False
+
+            pipeline_config.checkpoint_dir = resume_path.parent
 
         # Run unified pipeline
         pipeline = UnifiedPipeline(pipeline_config)
 
+        if resume_state:
+            pipeline.state = resume_state
+
         logger.info("🚀 Starting Agent Forge Unified Pipeline")
         logger.info(
-            f"Phases enabled: EvoMerge={evomerge}, Quiet-STaR={quietstar}, Compression={compression}"
+            f"Phases enabled: EvoMerge={pipeline.config.enable_evomerge}, "
+            f"Quiet-STaR={pipeline.config.enable_quietstar}, "
+            f"Compression={pipeline.config.enable_compression}"
         )
 
         results = asyncio.run(pipeline.run_complete_pipeline())
