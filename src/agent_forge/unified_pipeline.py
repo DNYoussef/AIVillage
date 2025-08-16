@@ -18,10 +18,16 @@ from pathlib import Path
 from typing import Any
 
 import click
-from compression_pipeline import CompressionConfig, CompressionPipeline
+from production.compression.compression_pipeline import (
+    CompressionConfig,
+    CompressionPipeline,
+)
 
 # Import pipeline components
-from evomerge_pipeline import EvolutionConfig, EvoMergePipeline
+from production.evolution.evomerge_pipeline import (
+    EvolutionConfig,
+    EvoMergePipeline,
+)
 from pydantic import BaseModel, Field
 from quietstar_baker import QuietSTaRBaker, QuietSTaRConfig
 
@@ -245,7 +251,7 @@ class UnifiedPipeline:
         if self.config.evomerge_config:
             evomerge_config = EvolutionConfig(**self.config.evomerge_config)
         else:
-            from evomerge_pipeline import BaseModelConfig
+            from production.evolution.evomerge_pipeline import BaseModelConfig
 
             evomerge_config = EvolutionConfig(
                 base_models=[
