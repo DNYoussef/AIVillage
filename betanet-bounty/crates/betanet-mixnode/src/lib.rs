@@ -9,6 +9,9 @@
 
 use std::net::SocketAddr;
 use std::time::Duration;
+use std::sync::Arc;
+
+use tokio::sync::RwLock;
 
 use thiserror::Error;
 
@@ -135,8 +138,8 @@ pub trait Mixnode: Send + Sync {
     /// Process a packet
     async fn process_packet(&self, packet: &[u8]) -> Result<Option<Vec<u8>>>;
 
-    /// Get node statistics
-    fn stats(&self) -> &MixnodeStats;
+    /// Get node statistics handle
+    fn stats(&self) -> Arc<RwLock<MixnodeStats>>;
 
     /// Get node address
     fn address(&self) -> SocketAddr;
