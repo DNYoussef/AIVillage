@@ -4,8 +4,8 @@
 //! to ensure constant-rate output and prevent traffic analysis.
 
 use std::sync::atomic::{AtomicU64, Ordering};
-use std::sync::Arc;
-use std::time::Duration;
+use std::sync::{Arc, Mutex as StdMutex};
+use std::time::{Duration, Instant};
 
 
 use tokio::sync::{Mutex, Semaphore};
@@ -23,8 +23,8 @@ pub struct TokenBucket {
     tokens: AtomicU64,
     /// Rate of token refill (tokens per second, fixed-point)
     refill_rate_fp: u64,
-    /// Last refill timestamp (microseconds since epoch)
-    last_refill_us: AtomicU64,
+    /// Last refill timestamp
+    last_refill: StdMutex<Instant>,
     /// Statistics
     stats: Arc<RateLimiterStats>,
 }
@@ -34,16 +34,11 @@ const TOKEN_PRECISION: u64 = 1_000_000; // 1 million = 1.0 token
 impl TokenBucket {
     /// Create new token bucket
     pub fn new(capacity: u64, refill_rate: f64) -> Self {
-        let now_us = std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .unwrap_or_default()
-            .as_micros() as u64;
-
         Self {
             capacity,
             tokens: AtomicU64::new(capacity * TOKEN_PRECISION),
             refill_rate_fp: (refill_rate * TOKEN_PRECISION as f64) as u64,
-            last_refill_us: AtomicU64::new(now_us),
+            last_refill: StdMutex::new(Instant::now()),
             stats: Arc::new(RateLimiterStats::new()),
         }
     }
@@ -109,57 +104,51 @@ impl TokenBucket {
         }
     }
 
-    /// Lock-free token refill using atomic operations
+    /// Token refill using atomic operations
     fn refill_lockfree(&self) {
-        let now_us = std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .unwrap_or_default()
-            .as_micros() as u64;
+        let now = Instant::now();
 
-        let last_refill = self.last_refill_us.load(Ordering::Acquire);
-        let elapsed_us = now_us.saturating_sub(last_refill);
+        let elapsed = {
+            let mut last_refill = self.last_refill.lock().unwrap();
+            let elapsed = last_refill.elapsed();
 
-        // Only refill if enough time has passed (reduce contention)
-        if elapsed_us < 1000 { // 1ms minimum
-            return;
-        }
+            // Only refill if enough time has passed (reduce contention)
+            if elapsed < Duration::from_micros(1000) {
+                return;
+            }
 
-        // Try to update the timestamp atomically
-        if self.last_refill_us.compare_exchange_weak(
-            last_refill,
-            now_us,
-            Ordering::Release,
-            Ordering::Relaxed,
-        ).is_ok() {
-            // We won the race to update timestamp, now add tokens
-            let tokens_to_add_fp = (elapsed_us * self.refill_rate_fp) / 1_000_000;
+            *last_refill = now;
+            elapsed
+        };
 
-            if tokens_to_add_fp > 0 {
-                let capacity_fp = self.capacity * TOKEN_PRECISION;
+        let elapsed_us = elapsed.as_micros() as u64;
+        let tokens_to_add_fp = (elapsed_us * self.refill_rate_fp) / 1_000_000;
 
-                // Atomic add with saturation at capacity
-                loop {
-                    let current = self.tokens.load(Ordering::Acquire);
-                    let new_tokens = (current + tokens_to_add_fp).min(capacity_fp);
+        if tokens_to_add_fp > 0 {
+            let capacity_fp = self.capacity * TOKEN_PRECISION;
 
-                    if current == new_tokens {
-                        break; // Already at capacity
+            // Atomic add with saturation at capacity
+            loop {
+                let current = self.tokens.load(Ordering::Acquire);
+                let new_tokens = (current + tokens_to_add_fp).min(capacity_fp);
+
+                if current == new_tokens {
+                    break; // Already at capacity
+                }
+
+                match self.tokens.compare_exchange_weak(
+                    current,
+                    new_tokens,
+                    Ordering::Release,
+                    Ordering::Relaxed,
+                ) {
+                    Ok(_) => {
+                        let added = (tokens_to_add_fp / TOKEN_PRECISION) as u64;
+                        self.stats.tokens_added.fetch_add(added, Ordering::Relaxed);
+                        break;
                     }
-
-                    match self.tokens.compare_exchange_weak(
-                        current,
-                        new_tokens,
-                        Ordering::Release,
-                        Ordering::Relaxed,
-                    ) {
-                        Ok(_) => {
-                            let added = (tokens_to_add_fp / TOKEN_PRECISION) as u64;
-                            self.stats.tokens_added.fetch_add(added, Ordering::Relaxed);
-                            break;
-                        }
-                        Err(_) => {
-                            std::hint::spin_loop();
-                        }
+                    Err(_) => {
+                        std::hint::spin_loop();
                     }
                 }
             }
@@ -505,6 +494,7 @@ impl RateLimitedTrafficShaper {
 mod tests {
     use super::*;
     use tokio::time::timeout;
+    use std::time::Duration;
 
     #[tokio::test]
     async fn test_token_bucket_basic() {
@@ -534,6 +524,33 @@ mod tests {
         sleep(Duration::from_millis(500)).await; // Should add ~5 tokens
         let available = bucket.available_tokens();
         assert!(available >= 4 && available <= 6); // Allow some timing variance
+    }
+
+    #[tokio::test]
+    async fn test_token_bucket_clock_change() {
+        let bucket = TokenBucket::new(10, 10.0);
+
+        // Consume all tokens
+        assert!(bucket.try_consume(10).await);
+
+        // Simulate clock going backwards by setting last_refill far in the future
+        {
+            let mut last = bucket.last_refill.lock().unwrap();
+            *last += Duration::from_secs(3600);
+        }
+
+        // Wait for more than enough real time and ensure no refill occurred
+        sleep(Duration::from_millis(1100)).await;
+        assert_eq!(bucket.available_tokens(), 0);
+
+        // Simulate clock jump forward
+        {
+            let mut last = bucket.last_refill.lock().unwrap();
+            *last -= Duration::from_secs(3600);
+        }
+
+        // Now tokens should refill to capacity
+        assert_eq!(bucket.available_tokens(), 10);
     }
 
     #[tokio::test]
