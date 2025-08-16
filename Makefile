@@ -1,26 +1,29 @@
-.PHONY: install format lint test ci lint-fix lint-report security-check
+.PHONY: install format lint test ci lint-fix lint-report security-check type-check
 
 install:
 	pip install -r requirements.txt -r requirements-dev.txt -r requirements-test.txt
 	pre-commit install
 
 format:
-	black .
-	isort .
+	ruff format .
+	black . --line-length=120
 
 lint:
-	python tools/linting/lint.py . --output summary
+	ruff check . --fix
 
 lint-fix:
-	python tools/linting/lint.py . --fix --output summary
+	ruff check . --fix --unsafe-fixes
 
 lint-report:
-	python tools/linting/lint.py . --output both --output-file lint_report_$(shell date +%Y%m%d_%H%M%S)
+	ruff check . --output-format=json > lint_report_$(shell date +%Y%m%d_%H%M%S).json
 
 security-check:
-	ruff check . --select S
+	ruff check . --select S --output-format=concise
+
+type-check:
+	mypy . --ignore-missing-imports --no-strict-optional
 
 test:
 	pytest
 
-ci: format lint test
+ci: format lint security-check type-check test

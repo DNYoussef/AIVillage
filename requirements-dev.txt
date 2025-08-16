@@ -1,8 +1,4 @@
 pre-commit
-black
-isort
-flake8
-flake8-bugbear
-mypy
-ruff
-bandit
+black>=23.0.0
+mypy>=1.0.0
+ruff>=0.1.0
