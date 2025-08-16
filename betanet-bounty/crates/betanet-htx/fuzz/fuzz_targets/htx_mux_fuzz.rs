@@ -1,9 +1,9 @@
 #![no_main]
 
-use libfuzzer_sys::fuzz_target;
-use betanet_htx::{HtxSession, HtxConfig, HtxStream, Frame, FrameType};
+use betanet_htx::{Frame, FrameType, HtxConfig, HtxSession, HtxStream};
 use bytes::Bytes;
-use std::net::SocketAddr;
+use libfuzzer_sys::fuzz_target;
+use tokio::runtime::Builder;
 
 fuzz_target!(|data: &[u8]| {
     if data.len() < 8 {
@@ -25,7 +25,7 @@ fuzz_target!(|data: &[u8]| {
         stream_id_bytes[0],
         stream_id_bytes[1],
         stream_id_bytes[2],
-        stream_id_bytes[3]
+        stream_id_bytes[3],
     ]) % 268_435_455; // Clamp to MAX_STREAM_ID
 
     // Test stream creation and management
@@ -41,9 +41,8 @@ fuzz_target!(|data: &[u8]| {
 
     // Test window operations
     if frame_data.len() >= 4 {
-        let window_delta = u32::from_be_bytes([
-            frame_data[0], frame_data[1], frame_data[2], frame_data[3]
-        ]);
+        let window_delta =
+            u32::from_be_bytes([frame_data[0], frame_data[1], frame_data[2], frame_data[3]]);
 
         stream.update_send_window(window_delta);
         let _ = stream.consume_send_window(window_delta % 65536);
@@ -75,22 +74,31 @@ fuzz_target!(|data: &[u8]| {
             FrameType::Data if stream_id > 0 => {
                 if let Ok(frame) = Frame::data(stream_id, payload) {
                     let encoded = frame.encode();
-                    // Test async data processing (can't await in fuzz target, but we can test sync parts)
-                    // Runtime would be: let _ = session.process_data(&encoded).await;
+                    // Process data using a lightweight Tokio runtime
+                    let runtime = Builder::new_current_thread()
+                        .enable_all()
+                        .build()
+                        .expect("runtime");
+                    let _ = runtime.block_on(session.process_data(&encoded));
                 }
             }
             FrameType::WindowUpdate => {
                 if payload.len() >= 4 {
-                    let window_delta = u32::from_be_bytes([
-                        payload[0], payload[1], payload[2], payload[3]
-                    ]) % 0x7FFF_FFFF + 1;
+                    let window_delta =
+                        u32::from_be_bytes([payload[0], payload[1], payload[2], payload[3]])
+                            % 0x7FFF_FFFF
+                            + 1;
                     if let Ok(frame) = Frame::window_update(stream_id, window_delta) {
                         let _ = frame.encode();
                     }
                 }
             }
             FrameType::Ping => {
-                let ping_data = if payload.len() <= 8 { Some(payload) } else { None };
+                let ping_data = if payload.len() <= 8 {
+                    Some(payload)
+                } else {
+                    None
+                };
                 if let Ok(frame) = Frame::ping(ping_data) {
                     let _ = frame.encode();
                 }
