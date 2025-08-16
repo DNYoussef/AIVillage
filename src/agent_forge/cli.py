@@ -15,7 +15,7 @@ import click
 import torch
 
 try:
-    from version import __version__
+    from .version import __version__
 except ImportError:  # pragma: no cover - fallback
     __version__ = "1.0.0"
 
@@ -23,26 +23,39 @@ logger = logging.getLogger(__name__)
 
 # Import command groups from submodules
 try:
-    # Import ADAS specialization commands
-    from adas.runner import specialize as adas_commands
-    from compression_pipeline import forge as compression_cli
+    from agent_forge.adas.runner import specialize as adas_commands
+except ImportError as e:  # pragma: no cover - surface missing modules
+    raise ImportError("ADAS specialization commands not available") from e
 
-    # Import curriculum engine commands
-    from curriculum.cli import curriculum_cli
-    from evomerge_pipeline import forge as evomerge_cli
-    from quietstar_baker import forge as quietstar_cli
+try:
+    from production.compression.compression_pipeline import forge as compression_cli
+except ImportError as e:  # pragma: no cover - surface missing modules
+    raise ImportError("Compression pipeline module not available") from e
 
-    # Import new training commands
-    from training.cli_commands import commands as training_commands
-    from unified_pipeline import forge as unified_cli
+try:
+    from agent_forge.curriculum.cli import curriculum_cli
+except ImportError as e:  # pragma: no cover - surface missing modules
+    raise ImportError("Curriculum engine module not available") from e
 
-    imports_available = True
-except ImportError as e:
-    logger.warning("Some pipeline modules not available: %s", e)
-    imports_available = False
-    training_commands = {}
-    adas_commands = None
-    curriculum_cli = None
+try:
+    from production.evolution.evomerge_pipeline import forge as evomerge_cli
+except ImportError as e:  # pragma: no cover - surface missing modules
+    raise ImportError("Evomerge pipeline module not available") from e
+
+try:
+    from agent_forge.quietstar_baker import forge as quietstar_cli
+except ImportError as e:  # pragma: no cover - surface missing modules
+    raise ImportError("QuietSTaR baker module not available") from e
+
+try:
+    from agent_forge.training.cli_commands import commands as training_commands
+except ImportError as e:  # pragma: no cover - surface missing modules
+    raise ImportError("Training commands module not available") from e
+
+try:
+    from agent_forge.unified_pipeline import forge as unified_cli
+except ImportError as e:  # pragma: no cover - surface missing modules
+    raise ImportError("Unified pipeline module not available") from e
 
 
 @click.group()
@@ -64,28 +77,25 @@ def forge() -> None:
     """
 
 
-# Register pipeline commands if available
-if imports_available:
-    try:
-        forge.add_command(evomerge_cli.commands["evo"])
-        forge.add_command(quietstar_cli.commands["bake-quietstar"])
-        forge.add_command(compression_cli.commands["compress"])
-        forge.add_command(unified_cli.commands["run-pipeline"])
+# Register pipeline commands
+try:
+    forge.add_command(evomerge_cli.commands["evo"])
+    forge.add_command(quietstar_cli.commands["bake-quietstar"])
+    forge.add_command(compression_cli.commands["compress"])
+    forge.add_command(unified_cli.commands["run-pipeline"])
 
-        # Register new training commands
-        for cmd_name, cmd_func in training_commands.items():
-            forge.add_command(cmd_func, name=cmd_name)
+    # Register new training commands
+    for cmd_name, cmd_func in training_commands.items():
+        forge.add_command(cmd_func, name=cmd_name)
 
-        # Register ADAS specialization commands
-        if adas_commands:
-            forge.add_command(adas_commands, name="specialize")
+    # Register ADAS specialization commands
+    forge.add_command(adas_commands, name="specialize")
 
-        # Register curriculum engine commands
-        if curriculum_cli:
-            forge.add_command(curriculum_cli, name="curriculum")
+    # Register curriculum engine commands
+    forge.add_command(curriculum_cli, name="curriculum")
 
-    except (KeyError, AttributeError) as e:
-        logger.warning("Could not register some commands: %s", e)
+except (KeyError, AttributeError) as e:
+    logger.warning("Could not register some commands: %s", e)
 
 
 @forge.command()
