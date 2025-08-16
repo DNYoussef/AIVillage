@@ -7,9 +7,9 @@ Combines all Agent Forge commands into a single interface:
 """
 
 import logging
+from pathlib import Path
 import subprocess
 import sys
-from pathlib import Path
 
 import click
 import torch
@@ -25,24 +25,25 @@ logger = logging.getLogger(__name__)
 try:
     # Import ADAS specialization commands
     from adas.runner import specialize as adas_commands
-    from compression_pipeline import forge as compression_cli
+    from compression_pipeline import forge_compression
 
     # Import curriculum engine commands
-    from curriculum.cli import curriculum_cli
+    from curriculum.cli import forge_curriculum
     from evomerge_pipeline import forge as evomerge_cli
     from quietstar_baker import forge as quietstar_cli
 
     # Import new training commands
-    from training.cli_commands import commands as training_commands
+    from training.cli_commands import forge_training
     from unified_pipeline import forge as unified_cli
 
     imports_available = True
 except ImportError as e:
     logger.warning("Some pipeline modules not available: %s", e)
     imports_available = False
-    training_commands = {}
+    forge_training = None
     adas_commands = None
-    curriculum_cli = None
+    forge_curriculum = None
+    forge_compression = None
 
 
 @click.group()
@@ -52,12 +53,9 @@ def forge() -> None:
     Commands:
         evo             Run evolutionary model merging
         bake-quietstar  Bake reasoning into model weights
-        compress        Apply BitNet compression
+        compression     Apply BitNet compression
         run-pipeline    Run complete unified pipeline
-        train           Run Forge training loop (NEW)
-        analyze         Analyze training checkpoints
-        test            Test trained models
-        validate        Validate training configs
+        training        Forge training command group
         specialize      Run ADAS×Transformer² specialization search (NEW)
         curriculum      Frontier curriculum engine (NEW)
         dashboard       Launch monitoring dashboard
@@ -69,20 +67,21 @@ if imports_available:
     try:
         forge.add_command(evomerge_cli.commands["evo"])
         forge.add_command(quietstar_cli.commands["bake-quietstar"])
-        forge.add_command(compression_cli.commands["compress"])
         forge.add_command(unified_cli.commands["run-pipeline"])
 
-        # Register new training commands
-        for cmd_name, cmd_func in training_commands.items():
-            forge.add_command(cmd_func, name=cmd_name)
+        if forge_compression:
+            forge.add_command(forge_compression, name="compression")
+
+        if forge_training:
+            forge.add_command(forge_training, name="training")
 
         # Register ADAS specialization commands
         if adas_commands:
             forge.add_command(adas_commands, name="specialize")
 
         # Register curriculum engine commands
-        if curriculum_cli:
-            forge.add_command(curriculum_cli, name="curriculum")
+        if forge_curriculum:
+            forge.add_command(forge_curriculum, name="curriculum")
 
     except (KeyError, AttributeError) as e:
         logger.warning("Could not register some commands: %s", e)

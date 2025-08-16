@@ -57,9 +57,9 @@ graph TB
 - **Purpose**: Unified command interface for all Agent Forge operations
 - **Commands**:
   - `forge evo` - Evolutionary merging
-  - `forge train` - New Forge training loop (our implementation)
-  - `forge compress` - Compression pipeline
-  - `forge analyze` - Training analysis
+  - `forge training train` - New Forge training loop (our implementation)
+  - `forge compression compress` - Compression pipeline
+  - `forge training analyze` - Training analysis
   - `forge dashboard` - Monitoring interface
 
 #### 2. **Unified Pipeline** (`unified_pipeline.py`)
@@ -167,7 +167,7 @@ Training Loop:
 Output: Enhanced Model + Training Metrics
 ```
 
-**Entry Point**: `forge train`
+**Entry Point**: `forge training train`
 **Main File**: `training/forge_train.py`
 **Status**: ✅ Complete Implementation (our work)
 
@@ -208,7 +208,7 @@ Phase 4: Production Deployment
     └─ Deployment packaging
 ```
 
-**Entry Points**: Multiple (`forge train`, `forge run-pipeline`, custom scripts)
+**Entry Points**: Multiple (`forge training train`, `forge run-pipeline`, custom scripts)
 **Status**: ✅ Phases 1-2 Complete, Phases 3-4 Partial
 
 ## 🎯 Integration Points & Data Flow
@@ -279,7 +279,7 @@ forge run-pipeline \
 
 #### 2. **New Forge Training** (All Enhancements)
 ```bash
-forge train \
+forge training train \
   --model-name gpt2 \
   --dataset openai_humaneval \
   --enable-grokfast \
@@ -296,7 +296,7 @@ forge train \
 forge run-pipeline --enable-evomerge --output-dir ./evolved
 
 # Step 2: Train with Forge enhancements
-forge train \
+forge training train \
   --model-name ./evolved/final_model \
   --enable-grokfast \
   --enable-self-model \
@@ -344,7 +344,7 @@ forge validate --config ./config.json --dry-run
 
 2. **Enhanced Training** (apply all research techniques)
    ```bash
-   forge train --model-path ./evolved/final_model --enable-all --max-steps 50000
+   forge training train --model-path ./evolved/final_model --enable-all --max-steps 50000
    ```
 
 3. **Specialization** (future - when fully implemented)
@@ -354,7 +354,7 @@ forge validate --config ./config.json --dry-run
 
 4. **Final Compression** (for deployment)
    ```bash
-   forge compress --input ./trained/final_model --stages 2 --target-size 0.02
+   forge compression compress --input ./trained/final_model --stages 2 --target-size 0.02
    ```
 
 ### Quality Gates

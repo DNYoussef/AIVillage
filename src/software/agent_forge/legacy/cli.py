@@ -7,9 +7,9 @@ Combines all Agent Forge commands into a single interface:
 """
 
 import logging
+from pathlib import Path
 import subprocess
 import sys
-from pathlib import Path
 
 import click
 import torch
@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 # Import command groups from submodules
 try:
-    from compression_pipeline import forge as compression_cli
+    from compression_pipeline import forge_compression
     from evomerge_pipeline import forge as evomerge_cli
     from quietstar_baker import forge as quietstar_cli
     from unified_pipeline import forge as unified_cli
@@ -32,6 +32,7 @@ try:
 except ImportError as e:
     logger.warning("Some pipeline modules not available: %s", e)
     imports_available = False
+    forge_compression = None
 
 
 @click.group()
@@ -41,7 +42,7 @@ def forge() -> None:
     Commands:
         evo             Run evolutionary model merging
         bake-quietstar  Bake reasoning into model weights
-        compress        Apply BitNet compression
+        compression     Apply BitNet compression
         run-pipeline    Run complete unified pipeline
         dashboard       Launch monitoring dashboard
     """
@@ -52,7 +53,8 @@ if imports_available:
     try:
         forge.add_command(evomerge_cli.commands["evo"])
         forge.add_command(quietstar_cli.commands["bake-quietstar"])
-        forge.add_command(compression_cli.commands["compress"])
+        if forge_compression:
+            forge.add_command(forge_compression, name="compression")
         forge.add_command(unified_cli.commands["run-pipeline"])
     except (KeyError, AttributeError) as e:
         logger.warning("Could not register some commands: %s", e)

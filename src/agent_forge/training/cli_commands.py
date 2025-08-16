@@ -8,8 +8,8 @@ import logging
 from pathlib import Path
 
 import click
-import torch
 from datasets import load_dataset
+import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 from .forge_train import ForgeTrainConfig, ForgeTrainer
@@ -18,12 +18,12 @@ logger = logging.getLogger(__name__)
 
 
 @click.group()
-def forge():
+def forge_training():
     """Agent Forge training commands."""
     pass
 
 
-@forge.command()
+@forge_training.command()
 @click.option("--model-name", default="gpt2", help="Base model to train")
 @click.option("--dataset", default="openai_humaneval", help="Dataset to use")
 @click.option("--output-dir", default="./forge_output", help="Output directory")
@@ -161,7 +161,7 @@ def train(
         raise
 
 
-@forge.command()
+@forge_training.command()
 @click.option("--checkpoint", required=True, help="Path to checkpoint")
 @click.option("--output", default="./analysis", help="Output directory for analysis")
 def analyze(checkpoint: str, output: str):
@@ -208,7 +208,7 @@ def analyze(checkpoint: str, output: str):
     click.echo(f"  • Eval Accuracy: {metrics.get('eval_accuracy', 'N/A'):.2%}")
 
 
-@forge.command()
+@forge_training.command()
 @click.option("--model-path", required=True, help="Path to trained model")
 @click.option("--prompt", required=True, help="Prompt to test")
 @click.option("--temperature", default=0.7, type=float, help="Generation temperature")
@@ -250,7 +250,7 @@ def test(model_path: str, prompt: str, temperature: float, max_tokens: int):
     click.echo(generated_text[len(prompt) :])
 
 
-@forge.command()
+@forge_training.command()
 @click.option("--config", type=click.Path(exists=True), help="Config file path")
 @click.option("--dry-run", is_flag=True, help="Validate config without training")
 def validate(config: str | None, dry_run: bool):
