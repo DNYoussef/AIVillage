@@ -384,3 +384,7 @@ Cargo.lock
 dep-graph.bin
 *.o
 *.obj
+
+# Allow tracked model utilities
+!agent_forge/models/
+!agent_forge/models/**

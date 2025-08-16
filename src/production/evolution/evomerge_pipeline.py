@@ -22,7 +22,7 @@ import time
 import traceback
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional, TYPE_CHECKING
 from uuid import uuid4
 
 import click
@@ -33,6 +33,9 @@ from tqdm import tqdm
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 import wandb
+
+if TYPE_CHECKING:
+    from agent_forge.models import SimpleModelManager
 
 # Configure logging
 logging.basicConfig(
@@ -773,9 +776,10 @@ class StructuredDataEvaluator(BaseEvaluator):
 class EvoMergePipeline:
     """Main evolutionary merging pipeline."""
 
-    def __init__(self, config: EvolutionConfig) -> None:
+    def __init__(self, config: EvolutionConfig, model_manager: Optional["SimpleModelManager"] = None) -> None:
         """Initialize EvoMergePipeline."""
         self.config = config
+        self.model_manager = model_manager
         self.state = EvolutionState()
         self.merge_ops = MergeOperators()
 
@@ -820,6 +824,9 @@ class EvoMergePipeline:
 
         for model_config in self.config.base_models:
             try:
+                if self.model_manager is not None:
+                    spec = {"model_id": model_config.path, "purpose": model_config.domain_specialty or "base"}
+                    asyncio.run(self.model_manager.download_model(spec))
                 logger.info("Loading base model: %s", model_config.name)
 
                 dtype = torch.float16 if self.config.device == "cuda" else torch.float32
@@ -831,6 +838,9 @@ class EvoMergePipeline:
 
                 models.append(model)
                 logger.info("Successfully loaded %s", model_config.name)
+
+                if self.model_manager is not None:
+                    self.model_manager.cleanup_old_models()
 
             except Exception as e:
                 logger.exception("Failed to load %s: %s", model_config.name, e)
