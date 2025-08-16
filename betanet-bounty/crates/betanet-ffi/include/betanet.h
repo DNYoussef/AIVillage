@@ -75,11 +75,11 @@ const char* betanet_version(void);
  * @param feature - Feature name to check (null-terminated string)
  *
  * Returns:
- * - 1 if feature is supported
- * - 0 if feature is not supported
- * - -1 if feature name is invalid
+ * - BETANET_SUCCESS if feature is supported
+ * - BETANET_NOT_SUPPORTED if feature is not supported
+ * - BETANET_INVALID_ARGUMENT if feature name is invalid
  */
-int betanet_feature_supported(const char* feature);
+BetanetResult betanet_feature_supported(const char* feature);
 
 /**
  * Free a buffer allocated by Betanet

@@ -2,13 +2,13 @@
 //!
 //! This is a minimal version for demonstrating FFI capabilities without OpenSSL dependencies
 
-use std::ffi::{CStr, CString};
+use std::ffi::CStr;
 use std::os::raw::{c_char, c_int, c_uint};
 use std::ptr;
 
 /// Result codes for Betanet FFI functions
-#[repr(C)]
-#[derive(Debug, Clone, Copy)]
+#[repr(i32)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum BetanetResult {
     /// Operation completed successfully
     Success = 0,
@@ -58,7 +58,11 @@ impl BetanetBuffer {
         let capacity = vec.capacity() as c_uint;
         std::mem::forget(vec); // Transfer ownership to C
 
-        Self { data, len, capacity }
+        Self {
+            data,
+            len,
+            capacity,
+        }
     }
 
     /// Create buffer from slice (read-only)
@@ -130,26 +134,24 @@ pub extern "C" fn betanet_version() -> *const c_char {
 /// * `feature` - Feature name to check (null-terminated string)
 ///
 /// # Returns
-/// * `1` if feature is supported
-/// * `0` if feature is not supported
-/// * `-1` if feature name is invalid
+/// * `BetanetResult::Success` if feature is supported
+/// * `BetanetResult::NotSupported` if feature is not supported
+/// * `BetanetResult::InvalidArgument` if feature name is invalid
 #[no_mangle]
-pub extern "C" fn betanet_feature_supported(feature: *const c_char) -> c_int {
+pub extern "C" fn betanet_feature_supported(feature: *const c_char) -> BetanetResult {
     if feature.is_null() {
-        return -1;
+        return BetanetResult::InvalidArgument;
     }
 
     let feature_cstr = unsafe { CStr::from_ptr(feature) };
     let feature_str = match feature_cstr.to_str() {
         Ok(s) => s,
-        Err(_) => return -1,
+        Err(_) => return BetanetResult::InvalidArgument,
     };
 
     match feature_str {
-        "ffi_demo" => 1,
-        "buffer_management" => 1,
-        "version_info" => 1,
-        _ => 0,
+        "ffi_demo" | "buffer_management" | "version_info" => BetanetResult::Success,
+        _ => BetanetResult::NotSupported,
     }
 }
 
@@ -277,9 +279,8 @@ pub extern "C" fn betanet_packet_decode(
     }
 
     // Decode length prefix
-    let length = u32::from_be_bytes([
-        input_data[0], input_data[1], input_data[2], input_data[3]
-    ]) as usize;
+    let length =
+        u32::from_be_bytes([input_data[0], input_data[1], input_data[2], input_data[3]]) as usize;
 
     if input_data.len() < 4 + length {
         return BetanetResult::ParseError;
@@ -303,10 +304,7 @@ pub extern "C" fn betanet_packet_decode(
 /// # Returns
 /// * Result code
 #[no_mangle]
-pub extern "C" fn betanet_echo(
-    input: *const c_char,
-    output: *mut BetanetBuffer,
-) -> BetanetResult {
+pub extern "C" fn betanet_echo(input: *const c_char, output: *mut BetanetBuffer) -> BetanetResult {
     if input.is_null() || output.is_null() {
         return BetanetResult::InvalidArgument;
     }

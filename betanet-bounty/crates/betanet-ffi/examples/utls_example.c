@@ -25,9 +25,9 @@ int main() {
     }
 
     printf("Library version: %s\n", betanet_version());
-    printf("uTLS support: %s\n", betanet_feature_supported("utls") ? "Yes" : "No");
-    printf("JA3 support: %s\n", betanet_feature_supported("ja3") ? "Yes" : "No");
-    printf("JA4 support: %s\n", betanet_feature_supported("ja4") ? "Yes" : "No");
+    printf("uTLS support: %s\n", betanet_feature_supported("utls") == BETANET_SUCCESS ? "Yes" : "No");
+    printf("JA3 support: %s\n", betanet_feature_supported("ja3") == BETANET_SUCCESS ? "Yes" : "No");
+    printf("JA4 support: %s\n", betanet_feature_supported("ja4") == BETANET_SUCCESS ? "Yes" : "No");
     printf("\n");
 
     // Run self-test first
