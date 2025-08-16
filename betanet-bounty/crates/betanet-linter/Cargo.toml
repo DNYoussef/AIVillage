@@ -19,6 +19,7 @@ tracing-subscriber = { workspace = true }
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
 regex = "1.10"
 async-trait = "0.1"
+once_cell = { workspace = true }
 
 # For SBOM generation
 toml = "0.8"

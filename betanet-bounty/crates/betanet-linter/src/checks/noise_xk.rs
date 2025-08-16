@@ -11,7 +11,20 @@
 use crate::{LintIssue, SeverityLevel, Result};
 use crate::checks::{CheckRule, CheckContext};
 use regex::Regex;
+use once_cell::sync::Lazy;
 use async_trait::async_trait;
+
+static NOISE_PATTERN_REGEX: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r#"Noise_XK_(\w+)_(\w+)_(\w+)"#).unwrap()
+});
+
+static HANDSHAKE_FRAGMENT_SIZE_REGEX: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r"HANDSHAKE_FRAGMENT_SIZE\s*:\s*usize\s*=\s*(\d+)").unwrap()
+});
+
+static MAX_MESSAGE_SIZE_REGEX: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r"MAX_MESSAGE_SIZE\s*:\s*usize\s*=\s*(\d+)").unwrap()
+});
 
 /// Noise XK handshake pattern compliance
 pub struct NoiseXkHandshakeRule;
@@ -38,9 +51,8 @@ impl CheckRule for NoiseXkHandshakeRule {
 
         // Check for correct Noise pattern string
         if context.content.contains("Noise_XK") {
-            let pattern_regex = Regex::new(r#"Noise_XK_(\w+)_(\w+)_(\w+)"#).unwrap();
             for (line_num, line) in context.content.lines().enumerate() {
-                if let Some(captures) = pattern_regex.captures(line) {
+                if let Some(captures) = NOISE_PATTERN_REGEX.captures(line) {
                     let key_exchange = captures.get(1).map_or("", |m| m.as_str());
                     let cipher = captures.get(2).map_or("", |m| m.as_str());
                     let hash = captures.get(3).map_or("", |m| m.as_str());
@@ -297,9 +309,8 @@ impl CheckRule for NoiseXkFragmentationRule {
         }
 
         // Check fragment size configuration
-        let fragment_size_regex = Regex::new(r"HANDSHAKE_FRAGMENT_SIZE\s*:\s*usize\s*=\s*(\d+)").unwrap();
         for (line_num, line) in context.content.lines().enumerate() {
-            if let Some(captures) = fragment_size_regex.captures(line) {
+            if let Some(captures) = HANDSHAKE_FRAGMENT_SIZE_REGEX.captures(line) {
                 if let Some(size_str) = captures.get(1) {
                     if let Ok(size) = size_str.as_str().parse::<u32>() {
                         if size < 576 {
@@ -427,9 +438,8 @@ impl CheckRule for NoiseXkSecurityRule {
 
         // Check for message size limits
         if context.content.contains("MAX_MESSAGE_SIZE") {
-            let max_size_regex = Regex::new(r"MAX_MESSAGE_SIZE\s*:\s*usize\s*=\s*(\d+)").unwrap();
             for (line_num, line) in context.content.lines().enumerate() {
-                if let Some(captures) = max_size_regex.captures(line) {
+                if let Some(captures) = MAX_MESSAGE_SIZE_REGEX.captures(line) {
                     if let Some(size_str) = captures.get(1) {
                         if let Ok(size) = size_str.as_str().parse::<u32>() {
                             if size > 65535 {

@@ -11,7 +11,35 @@
 use crate::{LintIssue, SeverityLevel, Result};
 use crate::checks::{CheckRule, CheckContext};
 use regex::Regex;
+use once_cell::sync::Lazy;
 use async_trait::async_trait;
+
+static MAX_FRAME_SIZE_REGEX: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r"MAX_FRAME_SIZE\s*:\s*usize\s*=\s*(\d+)").unwrap()
+});
+
+static MAX_STREAM_ID_REGEX: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r"MAX_STREAM_ID\s*:\s*u32\s*=\s*(\d+)").unwrap()
+});
+
+static ENCODE_COMPONENTS: Lazy<Vec<(Regex, &'static str)>> = Lazy::new(|| {
+    vec![
+        (Regex::new("uint24").unwrap(), "length field"),
+        (Regex::new("put_u8.*>>.*16").unwrap(), "uint24 big-endian encoding"),
+        (Regex::new("varint").unwrap(), "stream ID encoding"),
+        (Regex::new("frame_type as u8").unwrap(), "frame type field"),
+        (Regex::new("payload").unwrap(), "payload data"),
+    ]
+});
+
+static PARSING_COMPONENTS: Lazy<Vec<(Regex, &'static str)>> = Lazy::new(|| {
+    vec![
+        (Regex::new(r"data.len.*<.*4").unwrap(), "minimum header size check"),
+        (Regex::new(r"data\[0\].*<<.*16").unwrap(), "uint24 big-endian decoding"),
+        (Regex::new("decode_varint").unwrap(), "stream ID decoding"),
+        (Regex::new("FrameType::try_from").unwrap(), "frame type validation"),
+    ]
+});
 
 /// HTX frame structure compliance
 pub struct FrameStructureRule;
@@ -38,9 +66,8 @@ impl CheckRule for FrameStructureRule {
 
         // Check for MAX_FRAME_SIZE constant
         if context.content.contains("MAX_FRAME_SIZE") {
-            let max_size_regex = Regex::new(r"MAX_FRAME_SIZE\s*:\s*usize\s*=\s*(\d+)").unwrap();
             for (line_num, line) in context.content.lines().enumerate() {
-                if let Some(captures) = max_size_regex.captures(line) {
+                if let Some(captures) = MAX_FRAME_SIZE_REGEX.captures(line) {
                     if let Some(size_str) = captures.get(1) {
                         if let Ok(size) = size_str.as_str().parse::<u32>() {
                             // HTX v1.1 spec: MAX_FRAME_SIZE = 2^24 - 1 = 16,777,215
@@ -60,9 +87,8 @@ impl CheckRule for FrameStructureRule {
 
         // Check for MAX_STREAM_ID constant
         if context.content.contains("MAX_STREAM_ID") {
-            let max_stream_regex = Regex::new(r"MAX_STREAM_ID\s*:\s*u32\s*=\s*(\d+)").unwrap();
             for (line_num, line) in context.content.lines().enumerate() {
-                if let Some(captures) = max_stream_regex.captures(line) {
+                if let Some(captures) = MAX_STREAM_ID_REGEX.captures(line) {
                     if let Some(id_str) = captures.get(1) {
                         if let Ok(id) = id_str.as_str().parse::<u32>() {
                             // HTX v1.1 spec: MAX_STREAM_ID = 2^28 - 1 = 268,435,455 (varint limit)
@@ -82,16 +108,8 @@ impl CheckRule for FrameStructureRule {
 
         // Check frame encoding structure compliance
         if context.content.contains("encode") && context.content.contains("Frame") {
-            let required_components = [
-                ("uint24", "length field"),
-                ("put_u8.*>>.*16", "uint24 big-endian encoding"),
-                ("varint", "stream ID encoding"),
-                ("frame_type as u8", "frame type field"),
-                ("payload", "payload data"),
-            ];
-
-            for (pattern, description) in &required_components {
-                if !context.content.contains(pattern) && !Regex::new(pattern).unwrap().is_match(&context.content) {
+            for (regex, description) in ENCODE_COMPONENTS.iter() {
+                if !regex.is_match(&context.content) {
                     issues.push(LintIssue::new(
                         "FRAME003".to_string(),
                         SeverityLevel::Error,
@@ -104,15 +122,8 @@ impl CheckRule for FrameStructureRule {
 
         // Check frame parsing structure compliance
         if context.content.contains("parse_frame") || context.content.contains("decode") {
-            let required_parsing = [
-                ("data.len.*<.*4", "minimum header size check"),
-                ("data\\[0\\].*<<.*16", "uint24 big-endian decoding"),
-                ("decode_varint", "stream ID decoding"),
-                ("FrameType::try_from", "frame type validation"),
-            ];
-
-            for (pattern, description) in &required_parsing {
-                if !Regex::new(pattern).unwrap().is_match(&context.content) {
+            for (regex, description) in PARSING_COMPONENTS.iter() {
+                if !regex.is_match(&context.content) {
                     issues.push(LintIssue::new(
                         "FRAME004".to_string(),
                         SeverityLevel::Error,

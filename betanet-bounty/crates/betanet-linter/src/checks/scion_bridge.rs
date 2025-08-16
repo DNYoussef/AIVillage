@@ -10,7 +10,12 @@
 use crate::{LintIssue, SeverityLevel, Result};
 use crate::checks::{CheckRule, CheckContext};
 use regex::Regex;
+use once_cell::sync::Lazy;
 use async_trait::async_trait;
+
+static AS_REGEX: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r#""?(?:scion_as|as_id|autonomous_system)"?\s*[:=]\s*"?(\d+)-\d+:\d+:\d+"?"#).unwrap()
+});
 
 /// SCION gateway infrastructure compliance
 pub struct ScionGatewayRule;
@@ -79,9 +84,8 @@ impl CheckRule for ScionGatewayRule {
         }
 
         // Check for hardcoded SCION AS numbers (should be configurable)
-        let as_regex = Regex::new(r#""?(?:scion_as|as_id|autonomous_system)"?\s*[:=]\s*"?(\d+)-\d+:\d+:\d+"?"#).unwrap();
         for (line_num, line) in context.content.lines().enumerate() {
-            if let Some(captures) = as_regex.captures(line) {
+            if let Some(captures) = AS_REGEX.captures(line) {
                 if let Some(as_prefix) = captures.get(1) {
                     if as_prefix.as_str() == "1" {
                         issues.push(LintIssue::new(

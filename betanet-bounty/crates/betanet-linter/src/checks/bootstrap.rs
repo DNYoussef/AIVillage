@@ -5,7 +5,20 @@
 use crate::{LintIssue, SeverityLevel, Result};
 use crate::checks::{CheckContext, CheckRule};
 use regex::Regex;
+use once_cell::sync::Lazy;
 use async_trait::async_trait;
+
+static MEMORY_REGEX: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r"Mobile.*memory_kb:\s*(\d+)").unwrap()
+});
+
+static TARGET_TIME_REGEX: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r"Mobile.*target_time_ms:\s*(\d+)").unwrap()
+});
+
+static RATE_LIMIT_REGEX: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r"rate_limit.*:\s*(\d+)").unwrap()
+});
 
 /// Check that Argon2id is properly advertised and configured
 pub struct Argon2idAdvertisementRule;
@@ -138,10 +151,8 @@ impl CheckRule for Argon2idParameterRule {
 impl Argon2idParameterRule {
     fn check_mobile_params(&self, context: &CheckContext, issues: &mut Vec<LintIssue>) {
         // Check mobile memory usage (should be reasonable for mobile devices)
-        let memory_regex = Regex::new(r"Mobile.*memory_kb:\s*(\d+)").unwrap();
-
         for (line_num, line) in context.content.lines().enumerate() {
-            if let Some(captures) = memory_regex.captures(line) {
+            if let Some(captures) = MEMORY_REGEX.captures(line) {
                 if let Some(memory_str) = captures.get(1) {
                     if let Ok(memory_kb) = memory_str.as_str().parse::<u32>() {
                         if memory_kb > 32768 { // > 32 MB for mobile
@@ -158,10 +169,8 @@ impl Argon2idParameterRule {
         }
 
         // Check mobile target time (should be <300ms)
-        let target_time_regex = Regex::new(r"Mobile.*target_time_ms:\s*(\d+)").unwrap();
-
         for (line_num, line) in context.content.lines().enumerate() {
-            if let Some(captures) = target_time_regex.captures(line) {
+            if let Some(captures) = TARGET_TIME_REGEX.captures(line) {
                 if let Some(time_str) = captures.get(1) {
                     if let Ok(time_ms) = time_str.as_str().parse::<u32>() {
                         if time_ms >= 300 {
@@ -289,10 +298,8 @@ impl CheckRule for CpuPoWFallbackRule {
             }
 
             // Check for reasonable rate limits
-            let rate_limit_regex = Regex::new(r"rate_limit.*:\s*(\d+)").unwrap();
-
             for (line_num, line) in context.content.lines().enumerate() {
-                if let Some(captures) = rate_limit_regex.captures(line) {
+                if let Some(captures) = RATE_LIMIT_REGEX.captures(line) {
                     if let Some(rate_str) = captures.get(1) {
                         if let Ok(rate) = rate_str.as_str().parse::<u32>() {
                             if rate > 100 {
