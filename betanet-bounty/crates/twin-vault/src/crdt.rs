@@ -3,7 +3,7 @@
 //! Implements Last-Writer-Wins Map (LWW-Map) and Grow-only Counter (GCounter)
 //! with Ed25519 signatures for operation authenticity.
 
-use std::collections::{HashMap, BTreeMap};
+use std::collections::{BTreeMap, HashMap};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use bytes::Bytes;
@@ -67,14 +67,13 @@ impl SignedOperation {
         let mut temp = self.clone();
         temp.signature = Vec::new();
 
-        bincode::serialize(&temp)
-            .map_err(|e| CrdtError::SerializationError(e.to_string()))
+        bincode::serialize(&temp).map_err(|e| CrdtError::SerializationError(e.to_string()))
     }
 
     /// Check if this operation happened before another
     pub fn happened_before(&self, other: &SignedOperation) -> bool {
-        self.timestamp < other.timestamp ||
-        (self.timestamp == other.timestamp && self.actor_id < other.actor_id)
+        self.timestamp < other.timestamp
+            || (self.timestamp == other.timestamp && self.actor_id < other.actor_id)
     }
 }
 
@@ -87,10 +86,7 @@ pub enum CrdtOperation {
         value: Option<Bytes>, // None for delete
     },
     /// GCounter increment operation
-    GCounterIncrement {
-        counter_id: String,
-        amount: u64,
-    },
+    GCounterIncrement { counter_id: String, amount: u64 },
 }
 
 /// Last-Writer-Wins Map implementation
@@ -122,7 +118,10 @@ impl LwwMap {
                 // Check if this is the latest operation for this key
                 if let Some((_, existing_timestamp, existing_actor)) = self.entries.get(key) {
                     let existing_op = SignedOperation {
-                        operation: CrdtOperation::LwwSet { key: key.clone(), value: None },
+                        operation: CrdtOperation::LwwSet {
+                            key: key.clone(),
+                            value: None,
+                        },
                         actor_id: existing_actor.clone(),
                         timestamp: *existing_timestamp,
                         signature: Vec::new(),
@@ -133,14 +132,22 @@ impl LwwMap {
                         // This operation is newer, apply it
                         self.entries.insert(
                             key.clone(),
-                            (value.clone(), operation.timestamp, operation.actor_id.clone()),
+                            (
+                                value.clone(),
+                                operation.timestamp,
+                                operation.actor_id.clone(),
+                            ),
                         );
                     }
                 } else {
                     // First operation for this key
                     self.entries.insert(
                         key.clone(),
-                        (value.clone(), operation.timestamp, operation.actor_id.clone()),
+                        (
+                            value.clone(),
+                            operation.timestamp,
+                            operation.actor_id.clone(),
+                        ),
                     );
                 }
 
@@ -148,23 +155,34 @@ impl LwwMap {
                 self.operations.push(operation);
                 Ok(())
             }
-            _ => Err(CrdtError::InvalidOperation("Expected LwwSet operation".to_string())),
+            _ => Err(CrdtError::InvalidOperation(
+                "Expected LwwSet operation".to_string(),
+            )),
         }
     }
 
     /// Get value
     pub fn get(&self, key: &str) -> Option<&Bytes> {
-        self.entries.get(key).and_then(|(value, _, _)| value.as_ref())
+        self.entries
+            .get(key)
+            .and_then(|(value, _, _)| value.as_ref())
     }
 
     /// Delete value (set to None)
-    pub fn delete_signed(&mut self, key: String, operation: SignedOperation) -> Result<(), CrdtError> {
+    pub fn delete_signed(
+        &mut self,
+        key: String,
+        operation: SignedOperation,
+    ) -> Result<(), CrdtError> {
         // Verify this is a delete operation
         match &operation.operation {
-            CrdtOperation::LwwSet { key: op_key, value: None } if op_key == &key => {
-                self.set_signed(operation)
-            }
-            _ => Err(CrdtError::InvalidOperation("Expected delete operation".to_string())),
+            CrdtOperation::LwwSet {
+                key: op_key,
+                value: None,
+            } if op_key == &key => self.set_signed(operation),
+            _ => Err(CrdtError::InvalidOperation(
+                "Expected delete operation".to_string(),
+            )),
         }
     }
 
@@ -173,7 +191,11 @@ impl LwwMap {
         self.entries
             .iter()
             .filter_map(|(key, (value, _, _))| {
-                if value.is_some() { Some(key.clone()) } else { None }
+                if value.is_some() {
+                    Some(key.clone())
+                } else {
+                    None
+                }
             })
             .collect()
     }
@@ -183,10 +205,11 @@ impl LwwMap {
         // Apply all operations from other map
         for operation in &other.operations {
             // Skip if we already have this operation
-            if self.operations.iter().any(|op| {
-                op.actor_id == operation.actor_id &&
-                op.timestamp == operation.timestamp
-            }) {
+            if self
+                .operations
+                .iter()
+                .any(|op| op.actor_id == operation.actor_id && op.timestamp == operation.timestamp)
+            {
                 continue;
             }
 
@@ -232,16 +255,22 @@ impl GCounter {
         }
 
         match &operation.operation {
-            CrdtOperation::GCounterIncrement { counter_id: _, amount } => {
+            CrdtOperation::GCounterIncrement {
+                counter_id: _,
+                amount,
+            } => {
                 // Update actor's counter
                 let current = self.counters.get(&operation.actor_id).unwrap_or(&0);
-                self.counters.insert(operation.actor_id.clone(), current + amount);
+                self.counters
+                    .insert(operation.actor_id.clone(), current + amount);
 
                 // Add to operation log
                 self.operations.push(operation);
                 Ok(())
             }
-            _ => Err(CrdtError::InvalidOperation("Expected GCounterIncrement operation".to_string())),
+            _ => Err(CrdtError::InvalidOperation(
+                "Expected GCounterIncrement operation".to_string(),
+            )),
         }
     }
 
@@ -260,10 +289,11 @@ impl GCounter {
         // Apply all operations from other counter
         for operation in &other.operations {
             // Skip if we already have this operation
-            if self.operations.iter().any(|op| {
-                op.actor_id == operation.actor_id &&
-                op.timestamp == operation.timestamp
-            }) {
+            if self
+                .operations
+                .iter()
+                .any(|op| op.actor_id == operation.actor_id && op.timestamp == operation.timestamp)
+            {
                 continue;
             }
 
@@ -308,12 +338,16 @@ impl CrdtState {
 
     /// Get or create LWW map
     pub fn get_lww_map(&mut self, name: &str) -> &mut LwwMap {
-        self.lww_maps.entry(name.to_string()).or_insert_with(LwwMap::new)
+        self.lww_maps
+            .entry(name.to_string())
+            .or_insert_with(LwwMap::new)
     }
 
     /// Get or create GCounter
     pub fn get_g_counter(&mut self, name: &str) -> &mut GCounter {
-        self.g_counters.entry(name.to_string()).or_insert_with(GCounter::new)
+        self.g_counters
+            .entry(name.to_string())
+            .or_insert_with(GCounter::new)
     }
 
     /// Merge with another CRDT state
@@ -359,8 +393,8 @@ impl CrdtState {
         }
 
         // Compare states (simplified comparison)
-        test_state.lww_maps.len() == test_state2.lww_maps.len() &&
-        test_state.g_counters.len() == test_state2.g_counters.len()
+        test_state.lww_maps.len() == test_state2.lww_maps.len()
+            && test_state.g_counters.len() == test_state2.g_counters.len()
     }
 }
 
@@ -382,28 +416,25 @@ impl CrdtOperationFactory {
         // Use compatible RNG for ed25519-dalek 1.0.0
         // Generate key directly from bytes to avoid trait issues
         let keypair = {
-            use rand::{rngs::OsRng, RngCore};
             use ed25519_dalek::SecretKey;
+            use rand::{rngs::OsRng, RngCore};
 
             let mut secret_bytes = [0u8; 32];
             OsRng.fill_bytes(&mut secret_bytes);
             let secret_key = SecretKey::from_bytes(&secret_bytes).unwrap();
             let public_key = PublicKey::from(&secret_key);
-            Keypair { secret: secret_key, public: public_key }
+            Keypair {
+                secret: secret_key,
+                public: public_key,
+            }
         };
 
-        Self {
-            keypair,
-            actor_id,
-        }
+        Self { keypair, actor_id }
     }
 
     /// Create factory with existing keypair
     pub fn with_keypair(actor_id: String, keypair: Keypair) -> Self {
-        Self {
-            keypair,
-            actor_id,
-        }
+        Self { keypair, actor_id }
     }
 
     /// Create signed LWW set operation
@@ -418,20 +449,18 @@ impl CrdtOperationFactory {
 
     /// Create signed LWW delete operation
     pub fn create_lww_delete(&self, key: String) -> Result<SignedOperation, CrdtError> {
-        let operation = CrdtOperation::LwwSet {
-            key,
-            value: None,
-        };
+        let operation = CrdtOperation::LwwSet { key, value: None };
 
         SignedOperation::new(operation, self.actor_id.clone(), &self.keypair)
     }
 
     /// Create signed GCounter increment operation
-    pub fn create_g_counter_increment(&self, counter_id: String, amount: u64) -> Result<SignedOperation, CrdtError> {
-        let operation = CrdtOperation::GCounterIncrement {
-            counter_id,
-            amount,
-        };
+    pub fn create_g_counter_increment(
+        &self,
+        counter_id: String,
+        amount: u64,
+    ) -> Result<SignedOperation, CrdtError> {
+        let operation = CrdtOperation::GCounterIncrement { counter_id, amount };
 
         SignedOperation::new(operation, self.actor_id.clone(), &self.keypair)
     }
@@ -476,7 +505,9 @@ mod tests {
         let mut map = LwwMap::new();
 
         // Set a value
-        let set_op = factory.create_lww_set("key1".to_string(), Bytes::from("value1")).unwrap();
+        let set_op = factory
+            .create_lww_set("key1".to_string(), Bytes::from("value1"))
+            .unwrap();
         map.set_signed(set_op).unwrap();
 
         assert_eq!(map.get("key1"), Some(&Bytes::from("value1")));
@@ -499,10 +530,14 @@ mod tests {
         let mut map2 = LwwMap::new();
 
         // Add different values to each map
-        let op1 = factory1.create_lww_set("key1".to_string(), Bytes::from("value1")).unwrap();
+        let op1 = factory1
+            .create_lww_set("key1".to_string(), Bytes::from("value1"))
+            .unwrap();
         map1.set_signed(op1).unwrap();
 
-        let op2 = factory2.create_lww_set("key2".to_string(), Bytes::from("value2")).unwrap();
+        let op2 = factory2
+            .create_lww_set("key2".to_string(), Bytes::from("value2"))
+            .unwrap();
         map2.set_signed(op2).unwrap();
 
         // Merge map2 into map1
@@ -519,7 +554,9 @@ mod tests {
         let mut counter = GCounter::new();
 
         // Increment counter
-        let inc_op = factory.create_g_counter_increment("counter1".to_string(), 5).unwrap();
+        let inc_op = factory
+            .create_g_counter_increment("counter1".to_string(), 5)
+            .unwrap();
         counter.increment_signed(inc_op).unwrap();
 
         assert_eq!(counter.value(), 5);
@@ -527,7 +564,9 @@ mod tests {
         assert_eq!(counter.operation_count(), 1);
 
         // Increment again
-        let inc_op2 = factory.create_g_counter_increment("counter1".to_string(), 3).unwrap();
+        let inc_op2 = factory
+            .create_g_counter_increment("counter1".to_string(), 3)
+            .unwrap();
         counter.increment_signed(inc_op2).unwrap();
 
         assert_eq!(counter.value(), 8);
@@ -543,10 +582,14 @@ mod tests {
         let mut counter2 = GCounter::new();
 
         // Increment both counters
-        let inc1 = factory1.create_g_counter_increment("counter1".to_string(), 5).unwrap();
+        let inc1 = factory1
+            .create_g_counter_increment("counter1".to_string(), 5)
+            .unwrap();
         counter1.increment_signed(inc1).unwrap();
 
-        let inc2 = factory2.create_g_counter_increment("counter1".to_string(), 3).unwrap();
+        let inc2 = factory2
+            .create_g_counter_increment("counter1".to_string(), 3)
+            .unwrap();
         counter2.increment_signed(inc2).unwrap();
 
         // Merge counter2 into counter1
@@ -566,11 +609,18 @@ mod tests {
         let mut state2 = CrdtState::new();
 
         // Add operations to both states
-        let op1 = factory1.create_lww_set("key1".to_string(), Bytes::from("value1")).unwrap();
+        let op1 = factory1
+            .create_lww_set("key1".to_string(), Bytes::from("value1"))
+            .unwrap();
         state1.get_lww_map("map1").set_signed(op1).unwrap();
 
-        let op2 = factory2.create_g_counter_increment("counter1".to_string(), 5).unwrap();
-        state2.get_g_counter("counter1").increment_signed(op2).unwrap();
+        let op2 = factory2
+            .create_g_counter_increment("counter1".to_string(), 5)
+            .unwrap();
+        state2
+            .get_g_counter("counter1")
+            .increment_signed(op2)
+            .unwrap();
 
         // Test merge idempotency
         assert!(state1.is_merge_idempotent(&state2));
@@ -579,14 +629,19 @@ mod tests {
         state1.merge(&state2).unwrap();
 
         // Verify merge was successful
-        assert_eq!(state1.lww_maps.get("map1").unwrap().get("key1"), Some(&Bytes::from("value1")));
+        assert_eq!(
+            state1.lww_maps.get("map1").unwrap().get("key1"),
+            Some(&Bytes::from("value1"))
+        );
         assert_eq!(state1.g_counters.get("counter1").unwrap().value(), 5);
     }
 
     #[test]
     fn test_signed_operation_verification() {
         let factory = CrdtOperationFactory::new("actor1".to_string());
-        let operation = factory.create_lww_set("key1".to_string(), Bytes::from("value1")).unwrap();
+        let operation = factory
+            .create_lww_set("key1".to_string(), Bytes::from("value1"))
+            .unwrap();
 
         // Verify valid signature
         assert!(operation.verify().unwrap());
@@ -602,9 +657,13 @@ mod tests {
         let factory1 = CrdtOperationFactory::new("actor1".to_string());
         let factory2 = CrdtOperationFactory::new("actor2".to_string());
 
-        let op1 = factory1.create_lww_set("key1".to_string(), Bytes::from("value1")).unwrap();
+        let op1 = factory1
+            .create_lww_set("key1".to_string(), Bytes::from("value1"))
+            .unwrap();
         std::thread::sleep(std::time::Duration::from_millis(1)); // Ensure different timestamps
-        let op2 = factory2.create_lww_set("key1".to_string(), Bytes::from("value2")).unwrap();
+        let op2 = factory2
+            .create_lww_set("key1".to_string(), Bytes::from("value2"))
+            .unwrap();
 
         assert!(op1.happened_before(&op2));
         assert!(!op2.happened_before(&op1));

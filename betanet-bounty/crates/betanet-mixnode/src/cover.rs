@@ -29,7 +29,10 @@ impl CoverTrafficGenerator {
     pub async fn next_packet(&mut self) -> Result<Packet> {
         self.interval.tick().await;
 
-        debug!("Generating cover traffic packet of {} bytes", self.packet_size);
+        debug!(
+            "Generating cover traffic packet of {} bytes",
+            self.packet_size
+        );
 
         let packet = Packet::cover_traffic(self.packet_size, self.layer);
         Ok(packet)
@@ -148,11 +151,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_cover_traffic_generator() {
-        let mut generator = CoverTrafficGenerator::new(
-            Duration::from_millis(100),
-            512,
-            1
-        );
+        let mut generator = CoverTrafficGenerator::new(Duration::from_millis(100), 512, 1);
 
         let packet = generator.next_packet().await.unwrap();
         assert!(packet.is_cover_traffic());

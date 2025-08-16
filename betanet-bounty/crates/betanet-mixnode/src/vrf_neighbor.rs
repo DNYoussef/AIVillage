@@ -243,7 +243,9 @@ impl VrfNeighborSelector {
                 .iter()
                 .filter_map(|addr| {
                     self.known_nodes.get(addr).and_then(|node| {
-                        if node.reliability >= self.config.min_reliability && node.is_fresh(self.config.node_timeout_secs) {
+                        if node.reliability >= self.config.min_reliability
+                            && node.is_fresh(self.config.node_timeout_secs)
+                        {
                             Some(*addr)
                         } else {
                             None
@@ -283,7 +285,8 @@ impl VrfNeighborSelector {
 
                 if let Some(candidates) = candidates_by_as.get(&as_num) {
                     // Select node from this AS using VRF output
-                    if let Some(node_addr) = self.select_node_from_as(candidates, vrf_output, round) {
+                    if let Some(node_addr) = self.select_node_from_as(candidates, vrf_output, round)
+                    {
                         if !selected.contains(&node_addr) {
                             selected.push(node_addr);
                             used_as_numbers.insert(as_num);
@@ -339,7 +342,9 @@ impl VrfNeighborSelector {
         let weighted_candidates: Vec<(SocketAddr, f64)> = candidates
             .iter()
             .filter_map(|addr| {
-                self.known_nodes.get(addr).map(|node| (*addr, node.selection_score()))
+                self.known_nodes
+                    .get(addr)
+                    .map(|node| (*addr, node.selection_score()))
             })
             .collect();
 
@@ -553,7 +558,8 @@ mod tests {
         node.last_seen = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()
-            .as_secs() - 10; // 10 seconds ago
+            .as_secs()
+            - 10; // 10 seconds ago
 
         selector.add_node(node);
 

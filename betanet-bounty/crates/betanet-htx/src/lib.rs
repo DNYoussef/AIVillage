@@ -704,8 +704,10 @@ mod tests {
 
     #[test]
     fn test_session_creation() {
-        let mut config = HtxConfig::default();
-        config.enable_noise_xk = false; // Disable Noise XK for test simplicity
+        let config = HtxConfig {
+            enable_noise_xk: false,
+            ..Default::default()
+        }; // Disable Noise XK for test simplicity
 
         // Test initiator session
         let initiator_session = HtxSession::new(config.clone(), true);
@@ -722,8 +724,10 @@ mod tests {
 
     #[test]
     fn test_stream_creation() {
-        let mut config = HtxConfig::default();
-        config.enable_noise_xk = false;
+        let config = HtxConfig {
+            enable_noise_xk: false,
+            ..Default::default()
+        };
         let mut session = HtxSession::new(config, true).unwrap();
 
         let stream_id = session.create_stream().unwrap();
@@ -757,8 +761,10 @@ mod tests {
 
     #[tokio::test]
     async fn test_session_state_transitions() {
-        let mut config = HtxConfig::default();
-        config.enable_noise_xk = false; // Disable for simpler test
+        let config = HtxConfig {
+            enable_noise_xk: false,
+            ..Default::default()
+        }; // Disable for simpler test
 
         let mut session = HtxSession::new(config, true).unwrap();
         assert!(matches!(session.state, SessionState::Initialize));
@@ -777,8 +783,10 @@ mod tests {
 
     #[test]
     fn test_session_status() {
-        let mut config = HtxConfig::default();
-        config.enable_noise_xk = false;
+        let config = HtxConfig {
+            enable_noise_xk: false,
+            ..Default::default()
+        };
         let session = HtxSession::new(config, true).unwrap();
 
         let status = session.status();
@@ -794,11 +802,13 @@ mod tests {
             timeout in 1u64..3600,
             keepalive in 1u64..300,
         ) {
-            let mut config = HtxConfig::default();
-            config.enable_noise_xk = false; // Disable Noise XK for simpler testing
-            config.max_connections = max_connections;
-            config.connection_timeout_secs = timeout;
-            config.keepalive_interval_secs = keepalive;
+            let config = HtxConfig {
+                enable_noise_xk: false, // Disable Noise XK for simpler testing
+                max_connections,
+                connection_timeout_secs: timeout,
+                keepalive_interval_secs: keepalive,
+                ..Default::default()
+            };
 
             // Should be able to create sessions with any valid config
             let initiator = HtxSession::new(config.clone(), true);

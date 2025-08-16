@@ -1,7 +1,7 @@
 //! Report generation
 
-use serde_json::json;
 use crate::{LintResults, OutputFormat, Result};
+use serde_json::json;
 
 /// Report generator
 pub struct ReportGenerator {
@@ -28,19 +28,23 @@ impl ReportGenerator {
 
         let (critical, errors, warnings, info) = results.summary();
 
-        output.push_str(&format!("Betanet Linter Results\n"));
-        output.push_str(&format!("======================\n\n"));
+        output.push_str("Betanet Linter Results\n");
+        output.push_str("======================\n\n");
         output.push_str(&format!("Files checked: {}\n", results.files_checked));
         output.push_str(&format!("Rules executed: {}\n", results.rules_executed));
-        output.push_str(&format!("Critical: {}, Errors: {}, Warnings: {}, Info: {}\n\n",
-                                critical, errors, warnings, info));
+        output.push_str(&format!(
+            "Critical: {}, Errors: {}, Warnings: {}, Info: {}\n\n",
+            critical, errors, warnings, info
+        ));
 
         for issue in &results.issues {
-            output.push_str(&format!("[{}] {}: {} ({})\n",
-                                   issue.severity_str(),
-                                   issue.id,
-                                   issue.message,
-                                   issue.rule));
+            output.push_str(&format!(
+                "[{}] {}: {} ({})\n",
+                issue.severity_str(),
+                issue.id,
+                issue.message,
+                issue.rule
+            ));
             if let Some(path) = &issue.file_path {
                 if let (Some(line), Some(col)) = (issue.line_number, issue.column_number) {
                     output.push_str(&format!("  at {}:{}:{}\n", path.display(), line, col));
@@ -74,8 +78,8 @@ impl ReportGenerator {
             }).collect::<Vec<_>>()
         });
 
-        Ok(serde_json::to_string_pretty(&json_results)
-           .map_err(|e| crate::LinterError::Parse(e.to_string()))?)
+        serde_json::to_string_pretty(&json_results)
+            .map_err(|e| crate::LinterError::Parse(e.to_string()))
     }
 
     fn generate_sarif(&self, results: &LintResults) -> Result<String> {
@@ -107,8 +111,7 @@ impl ReportGenerator {
             }]
         });
 
-        Ok(serde_json::to_string_pretty(&sarif)
-           .map_err(|e| crate::LinterError::Parse(e.to_string()))?)
+        serde_json::to_string_pretty(&sarif).map_err(|e| crate::LinterError::Parse(e.to_string()))
     }
 }
 

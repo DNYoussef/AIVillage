@@ -13,8 +13,8 @@ use chacha20poly1305::{
     aead::{Aead, KeyInit},
     ChaCha20Poly1305, Nonce,
 };
-use rand::{rngs::OsRng, RngCore};
 use hkdf::Hkdf;
+use rand::{rngs::OsRng, RngCore};
 use serde::{Deserialize, Serialize};
 use sha2::Sha256;
 use sled::{Db, Tree};
@@ -24,7 +24,7 @@ use tokio::sync::RwLock;
 #[cfg(feature = "os-keystore")]
 use keyring::Entry;
 
-use crate::crdt::{CrdtState, CrdtOperationFactory, SignedOperation};
+use crate::crdt::{CrdtOperationFactory, CrdtState, SignedOperation};
 use crate::{TwinId, TwinOperation};
 
 /// Encryption key management
@@ -51,7 +51,8 @@ impl EncryptionKey {
     pub fn from_password(password: &str, salt: [u8; 16]) -> Self {
         let hk = Hkdf::<Sha256>::new(Some(&salt), password.as_bytes());
         let mut key = [0u8; 32];
-        hk.expand(b"twin-vault-key", &mut key).expect("Invalid length");
+        hk.expand(b"twin-vault-key", &mut key)
+            .expect("Invalid length");
 
         Self { key, salt }
     }
@@ -66,7 +67,8 @@ impl EncryptionKey {
         let cipher = self.cipher();
         let nonce = Nonce::from_slice(&self.salt[..12]); // Use first 12 bytes of salt as nonce
 
-        cipher.encrypt(nonce, data)
+        cipher
+            .encrypt(nonce, data)
             .map_err(|e| VaultError::EncryptionError(e.to_string()))
     }
 
@@ -75,7 +77,8 @@ impl EncryptionKey {
         let cipher = self.cipher();
         let nonce = Nonce::from_slice(&self.salt[..12]);
 
-        cipher.decrypt(nonce, encrypted_data)
+        cipher
+            .decrypt(nonce, encrypted_data)
             .map_err(|e| VaultError::DecryptionError(e.to_string()))
     }
 
@@ -127,7 +130,8 @@ impl KeyStore {
             let key_bytes = key.to_bytes();
             let base64_key = base64ct::Base64::encode_string(&key_bytes);
 
-            entry.set_password(&base64_key)
+            entry
+                .set_password(&base64_key)
                 .map_err(|e| VaultError::KeystoreError(e.to_string()))?;
 
             Ok(())
@@ -176,7 +180,8 @@ impl KeyStore {
             let entry = Entry::new(&self.service, &twin_id.to_string())
                 .map_err(|e| VaultError::KeystoreError(e.to_string()))?;
 
-            entry.delete_password()
+            entry
+                .delete_password()
                 .map_err(|e| VaultError::KeystoreError(e.to_string()))?;
 
             Ok(())
@@ -266,11 +271,12 @@ impl TwinVault {
     /// Create new twin vault
     pub async fn new(twin_id: TwinId, config: VaultConfig) -> Result<Self, VaultError> {
         // Create storage directory
-        std::fs::create_dir_all(&config.storage_path)
-            .map_err(VaultError::IoError)?;
+        std::fs::create_dir_all(&config.storage_path).map_err(VaultError::IoError)?;
 
         // Open database
-        let db_path = config.storage_path.join(format!("twin-{}.db", twin_id.to_string().replace(':', "_")));
+        let db_path = config
+            .storage_path
+            .join(format!("twin-{}.db", twin_id.to_string().replace(':', "_")));
         let db = sled::open(&db_path).map_err(VaultError::DatabaseError)?;
 
         // Open trees
@@ -303,7 +309,7 @@ impl TwinVault {
 
         // Get current sequence number
         let sequence_counter = Arc::new(std::sync::atomic::AtomicU64::new(
-            Self::get_last_sequence(&log_tree)?
+            Self::get_last_sequence(&log_tree)?,
         ));
 
         Ok(Self {
@@ -323,7 +329,9 @@ impl TwinVault {
     /// Set value in the vault
     pub async fn set(&self, key: String, value: Bytes, timestamp: u64) -> Result<(), VaultError> {
         // Create signed CRDT operation
-        let signed_op = self.operation_factory.create_lww_set(key.clone(), value.clone())?;
+        let signed_op = self
+            .operation_factory
+            .create_lww_set(key.clone(), value.clone())?;
 
         // Apply to CRDT state
         {
@@ -340,7 +348,8 @@ impl TwinVault {
         };
 
         // Append to log
-        self.append_to_log(operation, None, signed_op.signature).await?;
+        self.append_to_log(operation, None, signed_op.signature)
+            .await?;
 
         // Save state
         self.save_crdt_state().await?;
@@ -379,7 +388,8 @@ impl TwinVault {
         };
 
         // Append to log
-        self.append_to_log(operation, None, signed_op.signature).await?;
+        self.append_to_log(operation, None, signed_op.signature)
+            .await?;
 
         // Save state
         self.save_crdt_state().await?;
@@ -396,7 +406,9 @@ impl TwinVault {
         timestamp: u64,
     ) -> Result<(), VaultError> {
         // Create signed CRDT operation
-        let signed_op = self.operation_factory.create_g_counter_increment(counter_id.to_string(), amount)?;
+        let signed_op = self
+            .operation_factory
+            .create_g_counter_increment(counter_id.to_string(), amount)?;
 
         // Apply to CRDT state
         {
@@ -414,7 +426,8 @@ impl TwinVault {
         };
 
         // Append to log
-        self.append_to_log(operation, None, signed_op.signature).await?;
+        self.append_to_log(operation, None, signed_op.signature)
+            .await?;
 
         // Save state
         self.save_crdt_state().await?;
@@ -425,7 +438,11 @@ impl TwinVault {
     /// Get counter value
     pub async fn get_counter(&self, counter_id: &str) -> Result<u64, VaultError> {
         let state = self.crdt_state.read().await;
-        Ok(state.g_counters.get(counter_id).map(|c| c.value()).unwrap_or(0))
+        Ok(state
+            .g_counters
+            .get(counter_id)
+            .map(|c| c.value())
+            .unwrap_or(0))
     }
 
     /// Get all keys
@@ -461,7 +478,11 @@ impl TwinVault {
     pub async fn stats(&self) -> Result<VaultStats, VaultError> {
         let log_entries = self.log_tree.len();
         let state = self.crdt_state.read().await;
-        let total_keys = state.lww_maps.get("default").map(|m| m.keys().len()).unwrap_or(0);
+        let total_keys = state
+            .lww_maps
+            .get("default")
+            .map(|m| m.keys().len())
+            .unwrap_or(0);
         let total_counters = state.g_counters.len();
 
         Ok(VaultStats {
@@ -481,7 +502,10 @@ impl TwinVault {
         result: Option<Bytes>,
         signature: Vec<u8>,
     ) -> Result<(), VaultError> {
-        let sequence = self.sequence_counter.fetch_add(1, std::sync::atomic::Ordering::SeqCst) + 1;
+        let sequence = self
+            .sequence_counter
+            .fetch_add(1, std::sync::atomic::Ordering::SeqCst)
+            + 1;
 
         let log_entry = LogEntry::new(
             sequence,
@@ -498,7 +522,8 @@ impl TwinVault {
 
         // Store in log tree
         let key = sequence.to_be_bytes();
-        self.log_tree.insert(key, encrypted_entry)
+        self.log_tree
+            .insert(key, encrypted_entry)
             .map_err(VaultError::DatabaseError)?;
 
         // Flush to disk
@@ -511,9 +536,10 @@ impl TwinVault {
         state_tree: &Tree,
         encryption_key: &EncryptionKey,
     ) -> Result<CrdtState, VaultError> {
-        if let Some(encrypted_state) = state_tree.get("current_state")
-            .map_err(VaultError::DatabaseError)? {
-
+        if let Some(encrypted_state) = state_tree
+            .get("current_state")
+            .map_err(VaultError::DatabaseError)?
+        {
             let state_bytes = encryption_key.decrypt(&encrypted_state)?;
             let state: CrdtState = bincode::deserialize(&state_bytes)
                 .map_err(|e| VaultError::SerializationError(e.to_string()))?;
@@ -530,7 +556,8 @@ impl TwinVault {
             .map_err(|e| VaultError::SerializationError(e.to_string()))?;
         let encrypted_state = self.encryption_key.encrypt(&state_bytes)?;
 
-        self.state_tree.insert("current_state", encrypted_state)
+        self.state_tree
+            .insert("current_state", encrypted_state)
             .map_err(VaultError::DatabaseError)?;
         self.state_tree.flush().map_err(VaultError::DatabaseError)?;
 
@@ -540,8 +567,9 @@ impl TwinVault {
     fn get_last_sequence(log_tree: &Tree) -> Result<u64, VaultError> {
         if let Some((key, _)) = log_tree.last().map_err(VaultError::DatabaseError)? {
             let sequence = u64::from_be_bytes(
-                key.as_ref().try_into()
-                    .map_err(|_| VaultError::CorruptedData("Invalid sequence key".to_string()))?
+                key.as_ref()
+                    .try_into()
+                    .map_err(|_| VaultError::CorruptedData("Invalid sequence key".to_string()))?,
             );
             Ok(sequence)
         } else {
@@ -605,10 +633,7 @@ mod tests {
 
     async fn create_test_vault() -> (TwinVault, TempDir) {
         let temp_dir = TempDir::new().unwrap();
-        let twin_id = TwinId::new(
-            crate::AgentId::new("test-agent", "test-node"),
-            "test-vault",
-        );
+        let twin_id = TwinId::new(crate::AgentId::new("test-agent", "test-node"), "test-vault");
 
         let config = VaultConfig {
             storage_path: temp_dir.path().to_path_buf(),
@@ -626,7 +651,10 @@ mod tests {
         let (vault, _temp_dir) = create_test_vault().await;
 
         // Set a value
-        vault.set("key1".to_string(), Bytes::from("value1"), 12345).await.unwrap();
+        vault
+            .set("key1".to_string(), Bytes::from("value1"), 12345)
+            .await
+            .unwrap();
 
         // Get the value
         let result = vault.get("key1").await.unwrap();
@@ -645,14 +673,20 @@ mod tests {
         let (vault, _temp_dir) = create_test_vault().await;
 
         // Increment counter
-        vault.increment_counter("counter1", 5, "actor1", 12345).await.unwrap();
+        vault
+            .increment_counter("counter1", 5, "actor1", 12345)
+            .await
+            .unwrap();
 
         // Get counter value
         let value = vault.get_counter("counter1").await.unwrap();
         assert_eq!(value, 5);
 
         // Increment again
-        vault.increment_counter("counter1", 3, "actor1", 12346).await.unwrap();
+        vault
+            .increment_counter("counter1", 3, "actor1", 12346)
+            .await
+            .unwrap();
 
         // Check new value
         let value = vault.get_counter("counter1").await.unwrap();
@@ -665,8 +699,14 @@ mod tests {
         let (vault2, _temp_dir2) = create_test_vault().await;
 
         // Add data to both vaults
-        vault1.set("key1".to_string(), Bytes::from("value1"), 12345).await.unwrap();
-        vault2.increment_counter("counter1", 10, "actor2", 12346).await.unwrap();
+        vault1
+            .set("key1".to_string(), Bytes::from("value1"), 12345)
+            .await
+            .unwrap();
+        vault2
+            .increment_counter("counter1", 10, "actor2", 12346)
+            .await
+            .unwrap();
 
         // Get state from vault2
         let state2 = vault2.get_state().await.unwrap();
@@ -717,10 +757,7 @@ mod tests {
     #[tokio::test]
     async fn test_vault_persistence() {
         let temp_dir = TempDir::new().unwrap();
-        let twin_id = TwinId::new(
-            crate::AgentId::new("test-agent", "test-node"),
-            "test-vault",
-        );
+        let twin_id = TwinId::new(crate::AgentId::new("test-agent", "test-node"), "test-vault");
 
         let encryption_key = EncryptionKey::generate();
 
@@ -734,7 +771,14 @@ mod tests {
             };
 
             let vault = TwinVault::new(twin_id.clone(), config).await.unwrap();
-            vault.set("persistent_key".to_string(), Bytes::from("persistent_value"), 12345).await.unwrap();
+            vault
+                .set(
+                    "persistent_key".to_string(),
+                    Bytes::from("persistent_value"),
+                    12345,
+                )
+                .await
+                .unwrap();
         }
 
         // Recreate vault and verify data persists

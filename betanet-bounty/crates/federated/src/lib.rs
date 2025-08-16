@@ -44,22 +44,24 @@ use thiserror::Error;
 use uuid::Uuid;
 
 // Re-export from dependencies
-pub use agent_fabric::{AgentFabric, AgentId, AgentMessage, AgentResponse, GroupConfig, GroupMessage};
-pub use twin_vault::{TwinId, TwinManager, TwinOperation, Receipt};
+pub use agent_fabric::{
+    AgentFabric, AgentId, AgentMessage, AgentResponse, GroupConfig, GroupMessage,
+};
+pub use twin_vault::{Receipt, TwinId, TwinManager, TwinOperation};
 
 // Module declarations
-pub mod orchestrator;
 pub mod fedavg_secureagg;
 pub mod gossip;
-pub mod split;
+pub mod orchestrator;
 pub mod receipts;
+pub mod split;
 
 // Re-export main types
-pub use orchestrator::{RoundOrchestrator, RoundPlan, CohortManager};
-pub use fedavg_secureagg::{FedAvgAggregator, SecureAggregation, DifferentialPrivacy};
+pub use fedavg_secureagg::{DifferentialPrivacy, FedAvgAggregator, SecureAggregation};
 pub use gossip::{GossipProtocol, PeerExchange, RobustAggregation};
-pub use split::{SplitLearning, DeviceTraining, BeaconAggregation};
+pub use orchestrator::{CohortManager, RoundOrchestrator, RoundPlan};
 pub use receipts::{FLReceipt, ProofOfParticipation, ResourceMetrics};
+pub use split::{BeaconAggregation, DeviceTraining, SplitLearning};
 
 /// Federated Learning round identifier
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -100,7 +102,11 @@ impl RoundId {
 
 impl std::fmt::Display for RoundId {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}:{}:{}", self.session_id, self.epoch, self.round_number)
+        write!(
+            f,
+            "{}:{}:{}",
+            self.session_id, self.epoch, self.round_number
+        )
     }
 }
 
@@ -113,7 +119,11 @@ pub struct ParticipantId {
 }
 
 impl ParticipantId {
-    pub fn new(agent_id: AgentId, device_type: DeviceType, capabilities: DeviceCapabilities) -> Self {
+    pub fn new(
+        agent_id: AgentId,
+        device_type: DeviceType,
+        capabilities: DeviceCapabilities,
+    ) -> Self {
         Self {
             agent_id,
             device_type,
@@ -230,11 +240,17 @@ pub enum CompressionType {
     /// Quantization to 8-bit integers
     Q8,
     /// Top-K sparsification
-    TopK { k: usize },
+    TopK {
+        k: usize,
+    },
     /// Random sparsification with probability
-    Random { prob: f32 },
+    Random {
+        prob: f32,
+    },
     /// Gradient compression
-    Gradient { threshold: f32 },
+    Gradient {
+        threshold: f32,
+    },
 }
 
 /// Quantization types for model parameters
@@ -613,11 +629,8 @@ mod tests {
             quantization: QuantizationType::Float32,
         };
 
-        let params = ModelParameters::new(
-            "v1.0".to_string(),
-            Bytes::from(vec![1, 2, 3, 4]),
-            metadata
-        );
+        let params =
+            ModelParameters::new("v1.0".to_string(), Bytes::from(vec![1, 2, 3, 4]), metadata);
 
         assert_eq!(params.version, "v1.0");
         assert_eq!(params.size_bytes(), 4);

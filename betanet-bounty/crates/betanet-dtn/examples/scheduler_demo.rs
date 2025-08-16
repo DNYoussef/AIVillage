@@ -4,8 +4,7 @@
 //! transmission decisions based on queue stability and energy constraints.
 
 use betanet_dtn::sched::{
-    LyapunovScheduler, LyapunovConfig,
-    SyntheticContactGenerator, PerformanceTestFramework
+    LyapunovConfig, LyapunovScheduler, PerformanceTestFramework, SyntheticContactGenerator,
 };
 
 fn main() {
@@ -37,9 +36,27 @@ fn basic_scheduler_demo() {
 
     // Create Lyapunov scheduler with different V parameters
     let configs = vec![
-        ("Stability-focused (V=0.1)", LyapunovConfig { v_parameter: 0.1, ..Default::default() }),
-        ("Balanced (V=1.0)", LyapunovConfig { v_parameter: 1.0, ..Default::default() }),
-        ("Energy-focused (V=10.0)", LyapunovConfig { v_parameter: 10.0, ..Default::default() }),
+        (
+            "Stability-focused (V=0.1)",
+            LyapunovConfig {
+                v_parameter: 0.1,
+                ..Default::default()
+            },
+        ),
+        (
+            "Balanced (V=1.0)",
+            LyapunovConfig {
+                v_parameter: 1.0,
+                ..Default::default()
+            },
+        ),
+        (
+            "Energy-focused (V=10.0)",
+            LyapunovConfig {
+                v_parameter: 10.0,
+                ..Default::default()
+            },
+        ),
     ];
 
     for (name, config) in configs {
@@ -48,9 +65,18 @@ fn basic_scheduler_demo() {
         let scheduler_result = LyapunovScheduler::new(config);
         match scheduler_result {
             Ok(scheduler) => {
-                println!("   ✅ Created scheduler with V parameter = {:.1}", scheduler.get_config().v_parameter);
-                println!("   📊 Max queue length: {}", scheduler.get_config().max_queue_length);
-                println!("   ⚡ Energy weight: {:.2}", scheduler.get_config().energy_cost_weight);
+                println!(
+                    "   ✅ Created scheduler with V parameter = {:.1}",
+                    scheduler.get_config().v_parameter
+                );
+                println!(
+                    "   📊 Max queue length: {}",
+                    scheduler.get_config().max_queue_length
+                );
+                println!(
+                    "   ⚡ Energy weight: {:.2}",
+                    scheduler.get_config().energy_cost_weight
+                );
             }
             Err(e) => {
                 println!("   ❌ Failed to create scheduler: {}", e);
@@ -86,9 +112,13 @@ fn synthetic_contact_demo() {
         println!("   📊 Generated {} contacts", contacts.len());
 
         if !contacts.is_empty() {
-            let avg_energy = contacts.iter().map(|c| c.energy_cost).sum::<f64>() / contacts.len() as f64;
+            let avg_energy =
+                contacts.iter().map(|c| c.energy_cost).sum::<f64>() / contacts.len() as f64;
             let max_energy = contacts.iter().map(|c| c.energy_cost).fold(0.0, f64::max);
-            println!("   ⚡ Avg energy cost: {:.2}, Max: {:.2}", avg_energy, max_energy);
+            println!(
+                "   ⚡ Avg energy cost: {:.2}, Max: {:.2}",
+                avg_energy, max_energy
+            );
         }
         println!();
     }
@@ -99,7 +129,8 @@ fn synthetic_contact_demo() {
 
     if !bundles.is_empty() {
         let avg_size = bundles.iter().map(|b| b.size()).sum::<usize>() / bundles.len();
-        let avg_lifetime = bundles.iter().map(|b| b.primary.lifetime).sum::<u64>() / bundles.len() as u64;
+        let avg_lifetime =
+            bundles.iter().map(|b| b.primary.lifetime).sum::<u64>() / bundles.len() as u64;
         println!("   📏 Avg bundle size: {} bytes", avg_size);
         println!("   ⏰ Avg lifetime: {} ms", avg_lifetime);
     }
@@ -132,25 +163,35 @@ fn quick_performance_demo() {
         config,
         betanet_dtn::sched::TopologyType::Linear {
             contact_duration: 20,
-            interval: 40
+            interval: 40,
         },
         "Quick Demo Test",
     );
 
     // Print simplified results
     println!("🏆 Results Summary:");
-    println!("   Lyapunov - Delivery: {:.1}%, Energy/Bundle: {:.2}",
-             lyap_results.delivery_rate * 100.0, lyap_results.energy_per_bundle);
-    println!("   FIFO     - Delivery: {:.1}%, Energy/Bundle: {:.2}",
-             fifo_results.delivery_rate * 100.0, fifo_results.energy_per_bundle);
+    println!(
+        "   Lyapunov - Delivery: {:.1}%, Energy/Bundle: {:.2}",
+        lyap_results.delivery_rate * 100.0,
+        lyap_results.energy_per_bundle
+    );
+    println!(
+        "   FIFO     - Delivery: {:.1}%, Energy/Bundle: {:.2}",
+        fifo_results.delivery_rate * 100.0,
+        fifo_results.energy_per_bundle
+    );
 
     if lyap_results.delivery_rate > fifo_results.delivery_rate {
-        println!("   ✅ Lyapunov shows {:.1}% better delivery rate!",
-                 (lyap_results.delivery_rate - fifo_results.delivery_rate) * 100.0);
+        println!(
+            "   ✅ Lyapunov shows {:.1}% better delivery rate!",
+            (lyap_results.delivery_rate - fifo_results.delivery_rate) * 100.0
+        );
     }
 
     if lyap_results.energy_per_bundle < fifo_results.energy_per_bundle {
-        println!("   ⚡ Lyapunov is {:.1}% more energy efficient!",
-                 (1.0 - lyap_results.energy_per_bundle / fifo_results.energy_per_bundle) * 100.0);
+        println!(
+            "   ⚡ Lyapunov is {:.1}% more energy efficient!",
+            (1.0 - lyap_results.energy_per_bundle / fifo_results.energy_per_bundle) * 100.0
+        );
     }
 }

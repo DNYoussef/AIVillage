@@ -5,10 +5,7 @@ use std::time::Duration;
 use crate::Result;
 
 /// Calculate VRF-based delay
-pub async fn calculate_vrf_delay(
-    min_delay: &Duration,
-    max_delay: &Duration,
-) -> Result<Duration> {
+pub async fn calculate_vrf_delay(min_delay: &Duration, max_delay: &Duration) -> Result<Duration> {
     #[cfg(feature = "vrf")]
     {
         // VRF-based delay calculation stub
@@ -25,7 +22,9 @@ pub async fn calculate_vrf_delay(
 
     #[cfg(not(feature = "vrf"))]
     {
-        Err(crate::MixnodeError::Vrf("VRF feature not enabled".to_string()))
+        Err(crate::MixnodeError::Vrf(
+            "VRF feature not enabled".to_string(),
+        ))
     }
 }
 

@@ -6,10 +6,10 @@
 //! - Negotiation protocol with fallback to rate-limited CPU PoW
 //! - Anti-abuse protection with progressive difficulty scaling
 
+use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use std::time::{Duration, Instant};
 use thiserror::Error;
-use serde::{Deserialize, Serialize};
-use sha2::{Sha256, Digest};
 
 /// Bootstrap PoW errors
 #[derive(Debug, Error)]
@@ -58,13 +58,19 @@ impl DeviceClass {
     pub fn from_user_agent(user_agent: &str) -> Self {
         let ua_lower = user_agent.to_lowercase();
 
-        if ua_lower.contains("mobile") || ua_lower.contains("android") || ua_lower.contains("iphone") {
+        if ua_lower.contains("mobile")
+            || ua_lower.contains("android")
+            || ua_lower.contains("iphone")
+        {
             Self::Mobile
         } else if ua_lower.contains("server") || ua_lower.contains("datacenter") {
             Self::Server
         } else if ua_lower.contains("embed") || ua_lower.contains("iot") {
             Self::Embedded
-        } else if ua_lower.contains("windows") || ua_lower.contains("macos") || ua_lower.contains("linux") {
+        } else if ua_lower.contains("windows")
+            || ua_lower.contains("macos")
+            || ua_lower.contains("linux")
+        {
             Self::Desktop
         } else {
             Self::Unknown
@@ -109,16 +115,16 @@ impl Argon2Params {
     pub fn for_device_class(device_class: DeviceClass) -> Self {
         match device_class {
             DeviceClass::Mobile => Self {
-                memory_kb: 16384,  // 16 MB - mobile optimized
-                iterations: 1,     // Single iteration for speed
-                parallelism: 2,    // Limited cores on mobile
+                memory_kb: 16384, // 16 MB - mobile optimized
+                iterations: 1,    // Single iteration for speed
+                parallelism: 2,   // Limited cores on mobile
                 output_len: 32,
                 target_time_ms: 250, // <300ms target
             },
             DeviceClass::Desktop => Self {
-                memory_kb: 65536,  // 64 MB
-                iterations: 2,     // More iterations
-                parallelism: 4,    // More cores available
+                memory_kb: 65536, // 64 MB
+                iterations: 2,    // More iterations
+                parallelism: 4,   // More cores available
                 output_len: 32,
                 target_time_ms: 1000, // 1 second target
             },
@@ -130,14 +136,14 @@ impl Argon2Params {
                 target_time_ms: 2000, // 2 second target (10x+ harder than mobile)
             },
             DeviceClass::Embedded => Self {
-                memory_kb: 4096,   // 4 MB - very limited
+                memory_kb: 4096, // 4 MB - very limited
                 iterations: 1,
-                parallelism: 1,    // Single core
+                parallelism: 1, // Single core
                 output_len: 32,
                 target_time_ms: 500,
             },
             DeviceClass::Unknown => Self {
-                memory_kb: 32768,  // 32 MB - middle ground
+                memory_kb: 32768, // 32 MB - middle ground
                 iterations: 2,
                 parallelism: 2,
                 output_len: 32,
@@ -158,22 +164,26 @@ impl Argon2Params {
 
     /// Validate parameters are sane
     pub fn validate(&self) -> Result<()> {
-        if self.memory_kb < 1024 || self.memory_kb > 2097152 { // 1 MB to 2 GB
-            return Err(BootstrapError::InvalidDeviceClass(
-                format!("Invalid memory cost: {} KB", self.memory_kb)
-            ));
+        if self.memory_kb < 1024 || self.memory_kb > 2097152 {
+            // 1 MB to 2 GB
+            return Err(BootstrapError::InvalidDeviceClass(format!(
+                "Invalid memory cost: {} KB",
+                self.memory_kb
+            )));
         }
 
         if self.iterations == 0 || self.iterations > 10 {
-            return Err(BootstrapError::InvalidDeviceClass(
-                format!("Invalid iterations: {}", self.iterations)
-            ));
+            return Err(BootstrapError::InvalidDeviceClass(format!(
+                "Invalid iterations: {}",
+                self.iterations
+            )));
         }
 
         if self.parallelism == 0 || self.parallelism > 16 {
-            return Err(BootstrapError::InvalidDeviceClass(
-                format!("Invalid parallelism: {}", self.parallelism)
-            ));
+            return Err(BootstrapError::InvalidDeviceClass(format!(
+                "Invalid parallelism: {}",
+                self.parallelism
+            )));
         }
 
         Ok(())
@@ -326,7 +336,7 @@ impl Argon2PoW {
         }
 
         let start_time = Instant::now();
-        let mut nonce = challenge.nonce_hint;
+        let nonce = challenge.nonce_hint;
 
         // Use tokio spawn_blocking for CPU-intensive work
         let challenge_data = challenge.challenge.clone();
@@ -336,7 +346,8 @@ impl Argon2PoW {
 
         let solution = tokio::task::spawn_blocking(move || {
             Self::solve_blocking(&challenge_data, &params, difficulty, nonce)
-        }).await
+        })
+        .await
         .map_err(|e| BootstrapError::ComputationFailed(e.to_string()))??;
 
         let solve_time = start_time.elapsed();
@@ -358,7 +369,11 @@ impl Argon2PoW {
     ) -> Result<(u64, Vec<u8>)> {
         // TEMPORARY: Using SHA-256 based PoW for testing until argon2 dependency issues resolved
         // In production, this would use actual Argon2id with device-class parameters
-        let max_attempts = if params.memory_kb < 32768 { 100_000 } else { 1_000_000 }; // Mobile devices get fewer attempts
+        let max_attempts = if params.memory_kb < 32768 {
+            100_000
+        } else {
+            1_000_000
+        }; // Mobile devices get fewer attempts
 
         for _ in 0..max_attempts {
             // Prepare input: challenge || nonce || device_params_simulation
@@ -384,7 +399,9 @@ impl Argon2PoW {
             nonce = nonce.wrapping_add(1);
         }
 
-        Err(BootstrapError::ComputationFailed("Max attempts reached".to_string()))
+        Err(BootstrapError::ComputationFailed(
+            "Max attempts reached".to_string(),
+        ))
     }
 
     /// Check if hash meets difficulty requirement
@@ -432,7 +449,8 @@ impl Argon2PoW {
 
         let is_valid = tokio::task::spawn_blocking(move || {
             Self::verify_blocking(&challenge_data, &params, nonce, &expected_hash, difficulty)
-        }).await
+        })
+        .await
         .map_err(|e| BootstrapError::ComputationFailed(e.to_string()))?;
 
         Ok(is_valid)
@@ -481,25 +499,26 @@ impl CpuPoW {
     }
 
     /// Solve CPU PoW challenge
-    pub async fn solve_challenge(&self, challenge_id: &str, challenge: &[u8]) -> Result<(u64, Vec<u8>)> {
+    pub async fn solve_challenge(
+        &self,
+        challenge_id: &str,
+        challenge: &[u8],
+    ) -> Result<(u64, Vec<u8>)> {
         let challenge_data = challenge.to_vec();
         let difficulty = self.params.difficulty;
-        let challenge_id = challenge_id.to_string();
+        let _challenge_id = challenge_id.to_string();
 
-        let solution = tokio::task::spawn_blocking(move || {
-            Self::solve_cpu_blocking(&challenge_data, difficulty)
-        }).await
-        .map_err(|e| BootstrapError::ComputationFailed(e.to_string()))?;
-
-        solution
+        tokio::task::spawn_blocking(move || Self::solve_cpu_blocking(&challenge_data, difficulty))
+            .await
+            .map_err(|e| BootstrapError::ComputationFailed(e.to_string()))?
     }
 
     /// Blocking CPU PoW solve
     fn solve_cpu_blocking(challenge: &[u8], difficulty: u32) -> Result<(u64, Vec<u8>)> {
-        let mut nonce = 0u64;
         let max_attempts = 100_000; // Rate limited
 
-        for _ in 0..max_attempts {
+        for (nonce_iter, _) in (0..max_attempts).enumerate() {
+            let nonce = nonce_iter as u64;
             let mut hasher = Sha256::new();
             hasher.update(challenge);
             hasher.update(nonce.to_le_bytes());
@@ -508,11 +527,11 @@ impl CpuPoW {
             if Argon2PoW::check_difficulty(&hash, difficulty) {
                 return Ok((nonce, hash.to_vec()));
             }
-
-            nonce += 1;
         }
 
-        Err(BootstrapError::RateLimited("CPU PoW rate limit exceeded".to_string()))
+        Err(BootstrapError::RateLimited(
+            "CPU PoW rate limit exceeded".to_string(),
+        ))
     }
 }
 
@@ -548,7 +567,8 @@ impl BootstrapManager {
             let mut challenge = PoWChallenge::new(device_class, 16); // Base difficulty
             challenge.argon2_params.scale_for_abuse(abuse_factor);
 
-            self.challenges.insert(challenge.challenge_id.clone(), challenge.clone());
+            self.challenges
+                .insert(challenge.challenge_id.clone(), challenge.clone());
             Ok(BootstrapMessage::Challenge(challenge))
         } else {
             // Fallback to CPU PoW with strict rate limiting
@@ -563,7 +583,8 @@ impl BootstrapManager {
             // Scale difficulty based on abuse
             if abuse_factor > 1.0 {
                 params.difficulty = (params.difficulty as f64 * abuse_factor) as u32;
-                params.rate_limit_per_second = (params.rate_limit_per_second as f64 / abuse_factor) as u32;
+                params.rate_limit_per_second =
+                    (params.rate_limit_per_second as f64 / abuse_factor) as u32;
             }
 
             Ok(BootstrapMessage::CpuChallenge {
@@ -580,7 +601,9 @@ impl BootstrapManager {
         solution: PoWSolution,
         client_id: &str,
     ) -> Result<bool> {
-        let challenge = self.challenges.get(&solution.challenge_id)
+        let challenge = self
+            .challenges
+            .get(&solution.challenge_id)
             .ok_or(BootstrapError::VerificationFailed)?;
 
         let argon2_pow = Argon2PoW::new(challenge.argon2_params.clone())?;
@@ -602,7 +625,8 @@ impl BootstrapManager {
     /// Clean expired challenges
     pub fn cleanup_expired(&mut self) {
         let now = std::time::SystemTime::now();
-        self.challenges.retain(|_, challenge| challenge.expires_at > now);
+        self.challenges
+            .retain(|_, challenge| challenge.expires_at > now);
     }
 }
 
@@ -623,6 +647,12 @@ pub struct AbuseTracker {
     last_activity: std::collections::HashMap<String, std::time::Instant>,
 }
 
+impl Default for AbuseTracker {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl AbuseTracker {
     /// Create new abuse tracker
     pub fn new() -> Self {
@@ -635,8 +665,12 @@ impl AbuseTracker {
 
     /// Record successful solve
     pub fn record_success(&mut self, client_id: &str) {
-        *self.success_counts.entry(client_id.to_string()).or_insert(0) += 1;
-        self.last_activity.insert(client_id.to_string(), Instant::now());
+        *self
+            .success_counts
+            .entry(client_id.to_string())
+            .or_insert(0) += 1;
+        self.last_activity
+            .insert(client_id.to_string(), Instant::now());
 
         // Decay failure count on success
         if let Some(failures) = self.failure_counts.get_mut(client_id) {
@@ -646,8 +680,12 @@ impl AbuseTracker {
 
     /// Record failed attempt
     pub fn record_failure(&mut self, client_id: &str) {
-        *self.failure_counts.entry(client_id.to_string()).or_insert(0) += 1;
-        self.last_activity.insert(client_id.to_string(), Instant::now());
+        *self
+            .failure_counts
+            .entry(client_id.to_string())
+            .or_insert(0) += 1;
+        self.last_activity
+            .insert(client_id.to_string(), Instant::now());
     }
 
     /// Get abuse factor (1.0 = normal, >1.0 = increased difficulty)
@@ -678,7 +716,8 @@ impl AbuseTracker {
     fn cleanup_old_entries(&mut self) {
         let cutoff = Instant::now() - Duration::from_secs(3600);
 
-        let expired_clients: Vec<String> = self.last_activity
+        let expired_clients: Vec<String> = self
+            .last_activity
             .iter()
             .filter(|(_, &timestamp)| timestamp < cutoff)
             .map(|(client_id, _)| client_id.clone())
@@ -698,9 +737,22 @@ mod tests {
 
     #[test]
     fn test_device_class_detection() {
-        assert_eq!(DeviceClass::from_user_agent("Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15"), DeviceClass::Mobile);
-        assert_eq!(DeviceClass::from_user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"), DeviceClass::Desktop);
-        assert_eq!(DeviceClass::from_user_agent("Server/1.0"), DeviceClass::Server);
+        assert_eq!(
+            DeviceClass::from_user_agent(
+                "Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15"
+            ),
+            DeviceClass::Mobile
+        );
+        assert_eq!(
+            DeviceClass::from_user_agent(
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+            ),
+            DeviceClass::Desktop
+        );
+        assert_eq!(
+            DeviceClass::from_user_agent("Server/1.0"),
+            DeviceClass::Server
+        );
     }
 
     #[test]
@@ -766,7 +818,7 @@ mod tests {
         let solution = cpu_pow.solve_challenge("test", challenge).await;
         assert!(solution.is_ok());
 
-        let (nonce, hash) = solution.unwrap();
+        let (_nonce, hash) = solution.unwrap();
         assert!(Argon2PoW::check_difficulty(&hash, 8));
     }
 }

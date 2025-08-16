@@ -17,15 +17,14 @@ use tracing::{debug, error, info, warn};
 use uuid::Uuid;
 
 use agent_fabric::{
+    groups::{GroupMessageType, TrainingAction},
     AgentFabric, AgentId, AgentMessage, AgentResponse, GroupConfig, GroupMessage,
-    groups::{GroupMessageType, TrainingAction}
 };
-use twin_vault::{TwinManager, TwinId, TwinOperation, Receipt};
+use twin_vault::{Receipt, TwinId, TwinManager, TwinOperation};
 
 use crate::{
-    RoundId, ParticipantId, DeviceType, DeviceCapabilities, FLSession, SessionStatus,
-    TrainingConfig, ModelParameters, TrainingResult, AggregationResult, AggregationStats,
-    Result, FederatedError
+    AggregationResult, AggregationStats, DeviceCapabilities, DeviceType, FLSession, FederatedError,
+    ModelParameters, ParticipantId, Result, RoundId, SessionStatus, TrainingConfig, TrainingResult,
 };
 
 /// Round orchestrator that coordinates federated learning via MLS groups
@@ -132,7 +131,9 @@ impl RoundOrchestrator {
 
         // Store session and cohort
         self.sessions.write().insert(session_id.clone(), session);
-        self.cohorts.write().insert(session_id.clone(), cohort_manager);
+        self.cohorts
+            .write()
+            .insert(session_id.clone(), cohort_manager);
 
         // Publish session creation event
         let event = OrchestrationEvent::SessionCreated {
@@ -150,7 +151,10 @@ impl RoundOrchestrator {
         session_id: &str,
         participant: ParticipantId,
     ) -> Result<()> {
-        info!("Adding participant {} to session {}", participant.agent_id, session_id);
+        info!(
+            "Adding participant {} to session {}",
+            participant.agent_id, session_id
+        );
 
         // Add to MLS group
         let group_id = format!("fl-session-{}", session_id);
@@ -162,8 +166,11 @@ impl RoundOrchestrator {
             cohort.add_participant(participant.clone())?;
 
             // Check if we can start the session
-            if cohort.can_start_round() && self.get_session_status(session_id)? == SessionStatus::WaitingForParticipants {
-                self.update_session_status(session_id, SessionStatus::InProgress).await?;
+            if cohort.can_start_round()
+                && self.get_session_status(session_id)? == SessionStatus::WaitingForParticipants
+            {
+                self.update_session_status(session_id, SessionStatus::InProgress)
+                    .await?;
                 self.start_first_round(session_id).await?;
             }
 
@@ -186,7 +193,8 @@ impl RoundOrchestrator {
         // Get session and cohort
         let session = self.get_session(session_id)?;
         let mut cohorts = self.cohorts.write();
-        let cohort = cohorts.get_mut(session_id)
+        let cohort = cohorts
+            .get_mut(session_id)
             .ok_or_else(|| FederatedError::SessionNotFound(session_id.to_string()))?;
 
         // Check if we can start a round
@@ -216,7 +224,9 @@ impl RoundOrchestrator {
         cohort.start_round(round_id.clone());
 
         // Store round plan
-        self.round_plans.write().insert(round_id.clone(), round_plan.clone());
+        self.round_plans
+            .write()
+            .insert(round_id.clone(), round_plan.clone());
 
         // Publish round plan via MLS group
         self.publish_round_plan(&round_plan).await?;
@@ -238,20 +248,22 @@ impl RoundOrchestrator {
         round_id: &RoundId,
         result: TrainingResult,
     ) -> Result<()> {
-        info!("Collecting training result from {} for round {}",
-              result.participant_id.agent_id, round_id);
+        info!(
+            "Collecting training result from {} for round {}",
+            result.participant_id.agent_id, round_id
+        );
 
         // Verify the result is for the correct round
         if result.round_id != *round_id {
             return Err(FederatedError::ModelError(
-                "Training result round ID mismatch".to_string()
+                "Training result round ID mismatch".to_string(),
             ));
         }
 
         // Store result via twin vault for persistence
         let twin_id = TwinId::new(
             result.participant_id.agent_id.clone(),
-            format!("fl-result-{}", round_id)
+            format!("fl-result-{}", round_id),
         );
 
         let result_data = bincode::serialize(&result)
@@ -332,12 +344,18 @@ impl RoundOrchestrator {
         while let Some(command) = receiver.recv().await {
             match command {
                 OrchestrationCommand::StartSession { session_id } => {
-                    if let Err(e) = self.update_session_status(&session_id, SessionStatus::InProgress).await {
+                    if let Err(e) = self
+                        .update_session_status(&session_id, SessionStatus::InProgress)
+                        .await
+                    {
                         error!("Failed to start session {}: {}", session_id, e);
                     }
                 }
                 OrchestrationCommand::StopSession { session_id } => {
-                    if let Err(e) = self.update_session_status(&session_id, SessionStatus::Cancelled).await {
+                    if let Err(e) = self
+                        .update_session_status(&session_id, SessionStatus::Cancelled)
+                        .await
+                    {
                         error!("Failed to stop session {}: {}", session_id, e);
                     }
                 }
@@ -390,16 +408,17 @@ impl RoundOrchestrator {
         // Update session with results
         if let Some(session) = self.sessions.write().get_mut(&round_id.session_id) {
             // Check for convergence
-            if aggregation_result.stats.converged ||
-               round_id.round_number >= session.max_rounds {
+            if aggregation_result.stats.converged || round_id.round_number >= session.max_rounds {
                 session.status = if aggregation_result.stats.converged {
                     SessionStatus::Converged
                 } else {
                     SessionStatus::MaxRoundsReached
                 };
 
-                info!("Session {} completed with status: {:?}",
-                      round_id.session_id, session.status);
+                info!(
+                    "Session {} completed with status: {:?}",
+                    round_id.session_id, session.status
+                );
             }
         }
 
@@ -418,13 +437,14 @@ impl RoundOrchestrator {
     async fn aggregate_round_results(&self, round_id: &RoundId) -> Result<AggregationResult> {
         // Get training results from cohort
         let cohorts = self.cohorts.read();
-        let cohort = cohorts.get(&round_id.session_id)
+        let cohort = cohorts
+            .get(&round_id.session_id)
             .ok_or_else(|| FederatedError::SessionNotFound(round_id.session_id.clone()))?;
 
         let results = cohort.get_training_results();
         if results.is_empty() {
             return Err(FederatedError::AggregationError(
-                "No training results to aggregate".to_string()
+                "No training results to aggregate".to_string(),
             ));
         }
 
@@ -432,14 +452,14 @@ impl RoundOrchestrator {
         let mut total_examples = 0u64;
         let mut weighted_loss = 0.0f32;
         let mut weighted_accuracy = 0.0f32;
-        let participants: Vec<ParticipantId> = results.iter()
-            .map(|r| r.participant_id.clone())
-            .collect();
+        let participants: Vec<ParticipantId> =
+            results.iter().map(|r| r.participant_id.clone()).collect();
 
         for result in &results {
             total_examples += result.metrics.num_examples as u64;
             weighted_loss += result.metrics.training_loss * result.metrics.num_examples as f32;
-            weighted_accuracy += result.metrics.training_accuracy * result.metrics.num_examples as f32;
+            weighted_accuracy +=
+                result.metrics.training_accuracy * result.metrics.num_examples as f32;
         }
 
         let avg_loss = weighted_loss / total_examples as f32;
@@ -457,7 +477,7 @@ impl RoundOrchestrator {
             total_examples,
             avg_training_loss: avg_loss,
             avg_training_accuracy: avg_accuracy,
-            improvement: 0.0, // Calculate based on previous round
+            improvement: 0.0,          // Calculate based on previous round
             converged: avg_loss < 0.1, // Simple convergence criterion
         };
 
@@ -495,7 +515,10 @@ impl RoundOrchestrator {
             .await
             .map_err(FederatedError::AgentFabricError)?;
 
-        info!("Published aggregation result for round: {}", result.round_id);
+        info!(
+            "Published aggregation result for round: {}",
+            result.round_id
+        );
         Ok(())
     }
 
@@ -526,8 +549,11 @@ impl RoundOrchestrator {
         // Force completion with available results
         if let Some(cohort) = self.cohorts.read().get(&round_id.session_id) {
             if !cohort.get_training_results().is_empty() {
-                info!("Completing round {} with {} results after timeout",
-                      round_id, cohort.get_training_results().len());
+                info!(
+                    "Completing round {} with {} results after timeout",
+                    round_id,
+                    cohort.get_training_results().len()
+                );
                 self.complete_round(round_id).await?;
             } else {
                 warn!("Round {} timed out with no results, cancelling", round_id);
@@ -559,7 +585,10 @@ impl RoundOrchestrator {
                     if cohort.can_start_round() && cohort.current_round_result.is_some() {
                         // Start next round
                         if let Err(e) = self.start_round(&session_id).await {
-                            error!("Failed to start next round for session {}: {}", session_id, e);
+                            error!(
+                                "Failed to start next round for session {}: {}",
+                                session_id, e
+                            );
                         }
                         break;
                     }
@@ -579,7 +608,10 @@ impl RoundOrchestrator {
     async fn update_session_status(&self, session_id: &str, status: SessionStatus) -> Result<()> {
         if let Some(session) = self.sessions.write().get_mut(session_id) {
             session.status = status;
-            info!("Updated session {} status to {:?}", session_id, session.status);
+            info!(
+                "Updated session {} status to {:?}",
+                session_id, session.status
+            );
             Ok(())
         } else {
             Err(FederatedError::SessionNotFound(session_id.to_string()))
@@ -587,7 +619,8 @@ impl RoundOrchestrator {
     }
 
     fn get_session(&self, session_id: &str) -> Result<FLSession> {
-        self.sessions.read()
+        self.sessions
+            .read()
             .get(session_id)
             .cloned()
             .ok_or_else(|| FederatedError::SessionNotFound(session_id.to_string()))
@@ -697,10 +730,13 @@ impl CohortManager {
 
         self.participants.insert(agent_id.clone(), participant);
         self.active_participants.insert(agent_id.clone());
-        self.participant_health.insert(agent_id.clone(), ParticipantHealth::new());
+        self.participant_health
+            .insert(agent_id.clone(), ParticipantHealth::new());
 
-        info!("Added participant {} to cohort for session {}",
-              agent_id, self.session_id);
+        info!(
+            "Added participant {} to cohort for session {}",
+            agent_id, self.session_id
+        );
         Ok(())
     }
 
@@ -711,8 +747,10 @@ impl CohortManager {
         self.training_results.remove(agent_id);
         self.participant_health.remove(agent_id);
 
-        info!("Removed participant {} from cohort for session {}",
-              agent_id, self.session_id);
+        info!(
+            "Removed participant {} from cohort for session {}",
+            agent_id, self.session_id
+        );
     }
 
     pub fn can_start_round(&self) -> bool {
@@ -738,8 +776,11 @@ impl CohortManager {
         // Select participants for this round
         self.round_participants = self.select_round_participants();
 
-        info!("Started round {} with {} participants",
-              self.current_round, self.round_participants.len());
+        info!(
+            "Started round {} with {} participants",
+            self.current_round,
+            self.round_participants.len()
+        );
     }
 
     pub fn add_training_result(&mut self, result: TrainingResult) {
@@ -751,8 +792,12 @@ impl CohortManager {
         }
 
         self.training_results.insert(agent_id.clone(), result);
-        info!("Received training result from {} ({}/{})",
-              agent_id, self.training_results.len(), self.round_participants.len());
+        info!(
+            "Received training result from {} ({}/{})",
+            agent_id,
+            self.training_results.len(),
+            self.round_participants.len()
+        );
     }
 
     pub fn is_round_complete(&self) -> bool {
@@ -781,7 +826,9 @@ impl CohortManager {
 
     fn select_round_participants(&self) -> HashSet<AgentId> {
         // Simple selection: use all active participants up to target
-        let target_size = self.target_participants.min(self.active_participants.len() as u32) as usize;
+        let target_size = self
+            .target_participants
+            .min(self.active_participants.len() as u32) as usize;
         self.active_participants
             .iter()
             .take(target_size)
@@ -869,15 +916,9 @@ pub enum OrchestrationEvent {
 /// Commands for controlling the orchestrator
 #[derive(Debug, Clone)]
 pub enum OrchestrationCommand {
-    StartSession {
-        session_id: String,
-    },
-    StopSession {
-        session_id: String,
-    },
-    ForceRound {
-        session_id: String,
-    },
+    StartSession { session_id: String },
+    StopSession { session_id: String },
+    ForceRound { session_id: String },
 }
 
 /// Orchestrator configuration
@@ -908,19 +949,17 @@ impl Default for OrchestratorConfig {
 mod tests {
     use super::*;
     use agent_fabric::AgentFabric;
-    use twin_vault::{ReceiptSigner, ReceiptVerifier};
     use tempfile::TempDir;
+    use twin_vault::{ReceiptSigner, ReceiptVerifier};
 
     #[tokio::test]
     async fn test_round_plan_creation() {
         let round_id = RoundId::new("test-session".to_string(), 1, 1234567890);
-        let participants = vec![
-            ParticipantId::new(
-                AgentId::new("phone-001", "mobile"),
-                DeviceType::Phone,
-                DeviceCapabilities::default(),
-            )
-        ];
+        let participants = vec![ParticipantId::new(
+            AgentId::new("phone-001", "mobile"),
+            DeviceType::Phone,
+            DeviceCapabilities::default(),
+        )];
         let config = TrainingConfig::default();
 
         let plan = RoundPlan::new(

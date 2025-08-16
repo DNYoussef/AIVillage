@@ -15,13 +15,13 @@ use tempfile::TempDir;
 use tokio::time::{sleep, timeout};
 
 use agent_fabric::{
-    AgentFabric, AgentId, AgentMessage, AgentResponse, AgentClient, AgentServer,
-    HtxConfig, DeliveryOptions, Transport, MessagePriority,
-    api::{TwinMessage, TutorMessage, TwinAction, TutorAction, message_types},
-    GroupConfig, GroupMessage, GroupMessageType, TrainingAction, AlertLevel,
+    api::{message_types, TutorAction, TutorMessage, TwinAction, TwinMessage},
+    dtn_bridge::{BundleMessage, DtnBridge, DtnClient, DtnServer},
+    groups::{GroupMember, MlsGroup},
     rpc::{RpcClient, RpcServer, RpcTransport},
-    dtn_bridge::{DtnBridge, BundleMessage, DtnClient, DtnServer},
-    groups::{MlsGroup, GroupMember},
+    AgentClient, AgentFabric, AgentId, AgentMessage, AgentResponse, AgentServer, AlertLevel,
+    DeliveryOptions, GroupConfig, GroupMessage, GroupMessageType, HtxConfig, MessagePriority,
+    TrainingAction, Transport,
 };
 
 /// Test server implementation
@@ -39,7 +39,8 @@ impl TestServer {
     }
 
     fn get_message_count(&self) -> usize {
-        self.message_count.load(std::sync::atomic::Ordering::Relaxed)
+        self.message_count
+            .load(std::sync::atomic::Ordering::Relaxed)
     }
 }
 
@@ -50,25 +51,24 @@ impl AgentServer for TestServer {
         from: AgentId,
         message: AgentMessage,
     ) -> agent_fabric::Result<Option<AgentResponse>> {
-        self.message_count.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        self.message_count
+            .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
 
         match message.message_type.as_str() {
-            message_types::PING => {
-                Ok(Some(AgentResponse::success(&message.id, Bytes::from("pong"))))
-            }
-            "echo" => {
-                Ok(Some(AgentResponse::success(&message.id, message.payload)))
-            }
+            message_types::PING => Ok(Some(AgentResponse::success(
+                &message.id,
+                Bytes::from("pong"),
+            ))),
+            "echo" => Ok(Some(AgentResponse::success(&message.id, message.payload))),
             "notification" => {
                 // No response for notifications
                 Ok(None)
             }
-            "error" => {
-                Ok(Some(AgentResponse::error(&message.id, "Simulated error")))
-            }
-            _ => {
-                Ok(Some(AgentResponse::error(&message.id, "Unknown message type")))
-            }
+            "error" => Ok(Some(AgentResponse::error(&message.id, "Simulated error"))),
+            _ => Ok(Some(AgentResponse::error(
+                &message.id,
+                "Unknown message type",
+            ))),
         }
     }
 
@@ -100,7 +100,12 @@ async fn test_rpc_communication() {
 
     // Register test server
     let test_server = Arc::new(TestServer::new("test-server".to_string()));
-    fabric.register_server("test-handler".to_string(), Box::new(TestServer::new("test-server".to_string()))).await;
+    fabric
+        .register_server(
+            "test-handler".to_string(),
+            Box::new(TestServer::new("test-server".to_string())),
+        )
+        .await;
 
     // Test RPC ping
     let target_id = AgentId::new("target", "test-node");
@@ -113,7 +118,9 @@ async fn test_rpc_communication() {
 
     // This will fail since we don't have a connection to the target,
     // but it tests the RPC code path
-    let result = fabric.send_message(target_id, ping_message, rpc_options).await;
+    let result = fabric
+        .send_message(target_id, ping_message, rpc_options)
+        .await;
 
     // Should get TransportUnavailable or AgentNotFound error
     assert!(result.is_err());
@@ -124,7 +131,9 @@ async fn test_dtn_bridge_creation() {
     let temp_dir = TempDir::new().unwrap();
     let endpoint = betanet_dtn::EndpointId::node("test-node");
 
-    let bridge = DtnBridge::new(endpoint.clone(), temp_dir.path()).await.unwrap();
+    let bridge = DtnBridge::new(endpoint.clone(), temp_dir.path())
+        .await
+        .unwrap();
     assert_eq!(bridge.local_endpoint(), &endpoint);
 
     // Test starting and stopping
@@ -152,7 +161,10 @@ async fn test_dtn_bundle_creation() {
 
     assert_eq!(bundle_message.from, deserialized.from);
     assert_eq!(bundle_message.to, deserialized.to);
-    assert_eq!(bundle_message.content.message_type, deserialized.content.message_type);
+    assert_eq!(
+        bundle_message.content.message_type,
+        deserialized.content.message_type
+    );
 }
 
 #[tokio::test]
@@ -163,7 +175,9 @@ async fn test_mls_group_creation() {
         ..Default::default()
     };
 
-    let group = MlsGroup::new("test-group".to_string(), config.clone()).await.unwrap();
+    let group = MlsGroup::new("test-group".to_string(), config.clone())
+        .await
+        .unwrap();
     assert_eq!(group.get_config().group_id, "test-group");
     assert_eq!(group.get_config().max_members, 5);
 
@@ -180,7 +194,9 @@ async fn test_mls_group_creation() {
 #[tokio::test]
 async fn test_group_messaging() {
     let config = GroupConfig::default();
-    let group = MlsGroup::new("test-messaging".to_string(), config).await.unwrap();
+    let group = MlsGroup::new("test-messaging".to_string(), config)
+        .await
+        .unwrap();
 
     let creator = AgentId::new("creator", "node1");
     group.initialize_as_creator(creator.clone()).await.unwrap();
@@ -228,23 +244,31 @@ async fn test_voting_system() {
         ..Default::default()
     };
 
-    let group = MlsGroup::new("voting-test".to_string(), config).await.unwrap();
+    let group = MlsGroup::new("voting-test".to_string(), config)
+        .await
+        .unwrap();
 
     let proposer = AgentId::new("proposer", "node1");
     group.initialize_as_creator(proposer.clone()).await.unwrap();
 
     // Start a vote
-    let proposal_id = group.start_vote(
-        proposer.clone(),
-        "Test Proposal".to_string(),
-        "A test proposal for voting".to_string(),
-        300, // 5 minutes
-    ).await.unwrap();
+    let proposal_id = group
+        .start_vote(
+            proposer.clone(),
+            "Test Proposal".to_string(),
+            "A test proposal for voting".to_string(),
+            300, // 5 minutes
+        )
+        .await
+        .unwrap();
 
     assert!(!proposal_id.is_empty());
 
     // Cast a vote
-    group.cast_vote(proposal_id.clone(), proposer.clone(), true).await.unwrap();
+    group
+        .cast_vote(proposal_id.clone(), proposer.clone(), true)
+        .await
+        .unwrap();
 
     let stats = group.get_stats().await;
     assert_eq!(stats.votes_initiated, 1);
@@ -335,7 +359,9 @@ async fn test_message_timeouts() {
     };
 
     let start = std::time::Instant::now();
-    let result = fabric.send_message(target_id, message, timeout_options).await;
+    let result = fabric
+        .send_message(target_id, message, timeout_options)
+        .await;
     let elapsed = start.elapsed();
 
     // Should fail quickly due to short timeout
@@ -351,13 +377,19 @@ async fn test_error_handling() {
 
     // Test successful message
     let ping_message = AgentMessage::ping();
-    let result = test_server.handle_message(from_agent.clone(), ping_message).await.unwrap();
+    let result = test_server
+        .handle_message(from_agent.clone(), ping_message)
+        .await
+        .unwrap();
     assert!(result.is_some());
     assert!(result.unwrap().success);
 
     // Test error message
     let error_message = AgentMessage::new("error", Bytes::from("trigger error"));
-    let result = test_server.handle_message(from_agent.clone(), error_message).await.unwrap();
+    let result = test_server
+        .handle_message(from_agent.clone(), error_message)
+        .await
+        .unwrap();
     assert!(result.is_some());
     let response = result.unwrap();
     assert!(!response.success);
@@ -365,7 +397,10 @@ async fn test_error_handling() {
 
     // Test notification (no response)
     let notification_message = AgentMessage::new("notification", Bytes::from("notify"));
-    let result = test_server.handle_message(from_agent.clone(), notification_message).await.unwrap();
+    let result = test_server
+        .handle_message(from_agent.clone(), notification_message)
+        .await
+        .unwrap();
     assert!(result.is_none());
 
     // Check message count
@@ -405,7 +440,12 @@ async fn test_concurrent_operations() {
     fabric.init_dtn(temp_dir.path()).await.unwrap();
 
     let test_server = Arc::new(TestServer::new("concurrent-server".to_string()));
-    fabric.register_server("concurrent-handler".to_string(), Box::new(TestServer::new("concurrent-server".to_string()))).await;
+    fabric
+        .register_server(
+            "concurrent-handler".to_string(),
+            Box::new(TestServer::new("concurrent-server".to_string())),
+        )
+        .await;
 
     // Spawn multiple concurrent operations
     let mut handles = Vec::new();
@@ -432,13 +472,16 @@ async fn test_concurrent_operations() {
     for handle in handles {
         match handle.await {
             Ok(Ok(_)) => success_count += 1,
-            Ok(Err(_)) => {}, // Expected failures for non-existent targets
-            Err(_) => {}, // Task panics
+            Ok(Err(_)) => {} // Expected failures for non-existent targets
+            Err(_) => {}     // Task panics
         }
     }
 
     // At least some operations should succeed or fail gracefully
-    println!("Concurrent operations completed: {} successful", success_count);
+    println!(
+        "Concurrent operations completed: {} successful",
+        success_count
+    );
 }
 
 #[tokio::test]
@@ -462,8 +505,18 @@ async fn test_full_integration_scenario() {
     let twin_server = Arc::new(TestServer::new("twin".to_string()));
     let tutor_server = Arc::new(TestServer::new("tutor".to_string()));
 
-    twin_fabric.register_server("twin-handler".to_string(), Box::new(TestServer::new("twin".to_string()))).await;
-    tutor_fabric.register_server("tutor-handler".to_string(), Box::new(TestServer::new("tutor".to_string()))).await;
+    twin_fabric
+        .register_server(
+            "twin-handler".to_string(),
+            Box::new(TestServer::new("twin".to_string())),
+        )
+        .await;
+    tutor_fabric
+        .register_server(
+            "tutor-handler".to_string(),
+            Box::new(TestServer::new("tutor".to_string())),
+        )
+        .await;
 
     // Create MLS group
     let group_config = GroupConfig {
@@ -472,7 +525,10 @@ async fn test_full_integration_scenario() {
         ..Default::default()
     };
 
-    twin_fabric.join_group("integration-test".to_string(), group_config).await.unwrap();
+    twin_fabric
+        .join_group("integration-test".to_string(), group_config)
+        .await
+        .unwrap();
 
     // Send group message
     let group_message = GroupMessage {
@@ -489,7 +545,10 @@ async fn test_full_integration_scenario() {
             .as_secs(),
     };
 
-    twin_fabric.send_to_group("integration-test".to_string(), group_message).await.unwrap();
+    twin_fabric
+        .send_to_group("integration-test".to_string(), group_message)
+        .await
+        .unwrap();
 
     // Test message exchange
     let message = AgentMessage::new("integration", Bytes::from("full integration test"));

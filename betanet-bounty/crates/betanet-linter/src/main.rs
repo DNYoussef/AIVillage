@@ -3,7 +3,7 @@
 use std::path::PathBuf;
 
 use clap::{Parser, Subcommand};
-use tracing::{error, info};
+use tracing::info;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 use betanet_linter::{
@@ -84,8 +84,7 @@ async fn main() -> Result<()> {
     let filter = if cli.verbose { "debug" } else { "info" };
     tracing_subscriber::registry()
         .with(
-            tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| filter.into()),
+            tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| filter.into()),
         )
         .with(tracing_subscriber::fmt::layer())
         .init();
@@ -179,7 +178,11 @@ async fn main() -> Result<()> {
             if results.issues.is_empty() {
                 println!("✓ Rule '{}' passed", rule);
             } else {
-                println!("✗ Rule '{}' failed with {} issues", rule, results.issues.len());
+                println!(
+                    "✗ Rule '{}' failed with {} issues",
+                    rule,
+                    results.issues.len()
+                );
                 for issue in &results.issues {
                     println!("  {}: {}", issue.severity_str(), issue.message);
                 }
@@ -212,7 +215,7 @@ mod tests {
 
     #[test]
     fn test_cli_parsing() {
-        let cli = Cli::try_parse_from(&["betanet-linter", "lint", "--directory", "."]);
+        let cli = Cli::try_parse_from(["betanet-linter", "lint", "--directory", "."]);
         assert!(cli.is_ok());
     }
 }

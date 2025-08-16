@@ -3,9 +3,9 @@
 //! Automatically pulls Chrome version metadata from Chromium sources
 //! and regenerates TLS fingerprinting fixtures.
 
+use crate::{ChromeVersion, Result, UtlsError};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use crate::{ChromeVersion, Result, UtlsError};
 
 /// Chrome release channel
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -116,7 +116,10 @@ impl ChromeRefresh {
     }
 
     /// Fetch latest versions from Chrome API
-    pub async fn fetch_versions(&mut self, channel: ReleaseChannel) -> Result<Vec<ChromeVersionMetadata>> {
+    pub async fn fetch_versions(
+        &mut self,
+        channel: ReleaseChannel,
+    ) -> Result<Vec<ChromeVersionMetadata>> {
         // In a real implementation, this would make HTTP requests to Chrome's version API
         // For now, return mock data based on known stable versions
 
@@ -175,7 +178,8 @@ impl ChromeRefresh {
             self.fetch_versions(ReleaseChannel::Stable).await?;
         }
 
-        let stable_versions = self.versions_cache
+        let stable_versions = self
+            .versions_cache
             .get(&ReleaseChannel::Stable)
             .ok_or_else(|| UtlsError::Config("No stable versions cached".to_string()))?;
 
@@ -190,16 +194,21 @@ impl ChromeRefresh {
     }
 
     /// Get specific version by channel and position
-    pub async fn get_version(&mut self, channel: ReleaseChannel, position: usize) -> Result<ChromeVersion> {
+    pub async fn get_version(
+        &mut self,
+        channel: ReleaseChannel,
+        position: usize,
+    ) -> Result<ChromeVersion> {
         if self.is_cache_expired() {
             self.fetch_versions(channel).await?;
         }
 
-        let versions = self.versions_cache
-            .get(&channel)
-            .ok_or_else(|| UtlsError::Config(format!("No versions cached for channel {:?}", channel)))?;
+        let versions = self.versions_cache.get(&channel).ok_or_else(|| {
+            UtlsError::Config(format!("No versions cached for channel {:?}", channel))
+        })?;
 
-        versions.get(position)
+        versions
+            .get(position)
             .map(|v| v.version_components.clone().into())
             .ok_or_else(|| UtlsError::Config(format!("Version at position {} not found", position)))
     }
@@ -224,7 +233,10 @@ impl ChromeRefresh {
     }
 
     /// Get cached versions for a channel
-    pub fn get_cached_versions(&self, channel: ReleaseChannel) -> Option<&Vec<ChromeVersionMetadata>> {
+    pub fn get_cached_versions(
+        &self,
+        channel: ReleaseChannel,
+    ) -> Option<&Vec<ChromeVersionMetadata>> {
         self.versions_cache.get(&channel)
     }
 
@@ -296,14 +308,23 @@ impl AutoRefreshService {
             for channel in &self.config.channels {
                 match self.refresh_manager.fetch_versions(*channel).await {
                     Ok(versions) => {
-                        tracing::info!("Refreshed {} versions for channel {:?}", versions.len(), channel);
+                        tracing::info!(
+                            "Refreshed {} versions for channel {:?}",
+                            versions.len(),
+                            channel
+                        );
 
                         // Check if we have a new N-2 stable version
                         if *channel == ReleaseChannel::Stable {
-                            if let Ok(n2_version) = self.refresh_manager.get_stable_n2_version().await {
+                            if let Ok(n2_version) =
+                                self.refresh_manager.get_stable_n2_version().await
+                            {
                                 let current_n2 = ChromeVersion::current_stable_n2();
                                 if n2_version != current_n2 {
-                                    tracing::info!("New N-2 stable version detected: {}", n2_version.to_string());
+                                    tracing::info!(
+                                        "New N-2 stable version detected: {}",
+                                        n2_version.to_string()
+                                    );
                                     self.handle_version_update(n2_version).await?;
                                 }
                             }
@@ -316,7 +337,10 @@ impl AutoRefreshService {
             }
 
             // Wait for next refresh interval
-            tokio::time::sleep(tokio::time::Duration::from_secs(self.config.interval_seconds)).await;
+            tokio::time::sleep(tokio::time::Duration::from_secs(
+                self.config.interval_seconds,
+            ))
+            .await;
         }
     }
 
@@ -387,7 +411,10 @@ mod tests {
     #[tokio::test]
     async fn test_fetch_versions() {
         let mut refresh = ChromeRefresh::new();
-        let versions = refresh.fetch_versions(ReleaseChannel::Stable).await.unwrap();
+        let versions = refresh
+            .fetch_versions(ReleaseChannel::Stable)
+            .await
+            .unwrap();
 
         assert!(!versions.is_empty());
         assert!(versions.iter().any(|v| v.version_components.major == 119));

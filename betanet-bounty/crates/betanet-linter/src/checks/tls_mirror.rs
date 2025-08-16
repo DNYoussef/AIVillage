@@ -8,47 +8,36 @@
 //! - Cover traffic generation
 //! - Anti-fingerprinting measures
 
-use crate::{LintIssue, SeverityLevel, Result};
-use crate::checks::{CheckRule, CheckContext};
-use regex::Regex;
-use once_cell::sync::Lazy;
+use crate::checks::{CheckContext, CheckRule};
+use crate::{LintIssue, Result, SeverityLevel};
 use async_trait::async_trait;
+use once_cell::sync::Lazy;
+use regex::Regex;
 
-static TLS_REUSE_REGEX: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"stochastic_reuse_probability:\s*([0-9.]+)").unwrap()
-});
+static TLS_REUSE_REGEX: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"stochastic_reuse_probability:\s*([0-9.]+)").unwrap());
 
-static TTL_REGEX: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"default_ttl:\s*Duration::from_secs\((\d+)\)").unwrap()
-});
+static TTL_REGEX: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"default_ttl:\s*Duration::from_secs\((\d+)\)").unwrap());
 
-static CACHE_SIZE_REGEX: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"max_cache_size:\s*(\d+)").unwrap()
-});
+static CACHE_SIZE_REGEX: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"max_cache_size:\s*(\d+)").unwrap());
 
-static HARDCODED_REGEX: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r#"if\s+origin\s*==\s*"([^"]+)""#).unwrap()
-});
+static HARDCODED_REGEX: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r#"if\s+origin\s*==\s*"([^"]+)""#).unwrap());
 
-static LOGNORMAL_REGEX: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"mu:\s*([0-9.]+),\s*sigma:\s*([0-9.]+)").unwrap()
-});
+static LOGNORMAL_REGEX: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"mu:\s*([0-9.]+),\s*sigma:\s*([0-9.]+)").unwrap());
 
-static WEIGHT_REGEX: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"weight:\s*([0-9.]+)").unwrap()
-});
+static WEIGHT_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"weight:\s*([0-9.]+)").unwrap());
 
-static NUM_ENTRIES_REGEX: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"gen_range\((\d+)\.\.=?(\d+)\)").unwrap()
-});
+static NUM_ENTRIES_REGEX: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"gen_range\((\d+)\.\.=?(\d+)\)").unwrap());
 
-static POOL_LIMIT_REGEX: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"while.*len\(\)\s*>\s*(\d+)").unwrap()
-});
+static POOL_LIMIT_REGEX: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"while.*len\(\)\s*>\s*(\d+)").unwrap());
 
-static CHROME_VERSION_REGEX: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"Chrome[._]?(\d+)").unwrap()
-});
+static CHROME_VERSION_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"Chrome[._]?(\d+)").unwrap());
 
 /// TLS mirror template cache compliance
 pub struct TlsTemplateCacheRule;
@@ -67,9 +56,10 @@ impl CheckRule for TlsTemplateCacheRule {
         let mut issues = vec![];
 
         // Only check TLS-related files
-        if !context.file_path.to_string_lossy().contains("tls") &&
-           !context.content.contains("TemplateCache") &&
-           !context.content.contains("template_cache") {
+        if !context.file_path.to_string_lossy().contains("tls")
+            && !context.content.contains("TemplateCache")
+            && !context.content.contains("template_cache")
+        {
             return Ok(issues);
         }
 
@@ -78,7 +68,7 @@ impl CheckRule for TlsTemplateCacheRule {
             if let Some(captures) = TLS_REUSE_REGEX.captures(line) {
                 if let Some(prob_str) = captures.get(1) {
                     if let Ok(probability) = prob_str.as_str().parse::<f64>() {
-                        if probability < 0.7 || probability > 0.95 {
+                        if !(0.7..=0.95).contains(&probability) {
                             issues.push(LintIssue::new(
                                 "TLS001".to_string(),
                                 SeverityLevel::Warning,
@@ -105,7 +95,8 @@ impl CheckRule for TlsTemplateCacheRule {
             if let Some(captures) = TTL_REGEX.captures(line) {
                 if let Some(ttl_str) = captures.get(1) {
                     if let Ok(ttl_secs) = ttl_str.as_str().parse::<u64>() {
-                        if ttl_secs < 600 { // 10 minutes
+                        if ttl_secs < 600 {
+                            // 10 minutes
                             issues.push(LintIssue::new(
                                 "TLS003".to_string(),
                                 SeverityLevel::Warning,
@@ -114,13 +105,24 @@ impl CheckRule for TlsTemplateCacheRule {
                             ).with_location(context.file_path.clone(), line_num + 1, 0));
                         }
 
-                        if ttl_secs > 7200 { // 2 hours
-                            issues.push(LintIssue::new(
-                                "TLS004".to_string(),
-                                SeverityLevel::Warning,
-                                format!("TTL {} seconds too long, may create stale templates", ttl_secs),
-                                self.name().to_string(),
-                            ).with_location(context.file_path.clone(), line_num + 1, 0));
+                        if ttl_secs > 7200 {
+                            // 2 hours
+                            issues.push(
+                                LintIssue::new(
+                                    "TLS004".to_string(),
+                                    SeverityLevel::Warning,
+                                    format!(
+                                        "TTL {} seconds too long, may create stale templates",
+                                        ttl_secs
+                                    ),
+                                    self.name().to_string(),
+                                )
+                                .with_location(
+                                    context.file_path.clone(),
+                                    line_num + 1,
+                                    0,
+                                ),
+                            );
                         }
                     }
                 }
@@ -132,7 +134,8 @@ impl CheckRule for TlsTemplateCacheRule {
             issues.push(LintIssue::new(
                 "TLS005".to_string(),
                 SeverityLevel::Error,
-                "Hardcoded empty template data - templates should be dynamically generated".to_string(),
+                "Hardcoded empty template data - templates should be dynamically generated"
+                    .to_string(),
                 self.name().to_string(),
             ));
         }
@@ -143,21 +146,41 @@ impl CheckRule for TlsTemplateCacheRule {
                 if let Some(size_str) = captures.get(1) {
                     if let Ok(cache_size) = size_str.as_str().parse::<u32>() {
                         if cache_size < 100 {
-                            issues.push(LintIssue::new(
-                                "TLS006".to_string(),
-                                SeverityLevel::Warning,
-                                format!("Cache size {} too small, may cause frequent evictions", cache_size),
-                                self.name().to_string(),
-                            ).with_location(context.file_path.clone(), line_num + 1, 0));
+                            issues.push(
+                                LintIssue::new(
+                                    "TLS006".to_string(),
+                                    SeverityLevel::Warning,
+                                    format!(
+                                        "Cache size {} too small, may cause frequent evictions",
+                                        cache_size
+                                    ),
+                                    self.name().to_string(),
+                                )
+                                .with_location(
+                                    context.file_path.clone(),
+                                    line_num + 1,
+                                    0,
+                                ),
+                            );
                         }
 
                         if cache_size > 2000 {
-                            issues.push(LintIssue::new(
-                                "TLS007".to_string(),
-                                SeverityLevel::Warning,
-                                format!("Cache size {} excessive, may consume too much memory", cache_size),
-                                self.name().to_string(),
-                            ).with_location(context.file_path.clone(), line_num + 1, 0));
+                            issues.push(
+                                LintIssue::new(
+                                    "TLS007".to_string(),
+                                    SeverityLevel::Warning,
+                                    format!(
+                                        "Cache size {} excessive, may consume too much memory",
+                                        cache_size
+                                    ),
+                                    self.name().to_string(),
+                                )
+                                .with_location(
+                                    context.file_path.clone(),
+                                    line_num + 1,
+                                    0,
+                                ),
+                            );
                         }
                     }
                 }
@@ -212,7 +235,9 @@ impl CheckRule for TlsSiteClassificationRule {
         }
 
         // Check for balanced site class coverage
-        let site_classes = ["CDN", "Social", "Commerce", "News", "Tech", "Finance", "Gaming", "Stream"];
+        let site_classes = [
+            "CDN", "Social", "Commerce", "News", "Tech", "Finance", "Gaming", "Stream",
+        ];
         let mut covered_classes = 0;
         for class in &site_classes {
             if context.content.contains(class) {
@@ -250,8 +275,9 @@ impl CheckRule for TlsMixtureModelRule {
         let mut issues = vec![];
 
         // Only check mixture model files
-        if !context.content.contains("MixtureModel") &&
-           !context.content.contains("LogNormalComponent") {
+        if !context.content.contains("MixtureModel")
+            && !context.content.contains("LogNormalComponent")
+        {
             return Ok(issues);
         }
 
@@ -259,9 +285,12 @@ impl CheckRule for TlsMixtureModelRule {
         for (line_num, line) in context.content.lines().enumerate() {
             if let Some(captures) = LOGNORMAL_REGEX.captures(line) {
                 if let (Some(mu_str), Some(sigma_str)) = (captures.get(1), captures.get(2)) {
-                    if let (Ok(mu), Ok(sigma)) = (mu_str.as_str().parse::<f64>(), sigma_str.as_str().parse::<f64>()) {
+                    if let (Ok(mu), Ok(sigma)) = (
+                        mu_str.as_str().parse::<f64>(),
+                        sigma_str.as_str().parse::<f64>(),
+                    ) {
                         // Check mu parameter (log-scale location)
-                        if mu < 3.0 || mu > 16.0 {
+                        if !(3.0..=16.0).contains(&mu) {
                             issues.push(LintIssue::new(
                                 "TLS011".to_string(),
                                 SeverityLevel::Warning,
@@ -271,7 +300,7 @@ impl CheckRule for TlsMixtureModelRule {
                         }
 
                         // Check sigma parameter (log-scale spread)
-                        if sigma < 0.1 || sigma > 2.5 {
+                        if !(0.1..=2.5).contains(&sigma) {
                             issues.push(LintIssue::new(
                                 "TLS012".to_string(),
                                 SeverityLevel::Warning,
@@ -295,7 +324,7 @@ impl CheckRule for TlsMixtureModelRule {
                         total_weight += weight;
                         weight_count += 1;
 
-                        if weight < 0.0 || weight > 1.0 {
+                        if !(0.0..=1.0).contains(&weight) {
                             issues.push(LintIssue::new(
                                 "TLS013".to_string(),
                                 SeverityLevel::Error,
@@ -309,13 +338,17 @@ impl CheckRule for TlsMixtureModelRule {
         }
 
         // Check if weights approximately sum to 1.0 for each mixture
-        if weight_count > 0 && weight_count % 2 == 0 { // Assuming pairs for timing/size
+        if weight_count > 0 && weight_count % 2 == 0 {
+            // Assuming pairs for timing/size
             let expected_sum = (weight_count / 2) as f64; // Each mixture should sum to 1.0
             if (total_weight - expected_sum).abs() > 0.1 {
                 issues.push(LintIssue::new(
                     "TLS014".to_string(),
                     SeverityLevel::Warning,
-                    format!("Mixture component weights sum to {:.2}, should approximately sum to {:.1}", total_weight, expected_sum),
+                    format!(
+                        "Mixture component weights sum to {:.2}, should approximately sum to {:.1}",
+                        total_weight, expected_sum
+                    ),
                     self.name().to_string(),
                 ));
             }
@@ -342,9 +375,10 @@ impl CheckRule for TlsCoverTrafficRule {
         let mut issues = vec![];
 
         // Only check cover traffic related files
-        if !context.content.contains("CoverTraffic") &&
-           !context.content.contains("cover_pool") &&
-           !context.content.contains("generate_cover") {
+        if !context.content.contains("CoverTraffic")
+            && !context.content.contains("cover_pool")
+            && !context.content.contains("generate_cover")
+        {
             return Ok(issues);
         }
 
@@ -353,7 +387,10 @@ impl CheckRule for TlsCoverTrafficRule {
             if line.contains("cover") && line.contains("entries") {
                 if let Some(captures) = NUM_ENTRIES_REGEX.captures(line) {
                     if let (Some(min_str), Some(max_str)) = (captures.get(1), captures.get(2)) {
-                        if let (Ok(min_entries), Ok(max_entries)) = (min_str.as_str().parse::<u32>(), max_str.as_str().parse::<u32>()) {
+                        if let (Ok(min_entries), Ok(max_entries)) = (
+                            min_str.as_str().parse::<u32>(),
+                            max_str.as_str().parse::<u32>(),
+                        ) {
                             if min_entries < 3 {
                                 issues.push(LintIssue::new(
                                     "TLS015".to_string(),
@@ -424,7 +461,10 @@ impl CheckRule for TlsCoverTrafficRule {
                     issues.push(LintIssue::new(
                         "TLS020".to_string(),
                         SeverityLevel::Warning,
-                        format!("Predictable cover traffic server name '{}' may be detectable", name),
+                        format!(
+                            "Predictable cover traffic server name '{}' may be detectable",
+                            name
+                        ),
                         self.name().to_string(),
                     ));
                 }
@@ -452,10 +492,11 @@ impl CheckRule for TlsAntiFingerprintRule {
         let mut issues = vec![];
 
         // Only check anti-fingerprinting related files
-        if !context.content.contains("fingerprint") &&
-           !context.content.contains("Chrome") &&
-           !context.content.contains("ja3") &&
-           !context.content.contains("ClientHello") {
+        if !context.content.contains("fingerprint")
+            && !context.content.contains("Chrome")
+            && !context.content.contains("ja3")
+            && !context.content.contains("ClientHello")
+        {
             return Ok(issues);
         }
 
@@ -468,13 +509,23 @@ impl CheckRule for TlsAntiFingerprintRule {
                         hardcoded_versions += 1;
 
                         // Check if version is realistic (Chrome versions)
-                        if version < 90 || version > 130 {
-                            issues.push(LintIssue::new(
-                                "TLS021".to_string(),
-                                SeverityLevel::Warning,
-                                format!("Chrome version {} unrealistic, may be detectable", version),
-                                self.name().to_string(),
-                            ).with_location(context.file_path.clone(), line_num + 1, 0));
+                        if !(90..=130).contains(&version) {
+                            issues.push(
+                                LintIssue::new(
+                                    "TLS021".to_string(),
+                                    SeverityLevel::Warning,
+                                    format!(
+                                        "Chrome version {} unrealistic, may be detectable",
+                                        version
+                                    ),
+                                    self.name().to_string(),
+                                )
+                                .with_location(
+                                    context.file_path.clone(),
+                                    line_num + 1,
+                                    0,
+                                ),
+                            );
                         }
                     }
                 }
@@ -491,7 +542,13 @@ impl CheckRule for TlsAntiFingerprintRule {
         }
 
         // Check for cipher suite diversity
-        let cipher_patterns = ["TLS_AES_128", "TLS_AES_256", "TLS_CHACHA20", "ECDHE_RSA", "ECDHE_ECDSA"];
+        let cipher_patterns = [
+            "TLS_AES_128",
+            "TLS_AES_256",
+            "TLS_CHACHA20",
+            "ECDHE_RSA",
+            "ECDHE_ECDSA",
+        ];
         let mut cipher_count = 0;
         for pattern in &cipher_patterns {
             if context.content.contains(pattern) {
@@ -503,13 +560,22 @@ impl CheckRule for TlsAntiFingerprintRule {
             issues.push(LintIssue::new(
                 "TLS023".to_string(),
                 SeverityLevel::Warning,
-                format!("Only {} cipher suite types detected, consider more diversity", cipher_count),
+                format!(
+                    "Only {} cipher suite types detected, consider more diversity",
+                    cipher_count
+                ),
                 self.name().to_string(),
             ));
         }
 
         // Check for extension diversity
-        let extension_patterns = ["SERVER_NAME", "SUPPORTED_GROUPS", "SIGNATURE_ALGORITHMS", "ALPN", "KEY_SHARE"];
+        let extension_patterns = [
+            "SERVER_NAME",
+            "SUPPORTED_GROUPS",
+            "SIGNATURE_ALGORITHMS",
+            "ALPN",
+            "KEY_SHARE",
+        ];
         let mut extension_count = 0;
         for pattern in &extension_patterns {
             if context.content.contains(pattern) {
@@ -521,7 +587,10 @@ impl CheckRule for TlsAntiFingerprintRule {
             issues.push(LintIssue::new(
                 "TLS024".to_string(),
                 SeverityLevel::Warning,
-                format!("Only {} extension types detected, consider more diversity", extension_count),
+                format!(
+                    "Only {} extension types detected, consider more diversity",
+                    extension_count
+                ),
                 self.name().to_string(),
             ));
         }
@@ -537,8 +606,10 @@ impl CheckRule for TlsAntiFingerprintRule {
         }
 
         // Check for JA3/JA4 hash validation
-        if (context.content.contains("ja3") || context.content.contains("ja4")) &&
-           !context.content.contains("hash") && !context.content.contains("md5") {
+        if (context.content.contains("ja3") || context.content.contains("ja4"))
+            && !context.content.contains("hash")
+            && !context.content.contains("md5")
+        {
             issues.push(LintIssue::new(
                 "TLS026".to_string(),
                 SeverityLevel::Warning,

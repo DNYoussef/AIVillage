@@ -5,7 +5,7 @@ use std::time::{Duration, Instant};
 
 use bytes::Bytes;
 
-use betanet_mixnode::pipeline::{PacketPipeline, PipelinePacket, PipelineBenchmark};
+use betanet_mixnode::pipeline::{PacketPipeline, PipelineBenchmark, PipelinePacket};
 
 #[tokio::test]
 async fn test_pipeline_performance_target() {
@@ -20,7 +20,10 @@ async fn test_pipeline_performance_target() {
     results.print_results();
 
     let meets_target = results.meets_target(25000.0);
-    println!("🎯 Meets 25k pkt/s target: {}", if meets_target { "✅ YES" } else { "❌ NO" });
+    println!(
+        "🎯 Meets 25k pkt/s target: {}",
+        if meets_target { "✅ YES" } else { "❌ NO" }
+    );
 
     // Test 2: Memory pool efficiency
     println!("\n📊 Test 2: Memory Pool Efficiency");
@@ -104,7 +107,10 @@ async fn test_pipeline_performance_target() {
 
     // Basic assertion - we should be able to process some packets
     assert!(results.packets_processed > 0, "Should process some packets");
-    assert!(results.throughput_pps > 1000.0, "Should achieve at least 1k pkt/s");
+    assert!(
+        results.throughput_pps > 1000.0,
+        "Should achieve at least 1k pkt/s"
+    );
 }
 
 #[tokio::test]
@@ -130,7 +136,10 @@ async fn test_pipeline_basic_functionality() {
 
     // Check results
     let processed = pipeline.get_processed_packets(100);
-    let processed_count = pipeline.stats().packets_processed.load(std::sync::atomic::Ordering::Relaxed);
+    let processed_count = pipeline
+        .stats()
+        .packets_processed
+        .load(std::sync::atomic::Ordering::Relaxed);
     let queue_depths = pipeline.queue_depths();
 
     println!("Processed {} packets", processed.len());
@@ -140,5 +149,9 @@ async fn test_pipeline_basic_functionality() {
     pipeline.stop().await.unwrap();
 
     // Since Sphinx processing might fail with test data, we check that the pipeline at least tried to process
-    assert!(processed_count > 0, "Pipeline should attempt to process packets (got {})", processed_count);
+    assert!(
+        processed_count > 0,
+        "Pipeline should attempt to process packets (got {})",
+        processed_count
+    );
 }

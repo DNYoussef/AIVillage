@@ -6,10 +6,10 @@
 //! - Privacy budget enforcement
 //! - Leak parameter tracking
 
-use std::collections::{HashMap, VecDeque};
-use std::time::{SystemTime, UNIX_EPOCH};
-use thiserror::Error;
 use serde::{Deserialize, Serialize};
+use std::collections::{HashMap, VecDeque};
+use std::time::SystemTime;
+use thiserror::Error;
 
 /// Privacy accounting errors
 #[derive(Debug, Error)]
@@ -48,21 +48,29 @@ impl EdgeId {
             edge_type,
         }
     }
+}
 
-    pub fn to_string(&self) -> String {
-        format!("{}->{}({})", self.from_node, self.to_node, self.edge_type.as_str())
+impl std::fmt::Display for EdgeId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}->{}({})",
+            self.from_node,
+            self.to_node,
+            self.edge_type.as_str()
+        )
     }
 }
 
 /// Types of network edges with different privacy characteristics
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum EdgeType {
-    DirectConnection,     // Direct peer-to-peer connection
-    RelayConnection,      // Through relay/proxy
-    MixnetConnection,     // Through mixnet layer
-    TorConnection,        // Through Tor-like onion routing
-    CdnConnection,        // Content delivery network
-    VpnConnection,        // VPN tunnel
+    DirectConnection, // Direct peer-to-peer connection
+    RelayConnection,  // Through relay/proxy
+    MixnetConnection, // Through mixnet layer
+    TorConnection,    // Through Tor-like onion routing
+    CdnConnection,    // Content delivery network
+    VpnConnection,    // VPN tunnel
 }
 
 impl EdgeType {
@@ -79,12 +87,12 @@ impl EdgeType {
 
     pub fn base_epsilon(&self) -> f64 {
         match self {
-            Self::DirectConnection => 0.5,     // High privacy leak
-            Self::RelayConnection => 0.3,      // Medium privacy leak
-            Self::MixnetConnection => 0.1,     // Low privacy leak
-            Self::TorConnection => 0.05,       // Very low privacy leak
-            Self::CdnConnection => 0.4,        // Medium-high privacy leak
-            Self::VpnConnection => 0.2,        // Medium-low privacy leak
+            Self::DirectConnection => 0.5, // High privacy leak
+            Self::RelayConnection => 0.3,  // Medium privacy leak
+            Self::MixnetConnection => 0.1, // Low privacy leak
+            Self::TorConnection => 0.05,   // Very low privacy leak
+            Self::CdnConnection => 0.4,    // Medium-high privacy leak
+            Self::VpnConnection => 0.2,    // Medium-low privacy leak
         }
     }
 }
@@ -181,9 +189,9 @@ pub struct RouteMetadata {
 /// Methods for composing privacy parameters across route edges
 #[derive(Debug, Clone, Copy)]
 pub enum CompositionMethod {
-    Additive,        // Sum of epsilons
-    Sequential,      // Product composition
-    Advanced,        // RDP (Rényi Differential Privacy) composition
+    Additive,   // Sum of epsilons
+    Sequential, // Product composition
+    Advanced,   // RDP (Rényi Differential Privacy) composition
 }
 
 impl RoutePrivacy {
@@ -233,7 +241,8 @@ impl RoutePrivacy {
         let mut total_epsilon = 0.0;
 
         for edge_id in &self.edges {
-            let edge_priv = edge_privacy.get(edge_id)
+            let edge_priv = edge_privacy
+                .get(edge_id)
                 .ok_or_else(|| PrivacyError::EdgeNotFound(edge_id.to_string()))?;
 
             let edge_epsilon = edge_priv.estimate_epsilon(traffic_volume, connection_duration);
@@ -254,7 +263,8 @@ impl RoutePrivacy {
         let mut composed_epsilon = 0.0;
 
         for (i, edge_id) in self.edges.iter().enumerate() {
-            let edge_priv = edge_privacy.get(edge_id)
+            let edge_priv = edge_privacy
+                .get(edge_id)
                 .ok_or_else(|| PrivacyError::EdgeNotFound(edge_id.to_string()))?;
 
             let edge_epsilon = edge_priv.estimate_epsilon(traffic_volume, connection_duration);
@@ -275,11 +285,12 @@ impl RoutePrivacy {
         connection_duration: f64,
     ) -> Result<()> {
         // Advanced composition using RDP approximation
-        let mut alpha = 2.0; // Rényi parameter
+        let alpha = 2.0; // Rényi parameter
         let mut total_alpha_epsilon = 0.0;
 
         for edge_id in &self.edges {
-            let edge_priv = edge_privacy.get(edge_id)
+            let edge_priv = edge_privacy
+                .get(edge_id)
                 .ok_or_else(|| PrivacyError::EdgeNotFound(edge_id.to_string()))?;
 
             let edge_epsilon = edge_priv.estimate_epsilon(traffic_volume, connection_duration);
@@ -410,15 +421,21 @@ impl PrivacyBudgetManager {
         // Allocate budget
         self.epsilon_used += requested_epsilon;
         self.active_routes.insert(route_id.clone(), route_privacy);
-        self.record_transaction(route_id, requested_epsilon, requested_epsilon, BudgetAction::Allocated);
+        self.record_transaction(
+            route_id,
+            requested_epsilon,
+            requested_epsilon,
+            BudgetAction::Allocated,
+        );
 
         Ok(requested_epsilon)
     }
 
     /// Release privacy budget when route completes
     pub fn release_budget(&mut self, route_id: &str) -> Result<f64> {
-        let route_privacy = self.active_routes.remove(route_id)
-            .ok_or_else(|| PrivacyError::RouteComposition(format!("Route {} not found", route_id)))?;
+        let route_privacy = self.active_routes.remove(route_id).ok_or_else(|| {
+            PrivacyError::RouteComposition(format!("Route {} not found", route_id))
+        })?;
 
         let released_epsilon = route_privacy.total_epsilon;
         self.epsilon_used -= released_epsilon;
@@ -426,7 +443,7 @@ impl PrivacyBudgetManager {
             route_id.to_string(),
             released_epsilon,
             released_epsilon,
-            BudgetAction::Released
+            BudgetAction::Released,
         );
 
         Ok(released_epsilon)
@@ -453,10 +470,17 @@ impl PrivacyBudgetManager {
         metadata_leak: f64,
         confidence: f64,
     ) -> Result<()> {
-        let edge_privacy = self.edge_privacy.get_mut(edge_id)
+        let edge_privacy = self
+            .edge_privacy
+            .get_mut(edge_id)
             .ok_or_else(|| PrivacyError::EdgeNotFound(edge_id.to_string()))?;
 
-        edge_privacy.update_parameters(traffic_analysis, timing_correlation, metadata_leak, confidence);
+        edge_privacy.update_parameters(
+            traffic_analysis,
+            timing_correlation,
+            metadata_leak,
+            confidence,
+        );
         Ok(())
     }
 
@@ -466,12 +490,7 @@ impl PrivacyBudgetManager {
         self.active_routes.clear();
 
         // Keep transaction history for analysis
-        self.record_transaction(
-            "system".to_string(),
-            0.0,
-            0.0,
-            BudgetAction::Released
-        );
+        self.record_transaction("system".to_string(), 0.0, 0.0, BudgetAction::Released);
     }
 
     fn record_transaction(
@@ -594,7 +613,9 @@ pub mod analysis {
             .enumerate()
             .map(|(i, edges)| {
                 let mut route = RoutePrivacy::new(format!("strategy_{}", i), edges.clone());
-                route.compose_privacy(edge_privacy, 1000, 300.0).unwrap_or(());
+                route
+                    .compose_privacy(edge_privacy, 1000, 300.0)
+                    .unwrap_or(());
                 (i, route.total_epsilon)
             })
             .collect()
@@ -611,7 +632,10 @@ mod tests {
         let edge_privacy = EdgePrivacy::new(edge_id.clone());
 
         assert_eq!(edge_privacy.edge_id, edge_id);
-        assert_eq!(edge_privacy.base_epsilon, EdgeType::DirectConnection.base_epsilon());
+        assert_eq!(
+            edge_privacy.base_epsilon,
+            EdgeType::DirectConnection.base_epsilon()
+        );
     }
 
     #[test]
@@ -695,7 +719,9 @@ mod tests {
         manager.register_edge(edge.clone(), EdgePrivacy::new(edge.clone()));
 
         // Allocate budget
-        let _allocated = manager.request_budget("route1".to_string(), vec![edge], 1000, 300.0).unwrap();
+        let _allocated = manager
+            .request_budget("route1".to_string(), vec![edge], 1000, 300.0)
+            .unwrap();
         let status_before = manager.budget_status();
 
         // Release budget
@@ -703,7 +729,10 @@ mod tests {
         let status_after = manager.budget_status();
 
         assert!(released > 0.0);
-        assert_eq!(status_after.epsilon_used, status_before.epsilon_used - released);
+        assert_eq!(
+            status_after.epsilon_used,
+            status_before.epsilon_used - released
+        );
         assert_eq!(status_after.active_routes, 0);
     }
 }

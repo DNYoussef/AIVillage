@@ -8,13 +8,13 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use bytes::Bytes;
+use ndarray::Array1;
 use tempfile::TempDir;
 use tokio::time::sleep;
-use ndarray::Array1;
 
 use agent_fabric::{AgentFabric, AgentId};
-use twin_vault::{TwinManager, ReceiptSigner, ReceiptVerifier};
 use federated::*;
+use twin_vault::{ReceiptSigner, ReceiptVerifier, TwinManager};
 
 /// Mock test that simulates a complete federated learning round
 #[tokio::test]
@@ -39,7 +39,9 @@ async fn test_complete_federated_learning_workflow() {
         agent_fabric.clone(),
         twin_manager.clone(),
         orchestrator_config,
-    ).await.expect("Failed to create orchestrator");
+    )
+    .await
+    .expect("Failed to create orchestrator");
 
     println!("🎭 Created round orchestrator");
 
@@ -83,7 +85,9 @@ async fn test_complete_federated_learning_workflow() {
     println!("📋 Created training configuration");
 
     // Create FL session
-    let session_id = orchestrator.create_session(training_config).await
+    let session_id = orchestrator
+        .create_session(training_config)
+        .await
         .expect("Failed to create FL session");
 
     println!("🏗️  Created FL session: {}", session_id);
@@ -94,7 +98,9 @@ async fn test_complete_federated_learning_workflow() {
 
     // Add participants to session
     for (i, participant) in participants.iter().enumerate() {
-        orchestrator.add_participant(&session_id, participant.clone()).await
+        orchestrator
+            .add_participant(&session_id, participant.clone())
+            .await
             .expect(&format!("Failed to add participant {}", i));
         println!("  ✅ Added participant: {}", participant.agent_id);
     }
@@ -103,7 +109,9 @@ async fn test_complete_federated_learning_workflow() {
     sleep(Duration::from_millis(200)).await;
 
     // Start a round manually to test the flow
-    let round_id = orchestrator.start_round(&session_id).await
+    let round_id = orchestrator
+        .start_round(&session_id)
+        .await
         .expect("Failed to start round");
 
     println!("🔄 Started FL round: {}", round_id);
@@ -114,9 +122,14 @@ async fn test_complete_federated_learning_workflow() {
 
     // Submit training results
     for (i, result) in training_results.iter().enumerate() {
-        orchestrator.collect_training_result(&round_id, result.clone()).await
+        orchestrator
+            .collect_training_result(&round_id, result.clone())
+            .await
             .expect(&format!("Failed to collect result from participant {}", i));
-        println!("  📥 Collected result from: {}", result.participant_id.agent_id);
+        println!(
+            "  📥 Collected result from: {}",
+            result.participant_id.agent_id
+        );
     }
 
     // Wait for aggregation to complete
@@ -150,14 +163,19 @@ async fn test_secure_aggregation(round_id: &RoundId, training_results: Vec<Train
         QuantizationType::Float32,
     );
 
-    let result = secure_agg.secure_aggregate(round_id, training_results).await
+    let result = secure_agg
+        .secure_aggregate(round_id, training_results)
+        .await
         .expect("Secure aggregation failed");
 
     println!("  🔒 Secure aggregation completed:");
     println!("    - Participants: {}", result.stats.num_participants);
     println!("    - Total examples: {}", result.stats.total_examples);
     println!("    - Avg loss: {:.4}", result.stats.avg_training_loss);
-    println!("    - Avg accuracy: {:.4}", result.stats.avg_training_accuracy);
+    println!(
+        "    - Avg accuracy: {:.4}",
+        result.stats.avg_training_accuracy
+    );
     println!("    - Converged: {}", result.stats.converged);
 
     assert_eq!(result.round_id, *round_id);
@@ -189,7 +207,8 @@ async fn test_receipts_system(participants: &[ParticipantId]) {
             peak_memory_mb: 128.0,
         };
 
-        let receipt = pop.generate_receipt(participant.clone(), &metrics)
+        let receipt = pop
+            .generate_receipt(participant.clone(), &metrics)
             .expect("Failed to generate receipt");
 
         println!("  🧾 Generated receipt for {}", participant.agent_id);
@@ -205,7 +224,8 @@ async fn create_mock_agent_fabric() -> Arc<AgentFabric> {
     // Create a mock agent fabric
     // In a real implementation, this would connect to the actual network
     let node_id = AgentId::new("orchestrator-001", "fl-coordinator");
-    let fabric = AgentFabric::new(node_id).await
+    let fabric = AgentFabric::new(node_id)
+        .await
         .expect("Failed to create agent fabric");
     Arc::new(fabric)
 }
@@ -215,7 +235,8 @@ async fn create_mock_twin_manager(temp_path: &str) -> Arc<TwinManager> {
     let signer = ReceiptSigner::new("test-signer");
     let verifier = ReceiptVerifier::new();
 
-    let manager = TwinManager::new(signer, verifier).await
+    let manager = TwinManager::new(signer, verifier)
+        .await
         .expect("Failed to create twin manager");
 
     Arc::new(manager)
@@ -270,58 +291,65 @@ fn create_mock_participants() -> Vec<ParticipantId> {
 }
 
 /// Create mock training results for testing
-fn create_mock_training_results(round_id: &RoundId, participants: &[ParticipantId]) -> Vec<TrainingResult> {
-    participants.iter().enumerate().map(|(i, participant)| {
-        // Create mock model weights
-        let weights = Array1::from(vec![
-            0.1 + i as f32 * 0.05,  // Slightly different weights per participant
-            0.2 + i as f32 * 0.03,
-            0.3 + i as f32 * 0.02,
-            0.4 + i as f32 * 0.01,
-        ]);
+fn create_mock_training_results(
+    round_id: &RoundId,
+    participants: &[ParticipantId],
+) -> Vec<TrainingResult> {
+    participants
+        .iter()
+        .enumerate()
+        .map(|(i, participant)| {
+            // Create mock model weights
+            let weights = Array1::from(vec![
+                0.1 + i as f32 * 0.05, // Slightly different weights per participant
+                0.2 + i as f32 * 0.03,
+                0.3 + i as f32 * 0.02,
+                0.4 + i as f32 * 0.01,
+            ]);
 
-        let serialized_weights = bincode::serialize(&weights)
-            .expect("Failed to serialize weights");
+            let serialized_weights =
+                bincode::serialize(&weights).expect("Failed to serialize weights");
 
-        let metadata = ModelMetadata {
-            architecture: "test_cnn".to_string(),
-            parameter_count: 4,
-            input_shape: vec![32, 32, 3],
-            output_shape: vec![10],
-            compression: CompressionType::None,
-            quantization: QuantizationType::Float32,
-        };
+            let metadata = ModelMetadata {
+                architecture: "test_cnn".to_string(),
+                parameter_count: 4,
+                input_shape: vec![32, 32, 3],
+                output_shape: vec![10],
+                compression: CompressionType::None,
+                quantization: QuantizationType::Float32,
+            };
 
-        TrainingResult {
-            round_id: round_id.clone(),
-            participant_id: participant.clone(),
-            model_update: ModelParameters::new(
-                format!("participant-{}-v1", i),
-                Bytes::from(serialized_weights),
-                metadata,
-            ),
-            metrics: TrainingMetrics {
-                training_loss: 0.5 - (i as f32 * 0.05), // Decreasing loss
-                training_accuracy: 0.7 + (i as f32 * 0.05), // Increasing accuracy
-                validation_loss: Some(0.6 - (i as f32 * 0.03)),
-                validation_accuracy: Some(0.65 + (i as f32 * 0.04)),
-                num_examples: 1000 + (i * 200) as u32, // Different dataset sizes
-                training_time_sec: 60.0 + (i as f32 * 10.0),
-            },
-            resource_usage: ResourceUsage {
-                peak_memory_mb: 100.0 + (i as f32 * 20.0),
-                energy_joules: 50.0 + (i as f32 * 10.0),
-                flops: 1_000_000 + (i * 200_000) as u64,
-                bytes_sent: 1024 + (i * 256) as u64,
-                bytes_received: 2048 + (i * 512) as u64,
-                battery_drain: 0.05 + (i as f32 * 0.01),
-            },
-            timestamp: std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
-                .unwrap_or_default()
-                .as_secs(),
-        }
-    }).collect()
+            TrainingResult {
+                round_id: round_id.clone(),
+                participant_id: participant.clone(),
+                model_update: ModelParameters::new(
+                    format!("participant-{}-v1", i),
+                    Bytes::from(serialized_weights),
+                    metadata,
+                ),
+                metrics: TrainingMetrics {
+                    training_loss: 0.5 - (i as f32 * 0.05),     // Decreasing loss
+                    training_accuracy: 0.7 + (i as f32 * 0.05), // Increasing accuracy
+                    validation_loss: Some(0.6 - (i as f32 * 0.03)),
+                    validation_accuracy: Some(0.65 + (i as f32 * 0.04)),
+                    num_examples: 1000 + (i * 200) as u32, // Different dataset sizes
+                    training_time_sec: 60.0 + (i as f32 * 10.0),
+                },
+                resource_usage: ResourceUsage {
+                    peak_memory_mb: 100.0 + (i as f32 * 20.0),
+                    energy_joules: 50.0 + (i as f32 * 10.0),
+                    flops: 1_000_000 + (i * 200_000) as u64,
+                    bytes_sent: 1024 + (i * 256) as u64,
+                    bytes_received: 2048 + (i * 512) as u64,
+                    battery_drain: 0.05 + (i as f32 * 0.01),
+                },
+                timestamp: std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .unwrap_or_default()
+                    .as_secs(),
+            }
+        })
+        .collect()
 }
 
 /// Test compression algorithms
@@ -329,7 +357,10 @@ fn create_mock_training_results(round_id: &RoundId, participants: &[ParticipantI
 async fn test_compression_algorithms() {
     println!("🗜️  Testing compression algorithms...");
 
-    let privacy_config = PrivacyConfig { enable_dp: false, ..Default::default() };
+    let privacy_config = PrivacyConfig {
+        enable_dp: false,
+        ..Default::default()
+    };
 
     // Test Q8 quantization
     let secure_agg_q8 = SecureAggregation::new(
@@ -339,7 +370,8 @@ async fn test_compression_algorithms() {
     );
 
     let weights = Array1::from(vec![0.1, 0.5, -0.3, 0.8, -0.2]);
-    let quantized = secure_agg_q8.quantize_weights(&weights, 8)
+    let quantized = secure_agg_q8
+        .quantize_weights(&weights, 8)
         .expect("Q8 quantization failed");
 
     println!("  🔢 Q8 Quantization:");
@@ -353,7 +385,8 @@ async fn test_compression_algorithms() {
         QuantizationType::Float32,
     );
 
-    let sparse_weights = secure_agg_topk.top_k_sparsification(&weights, 3)
+    let sparse_weights = secure_agg_topk
+        .top_k_sparsification(&weights, 3)
         .expect("Top-K sparsification failed");
 
     let non_zero_count = sparse_weights.iter().filter(|&&x| x != 0.0).count();
@@ -366,7 +399,8 @@ async fn test_compression_algorithms() {
     assert_eq!(non_zero_count, 3);
 
     // Test random sparsification
-    let sparse_random = secure_agg_topk.random_sparsification(&weights, 0.6)
+    let sparse_random = secure_agg_topk
+        .random_sparsification(&weights, 0.6)
         .expect("Random sparsification failed");
 
     println!("  🎲 Random Sparsification (prob=0.6):");
@@ -383,8 +417,7 @@ async fn test_differential_privacy() {
     let dp = DifferentialPrivacy::new(1.0, 1e-5, 1.0, 1.0);
     let gradients = Array1::from(vec![2.0, -1.5, 3.0, 0.5]);
 
-    let dp_gradients = dp.apply_dp_sgd(&gradients)
-        .expect("DP-SGD failed");
+    let dp_gradients = dp.apply_dp_sgd(&gradients).expect("DP-SGD failed");
 
     // Check that gradients were clipped and noise was added
     let l2_norm = dp_gradients.mapv(|x| x * x).sum().sqrt();
@@ -400,7 +433,10 @@ async fn test_differential_privacy() {
 
     // Test privacy cost computation
     let (total_eps, total_delta) = dp.compute_privacy_cost(10, 5);
-    println!("    Total privacy cost (10 rounds): ε={:.4}, δ={:.6}", total_eps, total_delta);
+    println!(
+        "    Total privacy cost (10 rounds): ε={:.4}, δ={:.6}",
+        total_eps, total_delta
+    );
 
     println!("✅ Differential privacy test PASSED!");
 }
@@ -448,20 +484,24 @@ async fn benchmark_aggregation_performance() {
     );
 
     // Create larger dataset for benchmarking
-    let participants = (0..10).map(|i| {
-        ParticipantId::new(
-            AgentId::new(&format!("benchmark-{:03}", i), "mobile"),
-            DeviceType::Phone,
-            DeviceCapabilities::default(),
-        )
-    }).collect::<Vec<_>>();
+    let participants = (0..10)
+        .map(|i| {
+            ParticipantId::new(
+                AgentId::new(&format!("benchmark-{:03}", i), "mobile"),
+                DeviceType::Phone,
+                DeviceCapabilities::default(),
+            )
+        })
+        .collect::<Vec<_>>();
 
     let round_id = RoundId::new("benchmark".to_string(), 1, 12345);
     let training_results = create_mock_training_results(&round_id, &participants);
 
     let start_time = std::time::Instant::now();
 
-    let result = secure_agg.secure_aggregate(&round_id, training_results).await
+    let result = secure_agg
+        .secure_aggregate(&round_id, training_results)
+        .await
         .expect("Benchmark aggregation failed");
 
     let duration = start_time.elapsed();
@@ -470,8 +510,10 @@ async fn benchmark_aggregation_performance() {
     println!("    Participants: {}", result.stats.num_participants);
     println!("    Total examples: {}", result.stats.total_examples);
     println!("    Aggregation time: {:.2}ms", duration.as_millis());
-    println!("    Throughput: {:.0} examples/sec",
-             result.stats.total_examples as f64 / duration.as_secs_f64());
+    println!(
+        "    Throughput: {:.0} examples/sec",
+        result.stats.total_examples as f64 / duration.as_secs_f64()
+    );
 
     // Performance should be reasonable for 10 participants
     assert!(duration.as_millis() < 1000); // Should complete within 1 second

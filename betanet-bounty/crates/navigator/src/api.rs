@@ -5,8 +5,8 @@
 
 use crate::route::{QosRequirements, RoutingError, SemiringRouter};
 use crate::semiring::Cost;
-use betanet_dtn::{ContactGraphRouter, ConvergenceLayer, EndpointId};
 use betanet_dtn::router::Contact;
+use betanet_dtn::{ContactGraphRouter, ConvergenceLayer, EndpointId};
 use std::collections::HashMap;
 use std::sync::Arc;
 use thiserror::Error;
@@ -161,7 +161,7 @@ impl Navigator {
                 energy_cost_factor: 0.8, // Efficient protocol
                 reliability: 0.90,
                 privacy_features: vec!["path-diversity".to_string()],
-                mtu: 1200, // QUIC datagram MTU
+                mtu: 1200,               // QUIC datagram MTU
                 supports_custody: false, // Datagram mode
                 real_time_capable: true,
             },
@@ -217,18 +217,18 @@ impl Navigator {
         };
 
         // Select appropriate CLA based on path characteristics
-        let cla_selection = self.select_cla_for_path(&path, &qos, deadline, privacy_cap).await?;
+        let cla_selection = self
+            .select_cla_for_path(&path, &qos, deadline, privacy_cap)
+            .await?;
 
         // Update statistics
         let selection_time = start_time.elapsed().as_millis() as f64;
-        self.update_stats(&cla_selection.cla_name, selection_time, privacy_cap).await;
+        self.update_stats(&cla_selection.cla_name, selection_time, privacy_cap)
+            .await;
 
         info!(
             "Selected {} for {} with cost {} ({}ms)",
-            cla_selection.cla_name,
-            destination,
-            cla_selection.estimated_cost,
-            selection_time
+            cla_selection.cla_name, destination, cla_selection.estimated_cost, selection_time
         );
 
         Ok(cla_selection)
@@ -259,7 +259,8 @@ impl Navigator {
 
                 // Check constraints
                 if let Some(dl) = deadline {
-                    let estimated_completion = path.arrival_time + (characteristics.typical_latency_ms as u64);
+                    let estimated_completion =
+                        path.arrival_time + (characteristics.typical_latency_ms as u64);
                     if estimated_completion > dl {
                         continue; // CLA too slow for deadline
                     }
@@ -306,9 +307,15 @@ impl Navigator {
 
         // Privacy cost based on features and requirements
         let privacy_eps = if privacy_cap.is_some() {
-            if characteristics.privacy_features.contains(&"mixnode-routing".to_string()) {
+            if characteristics
+                .privacy_features
+                .contains(&"mixnode-routing".to_string())
+            {
                 0.1 // Mixnode routing provides good privacy
-            } else if characteristics.privacy_features.contains(&"mesh-routing".to_string()) {
+            } else if characteristics
+                .privacy_features
+                .contains(&"mesh-routing".to_string())
+            {
                 0.2 // Mesh routing provides some privacy
             } else {
                 0.5 // Direct routing, higher epsilon consumption
@@ -338,9 +345,7 @@ impl Navigator {
             return false;
         }
 
-        path.hop_count() > 3
-            || characteristics.reliability < 0.9
-            || qos.reliability_priority > 0.5
+        path.hop_count() > 3 || characteristics.reliability < 0.9 || qos.reliability_priority > 0.5
     }
 
     /// Generate CLA-specific parameters
@@ -411,25 +416,25 @@ impl Navigator {
     }
 
     /// Update navigator statistics
-    async fn update_stats(
-        &self,
-        cla_name: &str,
-        selection_time_ms: f64,
-        privacy_cap: Option<f64>,
-    ) {
+    async fn update_stats(&self, cla_name: &str, selection_time_ms: f64, privacy_cap: Option<f64>) {
         let mut stats = self.stats.write().await;
 
         stats.total_selections += 1;
-        *stats.selections_by_cla.entry(cla_name.to_string()).or_insert(0) += 1;
+        *stats
+            .selections_by_cla
+            .entry(cla_name.to_string())
+            .or_insert(0) += 1;
 
         // Update running average of selection time
         let alpha = 0.1; // EWMA smoothing factor
-        stats.avg_selection_time_ms = alpha * selection_time_ms + (1.0 - alpha) * stats.avg_selection_time_ms;
+        stats.avg_selection_time_ms =
+            alpha * selection_time_ms + (1.0 - alpha) * stats.avg_selection_time_ms;
 
         // Update privacy utilization if applicable
         if let Some(cap) = privacy_cap {
             let utilization = self.privacy_composer.budget_consumed / cap;
-            stats.avg_privacy_utilization = alpha * utilization + (1.0 - alpha) * stats.avg_privacy_utilization;
+            stats.avg_privacy_utilization =
+                alpha * utilization + (1.0 - alpha) * stats.avg_privacy_utilization;
         }
     }
 

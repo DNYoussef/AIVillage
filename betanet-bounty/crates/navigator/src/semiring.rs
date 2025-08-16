@@ -38,11 +38,7 @@ impl Cost {
     }
 
     /// Create from existing DTN Contact
-    pub fn from_dtn_contact(
-        contact: &Contact,
-        bundle_size_bytes: usize,
-        privacy_eps: f64,
-    ) -> Self {
+    pub fn from_dtn_contact(contact: &Contact, bundle_size_bytes: usize, privacy_eps: f64) -> Self {
         // Convert DTN metrics to our cost structure
         let latency_ms = contact.latency.as_millis() as f64;
 
@@ -268,7 +264,7 @@ mod tests {
     fn test_semiring_laws() {
         // Use costs where dominance relationships are clear
         let better = Cost::new(50.0, 3.0, 0.95, 0.05); // Dominates in all dimensions
-        let worse = Cost::new(100.0, 10.0, 0.8, 0.2);   // Dominated in all dimensions
+        let worse = Cost::new(100.0, 10.0, 0.8, 0.2); // Dominated in all dimensions
         let c = Cost::new(200.0, 2.0, 0.95, 0.05);
 
         // Addition commutativity: a ⊕ b = b ⊕ a (when one dominates)

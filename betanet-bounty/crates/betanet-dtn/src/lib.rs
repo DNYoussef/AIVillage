@@ -39,18 +39,24 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use serde::{Deserialize, Serialize};
 
 // Core DTN modules
-pub mod bundle;
-pub mod storage;
-pub mod router;
 pub mod api;
+pub mod bundle;
+pub mod router;
 pub mod sched;
+pub mod storage;
+
+// Security test modules
+#[cfg(any(test, feature = "security-testing"))]
+pub mod test_plaintext_guard;
 
 // Re-export main types
-pub use bundle::{Bundle, BundleId, EndpointId, PrimaryBlock, CanonicalBlock, PayloadBlock, BlockType};
+pub use api::{DtnError, DtnNode, RegistrationInfo, SendBundleOptions};
+pub use bundle::{
+    BlockType, Bundle, BundleId, CanonicalBlock, EndpointId, PayloadBlock, PrimaryBlock,
+};
+pub use router::{ContactGraphRouter, ContactPlan, RoutingPolicy};
+pub use sched::{LyapunovConfig, LyapunovScheduler, QueueState, SchedulingDecision};
 pub use storage::{BundleStore, StorageError};
-pub use router::{ContactGraphRouter, RoutingPolicy, ContactPlan};
-pub use api::{DtnNode, DtnError, SendBundleOptions, RegistrationInfo};
-pub use sched::{LyapunovScheduler, LyapunovConfig, SchedulingDecision, QueueState};
 
 /// DTN protocol version (Bundle Protocol v7)
 pub const DTN_VERSION: u8 = 7;
@@ -179,6 +185,22 @@ pub trait ConvergenceLayer: Send + Sync + 'static {
     async fn send_bundle(
         &self,
         destination: &str, // String representation of address
+        bundle: &Bundle,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        // DTN INVARIANT: No plaintext at gateway boundaries
+        // This debug assertion ensures payloads are encrypted before egress
+        debug_assert!(
+            bundle.payload.is_ciphertext(),
+            "DTN gateway invariant violated: plaintext payload detected at egress boundary"
+        );
+
+        self.send_bundle_impl(destination, bundle).await
+    }
+
+    /// Implementation-specific bundle sending (called after plaintext guard)
+    async fn send_bundle_impl(
+        &self,
+        destination: &str,
         bundle: &Bundle,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>;
 

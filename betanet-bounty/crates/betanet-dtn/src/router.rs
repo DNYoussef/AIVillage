@@ -39,8 +39,8 @@ impl Contact {
             end_time,
             data_rate,
             latency: Duration::from_millis(10), // Default 10ms latency
-            reliability: 0.95, // Default 95% reliability
-            energy_cost: 1.0,  // Default energy cost
+            reliability: 0.95,                  // Default 95% reliability
+            energy_cost: 1.0,                   // Default energy cost
         }
     }
 
@@ -140,6 +140,12 @@ pub struct Route {
     pub delivery_probability: f64,
     pub earliest_departure: u64,
     pub latest_arrival: u64,
+}
+
+impl Default for Route {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl Route {
@@ -262,7 +268,9 @@ impl ContactGraphRouter {
             .min_by(|a, b| {
                 let score_a = self.score_route(a);
                 let score_b = self.score_route(b);
-                score_a.partial_cmp(&score_b).unwrap_or(std::cmp::Ordering::Equal)
+                score_a
+                    .partial_cmp(&score_b)
+                    .unwrap_or(std::cmp::Ordering::Equal)
             });
 
         Ok(best_route)
@@ -281,7 +289,9 @@ impl ContactGraphRouter {
     ) -> Result<Option<EndpointId>, RoutingError> {
         let bundle_size = bundle.size();
 
-        if let Some(route) = self.find_best_route(&bundle.primary.destination, bundle_size, current_time)? {
+        if let Some(route) =
+            self.find_best_route(&bundle.primary.destination, bundle_size, current_time)?
+        {
             // Find the next hop from current node
             for (i, hop) in route.hops.iter().enumerate() {
                 if *hop == self.local_node && i + 1 < route.hops.len() {
@@ -299,12 +309,14 @@ impl ContactGraphRouter {
 
         // Remove expired cache entries
         let cache_cutoff = current_time.saturating_sub(self.cache_timeout.as_secs());
-        self.route_cache.retain(|(_, time), _| *time >= cache_cutoff / 60);
+        self.route_cache
+            .retain(|(_, time), _| *time >= cache_cutoff / 60);
     }
 
     /// Get active contacts at the given time
     pub fn get_active_contacts(&self, current_time: u64) -> Vec<Contact> {
-        self.contact_plan.get_active_contacts(current_time)
+        self.contact_plan
+            .get_active_contacts(current_time)
             .into_iter()
             .cloned()
             .collect()
@@ -322,20 +334,25 @@ impl ContactGraphRouter {
 
         // Direct routes first if preferred
         if self.policy.prefer_direct_paths {
-            if let Some(direct_route) = self.find_direct_route(destination, bundle_size, current_time)? {
+            if let Some(direct_route) =
+                self.find_direct_route(destination, bundle_size, current_time)?
+            {
                 routes.push(direct_route);
             }
         }
 
         // Multi-hop routes using modified Dijkstra
-        let multi_hop_routes = self.find_multi_hop_routes(destination, bundle_size, current_time)?;
+        let multi_hop_routes =
+            self.find_multi_hop_routes(destination, bundle_size, current_time)?;
         routes.extend(multi_hop_routes);
 
         // Sort by score
         routes.sort_by(|a, b| {
             let score_a = self.score_route(a);
             let score_b = self.score_route(b);
-            score_a.partial_cmp(&score_b).unwrap_or(std::cmp::Ordering::Equal)
+            score_a
+                .partial_cmp(&score_b)
+                .unwrap_or(std::cmp::Ordering::Equal)
         });
 
         // Return top routes
@@ -365,7 +382,9 @@ impl ContactGraphRouter {
         }
 
         // Look for future direct contacts
-        let future_contacts = self.contact_plan.get_future_contacts(&self.local_node, current_time);
+        let future_contacts = self
+            .contact_plan
+            .get_future_contacts(&self.local_node, current_time);
 
         for contact in future_contacts {
             if contact.to == *destination {
@@ -402,7 +421,9 @@ impl ContactGraphRouter {
             }
 
             // Find contacts from current node
-            let available_contacts: Vec<_> = self.contact_plan.contacts
+            let available_contacts: Vec<_> = self
+                .contact_plan
+                .contacts
                 .iter()
                 .filter(|c| c.from == current_node && c.is_active(current_time))
                 .collect();

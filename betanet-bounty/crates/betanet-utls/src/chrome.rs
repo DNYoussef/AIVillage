@@ -1,7 +1,7 @@
 //! Chrome browser profiles
 
+use crate::{cipher_suites, tls_version, ChromeVersion};
 use serde::{Deserialize, Serialize};
-use crate::{ChromeVersion, cipher_suites, tls_version};
 
 /// Chrome TLS profile
 #[derive(Debug, Clone, Serialize, Deserialize)]

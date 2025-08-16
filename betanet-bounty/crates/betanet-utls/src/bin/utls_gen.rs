@@ -4,14 +4,12 @@
 //! and computing JA3/JA4 fingerprints.
 
 use betanet_utls::{
-    ClientHello, ChromeVersion,
-    ja3, ja4,
     chrome::ChromeProfile,
+    ja3, ja4,
     refresh::{ChromeRefresh, ReleaseChannel},
-    TlsTemplateBuilder,
+    ChromeVersion, ClientHello, TlsTemplateBuilder,
 };
 use clap::{Parser, Subcommand};
-use serde_json;
 use std::fs;
 
 #[derive(Parser)]
@@ -126,19 +124,37 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cli = Cli::parse();
 
     match cli.command {
-        Commands::Generate { hostname, version, grease, format, output } => {
+        Commands::Generate {
+            hostname,
+            version,
+            grease,
+            format,
+            output,
+        } => {
             cmd_generate(hostname, version, grease, format, output).await?;
         }
-        Commands::Ja3 { hostname, version, grease } => {
+        Commands::Ja3 {
+            hostname,
+            version,
+            grease,
+        } => {
             cmd_ja3(hostname, version, grease).await?;
         }
-        Commands::Ja4 { hostname, version, grease } => {
+        Commands::Ja4 {
+            hostname,
+            version,
+            grease,
+        } => {
             cmd_ja4(hostname, version, grease).await?;
         }
         Commands::Compare { hostname, version } => {
             cmd_compare(hostname, version).await?;
         }
-        Commands::Template { name, hostname, output } => {
+        Commands::Template {
+            name,
+            hostname,
+            output,
+        } => {
             cmd_template(name, hostname, output).await?;
         }
         Commands::Refresh { channel } => {
@@ -231,10 +247,7 @@ async fn cmd_ja4(
     Ok(())
 }
 
-async fn cmd_compare(
-    hostname: String,
-    version: String,
-) -> Result<(), Box<dyn std::error::Error>> {
+async fn cmd_compare(hostname: String, version: String) -> Result<(), Box<dyn std::error::Error>> {
     println!("🔍 Comparing JA3 vs JA4 for {}", hostname);
 
     let hello = create_client_hello(&hostname, &version, true).await?;
@@ -249,7 +262,10 @@ async fn cmd_compare(
     let ja4_parts: Vec<&str> = ja4_fp.fingerprint.split('_').collect();
     if ja4_parts.len() == 2 {
         println!("\n🔬 JA4 Analysis:");
-        println!("  Prefix:     {} (protocol+ALPN+version+counts)", ja4_parts[0]);
+        println!(
+            "  Prefix:     {} (protocol+ALPN+version+counts)",
+            ja4_parts[0]
+        );
         println!("  Hashes:     {} (cipher+extension hashes)", ja4_parts[1]);
 
         if ja4_parts[0].len() >= 8 {
@@ -262,10 +278,16 @@ async fn cmd_compare(
             println!("  Protocol:   {} (TLS)", protocol);
             println!("  ALPN:       {} (HTTP/2)", alpn);
             println!("  TLS Version: {} (1.2)", tls_version);
-            println!("  Ciphers:    {} ({} total)", cipher_count,
-                     u8::from_str_radix(cipher_count, 16).unwrap_or(0));
-            println!("  Extensions: {} ({} total)", ext_count,
-                     u8::from_str_radix(ext_count, 16).unwrap_or(0));
+            println!(
+                "  Ciphers:    {} ({} total)",
+                cipher_count,
+                u8::from_str_radix(cipher_count, 16).unwrap_or(0)
+            );
+            println!(
+                "  Extensions: {} ({} total)",
+                ext_count,
+                u8::from_str_radix(ext_count, 16).unwrap_or(0)
+            );
         }
     }
 
@@ -336,14 +358,16 @@ async fn cmd_refresh(channel: String) -> Result<(), Box<dyn std::error::Error>> 
 
     println!("📦 Found {} versions:", versions.len());
     for (i, version) in versions.iter().take(5).enumerate() {
-        println!("  {}. Chrome {} ({})",
-                 i + 1,
-                 version.version,
-                 version.release_date.as_deref().unwrap_or("unknown"));
+        println!(
+            "  {}. Chrome {} ({})",
+            i + 1,
+            version.version,
+            version.release_date.as_deref().unwrap_or("unknown")
+        );
     }
 
     if let Ok(n2_version) = refresh.get_stable_n2_version().await {
-        println!("\n🎯 Current N-2 stable: Chrome {}", n2_version.to_string());
+        println!("\n🎯 Current N-2 stable: Chrome {}", n2_version);
     }
 
     Ok(())
@@ -450,9 +474,13 @@ async fn run_grease_test() -> Result<(), Box<dyn std::error::Error>> {
     };
 
     // Check GREASE presence
-    let has_grease_cipher = hello_with_grease.cipher_suites.iter()
+    let has_grease_cipher = hello_with_grease
+        .cipher_suites
+        .iter()
         .any(|&c| betanet_utls::grease::GREASE_VALUES.contains(&c));
-    let no_grease_cipher = hello_without_grease.cipher_suites.iter()
+    let no_grease_cipher = hello_without_grease
+        .cipher_suites
+        .iter()
         .any(|&c| betanet_utls::grease::GREASE_VALUES.contains(&c));
 
     assert!(has_grease_cipher);

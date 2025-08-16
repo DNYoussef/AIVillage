@@ -7,9 +7,8 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex as StdMutex};
 use std::time::{Duration, Instant};
 
-
-use tokio::sync::{Mutex, Semaphore};
 use std::collections::VecDeque;
+use tokio::sync::{Mutex, Semaphore};
 use tokio::time::sleep;
 use tracing::{debug, warn};
 
@@ -66,7 +65,9 @@ impl TokenBucket {
                 Ordering::Relaxed,
             ) {
                 Ok(_) => {
-                    self.stats.tokens_consumed.fetch_add(tokens, Ordering::Relaxed);
+                    self.stats
+                        .tokens_consumed
+                        .fetch_add(tokens, Ordering::Relaxed);
                     self.stats.requests_allowed.fetch_add(1, Ordering::Relaxed);
                     return true;
                 }
@@ -143,7 +144,7 @@ impl TokenBucket {
                     Ordering::Relaxed,
                 ) {
                     Ok(_) => {
-                        let added = (tokens_to_add_fp / TOKEN_PRECISION) as u64;
+                        let added = tokens_to_add_fp / TOKEN_PRECISION;
                         self.stats.tokens_added.fetch_add(added, Ordering::Relaxed);
                         break;
                     }
@@ -222,14 +223,18 @@ impl TrafficShaper {
             if queue.len() >= self.max_queue_size {
                 drop(queue);
                 self.stats.packets_dropped.fetch_add(1, Ordering::Relaxed);
-                return Err(MixnodeError::Network("Traffic shaper queue full".to_string()));
+                return Err(MixnodeError::Network(
+                    "Traffic shaper queue full".to_string(),
+                ));
             }
         }
 
         // Acquire buffer slot only after queue check
-        let _permit = self.buffer.acquire().await.map_err(|_| {
-            MixnodeError::Network("Traffic shaper buffer closed".to_string())
-        })?;
+        let _permit = self
+            .buffer
+            .acquire()
+            .await
+            .map_err(|_| MixnodeError::Network("Traffic shaper buffer closed".to_string()))?;
 
         // Add to queue with optimized VecDeque
         {
@@ -237,7 +242,9 @@ impl TrafficShaper {
             // Double-check size since queue could have grown
             if queue.len() >= self.max_queue_size {
                 self.stats.packets_dropped.fetch_add(1, Ordering::Relaxed);
-                return Err(MixnodeError::Network("Traffic shaper queue full".to_string()));
+                return Err(MixnodeError::Network(
+                    "Traffic shaper queue full".to_string(),
+                ));
             }
             queue.push_back(packet);
             self.stats.packets_queued.fetch_add(1, Ordering::Relaxed);
@@ -299,7 +306,8 @@ impl TrafficShaper {
     /// Update target rate
     pub fn update_rate(&mut self, new_rate: f64) {
         self.target_rate = new_rate;
-        self.rate_limiter.update_rate((new_rate * 2.0) as u64, new_rate);
+        self.rate_limiter
+            .update_rate((new_rate * 2.0) as u64, new_rate);
     }
 }
 
@@ -488,9 +496,16 @@ impl TrafficEstimator {
         }
 
         // Calculate average interval (harmonic mean for rate estimation)
-        let sum_inverse: f64 = self.recent_intervals
+        let sum_inverse: f64 = self
+            .recent_intervals
             .iter()
-            .map(|&interval| if interval > 0 { 1000.0 / interval as f64 } else { 0.0 })
+            .map(|&interval| {
+                if interval > 0 {
+                    1000.0 / interval as f64
+                } else {
+                    0.0
+                }
+            })
             .sum();
 
         if sum_inverse > 0.0 {
@@ -590,7 +605,8 @@ impl RateLimitedTrafficShaper {
 
     /// Update configuration
     pub fn update_config(&mut self, config: RateLimitingConfig) {
-        self.input_limiter.update_rate(config.burst_capacity, config.sustained_rate);
+        self.input_limiter
+            .update_rate(config.burst_capacity, config.sustained_rate);
         self.output_shaper.update_rate(config.output_rate);
         self.config = config;
     }
@@ -622,8 +638,8 @@ impl RateLimitedTrafficShaper {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tokio::time::timeout;
     use std::time::Duration;
+    use tokio::time::timeout;
 
     #[tokio::test]
     async fn test_token_bucket_basic() {
@@ -709,7 +725,7 @@ mod tests {
     async fn test_rate_limited_traffic_shaper() {
         let config = RateLimitingConfig {
             enabled: true,
-            burst_capacity: 100, // 100 bytes burst
+            burst_capacity: 100,  // 100 bytes burst
             sustained_rate: 50.0, // 50 bytes/sec
             shaping_buffer_size: 10,
             output_rate: 1.0,
@@ -750,17 +766,23 @@ mod tests {
         assert!(active_epsilon > 5.0); // Should be around 10 packets/sec
 
         // Simulate zero traffic period
-        shaper.handle_zero_traffic_period(Duration::from_secs(35)).await;
+        shaper
+            .handle_zero_traffic_period(Duration::from_secs(35))
+            .await;
         let zero_traffic_epsilon = shaper.get_epsilon_estimate().await;
         assert!((zero_traffic_epsilon - 0.01).abs() < 0.001); // Should be 0.01 for long silence
 
         // Test medium silence
-        shaper.handle_zero_traffic_period(Duration::from_secs(15)).await;
+        shaper
+            .handle_zero_traffic_period(Duration::from_secs(15))
+            .await;
         let medium_silence_epsilon = shaper.get_epsilon_estimate().await;
         assert!((medium_silence_epsilon - 0.05).abs() < 0.001); // Should be 0.05 for medium silence
 
         // Test short silence
-        shaper.handle_zero_traffic_period(Duration::from_secs(5)).await;
+        shaper
+            .handle_zero_traffic_period(Duration::from_secs(5))
+            .await;
         let short_silence_epsilon = shaper.get_epsilon_estimate().await;
         assert!((short_silence_epsilon - 0.1).abs() < 0.001); // Should be 0.1 for short silence
     }

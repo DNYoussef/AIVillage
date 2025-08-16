@@ -12,19 +12,19 @@ use async_trait::async_trait;
 use bytes::Bytes;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
-use tokio::sync::{RwLock, oneshot};
+use tokio::sync::{oneshot, RwLock};
 use tracing::{debug, error, info, warn};
 
 use agent_fabric::{
-    AgentFabric, AgentId, AgentMessage, AgentResponse, AgentServer,
-    DeliveryOptions, Transport, MessagePriority, AgentFabricError,
+    AgentFabric, AgentFabricError, AgentId, AgentMessage, AgentResponse, AgentServer,
+    DeliveryOptions, MessagePriority, Transport,
 };
 
 use crate::{
-    TwinId, TwinOperation, TwinPreferences,
     crdt::CrdtState,
     receipts::{Receipt, ReceiptSigner, ReceiptVerifier},
     vault::{TwinVault, VaultConfig},
+    TwinId, TwinOperation, TwinPreferences,
 };
 
 /// Twin operation request message
@@ -115,21 +115,27 @@ impl TwinVaultServer {
         from: AgentId,
         request: TwinOperationRequest,
     ) -> Result<TwinOperationResponse, crate::TwinVaultError> {
-        debug!("Handling twin operation from {}: {:?}", from, request.operation);
+        debug!(
+            "Handling twin operation from {}: {:?}",
+            from, request.operation
+        );
 
         // Check if consent is required
-        let needs_consent = !self.twin_manager
+        let needs_consent = !self
+            .twin_manager
             .check_consent(&request.twin_id, &from, &request.operation)
             .await;
 
         if needs_consent {
             // Request consent
-            let consent_granted = self.request_consent(
-                &request.twin_id,
-                from.clone(),
-                &request.operation,
-                request.consent_timeout_ms.unwrap_or(30000),
-            ).await?;
+            let consent_granted = self
+                .request_consent(
+                    &request.twin_id,
+                    from.clone(),
+                    &request.operation,
+                    request.consent_timeout_ms.unwrap_or(30000),
+                )
+                .await?;
 
             if !consent_granted {
                 return Ok(TwinOperationResponse {
@@ -142,11 +148,19 @@ impl TwinVaultServer {
         }
 
         // Perform operation
-        match self.twin_manager.perform_operation(request.twin_id, request.operation, from).await {
+        match self
+            .twin_manager
+            .perform_operation(request.twin_id, request.operation, from)
+            .await
+        {
             Ok((result, receipt)) => Ok(TwinOperationResponse {
                 success: true,
                 result,
-                receipt: if request.require_receipt { Some(receipt) } else { None },
+                receipt: if request.require_receipt {
+                    Some(receipt)
+                } else {
+                    None
+                },
                 error: None,
             }),
             Err(e) => Ok(TwinOperationResponse {
@@ -176,19 +190,28 @@ impl TwinVaultServer {
         }
 
         // Get vault
-        let vault = match self.twin_manager.get_twin(request.twin_id.clone(), VaultConfig::default()).await {
+        let vault = match self
+            .twin_manager
+            .get_twin(request.twin_id.clone(), VaultConfig::default())
+            .await
+        {
             Ok(vault) => vault,
-            Err(e) => return Ok(TwinSyncResponse {
-                success: false,
-                merged_state: None,
-                error: Some(e.to_string()),
-            }),
+            Err(e) => {
+                return Ok(TwinSyncResponse {
+                    success: false,
+                    merged_state: None,
+                    error: Some(e.to_string()),
+                })
+            }
         };
 
         // Merge state
         match vault.merge_state(request.state).await {
             Ok(()) => {
-                let merged_state = vault.get_state().await.map_err(crate::TwinVaultError::VaultError)?;
+                let merged_state = vault
+                    .get_state()
+                    .await
+                    .map_err(crate::TwinVaultError::VaultError)?;
                 Ok(TwinSyncResponse {
                     success: true,
                     merged_state: Some(merged_state),
@@ -207,8 +230,14 @@ impl TwinVaultServer {
         &self,
         response: ConsentResponse,
     ) -> Result<(), crate::TwinVaultError> {
-        let consent_key = format!("{}:{}", response.twin_id,
-            SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis());
+        let consent_key = format!(
+            "{}:{}",
+            response.twin_id,
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_millis()
+        );
 
         let mut pending = self.pending_consents.write().await;
         if let Some(sender) = pending.remove(&consent_key) {
@@ -223,11 +252,17 @@ impl TwinVaultServer {
         from: AgentId,
         request: PreferenceUpdateRequest,
     ) -> Result<(), crate::TwinVaultError> {
-        debug!("Updating preferences for twin {} from {}", request.twin_id, from);
+        debug!(
+            "Updating preferences for twin {} from {}",
+            request.twin_id, from
+        );
 
         // Only allow twin owner to update preferences
         if request.twin_id.agent_id != from {
-            warn!("Unauthorized preference update attempt by {} for twin {}", from, request.twin_id);
+            warn!(
+                "Unauthorized preference update attempt by {} for twin {}",
+                from, request.twin_id
+            );
             return Err(crate::TwinVaultError::ConsentDenied {
                 twin_id: request.twin_id,
                 requester: from,
@@ -235,7 +270,9 @@ impl TwinVaultServer {
             });
         }
 
-        self.twin_manager.set_preferences(request.twin_id, request.preferences).await;
+        self.twin_manager
+            .set_preferences(request.twin_id, request.preferences)
+            .await;
         Ok(())
     }
 
@@ -272,15 +309,18 @@ impl TwinVaultServer {
             require_receipt: false,
         };
 
-        match self.twin_manager.agent_fabric.send_message(
-            twin_id.agent_id.clone(),
-            consent_message,
-            delivery_options,
-        ).await {
+        match self
+            .twin_manager
+            .agent_fabric
+            .send_message(twin_id.agent_id.clone(), consent_message, delivery_options)
+            .await
+        {
             Ok(Some(response)) => {
                 if response.success {
                     if let Some(ref payload) = response.payload {
-                        if let Ok(consent_response) = serde_json::from_slice::<ConsentResponse>(payload) {
+                        if let Ok(consent_response) =
+                            serde_json::from_slice::<ConsentResponse>(payload)
+                        {
                             return Ok(consent_response.granted);
                         }
                     }
@@ -307,40 +347,55 @@ impl AgentServer for TwinVaultServer {
             message_types::TWIN_OPERATION => {
                 let request: TwinOperationRequest = serde_json::from_slice(&message.payload)
                     .map_err(|e| AgentFabricError::SerializationError(e.to_string()))?;
-                let response = self.handle_twin_operation(from, request).await
+                let response = self
+                    .handle_twin_operation(from, request)
+                    .await
                     .map_err(|e| AgentFabricError::NetworkError(e.to_string()))?;
 
                 let response_payload = serde_json::to_vec(&response)
                     .map_err(|e| AgentFabricError::SerializationError(e.to_string()))?;
-                Ok(Some(AgentResponse::success(&message.id, Bytes::from(response_payload))))
+                Ok(Some(AgentResponse::success(
+                    &message.id,
+                    Bytes::from(response_payload),
+                )))
             }
             message_types::TWIN_SYNC => {
                 let request: TwinSyncRequest = serde_json::from_slice(&message.payload)
                     .map_err(|e| AgentFabricError::SerializationError(e.to_string()))?;
-                let response = self.handle_twin_sync(from, request).await
+                let response = self
+                    .handle_twin_sync(from, request)
+                    .await
                     .map_err(|e| AgentFabricError::NetworkError(e.to_string()))?;
 
                 let response_payload = serde_json::to_vec(&response)
                     .map_err(|e| AgentFabricError::SerializationError(e.to_string()))?;
-                Ok(Some(AgentResponse::success(&message.id, Bytes::from(response_payload))))
+                Ok(Some(AgentResponse::success(
+                    &message.id,
+                    Bytes::from(response_payload),
+                )))
             }
             message_types::CONSENT_RESPONSE => {
                 let response: ConsentResponse = serde_json::from_slice(&message.payload)
                     .map_err(|e| AgentFabricError::SerializationError(e.to_string()))?;
-                self.handle_consent_response(response).await
+                self.handle_consent_response(response)
+                    .await
                     .map_err(|e| AgentFabricError::NetworkError(e.to_string()))?;
                 Ok(Some(AgentResponse::success(&message.id, Bytes::new())))
             }
             message_types::PREFERENCE_UPDATE => {
                 let request: PreferenceUpdateRequest = serde_json::from_slice(&message.payload)
                     .map_err(|e| AgentFabricError::SerializationError(e.to_string()))?;
-                self.handle_preference_update(from, request).await
+                self.handle_preference_update(from, request)
+                    .await
                     .map_err(|e| AgentFabricError::NetworkError(e.to_string()))?;
                 Ok(Some(AgentResponse::success(&message.id, Bytes::new())))
             }
             _ => {
                 warn!("Unknown message type: {}", message.message_type);
-                Ok(Some(AgentResponse::error(&message.id, "Unknown message type")))
+                Ok(Some(AgentResponse::error(
+                    &message.id,
+                    "Unknown message type",
+                )))
             }
         }
     }
@@ -401,19 +456,28 @@ impl TwinVaultClient {
             require_receipt: false,
         };
 
-        match self.agent_fabric.send_message(target_agent.clone(), message, delivery_options).await {
+        match self
+            .agent_fabric
+            .send_message(target_agent.clone(), message, delivery_options)
+            .await
+        {
             Ok(Some(response)) => {
                 if response.success {
-                    let twin_response: TwinOperationResponse = if let Some(ref payload) = response.payload {
-                        serde_json::from_slice(payload)
-                            .map_err(|e| IntegrationError::SerializationError(e.to_string()))?
-                    } else {
-                        return Err(IntegrationError::SerializationError("Empty payload".to_string()));
-                    };
+                    let twin_response: TwinOperationResponse =
+                        if let Some(ref payload) = response.payload {
+                            serde_json::from_slice(payload)
+                                .map_err(|e| IntegrationError::SerializationError(e.to_string()))?
+                        } else {
+                            return Err(IntegrationError::SerializationError(
+                                "Empty payload".to_string(),
+                            ));
+                        };
 
                     // Verify receipt if present
                     if let Some(ref receipt) = twin_response.receipt {
-                        let verification = self.receipt_verifier.verify_receipt(receipt)
+                        let verification = self
+                            .receipt_verifier
+                            .verify_receipt(receipt)
                             .map_err(|e| IntegrationError::ReceiptError(e.to_string()))?;
 
                         if !verification.is_trusted_and_valid() {
@@ -424,7 +488,9 @@ impl TwinVaultClient {
                     Ok(twin_response)
                 } else {
                     Err(IntegrationError::OperationFailed(
-                        response.error.unwrap_or_else(|| "Unknown error".to_string())
+                        response
+                            .error
+                            .unwrap_or_else(|| "Unknown error".to_string()),
                     ))
                 }
             }
@@ -461,26 +527,37 @@ impl TwinVaultClient {
             require_receipt: false,
         };
 
-        match self.agent_fabric.send_message(target_agent, message, delivery_options).await {
+        match self
+            .agent_fabric
+            .send_message(target_agent, message, delivery_options)
+            .await
+        {
             Ok(Some(response)) => {
                 if response.success {
-                    let sync_response: TwinSyncResponse = if let Some(ref payload) = response.payload {
-                        serde_json::from_slice(payload)
-                            .map_err(|e| IntegrationError::SerializationError(e.to_string()))?
-                    } else {
-                        return Err(IntegrationError::SerializationError("Empty payload".to_string()));
-                    };
+                    let sync_response: TwinSyncResponse =
+                        if let Some(ref payload) = response.payload {
+                            serde_json::from_slice(payload)
+                                .map_err(|e| IntegrationError::SerializationError(e.to_string()))?
+                        } else {
+                            return Err(IntegrationError::SerializationError(
+                                "Empty payload".to_string(),
+                            ));
+                        };
 
                     if sync_response.success {
                         Ok(sync_response.merged_state)
                     } else {
                         Err(IntegrationError::SyncFailed(
-                            sync_response.error.unwrap_or_else(|| "Unknown sync error".to_string())
+                            sync_response
+                                .error
+                                .unwrap_or_else(|| "Unknown sync error".to_string()),
                         ))
                     }
                 } else {
                     Err(IntegrationError::SyncFailed(
-                        response.error.unwrap_or_else(|| "Sync request failed".to_string())
+                        response
+                            .error
+                            .unwrap_or_else(|| "Sync request failed".to_string()),
                     ))
                 }
             }
@@ -516,13 +593,19 @@ impl TwinVaultClient {
             require_receipt: false,
         };
 
-        match self.agent_fabric.send_message(target_agent, message, delivery_options).await {
+        match self
+            .agent_fabric
+            .send_message(target_agent, message, delivery_options)
+            .await
+        {
             Ok(Some(response)) => {
                 if response.success {
                     Ok(())
                 } else {
                     Err(IntegrationError::OperationFailed(
-                        response.error.unwrap_or_else(|| "Preference update failed".to_string())
+                        response
+                            .error
+                            .unwrap_or_else(|| "Preference update failed".to_string()),
                     ))
                 }
             }
@@ -567,10 +650,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_twin_operation_request_serialization() {
-        let twin_id = TwinId::new(
-            AgentId::new("test-agent", "test-node"),
-            "test-twin",
-        );
+        let twin_id = TwinId::new(AgentId::new("test-agent", "test-node"), "test-twin");
 
         let operation = TwinOperation::Write {
             key: "test_key".to_string(),
@@ -589,16 +669,16 @@ mod tests {
         let serialized = serde_json::to_vec(&request).unwrap();
         let deserialized: TwinOperationRequest = serde_json::from_slice(&serialized).unwrap();
 
-        assert_eq!(request.twin_id.to_string(), deserialized.twin_id.to_string());
+        assert_eq!(
+            request.twin_id.to_string(),
+            deserialized.twin_id.to_string()
+        );
         assert_eq!(request.require_receipt, deserialized.require_receipt);
     }
 
     #[tokio::test]
     async fn test_consent_request_response() {
-        let twin_id = TwinId::new(
-            AgentId::new("test-agent", "test-node"),
-            "test-twin",
-        );
+        let twin_id = TwinId::new(AgentId::new("test-agent", "test-node"), "test-twin");
 
         let requester = AgentId::new("requester", "requester-node");
 
@@ -628,7 +708,10 @@ mod tests {
         let resp_serialized = serde_json::to_vec(&consent_response).unwrap();
         let resp_deserialized: ConsentResponse = serde_json::from_slice(&resp_serialized).unwrap();
 
-        assert_eq!(consent_request.twin_id.to_string(), req_deserialized.twin_id.to_string());
+        assert_eq!(
+            consent_request.twin_id.to_string(),
+            req_deserialized.twin_id.to_string()
+        );
         assert_eq!(consent_response.granted, resp_deserialized.granted);
     }
 
@@ -648,6 +731,10 @@ mod tests {
         unique_types.sort();
         unique_types.dedup();
 
-        assert_eq!(types.len(), unique_types.len(), "Message types must be unique");
+        assert_eq!(
+            types.len(),
+            unique_types.len(),
+            "Message types must be unique"
+        );
     }
 }

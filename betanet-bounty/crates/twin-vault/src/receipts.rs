@@ -9,9 +9,9 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use bytes::Bytes;
 #[cfg(feature = "receipts")]
 use coset::{
-    CoseSign1, CoseSign1Builder, HeaderBuilder, Label, ProtectedHeader,
-    CoseKey, CoseKeyBuilder, KeyType, Algorithm, AlgorithmWithUsage,
     iana::{Algorithm as IanaAlgorithm, KeyType as IanaKeyType},
+    Algorithm, AlgorithmWithUsage, CoseKey, CoseKeyBuilder, CoseSign1, CoseSign1Builder,
+    HeaderBuilder, KeyType, Label, ProtectedHeader,
 };
 use ed25519_dalek::{Keypair, PublicKey, SecretKey, Signature, Signer, Verifier};
 use rand::{rngs::OsRng, CryptoRng, RngCore};
@@ -60,7 +60,7 @@ impl Receipt {
 
         // Hash result data if present
         let result_hash = result_data.map(|data| {
-            use sha2::{Sha256, Digest};
+            use sha2::{Digest, Sha256};
             Sha256::digest(data).to_vec()
         });
 
@@ -99,8 +99,9 @@ impl Receipt {
             let cose_sign1 = CoseSign1::from_slice(&self.cose_signature)
                 .map_err(|e| ReceiptError::CoseError(e.to_string()))?;
 
-            let payload = cose_sign1.payload.as_ref()
-                .ok_or_else(|| ReceiptError::CoseError("No payload in COSE signature".to_string()))?;
+            let payload = cose_sign1.payload.as_ref().ok_or_else(|| {
+                ReceiptError::CoseError("No payload in COSE signature".to_string())
+            })?;
 
             // Verify the payload matches our canonical data
             let canonical = self.canonical_data()?;
@@ -155,7 +156,10 @@ impl Clone for ReceiptSigner {
         let secret_bytes = self.keypair.secret.to_bytes();
         let secret_key = SecretKey::from_bytes(&secret_bytes).unwrap();
         let public_key = PublicKey::from(&secret_key);
-        let keypair = Keypair { secret: secret_key, public: public_key };
+        let keypair = Keypair {
+            secret: secret_key,
+            public: public_key,
+        };
 
         Self {
             keypair,
@@ -176,34 +180,34 @@ impl ReceiptSigner {
             OsRng.fill_bytes(&mut secret_bytes);
             let secret_key = SecretKey::from_bytes(&secret_bytes).unwrap();
             let public_key = PublicKey::from(&secret_key);
-            Keypair { secret: secret_key, public: public_key }
+            Keypair {
+                secret: secret_key,
+                public: public_key,
+            }
         };
 
-        Self {
-            keypair,
-            signer_id,
-        }
+        Self { keypair, signer_id }
     }
 
     /// Create receipt signer with existing keypair
     pub fn with_keypair(signer_id: String, keypair: Keypair) -> Self {
-        Self {
-            keypair,
-            signer_id,
-        }
+        Self { keypair, signer_id }
     }
 
     /// Create receipt signer from secret key bytes
-    pub fn from_secret_bytes(signer_id: String, secret_bytes: &[u8; 32]) -> Result<Self, ReceiptError> {
+    pub fn from_secret_bytes(
+        signer_id: String,
+        secret_bytes: &[u8; 32],
+    ) -> Result<Self, ReceiptError> {
         let secret_key = SecretKey::from_bytes(secret_bytes)
             .map_err(|e| ReceiptError::KeyError(e.to_string()))?;
         let public_key = PublicKey::from(&secret_key);
-        let keypair = Keypair { secret: secret_key, public: public_key };
+        let keypair = Keypair {
+            secret: secret_key,
+            public: public_key,
+        };
 
-        Ok(Self {
-            keypair,
-            signer_id,
-        })
+        Ok(Self { keypair, signer_id })
     }
 
     /// Sign a receipt operation
@@ -214,7 +218,8 @@ impl ReceiptSigner {
         requester: &crate::AgentId,
         success: bool,
     ) -> Result<Receipt, ReceiptError> {
-        self.sign_operation_with_result(twin_id, operation, requester, success, None).await
+        self.sign_operation_with_result(twin_id, operation, requester, success, None)
+            .await
     }
 
     /// Sign a receipt operation with result data
@@ -258,7 +263,8 @@ impl ReceiptSigner {
                 .signature(signature.to_bytes().to_vec())
                 .build();
 
-            receipt.cose_signature = cose_sign1.to_vec()
+            receipt.cose_signature = cose_sign1
+                .to_vec()
                 .map_err(|e| ReceiptError::CoseError(e.to_string()))?;
         }
         #[cfg(not(feature = "receipts"))]
@@ -334,7 +340,10 @@ impl ReceiptVerifier {
     }
 
     /// Verify receipt signature
-    pub fn verify_receipt(&self, receipt: &Receipt) -> Result<ReceiptVerificationResult, ReceiptError> {
+    pub fn verify_receipt(
+        &self,
+        receipt: &Receipt,
+    ) -> Result<ReceiptVerificationResult, ReceiptError> {
         #[cfg(feature = "receipts")]
         {
             // Parse COSE signature
@@ -493,11 +502,7 @@ impl ReceiptStore {
     pub fn get_receipts_for_twin(&self, twin_id: &TwinId) -> Vec<&Receipt> {
         self.receipts_by_twin
             .get(twin_id)
-            .map(|ids| {
-                ids.iter()
-                    .filter_map(|id| self.receipts.get(id))
-                    .collect()
-            })
+            .map(|ids| ids.iter().filter_map(|id| self.receipts.get(id)).collect())
             .unwrap_or_default()
     }
 
@@ -505,11 +510,7 @@ impl ReceiptStore {
     pub fn get_receipts_by_operation(&self, operation_type: &str) -> Vec<&Receipt> {
         self.receipts_by_operation
             .get(operation_type)
-            .map(|ids| {
-                ids.iter()
-                    .filter_map(|id| self.receipts.get(id))
-                    .collect()
-            })
+            .map(|ids| ids.iter().filter_map(|id| self.receipts.get(id)).collect())
             .unwrap_or_default()
     }
 
@@ -517,9 +518,7 @@ impl ReceiptStore {
     pub fn get_receipts_in_range(&self, start_time: u64, end_time: u64) -> Vec<&Receipt> {
         self.receipts
             .values()
-            .filter(|receipt| {
-                receipt.timestamp >= start_time && receipt.timestamp <= end_time
-            })
+            .filter(|receipt| receipt.timestamp >= start_time && receipt.timestamp <= end_time)
             .collect()
     }
 
@@ -530,7 +529,8 @@ impl ReceiptStore {
 
     /// Clear expired receipts
     pub fn clear_expired(&mut self, max_age_ms: u64) -> usize {
-        let expired_ids: Vec<String> = self.receipts
+        let expired_ids: Vec<String> = self
+            .receipts
             .values()
             .filter(|receipt| receipt.is_expired(max_age_ms))
             .map(|receipt| receipt.receipt_id.clone())
@@ -609,10 +609,7 @@ mod tests {
     }
 
     fn create_test_twin_id() -> TwinId {
-        TwinId::new(
-            crate::AgentId::new("test-agent", "test-node"),
-            "test-twin",
-        )
+        TwinId::new(crate::AgentId::new("test-agent", "test-node"), "test-twin")
     }
 
     #[tokio::test]
@@ -623,7 +620,10 @@ mod tests {
         let requester = crate::AgentId::new("requester", "requester-node");
 
         // Create receipt
-        let receipt = signer.sign_operation(&twin_id, &operation, &requester, true).await.unwrap();
+        let receipt = signer
+            .sign_operation(&twin_id, &operation, &requester, true)
+            .await
+            .unwrap();
 
         // Verify receipt
         let is_valid = receipt.verify(&signer.public_key()).unwrap();
@@ -649,7 +649,10 @@ mod tests {
         let requester = crate::AgentId::new("requester", "requester-node");
 
         // Create receipt
-        let receipt = signer.sign_operation(&twin_id, &operation, &requester, true).await.unwrap();
+        let receipt = signer
+            .sign_operation(&twin_id, &operation, &requester, true)
+            .await
+            .unwrap();
 
         // Verify receipt
         let result = verifier.verify_receipt(&receipt).unwrap();
@@ -667,7 +670,10 @@ mod tests {
         let requester = crate::AgentId::new("requester", "requester-node");
 
         // Create receipt
-        let receipt = signer.sign_operation(&twin_id, &operation, &requester, true).await.unwrap();
+        let receipt = signer
+            .sign_operation(&twin_id, &operation, &requester, true)
+            .await
+            .unwrap();
 
         // Verify receipt
         let result = verifier.verify_receipt(&receipt).unwrap();
@@ -687,13 +693,10 @@ mod tests {
         let result_data = b"read_result_data";
 
         // Create receipt with result data
-        let receipt = signer.sign_operation_with_result(
-            &twin_id,
-            &operation,
-            &requester,
-            true,
-            Some(result_data),
-        ).await.unwrap();
+        let receipt = signer
+            .sign_operation_with_result(&twin_id, &operation, &requester, true, Some(result_data))
+            .await
+            .unwrap();
 
         // Verify receipt
         let is_valid = receipt.verify(&signer.public_key()).unwrap();
@@ -712,7 +715,10 @@ mod tests {
         let requester = crate::AgentId::new("requester", "requester-node");
 
         // Create and store receipt
-        let receipt = signer.sign_operation(&twin_id, &operation, &requester, true).await.unwrap();
+        let receipt = signer
+            .sign_operation(&twin_id, &operation, &requester, true)
+            .await
+            .unwrap();
         let receipt_id = receipt.receipt_id.clone();
         store.store_receipt(receipt);
 
@@ -752,10 +758,14 @@ mod tests {
         let secret_bytes = signer1.export_secret_key();
 
         // Create new signer from exported key
-        let signer2 = ReceiptSigner::from_secret_bytes("test-signer".to_string(), &secret_bytes).unwrap();
+        let signer2 =
+            ReceiptSigner::from_secret_bytes("test-signer".to_string(), &secret_bytes).unwrap();
 
         // Both signers should have the same public key
-        assert_eq!(signer1.public_key().to_bytes(), signer2.public_key().to_bytes());
+        assert_eq!(
+            signer1.public_key().to_bytes(),
+            signer2.public_key().to_bytes()
+        );
     }
 
     #[test]
@@ -766,6 +776,11 @@ mod tests {
 
         // Verify COSE key properties
         assert_eq!(cose_key.kty, KeyType::Assigned(IanaKeyType::OKP));
-        assert_eq!(cose_key.alg, Some(coset::RegisteredLabelWithPrivate::Assigned(IanaAlgorithm::EdDSA)));
+        assert_eq!(
+            cose_key.alg,
+            Some(coset::RegisteredLabelWithPrivate::Assigned(
+                IanaAlgorithm::EdDSA
+            ))
+        );
     }
 }

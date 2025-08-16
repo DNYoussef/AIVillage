@@ -10,9 +10,9 @@ use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
+use hkdf::Hkdf;
 use sha2::{Digest, Sha256};
 use x25519_dalek::{PublicKey, StaticSecret};
-use hkdf::Hkdf;
 
 use crate::{
     crypto::{ChaChaEncryption, CryptoUtils, KeyDerivation},
@@ -38,6 +38,12 @@ pub struct SphinxHeader {
     pub ephemeral_key: [u8; 32],
     /// Routing information (143 bytes encrypted)
     pub routing_info: [u8; 143],
+}
+
+impl Default for SphinxHeader {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl SphinxHeader {
@@ -98,15 +104,17 @@ impl SphinxPacket {
     /// Parse from bytes
     pub fn from_bytes(data: &[u8]) -> Result<Self> {
         if data.len() < SPHINX_HEADER_SIZE + SPHINX_PAYLOAD_SIZE {
-            return Err(MixnodeError::Packet("Invalid Sphinx packet size".to_string()));
+            return Err(MixnodeError::Packet(
+                "Invalid Sphinx packet size".to_string(),
+            ));
         }
 
-        let header_bytes: [u8; SPHINX_HEADER_SIZE] =
-            data[..SPHINX_HEADER_SIZE].try_into().unwrap();
+        let header_bytes: [u8; SPHINX_HEADER_SIZE] = data[..SPHINX_HEADER_SIZE].try_into().unwrap();
         let header = SphinxHeader::from_bytes(&header_bytes)?;
 
         let mut payload = [0u8; SPHINX_PAYLOAD_SIZE];
-        payload.copy_from_slice(&data[SPHINX_HEADER_SIZE..SPHINX_HEADER_SIZE + SPHINX_PAYLOAD_SIZE]);
+        payload
+            .copy_from_slice(&data[SPHINX_HEADER_SIZE..SPHINX_HEADER_SIZE + SPHINX_PAYLOAD_SIZE]);
 
         Ok(Self { header, payload })
     }
@@ -136,6 +144,12 @@ impl Default for SphinxPacket {
 pub struct ReplayProtection {
     seen_packets: Arc<RwLock<HashMap<[u8; 32], u64>>>,
     _cleanup_interval: Duration,
+}
+
+impl Default for ReplayProtection {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl ReplayProtection {
@@ -315,8 +329,7 @@ impl SphinxProcessor {
         }
 
         // Perform ECDH key exchange
-        let ephemeral_public =
-            PublicKey::from(packet.header.ephemeral_key);
+        let ephemeral_public = PublicKey::from(packet.header.ephemeral_key);
         let shared_secret = self.private_key.diffie_hellman(&ephemeral_public);
 
         // Derive decryption keys
@@ -337,7 +350,7 @@ impl SphinxProcessor {
         stats.packets_processed += 1;
         stats.avg_processing_time_ns =
             (stats.avg_processing_time_ns * (stats.packets_processed - 1) + processing_time)
-            / stats.packets_processed;
+                / stats.packets_processed;
 
         // Check if final destination
         if routing_info.is_final {
@@ -350,11 +363,15 @@ impl SphinxProcessor {
     }
 
     /// Process batch of packets for higher throughput
-    pub async fn process_batch(&self, packets: Vec<SphinxPacket>) -> Result<Vec<Option<SphinxPacket>>> {
+    pub async fn process_batch(
+        &self,
+        packets: Vec<SphinxPacket>,
+    ) -> Result<Vec<Option<SphinxPacket>>> {
         let mut results = Vec::with_capacity(packets.len());
 
         // Process packets in parallel batches
-        for chunk in packets.chunks(128) { // Process 128 packets per batch
+        for chunk in packets.chunks(128) {
+            // Process 128 packets per batch
             let mut batch_results = Vec::with_capacity(chunk.len());
 
             for packet in chunk {
@@ -370,8 +387,8 @@ impl SphinxProcessor {
     /// Calculate packet hash for replay protection
     fn calculate_packet_hash(&self, packet: &SphinxPacket) -> [u8; 32] {
         let mut hasher = Sha256::new();
-        hasher.update(&packet.header.to_bytes());
-        hasher.update(&packet.payload);
+        hasher.update(packet.header.to_bytes());
+        hasher.update(packet.payload);
         hasher.finalize().into()
     }
 
@@ -396,7 +413,9 @@ impl SphinxProcessor {
 
         let decrypted = encryption.decrypt(encrypted, &nonce)?;
         if decrypted.len() != 143 {
-            return Err(MixnodeError::Crypto("Invalid routing info size".to_string()));
+            return Err(MixnodeError::Crypto(
+                "Invalid routing info size".to_string(),
+            ));
         }
 
         let routing_bytes: [u8; 143] = decrypted.try_into().unwrap();
@@ -404,7 +423,11 @@ impl SphinxProcessor {
     }
 
     /// Decrypt payload in-place
-    fn decrypt_payload(&self, payload: &mut [u8; SPHINX_PAYLOAD_SIZE], key: &[u8; 32]) -> Result<()> {
+    fn decrypt_payload(
+        &self,
+        payload: &mut [u8; SPHINX_PAYLOAD_SIZE],
+        key: &[u8; 32],
+    ) -> Result<()> {
         let encryption = ChaChaEncryption::new(key);
         let nonce = [1u8; 12]; // Different nonce for payload
 
@@ -420,7 +443,8 @@ impl SphinxProcessor {
     /// Update header for next hop (blinding)
     fn update_header(&self, header: &mut SphinxHeader, shared_secret: &[u8; 32]) -> Result<()> {
         // Blind the ephemeral key
-        let blinding_factor = KeyDerivation::derive_key(shared_secret, b"sphinx-blind", b"betanet")?;
+        let blinding_factor =
+            KeyDerivation::derive_key(shared_secret, b"sphinx-blind", b"betanet")?;
 
         // Simple blinding operation (in practice, would use proper EC blinding)
         for (i, byte) in header.ephemeral_key.iter_mut().enumerate() {

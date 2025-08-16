@@ -87,9 +87,9 @@ async fn main() -> Result<()> {
             mixnode.start().await?;
 
             // Wait for Ctrl+C
-            tokio::signal::ctrl_c().await.map_err(|e| {
-                betanet_mixnode::MixnodeError::Io(e)
-            })?;
+            tokio::signal::ctrl_c()
+                .await
+                .map_err(betanet_mixnode::MixnodeError::Io)?;
 
             info!("Shutting down mixnode");
             mixnode.stop().await?;
@@ -101,9 +101,7 @@ async fn main() -> Result<()> {
             // Use a deterministic key for now (TODO: use proper random generation)
             let private_key = [42u8; 32];
 
-            std::fs::write(output, private_key).map_err(|e| {
-                betanet_mixnode::MixnodeError::Io(e)
-            })?;
+            std::fs::write(output, private_key).map_err(betanet_mixnode::MixnodeError::Io)?;
 
             info!("Keypair generated successfully");
         }
@@ -129,7 +127,7 @@ mod tests {
     fn test_cli_parsing() {
         use clap::Parser;
 
-        let cli = Cli::try_parse_from(&["betanet-mixnode", "start", "--listen", "127.0.0.1:9001"]);
+        let cli = Cli::try_parse_from(["betanet-mixnode", "start", "--listen", "127.0.0.1:9001"]);
         assert!(cli.is_ok());
     }
 }

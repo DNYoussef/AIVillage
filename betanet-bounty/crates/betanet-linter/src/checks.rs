@@ -1,31 +1,25 @@
 //! Linting rule implementations
 
-use crate::{LintIssue, SeverityLevel, Result};
-use regex::Regex;
-use once_cell::sync::Lazy;
+use crate::{LintIssue, Result, SeverityLevel};
 use async_trait::async_trait;
+use once_cell::sync::Lazy;
+use regex::Regex;
 
 pub mod bootstrap;
-pub mod tls_mirror;
-pub mod noise_xk;
 pub mod frame_format;
+pub mod noise_xk;
 pub mod scion_bridge;
+pub mod tls_mirror;
 
-static TEMPLATE_REUSE_REGEX: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"stochastic_reuse_probability:\s*([0-9.]+)").unwrap()
-});
+static TEMPLATE_REUSE_REGEX: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"stochastic_reuse_probability:\s*([0-9.]+)").unwrap());
 
-static KS_HISTOGRAM_REGEX: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"histogram.*=.*vec!\[").unwrap()
-});
+static KS_HISTOGRAM_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"histogram.*=.*vec!\[").unwrap());
 
-static KS_LOGNORMAL_REGEX: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"mu:\s*([0-9.]+).*sigma:\s*([0-9.]+)").unwrap()
-});
+static KS_LOGNORMAL_REGEX: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"mu:\s*([0-9.]+).*sigma:\s*([0-9.]+)").unwrap());
 
-static KEY_SIZE_REGEX: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"key_size.*=.*(\d+)").unwrap()
-});
+static KEY_SIZE_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"key_size.*=.*(\d+)").unwrap());
 
 static SECRET_REGEXES: Lazy<Vec<Regex>> = Lazy::new(|| {
     vec![
@@ -36,9 +30,8 @@ static SECRET_REGEXES: Lazy<Vec<Regex>> = Lazy::new(|| {
     ]
 });
 
-static EPSILON_REGEX: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"epsilon_max.*[:=]\s*([0-9.]+)").unwrap()
-});
+static EPSILON_REGEX: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"epsilon_max.*[:=]\s*([0-9.]+)").unwrap());
 
 /// Check rule trait
 #[async_trait]
@@ -138,8 +131,9 @@ impl CheckRule for TemplateReuseLintRule {
         let mut issues = vec![];
 
         // Check if this is a TLS camouflage related file
-        if !context.file_path.to_string_lossy().contains("tls") &&
-           !context.content.contains("TemplateCache") {
+        if !context.file_path.to_string_lossy().contains("tls")
+            && !context.content.contains("TemplateCache")
+        {
             return Ok(issues);
         }
 
@@ -149,7 +143,7 @@ impl CheckRule for TemplateReuseLintRule {
                 if let Some(prob_str) = captures.get(1) {
                     if let Ok(probability) = prob_str.as_str().parse::<f64>() {
                         // Check if probability is in acceptable range
-                        if probability < 0.7 || probability > 0.95 {
+                        if !(0.7..=0.95).contains(&probability) {
                             issues.push(LintIssue::new(
                                 "PRIV001".to_string(),
                                 SeverityLevel::Warning,
@@ -204,7 +198,8 @@ impl CheckRule for KSDistanceLintRule {
             issues.push(LintIssue::new(
                 "PRIV003".to_string(),
                 SeverityLevel::Error,
-                "Sampling function found without proper distribution histogram - may fail KS test".to_string(),
+                "Sampling function found without proper distribution histogram - may fail KS test"
+                    .to_string(),
                 self.name().to_string(),
             ));
         }
@@ -213,9 +208,12 @@ impl CheckRule for KSDistanceLintRule {
         for (line_num, line) in context.content.lines().enumerate() {
             if let Some(captures) = KS_LOGNORMAL_REGEX.captures(line) {
                 if let (Some(mu_str), Some(sigma_str)) = (captures.get(1), captures.get(2)) {
-                    if let (Ok(mu), Ok(sigma)) = (mu_str.as_str().parse::<f64>(), sigma_str.as_str().parse::<f64>()) {
+                    if let (Ok(mu), Ok(sigma)) = (
+                        mu_str.as_str().parse::<f64>(),
+                        sigma_str.as_str().parse::<f64>(),
+                    ) {
                         // Check if parameters are realistic for web traffic
-                        if mu < 3.0 || mu > 15.0 || sigma < 0.1 || sigma > 2.5 {
+                        if !(3.0..=15.0).contains(&mu) || !(0.1..=2.5).contains(&sigma) {
                             issues.push(LintIssue::new(
                                 "PRIV004".to_string(),
                                 SeverityLevel::Warning,
@@ -256,19 +254,35 @@ impl CheckRule for DependencySecurityRule {
                 ("openssl", "0.10.38", "Security vulnerabilities in OpenSSL"),
                 ("regex", "1.5.4", "ReDoS vulnerability patterns"),
                 ("serde_yaml", "0.8.23", "Stack overflow vulnerability"),
-                ("time", "0.1.44", "Potential for incorrect time calculations"),
+                (
+                    "time",
+                    "0.1.44",
+                    "Potential for incorrect time calculations",
+                ),
             ];
 
             for (dep_name, vuln_version, description) in &vulnerable_deps {
-                let dep_regex = regex::Regex::new(&format!(r#"{}\s*=\s*"({})""#, dep_name, vuln_version)).unwrap();
+                let dep_regex =
+                    regex::Regex::new(&format!(r#"{}\s*=\s*"({})""#, dep_name, vuln_version))
+                        .unwrap();
                 for (line_num, line) in context.content.lines().enumerate() {
                     if dep_regex.is_match(line) {
-                        issues.push(LintIssue::new(
-                            "SEC001".to_string(),
-                            SeverityLevel::Critical,
-                            format!("Vulnerable dependency {} version {} detected: {}", dep_name, vuln_version, description),
-                            self.name().to_string(),
-                        ).with_location(context.file_path.clone(), line_num + 1, 0));
+                        issues.push(
+                            LintIssue::new(
+                                "SEC001".to_string(),
+                                SeverityLevel::Critical,
+                                format!(
+                                    "Vulnerable dependency {} version {} detected: {}",
+                                    dep_name, vuln_version, description
+                                ),
+                                self.name().to_string(),
+                            )
+                            .with_location(
+                                context.file_path.clone(),
+                                line_num + 1,
+                                0,
+                            ),
+                        );
                     }
                 }
             }
@@ -276,8 +290,9 @@ impl CheckRule for DependencySecurityRule {
             // Check for dev-dependencies that shouldn't be in production
             let dev_only_deps = ["proptest", "criterion", "quickcheck"];
             for dep in &dev_only_deps {
-                if context.content.contains(&format!("dependencies]\n{}", dep)) ||
-                   context.content.contains(&format!("dependencies.{}", dep)) {
+                if context.content.contains(&format!("dependencies]\n{}", dep))
+                    || context.content.contains(&format!("dependencies.{}", dep))
+                {
                     issues.push(LintIssue::new(
                         "SEC002".to_string(),
                         SeverityLevel::Warning,
@@ -314,7 +329,10 @@ impl CheckRule for CryptographyBestPracticesRule {
             ("SHA1", "SHA1 is cryptographically weak"),
             ("RC4", "RC4 is insecure"),
             ("DES", "DES has insufficient key length"),
-            ("rand::thread_rng", "Consider using ChaCha20Rng for reproducible randomness"),
+            (
+                "rand::thread_rng",
+                "Consider using ChaCha20Rng for reproducible randomness",
+            ),
         ];
 
         for (pattern, warning) in &weak_patterns {
@@ -334,12 +352,22 @@ impl CheckRule for CryptographyBestPracticesRule {
                 if let Some(size_str) = captures.get(1) {
                     if let Ok(size) = size_str.as_str().parse::<u32>() {
                         if size < 128 {
-                            issues.push(LintIssue::new(
-                                "CRYPTO002".to_string(),
-                                SeverityLevel::Error,
-                                format!("Key size {} bits too small - use at least 128 bits", size),
-                                self.name().to_string(),
-                            ).with_location(context.file_path.clone(), line_num + 1, 0));
+                            issues.push(
+                                LintIssue::new(
+                                    "CRYPTO002".to_string(),
+                                    SeverityLevel::Error,
+                                    format!(
+                                        "Key size {} bits too small - use at least 128 bits",
+                                        size
+                                    ),
+                                    self.name().to_string(),
+                                )
+                                .with_location(
+                                    context.file_path.clone(),
+                                    line_num + 1,
+                                    0,
+                                ),
+                            );
                         }
                     }
                 }
@@ -350,12 +378,20 @@ impl CheckRule for CryptographyBestPracticesRule {
         for regex in SECRET_REGEXES.iter() {
             for (line_num, line) in context.content.lines().enumerate() {
                 if regex.is_match(line) && !line.contains("example") && !line.contains("test") {
-                    issues.push(LintIssue::new(
-                        "CRYPTO003".to_string(),
-                        SeverityLevel::Critical,
-                        "Hardcoded secret detected - use environment variables or secure vault".to_string(),
-                        self.name().to_string(),
-                    ).with_location(context.file_path.clone(), line_num + 1, 0));
+                    issues.push(
+                        LintIssue::new(
+                            "CRYPTO003".to_string(),
+                            SeverityLevel::Critical,
+                            "Hardcoded secret detected - use environment variables or secure vault"
+                                .to_string(),
+                            self.name().to_string(),
+                        )
+                        .with_location(
+                            context.file_path.clone(),
+                            line_num + 1,
+                            0,
+                        ),
+                    );
                 }
             }
         }
@@ -413,9 +449,9 @@ impl CheckRule for EpsilonPolicyLintRule {
 
         // Check for budget exhaustion handling
         if context.content.contains("BudgetExceeded") || context.content.contains("epsilon_used") {
-            let has_overflow_handling = context.content.contains("allow_budget_overdraft") ||
-                                        context.content.contains("reset_budget") ||
-                                        context.content.contains("release_budget");
+            let has_overflow_handling = context.content.contains("allow_budget_overdraft")
+                || context.content.contains("reset_budget")
+                || context.content.contains("release_budget");
 
             if !has_overflow_handling {
                 issues.push(LintIssue::new(

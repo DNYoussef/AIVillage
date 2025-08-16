@@ -2,8 +2,8 @@
 //!
 //! Implements verifiable proof of participation with examples, FLOPs, and energy tracking.
 
-use serde::{Deserialize, Serialize};
 use crate::{ParticipantId, Result};
+use serde::{Deserialize, Serialize};
 
 /// Federated learning receipt for proof of participation
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -23,7 +23,12 @@ pub struct FLReceipt {
 }
 
 impl FLReceipt {
-    pub fn new(participant_id: ParticipantId, num_examples: u32, flops: u64, energy_joules: f32) -> Self {
+    pub fn new(
+        participant_id: ParticipantId,
+        num_examples: u32,
+        flops: u64,
+        energy_joules: f32,
+    ) -> Self {
         Self {
             participant_id,
             num_examples,
@@ -48,7 +53,11 @@ impl ProofOfParticipation {
         Self {}
     }
 
-    pub fn generate_receipt(&self, participant_id: ParticipantId, metrics: &ResourceMetrics) -> Result<FLReceipt> {
+    pub fn generate_receipt(
+        &self,
+        participant_id: ParticipantId,
+        metrics: &ResourceMetrics,
+    ) -> Result<FLReceipt> {
         Ok(FLReceipt::new(
             participant_id,
             metrics.num_examples,

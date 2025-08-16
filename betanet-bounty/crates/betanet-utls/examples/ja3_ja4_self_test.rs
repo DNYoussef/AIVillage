@@ -3,11 +3,7 @@
 //! This example demonstrates the uTLS generator's ability to create
 //! Chrome N-2 ClientHello messages and calculate JA3/JA4 fingerprints.
 
-use betanet_utls::{
-    ClientHello,
-    ja3, ja4,
-    chrome::ChromeProfile,
-};
+use betanet_utls::{chrome::ChromeProfile, ja3, ja4, ClientHello};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -58,15 +54,31 @@ async fn test_chrome_n2_stable() -> Result<(), Box<dyn std::error::Error>> {
     println!("  Extensions: {} total", hello.extensions.len());
 
     // Check for GREASE values
-    let has_grease_cipher = hello.cipher_suites.iter().any(|&c| {
-        betanet_utls::grease::GREASE_VALUES.contains(&c)
-    });
-    let has_grease_ext = hello.extensions.iter().any(|ext| {
-        betanet_utls::grease::GREASE_VALUES.contains(&ext.extension_type)
-    });
+    let has_grease_cipher = hello
+        .cipher_suites
+        .iter()
+        .any(|&c| betanet_utls::grease::GREASE_VALUES.contains(&c));
+    let has_grease_ext = hello
+        .extensions
+        .iter()
+        .any(|ext| betanet_utls::grease::GREASE_VALUES.contains(&ext.extension_type));
 
-    println!("  GREASE Cipher: {}", if has_grease_cipher { "✅ Present" } else { "❌ Missing" });
-    println!("  GREASE Extension: {}", if has_grease_ext { "✅ Present" } else { "❌ Missing" });
+    println!(
+        "  GREASE Cipher: {}",
+        if has_grease_cipher {
+            "✅ Present"
+        } else {
+            "❌ Missing"
+        }
+    );
+    println!(
+        "  GREASE Extension: {}",
+        if has_grease_ext {
+            "✅ Present"
+        } else {
+            "❌ Missing"
+        }
+    );
 
     // Generate JA3 fingerprint
     let ja3_fp = ja3::generate_ja3(&hello)?;
@@ -77,9 +89,19 @@ async fn test_chrome_n2_stable() -> Result<(), Box<dyn std::error::Error>> {
     println!("  JA4: {}", ja4_fp.fingerprint);
 
     // Validate fingerprint properties
-    assert_eq!(ja3_fp.fingerprint.len(), 32, "JA3 should be 32-character MD5 hash");
-    assert!(ja4_fp.fingerprint.starts_with('t'), "JA4 should start with 't' for TLS");
-    assert!(ja4_fp.fingerprint.contains('_'), "JA4 should contain underscore separator");
+    assert_eq!(
+        ja3_fp.fingerprint.len(),
+        32,
+        "JA3 should be 32-character MD5 hash"
+    );
+    assert!(
+        ja4_fp.fingerprint.starts_with('t'),
+        "JA4 should start with 't' for TLS"
+    );
+    assert!(
+        ja4_fp.fingerprint.contains('_'),
+        "JA4 should contain underscore separator"
+    );
 
     Ok(())
 }
@@ -118,7 +140,9 @@ async fn test_ja3_vs_ja4_comparison() -> Result<(), Box<dyn std::error::Error>> 
     let ja3_fp = ja3::generate_ja3(&hello)?;
     let ja4_fp = ja4::generate_ja4(&hello)?;
 
-    println!("  JA3 Format: TLSVersion,CipherSuites,Extensions,EllipticCurves,EllipticCurvePointFormats");
+    println!(
+        "  JA3 Format: TLSVersion,CipherSuites,Extensions,EllipticCurves,EllipticCurvePointFormats"
+    );
     println!("  JA3 Hash: {} (MD5)", ja3_fp.fingerprint);
     println!();
     println!("  JA4 Format: q+ALPN+Version+CipherCount+ExtensionCount+ALPN_Extension+_+CiphersHash+ExtensionsHash");
@@ -127,8 +151,15 @@ async fn test_ja3_vs_ja4_comparison() -> Result<(), Box<dyn std::error::Error>> 
     // Analyze JA4 structure
     let ja4_parts: Vec<&str> = ja4_fp.fingerprint.split('_').collect();
     if ja4_parts.len() == 2 {
-        println!("  JA4 Prefix: {} (protocol + ALPN + version + counts)", ja4_parts[0]);
-        println!("  JA4 Hashes: {} ({} chars)", ja4_parts[1], ja4_parts[1].len());
+        println!(
+            "  JA4 Prefix: {} (protocol + ALPN + version + counts)",
+            ja4_parts[0]
+        );
+        println!(
+            "  JA4 Hashes: {} ({} chars)",
+            ja4_parts[1],
+            ja4_parts[1].len()
+        );
     }
 
     // Show key differences
@@ -175,7 +206,7 @@ async fn test_grease_impact() -> Result<(), Box<dyn std::error::Error>> {
 
     if let (Some(count_with), Some(count_without)) = (
         extract_cipher_count(&ja4_with_grease.fingerprint),
-        extract_cipher_count(&ja4_no_grease.fingerprint)
+        extract_cipher_count(&ja4_no_grease.fingerprint),
     ) {
         println!("\n  GREASE Impact on JA4 Cipher Count:");
         println!("    With GREASE: {} ciphers", count_with);
@@ -199,10 +230,12 @@ async fn test_hostname_consistency() -> Result<(), Box<dyn std::error::Error>> {
         let ja3_fp = ja3::generate_ja3(&hello)?;
         let ja4_fp = ja4::generate_ja4(&hello)?;
 
-        println!("    {}: JA3={} JA4={}",
-                 hostname,
-                 &ja3_fp.fingerprint[..8], // Show first 8 chars
-                 &ja4_fp.fingerprint.split('_').next().unwrap_or("")); // Show JA4 prefix
+        println!(
+            "    {}: JA3={} JA4={}",
+            hostname,
+            &ja3_fp.fingerprint[..8], // Show first 8 chars
+            &ja4_fp.fingerprint.split('_').next().unwrap_or("")
+        ); // Show JA4 prefix
 
         ja3_fingerprints.push(ja3_fp.fingerprint);
         ja4_fingerprints.push(ja4_fp.fingerprint);
@@ -215,7 +248,8 @@ async fn test_hostname_consistency() -> Result<(), Box<dyn std::error::Error>> {
     println!("    • Random values in ClientHello cause fingerprint variation");
 
     // Check JA4 structure consistency
-    let ja4_prefixes: Vec<String> = ja4_fingerprints.iter()
+    let ja4_prefixes: Vec<String> = ja4_fingerprints
+        .iter()
         .filter_map(|fp| fp.split('_').next().map(|s| s.to_string()))
         .collect();
 
@@ -226,8 +260,14 @@ async fn test_hostname_consistency() -> Result<(), Box<dyn std::error::Error>> {
             p.len() == first_prefix.len()
         });
 
-        println!("    • JA4 prefix structure consistency: {}",
-                 if consistent { "✅ Consistent" } else { "❌ Inconsistent" });
+        println!(
+            "    • JA4 prefix structure consistency: {}",
+            if consistent {
+                "✅ Consistent"
+            } else {
+                "❌ Inconsistent"
+            }
+        );
     }
 
     Ok(())

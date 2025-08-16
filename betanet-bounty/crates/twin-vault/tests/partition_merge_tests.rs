@@ -12,10 +12,10 @@ use tempfile::TempDir;
 use tokio::sync::RwLock;
 
 use twin_vault::{
-    AgentId, TwinId, TwinOperation, TwinManager, TwinPreferences,
-    crdt::{CrdtState, CrdtOperationFactory, LwwMap, GCounter},
-    vault::{TwinVault, VaultConfig},
+    crdt::{CrdtOperationFactory, CrdtState, GCounter, LwwMap},
     receipts::{ReceiptSigner, ReceiptVerifier},
+    vault::{TwinVault, VaultConfig},
+    AgentId, TwinId, TwinManager, TwinOperation, TwinPreferences,
 };
 
 /// Create test twin manager
@@ -31,11 +31,10 @@ async fn create_test_twin_manager() -> (TwinManager, Arc<agent_fabric::AgentFabr
     let mut receipt_verifier = ReceiptVerifier::new();
     receipt_verifier.add_trusted_key("test-signer".to_string(), receipt_signer.public_key());
 
-    let twin_manager = TwinManager::new(
-        Arc::clone(&agent_fabric),
-        receipt_signer,
-        receipt_verifier,
-    ).await.unwrap();
+    let twin_manager =
+        TwinManager::new(Arc::clone(&agent_fabric), receipt_signer, receipt_verifier)
+            .await
+            .unwrap();
 
     (twin_manager, agent_fabric, temp_dir)
 }
@@ -64,23 +63,35 @@ async fn test_lww_map_merge_idempotent() {
     let mut map3 = LwwMap::new();
 
     // Add different operations to each map
-    let op1a = factory1.create_lww_set("key1".to_string(), Bytes::from("value1a")).unwrap();
-    let op1b = factory1.create_lww_set("key2".to_string(), Bytes::from("value2a")).unwrap();
+    let op1a = factory1
+        .create_lww_set("key1".to_string(), Bytes::from("value1a"))
+        .unwrap();
+    let op1b = factory1
+        .create_lww_set("key2".to_string(), Bytes::from("value2a"))
+        .unwrap();
     map1.set_signed(op1a).unwrap();
     map1.set_signed(op1b).unwrap();
 
     // Simulate slight delay for different timestamps
     tokio::time::sleep(tokio::time::Duration::from_millis(1)).await;
 
-    let op2a = factory2.create_lww_set("key1".to_string(), Bytes::from("value1b")).unwrap(); // Conflict with map1
-    let op2b = factory2.create_lww_set("key3".to_string(), Bytes::from("value3b")).unwrap();
+    let op2a = factory2
+        .create_lww_set("key1".to_string(), Bytes::from("value1b"))
+        .unwrap(); // Conflict with map1
+    let op2b = factory2
+        .create_lww_set("key3".to_string(), Bytes::from("value3b"))
+        .unwrap();
     map2.set_signed(op2a).unwrap();
     map2.set_signed(op2b).unwrap();
 
     tokio::time::sleep(tokio::time::Duration::from_millis(1)).await;
 
-    let op3a = factory3.create_lww_set("key2".to_string(), Bytes::from("value2c")).unwrap(); // Conflict with map1
-    let op3b = factory3.create_lww_set("key4".to_string(), Bytes::from("value4c")).unwrap();
+    let op3a = factory3
+        .create_lww_set("key2".to_string(), Bytes::from("value2c"))
+        .unwrap(); // Conflict with map1
+    let op3b = factory3
+        .create_lww_set("key4".to_string(), Bytes::from("value4c"))
+        .unwrap();
     map3.set_signed(op3a).unwrap();
     map3.set_signed(op3b).unwrap();
 
@@ -130,17 +141,27 @@ async fn test_g_counter_merge_idempotent() {
     let mut counter3 = GCounter::new();
 
     // Add increments to each counter
-    let inc1a = factory1.create_g_counter_increment("counter".to_string(), 5).unwrap();
-    let inc1b = factory1.create_g_counter_increment("counter".to_string(), 3).unwrap();
+    let inc1a = factory1
+        .create_g_counter_increment("counter".to_string(), 5)
+        .unwrap();
+    let inc1b = factory1
+        .create_g_counter_increment("counter".to_string(), 3)
+        .unwrap();
     counter1.increment_signed(inc1a).unwrap();
     counter1.increment_signed(inc1b).unwrap();
 
-    let inc2a = factory2.create_g_counter_increment("counter".to_string(), 7).unwrap();
-    let inc2b = factory2.create_g_counter_increment("counter".to_string(), 2).unwrap();
+    let inc2a = factory2
+        .create_g_counter_increment("counter".to_string(), 7)
+        .unwrap();
+    let inc2b = factory2
+        .create_g_counter_increment("counter".to_string(), 2)
+        .unwrap();
     counter2.increment_signed(inc2a).unwrap();
     counter2.increment_signed(inc2b).unwrap();
 
-    let inc3a = factory3.create_g_counter_increment("counter".to_string(), 4).unwrap();
+    let inc3a = factory3
+        .create_g_counter_increment("counter".to_string(), 4)
+        .unwrap();
     counter3.increment_signed(inc3a).unwrap();
 
     // Test merge idempotency
@@ -184,32 +205,63 @@ async fn test_crdt_state_partition_merge() {
     let mut state_c = CrdtState::new();
 
     // Initial synchronized state
-    let init_op = factory_a.create_lww_set("initial".to_string(), Bytes::from("synced")).unwrap();
-    state_a.get_lww_map("map1").set_signed(init_op.clone()).unwrap();
-    state_b.get_lww_map("map1").set_signed(init_op.clone()).unwrap();
+    let init_op = factory_a
+        .create_lww_set("initial".to_string(), Bytes::from("synced"))
+        .unwrap();
+    state_a
+        .get_lww_map("map1")
+        .set_signed(init_op.clone())
+        .unwrap();
+    state_b
+        .get_lww_map("map1")
+        .set_signed(init_op.clone())
+        .unwrap();
     state_c.get_lww_map("map1").set_signed(init_op).unwrap();
 
     // Simulate partition: each node continues independently
 
     // Node A operations during partition
-    let op_a1 = factory_a.create_lww_set("key_a1".to_string(), Bytes::from("value_a1")).unwrap();
-    let op_a2 = factory_a.create_g_counter_increment("counter_a".to_string(), 10).unwrap();
+    let op_a1 = factory_a
+        .create_lww_set("key_a1".to_string(), Bytes::from("value_a1"))
+        .unwrap();
+    let op_a2 = factory_a
+        .create_g_counter_increment("counter_a".to_string(), 10)
+        .unwrap();
     state_a.get_lww_map("map1").set_signed(op_a1).unwrap();
-    state_a.get_g_counter("counter_a").increment_signed(op_a2).unwrap();
+    state_a
+        .get_g_counter("counter_a")
+        .increment_signed(op_a2)
+        .unwrap();
 
     // Node B operations during partition
-    let op_b1 = factory_b.create_lww_set("key_b1".to_string(), Bytes::from("value_b1")).unwrap();
-    let op_b2 = factory_b.create_lww_set("key_a1".to_string(), Bytes::from("value_b_conflict")).unwrap(); // Conflict!
-    let op_b3 = factory_b.create_g_counter_increment("counter_a".to_string(), 15).unwrap();
+    let op_b1 = factory_b
+        .create_lww_set("key_b1".to_string(), Bytes::from("value_b1"))
+        .unwrap();
+    let op_b2 = factory_b
+        .create_lww_set("key_a1".to_string(), Bytes::from("value_b_conflict"))
+        .unwrap(); // Conflict!
+    let op_b3 = factory_b
+        .create_g_counter_increment("counter_a".to_string(), 15)
+        .unwrap();
     state_b.get_lww_map("map1").set_signed(op_b1).unwrap();
     state_b.get_lww_map("map1").set_signed(op_b2).unwrap();
-    state_b.get_g_counter("counter_a").increment_signed(op_b3).unwrap();
+    state_b
+        .get_g_counter("counter_a")
+        .increment_signed(op_b3)
+        .unwrap();
 
     // Node C operations during partition
-    let op_c1 = factory_c.create_lww_set("key_c1".to_string(), Bytes::from("value_c1")).unwrap();
-    let op_c2 = factory_c.create_g_counter_increment("counter_c".to_string(), 20).unwrap();
+    let op_c1 = factory_c
+        .create_lww_set("key_c1".to_string(), Bytes::from("value_c1"))
+        .unwrap();
+    let op_c2 = factory_c
+        .create_g_counter_increment("counter_c".to_string(), 20)
+        .unwrap();
     state_c.get_lww_map("map1").set_signed(op_c1).unwrap();
-    state_c.get_g_counter("counter_c").increment_signed(op_c2).unwrap();
+    state_c
+        .get_g_counter("counter_c")
+        .increment_signed(op_c2)
+        .unwrap();
 
     // Test that merge is idempotent before healing
     assert!(state_a.is_merge_idempotent(&state_a));
@@ -228,7 +280,10 @@ async fn test_crdt_state_partition_merge() {
 
     // Should have same number of maps and counters
     assert_eq!(final_state.lww_maps.len(), final_state_copy.lww_maps.len());
-    assert_eq!(final_state.g_counters.len(), final_state_copy.g_counters.len());
+    assert_eq!(
+        final_state.g_counters.len(),
+        final_state_copy.g_counters.len()
+    );
 
     // Verify conflict resolution (LWW should have resolved key_a1 conflict)
     let map1 = final_state.lww_maps.get("map1").unwrap();
@@ -263,11 +318,23 @@ async fn test_twin_vault_merge_idempotent() {
     let vault2 = TwinVault::new(twin_id, config2).await.unwrap();
 
     // Add different data to each vault
-    vault1.set("key1".to_string(), Bytes::from("value1"), 12345).await.unwrap();
-    vault1.increment_counter("counter1", 10, "actor1", 12346).await.unwrap();
+    vault1
+        .set("key1".to_string(), Bytes::from("value1"), 12345)
+        .await
+        .unwrap();
+    vault1
+        .increment_counter("counter1", 10, "actor1", 12346)
+        .await
+        .unwrap();
 
-    vault2.set("key2".to_string(), Bytes::from("value2"), 12347).await.unwrap();
-    vault2.increment_counter("counter1", 15, "actor2", 12348).await.unwrap();
+    vault2
+        .set("key2".to_string(), Bytes::from("value2"), 12347)
+        .await
+        .unwrap();
+    vault2
+        .increment_counter("counter1", 15, "actor2", 12348)
+        .await
+        .unwrap();
 
     // Get states
     let state1 = vault1.get_state().await.unwrap();
@@ -282,11 +349,20 @@ async fn test_twin_vault_merge_idempotent() {
 
     // States should be identical after redundant merge
     assert_eq!(merged_state1.lww_maps.len(), merged_state2.lww_maps.len());
-    assert_eq!(merged_state1.g_counters.len(), merged_state2.g_counters.len());
+    assert_eq!(
+        merged_state1.g_counters.len(),
+        merged_state2.g_counters.len()
+    );
 
     // Verify data is present from both vaults
-    assert_eq!(vault1.get("key1").await.unwrap(), Some(Bytes::from("value1")));
-    assert_eq!(vault1.get("key2").await.unwrap(), Some(Bytes::from("value2")));
+    assert_eq!(
+        vault1.get("key1").await.unwrap(),
+        Some(Bytes::from("value1"))
+    );
+    assert_eq!(
+        vault1.get("key2").await.unwrap(),
+        Some(Bytes::from("value2"))
+    );
     assert_eq!(vault1.get_counter("counter1").await.unwrap(), 25); // 10 + 15
 
     println!("✅ Twin vault merge operations are idempotent");
@@ -308,10 +384,15 @@ async fn test_concurrent_operations_eventual_consistency() {
         allow_sync: true,
         ..Default::default()
     };
-    twin_manager.set_preferences(twin_id.clone(), preferences).await;
+    twin_manager
+        .set_preferences(twin_id.clone(), preferences)
+        .await;
 
     // Create vault
-    let vault = twin_manager.get_twin(twin_id.clone(), config).await.unwrap();
+    let vault = twin_manager
+        .get_twin(twin_id.clone(), config)
+        .await
+        .unwrap();
 
     // Simulate concurrent operations
     let mut handles = Vec::new();
@@ -333,7 +414,9 @@ async fn test_concurrent_operations_eventual_consistency() {
                 timestamp,
             };
 
-            manager.perform_operation(twin_id, operation, requester).await
+            manager
+                .perform_operation(twin_id, operation, requester)
+                .await
         });
 
         handles.push(handle);
@@ -342,7 +425,8 @@ async fn test_concurrent_operations_eventual_consistency() {
     // Wait for all operations to complete
     let mut results = Vec::new();
     for handle in handles {
-        let result: twin_vault::Result<(Option<bytes::Bytes>, twin_vault::Receipt)> = handle.await.unwrap();
+        let result: twin_vault::Result<(Option<bytes::Bytes>, twin_vault::Receipt)> =
+            handle.await.unwrap();
         results.push(result);
     }
 
@@ -376,18 +460,27 @@ async fn test_partition_merge_causality() {
     let mut state2 = CrdtState::new();
 
     // Initial synchronized state
-    let init_op = factory1.create_lww_set("base".to_string(), Bytes::from("initial")).unwrap();
-    state1.get_lww_map("map").set_signed(init_op.clone()).unwrap();
+    let init_op = factory1
+        .create_lww_set("base".to_string(), Bytes::from("initial"))
+        .unwrap();
+    state1
+        .get_lww_map("map")
+        .set_signed(init_op.clone())
+        .unwrap();
     state2.get_lww_map("map").set_signed(init_op).unwrap();
 
     // Create causal dependency: op2 logically depends on op1
-    let op1 = factory1.create_lww_set("step1".to_string(), Bytes::from("first")).unwrap();
+    let op1 = factory1
+        .create_lww_set("step1".to_string(), Bytes::from("first"))
+        .unwrap();
     state1.get_lww_map("map").set_signed(op1).unwrap();
 
     // Simulate network delay - op2 created after op1 but might arrive first
     tokio::time::sleep(tokio::time::Duration::from_millis(1)).await;
 
-    let op2 = factory2.create_lww_set("step2".to_string(), Bytes::from("second")).unwrap();
+    let op2 = factory2
+        .create_lww_set("step2".to_string(), Bytes::from("second"))
+        .unwrap();
     state2.get_lww_map("map").set_signed(op2).unwrap();
 
     // Merge in both directions (simulating partition healing)
@@ -428,17 +521,31 @@ async fn test_merge_performance_scalability() {
     // Add many operations to each state
     for i in 0..1000 {
         if i % 2 == 0 {
-            let op = factory1.create_lww_set(format!("key_{}", i), Bytes::from(format!("value1_{}", i))).unwrap();
+            let op = factory1
+                .create_lww_set(format!("key_{}", i), Bytes::from(format!("value1_{}", i)))
+                .unwrap();
             state1.get_lww_map("large_map").set_signed(op).unwrap();
 
-            let counter_op = factory1.create_g_counter_increment(format!("counter_{}", i), 1).unwrap();
-            state1.get_g_counter(&format!("counter_{}", i)).increment_signed(counter_op).unwrap();
+            let counter_op = factory1
+                .create_g_counter_increment(format!("counter_{}", i), 1)
+                .unwrap();
+            state1
+                .get_g_counter(&format!("counter_{}", i))
+                .increment_signed(counter_op)
+                .unwrap();
         } else {
-            let op = factory2.create_lww_set(format!("key_{}", i), Bytes::from(format!("value2_{}", i))).unwrap();
+            let op = factory2
+                .create_lww_set(format!("key_{}", i), Bytes::from(format!("value2_{}", i)))
+                .unwrap();
             state2.get_lww_map("large_map").set_signed(op).unwrap();
 
-            let counter_op = factory2.create_g_counter_increment(format!("counter_{}", i), 2).unwrap();
-            state2.get_g_counter(&format!("counter_{}", i)).increment_signed(counter_op).unwrap();
+            let counter_op = factory2
+                .create_g_counter_increment(format!("counter_{}", i), 2)
+                .unwrap();
+            state2
+                .get_g_counter(&format!("counter_{}", i))
+                .increment_signed(counter_op)
+                .unwrap();
         }
     }
 
@@ -464,7 +571,11 @@ async fn test_merge_performance_scalability() {
     println!("Idempotent merge time: {:?}", idempotent_time);
 
     // Merge should be reasonably fast (under 100ms for 1000 ops)
-    assert!(merge_time.as_millis() < 100, "Merge too slow: {:?}", merge_time);
+    assert!(
+        merge_time.as_millis() < 100,
+        "Merge too slow: {:?}",
+        merge_time
+    );
 
     println!("✅ Merge operations scale well and remain performant");
 }
@@ -487,15 +598,25 @@ async fn test_full_partition_scenario() {
         ..Default::default()
     };
 
-    twin_manager1.set_preferences(twin_id.clone(), preferences.clone()).await;
-    twin_manager2.set_preferences(twin_id.clone(), preferences).await;
+    twin_manager1
+        .set_preferences(twin_id.clone(), preferences.clone())
+        .await;
+    twin_manager2
+        .set_preferences(twin_id.clone(), preferences)
+        .await;
 
     // Create vaults on both managers
     let config1 = create_test_vault_config(&temp_dir1);
     let config2 = create_test_vault_config(&temp_dir2);
 
-    let _vault1 = twin_manager1.get_twin(twin_id.clone(), config1).await.unwrap();
-    let _vault2 = twin_manager2.get_twin(twin_id.clone(), config2).await.unwrap();
+    let _vault1 = twin_manager1
+        .get_twin(twin_id.clone(), config1)
+        .await
+        .unwrap();
+    let _vault2 = twin_manager2
+        .get_twin(twin_id.clone(), config2)
+        .await
+        .unwrap();
 
     // Simulate network partition: operations on both sides
 
@@ -512,8 +633,14 @@ async fn test_full_partition_scenario() {
         timestamp: 12346,
     };
 
-    twin_manager1.perform_operation(twin_id.clone(), op1a, requester1.clone()).await.unwrap();
-    twin_manager1.perform_operation(twin_id.clone(), op1b, requester1).await.unwrap();
+    twin_manager1
+        .perform_operation(twin_id.clone(), op1a, requester1.clone())
+        .await
+        .unwrap();
+    twin_manager1
+        .perform_operation(twin_id.clone(), op1b, requester1)
+        .await
+        .unwrap();
 
     // Side 2 operations (during partition)
     let op2a = TwinOperation::Write {
@@ -528,12 +655,24 @@ async fn test_full_partition_scenario() {
         timestamp: 12348,
     };
 
-    twin_manager2.perform_operation(twin_id.clone(), op2a, requester2.clone()).await.unwrap();
-    twin_manager2.perform_operation(twin_id.clone(), op2b, requester2).await.unwrap();
+    twin_manager2
+        .perform_operation(twin_id.clone(), op2a, requester2.clone())
+        .await
+        .unwrap();
+    twin_manager2
+        .perform_operation(twin_id.clone(), op2b, requester2)
+        .await
+        .unwrap();
 
     // Get states before merge
-    let vault1 = twin_manager1.get_twin(twin_id.clone(), VaultConfig::default()).await.unwrap();
-    let vault2 = twin_manager2.get_twin(twin_id.clone(), VaultConfig::default()).await.unwrap();
+    let vault1 = twin_manager1
+        .get_twin(twin_id.clone(), VaultConfig::default())
+        .await
+        .unwrap();
+    let vault2 = twin_manager2
+        .get_twin(twin_id.clone(), VaultConfig::default())
+        .await
+        .unwrap();
 
     let state1 = vault1.get_state().await.unwrap();
     let state2 = vault2.get_state().await.unwrap();
@@ -551,12 +690,24 @@ async fn test_full_partition_scenario() {
     assert_eq!(final_state1.g_counters.len(), final_state2.g_counters.len());
 
     // Verify both partitions' data is present
-    assert_eq!(vault1.get("partition_key_1").await.unwrap(), Some(Bytes::from("side1_value")));
-    assert_eq!(vault1.get("partition_key_2").await.unwrap(), Some(Bytes::from("side2_value")));
+    assert_eq!(
+        vault1.get("partition_key_1").await.unwrap(),
+        Some(Bytes::from("side1_value"))
+    );
+    assert_eq!(
+        vault1.get("partition_key_2").await.unwrap(),
+        Some(Bytes::from("side2_value"))
+    );
     assert_eq!(vault1.get_counter("shared_counter").await.unwrap(), 25); // 10 + 15
 
-    assert_eq!(vault2.get("partition_key_1").await.unwrap(), Some(Bytes::from("side1_value")));
-    assert_eq!(vault2.get("partition_key_2").await.unwrap(), Some(Bytes::from("side2_value")));
+    assert_eq!(
+        vault2.get("partition_key_1").await.unwrap(),
+        Some(Bytes::from("side1_value"))
+    );
+    assert_eq!(
+        vault2.get("partition_key_2").await.unwrap(),
+        Some(Bytes::from("side2_value"))
+    );
     assert_eq!(vault2.get_counter("shared_counter").await.unwrap(), 25); // 10 + 15
 
     println!("✅ Full partition scenario: eventual consistency achieved");

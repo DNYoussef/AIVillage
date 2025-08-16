@@ -7,14 +7,15 @@
 //! - Container orchestration and networking
 //! - Integration with navigator agent and dual-path transport
 
-use crate::{LintIssue, SeverityLevel, Result};
-use crate::checks::{CheckRule, CheckContext};
-use regex::Regex;
-use once_cell::sync::Lazy;
+use crate::checks::{CheckContext, CheckRule};
+use crate::{LintIssue, Result, SeverityLevel};
 use async_trait::async_trait;
+use once_cell::sync::Lazy;
+use regex::Regex;
 
 static AS_REGEX: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r#""?(?:scion_as|as_id|autonomous_system)"?\s*[:=]\s*"?(\d+)-\d+:\d+:\d+"?"#).unwrap()
+    Regex::new(r#""?(?:scion_as|as_id|autonomous_system)"?\s*[:=]\s*"?(\d+)-\d+:\d+:\d+"?"#)
+        .unwrap()
 });
 
 /// SCION gateway infrastructure compliance
@@ -34,10 +35,11 @@ impl CheckRule for ScionGatewayRule {
         let mut issues = vec![];
 
         // Only check SCION-related files
-        if !context.file_path.to_string_lossy().contains("scion") &&
-           !context.file_path.to_string_lossy().contains("gateway") &&
-           !context.content.contains("SCION") &&
-           !context.content.contains("Gateway") {
+        if !context.file_path.to_string_lossy().contains("scion")
+            && !context.file_path.to_string_lossy().contains("gateway")
+            && !context.content.contains("SCION")
+            && !context.content.contains("Gateway")
+        {
             return Ok(issues);
         }
 
@@ -88,12 +90,20 @@ impl CheckRule for ScionGatewayRule {
             if let Some(captures) = AS_REGEX.captures(line) {
                 if let Some(as_prefix) = captures.get(1) {
                     if as_prefix.as_str() == "1" {
-                        issues.push(LintIssue::new(
-                            "SCION003".to_string(),
-                            SeverityLevel::Warning,
-                            "Hardcoded test AS number detected - should use production AS ID".to_string(),
-                            self.name().to_string(),
-                        ).with_location(context.file_path.clone(), line_num + 1, 0));
+                        issues.push(
+                            LintIssue::new(
+                                "SCION003".to_string(),
+                                SeverityLevel::Warning,
+                                "Hardcoded test AS number detected - should use production AS ID"
+                                    .to_string(),
+                                self.name().to_string(),
+                            )
+                            .with_location(
+                                context.file_path.clone(),
+                                line_num + 1,
+                                0,
+                            ),
+                        );
                     }
                 }
             }
@@ -105,7 +115,8 @@ impl CheckRule for ScionGatewayRule {
                 issues.push(LintIssue::new(
                     "SCION004".to_string(),
                     SeverityLevel::Error,
-                    "SCION gateway should not use host networking for security isolation".to_string(),
+                    "SCION gateway should not use host networking for security isolation"
+                        .to_string(),
                     self.name().to_string(),
                 ));
             }
@@ -141,8 +152,11 @@ impl CheckRule for ScionPathSelectionRule {
         let mut issues = vec![];
 
         // Only check path selection related code
-        if !context.content.contains("path") && !context.content.contains("Path") &&
-           !context.content.contains("routing") && !context.content.contains("Routing") {
+        if !context.content.contains("path")
+            && !context.content.contains("Path")
+            && !context.content.contains("routing")
+            && !context.content.contains("Routing")
+        {
             return Ok(issues);
         }
 
@@ -179,7 +193,9 @@ impl CheckRule for ScionPathSelectionRule {
             }
 
             // Check for latency vs security tradeoff configuration
-            if !context.content.contains("latency_weight") && !context.content.contains("security_weight") {
+            if !context.content.contains("latency_weight")
+                && !context.content.contains("security_weight")
+            {
                 issues.push(LintIssue::new(
                     "SCION008".to_string(),
                     SeverityLevel::Warning,
@@ -230,14 +246,19 @@ impl CheckRule for ScionSecurityRule {
         let mut issues = vec![];
 
         // Only check security-related SCION code
-        if !context.content.contains("scion") && !context.content.contains("SCION") &&
-           !context.content.contains("auth") && !context.content.contains("security") {
+        if !context.content.contains("scion")
+            && !context.content.contains("SCION")
+            && !context.content.contains("auth")
+            && !context.content.contains("security")
+        {
             return Ok(issues);
         }
 
         // Check for proper certificate validation
         if context.content.contains("certificate") || context.content.contains("cert") {
-            if !context.content.contains("verify_certificate") && !context.content.contains("validate_cert") {
+            if !context.content.contains("verify_certificate")
+                && !context.content.contains("validate_cert")
+            {
                 issues.push(LintIssue::new(
                     "SCION010".to_string(),
                     SeverityLevel::Error,
@@ -278,15 +299,16 @@ impl CheckRule for ScionSecurityRule {
         }
 
         // Check for proper EPIC (SCION packet-carried forwarding state) validation
-        if context.content.contains("EPIC") || context.content.contains("epic") {
-            if !context.content.contains("epic_proof") && !context.content.contains("validate_epic") {
-                issues.push(LintIssue::new(
-                    "SCION013".to_string(),
-                    SeverityLevel::Error,
-                    "EPIC implementation missing proof validation".to_string(),
-                    self.name().to_string(),
-                ));
-            }
+        if (context.content.contains("EPIC") || context.content.contains("epic"))
+            && !context.content.contains("epic_proof")
+            && !context.content.contains("validate_epic")
+        {
+            issues.push(LintIssue::new(
+                "SCION013".to_string(),
+                SeverityLevel::Error,
+                "EPIC implementation missing proof validation".to_string(),
+                self.name().to_string(),
+            ));
         }
 
         // Check for DRKey (Dynamically Recreatable Key) implementation
@@ -310,15 +332,16 @@ impl CheckRule for ScionSecurityRule {
         }
 
         // Check for rate limiting on SCION paths
-        if context.content.contains("rate_limit") || context.content.contains("throttle") {
-            if !context.content.contains("per_path_limit") && !context.content.contains("path_based_rate") {
-                issues.push(LintIssue::new(
-                    "SCION015".to_string(),
-                    SeverityLevel::Warning,
-                    "Rate limiting should be applied per SCION path for DoS protection".to_string(),
-                    self.name().to_string(),
-                ));
-            }
+        if (context.content.contains("rate_limit") || context.content.contains("throttle"))
+            && !context.content.contains("per_path_limit")
+            && !context.content.contains("path_based_rate")
+        {
+            issues.push(LintIssue::new(
+                "SCION015".to_string(),
+                SeverityLevel::Warning,
+                "Rate limiting should be applied per SCION path for DoS protection".to_string(),
+                self.name().to_string(),
+            ));
         }
 
         Ok(issues)
@@ -342,89 +365,94 @@ impl CheckRule for ScionIntegrationRule {
         let mut issues = vec![];
 
         // Only check integration-related code
-        if !context.content.contains("integration") && !context.content.contains("bridge") &&
-           !context.content.contains("transport") && !context.content.contains("navigator") {
+        if !context.content.contains("integration")
+            && !context.content.contains("bridge")
+            && !context.content.contains("transport")
+            && !context.content.contains("navigator")
+        {
             return Ok(issues);
         }
 
         // Check for proper Navigator agent integration
-        if context.content.contains("Navigator") || context.content.contains("navigator") {
-            if context.content.contains("scion") || context.content.contains("SCION") {
-                let navigation_requirements = [
-                    ("scion_path_available", "SCION path availability check"),
-                    ("fallback_transport", "fallback transport mechanism"),
-                    ("path_quality_metrics", "path quality assessment"),
-                ];
+        if (context.content.contains("Navigator") || context.content.contains("navigator"))
+            && (context.content.contains("scion") || context.content.contains("SCION"))
+        {
+            let navigation_requirements = [
+                ("scion_path_available", "SCION path availability check"),
+                ("fallback_transport", "fallback transport mechanism"),
+                ("path_quality_metrics", "path quality assessment"),
+            ];
 
-                for (requirement, description) in &navigation_requirements {
-                    if !context.content.contains(requirement) {
-                        issues.push(LintIssue::new(
-                            "SCION016".to_string(),
-                            SeverityLevel::Warning,
-                            format!("Navigator-SCION integration missing: {}", description),
-                            self.name().to_string(),
-                        ));
-                    }
-                }
-            }
-        }
-
-        // Check for dual-path transport integration
-        if context.content.contains("dual_path") || context.content.contains("DualPath") {
-            if !context.content.contains("scion_primary") && !context.content.contains("scion_secondary") {
-                issues.push(LintIssue::new(
-                    "SCION017".to_string(),
-                    SeverityLevel::Warning,
-                    "Dual-path transport should consider SCION as primary/secondary option".to_string(),
-                    self.name().to_string(),
-                ));
-            }
-        }
-
-        // Check for resource management integration
-        if context.content.contains("resource_management") || context.content.contains("ResourceManagement") {
-            if context.content.contains("scion") && !context.content.contains("scion_bandwidth_limit") {
-                issues.push(LintIssue::new(
-                    "SCION018".to_string(),
-                    SeverityLevel::Warning,
-                    "Resource management missing SCION bandwidth limiting".to_string(),
-                    self.name().to_string(),
-                ));
-            }
-        }
-
-        // Check for federation manager compatibility
-        if context.content.contains("federation") || context.content.contains("Federation") {
-            if context.content.contains("scion") || context.content.contains("SCION") {
-                if !context.content.contains("cross_as_communication") {
+            for (requirement, description) in &navigation_requirements {
+                if !context.content.contains(requirement) {
                     issues.push(LintIssue::new(
-                        "SCION019".to_string(),
-                        SeverityLevel::Error,
-                        "Federation manager missing cross-AS communication support".to_string(),
+                        "SCION016".to_string(),
+                        SeverityLevel::Warning,
+                        format!("Navigator-SCION integration missing: {}", description),
                         self.name().to_string(),
                     ));
                 }
             }
         }
 
-        // Check for monitoring and observability
-        if context.content.contains("monitor") || context.content.contains("metrics") {
-            if context.content.contains("scion") {
-                let monitoring_requirements = [
-                    ("path_latency_metric", "path latency monitoring"),
-                    ("path_availability_metric", "path availability tracking"),
-                    ("gateway_health_check", "gateway health monitoring"),
-                ];
+        // Check for dual-path transport integration
+        if (context.content.contains("dual_path") || context.content.contains("DualPath"))
+            && !context.content.contains("scion_primary")
+            && !context.content.contains("scion_secondary")
+        {
+            issues.push(LintIssue::new(
+                "SCION017".to_string(),
+                SeverityLevel::Warning,
+                "Dual-path transport should consider SCION as primary/secondary option".to_string(),
+                self.name().to_string(),
+            ));
+        }
 
-                for (requirement, description) in &monitoring_requirements {
-                    if !context.content.contains(requirement) {
-                        issues.push(LintIssue::new(
-                            "SCION020".to_string(),
-                            SeverityLevel::Warning,
-                            format!("SCION monitoring missing: {}", description),
-                            self.name().to_string(),
-                        ));
-                    }
+        // Check for resource management integration
+        if (context.content.contains("resource_management")
+            || context.content.contains("ResourceManagement"))
+            && context.content.contains("scion")
+            && !context.content.contains("scion_bandwidth_limit")
+        {
+            issues.push(LintIssue::new(
+                "SCION018".to_string(),
+                SeverityLevel::Warning,
+                "Resource management missing SCION bandwidth limiting".to_string(),
+                self.name().to_string(),
+            ));
+        }
+
+        // Check for federation manager compatibility
+        if (context.content.contains("federation") || context.content.contains("Federation"))
+            && (context.content.contains("scion") || context.content.contains("SCION"))
+            && !context.content.contains("cross_as_communication")
+        {
+            issues.push(LintIssue::new(
+                "SCION019".to_string(),
+                SeverityLevel::Error,
+                "Federation manager missing cross-AS communication support".to_string(),
+                self.name().to_string(),
+            ));
+        }
+
+        // Check for monitoring and observability
+        if (context.content.contains("monitor") || context.content.contains("metrics"))
+            && context.content.contains("scion")
+        {
+            let monitoring_requirements = [
+                ("path_latency_metric", "path latency monitoring"),
+                ("path_availability_metric", "path availability tracking"),
+                ("gateway_health_check", "gateway health monitoring"),
+            ];
+
+            for (requirement, description) in &monitoring_requirements {
+                if !context.content.contains(requirement) {
+                    issues.push(LintIssue::new(
+                        "SCION020".to_string(),
+                        SeverityLevel::Warning,
+                        format!("SCION monitoring missing: {}", description),
+                        self.name().to_string(),
+                    ));
                 }
             }
         }
@@ -450,10 +478,11 @@ impl CheckRule for ScionDeploymentRule {
         let mut issues = vec![];
 
         // Only check deployment-related files
-        if !context.file_path.to_string_lossy().contains("docker") &&
-           !context.file_path.to_string_lossy().contains("compose") &&
-           !context.file_path.to_string_lossy().contains("k8s") &&
-           !context.file_path.to_string_lossy().contains("deploy") {
+        if !context.file_path.to_string_lossy().contains("docker")
+            && !context.file_path.to_string_lossy().contains("compose")
+            && !context.file_path.to_string_lossy().contains("k8s")
+            && !context.file_path.to_string_lossy().contains("deploy")
+        {
             return Ok(issues);
         }
 
@@ -514,15 +543,16 @@ impl CheckRule for ScionDeploymentRule {
         }
 
         // Check for service mesh integration
-        if context.content.contains("istio") || context.content.contains("linkerd") {
-            if context.content.contains("scion") && !context.content.contains("ServiceEntry") {
-                issues.push(LintIssue::new(
-                    "SCION026".to_string(),
-                    SeverityLevel::Warning,
-                    "SCION service mesh integration missing ServiceEntry configuration".to_string(),
-                    self.name().to_string(),
-                ));
-            }
+        if (context.content.contains("istio") || context.content.contains("linkerd"))
+            && context.content.contains("scion")
+            && !context.content.contains("ServiceEntry")
+        {
+            issues.push(LintIssue::new(
+                "SCION026".to_string(),
+                SeverityLevel::Warning,
+                "SCION service mesh integration missing ServiceEntry configuration".to_string(),
+                self.name().to_string(),
+            ));
         }
 
         Ok(issues)
@@ -555,7 +585,7 @@ mod tests {
         "#;
         let context = create_test_context(content);
         let issues = rule.check(&context).await.unwrap();
-        assert!(issues.len() > 0);
+        assert!(!issues.is_empty());
         assert!(issues.iter().any(|i| i.id == "SCION001"));
 
         // Test hardcoded test AS number
@@ -581,7 +611,7 @@ mod tests {
         "#;
         let context = create_test_context(content);
         let issues = rule.check(&context).await.unwrap();
-        assert!(issues.len() > 0);
+        assert!(!issues.is_empty());
         assert!(issues.iter().any(|i| i.id == "SCION006"));
     }
 
@@ -625,7 +655,7 @@ mod tests {
         "#;
         let context = create_test_context(content);
         let issues = rule.check(&context).await.unwrap();
-        assert!(issues.len() > 0);
+        assert!(!issues.is_empty());
         assert!(issues.iter().any(|i| i.id == "SCION016"));
     }
 

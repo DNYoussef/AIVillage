@@ -19,20 +19,20 @@ use tokio::sync::RwLock;
 use uuid::Uuid;
 
 // Re-export core types from dependencies
+pub use betanet_dtn::{BundleId, DtnError, DtnNode, EndpointId, SendBundleOptions};
 pub use betanet_htx::{HtxConfig, HtxError, HtxSession, StreamId};
-pub use betanet_dtn::{DtnNode, DtnError, EndpointId, BundleId, SendBundleOptions};
 
 // Module declarations
-pub mod rpc;
+pub mod api;
 pub mod dtn_bridge;
 pub mod groups;
-pub mod api;
+pub mod rpc;
 
 // Re-export from modules
-pub use api::{AgentClient, AgentServer, AgentMessage, AgentResponse};
+pub use api::{AgentClient, AgentMessage, AgentResponse, AgentServer};
+pub use dtn_bridge::{BundleMessage, DtnBridge};
+pub use groups::{GroupConfig, GroupMessage, MlsGroup};
 pub use rpc::{RpcClient, RpcServer, RpcTransport};
-pub use dtn_bridge::{DtnBridge, BundleMessage};
-pub use groups::{MlsGroup, GroupConfig, GroupMessage};
 
 /// Agent identifier
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -173,15 +173,14 @@ impl AgentFabric {
         options: DeliveryOptions,
     ) -> Result<Option<AgentResponse>> {
         match options.transport {
-            Transport::Rpc => {
-                self.send_via_rpc(to, message, options).await
-            }
-            Transport::Bundle => {
-                self.send_via_bundle(to, message, options).await
-            }
+            Transport::Rpc => self.send_via_rpc(to, message, options).await,
+            Transport::Bundle => self.send_via_bundle(to, message, options).await,
             Transport::Auto => {
                 // Try RPC first, fallback to bundle if not available
-                match self.send_via_rpc(to.clone(), message.clone(), options.clone()).await {
+                match self
+                    .send_via_rpc(to.clone(), message.clone(), options.clone())
+                    .await
+                {
                     Ok(response) => Ok(response),
                     Err(AgentFabricError::TransportUnavailable) => {
                         self.send_via_bundle(to, message, options).await
@@ -193,11 +192,7 @@ impl AgentFabric {
     }
 
     /// Send message to MLS group
-    pub async fn send_to_group(
-        &self,
-        group_id: String,
-        message: GroupMessage,
-    ) -> Result<()> {
+    pub async fn send_to_group(&self, group_id: String, message: GroupMessage) -> Result<()> {
         let groups = self.mls_groups.read().await;
         if let Some(group) = groups.get(&group_id) {
             group.send_message(message).await?;
@@ -254,7 +249,8 @@ impl AgentFabric {
                 content: message,
                 options: options.clone(),
             };
-            dtn.send_bundle(to.to_endpoint(), bundle_message, options).await?;
+            dtn.send_bundle(to.to_endpoint(), bundle_message, options)
+                .await?;
             Ok(None) // Bundle delivery is async, no immediate response
         } else {
             Err(AgentFabricError::TransportUnavailable)

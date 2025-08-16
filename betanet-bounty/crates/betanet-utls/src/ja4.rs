@@ -1,7 +1,7 @@
 //! JA4 fingerprinting
 
-use crate::{ClientHello, TlsFingerprint, Result, grease, extensions};
-use sha2::{Sha256, Digest};
+use crate::{extensions, grease, ClientHello, Result, TlsFingerprint};
+use sha2::{Digest, Sha256};
 
 /// Generate JA4 fingerprint from ClientHello
 /// JA4 format: q+ALPN+Version+CipherCount+ExtensionCount+ALPN_Extension+_+CiphersHash+ExtensionsHash
@@ -15,21 +15,25 @@ pub fn generate_ja4(hello: &ClientHello) -> Result<TlsFingerprint> {
         0x0302 => "11", // TLS 1.1
         0x0303 => "12", // TLS 1.2
         0x0304 => "13", // TLS 1.3
-        _ => "12", // Default to TLS 1.2
+        _ => "12",      // Default to TLS 1.2
     };
 
     // 3. First ALPN value or "00" if none
     let alpn = extract_first_alpn(hello).unwrap_or_else(|| "00".to_string());
 
     // 4. Cipher suites count (excluding GREASE)
-    let filtered_ciphers: Vec<u16> = hello.cipher_suites.iter()
+    let filtered_ciphers: Vec<u16> = hello
+        .cipher_suites
+        .iter()
         .filter(|&&cipher| !is_grease_value(cipher))
         .copied()
         .collect();
     let cipher_count = format!("{:02x}", filtered_ciphers.len().min(255));
 
     // 5. Extensions count (excluding GREASE)
-    let filtered_extensions: Vec<u16> = hello.extensions.iter()
+    let filtered_extensions: Vec<u16> = hello
+        .extensions
+        .iter()
         .map(|ext| ext.extension_type)
         .filter(|&ext_type| !is_grease_value(ext_type))
         .collect();
@@ -45,7 +49,8 @@ pub fn generate_ja4(hello: &ClientHello) -> Result<TlsFingerprint> {
     // 7. Cipher suites hash (first 12 chars of SHA256 of sorted cipher list)
     let mut sorted_ciphers = filtered_ciphers;
     sorted_ciphers.sort_unstable();
-    let cipher_string = sorted_ciphers.iter()
+    let cipher_string = sorted_ciphers
+        .iter()
         .map(|c| c.to_string())
         .collect::<Vec<_>>()
         .join(",");
@@ -54,15 +59,18 @@ pub fn generate_ja4(hello: &ClientHello) -> Result<TlsFingerprint> {
     // 8. Extensions hash (first 12 chars of SHA256 of sorted extension list)
     let mut sorted_extensions = filtered_extensions;
     sorted_extensions.sort_unstable();
-    let ext_string = sorted_extensions.iter()
+    let ext_string = sorted_extensions
+        .iter()
         .map(|e| e.to_string())
         .collect::<Vec<_>>()
         .join(",");
     let ext_hash = sha256_truncated(&ext_string, 12);
 
     // Build JA4 string: q+ALPN+Version+CipherCount+ExtensionCount+ALPN_Extension+_+CiphersHash+ExtensionsHash
-    let ja4_string = format!("{}{}{}{}{}{}_{}{}",
-        protocol, alpn, version, cipher_count, ext_count, alpn_ext, cipher_hash, ext_hash);
+    let ja4_string = format!(
+        "{}{}{}{}{}{}_{}{}",
+        protocol, alpn, version, cipher_count, ext_count, alpn_ext, cipher_hash, ext_hash
+    );
 
     Ok(TlsFingerprint::new(ja4_string, "ja4".to_string()))
 }
@@ -86,7 +94,8 @@ fn extract_first_alpn(hello: &ClientHello) -> Option<String> {
                     offset += 1;
 
                     if offset + proto_len <= ext.data.len() {
-                        let protocol = String::from_utf8_lossy(&ext.data[offset..offset + proto_len]);
+                        let protocol =
+                            String::from_utf8_lossy(&ext.data[offset..offset + proto_len]);
                         return Some(protocol.to_string());
                     }
                 }
@@ -98,7 +107,10 @@ fn extract_first_alpn(hello: &ClientHello) -> Option<String> {
 
 /// Check if ClientHello has ALPN extension
 fn has_alpn_extension(hello: &ClientHello) -> bool {
-    hello.extensions.iter().any(|ext| ext.extension_type == extensions::ALPN)
+    hello
+        .extensions
+        .iter()
+        .any(|ext| ext.extension_type == extensions::ALPN)
 }
 
 /// Calculate SHA256 hash and truncate to specified length

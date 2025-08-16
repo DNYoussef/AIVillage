@@ -4,8 +4,8 @@
 
 use std::fmt;
 
-use bytes::{Bytes, BytesMut, Buf, BufMut};
-use serde::{Deserialize, Serialize, Deserializer, Serializer};
+use bytes::{Buf, BufMut, Bytes, BytesMut};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use thiserror::Error;
 
 use crate::{BundleControlFlags, CreationTimestamp, DTN_VERSION};
@@ -64,7 +64,11 @@ pub struct BundleId {
 
 impl fmt::Display for BundleId {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}@{}.{}", self.source, self.timestamp.dtn_time, self.timestamp.sequence_number)
+        write!(
+            f,
+            "{}@{}.{}",
+            self.source, self.timestamp.dtn_time, self.timestamp.sequence_number
+        )
     }
 }
 
@@ -165,11 +169,7 @@ pub struct PrimaryBlock {
 }
 
 impl PrimaryBlock {
-    pub fn new(
-        destination: EndpointId,
-        source: EndpointId,
-        lifetime_ms: u64,
-    ) -> Self {
+    pub fn new(destination: EndpointId, source: EndpointId, lifetime_ms: u64) -> Self {
         Self {
             version: DTN_VERSION,
             bundle_control_flags: BundleControlFlags::NONE,
@@ -279,6 +279,112 @@ impl PayloadBlock {
             data: SerializableBytes::from(data),
         }
     }
+
+    /// Check if payload appears to be ciphertext (not plaintext)
+    ///
+    /// This performs heuristic analysis to detect plaintext content at DTN gateway boundaries.
+    /// Used to enforce the security invariant that no plaintext leaks outside the trust boundary.
+    pub fn is_ciphertext(&self) -> bool {
+        let payload = &self.data.0;
+
+        // Empty payloads are considered secure
+        if payload.is_empty() {
+            return true;
+        }
+
+        // Check for common plaintext patterns that should not appear in ciphertext
+
+        // 1. Check for printable ASCII strings (strong indicator of plaintext)
+        let printable_ratio = payload
+            .iter()
+            .filter(|&&b| {
+                b.is_ascii_graphic() || b == b' ' || b == b'\t' || b == b'\n' || b == b'\r'
+            })
+            .count() as f64
+            / payload.len() as f64;
+
+        // If >70% printable ASCII, likely plaintext
+        if printable_ratio > 0.7 {
+            return false;
+        }
+
+        // 2. Check for common protocol headers (HTTP, JSON, XML, etc.)
+        let common_headers: &[&[u8]] = &[
+            b"GET ",
+            b"POST",
+            b"HTTP/",
+            b"Content-",
+            b"{\"",
+            b"[{",
+            b"<?xml",
+            b"<html",
+            b"-----BEGIN",
+            b"ssh-rsa",
+            b"ssh-ed25519",
+        ];
+
+        for &header in common_headers {
+            if payload.starts_with(header) {
+                return false;
+            }
+        }
+
+        // 3. Check entropy - ciphertext should have high entropy
+        let entropy = calculate_entropy(payload);
+        // Entropy below 6.0 bits/byte suggests structured/plaintext data
+        if entropy < 6.0 {
+            return false;
+        }
+
+        // 4. Chi-squared test for randomness (ciphertext should be random)
+        let chi_squared = chi_squared_test(payload);
+        // High chi-squared values indicate non-random (potentially plaintext) data
+        if chi_squared > 300.0 {
+            return false;
+        }
+
+        // Passed all checks - appears to be ciphertext
+        true
+    }
+}
+
+/// Calculate Shannon entropy of byte array
+pub(crate) fn calculate_entropy(data: &[u8]) -> f64 {
+    let mut counts = [0u32; 256];
+    for &byte in data {
+        counts[byte as usize] += 1;
+    }
+
+    let len = data.len() as f64;
+    let mut entropy = 0.0;
+
+    for &count in &counts {
+        if count > 0 {
+            let p = count as f64 / len;
+            entropy -= p * p.log2();
+        }
+    }
+
+    entropy
+}
+
+/// Chi-squared test for randomness
+pub(crate) fn chi_squared_test(data: &[u8]) -> f64 {
+    let mut counts = [0u32; 256];
+    for &byte in data {
+        counts[byte as usize] += 1;
+    }
+
+    let expected = data.len() as f64 / 256.0;
+    let mut chi_squared = 0.0;
+
+    for &count in &counts {
+        let observed = count as f64;
+        let diff = observed - expected;
+        chi_squared += (diff * diff) / expected;
+    }
+
+    chi_squared
 }
 
 /// Complete bundle structure
@@ -352,8 +458,8 @@ impl Bundle {
         // Encode canonical blocks
         buf.put_u32(self.canonical_blocks.len() as u32);
         for block in &self.canonical_blocks {
-            let block_data = bincode::serialize(block)
-                .map_err(|e| BundleError::EncodingError(e.to_string()))?;
+            let block_data =
+                bincode::serialize(block).map_err(|e| BundleError::EncodingError(e.to_string()))?;
             buf.put_u32(block_data.len() as u32);
             buf.put_slice(&block_data);
         }
@@ -524,7 +630,10 @@ mod tests {
         assert_eq!(bundle.primary.destination, decoded.primary.destination);
         assert_eq!(bundle.primary.source, decoded.primary.source);
         assert_eq!(bundle.payload.data, decoded.payload.data);
-        assert_eq!(bundle.canonical_blocks.len(), decoded.canonical_blocks.len());
+        assert_eq!(
+            bundle.canonical_blocks.len(),
+            decoded.canonical_blocks.len()
+        );
     }
 
     #[test]

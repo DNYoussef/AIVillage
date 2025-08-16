@@ -76,8 +76,9 @@ impl MixnodeConfig {
 
     /// Save configuration to file
     pub fn save_to_file(&self, path: &PathBuf) -> crate::Result<()> {
-        let contents = serde_json::to_string_pretty(self)
-            .map_err(|e| crate::MixnodeError::Config(format!("Failed to serialize config: {}", e)))?;
+        let contents = serde_json::to_string_pretty(self).map_err(|e| {
+            crate::MixnodeError::Config(format!("Failed to serialize config: {}", e))
+        })?;
         std::fs::write(path, contents).map_err(crate::MixnodeError::Io)?;
         Ok(())
     }
@@ -85,7 +86,9 @@ impl MixnodeConfig {
     /// Validate configuration
     pub fn validate(&self) -> crate::Result<()> {
         if self.layers == 0 {
-            return Err(crate::MixnodeError::Config("Layers must be > 0".to_string()));
+            return Err(crate::MixnodeError::Config(
+                "Layers must be > 0".to_string(),
+            ));
         }
 
         if self.min_delay >= self.max_delay {

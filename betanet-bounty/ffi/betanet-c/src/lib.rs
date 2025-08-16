@@ -7,12 +7,12 @@
 #![deny(clippy::all)]
 #![allow(clippy::missing_safety_doc)]
 
+use std::collections::HashMap;
 use std::ffi::{CStr, CString};
 use std::os::raw::{c_char, c_int, c_uint, c_void};
 use std::ptr;
-use std::sync::{Arc, Mutex};
 use std::sync::atomic::AtomicBool;
-use std::collections::HashMap;
+use std::sync::{Arc, Mutex};
 
 use tokio::runtime::Runtime;
 use tokio::sync::mpsc;
@@ -117,22 +117,13 @@ pub struct BetanetConfig {
 }
 
 /// Callback function types
-pub type BetanetDataCallback = extern "C" fn(
-    user_data: *mut c_void,
-    data: *const u8,
-    len: c_uint,
-);
+pub type BetanetDataCallback = extern "C" fn(user_data: *mut c_void, data: *const u8, len: c_uint);
 
-pub type BetanetConnectionCallback = extern "C" fn(
-    user_data: *mut c_void,
-    state: BetanetConnectionState,
-);
+pub type BetanetConnectionCallback =
+    extern "C" fn(user_data: *mut c_void, state: BetanetConnectionState);
 
-pub type BetanetErrorCallback = extern "C" fn(
-    user_data: *mut c_void,
-    error_code: BetanetResult,
-    error_msg: *const c_char,
-);
+pub type BetanetErrorCallback =
+    extern "C" fn(user_data: *mut c_void, error_code: BetanetResult, error_msg: *const c_char);
 
 // Thread-local error storage
 thread_local! {
@@ -155,9 +146,7 @@ pub extern "C" fn betanet_init() -> BetanetResult {
 
 /// Create HTX client with configuration
 #[no_mangle]
-pub extern "C" fn betanet_htx_client_create(
-    config: *const BetanetConfig,
-) -> *mut BetanetHtxClient {
+pub extern "C" fn betanet_htx_client_create(config: *const BetanetConfig) -> *mut BetanetHtxClient {
     if config.is_null() {
         set_last_error("Configuration is null".to_string());
         return ptr::null_mut();
@@ -305,7 +294,11 @@ pub extern "C" fn betanet_htx_client_send_async(
                 // Convert back to pointer for callback after await
                 let user_data_ptr = user_data_usize as *mut c_void;
                 let error_msg = CString::new(format!("Send failed: {}", e)).unwrap();
-                callback(user_data_ptr, BetanetResult::NetworkError, error_msg.as_ptr());
+                callback(
+                    user_data_ptr,
+                    BetanetResult::NetworkError,
+                    error_msg.as_ptr(),
+                );
             }
         }
     });
@@ -349,20 +342,18 @@ pub extern "C" fn betanet_htx_client_recv(
             }
         }
         Err(mpsc::error::TryRecvError::Empty) => {
-            unsafe { *received_len = 0; }
+            unsafe {
+                *received_len = 0;
+            }
             BetanetResult::Success
         }
-        Err(mpsc::error::TryRecvError::Disconnected) => {
-            BetanetResult::NotConnected
-        }
+        Err(mpsc::error::TryRecvError::Disconnected) => BetanetResult::NotConnected,
     }
 }
 
 /// Create HTX server
 #[no_mangle]
-pub extern "C" fn betanet_htx_server_create(
-    config: *const BetanetConfig,
-) -> *mut BetanetHtxServer {
+pub extern "C" fn betanet_htx_server_create(config: *const BetanetConfig) -> *mut BetanetHtxServer {
     if config.is_null() {
         set_last_error("Configuration is null".to_string());
         return ptr::null_mut();
@@ -484,7 +475,9 @@ pub extern "C" fn betanet_htx_server_accept(
         connections.insert(conn_id, connection);
     }
 
-    unsafe { *connection_id = conn_id; }
+    unsafe {
+        *connection_id = conn_id;
+    }
     BetanetResult::Success
 }
 
@@ -517,11 +510,9 @@ pub extern "C" fn betanet_get_version() -> *const c_char {
 /// Get last error message
 #[no_mangle]
 pub extern "C" fn betanet_get_last_error() -> *const c_char {
-    LAST_ERROR.with(|e| {
-        match &*e.borrow() {
-            Some(err) => err.as_ptr(),
-            None => ptr::null(),
-        }
+    LAST_ERROR.with(|e| match &*e.borrow() {
+        Some(err) => err.as_ptr(),
+        None => ptr::null(),
     })
 }
 
@@ -532,7 +523,6 @@ pub extern "C" fn betanet_clear_error() {
         *e.borrow_mut() = None;
     });
 }
-
 
 #[cfg(test)]
 mod tests {

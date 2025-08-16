@@ -42,7 +42,8 @@ impl SyntheticContactGenerator {
         let mut contacts = Vec::new();
         let mut time = self.base_time;
 
-        for _ in 0..10 { // Generate 10 rounds of contacts
+        for _ in 0..10 {
+            // Generate 10 rounds of contacts
             for i in 0..(self.nodes.len() - 1) {
                 let contact = Contact {
                     from: self.nodes[i].clone(),
@@ -68,7 +69,8 @@ impl SyntheticContactGenerator {
         let mut time = self.base_time;
         let hub = self.nodes[0].clone();
 
-        for _ in 0..10 { // Generate 10 rounds of contacts
+        for _ in 0..10 {
+            // Generate 10 rounds of contacts
             for i in 1..self.nodes.len() {
                 // Bidirectional connections to hub
                 let to_hub = Contact {
@@ -103,11 +105,17 @@ impl SyntheticContactGenerator {
     }
 
     /// Generate a mesh topology with intermittent connectivity
-    pub fn mesh_topology(&mut self, contact_duration: u64, interval: u64, density: f64) -> Vec<Contact> {
+    pub fn mesh_topology(
+        &mut self,
+        contact_duration: u64,
+        interval: u64,
+        density: f64,
+    ) -> Vec<Contact> {
         let mut contacts = Vec::new();
         let mut time = self.base_time;
 
-        for _ in 0..10 { // Generate 10 rounds of contacts
+        for _ in 0..10 {
+            // Generate 10 rounds of contacts
             for i in 0..self.nodes.len() {
                 for j in (i + 1)..self.nodes.len() {
                     // Only create contact with given probability (density)
@@ -189,6 +197,12 @@ struct BundleMetadata {
     size: usize,
 }
 
+impl Default for FifoScheduler {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl FifoScheduler {
     pub fn new() -> Self {
         Self {
@@ -214,7 +228,7 @@ impl FifoScheduler {
 
         self.bundle_metadata.insert(bundle_id.clone(), metadata);
 
-        let queue = self.bundle_queues.entry(destination).or_insert_with(Vec::new);
+        let queue = self.bundle_queues.entry(destination).or_default();
         queue.push(bundle_id);
     }
 
@@ -263,14 +277,15 @@ impl FifoScheduler {
             bundles_to_transmit,
             estimated_utility: if should_transmit { 1.0 } else { 0.0 },
             estimated_energy_cost: contact.energy_cost,
-            drift_component: 0.0, // FIFO doesn't consider drift
+            drift_component: 0.0,   // FIFO doesn't consider drift
             penalty_component: 0.0, // FIFO doesn't consider penalty
             rationale: "FIFO: Always transmit oldest bundles first".to_string(),
         }
     }
 
     pub fn get_queue_lengths(&self) -> HashMap<EndpointId, usize> {
-        self.bundle_queues.iter()
+        self.bundle_queues
+            .iter()
             .map(|(dest, queue)| (dest.clone(), queue.len()))
             .collect()
     }
@@ -312,15 +327,21 @@ impl TestResults {
     pub fn finalize(&mut self) {
         self.delivery_rate = if self.total_bundles > 0 {
             self.bundles_delivered as f64 / self.total_bundles as f64
-        } else { 0.0 };
+        } else {
+            0.0
+        };
 
         self.on_time_rate = if self.bundles_delivered > 0 {
             self.bundles_on_time as f64 / self.bundles_delivered as f64
-        } else { 0.0 };
+        } else {
+            0.0
+        };
 
         self.energy_per_bundle = if self.bundles_delivered > 0 {
             self.total_energy_consumed / self.bundles_delivered as f64
-        } else { 0.0 };
+        } else {
+            0.0
+        };
     }
 
     pub fn print_comparison(&self, other: &TestResults) {
@@ -329,50 +350,102 @@ impl TestResults {
         println!("Test Duration: {} seconds", self.test_duration);
         println!();
 
-        println!("{:<25} {:<15} {:<15}", "Metric", &self.scheduler_name, &other.scheduler_name);
+        println!(
+            "{:<25} {:<15} {:<15}",
+            "Metric", &self.scheduler_name, &other.scheduler_name
+        );
         println!("{}", "-".repeat(55));
 
-        println!("{:<25} {:<15} {:<15}", "Total Bundles", self.total_bundles, other.total_bundles);
-        println!("{:<25} {:<15} {:<15}", "Delivered", self.bundles_delivered, other.bundles_delivered);
-        println!("{:<25} {:<15.3} {:<15.3}", "Delivery Rate", self.delivery_rate, other.delivery_rate);
-        println!("{:<25} {:<15.3} {:<15.3}", "On-Time Rate", self.on_time_rate, other.on_time_rate);
-        println!("{:<25} {:<15.2} {:<15.2}", "Energy/Bundle", self.energy_per_bundle, other.energy_per_bundle);
-        println!("{:<25} {:<15} {:<15}", "Max Queue Length", self.max_queue_length, other.max_queue_length);
-        println!("{:<25} {:<15.2} {:<15.2}", "Avg Queue Length", self.avg_queue_length, other.avg_queue_length);
+        println!(
+            "{:<25} {:<15} {:<15}",
+            "Total Bundles", self.total_bundles, other.total_bundles
+        );
+        println!(
+            "{:<25} {:<15} {:<15}",
+            "Delivered", self.bundles_delivered, other.bundles_delivered
+        );
+        println!(
+            "{:<25} {:<15.3} {:<15.3}",
+            "Delivery Rate", self.delivery_rate, other.delivery_rate
+        );
+        println!(
+            "{:<25} {:<15.3} {:<15.3}",
+            "On-Time Rate", self.on_time_rate, other.on_time_rate
+        );
+        println!(
+            "{:<25} {:<15.2} {:<15.2}",
+            "Energy/Bundle", self.energy_per_bundle, other.energy_per_bundle
+        );
+        println!(
+            "{:<25} {:<15} {:<15}",
+            "Max Queue Length", self.max_queue_length, other.max_queue_length
+        );
+        println!(
+            "{:<25} {:<15.2} {:<15.2}",
+            "Avg Queue Length", self.avg_queue_length, other.avg_queue_length
+        );
 
         println!();
         println!("🎯 Performance Summary:");
 
         if self.delivery_rate > other.delivery_rate {
-            println!("  ✅ {} has {:.1}% higher delivery rate",
-                     self.scheduler_name, (self.delivery_rate - other.delivery_rate) * 100.0);
+            println!(
+                "  ✅ {} has {:.1}% higher delivery rate",
+                self.scheduler_name,
+                (self.delivery_rate - other.delivery_rate) * 100.0
+            );
         } else if other.delivery_rate > self.delivery_rate {
-            println!("  ✅ {} has {:.1}% higher delivery rate",
-                     other.scheduler_name, (other.delivery_rate - self.delivery_rate) * 100.0);
+            println!(
+                "  ✅ {} has {:.1}% higher delivery rate",
+                other.scheduler_name,
+                (other.delivery_rate - self.delivery_rate) * 100.0
+            );
         }
 
         if self.on_time_rate > other.on_time_rate {
-            println!("  ⏰ {} has {:.1}% higher on-time rate",
-                     self.scheduler_name, (self.on_time_rate - other.on_time_rate) * 100.0);
+            println!(
+                "  ⏰ {} has {:.1}% higher on-time rate",
+                self.scheduler_name,
+                (self.on_time_rate - other.on_time_rate) * 100.0
+            );
         } else if other.on_time_rate > self.on_time_rate {
-            println!("  ⏰ {} has {:.1}% higher on-time rate",
-                     other.scheduler_name, (other.on_time_rate - self.on_time_rate) * 100.0);
+            println!(
+                "  ⏰ {} has {:.1}% higher on-time rate",
+                other.scheduler_name,
+                (other.on_time_rate - self.on_time_rate) * 100.0
+            );
         }
 
         if self.energy_per_bundle < other.energy_per_bundle {
-            println!("  ⚡ {} is {:.1}% more energy efficient",
-                     self.scheduler_name, (1.0 - self.energy_per_bundle / other.energy_per_bundle) * 100.0);
+            println!(
+                "  ⚡ {} is {:.1}% more energy efficient",
+                self.scheduler_name,
+                (1.0 - self.energy_per_bundle / other.energy_per_bundle) * 100.0
+            );
         } else if other.energy_per_bundle < self.energy_per_bundle {
-            println!("  ⚡ {} is {:.1}% more energy efficient",
-                     other.scheduler_name, (1.0 - other.energy_per_bundle / self.energy_per_bundle) * 100.0);
+            println!(
+                "  ⚡ {} is {:.1}% more energy efficient",
+                other.scheduler_name,
+                (1.0 - other.energy_per_bundle / self.energy_per_bundle) * 100.0
+            );
         }
 
-        if self.max_queue_length < other.max_queue_length {
-            println!("  📊 {} has better queue stability (max: {} vs {})",
-                     self.scheduler_name, self.max_queue_length, other.max_queue_length);
-        } else if other.max_queue_length < self.max_queue_length {
-            println!("  📊 {} has better queue stability (max: {} vs {})",
-                     other.scheduler_name, other.max_queue_length, self.max_queue_length);
+        match self.max_queue_length.cmp(&other.max_queue_length) {
+            std::cmp::Ordering::Less => {
+                println!(
+                    "  📊 {} has better queue stability (max: {} vs {})",
+                    self.scheduler_name, self.max_queue_length, other.max_queue_length
+                );
+            }
+            std::cmp::Ordering::Greater => {
+                println!(
+                    "  📊 {} has better queue stability (max: {} vs {})",
+                    other.scheduler_name, other.max_queue_length, self.max_queue_length
+                );
+            }
+            std::cmp::Ordering::Equal => {
+                // Same queue stability
+            }
         }
     }
 }
@@ -395,8 +468,12 @@ mod tests {
         let star_contacts = generator.star_topology(60, 120);
         assert!(!star_contacts.is_empty());
         // Should have bidirectional connections to hub (node0)
-        assert!(star_contacts.iter().any(|c| c.to == EndpointId::node("node0")));
-        assert!(star_contacts.iter().any(|c| c.from == EndpointId::node("node0")));
+        assert!(star_contacts
+            .iter()
+            .any(|c| c.to == EndpointId::node("node0")));
+        assert!(star_contacts
+            .iter()
+            .any(|c| c.from == EndpointId::node("node0")));
 
         // Test mesh topology
         let mesh_contacts = generator.mesh_topology(60, 120, 0.5);
@@ -436,7 +513,10 @@ mod tests {
         let decision = fifo.schedule_transmission(&contact, &[bundle.id()], 1);
         assert!(decision.should_transmit);
         assert_eq!(decision.bundles_to_transmit.len(), 1);
-        assert_eq!(decision.rationale, "FIFO: Always transmit oldest bundles first");
+        assert_eq!(
+            decision.rationale,
+            "FIFO: Always transmit oldest bundles first"
+        );
     }
 
     #[test]

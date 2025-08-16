@@ -13,8 +13,8 @@
 
 // Module structure (to be implemented)
 pub mod ble;
-pub mod fragmentation;
 pub mod fec;
+pub mod fragmentation;
 pub mod friendship;
 pub mod rebroadcast;
 

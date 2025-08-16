@@ -10,9 +10,9 @@
 #![allow(dead_code)]
 
 // Module structure (to be implemented)
-pub mod stream;
 pub mod datagram;
 pub mod privacy;
+pub mod stream;
 
 // Re-exports
 pub use stream::BetanetStreamCla;

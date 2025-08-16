@@ -2,9 +2,9 @@
 //!
 //! Tests core functionality without external dependencies that require newer Rust versions
 
+use bytes::Bytes;
 use federated::*;
 use ndarray::Array1;
-use bytes::Bytes;
 
 /// Mock FL communication test
 #[test]
@@ -16,21 +16,33 @@ fn test_mock_fl_communication() {
     println!("✅ Created {} participants", participants.len());
 
     for (i, participant) in participants.iter().enumerate() {
-        println!("  Participant {}: {} ({:?})",
-                 i + 1, participant.agent_id, participant.device_type);
+        println!(
+            "  Participant {}: {} ({:?})",
+            i + 1,
+            participant.agent_id,
+            participant.device_type
+        );
     }
 
     // Test 2: Create round and training results
     let round_id = RoundId::new("test-session".to_string(), 1, 1234567890);
     let training_results = create_test_training_results(&round_id, &participants);
-    println!("✅ Generated {} training results for round {}",
-             training_results.len(), round_id);
+    println!(
+        "✅ Generated {} training results for round {}",
+        training_results.len(),
+        round_id
+    );
 
     // Test 3: Test model parameter serialization/deserialization
     for (i, result) in training_results.iter().enumerate() {
-        let weights: Array1<f32> = bincode::deserialize(&result.model_update.weights)
-            .expect(&format!("Failed to deserialize weights for participant {}", i));
-        println!("  Participant {} weights: {:?}", i, weights.as_slice().unwrap());
+        let weights: Array1<f32> = bincode::deserialize(&result.model_update.weights).expect(
+            &format!("Failed to deserialize weights for participant {}", i),
+        );
+        println!(
+            "  Participant {} weights: {:?}",
+            i,
+            weights.as_slice().unwrap()
+        );
     }
 
     // Test 4: Test compression algorithms
@@ -112,55 +124,62 @@ fn create_test_participants() -> Vec<ParticipantId> {
     ]
 }
 
-fn create_test_training_results(round_id: &RoundId, participants: &[ParticipantId]) -> Vec<TrainingResult> {
-    participants.iter().enumerate().map(|(i, participant)| {
-        // Create different model weights for each participant to simulate real training
-        let base_weights = vec![
-            0.1 + (i as f32 * 0.05),
-            0.2 + (i as f32 * 0.03),
-            0.3 + (i as f32 * 0.02),
-            0.4 + (i as f32 * 0.01),
-            -0.1 + (i as f32 * 0.04),
-        ];
+fn create_test_training_results(
+    round_id: &RoundId,
+    participants: &[ParticipantId],
+) -> Vec<TrainingResult> {
+    participants
+        .iter()
+        .enumerate()
+        .map(|(i, participant)| {
+            // Create different model weights for each participant to simulate real training
+            let base_weights = vec![
+                0.1 + (i as f32 * 0.05),
+                0.2 + (i as f32 * 0.03),
+                0.3 + (i as f32 * 0.02),
+                0.4 + (i as f32 * 0.01),
+                -0.1 + (i as f32 * 0.04),
+            ];
 
-        let weights = Array1::from(base_weights);
-        let serialized_weights = bincode::serialize(&weights)
-            .expect("Failed to serialize weights");
+            let weights = Array1::from(base_weights);
+            let serialized_weights =
+                bincode::serialize(&weights).expect("Failed to serialize weights");
 
-        TrainingResult {
-            round_id: round_id.clone(),
-            participant_id: participant.clone(),
-            model_update: ModelParameters::new(
-                format!("model-v1-participant-{}", i),
-                Bytes::from(serialized_weights),
-                ModelMetadata {
-                    architecture: "test_cnn".to_string(),
-                    parameter_count: 5,
-                    input_shape: vec![32, 32, 3],
-                    output_shape: vec![10],
-                    compression: CompressionType::None,
-                    quantization: QuantizationType::Float32,
+            TrainingResult {
+                round_id: round_id.clone(),
+                participant_id: participant.clone(),
+                model_update: ModelParameters::new(
+                    format!("model-v1-participant-{}", i),
+                    Bytes::from(serialized_weights),
+                    ModelMetadata {
+                        architecture: "test_cnn".to_string(),
+                        parameter_count: 5,
+                        input_shape: vec![32, 32, 3],
+                        output_shape: vec![10],
+                        compression: CompressionType::None,
+                        quantization: QuantizationType::Float32,
+                    },
+                ),
+                metrics: TrainingMetrics {
+                    training_loss: 0.8 - (i as f32 * 0.1),      // Decreasing loss
+                    training_accuracy: 0.6 + (i as f32 * 0.08), // Increasing accuracy
+                    validation_loss: Some(0.85 - (i as f32 * 0.08)),
+                    validation_accuracy: Some(0.55 + (i as f32 * 0.09)),
+                    num_examples: 1000 + (i * 300) as u32,
+                    training_time_sec: 45.0 + (i as f32 * 15.0),
                 },
-            ),
-            metrics: TrainingMetrics {
-                training_loss: 0.8 - (i as f32 * 0.1), // Decreasing loss
-                training_accuracy: 0.6 + (i as f32 * 0.08), // Increasing accuracy
-                validation_loss: Some(0.85 - (i as f32 * 0.08)),
-                validation_accuracy: Some(0.55 + (i as f32 * 0.09)),
-                num_examples: 1000 + (i * 300) as u32,
-                training_time_sec: 45.0 + (i as f32 * 15.0),
-            },
-            resource_usage: ResourceUsage {
-                peak_memory_mb: 80.0 + (i as f32 * 25.0),
-                energy_joules: 35.0 + (i as f32 * 12.0),
-                flops: 800_000 + (i * 150_000) as u64,
-                bytes_sent: 2048 + (i * 512) as u64,
-                bytes_received: 4096 + (i * 1024) as u64,
-                battery_drain: 0.03 + (i as f32 * 0.01),
-            },
-            timestamp: 1234567890 + (i * 60) as u64,
-        }
-    }).collect()
+                resource_usage: ResourceUsage {
+                    peak_memory_mb: 80.0 + (i as f32 * 25.0),
+                    energy_joules: 35.0 + (i as f32 * 12.0),
+                    flops: 800_000 + (i * 150_000) as u64,
+                    bytes_sent: 2048 + (i * 512) as u64,
+                    bytes_received: 4096 + (i * 1024) as u64,
+                    battery_drain: 0.03 + (i as f32 * 0.01),
+                },
+                timestamp: 1234567890 + (i * 60) as u64,
+            }
+        })
+        .collect()
 }
 
 fn test_compression_algorithms() {
@@ -169,7 +188,10 @@ fn test_compression_algorithms() {
     let test_weights = Array1::from(vec![0.8, -0.3, 0.9, 0.1, -0.7, 0.4, -0.1, 0.6]);
 
     // Create secure aggregation for testing
-    let privacy_config = PrivacyConfig { enable_dp: false, ..Default::default() };
+    let privacy_config = PrivacyConfig {
+        enable_dp: false,
+        ..Default::default()
+    };
     let secure_agg = SecureAggregation::new(
         privacy_config,
         CompressionType::None,
@@ -177,22 +199,32 @@ fn test_compression_algorithms() {
     );
 
     // Test quantization
-    let quantized = secure_agg.quantize_weights(&test_weights, 8)
+    let quantized = secure_agg
+        .quantize_weights(&test_weights, 8)
         .expect("Quantization failed");
     println!("  Original: {:?}", test_weights.as_slice().unwrap());
     println!("  Quantized (8-bit): {:?}", quantized.as_slice().unwrap());
 
     // Test top-k sparsification
-    let sparse_topk = secure_agg.top_k_sparsification(&test_weights, 4)
+    let sparse_topk = secure_agg
+        .top_k_sparsification(&test_weights, 4)
         .expect("Top-K failed");
     let non_zero_count = sparse_topk.iter().filter(|&&x| x != 0.0).count();
-    println!("  Top-K (k=4): {:?}, non-zero: {}", sparse_topk.as_slice().unwrap(), non_zero_count);
+    println!(
+        "  Top-K (k=4): {:?}, non-zero: {}",
+        sparse_topk.as_slice().unwrap(),
+        non_zero_count
+    );
     assert_eq!(non_zero_count, 4);
 
     // Test gradient compression
-    let compressed = secure_agg.gradient_compression(&test_weights, 0.5)
+    let compressed = secure_agg
+        .gradient_compression(&test_weights, 0.5)
         .expect("Gradient compression failed");
-    println!("  Gradient compressed (threshold=0.5): {:?}", compressed.as_slice().unwrap());
+    println!(
+        "  Gradient compressed (threshold=0.5): {:?}",
+        compressed.as_slice().unwrap()
+    );
 
     println!("  ✅ Compression algorithms working correctly");
 }
@@ -203,20 +235,28 @@ fn test_differential_privacy_basic() {
     let dp = DifferentialPrivacy::new(1.0, 1e-5, 1.0, 1.0);
     let gradients = Array1::from(vec![3.0, -2.0, 4.0, 1.0]);
 
-    let dp_gradients = dp.apply_dp_sgd(&gradients)
-        .expect("DP-SGD failed");
+    let dp_gradients = dp.apply_dp_sgd(&gradients).expect("DP-SGD failed");
 
     let original_norm = gradients.mapv(|x| x * x).sum().sqrt();
     let dp_norm = dp_gradients.mapv(|x| x * x).sum().sqrt();
 
-    println!("  Original gradients: {:?} (L2 norm: {:.3})",
-             gradients.as_slice().unwrap(), original_norm);
-    println!("  DP gradients: {:?} (L2 norm: {:.3})",
-             dp_gradients.as_slice().unwrap(), dp_norm);
+    println!(
+        "  Original gradients: {:?} (L2 norm: {:.3})",
+        gradients.as_slice().unwrap(),
+        original_norm
+    );
+    println!(
+        "  DP gradients: {:?} (L2 norm: {:.3})",
+        dp_gradients.as_slice().unwrap(),
+        dp_norm
+    );
 
     // Test privacy cost computation
     let (eps, delta) = dp.compute_privacy_cost(5, 3);
-    println!("  Privacy cost (5 rounds, 3 participants): ε={:.3}, δ={:.6}", eps, delta);
+    println!(
+        "  Privacy cost (5 rounds, 3 participants): ε={:.3}, δ={:.6}",
+        eps, delta
+    );
 
     // Clipped norm should be <= clipping_norm + small tolerance for noise
     assert!(dp_norm <= 1.5);
@@ -238,7 +278,10 @@ fn test_aggregation_stats(training_results: &[TrainingResult]) {
     println!("  Participants: {}", stats.num_participants);
     println!("  Total examples: {}", stats.total_examples);
     println!("  Average training loss: {:.4}", stats.avg_training_loss);
-    println!("  Average training accuracy: {:.4}", stats.avg_training_accuracy);
+    println!(
+        "  Average training accuracy: {:.4}",
+        stats.avg_training_accuracy
+    );
     println!("  Converged: {}", stats.converged);
 
     assert_eq!(stats.num_participants, training_results.len() as u32);
@@ -293,7 +336,8 @@ fn test_receipts_basic(participants: &[ParticipantId]) {
             peak_memory_mb: 120.0 + (i as f32 * 30.0),
         };
 
-        let receipt = pop.generate_receipt(participant.clone(), &metrics)
+        let receipt = pop
+            .generate_receipt(participant.clone(), &metrics)
             .expect("Failed to generate receipt");
 
         println!("  Receipt for {}:", participant.agent_id);
@@ -337,7 +381,10 @@ fn test_round_plan_functionality() {
     plan = plan.with_metadata("experiment_id".to_string(), "exp-001".to_string());
     plan = plan.with_metadata("researcher".to_string(), "alice".to_string());
 
-    assert_eq!(plan.metadata.get("experiment_id"), Some(&"exp-001".to_string()));
+    assert_eq!(
+        plan.metadata.get("experiment_id"),
+        Some(&"exp-001".to_string())
+    );
     assert_eq!(plan.metadata.get("researcher"), Some(&"alice".to_string()));
 
     println!("  Round: {}", plan.round_id);
@@ -362,7 +409,8 @@ fn test_cohort_manager_functionality() {
 
     // Add participants
     for participant in &participants {
-        cohort.add_participant(participant.clone())
+        cohort
+            .add_participant(participant.clone())
             .expect("Failed to add participant");
     }
 
@@ -378,7 +426,8 @@ fn test_cohort_manager_functionality() {
 
     // Add some training results
     let training_results = create_test_training_results(&round_id, &participants);
-    for result in training_results.iter().take(3) { // Add 3 out of 4 results
+    for result in training_results.iter().take(3) {
+        // Add 3 out of 4 results
         cohort.add_training_result(result.clone());
     }
 

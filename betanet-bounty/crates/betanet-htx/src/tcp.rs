@@ -4,25 +4,23 @@
 //! and optional fingerprint camouflage.
 
 use crate::transport::{
-    GenericTransportStream, StreamId, Transport, TransportConfig, TransportConnection,
-    TransportError, TransportListener, TransportStats, TransportStream,
+    StreamId, Transport, TransportConfig, TransportConnection, TransportListener, TransportStats,
+    TransportStream,
 };
 use crate::{Frame, FrameBuffer, HtxError, NoiseXK, Result};
 use async_trait::async_trait;
 use bytes::{Bytes, BytesMut};
-use rustls::pki_types::{CertificateDer, PrivateKeyDer, ServerName};
+use rustls::pki_types::ServerName;
 use rustls::{ClientConfig, RootCertStore, ServerConfig};
-use std::io;
 use std::net::SocketAddr;
 use std::pin::Pin;
 use std::sync::Arc;
 use std::task::{Context, Poll};
-use std::time::Duration;
-use tokio::io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt, ReadBuf};
+use tokio::io::{AsyncRead, AsyncWrite, ReadBuf};
 use tokio::net::{TcpListener, TcpStream};
 use tokio::sync::Mutex;
 use tokio_rustls::{TlsAcceptor, TlsConnector, TlsStream};
-use tracing::{debug, error, info, warn};
+use tracing::{debug, info, warn};
 
 /// TCP transport factory
 #[derive(Clone)]
@@ -103,7 +101,8 @@ impl TcpTransport {
     pub fn default_server_tls_config() -> Result<ServerConfig> {
         Err(HtxError::Config(
             "Server TLS configuration requires external certificates. \
-             Use with_server_tls() with your own TlsAcceptor.".to_string()
+             Use with_server_tls() with your own TlsAcceptor."
+                .to_string(),
         ))
     }
 }
@@ -125,12 +124,14 @@ impl Transport for TcpTransport {
             let server_name = ServerName::try_from("localhost")
                 .map_err(|e| HtxError::Config(format!("Invalid server name: {}", e)))?;
 
-            let tls_stream = connector.connect(server_name, tcp_stream).await
-                .map_err(|e| HtxError::Transport(format!("TLS handshake failed: {}", e)))?;
-
-            tls_stream
+            connector
+                .connect(server_name, tcp_stream)
+                .await
+                .map_err(|e| HtxError::Transport(format!("TLS handshake failed: {}", e)))?
         } else {
-            return Err(HtxError::Config("TLS connector required for TCP transport".to_string()));
+            return Err(HtxError::Config(
+                "TLS connector required for TCP transport".to_string(),
+            ));
         };
 
         // Create connection with multiplexing support
@@ -152,8 +153,9 @@ impl Transport for TcpTransport {
 
         let listener = TcpListener::bind(addr).await.map_err(HtxError::Io)?;
 
-        let acceptor = self.tls_acceptor.as_ref()
-            .ok_or_else(|| HtxError::Config("TLS acceptor required for TCP listener".to_string()))?;
+        let acceptor = self.tls_acceptor.as_ref().ok_or_else(|| {
+            HtxError::Config("TLS acceptor required for TCP listener".to_string())
+        })?;
 
         Ok(TcpListener443 {
             listener,
@@ -177,7 +179,10 @@ impl TransportListener for TcpListener443 {
         let (tcp_stream, peer_addr) = self.listener.accept().await.map_err(HtxError::Io)?;
 
         // Perform TLS handshake
-        let tls_stream = self.acceptor.accept(tcp_stream).await
+        let tls_stream = self
+            .acceptor
+            .accept(tcp_stream)
+            .await
             .map_err(|e| HtxError::Transport(format!("TLS handshake failed: {}", e)))?;
 
         // Create connection with multiplexing support
@@ -224,7 +229,8 @@ impl TransportConnection for TcpConnection {
         };
 
         // Register stream
-        self.streams.insert(stream_id, Arc::new(Mutex::new(stream.clone())));
+        self.streams
+            .insert(stream_id, Arc::new(Mutex::new(stream.clone())));
 
         // Update stats
         {
@@ -260,7 +266,8 @@ impl TransportConnection for TcpConnection {
         }
 
         // Add to frame buffer
-        self.frame_buffer.append_data(&Bytes::copy_from_slice(&buf[..n]))?;
+        self.frame_buffer
+            .append_data(&Bytes::copy_from_slice(&buf[..n]))?;
 
         // Try to parse frame again
         Ok(self.frame_buffer.parse_frames()?.pop())
@@ -270,7 +277,10 @@ impl TransportConnection for TcpConnection {
         use tokio::io::AsyncWriteExt;
 
         let encoded = frame.encode();
-        self.stream.write_all(&encoded).await.map_err(HtxError::Io)?;
+        self.stream
+            .write_all(&encoded)
+            .await
+            .map_err(HtxError::Io)?;
 
         // Update stats
         {
@@ -310,11 +320,7 @@ impl TransportConnection for TcpConnection {
         self.streams.clear();
 
         // Send close frame (using Control frame type)
-        let close_frame = Frame::new(
-            crate::frame::FrameType::Control,
-            0,
-            "CLOSE".into()
-        )?;
+        let close_frame = Frame::new(crate::frame::FrameType::Control, 0, "CLOSE".into())?;
         let _ = self.write_frame(close_frame).await;
 
         // Close TLS stream
@@ -344,7 +350,10 @@ impl TransportStream for TcpMultiplexedStream {
     }
 
     async fn reset(&mut self, error_code: u32) -> Result<()> {
-        warn!("Resetting TCP multiplexed stream {} with error code {}", self.stream_id, error_code);
+        warn!(
+            "Resetting TCP multiplexed stream {} with error code {}",
+            self.stream_id, error_code
+        );
         self.is_open = false;
         Ok(())
     }
@@ -384,7 +393,7 @@ impl AsyncWrite for TcpMultiplexedStream {
         if !self.is_open {
             return Poll::Ready(Err(std::io::Error::new(
                 std::io::ErrorKind::BrokenPipe,
-                "Stream is closed"
+                "Stream is closed",
             )));
         }
 
@@ -395,7 +404,7 @@ impl AsyncWrite for TcpMultiplexedStream {
 
     fn poll_flush(
         self: Pin<&mut Self>,
-        _cx: &mut Context<'_>
+        _cx: &mut Context<'_>,
     ) -> Poll<std::result::Result<(), std::io::Error>> {
         // In a real implementation, this would flush buffered frames
         Poll::Ready(Ok(()))
@@ -403,7 +412,7 @@ impl AsyncWrite for TcpMultiplexedStream {
 
     fn poll_shutdown(
         mut self: Pin<&mut Self>,
-        _cx: &mut Context<'_>
+        _cx: &mut Context<'_>,
     ) -> Poll<std::result::Result<(), std::io::Error>> {
         self.is_open = false;
         Poll::Ready(Ok(()))

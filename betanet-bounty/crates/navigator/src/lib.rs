@@ -85,18 +85,18 @@
 #![allow(dead_code)]
 
 // Core modules
-pub mod semiring;
-pub mod route;
 pub mod api;
+pub mod route;
+pub mod semiring;
 
 // Re-export main types for convenience
-pub use api::{Navigator, NavigatorError, ClaSelection, NavigatorStats, PrivacyMode};
-pub use route::{QosRequirements, RoutingError, SemiringRouter, LabeledPath, ParetoFrontier};
+pub use api::{ClaSelection, Navigator, NavigatorError, NavigatorStats, PrivacyMode};
+pub use route::{LabeledPath, ParetoFrontier, QosRequirements, RoutingError, SemiringRouter};
 pub use semiring::{Cost, WeightVector};
 
 // Re-export key DTN types for integration
-pub use betanet_dtn::{EndpointId, Bundle, ContactPlan, RoutingPolicy};
 pub use betanet_dtn::router::Contact;
+pub use betanet_dtn::{Bundle, ContactPlan, EndpointId, RoutingPolicy};
 
 /// Current version of the Navigator crate
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -132,14 +132,29 @@ mod integration_tests {
         let qos_privacy = QosRequirements::privacy_first();
 
         // These should not fail even with empty contact plan (will return NoPathFound)
-        let result_rt = navigator.select_path(&destination, qos_real_time, None, None).await;
-        let result_energy = navigator.select_path(&destination, qos_energy, None, None).await;
-        let result_privacy = navigator.select_path(&destination, qos_privacy, None, None).await;
+        let result_rt = navigator
+            .select_path(&destination, qos_real_time, None, None)
+            .await;
+        let result_energy = navigator
+            .select_path(&destination, qos_energy, None, None)
+            .await;
+        let result_privacy = navigator
+            .select_path(&destination, qos_privacy, None, None)
+            .await;
 
         // All should fail with NoPathFound since we have no contacts
-        assert!(matches!(result_rt, Err(NavigatorError::Routing(RoutingError::NoPathFound { .. }))));
-        assert!(matches!(result_energy, Err(NavigatorError::Routing(RoutingError::NoPathFound { .. }))));
-        assert!(matches!(result_privacy, Err(NavigatorError::Routing(RoutingError::NoPathFound { .. }))));
+        assert!(matches!(
+            result_rt,
+            Err(NavigatorError::Routing(RoutingError::NoPathFound { .. }))
+        ));
+        assert!(matches!(
+            result_energy,
+            Err(NavigatorError::Routing(RoutingError::NoPathFound { .. }))
+        ));
+        assert!(matches!(
+            result_privacy,
+            Err(NavigatorError::Routing(RoutingError::NoPathFound { .. }))
+        ));
     }
 
     #[tokio::test]

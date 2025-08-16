@@ -16,19 +16,19 @@ use thiserror::Error;
 use tokio::sync::RwLock;
 
 // Re-export core types from Agent Fabric
-pub use agent_fabric::{AgentId, AgentMessage, AgentResponse, AgentFabric};
+pub use agent_fabric::{AgentFabric, AgentId, AgentMessage, AgentResponse};
 
 // Module declarations
 pub mod crdt;
-pub mod vault;
-pub mod receipts;
 pub mod integration;
+pub mod receipts;
+pub mod vault;
 
 // Re-export from modules
-pub use crdt::{LwwMap, GCounter, SignedOperation, CrdtState};
-pub use vault::{TwinVault, VaultConfig, EncryptionKey};
+pub use crdt::{CrdtState, GCounter, LwwMap, SignedOperation};
+pub use integration::{message_types, TwinVaultClient, TwinVaultServer};
 pub use receipts::{Receipt, ReceiptSigner, ReceiptVerifier};
-pub use integration::{TwinVaultServer, TwinVaultClient, message_types};
+pub use vault::{EncryptionKey, TwinVault, VaultConfig};
 
 /// Twin identifier for state management
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -63,10 +63,7 @@ impl std::fmt::Display for TwinId {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum TwinOperation {
     /// Read operation
-    Read {
-        key: String,
-        timestamp: u64,
-    },
+    Read { key: String, timestamp: u64 },
     /// Write operation
     Write {
         key: String,
@@ -74,10 +71,7 @@ pub enum TwinOperation {
         timestamp: u64,
     },
     /// Delete operation
-    Delete {
-        key: String,
-        timestamp: u64,
-    },
+    Delete { key: String, timestamp: u64 },
     /// Increment counter
     Increment {
         counter_id: String,
@@ -203,9 +197,9 @@ impl TwinManager {
         // Check operation-specific permissions
         match operation {
             TwinOperation::Read { .. } => preferences.allow_read,
-            TwinOperation::Write { .. } | TwinOperation::Delete { .. } | TwinOperation::Increment { .. } => {
-                preferences.allow_write
-            }
+            TwinOperation::Write { .. }
+            | TwinOperation::Delete { .. }
+            | TwinOperation::Increment { .. } => preferences.allow_write,
         }
     }
 
@@ -228,16 +222,20 @@ impl TwinManager {
         // Get vault
         let vault = {
             let vaults = self.vaults.read().await;
-            vaults.get(&twin_id).cloned()
+            vaults
+                .get(&twin_id)
+                .cloned()
                 .ok_or_else(|| TwinVaultError::TwinNotFound(twin_id.clone()))?
         };
 
         // Perform operation
         let result = match &operation {
-            TwinOperation::Read { key, .. } => {
-                vault.get(key).await.map(|v| v.map(|b| b.into()))
-            }
-            TwinOperation::Write { key, value, timestamp } => {
+            TwinOperation::Read { key, .. } => vault.get(key).await.map(|v| v.map(|b| b.into())),
+            TwinOperation::Write {
+                key,
+                value,
+                timestamp,
+            } => {
                 vault.set(key.clone(), value.clone(), *timestamp).await?;
                 Ok(None)
             }
@@ -245,29 +243,30 @@ impl TwinManager {
                 vault.delete(key, *timestamp).await?;
                 Ok(None)
             }
-            TwinOperation::Increment { counter_id, amount, actor_id, timestamp } => {
-                vault.increment_counter(counter_id, *amount, actor_id, *timestamp).await?;
+            TwinOperation::Increment {
+                counter_id,
+                amount,
+                actor_id,
+                timestamp,
+            } => {
+                vault
+                    .increment_counter(counter_id, *amount, actor_id, *timestamp)
+                    .await?;
                 Ok(None)
             }
         }?;
 
         // Generate receipt
-        let receipt = self.receipt_signer.sign_operation(
-            &twin_id,
-            &operation,
-            &requester,
-            result.is_some(),
-        ).await?;
+        let receipt = self
+            .receipt_signer
+            .sign_operation(&twin_id, &operation, &requester, result.is_some())
+            .await?;
 
         Ok((result, receipt))
     }
 
     /// Sync twin state with remote agent
-    pub async fn sync_with_agent(
-        &self,
-        twin_id: TwinId,
-        remote_agent: AgentId,
-    ) -> Result<()> {
+    pub async fn sync_with_agent(&self, twin_id: TwinId, remote_agent: AgentId) -> Result<()> {
         // Check sync permission
         let preferences = self.get_preferences(&twin_id).await;
         if !preferences.allow_sync && !preferences.trusted_agents.contains(&remote_agent) {
@@ -281,7 +280,9 @@ impl TwinManager {
         // Get vault
         let vault = {
             let vaults = self.vaults.read().await;
-            vaults.get(&twin_id).cloned()
+            vaults
+                .get(&twin_id)
+                .cloned()
                 .ok_or_else(|| TwinVaultError::TwinNotFound(twin_id.clone()))?
         };
 
@@ -295,11 +296,14 @@ impl TwinManager {
         );
 
         // Send sync via Agent Fabric
-        self.agent_fabric.send_message(
-            remote_agent,
-            sync_message,
-            agent_fabric::DeliveryOptions::default(),
-        ).await.map_err(|e| TwinVaultError::AgentFabricError(e.to_string()))?;
+        self.agent_fabric
+            .send_message(
+                remote_agent,
+                sync_message,
+                agent_fabric::DeliveryOptions::default(),
+            )
+            .await
+            .map_err(|e| TwinVaultError::AgentFabricError(e.to_string()))?;
 
         Ok(())
     }

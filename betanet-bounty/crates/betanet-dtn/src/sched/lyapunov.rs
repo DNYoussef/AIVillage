@@ -50,12 +50,12 @@ pub struct LyapunovConfig {
 impl Default for LyapunovConfig {
     fn default() -> Self {
         Self {
-            v_parameter: 1.0,               // Balanced stability vs efficiency
-            max_queue_length: 1000,         // Reasonable queue limit
-            energy_cost_weight: 0.3,        // Moderate energy awareness
-            privacy_penalty_weight: 0.2,    // Some privacy consideration
-            observation_window: 300,        // 5 minutes
-            min_utility_threshold: 0.1,     // Prevent negative utility transmissions
+            v_parameter: 1.0,            // Balanced stability vs efficiency
+            max_queue_length: 1000,      // Reasonable queue limit
+            energy_cost_weight: 0.3,     // Moderate energy awareness
+            privacy_penalty_weight: 0.2, // Some privacy consideration
+            observation_window: 300,     // 5 minutes
+            min_utility_threshold: 0.1,  // Prevent negative utility transmissions
         }
     }
 }
@@ -170,7 +170,7 @@ struct BundleMetadata {
     pub creation_time: u64,
     pub lifetime_ms: u64,
     pub priority: u8,
-    pub arrival_time: u64,  // When bundle entered queue
+    pub arrival_time: u64, // When bundle entered queue
 }
 
 /// Record of a bundle delivery for utility computation
@@ -232,11 +232,11 @@ impl LyapunovScheduler {
         self.bundle_cache.insert(bundle_id.clone(), metadata);
 
         // Add to pending bundles for destination
-        let queue = self.pending_bundles.entry(destination.clone()).or_insert_with(Vec::new);
+        let queue = self.pending_bundles.entry(destination.clone()).or_default();
         queue.push(bundle_id);
 
         // Update queue state
-        let state = self.queue_states.entry(destination.clone()).or_insert_with(QueueState::default);
+        let state = self.queue_states.entry(destination.clone()).or_default();
         state.prev_queue_length = state.queue_length;
         state.queue_length = queue.len();
         state.last_update = now;
@@ -244,18 +244,29 @@ impl LyapunovScheduler {
         // Update average queue length
         state.avg_queue_length = 0.9 * state.avg_queue_length + 0.1 * state.queue_length as f64;
 
-        debug!("Enqueued bundle {} for {}, queue length now {}",
-               bundle.id(), destination, state.queue_length);
+        debug!(
+            "Enqueued bundle {} for {}, queue length now {}",
+            bundle.id(),
+            destination,
+            state.queue_length
+        );
 
         // Warn if queue is getting large
         if state.queue_length > self.config.max_queue_length {
-            warn!("Queue for {} exceeded max length: {} > {}",
-                  destination, state.queue_length, self.config.max_queue_length);
+            warn!(
+                "Queue for {} exceeded max length: {} > {}",
+                destination, state.queue_length, self.config.max_queue_length
+            );
         }
     }
 
     /// Remove a bundle from the scheduling queue (e.g., after successful delivery)
-    pub fn dequeue_bundle(&mut self, bundle_id: BundleId, was_delivered_on_time: bool, energy_cost: f64) {
+    pub fn dequeue_bundle(
+        &mut self,
+        bundle_id: BundleId,
+        was_delivered_on_time: bool,
+        energy_cost: f64,
+    ) {
         if let Some(metadata) = self.bundle_cache.remove(&bundle_id) {
             let destination = &metadata.destination;
             let now = SystemTime::now()
@@ -281,10 +292,14 @@ impl LyapunovScheduler {
                     state.energy_consumed += energy_cost;
 
                     // Update average queue length
-                    state.avg_queue_length = 0.9 * state.avg_queue_length + 0.1 * state.queue_length as f64;
+                    state.avg_queue_length =
+                        0.9 * state.avg_queue_length + 0.1 * state.queue_length as f64;
 
                     // Record delivery for utility computation
-                    let history = self.delivery_history.entry(destination.clone()).or_insert_with(Vec::new);
+                    let history = self
+                        .delivery_history
+                        .entry(destination.clone())
+                        .or_default();
                     history.push(DeliveryRecord {
                         timestamp: now,
                         was_on_time: was_delivered_on_time,
@@ -298,8 +313,10 @@ impl LyapunovScheduler {
                 }
             }
 
-            debug!("Dequeued bundle {} from {}, on_time: {}, energy: {:.3}",
-                   bundle_id, destination, was_delivered_on_time, energy_cost);
+            debug!(
+                "Dequeued bundle {} from {}, on_time: {}, energy: {:.3}",
+                bundle_id, destination, was_delivered_on_time, energy_cost
+            );
         }
     }
 
@@ -319,20 +336,27 @@ impl LyapunovScheduler {
         trace!("Scheduling transmission for contact to {}", destination);
 
         // Get current queue state
-        let queue_state = self.queue_states.get(destination).cloned()
+        let queue_state = self
+            .queue_states
+            .get(destination)
+            .cloned()
             .unwrap_or_default();
 
         // Filter bundles that are actually for this destination and available
-        let mut candidate_bundles: Vec<_> = available_bundles.iter()
+        let mut candidate_bundles: Vec<_> = available_bundles
+            .iter()
             .filter_map(|bundle_id| {
-                self.bundle_cache.get(bundle_id).map(|metadata| (bundle_id.clone(), metadata))
+                self.bundle_cache
+                    .get(bundle_id)
+                    .map(|metadata| (bundle_id.clone(), metadata))
             })
             .filter(|(_, metadata)| metadata.destination == *destination)
             .collect();
 
         // Sort by priority (higher priority first) and age (older first)
         candidate_bundles.sort_by(|a, b| {
-            b.1.priority.cmp(&a.1.priority)
+            b.1.priority
+                .cmp(&a.1.priority)
                 .then_with(|| a.1.arrival_time.cmp(&b.1.arrival_time))
         });
 
@@ -347,7 +371,7 @@ impl LyapunovScheduler {
             &candidate_bundles,
             contact,
             max_transmissions,
-            now
+            now,
         );
 
         // Account for energy costs
@@ -363,10 +387,12 @@ impl LyapunovScheduler {
         let penalty_component = -self.config.v_parameter * total_utility;
         let lyapunov_expression = drift_component + penalty_component;
 
-        let should_transmit = lyapunov_expression < 0.0 && total_utility > self.config.min_utility_threshold;
+        let should_transmit =
+            lyapunov_expression < 0.0 && total_utility > self.config.min_utility_threshold;
 
         let bundles_to_transmit = if should_transmit {
-            candidate_bundles.iter()
+            candidate_bundles
+                .iter()
                 .take(max_transmissions)
                 .map(|(bundle_id, _)| bundle_id.clone())
                 .collect()
@@ -376,11 +402,20 @@ impl LyapunovScheduler {
 
         let rationale = format!(
             "Queue={:.1}, Drift={:.2}, Utility={:.3}, Energy={:.3}, Privacy={:.3}, Lyapunov={:.3}",
-            queue_length, drift_component, base_utility, energy_penalty, privacy_penalty, lyapunov_expression
+            queue_length,
+            drift_component,
+            base_utility,
+            energy_penalty,
+            privacy_penalty,
+            lyapunov_expression
         );
 
-        debug!("Scheduling decision for {}: {} ({})",
-               destination, if should_transmit { "TRANSMIT" } else { "DEFER" }, rationale);
+        debug!(
+            "Scheduling decision for {}: {} ({})",
+            destination,
+            if should_transmit { "TRANSMIT" } else { "DEFER" },
+            rationale
+        );
 
         Ok(SchedulingDecision {
             should_transmit,
@@ -449,8 +484,10 @@ impl LyapunovScheduler {
             });
         }
 
-        info!("Updating Lyapunov config: V {} -> {}",
-              self.config.v_parameter, new_config.v_parameter);
+        info!(
+            "Updating Lyapunov config: V {} -> {}",
+            self.config.v_parameter, new_config.v_parameter
+        );
 
         self.config = new_config;
         Ok(())
@@ -481,33 +518,43 @@ impl LyapunovScheduler {
         }
 
         // Clean up empty queues
-        self.pending_bundles.retain(|_, bundles| !bundles.is_empty());
-        self.queue_states.retain(|destination, _| {
-            self.pending_bundles.contains_key(destination)
-        });
+        self.pending_bundles
+            .retain(|_, bundles| !bundles.is_empty());
+        self.queue_states
+            .retain(|destination, _| self.pending_bundles.contains_key(destination));
 
-        debug!("Cleaned up scheduler data, {} active destinations",
-               self.queue_states.len());
+        debug!(
+            "Cleaned up scheduler data, {} active destinations",
+            self.queue_states.len()
+        );
     }
 
     /// Get comprehensive statistics for monitoring and debugging
     pub fn get_statistics(&self) -> LyapunovStatistics {
-        let total_queued = self.queue_states.values()
+        let total_queued = self
+            .queue_states
+            .values()
             .map(|state| state.queue_length)
             .sum::<usize>();
 
-        let total_delivered = self.queue_states.values()
+        let total_delivered = self
+            .queue_states
+            .values()
             .map(|state| state.total_processed)
             .sum::<u64>();
 
-        let total_on_time = self.queue_states.values()
+        let total_on_time = self
+            .queue_states
+            .values()
             .map(|state| state.delivered_on_time)
             .sum::<u64>();
 
         let avg_queue_length = if !self.queue_states.is_empty() {
-            self.queue_states.values()
+            self.queue_states
+                .values()
                 .map(|state| state.avg_queue_length)
-                .sum::<f64>() / self.queue_states.len() as f64
+                .sum::<f64>()
+                / self.queue_states.len() as f64
         } else {
             0.0
         };
@@ -630,7 +677,9 @@ mod tests {
         }
 
         let contact = create_test_contact("dest1", 1.0);
-        let decision = scheduler.schedule_transmission(&contact, &bundle_ids, 3).unwrap();
+        let decision = scheduler
+            .schedule_transmission(&contact, &bundle_ids, 3)
+            .unwrap();
 
         // Should transmit when queue is building up
         assert!(decision.should_transmit);
@@ -652,7 +701,9 @@ mod tests {
         scheduler.enqueue_bundle(&bundle);
 
         let high_energy_contact = create_test_contact("dest1", 10.0); // Very expensive
-        let decision = scheduler.schedule_transmission(&high_energy_contact, &[bundle_id], 1).unwrap();
+        let decision = scheduler
+            .schedule_transmission(&high_energy_contact, &[bundle_id], 1)
+            .unwrap();
 
         // Should defer transmission when energy cost is high and V is large
         assert!(!decision.should_transmit);
@@ -669,7 +720,9 @@ mod tests {
         scheduler.enqueue_bundle(&short_lifetime_bundle);
 
         let contact = create_test_contact("dest1", 1.0);
-        let decision = scheduler.schedule_transmission(&contact, &[bundle_id], 1).unwrap();
+        let decision = scheduler
+            .schedule_transmission(&contact, &[bundle_id], 1)
+            .unwrap();
 
         // Should still transmit even if deadline is tight (reduced utility but positive)
         assert!(decision.estimated_utility > 0.0);
@@ -692,7 +745,11 @@ mod tests {
             queue_length_at_delivery: 0,
         };
 
-        scheduler.delivery_history.entry(dest.clone()).or_insert_with(Vec::new).push(old_record);
+        scheduler
+            .delivery_history
+            .entry(dest.clone())
+            .or_insert_with(Vec::new)
+            .push(old_record);
 
         // Verify history was created
         assert!(scheduler.delivery_history.contains_key(&dest));
@@ -703,7 +760,11 @@ mod tests {
 
         // Delivery history should be cleaned up
         if let Some(history) = scheduler.delivery_history.get(&dest) {
-            assert!(history.is_empty(), "History should be empty after cleanup, but has {} items", history.len());
+            assert!(
+                history.is_empty(),
+                "History should be empty after cleanup, but has {} items",
+                history.len()
+            );
         }
     }
 

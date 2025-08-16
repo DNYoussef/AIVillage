@@ -1,0 +1,44 @@
+name: fuzz-smoke
+on: [push]
+jobs:
+  fuzz:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo install cargo-fuzz
+      - name: Initialize fuzz corpus
+        run: |
+          export OPENSSL_VENDORED=1
+          cd crates/betanet-htx
+          cargo fuzz build htx_frame_fuzz
+          cargo fuzz build htx_noise_fuzz
+          cargo fuzz build htx_mux_fuzz
+      - name: Run fuzz smoke tests
+        run: |
+          export OPENSSL_VENDORED=1
+          cd crates/betanet-htx
+          mkdir -p ../../artifacts/fuzz
+
+          echo "=== HTX Frame Fuzz ===" | tee ../../artifacts/fuzz/frame_fuzz.log
+          timeout 180 cargo fuzz run htx_frame_fuzz -- -max_total_time=180 2>&1 | tee -a ../../artifacts/fuzz/frame_fuzz.log || true
+
+          echo "=== HTX Noise Fuzz ===" | tee ../../artifacts/fuzz/noise_fuzz.log
+          timeout 180 cargo fuzz run htx_noise_fuzz -- -max_total_time=180 2>&1 | tee -a ../../artifacts/fuzz/noise_fuzz.log || true
+
+          echo "=== HTX Mux Fuzz ===" | tee ../../artifacts/fuzz/mux_fuzz.log
+          timeout 180 cargo fuzz run htx_mux_fuzz -- -max_total_time=180 2>&1 | tee -a ../../artifacts/fuzz/mux_fuzz.log || true
+
+          # Check for crashes
+          CRASHES=$(find . -name "crash-*" | wc -l)
+          echo "Total crashes found: $CRASHES"
+          if [ $CRASHES -eq 0 ]; then
+            echo "✅ Fuzz smoke tests passed - no crashes" | tee ../../artifacts/fuzz/summary.txt
+          else
+            echo "❌ Fuzz smoke tests failed - $CRASHES crashes found" | tee ../../artifacts/fuzz/summary.txt
+            exit 1
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fuzz-logs
+          path: artifacts/fuzz

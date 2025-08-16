@@ -25,7 +25,10 @@ impl TryFrom<u8> for PacketType {
             0x01 => Ok(Self::Data),
             0x02 => Ok(Self::Control),
             0x03 => Ok(Self::Cover),
-            _ => Err(MixnodeError::Packet(format!("Invalid packet type: {}", value))),
+            _ => Err(MixnodeError::Packet(format!(
+                "Invalid packet type: {}",
+                value
+            ))),
         }
     }
 }

@@ -1,13 +1,31 @@
 //! Core linting functionality
 
+use crate::checks::bootstrap::{
+    AbuseTrackingRule, Argon2idAdvertisementRule, Argon2idParameterRule, BootstrapNegotiationRule,
+    CpuPoWFallbackRule,
+};
+use crate::checks::frame_format::{
+    FrameBufferRule, FrameStructureRule, FrameTypeRule, FrameValidationRule, VarintEncodingRule,
+};
+use crate::checks::noise_xk::{
+    NoiseXkFragmentationRule, NoiseXkHandshakeRule, NoiseXkKeyRotationRule, NoiseXkSecurityRule,
+    NoiseXkTransportRule,
+};
+use crate::checks::scion_bridge::{
+    ScionDeploymentRule, ScionGatewayRule, ScionIntegrationRule, ScionPathSelectionRule,
+    ScionSecurityRule,
+};
+use crate::checks::tls_mirror::{
+    TlsAntiFingerprintRule, TlsCoverTrafficRule, TlsMixtureModelRule, TlsSiteClassificationRule,
+    TlsTemplateCacheRule,
+};
+use crate::checks::{
+    BlockingCallRule, CheckContext, CheckRule, CryptographyBestPracticesRule,
+    DependencySecurityRule, EpsilonPolicyLintRule, KSDistanceLintRule, TemplateReuseLintRule,
+    UnsafeCodeRule,
+};
+use crate::{LintIssue, LintResults, LinterConfig, Result, SeverityLevel};
 use walkdir::WalkDir;
-use crate::{LinterConfig, LintResults, LintIssue, SeverityLevel, Result};
-use crate::checks::{CheckRule, CheckContext, UnsafeCodeRule, BlockingCallRule, TemplateReuseLintRule, KSDistanceLintRule, EpsilonPolicyLintRule, DependencySecurityRule, CryptographyBestPracticesRule};
-use crate::checks::bootstrap::{Argon2idAdvertisementRule, Argon2idParameterRule, CpuPoWFallbackRule, BootstrapNegotiationRule, AbuseTrackingRule};
-use crate::checks::tls_mirror::{TlsTemplateCacheRule, TlsSiteClassificationRule, TlsMixtureModelRule, TlsCoverTrafficRule, TlsAntiFingerprintRule};
-use crate::checks::noise_xk::{NoiseXkHandshakeRule, NoiseXkKeyRotationRule, NoiseXkFragmentationRule, NoiseXkSecurityRule, NoiseXkTransportRule};
-use crate::checks::frame_format::{FrameStructureRule, FrameTypeRule, VarintEncodingRule, FrameBufferRule, FrameValidationRule};
-use crate::checks::scion_bridge::{ScionGatewayRule, ScionPathSelectionRule, ScionSecurityRule, ScionIntegrationRule, ScionDeploymentRule};
 
 /// Main linter
 pub struct Linter {
@@ -18,51 +36,46 @@ pub struct Linter {
 impl Linter {
     /// Create new linter
     pub fn new(config: LinterConfig) -> Self {
-        let mut rules: Vec<Box<dyn CheckRule>> = vec![];
-
-        // Add all available rules
-        rules.push(Box::new(UnsafeCodeRule));
-        rules.push(Box::new(BlockingCallRule));
-        rules.push(Box::new(TemplateReuseLintRule));
-        rules.push(Box::new(KSDistanceLintRule));
-        rules.push(Box::new(EpsilonPolicyLintRule));
-        rules.push(Box::new(DependencySecurityRule));
-        rules.push(Box::new(CryptographyBestPracticesRule));
-
-        // Bootstrap rules
-        rules.push(Box::new(Argon2idAdvertisementRule));
-        rules.push(Box::new(Argon2idParameterRule));
-        rules.push(Box::new(CpuPoWFallbackRule));
-        rules.push(Box::new(BootstrapNegotiationRule));
-        rules.push(Box::new(AbuseTrackingRule));
-
-        // TLS mirror rules
-        rules.push(Box::new(TlsTemplateCacheRule));
-        rules.push(Box::new(TlsSiteClassificationRule));
-        rules.push(Box::new(TlsMixtureModelRule));
-        rules.push(Box::new(TlsCoverTrafficRule));
-        rules.push(Box::new(TlsAntiFingerprintRule));
-
-        // Noise XK rules
-        rules.push(Box::new(NoiseXkHandshakeRule));
-        rules.push(Box::new(NoiseXkKeyRotationRule));
-        rules.push(Box::new(NoiseXkFragmentationRule));
-        rules.push(Box::new(NoiseXkSecurityRule));
-        rules.push(Box::new(NoiseXkTransportRule));
-
-        // Frame format rules
-        rules.push(Box::new(FrameStructureRule));
-        rules.push(Box::new(FrameTypeRule));
-        rules.push(Box::new(VarintEncodingRule));
-        rules.push(Box::new(FrameBufferRule));
-        rules.push(Box::new(FrameValidationRule));
-
-        // SCION bridge rules
-        rules.push(Box::new(ScionGatewayRule));
-        rules.push(Box::new(ScionPathSelectionRule));
-        rules.push(Box::new(ScionSecurityRule));
-        rules.push(Box::new(ScionIntegrationRule));
-        rules.push(Box::new(ScionDeploymentRule));
+        let rules: Vec<Box<dyn CheckRule>> = vec![
+            // Add all available rules
+            Box::new(UnsafeCodeRule),
+            Box::new(BlockingCallRule),
+            Box::new(TemplateReuseLintRule),
+            Box::new(KSDistanceLintRule),
+            Box::new(EpsilonPolicyLintRule),
+            Box::new(DependencySecurityRule),
+            Box::new(CryptographyBestPracticesRule),
+            // Bootstrap rules
+            Box::new(Argon2idAdvertisementRule),
+            Box::new(Argon2idParameterRule),
+            Box::new(CpuPoWFallbackRule),
+            Box::new(BootstrapNegotiationRule),
+            Box::new(AbuseTrackingRule),
+            // TLS mirror rules
+            Box::new(TlsTemplateCacheRule),
+            Box::new(TlsSiteClassificationRule),
+            Box::new(TlsMixtureModelRule),
+            Box::new(TlsCoverTrafficRule),
+            Box::new(TlsAntiFingerprintRule),
+            // Noise XK rules
+            Box::new(NoiseXkHandshakeRule),
+            Box::new(NoiseXkKeyRotationRule),
+            Box::new(NoiseXkFragmentationRule),
+            Box::new(NoiseXkSecurityRule),
+            Box::new(NoiseXkTransportRule),
+            // Frame format rules
+            Box::new(FrameStructureRule),
+            Box::new(FrameTypeRule),
+            Box::new(VarintEncodingRule),
+            Box::new(FrameBufferRule),
+            Box::new(FrameValidationRule),
+            // SCION bridge rules
+            Box::new(ScionGatewayRule),
+            Box::new(ScionPathSelectionRule),
+            Box::new(ScionSecurityRule),
+            Box::new(ScionIntegrationRule),
+            Box::new(ScionDeploymentRule),
+        ];
 
         Self { config, rules }
     }
@@ -141,9 +154,12 @@ impl Linter {
         Ok(results)
     }
 
-    async fn check_rust_file(&self, path: &std::path::Path, results: &mut LintResults) -> Result<()> {
-        let content = std::fs::read_to_string(path)
-            .map_err(|e| crate::LinterError::Io(e))?;
+    async fn check_rust_file(
+        &self,
+        path: &std::path::Path,
+        results: &mut LintResults,
+    ) -> Result<()> {
+        let content = std::fs::read_to_string(path).map_err(crate::LinterError::Io)?;
 
         let context = CheckContext {
             file_path: path.to_path_buf(),
@@ -162,9 +178,12 @@ impl Linter {
         Ok(())
     }
 
-    async fn check_toml_file(&self, path: &std::path::Path, results: &mut LintResults) -> Result<()> {
-        let content = std::fs::read_to_string(path)
-            .map_err(|e| crate::LinterError::Io(e))?;
+    async fn check_toml_file(
+        &self,
+        path: &std::path::Path,
+        results: &mut LintResults,
+    ) -> Result<()> {
+        let content = std::fs::read_to_string(path).map_err(crate::LinterError::Io)?;
 
         let context = CheckContext {
             file_path: path.to_path_buf(),
@@ -175,18 +194,36 @@ impl Linter {
         for rule in &self.rules {
             // Only run certain rules on TOML files
             match rule.name() {
-                "template-cache-reuse-ratio" | "ks-distance-distribution" | "epsilon-privacy-policy" |
-                "dependency-security" | "cryptography-best-practices" |
-                "argon2id-advertisement" | "argon2id-parameters" | "cpu-pow-fallback" |
-                "bootstrap-negotiation" | "abuse-tracking" |
-                "tls-template-cache" | "tls-site-classification" | "tls-mixture-model" |
-                "tls-cover-traffic" | "tls-anti-fingerprint" |
-                "noise-xk-handshake" | "noise-xk-key-rotation" | "noise-xk-fragmentation" |
-                "noise-xk-security" | "noise-xk-transport" |
-                "frame-structure" | "frame-type" | "varint-encoding" |
-                "frame-buffer" | "frame-validation" |
-                "scion-gateway-infrastructure" | "scion-path-selection" | "scion-security" |
-                "scion-integration" | "scion-deployment" => {
+                "template-cache-reuse-ratio"
+                | "ks-distance-distribution"
+                | "epsilon-privacy-policy"
+                | "dependency-security"
+                | "cryptography-best-practices"
+                | "argon2id-advertisement"
+                | "argon2id-parameters"
+                | "cpu-pow-fallback"
+                | "bootstrap-negotiation"
+                | "abuse-tracking"
+                | "tls-template-cache"
+                | "tls-site-classification"
+                | "tls-mixture-model"
+                | "tls-cover-traffic"
+                | "tls-anti-fingerprint"
+                | "noise-xk-handshake"
+                | "noise-xk-key-rotation"
+                | "noise-xk-fragmentation"
+                | "noise-xk-security"
+                | "noise-xk-transport"
+                | "frame-structure"
+                | "frame-type"
+                | "varint-encoding"
+                | "frame-buffer"
+                | "frame-validation"
+                | "scion-gateway-infrastructure"
+                | "scion-path-selection"
+                | "scion-security"
+                | "scion-integration"
+                | "scion-deployment" => {
                     let rule_issues = rule.check(&context).await?;
                     for issue in rule_issues {
                         results.add_issue(issue);

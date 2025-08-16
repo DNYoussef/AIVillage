@@ -15,9 +15,9 @@ pub mod fingerprint;
 pub mod refresh;
 pub mod template;
 
-pub use template::{TlsTemplate, TlsTemplateBuilder, UtlsTemplate};
 pub use clienthello::{ClientHello, TlsExtension};
 pub use fingerprint::TlsFingerprint;
+pub use template::{TlsTemplate, TlsTemplateBuilder, UtlsTemplate};
 
 #[cfg(feature = "ja3")]
 pub mod ja3;
@@ -85,12 +85,19 @@ impl ChromeVersion {
         // Chrome 119 (N-2 from current as of writing)
         Self::new(119, 0, 6045, 123)
     }
+}
 
-    /// Get version string
-    pub fn to_string(&self) -> String {
-        format!("{}.{}.{}.{}", self.major, self.minor, self.build, self.patch)
+impl std::fmt::Display for ChromeVersion {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}.{}.{}.{}",
+            self.major, self.minor, self.build, self.patch
+        )
     }
+}
 
+impl ChromeVersion {
     /// Parse from string
     pub fn from_string(s: &str) -> Result<Self> {
         let parts: Vec<&str> = s.split('.').collect();
@@ -170,10 +177,8 @@ pub mod grease {
     /// GREASE values used by Chrome for cipher suites, extensions, groups, etc.
     /// These follow the pattern 0x?A?A where ? can be 0-F
     pub const GREASE_VALUES: [u16; 16] = [
-        0x0A0A, 0x1A1A, 0x2A2A, 0x3A3A,
-        0x4A4A, 0x5A5A, 0x6A6A, 0x7A7A,
-        0x8A8A, 0x9A9A, 0xAAAA, 0xBABA,
-        0xCACA, 0xDADA, 0xEAEA, 0xFAFA,
+        0x0A0A, 0x1A1A, 0x2A2A, 0x3A3A, 0x4A4A, 0x5A5A, 0x6A6A, 0x7A7A, 0x8A8A, 0x9A9A, 0xAAAA,
+        0xBABA, 0xCACA, 0xDADA, 0xEAEA, 0xFAFA,
     ];
 
     /// Get a deterministic GREASE value for a given index

@@ -4,10 +4,10 @@
 //! using semiring algebra and Pareto frontier management.
 
 use crate::semiring::{Cost, WeightVector};
-use betanet_dtn::{ContactGraphRouter, EndpointId};
 use betanet_dtn::router::Contact;
-use std::collections::HashMap;
+use betanet_dtn::{ContactGraphRouter, EndpointId};
 use std::cmp::{Ordering, PartialEq, PartialOrd};
+use std::collections::HashMap;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use thiserror::Error;
 use tracing::debug;
@@ -143,7 +143,8 @@ impl ParetoFrontier {
 
         // Sort by scalarized cost (higher is worse)
         self.paths.sort_by(|a, b| {
-            b.cost.scalarize(&weights)
+            b.cost
+                .scalarize(&weights)
                 .partial_cmp(&a.cost.scalarize(&weights))
                 .unwrap_or(std::cmp::Ordering::Equal)
         });
@@ -159,13 +160,12 @@ impl ParetoFrontier {
 
     /// Select best path using given weights
     pub fn select_best(&self, weights: &WeightVector) -> Option<&LabeledPath> {
-        self.paths
-            .iter()
-            .min_by(|a, b| {
-                a.cost.scalarize(weights)
-                    .partial_cmp(&b.cost.scalarize(weights))
-                    .unwrap_or(std::cmp::Ordering::Equal)
-            })
+        self.paths.iter().min_by(|a, b| {
+            a.cost
+                .scalarize(weights)
+                .partial_cmp(&b.cost.scalarize(weights))
+                .unwrap_or(std::cmp::Ordering::Equal)
+        })
     }
 
     /// Check if frontier is empty
@@ -197,7 +197,11 @@ pub struct SemiringRouter {
 
 impl SemiringRouter {
     /// Create new semiring router wrapping DTN router
-    pub fn new(dtn_router: ContactGraphRouter, local_node: EndpointId, frontier_cap: Option<usize>) -> Self {
+    pub fn new(
+        dtn_router: ContactGraphRouter,
+        local_node: EndpointId,
+        frontier_cap: Option<usize>,
+    ) -> Self {
         Self {
             dtn_router,
             local_node,
@@ -224,7 +228,10 @@ impl SemiringRouter {
             }
         }
 
-        debug!("Computing Pareto frontier for {} with label-setting", destination);
+        debug!(
+            "Computing Pareto frontier for {} with label-setting",
+            destination
+        );
 
         // Get contact plan from DTN router
         let contacts = self.get_active_and_future_contacts(current_time);
@@ -236,16 +243,12 @@ impl SemiringRouter {
         }
 
         // Label-setting algorithm with Pareto frontier
-        let frontier = self.label_setting_search(
-            destination,
-            contacts,
-            current_time,
-            deadline,
-            privacy_cap,
-        )?;
+        let frontier =
+            self.label_setting_search(destination, contacts, current_time, deadline, privacy_cap)?;
 
         // Cache result
-        self.frontier_cache.insert(destination.clone(), frontier.clone());
+        self.frontier_cache
+            .insert(destination.clone(), frontier.clone());
 
         // Cleanup old cache entries periodically
         if self.should_cleanup_cache(current_time) {
@@ -274,9 +277,7 @@ impl SemiringRouter {
         let valid_paths: Vec<&LabeledPath> = frontier
             .paths()
             .iter()
-            .filter(|path| {
-                path.meets_deadline(deadline) && path.respects_privacy_cap(privacy_cap)
-            })
+            .filter(|path| path.meets_deadline(deadline) && path.respects_privacy_cap(privacy_cap))
             .collect();
 
         if valid_paths.is_empty() {
@@ -286,18 +287,20 @@ impl SemiringRouter {
 
         // Select best path using QoS-derived weights
         let weights = qos.to_weight_vector();
-        let best_path = valid_paths
-            .into_iter()
-            .min_by(|a, b| {
-                a.cost.scalarize(&weights)
-                    .partial_cmp(&b.cost.scalarize(&weights))
-                    .unwrap_or(std::cmp::Ordering::Equal)
-            });
+        let best_path = valid_paths.into_iter().min_by(|a, b| {
+            a.cost
+                .scalarize(&weights)
+                .partial_cmp(&b.cost.scalarize(&weights))
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
 
         debug!(
             "Selected path to {} with cost {} using weights {:?}",
             destination,
-            best_path.as_ref().map(|p| p.cost.to_string()).unwrap_or_else(|| "None".to_string()),
+            best_path
+                .as_ref()
+                .map(|p| p.cost.to_string())
+                .unwrap_or_else(|| "None".to_string()),
             weights
         );
 
@@ -422,11 +425,7 @@ impl SemiringRouter {
     }
 
     /// Estimate privacy epsilon cost for a contact
-    fn estimate_privacy_cost(
-        &self,
-        contact: &Contact,
-        privacy_cap: Option<f64>,
-    ) -> f64 {
+    fn estimate_privacy_cost(&self, contact: &Contact, privacy_cap: Option<f64>) -> f64 {
         // Privacy cost depends on transport type and configuration
         // This would integrate with the privacy composer from existing code
 
@@ -616,7 +615,7 @@ mod tests {
         let weights = qos.to_weight_vector();
 
         assert!(weights.latency > 0.5); // Should prioritize latency
-        assert!(weights.energy < 0.2);  // Should de-prioritize energy
+        assert!(weights.energy < 0.2); // Should de-prioritize energy
     }
 
     #[test]

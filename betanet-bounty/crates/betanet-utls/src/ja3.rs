@@ -1,6 +1,6 @@
 //! JA3 fingerprinting
 
-use crate::{ClientHello, TlsFingerprint, Result, grease, extensions};
+use crate::{extensions, grease, ClientHello, Result, TlsFingerprint};
 
 /// Generate JA3 fingerprint from ClientHello
 /// JA3 format: TLSVersion,CipherSuites,Extensions,EllipticCurves,EllipticCurvePointFormats
@@ -11,18 +11,22 @@ pub fn generate_ja3(hello: &ClientHello) -> Result<TlsFingerprint> {
         0x0304 => "772", // TLS 1.3
         0x0302 => "770", // TLS 1.1
         0x0301 => "769", // TLS 1.0
-        _ => "771", // Default to TLS 1.2
+        _ => "771",      // Default to TLS 1.2
     };
 
     // 2. Cipher Suites - exclude GREASE values and join with hyphens
-    let ciphers = hello.cipher_suites.iter()
+    let ciphers = hello
+        .cipher_suites
+        .iter()
         .filter(|&&cipher| !is_grease_value(cipher))
         .map(|c| c.to_string())
         .collect::<Vec<_>>()
         .join("-");
 
     // 3. Extensions - exclude GREASE values and join with hyphens
-    let extensions = hello.extensions.iter()
+    let extensions = hello
+        .extensions
+        .iter()
         .filter(|ext| !is_grease_value(ext.extension_type))
         .map(|e| e.extension_type.to_string())
         .collect::<Vec<_>>()
@@ -44,7 +48,10 @@ pub fn generate_ja3(hello: &ClientHello) -> Result<TlsFingerprint> {
         .join("-");
 
     // Build JA3 string
-    let ja3_string = format!("{},{},{},{},{}", version, ciphers, extensions, curves, point_formats);
+    let ja3_string = format!(
+        "{},{},{},{},{}",
+        version, ciphers, extensions, curves, point_formats
+    );
 
     // Calculate MD5 hash
     let hash = format!("{:x}", md5::compute(ja3_string.as_bytes()));
@@ -85,7 +92,7 @@ fn extract_point_formats(hello: &ClientHello) -> Vec<u8> {
         if ext.extension_type == extensions::EC_POINT_FORMATS && !ext.data.is_empty() {
             let formats_len = ext.data[0] as usize;
 
-            if ext.data.len() >= 1 + formats_len {
+            if ext.data.len() > formats_len {
                 return ext.data[1..1 + formats_len].to_vec();
             }
         }

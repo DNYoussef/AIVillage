@@ -8,10 +8,7 @@
 
 use std::time::Instant;
 
-use betanet_mixnode::{
-    pipeline::PipelineBenchmark,
-    Result,
-};
+use betanet_mixnode::{pipeline::PipelineBenchmark, Result};
 
 /// Custom benchmark for mixnode-specific performance testing
 async fn custom_mixnode_benchmark() -> Result<()> {
@@ -25,7 +22,10 @@ async fn custom_mixnode_benchmark() -> Result<()> {
     results.print_results();
 
     let meets_target = results.meets_target(25000.0);
-    println!("🎯 Meets 25k pkt/s target: {}", if meets_target { "✅ YES" } else { "❌ NO" });
+    println!(
+        "🎯 Meets 25k pkt/s target: {}",
+        if meets_target { "✅ YES" } else { "❌ NO" }
+    );
 
     // Test 2: Longer sustained test
     println!("\n📊 Test 2: Sustained Throughput (15 seconds)");
@@ -34,7 +34,10 @@ async fn custom_mixnode_benchmark() -> Result<()> {
     results.print_results();
 
     let meets_target = results.meets_target(25000.0);
-    println!("🎯 Meets 25k pkt/s target: {}", if meets_target { "✅ YES" } else { "❌ NO" });
+    println!(
+        "🎯 Meets 25k pkt/s target: {}",
+        if meets_target { "✅ YES" } else { "❌ NO" }
+    );
 
     // Test 3: Worker scaling test
     println!("\n📊 Test 3: Worker Scaling Analysis");

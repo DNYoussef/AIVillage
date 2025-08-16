@@ -12,13 +12,14 @@ use rand::rngs::OsRng;
 use tempfile::TempDir;
 
 use twin_vault::{
-    AgentId, TwinId, TwinOperation, TwinManager, TwinPreferences,
-    receipts::{Receipt, ReceiptSigner, ReceiptVerifier, ReceiptStore, ReceiptVerificationResult},
+    receipts::{Receipt, ReceiptSigner, ReceiptStore, ReceiptVerificationResult, ReceiptVerifier},
     vault::VaultConfig,
+    AgentId, TwinId, TwinManager, TwinOperation, TwinPreferences,
 };
 
 /// Create test twin manager with receipt signer/verifier
-async fn create_test_twin_manager_with_receipts() -> (TwinManager, ReceiptSigner, ReceiptVerifier, TempDir) {
+async fn create_test_twin_manager_with_receipts(
+) -> (TwinManager, ReceiptSigner, ReceiptVerifier, TempDir) {
     let temp_dir = TempDir::new().unwrap();
 
     // Create agent fabric
@@ -36,7 +37,9 @@ async fn create_test_twin_manager_with_receipts() -> (TwinManager, ReceiptSigner
         agent_fabric,
         receipt_signer.clone(),
         receipt_verifier.clone(),
-    ).await.unwrap();
+    )
+    .await
+    .unwrap();
 
     (twin_manager, receipt_signer, receipt_verifier, temp_dir)
 }
@@ -69,7 +72,10 @@ async fn test_basic_receipt_verification() {
     };
 
     // Create receipt
-    let receipt = signer.sign_operation(&twin_id, &operation, &requester, true).await.unwrap();
+    let receipt = signer
+        .sign_operation(&twin_id, &operation, &requester, true)
+        .await
+        .unwrap();
 
     // Verify receipt
     let verification = verifier.verify_receipt(&receipt).unwrap();
@@ -102,7 +108,10 @@ async fn test_untrusted_signer_verification() {
     };
 
     // Create receipt with untrusted signer
-    let receipt = untrusted_signer.sign_operation(&twin_id, &operation, &requester, true).await.unwrap();
+    let receipt = untrusted_signer
+        .sign_operation(&twin_id, &operation, &requester, true)
+        .await
+        .unwrap();
 
     // Verification should fail for untrusted signer
     let verification = verifier.verify_receipt(&receipt).unwrap();
@@ -129,7 +138,10 @@ async fn test_tampered_receipt_verification() {
     };
 
     // Create valid receipt
-    let mut receipt = signer.sign_operation(&twin_id, &operation, &requester, true).await.unwrap();
+    let mut receipt = signer
+        .sign_operation(&twin_id, &operation, &requester, true)
+        .await
+        .unwrap();
 
     // Tamper with receipt data
     receipt.success = false; // Change success flag
@@ -161,13 +173,10 @@ async fn test_receipt_with_result_data() {
     let result_data = b"sensitive_read_result";
 
     // Create receipt with result data
-    let receipt = signer.sign_operation_with_result(
-        &twin_id,
-        &operation,
-        &requester,
-        true,
-        Some(result_data)
-    ).await.unwrap();
+    let receipt = signer
+        .sign_operation_with_result(&twin_id, &operation, &requester, true, Some(result_data))
+        .await
+        .unwrap();
 
     // Verify receipt
     let verification = verifier.verify_receipt(&receipt).unwrap();
@@ -177,7 +186,7 @@ async fn test_receipt_with_result_data() {
     assert!(receipt.result_hash.is_some());
 
     // Verify hash matches the data
-    use sha2::{Sha256, Digest};
+    use sha2::{Digest, Sha256};
     let expected_hash = Sha256::digest(result_data).to_vec();
     assert_eq!(receipt.result_hash.unwrap(), expected_hash);
 
@@ -202,7 +211,10 @@ async fn test_receipt_expiration() {
     };
 
     // Create receipt
-    let receipt = signer.sign_operation(&twin_id, &operation, &requester, true).await.unwrap();
+    let receipt = signer
+        .sign_operation(&twin_id, &operation, &requester, true)
+        .await
+        .unwrap();
 
     // Test immediate verification (should pass)
     let verification = verifier.verify_receipt(&receipt).unwrap();
@@ -211,10 +223,16 @@ async fn test_receipt_expiration() {
     // Test with very short expiry (should fail)
     let verification_with_expiry = verifier.verify_receipt_with_expiry(&receipt, 0).unwrap();
     assert!(!verification_with_expiry.valid);
-    assert!(verification_with_expiry.error.as_ref().unwrap().contains("expired"));
+    assert!(verification_with_expiry
+        .error
+        .as_ref()
+        .unwrap()
+        .contains("expired"));
 
     // Test with long expiry (should pass)
-    let verification_with_long_expiry = verifier.verify_receipt_with_expiry(&receipt, 60000).unwrap();
+    let verification_with_long_expiry = verifier
+        .verify_receipt_with_expiry(&receipt, 60000)
+        .unwrap();
     assert!(verification_with_long_expiry.is_trusted_and_valid());
 
     println!("✅ Receipt expiration handling works correctly");
@@ -251,13 +269,19 @@ async fn test_receipt_store_operations() {
 
     // Create receipts for twin1
     for operation in &operations {
-        let receipt = signer.sign_operation(&twin_id1, operation, &requester, true).await.unwrap();
+        let receipt = signer
+            .sign_operation(&twin_id1, operation, &requester, true)
+            .await
+            .unwrap();
         receipts.push(receipt.clone());
         store.store_receipt(receipt);
     }
 
     // Create one receipt for twin2
-    let receipt2 = signer.sign_operation(&twin_id2, &operations[0], &requester, true).await.unwrap();
+    let receipt2 = signer
+        .sign_operation(&twin_id2, &operations[0], &requester, true)
+        .await
+        .unwrap();
     store.store_receipt(receipt2.clone());
 
     // Test retrieval by ID
@@ -286,7 +310,10 @@ async fn test_receipt_store_operations() {
     assert_eq!(store.count(), 4);
 
     // Test time range retrieval
-    let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as u64;
+    let now = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_millis() as u64;
     let recent_receipts = store.get_receipts_in_range(now - 10000, now + 10000);
     assert_eq!(recent_receipts.len(), 4); // All receipts should be recent
 
@@ -296,10 +323,14 @@ async fn test_receipt_store_operations() {
 /// Test full integration: twin manager operations with receipt verification
 #[tokio::test]
 async fn test_full_receipt_integration() {
-    let (twin_manager, _signer, verifier, temp_dir) = create_test_twin_manager_with_receipts().await;
+    let (twin_manager, _signer, verifier, temp_dir) =
+        create_test_twin_manager_with_receipts().await;
     let config = create_test_vault_config(&temp_dir);
 
-    let twin_id = TwinId::new(AgentId::new("integration-agent", "integration-node"), "integration-twin");
+    let twin_id = TwinId::new(
+        AgentId::new("integration-agent", "integration-node"),
+        "integration-twin",
+    );
     let requester = AgentId::new("requester", "requester-node");
 
     // Set permissive preferences
@@ -309,10 +340,15 @@ async fn test_full_receipt_integration() {
         allow_sync: true,
         ..Default::default()
     };
-    twin_manager.set_preferences(twin_id.clone(), preferences).await;
+    twin_manager
+        .set_preferences(twin_id.clone(), preferences)
+        .await;
 
     // Create vault
-    let _vault = twin_manager.get_twin(twin_id.clone(), config).await.unwrap();
+    let _vault = twin_manager
+        .get_twin(twin_id.clone(), config)
+        .await
+        .unwrap();
 
     // Perform operations and collect receipts
     let operations = vec![
@@ -348,7 +384,10 @@ async fn test_full_receipt_integration() {
 
         // Verify receipt immediately
         let verification = verifier.verify_receipt(&receipt).unwrap();
-        assert!(verification.is_trusted_and_valid(), "Receipt verification failed");
+        assert!(
+            verification.is_trusted_and_valid(),
+            "Receipt verification failed"
+        );
 
         receipts.push((result, receipt));
     }
@@ -362,7 +401,10 @@ async fn test_full_receipt_integration() {
 
     // Third operation (read) should have result
     assert!(receipts[2].0.is_some());
-    assert_eq!(receipts[2].0.as_ref().unwrap(), &Bytes::from("integration_value1"));
+    assert_eq!(
+        receipts[2].0.as_ref().unwrap(),
+        &Bytes::from("integration_value1")
+    );
 
     // Fourth operation (increment) should have no result
     assert!(receipts[3].0.is_none());
@@ -375,10 +417,21 @@ async fn test_full_receipt_integration() {
         assert!(!receipt.receipt_id.is_empty());
 
         // Check metadata
-        assert_eq!(receipt.metadata.get("signer_id"), Some(&"test-signer".to_string()));
-        assert_eq!(receipt.metadata.get("signature_algorithm"), Some(&"Ed25519".to_string()));
+        assert_eq!(
+            receipt.metadata.get("signer_id"),
+            Some(&"test-signer".to_string())
+        );
+        assert_eq!(
+            receipt.metadata.get("signature_algorithm"),
+            Some(&"Ed25519".to_string())
+        );
 
-        println!("Receipt {}: {} - {}", i, receipt.operation_type(), receipt.receipt_id);
+        println!(
+            "Receipt {}: {} - {}",
+            i,
+            receipt.operation_type(),
+            receipt.receipt_id
+        );
     }
 
     println!("✅ Full receipt integration works correctly");
@@ -387,10 +440,14 @@ async fn test_full_receipt_integration() {
 /// Test receipt verification under concurrent operations
 #[tokio::test]
 async fn test_concurrent_receipt_verification() {
-    let (twin_manager, _signer, verifier, temp_dir) = create_test_twin_manager_with_receipts().await;
+    let (twin_manager, _signer, verifier, temp_dir) =
+        create_test_twin_manager_with_receipts().await;
     let config = create_test_vault_config(&temp_dir);
 
-    let twin_id = TwinId::new(AgentId::new("concurrent-agent", "concurrent-node"), "concurrent-twin");
+    let twin_id = TwinId::new(
+        AgentId::new("concurrent-agent", "concurrent-node"),
+        "concurrent-twin",
+    );
 
     // Set permissive preferences
     let preferences = TwinPreferences {
@@ -399,10 +456,15 @@ async fn test_concurrent_receipt_verification() {
         allow_sync: true,
         ..Default::default()
     };
-    twin_manager.set_preferences(twin_id.clone(), preferences).await;
+    twin_manager
+        .set_preferences(twin_id.clone(), preferences)
+        .await;
 
     // Create vault
-    let _vault = twin_manager.get_twin(twin_id.clone(), config).await.unwrap();
+    let _vault = twin_manager
+        .get_twin(twin_id.clone(), config)
+        .await
+        .unwrap();
 
     // Spawn concurrent operations
     let mut handles = Vec::new();
@@ -416,10 +478,15 @@ async fn test_concurrent_receipt_verification() {
             let operation = TwinOperation::Write {
                 key: format!("concurrent_key_{}", i),
                 value: Bytes::from(format!("concurrent_value_{}", i)),
-                timestamp: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as u64,
+                timestamp: SystemTime::now()
+                    .duration_since(UNIX_EPOCH)
+                    .unwrap()
+                    .as_millis() as u64,
             };
 
-            manager.perform_operation(twin_id, operation, requester).await
+            manager
+                .perform_operation(twin_id, operation, requester)
+                .await
         });
 
         handles.push(handle);
@@ -438,16 +505,18 @@ async fn test_concurrent_receipt_verification() {
 
     for receipt in all_receipts {
         let verifier = verifier.clone();
-        let handle = tokio::spawn(async move {
-            verifier.verify_receipt(&receipt)
-        });
+        let handle = tokio::spawn(async move { verifier.verify_receipt(&receipt) });
         verification_handles.push(handle);
     }
 
     // Check all verifications
     for (i, handle) in verification_handles.into_iter().enumerate() {
         let verification = handle.await.unwrap().unwrap();
-        assert!(verification.is_trusted_and_valid(), "Verification {} failed", i);
+        assert!(
+            verification.is_trusted_and_valid(),
+            "Verification {} failed",
+            i
+        );
     }
 
     println!("✅ Concurrent receipt verification works correctly");
@@ -475,9 +544,18 @@ async fn test_cross_signer_verification() {
     };
 
     // Create receipts with different signers
-    let receipt1 = signer1.sign_operation(&twin_id, &operation, &requester, true).await.unwrap();
-    let receipt2 = signer2.sign_operation(&twin_id, &operation, &requester, true).await.unwrap();
-    let receipt3 = signer3.sign_operation(&twin_id, &operation, &requester, true).await.unwrap();
+    let receipt1 = signer1
+        .sign_operation(&twin_id, &operation, &requester, true)
+        .await
+        .unwrap();
+    let receipt2 = signer2
+        .sign_operation(&twin_id, &operation, &requester, true)
+        .await
+        .unwrap();
+    let receipt3 = signer3
+        .sign_operation(&twin_id, &operation, &requester, true)
+        .await
+        .unwrap();
 
     // Verify receipts
     let verification1 = verifier.verify_receipt(&receipt1).unwrap();
@@ -515,14 +593,18 @@ async fn test_receipt_store_expiration_cleanup() {
     let signer = ReceiptSigner::new("cleanup-signer".to_string());
     let mut store = ReceiptStore::new();
 
-    let twin_id = TwinId::new(AgentId::new("cleanup-agent", "cleanup-node"), "cleanup-twin");
+    let twin_id = TwinId::new(
+        AgentId::new("cleanup-agent", "cleanup-node"),
+        "cleanup-twin",
+    );
     let requester = AgentId::new("requester", "requester-node");
 
     // Create receipts with artificial timestamps
     let old_timestamp = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .unwrap()
-        .as_millis() as u64 - 120000; // 2 minutes ago
+        .as_millis() as u64
+        - 120000; // 2 minutes ago
 
     // Create old receipt
     let operation1 = TwinOperation::Write {
@@ -530,7 +612,10 @@ async fn test_receipt_store_expiration_cleanup() {
         value: Bytes::from("old_value"),
         timestamp: old_timestamp,
     };
-    let mut old_receipt = signer.sign_operation(&twin_id, &operation1, &requester, true).await.unwrap();
+    let mut old_receipt = signer
+        .sign_operation(&twin_id, &operation1, &requester, true)
+        .await
+        .unwrap();
     old_receipt.timestamp = old_timestamp; // Manually set old timestamp
     store.store_receipt(old_receipt);
 
@@ -538,9 +623,15 @@ async fn test_receipt_store_expiration_cleanup() {
     let operation2 = TwinOperation::Write {
         key: "new_key".to_string(),
         value: Bytes::from("new_value"),
-        timestamp: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as u64,
+        timestamp: SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_millis() as u64,
     };
-    let new_receipt = signer.sign_operation(&twin_id, &operation2, &requester, true).await.unwrap();
+    let new_receipt = signer
+        .sign_operation(&twin_id, &operation2, &requester, true)
+        .await
+        .unwrap();
     store.store_receipt(new_receipt);
 
     // Verify initial count

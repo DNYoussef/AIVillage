@@ -8,23 +8,20 @@
 //! - Fragmentation and MTU discovery
 //! - Transport state management
 
-use crate::{LintIssue, SeverityLevel, Result};
-use crate::checks::{CheckRule, CheckContext};
-use regex::Regex;
-use once_cell::sync::Lazy;
+use crate::checks::{CheckContext, CheckRule};
+use crate::{LintIssue, Result, SeverityLevel};
 use async_trait::async_trait;
+use once_cell::sync::Lazy;
+use regex::Regex;
 
-static NOISE_PATTERN_REGEX: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r#"Noise_XK_(\w+)_(\w+)_(\w+)"#).unwrap()
-});
+static NOISE_PATTERN_REGEX: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r#"Noise_XK_(\w+)_(\w+)_(\w+)"#).unwrap());
 
-static HANDSHAKE_FRAGMENT_SIZE_REGEX: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"HANDSHAKE_FRAGMENT_SIZE\s*:\s*usize\s*=\s*(\d+)").unwrap()
-});
+static HANDSHAKE_FRAGMENT_SIZE_REGEX: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"HANDSHAKE_FRAGMENT_SIZE\s*:\s*usize\s*=\s*(\d+)").unwrap());
 
-static MAX_MESSAGE_SIZE_REGEX: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"MAX_MESSAGE_SIZE\s*:\s*usize\s*=\s*(\d+)").unwrap()
-});
+static MAX_MESSAGE_SIZE_REGEX: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"MAX_MESSAGE_SIZE\s*:\s*usize\s*=\s*(\d+)").unwrap());
 
 /// Noise XK handshake pattern compliance
 pub struct NoiseXkHandshakeRule;
@@ -43,9 +40,10 @@ impl CheckRule for NoiseXkHandshakeRule {
         let mut issues = vec![];
 
         // Only check Noise-related files
-        if !context.file_path.to_string_lossy().contains("noise") &&
-           !context.content.contains("NoiseXK") &&
-           !context.content.contains("Noise_XK") {
+        if !context.file_path.to_string_lossy().contains("noise")
+            && !context.content.contains("NoiseXK")
+            && !context.content.contains("Noise_XK")
+        {
             return Ok(issues);
         }
 
@@ -59,12 +57,22 @@ impl CheckRule for NoiseXkHandshakeRule {
 
                     // Validate cryptographic primitives
                     if key_exchange != "25519" {
-                        issues.push(LintIssue::new(
-                            "NOISE001".to_string(),
-                            SeverityLevel::Error,
-                            format!("Insecure key exchange '{}' - should use '25519' (X25519)", key_exchange),
-                            self.name().to_string(),
-                        ).with_location(context.file_path.clone(), line_num + 1, 0));
+                        issues.push(
+                            LintIssue::new(
+                                "NOISE001".to_string(),
+                                SeverityLevel::Error,
+                                format!(
+                                    "Insecure key exchange '{}' - should use '25519' (X25519)",
+                                    key_exchange
+                                ),
+                                self.name().to_string(),
+                            )
+                            .with_location(
+                                context.file_path.clone(),
+                                line_num + 1,
+                                0,
+                            ),
+                        );
                     }
 
                     if cipher != "ChaChaPoly" {
@@ -77,12 +85,22 @@ impl CheckRule for NoiseXkHandshakeRule {
                     }
 
                     if hash != "BLAKE2s" && hash != "SHA256" {
-                        issues.push(LintIssue::new(
-                            "NOISE003".to_string(),
-                            SeverityLevel::Warning,
-                            format!("Hash function '{}' - recommend 'BLAKE2s' or 'SHA256'", hash),
-                            self.name().to_string(),
-                        ).with_location(context.file_path.clone(), line_num + 1, 0));
+                        issues.push(
+                            LintIssue::new(
+                                "NOISE003".to_string(),
+                                SeverityLevel::Warning,
+                                format!(
+                                    "Hash function '{}' - recommend 'BLAKE2s' or 'SHA256'",
+                                    hash
+                                ),
+                                self.name().to_string(),
+                            )
+                            .with_location(
+                                context.file_path.clone(),
+                                line_num + 1,
+                                0,
+                            ),
+                        );
                     }
                 }
             }
@@ -90,7 +108,14 @@ impl CheckRule for NoiseXkHandshakeRule {
 
         // Check for proper handshake state management
         if context.content.contains("HandshakePhase") {
-            let required_phases = ["Uninitialized", "Message1", "Message2", "Message3", "Transport", "Failed"];
+            let required_phases = [
+                "Uninitialized",
+                "Message1",
+                "Message2",
+                "Message3",
+                "Transport",
+                "Failed",
+            ];
             let mut missing_phases = Vec::new();
 
             for &phase in &required_phases {
@@ -111,11 +136,31 @@ impl CheckRule for NoiseXkHandshakeRule {
 
         // Check for proper XK message sequence validation
         let message_sequence_checks = [
-            ("create_message_1", "is_initiator", "Only initiator can send message 1"),
-            ("create_message_2", "!self.is_initiator", "Only responder can send message 2"),
-            ("create_message_3", "is_initiator", "Only initiator can send message 3"),
-            ("process_message_2", "is_initiator", "Only initiator can process message 2"),
-            ("process_message_3", "!self.is_initiator", "Only responder can process message 3"),
+            (
+                "create_message_1",
+                "is_initiator",
+                "Only initiator can send message 1",
+            ),
+            (
+                "create_message_2",
+                "!self.is_initiator",
+                "Only responder can send message 2",
+            ),
+            (
+                "create_message_3",
+                "is_initiator",
+                "Only initiator can send message 3",
+            ),
+            (
+                "process_message_2",
+                "is_initiator",
+                "Only initiator can process message 2",
+            ),
+            (
+                "process_message_3",
+                "!self.is_initiator",
+                "Only responder can process message 3",
+            ),
         ];
 
         for (method, condition, _description) in &message_sequence_checks {
@@ -123,12 +168,16 @@ impl CheckRule for NoiseXkHandshakeRule {
                 // Check if proper role validation exists
                 let method_start = context.content.find(method);
                 if let Some(start) = method_start {
-                    let method_section = &context.content[start..start + 500.min(context.content.len() - start)];
+                    let method_section =
+                        &context.content[start..start + 500.min(context.content.len() - start)];
                     if !method_section.contains(condition) {
                         issues.push(LintIssue::new(
                             "NOISE005".to_string(),
                             SeverityLevel::Error,
-                            format!("Method '{}' missing role validation ({})", method, condition),
+                            format!(
+                                "Method '{}' missing role validation ({})",
+                                method, condition
+                            ),
                             self.name().to_string(),
                         ));
                     }
@@ -149,13 +198,18 @@ impl CheckRule for NoiseXkHandshakeRule {
                 if context.content.contains(method) {
                     let method_start = context.content.find(method);
                     if let Some(start) = method_start {
-                        let method_section = &context.content[start..start + 800.min(context.content.len() - start)];
-                        if !method_section.contains(&format!("phase.*{}", expected_state)) &&
-                           !method_section.contains(&format!("{}.*phase", expected_state)) {
+                        let method_section =
+                            &context.content[start..start + 800.min(context.content.len() - start)];
+                        if !method_section.contains(&format!("phase.*{}", expected_state))
+                            && !method_section.contains(&format!("{}.*phase", expected_state))
+                        {
                             issues.push(LintIssue::new(
                                 "NOISE006".to_string(),
                                 SeverityLevel::Warning,
-                                format!("Method '{}' should validate phase is '{}'", method, expected_state),
+                                format!(
+                                    "Method '{}' should validate phase is '{}'",
+                                    method, expected_state
+                                ),
                                 self.name().to_string(),
                             ));
                         }
@@ -185,9 +239,10 @@ impl CheckRule for NoiseXkKeyRotationRule {
         let mut issues = vec![];
 
         // Only check key rotation related files
-        if !context.content.contains("KeyRotation") &&
-           !context.content.contains("rekey") &&
-           !context.content.contains("KEY_UPDATE") {
+        if !context.content.contains("KeyRotation")
+            && !context.content.contains("rekey")
+            && !context.content.contains("KEY_UPDATE")
+        {
             return Ok(issues);
         }
 
@@ -200,18 +255,29 @@ impl CheckRule for NoiseXkKeyRotationRule {
 
         for (constant, expected_value, description) in &threshold_checks {
             if context.content.contains(constant) {
-                let threshold_regex = Regex::new(&format!(r"{}\s*:\s*\w+\s*=\s*([^;]+)", constant)).unwrap();
+                let threshold_regex =
+                    Regex::new(&format!(r"{}\s*:\s*\w+\s*=\s*([^;]+)", constant)).unwrap();
                 for (line_num, line) in context.content.lines().enumerate() {
                     if let Some(captures) = threshold_regex.captures(line) {
                         if let Some(value) = captures.get(1) {
                             let value_str = value.as_str().trim();
                             if !value_str.contains(expected_value) {
-                                issues.push(LintIssue::new(
-                                    "NOISE007".to_string(),
-                                    SeverityLevel::Warning,
-                                    format!("{} value '{}' differs from spec recommendation ({})", constant, value_str, description),
-                                    self.name().to_string(),
-                                ).with_location(context.file_path.clone(), line_num + 1, 0));
+                                issues.push(
+                                    LintIssue::new(
+                                        "NOISE007".to_string(),
+                                        SeverityLevel::Warning,
+                                        format!(
+                                            "{} value '{}' differs from spec recommendation ({})",
+                                            constant, value_str, description
+                                        ),
+                                        self.name().to_string(),
+                                    )
+                                    .with_location(
+                                        context.file_path.clone(),
+                                        line_num + 1,
+                                        0,
+                                    ),
+                                );
                             }
                         }
                     }
@@ -222,25 +288,40 @@ impl CheckRule for NoiseXkKeyRotationRule {
         // Check KEY_UPDATE rate limiting parameters
         let rate_limit_checks = [
             ("KEY_UPDATE_MIN_INTERVAL_SECS", 30, "minimum 30 seconds"),
-            ("KEY_UPDATE_MIN_INTERVAL_FRAMES", 4096, "minimum 4096 frames"),
+            (
+                "KEY_UPDATE_MIN_INTERVAL_FRAMES",
+                4096,
+                "minimum 4096 frames",
+            ),
             ("KEY_UPDATE_ACCEPT_WINDOW_SECS", 2, "2 second window"),
             ("KEY_UPDATE_TOKEN_BUCKET_SIZE", 10, "burst size 10"),
         ];
 
         for (constant, expected_min, description) in &rate_limit_checks {
             if context.content.contains(constant) {
-                let const_regex = Regex::new(&format!(r"{}\s*:\s*\w+\s*=\s*(\d+)", constant)).unwrap();
+                let const_regex =
+                    Regex::new(&format!(r"{}\s*:\s*\w+\s*=\s*(\d+)", constant)).unwrap();
                 for (line_num, line) in context.content.lines().enumerate() {
                     if let Some(captures) = const_regex.captures(line) {
                         if let Some(value_str) = captures.get(1) {
                             if let Ok(value) = value_str.as_str().parse::<u32>() {
                                 if (value as i32) < *expected_min {
-                                    issues.push(LintIssue::new(
-                                        "NOISE008".to_string(),
-                                        SeverityLevel::Warning,
-                                        format!("{} value {} below recommended minimum ({})", constant, value, description),
-                                        self.name().to_string(),
-                                    ).with_location(context.file_path.clone(), line_num + 1, 0));
+                                    issues.push(
+                                        LintIssue::new(
+                                            "NOISE008".to_string(),
+                                            SeverityLevel::Warning,
+                                            format!(
+                                                "{} value {} below recommended minimum ({})",
+                                                constant, value, description
+                                            ),
+                                            self.name().to_string(),
+                                        )
+                                        .with_location(
+                                            context.file_path.clone(),
+                                            line_num + 1,
+                                            0,
+                                        ),
+                                    );
                                 }
                             }
                         }
@@ -270,15 +351,17 @@ impl CheckRule for NoiseXkKeyRotationRule {
         }
 
         // Check for sliding window rate limiting
-        if context.content.contains("accept_window") || context.content.contains("should_accept") {
-            if !context.content.contains("recent_updates") || !context.content.contains("VecDeque") {
-                issues.push(LintIssue::new(
-                    "NOISE010".to_string(),
-                    SeverityLevel::Error,
-                    "Sliding window rate limiting implementation missing proper window tracking".to_string(),
-                    self.name().to_string(),
-                ));
-            }
+        if (context.content.contains("accept_window") || context.content.contains("should_accept"))
+            && (!context.content.contains("recent_updates")
+                || !context.content.contains("VecDeque"))
+        {
+            issues.push(LintIssue::new(
+                "NOISE010".to_string(),
+                SeverityLevel::Error,
+                "Sliding window rate limiting implementation missing proper window tracking"
+                    .to_string(),
+                self.name().to_string(),
+            ));
         }
 
         Ok(issues)
@@ -302,9 +385,10 @@ impl CheckRule for NoiseXkFragmentationRule {
         let mut issues = vec![];
 
         // Only check fragmentation related files
-        if !context.content.contains("fragment") &&
-           !context.content.contains("HANDSHAKE_FRAGMENT_SIZE") &&
-           !context.content.contains("HandshakeFragment") {
+        if !context.content.contains("fragment")
+            && !context.content.contains("HANDSHAKE_FRAGMENT_SIZE")
+            && !context.content.contains("HandshakeFragment")
+        {
             return Ok(issues);
         }
 
@@ -314,12 +398,19 @@ impl CheckRule for NoiseXkFragmentationRule {
                 if let Some(size_str) = captures.get(1) {
                     if let Ok(size) = size_str.as_str().parse::<u32>() {
                         if size < 576 {
-                            issues.push(LintIssue::new(
-                                "NOISE011".to_string(),
-                                SeverityLevel::Error,
-                                format!("Fragment size {} below IPv4 minimum MTU (576)", size),
-                                self.name().to_string(),
-                            ).with_location(context.file_path.clone(), line_num + 1, 0));
+                            issues.push(
+                                LintIssue::new(
+                                    "NOISE011".to_string(),
+                                    SeverityLevel::Error,
+                                    format!("Fragment size {} below IPv4 minimum MTU (576)", size),
+                                    self.name().to_string(),
+                                )
+                                .with_location(
+                                    context.file_path.clone(),
+                                    line_num + 1,
+                                    0,
+                                ),
+                            );
                         }
 
                         if size > 1500 {
@@ -360,7 +451,10 @@ impl CheckRule for NoiseXkFragmentationRule {
                 issues.push(LintIssue::new(
                     "NOISE014".to_string(),
                     SeverityLevel::Error,
-                    format!("HandshakeFragment missing required fields: {}", missing_fields.join(", ")),
+                    format!(
+                        "HandshakeFragment missing required fields: {}",
+                        missing_fields.join(", ")
+                    ),
                     self.name().to_string(),
                 ));
             }
@@ -381,13 +475,18 @@ impl CheckRule for NoiseXkFragmentationRule {
                 issues.push(LintIssue::new(
                     "NOISE015".to_string(),
                     SeverityLevel::Error,
-                    format!("HandshakeReassembler missing required methods: {}", missing_methods.join(", ")),
+                    format!(
+                        "HandshakeReassembler missing required methods: {}",
+                        missing_methods.join(", ")
+                    ),
                     self.name().to_string(),
                 ));
             }
 
             // Check for proper fragment bounds checking
-            if context.content.contains("add_fragment") && !context.content.contains("fragment_index as usize") {
+            if context.content.contains("add_fragment")
+                && !context.content.contains("fragment_index as usize")
+            {
                 issues.push(LintIssue::new(
                     "NOISE016".to_string(),
                     SeverityLevel::Warning,
@@ -418,22 +517,23 @@ impl CheckRule for NoiseXkSecurityRule {
         let mut issues = vec![];
 
         // Only check security-related Noise files
-        if !context.content.contains("NoiseXK") &&
-           !context.content.contains("encrypt") &&
-           !context.content.contains("decrypt") {
+        if !context.content.contains("NoiseXK")
+            && !context.content.contains("encrypt")
+            && !context.content.contains("decrypt")
+        {
             return Ok(issues);
         }
 
         // Check key length validation
-        if context.content.contains("InvalidKeyLength") {
-            if !context.content.contains("key.len() != 32") {
-                issues.push(LintIssue::new(
-                    "NOISE017".to_string(),
-                    SeverityLevel::Error,
-                    "Missing proper X25519 key length validation (32 bytes)".to_string(),
-                    self.name().to_string(),
-                ));
-            }
+        if context.content.contains("InvalidKeyLength")
+            && !context.content.contains("key.len() != 32")
+        {
+            issues.push(LintIssue::new(
+                "NOISE017".to_string(),
+                SeverityLevel::Error,
+                "Missing proper X25519 key length validation (32 bytes)".to_string(),
+                self.name().to_string(),
+            ));
         }
 
         // Check for message size limits
@@ -452,12 +552,22 @@ impl CheckRule for NoiseXkSecurityRule {
                             }
 
                             if size < 1024 {
-                                issues.push(LintIssue::new(
-                                    "NOISE019".to_string(),
-                                    SeverityLevel::Warning,
-                                    format!("MAX_MESSAGE_SIZE {} too small for practical use", size),
-                                    self.name().to_string(),
-                                ).with_location(context.file_path.clone(), line_num + 1, 0));
+                                issues.push(
+                                    LintIssue::new(
+                                        "NOISE019".to_string(),
+                                        SeverityLevel::Warning,
+                                        format!(
+                                            "MAX_MESSAGE_SIZE {} too small for practical use",
+                                            size
+                                        ),
+                                        self.name().to_string(),
+                                    )
+                                    .with_location(
+                                        context.file_path.clone(),
+                                        line_num + 1,
+                                        0,
+                                    ),
+                                );
                             }
                         }
                     }
@@ -523,15 +633,16 @@ impl CheckRule for NoiseXkSecurityRule {
         }
 
         // Check for nonce overflow protection
-        if context.content.contains("nonce") || context.content.contains("NonceOverflow") {
-            if !context.content.contains("overflow") && context.content.contains("encrypt") {
-                issues.push(LintIssue::new(
-                    "NOISE025".to_string(),
-                    SeverityLevel::Error,
-                    "Missing nonce overflow detection and handling".to_string(),
-                    self.name().to_string(),
-                ));
-            }
+        if (context.content.contains("nonce") || context.content.contains("NonceOverflow"))
+            && !context.content.contains("overflow")
+            && context.content.contains("encrypt")
+        {
+            issues.push(LintIssue::new(
+                "NOISE025".to_string(),
+                SeverityLevel::Error,
+                "Missing nonce overflow detection and handling".to_string(),
+                self.name().to_string(),
+            ));
         }
 
         // Check for proper state cleanup on errors
@@ -542,11 +653,14 @@ impl CheckRule for NoiseXkSecurityRule {
                 ""
             };
 
-            if !reset_section.contains("handshake = None") || !reset_section.contains("transport = None") {
+            if !reset_section.contains("handshake = None")
+                || !reset_section.contains("transport = None")
+            {
                 issues.push(LintIssue::new(
                     "NOISE026".to_string(),
                     SeverityLevel::Warning,
-                    "reset() should clear all cryptographic state (handshake, transport)".to_string(),
+                    "reset() should clear all cryptographic state (handshake, transport)"
+                        .to_string(),
                     self.name().to_string(),
                 ));
             }
@@ -573,16 +687,18 @@ impl CheckRule for NoiseXkTransportRule {
         let mut issues = vec![];
 
         // Only check transport-related files
-        if !context.content.contains("transport") &&
-           !context.content.contains("TransportState") &&
-           !context.content.contains("into_transport_mode") {
+        if !context.content.contains("transport")
+            && !context.content.contains("TransportState")
+            && !context.content.contains("into_transport_mode")
+        {
             return Ok(issues);
         }
 
         // Check for proper transport state initialization
         if context.content.contains("into_transport_mode") {
             // Should only be called after message 3 processing
-            let transport_context = if let Some(start) = context.content.find("into_transport_mode") {
+            let transport_context = if let Some(start) = context.content.find("into_transport_mode")
+            {
                 let start_context = start.saturating_sub(300);
                 let end_context = (start + 300).min(context.content.len());
                 &context.content[start_context..end_context]
@@ -594,7 +710,8 @@ impl CheckRule for NoiseXkTransportRule {
                 issues.push(LintIssue::new(
                     "NOISE027".to_string(),
                     SeverityLevel::Warning,
-                    "into_transport_mode() should only be called after message 3 processing".to_string(),
+                    "into_transport_mode() should only be called after message 3 processing"
+                        .to_string(),
                     self.name().to_string(),
                 ));
             }
@@ -622,17 +739,23 @@ impl CheckRule for NoiseXkTransportRule {
         let transport_methods = ["encrypt", "decrypt", "initiate_key_update"];
         for method in &transport_methods {
             if context.content.contains(&format!("fn {}", method)) {
-                let method_section = if let Some(start) = context.content.find(&format!("fn {}", method)) {
-                    &context.content[start..start + 400.min(context.content.len() - start)]
-                } else {
-                    ""
-                };
+                let method_section =
+                    if let Some(start) = context.content.find(&format!("fn {}", method)) {
+                        &context.content[start..start + 400.min(context.content.len() - start)]
+                    } else {
+                        ""
+                    };
 
-                if !method_section.contains("is_transport_ready") && !method_section.contains("HandshakeNotComplete") {
+                if !method_section.contains("is_transport_ready")
+                    && !method_section.contains("HandshakeNotComplete")
+                {
                     issues.push(LintIssue::new(
                         "NOISE029".to_string(),
                         SeverityLevel::Error,
-                        format!("{}() should validate handshake completion before operation", method),
+                        format!(
+                            "{}() should validate handshake completion before operation",
+                            method
+                        ),
                         self.name().to_string(),
                     ));
                 }
@@ -641,7 +764,8 @@ impl CheckRule for NoiseXkTransportRule {
 
         // Check for proper frame counting
         if context.content.contains("frames_sent") || context.content.contains("frames_received") {
-            if context.content.contains("encrypt") && !context.content.contains("record_frame_sent") {
+            if context.content.contains("encrypt") && !context.content.contains("record_frame_sent")
+            {
                 issues.push(LintIssue::new(
                     "NOISE030".to_string(),
                     SeverityLevel::Warning,
@@ -650,7 +774,9 @@ impl CheckRule for NoiseXkTransportRule {
                 ));
             }
 
-            if context.content.contains("decrypt") && !context.content.contains("record_frame_received") {
+            if context.content.contains("decrypt")
+                && !context.content.contains("record_frame_received")
+            {
                 issues.push(LintIssue::new(
                     "NOISE031".to_string(),
                     SeverityLevel::Warning,
@@ -671,7 +797,8 @@ impl CheckRule for NoiseXkTransportRule {
                 ));
             }
 
-            if context.content.contains("decrypt") && !context.content.contains("bytes_received +=") {
+            if context.content.contains("decrypt") && !context.content.contains("bytes_received +=")
+            {
                 issues.push(LintIssue::new(
                     "NOISE033".to_string(),
                     SeverityLevel::Warning,

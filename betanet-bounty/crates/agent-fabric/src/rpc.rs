@@ -12,16 +12,18 @@ use bytes::Bytes;
 use futures::StreamExt;
 use serde::{Deserialize, Serialize};
 use tokio::net::{TcpListener, TcpStream};
-use tokio::sync::{mpsc, RwLock, Mutex, oneshot};
+use tokio::sync::{mpsc, oneshot, Mutex, RwLock};
 use tokio::time::timeout;
 use tracing::{debug, error, info, warn};
 
 use betanet_htx::{
-    HtxConfig, HtxSession, HtxTcpConnection, StreamId,
-    dial_tcp, accept_tcp, HtxError, Result as HtxResult
+    accept_tcp, dial_tcp, HtxConfig, HtxError, HtxSession, HtxTcpConnection, Result as HtxResult,
+    StreamId,
 };
 
-use crate::{AgentId, AgentMessage, AgentResponse, AgentClient, AgentServer, AgentFabricError, Result};
+use crate::{
+    AgentClient, AgentFabricError, AgentId, AgentMessage, AgentResponse, AgentServer, Result,
+};
 
 /// RPC message envelope for HTX transport
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -61,7 +63,10 @@ impl RpcTransport {
     /// Create new RPC transport
     pub async fn new(config: HtxConfig) -> Result<Self> {
         let server_addr = config.listen_addr;
-        let local_agent_id = AgentId::new("rpc-transport", format!("{}:{}", server_addr.ip(), server_addr.port()));
+        let local_agent_id = AgentId::new(
+            "rpc-transport",
+            format!("{}:{}", server_addr.ip(), server_addr.port()),
+        );
 
         Ok(Self {
             config,
@@ -109,7 +114,9 @@ impl RpcTransport {
                                 conn_connections,
                                 conn_pending,
                                 conn_handlers,
-                            ).await {
+                            )
+                            .await
+                            {
                                 error!("Connection handler error: {}", e);
                             }
                         });
@@ -136,7 +143,8 @@ impl RpcTransport {
             .map_err(AgentFabricError::HtxError)?;
 
         // Perform handshake
-        connection.handshake()
+        connection
+            .handshake()
             .await
             .map_err(AgentFabricError::HtxError)?;
 
@@ -170,15 +178,18 @@ impl RpcTransport {
 
         // Create pending request
         let (sender, receiver) = oneshot::channel();
-        let timeout_instant = tokio::time::Instant::now() +
-            Duration::from_millis(timeout_ms.unwrap_or(30000));
+        let timeout_instant =
+            tokio::time::Instant::now() + Duration::from_millis(timeout_ms.unwrap_or(30000));
 
         {
             let mut pending = self.pending_requests.write().await;
-            pending.insert(message_id.clone(), PendingRequest {
-                sender,
-                timeout: timeout_instant,
-            });
+            pending.insert(
+                message_id.clone(),
+                PendingRequest {
+                    sender,
+                    timeout: timeout_instant,
+                },
+            );
         }
 
         // Send message
@@ -189,10 +200,13 @@ impl RpcTransport {
             timeout(Duration::from_millis(timeout_ms), receiver)
                 .await
                 .map_err(|_| AgentFabricError::NetworkError("Request timeout".to_string()))?
-                .map_err(|_| AgentFabricError::NetworkError("Response channel closed".to_string()))?
+                .map_err(|_| {
+                    AgentFabricError::NetworkError("Response channel closed".to_string())
+                })?
         } else {
-            receiver.await
-                .map_err(|_| AgentFabricError::NetworkError("Response channel closed".to_string()))?
+            receiver.await.map_err(|_| {
+                AgentFabricError::NetworkError("Response channel closed".to_string())
+            })?
         };
 
         Ok(response)
@@ -225,13 +239,15 @@ impl RpcTransport {
         let connections = self.connections.read().await;
         if let Some(connection_arc) = connections.get(&to) {
             let mut connection = connection_arc.lock().await;
-            let stream_id = connection.create_stream()
+            let stream_id = connection
+                .create_stream()
                 .map_err(AgentFabricError::HtxError)?;
 
             let envelope_bytes = serde_json::to_vec(&envelope)
                 .map_err(|e| AgentFabricError::SerializationError(e.to_string()))?;
 
-            connection.send(stream_id, &envelope_bytes)
+            connection
+                .send(stream_id, &envelope_bytes)
                 .await
                 .map_err(AgentFabricError::HtxError)?;
 
@@ -257,7 +273,9 @@ impl RpcTransport {
                             &mut connection,
                             Arc::clone(&pending_requests),
                             Arc::clone(&message_handlers),
-                        ).await {
+                        )
+                        .await
+                        {
                             error!("Error processing message: {}", e);
                         }
                     }
@@ -313,7 +331,8 @@ impl RpcTransport {
                 let response_bytes = serde_json::to_vec(&response_envelope)
                     .map_err(|e| AgentFabricError::SerializationError(e.to_string()))?;
 
-                connection.send(stream_id.0, &response_bytes)
+                connection
+                    .send(stream_id.0, &response_bytes)
                     .await
                     .map_err(AgentFabricError::HtxError)?;
             }
@@ -365,7 +384,9 @@ impl RpcTransport {
 
                 for id in to_remove {
                     if let Some(req) = pending.remove(&id) {
-                        let _ = req.sender.send(AgentResponse::error(&id, "Request timeout"));
+                        let _ = req
+                            .sender
+                            .send(AgentResponse::error(&id, "Request timeout"));
                     }
                 }
             }
@@ -402,18 +423,24 @@ impl RpcClient {
         message: AgentMessage,
         timeout_ms: u64,
     ) -> Result<AgentResponse> {
-        self.transport.send_request(to, message, Some(timeout_ms)).await
+        self.transport
+            .send_request(to, message, Some(timeout_ms))
+            .await
     }
 }
 
 #[async_trait]
 impl AgentClient for RpcClient {
     async fn send_message(&self, message: AgentMessage) -> Result<AgentResponse> {
-        self.transport.send_request(self.target_agent.clone(), message, None).await
+        self.transport
+            .send_request(self.target_agent.clone(), message, None)
+            .await
     }
 
     async fn send_notification(&self, message: AgentMessage) -> Result<()> {
-        self.transport.send_notification(self.target_agent.clone(), message).await
+        self.transport
+            .send_notification(self.target_agent.clone(), message)
+            .await
     }
 
     fn target_agent(&self) -> &AgentId {
@@ -471,9 +498,15 @@ mod tests {
             self.call_count.fetch_add(1, Ordering::Relaxed);
 
             if message.message_type == "ping" {
-                Ok(Some(AgentResponse::success(&message.id, Bytes::from("pong"))))
+                Ok(Some(AgentResponse::success(
+                    &message.id,
+                    Bytes::from("pong"),
+                )))
             } else {
-                Ok(Some(AgentResponse::error(&message.id, "Unknown message type")))
+                Ok(Some(AgentResponse::error(
+                    &message.id,
+                    "Unknown message type",
+                )))
             }
         }
 

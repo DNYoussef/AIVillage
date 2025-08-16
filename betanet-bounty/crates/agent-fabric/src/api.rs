@@ -6,7 +6,7 @@ use async_trait::async_trait;
 use bytes::Bytes;
 use serde::{Deserialize, Serialize};
 
-use crate::{AgentId, AgentFabricError, Result};
+use crate::{AgentFabricError, AgentId, Result};
 
 /// Generic agent message
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -87,7 +87,11 @@ pub trait AgentClient: Send + Sync {
 #[async_trait]
 pub trait AgentServer: Send + Sync {
     /// Handle an incoming message
-    async fn handle_message(&self, from: AgentId, message: AgentMessage) -> Result<Option<AgentResponse>>;
+    async fn handle_message(
+        &self,
+        from: AgentId,
+        message: AgentMessage,
+    ) -> Result<Option<AgentResponse>>;
 
     /// Get supported message types
     fn supported_message_types(&self) -> Vec<String>;
@@ -153,8 +157,7 @@ impl AgentMessage {
     }
 
     pub fn pong(request_id: &str) -> Self {
-        Self::new(message_types::PONG, Bytes::from("pong"))
-            .with_metadata("request_id", request_id)
+        Self::new(message_types::PONG, Bytes::from("pong")).with_metadata("request_id", request_id)
     }
 
     pub fn twin_message(twin_msg: TwinMessage) -> Result<Self> {
@@ -166,7 +169,10 @@ impl AgentMessage {
     pub fn tutor_message(tutor_msg: TutorMessage) -> Result<Self> {
         let payload = serde_json::to_vec(&tutor_msg)
             .map_err(|e| AgentFabricError::SerializationError(e.to_string()))?;
-        Ok(Self::new(message_types::TUTOR_MESSAGE, Bytes::from(payload)))
+        Ok(Self::new(
+            message_types::TUTOR_MESSAGE,
+            Bytes::from(payload),
+        ))
     }
 
     pub fn status_request() -> Self {
@@ -183,7 +189,10 @@ impl AgentResponse {
         Self::success(request_id, Bytes::from("pong"))
     }
 
-    pub fn status(request_id: &str, status: std::collections::HashMap<String, String>) -> Result<Self> {
+    pub fn status(
+        request_id: &str,
+        status: std::collections::HashMap<String, String>,
+    ) -> Result<Self> {
         let payload = serde_json::to_vec(&status)
             .map_err(|e| AgentFabricError::SerializationError(e.to_string()))?;
         Ok(Self::success(request_id, Bytes::from(payload)))
@@ -238,7 +247,10 @@ mod tests {
 
         let pong = AgentMessage::pong("ping-123");
         assert_eq!(pong.message_type, message_types::PONG);
-        assert_eq!(pong.metadata.get("request_id"), Some(&"ping-123".to_string()));
+        assert_eq!(
+            pong.metadata.get("request_id"),
+            Some(&"ping-123".to_string())
+        );
     }
 
     #[test]

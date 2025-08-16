@@ -3,9 +3,7 @@
 use bytes::{BufMut, Bytes, BytesMut};
 use serde::{Deserialize, Serialize};
 
-use crate::{
-    chrome::ChromeProfile, extensions, grease, tls_version, Result,
-};
+use crate::{chrome::ChromeProfile, extensions, grease, tls_version, Result};
 
 /// TLS extension
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -151,7 +149,11 @@ impl ClientHello {
     }
 
     /// Create ClientHello from Chrome profile with optional GREASE
-    pub fn from_chrome_profile_with_grease(profile: &ChromeProfile, hostname: &str, include_grease: bool) -> Self {
+    pub fn from_chrome_profile_with_grease(
+        profile: &ChromeProfile,
+        hostname: &str,
+        include_grease: bool,
+    ) -> Self {
         let mut hello = Self::new();
 
         hello.version = profile.tls_version;
@@ -162,7 +164,7 @@ impl ClientHello {
             cipher_suites.extend_from_slice(&profile.cipher_suites);
             hello.cipher_suites = cipher_suites;
         } else {
-            hello.cipher_suites = profile.cipher_suites.clone();
+            hello.cipher_suites.clone_from(&profile.cipher_suites);
         }
 
         // Add Chrome-like extensions in typical Chrome order
@@ -284,9 +286,7 @@ impl ClientHello {
 
     /// Calculate message size
     pub fn size(&self) -> usize {
-        let extensions_size: usize = self.extensions.iter()
-            .map(|ext| 4 + ext.data.len())
-            .sum();
+        let extensions_size: usize = self.extensions.iter().map(|ext| 4 + ext.data.len()).sum();
 
         4 + // Handshake header
         2 + // Version
@@ -365,12 +365,16 @@ mod tests {
         assert_eq!(hello.session_id.len(), 32);
 
         // Should have GREASE extension
-        let has_grease_ext = hello.extensions.iter()
+        let has_grease_ext = hello
+            .extensions
+            .iter()
             .any(|ext| ext.extension_type == crate::grease::grease_extension());
         assert!(has_grease_ext);
 
         // Should have server name extension
-        let has_sni = hello.extensions.iter()
+        let has_sni = hello
+            .extensions
+            .iter()
             .any(|ext| ext.extension_type == extensions::SERVER_NAME);
         assert!(has_sni);
     }

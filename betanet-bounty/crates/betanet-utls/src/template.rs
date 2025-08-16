@@ -1,7 +1,7 @@
 //! uTLS template generation
 
-use serde::{Deserialize, Serialize};
 use crate::{ChromeVersion, Result};
+use serde::{Deserialize, Serialize};
 
 /// uTLS template (legacy)
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -152,22 +152,31 @@ impl TlsTemplate {
     pub fn ja3_fingerprint(&self) -> String {
         // JA3 = MD5(SSLVersion,Cipher,SSLExtension,EllipticCurve,EllipticCurvePointFormat)
         let version = "771"; // TLS 1.2
-        let ciphers = self.cipher_suites.iter()
+        let ciphers = self
+            .cipher_suites
+            .iter()
             .map(|c| c.to_string())
             .collect::<Vec<_>>()
             .join("-");
-        let extensions = self.extensions.iter()
+        let extensions = self
+            .extensions
+            .iter()
             .map(|e| e.to_string())
             .collect::<Vec<_>>()
             .join("-");
-        let curves = self.curves.iter()
+        let curves = self
+            .curves
+            .iter()
             .map(|c| c.to_string())
             .collect::<Vec<_>>()
             .join("-");
         let point_formats = "0"; // Uncompressed
 
         // In real implementation would compute MD5 hash
-        format!("{}|{}|{}|{}|{}", version, ciphers, extensions, curves, point_formats)
+        format!(
+            "{}|{}|{}|{}|{}",
+            version, ciphers, extensions, curves, point_formats
+        )
     }
 }
 
@@ -226,10 +235,7 @@ mod tests {
 
     #[test]
     fn test_tls_template_creation() {
-        let template = TlsTemplate::for_chrome(
-            ChromeVersion::current_stable_n2(),
-            "example.com"
-        );
+        let template = TlsTemplate::for_chrome(ChromeVersion::current_stable_n2(), "example.com");
 
         assert_eq!(template.server_name, "example.com");
         assert!(!template.cipher_suites.is_empty());
@@ -250,10 +256,7 @@ mod tests {
 
     #[test]
     fn test_wire_format_generation() {
-        let template = TlsTemplate::for_chrome(
-            ChromeVersion::current_stable_n2(),
-            "example.com"
-        );
+        let template = TlsTemplate::for_chrome(ChromeVersion::current_stable_n2(), "example.com");
 
         let wire = template.to_wire_format().unwrap();
         assert!(!wire.is_empty());
@@ -266,10 +269,7 @@ mod tests {
 
     #[test]
     fn test_ja3_fingerprint() {
-        let template = TlsTemplate::for_chrome(
-            ChromeVersion::current_stable_n2(),
-            "example.com"
-        );
+        let template = TlsTemplate::for_chrome(ChromeVersion::current_stable_n2(), "example.com");
 
         let fingerprint = template.ja3_fingerprint();
         assert!(!fingerprint.is_empty());

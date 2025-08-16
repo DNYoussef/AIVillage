@@ -9,15 +9,15 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use bytes::Bytes;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
-use tokio::sync::{mpsc, RwLock, Mutex};
+use tokio::sync::{mpsc, Mutex, RwLock};
 use tokio::time::{interval, Interval};
 use tracing::{debug, error, info, warn};
 
 use crate::bundle::{Bundle, BundleId, EndpointId};
+use crate::router::{ContactGraphRouter, ContactPlan, RoutingError, RoutingPolicy};
+use crate::sched::{LyapunovConfig, LyapunovScheduler};
 use crate::storage::{BundleStore, StorageError};
-use crate::router::{ContactGraphRouter, ContactPlan, RoutingPolicy, RoutingError};
-use crate::sched::{LyapunovScheduler, LyapunovConfig};
-use crate::{ConvergenceLayer, BundleStats, DEFAULT_BUNDLE_LIFETIME};
+use crate::{BundleStats, ConvergenceLayer, DEFAULT_BUNDLE_LIFETIME};
 
 /// Options for sending bundles
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -118,16 +118,14 @@ impl DtnNode {
         let storage = Arc::new(
             BundleStore::open(storage_path)
                 .await
-                .map_err(DtnError::StorageError)?
+                .map_err(DtnError::StorageError)?,
         );
 
-        let router = Arc::new(Mutex::new(
-            ContactGraphRouter::new(node_id.clone(), policy)
-        ));
+        let router = Arc::new(Mutex::new(ContactGraphRouter::new(node_id.clone(), policy)));
 
         let scheduler = Arc::new(Mutex::new(
             LyapunovScheduler::new(LyapunovConfig::default())
-                .map_err(|e| DtnError::ConfigError(e.to_string()))?
+                .map_err(|e| DtnError::ConfigError(e.to_string()))?,
         ));
 
         let (event_sender, event_receiver) = mpsc::channel(1000);
@@ -203,7 +201,10 @@ impl DtnNode {
         let bundle_id = bundle.id();
 
         // Store bundle
-        self.storage.store(bundle.clone()).await.map_err(DtnError::StorageError)?;
+        self.storage
+            .store(bundle.clone())
+            .await
+            .map_err(DtnError::StorageError)?;
 
         // Enqueue with scheduler
         {
@@ -223,12 +224,15 @@ impl DtnNode {
         }
 
         // Send event
-        let _ = self.event_sender.send(BundleEvent::BundleReceived {
-            bundle_id: bundle_id.clone(),
-            source: self.node_id.clone(),
-            destination,
-            payload_size: bundle.payload.data.len(),
-        }).await;
+        let _ = self
+            .event_sender
+            .send(BundleEvent::BundleReceived {
+                bundle_id: bundle_id.clone(),
+                source: self.node_id.clone(),
+                destination,
+                payload_size: bundle.payload.data.len(),
+            })
+            .await;
 
         Ok(bundle_id)
     }
@@ -263,7 +267,10 @@ impl DtnNode {
             queues.insert(endpoint.clone(), sender);
         }
 
-        info!("Registered application '{}' for endpoint {}", application_id, endpoint);
+        info!(
+            "Registered application '{}' for endpoint {}",
+            application_id, endpoint
+        );
 
         Ok(receiver)
     }
@@ -342,7 +349,10 @@ impl DtnNode {
     ) -> Result<(), DtnError> {
         let bundle_id = bundle.id();
 
-        debug!("Processing incoming bundle: {} from CLA: {}", bundle_id, from_cla);
+        debug!(
+            "Processing incoming bundle: {} from CLA: {}",
+            bundle_id, from_cla
+        );
 
         // Check if bundle is expired
         if bundle.is_expired() {
@@ -351,13 +361,17 @@ impl DtnNode {
             let mut stats = self.stats.write().await;
             stats.record_expired();
 
-            let _ = self.event_sender.send(BundleEvent::BundleExpired { bundle_id }).await;
+            let _ = self
+                .event_sender
+                .send(BundleEvent::BundleExpired { bundle_id })
+                .await;
             return Ok(());
         }
 
         // Check if bundle is for local delivery
         if self.is_local_destination(&bundle.primary.destination).await {
-            self.deliver_bundle_locally(bundle.clone(), from_cla).await?;
+            self.deliver_bundle_locally(bundle.clone(), from_cla)
+                .await?;
         } else {
             // Store and forward
             if let Err(e) = self.storage.store(bundle.clone()).await {
@@ -467,10 +481,13 @@ impl DtnNode {
                 };
 
                 if let Some(reg) = registration {
-                    let _ = self.event_sender.send(BundleEvent::BundleDelivered {
-                        bundle_id,
-                        to_application: reg.application_id,
-                    }).await;
+                    let _ = self
+                        .event_sender
+                        .send(BundleEvent::BundleDelivered {
+                            bundle_id,
+                            to_application: reg.application_id,
+                        })
+                        .await;
                 }
             } else {
                 warn!("Failed to deliver bundle to application queue");
@@ -504,7 +521,7 @@ impl DtnNode {
             // Make scheduling decision
             let decision = {
                 let mut scheduler = self.scheduler.lock().await;
-                scheduler.schedule_transmission(&contact, &available_bundles, 1) // max 1 bundle for simplicity
+                scheduler.schedule_transmission(contact, &available_bundles, 1) // max 1 bundle for simplicity
                     .map_err(|e| DtnError::ConfigError(e.to_string()))?
             };
 
@@ -513,7 +530,7 @@ impl DtnNode {
                 let clas = self.convergence_layers.read().await;
 
                 let mut transmitted = false;
-                for (cla_name, _cla) in clas.iter() {
+                if let Some((cla_name, _cla)) = clas.iter().next() {
                     debug!("Lyapunov scheduler approved transmission of bundle {} via CLA: {} (utility: {:.3}, energy: {:.3})",
                            bundle.id(), cla_name, decision.estimated_utility, decision.estimated_energy_cost);
 
@@ -524,11 +541,14 @@ impl DtnNode {
                     // 3. Send bundle via CLA
                     // 4. Handle success/failure
 
-                    let _ = self.event_sender.send(BundleEvent::BundleForwarded {
-                        bundle_id: bundle.id(),
-                        next_hop: contact.to.clone(),
-                        cla_name: cla_name.clone(),
-                    }).await;
+                    let _ = self
+                        .event_sender
+                        .send(BundleEvent::BundleForwarded {
+                            bundle_id: bundle.id(),
+                            next_hop: contact.to.clone(),
+                            cla_name: cla_name.clone(),
+                        })
+                        .await;
 
                     // Update stats
                     let mut stats = self.stats.write().await;
@@ -539,17 +559,22 @@ impl DtnNode {
                     scheduler.dequeue_bundle(bundle.id(), true, decision.estimated_energy_cost);
 
                     transmitted = true;
-                    break; // For now, just use first available CLA
                 }
 
                 if transmitted {
-                    info!("Bundle {} forwarded based on Lyapunov decision: {}",
-                          bundle.id(), decision.rationale);
+                    info!(
+                        "Bundle {} forwarded based on Lyapunov decision: {}",
+                        bundle.id(),
+                        decision.rationale
+                    );
                     return Ok(());
                 }
             } else {
-                debug!("Lyapunov scheduler deferred transmission of bundle {}: {}",
-                       bundle.id(), decision.rationale);
+                debug!(
+                    "Lyapunov scheduler deferred transmission of bundle {}: {}",
+                    bundle.id(),
+                    decision.rationale
+                );
             }
         }
 
@@ -621,11 +646,10 @@ mod tests {
             .await
             .unwrap();
 
-        let _receiver = node.register_application(
-            app_endpoint.clone(),
-            "test-app".to_string(),
-            10,
-        ).await.unwrap();
+        let _receiver = node
+            .register_application(app_endpoint.clone(), "test-app".to_string(), 10)
+            .await
+            .unwrap();
 
         let registrations = node.get_registrations().await;
         assert_eq!(registrations.len(), 1);
@@ -648,7 +672,10 @@ mod tests {
         let payload = Bytes::from("Hello, DTN!");
         let options = SendBundleOptions::default();
 
-        let bundle_id = node.send_bundle(destination, payload, options).await.unwrap();
+        let bundle_id = node
+            .send_bundle(destination, payload, options)
+            .await
+            .unwrap();
         assert!(!bundle_id.to_string().is_empty());
 
         let stats = node.get_stats().await;

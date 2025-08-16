@@ -117,12 +117,7 @@ pub struct LintIssue {
 
 impl LintIssue {
     /// Create new lint issue
-    pub fn new(
-        id: String,
-        severity: SeverityLevel,
-        message: String,
-        rule: String,
-    ) -> Self {
+    pub fn new(id: String, severity: SeverityLevel, message: String, rule: String) -> Self {
         Self {
             id,
             severity,
@@ -171,7 +166,10 @@ impl LintResults {
 
     /// Get issues by severity
     pub fn issues_by_severity(&self, severity: &SeverityLevel) -> Vec<&LintIssue> {
-        self.issues.iter().filter(|i| &i.severity == severity).collect()
+        self.issues
+            .iter()
+            .filter(|i| &i.severity == severity)
+            .collect()
     }
 
     /// Check if has issues above severity level

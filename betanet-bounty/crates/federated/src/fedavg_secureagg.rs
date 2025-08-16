@@ -10,8 +10,8 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use bytes::Bytes;
-use ndarray::{Array1, Array2, ArrayView1, Axis};
 use nalgebra::{DMatrix, DVector};
+use ndarray::{Array1, Array2, ArrayView1, Axis};
 use num_traits::Float;
 use rand::{thread_rng, Rng, SeedableRng};
 use serde::{Deserialize, Serialize};
@@ -20,9 +20,8 @@ use thiserror::Error;
 use tracing::{debug, info, warn};
 
 use crate::{
-    ParticipantId, ModelParameters, TrainingResult, AggregationResult, AggregationStats,
-    CompressionType, QuantizationType, PrivacyConfig, RoundId,
-    Result, FederatedError
+    AggregationResult, AggregationStats, CompressionType, FederatedError, ModelParameters,
+    ParticipantId, PrivacyConfig, QuantizationType, Result, RoundId, TrainingResult,
 };
 
 /// Secure aggregation protocol for federated learning
@@ -52,7 +51,11 @@ impl SecureAggregation {
     }
 
     /// Generate additive secret sharing mask for a participant
-    pub fn generate_mask(&mut self, model_size: usize, participant_id: &ParticipantId) -> SecretMask {
+    pub fn generate_mask(
+        &mut self,
+        model_size: usize,
+        participant_id: &ParticipantId,
+    ) -> SecretMask {
         // Generate deterministic seed from participant ID for reproducibility
         let mut hasher = Sha256::new();
         hasher.update(participant_id.agent_id.to_string().as_bytes());
@@ -81,12 +84,15 @@ impl SecureAggregation {
     ) -> Result<AggregationResult> {
         if training_results.is_empty() {
             return Err(FederatedError::AggregationError(
-                "No training results to aggregate".to_string()
+                "No training results to aggregate".to_string(),
             ));
         }
 
-        info!("Starting secure aggregation for round {} with {} participants",
-              round_id, training_results.len());
+        info!(
+            "Starting secure aggregation for round {} with {} participants",
+            round_id,
+            training_results.len()
+        );
 
         // Step 1: Extract and validate model parameters
         let model_updates = self.extract_model_updates(&training_results)?;
@@ -156,7 +162,7 @@ impl SecureAggregation {
             for update in &updates {
                 if update.weights.len() != expected_size {
                     return Err(FederatedError::AggregationError(
-                        "Model updates have inconsistent dimensions".to_string()
+                        "Model updates have inconsistent dimensions".to_string(),
                     ));
                 }
             }
@@ -166,18 +172,26 @@ impl SecureAggregation {
     }
 
     /// Apply differential privacy to model updates
-    fn apply_differential_privacy(&self, mut updates: Vec<ModelUpdate>) -> Result<Vec<ModelUpdate>> {
-        info!("Applying differential privacy with ε={}, δ={}",
-              self.privacy_config.dp_epsilon, self.privacy_config.dp_delta);
+    fn apply_differential_privacy(
+        &self,
+        mut updates: Vec<ModelUpdate>,
+    ) -> Result<Vec<ModelUpdate>> {
+        info!(
+            "Applying differential privacy with ε={}, δ={}",
+            self.privacy_config.dp_epsilon, self.privacy_config.dp_delta
+        );
 
         for update in &mut updates {
             // Clip gradients to bound sensitivity
-            let clipped_weights = self.clip_gradients(&update.weights, self.privacy_config.clipping_norm);
+            let clipped_weights =
+                self.clip_gradients(&update.weights, self.privacy_config.clipping_norm);
 
             // Add calibrated noise
-            let noisy_weights = self.add_dp_noise(clipped_weights,
-                                                  self.privacy_config.noise_multiplier,
-                                                  self.privacy_config.clipping_norm)?;
+            let noisy_weights = self.add_dp_noise(
+                clipped_weights,
+                self.privacy_config.noise_multiplier,
+                self.privacy_config.clipping_norm,
+            )?;
 
             update.weights = noisy_weights;
         }
@@ -197,12 +211,19 @@ impl SecureAggregation {
     }
 
     /// Add Gaussian noise for differential privacy
-    fn add_dp_noise(&self, mut weights: Array1<f32>, noise_multiplier: f32, clipping_norm: f32) -> Result<Array1<f32>> {
+    fn add_dp_noise(
+        &self,
+        mut weights: Array1<f32>,
+        noise_multiplier: f32,
+        clipping_norm: f32,
+    ) -> Result<Array1<f32>> {
         let noise_stddev = noise_multiplier * clipping_norm;
 
         for weight in weights.iter_mut() {
-            let noise: f32 = thread_rng().sample(rand_distr::Normal::new(0.0, noise_stddev)
-                .map_err(|e| FederatedError::AggregationError(format!("DP noise generation failed: {}", e)))?);
+            let noise: f32 =
+                thread_rng().sample(rand_distr::Normal::new(0.0, noise_stddev).map_err(|e| {
+                    FederatedError::AggregationError(format!("DP noise generation failed: {}", e))
+                })?);
             *weight += noise;
         }
 
@@ -301,23 +322,22 @@ impl SecureAggregation {
 
     /// Apply gradient-based compression
     fn gradient_compression(&self, weights: &Array1<f32>, threshold: f32) -> Result<Array1<f32>> {
-        let compressed = weights.mapv(|w| {
-            if w.abs() > threshold {
-                w
-            } else {
-                0.0
-            }
-        });
+        let compressed = weights.mapv(|w| if w.abs() > threshold { w } else { 0.0 });
 
         Ok(compressed)
     }
 
     /// Perform secure FedAvg with additive masks
-    async fn secure_fedavg_with_masks(&mut self, updates: Vec<ModelUpdate>) -> Result<ModelParameters> {
+    async fn secure_fedavg_with_masks(
+        &mut self,
+        updates: Vec<ModelUpdate>,
+    ) -> Result<ModelParameters> {
         info!("Performing secure FedAvg with additive masks");
 
         if updates.is_empty() {
-            return Err(FederatedError::AggregationError("No updates to aggregate".to_string()));
+            return Err(FederatedError::AggregationError(
+                "No updates to aggregate".to_string(),
+            ));
         }
 
         let model_size = updates[0].weights.len();
@@ -342,11 +362,13 @@ impl SecureAggregation {
         }
 
         // Remove masks (simplified - in real protocol, masks would sum to zero)
-        let mask_sum: Array1<f32> = masks.iter()
+        let mask_sum: Array1<f32> = masks
+            .iter()
             .map(|m| &m.mask)
             .fold(Array1::zeros(model_size), |acc, mask| acc + mask);
 
-        aggregated_weights = (aggregated_weights - mask_sum * total_examples as f32) / total_examples as f32;
+        aggregated_weights =
+            (aggregated_weights - mask_sum * total_examples as f32) / total_examples as f32;
 
         // Serialize aggregated weights
         let serialized_weights = self.serialize_weights(&aggregated_weights)?;
@@ -355,17 +377,20 @@ impl SecureAggregation {
         let metadata = crate::ModelMetadata {
             architecture: "federated_model".to_string(),
             parameter_count: model_size as u64,
-            input_shape: vec![1], // Placeholder
+            input_shape: vec![1],  // Placeholder
             output_shape: vec![1], // Placeholder
             compression: self.compression_type.clone(),
             quantization: self.quantization_type.clone(),
         };
 
         Ok(ModelParameters::new(
-            format!("secure_agg_v{}", std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
-                .unwrap_or_default()
-                .as_secs()),
+            format!(
+                "secure_agg_v{}",
+                std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .unwrap_or_default()
+                    .as_secs()
+            ),
             serialized_weights,
             metadata,
         ))
@@ -376,7 +401,9 @@ impl SecureAggregation {
         info!("Performing standard FedAvg");
 
         if updates.is_empty() {
-            return Err(FederatedError::AggregationError("No updates to aggregate".to_string()));
+            return Err(FederatedError::AggregationError(
+                "No updates to aggregate".to_string(),
+            ));
         }
 
         let model_size = updates[0].weights.len();
@@ -399,17 +426,20 @@ impl SecureAggregation {
         let metadata = crate::ModelMetadata {
             architecture: "federated_model".to_string(),
             parameter_count: model_size as u64,
-            input_shape: vec![1], // Placeholder
+            input_shape: vec![1],  // Placeholder
             output_shape: vec![1], // Placeholder
             compression: self.compression_type.clone(),
             quantization: self.quantization_type.clone(),
         };
 
         Ok(ModelParameters::new(
-            format!("fedavg_v{}", std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
-                .unwrap_or_default()
-                .as_secs()),
+            format!(
+                "fedavg_v{}",
+                std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .unwrap_or_default()
+                    .as_secs()
+            ),
             serialized_weights,
             metadata,
         ))
@@ -418,9 +448,7 @@ impl SecureAggregation {
     /// Compute aggregation statistics
     fn compute_aggregation_stats(&self, results: &[TrainingResult]) -> AggregationStats {
         let num_participants = results.len() as u32;
-        let total_examples: u64 = results.iter()
-            .map(|r| r.metrics.num_examples as u64)
-            .sum();
+        let total_examples: u64 = results.iter().map(|r| r.metrics.num_examples as u64).sum();
 
         // Weighted averages
         let mut weighted_loss = 0.0f32;
@@ -499,7 +527,9 @@ impl FedAvgAggregator {
         let valid_results = self.filter_valid_results(training_results)?;
 
         // Perform secure aggregation
-        self.secure_agg.secure_aggregate(round_id, valid_results).await
+        self.secure_agg
+            .secure_aggregate(round_id, valid_results)
+            .await
     }
 
     fn filter_valid_results(&self, results: Vec<TrainingResult>) -> Result<Vec<TrainingResult>> {
@@ -507,21 +537,24 @@ impl FedAvgAggregator {
 
         for result in results {
             // Check for reasonable training metrics
-            if result.metrics.training_loss.is_finite() &&
-               result.metrics.training_loss >= 0.0 &&
-               result.metrics.training_accuracy >= 0.0 &&
-               result.metrics.training_accuracy <= 1.0 &&
-               result.metrics.num_examples > 0 {
+            if result.metrics.training_loss.is_finite()
+                && result.metrics.training_loss >= 0.0
+                && result.metrics.training_accuracy >= 0.0
+                && result.metrics.training_accuracy <= 1.0
+                && result.metrics.num_examples > 0
+            {
                 valid_results.push(result);
             } else {
-                warn!("Filtering out invalid training result from {}",
-                      result.participant_id.agent_id);
+                warn!(
+                    "Filtering out invalid training result from {}",
+                    result.participant_id.agent_id
+                );
             }
         }
 
         if valid_results.is_empty() {
             return Err(FederatedError::AggregationError(
-                "No valid training results after filtering".to_string()
+                "No valid training results after filtering".to_string(),
             ));
         }
 
@@ -609,12 +642,10 @@ impl DifferentialPrivacy {
         let noise_stddev = self.noise_multiplier * self.clipping_norm;
 
         for grad in gradients.iter_mut() {
-            let noise: f32 = thread_rng().sample(
-                rand_distr::Normal::new(0.0, noise_stddev)
-                    .map_err(|e| FederatedError::AggregationError(
-                        format!("Noise generation failed: {}", e)
-                    ))?
-            );
+            let noise: f32 =
+                thread_rng().sample(rand_distr::Normal::new(0.0, noise_stddev).map_err(|e| {
+                    FederatedError::AggregationError(format!("Noise generation failed: {}", e))
+                })?);
             *grad += noise;
         }
 
@@ -634,9 +665,13 @@ impl DifferentialPrivacy {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{DeviceCapabilities, DeviceType, TrainingMetrics, ResourceUsage};
+    use crate::{DeviceCapabilities, DeviceType, ResourceUsage, TrainingMetrics};
 
-    fn create_test_training_result(participant_id: ParticipantId, loss: f32, accuracy: f32) -> TrainingResult {
+    fn create_test_training_result(
+        participant_id: ParticipantId,
+        loss: f32,
+        accuracy: f32,
+    ) -> TrainingResult {
         let weights = Array1::from(vec![1.0, 2.0, 3.0, 4.0]);
         let serialized_weights = bincode::serialize(&weights).unwrap();
 
@@ -706,7 +741,10 @@ mod tests {
         ];
 
         let round_id = RoundId::new("test".to_string(), 1, 12345);
-        let aggregation_result = secure_agg.secure_aggregate(&round_id, results).await.unwrap();
+        let aggregation_result = secure_agg
+            .secure_aggregate(&round_id, results)
+            .await
+            .unwrap();
 
         assert_eq!(aggregation_result.round_id, round_id);
         assert_eq!(aggregation_result.stats.num_participants, 2);
@@ -732,7 +770,10 @@ mod tests {
 
     #[test]
     fn test_top_k_sparsification() {
-        let privacy_config = PrivacyConfig { enable_dp: false, ..Default::default() };
+        let privacy_config = PrivacyConfig {
+            enable_dp: false,
+            ..Default::default()
+        };
         let secure_agg = SecureAggregation::new(
             privacy_config,
             CompressionType::TopK { k: 2 },
@@ -753,12 +794,12 @@ mod tests {
 
     #[test]
     fn test_quantization() {
-        let privacy_config = PrivacyConfig { enable_dp: false, ..Default::default() };
-        let secure_agg = SecureAggregation::new(
-            privacy_config,
-            CompressionType::Q8,
-            QuantizationType::Int8,
-        );
+        let privacy_config = PrivacyConfig {
+            enable_dp: false,
+            ..Default::default()
+        };
+        let secure_agg =
+            SecureAggregation::new(privacy_config, CompressionType::Q8, QuantizationType::Int8);
 
         let weights = Array1::from(vec![0.1, 0.5, -0.3, 0.8, -0.2]);
         let quantized = secure_agg.quantize_weights(&weights, 8).unwrap();

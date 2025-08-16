@@ -10,13 +10,12 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use crate::bundle::{Bundle, BundleId};
 use crate::router::Contact;
 use crate::sched::{
-    LyapunovScheduler, LyapunovConfig,
-    SyntheticContactGenerator, FifoScheduler, TestResults
+    FifoScheduler, LyapunovConfig, LyapunovScheduler, SyntheticContactGenerator, TestResults,
 };
 
 /// Comprehensive scheduler performance test framework
 pub struct PerformanceTestFramework {
-    test_duration: u64, // seconds
+    test_duration: u64,       // seconds
     bundle_arrival_rate: f64, // bundles per second
     contact_generator: SyntheticContactGenerator,
 }
@@ -47,7 +46,10 @@ impl PerformanceTestFramework {
         scenario_name: &str,
     ) -> (TestResults, TestResults) {
         println!("\n🧪 Running performance test: {}", scenario_name);
-        println!("Duration: {} seconds, Topology: {:?}", self.test_duration, topology_type);
+        println!(
+            "Duration: {} seconds, Topology: {:?}",
+            self.test_duration, topology_type
+        );
 
         // Generate synthetic contact graph
         let contacts = self.generate_contacts(&topology_type);
@@ -69,12 +71,8 @@ impl PerformanceTestFramework {
         );
 
         // Run FIFO scheduler test
-        let fifo_results = self.run_scheduler_test(
-            SchedulerType::Fifo,
-            &contacts,
-            &bundles,
-            "FIFO",
-        );
+        let fifo_results =
+            self.run_scheduler_test(SchedulerType::Fifo, &contacts, &bundles, "FIFO");
 
         // Print comparison
         lyapunov_results.print_comparison(&fifo_results);
@@ -84,15 +82,25 @@ impl PerformanceTestFramework {
 
     fn generate_contacts(&mut self, topology: &TopologyType) -> Vec<Contact> {
         match topology {
-            TopologyType::Linear { contact_duration, interval } => {
-                self.contact_generator.linear_topology(*contact_duration, *interval)
-            }
-            TopologyType::Star { contact_duration, interval } => {
-                self.contact_generator.star_topology(*contact_duration, *interval)
-            }
-            TopologyType::Mesh { contact_duration, interval, density } => {
-                self.contact_generator.mesh_topology(*contact_duration, *interval, *density)
-            }
+            TopologyType::Linear {
+                contact_duration,
+                interval,
+            } => self
+                .contact_generator
+                .linear_topology(*contact_duration, *interval),
+            TopologyType::Star {
+                contact_duration,
+                interval,
+            } => self
+                .contact_generator
+                .star_topology(*contact_duration, *interval),
+            TopologyType::Mesh {
+                contact_duration,
+                interval,
+                density,
+            } => self
+                .contact_generator
+                .mesh_topology(*contact_duration, *interval, *density),
         }
     }
 
@@ -113,7 +121,10 @@ impl PerformanceTestFramework {
 
         match &scheduler_type {
             SchedulerType::Lyapunov(config) => {
-                lyapunov_scheduler = Some(LyapunovScheduler::new(config.clone()).expect("Failed to create Lyapunov scheduler"));
+                lyapunov_scheduler = Some(
+                    LyapunovScheduler::new(config.clone())
+                        .expect("Failed to create Lyapunov scheduler"),
+                );
             }
             SchedulerType::Fifo => {
                 fifo_scheduler = Some(FifoScheduler::new());
@@ -137,7 +148,8 @@ impl PerformanceTestFramework {
         }
 
         // Simulate contact opportunities and scheduling decisions
-        let mut bundle_states: HashMap<BundleId, BundleState> = bundles.iter()
+        let mut bundle_states: HashMap<BundleId, BundleState> = bundles
+            .iter()
             .map(|b| (b.id(), BundleState::Queued))
             .collect();
 
@@ -147,7 +159,8 @@ impl PerformanceTestFramework {
 
         while current_time <= end_time {
             // Find active contacts at current time
-            let active_contacts: Vec<_> = contacts.iter()
+            let active_contacts: Vec<_> = contacts
+                .iter()
                 .filter(|c| c.is_active(current_time))
                 .cloned()
                 .collect();
@@ -156,15 +169,21 @@ impl PerformanceTestFramework {
             let current_queue_length = match &scheduler_type {
                 SchedulerType::Lyapunov(_) => {
                     if let Some(ref scheduler) = lyapunov_scheduler {
-                        scheduler.get_queue_states().values()
+                        scheduler
+                            .get_queue_states()
+                            .values()
                             .map(|state| state.queue_length)
                             .sum::<usize>()
-                    } else { 0 }
+                    } else {
+                        0
+                    }
                 }
                 SchedulerType::Fifo => {
                     if let Some(ref scheduler) = fifo_scheduler {
                         scheduler.get_queue_lengths().values().sum::<usize>()
-                    } else { 0 }
+                    } else {
+                        0
+                    }
                 }
             };
 
@@ -173,15 +192,22 @@ impl PerformanceTestFramework {
 
             // Process each active contact
             for contact in &active_contacts {
-                let available_bundles: Vec<BundleId> = bundle_states.iter()
+                let available_bundles: Vec<BundleId> = bundle_states
+                    .iter()
                     .filter_map(|(id, state)| {
                         if matches!(state, BundleState::Queued) {
                             if let Some(bundle) = bundles.iter().find(|b| b.id() == *id) {
                                 if bundle.primary.destination == contact.to {
                                     Some(id.clone())
-                                } else { None }
-                            } else { None }
-                        } else { None }
+                                } else {
+                                    None
+                                }
+                            } else {
+                                None
+                            }
+                        } else {
+                            None
+                        }
                     })
                     .collect();
 
@@ -193,7 +219,8 @@ impl PerformanceTestFramework {
                 let decision = match &scheduler_type {
                     SchedulerType::Lyapunov(_) => {
                         if let Some(ref mut scheduler) = lyapunov_scheduler {
-                            scheduler.schedule_transmission(contact, &available_bundles, 1)
+                            scheduler
+                                .schedule_transmission(contact, &available_bundles, 1)
                                 .unwrap_or_else(|_| {
                                     // Create default "no transmission" decision
                                     crate::sched::SchedulingDecision {
@@ -229,7 +256,8 @@ impl PerformanceTestFramework {
 
                             if delivery_successful {
                                 // Check if delivered on time
-                                let bundle_age = current_time.saturating_sub(bundle.primary.creation_timestamp.dtn_time);
+                                let bundle_age = current_time
+                                    .saturating_sub(bundle.primary.creation_timestamp.dtn_time);
                                 let was_on_time = (bundle_age * 1000) <= bundle.primary.lifetime;
 
                                 results.bundles_delivered += 1;
@@ -244,7 +272,11 @@ impl PerformanceTestFramework {
                                 match &scheduler_type {
                                     SchedulerType::Lyapunov(_) => {
                                         if let Some(ref mut scheduler) = lyapunov_scheduler {
-                                            scheduler.dequeue_bundle(bundle_id.clone(), was_on_time, decision.estimated_energy_cost);
+                                            scheduler.dequeue_bundle(
+                                                bundle_id.clone(),
+                                                was_on_time,
+                                                decision.estimated_energy_cost,
+                                            );
                                         }
                                     }
                                     SchedulerType::Fifo => {
@@ -255,7 +287,8 @@ impl PerformanceTestFramework {
                                 }
                             } else {
                                 // Transmission failed - bundle remains queued
-                                results.total_energy_consumed += decision.estimated_energy_cost * 0.5; // Partial energy cost
+                                results.total_energy_consumed +=
+                                    decision.estimated_energy_cost * 0.5; // Partial energy cost
                             }
                         }
                     }
@@ -269,7 +302,9 @@ impl PerformanceTestFramework {
         // Calculate final statistics
         results.avg_queue_length = if !queue_length_samples.is_empty() {
             queue_length_samples.iter().sum::<usize>() as f64 / queue_length_samples.len() as f64
-        } else { 0.0 };
+        } else {
+            0.0
+        };
 
         results.finalize();
         results
@@ -278,9 +313,19 @@ impl PerformanceTestFramework {
 
 #[derive(Debug, Clone)]
 pub enum TopologyType {
-    Linear { contact_duration: u64, interval: u64 },
-    Star { contact_duration: u64, interval: u64 },
-    Mesh { contact_duration: u64, interval: u64, density: f64 },
+    Linear {
+        contact_duration: u64,
+        interval: u64,
+    },
+    Star {
+        contact_duration: u64,
+        interval: u64,
+    },
+    Mesh {
+        contact_duration: u64,
+        interval: u64,
+        density: f64,
+    },
 }
 
 #[derive(Debug, Clone)]
@@ -320,7 +365,10 @@ impl SchedulerTestSuite {
 
         let (lyap_linear, fifo_linear) = framework.run_comparison_test(
             stability_config.clone(),
-            TopologyType::Linear { contact_duration: 60, interval: 120 },
+            TopologyType::Linear {
+                contact_duration: 60,
+                interval: 120,
+            },
             "Linear Topology - Stability Focus (Low V)",
         );
 
@@ -337,7 +385,10 @@ impl SchedulerTestSuite {
 
         let (lyap_star, fifo_star) = framework2.run_comparison_test(
             energy_config,
-            TopologyType::Star { contact_duration: 90, interval: 180 },
+            TopologyType::Star {
+                contact_duration: 90,
+                interval: 180,
+            },
             "Star Topology - Energy Focus (High V)",
         );
 
@@ -356,7 +407,11 @@ impl SchedulerTestSuite {
 
         let (lyap_mesh, fifo_mesh) = framework3.run_comparison_test(
             balanced_config,
-            TopologyType::Mesh { contact_duration: 45, interval: 90, density: 0.6 },
+            TopologyType::Mesh {
+                contact_duration: 45,
+                interval: 90,
+                density: 0.6,
+            },
             "Mesh Topology - Balanced Configuration",
         );
 
@@ -377,24 +432,65 @@ impl SchedulerTestSuite {
 
         for (scenario, lyap, fifo) in &test_cases {
             println!("\n📊 {}", scenario);
-            println!("  Delivery Rate: Lyapunov {:.3} vs FIFO {:.3} - Winner: {}",
-                     lyap.delivery_rate, fifo.delivery_rate,
-                     if lyap.delivery_rate > fifo.delivery_rate { "Lyapunov" } else { "FIFO" });
-            println!("  On-Time Rate:  Lyapunov {:.3} vs FIFO {:.3} - Winner: {}",
-                     lyap.on_time_rate, fifo.on_time_rate,
-                     if lyap.on_time_rate > fifo.on_time_rate { "Lyapunov" } else { "FIFO" });
-            println!("  Energy/Bundle: Lyapunov {:.2} vs FIFO {:.2} - Winner: {}",
-                     lyap.energy_per_bundle, fifo.energy_per_bundle,
-                     if lyap.energy_per_bundle < fifo.energy_per_bundle { "Lyapunov" } else { "FIFO" });
-            println!("  Max Queue:     Lyapunov {} vs FIFO {} - Winner: {}",
-                     lyap.max_queue_length, fifo.max_queue_length,
-                     if lyap.max_queue_length < fifo.max_queue_length { "Lyapunov" } else { "FIFO" });
+            println!(
+                "  Delivery Rate: Lyapunov {:.3} vs FIFO {:.3} - Winner: {}",
+                lyap.delivery_rate,
+                fifo.delivery_rate,
+                if lyap.delivery_rate > fifo.delivery_rate {
+                    "Lyapunov"
+                } else {
+                    "FIFO"
+                }
+            );
+            println!(
+                "  On-Time Rate:  Lyapunov {:.3} vs FIFO {:.3} - Winner: {}",
+                lyap.on_time_rate,
+                fifo.on_time_rate,
+                if lyap.on_time_rate > fifo.on_time_rate {
+                    "Lyapunov"
+                } else {
+                    "FIFO"
+                }
+            );
+            println!(
+                "  Energy/Bundle: Lyapunov {:.2} vs FIFO {:.2} - Winner: {}",
+                lyap.energy_per_bundle,
+                fifo.energy_per_bundle,
+                if lyap.energy_per_bundle < fifo.energy_per_bundle {
+                    "Lyapunov"
+                } else {
+                    "FIFO"
+                }
+            );
+            println!(
+                "  Max Queue:     Lyapunov {} vs FIFO {} - Winner: {}",
+                lyap.max_queue_length,
+                fifo.max_queue_length,
+                if lyap.max_queue_length < fifo.max_queue_length {
+                    "Lyapunov"
+                } else {
+                    "FIFO"
+                }
+            );
 
             // Score the overall winner for this test case
-            let lyap_score = (if lyap.delivery_rate > fifo.delivery_rate { 1 } else { 0 }) +
-                           (if lyap.on_time_rate > fifo.on_time_rate { 1 } else { 0 }) +
-                           (if lyap.energy_per_bundle < fifo.energy_per_bundle { 1 } else { 0 }) +
-                           (if lyap.max_queue_length < fifo.max_queue_length { 1 } else { 0 });
+            let lyap_score = (if lyap.delivery_rate > fifo.delivery_rate {
+                1
+            } else {
+                0
+            }) + (if lyap.on_time_rate > fifo.on_time_rate {
+                1
+            } else {
+                0
+            }) + (if lyap.energy_per_bundle < fifo.energy_per_bundle {
+                1
+            } else {
+                0
+            }) + (if lyap.max_queue_length < fifo.max_queue_length {
+                1
+            } else {
+                0
+            });
 
             if lyap_score > 2 {
                 lyap_wins += 1;
@@ -438,20 +534,20 @@ mod tests {
 
         let linear_contacts = framework.generate_contacts(&TopologyType::Linear {
             contact_duration: 30,
-            interval: 60
+            interval: 60,
         });
         assert!(!linear_contacts.is_empty());
 
         let star_contacts = framework.generate_contacts(&TopologyType::Star {
             contact_duration: 30,
-            interval: 60
+            interval: 60,
         });
         assert!(!star_contacts.is_empty());
 
         let mesh_contacts = framework.generate_contacts(&TopologyType::Mesh {
             contact_duration: 30,
             interval: 60,
-            density: 0.5
+            density: 0.5,
         });
         assert!(!mesh_contacts.is_empty());
     }
@@ -468,7 +564,10 @@ mod tests {
 
         let (lyap_results, fifo_results) = framework.run_comparison_test(
             config,
-            TopologyType::Linear { contact_duration: 15, interval: 30 },
+            TopologyType::Linear {
+                contact_duration: 15,
+                interval: 30,
+            },
             "Quick Test",
         );
 

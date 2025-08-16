@@ -3,9 +3,9 @@
 //! Enables peer discovery and communication over BitChat BLE mesh with
 //! robust aggregation using trimmed mean and Krum algorithms.
 
-use std::collections::HashMap;
-use serde::{Deserialize, Serialize};
 use crate::{ParticipantId, Result};
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 /// Gossip protocol for peer exchange and robust aggregation
 pub struct GossipProtocol {

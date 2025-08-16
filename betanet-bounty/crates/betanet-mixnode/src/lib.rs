@@ -8,8 +8,8 @@
 #![deny(missing_docs)]
 
 use std::net::SocketAddr;
-use std::time::Duration;
 use std::sync::Arc;
+use std::time::Duration;
 
 use tokio::sync::RwLock;
 
@@ -107,7 +107,7 @@ impl MixnodeStats {
         let time_us = processing_time.as_micros() as f64;
         self.avg_processing_time_us =
             (self.avg_processing_time_us * (self.packets_processed - 1) as f64 + time_us)
-            / self.packets_processed as f64;
+                / self.packets_processed as f64;
     }
 
     /// Record forwarded packet

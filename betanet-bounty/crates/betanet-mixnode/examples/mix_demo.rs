@@ -8,16 +8,12 @@
 use std::net::SocketAddr;
 use std::time::Duration;
 
-use tokio::net::{TcpListener, TcpStream};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
+use tokio::net::{TcpListener, TcpStream};
 use tokio::time::{sleep, timeout};
-use tracing::{debug, info, warn, error};
+use tracing::{debug, error, info, warn};
 
-use betanet_mixnode::{
-    config::MixnodeConfig,
-    mixnode::StandardMixnode,
-    Mixnode,
-};
+use betanet_mixnode::{config::MixnodeConfig, mixnode::StandardMixnode, Mixnode};
 
 /// Demo configuration
 #[derive(Debug, Clone)]
@@ -57,7 +53,11 @@ pub struct DemoMixnode {
 
 impl DemoMixnode {
     /// Create new demo mixnode
-    pub fn new(id: String, address: SocketAddr, next_hop: Option<SocketAddr>) -> std::result::Result<Self, Box<dyn std::error::Error>> {
+    pub fn new(
+        id: String,
+        address: SocketAddr,
+        next_hop: Option<SocketAddr>,
+    ) -> std::result::Result<Self, Box<dyn std::error::Error>> {
         let config = MixnodeConfig {
             listen_addr: address,
             enable_sphinx: true,
@@ -65,7 +65,8 @@ impl DemoMixnode {
             ..Default::default()
         };
 
-        let mixnode = StandardMixnode::new(config).map_err(|e| Box::new(e) as Box<dyn std::error::Error>)?;
+        let mixnode =
+            StandardMixnode::new(config).map_err(|e| Box::new(e) as Box<dyn std::error::Error>)?;
 
         Ok(Self {
             id,
@@ -118,7 +119,7 @@ impl DemoMixnode {
 /// Handle incoming connection
 async fn handle_connection(
     mut stream: TcpStream,
-    next_hop: Option<SocketAddr>
+    next_hop: Option<SocketAddr>,
 ) -> std::result::Result<(), std::io::Error> {
     let mut buffer = vec![0u8; 4096];
 
@@ -159,16 +160,17 @@ async fn handle_connection(
 }
 
 /// Forward packet to next hop
-async fn forward_packet(data: &[u8], next_hop: SocketAddr) -> std::result::Result<(), std::io::Error> {
+async fn forward_packet(
+    data: &[u8],
+    next_hop: SocketAddr,
+) -> std::result::Result<(), std::io::Error> {
     match TcpStream::connect(next_hop).await {
         Ok(mut stream) => {
             stream.write_all(data).await?;
             debug!("Packet forwarded to {}", next_hop);
             Ok(())
         }
-        Err(e) => {
-            Err(e)
-        }
+        Err(e) => Err(e),
     }
 }
 
@@ -187,7 +189,10 @@ impl DemoClient {
 
     /// Send test packet through mixnet
     pub async fn send_packet(&self, data: &[u8]) -> std::result::Result<Vec<u8>, std::io::Error> {
-        info!("Sending packet through mixnet entry: {}", self.entry_address);
+        info!(
+            "Sending packet through mixnet entry: {}",
+            self.entry_address
+        );
 
         match TcpStream::connect(self.entry_address).await {
             Ok(mut stream) => {
@@ -203,10 +208,13 @@ impl DemoClient {
                         Ok(response)
                     }
                     Ok(Err(e)) => Err(e),
-                    Err(_) => Err(std::io::Error::new(std::io::ErrorKind::TimedOut, "Response timeout")),
+                    Err(_) => Err(std::io::Error::new(
+                        std::io::ErrorKind::TimedOut,
+                        "Response timeout",
+                    )),
                 }
             }
-            Err(e) => Err(e)
+            Err(e) => Err(e),
         }
     }
 }
@@ -231,21 +239,17 @@ async fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
     let mixnode2_addr: SocketAddr = "127.0.0.1:8002".parse().unwrap();
     let mixnode3_addr: SocketAddr = "127.0.0.1:8003".parse().unwrap();
 
-    info!("Topology: Client -> Mixnode1({}) -> Mixnode2({}) -> Mixnode3({})",
-          mixnode1_addr, mixnode2_addr, mixnode3_addr);
+    info!(
+        "Topology: Client -> Mixnode1({}) -> Mixnode2({}) -> Mixnode3({})",
+        mixnode1_addr, mixnode2_addr, mixnode3_addr
+    );
 
     // Create mixnodes
-    let mut mixnode1 = DemoMixnode::new(
-        "MixNode1".to_string(),
-        mixnode1_addr,
-        Some(mixnode2_addr),
-    )?;
+    let mut mixnode1 =
+        DemoMixnode::new("MixNode1".to_string(), mixnode1_addr, Some(mixnode2_addr))?;
 
-    let mut mixnode2 = DemoMixnode::new(
-        "MixNode2".to_string(),
-        mixnode2_addr,
-        Some(mixnode3_addr),
-    )?;
+    let mut mixnode2 =
+        DemoMixnode::new("MixNode2".to_string(), mixnode2_addr, Some(mixnode3_addr))?;
 
     let mut mixnode3 = DemoMixnode::new(
         "MixNode3".to_string(),
@@ -279,8 +283,12 @@ async fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
         total_packets += 1;
 
         let test_data = format!("TEST_PACKET_{:03}", i).into_bytes();
-        info!("Sending packet {}/{}: {:?}", i + 1, config.num_packets,
-              String::from_utf8_lossy(&test_data));
+        info!(
+            "Sending packet {}/{}: {:?}",
+            i + 1,
+            config.num_packets,
+            String::from_utf8_lossy(&test_data)
+        );
 
         match client.send_packet(&test_data).await {
             Ok(response) => {
@@ -307,7 +315,10 @@ async fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
     info!("================");
     info!("Total packets sent: {}", total_packets);
     info!("Successful packets: {}", success_count);
-    info!("Success rate: {:.1}%", (success_count as f64 / total_packets as f64) * 100.0);
+    info!(
+        "Success rate: {:.1}%",
+        (success_count as f64 / total_packets as f64) * 100.0
+    );
 
     if success_count > 0 {
         info!("🎉 3-hop mixnet routing demonstration SUCCESSFUL!");
@@ -392,7 +403,14 @@ async fn demo_pipeline_performance() -> Result<()> {
     info!("- Time: {:.2}s", elapsed.as_secs_f64());
     info!("- Throughput: {:.0} pkt/s", throughput);
     info!("- Target: 25,000 pkt/s");
-    info!("- Result: {}", if throughput >= 25000.0 { "✅ PASSED" } else { "❌ FAILED" });
+    info!(
+        "- Result: {}",
+        if throughput >= 25000.0 {
+            "✅ PASSED"
+        } else {
+            "❌ FAILED"
+        }
+    );
 
     Ok(())
 }
@@ -406,11 +424,7 @@ mod tests {
         let addr: SocketAddr = "127.0.0.1:9001".parse().unwrap();
         let next_hop: SocketAddr = "127.0.0.1:9002".parse().unwrap();
 
-        let mixnode = DemoMixnode::new(
-            "TestNode".to_string(),
-            addr,
-            Some(next_hop),
-        );
+        let mixnode = DemoMixnode::new("TestNode".to_string(), addr, Some(next_hop));
 
         assert!(mixnode.is_ok());
         let node = mixnode.unwrap();

@@ -54,7 +54,7 @@ impl SbomGenerator {
                 .map(|pkg| {
                     let hash = compute_package_hash(pkg)?;
                     Ok(json!({
-                        "SPDXID": format!("SPDXRef-{}", pkg.name.replace("-", "")),
+                        "SPDXID": format!("SPDXRef-{}", pkg.name.replace('-', "")),
                         "name": pkg.name,
                         "version": pkg.version.to_string(),
                         "downloadLocation": pkg.repository.as_ref()
@@ -81,16 +81,15 @@ impl SbomGenerator {
             "relationships": metadata.packages.iter().flat_map(|pkg| {
                 pkg.dependencies.iter().map(|dep| {
                     json!({
-                        "spdxElementId": format!("SPDXRef-{}", pkg.name.replace("-", "")),
+                        "spdxElementId": format!("SPDXRef-{}", pkg.name.replace('-', "")),
                         "relationshipType": "DEPENDS_ON",
-                        "relatedSpdxElement": format!("SPDXRef-{}", dep.name.replace("-", ""))
+                        "relatedSpdxElement": format!("SPDXRef-{}", dep.name.replace('-', ""))
                     })
                 }).collect::<Vec<_>>()
             }).collect::<Vec<_>>()
         });
 
-        Ok(serde_json::to_string_pretty(&spdx)
-            .map_err(|e| crate::LinterError::Parse(e.to_string()))?)
+        serde_json::to_string_pretty(&spdx).map_err(|e| crate::LinterError::Parse(e.to_string()))
     }
 
     async fn generate_cyclonedx(&self, directory: &Path) -> Result<String> {
@@ -115,8 +114,8 @@ impl SbomGenerator {
             }).collect::<Vec<_>>()
         });
 
-        Ok(serde_json::to_string_pretty(&cyclonedx)
-            .map_err(|e| crate::LinterError::Parse(e.to_string()))?)
+        serde_json::to_string_pretty(&cyclonedx)
+            .map_err(|e| crate::LinterError::Parse(e.to_string()))
     }
 }
 
@@ -127,7 +126,7 @@ fn compute_package_hash(pkg: &cargo_metadata::Package) -> Result<String> {
         .ok_or_else(|| crate::LinterError::Sbom("Missing package directory".into()))?
         .to_path_buf();
 
-    let mut files: Vec<_> = WalkDir::new(&pkg_dir)
+    let mut files: Vec<_> = WalkDir::new(pkg_dir)
         .into_iter()
         .filter_entry(|e| e.file_name().to_string_lossy() != "target")
         .filter_map(|e| e.ok())

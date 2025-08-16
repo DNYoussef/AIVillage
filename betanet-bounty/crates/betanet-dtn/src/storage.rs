@@ -76,10 +76,18 @@ impl BundleStore {
     pub async fn open<P: AsRef<Path>>(path: P) -> Result<Self, StorageError> {
         let db = sled::open(path).map_err(StorageError::DatabaseError)?;
 
-        let bundles = db.open_tree("bundles").map_err(StorageError::DatabaseError)?;
-        let metadata = db.open_tree("metadata").map_err(StorageError::DatabaseError)?;
-        let by_destination = db.open_tree("by_destination").map_err(StorageError::DatabaseError)?;
-        let by_source = db.open_tree("by_source").map_err(StorageError::DatabaseError)?;
+        let bundles = db
+            .open_tree("bundles")
+            .map_err(StorageError::DatabaseError)?;
+        let metadata = db
+            .open_tree("metadata")
+            .map_err(StorageError::DatabaseError)?;
+        let by_destination = db
+            .open_tree("by_destination")
+            .map_err(StorageError::DatabaseError)?;
+        let by_source = db
+            .open_tree("by_source")
+            .map_err(StorageError::DatabaseError)?;
 
         let stats = Arc::new(RwLock::new(StorageStats::default()));
 
@@ -98,10 +106,18 @@ impl BundleStore {
         let config = sled::Config::new().temporary(true);
         let db = config.open().map_err(StorageError::DatabaseError)?;
 
-        let bundles = db.open_tree("bundles").map_err(StorageError::DatabaseError)?;
-        let metadata = db.open_tree("metadata").map_err(StorageError::DatabaseError)?;
-        let by_destination = db.open_tree("by_destination").map_err(StorageError::DatabaseError)?;
-        let by_source = db.open_tree("by_source").map_err(StorageError::DatabaseError)?;
+        let bundles = db
+            .open_tree("bundles")
+            .map_err(StorageError::DatabaseError)?;
+        let metadata = db
+            .open_tree("metadata")
+            .map_err(StorageError::DatabaseError)?;
+        let by_destination = db
+            .open_tree("by_destination")
+            .map_err(StorageError::DatabaseError)?;
+        let by_source = db
+            .open_tree("by_source")
+            .map_err(StorageError::DatabaseError)?;
 
         let stats = Arc::new(RwLock::new(StorageStats::default()));
 
@@ -121,7 +137,11 @@ impl BundleStore {
         let id_key = self.bundle_id_key(&bundle_id);
 
         // Check if bundle already exists
-        if self.bundles.contains_key(&id_key).map_err(StorageError::DatabaseError)? {
+        if self
+            .bundles
+            .contains_key(&id_key)
+            .map_err(StorageError::DatabaseError)?
+        {
             return Err(StorageError::BundleExists(bundle_id));
         }
 
@@ -134,20 +154,24 @@ impl BundleStore {
             .map_err(|e| StorageError::SerializationError(e.to_string()))?;
 
         // Store in multiple indexes
-        self.bundles.insert(&id_key, bundle_data.as_ref())
+        self.bundles
+            .insert(&id_key, bundle_data.as_ref())
             .map_err(StorageError::DatabaseError)?;
 
-        self.metadata.insert(&id_key, metadata_data)
+        self.metadata
+            .insert(&id_key, metadata_data)
             .map_err(StorageError::DatabaseError)?;
 
         // Index by destination
         let dest_key = format!("{}#{}", bundle.primary.destination, bundle_id);
-        self.by_destination.insert(dest_key.as_bytes(), &*id_key)
+        self.by_destination
+            .insert(dest_key.as_bytes(), &*id_key)
             .map_err(StorageError::DatabaseError)?;
 
         // Index by source
         let src_key = format!("{}#{}", bundle.primary.source, bundle_id);
-        self.by_source.insert(src_key.as_bytes(), &*id_key)
+        self.by_source
+            .insert(src_key.as_bytes(), &*id_key)
             .map_err(StorageError::DatabaseError)?;
 
         // Update stats
@@ -158,7 +182,10 @@ impl BundleStore {
         }
 
         // Flush to ensure durability
-        self.db.flush_async().await.map_err(StorageError::DatabaseError)?;
+        self.db
+            .flush_async()
+            .await
+            .map_err(StorageError::DatabaseError)?;
 
         Ok(())
     }
@@ -167,7 +194,11 @@ impl BundleStore {
     pub async fn get(&self, bundle_id: &BundleId) -> Result<Option<Bundle>, StorageError> {
         let id_key = self.bundle_id_key(bundle_id);
 
-        if let Some(bundle_data) = self.bundles.get(&id_key).map_err(StorageError::DatabaseError)? {
+        if let Some(bundle_data) = self
+            .bundles
+            .get(&id_key)
+            .map_err(StorageError::DatabaseError)?
+        {
             let bundle = Bundle::decode(Bytes::from(bundle_data.to_vec()))
                 .map_err(StorageError::BundleError)?;
 
@@ -181,10 +212,17 @@ impl BundleStore {
     }
 
     /// Get bundle metadata without loading the full bundle
-    pub async fn get_metadata(&self, bundle_id: &BundleId) -> Result<Option<BundleMetadata>, StorageError> {
+    pub async fn get_metadata(
+        &self,
+        bundle_id: &BundleId,
+    ) -> Result<Option<BundleMetadata>, StorageError> {
         let id_key = self.bundle_id_key(bundle_id);
 
-        if let Some(metadata_data) = self.metadata.get(&id_key).map_err(StorageError::DatabaseError)? {
+        if let Some(metadata_data) = self
+            .metadata
+            .get(id_key)
+            .map_err(StorageError::DatabaseError)?
+        {
             let metadata: BundleMetadata = bincode::deserialize(&metadata_data)
                 .map_err(|e| StorageError::SerializationError(e.to_string()))?;
             Ok(Some(metadata))
@@ -198,7 +236,11 @@ impl BundleStore {
         let id_key = self.bundle_id_key(bundle_id);
 
         // Get metadata for cleanup
-        let metadata = if let Some(metadata_data) = self.metadata.get(&id_key).map_err(StorageError::DatabaseError)? {
+        let metadata = if let Some(metadata_data) = self
+            .metadata
+            .get(&id_key)
+            .map_err(StorageError::DatabaseError)?
+        {
             let metadata: BundleMetadata = bincode::deserialize(&metadata_data)
                 .map_err(|e| StorageError::SerializationError(e.to_string()))?;
             Some(metadata)
@@ -207,19 +249,29 @@ impl BundleStore {
         };
 
         // Remove from main storage
-        let removed = self.bundles.remove(&id_key).map_err(StorageError::DatabaseError)?.is_some();
+        let removed = self
+            .bundles
+            .remove(&id_key)
+            .map_err(StorageError::DatabaseError)?
+            .is_some();
 
         if removed {
             // Remove metadata
-            self.metadata.remove(&id_key).map_err(StorageError::DatabaseError)?;
+            self.metadata
+                .remove(&id_key)
+                .map_err(StorageError::DatabaseError)?;
 
             if let Some(meta) = metadata {
                 // Remove from indexes
                 let dest_key = format!("{}#{}", meta.destination, bundle_id);
-                self.by_destination.remove(dest_key.as_bytes()).map_err(StorageError::DatabaseError)?;
+                self.by_destination
+                    .remove(dest_key.as_bytes())
+                    .map_err(StorageError::DatabaseError)?;
 
                 let src_key = format!("{}#{}", meta.source, bundle_id);
-                self.by_source.remove(src_key.as_bytes()).map_err(StorageError::DatabaseError)?;
+                self.by_source
+                    .remove(src_key.as_bytes())
+                    .map_err(StorageError::DatabaseError)?;
 
                 // Update stats
                 let mut stats = self.stats.write().await;
@@ -232,7 +284,10 @@ impl BundleStore {
     }
 
     /// List bundles for a destination
-    pub async fn list_for_destination(&self, destination: &EndpointId) -> Result<Vec<BundleId>, StorageError> {
+    pub async fn list_for_destination(
+        &self,
+        destination: &EndpointId,
+    ) -> Result<Vec<BundleId>, StorageError> {
         let prefix = format!("{}#", destination);
         let mut bundle_ids = Vec::new();
 
@@ -295,43 +350,56 @@ impl BundleStore {
 
     /// Get approximate size of database
     pub async fn size_on_disk(&self) -> Result<u64, StorageError> {
-        Ok(self.db.size_on_disk().map_err(StorageError::DatabaseError)?)
+        self.db.size_on_disk().map_err(StorageError::DatabaseError)
     }
 
     /// Flush all pending writes
     pub async fn flush(&self) -> Result<(), StorageError> {
-        self.db.flush_async().await.map_err(StorageError::DatabaseError)?;
+        self.db
+            .flush_async()
+            .await
+            .map_err(StorageError::DatabaseError)?;
         Ok(())
     }
 
     // Helper methods
 
     fn bundle_id_key(&self, bundle_id: &BundleId) -> Vec<u8> {
-        format!("{}@{}.{}",
-               bundle_id.source,
-               bundle_id.timestamp.dtn_time,
-               bundle_id.timestamp.sequence_number).into_bytes()
+        format!(
+            "{}@{}.{}",
+            bundle_id.source, bundle_id.timestamp.dtn_time, bundle_id.timestamp.sequence_number
+        )
+        .into_bytes()
     }
 
     fn parse_bundle_id(&self, key: &str) -> Result<BundleId, StorageError> {
         // Parse "source@time.sequence" format
         if let Some((source_str, timestamp_str)) = key.split_once('@') {
             if let Some((time_str, seq_str)) = timestamp_str.split_once('.') {
-                let source: EndpointId = source_str.parse()
+                let source: EndpointId = source_str
+                    .parse()
                     .map_err(|e| StorageError::ParseError(format!("Invalid source: {}", e)))?;
-                let dtn_time: u64 = time_str.parse()
+                let dtn_time: u64 = time_str
+                    .parse()
                     .map_err(|e| StorageError::ParseError(format!("Invalid time: {}", e)))?;
-                let sequence_number: u64 = seq_str.parse()
+                let sequence_number: u64 = seq_str
+                    .parse()
                     .map_err(|e| StorageError::ParseError(format!("Invalid sequence: {}", e)))?;
 
                 return Ok(BundleId {
                     source,
-                    timestamp: crate::CreationTimestamp { dtn_time, sequence_number },
+                    timestamp: crate::CreationTimestamp {
+                        dtn_time,
+                        sequence_number,
+                    },
                 });
             }
         }
 
-        Err(StorageError::ParseError(format!("Invalid bundle ID format: {}", key)))
+        Err(StorageError::ParseError(format!(
+            "Invalid bundle ID format: {}",
+            key
+        )))
     }
 }
 
@@ -390,7 +458,10 @@ mod tests {
 
         // Retrieve bundle
         let retrieved = store.get(&bundle_id).await.unwrap().unwrap();
-        assert_eq!(retrieved.payload.data, crate::bundle::SerializableBytes::from(payload));
+        assert_eq!(
+            retrieved.payload.data,
+            crate::bundle::SerializableBytes::from(payload)
+        );
 
         // Check metadata
         let metadata = store.get_metadata(&bundle_id).await.unwrap().unwrap();

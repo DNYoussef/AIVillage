@@ -2,23 +2,18 @@
 //!
 //! Ensures proper Argon2id PoW implementation and parameter validation
 
-use crate::{LintIssue, SeverityLevel, Result};
 use crate::checks::{CheckContext, CheckRule};
-use regex::Regex;
-use once_cell::sync::Lazy;
+use crate::{LintIssue, Result, SeverityLevel};
 use async_trait::async_trait;
+use once_cell::sync::Lazy;
+use regex::Regex;
 
-static MEMORY_REGEX: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"Mobile.*memory_kb:\s*(\d+)").unwrap()
-});
+static MEMORY_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"Mobile.*memory_kb:\s*(\d+)").unwrap());
 
-static TARGET_TIME_REGEX: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"Mobile.*target_time_ms:\s*(\d+)").unwrap()
-});
+static TARGET_TIME_REGEX: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"Mobile.*target_time_ms:\s*(\d+)").unwrap());
 
-static RATE_LIMIT_REGEX: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"rate_limit.*:\s*(\d+)").unwrap()
-});
+static RATE_LIMIT_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"rate_limit.*:\s*(\d+)").unwrap());
 
 /// Check that Argon2id is properly advertised and configured
 pub struct Argon2idAdvertisementRule;
@@ -37,15 +32,16 @@ impl CheckRule for Argon2idAdvertisementRule {
         let mut issues = vec![];
 
         // Only check bootstrap-related files
-        if !context.file_path.to_string_lossy().contains("bootstrap") &&
-           !context.content.contains("PoW") &&
-           !context.content.contains("argon2") {
+        if !context.file_path.to_string_lossy().contains("bootstrap")
+            && !context.content.contains("PoW")
+            && !context.content.contains("argon2")
+        {
             return Ok(issues);
         }
 
         // Check if Argon2id is properly advertised
-        let has_argon2id_enum = context.content.contains("supports_argon2id") ||
-                               context.content.contains("Argon2id");
+        let has_argon2id_enum =
+            context.content.contains("supports_argon2id") || context.content.contains("Argon2id");
 
         if context.content.contains("PoW") && !has_argon2id_enum {
             issues.push(LintIssue::new(
@@ -71,7 +67,10 @@ impl CheckRule for Argon2idAdvertisementRule {
                 issues.push(LintIssue::new(
                     "BS002".to_string(),
                     SeverityLevel::Warning,
-                    format!("DeviceClass implementation missing key device types (found {}/4)", found_classes),
+                    format!(
+                        "DeviceClass implementation missing key device types (found {}/4)",
+                        found_classes
+                    ),
                     self.name().to_string(),
                 ));
             }
@@ -108,9 +107,10 @@ impl CheckRule for Argon2idParameterRule {
         let mut issues = vec![];
 
         // Only check files with Argon2 parameters
-        if !context.content.contains("Argon2Params") &&
-           !context.content.contains("memory_kb") &&
-           !context.content.contains("iterations") {
+        if !context.content.contains("Argon2Params")
+            && !context.content.contains("memory_kb")
+            && !context.content.contains("iterations")
+        {
             return Ok(issues);
         }
 
@@ -135,7 +135,8 @@ impl CheckRule for Argon2idParameterRule {
         }
 
         // Check for abuse factor scaling
-        if context.content.contains("Argon2Params") && !context.content.contains("scale_for_abuse") {
+        if context.content.contains("Argon2Params") && !context.content.contains("scale_for_abuse")
+        {
             issues.push(LintIssue::new(
                 "BS005".to_string(),
                 SeverityLevel::Warning,
@@ -155,7 +156,8 @@ impl Argon2idParameterRule {
             if let Some(captures) = MEMORY_REGEX.captures(line) {
                 if let Some(memory_str) = captures.get(1) {
                     if let Ok(memory_kb) = memory_str.as_str().parse::<u32>() {
-                        if memory_kb > 32768 { // > 32 MB for mobile
+                        if memory_kb > 32768 {
+                            // > 32 MB for mobile
                             issues.push(LintIssue::new(
                                 "BS006".to_string(),
                                 SeverityLevel::Error,
@@ -174,12 +176,22 @@ impl Argon2idParameterRule {
                 if let Some(time_str) = captures.get(1) {
                     if let Ok(time_ms) = time_str.as_str().parse::<u32>() {
                         if time_ms >= 300 {
-                            issues.push(LintIssue::new(
-                                "BS007".to_string(),
-                                SeverityLevel::Error,
-                                format!("Mobile target time {}ms exceeds 300ms requirement", time_ms),
-                                self.name().to_string(),
-                            ).with_location(context.file_path.clone(), line_num + 1, 0));
+                            issues.push(
+                                LintIssue::new(
+                                    "BS007".to_string(),
+                                    SeverityLevel::Error,
+                                    format!(
+                                        "Mobile target time {}ms exceeds 300ms requirement",
+                                        time_ms
+                                    ),
+                                    self.name().to_string(),
+                                )
+                                .with_location(
+                                    context.file_path.clone(),
+                                    line_num + 1,
+                                    0,
+                                ),
+                            );
                         }
                     }
                 }
@@ -215,8 +227,10 @@ impl Argon2idParameterRule {
                 issues.push(LintIssue::new(
                     "BS009".to_string(),
                     SeverityLevel::Warning,
-                    format!("Server iterations ({}) should be significantly higher than mobile ({})",
-                           server_iter, mobile_iter),
+                    format!(
+                        "Server iterations ({}) should be significantly higher than mobile ({})",
+                        server_iter, mobile_iter
+                    ),
                     self.name().to_string(),
                 ));
             }
@@ -269,15 +283,15 @@ impl CheckRule for CpuPoWFallbackRule {
         let mut issues = vec![];
 
         // Check if this file implements PoW
-        if !context.content.contains("PoW") &&
-           !context.content.contains("CpuPoW") &&
-           !context.content.contains("bootstrap") {
+        if !context.content.contains("PoW")
+            && !context.content.contains("CpuPoW")
+            && !context.content.contains("bootstrap")
+        {
             return Ok(issues);
         }
 
         // Check for CPU PoW fallback implementation
-        if context.content.contains("supports_argon2id") &&
-           !context.content.contains("CpuPoW") {
+        if context.content.contains("supports_argon2id") && !context.content.contains("CpuPoW") {
             issues.push(LintIssue::new(
                 "BS010".to_string(),
                 SeverityLevel::Error,
@@ -337,19 +351,15 @@ impl CheckRule for BootstrapNegotiationRule {
         let mut issues = vec![];
 
         // Only check bootstrap negotiation files
-        if !context.content.contains("BootstrapMessage") &&
-           !context.content.contains("ClientHello") &&
-           !context.content.contains("negotiation") {
+        if !context.content.contains("BootstrapMessage")
+            && !context.content.contains("ClientHello")
+            && !context.content.contains("negotiation")
+        {
             return Ok(issues);
         }
 
         // Check for complete negotiation message types
-        let required_messages = [
-            "ClientHello",
-            "Challenge",
-            "Solution",
-            "Result",
-        ];
+        let required_messages = ["ClientHello", "Challenge", "Solution", "Result"];
 
         let mut found_messages = 0;
         for message in &required_messages {
@@ -362,15 +372,18 @@ impl CheckRule for BootstrapNegotiationRule {
             issues.push(LintIssue::new(
                 "BS013".to_string(),
                 SeverityLevel::Error,
-                format!("Incomplete bootstrap negotiation protocol (found {}/{} message types)",
-                       found_messages, required_messages.len()),
+                format!(
+                    "Incomplete bootstrap negotiation protocol (found {}/{} message types)",
+                    found_messages,
+                    required_messages.len()
+                ),
                 self.name().to_string(),
             ));
         }
 
         // Check for capability announcement
-        if context.content.contains("ClientHello") &&
-           !context.content.contains("supports_argon2id") {
+        if context.content.contains("ClientHello") && !context.content.contains("supports_argon2id")
+        {
             issues.push(LintIssue::new(
                 "BS014".to_string(),
                 SeverityLevel::Error,
@@ -380,8 +393,7 @@ impl CheckRule for BootstrapNegotiationRule {
         }
 
         // Check for challenge expiry
-        if context.content.contains("Challenge") &&
-           !context.content.contains("expires_at") {
+        if context.content.contains("Challenge") && !context.content.contains("expires_at") {
             issues.push(LintIssue::new(
                 "BS015".to_string(),
                 SeverityLevel::Warning,
@@ -411,15 +423,16 @@ impl CheckRule for AbuseTrackingRule {
         let mut issues = vec![];
 
         // Only check abuse tracking related code
-        if !context.content.contains("AbuseTracker") &&
-           !context.content.contains("abuse_factor") &&
-           !context.content.contains("scale_for_abuse") {
+        if !context.content.contains("AbuseTracker")
+            && !context.content.contains("abuse_factor")
+            && !context.content.contains("scale_for_abuse")
+        {
             return Ok(issues);
         }
 
         // Check for abuse tracking in bootstrap manager
-        if context.content.contains("BootstrapManager") &&
-           !context.content.contains("AbuseTracker") {
+        if context.content.contains("BootstrapManager") && !context.content.contains("AbuseTracker")
+        {
             issues.push(LintIssue::new(
                 "BS016".to_string(),
                 SeverityLevel::Error,
@@ -450,8 +463,8 @@ impl CheckRule for AbuseTrackingRule {
         }
 
         // Check for progressive scaling
-        if context.content.contains("abuse_factor") &&
-           !context.content.contains("scale_for_abuse") {
+        if context.content.contains("abuse_factor") && !context.content.contains("scale_for_abuse")
+        {
             issues.push(LintIssue::new(
                 "BS019".to_string(),
                 SeverityLevel::Warning,
@@ -461,8 +474,7 @@ impl CheckRule for AbuseTrackingRule {
         }
 
         // Check for cleanup mechanism
-        if context.content.contains("AbuseTracker") &&
-           !context.content.contains("cleanup") {
+        if context.content.contains("AbuseTracker") && !context.content.contains("cleanup") {
             issues.push(LintIssue::new(
                 "BS020".to_string(),
                 SeverityLevel::Warning,
@@ -508,12 +520,14 @@ mod tests {
         let rule = Argon2idParameterRule;
 
         // Test mobile parameters too high
-        let context = create_test_context(r#"
+        let context = create_test_context(
+            r#"
             Mobile => Self {
                 memory_kb: 65536,  // Too high for mobile
                 target_time_ms: 500, // Too high for mobile
             }
-        "#);
+        "#,
+        );
         let issues = rule.check(&context).await.unwrap();
         assert!(issues.iter().any(|i| i.id == "BS006"));
         assert!(issues.iter().any(|i| i.id == "BS007"));

@@ -16,9 +16,7 @@ use bytes::{Bytes, BytesMut};
 use tokio::sync::{broadcast, Semaphore};
 use tokio::time::sleep;
 
-use crate::{
-    MixnodeError, Result,
-};
+use crate::{MixnodeError, Result};
 
 #[cfg(feature = "cover-traffic")]
 use crate::cover::{AdvancedCoverTrafficGenerator, CoverTrafficConfig};
@@ -146,7 +144,8 @@ impl MemoryPool {
 
     /// Get memory pool hit rate (percentage, 0-100)
     pub fn hit_rate_percent(&self) -> f64 {
-        let total_requests = self.allocated.load(Ordering::Relaxed) + self.reused.load(Ordering::Relaxed);
+        let total_requests =
+            self.allocated.load(Ordering::Relaxed) + self.reused.load(Ordering::Relaxed);
         if total_requests == 0 {
             return 0.0;
         }
@@ -266,7 +265,7 @@ impl PacketPipeline {
     pub fn with_config(
         num_workers: usize,
         rate_config: RateLimitingConfig,
-        cover_config: Option<CoverTrafficConfig>
+        cover_config: Option<CoverTrafficConfig>,
     ) -> Self {
         let memory_pool = Arc::new(MemoryPool::new(POOL_SIZE, 4096));
         #[cfg(feature = "sphinx")]
@@ -299,10 +298,7 @@ impl PacketPipeline {
 
     /// Create new packet pipeline with configuration (without cover traffic)
     #[cfg(not(feature = "cover-traffic"))]
-    pub fn with_config(
-        num_workers: usize,
-        rate_config: RateLimitingConfig,
-    ) -> Self {
+    pub fn with_config(num_workers: usize, rate_config: RateLimitingConfig) -> Self {
         let memory_pool = Arc::new(MemoryPool::new(POOL_SIZE, 4096));
         #[cfg(feature = "sphinx")]
         let sphinx_processor = Arc::new(SphinxProcessor::new());
@@ -419,9 +415,9 @@ impl PacketPipeline {
 
         // Wait for workers to finish
         for worker in self.workers.drain(..) {
-            worker.await.map_err(|e| {
-                MixnodeError::Network(format!("Worker join error: {}", e))
-            })?;
+            worker
+                .await
+                .map_err(|e| MixnodeError::Network(format!("Worker join error: {}", e)))?;
         }
 
         Ok(())
@@ -430,9 +426,11 @@ impl PacketPipeline {
     /// Submit packet for processing
     pub async fn submit_packet(&self, packet: PipelinePacket) -> Result<()> {
         // Acquire semaphore permit for backpressure
-        let _permit = self.processing_semaphore.acquire().await.map_err(|_| {
-            MixnodeError::Network("Pipeline semaphore closed".to_string())
-        })?;
+        let _permit = self
+            .processing_semaphore
+            .acquire()
+            .await
+            .map_err(|_| MixnodeError::Network("Pipeline semaphore closed".to_string()))?;
 
         // Add to input queue
         {
@@ -606,7 +604,7 @@ impl PipelineBenchmark {
             async move {
                 while start_time.elapsed() < test_duration {
                     for packet in test_packets {
-                        if let Err(_) = pipeline.submit_packet(packet.clone()).await {
+                        if pipeline.submit_packet(packet.clone()).await.is_err() {
                             break; // Pipeline full
                         }
                         packets_sent += 1;
@@ -682,9 +680,14 @@ impl BenchmarkResults {
         println!("  Packets dropped:   {}", self.packets_dropped);
         println!("  Elapsed time:      {:.2}s", self.elapsed_secs);
         println!("  Throughput:        {:.0} pkt/s", self.throughput_pps);
-        println!("  Avg processing:    {:.2}μs", self.avg_processing_time_ns as f64 / 1000.0);
-        println!("  Success rate:      {:.1}%",
-                 (self.packets_processed as f64 / self.packets_sent as f64) * 100.0);
+        println!(
+            "  Avg processing:    {:.2}μs",
+            self.avg_processing_time_ns as f64 / 1000.0
+        );
+        println!(
+            "  Success rate:      {:.1}%",
+            (self.packets_processed as f64 / self.packets_sent as f64) * 100.0
+        );
     }
 }
 
@@ -712,7 +715,10 @@ mod tests {
         let stats = pipeline.stats();
 
         println!("Processed {} packets", processed.len());
-        println!("Pipeline processed: {}", stats.packets_processed.load(Ordering::Relaxed));
+        println!(
+            "Pipeline processed: {}",
+            stats.packets_processed.load(Ordering::Relaxed)
+        );
 
         pipeline.stop().await.unwrap();
     }

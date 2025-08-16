@@ -8,24 +8,25 @@
 //! - Buffer management and parsing logic
 //! - Zero-copy optimization practices
 
-use crate::{LintIssue, SeverityLevel, Result};
-use crate::checks::{CheckRule, CheckContext};
-use regex::Regex;
-use once_cell::sync::Lazy;
+use crate::checks::{CheckContext, CheckRule};
+use crate::{LintIssue, Result, SeverityLevel};
 use async_trait::async_trait;
+use once_cell::sync::Lazy;
+use regex::Regex;
 
-static MAX_FRAME_SIZE_REGEX: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"MAX_FRAME_SIZE\s*:\s*usize\s*=\s*(\d+)").unwrap()
-});
+static MAX_FRAME_SIZE_REGEX: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"MAX_FRAME_SIZE\s*:\s*usize\s*=\s*(\d+)").unwrap());
 
-static MAX_STREAM_ID_REGEX: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"MAX_STREAM_ID\s*:\s*u32\s*=\s*(\d+)").unwrap()
-});
+static MAX_STREAM_ID_REGEX: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"MAX_STREAM_ID\s*:\s*u32\s*=\s*(\d+)").unwrap());
 
 static ENCODE_COMPONENTS: Lazy<Vec<(Regex, &'static str)>> = Lazy::new(|| {
     vec![
         (Regex::new("uint24").unwrap(), "length field"),
-        (Regex::new("put_u8.*>>.*16").unwrap(), "uint24 big-endian encoding"),
+        (
+            Regex::new("put_u8.*>>.*16").unwrap(),
+            "uint24 big-endian encoding",
+        ),
         (Regex::new("varint").unwrap(), "stream ID encoding"),
         (Regex::new("frame_type as u8").unwrap(), "frame type field"),
         (Regex::new("payload").unwrap(), "payload data"),
@@ -34,10 +35,19 @@ static ENCODE_COMPONENTS: Lazy<Vec<(Regex, &'static str)>> = Lazy::new(|| {
 
 static PARSING_COMPONENTS: Lazy<Vec<(Regex, &'static str)>> = Lazy::new(|| {
     vec![
-        (Regex::new(r"data.len.*<.*4").unwrap(), "minimum header size check"),
-        (Regex::new(r"data\[0\].*<<.*16").unwrap(), "uint24 big-endian decoding"),
+        (
+            Regex::new(r"data.len.*<.*4").unwrap(),
+            "minimum header size check",
+        ),
+        (
+            Regex::new(r"data\[0\].*<<.*16").unwrap(),
+            "uint24 big-endian decoding",
+        ),
         (Regex::new("decode_varint").unwrap(), "stream ID decoding"),
-        (Regex::new("FrameType::try_from").unwrap(), "frame type validation"),
+        (
+            Regex::new("FrameType::try_from").unwrap(),
+            "frame type validation",
+        ),
     ]
 });
 
@@ -58,9 +68,10 @@ impl CheckRule for FrameStructureRule {
         let mut issues = vec![];
 
         // Only check frame-related files
-        if !context.file_path.to_string_lossy().contains("frame") &&
-           !context.content.contains("Frame") &&
-           !context.content.contains("HTX") {
+        if !context.file_path.to_string_lossy().contains("frame")
+            && !context.content.contains("Frame")
+            && !context.content.contains("HTX")
+        {
             return Ok(issues);
         }
 
@@ -172,7 +183,7 @@ impl CheckRule for FrameTypeRule {
         ];
 
         for (frame_type, expected_value) in &required_frame_types {
-            if context.content.contains(&format!("enum FrameType")) {
+            if context.content.contains("enum FrameType") {
                 if !context.content.contains(frame_type) {
                     issues.push(LintIssue::new(
                         "FRAME005".to_string(),
@@ -182,7 +193,8 @@ impl CheckRule for FrameTypeRule {
                     ));
                 } else {
                     // Check for correct value assignment
-                    let type_regex = Regex::new(&format!(r"{}\s*=\s*(0x[0-9a-fA-F]+)", frame_type)).unwrap();
+                    let type_regex =
+                        Regex::new(&format!(r"{}\s*=\s*(0x[0-9a-fA-F]+)", frame_type)).unwrap();
                     let mut found_correct_value = false;
                     for line in context.content.lines() {
                         if let Some(captures) = type_regex.captures(line) {
@@ -193,8 +205,12 @@ impl CheckRule for FrameTypeRule {
                                     issues.push(LintIssue::new(
                                         "FRAME006".to_string(),
                                         SeverityLevel::Error,
-                                        format!("Frame type {} has incorrect value {} - should be {}",
-                                               frame_type, value.as_str(), expected_value),
+                                        format!(
+                                            "Frame type {} has incorrect value {} - should be {}",
+                                            frame_type,
+                                            value.as_str(),
+                                            expected_value
+                                        ),
                                         self.name().to_string(),
                                     ));
                                 }
@@ -203,11 +219,16 @@ impl CheckRule for FrameTypeRule {
                         }
                     }
 
-                    if !found_correct_value && context.content.contains(&format!("{} =", frame_type)) {
+                    if !found_correct_value
+                        && context.content.contains(&format!("{} =", frame_type))
+                    {
                         issues.push(LintIssue::new(
                             "FRAME007".to_string(),
                             SeverityLevel::Warning,
-                            format!("Could not verify {} frame type value - should be {}", frame_type, expected_value),
+                            format!(
+                                "Could not verify {} frame type value - should be {}",
+                                frame_type, expected_value
+                            ),
                             self.name().to_string(),
                         ));
                     }
@@ -219,12 +240,19 @@ impl CheckRule for FrameTypeRule {
         if context.content.contains("TryFrom<u8>") && context.content.contains("FrameType") {
             // Verify all frame types are handled in try_from
             for (frame_type, expected_value) in &required_frame_types {
-                let try_from_pattern = format!(r"{}\s*=>\s*Ok\(Self::{}\)", expected_value, frame_type);
-                if !Regex::new(&try_from_pattern).unwrap().is_match(&context.content) {
+                let try_from_pattern =
+                    format!(r"{}\s*=>\s*Ok\(Self::{}\)", expected_value, frame_type);
+                if !Regex::new(&try_from_pattern)
+                    .unwrap()
+                    .is_match(&context.content)
+                {
                     issues.push(LintIssue::new(
                         "FRAME008".to_string(),
                         SeverityLevel::Error,
-                        format!("TryFrom<u8> missing case for {} ({})", frame_type, expected_value),
+                        format!(
+                            "TryFrom<u8> missing case for {} ({})",
+                            frame_type, expected_value
+                        ),
                         self.name().to_string(),
                     ));
                 }
@@ -262,9 +290,10 @@ impl CheckRule for VarintEncodingRule {
         let mut issues = vec![];
 
         // Only check varint-related code
-        if !context.content.contains("varint") &&
-           !context.content.contains("LEB128") &&
-           !context.content.contains("encode_varint") {
+        if !context.content.contains("varint")
+            && !context.content.contains("LEB128")
+            && !context.content.contains("encode_varint")
+        {
             return Ok(issues);
         }
 
@@ -318,7 +347,10 @@ impl CheckRule for VarintEncodingRule {
                     issues.push(LintIssue::new(
                         "FRAME012".to_string(),
                         SeverityLevel::Warning,
-                        format!("Varint length calculation missing boundary check: {}", boundary),
+                        format!(
+                            "Varint length calculation missing boundary check: {}",
+                            boundary
+                        ),
                         self.name().to_string(),
                     ));
                 }
@@ -367,9 +399,10 @@ impl CheckRule for FrameBufferRule {
         let mut issues = vec![];
 
         // Only check frame buffer related code
-        if !context.content.contains("FrameBuffer") &&
-           !context.content.contains("BytesMut") &&
-           !context.content.contains("frame") {
+        if !context.content.contains("FrameBuffer")
+            && !context.content.contains("BytesMut")
+            && !context.content.contains("frame")
+        {
             return Ok(issues);
         }
 
@@ -400,12 +433,20 @@ impl CheckRule for FrameBufferRule {
                 // Check if it's in a context where copying might be unnecessary
                 let copy_contexts = ["payload", "frame", "decode"];
                 for context_word in &copy_contexts {
-                    if context.content.contains(&format!("{}.clone()", context_word)) ||
-                       context.content.contains(&format!("{}.to_vec()", context_word)) {
+                    if context
+                        .content
+                        .contains(&format!("{}.clone()", context_word))
+                        || context
+                            .content
+                            .contains(&format!("{}.to_vec()", context_word))
+                    {
                         issues.push(LintIssue::new(
                             "FRAME016".to_string(),
                             SeverityLevel::Warning,
-                            format!("Potential unnecessary copy in {} - consider zero-copy with Bytes", context_word),
+                            format!(
+                                "Potential unnecessary copy in {} - consider zero-copy with Bytes",
+                                context_word
+                            ),
                             self.name().to_string(),
                         ));
                     }
@@ -424,27 +465,27 @@ impl CheckRule for FrameBufferRule {
         }
 
         // Check buffer overflow protection
-        if context.content.contains("append_data") {
-            if !context.content.contains("max_buffer_size") && !context.content.contains("buffer.len()") {
-                issues.push(LintIssue::new(
-                    "FRAME018".to_string(),
-                    SeverityLevel::Error,
-                    "Buffer append missing overflow protection".to_string(),
-                    self.name().to_string(),
-                ));
-            }
+        if context.content.contains("append_data")
+            && !context.content.contains("max_buffer_size")
+            && !context.content.contains("buffer.len()")
+        {
+            issues.push(LintIssue::new(
+                "FRAME018".to_string(),
+                SeverityLevel::Error,
+                "Buffer append missing overflow protection".to_string(),
+                self.name().to_string(),
+            ));
         }
 
         // Check for incomplete frame handling
-        if context.content.contains("parse_frames") {
-            if !context.content.contains("IncompleteFrame") {
-                issues.push(LintIssue::new(
-                    "FRAME019".to_string(),
-                    SeverityLevel::Error,
-                    "Frame parsing missing IncompleteFrame error handling".to_string(),
-                    self.name().to_string(),
-                ));
-            }
+        if context.content.contains("parse_frames") && !context.content.contains("IncompleteFrame")
+        {
+            issues.push(LintIssue::new(
+                "FRAME019".to_string(),
+                SeverityLevel::Error,
+                "Frame parsing missing IncompleteFrame error handling".to_string(),
+                self.name().to_string(),
+            ));
         }
 
         Ok(issues)
@@ -468,22 +509,24 @@ impl CheckRule for FrameValidationRule {
         let mut issues = vec![];
 
         // Only check frame validation code
-        if !context.content.contains("Frame") &&
-           !context.content.contains("validate") &&
-           !context.content.contains("new") {
+        if !context.content.contains("Frame")
+            && !context.content.contains("validate")
+            && !context.content.contains("new")
+        {
             return Ok(issues);
         }
 
         // Check DATA frame validation
-        if context.content.contains("Frame::data") || context.content.contains("FrameType::Data") {
-            if !context.content.contains("stream_id == 0") && !context.content.contains("stream_id > 0") {
-                issues.push(LintIssue::new(
-                    "FRAME020".to_string(),
-                    SeverityLevel::Error,
-                    "DATA frame missing stream_id > 0 validation".to_string(),
-                    self.name().to_string(),
-                ));
-            }
+        if (context.content.contains("Frame::data") || context.content.contains("FrameType::Data"))
+            && !context.content.contains("stream_id == 0")
+            && !context.content.contains("stream_id > 0")
+        {
+            issues.push(LintIssue::new(
+                "FRAME020".to_string(),
+                SeverityLevel::Error,
+                "DATA frame missing stream_id > 0 validation".to_string(),
+                self.name().to_string(),
+            ));
         }
 
         // Check WINDOW_UPDATE frame validation
@@ -506,15 +549,16 @@ impl CheckRule for FrameValidationRule {
         }
 
         // Check PING frame validation
-        if context.content.contains("ping") || context.content.contains("Ping") {
-            if context.content.contains("ping_data") && !context.content.contains("data.len() > 8") {
-                issues.push(LintIssue::new(
-                    "FRAME022".to_string(),
-                    SeverityLevel::Error,
-                    "PING frame missing payload size validation (8 bytes max)".to_string(),
-                    self.name().to_string(),
-                ));
-            }
+        if (context.content.contains("ping") || context.content.contains("Ping"))
+            && context.content.contains("ping_data")
+            && !context.content.contains("data.len() > 8")
+        {
+            issues.push(LintIssue::new(
+                "FRAME022".to_string(),
+                SeverityLevel::Error,
+                "PING frame missing payload size validation (8 bytes max)".to_string(),
+                self.name().to_string(),
+            ));
         }
 
         // Check size validation
@@ -613,7 +657,7 @@ mod tests {
         "#;
         let context = create_test_context(content);
         let issues = rule.check(&context).await.unwrap();
-        assert!(issues.len() > 0);
+        assert!(!issues.is_empty());
         assert!(issues.iter().any(|i| i.id == "FRAME005"));
     }
 
@@ -630,7 +674,7 @@ mod tests {
         "#;
         let context = create_test_context(content);
         let issues = rule.check(&context).await.unwrap();
-        assert!(issues.len() > 0);
+        assert!(!issues.is_empty());
         assert!(issues.iter().any(|i| i.id == "FRAME010"));
     }
 

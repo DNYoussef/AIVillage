@@ -3,8 +3,8 @@
 //! Enables split learning where early layers run on device and later layers
 //! run on beacon nodes, with record/replay of microbatches.
 
-use serde::{Deserialize, Serialize};
 use crate::{ParticipantId, Result};
+use serde::{Deserialize, Serialize};
 
 /// Split learning coordinator
 pub struct SplitLearning {

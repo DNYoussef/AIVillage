@@ -9,21 +9,21 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use bytes::Bytes;
 use serde::{Deserialize, Serialize};
-use tokio::sync::{mpsc, RwLock, Mutex};
+use tokio::sync::{mpsc, Mutex, RwLock};
 use tracing::{debug, error, info, warn};
 
-#[cfg(feature = "mls")]
-use openmls::prelude::*;
 #[cfg(feature = "mls")]
 use openmls::group::MlsGroup as MlsGroup_;
 #[cfg(feature = "mls")]
 use openmls::messages::processed_message::ProcessedMessageContent;
 #[cfg(feature = "mls")]
+use openmls::prelude::*;
+#[cfg(feature = "mls")]
 use openmls_rust_crypto::OpenMlsRustCrypto;
 #[cfg(feature = "mls")]
 use openmls_traits::{OpenMlsCryptoProvider, OpenMlsProvider};
 
-use crate::{AgentId, AgentFabricError, Result};
+use crate::{AgentFabricError, AgentId, Result};
 
 /// MLS group configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -82,9 +82,7 @@ pub enum GroupMessageType {
         action: VoteAction,
     },
     /// General group communication
-    Broadcast {
-        category: String,
-    },
+    Broadcast { category: String },
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -402,7 +400,8 @@ impl MlsGroup {
         let deadline = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap_or_default()
-            .as_secs() + timeout_seconds;
+            .as_secs()
+            + timeout_seconds;
 
         let proposal = VoteProposal {
             proposal_id: proposal_id.clone(),
@@ -448,11 +447,18 @@ impl MlsGroup {
     }
 
     /// Cast a vote
-    pub async fn cast_vote(&self, proposal_id: String, voter: AgentId, approve: bool) -> Result<()> {
+    pub async fn cast_vote(
+        &self,
+        proposal_id: String,
+        voter: AgentId,
+        approve: bool,
+    ) -> Result<()> {
         let vote_weight = self.get_member_vote_weight(&voter).await.unwrap_or(0);
 
         if vote_weight == 0 {
-            return Err(AgentFabricError::MlsError("Voter not found or no vote weight".to_string()));
+            return Err(AgentFabricError::MlsError(
+                "Voter not found or no vote weight".to_string(),
+            ));
         }
 
         // Update proposal
@@ -486,7 +492,10 @@ impl MlsGroup {
 
         self.send_message(vote_message).await?;
 
-        debug!("Vote cast for proposal {} by {}: {}", proposal_id, voter, approve);
+        debug!(
+            "Vote cast for proposal {} by {}: {}",
+            proposal_id, voter, approve
+        );
         Ok(())
     }
 
@@ -512,10 +521,16 @@ impl MlsGroup {
             GroupMessageType::Training { session_id, action } => {
                 self.handle_training_message(session_id, action).await?;
             }
-            GroupMessageType::Alert { alert_level, category } => {
+            GroupMessageType::Alert {
+                alert_level,
+                category,
+            } => {
                 self.handle_alert_message(alert_level, category).await?;
             }
-            GroupMessageType::Vote { proposal_id, action } => {
+            GroupMessageType::Vote {
+                proposal_id,
+                action,
+            } => {
                 self.handle_vote_message(proposal_id, action).await?;
             }
             GroupMessageType::Broadcast { category: _ } => {
@@ -535,7 +550,11 @@ impl MlsGroup {
         Ok(())
     }
 
-    async fn handle_training_message(&self, _session_id: &str, action: &TrainingAction) -> Result<()> {
+    async fn handle_training_message(
+        &self,
+        _session_id: &str,
+        action: &TrainingAction,
+    ) -> Result<()> {
         match action {
             TrainingAction::StartSession => {
                 let mut stats = self.stats.write().await;
@@ -604,9 +623,15 @@ impl MlsGroup {
 
             if passed {
                 proposal.executed = true;
-                info!("Vote {} PASSED ({} for, {} against)", proposal_id, proposal.votes_for, proposal.votes_against);
+                info!(
+                    "Vote {} PASSED ({} for, {} against)",
+                    proposal_id, proposal.votes_for, proposal.votes_against
+                );
             } else {
-                info!("Vote {} FAILED ({} for, {} against)", proposal_id, proposal.votes_for, proposal.votes_against);
+                info!(
+                    "Vote {} FAILED ({} for, {} against)",
+                    proposal_id, proposal.votes_for, proposal.votes_against
+                );
             }
 
             let mut stats = self.stats.write().await;
@@ -635,7 +660,9 @@ mod tests {
     #[tokio::test]
     async fn test_group_creation() {
         let config = GroupConfig::default();
-        let group = MlsGroup::new("test-group".to_string(), config).await.unwrap();
+        let group = MlsGroup::new("test-group".to_string(), config)
+            .await
+            .unwrap();
 
         assert_eq!(group.group_id, "test-group");
         assert_eq!(group.config.group_id, "default");

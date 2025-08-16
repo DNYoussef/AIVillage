@@ -1,7 +1,7 @@
 //! Unit tests for individual federated learning components
 
-use ndarray::Array1;
 use federated::*;
+use ndarray::Array1;
 
 #[test]
 fn test_round_id_creation_and_display() {
@@ -131,7 +131,7 @@ fn test_model_parameters() {
     let params = ModelParameters::new(
         "v1.0".to_string(),
         bytes::Bytes::from(weights_bytes),
-        metadata
+        metadata,
     );
 
     assert_eq!(params.version, "v1.0");
@@ -162,11 +162,8 @@ fn test_resource_metrics() {
 #[test]
 fn test_fl_receipt_creation() {
     let agent_id = agent_fabric::AgentId::new("test-participant", "mobile");
-    let participant = ParticipantId::new(
-        agent_id,
-        DeviceType::Phone,
-        DeviceCapabilities::default()
-    );
+    let participant =
+        ParticipantId::new(agent_id, DeviceType::Phone, DeviceCapabilities::default());
 
     let receipt = FLReceipt::new(participant.clone(), 1000, 1_000_000, 50.0);
 

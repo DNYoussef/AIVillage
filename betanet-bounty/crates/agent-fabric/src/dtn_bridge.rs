@@ -11,18 +11,17 @@ use std::time::Duration;
 use async_trait::async_trait;
 use bytes::Bytes;
 use serde::{Deserialize, Serialize};
-use tokio::sync::{mpsc, RwLock, Mutex};
+use tokio::sync::{mpsc, Mutex, RwLock};
 use tracing::{debug, error, info, warn};
 
+use betanet_dtn::api::{BundleEvent, IncomingBundle, RegistrationInfo};
 use betanet_dtn::{
-    DtnNode, DtnError, EndpointId, BundleId, SendBundleOptions as DtnSendOptions,
-    RoutingPolicy,
+    BundleId, DtnError, DtnNode, EndpointId, RoutingPolicy, SendBundleOptions as DtnSendOptions,
 };
-use betanet_dtn::api::{RegistrationInfo, IncomingBundle, BundleEvent};
 
 use crate::{
-    AgentId, AgentMessage, AgentResponse, AgentClient, AgentServer,
-    AgentFabricError, Result, DeliveryOptions, MessagePriority
+    AgentClient, AgentFabricError, AgentId, AgentMessage, AgentResponse, AgentServer,
+    DeliveryOptions, MessagePriority, Result,
 };
 
 /// Bundle message wrapper for agent messaging
@@ -66,10 +65,7 @@ pub struct BundleStats {
 
 impl DtnBridge {
     /// Create new DTN bridge
-    pub async fn new(
-        local_endpoint: EndpointId,
-        storage_path: impl AsRef<Path>,
-    ) -> Result<Self> {
+    pub async fn new(local_endpoint: EndpointId, storage_path: impl AsRef<Path>) -> Result<Self> {
         Self::with_policy(local_endpoint, storage_path, RoutingPolicy::default()).await
     }
 
@@ -79,13 +75,9 @@ impl DtnBridge {
         storage_path: impl AsRef<Path>,
         policy: RoutingPolicy,
     ) -> Result<Self> {
-        let (node, event_receiver) = DtnNode::new(
-            local_endpoint.clone(),
-            storage_path,
-            policy,
-        )
-        .await
-        .map_err(AgentFabricError::DtnError)?;
+        let (node, event_receiver) = DtnNode::new(local_endpoint.clone(), storage_path, policy)
+            .await
+            .map_err(AgentFabricError::DtnError)?;
 
         let node = Arc::new(node);
 
@@ -115,7 +107,10 @@ impl DtnBridge {
     /// Start the DTN bridge
     pub async fn start(&self) -> Result<()> {
         // Start DTN node
-        self.node.start().await.map_err(AgentFabricError::DtnError)?;
+        self.node
+            .start()
+            .await
+            .map_err(AgentFabricError::DtnError)?;
 
         // Start background tasks
         self.start_background_tasks().await;
@@ -142,7 +137,8 @@ impl DtnBridge {
             .map_err(|e| AgentFabricError::SerializationError(e.to_string()))?;
 
         let dtn_options = DtnSendOptions {
-            lifetime: options.timeout_ms
+            lifetime: options
+                .timeout_ms
                 .map(Duration::from_millis)
                 .unwrap_or(Duration::from_secs(24 * 60 * 60)), // 24 hours default
             priority: match options.priority {
@@ -169,10 +165,7 @@ impl DtnBridge {
             stats.bytes_sent += message.content.payload.len() as u64;
         }
 
-        debug!(
-            "Sent bundle {} to {} via DTN",
-            bundle_id, destination
-        );
+        debug!("Sent bundle {} to {} via DTN", bundle_id, destination);
 
         Ok(bundle_id)
     }
@@ -300,19 +293,31 @@ impl DtnBridge {
 
     async fn process_bundle_event(&self, event: BundleEvent) {
         match event {
-            BundleEvent::BundleReceived { bundle_id, source, destination, payload_size } => {
+            BundleEvent::BundleReceived {
+                bundle_id,
+                source,
+                destination,
+                payload_size,
+            } => {
                 debug!(
                     "Bundle {} received: {} -> {} ({} bytes)",
                     bundle_id, source, destination, payload_size
                 );
             }
-            BundleEvent::BundleForwarded { bundle_id, next_hop, cla_name } => {
+            BundleEvent::BundleForwarded {
+                bundle_id,
+                next_hop,
+                cla_name,
+            } => {
                 debug!(
                     "Bundle {} forwarded to {} via {}",
                     bundle_id, next_hop, cla_name
                 );
             }
-            BundleEvent::BundleDelivered { bundle_id, to_application } => {
+            BundleEvent::BundleDelivered {
+                bundle_id,
+                to_application,
+            } => {
                 info!(
                     "Bundle {} delivered to application {}",
                     bundle_id, to_application
@@ -333,7 +338,10 @@ impl DtnBridge {
             BundleEvent::CustodyAccepted { bundle_id } => {
                 debug!("Custody accepted for bundle {}", bundle_id);
             }
-            BundleEvent::DeliveryReport { bundle_id, delivered } => {
+            BundleEvent::DeliveryReport {
+                bundle_id,
+                delivered,
+            } => {
                 debug!(
                     "Delivery report for bundle {}: {}",
                     bundle_id,
@@ -386,7 +394,9 @@ impl DtnClient {
         };
 
         let destination = self.target_agent.to_endpoint();
-        self.bridge.send_bundle(destination, bundle_message, options).await
+        self.bridge
+            .send_bundle(destination, bundle_message, options)
+            .await
     }
 }
 
@@ -395,7 +405,9 @@ impl AgentClient for DtnClient {
     async fn send_message(&self, message: AgentMessage) -> Result<AgentResponse> {
         // For DTN/bundle delivery, we typically don't get immediate responses
         // This could be enhanced to support request-response patterns over DTN
-        let _bundle_id = self.send_bundle(message.clone(), DeliveryOptions::default()).await?;
+        let _bundle_id = self
+            .send_bundle(message.clone(), DeliveryOptions::default())
+            .await?;
 
         // Return a success response indicating the bundle was sent
         Ok(AgentResponse::success(
@@ -405,7 +417,9 @@ impl AgentClient for DtnClient {
     }
 
     async fn send_notification(&self, message: AgentMessage) -> Result<()> {
-        let _bundle_id = self.send_bundle(message, DeliveryOptions::default()).await?;
+        let _bundle_id = self
+            .send_bundle(message, DeliveryOptions::default())
+            .await?;
         Ok(())
     }
 
@@ -440,8 +454,8 @@ impl DtnServer {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tempfile::TempDir;
     use std::sync::atomic::{AtomicUsize, Ordering};
+    use tempfile::TempDir;
 
     struct TestDtnServer {
         call_count: AtomicUsize,
@@ -469,9 +483,15 @@ mod tests {
             self.call_count.fetch_add(1, Ordering::Relaxed);
 
             if message.message_type == "ping" {
-                Ok(Some(AgentResponse::success(&message.id, Bytes::from("pong"))))
+                Ok(Some(AgentResponse::success(
+                    &message.id,
+                    Bytes::from("pong"),
+                )))
             } else {
-                Ok(Some(AgentResponse::error(&message.id, "Unknown message type")))
+                Ok(Some(AgentResponse::error(
+                    &message.id,
+                    "Unknown message type",
+                )))
             }
         }
 
@@ -485,7 +505,9 @@ mod tests {
         let temp_dir = TempDir::new().unwrap();
         let endpoint = EndpointId::node("test-node");
 
-        let bridge = DtnBridge::new(endpoint.clone(), temp_dir.path()).await.unwrap();
+        let bridge = DtnBridge::new(endpoint.clone(), temp_dir.path())
+            .await
+            .unwrap();
         assert_eq!(bridge.local_endpoint(), &endpoint);
     }
 
@@ -503,7 +525,10 @@ mod tests {
 
         assert_eq!(bundle_msg.from, deserialized.from);
         assert_eq!(bundle_msg.to, deserialized.to);
-        assert_eq!(bundle_msg.content.message_type, deserialized.content.message_type);
+        assert_eq!(
+            bundle_msg.content.message_type,
+            deserialized.content.message_type
+        );
     }
 
     #[tokio::test]

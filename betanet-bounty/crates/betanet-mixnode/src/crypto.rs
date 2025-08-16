@@ -4,7 +4,9 @@ use chacha20poly1305::{
     aead::{Aead, AeadCore, KeyInit},
     ChaCha20Poly1305, Key, Nonce,
 };
-use ed25519_dalek::{Keypair, PublicKey as Ed25519PublicKey, SecretKey, Signature, Signer, Verifier};
+use ed25519_dalek::{
+    Keypair, PublicKey as Ed25519PublicKey, SecretKey, Signature, Signer, Verifier,
+};
 use hkdf::Hkdf;
 use rand::rngs::OsRng;
 use sha2::Sha256;
@@ -84,9 +86,8 @@ impl Ed25519Signer {
 
     /// Create signer from private key bytes
     pub fn from_bytes(bytes: &[u8; 32]) -> Result<Self> {
-        let secret = SecretKey::from_bytes(bytes).map_err(|e| {
-            MixnodeError::Crypto(format!("Invalid secret key: {}", e))
-        })?;
+        let secret = SecretKey::from_bytes(bytes)
+            .map_err(|e| MixnodeError::Crypto(format!("Invalid secret key: {}", e)))?;
         let public = Ed25519PublicKey::from(&secret);
         let keypair = Keypair { secret, public };
         Ok(Self { keypair })
@@ -239,7 +240,11 @@ mod tests {
         let public_key = signer.public_key();
 
         assert!(Ed25519Signer::verify(&public_key, data, &signature));
-        assert!(!Ed25519Signer::verify(&public_key, b"wrong message", &signature));
+        assert!(!Ed25519Signer::verify(
+            &public_key,
+            b"wrong message",
+            &signature
+        ));
     }
 
     #[test]

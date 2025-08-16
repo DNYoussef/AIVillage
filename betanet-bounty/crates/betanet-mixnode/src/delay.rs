@@ -3,7 +3,6 @@
 use std::collections::BinaryHeap;
 use std::time::{Duration, Instant};
 
-
 /// Delayed packet entry
 #[derive(Debug)]
 struct DelayedPacket {
@@ -96,7 +95,9 @@ mod tests {
         let packet = vec![1, 2, 3, 4];
 
         // Add packet with 10ms delay
-        queue.add_packet(packet.clone(), Duration::from_millis(10)).await;
+        queue
+            .add_packet(packet.clone(), Duration::from_millis(10))
+            .await;
 
         // Should not be ready immediately
         assert!(queue.pop_ready().await.is_none());
