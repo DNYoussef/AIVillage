@@ -182,8 +182,8 @@ build-backend = "setuptools.build_meta"
 
 # Linting and formatting configuration
 [tool.ruff]
-target-version = "py310"
-line-length = 88
+target-version = "py311"
+line-length = 120
 
 [tool.ruff.lint]
 # Essential rules for CI stability - focused on correctness and compatibility
@@ -244,11 +244,11 @@ known-first-party = ["agents", "communications", "core", "agent_forge", "utils",
 force-sort-within-sections = true
 
 [tool.black]
-line-length = 88
-target-version = ['py310']
+line-length = 120
+target-version = ['py311']
 include = '\.pyi?$'
 extend-exclude = '''
-# Exclude generated files
+# Exclude generated files and archived directories
 /(
     \.eggs
   | \.git
@@ -262,11 +262,15 @@ extend-exclude = '''
   | node_modules
   | models
   | download_env
+  | archived
+  | deprecated
+  | experimental
+  | __pycache__
 )/
 '''
 
 [tool.mypy]
-python_version = "3.10"
+python_version = "3.11"
 ignore_missing_imports = true
 warn_unused_configs = true
 

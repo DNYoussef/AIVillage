@@ -1,0 +1,23 @@
+# Global code owners
+* @aivillage/betanet-team
+
+# Rust crates
+/crates/ @aivillage/rust-team
+/crates/betanet-htx/ @aivillage/transport-team
+/crates/betanet-mixnode/ @aivillage/mixnet-team
+/crates/betanet-utls/ @aivillage/fingerprint-team
+/crates/betanet-linter/ @aivillage/security-team
+
+# FFI and integration
+/ffi/ @aivillage/integration-team
+/ffi/betanet-c/python/ @aivillage/python-team
+
+# Infrastructure
+/.github/ @aivillage/devops-team
+/tools/ @aivillage/devops-team
+Makefile @aivillage/devops-team
+
+# Examples and documentation
+/examples/ @aivillage/docs-team
+README.md @aivillage/docs-team
+LICENSE @aivillage/legal-team

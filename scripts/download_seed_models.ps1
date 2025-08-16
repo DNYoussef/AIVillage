@@ -19,23 +19,24 @@ Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "Target: $Root" -ForegroundColor White
 Write-Host ""
 
-# Check Python and required packages
-$venv = "$Root\.venv"
+# Determine python path
+$venv = Join-Path $Root ".venv"
 if (Test-Path $venv) {
-    $py = "$venv\Scripts\python.exe"
-    Write-Host "✓ Using virtual environment: $venv" -ForegroundColor Green
+    $py = Join-Path $venv "Scripts\python.exe"
+    Write-Host "Using virtual environment: $venv" -ForegroundColor Green
 }
 else {
     $py = "python"
-    Write-Host "⚠ Using system Python (consider running OFFLINE_install.ps1 first)" -ForegroundColor Yellow
+    Write-Host "Using system Python (consider running OFFLINE_install.ps1 first)" -ForegroundColor Yellow
 }
 
-# Test huggingface_hub availability
+# Ensure huggingface_hub available
 try {
-    & $py -c "import huggingface_hub; print('✓ huggingface_hub available')"
+    & $py -c "import huggingface_hub; print('huggingface_hub_ok')" > $null
+    Write-Host "huggingface_hub available" -ForegroundColor Green
 }
 catch {
-    Write-Host "❌ huggingface_hub not found. Installing..." -ForegroundColor Red
+    Write-Host "huggingface_hub not found. Installing..." -ForegroundColor Yellow
     & $py -m pip install huggingface_hub transformers torch --quiet
     if ($LASTEXITCODE -ne 0) {
         Write-Host "Failed to install required packages" -ForegroundColor Red
@@ -43,7 +44,6 @@ catch {
     }
 }
 
-# Define the 3 seed models
 $models = @(
     @{
         id        = "Qwen/Qwen2.5-Coder-1.5B-Instruct"
@@ -65,16 +65,15 @@ $models = @(
     }
 )
 
-Write-Host "📋 Models to download:" -ForegroundColor Blue
-foreach ($model in $models) {
-    $targetDir = Join-Path $env:AIV_MODELS_DIR $model.safe_name
-    $exists = Test-Path (Join-Path $targetDir "config.json")
-    $status = if ($exists) { "✓ EXISTS" } else { "⬇ DOWNLOAD" }
-    Write-Host "  $($model.id) ($($model.type)) - $status" -ForegroundColor $(if ($exists) { "Green" } else { "Yellow" })
+Write-Host "Models to download:" -ForegroundColor Blue
+foreach ($m in $models) {
+    $td = Join-Path $env:AIV_MODELS_DIR $m.safe_name
+    $exists = Test-Path (Join-Path $td "config.json")
+    $status = if ($exists) { "[EXISTS]" } else { "[DOWNLOAD]" }
+    Write-Host "  $($m.id) ($($m.type)) - $status" -ForegroundColor $(if ($exists) { "Green" } else { "Yellow" })
 }
 Write-Host ""
 
-# Download each model
 $downloaded = 0
 $skipped = 0
 $failed = 0
@@ -82,33 +81,30 @@ $failed = 0
 foreach ($model in $models) {
     $modelId = $model.id
     $targetDir = Join-Path $env:AIV_MODELS_DIR $model.safe_name
+    Write-Host "Processing: $modelId -> $targetDir" -ForegroundColor Yellow
 
-    Write-Host "🔄 Processing: $modelId" -ForegroundColor Yellow
-
-    # Check if already exists
-    if ((Test-Path (Join-Path $targetDir "config.json")) -and !$Force) {
+    # Check existing
+    if ((Test-Path (Join-Path $targetDir "config.json")) -and -not $Force) {
         if ($SkipExisting) {
-            Write-Host "   ✓ Already exists, skipping" -ForegroundColor Green
+            Write-Host "  Skipping existing" -ForegroundColor Green
             $skipped++
             continue
         }
         else {
-            $response = Read-Host "   Model exists. Overwrite? (y/N)"
-            if ($response -notmatch "^[Yy]") {
-                Write-Host "   ✓ Skipped by user" -ForegroundColor Yellow
+            $resp = Read-Host "  Model exists. Overwrite? (y/N)"
+            if ($resp -notmatch "^[Yy]") {
+                Write-Host "  Skipped by user" -ForegroundColor Yellow
                 $skipped++
                 continue
             }
         }
     }
 
-    # Create target directory
     New-Item -ItemType Directory -Path $targetDir -Force | Out-Null
 
-    # Download using Python script
+    # Write python downloader to temp file
     $pyLines = @(
         '#!/usr/bin/env python3',
-        'import os',
         'import sys',
         'from huggingface_hub import snapshot_download',
         'from pathlib import Path',
@@ -117,7 +113,7 @@ foreach ($model in $models) {
         'target_dir = sys.argv[2]',
         'revision = sys.argv[3]',
         '',
-        'print(f"Downloading {model_id} to {target_dir}")',
+        'print("Downloading {} to {}".format(model_id, target_dir))',
         '',
         'try:',
         '    snapshot_download(',
@@ -127,54 +123,48 @@ foreach ($model in $models) {
         '        local_dir_use_symlinks=False,',
         '        resume_download=True',
         '    )',
-        '',
         '    config_path = Path(target_dir) / "config.json"',
         '    if not config_path.exists():',
-        '        print(f"[x] Download failed: config.json not found in {target_dir}")',
+        '        print("[x] Download failed: config.json not found in {}".format(target_dir))',
         '        sys.exit(1)',
-        '',
-        '    print(f"[v] Download successful: {config_path}")',
+        '    print("[v] Download successful: {}".format(config_path))',
         '    sys.exit(0)',
-        '',
         'except Exception as e:',
-        '    print(f"[x] Download failed: {e}")',
+        '    print("[x] Download failed: {}".format(e))',
         '    sys.exit(1)'
     )
-    $tempPyScript = Join-Path $env:TEMP 'download_model.py'
-    $pyLines | Set-Content -Path $tempPyScript -Encoding UTF8
+    $tempPy = Join-Path $env:TEMP "download_model.py"
+    $pyLines | Set-Content -Path $tempPy -Encoding UTF8
 
     try {
-        & $py $tempPyScript $modelId $targetDir $model.revision
+        & $py $tempPy $modelId $targetDir $model.revision
         if ($LASTEXITCODE -eq 0) {
-            Write-Host "   ✅ Download completed" -ForegroundColor Green
+            Write-Host "  Download completed" -ForegroundColor Green
             $downloaded++
         }
         else {
-            Write-Host "   ❌ Download failed" -ForegroundColor Red
+            Write-Host "  Download failed (python exit code $LASTEXITCODE)" -ForegroundColor Red
             $failed++
         }
     }
     catch {
-        Write-Host "   ❌ Download error: $_" -ForegroundColor Red
+        Write-Host "  Error running python: $_" -ForegroundColor Red
         $failed++
     }
     finally {
-        Remove-Item $tempPyScript -ErrorAction SilentlyContinue
+        Remove-Item $tempPy -ErrorAction SilentlyContinue
     }
 
     Write-Host ""
 }
 
-# Update models.yaml
-Write-Host "📝 Updating models.yaml..." -ForegroundColor Blue
-
+Write-Host "Updating models.yaml" -ForegroundColor Blue
 $yamlLines = @(
     "# Agent Forge Seed Models for EvoMerge Pipeline",
     "# Generated by download_seed_models.ps1",
     "",
     "models:"
 )
-
 foreach ($model in $models) {
     $targetDir = Join-Path $env:AIV_MODELS_DIR $model.safe_name
     if (Test-Path (Join-Path $targetDir "config.json")) {
@@ -192,27 +182,20 @@ foreach ($model in $models) {
         $yamlLines += ""
     }
 }
-
 $modelsYaml = Join-Path $Root "models\models.yaml"
 $yamlLines | Set-Content -Path $modelsYaml -Encoding UTF8
-Write-Host "   ✓ Updated: $modelsYaml" -ForegroundColor Green
+Write-Host "  Updated: $modelsYaml" -ForegroundColor Green
 
-# Summary
-Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "Download Summary" -ForegroundColor Cyan
-Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "✅ Downloaded: $downloaded models" -ForegroundColor Green
-Write-Host "⏭ Skipped: $skipped models" -ForegroundColor Yellow
-Write-Host "❌ Failed: $failed models" -ForegroundColor Red
-Write-Host ""
+Write-Host "  Downloaded: $downloaded" -ForegroundColor Green
+Write-Host "  Skipped: $skipped" -ForegroundColor Yellow
+Write-Host "  Failed: $failed" -ForegroundColor Red
 
 if ($failed -gt 0) {
-    Write-Host "⚠ Some downloads failed. Check network connection and try again." -ForegroundColor Yellow
-    Write-Host "   Use -Force to overwrite existing models" -ForegroundColor Gray
+    Write-Host "Some downloads failed. Check logs and network." -ForegroundColor Yellow
     exit 1
 }
 
-# Verify all models are ready
 $readyModels = 0
 foreach ($model in $models) {
     $targetDir = Join-Path $env:AIV_MODELS_DIR $model.safe_name
@@ -221,33 +204,17 @@ foreach ($model in $models) {
     }
 }
 
-Write-Host "📊 Pipeline Status:" -ForegroundColor Blue
-Write-Host "   Models ready: $readyModels/3" -ForegroundColor White
-Write-Host "   Storage path: $env:AIV_MODELS_DIR" -ForegroundColor White
-Write-Host "   Models config: $modelsYaml" -ForegroundColor White
+Write-Host "Models ready: $readyModels/3" -ForegroundColor White
+Write-Host "Storage path: $env:AIV_MODELS_DIR" -ForegroundColor White
+Write-Host "Models config: $modelsYaml" -ForegroundColor White
 
 if ($readyModels -eq 3) {
-    Write-Host ""
-    Write-Host "🎉 All models ready! Next steps:" -ForegroundColor Green
-    Write-Host "   1. Run EvoMerge: ./scripts/run_evomerge.ps1" -ForegroundColor White
-    Write-Host "   2. Run BitNet training: ./scripts/run_bitnet158.ps1 -ModelPath <path>" -ForegroundColor White
-    Write-Host "   3. Test specific model: ./scripts/test_bitnet_implementation.py" -ForegroundColor White
-    Write-Host ""
-    Write-Host "🔧 Available models:" -ForegroundColor Blue
-    foreach ($model in $models) {
-        $targetDir = Join-Path $env:AIV_MODELS_DIR $model.safe_name
-        if (Test-Path (Join-Path $targetDir "config.json")) {
-            Write-Host "   $($model.type): $targetDir" -ForegroundColor Gray
-        }
-    }
+    Write-Host "All models ready." -ForegroundColor Green
+    Write-Host "Next steps: Run EvoMerge: ./scripts/run_evomerge.ps1" -ForegroundColor White
 }
 else {
-    Write-Host ""
-    Write-Host "⚠ Not all models downloaded. Pipeline not ready." -ForegroundColor Yellow
+    Write-Host "Not all models downloaded. Pipeline not ready." -ForegroundColor Yellow
     exit 1
 }
 
-Write-Host ""
-Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "✅ Seed model download complete!" -ForegroundColor Green
-Write-Host "========================================" -ForegroundColor Cyan
+Write-Host "Seed model download complete!" -ForegroundColor Green

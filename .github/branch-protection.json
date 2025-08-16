@@ -6,11 +6,11 @@
       "required_status_checks": {
         "strict": true,
         "contexts": [
-          "Test Suite (3.10)",
-          "Test Suite (3.11)",
-          "Test Suite (3.12)",
-          "Test Results Summary",
-          "Build Verification",
+          "quick-check",
+          "extended-lint",
+          "test",
+          "Unit Tests",
+          "Code Quality Checks",
           "Security Scan"
         ]
       },
@@ -35,8 +35,9 @@
       "required_status_checks": {
         "strict": true,
         "contexts": [
-          "Test Suite (3.11)",
-          "Build Verification"
+          "quick-check",
+          "extended-lint",
+          "test"
         ]
       },
       "required_reviews": {

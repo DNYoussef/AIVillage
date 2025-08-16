@@ -28,8 +28,8 @@ class LintingOrchestrator:
         """Load linting configuration."""
         default_config = {
             "python": {
-                "line_length": 88,
-                "target_python": "py310",
+                "line_length": 120,
+                "target_python": "py311",
                 "exclude_dirs": [
                     ".git",
                     "__pycache__",
@@ -39,13 +39,15 @@ class LintingOrchestrator:
                     "env",
                     ".mypy_cache",
                     "archived",
+                    "deprecated",
+                    "experimental",
                 ],
                 "tools": {
                     "ruff": {"enabled": True, "fix": False, "config": "pyproject.toml"},
                     "black": {"enabled": True, "check": True},
                     "isort": {"enabled": True, "check": True},
                     "mypy": {"enabled": True, "non_blocking": True},
-                    "flake8": {"enabled": True, "config": ".flake8"},
+                    "flake8": {"enabled": False, "config": ".flake8"},
                 },
             },
             "performance": {"max_workers": 4, "timeout_per_tool": 300},

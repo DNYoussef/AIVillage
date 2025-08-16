@@ -1,0 +1,47 @@
+[package]
+name = "betanet-mixnode"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "High-performance Nym-style mixnode for Betanet"
+
+[dependencies]
+async-trait = "0.1"
+tokio = { workspace = true, features = ["net", "io-util", "macros", "rt-multi-thread"] }
+chacha20poly1305 = { workspace = true }
+hkdf = { workspace = true }
+sha2 = { workspace = true }
+ed25519-dalek = { workspace = true }
+x25519-dalek = { workspace = true }
+rand = { workspace = true }
+rand_core = { workspace = true }
+bytes = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+bincode = { workspace = true }
+thiserror = { workspace = true }
+anyhow = { workspace = true }
+tracing = { workspace = true }
+clap = { workspace = true }
+
+# VRF dependencies
+vrf = { version = "0.2", optional = true }
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["test-util"] }
+proptest = { workspace = true }
+tempfile = { workspace = true }
+tracing-subscriber = { version = "0.3", features = ["fmt"] }
+
+[features]
+default = ["sphinx", "vrf", "cover-traffic"]
+sphinx = []
+vrf = ["dep:vrf"]
+cover-traffic = []
+
+[[bin]]
+name = "betanet-mixnode"
+path = "src/main.rs"

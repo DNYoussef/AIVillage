@@ -310,23 +310,22 @@ jobs:
     - name: Install quality tools
       run: |
         python -m pip install --upgrade pip
-        pip install black isort flake8 mypy pylint
+        pip install black isort ruff mypy
         pip install -r src/agent_forge/curriculum/requirements.txt
 
     - name: Check code formatting with Black
       run: |
-        black --check --diff src/agent_forge/curriculum/
+        black --check --diff --line-length=120 src/agent_forge/curriculum/
 
     - name: Check import sorting with isort
       run: |
-        isort --check-only --diff src/agent_forge/curriculum/
+        isort --check-only --diff --line-length=120 src/agent_forge/curriculum/
 
-    - name: Run flake8 linting
+    - name: Run Ruff linting
       run: |
-        flake8 src/agent_forge/curriculum/ \
-          --max-line-length=120 \
-          --extend-ignore=E203,W503 \
-          --output-file=flake8_report.txt
+        ruff check src/agent_forge/curriculum/ \
+          --select E,W,F,I,UP,B,C4,S106,S107,S108 \
+          --line-length=120
 
     - name: Run mypy type checking
       run: |
@@ -340,7 +339,7 @@ jobs:
       with:
         name: code-quality-reports
         path: |
-          flake8_report.txt
+          ruff_report.txt
 
   build-summary:
     runs-on: ubuntu-latest

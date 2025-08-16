@@ -15,23 +15,21 @@ repos:
     hooks:
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix]
-        exclude: ^(scripts/archived/|\.github/workflows/archived/|deprecated/)
-      - id: ruff-format
-        exclude: ^(scripts/archived/|\.github/workflows/archived/|deprecated/)
+        exclude: ^(archived/|deprecated/|experimental/|\.git/|__pycache__/)
 
   - repo: https://github.com/psf/black
     rev: 25.1.0
     hooks:
       - id: black
-        args: [--line-length=88]
-        exclude: ^(scripts/archived/|\.github/workflows/archived/|deprecated/)
+        args: [--line-length=120]
+        exclude: ^(archived/|deprecated/|experimental/|\.git/|__pycache__/)
 
   - repo: https://github.com/pycqa/isort
     rev: 6.0.1
     hooks:
       - id: isort
-        args: [--profile=black, --line-length=88]
-        exclude: ^(scripts/archived/|\.github/workflows/archived/|deprecated/)
+        args: [--profile=black, --line-length=120]
+        exclude: ^(archived/|deprecated/|experimental/|\.git/|__pycache__/)
 
   - repo: local
     hooks:
@@ -46,7 +44,7 @@ repos:
 
       - id: security-scan
         name: Security scan (critical issues only)
-        entry: bash -c 'ruff check . --select S --quiet | head -10 || true'
+        entry: bash -c 'ruff check . --select S --quiet | head -10'
         language: system
         pass_filenames: false
         types: [python]
