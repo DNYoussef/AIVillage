@@ -357,8 +357,10 @@ impl AccessTicket {
         })
     }
 
-    /// Sign ticket with Ed25519 private key (stub implementation)
+    /// Sign ticket with Ed25519 private key
     pub fn sign(&mut self, private_key: &[u8]) -> Result<(), TicketError> {
+        use ed25519_dalek::{SigningKey, Signature, Signer, VerifyingKey};
+
         if private_key.len() != ED25519_KEY_LEN {
             return Err(TicketError::InvalidKeyLength {
                 expected: ED25519_KEY_LEN,
@@ -366,26 +368,35 @@ impl AccessTicket {
             });
         }
 
-        // Simple stub signature: just copy first 8 bytes of private key to signature
-        // In real implementation would use ed25519-dalek
-        let mut signature = [0u8; 64];
-        signature[..8].copy_from_slice(&private_key[..8]);
-        signature[8] = 0xFF; // Marker byte to indicate this is a stub signature
+        // SECURITY FIX: Use proper Ed25519 signing
+        let signing_key = SigningKey::from_bytes(
+            private_key.try_into()
+                .map_err(|_| TicketError::InvalidKey("Invalid private key format".to_string()))?
+        );
 
-        self.signature = Bytes::from(signature.to_vec());
+        // Derive the correct public key from the private key
+        let verifying_key: VerifyingKey = (&signing_key).into();
+        self.issuer_public_key = Bytes::from(verifying_key.to_bytes().to_vec());
 
-        // Derive public key from private key (same logic as generate_issuer_keypair)
-        let mut public_key = [0u8; 32];
-        public_key[..8].copy_from_slice(&private_key[..8]);
-        public_key[8] = 0xAA; // Marker to distinguish public from private
+        // Create ticket message to sign
+        let mut message = Vec::new();
+        message.extend_from_slice(&self.subject);
+        message.extend_from_slice(&self.issued_at.to_le_bytes());
+        message.extend_from_slice(&self.expires_at.to_le_bytes());
+        message.push(self.ticket_type as u8);
+        message.extend_from_slice(&self.nonce);
 
-        self.issuer_public_key = Bytes::from(public_key.to_vec());
+        // Sign the message
+        let signature: Signature = signing_key.sign(&message);
+        self.signature = Bytes::from(signature.to_bytes().to_vec());
 
         Ok(())
     }
 
-    /// Verify ticket signature (stub implementation)
+    /// Verify ticket signature using Ed25519
     pub fn verify(&self, public_key: &[u8]) -> Result<bool, TicketError> {
+        use ed25519_dalek::{VerifyingKey, Signature, Verifier};
+
         if public_key.len() != ED25519_KEY_LEN {
             return Err(TicketError::InvalidKeyLength {
                 expected: ED25519_KEY_LEN,
@@ -397,20 +408,27 @@ impl AccessTicket {
             return Ok(false);
         }
 
-        // Check if this is our stub signature format
-        if self.signature[8] != 0xFF {
-            return Ok(false);
-        }
+        // SECURITY FIX: Use proper Ed25519 verification
+        let verifying_key = VerifyingKey::from_bytes(
+            public_key.try_into()
+                .map_err(|_| TicketError::InvalidKey("Invalid public key format".to_string()))?
+        ).map_err(|_| TicketError::InvalidKey("Invalid public key".to_string()))?;
 
-        // For our stub, the signature is just the first 8 bytes of the private key
-        // The public key contains the same first 8 bytes, so we can verify directly
-        if public_key.len() < 9 || public_key[8] != 0xAA {
-            return Ok(false); // Not our public key format
-        }
+        let signature = Signature::from_bytes(
+            self.signature.as_ref().try_into()
+                .map_err(|_| TicketError::InvalidKey("Invalid signature format".to_string()))?
+        );
 
-        let signature_prefix = &self.signature[..8];
-        let public_key_prefix = &public_key[..8];
-        Ok(signature_prefix == public_key_prefix)
+        // Recreate the message that was signed
+        let mut message = Vec::new();
+        message.extend_from_slice(&self.subject);
+        message.extend_from_slice(&self.issued_at.to_le_bytes());
+        message.extend_from_slice(&self.expires_at.to_le_bytes());
+        message.push(self.ticket_type as u8);
+        message.extend_from_slice(&self.nonce);
+
+        // Verify the signature
+        Ok(verifying_key.verify(&message, &signature).is_ok())
     }
 
     fn default_bandwidth(ticket_type: TicketType) -> u32 {
@@ -733,20 +751,18 @@ pub struct ManagerStats {
     pub nonce_history_size: usize,
 }
 
-/// Generate Ed25519 keypair for ticket issuing (stub implementation)
+/// Generate Ed25519 keypair for ticket issuing
 pub fn generate_issuer_keypair() -> (Bytes, Bytes) {
-    // Stub implementation - in real code would use ed25519-dalek
-    let mut private_key = [0u8; 32];
-    rand::Rng::fill(&mut OsRng, &mut private_key[..]);
+    // SECURITY FIX: Use proper Ed25519 key generation
+    use ed25519_dalek::{SigningKey, VerifyingKey};
 
-    // For the stub, public key is derived from private key by adding a constant
-    let mut public_key = [0u8; 32];
-    public_key[..8].copy_from_slice(&private_key[..8]);
-    public_key[8] = 0xAA; // Marker to distinguish public from private
+    // Generate cryptographically secure signing key
+    let signing_key = SigningKey::generate(&mut OsRng);
+    let verifying_key: VerifyingKey = (&signing_key).into();
 
     (
-        Bytes::from(private_key.to_vec()),
-        Bytes::from(public_key.to_vec()),
+        Bytes::from(signing_key.to_bytes().to_vec()),
+        Bytes::from(verifying_key.to_bytes().to_vec()),
     )
 }
 

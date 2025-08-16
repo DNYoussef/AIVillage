@@ -12,6 +12,7 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use sha2::{Digest, Sha256};
 use x25519_dalek::{PublicKey, StaticSecret};
+use hkdf::Hkdf;
 
 use crate::{
     crypto::{ChaChaEncryption, CryptoUtils, KeyDerivation},
@@ -384,7 +385,14 @@ impl SphinxProcessor {
     /// Decrypt routing information
     fn decrypt_routing_info(&self, encrypted: &[u8; 143], key: &[u8; 32]) -> Result<RoutingInfo> {
         let encryption = ChaChaEncryption::new(key);
-        let nonce = [0u8; 12]; // Deterministic nonce for routing info
+
+        // SECURITY FIX: Use cryptographically secure nonce derivation
+        // Derive nonce from routing info and key using HKDF for deterministic but secure nonce
+        let mut nonce = [0u8; 12];
+        let salt = b"sphinx-routing-nonce";
+        let hk = Hkdf::<Sha256>::new(Some(salt), key);
+        hk.expand(&encrypted[..16], &mut nonce)
+            .map_err(|_| MixnodeError::Crypto("Failed to derive routing nonce".to_string()))?;
 
         let decrypted = encryption.decrypt(encrypted, &nonce)?;
         if decrypted.len() != 143 {
