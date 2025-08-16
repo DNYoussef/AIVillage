@@ -62,6 +62,7 @@ apply_security_patches.py
 download_env/
 models/
 models--*/
+!src/agent_forge/models/
 merged_model/
 compressed_*/
 test_merged_models/
