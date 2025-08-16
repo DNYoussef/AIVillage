@@ -9,19 +9,28 @@ all: build test lint
 # Build all crates
 build:
 	@echo "🔨 Building Betanet workspace..."
-	cargo build --all-features
+	@echo "🔧 Building core bounty packages..."
+	OPENSSL_VENDORED=1 cargo build --package betanet-htx --package betanet-utls --package betanet-linter --package betanet-ffi
+	@echo "🔧 Building mixnode (no VRF features for compatibility)..."
+	OPENSSL_VENDORED=1 cargo build --package betanet-mixnode --no-default-features --features sphinx
 	@echo "✅ Build complete"
 
 # Build optimized release
 build-release:
 	@echo "🚀 Building optimized release..."
-	cargo build --release --all-features
+	@echo "🔧 Building core packages (release)..."
+	OPENSSL_VENDORED=1 cargo build --release --package betanet-htx --package betanet-utls --package betanet-linter --package betanet-ffi
+	@echo "🔧 Building mixnode (release, no VRF features)..."
+	OPENSSL_VENDORED=1 cargo build --release --package betanet-mixnode --no-default-features --features sphinx
 	@echo "✅ Release build complete"
 
 # Run all tests
 test:
 	@echo "🧪 Running tests..."
-	cargo test --all-features
+	@echo "🧪 Testing core packages..."
+	OPENSSL_VENDORED=1 cargo test --package betanet-htx --package betanet-utls --package betanet-linter --package betanet-ffi
+	@echo "🧪 Testing mixnode..."
+	OPENSSL_VENDORED=1 cargo test --package betanet-mixnode --no-default-features --features sphinx
 	@echo "✅ Tests complete"
 
 # Run tests with coverage (legacy tarpaulin)

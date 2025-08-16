@@ -261,11 +261,11 @@ impl Mixnode for StandardMixnode {
     async fn process_packet(&self, packet: &[u8]) -> Result<Option<Vec<u8>>> {
         debug!("Processing packet of {} bytes", packet.len());
 
-        let parsed_packet = Packet::parse(packet)?;
+        let _parsed_packet = Packet::parse(packet)?;
 
         #[cfg(feature = "sphinx")]
         if self.config.enable_sphinx {
-            return crate::sphinx::process_sphinx_packet(&parsed_packet).await;
+            return crate::sphinx::process_sphinx_packet(&_parsed_packet).await;
         }
 
         // Fallback to simple forwarding

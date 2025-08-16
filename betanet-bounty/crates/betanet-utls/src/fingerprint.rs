@@ -22,12 +22,12 @@ impl TlsFingerprint {
 }
 
 /// Generate fingerprint from ClientHello
-pub fn generate_fingerprint(hello: &ClientHello, fingerprint_type: &str) -> Result<TlsFingerprint> {
+pub fn generate_fingerprint(_hello: &ClientHello, fingerprint_type: &str) -> Result<TlsFingerprint> {
     match fingerprint_type {
         #[cfg(feature = "ja3")]
-        "ja3" => crate::ja3::generate_ja3(hello),
+        "ja3" => crate::ja3::generate_ja3(_hello),
         #[cfg(feature = "ja4")]
-        "ja4" => crate::ja4::generate_ja4(hello),
+        "ja4" => crate::ja4::generate_ja4(_hello),
         _ => Ok(TlsFingerprint::new("unsupported".to_string(), fingerprint_type.to_string())),
     }
 }
