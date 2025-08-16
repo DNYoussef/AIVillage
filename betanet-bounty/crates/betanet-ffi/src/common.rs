@@ -1,6 +1,7 @@
 //! Common FFI types and utilities
 
 use std::os::raw::{c_char, c_int, c_uint, c_void};
+use std::ptr;
 
 /// Result codes for Betanet FFI functions
 #[repr(C)]
@@ -60,7 +61,11 @@ impl BetanetBuffer {
         let capacity = vec.capacity() as c_uint;
         std::mem::forget(vec); // Transfer ownership to C
 
-        Self { data, len, capacity }
+        Self {
+            data,
+            len,
+            capacity,
+        }
     }
 
     /// Create buffer from slice (read-only)
@@ -99,6 +104,10 @@ impl BetanetBuffer {
 
 /// Free a buffer allocated by Betanet
 ///
+/// This function must be called by C callers to release buffers returned by
+/// the Betanet library. Failing to do so or attempting to free the pointer with
+/// another method will result in memory leaks.
+///
 /// # Arguments
 /// * `buffer` - Buffer to free
 ///
@@ -107,6 +116,9 @@ impl BetanetBuffer {
 #[no_mangle]
 pub unsafe extern "C" fn betanet_buffer_free(buffer: BetanetBuffer) {
     if buffer.capacity > 0 && !buffer.data.is_null() {
+        // Overwrite buffer contents before dropping
+        ptr::write_bytes(buffer.data, 0, buffer.len as usize);
+
         // This was an owned buffer, convert back to Vec to drop
         let _vec = buffer.into_vec();
     }
@@ -154,5 +166,3 @@ pub extern "C" fn betanet_error_message(result: BetanetResult) -> *const c_char 
 
     msg.as_ptr() as *const c_char
 }
-
-use std::ptr;
