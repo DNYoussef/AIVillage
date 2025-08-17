@@ -23,6 +23,7 @@ pub mod bootstrap;
 pub mod frame;
 pub mod noise;
 pub mod privacy;
+pub mod scion_mac;
 // pub mod ticket;  // Temporarily disabled due to base64 API changes
 // pub mod tls;  // Temporarily disabled due to dependency issues
 pub mod transport;
@@ -49,6 +50,9 @@ pub use privacy::{
     BudgetStatus, CompositionMethod, EdgeId, EdgePrivacy, EdgeType, PrivacyBudgetManager,
     PrivacyError, PrivacyPolicy, RoutePrivacy,
 };
+pub use scion_mac::{
+    MacAlgorithm, MacKey, ScionMacError, ScionMacHandler, ScionPacketMac,
+};
 // pub use ticket::{
 //     AccessTicket, AccessTicketManager, TicketError, TicketStatus, TicketType,
 //     generate_issuer_keypair,
@@ -73,8 +77,8 @@ pub use tcp::{TcpConnection, TcpListener443, TcpMultiplexedStream, TcpTransport}
 /// HTX protocol version
 pub const HTX_VERSION: u8 = 1;
 
-/// Maximum frame size (64KB)
-pub const MAX_FRAME_SIZE: usize = 65536;
+/// Maximum frame size per HTX v1.1 spec (2^24 - 1)
+pub const MAX_FRAME_SIZE: usize = 16_777_215;
 
 /// HTX protocol errors
 #[derive(Debug, Error)]

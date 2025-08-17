@@ -8,7 +8,7 @@ use std::net::SocketAddr;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
-use bytes::{Bytes, BytesMut};
+use bytes::Bytes;
 use tokio::net::UdpSocket;
 use tokio::sync::{mpsc, RwLock};
 use tracing::{debug, error, info, warn};
@@ -44,7 +44,7 @@ pub struct MasqueDatagram {
 }
 
 /// MASQUE proxy session state
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct ProxySession {
     session_id: SessionId,
     target_addr: SocketAddr,
@@ -426,7 +426,7 @@ impl MasqueClient {
         // This would typically send an HTTP/3 CONNECT-UDP request
         // For this implementation, we'll simulate the request
 
-        let request = ConnectUdpRequest {
+        let _request = ConnectUdpRequest {
             session_id: 0, // Will be assigned by proxy
             target_host: target_host.to_string(),
             target_port,
@@ -456,7 +456,7 @@ impl MasqueClient {
         let session_id = self.session_id
             .ok_or_else(|| HtxError::Protocol("Not connected".to_string()))?;
 
-        let datagram = MasqueDatagram {
+        let _datagram = MasqueDatagram {
             session_id,
             context_id: session_id,
             payload: Bytes::copy_from_slice(data),

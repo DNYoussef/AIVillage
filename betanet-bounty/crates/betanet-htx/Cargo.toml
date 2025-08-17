@@ -21,9 +21,11 @@ x25519-dalek = { workspace = true }
 ed25519-dalek = { workspace = true }
 hkdf = { workspace = true }
 sha2 = { workspace = true }
+hmac = { workspace = true }
 # argon2 = "0.2"  # Temporarily disabled due to edition2024 conflicts
 rand = { workspace = true }
 rand_core = { workspace = true }
+rand_chacha = { workspace = true }
 bytes = { workspace = true }
 thiserror = { workspace = true }
 tracing = { workspace = true }
