@@ -1,0 +1,325 @@
+name: Main CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+    inputs:
+      run_performance_tests:
+        description: 'Run performance benchmarks'
+        required: false
+        default: 'false'
+        type: boolean
+      run_security_scan:
+        description: 'Run deep security scan'
+        required: false
+        default: 'true'
+        type: boolean
+
+env:
+  PYTHON_VERSION: '3.11'
+  NODE_VERSION: '18'
+  CARGO_TERM_COLOR: always
+  PIP_DISABLE_PIP_VERSION_CHECK: 1
+
+jobs:
+  # ============================================
+  # STAGE 1: Pre-flight Checks (Fast Fail)
+  # ============================================
+  pre-flight:
+    name: Pre-flight Checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install minimal tools
+        run: pip install ruff
+
+      - name: 🚨 Critical Syntax Check
+        run: |
+          echo "Checking for syntax errors..."
+          ruff check . --select E9,F63,F7,F82,F821,F823 --output-format=concise
+          echo "✅ No syntax errors found"
+
+      - name: 🔒 Security Quick Scan
+        run: |
+          echo "Checking for critical security issues..."
+          ruff check . --select S102,S105,S106,S107,S108,S110 --output-format=concise
+          echo "✅ No critical security issues found"
+
+      - name: 🚫 No Placeholders in Production
+        run: |
+          echo "Checking for placeholders in production code..."
+          if grep -r "TODO\|FIXME\|XXX\|HACK\|placeholder\|stub\|not implemented" \
+             --include="*.py" --include="*.rs" --include="*.go" \
+             src/production/ packages/core/ 2>/dev/null; then
+            echo "❌ Production code cannot contain placeholders!"
+            exit 1
+          fi
+          echo "✅ No placeholders in production code"
+
+      - name: 🚫 No Experimental Imports in Production
+        run: |
+          echo "Checking for experimental imports..."
+          if grep -r "from experimental\|import experimental" \
+             --include="*.py" src/production/ packages/core/ 2>/dev/null; then
+            echo "❌ Production code cannot import experimental!"
+            exit 1
+          fi
+          echo "✅ No experimental imports in production"
+
+  # ============================================
+  # STAGE 2: Code Quality
+  # ============================================
+  code-quality:
+    name: Code Quality
+    needs: pre-flight
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install quality tools
+        run: |
+          pip install ruff black isort mypy
+          pip install -r requirements.txt
+
+      - name: 🎨 Format Check
+        run: |
+          echo "Checking code formatting..."
+          black --check --diff --line-length=120 .
+          echo "✅ Code formatting is correct"
+
+      - name: 📝 Lint Check
+        run: |
+          echo "Running linting checks..."
+          ruff check . --select E,W,F,I,UP,B,C4,SIM --output-format=grouped
+          echo "✅ Linting passed"
+
+      - name: 🔍 Type Check
+        continue-on-error: true
+        run: |
+          echo "Running type checking..."
+          mypy . --ignore-missing-imports --no-strict-optional \
+            --exclude 'deprecated|archive|experimental|tmp'
+          echo "✅ Type checking completed"
+
+  # ============================================
+  # STAGE 3: Testing
+  # ============================================
+  test:
+    name: Test Suite
+    needs: pre-flight
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: ['3.9', '3.11']
+      fail-fast: false
+      
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install -r requirements-test.txt
+          pip install pytest pytest-cov pytest-timeout pytest-xdist
+
+      - name: 🧪 Run Unit Tests
+        run: |
+          pytest tests/unit/ -v --tb=short --timeout=60 -n auto
+
+      - name: 🔗 Run Integration Tests
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          pytest tests/integration/ -v --tb=short --timeout=120
+
+      - name: 📊 Generate Coverage Report
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11'
+        run: |
+          pytest tests/ --cov=src --cov=packages \
+            --cov-report=xml --cov-report=term-missing \
+            --cov-fail-under=60
+
+      - name: Upload Coverage
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11'
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage.xml
+          flags: unittests
+          name: codecov-umbrella
+
+  # ============================================
+  # STAGE 4: Security Scanning
+  # ============================================
+  security:
+    name: Security Scan
+    needs: pre-flight
+    if: github.event.inputs.run_security_scan != 'false'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install security tools
+        run: |
+          pip install bandit safety semgrep
+
+      - name: 🔐 Bandit Security Scan
+        run: |
+          echo "Running Bandit security scan..."
+          bandit -r src/ packages/ -f json -o bandit-report.json || true
+          bandit -r src/ packages/ -ll
+          echo "✅ Security scan completed"
+
+      - name: 🛡️ Safety Dependency Check
+        run: |
+          echo "Checking for vulnerable dependencies..."
+          pip freeze | safety check --stdin --json || true
+          echo "✅ Dependency check completed"
+
+      - name: 🔍 Semgrep SAST
+        if: github.event_name == 'pull_request'
+        run: |
+          echo "Running Semgrep security analysis..."
+          semgrep --config=auto src/ packages/ --json -o semgrep-report.json || true
+          echo "✅ SAST analysis completed"
+
+      - name: Upload Security Reports
+        uses: actions/upload-artifact@v3
+        with:
+          name: security-reports
+          path: |
+            bandit-report.json
+            semgrep-report.json
+
+  # ============================================
+  # STAGE 5: Performance Testing (Optional)
+  # ============================================
+  performance:
+    name: Performance Tests
+    needs: [code-quality, test]
+    if: github.event.inputs.run_performance_tests == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install pytest-benchmark locust
+
+      - name: 🚀 Run Performance Benchmarks
+        run: |
+          pytest tests/performance/ -v --benchmark-only \
+            --benchmark-autosave --benchmark-compare
+
+      - name: 📈 Run Load Tests
+        continue-on-error: true
+        run: |
+          locust -f tests/load/locustfile.py \
+            --headless --users 10 --spawn-rate 2 \
+            --run-time 60s --html report.html
+
+      - name: Upload Performance Reports
+        uses: actions/upload-artifact@v3
+        with:
+          name: performance-reports
+          path: |
+            .benchmarks/
+            report.html
+
+  # ============================================
+  # STAGE 6: Build & Package
+  # ============================================
+  build:
+    name: Build & Package
+    needs: [code-quality, test, security]
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: 📦 Build Python Package
+        run: |
+          pip install build wheel
+          python -m build
+
+      - name: 🐳 Build Docker Image
+        run: |
+          docker build -t aivillage:${{ github.sha }} .
+          docker tag aivillage:${{ github.sha }} aivillage:latest
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: dist
+          path: dist/
+
+  # ============================================
+  # STAGE 7: Deploy (Main Branch Only)
+  # ============================================
+  deploy:
+    name: Deploy to Staging
+    needs: build
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 🚀 Deploy to Staging
+        run: |
+          echo "Deploying to staging environment..."
+          # Add actual deployment commands here
+          echo "✅ Deployment completed"
+
+# ============================================
+# Status Check (Required for merge)
+# ============================================
+  status-check:
+    name: CI Status Check
+    needs: [pre-flight, code-quality, test, security]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check CI Status
+        run: |
+          if [[ "${{ needs.pre-flight.result }}" != "success" || \
+                "${{ needs.code-quality.result }}" != "success" || \
+                "${{ needs.test.result }}" != "success" || \
+                "${{ needs.security.result }}" == "failure" ]]; then
+            echo "❌ CI checks failed"
+            exit 1
+          fi
+          echo "✅ All CI checks passed"

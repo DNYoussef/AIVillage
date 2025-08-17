@@ -1,46 +1,208 @@
+# AIVillage Pre-commit Configuration
+# Runs fast local checks before commits to catch issues early
+
 repos:
-  # Essential file quality checks
+  # ============================================
+  # File Quality & Security Checks
+  # ============================================
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v6.0.0
+    rev: v4.5.0
     hooks:
+      # File quality
       - id: trailing-whitespace
+        name: Fix trailing whitespace
+        exclude: ^(deprecated/|archive/|\.git/)
       - id: end-of-file-fixer
-      - id: check-yaml
-      - id: check-json
+        name: Fix missing EOF newline
+        exclude: ^(deprecated/|archive/|\.git/)
+      - id: mixed-line-ending
+        name: Fix mixed line endings
+        args: [--fix=lf]
+      
+      # Large files & merge conflicts
       - id: check-added-large-files
+        name: Check for large files
+        args: [--maxkb=5000]
       - id: check-merge-conflict
+        name: Check for merge conflicts
+      
+      # Security
       - id: detect-private-key
+        name: Detect private keys
+      - id: check-symlinks
+        name: Check for broken symlinks
+      
+      # File format validation
+      - id: check-yaml
+        name: Validate YAML files
+        exclude: ^(deprecated/|archive/)
+      - id: check-json
+        name: Validate JSON files
+        exclude: ^(deprecated/|archive/)
+      - id: check-toml
+        name: Validate TOML files
+      - id: check-xml
+        name: Validate XML files
+      
+      # Python specific
+      - id: check-ast
+        name: Check Python syntax
+        exclude: ^(deprecated/|archive/|experimental/)
+      - id: debug-statements
+        name: Check for debug statements
+        exclude: ^(tests/|deprecated/)
+      - id: name-tests-test
+        name: Verify test naming
+        args: [--pytest-test-first]
 
-  # Unified linting with Ruff (includes import sorting, replaces isort)
+  # ============================================
+  # Python Code Quality - Ruff (Fast!)
+  # ============================================
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.12.8
+    rev: v0.1.9
     hooks:
+      # Linting with auto-fix
       - id: ruff
-        name: Ruff Linter (includes import sorting)
-        args: [--fix, --exit-non-zero-on-fix]
-        exclude: ^(archived/|deprecated/|experimental/|tmp.*/|.*tmp.*/|\.git/|__pycache__/)
+        name: Ruff linter (with fixes)
+        args: [
+          --fix,
+          --exit-non-zero-on-fix,
+          --show-fixes,
+          --select, "E,W,F,I,UP,B,C4,SIM,RUF",
+          --ignore, "E501,E741",
+          --exclude, "deprecated/*,archive/*,experimental/*,tmp*/*"
+        ]
+      
+      # Formatting (faster than Black)
       - id: ruff-format
-        name: Ruff Formatter (fast alternative to Black)
-        exclude: ^(archived/|deprecated/|experimental/|tmp.*/|.*tmp.*/|\.git/|__pycache__/)
+        name: Ruff formatter
+        args: [
+          --line-length=120,
+          --exclude, "deprecated/*,archive/*,experimental/*,tmp*/*"
+        ]
 
-  # Black formatting (for files that need specific Black formatting)
+  # ============================================
+  # Additional Python Formatting - Black
+  # ============================================
   - repo: https://github.com/psf/black
-    rev: 25.1.0
+    rev: 23.12.1
     hooks:
       - id: black
-        name: Black Formatter
-        args: [--line-length=120]
-        exclude: ^(archived/|deprecated/|experimental/|tmp.*/|.*tmp.*/|\.git/|__pycache__/)
+        name: Black formatter
+        language_version: python3.11
+        args: [
+          --line-length=120,
+          --target-version, py39,
+          --target-version, py310,
+          --target-version, py311,
+          --exclude, "(deprecated|archive|experimental|tmp|__pycache__|node_modules)"
+        ]
 
-  # MyPy type checking (optional, only on changed files)
+  # ============================================
+  # Import Sorting - isort
+  # ============================================
+  - repo: https://github.com/PyCQA/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+        name: Sort imports
+        args: [
+          --profile, black,
+          --line-length, "120",
+          --skip, "deprecated,archive,experimental"
+        ]
+
+  # ============================================
+  # Security Scanning - Bandit
+  # ============================================
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.7.5
+    hooks:
+      - id: bandit
+        name: Security scan with Bandit
+        args: [
+          -ll,  # Only show medium and high severity
+          --skip, "B101,B601",  # Skip assert_used and shell_true
+          --exclude, "tests/*,deprecated/*,archive/*"
+        ]
+        files: ^(src|packages)/.*\.py$
+
+  # ============================================
+  # Type Checking - MyPy (Optional)
+  # ============================================
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.8.0
     hooks:
       - id: mypy
-        name: MyPy Type Checker
-        exclude: ^(archived/|deprecated/|experimental/|tmp.*/|.*tmp.*/|tests/|stubs/|\.git/|__pycache__/)
-        args: [--ignore-missing-imports, --no-strict-optional]
-        additional_dependencies: [types-requests, types-PyYAML]
+        name: Type checking with MyPy
+        args: [
+          --ignore-missing-imports,
+          --no-strict-optional,
+          --warn-redundant-casts,
+          --warn-unused-ignores,
+          --exclude, "deprecated|archive|experimental|tests"
+        ]
+        additional_dependencies: [
+          types-requests,
+          types-PyYAML,
+          types-redis,
+          types-setuptools
+        ]
+        files: ^(src|packages)/.*\.py$
+        pass_filenames: false
 
+  # ============================================
+  # Documentation - Markdown
+  # ============================================
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.38.0
+    hooks:
+      - id: markdownlint
+        name: Lint Markdown files
+        args: [--fix]
+        exclude: ^(deprecated/|archive/|\.github/ISSUE_TEMPLATE/)
+
+  # ============================================
+  # Shell Scripts
+  # ============================================
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.9.0.6
+    hooks:
+      - id: shellcheck
+        name: Check shell scripts
+        exclude: ^(deprecated/|archive/)
+
+  # ============================================
+  # Secrets Detection
+  # ============================================
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.4.0
+    hooks:
+      - id: detect-secrets
+        name: Detect secrets
+        args: [--baseline, .secrets.baseline]
+        exclude: ^(deprecated/|archive/|\.git/)
+
+# ============================================
+# Configuration
+# ============================================
 default_language_version:
-  python: python3
+  python: python3.11
+  
+fail_fast: false  # Run all hooks even if one fails
+
+exclude: |
+  (?x)^(
+    deprecated/.*|
+    archive/.*|
+    \.git/.*|
+    \.mypy_cache/.*|
+    \.ruff_cache/.*|
+    __pycache__/.*|
+    node_modules/.*|
+    venv/.*|
+    \.env.*|
+    build/.*|
+    dist/.*|
+    .*\.egg-info/.*
+  )$
