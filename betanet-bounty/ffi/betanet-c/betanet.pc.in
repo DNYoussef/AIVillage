@@ -4,11 +4,11 @@ libdir=${exec_prefix}/lib
 includedir=${prefix}/include
 
 Name: Betanet
-Description: Betanet C FFI library for secure networking
+Description: Betanet C FFI library for secure networking and transport protocols
 Version: @PROJECT_VERSION@
-URL: https://github.com/yourusername/betanet
+URL: https://github.com/betanet/betanet-bounty
 
 Requires:
 Libs: -L${libdir} -lbetanet_c
-Libs.private: -lpthread -lm
+Libs.private: -lpthread -lm -ldl @PLATFORM_LIBS@
 Cflags: -I${includedir}

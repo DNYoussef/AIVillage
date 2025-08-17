@@ -9,10 +9,10 @@ repository.workspace = true
 description = "C FFI library for Betanet integration with AI Village Python infrastructure"
 
 [dependencies]
-# Comment out dependencies that require OpenSSL for now
-# betanet-htx = { path = "../../crates/betanet-htx" }
-# betanet-mixnode = { path = "../../crates/betanet-mixnode" }
-# betanet-utls = { path = "../../crates/betanet-utls" }
+# Core Betanet components
+betanet-htx = { path = "../../crates/betanet-htx" }
+betanet-mixnode = { path = "../../crates/betanet-mixnode" }
+betanet-utls = { path = "../../crates/betanet-utls" }
 
 # FFI and C interop
 libc = "0.2"

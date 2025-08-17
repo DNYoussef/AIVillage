@@ -2,6 +2,25 @@
 //!
 //! Provides C-compatible FFI bindings for Betanet components with safe APIs,
 //! async runtime management, and comprehensive error handling.
+//!
+//! # Memory Management
+//! 
+//! - All pointers returned by `*_create()` functions must be freed with corresponding `*_destroy()` functions
+//! - String parameters passed to functions must be null-terminated and valid for the duration of the call
+//! - Callback functions may be called from any thread and must be thread-safe
+//! - User data pointers are passed through unchanged and remain owned by the caller
+//!
+//! # Thread Safety
+//!
+//! - All functions are thread-safe unless otherwise noted
+//! - Callbacks may be invoked from background threads
+//! - The library uses internal async runtime for non-blocking operations
+//!
+//! # Error Handling
+//!
+//! - Functions return BetanetResult enum values indicating success or failure
+//! - Additional error information available via betanet_get_last_error()
+//! - Error strings are valid until the next function call or betanet_clear_error()
 
 #![deny(warnings)]
 #![deny(clippy::all)]

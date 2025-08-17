@@ -88,11 +88,32 @@ endif()
 
 # Install rules
 install(FILES include/betanet.h DESTINATION include)
-install(TARGETS c_echo_client c_echo_server
-    RUNTIME DESTINATION bin
-    LIBRARY DESTINATION lib
-    ARCHIVE DESTINATION lib
-)
+
+# Install Rust library
+if(WIN32)
+    install(FILES ${BETANET_RUST_BUILD_DIR}/${BETANET_LIB_NAME} DESTINATION lib)
+    install(FILES ${BETANET_RUST_BUILD_DIR}/${BETANET_DLL_NAME} DESTINATION bin)
+else()
+    install(FILES ${BETANET_RUST_BUILD_DIR}/${BETANET_LIB_NAME} DESTINATION lib)
+endif()
+
+# Install examples
+if(BUILD_EXAMPLES)
+    install(TARGETS c_echo_client c_echo_server
+        RUNTIME DESTINATION bin
+        LIBRARY DESTINATION lib
+        ARCHIVE DESTINATION lib
+    )
+endif()
+
+# Platform-specific library flags for pkg-config
+if(WIN32)
+    set(PLATFORM_LIBS "-lws2_32 -luserenv -lbcrypt -lntdll")
+elseif(APPLE)
+    set(PLATFORM_LIBS "-framework Security -framework CoreFoundation")
+else()
+    set(PLATFORM_LIBS "")
+endif()
 
 # Generate pkg-config file
 configure_file(
