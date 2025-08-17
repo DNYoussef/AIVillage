@@ -16,6 +16,7 @@ use crate::checks::scion_bridge::{
     ScionSecurityRule,
 };
 use crate::checks::tls_mirror::{
+use crate::checks::compliance::Section11ComplianceChecker;
     TlsAntiFingerprintRule, TlsCoverTrafficRule, TlsMixtureModelRule, TlsSiteClassificationRule,
     TlsTemplateCacheRule,
 };

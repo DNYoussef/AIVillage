@@ -112,12 +112,12 @@ pub struct LintIssue {
     /// Column number
     pub column_number: Option<usize>,
     /// Rule that triggered this issue
-    pub rule: String,
+    pub rule_name: String,
 }
 
 impl LintIssue {
     /// Create new lint issue
-    pub fn new(id: String, severity: SeverityLevel, message: String, rule: String) -> Self {
+    pub fn new(id: String, severity: SeverityLevel, message: String, rule_name: String) -> Self {
         Self {
             id,
             severity,
@@ -125,7 +125,7 @@ impl LintIssue {
             file_path: None,
             line_number: None,
             column_number: None,
-            rule,
+            rule_name,
         }
     }
 

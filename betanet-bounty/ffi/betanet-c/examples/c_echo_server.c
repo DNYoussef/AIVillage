@@ -18,9 +18,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 #include <signal.h>
 #include "../include/betanet.h"
+
+#ifdef _WIN32
+    #include <windows.h>
+    #define sleep(x) Sleep(x * 1000)
+    #define usleep(x) Sleep(x / 1000)
+#else
+    #include <unistd.h>
+#endif
 
 // Global server handle for cleanup
 static struct BetanetHtxServer* g_server = NULL;
@@ -51,7 +58,7 @@ void on_server_state_changed(void* user_data, enum BetanetConnectionState state)
         case Disconnecting:
             state_str = "Stopping";
             break;
-        case Error:
+        case ConnectionError:
             state_str = "Error";
             g_server_started = 0;
             break;
@@ -176,11 +183,11 @@ int main(int argc, char* argv[]) {
         // Try to accept a new connection (non-blocking in a real implementation)
         // This is a simplified example - in practice you'd use proper async I/O
         result = betanet_htx_server_accept(g_server, &connection_id);
-        
+
         if (result == Success) {
             active_connections++;
             total_connections++;
-            printf("[SERVER] New client connected (ID: %u). Active: %d, Total: %d\n", 
+            printf("[SERVER] New client connected (ID: %u). Active: %d, Total: %d\n",
                    connection_id, active_connections, total_connections);
 
             // In a real implementation, you would:
@@ -188,16 +195,16 @@ int main(int argc, char* argv[]) {
             // 2. Set up message handlers for this connection
             // 3. Echo back any received messages
             // 4. Handle connection cleanup when client disconnects
-            
+
             // For this demo, we'll simulate the echo process
             printf("[SERVER] Connection %u ready for echo service\n", connection_id);
-            
+
             // Simulate some echo activity
             usleep(500000); // 500ms
-            
+
             // Simulate connection activity (in real code, this would be event-driven)
             printf("[SERVER] Echoing messages for connection %u...\n", connection_id);
-            
+
         } else if (result != NotConnected) {
             // NotConnected means no pending connections, which is normal
             const char* error = betanet_get_last_error();

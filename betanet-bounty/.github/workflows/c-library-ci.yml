@@ -4,7 +4,7 @@ name: C Library Cross-OS Build & Test
 on:
   push:
     branches: [ main, develop ]
-    paths: 
+    paths:
       - 'ffi/betanet-c/**'
       - 'crates/betanet-htx/**'
       - 'crates/betanet-mixnode/**'
@@ -35,19 +35,19 @@ jobs:
             target: x86_64-unknown-linux-gnu
             cmake_preset: Release
             artifact_suffix: linux-x64
-            
+
           # Windows builds
           - os: windows-latest
             target: x86_64-pc-windows-msvc
             cmake_preset: Release
             artifact_suffix: windows-x64
-            
+
           # macOS builds (x64)
           - os: macos-latest
             target: x86_64-apple-darwin
             cmake_preset: Release
             artifact_suffix: macos-x64
-            
+
           # macOS builds (ARM64)
           - os: macos-latest
             target: aarch64-apple-darwin
@@ -55,7 +55,7 @@ jobs:
             artifact_suffix: macos-arm64
 
     runs-on: ${{ matrix.os }}
-    
+
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
@@ -162,7 +162,7 @@ jobs:
         fi
       shell: bash
 
-    - name: Test echo server help  
+    - name: Test echo server help
       working-directory: ffi/betanet-c
       continue-on-error: true  # May fail if library dependencies aren't available
       run: |
@@ -219,18 +219,18 @@ jobs:
       run: |
         echo "Testing compilation using pkg-config..."
         export PKG_CONFIG_PATH="$(pwd)/build:$PKG_CONFIG_PATH"
-        
+
         # Create simple test program
         cat > test_pkg_config.c << 'EOF'
         #include <betanet.h>
         #include <stdio.h>
-        
+
         int main() {
             printf("Betanet library version: %s\n", betanet_get_version());
             return 0;
         }
         EOF
-        
+
         # Compile using pkg-config
         gcc $(pkg-config --cflags betanet) test_pkg_config.c $(pkg-config --libs betanet) -o test_pkg_config
         echo "✅ Successfully compiled test program using pkg-config"
@@ -244,7 +244,7 @@ jobs:
         target:
           - aarch64-unknown-linux-gnu
           - armv7-unknown-linux-gnueabihf
-    
+
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
@@ -271,26 +271,26 @@ jobs:
     needs: [build-and-test, test-cross-compilation]
     runs-on: ubuntu-latest
     if: always()
-    
+
     steps:
     - name: Check build results
       run: |
         echo "## Betanet C Library Build Summary" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### Build Status" >> $GITHUB_STEP_SUMMARY
-        
+
         if [ "${{ needs.build-and-test.result }}" == "success" ]; then
           echo "✅ **Main builds:** All platforms passed" >> $GITHUB_STEP_SUMMARY
         else
           echo "❌ **Main builds:** Some platforms failed" >> $GITHUB_STEP_SUMMARY
         fi
-        
+
         if [ "${{ needs.test-cross-compilation.result }}" == "success" ]; then
           echo "✅ **Cross-compilation:** All targets passed" >> $GITHUB_STEP_SUMMARY
         else
           echo "❌ **Cross-compilation:** Some targets failed" >> $GITHUB_STEP_SUMMARY
         fi
-        
+
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### Supported Platforms" >> $GITHUB_STEP_SUMMARY
         echo "- **Linux x64:** Ubuntu latest with GCC" >> $GITHUB_STEP_SUMMARY
@@ -299,7 +299,7 @@ jobs:
         echo "- **macOS ARM64:** macOS latest with Clang (cross-compile)" >> $GITHUB_STEP_SUMMARY
         echo "- **Linux ARM64:** Cross-compilation target" >> $GITHUB_STEP_SUMMARY
         echo "- **Linux ARMv7:** Cross-compilation target" >> $GITHUB_STEP_SUMMARY
-        
+
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### Features Verified" >> $GITHUB_STEP_SUMMARY
         echo "- ✅ Rust library compilation" >> $GITHUB_STEP_SUMMARY

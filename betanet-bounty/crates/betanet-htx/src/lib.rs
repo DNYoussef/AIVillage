@@ -21,11 +21,12 @@ use tokio::net::{TcpListener, TcpStream};
 // Core HTX modules
 pub mod bootstrap;
 pub mod frame;
+pub mod mux;
 pub mod noise;
 pub mod privacy;
 pub mod scion_mac;
 // pub mod ticket;  // Temporarily disabled due to base64 API changes
-// pub mod tls;  // Temporarily disabled due to dependency issues
+pub mod tls;
 pub mod transport;
 
 // Transport implementations
@@ -43,6 +44,7 @@ pub use bootstrap::{
     CpuPoW, CpuPoWParams, DeviceClass, PoWChallenge, PoWSolution,
 };
 pub use frame::{parse_frame, Frame, FrameBuffer, FrameError, FrameType};
+pub use mux::{MuxStats, StreamMux, StreamState as MuxStreamState};
 pub use noise::{
     generate_keypair, HandshakeFragment, HandshakePhase, NoiseError, NoiseStatus, NoiseXK,
 };
@@ -61,10 +63,11 @@ pub use scion_mac::{
 //         CarrierMarkovChain, PaddingGenerator, RotationStats,
 //     },
 // };
-// pub use tls::{
-//     TemplateCache, TemplateKey, TemplateCacheConfig, TlsCamouflageError,
-//     BackgroundCalibrator, MixtureModel, SiteClass, FallbackReducer,
-// };
+pub use tls::{
+    TemplateCache, TemplateKey, TemplateCacheConfig, TlsCamouflageError,
+    BackgroundCalibrator, MixtureModel, SiteClass, FallbackReducer,
+    TlsCamouflageBuilder, apply_ja3_template, create_tls_connector,
+};
 pub use transport::{
     ConnectionId, StreamId, Transport, TransportConfig, TransportConnection, TransportError,
     TransportListener, TransportStats, TransportStream,

@@ -120,23 +120,13 @@ impl Default for NeighborSelectionConfig {
 impl VrfNeighborSelector {
     /// Create new VRF neighbor selector
     pub fn new(config: NeighborSelectionConfig) -> Self {
-        // Generate deterministic VRF key for now (TODO: use proper random generation)
-        let vrf_private_key = [42u8; 32];
-        let vrf_public_key = CryptoUtils::sha256(&vrf_private_key);
-
-        Self {
-            vrf_private_key,
-            vrf_public_key,
-            known_nodes: HashMap::new(),
-            as_groups: HashMap::new(),
-            selection_cache: HashMap::new(),
-            config,
-        }
+        Self::with_vrf_key(CryptoUtils::random_bytes(32).try_into().unwrap(), config)
     }
 
     /// Create selector with existing VRF key
     pub fn with_vrf_key(private_key: [u8; 32], config: NeighborSelectionConfig) -> Self {
-        let vrf_public_key = CryptoUtils::sha256(&private_key);
+        // Derive VRF public key from private key
+        let vrf_public_key = Self::derive_vrf_public_key(&private_key);
 
         Self {
             vrf_private_key: private_key,
@@ -146,6 +136,26 @@ impl VrfNeighborSelector {
             selection_cache: HashMap::new(),
             config,
         }
+    }
+    
+    /// Derive VRF public key from private key
+    #[cfg(feature = "vrf")]
+    fn derive_vrf_public_key(private_key: &[u8; 32]) -> [u8; 32] {
+        use schnorrkel::SecretKey;
+        
+        if let Ok(secret_key) = SecretKey::from_bytes(private_key) {
+            let public_key = secret_key.to_public();
+            public_key.to_bytes()
+        } else {
+            // Fallback to hash-based derivation if key is invalid
+            CryptoUtils::sha256(private_key)
+        }
+    }
+    
+    /// Derive VRF public key from private key (fallback)
+    #[cfg(not(feature = "vrf"))]
+    fn derive_vrf_public_key(private_key: &[u8; 32]) -> [u8; 32] {
+        CryptoUtils::sha256(private_key)
     }
 
     /// Get VRF public key
@@ -221,9 +231,38 @@ impl VrfNeighborSelector {
         Ok(selected)
     }
 
-    /// Generate VRF output (simplified version)
+    /// Generate VRF output using Schnorrkel (Ed25519-based VRF)
+    #[cfg(feature = "vrf")]
     fn generate_vrf_output(&self, seed: &[u8]) -> Result<[u8; 32]> {
-        // Simplified VRF: HMAC-SHA256(private_key, seed)
+        use schnorrkel::{SecretKey, vrf::VrfInOut, vrf::VrfPreOut, context::SigningContext};
+        
+        // Convert private key to Schnorrkel format
+        let secret_key = SecretKey::from_bytes(&self.vrf_private_key)
+            .map_err(|e| MixnodeError::Vrf(format!("Invalid VRF secret key: {}", e)))?;
+        
+        // Create signing context
+        let context = SigningContext::new(b"betanet-mixnode-vrf");
+        
+        // Generate VRF input
+        let (vrf_in_out, vrf_proof, _) = secret_key.vrf_sign(context.bytes(seed));
+        
+        // Extract VRF output
+        let vrf_output = vrf_in_out.make_bytes(b"vrf-output");
+        
+        // Verify proof to ensure correctness
+        let public_key = secret_key.to_public();
+        if !public_key.vrf_verify(context.bytes(seed), &vrf_in_out, &vrf_proof) {
+            return Err(MixnodeError::Vrf("VRF proof verification failed".to_string()));
+        }
+        
+        Ok(vrf_output)
+    }
+    
+    /// Generate VRF output (fallback implementation without VRF feature)
+    #[cfg(not(feature = "vrf"))]
+    fn generate_vrf_output(&self, seed: &[u8]) -> Result<[u8; 32]> {
+        // Fallback: Secure HMAC-SHA256(private_key, seed)
+        use sha2::{Sha256, Digest};
         let mut hasher = Sha256::new();
         hasher.update(&self.vrf_private_key);
         hasher.update(seed);

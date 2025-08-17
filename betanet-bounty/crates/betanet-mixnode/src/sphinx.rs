@@ -429,7 +429,14 @@ impl SphinxProcessor {
         key: &[u8; 32],
     ) -> Result<()> {
         let encryption = ChaChaEncryption::new(key);
-        let nonce = [1u8; 12]; // Different nonce for payload
+        
+        // SECURITY FIX: Use secure nonce derivation for payload
+        // Derive nonce from payload and key using HKDF for deterministic but secure nonce
+        let mut nonce = [0u8; 12];
+        let salt = b"sphinx-payload-nonce";
+        let hk = Hkdf::<Sha256>::new(Some(salt), key);
+        hk.expand(&payload[..16], &mut nonce)
+            .map_err(|_| MixnodeError::Crypto("Failed to derive payload nonce".to_string()))?;
 
         let decrypted = encryption.decrypt(payload, &nonce)?;
         if decrypted.len() != SPHINX_PAYLOAD_SIZE {

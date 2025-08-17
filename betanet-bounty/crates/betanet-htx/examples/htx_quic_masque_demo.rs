@@ -85,9 +85,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let config = DemoConfig::default();
 
     // Run the demo
-    if cfg!(feature = "quic") {
+    #[cfg(feature = "quic")]
+    {
         run_quic_masque_demo(config).await?;
-    } else {
+    }
+    #[cfg(not(feature = "quic"))]
+    {
         run_stub_demo(config).await?;
     }
 

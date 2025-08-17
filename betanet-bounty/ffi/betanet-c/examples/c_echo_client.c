@@ -18,9 +18,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 #include <signal.h>
 #include "../include/betanet.h"
+
+#ifdef _WIN32
+    #include <windows.h>
+    #define sleep(x) Sleep(x * 1000)
+    #define usleep(x) Sleep(x / 1000)
+#else
+    #include <unistd.h>
+#endif
 
 // Global client handle for cleanup
 static struct BetanetHtxClient* g_client = NULL;
@@ -51,7 +58,7 @@ void on_connection_state_changed(void* user_data, enum BetanetConnectionState st
         case Disconnecting:
             state_str = "Disconnecting";
             break;
-        case Error:
+        case ConnectionError:
             state_str = "Error";
             g_connected = 0;
             break;

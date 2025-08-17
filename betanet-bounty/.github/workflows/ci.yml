@@ -156,6 +156,63 @@ jobs:
         name: betanet-sbom
         path: betanet-sbom.json
 
+  masque-demo:
+    name: QUIC/H3 + MASQUE Demo
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+
+    - name: Cache Cargo
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          target/
+        key: ubuntu-masque-${{ hashFiles('**/Cargo.lock') }}
+
+    - name: Build MASQUE demo
+      run: cargo build --package betanet-htx --example masque_demo
+
+    - name: Run MASQUE demo test
+      run: |
+        # Run the MASQUE demo and capture output
+        cargo run --package betanet-htx --example masque_demo --quiet
+        
+        # Verify transcript was generated
+        TRANSCRIPT_FILE="betanet-bounty/artifacts/quic_masque_demo_20250816_163250_traffic.pcap.txt"
+        if [ -f "$TRANSCRIPT_FILE" ]; then
+          echo "✅ MASQUE demo transcript generated successfully"
+          
+          # Verify transcript contains required elements
+          if grep -q "MASQUE CONNECT-UDP Demo Transcript" "$TRANSCRIPT_FILE" && \
+             grep -q "H3 Control Stream Establishment" "$TRANSCRIPT_FILE" && \
+             grep -q "CONNECT-UDP" "$TRANSCRIPT_FILE" && \
+             grep -q "UDP Datagram" "$TRANSCRIPT_FILE" && \
+             grep -q "Demo Summary" "$TRANSCRIPT_FILE"; then
+            echo "✅ Transcript contains all required RFC 9298 elements"
+            
+            # Show summary statistics
+            echo "📊 Demo Results:"
+            grep -E "(Datagrams Sent|Datagrams Received|Success Rate|Protocol)" "$TRANSCRIPT_FILE"
+          else
+            echo "❌ Transcript missing required elements"
+            exit 1
+          fi
+        else
+          echo "❌ MASQUE demo transcript not generated"
+          exit 1
+        fi
+
+    - name: Upload MASQUE transcript
+      uses: actions/upload-artifact@v3
+      with:
+        name: masque-demo-transcript
+        path: betanet-bounty/artifacts/quic_masque_demo_*.txt
+
   integration:
     name: AI Village Integration Tests
     runs-on: ubuntu-latest
@@ -202,7 +259,7 @@ jobs:
     name: Release Build
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
-    needs: [test, fuzz, security, sbom, integration]
+    needs: [test, fuzz, security, sbom, masque-demo, integration]
     steps:
     - uses: actions/checkout@v4
 

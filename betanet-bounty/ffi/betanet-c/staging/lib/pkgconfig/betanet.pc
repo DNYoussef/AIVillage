@@ -1,0 +1,14 @@
+prefix=C:/Program Files (x86)/betanet_c_examples
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: Betanet
+Description: Betanet C FFI library for secure networking and transport protocols
+Version: 0.1.0
+URL: https://github.com/betanet/betanet-bounty
+
+Requires:
+Libs: -L${libdir} -lbetanet_c
+Libs.private: -lpthread -lm -ldl -lws2_32 -luserenv -lbcrypt -lntdll
+Cflags: -I${includedir}

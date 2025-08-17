@@ -10,6 +10,7 @@ pub mod frame_format;
 pub mod noise_xk;
 pub mod scion_bridge;
 pub mod tls_mirror;
+pub mod compliance;
 
 static TEMPLATE_REUSE_REGEX: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"stochastic_reuse_probability:\s*([0-9.]+)").unwrap());

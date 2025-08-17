@@ -3,7 +3,7 @@
 //! Provides cryptographic verification and authentication for SCION packets
 //! according to the SCION protocol specification.
 
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use std::time::{Duration, SystemTime};
 
 use bytes::Bytes;
 use hmac::{Hmac, Mac};

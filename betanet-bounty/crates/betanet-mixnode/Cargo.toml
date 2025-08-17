@@ -26,9 +26,13 @@ thiserror = { workspace = true }
 anyhow = { workspace = true }
 tracing = { workspace = true }
 clap = { workspace = true }
+sysinfo = "0.30"
+chrono = { version = "0.4", features = ["serde"] }
+num_cpus = "1.16"
 
 # VRF dependencies
-vrf = { version = "0.2", optional = true }
+curve25519-dalek = { version = "4.1", optional = true }
+schnorrkel = { version = "0.11", optional = true }
 
 [dev-dependencies]
 tokio = { workspace = true, features = ["test-util"] }
@@ -37,9 +41,9 @@ tempfile = { workspace = true }
 tracing-subscriber = { version = "0.3", features = ["fmt"] }
 
 [features]
-default = ["sphinx", "vrf", "cover-traffic"]
+default = ["sphinx", "cover-traffic"]
 sphinx = []
-vrf = ["dep:vrf"]
+vrf = ["dep:curve25519-dalek", "dep:schnorrkel"]
 cover-traffic = []
 
 [[bin]]

@@ -4,7 +4,7 @@
 //! async runtime management, and comprehensive error handling.
 //!
 //! # Memory Management
-//! 
+//!
 //! - All pointers returned by `*_create()` functions must be freed with corresponding `*_destroy()` functions
 //! - String parameters passed to functions must be null-terminated and valid for the duration of the call
 //! - Callback functions may be called from any thread and must be thread-safe
@@ -41,7 +41,7 @@ use tokio::sync::mpsc;
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum BetanetResult {
     Success = 0,
-    Error = 1,
+    GeneralError = 1,
     InvalidParameter = 2,
     NetworkError = 3,
     CryptoError = 4,
@@ -59,7 +59,7 @@ pub enum BetanetConnectionState {
     Connecting = 1,
     Connected = 2,
     Disconnecting = 3,
-    Error = 4,
+    ConnectionError = 4,
 }
 
 /// Transport type
@@ -343,7 +343,7 @@ pub extern "C" fn betanet_htx_client_recv(
     // Try to receive data (non-blocking)
     let mut rx = match client.rx.try_lock() {
         Ok(rx) => rx,
-        Err(_) => return BetanetResult::Error,
+        Err(_) => return BetanetResult::GeneralError,
     };
 
     match rx.try_recv() {

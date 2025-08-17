@@ -19,8 +19,8 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
-# Rust library paths
-set(BETANET_RUST_TARGET_DIR "${CMAKE_CURRENT_SOURCE_DIR}/target")
+# Rust library paths (use workspace target directory)
+set(BETANET_RUST_TARGET_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../target")
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     set(BETANET_RUST_BUILD_DIR "${BETANET_RUST_TARGET_DIR}/debug")
 else()
@@ -29,7 +29,7 @@ endif()
 
 # Platform-specific library naming
 if(WIN32)
-    set(BETANET_LIB_NAME "betanet_c.dll.lib")
+    set(BETANET_LIB_NAME "betanet_c.dll")
     set(BETANET_DLL_NAME "betanet_c.dll")
 elseif(APPLE)
     set(BETANET_LIB_NAME "libbetanet_c.dylib")
@@ -51,11 +51,18 @@ add_custom_target(build_rust_lib ALL
 
 # Create imported library target
 add_library(betanet_c SHARED IMPORTED)
-set_target_properties(betanet_c PROPERTIES
-    IMPORTED_LOCATION ${BETANET_RUST_BUILD_DIR}/${BETANET_LIB_NAME}
-    IMPORTED_IMPLIB ${BETANET_RUST_BUILD_DIR}/${BETANET_LIB_NAME}
-    INTERFACE_INCLUDE_DIRECTORIES ${CMAKE_CURRENT_SOURCE_DIR}/include
-)
+if(WIN32)
+    set_target_properties(betanet_c PROPERTIES
+        IMPORTED_LOCATION ${BETANET_RUST_BUILD_DIR}/${BETANET_DLL_NAME}
+        IMPORTED_IMPLIB ${BETANET_RUST_BUILD_DIR}/betanet_c.dll.lib
+        INTERFACE_INCLUDE_DIRECTORIES ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+else()
+    set_target_properties(betanet_c PROPERTIES
+        IMPORTED_LOCATION ${BETANET_RUST_BUILD_DIR}/${BETANET_LIB_NAME}
+        INTERFACE_INCLUDE_DIRECTORIES ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+endif()
 add_dependencies(betanet_c build_rust_lib)
 
 # Copy DLL to output directory on Windows
