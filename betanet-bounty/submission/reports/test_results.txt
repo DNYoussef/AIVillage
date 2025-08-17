@@ -1,0 +1,418 @@
+Test Results Summary
+===================
+Date: Sun, Aug 17, 2025 12:16:10 AM
+
+HTX Transport Tests:
+warning: unused import: `std::sync::Arc`
+  --> crates\betanet-htx\examples\masque_demo.rs:17:5
+   |
+17 | use std::sync::Arc;
+   |     ^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` on by default
+
+warning: unused import: `bytes::Bytes`
+  --> crates\betanet-htx\examples\masque_demo.rs:20:5
+   |
+20 | use bytes::Bytes;
+   |     ^^^^^^^^^^^^
+
+warning: unused import: `tokio::sync::mpsc`
+  --> crates\betanet-htx\examples\masque_demo.rs:23:5
+   |
+23 | use tokio::sync::mpsc;
+   |     ^^^^^^^^^^^^^^^^^
+
+warning: unused import: `tokio::time::timeout`
+  --> crates\betanet-htx\examples\masque_demo.rs:24:5
+   |
+24 | use tokio::time::timeout;
+   |     ^^^^^^^^^^^^^^^^^^^^
+
+warning: function `start_local_echo_server` is never used
+   --> crates\betanet-htx\examples\masque_demo.rs:215:10
+    |
+215 | async fn start_local_echo_server(addr: SocketAddr) -> Result<(), Box<dyn std::error::Error>> {
+    |          ^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` on by default
+
+warning: unused import: `tokio::time::timeout`
+   --> crates\betanet-htx\src\masque.rs:511:9
+    |
+511 |     use tokio::time::timeout;
+    |         ^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(unused_imports)]` on by default
+
+warning: unused imports: `TlsCamouflageBuilder`, `create_tls_connector`, and `dial_tcp`
+  --> crates\betanet-htx\examples\echo_server.rs:11:17
+   |
+11 |     accept_tcp, dial_tcp, HtxConfig, HtxError, Result, StreamMux,
+   |                 ^^^^^^^^
+12 |     TlsCamouflageBuilder, create_tls_connector,
+   |     ^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` on by default
+
+warning: unused variable: `mux`
+   --> crates\betanet-htx\examples\echo_server.rs:148:9
+    |
+148 |     let mux = StreamMux::new(false, frame_sender); // Server uses even stream IDs
+    |         ^^^ help: if this is intentional, prefix it with an underscore: `_mux`
+    |
+    = note: `#[warn(unused_variables)]` on by default
+
+warning: unreachable expression
+   --> crates\betanet-htx\examples\echo_server.rs:213:5
+    |
+210 |         return Err(HtxError::Config("QUIC feature not enabled".to_string()));
+    |         -------------------------------------------------------------------- any code following this expression is unreachable
+...
+213 |     Ok(())
+    |     ^^^^^^ unreachable expression
+    |
+    = note: `#[warn(unreachable_code)]` on by default
+
+warning: unused variable: `config`
+   --> crates\betanet-htx\examples\echo_server.rs:190:26
+    |
+190 | async fn run_quic_server(config: HtxConfig) -> Result<()> {
+    |                          ^^^^^^ help: if this is intentional, prefix it with an underscore: `_config`
+
+warning: variable does not need to be mutable
+  --> crates\betanet-htx\examples\echo_server.rs:75:9
+   |
+75 |     let mut config = HtxConfig {
+   |         ----^^^^^^
+   |         |
+   |         help: remove this `mut`
+   |
+   = note: `#[warn(unused_mut)]` on by default
+
+warning: unused import: `Instant`
+  --> crates\betanet-htx\examples\htx_quic_masque_demo.rs:13:27
+   |
+13 | use std::time::{Duration, Instant};
+   |                           ^^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` on by default
+
+warning: unused import: `bytes::Bytes`
+  --> crates\betanet-htx\examples\htx_quic_masque_demo.rs:15:5
+   |
+15 | use bytes::Bytes;
+   |     ^^^^^^^^^^^^
+
+warning: unused import: `tokio::time::timeout`
+  --> crates\betanet-htx\examples\htx_quic_masque_demo.rs:16:5
+   |
+16 | use tokio::time::timeout;
+   |     ^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `warn`
+  --> crates\betanet-htx\examples\htx_quic_masque_demo.rs:17:21
+   |
+17 | use tracing::{info, warn, Level};
+   |                     ^^^^
+
+warning: unused variable: `config`
+   --> crates\betanet-htx\examples\htx_quic_masque_demo.rs:347:37
+    |
+347 | async fn simulate_performance_tests(config: &DemoConfig) -> Result<(), Box<dyn std::error::Error>> {
+    |                                     ^^^^^^ help: if this is intentional, prefix it with an underscore: `_config`
+    |
+    = note: `#[warn(unused_variables)]` on by default
+
+warning: fields `proxy_addr`, `target_host`, and `target_port` are never read
+  --> crates\betanet-htx\examples\htx_quic_masque_demo.rs:30:5
+   |
+29 | struct DemoConfig {
+   |        ---------- fields in this struct
+30 |     proxy_addr: SocketAddr,
+   |     ^^^^^^^^^^
+31 |     target_host: String,
+   |     ^^^^^^^^^^^
+32 |     target_port: u16,
+   |     ^^^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` on by default
+
+warning: function `analyze_security_features` is never used
+   --> crates\betanet-htx\examples\htx_quic_masque_demo.rs:361:10
+    |
+361 | async fn analyze_security_features(metrics: &ConnectionMetrics) -> Result<(), Box<dyn std::error::Error>> {
+    |          ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused imports: `TlsCamouflageBuilder` and `create_tls_connector`
+  --> crates\betanet-htx\examples\echo_client.rs:12:5
+   |
+12 |     TlsCamouflageBuilder, create_tls_connector,
+   |     ^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` on by default
+
+warning: unused variable: `mux`
+   --> crates\betanet-htx\examples\echo_client.rs:135:9
+    |
+135 |     let mux = StreamMux::new(true, frame_sender); // Client uses odd stream IDs
+    |         ^^^ help: if this is intentional, prefix it with an underscore: `_mux`
+    |
+    = note: `#[warn(unused_variables)]` on by default
+
+warning: unreachable expression
+   --> crates\betanet-htx\examples\echo_client.rs:258:5
+    |
+255 |         return Err(HtxError::Config("QUIC feature not enabled".to_string()));
+    |         -------------------------------------------------------------------- any code following this expression is unreachable
+...
+258 |     Ok(())
+    |     ^^^^^^ unreachable expression
+    |
+    = note: `#[warn(unreachable_code)]` on by default
+
+warning: unused variable: `server`
+   --> crates\betanet-htx\examples\echo_client.rs:195:26
+    |
+195 | async fn run_quic_client(server: SocketAddr, config: HtxConfig, args: &Args) -> Result<()> {
+    |                          ^^^^^^ help: if this is intentional, prefix it with an underscore: `_server`
+
+warning: unused variable: `config`
+   --> crates\betanet-htx\examples\echo_client.rs:195:46
+    |
+195 | async fn run_quic_client(server: SocketAddr, config: HtxConfig, args: &Args) -> Result<()> {
+    |                                              ^^^^^^ help: if this is intentional, prefix it with an underscore: `_config`
+
+warning: unused variable: `args`
+   --> crates\betanet-htx\examples\echo_client.rs:195:65
+    |
+195 | async fn run_quic_client(server: SocketAddr, config: HtxConfig, args: &Args) -> Result<()> {
+    |                                                                 ^^^^ help: if this is intentional, prefix it with an underscore: `_args`
+
+warning: unused imports: `FrameType`, `Frame`, `HtxConfig`, and `HtxError`
+ --> crates\betanet-htx\examples\htx_quic_datagram_demo.rs:9:19
+  |
+9 | use betanet_htx::{HtxConfig, Frame, FrameType, HtxError};
+  |                   ^^^^^^^^^  ^^^^^  ^^^^^^^^^  ^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default
+
+warning: unused import: `bytes::Bytes`
+  --> crates\betanet-htx\examples\htx_quic_datagram_demo.rs:10:5
+   |
+10 | use bytes::Bytes;
+   |     ^^^^^^^^^^^^
+
+warning: unused import: `std::net::SocketAddr`
+  --> crates\betanet-htx\examples\htx_quic_datagram_demo.rs:11:5
+   |
+11 | use std::net::SocketAddr;
+   |     ^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `std::time::Duration`
+  --> crates\betanet-htx\examples\htx_quic_datagram_demo.rs:12:5
+   |
+12 | use std::time::Duration;
+   |     ^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `tokio::time::sleep`
+  --> crates\betanet-htx\examples\htx_quic_datagram_demo.rs:13:5
+   |
+13 | use tokio::time::sleep;
+   |     ^^^^^^^^^^^^^^^^^^
+
+warning: unused imports: `error` and `warn`
+  --> crates\betanet-htx\examples\htx_quic_datagram_demo.rs:14:21
+   |
+14 | use tracing::{info, warn, error};
+   |                     ^^^^  ^^^^^
+
+warning: unreachable expression
+  --> crates\betanet-htx\examples\htx_quic_datagram_demo.rs:78:5
+   |
+29 |         return Ok(());
+   |         ------------- any code following this expression is unreachable
+...
+78 |     Ok(())
+   |     ^^^^^^ unreachable expression
+   |
+   = note: `#[warn(unreachable_code)]` on by default
+
+
+running 73 tests
+.........................................................................
+test result: ok. 73 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.67s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+✓ HTX tests: PASSED
+Mixnode Tests:
+warning: unexpected `cfg` condition value: `pipeline-demo`
+   --> crates\betanet-mixnode\examples\mix_demo.rs:357:7
+    |
+357 | #[cfg(feature = "pipeline-demo")]
+    |       ^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: expected values for `feature` are: `cover-traffic`, `default`, `sphinx`, and `vrf`
+    = help: consider adding `pipeline-demo` as a feature in `Cargo.toml`
+    = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg/cargo-specifics.html> for more information about checking conditional configuration
+    = note: `#[warn(unexpected_cfgs)]` on by default
+
+
+running 29 tests
+.............................
+test result: ok. 29 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.12s
+
+
+running 1 test
+.
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 2 tests
+..
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.89s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+✓ Mixnode tests: PASSED
+Linter Tests:
+
+running 27 tests
+. 1/27
+checks::frame_format::tests::test_frame_buffer_rule --- FAILED
+checks::bootstrap::tests::test_bootstrap_negotiation_rule --- FAILED
+checks::bootstrap::tests::test_abuse_tracking_rule --- FAILED
+. 5/27
+checks::frame_format::tests::test_frame_validation_rule --- FAILED
+checks::noise_xk::tests::test_key_rotation_rule --- FAILED
+checks::noise_xk::tests::test_security_rule --- FAILED
+checks::scion_bridge::tests::test_scion_deployment_rule --- FAILED
+checks::noise_xk::tests::test_transport_rule --- FAILED
+.. 12/27
+checks::scion_bridge::tests::test_scion_security_rule --- FAILED
+. 14/27
+checks::tls_mirror::tests::test_anti_fingerprint_rule --- FAILED
+checks::bootstrap::tests::test_cpu_pow_fallback_rule --- FAILED
+.... 20/27
+checks::bootstrap::tests::test_argon2id_parameter_rule --- FAILED
+checks::scion_bridge::tests::test_scion_gateway_rule --- FAILED
+.. 24/27
+checks::tls_mirror::tests::test_template_cache_rule --- FAILED
+..
+failures:
+
+---- checks::frame_format::tests::test_frame_buffer_rule stdout ----
+
+thread 'checks::frame_format::tests::test_frame_buffer_rule' panicked at crates\betanet-linter\src\checks\frame_format.rs:715:9:
+assertion `left == right` failed
+  left: 4
+ right: 1
+
+---- checks::bootstrap::tests::test_bootstrap_negotiation_rule stdout ----
+
+thread 'checks::bootstrap::tests::test_bootstrap_negotiation_rule' panicked at crates\betanet-linter\src\checks\bootstrap.rs:563:9:
+assertion failed: issues.iter().any(|i| i.id == "BS014")
+
+---- checks::bootstrap::tests::test_abuse_tracking_rule stdout ----
+
+thread 'checks::bootstrap::tests::test_abuse_tracking_rule' panicked at crates\betanet-linter\src\checks\bootstrap.rs:573:9:
+assertion failed: issues.iter().any(|i| i.id == "BS016")
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- checks::frame_format::tests::test_frame_validation_rule stdout ----
+
+thread 'checks::frame_format::tests::test_frame_validation_rule' panicked at crates\betanet-linter\src\checks\frame_format.rs:696:9:
+assertion `left == right` failed
+  left: 0
+ right: 1
+
+---- checks::noise_xk::tests::test_key_rotation_rule stdout ----
+
+thread 'checks::noise_xk::tests::test_key_rotation_rule' panicked at crates\betanet-linter\src\checks\noise_xk.rs:859:9:
+assertion `left == right` failed
+  left: 0
+ right: 1
+
+---- checks::noise_xk::tests::test_security_rule stdout ----
+
+thread 'checks::noise_xk::tests::test_security_rule' panicked at crates\betanet-linter\src\checks\noise_xk.rs:874:9:
+assertion failed: issues.len() >= 2
+
+---- checks::scion_bridge::tests::test_scion_deployment_rule stdout ----
+
+thread 'checks::scion_bridge::tests::test_scion_deployment_rule' panicked at crates\betanet-linter\src\checks\scion_bridge.rs:682:9:
+assertion failed: issues.iter().any(|i| i.id == "SCION022")
+
+---- checks::noise_xk::tests::test_transport_rule stdout ----
+
+thread 'checks::noise_xk::tests::test_transport_rule' panicked at crates\betanet-linter\src\checks\noise_xk.rs:907:9:
+assertion `left == right` failed
+  left: "NOISE028"
+ right: "NOISE029"
+
+---- checks::scion_bridge::tests::test_scion_security_rule stdout ----
+
+thread 'checks::scion_bridge::tests::test_scion_security_rule' panicked at crates\betanet-linter\src\checks\scion_bridge.rs:635:9:
+assertion `left == right` failed
+  left: 0
+ right: 1
+
+---- checks::tls_mirror::tests::test_anti_fingerprint_rule stdout ----
+
+thread 'checks::tls_mirror::tests::test_anti_fingerprint_rule' panicked at crates\betanet-linter\src\checks\tls_mirror.rs:687:9:
+assertion `left == right` failed
+  left: 0
+ right: 1
+
+---- checks::bootstrap::tests::test_cpu_pow_fallback_rule stdout ----
+
+thread 'checks::bootstrap::tests::test_cpu_pow_fallback_rule' panicked at crates\betanet-linter\src\checks\bootstrap.rs:543:9:
+assertion failed: issues.iter().any(|i| i.id == "BS010")
+
+---- checks::bootstrap::tests::test_argon2id_parameter_rule stdout ----
+
+thread 'checks::bootstrap::tests::test_argon2id_parameter_rule' panicked at crates\betanet-linter\src\checks\bootstrap.rs:532:9:
+assertion failed: issues.iter().any(|i| i.id == "BS006")
+
+---- checks::scion_bridge::tests::test_scion_gateway_rule stdout ----
+
+thread 'checks::scion_bridge::tests::test_scion_gateway_rule' panicked at crates\betanet-linter\src\checks\scion_bridge.rs:597:9:
+assertion `left == right` failed
+  left: 4
+ right: 1
+
+---- checks::tls_mirror::tests::test_template_cache_rule stdout ----
+
+thread 'checks::tls_mirror::tests::test_template_cache_rule' panicked at crates\betanet-linter\src\checks\tls_mirror.rs:659:9:
+assertion `left == right` failed
+  left: 2
+ right: 1
+
+
+failures:
+    checks::bootstrap::tests::test_abuse_tracking_rule
+    checks::bootstrap::tests::test_argon2id_parameter_rule
+    checks::bootstrap::tests::test_bootstrap_negotiation_rule
+    checks::bootstrap::tests::test_cpu_pow_fallback_rule
+    checks::frame_format::tests::test_frame_buffer_rule
+    checks::frame_format::tests::test_frame_validation_rule
+    checks::noise_xk::tests::test_key_rotation_rule
+    checks::noise_xk::tests::test_security_rule
+    checks::noise_xk::tests::test_transport_rule
+    checks::scion_bridge::tests::test_scion_deployment_rule
+    checks::scion_bridge::tests::test_scion_gateway_rule
+    checks::scion_bridge::tests::test_scion_security_rule
+    checks::tls_mirror::tests::test_anti_fingerprint_rule
+    checks::tls_mirror::tests::test_template_cache_rule
+
+test result: FAILED. 13 passed; 14 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.21s
+
+error: test failed, to rerun pass `-p betanet-linter --lib`
+✗ Linter tests: FAILED
