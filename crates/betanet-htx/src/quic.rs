@@ -6,6 +6,10 @@ use std::net::SocketAddr;
 use std::path::Path;
 #[cfg(feature = "quic")]
 use std::sync::Arc;
+#[cfg(feature = "quic")]
+use std::sync::OnceLock;
+#[cfg(feature = "quic")]
+use std::time::{Duration, Instant};
 
 #[cfg(feature = "quic")]
 use quinn::{ClientConfig, Endpoint, ServerConfig, Connection, SendDatagramError};
@@ -21,6 +25,10 @@ use crate::{transport::TransportStats, HtxConfig, HtxError, Result, Frame};
 
 #[cfg(feature = "quic")]
 use base64::Engine;
+#[cfg(feature = "quic")]
+use dashmap::DashMap;
+#[cfg(feature = "quic")]
+use trust_dns_resolver::TokioAsyncResolver;
 
 /// QUIC transport with DATAGRAM support
 #[cfg(feature = "quic")]
@@ -57,6 +65,11 @@ impl Default for EchConfig {
         }
     }
 }
+
+#[cfg(feature = "quic")]
+static ECH_CONFIG_CACHE: OnceLock<DashMap<String, (Instant, EchConfig)>> = OnceLock::new();
+#[cfg(feature = "quic")]
+const ECH_CACHE_TTL: Duration = Duration::from_secs(3600);
 
 #[cfg(feature = "quic")]
 impl EchConfig {
@@ -125,9 +138,39 @@ impl EchConfig {
         Self::from_bytes(&data, public_name)
     }
 
-    pub async fn from_dns(_domain: &str) -> Result<Self> {
-        // DNS ECH resolution disabled due to dependency issues
-        Err(HtxError::Config("ECH DNS resolution not available".to_string()))
+    pub async fn from_dns(domain: &str) -> Result<Self> {
+        let cache = ECH_CONFIG_CACHE.get_or_init(|| DashMap::new());
+        if let Some(entry) = cache.get(domain) {
+            if entry.value().0.elapsed() < ECH_CACHE_TTL {
+                return Ok(entry.value().1.clone());
+            }
+        }
+
+        let resolver = TokioAsyncResolver::tokio_from_system_conf()
+            .map_err(|e| HtxError::Config(format!("resolver init failed: {}", e)))?;
+        let query_name = format!("_echconfig.{}", domain);
+        let response = resolver
+            .txt_lookup(query_name)
+            .await
+            .map_err(|e| HtxError::Config(format!("ECH DNS lookup failed: {}", e)))?;
+
+        let data_b64 = response
+            .iter()
+            .flat_map(|txt| txt.txt_data().iter())
+            .map(|bytes| String::from_utf8_lossy(bytes).to_string())
+            .collect::<String>();
+
+        if data_b64.is_empty() {
+            return Err(HtxError::Config("ECH config not found in DNS".into()));
+        }
+
+        let data = base64::engine::general_purpose::STANDARD
+            .decode(data_b64.trim())
+            .map_err(|e| HtxError::Config(format!("invalid ECH base64: {}", e)))?;
+
+        let cfg = Self::from_bytes(&data, domain.to_string())?;
+        cache.insert(domain.to_string(), (Instant::now(), cfg.clone()));
+        Ok(cfg)
     }
 
     pub fn validate(&self) -> Result<()> {

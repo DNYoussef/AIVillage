@@ -45,7 +45,7 @@ base64 = "0.21"
 urlencoding = "2.1"
 hex = "0.4"
 # rcgen = "0.13"
-# trust-dns-resolver = { version = "0.23", optional = true }
+trust-dns-resolver = { version = "0.23", features = ["tokio-runtime"], optional = true }
 
 [dev-dependencies]
 tokio = { workspace = true, features = ["test-util"] }
@@ -58,7 +58,7 @@ rand_distr = "0.4"
 [features]
 default = ["tcp", "noise-xk"]
 tcp = []
-quic = ["dep:quinn"]
+quic = ["dep:quinn", "dep:trust-dns-resolver"]
 noise-xk = []
 hybrid-kem-stub = []
 tls-fingerprint = []
