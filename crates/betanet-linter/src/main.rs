@@ -47,6 +47,10 @@ enum Commands {
         /// Output file
         #[arg(short, long)]
         output: Option<PathBuf>,
+
+        /// Additional paths to ignore
+        #[arg(long, value_name = "PATH")]
+        ignore: Vec<PathBuf>,
     },
 
     /// Generate SBOM
@@ -73,6 +77,10 @@ enum Commands {
         /// Directory to check
         #[arg(short, long, default_value = ".")]
         directory: PathBuf,
+
+        /// Additional paths to ignore
+        #[arg(long, value_name = "PATH")]
+        ignore: Vec<PathBuf>,
     },
 
     /// Security scan for vulnerable binaries
@@ -88,6 +96,10 @@ enum Commands {
         /// Fail on any security issues
         #[arg(long)]
         fail_on_issues: bool,
+
+        /// Additional paths to ignore
+        #[arg(long, value_name = "PATH")]
+        ignore: Vec<PathBuf>,
     },
 }
 
@@ -116,6 +128,7 @@ async fn main() -> Result<()> {
             severity,
             all_checks,
             output,
+            ignore,
         } => {
             info!("Linting directory: {:?}", directory);
 
@@ -126,13 +139,12 @@ async fn main() -> Result<()> {
                 _ => SeverityLevel::Info,
             };
 
-            let config = LinterConfig {
-                target_dir: directory,
-                enable_all_checks: all_checks,
-                generate_sbom: false,
-                output_format: output_format.clone(),
-                severity_level,
-            };
+            let mut config = LinterConfig::default();
+            config.target_dir = directory;
+            config.enable_all_checks = all_checks;
+            config.output_format = output_format.clone();
+            config.severity_level = severity_level;
+            config.ignored_paths.extend(ignore);
 
             let linter = Linter::new(config);
             let results = linter.run().await?;
@@ -176,16 +188,15 @@ async fn main() -> Result<()> {
             }
         }
 
-        Commands::Check { rule, directory } => {
+        Commands::Check { rule, directory, ignore } => {
             info!("Checking rule '{}' in directory: {:?}", rule, directory);
 
-            let config = LinterConfig {
-                target_dir: directory,
-                enable_all_checks: false,
-                generate_sbom: false,
-                output_format,
-                severity_level: SeverityLevel::Info,
-            };
+            let mut config = LinterConfig::default();
+            config.target_dir = directory;
+            config.enable_all_checks = false;
+            config.output_format = output_format;
+            config.severity_level = SeverityLevel::Info;
+            config.ignored_paths.extend(ignore);
 
             let linter = Linter::new(config);
             let results = linter.check_rule(&rule).await?;
@@ -204,16 +215,15 @@ async fn main() -> Result<()> {
             }
         }
 
-        Commands::SecurityScan { target, output, fail_on_issues } => {
+        Commands::SecurityScan { target, output, fail_on_issues, ignore } => {
             info!("Running security scan on: {:?}", target);
 
-            let config = LinterConfig {
-                target_dir: target,
-                enable_all_checks: false,
-                generate_sbom: false,
-                output_format: output_format.clone(),
-                severity_level: SeverityLevel::Info,
-            };
+            let mut config = LinterConfig::default();
+            config.target_dir = target;
+            config.enable_all_checks = false;
+            config.output_format = output_format.clone();
+            config.severity_level = SeverityLevel::Info;
+            config.ignored_paths.extend(ignore);
 
             let linter = Linter::new(config);
             let results = linter.security_scan().await?;

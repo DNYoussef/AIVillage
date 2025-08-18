@@ -378,10 +378,11 @@ impl Linter {
     pub async fn run(&self) -> Result<LintResults> {
         let mut results = LintResults::new();
 
-        // Walk directory and find relevant files
+        // Walk directory and find relevant files, skipping ignored paths
         for entry in WalkDir::new(&self.config.target_dir)
             .follow_links(true)
             .into_iter()
+            .filter_entry(|e| !self.is_ignored(e.path()))
             .filter_map(|e| e.ok())
         {
             if entry.file_type().is_file() {
@@ -422,6 +423,7 @@ impl Linter {
             for entry in WalkDir::new(&self.config.target_dir)
                 .follow_links(true)
                 .into_iter()
+                .filter_entry(|e| !self.is_ignored(e.path()))
                 .filter_map(|e| e.ok())
             {
                 if entry.file_type().is_file() {
@@ -466,6 +468,7 @@ impl Linter {
         for entry in WalkDir::new(&self.config.target_dir)
             .follow_links(true)
             .into_iter()
+            .filter_entry(|e| !self.is_ignored(e.path()))
             .filter_map(|e| e.ok())
         {
             if entry.file_type().is_file() {
@@ -589,5 +592,23 @@ impl Linter {
             }
         }
         Ok(())
+    }
+
+    fn is_ignored(&self, path: &std::path::Path) -> bool {
+        if let Ok(relative) = path.strip_prefix(&self.config.target_dir) {
+            for ancestor in relative.ancestors() {
+                if let Some(name) = ancestor.file_name() {
+                    if self
+                        .config
+                        .ignored_paths
+                        .iter()
+                        .any(|p| p.as_os_str() == name)
+                    {
+                        return true;
+                    }
+                }
+            }
+        }
+        false
     }
 }
