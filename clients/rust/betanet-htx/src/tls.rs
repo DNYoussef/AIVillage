@@ -1051,37 +1051,145 @@ mod tests {
     }
 }
 
+/// JA3 template parameters
+#[derive(Debug, Clone, Default)]
+pub struct Ja3Params {
+    pub version: u16,
+    pub cipher_suites: Vec<u16>,
+    pub extensions: Vec<u16>,
+    pub curves: Vec<u16>,
+    pub point_formats: Vec<u16>,
+}
+
+fn parse_u16_list(part: &str) -> Result<Vec<u16>> {
+    if part.is_empty() {
+        return Ok(vec![]);
+    }
+    part.split('-')
+        .map(|s| {
+            s.parse::<u16>().map_err(|_| {
+                TlsCamouflageError::InvalidConfig(format!(
+                    "invalid number in JA3 template: {}",
+                    s
+                ))
+            })
+        })
+        .collect()
+}
+
 /// Apply JA3 template for fingerprint resistance
-pub fn apply_ja3_template(template: &str) -> Result<()> {
-    // Stub implementation - would configure TLS client with JA3 template
-    tracing::info!("Applying JA3 template: {}", template);
-    Ok(())
+pub fn apply_ja3_template(template: &str) -> Result<Ja3Params> {
+    let parts: Vec<&str> = template.split(',').collect();
+    if parts.len() != 5 {
+        return Err(TlsCamouflageError::InvalidConfig(
+            "invalid JA3 template format".into(),
+        ));
+    }
+    let version = parts[0]
+        .parse::<u16>()
+        .map_err(|_| TlsCamouflageError::InvalidConfig("invalid JA3 version".into()))?;
+    let cipher_suites = parse_u16_list(parts[1])?;
+    let extensions = parse_u16_list(parts[2])?;
+    let curves = parse_u16_list(parts[3])?;
+    let point_formats = parse_u16_list(parts[4])?;
+    Ok(Ja3Params {
+        version,
+        cipher_suites,
+        extensions,
+        curves,
+        point_formats,
+    })
 }
 
 /// Create TLS connector with HTX camouflage
-pub fn create_tls_connector() -> Result<TlsConnectorStub> {
-    // Stub implementation - would create real TLS connector
-    Ok(TlsConnectorStub::new())
+pub fn create_tls_connector(
+    params: Ja3Params,
+    ech: Option<EchConfig>,
+) -> Result<TlsConnectorStub> {
+    let mut stub = TlsConnectorStub::new();
+    stub.version = params.version;
+    stub.cipher_suites = params.cipher_suites;
+    stub.extensions = params.extensions;
+    stub.curves = params.curves;
+    stub.point_formats = params.point_formats;
+    stub.ech_config = ech;
+    Ok(stub)
+}
+
+#[cfg(feature = "quic")]
+pub use crate::quic::EchConfig;
+
+#[cfg(not(feature = "quic"))]
+#[derive(Debug, Clone)]
+pub struct EchConfig {
+    pub public_name: String,
+}
+
+#[cfg(not(feature = "quic"))]
+impl Default for EchConfig {
+    fn default() -> Self {
+        Self {
+            public_name: "example.com".to_string(),
+        }
+    }
 }
 
 /// Stub TLS connector for testing
 pub struct TlsConnectorStub {
     enabled: bool,
+    version: u16,
+    cipher_suites: Vec<u16>,
+    extensions: Vec<u16>,
+    curves: Vec<u16>,
+    point_formats: Vec<u16>,
+    ech_config: Option<EchConfig>,
 }
 
 impl TlsConnectorStub {
     pub fn new() -> Self {
-        Self { enabled: true }
+        Self {
+            enabled: true,
+            version: 771,
+            cipher_suites: Vec::new(),
+            extensions: Vec::new(),
+            curves: Vec::new(),
+            point_formats: Vec::new(),
+            ech_config: None,
+        }
     }
-    
+
     pub fn is_enabled(&self) -> bool {
         self.enabled
+    }
+
+    pub fn fingerprint(&self) -> String {
+        fn join(values: &[u16]) -> String {
+            values
+                .iter()
+                .map(|v| v.to_string())
+                .collect::<Vec<_>>()
+                .join("-")
+        }
+        let base = format!(
+            "{},{},{},{},{}",
+            self.version,
+            join(&self.cipher_suites),
+            join(&self.extensions),
+            join(&self.curves),
+            join(&self.point_formats)
+        );
+        if self.ech_config.is_some() {
+            format!("{}|ECH", base)
+        } else {
+            base
+        }
     }
 }
 
 /// TLS camouflage builder for configuring TLS settings
 pub struct TlsCamouflageBuilder {
     enable_ech: bool,
+    ech_config: Option<EchConfig>,
     ja3_template: Option<String>,
 }
 
@@ -1089,30 +1197,76 @@ impl TlsCamouflageBuilder {
     pub fn new() -> Self {
         Self {
             enable_ech: false,
+            ech_config: None,
             ja3_template: None,
         }
     }
-    
+
     pub fn with_ech(mut self, enable: bool) -> Self {
         self.enable_ech = enable;
         self
     }
-    
+
+    pub fn with_ech_config(mut self, cfg: EchConfig) -> Self {
+        self.ech_config = Some(cfg);
+        self
+    }
+
     pub fn with_ja3_template(mut self, template: String) -> Self {
         self.ja3_template = Some(template);
         self
     }
-    
+
     pub fn build(self) -> Result<TlsConnectorStub> {
-        // Apply configurations
-        if let Some(template) = &self.ja3_template {
-            apply_ja3_template(template)?;
-        }
-        
-        if self.enable_ech {
-            tracing::info!("ECH enabled for TLS camouflage");
-        }
-        
-        create_tls_connector()
+        let params = if let Some(tmpl) = &self.ja3_template {
+            apply_ja3_template(tmpl)?
+        } else {
+            Ja3Params::default()
+        };
+        let ech = if self.enable_ech {
+            self.ech_config.or_else(|| Some(EchConfig::default()))
+        } else {
+            None
+        };
+        create_tls_connector(params, ech)
+    }
+}
+
+#[cfg(test)]
+mod tls_camouflage_tests {
+    use super::*;
+
+    #[test]
+    fn fingerprint_differs_with_templates() {
+        let tpl1 = "771,4865-4866,0,23,0".to_string();
+        let tpl2 = "771,4867,0,23,0".to_string();
+        let fp1 = TlsCamouflageBuilder::new()
+            .with_ja3_template(tpl1)
+            .build()
+            .unwrap()
+            .fingerprint();
+        let fp2 = TlsCamouflageBuilder::new()
+            .with_ja3_template(tpl2)
+            .build()
+            .unwrap()
+            .fingerprint();
+        assert_ne!(fp1, fp2);
+    }
+
+    #[test]
+    fn fingerprint_differs_with_ech() {
+        let tpl = "771,4865-4866,0,23,0".to_string();
+        let fp_no_ech = TlsCamouflageBuilder::new()
+            .with_ja3_template(tpl.clone())
+            .build()
+            .unwrap()
+            .fingerprint();
+        let fp_ech = TlsCamouflageBuilder::new()
+            .with_ech(true)
+            .with_ja3_template(tpl)
+            .build()
+            .unwrap()
+            .fingerprint();
+        assert_ne!(fp_no_ech, fp_ech);
     }
 }
