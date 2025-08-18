@@ -4,6 +4,7 @@ use crate::{LintIssue, Result, SeverityLevel};
 use async_trait::async_trait;
 use once_cell::sync::Lazy;
 use regex::Regex;
+use syn::visit::Visit;
 
 pub mod bootstrap;
 pub mod frame_format;
@@ -71,16 +72,79 @@ impl CheckRule for UnsafeCodeRule {
     async fn check(&self, context: &CheckContext) -> Result<Vec<LintIssue>> {
         let mut issues = vec![];
 
-        if context.content.contains("unsafe") {
-            issues.push(LintIssue::new(
-                "S001".to_string(),
-                SeverityLevel::Warning,
-                "Unsafe code detected".to_string(),
-                self.name().to_string(),
-            ));
+        if let Ok(ast) = syn::parse_file(&context.content) {
+            struct UnsafeVisitor {
+                found: bool,
+            }
+
+            impl<'ast> Visit<'ast> for UnsafeVisitor {
+                fn visit_item_fn(&mut self, i: &'ast syn::ItemFn) {
+                    if i.sig.unsafety.is_some() {
+                        self.found = true;
+                    }
+                    syn::visit::visit_item_fn(self, i);
+                }
+
+                fn visit_expr_unsafe(&mut self, i: &'ast syn::ExprUnsafe) {
+                    self.found = true;
+                    syn::visit::visit_expr_unsafe(self, i);
+                }
+            }
+
+            let mut visitor = UnsafeVisitor { found: false };
+            visitor.visit_file(&ast);
+
+            if visitor.found {
+                issues.push(LintIssue::new(
+                    "S001".to_string(),
+                    SeverityLevel::Warning,
+                    "Unsafe code detected".to_string(),
+                    self.name().to_string(),
+                ));
+            }
         }
 
         Ok(issues)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::path::PathBuf;
+
+    fn ctx(content: &str) -> CheckContext {
+        CheckContext {
+            file_path: PathBuf::from("test.rs"),
+            content: content.to_string(),
+        }
+    }
+
+    #[tokio::test]
+    async fn detects_unsafe_usage() {
+        let rule = UnsafeCodeRule;
+        let src = r#"
+            fn main() {
+                unsafe { let x = 1; }
+            }
+            unsafe fn dangerous() {}
+        "#;
+        let issues = rule.check(&ctx(src)).await.unwrap();
+        assert_eq!(issues.len(), 1);
+        assert_eq!(issues[0].id, "S001");
+    }
+
+    #[tokio::test]
+    async fn ignores_comments_and_identifiers() {
+        let rule = UnsafeCodeRule;
+        let src = r#"
+            // unsafe comment
+            fn main() {
+                let unsafe_variable = "safe";
+            }
+        "#;
+        let issues = rule.check(&ctx(src)).await.unwrap();
+        assert!(issues.is_empty());
     }
 }
 
