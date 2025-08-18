@@ -7,9 +7,7 @@ Combines best practices from multiple compression test files into single compreh
 import sys
 import unittest
 from pathlib import Path
-from unittest.mock import MagicMock, patch
 
-import numpy as np
 import pytest
 import torch
 
@@ -25,12 +23,7 @@ class TestCompressionSuite(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures"""
         self.test_model = self._create_test_model()
-        self.config = {
-            "compression_ratio": 0.5,
-            "quantization_bits": 8,
-            "cpu_only": True,
-            "batch_size": 1
-        }
+        self.config = {"compression_ratio": 0.5, "quantization_bits": 8, "cpu_only": True, "batch_size": 1}
 
     def _create_test_model(self):
         """Create a test model for compression"""
@@ -39,7 +32,7 @@ class TestCompressionSuite(unittest.TestCase):
             torch.nn.ReLU(),
             torch.nn.Linear(256, 128),
             torch.nn.ReLU(),
-            torch.nn.Linear(128, 10)
+            torch.nn.Linear(128, 10),
         )
 
     # Core Compression Tests (from test_compression_comprehensive.py)
@@ -64,7 +57,7 @@ class TestCompressionSuite(unittest.TestCase):
         compressed_model = compressor.compress(self.test_model)
 
         # Test SeedLM features
-        self.assertTrue(hasattr(compressed_model, 'seed_params'))
+        self.assertTrue(hasattr(compressed_model, "seed_params"))
         self.assertTrue(compressed_model.seed_params is not None)
 
     def test_seedlm_decompression(self):
@@ -77,8 +70,7 @@ class TestCompressionSuite(unittest.TestCase):
 
         # Verify shapes match
         for (name1, param1), (name2, param2) in zip(
-            self.test_model.named_parameters(),
-            decompressed_model.named_parameters()
+            self.test_model.named_parameters(), decompressed_model.named_parameters()
         ):
             self.assertEqual(param1.shape, param2.shape)
 
@@ -110,7 +102,7 @@ class TestCompressionSuite(unittest.TestCase):
         self.assertFalse(next(compressed_model.parameters()).is_cuda)
 
         # Verify mobile optimization
-        self.assertTrue(hasattr(compressed_model, 'mobile_optimized'))
+        self.assertTrue(hasattr(compressed_model, "mobile_optimized"))
         self.assertTrue(compressed_model.mobile_optimized)
 
     def test_memory_efficient_compression(self):
@@ -132,16 +124,12 @@ class TestCompressionSuite(unittest.TestCase):
         """Test full compression pipeline integration"""
         from agent_forge.compression.pipeline import CompressionPipeline
 
-        pipeline = CompressionPipeline([
-            "seedlm",
-            "bitnet",
-            "vptq"
-        ])
+        pipeline = CompressionPipeline(["seedlm", "bitnet", "vptq"])
 
         compressed_model = pipeline.compress(self.test_model, self.config)
 
         # Verify all stages applied
-        self.assertTrue(hasattr(compressed_model, 'compression_stages'))
+        self.assertTrue(hasattr(compressed_model, "compression_stages"))
         self.assertEqual(len(compressed_model.compression_stages), 3)
 
     # Performance Tests
@@ -215,18 +203,13 @@ class TestCompressionIntegration(unittest.TestCase):
         result = pipeline.run(model)
 
         self.assertIsNotNone(result)
-        self.assertTrue(hasattr(result, 'model'))
+        self.assertTrue(hasattr(result, "model"))
 
     def test_compression_with_mobile_deployment(self):
         """Test compression for mobile deployment"""
         from agent_forge.compression.mobile_compressor import MobileCompressor
 
-        config = {
-            "target_device": "mobile",
-            "max_model_size_mb": 50,
-            "quantization_bits": 8,
-            "cpu_only": True
-        }
+        config = {"target_device": "mobile", "max_model_size_mb": 50, "quantization_bits": 8, "cpu_only": True}
 
         compressor = MobileCompressor(config)
         model = torch.nn.Linear(1000, 1000)

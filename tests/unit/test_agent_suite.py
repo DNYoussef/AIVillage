@@ -4,11 +4,10 @@ Unified Agent Test Suite
 Combines best practices from multiple agent test files into single comprehensive suite
 """
 
-import asyncio
 import sys
 import unittest
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -27,7 +26,7 @@ class TestAgentSuite(unittest.TestCase):
             "agent_type": "test",
             "capabilities": ["reasoning", "planning"],
             "memory_size": 1000,
-            "rag_enabled": True
+            "rag_enabled": True,
         }
         self.mock_rag = MagicMock()
         self.mock_p2p = MagicMock()
@@ -41,11 +40,29 @@ class TestAgentSuite(unittest.TestCase):
         agent_types = registry.get_all_agent_types()
 
         expected_agents = [
-            "King", "Auditor", "Legal", "Shield", "Sword",
-            "Coordinator", "Gardener", "Magi", "Navigator", "Sustainer",
-            "Curator", "Oracle", "Sage", "Shaman", "Strategist",
-            "Ensemble", "Horticulturist", "Maker", "Banker-Economist", "Merchant",
-            "Medic", "Polyglot", "Tutor"
+            "King",
+            "Auditor",
+            "Legal",
+            "Shield",
+            "Sword",
+            "Coordinator",
+            "Gardener",
+            "Magi",
+            "Navigator",
+            "Sustainer",
+            "Curator",
+            "Oracle",
+            "Sage",
+            "Shaman",
+            "Strategist",
+            "Ensemble",
+            "Horticulturist",
+            "Maker",
+            "Banker-Economist",
+            "Merchant",
+            "Medic",
+            "Polyglot",
+            "Tutor",
         ]
 
         for agent_type in expected_agents:
@@ -93,7 +110,7 @@ class TestAgentSuite(unittest.TestCase):
         self.assertIn("priority", thought.content.lower())
 
     # Coordination System Tests (from test_coordination_system.py)
-    @patch('packages.agents.core.agent_orchestration_system.AgentOrchestrationSystem')
+    @patch("packages.agents.core.agent_orchestration_system.AgentOrchestrationSystem")
     def test_multi_agent_coordination(self, mock_orchestration):
         """Test multi-agent coordination system"""
         orchestrator = mock_orchestration.return_value
@@ -102,14 +119,14 @@ class TestAgentSuite(unittest.TestCase):
         agents = {
             "king": MagicMock(agent_type="King"),
             "magi": MagicMock(agent_type="Magi"),
-            "sage": MagicMock(agent_type="Sage")
+            "sage": MagicMock(agent_type="Sage"),
         }
 
         orchestrator.register_agents(agents)
 
         # Test task distribution
         task = {"type": "complex_research", "requires": ["research", "analysis"]}
-        result = orchestrator.execute_task(task)
+        orchestrator.execute_task(task)
 
         orchestrator.execute_task.assert_called_once_with(task)
 
@@ -168,7 +185,7 @@ class TestAgentSuite(unittest.TestCase):
         agent = BaseAgent(self.agent_config)
 
         # Test architecture discovery
-        current_architecture = agent.get_architecture()
+        agent.get_architecture()
         proposed_modifications = agent.discover_improvements()
 
         self.assertIsNotNone(proposed_modifications)
@@ -200,11 +217,7 @@ class TestAgentIntegration(unittest.TestCase):
         orchestrator.register_coordinator(king)
 
         # Create task
-        task = {
-            "type": "research",
-            "query": "Analyze system performance",
-            "priority": "high"
-        }
+        task = {"type": "research", "query": "Analyze system performance", "priority": "high"}
 
         # Execute task
         result = await orchestrator.execute_async_task(task)
@@ -217,10 +230,7 @@ class TestAgentIntegration(unittest.TestCase):
         from packages.agents.core.base_agent_template import BaseAgent
 
         # Create agents
-        agents = [
-            BaseAgent({"agent_type": f"Agent{i}", "p2p_enabled": True})
-            for i in range(5)
-        ]
+        agents = [BaseAgent({"agent_type": f"Agent{i}", "p2p_enabled": True}) for i in range(5)]
 
         # Mock P2P mesh
         mock_mesh = MagicMock()
@@ -236,12 +246,7 @@ class TestAgentIntegration(unittest.TestCase):
         """Test agent optimization for mobile deployment"""
         from packages.agents.core.base_agent_template import BaseAgent
 
-        mobile_config = {
-            "agent_type": "MobileAgent",
-            "mobile_optimized": True,
-            "max_memory_mb": 50,
-            "cpu_only": True
-        }
+        mobile_config = {"agent_type": "MobileAgent", "mobile_optimized": True, "max_memory_mb": 50, "cpu_only": True}
 
         agent = BaseAgent(mobile_config)
 
