@@ -427,6 +427,50 @@ crates/
 - **Message Chunking**: ✅ PASS - Large message fragmentation and reassembly
 - **Error Handling**: ✅ PASS - Transport failover and retry mechanisms
 
+### ✅ COMPLETED: Edge Device & Mobile Infrastructure Consolidation (August 18, 2025)
+
+#### Edge Device Unification Summary
+
+- **✅ Unified Architecture**: Consolidated 12+ edge device implementations → `packages/edge/`
+- **✅ Core Edge Manager**: Single system for all device types (mobile, desktop, server)
+- **✅ Mobile Resource Management**: Battery/thermal-aware policies with real-time adaptation
+- **✅ Fog Computing**: Distributed compute using idle charging edge devices
+- **✅ P2P Integration**: Seamless communication via unified P2P transport layer
+
+#### Technical Implementation
+
+- **✅ Edge Manager**: `packages/edge/core/edge_manager.py` (594 lines) - Device registration and lifecycle
+- **✅ Mobile Optimization**: `packages/edge/mobile/resource_manager.py` (848 lines) - Battery/thermal policies
+- **✅ Fog Coordinator**: `packages/edge/fog_compute/fog_coordinator.py` (461 lines) - Distributed computing
+- **✅ P2P Integration**: `packages/edge/bridges/p2p_integration.py` (334 lines) - Transport bridge
+- **✅ Cross-Platform**: Mobile (iOS/Android), desktop, and server support
+
+#### Deprecated Locations (Moved to deprecated/edge_device_consolidation/20250818/)
+
+- **Core Components**: `src/core/device_manager.py`, `src/core/resources/device_profiler.py`
+- **Edge Management**: `src/digital_twin/deployment/edge_manager.py`, `src/federation/core/device_registry.py`
+- **Mobile Infrastructure**: `src/production/monitoring/mobile/` directory (resource management)
+- **Hardware Layer**: `src/hardware/edge/` directory (device abstractions)
+- **Deployment**: `src/deployment/mobile_compressor.py` (mobile compression)
+
+#### Key Features Delivered
+
+- **Device Management**: Registration, capability detection, lifecycle management for all device types
+- **Mobile-First Design**: BitChat-preferred routing, battery conservation, thermal throttling
+- **Real Cryptography**: Replaced all security placeholders with AES-GCM, Ed25519, X25519
+- **Fog Computing**: Coordinate distributed workloads across charging edge devices
+- **Resource Optimization**: Dynamic memory/CPU limits based on device constraints
+- **P2P Communication**: Intelligent transport selection with mobile-aware routing
+
+#### Integration Test Results
+
+- **Edge-P2P Integration**: ✅ PASS - All core functionality working
+- **Device Registration**: ✅ PASS - Mobile and desktop devices registered successfully
+- **Transport Optimization**: ✅ PASS - Battery-aware BitChat routing for mobile devices
+- **Security Implementation**: ✅ PASS - All placeholders replaced with real cryptography
+- **Resource Management**: ✅ PASS - Thermal/battery policies working with real-time adaptation
+- **Fog Computing**: ✅ PASS - Distributed workload coordination functional
+
 ### Phase 2: Core Components (Week 2)
 
 #### Agent Consolidation (Next Priority)

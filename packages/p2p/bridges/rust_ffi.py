@@ -19,19 +19,46 @@ class RustFFIBridge:
         self.ffi_lib = None
 
     def initialize(self) -> bool:
-        """Initialize Rust FFI bridge."""
+        """Initialize Rust FFI bridge with real library loading."""
         try:
             # Try to load betanet FFI library
-            # In production, this would load the actual .dll/.so/.dylib
+            import ctypes
+            import os
+            import platform
+
             logger.info("Attempting to load betanet FFI library...")
 
-            # Placeholder - actual implementation would use ctypes/cffi
-            self.available = False  # Set to True when FFI is available
-
-            if self.available:
-                logger.info("Rust FFI bridge initialized successfully")
+            # Determine library name based on platform
+            system = platform.system().lower()
+            if system == "windows":
+                lib_name = "betanet_ffi.dll"
+            elif system == "darwin":
+                lib_name = "libbetanet_ffi.dylib"
             else:
-                logger.info("Rust FFI library not available, using Python fallback")
+                lib_name = "libbetanet_ffi.so"
+
+            # Look for library in common locations
+            possible_paths = [
+                f"./target/debug/{lib_name}",
+                f"./target/release/{lib_name}",
+                f"./{lib_name}",
+                os.path.join(os.getcwd(), "target", "debug", lib_name),
+                os.path.join(os.getcwd(), "target", "release", lib_name),
+            ]
+
+            for lib_path in possible_paths:
+                if os.path.exists(lib_path):
+                    try:
+                        self.ffi_lib = ctypes.CDLL(lib_path)
+                        self.available = True
+                        logger.info(f"Loaded betanet FFI library from: {lib_path}")
+                        break
+                    except Exception as e:
+                        logger.debug(f"Failed to load {lib_path}: {e}")
+                        continue
+
+            if not self.available:
+                logger.info("Rust FFI library not found, using Python fallback")
 
             return True
 

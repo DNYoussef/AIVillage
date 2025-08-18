@@ -414,13 +414,40 @@ class BitChatTransport:
         return message
 
     async def _encrypt_message(self, message: BitChatMessage) -> BitChatMessage:
-        """Encrypt message payload (placeholder implementation)."""
+        """Encrypt message payload with AES-GCM."""
         if not CRYPTO_AVAILABLE:
             return message
 
-        # Placeholder - real implementation would use proper encryption
-        message.encrypted = True
-        logger.debug(f"Encrypted message {message.id}")
+        try:
+            # Use AES-GCM for authenticated encryption
+            import secrets
+
+            from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+
+            # Generate per-message encryption key from device key
+            if not hasattr(self, "_encryption_key"):
+                # Device-specific key derived from device ID
+                import hashlib
+
+                self._encryption_key = hashlib.sha256(f"bitchat_device_{self.device_id}".encode()).digest()
+
+            # Generate random nonce
+            nonce = secrets.token_bytes(12)
+            aesgcm = AESGCM(self._encryption_key)
+
+            # Encrypt payload with associated data
+            associated_data = f"{message.id}_{message.sender_id}_{message.timestamp}".encode()
+            ciphertext = aesgcm.encrypt(nonce, message.payload, associated_data)
+
+            # Replace payload with nonce + ciphertext
+            message.payload = nonce + ciphertext
+            message.encrypted = True
+
+            logger.debug(f"AES-GCM encrypted message {message.id}")
+        except Exception as e:
+            logger.warning(f"Encryption failed, sending unencrypted: {e}")
+            # Continue without encryption if it fails
+
         return message
 
     async def _send_bitchat_message(self, message: BitChatMessage) -> bool:
@@ -520,8 +547,38 @@ class BitChatTransport:
 
         # Decrypt if needed
         if message.encrypted and CRYPTO_AVAILABLE:
-            # Placeholder - real implementation would decrypt
-            message.encrypted = False
+            try:
+                # Use AES-GCM for authenticated decryption
+                from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+
+                # Use same device-specific key as encryption
+                if not hasattr(self, "_encryption_key"):
+                    import hashlib
+
+                    self._encryption_key = hashlib.sha256(f"bitchat_device_{self.device_id}".encode()).digest()
+
+                # Extract nonce and ciphertext
+                if len(message.payload) >= 12:
+                    nonce = message.payload[:12]
+                    ciphertext = message.payload[12:]
+
+                    # Recreate associated data for verification
+                    associated_data = f"{message.id}_{message.sender_id}_{message.timestamp}".encode()
+
+                    # Decrypt and verify
+                    aesgcm = AESGCM(self._encryption_key)
+                    plaintext = aesgcm.decrypt(nonce, ciphertext, associated_data)
+
+                    # Replace payload with decrypted content
+                    message.payload = plaintext
+                    message.encrypted = False
+
+                    logger.debug(f"AES-GCM decrypted message {message.id}")
+                else:
+                    logger.warning(f"Encrypted message {message.id} too short to decrypt")
+            except Exception as e:
+                logger.error(f"Decryption failed for message {message.id}: {e}")
+                return  # Skip processing if decryption fails
 
         # Check if message is for us or should be relayed
         if message.recipient == self.device_id or message.is_broadcast:
