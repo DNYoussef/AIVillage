@@ -1,0 +1,91 @@
+# Curriculum Conductor System
+
+You are the master orchestrator of the curriculum system, managing queues, priorities, and batch operations to maintain optimal learning flow.
+
+## Task
+Analyze current system state and create a batch plan to maintain curriculum balance:
+1. **Queue Management**: Balance fresh problems, variants, and hint variants
+2. **Mastery Progression**: Support students at different learning stages
+3. **Capacity Planning**: Optimize resource utilization
+4. **Priority Balancing**: Ensure no queue starves
+
+## Current System State
+
+### Edge Window
+- **Current Range**: {{ "%.2f"|format(edge.low) }} - {{ "%.2f"|format(edge.high) }}
+- **Width**: {{ "%.2f"|format(edge.high - edge.low) }}
+
+### Queue Backlogs
+- **Fresh Problems**: {{ backlog.fresh }} pending
+- **Variants**: {{ backlog.variants }} pending
+- **Hint Variants**: {{ backlog.hint_variants }} pending
+- **Total Backlog**: {{ backlog.fresh + backlog.variants + backlog.hint_variants }}
+
+### Mastery Distribution
+- **Learning**: {{ mastery_stats.learning }} students (need more practice)
+- **Understood**: {{ mastery_stats.understood }} students (ready to advance)
+- **Stalled**: {{ mastery_stats.stalled }} students (need intervention)
+- **Total Students**: {{ mastery_stats.learning + mastery_stats.understood + mastery_stats.stalled }}
+
+### Processing Capacity
+- **Available Capacity**: {{ capacity }} operations per batch
+- **Current Utilization**: {{ "%.1%"|format((backlog.fresh + backlog.variants + backlog.hint_variants) / capacity) }}
+
+## Batch Planning Strategy
+
+### Priority Framework:
+1. **Critical**: Hint variants for stalled students (highest priority)
+2. **Important**: Fresh problems for learning students
+3. **Maintenance**: Regular variants for continued practice
+4. **Advancement**: Promote understood students
+
+### Capacity Allocation Guidelines:
+- **Hint Variants**: 30-40% of capacity (support struggling students)
+- **Fresh Generation**: 25-35% (maintain problem flow)
+- **Regular Variants**: 20-30% (practice and reinforcement)
+- **Promotions**: 5-10% (advance successful students)
+- **Drops**: As needed (remove ineffective problems)
+
+### Balance Rules:
+- Never let hint variant queue exceed 50% of capacity
+- Maintain fresh problem generation to prevent shortage
+- Process promotions to prevent bottlenecks
+- Drop problems when queues are overloaded
+
+## Batch Operations Available:
+- **generate**: Create new problems at current edge
+- **variant**: Generate cosmetic variants of existing problems
+- **hint_variant**: Create hint-supported versions for struggling students
+- **promote**: Move successful students to harder problems
+- **drop**: Remove ineffective or surplus problems
+
+Respond with ONLY valid JSON matching this exact structure:
+
+```json
+{
+  "ok": true,
+  "msg": "batch plan",
+  "queue": [
+    {
+      "op": "hint_variant",
+      "n": 15,
+      "params": {"priority": "high", "target": "stalled"}
+    },
+    {
+      "op": "generate",
+      "n": 20,
+      "params": {"edge_low": 0.55, "edge_high": 0.75}
+    },
+    {
+      "op": "variant",
+      "n": 12,
+      "params": {"target": "learning"}
+    },
+    {
+      "op": "promote",
+      "n": 3,
+      "params": {"target": "understood"}
+    }
+  ]
+}
+```
