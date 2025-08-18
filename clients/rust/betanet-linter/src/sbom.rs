@@ -5,6 +5,7 @@ use serde_json::json;
 use sha2::{Digest, Sha256};
 use std::{fs::File, io::Read, path::Path};
 use walkdir::WalkDir;
+use rayon::prelude::*;
 
 use crate::Result;
 
@@ -369,12 +370,22 @@ fn compute_package_hash(pkg: &cargo_metadata::Package) -> Result<String> {
         .collect();
     files.sort();
 
+    // Hash files in parallel while maintaining deterministic order
+    let file_hashes = files
+        .par_iter()
+        .map(|path| -> Result<Vec<u8>> {
+            let mut file = File::open(path)?;
+            let mut buf = Vec::new();
+            file.read_to_end(&mut buf)?;
+            let mut file_hasher = Sha256::new();
+            file_hasher.update(&buf);
+            Ok(file_hasher.finalize().to_vec())
+        })
+        .collect::<Result<Vec<_>>>()?;
+
     let mut hasher = Sha256::new();
-    for path in files {
-        let mut file = File::open(&path)?;
-        let mut buf = Vec::new();
-        file.read_to_end(&mut buf)?;
-        hasher.update(buf);
+    for hash in file_hashes {
+        hasher.update(hash);
     }
 
     Ok(format!("{:x}", hasher.finalize()))
@@ -443,6 +454,7 @@ mod tests {
     use super::*;
     use std::fs;
     use tempfile::tempdir;
+    use std::time::Instant;
 
     #[tokio::test]
     async fn package_hash_is_deterministic() -> Result<()> {
@@ -485,6 +497,35 @@ mod tests {
             .unwrap()
             .to_string();
         assert_ne!(hash1, hash3);
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn stress_test_large_directory_tree() -> Result<()> {
+        let dir = tempdir()?;
+        fs::create_dir(dir.path().join("src"))?;
+        fs::write(
+            dir.path().join("Cargo.toml"),
+            "[package]\nname = \"test_pkg\"\nversion = \"0.1.0\"\nedition = \"2021\"\n",
+        )?;
+
+        // Create a large directory tree with many files
+        for i in 0..100 {
+            let sub = dir.path().join("src").join(format!("dir{}", i));
+            fs::create_dir_all(&sub)?;
+            for j in 0..10 {
+                fs::write(sub.join(format!("file{}.rs", j)), "fn main() {}\n")?;
+            }
+        }
+
+        let generator = SbomGenerator::new();
+        let start = Instant::now();
+        generator.generate(dir.path(), "spdx").await?;
+        let duration = start.elapsed();
+
+        // Ensure generation completes within a reasonable time
+        assert!(duration.as_secs() < 10, "SBOM generation too slow: {:?}", duration);
 
         Ok(())
     }
