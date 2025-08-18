@@ -1,8 +1,0 @@
-src/monitoring/system_health_dashboard.py:121:            "NotImplementedError",
-src/monitoring/system_health_dashboard.py:125:            "raise NotImplementedError",
-src/monitoring/system_health_dashboard.py:182:            "NotImplementedError",
-src/monitoring/system_health_dashboard.py:186:            "raise NotImplementedError",
-src/production/agent_forge/evolution/evolution_metrics.py:133:        raise NotImplementedError
-src/production/agent_forge/evolution/evolution_metrics.py:136:        raise NotImplementedError
-src/production/agent_forge/evolution/evolution_metrics.py:141:        raise NotImplementedError
-src/production/agent_forge/evolution/evolution_metrics.py:146:        raise NotImplementedError
