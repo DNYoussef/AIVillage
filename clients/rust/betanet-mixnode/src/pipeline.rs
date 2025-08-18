@@ -13,6 +13,7 @@ use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
 use bytes::{Bytes, BytesMut};
+use crossbeam_queue::SegQueue;
 use tokio::sync::{broadcast, Notify, Semaphore};
 use tokio::time::sleep;
 
@@ -106,8 +107,8 @@ impl PipelinePacket {
 
 /// Memory pool for packet buffers
 pub struct MemoryPool {
-    /// Pool of reusable buffers
-    buffers: Mutex<VecDeque<BytesMut>>,
+    /// Pool of reusable buffers stored in a lock-free queue
+    buffers: SegQueue<BytesMut>,
     /// Pool statistics
     allocated: AtomicUsize,
     reused: AtomicUsize,
@@ -116,13 +117,13 @@ pub struct MemoryPool {
 impl MemoryPool {
     /// Create new memory pool
     pub fn new(capacity: usize, buffer_size: usize) -> Self {
-        let mut buffers = VecDeque::with_capacity(capacity);
+        let buffers = SegQueue::new();
         for _ in 0..capacity {
-            buffers.push_back(BytesMut::with_capacity(buffer_size));
+            buffers.push(BytesMut::with_capacity(buffer_size));
         }
 
         Self {
-            buffers: Mutex::new(buffers),
+            buffers,
             allocated: AtomicUsize::new(0),
             reused: AtomicUsize::new(0),
         }
@@ -130,13 +131,11 @@ impl MemoryPool {
 
     /// Get buffer from pool
     pub fn get_buffer(&self, size: usize) -> BytesMut {
-        if let Ok(mut pool) = self.buffers.try_lock() {
-            if let Some(mut buf) = pool.pop_front() {
-                buf.clear();
-                if buf.capacity() >= size {
-                    self.reused.fetch_add(1, Ordering::Relaxed);
-                    return buf;
-                }
+        if let Some(mut buf) = self.buffers.pop() {
+            buf.clear();
+            if buf.capacity() >= size {
+                self.reused.fetch_add(1, Ordering::Relaxed);
+                return buf;
             }
         }
 
@@ -158,10 +157,8 @@ impl MemoryPool {
     /// Return buffer to pool
     pub fn return_buffer(&self, mut buffer: BytesMut) {
         buffer.clear();
-        if let Ok(mut pool) = self.buffers.try_lock() {
-            if pool.len() < POOL_SIZE {
-                pool.push_back(buffer);
-            }
+        if self.buffers.len() < POOL_SIZE {
+            self.buffers.push(buffer);
         }
     }
 
