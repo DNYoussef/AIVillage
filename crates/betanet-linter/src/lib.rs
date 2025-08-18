@@ -58,6 +58,8 @@ pub struct LinterConfig {
     pub output_format: OutputFormat,
     /// Severity level
     pub severity_level: SeverityLevel,
+    /// Paths to ignore during scanning
+    pub ignored_paths: Vec<PathBuf>,
 }
 
 /// Output format
@@ -92,6 +94,11 @@ impl Default for LinterConfig {
             generate_sbom: false,
             output_format: OutputFormat::Text,
             severity_level: SeverityLevel::Info,
+            ignored_paths: vec![
+                PathBuf::from("target"),
+                PathBuf::from(".git"),
+                PathBuf::from("node_modules"),
+            ],
         }
     }
 }
