@@ -13,7 +13,7 @@ use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
 use bytes::{Bytes, BytesMut};
-use tokio::sync::{broadcast, Semaphore};
+use tokio::sync::{broadcast, Notify, Semaphore};
 use tokio::time::sleep;
 
 use crate::{MixnodeError, Result};
@@ -49,6 +49,8 @@ pub struct PacketPipeline {
     output_queue: Arc<Mutex<VecDeque<PipelinePacket>>>,
     /// Processing semaphore for backpressure
     processing_semaphore: Arc<Semaphore>,
+    /// Notifier for waking workers when new packets arrive
+    packet_notifier: Arc<Notify>,
     /// Pipeline statistics
     stats: Arc<PipelineStats>,
     /// Worker handles
@@ -271,6 +273,7 @@ impl PacketPipeline {
         #[cfg(feature = "sphinx")]
         let sphinx_processor = Arc::new(SphinxProcessor::new());
         let processing_semaphore = Arc::new(Semaphore::new(MAX_QUEUE_DEPTH));
+        let packet_notifier = Arc::new(Notify::new());
         let stats = Arc::new(PipelineStats::new());
         let rate_limiter = Arc::new(RateLimitedTrafficShaper::new(rate_config));
 
@@ -287,6 +290,7 @@ impl PacketPipeline {
             input_queue: Arc::new(Mutex::new(VecDeque::new())),
             output_queue: Arc::new(Mutex::new(VecDeque::new())),
             processing_semaphore,
+            packet_notifier,
             stats,
             workers: Vec::with_capacity(num_workers),
             shutdown_tx: None,
@@ -303,6 +307,7 @@ impl PacketPipeline {
         #[cfg(feature = "sphinx")]
         let sphinx_processor = Arc::new(SphinxProcessor::new());
         let processing_semaphore = Arc::new(Semaphore::new(MAX_QUEUE_DEPTH));
+        let packet_notifier = Arc::new(Notify::new());
         let stats = Arc::new(PipelineStats::new());
         let rate_limiter = Arc::new(RateLimitedTrafficShaper::new(rate_config));
 
@@ -313,6 +318,7 @@ impl PacketPipeline {
             input_queue: Arc::new(Mutex::new(VecDeque::new())),
             output_queue: Arc::new(Mutex::new(VecDeque::new())),
             processing_semaphore,
+            packet_notifier,
             stats,
             workers: Vec::with_capacity(num_workers),
             shutdown_tx: None,
@@ -334,6 +340,7 @@ impl PacketPipeline {
             #[cfg(feature = "sphinx")]
             let sphinx_processor = Arc::clone(&self.sphinx_processor);
             let processing_semaphore = Arc::clone(&self.processing_semaphore);
+            let packet_notifier = Arc::clone(&self.packet_notifier);
             let stats = Arc::clone(&self.stats);
             let mut shutdown_rx = shutdown_tx.subscribe();
 
@@ -346,21 +353,26 @@ impl PacketPipeline {
                             tracing::debug!("Worker {} shutting down", worker_id);
                             break;
                         }
-                        _ = sleep(Duration::from_micros(50)) => {
-                            // Process available packets in batches (faster polling)
-                            batch_buffer.clear();
+                        _ = packet_notifier.notified() => {
+                            loop {
+                                // Process available packets in batches when notified
+                                batch_buffer.clear();
 
-                            // Collect batch with guaranteed processing
-                            {
-                                let mut queue = input_queue.lock().unwrap();
-                                while batch_buffer.len() < BATCH_SIZE && !queue.is_empty() {
-                                    if let Some(packet) = queue.pop_front() {
-                                        batch_buffer.push(packet);
+                                {
+                                    let mut queue = input_queue.lock().unwrap();
+                                    while batch_buffer.len() < BATCH_SIZE {
+                                        if let Some(packet) = queue.pop_front() {
+                                            batch_buffer.push(packet);
+                                        } else {
+                                            break;
+                                        }
                                     }
                                 }
-                            }
 
-                            if !batch_buffer.is_empty() {
+                                if batch_buffer.is_empty() {
+                                    break;
+                                }
+
                                 let start_time = Instant::now();
 
                                 // Process batch
@@ -433,13 +445,19 @@ impl PacketPipeline {
             .map_err(|_| MixnodeError::Network("Pipeline semaphore closed".to_string()))?;
 
         // Add to input queue
-        {
+        let was_empty = {
             let mut queue = self.input_queue.lock().unwrap();
             if queue.len() >= MAX_QUEUE_DEPTH {
                 self.stats.packets_dropped.fetch_add(1, Ordering::Relaxed);
                 return Err(MixnodeError::Network("Pipeline queue full".to_string()));
             }
+            let was_empty = queue.is_empty();
             queue.push_back(packet);
+            was_empty
+        };
+
+        if was_empty {
+            self.packet_notifier.notify_one();
         }
 
         // Don't release permit - will be released after processing
