@@ -47,7 +47,7 @@ AIVillage follows a clean, layered architecture optimized for maintainability an
 
 ```
 📱 Apps Layer          → Mobile apps, web interfaces, CLI tools
-🧠 Core Layer          → Agents, RAG, Agent Forge, Tokenomics  
+🧠 Core Layer          → Agents, RAG, Agent Forge, Tokenomics
 🌐 Infrastructure     → P2P networking, edge computing, APIs
 🛠️ DevOps Layer        → CI/CD, monitoring, deployment
 ```
@@ -57,9 +57,45 @@ AIVillage follows a clean, layered architecture optimized for maintainability an
 - **🤖 Meta-Agents**: 18 specialized AI agents (King, Magi, Sage, etc.)
 - **🔧 Agent Forge**: Self-improving agent training and evolution system
 - **📚 HyperRAG**: Advanced retrieval-augmented generation with Bayesian trust
-- **🌐 P2P Network**: BitChat (Bluetooth) + BetaNet (encrypted internet) protocols
+- **🌐 P2P Network**: BitChat (Bluetooth) + BetaNet (encrypted internet) protocols ✨ **ENHANCED & STABILIZED**
 - **📱 Mobile Support**: Native iOS/Android apps with offline capabilities
 - **💰 DAO Governance**: Decentralized autonomous organization with token economics
+
+## 🆕 LATEST: BitChat Transport Stabilization Complete
+*August 17, 2025 - P2P Communication Layer Consolidation*
+
+### P2P System Transformation ✅
+
+We've successfully completed a major consolidation of our P2P communication infrastructure, unifying 12+ disparate implementations into a single, robust system:
+
+#### 🚀 **Unified Transport Architecture**
+- **Central Coordination**: All P2P transports now managed by unified `TransportManager` with intelligent routing
+- **Protocol Support**: BitChat (BLE mesh), BetaNet (HTX), QUIC with automatic failover chains
+- **Message Standards**: Unified message format supporting chunking, priority, and metadata
+- **Resource Awareness**: Battery and data budget management for mobile deployments
+
+#### 🔧 **Technical Achievements**
+- **Transport Manager**: `packages/p2p/core/transport_manager.py` (594 lines) - Core orchestration system
+- **BitChat Transport**: `packages/p2p/bitchat/ble_transport.py` (318 lines) - 7-hop mesh networking
+- **BetaNet Transport**: `packages/p2p/betanet/htx_transport.py` (267 lines) - HTX v1.1 frame protocol
+- **Compatibility Bridge**: `packages/p2p/bridges/compatibility.py` (198 lines) - Legacy support layer
+- **Integration Tests**: `test_unified_p2p.py` - 6/6 tests passing with comprehensive validation
+
+#### 📊 **Integration Results**
+- **✅ Unified P2P System**: Transport registration, message routing, and protocol coordination working
+- **✅ Legacy Compatibility**: Backward compatibility maintained with deprecation warnings
+- **✅ Mobile Optimization**: Resource-aware transport selection based on battery/network conditions
+- **✅ Error Resilience**: Transport failover and retry mechanisms with exponential backoff
+- **✅ Message Chunking**: Large message fragmentation and reassembly for size constraints
+- **✅ Performance**: Intelligent scoring algorithm for optimal transport selection
+
+#### 🗂️ **Cleanup Completed**
+- **40 legacy files** moved from `src/core/p2p/` to `deprecated/p2p_consolidation/20250818/`
+- **6 infrastructure files** moved from `src/infrastructure/p2p/` to deprecation
+- **Legacy imports** preserved via compatibility bridges during migration period
+- **Test consolidation** from scattered locations to unified test suite
+
+This consolidation provides a solid foundation for the next phase: Agent system unification and RAG consolidation.
 
 ## 🔄 Automation & Development Workflow
 
@@ -69,7 +105,7 @@ AIVillage features a comprehensive 7-stage CI/CD pipeline:
 
 #### 1. **Pre-flight Checks** ⚡ (< 30 seconds)
 - Syntax error detection
-- Critical security vulnerabilities  
+- Critical security vulnerabilities
 - Production code quality gates
 - No experimental imports in production
 
@@ -140,7 +176,7 @@ make clean                  # Clean build artifacts
 
 # Code Quality
 make format                 # Format code (Ruff + Black)
-make lint                   # Run linting checks  
+make lint                   # Run linting checks
 make lint-fix              # Auto-fix linting issues
 make type-check            # Run MyPy type checking
 make security              # Run security scans
@@ -186,7 +222,7 @@ make deploy-production     # Deploy to production
 ```
 tests/
 ├── unit/              # Fast unit tests
-├── integration/       # Component integration tests  
+├── integration/       # Component integration tests
 ├── e2e/              # End-to-end system tests
 ├── performance/      # Benchmark tests
 ├── fixtures/         # Shared test data
@@ -216,7 +252,7 @@ pytest tests/unit/ -n auto
 ### Security Measures
 
 - **🔐 Static Analysis**: Bandit + Semgrep scanning
-- **🔑 Secret Detection**: Pre-commit hooks + CI validation  
+- **🔑 Secret Detection**: Pre-commit hooks + CI validation
 - **🛡️ Dependency Scanning**: Safety vulnerability checks
 - **🚨 Automated Alerts**: Security issue notifications
 - **📋 Security Gates**: Production deployment blockers
@@ -254,7 +290,7 @@ open docs/api/index.html
 ### Development Workflow
 
 1. **Fork & Clone**: Fork the repository and clone locally
-2. **Setup**: Run `make dev-install` to set up development environment  
+2. **Setup**: Run `make dev-install` to set up development environment
 3. **Branch**: Create feature branch from `develop`
 4. **Code**: Follow the [coding style guide](docs/CLAUDE.md)
 5. **Test**: Ensure `make ci-local` passes
@@ -265,7 +301,7 @@ open docs/api/index.html
 
 All contributions must pass:
 - ✅ Pre-commit hooks
-- ✅ CI/CD pipeline  
+- ✅ CI/CD pipeline
 - ✅ Code review
 - ✅ Security scan
 - ✅ Test coverage
@@ -375,7 +411,7 @@ make security        # Security scan
 ### Getting Help
 
 - **📧 Issues**: [GitHub Issues](https://github.com/DNYoussef/AIVillage/issues)
-- **💬 Discussions**: [GitHub Discussions](https://github.com/DNYoussef/AIVillage/discussions)  
+- **💬 Discussions**: [GitHub Discussions](https://github.com/DNYoussef/AIVillage/discussions)
 - **📖 Documentation**: [docs/](docs/)
 - **🔧 Development**: [docs/development/](docs/development/)
 

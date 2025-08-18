@@ -182,11 +182,9 @@ build-backend = "setuptools.build_meta"
 
 # Unified Code Quality Configuration
 [tool.ruff]
-target-version = "py312"  # Match actual Python version
+target-version = "py311"  # Compatible with Ruff version
 line-length = 120
 fix = true
-
-[tool.ruff.lint]
 # Comprehensive rule set - enable most rules then selectively exclude
 select = [
     "E",    # pycodestyle errors (syntax, indentation)
@@ -240,7 +238,7 @@ exclude = [
     ".git", ".mypy_cache", ".ruff_cache", ".pytest_cache",  # Tool caches
 ]
 
-[tool.ruff.lint.per-file-ignores]
+[tool.ruff.per-file-ignores]
 # Test files have relaxed rules
 "tests/**/*.py" = [
     "D",       # pydocstyle (no docstrings required in tests)
@@ -259,10 +257,10 @@ exclude = [
 "tmp*/**/*.py" = ["ALL"]  # Skip all rules for temporary code
 "experimental/**/*.py" = ["D", "PLR", "S"]  # Relaxed rules for experimental code
 
-[tool.ruff.lint.pydocstyle]
+[tool.ruff.pydocstyle]
 convention = "google"
 
-[tool.ruff.lint.isort]
+[tool.ruff.isort]
 known-first-party = ["agents", "communications", "core", "agent_forge", "utils", "ingestion", "src"]
 force-sort-within-sections = true
 split-on-trailing-comma = true

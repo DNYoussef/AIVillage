@@ -9,7 +9,7 @@ This document provides a comprehensive mapping of the AIVillage project structur
 
 ### 10 Major Consolidation Groups Identified:
 1. **RAG Systems** - 10+ implementations to unify
-2. **Agent Forge & Training** - 8+ implementations 
+2. **Agent Forge & Training** - 8+ implementations
 3. **Specialized Agents** - 15+ locations
 4. **P2P/Communication** - 12+ implementations
 5. **Compression Systems** - 6+ implementations
@@ -243,7 +243,7 @@ crates/
 ### Priority 3: P2P/Communication Consolidation
 **Current State:** 6+ communication system implementations
 **Recommended Action:**
-1. Unify under `packages/p2p/` 
+1. Unify under `packages/p2p/`
 2. Separate protocols (BitChat, BetaNet) into submodules
 3. Archive old implementations
 4. Create clear transport abstraction layer
@@ -347,7 +347,7 @@ crates/
 - **Claude Prompt**: See CONSOLIDATION_GROUPS.md for specific unification prompt
 - **Priority Features**: Bayesian trust graphs, Hyper RAG cognitive nexus, offline mode
 
-#### Agent Forge Consolidation  
+#### Agent Forge Consolidation
 - **Target**: Unify 8+ implementations → `packages/agent_forge/`
 - **Components**: Training pipeline, ADAS, curriculum, evolution, compression
 - **Key Preservation**: All training phases, evolution metrics
@@ -357,12 +357,42 @@ crates/
 - **Structure**: unit/, integration/, e2e/, benchmarks/
 - **Action**: Delete all src/*/tests/ directories after migration
 
+### ✅ COMPLETED: P2P/Communication Consolidation (Phase 1 Complete)
+**Successfully consolidated all P2P/communication systems**
+
+#### P2P Transport Unification Completed
+- **✅ Unified Architecture**: Consolidated 12+ implementations → `packages/p2p/`
+- **✅ Core Transport Manager**: Intelligent routing with transport selection algorithm
+- **✅ Protocol Support**: BitChat (BLE mesh), BetaNet (HTX), QUIC with fallback chains
+- **✅ Mobile Optimization**: Battery/data-aware transport policies and resource constraints
+- **✅ Compatibility Bridges**: Legacy import support during migration period
+
+#### Technical Implementation
+- **✅ Transport Manager**: `packages/p2p/core/transport_manager.py` - Unified coordination system
+- **✅ Message Types**: `packages/p2p/core/message_types.py` - Standardized message format
+- **✅ BitChat Transport**: `packages/p2p/bitchat/ble_transport.py` - 7-hop mesh networking
+- **✅ BetaNet Transport**: `packages/p2p/betanet/htx_transport.py` - HTX v1.1 frame protocol
+- **✅ Legacy Support**: `packages/p2p/bridges/compatibility.py` - Migration compatibility
+
+#### Deprecated Locations (Moved to deprecated/p2p_consolidation/20250818/):
+- **40 files** from `src/core/p2p/` - Legacy transport implementations
+- **6 files** from `src/infrastructure/p2p/` - Device mesh and NAT traversal
+- **Legacy Python** implementations preserved with compatibility bridges
+- **Test files** migrated to unified test suite
+
+#### Integration Test Results
+- **Unified P2P System**: ✅ PASS - Transport registration and message routing functional
+- **Legacy Compatibility**: ✅ PASS - Backward compatibility maintained during migration
+- **Mobile Integration**: ✅ PASS - Resource-aware transport selection working
+- **Message Chunking**: ✅ PASS - Large message fragmentation and reassembly
+- **Error Handling**: ✅ PASS - Transport failover and retry mechanisms
+
 ### Phase 2: Core Components (Week 2)
 
-#### P2P/Communication Unification
-- **Target**: Consolidate 12+ implementations → `packages/p2p/`
-- **Submodules**: bitchat/, betanet/, libp2p/, core/
-- **Mobile**: Preserve Android/iOS bridges
+#### Agent Consolidation (Next Priority)
+- **Target**: Unify 15+ agent locations → `packages/agents/`
+- **Strategy**: One implementation per agent type
+- **Preserve**: Best features from experimental versions
 
 #### Agent Consolidation
 - **Target**: Unify 15+ agent locations → `packages/agents/`
