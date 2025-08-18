@@ -4,8 +4,8 @@
 //! to ensure constant-rate output and prevent traffic analysis.
 
 use std::sync::atomic::{AtomicU64, Ordering};
-use std::sync::{Arc, Mutex as StdMutex};
-use std::time::{Duration, Instant};
+use std::sync::Arc;
+use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 use std::collections::VecDeque;
 use tokio::sync::{Mutex, Semaphore};
@@ -23,8 +23,8 @@ pub struct TokenBucket {
     tokens: AtomicU64,
     /// Rate of token refill (tokens per second, fixed-point)
     refill_rate_fp: u64,
-    /// Last refill timestamp
-    last_refill: StdMutex<Instant>,
+    /// Last refill timestamp (microseconds since UNIX_EPOCH)
+    last_refill: AtomicU64,
     /// Statistics
     stats: Arc<RateLimiterStats>,
 }
@@ -38,7 +38,7 @@ impl TokenBucket {
             capacity,
             tokens: AtomicU64::new(capacity * TOKEN_PRECISION),
             refill_rate_fp: (refill_rate * TOKEN_PRECISION as f64) as u64,
-            last_refill: StdMutex::new(Instant::now()),
+            last_refill: AtomicU64::new(Self::now_micros()),
             stats: Arc::new(RateLimiterStats::new()),
         }
     }
@@ -106,24 +106,29 @@ impl TokenBucket {
         }
     }
 
+    fn now_micros() -> u64 {
+        SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap_or(Duration::ZERO)
+            .as_micros() as u64
+    }
+
     /// Token refill using atomic operations
     fn refill_lockfree(&self) {
-        let now = Instant::now();
+        let now = Self::now_micros();
 
-        let elapsed = {
-            let mut last_refill = self.last_refill.lock().unwrap();
-            let elapsed = last_refill.elapsed();
-
-            // Only refill if enough time has passed (reduce contention)
-            if elapsed < Duration::from_micros(1000) {
-                return;
+        let Ok(last) = self.last_refill.fetch_update(Ordering::AcqRel, Ordering::Acquire, |last| {
+            let elapsed = now.saturating_sub(last);
+            if elapsed >= 1_000 {
+                Some(now)
+            } else {
+                None
             }
-
-            *last_refill = now;
-            elapsed
+        }) else {
+            return;
         };
 
-        let elapsed_us = elapsed.as_micros() as u64;
+        let elapsed_us = now - last;
         let tokens_to_add_fp = (elapsed_us * self.refill_rate_fp) / 1_000_000;
 
         if tokens_to_add_fp > 0 {
