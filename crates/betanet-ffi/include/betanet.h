@@ -10,134 +10,160 @@
 extern "C" {
 #endif
 
-/**
- * Result codes for Betanet FFI functions
- */
+/* Result codes for Betanet FFI functions */
 typedef enum {
-    /** Operation completed successfully */
     BETANET_SUCCESS = 0,
-    /** Invalid argument provided */
     BETANET_INVALID_ARGUMENT = -1,
-    /** Out of memory */
     BETANET_OUT_OF_MEMORY = -2,
-    /** Network error */
     BETANET_NETWORK_ERROR = -3,
-    /** Parsing error */
     BETANET_PARSE_ERROR = -4,
-    /** Cryptographic error */
     BETANET_CRYPTO_ERROR = -5,
-    /** Internal error */
     BETANET_INTERNAL_ERROR = -6,
-    /** Feature not supported */
     BETANET_NOT_SUPPORTED = -7,
-    /** Operation timed out */
     BETANET_TIMEOUT = -8,
 } BetanetResult;
 
-/**
- * Buffer structure for passing data between C and Rust
- */
+/* Backwards compatible aliases used in examples */
+typedef BetanetResult betanet_Result;
+#define betanet_Success BETANET_SUCCESS
+#define betanet_InvalidArgument BETANET_INVALID_ARGUMENT
+#define betanet_OutOfMemory BETANET_OUT_OF_MEMORY
+#define betanet_NetworkError BETANET_NETWORK_ERROR
+#define betanet_ParseError BETANET_PARSE_ERROR
+#define betanet_CryptoError BETANET_CRYPTO_ERROR
+#define betanet_InternalError BETANET_INTERNAL_ERROR
+#define betanet_NotSupported BETANET_NOT_SUPPORTED
+#define betanet_Timeout BETANET_TIMEOUT
+
+/* Buffer structure for passing data between C and Rust */
 typedef struct {
-    /** Pointer to data */
     uint8_t *data;
-    /** Length of data in bytes */
     uint32_t len;
-    /** Capacity of buffer (for owned buffers) */
     uint32_t capacity;
 } BetanetBuffer;
 
-/**
- * Initialize the Betanet library
- *
- * Must be called before using any other functions.
- * Returns 0 on success, negative error code on failure.
+typedef BetanetBuffer betanet_Buffer;
+
+/* Opaque handle type used for protocol objects */
+typedef struct BetanetHandle BetanetHandle;
+
+typedef BetanetHandle HTXFrame;
+typedef BetanetHandle HTXClient;
+typedef BetanetHandle HTXServer;
+
+typedef BetanetHandle MixnodeHandle;
+typedef BetanetHandle SphinxPacketHandle;
+
+typedef BetanetHandle UTLSTemplate;
+typedef BetanetHandle JA3Generator;
+typedef BetanetHandle JA4Generator;
+
+typedef BetanetHandle LinterHandle;
+
+/* Mixnode configuration */
+typedef struct {
+    uint32_t max_pps;
+    uint32_t delay_pool_size;
+    double cover_traffic_rate;
+    int32_t enable_vrf_delay;
+} MixnodeConfigFFI;
+
+typedef MixnodeConfigFFI betanet_MixnodeConfigFFI;
+
+/* Linter configuration */
+typedef struct {
+    const char* target_dir;
+    uint32_t min_severity;
+    int32_t all_checks;
+} LinterConfigFFI;
+
+typedef LinterConfigFFI betanet_LinterConfigFFI;
+
+/* Linter results */
+typedef struct {
+    uint32_t files_checked;
+    uint32_t rules_executed;
+    uint32_t critical_issues;
+    uint32_t error_issues;
+    uint32_t warning_issues;
+    uint32_t info_issues;
+} LinterResultsFFI;
+
+typedef LinterResultsFFI betanet_LinterResultsFFI;
+
+/*
+ * Base library functions
  */
 int betanet_init(void);
-
-/**
- * Cleanup and shutdown the Betanet library
- *
- * Should be called when finished using the library.
- */
 void betanet_cleanup(void);
-
-/**
- * Get library version string
- *
- * Returns a null-terminated string with the library version.
- * The caller must not free the returned pointer.
- */
 const char* betanet_version(void);
-
-/**
- * Check if a feature is supported
- *
- * @param feature - Feature name to check (null-terminated string)
- *
- * Returns:
- * - BETANET_SUCCESS if feature is supported
- * - BETANET_NOT_SUPPORTED if feature is not supported
- * - BETANET_INVALID_ARGUMENT if feature name is invalid
- */
 BetanetResult betanet_feature_supported(const char* feature);
-
-/**
- * Free a buffer allocated by Betanet
- *
- * @param buffer - Buffer to free
- *
- * SAFETY: Buffer must have been allocated by Betanet library
- */
 void betanet_buffer_free(BetanetBuffer buffer);
-
-/**
- * Allocate a new buffer
- *
- * @param size - Size in bytes to allocate
- *
- * Returns new buffer on success, empty buffer on failure
- */
 BetanetBuffer betanet_buffer_alloc(uint32_t size);
-
-/**
- * Get error message for result code
- *
- * @param result - Result code
- *
- * Returns null-terminated error message string.
- * The caller must not free the returned pointer.
- */
 const char* betanet_error_message(BetanetResult result);
-
-/**
- * Simple packet encoder demo
- *
- * @param input - Input data
- * @param output - Output buffer (will be allocated)
- *
- * Returns result code
- */
 BetanetResult betanet_packet_encode(BetanetBuffer input, BetanetBuffer* output);
-
-/**
- * Simple packet decoder demo
- *
- * @param input - Input encoded data
- * @param output - Output buffer (will be allocated)
- *
- * Returns result code
- */
 BetanetResult betanet_packet_decode(BetanetBuffer input, BetanetBuffer* output);
-
-/**
- * Echo function for testing
- *
- * @param input - Input string (null-terminated)
- * @param output - Output buffer (will be allocated)
- *
- * Returns result code
- */
 BetanetResult betanet_echo(const char* input, BetanetBuffer* output);
+
+/*
+ * HTX protocol bindings
+ */
+HTXFrame* htx_frame_create(uint32_t stream_id, uint32_t frame_type, BetanetBuffer payload);
+BetanetResult htx_frame_encode(const HTXFrame* frame, BetanetBuffer* buffer);
+HTXFrame* htx_frame_decode(BetanetBuffer data);
+uint32_t htx_frame_stream_id(const HTXFrame* frame);
+uint32_t htx_frame_type(const HTXFrame* frame);
+BetanetResult htx_frame_payload(const HTXFrame* frame, BetanetBuffer* buffer);
+void htx_frame_free(HTXFrame* frame);
+
+HTXClient* htx_client_create(void);
+BetanetResult htx_client_connect(HTXClient* client, const char* address, uint32_t port);
+BetanetResult htx_client_send_frame(HTXClient* client, const HTXFrame* frame);
+void htx_client_free(HTXClient* client);
+
+/*
+ * Mixnode and Sphinx bindings
+ */
+MixnodeHandle* mixnode_create(const MixnodeConfigFFI* config);
+BetanetResult mixnode_start(MixnodeHandle* mixnode);
+BetanetResult mixnode_stop(MixnodeHandle* mixnode);
+BetanetResult mixnode_process_packet(MixnodeHandle* mixnode, BetanetBuffer packet_data, BetanetBuffer* output_packet);
+BetanetResult mixnode_get_stats(const MixnodeHandle* mixnode,
+                                uint32_t* packets_processed,
+                                uint32_t* packets_forwarded,
+                                uint32_t* packets_dropped,
+                                double* current_pps);
+void mixnode_free(MixnodeHandle* mixnode);
+
+SphinxPacketHandle* sphinx_packet_create(BetanetBuffer payload, const char* route);
+BetanetResult sphinx_packet_encode(const SphinxPacketHandle* packet, BetanetBuffer* buffer);
+SphinxPacketHandle* sphinx_packet_decode(BetanetBuffer data);
+void sphinx_packet_free(SphinxPacketHandle* packet);
+
+/*
+ * uTLS and fingerprinting bindings
+ */
+JA3Generator* utls_ja3_generator_create(void);
+BetanetResult utls_ja3_generate(JA3Generator* generator, BetanetBuffer client_hello, BetanetBuffer* fingerprint);
+void utls_ja3_generator_free(JA3Generator* generator);
+
+JA4Generator* utls_ja4_generator_create(void);
+BetanetResult utls_ja4_generate(JA4Generator* generator, BetanetBuffer client_hello, int32_t is_quic, BetanetBuffer* fingerprint);
+void utls_ja4_generator_free(JA4Generator* generator);
+
+UTLSTemplate* utls_template_create(const char* browser_type);
+BetanetResult utls_template_generate_client_hello(UTLSTemplate* template_handle, const char* server_name, BetanetBuffer* client_hello);
+void utls_template_free(UTLSTemplate* template_handle);
+int utls_self_test(void);
+
+/*
+ * Linter bindings
+ */
+LinterHandle* linter_create(const LinterConfigFFI* config);
+BetanetResult linter_run(LinterHandle* linter, LinterResultsFFI* results);
+BetanetResult linter_check_rule(LinterHandle* linter, const char* rule_name, LinterResultsFFI* results);
+BetanetResult linter_generate_sbom(const char* directory, const char* format, BetanetBuffer* output);
+void linter_free(LinterHandle* linter);
 
 #ifdef __cplusplus
 }
