@@ -26,11 +26,7 @@ logger = logging.getLogger(__name__)
 
 # Enable evolution system imports
 try:
-    from .agent_evolution_engine import AgentEvolutionEngine, AgentGenome, AgentKPIs, GeneticOptimizer
-    from .evolution_dashboard import EvolutionDashboard, PerformanceAnalyzer
-    from .evolution_orchestrator import EvolutionOrchestrator, OrchestrationConfig, OrchestrationState
-    from .meta_learning_engine import MetaLearningEngine
-    from .safe_code_modifier import CodeModification, SafeCodeModifier
+    from .evolution_orchestrator import EvolutionOrchestrator, OrchestrationConfig
 
     # Set availability flag
     EVOLUTION_AVAILABLE = True

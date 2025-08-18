@@ -7,12 +7,7 @@ import torch
 
 # Import all production components
 try:
-    from src.production.benchmarking import RealBenchmark
-    from src.production.compression import CompressionPipeline
-    from src.production.evolution import EvolutionaryTournament
-    from src.production.geometry import GeometryFeedback
-    from src.production.memory import MemoryManager
-    from src.production.rag import RAGPipeline
+    pass
 except ImportError:
     pytest.skip("Production modules not available", allow_module_level=True)
 
@@ -119,9 +114,7 @@ class TestProductionIntegration:
         }
 
         # Test memory efficiency
-        compression_efficiency = (
-            memory_usage["after_compression"] < memory_usage["after_rag"]
-        )
+        compression_efficiency = memory_usage["after_compression"] < memory_usage["after_rag"]
         assert compression_efficiency, "Compression should reduce memory usage"
 
     def test_benchmarking_integration(self) -> None:

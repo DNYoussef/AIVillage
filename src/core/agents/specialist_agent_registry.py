@@ -107,9 +107,7 @@ class AgentInstance:
 
     # Network state
     endpoint: str | None = None
-    transport_preferences: list[str] = field(
-        default_factory=lambda: ["betanet", "bitchat"]
-    )
+    transport_preferences: list[str] = field(default_factory=lambda: ["betanet", "bitchat"])
     latency_ms: float = 0.0
 
 
@@ -132,10 +130,7 @@ class SpecialistAgentRegistry:
         self._initialize_core_agent_specs()
         self._build_capability_indexes()
 
-        logger.info(
-            "SpecialistAgentRegistry initialized with "
-            f"{len(self.specifications)} agent types"
-        )
+        logger.info("SpecialistAgentRegistry initialized with " f"{len(self.specifications)} agent types")
 
     def _initialize_core_agent_specs(self):
         """Initialize specifications for all 18 core agents."""
@@ -410,9 +405,7 @@ class SpecialistAgentRegistry:
                     self.capability_index[capability] = []
                 self.capability_index[capability].append(agent_type)
 
-    def register_instance(
-        self, agent_type: str, device_id: str, **kwargs
-    ) -> AgentInstance:
+    def register_instance(self, agent_type: str, device_id: str, **kwargs) -> AgentInstance:
         """Register a new agent instance."""
         if agent_type not in self.specifications:
             raise ValueError(f"Unknown agent type: {agent_type}")
@@ -430,9 +423,7 @@ class SpecialistAgentRegistry:
         )
 
         self.instances[instance_id] = instance
-        logger.info(
-            f"Registered {agent_type} instance {instance_id} on device {device_id}"
-        )
+        logger.info(f"Registered {agent_type} instance {instance_id} on device {device_id}")
 
         return instance
 
@@ -492,9 +483,7 @@ class SpecialistAgentRegistry:
             candidates = self.get_available_instances()
 
         if not candidates:
-            logger.warning(
-                f"No available agents for task: {task.get('task_id', 'unknown')}"
-            )
+            logger.warning(f"No available agents for task: {task.get('task_id', 'unknown')}")
             return None
 
         # Score candidates based on suitability
@@ -508,9 +497,7 @@ class SpecialistAgentRegistry:
             score = spec.collaboration_score * spec.priority_multiplier
 
             # Adjust for current load
-            load_factor = 1.0 - (
-                len(candidate.current_tasks) / spec.max_concurrent_tasks
-            )
+            load_factor = 1.0 - (len(candidate.current_tasks) / spec.max_concurrent_tasks)
             score *= load_factor
 
             # Adjust for performance history
@@ -518,9 +505,7 @@ class SpecialistAgentRegistry:
             score *= success_rate
 
             # Adjust for capability match
-            if required_capability and required_capability in [
-                c.value for c in candidate.capabilities_available
-            ]:
+            if required_capability and required_capability in [c.value for c in candidate.capabilities_available]:
                 score *= 1.2
 
             if score > best_score:
@@ -561,22 +546,17 @@ class SpecialistAgentRegistry:
         # Count instances by status
         for instance in self.instances.values():
             status_key = instance.status.value
-            status["instances_by_status"][status_key] = (
-                status["instances_by_status"].get(status_key, 0) + 1
-            )
+            status["instances_by_status"][status_key] = status["instances_by_status"].get(status_key, 0) + 1
 
             type_key = instance.agent_type
-            status["instances_by_type"][type_key] = (
-                status["instances_by_type"].get(type_key, 0) + 1
-            )
+            status["instances_by_type"][type_key] = status["instances_by_type"].get(type_key, 0) + 1
 
         # Count capability coverage
         for capability, agent_types in self.capability_index.items():
             available_instances = sum(
                 1
                 for instance in self.instances.values()
-                if instance.agent_type in agent_types
-                and instance.status == AgentStatus.AVAILABLE
+                if instance.agent_type in agent_types and instance.status == AgentStatus.AVAILABLE
             )
             status["capability_coverage"][capability.value] = {
                 "agent_types": len(agent_types),
@@ -588,8 +568,7 @@ class SpecialistAgentRegistry:
             available_instances = sum(
                 1
                 for instance in self.instances.values()
-                if instance.agent_type in agent_types
-                and instance.status == AgentStatus.AVAILABLE
+                if instance.agent_type in agent_types and instance.status == AgentStatus.AVAILABLE
             )
             status["role_coverage"][role.value] = {
                 "agent_types": len(agent_types),
@@ -606,9 +585,7 @@ class SpecialistAgentRegistry:
             export_data[agent_type] = asdict(spec)
             # Convert enums to strings for JSON serialization
             export_data[agent_type]["primary_role"] = spec.primary_role.value
-            export_data[agent_type]["secondary_roles"] = [
-                r.value for r in spec.secondary_roles
-            ]
+            export_data[agent_type]["secondary_roles"] = [r.value for r in spec.secondary_roles]
 
             # Convert capability configs
             for cap_config in export_data[agent_type]["capabilities"]:

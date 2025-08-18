@@ -69,17 +69,13 @@ class PerformanceBenchmark:
     def create_llm_client(self) -> OpenRouterLLM:
         """Create LLM client (mock or real based on API key availability)."""
         if self.use_mock:
-            from tests.curriculum.test_integration_comprehensive import (
-                MockOpenRouterLLM,
-            )
+            from tests.curriculum.test_integration_comprehensive import MockOpenRouterLLM
 
             return MockOpenRouterLLM(self.api_key)
         else:
             return OpenRouterLLM(api_key=self.api_key, model="openai/gpt-4o-mini")
 
-    async def measure_performance(
-        self, operation_name: str, operation_func, *args, **kwargs
-    ) -> PerformanceMetrics:
+    async def measure_performance(self, operation_name: str, operation_func, *args, **kwargs) -> PerformanceMetrics:
         """Measure performance of an async operation."""
         process = psutil.Process(os.getpid())
 
@@ -243,9 +239,9 @@ class TestPerformanceBenchmarks:
                 )
 
                 # Performance assertions
-                assert metrics.duration_seconds < 120, (
-                    f"Edge finding took {metrics.duration_seconds:.1f}s, should be <120s"
-                )
+                assert (
+                    metrics.duration_seconds < 120
+                ), f"Edge finding took {metrics.duration_seconds:.1f}s, should be <120s"
                 assert metrics.success_rate == 1.0, "Edge finding should succeed"
 
                 logger.info(
@@ -278,12 +274,10 @@ class TestPerformanceBenchmarks:
                 )
 
                 # Performance assertions
-                assert metrics.duration_seconds < 300, (
-                    f"Problem generation took {metrics.duration_seconds:.1f}s, should be <300s"
-                )
-                assert metrics.throughput_per_second > 0.05, (
-                    f"Throughput {metrics.throughput_per_second:.3f} too low"
-                )
+                assert (
+                    metrics.duration_seconds < 300
+                ), f"Problem generation took {metrics.duration_seconds:.1f}s, should be <300s"
+                assert metrics.throughput_per_second > 0.05, f"Throughput {metrics.throughput_per_second:.3f} too low"
 
                 logger.info(
                     f"Problem generation {batch_size}: {metrics.duration_seconds:.1f}s, {metrics.throughput_per_second:.2f} problems/sec"
@@ -321,9 +315,9 @@ class TestPerformanceBenchmarks:
                     n_variants=count,
                 )
 
-                assert metrics.duration_seconds < 180, (
-                    f"Variant generation took {metrics.duration_seconds:.1f}s, should be <180s"
-                )
+                assert (
+                    metrics.duration_seconds < 180
+                ), f"Variant generation took {metrics.duration_seconds:.1f}s, should be <180s"
 
                 logger.info(
                     f"Variant generation {count}: {metrics.duration_seconds:.1f}s, {metrics.throughput_per_second:.2f} variants/sec"
@@ -361,12 +355,10 @@ class TestPerformanceBenchmarks:
                 model_answers=test_answers,
             )
 
-            assert metrics.duration_seconds < 300, (
-                f"Batch grading took {metrics.duration_seconds:.1f}s"
-            )
-            assert metrics.throughput_per_second > 0.01, (
-                f"Grading throughput too low: {metrics.throughput_per_second:.3f}"
-            )
+            assert metrics.duration_seconds < 300, f"Batch grading took {metrics.duration_seconds:.1f}s"
+            assert (
+                metrics.throughput_per_second > 0.01
+            ), f"Grading throughput too low: {metrics.throughput_per_second:.3f}"
 
             logger.info(
                 f"Batch grading: {metrics.duration_seconds:.1f}s, {metrics.throughput_per_second:.2f} solutions/sec"
@@ -387,12 +379,8 @@ class TestPerformanceBenchmarks:
                 constraints=EdgeConstraints(problem_budget=50),
             )
 
-            assert metrics.duration_seconds < 600, (
-                f"Orchestrator init took {metrics.duration_seconds:.1f}s"
-            )
-            assert metrics.success_rate == 1.0, (
-                "Orchestrator initialization should succeed"
-            )
+            assert metrics.duration_seconds < 600, f"Orchestrator init took {metrics.duration_seconds:.1f}s"
+            assert metrics.success_rate == 1.0, "Orchestrator initialization should succeed"
 
             # Benchmark curriculum cycles
             cycle_metrics = await benchmark.measure_performance(
@@ -403,9 +391,7 @@ class TestPerformanceBenchmarks:
                 cycle_capacity=10,
             )
 
-            assert cycle_metrics.duration_seconds < 900, (
-                f"Curriculum cycles took {cycle_metrics.duration_seconds:.1f}s"
-            )
+            assert cycle_metrics.duration_seconds < 900, f"Curriculum cycles took {cycle_metrics.duration_seconds:.1f}s"
 
             logger.info(f"Orchestrator init: {metrics.duration_seconds:.1f}s")
             logger.info(f"Curriculum cycles: {cycle_metrics.duration_seconds:.1f}s")
@@ -421,15 +407,15 @@ class TestLoadTesting:
         use_mock = api_key == "mock-key"
 
         if use_mock:
-            from tests.curriculum.test_integration_comprehensive import (
-                MockOpenRouterLLM,
-            )
+            from tests.curriculum.test_integration_comprehensive import MockOpenRouterLLM
 
-            create_client = lambda: MockOpenRouterLLM(api_key)
+            def create_client():
+                return MockOpenRouterLLM(api_key)
+
         else:
-            create_client = lambda: OpenRouterLLM(
-                api_key=api_key, model="openai/gpt-4o-mini"
-            )
+
+            def create_client():
+                return OpenRouterLLM(api_key=api_key, model="openai/gpt-4o-mini")
 
         async def worker_task(worker_id: int, num_operations: int):
             """Worker task for concurrent testing."""
@@ -485,10 +471,7 @@ class TestLoadTesting:
 
         start_time = time.time()
 
-        tasks = [
-            worker_task(worker_id, operations_per_worker)
-            for worker_id in range(num_workers)
-        ]
+        tasks = [worker_task(worker_id, operations_per_worker) for worker_id in range(num_workers)]
 
         worker_results = await asyncio.gather(*tasks, return_exceptions=True)
 
@@ -512,19 +495,13 @@ class TestLoadTesting:
                     failed_operations += 1
 
         # Performance assertions
-        success_rate = successful_operations / (
-            successful_operations + failed_operations
-        )
-        assert success_rate >= 0.8, (
-            f"Success rate {success_rate:.1%} too low for load test"
-        )
+        success_rate = successful_operations / (successful_operations + failed_operations)
+        assert success_rate >= 0.8, f"Success rate {success_rate:.1%} too low for load test"
 
         throughput = total_items / total_duration
         assert throughput > 0, "Should process some items"
 
-        logger.info(
-            f"Load test: {num_workers} workers, {operations_per_worker} ops each"
-        )
+        logger.info(f"Load test: {num_workers} workers, {operations_per_worker} ops each")
         logger.info(f"Success rate: {success_rate:.1%}")
         logger.info(f"Total duration: {total_duration:.1f}s")
         logger.info(f"Throughput: {throughput:.2f} items/sec")
@@ -536,9 +513,7 @@ class TestLoadTesting:
         use_mock = api_key == "mock-key"
 
         if use_mock:
-            from tests.curriculum.test_integration_comprehensive import (
-                MockOpenRouterLLM,
-            )
+            from tests.curriculum.test_integration_comprehensive import MockOpenRouterLLM
 
             client = MockOpenRouterLLM(api_key)
         else:
@@ -556,9 +531,7 @@ class TestLoadTesting:
         # Generate increasing numbers of problems and measure memory
         problem_counts = [5, 10, 15, 20]
         for count in problem_counts:
-            result = await problem_gen.generate_problems(
-                domain="coding-python", edge=edge, topic_mix=topic_mix, n=count
-            )
+            await problem_gen.generate_problems(domain="coding-python", edge=edge, topic_mix=topic_mix, n=count)
 
             current_memory = process.memory_info().rss / (1024 * 1024)  # MB
             memory_measurements.append((count, current_memory))
@@ -567,13 +540,11 @@ class TestLoadTesting:
             memory_growth = current_memory - initial_memory
             max_allowed_growth = count * 2  # 2MB per problem is generous
 
-            assert memory_growth < max_allowed_growth, (
-                f"Memory grew {memory_growth:.1f}MB for {count} problems, max allowed: {max_allowed_growth}MB"
-            )
+            assert (
+                memory_growth < max_allowed_growth
+            ), f"Memory grew {memory_growth:.1f}MB for {count} problems, max allowed: {max_allowed_growth}MB"
 
-            logger.info(
-                f"Generated {count} problems, memory: {current_memory:.1f}MB (+{memory_growth:.1f}MB)"
-            )
+            logger.info(f"Generated {count} problems, memory: {current_memory:.1f}MB (+{memory_growth:.1f}MB)")
 
         # Check memory doesn't grow linearly (should be sub-linear due to reuse)
         final_memory = memory_measurements[-1][1]
@@ -582,9 +553,7 @@ class TestLoadTesting:
 
         # Memory per problem should decrease with scale (efficiency)
         memory_per_problem = final_growth / max_problems if max_problems > 0 else 0
-        assert memory_per_problem < 5.0, (
-            f"Memory per problem {memory_per_problem:.1f}MB too high"
-        )
+        assert memory_per_problem < 5.0, f"Memory per problem {memory_per_problem:.1f}MB too high"
 
         if not use_mock:
             await client.close()
@@ -615,9 +584,7 @@ class TestScalabilityLimits:
         use_mock = api_key == "mock-key"
 
         if use_mock:
-            from tests.curriculum.test_integration_comprehensive import (
-                MockOpenRouterLLM,
-            )
+            from tests.curriculum.test_integration_comprehensive import MockOpenRouterLLM
 
             client = MockOpenRouterLLM(api_key)
         else:
@@ -643,20 +610,14 @@ class TestScalabilityLimits:
 
         # Should handle large datasets efficiently
         assert result.ok, "Should successfully process large telemetry"
-        assert duration < 300, (
-            f"Processing 1000 telemetry entries took {duration:.1f}s, should be <300s"
-        )
+        assert duration < 300, f"Processing 1000 telemetry entries took {duration:.1f}s, should be <300s"
         assert memory_used < 100, f"Used {memory_used:.1f}MB memory, should be <100MB"
 
         throughput = len(large_telemetry) / duration
         assert throughput > 3, f"Throughput {throughput:.1f} entries/sec too low"
 
-        logger.info(
-            f"Processed {len(large_telemetry)} telemetry entries in {duration:.1f}s"
-        )
-        logger.info(
-            f"Memory usage: {memory_used:.1f}MB, throughput: {throughput:.1f} entries/sec"
-        )
+        logger.info(f"Processed {len(large_telemetry)} telemetry entries in {duration:.1f}s")
+        logger.info(f"Memory usage: {memory_used:.1f}MB, throughput: {throughput:.1f} entries/sec")
 
         if not use_mock:
             await client.close()
@@ -690,9 +651,7 @@ def generate_performance_report_file(benchmark: PerformanceBenchmark, output_pat
     print(f"Items Processed: {summary['total_items_processed']}")
     print(f"Overall Throughput: {summary['overall_throughput']:.2f} items/sec")
 
-    print(
-        f"\n{'By Operation:':<20} {'Avg Duration':<12} {'Throughput':<12} {'Success Rate'}"
-    )
+    print(f"\n{'By Operation:':<20} {'Avg Duration':<12} {'Throughput':<12} {'Success Rate'}")
     print("-" * 60)
 
     for op, stats in report["by_operation"].items():

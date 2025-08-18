@@ -18,10 +18,7 @@ from pydantic import BaseModel, Field
 
 from src.agent_forge.compression.bitnet import BITNETCompressor
 from src.agent_forge.compression.bitnet import compress as bitnet_compress
-from src.agent_forge.compression.seedlm import (
-    LinearFeedbackShiftRegister,
-    SEEDLMCompressor,
-)
+from src.agent_forge.compression.seedlm import LinearFeedbackShiftRegister, SEEDLMCompressor
 from src.agent_forge.compression.seedlm import compress as seedlm_compress
 from src.agent_forge.compression.vptq import VPTQCompressor
 from src.agent_forge.compression.vptq import compress as vptq_compress
@@ -46,9 +43,7 @@ class CompressionConfig(BaseModel):
     target_device: str = Field(default="mobile")
     memory_limit_mb: int = Field(default=2048, ge=1)
     target_compression: float | None = Field(default=None, ge=0.0)
-    eval_before_after: bool = Field(
-        default=False, description="Call evaluation hook before and after compression"
-    )
+    eval_before_after: bool = Field(default=False, description="Call evaluation hook before and after compression")
 
 
 class UnifiedCompressor(_CoreUnifiedCompressor):

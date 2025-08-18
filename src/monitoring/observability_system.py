@@ -191,9 +191,7 @@ class MetricsCollector:
         finally:
             conn.close()
 
-    def record_counter(
-        self, name: str, value: float = 1.0, labels: dict[str, str] = None
-    ):
+    def record_counter(self, name: str, value: float = 1.0, labels: dict[str, str] = None):
         """Record a counter metric.
 
         Args:
@@ -263,9 +261,7 @@ class MetricsCollector:
 
             self.metrics_buffer.append(metric)
 
-    def record_timer(
-        self, name: str, duration_ms: float, labels: dict[str, str] = None
-    ):
+    def record_timer(self, name: str, duration_ms: float, labels: dict[str, str] = None):
         """Record a timer metric.
 
         Args:
@@ -307,9 +303,7 @@ class MetricsCollector:
 
         return len(metrics_to_flush)
 
-    def get_metric_summary(
-        self, name: str, start_time: float = None, end_time: float = None
-    ) -> dict[str, Any]:
+    def get_metric_summary(self, name: str, start_time: float = None, end_time: float = None) -> dict[str, Any]:
         """Get metric summary statistics.
 
         Args:
@@ -990,9 +984,7 @@ class HealthMonitor:
             return
 
         self.monitoring_active = True
-        self._monitor_thread = threading.Thread(
-            target=self._monitoring_loop, args=(interval_seconds,), daemon=True
-        )
+        self._monitor_thread = threading.Thread(target=self._monitoring_loop, args=(interval_seconds,), daemon=True)
         self._monitor_thread.start()
 
     def stop_monitoring(self):
@@ -1267,9 +1259,7 @@ def timed_operation(observability: ObservabilitySystem, operation_name: str):
                     result = func(*args, **kwargs)
                     duration_ms = (time.time() - start_time) * 1000
 
-                    observability.metrics.record_timer(
-                        f"{operation_name}_duration", duration_ms, {"status": "success"}
-                    )
+                    observability.metrics.record_timer(f"{operation_name}_duration", duration_ms, {"status": "success"})
 
                     observability.logger.info(
                         f"Operation {operation_name} completed",
@@ -1283,9 +1273,7 @@ def timed_operation(observability: ObservabilitySystem, operation_name: str):
                 except Exception as e:
                     duration_ms = (time.time() - start_time) * 1000
 
-                    observability.metrics.record_timer(
-                        f"{operation_name}_duration", duration_ms, {"status": "error"}
-                    )
+                    observability.metrics.record_timer(f"{operation_name}_duration", duration_ms, {"status": "error"})
 
                     observability.logger.error(
                         f"Operation {operation_name} failed: {e}",
@@ -1320,9 +1308,7 @@ def monitored_operation(
     """
     start_time = time.time()
 
-    with traced_operation(
-        observability.tracer, operation_name, attributes=attributes
-    ) as span:
+    with traced_operation(observability.tracer, operation_name, attributes=attributes) as span:
         context = {
             "span": span,
             "start_time": start_time,
@@ -1333,15 +1319,11 @@ def monitored_operation(
             yield context
 
             duration_ms = (time.time() - start_time) * 1000
-            observability.metrics.record_timer(
-                f"{operation_name}_duration", duration_ms, {"status": "success"}
-            )
+            observability.metrics.record_timer(f"{operation_name}_duration", duration_ms, {"status": "success"})
 
         except Exception as e:
             duration_ms = (time.time() - start_time) * 1000
-            observability.metrics.record_timer(
-                f"{operation_name}_duration", duration_ms, {"status": "error"}
-            )
+            observability.metrics.record_timer(f"{operation_name}_duration", duration_ms, {"status": "error"})
 
             observability.logger.error(
                 f"Monitored operation failed: {e}",

@@ -129,23 +129,16 @@ class CrossContextRetriever:
                 topic_hints.append(domain)
 
         # Determine specificity level
-        if any(
-            word in query_lower for word in ["overview", "general", "about", "what is"]
-        ):
+        if any(word in query_lower for word in ["overview", "general", "about", "what is"]):
             specificity_level = "global"
-        elif any(
-            word in query_lower
-            for word in ["specific", "detail", "exactly", "precisely"]
-        ):
+        elif any(word in query_lower for word in ["specific", "detail", "exactly", "precisely"]):
             specificity_level = "specific"
         else:
             specificity_level = "local"
 
         # Cross-reference hints
         cross_ref_hints = []
-        if any(
-            word in query_lower for word in ["related", "connection", "link", "similar"]
-        ):
+        if any(word in query_lower for word in ["related", "connection", "link", "similar"]):
             cross_ref_hints.append("related_concepts")
         if any(word in query_lower for word in ["caused", "led to", "resulted"]):
             cross_ref_hints.append("causal_relationships")
@@ -170,10 +163,7 @@ class CrossContextRetriever:
 
         # Analyze query context
         query_context = self.analyze_query_context(query)
-        logger.info(
-            f"Query context: {query_context.specificity_level} level, "
-            f"topics: {query_context.topic_hints}"
-        )
+        logger.info(f"Query context: {query_context.specificity_level} level, " f"topics: {query_context.topic_hints}")
 
         # Generate query embedding
         query_embedding = self.embedder.encode([query])[0]
@@ -182,38 +172,29 @@ class CrossContextRetriever:
         candidates = []
 
         # 1. Local context retrieval
-        local_candidates = await self._retrieve_local_context(
-            query_embedding, query_context, k * 2
-        )
+        local_candidates = await self._retrieve_local_context(query_embedding, query_context, k * 2)
         candidates.extend(local_candidates)
 
         # 2. Global context retrieval (if query is global or general)
         if query_context.specificity_level in ["global", "local"]:
-            global_candidates = await self._retrieve_global_context(
-                query_embedding, query_context, k // 2
-            )
+            global_candidates = await self._retrieve_global_context(query_embedding, query_context, k // 2)
             candidates.extend(global_candidates)
 
         # 3. Cross-reference retrieval
         if query_context.cross_reference_hints:
-            cross_ref_candidates = await self._retrieve_cross_references(
-                query_embedding, query_context, k // 2
-            )
+            cross_ref_candidates = await self._retrieve_cross_references(query_embedding, query_context, k // 2)
             candidates.extend(cross_ref_candidates)
 
         # 4. Graph-based retrieval (if enabled)
         if use_graph_paths and query_context.cross_reference_hints:
-            graph_candidates = await self._retrieve_via_graph_paths(
-                query, candidates[:5], k // 2
-            )
+            graph_candidates = await self._retrieve_via_graph_paths(query, candidates[:5], k // 2)
             candidates.extend(graph_candidates)
 
         # Remove duplicates
         unique_candidates = {}
         for candidate in candidates:
             if candidate.chunk_id not in unique_candidates or (
-                candidate.combined_score
-                > unique_candidates[candidate.chunk_id].combined_score
+                candidate.combined_score > unique_candidates[candidate.chunk_id].combined_score
             ):
                 unique_candidates[candidate.chunk_id] = candidate
 
@@ -250,20 +231,14 @@ class CrossContextRetriever:
 
             for row in cursor.fetchall():
                 chunk_id, parent_title, section_title, content = row[0:4]
-                local_summary, local_tags, temporal_context, geographic_context = row[
-                    4:8
-                ]
-                cross_references, embedding_bytes, global_summary, trust_score = row[
-                    8:12
-                ]
+                local_summary, local_tags, temporal_context, geographic_context = row[4:8]
+                cross_references, embedding_bytes, global_summary, trust_score = row[8:12]
 
                 # Reconstruct embedding
                 chunk_embedding = np.frombuffer(embedding_bytes, dtype=np.float32)
 
                 # Calculate semantic similarity
-                semantic_sim = cosine_similarity([query_embedding], [chunk_embedding])[
-                    0
-                ][0]
+                semantic_sim = cosine_similarity([query_embedding], [chunk_embedding])[0][0]
 
                 # Calculate context relevance
                 context_relevance = self._calculate_context_relevance(
@@ -331,14 +306,10 @@ class CrossContextRetriever:
                 summary_embedding = self.embedder.encode([summary])[0]
 
                 # Calculate similarity
-                semantic_sim = cosine_similarity(
-                    [query_embedding], [summary_embedding]
-                )[0][0]
+                semantic_sim = cosine_similarity([query_embedding], [summary_embedding])[0][0]
 
                 # Calculate context relevance
-                context_relevance = self._calculate_global_context_relevance(
-                    query_context, global_tags, categories
-                )
+                context_relevance = self._calculate_global_context_relevance(query_context, global_tags, categories)
 
                 relevance_score = semantic_sim * 0.6 + context_relevance * 0.4
                 combined_score = relevance_score * (0.6 + trust_score * 0.4)
@@ -349,8 +320,7 @@ class CrossContextRetriever:
                 if representative_chunk:
                     result = RetrievalResult(
                         chunk_id=representative_chunk["chunk_id"],
-                        content=representative_chunk["content"][:500]
-                        + "...",  # Truncate
+                        content=representative_chunk["content"][:500] + "...",  # Truncate
                         local_summary=representative_chunk["local_summary"],
                         global_summary=summary,
                         parent_title=title,
@@ -433,13 +403,9 @@ class CrossContextRetriever:
 
                 if neighbor_data:
                     # Calculate relevance using cross-encoder
-                    relevance_score = self._calculate_graph_relevance(
-                        query, neighbor_data["content"]
-                    )
+                    relevance_score = self._calculate_graph_relevance(query, neighbor_data["content"])
 
-                    combined_score = (
-                        relevance_score * path_trust * 0.8
-                    )  # Discount for indirect
+                    combined_score = relevance_score * path_trust * 0.8  # Discount for indirect
 
                     result = RetrievalResult(
                         chunk_id=neighbor_id,
@@ -481,9 +447,7 @@ class CrossContextRetriever:
                 if source not in self.graph_cache:
                     self.graph_cache[source] = []
 
-                self.graph_cache[source].append(
-                    {"target": target, "trust": trust, "type": rel_type}
-                )
+                self.graph_cache[source].append({"target": target, "trust": trust, "type": rel_type})
 
         logger.info(f"Loaded graph cache with {len(self.graph_cache)} nodes")
 
@@ -570,10 +534,7 @@ class CrossContextRetriever:
         if (
             query_context.temporal_hints
             and temporal_context
-            and any(
-                hint in temporal_context.lower()
-                for hint in query_context.temporal_hints
-            )
+            and any(hint in temporal_context.lower() for hint in query_context.temporal_hints)
         ):
             relevance += 1.0
             factors += 1
@@ -582,10 +543,7 @@ class CrossContextRetriever:
         if (
             query_context.geographic_hints
             and geographic_context
-            and any(
-                hint in geographic_context.lower()
-                for hint in query_context.geographic_hints
-            )
+            and any(hint in geographic_context.lower() for hint in query_context.geographic_hints)
         ):
             relevance += 1.0
             factors += 1
@@ -628,15 +586,10 @@ class CrossContextRetriever:
             if any(tag in query_context.topic_hints for tag in chunk_tags):
                 matching.append("topic_tags")
 
-        if temporal_context and any(
-            hint in temporal_context.lower() for hint in query_context.temporal_hints
-        ):
+        if temporal_context and any(hint in temporal_context.lower() for hint in query_context.temporal_hints):
             matching.append("temporal_context")
 
-        if geographic_context and any(
-            hint in geographic_context.lower()
-            for hint in query_context.geographic_hints
-        ):
+        if geographic_context and any(hint in geographic_context.lower() for hint in query_context.geographic_hints):
             matching.append("geographic_context")
 
         return matching
@@ -653,9 +606,7 @@ class CrossContextRetriever:
             overlap = len(query_words & content_words)
             return overlap / len(query_words) if query_words else 0.0
 
-    async def _rerank_with_cross_encoder(
-        self, query: str, candidates: list[RetrievalResult]
-    ) -> list[RetrievalResult]:
+    async def _rerank_with_cross_encoder(self, query: str, candidates: list[RetrievalResult]) -> list[RetrievalResult]:
         """Re-rank candidates using cross-encoder."""
         if not candidates:
             return candidates
@@ -672,14 +623,10 @@ class CrossContextRetriever:
 
             # Update combined scores
             for i, candidate in enumerate(candidates):
-                cross_encoder_score = (
-                    float(scores[i]) if hasattr(scores, "__iter__") else float(scores)
-                )
+                cross_encoder_score = float(scores[i]) if hasattr(scores, "__iter__") else float(scores)
 
                 # Weighted combination of original score and cross-encoder score
-                candidate.combined_score = (
-                    candidate.combined_score * 0.7 + cross_encoder_score * 0.3
-                )
+                candidate.combined_score = candidate.combined_score * 0.7 + cross_encoder_score * 0.3
 
         except Exception as e:
             logger.warning(f"Cross-encoder reranking failed: {e}")
@@ -703,9 +650,7 @@ async def main() -> None:
         print(f"\n=== Query: {query} ===")
 
         try:
-            results = await retriever.retrieve_cross_context(
-                query, k=5, use_graph_paths=True
-            )
+            results = await retriever.retrieve_cross_context(query, k=5, use_graph_paths=True)
 
             for i, result in enumerate(results):
                 print(f"\nResult {i + 1}:")

@@ -17,24 +17,13 @@ import pytest
 
 # Add src and experimental paths
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
-sys.path.insert(
-    0, os.path.join(os.path.dirname(__file__), "..", "experimental", "agents", "agents")
-)
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "experimental", "agents", "agents"))
 
 # Import federation components
 try:
-    from federation.core.device_registry import (
-        DeviceCapability,
-        DeviceProfile,
-        DeviceRegistry,
-        DeviceRole,
-    )
+    from federation.core.device_registry import DeviceCapability, DeviceProfile, DeviceRegistry, DeviceRole
     from federation.core.federation_manager import FederationManager, PrivacyLevel
-    from federation.protocols.bitchat_enhanced import (
-        BitChatMessageType,
-        EnhancedBitChatMessage,
-        EnhancedBitChatTransport,
-    )
+    from federation.protocols.bitchat_enhanced import EnhancedBitChatMessage, EnhancedBitChatTransport
     from federation.protocols.tor_transport import TorHiddenService, TorTransport
 
     FEDERATION_IMPORTS_OK = True
@@ -43,9 +32,7 @@ except ImportError as e:
     FEDERATION_IMPORTS_OK = False
 
 # Skip tests if imports fail
-pytestmark = pytest.mark.skipif(
-    not FEDERATION_IMPORTS_OK, reason="Federation modules not available"
-)
+pytestmark = pytest.mark.skipif(not FEDERATION_IMPORTS_OK, reason="Federation modules not available")
 
 
 class TestDeviceRegistry:
@@ -92,9 +79,7 @@ class TestDeviceRegistry:
             try:
                 with patch("psutil.virtual_memory") as mock_memory:
                     mock_memory.return_value.total = 8 * 1024**3  # 8GB
-                    with patch(
-                        "psutil.sensors_battery", return_value=None
-                    ):  # No battery = always on
+                    with patch("psutil.sensors_battery", return_value=None):  # No battery = always on
                         profile = await registry.initialize_local_device(capabilities)
             except ImportError:
                 # psutil not available, create profile manually
@@ -107,9 +92,7 @@ class TestDeviceRegistry:
         """Test device contribution score calculation"""
         from federation.core.device_registry import DeviceIdentity
 
-        identity = DeviceIdentity(
-            "test_device", public_key=b"test_key", signing_key_public=b"sign_key"
-        )
+        identity = DeviceIdentity("test_device", public_key=b"test_key", signing_key_public=b"sign_key")
         identity.reputation_score = 0.7
 
         profile = DeviceProfile(
@@ -134,9 +117,7 @@ class TestDeviceRegistry:
         from federation.core.device_registry import DeviceIdentity, DeviceProfile
 
         old_device = DeviceProfile(
-            identity=DeviceIdentity(
-                "old_device", public_key=b"key", signing_key_public=b"sign"
-            ),
+            identity=DeviceIdentity("old_device", public_key=b"key", signing_key_public=b"sign"),
             role=DeviceRole.EDGE,
         )
         old_device.identity.last_seen = 0.0  # Very old timestamp
@@ -227,9 +208,7 @@ class TestEnhancedBitChat:
         try:
             import nacl.signing
 
-            message = EnhancedBitChatMessage(
-                sender="test_sender", payload=b"test message"
-            )
+            message = EnhancedBitChatMessage(sender="test_sender", payload=b"test message")
 
             # Generate signing keys
             signing_key = nacl.signing.SigningKey.generate()
@@ -254,9 +233,7 @@ class TestTorTransport:
 
     def test_tor_transport_initialization(self):
         """Test Tor transport initialization"""
-        transport = TorTransport(
-            socks_port=9050, control_port=9051, hidden_service_port=80, target_port=8080
-        )
+        transport = TorTransport(socks_port=9050, control_port=9051, hidden_service_port=80, target_port=8080)
 
         assert transport.socks_port == 9050
         assert transport.control_port == 9051
@@ -343,9 +320,7 @@ class TestFederationManager:
         manager = FederationManager("test_node", enable_tor=False, enable_i2p=False)
 
         # Mock the dual-path transport startup
-        with patch(
-            "federation.core.federation_manager.DualPathTransport"
-        ) as mock_transport_class:
+        with patch("federation.core.federation_manager.DualPathTransport") as mock_transport_class:
             mock_transport = Mock()
             mock_transport.start = AsyncMock(return_value=True)
             mock_transport.register_message_handler = Mock()
@@ -353,9 +328,7 @@ class TestFederationManager:
             mock_transport_class.return_value = mock_transport
 
             # Mock device registry initialization
-            with patch.object(
-                manager.device_registry, "initialize_local_device"
-            ) as mock_init:
+            with patch.object(manager.device_registry, "initialize_local_device") as mock_init:
                 mock_profile = Mock()
                 mock_profile.role = DeviceRole.EDGE
                 mock_profile.capabilities = {DeviceCapability.BLUETOOTH}
@@ -409,9 +382,7 @@ class TestFederationManager:
             "_find_service_providers",
             return_value=["edge_node_1", "edge_node_2"],
         ):
-            with patch.object(
-                manager, "_select_optimal_service_node", return_value="edge_node_1"
-            ):
+            with patch.object(manager, "_select_optimal_service_node", return_value="edge_node_1"):
                 with patch.object(manager, "send_federated_message", return_value=True):
                     with patch.object(
                         manager,

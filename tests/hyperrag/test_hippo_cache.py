@@ -5,7 +5,6 @@ from dataclasses import dataclass
 from datetime import datetime
 
 import numpy as np
-
 from hyperrag.hippo_cache import CacheEntry, HippoCache
 
 

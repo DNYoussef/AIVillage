@@ -1,15 +1,11 @@
 import importlib
 import unittest
 
-if (
-    importlib.util.find_spec("torch") is None
-    or importlib.util.find_spec("grokfast") is None
-):
+if importlib.util.find_spec("torch") is None or importlib.util.find_spec("grokfast") is None:
     msg = "Dependencies not installed"
     raise unittest.SkipTest(msg)
 
 import torch
-
 from agent_forge.training.grokfast_opt import GrokfastAdam
 
 

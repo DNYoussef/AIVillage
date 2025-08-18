@@ -10,10 +10,7 @@ sys.path.insert(0, str(Path(__file__).parent / "src"))
 def test_basic_validation():
     """Test basic environment validation."""
     try:
-        from core.config.environment_validator import (
-            EnvironmentValidator,
-            ValidationLevel,
-        )
+        from core.config.environment_validator import EnvironmentValidator, ValidationLevel
 
         print("✅ Successfully imported EnvironmentValidator")
 
@@ -36,9 +33,7 @@ def test_basic_validation():
         print("✅ Created development validator")
 
         report = validator.validate_all(test_env)
-        print(
-            f"✅ Validation completed - Errors: {report.errors}, Warnings: {report.warnings}"
-        )
+        print(f"✅ Validation completed - Errors: {report.errors}, Warnings: {report.warnings}")
 
         # Show first few issues if any
         if report.issues:
@@ -119,9 +114,7 @@ def test_template_completeness() -> bool | None:
 
         # Count variables
         variable_lines = [
-            line
-            for line in template_content.split("\n")
-            if "=" in line and not line.strip().startswith("#")
+            line for line in template_content.split("\n") if "=" in line and not line.strip().startswith("#")
         ]
 
         print(f"✅ .env.template has {len(variable_lines)} configuration variables")

@@ -108,9 +108,7 @@ class TestHTXFrameCodec:
         original_payload = b"Hello, HTX world!"
 
         # Encode frame
-        encoded = HTXFrameCodec.encode_frame(
-            HTXFrameType.DATA, stream_id=123, payload=original_payload
-        )
+        encoded = HTXFrameCodec.encode_frame(HTXFrameType.DATA, stream_id=123, payload=original_payload)
 
         assert isinstance(encoded, bytes)
         assert len(encoded) > len(original_payload)
@@ -126,9 +124,7 @@ class TestHTXFrameCodec:
 
     def test_empty_payload_frame(self):
         """Test frame with empty payload."""
-        encoded = HTXFrameCodec.encode_frame(
-            HTXFrameType.PING, stream_id=0, payload=b""
-        )
+        encoded = HTXFrameCodec.encode_frame(HTXFrameType.PING, stream_id=0, payload=b"")
 
         decoded_frame, consumed = HTXFrameCodec.decode_frame(encoded)
 
@@ -140,9 +136,7 @@ class TestHTXFrameCodec:
         """Test frame with large payload."""
         large_payload = b"X" * 10000  # 10KB payload
 
-        encoded = HTXFrameCodec.encode_frame(
-            HTXFrameType.DATA, stream_id=456, payload=large_payload
-        )
+        encoded = HTXFrameCodec.encode_frame(HTXFrameType.DATA, stream_id=456, payload=large_payload)
 
         decoded_frame, consumed = HTXFrameCodec.decode_frame(encoded)
 
@@ -165,9 +159,7 @@ class TestHTXFrameCodec:
         ]
 
         for stream_id, expected_varint_bytes in test_cases:
-            encoded = HTXFrameCodec.encode_frame(
-                HTXFrameType.CONTROL, stream_id=stream_id, payload=b"test"
-            )
+            encoded = HTXFrameCodec.encode_frame(HTXFrameType.CONTROL, stream_id=stream_id, payload=b"test")
 
             decoded_frame, _ = HTXFrameCodec.decode_frame(encoded)
             assert decoded_frame.stream_id == stream_id
@@ -175,13 +167,9 @@ class TestHTXFrameCodec:
     def test_frame_size_limits(self):
         """Test frame size limit enforcement."""
         # Test maximum frame size
-        max_payload = b"X" * (
-            HTXFrameCodec.MAX_FRAME_SIZE - 10
-        )  # Leave room for headers
+        max_payload = b"X" * (HTXFrameCodec.MAX_FRAME_SIZE - 10)  # Leave room for headers
 
-        encoded = HTXFrameCodec.encode_frame(
-            HTXFrameType.DATA, stream_id=1, payload=max_payload
-        )
+        encoded = HTXFrameCodec.encode_frame(HTXFrameType.DATA, stream_id=1, payload=max_payload)
 
         decoded_frame, _ = HTXFrameCodec.decode_frame(encoded)
         assert len(decoded_frame.payload) == len(max_payload)
@@ -190,18 +178,14 @@ class TestHTXFrameCodec:
         oversized_payload = b"X" * HTXFrameCodec.MAX_FRAME_SIZE
 
         with pytest.raises(ValueError, match="Frame too large"):
-            HTXFrameCodec.encode_frame(
-                HTXFrameType.DATA, stream_id=1, payload=oversized_payload
-            )
+            HTXFrameCodec.encode_frame(HTXFrameType.DATA, stream_id=1, payload=oversized_payload)
 
     def test_stream_id_limits(self):
         """Test stream ID limit enforcement."""
         # Test maximum stream ID
         max_stream_id = HTXFrameCodec.MAX_STREAM_ID
 
-        encoded = HTXFrameCodec.encode_frame(
-            HTXFrameType.DATA, stream_id=max_stream_id, payload=b"test"
-        )
+        encoded = HTXFrameCodec.encode_frame(HTXFrameType.DATA, stream_id=max_stream_id, payload=b"test")
 
         decoded_frame, _ = HTXFrameCodec.decode_frame(encoded)
         assert decoded_frame.stream_id == max_stream_id
@@ -235,9 +219,7 @@ class TestFrameDecoding:
     def test_incomplete_frame_data(self):
         """Test handling of incomplete frame data."""
         # Create a complete frame first
-        complete_frame = HTXFrameCodec.encode_frame(
-            HTXFrameType.DATA, stream_id=42, payload=b"complete payload"
-        )
+        complete_frame = HTXFrameCodec.encode_frame(HTXFrameType.DATA, stream_id=42, payload=b"complete payload")
 
         # Test with incomplete length header
         incomplete_data = complete_frame[:2]  # Only 2 bytes of 3-byte length
@@ -254,18 +236,14 @@ class TestFrameDecoding:
     def test_malformed_frame_data(self):
         """Test handling of malformed frame data."""
         # Test with invalid length (too large)
-        malformed_data = struct.pack(">I", HTXFrameCodec.MAX_FRAME_SIZE + 1)[
-            1:
-        ]  # 3-byte length
+        malformed_data = struct.pack(">I", HTXFrameCodec.MAX_FRAME_SIZE + 1)[1:]  # 3-byte length
         malformed_data += b"dummy content"
 
         with pytest.raises(ValueError, match="Frame too large"):
             HTXFrameCodec.decode_frame(malformed_data)
 
         # Test with unknown frame type
-        valid_frame = HTXFrameCodec.encode_frame(
-            HTXFrameType.DATA, stream_id=1, payload=b"test"
-        )
+        valid_frame = HTXFrameCodec.encode_frame(HTXFrameType.DATA, stream_id=1, payload=b"test")
 
         # Modify frame type to invalid value
         malformed_data = bytearray(valid_frame)
@@ -313,9 +291,7 @@ class TestHTXFrameBuffer:
         buffer = HTXFrameBuffer()
 
         # Create a frame
-        test_frame = HTXFrameCodec.encode_frame(
-            HTXFrameType.DATA, stream_id=100, payload=b"single frame test"
-        )
+        test_frame = HTXFrameCodec.encode_frame(HTXFrameType.DATA, stream_id=100, payload=b"single frame test")
 
         # Add to buffer and parse
         buffer.append_data(test_frame)
@@ -364,9 +340,7 @@ class TestHTXFrameBuffer:
         buffer = HTXFrameBuffer()
 
         # Create a complete frame
-        complete_frame = HTXFrameCodec.encode_frame(
-            HTXFrameType.DATA, stream_id=42, payload=b"complete frame data"
-        )
+        complete_frame = HTXFrameCodec.encode_frame(HTXFrameType.DATA, stream_id=42, payload=b"complete frame data")
 
         # Add partial frame data
         partial_data = complete_frame[:10]
@@ -406,9 +380,7 @@ class TestHTXFrameBuffer:
 
         # Add some junk data followed by a valid frame
         junk_data = b"\xff\xff\xff\xff"  # Invalid frame
-        valid_frame = HTXFrameCodec.encode_frame(
-            HTXFrameType.DATA, stream_id=1, payload=b"valid after junk"
-        )
+        valid_frame = HTXFrameCodec.encode_frame(HTXFrameType.DATA, stream_id=1, payload=b"valid after junk")
 
         buffer.append_data(junk_data + valid_frame)
 
@@ -580,9 +552,7 @@ class TestFrameFormatIntegration:
         # Verify all frames were received correctly
         assert len(received_frames) == len(frames_to_send)
 
-        for i, (expected_type, expected_stream, expected_payload) in enumerate(
-            frames_to_send
-        ):
+        for i, (expected_type, expected_stream, expected_payload) in enumerate(frames_to_send):
             frame = received_frames[i]
             assert frame.frame_type == expected_type
             assert frame.stream_id == expected_stream
@@ -595,9 +565,7 @@ def test_htx_frame_format_smoke_test():
 
     # Test basic frame creation
     payload = b"HTX frame format test"
-    frame_bytes = HTXFrameCodec.encode_frame(
-        HTXFrameType.DATA, stream_id=42, payload=payload
-    )
+    frame_bytes = HTXFrameCodec.encode_frame(HTXFrameType.DATA, stream_id=42, payload=payload)
     assert len(frame_bytes) > len(payload)
     print(f"  Encoded frame: {len(frame_bytes)} bytes")
 
@@ -605,9 +573,7 @@ def test_htx_frame_format_smoke_test():
     decoded_frame, consumed = HTXFrameCodec.decode_frame(frame_bytes)
     assert decoded_frame.payload == payload
     assert consumed == len(frame_bytes)
-    print(
-        f"  Decoded frame: stream={decoded_frame.stream_id}, type={decoded_frame.frame_type.name}"
-    )
+    print(f"  Decoded frame: stream={decoded_frame.stream_id}, type={decoded_frame.frame_type.name}")
 
     # Test buffer processing
     buffer = HTXFrameBuffer()
@@ -624,9 +590,7 @@ def test_htx_frame_format_smoke_test():
     assert len(ping_frame) > 0
     assert len(window_frame) > 0
     assert len(data_frame) > 0
-    print(
-        f"  Helper functions: ping={len(ping_frame)}, window={len(window_frame)}, data={len(data_frame)} bytes"
-    )
+    print(f"  Helper functions: ping={len(ping_frame)}, window={len(window_frame)}, data={len(data_frame)} bytes")
 
     print("  HTX frame format smoke test PASSED")
 

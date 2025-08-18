@@ -14,9 +14,7 @@ from pathlib import Path
 from typing import Any
 
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -153,9 +151,7 @@ class IntegrationTestPipeline:
                     "--benchmark-skip",
                 ]
 
-                result = self.run_command(
-                    command, timeout=600
-                )  # Longer timeout for benchmarks
+                result = self.run_command(command, timeout=600)  # Longer timeout for benchmarks
                 benchmark_results[benchmark_path] = result
             else:
                 logger.info(f"Benchmark not found: {benchmark_path}")
@@ -176,9 +172,7 @@ class IntegrationTestPipeline:
             "audit_logging": {"success": True, "score": 0.95},
         }
 
-        overall_security_score = sum(
-            test["score"] for test in security_results.values()
-        ) / len(security_results)
+        overall_security_score = sum(test["score"] for test in security_results.values()) / len(security_results)
 
         self.test_results["security_tests"] = {
             "overall_score": overall_security_score,
@@ -201,8 +195,7 @@ class IntegrationTestPipeline:
             total, used, free = shutil.disk_usage(self.project_root)
             disk_usage_percent = used / total
             health_checks["disk_space"] = {
-                "success": free
-                > (1.0 * 1024**3),  # At least 1GB free space (critical for development)
+                "success": free > (1.0 * 1024**3),  # At least 1GB free space (critical for development)
                 "usage_percent": disk_usage_percent,
                 "free_gb": free / (1024**3),
                 "threshold_gb": 1.0,
@@ -217,14 +210,10 @@ class IntegrationTestPipeline:
             installed_packages = [pkg.project_name for pkg in pkg_resources.working_set]
             # asyncio is built into Python 3.7+, so don't check for it as a package
             required_packages = ["pytest", "numpy"]
-            missing_packages = [
-                pkg for pkg in required_packages if pkg not in installed_packages
-            ]
+            missing_packages = [pkg for pkg in required_packages if pkg not in installed_packages]
 
             # Check if asyncio is available (built-in module)
             try:
-                import asyncio
-
                 asyncio_available = True
             except ImportError:
                 asyncio_available = False
@@ -249,9 +238,7 @@ class IntegrationTestPipeline:
         except Exception as e:
             health_checks["file_permissions"] = {"success": False, "error": str(e)}
 
-        overall_health = all(
-            check.get("success", False) for check in health_checks.values()
-        )
+        overall_health = all(check.get("success", False) for check in health_checks.values())
 
         self.test_results["system_health"] = {
             "overall_health": overall_health,
@@ -266,32 +253,20 @@ class IntegrationTestPipeline:
 
         # Collect all test results
         integration_success = (
-            self.test_results.get("integration_tests", {})
-            .get("command_result", {})
-            .get("success", False)
+            self.test_results.get("integration_tests", {}).get("command_result", {}).get("success", False)
         )
         production_success = (
-            self.test_results.get("production_readiness", {})
-            .get("command_result", {})
-            .get("success", False)
+            self.test_results.get("production_readiness", {}).get("command_result", {}).get("success", False)
         )
-        security_success = self.test_results.get("security_tests", {}).get(
-            "success", False
-        )
-        health_success = self.test_results.get("system_health", {}).get(
-            "overall_health", False
-        )
+        security_success = self.test_results.get("security_tests", {}).get("success", False)
+        health_success = self.test_results.get("system_health", {}).get("overall_health", False)
 
         # Calculate benchmark success (allow some benchmarks to fail for non-critical issues)
         benchmark_results = self.test_results.get("performance_benchmarks", {})
         if benchmark_results:
-            benchmark_successes = [
-                result.get("success", False) for result in benchmark_results.values()
-            ]
+            benchmark_successes = [result.get("success", False) for result in benchmark_results.values()]
             benchmark_success_rate = sum(benchmark_successes) / len(benchmark_successes)
-            benchmark_success = (
-                benchmark_success_rate >= 0.5
-            )  # At least 50% of benchmarks pass
+            benchmark_success = benchmark_success_rate >= 0.5  # At least 50% of benchmarks pass
         else:
             benchmark_success = True
 
@@ -307,15 +282,11 @@ class IntegrationTestPipeline:
         success_rate = sum(all_tests) / len(all_tests)
 
         # Get detailed integration metrics
-        integration_report = self.test_results.get("integration_tests", {}).get(
-            "test_report", {}
-        )
+        integration_report = self.test_results.get("integration_tests", {}).get("test_report", {})
         integration_success_rate = integration_report.get("success_rate", 0.0)
 
         # Get production readiness metrics
-        production_report = self.test_results.get("production_readiness", {}).get(
-            "test_report", {}
-        )
+        production_report = self.test_results.get("production_readiness", {}).get("test_report", {})
         production_ready = production_report.get("production_ready", False)
 
         report = {
@@ -341,17 +312,13 @@ class IntegrationTestPipeline:
                 "system_health": self.test_results.get("system_health", {}),
                 "performance_benchmarks": benchmark_results,
             },
-            "recommendations": self._generate_recommendations(
-                pipeline_success, success_rate
-            ),
+            "recommendations": self._generate_recommendations(pipeline_success, success_rate),
             "detailed_results": self.test_results,
         }
 
         return report
 
-    def _generate_recommendations(
-        self, pipeline_success: bool, success_rate: float
-    ) -> list[str]:
+    def _generate_recommendations(self, pipeline_success: bool, success_rate: float) -> list[str]:
         """Generate deployment recommendations."""
         recommendations = []
 
@@ -360,43 +327,29 @@ class IntegrationTestPipeline:
             recommendations.append("✓ All integration tests passed successfully")
             recommendations.append("✓ Performance and security requirements met")
         else:
-            recommendations.append(
-                "⚠ System requires attention before production deployment"
-            )
+            recommendations.append("⚠ System requires attention before production deployment")
 
             if success_rate < 0.95:
-                recommendations.append(
-                    f"⚠ Success rate ({success_rate:.1%}) is below 95% threshold"
-                )
+                recommendations.append(f"⚠ Success rate ({success_rate:.1%}) is below 95% threshold")
 
             # Specific recommendations based on failed tests
             integration_success = (
-                self.test_results.get("integration_tests", {})
-                .get("command_result", {})
-                .get("success", False)
+                self.test_results.get("integration_tests", {}).get("command_result", {}).get("success", False)
             )
             if not integration_success:
-                recommendations.append(
-                    "⚠ Fix integration test failures before deployment"
-                )
+                recommendations.append("⚠ Fix integration test failures before deployment")
 
             production_success = (
-                self.test_results.get("production_readiness", {})
-                .get("command_result", {})
-                .get("success", False)
+                self.test_results.get("production_readiness", {}).get("command_result", {}).get("success", False)
             )
             if not production_success:
                 recommendations.append("⚠ Address production readiness issues")
 
-            security_success = self.test_results.get("security_tests", {}).get(
-                "success", False
-            )
+            security_success = self.test_results.get("security_tests", {}).get("success", False)
             if not security_success:
                 recommendations.append("⚠ Resolve security test failures")
 
-            health_success = self.test_results.get("system_health", {}).get(
-                "overall_health", False
-            )
+            health_success = self.test_results.get("system_health", {}).get("overall_health", False)
             if not health_success:
                 recommendations.append("⚠ Fix system health issues")
 

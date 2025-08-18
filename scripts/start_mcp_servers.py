@@ -14,9 +14,7 @@ import subprocess
 import sys
 
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -86,9 +84,7 @@ class MCPServerManager:
             await asyncio.sleep(1)
 
             if process.poll() is None:
-                logger.info(
-                    f"Successfully started MCP server: {name} (PID: {process.pid})"
-                )
+                logger.info(f"Successfully started MCP server: {name} (PID: {process.pid})")
                 return process
             stdout, stderr = process.communicate()
             logger.error(f"Failed to start MCP server {name}: {stderr}")
@@ -108,9 +104,7 @@ class MCPServerManager:
 
             # Wait for graceful shutdown
             try:
-                await asyncio.wait_for(
-                    asyncio.create_task(self._wait_for_process(process)), timeout=10
-                )
+                await asyncio.wait_for(asyncio.create_task(self._wait_for_process(process)), timeout=10)
                 logger.info(f"MCP server {name} stopped gracefully")
             except TimeoutError:
                 # Force kill if graceful shutdown failed
@@ -161,9 +155,7 @@ class MCPServerManager:
             dead_servers = []
             for name, process in self.processes.items():
                 if process.poll() is not None:
-                    logger.warning(
-                        f"MCP server {name} has died (exit code: {process.returncode})"
-                    )
+                    logger.warning(f"MCP server {name} has died (exit code: {process.returncode})")
                     dead_servers.append(name)
 
             # Restart dead servers
@@ -250,9 +242,7 @@ async def main() -> None:
         choices=["start", "stop", "status", "restart"],
         help="Action to perform",
     )
-    parser.add_argument(
-        "--config", default="mcp_config.json", help="Configuration file path"
-    )
+    parser.add_argument("--config", default="mcp_config.json", help="Configuration file path")
 
     args = parser.parse_args()
 

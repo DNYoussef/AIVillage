@@ -226,9 +226,7 @@ class TestTaskScheduler:
         # Tasks should be ordered by priority (highest first)
         assert len(self.scheduler.pending_tasks) == 3
         # Priority queue returns highest priority first
-        priorities = [
-            item[0] for item in sorted(self.scheduler.pending_tasks, reverse=True)
-        ]
+        priorities = [item[0] for item in sorted(self.scheduler.pending_tasks, reverse=True)]
         assert priorities == [10, 5, 1]  # Descending order
 
     def test_task_completion(self):
@@ -276,10 +274,7 @@ class TestMessageBroker:
 
         assert "agent1" in self.broker.message_handlers
         assert MessageType.TASK_REQUEST in self.broker.message_handlers["agent1"]
-        assert (
-            self.broker.message_handlers["agent1"][MessageType.TASK_REQUEST]
-            == dummy_handler
-        )
+        assert self.broker.message_handlers["agent1"][MessageType.TASK_REQUEST] == dummy_handler
 
     def test_message_sending(self):
         """Test message sending."""
@@ -381,9 +376,7 @@ class TestResourceManager:
         self.resource_manager.register_resource(resource)
 
         # Allocate resources
-        success = self.resource_manager.allocate_resource(
-            resource_id="memory_001", agent_id="agent_001", amount=500.0
-        )
+        success = self.resource_manager.allocate_resource(resource_id="memory_001", agent_id="agent_001", amount=500.0)
 
         assert success is True
         assert "memory_001" in self.resource_manager.allocations
@@ -406,9 +399,7 @@ class TestResourceManager:
         success = self.resource_manager.release_resource("test_resource", "agent1")
 
         assert success is True
-        assert "agent1" not in self.resource_manager.allocations.get(
-            "test_resource", {}
-        )
+        assert "agent1" not in self.resource_manager.allocations.get("test_resource", {})
 
         # Check resource was updated
         updated_resource = self.resource_manager.resources["test_resource"]
@@ -508,9 +499,7 @@ class TestCoordinationEngine:
         self.resource_manager.register_resource(resource)
 
         # Allocate some resources
-        success = self.resource_manager.allocate_resource(
-            "gpu_resource", "agent1", 50.0
-        )
+        success = self.resource_manager.allocate_resource("gpu_resource", "agent1", 50.0)
         assert success is True
 
         # Check resource usage
@@ -554,7 +543,7 @@ class TestIntegrationScenarios:
         # Setup components
         registry = AgentRegistry(":memory:")
         scheduler = TaskScheduler(registry, ":memory:")
-        broker = MessageBroker()
+        MessageBroker()
         resource_manager = ResourceManager()
 
         # Register multiple specialized agents
@@ -651,11 +640,7 @@ if __name__ == "__main__":
     print("Testing agent registry...")
     with tempfile.NamedTemporaryFile(delete=False) as tmp:
         registry = AgentRegistry(tmp.name)
-        capabilities = [
-            AgentCapability(
-                "test_cap", "1.0", "Test", supported_task_types=["test_cap"]
-            )
-        ]
+        capabilities = [AgentCapability("test_cap", "1.0", "Test", supported_task_types=["test_cap"])]
         agent = Agent(
             "test_agent",
             "Test Agent",

@@ -28,9 +28,7 @@ def test_agent_forge_manifest_roundtrip():
         # Recreate agent from loaded manifest to ensure parity
         forge2 = AgentForge(enable_evolution=False, enable_compression=False)
         agent_spec = loaded.agents[0]
-        agent2 = forge2.create_agent(
-            {"agent_type": agent_spec["type"], "config": agent_spec["config"]}
-        )
+        agent2 = forge2.create_agent({"agent_type": agent_spec["type"], "config": agent_spec["config"]})
         assert agent2 is not None
         assert getattr(agent2, "config", {}) == getattr(agent, "config", {})
 
@@ -55,9 +53,7 @@ class DummyKPIEngine:
 def test_hook_invocations():
     forge = AgentForge(enable_evolution=False, enable_compression=False)
 
-    with mock.patch(
-        "src.production.agent_forge.core.forge.on_agent_created"
-    ) as created_hook:
+    with mock.patch("src.production.agent_forge.core.forge.on_agent_created") as created_hook:
         agent = forge.create_agent({"agent_type": "navigator"})
         assert agent is not None
         created_hook.assert_called_once()
@@ -65,17 +61,13 @@ def test_hook_invocations():
     # Evolution hook
     forge.kpi_engine = DummyKPIEngine()
     manifest = forge.create_manifest()
-    with mock.patch(
-        "src.production.agent_forge.core.forge.evolution_step"
-    ) as evo_hook:
+    with mock.patch("src.production.agent_forge.core.forge.evolution_step") as evo_hook:
         forge.run_kpi_cycle(manifest)
         assert evo_hook.called
 
     # Compression hook
     forge.compression_engines["dummy"] = object()
     agent_id = next(iter(forge.created_agents))
-    with mock.patch(
-        "src.production.agent_forge.core.forge.apply_compression"
-    ) as comp_hook:
+    with mock.patch("src.production.agent_forge.core.forge.apply_compression") as comp_hook:
         forge.compress_agent(agent_id, "dummy")
         comp_hook.assert_called_once()

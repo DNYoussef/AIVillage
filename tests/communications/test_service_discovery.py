@@ -36,9 +36,7 @@ def test_service_cleanup_and_discovery():
     assert len(registry.discover_services("test")) == 2
 
     # Mark second service as stale
-    registry.services["agent2:test"].last_heartbeat = (
-        time.time() - registry.heartbeat_timeout - 1
-    )
+    registry.services["agent2:test"].last_heartbeat = time.time() - registry.heartbeat_timeout - 1
 
     # Cleanup stale services
     cleaned = registry.cleanup_stale_services()

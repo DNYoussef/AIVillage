@@ -14,14 +14,7 @@ from typing import Any
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 sys.path.insert(
     0,
-    str(
-        Path(__file__).parent.parent
-        / "src"
-        / "production"
-        / "rag"
-        / "rag_system"
-        / "core"
-    ),
+    str(Path(__file__).parent.parent / "src" / "production" / "rag" / "rag_system" / "core"),
 )
 
 from codex_rag_integration import CODEXRAGPipeline
@@ -195,9 +188,7 @@ class RAGEvaluationBenchmarks:
             logger.exception(f"Failed to initialize RAG pipeline: {e}")
             return False
 
-    def calculate_relevance_score(
-        self, query: dict[str, Any], results: list[Any]
-    ) -> float:
+    def calculate_relevance_score(self, query: dict[str, Any], results: list[Any]) -> float:
         """Calculate relevance score based on keyword matching."""
         expected_keywords = [kw.lower() for kw in query["expected_keywords"]]
         total_score = 0.0
@@ -213,18 +204,14 @@ class RAGEvaluationBenchmarks:
 
         return total_score / min(len(results), 5)
 
-    async def run_latency_benchmark(
-        self, queries: list[str], iterations: int = 3
-    ) -> dict[str, Any]:
+    async def run_latency_benchmark(self, queries: list[str], iterations: int = 3) -> dict[str, Any]:
         """Run latency benchmarks with multiple iterations."""
         all_latencies = []
         cache_hits = 0
         vector_searches = 0
         keyword_searches = 0
 
-        logger.info(
-            f"Running latency benchmark with {len(queries)} queries, {iterations} iterations each"
-        )
+        logger.info(f"Running latency benchmark with {len(queries)} queries, {iterations} iterations each")
 
         for iteration in range(iterations):
             logger.info(f"Iteration {iteration + 1}/{iterations}")
@@ -233,9 +220,7 @@ class RAGEvaluationBenchmarks:
                 query = query_data["query"]
 
                 start_time = time.perf_counter()
-                results, metrics = await self.rag_pipeline.retrieve(
-                    query, k=10, use_cache=True
-                )
+                results, metrics = await self.rag_pipeline.retrieve(query, k=10, use_cache=True)
                 end_time = time.perf_counter()
 
                 latency_ms = (end_time - start_time) * 1000
@@ -249,9 +234,7 @@ class RAGEvaluationBenchmarks:
                 if metrics.get("keyword_search", False):
                     keyword_searches += 1
 
-                logger.debug(
-                    f"Query {i + 1}: {latency_ms:.2f}ms (cache: {metrics.get('cache_hit', False)})"
-                )
+                logger.debug(f"Query {i + 1}: {latency_ms:.2f}ms (cache: {metrics.get('cache_hit', False)})")
 
         # Calculate statistics
         avg_latency = statistics.mean(all_latencies)
@@ -278,9 +261,7 @@ class RAGEvaluationBenchmarks:
             "meets_target": avg_latency < self.latency_targets["avg_latency_ms"],
         }
 
-    async def run_accuracy_benchmark(
-        self, queries: list[dict[str, Any]]
-    ) -> dict[str, Any]:
+    async def run_accuracy_benchmark(self, queries: list[dict[str, Any]]) -> dict[str, Any]:
         """Run accuracy benchmarks based on relevance scoring."""
         relevance_scores = []
         retrieval_counts = []
@@ -290,18 +271,14 @@ class RAGEvaluationBenchmarks:
         for i, query_data in enumerate(queries):
             query = query_data["query"]
 
-            results, metrics = await self.rag_pipeline.retrieve(
-                query, k=10, use_cache=False
-            )
+            results, metrics = await self.rag_pipeline.retrieve(query, k=10, use_cache=False)
 
             if results:
                 relevance_score = self.calculate_relevance_score(query_data, results)
                 relevance_scores.append(relevance_score)
                 retrieval_counts.append(len(results))
 
-                logger.debug(
-                    f"Query {i + 1}: relevance={relevance_score:.3f}, results={len(results)}"
-                )
+                logger.debug(f"Query {i + 1}: relevance={relevance_score:.3f}, results={len(results)}")
             else:
                 relevance_scores.append(0.0)
                 retrieval_counts.append(0)
@@ -309,12 +286,8 @@ class RAGEvaluationBenchmarks:
 
         # Calculate accuracy metrics
         avg_relevance = statistics.mean(relevance_scores) if relevance_scores else 0.0
-        avg_retrieval_count = (
-            statistics.mean(retrieval_counts) if retrieval_counts else 0.0
-        )
-        successful_queries = sum(
-            1 for score in relevance_scores if score > 0.1
-        )  # 10% minimum relevance
+        avg_retrieval_count = statistics.mean(retrieval_counts) if retrieval_counts else 0.0
+        successful_queries = sum(1 for score in relevance_scores if score > 0.1)  # 10% minimum relevance
 
         return {
             "total_test_queries": len(queries),
@@ -324,18 +297,12 @@ class RAGEvaluationBenchmarks:
             "avg_retrieval_count": avg_retrieval_count,
             "relevance_scores": relevance_scores,
             "retrieval_counts": retrieval_counts,
-            "high_relevance_queries": sum(
-                1 for score in relevance_scores if score > 0.5
-            ),  # 50% relevance
+            "high_relevance_queries": sum(1 for score in relevance_scores if score > 0.5),  # 50% relevance
         }
 
-    async def run_stress_test(
-        self, concurrent_queries: int = 10, total_requests: int = 100
-    ) -> dict[str, Any]:
+    async def run_stress_test(self, concurrent_queries: int = 10, total_requests: int = 100) -> dict[str, Any]:
         """Run concurrent stress test to evaluate performance under load."""
-        logger.info(
-            f"Running stress test: {concurrent_queries} concurrent queries, {total_requests} total requests"
-        )
+        logger.info(f"Running stress test: {concurrent_queries} concurrent queries, {total_requests} total requests")
 
         query_pool = [q["query"] for q in self.test_queries[:5]]  # Use first 5 queries
 
@@ -344,9 +311,7 @@ class RAGEvaluationBenchmarks:
             start_time = time.perf_counter()
 
             try:
-                results, metrics = await self.rag_pipeline.retrieve(
-                    query, k=5, use_cache=True
-                )
+                results, metrics = await self.rag_pipeline.retrieve(query, k=5, use_cache=True)
                 end_time = time.perf_counter()
 
                 return {
@@ -377,26 +342,20 @@ class RAGEvaluationBenchmarks:
             batch_results = await asyncio.gather(*batch_tasks, return_exceptions=True)
             all_results.extend(batch_results)
 
-            logger.info(
-                f"Completed batch {batch_start // batch_size + 1} ({len(batch_results)} queries)"
-            )
+            logger.info(f"Completed batch {batch_start // batch_size + 1} ({len(batch_results)} queries)")
 
         end_time = time.perf_counter()
         total_time = end_time - start_time
 
         # Analyze results
-        successful_requests = [
-            r for r in all_results if isinstance(r, dict) and r.get("success", False)
-        ]
+        successful_requests = [r for r in all_results if isinstance(r, dict) and r.get("success", False)]
         failed_requests = len(all_results) - len(successful_requests)
 
         if successful_requests:
             latencies = [r["latency_ms"] for r in successful_requests]
             avg_latency = statistics.mean(latencies)
             max_latency = max(latencies)
-            cache_hits = sum(
-                1 for r in successful_requests if r.get("cache_hit", False)
-            )
+            cache_hits = sum(1 for r in successful_requests if r.get("cache_hit", False))
         else:
             avg_latency = max_latency = 0
             cache_hits = 0
@@ -411,9 +370,7 @@ class RAGEvaluationBenchmarks:
             "requests_per_second": total_requests / total_time,
             "avg_latency_ms": avg_latency,
             "max_latency_ms": max_latency,
-            "cache_hit_rate": (
-                cache_hits / len(successful_requests) if successful_requests else 0
-            ),
+            "cache_hit_rate": (cache_hits / len(successful_requests) if successful_requests else 0),
         }
 
     async def run_comprehensive_evaluation(self) -> dict[str, Any]:
@@ -429,11 +386,7 @@ class RAGEvaluationBenchmarks:
         initial_metrics = self.rag_pipeline.get_performance_metrics()
         index_size = initial_metrics.get(
             "index_size",
-            (
-                self.rag_pipeline.index.ntotal
-                if hasattr(self.rag_pipeline, "index")
-                else 0
-            ),
+            (self.rag_pipeline.index.ntotal if hasattr(self.rag_pipeline, "index") else 0),
         )
         logger.info(f"Initial pipeline state: {index_size} vectors indexed")
 
@@ -454,9 +407,7 @@ class RAGEvaluationBenchmarks:
 
         # 3. Stress Test
         logger.info("=== Running Stress Test ===")
-        stress_results = await self.run_stress_test(
-            concurrent_queries=5, total_requests=50
-        )
+        stress_results = await self.run_stress_test(concurrent_queries=5, total_requests=50)
         evaluation_results["stress_test"] = stress_results
 
         # 4. Final pipeline metrics
@@ -477,11 +428,7 @@ class RAGEvaluationBenchmarks:
         stress_results = results["stress_test"]
 
         # Performance scores (0-100)
-        latency_score = (
-            100
-            if latency_results["meets_target"]
-            else max(0, 100 - latency_results["avg_latency_ms"])
-        )
+        latency_score = 100 if latency_results["meets_target"] else max(0, 100 - latency_results["avg_latency_ms"])
         accuracy_score = accuracy_results["avg_relevance_score"] * 100
         reliability_score = stress_results["success_rate"] * 100
 
@@ -523,36 +470,24 @@ class RAGEvaluationBenchmarks:
 
         # Latency recommendations
         if latency_results["avg_latency_ms"] > 100:
-            recommendations.append(
-                "Optimize embedding model or use GPU acceleration to meet <100ms latency target"
-            )
+            recommendations.append("Optimize embedding model or use GPU acceleration to meet <100ms latency target")
 
         if latency_results["cache_hit_rate"] < 0.3:
-            recommendations.append(
-                "Increase cache size or adjust caching strategy to improve cache hit rate"
-            )
+            recommendations.append("Increase cache size or adjust caching strategy to improve cache hit rate")
 
         # Accuracy recommendations
         if accuracy_results["avg_relevance_score"] < 0.7:
-            recommendations.append(
-                "Consider fine-tuning embedding model or adjusting chunking strategy"
-            )
+            recommendations.append("Consider fine-tuning embedding model or adjusting chunking strategy")
 
         if accuracy_results["success_rate"] < 0.9:
-            recommendations.append(
-                "Review query preprocessing and improve document quality filtering"
-            )
+            recommendations.append("Review query preprocessing and improve document quality filtering")
 
         # Reliability recommendations
         if stress_results["success_rate"] < 0.95:
-            recommendations.append(
-                "Improve error handling and add connection pooling for better reliability"
-            )
+            recommendations.append("Improve error handling and add connection pooling for better reliability")
 
         if stress_results["avg_latency_ms"] > latency_results["avg_latency_ms"] * 1.5:
-            recommendations.append(
-                "Consider horizontal scaling or load balancing for concurrent queries"
-            )
+            recommendations.append("Consider horizontal scaling or load balancing for concurrent queries")
 
         return recommendations
 
@@ -577,12 +512,8 @@ async def main():
         stress = results["stress_test"]
 
         print("\n=== RAG Pipeline Evaluation Results ===")
-        print(
-            f"Overall Score: {assessment['overall_score']:.1f}/100 (Grade: {assessment['grade']})"
-        )
-        print(
-            f"Meets CODEX Requirements: {'YES' if assessment['meets_codex_requirements'] else 'NO'}"
-        )
+        print(f"Overall Score: {assessment['overall_score']:.1f}/100 (Grade: {assessment['grade']})")
+        print(f"Meets CODEX Requirements: {'YES' if assessment['meets_codex_requirements'] else 'NO'}")
         print("\n--- Performance Metrics ---")
         print(f"Average Latency: {latency['avg_latency_ms']:.2f}ms (target: <100ms)")
         print(f"P95 Latency: {latency['p95_latency_ms']:.2f}ms")

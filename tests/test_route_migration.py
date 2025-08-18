@@ -32,9 +32,7 @@ class TestServerDeprecationWarnings:
             # Import server to trigger startup
 
             # Should have deprecation warning
-            assert any(
-                "development only" in str(warning.message).lower() for warning in w
-            )
+            assert any("development only" in str(warning.message).lower() for warning in w)
 
     def test_no_warning_in_dev_mode(self, mock_env_dev_mode):
         """Test server.py doesn't warn in dev mode."""
@@ -42,9 +40,7 @@ class TestServerDeprecationWarnings:
             warnings.simplefilter("always")
 
             # Should not have deprecation warning
-            assert not any(
-                "development only" in str(warning.message).lower() for warning in w
-            )
+            assert not any("development only" in str(warning.message).lower() for warning in w)
 
 
 class TestRouteMigration:
@@ -79,34 +75,26 @@ class TestRouteMigration:
         """Test /query endpoint returns deprecation header."""
         response = server_client.post("/query", json={"query": "test"})
         assert "X-Deprecated" in response.headers
-        assert "Use /v1/query via Twin service" in response.headers.get(
-            "X-Deprecated", ""
-        )
+        assert "Use /v1/query via Twin service" in response.headers.get("X-Deprecated", "")
 
     def test_upload_endpoint_deprecated(self, server_client):
         """Test /upload endpoint returns deprecation header."""
         files = {"file": ("test.txt", b"test content", "text/plain")}
         response = server_client.post("/upload", files=files)
         assert "X-Deprecated" in response.headers
-        assert "Use /v1/upload via Twin service" in response.headers.get(
-            "X-Deprecated", ""
-        )
+        assert "Use /v1/upload via Twin service" in response.headers.get("X-Deprecated", "")
 
     def test_explain_endpoint_deprecated(self, server_client):
         """Test /explain endpoint returns deprecation header."""
         response = server_client.get("/explain", params={"start": "a", "end": "b"})
         assert "X-Deprecated" in response.headers
-        assert "Use POST /explain via Twin service" in response.headers.get(
-            "X-Deprecated", ""
-        )
+        assert "Use POST /explain via Twin service" in response.headers.get("X-Deprecated", "")
 
     def test_v1_explanation_deprecated(self, server_client):
         """Test /v1/explanation endpoint returns deprecation header."""
         response = server_client.get("/v1/explanation", params={"chat_id": "123"})
         assert "X-Deprecated" in response.headers
-        assert "Use POST /v1/evidence via Twin service" in response.headers.get(
-            "X-Deprecated", ""
-        )
+        assert "Use POST /v1/evidence via Twin service" in response.headers.get("X-Deprecated", "")
 
 
 class TestNewTwinRoutes:
@@ -160,12 +148,8 @@ class TestGatewayProxying:
             mock_response.status_code = 200
             mock_response.json.return_value = {"response": "test"}
             mock_response.headers = {}
-            mock_client.return_value.__aenter__.return_value.post.return_value = (
-                mock_response
-            )
-            mock_client.return_value.__aenter__.return_value.get.return_value = (
-                mock_response
-            )
+            mock_client.return_value.__aenter__.return_value.post.return_value = mock_response
+            mock_client.return_value.__aenter__.return_value.get.return_value = mock_response
 
             from services.gateway.app import app
 

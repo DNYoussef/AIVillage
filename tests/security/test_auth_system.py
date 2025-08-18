@@ -137,9 +137,7 @@ class TestTokenManager:
         tm = TokenManager()
 
         # Create token with very short expiry
-        token = tm.create_token(
-            "test_user", ["read"], expires_in_hours=-1
-        )  # Already expired
+        token = tm.create_token("test_user", ["read"], expires_in_hours=-1)  # Already expired
 
         is_valid, payload = tm.verify_token(token)
 
@@ -230,13 +228,9 @@ class TestAuthenticationManager:
         self.temp_db = tempfile.NamedTemporaryFile(delete=False)
         self.temp_db.close()
 
-        self.config = AuthConfig(
-            password_min_length=8, max_failed_attempts=3, lockout_duration_minutes=5
-        )
+        self.config = AuthConfig(password_min_length=8, max_failed_attempts=3, lockout_duration_minutes=5)
 
-        self.auth_manager = AuthenticationManager(
-            config=self.config, db_path=self.temp_db.name
-        )
+        self.auth_manager = AuthenticationManager(config=self.config, db_path=self.temp_db.name)
 
     def teardown_method(self):
         """Cleanup after each test."""
@@ -296,9 +290,7 @@ class TestAuthenticationManager:
     def test_user_creation_duplicate_username(self):
         """Test user creation with duplicate username."""
         # Create first user
-        self.auth_manager.create_user(
-            username="duplicate", email="first@example.com", password="TestPassword123!"
-        )
+        self.auth_manager.create_user(username="duplicate", email="first@example.com", password="TestPassword123!")
 
         # Try to create user with same username
         with pytest.raises(ValueError):
@@ -311,16 +303,12 @@ class TestAuthenticationManager:
     def test_user_creation_weak_password(self):
         """Test user creation with weak password."""
         with pytest.raises(ValueError, match="Password validation failed"):
-            self.auth_manager.create_user(
-                username="weakpass", email="weak@example.com", password="weak"
-            )
+            self.auth_manager.create_user(username="weakpass", email="weak@example.com", password="weak")
 
     def test_successful_authentication(self):
         """Test successful user authentication."""
         # Create user
-        self.auth_manager.create_user(
-            username="authuser", email="auth@example.com", password="TestPassword123!"
-        )
+        self.auth_manager.create_user(username="authuser", email="auth@example.com", password="TestPassword123!")
 
         # Authenticate
         success, user, session_token = self.auth_manager.authenticate(
@@ -338,9 +326,7 @@ class TestAuthenticationManager:
     def test_failed_authentication_wrong_password(self):
         """Test failed authentication with wrong password."""
         # Create user
-        self.auth_manager.create_user(
-            username="authuser", email="auth@example.com", password="TestPassword123!"
-        )
+        self.auth_manager.create_user(username="authuser", email="auth@example.com", password="TestPassword123!")
 
         # Try wrong password
         success, user, session_token = self.auth_manager.authenticate(
@@ -370,9 +356,7 @@ class TestAuthenticationManager:
     def test_account_lockout(self):
         """Test account lockout after multiple failed attempts."""
         # Create user
-        self.auth_manager.create_user(
-            username="locktest", email="lock@example.com", password="TestPassword123!"
-        )
+        self.auth_manager.create_user(username="locktest", email="lock@example.com", password="TestPassword123!")
 
         # Fail authentication multiple times
         for i in range(self.config.max_failed_attempts):
@@ -422,9 +406,7 @@ class TestAuthenticationManager:
     def test_api_key_creation_and_authentication(self):
         """Test API key creation and authentication."""
         # Create user
-        user = self.auth_manager.create_user(
-            username="apiuser", email="api@example.com", password="TestPassword123!"
-        )
+        user = self.auth_manager.create_user(username="apiuser", email="api@example.com", password="TestPassword123!")
 
         # Create API key
         api_key, api_key_obj = self.auth_manager.create_api_key(
@@ -440,9 +422,7 @@ class TestAuthenticationManager:
         assert Permission.WRITE in api_key_obj.permissions
 
         # Authenticate with API key
-        success, auth_user = self.auth_manager.authenticate_api_key(
-            api_key=api_key, ip_address="127.0.0.1"
-        )
+        success, auth_user = self.auth_manager.authenticate_api_key(api_key=api_key, ip_address="127.0.0.1")
 
         assert success is True
         assert auth_user is not None
@@ -462,16 +442,12 @@ class TestAuthenticationManager:
         )
 
         # Revoke API key
-        success = self.auth_manager.revoke_api_key(
-            key_id=api_key_obj.key_id, user_id=user.user_id
-        )
+        success = self.auth_manager.revoke_api_key(key_id=api_key_obj.key_id, user_id=user.user_id)
 
         assert success is True
 
         # Authentication should fail with revoked key
-        success, auth_user = self.auth_manager.authenticate_api_key(
-            api_key=api_key, ip_address="127.0.0.1"
-        )
+        success, auth_user = self.auth_manager.authenticate_api_key(api_key=api_key, ip_address="127.0.0.1")
 
         assert success is False
         assert auth_user is None
@@ -479,9 +455,7 @@ class TestAuthenticationManager:
     def test_mfa_enable_disable(self):
         """Test MFA enable/disable functionality."""
         # Create user
-        user = self.auth_manager.create_user(
-            username="mfauser", email="mfa@example.com", password="TestPassword123!"
-        )
+        user = self.auth_manager.create_user(username="mfauser", email="mfa@example.com", password="TestPassword123!")
 
         # Enable MFA
         secret = self.auth_manager.enable_mfa(user.user_id)
@@ -645,27 +619,12 @@ class TestAuthorizationManager:
         )
 
         # Should have access to INTERNAL and PUBLIC resources
-        assert (
-            auth_mgr.check_access(
-                internal_user, "resource", Permission.READ, SecurityLevel.INTERNAL
-            )
-            is True
-        )
+        assert auth_mgr.check_access(internal_user, "resource", Permission.READ, SecurityLevel.INTERNAL) is True
 
-        assert (
-            auth_mgr.check_access(
-                internal_user, "resource", Permission.READ, SecurityLevel.PUBLIC
-            )
-            is True
-        )
+        assert auth_mgr.check_access(internal_user, "resource", Permission.READ, SecurityLevel.PUBLIC) is True
 
         # Should NOT have access to CONFIDENTIAL resources
-        assert (
-            auth_mgr.check_access(
-                internal_user, "resource", Permission.READ, SecurityLevel.CONFIDENTIAL
-            )
-            is False
-        )
+        assert auth_mgr.check_access(internal_user, "resource", Permission.READ, SecurityLevel.CONFIDENTIAL) is False
 
     def test_disabled_user_access_denial(self):
         """Test that disabled users are denied access."""
@@ -682,12 +641,7 @@ class TestAuthorizationManager:
         )
 
         # Even admin users should be denied if disabled
-        assert (
-            auth_mgr.check_access(
-                disabled_user, "resource", Permission.READ, SecurityLevel.PUBLIC
-            )
-            is False
-        )
+        assert auth_mgr.check_access(disabled_user, "resource", Permission.READ, SecurityLevel.PUBLIC) is False
 
 
 class TestIntegrationScenarios:
@@ -752,9 +706,7 @@ class TestIntegrationScenarios:
         assert has_admin is False  # Developer should not have admin
 
         # 7. Authenticate with API key
-        api_success, api_user = self.auth_manager.authenticate_api_key(
-            api_key=api_key, ip_address="10.0.0.1"
-        )
+        api_success, api_user = self.auth_manager.authenticate_api_key(api_key=api_key, ip_address="10.0.0.1")
 
         assert api_success is True
         assert api_user.user_id == user.user_id
@@ -834,9 +786,7 @@ if __name__ == "__main__":
         auth_mgr = AuthenticationManager(db_path=tmp.name)
 
         # Create and authenticate user
-        user = auth_mgr.create_user(
-            username="testuser", email="test@example.com", password="TestPassword123!"
-        )
+        user = auth_mgr.create_user(username="testuser", email="test@example.com", password="TestPassword123!")
 
         success, auth_user, session = auth_mgr.authenticate(
             username="testuser", password="TestPassword123!", ip_address="127.0.0.1"
@@ -845,9 +795,7 @@ if __name__ == "__main__":
         print(f"OK User creation and authentication: {success}")
 
         # Test API key
-        api_key, api_obj = auth_mgr.create_api_key(
-            user_id=user.user_id, name="Test Key", permissions=[Permission.READ]
-        )
+        api_key, api_obj = auth_mgr.create_api_key(user_id=user.user_id, name="Test Key", permissions=[Permission.READ])
 
         api_success, api_user = auth_mgr.authenticate_api_key(api_key)
         print(f"OK API key authentication: {api_success}")
@@ -872,9 +820,7 @@ if __name__ == "__main__":
     )
 
     has_admin_perm = authz_mgr.has_permission(admin_user, Permission.ADMIN)
-    has_access = authz_mgr.check_access(
-        admin_user, "resource", Permission.READ, SecurityLevel.CONFIDENTIAL
-    )
+    has_access = authz_mgr.check_access(admin_user, "resource", Permission.READ, SecurityLevel.CONFIDENTIAL)
 
     print(f"OK Authorization: admin_perm={has_admin_perm}, access={has_access}")
 

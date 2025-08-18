@@ -15,10 +15,7 @@ from typing import Any
 from src.production.communications.p2p.p2p_node import P2PNode
 
 from ...core.resources.resource_monitor import ResourceMonitor
-from ..distributed_inference.model_sharding_engine import (
-    DeviceProfile,
-    ModelShardingEngine,
-)
+from ..distributed_inference.model_sharding_engine import DeviceProfile, ModelShardingEngine
 
 logger = logging.getLogger(__name__)
 
@@ -118,14 +115,10 @@ class DistributedAgentOrchestrator:
         # Agent state
         self.current_deployment_plan: AgentDeploymentPlan | None = None
         self.active_agents: dict[str, AgentInstance] = {}  # instance_id -> instance
-        self.agent_registry: dict[
-            AgentType, list[str]
-        ] = {}  # agent_type -> instance_ids
+        self.agent_registry: dict[AgentType, list[str]] = {}  # agent_type -> instance_ids
 
         # Device assignments
-        self.device_agent_assignments: dict[
-            str, list[str]
-        ] = {}  # device_id -> instance_ids
+        self.device_agent_assignments: dict[str, list[str]] = {}  # device_id -> instance_ids
 
         # Performance tracking
         self.deployment_stats = {
@@ -327,9 +320,7 @@ class DistributedAgentOrchestrator:
                 raise ValueError(msg)
 
             # Create deployment plan
-            deployment_plan = await self._create_deployment_plan(
-                device_profiles, deployment_strategy
-            )
+            deployment_plan = await self._create_deployment_plan(device_profiles, deployment_strategy)
 
             # Execute deployment
             success = await self._execute_deployment_plan(deployment_plan)
@@ -343,13 +334,9 @@ class DistributedAgentOrchestrator:
                 self.deployment_stats["avg_deployment_time"] = (
                     self.deployment_stats["avg_deployment_time"] + duration
                 ) / 2
-                self.deployment_stats["agents_deployed"] = len(
-                    deployment_plan.agent_instances
-                )
+                self.deployment_stats["agents_deployed"] = len(deployment_plan.agent_instances)
 
-                logger.info(
-                    f"Agent constellation deployed successfully in {duration:.2f}s"
-                )
+                logger.info(f"Agent constellation deployed successfully in {duration:.2f}s")
                 return deployment_plan
             msg = "Deployment execution failed"
             raise RuntimeError(msg)
@@ -359,15 +346,11 @@ class DistributedAgentOrchestrator:
             self.deployment_stats["deployment_failures"] += 1
             raise
 
-    async def _get_available_devices(
-        self, target_devices: list[str] | None = None
-    ) -> list[DeviceProfile]:
+    async def _get_available_devices(self, target_devices: list[str] | None = None) -> list[DeviceProfile]:
         """Get available devices for agent deployment."""
         # Use sharding engine's device discovery if available
         if self.sharding_engine:
-            device_profiles = await self.sharding_engine._get_device_profiles(
-                target_devices
-            )
+            device_profiles = await self.sharding_engine._get_device_profiles(target_devices)
         else:
             # Fallback to P2P peer discovery
             device_profiles = []
@@ -376,10 +359,7 @@ class DistributedAgentOrchestrator:
             suitable_peers = self.p2p_node.get_suitable_evolution_peers(min_count=1)
 
             # Include local device if suitable
-            if (
-                self.p2p_node.local_capabilities
-                and self.p2p_node.local_capabilities.is_suitable_for_evolution()
-            ):
+            if self.p2p_node.local_capabilities and self.p2p_node.local_capabilities.is_suitable_for_evolution():
                 suitable_peers.insert(0, self.p2p_node.local_capabilities)
 
             # Convert to DeviceProfile objects
@@ -404,9 +384,7 @@ class DistributedAgentOrchestrator:
             if self._is_device_suitable_for_agents(device):
                 suitable_devices.append(device)
 
-        logger.info(
-            f"Found {len(suitable_devices)} suitable devices for agent deployment"
-        )
+        logger.info(f"Found {len(suitable_devices)} suitable devices for agent deployment")
         return suitable_devices
 
     def _is_device_suitable_for_agents(self, device: DeviceProfile) -> bool:
@@ -439,25 +417,16 @@ class DistributedAgentOrchestrator:
         msg = f"Unknown deployment strategy: {strategy}"
         raise ValueError(msg)
 
-    async def _create_optimal_deployment_plan(
-        self, device_profiles: list[DeviceProfile]
-    ) -> AgentDeploymentPlan:
+    async def _create_optimal_deployment_plan(self, device_profiles: list[DeviceProfile]) -> AgentDeploymentPlan:
         """Create optimal deployment plan considering all constraints."""
         agent_instances = []
         device_assignments = {device.device_id: [] for device in device_profiles}
-        device_resource_usage = {
-            device.device_id: {"memory_mb": 0.0, "compute": 0.0}
-            for device in device_profiles
-        }
+        device_resource_usage = {device.device_id: {"memory_mb": 0.0, "compute": 0.0} for device in device_profiles}
 
         # Sort devices by capability (best first)
         sorted_devices = sorted(
             device_profiles,
-            key=lambda d: (
-                d.available_memory_mb * 0.4
-                + d.compute_score * 0.3
-                + d.reliability_score * 0.3
-            ),
+            key=lambda d: (d.available_memory_mb * 0.4 + d.compute_score * 0.3 + d.reliability_score * 0.3),
             reverse=True,
         )
 
@@ -492,9 +461,7 @@ class DistributedAgentOrchestrator:
 
             for device in sorted_devices:
                 # Check if device can accommodate this agent
-                if not self._can_device_host_agent(
-                    device, spec, device_resource_usage[device.device_id]
-                ):
+                if not self._can_device_host_agent(device, spec, device_resource_usage[device.device_id]):
                     continue
 
                 # Calculate suitability score
@@ -505,9 +472,7 @@ class DistributedAgentOrchestrator:
                     best_device = device
 
             if best_device is None:
-                logger.warning(
-                    f"Could not find suitable device for agent {agent_type.value}"
-                )
+                logger.warning(f"Could not find suitable device for agent {agent_type.value}")
                 continue
 
             # Create agent instance
@@ -522,21 +487,13 @@ class DistributedAgentOrchestrator:
             device_assignments[best_device.device_id].append(instance.instance_id)
 
             # Update resource usage
-            device_resource_usage[best_device.device_id]["memory_mb"] += (
-                spec.memory_requirement_mb
-            )
-            device_resource_usage[best_device.device_id]["compute"] += (
-                spec.compute_requirement
-            )
+            device_resource_usage[best_device.device_id]["memory_mb"] += spec.memory_requirement_mb
+            device_resource_usage[best_device.device_id]["compute"] += spec.compute_requirement
 
         # Calculate redundancy coverage
         redundancy_coverage = {}
         for agent_type, spec in self.agent_specs.items():
-            deployed_count = sum(
-                1
-                for instance in agent_instances
-                if instance.agent_spec.agent_type == agent_type
-            )
+            deployed_count = sum(1 for instance in agent_instances if instance.agent_spec.agent_type == agent_type)
             redundancy_coverage[agent_type] = deployed_count
 
         plan = AgentDeploymentPlan(
@@ -553,16 +510,12 @@ class DistributedAgentOrchestrator:
         )
         return plan
 
-    async def _create_priority_based_plan(
-        self, device_profiles: list[DeviceProfile]
-    ) -> AgentDeploymentPlan:
+    async def _create_priority_based_plan(self, device_profiles: list[DeviceProfile]) -> AgentDeploymentPlan:
         """Create deployment plan prioritizing critical agents first."""
         # Simplified implementation - similar to optimal but stricter priority ordering
         return await self._create_optimal_deployment_plan(device_profiles)
 
-    async def _create_balanced_deployment_plan(
-        self, device_profiles: list[DeviceProfile]
-    ) -> AgentDeploymentPlan:
+    async def _create_balanced_deployment_plan(self, device_profiles: list[DeviceProfile]) -> AgentDeploymentPlan:
         """Create balanced deployment plan distributing load evenly."""
         # Simplified implementation - could implement round-robin assignment
         return await self._create_optimal_deployment_plan(device_profiles)
@@ -575,17 +528,11 @@ class DistributedAgentOrchestrator:
     ) -> bool:
         """Check if device can host the agent given current usage."""
         # Memory constraint
-        if (
-            current_usage["memory_mb"] + agent_spec.memory_requirement_mb
-            > device.available_memory_mb
-        ):
+        if current_usage["memory_mb"] + agent_spec.memory_requirement_mb > device.available_memory_mb:
             return False
 
         # Compute constraint (simplified)
-        if (
-            current_usage["compute"] + agent_spec.compute_requirement
-            > device.compute_score
-        ):
+        if current_usage["compute"] + agent_spec.compute_requirement > device.compute_score:
             return False
 
         # GPU requirement
@@ -596,12 +543,8 @@ class DistributedAgentOrchestrator:
 
         # Resource constraints
         for constraint, value in agent_spec.resource_constraints.items():
-            if (
-                constraint == "min_reliability" and device.reliability_score < value
-            ) or (
-                constraint == "min_battery"
-                and device.battery_level
-                and device.battery_level < value
+            if (constraint == "min_reliability" and device.reliability_score < value) or (
+                constraint == "min_battery" and device.battery_level and device.battery_level < value
             ):
                 return False
             if constraint == "min_compute_score" and device.compute_score < value:
@@ -609,9 +552,7 @@ class DistributedAgentOrchestrator:
 
         return True
 
-    def _calculate_agent_device_suitability(
-        self, device: DeviceProfile, agent_spec: AgentSpec
-    ) -> float:
+    def _calculate_agent_device_suitability(self, device: DeviceProfile, agent_spec: AgentSpec) -> float:
         """Calculate how suitable a device is for hosting an agent."""
         score = 0.0
 
@@ -661,10 +602,7 @@ class DistributedAgentOrchestrator:
                 # Check if dependencies are satisfied
                 dependencies_met = True
                 for dep_type in instance.agent_spec.dependencies:
-                    if not any(
-                        deployed_agent.agent_spec.agent_type == dep_type
-                        for deployed_agent in deployed_agents
-                    ):
+                    if not any(deployed_agent.agent_spec.agent_type == dep_type for deployed_agent in deployed_agents):
                         dependencies_met = False
                         break
 
@@ -686,9 +624,7 @@ class DistributedAgentOrchestrator:
                         device_id = instance.device_id
                         if device_id not in self.device_agent_assignments:
                             self.device_agent_assignments[device_id] = []
-                        self.device_agent_assignments[device_id].append(
-                            instance.instance_id
-                        )
+                        self.device_agent_assignments[device_id].append(instance.instance_id)
 
                         deployment_results.append(True)
                     else:
@@ -700,24 +636,16 @@ class DistributedAgentOrchestrator:
                 remaining_agents.remove(instance)
 
         if remaining_agents:
-            logger.warning(
-                f"Could not deploy {len(remaining_agents)} agents due to dependency issues"
-            )
+            logger.warning(f"Could not deploy {len(remaining_agents)} agents due to dependency issues")
 
-        success_rate = (
-            sum(deployment_results) / len(deployment_results)
-            if deployment_results
-            else 0.0
-        )
+        success_rate = sum(deployment_results) / len(deployment_results) if deployment_results else 0.0
         logger.info(f"Deployment completed: {success_rate:.1%} success rate")
 
         return success_rate > 0.8  # Consider successful if >80% agents deployed
 
     async def _deploy_agent_instance(self, instance: AgentInstance) -> bool:
         """Deploy a single agent instance."""
-        logger.debug(
-            f"Deploying agent {instance.instance_id} to device {instance.device_id}"
-        )
+        logger.debug(f"Deploying agent {instance.instance_id} to device {instance.device_id}")
 
         try:
             instance.status = "starting"
@@ -738,9 +666,7 @@ class DistributedAgentOrchestrator:
                 success = await self._deploy_agent_locally(instance)
             else:
                 # Remote deployment
-                success = await self.p2p_node.send_to_peer(
-                    instance.device_id, deployment_message
-                )
+                success = await self.p2p_node.send_to_peer(instance.device_id, deployment_message)
 
             if success:
                 instance.status = "running"
@@ -780,16 +706,11 @@ class DistributedAgentOrchestrator:
             "plan_id": plan.plan_id,
             "agents_deployed": len(plan.agent_instances),
             "devices_used": len([d for d in plan.device_assignments.values() if d]),
-            "redundancy_coverage": {
-                agent_type.value: count
-                for agent_type, count in plan.redundancy_coverage.items()
-            },
+            "redundancy_coverage": {agent_type.value: count for agent_type, count in plan.redundancy_coverage.items()},
             "timestamp": time.time(),
         }
 
-        await self.p2p_node.broadcast_to_peers(
-            "AGENT_DEPLOYMENT_COMPLETE", deployment_summary
-        )
+        await self.p2p_node.broadcast_to_peers("AGENT_DEPLOYMENT_COMPLETE", deployment_summary)
 
     async def enable_cross_device_collaboration(self) -> None:
         """Enable agents to work together across device boundaries."""
@@ -799,8 +720,7 @@ class DistributedAgentOrchestrator:
         collaboration_config = {
             "type": "ENABLE_AGENT_COLLABORATION",
             "agent_registry": {
-                agent_type.value: instance_ids
-                for agent_type, instance_ids in self.agent_registry.items()
+                agent_type.value: instance_ids for agent_type, instance_ids in self.agent_registry.items()
             },
             "device_assignments": self.device_agent_assignments,
             "routing_protocol": "p2p_direct",
@@ -808,9 +728,7 @@ class DistributedAgentOrchestrator:
         }
 
         # Broadcast to all devices
-        await self.p2p_node.broadcast_to_peers(
-            "ENABLE_AGENT_COLLABORATION", collaboration_config
-        )
+        await self.p2p_node.broadcast_to_peers("ENABLE_AGENT_COLLABORATION", collaboration_config)
 
         # Start collaboration monitoring
         asyncio.create_task(self._monitor_agent_collaboration())
@@ -842,9 +760,7 @@ class DistributedAgentOrchestrator:
         if instance.agent_spec.can_migrate:
             # Try to migrate agent
             # This would integrate with the migration manager
-            logger.info(
-                f"Triggering migration for unhealthy agent {instance.instance_id}"
-            )
+            logger.info(f"Triggering migration for unhealthy agent {instance.instance_id}")
         else:
             # Try to restart agent on same device
             logger.info(f"Attempting to restart agent {instance.instance_id}")
@@ -865,17 +781,11 @@ class DistributedAgentOrchestrator:
 
         # Calculate status metrics
         total_agents = len(self.current_deployment_plan.agent_instances)
-        running_agents = sum(
-            1 for agent in self.active_agents.values() if agent.status == "running"
-        )
-        failed_agents = sum(
-            1 for agent in self.active_agents.values() if agent.status == "failed"
-        )
+        running_agents = sum(1 for agent in self.active_agents.values() if agent.status == "running")
+        failed_agents = sum(1 for agent in self.active_agents.values() if agent.status == "failed")
 
         # Device coverage
-        devices_with_agents = len(
-            [d for d in self.device_agent_assignments.values() if d]
-        )
+        devices_with_agents = len([d for d in self.device_agent_assignments.values() if d])
 
         # Redundancy coverage
         redundancy_status = {}
@@ -897,9 +807,7 @@ class DistributedAgentOrchestrator:
             "agents_running": running_agents,
             "agents_failed": failed_agents,
             "devices_used": devices_with_agents,
-            "deployment_health": (
-                running_agents / total_agents if total_agents > 0 else 0.0
-            ),
+            "deployment_health": (running_agents / total_agents if total_agents > 0 else 0.0),
             "redundancy_status": redundancy_status,
             "device_assignments": {
                 device_id: len(instance_ids)

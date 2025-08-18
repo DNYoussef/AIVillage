@@ -65,9 +65,7 @@ class PartitionSafetyMonitor:
         self.vote_history: dict[str, list[VoteRecord]] = {}  # proposal_id -> votes
         self.partition_history: list[PartitionSafetyReport] = []
 
-    def assess_partition_safety(
-        self, votes: list[VoteRecord], proposal_id: str = None
-    ) -> PartitionSafetyReport:
+    def assess_partition_safety(self, votes: list[VoteRecord], proposal_id: str = None) -> PartitionSafetyReport:
         """Comprehensive partition safety assessment."""
         logger.info(f"Assessing partition safety for proposal {proposal_id}")
 
@@ -172,9 +170,7 @@ class PartitionSafetyMonitor:
                         severity=0.8,
                         description=f"Safety assessment failed: {str(e)}",
                         affected_entities=[],
-                        mitigation_suggestions=[
-                            "Check system health and retry assessment"
-                        ],
+                        mitigation_suggestions=["Check system health and retry assessment"],
                     )
                 ],
                 diversity_metrics={},
@@ -301,9 +297,7 @@ class PartitionSafetyMonitor:
 
         return risks
 
-    def _assess_geographic_distribution(
-        self, votes: list[VoteRecord]
-    ) -> list[PartitionRisk]:
+    def _assess_geographic_distribution(self, votes: list[VoteRecord]) -> list[PartitionRisk]:
         """Assess geographic distribution risks."""
         risks = []
 
@@ -360,9 +354,7 @@ class PartitionSafetyMonitor:
 
         return risks
 
-    def _assess_temporal_concentration(
-        self, votes: list[VoteRecord], proposal_id: str
-    ) -> list[PartitionRisk]:
+    def _assess_temporal_concentration(self, votes: list[VoteRecord], proposal_id: str) -> list[PartitionRisk]:
         """Assess temporal concentration risks."""
         risks = []
 
@@ -407,9 +399,7 @@ class PartitionSafetyMonitor:
 
         return risks
 
-    def _assess_diversity_requirements(
-        self, votes: list[VoteRecord]
-    ) -> list[PartitionRisk]:
+    def _assess_diversity_requirements(self, votes: list[VoteRecord]) -> list[PartitionRisk]:
         """Assess diversity requirement compliance."""
         risks = []
 
@@ -478,27 +468,20 @@ class PartitionSafetyMonitor:
             # AS weight distribution
             as_weights = {}
             for vote in votes:
-                as_weights[vote.as_group] = (
-                    as_weights.get(vote.as_group, 0) + vote.weight
-                )
+                as_weights[vote.as_group] = as_weights.get(vote.as_group, 0) + vote.weight
             metrics["as_weight_distribution"] = {
-                as_group: weight / total_weight
-                for as_group, weight in as_weights.items()
+                as_group: weight / total_weight for as_group, weight in as_weights.items()
             }
 
             # ISD weight distribution
             isd_weights = {}
             for vote in votes:
                 isd_weights[vote.isd] = isd_weights.get(vote.isd, 0) + vote.weight
-            metrics["isd_weight_distribution"] = {
-                isd: weight / total_weight for isd, weight in isd_weights.items()
-            }
+            metrics["isd_weight_distribution"] = {isd: weight / total_weight for isd, weight in isd_weights.items()}
 
         return metrics
 
-    def _calculate_geographic_distribution(
-        self, votes: list[VoteRecord]
-    ) -> dict[str, any]:
+    def _calculate_geographic_distribution(self, votes: list[VoteRecord]) -> dict[str, any]:
         """Calculate geographic distribution metrics."""
         distribution = {}
 
@@ -516,8 +499,7 @@ class PartitionSafetyMonitor:
 
         if total_weight > 0:
             distribution["region_weight_distribution"] = {
-                region: weight / total_weight
-                for region, weight in region_weights.items()
+                region: weight / total_weight for region, weight in region_weights.items()
             }
 
         distribution["unique_regions"] = len(region_counts)
@@ -535,23 +517,17 @@ class PartitionSafetyMonitor:
         timestamps.sort()
 
         analysis["vote_count"] = len(votes)
-        analysis["time_span_seconds"] = (
-            timestamps[-1] - timestamps[0] if len(timestamps) > 1 else 0
-        )
+        analysis["time_span_seconds"] = timestamps[-1] - timestamps[0] if len(timestamps) > 1 else 0
         analysis["first_vote"] = timestamps[0]
         analysis["last_vote"] = timestamps[-1]
 
         # Calculate vote rate over time
         if analysis["time_span_seconds"] > 0:
-            analysis["avg_vote_rate_per_minute"] = (
-                len(votes) / analysis["time_span_seconds"]
-            ) * 60
+            analysis["avg_vote_rate_per_minute"] = (len(votes) / analysis["time_span_seconds"]) * 60
 
         # Time intervals between votes
         if len(timestamps) > 1:
-            intervals = [
-                timestamps[i + 1] - timestamps[i] for i in range(len(timestamps) - 1)
-            ]
+            intervals = [timestamps[i + 1] - timestamps[i] for i in range(len(timestamps) - 1)]
             analysis["avg_interval_seconds"] = sum(intervals) / len(intervals)
             analysis["max_interval_seconds"] = max(intervals)
             analysis["min_interval_seconds"] = min(intervals)
@@ -601,16 +577,12 @@ class PartitionSafetyMonitor:
 
         return min(1.0, weighted_score / total_weight) if total_weight > 0 else 0.0
 
-    def _generate_recommendations(
-        self, risks: list[PartitionRisk], diversity_metrics: dict[str, any]
-    ) -> list[str]:
+    def _generate_recommendations(self, risks: list[PartitionRisk], diversity_metrics: dict[str, any]) -> list[str]:
         """Generate actionable recommendations based on risk assessment."""
         recommendations = []
 
         if not risks:
-            recommendations.append(
-                "Network partition safety is good - continue monitoring"
-            )
+            recommendations.append("Network partition safety is good - continue monitoring")
             return recommendations
 
         # Group risks by type for targeted recommendations
@@ -618,9 +590,7 @@ class PartitionSafetyMonitor:
 
         if "AS_CONCENTRATION" in risk_types or "ISD_CONCENTRATION" in risk_types:
             recommendations.append("Implement stronger weight distribution mechanisms")
-            recommendations.append(
-                "Encourage participation from underrepresented AS/ISD groups"
-            )
+            recommendations.append("Encourage participation from underrepresented AS/ISD groups")
 
         if "INSUFFICIENT_AS_DIVERSITY" in risk_types:
             recommendations.append("Lower barriers to AS group participation")
@@ -628,14 +598,10 @@ class PartitionSafetyMonitor:
 
         if "INSUFFICIENT_ISD_DIVERSITY" in risk_types:
             recommendations.append("Critical: Improve inter-ISD connectivity")
-            recommendations.append(
-                "Consider emergency procedures for single-ISD scenarios"
-            )
+            recommendations.append("Consider emergency procedures for single-ISD scenarios")
 
         if "GEOGRAPHIC_CONCENTRATION" in risk_types:
-            recommendations.append(
-                "Promote global participation and geographic diversity"
-            )
+            recommendations.append("Promote global participation and geographic diversity")
             recommendations.append("Monitor for regional network outages")
 
         if "TEMPORAL_CONCENTRATION" in risk_types:
@@ -645,9 +611,7 @@ class PartitionSafetyMonitor:
         # Add severity-based recommendations
         high_severity_risks = [r for r in risks if r.severity > 0.7]
         if high_severity_risks:
-            recommendations.append(
-                "HIGH PRIORITY: Address high-severity partition risks immediately"
-            )
+            recommendations.append("HIGH PRIORITY: Address high-severity partition risks immediately")
             recommendations.append("Consider emergency governance procedures")
 
         return recommendations
@@ -655,9 +619,7 @@ class PartitionSafetyMonitor:
     def get_historical_trends(self, days: int = 7) -> dict[str, any]:
         """Get historical partition safety trends."""
         cutoff_time = time.time() - (days * 24 * 3600)
-        recent_reports = [
-            r for r in self.partition_history if r.timestamp >= cutoff_time
-        ]
+        recent_reports = [r for r in self.partition_history if r.timestamp >= cutoff_time]
 
         if not recent_reports:
             return {"error": "No historical data available"}
@@ -671,17 +633,15 @@ class PartitionSafetyMonitor:
             "total_assessments": len(recent_reports),
             "avg_risk_score": sum(risk_scores) / len(risk_scores),
             "safety_percentage": sum(safety_statuses) / len(safety_statuses) * 100,
-            "risk_trend": "improving"
-            if len(risk_scores) > 1 and risk_scores[-1] < risk_scores[0]
-            else "stable_or_worsening",
+            "risk_trend": (
+                "improving" if len(risk_scores) > 1 and risk_scores[-1] < risk_scores[0] else "stable_or_worsening"
+            ),
             "most_common_risks": self._get_most_common_risks(recent_reports),
         }
 
         return trends
 
-    def _get_most_common_risks(
-        self, reports: list[PartitionSafetyReport]
-    ) -> dict[str, int]:
+    def _get_most_common_risks(self, reports: list[PartitionSafetyReport]) -> dict[str, int]:
         """Get most common risk types from reports."""
         risk_counts = {}
 

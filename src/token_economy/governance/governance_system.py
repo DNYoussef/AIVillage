@@ -78,9 +78,7 @@ class GovernanceSystem:
                 if balance > 0:
                     total += balance
 
-            logger.debug(
-                f"Total supply calculated from {len(all_users)} users: {total}"
-            )
+            logger.debug(f"Total supply calculated from {len(all_users)} users: {total}")
             return total
         except Exception as e:
             logger.error(f"Error calculating total supply: {e}")
@@ -99,8 +97,7 @@ class GovernanceSystem:
         voting_power = self.get_voting_power(proposer_id)
         if voting_power < self.config.min_proposal_power:
             raise ValueError(
-                f"Insufficient voting power. Required: {self.config.min_proposal_power}, "
-                f"Available: {voting_power}"
+                f"Insufficient voting power. Required: {self.config.min_proposal_power}, " f"Available: {voting_power}"
             )
 
         # Generate unique proposal ID
@@ -182,9 +179,7 @@ class GovernanceSystem:
         # Save updated proposal
         self.storage.save_proposal(proposal)
 
-        logger.info(
-            f"Vote cast by {voter_id} on proposal {proposal_id}: {choice.value}"
-        )
+        logger.info(f"Vote cast by {voter_id} on proposal {proposal_id}: {choice.value}")
         return vote
 
     def tally_votes(self, proposal_id: str) -> dict:
@@ -243,9 +238,7 @@ class GovernanceSystem:
         # Check if voting period has ended
         current_time = int(time.time())
         if proposal.voting_end and current_time < proposal.voting_end:
-            raise ValueError(
-                f"Voting period for proposal {proposal_id} has not ended yet"
-            )
+            raise ValueError(f"Voting period for proposal {proposal_id} has not ended yet")
 
         # Tally votes and determine outcome
         tally = self.tally_votes(proposal_id)
@@ -295,9 +288,7 @@ class GovernanceSystem:
                     finalized = self.finalize_proposal(proposal.id)
                     expired_proposals.append(finalized)
                 except Exception as e:
-                    logger.error(
-                        f"Error finalizing expired proposal {proposal.id}: {e}"
-                    )
+                    logger.error(f"Error finalizing expired proposal {proposal.id}: {e}")
 
         if expired_proposals:
             logger.info(f"Processed {len(expired_proposals)} expired proposals")

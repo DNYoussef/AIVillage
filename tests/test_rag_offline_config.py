@@ -39,16 +39,10 @@ def test_rag_offline_config():
     registry = OfflineRAGConfigRegistry()
     status = registry.get_registry_status()
 
-    assert status["total_configs"] >= 5, (
-        f"Expected >=5 default configs, got {status['total_configs']}"
-    )
-    assert status["validated_configs"] >= 4, (
-        f"Expected >=4 validated configs, got {status['validated_configs']}"
-    )
+    assert status["total_configs"] >= 5, f"Expected >=5 default configs, got {status['total_configs']}"
+    assert status["validated_configs"] >= 4, f"Expected >=4 validated configs, got {status['validated_configs']}"
     assert len(status["available_configs"]) >= 4
-    print(
-        f"    [PASS] Registry initialized: {status['total_configs']} total, {status['validated_configs']} validated"
-    )
+    print(f"    [PASS] Registry initialized: {status['total_configs']} total, {status['validated_configs']} validated")
     print(f"    [PASS] Available configs: {status['available_configs']}")
 
     # Test 2: Default Configuration Validation
@@ -62,9 +56,7 @@ def test_rag_offline_config():
     assert standard_config.embedding.provider == EmbeddingProvider.SENTENCE_TRANSFORMERS
     assert standard_config.vector_store_type == VectorStoreType.FAISS
     assert len(standard_config.validation_errors) == 0
-    print(
-        f"    [PASS] Standard config: {standard_config.name} - {standard_config.validation_checksum}"
-    )
+    print(f"    [PASS] Standard config: {standard_config.name} - {standard_config.validation_checksum}")
 
     # Test performance config
     performance_config = registry.get_config("performance_offline")
@@ -117,9 +109,7 @@ def test_rag_offline_config():
     # Test device selection logic
     mobile_device_config = registry.get_config_for_device("mobile", 256)
     print(f"    [DEBUG] Mobile device config name: {mobile_device_config.name}")
-    assert (
-        mobile_device_config.is_mobile_optimized is True
-    )  # Check the key property instead
+    assert mobile_device_config.is_mobile_optimized is True  # Check the key property instead
     print(f"    [PASS] Mobile device (256MB) -> {mobile_device_config.name}")
 
     low_memory_config = registry.get_config_for_device("laptop", 512)
@@ -138,27 +128,19 @@ def test_rag_offline_config():
     print("\n[5] Testing configuration validation framework...")
 
     # Test valid configuration creation
-    from core.knowledge.rag_offline_config import (
-        ChunkingConfig,
-        EmbeddingConfig,
-        RetrievalConfig,
-    )
+    from core.knowledge.rag_offline_config import ChunkingConfig, EmbeddingConfig, RetrievalConfig
 
     valid_config = OfflineRAGConfig(
         name="test_valid",
         chunking=ChunkingConfig(chunk_size=512, chunk_overlap=50),
         retrieval=RetrievalConfig(top_k=5, max_results=10),
-        embedding=EmbeddingConfig(
-            provider=EmbeddingProvider.SENTENCE_TRANSFORMERS, model_name="test-model"
-        ),
+        embedding=EmbeddingConfig(provider=EmbeddingProvider.SENTENCE_TRANSFORMERS, model_name="test-model"),
         max_memory_mb=256,
     )
     assert valid_config.validate_config() is True
     assert len(valid_config.validation_errors) == 0
     assert valid_config.validation_checksum is not None
-    print(
-        f"    [PASS] Valid config validation: checksum {valid_config.validation_checksum}"
-    )
+    print(f"    [PASS] Valid config validation: checksum {valid_config.validation_checksum}")
 
     # Test invalid configuration detection
     invalid_config = OfflineRAGConfig(
@@ -180,9 +162,7 @@ def test_rag_offline_config():
     )
     assert invalid_config.validate_config() is False
     assert len(invalid_config.validation_errors) >= 3
-    print(
-        f"    [PASS] Invalid config detected: {len(invalid_config.validation_errors)} errors"
-    )
+    print(f"    [PASS] Invalid config detected: {len(invalid_config.validation_errors)} errors")
 
     # Test 6: Mobile Adaptation
     print("\n[6] Testing mobile adaptation...")
@@ -196,16 +176,12 @@ def test_rag_offline_config():
     assert adapted_config.max_memory_mb <= 256
     assert adapted_config.chunking.chunk_size <= 256
     assert adapted_config.retrieval.enable_reranking is False  # Disabled for efficiency
-    assert (
-        adapted_config.vector_store_type == VectorStoreType.SQLITE_VSS
-    )  # More efficient
+    assert adapted_config.vector_store_type == VectorStoreType.SQLITE_VSS  # More efficient
 
     # Validate the adapted config
     assert adapted_config.validate_config() is True
     print(f"    [PASS] Mobile adaptation: {base_config.name} -> {adapted_config.name}")
-    print(
-        f"    [PASS] Adapted settings: {adapted_config.chunking.chunk_size} chars, {adapted_config.max_memory_mb}MB"
-    )
+    print(f"    [PASS] Adapted settings: {adapted_config.chunking.chunk_size} chars, {adapted_config.max_memory_mb}MB")
 
     # Test 7: Configuration Templates and Modes
     print("\n[7] Testing configuration templates and modes...")
@@ -251,9 +227,7 @@ def test_rag_offline_config():
     assert mobile_rag.is_mobile_optimized is True
 
     print("    [PASS] Global registry access working")
-    print(
-        "    [PASS] Convenience functions: get_offline_rag_config, get_mobile_rag_config"
-    )
+    print("    [PASS] Convenience functions: get_offline_rag_config, get_mobile_rag_config")
 
     # Test 9: Custom Configuration Creation
     print("\n[9] Testing custom configuration creation...")
@@ -286,18 +260,14 @@ def test_rag_offline_config():
     mobile_chunk_size = mobile_chunking.get_effective_chunk_size(is_mobile=True)
     desktop_chunk_size = mobile_chunking.get_effective_chunk_size(is_mobile=False)
     assert mobile_chunk_size <= desktop_chunk_size
-    print(
-        f"    [PASS] Adaptive chunking: mobile={mobile_chunk_size}, desktop={desktop_chunk_size}"
-    )
+    print(f"    [PASS] Adaptive chunking: mobile={mobile_chunk_size}, desktop={desktop_chunk_size}")
 
     # Test retrieval adaptation
     mobile_retrieval = mobile_config.retrieval
     mobile_top_k = mobile_retrieval.get_effective_top_k(is_mobile=True)
     desktop_top_k = mobile_retrieval.get_effective_top_k(is_mobile=False)
     assert mobile_top_k <= desktop_top_k
-    print(
-        f"    [PASS] Adaptive retrieval: mobile_top_k={mobile_top_k}, desktop_top_k={desktop_top_k}"
-    )
+    print(f"    [PASS] Adaptive retrieval: mobile_top_k={mobile_top_k}, desktop_top_k={desktop_top_k}")
 
     print("\n=== RAG Offline Configuration: ALL TESTS PASSED ===")
 

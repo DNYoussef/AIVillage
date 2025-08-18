@@ -83,9 +83,7 @@ def main():
     backup_info = {
         "timestamp": timestamp,
         "important_files": [str(f.relative_to(base_path)) for f in file_list],
-        "directory_count": len(
-            [k for k, v in structure.items() if v.get("type") == "directory"]
-        ),
+        "directory_count": len([k for k, v in structure.items() if v.get("type") == "directory"]),
         "note": "Backup created before codebase restructuring",
     }
 

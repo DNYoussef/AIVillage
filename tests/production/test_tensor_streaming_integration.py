@@ -37,9 +37,7 @@ async def test_tensor_stream_round_trip(monkeypatch):
         return False
 
     # Bind the helper as a method on the sender node
-    monkeypatch.setattr(
-        sender, "send_message", fake_send_message.__get__(sender, P2PNode)
-    )
+    monkeypatch.setattr(sender, "send_message", fake_send_message.__get__(sender, P2PNode))
 
     tensor = np.arange(8, dtype=np.float32)
     tensor_id = await send_stream.send_tensor(tensor, "test", receiver.node_id)
@@ -96,12 +94,8 @@ async def test_tensor_stream_round_trip_torch(monkeypatch):
             return True
         return False
 
-    monkeypatch.setattr(
-        sender, "send_message", fake_send_message.__get__(sender, P2PNode)
-    )
-    monkeypatch.setattr(
-        receiver, "send_message", recv_send_message.__get__(receiver, P2PNode)
-    )
+    monkeypatch.setattr(sender, "send_message", fake_send_message.__get__(sender, P2PNode))
+    monkeypatch.setattr(receiver, "send_message", recv_send_message.__get__(receiver, P2PNode))
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     tensor = torch.arange(8, dtype=torch.float32, device=device, requires_grad=True)
@@ -201,12 +195,8 @@ async def test_key_exchange_after_restart(monkeypatch):
             return True
         return False
 
-    monkeypatch.setattr(
-        sender, "send_message", send_from_sender.__get__(sender, P2PNode)
-    )
-    monkeypatch.setattr(
-        receiver, "send_message", send_from_receiver.__get__(receiver, P2PNode)
-    )
+    monkeypatch.setattr(sender, "send_message", send_from_sender.__get__(sender, P2PNode))
+    monkeypatch.setattr(receiver, "send_message", send_from_receiver.__get__(receiver, P2PNode))
 
     await send_stream._ensure_key(receiver.node_id)
     first_key = send_stream._key_cache[receiver.node_id]
@@ -235,12 +225,8 @@ async def test_key_exchange_after_restart(monkeypatch):
 
         return _send
 
-    monkeypatch.setattr(
-        sender, "send_message", make_send_from_sender(receiver).__get__(sender, P2PNode)
-    )
-    monkeypatch.setattr(
-        receiver, "send_message", send_from_receiver_new.__get__(receiver, P2PNode)
-    )
+    monkeypatch.setattr(sender, "send_message", make_send_from_sender(receiver).__get__(sender, P2PNode))
+    monkeypatch.setattr(receiver, "send_message", send_from_receiver_new.__get__(receiver, P2PNode))
 
     await recv_stream._initiate_key_exchange(sender.node_id)
 
@@ -273,9 +259,7 @@ async def test_concurrent_transfers(monkeypatch):
             return True
         return False
 
-    monkeypatch.setattr(
-        sender, "send_message", fake_send_message.__get__(sender, P2PNode)
-    )
+    monkeypatch.setattr(sender, "send_message", fake_send_message.__get__(sender, P2PNode))
 
     tensor1 = np.arange(8, dtype=np.float32)
     tensor2 = np.arange(16, dtype=np.float32)

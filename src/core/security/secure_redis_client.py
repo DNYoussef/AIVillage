@@ -125,9 +125,7 @@ def create_secure_redis_client(
             }
         )
 
-        logger.info(
-            f"Redis TLS enabled for {parsed.hostname}:{connection_params['port']}"
-        )
+        logger.info(f"Redis TLS enabled for {parsed.hostname}:{connection_params['port']}")
 
     try:
         # Create Redis client
@@ -168,8 +166,7 @@ def validate_redis_url_security(redis_url: str) -> None:
     # Check for HTTP instead of Redis protocol
     if parsed.scheme in ("http", "https"):
         raise SecureRedisError(
-            f"HTTP URL provided for Redis connection: {redis_url}. "
-            "Use redis:// or rediss:// protocol instead."
+            f"HTTP URL provided for Redis connection: {redis_url}. " "Use redis:// or rediss:// protocol instead."
         )
 
     # Enforce TLS in production
@@ -181,8 +178,7 @@ def validate_redis_url_security(redis_url: str) -> None:
             )
         elif parsed.scheme not in ("redis", "rediss"):
             raise SecureRedisError(
-                f"Invalid Redis protocol in production: {parsed.scheme}. "
-                "Use redis:// or rediss:// protocols."
+                f"Invalid Redis protocol in production: {parsed.scheme}. " "Use redis:// or rediss:// protocols."
             )
 
 

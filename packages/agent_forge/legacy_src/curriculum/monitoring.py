@@ -587,7 +587,7 @@ class CurriculumHealthChecks:
         try:
             status = await self.orchestrator.get_curriculum_status()
 
-            queues = status.get("queues", {})
+            status.get("queues", {})
             health_status = status.get("system_health", "unknown")
 
             if health_status == "critical - no problems queued":

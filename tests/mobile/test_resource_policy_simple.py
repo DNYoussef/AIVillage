@@ -57,10 +57,7 @@ class ChunkingConfig:
 
     def effective_chunk_size(self) -> int:
         effective_size = int(
-            self.base_chunk_size
-            * self.memory_scale_factor
-            * self.thermal_scale_factor
-            * self.battery_scale_factor
+            self.base_chunk_size * self.memory_scale_factor * self.thermal_scale_factor * self.battery_scale_factor
         )
         return max(64, min(2048, effective_size))
 
@@ -153,9 +150,7 @@ class SimpleBatteryThermalResourceManager:
 
         return PowerMode.PERFORMANCE
 
-    def _evaluate_transport_preference(
-        self, profile: MockDeviceProfile
-    ) -> TransportPreference:
+    def _evaluate_transport_preference(self, profile: MockDeviceProfile) -> TransportPreference:
         """Evaluate transport preference"""
         if profile.battery_percent <= self.battery_critical:
             return TransportPreference.BITCHAT_ONLY
@@ -220,9 +215,7 @@ class SimpleBatteryThermalResourceManager:
 
         return policies
 
-    async def get_transport_routing_decision(
-        self, message_size_bytes: int, priority: int
-    ) -> dict[str, Any]:
+    async def get_transport_routing_decision(self, message_size_bytes: int, priority: int) -> dict[str, Any]:
         """Get routing decision for a message"""
         decision = {
             "primary_transport": "bitchat",

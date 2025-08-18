@@ -52,9 +52,7 @@ class CleanupAndCommitAgent:
         )
         self.logger = logging.getLogger(__name__)
 
-    def run_command(
-        self, cmd: list[str], cwd: str = None, ignore_errors: bool = False
-    ) -> dict[str, Any]:
+    def run_command(self, cmd: list[str], cwd: str = None, ignore_errors: bool = False) -> dict[str, Any]:
         """Run a command and return the result."""
         try:
             cwd = cwd or str(self.work_dir)
@@ -114,9 +112,7 @@ class CleanupAndCommitAgent:
             if result["success"]:
                 self.logger.info(f"✓ Installed {tool}")
             else:
-                self.logger.warning(
-                    f"✗ Failed to install {tool}: {result.get('stderr', '')}"
-                )
+                self.logger.warning(f"✗ Failed to install {tool}: {result.get('stderr', '')}")
 
         return True
 
@@ -314,9 +310,7 @@ class CleanupAndCommitAgent:
         }
 
         self.results["cleanup"]["temp_files"] = cleanup_result
-        self.logger.info(
-            f"Cleaned up {len(removed_files)} files and {len(removed_dirs)} directories"
-        )
+        self.logger.info(f"Cleaned up {len(removed_files)} files and {len(removed_dirs)} directories")
         return cleanup_result
 
     def fix_import_issues(self) -> dict[str, Any]:
@@ -381,9 +375,7 @@ class CleanupAndCommitAgent:
                 valid_files.append(str(file_path))
 
             except SyntaxError as e:
-                syntax_errors.append(
-                    {"file": str(file_path), "line": e.lineno, "error": str(e)}
-                )
+                syntax_errors.append({"file": str(file_path), "line": e.lineno, "error": str(e)})
             except Exception as e:
                 syntax_errors.append({"file": str(file_path), "error": str(e)})
 
@@ -399,9 +391,7 @@ class CleanupAndCommitAgent:
         if syntax_errors:
             self.logger.warning(f"Found {len(syntax_errors)} syntax errors")
             for error in syntax_errors[:5]:  # Show first 5
-                self.logger.warning(
-                    f"  {error['file']}: {error.get('error', 'Unknown error')}"
-                )
+                self.logger.warning(f"  {error['file']}: {error.get('error', 'Unknown error')}")
         else:
             self.logger.info("All Python files have valid syntax")
 
@@ -412,9 +402,7 @@ class CleanupAndCommitAgent:
         result = self.run_command(["git", "status", "--porcelain"])
 
         if result["success"]:
-            lines = (
-                result["stdout"].strip().split("\n") if result["stdout"].strip() else []
-            )
+            lines = result["stdout"].strip().split("\n") if result["stdout"].strip() else []
 
             modified = []
             untracked = []
@@ -449,15 +437,9 @@ class CleanupAndCommitAgent:
 
         if result["success"]:
             # Get status after adding
-            status_result = self.run_command(
-                ["git", "status", "--porcelain", "--cached"]
-            )
+            status_result = self.run_command(["git", "status", "--porcelain", "--cached"])
             if status_result["success"]:
-                staged_files = (
-                    status_result["stdout"].strip().split("\n")
-                    if status_result["stdout"].strip()
-                    else []
-                )
+                staged_files = status_result["stdout"].strip().split("\n") if status_result["stdout"].strip() else []
                 result["staged_files"] = len(staged_files)
                 result["files"] = [line[3:] for line in staged_files]
 
@@ -605,21 +587,13 @@ Co-Authored-By: AIVillage-Cleanup-Agent <cleanup@aivillage.dev>"""
                     push_result = self.git_push()
 
                     if push_result["success"]:
-                        self.logger.info(
-                            "✅ Successfully pushed all changes to GitHub!"
-                        )
+                        self.logger.info("✅ Successfully pushed all changes to GitHub!")
                     else:
-                        self.logger.error(
-                            f"❌ Failed to push: {push_result.get('stderr', 'Unknown error')}"
-                        )
+                        self.logger.error(f"❌ Failed to push: {push_result.get('stderr', 'Unknown error')}")
                 else:
-                    self.logger.error(
-                        f"❌ Failed to commit: {commit_result.get('stderr', 'Unknown error')}"
-                    )
+                    self.logger.error(f"❌ Failed to commit: {commit_result.get('stderr', 'Unknown error')}")
             else:
-                self.logger.error(
-                    f"❌ Failed to stage changes: {add_result.get('stderr', 'Unknown error')}"
-                )
+                self.logger.error(f"❌ Failed to stage changes: {add_result.get('stderr', 'Unknown error')}")
 
             # Step 6: Generate report
             self.logger.info("\n📊 STEP 6: Generating final report...")
@@ -664,9 +638,7 @@ Co-Authored-By: AIVillage-Cleanup-Agent <cleanup@aivillage.dev>"""
         if self.results.get("cleanup"):
             cleanup = self.results["cleanup"]
             if "temp_files" in cleanup:
-                self.logger.info(
-                    f"✅ Cleaned {cleanup['temp_files']['removed_files']} temp files"
-                )
+                self.logger.info(f"✅ Cleaned {cleanup['temp_files']['removed_files']} temp files")
             if "syntax_validation" in cleanup:
                 syntax = cleanup["syntax_validation"]
                 self.logger.info(f"✅ Validated {syntax['valid_files']} Python files")
@@ -690,15 +662,9 @@ Co-Authored-By: AIVillage-Cleanup-Agent <cleanup@aivillage.dev>"""
 def main():
     """Main entry point for the cleanup and commit agent."""
     parser = argparse.ArgumentParser(description="AIVillage Cleanup and Commit Agent")
-    parser.add_argument(
-        "--work-dir", default=".", help="Working directory (default: current directory)"
-    )
-    parser.add_argument(
-        "--dry-run", action="store_true", help="Run in dry-run mode (no git operations)"
-    )
-    parser.add_argument(
-        "--lint-only", action="store_true", help="Only run linting, no git operations"
-    )
+    parser.add_argument("--work-dir", default=".", help="Working directory (default: current directory)")
+    parser.add_argument("--dry-run", action="store_true", help="Run in dry-run mode (no git operations)")
+    parser.add_argument("--lint-only", action="store_true", help="Only run linting, no git operations")
     parser.add_argument("--verbose", "-v", action="store_true", help="Verbose output")
 
     args = parser.parse_args()

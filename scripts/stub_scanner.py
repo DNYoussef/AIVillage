@@ -68,10 +68,7 @@ class StubDetectorVisitor(ast.NodeVisitor):
 
         # Check for different stub patterns
         body_statements = [
-            stmt
-            for stmt in node.body
-            if not isinstance(stmt, ast.Expr)
-            or not isinstance(stmt.value, ast.Constant)
+            stmt for stmt in node.body if not isinstance(stmt, ast.Expr) or not isinstance(stmt.value, ast.Constant)
         ]
 
         # Pattern 1: Only pass statement
@@ -90,10 +87,7 @@ class StubDetectorVisitor(ast.NodeVisitor):
         if len(body_statements) == 1:
             stmt = body_statements[0]
             if isinstance(stmt, ast.Raise) and isinstance(stmt.exc, ast.Call):
-                if (
-                    isinstance(stmt.exc.func, ast.Name)
-                    and stmt.exc.func.id == "NotImplementedError"
-                ):
+                if isinstance(stmt.exc.func, ast.Name) and stmt.exc.func.id == "NotImplementedError":
                     self._report_stub(
                         node.lineno,
                         function_name,
@@ -105,11 +99,7 @@ class StubDetectorVisitor(ast.NodeVisitor):
                     return
 
         # Pattern 3: Only docstring (no real implementation)
-        if (
-            len(node.body) == 1
-            and isinstance(node.body[0], ast.Expr)
-            and isinstance(node.body[0].value, ast.Constant)
-        ):
+        if len(node.body) == 1 and isinstance(node.body[0], ast.Expr) and isinstance(node.body[0].value, ast.Constant):
             if isinstance(node.body[0].value.value, str):  # Docstring
                 self._report_stub(
                     node.lineno,
@@ -122,13 +112,8 @@ class StubDetectorVisitor(ast.NodeVisitor):
                 return
 
         # Pattern 4: Function with TODO/FIXME comments
-        for i, line in enumerate(
-            self.source_lines[node.lineno - 1 : node.end_lineno], node.lineno
-        ):
-            if any(
-                marker in line.upper()
-                for marker in ["# TODO", "# FIXME", "# STUB", "# PLACEHOLDER"]
-            ):
+        for i, line in enumerate(self.source_lines[node.lineno - 1 : node.end_lineno], node.lineno):
+            if any(marker in line.upper() for marker in ["# TODO", "# FIXME", "# STUB", "# PLACEHOLDER"]):
                 self._report_stub(
                     i,
                     function_name,
@@ -168,9 +153,7 @@ class StubDetectorVisitor(ast.NodeVisitor):
         context_lines_list = []
         for i in range(start, end):
             prefix = ">>>" if i == line_num - 1 else "   "
-            context_lines_list.append(
-                f"{prefix} {i + 1:4d}: {self.source_lines[i].rstrip()}"
-            )
+            context_lines_list.append(f"{prefix} {i + 1:4d}: {self.source_lines[i].rstrip()}")
 
         return "\n".join(context_lines_list)
 
@@ -196,9 +179,7 @@ def scan_file(file_path: Path) -> list[StubReport]:
         return []
 
 
-def scan_repository(
-    root_path: Path, exclude_patterns: set[str] = None
-) -> dict[str, list[StubReport]]:
+def scan_repository(root_path: Path, exclude_patterns: set[str] = None) -> dict[str, list[StubReport]]:
     """Scan entire repository for stubs."""
     if exclude_patterns is None:
         exclude_patterns = {
@@ -232,9 +213,7 @@ def scan_repository(
     return all_stubs
 
 
-def generate_report(
-    all_stubs: dict[str, list[StubReport]], output_file: Path = None
-) -> bool:
+def generate_report(all_stubs: dict[str, list[StubReport]], output_file: Path = None) -> bool:
     """Generate comprehensive stub report."""
 
     # Categorize stubs
@@ -275,31 +254,21 @@ def generate_report(
     gate_status = "PASS" if total_critical == 0 else "FAIL"
     report_lines.append(f"## ACCEPTANCE GATE STATUS: {gate_status}")
     if total_critical > 0:
-        report_lines.append(
-            "FAIL: Repository contains CRITICAL stubs that block production deployment."
-        )
+        report_lines.append("FAIL: Repository contains CRITICAL stubs that block production deployment.")
         report_lines.append("   All CRITICAL stubs must be fixed before acceptance.")
     else:
-        report_lines.append(
-            "PASS: No CRITICAL stubs found. Repository ready for production."
-        )
+        report_lines.append("PASS: No CRITICAL stubs found. Repository ready for production.")
     report_lines.append("")
 
     # Critical stubs detail
     if critical_stubs:
         report_lines.append("## [CRITICAL] STUBS (Must Fix)")
-        report_lines.append(
-            "These stubs will cause runtime failures and block production deployment:"
-        )
+        report_lines.append("These stubs will cause runtime failures and block production deployment:")
         report_lines.append("")
 
         for i, stub in enumerate(critical_stubs, 1):
             report_lines.append(f"### {i}. {stub.file_path}:{stub.line_number}")
-            location = (
-                f"{stub.class_name}.{stub.function_name}"
-                if stub.class_name
-                else stub.function_name
-            )
+            location = f"{stub.class_name}.{stub.function_name}" if stub.class_name else stub.function_name
             report_lines.append(f"**Location:** `{location}`")
             report_lines.append(f"**Stub Type:** `{stub.stub_type}`")
             report_lines.append("**Context:**")
@@ -317,14 +286,8 @@ def generate_report(
         report_lines.append("")
 
         for stub in warning_stubs[:10]:  # Show first 10
-            location = (
-                f"{stub.class_name}.{stub.function_name}"
-                if stub.class_name
-                else stub.function_name
-            )
-            report_lines.append(
-                f"- `{stub.file_path}:{stub.line_number}` - `{location}`"
-            )
+            location = f"{stub.class_name}.{stub.function_name}" if stub.class_name else stub.function_name
+            report_lines.append(f"- `{stub.file_path}:{stub.line_number}` - `{location}`")
 
         if len(warning_stubs) > 10:
             report_lines.append(f"... and {len(warning_stubs) - 10} more")
@@ -333,9 +296,7 @@ def generate_report(
     # Info stubs summary
     if info_stubs:
         report_lines.append("## [INFO] STUBS (For Reference)")
-        report_lines.append(
-            f"Found {len(info_stubs)} TODO/FIXME comments. These are tracked for future work."
-        )
+        report_lines.append(f"Found {len(info_stubs)} TODO/FIXME comments. These are tracked for future work.")
         report_lines.append("")
 
     # File-by-file breakdown
@@ -345,27 +306,15 @@ def generate_report(
         warning_count = sum(1 for s in stubs if s.severity == "WARNING")
         info_count = sum(1 for s in stubs if s.severity == "INFO")
 
-        status = (
-            "[CRITICAL]"
-            if critical_count > 0
-            else "[WARNING]"
-            if warning_count > 0
-            else "[INFO]"
-        )
-        report_lines.append(
-            f"{status} `{file_path}` - {critical_count}C/{warning_count}W/{info_count}I"
-        )
+        status = "[CRITICAL]" if critical_count > 0 else "[WARNING]" if warning_count > 0 else "[INFO]"
+        report_lines.append(f"{status} `{file_path}` - {critical_count}C/{warning_count}W/{info_count}I")
 
     report_lines.append("")
     report_lines.append("## NEXT STEPS")
     if total_critical > 0:
         report_lines.append("1. [CRITICAL] Fix all CRITICAL stubs (runtime blockers)")
-        report_lines.append(
-            "2. [WARNING] Review WARNING stubs (docstring-only functions)"
-        )
-        report_lines.append(
-            "3. [INFO] Prioritize INFO stubs (TODO comments) for future work"
-        )
+        report_lines.append("2. [WARNING] Review WARNING stubs (docstring-only functions)")
+        report_lines.append("3. [INFO] Prioritize INFO stubs (TODO comments) for future work")
     else:
         report_lines.append("1. [PASS] All CRITICAL stubs resolved")
         report_lines.append("2. [WARNING] Review remaining WARNING stubs if desired")

@@ -44,9 +44,7 @@ class EvolutionValidator:
         self.test_output_dir.mkdir(parents=True, exist_ok=True)
         self.validation_results = []
 
-    def validate_generation_1(
-        self, merger: CorrectedEvolutionMerger
-    ) -> dict[str, bool]:
+    def validate_generation_1(self, merger: CorrectedEvolutionMerger) -> dict[str, bool]:
         """Validate that Generation 1 is systematic and complete."""
         logger.info("=== VALIDATING GENERATION 1 ===")
 
@@ -85,9 +83,7 @@ class EvolutionValidator:
         actual_set = set(actual_combinations)
 
         validation["all_systematic_combinations"] = expected_set == actual_set
-        validation["unique_combinations"] = len(actual_combinations) == len(
-            set(actual_combinations)
-        )
+        validation["unique_combinations"] = len(actual_combinations) == len(set(actual_combinations))
 
         logger.info("Expected combinations: %s", len(expected_set))
         logger.info("Actual combinations: %s", len(actual_set))
@@ -104,9 +100,7 @@ class EvolutionValidator:
 
         return validation
 
-    def validate_breeding_logic(
-        self, merger: CorrectedEvolutionMerger, generation: int
-    ) -> dict[str, bool]:
+    def validate_breeding_logic(self, merger: CorrectedEvolutionMerger, generation: int) -> dict[str, bool]:
         """Validate breeding logic for a specific generation."""
         logger.info("=== VALIDATING BREEDING LOGIC FOR GENERATION %s ===", generation)
 
@@ -114,9 +108,7 @@ class EvolutionValidator:
         pre_breeding_pop = merger.population.copy()
 
         # Sort by fitness to understand breeding inputs
-        ranked_population = sorted(
-            pre_breeding_pop, key=lambda x: x["fitness"], reverse=True
-        )
+        ranked_population = sorted(pre_breeding_pop, key=lambda x: x["fitness"], reverse=True)
 
         logger.info("Pre-breeding population (ranked by fitness):")
         for i, ind in enumerate(ranked_population):
@@ -139,12 +131,8 @@ class EvolutionValidator:
         }
 
         # Count breeding types
-        mutant_count = len(
-            [ind for ind in next_gen if ind.get("breeding_type") == "mutation"]
-        )
-        child_count = len(
-            [ind for ind in next_gen if ind.get("breeding_type") == "triad_merge"]
-        )
+        mutant_count = len([ind for ind in next_gen if ind.get("breeding_type") == "mutation"])
+        child_count = len([ind for ind in next_gen if ind.get("breeding_type") == "triad_merge"])
 
         validation["correct_mutant_count"] = mutant_count == 6
         validation["correct_child_count"] = child_count == 2
@@ -153,25 +141,19 @@ class EvolutionValidator:
         # Check generation numbers
         expected_gen = generation + 1
         actual_generations = [ind.get("generation", 0) for ind in next_gen]
-        validation["all_new_generation"] = all(
-            gen == expected_gen for gen in actual_generations
-        )
+        validation["all_new_generation"] = all(gen == expected_gen for gen in actual_generations)
 
         logger.info("Next generation size: %s (Expected: 8)", len(next_gen))
         logger.info("Mutants: %s (Expected: 6)", mutant_count)
         logger.info("Children: %s (Expected: 2)", child_count)
-        logger.info(
-            "All generation %s: %s", expected_gen, validation["all_new_generation"]
-        )
+        logger.info("All generation %s: %s", expected_gen, validation["all_new_generation"])
 
         # Log breeding details
         logger.info("Next generation breakdown:")
         for ind in next_gen:
             breeding_type = ind.get("breeding_type", "unknown")
             parent_ids = ind.get("parent_ids", [])
-            logger.info(
-                "  %s - Type: %s - Parents: %s", ind["id"], breeding_type, parent_ids
-            )
+            logger.info("  %s - Type: %s - Parents: %s", ind["id"], breeding_type, parent_ids)
 
         return validation
 
@@ -217,9 +199,7 @@ class EvolutionValidator:
 
                 # Validate breeding logic (if not the last generation)
                 if generation_count < max_generations:
-                    breeding_validation = self.validate_breeding_logic(
-                        merger, merger.generation
-                    )
+                    breeding_validation = self.validate_breeding_logic(merger, merger.generation)
                     test_results["breeding_validations"].append(
                         {
                             "generation": merger.generation,
@@ -263,25 +243,19 @@ class EvolutionValidator:
         test_results["consistent_population_size"] = consistent_population
 
         if not consistent_population:
-            logger.error(
-                "❌ Population size inconsistent: %s", test_results["population_sizes"]
-            )
+            logger.error("❌ Population size inconsistent: %s", test_results["population_sizes"])
             test_results["all_tests_passed"] = False
         else:
             logger.info("✅ Population size consistent (8 throughout)")
 
         # Overall result
         if test_results["all_tests_passed"]:
-            logger.info(
-                "🎉 ALL TESTS PASSED - Corrected evolution system is working correctly!"
-            )
+            logger.info("🎉 ALL TESTS PASSED - Corrected evolution system is working correctly!")
         else:
             logger.error("❌ SOME TESTS FAILED - System needs further correction")
 
         # Save test results
-        test_file = (
-            self.test_output_dir / f"validation_results_{max_generations}gen.json"
-        )
+        test_file = self.test_output_dir / f"validation_results_{max_generations}gen.json"
         with open(test_file, "w") as f:
             json.dump(test_results, f, indent=2, default=str)
 

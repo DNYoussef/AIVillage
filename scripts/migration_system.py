@@ -17,10 +17,7 @@ ROOT_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT_DIR))
 sys.path.insert(0, str(ROOT_DIR / "src"))
 
-from core.security.digital_twin_encryption import (
-    DigitalTwinEncryption,
-    DigitalTwinEncryptionError,
-)
+from core.security.digital_twin_encryption import DigitalTwinEncryption, DigitalTwinEncryptionError
 
 logger = logging.getLogger(__name__)
 
@@ -82,9 +79,7 @@ class DatabaseMigrator:
 
     def rollback_migration(self, version: int) -> None:
         """Remove a migration record."""
-        self.connection.execute(
-            "DELETE FROM schema_version WHERE version = ?", (version,)
-        )
+        self.connection.execute("DELETE FROM schema_version WHERE version = ?", (version,))
 
     def rename_column_if_exists(self, table: str, old: str, new: str) -> None:
         """Rename a column if the old name exists and new one is missing."""
@@ -203,9 +198,7 @@ class EvolutionMetricsMigrator(DatabaseMigrator):
         self.connection.execute(
             "INSERT INTO evolution_rounds (round_number, population_size, avg_fitness) VALUES (1, 10, 0.5)"
         )
-        round_id = self.connection.execute(
-            "SELECT id FROM evolution_rounds WHERE round_number=1"
-        ).fetchone()[0]
+        round_id = self.connection.execute("SELECT id FROM evolution_rounds WHERE round_number=1").fetchone()[0]
         self.connection.execute(
             "INSERT INTO fitness_metrics (round_id, agent_id, metric_name, metric_value) VALUES (?, ?, ?, ?)",
             (round_id, "agent_1", "accuracy", 0.8),
@@ -333,9 +326,7 @@ class DigitalTwinMigrator(DatabaseMigrator):
             encryption = DigitalTwinEncryption()
         except DigitalTwinEncryptionError:
             raw_key = os.urandom(32)
-            os.environ["DIGITAL_TWIN_ENCRYPTION_KEY"] = base64.b64encode(
-                raw_key
-            ).decode()
+            os.environ["DIGITAL_TWIN_ENCRYPTION_KEY"] = base64.b64encode(raw_key).decode()
             encryption = DigitalTwinEncryption()
 
         enc_name = encryption.encrypt_sensitive_field("Seed Learner", "name")
@@ -513,9 +504,7 @@ def main():
         except Exception as e:
             logger.exception(f"Migration failed for {migrator.__class__.__name__}: {e}")
 
-    print(
-        f"\nMigration complete: {success_count}/{len(migrators)} databases migrated successfully"
-    )
+    print(f"\nMigration complete: {success_count}/{len(migrators)} databases migrated successfully")
 
     # Verify databases exist
     data_dir = Path("data")

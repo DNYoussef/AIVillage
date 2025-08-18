@@ -12,6 +12,7 @@ Example chat line used by WhatsApp::
 The parser extracts a timestamp, sender and message text for each line
 matching this format.
 """
+
 from __future__ import annotations
 
 import io
@@ -22,9 +23,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 
-_LINE_RE = re.compile(
-    r"^(\d{1,2}/\d{1,2}/\d{2,4}), (\d{1,2}:\d{2}(?:\s?[AP]M)?) - ([^:]+): (.*)$"
-)
+_LINE_RE = re.compile(r"^(\d{1,2}/\d{1,2}/\d{2,4}), (\d{1,2}:\d{2}(?:\s?[AP]M)?) - ([^:]+): (.*)$")
 
 
 @dataclass
@@ -55,9 +54,7 @@ class WhatsAppConnector:
         path = Path(export_path)
         if path.suffix.lower() == ".zip":
             with zipfile.ZipFile(path) as zf:
-                txt_name = next(
-                    (n for n in zf.namelist() if n.lower().endswith(".txt")), None
-                )
+                txt_name = next((n for n in zf.namelist() if n.lower().endswith(".txt")), None)
                 if txt_name is None:
                     return 0
                 data = zf.read(txt_name).decode("utf-8", errors="ignore")
@@ -87,10 +84,7 @@ class WhatsAppConnector:
     # Accessors
     def get_messages(self) -> list[dict[str, str]]:
         """Return parsed messages as dictionaries."""
-        return [
-            {"timestamp": m.timestamp, "sender": m.sender, "text": m.text}
-            for m in self._messages
-        ]
+        return [{"timestamp": m.timestamp, "sender": m.sender, "text": m.text} for m in self._messages]
 
     def get_message_count(self) -> int:
         """Number of parsed messages."""
@@ -98,6 +92,7 @@ class WhatsAppConnector:
 
 
 # Convenience functions retained for backwards compatibility -----------------
+
 
 def load_export(path: str | Path) -> WhatsAppConnector:
     conn = WhatsAppConnector()

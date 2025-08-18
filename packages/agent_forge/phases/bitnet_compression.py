@@ -224,7 +224,7 @@ class BitNetCompressedModel(nn.Module):
         logger.info("Compressing model layers...")
 
         for name, module in self.original_model.named_modules():
-            if isinstance(module, (nn.Linear, nn.Conv1d, nn.Conv2d)):
+            if isinstance(module, nn.Linear | nn.Conv1d | nn.Conv2d):
                 # Determine if layer should preserve precision
                 preserve = self._should_preserve_precision(name, module)
 
@@ -516,7 +516,7 @@ class BitNetCompressionPipeline:
         # Register hooks for collecting statistics
         hooks = []
         for name, module in model.named_modules():
-            if isinstance(module, (nn.Linear, nn.Conv1d, nn.Conv2d)):
+            if isinstance(module, nn.Linear | nn.Conv1d | nn.Conv2d):
                 hook = module.register_forward_hook(lambda m, i, o, n=name: collect_stats_hook(m, i, o, n))
                 hooks.append(hook)
 

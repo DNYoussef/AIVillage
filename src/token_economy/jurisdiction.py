@@ -32,9 +32,7 @@ class JurisdictionManager:
 
     def __init__(self) -> None:
         """Initialise a jurisdiction manager with default rules."""
-        self.jurisdiction_rules: dict[str, dict[str, str]] = (
-            self.load_jurisdiction_rules()
-        )
+        self.jurisdiction_rules: dict[str, dict[str, str]] = self.load_jurisdiction_rules()
         self.user_modes: dict[str, str] = {}
         self.disabled_features: dict[str, set] = {}
 
@@ -91,9 +89,7 @@ class JurisdictionManager:
     def use_terminology(self, term: str) -> None:
         logger.debug("Using terminology: %s", term)
 
-    def apply_jurisdiction_rules(
-        self, user_id: str, jurisdiction: JurisdictionType
-    ) -> None:
+    def apply_jurisdiction_rules(self, user_id: str, jurisdiction: JurisdictionType) -> None:
         if jurisdiction == JurisdictionType.RED:
             self.set_user_mode(user_id, "EDUCATION_ONLY")
             self.disable_crypto_features(user_id)

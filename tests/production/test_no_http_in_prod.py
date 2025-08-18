@@ -22,9 +22,7 @@ class TestNoHTTPInProduction(unittest.TestCase):
         self.config_dir = self.project_root / "config"
 
         # Pattern to find HTTP URLs in source code
-        self.http_pattern = re.compile(
-            r'["\']http://[^"\']*["\']|`http://[^`]*`|=http://[^\s]*'
-        )
+        self.http_pattern = re.compile(r'["\']http://[^"\']*["\']|`http://[^`]*`|=http://[^\s]*')
 
         # Files to exclude from scanning (development/test files)
         self.excluded_patterns = [
@@ -93,12 +91,7 @@ class TestNoHTTPInProduction(unittest.TestCase):
 
             file_violations = self.scan_file_for_http_urls(py_file)
             if file_violations:
-                violations.extend(
-                    [
-                        f"{py_file}:{line_num}: {line}"
-                        for line_num, line in file_violations
-                    ]
-                )
+                violations.extend([f"{py_file}:{line_num}: {line}" for line_num, line in file_violations])
 
         self.assertEqual(
             [],
@@ -122,9 +115,7 @@ class TestNoHTTPInProduction(unittest.TestCase):
         # Find HTTP URLs in the config
         http_matches = self.http_pattern.findall(config_content)
 
-        self.assertEqual(
-            [], http_matches, f"Found HTTP URLs in production config: {http_matches}"
-        )
+        self.assertEqual([], http_matches, f"Found HTTP URLs in production config: {http_matches}")
 
     def test_production_config_yaml_structure(self):
         """Test that production config YAML structure is valid and secure."""
@@ -193,9 +184,7 @@ class TestNoHTTPInProduction(unittest.TestCase):
     def test_vector_store_https_enforcement(self):
         """Test that vector store enforces HTTPS in production."""
         try:
-            from src.production.rag.rag_system.retrieval.vector_store import (
-                _get_qdrant_url,
-            )
+            from src.production.rag.rag_system.retrieval.vector_store import _get_qdrant_url
 
             # Test with production environment
             os.environ["AIVILLAGE_ENV"] = "production"
@@ -228,15 +217,10 @@ class TestNoHTTPInProduction(unittest.TestCase):
         """Test that config manager validates HTTPS in production."""
         try:
             from src.core.config_manager import CODEXConfigManager
-            from src.core.security import HTTPSecurityError
 
             # Create temporary config with HTTP URL
             test_config = {
-                "external_services": {
-                    "monitoring": {
-                        "prometheus_endpoint": "http://insecure.example.com:9090"
-                    }
-                }
+                "external_services": {"monitoring": {"prometheus_endpoint": "http://insecure.example.com:9090"}}
             }
 
             # Test with production environment
@@ -280,9 +264,7 @@ class TestNoHTTPInProduction(unittest.TestCase):
 
         # services.yaml should be marked as development
         environment = services_data.get("environment", "").lower()
-        self.assertIn(
-            "dev", environment, "services.yaml should be marked as development-only"
-        )
+        self.assertIn("dev", environment, "services.yaml should be marked as development-only")
 
 
 if __name__ == "__main__":

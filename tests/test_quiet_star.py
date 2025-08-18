@@ -11,11 +11,7 @@ import pytest
 import torch
 import torch.nn as nn
 
-from src.agent_forge.quiet_star.config import (
-    get_default_config,
-    get_inference_config,
-    get_training_config,
-)
+from src.agent_forge.quiet_star.config import get_default_config, get_inference_config, get_training_config
 from src.agent_forge.quiet_star.losses import QuietSTaRLoss
 from src.agent_forge.quiet_star.model import QuietSTaRModelWrapper
 from src.agent_forge.quiet_star.sampler import ThoughtLeakDetector, ThoughtSampler
@@ -86,9 +82,7 @@ class MockModel(nn.Module):
         self.config.hidden_size = hidden_size
         self.config.vocab_size = vocab_size
 
-    def forward(
-        self, input_ids, attention_mask=None, output_hidden_states=False, **kwargs
-    ):
+    def forward(self, input_ids, attention_mask=None, output_hidden_states=False, **kwargs):
         embeddings = self.embedding(input_ids)
         hidden_states = self.transformer(embeddings)
         logits = self.lm_head(hidden_states)
@@ -163,9 +157,7 @@ class TestThoughtLeakDetector:
         for text in unsafe_texts:
             results = detector.detect_leaks(text)
             if results["token_leaks"]:
-                assert not detector.is_safe_output(text), (
-                    f"Text should be unsafe: {text}"
-                )
+                assert not detector.is_safe_output(text), f"Text should be unsafe: {text}"
 
 
 class TestQuietSTaRLoss:
@@ -224,11 +216,7 @@ class TestIntegration:
                     force_thoughts=False,
                 )
 
-            output_ids = (
-                result.stripped_ids
-                if result.stripped_ids is not None
-                else result.generated_ids
-            )
+            output_ids = result.stripped_ids if result.stripped_ids is not None else result.generated_ids
             output_text = mock_tokenizer.decode(output_ids[0], skip_special_tokens=True)
 
             # CRITICAL: No leaks allowed
@@ -257,9 +245,7 @@ class TestIntegration:
 
         wrapper.train()
         outputs = wrapper(input_ids=input_ids)
-        thought_mask = wrapper.thought_head.create_thought_mask(
-            input_ids, special_token_ids
-        )
+        thought_mask = wrapper.thought_head.create_thought_mask(input_ids, special_token_ids)
 
         loss_components = loss_fn(
             logits=outputs["logits"],
@@ -278,9 +264,7 @@ class TestIntegration:
         # Verify loss values are reasonable
         assert loss_components.task_loss.item() > 0
         assert loss_components.reflection_loss.item() >= 0
-        assert (
-            loss_components.leak_loss.item() > 0
-        )  # Should detect the intentional leak
+        assert loss_components.leak_loss.item() > 0  # Should detect the intentional leak
 
     def test_special_tokens_present_and_functional(self, mock_tokenizer):
         """Verify special tokens are present and properly handled."""
@@ -328,26 +312,14 @@ def test_smoke_test_integration(mock_tokenizer_cls, mock_model_cls):
         )
 
         # Verify critical test results
-        assert results["tests_passed"]["no_leakage"], (
-            "Smoke test failed: leakage detected"
-        )
-        assert results["tests_passed"]["loss_terms_wired"], (
-            "Smoke test failed: loss terms not wired"
-        )
-        assert results["tests_passed"]["tokens_present"], (
-            "Smoke test failed: tokens not present"
-        )
-        assert results["tests_passed"]["generation_successful"], (
-            "Smoke test failed: generation failed"
-        )
+        assert results["tests_passed"]["no_leakage"], "Smoke test failed: leakage detected"
+        assert results["tests_passed"]["loss_terms_wired"], "Smoke test failed: loss terms not wired"
+        assert results["tests_passed"]["tokens_present"], "Smoke test failed: tokens not present"
+        assert results["tests_passed"]["generation_successful"], "Smoke test failed: generation failed"
 
         # Check leak statistics
-        assert results["leak_count"] == 0, (
-            f"Smoke test detected {results['leak_count']} leaks"
-        )
-        assert results["leak_rate"] == 0.0, (
-            f"Smoke test leak rate: {results['leak_rate']}"
-        )
+        assert results["leak_count"] == 0, f"Smoke test detected {results['leak_count']} leaks"
+        assert results["leak_rate"] == 0.0, f"Smoke test leak rate: {results['leak_rate']}"
         assert results["overall_pass"], "Smoke test overall failure"
 
 

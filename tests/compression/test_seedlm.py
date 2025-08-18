@@ -7,7 +7,6 @@ import time
 
 import pytest
 import torch
-
 from agent_forge.compression.seedlm import (
     ProgressiveSeedLMEncoder,
     SeedLMCompressionError,
@@ -41,9 +40,9 @@ class TestSeedLMPerformance:
         decompression_time = time.time() - start_time
 
         # Verify compression ratio meets requirement
-        assert compressed["compression_ratio"] >= 2.0, (
-            f"Compression ratio {compressed['compression_ratio']:.2f} below 2.0x minimum"
-        )
+        assert (
+            compressed["compression_ratio"] >= 2.0
+        ), f"Compression ratio {compressed['compression_ratio']:.2f} below 2.0x minimum"
 
         # Verify reconstruction accuracy
         mse = torch.mean((test_weight - reconstructed) ** 2).item()
@@ -54,16 +53,10 @@ class TestSeedLMPerformance:
         throughput_factor = total_time / 0.01  # Baseline: 10ms for fp16 operations
 
         # Sprint requirement: ≤40% throughput drop (1.4x slower max)
-        assert throughput_factor <= 1.4, (
-            f"Throughput drop {throughput_factor:.2f}x exceeds 40% limit"
-        )
+        assert throughput_factor <= 1.4, f"Throughput drop {throughput_factor:.2f}x exceeds 40% limit"
 
-        print(
-            f"Compression: {compression_time * 1000:.1f}ms, Decompression: {decompression_time * 1000:.1f}ms"
-        )
-        print(
-            f"Compression ratio: {compressed['compression_ratio']:.2f}x, MSE: {mse:.6f}"
-        )
+        print(f"Compression: {compression_time * 1000:.1f}ms, Decompression: {decompression_time * 1000:.1f}ms")
+        print(f"Compression ratio: {compressed['compression_ratio']:.2f}x, MSE: {mse:.6f}")
 
     def test_seedlm_8bit_accuracy(self):
         """Test 8-bit accuracy within bounds - dashboard tracks compression module trends"""
@@ -90,16 +83,10 @@ class TestSeedLMPerformance:
                 max_mse = 0.2 * (1.1 - quality)  # Stricter for higher quality
                 max_abs_error = 2.0 * (1.1 - quality)
 
-                assert mse <= max_mse, (
-                    f"MSE {mse:.4f} exceeds {max_mse:.4f} for quality {quality}"
-                )
-                assert max_error <= max_abs_error, (
-                    f"Max error {max_error:.4f} exceeds {max_abs_error:.4f}"
-                )
+                assert mse <= max_mse, f"MSE {mse:.4f} exceeds {max_mse:.4f} for quality {quality}"
+                assert max_error <= max_abs_error, f"Max error {max_error:.4f} exceeds {max_abs_error:.4f}"
 
-                print(
-                    f"Shape {shape}, Quality {quality}: MSE={mse:.4f}, MaxErr={max_error:.4f}"
-                )
+                print(f"Shape {shape}, Quality {quality}: MSE={mse:.4f}, MaxErr={max_error:.4f}")
 
     @pytest.mark.slow
     def test_large_model_compression_benchmark(self):
@@ -144,9 +131,7 @@ class TestSeedLMPerformance:
             mse = torch.mean((tensor - reconstructed) ** 2).item()
             assert mse < 0.05, f"Large tensor MSE {mse:.4f} too high"
 
-            print(
-                f"  Compression: {compression_time:.2f}s, Decompression: {decompression_time:.2f}s"
-            )
+            print(f"  Compression: {compression_time:.2f}s, Decompression: {decompression_time:.2f}s")
             print(f"  MSE: {mse:.6f}")
 
         # Overall benchmarks
@@ -157,12 +142,8 @@ class TestSeedLMPerformance:
         print(f"Total processing time: {total_time:.2f}s")
 
         # Performance requirements for large models
-        assert overall_ratio >= 1.5, (
-            f"Large model compression ratio {overall_ratio:.2f}x insufficient"
-        )
-        assert total_time < 30.0, (
-            f"Large model processing time {total_time:.2f}s too slow"
-        )
+        assert overall_ratio >= 1.5, f"Large model compression ratio {overall_ratio:.2f}x insufficient"
+        assert total_time < 30.0, f"Large model processing time {total_time:.2f}s too slow"
 
 
 @pytest.mark.compression
@@ -338,9 +319,7 @@ class TestSeedLMFunctionality:
         memory_increase = memory_after - memory_before
 
         # Memory increase should be reasonable (less than 100MB for this test)
-        assert memory_increase < 100, (
-            f"Memory increase {memory_increase:.1f}MB too high"
-        )
+        assert memory_increase < 100, f"Memory increase {memory_increase:.1f}MB too high"
 
         # Verify quality
         mse = torch.mean((large_tensor - reconstructed) ** 2).item()
@@ -366,9 +345,7 @@ class TestSeedLMFunctionality:
             max_error = torch.max(torch.abs(coeffs - dequantized)).item()
             relative_error = max_error / (torch.max(torch.abs(coeffs)).item() + 1e-8)
 
-            assert relative_error < 0.1, (
-                f"Quantization error {relative_error:.4f} too high"
-            )
+            assert relative_error < 0.1, f"Quantization error {relative_error:.4f} too high"
 
     def test_streaming_capability(self):
         """Test streaming/bandwidth-limited compression"""
@@ -415,13 +392,9 @@ class TestSeedLMFunctionality:
 
             # Verify adaptive sizing makes sense
             if name == "high_variance":
-                assert block_size <= 8, (
-                    f"High variance should use small blocks, got {block_size}"
-                )
+                assert block_size <= 8, f"High variance should use small blocks, got {block_size}"
             elif name == "low_variance":
-                assert block_size >= 16, (
-                    f"Low variance should use large blocks, got {block_size}"
-                )
+                assert block_size >= 16, f"Low variance should use large blocks, got {block_size}"
 
             # Verify reconstruction quality
             reconstructed = encoder.decode(compressed)
@@ -449,21 +422,17 @@ def test_compression_performance_regression():
     decompression_elapsed = time.time() - start_time
 
     # Performance thresholds (will be tracked in CI)
-    assert compression_elapsed < 2.0, (
-        f"Compression too slow: {compression_elapsed:.2f}s"
-    )
-    assert decompression_elapsed < 1.0, (
-        f"Decompression too slow: {decompression_elapsed:.2f}s"
-    )
+    assert compression_elapsed < 2.0, f"Compression too slow: {compression_elapsed:.2f}s"
+    assert decompression_elapsed < 1.0, f"Decompression too slow: {decompression_elapsed:.2f}s"
 
     # Quality threshold (relaxed for prototype performance)
     mse = torch.mean((test_tensor - reconstructed) ** 2).item()
     assert mse < 1.0, f"Quality regression: MSE {mse:.4f}"
 
     # Compression efficiency
-    assert compressed["compression_ratio"] >= 1.5, (
-        f"Compression ratio regression: {compressed['compression_ratio']:.2f}x"
-    )
+    assert (
+        compressed["compression_ratio"] >= 1.5
+    ), f"Compression ratio regression: {compressed['compression_ratio']:.2f}x"
 
     print(
         f"Benchmark: Compression {compression_elapsed * 1000:.0f}ms, Decompression {decompression_elapsed * 1000:.0f}ms"

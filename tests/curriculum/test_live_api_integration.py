@@ -57,9 +57,7 @@ TEST_MODELS = {
 
 def requires_api_key(func):
     """Decorator to skip tests if API key not available."""
-    return pytest.mark.skipif(SKIP_LIVE_TESTS, reason="OPENROUTER_API_KEY not set")(
-        func
-    )
+    return pytest.mark.skipif(SKIP_LIVE_TESTS, reason="OPENROUTER_API_KEY not set")(func)
 
 
 @pytest.fixture
@@ -114,9 +112,7 @@ class TestLiveAPIIntegration:
         result = await edge_finder.find_edge(
             domain="coding-python",
             telemetry=sample_telemetry_realistic,
-            constraints=EdgeConstraints(
-                target_low=0.55, target_high=0.75, problem_budget=100
-            ),
+            constraints=EdgeConstraints(target_low=0.55, target_high=0.75, problem_budget=100),
         )
 
         duration = time.time() - start_time
@@ -130,19 +126,13 @@ class TestLiveAPIIntegration:
         assert result.generation_plan.n_total == 100
 
         # Check performance
-        assert duration < 60, (
-            f"Edge detection took {duration:.1f}s, should be under 60s"
-        )
+        assert duration < 60, f"Edge detection took {duration:.1f}s, should be under 60s"
 
         # Validate topic mix weights
         total_weight = sum(topic.weight for topic in result.topic_mix)
-        assert 0.8 <= total_weight <= 1.2, (
-            f"Topic weights sum to {total_weight}, should be ~1.0"
-        )
+        assert 0.8 <= total_weight <= 1.2, f"Topic weights sum to {total_weight}, should be ~1.0"
 
-        logger.info(
-            f"Edge detection: {result.edge.low:.2f}-{result.edge.high:.2f} in {duration:.1f}s"
-        )
+        logger.info(f"Edge detection: {result.edge.low:.2f}-{result.edge.high:.2f} in {duration:.1f}s")
 
     @requires_api_key
     @pytest.mark.asyncio
@@ -208,9 +198,7 @@ class TestLiveAPIIntegration:
             ],
         )
 
-        variant_policy = VariantPolicy(
-            paraphrase=True, numeric_jitter=NumericJitterPolicy(enabled=True, pct=15)
-        )
+        variant_policy = VariantPolicy(paraphrase=True, numeric_jitter=NumericJitterPolicy(enabled=True, pct=15))
 
         start_time = time.time()
 
@@ -233,10 +221,7 @@ class TestLiveAPIIntegration:
             assert variant.rubric
 
             # Should be similar but different
-            assert (
-                "vowel" in variant.statement.lower()
-                or "count" in variant.statement.lower()
-            )
+            assert "vowel" in variant.statement.lower() or "count" in variant.statement.lower()
 
         logger.info(f"Generated {len(result.variants)} variants in {duration:.1f}s")
 
@@ -286,9 +271,7 @@ class TestLiveAPIIntegration:
             # Check reasonable grading time
             assert duration < 30, f"Grading took {duration:.1f}s, should be under 30s"
 
-            logger.info(
-                f"Grading {'CORRECT' if result.correct else 'INCORRECT'} in {duration:.1f}s"
-            )
+            logger.info(f"Grading {'CORRECT' if result.correct else 'INCORRECT'} in {duration:.1f}s")
 
     @requires_api_key
     @pytest.mark.asyncio
@@ -315,9 +298,7 @@ class TestLiveAPIIntegration:
         for wrong_answer in wrong_answers:
             start_time = time.time()
 
-            result = await hint_gen.generate_hint(
-                problem=problem, wrong_answer=wrong_answer
-            )
+            result = await hint_gen.generate_hint(problem=problem, wrong_answer=wrong_answer)
 
             duration = time.time() - start_time
 
@@ -333,9 +314,7 @@ class TestLiveAPIIntegration:
             # Should be helpful
             assert len(result.hint.strip()) > 5
 
-            logger.info(
-                f"Generated hint: '{result.hint}' ({word_count} words) in {duration:.1f}s"
-            )
+            logger.info(f"Generated hint: '{result.hint}' ({word_count} words) in {duration:.1f}s")
 
     @requires_api_key
     @pytest.mark.asyncio
@@ -345,9 +324,7 @@ class TestLiveAPIIntegration:
             temp_db = f.name
 
         try:
-            tracker = MasteryTracker(
-                live_llm, model=TEST_MODELS["fast"], storage_path=temp_db
-            )
+            tracker = MasteryTracker(live_llm, model=TEST_MODELS["fast"], storage_path=temp_db)
 
             # Simulate learning progression
             student_id = "live_test_student"
@@ -439,12 +416,8 @@ class TestEndToEndPipelineLive:
         assert "system_health" in status
 
         logger.info(f"Full pipeline completed in {duration:.1f}s")
-        logger.info(
-            f"Initialization: {init['initial_problems']} problems, {len(init['topic_mix'])} topics"
-        )
-        logger.info(
-            f"Cycles: {cycles['successful_cycles']}/{cycles['total_cycles']} successful"
-        )
+        logger.info(f"Initialization: {init['initial_problems']} problems, {len(init['topic_mix'])} topics")
+        logger.info(f"Cycles: {cycles['successful_cycles']}/{cycles['total_cycles']} successful")
         logger.info(f"Final queues: {status['queues']}")
         logger.info(f"System health: {status['system_health']}")
 
@@ -462,9 +435,7 @@ class TestEndToEndPipelineLive:
             init_result = await orchestrator.initialize_curriculum(
                 domain="coding-python",
                 initial_telemetry=sample_telemetry_realistic,
-                constraints=EdgeConstraints(
-                    target_low=0.55, target_high=0.75, problem_budget=50
-                ),
+                constraints=EdgeConstraints(target_low=0.55, target_high=0.75, problem_budget=50),
             )
 
             assert init_result["success"] is True
@@ -482,9 +453,7 @@ class TestEndToEndPipelineLive:
                 duration = time.time() - start_time
 
                 assert cycle_result["successful_cycles"] >= 0
-                logger.info(
-                    f"Cycle {cycle_num + 1} with capacity {capacity} completed in {duration:.1f}s"
-                )
+                logger.info(f"Cycle {cycle_num + 1} with capacity {capacity} completed in {duration:.1f}s")
 
             # Check final system status
             final_status = await orchestrator.get_curriculum_status()
@@ -501,9 +470,7 @@ class TestAPIContractCompliance:
         if not API_KEY:
             pytest.skip("OPENROUTER_API_KEY not available")
 
-        async with OpenRouterLLM(
-            api_key=API_KEY, rpm_limit=10
-        ) as client:  # Very low limit
+        async with OpenRouterLLM(api_key=API_KEY, rpm_limit=10) as client:  # Very low limit
             start_time = time.time()
 
             # Make multiple rapid requests
@@ -517,9 +484,7 @@ class TestAPIContractCompliance:
             duration = time.time() - start_time
 
             # Should have taken time due to rate limiting
-            assert duration >= 4, (
-                f"5 requests with 10 RPM limit should take ≥4s, took {duration:.1f}s"
-            )
+            assert duration >= 4, f"5 requests with 10 RPM limit should take ≥4s, took {duration:.1f}s"
 
             # All requests should eventually succeed (no permanent failures)
             successful = sum(1 for r in results if isinstance(r, str))
@@ -573,9 +538,9 @@ class TestAPIContractCompliance:
                 assert result1 == result2
 
                 # Second request should be much faster (cached)
-                assert second_duration < first_duration * 0.5, (
-                    f"Cached request ({second_duration:.1f}s) should be much faster than first ({first_duration:.1f}s)"
-                )
+                assert (
+                    second_duration < first_duration * 0.5
+                ), f"Cached request ({second_duration:.1f}s) should be much faster than first ({first_duration:.1f}s)"
 
 
 if __name__ == "__main__":

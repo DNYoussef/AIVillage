@@ -52,9 +52,7 @@ except ImportError:
 try:
     from src.production.monitoring.mobile.resource_management import (
         BatteryThermalResourceManager,
-        ChunkingConfig,
         PowerMode,
-        ResourcePolicy,
         TransportPreference,
     )
 
@@ -170,9 +168,7 @@ class TestResourcePolicy:
         )
 
     @pytest.mark.asyncio
-    async def test_normal_conditions_balanced_mode(
-        self, resource_manager, normal_profile
-    ):
+    async def test_normal_conditions_balanced_mode(self, resource_manager, normal_profile):
         """Test resource management under normal conditions"""
         if not RESOURCE_MANAGEMENT_AVAILABLE:
             pytest.skip("Resource management not available")
@@ -197,9 +193,7 @@ class TestResourcePolicy:
         assert "thermal_critical" not in state.active_policies
 
     @pytest.mark.asyncio
-    async def test_low_battery_bitchat_preferred(
-        self, resource_manager, low_battery_profile
-    ):
+    async def test_low_battery_bitchat_preferred(self, resource_manager, low_battery_profile):
         """Test BitChat preference under low battery conditions"""
         if not RESOURCE_MANAGEMENT_AVAILABLE:
             pytest.skip("Resource management not available")
@@ -223,9 +217,7 @@ class TestResourcePolicy:
         assert chunk_size < 512  # Smaller chunks for battery saving
 
     @pytest.mark.asyncio
-    async def test_critical_battery_bitchat_only(
-        self, resource_manager, critical_battery_profile
-    ):
+    async def test_critical_battery_bitchat_only(self, resource_manager, critical_battery_profile):
         """Test BitChat-only mode under critical battery"""
         if not RESOURCE_MANAGEMENT_AVAILABLE:
             pytest.skip("Resource management not available")
@@ -264,9 +256,7 @@ class TestResourcePolicy:
         assert chunk_size < 512  # Smaller chunks for thermal management
 
     @pytest.mark.asyncio
-    async def test_memory_constrained_chunk_sizing(
-        self, resource_manager, low_memory_profile
-    ):
+    async def test_memory_constrained_chunk_sizing(self, resource_manager, low_memory_profile):
         """Test chunk size reduction for memory-constrained devices"""
         if not RESOURCE_MANAGEMENT_AVAILABLE:
             pytest.skip("Resource management not available")
@@ -286,9 +276,7 @@ class TestResourcePolicy:
         assert recommendations["batch_size"] <= 4
 
     @pytest.mark.asyncio
-    async def test_cellular_network_cost_awareness(
-        self, resource_manager, cellular_profile
-    ):
+    async def test_cellular_network_cost_awareness(self, resource_manager, cellular_profile):
         """Test BitChat preference on cellular networks for cost savings"""
         if not RESOURCE_MANAGEMENT_AVAILABLE:
             pytest.skip("Resource management not available")
@@ -306,9 +294,7 @@ class TestResourcePolicy:
             assert "high_latency_network" in state.active_policies
 
     @pytest.mark.asyncio
-    async def test_transport_routing_decision_small_message(
-        self, resource_manager, normal_profile
-    ):
+    async def test_transport_routing_decision_small_message(self, resource_manager, normal_profile):
         """Test transport routing decision for small messages"""
         if not RESOURCE_MANAGEMENT_AVAILABLE:
             pytest.skip("Resource management not available")
@@ -316,9 +302,7 @@ class TestResourcePolicy:
         await resource_manager.evaluate_and_adapt(normal_profile)
 
         # Small message (1KB) should typically prefer BitChat
-        decision = await resource_manager.get_transport_routing_decision(
-            message_size_bytes=1024, priority=5
-        )
+        decision = await resource_manager.get_transport_routing_decision(message_size_bytes=1024, priority=5)
 
         assert decision["primary_transport"] in ["bitchat", "betanet"]
         assert "rationale" in decision
@@ -326,9 +310,7 @@ class TestResourcePolicy:
         assert decision["chunk_size"] > 0
 
     @pytest.mark.asyncio
-    async def test_transport_routing_decision_large_message(
-        self, resource_manager, normal_profile
-    ):
+    async def test_transport_routing_decision_large_message(self, resource_manager, normal_profile):
         """Test transport routing decision for large messages"""
         if not RESOURCE_MANAGEMENT_AVAILABLE:
             pytest.skip("Resource management not available")
@@ -336,18 +318,14 @@ class TestResourcePolicy:
         await resource_manager.evaluate_and_adapt(normal_profile)
 
         # Large message (50KB) under normal conditions
-        decision = await resource_manager.get_transport_routing_decision(
-            message_size_bytes=50 * 1024, priority=5
-        )
+        decision = await resource_manager.get_transport_routing_decision(message_size_bytes=50 * 1024, priority=5)
 
         assert decision["primary_transport"] in ["bitchat", "betanet"]
         assert "fallback_transport" in decision
         assert decision["chunk_size"] > 0
 
     @pytest.mark.asyncio
-    async def test_transport_routing_decision_urgent_priority(
-        self, resource_manager, normal_profile
-    ):
+    async def test_transport_routing_decision_urgent_priority(self, resource_manager, normal_profile):
         """Test transport routing decision for urgent messages"""
         if not RESOURCE_MANAGEMENT_AVAILABLE:
             pytest.skip("Resource management not available")
@@ -364,9 +342,7 @@ class TestResourcePolicy:
         assert "high_priority" in " ".join(decision["rationale"])
 
     @pytest.mark.asyncio
-    async def test_battery_critical_forces_bitchat_only(
-        self, resource_manager, critical_battery_profile
-    ):
+    async def test_battery_critical_forces_bitchat_only(self, resource_manager, critical_battery_profile):
         """Test that critical battery forces BitChat-only routing"""
         if not RESOURCE_MANAGEMENT_AVAILABLE:
             pytest.skip("Resource management not available")
@@ -384,9 +360,7 @@ class TestResourcePolicy:
         assert "battery_critical" in " ".join(decision["rationale"])
 
     @pytest.mark.asyncio
-    async def test_chunking_recommendations_data_types(
-        self, resource_manager, normal_profile
-    ):
+    async def test_chunking_recommendations_data_types(self, resource_manager, normal_profile):
         """Test chunking recommendations for different data types"""
         if not RESOURCE_MANAGEMENT_AVAILABLE:
             pytest.skip("Resource management not available")
@@ -463,9 +437,7 @@ class TestDualPathTransportIntegration:
     def mock_dual_path_transport(self):
         """Create mock dual-path transport for testing"""
         # Mock the transport imports
-        with patch(
-            "src.core.p2p.dual_path_transport.RESOURCE_MANAGEMENT_AVAILABLE", True
-        ):
+        with patch("src.core.p2p.dual_path_transport.RESOURCE_MANAGEMENT_AVAILABLE", True):
             try:
                 from src.core.p2p.dual_path_transport import DualPathTransport
 

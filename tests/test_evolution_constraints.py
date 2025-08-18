@@ -6,12 +6,8 @@ import asyncio
 from src.core.resources.constraint_manager import ConstraintManager
 from src.core.resources.device_profiler import DeviceProfiler
 from src.core.resources.resource_monitor import ResourceMonitor
-from src.production.agent_forge.evolution.infrastructure_aware_evolution import (
-    InfrastructureAwareEvolution,
-)
-from src.production.agent_forge.evolution.resource_constrained_evolution import (
-    ResourceConstrainedEvolution,
-)
+from src.production.agent_forge.evolution.infrastructure_aware_evolution import InfrastructureAwareEvolution
+from src.production.agent_forge.evolution.resource_constrained_evolution import ResourceConstrainedEvolution
 
 
 class MockAgent:
@@ -81,9 +77,7 @@ async def test_evolution_with_constraints():
     # Test resource allocation
     print("\n[TEST] Resource Allocation for Evolution")
     try:
-        allocation = await evolution_system._allocate_resources_for_evolution(
-            "nightly", agent
-        )
+        allocation = await evolution_system._allocate_resources_for_evolution("nightly", agent)
         if allocation:
             print(f"  Memory allocated: {allocation['memory_mb']}MB")
             print(f"  CPU allocated: {allocation['cpu_percent']}%")
@@ -95,9 +89,7 @@ async def test_evolution_with_constraints():
 
     # Test infrastructure-aware evolution
     print("\n[TEST] Infrastructure-Aware Evolution")
-    infra_evolution = InfrastructureAwareEvolution(
-        resource_monitor=monitor, constraint_manager=constraint_manager
-    )
+    infra_evolution = InfrastructureAwareEvolution(resource_monitor=monitor, constraint_manager=constraint_manager)
 
     try:
         # Test evolution mode selection
@@ -107,9 +99,7 @@ async def test_evolution_with_constraints():
         # Test system status
         status = await infra_evolution.get_system_status()
         print(f"  P2P enabled: {status.get('p2p_enabled', False)}")
-        print(
-            f"  Resource monitoring: {status.get('resource_monitoring_active', False)}"
-        )
+        print(f"  Resource monitoring: {status.get('resource_monitoring_active', False)}")
         print(f"  Active components: {len(status.get('components', []))}")
     except Exception as e:
         print(f"  Infrastructure evolution error: {e}")

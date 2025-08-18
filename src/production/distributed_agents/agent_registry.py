@@ -51,9 +51,7 @@ class DistributedAgentRegistry:
         for location in ("local", "remote"):
             section = data.get(location, {}) if isinstance(data, dict) else {}
             if isinstance(section, dict):
-                self._agents[location].update(
-                    {str(name): str(endpoint) for name, endpoint in section.items()}
-                )
+                self._agents[location].update({str(name): str(endpoint) for name, endpoint in section.items()})
 
     def _save(self) -> None:
         self.path.parent.mkdir(parents=True, exist_ok=True)
@@ -106,14 +104,8 @@ class DistributedAgentRegistry:
 
         if location:
             loc = "remote" if location == "remote" else "local"
-            return [
-                AgentLocation(name, ep, loc)
-                for name, ep in self._agents.get(loc, {}).items()
-            ]
+            return [AgentLocation(name, ep, loc) for name, ep in self._agents.get(loc, {}).items()]
         agents: list[AgentLocation] = []
         for loc in ("local", "remote"):
-            agents.extend(
-                AgentLocation(name, ep, loc)
-                for name, ep in self._agents[loc].items()
-            )
+            agents.extend(AgentLocation(name, ep, loc) for name, ep in self._agents[loc].items())
         return agents

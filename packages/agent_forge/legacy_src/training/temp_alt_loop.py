@@ -275,7 +275,7 @@ class TempAlternationTrainer:
         """Single training step with temperature alternation."""
 
         input_ids = batch["input_ids"].to(self.device)
-        attention_mask = batch["attention_mask"].to(self.device)
+        batch["attention_mask"].to(self.device)
         temp_labels = batch.get("temp_label", torch.zeros(input_ids.size(0), dtype=torch.long)).to(self.device)
         stage_labels = batch.get("stage_label", torch.zeros(input_ids.size(0), dtype=torch.long)).to(self.device)
 

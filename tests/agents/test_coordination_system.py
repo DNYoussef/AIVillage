@@ -390,9 +390,7 @@ class TestTaskScheduler:
     def test_task_priority_ordering(self):
         """Test task priority ordering."""
         tasks = [
-            Task(
-                "low", "Low Priority", "test", TaskPriority.LOW, ["cap1"], {}, "user1"
-            ),
+            Task("low", "Low Priority", "test", TaskPriority.LOW, ["cap1"], {}, "user1"),
             Task(
                 "high",
                 "High Priority",
@@ -643,10 +641,7 @@ class TestMessageBroker:
         assert self.broker.message_queue["agent1"][0] == message
 
         # agent2 should not receive the message (not in recipients)
-        assert (
-            "agent2" not in self.broker.message_queue
-            or len(self.broker.message_queue["agent2"]) == 0
-        )
+        assert "agent2" not in self.broker.message_queue or len(self.broker.message_queue["agent2"]) == 0
 
     def test_broadcast_message(self):
         """Test message broadcasting."""
@@ -665,9 +660,7 @@ class TestMessageBroker:
         )
 
         # Broadcast message
-        success = self.broker.broadcast_message(
-            message, MessageType.SYSTEM_NOTIFICATION
-        )
+        success = self.broker.broadcast_message(message, MessageType.SYSTEM_NOTIFICATION)
 
         assert success is True
 
@@ -734,9 +727,7 @@ class TestMessageBroker:
         self.broker.publish_message(result_msg)
 
         # Get only task assignment messages
-        task_messages = self.broker.get_messages(
-            "agent1", message_type=MessageType.TASK_ASSIGNMENT
-        )
+        task_messages = self.broker.get_messages("agent1", message_type=MessageType.TASK_ASSIGNMENT)
 
         assert len(task_messages) == 1
         assert task_messages[0].message_type == MessageType.TASK_ASSIGNMENT
@@ -858,29 +849,21 @@ class TestResourceManager:
         )
 
         assert allocation_id is not None
-        assert (
-            self.resource_manager.resources["memory_001"].available["memory_gb"] == 32
-        )
+        assert self.resource_manager.resources["memory_001"].available["memory_gb"] == 32
 
         # Deallocate
         success = self.resource_manager.deallocate_resource(allocation_id)
 
         assert success is True
         assert allocation_id not in self.resource_manager.allocations
-        assert (
-            self.resource_manager.resources["memory_001"].available["memory_gb"] == 64
-        )
+        assert self.resource_manager.resources["memory_001"].available["memory_gb"] == 64
 
     def test_find_available_resources(self):
         """Test finding available resources."""
         # Register multiple resources
         resources = [
-            Resource(
-                "gpu_1", "GPU 1", ResourceType.GPU, {"memory_gb": 16}, {"memory_gb": 16}
-            ),
-            Resource(
-                "gpu_2", "GPU 2", ResourceType.GPU, {"memory_gb": 8}, {"memory_gb": 8}
-            ),
+            Resource("gpu_1", "GPU 1", ResourceType.GPU, {"memory_gb": 16}, {"memory_gb": 16}),
+            Resource("gpu_2", "GPU 2", ResourceType.GPU, {"memory_gb": 8}, {"memory_gb": 8}),
             Resource("cpu_1", "CPU 1", ResourceType.CPU, {"cores": 16}, {"cores": 16}),
         ]
 
@@ -896,9 +879,7 @@ class TestResourceManager:
         assert gpu_resources[0].resource_id == "gpu_1"
 
         # Find any resource type with specific requirements
-        any_resources = self.resource_manager.find_available_resources(
-            requirements={"memory_gb": 5}
-        )
+        any_resources = self.resource_manager.find_available_resources(requirements={"memory_gb": 5})
 
         assert len(any_resources) == 2  # Both GPUs meet the requirement
 
@@ -989,12 +970,8 @@ class TestCoordinationEngine:
         assert agent.agent_id in self.engine.registry.agents
 
         # Agent should be subscribed to relevant message types
-        assert agent.agent_id in self.engine.broker.subscriptions.get(
-            MessageType.TASK_ASSIGNMENT, set()
-        )
-        assert agent.agent_id in self.engine.broker.subscriptions.get(
-            MessageType.SYSTEM_NOTIFICATION, set()
-        )
+        assert agent.agent_id in self.engine.broker.subscriptions.get(MessageType.TASK_ASSIGNMENT, set())
+        assert agent.agent_id in self.engine.broker.subscriptions.get(MessageType.SYSTEM_NOTIFICATION, set())
 
     def test_task_lifecycle_management(self):
         """Test complete task lifecycle management."""
@@ -1027,9 +1004,7 @@ class TestCoordinationEngine:
         assert task.task_id in self.engine.scheduler.task_queue
 
         # Process coordination step (would normally assign task to agent)
-        available_agents = self.engine.registry.find_agents_by_capability(
-            "data_processing"
-        )
+        available_agents = self.engine.registry.find_agents_by_capability("data_processing")
         assert len(available_agents) == 1
 
         next_tasks = self.engine.scheduler.get_next_tasks("data_processing", limit=1)
@@ -1102,9 +1077,7 @@ class TestCoordinationEngine:
         self.engine.onboard_agent(agent)
 
         # Simulate agent failure
-        success = self.engine.handle_agent_failure(
-            "failure_agent", "Connection timeout"
-        )
+        success = self.engine.handle_agent_failure("failure_agent", "Connection timeout")
 
         assert success is True
 
@@ -1329,9 +1302,7 @@ class TestIntegrationScenarios:
             assert len(viz_tasks) == 1
 
             # Check resource availability for ML task
-            gpu_resources = engine.resource_manager.find_available_resources(
-                ResourceType.GPU, {"memory_gb": 16}
-            )
+            gpu_resources = engine.resource_manager.find_available_resources(ResourceType.GPU, {"memory_gb": 16})
             assert len(gpu_resources) == 1
 
             # Verify message broker is ready for coordination
@@ -1361,9 +1332,7 @@ if __name__ == "__main__":
     print("Testing agent registry...")
     with tempfile.NamedTemporaryFile(delete=False) as tmp:
         registry = AgentRegistry(tmp.name)
-        agent = Agent(
-            "test_agent", "Test Agent", "worker", ["test_cap"], "http://localhost:8001"
-        )
+        agent = Agent("test_agent", "Test Agent", "worker", ["test_cap"], "http://localhost:8001")
         success = registry.register_agent(agent)
         found_agents = registry.find_agents_by_capability("test_cap")
         print(f"OK Agent registry: registered={success}, found={len(found_agents)}")
@@ -1413,14 +1382,10 @@ if __name__ == "__main__":
     print("Testing resource manager...")
     with tempfile.NamedTemporaryFile(delete=False) as tmp:
         rm = ResourceManager(tmp.name)
-        resource = Resource(
-            "test_res", "Test Resource", ResourceType.CPU, {"cores": 8}, {"cores": 8}
-        )
+        resource = Resource("test_res", "Test Resource", ResourceType.CPU, {"cores": 8}, {"cores": 8})
         reg_success = rm.register_resource(resource)
         alloc_id = rm.allocate_resource("test_res", "task1", {"cores": 4})
-        print(
-            f"OK Resource manager: registered={reg_success}, allocated={alloc_id is not None}"
-        )
+        print(f"OK Resource manager: registered={reg_success}, allocated={alloc_id is not None}")
         try:
             os.unlink(tmp.name)
         except PermissionError:
@@ -1458,9 +1423,7 @@ if __name__ == "__main__":
 
     health = engine.get_system_health()
 
-    print(
-        f"OK Coordination engine: onboard={onboard_success}, submit={submit_success}, health_keys={len(health)}"
-    )
+    print(f"OK Coordination engine: onboard={onboard_success}, submit={submit_success}, health_keys={len(health)}")
 
     # Cleanup
     for db_path in temp_dbs:

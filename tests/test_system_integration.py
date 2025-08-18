@@ -44,11 +44,7 @@ class SystemIntegrationTester:
 
         try:
             start_time = time.time()
-            result = (
-                await test_func()
-                if asyncio.iscoroutinefunction(test_func)
-                else test_func()
-            )
+            result = await test_func() if asyncio.iscoroutinefunction(test_func) else test_func()
             duration = time.time() - start_time
 
             if result:
@@ -155,9 +151,7 @@ class SystemIntegrationTester:
 
             # Test agent creation request
             start_time = time.time()
-            result = await orchestrator.coordinate_agents(
-                [{"type": "king", "task": "test_coordination", "priority": 1}]
-            )
+            await orchestrator.coordinate_agents([{"type": "king", "task": "test_coordination", "priority": 1}])
             duration = time.time() - start_time
 
             # Verify <100ms requirement
@@ -190,7 +184,7 @@ class SystemIntegrationTester:
                 "message_type": "coordination",
             }
 
-            result = await protocol.route_message(test_message)
+            await protocol.route_message(test_message)
             await protocol.stop()
 
             self.log("INFO", "T3 agent communication successful")
@@ -215,25 +209,20 @@ class SystemIntegrationTester:
     async def test_t2_rag_performance(self) -> bool:
         """Test T2 RAG system performance metrics"""
         try:
-            from production.rag.rag_system.interface import (
-                HybridRetriever,
-                ProductionEmbeddingModel,
-            )
+            from production.rag.rag_system.interface import HybridRetriever, ProductionEmbeddingModel
 
             # Test embedding model
             embedding_model = ProductionEmbeddingModel()
 
             # Test vector operations timing
             start_time = time.time()
-            embeddings = await embedding_model.get_embeddings(
-                ["test query for performance"]
-            )
+            await embedding_model.get_embeddings(["test query for performance"])
             vector_duration = time.time() - start_time
 
             # Test hybrid retrieval
             retriever = HybridRetriever()
             start_time = time.time()
-            results = await retriever.retrieve("test query", top_k=5)
+            await retriever.retrieve("test query", top_k=5)
             retrieval_duration = time.time() - start_time
 
             # Verify performance targets
@@ -261,17 +250,15 @@ class SystemIntegrationTester:
         """Test T2 RAG system end-to-end integration"""
         try:
             from production.rag.rag_system.agent_interface import LatentSpaceAgent
-            from production.rag.rag_system.interface import (
-                ContextualKnowledgeConstructor,
-            )
+            from production.rag.rag_system.interface import ContextualKnowledgeConstructor
 
             # Test latent space agent
             agent = LatentSpaceAgent()
-            enhancement_result = await agent.enhance_query("test integration query")
+            await agent.enhance_query("test integration query")
 
             # Test knowledge constructor
             constructor = ContextualKnowledgeConstructor()
-            knowledge_result = await constructor.construct("integration test context")
+            await constructor.construct("integration test context")
 
             self.log("INFO", "T2 RAG integration successful")
             return True
@@ -298,9 +285,7 @@ class SystemIntegrationTester:
             # Create temporary database for testing
             import tempfile
 
-            from production.distributed_inference.tokenomics_receipts import (
-                TokenomicsReceiptManager,
-            )
+            from production.distributed_inference.tokenomics_receipts import TokenomicsReceiptManager
 
             with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as tmp:
                 db_path = tmp.name
@@ -341,9 +326,7 @@ class SystemIntegrationTester:
     async def test_t6_tensor_streaming(self) -> bool:
         """Test T6 tensor streaming capabilities"""
         try:
-            from production.communications.p2p.tensor_streaming import (
-                TensorStreamManager,
-            )
+            from production.communications.p2p.tensor_streaming import TensorStreamManager
 
             manager = TensorStreamManager("test_node")
 
@@ -351,9 +334,7 @@ class SystemIntegrationTester:
             await manager.start()
 
             # Test stream creation (simulation)
-            stream_id = await manager.create_stream(
-                "test_recipient", {"test": "tensor_data"}, priority=1
-            )
+            stream_id = await manager.create_stream("test_recipient", {"test": "tensor_data"}, priority=1)
 
             await manager.stop()
 
@@ -371,12 +352,10 @@ class SystemIntegrationTester:
         """Test T3 Agent Forge + T2 RAG System integration"""
         try:
             from production.agent_forge.orchestrator import FastAgentOrchestrator
-            from production.rag.rag_system.agent_interface import (
-                DynamicKnowledgeIntegrationAgent,
-            )
+            from production.rag.rag_system.agent_interface import DynamicKnowledgeIntegrationAgent
 
             # Create orchestrator and RAG agent
-            orchestrator = FastAgentOrchestrator()
+            FastAgentOrchestrator()
             rag_agent = DynamicKnowledgeIntegrationAgent()
 
             # Test knowledge integration through agent coordination
@@ -387,9 +366,7 @@ class SystemIntegrationTester:
             }
 
             # Simulate RAG agent integration
-            integration_result = await rag_agent.integrate_knowledge(
-                knowledge_task["query"], knowledge_task["context"]
-            )
+            await rag_agent.integrate_knowledge(knowledge_task["query"], knowledge_task["context"])
 
             self.log("INFO", "Cross-track Agent+RAG integration successful")
             return True
@@ -401,14 +378,11 @@ class SystemIntegrationTester:
         """Test T5 Federation + T6 Distributed Inference integration"""
         try:
             from federation.core.federation_manager import FederationManager
-            from production.distributed_inference.tokenomics_receipts import (
-                TokenomicsReceiptManager,
-            )
+
+            from production.distributed_inference.tokenomics_receipts import TokenomicsReceiptManager
 
             # Create components
-            federation = FederationManager(
-                "test_fed_device", enable_tor=False, enable_i2p=False
-            )
+            federation = FederationManager("test_fed_device", enable_tor=False, enable_i2p=False)
 
             # Create temporary database
             import tempfile
@@ -520,9 +494,7 @@ class SystemIntegrationTester:
         # T5: Security & Federation Tests
         self.log("INFO", "Testing T5: Security & Federation")
         await self.run_test("T5_federation_imports", self.test_t5_federation_imports)
-        await self.run_test(
-            "T5_federation_initialization", self.test_t5_federation_initialization
-        )
+        await self.run_test("T5_federation_initialization", self.test_t5_federation_initialization)
         await self.run_test("T5_bitchat_operations", self.test_t5_bitchat_operations)
 
         # T3: Agent Forge Tests
@@ -540,16 +512,12 @@ class SystemIntegrationTester:
         # T6: Distributed Inference Tests
         self.log("INFO", "Testing T6: Distributed Inference")
         await self.run_test("T6_distributed_imports", self.test_t6_distributed_imports)
-        await self.run_test(
-            "T6_tokenomics_integration", self.test_t6_tokenomics_integration
-        )
+        await self.run_test("T6_tokenomics_integration", self.test_t6_tokenomics_integration)
         await self.run_test("T6_tensor_streaming", self.test_t6_tensor_streaming)
 
         # Cross-Track Integration Tests
         self.log("INFO", "Testing Cross-Track Integration")
-        await self.run_test(
-            "CrossTrack_agent_rag", self.test_cross_track_agent_rag_integration
-        )
+        await self.run_test("CrossTrack_agent_rag", self.test_cross_track_agent_rag_integration)
         await self.run_test(
             "CrossTrack_federation_streaming",
             self.test_cross_track_federation_streaming,
@@ -557,12 +525,8 @@ class SystemIntegrationTester:
 
         # Production Readiness Tests
         self.log("INFO", "Testing Production Readiness")
-        await self.run_test(
-            "Production_dependencies", self.test_production_dependency_check
-        )
-        await self.run_test(
-            "Production_configuration", self.test_production_configuration_validation
-        )
+        await self.run_test("Production_dependencies", self.test_production_dependency_check)
+        await self.run_test("Production_configuration", self.test_production_configuration_validation)
 
         # Generate final report
         self.generate_final_report()
@@ -570,9 +534,7 @@ class SystemIntegrationTester:
     def generate_final_report(self):
         """Generate comprehensive test report"""
         total_duration = time.time() - self.start_time
-        success_rate = (
-            (self.passed_tests / self.total_tests * 100) if self.total_tests > 0 else 0
-        )
+        success_rate = (self.passed_tests / self.total_tests * 100) if self.total_tests > 0 else 0
 
         self.log("INFO", "=" * 60)
         self.log("INFO", "SYSTEM INTEGRATION TEST REPORT")
@@ -591,29 +553,17 @@ class SystemIntegrationTester:
             "T3": [name for name in self.test_results.keys() if name.startswith("T3_")],
             "T2": [name for name in self.test_results.keys() if name.startswith("T2_")],
             "T6": [name for name in self.test_results.keys() if name.startswith("T6_")],
-            "CrossTrack": [
-                name
-                for name in self.test_results.keys()
-                if name.startswith("CrossTrack_")
-            ],
-            "Production": [
-                name
-                for name in self.test_results.keys()
-                if name.startswith("Production_")
-            ],
+            "CrossTrack": [name for name in self.test_results.keys() if name.startswith("CrossTrack_")],
+            "Production": [name for name in self.test_results.keys() if name.startswith("Production_")],
         }
 
         self.log("INFO", "")
         self.log("INFO", "TRACK SUMMARY:")
         for track, tests in track_summary.items():
             if tests:
-                track_passed = sum(
-                    1 for test in tests if self.test_results[test]["status"] == "PASS"
-                )
+                track_passed = sum(1 for test in tests if self.test_results[test]["status"] == "PASS")
                 track_total = len(tests)
-                track_rate = (
-                    (track_passed / track_total * 100) if track_total > 0 else 0
-                )
+                track_rate = (track_passed / track_total * 100) if track_total > 0 else 0
                 status = "PASS" if track_passed == track_total else "FAIL"
                 self.log(
                     "INFO",

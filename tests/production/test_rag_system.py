@@ -9,12 +9,8 @@ import pytest
 
 # Mock external dependencies
 try:
-    from production.rag.rag_system.core.latent_space_activation import (
-        LatentSpaceActivation,
-    )
-    from production.rag.rag_system.processing.reasoning_engine import (
-        UncertaintyAwareReasoningEngine,
-    )
+    from production.rag.rag_system.core.latent_space_activation import LatentSpaceActivation
+    from production.rag.rag_system.processing.reasoning_engine import UncertaintyAwareReasoningEngine
     from production.rag.rag_system.utils.standardized_formats import RAGResponseFormat
 except ImportError:
     pytest.skip("RAG system dependencies not available", allow_module_level=True)
@@ -65,9 +61,7 @@ class TestUncertaintyAwareReasoningEngine:
         """Test reasoning engine initialization."""
         assert reasoning_engine is not None
         # Test any initialization parameters
-        assert hasattr(reasoning_engine, "process_query") or hasattr(
-            reasoning_engine, "reason"
-        )
+        assert hasattr(reasoning_engine, "process_query") or hasattr(reasoning_engine, "reason")
 
     def test_uncertainty_calculation(self, reasoning_engine, sample_documents):
         """Test uncertainty calculation for retrieved documents."""
@@ -82,14 +76,10 @@ class TestUncertaintyAwareReasoningEngine:
                 assert "overall_uncertainty" in uncertainty
                 assert 0 <= uncertainty["overall_uncertainty"] <= 1
 
-    def test_reasoning_with_confidence(
-        self, reasoning_engine, sample_query, sample_documents
-    ):
+    def test_reasoning_with_confidence(self, reasoning_engine, sample_query, sample_documents):
         """Test reasoning with confidence estimation."""
         if hasattr(reasoning_engine, "reason_with_confidence"):
-            result = reasoning_engine.reason_with_confidence(
-                sample_query, sample_documents
-            )
+            result = reasoning_engine.reason_with_confidence(sample_query, sample_documents)
 
             assert "answer" in result
             assert "confidence" in result
@@ -107,9 +97,7 @@ class TestUncertaintyAwareReasoningEngine:
         }
 
         if hasattr(reasoning_engine, "multi_step_reasoning"):
-            result = reasoning_engine.multi_step_reasoning(
-                complex_query, sample_documents
-            )
+            result = reasoning_engine.multi_step_reasoning(complex_query, sample_documents)
 
             assert "steps" in result
             assert "final_answer" in result
@@ -188,23 +176,17 @@ class TestLatentSpaceActivation:
         """Test similarity computation in latent space."""
         if hasattr(activation_system, "compute_similarity"):
             # Test self-similarity
-            similarity = activation_system.compute_similarity(
-                sample_embeddings[0], sample_embeddings[0]
-            )
+            similarity = activation_system.compute_similarity(sample_embeddings[0], sample_embeddings[0])
             assert similarity > 0.9  # Should be very similar to itself
 
             # Test different embeddings
-            similarity = activation_system.compute_similarity(
-                sample_embeddings[0], sample_embeddings[1]
-            )
+            similarity = activation_system.compute_similarity(sample_embeddings[0], sample_embeddings[1])
             assert -1 <= similarity <= 1  # Valid similarity range
 
     def test_dimension_reduction(self, activation_system, sample_embeddings):
         """Test dimensionality reduction capabilities."""
         if hasattr(activation_system, "reduce_dimensions"):
-            reduced = activation_system.reduce_dimensions(
-                sample_embeddings, target_dim=256
-            )
+            reduced = activation_system.reduce_dimensions(sample_embeddings, target_dim=256)
 
             assert reduced.shape[1] == 256
             assert reduced.shape[0] == sample_embeddings.shape[0]
@@ -282,9 +264,7 @@ class TestRAGResponseFormat:
 
         try:
             response = RAGResponseFormat(**sample_rag_data)
-            serialized = (
-                response.dict() if hasattr(response, "dict") else sample_rag_data
-            )
+            serialized = response.dict() if hasattr(response, "dict") else sample_rag_data
 
             # Should be JSON serializable
             json_str = json.dumps(serialized)
@@ -361,9 +341,7 @@ class TestRAGSystemIntegration:
             retrieved_docs = mock_vector_store.search(query)
 
             if hasattr(reasoning_engine, "reason_with_confidence"):
-                result = reasoning_engine.reason_with_confidence(
-                    {"text": query}, retrieved_docs
-                )
+                result = reasoning_engine.reason_with_confidence({"text": query}, retrieved_docs)
 
                 assert "confidence" in result
                 assert result["confidence"] > 0
@@ -439,10 +417,7 @@ class TestRAGPerformance:
             reasoning_engine = UncertaintyAwareReasoningEngine()
 
             # Mock complex reasoning task
-            large_context = [
-                {"content": f"Document {i} with relevant information"}
-                for i in range(50)
-            ]
+            large_context = [{"content": f"Document {i} with relevant information"} for i in range(50)]
 
             import time
 
@@ -450,14 +425,10 @@ class TestRAGPerformance:
 
             # Simulate reasoning process
             if hasattr(reasoning_engine, "reason_with_confidence"):
-                reasoning_engine.reason_with_confidence(
-                    {"text": "Complex query"}, large_context
-                )
+                reasoning_engine.reason_with_confidence({"text": "Complex query"}, large_context)
 
                 reasoning_time = time.time() - start_time
-                assert reasoning_time < 10.0, (
-                    f"Reasoning took {reasoning_time:.2f} seconds"
-                )
+                assert reasoning_time < 10.0, f"Reasoning took {reasoning_time:.2f} seconds"
 
         except ImportError:
             pytest.skip("Reasoning engine not available")
@@ -501,9 +472,7 @@ class TestRAGScalability:
             concurrent_time = time.time() - start_time
 
             # Should handle concurrency efficiently
-            assert concurrent_time < 1.0, (
-                f"Concurrent processing took {concurrent_time:.2f} seconds"
-            )
+            assert concurrent_time < 1.0, f"Concurrent processing took {concurrent_time:.2f} seconds"
             assert len(results) == 10
 
         # Run the async test

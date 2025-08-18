@@ -267,9 +267,7 @@ class AIVillageCodeMigrator:
 
         return result
 
-    def _apply_fixes_to_file(
-        self, file_path: str, fixes: list[ImportFix], result: MigrationResult
-    ):
+    def _apply_fixes_to_file(self, file_path: str, fixes: list[ImportFix], result: MigrationResult):
         """Apply fixes to a single file."""
         # Read the file
         with open(file_path, encoding="utf-8") as f:
@@ -287,9 +285,7 @@ class AIVillageCodeMigrator:
 
                     # Replace the old import with the new one
                     if fix.old_import.strip() in old_line:
-                        new_line = old_line.replace(
-                            fix.old_import.strip(), fix.new_import
-                        )
+                        new_line = old_line.replace(fix.old_import.strip(), fix.new_import)
                         lines[line_idx] = new_line + "\n"
 
                         result.imports_fixed += 1
@@ -302,9 +298,7 @@ class AIVillageCodeMigrator:
                         result.warnings.append(warning_msg)
 
             except Exception as e:
-                error_msg = (
-                    f"Error applying fix {fix.old_import} -> {fix.new_import}: {e}"
-                )
+                error_msg = f"Error applying fix {fix.old_import} -> {fix.new_import}: {e}"
                 logger.error(error_msg)
                 result.errors.append(error_msg)
 
@@ -313,9 +307,7 @@ class AIVillageCodeMigrator:
             with open(file_path, "w", encoding="utf-8") as f:
                 f.writelines(lines)
 
-            logger.info(
-                f"Updated {file_path} with {len([f for f in fixes if f.file_path == file_path])} fixes"
-            )
+            logger.info(f"Updated {file_path} with {len([f for f in fixes if f.file_path == file_path])} fixes")
 
     def generate_migration_report(
         self,
@@ -460,15 +452,11 @@ Examples:
         help="Apply fixes to files (modifies files in-place)",
     )
 
-    parser.add_argument(
-        "--report", action="store_true", help="Generate and display migration report"
-    )
+    parser.add_argument("--report", action="store_true", help="Generate and display migration report")
 
     parser.add_argument("--output", type=Path, help="Output file for migration report")
 
-    parser.add_argument(
-        "--verbose", "-v", action="store_true", help="Enable verbose logging"
-    )
+    parser.add_argument("--verbose", "-v", action="store_true", help="Enable verbose logging")
 
     args = parser.parse_args()
 
@@ -498,9 +486,7 @@ Examples:
             print("No import issues found. Your code appears to be up-to-date!")
             return 0
 
-        print(
-            f"Found {len(all_fixes)} import issues across {len(set(fix.file_path for fix in all_fixes))} files"
-        )
+        print(f"Found {len(all_fixes)} import issues across {len(set(fix.file_path for fix in all_fixes))} files")
 
         # Apply fixes if requested
         migration_result = None

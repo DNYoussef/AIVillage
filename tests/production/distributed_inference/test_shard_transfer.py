@@ -67,10 +67,7 @@ transformers_stub.TrainerCallback = type("TrainerCallback", (), {})
 transformers_stub.TrainingArguments = type("TrainingArguments", (), {})
 sys.modules.setdefault("transformers", transformers_stub)
 
-from src.production.distributed_inference.compression_integration import (
-    CompressedShard,
-    DistributedCompressionManager,
-)
+from src.production.distributed_inference.compression_integration import CompressedShard, DistributedCompressionManager
 from src.production.distributed_inference.model_sharding_engine import ModelShard
 
 

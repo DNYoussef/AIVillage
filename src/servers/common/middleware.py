@@ -34,9 +34,7 @@ class RateLimiter:
     def get_stats(self, client_id: str) -> dict[str, Any]:
         """Return statistics for the given client."""
         now = time.time()
-        window = [
-            t for t in self.requests.get(client_id, []) if now - t < self.window_seconds
-        ]
+        window = [t for t in self.requests.get(client_id, []) if now - t < self.window_seconds]
         remaining = max(0, self.max_requests - len(window))
         return {
             "requests": len(window),
@@ -64,9 +62,7 @@ class SecurityMiddleware(BaseHTTPMiddleware):
         client_ip = request.client.host if request.client else "unknown"
         if self.rate_limiter and request.url.path.startswith(self.protected_paths):
             if not self.rate_limiter.is_allowed(client_ip):
-                return JSONResponse(
-                    status_code=429, content={"detail": "Rate limit exceeded"}
-                )
+                return JSONResponse(status_code=429, content={"detail": "Rate limit exceeded"})
         if self.api_key and request.url.path not in {"/", "/healthz", "/status"}:
             key = request.headers.get("x-api-key")
             if key != self.api_key:

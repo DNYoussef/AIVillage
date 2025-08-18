@@ -90,9 +90,7 @@ class MobileCompressionPipeline:
 
         return model
 
-    def _quantize_int8_static(
-        self, model: nn.Module, calibration_data: torch.Tensor | None
-    ) -> nn.Module:
+    def _quantize_int8_static(self, model: nn.Module, calibration_data: torch.Tensor | None) -> nn.Module:
         """Static INT8 quantization with calibration."""
         model.eval()
 
@@ -113,9 +111,7 @@ class MobileCompressionPipeline:
 
     def _quantize_int8_dynamic(self, model: nn.Module) -> nn.Module:
         """Dynamic INT8 quantization (no calibration needed)."""
-        quantized_model = torch.quantization.quantize_dynamic(
-            model, {nn.Linear, nn.LSTM, nn.GRU}, dtype=torch.qint8
-        )
+        quantized_model = torch.quantization.quantize_dynamic(model, {nn.Linear, nn.LSTM, nn.GRU}, dtype=torch.qint8)
         return quantized_model
 
     def _quantize_int16(self, model: nn.Module) -> nn.Module:
@@ -222,9 +218,7 @@ class MobileOptimizedLayers:
         )
 
     @staticmethod
-    def create_mobile_attention(
-        embed_dim: int, num_heads: int = 4, use_linear_attention: bool = True
-    ) -> nn.Module:
+    def create_mobile_attention(embed_dim: int, num_heads: int = 4, use_linear_attention: bool = True) -> nn.Module:
         """Create mobile-optimized attention layer."""
         if use_linear_attention:
             # Linear attention for O(n) complexity instead of O(n²)

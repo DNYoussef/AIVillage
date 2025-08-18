@@ -241,15 +241,15 @@ class Grader:
                 elif isinstance(node, ast.Return):
                     analysis["has_return"] = True
 
-                elif isinstance(node, (ast.For, ast.While)):
+                elif isinstance(node, ast.For | ast.While):
                     analysis["has_loops"] = True
                     analysis["complexity_score"] += 0.2
 
-                elif isinstance(node, (ast.If, ast.IfExp)):
+                elif isinstance(node, ast.If | ast.IfExp):
                     analysis["has_conditionals"] = True
                     analysis["complexity_score"] += 0.1
 
-                elif isinstance(node, (ast.Import, ast.ImportFrom)):
+                elif isinstance(node, ast.Import | ast.ImportFrom):
                     analysis["imports"].append(ast.dump(node))
 
             # Estimate correctness based on structure

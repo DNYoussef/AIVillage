@@ -138,9 +138,7 @@ def test_realistic_compression() -> None:
 
         bitnet = BITNETCompressor()
 
-        print(
-            f"\n{'Type':<15} {'Original (MB)':<12} {'Compressed (B)':<12} {'Ratio':<8} {'Quality'}"
-        )
+        print(f"\n{'Type':<15} {'Original (MB)':<12} {'Compressed (B)':<12} {'Ratio':<8} {'Quality'}")
         print("-" * 70)
 
         for name, tensor in test_cases:
@@ -157,9 +155,7 @@ def test_realistic_compression() -> None:
             reconstructed = bitnet.decompress(compressed)
             mse = torch.mean((tensor - reconstructed) ** 2).item()
 
-            print(
-                f"{name:<15} {original_mb:<12.1f} {final_bytes:<12,} {ratio:<8.0f} {mse:<.4f}"
-            )
+            print(f"{name:<15} {original_mb:<12.1f} {final_bytes:<12,} {ratio:<8.0f} {mse:<.4f}")
 
     except Exception as e:
         print(f"Realistic compression test failed: {e}")

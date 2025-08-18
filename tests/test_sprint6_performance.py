@@ -219,9 +219,7 @@ class TestScalabilityTests:
             task_id = f"scale_test_task_{i}"
 
             start_time = time.time()
-            success = manager.register_task(
-                task_id, "lightweight"
-            )  # Use lightweight constraints
+            success = manager.register_task(task_id, "lightweight")  # Use lightweight constraints
             reg_time = time.time() - start_time
 
             registration_times.append(reg_time)
@@ -317,9 +315,7 @@ class TestScalabilityTests:
             snapshot = Mock()
             snapshot.memory_percent = 40.0
             snapshot.cpu_percent = 30.0
-            snapshot.memory_available = int(
-                total_memory * 1024 * 1024 * 1024 * 0.6
-            )  # 60% available
+            snapshot.memory_available = int(total_memory * 1024 * 1024 * 1024 * 0.6)  # 60% available
             snapshot.is_resource_constrained = False
 
             profiler.current_snapshot = snapshot
@@ -336,9 +332,9 @@ class TestScalabilityTests:
                     suitable_variants.append(variant)
 
             # Should have appropriate number of variants for device class
-            assert len(suitable_variants) >= expected_min_variants, (
-                f"Device with {total_memory}GB should have at least {expected_min_variants} variants, got {len(suitable_variants)}"
-            )
+            assert (
+                len(suitable_variants) >= expected_min_variants
+            ), f"Device with {total_memory}GB should have at least {expected_min_variants} variants, got {len(suitable_variants)}"
 
 
 if __name__ == "__main__":

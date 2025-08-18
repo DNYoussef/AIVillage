@@ -79,9 +79,7 @@ class TestServer(unittest.TestCase):
                 resp1 = await server.upload_endpoint(file)
                 file = UploadFile(filename="test.txt", file=BytesIO(b"hello"))
                 resp2 = await server.upload_endpoint(file)
-                query_resp = await server.query_endpoint(
-                    server.SecureQueryRequest(query="hi")
-                )
+                query_resp = await server.query_endpoint(server.SecureQueryRequest(query="hi"))
                 await server.shutdown_event()
                 return resp1, resp2, query_resp
 

@@ -94,9 +94,7 @@ def prove_stage_2_seedlm():
         from src.agent_forge.compression.seedlm import SEEDLMCompressor
 
         # Create test data (must be compatible with SeedLM block size)
-        test_tensor = torch.randn(
-            96, 96, dtype=torch.float32
-        )  # 96x96 = 9216, divisible by 12
+        test_tensor = torch.randn(96, 96, dtype=torch.float32)  # 96x96 = 9216, divisible by 12
         original_bytes = test_tensor.numel() * 4
 
         print("INPUT:")
@@ -128,9 +126,7 @@ def prove_stage_2_seedlm():
 
         print("\nCOMPRESSED SIZE BREAKDOWN:")
         print(f"  Seeds: {len(compressed['seeds'])} x 2 = {seeds_size} bytes")
-        print(
-            f"  Coefficients: {compressed['coefficients'].shape} = {coeffs_size} bytes"
-        )
+        print(f"  Coefficients: {compressed['coefficients'].shape} = {coeffs_size} bytes")
         print(f"  Exponents: {len(compressed['shared_exponents'])} = {exps_size} bytes")
         print(f"  Shape info: {shape_size} bytes")
         print(f"  Block info: {block_info_size} bytes")
@@ -205,14 +201,7 @@ def prove_stage_3_vptq():
         offset_size = 4  # float32
         shape_size = 16  # original_shape and metadata
         vector_info_size = 8  # vector_dim, pad_length
-        total_size = (
-            codebook_size
-            + indices_size
-            + scale_size
-            + offset_size
-            + shape_size
-            + vector_info_size
-        )
+        total_size = codebook_size + indices_size + scale_size + offset_size + shape_size + vector_info_size
 
         print("\nCOMPRESSED SIZE BREAKDOWN:")
         print(f"  Codebook: {compressed['codebook'].shape} = {codebook_size} bytes")
@@ -273,9 +262,7 @@ def prove_stage_4_hyper():
 
                 compress_func = compress
             elif location == "src.production.compression.hyper_compression":
-                from src.production.compression.hyper_compression import (
-                    HyperCompressionEncoder,
-                )
+                from src.production.compression.hyper_compression import HyperCompressionEncoder
 
                 encoder = HyperCompressionEncoder()
                 compress_func = encoder.encode
@@ -351,9 +338,7 @@ def prove_stage_4_hyper():
         print(f"  Compressed size: {compressed_size} bytes")
         print(f"  Compression ratio: {ratio:.2f}x")
 
-        print(
-            f"\nSTAGE 4 VERDICT: FALLBACK WORKS - {ratio:.1f}x compression (using gzip)"
-        )
+        print(f"\nSTAGE 4 VERDICT: FALLBACK WORKS - {ratio:.1f}x compression (using gzip)")
         return True, ratio
 
     except Exception as e:

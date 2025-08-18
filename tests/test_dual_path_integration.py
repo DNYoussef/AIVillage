@@ -13,21 +13,12 @@ import pytest
 
 # Add src and experimental paths
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
-sys.path.insert(
-    0, os.path.join(os.path.dirname(__file__), "..", "experimental", "agents", "agents")
-)
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "experimental", "agents", "agents"))
 
 # Import components to test
 try:
-    from navigator.path_policy import (
-        EnergyMode,
-        MessageContext,
-        NavigatorAgent,
-        PathProtocol,
-        RoutingPriority,
-    )
+    from navigator.path_policy import EnergyMode, MessageContext, NavigatorAgent, PathProtocol, RoutingPriority
 
-    from core.p2p.betanet_transport import BetanetMessage, BetanetTransport
     from core.p2p.bitchat_transport import BitChatMessage, BitChatTransport
     from core.p2p.dual_path_transport import DualPathMessage, DualPathTransport
 
@@ -37,9 +28,7 @@ except ImportError as e:
     IMPORTS_SUCCESSFUL = False
 
 # Skip all tests if imports fail
-pytestmark = pytest.mark.skipif(
-    not IMPORTS_SUCCESSFUL, reason="Required modules not available"
-)
+pytestmark = pytest.mark.skipif(not IMPORTS_SUCCESSFUL, reason="Required modules not available")
 
 
 class TestDualPathIntegration:
@@ -55,9 +44,7 @@ class TestDualPathIntegration:
     @pytest.fixture
     async def dual_transport(self):
         """Create dual-path transport instance"""
-        transport = DualPathTransport(
-            node_id="test_node", enable_bitchat=True, enable_betanet=True
-        )
+        transport = DualPathTransport(node_id="test_node", enable_bitchat=True, enable_betanet=True)
         try:
             yield transport
         finally:
@@ -154,9 +141,7 @@ class TestDualPathIntegration:
         navigator.conditions.battery_percent = 80
 
         # Test path selection
-        protocol, metadata = await navigator.select_path(
-            "remote_peer", context, ["bitchat", "betanet"]
-        )
+        protocol, metadata = await navigator.select_path("remote_peer", context, ["bitchat", "betanet"])
 
         # Should select Betanet for performance
         assert protocol == PathProtocol.BETANET
@@ -170,9 +155,7 @@ class TestDualPathIntegration:
         navigator.conditions.battery_percent = 15  # Low battery
         navigator.set_energy_mode(EnergyMode.POWERSAVE)
 
-        context = MessageContext(
-            size_bytes=1000, priority=3, requires_realtime=False
-        )  # Low priority
+        context = MessageContext(size_bytes=1000, priority=3, requires_realtime=False)  # Low priority
 
         # Mock peer nearby for BitChat
         navigator.conditions.bluetooth_available = True
@@ -266,9 +249,7 @@ class TestDualPathIntegration:
 
         # Test broadcast
         with patch.object(dual_transport, "_send_via_bitchat", return_value=True):
-            peer_count = await dual_transport.broadcast_message(
-                payload={"broadcast": "test"}, priority=6
-            )
+            peer_count = await dual_transport.broadcast_message(payload={"broadcast": "test"}, priority=6)
 
             # Should broadcast to available peers
             assert peer_count >= 0  # May be 0 if no real connections
@@ -287,9 +268,7 @@ class TestDualPathIntegration:
         navigator.conditions.bluetooth_available = True
 
         # Test path selection
-        protocol, metadata = await navigator.select_path(
-            "sensitive_peer", context, ["betanet", "bitchat"]
-        )
+        protocol, metadata = await navigator.select_path("sensitive_peer", context, ["betanet", "bitchat"])
 
         # Should prefer Betanet with privacy routing for sensitive content
         if protocol == PathProtocol.BETANET:
@@ -303,9 +282,7 @@ class TestNavigatorPathSelection:
     @pytest.fixture
     def navigator(self):
         """Create test Navigator instance"""
-        nav = NavigatorAgent(
-            agent_id="test_nav", routing_priority=RoutingPriority.OFFLINE_FIRST
-        )
+        nav = NavigatorAgent(agent_id="test_nav", routing_priority=RoutingPriority.OFFLINE_FIRST)
         nav.enable_global_south_mode(True)
         return nav
 
@@ -326,14 +303,10 @@ class TestNavigatorPathSelection:
         navigator.set_energy_mode(EnergyMode.POWERSAVE)
 
         # Create urgent message
-        urgent_context = MessageContext(
-            size_bytes=1000, priority=10, requires_realtime=True
-        )  # Maximum urgency
+        urgent_context = MessageContext(size_bytes=1000, priority=10, requires_realtime=True)  # Maximum urgency
 
         # Test emergency routing
-        protocol, metadata = await navigator.select_path(
-            "emergency_target", urgent_context, ["betanet"]
-        )
+        protocol, metadata = await navigator.select_path("emergency_target", urgent_context, ["betanet"])
 
         # Should override energy conservation for emergency
         assert protocol == PathProtocol.BETANET
@@ -352,9 +325,7 @@ class TestNavigatorPathSelection:
         # Mock nearby peer for BitChat alternative
         from navigator.path_policy import PeerInfo
 
-        peer_info = PeerInfo(
-            peer_id="local_peer", protocols={"bitchat"}, hop_distance=2
-        )
+        peer_info = PeerInfo(peer_id="local_peer", protocols={"bitchat"}, hop_distance=2)
         navigator.update_peer_info("local_peer", peer_info)
 
         # Test path selection

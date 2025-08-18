@@ -3,11 +3,7 @@ from pathlib import Path
 
 from token_economy.compute_mining import ComputeMiningSystem, ComputeSession
 from token_economy.credit_system import EarningRule, VILLAGECreditSystem
-from token_economy.jurisdiction import (
-    JurisdictionManager,
-    JurisdictionType,
-    UserContext,
-)
+from token_economy.jurisdiction import JurisdictionManager, JurisdictionType, UserContext
 
 
 def test_end_to_end_flow():

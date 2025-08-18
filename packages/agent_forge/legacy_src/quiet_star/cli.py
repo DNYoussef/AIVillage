@@ -168,11 +168,11 @@ def train(
         config.update_token_ids(tokenizer)
 
         # Wrap with Quiet-STaR
-        quiet_model = QuietSTaRModelWrapper(base_model=model, config=config, special_token_ids=config.special_token_ids)
+        QuietSTaRModelWrapper(base_model=model, config=config, special_token_ids=config.special_token_ids)
 
         # Create training components
-        loss_fn = QuietSTaRLoss(config)
-        sampler = ThoughtSampler(config, tokenizer)
+        QuietSTaRLoss(config)
+        ThoughtSampler(config, tokenizer)
 
         # Placeholder training loop (would need actual training data)
         click.echo("Training loop placeholder - implement with your training data")
@@ -1048,7 +1048,9 @@ def test_adaptive_temperature(questions_file, output_dir, model_name, strategy, 
                     "description": (
                         "low"
                         if temp < 0.5
-                        else "recommended" if temp == temp_recommendation.adjusted_temperature else "high"
+                        else "recommended"
+                        if temp == temp_recommendation.adjusted_temperature
+                        else "high"
                     ),
                     "note": f"Would sample with temperature {temp:.2f}",
                 }
@@ -1725,7 +1727,7 @@ def run_smoke_test(model_name: str, config: QuietSTaRConfig, num_samples: int, o
                     inputs["input_ids"], config.special_token_ids
                 )
 
-                loss_components = loss_fn(
+                loss_fn(
                     logits=outputs["logits"],
                     labels=labels,
                     thought_mask=thought_mask,

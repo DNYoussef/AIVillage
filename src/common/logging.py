@@ -32,9 +32,7 @@ def setup_logging(
     logging.Logger
         The root logger configured with the specified handlers.
     """
-    level = (
-        getattr(logging, log_level.upper()) if isinstance(log_level, str) else log_level
-    )
+    level = getattr(logging, log_level.upper()) if isinstance(log_level, str) else log_level
 
     logger = logging.getLogger()
     logger.setLevel(level)
@@ -50,9 +48,7 @@ def setup_logging(
     if log_file:
         log_path = Path(log_file)
         log_path.parent.mkdir(parents=True, exist_ok=True)
-        file_handler = RotatingFileHandler(
-            log_path, maxBytes=max_bytes, backupCount=backup_count
-        )
+        file_handler = RotatingFileHandler(log_path, maxBytes=max_bytes, backupCount=backup_count)
         file_handler.setFormatter(formatter)
         file_handler.setLevel(level)
         logger.addHandler(file_handler)

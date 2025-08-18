@@ -278,9 +278,7 @@ class TestComponentIntegration:
         edge = EdgeWindow(low=0.55, high=0.75)
         topic_mix = [TopicMix(topic="string_ops", weight=1.0)]
 
-        result = await problem_gen.generate_problems(
-            domain="coding-python", edge=edge, topic_mix=topic_mix, n=3
-        )
+        result = await problem_gen.generate_problems(domain="coding-python", edge=edge, topic_mix=topic_mix, n=3)
 
         assert result.ok is True
         assert len(result.problems) > 0
@@ -296,9 +294,7 @@ class TestComponentIntegration:
         """Test VariantMaker component integration."""
         variant_maker = VariantMaker(mock_llm)
 
-        variant_policy = VariantPolicy(
-            paraphrase=True, numeric_jitter=NumericJitterPolicy(enabled=True, pct=10)
-        )
+        variant_policy = VariantPolicy(paraphrase=True, numeric_jitter=NumericJitterPolicy(enabled=True, pct=10))
 
         result = await variant_maker.create_variants(
             base_problem=sample_problem, variant_policy=variant_policy, n_variants=2
@@ -317,13 +313,9 @@ class TestComponentIntegration:
         """Test Grader component integration."""
         grader = Grader(mock_llm, enable_code_execution=False)
 
-        model_answer = (
-            "def remove_vowels(s): return ''.join(c for c in s if c not in 'aeiou')"
-        )
+        model_answer = "def remove_vowels(s): return ''.join(c for c in s if c not in 'aeiou')"
 
-        result = await grader.grade_solution(
-            problem=sample_problem, model_answer=model_answer
-        )
+        result = await grader.grade_solution(problem=sample_problem, model_answer=model_answer)
 
         assert result.ok is True
         assert isinstance(result.correct, bool)
@@ -336,9 +328,7 @@ class TestComponentIntegration:
 
         wrong_answer = "def remove_vowels(s): return s.replace('a', '')"
 
-        result = await hint_gen.generate_hint(
-            problem=sample_problem, wrong_answer=wrong_answer
-        )
+        result = await hint_gen.generate_hint(problem=sample_problem, wrong_answer=wrong_answer)
 
         assert result.ok is True
         assert result.hint
@@ -399,10 +389,7 @@ class TestComponentIntegration:
         assert result.delta
 
         # Should nudge to make easier when accuracy too low
-        assert (
-            result.new_edge.low <= current_edge.low
-            or result.new_edge.high <= current_edge.high
-        )
+        assert result.new_edge.low <= current_edge.low or result.new_edge.high <= current_edge.high
 
 
 class TestEndToEndPipeline:
@@ -413,9 +400,7 @@ class TestEndToEndPipeline:
         """Test CurriculumOrchestrator initialization."""
         orchestrator = CurriculumOrchestrator(mock_llm)
 
-        result = await orchestrator.initialize_curriculum(
-            domain="coding-python", initial_telemetry=sample_telemetry
-        )
+        result = await orchestrator.initialize_curriculum(domain="coding-python", initial_telemetry=sample_telemetry)
 
         assert result["success"] is True
         assert result["domain"] == "coding-python"
@@ -453,9 +438,7 @@ class TestEndToEndPipeline:
         assert init_result["success"] is True
 
         # Run cycles
-        cycle_result = await orchestrator.run_curriculum_cycle(
-            domain="coding-python", num_cycles=2, cycle_capacity=10
-        )
+        cycle_result = await orchestrator.run_curriculum_cycle(domain="coding-python", num_cycles=2, cycle_capacity=10)
 
         assert cycle_result["total_cycles"] == 2
         assert cycle_result["successful_cycles"] >= 0
@@ -497,9 +480,7 @@ class TestDataFlowValidation:
         problem_gen = ProblemGenerator(mock_llm)
 
         # Find edge
-        edge_result = await edge_finder.find_edge(
-            domain="coding-python", telemetry=sample_telemetry
-        )
+        edge_result = await edge_finder.find_edge(domain="coding-python", telemetry=sample_telemetry)
 
         # Use edge result for problem generation
         problem_result = await problem_gen.generate_problems(
@@ -515,11 +496,7 @@ class TestDataFlowValidation:
         # Verify problems respect edge bounds
         for problem in problem_result.problems:
             # Allow some tolerance for edge bounds
-            assert (
-                edge_result.edge.low - 0.1
-                <= problem.difficulty
-                <= edge_result.edge.high + 0.1
-            )
+            assert edge_result.edge.low - 0.1 <= problem.difficulty <= edge_result.edge.high + 0.1
 
     @pytest.mark.asyncio
     async def test_problem_to_variant_flow(self, mock_llm, sample_problem):
@@ -605,15 +582,11 @@ class TestErrorHandlingAndRobustness:
 
         # Test negative problem count
         with pytest.raises(ValueError):
-            await problem_gen.generate_problems(
-                domain="coding-python", edge=edge, topic_mix=topic_mix, n=-1
-            )
+            await problem_gen.generate_problems(domain="coding-python", edge=edge, topic_mix=topic_mix, n=-1)
 
         # Test empty domain
         with pytest.raises(ValueError):
-            await problem_gen.generate_problems(
-                domain="", edge=edge, topic_mix=topic_mix, n=5
-            )
+            await problem_gen.generate_problems(domain="", edge=edge, topic_mix=topic_mix, n=5)
 
     @pytest.mark.asyncio
     async def test_component_fallback_mechanisms(self, mock_llm):
@@ -632,9 +605,7 @@ class TestErrorHandlingAndRobustness:
         )
 
         # Should work even with LLM failure by falling back to patterns
-        result = await hint_gen.generate_hint(
-            problem=problem, wrong_answer="print('wrong')", use_local_fallback=True
-        )
+        result = await hint_gen.generate_hint(problem=problem, wrong_answer="print('wrong')", use_local_fallback=True)
 
         assert result.ok is True
         assert result.hint
@@ -670,9 +641,7 @@ class TestPerformanceAndScaling:
         assert duration < 30  # Should complete within reasonable time with mocks
 
         # Should batch requests efficiently
-        assert (
-            mock_llm.call_count >= 2
-        )  # At least 2 batches for 10 problems with batch_size=5
+        assert mock_llm.call_count >= 2  # At least 2 batches for 10 problems with batch_size=5
 
     @pytest.mark.asyncio
     async def test_memory_usage_stability(self, mock_llm, sample_telemetry):
@@ -689,18 +658,14 @@ class TestPerformanceAndScaling:
 
         # Run multiple initialization cycles
         for i in range(5):
-            await orchestrator.initialize_curriculum(
-                domain=f"test-domain-{i}", initial_telemetry=sample_telemetry
-            )
+            await orchestrator.initialize_curriculum(domain=f"test-domain-{i}", initial_telemetry=sample_telemetry)
             gc.collect()  # Force garbage collection
 
         final_memory = process.memory_info().rss
         memory_growth = final_memory - initial_memory
 
         # Memory growth should be reasonable (less than 50MB for mock operations)
-        assert memory_growth < 50 * 1024 * 1024, (
-            f"Memory grew by {memory_growth / (1024 * 1024):.1f}MB"
-        )
+        assert memory_growth < 50 * 1024 * 1024, f"Memory grew by {memory_growth / (1024 * 1024):.1f}MB"
 
 
 if __name__ == "__main__":

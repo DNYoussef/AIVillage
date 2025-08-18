@@ -184,9 +184,7 @@ def test_real_weights_compression(weights_dict, max_layers=5):
             total_compressed += s4_size
             successful_layers += 1
 
-            print(
-                f"  FINAL: {original_size:,} -> {s4_size:,} bytes ({final_ratio:.1f}x compression)"
-            )
+            print(f"  FINAL: {original_size:,} -> {s4_size:,} bytes ({final_ratio:.1f}x compression)")
 
         except Exception as e:
             print(f"  ERROR: {e}")
@@ -201,12 +199,8 @@ def test_real_weights_compression(weights_dict, max_layers=5):
         print(f"Layers tested: {layer_count}")
         print(f"Successful: {successful_layers}/{layer_count}")
         print(f"Success rate: {successful_layers / layer_count * 100:.1f}%")
-        print(
-            f"Original size: {total_original:,} bytes ({total_original / (1024**2):.1f} MB)"
-        )
-        print(
-            f"Compressed size: {total_compressed:,} bytes ({total_compressed / (1024**2):.2f} MB)"
-        )
+        print(f"Original size: {total_original:,} bytes ({total_original / (1024**2):.1f} MB)")
+        print(f"Compressed size: {total_compressed:,} bytes ({total_compressed / (1024**2):.2f} MB)")
         print(f"Compression ratio: {overall_ratio:.1f}x")
 
         return overall_ratio, successful_layers == layer_count
@@ -267,15 +261,11 @@ def main():
 
     try:
         # Test compression on real weights
-        compression_ratio, all_work = test_real_weights_compression(
-            weights, max_layers=5
-        )
+        compression_ratio, all_work = test_real_weights_compression(weights, max_layers=5)
 
         if compression_ratio > 0:
             # Project to full model
-            final_mb, mobile_ok, kenya_ok = project_full_model_compression(
-                compression_ratio, total_params, size_gb
-            )
+            final_mb, mobile_ok, kenya_ok = project_full_model_compression(compression_ratio, total_params, size_gb)
 
             print("\n" + "=" * 70)
             print("FINAL VALIDATION WITH REAL MODEL")
@@ -298,16 +288,12 @@ def main():
             significant_compression = compression_ratio >= 20
             mobile_ready = mobile_ok
 
-            success = (
-                is_real_1_5b and all_work and significant_compression and mobile_ready
-            )
+            success = is_real_1_5b and all_work and significant_compression and mobile_ready
 
             print("\nFINAL ASSESSMENT:")
             print(f"  Real 1.5B model: {'YES' if is_real_1_5b else 'NO'}")
             print(f"  All stages functional: {'YES' if all_work else 'NO'}")
-            print(
-                f"  Significant compression: {'YES' if significant_compression else 'NO'}"
-            )
+            print(f"  Significant compression: {'YES' if significant_compression else 'NO'}")
             print(f"  Mobile deployment ready: {'YES' if mobile_ready else 'NO'}")
 
             if success:
@@ -324,9 +310,7 @@ def main():
                 if not all_work:
                     print("   - Some compression stages had issues")
                 if not significant_compression:
-                    print(
-                        f"   - Compression ratio {compression_ratio:.1f}x below target"
-                    )
+                    print(f"   - Compression ratio {compression_ratio:.1f}x below target")
                 if not mobile_ready:
                     print(f"   - Final size {final_mb:.1f}MB too large for mobile")
 

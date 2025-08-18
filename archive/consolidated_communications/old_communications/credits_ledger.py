@@ -1,9 +1,9 @@
 """Credits Ledger MVP - Fixed-supply shell currency with Prometheus-based earning."""
 
-import logging
-import os
 from dataclasses import dataclass
 from datetime import UTC, datetime
+import logging
+import os
 
 from sqlalchemy import (
     Column,
@@ -31,9 +31,7 @@ class User(Base):
 
     id = Column(Integer, primary_key=True)
     username = Column(String(64), unique=True, nullable=False, index=True)
-    node_id = Column(
-        String(128), unique=True, nullable=True
-    )  # For Prometheus node identification
+    node_id = Column(String(128), unique=True, nullable=True)  # For Prometheus node identification
     created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
     # Relationships
@@ -43,9 +41,7 @@ class User(Base):
         foreign_keys="Transaction.from_user_id",
         back_populates="from_user",
     )
-    received_transactions = relationship(
-        "Transaction", foreign_keys="Transaction.to_user_id", back_populates="to_user"
-    )
+    received_transactions = relationship("Transaction", foreign_keys="Transaction.to_user_id", back_populates="to_user")
     earnings = relationship("Earning", back_populates="user")
 
 
@@ -79,19 +75,13 @@ class Transaction(Base):
     burn_amount = Column(Integer, nullable=False)  # 1% burn
     net_amount = Column(Integer, nullable=False)  # Amount after burn
     transaction_type = Column(String(32), nullable=False)  # 'transfer', 'earn', 'burn'
-    status = Column(
-        String(32), default="pending", nullable=False
-    )  # 'pending', 'completed', 'failed'
+    status = Column(String(32), default="pending", nullable=False)  # 'pending', 'completed', 'failed'
     created_at = Column(DateTime, default=lambda: datetime.now(UTC))
     completed_at = Column(DateTime, nullable=True)
 
     # Relationships
-    from_user = relationship(
-        "User", foreign_keys=[from_user_id], back_populates="sent_transactions"
-    )
-    to_user = relationship(
-        "User", foreign_keys=[to_user_id], back_populates="received_transactions"
-    )
+    from_user = relationship("User", foreign_keys=[from_user_id], back_populates="sent_transactions")
+    to_user = relationship("User", foreign_keys=[to_user_id], back_populates="received_transactions")
 
     # Constraints
     __table_args__ = (
@@ -166,9 +156,7 @@ class EarningResponse:
 
 class CreditsConfig:
     def __init__(self) -> None:
-        self.database_url = os.getenv(
-            "DATABASE_URL", "postgresql://user:password@localhost/aivillage"
-        )
+        self.database_url = os.getenv("DATABASE_URL", "postgresql://user:password@localhost/aivillage")
         self.burn_rate = 0.01  # 1% burn on spend
         self.fixed_supply = 1_000_000_000  # 1 billion credits max supply
         self.earning_rate_flops = 1000  # credits per GFLOP
@@ -183,9 +171,7 @@ class CreditsLedger:
     def __init__(self, config: CreditsConfig) -> None:
         self.config = config
         self.engine = create_engine(config.database_url)
-        self.SessionLocal = sessionmaker(
-            autocommit=False, autoflush=False, bind=self.engine
-        )
+        self.SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=self.engine)
 
     def create_tables(self) -> None:
         """Create all database tables."""
@@ -236,9 +222,7 @@ class CreditsLedger:
                 last_updated=wallet.updated_at,
             )
 
-    def transfer(
-        self, from_username: str, to_username: str, amount: int
-    ) -> TransactionResponse:
+    def transfer(self, from_username: str, to_username: str, amount: int) -> TransactionResponse:
         """Transfer credits between users with 1% burn."""
         if amount <= 0:
             msg = "Amount must be positive"
@@ -249,9 +233,7 @@ class CreditsLedger:
 
         with self.get_session() as session:
             # Get users
-            from_user = (
-                session.query(User).filter(User.username == from_username).first()
-            )
+            from_user = session.query(User).filter(User.username == from_username).first()
             to_user = session.query(User).filter(User.username == to_username).first()
 
             if not from_user:
@@ -385,9 +367,7 @@ class CreditsLedger:
                 created_at=earning.created_at,
             )
 
-    def get_transactions(
-        self, username: str, limit: int = 100
-    ) -> list[TransactionResponse]:
+    def get_transactions(self, username: str, limit: int = 100) -> list[TransactionResponse]:
         """Get transaction history for user."""
         with self.get_session() as session:
             user = session.query(User).filter(User.username == username).first()

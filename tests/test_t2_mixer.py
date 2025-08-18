@@ -24,9 +24,7 @@ class MockModel(nn.Module):
                     [
                         nn.ModuleDict(
                             {
-                                "attn": nn.ModuleDict(
-                                    {"c_attn": nn.Linear(64, 192)}
-                                ),  # QKV projection
+                                "attn": nn.ModuleDict({"c_attn": nn.Linear(64, 192)}),  # QKV projection
                                 "mlp": nn.ModuleDict({"c_fc": nn.Linear(64, 256)}),
                             }
                         )
@@ -57,11 +55,7 @@ def mock_model():
 def model_shapes():
     """Get model parameter shapes."""
     model = MockModel()
-    return {
-        name: param.shape
-        for name, param in model.named_parameters()
-        if param.requires_grad
-    }
+    return {name: param.shape for name, param in model.named_parameters() if param.requires_grad}
 
 
 @pytest.fixture
@@ -94,9 +88,7 @@ class TestFeatureExtractor:
         """Test basic prompt statistics extraction."""
         extractor = FeatureExtractor()
 
-        prompt = (
-            "def fibonacci(n): return n if n <= 1 else fibonacci(n-1) + fibonacci(n-2)"
-        )
+        prompt = "def fibonacci(n): return n if n <= 1 else fibonacci(n-1) + fibonacci(n-2)"
         stats = extractor.extract_prompt_stats(prompt)
 
         assert isinstance(stats, dict)
@@ -211,9 +203,7 @@ class TestExpertAdapter:
             expected_shape = model_shapes[target_layers[0]]
 
             assert delta.shape == expected_shape
-            assert not torch.allclose(
-                delta, torch.zeros_like(delta)
-            )  # Should be non-zero
+            assert not torch.allclose(delta, torch.zeros_like(delta))  # Should be non-zero
 
     def test_different_initializations(self, model_shapes):
         """Test different initialization methods."""
@@ -342,10 +332,8 @@ class TestT2Mixer:
         # Test patching context manager
         with mixer.patch(mock_model, expert_weights):
             # Parameters should be modified inside context
-            modified = False
             for name, param in mock_model.named_parameters():
                 if not torch.allclose(param.data, original_params[name]):
-                    modified = True
                     break
             # Note: might not modify if layer names don't match exactly
 
@@ -402,10 +390,7 @@ class TestT2Mixer:
     def test_sparsity_enforcement(self, dispatch_spec, model_shapes):
         """Test that sparsity is enforced (max 4 active experts)."""
         # Create many experts
-        expert_lib = {
-            f"expert_{i}": {"layers": ["attn_qkv"], "rank": 1, "init": "random"}
-            for i in range(10)
-        }
+        expert_lib = {f"expert_{i}": {"layers": ["attn_qkv"], "rank": 1, "init": "random"} for i in range(10)}
 
         mixer = T2Mixer(dispatch_spec, expert_lib, model_shapes)
 
@@ -463,9 +448,7 @@ class TestIntegration:
         tokenizer.pad_token_id = 0
 
         # Set up mixer
-        model_shapes = {
-            name: param.shape for name, param in mock_model.named_parameters()
-        }
+        model_shapes = {name: param.shape for name, param in mock_model.named_parameters()}
 
         expert_lib = {
             "coding_expert": {
@@ -503,9 +486,7 @@ class TestIntegration:
             output = mock_model.generate(**tokenized, max_new_tokens=10)
 
             assert output is not None
-            assert (
-                output.shape[1] > tokenized["input_ids"].shape[1]
-            )  # Should have new tokens
+            assert output.shape[1] > tokenized["input_ids"].shape[1]  # Should have new tokens
 
     def test_error_handling(self, model_shapes):
         """Test error handling in various scenarios."""

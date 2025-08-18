@@ -640,12 +640,8 @@ class TestBenchmarkIntegration:
             ),
         ]
 
-        poor_performance = [
-            r for r in manager.results if r.threshold_level == PerformanceThreshold.POOR
-        ]
-        recommendations = manager._generate_performance_recommendations(
-            [], poor_performance
-        )
+        poor_performance = [r for r in manager.results if r.threshold_level == PerformanceThreshold.POOR]
+        recommendations = manager._generate_performance_recommendations([], poor_performance)
 
         assert len(recommendations) >= 3  # Should have specific recommendations
         rec_text = " ".join(recommendations).lower()
@@ -700,9 +696,7 @@ if __name__ == "__main__":
     # Test basic functionality
     print("Testing performance metrics...")
     metrics = PerformanceMetrics(latency_ms=25.0, throughput_ops_per_sec=50.0)
-    print(
-        f"OK Performance metrics: latency={metrics.latency_ms}ms, throughput={metrics.throughput_ops_per_sec}"
-    )
+    print(f"OK Performance metrics: latency={metrics.latency_ms}ms, throughput={metrics.throughput_ops_per_sec}")
 
     # Test resource monitoring
     print("Testing resource monitoring...")
@@ -710,9 +704,7 @@ if __name__ == "__main__":
     monitor.start_monitoring()
     time.sleep(0.2)
     resource_metrics = monitor.stop_monitoring()
-    print(
-        f"OK Resource monitoring: {resource_metrics.get('sample_count', 0)} samples collected"
-    )
+    print(f"OK Resource monitoring: {resource_metrics.get('sample_count', 0)} samples collected")
 
     # Test benchmark manager
     print("Testing benchmark manager...")
@@ -722,9 +714,7 @@ if __name__ == "__main__":
     # Test P2P benchmark
     print("Testing P2P latency benchmark...")
     metrics, details = manager._benchmark_p2p_latency()
-    print(
-        f"OK P2P benchmark: latency={metrics.latency_ms:.1f}ms, success_rate={metrics.success_rate:.1f}%"
-    )
+    print(f"OK P2P benchmark: latency={metrics.latency_ms:.1f}ms, success_rate={metrics.success_rate:.1f}%")
 
     # Test RAG benchmark
     print("Testing RAG query benchmark...")

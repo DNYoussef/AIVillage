@@ -18,11 +18,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 # Try to import the integrated metrics module
 try:
-    from evolution_metrics_integrated import (
-        IntegratedEvolutionMetrics,
-        get_health_status,
-        get_metrics_instance,
-    )
+    from evolution_metrics_integrated import get_health_status
 
     INTEGRATED_AVAILABLE = True
 except ImportError:
@@ -102,11 +98,7 @@ class EvolutionMetricsHandler(BaseHTTPRequestHandler):
                 "wal_mode": False,
             },
             "redis": {"available": False, "connected": False},
-            "metrics": {
-                "flush_threshold": int(
-                    os.getenv("AIVILLAGE_METRICS_FLUSH_THRESHOLD", "50")
-                )
-            },
+            "metrics": {"flush_threshold": int(os.getenv("AIVILLAGE_METRICS_FLUSH_THRESHOLD", "50"))},
             "api": {
                 "port": 8081,
                 "endpoints": [
@@ -134,9 +126,7 @@ class EvolutionMetricsHandler(BaseHTTPRequestHandler):
                 health["metrics"]["total_collected"] = cursor.fetchone()[0]
 
                 # Get current round
-                cursor.execute(
-                    "SELECT id, status FROM evolution_rounds ORDER BY id DESC LIMIT 1"
-                )
+                cursor.execute("SELECT id, status FROM evolution_rounds ORDER BY id DESC LIMIT 1")
                 row = cursor.fetchone()
                 if row:
                     health["database"]["current_round"] = row[0]

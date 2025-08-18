@@ -4,10 +4,7 @@ from typing import Any
 
 import pytest
 
-from src.production.distributed_agents.distributed_agent_orchestrator import (
-    AgentInstance,
-    DistributedAgentOrchestrator,
-)
+from src.production.distributed_agents.distributed_agent_orchestrator import AgentInstance, DistributedAgentOrchestrator
 
 
 @dataclass
@@ -29,9 +26,7 @@ class DummyShardingEngine:
     def __init__(self, devices: list[DeviceProfile]):
         self.devices = devices
 
-    async def _get_device_profiles(
-        self, target_devices=None
-    ):  # - matches orchestrator expectations
+    async def _get_device_profiles(self, target_devices=None):  # - matches orchestrator expectations
         return self.devices
 
 
@@ -92,9 +87,7 @@ def orchestrator_setup(monkeypatch):
     orch = DistributedAgentOrchestrator(p2p, monitor, sharding)
 
     # Speed up local deployments
-    monkeypatch.setattr(
-        DistributedAgentOrchestrator, "_deploy_agent_locally", _fast_deploy
-    )
+    monkeypatch.setattr(DistributedAgentOrchestrator, "_deploy_agent_locally", _fast_deploy)
     monkeypatch.setattr(AgentInstance, "__hash__", lambda self: hash(self.instance_id))
 
     return orch, p2p

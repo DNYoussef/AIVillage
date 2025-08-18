@@ -4,12 +4,7 @@ import unittest
 from pathlib import Path
 
 import torch
-
-from agent_forge.compression import (
-    SeedLMCompressor,
-    VPTQQuantizer,
-    stream_compress_model,
-)
+from agent_forge.compression import SeedLMCompressor, VPTQQuantizer, stream_compress_model
 from agent_forge.compression.stage1_bitnet import convert_to_bitnet
 
 try:

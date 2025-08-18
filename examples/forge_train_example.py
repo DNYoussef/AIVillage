@@ -14,11 +14,11 @@ import logging
 from pathlib import Path
 
 import numpy as np
-from datasets import Dataset
-from transformers import GPT2LMHeadModel, GPT2Tokenizer
 
 # Import Forge components
 from agent_forge.training.forge_train import ForgeTrainConfig, ForgeTrainer
+from datasets import Dataset
+from transformers import GPT2LMHeadModel, GPT2Tokenizer
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -132,9 +132,7 @@ def main():
     eval_data = create_synthetic_dataset(200)
 
     # Preprocess
-    train_data = train_data.map(
-        lambda x: preprocess_function(x, tokenizer), batched=True
-    )
+    train_data = train_data.map(lambda x: preprocess_function(x, tokenizer), batched=True)
     eval_data = eval_data.map(lambda x: preprocess_function(x, tokenizer), batched=True)
 
     # Create trainer
@@ -186,9 +184,7 @@ def main():
         if trainer.dream_manager:
             dream_stats = trainer.dream_manager.get_metrics()
             logger.info(f"  • Total Dreams: {dream_stats['total_dreams']}")
-            logger.info(
-                f"  • Buffer Size: {dream_stats['buffer_stats']['total_examples']}"
-            )
+            logger.info(f"  • Buffer Size: {dream_stats['buffer_stats']['total_examples']}")
 
 
 if __name__ == "__main__":

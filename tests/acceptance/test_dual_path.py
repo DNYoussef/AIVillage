@@ -24,19 +24,12 @@ import pytest
 try:
     from experimental.agents.agents.navigator.path_policy import (
         LinkChangeDetector,
-        MessageContext,
         NavigatorAgent,
-        NetworkConditions,
         PathProtocol,
         RoutingPriority,
     )
-    from src.core.p2p.unified_transport import (
-        DeliveryReceipt,
-        DeliveryStatus,
-        PathSelection,
-        TransportContext,
-        UnifiedTransport,
-    )
+
+    from src.core.p2p.unified_transport import DeliveryStatus, PathSelection, TransportContext, UnifiedTransport
 
     IMPORTS_AVAILABLE = True
 except ImportError as e:
@@ -61,9 +54,7 @@ class MockBitChatTransport:
     async def stop(self) -> None:
         self.is_running = False
 
-    async def send_message(
-        self, recipient: str, payload: bytes, priority: int = 5, ttl: int = 7
-    ) -> bool:
+    async def send_message(self, recipient: str, payload: bytes, priority: int = 5, ttl: int = 7) -> bool:
         # Simulate send success based on peer reachability
         return self.peer_reachable_map.get(recipient, True)
 
@@ -127,9 +118,7 @@ class MockBetanetTransport:
 class MockDualPathTransport:
     """Mock dual-path transport combining BitChat and Betanet"""
 
-    def __init__(
-        self, node_id: str, enable_bitchat: bool = True, enable_betanet: bool = True
-    ):
+    def __init__(self, node_id: str, enable_bitchat: bool = True, enable_betanet: bool = True):
         self.node_id = node_id
         self.enable_bitchat = enable_bitchat
         self.enable_betanet = enable_betanet
@@ -298,9 +287,7 @@ class TestProximityLocalScenario:
 
         # Verify message was queued for store-and-forward
         assert receipt.path_chosen in ["store_forward", "bitchat"]
-        assert (
-            mock_dual_path.routing_stats["store_forward_queued"] >= 0
-        )  # May be queued
+        assert mock_dual_path.routing_stats["store_forward_queued"] >= 0  # May be queued
 
     @pytest.mark.asyncio
     async def test_delivered_when_peer_reappears(self, unified_transport):
@@ -313,18 +300,14 @@ class TestProximityLocalScenario:
         mock_dual_path.bitchat.set_peer_reachable(peer_id, False)
         mock_dual_path.betanet.send_success = False
 
-        await transport.send(
-            peer_id, "Offline message", TransportContext(proximity_hint="local")
-        )
+        await transport.send(peer_id, "Offline message", TransportContext(proximity_hint="local"))
 
         # Step 2: Peer comes back online
         mock_dual_path.bitchat.set_peer_reachable(peer_id, True)
         mock_dual_path.betanet.send_success = True
 
         # Step 3: Send another message - should be delivered immediately
-        receipt2 = await transport.send(
-            peer_id, "Online message", TransportContext(proximity_hint="local")
-        )
+        receipt2 = await transport.send(peer_id, "Online message", TransportContext(proximity_hint="local"))
 
         # Verify second message was delivered via BitChat
         assert receipt2.path_chosen == "bitchat"
@@ -344,9 +327,7 @@ class TestLargeUrgentScenario:
         large_payload = "x" * 50000  # 50KB message
 
         # Send large message
-        context = TransportContext(
-            size_bytes=len(large_payload), priority=5, proximity_hint="remote"
-        )
+        context = TransportContext(size_bytes=len(large_payload), priority=5, proximity_hint="remote")
 
         receipt = await transport.send(peer_id, large_payload, context)
 
@@ -421,13 +402,9 @@ class TestLinkChangeScenario:
             receipt1 = await transport.send(peer_id, "Message 1", context1)
 
             # Simulate link change: Internet becomes available
-            with patch.object(
-                transport, "_check_internet_available", return_value=True
-            ):
+            with patch.object(transport, "_check_internet_available", return_value=True):
                 # Send second message - should detect link change and switch
-                context2 = TransportContext(
-                    size_bytes=20000, priority=8
-                )  # Large urgent
+                context2 = TransportContext(size_bytes=20000, priority=8)  # Large urgent
                 receipt2 = await transport.send(peer_id, "Message 2", context2)
                 switch_time = time.time()
 
@@ -436,8 +413,7 @@ class TestLinkChangeScenario:
 
         # Should have switched paths due to link change + large/urgent message
         assert (
-            receipt1.path_chosen != receipt2.path_chosen
-            or receipt2.path_reasoning == PathSelection.LINK_CHANGE_SWITCH
+            receipt1.path_chosen != receipt2.path_chosen or receipt2.path_reasoning == PathSelection.LINK_CHANGE_SWITCH
         )
         assert time_diff_ms < 1000  # Should be much faster than 1 second
 

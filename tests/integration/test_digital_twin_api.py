@@ -3,9 +3,8 @@ from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parents[2]))
 import pytest
-from fastapi.testclient import TestClient
-
 from experimental.services.services.twin.app import app
+from fastapi.testclient import TestClient
 
 
 @pytest.mark.asyncio

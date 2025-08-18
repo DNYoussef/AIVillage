@@ -78,11 +78,7 @@ def test_full_compression_workflow():
                         + 32
                     )
                 elif comp_name == "VPTQ":
-                    comp_size = (
-                        compressed["codebook"].numel() * 4
-                        + len(compressed["indices"])
-                        + 32
-                    )
+                    comp_size = compressed["codebook"].numel() * 4 + len(compressed["indices"]) + 32
 
                 # Scale to full model
                 param_ratio = first_param.numel() / total_params
@@ -92,9 +88,7 @@ def test_full_compression_workflow():
 
                 # Test decompression
                 decompressed = compressor.decompress(compressed)
-                reconstruction_error = torch.norm(
-                    first_param - decompressed
-                ) / torch.norm(first_param)
+                reconstruction_error = torch.norm(first_param - decompressed) / torch.norm(first_param)
 
                 print(f"  Compression time: {compress_time:.3f}s")
                 print(f"  Compressed size: {estimated_model_size:,.0f} bytes")
@@ -202,9 +196,7 @@ def demonstrate_mobile_scenarios():
     }
 
     print("\nMobile Deployment Analysis:")
-    print(
-        f"{'Device':<25} {'Model':<15} {'Original':<10} {'Compressed':<12} {'Fits?':<8}"
-    )
+    print(f"{'Device':<25} {'Model':<15} {'Original':<10} {'Compressed':<12} {'Fits?':<8}")
     print(f"{'-' * 75}")
 
     for device_name, device_info in devices.items():

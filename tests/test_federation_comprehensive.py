@@ -21,17 +21,13 @@ import pytest
 
 # Add src and experimental paths
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
-sys.path.insert(
-    0, os.path.join(os.path.dirname(__file__), "..", "experimental", "agents", "agents")
-)
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "experimental", "agents", "agents"))
 
 # Import all federation components
 try:
     # Core federation
-    from navigator.path_policy import NavigatorAgent, PathProtocol
 
     # Existing dual-path
-    from core.p2p.dual_path_transport import DualPathTransport
     from federation.core.device_registry import (
         DeviceCapability,
         DeviceIdentity,
@@ -43,27 +39,18 @@ try:
 
     # Enhanced protocols
     from federation.protocols.bitchat_enhanced import (
-        BitChatChannel,
-        BitChatCryptoKeys,
-        BitChatFragment,
         BitChatMessageType,
         EnhancedBitChatMessage,
         EnhancedBitChatTransport,
     )
-    from federation.protocols.tor_transport import (
-        TorCircuit,
-        TorHiddenService,
-        TorTransport,
-    )
+    from federation.protocols.tor_transport import TorHiddenService, TorTransport
 
     IMPORTS_OK = True
 except ImportError as e:
     print(f"Import error: {e}")
     IMPORTS_OK = False
 
-pytestmark = pytest.mark.skipif(
-    not IMPORTS_OK, reason="Federation modules not available"
-)
+pytestmark = pytest.mark.skipif(not IMPORTS_OK, reason="Federation modules not available")
 
 
 # ==================== DEVICE FEDERATION TESTS ====================
@@ -121,12 +108,8 @@ class TestDeviceFederationComplete:
 
         for scenario in role_scenarios:
             # Mock resource detection
-            with patch.object(
-                registry, "_gather_resources", return_value=scenario["resources"]
-            ):
-                profile = await registry.initialize_local_device(
-                    scenario["capabilities"], region="test"
-                )
+            with patch.object(registry, "_gather_resources", return_value=scenario["resources"]):
+                profile = await registry.initialize_local_device(scenario["capabilities"], region="test")
 
                 # Verify role assignment
                 assert profile.role in [
@@ -147,9 +130,7 @@ class TestDeviceFederationComplete:
             for i in range(devices_per_region):
                 device_id = f"{region}_device_{i}"
                 identity = DeviceIdentity(device_id)
-                profile = DeviceProfile(
-                    identity=identity, role=DeviceRole.EDGE, region=region
-                )
+                profile = DeviceProfile(identity=identity, role=DeviceRole.EDGE, region=region)
 
                 success = await registry.register_device(profile)
                 assert success
@@ -240,37 +221,27 @@ class TestEnhancedBitChatComplete:
         # Exchange keys (simulate key exchange)
         alice.peer_keys["bob"] = {
             "public_key": bob.crypto_keys.public_key,
-            "verify_key": bytes(bob.crypto_keys.verify_key)
-            if bob.crypto_keys.verify_key
-            else b"",
+            "verify_key": bytes(bob.crypto_keys.verify_key) if bob.crypto_keys.verify_key else b"",
         }
         bob.peer_keys["alice"] = {
             "public_key": alice.crypto_keys.public_key,
-            "verify_key": bytes(alice.crypto_keys.verify_key)
-            if alice.crypto_keys.verify_key
-            else b"",
+            "verify_key": bytes(alice.crypto_keys.verify_key) if alice.crypto_keys.verify_key else b"",
         }
 
         # Create and encrypt message
         test_payload = b"Secret message from Alice to Bob"
-        message = EnhancedBitChatMessage(
-            sender="alice", recipient="bob", payload=test_payload
-        )
+        message = EnhancedBitChatMessage(sender="alice", recipient="bob", payload=test_payload)
 
         # Test encryption (if crypto available)
         if alice.crypto_keys.public_key and bob.crypto_keys.public_key:
-            encrypted = message.encrypt_payload(
-                bob.crypto_keys.public_key, alice.crypto_keys.private_key
-            )
+            encrypted = message.encrypt_payload(bob.crypto_keys.public_key, alice.crypto_keys.private_key)
 
             if encrypted:
                 assert message.encrypted
                 assert message.payload != test_payload
 
                 # Test decryption
-                decrypted = message.decrypt_payload(
-                    alice.crypto_keys.public_key, bob.crypto_keys.private_key
-                )
+                decrypted = message.decrypt_payload(alice.crypto_keys.public_key, bob.crypto_keys.private_key)
                 assert decrypted
                 assert message.payload == test_payload
 
@@ -301,9 +272,7 @@ class TestEnhancedBitChatComplete:
                 assert message.is_fragmented
 
                 # Test reassembly
-                reassembled = EnhancedBitChatMessage.reassemble_from_fragments(
-                    fragments
-                )
+                reassembled = EnhancedBitChatMessage.reassemble_from_fragments(fragments)
                 assert reassembled is not None
                 assert reassembled.payload == payload
 
@@ -314,9 +283,7 @@ class TestEnhancedBitChatComplete:
             {"data": b"A" * 1000, "min_ratio": 0.9},
             # JSON-like data
             {
-                "data": json.dumps(
-                    {"key": "value"} | {f"key{i}": f"value{i}" for i in range(50)}
-                ).encode(),
+                "data": json.dumps({"key": "value"} | {f"key{i}": f"value{i}" for i in range(50)}).encode(),
                 "min_ratio": 0.3,
             },
             # Random data (less compressible)
@@ -353,12 +320,8 @@ class TestEnhancedBitChatComplete:
 
         # Test channel messaging
         for channel in channels:
-            with patch.object(
-                transport, "_transmit_enhanced_message", return_value=True
-            ):
-                success = await transport.send_channel_message(
-                    channel, f"Hello {channel}!"
-                )
+            with patch.object(transport, "_transmit_enhanced_message", return_value=True):
+                success = await transport.send_channel_message(channel, f"Hello {channel}!")
                 assert success
 
         # Leave channels
@@ -403,9 +366,7 @@ class TestTorTransportComplete:
 
     def test_tor_hidden_service_creation(self):
         """Test Tor hidden service configuration"""
-        transport = TorTransport(
-            socks_port=9050, control_port=9051, hidden_service_port=80, target_port=8080
-        )
+        transport = TorTransport(socks_port=9050, control_port=9051, hidden_service_port=80, target_port=8080)
 
         # Mock hidden service creation
         mock_service = TorHiddenService(
@@ -619,9 +580,7 @@ class TestMultiProtocolRouting:
             side_effect=lambda *a, **k: mock_send("tor", *a, **k),
         ):
             with patch.object(manager, "dual_path_transport") as mock_transport:
-                mock_transport.send_message = AsyncMock(
-                    side_effect=lambda *a, **k: mock_send("dual_path", *a, **k)
-                )
+                mock_transport.send_message = AsyncMock(side_effect=lambda *a, **k: mock_send("dual_path", *a, **k))
 
                 # Attempt to send message
                 manager.is_running = True
@@ -702,9 +661,7 @@ class TestPrivacyAndVPN:
             mock_relays.append(relay)
 
         # Mock device registry
-        with patch.object(
-            manager.device_registry, "get_devices_by_role", return_value=mock_relays
-        ):
+        with patch.object(manager.device_registry, "get_devices_by_role", return_value=mock_relays):
             # Create anonymous tunnel (3 hops)
             tunnel_id = await manager.create_privacy_tunnel(
                 destination="secure_destination", privacy_level=PrivacyLevel.ANONYMOUS
@@ -902,9 +859,7 @@ class TestSecurityValidation:
             device_id = f"sybil_{i}"
             identity = DeviceIdentity(device_id)
             # All have same characteristics (suspicious)
-            profile = DeviceProfile(
-                identity=identity, role=DeviceRole.WORKER, cpu_cores=4, memory_gb=8.0
-            )
+            profile = DeviceProfile(identity=identity, role=DeviceRole.WORKER, cpu_cores=4, memory_gb=8.0)
             # Low reputation for new devices
             profile.identity.reputation_score = 0.1
 
@@ -931,9 +886,7 @@ class TestSecurityValidation:
             signing_key = nacl.signing.SigningKey.generate()
             verify_key = signing_key.verify_key
 
-            message = EnhancedBitChatMessage(
-                sender="trusted_sender", payload=b"Important message"
-            )
+            message = EnhancedBitChatMessage(sender="trusted_sender", payload=b"Important message")
 
             # Sign message
             message.sign_message(signing_key)
@@ -987,9 +940,7 @@ class TestSecurityValidation:
         # Simulate DoS attempt with many requests
         spam_messages = []
         for i in range(1000):
-            spam_messages.append(
-                {"id": f"spam_{i}", "payload": os.urandom(1000)}
-            )  # Random payload
+            spam_messages.append({"id": f"spam_{i}", "payload": os.urandom(1000)})  # Random payload
 
         # Process with rate limiting
         processed = 0
@@ -1026,17 +977,11 @@ class TestEndToEndIntegration:
 
         # Mock service provider
         service_provider = Mock()
-        service_provider.process_request = AsyncMock(
-            return_value={"result": "Hola", "confidence": 0.95}
-        )
+        service_provider.process_request = AsyncMock(return_value={"result": "Hola", "confidence": 0.95})
 
         # Mock service discovery
-        with patch.object(
-            manager, "_find_service_providers", return_value=["edge_node_1"]
-        ):
-            with patch.object(
-                manager, "_select_optimal_service_node", return_value="edge_node_1"
-            ):
+        with patch.object(manager, "_find_service_providers", return_value=["edge_node_1"]):
+            with patch.object(manager, "_select_optimal_service_node", return_value="edge_node_1"):
                 with patch.object(manager, "send_federated_message", return_value=True):
                     with patch.object(
                         manager,
@@ -1082,9 +1027,7 @@ class TestEndToEndIntegration:
         test_message = b"Offline mesh test message"
 
         with patch.object(nodes[0], "_transmit_enhanced_message", return_value=True):
-            success = await nodes[0].send_enhanced_message(
-                recipient="mesh_node_4", payload=test_message
-            )
+            success = await nodes[0].send_enhanced_message(recipient="mesh_node_4", payload=test_message)
 
             assert success
 

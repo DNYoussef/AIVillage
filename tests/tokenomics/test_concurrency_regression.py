@@ -51,9 +51,7 @@ class TokenomicsConcurrencyTester:
             system.close()
         self.systems.clear()
 
-    def concurrent_balance_updates(
-        self, user_id: str, operations: int, amount: int
-    ) -> dict:
+    def concurrent_balance_updates(self, user_id: str, operations: int, amount: int) -> dict:
         """Perform concurrent balance updates for a user."""
         system = self.get_system()
         results = {
@@ -71,9 +69,7 @@ class TokenomicsConcurrencyTester:
                     op_amount = random.randint(1, 5)  # Small random amounts
                     current_balance = system.get_balance(user_id)
 
-                    if (
-                        random.choice([True, False]) and current_balance < 10000
-                    ):  # Cap balance growth
+                    if random.choice([True, False]) and current_balance < 10000:  # Cap balance growth
                         # Earning credits - ADD positive delta
                         system.update_balance(user_id, op_amount)
                     elif current_balance >= op_amount:
@@ -156,7 +152,7 @@ class TokenomicsConcurrencyTester:
                 try:
                     if random.choice([True, False]):
                         # Earning operation
-                        earned = system.earn_credits(
+                        system.earn_credits(
                             user_id,
                             "CONCURRENT_TEST",
                             {"iteration": i, "thread": threading.get_ident()},
@@ -166,9 +162,7 @@ class TokenomicsConcurrencyTester:
                         # Spending operation (if balance allows)
                         current_balance = system.get_balance(user_id)
                         if current_balance >= 5:
-                            system.spend_credits(
-                                user_id, 5, "TEST_SPEND", {"iteration": i}
-                            )
+                            system.spend_credits(user_id, 5, "TEST_SPEND", {"iteration": i})
                             results["spendings"] += 1
 
                     time.sleep(random.uniform(0.001, 0.004))
@@ -223,9 +217,7 @@ class TestTokenomicsConcurrencyRegression:
             num_threads = 5  # Fewer threads, higher contention
             operations_per_thread = 20  # Fewer operations to avoid timeout
 
-            with concurrent.futures.ThreadPoolExecutor(
-                max_workers=num_threads
-            ) as executor:
+            with concurrent.futures.ThreadPoolExecutor(max_workers=num_threads) as executor:
                 futures = [
                     executor.submit(
                         tester.concurrent_balance_updates,
@@ -249,25 +241,15 @@ class TestTokenomicsConcurrencyRegression:
 
             # Race condition detection checks
             if total_errors > 0 and "Python int too large" in str(tester.errors):
-                print(
-                    "  [DETECTED] Critical race condition: Integer overflow from concurrent reads"
-                )
-                print(
-                    "  [WARNING] Tokenomics system has race condition in balance updates"
-                )
-                print(
-                    "  [RECOMMENDATION] Implement atomic balance operations or database-level constraints"
-                )
+                print("  [DETECTED] Critical race condition: Integer overflow from concurrent reads")
+                print("  [WARNING] Tokenomics system has race condition in balance updates")
+                print("  [RECOMMENDATION] Implement atomic balance operations or database-level constraints")
 
                 # This is expected for now - the race condition exists
                 # In the future, this should be fixed and the test updated
 
-            elif (
-                final_balance > initial_balance * 100
-            ):  # Excessive growth indicates race condition
-                print(
-                    f"  [DETECTED] Suspicious balance growth: {final_balance} >> {initial_balance}"
-                )
+            elif final_balance > initial_balance * 100:  # Excessive growth indicates race condition
+                print(f"  [DETECTED] Suspicious balance growth: {final_balance} >> {initial_balance}")
                 print("  [WARNING] Possible race condition causing balance inflation")
 
             else:
@@ -320,12 +302,8 @@ class TestTokenomicsConcurrencyRegression:
 
                 return results
 
-            with concurrent.futures.ThreadPoolExecutor(
-                max_workers=num_threads
-            ) as executor:
-                futures = [
-                    executor.submit(safe_user_operations, i) for i in range(user_count)
-                ]
+            with concurrent.futures.ThreadPoolExecutor(max_workers=num_threads) as executor:
+                futures = [executor.submit(safe_user_operations, i) for i in range(user_count)]
 
                 results = [f.result() for f in concurrent.futures.as_completed(futures)]
 
@@ -343,19 +321,13 @@ class TestTokenomicsConcurrencyRegression:
             print(f"  Final balances: {final_balances}")
 
             # Regression checks for realistic operations
-            assert total_errors == 0, (
-                f"Realistic operations should not error: {total_errors}"
-            )
-            assert total_operations == user_count * operations_per_thread, (
-                "All operations should complete"
-            )
+            assert total_errors == 0, f"Realistic operations should not error: {total_errors}"
+            assert total_operations == user_count * operations_per_thread, "All operations should complete"
 
             # Each user should have their expected balance (500 + operations_per_thread)
             expected_balance = 500 + operations_per_thread
             for user, balance in final_balances.items():
-                assert balance == expected_balance, (
-                    f"{user} expected {expected_balance}, got {balance}"
-                )
+                assert balance == expected_balance, f"{user} expected {expected_balance}, got {balance}"
 
             print("  [PASS] Realistic concurrent operations regression test PASSED")
 
@@ -373,9 +345,7 @@ class TestTokenomicsConcurrencyRegression:
             num_threads = 8
             transactions_per_thread = 30
 
-            with concurrent.futures.ThreadPoolExecutor(
-                max_workers=num_threads
-            ) as executor:
+            with concurrent.futures.ThreadPoolExecutor(max_workers=num_threads) as executor:
                 futures = [
                     executor.submit(
                         tester.concurrent_transactions,
@@ -396,9 +366,7 @@ class TestTokenomicsConcurrencyRegression:
             print(f"  Error details: {len(tester.errors)}")
 
             # Regression checks
-            assert total_errors == 0, (
-                f"Transaction recording should not error: {tester.errors}"
-            )
+            assert total_errors == 0, f"Transaction recording should not error: {tester.errors}"
             assert total_transactions > 0, "Should successfully record transactions"
 
             print("  [PASS] Concurrent transaction recording regression test PASSED")
@@ -416,17 +384,13 @@ class TestTokenomicsConcurrencyRegression:
             # Initialize users with starting credits
             system = tester.get_system()
             for i in range(5):
-                system.update_balance(
-                    f"user_{i}", 500
-                )  # Start each user with 500 credits
+                system.update_balance(f"user_{i}", 500)  # Start each user with 500 credits
 
             # Run mixed concurrent operations
             num_threads = 12
             operations_per_thread = 25
 
-            with concurrent.futures.ThreadPoolExecutor(
-                max_workers=num_threads
-            ) as executor:
+            with concurrent.futures.ThreadPoolExecutor(max_workers=num_threads) as executor:
                 futures = [
                     executor.submit(
                         tester.concurrent_earning_spending,
@@ -455,12 +419,8 @@ class TestTokenomicsConcurrencyRegression:
             print(f"  Final balances: {final_balances}")
 
             # Regression checks
-            assert total_errors == 0, (
-                f"Mixed operations should not error: {tester.errors}"
-            )
-            assert total_earnings + total_spendings > 0, (
-                "Should complete some operations"
-            )
+            assert total_errors == 0, f"Mixed operations should not error: {tester.errors}"
+            assert total_earnings + total_spendings > 0, "Should complete some operations"
 
             # All balances should be non-negative
             for user, balance in final_balances.items():
@@ -490,9 +450,7 @@ class TestTokenomicsConcurrencyRegression:
                         # Quick successive operations that might cause locks
                         balance = system.get_balance(user_id)
                         system.update_balance(user_id, balance + 1)
-                        system.record_transaction(
-                            user_id, 1, "RAPID", "TEST", {"op": i}
-                        )
+                        system.record_transaction(user_id, 1, "RAPID", "TEST", {"op": i})
                         results["operations"] += 1
                     except Exception as e:
                         results["errors"] += 1
@@ -504,10 +462,7 @@ class TestTokenomicsConcurrencyRegression:
 
         # Run high contention test
         with concurrent.futures.ThreadPoolExecutor(max_workers=num_threads) as executor:
-            futures = [
-                executor.submit(rapid_operations, f"user_{i % 3}", temp_db_path)
-                for i in range(num_threads)
-            ]
+            futures = [executor.submit(rapid_operations, f"user_{i % 3}", temp_db_path) for i in range(num_threads)]
 
             results = [f.result() for f in concurrent.futures.as_completed(futures)]
 
@@ -521,21 +476,13 @@ class TestTokenomicsConcurrencyRegression:
         # Regression checks - some errors are acceptable under extreme contention,
         # but the system should handle most operations successfully
         success_rate = (
-            total_operations / (total_operations + total_errors)
-            if (total_operations + total_errors) > 0
-            else 0
+            total_operations / (total_operations + total_errors) if (total_operations + total_errors) > 0 else 0
         )
 
-        assert success_rate >= 0.95, (
-            f"Success rate too low: {success_rate:.2%} (95%+ required)"
-        )
-        assert total_operations > 0, (
-            "Should complete some operations even under high contention"
-        )
+        assert success_rate >= 0.95, f"Success rate too low: {success_rate:.2%} (95%+ required)"
+        assert total_operations > 0, "Should complete some operations even under high contention"
 
-        print(
-            f"  [PASS] Database lock handling regression test PASSED (success rate: {success_rate:.1%})"
-        )
+        print(f"  [PASS] Database lock handling regression test PASSED (success rate: {success_rate:.1%})")
 
     def test_wal_mode_effectiveness(self, temp_db_path):
         """Test that WAL mode is properly configured for concurrent access."""
@@ -571,21 +518,15 @@ class TestTokenomicsConcurrencyRegression:
             cursor.close()
 
             # Regression checks
-            assert journal_mode.upper() == "WAL", (
-                f"Expected WAL mode, got: {journal_mode}"
-            )
-            assert busy_timeout >= 5000, (
-                f"Busy timeout too low: {busy_timeout}ms (5000ms+ required)"
-            )
+            assert journal_mode.upper() == "WAL", f"Expected WAL mode, got: {journal_mode}"
+            assert busy_timeout >= 5000, f"Busy timeout too low: {busy_timeout}ms (5000ms+ required)"
 
             # Basic functionality check - ensure database operations work
-            test_balance = system.get_balance("wal_test_user")
+            system.get_balance("wal_test_user")
             system.update_balance("wal_test_user", 42)
             updated_balance = system.get_balance("wal_test_user")
 
-            assert updated_balance == 42, (
-                f"Basic database operations failed: {updated_balance} != 42"
-            )
+            assert updated_balance == 42, f"Basic database operations failed: {updated_balance} != 42"
 
             print("  [PASS] WAL mode configuration regression test PASSED")
 

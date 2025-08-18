@@ -56,18 +56,14 @@ def test_basic_pipeline():
         stats = pipeline.index_documents([test_doc])
 
         if stats["documents_processed"] != 1:
-            print(
-                f"FAIL: Expected 1 document processed, got {stats['documents_processed']}"
-            )
+            print(f"FAIL: Expected 1 document processed, got {stats['documents_processed']}")
             return False
 
         if stats["chunks_created"] < 1:
             print("FAIL: No chunks created from document")
             return False
 
-        print(
-            f"PASS: Indexed {stats['documents_processed']} docs, {stats['chunks_created']} chunks"
-        )
+        print(f"PASS: Indexed {stats['documents_processed']} docs, {stats['chunks_created']} chunks")
 
         return True
 
@@ -190,9 +186,7 @@ def test_enhanced_pipeline():
         print("PASS: Enhanced pipeline created")
 
         # Test trust metrics
-        test_metrics = TrustMetrics(
-            base_score=0.8, citation_count=50, source_quality=0.9
-        )
+        test_metrics = TrustMetrics(base_score=0.8, citation_count=50, source_quality=0.9)
 
         trust_score = test_metrics.trust_score
 
@@ -222,11 +216,7 @@ def test_semantic_cache():
         cache = SemanticMultiTierCache()
 
         # Check tier structure
-        if (
-            not hasattr(cache, "hot_cache")
-            or not hasattr(cache, "warm_cache")
-            or not hasattr(cache, "cold_cache")
-        ):
+        if not hasattr(cache, "hot_cache") or not hasattr(cache, "warm_cache") or not hasattr(cache, "cold_cache"):
             print("FAIL: Missing cache tiers")
             return False
 
@@ -412,9 +402,7 @@ async def test_end_to_end():
             result_text = top_result.text.lower()
             query_words = query.lower().split()
 
-            relevance_found = any(
-                word in result_text for word in query_words if len(word) > 3
-            )
+            relevance_found = any(word in result_text for word in query_words if len(word) > 3)
 
             if relevance_found:
                 print("PASS: Result appears relevant")

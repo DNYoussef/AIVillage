@@ -70,15 +70,11 @@ class RealWorldTestSuite:
         """Small transformer for translation."""
 
         class TranslationModel(nn.Module):
-            def __init__(
-                self, vocab_size=10000, d_model=256, nhead=4, num_layers=2
-            ) -> None:
+            def __init__(self, vocab_size=10000, d_model=256, nhead=4, num_layers=2) -> None:
                 super().__init__()
                 self.embedding = nn.Embedding(vocab_size, d_model)
                 self.pos_encoding = nn.Parameter(torch.randn(1, 100, d_model))
-                encoder_layer = nn.TransformerEncoderLayer(
-                    d_model, nhead, batch_first=True
-                )
+                encoder_layer = nn.TransformerEncoderLayer(d_model, nhead, batch_first=True)
                 self.transformer = nn.TransformerEncoder(encoder_layer, num_layers)
                 self.output = nn.Linear(d_model, vocab_size)
 
@@ -122,12 +118,8 @@ class RealWorldTestSuite:
         class SpeechModel(nn.Module):
             def __init__(self, input_dim=80, hidden_dim=128, num_classes=50) -> None:
                 super().__init__()
-                self.feature_extractor = nn.Conv1d(
-                    1, input_dim, kernel_size=160, stride=80
-                )
-                self.rnn = nn.LSTM(
-                    input_dim, hidden_dim, num_layers=2, batch_first=True
-                )
+                self.feature_extractor = nn.Conv1d(1, input_dim, kernel_size=160, stride=80)
+                self.rnn = nn.LSTM(input_dim, hidden_dim, num_layers=2, batch_first=True)
                 self.output = nn.Linear(hidden_dim, num_classes)
 
             def forward(self, x):
@@ -197,17 +189,12 @@ class RealWorldTestSuite:
                         test_input = torch.randn(config["typical_input"])
 
                     # Measure performance
-                    metrics = self._measure_performance(
-                        compressed, test_input, config["target_latency_ms"]
-                    )
+                    metrics = self._measure_performance(compressed, test_input, config["target_latency_ms"])
 
                     results[use_case][profile] = metrics
 
                     # Print summary
-                    print(
-                        f"  Latency: {metrics['latency_ms']:.1f}ms "
-                        f"({'✅' if metrics['meets_latency'] else '❌'})"
-                    )
+                    print(f"  Latency: {metrics['latency_ms']:.1f}ms " f"({'✅' if metrics['meets_latency'] else '❌'})")
                     print(f"  Model size: {metrics['model_size_mb']:.1f}MB")
                     print(f"  Memory usage: {metrics['memory_mb']:.1f}MB")
 

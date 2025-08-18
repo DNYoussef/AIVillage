@@ -78,9 +78,7 @@ class TestTokenBucketConfig:
 
     def test_config_custom_values(self):
         """Test custom token bucket configuration."""
-        config = TokenBucketConfig(
-            capacity=500, refill_rate=25.0, burst_capacity=100, window_seconds=120
-        )
+        config = TokenBucketConfig(capacity=500, refill_rate=25.0, burst_capacity=100, window_seconds=120)
 
         assert config.capacity == 500
         assert config.refill_rate == 25.0
@@ -259,13 +257,9 @@ class TestAccessTicket:
         assert deserialized_ticket.issuer_id == original_ticket.issuer_id
         assert deserialized_ticket.subject_id == original_ticket.subject_id
         assert deserialized_ticket.ticket_type == original_ticket.ticket_type
-        assert (
-            deserialized_ticket.max_bandwidth_bps == original_ticket.max_bandwidth_bps
-        )
+        assert deserialized_ticket.max_bandwidth_bps == original_ticket.max_bandwidth_bps
         assert deserialized_ticket.max_connections == original_ticket.max_connections
-        assert (
-            deserialized_ticket.allowed_protocols == original_ticket.allowed_protocols
-        )
+        assert deserialized_ticket.allowed_protocols == original_ticket.allowed_protocols
         assert deserialized_ticket.sequence_number == original_ticket.sequence_number
         assert deserialized_ticket.ticket_id == original_ticket.ticket_id
         assert deserialized_ticket.nonce == original_ticket.nonce
@@ -380,9 +374,7 @@ class TestAccessTicketManager:
         manager.add_trusted_issuer(issuer_id, public_key)
 
         # Create valid ticket
-        ticket = manager.issue_ticket(
-            issuer_id=issuer_id, subject_id="test_subject", private_key=private_key
-        )
+        ticket = manager.issue_ticket(issuer_id=issuer_id, subject_id="test_subject", private_key=private_key)
 
         # First validation should succeed
         status1 = manager.validate_ticket(ticket)
@@ -425,9 +417,7 @@ class TestAccessTicketManager:
         manager = AccessTicketManager()
 
         with pytest.raises(ValueError, match="Unknown issuer"):
-            manager.issue_ticket(
-                "unknown_issuer", "subject", private_key=secrets.token_bytes(32)
-            )
+            manager.issue_ticket("unknown_issuer", "subject", private_key=secrets.token_bytes(32))
 
     def test_ticket_permissions_by_type(self):
         """Test that ticket permissions vary by type."""
@@ -439,15 +429,9 @@ class TestAccessTicketManager:
         manager.add_trusted_issuer(issuer_id, public_key)
 
         # Issue different ticket types
-        standard_ticket = manager.issue_ticket(
-            issuer_id, "user1", TicketType.STANDARD, private_key=private_key
-        )
-        premium_ticket = manager.issue_ticket(
-            issuer_id, "user2", TicketType.PREMIUM, private_key=private_key
-        )
-        burst_ticket = manager.issue_ticket(
-            issuer_id, "user3", TicketType.BURST, private_key=private_key
-        )
+        standard_ticket = manager.issue_ticket(issuer_id, "user1", TicketType.STANDARD, private_key=private_key)
+        premium_ticket = manager.issue_ticket(issuer_id, "user2", TicketType.PREMIUM, private_key=private_key)
+        burst_ticket = manager.issue_ticket(issuer_id, "user3", TicketType.BURST, private_key=private_key)
 
         # Premium should have higher limits than standard
         assert premium_ticket.max_bandwidth_bps > standard_ticket.max_bandwidth_bps
@@ -466,9 +450,7 @@ class TestAccessTicketManager:
         manager.add_trusted_issuer(issuer_id, public_key)
 
         # Issue ticket
-        ticket = manager.issue_ticket(
-            issuer_id, "test_subject", TicketType.STANDARD, private_key=private_key
-        )
+        ticket = manager.issue_ticket(issuer_id, "test_subject", TicketType.STANDARD, private_key=private_key)
 
         # First validation should succeed
         status1 = manager.validate_ticket(ticket)
@@ -476,9 +458,7 @@ class TestAccessTicketManager:
 
         # Create many more tickets with same subject but different nonces
         for i in range(20):
-            new_ticket = manager.issue_ticket(
-                issuer_id, "test_subject", TicketType.STANDARD, private_key=private_key
-            )
+            new_ticket = manager.issue_ticket(issuer_id, "test_subject", TicketType.STANDARD, private_key=private_key)
             status = manager.validate_ticket(new_ticket)
             # Eventually should hit rate limit
             if status == TicketStatus.RATE_LIMITED:
@@ -493,9 +473,7 @@ class TestAccessTicketManager:
         manager = AccessTicketManager()
 
         # Add some expired items (simulate aging)
-        manager.active_tickets["expired_user"] = AccessTicket(
-            expires_at=time.time() - 3600
-        )
+        manager.active_tickets["expired_user"] = AccessTicket(expires_at=time.time() - 3600)
 
         # Add inactive rate limiter
         config = TokenBucketConfig()
@@ -545,9 +523,7 @@ class TestAccessTicketManager:
         private_key, public_key = generate_issuer_keypair()
         manager.add_trusted_issuer(issuer_id, public_key)
 
-        ticket = manager.issue_ticket(
-            issuer_id, "test_subject", TicketType.PREMIUM, private_key=private_key
-        )
+        ticket = manager.issue_ticket(issuer_id, "test_subject", TicketType.PREMIUM, private_key=private_key)
         manager.validate_ticket(ticket)  # This should cache the ticket
 
         status = manager.get_subject_status("test_subject")
@@ -673,9 +649,7 @@ def test_access_tickets_smoke_test():
     private_key, public_key = generate_issuer_keypair()
     assert len(private_key) == 32
     assert len(public_key) == 32
-    print(
-        f"  Issuer keypair generated: private={len(private_key)}, public={len(public_key)} bytes"
-    )
+    print(f"  Issuer keypair generated: private={len(private_key)}, public={len(public_key)} bytes")
 
     # Test adding trusted issuer
     issuer_id = "smoke_test_issuer"
@@ -692,9 +666,7 @@ def test_access_tickets_smoke_test():
     )
     assert ticket.issuer_id == issuer_id
     assert len(ticket.signature) > 0
-    print(
-        f"  Ticket issued: type={ticket.ticket_type.value}, bandwidth={ticket.max_bandwidth_bps}"
-    )
+    print(f"  Ticket issued: type={ticket.ticket_type.value}, bandwidth={ticket.max_bandwidth_bps}")
 
     # Test ticket validation
     status = manager.validate_ticket(ticket)
@@ -717,9 +689,7 @@ def test_access_tickets_smoke_test():
     # Test statistics
     stats = manager.get_statistics()
     assert stats["tickets_validated"] >= 1
-    print(
-        f"  Statistics: validated={stats['tickets_validated']}, trusted_issuers={stats['trusted_issuers']}"
-    )
+    print(f"  Statistics: validated={stats['tickets_validated']}, trusted_issuers={stats['trusted_issuers']}")
 
     print("  Access tickets smoke test PASSED")
 

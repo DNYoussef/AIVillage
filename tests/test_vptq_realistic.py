@@ -104,18 +104,12 @@ class TestVPTQRealistic(unittest.TestCase):
 
         # Calculate metrics
         compression_ratio = results["original_size_mb"] / results["compressed_size_mb"]
-        accuracy_retention = (
-            results["compressed_accuracy"] / results["original_accuracy"]
-        )
+        accuracy_retention = results["compressed_accuracy"] / results["original_accuracy"]
 
         # Quality gates
         self.assertGreaterEqual(compression_ratio, 3.5)  # At least 3.5x compression
-        self.assertGreaterEqual(
-            accuracy_retention, 0.90
-        )  # At least 90% accuracy retention
-        self.assertGreaterEqual(
-            results["inference_speedup"], 2.0
-        )  # At least 2x speedup
+        self.assertGreaterEqual(accuracy_retention, 0.90)  # At least 90% accuracy retention
+        self.assertGreaterEqual(results["inference_speedup"], 2.0)  # At least 2x speedup
 
     @patch("torch.cuda.is_available")
     def test_device_selection(self, mock_cuda_available):
@@ -223,9 +217,7 @@ class TestCompressionIntegration(unittest.TestCase):
 
         # Validate all models were compressed
         self.assertTrue(all(model["compressed"] for model in generation_models))
-        self.assertTrue(
-            all(model["compression_ratio"] >= 3.5 for model in generation_models)
-        )
+        self.assertTrue(all(model["compression_ratio"] >= 3.5 for model in generation_models))
 
     def test_pareto_front_with_compression(self):
         """Test Pareto front calculation including compression metrics."""
@@ -257,8 +249,7 @@ class TestCompressionIntegration(unittest.TestCase):
                         and model_b["latency_ms"] <= model_a["latency_ms"]
                         and (
                             model_b["accuracy"] > model_a["accuracy"]
-                            or model_b["compression_ratio"]
-                            > model_a["compression_ratio"]
+                            or model_b["compression_ratio"] > model_a["compression_ratio"]
                             or model_b["latency_ms"] < model_a["latency_ms"]
                         )
                     ):

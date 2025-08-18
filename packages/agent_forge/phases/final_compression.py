@@ -546,7 +546,7 @@ class GrokfastCompressionOptimizer:
         best_score = float("inf")
 
         for dim in vector_dims:
-            compressor = VPTQCompressor(bits=2, vector_dim=dim, iterations=10)
+            VPTQCompressor(bits=2, vector_dim=dim, iterations=10)
 
             # Simulate optimization with Grokfast-style updates
             score = 0.0

@@ -66,9 +66,7 @@ class RateLimiter:
         # Clean old requests
         if client_id in self.requests:
             self.requests[client_id] = [
-                timestamp
-                for timestamp in self.requests[client_id]
-                if now - timestamp < self.window_seconds
+                timestamp for timestamp in self.requests[client_id] if now - timestamp < self.window_seconds
             ]
         else:
             self.requests[client_id] = []
@@ -87,11 +85,7 @@ class RateLimiter:
             return {"requests": 0, "remaining": self.max_requests}
 
         now = time.time()
-        recent_requests = [
-            timestamp
-            for timestamp in self.requests[client_id]
-            if now - timestamp < self.window_seconds
-        ]
+        recent_requests = [timestamp for timestamp in self.requests[client_id] if now - timestamp < self.window_seconds]
 
         return {
             "requests": len(recent_requests),
@@ -104,9 +98,7 @@ class JWTAuthenticator:
     """JWT token authentication and management."""
 
     def __init__(self, secret_key: str | None = None) -> None:
-        self.secret_key = (
-            secret_key or os.getenv("API_SECRET_KEY") or secrets.token_urlsafe(32)
-        )
+        self.secret_key = secret_key or os.getenv("API_SECRET_KEY") or secrets.token_urlsafe(32)
         self.algorithm = "HS256"
         self.token_expiry_hours = int(os.getenv("API_JWT_EXPIRY_HOURS", "24"))
         self.refresh_expiry_days = int(os.getenv("API_REFRESH_TOKEN_EXPIRY_DAYS", "30"))
@@ -148,9 +140,7 @@ class JWTAuthenticator:
 
         return jwt.encode(payload, self.secret_key, algorithm=self.algorithm)
 
-    def verify_token(
-        self, token: str, token_type: str = "access_token"
-    ) -> dict[str, Any]:
+    def verify_token(self, token: str, token_type: str = "access_token") -> dict[str, Any]:
         """Verify and decode JWT token."""
         try:
             payload = jwt.decode(token, self.secret_key, algorithms=[self.algorithm])
@@ -171,9 +161,7 @@ class JWTAuthenticator:
     def hash_password(self, password: str) -> tuple[str, str]:
         """Hash password with salt using PBKDF2."""
         salt = os.urandom(32)
-        password_hash = hashlib.pbkdf2_hmac(
-            "sha256", password.encode("utf-8"), salt, 100000
-        )
+        password_hash = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, 100000)
 
         return salt.hex(), password_hash.hex()
 
@@ -183,9 +171,7 @@ class JWTAuthenticator:
             salt = bytes.fromhex(salt_hex)
             stored_hash = bytes.fromhex(hash_hex)
 
-            password_hash = hashlib.pbkdf2_hmac(
-                "sha256", password.encode("utf-8"), salt, 100000
-            )
+            password_hash = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, 100000)
 
             return hmac.compare_digest(password_hash, stored_hash)
         except Exception:
@@ -270,9 +256,7 @@ class InputValidator:
             return str(value)
 
         # Remove null bytes and control characters
-        sanitized = "".join(
-            char for char in value if ord(char) >= 32 or char in "\n\r\t"
-        )
+        sanitized = "".join(char for char in value if ord(char) >= 32 or char in "\n\r\t")
 
         # Limit length
         if len(sanitized) > max_length:
@@ -316,9 +300,7 @@ class SecureAPIServer:
 
         # CORS settings
         self.cors_enabled = os.getenv("API_CORS_ENABLED", "true").lower() == "true"
-        self.cors_origins = os.getenv(
-            "API_CORS_ORIGINS", "https://localhost:3000"
-        ).split(",")
+        self.cors_origins = os.getenv("API_CORS_ORIGINS", "https://localhost:3000").split(",")
 
         # Apps
         self.apps = {}
@@ -370,9 +352,7 @@ class SecureAPIServer:
             self.apps[service] = app
 
     @middleware
-    async def _security_middleware(
-        self, request: web_request.Request, handler: Callable
-    ) -> web.Response:
+    async def _security_middleware(self, request: web_request.Request, handler: Callable) -> web.Response:
         """Security headers and basic security checks."""
         response = await handler(request)
 
@@ -384,16 +364,12 @@ class SecureAPIServer:
         response.headers["Content-Security-Policy"] = "default-src 'self'"
 
         if self.tls_enabled:
-            response.headers["Strict-Transport-Security"] = (
-                "max-age=31536000; includeSubDomains"
-            )
+            response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
 
         return response
 
     @middleware
-    async def _rate_limit_middleware(
-        self, request: web_request.Request, handler: Callable
-    ) -> web.Response:
+    async def _rate_limit_middleware(self, request: web_request.Request, handler: Callable) -> web.Response:
         """Rate limiting middleware."""
         # Skip rate limiting for health checks
         if request.path.startswith("/health"):
@@ -408,9 +384,7 @@ class SecureAPIServer:
                 text=json.dumps(
                     {
                         "error": "Rate limit exceeded",
-                        "retry_after": int(
-                            stats.get("reset_time", time.time()) - time.time()
-                        ),
+                        "retry_after": int(stats.get("reset_time", time.time()) - time.time()),
                     }
                 ),
                 headers={
@@ -426,16 +400,12 @@ class SecureAPIServer:
         stats = self.rate_limiter.get_stats(client_id)
         response.headers["X-RateLimit-Limit"] = str(self.rate_limiter.max_requests)
         response.headers["X-RateLimit-Remaining"] = str(stats["remaining"])
-        response.headers["X-RateLimit-Reset"] = str(
-            int(stats.get("reset_time", time.time()))
-        )
+        response.headers["X-RateLimit-Reset"] = str(int(stats.get("reset_time", time.time())))
 
         return response
 
     @middleware
-    async def _auth_middleware(
-        self, request: web_request.Request, handler: Callable
-    ) -> web.Response:
+    async def _auth_middleware(self, request: web_request.Request, handler: Callable) -> web.Response:
         """Authentication middleware."""
         # Skip auth for public endpoints
         if request.path in ["/health", "/auth/login", "/auth/register"]:
@@ -444,9 +414,7 @@ class SecureAPIServer:
         # Check for API token
         auth_header = request.headers.get("Authorization")
         if not auth_header or not auth_header.startswith("Bearer "):
-            raise web.HTTPUnauthorized(
-                text=json.dumps({"error": "Missing or invalid authorization header"})
-            )
+            raise web.HTTPUnauthorized(text=json.dumps({"error": "Missing or invalid authorization header"}))
 
         token = auth_header[7:]  # Remove 'Bearer '
 
@@ -474,9 +442,7 @@ class SecureAPIServer:
             app.router.add_post("/profiles", self._create_profile)
             app.router.add_put("/profiles/{profile_id}", self._update_profile)
             app.router.add_delete("/profiles/{profile_id}", self._delete_profile)
-            app.router.add_get(
-                "/profiles/{profile_id}/export", self._export_profile_data
-            )
+            app.router.add_get("/profiles/{profile_id}/export", self._export_profile_data)
 
         elif service == "evolution_metrics":
             app.router.add_get("/metrics", self._get_metrics)
@@ -513,26 +479,18 @@ class SecureAPIServer:
             # Get user from RBAC system
             user = self.rbac_system.get_user(username)
             if not user:
-                raise web.HTTPUnauthorized(
-                    text=json.dumps({"error": "Invalid credentials"})
-                )
+                raise web.HTTPUnauthorized(text=json.dumps({"error": "Invalid credentials"}))
 
             # Verify password
             if not user.get("password_hash") or not user.get("password_salt"):
-                raise web.HTTPUnauthorized(
-                    text=json.dumps({"error": "Invalid credentials"})
-                )
+                raise web.HTTPUnauthorized(text=json.dumps({"error": "Invalid credentials"}))
 
             salt = user["password_salt"]
             expected_hash = user["password_hash"]
-            actual_hash = hashlib.pbkdf2_hmac(
-                "sha256", password.encode(), salt.encode(), 100000
-            ).hex()
+            actual_hash = hashlib.pbkdf2_hmac("sha256", password.encode(), salt.encode(), 100000).hex()
 
             if not hmac.compare_digest(expected_hash, actual_hash):
-                raise web.HTTPUnauthorized(
-                    text=json.dumps({"error": "Invalid credentials"})
-                )
+                raise web.HTTPUnauthorized(text=json.dumps({"error": "Invalid credentials"}))
 
             # Get user roles and permissions
             roles = self.rbac_system.get_user_roles(user["user_id"])
@@ -584,9 +542,7 @@ class SecureAPIServer:
             validated_data = self.validator.validate_json(data, schema)
 
             # Hash password
-            salt, password_hash = self.authenticator.hash_password(
-                validated_data["password"]
-            )
+            salt, password_hash = self.authenticator.hash_password(validated_data["password"])
 
             # Store user in database using RBAC system
             user_id = f"user_{secrets.token_urlsafe(8)}"
@@ -600,9 +556,7 @@ class SecureAPIServer:
             )
 
             if not success:
-                raise web.HTTPBadRequest(
-                    text=json.dumps({"error": "User registration failed"})
-                )
+                raise web.HTTPBadRequest(text=json.dumps({"error": "User registration failed"}))
 
             return web.json_response(
                 {
@@ -624,9 +578,7 @@ class SecureAPIServer:
             refresh_token = data.get("refresh_token")
 
             if not refresh_token:
-                raise web.HTTPBadRequest(
-                    text=json.dumps({"error": "Missing refresh token"})
-                )
+                raise web.HTTPBadRequest(text=json.dumps({"error": "Missing refresh token"}))
 
             payload = self.authenticator.verify_token(refresh_token, "refresh_token")
             user_id = payload["user_id"]
@@ -705,9 +657,7 @@ class SecureAPIServer:
         user_id = request.get("user", {}).get("user_id")
 
         if not user_id:
-            raise web.HTTPUnauthorized(
-                text=json.dumps({"error": "Authentication required"})
-            )
+            raise web.HTTPUnauthorized(text=json.dumps({"error": "Authentication required"}))
 
         try:
             # Retrieve profile with encryption
@@ -715,23 +665,17 @@ class SecureAPIServer:
             if not profile:
                 raise web.HTTPNotFound(text=json.dumps({"error": "Profile not found"}))
 
-            return web.json_response(
-                {"profile_id": profile_id, "data": profile, "status": "success"}
-            )
+            return web.json_response({"profile_id": profile_id, "data": profile, "status": "success"})
         except Exception as e:
             logger.exception(f"Failed to get profile {profile_id}: {e}")
-            raise web.HTTPInternalServerError(
-                text=json.dumps({"error": "Failed to retrieve profile"})
-            )
+            raise web.HTTPInternalServerError(text=json.dumps({"error": "Failed to retrieve profile"}))
 
     async def _create_profile(self, request: web_request.Request) -> web.Response:
         """Create learning profile."""
         user_id = request.get("user", {}).get("user_id")
 
         if not user_id:
-            raise web.HTTPUnauthorized(
-                text=json.dumps({"error": "Authentication required"})
-            )
+            raise web.HTTPUnauthorized(text=json.dumps({"error": "Authentication required"}))
 
         try:
             data = await request.json()
@@ -757,9 +701,7 @@ class SecureAPIServer:
             raise web.HTTPBadRequest(text=json.dumps({"error": "Invalid JSON"}))
         except Exception as e:
             logger.exception(f"Failed to create profile: {e}")
-            raise web.HTTPInternalServerError(
-                text=json.dumps({"error": "Failed to create profile"})
-            )
+            raise web.HTTPInternalServerError(text=json.dumps({"error": "Failed to create profile"}))
 
     async def _update_profile(self, request: web_request.Request) -> web.Response:
         """Update learning profile."""
@@ -767,9 +709,7 @@ class SecureAPIServer:
         user_id = request.get("user", {}).get("user_id")
 
         if not user_id:
-            raise web.HTTPUnauthorized(
-                text=json.dumps({"error": "Authentication required"})
-            )
+            raise web.HTTPUnauthorized(text=json.dumps({"error": "Authentication required"}))
 
         try:
             data = await request.json()
@@ -785,9 +725,7 @@ class SecureAPIServer:
             raise web.HTTPBadRequest(text=json.dumps({"error": "Invalid JSON"}))
         except Exception as e:
             logger.exception(f"Failed to update profile {profile_id}: {e}")
-            raise web.HTTPInternalServerError(
-                text=json.dumps({"error": "Failed to update profile"})
-            )
+            raise web.HTTPInternalServerError(text=json.dumps({"error": "Failed to update profile"}))
 
     async def _delete_profile(self, request: web_request.Request) -> web.Response:
         """Delete learning profile."""
@@ -795,27 +733,19 @@ class SecureAPIServer:
         user_id = request.get("user", {}).get("user_id")
 
         if not user_id:
-            raise web.HTTPUnauthorized(
-                text=json.dumps({"error": "Authentication required"})
-            )
+            raise web.HTTPUnauthorized(text=json.dumps({"error": "Authentication required"}))
 
         try:
             # GDPR-compliant deletion with secure erasure
-            success = self.profile_db.delete_profile(
-                user_id, profile_id, gdpr_compliant=True
-            )
+            success = self.profile_db.delete_profile(user_id, profile_id, gdpr_compliant=True)
 
             if not success:
                 raise web.HTTPNotFound(text=json.dumps({"error": "Profile not found"}))
 
-            return web.json_response(
-                {"profile_id": profile_id, "status": "deleted", "gdpr_compliant": True}
-            )
+            return web.json_response({"profile_id": profile_id, "status": "deleted", "gdpr_compliant": True})
         except Exception as e:
             logger.exception(f"Failed to delete profile {profile_id}: {e}")
-            raise web.HTTPInternalServerError(
-                text=json.dumps({"error": "Failed to delete profile"})
-            )
+            raise web.HTTPInternalServerError(text=json.dumps({"error": "Failed to delete profile"}))
 
     async def _export_profile_data(self, request: web_request.Request) -> web.Response:
         """Export profile data for GDPR compliance."""
@@ -823,18 +753,14 @@ class SecureAPIServer:
         user_id = request.get("user", {}).get("user_id")
 
         if not user_id:
-            raise web.HTTPUnauthorized(
-                text=json.dumps({"error": "Authentication required"})
-            )
+            raise web.HTTPUnauthorized(text=json.dumps({"error": "Authentication required"}))
 
         try:
             # Export all user data for GDPR compliance
             export_data = self.profile_db.export_user_data(user_id, profile_id)
 
             if not export_data:
-                raise web.HTTPNotFound(
-                    text=json.dumps({"error": "No data found for export"})
-                )
+                raise web.HTTPNotFound(text=json.dumps({"error": "No data found for export"}))
 
             return web.json_response(
                 {
@@ -847,9 +773,7 @@ class SecureAPIServer:
             )
         except Exception as e:
             logger.exception(f"Failed to export profile data {profile_id}: {e}")
-            raise web.HTTPInternalServerError(
-                text=json.dumps({"error": "Failed to export profile data"})
-            )
+            raise web.HTTPInternalServerError(text=json.dumps({"error": "Failed to export profile data"}))
 
     # Evolution Metrics endpoints (placeholder implementations)
     async def _get_metrics(self, request: web_request.Request) -> web.Response:
@@ -890,16 +814,12 @@ class SecureAPIServer:
         if Path(self.cert_file).exists() and Path(self.key_file).exists():
             context.load_cert_chain(self.cert_file, self.key_file)
         else:
-            logger.warning(
-                "TLS certificates not found, generating self-signed certificates"
-            )
+            logger.warning("TLS certificates not found, generating self-signed certificates")
             self._generate_self_signed_cert()
             context.load_cert_chain(self.cert_file, self.key_file)
 
         # Security settings
-        context.set_ciphers(
-            "ECDHE+AESGCM:ECDHE+CHACHA20:DHE+AESGCM:DHE+CHACHA20:!aNULL:!MD5:!DSS"
-        )
+        context.set_ciphers("ECDHE+AESGCM:ECDHE+CHACHA20:DHE+AESGCM:DHE+CHACHA20:!aNULL:!MD5:!DSS")
         context.options |= ssl.OP_NO_COMPRESSION
         context.options |= ssl.OP_NO_RENEGOTIATION
 
@@ -981,9 +901,7 @@ class SecureAPIServer:
             sites.append(site)
 
             protocol = "https" if self.tls_enabled else "http"
-            logger.info(
-                f"Started {service} API server: {protocol}://{self.host}:{port}"
-            )
+            logger.info(f"Started {service} API server: {protocol}://{self.host}:{port}")
 
         logger.info("All secure API servers started successfully")
         return runners, sites

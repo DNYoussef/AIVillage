@@ -57,9 +57,7 @@ with tempfile.TemporaryDirectory() as temp_dir:
     original_file_size = original_file.stat().st_size
 
     # Run mobile compression pipeline
-    compressed_file_path = quantizer.compress_for_mobile(
-        str(original_file), output_dir=str(temp_path / "mobile")
-    )
+    compressed_file_path = quantizer.compress_for_mobile(str(original_file), output_dir=str(temp_path / "mobile"))
 
     compressed_file_size = Path(compressed_file_path).stat().st_size
     file_ratio = original_file_size / compressed_file_size
@@ -80,9 +78,7 @@ print(f"   Target achieved: {ratio >= 3.5}")
 print("\n" + "=" * 60)
 print("PROOF RESULTS:")
 print("=" * 60)
-print(
-    f"✓ REAL PyTorch model: {sum(p.numel() for p in model.parameters()):,} parameters"
-)
+print(f"✓ REAL PyTorch model: {sum(p.numel() for p in model.parameters()):,} parameters")
 print(f"✓ REAL compression: {ratio:.2f}x using torch.quantization")
 print(f"✓ REAL memory savings: {(original_size_mb - compressed_size_mb):.2f} MB")
 print(f"✓ REAL file compression: {file_ratio:.2f}x")

@@ -18,33 +18,28 @@ import pytest
 try:
     from src.core.evolution_metrics_integrated import EvolutionMetricsData as EvolutionMetrics
     from src.core.evolution_metrics_integrated import IntegratedEvolutionMetrics as EvolutionMetricsCollector
-    from src.core.evolution_metrics_integrated import IntegratedEvolutionMetrics as SQLiteMetricsBackend
 
     EVOLUTION_AVAILABLE = True
 except ImportError:
     EVOLUTION_AVAILABLE = False
 
 try:
-    from src.production.rag.rag_system.core.pipeline import (
-        Answer,
-        Document,
-        EnhancedRAGPipeline,
-    )
+    from src.production.rag.rag_system.core.pipeline import Answer, Document, EnhancedRAGPipeline
 
     RAG_AVAILABLE = True
 except ImportError:
     RAG_AVAILABLE = False
 
 try:
-    from src.core.p2p.libp2p_mesh import LibP2PMeshNetwork, MeshMessage
-    from src.core.p2p.p2p_node import P2PNode, PeerCapabilities
+    from src.core.p2p.libp2p_mesh import MeshMessage
+    from src.core.p2p.p2p_node import P2PNode
 
     P2P_AVAILABLE = True
 except ImportError:
     P2P_AVAILABLE = False
 
 try:
-    from src.digital_twin.core.digital_twin import DigitalTwin, LearningProfile
+    from src.digital_twin.core.digital_twin import LearningProfile
 
     DIGITAL_TWIN_AVAILABLE = True
 except ImportError:
@@ -54,9 +49,7 @@ except ImportError:
 class TestEvolutionIntegration:
     """Test evolution metrics integration with existing agent forge."""
 
-    @pytest.mark.skipif(
-        not EVOLUTION_AVAILABLE, reason="Evolution metrics not available"
-    )
+    @pytest.mark.skipif(not EVOLUTION_AVAILABLE, reason="Evolution metrics not available")
     @pytest.mark.asyncio
     async def test_evolution_metrics_persistence(self):
         """Test that evolution metrics properly persist to database."""
@@ -96,9 +89,7 @@ class TestEvolutionIntegration:
 
             assert count == 1, "Evolution metrics should be persisted to database"
 
-    @pytest.mark.skipif(
-        not EVOLUTION_AVAILABLE, reason="Evolution metrics not available"
-    )
+    @pytest.mark.skipif(not EVOLUTION_AVAILABLE, reason="Evolution metrics not available")
     def test_metrics_data_format_compatibility(self):
         """Test that evolution metrics use compatible data formats."""
         metrics = EvolutionMetrics(
@@ -173,9 +164,7 @@ class TestRAGIntegration:
 
         results = [
             RetrievalResult(id=1, text="Test content about AI", score=0.9),
-            RetrievalResult(
-                id=2, text="More information on machine learning", score=0.8
-            ),
+            RetrievalResult(id=2, text="More information on machine learning", score=0.8),
         ]
 
         answer = pipeline.generate_answer("What is AI?", results)
@@ -184,9 +173,7 @@ class TestRAGIntegration:
         assert hasattr(answer, "text"), "Answer should have text"
         assert hasattr(answer, "citations"), "Answer should have citations"
         assert hasattr(answer, "confidence"), "Answer should have confidence score"
-        assert hasattr(answer, "source_documents"), (
-            "Answer should have source documents"
-        )
+        assert hasattr(answer, "source_documents"), "Answer should have source documents"
 
 
 class TestP2PIntegration:
@@ -325,9 +312,7 @@ class TestDataFlowIntegration:
         sig = inspect.signature(mock_async_method)
 
         assert "data" in sig.parameters, "Methods should accept data parameter"
-        assert sig.return_annotation != inspect.Signature.empty, (
-            "Methods should have return annotations"
-        )
+        assert sig.return_annotation != inspect.Signature.empty, "Methods should have return annotations"
 
 
 # Test configuration and fixtures
@@ -449,25 +434,14 @@ class TestCODEXConfigurationIntegration:
             sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
             from core.config_manager import CODEXConfigManager
 
-            config_manager = CODEXConfigManager(
-                config_dir=str(temp_config_dir), enable_hot_reload=False
-            )
+            config_manager = CODEXConfigManager(config_dir=str(temp_config_dir), enable_hot_reload=False)
 
             # Test main configuration
             assert config_manager.get("integration.evolution_metrics.enabled") is True
-            assert (
-                config_manager.get("integration.evolution_metrics.backend") == "sqlite"
-            )
-            assert (
-                config_manager.get("integration.rag_pipeline.embedding_model")
-                == "paraphrase-MiniLM-L3-v2"
-            )
-            assert (
-                config_manager.get("integration.p2p_networking.transport") == "libp2p"
-            )
-            assert (
-                config_manager.get("integration.digital_twin.privacy_mode") == "strict"
-            )
+            assert config_manager.get("integration.evolution_metrics.backend") == "sqlite"
+            assert config_manager.get("integration.rag_pipeline.embedding_model") == "paraphrase-MiniLM-L3-v2"
+            assert config_manager.get("integration.p2p_networking.transport") == "libp2p"
+            assert config_manager.get("integration.digital_twin.privacy_mode") == "strict"
 
             # Test P2P configuration
             assert config_manager.get("p2p_config.host") == "0.0.0.0"
@@ -477,10 +451,7 @@ class TestCODEXConfigurationIntegration:
             assert config_manager.get("p2p_config.security.tls_enabled") is True
 
             # Test RAG configuration
-            assert (
-                config_manager.get("rag_config.embedder.model_name")
-                == "paraphrase-MiniLM-L3-v2"
-            )
+            assert config_manager.get("rag_config.embedder.model_name") == "paraphrase-MiniLM-L3-v2"
             assert config_manager.get("rag_config.retrieval.vector_top_k") == 20
             assert config_manager.get("rag_config.retrieval.final_top_k") == 10
             assert config_manager.get("rag_config.cache.l1_size") == 128
@@ -507,20 +478,13 @@ class TestCODEXConfigurationIntegration:
             }
 
             with patch.dict(os.environ, test_env):
-                config_manager = CODEXConfigManager(
-                    config_dir=str(temp_config_dir), enable_hot_reload=False
-                )
+                config_manager = CODEXConfigManager(config_dir=str(temp_config_dir), enable_hot_reload=False)
 
                 # Verify overrides are applied
-                assert (
-                    config_manager.get("integration.evolution_metrics.backend")
-                    == "redis"
-                )
+                assert config_manager.get("integration.evolution_metrics.backend") == "redis"
                 assert config_manager.get("p2p_config.port") == 4002
                 assert config_manager.get("rag_config.cache.l1_size") == 256
-                assert (
-                    config_manager.get("integration.digital_twin.max_profiles") == 5000
-                )
+                assert config_manager.get("integration.digital_twin.max_profiles") == 5000
 
         except ImportError:
             pytest.skip("Config manager not available for testing")
@@ -533,9 +497,7 @@ class TestCODEXConfigurationIntegration:
             sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
             from core.config_manager import CODEXConfigManager
 
-            config_manager = CODEXConfigManager(
-                config_dir=str(temp_config_dir), enable_hot_reload=False
-            )
+            config_manager = CODEXConfigManager(config_dir=str(temp_config_dir), enable_hot_reload=False)
 
             # Test CODEX requirement compliance
             codex_requirements = [
@@ -568,9 +530,9 @@ class TestCODEXConfigurationIntegration:
 
             for config_path, expected_value in codex_requirements:
                 actual_value = config_manager.get(config_path)
-                assert actual_value == expected_value, (
-                    f"CODEX requirement failed: {config_path} = {actual_value}, expected {expected_value}"
-                )
+                assert (
+                    actual_value == expected_value
+                ), f"CODEX requirement failed: {config_path} = {actual_value}, expected {expected_value}"
 
         except ImportError:
             pytest.skip("Config manager not available for testing")

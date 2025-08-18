@@ -259,9 +259,7 @@ def validate_model_configuration() -> dict[str, Any]:
         results["issues"].append("Vector dimension mismatch")
 
     # Check cross-encoder model
-    cross_encoder = os.getenv(
-        "RAG_CROSS_ENCODER_MODEL", "cross-encoder/ms-marco-MiniLM-L-2-v2"
-    )
+    cross_encoder = os.getenv("RAG_CROSS_ENCODER_MODEL", "cross-encoder/ms-marco-MiniLM-L-2-v2")
     if "cross-encoder/ms-marco-MiniLM" in cross_encoder:
         print(f"✅ Cross-encoder model: {cross_encoder}")
         results["passed"] += 1

@@ -155,18 +155,10 @@ class TokenomicsReceiptManager:
                 )
 
                 # Create indexes for efficient queries
-                await conn.execute(
-                    "CREATE INDEX IF NOT EXISTS idx_receipts_node_id ON receipts(node_id)"
-                )
-                await conn.execute(
-                    "CREATE INDEX IF NOT EXISTS idx_receipts_timestamp ON receipts(timestamp)"
-                )
-                await conn.execute(
-                    "CREATE INDEX IF NOT EXISTS idx_receipts_status ON receipts(status)"
-                )
-                await conn.execute(
-                    "CREATE INDEX IF NOT EXISTS idx_receipts_tensor_id ON receipts(tensor_id)"
-                )
+                await conn.execute("CREATE INDEX IF NOT EXISTS idx_receipts_node_id ON receipts(node_id)")
+                await conn.execute("CREATE INDEX IF NOT EXISTS idx_receipts_timestamp ON receipts(timestamp)")
+                await conn.execute("CREATE INDEX IF NOT EXISTS idx_receipts_status ON receipts(status)")
+                await conn.execute("CREATE INDEX IF NOT EXISTS idx_receipts_tensor_id ON receipts(tensor_id)")
 
                 # Create summary view for statistics
                 await conn.execute(
@@ -202,9 +194,7 @@ class TokenomicsReceiptManager:
             try:
                 # Use aiosqlite for async operations (would need to be added to requirements)
                 # For now, using sync sqlite3 with asyncio thread executor
-                conn = await asyncio.get_event_loop().run_in_executor(
-                    None, sqlite3.connect, str(self.db_path)
-                )
+                conn = await asyncio.get_event_loop().run_in_executor(None, sqlite3.connect, str(self.db_path))
 
                 # Configure connection
                 conn.row_factory = sqlite3.Row
@@ -222,9 +212,7 @@ class TokenomicsReceiptManager:
                     retry_count += 1
                     self.stats["busy_timeouts"] += 1
                     wait_time = min(2**retry_count, 10)  # Exponential backoff, max 10s
-                    logger.warning(
-                        f"Database busy, retrying in {wait_time}s (attempt {retry_count})"
-                    )
+                    logger.warning(f"Database busy, retrying in {wait_time}s (attempt {retry_count})")
                     await asyncio.sleep(wait_time)
                     continue
                 else:
@@ -255,9 +243,7 @@ class TokenomicsReceiptManager:
         receipt_id = str(uuid.uuid4())
 
         # Calculate cost based on bytes transferred
-        amount = (
-            bytes_transferred * self.config.credit_per_mb_transferred / (1024 * 1024)
-        )
+        amount = bytes_transferred * self.config.credit_per_mb_transferred / (1024 * 1024)
 
         receipt = TokenomicsReceipt(
             receipt_id=receipt_id,
@@ -274,9 +260,7 @@ class TokenomicsReceiptManager:
         self.stats["receipts_created"] += 1
         self.stats["total_credits_processed"] += amount
 
-        logger.info(
-            f"Created tensor transfer receipt {receipt_id}: {bytes_transferred} bytes, {amount:.4f} credits"
-        )
+        logger.info(f"Created tensor transfer receipt {receipt_id}: {bytes_transferred} bytes, {amount:.4f} credits")
         return receipt_id
 
     async def create_compute_credit_receipt(
@@ -307,9 +291,7 @@ class TokenomicsReceiptManager:
         self.stats["receipts_created"] += 1
         self.stats["total_credits_processed"] += amount
 
-        logger.info(
-            f"Created compute credit receipt {receipt_id}: {compute_time_ms}ms, {amount:.4f} credits"
-        )
+        logger.info(f"Created compute credit receipt {receipt_id}: {compute_time_ms}ms, {amount:.4f} credits")
         return receipt_id
 
     async def create_bandwidth_usage_receipt(
@@ -340,9 +322,7 @@ class TokenomicsReceiptManager:
         self.stats["receipts_created"] += 1
         self.stats["total_credits_processed"] += amount
 
-        logger.info(
-            f"Created bandwidth usage receipt {receipt_id}: {bytes_transferred} bytes, {amount:.4f} credits"
-        )
+        logger.info(f"Created bandwidth usage receipt {receipt_id}: {bytes_transferred} bytes, {amount:.4f} credits")
         return receipt_id
 
     async def _store_receipt(self, receipt: TokenomicsReceipt) -> None:
@@ -395,9 +375,7 @@ class TokenomicsReceiptManager:
                     "SELECT * FROM receipts WHERE receipt_id = ?",
                     (receipt_id,),
                 )
-                row = await asyncio.get_event_loop().run_in_executor(
-                    None, cursor.fetchone
-                )
+                row = await asyncio.get_event_loop().run_in_executor(None, cursor.fetchone)
 
                 if row:
                     return self._row_to_receipt(row)
@@ -440,9 +418,7 @@ class TokenomicsReceiptManager:
                     "SELECT status FROM receipts WHERE receipt_id = ?",
                     (receipt_id,),
                 )
-                row = await asyncio.get_event_loop().run_in_executor(
-                    None, cursor.fetchone
-                )
+                row = await asyncio.get_event_loop().run_in_executor(None, cursor.fetchone)
 
                 if row and row["status"] == "confirmed":
                     self.stats["receipts_confirmed"] += 1
@@ -471,12 +447,8 @@ class TokenomicsReceiptManager:
             params.extend([limit, offset])
 
             async with self._get_connection() as conn:
-                cursor = await asyncio.get_event_loop().run_in_executor(
-                    None, conn.execute, query, params
-                )
-                rows = await asyncio.get_event_loop().run_in_executor(
-                    None, cursor.fetchall
-                )
+                cursor = await asyncio.get_event_loop().run_in_executor(None, conn.execute, query, params)
+                rows = await asyncio.get_event_loop().run_in_executor(None, cursor.fetchall)
 
                 return [self._row_to_receipt(row) for row in rows]
 
@@ -484,9 +456,7 @@ class TokenomicsReceiptManager:
             logger.exception(f"Failed to get receipts for node {node_id}: {e}")
             return []
 
-    async def get_tokenomics_summary(
-        self, node_id: str | None = None
-    ) -> dict[str, Any]:
+    async def get_tokenomics_summary(self, node_id: str | None = None) -> dict[str, Any]:
         """Get tokenomics summary statistics."""
         try:
             async with self._get_connection() as conn:
@@ -516,9 +486,7 @@ class TokenomicsReceiptManager:
                         "SELECT * FROM receipt_summary",
                     )
 
-                rows = await asyncio.get_event_loop().run_in_executor(
-                    None, cursor.fetchall
-                )
+                rows = await asyncio.get_event_loop().run_in_executor(None, cursor.fetchall)
 
                 summary = {
                     "node_id": node_id,

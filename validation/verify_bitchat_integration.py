@@ -65,16 +65,10 @@ class BitChatIntegrationVerifier:
             ("tmp_bitchat/android/results.md", "Android Results Documentation"),
         ]
 
-        android_files_exist = all(
-            self.verify_file_exists(file_path, desc)
-            for file_path, desc in files_to_check
-        )
+        android_files_exist = all(self.verify_file_exists(file_path, desc) for file_path, desc in files_to_check)
 
         # Check Android service implementation
-        service_file = (
-            project_root
-            / "android/app/src/main/java/com/aivillage/bitchat/BitChatService.kt"
-        )
+        service_file = project_root / "android/app/src/main/java/com/aivillage/bitchat/BitChatService.kt"
         if service_file.exists():
             content = service_file.read_text()
             required_features = [
@@ -105,10 +99,7 @@ class BitChatIntegrationVerifier:
             ("ios/Bitchat/README.md", "iOS Documentation"),
         ]
 
-        ios_files_exist = all(
-            self.verify_file_exists(file_path, desc)
-            for file_path, desc in files_to_check
-        )
+        ios_files_exist = all(self.verify_file_exists(file_path, desc) for file_path, desc in files_to_check)
 
         # Check iOS manager implementation
         manager_file = project_root / "ios/Bitchat/Sources/Bitchat/BitChatManager.swift"
@@ -141,10 +132,7 @@ class BitChatIntegrationVerifier:
             ("tmp_bitchat/proto/test_proto_roundtrip.py", "Protobuf Round-trip Tests"),
         ]
 
-        proto_files_exist = all(
-            self.verify_file_exists(file_path, desc)
-            for file_path, desc in files_to_check
-        )
+        proto_files_exist = all(self.verify_file_exists(file_path, desc) for file_path, desc in files_to_check)
 
         # Test protobuf validation
         if proto_files_exist:
@@ -180,9 +168,7 @@ class BitChatIntegrationVerifier:
         logger.info("🌉 Verifying Integration Bridge...")
 
         integration_file = "src/core/p2p/bitchat_mvp_integration.py"
-        bridge_exists = self.verify_file_exists(
-            integration_file, "BitChat MVP Integration Bridge"
-        )
+        bridge_exists = self.verify_file_exists(integration_file, "BitChat MVP Integration Bridge")
 
         if bridge_exists:
             # Check for key integration components
@@ -198,9 +184,7 @@ class BitChatIntegrationVerifier:
                 "mobile_peers",
             ]
 
-            features_present = all(
-                feature in content for feature in integration_features
-            )
+            features_present = all(feature in content for feature in integration_features)
             if features_present:
                 logger.info("✅ Integration bridge has all required features")
             else:
@@ -215,9 +199,7 @@ class BitChatIntegrationVerifier:
         logger.info("🧭 Verifying Navigator Integration...")
 
         # Check for dual-path transport file
-        dual_path_exists = self.verify_file_exists(
-            "src/core/p2p/dual_path_transport.py", "Dual-Path Transport System"
-        )
+        dual_path_exists = self.verify_file_exists("src/core/p2p/dual_path_transport.py", "Dual-Path Transport System")
 
         if dual_path_exists:
             # Check for navigator integration
@@ -252,9 +234,7 @@ class BitChatIntegrationVerifier:
         ]
 
         resource_exists = any(
-            self.verify_file_exists(
-                file_path, f"Resource Management: {Path(file_path).name}"
-            )
+            self.verify_file_exists(file_path, f"Resource Management: {Path(file_path).name}")
             for file_path in resource_files
         )
 
@@ -461,9 +441,7 @@ All core components have been implemented and are ready for hardware validation 
 """
 
         # Write report to file
-        report_file = (
-            project_root / "tmp_bitchat" / "integration_verification_report.md"
-        )
+        report_file = project_root / "tmp_bitchat" / "integration_verification_report.md"
         report_file.parent.mkdir(exist_ok=True)
         report_file.write_text(report_content)
 
@@ -473,9 +451,7 @@ All core components have been implemented and are ready for hardware validation 
         print("\n" + "=" * 60)
         print("🏁 BITCHAT MVP INTEGRATION VERIFICATION COMPLETE")
         print(f"📊 Overall Result: {overall_status}")
-        print(
-            f"📈 Success Rate: {success_rate:.1f}% ({passed_checks}/{total_checks} checks)"
-        )
+        print(f"📈 Success Rate: {success_rate:.1f}% ({passed_checks}/{total_checks} checks)")
         print(f"📄 Report: {report_file}")
         print("=" * 60)
 

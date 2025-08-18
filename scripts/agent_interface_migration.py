@@ -86,28 +86,19 @@ class AgentInterfaceMigrator:
                 }
 
                 # Check for RAG interface usage
-                if any(
-                    pattern in content
-                    for pattern in ["sha256", "SHA256", "hash.*embed", "mock.*embed"]
-                ):
+                if any(pattern in content for pattern in ["sha256", "SHA256", "hash.*embed", "mock.*embed"]):
                     file_analysis["needs_rag_update"] = True
                     file_analysis["outdated_patterns"].append("SHA256 embeddings")
                     analysis["rag_interfaces"].append(str(file_path))
 
                 # Check for evolution metrics usage
-                if any(
-                    pattern in content
-                    for pattern in ["evolution.*json", "metrics.*json", "fitness.*file"]
-                ):
+                if any(pattern in content for pattern in ["evolution.*json", "metrics.*json", "fitness.*file"]):
                     file_analysis["needs_evolution_update"] = True
                     file_analysis["outdated_patterns"].append("JSON metrics storage")
                     analysis["evolution_interfaces"].append(str(file_path))
 
                 # Check for P2P network usage
-                if any(
-                    pattern in content
-                    for pattern in ["bluetooth", "mock.*p2p", "fake.*network"]
-                ):
+                if any(pattern in content for pattern in ["bluetooth", "mock.*p2p", "fake.*network"]):
                     file_analysis["needs_p2p_update"] = True
                     file_analysis["outdated_patterns"].append("Mock Bluetooth P2P")
                     analysis["p2p_interfaces"].append(str(file_path))
@@ -126,9 +117,7 @@ class AgentInterfaceMigrator:
             except Exception as e:
                 logger.warning(f"Error analyzing {file_path}: {e}")
 
-        logger.info(
-            f"Analysis complete: {len(analysis['update_candidates'])} files need updates"
-        )
+        logger.info(f"Analysis complete: {len(analysis['update_candidates'])} files need updates")
         return analysis
 
     def create_updated_interfaces(self) -> dict[str, str]:
@@ -300,9 +289,7 @@ class P2PMessagingInterface:
 
         return interfaces
 
-    def update_agent_file(
-        self, file_path: Path, interface_updates: dict[str, str]
-    ) -> dict[str, Any]:
+    def update_agent_file(self, file_path: Path, interface_updates: dict[str, str]) -> dict[str, Any]:
         """Update a single agent file with new interfaces."""
         logger.info(f"Updating {file_path}...")
 
@@ -330,10 +317,7 @@ class P2PMessagingInterface:
                 updated_content = "import requests\nimport json\n" + updated_content
                 update_result["rag_updated"] = True
 
-            if (
-                "import sqlite3" not in updated_content
-                and "evolution" in content.lower()
-            ):
+            if "import sqlite3" not in updated_content and "evolution" in content.lower():
                 updated_content = "import sqlite3\n" + updated_content
                 update_result["evolution_updated"] = True
 
@@ -346,9 +330,7 @@ class P2PMessagingInterface:
                 updated_content += "\n\n" + interface_updates["rag_query_interface"]
 
             if update_result["evolution_updated"]:
-                updated_content += (
-                    "\n\n" + interface_updates["evolution_metrics_interface"]
-                )
+                updated_content += "\n\n" + interface_updates["evolution_metrics_interface"]
 
             if update_result["p2p_updated"]:
                 updated_content += "\n\n" + interface_updates["p2p_messaging_interface"]
@@ -600,9 +582,7 @@ class CODEXAgentAdapter:
             "update_results": update_results,
         }
 
-        logger.info(
-            f"Agent interface migration completed: {len(update_results)} agents updated"
-        )
+        logger.info(f"Agent interface migration completed: {len(update_results)} agents updated")
 
         return report
 

@@ -65,9 +65,7 @@ class TestOfflineRAGConfig:
 
     def test_config_customization(self):
         """Test that offline config can be customized."""
-        custom_config = OfflineRAGConfig(
-            chunk_size=128, cache_max_size_mb=256, strict_offline_mode=True
-        )
+        custom_config = OfflineRAGConfig(chunk_size=128, cache_max_size_mb=256, strict_offline_mode=True)
 
         assert custom_config.chunk_size == 128
         assert custom_config.cache_max_size_mb == 256
@@ -104,9 +102,7 @@ class TestOfflineDefaultsManager:
         with tempfile.TemporaryDirectory() as temp_dir:
             manager = OfflineDefaultsManager(temp_dir)
 
-            config = manager.get_offline_config(
-                chunk_size=64, temperature=0.1, custom_param="test_value"
-            )
+            config = manager.get_offline_config(chunk_size=64, temperature=0.1, custom_param="test_value")
 
             assert config.chunk_size == 64
             assert config.temperature == 0.1
@@ -130,10 +126,7 @@ class TestOfflineDefaultsManager:
             assert "storage_info" in results
 
             # Directory checks should pass (they were created)
-            assert (
-                len([w for w in results["warnings"] if "No local models found" in w])
-                > 0
-            )
+            assert len([w for w in results["warnings"] if "No local models found" in w]) > 0
 
     def test_validate_offline_readiness_with_disk_space_check(self):
         """Test validation includes disk space checking."""
@@ -266,7 +259,7 @@ class TestOfflineIntegration:
             assert setup_results["success"] is True
 
             # Step 2: Validate readiness
-            validation_results = validate_offline_readiness(temp_dir)
+            validate_offline_readiness(temp_dir)
 
             # Step 3: Get configuration
             config = get_offline_rag_config()
@@ -282,9 +275,7 @@ class TestOfflineIntegration:
 
     def test_offline_config_serialization(self):
         """Test that offline config can be serialized and deserialized."""
-        original_config = get_offline_rag_config(
-            chunk_size=128, temperature=0.2, custom_setting="test"
-        )
+        original_config = get_offline_rag_config(chunk_size=128, temperature=0.2, custom_setting="test")
 
         # Test dict conversion
         config_dict = original_config.dict()
@@ -305,9 +296,7 @@ class TestOfflineIntegration:
 
     def test_offline_graceful_degradation(self):
         """Test graceful degradation when optional components missing."""
-        config = get_offline_rag_config(
-            enable_graceful_degradation=True, strict_offline_mode=False
-        )
+        config = get_offline_rag_config(enable_graceful_degradation=True, strict_offline_mode=False)
 
         # Should allow graceful degradation
         assert config.enable_graceful_degradation is True

@@ -52,14 +52,10 @@ class DummyModel:
         """Mock state dict for PyTorch style."""
         return {
             "conv1.weight": MagicMock(
-                detach=lambda: MagicMock(
-                    cpu=lambda: MagicMock(numpy=lambda: np.random.randn(64, 3, 3, 3))
-                )
+                detach=lambda: MagicMock(cpu=lambda: MagicMock(numpy=lambda: np.random.randn(64, 3, 3, 3)))
             ),
             "linear1.weight": MagicMock(
-                detach=lambda: MagicMock(
-                    cpu=lambda: MagicMock(numpy=lambda: np.random.randn(100, 50))
-                )
+                detach=lambda: MagicMock(cpu=lambda: MagicMock(numpy=lambda: np.random.randn(100, 50)))
             ),
         }
 
@@ -233,17 +229,13 @@ class TestFeatureExtractor:
         assert features.extraction_method == ExtractionMethod.POOLING
 
         # Test projection
-        config = FeatureExtractionConfig(
-            extraction_method=ExtractionMethod.PROJECTION, projection_dim=50
-        )
+        config = FeatureExtractionConfig(extraction_method=ExtractionMethod.PROJECTION, projection_dim=50)
         extractor = FeatureExtractor(config)
         features = extractor.extract_features(model, "projected_model")
         assert features.extraction_method == ExtractionMethod.PROJECTION
 
         # Test sampling
-        config = FeatureExtractionConfig(
-            extraction_method=ExtractionMethod.SAMPLING, sampling_rate=0.5
-        )
+        config = FeatureExtractionConfig(extraction_method=ExtractionMethod.SAMPLING, sampling_rate=0.5)
         extractor = FeatureExtractor(config)
         features = extractor.extract_features(model, "sampled_model")
         assert features.extraction_method == ExtractionMethod.SAMPLING
@@ -264,9 +256,7 @@ class TestFeatureExtractor:
 
     def test_apply_aggregation(self):
         """Test feature aggregation."""
-        config = FeatureExtractionConfig(
-            extraction_method=ExtractionMethod.AGGREGATION, max_features=100
-        )
+        config = FeatureExtractionConfig(extraction_method=ExtractionMethod.AGGREGATION, max_features=100)
         extractor = FeatureExtractor(config)
         model = DummyModel()
 
@@ -278,9 +268,7 @@ class TestFeatureExtractor:
 
     def test_apply_compression(self):
         """Test feature compression."""
-        config = FeatureExtractionConfig(
-            extraction_method=ExtractionMethod.COMPRESSION, compression_ratio=0.5
-        )
+        config = FeatureExtractionConfig(extraction_method=ExtractionMethod.COMPRESSION, compression_ratio=0.5)
         extractor = FeatureExtractor(config)
         model = DummyModel()
 
@@ -328,9 +316,7 @@ class TestModelComparator:
             SimilarityMetric.SEMANTIC,
         ]
 
-        comparison = comparator.compare_models(
-            model_a, model_b, "model_a", "model_b", metrics=metrics
-        )
+        comparison = comparator.compare_models(model_a, model_b, "model_a", "model_b", metrics=metrics)
 
         for metric in metrics:
             assert metric.value in comparison.similarity_scores
@@ -608,9 +594,7 @@ class TestIntegrationScenarios:
 
         for i in range(len(models)):
             for j in range(i + 1, len(models)):
-                comparison = comparator.compare_models(
-                    models[i], models[j], f"model_{i}", f"model_{j}"
-                )
+                comparison = comparator.compare_models(models[i], models[j], f"model_{i}", f"model_{j}")
                 comparisons.append(comparison)
 
         assert len(comparisons) == 3  # 3 choose 2

@@ -59,10 +59,10 @@ def find_edge(
     # Load config if provided
     if config:
         with open(config) as f:
-            config_data = yaml.safe_load(f)
+            yaml.safe_load(f)
         click.echo(f"✅ Loaded config from {config}")
     else:
-        config_data = {}
+        pass
 
     # Get API key
     if not api_key:

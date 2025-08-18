@@ -28,10 +28,7 @@ except ImportError:
     import fitz
     import PyPDF2
 
-from production.rag.rag_system.core.intelligent_chunking import (
-    DocumentType,
-    IntelligentChunker,
-)
+from production.rag.rag_system.core.intelligent_chunking import DocumentType, IntelligentChunker
 from production.rag.wikipedia_data_loader import WikipediaDataLoader
 
 # Configure logging
@@ -104,12 +101,8 @@ class PDFIngestionManager:
                     text_blocks = []
                     metadata = {
                         "total_pages": len(reader.pages),
-                        "title": getattr(reader.metadata, "title", "")
-                        if reader.metadata
-                        else "",
-                        "author": getattr(reader.metadata, "author", "")
-                        if reader.metadata
-                        else "",
+                        "title": getattr(reader.metadata, "title", "") if reader.metadata else "",
+                        "author": getattr(reader.metadata, "author", "") if reader.metadata else "",
                         "pdf_path": pdf_path,
                     }
 
@@ -121,9 +114,7 @@ class PDFIngestionManager:
                     return "\n\n".join(text_blocks), metadata
 
             except Exception as e2:
-                logger.exception(
-                    f"Both PDF extraction methods failed for {pdf_path}: {e2}"
-                )
+                logger.exception(f"Both PDF extraction methods failed for {pdf_path}: {e2}")
                 raise
 
     def determine_document_type(self, text: str, filename: str) -> DocumentType:
@@ -195,9 +186,7 @@ class PDFIngestionManager:
             doc_id = f"{category}_{filename}_{file_hash[:8]}"
 
             # Chunk the document intelligently
-            chunks = self.chunker.chunk_document(
-                text=text, document_id=doc_id, doc_type=doc_type
-            )
+            chunks = self.chunker.chunk_document(text=text, document_id=doc_id, doc_type=doc_type)
 
             logger.info(f"Created {len(chunks)} intelligent chunks for {filename}")
 
@@ -242,15 +231,11 @@ class PDFIngestionManager:
                 self.stats["total_chunks"] += len(chunks)
                 self.stats["total_pages"] += metadata.get("total_pages", 0)
 
-                logger.info(
-                    f"Successfully ingested {filename} with {len(chunks)} chunks"
-                )
+                logger.info(f"Successfully ingested {filename} with {len(chunks)} chunks")
                 return True
 
             except Exception as e:
-                logger.exception(
-                    f"Failed to store document {filename} in RAG system: {e}"
-                )
+                logger.exception(f"Failed to store document {filename} in RAG system: {e}")
                 return False
 
         except Exception as e:
@@ -280,11 +265,7 @@ class PDFIngestionManager:
                 category = "magi_research"
             elif "multiagent" in path_str:
                 category = "multiagent"
-            elif (
-                "Math" in path_str
-                or "geometry" in path_str
-                or "calculus" in path_str.lower()
-            ):
+            elif "Math" in path_str or "geometry" in path_str or "calculus" in path_str.lower():
                 category = "mathematics"
             elif "Grossman" in path_str:
                 category = "grossman_calculus"
@@ -330,9 +311,7 @@ class PDFIngestionManager:
         batch_size = 5
         for i in range(0, len(pdf_sources), batch_size):
             batch = pdf_sources[i : i + batch_size]
-            logger.info(
-                f"Processing batch {i // batch_size + 1}/{(len(pdf_sources) - 1) // batch_size + 1}"
-            )
+            logger.info(f"Processing batch {i // batch_size + 1}/{(len(pdf_sources) - 1) // batch_size + 1}")
 
             tasks = []
             for pdf_path, category in batch:
@@ -355,9 +334,7 @@ class PDFIngestionManager:
         logger.info(f"Failed ingestions: {self.stats['failed_ingestions']}")
         logger.info(f"Total chunks created: {self.stats['total_chunks']}")
         logger.info(f"Total pages processed: {self.stats['total_pages']}")
-        logger.info(
-            f"Success rate: {self.stats['successful_ingestions'] / self.stats['total_files'] * 100:.1f}%"
-        )
+        logger.info(f"Success rate: {self.stats['successful_ingestions'] / self.stats['total_files'] * 100:.1f}%")
 
 
 async def main() -> None:

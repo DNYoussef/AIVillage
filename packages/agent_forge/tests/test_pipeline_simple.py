@@ -63,13 +63,12 @@ def test_phase_orchestrator():
         from core.phase_controller import PhaseOrchestrator
 
         # Create orchestrator
-        orchestrator = PhaseOrchestrator()
+        PhaseOrchestrator()
 
         # Test empty phase sequence
-        phases = []
 
         # Create dummy model
-        model = nn.Linear(10, 10)
+        nn.Linear(10, 10)
 
         logger.info("✓ Phase orchestrator created successfully")
         return True

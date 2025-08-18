@@ -10,11 +10,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
 
 import asyncio
 
-from core.p2p.betanet_covert_transport import (
-    BetanetCovertTransport,
-    CovertTrafficProfile,
-    CovertTransportMode,
-)
+from core.p2p.betanet_covert_transport import BetanetCovertTransport, CovertTrafficProfile, CovertTransportMode
 
 
 async def test_covert_transport_integration():
@@ -27,9 +23,7 @@ async def test_covert_transport_integration():
     assert len(profile.user_agents) >= 4, "Should have multiple user agents"
     assert len(profile.content_types) >= 3, "Should have multiple content types"
     assert len(profile.request_paths) >= 5, "Should have multiple request paths"
-    print(
-        f"    ✓ Profile created: {len(profile.user_agents)} UAs, {len(profile.content_types)} types"
-    )
+    print(f"    ✓ Profile created: {len(profile.user_agents)} UAs, {len(profile.content_types)} types")
 
     # Test 2: Transport Initialization
     print("\n[2] Testing transport initialization...")
@@ -63,12 +57,8 @@ async def test_covert_transport_integration():
     if transport.websocket_channel:
         try:
             # Test connection establishment (will use mock in test env)
-            result = await transport.websocket_channel.establish_connection(
-                "wss://example.com/ws"
-            )
-            print(
-                f"    ✓ WebSocket channel test: {'CONNECTED' if result else 'MOCK_OK'}"
-            )
+            result = await transport.websocket_channel.establish_connection("wss://example.com/ws")
+            print(f"    ✓ WebSocket channel test: {'CONNECTED' if result else 'MOCK_OK'}")
         except Exception as e:
             print(f"    ! WebSocket test exception (expected): {type(e).__name__}")
 
@@ -81,9 +71,7 @@ async def test_covert_transport_integration():
     mock_transport = MockBetanetTransport()
     from core.p2p.betanet_covert_transport import enhance_betanet_with_covert_transport
 
-    enhanced = enhance_betanet_with_covert_transport(
-        mock_transport, CovertTransportMode.HTTP2
-    )
+    enhanced = enhance_betanet_with_covert_transport(mock_transport, CovertTransportMode.HTTP2)
 
     assert hasattr(enhanced, "covert_transport")
     assert hasattr(enhanced, "send_covert_message")

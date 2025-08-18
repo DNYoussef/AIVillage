@@ -25,10 +25,12 @@ import pytest
 # Add src directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
-# Test imports
-from core.compatibility.bridge_system import compatibility_bridge
-from hardware.edge.digital_twin import DigitalTwinConcierge
 from hyperag.education import curriculum_graph
+
+from core.compatibility.bridge_system import compatibility_bridge
+
+# Test imports
+from hardware.edge.digital_twin import DigitalTwinConcierge
 from software.agent_forge.process_orchestrator import AgentForgeOrchestrator
 from software.hyper_rag.hyper_rag_pipeline import HyperRAGPipeline, RAGType
 from software.meta_agents.battle_orchestrator import BattleOrchestrator
@@ -254,10 +256,7 @@ class TestArchitecturalIntegration:
     async def test_hyperag_education_integration(self):
         """Test HyperAG education system integration."""
         # Test curriculum graph functionality
-        from hyperag.education import (
-            add_concept_to_curriculum,
-            generate_learning_path_for_topic,
-        )
+        from hyperag.education import add_concept_to_curriculum, generate_learning_path_for_topic
 
         # Add test concepts to curriculum
         concept_id_1 = add_concept_to_curriculum(
@@ -312,7 +311,7 @@ class TestArchitecturalIntegration:
         assert stats["total_mappings"] >= 0
 
         # Test migration guidance
-        guidance = compatibility_bridge.get_migration_guidance("agent_forge.core")
+        compatibility_bridge.get_migration_guidance("agent_forge.core")
         # May be None if no specific guidance is registered
 
         # Test deprecation registration
@@ -327,18 +326,14 @@ class TestArchitecturalIntegration:
         assert success is True
 
         # Test bridge creation
-        bridge_created = compatibility_bridge.create_import_bridge(
-            "test_old_module", "test.new.module"
-        )
+        bridge_created = compatibility_bridge.create_import_bridge("test_old_module", "test.new.module")
 
         assert bridge_created is True
 
         logger.info("✓ Compatibility Bridge integration test passed")
 
     @pytest.mark.asyncio
-    async def test_cross_component_communication(
-        self, hyper_rag, sword_agent, shield_agent
-    ):
+    async def test_cross_component_communication(self, hyper_rag, sword_agent, shield_agent):
         """Test communication between different architectural components."""
         # Simulate Sage Agent using Hyper RAG to answer Sword Agent query
         await hyper_rag.ingest_knowledge(
@@ -360,9 +355,7 @@ class TestArchitecturalIntegration:
 
         # Shield Agent analyzes threat based on retrieved knowledge
         threat_indicators = ["unusual_sql_queries", "error_message_leakage"]
-        threat_analysis = await shield_agent.threat_detection_analysis(
-            threat_indicators
-        )
+        threat_analysis = await shield_agent.threat_detection_analysis(threat_indicators)
 
         assert "threat_type" in threat_analysis
         assert "severity" in threat_analysis
@@ -427,10 +420,7 @@ class TestArchitecturalIntegration:
         assert len(knowledge_result.items) >= 2
 
         # 4. Generate learning path using HyperAG education system
-        from hyperag.education import (
-            add_concept_to_curriculum,
-            generate_learning_path_for_topic,
-        )
+        from hyperag.education import add_concept_to_curriculum, generate_learning_path_for_topic
 
         # Add cybersecurity concepts
         intro_concept = add_concept_to_curriculum(
@@ -440,7 +430,7 @@ class TestArchitecturalIntegration:
             estimated_minutes=90,
         )
 
-        threats_concept = add_concept_to_curriculum(
+        add_concept_to_curriculum(
             name="Common Cyber Threats",
             description="Understanding malware, phishing, and other attacks",
             difficulty="intermediate",
@@ -492,9 +482,7 @@ class TestArchitecturalIntegration:
             "response_confidence": knowledge_result.confidence_score,
             "educational_components": {
                 "concepts_available": len(curriculum_graph.concepts),
-                "learning_path_duration": learning_path.estimated_duration_hours
-                if learning_path
-                else 0,
+                "learning_path_duration": learning_path.estimated_duration_hours if learning_path else 0,
                 "difficulty_appropriate": True,
             },
         }
@@ -533,9 +521,7 @@ class TestArchitecturalIntegration:
         initialization_time = (end_time - start_time).total_seconds()
 
         # Performance assertions
-        assert initialization_time < 10.0, (
-            f"System initialization took {initialization_time:.2f}s (>10s)"
-        )
+        assert initialization_time < 10.0, f"System initialization took {initialization_time:.2f}s (>10s)"
 
         # Verify all systems are operational
         sword_shield_ok, hyper_rag_ok, education_ok, compatibility_ok = results
@@ -545,9 +531,7 @@ class TestArchitecturalIntegration:
         assert education_ok is True
         assert compatibility_ok is True
 
-        logger.info(
-            f"✓ System performance test passed - initialized in {initialization_time:.2f}s"
-        )
+        logger.info(f"✓ System performance test passed - initialized in {initialization_time:.2f}s")
 
     async def _init_sword_shield_system(self) -> bool:
         """Initialize Sword/Shield security system."""
@@ -634,9 +618,7 @@ class TestArchitecturalIntegration:
             assert "invalid" in str(e).lower() or "error" in str(e).lower()
 
         # Test compatibility bridge with non-existent module
-        bridge_created = compatibility_bridge.create_import_bridge(
-            "non_existent_module", "also_non_existent.module"
-        )
+        bridge_created = compatibility_bridge.create_import_bridge("non_existent_module", "also_non_existent.module")
 
         # Should either succeed (creating bridge) or fail gracefully
         assert isinstance(bridge_created, bool)

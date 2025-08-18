@@ -11,7 +11,7 @@ sys.path.append("src/production/rag/rag_system/core")
 
 try:
     from codex_rag_integration import Document
-    from enhanced_query_processor import EnhancedQueryProcessor, SynthesizedAnswer
+    from enhanced_query_processor import EnhancedQueryProcessor
     from graph_enhanced_rag_pipeline import GraphEnhancedRAGPipeline
 
     async def test_full_integration():
@@ -56,9 +56,7 @@ try:
         # Index the document
         print("[INDEX] Indexing test document...")
         stats = rag_pipeline.index_documents([test_doc])
-        print(
-            f"Indexed: {stats['documents_processed']} docs, {stats['chunks_created']} chunks"
-        )
+        print(f"Indexed: {stats['documents_processed']} docs, {stats['chunks_created']} chunks")
 
         # Test query
         test_query = "What is machine learning and how does it relate to AI?"

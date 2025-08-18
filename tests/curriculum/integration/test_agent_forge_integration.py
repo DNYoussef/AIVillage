@@ -18,12 +18,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent / "src"))
 
-from agent_forge.curriculum import (
-    CurriculumOrchestrator,
-    EdgeConstraints,
-    Problem,
-    TelemetryEntry,
-)
+from agent_forge.curriculum import CurriculumOrchestrator, EdgeConstraints, Problem, TelemetryEntry
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -73,14 +68,10 @@ class MockAgentForgeTrainer:
             result = await self.curriculum_engine.initialize_curriculum(
                 domain=domain,
                 initial_telemetry=sample_telemetry,
-                constraints=EdgeConstraints(
-                    target_low=0.55, target_high=0.75, problem_budget=50
-                ),
+                constraints=EdgeConstraints(target_low=0.55, target_high=0.75, problem_budget=50),
             )
 
-            logger.info(
-                f"Training session started with curriculum: {result['success']}"
-            )
+            logger.info(f"Training session started with curriculum: {result['success']}")
             return result
 
         return {"success": True, "curriculum_enabled": False}
@@ -161,7 +152,7 @@ class MockAgentForgeTrainer:
             return
 
         # Get recent telemetry
-        recent_telemetry = self.telemetry_history[-20:]
+        self.telemetry_history[-20:]
 
         # Run a curriculum cycle
         cycle_result = await self.curriculum_engine.run_curriculum_cycle(
@@ -177,9 +168,7 @@ class MockAgentForgeTrainer:
             if queues.get("fresh_problems", 0) > 0:
                 self.current_problems = await self._get_curriculum_problems()
 
-        logger.info(
-            f"Curriculum updated: {cycle_result['successful_cycles']} successful cycles"
-        )
+        logger.info(f"Curriculum updated: {cycle_result['successful_cycles']} successful cycles")
 
     async def _get_curriculum_problems(self) -> list[Problem]:
         """Get problems from curriculum queue (mock implementation)."""
@@ -284,20 +273,16 @@ class TestAgentForgeTrainingIntegration:
         await agent_forge_trainer.start_training_session()
 
         # Get initial curriculum state
-        initial_status = (
-            await agent_forge_trainer.curriculum_engine.get_curriculum_status()
-        )
-        initial_edge = initial_status["current_edge"]
+        initial_status = await agent_forge_trainer.curriculum_engine.get_curriculum_status()
+        initial_status["current_edge"]
 
         # Run training for enough steps to trigger curriculum updates
         for step in range(50):
             await agent_forge_trainer.training_step(step)
 
         # Check if curriculum has adapted
-        final_status = (
-            await agent_forge_trainer.curriculum_engine.get_curriculum_status()
-        )
-        final_edge = final_status["current_edge"]
+        final_status = await agent_forge_trainer.curriculum_engine.get_curriculum_status()
+        final_status["current_edge"]
 
         # Curriculum should have some activity
         assert final_status["queues"]["total_queued"] >= 0
@@ -338,7 +323,7 @@ class TestAgentForgeTrainingIntegration:
         await agent_forge_trainer.start_training_session()
 
         # Initially should have some problems
-        initial_problem_count = len(agent_forge_trainer.current_problems)
+        len(agent_forge_trainer.current_problems)
 
         # Run training with curriculum updates
         for step in range(30):
@@ -418,12 +403,8 @@ class TestCurriculumEffectivenessTracking:
         assert baseline_avg > 0.5
 
         # Curriculum should show more consistent performance
-        curriculum_variance = sum(
-            (x - curriculum_avg) ** 2 for x in curriculum_final
-        ) / len(curriculum_final)
-        baseline_variance = sum((x - baseline_avg) ** 2 for x in baseline_final) / len(
-            baseline_final
-        )
+        curriculum_variance = sum((x - curriculum_avg) ** 2 for x in curriculum_final) / len(curriculum_final)
+        baseline_variance = sum((x - baseline_avg) ** 2 for x in baseline_final) / len(baseline_final)
 
         logger.info(f"Curriculum variance: {curriculum_variance:.4f}")
         logger.info(f"Baseline variance: {baseline_variance:.4f}")
@@ -529,9 +510,7 @@ class TestLongRunningTrainingIntegration:
         # Should have accumulated substantial telemetry
         assert len(trainer.telemetry_history) > 20
 
-        logger.info(
-            f"Extended training: {len(trainer.telemetry_history)} telemetry entries"
-        )
+        logger.info(f"Extended training: {len(trainer.telemetry_history)} telemetry entries")
         logger.info(f"Final curriculum health: {final_health}")
 
 

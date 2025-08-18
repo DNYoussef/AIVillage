@@ -47,7 +47,7 @@ class MoralPrinciple:
 
     def applies_to_context(self, context: dict[str, Any]) -> bool:
         """Check if this principle applies to a given context."""
-        context_tags = context.get("tags", [])
+        context.get("tags", [])
         context_complexity = context.get("complexity", MoralComplexity.SIMPLE)
 
         # Principle applies if complexity is at or below our level

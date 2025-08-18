@@ -19,7 +19,6 @@ sys.path.append("src/production/rag/rag_system/core")
 try:
     from codex_rag_integration import Document
     from enhanced_codex_rag import EnhancedCODEXRAGPipeline
-    from intelligent_chunking_simple import ContentType, DocumentType
 
     CHUNKING_AVAILABLE = True
 except ImportError as e:
@@ -472,9 +471,7 @@ class ChunkingQualityAnalyzer:
 
         return documents
 
-    async def test_chunking_by_document_type(
-        self, documents: dict[str, Document]
-    ) -> dict[str, Any]:
+    async def test_chunking_by_document_type(self, documents: dict[str, Document]) -> dict[str, Any]:
         """Test chunking effectiveness for each document type."""
 
         print("\n" + "=" * 70)
@@ -523,9 +520,7 @@ class ChunkingQualityAnalyzer:
                 "chunking_results": {
                     "total_chunks": len(chunks),
                     "processing_time_ms": processing_time,
-                    "avg_chunk_length": sum(len(c.text) for c in chunks) / len(chunks)
-                    if chunks
-                    else 0,
+                    "avg_chunk_length": sum(len(c.text) for c in chunks) / len(chunks) if chunks else 0,
                     "chunks_details": [
                         {
                             "id": chunk.id,
@@ -534,9 +529,7 @@ class ChunkingQualityAnalyzer:
                             "content_type": chunk.metadata.get("chunk_type", "unknown"),
                             "coherence": chunk.metadata.get("topic_coherence", 0.0),
                             "entities": chunk.metadata.get("entities", []),
-                            "preview": chunk.text[:100] + "..."
-                            if len(chunk.text) > 100
-                            else chunk.text,
+                            "preview": chunk.text[:100] + "..." if len(chunk.text) > 100 else chunk.text,
                         }
                         for chunk in chunks[:5]  # Show first 5 chunks
                     ],
@@ -547,32 +540,20 @@ class ChunkingQualityAnalyzer:
 
             # Display results
             print(f"Document: {document.title}")
-            print(
-                f"Content Length: {len(document.content):,} chars, {len(document.content.split()):,} words"
-            )
+            print(f"Content Length: {len(document.content):,} chars, {len(document.content.split()):,} words")
             print(f"Processing Time: {processing_time:.1f}ms")
             print(f"Total Chunks: {len(chunks)}")
 
             if structure_analysis and not structure_analysis.get("error"):
-                print(
-                    f"Document Type: {structure_analysis.get('document_type', 'unknown')}"
-                )
-                print(
-                    f"Detected Boundaries: {structure_analysis.get('detected_boundaries', 0)}"
-                )
-                print(
-                    f"Average Similarity: {structure_analysis.get('avg_similarity', 0):.3f}"
-                )
-                print(
-                    f"Content Types: {structure_analysis.get('content_type_distribution', {})}"
-                )
+                print(f"Document Type: {structure_analysis.get('document_type', 'unknown')}")
+                print(f"Detected Boundaries: {structure_analysis.get('detected_boundaries', 0)}")
+                print(f"Average Similarity: {structure_analysis.get('avg_similarity', 0):.3f}")
+                print(f"Content Types: {structure_analysis.get('content_type_distribution', {})}")
 
             print("Quality Scores:")
             print(f"  - Coherence: {chunk_quality['avg_coherence']:.3f}")
             print(f"  - Boundary Accuracy: {chunk_quality['boundary_accuracy']:.3f}")
-            print(
-                f"  - Context Preservation: {chunk_quality['context_preservation']:.3f}"
-            )
+            print(f"  - Context Preservation: {chunk_quality['context_preservation']:.3f}")
 
             # Show sample chunks
             print("\nSample Chunks:")
@@ -585,9 +566,7 @@ class ChunkingQualityAnalyzer:
 
         return results
 
-    def analyze_chunk_quality(
-        self, chunks: list, structure_analysis: dict
-    ) -> dict[str, float]:
+    def analyze_chunk_quality(self, chunks: list, structure_analysis: dict) -> dict[str, float]:
         """Analyze the quality of generated chunks."""
 
         if not chunks:
@@ -610,9 +589,7 @@ class ChunkingQualityAnalyzer:
         detected_boundaries = structure_analysis.get("detected_boundaries", 0)
         expected_boundaries = len(chunks) - 1
         boundary_accuracy = (
-            min(detected_boundaries / max(expected_boundaries, 1), 1.0)
-            if expected_boundaries > 0
-            else 1.0
+            min(detected_boundaries / max(expected_boundaries, 1), 1.0) if expected_boundaries > 0 else 1.0
         )
 
         # Context preservation (estimated based on chunk metadata richness)
@@ -628,9 +605,7 @@ class ChunkingQualityAnalyzer:
         # Size consistency
         chunk_lengths = [len(chunk.text) for chunk in chunks]
         avg_length = sum(chunk_lengths) / len(chunk_lengths)
-        length_variance = sum(
-            (length - avg_length) ** 2 for length in chunk_lengths
-        ) / len(chunk_lengths)
+        length_variance = sum((length - avg_length) ** 2 for length in chunk_lengths) / len(chunk_lengths)
         size_consistency = max(0, 1 - (length_variance / (avg_length**2)))
 
         return {
@@ -640,9 +615,7 @@ class ChunkingQualityAnalyzer:
             "size_consistency": size_consistency,
         }
 
-    async def test_retrieval_performance(
-        self, documents: dict[str, Document]
-    ) -> dict[str, Any]:
+    async def test_retrieval_performance(self, documents: dict[str, Document]) -> dict[str, Any]:
         """Test retrieval precision with chunked documents."""
 
         print("\nRETRIEVAL PERFORMANCE TESTING:")
@@ -722,18 +695,13 @@ class ChunkingQualityAnalyzer:
                     }
                 )
 
-                print(
-                    f"  '{query[:50]}...' -> {len(results)} results, {precision:.2f} precision, {query_time:.1f}ms"
-                )
+                print(f"  '{query[:50]}...' -> {len(results)} results, {precision:.2f} precision, {query_time:.1f}ms")
 
             retrieval_results[doc_type] = {
                 "queries_tested": len(queries),
-                "avg_precision": sum(r["precision"] for r in doc_results)
-                / len(doc_results),
-                "avg_query_time_ms": sum(r["query_time_ms"] for r in doc_results)
-                / len(doc_results),
-                "avg_results_count": sum(r["results_count"] for r in doc_results)
-                / len(doc_results),
+                "avg_precision": sum(r["precision"] for r in doc_results) / len(doc_results),
+                "avg_query_time_ms": sum(r["query_time_ms"] for r in doc_results) / len(doc_results),
+                "avg_results_count": sum(r["results_count"] for r in doc_results) / len(doc_results),
                 "query_details": doc_results,
             }
 
@@ -768,9 +736,7 @@ class ChunkingQualityAnalyzer:
             repetitions = (target_words // current_words) + 1
 
             large_content = (base_content + "\n\n") * repetitions
-            large_content = " ".join(
-                large_content.split()[:target_words]
-            )  # Trim to exact word count
+            large_content = " ".join(large_content.split()[:target_words])  # Trim to exact word count
 
             large_document = Document(
                 id=f"large_doc_{word_count}",
@@ -860,12 +826,8 @@ class ChunkingQualityAnalyzer:
         for doc_type, results in chunking_results.items():
             quality = results["quality_metrics"]
             overall_metrics["chunk_coherence"][doc_type] = quality["avg_coherence"]
-            overall_metrics["boundary_accuracy"][doc_type] = quality[
-                "boundary_accuracy"
-            ]
-            overall_metrics["context_preservation"][doc_type] = quality[
-                "context_preservation"
-            ]
+            overall_metrics["boundary_accuracy"][doc_type] = quality["boundary_accuracy"]
+            overall_metrics["context_preservation"][doc_type] = quality["context_preservation"]
 
         # Aggregate retrieval precision
         for doc_type, results in retrieval_results.items():
@@ -881,34 +843,25 @@ class ChunkingQualityAnalyzer:
         }
 
         # Estimate improvements based on test results
-        avg_coherence = sum(overall_metrics["chunk_coherence"].values()) / len(
-            overall_metrics["chunk_coherence"]
-        )
+        avg_coherence = sum(overall_metrics["chunk_coherence"].values()) / len(overall_metrics["chunk_coherence"])
         avg_precision = sum(overall_metrics["retrieval_precision"].values()) / len(
             overall_metrics["retrieval_precision"]
         )
-        avg_boundary_accuracy = sum(
-            overall_metrics["boundary_accuracy"].values()
-        ) / len(overall_metrics["boundary_accuracy"])
+        avg_boundary_accuracy = sum(overall_metrics["boundary_accuracy"].values()) / len(
+            overall_metrics["boundary_accuracy"]
+        )
 
         estimated_improvements = {
-            "answer_rate": min(
-                0.85, baseline_metrics["answer_rate"] + (avg_coherence * 0.3)
-            ),
-            "relevance_score": min(
-                0.90, baseline_metrics["relevance_score"] + (avg_precision * 0.25)
-            ),
+            "answer_rate": min(0.85, baseline_metrics["answer_rate"] + (avg_coherence * 0.3)),
+            "relevance_score": min(0.90, baseline_metrics["relevance_score"] + (avg_precision * 0.25)),
             "trust_accuracy": min(
                 0.88,
                 baseline_metrics["trust_accuracy"] + (avg_boundary_accuracy * 0.18),
             ),
-            "query_understanding": min(
-                0.87, baseline_metrics["query_understanding"] + (avg_coherence * 0.15)
-            ),
+            "query_understanding": min(0.87, baseline_metrics["query_understanding"] + (avg_coherence * 0.15)),
             "answer_quality": min(
                 0.89,
-                baseline_metrics["answer_quality"]
-                + ((avg_coherence + avg_precision) * 0.1),
+                baseline_metrics["answer_quality"] + ((avg_coherence + avg_precision) * 0.1),
             ),
         }
 
@@ -919,25 +872,18 @@ class ChunkingQualityAnalyzer:
 
             performance_summary = {
                 "max_document_size_tested": max_word_count,
-                "processing_rate_words_per_sec": largest_test["throughput"][
-                    "words_per_second"
-                ],
-                "memory_efficiency_mb_per_1k_words": largest_test["memory"][
-                    "memory_used_mb"
-                ]
-                / (max_word_count / 1000),
-                "scalability_assessment": "Excellent"
-                if largest_test["throughput"]["words_per_second"] > 1000
-                else "Good",
+                "processing_rate_words_per_sec": largest_test["throughput"]["words_per_second"],
+                "memory_efficiency_mb_per_1k_words": largest_test["memory"]["memory_used_mb"] / (max_word_count / 1000),
+                "scalability_assessment": (
+                    "Excellent" if largest_test["throughput"]["words_per_second"] > 1000 else "Good"
+                ),
             }
         else:
             performance_summary = {"status": "not_tested"}
 
         quality_report = {
             "executive_summary": {
-                "overall_assessment": "Excellent"
-                if avg_coherence > 0.8 and avg_precision > 0.8
-                else "Good",
+                "overall_assessment": "Excellent" if avg_coherence > 0.8 and avg_precision > 0.8 else "Good",
                 "key_strengths": [
                     f"High chunk coherence ({avg_coherence:.3f})",
                     f"Strong retrieval precision ({avg_precision:.3f})",
@@ -948,8 +894,7 @@ class ChunkingQualityAnalyzer:
                     metric: {
                         "baseline": baseline_metrics[metric],
                         "enhanced": estimated_improvements[metric],
-                        "improvement": estimated_improvements[metric]
-                        - baseline_metrics[metric],
+                        "improvement": estimated_improvements[metric] - baseline_metrics[metric],
                     }
                     for metric in baseline_metrics
                 },
@@ -960,9 +905,7 @@ class ChunkingQualityAnalyzer:
                     doc_type: {
                         "coherence": overall_metrics["chunk_coherence"][doc_type],
                         "precision": overall_metrics["retrieval_precision"][doc_type],
-                        "boundary_accuracy": overall_metrics["boundary_accuracy"][
-                            doc_type
-                        ],
+                        "boundary_accuracy": overall_metrics["boundary_accuracy"][doc_type],
                     }
                     for doc_type in overall_metrics["chunk_coherence"]
                 },
@@ -978,17 +921,13 @@ class ChunkingQualityAnalyzer:
 
         # Display summary
         print("\nQUALITY ASSESSMENT SUMMARY:")
-        print(
-            f"Overall Assessment: {quality_report['executive_summary']['overall_assessment']}"
-        )
+        print(f"Overall Assessment: {quality_report['executive_summary']['overall_assessment']}")
         print(f"Average Chunk Coherence: {avg_coherence:.3f}")
         print(f"Average Retrieval Precision: {avg_precision:.3f}")
         print(f"Average Boundary Accuracy: {avg_boundary_accuracy:.3f}")
 
         print("\nESTIMATED IMPROVEMENTS:")
-        for metric, values in quality_report["executive_summary"][
-            "baseline_vs_enhanced"
-        ].items():
+        for metric, values in quality_report["executive_summary"]["baseline_vs_enhanced"].items():
             improvement_pct = (values["improvement"] / values["baseline"]) * 100
             print(
                 f"  {metric.replace('_', ' ').title()}: {values['baseline']:.3f} -> {values['enhanced']:.3f} (+{improvement_pct:.1f}%)"
@@ -1025,9 +964,7 @@ async def run_comprehensive_chunking_test():
     performance_results = await analyzer.test_performance_scale()
 
     # Generate quality report
-    quality_report = analyzer.generate_quality_report(
-        chunking_results, retrieval_results, performance_results
-    )
+    quality_report = analyzer.generate_quality_report(chunking_results, retrieval_results, performance_results)
 
     # Save detailed results
     all_results = {
@@ -1045,9 +982,7 @@ async def run_comprehensive_chunking_test():
 
     # Final assessment
     overall_assessment = quality_report["executive_summary"]["overall_assessment"]
-    answer_rate_improvement = quality_report["executive_summary"][
-        "estimated_improvements"
-    ]["answer_rate"]
+    answer_rate_improvement = quality_report["executive_summary"]["estimated_improvements"]["answer_rate"]
 
     print("\nCOMPREHENSIVE TESTING COMPLETE!")
     print(f"Overall Assessment: {overall_assessment}")

@@ -27,9 +27,7 @@ def test_real_individual_stages():
     original_size = test_weights.numel() * 4
 
     print(f"Test tensor: {test_weights.shape}")
-    print(
-        f"Original size: {original_size:,} bytes ({original_size / 1024 / 1024:.1f}MB)"
-    )
+    print(f"Original size: {original_size:,} bytes ({original_size / 1024 / 1024:.1f}MB)")
 
     # Test BitNet - REAL measurements
     print("\n--- BitNet 1.58-bit Compression ---")
@@ -49,9 +47,7 @@ def test_real_individual_stages():
 
     # Verify decompression works
     bitnet_decompressed = bitnet.decompress(bitnet_compressed)
-    bitnet_error = torch.norm(test_weights - bitnet_decompressed) / torch.norm(
-        test_weights
-    )
+    bitnet_error = torch.norm(test_weights - bitnet_decompressed) / torch.norm(test_weights)
     print(f"Reconstruction error: {bitnet_error:.4f}")
 
     # Test SeedLM - REAL measurements
@@ -79,9 +75,7 @@ def test_real_individual_stages():
 
         # Verify decompression
         seedlm_decompressed = seedlm.decompress(seedlm_compressed)
-        seedlm_error = torch.norm(test_weights - seedlm_decompressed) / torch.norm(
-            test_weights
-        )
+        seedlm_error = torch.norm(test_weights - seedlm_decompressed) / torch.norm(test_weights)
         print(f"Reconstruction error: {seedlm_error:.4f}")
 
     except Exception as e:
@@ -103,9 +97,7 @@ def test_real_individual_stages():
     vptq_size = codebook_bytes + indices_bytes + 32
     vptq_ratio = original_size / vptq_size
 
-    print(
-        f"Codebook: {vptq_compressed['codebook'].numel()} values x 4 bytes = {codebook_bytes}"
-    )
+    print(f"Codebook: {vptq_compressed['codebook'].numel()} values x 4 bytes = {codebook_bytes}")
     print(f"Indices: {len(vptq_compressed['indices'])} bytes")
     print(f"Total compressed size: {vptq_size:,} bytes")
     print(f"REAL compression ratio: {vptq_ratio:.1f}x")
@@ -146,9 +138,7 @@ def test_real_pipeline_simulation():
     original_size = param_count * 4
 
     print(f"\nTest model: {param_count:,} parameters")
-    print(
-        f"Original size: {original_size:,} bytes ({original_size / 1024 / 1024:.1f}MB)"
-    )
+    print(f"Original size: {original_size:,} bytes ({original_size / 1024 / 1024:.1f}MB)")
 
     # Simulate pipeline with REAL compression ratios from individual tests
     print("\n--- Simulating 4-Stage Pipeline ---")
@@ -293,9 +283,7 @@ def test_real_mobile_deployment():
         for device_name, limit_mb in device_limits:
             fits = compressed_mb < limit_mb
             fits_devices.append(fits)
-            print(
-                f"    {device_name}: {'FITS' if fits else 'TOO LARGE'} ({compressed_mb:.0f}MB < {limit_mb}MB)"
-            )
+            print(f"    {device_name}: {'FITS' if fits else 'TOO LARGE'} ({compressed_mb:.0f}MB < {limit_mb}MB)")
 
         deployment_results[model_name] = {
             "compressed_mb": compressed_mb,

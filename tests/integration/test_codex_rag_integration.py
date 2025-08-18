@@ -12,14 +12,8 @@ from pathlib import Path
 
 import pytest
 
-from src.production.rag.rag_system.core.codex_rag_integration import (
-    CODEXCompliantCache,
-    CODEXRAGPipeline,
-)
-from src.production.rag.wikipedia_data_loader import (
-    WikipediaDataLoader,
-    create_sample_educational_content,
-)
+from src.production.rag.rag_system.core.codex_rag_integration import CODEXCompliantCache, CODEXRAGPipeline
+from src.production.rag.wikipedia_data_loader import WikipediaDataLoader, create_sample_educational_content
 
 
 class TestCODEXRAGIntegration:
@@ -201,10 +195,7 @@ class TestCODEXRAGIntegration:
     def test_environment_variable_compliance(self):
         """Test CODEX environment variable compliance."""
         # Test default values
-        assert (
-            os.getenv("RAG_EMBEDDING_MODEL", "paraphrase-MiniLM-L3-v2")
-            == "paraphrase-MiniLM-L3-v2"
-        )
+        assert os.getenv("RAG_EMBEDDING_MODEL", "paraphrase-MiniLM-L3-v2") == "paraphrase-MiniLM-L3-v2"
         assert int(os.getenv("RAG_VECTOR_DIM", "384")) == 384
         assert int(os.getenv("RAG_DEFAULT_K", "10")) == 10
         assert int(os.getenv("RAG_CHUNK_SIZE", "512")) == 512

@@ -34,10 +34,7 @@ print("=== Sprint 7 Distributed Inference System Tests ===\n")
 # Test 1: Core Data Structures
 print("Test 1: Core Data Structures")
 try:
-    from src.production.distributed_inference.model_sharding_engine import (
-        ModelShard,
-        ShardingStrategy,
-    )
+    from src.production.distributed_inference.model_sharding_engine import ModelShard, ShardingStrategy
 
     # Test enum
     strategy = ShardingStrategy.MEMORY_AWARE
@@ -62,11 +59,7 @@ except Exception as e:
 # Test 2: Agent System Data Structures
 print("Test 2: Agent System Data Structures")
 try:
-    from src.production.distributed_agents.distributed_agent_orchestrator import (
-        AgentPriority,
-        AgentSpec,
-        AgentType,
-    )
+    from src.production.distributed_agents.distributed_agent_orchestrator import AgentPriority, AgentSpec, AgentType
 
     # Test agent types
     king_agent = AgentType.KING
@@ -113,9 +106,7 @@ try:
         source_device_id="device_1",
         strategy=strategy,
     )
-    print(
-        f"  ✓ MigrationRequest: {request.agent_instance_id} from {request.source_device_id}"
-    )
+    print(f"  ✓ MigrationRequest: {request.agent_instance_id} from {request.source_device_id}")
 
     print("  PASS: Migration system working\n")
 
@@ -137,12 +128,8 @@ try:
     print(f"  ✓ Resharding enums: {reason.value} -> {strategy.value}")
 
     # Test resharding event
-    event = ReshardingEvent(
-        event_id=str(uuid.uuid4()), reason=reason, trigger_device_id="new_device"
-    )
-    print(
-        f"  ✓ ReshardingEvent: {event.reason.value} triggered by {event.trigger_device_id}"
-    )
+    event = ReshardingEvent(event_id=str(uuid.uuid4()), reason=reason, trigger_device_id="new_device")
+    print(f"  ✓ ReshardingEvent: {event.reason.value} triggered by {event.trigger_device_id}")
 
     print("  PASS: Resharding system working\n")
 
@@ -169,9 +156,7 @@ try:
         max_participants_per_round=10,
         target_accuracy=0.85,
     )
-    print(
-        f"  ✓ FederatedConfig: {config.min_participants_per_round}-{config.max_participants_per_round} participants"
-    )
+    print(f"  ✓ FederatedConfig: {config.min_participants_per_round}-{config.max_participants_per_round} participants")
 
     print("  PASS: Federated learning system working\n")
 

@@ -800,7 +800,7 @@ class ForgeTrainer:
 
             # Update edge-of-chaos controller
             if self.config.enable_edge_control and len(batch_accuracies) >= 10:
-                difficulty_settings = self.edge_controller.update(batch_accuracies[-10:])
+                self.edge_controller.update(batch_accuracies[-10:])
                 # Apply difficulty settings to future batches (implementation specific)
 
             # Dream cycle

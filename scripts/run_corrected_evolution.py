@@ -116,15 +116,9 @@ class CorrectedEvolutionMerger:
         logger.info("=== SYSTEMATIC GENERATION 1 INITIALIZATION ===")
 
         # Get the 3 pairs of techniques
-        interpolation_techniques = self.technique_pairs[
-            "interpolation"
-        ]  # [slerp, linear]
-        arithmetic_techniques = self.technique_pairs[
-            "arithmetic"
-        ]  # [task_arithmetic, ties]
-        advanced_techniques = self.technique_pairs[
-            "advanced"
-        ]  # [dare_ties, model_soup]
+        interpolation_techniques = self.technique_pairs["interpolation"]  # [slerp, linear]
+        arithmetic_techniques = self.technique_pairs["arithmetic"]  # [task_arithmetic, ties]
+        advanced_techniques = self.technique_pairs["advanced"]  # [dare_ties, model_soup]
 
         population = []
         combination_id = 0
@@ -141,12 +135,8 @@ class CorrectedEvolutionMerger:
                         "generation": 1,
                         "fitness": 0.0,
                         "technique_combination": combination,
-                        "primary_method": combination[
-                            0
-                        ],  # Use first technique as primary
-                        "base_model": self.available_models[
-                            0
-                        ],  # Use first available model
+                        "primary_method": combination[0],  # Use first technique as primary
+                        "base_model": self.available_models[0],  # Use first available model
                         "models": [self.available_models[0]],
                         "parameters": self.generate_optimal_parameters(combination[0]),
                         "parent_ids": [],
@@ -165,9 +155,7 @@ class CorrectedEvolutionMerger:
         # Verify we have exactly 8 individuals
         assert len(population) == 8, f"Expected 8 individuals, got {len(population)}"
 
-        logger.info(
-            "✅ Systematic Generation 1 created with %d individuals", len(population)
-        )
+        logger.info("✅ Systematic Generation 1 created with %d individuals", len(population))
         logger.info("Combinations created:")
         for i, ind in enumerate(population):
             logger.info("  %d. %s", i + 1, ind["technique_combination"])
@@ -190,9 +178,7 @@ class CorrectedEvolutionMerger:
             return {"soup_ratio": 0.5}  # Balanced soup ratio
         return {}
 
-    def breed_next_generation(
-        self, ranked_population: list[dict[str, Any]]
-    ) -> list[dict[str, Any]]:
+    def breed_next_generation(self, ranked_population: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """CORRECTED: Implement proper breeding logic for subsequent generations.
 
         Strategy:
@@ -203,9 +189,7 @@ class CorrectedEvolutionMerger:
         logger.info("=== BREEDING GENERATION %d ===", self.generation + 1)
 
         # Ensure we have exactly 8 individuals ranked by fitness
-        assert len(ranked_population) == 8, (
-            f"Expected 8 individuals, got {len(ranked_population)}"
-        )
+        assert len(ranked_population) == 8, f"Expected 8 individuals, got {len(ranked_population)}"
 
         next_generation = []
 
@@ -224,9 +208,7 @@ class CorrectedEvolutionMerger:
         # Create 3 mutations from each of the best 2 (total 6)
         for i, parent in enumerate(best_2):
             for mutation_id in range(3):
-                mutant = self.create_mutant(
-                    parent, f"best_{i + 1}_mut_{mutation_id + 1}"
-                )
+                mutant = self.create_mutant(parent, f"best_{i + 1}_mut_{mutation_id + 1}")
                 next_generation.append(mutant)
                 logger.info("  Created mutant: %s from %s", mutant["id"], parent["id"])
 
@@ -257,9 +239,7 @@ class CorrectedEvolutionMerger:
         logger.info("  %s from triad: %s", child_2["id"], [p["id"] for p in triad_2])
 
         # Verify we have exactly 8 individuals
-        assert len(next_generation) == 8, (
-            f"Expected 8 individuals, got {len(next_generation)}"
-        )
+        assert len(next_generation) == 8, f"Expected 8 individuals, got {len(next_generation)}"
 
         logger.info(
             "✅ Next generation bred: 6 mutants + 2 children = %d total",
@@ -268,9 +248,7 @@ class CorrectedEvolutionMerger:
 
         return next_generation
 
-    def create_mutant(
-        self, parent: dict[str, Any], mutant_suffix: str
-    ) -> dict[str, Any]:
+    def create_mutant(self, parent: dict[str, Any], mutant_suffix: str) -> dict[str, Any]:
         """Create a mutant from a parent with technique/parameter mutations."""
         mutant = parent.copy()
         mutant["id"] = f"gen{self.generation + 1}_{mutant_suffix}"
@@ -293,9 +271,7 @@ class CorrectedEvolutionMerger:
             )
         else:
             # Mutate parameters only
-            mutant["parameters"] = self.mutate_parameters(
-                parent["primary_method"], parent["parameters"]
-            )
+            mutant["parameters"] = self.mutate_parameters(parent["primary_method"], parent["parameters"])
             logger.info(
                 "    Parameter mutation: %s → %s",
                 parent["parameters"],
@@ -304,9 +280,7 @@ class CorrectedEvolutionMerger:
 
         return mutant
 
-    def mutate_parameters(
-        self, method: str, current_params: dict[str, Any]
-    ) -> dict[str, Any]:
+    def mutate_parameters(self, method: str, current_params: dict[str, Any]) -> dict[str, Any]:
         """Mutate parameters for a specific method."""
         mutated = current_params.copy()
 
@@ -320,9 +294,7 @@ class CorrectedEvolutionMerger:
 
         elif method == "task_arithmetic":
             current_sc = mutated.get("scaling_coefficient", 1.0)
-            mutated["scaling_coefficient"] = max(
-                0.1, min(3.0, current_sc + random.gauss(0, 0.3))
-            )
+            mutated["scaling_coefficient"] = max(0.1, min(3.0, current_sc + random.gauss(0, 0.3)))
 
         elif method == "ties":
             current_d = mutated.get("density", 0.5)
@@ -340,9 +312,7 @@ class CorrectedEvolutionMerger:
 
         return mutated
 
-    def merge_triad(
-        self, triad: list[dict[str, Any]], child_suffix: str
-    ) -> dict[str, Any]:
+    def merge_triad(self, triad: list[dict[str, Any]], child_suffix: str) -> dict[str, Any]:
         """Merge a triad of 3 individuals into a single child.
 
         Strategy: Take the best technique and blend parameters.
@@ -360,9 +330,7 @@ class CorrectedEvolutionMerger:
             "primary_method": best_parent["primary_method"],  # Take from best parent
             "base_model": best_parent["base_model"],
             "models": best_parent["models"],
-            "technique_combination": best_parent.get(
-                "technique_combination", [best_parent["primary_method"]]
-            ),
+            "technique_combination": best_parent.get("technique_combination", [best_parent["primary_method"]]),
             "parent_ids": [p["id"] for p in triad],
             "breeding_type": "triad_merge",
         }
@@ -394,39 +362,25 @@ class CorrectedEvolutionMerger:
 
         elif method == "linear":
             w_values = [p.get("parameters", {}).get("weight", 0.5) for p in triad]
-            blended["weight"] = sum(
-                w * wv for w, wv in zip(weights, w_values, strict=False)
-            )
+            blended["weight"] = sum(w * wv for w, wv in zip(weights, w_values, strict=False))
 
         elif method == "task_arithmetic":
-            sc_values = [
-                p.get("parameters", {}).get("scaling_coefficient", 1.0) for p in triad
-            ]
-            blended["scaling_coefficient"] = sum(
-                w * sc for w, sc in zip(weights, sc_values, strict=False)
-            )
+            sc_values = [p.get("parameters", {}).get("scaling_coefficient", 1.0) for p in triad]
+            blended["scaling_coefficient"] = sum(w * sc for w, sc in zip(weights, sc_values, strict=False))
 
         elif method == "ties":
             d_values = [p.get("parameters", {}).get("density", 0.5) for p in triad]
-            blended["density"] = sum(
-                w * d for w, d in zip(weights, d_values, strict=False)
-            )
+            blended["density"] = sum(w * d for w, d in zip(weights, d_values, strict=False))
 
         elif method == "dare_ties":
             d_values = [p.get("parameters", {}).get("density", 0.5) for p in triad]
             l_values = [p.get("parameters", {}).get("lambda", 1.0) for p in triad]
-            blended["density"] = sum(
-                w * d for w, d in zip(weights, d_values, strict=False)
-            )
-            blended["lambda"] = sum(
-                w * l for w, l in zip(weights, l_values, strict=False)
-            )
+            blended["density"] = sum(w * d for w, d in zip(weights, d_values, strict=False))
+            blended["lambda"] = sum(w * l for w, l in zip(weights, l_values, strict=False))
 
         elif method == "model_soup":
             r_values = [p.get("parameters", {}).get("soup_ratio", 0.5) for p in triad]
-            blended["soup_ratio"] = sum(
-                w * r for w, r in zip(weights, r_values, strict=False)
-            )
+            blended["soup_ratio"] = sum(w * r for w, r in zip(weights, r_values, strict=False))
 
         return blended
 
@@ -469,10 +423,7 @@ class CorrectedEvolutionMerger:
         else:
             # Average performance for unknown models
             all_perfs = list(base_performances.values())
-            base_perf = {
-                metric: sum(p[metric] for p in all_perfs) / len(all_perfs)
-                for metric in all_perfs[0].keys()
-            }
+            base_perf = {metric: sum(p[metric] for p in all_perfs) / len(all_perfs) for metric in all_perfs[0].keys()}
 
         # Method-specific bonuses
         method_modifiers = {
@@ -495,18 +446,14 @@ class CorrectedEvolutionMerger:
             param_bonus = self.calculate_parameter_bonus(individual, metric)
             noise = random.gauss(0, 0.03)
 
-            final_score = (
-                base_score + method_bonus + param_bonus + evolution_bonus + noise
-            )
+            final_score = base_score + method_bonus + param_bonus + evolution_bonus + noise
             final_score = max(0.1, min(0.95, final_score))
 
             results[metric] = final_score
 
         return results
 
-    def calculate_parameter_bonus(
-        self, individual: dict[str, Any], metric: str
-    ) -> float:
+    def calculate_parameter_bonus(self, individual: dict[str, Any], metric: str) -> float:
         """Calculate parameter optimization bonus."""
         method = individual["primary_method"]
         params = individual.get("parameters", {})
@@ -580,9 +527,7 @@ class CorrectedEvolutionMerger:
 
         # Log results
         best_individual = self.population[0]
-        avg_fitness = sum(ind["fitness"] for ind in self.population) / len(
-            self.population
-        )
+        avg_fitness = sum(ind["fitness"] for ind in self.population) / len(self.population)
 
         logger.info("Generation %d Results:", self.generation)
         logger.info("Best fitness: %.4f", best_individual["fitness"])

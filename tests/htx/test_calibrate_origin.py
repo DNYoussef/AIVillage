@@ -6,8 +6,7 @@ import pytest
 # Import HTXTransport directly to avoid heavy package initialization
 spec = importlib.util.spec_from_file_location(
     "betanet_htx_transport",
-    pathlib.Path(__file__).resolve().parents[2]
-    / "src/core/p2p/betanet_htx_transport.py",
+    pathlib.Path(__file__).resolve().parents[2] / "src/core/p2p/betanet_htx_transport.py",
 )
 mod = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(mod)

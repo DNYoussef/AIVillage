@@ -108,9 +108,7 @@ class TestPickleElimination:
     async def test_legacy_pickle_rejection_rag_cache(self):
         """Test that RAG cache properly rejects legacy pickle files."""
         try:
-            from production.rag.rag_system.core.semantic_cache_advanced import (
-                SemanticMultiTierCache,
-            )
+            from production.rag.rag_system.core.semantic_cache_advanced import SemanticMultiTierCache
 
             with tempfile.TemporaryDirectory() as temp_dir:
                 cache = SemanticMultiTierCache(cache_dir=Path(temp_dir))
@@ -426,9 +424,7 @@ class TestSecurityIntegration:
             ):
                 filtered_violations.append(violation)
 
-        assert len(filtered_violations) == 0, (
-            f"Found insecure serialization: {filtered_violations}"
-        )
+        assert len(filtered_violations) == 0, f"Found insecure serialization: {filtered_violations}"
 
     def test_secure_serializer_coverage(self):
         """Test that secure serializer covers all needed use cases."""

@@ -19,7 +19,6 @@ from pathlib import Path
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
-# Import all major components
 from agents.coordination_system import (
     Agent,
     AgentCapability,
@@ -30,24 +29,13 @@ from agents.coordination_system import (
     Task,
     TaskScheduler,
 )
-from core.resilience.error_handling import (
-    CircuitBreakerManager,
-    GracefulDegradationManager,
-    RetryHandler,
-)
+
+from core.resilience.error_handling import CircuitBreakerManager, GracefulDegradationManager, RetryHandler
+
+# Import all major components
 from ml.feature_extraction import FeatureExtractor, ModelComparator
-from monitoring.observability_system import (
-    AlertSeverity,
-    LogLevel,
-    ObservabilitySystem,
-)
-from security.auth_system import (
-    AuthenticationManager,
-    AuthorizationManager,
-    Permission,
-    SecurityLevel,
-    UserRole,
-)
+from monitoring.observability_system import AlertSeverity, LogLevel, ObservabilitySystem
+from security.auth_system import AuthenticationManager, AuthorizationManager, Permission, SecurityLevel, UserRole
 from testing.coverage_gates import CoverageGate, LintingGate, QualityGateFramework
 from testing.performance_benchmarks import BenchmarkSuite, PerformanceBenchmarkManager
 
@@ -89,9 +77,7 @@ class TestAuthenticationMonitoringIntegration:
         # Start monitoring context for authentication
         with self.observability.tracer.traced_operation("user_authentication") as span:
             # Record authentication metrics
-            self.observability.metrics.record_counter(
-                "auth_attempts", 1.0, {"user": user.username}
-            )
+            self.observability.metrics.record_counter("auth_attempts", 1.0, {"user": user.username})
 
             # Perform authentication
             success, auth_user, session_token = self.auth_manager.authenticate(
@@ -112,14 +98,10 @@ class TestAuthenticationMonitoringIntegration:
             )
 
             if success:
-                self.observability.metrics.record_counter(
-                    "auth_success", 1.0, {"user": user.username}
-                )
+                self.observability.metrics.record_counter("auth_success", 1.0, {"user": user.username})
                 span.status = "ok"
             else:
-                self.observability.metrics.record_counter(
-                    "auth_failure", 1.0, {"user": user.username}
-                )
+                self.observability.metrics.record_counter("auth_failure", 1.0, {"user": user.username})
                 span.status = "error"
 
         # Verify authentication succeeded
@@ -168,14 +150,10 @@ class TestAuthenticationMonitoringIntegration:
 
             if not success:
                 failed_attempts += 1
-                self.observability.metrics.record_counter(
-                    "auth_failures", 1.0, {"user": "alert_user"}
-                )
+                self.observability.metrics.record_counter("auth_failures", 1.0, {"user": "alert_user"})
 
         # Check if alert was triggered
-        self.observability.alerts.check_alert_conditions(
-            {"auth_failures": failed_attempts}
-        )
+        self.observability.alerts.check_alert_conditions({"auth_failures": failed_attempts})
 
         active_alerts = self.observability.alerts.get_active_alerts()
 
@@ -219,9 +197,7 @@ class TestAuthenticationMonitoringIntegration:
         # Verify monitoring captured session operations
         assert len(self.observability.tracer.completed_spans) >= 1
         session_span = next(
-            span
-            for span in self.observability.tracer.completed_spans
-            if span.operation_name == "session_validation"
+            span for span in self.observability.tracer.completed_spans if span.operation_name == "session_validation"
         )
         assert session_span.status == "ok"
 
@@ -254,7 +230,7 @@ class TestAgentCoordinationSecurityIntegration:
     def test_secure_agent_registration(self):
         """Test that agent registration requires proper authentication."""
         # Create user with appropriate permissions
-        user = self.auth_manager.create_user(
+        self.auth_manager.create_user(
             username="agent_operator",
             email="operator@example.com",
             password="SecurePassword123!",
@@ -272,9 +248,7 @@ class TestAgentCoordinationSecurityIntegration:
         assert success is True
 
         # Verify user has permission to register agents
-        has_permission = self.authz_manager.has_permission(
-            auth_user, Permission.EXECUTE
-        )
+        has_permission = self.authz_manager.has_permission(auth_user, Permission.EXECUTE)
         assert has_permission is True
 
         # Register agent with authenticated context
@@ -330,9 +304,7 @@ class TestAgentCoordinationSecurityIntegration:
         )
 
         # Test admin can submit high-security tasks
-        admin_can_execute = self.authz_manager.has_permission(
-            admin_user, Permission.EXECUTE
-        )
+        admin_can_execute = self.authz_manager.has_permission(admin_user, Permission.EXECUTE)
         admin_can_access_confidential = self.authz_manager.check_access(
             admin_user,
             "high_security_task",
@@ -344,9 +316,7 @@ class TestAgentCoordinationSecurityIntegration:
         assert admin_can_access_confidential is True
 
         # Test viewer cannot submit execution tasks
-        viewer_can_execute = self.authz_manager.has_permission(
-            viewer_user, Permission.EXECUTE
-        )
+        viewer_can_execute = self.authz_manager.has_permission(viewer_user, Permission.EXECUTE)
         viewer_can_access_confidential = self.authz_manager.check_access(
             viewer_user,
             "high_security_task",
@@ -385,9 +355,7 @@ class TestAgentCoordinationSecurityIntegration:
                 "message_id": message.message_id,
             }
 
-        self.broker.register_handler(
-            "secure_agent", MessageType.TASK_REQUEST, secure_message_handler
-        )
+        self.broker.register_handler("secure_agent", MessageType.TASK_REQUEST, secure_message_handler)
 
         # Create secure message with security metadata
         secure_message = {
@@ -443,7 +411,7 @@ class TestMLFeatureExtractionPerformanceIntegration:
         model_b = MockModel("test_model_b", 2000000)
 
         # Benchmark feature extraction performance
-        config = BenchmarkSuite(
+        BenchmarkSuite(
             name="feature_extraction_test",
             description="Feature extraction performance test",
             benchmarks=[],
@@ -470,9 +438,7 @@ class TestMLFeatureExtractionPerformanceIntegration:
         # Test model comparison performance
         start_time = time.time()
 
-        comparison = self.model_comparator.compare_models(
-            model_a, model_b, "test_model_a", "test_model_b"
-        )
+        comparison = self.model_comparator.compare_models(model_a, model_b, "test_model_a", "test_model_b")
 
         comparison_time = time.time() - start_time
 
@@ -504,9 +470,7 @@ class TestMLFeatureExtractionPerformanceIntegration:
         class MemoryIntensiveModel:
             def __init__(self, size_mb=10):
                 # Create data structures to simulate model memory usage
-                self.large_data = [0.1] * (
-                    size_mb * 1024 * 128
-                )  # Approximately size_mb MB
+                self.large_data = [0.1] * (size_mb * 1024 * 128)  # Approximately size_mb MB
                 self.name = f"memory_model_{size_mb}mb"
 
             def get_weights(self):
@@ -556,12 +520,8 @@ class TestMLFeatureExtractionPerformanceIntegration:
 
         # Use ThreadPoolExecutor for concurrent execution
         with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
-            futures = [
-                executor.submit(extract_features_task, model) for model in models
-            ]
-            results = [
-                future.result() for future in concurrent.futures.as_completed(futures)
-            ]
+            futures = [executor.submit(extract_features_task, model) for model in models]
+            results = [future.result() for future in concurrent.futures.as_completed(futures)]
 
         total_time = time.time() - start_time
 
@@ -615,9 +575,7 @@ class TestErrorHandlingObservabilityIntegration:
 
         # Simulate service failures with monitoring
         for i in range(4):  # Exceed failure threshold
-            with self.observability.tracer.traced_operation(
-                f"service_call_{i}"
-            ) as span:
+            with self.observability.tracer.traced_operation(f"service_call_{i}") as span:
                 try:
                     # Simulate failing service call
                     with self.circuit_breaker.circuit_breaker(service_name):
@@ -628,9 +586,7 @@ class TestErrorHandlingObservabilityIntegration:
                             raise Exception(f"Service failure {i}")
                         else:
                             # 4th call should be blocked by circuit breaker
-                            self.observability.metrics.record_counter(
-                                "service_calls", 1.0, {"service": service_name}
-                            )
+                            self.observability.metrics.record_counter("service_calls", 1.0, {"service": service_name})
 
                 except Exception as e:
                     span.status = "error"
@@ -673,9 +629,7 @@ class TestErrorHandlingObservabilityIntegration:
             call_count += 1
 
             # Record attempt in monitoring
-            self.observability.metrics.record_counter(
-                "operation_attempts", 1.0, {"operation": operation_name}
-            )
+            self.observability.metrics.record_counter("operation_attempts", 1.0, {"operation": operation_name})
 
             if call_count < 3:  # Fail first 2 attempts
                 self.observability.logger.warning(
@@ -731,17 +685,13 @@ class TestErrorHandlingObservabilityIntegration:
                 service=service_name,
                 degradation_level="fallback",
             )
-            self.observability.metrics.record_counter(
-                "degradation_events", 1.0, {"service": service_name}
-            )
+            self.observability.metrics.record_counter("degradation_events", 1.0, {"service": service_name})
             return "fallback_result"
 
         self.degradation_manager.register_fallback(service_name, fallback_strategy)
 
         # Simulate service degradation with monitoring
-        with self.observability.tracer.traced_operation(
-            "degraded_service_call"
-        ) as span:
+        with self.observability.tracer.traced_operation("degraded_service_call") as span:
             try:
                 # Simulate primary service failure
                 self.observability.logger.error(
@@ -777,9 +727,7 @@ class TestErrorHandlingObservabilityIntegration:
 
         # Verify degradation metrics
         degradation_metrics = [
-            metric
-            for metric in self.observability.metrics.metrics_buffer
-            if "degradation_events" in str(metric)
+            metric for metric in self.observability.metrics.metrics_buffer if "degradation_events" in str(metric)
         ]
         assert len(degradation_metrics) >= 1
 
@@ -843,9 +791,7 @@ class TestQualityGatesIntegration:
 
         # Run quality validation with monitoring
         with self.observability.tracer.traced_operation("quality_validation") as span:
-            self.observability.metrics.record_gauge(
-                "coverage_overall", 80.65
-            )  # Average coverage
+            self.observability.metrics.record_gauge("coverage_overall", 80.65)  # Average coverage
 
             # Validate coverage gate
             coverage_result = coverage_gate.validate(coverage_data)
@@ -877,17 +823,11 @@ class TestQualityGatesIntegration:
         assert linting_result.passed is True
 
         # Verify monitoring captured quality validation
-        quality_logs = [
-            log
-            for log in self.observability.logger.log_buffer
-            if "validation completed" in log.message
-        ]
+        quality_logs = [log for log in self.observability.logger.log_buffer if "validation completed" in log.message]
         assert len(quality_logs) >= 2
 
         # Get overall quality report
-        overall_results = self.quality_framework.run_quality_gates(
-            {"coverage": coverage_data, "linting": linting_data}
-        )
+        overall_results = self.quality_framework.run_quality_gates({"coverage": coverage_data, "linting": linting_data})
 
         # Verify overall quality validation
         assert overall_results["overall_passed"] is True

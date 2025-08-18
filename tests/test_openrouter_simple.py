@@ -34,9 +34,7 @@ async def test_simple_connection():
         # Simple test request
         response = await client.complete(
             task_type=TaskType.EVALUATION_GRADING,
-            messages=[
-                {"role": "user", "content": "What is 2+2? Answer with just the number."}
-            ],
+            messages=[{"role": "user", "content": "What is 2+2? Answer with just the number."}],
             max_tokens=10,
             temperature=0.1,
         )

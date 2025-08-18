@@ -308,9 +308,7 @@ class UnifiedPipeline:
                 }
             )
 
-        logger.info(
-            f"✅ Quiet-STaR completed - Winner: {results['winner']}, Improvement: {results['improvement']:.1f}%"
-        )
+        logger.info(f"✅ Quiet-STaR completed - Winner: {results['winner']}, Improvement: {results['improvement']:.1f}%")
 
     async def run_compression_phase(self, source_model_path: str) -> None:
         """Run BitNet compression."""

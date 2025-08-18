@@ -102,7 +102,6 @@ class TestClientHelloFingerprint:
         )
 
         # Mock JA3 string generation (would be done by calibrator)
-        expected_ja3_format = "version,ciphers,extensions,curves,sig_algs"
         # JA3 should follow this pattern with dash-separated values
 
         # This tests the structure exists for JA3 generation
@@ -231,9 +230,7 @@ class TestuTLSFingerprintCalibrator:
         """Test calibrating fingerprint without randomization."""
         calibrator = uTLSFingerprintCalibrator()
 
-        fingerprint = calibrator.calibrate_fingerprint(
-            "chrome_120_windows", randomize=False
-        )
+        fingerprint = calibrator.calibrate_fingerprint("chrome_120_windows", randomize=False)
 
         # Should match template exactly
         template = FingerprintTemplate.CHROME_120_WINDOWS
@@ -494,14 +491,10 @@ class TestFingerprintIntegration:
         calibrator = uTLSFingerprintCalibrator()
 
         # 1. Calibrate fingerprint
-        fingerprint = calibrator.calibrate_fingerprint(
-            "chrome_120_windows", randomize=True
-        )
+        fingerprint = calibrator.calibrate_fingerprint("chrome_120_windows", randomize=True)
 
         # 2. Generate ClientHello
-        client_hello = calibrator.generate_client_hello(
-            fingerprint, "secure.example.com"
-        )
+        client_hello = calibrator.generate_client_hello(fingerprint, "secure.example.com")
 
         # 3. Validate fingerprint match
         is_valid = calibrator.validate_fingerprint_match(client_hello, fingerprint)
@@ -580,9 +573,7 @@ def test_utls_fingerprinting_smoke_test():
     fingerprint = calibrator.calibrate_fingerprint("chrome_120_windows")
     assert fingerprint.browser_type == "chrome"
     assert len(fingerprint.ja3_hash) == 32
-    print(
-        f"  Chrome fingerprint: JA3={fingerprint.ja3_hash[:8]}..., JA4={fingerprint.ja4_hash[:8]}..."
-    )
+    print(f"  Chrome fingerprint: JA3={fingerprint.ja3_hash[:8]}..., JA4={fingerprint.ja4_hash[:8]}...")
 
     # Test ClientHello generation
     client_hello = calibrator.generate_client_hello(fingerprint, "test.example.com")
@@ -598,9 +589,7 @@ def test_utls_fingerprinting_smoke_test():
     # Test statistics
     stats = calibrator.get_fingerprint_stats()
     assert len(stats["available_templates"]) >= 3
-    print(
-        f"  Statistics: {len(stats['available_templates'])} templates, cache size: {stats['cache_size']}"
-    )
+    print(f"  Statistics: {len(stats['available_templates'])} templates, cache size: {stats['cache_size']}")
 
     print("  uTLS fingerprinting smoke test PASSED")
 

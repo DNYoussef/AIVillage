@@ -7,12 +7,7 @@ from pathlib import Path
 import pytest
 
 from src.token_economy.credit_system import EarningRule, VILLAGECreditSystem
-from src.token_economy.governance import (
-    GovernanceConfig,
-    GovernanceSystem,
-    ProposalStatus,
-    VoteChoice,
-)
+from src.token_economy.governance import GovernanceConfig, GovernanceSystem, ProposalStatus, VoteChoice
 
 
 @pytest.fixture
@@ -278,9 +273,7 @@ class TestQuorumAndSupermajority:
         assert tally["participation_rate"] == 0.1  # 500/5000
 
         # Vote with sufficient participation
-        governance_system.cast_vote(
-            proposal.id, "charlie", VoteChoice.YES
-        )  # +1000 power = 1500 total
+        governance_system.cast_vote(proposal.id, "charlie", VoteChoice.YES)  # +1000 power = 1500 total
         tally = governance_system.tally_votes(proposal.id)
         assert tally["quorum_met"]
         assert tally["participation_rate"] == 0.3  # 1500/5000
@@ -309,9 +302,7 @@ class TestQuorumAndSupermajority:
         assert tally["yes_rate"] == 0.7
 
         # Now change one vote to make it fail supermajority
-        governance_system.cast_vote(
-            proposal.id, "bob", VoteChoice.NO
-        )  # Change bob to NO
+        governance_system.cast_vote(proposal.id, "bob", VoteChoice.NO)  # Change bob to NO
         # Total: 5000, YES: 2000 (40%), NO: 3000 (60%)
 
         tally = governance_system.tally_votes(proposal.id)
@@ -419,9 +410,7 @@ class TestProposalEnactment:
         governance_system.start_voting(proposal.id)
 
         # Vote to fail (insufficient votes)
-        governance_system.cast_vote(
-            proposal.id, "diana", VoteChoice.YES
-        )  # Only 500 power
+        governance_system.cast_vote(proposal.id, "diana", VoteChoice.YES)  # Only 500 power
 
         # Manually set voting end time to past
         proposal_obj = governance_system.get_proposal(proposal.id)
@@ -532,12 +521,8 @@ class TestInvariants:
         # Vote: 60% YES (of non-abstain), 40% NO, with abstains
         governance_system.cast_vote(proposal.id, "alice", VoteChoice.YES)  # 2000
         governance_system.cast_vote(proposal.id, "charlie", VoteChoice.NO)  # 1000
-        governance_system.cast_vote(
-            proposal.id, "bob", VoteChoice.ABSTAIN
-        )  # 1500 (abstain)
-        governance_system.cast_vote(
-            proposal.id, "diana", VoteChoice.ABSTAIN
-        )  # 500 (abstain)
+        governance_system.cast_vote(proposal.id, "bob", VoteChoice.ABSTAIN)  # 1500 (abstain)
+        governance_system.cast_vote(proposal.id, "diana", VoteChoice.ABSTAIN)  # 500 (abstain)
 
         tally = governance_system.tally_votes(proposal.id)
 

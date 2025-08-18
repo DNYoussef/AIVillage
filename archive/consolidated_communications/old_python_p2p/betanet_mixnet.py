@@ -6,17 +6,17 @@ BeaconSet entropy, and constant-rate padding for indistinguishability.
 """
 
 import asyncio
+from dataclasses import dataclass
+from enum import Enum
 import hashlib
 import hmac
 import json
 import logging
+from pathlib import Path
 import random
 import secrets
 import struct
 import time
-from dataclasses import dataclass
-from enum import Enum
-from pathlib import Path
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -94,9 +94,7 @@ class VRFSelector:
 
         return proof, vrf_output
 
-    def verify_vrf_proof(
-        self, input_data: bytes, proof: bytes, vrf_output: bytes, pubkey: bytes
-    ) -> bool:
+    def verify_vrf_proof(self, input_data: bytes, proof: bytes, vrf_output: bytes, pubkey: bytes) -> bool:
         """Verify VRF proof (simplified)."""
         # In production, would use proper VRF verification
         expected_proof, expected_output = self.generate_vrf_proof(input_data)
@@ -166,9 +164,7 @@ class VRFSelector:
                 break
 
             # VRF-based selection with weighted probability
-            weights = [
-                self._calculate_hop_weight(h, mode) for h in remaining_candidates
-            ]
+            weights = [self._calculate_hop_weight(h, mode) for h in remaining_candidates]
             selected = rng.choices(remaining_candidates, weights=weights)[0]
 
             selected_hops.append(selected)
@@ -179,9 +175,7 @@ class VRFSelector:
         as_groups.add(src_as_group)
         as_groups.add(dst_as_group)
 
-        logger.info(
-            f"Selected {len(selected_hops)} hops with {len(as_groups)} AS groups"
-        )
+        logger.info(f"Selected {len(selected_hops)} hops with {len(as_groups)} AS groups")
 
         return selected_hops
 
@@ -199,11 +193,7 @@ class VRFSelector:
             return hop.trust_score * 0.7 + (1.0 - hop.latency_ms / 1000) * 0.3
         elif mode == PrivacyMode.BALANCED:
             # Balance trust, latency, and capacity
-            return (
-                hop.trust_score * 0.4
-                + (1.0 - hop.latency_ms / 1000) * 0.3
-                + hop.capacity_ratio * 0.3
-            )
+            return hop.trust_score * 0.4 + (1.0 - hop.latency_ms / 1000) * 0.3 + hop.capacity_ratio * 0.3
         else:  # PERFORMANCE
             # Prefer low latency and high capacity
             return (1.0 - hop.latency_ms / 1000) * 0.6 + hop.capacity_ratio * 0.4
@@ -288,14 +278,10 @@ class BetanetMixnet:
 
     async def create_mix_route(self, src_as: str, dst_as: str) -> MixRoute | None:
         """Create mix route with privacy guarantees."""
-        logger.info(
-            f"Creating mix route from {src_as} to {dst_as} (mode={self.mode.value})"
-        )
+        logger.info(f"Creating mix route from {src_as} to {dst_as} (mode={self.mode.value})")
 
         # Select hops using VRF
-        selected_hops = self.vrf_selector.select_hops(
-            self.beacon_set, self.available_nodes, self.mode, src_as, dst_as
-        )
+        selected_hops = self.vrf_selector.select_hops(self.beacon_set, self.available_nodes, self.mode, src_as, dst_as)
 
         if not selected_hops:
             logger.error("No hops selected for route")
@@ -411,9 +397,7 @@ class BetanetMixnet:
     async def _send_padding_packet(self, route: MixRoute, data: bytes):
         """Send padding packet through route."""
         # Simplified padding send (would use actual transport in production)
-        logger.debug(
-            f"Sent {len(data)} bytes padding through route {route.route_id.hex()[:8]}"
-        )
+        logger.debug(f"Sent {len(data)} bytes padding through route {route.route_id.hex()[:8]}")
 
     async def benchmark_performance(self) -> dict[str, Any]:
         """Benchmark mixnet performance."""
@@ -430,9 +414,7 @@ class BetanetMixnet:
 
         test_routes = []
         for i in range(10):
-            route = await self.create_mix_route(
-                f"{i + 1}-ff00:0:110", f"{(i + 5) % 10 + 1}-ff00:0:220"
-            )
+            route = await self.create_mix_route(f"{i + 1}-ff00:0:110", f"{(i + 5) % 10 + 1}-ff00:0:220")
             if route:
                 test_routes.append(route)
 
@@ -443,9 +425,7 @@ class BetanetMixnet:
                 "test": "route_creation",
                 "routes_created": len(test_routes),
                 "total_time": creation_time,
-                "avg_time_per_route": creation_time / len(test_routes)
-                if test_routes
-                else 0,
+                "avg_time_per_route": creation_time / len(test_routes) if test_routes else 0,
                 "success_rate": len(test_routes) / 10,
             }
         )
@@ -457,24 +437,18 @@ class BetanetMixnet:
                 "test": "as_diversity",
                 "min_diversity": min(as_diversity_scores) if as_diversity_scores else 0,
                 "max_diversity": max(as_diversity_scores) if as_diversity_scores else 0,
-                "avg_diversity": sum(as_diversity_scores) / len(as_diversity_scores)
-                if as_diversity_scores
-                else 0,
+                "avg_diversity": sum(as_diversity_scores) / len(as_diversity_scores) if as_diversity_scores else 0,
             }
         )
 
         # Test trust requirements
-        trust_compliance = sum(
-            1 for r in test_routes if r.min_trust >= 0.8 or len(r.hops) >= 2
-        )
+        trust_compliance = sum(1 for r in test_routes if r.min_trust >= 0.8 or len(r.hops) >= 2)
         results["tests"].append(
             {
                 "test": "trust_requirements",
                 "compliant_routes": trust_compliance,
                 "total_routes": len(test_routes),
-                "compliance_rate": trust_compliance / len(test_routes)
-                if test_routes
-                else 0,
+                "compliance_rate": trust_compliance / len(test_routes) if test_routes else 0,
             }
         )
 
@@ -507,9 +481,7 @@ async def test_mixnet_compliance():
     for mode in PrivacyMode:
         logger.info(f"Testing {mode.value} mode")
 
-        mixnet = BetanetMixnet(
-            {"privacy_mode": mode.value, "constant_rate_padding": True}
-        )
+        mixnet = BetanetMixnet({"privacy_mode": mode.value, "constant_rate_padding": True})
 
         # Test route creation
         route = await mixnet.create_mix_route("1-ff00:0:110", "5-ff00:0:550")
@@ -518,15 +490,11 @@ async def test_mixnet_compliance():
 
         # Verify privacy requirements
         if mode == PrivacyMode.BALANCED:
-            assert route.min_trust >= 0.8 or len(route.hops) >= 2, (
-                "Balanced mode trust requirement not met"
-            )
+            assert route.min_trust >= 0.8 or len(route.hops) >= 2, "Balanced mode trust requirement not met"
 
         assert route.as_diversity >= 2, "AS diversity requirement not met"
 
-        logger.info(
-            f"✅ {mode.value} mode: {len(route.hops)} hops, AS diversity {route.as_diversity}"
-        )
+        logger.info(f"✅ {mode.value} mode: {len(route.hops)} hops, AS diversity {route.as_diversity}")
 
         await mixnet.cleanup()
 
@@ -537,9 +505,7 @@ async def test_mixnet_compliance():
     assert len(output) == 32, "VRF output length incorrect"
 
     # Test diversity checking
-    assert vrf.check_route_diversity(secrets.token_bytes(16)), (
-        "Route diversity check failed"
-    )
+    assert vrf.check_route_diversity(secrets.token_bytes(16)), "Route diversity check failed"
 
     logger.info("✅ All mixnet compliance tests passed")
 

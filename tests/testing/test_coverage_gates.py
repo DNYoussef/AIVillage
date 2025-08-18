@@ -317,18 +317,14 @@ class TestQualityGateManager:
         assert manager.get_overall_status() == QualityGateStatus.WARNING
 
         # Test with failure
-        manager.results.append(
-            QualityGateResult("gate4", QualityGateStatus.FAIL, "Fail")
-        )
+        manager.results.append(QualityGateResult("gate4", QualityGateStatus.FAIL, "Fail"))
         assert manager.get_overall_status() == QualityGateStatus.FAIL
 
     def test_report_generation(self):
         """Test comprehensive report generation."""
         manager = QualityGateManager()
         manager.results = [
-            QualityGateResult(
-                "gate1", QualityGateStatus.PASS, "Pass", {"detail": "test"}
-            ),
+            QualityGateResult("gate1", QualityGateStatus.PASS, "Pass", {"detail": "test"}),
             QualityGateResult("gate2", QualityGateStatus.WARNING, "Warning"),
         ]
 
@@ -431,9 +427,7 @@ class TestQualityGatesIntegration:
         # Set up results with various statuses
         manager.results = [
             QualityGateResult("basic_imports", QualityGateStatus.PASS, "Pass"),
-            QualityGateResult(
-                "coverage_analysis", QualityGateStatus.WARNING, "Low coverage"
-            ),
+            QualityGateResult("coverage_analysis", QualityGateStatus.WARNING, "Low coverage"),
             QualityGateResult("critical_tests", QualityGateStatus.FAIL, "Tests failed"),
         ]
 

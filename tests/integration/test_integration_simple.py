@@ -18,7 +18,6 @@ from pathlib import Path
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
-# Import core components that we know work
 from agents.coordination_system import (
     Agent,
     AgentCapability,
@@ -31,18 +30,11 @@ from agents.coordination_system import (
     Task,
     TaskScheduler,
 )
+
+# Import core components that we know work
 from ml.feature_extraction import FeatureExtractor, ModelComparator
-from monitoring.observability_system import (
-    ObservabilitySystem,
-    traced_operation,
-)
-from security.auth_system import (
-    AuthenticationManager,
-    AuthorizationManager,
-    Permission,
-    SecurityLevel,
-    UserRole,
-)
+from monitoring.observability_system import ObservabilitySystem, traced_operation
+from security.auth_system import AuthenticationManager, AuthorizationManager, Permission, SecurityLevel, UserRole
 
 
 class TestCoreIntegration:
@@ -81,9 +73,7 @@ class TestCoreIntegration:
             )
 
             # Monitor authentication process
-            with traced_operation(
-                observability.tracer, "user_auth_integration"
-            ) as span:
+            with traced_operation(observability.tracer, "user_auth_integration") as span:
                 observability.metrics.record_counter("auth_attempts", 1.0)
 
                 success, auth_user, session_token = auth_manager.authenticate(
@@ -170,9 +160,7 @@ class TestCoreIntegration:
         def test_handler(message):
             return {"status": "handled", "message_id": message.message_id}
 
-        broker.register_handler(
-            "integration_agent", MessageType.TASK_REQUEST, test_handler
-        )
+        broker.register_handler("integration_agent", MessageType.TASK_REQUEST, test_handler)
 
         message = Message(
             message_id="integration_msg",
@@ -203,9 +191,7 @@ class TestCoreIntegration:
         cpu_resource = Resource(**resource)
         resource_manager.register_resource(cpu_resource)
 
-        allocated = resource_manager.allocate_resource(
-            "test_cpu", "integration_agent", 50.0
-        )
+        allocated = resource_manager.allocate_resource("test_cpu", "integration_agent", 50.0)
         assert allocated is True
 
         print("OK Agent Coordination integration successful")
@@ -241,9 +227,7 @@ class TestCoreIntegration:
 
         # Test model comparison
         start_time = time.time()
-        comparison = model_comparator.compare_models(
-            model_a, model_b, "integration_model_a", "integration_model_b"
-        )
+        comparison = model_comparator.compare_models(model_a, model_b, "integration_model_a", "integration_model_b")
         comparison_time = time.time() - start_time
 
         # Verify comparison
@@ -299,9 +283,7 @@ class TestCoreIntegration:
 
         # Test viewer permissions
         viewer_can_read = authz_manager.has_permission(viewer_user, Permission.READ)
-        viewer_can_execute = authz_manager.has_permission(
-            viewer_user, Permission.EXECUTE
-        )
+        viewer_can_execute = authz_manager.has_permission(viewer_user, Permission.EXECUTE)
         viewer_access_confidential = authz_manager.check_access(
             viewer_user,
             "confidential_resource",
@@ -343,7 +325,7 @@ class TestCoreIntegration:
 
         try:
             # 1. Authenticate user
-            user = auth_manager.create_user(
+            auth_manager.create_user(
                 username="e2e_user",
                 email="e2e@test.com",
                 password="E2EPassword123!",
@@ -404,9 +386,7 @@ class TestCoreIntegration:
                 task_id = scheduler.submit_task(task)
                 assert task_id == "e2e_task"
 
-                observability.metrics.record_counter(
-                    "tasks_submitted", 1.0, {"user": auth_user.username}
-                )
+                observability.metrics.record_counter("tasks_submitted", 1.0, {"user": auth_user.username})
                 observability.logger.info(
                     "Task submitted in E2E test",
                     trace_id=span.trace_id,
@@ -424,9 +404,7 @@ class TestCoreIntegration:
                 observability.metrics.record_counter("tasks_completed", 1.0)
                 return {"status": "completed", "result": "e2e_success"}
 
-            broker.register_handler(
-                "e2e_agent", MessageType.TASK_REQUEST, task_completion_handler
-            )
+            broker.register_handler("e2e_agent", MessageType.TASK_REQUEST, task_completion_handler)
 
             completion_message = Message(
                 message_id="e2e_completion",
@@ -450,7 +428,7 @@ class TestCoreIntegration:
             # 6. Complete task and verify monitoring
             result = {"output": "e2e_processed", "status": "success"}
             # Note: Task needs to be running to be completed, skip this assertion for integration test
-            complete_success = scheduler.complete_task("e2e_task", result)
+            scheduler.complete_task("e2e_task", result)
             # assert complete_success is True  # Skip - task not in running state
 
             # 7. Verify end-to-end monitoring data
@@ -463,14 +441,9 @@ class TestCoreIntegration:
             # Verify trace data - be more lenient
             assert len(observability.tracer.completed_spans) >= 1
             if len(observability.tracer.completed_spans) >= 2:
-                trace_names = {
-                    span.operation_name for span in observability.tracer.completed_spans
-                }
+                trace_names = {span.operation_name for span in observability.tracer.completed_spans}
                 # Check that at least one of our operations was traced
-                has_our_traces = any(
-                    name in trace_names
-                    for name in ["agent_registration", "task_submission"]
-                )
+                has_our_traces = any(name in trace_names for name in ["agent_registration", "task_submission"])
                 assert has_our_traces
 
             # Verify log data - be more lenient

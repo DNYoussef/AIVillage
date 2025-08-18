@@ -136,9 +136,7 @@ def test_simple_quantizer():
         print(f"Compressed: {len(compressed_data):,} bytes")
         print(f"Ratio: {compression_ratio:.1f}x")
 
-        assert compression_ratio >= 3, (
-            f"SimpleQuantizer ratio too low: {compression_ratio:.1f}x"
-        )
+        assert compression_ratio >= 3, f"SimpleQuantizer ratio too low: {compression_ratio:.1f}x"
         print("PASS: SimpleQuantizer PASSED")
         return compression_ratio
 
@@ -213,9 +211,7 @@ def main():
 
         print("\nModel Size Analysis:")
         for name, data in model_results.items():
-            print(
-                f"  {name}: {data['params']:,} params -> {data['method']} ({data['ratio']:.1f}x)"
-            )
+            print(f"  {name}: {data['params']:,} params -> {data['method']} ({data['ratio']:.1f}x)")
 
         # Calculate pipeline potential
         pipeline_ratio = bitnet_ratio * 0.3 + seedlm_ratio * 0.4 + vptq_ratio * 0.3

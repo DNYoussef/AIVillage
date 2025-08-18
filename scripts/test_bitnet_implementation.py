@@ -10,9 +10,7 @@ from pathlib import Path
 import torch
 
 # Add the compression module to path
-sys.path.append(
-    str(Path(__file__).parent.parent / "src" / "production" / "compression")
-)
+sys.path.append(str(Path(__file__).parent.parent / "src" / "production" / "compression"))
 
 from compression.stage1_bitnet import BitNetLinear, GradualBitnetCallback
 
@@ -111,13 +109,9 @@ def test_lambda_scheduler():
         state = MockState(step)
         callback.on_step_begin(None, state, None, model=model)
 
-        expected_lambda = (
-            min(1.0, step / callback.warmup_steps) if callback.warmup_steps > 0 else 1.0
-        )
+        expected_lambda = min(1.0, step / callback.warmup_steps) if callback.warmup_steps > 0 else 1.0
 
-        print(
-            f"   Step {step:3d}: λ={callback.current_lambda:.3f} (expected: {expected_lambda:.3f})"
-        )
+        print(f"   Step {step:3d}: λ={callback.current_lambda:.3f} (expected: {expected_lambda:.3f})")
 
         # Check that layers are updated
         assert model.layer1.lambda_val == callback.current_lambda

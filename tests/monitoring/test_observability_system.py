@@ -209,9 +209,7 @@ class TestDistributedTracer:
         """Test flushing spans and retrieving traces."""
         # Create a trace with multiple spans
         parent_span = self.tracer.start_span("parent")
-        child_span = self.tracer.start_span(
-            "child", parent_span_id=parent_span.span_id, trace_id=parent_span.trace_id
-        )
+        child_span = self.tracer.start_span("child", parent_span_id=parent_span.span_id, trace_id=parent_span.trace_id)
 
         self.tracer.finish_span(child_span)
         self.tracer.finish_span(parent_span)
@@ -275,9 +273,7 @@ class TestLogHandler:
         trace_id = "test_trace_123"
         span_id = "test_span_456"
 
-        self.logger.info(
-            "Test message", trace_id=trace_id, span_id=span_id, user_id="12345"
-        )
+        self.logger.info("Test message", trace_id=trace_id, span_id=span_id, user_id="12345")
 
         log_entry = self.logger.log_buffer[0]
         assert log_entry.trace_id == trace_id
@@ -555,9 +551,7 @@ class TestObservabilitySystem:
         """Test dashboard data generation."""
         # Add some test data
         self.observability.metrics.record_counter("test_metric", 1.0)
-        self.observability.alerts.trigger_alert(
-            "Test Alert", "Description", AlertSeverity.WARNING
-        )
+        self.observability.alerts.trigger_alert("Test Alert", "Description", AlertSeverity.WARNING)
 
         dashboard_data = self.observability.get_dashboard_data()
 
@@ -588,9 +582,7 @@ class TestIntegrationScenarios:
             temp_db = tempfile.NamedTemporaryFile(delete=False)
             temp_db.close()
 
-            obs = ObservabilitySystem(
-                service_name=service_name, storage_backend=temp_db.name
-            )
+            obs = ObservabilitySystem(service_name=service_name, storage_backend=temp_db.name)
             obs.start()
             services[service_name] = (obs, temp_db.name)
 
@@ -619,7 +611,7 @@ class TestIntegrationScenarios:
                         "create_order",
                         parent_span_id=user_span.span_id,
                         attributes={"trace_id": gateway_span.trace_id},
-                    ) as order_span:
+                    ):
                         order_obs.metrics.record_counter("orders_created", 1.0)
 
             # Verify metrics were collected in all services
@@ -686,9 +678,7 @@ if __name__ == "__main__":
     print("Testing alert management...")
     with tempfile.NamedTemporaryFile(delete=False) as tmp:
         alert_mgr = AlertManager(tmp.name)
-        alert = alert_mgr.trigger_alert(
-            "Test Alert", "Test description", AlertSeverity.WARNING
-        )
+        alert = alert_mgr.trigger_alert("Test Alert", "Test description", AlertSeverity.WARNING)
         active_alerts = alert_mgr.get_active_alerts()
         print(f"OK Alerting: {len(active_alerts)} active alerts")
         try:

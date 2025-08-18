@@ -6,16 +6,16 @@ including uTLS fingerprinting, Noise XK inner protocol, and proper frame format.
 """
 
 import asyncio
+from dataclasses import dataclass
+from enum import IntEnum
 import hashlib
 import json
 import logging
+from pathlib import Path
 import random
 import secrets
 import struct
 import time
-from dataclasses import dataclass
-from enum import IntEnum
-from pathlib import Path
 from typing import Any
 
 import aiofiles
@@ -25,7 +25,7 @@ try:
     from cryptography.hazmat.backends import default_backend
     from cryptography.hazmat.primitives import hashes, serialization
     from cryptography.hazmat.primitives.asymmetric import x25519
-    from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+    from cryptography.hazmat.primitives.ciphers import Cipher, algorithms
     from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 
     CRYPTO_AVAILABLE = True
@@ -165,9 +165,7 @@ class HTXTransport:
             encoding=serialization.Encoding.Raw, format=serialization.PublicFormat.Raw
         )
 
-    async def calibrate_origin(
-        self, origin_host: str, origin_port: int = 443
-    ) -> HTXCalibration:
+    async def calibrate_origin(self, origin_host: str, origin_port: int = 443) -> HTXCalibration:
         """Calibrate uTLS parameters from origin server."""
         logger.info(f"Calibrating TLS fingerprint for {origin_host}:{origin_port}")
 
@@ -247,9 +245,7 @@ class HTXTransport:
             )
 
             # -> e, es (initiator to responder)
-            message1 = (
-                self.noise_state.ephemeral_public + self.noise_state.static_public
-            )
+            message1 = self.noise_state.ephemeral_public + self.noise_state.static_public
             writer.write(message1)
             await writer.drain()
 
@@ -289,9 +285,7 @@ class HTXTransport:
             )
 
             # -> e, ee, se
-            message2 = (
-                self.noise_state.ephemeral_public + self.noise_state.static_public
-            )
+            message2 = self.noise_state.ephemeral_public + self.noise_state.static_public
             writer.write(message2)
             await writer.drain()
 
@@ -321,9 +315,9 @@ class HTXTransport:
         )
 
         key_material = hkdf.derive(handshake_hash)
-        k0 = key_material[:32]
+        key_material[:32]
         k0c = key_material[32:64]
-        k0s = key_material[64:96]
+        key_material[64:96]
 
         # Use K0c for client->server, K0s for server->client
         self.noise_state.cipher_key = k0c
@@ -331,9 +325,7 @@ class HTXTransport:
 
         logger.debug("Derived Noise XK keys")
 
-    def create_htx_frame(
-        self, frame_type: HTXFrameType, stream_id: int, payload: bytes
-    ) -> bytes:
+    def create_htx_frame(self, frame_type: HTXFrameType, stream_id: int, payload: bytes) -> bytes:
         """Create HTX frame with proper format."""
         # Frame format: uint24 length | varint stream_id | type | payload
 
@@ -371,9 +363,7 @@ class HTXTransport:
             shift += 7
         raise ValueError("Invalid varint")
 
-    async def send_window_update(
-        self, writer: asyncio.StreamWriter, stream_id: int, window_size: int
-    ):
+    async def send_window_update(self, writer: asyncio.StreamWriter, stream_id: int, window_size: int):
         """Send WINDOW_UPDATE frame when ≥50% consumed."""
         payload = struct.pack(">I", window_size)
         frame = self.create_htx_frame(HTXFrameType.WINDOW_UPDATE, stream_id, payload)
@@ -428,9 +418,7 @@ class HTXTransport:
 
         logger.info(f"KEY_UPDATE completed (counter={self.noise_state.rekey_counter})")
 
-    def create_access_ticket(
-        self, peer_id: str, carrier: str = "cookie"
-    ) -> AccessTicket:
+    def create_access_ticket(self, peer_id: str, carrier: str = "cookie") -> AccessTicket:
         """Create access ticket for peer."""
         ticket = AccessTicket(
             ticket_id=secrets.token_bytes(16),
@@ -544,9 +532,7 @@ class HTXTransport:
                     writer.write(frame)
                     await writer.drain()
 
-                    logger.debug(
-                        f"Sent {padding_size} bytes padding after {idle_time:.0f}ms idle"
-                    )
+                    logger.debug(f"Sent {padding_size} bytes padding after {idle_time:.0f}ms idle")
                     last_activity = time.time()
 
         self.padding_task = asyncio.create_task(padding_loop())
@@ -565,9 +551,7 @@ class HTXTransport:
         # Start ≥2 cover connections
         cover_tasks = []
         for cover_host, cover_port in random.sample(cover_origins, 2):
-            task = asyncio.create_task(
-                self._establish_cover_connection(cover_host, cover_port)
-            )
+            task = asyncio.create_task(self._establish_cover_connection(cover_host, cover_port))
             cover_tasks.append(task)
 
         # Establish real TCP connection with randomized backoff

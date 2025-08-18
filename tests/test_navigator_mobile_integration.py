@@ -28,9 +28,7 @@ async def test_navigator_mobile_integration():
     status = navigator.get_integration_status()
     assert status["integration_active"] is True
     assert "transport_profiles" in status
-    print(
-        f"    [PASS] Integration active with {len(status['transport_profiles'])} transport profiles"
-    )
+    print(f"    [PASS] Integration active with {len(status['transport_profiles'])} transport profiles")
 
     # Test 2: Constraint Evaluation
     print("\n[2] Testing device constraint evaluation...")
@@ -46,22 +44,16 @@ async def test_navigator_mobile_integration():
     )
     assert ConstraintType.BATTERY_CRITICAL in constraints.active_constraints
     assert constraints.battery_level == 15
-    print(
-        f"    [PASS] Battery critical constraint detected: {constraints.battery_level}%"
-    )
+    print(f"    [PASS] Battery critical constraint detected: {constraints.battery_level}%")
 
     # Test 3: BitChat-First Routing Under Battery Constraints
     print("\n[3] Testing BitChat-first routing under battery constraints...")
 
-    decision = await navigator.route_with_constraints(
-        "peer123", 1024, TransportPriority.NORMAL
-    )
+    decision = await navigator.route_with_constraints("peer123", 1024, TransportPriority.NORMAL)
     assert decision.primary_transport.transport_type == "bitchat"
     assert ConstraintType.BATTERY_CRITICAL in decision.applied_constraints
     assert "critical battery" in decision.decision_reason
-    print(
-        f"    [PASS] Selected {decision.primary_transport.transport_type} due to: {decision.decision_reason}"
-    )
+    print(f"    [PASS] Selected {decision.primary_transport.transport_type} due to: {decision.decision_reason}")
     print(
         f"    [PASS] Power efficiency: {decision.power_efficiency_score:.2f}, Battery drain: {decision.expected_battery_drain_percent:.2f}%"
     )
@@ -74,9 +66,7 @@ async def test_navigator_mobile_integration():
     os.environ["CPU_TEMP"] = "35.0"
     os.environ["NETWORK_TYPE"] = "wifi"
 
-    decision = await navigator.route_with_constraints(
-        "peer456", 2048, TransportPriority.NORMAL
-    )
+    decision = await navigator.route_with_constraints("peer456", 2048, TransportPriority.NORMAL)
     # Should consider both BitChat and Betanet
     available_types = {decision.primary_transport.transport_type}
     for backup in decision.backup_transports:
@@ -95,13 +85,9 @@ async def test_navigator_mobile_integration():
     os.environ["BATTERY_LEVEL"] = "60"
     os.environ["NETWORK_TYPE"] = "cellular"
 
-    decision = await navigator.route_with_constraints(
-        "peer789", 4096, TransportPriority.NORMAL
-    )
+    decision = await navigator.route_with_constraints("peer789", 4096, TransportPriority.NORMAL)
     assert ConstraintType.CELLULAR_DATA in decision.applied_constraints
-    assert decision.primary_transport.cost_factor < 0.5, (
-        "Should select low-cost transport on cellular"
-    )
+    assert decision.primary_transport.cost_factor < 0.5, "Should select low-cost transport on cellular"
     print(
         f"    [PASS] Cellular optimization: {decision.primary_transport.transport_type}, cost factor: {decision.primary_transport.cost_factor:.2f}"
     )
@@ -115,13 +101,9 @@ async def test_navigator_mobile_integration():
     os.environ["CPU_TEMP"] = "62.0"  # Above critical threshold
     os.environ["NETWORK_TYPE"] = "wifi"
 
-    decision = await navigator.route_with_constraints(
-        "peer999", 1024, TransportPriority.HIGH
-    )
+    decision = await navigator.route_with_constraints("peer999", 1024, TransportPriority.HIGH)
     assert ConstraintType.THERMAL_CRITICAL in decision.applied_constraints
-    assert decision.primary_transport.transport_type in ["bitchat", "scion"], (
-        "Should avoid CPU-intensive transports"
-    )
+    assert decision.primary_transport.transport_type in ["bitchat", "scion"], "Should avoid CPU-intensive transports"
     print(
         f"    [PASS] Thermal handling: selected {decision.primary_transport.transport_type} with temp {float(os.environ['CPU_TEMP'])}°C"
     )
@@ -129,9 +111,7 @@ async def test_navigator_mobile_integration():
     # Test 7: Factory Function Integration
     print("\n[7] Testing factory function integration...")
 
-    mobile_navigator = await create_mobile_aware_navigator(
-        enable_resource_management=True
-    )
+    mobile_navigator = await create_mobile_aware_navigator(enable_resource_management=True)
     factory_status = mobile_navigator.get_integration_status()
     assert factory_status["integration_active"] is True
     print("    [PASS] Factory created navigator with resource management")
@@ -144,16 +124,12 @@ async def test_navigator_mobile_integration():
     os.environ["CPU_TEMP"] = "70.0"  # Critical
     os.environ["NETWORK_TYPE"] = "cellular"
 
-    decision = await navigator.route_with_constraints(
-        "fallback_peer", 512, TransportPriority.CRITICAL
-    )
-    assert decision.primary_transport.transport_type == "bitchat", (
-        "Should fallback to BitChat under extreme constraints"
-    )
+    decision = await navigator.route_with_constraints("fallback_peer", 512, TransportPriority.CRITICAL)
+    assert (
+        decision.primary_transport.transport_type == "bitchat"
+    ), "Should fallback to BitChat under extreme constraints"
     assert len(decision.applied_constraints) >= 2, "Should detect multiple constraints"
-    print(
-        f"    [PASS] Extreme constraints handled: {len(decision.applied_constraints)} constraints applied"
-    )
+    print(f"    [PASS] Extreme constraints handled: {len(decision.applied_constraints)} constraints applied")
     print(f"    [PASS] Fallback transport: {decision.primary_transport.transport_type}")
 
     print("\n=== Navigator Mobile Integration: ALL TESTS PASSED ===")
@@ -176,9 +152,7 @@ if __name__ == "__main__":
         result = asyncio.run(test_navigator_mobile_integration())
         print(f"\n[SUCCESS] Prompt 3 Integration Result: {result['prompt_3_status']}")
         print("\n[VALIDATED] Key Integration Features:")
-        print(
-            "  - Battery-aware transport selection (BitChat-first under low power) [OK]"
-        )
+        print("  - Battery-aware transport selection (BitChat-first under low power) [OK]")
         print("  - Thermal throttling integration with transport decisions [OK]")
         print("  - Memory-constrained chunk sizing coordination [OK]")
         print("  - Network cost-aware routing preferences [OK]")

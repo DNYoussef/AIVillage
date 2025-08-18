@@ -97,9 +97,7 @@ class NetworkConditions:
 class MockTransportNode:
     """Mock transport node for reliability testing"""
 
-    def __init__(
-        self, node_id: str, network_conditions: NetworkConditions, max_hops: int = 7
-    ):
+    def __init__(self, node_id: str, network_conditions: NetworkConditions, max_hops: int = 7):
         self.node_id = node_id
         self.network_conditions = network_conditions
         self.max_hops = max_hops
@@ -119,9 +117,7 @@ class MockTransportNode:
         # Message cache for duplicate detection
         self.message_cache: set[str] = set()
 
-    async def send_message(
-        self, recipient: str, payload: bytes, priority: int = 5, ttl: int = 7
-    ) -> bool:
+    async def send_message(self, recipient: str, payload: bytes, priority: int = 5, ttl: int = 7) -> bool:
         """Send message with network simulation"""
         if not self.is_online:
             return False
@@ -176,9 +172,7 @@ class MockTransportNode:
             next_hop = self.routing_table.get(message.recipient)
             if next_hop and next_hop in self.peers and next_hop != from_peer:
                 self.messages_relayed += 1
-                logger.debug(
-                    f"[{self.node_id}] Relayed message {message.id[:8]} to {next_hop}"
-                )
+                logger.debug(f"[{self.node_id}] Relayed message {message.id[:8]} to {next_hop}")
                 return True
 
         return False
@@ -188,9 +182,7 @@ class MockTransportNode:
         self.is_online = online
         if online:
             # Deliver stored messages when coming online
-            logger.debug(
-                f"[{self.node_id}] Coming online, delivering {len(self.stored_messages)} stored messages"
-            )
+            logger.debug(f"[{self.node_id}] Coming online, delivering {len(self.stored_messages)} stored messages")
             self.stored_messages.clear()
 
     def add_peer(self, peer_id: str):
@@ -255,9 +247,7 @@ class ReliabilityTestHarness:
         self.ble_handshake = MockBLEHandshake()
         self.test_results: dict[str, Any] = {}
 
-    def create_network_topology(
-        self, node_count: int = 5, packet_loss_rate: float = 0.3, offline_nodes: int = 0
-    ):
+    def create_network_topology(self, node_count: int = 5, packet_loss_rate: float = 0.3, offline_nodes: int = 0):
         """Create test network topology"""
         self.nodes.clear()
 
@@ -289,9 +279,7 @@ class ReliabilityTestHarness:
                 node.add_peer(peer_id)
                 self.nodes[peer_id].add_peer(node_id)
 
-        logger.info(
-            f"Created network topology: {node_count} nodes, {packet_loss_rate:.1%} packet loss"
-        )
+        logger.info(f"Created network topology: {node_count} nodes, {packet_loss_rate:.1%} packet loss")
 
     async def test_message_delivery(
         self,
@@ -320,17 +308,13 @@ class ReliabilityTestHarness:
             payload = b"x" * payload_size  # Test payload
 
             # Send message
-            success = await sender_node.send_message(
-                recipient, payload, priority=5, ttl=7
-            )
+            success = await sender_node.send_message(recipient, payload, priority=5, ttl=7)
 
             if success:
                 results["messages_sent"] += 1
 
                 # Simulate message propagation through network
-                delivered = await self._simulate_message_propagation(
-                    sender, recipient, payload
-                )
+                delivered = await self._simulate_message_propagation(sender, recipient, payload)
 
                 if delivered:
                     delivery_time = (time.time() - start_time) * 1000
@@ -342,27 +326,19 @@ class ReliabilityTestHarness:
 
         # Calculate statistics
         if results["messages_sent"] > 0:
-            results["delivery_rate"] = (
-                results["messages_delivered"] / results["messages_sent"]
-            )
+            results["delivery_rate"] = results["messages_delivered"] / results["messages_sent"]
 
         if delivery_times:
             results["avg_delivery_time_ms"] = sum(delivery_times) / len(delivery_times)
 
-        results["messages_dropped"] = sum(
-            node.messages_dropped for node in self.nodes.values()
-        )
+        results["messages_dropped"] = sum(node.messages_dropped for node in self.nodes.values())
 
         return results
 
-    async def _simulate_message_propagation(
-        self, sender: str, recipient: str, payload: bytes
-    ) -> bool:
+    async def _simulate_message_propagation(self, sender: str, recipient: str, payload: bytes) -> bool:
         """Simulate message propagation through mesh network"""
         # Create message
-        message = BitChatMessage(
-            sender=sender, recipient=recipient, payload=payload, ttl=7
-        )
+        message = BitChatMessage(sender=sender, recipient=recipient, payload=payload, ttl=7)
 
         # Start propagation from sender with breadth-first search
         visited = {sender}
@@ -413,9 +389,7 @@ class ReliabilityTestHarness:
                     await asyncio.sleep(delay * 0.1)  # Scale down for faster testing
 
                     # Attempt delivery
-                    delivered = await peer_node.receive_message(
-                        hop_message, current_node_id
-                    )
+                    delivered = await peer_node.receive_message(hop_message, current_node_id)
 
                     if peer_id == recipient and delivered and delivery_success:
                         return True
@@ -479,8 +453,7 @@ class ReliabilityTestHarness:
         # Calculate success rate
         if results["offline_messages_stored"] > 0:
             results["store_forward_success_rate"] = (
-                results["messages_delivered_when_online"]
-                / results["offline_messages_stored"]
+                results["messages_delivered_when_online"] / results["offline_messages_stored"]
             )
         else:
             # If no messages stored but we have offline nodes, it's still a success scenario
@@ -544,9 +517,7 @@ class ReliabilityTestHarness:
 
         return results
 
-    async def test_ble_handshake_simulation(
-        self, device_count: int = 5
-    ) -> dict[str, Any]:
+    async def test_ble_handshake_simulation(self, device_count: int = 5) -> dict[str, Any]:
         """Test BLE handshake simulation"""
         results = {
             "handshake_attempts": 0,
@@ -563,9 +534,7 @@ class ReliabilityTestHarness:
             for j in range(i + 1, len(devices)):
                 start_time = time.time()
 
-                success = await self.ble_handshake.attempt_handshake(
-                    devices[i], devices[j]
-                )
+                success = await self.ble_handshake.attempt_handshake(devices[i], devices[j])
 
                 handshake_time = (time.time() - start_time) * 1000
                 handshake_times.append(handshake_time)
@@ -576,14 +545,10 @@ class ReliabilityTestHarness:
                 results["handshake_attempts"] += 1
 
         if results["handshake_attempts"] > 0:
-            results["handshake_success_rate"] = (
-                results["successful_handshakes"] / results["handshake_attempts"]
-            )
+            results["handshake_success_rate"] = results["successful_handshakes"] / results["handshake_attempts"]
 
         if handshake_times:
-            results["avg_handshake_time_ms"] = sum(handshake_times) / len(
-                handshake_times
-            )
+            results["avg_handshake_time_ms"] = sum(handshake_times) / len(handshake_times)
 
         return results
 
@@ -592,25 +557,16 @@ class ReliabilityTestHarness:
         total_stats = {
             "total_nodes": len(self.nodes),
             "online_nodes": sum(1 for node in self.nodes.values() if node.is_online),
-            "total_messages_sent": sum(
-                node.messages_sent for node in self.nodes.values()
-            ),
-            "total_messages_received": sum(
-                node.messages_received for node in self.nodes.values()
-            ),
-            "total_messages_relayed": sum(
-                node.messages_relayed for node in self.nodes.values()
-            ),
-            "total_messages_dropped": sum(
-                node.messages_dropped for node in self.nodes.values()
-            ),
+            "total_messages_sent": sum(node.messages_sent for node in self.nodes.values()),
+            "total_messages_received": sum(node.messages_received for node in self.nodes.values()),
+            "total_messages_relayed": sum(node.messages_relayed for node in self.nodes.values()),
+            "total_messages_dropped": sum(node.messages_dropped for node in self.nodes.values()),
             "node_details": [node.get_stats() for node in self.nodes.values()],
         }
 
         if total_stats["total_messages_sent"] > 0:
             total_stats["network_delivery_rate"] = (
-                total_stats["total_messages_received"]
-                / total_stats["total_messages_sent"]
+                total_stats["total_messages_received"] / total_stats["total_messages_sent"]
             )
         else:
             total_stats["network_delivery_rate"] = 0.0
@@ -630,41 +586,29 @@ class TestTransportReliability:
     @pytest.mark.asyncio
     async def test_high_packet_loss_delivery(self, harness):
         """Test message delivery under 30% packet loss"""
-        harness.create_network_topology(
-            node_count=5, packet_loss_rate=0.3, offline_nodes=0
-        )  # 30% packet loss
+        harness.create_network_topology(node_count=5, packet_loss_rate=0.3, offline_nodes=0)  # 30% packet loss
 
         results = await harness.test_message_delivery(
             sender="node_0", recipient="node_4", message_count=20, payload_size=512
         )
 
         # Should still achieve reasonable delivery rate despite packet loss
-        assert results["delivery_rate"] >= 0.5, (
-            f"Delivery rate too low: {results['delivery_rate']}"
-        )
+        assert results["delivery_rate"] >= 0.5, f"Delivery rate too low: {results['delivery_rate']}"
         assert results["messages_sent"] > 0
-        print(
-            f"[OK] 30% packet loss test: {results['delivery_rate']:.1%} delivery rate"
-        )
+        print(f"[OK] 30% packet loss test: {results['delivery_rate']:.1%} delivery rate")
 
     @pytest.mark.asyncio
     async def test_extreme_packet_loss_delivery(self, harness):
         """Test message delivery under 40% packet loss"""
-        harness.create_network_topology(
-            node_count=6, packet_loss_rate=0.4, offline_nodes=0
-        )  # 40% packet loss
+        harness.create_network_topology(node_count=6, packet_loss_rate=0.4, offline_nodes=0)  # 40% packet loss
 
         results = await harness.test_message_delivery(
             sender="node_0", recipient="node_5", message_count=25, payload_size=1024
         )
 
         # Even with extreme packet loss, some messages should get through with retry logic
-        assert results["delivery_rate"] >= 0.2, (
-            f"Delivery rate too low: {results['delivery_rate']}"
-        )
-        print(
-            f"[OK] 40% packet loss test: {results['delivery_rate']:.1%} delivery rate"
-        )
+        assert results["delivery_rate"] >= 0.2, f"Delivery rate too low: {results['delivery_rate']}"
+        print(f"[OK] 40% packet loss test: {results['delivery_rate']:.1%} delivery rate")
 
     @pytest.mark.asyncio
     async def test_ttl_relay_enforcement(self, harness):
@@ -678,17 +622,13 @@ class TestTransportReliability:
     @pytest.mark.asyncio
     async def test_store_and_forward(self, harness):
         """Test store-and-forward for offline scenarios"""
-        harness.create_network_topology(
-            node_count=5, packet_loss_rate=0.1, offline_nodes=2
-        )
+        harness.create_network_topology(node_count=5, packet_loss_rate=0.1, offline_nodes=2)
 
         results = await harness.test_store_and_forward()
 
         assert results["offline_messages_stored"] > 0
         assert results["store_forward_success_rate"] >= 0.5
-        print(
-            f"[OK] Store-and-forward test: {results['store_forward_success_rate']:.1%} success rate"
-        )
+        print(f"[OK] Store-and-forward test: {results['store_forward_success_rate']:.1%} success rate")
 
     @pytest.mark.asyncio
     async def test_ble_handshake_simulation(self, harness):
@@ -696,20 +636,14 @@ class TestTransportReliability:
         results = await harness.test_ble_handshake_simulation(device_count=4)
 
         assert results["handshake_attempts"] > 0
-        assert (
-            results["handshake_success_rate"] >= 0.6
-        )  # Expect reasonable success rate
+        assert results["handshake_success_rate"] >= 0.6  # Expect reasonable success rate
         assert results["avg_handshake_time_ms"] >= 400  # Realistic handshake time
-        print(
-            f"[OK] BLE handshake test: {results['handshake_success_rate']:.1%} success rate"
-        )
+        print(f"[OK] BLE handshake test: {results['handshake_success_rate']:.1%} success rate")
 
     @pytest.mark.asyncio
     async def test_network_resilience(self, harness):
         """Test overall network resilience"""
-        harness.create_network_topology(
-            node_count=8, packet_loss_rate=0.25, offline_nodes=1
-        )  # 25% packet loss
+        harness.create_network_topology(node_count=8, packet_loss_rate=0.25, offline_nodes=1)  # 25% packet loss
 
         # Test multiple message flows
         all_results = []
@@ -727,17 +661,11 @@ class TestTransportReliability:
         avg_delivery_rate = sum(all_results) / len(all_results)
 
         # Network should maintain reasonable connectivity
-        assert avg_delivery_rate >= 0.4, (
-            f"Network resilience too low: {avg_delivery_rate}"
-        )
+        assert avg_delivery_rate >= 0.4, f"Network resilience too low: {avg_delivery_rate}"
 
         network_stats = harness.get_network_stats()
-        print(
-            f"[OK] Network resilience test: {avg_delivery_rate:.1%} avg delivery rate"
-        )
-        print(
-            f"   Network stats: {network_stats['network_delivery_rate']:.1%} overall delivery"
-        )
+        print(f"[OK] Network resilience test: {avg_delivery_rate:.1%} avg delivery rate")
+        print(f"   Network stats: {network_stats['network_delivery_rate']:.1%} overall delivery")
 
 
 if __name__ == "__main__":
@@ -751,9 +679,7 @@ if __name__ == "__main__":
 
         # Test 1: High packet loss (30%)
         print("\nTest 1: High Packet Loss (30%)")
-        harness.create_network_topology(
-            node_count=5, packet_loss_rate=0.3, offline_nodes=0
-        )
+        harness.create_network_topology(node_count=5, packet_loss_rate=0.3, offline_nodes=0)
 
         results = await harness.test_message_delivery(
             sender="node_0", recipient="node_4", message_count=20, payload_size=512
@@ -766,9 +692,7 @@ if __name__ == "__main__":
 
         # Test 2: Extreme packet loss (40%)
         print("\n[RADIO] Test 2: Extreme Packet Loss (40%)")
-        harness.create_network_topology(
-            node_count=6, packet_loss_rate=0.4, offline_nodes=0
-        )
+        harness.create_network_topology(node_count=6, packet_loss_rate=0.4, offline_nodes=0)
 
         results = await harness.test_message_delivery(
             sender="node_0", recipient="node_5", message_count=25, payload_size=1024
@@ -785,18 +709,12 @@ if __name__ == "__main__":
 
         # Test 4: Store-and-forward
         print("\n[STORAGE] Test 4: Store-and-Forward")
-        harness.create_network_topology(
-            node_count=5, packet_loss_rate=0.1, offline_nodes=2
-        )
+        harness.create_network_topology(node_count=5, packet_loss_rate=0.1, offline_nodes=2)
 
         sf_results = await harness.test_store_and_forward()
         print(f"   Offline Messages Stored: {sf_results['offline_messages_stored']}")
-        print(
-            f"   Messages Delivered When Online: {sf_results['messages_delivered_when_online']}"
-        )
-        print(
-            f"   Store-Forward Success Rate: {sf_results['store_forward_success_rate']:.1%}"
-        )
+        print(f"   Messages Delivered When Online: {sf_results['messages_delivered_when_online']}")
+        print(f"   Store-Forward Success Rate: {sf_results['store_forward_success_rate']:.1%}")
 
         # Test 5: BLE handshake
         print("\n[MOBILE] Test 5: BLE Handshake Simulation")
@@ -823,12 +741,9 @@ if __name__ == "__main__":
         # Return overall success metrics
         overall_success = (
             results["delivery_rate"] >= 0.3
-            and ttl_results[
-                "ttl_enforcement_working"
-            ]  # Some delivery under extreme loss
+            and ttl_results["ttl_enforcement_working"]  # Some delivery under extreme loss
             and sf_results["store_forward_success_rate"] >= 0.5  # TTL working
-            and ble_results["handshake_success_rate"]
-            >= 0.6  # Store-forward working  # BLE handshakes working
+            and ble_results["handshake_success_rate"] >= 0.6  # Store-forward working  # BLE handshakes working
         )
 
         print(f"[TARGET] Overall Test Suite: {'PASS' if overall_success else 'FAIL'}")

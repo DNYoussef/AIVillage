@@ -104,9 +104,7 @@ class P2PNetworkMigrator:
 
         return peer_config
 
-    def create_libp2p_configuration(
-        self, peer_config: dict[str, Any]
-    ) -> dict[str, Any]:
+    def create_libp2p_configuration(self, peer_config: dict[str, Any]) -> dict[str, Any]:
         """Create LibP2P configuration from legacy data."""
         logger.info("Creating LibP2P configuration...")
 
@@ -152,9 +150,7 @@ class P2PNetworkMigrator:
         for peer in peer_config["known_peers"]:
             if isinstance(peer, dict) and "address" in peer:
                 bootstrap_addr = f"/ip4/{peer['address']}/tcp/{peer.get('port', 4001)}"
-                libp2p_config["peer_discovery"]["bootstrap_peers"].append(
-                    bootstrap_addr
-                )
+                libp2p_config["peer_discovery"]["bootstrap_peers"].append(bootstrap_addr)
 
         return libp2p_config
 
@@ -212,8 +208,6 @@ class P2PNetworkMigrator:
         try:
             # Check if LibP2P is available
             try:
-                from libp2p import new_host
-
                 connectivity_results["libp2p_available"] = True
                 logger.info("LibP2P library is available")
             except ImportError:
@@ -351,9 +345,7 @@ class P2PNetworkMigrator:
             },
             "peer_configuration": {
                 "legacy_peers": len(peer_config["known_peers"]),
-                "libp2p_bootstrap_peers": len(
-                    libp2p_config["peer_discovery"]["bootstrap_peers"]
-                ),
+                "libp2p_bootstrap_peers": len(libp2p_config["peer_discovery"]["bootstrap_peers"]),
             },
             "libp2p_config": {
                 "path": str(config_path),
@@ -372,9 +364,7 @@ class P2PNetworkMigrator:
             },
         }
 
-        logger.info(
-            f"P2P migration completed: {connectivity_results['message_delivery_rate']:.0%} delivery rate"
-        )
+        logger.info(f"P2P migration completed: {connectivity_results['message_delivery_rate']:.0%} delivery rate")
 
         return report
 
@@ -395,14 +385,10 @@ def main() -> None:
     print(f"Status: {report['status']}")
     print(f"Migration: {report['migration_type']}")
     print(f"Legacy files: {report['legacy_files']['found']}")
-    print(
-        f"LibP2P host: {report['libp2p_config']['host']}:{report['libp2p_config']['port']}"
-    )
+    print(f"LibP2P host: {report['libp2p_config']['host']}:{report['libp2p_config']['port']}")
     print(f"Max peers: {report['libp2p_config']['max_peers']}")
     print(f"LibP2P available: {report['connectivity_test']['libp2p_available']}")
-    print(
-        f"Message delivery: {report['performance_metrics']['libp2p_performance']['message_delivery_rate']:.0%}"
-    )
+    print(f"Message delivery: {report['performance_metrics']['libp2p_performance']['message_delivery_rate']:.0%}")
     print(f"CODEX compliance: {all(report['codex_compliance'].values())}")
     print(f"Duration: {report['duration']:.2f} seconds")
     print(f"Report saved: {report_path}")

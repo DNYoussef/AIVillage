@@ -53,9 +53,7 @@ class TestBitNetLinear(unittest.TestCase):
         output = self.layer(x)
 
         # Should use full precision weights
-        expected = torch.nn.functional.linear(
-            x, self.layer.weight_fp * self.layer.alpha, self.layer.bias
-        )
+        expected = torch.nn.functional.linear(x, self.layer.weight_fp * self.layer.alpha, self.layer.bias)
         torch.testing.assert_close(output, expected, rtol=1e-4, atol=1e-4)
 
     def test_forward_training_lambda_1(self):
@@ -67,9 +65,7 @@ class TestBitNetLinear(unittest.TestCase):
         output = self.layer(x)
 
         # Should use quantized weights
-        quantized_weights = (
-            self.layer.quantize_weights(self.layer.weight_fp) * self.layer.alpha
-        )
+        quantized_weights = self.layer.quantize_weights(self.layer.weight_fp) * self.layer.alpha
         expected = torch.nn.functional.linear(x, quantized_weights, self.layer.bias)
         torch.testing.assert_close(output, expected)
 
@@ -84,9 +80,7 @@ class TestBitNetLinear(unittest.TestCase):
         # Should interpolate between FP and quantized
         quantized_weights = self.layer.quantize_weights(self.layer.weight_fp)
         interpolated = 0.5 * self.layer.weight_fp + 0.5 * quantized_weights
-        expected = torch.nn.functional.linear(
-            x, interpolated * self.layer.alpha, self.layer.bias
-        )
+        expected = torch.nn.functional.linear(x, interpolated * self.layer.alpha, self.layer.bias)
         torch.testing.assert_close(output, expected)
 
     def test_forward_eval(self):
@@ -98,9 +92,7 @@ class TestBitNetLinear(unittest.TestCase):
         output = self.layer(x)
 
         # Should always use quantized weights in eval
-        quantized_weights = (
-            self.layer.quantize_weights(self.layer.weight_fp) * self.layer.alpha
-        )
+        quantized_weights = self.layer.quantize_weights(self.layer.weight_fp) * self.layer.alpha
         expected = torch.nn.functional.linear(x, quantized_weights, self.layer.bias)
         torch.testing.assert_close(output, expected)
 
@@ -142,16 +134,12 @@ class TestGradualBitnetCallback(unittest.TestCase):
             with self.subTest(step=step):
                 mock_state.global_step = step
 
-                self.callback.on_step_begin(
-                    mock_args, mock_state, mock_control, model=model
-                )
+                self.callback.on_step_begin(mock_args, mock_state, mock_control, model=model)
 
                 # Check that all BitNetLinear layers have correct λ
                 for module in model.modules():
                     if isinstance(module, BitNetLinear):
-                        self.assertAlmostEqual(
-                            module.lambda_val, expected_lambda, places=4
-                        )
+                        self.assertAlmostEqual(module.lambda_val, expected_lambda, places=4)
 
     def test_lambda_schedule_post_warmup(self):
         """Test λ schedule after warmup period."""
@@ -168,9 +156,7 @@ class TestGradualBitnetCallback(unittest.TestCase):
             with self.subTest(step=step):
                 mock_state.global_step = step
 
-                self.callback.on_step_begin(
-                    mock_args, mock_state, mock_control, model=model
-                )
+                self.callback.on_step_begin(mock_args, mock_state, mock_control, model=model)
 
                 # Should always be λ=1.0 after warmup
                 for module in model.modules():
@@ -236,12 +222,8 @@ class TestConvertToBitNet(unittest.TestCase):
         bitnet_model = convert_to_bitnet(model, rmsnorm_post_attn=False)
 
         # All Linear layers should be replaced with BitNetLinear
-        linear_count_after = sum(
-            1 for m in bitnet_model.modules() if isinstance(m, nn.Linear)
-        )
-        bitnet_count = sum(
-            1 for m in bitnet_model.modules() if isinstance(m, BitNetLinear)
-        )
+        linear_count_after = sum(1 for m in bitnet_model.modules() if isinstance(m, nn.Linear))
+        bitnet_count = sum(1 for m in bitnet_model.modules() if isinstance(m, BitNetLinear))
 
         self.assertEqual(linear_count_after, 0)  # No Linear layers left
         self.assertEqual(bitnet_count, 3)  # 3 BitNetLinear layers
@@ -269,15 +251,15 @@ class TestSelfGeneratedData(unittest.TestCase):
         # Mock generation
         mock_tokenizer_instance.return_value = {"input_ids": torch.tensor([[1, 2, 3]])}
         mock_model_instance.generate.return_value = torch.tensor([[1, 2, 3, 4, 5, 6]])
-        mock_tokenizer_instance.decode.return_value = "### Response:\nThis is a test response that meets all quality criteria and should pass validation."
+        mock_tokenizer_instance.decode.return_value = (
+            "### Response:\nThis is a test response that meets all quality criteria and should pass validation."
+        )
 
         # Test generator initialization
         generator = SelfDataGenerator("/fake/model/path")
 
         # Test response validation
-        valid_response = (
-            "This is a valid response with enough content to pass all quality checks."
-        )
+        valid_response = "This is a valid response with enough content to pass all quality checks."
         invalid_response = "Short."
         ai_response = "As an AI language model, I cannot help with this."
 

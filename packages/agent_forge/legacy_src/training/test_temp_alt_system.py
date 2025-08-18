@@ -91,7 +91,7 @@ class TestTempCurriculum:
     def test_round_advancement(self):
         """Test curriculum round advancement."""
         scheduler = create_nonoverlap_scheduler()
-        initial_bins = len(scheduler.get_bins())
+        len(scheduler.get_bins())
         initial_round = scheduler.current_round
 
         scheduler.advance_round()

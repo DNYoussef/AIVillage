@@ -37,9 +37,7 @@ class ComponentHealthChecker:
 
         logger.info(f"Health checker initialized for project: {project_root}")
 
-    def check_component_health(
-        self, component_path: Path, component_name: str
-    ) -> dict[str, Any]:
+    def check_component_health(self, component_path: Path, component_name: str) -> dict[str, Any]:
         """Check health of a specific component.
 
         Returns:
@@ -70,13 +68,7 @@ class ComponentHealthChecker:
             working_indicators = self._check_for_working_code(content)
 
             return {
-                "status": (
-                    "healthy"
-                    if health_score > 0.7
-                    else "partial"
-                    if health_score > 0.3
-                    else "unhealthy"
-                ),
+                "status": ("healthy" if health_score > 0.7 else "partial" if health_score > 0.3 else "unhealthy"),
                 "health_score": health_score,
                 "implementation_score": implementation_score,
                 "functionality_score": functionality_score,
@@ -119,9 +111,7 @@ class ComponentHealthChecker:
             "__init__",
         ]
 
-        positive_count = sum(
-            1 for line in lines for pattern in positive_patterns if pattern in line
-        )
+        positive_count = sum(1 for line in lines for pattern in positive_patterns if pattern in line)
 
         if not lines:
             return 0.0
@@ -130,9 +120,7 @@ class ComponentHealthChecker:
 
         # Penalize based on runtime diagnostics
         diagnostics = self._get_runtime_metrics()
-        runtime_factor = diagnostics.get("ping_success", 1.0) * (
-            1 - diagnostics.get("error_rate", 0.0)
-        )
+        runtime_factor = diagnostics.get("ping_success", 1.0) * (1 - diagnostics.get("error_rate", 0.0))
 
         # Penalize based on proportion of stubbed functions
         stub_ratio = self._get_stub_ratio(content)
@@ -157,9 +145,7 @@ class ComponentHealthChecker:
         functionality_score = 0.0
 
         for _category, patterns in functionality_patterns:
-            category_found = any(
-                pattern.lower() in content.lower() for pattern in patterns
-            )
+            category_found = any(pattern.lower() in content.lower() for pattern in patterns)
             if category_found:
                 functionality_score += 0.125  # Each category worth 12.5%
 
@@ -182,7 +168,7 @@ class ComponentHealthChecker:
         try:
             tree = ast.parse(content)
             for node in ast.walk(tree):
-                if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef):
                     stub_type = self._get_stub_type(node)
                     if stub_type and stub_type not in found_stubs:
                         found_stubs.append(stub_type)
@@ -193,7 +179,7 @@ class ComponentHealthChecker:
 
     def _get_stub_type(self, node: ast.AST) -> str | None:
         """Determine if a function node represents a stub."""
-        if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+        if not isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef):
             return None
         if len(node.body) != 1:
             return None
@@ -207,11 +193,7 @@ class ComponentHealthChecker:
             and stmt.exc.func.id == "NotImplementedError"
         ):
             return "NotImplementedError"
-        if (
-            isinstance(stmt, ast.Expr)
-            and isinstance(stmt.value, ast.Constant)
-            and isinstance(stmt.value.value, str)
-        ):
+        if isinstance(stmt, ast.Expr) and isinstance(stmt.value, ast.Constant) and isinstance(stmt.value.value, str):
             return "docstring_only"
         if isinstance(stmt, ast.Return):
             val = stmt.value
@@ -232,7 +214,7 @@ class ComponentHealthChecker:
         total = 0
         stubbed = 0
         for node in ast.walk(tree):
-            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef):
                 total += 1
                 if self._get_stub_type(node):
                     stubbed += 1
@@ -279,58 +261,22 @@ class ComponentHealthChecker:
             "communications_protocol": self.src_path / "communications" / "protocol.py",
             "message_system": self.src_path / "communications" / "message.py",
             # Phase 2: Connectors
-            "whatsapp_connector": self.src_path
-            / "ingestion"
-            / "connectors"
-            / "whatsapp.py",
-            "amazon_connector": self.src_path
-            / "ingestion"
-            / "connectors"
-            / "amazon_orders.py",
+            "whatsapp_connector": self.src_path / "ingestion" / "connectors" / "whatsapp.py",
+            "amazon_connector": self.src_path / "ingestion" / "connectors" / "amazon_orders.py",
             # Phase 3: Retrievers
-            "ppr_retriever": self.src_path
-            / "mcp_servers"
-            / "hyperag"
-            / "retrieval"
-            / "ppr_retriever.py",
-            "divergent_retriever": self.src_path
-            / "mcp_servers"
-            / "hyperag"
-            / "retrieval"
-            / "divergent_retriever.py",
-            "hybrid_retriever": self.src_path
-            / "mcp_servers"
-            / "hyperag"
-            / "retrieval"
-            / "hybrid_retriever.py",
+            "ppr_retriever": self.src_path / "mcp_servers" / "hyperag" / "retrieval" / "ppr_retriever.py",
+            "divergent_retriever": self.src_path / "mcp_servers" / "hyperag" / "retrieval" / "divergent_retriever.py",
+            "hybrid_retriever": self.src_path / "mcp_servers" / "hyperag" / "retrieval" / "hybrid_retriever.py",
             # Core Systems
-            "compression_system": self.src_path
-            / "production"
-            / "compression"
-            / "unified_compressor.py",
+            "compression_system": self.src_path / "production" / "compression" / "unified_compressor.py",
             "agent_forge": self.src_path / "agent_forge" / "orchestrator.py",
             "p2p_network": self.src_path / "core" / "p2p" / "p2p_node.py",
-            "rag_system": self.src_path
-            / "production"
-            / "rag"
-            / "rag_system"
-            / "main.py",
+            "rag_system": self.src_path / "production" / "rag" / "rag_system" / "main.py",
             # Memory Systems
-            "hippo_index": self.src_path
-            / "mcp_servers"
-            / "hyperag"
-            / "memory"
-            / "hippo_index.py",
-            "hypergraph_kg": self.src_path
-            / "mcp_servers"
-            / "hyperag"
-            / "memory"
-            / "hypergraph_kg.py",
+            "hippo_index": self.src_path / "mcp_servers" / "hyperag" / "memory" / "hippo_index.py",
+            "hypergraph_kg": self.src_path / "mcp_servers" / "hyperag" / "memory" / "hypergraph_kg.py",
             # Infrastructure
-            "device_profiler": self.src_path
-            / "core"
-            / "resources"
-            / "device_profiler.py",
+            "device_profiler": self.src_path / "core" / "resources" / "device_profiler.py",
             "mesh_network": self.src_path / "infrastructure" / "mesh_network.py",
         }
 
@@ -338,44 +284,29 @@ class ComponentHealthChecker:
 
         for component_name, component_path in components_to_check.items():
             logger.info(f"Checking health of {component_name}...")
-            health_results[component_name] = self.check_component_health(
-                component_path, component_name
-            )
+            health_results[component_name] = self.check_component_health(component_path, component_name)
 
             # Add slight delay to avoid overwhelming the system
             await asyncio.sleep(0.01)
 
         return health_results
 
-    def calculate_overall_system_health(
-        self, component_results: dict[str, dict[str, Any]]
-    ) -> dict[str, Any]:
+    def calculate_overall_system_health(self, component_results: dict[str, dict[str, Any]]) -> dict[str, Any]:
         """Calculate overall system health metrics."""
         total_components = len(component_results)
-        healthy_components = sum(
-            1 for result in component_results.values() if result["status"] == "healthy"
-        )
-        partial_components = sum(
-            1 for result in component_results.values() if result["status"] == "partial"
-        )
+        healthy_components = sum(1 for result in component_results.values() if result["status"] == "healthy")
+        partial_components = sum(1 for result in component_results.values() if result["status"] == "partial")
         unhealthy_components = sum(
-            1
-            for result in component_results.values()
-            if result["status"] in ["unhealthy", "error", "missing"]
+            1 for result in component_results.values() if result["status"] in ["unhealthy", "error", "missing"]
         )
 
         # Calculate average scores
-        avg_health_score = (
-            sum(result["health_score"] for result in component_results.values())
-            / total_components
-        )
+        avg_health_score = sum(result["health_score"] for result in component_results.values()) / total_components
         avg_implementation_score = (
-            sum(result["implementation_score"] for result in component_results.values())
-            / total_components
+            sum(result["implementation_score"] for result in component_results.values()) / total_components
         )
         avg_functionality_score = (
-            sum(result["functionality_score"] for result in component_results.values())
-            / total_components
+            sum(result["functionality_score"] for result in component_results.values()) / total_components
         )
 
         # Calculate completion percentage
@@ -383,9 +314,7 @@ class ComponentHealthChecker:
 
         # Count components with working indicators
         working_implementations = sum(
-            1
-            for result in component_results.values()
-            if result.get("working_indicators", [])
+            1 for result in component_results.values() if result.get("working_indicators", [])
         )
 
         return {
@@ -399,11 +328,7 @@ class ComponentHealthChecker:
             "avg_functionality_score": avg_functionality_score,
             "working_implementations": working_implementations,
             "health_status": (
-                "healthy"
-                if avg_health_score > 0.7
-                else "partial"
-                if avg_health_score > 0.4
-                else "unhealthy"
+                "healthy" if avg_health_score > 0.7 else "partial" if avg_health_score > 0.4 else "unhealthy"
             ),
         }
 
@@ -473,16 +398,12 @@ class ComponentHealthChecker:
             # Add working indicators if present
             working_indicators = result.get("working_indicators", [])
             if working_indicators:
-                report_lines.append(
-                    f"- ✅ Working Code Found: {', '.join(working_indicators[:3])}"
-                )
+                report_lines.append(f"- ✅ Working Code Found: {', '.join(working_indicators[:3])}")
 
             # Add stub warnings if present
             stub_indicators = result.get("stub_indicators", [])
             if stub_indicators:
-                report_lines.append(
-                    f"- ⚠️ Stubs Found: {', '.join(stub_indicators[:3])}"
-                )
+                report_lines.append(f"- ⚠️ Stubs Found: {', '.join(stub_indicators[:3])}")
 
             # Add error if present
             if result.get("error"):
@@ -574,14 +495,10 @@ class SystemHealthDashboard:
         system_metrics = self.collect_system_metrics()
 
         # Calculate overall health
-        overall_health = self.health_checker.calculate_overall_system_health(
-            component_results
-        )
+        overall_health = self.health_checker.calculate_overall_system_health(component_results)
 
         # Generate report
-        health_report = self.health_checker.generate_health_report(
-            component_results, overall_health
-        )
+        health_report = self.health_checker.generate_health_report(component_results, overall_health)
 
         dashboard_data = {
             "timestamp": datetime.now().isoformat(),
@@ -592,9 +509,7 @@ class SystemHealthDashboard:
             "sprint_success": overall_health["completion_percentage"] > 60.0,
         }
 
-        logger.info(
-            f"✅ Health scan complete. System completion: {overall_health['completion_percentage']:.1f}%"
-        )
+        logger.info(f"✅ Health scan complete. System completion: {overall_health['completion_percentage']:.1f}%")
 
         return dashboard_data
 
@@ -611,9 +526,7 @@ class SystemHealthDashboard:
         # Also save JSON data
         json_path = output_path.with_suffix(".json")
         json_data = {k: v for k, v in dashboard_data.items() if k != "health_report"}
-        json_path.write_text(
-            json.dumps(json_data, indent=2, default=str), encoding="utf-8"
-        )
+        json_path.write_text(json.dumps(json_data, indent=2, default=str), encoding="utf-8")
 
         logger.info(f"📊 Dashboard saved to {output_path}")
         logger.info(f"📊 JSON data saved to {json_path}")
@@ -630,24 +543,16 @@ class SystemHealthDashboard:
         print(f"📅 Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         print(f"🎯 System Completion: {overall['completion_percentage']:.1f}%")
         print(f"🏥 Health Status: {overall['health_status'].upper()}")
-        print(
-            f"✅ Healthy Components: {overall['healthy_components']}/{overall['total_components']}"
-        )
-        print(
-            f"⚠️  Partial Components: {overall['partial_components']}/{overall['total_components']}"
-        )
-        print(
-            f"❌ Unhealthy Components: {overall['unhealthy_components']}/{overall['total_components']}"
-        )
+        print(f"✅ Healthy Components: {overall['healthy_components']}/{overall['total_components']}")
+        print(f"⚠️  Partial Components: {overall['partial_components']}/{overall['total_components']}")
+        print(f"❌ Unhealthy Components: {overall['unhealthy_components']}/{overall['total_components']}")
         print(f"🔧 Working Implementations: {overall['working_implementations']}")
 
         # Sprint success check
         if dashboard_data["sprint_success"]:
             print("\n🎉 SPRINT SUCCESS: Target >60% completion achieved!")
         else:
-            print(
-                f"\n⚠️  Sprint target not met. Need >60%, current: {overall['completion_percentage']:.1f}%"
-            )
+            print(f"\n⚠️  Sprint target not met. Need >60%, current: {overall['completion_percentage']:.1f}%")
 
         print("=" * 60)
 

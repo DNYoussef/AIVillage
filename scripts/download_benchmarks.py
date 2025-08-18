@@ -19,9 +19,7 @@ from pathlib import Path
 
 from datasets import load_dataset
 
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 BENCHMARKS = {
@@ -109,9 +107,7 @@ def download_benchmark(benchmark_key: str, config: dict, base_path: Path) -> boo
         return False
 
 
-def create_benchmark_manifest(
-    base_path: Path, downloaded_benchmarks: list[str]
-) -> None:
+def create_benchmark_manifest(base_path: Path, downloaded_benchmarks: list[str]) -> None:
     """Create manifest file for benchmark datasets."""
     manifest_path = base_path / "benchmark_manifest.json"
 
@@ -302,9 +298,7 @@ if __name__ == "__main__":
 
 def main() -> int:
     """Main download function."""
-    parser = argparse.ArgumentParser(
-        description="Download Agent Forge benchmark datasets"
-    )
+    parser = argparse.ArgumentParser(description="Download Agent Forge benchmark datasets")
     parser.add_argument(
         "--benchmarks-dir",
         default="./benchmarks",
@@ -330,9 +324,7 @@ def main() -> int:
     else:
         benchmarks_to_download = args.benchmarks
 
-    logger.info(
-        f"Planning to download {len(benchmarks_to_download)} benchmark datasets"
-    )
+    logger.info(f"Planning to download {len(benchmarks_to_download)} benchmark datasets")
 
     # Download benchmarks
     downloaded_benchmarks = []
@@ -343,9 +335,7 @@ def main() -> int:
             logger.warning(f"Unknown benchmark: {benchmark_key}")
             continue
 
-        success = download_benchmark(
-            benchmark_key, BENCHMARKS[benchmark_key], base_path
-        )
+        success = download_benchmark(benchmark_key, BENCHMARKS[benchmark_key], base_path)
         if success:
             downloaded_benchmarks.append(benchmark_key)
         else:

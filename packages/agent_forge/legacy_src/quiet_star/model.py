@@ -501,13 +501,12 @@ class QuietSTaRModelWrapper(nn.Module):
         Returns:
             Dictionary with generated tokens and thought information
         """
-        device = input_ids.device
-        batch_size = input_ids.size(0)
+        input_ids.size(0)
 
         thought_prob = thought_probability if thought_probability is not None else self.config.thought_ratio
         sot_id = self.special_token_ids.get(self.config.start_of_thought_token, -1)
         eot_id = self.special_token_ids.get(self.config.end_of_thought_token, -1)
-        not_id = self.special_token_ids.get(self.config.no_thought_token, -1)
+        self.special_token_ids.get(self.config.no_thought_token, -1)
 
         # Track generation state
         current_ids = input_ids.clone()

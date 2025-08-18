@@ -36,9 +36,7 @@ def build_parser(
     return parser
 
 
-def dispatch(
-    commands: ActionMap, args: argparse.Namespace, attr: str = "action"
-) -> int:
+def dispatch(commands: ActionMap, args: argparse.Namespace, attr: str = "action") -> int:
     """Dispatch to the handler mapped by ``attr`` in ``commands``."""
     key = getattr(args, attr)
     handler = commands.get(key)

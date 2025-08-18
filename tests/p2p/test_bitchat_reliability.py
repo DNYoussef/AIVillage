@@ -119,10 +119,7 @@ class BitChatReliabilityTester:
     def create_mesh_topology(self, topology_type: str = "random") -> None:
         """Create mesh network topology"""
         # Create nodes
-        self.nodes = [
-            MockBitChatNode(f"node_{i:02d}", self.packet_loss_rate)
-            for i in range(self.num_nodes)
-        ]
+        self.nodes = [MockBitChatNode(f"node_{i:02d}", self.packet_loss_rate) for i in range(self.num_nodes)]
 
         if topology_type == "ring":
             # Ring topology - each node connected to 2 neighbors
@@ -183,9 +180,7 @@ class BitChatReliabilityTester:
             await asyncio.sleep(0.1)
 
             # Check if delivered
-            recipient_received = any(
-                msg.id == message.id for msg in recipient.received_messages
-            )
+            recipient_received = any(msg.id == message.id for msg in recipient.received_messages)
 
             if recipient_received:
                 results["total_delivered"] += 1
@@ -196,28 +191,18 @@ class BitChatReliabilityTester:
                 for msg in recipient.received_messages:
                     if msg.id == message.id:
                         hop_count = msg.hop_count
-                        results["delivery_by_hop"][hop_count] = (
-                            results["delivery_by_hop"].get(hop_count, 0) + 1
-                        )
-                        results["max_hops_used"] = max(
-                            results["max_hops_used"], hop_count
-                        )
+                        results["delivery_by_hop"][hop_count] = results["delivery_by_hop"].get(hop_count, 0) + 1
+                        results["max_hops_used"] = max(results["max_hops_used"], hop_count)
                         break
 
         # Calculate metrics
         results["delivery_rate"] = (
-            results["total_delivered"] / results["total_sent"]
-            if results["total_sent"] > 0
-            else 0
+            results["total_delivered"] / results["total_sent"] if results["total_sent"] > 0 else 0
         )
-        results["avg_delivery_time"] = (
-            sum(delivery_times) / len(delivery_times) if delivery_times else 0
-        )
+        results["avg_delivery_time"] = sum(delivery_times) / len(delivery_times) if delivery_times else 0
 
         # Calculate duplicate rate
-        total_duplicates = sum(
-            node.transport.stats["duplicates_dropped_total"] for node in self.nodes
-        )
+        total_duplicates = sum(node.transport.stats["duplicates_dropped_total"] for node in self.nodes)
         total_received = sum(len(node.received_messages) for node in self.nodes)
         results["duplicate_rate"] = total_duplicates / max(total_received, 1)
 
@@ -234,8 +219,7 @@ class BitChatReliabilityTester:
         stats = {
             "total_nodes": len(self.nodes),
             "total_connections": sum(len(node.neighbors) for node in self.nodes) // 2,
-            "avg_connections_per_node": sum(len(node.neighbors) for node in self.nodes)
-            / len(self.nodes),
+            "avg_connections_per_node": sum(len(node.neighbors) for node in self.nodes) / len(self.nodes),
             "packet_loss_rate": self.packet_loss_rate,
         }
 
@@ -246,9 +230,7 @@ class BitChatReliabilityTester:
             "messages_relayed",
             "duplicates_dropped_total",
         ]:
-            stats[stat_name] = sum(
-                node.transport.stats[stat_name] for node in self.nodes
-            )
+            stats[stat_name] = sum(node.transport.stats[stat_name] for node in self.nodes)
 
         # Hops histogram
         hops_histogram = {}
@@ -269,12 +251,8 @@ async def test_bitchat_reliability_low_loss():
     results = await tester.test_message_delivery(50)
 
     # Should achieve >90% delivery with low packet loss
-    assert results["delivery_rate"] >= 0.90, (
-        f"Low loss delivery rate: {results['delivery_rate']:.2%}"
-    )
-    assert results["max_hops_used"] <= 7, (
-        f"Max hops exceeded: {results['max_hops_used']}"
-    )
+    assert results["delivery_rate"] >= 0.90, f"Low loss delivery rate: {results['delivery_rate']:.2%}"
+    assert results["max_hops_used"] <= 7, f"Max hops exceeded: {results['max_hops_used']}"
 
 
 @pytest.mark.asyncio
@@ -286,9 +264,7 @@ async def test_bitchat_reliability_medium_loss():
     results = await tester.test_message_delivery(50)
 
     # Should achieve >85% delivery with medium packet loss
-    assert results["delivery_rate"] >= 0.85, (
-        f"Medium loss delivery rate: {results['delivery_rate']:.2%}"
-    )
+    assert results["delivery_rate"] >= 0.85, f"Medium loss delivery rate: {results['delivery_rate']:.2%}"
 
 
 @pytest.mark.asyncio
@@ -300,9 +276,7 @@ async def test_bitchat_reliability_high_loss():
     results = await tester.test_message_delivery(50)
 
     # Should achieve >75% delivery even with high packet loss
-    assert results["delivery_rate"] >= 0.75, (
-        f"High loss delivery rate: {results['delivery_rate']:.2%}"
-    )
+    assert results["delivery_rate"] >= 0.75, f"High loss delivery rate: {results['delivery_rate']:.2%}"
 
 
 @pytest.mark.asyncio
@@ -315,12 +289,8 @@ async def test_bitchat_duplicate_suppression():
     network_stats = tester.get_network_stats()
 
     # Duplicate rate should be reasonable in looped topology
-    assert results["duplicate_rate"] < 0.5, (
-        f"High duplicate rate: {results['duplicate_rate']:.2%}"
-    )
-    assert network_stats["duplicates_dropped_total"] > 0, (
-        "No duplicates detected (loops should create some)"
-    )
+    assert results["duplicate_rate"] < 0.5, f"High duplicate rate: {results['duplicate_rate']:.2%}"
+    assert network_stats["duplicates_dropped_total"] > 0, "No duplicates detected (loops should create some)"
 
 
 @pytest.mark.asyncio
@@ -332,19 +302,15 @@ async def test_bitchat_hop_limits():
     results = await tester.test_message_delivery(30)
 
     # All messages should respect TTL=7 limit
-    assert results["max_hops_used"] <= 7, (
-        f"TTL exceeded: max hops = {results['max_hops_used']}"
-    )
+    assert results["max_hops_used"] <= 7, f"TTL exceeded: max hops = {results['max_hops_used']}"
 
     # Most messages should deliver within 3 hops in a small network
-    hop3_and_under = sum(
-        count for hop, count in results["delivery_by_hop"].items() if hop <= 3
-    )
+    hop3_and_under = sum(count for hop, count in results["delivery_by_hop"].items() if hop <= 3)
     total_delivered = results["total_delivered"]
     if total_delivered > 0:
-        assert hop3_and_under / total_delivered >= 0.7, (
-            f"Too many long-hop deliveries: {hop3_and_under}/{total_delivered}"
-        )
+        assert (
+            hop3_and_under / total_delivered >= 0.7
+        ), f"Too many long-hop deliveries: {hop3_and_under}/{total_delivered}"
 
 
 def test_bitchat_compression():
@@ -362,9 +328,7 @@ def test_bitchat_compression():
 
     if transport.enable_compression:
         assert is_compressed, "Large payload should be compressed"
-        assert len(compressed) < len(large_payload), (
-            "Compressed payload should be smaller"
-        )
+        assert len(compressed) < len(large_payload), "Compressed payload should be smaller"
 
         # Test decompression
         decompressed = transport._decompress_payload(compressed, is_compressed)
@@ -424,16 +388,9 @@ def main():
         "scenarios": results,
         "summary": {
             "total_scenarios": len(results),
-            "avg_delivery_rate": sum(
-                r["delivery_results"]["delivery_rate"] for r in results
-            )
-            / len(results),
-            "min_delivery_rate": min(
-                r["delivery_results"]["delivery_rate"] for r in results
-            ),
-            "max_delivery_rate": max(
-                r["delivery_results"]["delivery_rate"] for r in results
-            ),
+            "avg_delivery_rate": sum(r["delivery_results"]["delivery_rate"] for r in results) / len(results),
+            "min_delivery_rate": min(r["delivery_results"]["delivery_rate"] for r in results),
+            "max_delivery_rate": max(r["delivery_results"]["delivery_rate"] for r in results),
         },
     }
 
@@ -446,9 +403,7 @@ def main():
 
     print("\nBitChat Reliability Test Report:")
     print(f"Average delivery rate: {report['summary']['avg_delivery_rate']:.1%}")
-    print(
-        f"Range: {report['summary']['min_delivery_rate']:.1%} - {report['summary']['max_delivery_rate']:.1%}"
-    )
+    print(f"Range: {report['summary']['min_delivery_rate']:.1%} - {report['summary']['max_delivery_rate']:.1%}")
     print(f"Report saved: {output_dir / 'bitchat_reliability.json'}")
 
     # Verdict

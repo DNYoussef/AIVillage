@@ -20,11 +20,7 @@ import pytest
 # Add src to path following existing pattern
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
-from core.p2p.htx.noise_protocol import (
-    NoiseHandshakeState,
-    NoiseKeys,
-    NoiseXKProtocol,
-)
+from core.p2p.htx.noise_protocol import NoiseHandshakeState, NoiseKeys, NoiseXKProtocol
 
 
 class TestNoiseKeys:
@@ -81,9 +77,7 @@ class TestNoiseXKProtocol:
         """Test protocol initialization as initiator."""
         remote_static_key = secrets.token_bytes(32)
 
-        protocol = NoiseXKProtocol(
-            is_initiator=True, known_remote_static=remote_static_key
-        )
+        protocol = NoiseXKProtocol(is_initiator=True, known_remote_static=remote_static_key)
 
         assert protocol.is_initiator is True
         assert protocol.state == NoiseHandshakeState.UNINITIALIZED
@@ -120,9 +114,7 @@ class TestNoiseXKProtocol:
     def test_handshake_initialization(self):
         """Test handshake initialization."""
         remote_static_key = secrets.token_bytes(32)
-        protocol = NoiseXKProtocol(
-            is_initiator=True, known_remote_static=remote_static_key
-        )
+        protocol = NoiseXKProtocol(is_initiator=True, known_remote_static=remote_static_key)
 
         protocol.initialize_handshake()
 
@@ -137,9 +129,7 @@ class TestNoiseXKProtocol:
     def test_handshake_initialization_twice(self):
         """Test that handshake can't be initialized twice."""
         remote_static_key = secrets.token_bytes(32)
-        protocol = NoiseXKProtocol(
-            is_initiator=True, known_remote_static=remote_static_key
-        )
+        protocol = NoiseXKProtocol(is_initiator=True, known_remote_static=remote_static_key)
 
         protocol.initialize_handshake()
 
@@ -153,9 +143,7 @@ class TestNoiseXKHandshake:
     def test_message_1_creation(self):
         """Test creating first handshake message (initiator)."""
         remote_static_key = secrets.token_bytes(32)
-        initiator = NoiseXKProtocol(
-            is_initiator=True, known_remote_static=remote_static_key
-        )
+        initiator = NoiseXKProtocol(is_initiator=True, known_remote_static=remote_static_key)
         initiator.initialize_handshake()
 
         message1 = initiator.create_message_1()
@@ -177,9 +165,7 @@ class TestNoiseXKHandshake:
     def test_message_1_wrong_state(self):
         """Test creating message 1 from wrong state."""
         remote_static_key = secrets.token_bytes(32)
-        initiator = NoiseXKProtocol(
-            is_initiator=True, known_remote_static=remote_static_key
-        )
+        initiator = NoiseXKProtocol(is_initiator=True, known_remote_static=remote_static_key)
         # Don't initialize handshake
 
         with pytest.raises(RuntimeError, match="Cannot send message 1 from state"):
@@ -209,9 +195,7 @@ class TestNoiseXKHandshake:
     def test_message_1_processing_wrong_role(self):
         """Test that initiator cannot process message 1."""
         remote_static_key = secrets.token_bytes(32)
-        initiator = NoiseXKProtocol(
-            is_initiator=True, known_remote_static=remote_static_key
-        )
+        initiator = NoiseXKProtocol(is_initiator=True, known_remote_static=remote_static_key)
         initiator.initialize_handshake()
 
         with pytest.raises(RuntimeError, match="Initiator cannot process message 1"):
@@ -255,9 +239,7 @@ class TestNoiseXKHandshake:
     def test_message_2_wrong_role(self):
         """Test that initiator cannot create message 2."""
         remote_static_key = secrets.token_bytes(32)
-        initiator = NoiseXKProtocol(
-            is_initiator=True, known_remote_static=remote_static_key
-        )
+        initiator = NoiseXKProtocol(is_initiator=True, known_remote_static=remote_static_key)
 
         with pytest.raises(RuntimeError, match="Initiator cannot send message 2"):
             initiator.create_message_2()
@@ -265,9 +247,7 @@ class TestNoiseXKHandshake:
     def test_message_2_processing(self):
         """Test processing second handshake message (initiator)."""
         remote_static_key = secrets.token_bytes(32)
-        initiator = NoiseXKProtocol(
-            is_initiator=True, known_remote_static=remote_static_key
-        )
+        initiator = NoiseXKProtocol(is_initiator=True, known_remote_static=remote_static_key)
         initiator.initialize_handshake()
         initiator.create_message_1()  # Send message 1 first
 
@@ -281,9 +261,7 @@ class TestNoiseXKHandshake:
     def test_message_3_creation(self):
         """Test creating third handshake message (initiator)."""
         remote_static_key = secrets.token_bytes(32)
-        initiator = NoiseXKProtocol(
-            is_initiator=True, known_remote_static=remote_static_key
-        )
+        initiator = NoiseXKProtocol(is_initiator=True, known_remote_static=remote_static_key)
         initiator.initialize_handshake()
         initiator.create_message_1()
 
@@ -520,9 +498,7 @@ class TestNoiseProtocolStatus:
     def test_get_status(self):
         """Test getting protocol status."""
         remote_static_key = secrets.token_bytes(32)
-        protocol = NoiseXKProtocol(
-            is_initiator=True, known_remote_static=remote_static_key
-        )
+        protocol = NoiseXKProtocol(is_initiator=True, known_remote_static=remote_static_key)
 
         status = protocol.get_status()
 
@@ -539,9 +515,7 @@ class TestNoiseProtocolStatus:
     def test_get_handshake_hash(self):
         """Test getting handshake hash."""
         remote_static_key = secrets.token_bytes(32)
-        protocol = NoiseXKProtocol(
-            is_initiator=True, known_remote_static=remote_static_key
-        )
+        protocol = NoiseXKProtocol(is_initiator=True, known_remote_static=remote_static_key)
 
         # Before initialization
         hash_before = protocol.get_handshake_hash()
@@ -556,9 +530,7 @@ class TestNoiseProtocolStatus:
     def test_reset(self):
         """Test protocol reset."""
         remote_static_key = secrets.token_bytes(32)
-        protocol = NoiseXKProtocol(
-            is_initiator=True, known_remote_static=remote_static_key
-        )
+        protocol = NoiseXKProtocol(is_initiator=True, known_remote_static=remote_static_key)
 
         # Initialize and modify state
         protocol.initialize_handshake()
@@ -585,9 +557,7 @@ class TestNoiseIntegration:
             secrets.token_bytes(32),
         )
 
-        initiator = NoiseXKProtocol(
-            is_initiator=True, known_remote_static=responder_static_public
-        )
+        initiator = NoiseXKProtocol(is_initiator=True, known_remote_static=responder_static_public)
         responder = NoiseXKProtocol(is_initiator=False)
 
         # Manually set responder's static key for testing
@@ -694,9 +664,7 @@ def test_noise_protocol_smoke_test():
     status = initiator.get_status()
     assert "state" in status
     assert "is_initiator" in status
-    print(
-        f"  Protocol status: state={status['state']}, crypto_available={status['crypto_available']}"
-    )
+    print(f"  Protocol status: state={status['state']}, crypto_available={status['crypto_available']}")
 
     # Test cryptographic functions
     private_key, public_key = initiator._generate_keypair()
@@ -705,9 +673,7 @@ def test_noise_protocol_smoke_test():
 
     hash_result = initiator._hash(b"test data")
     assert len(hash_result) == 32
-    print(
-        f"  Crypto functions: keypair={len(private_key)}+{len(public_key)} bytes, hash={len(hash_result)} bytes"
-    )
+    print(f"  Crypto functions: keypair={len(private_key)}+{len(public_key)} bytes, hash={len(hash_result)} bytes")
 
     print("  Noise XK protocol smoke test PASSED")
 

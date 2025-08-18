@@ -240,9 +240,7 @@ class BattleOrchestrator(BaseAgent):
 
     async def schedule_daily_battles(self):
         """Start the daily battle scheduling loop."""
-        logger.info(
-            f"Starting daily battle scheduler - battles at {self.daily_battle_time}"
-        )
+        logger.info(f"Starting daily battle scheduler - battles at {self.daily_battle_time}")
 
         while True:
             try:
@@ -252,9 +250,7 @@ class BattleOrchestrator(BaseAgent):
                 # If today's battle time has passed, schedule for tomorrow
                 if now >= today_battle_time:
                     tomorrow = now.date() + timedelta(days=1)
-                    next_battle_time = datetime.combine(
-                        tomorrow, self.daily_battle_time
-                    )
+                    next_battle_time = datetime.combine(tomorrow, self.daily_battle_time)
                 else:
                     next_battle_time = today_battle_time
 
@@ -362,20 +358,14 @@ class BattleOrchestrator(BaseAgent):
             difficulty_preference = ["intermediate", "advanced"]
 
         # Filter scenarios by difficulty preference
-        suitable_scenarios = [
-            s
-            for s in self.battle_scenarios.values()
-            if s.difficulty_level in difficulty_preference
-        ]
+        suitable_scenarios = [s for s in self.battle_scenarios.values() if s.difficulty_level in difficulty_preference]
 
         if not suitable_scenarios:
             suitable_scenarios = list(self.battle_scenarios.values())
 
         return random.choice(suitable_scenarios)
 
-    async def _execute_preparation_phase(
-        self, scenario: BattleScenario
-    ) -> dict[str, Any]:
+    async def _execute_preparation_phase(self, scenario: BattleScenario) -> dict[str, Any]:
         """Execute battle preparation phase."""
         # Initialize sandbox environment
         sandbox_status = await self._setup_sandbox_environment(scenario)
@@ -403,9 +393,7 @@ class BattleOrchestrator(BaseAgent):
         )
 
         # Wait for both agents to complete preparation
-        sword_prep, shield_prep = await asyncio.gather(
-            sword_prep_task, shield_prep_task
-        )
+        sword_prep, shield_prep = await asyncio.gather(sword_prep_task, shield_prep_task)
 
         return {
             "sandbox_status": sandbox_status,
@@ -414,9 +402,7 @@ class BattleOrchestrator(BaseAgent):
             "preparation_duration": random.uniform(300, 900),  # 5-15 minutes
         }
 
-    async def _execute_reconnaissance_phase(
-        self, scenario: BattleScenario
-    ) -> dict[str, Any]:
+    async def _execute_reconnaissance_phase(self, scenario: BattleScenario) -> dict[str, Any]:
         """Execute reconnaissance phase (Sword gathers intelligence)."""
         # Sword conducts reconnaissance
         recon_results = await self.sword_agent.conduct_reconnaissance(
@@ -439,8 +425,7 @@ class BattleOrchestrator(BaseAgent):
         return {
             "reconnaissance_results": recon_results,
             "detection_results": detection_results,
-            "stealth_success": detection_results.get("false_positive_probability", 0)
-            > 0.5,
+            "stealth_success": detection_results.get("false_positive_probability", 0) > 0.5,
             "intelligence_gathered": len(recon_results.get("intelligence_items", [])),
             "phase_duration": random.uniform(600, 1800),  # 10-30 minutes
         }
@@ -451,23 +436,15 @@ class BattleOrchestrator(BaseAgent):
         attack_scenarios = self._generate_attack_scenarios(scenario)
 
         # Execute attacks and defenses in parallel
-        attack_task = asyncio.create_task(
-            self.sword_agent.execute_battle_attacks(attack_scenarios)
-        )
+        attack_task = asyncio.create_task(self.sword_agent.execute_battle_attacks(attack_scenarios))
 
-        defense_task = asyncio.create_task(
-            self.shield_agent.engage_battle_defense(attack_scenarios)
-        )
+        defense_task = asyncio.create_task(self.shield_agent.engage_battle_defense(attack_scenarios))
 
         # Wait for both to complete
-        attack_results, defense_results = await asyncio.gather(
-            attack_task, defense_task
-        )
+        attack_results, defense_results = await asyncio.gather(attack_task, defense_task)
 
         # Calculate combat effectiveness
-        combat_effectiveness = self._calculate_combat_effectiveness(
-            attack_results, defense_results, scenario
-        )
+        combat_effectiveness = self._calculate_combat_effectiveness(attack_results, defense_results, scenario)
 
         return {
             "attack_results": attack_results,
@@ -477,21 +454,15 @@ class BattleOrchestrator(BaseAgent):
             "phase_duration": random.uniform(1800, 3600),  # 30-60 minutes
         }
 
-    def _generate_attack_scenarios(
-        self, scenario: BattleScenario
-    ) -> list[dict[str, Any]]:
+    def _generate_attack_scenarios(self, scenario: BattleScenario) -> list[dict[str, Any]]:
         """Generate specific attack scenarios for the battle."""
         attack_scenarios = []
 
         for attack_vector in scenario.attack_vectors:
             attack_scenario = {
-                "attack_id": hashlib.md5(
-                    f"{scenario.scenario_id}_{attack_vector}".encode()
-                ).hexdigest()[:8],
+                "attack_id": hashlib.md5(f"{scenario.scenario_id}_{attack_vector}".encode()).hexdigest()[:8],
                 "attack_vector": attack_vector,
-                "target_systems": random.sample(
-                    scenario.target_systems, min(2, len(scenario.target_systems))
-                ),
+                "target_systems": random.sample(scenario.target_systems, min(2, len(scenario.target_systems))),
                 "attack_complexity": random.choice(["low", "medium", "high"]),
                 "stealth_requirement": random.choice(["low", "medium", "high"]),
                 "success_threshold": random.uniform(0.6, 0.9),
@@ -537,9 +508,7 @@ class BattleOrchestrator(BaseAgent):
             ],
         }
 
-        base_indicators = indicator_map.get(
-            attack_vector, ["generic_suspicious_activity"]
-        )
+        base_indicators = indicator_map.get(attack_vector, ["generic_suspicious_activity"])
         return random.sample(base_indicators, min(len(base_indicators), 3))
 
     def _get_payload_type(self, attack_vector: str) -> str:
@@ -559,20 +528,12 @@ class BattleOrchestrator(BaseAgent):
     ) -> dict[str, float]:
         """Calculate combat phase effectiveness scores."""
         # Attack effectiveness
-        successful_attacks = sum(
-            1
-            for r in attack_results.get("attack_results", [])
-            if r.get("success", False)
-        )
+        successful_attacks = sum(1 for r in attack_results.get("attack_results", []) if r.get("success", False))
         total_attacks = len(attack_results.get("attack_results", []))
         attack_success_rate = successful_attacks / max(total_attacks, 1)
 
         # Defense effectiveness
-        successful_detections = sum(
-            1
-            for r in defense_results.get("detection_results", [])
-            if r.get("detected", False)
-        )
+        successful_detections = sum(1 for r in defense_results.get("detection_results", []) if r.get("detected", False))
         defense_success_rate = successful_detections / max(total_attacks, 1)
 
         # Weighted scoring based on scenario difficulty
@@ -590,30 +551,20 @@ class BattleOrchestrator(BaseAgent):
             "defense_success_rate": defense_success_rate,
             "attack_effectiveness": attack_success_rate * multiplier,
             "defense_effectiveness": defense_success_rate * multiplier,
-            "overall_engagement_score": (attack_success_rate + defense_success_rate)
-            / 2
-            * multiplier,
+            "overall_engagement_score": (attack_success_rate + defense_success_rate) / 2 * multiplier,
         }
 
     async def _execute_analysis_phase(self, battle_results: dict) -> dict[str, Any]:
         """Execute post-battle analysis phase."""
         # Both agents conduct analysis in parallel
-        sword_analysis_task = asyncio.create_task(
-            self.sword_agent.post_battle_analysis(battle_results)
-        )
+        sword_analysis_task = asyncio.create_task(self.sword_agent.post_battle_analysis(battle_results))
 
-        shield_analysis_task = asyncio.create_task(
-            self.shield_agent.post_battle_analysis(battle_results)
-        )
+        shield_analysis_task = asyncio.create_task(self.shield_agent.post_battle_analysis(battle_results))
 
-        sword_analysis, shield_analysis = await asyncio.gather(
-            sword_analysis_task, shield_analysis_task
-        )
+        sword_analysis, shield_analysis = await asyncio.gather(sword_analysis_task, shield_analysis_task)
 
         # Orchestrator conducts meta-analysis
-        meta_analysis = self._conduct_meta_analysis(
-            battle_results, sword_analysis, shield_analysis
-        )
+        meta_analysis = self._conduct_meta_analysis(battle_results, sword_analysis, shield_analysis)
 
         return {
             "sword_analysis": sword_analysis,
@@ -630,18 +581,10 @@ class BattleOrchestrator(BaseAgent):
 
         return {
             "battle_balance": self._assess_battle_balance(combat_results),
-            "agent_improvements": self._identify_agent_improvements(
-                sword_analysis, shield_analysis
-            ),
-            "scenario_effectiveness": self._assess_scenario_effectiveness(
-                battle_results
-            ),
-            "future_recommendations": self._generate_future_recommendations(
-                battle_results
-            ),
-            "training_focus_areas": self._identify_training_focus_areas(
-                sword_analysis, shield_analysis
-            ),
+            "agent_improvements": self._identify_agent_improvements(sword_analysis, shield_analysis),
+            "scenario_effectiveness": self._assess_scenario_effectiveness(battle_results),
+            "future_recommendations": self._generate_future_recommendations(battle_results),
+            "training_focus_areas": self._identify_training_focus_areas(sword_analysis, shield_analysis),
         }
 
     def _assess_battle_balance(self, combat_results: dict) -> dict[str, Any]:
@@ -656,14 +599,10 @@ class BattleOrchestrator(BaseAgent):
             "balance_score": balance_ratio,
             "balance_assessment": "balanced" if balance_ratio > 0.7 else "unbalanced",
             "dominant_side": "attack" if attack_rate > defense_rate else "defense",
-            "recommendations": self._get_balance_recommendations(
-                balance_ratio, attack_rate, defense_rate
-            ),
+            "recommendations": self._get_balance_recommendations(balance_ratio, attack_rate, defense_rate),
         }
 
-    def _get_balance_recommendations(
-        self, balance_ratio: float, attack_rate: float, defense_rate: float
-    ) -> list[str]:
+    def _get_balance_recommendations(self, balance_ratio: float, attack_rate: float, defense_rate: float) -> list[str]:
         """Get recommendations for improving battle balance."""
         recommendations = []
 
@@ -689,45 +628,24 @@ class BattleOrchestrator(BaseAgent):
 
         return recommendations
 
-    def _identify_agent_improvements(
-        self, sword_analysis: dict, shield_analysis: dict
-    ) -> dict[str, list[str]]:
+    def _identify_agent_improvements(self, sword_analysis: dict, shield_analysis: dict) -> dict[str, list[str]]:
         """Identify specific improvements for each agent."""
         return {
-            "sword_improvements": sword_analysis.get("performance_assessment", {}).get(
-                "improvement_priorities", []
-            ),
-            "shield_improvements": shield_analysis.get(
-                "performance_assessment", {}
-            ).get("improvement_priorities", []),
-            "shared_improvements": self._find_shared_improvement_areas(
-                sword_analysis, shield_analysis
-            ),
+            "sword_improvements": sword_analysis.get("performance_assessment", {}).get("improvement_priorities", []),
+            "shield_improvements": shield_analysis.get("performance_assessment", {}).get("improvement_priorities", []),
+            "shared_improvements": self._find_shared_improvement_areas(sword_analysis, shield_analysis),
         }
 
-    def _find_shared_improvement_areas(
-        self, sword_analysis: dict, shield_analysis: dict
-    ) -> list[str]:
+    def _find_shared_improvement_areas(self, sword_analysis: dict, shield_analysis: dict) -> list[str]:
         """Find improvement areas that benefit both agents."""
-        sword_areas = set(
-            sword_analysis.get("performance_assessment", {}).get(
-                "improvement_priorities", []
-            )
-        )
-        shield_areas = set(
-            shield_analysis.get("performance_assessment", {}).get(
-                "improvement_priorities", []
-            )
-        )
+        sword_areas = set(sword_analysis.get("performance_assessment", {}).get("improvement_priorities", []))
+        shield_areas = set(shield_analysis.get("performance_assessment", {}).get("improvement_priorities", []))
 
         # Areas that appear in both analyses
         shared_areas = list(sword_areas.intersection(shield_areas))
 
         # Add common improvement themes
-        if (
-            "intelligence_gathering" in sword_areas
-            or "threat_intelligence" in shield_areas
-        ):
+        if "intelligence_gathering" in sword_areas or "threat_intelligence" in shield_areas:
             shared_areas.append("enhanced_threat_intelligence_sharing")
 
         return shared_areas
@@ -737,19 +655,13 @@ class BattleOrchestrator(BaseAgent):
         scenario = battle_results["scenario"]
         combat_results = battle_results["phases"]["combat"]
 
-        scenario_score = combat_results["combat_effectiveness"][
-            "overall_engagement_score"
-        ]
+        scenario_score = combat_results["combat_effectiveness"]["overall_engagement_score"]
 
         return {
             "scenario_id": scenario.scenario_id,
             "effectiveness_score": scenario_score,
             "difficulty_appropriate": scenario_score > 0.6 and scenario_score < 0.9,
-            "engagement_level": "high"
-            if scenario_score > 0.8
-            else "medium"
-            if scenario_score > 0.6
-            else "low",
+            "engagement_level": "high" if scenario_score > 0.8 else "medium" if scenario_score > 0.6 else "low",
             "reuse_recommendation": scenario_score > 0.7,
         }
 
@@ -757,9 +669,7 @@ class BattleOrchestrator(BaseAgent):
         """Generate recommendations for future battles."""
         recommendations = []
 
-        combat_effectiveness = battle_results["phases"]["combat"][
-            "combat_effectiveness"
-        ]
+        combat_effectiveness = battle_results["phases"]["combat"]["combat_effectiveness"]
 
         if combat_effectiveness["overall_engagement_score"] < 0.6:
             recommendations.append("increase_scenario_complexity")
@@ -781,19 +691,13 @@ class BattleOrchestrator(BaseAgent):
 
         return recommendations
 
-    def _identify_training_focus_areas(
-        self, sword_analysis: dict, shield_analysis: dict
-    ) -> list[str]:
+    def _identify_training_focus_areas(self, sword_analysis: dict, shield_analysis: dict) -> list[str]:
         """Identify key areas for agent training focus."""
         focus_areas = []
 
         # Extract weaknesses from both agents
-        sword_weaknesses = sword_analysis.get("performance_assessment", {}).get(
-            "weaknesses", []
-        )
-        shield_weaknesses = shield_analysis.get("performance_assessment", {}).get(
-            "weaknesses", []
-        )
+        sword_weaknesses = sword_analysis.get("performance_assessment", {}).get("weaknesses", [])
+        shield_weaknesses = shield_analysis.get("performance_assessment", {}).get("weaknesses", [])
 
         # Map weaknesses to training areas
         weakness_to_training = {
@@ -858,41 +762,23 @@ class BattleOrchestrator(BaseAgent):
                 ),
             },
             "performance_summary": {
-                "attack_success_rate": combat_results["combat_effectiveness"][
-                    "attack_success_rate"
-                ],
-                "defense_success_rate": combat_results["combat_effectiveness"][
-                    "defense_success_rate"
-                ],
+                "attack_success_rate": combat_results["combat_effectiveness"]["attack_success_rate"],
+                "defense_success_rate": combat_results["combat_effectiveness"]["defense_success_rate"],
                 "overall_winner": self._determine_battle_winner(combat_results),
-                "battle_balance": analysis_results["meta_analysis"]["battle_balance"][
-                    "balance_assessment"
-                ],
+                "battle_balance": analysis_results["meta_analysis"]["battle_balance"]["balance_assessment"],
             },
             "key_insights": {
-                "sword_performance": analysis_results["sword_analysis"][
-                    "performance_assessment"
-                ]["overall_grade"],
-                "shield_performance": analysis_results["shield_analysis"][
-                    "performance_assessment"
-                ]["overall_grade"],
-                "improvement_priorities": analysis_results["meta_analysis"][
-                    "agent_improvements"
+                "sword_performance": analysis_results["sword_analysis"]["performance_assessment"]["overall_grade"],
+                "shield_performance": analysis_results["shield_analysis"]["performance_assessment"]["overall_grade"],
+                "improvement_priorities": analysis_results["meta_analysis"]["agent_improvements"],
+                "scenario_effectiveness": analysis_results["meta_analysis"]["scenario_effectiveness"][
+                    "effectiveness_score"
                 ],
-                "scenario_effectiveness": analysis_results["meta_analysis"][
-                    "scenario_effectiveness"
-                ]["effectiveness_score"],
             },
             "recommendations": {
-                "future_battles": analysis_results["meta_analysis"][
-                    "future_recommendations"
-                ],
-                "training_focus": analysis_results["meta_analysis"][
-                    "training_focus_areas"
-                ],
-                "balance_adjustments": analysis_results["meta_analysis"][
-                    "battle_balance"
-                ]["recommendations"],
+                "future_battles": analysis_results["meta_analysis"]["future_recommendations"],
+                "training_focus": analysis_results["meta_analysis"]["training_focus_areas"],
+                "balance_adjustments": analysis_results["meta_analysis"]["battle_balance"]["recommendations"],
             },
             "next_steps": self._generate_next_steps(analysis_results),
         }
@@ -933,9 +819,7 @@ class BattleOrchestrator(BaseAgent):
 
         # Training focus
         if meta_analysis["training_focus_areas"]:
-            next_steps.append(
-                f"Focus training on: {', '.join(meta_analysis['training_focus_areas'][:2])}"
-            )
+            next_steps.append(f"Focus training on: {', '.join(meta_analysis['training_focus_areas'][:2])}")
 
         # Future battle planning
         next_steps.extend(meta_analysis["future_recommendations"][:2])
@@ -949,25 +833,15 @@ class BattleOrchestrator(BaseAgent):
         combat_results = battle_results["phases"]["combat"]
         effectiveness = combat_results["combat_effectiveness"]
 
-        logger.info(
-            f"  Attack Success Rate: {effectiveness['attack_success_rate']:.2%}"
-        )
-        logger.info(
-            f"  Defense Success Rate: {effectiveness['defense_success_rate']:.2%}"
-        )
+        logger.info(f"  Attack Success Rate: {effectiveness['attack_success_rate']:.2%}")
+        logger.info(f"  Defense Success Rate: {effectiveness['defense_success_rate']:.2%}")
         logger.info(f"  Winner: {self._determine_battle_winner(combat_results)}")
 
         analysis_results = battle_results["phases"]["analysis"]
-        logger.info(
-            f"  Sword Grade: {analysis_results['sword_analysis']['performance_assessment']['overall_grade']}"
-        )
-        logger.info(
-            f"  Shield Grade: {analysis_results['shield_analysis']['performance_assessment']['overall_grade']}"
-        )
+        logger.info(f"  Sword Grade: {analysis_results['sword_analysis']['performance_assessment']['overall_grade']}")
+        logger.info(f"  Shield Grade: {analysis_results['shield_analysis']['performance_assessment']['overall_grade']}")
 
-    def _calculate_battle_metrics(
-        self, battle_results: dict, duration_minutes: float
-    ) -> BattleMetrics:
+    def _calculate_battle_metrics(self, battle_results: dict, duration_minutes: float) -> BattleMetrics:
         """Calculate final battle metrics."""
         combat_results = battle_results["phases"]["combat"]
         effectiveness = combat_results["combat_effectiveness"]
@@ -975,16 +849,8 @@ class BattleOrchestrator(BaseAgent):
 
         # Convert grades to scores
         grade_to_score = {"A": 95, "B": 85, "C": 75, "D": 65, "F": 50}
-        sword_score = grade_to_score[
-            analysis_results["sword_analysis"]["performance_assessment"][
-                "overall_grade"
-            ]
-        ]
-        shield_score = grade_to_score[
-            analysis_results["shield_analysis"]["performance_assessment"][
-                "overall_grade"
-            ]
-        ]
+        sword_score = grade_to_score[analysis_results["sword_analysis"]["performance_assessment"]["overall_grade"]]
+        shield_score = grade_to_score[analysis_results["shield_analysis"]["performance_assessment"]["overall_grade"]]
 
         return BattleMetrics(
             battle_id=battle_results["battle_id"],
@@ -995,35 +861,25 @@ class BattleOrchestrator(BaseAgent):
             overall_winner=self._determine_battle_winner(combat_results),
             attack_success_rate=effectiveness["attack_success_rate"],
             defense_success_rate=effectiveness["defense_success_rate"],
-            detection_accuracy=effectiveness[
-                "defense_success_rate"
-            ],  # Proxy for detection
+            detection_accuracy=effectiveness["defense_success_rate"],  # Proxy for detection
             response_effectiveness=shield_score / 100.0,  # Normalized
         )
 
     def _update_win_rates(self, metrics: BattleMetrics):
         """Update historical win rates."""
         if metrics.overall_winner == "sword":
-            self.sword_win_rate = (
-                (self.sword_win_rate * (self.battle_count - 1)) + 1.0
-            ) / self.battle_count
+            self.sword_win_rate = ((self.sword_win_rate * (self.battle_count - 1)) + 1.0) / self.battle_count
         elif metrics.overall_winner == "shield":
-            self.shield_win_rate = (
-                (self.shield_win_rate * (self.battle_count - 1)) + 1.0
-            ) / self.battle_count
+            self.shield_win_rate = ((self.shield_win_rate * (self.battle_count - 1)) + 1.0) / self.battle_count
         # For draws, neither win rate increases
 
-    async def _setup_sandbox_environment(
-        self, scenario: BattleScenario
-    ) -> dict[str, Any]:
+    async def _setup_sandbox_environment(self, scenario: BattleScenario) -> dict[str, Any]:
         """Set up isolated sandbox environment for battle."""
         # Simulate sandbox setup
         await asyncio.sleep(random.uniform(30, 120))  # Setup time
 
         return {
-            "environment_id": hashlib.md5(scenario.scenario_id.encode()).hexdigest()[
-                :8
-            ],
+            "environment_id": hashlib.md5(scenario.scenario_id.encode()).hexdigest()[:8],
             "virtual_machines": self.sandbox_config["virtual_machines"],
             "simulated_services": self.sandbox_config["simulated_services"],
             "monitoring_enabled": self.sandbox_config["monitoring_enabled"],
@@ -1060,9 +916,7 @@ class BattleOrchestrator(BaseAgent):
             self._initialize_battle_scenarios()
 
             self.initialized = True
-            self.logger.info(
-                f"Battle Orchestrator {self.agent_id} initialized - Ready for war games"
-            )
+            self.logger.info(f"Battle Orchestrator {self.agent_id} initialized - Ready for war games")
 
         except Exception as e:
             self.logger.error(f"Battle Orchestrator initialization failed: {e}")

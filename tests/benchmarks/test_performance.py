@@ -220,17 +220,13 @@ def test_hyperag_simulation_performance(benchmark):
             similarities.append(similarity)
 
         # Sort by similarity
-        sorted_indices = sorted(
-            range(len(similarities)), key=lambda i: similarities[i], reverse=True
-        )
+        sorted_indices = sorted(range(len(similarities)), key=lambda i: similarities[i], reverse=True)
 
         # Return top 10
         top_results = sorted_indices[:10]
         return len(top_results)
 
-    with benchmark.measure(
-        "hyperag_simulation_performance", {"vectors": 100, "dims": 50}
-    ):
+    with benchmark.measure("hyperag_simulation_performance", {"vectors": 100, "dims": 50}):
         result = hyperag_simulation()
 
     assert result == 10, "Should return top 10 results"
@@ -279,9 +275,7 @@ def test_memory_usage_simulation(benchmark):
 
         return total_elements
 
-    with benchmark.measure(
-        "memory_usage_simulation", {"chunks": 100, "chunk_size": 100}
-    ):
+    with benchmark.measure("memory_usage_simulation", {"chunks": 100, "chunk_size": 100}):
         result = memory_simulation()
 
     assert result == 10000, "Should allocate and process 10k elements"

@@ -2,7 +2,6 @@ import time
 from datetime import datetime
 
 import numpy as np
-
 from hyperrag.hippo_cache import CacheEntry, HippoCache
 
 

@@ -132,9 +132,7 @@ class LinkChangeDetector:
         if not self.change_events:
             return {"events": 0, "within_target": True}
 
-        avg_time = sum(e["evaluation_time_ms"] for e in self.change_events) / len(
-            self.change_events
-        )
+        avg_time = sum(e["evaluation_time_ms"] for e in self.change_events) / len(self.change_events)
 
         return {
             "total_events": len(self.change_events),
@@ -182,17 +180,13 @@ class SimulatedUnifiedTransport:
         """Set peer reachability for testing"""
         self.peer_reachable[peer_id] = reachable
 
-    def set_network_state(
-        self, bluetooth: bool = True, internet: bool = True, wifi: bool = True
-    ):
+    def set_network_state(self, bluetooth: bool = True, internet: bool = True, wifi: bool = True):
         """Set network state for testing"""
         self.bluetooth_available = bluetooth
         self.internet_available = internet
         self.wifi_connected = wifi
 
-    async def send(
-        self, destination: str, payload: str, context: TransportContext
-    ) -> DeliveryReceipt:
+    async def send(self, destination: str, payload: str, context: TransportContext) -> DeliveryReceipt:
         """Send message with auto-path selection"""
         if not self.is_running:
             raise RuntimeError("Transport not running")
@@ -227,9 +221,7 @@ class SimulatedUnifiedTransport:
 
         return receipt
 
-    def _select_optimal_path(
-        self, destination: str, context: TransportContext
-    ) -> tuple[str, PathSelection]:
+    def _select_optimal_path(self, destination: str, context: TransportContext) -> tuple[str, PathSelection]:
         """Auto-select optimal path based on context"""
 
         # Priority 1: Proximity local -> BitChat
@@ -241,11 +233,7 @@ class SimulatedUnifiedTransport:
             return "bitchat", PathSelection.PROXIMITY_LOCAL
 
         # Priority 2: Large/urgent -> Betanet
-        if (
-            context.size_bytes > 10000
-            or context.priority >= 8
-            or context.requires_realtime
-        ):
+        if context.size_bytes > 10000 or context.priority >= 8 or context.requires_realtime:
             if self.internet_available:
                 return "betanet", PathSelection.LARGE_URGENT
 
@@ -259,11 +247,7 @@ class SimulatedUnifiedTransport:
             return "bitchat", PathSelection.BATTERY_CONSERVATION
 
         # Priority 4: Cost optimization -> BitChat
-        if (
-            context.cost_sensitive
-            and self.bluetooth_available
-            and self.peer_reachable.get(destination, False)
-        ):
+        if context.cost_sensitive and self.bluetooth_available and self.peer_reachable.get(destination, False):
             return "bitchat", PathSelection.COST_OPTIMIZATION
 
         # Priority 5: Privacy required -> Betanet
@@ -279,9 +263,7 @@ class SimulatedUnifiedTransport:
 
         return "store_forward", PathSelection.FALLBACK_OFFLINE
 
-    async def _simulate_delivery(
-        self, destination: str, payload: str, path: str
-    ) -> bool:
+    async def _simulate_delivery(self, destination: str, payload: str, path: str) -> bool:
         """Simulate message delivery"""
         # Add small delay to simulate network time
         await asyncio.sleep(0.01)
@@ -348,9 +330,7 @@ class SimulatedUnifiedTransport:
             "node_id": self.node_id,
             "export_timestamp": time.time(),
             "total_messages": len(self.receipts),
-            "path_distribution": {
-                path: stats["sent"] for path, stats in self.path_stats.items()
-            },
+            "path_distribution": {path: stats["sent"] for path, stats in self.path_stats.items()},
             "link_change_performance": self.link_detector.get_performance_metrics(),
             "receipts": [self._receipt_to_dict(r) for r in self.receipts.values()],
             "recent_metrics": self.metrics_buffer[-50:],  # Last 50 messages
@@ -397,9 +377,7 @@ async def test_scenario_1_proximity_local():
     )
 
     # Should try BitChat but fail, potentially falling back to store-forward
-    print(
-        f"  PASS: Offline peer -> {receipt2.path_chosen} (success: {receipt2.success})"
-    )
+    print(f"  PASS: Offline peer -> {receipt2.path_chosen} (success: {receipt2.success})")
 
     # Test 1C: Peer comes back online -> delivery works
     transport.set_peer_reachable(peer_id, True)
@@ -463,9 +441,7 @@ async def test_scenario_2_large_urgent():
     )
 
     # Should still use Betanet but with potential fallback behavior
-    print(
-        f"  PASS: Degraded network -> {receipt3.path_chosen} (success: {receipt3.success})"
-    )
+    print(f"  PASS: Degraded network -> {receipt3.path_chosen} (success: {receipt3.success})")
 
     await transport.stop()
     return True
@@ -501,9 +477,7 @@ async def test_scenario_3_link_flap_500ms():
     receipt2 = await transport.send(
         peer_id,
         "Message after link change",
-        TransportContext(
-            size_bytes=20000, priority=8
-        ),  # Large urgent to prefer Betanet
+        TransportContext(size_bytes=20000, priority=8),  # Large urgent to prefer Betanet
     )
 
     switch_time = time.time()
@@ -577,9 +551,7 @@ async def test_scenario_5_battery_conservation():
     assert receipt.path_chosen == "bitchat"
     assert receipt.path_reasoning == PathSelection.BATTERY_CONSERVATION
     assert receipt.energy_cost < 0.5  # BitChat should be energy efficient
-    print(
-        f"  PASS: Low battery -> BitChat chosen (energy cost: {receipt.energy_cost:.1f})"
-    )
+    print(f"  PASS: Low battery -> BitChat chosen (energy cost: {receipt.energy_cost:.1f})")
 
     await transport.stop()
     return True

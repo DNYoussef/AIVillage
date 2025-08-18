@@ -10,14 +10,12 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+from packages.agent_forge.legacy_production.agent_factory import AgentFactory
 from src.agent_forge.adas.adas import ADASTask, SecureCodeRunner
 from src.agent_forge.compression.bitnet_enhanced import EnhancedBitNetCompressor
-from src.production.agent_forge.agent_factory import AgentFactory
 from src.production.evolution.evomerge_pipeline import EvolutionConfig, EvoMergePipeline
 
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -196,14 +194,10 @@ class FixedAgentForgeValidator:
                 # Load and compress a simple test model
                 try:
                     # Try to load a real model
-                    model, tokenizer = compressor.load_test_model(
-                        "distilbert-base-uncased"
-                    )
+                    model, tokenizer = compressor.load_test_model("distilbert-base-uncased")
 
                     # Compress the model
-                    compression_result = compressor.compress_model(
-                        model, "test_distilbert"
-                    )
+                    compression_result = compressor.compress_model(model, "test_distilbert")
 
                     if "error" not in compression_result:
                         ratio = compression_result.get("compression_ratio", 0)
@@ -225,9 +219,7 @@ class FixedAgentForgeValidator:
                     # Try with simple model fallback
                     try:
                         simple_model = compressor._create_simple_model()
-                        compression_result = compressor.compress_model(
-                            simple_model, "simple_test_model"
-                        )
+                        compression_result = compressor.compress_model(simple_model, "simple_test_model")
 
                         if "error" not in compression_result:
                             ratio = compression_result.get("compression_ratio", 0)
@@ -320,9 +312,7 @@ class FixedAgentForgeValidator:
             # Try alternative initialization
             try:
                 # Test with minimal parameters
-                task = ADASTask(
-                    task_type="test", task_content="Test task for validation"
-                )
+                task = ADASTask(task_type="test", task_content="Test task for validation")
 
                 self.results["adas_system"] = {
                     "status": "success",
@@ -349,12 +339,8 @@ class FixedAgentForgeValidator:
 
         # Calculate results
         total_tests = len(self.results)
-        successful_tests = sum(
-            1 for r in self.results.values() if r["status"] == "success"
-        )
-        partial_tests = sum(
-            1 for r in self.results.values() if r["status"] == "partial"
-        )
+        successful_tests = sum(1 for r in self.results.values() if r["status"] == "success")
+        partial_tests = sum(1 for r in self.results.values() if r["status"] == "partial")
 
         logger.info("=== Fixed Agent Forge Validation Results ===")
         for test_name, result in self.results.items():
@@ -365,9 +351,7 @@ class FixedAgentForgeValidator:
                 "pending": "PEND",
             }
 
-            logger.info(
-                f"[{status_emoji[result['status']]}] {test_name}: {result['status'].upper()}"
-            )
+            logger.info(f"[{status_emoji[result['status']]}] {test_name}: {result['status'].upper()}")
             logger.info(f"   Time: {result['time']:.2f}s")
             logger.info(f"   Details: {result['details']}")
 
@@ -382,9 +366,7 @@ class FixedAgentForgeValidator:
 async def test_async_adas() -> None:
     """Test ADAS async functionality if available."""
     try:
-        task = ADASTask(
-            task_type="async_test", task_content="Test async ADAS functionality"
-        )
+        task = ADASTask(task_type="async_test", task_content="Test async ADAS functionality")
 
         if hasattr(task, "run"):
             # Run async task

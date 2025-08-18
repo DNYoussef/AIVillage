@@ -12,10 +12,7 @@ import pytest
 import torch
 import torch.nn as nn
 
-from src.agent_forge.adas.archive import (
-    ADASArchive,
-    ExperimentResult,
-)
+from src.agent_forge.adas.archive import ADASArchive, ExperimentResult
 from src.agent_forge.adas.proposer import ADASProposer
 from src.agent_forge.adas.runner import ADASRunner, TaskSuite
 
@@ -88,9 +85,7 @@ class TestADASArchive:
         assert stats["total_results"] == 0
         assert stats["successful_results"] == 0
 
-    def test_add_and_retrieve_results(
-        self, temp_archive_path, sample_experiment_result
-    ):
+    def test_add_and_retrieve_results(self, temp_archive_path, sample_experiment_result):
         """Test adding and retrieving experiment results."""
         archive = ADASArchive(temp_archive_path)
 
@@ -178,10 +173,7 @@ class TestADASArchive:
                     dominates = (
                         result_i.score >= result_j.score
                         and result_i.latency_ms <= result_j.latency_ms
-                        and (
-                            result_i.score > result_j.score
-                            or result_i.latency_ms < result_j.latency_ms
-                        )
+                        and (result_i.score > result_j.score or result_i.latency_ms < result_j.latency_ms)
                     )
                     assert not dominates, f"Point {i} dominates point {j} in Pareto set"
 
@@ -309,9 +301,7 @@ class TestADASProposer:
         proposer = ADASProposer(archive)
 
         # Generate mutation-based proposal
-        proposal = proposer._mutate_from_archive(
-            successful_results, target_latency_ms=80
-        )
+        proposal = proposer._mutate_from_archive(successful_results, target_latency_ms=80)
 
         assert "expert" in proposal
         assert "dispatch" in proposal
@@ -476,9 +466,7 @@ class TestADASRunner:
         """Test ADAS runner initialization."""
         model, tokenizer = mock_model_and_tokenizer
 
-        runner = ADASRunner(
-            base_model=model, tokenizer=tokenizer, archive_path=temp_archive_path
-        )
+        runner = ADASRunner(base_model=model, tokenizer=tokenizer, archive_path=temp_archive_path)
 
         assert runner.base_model is model
         assert runner.tokenizer is tokenizer
@@ -487,9 +475,7 @@ class TestADASRunner:
 
     @patch("src.agent_forge.adas.runner.T2Mixer")
     @patch("torch.cuda.is_available", return_value=False)
-    def test_single_proposal_evaluation(
-        self, mock_cuda, mock_t2mixer, mock_model_and_tokenizer, temp_archive_path
-    ):
+    def test_single_proposal_evaluation(self, mock_cuda, mock_t2mixer, mock_model_and_tokenizer, temp_archive_path):
         """Test evaluation of a single proposal."""
         model, tokenizer = mock_model_and_tokenizer
 
@@ -501,9 +487,7 @@ class TestADASRunner:
         mock_mixer_instance.patch.__exit__ = Mock()
         mock_t2mixer.return_value = mock_mixer_instance
 
-        runner = ADASRunner(
-            base_model=model, tokenizer=tokenizer, archive_path=temp_archive_path
-        )
+        runner = ADASRunner(base_model=model, tokenizer=tokenizer, archive_path=temp_archive_path)
 
         # Mock proposal
         proposal = {
@@ -528,16 +512,14 @@ class TestADASRunner:
 
         assert isinstance(result, ExperimentResult)
         assert result.trial_id == "test_001"
-        assert result.success == True
+        assert result.success is True
         assert result.score >= 0
         assert result.latency_ms >= 0
         assert result.vram_gb >= 0
 
     @patch("src.agent_forge.adas.runner.T2Mixer")
     @patch("torch.cuda.is_available", return_value=False)
-    def test_batch_evaluation(
-        self, mock_cuda, mock_t2mixer, mock_model_and_tokenizer, temp_archive_path
-    ):
+    def test_batch_evaluation(self, mock_cuda, mock_t2mixer, mock_model_and_tokenizer, temp_archive_path):
         """Test batch evaluation of proposals."""
         model, tokenizer = mock_model_and_tokenizer
 
@@ -549,9 +531,7 @@ class TestADASRunner:
         mock_mixer_instance.patch.__exit__ = Mock()
         mock_t2mixer.return_value = mock_mixer_instance
 
-        runner = ADASRunner(
-            base_model=model, tokenizer=tokenizer, archive_path=temp_archive_path
-        )
+        runner = ADASRunner(base_model=model, tokenizer=tokenizer, archive_path=temp_archive_path)
 
         # Create multiple proposals
         proposals = []
@@ -581,13 +561,11 @@ class TestADASRunner:
         assert len(results) == 3
         for result in results:
             assert isinstance(result, ExperimentResult)
-            assert result.success == True
+            assert result.success is True
 
     @patch("src.agent_forge.adas.runner.T2Mixer")
     @patch("torch.cuda.is_available", return_value=False)
-    def test_full_specialization_run(
-        self, mock_cuda, mock_t2mixer, mock_model_and_tokenizer, temp_archive_path
-    ):
+    def test_full_specialization_run(self, mock_cuda, mock_t2mixer, mock_model_and_tokenizer, temp_archive_path):
         """Test complete specialization run."""
         model, tokenizer = mock_model_and_tokenizer
 
@@ -599,9 +577,7 @@ class TestADASRunner:
         mock_mixer_instance.patch.__exit__ = Mock()
         mock_t2mixer.return_value = mock_mixer_instance
 
-        runner = ADASRunner(
-            base_model=model, tokenizer=tokenizer, archive_path=temp_archive_path
-        )
+        runner = ADASRunner(base_model=model, tokenizer=tokenizer, archive_path=temp_archive_path)
 
         # Run short specialization
         summary = runner.run_specialization(
@@ -629,9 +605,7 @@ class TestADASRunner:
         """Test VRAM usage tracking."""
         model, tokenizer = mock_model_and_tokenizer
 
-        runner = ADASRunner(
-            base_model=model, tokenizer=tokenizer, archive_path=temp_archive_path
-        )
+        runner = ADASRunner(base_model=model, tokenizer=tokenizer, archive_path=temp_archive_path)
 
         # Should work even without CUDA
         vram = runner._get_vram_usage()
@@ -642,9 +616,7 @@ class TestADASRunner:
         """Test summary generation from results."""
         model, tokenizer = mock_model_and_tokenizer
 
-        runner = ADASRunner(
-            base_model=model, tokenizer=tokenizer, archive_path=temp_archive_path
-        )
+        runner = ADASRunner(base_model=model, tokenizer=tokenizer, archive_path=temp_archive_path)
 
         # Create mock results
         results = []
@@ -691,9 +663,7 @@ class TestErrorHandling:
         proposer = ADASProposer()
 
         # Test with extreme values
-        proposal = proposer._generate_random_proposal(
-            target_latency_ms=1
-        )  # Very low budget
+        proposal = proposer._generate_random_proposal(target_latency_ms=1)  # Very low budget
 
         # Should still generate valid proposal
         assert "expert" in proposal

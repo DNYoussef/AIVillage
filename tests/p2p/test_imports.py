@@ -26,63 +26,47 @@ class TestP2PImports:
 
         # Test core P2P imports
         try:
-            from src.core.p2p import libp2p_mesh
-
             import_results["libp2p_mesh"] = True
         except ImportError as e:
             import_results["libp2p_mesh"] = f"ImportError: {e}"
 
         try:
-            from src.core.p2p import bitchat_transport
-
             import_results["bitchat_transport"] = True
         except ImportError as e:
             import_results["bitchat_transport"] = f"ImportError: {e}"
 
         try:
-            from src.core.p2p import betanet_transport_v2
-
             import_results["betanet_transport_v2"] = True
         except ImportError as e:
             import_results["betanet_transport_v2"] = f"ImportError: {e}"
 
         try:
-            from src.core.p2p import dual_path_transport
-
             import_results["dual_path_transport"] = True
         except ImportError as e:
             import_results["dual_path_transport"] = f"ImportError: {e}"
 
         try:
-            from src.core.p2p import unified_transport
-
             import_results["unified_transport"] = True
         except ImportError as e:
             import_results["unified_transport"] = f"ImportError: {e}"
 
         # At least basic imports should work (relaxed for dependency issues)
-        successful_imports = sum(
-            1 for result in import_results.values() if result is True
-        )
+        successful_imports = sum(1 for result in import_results.values() if result is True)
         print(f"Import results: {import_results}")
 
         # Store import status for integration validation
         _store_import_status(import_results)
 
         # Expect at least 2 successful imports (lowered threshold for dependency tolerance)
-        assert successful_imports >= 2, (
-            f"Expected at least 2 successful imports, got {successful_imports}: {import_results}"
-        )
+        assert (
+            successful_imports >= 2
+        ), f"Expected at least 2 successful imports, got {successful_imports}: {import_results}"
 
     def test_transport_class_instantiation(self):
         """Test that transport classes can be instantiated with graceful fallbacks."""
         # Test with dependency-aware imports
         try:
-            from src.core.p2p.bitchat_transport import (
-                BLUETOOTH_AVAILABLE,
-                CRYPTO_AVAILABLE,
-                BitChatTransport,
-            )
+            from src.core.p2p.bitchat_transport import BitChatTransport
 
             # Should be able to create transport even if dependencies missing
             transport = BitChatTransport(device_id="test_device")
@@ -111,46 +95,36 @@ class TestP2PImports:
 
         # Test cryptography availability
         try:
-            import cryptography
-
             dependency_status["cryptography"] = True
         except ImportError:
             dependency_status["cryptography"] = False
 
         # Test pynacl availability
         try:
-            import nacl
-
             dependency_status["pynacl"] = True
         except ImportError:
             dependency_status["pynacl"] = False
 
         # Test lz4 availability
         try:
-            import lz4
-
             dependency_status["lz4"] = True
         except ImportError:
             dependency_status["lz4"] = False
 
         # Test aiohttp availability
         try:
-            import aiohttp
-
             dependency_status["aiohttp"] = True
         except ImportError:
             dependency_status["aiohttp"] = False
 
         # Test h2 availability
         try:
-            import h2
-
             dependency_status["h2"] = True
         except ImportError:
             dependency_status["h2"] = False
 
         # At least some core dependencies should be available
-        available_deps = sum(1 for available in dependency_status.values() if available)
+        sum(1 for available in dependency_status.values() if available)
         print(f"Dependency status: {dependency_status}")
 
         # Store results for integration validation
@@ -188,9 +162,7 @@ class TestP2PImports:
             assert config.pubsub_topic is not None
 
             # Test custom configuration
-            custom_config = MeshConfiguration(
-                node_id="test_node", listen_port=4001, max_peers=10
-            )
+            custom_config = MeshConfiguration(node_id="test_node", listen_port=4001, max_peers=10)
             assert custom_config.node_id == "test_node"
             assert custom_config.listen_port == 4001
             assert custom_config.max_peers == 10
@@ -201,11 +173,7 @@ class TestP2PImports:
     def test_fallback_transport_availability(self):
         """Test that fallback transports are available when main deps missing."""
         try:
-            from src.core.p2p.fallback_transports import (
-                FallbackTransportManager,
-                TransportType,
-                create_default_fallback_manager,
-            )
+            from src.core.p2p.fallback_transports import TransportType, create_default_fallback_manager
 
             # Test fallback manager creation
             manager = create_default_fallback_manager("test_node")

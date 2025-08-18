@@ -163,10 +163,7 @@ class Enhanced50GenEvolutionMerger:
             config["parameters"] = {}
 
         # Add multiple models for some methods
-        if (
-            method in ["linear", "slerp", "model_soup"]
-            and len(self.available_models) > 1
-        ):
+        if method in ["linear", "slerp", "model_soup"] and len(self.available_models) > 1:
             additional_models = random.sample(
                 [m for m in self.available_models if m != base_model],
                 min(1, len(self.available_models) - 1),
@@ -195,52 +192,36 @@ class Enhanced50GenEvolutionMerger:
             # Mutate parameters
             if method == "slerp":
                 current_t = mutated["parameters"].get("t", 0.5)
-                mutated["parameters"]["t"] = max(
-                    0.1, min(0.9, current_t + random.gauss(0, 0.2))
-                )
+                mutated["parameters"]["t"] = max(0.1, min(0.9, current_t + random.gauss(0, 0.2)))
 
             elif method == "linear":
                 current_w = mutated["parameters"].get("weight", 0.5)
-                mutated["parameters"]["weight"] = max(
-                    0.1, min(0.9, current_w + random.gauss(0, 0.2))
-                )
+                mutated["parameters"]["weight"] = max(0.1, min(0.9, current_w + random.gauss(0, 0.2)))
 
             elif method == "task_arithmetic":
                 current_sc = mutated["parameters"].get("scaling_coefficient", 1.0)
-                mutated["parameters"]["scaling_coefficient"] = max(
-                    0.1, min(3.0, current_sc + random.gauss(0, 0.3))
-                )
+                mutated["parameters"]["scaling_coefficient"] = max(0.1, min(3.0, current_sc + random.gauss(0, 0.3)))
 
             elif method == "ties":
                 current_d = mutated["parameters"].get("density", 0.5)
-                mutated["parameters"]["density"] = max(
-                    0.1, min(0.9, current_d + random.gauss(0, 0.1))
-                )
+                mutated["parameters"]["density"] = max(0.1, min(0.9, current_d + random.gauss(0, 0.1)))
 
             elif method == "dare_ties":
                 current_d = mutated["parameters"].get("density", 0.5)
                 current_l = mutated["parameters"].get("lambda", 1.0)
-                mutated["parameters"]["density"] = max(
-                    0.1, min(0.9, current_d + random.gauss(0, 0.1))
-                )
-                mutated["parameters"]["lambda"] = max(
-                    0.1, min(2.0, current_l + random.gauss(0, 0.2))
-                )
+                mutated["parameters"]["density"] = max(0.1, min(0.9, current_d + random.gauss(0, 0.1)))
+                mutated["parameters"]["lambda"] = max(0.1, min(2.0, current_l + random.gauss(0, 0.2)))
 
         # Sometimes change merge method entirely (5% chance)
         if random.random() < 0.05:
             mutated["merge_method"] = random.choice(self.merge_methods)
             # Reinitialize parameters for new method
-            new_config = self.create_base_config(
-                mutated["merge_method"], mutated["base_model"]
-            )
+            new_config = self.create_base_config(mutated["merge_method"], mutated["base_model"])
             mutated["parameters"] = new_config["parameters"]
 
         return mutated
 
-    def crossover_configs(
-        self, parent1: dict[str, Any], parent2: dict[str, Any]
-    ) -> dict[str, Any]:
+    def crossover_configs(self, parent1: dict[str, Any], parent2: dict[str, Any]) -> dict[str, Any]:
         """Enhanced crossover with method mixing."""
         crossover_rate = self.base_crossover_rate
 
@@ -252,9 +233,7 @@ class Enhanced50GenEvolutionMerger:
             ]
 
             # Method crossover
-            child["merge_method"] = random.choice(
-                [parent1["merge_method"], parent2["merge_method"]]
-            )
+            child["merge_method"] = random.choice([parent1["merge_method"], parent2["merge_method"]])
 
             # Parameter blending
             p1_params = parent1.get("parameters", {})
@@ -265,7 +244,7 @@ class Enhanced50GenEvolutionMerger:
                 if key in p1_params and key in p2_params:
                     # Blend numeric parameters
                     v1, v2 = p1_params[key], p2_params[key]
-                    if isinstance(v1, (int, float)) and isinstance(v2, (int, float)):
+                    if isinstance(v1, int | float) and isinstance(v2, int | float):
                         alpha = random.uniform(0.3, 0.7)
                         blended_params[key] = alpha * v1 + (1 - alpha) * v2
                     else:
@@ -277,9 +256,7 @@ class Enhanced50GenEvolutionMerger:
             child["parameters"] = blended_params
 
             # Model inheritance
-            all_models = list(
-                set(parent1.get("models", []) + parent2.get("models", []))
-            )
+            all_models = list(set(parent1.get("models", []) + parent2.get("models", [])))
             child["models"] = all_models[: min(3, len(all_models))]  # Limit to 3 models
 
             return child
@@ -325,10 +302,7 @@ class Enhanced50GenEvolutionMerger:
         else:
             # Average performance for unknown models
             all_perfs = list(base_performances.values())
-            base_perf = {
-                metric: sum(p[metric] for p in all_perfs) / len(all_perfs)
-                for metric in all_perfs[0].keys()
-            }
+            base_perf = {metric: sum(p[metric] for p in all_perfs) / len(all_perfs) for metric in all_perfs[0].keys()}
 
         # Method-specific bonuses/penalties
         method_modifiers = {
@@ -357,9 +331,7 @@ class Enhanced50GenEvolutionMerger:
             # Random variation
             noise = random.gauss(0, 0.03)
 
-            final_score = (
-                base_score + method_bonus + param_bonus + evolution_bonus + noise
-            )
+            final_score = base_score + method_bonus + param_bonus + evolution_bonus + noise
             final_score = max(0.1, min(0.95, final_score))  # Clamp to realistic range
 
             results[metric] = final_score
@@ -426,9 +398,7 @@ class Enhanced50GenEvolutionMerger:
                     threshold_bonus = 0
 
                 normalized_score = score / threshold if threshold > 0 else score
-                metric_fitness = (
-                    normalized_score + threshold_bonus
-                ) * adjusted_weights[metric]
+                metric_fitness = (normalized_score + threshold_bonus) * adjusted_weights[metric]
                 fitness += metric_fitness
 
         # Diversity bonus (encourage different approaches)
@@ -439,24 +409,18 @@ class Enhanced50GenEvolutionMerger:
             method_counts[m] = method_counts.get(m, 0) + 1
 
         total_pop = len(self.population)
-        method_frequency = (
-            method_counts.get(method, 0) / total_pop if total_pop > 0 else 0
-        )
+        method_frequency = method_counts.get(method, 0) / total_pop if total_pop > 0 else 0
         diversity_bonus = 0.05 * (1 - method_frequency)  # Bonus for rare methods
 
         fitness += diversity_bonus
         return fitness
 
-    def select_parents_tournament(
-        self, tournament_size: int = 3
-    ) -> list[dict[str, Any]]:
+    def select_parents_tournament(self, tournament_size: int = 3) -> list[dict[str, Any]]:
         """Enhanced tournament selection with diversity consideration."""
         parents = []
 
         for _ in range(self.population_size - self.elite_size):
-            tournament = random.sample(
-                self.population, min(tournament_size, len(self.population))
-            )
+            tournament = random.sample(self.population, min(tournament_size, len(self.population)))
 
             # 80% fitness-based selection, 20% diversity-based
             if random.random() < 0.8:
@@ -497,21 +461,12 @@ class Enhanced50GenEvolutionMerger:
         param_diversity = 0.0
         if len(self.population) > 1:
             # Sample parameter diversity for task_arithmetic method
-            ta_individuals = [
-                ind
-                for ind in self.population
-                if ind.get("merge_method") == "task_arithmetic"
-            ]
+            ta_individuals = [ind for ind in self.population if ind.get("merge_method") == "task_arithmetic"]
             if len(ta_individuals) > 1:
-                scaling_coeffs = [
-                    ind.get("parameters", {}).get("scaling_coefficient", 1.0)
-                    for ind in ta_individuals
-                ]
+                scaling_coeffs = [ind.get("parameters", {}).get("scaling_coefficient", 1.0) for ind in ta_individuals]
                 param_diversity = np.std(scaling_coeffs)
 
-        total_diversity = (
-            method_diversity + min(fitness_std, 0.5) + min(param_diversity, 0.5)
-        ) / 3
+        total_diversity = (method_diversity + min(fitness_std, 0.5) + min(param_diversity, 0.5)) / 3
         return total_diversity
 
     def evolve_generation(self):
@@ -542,9 +497,7 @@ class Enhanced50GenEvolutionMerger:
 
         # Log generation results
         best_individual = self.population[0]
-        avg_fitness = sum(ind["fitness"] for ind in self.population) / len(
-            self.population
-        )
+        avg_fitness = sum(ind["fitness"] for ind in self.population) / len(self.population)
 
         logger.info("Generation %d Results:", self.generation)
         logger.info("Best fitness: %.4f", best_individual["fitness"])
@@ -633,9 +586,7 @@ class Enhanced50GenEvolutionMerger:
                 # Progress update every 10 generations
                 if generation_count % 10 == 0:
                     elapsed = time.time() - start_time
-                    estimated_total = elapsed * (
-                        self.max_generations / generation_count
-                    )
+                    estimated_total = elapsed * (self.max_generations / generation_count)
                     remaining = estimated_total - elapsed
 
                     logger.info(
@@ -679,9 +630,7 @@ class Enhanced50GenEvolutionMerger:
                 "duration_minutes": duration / 60,
                 "best_fitness": best_overall["fitness"],
                 "best_configuration": best_overall,
-                "final_diversity": (
-                    self.diversity_history[-1] if self.diversity_history else 0
-                ),
+                "final_diversity": (self.diversity_history[-1] if self.diversity_history else 0),
                 "stagnation_periods": self.stagnation_counter,
                 "population_size": self.population_size,
                 "available_models": self.available_models,
@@ -700,12 +649,8 @@ class Enhanced50GenEvolutionMerger:
             ],
             "diversity_evolution": self.diversity_history,
             "performance_metrics": {
-                "fitness_progression": [
-                    gen["best_fitness"] for gen in self.benchmark_history
-                ],
-                "average_fitness_progression": [
-                    gen["average_fitness"] for gen in self.benchmark_history
-                ],
+                "fitness_progression": [gen["best_fitness"] for gen in self.benchmark_history],
+                "average_fitness_progression": [gen["average_fitness"] for gen in self.benchmark_history],
                 "method_evolution": self.analyze_method_evolution(),
             },
         }

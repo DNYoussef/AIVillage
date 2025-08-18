@@ -111,9 +111,7 @@ class FederatedLearningServer:
         selected_clients = self._select_clients()
 
         if len(selected_clients) < self.min_clients:
-            self.logger.warning(
-                f"Not enough clients: {len(selected_clients)} < {self.min_clients}"
-            )
+            self.logger.warning(f"Not enough clients: {len(selected_clients)} < {self.min_clients}")
             return {
                 "status": "insufficient_clients",
                 "round_number": self.current_round,  # Provide for consistency
@@ -147,9 +145,7 @@ class FederatedLearningServer:
             "participating_clients": round_info.participating_clients,
         }
 
-        self.logger.info(
-            f"Started round {self.current_round} with {len(selected_clients)} clients"
-        )
+        self.logger.info(f"Started round {self.current_round} with {len(selected_clients)} clients")
 
         return round_config
 
@@ -160,10 +156,7 @@ class FederatedLearningServer:
             client_info
             for client_info in self.registered_clients.values()
             # Check client eligibility
-            if (
-                client_info.get("active", False)
-                and client_info.get("battery_level", 0) > min_battery_level
-            )
+            if (client_info.get("active", False) and client_info.get("battery_level", 0) > min_battery_level)
         ]
 
         # Random selection based on fraction
@@ -194,9 +187,7 @@ class FederatedLearningServer:
             weights = np.ones(len(eligible_clients)) / len(eligible_clients)
 
         # Select clients
-        indices = rng.choice(
-            len(eligible_clients), size=num_to_select, replace=False, p=weights
-        )
+        indices = rng.choice(len(eligible_clients), size=num_to_select, replace=False, p=weights)
 
         return [eligible_clients[i] for i in indices]
 
@@ -209,22 +200,17 @@ class FederatedLearningServer:
         # Store update
         self.client_updates[self.current_round].append(update)
 
-        self.logger.info(
-            f"Received update from {update.client_id} for round {update.round_number}"
-        )
+        self.logger.info(f"Received update from {update.client_id} for round {update.round_number}")
 
         # Check if we have enough updates to aggregate
         current_round_info = self.round_history[-1]
         expected_clients = set(current_round_info.participating_clients)
-        received_clients = {
-            u.client_id for u in self.client_updates[self.current_round]
-        }
+        received_clients = {u.client_id for u in self.client_updates[self.current_round]}
 
         if len(received_clients) >= self.min_clients:
             # Check if timeout reached or all clients reported
-            if (
-                time.time() - current_round_info.start_time > self.round_timeout
-                or expected_clients.issubset(received_clients)
+            if time.time() - current_round_info.start_time > self.round_timeout or expected_clients.issubset(
+                received_clients
             ):
                 # Trigger aggregation
                 await self._aggregate_updates()
@@ -238,9 +224,7 @@ class FederatedLearningServer:
         if not updates:
             return
 
-        self.logger.info(
-            f"Aggregating {len(updates)} updates for round {self.current_round}"
-        )
+        self.logger.info(f"Aggregating {len(updates)} updates for round {self.current_round}")
 
         # Choose aggregation method
         if self.aggregation_strategy == AggregationStrategy.FEDAVG:
@@ -263,9 +247,7 @@ class FederatedLearningServer:
 
         self.logger.info(f"Round {self.current_round} complete")
 
-    def _federated_averaging(
-        self, updates: list[ClientUpdate]
-    ) -> dict[str, torch.Tensor]:
+    def _federated_averaging(self, updates: list[ClientUpdate]) -> dict[str, torch.Tensor]:
         """Standard federated averaging algorithm."""
         # Calculate total samples
         total_samples = sum(update.num_samples for update in updates)
@@ -285,10 +267,7 @@ class FederatedLearningServer:
                     weight = update.num_samples / total_samples
 
                     # Apply gradient to current parameter
-                    updated_param = (
-                        model_state[param_name]
-                        + self.learning_rate * update.gradients[param_name]
-                    )
+                    updated_param = model_state[param_name] + self.learning_rate * update.gradients[param_name]
 
                     if aggregated_param is None:
                         aggregated_param = weight * updated_param
@@ -303,9 +282,7 @@ class FederatedLearningServer:
 
         return aggregated_state
 
-    def _fedprox_aggregation(
-        self, updates: list[ClientUpdate]
-    ) -> dict[str, torch.Tensor]:
+    def _fedprox_aggregation(self, updates: list[ClientUpdate]) -> dict[str, torch.Tensor]:
         """FedProx aggregation with proximal term."""
         # Start with standard averaging
         aggregated_state = self._federated_averaging(updates)
@@ -316,15 +293,11 @@ class FederatedLearningServer:
 
         for param_name in aggregated_state:
             # Add proximal regularization
-            aggregated_state[param_name] = (
-                aggregated_state[param_name] + mu * current_state[param_name]
-            ) / (1 + mu)
+            aggregated_state[param_name] = (aggregated_state[param_name] + mu * current_state[param_name]) / (1 + mu)
 
         return aggregated_state
 
-    def _scaffold_aggregation(
-        self, updates: list[ClientUpdate]
-    ) -> dict[str, torch.Tensor]:
+    def _scaffold_aggregation(self, updates: list[ClientUpdate]) -> dict[str, torch.Tensor]:
         """SCAFFOLD aggregation with control variates."""
         # This is a simplified version - full SCAFFOLD requires control variates
         # For now, use standard averaging with drift correction
@@ -368,9 +341,7 @@ class FederatedLearningServer:
 
         return aggregated
 
-    def _compress_model_state(
-        self, state_dict: dict[str, torch.Tensor]
-    ) -> dict[str, Any]:
+    def _compress_model_state(self, state_dict: dict[str, torch.Tensor]) -> dict[str, Any]:
         """Compress model state for efficient transmission."""
         compressed = {}
 
@@ -408,11 +379,7 @@ class FederatedLearningServer:
                 {
                     "round_number": round_info.round_number,
                     "num_clients": len(round_info.participating_clients),
-                    "duration": (
-                        (round_info.end_time - round_info.start_time)
-                        if round_info.end_time
-                        else None
-                    ),
+                    "duration": ((round_info.end_time - round_info.start_time) if round_info.end_time else None),
                     "metrics": round_info.aggregated_metrics,
                 }
             )
@@ -471,9 +438,7 @@ class FederatedLearningClient:
         local_epochs = config.get("local_epochs", 5)
 
         # Setup optimizer
-        self.optimizer = torch.optim.SGD(
-            self.local_model.parameters(), lr=learning_rate, momentum=0.9
-        )
+        self.optimizer = torch.optim.SGD(self.local_model.parameters(), lr=learning_rate, momentum=0.9)
 
         # Save initial state for gradient calculation
         initial_state = {k: v.clone() for k, v in self.local_model.state_dict().items()}
@@ -559,9 +524,7 @@ class FederatedLearningClient:
 
         for key, compressed_tensor in compressed_state.items():
             # Decompress tensor
-            data = torch.tensor(compressed_tensor["data"], dtype=torch.float32).reshape(
-                compressed_tensor["shape"]
-            )
+            data = torch.tensor(compressed_tensor["data"], dtype=torch.float32).reshape(compressed_tensor["shape"])
 
             state_dict[key] = data
 
@@ -596,17 +559,13 @@ async def test_federated_learning() -> bool:
 
     # Create server
     global_model = SimpleModel()
-    server = FederatedLearningServer(
-        global_model, aggregation_strategy=AggregationStrategy.FEDAVG, min_clients=2
-    )
+    server = FederatedLearningServer(global_model, aggregation_strategy=AggregationStrategy.FEDAVG, min_clients=2)
 
     # Create clients with synthetic data
     clients = []
     for i in range(3):
         # Create synthetic dataset
-        dataset = torch.utils.data.TensorDataset(
-            torch.randn(100, 10), torch.randint(0, 2, (100,))
-        )
+        dataset = torch.utils.data.TensorDataset(torch.randn(100, 10), torch.randint(0, 2, (100,)))
         dataloader = torch.utils.data.DataLoader(dataset, batch_size=32)
 
         client = FederatedLearningClient(

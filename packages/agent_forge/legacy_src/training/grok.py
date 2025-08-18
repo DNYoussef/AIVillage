@@ -138,7 +138,6 @@ class GrokController:
             avg_id = np.mean(list(telemetry.id_by_layer.values()))
             if len(self.lambda_history) > 10:
                 # Compare to historical average
-                historical_ids = []  # Would need to track this
                 # Simplified: check if ID is low
                 if avg_id < 10:  # Threshold depends on model
                     id_dropping = True

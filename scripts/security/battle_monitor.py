@@ -43,9 +43,7 @@ class BattleSystemMonitor:
     Monitors the Sword/Shield security battle system performance.
     """
 
-    def __init__(
-        self, report_interval_minutes: int = 60, enable_king_reports: bool = False
-    ):
+    def __init__(self, report_interval_minutes: int = 60, enable_king_reports: bool = False):
         self.report_interval = timedelta(minutes=report_interval_minutes)
         self.enable_king_reports = enable_king_reports
         self.last_report_time = datetime.now()
@@ -55,9 +53,7 @@ class BattleSystemMonitor:
         self.battle_history: list[BattleMetrics] = []
         self.agent_status_history: list[dict[str, Any]] = []
 
-        logger.info(
-            f"Battle System Monitor initialized - Report interval: {report_interval_minutes} minutes"
-        )
+        logger.info(f"Battle System Monitor initialized - Report interval: {report_interval_minutes} minutes")
 
     async def start_monitoring(self, orchestrator: BattleOrchestrator):
         """
@@ -110,9 +106,7 @@ class BattleSystemMonitor:
                 "orchestrator": orchestrator_status,
                 "sword_agent": sword_status,
                 "shield_agent": shield_status,
-                "system_health": self._assess_system_health(
-                    orchestrator_status, sword_status, shield_status
-                ),
+                "system_health": self._assess_system_health(orchestrator_status, sword_status, shield_status),
             }
 
             self.agent_status_history.append(status_snapshot)
@@ -120,9 +114,7 @@ class BattleSystemMonitor:
             # Keep only last 24 hours of status history
             cutoff_time = timestamp - timedelta(hours=24)
             self.agent_status_history = [
-                s
-                for s in self.agent_status_history
-                if datetime.fromisoformat(s["timestamp"]) > cutoff_time
+                s for s in self.agent_status_history if datetime.fromisoformat(s["timestamp"]) > cutoff_time
             ]
 
         except Exception as e:
@@ -199,9 +191,7 @@ class BattleSystemMonitor:
             logger.info("📊 Generating battle system status report...")
 
             # Get current status
-            current_status = (
-                self.agent_status_history[-1] if self.agent_status_history else None
-            )
+            current_status = self.agent_status_history[-1] if self.agent_status_history else None
 
             if not current_status:
                 logger.warning("No status data available for reporting")
@@ -225,9 +215,7 @@ class BattleSystemMonitor:
                 "system_status": current_status,
                 "battle_performance": battle_analysis,
                 "performance_trends": trend_analysis,
-                "recommendations": self._generate_recommendations(
-                    current_status, battle_analysis, trend_analysis
-                ),
+                "recommendations": self._generate_recommendations(current_status, battle_analysis, trend_analysis),
             }
 
             # Log report summary
@@ -243,33 +231,23 @@ class BattleSystemMonitor:
             # Keep only last 7 days of reports
             cutoff_time = datetime.now() - timedelta(days=7)
             self.performance_history = [
-                r
-                for r in self.performance_history
-                if datetime.fromisoformat(r["report_timestamp"]) > cutoff_time
+                r for r in self.performance_history if datetime.fromisoformat(r["report_timestamp"]) > cutoff_time
             ]
 
         except Exception as e:
             logger.error(f"Error generating status report: {e}")
 
-    def _get_recent_battles(
-        self, orchestrator: BattleOrchestrator
-    ) -> list[BattleMetrics]:
+    def _get_recent_battles(self, orchestrator: BattleOrchestrator) -> list[BattleMetrics]:
         """Get recent battle history from orchestrator."""
         # Get battles from last 24 hours
         cutoff_time = datetime.now() - timedelta(hours=24)
         cutoff_date = cutoff_time.strftime("%Y-%m-%d")
 
-        recent_battles = [
-            battle
-            for battle in orchestrator.battle_history
-            if battle.battle_date >= cutoff_date
-        ]
+        recent_battles = [battle for battle in orchestrator.battle_history if battle.battle_date >= cutoff_date]
 
         return recent_battles
 
-    def _analyze_battle_performance(
-        self, recent_battles: list[BattleMetrics]
-    ) -> dict[str, Any]:
+    def _analyze_battle_performance(self, recent_battles: list[BattleMetrics]) -> dict[str, Any]:
         """Analyze recent battle performance."""
         if not recent_battles:
             return {
@@ -285,12 +263,8 @@ class BattleSystemMonitor:
         draws = sum(1 for b in recent_battles if b.overall_winner == "draw")
 
         avg_duration = sum(b.duration_minutes for b in recent_battles) / total_battles
-        avg_attack_success = (
-            sum(b.attack_success_rate for b in recent_battles) / total_battles
-        )
-        avg_defense_success = (
-            sum(b.defense_success_rate for b in recent_battles) / total_battles
-        )
+        avg_attack_success = sum(b.attack_success_rate for b in recent_battles) / total_battles
+        avg_defense_success = sum(b.defense_success_rate for b in recent_battles) / total_battles
         avg_sword_score = sum(b.sword_score for b in recent_battles) / total_battles
         avg_shield_score = sum(b.shield_score for b in recent_battles) / total_battles
 
@@ -313,11 +287,9 @@ class BattleSystemMonitor:
             },
             "battle_balance": {
                 "is_balanced": abs(sword_wins - shield_wins) <= 1,
-                "dominant_side": "sword"
-                if sword_wins > shield_wins
-                else "shield"
-                if shield_wins > sword_wins
-                else "balanced",
+                "dominant_side": (
+                    "sword" if sword_wins > shield_wins else "shield" if shield_wins > sword_wins else "balanced"
+                ),
             },
         }
 
@@ -333,12 +305,8 @@ class BattleSystemMonitor:
         current_report = self.performance_history[-1]
         previous_report = self.performance_history[-2]
 
-        current_perf = current_report.get("battle_performance", {}).get(
-            "performance_averages", {}
-        )
-        previous_perf = previous_report.get("battle_performance", {}).get(
-            "performance_averages", {}
-        )
+        current_perf = current_report.get("battle_performance", {}).get("performance_averages", {})
+        previous_perf = previous_report.get("battle_performance", {}).get("performance_averages", {})
 
         if not current_perf or not previous_perf:
             return {
@@ -352,20 +320,14 @@ class BattleSystemMonitor:
                 current_value = current_perf[metric]
                 previous_value = previous_perf[metric]
                 change = current_value - previous_value
-                percent_change = (
-                    (change / previous_value) * 100 if previous_value != 0 else 0
-                )
+                percent_change = (change / previous_value) * 100 if previous_value != 0 else 0
 
                 trends[metric] = {
                     "current_value": current_value,
                     "previous_value": previous_value,
                     "change": change,
                     "percent_change": percent_change,
-                    "trend": "improving"
-                    if change > 0
-                    else "declining"
-                    if change < 0
-                    else "stable",
+                    "trend": "improving" if change > 0 else "declining" if change < 0 else "stable",
                 }
 
         return {
@@ -404,9 +366,7 @@ class BattleSystemMonitor:
         else:
             return "stable"
 
-    def _generate_recommendations(
-        self, current_status: dict, battle_analysis: dict, trend_analysis: dict
-    ) -> list[str]:
+    def _generate_recommendations(self, current_status: dict, battle_analysis: dict, trend_analysis: dict) -> list[str]:
         """Generate system improvement recommendations."""
         recommendations = []
 
@@ -463,9 +423,7 @@ class BattleSystemMonitor:
 
         # System health
         health = report["system_status"]["system_health"]
-        logger.info(
-            f"  System Health: {health['status'].upper()} ({health['health_score']}/100)"
-        )
+        logger.info(f"  System Health: {health['status'].upper()} ({health['health_score']}/100)")
 
         if health["issues"]:
             logger.warning(f"  Issues: {', '.join(health['issues'])}")
@@ -518,9 +476,7 @@ class BattleSystemMonitor:
 
             # In a real implementation, this would send via the communication system
             logger.info("📤 Status report prepared for King Agent")
-            logger.info(
-                f"Executive Summary: {king_communication['content']['summary']}"
-            )
+            logger.info(f"Executive Summary: {king_communication['content']['summary']}")
 
         except Exception as e:
             logger.error(f"Error sending King Agent report: {e}")
@@ -533,9 +489,7 @@ class BattleSystemMonitor:
         summary_parts = []
 
         # System status
-        summary_parts.append(
-            f"Battle system health: {health['status']} ({health['health_score']}/100)"
-        )
+        summary_parts.append(f"Battle system health: {health['status']} ({health['health_score']}/100)")
 
         # Recent activity
         if battle_perf.get("analysis_available"):
@@ -555,9 +509,7 @@ class BattleSystemMonitor:
         # Recommendations
         recommendations = report["recommendations"]
         if recommendations:
-            summary_parts.append(
-                f"Top recommendation: {recommendations[0].replace('_', ' ')}"
-            )
+            summary_parts.append(f"Top recommendation: {recommendations[0].replace('_', ' ')}")
 
         return ". ".join(summary_parts) + "."
 
@@ -572,9 +524,7 @@ class BattleSystemMonitor:
             "report_interval_minutes": self.report_interval.total_seconds() / 60,
             "king_reports_enabled": self.enable_king_reports,
             "last_report_time": self.last_report_time.isoformat(),
-            "next_report_due": (
-                self.last_report_time + self.report_interval
-            ).isoformat(),
+            "next_report_due": (self.last_report_time + self.report_interval).isoformat(),
         }
 
 
@@ -604,9 +554,7 @@ Examples:
         help="Enable status reports to King Agent",
     )
 
-    parser.add_argument(
-        "--verbose", "-v", action="store_true", help="Enable verbose logging"
-    )
+    parser.add_argument("--verbose", "-v", action="store_true", help="Enable verbose logging")
 
     args = parser.parse_args()
 
@@ -623,9 +571,7 @@ Examples:
     # For monitoring, we need to connect to an existing battle orchestrator
     # In a real deployment, this would connect to the running system
     logger.info("🔍 Battle System Monitor starting...")
-    logger.info(
-        "Note: In production, this would connect to the running battle orchestrator"
-    )
+    logger.info("Note: In production, this would connect to the running battle orchestrator")
 
     # Create a mock orchestrator for demonstration
     mock_orchestrator = BattleOrchestrator("monitoring_orchestrator")

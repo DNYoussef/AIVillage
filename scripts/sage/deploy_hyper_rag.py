@@ -51,9 +51,7 @@ class HyperRAGDeployer:
 
         logger.info(f"Hyper RAG Deployer initialized for Sage Agent: {sage_agent_id}")
         if dry_run:
-            logger.info(
-                "DRY RUN MODE: System will be initialized but not persistently deployed"
-            )
+            logger.info("DRY RUN MODE: System will be initialized but not persistently deployed")
 
     async def deploy_hyper_rag(self) -> bool:
         """
@@ -117,9 +115,7 @@ class HyperRAGDeployer:
 
             logger.info("✓ Hyper RAG Pipeline initialized successfully")
             logger.info(f"✓ Managed by Sage Agent: {self.sage_agent_id}")
-            logger.info(
-                "✓ All components ready: Bayesian Engine, Cognitive Nexus, Knowledge Store"
-            )
+            logger.info("✓ All components ready: Bayesian Engine, Cognitive Nexus, Knowledge Store")
 
             return True
 
@@ -208,14 +204,11 @@ class HyperRAGDeployer:
                 ingested_ids.append(item_id)
 
             logger.info(f"✓ Ingested {len(ingested_ids)} demo knowledge items")
-            logger.info(
-                f"✓ Context hierarchy: {len(self.hyper_rag.context_hierarchy)} books"
-            )
+            logger.info(f"✓ Context hierarchy: {len(self.hyper_rag.context_hierarchy)} books")
 
             # Verify semantic connections were created
             total_connections = sum(
-                len(item.semantic_connections or [])
-                for item in self.hyper_rag.knowledge_items.values()
+                len(item.semantic_connections or []) for item in self.hyper_rag.knowledge_items.values()
             )
             logger.info(f"✓ Generated {total_connections} semantic connections")
 
@@ -248,22 +241,14 @@ class HyperRAGDeployer:
 
                 method_results = []
                 for query in test_queries:
-                    result = await self.hyper_rag.retrieve_knowledge(
-                        query=query, retrieval_type=method, max_results=3
-                    )
+                    result = await self.hyper_rag.retrieve_knowledge(query=query, retrieval_type=method, max_results=3)
                     method_results.append(result)
 
                 # Verify results
-                avg_confidence = sum(r.confidence_score for r in method_results) / len(
-                    method_results
-                )
-                avg_items = sum(len(r.items) for r in method_results) / len(
-                    method_results
-                )
+                avg_confidence = sum(r.confidence_score for r in method_results) / len(method_results)
+                avg_items = sum(len(r.items) for r in method_results) / len(method_results)
 
-                logger.info(
-                    f"✓ {method.value}: {avg_confidence:.3f} avg confidence, {avg_items:.1f} avg items"
-                )
+                logger.info(f"✓ {method.value}: {avg_confidence:.3f} avg confidence, {avg_items:.1f} avg items")
 
                 # Ensure all methods return reasonable results
                 if avg_confidence < 0.3:
@@ -287,8 +272,7 @@ class HyperRAGDeployer:
 
             # Get initial belief state
             initial_beliefs = {
-                belief_id: belief.probability
-                for belief_id, belief in self.hyper_rag.belief_engine.beliefs.items()
+                belief_id: belief.probability for belief_id, belief in self.hyper_rag.belief_engine.beliefs.items()
             }
 
             # Perform Bayesian retrieval which should update beliefs
@@ -299,8 +283,7 @@ class HyperRAGDeployer:
 
             # Check belief updates
             updated_beliefs = {
-                belief_id: belief.probability
-                for belief_id, belief in self.hyper_rag.belief_engine.beliefs.items()
+                belief_id: belief.probability for belief_id, belief in self.hyper_rag.belief_engine.beliefs.items()
             }
 
             # Count belief changes
@@ -326,26 +309,16 @@ class HyperRAGDeployer:
             propagated_beliefs = 0
             for item in bayesian_result.items:
                 for connected_id in item.semantic_connections or []:
-                    if (
-                        connected_id in updated_beliefs
-                        and connected_id in initial_beliefs
-                    ):
-                        change = abs(
-                            updated_beliefs[connected_id]
-                            - initial_beliefs[connected_id]
-                        )
+                    if connected_id in updated_beliefs and connected_id in initial_beliefs:
+                        change = abs(updated_beliefs[connected_id] - initial_beliefs[connected_id])
                         if change > 0.01:
                             propagated_beliefs += 1
 
-            logger.info(
-                f"✓ Semantic propagation: {propagated_beliefs} connected beliefs updated"
-            )
+            logger.info(f"✓ Semantic propagation: {propagated_beliefs} connected beliefs updated")
 
             # Verify Bayesian scores in results
             assert len(bayesian_result.bayesian_scores) == len(bayesian_result.items)
-            avg_bayesian_score = sum(bayesian_result.bayesian_scores.values()) / len(
-                bayesian_result.bayesian_scores
-            )
+            avg_bayesian_score = sum(bayesian_result.bayesian_scores.values()) / len(bayesian_result.bayesian_scores)
             logger.info(f"✓ Average Bayesian score: {avg_bayesian_score:.3f}")
 
             return True
@@ -388,15 +361,11 @@ class HyperRAGDeployer:
             # Log analysis insights
             if "synthesis_result" in cognitive_analysis:
                 synthesis = cognitive_analysis["synthesis_result"]
-                logger.info(
-                    f"✓ Synthesis insights: {len(synthesis.get('key_insights', []))} insights generated"
-                )
+                logger.info(f"✓ Synthesis insights: {len(synthesis.get('key_insights', []))} insights generated")
 
             if "uncertainty_quantification" in cognitive_analysis:
                 uncertainty = cognitive_analysis["uncertainty_quantification"]
-                logger.info(
-                    f"✓ Uncertainty analysis: {uncertainty.get('overall_confidence', 0):.3f} confidence"
-                )
+                logger.info(f"✓ Uncertainty analysis: {uncertainty.get('overall_confidence', 0):.3f} confidence")
 
             return True
 
@@ -422,8 +391,7 @@ class HyperRAGDeployer:
             start_time = datetime.now()
 
             concurrent_tasks = [
-                self.hyper_rag.retrieve_knowledge(query, RAGType.HYBRID, 3)
-                for query in concurrent_queries
+                self.hyper_rag.retrieve_knowledge(query, RAGType.HYBRID, 3) for query in concurrent_queries
             ]
 
             concurrent_results = await asyncio.gather(*concurrent_tasks)
@@ -437,45 +405,32 @@ class HyperRAGDeployer:
                     logger.error(f"Concurrent query {i} returned no results")
                     return False
 
-            logger.info(
-                f"✓ Concurrent performance: {len(concurrent_queries)} queries in {total_time:.3f}s"
-            )
-            logger.info(
-                f"✓ Average query time: {total_time / len(concurrent_queries):.3f}s"
-            )
+            logger.info(f"✓ Concurrent performance: {len(concurrent_queries)} queries in {total_time:.3f}s")
+            logger.info(f"✓ Average query time: {total_time / len(concurrent_queries):.3f}s")
 
             # Test cache performance
             cache_query = concurrent_queries[0]
 
             # First query (should populate cache)
             cache_start = datetime.now()
-            first_result = await self.hyper_rag.retrieve_knowledge(
-                cache_query, RAGType.HYBRID, 3
-            )
+            await self.hyper_rag.retrieve_knowledge(cache_query, RAGType.HYBRID, 3)
             first_time = (datetime.now() - cache_start).total_seconds()
 
             # Second identical query (should hit cache)
             cache_start = datetime.now()
-            cached_result = await self.hyper_rag.retrieve_knowledge(
-                cache_query, RAGType.HYBRID, 3
-            )
+            await self.hyper_rag.retrieve_knowledge(cache_query, RAGType.HYBRID, 3)
             cached_time = (datetime.now() - cache_start).total_seconds()
 
             # Cache should improve performance
             if self.hyper_rag.retrieval_stats["cache_hits"] > 0:
-                logger.info(
-                    f"✓ Cache performance: {first_time:.3f}s → {cached_time:.3f}s"
-                )
-                logger.info(
-                    f"✓ Cache hits: {self.hyper_rag.retrieval_stats['cache_hits']}"
-                )
+                logger.info(f"✓ Cache performance: {first_time:.3f}s → {cached_time:.3f}s")
+                logger.info(f"✓ Cache hits: {self.hyper_rag.retrieval_stats['cache_hits']}")
 
             # Test memory usage (simplified)
             knowledge_items_size = len(self.hyper_rag.knowledge_items)
             beliefs_size = len(self.hyper_rag.belief_engine.beliefs)
             semantic_connections = sum(
-                len(item.semantic_connections or [])
-                for item in self.hyper_rag.knowledge_items.values()
+                len(item.semantic_connections or []) for item in self.hyper_rag.knowledge_items.values()
             )
 
             logger.info(
@@ -501,35 +456,21 @@ class HyperRAGDeployer:
         # Belief statistics
         belief_stats = stats["belief_statistics"]
         logger.info(f"  Total Beliefs: {belief_stats['total_beliefs']}")
-        logger.info(
-            f"  Average Belief Probability: {belief_stats['avg_probability']:.3f}"
-        )
-        logger.info(
-            f"  High Confidence Beliefs (>0.8): {belief_stats['high_confidence_beliefs']}"
-        )
-        logger.info(
-            f"  Low Confidence Beliefs (<0.3): {belief_stats['low_confidence_beliefs']}"
-        )
+        logger.info(f"  Average Belief Probability: {belief_stats['avg_probability']:.3f}")
+        logger.info(f"  High Confidence Beliefs (>0.8): {belief_stats['high_confidence_beliefs']}")
+        logger.info(f"  Low Confidence Beliefs (<0.3): {belief_stats['low_confidence_beliefs']}")
 
         # Context statistics
         context_stats = stats["context_statistics"]
         logger.info(f"  Context Books: {context_stats['total_context_books']}")
         logger.info(f"  Context Chapters: {context_stats['total_context_chapters']}")
-        logger.info(
-            f"  Avg Chapters per Book: {context_stats['avg_chapters_per_book']:.1f}"
-        )
+        logger.info(f"  Avg Chapters per Book: {context_stats['avg_chapters_per_book']:.1f}")
 
         # Semantic graph statistics
         graph_stats = stats["semantic_graph_statistics"]
-        logger.info(
-            f"  Semantic Connections: {graph_stats['total_semantic_connections']}"
-        )
-        logger.info(
-            f"  Highly Connected Items (>5 connections): {graph_stats['highly_connected_items']}"
-        )
-        logger.info(
-            f"  Avg Connections per Item: {graph_stats['avg_connections_per_item']:.1f}"
-        )
+        logger.info(f"  Semantic Connections: {graph_stats['total_semantic_connections']}")
+        logger.info(f"  Highly Connected Items (>5 connections): {graph_stats['highly_connected_items']}")
+        logger.info(f"  Avg Connections per Item: {graph_stats['avg_connections_per_item']:.1f}")
 
         # Retrieval statistics
         retrieval_stats = stats["retrieval_statistics"]
@@ -539,9 +480,7 @@ class HyperRAGDeployer:
         logger.info(f"  Bayesian Retrievals: {retrieval_stats['bayesian_retrievals']}")
         logger.info(f"  Hybrid Retrievals: {retrieval_stats['hybrid_retrievals']}")
         logger.info(f"  Cache Hits: {retrieval_stats['cache_hits']}")
-        logger.info(
-            f"  Average Response Time: {retrieval_stats['avg_response_time']:.3f}s"
-        )
+        logger.info(f"  Average Response Time: {retrieval_stats['avg_response_time']:.3f}s")
 
     def get_deployment_status(self) -> dict[str, Any]:
         """Get deployment status summary."""
@@ -579,9 +518,7 @@ Examples:
         help="Sage Agent ID to manage the RAG system (default: sage)",
     )
 
-    parser.add_argument(
-        "--demo-data", action="store_true", help="Load demonstration knowledge data"
-    )
+    parser.add_argument("--demo-data", action="store_true", help="Load demonstration knowledge data")
 
     parser.add_argument(
         "--dry-run",
@@ -589,9 +526,7 @@ Examples:
         help="Test deployment without persistent storage",
     )
 
-    parser.add_argument(
-        "--verbose", "-v", action="store_true", help="Enable verbose logging"
-    )
+    parser.add_argument("--verbose", "-v", action="store_true", help="Enable verbose logging")
 
     args = parser.parse_args()
 
@@ -618,9 +553,7 @@ Examples:
 
             logger.info("🧠 Hyper RAG System is now operational!")
             logger.info(f"Managed by Sage Agent: {args.sage_agent_id}")
-            logger.info(
-                "Features: Vector+Graph+Bayesian RAG, Cognitive Nexus, Dual Context Tags"
-            )
+            logger.info("Features: Vector+Graph+Bayesian RAG, Cognitive Nexus, Dual Context Tags")
 
             return 0
         else:

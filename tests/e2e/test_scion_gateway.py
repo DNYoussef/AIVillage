@@ -26,9 +26,7 @@ import pytest
 import pytest_asyncio
 
 from src.core.message_types import Message, MessageType
-from src.navigation.scion_navigator import (
-    SCIONAwareNavigator,
-)
+from src.navigation.scion_navigator import SCIONAwareNavigator
 from src.transport.scion_gateway import GatewayConfig, SCIONGateway, SCIONGatewayError
 
 # Test configuration
@@ -100,45 +98,29 @@ class TestMetrics:
             "latency_ms": {
                 "mean": statistics.mean(self.latencies) if self.latencies else 0,
                 "median": statistics.median(self.latencies) if self.latencies else 0,
-                "p95": statistics.quantiles(self.latencies, n=20)[18]
-                if len(self.latencies) >= 20
-                else 0,
-                "p99": statistics.quantiles(self.latencies, n=100)[98]
-                if len(self.latencies) >= 100
-                else 0,
+                "p95": statistics.quantiles(self.latencies, n=20)[18] if len(self.latencies) >= 20 else 0,
+                "p99": statistics.quantiles(self.latencies, n=100)[98] if len(self.latencies) >= 100 else 0,
                 "min": min(self.latencies) if self.latencies else 0,
                 "max": max(self.latencies) if self.latencies else 0,
             },
             # Throughput statistics
             "throughput_ppm": {
-                "mean": statistics.mean(self.throughput_samples)
-                if self.throughput_samples
-                else 0,
+                "mean": statistics.mean(self.throughput_samples) if self.throughput_samples else 0,
                 "max": max(self.throughput_samples) if self.throughput_samples else 0,
-                "target_achieved": any(
-                    t >= TARGET_THROUGHPUT_PPM for t in self.throughput_samples
-                ),
+                "target_achieved": any(t >= TARGET_THROUGHPUT_PPM for t in self.throughput_samples),
             },
             # Failover statistics
             "failover_ms": {
-                "mean": statistics.mean(self.failover_times)
-                if self.failover_times
-                else 0,
-                "p95": statistics.quantiles(self.failover_times, n=20)[18]
-                if len(self.failover_times) >= 20
-                else 0,
-                "target_achieved": all(
-                    t <= TARGET_P95_RECOVERY_MS for t in self.failover_times
-                ),
+                "mean": statistics.mean(self.failover_times) if self.failover_times else 0,
+                "p95": statistics.quantiles(self.failover_times, n=20)[18] if len(self.failover_times) >= 20 else 0,
+                "target_achieved": all(t <= TARGET_P95_RECOVERY_MS for t in self.failover_times),
             },
             # Anti-replay statistics
             "anti_replay": {
                 "tests_performed": self.anti_replay_tests,
                 "false_rejects": self.false_rejects,
-                "false_reject_rate": self.false_rejects
-                / max(1, self.anti_replay_tests),
-                "target_achieved": self.false_rejects / max(1, self.anti_replay_tests)
-                <= TARGET_FALSE_REJECT_RATE,
+                "false_reject_rate": self.false_rejects / max(1, self.anti_replay_tests),
+                "target_achieved": self.false_rejects / max(1, self.anti_replay_tests) <= TARGET_FALSE_REJECT_RATE,
             },
         }
 
@@ -220,9 +202,7 @@ class TestSCIONGatewayConnectivity:
                 result = sock.connect_ex((host, int(port)))
                 sock.close()
 
-                assert result == 0, (
-                    f"Cannot connect to SCION sidecar at {gateway_config.sidecar_address}"
-                )
+                assert result == 0, f"Cannot connect to SCION sidecar at {gateway_config.sidecar_address}"
 
             except Exception as e:
                 pytest.fail(f"SCION sidecar connectivity test failed: {e}")
@@ -349,17 +329,13 @@ class TestSCIONPerformance:
         """Test achieving target throughput of ≥500k packets/minute."""
         target_duration = 60  # 1 minute test
         batch_size = 100
-        target_interval = (
-            60.0 / TARGET_THROUGHPUT_PPM
-        ) * batch_size  # Target time per batch
+        target_interval = (60.0 / TARGET_THROUGHPUT_PPM) * batch_size  # Target time per batch
 
         start_time = time.time()
         packets_sent_in_interval = 0
         interval_start = start_time
 
-        logger.info(
-            f"Starting throughput test: target {TARGET_THROUGHPUT_PPM} packets/minute"
-        )
+        logger.info(f"Starting throughput test: target {TARGET_THROUGHPUT_PPM} packets/minute")
 
         while (time.time() - start_time) < target_duration:
             batch_start = time.time()
@@ -367,12 +343,8 @@ class TestSCIONPerformance:
             # Send batch of packets
             batch_tasks = []
             for i in range(batch_size):
-                test_packet = (
-                    f"throughput_test_packet_{packets_sent_in_interval + i}".encode()
-                )
-                batch_tasks.append(
-                    scion_gateway.send_packet(test_packet, TEST_DESTINATION)
-                )
+                test_packet = f"throughput_test_packet_{packets_sent_in_interval + i}".encode()
+                batch_tasks.append(scion_gateway.send_packet(test_packet, TEST_DESTINATION))
 
             try:
                 # Send batch concurrently
@@ -415,14 +387,10 @@ class TestSCIONPerformance:
         logger.info(f"Final throughput: {final_throughput:.0f} packets/minute")
 
         # Verify target achievement
-        max_throughput = (
-            max(test_metrics.throughput_samples)
-            if test_metrics.throughput_samples
-            else 0
-        )
-        assert max_throughput >= TARGET_THROUGHPUT_PPM * 0.8, (
-            f"Throughput target not achieved: {max_throughput:.0f} < {TARGET_THROUGHPUT_PPM}"
-        )
+        max_throughput = max(test_metrics.throughput_samples) if test_metrics.throughput_samples else 0
+        assert (
+            max_throughput >= TARGET_THROUGHPUT_PPM * 0.8
+        ), f"Throughput target not achieved: {max_throughput:.0f} < {TARGET_THROUGHPUT_PPM}"
 
     @pytest.mark.asyncio
     async def test_concurrent_connections(self, gateway_config, test_metrics):
@@ -455,9 +423,7 @@ class TestSCIONPerformance:
         # Start all workers concurrently
         start_time = time.time()
 
-        workers = [
-            asyncio.create_task(connection_worker(i)) for i in range(num_connections)
-        ]
+        workers = [asyncio.create_task(connection_worker(i)) for i in range(num_connections)]
 
         await asyncio.gather(*workers, return_exceptions=True)
 
@@ -476,9 +442,7 @@ class TestSCIONPerformance:
 
         # At least 80% success rate expected
         success_rate = test_metrics.packets_sent / expected_packets
-        assert success_rate >= 0.8, (
-            f"Low success rate in concurrent test: {success_rate:.2%}"
-        )
+        assert success_rate >= 0.8, f"Low success rate in concurrent test: {success_rate:.2%}"
 
 
 class TestSCIONAntiReplay:
@@ -496,9 +460,7 @@ class TestSCIONAntiReplay:
             test_packet = f"sequence_test_packet_{i}".encode()
 
             try:
-                packet_id = await scion_gateway.send_packet(
-                    test_packet, TEST_DESTINATION
-                )
+                packet_id = await scion_gateway.send_packet(test_packet, TEST_DESTINATION)
                 assert packet_id is not None
 
                 test_metrics.record_packet_sent()
@@ -511,9 +473,9 @@ class TestSCIONAntiReplay:
 
         # Verify false reject rate
         false_reject_rate = test_metrics.false_rejects / test_metrics.anti_replay_tests
-        assert false_reject_rate <= TARGET_FALSE_REJECT_RATE, (
-            f"Anti-replay false reject rate too high: {false_reject_rate:.2%}"
-        )
+        assert (
+            false_reject_rate <= TARGET_FALSE_REJECT_RATE
+        ), f"Anti-replay false reject rate too high: {false_reject_rate:.2%}"
 
     @pytest.mark.asyncio
     async def test_duplicate_packet_detection(self, scion_gateway):
@@ -581,14 +543,12 @@ class TestSCIONFailover:
                 assert backup_id is not None
 
                 # Verify failover time meets target
-                assert failover_time <= TARGET_P95_RECOVERY_MS, (
-                    f"Failover too slow: {failover_time}ms > {TARGET_P95_RECOVERY_MS}ms"
-                )
+                assert (
+                    failover_time <= TARGET_P95_RECOVERY_MS
+                ), f"Failover too slow: {failover_time}ms > {TARGET_P95_RECOVERY_MS}ms"
 
             except SCIONGatewayError as backup_error:
-                pytest.fail(
-                    f"Both primary and backup paths failed: {e}, {backup_error}"
-                )
+                pytest.fail(f"Both primary and backup paths failed: {e}, {backup_error}")
 
 
 class TestSCIONNavigatorIntegration:
@@ -603,9 +563,7 @@ class TestSCIONNavigatorIntegration:
             async def handle_received_message(self, message, source, transport_type):
                 pass
 
-            async def send_message_via_transport(
-                self, message, destination, transport_type, metadata
-            ):
+            async def send_message_via_transport(self, message, destination, transport_type, metadata):
                 return transport_type == "scion"  # Only SCION succeeds
 
         transport_manager = MockTransportManager()
@@ -620,23 +578,16 @@ class TestSCIONNavigatorIntegration:
             await navigator.start()
 
             # Test route finding
-            test_message = Message(
-                type=MessageType.DATA, content={"test": "navigation"}, metadata={}
-            )
+            test_message = Message(type=MessageType.DATA, content={"test": "navigation"}, metadata={})
 
-            decision = await navigator.find_optimal_route(
-                TEST_DESTINATION, test_message
-            )
+            decision = await navigator.find_optimal_route(TEST_DESTINATION, test_message)
 
             assert decision is not None
             assert decision.primary_transport is not None
             assert decision.confidence_score > 0.0
 
             # SCION should be preferred when available
-            if any(
-                c.transport_type == "scion"
-                for c in [decision.primary_transport] + decision.backup_transports
-            ):
+            if any(c.transport_type == "scion" for c in [decision.primary_transport] + decision.backup_transports):
                 logger.info("SCION transport properly included in routing decision")
 
         finally:
@@ -694,9 +645,7 @@ async def test_end_to_end_integration(gateway_config, test_metrics):
 
 def pytest_configure(config):
     """Configure pytest with custom markers."""
-    config.addinivalue_line(
-        "markers", "slow: marks tests as slow (deselect with '-m \"not slow\"')"
-    )
+    config.addinivalue_line("markers", "slow: marks tests as slow (deselect with '-m \"not slow\"')")
 
 
 def pytest_collection_modifyitems(config, items):

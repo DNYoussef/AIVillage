@@ -20,7 +20,6 @@ from pathlib import Path
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
-# Import all major system components
 from agents.coordination_system import (
     Agent,
     AgentCapability,
@@ -33,21 +32,13 @@ from agents.coordination_system import (
     Task,
     TaskScheduler,
 )
-from core.resilience.error_handling import (
-    ResilienceManager,
-)
+
+from core.resilience.error_handling import ResilienceManager
+
+# Import all major system components
 from ml.feature_extraction import FeatureExtractor, ModelComparator
-from monitoring.observability_system import (
-    ObservabilitySystem,
-    traced_operation,
-)
-from security.auth_system import (
-    AuthenticationManager,
-    AuthorizationManager,
-    Permission,
-    SecurityLevel,
-    UserRole,
-)
+from monitoring.observability_system import ObservabilitySystem, traced_operation
+from security.auth_system import AuthenticationManager, AuthorizationManager, Permission, SecurityLevel, UserRole
 from testing.performance_benchmarks import PerformanceBenchmarkManager
 
 
@@ -85,9 +76,7 @@ class AIVillageSystemTest:
         }
 
         # TaskScheduler needs AgentRegistry
-        self.components["task_scheduler"] = TaskScheduler(
-            self.components["agent_registry"], self.temp_dbs[3]
-        )
+        self.components["task_scheduler"] = TaskScheduler(self.components["agent_registry"], self.temp_dbs[3])
 
         # Start observability
         self.components["observability"].start()
@@ -153,9 +142,7 @@ class AIVillageSystemTest:
             )
 
             assert can_execute is True, "User should have execute permission"
-            assert can_access_confidential is True, (
-                "User should access confidential data"
-            )
+            assert can_access_confidential is True, "User should access confidential data"
 
             observability.metrics.record_counter("workflow_users_authenticated", 1.0)
 
@@ -241,9 +228,7 @@ class AIVillageSystemTest:
         for agent_config in agent_configs:
             # Create agent capabilities
             capabilities = [
-                AgentCapability(
-                    cap, "1.0", f"{cap} capability", supported_task_types=[cap]
-                )
+                AgentCapability(cap, "1.0", f"{cap} capability", supported_task_types=[cap])
                 for cap in agent_config["capabilities"]
             ]
 
@@ -272,9 +257,7 @@ class AIVillageSystemTest:
             # Register message handlers for each agent
             def create_handler(agent_id):
                 def handler(message):
-                    observability.metrics.record_counter(
-                        "agent_messages_processed", 1.0, {"agent": agent_id}
-                    )
+                    observability.metrics.record_counter("agent_messages_processed", 1.0, {"agent": agent_id})
                     return {
                         "status": "processed",
                         "agent": agent_id,
@@ -283,9 +266,7 @@ class AIVillageSystemTest:
 
                 return handler
 
-            broker.register_handler(
-                agent.agent_id, MessageType.TASK_REQUEST, create_handler(agent.agent_id)
-            )
+            broker.register_handler(agent.agent_id, MessageType.TASK_REQUEST, create_handler(agent.agent_id))
 
         # 3. Verify agent discovery
         data_agents = registry.find_agents_by_capability("data_cleaning")
@@ -308,7 +289,7 @@ class AIVillageSystemTest:
         print("\n--- Testing ML Pipeline Workflow ---")
 
         scheduler = self.components["task_scheduler"]
-        broker = self.components["message_broker"]
+        self.components["message_broker"]
         observability = self.components["observability"]
         feature_extractor = self.components["feature_extractor"]
         model_comparator = self.components["model_comparator"]
@@ -358,9 +339,7 @@ class AIVillageSystemTest:
         # 2. Submit tasks with monitoring
         submitted_tasks = []
         for task in ml_tasks:
-            with traced_operation(
-                observability.tracer, f"task_submission_{task.task_type}"
-            ) as span:
+            with traced_operation(observability.tracer, f"task_submission_{task.task_type}") as span:
                 task_id = scheduler.submit_task(task)
                 submitted_tasks.append(task_id)
 
@@ -372,9 +351,7 @@ class AIVillageSystemTest:
                     user_id=user_context["user"].user_id,
                 )
 
-                observability.metrics.record_counter(
-                    "ml_tasks_submitted", 1.0, {"type": task.task_type}
-                )
+                observability.metrics.record_counter("ml_tasks_submitted", 1.0, {"type": task.task_type})
 
         assert len(submitted_tasks) == 3, "Should have submitted 3 ML tasks"
 
@@ -399,24 +376,16 @@ class AIVillageSystemTest:
         # Extract features and compare models
         model_features = []
         for model in models:
-            with traced_operation(
-                observability.tracer, f"feature_extraction_{model.name}"
-            ) as span:
+            with traced_operation(observability.tracer, f"feature_extraction_{model.name}") as span:
                 start_time = time.time()
                 features = feature_extractor.extract_features(model, model.name)
                 extraction_time = time.time() - start_time
-                observability.tracer.set_span_attribute(
-                    span, "extraction_time_ms", extraction_time * 1000
-                )
-                observability.metrics.record_timer(
-                    "feature_extraction_time", extraction_time * 1000
-                )
+                observability.tracer.set_span_attribute(span, "extraction_time_ms", extraction_time * 1000)
+                observability.metrics.record_timer("feature_extraction_time", extraction_time * 1000)
                 model_features.append(features)
 
         # Compare best models
-        comparison = model_comparator.compare_models(
-            models[1], models[2], "optimized_model", "ensemble_model"
-        )
+        comparison = model_comparator.compare_models(models[1], models[2], "optimized_model", "ensemble_model")
 
         assert comparison is not None, "Model comparison should succeed"
         assert comparison.model_a_id == "optimized_model"
@@ -424,9 +393,7 @@ class AIVillageSystemTest:
 
         observability.metrics.record_counter("model_comparisons_completed", 1.0)
 
-        print(
-            "OK ML pipeline - 3 tasks submitted, feature extraction and comparison completed"
-        )
+        print("OK ML pipeline - 3 tasks submitted, feature extraction and comparison completed")
         return {"tasks": submitted_tasks, "models": models, "comparison": comparison}
 
     def test_system_resilience_and_monitoring(self, user_context):
@@ -438,9 +405,7 @@ class AIVillageSystemTest:
 
         # 1. Test circuit breaker with monitoring
         def failing_service():
-            observability.metrics.record_counter(
-                "service_failures", 1.0, {"service": "external_api"}
-            )
+            observability.metrics.record_counter("service_failures", 1.0, {"service": "external_api"})
             raise Exception("Service is down")
 
         # Test circuit breaker through resilience manager
@@ -449,7 +414,7 @@ class AIVillageSystemTest:
             with traced_operation(observability.tracer, f"resilience_test_{i}") as span:
                 try:
                     # This should fail and eventually open the circuit breaker
-                    result = resilience_manager.resilient_call(
+                    resilience_manager.resilient_call(
                         component="external_api",
                         operation="test_call",
                         func=failing_service,
@@ -471,15 +436,13 @@ class AIVillageSystemTest:
         def simple_retry_test():
             nonlocal retry_attempts
             retry_attempts += 1
-            observability.metrics.record_counter(
-                "retry_attempts", 1.0, {"operation": "simple_test"}
-            )
+            observability.metrics.record_counter("retry_attempts", 1.0, {"operation": "simple_test"})
             observability.logger.info(f"Retry test attempt {retry_attempts}")
             return f"retry_success_attempt_{retry_attempts}"
 
         # Test with simple operation that succeeds
         try:
-            result = resilience_manager.resilient_call(
+            resilience_manager.resilient_call(
                 component="simple_service",
                 operation="test_call",
                 func=simple_retry_test,
@@ -489,19 +452,14 @@ class AIVillageSystemTest:
         except Exception as e:
             retry_test_success = False
             observability.logger.warning(f"Retry test failed: {e}")
-            result = None
 
         # Verify at least one attempt was made
         assert retry_attempts >= 1, "Should have made at least one attempt"
 
         # 3. Test graceful degradation through fallback
         def fallback_service():
-            observability.logger.info(
-                "Using fallback service", service="primary_test", mode="degraded"
-            )
-            observability.metrics.record_counter(
-                "degradation_activations", 1.0, {"service": "primary_test"}
-            )
+            observability.logger.info("Using fallback service", service="primary_test", mode="degraded")
+            observability.metrics.record_counter("degradation_activations", 1.0, {"service": "primary_test"})
             return "degraded_response"
 
         # Test with fallback function
@@ -512,9 +470,7 @@ class AIVillageSystemTest:
             fallback_func=fallback_service,
         )
 
-        assert degraded_result == "degraded_response", (
-            "Degradation should provide fallback result"
-        )
+        assert degraded_result == "degraded_response", "Degradation should provide fallback result"
 
         # 4. Verify comprehensive monitoring data
         time.sleep(0.2)  # Allow metrics to be processed
@@ -523,19 +479,11 @@ class AIVillageSystemTest:
         assert dashboard_data["service_name"] == "aivillage_e2e"
 
         # Verify monitoring captured resilience events - be more lenient
-        assert len(observability.tracer.completed_spans) >= 3, (
-            "Should have multiple traced operations"
-        )
-        assert len(observability.logger.log_buffer) >= 5, (
-            "Should have comprehensive logs"
-        )
-        assert len(observability.metrics.metrics_buffer) >= 3, (
-            "Should have resilience metrics"
-        )
+        assert len(observability.tracer.completed_spans) >= 3, "Should have multiple traced operations"
+        assert len(observability.logger.log_buffer) >= 5, "Should have comprehensive logs"
+        assert len(observability.metrics.metrics_buffer) >= 3, "Should have resilience metrics"
 
-        print(
-            "OK System resilience - Resilience manager with circuit breaker, retry, and degradation verified"
-        )
+        print("OK System resilience - Resilience manager with circuit breaker, retry, and degradation verified")
         return {
             "resilience_manager_active": True,
             "retry_success": retry_test_success,
@@ -546,7 +494,7 @@ class AIVillageSystemTest:
         """Test system performance under load."""
         print("\n--- Testing Performance and Load Validation ---")
 
-        benchmark_manager = self.components["benchmark_manager"]
+        self.components["benchmark_manager"]
         observability = self.components["observability"]
         registry = self.components["agent_registry"]
         scheduler = self.components["task_scheduler"]
@@ -557,8 +505,8 @@ class AIVillageSystemTest:
         # Simulate concurrent agent operations
         for i in range(10):
             # Find agents (tests registry performance)
-            data_agents = registry.find_agents_by_capability("data_cleaning")
-            ml_agents = registry.find_agents_by_capability("model_training")
+            registry.find_agents_by_capability("data_cleaning")
+            registry.find_agents_by_capability("model_training")
 
             # Submit lightweight tasks (tests scheduler performance)
             task = Task(
@@ -579,14 +527,10 @@ class AIVillageSystemTest:
         memory_usage = process.memory_info().rss / 1024 / 1024  # MB
 
         observability.metrics.record_gauge("system_memory_usage_mb", memory_usage)
-        observability.metrics.record_timer(
-            "performance_test_duration_ms", performance_time * 1000
-        )
+        observability.metrics.record_timer("performance_test_duration_ms", performance_time * 1000)
 
         # Performance assertions
-        assert performance_time < 5.0, (
-            f"Performance test took too long: {performance_time}s"
-        )
+        assert performance_time < 5.0, f"Performance test took too long: {performance_time}s"
         assert memory_usage < 500, f"Memory usage too high: {memory_usage}MB"
 
         # 3. Concurrent load test
@@ -597,24 +541,18 @@ class AIVillageSystemTest:
             with traced_operation(observability.tracer, f"concurrent_op_{thread_id}"):
                 # Simulate various operations
                 registry.find_agents_by_capability("system_monitoring")
-                observability.metrics.record_counter(
-                    "concurrent_operations", 1.0, {"thread": str(thread_id)}
-                )
+                observability.metrics.record_counter("concurrent_operations", 1.0, {"thread": str(thread_id)})
                 time.sleep(0.01)  # Simulate work
                 return f"thread_{thread_id}_complete"
 
         # Run concurrent operations
         with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
             futures = [executor.submit(concurrent_operation, i) for i in range(20)]
-            results = [
-                future.result() for future in concurrent.futures.as_completed(futures)
-            ]
+            results = [future.result() for future in concurrent.futures.as_completed(futures)]
 
         assert len(results) == 20, "All concurrent operations should complete"
 
-        print(
-            "OK Performance validation - Load testing and concurrent operations successful"
-        )
+        print("OK Performance validation - Load testing and concurrent operations successful")
         return {
             "performance_time": performance_time,
             "memory_usage": memory_usage,
@@ -641,13 +579,9 @@ class AIVillageSystemTest:
         assert api_key_obj is not None, "API key object should be created"
 
         # Test API key authentication
-        api_success, api_user = auth_manager.authenticate_api_key(
-            api_key, ip_address="192.168.1.100"
-        )
+        api_success, api_user = auth_manager.authenticate_api_key(api_key, ip_address="192.168.1.100")
         assert api_success is True, "API key authentication should succeed"
-        assert api_user.user_id == user_context["user"].user_id, (
-            "API user should match original user"
-        )
+        assert api_user.user_id == user_context["user"].user_id, "API user should match original user"
 
         # 2. Test MFA integration
         mfa_secret = auth_manager.enable_mfa(user_context["user"].user_id)
@@ -698,9 +632,7 @@ class AIVillageSystemTest:
         )
 
         assert admin_can_access_ts is True, "Admin should access top secret data"
-        assert public_cannot_access_ts is False, (
-            "Public user should not access top secret data"
-        )
+        assert public_cannot_access_ts is False, "Public user should not access top secret data"
 
         # 4. Test audit logging
         audit_logs = auth_manager.get_audit_logs(user_id=user_context["user"].user_id)
@@ -709,9 +641,7 @@ class AIVillageSystemTest:
         # Verify different log types
         log_actions = {log.action for log in audit_logs}
         expected_actions = {"user_created", "login_success", "mfa_enabled"}
-        assert expected_actions.issubset(log_actions), (
-            "Should have expected audit actions"
-        )
+        assert expected_actions.issubset(log_actions), "Should have expected audit actions"
 
         # 5. Test security monitoring integration
         observability.metrics.record_counter("security_validations_completed", 1.0)
@@ -723,9 +653,7 @@ class AIVillageSystemTest:
             audit_logs_count=len(audit_logs),
         )
 
-        print(
-            "OK Security integration - MFA, API keys, authorization, and audit logging verified"
-        )
+        print("OK Security integration - MFA, API keys, authorization, and audit logging verified")
         return {
             "api_key_valid": True,
             "mfa_enabled": True,
@@ -835,10 +763,7 @@ class AIVillageSystemTest:
             sec = self.test_results["security"]
             print(f"  Audit Log Entries: {sec.get('audit_logs_count', 0)}")
 
-        print(
-            "\nSYSTEM STATUS: "
-            + ("OPERATIONAL" if passed_tests == total_tests else "DEGRADED")
-        )
+        print("\nSYSTEM STATUS: " + ("OPERATIONAL" if passed_tests == total_tests else "DEGRADED"))
         print("=" * 60)
 
 

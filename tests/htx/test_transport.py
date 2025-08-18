@@ -23,18 +23,8 @@ import pytest
 # Add src to path following existing pattern
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
-from core.p2p.htx.access_tickets import (
-    AccessTicketManager,
-    TicketType,
-    generate_issuer_keypair,
-)
-from core.p2p.htx.transport import (
-    HTXConnection,
-    HTXConnectionState,
-    HTXStream,
-    HTXStreamState,
-    HTXTransport,
-)
+from core.p2p.htx.access_tickets import AccessTicketManager, TicketType, generate_issuer_keypair
+from core.p2p.htx.transport import HTXConnection, HTXConnectionState, HTXStream, HTXStreamState, HTXTransport
 from core.p2p.htx.utls_fingerprinting import uTLSFingerprintCalibrator
 
 
@@ -97,9 +87,7 @@ class TestHTXConnection:
 
     def test_connection_creation(self):
         """Test basic connection creation."""
-        connection = HTXConnection(
-            connection_id="test_conn_123", remote_address="example.com:443"
-        )
+        connection = HTXConnection(connection_id="test_conn_123", remote_address="example.com:443")
 
         assert connection.connection_id == "test_conn_123"
         assert connection.remote_address == "example.com:443"
@@ -221,15 +209,9 @@ class TestHTXTransport:
 
         # Mock the internal connection methods
         with (
-            patch.object(
-                transport, "_perform_tls_handshake", new_callable=AsyncMock
-            ) as mock_tls,
-            patch.object(
-                transport, "_perform_noise_handshake", new_callable=AsyncMock
-            ) as mock_noise,
-            patch.object(
-                transport, "_authenticate_connection", new_callable=AsyncMock
-            ) as mock_auth,
+            patch.object(transport, "_perform_tls_handshake", new_callable=AsyncMock) as mock_tls,
+            patch.object(transport, "_perform_noise_handshake", new_callable=AsyncMock) as mock_noise,
+            patch.object(transport, "_authenticate_connection", new_callable=AsyncMock) as mock_auth,
         ):
             connection_id = await transport.connect("secure.example.com:443")
 
@@ -270,19 +252,11 @@ class TestHTXTransport:
 
         # Mock the internal methods
         with (
-            patch.object(
-                transport, "_perform_tls_handshake", new_callable=AsyncMock
-            ) as mock_tls,
-            patch.object(
-                transport, "_perform_noise_handshake", new_callable=AsyncMock
-            ) as mock_noise,
-            patch.object(
-                transport, "_authenticate_connection", new_callable=AsyncMock
-            ) as mock_auth,
+            patch.object(transport, "_perform_tls_handshake", new_callable=AsyncMock) as mock_tls,
+            patch.object(transport, "_perform_noise_handshake", new_callable=AsyncMock) as mock_noise,
+            patch.object(transport, "_authenticate_connection", new_callable=AsyncMock) as mock_auth,
         ):
-            connection_id = await transport.connect(
-                "premium.example.com:443", access_ticket=access_ticket
-            )
+            connection_id = await transport.connect("premium.example.com:443", access_ticket=access_ticket)
 
             assert connection_id is not None
 
@@ -320,9 +294,7 @@ class TestHTXTransport:
         with (
             patch.object(transport, "_perform_tls_handshake", new_callable=AsyncMock),
             patch.object(transport, "_perform_noise_handshake", new_callable=AsyncMock),
-            patch.object(
-                transport, "_send_frame_data", new_callable=AsyncMock, return_value=True
-            ) as mock_send,
+            patch.object(transport, "_send_frame_data", new_callable=AsyncMock, return_value=True) as mock_send,
         ):
             # Establish connection
             connection_id = await transport.connect("message.example.com:443")
@@ -363,9 +335,7 @@ class TestHTXTransport:
 
             # Try to send large message
             large_data = b"X" * 1000  # Larger than window
-            result = await transport.send_message(
-                connection_id, large_data, stream_id=1
-            )
+            result = await transport.send_message(connection_id, large_data, stream_id=1)
 
             # Should fail due to flow control
             assert result is False
@@ -480,10 +450,7 @@ class TestHTXTransport:
         transport.add_connection_handler("connection_established", connection_handler)
 
         assert "connection_established" in transport.connection_handlers
-        assert (
-            transport.connection_handlers["connection_established"]
-            == connection_handler
-        )
+        assert transport.connection_handlers["connection_established"] == connection_handler
 
     def test_get_or_create_stream(self):
         """Test stream creation and retrieval."""
@@ -545,9 +512,7 @@ class TestHTXTransportStatus:
     async def test_get_transport_statistics(self):
         """Test getting transport statistics."""
         server_key = secrets.token_bytes(32)
-        transport = HTXTransport(
-            known_server_key=server_key, fingerprint_template="safari_17_macos"
-        )
+        transport = HTXTransport(known_server_key=server_key, fingerprint_template="safari_17_macos")
         await transport.start()
 
         stats = transport.get_transport_statistics()
@@ -600,23 +565,13 @@ class TestHTXTransportIntegration:
 
         # Mock all the network operations
         with (
-            patch.object(
-                transport, "_perform_tls_handshake", new_callable=AsyncMock
-            ) as mock_tls,
-            patch.object(
-                transport, "_perform_noise_handshake", new_callable=AsyncMock
-            ) as mock_noise,
-            patch.object(
-                transport, "_authenticate_connection", new_callable=AsyncMock
-            ) as mock_auth,
-            patch.object(
-                transport, "_send_frame_data", new_callable=AsyncMock, return_value=True
-            ),
+            patch.object(transport, "_perform_tls_handshake", new_callable=AsyncMock) as mock_tls,
+            patch.object(transport, "_perform_noise_handshake", new_callable=AsyncMock) as mock_noise,
+            patch.object(transport, "_authenticate_connection", new_callable=AsyncMock) as mock_auth,
+            patch.object(transport, "_send_frame_data", new_callable=AsyncMock, return_value=True),
         ):
             # 1. Establish connection
-            connection_id = await transport.connect(
-                "integration.example.com:443", access_ticket=access_ticket
-            )
+            connection_id = await transport.connect("integration.example.com:443", access_ticket=access_ticket)
             assert connection_id is not None
 
             # 2. Verify all handshake steps were performed
@@ -690,12 +645,8 @@ class TestHTXTransportIntegration:
 
         # Mock network operations but verify component interactions
         with (
-            patch.object(
-                transport, "_perform_tls_handshake", new_callable=AsyncMock
-            ) as mock_tls,
-            patch.object(
-                transport, "_perform_noise_handshake", new_callable=AsyncMock
-            ) as mock_noise,
+            patch.object(transport, "_perform_tls_handshake", new_callable=AsyncMock) as mock_tls,
+            patch.object(transport, "_perform_noise_handshake", new_callable=AsyncMock) as mock_noise,
         ):
             connection_id = await transport.connect("component.example.com:443")
             connection = transport.connections[connection_id]
@@ -706,9 +657,7 @@ class TestHTXTransportIntegration:
             tls_call_args = mock_tls.call_args[0]
             tls_connection = tls_call_args[0]
             assert tls_connection.fingerprint is not None
-            assert (
-                tls_connection.fingerprint.browser_type == "chrome"
-            )  # Default template
+            assert tls_connection.fingerprint.browser_type == "chrome"  # Default template
 
             # 2. Noise protocol should be initialized
             mock_noise.assert_called_once()
@@ -731,9 +680,7 @@ class TestHTXTransportIntegration:
         await transport.start()
 
         # Test TLS handshake failure
-        with patch.object(
-            transport, "_perform_tls_handshake", new_callable=AsyncMock
-        ) as mock_tls:
+        with patch.object(transport, "_perform_tls_handshake", new_callable=AsyncMock) as mock_tls:
             mock_tls.side_effect = RuntimeError("TLS handshake failed")
 
             connection_id = await transport.connect("error.example.com:443")
@@ -742,9 +689,7 @@ class TestHTXTransportIntegration:
         # Test Noise handshake failure
         with (
             patch.object(transport, "_perform_tls_handshake", new_callable=AsyncMock),
-            patch.object(
-                transport, "_perform_noise_handshake", new_callable=AsyncMock
-            ) as mock_noise,
+            patch.object(transport, "_perform_noise_handshake", new_callable=AsyncMock) as mock_noise,
         ):
             mock_noise.side_effect = RuntimeError("Noise handshake failed")
 
@@ -760,9 +705,7 @@ def test_htx_transport_smoke_test():
 
     # Test transport initialization
     server_key = secrets.token_bytes(32)
-    transport = HTXTransport(
-        known_server_key=server_key, fingerprint_template="firefox_121_linux"
-    )
+    transport = HTXTransport(known_server_key=server_key, fingerprint_template="firefox_121_linux")
 
     assert transport.known_server_key == server_key
     assert transport.fingerprint_template == "firefox_121_linux"
@@ -773,18 +716,14 @@ def test_htx_transport_smoke_test():
     connection = HTXConnection("test_conn", "smoke.example.com:443")
     assert connection.connection_id == "test_conn"
     assert connection.state == HTXConnectionState.DISCONNECTED
-    print(
-        f"  Connection created: id={connection.connection_id}, state={connection.state.value}"
-    )
+    print(f"  Connection created: id={connection.connection_id}, state={connection.state.value}")
 
     # Test stream structure
     stream = HTXStream(stream_id=42, state=HTXStreamState.OPEN)
     assert stream.stream_id == 42
     assert stream.state == HTXStreamState.OPEN
     assert stream.flow_control_window == 65536
-    print(
-        f"  Stream created: id={stream.stream_id}, window={stream.flow_control_window} bytes"
-    )
+    print(f"  Stream created: id={stream.stream_id}, window={stream.flow_control_window} bytes")
 
     # Test component integration
     assert transport.fingerprint_calibrator is not None
@@ -793,18 +732,14 @@ def test_htx_transport_smoke_test():
     calibrator_stats = transport.fingerprint_calibrator.get_fingerprint_stats()
     ticket_stats = transport.ticket_manager.get_statistics()
 
-    print(
-        f"  Components: fingerprint_templates={len(calibrator_stats['available_templates'])}"
-    )
+    print(f"  Components: fingerprint_templates={len(calibrator_stats['available_templates'])}")
     print(f"             ticket_manager={ticket_stats['trusted_issuers']} issuers")
 
     # Test statistics
     stats = transport.get_transport_statistics()
     assert stats["transport_running"] is False
     assert stats["active_connections"] == 0
-    print(
-        f"  Statistics: running={stats['transport_running']}, connections={stats['active_connections']}"
-    )
+    print(f"  Statistics: running={stats['transport_running']}, connections={stats['active_connections']}")
 
     print("  HTX transport smoke test PASSED")
 

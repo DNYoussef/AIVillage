@@ -69,9 +69,7 @@ class TestModularComponentInterfaces:
         """Test fingerprint calibration with Noise protocol integration."""
         # Calibrate fingerprint
         calibrator = uTLSFingerprintCalibrator()
-        fingerprint = calibrator.calibrate_fingerprint(
-            "chrome_120_windows", randomize=True
-        )
+        fingerprint = calibrator.calibrate_fingerprint("chrome_120_windows", randomize=True)
 
         # Generate ClientHello
         server_name = "integration-test.example.com"
@@ -83,9 +81,7 @@ class TestModularComponentInterfaces:
 
         # Test with Noise protocol (would use after TLS handshake)
         server_static_key = secrets.token_bytes(32)
-        noise_protocol = NoiseXKProtocol(
-            is_initiator=True, known_remote_static=server_static_key
-        )
+        noise_protocol = NoiseXKProtocol(is_initiator=True, known_remote_static=server_static_key)
         noise_protocol.initialize_handshake()
 
         # Verify protocols can coexist
@@ -132,9 +128,7 @@ class TestModularComponentInterfaces:
     def test_noise_protocol_with_frame_format(self):
         """Test Noise protocol encryption with frame format."""
         # Set up Noise protocol
-        initiator = NoiseXKProtocol(
-            is_initiator=True, known_remote_static=secrets.token_bytes(32)
-        )
+        initiator = NoiseXKProtocol(is_initiator=True, known_remote_static=secrets.token_bytes(32))
         initiator.initialize_handshake()
 
         # Simulate completed handshake
@@ -197,23 +191,13 @@ class TestEndToEndMessageFlow:
 
         # Mock network operations to focus on component integration
         with (
-            patch.object(
-                transport, "_perform_tls_handshake", new_callable=AsyncMock
-            ) as mock_tls,
-            patch.object(
-                transport, "_perform_noise_handshake", new_callable=AsyncMock
-            ) as mock_noise,
-            patch.object(
-                transport, "_authenticate_connection", new_callable=AsyncMock
-            ) as mock_auth,
-            patch.object(
-                transport, "_send_frame_data", new_callable=AsyncMock, return_value=True
-            ) as mock_send,
+            patch.object(transport, "_perform_tls_handshake", new_callable=AsyncMock) as mock_tls,
+            patch.object(transport, "_perform_noise_handshake", new_callable=AsyncMock) as mock_noise,
+            patch.object(transport, "_authenticate_connection", new_callable=AsyncMock) as mock_auth,
+            patch.object(transport, "_send_frame_data", new_callable=AsyncMock, return_value=True) as mock_send,
         ):
             # 1. Establish connection (integrates fingerprinting, Noise, access tickets)
-            connection_id = await transport.connect(
-                "flow-test.example.com:443", access_ticket=access_ticket
-            )
+            connection_id = await transport.connect("flow-test.example.com:443", access_ticket=access_ticket)
 
             assert connection_id is not None
             connection = transport.connections[connection_id]
@@ -238,9 +222,7 @@ class TestEndToEndMessageFlow:
             # Verify frame was sent
             mock_send.assert_called()
             sent_data = mock_send.call_args[0][1]  # Get the data argument
-            assert len(sent_data) > len(
-                app_message
-            )  # Should be larger due to framing/encryption
+            assert len(sent_data) > len(app_message)  # Should be larger due to framing/encryption
 
             # 3. Verify connection statistics
             status = transport.get_connection_status(connection_id)
@@ -265,9 +247,7 @@ class TestEndToEndMessageFlow:
         with (
             patch.object(transport, "_perform_tls_handshake", new_callable=AsyncMock),
             patch.object(transport, "_perform_noise_handshake", new_callable=AsyncMock),
-            patch.object(
-                transport, "_send_frame_data", new_callable=AsyncMock, return_value=True
-            ),
+            patch.object(transport, "_send_frame_data", new_callable=AsyncMock, return_value=True),
         ):
             connection_id = await transport.connect("bidirectional.example.com:443")
             connection = transport.connections[connection_id]
@@ -309,9 +289,7 @@ class TestRealWorldScenarios:
         with (
             patch.object(transport, "_perform_tls_handshake", new_callable=AsyncMock),
             patch.object(transport, "_perform_noise_handshake", new_callable=AsyncMock),
-            patch.object(
-                transport, "_send_frame_data", new_callable=AsyncMock, return_value=True
-            ),
+            patch.object(transport, "_send_frame_data", new_callable=AsyncMock, return_value=True),
         ):
             connection_id = await transport.connect("multistream.example.com:443")
             connection = transport.connections[connection_id]
@@ -325,9 +303,7 @@ class TestRealWorldScenarios:
             ]
 
             for stream_id, message_data in messages:
-                result = await transport.send_message(
-                    connection_id, message_data, stream_id=stream_id
-                )
+                result = await transport.send_message(connection_id, message_data, stream_id=stream_id)
                 assert result is True
 
             # Verify all streams were created
@@ -348,7 +324,7 @@ class TestRealWorldScenarios:
     @pytest.mark.asyncio
     async def test_ticket_types_scenario(self):
         """Test different ticket types with different permissions."""
-        server_key = secrets.token_bytes(32)
+        secrets.token_bytes(32)
         ticket_manager = AccessTicketManager()
         private_key, public_key = generate_issuer_keypair()
         ticket_manager.add_trusted_issuer("scenario_issuer", public_key)
@@ -362,9 +338,7 @@ class TestRealWorldScenarios:
         ]
 
         for ticket_type, subject_id in ticket_types:
-            ticket = ticket_manager.issue_ticket(
-                "scenario_issuer", subject_id, ticket_type, private_key=private_key
-            )
+            ticket = ticket_manager.issue_ticket("scenario_issuer", subject_id, ticket_type, private_key=private_key)
 
             # Validate ticket
             status = ticket_manager.validate_ticket(ticket)
@@ -391,9 +365,7 @@ class TestRealWorldScenarios:
         await transport.start()
 
         # Test TLS handshake failure
-        with patch.object(
-            transport, "_perform_tls_handshake", new_callable=AsyncMock
-        ) as mock_tls:
+        with patch.object(transport, "_perform_tls_handshake", new_callable=AsyncMock) as mock_tls:
             mock_tls.side_effect = RuntimeError("Simulated TLS failure")
 
             connection_id = await transport.connect("failure.example.com:443")
@@ -423,14 +395,10 @@ class TestComponentCompatibility:
 
         for template_name in templates:
             calibrator = uTLSFingerprintCalibrator()
-            fingerprint = calibrator.calibrate_fingerprint(
-                template_name, randomize=False
-            )
+            fingerprint = calibrator.calibrate_fingerprint(template_name, randomize=False)
 
             # Should generate valid ClientHello for all templates
-            client_hello = calibrator.generate_client_hello(
-                fingerprint, "compat-test.com"
-            )
+            client_hello = calibrator.generate_client_hello(fingerprint, "compat-test.com")
             assert len(client_hello) > 50
             assert b"compat-test.com" in client_hello
 
@@ -459,9 +427,7 @@ class TestComponentCompatibility:
             test_payload = f"Test payload for {frame_type.name}".encode()
 
             # Encode frame
-            encoded = HTXFrameCodec.encode_frame(
-                frame_type, stream_id=1, payload=test_payload
-            )
+            encoded = HTXFrameCodec.encode_frame(frame_type, stream_id=1, payload=test_payload)
 
             # Decode frame
             decoded_frame, consumed = HTXFrameCodec.decode_frame(encoded)
@@ -551,9 +517,7 @@ class TestSystemPerformanceIntegration:
         # Create multiple frames
         frames_data = []
         for i in range(100):
-            frame_data = create_data_frame(
-                stream_id=i % 10, data=f"Frame {i} test payload data".encode()
-            )
+            frame_data = create_data_frame(stream_id=i % 10, data=f"Frame {i} test payload data".encode())
             frames_data.append(frame_data)
 
         # Measure batch processing time
@@ -575,9 +539,7 @@ class TestSystemPerformanceIntegration:
 
         # Verify throughput
         bytes_processed = len(all_data)
-        throughput_mbps = (bytes_processed * 8) / (
-            processing_time * 1_000_000
-        )  # Convert to Mbps
+        throughput_mbps = (bytes_processed * 8) / (processing_time * 1_000_000)  # Convert to Mbps
 
         # Should have reasonable throughput
         assert throughput_mbps > 10  # At least 10 Mbps processing throughput
@@ -617,9 +579,7 @@ class TestSystemPerformanceIntegration:
 
         # Calculate validation rate
         validations_per_second = len(tickets) / validation_time
-        assert (
-            validations_per_second > 100
-        )  # Should handle at least 100 validations/second
+        assert validations_per_second > 100  # Should handle at least 100 validations/second
 
 
 def test_htx_integration_smoke_test():
@@ -641,16 +601,12 @@ def test_htx_integration_smoke_test():
     private_key, public_key = generate_issuer_keypair()
     manager.add_trusted_issuer("smoke_issuer", public_key)
 
-    ticket = manager.issue_ticket(
-        "smoke_issuer", "smoke_subject", TicketType.PREMIUM, private_key=private_key
-    )
+    ticket = manager.issue_ticket("smoke_issuer", "smoke_subject", TicketType.PREMIUM, private_key=private_key)
     status = manager.validate_ticket(ticket)
 
     assert status == TicketStatus.VALID
     assert b"integration.test" in client_hello
-    print(
-        f"  Component integration: fingerprint={fingerprint.ja3_hash[:8]}..., ticket={status.value}"
-    )
+    print(f"  Component integration: fingerprint={fingerprint.ja3_hash[:8]}..., ticket={status.value}")
 
     # Test frame format integration
     test_data = b"Integration smoke test data"
@@ -674,9 +630,7 @@ def test_htx_integration_smoke_test():
 
     assert stats["active_connections"] == 0
     assert stats["fingerprint_template"] == "chrome_120_windows"
-    print(
-        f"  Transport coordinator: template={stats['fingerprint_template']}, ready={not transport.is_running}"
-    )
+    print(f"  Transport coordinator: template={stats['fingerprint_template']}, ready={not transport.is_running}")
 
     print("  HTX integration smoke test PASSED")
     print()

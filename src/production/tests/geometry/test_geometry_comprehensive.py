@@ -6,9 +6,7 @@ import pytest
 import torch
 
 try:
-    from src.production.geometry import GeometryFeedback
-    from src.production.geometry.geometry import Snapshot
-    from src.production.geometry.geometry_feedback import GeometryFeedback as GF
+    pass
 except ImportError:
     # Handle missing imports gracefully
     pytest.skip("Production geometry modules not available", allow_module_level=True)
@@ -40,9 +38,7 @@ class TestGeometryFeedback:
         flat1 = weights1.flatten()
         flat2 = weights2.flatten()
 
-        cos_sim = torch.nn.functional.cosine_similarity(
-            flat1.unsqueeze(0), flat2.unsqueeze(0)
-        ).item()
+        cos_sim = torch.nn.functional.cosine_similarity(flat1.unsqueeze(0), flat2.unsqueeze(0)).item()
 
         assert -1 <= cos_sim <= 1
 

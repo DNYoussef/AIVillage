@@ -31,7 +31,6 @@ except ImportError as e:
 try:
     from ...edge.core.edge_manager import EdgeManager
     from ...edge.fog_compute.fog_coordinator import FogCoordinator
-    from ...edge.fog_compute.task_distributor import TaskDistributor
 
     FOG_AVAILABLE = True
 except ImportError as e:
@@ -214,7 +213,7 @@ class FederatedAgentForge:
 
         try:
             # Create training task specifications
-            total_phases = sum(
+            sum(
                 [
                     self.base_config.enable_evomerge,
                     self.base_config.enable_quietstar,

@@ -36,9 +36,7 @@ class TestCovertTrafficProfile:
         """Test creating realistic browser traffic profile."""
         profile = CovertTrafficProfile.create_browser_profile()
 
-        assert len(profile.user_agents) >= 4, (
-            "Should have multiple realistic user agents"
-        )
+        assert len(profile.user_agents) >= 4, "Should have multiple realistic user agents"
         assert len(profile.content_types) >= 3, "Should have multiple content types"
         assert len(profile.request_paths) >= 5, "Should have multiple API paths"
 
@@ -53,12 +51,7 @@ class TestCovertTrafficProfile:
 
         # Check timing and payload ranges are reasonable
         assert 0.1 <= profile.timing_intervals[0] <= profile.timing_intervals[1] <= 10.0
-        assert (
-            64
-            <= profile.payload_size_range[0]
-            <= profile.payload_size_range[1]
-            <= 16384
-        )
+        assert 64 <= profile.payload_size_range[0] <= profile.payload_size_range[1] <= 16384
 
 
 class TestHTTP2CovertChannel:
@@ -216,9 +209,7 @@ class TestBetanetCovertTransport:
         """Test establishing WebSocket channel."""
         transport = BetanetCovertTransport(CovertTransportMode.WEBSOCKET)
 
-        result = await transport._establish_channel(
-            CovertTransportMode.WEBSOCKET, "example.com", 443
-        )
+        result = await transport._establish_channel(CovertTransportMode.WEBSOCKET, "example.com", 443)
 
         assert result is True
         assert CovertTransportMode.WEBSOCKET in transport.active_channels
@@ -228,9 +219,7 @@ class TestBetanetCovertTransport:
         transport = BetanetCovertTransport(CovertTransportMode.WEBSOCKET)
 
         # Establish WebSocket channel first
-        await transport._establish_channel(
-            CovertTransportMode.WEBSOCKET, "example.com", 443
-        )
+        await transport._establish_channel(CovertTransportMode.WEBSOCKET, "example.com", 443)
 
         test_data = b"covert message payload"
         result = await transport.send_covert_data(test_data)
@@ -283,9 +272,7 @@ class TestBetanetIntegration:
         # Mock existing transport
         mock_transport = MagicMock()
 
-        enhanced = enhance_betanet_with_covert_transport(
-            mock_transport, CovertTransportMode.HTTP2
-        )
+        enhanced = enhance_betanet_with_covert_transport(mock_transport, CovertTransportMode.HTTP2)
 
         assert enhanced == mock_transport
         assert hasattr(mock_transport, "covert_transport")
@@ -336,9 +323,7 @@ class TestCovertTransportIntegration:
         transport = BetanetCovertTransport()
 
         # Generate multiple payloads
-        payloads = [
-            transport._generate_dummy_payload(size) for size in [512, 1024, 2048, 4096]
-        ]
+        payloads = [transport._generate_dummy_payload(size) for size in [512, 1024, 2048, 4096]]
 
         # Check they vary appropriately
         assert len(set(payloads)) == len(payloads), "Payloads should be unique"

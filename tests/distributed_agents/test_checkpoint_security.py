@@ -5,15 +5,9 @@ import msgpack
 import pytest
 
 from src.core.p2p.p2p_node import PeerCapabilities
-from src.production.distributed_agents.agent_migration_manager import (
-    AgentCheckpoint,
-    AgentMigrationManager,
-)
+from src.production.distributed_agents.agent_migration_manager import AgentCheckpoint, AgentMigrationManager
 from src.production.distributed_agents.distributed_agent_orchestrator import AgentType
-from src.production.distributed_agents.serialization import (
-    deserialize_checkpoint,
-    serialize_checkpoint,
-)
+from src.production.distributed_agents.serialization import deserialize_checkpoint, serialize_checkpoint
 
 
 class DummyAgent:
@@ -33,12 +27,8 @@ class DummyP2P:
     def __init__(self) -> None:
         self.node_id = "local"
         self.peer_registry = {
-            "trusted": PeerCapabilities(
-                device_id="trusted", cpu_cores=4, ram_mb=4096, trust_score=0.9
-            ),
-            "evil": PeerCapabilities(
-                device_id="evil", cpu_cores=4, ram_mb=4096, trust_score=0.1
-            ),
+            "trusted": PeerCapabilities(device_id="trusted", cpu_cores=4, ram_mb=4096, trust_score=0.9),
+            "evil": PeerCapabilities(device_id="evil", cpu_cores=4, ram_mb=4096, trust_score=0.1),
         }
 
     async def send_to_peer(self, _peer_id: str, _message: dict) -> bool:
@@ -50,9 +40,7 @@ async def test_untrusted_checkpoint_rejected() -> None:
     p2p = DummyP2P()
     orchestrator = DummyOrchestrator()
     orchestrator.active_agents["agent1"] = DummyAgent("agent1")
-    with patch.object(
-        AgentMigrationManager, "_start_background_tasks", lambda _self: None
-    ):
+    with patch.object(AgentMigrationManager, "_start_background_tasks", lambda _self: None):
         manager = AgentMigrationManager(p2p, orchestrator)
 
     payload = msgpack.dumps(
@@ -80,9 +68,7 @@ async def test_malicious_payload_raises_value_error() -> None:
     p2p = DummyP2P()
     orchestrator = DummyOrchestrator()
     orchestrator.active_agents["agent1"] = DummyAgent("agent1")
-    with patch.object(
-        AgentMigrationManager, "_start_background_tasks", lambda _self: None
-    ):
+    with patch.object(AgentMigrationManager, "_start_background_tasks", lambda _self: None):
         manager = AgentMigrationManager(p2p, orchestrator)
 
     bad_payload = msgpack.dumps({"foo": "bar"})
@@ -110,9 +96,7 @@ async def test_legacy_json_checkpoint_supported() -> None:
     orchestrator = DummyOrchestrator()
     agent = DummyAgent("agent1")
     orchestrator.active_agents["agent1"] = agent
-    with patch.object(
-        AgentMigrationManager, "_start_background_tasks", lambda _self: None
-    ):
+    with patch.object(AgentMigrationManager, "_start_background_tasks", lambda _self: None):
         manager = AgentMigrationManager(p2p, orchestrator)
 
     legacy_payload = json.dumps(

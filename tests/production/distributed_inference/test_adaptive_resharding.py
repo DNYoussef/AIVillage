@@ -11,11 +11,7 @@ from src.production.distributed_inference.adaptive_resharding import (
     ReshardingReason,
     ReshardingStrategy,
 )
-from src.production.distributed_inference.model_sharding_engine import (
-    ModelShard,
-    ModelShardingEngine,
-    ShardingPlan,
-)
+from src.production.distributed_inference.model_sharding_engine import ModelShard, ModelShardingEngine, ShardingPlan
 
 
 @pytest.fixture
@@ -63,9 +59,7 @@ def mock_p2p_node():
 
 
 @pytest.mark.asyncio
-async def test_event_serialized_after_success(
-    tmp_path, mock_sharding_engine, mock_p2p_node, resharding_config
-):
+async def test_event_serialized_after_success(tmp_path, mock_sharding_engine, mock_p2p_node, resharding_config):
     state_file = tmp_path / "reshard.json"
     manager = AdaptiveReshardingManager(
         mock_sharding_engine,
@@ -74,9 +68,7 @@ async def test_event_serialized_after_success(
         state_file=str(state_file),
     )
     manager._execute_resharding = AsyncMock(return_value=True)
-    await manager.trigger_resharding(
-        ReshardingReason.MANUAL_TRIGGER, strategy=ReshardingStrategy.OPTIMAL_REBALANCE
-    )
+    await manager.trigger_resharding(ReshardingReason.MANUAL_TRIGGER, strategy=ReshardingStrategy.OPTIMAL_REBALANCE)
     assert state_file.exists()
     with state_file.open() as f:
         data = json.load(f)
@@ -84,9 +76,7 @@ async def test_event_serialized_after_success(
 
 
 @pytest.mark.asyncio
-async def test_incomplete_event_replayed_on_restart(
-    tmp_path, mock_sharding_engine, mock_p2p_node, resharding_config
-):
+async def test_incomplete_event_replayed_on_restart(tmp_path, mock_sharding_engine, mock_p2p_node, resharding_config):
     state_file = tmp_path / "reshard.json"
     manager = AdaptiveReshardingManager(
         mock_sharding_engine,

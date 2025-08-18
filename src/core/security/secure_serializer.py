@@ -22,6 +22,7 @@ from typing import Any
 
 try:  # Optional performant JSON library
     import orjson as _orjson
+
     ORJSON_AVAILABLE = True
 
     def _json_dumps(obj: Any) -> bytes:
@@ -34,12 +35,11 @@ except Exception:  # pragma: no cover - fallback path
     ORJSON_AVAILABLE = False
 
     def _json_dumps(obj: Any) -> bytes:
-        return json.dumps(obj, ensure_ascii=True, separators=(",", ":")).encode(
-            "utf-8"
-        )
+        return json.dumps(obj, ensure_ascii=True, separators=(",", ":")).encode("utf-8")
 
     def _json_loads(data: bytes) -> Any:
         return json.loads(data.decode("utf-8"))
+
 
 logger = logging.getLogger(__name__)
 
@@ -113,9 +113,7 @@ class SecureSerializer:
 
         return secrets.token_bytes(32)
 
-    def register_custom_type(
-        self, type_class: type, serializer: callable, deserializer: callable
-    ):
+    def register_custom_type(self, type_class: type, serializer: callable, deserializer: callable):
         """
         Register custom type serialization handlers.
 
@@ -136,17 +134,13 @@ class SecureSerializer:
             raise SerializationError("Schema validation requires dict object")
         for field, expected_type in schema.items():
             if field not in obj or not isinstance(obj[field], expected_type):
-                raise SerializationError(
-                    f"Field '{field}' missing or not of type {expected_type.__name__}"
-                )
+                raise SerializationError(f"Field '{field}' missing or not of type {expected_type.__name__}")
 
     def _validate_data_security(self, data: Any) -> None:
         """Validate data for security concerns."""
         if isinstance(data, str | bytes):
             if len(data) > self.max_size_bytes:
-                raise SecurityViolationError(
-                    f"Data size exceeds limit: {len(data)} > {self.max_size_bytes}"
-                )
+                raise SecurityViolationError(f"Data size exceeds limit: {len(data)} > {self.max_size_bytes}")
 
         # Check for suspicious patterns
         if isinstance(data, str):
@@ -212,15 +206,11 @@ class SecureSerializer:
                     return {
                         "__type__": "object",
                         "__class__": item.__class__.__name__,
-                        "__value__": {
-                            k: convert_item(v) for k, v in item.__dict__.items()
-                        },
+                        "__value__": {k: convert_item(v) for k, v in item.__dict__.items()},
                     }
                 else:
                     # Fallback to string representation
-                    logger.warning(
-                        f"Unsupported type {type(item)}, converting to string"
-                    )
+                    logger.warning(f"Unsupported type {type(item)}, converting to string")
                     return {"__type__": "str", "__value__": str(item)}
 
         return convert_item(obj)
@@ -248,9 +238,7 @@ class SecureSerializer:
             return obj_value
         elif obj_type == "dataclass":
             # Would need dataclass registry for full restoration
-            logger.warning(
-                f"Dataclass deserialization not fully implemented: {data.get('__class__')}"
-            )
+            logger.warning(f"Dataclass deserialization not fully implemented: {data.get('__class__')}")
             return {k: self._restore_data(v) for k, v in obj_value.items()}
         elif obj_type == "dict":
             return {k: self._restore_data(v) for k, v in obj_value.items()}
@@ -321,9 +309,7 @@ class SecureSerializer:
 
             # Apply signature if needed
             if serialization_type == SerializationType.SIGNED_JSON:
-                signature = hmac.new(
-                    self.secret_key, json_bytes, hashlib.sha256
-                ).hexdigest()
+                signature = hmac.new(self.secret_key, json_bytes, hashlib.sha256).hexdigest()
 
                 signed_data = {
                     "signature": signature,
@@ -363,9 +349,7 @@ class SecureSerializer:
                 signed_data = base64.b64decode(parsed_data["data"])
 
                 # Verify signature
-                expected_signature = hmac.new(
-                    self.secret_key, signed_data, hashlib.sha256
-                ).hexdigest()
+                expected_signature = hmac.new(self.secret_key, signed_data, hashlib.sha256).hexdigest()
 
                 if not hmac.compare_digest(signature, expected_signature):
                     raise SecurityViolationError("Invalid signature")
@@ -395,9 +379,7 @@ class SecureSerializer:
     # Pickle-compatible interface for backward compatibility
     def dump(self, obj: Any, file, schema: dict[str, type] | None = None):
         """Pickle-compatible dump method."""
-        serialized = self.dumps(
-            obj, SerializationType.COMPRESSED_JSON, schema=schema
-        )
+        serialized = self.dumps(obj, SerializationType.COMPRESSED_JSON, schema=schema)
         if hasattr(file, "write"):
             file.write(serialized)
         else:
@@ -419,13 +401,9 @@ _default_serializer = SecureSerializer()
 
 
 # Pickle-compatible functions
-def dumps(
-    obj: Any, protocol: int = None, schema: dict[str, type] | None = None
-) -> bytes:
+def dumps(obj: Any, protocol: int = None, schema: dict[str, type] | None = None) -> bytes:
     """Secure replacement for pickle.dumps."""
-    return _default_serializer.dumps(
-        obj, SerializationType.COMPRESSED_JSON, schema=schema
-    )
+    return _default_serializer.dumps(obj, SerializationType.COMPRESSED_JSON, schema=schema)
 
 
 def loads(data: bytes, schema: dict[str, type] | None = None) -> Any:
@@ -433,9 +411,7 @@ def loads(data: bytes, schema: dict[str, type] | None = None) -> Any:
     return _default_serializer.loads(data, schema=schema)
 
 
-def dump(
-    obj: Any, file, protocol: int = None, schema: dict[str, type] | None = None
-) -> None:
+def dump(obj: Any, file, protocol: int = None, schema: dict[str, type] | None = None) -> None:
     """Secure replacement for pickle.dump."""
     _default_serializer.dump(obj, file, schema=schema)
 
@@ -463,8 +439,7 @@ class LegacyPickleRejector:
         """Raise error if data appears to be pickle format."""
         if cls.is_pickle_data(data):
             raise SecurityViolationError(
-                "Legacy pickle data detected and rejected for security. "
-                "Please re-serialize with SecureSerializer."
+                "Legacy pickle data detected and rejected for security. " "Please re-serialize with SecureSerializer."
             )
 
 

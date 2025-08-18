@@ -27,7 +27,6 @@ from typing import Any
 try:
     import matplotlib.pyplot as plt
     import numpy as np
-    import pandas as pd
     import psutil
     import torch
 except ImportError as e:
@@ -176,9 +175,7 @@ class UnifiedMonitor(BaseScript):
         # Load historical data
         self._load_historical_data()
 
-        self.logger.info(
-            f"UnifiedMonitor initialized with systems: {[s.value for s in self.config.enabled_systems]}"
-        )
+        self.logger.info(f"UnifiedMonitor initialized with systems: {[s.value for s in self.config.enabled_systems]}")
 
     def _load_historical_data(self) -> None:
         """Load historical monitoring data from disk."""
@@ -196,12 +193,8 @@ class UnifiedMonitor(BaseScript):
             if compression_file.exists():
                 with open(compression_file) as f:
                     data = json.load(f)
-                    self.compression_metrics = [
-                        CompressionMetrics(**item) for item in data
-                    ]
-                self.logger.info(
-                    f"Loaded {len(self.compression_metrics)} compression metrics"
-                )
+                    self.compression_metrics = [CompressionMetrics(**item) for item in data]
+                self.logger.info(f"Loaded {len(self.compression_metrics)} compression metrics")
 
             # Load evolution metrics
             evolution_file = self.data_dir / "evolution_metrics.json"
@@ -209,9 +202,7 @@ class UnifiedMonitor(BaseScript):
                 with open(evolution_file) as f:
                     data = json.load(f)
                     self.evolution_metrics = [EvolutionMetrics(**item) for item in data]
-                self.logger.info(
-                    f"Loaded {len(self.evolution_metrics)} evolution metrics"
-                )
+                self.logger.info(f"Loaded {len(self.evolution_metrics)} evolution metrics")
 
         except Exception as e:
             self.logger.exception(f"Failed to load historical data: {e}")
@@ -223,9 +214,7 @@ class UnifiedMonitor(BaseScript):
             if self.system_metrics:
                 system_file = self.data_dir / "system_metrics.json"
                 with open(system_file, "w") as f:
-                    json.dump(
-                        [asdict(m) for m in self.system_metrics[-1000:]], f, indent=2
-                    )
+                    json.dump([asdict(m) for m in self.system_metrics[-1000:]], f, indent=2)
 
             # Save compression metrics
             if self.compression_metrics:
@@ -241,9 +230,7 @@ class UnifiedMonitor(BaseScript):
             if self.evolution_metrics:
                 evolution_file = self.data_dir / "evolution_metrics.json"
                 with open(evolution_file, "w") as f:
-                    json.dump(
-                        [asdict(m) for m in self.evolution_metrics[-1000:]], f, indent=2
-                    )
+                    json.dump([asdict(m) for m in self.evolution_metrics[-1000:]], f, indent=2)
 
         except Exception as e:
             self.logger.exception(f"Failed to save metrics: {e}")
@@ -414,9 +401,7 @@ class UnifiedMonitor(BaseScript):
         if "system" in metrics:
             system = metrics["system"]
 
-            if system.cpu_percent > self.config.alert_thresholds.get(
-                "cpu_percent_high", 80
-            ):
+            if system.cpu_percent > self.config.alert_thresholds.get("cpu_percent_high", 80):
                 alerts.append(
                     AlertEvent(
                         timestamp=timestamp,
@@ -429,9 +414,7 @@ class UnifiedMonitor(BaseScript):
                     )
                 )
 
-            if system.memory_percent > self.config.alert_thresholds.get(
-                "memory_percent_high", 85
-            ):
+            if system.memory_percent > self.config.alert_thresholds.get("memory_percent_high", 85):
                 alerts.append(
                     AlertEvent(
                         timestamp=timestamp,
@@ -448,9 +431,7 @@ class UnifiedMonitor(BaseScript):
         if "compression" in metrics:
             compression = metrics["compression"]
 
-            if compression.compression_ratio < self.config.alert_thresholds.get(
-                "compression_ratio_low", 3.0
-            ):
+            if compression.compression_ratio < self.config.alert_thresholds.get("compression_ratio_low", 3.0):
                 alerts.append(
                     AlertEvent(
                         timestamp=timestamp,
@@ -507,9 +488,7 @@ class UnifiedMonitor(BaseScript):
                     alerts = self.check_alerts(current_metrics)
                     for alert in alerts:
                         self.alert_events.append(alert)
-                        self.logger.warning(
-                            f"ALERT [{alert.severity}]: {alert.message}"
-                        )
+                        self.logger.warning(f"ALERT [{alert.severity}]: {alert.message}")
 
                 # Save metrics periodically
                 if len(self.system_metrics) % 10 == 0:
@@ -586,11 +565,7 @@ class UnifiedMonitor(BaseScript):
 
         # System metrics summary
         if MonitoringSystem.SYSTEM in self.config.enabled_systems:
-            recent_system = [
-                m
-                for m in self.system_metrics
-                if datetime.fromisoformat(m.timestamp) > cutoff_time
-            ]
+            recent_system = [m for m in self.system_metrics if datetime.fromisoformat(m.timestamp) > cutoff_time]
 
             if recent_system:
                 cpu_values = [m.cpu_percent for m in recent_system]
@@ -608,9 +583,7 @@ class UnifiedMonitor(BaseScript):
         # Compression metrics summary
         if MonitoringSystem.COMPRESSION in self.config.enabled_systems:
             recent_compression = [
-                m
-                for m in self.compression_metrics
-                if datetime.fromisoformat(m.timestamp) > cutoff_time
+                m for m in self.compression_metrics if datetime.fromisoformat(m.timestamp) > cutoff_time
             ]
 
             if recent_compression:
@@ -626,11 +599,7 @@ class UnifiedMonitor(BaseScript):
 """
 
         # Alert summary
-        recent_alerts = [
-            a
-            for a in self.alert_events
-            if datetime.fromisoformat(a.timestamp) > cutoff_time
-        ]
+        recent_alerts = [a for a in self.alert_events if datetime.fromisoformat(a.timestamp) > cutoff_time]
 
         if recent_alerts:
             alert_counts = {}
@@ -664,9 +633,7 @@ class UnifiedMonitor(BaseScript):
             fig, axes = plt.subplots(2, 2, figsize=(15, 10))
             fig.suptitle("System Performance Dashboard", fontsize=16)
 
-            timestamps = [
-                datetime.fromisoformat(m.timestamp) for m in self.system_metrics[-100:]
-            ]
+            timestamps = [datetime.fromisoformat(m.timestamp) for m in self.system_metrics[-100:]]
             cpu_values = [m.cpu_percent for m in self.system_metrics[-100:]]
             memory_values = [m.memory_percent for m in self.system_metrics[-100:]]
             disk_values = [m.disk_usage_percent for m in self.system_metrics[-100:]]
@@ -708,10 +675,7 @@ class UnifiedMonitor(BaseScript):
             fig, axes = plt.subplots(2, 2, figsize=(15, 10))
             fig.suptitle("Compression Performance Dashboard", fontsize=16)
 
-            timestamps = [
-                datetime.fromisoformat(m.timestamp)
-                for m in self.compression_metrics[-100:]
-            ]
+            timestamps = [datetime.fromisoformat(m.timestamp) for m in self.compression_metrics[-100:]]
             ratios = [m.compression_ratio for m in self.compression_metrics[-100:]]
             errors = [m.relative_error for m in self.compression_metrics[-100:]]
             times = [m.compression_time for m in self.compression_metrics[-100:]]
@@ -826,9 +790,7 @@ class UnifiedMonitor(BaseScript):
         """
         try:
             # Default monitoring duration
-            duration = self.get_config_value(
-                "monitoring.duration", 60
-            )  # 1 minute default
+            duration = self.get_config_value("monitoring.duration", 60)  # 1 minute default
 
             if self.dry_run:
                 return ScriptResult(
@@ -857,13 +819,10 @@ class UnifiedMonitor(BaseScript):
                 },
                 metrics={
                     "monitoring_duration": duration,
-                    "samples_collected": len(self.system_metrics)
-                    + len(self.compression_metrics),
+                    "samples_collected": len(self.system_metrics) + len(self.compression_metrics),
                     "alerts_generated": len(self.alert_events),
                 },
             )
 
         except Exception as e:
-            return ScriptResult(
-                success=False, message=f"Monitoring failed: {e}", errors=[str(e)]
-            )
+            return ScriptResult(success=False, message=f"Monitoring failed: {e}", errors=[str(e)])

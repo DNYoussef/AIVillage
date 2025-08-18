@@ -6,6 +6,7 @@ any network requests.  Only a tiny subset of columns is required for the
 parser: ``Order Date``, ``Title`` and ``Total Owed`` (or ``Total Charged``).
 Additional columns are ignored but preserved in the returned dictionaries.
 """
+
 from __future__ import annotations
 
 import csv
@@ -44,6 +45,7 @@ class AmazonOrdersConnector:
 
 
 # Backwards compatibility helpers -------------------------------------------
+
 
 def get_orders(csv_path: str | Path) -> list[dict[str, str]]:
     return AmazonOrdersConnector(csv_path).get_orders()

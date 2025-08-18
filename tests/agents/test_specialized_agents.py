@@ -85,9 +85,7 @@ class TestDevOpsAgent:
         """Test deployment simulation"""
         from src.agents.specialized.devops_agent import DeploymentRequest
 
-        request = DeploymentRequest(
-            environment="staging", service="test-service", version="v1.0.0"
-        )
+        request = DeploymentRequest(environment="staging", service="test-service", version="v1.0.0")
 
         result = await agent.deploy_service(request)
 
@@ -184,9 +182,7 @@ class TestCreativeAgent:
         """Test story generation"""
         from src.agents.specialized.creative_agent import CreativeRequest
 
-        request = CreativeRequest(
-            content_type="story", theme="adventure", style="fantasy", length="medium"
-        )
+        request = CreativeRequest(content_type="story", theme="adventure", style="fantasy", length="medium")
 
         result = await agent.generate_story(request)
 

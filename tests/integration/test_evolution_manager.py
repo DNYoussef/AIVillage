@@ -1,5 +1,4 @@
 import pytest
-
 from experimental.agents.agents.king.evolution_manager import EvolutionManager
 from experimental.agents.agents.king.king_agent import KingAgent
 

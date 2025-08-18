@@ -14,9 +14,7 @@ from src.communications.message import Message, MessageType, Priority
 from src.communications.protocol import CommunicationsProtocol
 
 # Configure logging for demo
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -33,9 +31,7 @@ class VerificationResults:
             "timestamp": time.time(),
         }
 
-    def add_message(
-        self, direction: str, message_type: str, content: Any, encrypted: bool = True
-    ):
+    def add_message(self, direction: str, message_type: str, content: Any, encrypted: bool = True):
         self.messages_exchanged.append(
             {
                 "direction": direction,
@@ -55,9 +51,7 @@ class VerificationResults:
         passed = sum(1 for test in self.test_results.values() if test["success"])
         total = len(self.test_results)
 
-        print(
-            f"\nTEST RESULTS: {passed}/{total} tests passed ({passed / total * 100:.1f}%)"
-        )
+        print(f"\nTEST RESULTS: {passed}/{total} tests passed ({passed / total * 100:.1f}%)")
         print("-" * 60)
 
         for test_name, result in self.test_results.items():
@@ -72,9 +66,7 @@ class VerificationResults:
         for msg in self.messages_exchanged[-10:]:  # Show last 10 messages
             direction_arrow = "→" if msg["direction"] == "sent" else "←"
             encryption_status = "[ENCRYPTED]" if msg["encrypted"] else "[PLAIN]"
-            print(
-                f"{direction_arrow} {msg['type']:20} {encryption_status:12} | {str(msg['content'])[:50]}"
-            )
+            print(f"{direction_arrow} {msg['type']:20} {encryption_status:12} | {str(msg['content'])[:50]}")
 
         print("\n" + "=" * 100)
 
@@ -90,9 +82,7 @@ async def verify_connection_establishment(results: VerificationResults):
 
         # Connect client
         client = CommunicationsProtocol("verification_client", port=8889)
-        connection_success = await client.connect(
-            "ws://localhost:8888", "verification_server"
-        )
+        connection_success = await client.connect("ws://localhost:8888", "verification_server")
 
         # Verify connection
         server_sees_client = server.is_connected("verification_client")
@@ -127,9 +117,7 @@ async def verify_bidirectional_messaging(results: VerificationResults):
 
     def message_handler(agent_id: str, message: dict):
         received_messages.append({"from": agent_id, "message": message})
-        results.add_message(
-            "received", message.get("type", "unknown"), message.get("content", {})
-        )
+        results.add_message("received", message.get("type", "unknown"), message.get("content", {}))
 
     try:
         # Setup server and client
@@ -197,9 +185,7 @@ async def verify_bidirectional_messaging(results: VerificationResults):
 
         # Verify results
         messages_received = len(received_messages)
-        if successful_sends == len(messages_to_send) and messages_received >= len(
-            messages_to_send
-        ):
+        if successful_sends == len(messages_to_send) and messages_received >= len(messages_to_send):
             results.add_test(
                 "bidirectional_messaging",
                 True,
@@ -346,9 +332,7 @@ async def verify_reconnection(results: VerificationResults):
 
         # Connect client
         client = CommunicationsProtocol("reconnect_client", port=8889)
-        initial_connection = await client.connect(
-            "ws://localhost:8888", "reconnect_server"
-        )
+        initial_connection = await client.connect("ws://localhost:8888", "reconnect_server")
 
         if not initial_connection:
             results.add_test("reconnection_logic", False, "Initial connection failed")
@@ -417,9 +401,7 @@ async def verify_ssl_support(results: VerificationResults):
         )
 
         client_ssl_support = (
-            "ssl_context" in client_source
-            and "wss" in client_source
-            and "ssl.SSLContext" in client_source
+            "ssl_context" in client_source and "wss" in client_source and "ssl.SSLContext" in client_source
         )
 
         if server_ssl_support and client_ssl_support:

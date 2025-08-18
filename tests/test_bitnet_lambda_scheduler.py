@@ -14,9 +14,7 @@ import pytest
 import torch
 import torch.nn as nn
 
-sys.path.append(
-    str(Path(__file__).parent.parent / "src" / "production" / "compression")
-)
+sys.path.append(str(Path(__file__).parent.parent / "src" / "production" / "compression"))
 
 from compression.stage1_bitnet import BitNetLinear, GradualBitnetCallback
 
@@ -265,9 +263,7 @@ class TestGradualBitnetCallback:
         assert mock_layer2.lambda_val == expected_lambda
 
         # Non-BitNet layer should not have lambda_val set
-        assert not hasattr(mock_other_layer, "lambda_val") or not callable(
-            mock_other_layer.lambda_val
-        )
+        assert not hasattr(mock_other_layer, "lambda_val") or not callable(mock_other_layer.lambda_val)
 
     def test_log_callback(self):
         """Test logging callback adds λ values."""

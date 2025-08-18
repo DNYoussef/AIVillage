@@ -17,7 +17,6 @@ from typing import Any
 try:
     from ...edge.core.edge_manager import EdgeManager
     from ...edge.fog_compute.fog_coordinator import FogCoordinator
-    from ...edge.fog_compute.fog_node import FogNode
     from ...edge.fog_compute.task_distributor import TaskDistributor
 
     FOG_AVAILABLE = True
@@ -182,7 +181,6 @@ class FogComputeOrchestrator:
                     thermal_state = device.get("thermal_state", "normal")
 
                     if battery_level >= self.fog_config.battery_threshold and thermal_state in ["normal", "warm"]:
-
                         device_info = {
                             "device_id": device["device_id"],
                             "type": "edge_device",
@@ -428,7 +426,6 @@ class FogComputeOrchestrator:
                     and resources["storage_gb"] >= requirements["storage_gb"]
                     and (not requirements["gpu_required"] or resources["gpu_available"])
                 ):
-
                     # Calculate fit score
                     cpu_fit = min(resources["cpu_cores"] / requirements["cpu_cores"], 2.0)
                     memory_fit = min(resources["memory_gb"] / requirements["memory_gb"], 2.0)
@@ -754,7 +751,7 @@ async def run_fog_distributed_agent_forge(
     orchestrator = await create_fog_compute_pipeline(base_config, fog_config)
 
     # Discover infrastructure
-    infrastructure = await orchestrator.discover_fog_infrastructure()
+    await orchestrator.discover_fog_infrastructure()
 
     # Get enabled phases
     phases = []

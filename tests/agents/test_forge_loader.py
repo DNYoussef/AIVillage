@@ -212,13 +212,9 @@ class TestAgentForgeTemplateLoader:
     def test_agent_creation_success(self, temp_templates_dir):
         """Test successful agent creation using templates."""
         with (
-            patch(
-                "src.production.agent_forge.agent_factory.BaseMetaAgent"
-            ) as MockBaseAgent,
+            patch("src.production.agent_forge.agent_factory.BaseMetaAgent") as MockBaseAgent,
             patch("src.production.agent_forge.agent_factory.AgentRole") as MockRole,
-            patch(
-                "src.production.agent_forge.agent_factory.AgentSpecialization"
-            ) as MockSpec,
+            patch("src.production.agent_forge.agent_factory.AgentSpecialization") as MockSpec,
         ):
             # Mock the base agent
             mock_agent = MagicMock()
@@ -240,13 +236,9 @@ class TestAgentForgeTemplateLoader:
     def test_agent_creation_with_config(self, temp_templates_dir):
         """Test agent creation with custom configuration."""
         with (
-            patch(
-                "src.production.agent_forge.agent_factory.BaseMetaAgent"
-            ) as MockBaseAgent,
+            patch("src.production.agent_forge.agent_factory.BaseMetaAgent") as MockBaseAgent,
             patch("src.production.agent_forge.agent_factory.AgentRole") as MockRole,
-            patch(
-                "src.production.agent_forge.agent_factory.AgentSpecialization"
-            ) as MockSpec,
+            patch("src.production.agent_forge.agent_factory.AgentSpecialization") as MockSpec,
         ):
             mock_agent = MagicMock()
             MockBaseAgent.return_value = mock_agent

@@ -42,18 +42,10 @@ def load_config(overrides: dict[str, Any] | None = None) -> dict[str, Any]:
             config[key] = _coerce_value(key, env_val)
     if overrides:
         for key, value in overrides.items():
-            if (
-                key in config
-                and isinstance(config[key], set)
-                and isinstance(value, set | list | tuple)
-            ):
+            if key in config and isinstance(config[key], set) and isinstance(value, set | list | tuple):
                 config[key] = set(value)
             else:
                 config[key] = value
     if isinstance(config["ALLOWED_EXTENSIONS"], str):
-        config["ALLOWED_EXTENSIONS"] = {
-            ext.strip()
-            for ext in config["ALLOWED_EXTENSIONS"].split(",")
-            if ext.strip()
-        }
+        config["ALLOWED_EXTENSIONS"] = {ext.strip() for ext in config["ALLOWED_EXTENSIONS"].split(",") if ext.strip()}
     return config

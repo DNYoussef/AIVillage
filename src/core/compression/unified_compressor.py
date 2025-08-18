@@ -115,8 +115,7 @@ class UnifiedCompressor:
         # while still reporting that the advanced pipeline was selected.
         if param_count > 5_000_000:
             logger.warning(
-                "Model too large for full advanced compression in test environment; "
-                "returning placeholder output"
+                "Model too large for full advanced compression in test environment; " "returning placeholder output"
             )
             data = b""
         else:
@@ -131,9 +130,7 @@ class UnifiedCompressor:
         }
 
     # ------------------------------------------------------------------
-    def decompress(
-        self, compressed: dict[str, object]
-    ) -> torch.nn.Module | dict[str, torch.Tensor]:
+    def decompress(self, compressed: dict[str, object]) -> torch.nn.Module | dict[str, torch.Tensor]:
         method = compressed.get("method", "simple")
         data = compressed.get("data")
         if method == "simple":

@@ -8,8 +8,6 @@ from dataclasses import dataclass
 from pathlib import Path
 
 try:
-    import portalocker
-
     HAS_PORTALOCKER = True
 except ImportError:
     HAS_PORTALOCKER = False
@@ -101,15 +99,10 @@ class SQLiteDatabase:
                     self.conn.commit()
                     return cur
                 except sqlite3.OperationalError as e:
-                    if (
-                        "database is locked" in str(e).lower()
-                        or "busy" in str(e).lower()
-                    ):
+                    if "database is locked" in str(e).lower() or "busy" in str(e).lower():
                         if attempt < max_retries:
                             # Jittered exponential backoff
-                            base_delay = retry_delays[
-                                min(attempt, len(retry_delays) - 1)
-                            ]
+                            base_delay = retry_delays[min(attempt, len(retry_delays) - 1)]
                             jitter = random.uniform(0.8, 1.2)  # ±20% jitter
                             delay = base_delay * jitter
 
@@ -119,9 +112,7 @@ class SQLiteDatabase:
                             time.sleep(delay)
                             continue
                         else:
-                            logger.error(
-                                f"Database locked/busy after {max_retries + 1} attempts, giving up: {e}"
-                            )
+                            logger.error(f"Database locked/busy after {max_retries + 1} attempts, giving up: {e}")
                             raise
                     else:
                         # Non-locking error, don't retry
@@ -211,10 +202,7 @@ class VILLAGECreditSystem:
 
     def get_earning_rule(self, action: str) -> EarningRule:
         cur = self.db.execute(
-            (
-                "SELECT action, base_credits, multipliers, conditions "
-                "FROM earning_rules WHERE action = ?"
-            ),
+            ("SELECT action, base_credits, multipliers, conditions " "FROM earning_rules WHERE action = ?"),
             (action,),
         )
         row = cur.fetchone()
@@ -231,10 +219,7 @@ class VILLAGECreditSystem:
 
     def is_first_time(self, user_id: str, action: str) -> bool:
         cur = self.db.execute(
-            (
-                "SELECT COUNT(*) as cnt FROM transactions "
-                "WHERE user_id = ? AND category = ?"
-            ),
+            ("SELECT COUNT(*) as cnt FROM transactions " "WHERE user_id = ? AND category = ?"),
             (user_id, action),
         )
         count = cur.fetchone()["cnt"]
@@ -244,9 +229,7 @@ class VILLAGECreditSystem:
     def adjust_for_ppp(self, credit_amount: int, country: str | None) -> int:
         if country and country in PPP_ADJUSTMENTS:
             adjusted = int(credit_amount * PPP_ADJUSTMENTS[country])
-            logger.debug(
-                "PPP adjustment for %s: %d -> %d", country, credit_amount, adjusted
-            )
+            logger.debug("PPP adjustment for %s: %d -> %d", country, credit_amount, adjusted)
             return adjusted
         return credit_amount
 
@@ -330,12 +313,8 @@ class VILLAGECreditSystem:
         self.update_balance(user_id, credit_amount)
         return credit_amount
 
-    def spend_credits(
-        self, user_id: str, amount: int, category: str, metadata: dict[str, str]
-    ) -> None:
-        cur = self.db.execute(
-            "SELECT balance FROM balances WHERE user_id = ?", (user_id,)
-        )
+    def spend_credits(self, user_id: str, amount: int, category: str, metadata: dict[str, str]) -> None:
+        cur = self.db.execute("SELECT balance FROM balances WHERE user_id = ?", (user_id,))
         row = cur.fetchone()
         if row is None or row["balance"] < amount:
             logger.error("User %s has insufficient balance", user_id)
@@ -345,9 +324,7 @@ class VILLAGECreditSystem:
         self.update_balance(user_id, -amount)
 
     def get_balance(self, user_id: str) -> int:
-        cur = self.db.execute(
-            "SELECT balance FROM balances WHERE user_id = ?", (user_id,)
-        )
+        cur = self.db.execute("SELECT balance FROM balances WHERE user_id = ?", (user_id,))
         row = cur.fetchone()
         return row["balance"] if row else 0
 

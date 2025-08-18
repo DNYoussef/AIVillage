@@ -6,7 +6,6 @@ import sys
 from pathlib import Path
 
 import pytest
-
 from mcp_servers.hyperag.planning.plan_structures import (
     ExecutionStatus,
     ExecutionStep,
@@ -374,9 +373,7 @@ class TestPlanDSL:
 
     def test_plan_serialization_to_dsl(self):
         """Test plan serialization to DSL format"""
-        constraints = RetrievalConstraints(
-            max_depth=3, max_nodes=50, confidence_threshold=0.8, time_budget_ms=3000
-        )
+        constraints = RetrievalConstraints(max_depth=3, max_nodes=50, confidence_threshold=0.8, time_budget_ms=3000)
 
         plan = QueryPlan(
             plan_id="test-plan-123",

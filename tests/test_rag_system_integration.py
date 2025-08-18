@@ -10,9 +10,7 @@ import pytest
 
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 
-pytest.skip(
-    "Skipping integration test due to heavy dependencies", allow_module_level=True
-)
+pytest.skip("Skipping integration test due to heavy dependencies", allow_module_level=True)
 
 fake_faiss = mock.MagicMock()
 fake_faiss.__spec__ = mock.MagicMock()
@@ -73,9 +71,7 @@ class TestRAGSystemIntegration(unittest.TestCase):
 
         # Process a sample user query
         sample_query = "What are the key features of the RAG system?"
-        result = self.loop.run_until_complete(
-            process_user_query(components, sample_query)
-        )
+        result = self.loop.run_until_complete(process_user_query(components, sample_query))
 
         # Verify that the result is not None and contains expected keys
         assert result is not None

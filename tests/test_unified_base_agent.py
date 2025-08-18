@@ -5,9 +5,6 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import numpy as np
 import pytest
-from rag_system.core.config import UnifiedConfig
-from rag_system.retrieval.vector_store import VectorStore
-
 from agents.unified_base_agent import (
     SelfEvolvingSystem,
     UnifiedAgentConfig,
@@ -17,12 +14,10 @@ from agents.unified_base_agent import (
     create_agent,
 )
 from agents.utils.task import Task as LangroidTask
-from core.error_handling import (
-    AIVillageException,
-    ErrorCategory,
-    ErrorSeverity,
-    StandardCommunicationProtocol,
-)
+from rag_system.core.config import UnifiedConfig
+from rag_system.retrieval.vector_store import VectorStore
+
+from core.error_handling import AIVillageException, ErrorCategory, ErrorSeverity, StandardCommunicationProtocol
 
 
 class TestUnifiedBaseAgent:
@@ -52,9 +47,7 @@ class TestUnifiedBaseAgent:
     @pytest.fixture
     def agent(self, mock_config, mock_communication_protocol):
         """Create a test agent instance."""
-        with patch(
-            "agents.language_models.openai_gpt.OpenAIGPTConfig"
-        ) as mock_llm_config:
+        with patch("agents.language_models.openai_gpt.OpenAIGPTConfig") as mock_llm_config:
             mock_llm = MagicMock()
             mock_llm.complete = AsyncMock(return_value=MagicMock(text="test response"))
             mock_llm_config.return_value.create.return_value = mock_llm
@@ -62,13 +55,9 @@ class TestUnifiedBaseAgent:
             agent = UnifiedBaseAgent(mock_config, mock_communication_protocol)
             yield agent
 
-    def test_agent_initialization_success(
-        self, mock_config, mock_communication_protocol
-    ):
+    def test_agent_initialization_success(self, mock_config, mock_communication_protocol):
         """Test successful agent initialization."""
-        with patch(
-            "agents.language_models.openai_gpt.OpenAIGPTConfig"
-        ) as mock_llm_config:
+        with patch("agents.language_models.openai_gpt.OpenAIGPTConfig") as mock_llm_config:
             mock_llm = MagicMock()
             mock_llm_config.return_value.create.return_value = mock_llm
 
@@ -77,16 +66,10 @@ class TestUnifiedBaseAgent:
             assert agent.description == "A test agent"
             assert "test_capability" in agent.capabilities
 
-    def test_agent_initialization_failure(
-        self, mock_config, mock_communication_protocol
-    ):
+    def test_agent_initialization_failure(self, mock_config, mock_communication_protocol):
         """Test agent initialization failure with proper error handling."""
-        with patch(
-            "agents.language_models.openai_gpt.OpenAIGPTConfig"
-        ) as mock_llm_config:
-            mock_llm_config.return_value.create.side_effect = Exception(
-                "LLM init failed"
-            )
+        with patch("agents.language_models.openai_gpt.OpenAIGPTConfig") as mock_llm_config:
+            mock_llm_config.return_value.create.side_effect = Exception("LLM init failed")
 
             with pytest.raises(AIVillageException) as exc_info:
                 UnifiedBaseAgent(mock_config, mock_communication_protocol)
@@ -109,9 +92,7 @@ class TestUnifiedBaseAgent:
     @pytest.mark.asyncio
     async def test_execute_task_quality_assurance_failure(self, agent):
         """Test task execution failure due to quality assurance."""
-        with patch.object(
-            agent.quality_assurance_layer, "check_task_safety", return_value=False
-        ):
+        with patch.object(agent.quality_assurance_layer, "check_task_safety", return_value=False):
             task = LangroidTask(agent, "unsafe task")
 
             with pytest.raises(AIVillageException) as exc_info:
@@ -163,9 +144,7 @@ class TestUnifiedBaseAgent:
     @pytest.mark.asyncio
     async def test_get_embedding_failure(self, agent):
         """Test embedding retrieval failure."""
-        agent.rag_pipeline.get_embedding = AsyncMock(
-            side_effect=Exception("Embedding error")
-        )
+        agent.rag_pipeline.get_embedding = AsyncMock(side_effect=Exception("Embedding error"))
 
         with pytest.raises(AIVillageException) as exc_info:
             await agent.get_embedding("test text")
@@ -284,9 +263,7 @@ class TestSelfEvolvingSystem:
     async def test_evolve_system_success(self, system):
         """Test successful system evolution."""
         with (
-            patch.object(
-                system, "analyze_agent_performance", return_value={"cap1": 0.8}
-            ),
+            patch.object(system, "analyze_agent_performance", return_value={"cap1": 0.8}),
             patch.object(system, "generate_new_capabilities", return_value=["new_cap"]),
         ):
             await system.evolve()
@@ -353,9 +330,7 @@ class TestCreateAgent:
 
     def test_create_agent_success(self, mock_config, mock_communication_protocol):
         """Test successful agent creation via factory."""
-        with patch(
-            "agents.language_models.openai_gpt.OpenAIGPTConfig"
-        ) as mock_llm_config:
+        with patch("agents.language_models.openai_gpt.OpenAIGPTConfig") as mock_llm_config:
             mock_llm = MagicMock()
             mock_llm_config.return_value.create.return_value = mock_llm
 
@@ -364,12 +339,8 @@ class TestCreateAgent:
 
     def test_create_agent_failure(self, mock_config, mock_communication_protocol):
         """Test agent creation failure via factory."""
-        with patch(
-            "agents.language_models.openai_gpt.OpenAIGPTConfig"
-        ) as mock_llm_config:
-            mock_llm_config.return_value.create.side_effect = Exception(
-                "Creation failed"
-            )
+        with patch("agents.language_models.openai_gpt.OpenAIGPTConfig") as mock_llm_config:
+            mock_llm_config.return_value.create.side_effect = Exception("Creation failed")
 
             with pytest.raises(AIVillageException) as exc_info:
                 create_agent("TestAgent", mock_config, mock_communication_protocol)

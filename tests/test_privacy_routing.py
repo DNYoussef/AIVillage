@@ -2,12 +2,8 @@ import time
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-
 from federation.core.device_registry import DeviceRole
-from federation.core.federation_manager import (
-    FederationManager,
-    PrivacyLevel,
-)
+from federation.core.federation_manager import FederationManager, PrivacyLevel
 
 
 @pytest.mark.asyncio
@@ -22,9 +18,7 @@ async def test_build_privacy_circuit_generates_keys():
         relay.role = DeviceRole.RELAY
         mock_relays.append(relay)
 
-    with patch.object(
-        manager.device_registry, "get_devices_by_role", return_value=mock_relays
-    ):
+    with patch.object(manager.device_registry, "get_devices_by_role", return_value=mock_relays):
         circuit = await manager._build_privacy_circuit("dest", min_hops=3)
 
     assert circuit is not None
@@ -65,9 +59,7 @@ async def test_send_federated_message_routes_by_protocol():
     manager.create_privacy_tunnel = fake_create_privacy_tunnel
 
     payload = {"hello": "world"}
-    success = await manager.send_federated_message(
-        "dest", payload, privacy_level=PrivacyLevel.ANONYMOUS
-    )
+    success = await manager.send_federated_message("dest", payload, privacy_level=PrivacyLevel.ANONYMOUS)
 
     assert success
     manager.tor_transport.send_message.assert_called_once()

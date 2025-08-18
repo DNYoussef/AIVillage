@@ -1,8 +1,8 @@
 import asyncio
-
-import pytest
 import sys
 import types
+
+import pytest
 
 sys.modules.setdefault("compression_pipeline", types.ModuleType("compression_pipeline"))
 sys.modules["compression_pipeline"].CompressionConfig = object
@@ -16,12 +16,7 @@ sys.modules.setdefault("quietstar_baker", types.ModuleType("quietstar_baker"))
 sys.modules["quietstar_baker"].QuietSTaRBaker = object
 sys.modules["quietstar_baker"].QuietSTaRConfig = object
 
-from agent_forge.unified_pipeline import (
-    PipelineState,
-    UnifiedPipeline,
-    UnifiedPipelineConfig,
-    run_pipeline,
-)
+from agent_forge.unified_pipeline import PipelineState, UnifiedPipeline, UnifiedPipelineConfig, run_pipeline
 
 
 async def _noop(*args, **kwargs):

@@ -30,8 +30,6 @@ from production.compression.cpu_only_config import (
 def _is_torch_available() -> bool:
     """Check if PyTorch is available for testing."""
     try:
-        import torch
-
         return True
     except ImportError:
         return False
@@ -238,9 +236,7 @@ class TestCPUQuantizer:
 
         # Should have quantized the linear layers
         assert quantization_info["quantized_layers"] == 2
-        assert (
-            quantization_info["size_reduction"] > 0.5
-        )  # Should achieve good compression
+        assert quantization_info["size_reduction"] > 0.5  # Should achieve good compression
 
 
 class TestCPUOnlyUtilities:
@@ -407,9 +403,7 @@ if __name__ == "__main__":
     # Test basic configuration
     print("Testing CPU-only configuration...")
     config = get_cpu_only_config()
-    print(
-        f"OK CPU config created: device={config.device}, force_cpu={config.force_cpu}"
-    )
+    print(f"OK CPU config created: device={config.device}, force_cpu={config.force_cpu}")
 
     # Test environment setup
     print("Testing environment setup...")

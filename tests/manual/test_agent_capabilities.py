@@ -10,14 +10,13 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 try:
     from src.communications.message import Message, MessageType
-    from src.communications.protocol import CommunicationsProtocol
     from src.production.agent_forge.agent_factory import AgentFactory
 except ImportError as e:
     print(f"Import error: {e}")
     print("Trying alternative imports...")
     try:
         # Try importing from agent_forge directly
-        from agent_forge.validate_all_agents import validate_all_agents
+        pass
     except ImportError as e2:
         print(f"Alternative import failed: {e2}")
         sys.exit(1)
@@ -196,11 +195,7 @@ def main():
     print("\nDetailed Agent Analysis:")
     for agent_id, result in creation_results.items():
         if result.get("created"):
-            status = (
-                "✓ REAL IMPLEMENTATION"
-                if result.get("agent_class") != "GenericAgent"
-                else "○ GENERIC STUB"
-            )
+            status = "✓ REAL IMPLEMENTATION" if result.get("agent_class") != "GenericAgent" else "○ GENERIC STUB"
             print(f"  {agent_id}: {status} ({result.get('agent_class', 'Unknown')})")
         else:
             print(f"  {agent_id}: ✗ FAILED - {result.get('error', 'Unknown error')}")

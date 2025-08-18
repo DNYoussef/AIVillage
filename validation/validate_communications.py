@@ -13,17 +13,15 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 try:
-    from src.communications.message_passing_system import MessagePassingSystem
-    from src.communications.service_discovery import ServiceDiscovery, ServiceInfo
-    from src.communications.standard_protocol import StandardCommunicationProtocol
-    from src.communications.websocket_handler import WebSocketHandler
+    from packages.p2p.communications.message_passing_system import MessagePassingSystem
+    from packages.p2p.communications.service_discovery import ServiceDiscovery, ServiceInfo
+    from packages.p2p.communications.standard_protocol import StandardCommunicationProtocol
+    from packages.p2p.communications.websocket_handler import WebSocketHandler
 except ImportError as e:
     print(f"Warning: Could not import Communications components: {e}")
     StandardCommunicationProtocol = None
 
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -64,9 +62,7 @@ class CommunicationsValidator:
             # Initialize protocol
             protocol = StandardCommunicationProtocol(protocol_config)
 
-            if hasattr(protocol, "send_message") and hasattr(
-                protocol, "receive_message"
-            ):
+            if hasattr(protocol, "send_message") and hasattr(protocol, "receive_message"):
                 self.results["standard_protocol"] = {
                     "status": "success",
                     "time": time.time() - start_time,
@@ -114,9 +110,7 @@ class CommunicationsValidator:
                 status="active",
             )
 
-            if hasattr(discovery, "register_service") and hasattr(
-                discovery, "discover_services"
-            ):
+            if hasattr(discovery, "register_service") and hasattr(discovery, "discover_services"):
                 self.results["service_discovery"] = {
                     "status": "success",
                     "time": time.time() - start_time,
@@ -153,9 +147,7 @@ class CommunicationsValidator:
 
             messaging = MessagePassingSystem(messaging_config)
 
-            if hasattr(messaging, "send_message") and hasattr(
-                messaging, "receive_message"
-            ):
+            if hasattr(messaging, "send_message") and hasattr(messaging, "receive_message"):
                 # Test message structure
                 {
                     "message_id": "msg_test_001",
@@ -206,9 +198,7 @@ class CommunicationsValidator:
 
             ws_handler = WebSocketHandler(websocket_config)
 
-            if hasattr(ws_handler, "start_server") and hasattr(
-                ws_handler, "broadcast_message"
-            ):
+            if hasattr(ws_handler, "start_server") and hasattr(ws_handler, "broadcast_message"):
                 # Test WebSocket message structure
                 {
                     "type": "agent_communication",
@@ -251,12 +241,8 @@ class CommunicationsValidator:
 
         # Calculate results
         total_tests = len(self.results)
-        successful_tests = sum(
-            1 for r in self.results.values() if r["status"] == "success"
-        )
-        partial_tests = sum(
-            1 for r in self.results.values() if r["status"] == "partial"
-        )
+        successful_tests = sum(1 for r in self.results.values() if r["status"] == "success")
+        partial_tests = sum(1 for r in self.results.values() if r["status"] == "partial")
 
         logger.info("=== Communications Validation Results ===")
         for test_name, result in self.results.items():
@@ -267,9 +253,7 @@ class CommunicationsValidator:
                 "pending": "PEND",
             }
 
-            logger.info(
-                f"[{status_emoji[result['status']]}] {test_name}: {result['status'].upper()}"
-            )
+            logger.info(f"[{status_emoji[result['status']]}] {test_name}: {result['status'].upper()}")
             logger.info(f"   Time: {result['time']:.2f}s")
             logger.info(f"   Details: {result['details']}")
 

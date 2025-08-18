@@ -80,7 +80,7 @@ class VectorCompositionOperator:
                     alpha = composition_vector[i % len(composition_vector)]
 
                 # Apply vector composition based on value type
-                if isinstance(base_val, (int, float)) and isinstance(target_val, (int, float)):
+                if isinstance(base_val, int | float) and isinstance(target_val, int | float):
                     composed_config[key] = self._compose_numeric(base_val, target_val, alpha)
                 elif isinstance(base_val, list) and isinstance(target_val, list):
                     composed_config[key] = self._compose_lists(base_val, target_val, alpha)
@@ -123,7 +123,7 @@ class VectorCompositionOperator:
             # Use alpha with position-dependent variation
             position_alpha = alpha + (i / max_len) * 0.1
 
-            if isinstance(base_item, (int, float)) and isinstance(target_item, (int, float)):
+            if isinstance(base_item, int | float) and isinstance(target_item, int | float):
                 composed.append(self._compose_numeric(base_item, target_item, position_alpha))
             else:
                 composed.append(base_item if position_alpha < 0.5 else target_item)
@@ -137,7 +137,7 @@ class VectorCompositionOperator:
         for key, target_val in target.items():
             if key in composed:
                 base_val = composed[key]
-                if isinstance(base_val, (int, float)) and isinstance(target_val, (int, float)):
+                if isinstance(base_val, int | float) and isinstance(target_val, int | float):
                     composed[key] = self._compose_numeric(base_val, target_val, alpha)
                 elif isinstance(base_val, list) and isinstance(target_val, list):
                     composed[key] = self._compose_lists(base_val, target_val, alpha)

@@ -204,9 +204,7 @@ async def test_rag_questions():
 
         # Index the test documents
         stats = pipeline.index_documents(test_docs)
-        print(
-            f"Indexed {stats['documents_processed']} documents, {stats['chunks_created']} chunks"
-        )
+        print(f"Indexed {stats['documents_processed']} documents, {stats['chunks_created']} chunks")
 
         # Test questions
         test_questions = [
@@ -229,9 +227,7 @@ async def test_rag_questions():
             start_time = time.perf_counter()
 
             # Use the enhanced retrieval with trust weighting
-            results, metrics = await pipeline.retrieve_with_trust(
-                query=question, k=3, trust_weight=0.4
-            )
+            results, metrics = await pipeline.retrieve_with_trust(query=question, k=3, trust_weight=0.4)
 
             latency = (time.perf_counter() - start_time) * 1000
 
@@ -252,9 +248,7 @@ async def test_rag_questions():
 
             print("📝 Answer Extract:")
             # Show relevant portion of the text
-            answer_text = best_result.text[:500] + (
-                "..." if len(best_result.text) > 500 else ""
-            )
+            answer_text = best_result.text[:500] + ("..." if len(best_result.text) > 500 else "")
             print(f"   {answer_text}")
 
             # Check if answer seems relevant
@@ -300,9 +294,7 @@ async def test_rag_questions():
             else:
                 print("❌ Answer may not be relevant")
 
-            print(
-                f"🔍 Relevance: {relevance_score:.2f} ({overlap}/{len(relevant_q_words)} key words match)"
-            )
+            print(f"🔍 Relevance: {relevance_score:.2f} ({overlap}/{len(relevant_q_words)} key words match)")
 
             # Show cache performance
             cache_hit = metrics.get("cache_hit", False)
@@ -320,9 +312,7 @@ async def test_rag_questions():
         results, _ = await pipeline.retrieve_with_trust(sample_question, k=3)
 
         if results:
-            formatted_response = pipeline.format_hierarchical_response(
-                results, max_context_length=800
-            )
+            formatted_response = pipeline.format_hierarchical_response(results, max_context_length=800)
 
             print(f"\nFormatted Response for: '{sample_question}'")
             print("-" * 40)

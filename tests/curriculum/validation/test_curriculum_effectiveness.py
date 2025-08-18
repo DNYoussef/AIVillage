@@ -93,9 +93,7 @@ class CurriculumEffectivenessValidator:
         logger.info(f"Starting experiment {experiment_id} with {control_group}")
 
         # Generate experiment problems
-        problems = await self._generate_experiment_problems(
-            domain, difficulty_range=(0.3, 0.8)
-        )
+        problems = await self._generate_experiment_problems(domain, difficulty_range=(0.3, 0.8))
 
         # Simulate student learning
         results = []
@@ -187,14 +185,16 @@ class CurriculumEffectivenessValidator:
             "edge_vs_hard_efficiency": edge_results["learning_efficiency"]
             / max(hard_results["learning_efficiency"], 0.001),
             "edge_success_rate": edge_results["success_rate"],
-            "optimal_range_validation": 1.0
-            if edge_results["learning_efficiency"]
-            == max(
-                edge_results["learning_efficiency"],
-                easy_results["learning_efficiency"],
-                hard_results["learning_efficiency"],
-            )
-            else 0.0,
+            "optimal_range_validation": (
+                1.0
+                if edge_results["learning_efficiency"]
+                == max(
+                    edge_results["learning_efficiency"],
+                    easy_results["learning_efficiency"],
+                    hard_results["learning_efficiency"],
+                )
+                else 0.0
+            ),
         }
 
         logger.info(f"Edge validation results: {validation_metrics}")
@@ -231,9 +231,7 @@ class CurriculumEffectivenessValidator:
             use_curriculum=False,
         )
 
-        transfer_effectiveness = transfer_success_rate / max(
-            baseline_experiment.success_rate, 0.001
-        )
+        transfer_effectiveness = transfer_success_rate / max(baseline_experiment.success_rate, 0.001)
 
         logger.info(f"Transfer learning effectiveness: {transfer_effectiveness:.2f}x")
         return transfer_effectiveness
@@ -245,9 +243,7 @@ class CurriculumEffectivenessValidator:
             return {"error": "No curriculum engine available"}
 
         # Analyze recent curriculum history
-        curriculum_outcomes = [
-            o for o in self.learning_outcomes if o.problem_type == "curriculum"
-        ]
+        curriculum_outcomes = [o for o in self.learning_outcomes if o.problem_type == "curriculum"]
 
         if len(curriculum_outcomes) < 10:
             return {"insufficient_data": len(curriculum_outcomes)}
@@ -271,16 +267,12 @@ class CurriculumEffectivenessValidator:
                 adherence = 1.0 - abs(actual_accuracy - target_accuracy)
                 adherence_scores.append(max(0.0, adherence))
 
-        overall_adherence = (
-            statistics.mean(adherence_scores) if adherence_scores else 0.0
-        )
+        overall_adherence = statistics.mean(adherence_scores) if adherence_scores else 0.0
 
         return {
             "overall_adherence": overall_adherence,
             "bands_analyzed": len(adherence_scores),
-            "accuracy_by_band": {
-                str(k): statistics.mean(v) for k, v in accuracy_by_difficulty.items()
-            },
+            "accuracy_by_band": {str(k): statistics.mean(v) for k, v in accuracy_by_difficulty.items()},
         }
 
     def generate_effectiveness_report(self) -> dict[str, Any]:
@@ -290,9 +282,7 @@ class CurriculumEffectivenessValidator:
             return {"error": "No experiments available"}
 
         # Separate curriculum and baseline experiments
-        curriculum_exps = [
-            e for e in self.experiments if e.control_group == "curriculum"
-        ]
+        curriculum_exps = [e for e in self.experiments if e.control_group == "curriculum"]
         baseline_exps = [e for e in self.experiments if e.control_group == "baseline"]
 
         report = {
@@ -312,17 +302,12 @@ class CurriculumEffectivenessValidator:
             curr_success = statistics.mean(e.success_rate for e in curriculum_exps)
             base_success = statistics.mean(e.success_rate for e in baseline_exps)
 
-            curr_efficiency = statistics.mean(
-                e.learning_efficiency for e in curriculum_exps
-            )
-            base_efficiency = statistics.mean(
-                e.learning_efficiency for e in baseline_exps
-            )
+            curr_efficiency = statistics.mean(e.learning_efficiency for e in curriculum_exps)
+            base_efficiency = statistics.mean(e.learning_efficiency for e in baseline_exps)
 
             report["effectiveness_metrics"] = {
                 "success_rate_improvement": curr_success / max(base_success, 0.001),
-                "learning_efficiency_improvement": curr_efficiency
-                / max(base_efficiency, 0.001),
+                "learning_efficiency_improvement": curr_efficiency / max(base_efficiency, 0.001),
                 "curriculum_avg_success": curr_success,
                 "baseline_avg_success": base_success,
                 "curriculum_avg_efficiency": curr_efficiency,
@@ -331,29 +316,22 @@ class CurriculumEffectivenessValidator:
 
             # Generate recommendations
             if curr_success > base_success * 1.1:
-                report["recommendations"].append(
-                    "Curriculum shows significant success rate improvement"
-                )
+                report["recommendations"].append("Curriculum shows significant success rate improvement")
 
             if curr_efficiency > base_efficiency * 1.2:
-                report["recommendations"].append(
-                    "Curriculum demonstrates superior learning efficiency"
-                )
+                report["recommendations"].append("Curriculum demonstrates superior learning efficiency")
 
         # Analyze learning progression
         if self.learning_outcomes:
             successful_outcomes = [o for o in self.learning_outcomes if o.success]
             if successful_outcomes:
-                avg_difficulty = statistics.mean(
-                    o.difficulty for o in successful_outcomes
-                )
+                avg_difficulty = statistics.mean(o.difficulty for o in successful_outcomes)
                 avg_attempts = statistics.mean(o.attempts for o in successful_outcomes)
 
                 report["learning_progression"] = {
                     "average_mastered_difficulty": avg_difficulty,
                     "average_attempts_to_success": avg_attempts,
-                    "mastery_rate": len(successful_outcomes)
-                    / len(self.learning_outcomes),
+                    "mastery_rate": len(successful_outcomes) / len(self.learning_outcomes),
                 }
 
         return report
@@ -368,9 +346,7 @@ class CurriculumEffectivenessValidator:
 
         problems = []
         for i in range(count):
-            difficulty = difficulty_range[0] + (
-                difficulty_range[1] - difficulty_range[0]
-            ) * (i / count)
+            difficulty = difficulty_range[0] + (difficulty_range[1] - difficulty_range[0]) * (i / count)
 
             problems.append(
                 Problem(
@@ -399,9 +375,7 @@ class CurriculumEffectivenessValidator:
         start_time = datetime.now()
 
         # Simulate learning over time
-        for i, problem in enumerate(
-            problems[: min(len(problems), duration_minutes // 2)]
-        ):
+        for i, problem in enumerate(problems[: min(len(problems), duration_minutes // 2)]):
             # Simulate attempts based on difficulty and student capability
             student_skill = 0.4 + (i * 0.02)  # Gradual improvement
             difficulty_delta = abs(problem.difficulty - student_skill)
@@ -479,9 +453,7 @@ class CurriculumEffectivenessValidator:
         # Calculate metrics
         success_rate = sum(1 for o in all_outcomes if o.success) / len(all_outcomes)
         avg_attempts = statistics.mean(o.attempts for o in all_outcomes)
-        learning_efficiency = (
-            len([o for o in all_outcomes if o.success]) / duration_minutes
-        )
+        learning_efficiency = len([o for o in all_outcomes if o.success]) / duration_minutes
         retention_rate = await self._calculate_retention_rate(all_outcomes)
 
         return CurriculumExperiment(
@@ -608,9 +580,7 @@ class TestCurriculumEffectivenessValidation:
         """Test analysis of curriculum adherence to target difficulty."""
 
         # Run experiment to generate data
-        await validator.run_controlled_experiment(
-            duration_minutes=20, num_students=3, use_curriculum=True
-        )
+        await validator.run_controlled_experiment(duration_minutes=20, num_students=3, use_curriculum=True)
 
         adherence = await validator.analyze_curriculum_adherence()
 
@@ -625,13 +595,9 @@ class TestCurriculumEffectivenessValidation:
         """Test generation of comprehensive effectiveness report."""
 
         # Run multiple experiments
-        await validator.run_controlled_experiment(
-            duration_minutes=15, num_students=3, use_curriculum=True
-        )
+        await validator.run_controlled_experiment(duration_minutes=15, num_students=3, use_curriculum=True)
 
-        await validator.run_controlled_experiment(
-            duration_minutes=15, num_students=3, use_curriculum=False
-        )
+        await validator.run_controlled_experiment(duration_minutes=15, num_students=3, use_curriculum=False)
 
         report = validator.generate_effectiveness_report()
 
@@ -684,18 +650,14 @@ class TestLongTermEffectivenessTracking:
             longitudinal_results[period] = {
                 "success_rate": experiment.success_rate,
                 "efficiency": experiment.learning_efficiency,
-                "avg_difficulty": statistics.mean(experiment.difficulty_progression)
-                if experiment.difficulty_progression
-                else 0.0,
+                "avg_difficulty": (
+                    statistics.mean(experiment.difficulty_progression) if experiment.difficulty_progression else 0.0
+                ),
             }
 
         # Analyze trends
-        success_rates = [
-            longitudinal_results[p]["success_rate"] for p in longitudinal_results
-        ]
-        efficiencies = [
-            longitudinal_results[p]["efficiency"] for p in longitudinal_results
-        ]
+        success_rates = [longitudinal_results[p]["success_rate"] for p in longitudinal_results]
+        efficiencies = [longitudinal_results[p]["efficiency"] for p in longitudinal_results]
 
         # Should show learning progression over time
         assert len(success_rates) == 3
@@ -706,9 +668,7 @@ class TestLongTermEffectivenessTracking:
         initial_success = success_rates[0]
 
         logger.info(f"Longitudinal success rates: {success_rates}")
-        logger.info(
-            f"Success improvement: {final_success / max(initial_success, 0.001):.2f}x"
-        )
+        logger.info(f"Success improvement: {final_success / max(initial_success, 0.001):.2f}x")
 
         assert final_success >= 0.0  # Should maintain reasonable performance
 

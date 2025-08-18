@@ -121,17 +121,17 @@ class TestErrorTracker:
 
         # Network error
         network_error = ConnectionError("Connection failed")
-        error_id = tracker.record_error("test", "op", network_error)
+        tracker.record_error("test", "op", network_error)
         assert tracker.errors[-1].category == ErrorCategory.NETWORK
 
         # Validation error
         validation_error = ValueError("Invalid input")
-        error_id = tracker.record_error("test", "op", validation_error)
+        tracker.record_error("test", "op", validation_error)
         assert tracker.errors[-1].category == ErrorCategory.VALIDATION
 
         # Generic error
         generic_error = RuntimeError("Something went wrong")
-        error_id = tracker.record_error("test", "op", generic_error)
+        tracker.record_error("test", "op", generic_error)
         assert tracker.errors[-1].category == ErrorCategory.INTERNAL
 
     def test_component_health_updates(self):
@@ -253,9 +253,7 @@ class TestCircuitBreaker:
 
     def test_circuit_breaker_half_open_recovery(self):
         """Test circuit breaker recovery from half-open state."""
-        config = CircuitBreakerConfig(
-            failure_threshold=2, success_threshold=2, timeout_ms=100
-        )
+        config = CircuitBreakerConfig(failure_threshold=2, success_threshold=2, timeout_ms=100)
         cb = CircuitBreaker("test_service", config)
 
         # Force to half-open state
@@ -399,9 +397,7 @@ class TestRetryHandler:
     def test_retry_delay_strategies(self):
         """Test different retry delay strategies."""
         # Fixed delay
-        fixed_config = RetryConfig(
-            strategy=RetryStrategy.FIXED_DELAY, initial_delay_ms=100
-        )
+        fixed_config = RetryConfig(strategy=RetryStrategy.FIXED_DELAY, initial_delay_ms=100)
         fixed_handler = RetryHandler(fixed_config)
 
         delay1 = fixed_handler._calculate_delay(0)
@@ -409,9 +405,7 @@ class TestRetryHandler:
         assert delay1 == delay2 == 0.1  # 100ms
 
         # Exponential backoff
-        exp_config = RetryConfig(
-            strategy=RetryStrategy.EXPONENTIAL_BACKOFF, initial_delay_ms=100
-        )
+        exp_config = RetryConfig(strategy=RetryStrategy.EXPONENTIAL_BACKOFF, initial_delay_ms=100)
         exp_handler = RetryHandler(exp_config)
 
         delay1 = exp_handler._calculate_delay(0)
@@ -523,9 +517,7 @@ class TestGracefulDegradation:
         degradation = GracefulDegradation()
 
         default_response = {"status": "default", "message": "Service unavailable"}
-        response = degradation.fallback_response(
-            "service", "operation", default_response
-        )
+        response = degradation.fallback_response("service", "operation", default_response)
         assert response == default_response
 
     def test_fallback_response_offline_mode(self):
@@ -606,9 +598,7 @@ class TestHealthMonitor:
         def critical_failing_check():
             return False
 
-        critical_check = HealthCheck(
-            "critical_test", critical_failing_check, critical=True
-        )
+        critical_check = HealthCheck("critical_test", critical_failing_check, critical=True)
         monitor.register_health_check(critical_check)
 
         health = monitor.check_system_health()
@@ -766,13 +756,11 @@ class TestResilienceManager:
         manager = ResilienceManager()
 
         # Generate some activity
-        cb = manager.get_circuit_breaker("test_service")
-        rh = manager.get_retry_handler("test_service")
+        manager.get_circuit_breaker("test_service")
+        manager.get_retry_handler("test_service")
 
         # Record an error
-        manager.error_tracker.record_error(
-            "test_component", "test_op", Exception("test error")
-        )
+        manager.error_tracker.record_error("test_component", "test_op", Exception("test error"))
 
         report = manager.get_resilience_report()
 
@@ -974,9 +962,7 @@ if __name__ == "__main__":
     # Test error tracking
     print("Testing error tracking...")
     tracker = ErrorTracker()
-    error_id = tracker.record_error(
-        "test_component", "test_op", ConnectionError("test")
-    )
+    error_id = tracker.record_error("test_component", "test_op", ConnectionError("test"))
     print(f"OK Error tracking: recorded error {error_id}")
 
     # Test circuit breaker

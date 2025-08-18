@@ -141,9 +141,7 @@ async def test_bayesian_graph_rag_system():
     ]
 
     # Index documents with complete graph integration
-    print(
-        f"\n[PROCESS] Indexing {len(test_documents)} documents with graph integration..."
-    )
+    print(f"\n[PROCESS] Indexing {len(test_documents)} documents with graph integration...")
     start_time = time.perf_counter()
     indexing_stats = pipeline.index_documents(test_documents)
     indexing_time = time.perf_counter() - start_time
@@ -152,15 +150,9 @@ async def test_bayesian_graph_rag_system():
     print(f"  Documents Processed: {indexing_stats['documents_processed']}")
     print(f"  Total Chunks Created: {indexing_stats['chunks_created']}")
     print(f"  Chunks in Knowledge Graph: {indexing_stats.get('chunks_in_graph', 0)}")
-    print(
-        f"  Semantic Relationships: {indexing_stats.get('relationships_detected', 0)}"
-    )
-    print(
-        f"  Trust Propagation Time: {indexing_stats.get('trust_propagation_time_ms', 0):.1f}ms"
-    )
-    print(
-        f"  Graph Integration: {'Enabled' if indexing_stats.get('graph_integration_enabled', False) else 'Disabled'}"
-    )
+    print(f"  Semantic Relationships: {indexing_stats.get('relationships_detected', 0)}")
+    print(f"  Trust Propagation Time: {indexing_stats.get('trust_propagation_time_ms', 0):.1f}ms")
+    print(f"  Graph Integration: {'Enabled' if indexing_stats.get('graph_integration_enabled', False) else 'Disabled'}")
 
     # Test graph-enhanced retrieval with various query types
     test_queries = [
@@ -241,21 +233,15 @@ async def test_bayesian_graph_rag_system():
             print(f"    Combined Score: {best_result.score:.3f}")
             print(f"    Trust Score: {metadata.get('trust_score', 0):.3f}")
             print(f"    Centrality Score: {metadata.get('centrality_score', 0):.3f}")
-            print(
-                f"    Semantic Similarity: {metadata.get('semantic_similarity', 0):.3f}"
-            )
+            print(f"    Semantic Similarity: {metadata.get('semantic_similarity', 0):.3f}")
             print(f"    Traversal Depth: {metadata.get('traversal_depth', 0)}")
             print(f"    Relationship: {metadata.get('relationship_type', 'direct')}")
 
             # Check concept coverage
             result_text = best_result.text.lower()
-            concepts_found = sum(
-                1 for concept in expected_concepts if concept.lower() in result_text
-            )
+            concepts_found = sum(1 for concept in expected_concepts if concept.lower() in result_text)
             concept_coverage = concepts_found / len(expected_concepts)
-            print(
-                f"    Concept Coverage: {concept_coverage:.1%} ({concepts_found}/{len(expected_concepts)})"
-            )
+            print(f"    Concept Coverage: {concept_coverage:.1%} ({concepts_found}/{len(expected_concepts)})")
 
             # Show snippet
             snippet = best_result.text[:150].replace("\n", " ").strip()
@@ -265,9 +251,7 @@ async def test_bayesian_graph_rag_system():
             if metadata.get("traversal_depth", 0) > 0:
                 parent_chunk = metadata.get("parent_chunk")
                 relationship_type = metadata.get("relationship_type")
-                print(
-                    f"    Graph Traversal: Connected via '{relationship_type}' from {parent_chunk}"
-                )
+                print(f"    Graph Traversal: Connected via '{relationship_type}' from {parent_chunk}")
         else:
             print("    No results found")
 
@@ -312,18 +296,14 @@ async def test_bayesian_graph_rag_system():
 
     # Core metrics
     print("Retrieval Performance:")
-    print(
-        f"  Success Rate: {success_rate:.1f}% ({successful_retrievals}/{total_queries})"
-    )
+    print(f"  Success Rate: {success_rate:.1f}% ({successful_retrievals}/{total_queries})")
     print(f"  Average Latency: {avg_retrieval_time:.1f}ms")
     print(f"  Target Met (<100ms): {'Yes' if avg_retrieval_time < 100 else 'No'}")
 
     # Graph integration metrics
     graph_integration = performance_metrics.get("graph_integration", {})
     print("\nGraph Integration:")
-    print(
-        f"  Status: {'Active' if graph_integration.get('enabled', False) else 'Inactive'}"
-    )
+    print(f"  Status: {'Active' if graph_integration.get('enabled', False) else 'Inactive'}")
     print(f"  Chunks in Graph: {graph_integration.get('chunks_in_graph', 0)}")
     print(f"  Relationships: {graph_integration.get('relationships_detected', 0)}")
     print(f"  Trust Propagations: {graph_integration.get('trust_propagations', 0)}")
@@ -350,17 +330,13 @@ async def test_bayesian_graph_rag_system():
         rel_dist = graph_stats.get("relationship_distribution", {})
         if rel_dist:
             print("\nRelationship Types Found:")
-            for rel_type, count in sorted(
-                rel_dist.items(), key=lambda x: x[1], reverse=True
-            ):
+            for rel_type, count in sorted(rel_dist.items(), key=lambda x: x[1], reverse=True):
                 print(f"  {rel_type.title()}: {count}")
 
     # Quality metrics
     contextual_quality = performance_metrics.get("contextual_quality", {})
     print("\nContent Quality:")
-    print(
-        f"  Context Richness: {contextual_quality.get('avg_context_richness', 0):.3f}"
-    )
+    print(f"  Context Richness: {contextual_quality.get('avg_context_richness', 0):.3f}")
     print(f"  Context Coverage: {contextual_quality.get('context_coverage', 0):.1%}")
 
     # Final assessment
@@ -373,22 +349,13 @@ async def test_bayesian_graph_rag_system():
         and graph_integration.get("relationships_detected", 0) > 0
     )
 
-    trust_working = (
-        graph_integration.get("trust_propagations", 0) > 0
-        and trust_metrics.get("avg_trust_score", 0) > 0
-    )
+    trust_working = graph_integration.get("trust_propagations", 0) > 0 and trust_metrics.get("avg_trust_score", 0) > 0
 
     retrieval_working = success_rate >= 80  # 80% success target
     performance_good = avg_retrieval_time < 100  # Sub-100ms target
     context_rich = contextual_quality.get("avg_context_richness", 0) > 0.6
 
-    if (
-        graph_working
-        and trust_working
-        and retrieval_working
-        and performance_good
-        and context_rich
-    ):
+    if graph_working and trust_working and retrieval_working and performance_good and context_rich:
         print("EXCELLENT: Bayesian Graph RAG System fully operational!")
         print("  - Knowledge graph construction: Working")
         print("  - Semantic relationship detection: Working")

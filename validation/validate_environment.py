@@ -268,9 +268,7 @@ def validate_codex_environment() -> dict[str, Any]:
                         if not (min_val <= int_val <= max_val):
                             status = "OUT_OF_RANGE"
                             results["out_of_range"] += 1
-                            issues.append(
-                                f"Value must be between {min_val} and {max_val}"
-                            )
+                            issues.append(f"Value must be between {min_val} and {max_val}")
                 except ValueError:
                     status = "INVALID"
                     results["invalid_values"] += 1
@@ -287,9 +285,7 @@ def validate_codex_environment() -> dict[str, Any]:
             results["valid"] += 1
 
         # Store result (mask sensitive values)
-        display_value = (
-            "***MASKED***" if config.get("sensitive", False) and value else value
-        )
+        display_value = "***MASKED***" if config.get("sensitive", False) and value else value
         results["variables"][var_name] = {
             "value": display_value,
             "status": status,
@@ -322,18 +318,13 @@ def validate_codex_environment() -> dict[str, Any]:
 
     # Final status
     total_issues = (
-        results["missing_required"]
-        + results["invalid_values"]
-        + results["out_of_range"]
-        + results["security_issues"]
+        results["missing_required"] + results["invalid_values"] + results["out_of_range"] + results["security_issues"]
     )
     print()
     if total_issues == 0:
         print("SUCCESS: ALL ENVIRONMENT VARIABLES PASS CODEX REQUIREMENTS")
     else:
-        print(
-            f"WARNING: {total_issues} ISSUES FOUND - Review and fix before production"
-        )
+        print(f"WARNING: {total_issues} ISSUES FOUND - Review and fix before production")
 
     return results
 

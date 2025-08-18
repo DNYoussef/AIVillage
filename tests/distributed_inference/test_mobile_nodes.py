@@ -5,10 +5,7 @@ import pytest
 from src.core.p2p.p2p_node import P2PNode, PeerCapabilities
 from src.core.resources.device_profiler import DeviceProfiler
 from src.core.resources.resource_monitor import ResourceMonitor
-from src.production.distributed_inference.model_sharding_engine import (
-    ModelShardingEngine,
-    ShardingStrategy,
-)
+from src.production.distributed_inference.model_sharding_engine import ModelShardingEngine, ShardingStrategy
 
 
 @pytest.fixture
@@ -34,12 +31,8 @@ def mock_device_profiler():
 
 
 @pytest.mark.asyncio
-async def test_skip_low_battery_devices(
-    mock_p2p_node, mock_resource_monitor, mock_device_profiler
-):
-    engine = ModelShardingEngine(
-        mock_p2p_node, mock_resource_monitor, mock_device_profiler
-    )
+async def test_skip_low_battery_devices(mock_p2p_node, mock_resource_monitor, mock_device_profiler):
+    engine = ModelShardingEngine(mock_p2p_node, mock_resource_monitor, mock_device_profiler)
 
     high_peer = PeerCapabilities(
         device_id="high",
@@ -70,9 +63,7 @@ async def test_skip_low_battery_devices(
     }
 
     with (
-        patch.object(
-            ModelShardingEngine, "_analyze_model", AsyncMock(return_value=analysis)
-        ),
+        patch.object(ModelShardingEngine, "_analyze_model", AsyncMock(return_value=analysis)),
         patch.object(ModelShardingEngine, "_activate_sharding_plan", AsyncMock()),
     ):
         plan = await engine.shard_model("dummy", ShardingStrategy.MEMORY_AWARE)

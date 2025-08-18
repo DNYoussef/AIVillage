@@ -18,9 +18,7 @@ def find_backup_files():
                 {
                     "path": str(file_path),
                     "size": file_path.stat().st_size,
-                    "modified": datetime.fromtimestamp(
-                        file_path.stat().st_mtime
-                    ).isoformat(),
+                    "modified": datetime.fromtimestamp(file_path.stat().st_mtime).isoformat(),
                     "risk_level": categorize_risk(file_path),
                 }
             )
@@ -33,10 +31,7 @@ def categorize_risk(file_path) -> str:
     path_str = str(file_path).lower()
 
     # HIGH risk: Source code backups
-    if any(
-        ext in path_str
-        for ext in [".py.backup", ".js.backup", ".ts.backup", ".java.backup"]
-    ):
+    if any(ext in path_str for ext in [".py.backup", ".js.backup", ".ts.backup", ".java.backup"]):
         return "HIGH"
 
     # MEDIUM risk: Configuration backups
@@ -44,9 +39,7 @@ def categorize_risk(file_path) -> str:
         return "MEDIUM"
 
     # LOW risk: Test and migration backups
-    if any(
-        name in path_str for name in ["test", "migration", "migrate", "backup_test"]
-    ):
+    if any(name in path_str for name in ["test", "migration", "migrate", "backup_test"]):
         return "LOW"
 
     # Default to MEDIUM for unknown types

@@ -123,20 +123,14 @@ async def validate_mobile_optimization():
         state = await manager.evaluate_and_adapt(profile)
 
         # Get routing decision for a typical message
-        decision = await manager.get_transport_routing_decision(
-            message_size_bytes=5 * 1024, priority=5
-        )  # 5KB message
+        decision = await manager.get_transport_routing_decision(message_size_bytes=5 * 1024, priority=5)  # 5KB message
 
         # Display results
         print(f"   Power Mode:      {state.power_mode.value}")
         print(f"   Transport Pref:  {state.transport_preference.value}")
         print(f"   Primary Route:   {decision['primary_transport']}")
-        print(
-            f"   Chunk Size:      {state.chunking_config.effective_chunk_size()} bytes"
-        )
-        print(
-            f"   Active Policies: {', '.join(state.active_policies) if state.active_policies else 'None'}"
-        )
+        print(f"   Chunk Size:      {state.chunking_config.effective_chunk_size()} bytes")
+        print(f"   Active Policies: {', '.join(state.active_policies) if state.active_policies else 'None'}")
 
         # Validate expected behavior
         result = validate_scenario_behavior(scenario, state, decision)
@@ -280,12 +274,8 @@ async def test_chunk_size_adaptation():
         chunk_size = state.chunking_config.effective_chunk_size()
         min_expected, max_expected = config["expected_range"]
 
-        print(
-            f"RAM: {config['ram_gb']}GB, Battery: {config['battery']}%, Temp: {config['temp']}°C"
-        )
-        print(
-            f"  Chunk Size: {chunk_size} bytes (expected: {min_expected}-{max_expected})"
-        )
+        print(f"RAM: {config['ram_gb']}GB, Battery: {config['battery']}%, Temp: {config['temp']}°C")
+        print(f"  Chunk Size: {chunk_size} bytes (expected: {min_expected}-{max_expected})")
 
         if min_expected <= chunk_size <= max_expected:
             print("  Status: ✓ PASSED")
@@ -302,9 +292,7 @@ if __name__ == "__main__":
         await test_chunk_size_adaptation()
 
         if success:
-            print(
-                "\n🚀 Mobile optimization implementation ready for production deployment!"
-            )
+            print("\n🚀 Mobile optimization implementation ready for production deployment!")
             exit(0)
         else:
             print("\n🔧 Mobile optimization needs fixes before deployment.")

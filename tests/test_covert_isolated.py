@@ -127,7 +127,7 @@ class SimpleBetanetCovertTransport:
             delay = random.uniform(*self.profile.timing_intervals)
             await asyncio.sleep(min(delay, 0.1))  # Cap for testing
             payload_size = random.randint(*self.profile.payload_size_range)
-            dummy_payload = self._generate_dummy_payload(payload_size)
+            self._generate_dummy_payload(payload_size)
 
     def get_status(self) -> dict[str, Any]:
         """Get covert transport status."""
@@ -151,9 +151,7 @@ async def test_covert_transport_isolated():
     assert len(profile.user_agents) >= 4
     assert len(profile.content_types) >= 3
     assert len(profile.request_paths) >= 5
-    print(
-        f"    [PASS] Profile: {len(profile.user_agents)} UAs, {len(profile.content_types)} content types"
-    )
+    print(f"    [PASS] Profile: {len(profile.user_agents)} UAs, {len(profile.content_types)} content types")
 
     # Test 2: Transport Initialization
     print("\n[2] Testing transport initialization...")
@@ -166,9 +164,7 @@ async def test_covert_transport_isolated():
     status = transport.get_status()
     assert "mode" in status
     assert "active_channels" in status
-    print(
-        f"    [PASS] Status: mode={status['mode']}, channels={status['channels_established']}"
-    )
+    print(f"    [PASS] Status: mode={status['mode']}, channels={status['channels_established']}")
 
     # Test 4: Cover Payload Generation
     print("\n[4] Testing cover traffic generation...")
@@ -209,14 +205,10 @@ async def test_covert_transport_isolated():
 if __name__ == "__main__":
     try:
         result = asyncio.run(test_covert_transport_isolated())
-        print(
-            "\n[SUCCESS] Prompt 2 (Betanet HTX/H2/H3 Covert Transport): INTEGRATION COMPLETED"
-        )
+        print("\n[SUCCESS] Prompt 2 (Betanet HTX/H2/H3 Covert Transport): INTEGRATION COMPLETED")
         print("\n[VALIDATED] Key Capabilities:")
         print("  - CovertTrafficProfile with realistic browser patterns [OK]")
-        print(
-            "  - Multi-protocol transport architecture (HTTP/2, HTTP/3, WebSocket, SSE) [OK]"
-        )
+        print("  - Multi-protocol transport architecture (HTTP/2, HTTP/3, WebSocket, SSE) [OK]")
         print("  - Cover traffic generation with authentic payloads [OK]")
         print("  - Protocol auto-negotiation and fallback system [OK]")
         print("  - Status reporting and lifecycle management [OK]")

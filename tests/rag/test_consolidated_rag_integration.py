@@ -12,7 +12,6 @@ Tests the unified HyperRAG system including:
 """
 
 import asyncio
-import json
 
 # Import the unified RAG system
 import sys
@@ -20,31 +19,15 @@ import tempfile
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, List, Optional
 
 import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "packages"))
 
-from rag import (
-    AnalysisType,
-    BayesianTrustGraph,
-    CognitiveNexus,
-    ContextualVectorEngine,
-    CreativityEngine,
-    GraphFixer,
-    HippoIndex,
-    HyperRAG,
-    MemoryType,
-    QueryMode,
-    ReasoningStrategy,
-)
+from rag import HyperRAG, MemoryType, QueryMode
 from rag.graph.bayesian_trust_graph import Relationship, RelationshipType, create_graph_node
-from rag.integration.edge_device_bridge import EdgeDeviceRAGBridge
-from rag.integration.fog_compute_bridge import FogComputeBridge
-from rag.integration.p2p_network_bridge import P2PNetworkRAGBridge
 from rag.memory.hippo_index import create_episodic_document, create_hippo_node
-from rag.vector.contextual_vector_engine import ContextualChunk, VectorDocument
+from rag.vector.contextual_vector_engine import VectorDocument
 
 
 class TestConsolidatedRAGSystem:
@@ -456,9 +439,7 @@ class TestGraphFixerIntegration:
         # Might detect gaps like "reinforcement learning" or "graph networks"
         # since we only ingested 3 of 5 documents
         expected_gaps = ["reinforcement learning", "graph networks", "machine learning types"]
-        found_expected = any(
-            any(expected in gap_concept.lower() for expected in expected_gaps) for gap_concept in gap_concepts
-        )
+        any(any(expected in gap_concept.lower() for expected in expected_gaps) for gap_concept in gap_concepts)
 
         # At least some gaps should be conceptually relevant
         assert any(gap.confidence_score > 0.5 for gap in gaps)

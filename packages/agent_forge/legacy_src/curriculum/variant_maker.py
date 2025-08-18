@@ -250,7 +250,6 @@ class VariantMaker:
         logger.info(f"Creating {n_variants} variants for problem {base_problem.id}")
 
         variants = []
-        llm_failures = 0
 
         # Try LLM generation first
         if n_variants > 1:  # Use LLM for multiple variants
@@ -287,7 +286,6 @@ class VariantMaker:
 
             except Exception as e:
                 logger.error(f"LLM variant generation failed: {e}")
-                llm_failures = n_variants
 
         # Fill remaining with local transformations
         remaining_needed = n_variants - len(variants)

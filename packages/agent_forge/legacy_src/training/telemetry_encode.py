@@ -205,7 +205,7 @@ class TelemetryEncoder(nn.Module):
     def _positional_encode(self, features: torch.Tensor) -> torch.Tensor:
         """Apply positional encoding style transformation."""
         # features: [batch_size, num_features]
-        batch_size = features.shape[0]
+        features.shape[0]
 
         # Create sinusoidal encodings
         encodings = []

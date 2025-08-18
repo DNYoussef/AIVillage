@@ -28,9 +28,7 @@ stub_message_types = types.ModuleType("src.core.message_types")
 
 
 class _DummyMessage:
-    def __init__(
-        self, content: bytes = b"", metadata: dict | None = None, timestamp: float = 0.0
-    ):
+    def __init__(self, content: bytes = b"", metadata: dict | None = None, timestamp: float = 0.0):
         self.content = content
         self.metadata = metadata or {}
         self.timestamp = timestamp
@@ -55,13 +53,7 @@ class _DummyTransportManager:
 stub_transport_manager.TransportManager = _DummyTransportManager
 sys.modules["src.core.transport_manager"] = stub_transport_manager
 
-from agents.navigator.path_policy import (
-    EnergyMode,
-    MessageContext,
-    NavigatorAgent,
-    PathProtocol,
-    RoutingPriority,
-)
+from agents.navigator.path_policy import EnergyMode, MessageContext, NavigatorAgent, PathProtocol, RoutingPriority
 
 
 # Mock SCION classes for testing
@@ -322,9 +314,7 @@ class TestSCIONPreference(unittest.TestCase):
         self.mock_gateway.set_connectivity(healthy=True, scion_connected=True)
 
         # First path selection
-        protocol1, _ = await self.navigator.select_path(
-            destination, context, ["scion", "betanet"]
-        )
+        protocol1, _ = await self.navigator.select_path(destination, context, ["scion", "betanet"])
         self.assertEqual(protocol1, PathProtocol.SCION)
 
         # Advance time and simulate link change
@@ -350,9 +340,7 @@ class TestSCIONPreference(unittest.TestCase):
 
         # Second path selection with fast switching
         start_time = time.time() * 1000
-        protocol2, metadata2 = await self.navigator.select_path(
-            destination, context, ["scion", "betanet"]
-        )
+        protocol2, metadata2 = await self.navigator.select_path(destination, context, ["scion", "betanet"])
         switch_time = time.time() * 1000 - start_time
 
         # Verify fallback to Betanet
@@ -374,9 +362,7 @@ class TestSCIONPreference(unittest.TestCase):
 
         # Initial selection uses SCION
         self.mock_gateway.set_connectivity(healthy=True, scion_connected=True)
-        protocol1, _ = await self.navigator.select_path(
-            destination, context, ["scion", "betanet"]
-        )
+        protocol1, _ = await self.navigator.select_path(destination, context, ["scion", "betanet"])
         self.assertEqual(protocol1, PathProtocol.SCION)
 
         # Simulate link flap where SCION becomes unavailable
@@ -384,9 +370,7 @@ class TestSCIONPreference(unittest.TestCase):
         self.mock_gateway.set_connectivity(healthy=False, scion_connected=False)
 
         start_switch = time.time() * 1000
-        protocol2, _ = await self.navigator.select_path(
-            destination, context, ["scion", "betanet"]
-        )
+        protocol2, _ = await self.navigator.select_path(destination, context, ["scion", "betanet"])
         self.advance_time(10)
         switch_time = time.time() * 1000 - start_switch
 
@@ -439,9 +423,7 @@ class TestSCIONPreference(unittest.TestCase):
         self.mock_gateway.set_connectivity(healthy=True, scion_connected=True)
 
         # Execute path selection
-        protocol, metadata = await self.navigator.select_path(
-            destination, context, ["scion", "betanet"]
-        )
+        protocol, metadata = await self.navigator.select_path(destination, context, ["scion", "betanet"])
 
         # Verify SCION selected (should prefer low-latency path)
         self.assertEqual(protocol, PathProtocol.SCION)
@@ -457,9 +439,7 @@ class TestSCIONPreference(unittest.TestCase):
         self.assertGreater(scion_score, 0.7)  # Should be > 0.7 for good performance
 
         # Verify RTT EWMA was updated
-        scion_path_keys = [
-            k for k in self.navigator.path_rtt_ewma.keys() if k.startswith("scion_")
-        ]
+        scion_path_keys = [k for k in self.navigator.path_rtt_ewma.keys() if k.startswith("scion_")]
         self.assertGreater(len(scion_path_keys), 0)
 
         print(f"✅ Path scoring test passed (scion_score={scion_score:.3f})")
@@ -476,9 +456,7 @@ class TestSCIONPreference(unittest.TestCase):
         # Execute multiple path selections
         for i in range(3):
             self.advance_time(100)  # 100ms between selections
-            await self.navigator.select_path(
-                destination + f"_{i}", context, ["scion", "betanet", "bitchat"]
-            )
+            await self.navigator.select_path(destination + f"_{i}", context, ["scion", "betanet", "bitchat"])
 
         # Verify receipts contain all required data
         receipts = self.navigator.get_receipts()
@@ -540,9 +518,7 @@ class TestSCIONPreference(unittest.TestCase):
         self.assertEqual(stats["receipts_with_scion"], 5)
         self.assertGreater(stats["path_rtt_ewma_entries"], 0)
 
-        print(
-            f"✅ SCION statistics test passed ({stats['scion_selections']} selections)"
-        )
+        print(f"✅ SCION statistics test passed ({stats['scion_selections']} selections)")
 
 
 class TestSCIONPreferenceRunner:
@@ -628,18 +604,14 @@ async def test_link_flap_switch_creates_receipts():
     context = MessageContext(size_bytes=1024, priority=8, requires_realtime=True)
 
     mock_gateway.set_connectivity(healthy=True, scion_connected=True)
-    protocol1, _ = await navigator.select_path(
-        destination, context, ["scion", "betanet"]
-    )
+    protocol1, _ = await navigator.select_path(destination, context, ["scion", "betanet"])
     assert protocol1 == PathProtocol.SCION
 
     mock_gateway.set_connectivity(healthy=False, scion_connected=False)
     navigator.scion_path_cache.clear()
     navigator.routing_decisions.clear()
     start_switch = time.time() * 1000
-    protocol2, _ = await navigator.select_path(
-        destination, context, ["scion", "betanet"]
-    )
+    protocol2, _ = await navigator.select_path(destination, context, ["scion", "betanet"])
     switch_time = time.time() * 1000 - start_switch
 
     assert protocol2 != PathProtocol.SCION

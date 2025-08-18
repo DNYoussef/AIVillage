@@ -6,10 +6,7 @@ from core.evidence import Chunk, ConfidenceTier, EvidencePack
 def _make(scores):
     return EvidencePack(
         query="q",
-        chunks=[
-            Chunk(id=str(i), text="t", score=s, source_uri="https://e.com")
-            for i, s in enumerate(scores)
-        ],
+        chunks=[Chunk(id=str(i), text="t", score=s, source_uri="https://e.com") for i, s in enumerate(scores)],
     )
 
 

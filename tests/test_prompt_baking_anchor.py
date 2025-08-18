@@ -8,7 +8,6 @@ if importlib.util.find_spec("torch") is None:
 from types import SimpleNamespace
 
 import torch
-
 from agent_forge.prompt_baking.baker import bake
 from agent_forge.prompt_baking.loader import inject_morality
 from agent_forge.prompt_baking.prompts import morality_v1
@@ -53,9 +52,7 @@ class DummyModel(torch.nn.Module):
         logits = self.head(embeds)
         loss = None
         if labels is not None:
-            loss = torch.nn.functional.cross_entropy(
-                logits.view(-1, logits.size(-1)), labels.view(-1)
-            )
+            loss = torch.nn.functional.cross_entropy(logits.view(-1, logits.size(-1)), labels.view(-1))
         return SimpleNamespace(loss=loss, logits=logits)
 
     def get_input_embeddings(self):

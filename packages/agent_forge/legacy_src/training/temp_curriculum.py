@@ -528,7 +528,7 @@ class TeacherConsistency:
             student_logits = student_logits[..., :min_size]
 
         # Compute KL divergence
-        student_probs = torch.softmax(student_logits, dim=-1)
+        torch.softmax(student_logits, dim=-1)
         kl_div = torch.kl_div(
             torch.log_softmax(student_logits, dim=-1),
             teacher_probs,

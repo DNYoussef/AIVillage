@@ -12,13 +12,8 @@ import unittest
 from pathlib import Path
 from unittest.mock import Mock, patch
 
-from src.production.evolution.evomerge.bench_orchestrator import (
-    BenchmarkOrchestrator,
-    determine_model_suite,
-)
-from src.production.evolution.evomerge.evolutionary_tournament import (
-    EvolutionaryTournament,
-)
+from src.production.evolution.evomerge.bench_orchestrator import BenchmarkOrchestrator, determine_model_suite
+from src.production.evolution.evomerge.evolutionary_tournament import EvolutionaryTournament
 
 
 class TestBenchmarkOrchestrator(unittest.TestCase):
@@ -56,9 +51,7 @@ class TestBenchmarkOrchestrator(unittest.TestCase):
         orchestrator = BenchmarkOrchestrator("test", wandb_mode="disabled")
 
         self.assertEqual(orchestrator.suite_name, "test")
-        self.assertEqual(
-            orchestrator.suite_config.objectives, ["mmlu_score", "gsm8k_score"]
-        )
+        self.assertEqual(orchestrator.suite_config.objectives, ["mmlu_score", "gsm8k_score"])
         self.assertEqual(len(orchestrator.suite_config.task_groups), 1)
 
     def test_get_task_list(self):
@@ -73,14 +66,10 @@ class TestBenchmarkOrchestrator(unittest.TestCase):
         """Test mapping objectives to result keys."""
         orchestrator = BenchmarkOrchestrator("test", wandb_mode="disabled")
 
-        mock_results = {
-            "results": {"mmlu": {"acc": 0.85}, "gsm8k": {"exact_match": 0.72}}
-        }
+        mock_results = {"results": {"mmlu": {"acc": 0.85}, "gsm8k": {"exact_match": 0.72}}}
 
         mmlu_key = orchestrator._map_objective_to_result_key("mmlu_score", mock_results)
-        gsm8k_key = orchestrator._map_objective_to_result_key(
-            "gsm8k_score", mock_results
-        )
+        gsm8k_key = orchestrator._map_objective_to_result_key("gsm8k_score", mock_results)
 
         self.assertEqual(mmlu_key, "mmlu")
         self.assertEqual(gsm8k_key, "gsm8k")
@@ -99,9 +88,7 @@ class TestBenchmarkOrchestrator(unittest.TestCase):
         scores = orchestrator._extract_objective_scores(mock_results)
 
         self.assertEqual(scores["mmlu_score"], 0.85)  # Should prefer 'acc'
-        self.assertEqual(
-            scores["gsm8k_score"], 0.70
-        )  # Should prefer 'acc' over 'exact_match'
+        self.assertEqual(scores["gsm8k_score"], 0.70)  # Should prefer 'acc' over 'exact_match'
 
 
 class TestModelSuiteDetection(unittest.TestCase):
@@ -168,11 +155,7 @@ class TestEvolutionaryTournament(unittest.TestCase):
 
     def setUp(self):
         """Set up test environment."""
-        from src.production.evolution.evomerge.config import (
-            Configuration,
-            EvolutionSettings,
-            MergeSettings,
-        )
+        from src.production.evolution.evomerge.config import Configuration, EvolutionSettings, MergeSettings
 
         self.config = Configuration(
             models=[],
@@ -199,12 +182,8 @@ class TestEvolutionaryTournament(unittest.TestCase):
         should_stop = tournament.should_early_stop(fitness_history, 0.5, 3)
         self.assertTrue(should_stop)
 
-    @patch(
-        "src.production.evolution.evomerge.evolutionary_tournament.AdvancedModelMerger"
-    )
-    @patch(
-        "src.production.evolution.evomerge.evolutionary_tournament.BenchmarkOrchestrator"
-    )
+    @patch("src.production.evolution.evomerge.evolutionary_tournament.AdvancedModelMerger")
+    @patch("src.production.evolution.evomerge.evolutionary_tournament.BenchmarkOrchestrator")
     def test_create_generation_children(self, mock_orchestrator, mock_merger):
         """Test generation children creation."""
         tournament = EvolutionaryTournament(self.config)
@@ -221,16 +200,14 @@ class TestEvolutionaryTournament(unittest.TestCase):
             parents = ["/path/parent1", "/path/parent2", "/path/parent3"]
 
             with patch("shutil.move"), patch("shutil.copytree"):
-                children = tournament.create_generation_children(
-                    parents, generation=0, phase="pre", target_count=3
-                )
+                children = tournament.create_generation_children(parents, generation=0, phase="pre", target_count=3)
 
             self.assertEqual(len(children), 3)
             self.assertTrue(all("child_" in child for child in children))
 
     def test_fitness_calculation(self):
         """Test aggregated fitness calculation in evolve method."""
-        tournament = EvolutionaryTournament(self.config)
+        EvolutionaryTournament(self.config)
 
         # Mock scores for testing
         mock_scores = [
@@ -253,19 +230,11 @@ class TestEvolutionaryTournament(unittest.TestCase):
 class TestIntegrationScenarios(unittest.TestCase):
     """Integration tests for complete EvoMerge scenarios."""
 
-    @patch(
-        "src.production.evolution.evomerge.evolutionary_tournament.BenchmarkOrchestrator"
-    )
-    @patch(
-        "src.production.evolution.evomerge.evolutionary_tournament.AdvancedModelMerger"
-    )
+    @patch("src.production.evolution.evomerge.evolutionary_tournament.BenchmarkOrchestrator")
+    @patch("src.production.evolution.evomerge.evolutionary_tournament.AdvancedModelMerger")
     def test_dual_phase_benchmarking(self, mock_merger, mock_orchestrator):
         """Test complete dual-phase benchmarking workflow."""
-        from src.production.evolution.evomerge.config import (
-            Configuration,
-            EvolutionSettings,
-            MergeSettings,
-        )
+        from src.production.evolution.evomerge.config import Configuration, EvolutionSettings, MergeSettings
 
         config = Configuration(
             models=[],
@@ -299,9 +268,7 @@ class TestIntegrationScenarios(unittest.TestCase):
                     [f"/tmp/post_child_{i}" for i in range(8)],  # post phase
                 ]
 
-                with patch(
-                    "src.production.evolution.evomerge.evolutionary_tournament.nsga2_select"
-                ) as mock_nsga:
+                with patch("src.production.evolution.evomerge.evolutionary_tournament.nsga2_select") as mock_nsga:
                     mock_nsga.side_effect = [
                         (
                             [f"/tmp/pre_child_{i}" for i in range(3)],
@@ -313,24 +280,18 @@ class TestIntegrationScenarios(unittest.TestCase):
                         ),  # post selection
                     ]
 
-                    with patch.object(
-                        tournament, "create_initial_population"
-                    ) as mock_init:
+                    with patch.object(tournament, "create_initial_population") as mock_init:
                         mock_init.return_value = [
                             "/tmp/parent1",
                             "/tmp/parent2",
                             "/tmp/parent3",
                         ]
 
-                        with patch.object(
-                            tournament, "calculate_diversity"
-                        ) as mock_div:
+                        with patch.object(tournament, "calculate_diversity") as mock_div:
                             mock_div.return_value = 0.5
 
                             # Run single generation
-                            result = tournament.evolve(
-                                max_gens=1, suite="general", phase_both=True
-                            )
+                            tournament.evolve(max_gens=1, suite="general", phase_both=True)
 
                             # Verify both phases were executed
                             self.assertEqual(mock_create.call_count, 2)

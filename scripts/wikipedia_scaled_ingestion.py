@@ -27,23 +27,14 @@ from tqdm import tqdm
 sys.path.insert(0, str(Path(__file__).parent.parent))
 sys.path.insert(
     0,
-    str(
-        Path(__file__).parent.parent
-        / "src"
-        / "production"
-        / "rag"
-        / "rag_system"
-        / "core"
-    ),
+    str(Path(__file__).parent.parent / "src" / "production" / "rag" / "rag_system" / "core"),
 )
 
 from bayesrag_codex_enhanced import BayesRAGEnhancedPipeline
 from codex_rag_integration import Document
 
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -140,8 +131,7 @@ class WikipediaScaledIngestion:
                     self.failed_articles = set(progress.get("failed", []))
 
                 logger.info(
-                    f"Loaded progress: {len(self.processed_articles)} processed, "
-                    f"{len(self.failed_articles)} failed"
+                    f"Loaded progress: {len(self.processed_articles)} processed, " f"{len(self.failed_articles)} failed"
                 )
             except Exception as e:
                 logger.warning(f"Failed to load progress: {e}")
@@ -181,10 +171,7 @@ class WikipediaScaledIngestion:
             search_results = wikipedia.search(category, results=limit)
 
             for title in search_results:
-                if (
-                    title not in self.processed_articles
-                    and title not in self.failed_articles
-                ):
+                if title not in self.processed_articles and title not in self.failed_articles:
                     articles.append(title)
 
             logger.info(f"Found {len(articles)} new articles in category: {category}")
@@ -228,9 +215,7 @@ class WikipediaScaledIngestion:
                 categories=categories,
                 links=links,
                 word_count=word_count,
-                revision_id=(
-                    str(page.revision_id) if hasattr(page, "revision_id") else None
-                ),
+                revision_id=(str(page.revision_id) if hasattr(page, "revision_id") else None),
             )
 
             return article
@@ -273,9 +258,7 @@ class WikipediaScaledIngestion:
 
         return trust_score
 
-    def create_document_from_article(
-        self, article: WikipediaArticle, trust_score: float
-    ) -> Document:
+    def create_document_from_article(self, article: WikipediaArticle, trust_score: float) -> Document:
         """Convert Wikipedia article to CODEX Document format."""
         # Create metadata
         metadata = {
@@ -301,9 +284,7 @@ class WikipediaScaledIngestion:
 
         return doc
 
-    async def process_article_batch(
-        self, articles: list[WikipediaArticle]
-    ) -> list[Document]:
+    async def process_article_batch(self, articles: list[WikipediaArticle]) -> list[Document]:
         """Process a batch of articles in parallel."""
         documents = []
 
@@ -317,9 +298,7 @@ class WikipediaScaledIngestion:
                 documents.append(doc)
                 self.stats.average_trust_score += trust_score
             else:
-                logger.debug(
-                    f"Article '{article.title}' filtered out: trust_score={trust_score:.2f}"
-                )
+                logger.debug(f"Article '{article.title}' filtered out: trust_score={trust_score:.2f}")
 
         return documents
 
@@ -335,9 +314,7 @@ class WikipediaScaledIngestion:
         # Calculate articles per category
         articles_per_category = max(10, target_count // len(self.CATEGORIES))
 
-        logger.info(
-            f"Target: {target_count} articles across {len(self.CATEGORIES)} categories"
-        )
+        logger.info(f"Target: {target_count} articles across {len(self.CATEGORIES)} categories")
         logger.info(f"Fetching ~{articles_per_category} articles per category")
 
         all_titles = []
@@ -345,9 +322,7 @@ class WikipediaScaledIngestion:
         # Fetch article titles from each category
         with tqdm(total=len(self.CATEGORIES), desc="Fetching categories") as pbar:
             for category in self.CATEGORIES:
-                titles = self.fetch_articles_by_category(
-                    category, articles_per_category
-                )
+                titles = self.fetch_articles_by_category(category, articles_per_category)
                 all_titles.extend(titles)
                 pbar.update(1)
 
@@ -358,17 +333,14 @@ class WikipediaScaledIngestion:
 
         with tqdm(total=len(all_titles), desc="Processing articles") as pbar:
             # Use thread pool for parallel fetching
-            with concurrent.futures.ThreadPoolExecutor(
-                max_workers=self.max_workers
-            ) as executor:
+            with concurrent.futures.ThreadPoolExecutor(max_workers=self.max_workers) as executor:
                 # Process in chunks
                 for i in range(0, len(all_titles), self.batch_size):
                     batch_titles = all_titles[i : i + self.batch_size]
 
                     # Fetch articles in parallel
                     future_to_title = {
-                        executor.submit(self.fetch_article_content, title): title
-                        for title in batch_titles
+                        executor.submit(self.fetch_article_content, title): title for title in batch_titles
                     }
 
                     articles = []
@@ -402,12 +374,8 @@ class WikipediaScaledIngestion:
                             # Index documents in pipeline
                             try:
                                 index_stats = self.pipeline.index_documents(documents)
-                                self.stats.total_chunks += index_stats.get(
-                                    "chunks_created", 0
-                                )
-                                self.stats.total_embeddings += index_stats.get(
-                                    "vectors_indexed", 0
-                                )
+                                self.stats.total_chunks += index_stats.get("chunks_created", 0)
+                                self.stats.total_embeddings += index_stats.get("vectors_indexed", 0)
                                 processed_count += len(documents)
 
                             except Exception as e:
@@ -440,9 +408,7 @@ class WikipediaScaledIngestion:
         logger.info(f"Total embeddings: {self.stats.total_embeddings}")
         logger.info(f"Average trust score: {self.stats.average_trust_score:.3f}")
         logger.info(f"Processing time: {self.stats.processing_time:.1f} seconds")
-        logger.info(
-            f"Articles per second: {self.stats.total_articles / self.stats.processing_time:.2f}"
-        )
+        logger.info(f"Articles per second: {self.stats.total_articles / self.stats.processing_time:.2f}")
 
         return self.stats
 
@@ -474,9 +440,7 @@ class WikipediaScaledIngestion:
 
         for query in test_queries:
             try:
-                results, metrics = await self.pipeline.retrieve_with_trust(
-                    query=query, k=3
-                )
+                results, metrics = await self.pipeline.retrieve_with_trust(query=query, k=3)
 
                 verification["sample_queries"].append(
                     {
@@ -502,9 +466,7 @@ async def main():
     data_dir = Path("data/wikipedia_scaled")
 
     # Initialize ingestion pipeline
-    ingestion = WikipediaScaledIngestion(
-        data_dir=data_dir, batch_size=50, max_workers=8, resume=True
-    )
+    ingestion = WikipediaScaledIngestion(data_dir=data_dir, batch_size=50, max_workers=8, resume=True)
 
     # Run ingestion
     print(f"Starting ingestion of {target_articles} Wikipedia articles...")

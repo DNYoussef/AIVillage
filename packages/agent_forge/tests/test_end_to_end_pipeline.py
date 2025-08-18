@@ -223,10 +223,10 @@ class TestEndToEndPipeline:
             if len(results) != 2:
                 raise ValueError(f"Expected 2 results (stopped at failure), got {len(results)}")
 
-            if results[0].success != True:
+            if results[0].success is not True:
                 raise ValueError("First phase should have succeeded")
 
-            if results[1].success != False:
+            if results[1].success is not False:
                 raise ValueError("Second phase should have failed")
 
             self.log_result(test_name, True, "Pipeline correctly stopped at failing phase")

@@ -12,17 +12,7 @@ import time
 sys.path.append("src/production/rag/rag_system/core")
 
 try:
-    from codex_rag_integration import Document
-    from contextual_tagging import ContentDomain, ReadingLevel
-    from enhanced_query_processor import (
-        ComplexityLevel,
-        ContextLevel,
-        EnhancedQueryProcessor,
-        QueryDecomposition,
-        QueryIntent,
-        SynthesizedAnswer,
-        TemporalRequirement,
-    )
+    from enhanced_query_processor import EnhancedQueryProcessor
     from graph_enhanced_rag_pipeline import GraphEnhancedRAGPipeline
 
     async def test_query_decomposition_only():
@@ -85,9 +75,7 @@ try:
                     confidence,
                 ) = query_processor._classify_intent(normalized)
                 context_level = query_processor._determine_context_level(normalized, {})
-                complexity = query_processor._assess_complexity(
-                    normalized, key_concepts
-                )
+                complexity = query_processor._assess_complexity(normalized, key_concepts)
                 temporal = query_processor._analyze_temporal_requirements(normalized)
 
                 processing_time = (time.perf_counter() - start_time) * 1000
@@ -95,9 +83,7 @@ try:
                 print(f"  Processing time: {processing_time:.1f}ms")
                 print(f"  Normalized: {normalized}")
                 print(f"  Key concepts: {key_concepts}")
-                print(
-                    f"  Primary intent: {primary_intent.value} (confidence: {confidence:.2f})"
-                )
+                print(f"  Primary intent: {primary_intent.value} (confidence: {confidence:.2f})")
                 print(f"  Context level: {context_level.value}")
                 print(f"  Complexity: {complexity.value}")
                 print(f"  Temporal: {temporal.value}")
@@ -138,12 +124,8 @@ try:
         print("=" * 55)
 
         success_rate = successful_decompositions / len(test_queries)
-        print(
-            f"Individual component tests: {successful_decompositions}/{len(test_queries)} ({success_rate:.1%})"
-        )
-        print(
-            f"Full decomposition test: {'PASS' if full_decomposition_success else 'FAIL'}"
-        )
+        print(f"Individual component tests: {successful_decompositions}/{len(test_queries)} ({success_rate:.1%})")
+        print(f"Full decomposition test: {'PASS' if full_decomposition_success else 'FAIL'}")
 
         # Feature validation
         print("\nFeatures Tested:")
@@ -153,9 +135,7 @@ try:
         print("  - Context level detection: Working")
         print("  - Complexity assessment: Working")
         print("  - Temporal analysis: Working")
-        print(
-            f"  - Full decomposition: {'Working' if full_decomposition_success else 'Failed'}"
-        )
+        print(f"  - Full decomposition: {'Working' if full_decomposition_success else 'Failed'}")
 
         if success_rate >= 0.8 and full_decomposition_success:
             print("\nSUCCESS: Enhanced query decomposition working!")
@@ -200,15 +180,11 @@ except ImportError as e:
             query_lower = query.lower()
 
             # Test factual patterns
-            factual_matches = sum(
-                len(re.findall(pattern, query_lower, re.IGNORECASE))
-                for pattern in factual_patterns
-            )
+            factual_matches = sum(len(re.findall(pattern, query_lower, re.IGNORECASE)) for pattern in factual_patterns)
 
             # Test explanatory patterns
             explanatory_matches = sum(
-                len(re.findall(pattern, query_lower, re.IGNORECASE))
-                for pattern in explanatory_patterns
+                len(re.findall(pattern, query_lower, re.IGNORECASE)) for pattern in explanatory_patterns
             )
 
             print(f"Query: {query}")

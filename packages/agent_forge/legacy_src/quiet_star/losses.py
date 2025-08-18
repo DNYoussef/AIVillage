@@ -227,9 +227,6 @@ class QuietSTaRLoss(nn.Module):
         batch_size = input_ids.size(0)
 
         # Get special tokens for detection
-        sot_token = self.config.start_of_thought_token
-        eot_token = self.config.end_of_thought_token
-        not_token = self.config.no_thought_token
 
         total_leak_penalty = torch.tensor(0.0, device=device, requires_grad=True)
         total_leaks = 0

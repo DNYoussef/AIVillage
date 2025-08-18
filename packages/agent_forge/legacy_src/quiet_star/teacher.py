@@ -142,7 +142,7 @@ class TeacherPromptGenerator:
         if not suitable_prompts:
             suitable_prompts = self.reflection_prompts
 
-        prompt_template = random.choice(suitable_prompts)
+        random.choice(suitable_prompts)
 
         # Generate reflection content
         reflection_starters = [

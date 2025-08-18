@@ -63,9 +63,7 @@ class CoverageTarget:
     current_percent: float
     priority: int
     test_files: list[str] = field(default_factory=list)
-    missing_coverage: list[str] = field(
-        default_factory=list
-    )  # Uncovered lines/functions
+    missing_coverage: list[str] = field(default_factory=list)  # Uncovered lines/functions
 
 
 class CoverageAnalyzer:
@@ -117,21 +115,14 @@ class CoverageAnalyzer:
                 try:
                     file_path = Path(filename)
                     relative_path = file_path.relative_to(self.project_root)
-                    module_name = (
-                        str(relative_path)
-                        .replace("/", ".")
-                        .replace("\\", ".")
-                        .replace(".py", "")
-                    )
+                    module_name = str(relative_path).replace("/", ".").replace("\\", ".").replace(".py", "")
 
                     # Get detailed analysis
                     _, executable_lines, missing_lines, _ = analysis(filename)
 
                     total_lines = len(executable_lines)
                     covered_lines = total_lines - len(missing_lines)
-                    coverage_pct = (
-                        (covered_lines / total_lines * 100) if total_lines > 0 else 0.0
-                    )
+                    coverage_pct = (covered_lines / total_lines * 100) if total_lines > 0 else 0.0
 
                     metrics = CoverageMetrics(
                         module_name=module_name,
@@ -284,9 +275,7 @@ class CoverageAnalyzer:
                 critical_functions_total=critical_funcs,
                 critical_functions_covered=int(critical_funcs * coverage_pct / 100),
                 integration_points_total=max(1, critical_funcs // 3),
-                integration_points_covered=max(
-                    0, int(critical_funcs // 3 * coverage_pct / 100)
-                ),
+                integration_points_covered=max(0, int(critical_funcs // 3 * coverage_pct / 100)),
                 complexity_score=min(5.0, total / 30.0),
                 risk_score=max(0.0, 1.0 - coverage_pct / 100.0),
                 priority=priority,
@@ -301,16 +290,12 @@ class CoverageAnalyzer:
 
         return (covered_lines / total_lines * 100) if total_lines > 0 else 0.0
 
-    def identify_coverage_gaps(
-        self, metrics: dict[str, CoverageMetrics]
-    ) -> list[CoverageTarget]:
+    def identify_coverage_gaps(self, metrics: dict[str, CoverageMetrics]) -> list[CoverageTarget]:
         """Identify key coverage gaps and create improvement targets."""
         gaps = []
 
         # Priority 1: Critical components below 30%
-        critical_gaps = [
-            m for m in metrics.values() if m.priority <= 2 and m.coverage_percent < 30.0
-        ]
+        critical_gaps = [m for m in metrics.values() if m.priority <= 2 and m.coverage_percent < 30.0]
 
         for metric in critical_gaps:
             target = CoverageTarget(
@@ -323,11 +308,7 @@ class CoverageAnalyzer:
             gaps.append(target)
 
         # Priority 2: Integration components below 40%
-        integration_gaps = [
-            m
-            for m in metrics.values()
-            if m.integration_points_total > 0 and m.coverage_percent < 40.0
-        ]
+        integration_gaps = [m for m in metrics.values() if m.integration_points_total > 0 and m.coverage_percent < 40.0]
 
         for metric in integration_gaps:
             if metric.module_name not in [g.component for g in gaps]:
@@ -387,9 +368,7 @@ class CoverageHarness:
             print(f"    Target already achieved! Current: {baseline_coverage:.1f}%")
             strategy = "maintain"
         else:
-            print(
-                f"    Improvement needed: {total_improvement_needed:.1f} percentage points"
-            )
+            print(f"    Improvement needed: {total_improvement_needed:.1f} percentage points")
             strategy = "improve"
 
         # Step 4: Generate targeted tests
@@ -404,9 +383,7 @@ class CoverageHarness:
 
         if strategy == "improve":
             improvements = self._implement_coverage_improvements(coverage_gaps[:5])
-            print(
-                f"    Coverage improvements implemented: {improvements['improvements_count']}"
-            )
+            print(f"    Coverage improvements implemented: {improvements['improvements_count']}")
         else:
             improvements = {"improvements_count": 0, "coverage_boost": 0.0}
 
@@ -415,9 +392,7 @@ class CoverageHarness:
 
         # Simulate post-improvement coverage
         projected_coverage = (
-            baseline_coverage
-            + generated_tests["expected_boost"]
-            + improvements.get("coverage_boost", 0.0)
+            baseline_coverage + generated_tests["expected_boost"] + improvements.get("coverage_boost", 0.0)
         )
         actual_target_achieved = projected_coverage >= self.target_coverage
 
@@ -445,9 +420,7 @@ class CoverageHarness:
             "components_analyzed": len(baseline_metrics),
         }
 
-    def _generate_strategic_tests(
-        self, priority_gaps: list[CoverageTarget]
-    ) -> dict[str, Any]:
+    def _generate_strategic_tests(self, priority_gaps: list[CoverageTarget]) -> dict[str, Any]:
         """Generate strategic tests for priority coverage gaps."""
         test_templates = {
             "integration": [
@@ -495,9 +468,7 @@ class CoverageHarness:
             "templates_used": list(test_templates.keys()),
         }
 
-    def _implement_coverage_improvements(
-        self, priority_gaps: list[CoverageTarget]
-    ) -> dict[str, Any]:
+    def _implement_coverage_improvements(self, priority_gaps: list[CoverageTarget]) -> dict[str, Any]:
         """Implement actual coverage improvements for priority gaps."""
         improvements_count = 0
         coverage_boost = 0.0
@@ -505,10 +476,7 @@ class CoverageHarness:
         for gap in priority_gaps:
             # Create targeted test file
             test_file_path = (
-                self.project_root
-                / "tests"
-                / "coverage"
-                / f"test_{gap.component.split('.')[-1]}_coverage.py"
+                self.project_root / "tests" / "coverage" / f"test_{gap.component.split('.')[-1]}_coverage.py"
             )
 
             if not test_file_path.parent.exists():
@@ -638,9 +606,7 @@ def test_coverage_harness_generated():
 
 
 # Convenience functions
-def run_coverage_campaign(
-    project_root: Path = None, target: float = 30.0
-) -> dict[str, Any]:
+def run_coverage_campaign(project_root: Path = None, target: float = 30.0) -> dict[str, Any]:
     """Run complete coverage improvement campaign."""
     if project_root is None:
         project_root = Path.cwd()

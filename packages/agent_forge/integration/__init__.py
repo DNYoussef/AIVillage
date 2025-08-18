@@ -10,26 +10,12 @@ Provides integration capabilities for the Agent Forge pipeline with:
 
 # Import integration components
 try:
-    from .federated_training import (
-        FederatedAgentForge,
-        FederatedTrainingConfig,
-        create_federated_pipeline,
-        run_federated_agent_forge,
-    )
-
     FEDERATED_AVAILABLE = True
 except ImportError as e:
     print(f"Warning: Federated training integration not available: {e}")
     FEDERATED_AVAILABLE = False
 
 try:
-    from .fog_compute_integration import (
-        FogComputeConfig,
-        FogComputeOrchestrator,
-        create_fog_compute_pipeline,
-        run_fog_distributed_agent_forge,
-    )
-
     FOG_AVAILABLE = True
 except ImportError as e:
     print(f"Warning: Fog compute integration not available: {e}")

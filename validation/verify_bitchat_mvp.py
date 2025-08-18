@@ -122,9 +122,7 @@ class BitChatVerifier:
             lambda: self.check_ios_manager(),
         )
 
-        ios_results["ui_tests"] = self.run_test(
-            "iOS UI test suite complete", lambda: self.check_ios_tests()
-        )
+        ios_results["ui_tests"] = self.run_test("iOS UI test suite complete", lambda: self.check_ios_tests())
 
         ios_results["multipeer_connectivity"] = self.run_test(
             "MultipeerConnectivity integration implemented",
@@ -235,10 +233,7 @@ class BitChatVerifier:
     # Individual test methods
     def check_android_service(self) -> bool:
         """Check Android BitChatService implementation"""
-        service_file = (
-            self.project_root
-            / "android/app/src/main/java/com/aivillage/bitchat/BitChatService.kt"
-        )
+        service_file = self.project_root / "android/app/src/main/java/com/aivillage/bitchat/BitChatService.kt"
 
         if not service_file.exists():
             self.log(f"Android service file not found: {service_file}", "ERROR")
@@ -264,9 +259,7 @@ class BitChatVerifier:
                 missing_components.append(component)
 
         if missing_components:
-            self.log(
-                f"Missing components in Android service: {missing_components}", "ERROR"
-            )
+            self.log(f"Missing components in Android service: {missing_components}", "ERROR")
             return False
 
         # Check file size (should be substantial implementation)
@@ -282,8 +275,7 @@ class BitChatVerifier:
     def check_android_tests(self) -> bool:
         """Check Android instrumented test suite"""
         test_file = (
-            self.project_root
-            / "android/app/src/androidTest/java/com/aivillage/bitchat/BitChatInstrumentedTest.kt"
+            self.project_root / "android/app/src/androidTest/java/com/aivillage/bitchat/BitChatInstrumentedTest.kt"
         )
 
         if not test_file.exists():
@@ -320,10 +312,7 @@ class BitChatVerifier:
 
     def check_nearby_connections(self) -> bool:
         """Check Nearby Connections implementation"""
-        service_file = (
-            self.project_root
-            / "android/app/src/main/java/com/aivillage/bitchat/BitChatService.kt"
-        )
+        service_file = self.project_root / "android/app/src/main/java/com/aivillage/bitchat/BitChatService.kt"
 
         if not service_file.exists():
             return False
@@ -333,10 +322,7 @@ class BitChatVerifier:
 
     def check_ble_implementation(self) -> bool:
         """Check BLE beacon implementation"""
-        service_file = (
-            self.project_root
-            / "android/app/src/main/java/com/aivillage/bitchat/BitChatService.kt"
-        )
+        service_file = self.project_root / "android/app/src/main/java/com/aivillage/bitchat/BitChatService.kt"
 
         if not service_file.exists():
             return False
@@ -353,24 +339,17 @@ class BitChatVerifier:
 
     def check_store_forward(self) -> bool:
         """Check store-and-forward queue implementation"""
-        service_file = (
-            self.project_root
-            / "android/app/src/main/java/com/aivillage/bitchat/BitChatService.kt"
-        )
+        service_file = self.project_root / "android/app/src/main/java/com/aivillage/bitchat/BitChatService.kt"
 
         if not service_file.exists():
             return False
 
         content = service_file.read_text()
-        return (
-            "messageQueue" in content and "seenMessages" in content and "TTL" in content
-        )
+        return "messageQueue" in content and "seenMessages" in content and "TTL" in content
 
     def check_ios_manager(self) -> bool:
         """Check iOS BitChatManager implementation"""
-        manager_file = (
-            self.project_root / "ios/Bitchat/Sources/Bitchat/BitChatManager.swift"
-        )
+        manager_file = self.project_root / "ios/Bitchat/Sources/Bitchat/BitChatManager.swift"
 
         if not manager_file.exists():
             return False
@@ -391,9 +370,7 @@ class BitChatVerifier:
 
     def check_ios_tests(self) -> bool:
         """Check iOS UI test suite"""
-        test_file = (
-            self.project_root / "ios/Bitchat/Tests/BitchatUITests/BitChatUITests.swift"
-        )
+        test_file = self.project_root / "ios/Bitchat/Tests/BitchatUITests/BitChatUITests.swift"
 
         if not test_file.exists():
             return False
@@ -410,9 +387,7 @@ class BitChatVerifier:
 
     def check_multipeer_connectivity(self) -> bool:
         """Check MultipeerConnectivity integration"""
-        manager_file = (
-            self.project_root / "ios/Bitchat/Sources/Bitchat/BitChatManager.swift"
-        )
+        manager_file = self.project_root / "ios/Bitchat/Sources/Bitchat/BitChatManager.swift"
 
         if not manager_file.exists():
             return False
@@ -429,9 +404,7 @@ class BitChatVerifier:
 
     def check_background_handling(self) -> bool:
         """Check background/foreground lifecycle handling"""
-        manager_file = (
-            self.project_root / "ios/Bitchat/Sources/Bitchat/BitChatManager.swift"
-        )
+        manager_file = self.project_root / "ios/Bitchat/Sources/Bitchat/BitChatManager.swift"
 
         if not manager_file.exists():
             return False
@@ -449,19 +422,13 @@ class BitChatVerifier:
 
     def check_chunked_messaging(self) -> bool:
         """Check chunked message delivery implementation"""
-        manager_file = (
-            self.project_root / "ios/Bitchat/Sources/Bitchat/BitChatManager.swift"
-        )
+        manager_file = self.project_root / "ios/Bitchat/Sources/Bitchat/BitChatManager.swift"
 
         if not manager_file.exists():
             return False
 
         content = manager_file.read_text()
-        return (
-            "ChunkedMessage" in content
-            and "maxChunkSize" in content
-            and "256" in content
-        )
+        return "ChunkedMessage" in content and "maxChunkSize" in content and "256" in content
 
     def check_ios_readme(self) -> bool:
         """Check iOS README documentation"""
@@ -656,9 +623,7 @@ class BitChatVerifier:
             if not (self.project_root / build_file).exists():
                 # Create minimal build configuration for validation
                 if "build.gradle" in build_file:
-                    (self.project_root / build_file).parent.mkdir(
-                        parents=True, exist_ok=True
-                    )
+                    (self.project_root / build_file).parent.mkdir(parents=True, exist_ok=True)
                     (self.project_root / build_file).write_text(
                         """
 android {
@@ -682,9 +647,7 @@ dependencies {
         # Check for iOS project structure
 
         has_package = (self.project_root / "ios/Bitchat/Package.swift").exists()
-        has_source = (
-            self.project_root / "ios/Bitchat/Sources/Bitchat/BitChatManager.swift"
-        ).exists()
+        has_source = (self.project_root / "ios/Bitchat/Sources/Bitchat/BitChatManager.swift").exists()
 
         if not has_package:
             # Create minimal Package.swift for validation
@@ -740,11 +703,7 @@ let package = Package(
             full_path = self.project_root / file_path
             if full_path.exists():
                 content = full_path.read_text()
-                if (
-                    "<3%" in content
-                    or "3%/hour" in content
-                    or "battery" in content.lower()
-                ):
+                if "<3%" in content or "3%/hour" in content or "battery" in content.lower():
                     return True
 
         return False
@@ -758,9 +717,7 @@ let package = Package(
         report_file = report_dir / "bitchat_mvp_verification_report.md"
 
         # Calculate overall success rate
-        overall_success_rate = (
-            (self.success_count / self.total_tests) * 100 if self.total_tests > 0 else 0
-        )
+        overall_success_rate = (self.success_count / self.total_tests) * 100 if self.total_tests > 0 else 0
 
         # Determine overall status
         if overall_success_rate >= 90:
@@ -792,9 +749,7 @@ BitChat MVP has been comprehensively verified across Android, iOS, protobuf inte
         android_results = self.results.get("android", {})
         android_passed = sum(1 for result in android_results.values() if result)
         android_total = len(android_results)
-        android_rate = (
-            (android_passed / android_total) * 100 if android_total > 0 else 0
-        )
+        android_rate = (android_passed / android_total) * 100 if android_total > 0 else 0
 
         report_content += f"""
 **Status**: {android_rate:.0f}% complete ({android_passed}/{android_total} checks passed)
@@ -805,9 +760,7 @@ BitChat MVP has been comprehensively verified across Android, iOS, protobuf inte
 
         for component, passed in android_results.items():
             status = "✅ PASS" if passed else "❌ FAIL"
-            report_content += (
-                f"| {component.replace('_', ' ').title()} | {status} | - |\n"
-            )
+            report_content += f"| {component.replace('_', ' ').title()} | {status} | - |\n"
 
         # Add iOS results
         ios_results = self.results.get("ios", {})
@@ -826,17 +779,13 @@ BitChat MVP has been comprehensively verified across Android, iOS, protobuf inte
 
         for component, passed in ios_results.items():
             status = "✅ PASS" if passed else "❌ FAIL"
-            report_content += (
-                f"| {component.replace('_', ' ').title()} | {status} | - |\n"
-            )
+            report_content += f"| {component.replace('_', ' ').title()} | {status} | - |\n"
 
         # Add Protobuf results
         protobuf_results = self.results.get("protobuf", {})
         protobuf_passed = sum(1 for result in protobuf_results.values() if result)
         protobuf_total = len(protobuf_results)
-        protobuf_rate = (
-            (protobuf_passed / protobuf_total) * 100 if protobuf_total > 0 else 0
-        )
+        protobuf_rate = (protobuf_passed / protobuf_total) * 100 if protobuf_total > 0 else 0
 
         report_content += f"""
 ### 📦 Protobuf Interchange Format
@@ -849,9 +798,7 @@ BitChat MVP has been comprehensively verified across Android, iOS, protobuf inte
 
         for component, passed in protobuf_results.items():
             status = "✅ PASS" if passed else "❌ FAIL"
-            report_content += (
-                f"| {component.replace('_', ' ').title()} | {status} | - |\n"
-            )
+            report_content += f"| {component.replace('_', ' ').title()} | {status} | - |\n"
 
         # Add Tools results
         tools_results = self.results.get("tools", {})
@@ -870,19 +817,13 @@ BitChat MVP has been comprehensively verified across Android, iOS, protobuf inte
 
         for component, passed in tools_results.items():
             status = "✅ PASS" if passed else "❌ FAIL"
-            report_content += (
-                f"| {component.replace('_', ' ').title()} | {status} | - |\n"
-            )
+            report_content += f"| {component.replace('_', ' ').title()} | {status} | - |\n"
 
         # Add Integration results
         integration_results = self.results.get("integration", {})
         integration_passed = sum(1 for result in integration_results.values() if result)
         integration_total = len(integration_results)
-        integration_rate = (
-            (integration_passed / integration_total) * 100
-            if integration_total > 0
-            else 0
-        )
+        integration_rate = (integration_passed / integration_total) * 100 if integration_total > 0 else 0
 
         report_content += f"""
 ### 🔗 Integration Tests
@@ -1007,9 +948,7 @@ The implementation successfully demonstrates local mesh networking capabilities 
         self.generate_verification_report()
 
         # Print final summary
-        success_rate = (
-            (self.success_count / self.total_tests) * 100 if self.total_tests > 0 else 0
-        )
+        success_rate = (self.success_count / self.total_tests) * 100 if self.total_tests > 0 else 0
 
         self.log("=" * 60, "INFO")
         self.log("🏁 BITCHAT MVP VERIFICATION COMPLETE", "TITLE")

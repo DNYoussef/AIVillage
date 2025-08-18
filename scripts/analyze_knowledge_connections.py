@@ -120,10 +120,7 @@ def extract_key_concepts(text: str, max_concepts: int = 15) -> list[str]:
     # Extract meaningful bigrams
     for i in range(len(words) - 1):
         bigram = f"{words[i]} {words[i + 1]}"
-        if any(
-            pattern.replace("\\s+", " ").replace("\\", "") in bigram
-            for pattern in all_patterns
-        ):
+        if any(pattern.replace("\\s+", " ").replace("\\", "") in bigram for pattern in all_patterns):
             concepts.add(bigram)
 
     return list(concepts)[:max_concepts]
@@ -156,31 +153,19 @@ def analyze_document_connections(papers_dir: Path) -> dict[str, dict]:
                 doc_type = "mathematics"
                 category = "grossman_calculus"
                 domain = "Mathematical Foundations"
-            elif any(
-                term in filename.lower()
-                for term in ["rag", "retrieval", "graph", "knowledge"]
-            ):
+            elif any(term in filename.lower() for term in ["rag", "retrieval", "graph", "knowledge"]):
                 doc_type = "rag_research"
                 category = "rag_research"
                 domain = "Information Retrieval"
-            elif any(
-                term in filename.lower()
-                for term in ["agent", "multi", "swarm", "agentic"]
-            ):
+            elif any(term in filename.lower() for term in ["agent", "multi", "swarm", "agentic"]):
                 doc_type = "multiagent"
                 category = "multiagent"
                 domain = "Multi-Agent Systems"
-            elif any(
-                term in filename.lower()
-                for term in ["compress", "quant", "bit", "efficient"]
-            ):
+            elif any(term in filename.lower() for term in ["compress", "quant", "bit", "efficient"]):
                 doc_type = "compression"
                 category = "compression"
                 domain = "Model Optimization"
-            elif any(
-                term in filename.lower()
-                for term in ["neural", "transform", "attention", "llm"]
-            ):
+            elif any(term in filename.lower() for term in ["neural", "transform", "attention", "llm"]):
                 doc_type = "ai_research"
                 category = "ai_research"
                 domain = "Neural Networks"
@@ -190,9 +175,7 @@ def analyze_document_connections(papers_dir: Path) -> dict[str, dict]:
                 domain = "General AI Research"
 
             # Extract concepts from first portion of text
-            sample_text = (
-                text_content[:3000] if len(text_content) > 3000 else text_content
-            )
+            sample_text = text_content[:3000] if len(text_content) > 3000 else text_content
             concepts = extract_key_concepts(sample_text)
 
             documents[filename] = {
@@ -247,8 +230,7 @@ def find_knowledge_connections(documents: dict[str, dict]) -> dict[str, list]:
                         "document": connected_doc,
                         "shared_concepts": shared_concepts[connected_doc],
                         "strength": len(shared_concepts[connected_doc]),
-                        "cross_domain": doc_data["domain"]
-                        != documents[connected_doc]["domain"],
+                        "cross_domain": doc_data["domain"] != documents[connected_doc]["domain"],
                     }
                 )
 
@@ -259,9 +241,7 @@ def find_knowledge_connections(documents: dict[str, dict]) -> dict[str, list]:
     return dict(connections)
 
 
-def analyze_grossman_connections(
-    documents: dict[str, dict], connections: dict[str, list]
-) -> None:
+def analyze_grossman_connections(documents: dict[str, dict], connections: dict[str, list]) -> None:
     """Analyze connections from Grossman mathematics papers."""
     print("\n" + "=" * 70)
     print("🔬 GROSSMAN MATHEMATICAL PAPERS - KNOWLEDGE BRIDGES")
@@ -291,8 +271,7 @@ def analyze_grossman_connections(
         ai_connections = [
             conn
             for conn in paper_connections
-            if documents[conn["document"]]["type"]
-            in ["ai_research", "rag_research", "multiagent", "compression"]
+            if documents[conn["document"]]["type"] in ["ai_research", "rag_research", "multiagent", "compression"]
         ]
 
         if ai_connections:
@@ -343,11 +322,7 @@ def analyze_concept_clusters(documents: dict[str, dict]) -> None:
             concept_domains[concept].add(doc_data["domain"])
 
     # Find cross-domain concepts
-    cross_domain_concepts = {
-        concept: domains
-        for concept, domains in concept_domains.items()
-        if len(domains) > 1
-    }
+    cross_domain_concepts = {concept: domains for concept, domains in concept_domains.items() if len(domains) > 1}
 
     print(f"📊 Found {len(cross_domain_concepts)} cross-domain concepts")
 
@@ -379,18 +354,11 @@ def analyze_concept_clusters(documents: dict[str, dict]) -> None:
 
     interaction_matrix = defaultdict(int)
     for concept, concept_domains_set in cross_domain_concepts.items():
-        domain_pairs = [
-            (d1, d2)
-            for d1 in concept_domains_set
-            for d2 in concept_domains_set
-            if d1 < d2
-        ]
+        domain_pairs = [(d1, d2) for d1 in concept_domains_set for d2 in concept_domains_set if d1 < d2]
         for d1, d2 in domain_pairs:
             interaction_matrix[(d1, d2)] += 1
 
-    sorted_interactions = sorted(
-        interaction_matrix.items(), key=lambda x: x[1], reverse=True
-    )
+    sorted_interactions = sorted(interaction_matrix.items(), key=lambda x: x[1], reverse=True)
 
     for (domain1, domain2), count in sorted_interactions[:8]:
         print(f"   {domain1} ↔ {domain2}: {count} shared concepts")
@@ -469,12 +437,7 @@ def main() -> None:
         "document_types": dict(type_counts),
         "knowledge_domains": dict(domain_counts),
         "grossman_papers": len([d for d in documents if "grossman" in d.lower()]),
-        "cross_domain_connections": sum(
-            1
-            for conns in connections.values()
-            for conn in conns
-            if conn["cross_domain"]
-        ),
+        "cross_domain_connections": sum(1 for conns in connections.values() for conn in conns if conn["cross_domain"]),
         "analysis_timestamp": str(Path().cwd()),
     }
 
@@ -483,9 +446,7 @@ def main() -> None:
 
     print("\n✅ Analysis complete!")
     print("📄 Detailed results saved to: knowledge_connections_analysis.json")
-    print(
-        "\n🎉 SUCCESS: Knowledge graph shows rich connections between Grossman mathematics and AI research!"
-    )
+    print("\n🎉 SUCCESS: Knowledge graph shows rich connections between Grossman mathematics and AI research!")
 
 
 if __name__ == "__main__":

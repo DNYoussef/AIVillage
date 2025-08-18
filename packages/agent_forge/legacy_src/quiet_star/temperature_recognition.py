@@ -285,9 +285,7 @@ class TemperatureSelfRecognition:
             combined_text.count(hedge) for hedge in self.confidence_patterns["hedging_language"]
         )
 
-        confidence_markers = sum(
-            combined_text.count(marker) for marker in self.confidence_patterns["confidence_markers"]
-        )
+        sum(combined_text.count(marker) for marker in self.confidence_patterns["confidence_markers"])
 
         # Consistency assessment from multiple samples
         if multiple_samples and len(multiple_samples) > 1:

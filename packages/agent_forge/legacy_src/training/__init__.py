@@ -168,8 +168,6 @@ def expert_vectors():
 
 
 if __name__ == "__main__":
-    import json
-
     info = get_system_info()
     print("🌡️⚡ Temperature-Alternating Self-Modeling Fast-Grokking System")
     print("=" * 70)

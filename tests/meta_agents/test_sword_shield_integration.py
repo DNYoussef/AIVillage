@@ -72,9 +72,7 @@ class TestSwordShieldIntegration:
     @pytest.mark.asyncio
     async def test_sword_daily_research(self, sword_agent):
         """Test Sword Agent conducts daily offensive research."""
-        with patch.object(
-            sword_agent.quiet_star, "generate_reasoning", new_callable=AsyncMock
-        ) as mock_reasoning:
+        with patch.object(sword_agent.quiet_star, "generate_reasoning", new_callable=AsyncMock) as mock_reasoning:
             mock_reasoning.return_value = "encrypted_offensive_research_thoughts"
 
             research_results = await sword_agent.daily_offensive_research()
@@ -89,9 +87,7 @@ class TestSwordShieldIntegration:
     @pytest.mark.asyncio
     async def test_shield_daily_research(self, shield_agent):
         """Test Shield Agent conducts daily defensive research."""
-        with patch.object(
-            shield_agent.quiet_star, "generate_reasoning", new_callable=AsyncMock
-        ) as mock_reasoning:
+        with patch.object(shield_agent.quiet_star, "generate_reasoning", new_callable=AsyncMock) as mock_reasoning:
             mock_reasoning.return_value = "encrypted_defensive_research_thoughts"
 
             research_results = await shield_agent.daily_defensive_research()
@@ -112,9 +108,7 @@ class TestSwordShieldIntegration:
             "attack_timeline": "6_hours",
         }
 
-        with patch.object(
-            sword_agent.quiet_star, "generate_reasoning", new_callable=AsyncMock
-        ) as mock_reasoning:
+        with patch.object(sword_agent.quiet_star, "generate_reasoning", new_callable=AsyncMock) as mock_reasoning:
             mock_reasoning.return_value = "encrypted_attack_strategy"
 
             attack_strategy = await sword_agent.prepare_battle_attack(target_info)
@@ -135,9 +129,7 @@ class TestSwordShieldIntegration:
             "attacker_profile": "advanced_persistent_threat",
         }
 
-        with patch.object(
-            shield_agent.quiet_star, "generate_reasoning", new_callable=AsyncMock
-        ) as mock_reasoning:
+        with patch.object(shield_agent.quiet_star, "generate_reasoning", new_callable=AsyncMock) as mock_reasoning:
             mock_reasoning.return_value = "encrypted_defense_strategy"
 
             defense_strategy = await shield_agent.prepare_battle_defense(threat_intel)
@@ -158,14 +150,10 @@ class TestSwordShieldIntegration:
             "suspicious_network_traffic",
         ]
 
-        with patch.object(
-            shield_agent.quiet_star, "generate_reasoning", new_callable=AsyncMock
-        ) as mock_reasoning:
+        with patch.object(shield_agent.quiet_star, "generate_reasoning", new_callable=AsyncMock) as mock_reasoning:
             mock_reasoning.return_value = "encrypted_threat_analysis"
 
-            analysis = await shield_agent.threat_detection_analysis(
-                suspicious_indicators
-            )
+            analysis = await shield_agent.threat_detection_analysis(suspicious_indicators)
 
             assert "analysis_id" in analysis
             assert "threat_type" in analysis
@@ -262,12 +250,8 @@ class TestSwordShieldIntegration:
                 "threat_type": "reconnaissance",
                 "severity": "low",
             }
-            mock_attacks.return_value = {
-                "attack_results": [{"success": True, "technique": "sql_injection"}]
-            }
-            mock_defense.return_value = {
-                "detection_results": [{"detected": True, "response_time": 120}]
-            }
+            mock_attacks.return_value = {"attack_results": [{"success": True, "technique": "sql_injection"}]}
+            mock_defense.return_value = {"detection_results": [{"detected": True, "response_time": 120}]}
             mock_sword_analysis.return_value = {
                 "performance_assessment": {
                     "overall_grade": "B",
@@ -311,15 +295,9 @@ class TestSwordShieldIntegration:
         from software.meta_agents.battle_orchestrator import BattleMetrics
 
         test_battles = [
-            BattleMetrics(
-                "battle1", "2024-01-01", 90, 85, 75, "sword", 0.8, 0.6, 0.6, 0.7
-            ),
-            BattleMetrics(
-                "battle2", "2024-01-02", 95, 70, 90, "shield", 0.5, 0.9, 0.9, 0.8
-            ),
-            BattleMetrics(
-                "battle3", "2024-01-03", 85, 80, 80, "draw", 0.7, 0.7, 0.7, 0.7
-            ),
+            BattleMetrics("battle1", "2024-01-01", 90, 85, 75, "sword", 0.8, 0.6, 0.6, 0.7),
+            BattleMetrics("battle2", "2024-01-02", 95, 70, 90, "shield", 0.5, 0.9, 0.9, 0.8),
+            BattleMetrics("battle3", "2024-01-03", 85, 80, 80, "draw", 0.7, 0.7, 0.7, 0.7),
         ]
 
         for metrics in test_battles:
@@ -345,9 +323,7 @@ class TestSwordShieldIntegration:
         test_prompt = "Analyze this security scenario for vulnerabilities"
 
         # Test Sword Agent encrypted thoughts
-        with patch.object(
-            sword_agent.quiet_star, "generate_reasoning", new_callable=AsyncMock
-        ) as mock_sword_reasoning:
+        with patch.object(sword_agent.quiet_star, "generate_reasoning", new_callable=AsyncMock) as mock_sword_reasoning:
             mock_sword_reasoning.return_value = "offensive_security_analysis"
 
             encrypted_thought = await sword_agent.think_encrypted(test_prompt)
@@ -374,9 +350,7 @@ class TestSwordShieldIntegration:
         test_message = "Security intelligence report from daily research"
 
         # Test Sword communication with King
-        sword_comm = await sword_agent.communicate_with_king(
-            test_message, priority="high"
-        )
+        sword_comm = await sword_agent.communicate_with_king(test_message, priority="high")
 
         assert sword_comm["from_agent"] == "sword"
         assert sword_comm["to_agent"] == "king"
@@ -385,9 +359,7 @@ class TestSwordShieldIntegration:
         assert sword_comm["content"] == test_message
 
         # Test Shield communication with King
-        shield_comm = await shield_agent.communicate_with_king(
-            test_message, priority="normal"
-        )
+        shield_comm = await shield_agent.communicate_with_king(test_message, priority="normal")
 
         assert shield_comm["from_agent"] == "shield"
         assert shield_comm["to_agent"] == "king"
@@ -395,9 +367,7 @@ class TestSwordShieldIntegration:
         assert shield_comm["encrypted"] is False  # King communications unencrypted
         assert shield_comm["content"] == test_message
 
-    def test_agent_status_reporting(
-        self, sword_agent, shield_agent, battle_orchestrator
-    ):
+    def test_agent_status_reporting(self, sword_agent, shield_agent, battle_orchestrator):
         """Test agent status reporting capabilities."""
         # Test Sword Agent status
         sword_status = sword_agent.get_offensive_status()
@@ -450,10 +420,8 @@ class TestSwordShieldIntegration:
                 "countermeasures": ["network_segmentation", "endpoint_monitoring"],
             }
 
-            analysis_result = (
-                await battle_orchestrator.shield_agent.threat_detection_analysis(
-                    sword_intel["discovered_vulnerabilities"]
-                )
+            analysis_result = await battle_orchestrator.shield_agent.threat_detection_analysis(
+                sword_intel["discovered_vulnerabilities"]
             )
 
             assert "threat_classification" in analysis_result
@@ -489,23 +457,13 @@ class TestSwordShieldIntegration:
         """Test sandbox environment setup and isolation."""
         test_scenario = list(battle_orchestrator.battle_scenarios.values())[0]
 
-        sandbox_status = await battle_orchestrator._setup_sandbox_environment(
-            test_scenario
-        )
+        sandbox_status = await battle_orchestrator._setup_sandbox_environment(test_scenario)
 
         assert "environment_id" in sandbox_status
         assert sandbox_status["isolation_confirmed"] is True
-        assert (
-            sandbox_status["virtual_machines"]
-            == battle_orchestrator.sandbox_config["virtual_machines"]
-        )
-        assert (
-            sandbox_status["monitoring_enabled"]
-            == battle_orchestrator.sandbox_config["monitoring_enabled"]
-        )
-        assert set(sandbox_status["target_systems_ready"]) == set(
-            test_scenario.target_systems
-        )
+        assert sandbox_status["virtual_machines"] == battle_orchestrator.sandbox_config["virtual_machines"]
+        assert sandbox_status["monitoring_enabled"] == battle_orchestrator.sandbox_config["monitoring_enabled"]
+        assert set(sandbox_status["target_systems_ready"]) == set(test_scenario.target_systems)
 
     def test_performance_metrics_calculation(self, battle_orchestrator):
         """Test battle performance metrics calculation."""
@@ -520,19 +478,13 @@ class TestSwordShieldIntegration:
                     }
                 },
                 "analysis": {
-                    "sword_analysis": {
-                        "performance_assessment": {"overall_grade": "B"}
-                    },
-                    "shield_analysis": {
-                        "performance_assessment": {"overall_grade": "A"}
-                    },
+                    "sword_analysis": {"performance_assessment": {"overall_grade": "B"}},
+                    "shield_analysis": {"performance_assessment": {"overall_grade": "A"}},
                 },
             },
         }
 
-        metrics = battle_orchestrator._calculate_battle_metrics(
-            mock_battle_results, 90.0
-        )
+        metrics = battle_orchestrator._calculate_battle_metrics(mock_battle_results, 90.0)
 
         assert metrics.battle_id == "test_battle"
         assert metrics.duration_minutes == 90.0

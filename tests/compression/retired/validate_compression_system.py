@@ -20,9 +20,7 @@ from src.core.compression.advanced_pipeline import AdvancedCompressionPipeline
 from src.core.compression.unified_compressor import UnifiedCompressor
 from src.deployment.mobile_compressor import MobileCompressor
 
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -44,12 +42,8 @@ def test_bitnet_compression():
     compressed_size = len(compressed["packed_weights"]) + 24  # +metadata
     compression_ratio = original_size / compressed_size
 
-    print(
-        f"Original size: {original_size:,} bytes ({original_size / 1024 / 1024:.1f}MB)"
-    )
-    print(
-        f"Compressed size: {compressed_size:,} bytes ({compressed_size / 1024:.1f}KB)"
-    )
+    print(f"Original size: {original_size:,} bytes ({original_size / 1024 / 1024:.1f}MB)")
+    print(f"Compressed size: {compressed_size:,} bytes ({compressed_size / 1024:.1f}KB)")
     print(f"Compression ratio: {compression_ratio:.1f}x")
     print(f"Compression time: {compress_time:.3f}s")
 
@@ -62,9 +56,7 @@ def test_bitnet_compression():
     expected_ratio = 32 / bitnet.bits_per_weight  # 32 bits / 2 bits = 16x
     print(f"Expected ratio: ~{expected_ratio:.1f}x")
 
-    assert compression_ratio >= 10, (
-        f"BitNet compression too low: {compression_ratio:.1f}x"
-    )
+    assert compression_ratio >= 10, f"BitNet compression too low: {compression_ratio:.1f}x"
     assert len(unique_values) <= 4, f"Too many unique values: {len(unique_values)}"
 
     print("✅ BitNet compression PASSED")
@@ -94,21 +86,13 @@ def test_seedlm_compression():
     bits_per_weight = total_bits / weights.numel()
 
     print(f"Seeds: {len(compressed['seeds'])} x 2 bytes = {seeds_bytes} bytes")
-    print(
-        f"Coefficients: {compressed['coefficients'].size} x 1 byte = {coeffs_bytes} bytes"
-    )
-    print(
-        f"Exponents: {len(compressed['shared_exponents'])} x 1 byte = {exps_bytes} bytes"
-    )
-    print(
-        f"Total compressed: {seeds_bytes + coeffs_bytes + exps_bytes + metadata_bytes} bytes"
-    )
+    print(f"Coefficients: {compressed['coefficients'].size} x 1 byte = {coeffs_bytes} bytes")
+    print(f"Exponents: {len(compressed['shared_exponents'])} x 1 byte = {exps_bytes} bytes")
+    print(f"Total compressed: {seeds_bytes + coeffs_bytes + exps_bytes + metadata_bytes} bytes")
     print(f"Bits per weight: {bits_per_weight:.2f}")
     print(f"Compression time: {compress_time:.3f}s")
 
-    compression_ratio = original_size / (
-        seeds_bytes + coeffs_bytes + exps_bytes + metadata_bytes
-    )
+    compression_ratio = original_size / (seeds_bytes + coeffs_bytes + exps_bytes + metadata_bytes)
     print(f"Compression ratio: {compression_ratio:.1f}x")
 
     # Test decompression
@@ -116,12 +100,8 @@ def test_seedlm_compression():
     reconstruction_error = torch.norm(weights - decompressed) / torch.norm(weights)
     print(f"Reconstruction error: {reconstruction_error:.4f}")
 
-    assert bits_per_weight <= 5.0, (
-        f"SeedLM bits per weight too high: {bits_per_weight:.2f}"
-    )
-    assert compression_ratio >= 5, (
-        f"SeedLM compression too low: {compression_ratio:.1f}x"
-    )
+    assert bits_per_weight <= 5.0, f"SeedLM bits per weight too high: {bits_per_weight:.2f}"
+    assert compression_ratio >= 5, f"SeedLM compression too low: {compression_ratio:.1f}x"
 
     print("✅ SeedLM compression PASSED")
     return compression_ratio
@@ -161,9 +141,7 @@ def test_vptq_compression():
     print(f"Reconstruction error: {reconstruction_error:.4f}")
 
     assert compression_ratio >= 2, f"VPTQ compression too low: {compression_ratio:.1f}x"
-    assert reconstruction_error < 1.0, (
-        f"VPTQ reconstruction error too high: {reconstruction_error:.4f}"
-    )
+    assert reconstruction_error < 1.0, f"VPTQ reconstruction error too high: {reconstruction_error:.4f}"
 
     print("✅ VPTQ compression PASSED")
     return compression_ratio
@@ -174,9 +152,7 @@ def test_advanced_pipeline():
     print("\n=== Testing Advanced 4-Stage Pipeline ===")
 
     # Create small model for testing
-    model = nn.Sequential(
-        nn.Linear(256, 128), nn.ReLU(), nn.Linear(128, 64), nn.ReLU(), nn.Linear(64, 10)
-    )
+    model = nn.Sequential(nn.Linear(256, 128), nn.ReLU(), nn.Linear(128, 64), nn.ReLU(), nn.Linear(64, 10))
 
     original_size = sum(p.numel() * 4 for p in model.parameters())
 
@@ -194,9 +170,7 @@ def test_advanced_pipeline():
     ratio = original_size / compressed_size
 
     print(f"Compression time: {duration:.2f}s")
-    print(
-        f"Compressed size: {compressed_size:,} bytes ({compressed_size / 1024:.1f}KB)"
-    )
+    print(f"Compressed size: {compressed_size:,} bytes ({compressed_size / 1024:.1f}KB)")
     print(f"Pipeline compression ratio: {ratio:.1f}x")
 
     # Test decompression
@@ -283,9 +257,7 @@ def test_mobile_deployment():
         print(f"Compressed size: {package['compressed_size_mb']:.2f}MB")
         print(f"Compression ratio: {package['compression_ratio']:.1f}x")
         print(f"Sprint 9 compatible: {package['sprint9_compatible']}")
-        print(
-            f"Fits in device memory: {package['compressed_size_mb'] < compressor.profile['memory_mb'] * 0.5}"
-        )
+        print(f"Fits in device memory: {package['compressed_size_mb'] < compressor.profile['memory_mb'] * 0.5}")
 
         results[profile] = package
 
@@ -327,9 +299,7 @@ def create_performance_summary():
 
         print("\n📱 Mobile Deployment:")
         for profile, result in mobile_results.items():
-            print(
-                f"  {profile}: {result['compression_ratio']:.1f}x ({result['compression_method']})"
-            )
+            print(f"  {profile}: {result['compression_ratio']:.1f}x ({result['compression_method']})")
 
         # Check Atlantis vision targets
         best_ratio = max(bitnet_ratio, seedlm_ratio, vptq_ratio, pipeline_ratio)

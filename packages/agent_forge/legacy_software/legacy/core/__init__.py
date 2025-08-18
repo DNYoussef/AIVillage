@@ -7,7 +7,7 @@ environments that place ``src`` ahead of the repository root on ``sys.path``.
 """
 
 try:  # pragma: no cover - import convenience
-    from src.production.agent_forge.core.forge import AgentForge  # type: ignore
+    from packages.agent_forge.legacy_production.core.forge import AgentForge  # type: ignore
 except Exception:  # pragma: no cover - keep import failure silent
     AgentForge = None  # type: ignore
 

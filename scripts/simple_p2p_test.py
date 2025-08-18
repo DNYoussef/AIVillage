@@ -17,14 +17,7 @@ def test_code_changes_present() -> bool:
     print("[CODE CHECK] Validating P2P protocol fixes...")
 
     # Check p2p_node.py for our changes
-    p2p_node_path = (
-        Path(__file__).parent.parent
-        / "src"
-        / "production"
-        / "communications"
-        / "p2p"
-        / "p2p_node.py"
-    )
+    p2p_node_path = Path(__file__).parent.parent / "src" / "production" / "communications" / "p2p" / "p2p_node.py"
 
     if not p2p_node_path.exists():
         print("ERROR: p2p_node.py not found")
@@ -68,15 +61,9 @@ def test_imports() -> bool | None:
     print("[IMPORT CHECK] Testing module imports...")
 
     try:
-        from src.core.p2p.p2p_node import P2PNode, PeerCapabilities
-
         print("  [OK] P2PNode imported successfully")
 
-        from src.core.p2p.peer_discovery import PeerDiscovery
-
         print("  [OK] PeerDiscovery imported successfully")
-
-        from src.core.p2p.message_protocol import MessageProtocol
 
         print("  [OK] MessageProtocol imported successfully")
 
@@ -136,9 +123,7 @@ async def test_basic_p2p_node() -> bool | None:
         suitable_peers = node.get_suitable_evolution_peers(min_count=1)
 
         if len(suitable_peers) == 8:
-            print(
-                f"  [OK] Evolution peer selection returns all {len(suitable_peers)} peers (5-peer limit removed)"
-            )
+            print(f"  [OK] Evolution peer selection returns all {len(suitable_peers)} peers (5-peer limit removed)")
         else:
             print(f"  [ERROR] Expected 8 peers, got {len(suitable_peers)}")
             return False

@@ -202,9 +202,7 @@ def verify_api_endpoints():
         "timestamp": datetime.now().isoformat(),
         "database": {"connected": os.path.exists(db_path), "path": db_path},
         "redis": {"available": False, "connected": False},
-        "metrics": {
-            "flush_threshold": int(os.getenv("AIVILLAGE_METRICS_FLUSH_THRESHOLD", "50"))
-        },
+        "metrics": {"flush_threshold": int(os.getenv("AIVILLAGE_METRICS_FLUSH_THRESHOLD", "50"))},
         "port": port,
     }
 

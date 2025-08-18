@@ -17,9 +17,7 @@ async def test_federation_manager():
         from federation.core.federation_manager import FederationManager
 
         # Test with Tor and I2P disabled (should work)
-        manager = FederationManager(
-            device_id="test_device", enable_tor=False, enable_i2p=False
-        )
+        manager = FederationManager(device_id="test_device", enable_tor=False, enable_i2p=False)
 
         # Test Tor implementation (should gracefully handle when disabled)
         await manager._start_tor_transport()

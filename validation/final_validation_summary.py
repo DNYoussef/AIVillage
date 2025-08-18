@@ -74,10 +74,7 @@ async def test_completed_components():
     # 3. Test Complete LibP2P Mesh
     print("\n3. Complete LibP2P Mesh...")
     try:
-        from src.core.p2p.libp2p_mesh import (
-            LibP2PMeshNetwork,
-            MeshConfiguration,
-        )
+        from src.core.p2p.libp2p_mesh import LibP2PMeshNetwork, MeshConfiguration
 
         config = MeshConfiguration("test_final_mesh", 4004)
         mesh = LibP2PMeshNetwork(config)
@@ -90,9 +87,7 @@ async def test_completed_components():
             mesh.get_network_stats()
             await mesh.stop()
 
-            print(
-                f"   PASS: {len(discovered)} peers discovered, {len(connected)} connected"
-            )
+            print(f"   PASS: {len(discovered)} peers discovered, {len(connected)} connected")
             results["libp2p_mesh"] = "PASS"
         else:
             print("   FAIL: Could not start mesh network")
@@ -105,7 +100,7 @@ async def test_completed_components():
     # 4. Test Fixed Agent Factory
     print("\n4. Fixed Agent Factory...")
     try:
-        from src.production.agent_forge.agent_factory import AgentFactory
+        from packages.agent_forge.legacy_production.agent_factory import AgentFactory
 
         factory = AgentFactory()
         available = factory.list_available_agents()
@@ -130,9 +125,7 @@ async def test_completed_components():
     try:
         from src.agent_forge.adas.adas import ADASTask
 
-        task = ADASTask(
-            task_type="final_test", task_content="Test ADAS system functionality"
-        )
+        task = ADASTask(task_type="final_test", task_content="Test ADAS system functionality")
 
         # Test prompt generation
         prompt = task.generate_prompt([])

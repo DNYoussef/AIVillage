@@ -147,7 +147,7 @@ class MergeOperators:
         merged_state = {}
         device = next(models[0].parameters()).device
 
-        with tempfile.TemporaryDirectory() as tmpdir:
+        with tempfile.TemporaryDirectory():
             for key in models[0].state_dict():
                 param_shape = models[0].state_dict()[key].shape
                 numel = models[0].state_dict()[key].numel()
@@ -332,7 +332,7 @@ class ModelEvaluator:
                         # Tokenize and generate
                         inputs = tokenizer(prompt, return_tensors="pt", truncation=True, max_length=512).to(self.device)
 
-                        outputs = model.generate(
+                        model.generate(
                             **inputs,
                             max_new_tokens=50,
                             temperature=0.7,

@@ -13,12 +13,7 @@ class TestKingAgentBasic(unittest.TestCase):
         """Test that King agent can be imported with dependency stubs."""
         try:
             # Try to import core components
-            from agents.unified_base_agent import UnifiedBaseAgent
-            from core.error_handling import (
-                Message,
-                MessageType,
-                StandardCommunicationProtocol,
-            )
+            from core.error_handling import Message, MessageType, StandardCommunicationProtocol
 
             print("✅ Core agent components imported successfully")
 
@@ -58,11 +53,7 @@ class TestKingAgentBasic(unittest.TestCase):
     def test_communication_protocol(self):
         """Test communication protocol functionality."""
         try:
-            from core.error_handling import (
-                Message,
-                MessageType,
-                StandardCommunicationProtocol,
-            )
+            from core.error_handling import Message, MessageType, StandardCommunicationProtocol
 
             protocol = StandardCommunicationProtocol()
 
@@ -108,16 +99,12 @@ class TestKingAgentBasic(unittest.TestCase):
             assert runner is not None
 
             # Test validation
-            technique = AgentTechnique(
-                technique_name="test", code="def run(m,w,p): return 0.5"
-            )
+            technique = AgentTechnique(technique_name="test", code="def run(m,w,p): return 0.5")
             is_valid = technique.validate_code("def run(m,w,p): return 0.5")
             assert is_valid
 
             # Test dangerous code rejection
-            is_dangerous = technique.validate_code(
-                "def run(m,w,p): eval('dangerous'); return 0.5"
-            )
+            is_dangerous = technique.validate_code("def run(m,w,p): eval('dangerous'); return 0.5")
             assert not is_dangerous
 
             print("✅ Security features operational")

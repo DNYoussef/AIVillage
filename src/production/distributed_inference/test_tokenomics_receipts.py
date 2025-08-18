@@ -6,10 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from .tokenomics_receipts import (
-    TokenomicsConfig,
-    TokenomicsReceiptManager,
-)
+from .tokenomics_receipts import TokenomicsConfig, TokenomicsReceiptManager
 
 
 @pytest.fixture
@@ -181,15 +178,11 @@ async def test_get_node_receipts(receipt_manager):
     assert len(all_receipts) == 5
 
     # Get only confirmed receipts
-    confirmed_receipts = await receipt_manager.get_node_receipts(
-        node_id, status="confirmed"
-    )
+    confirmed_receipts = await receipt_manager.get_node_receipts(node_id, status="confirmed")
     assert len(confirmed_receipts) == 2
 
     # Get only pending receipts
-    pending_receipts = await receipt_manager.get_node_receipts(
-        node_id, status="pending"
-    )
+    pending_receipts = await receipt_manager.get_node_receipts(node_id, status="pending")
     assert len(pending_receipts) == 3
 
     # Test pagination

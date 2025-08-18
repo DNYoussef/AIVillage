@@ -23,9 +23,7 @@ except ImportError:
     import fitz
 
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -58,9 +56,7 @@ def extract_text_from_pdf(pdf_path: str) -> tuple[str, dict]:
         raise
 
 
-def simple_chunk_text(
-    text: str, chunk_size: int = 2000, overlap: int = 200
-) -> list[str]:
+def simple_chunk_text(text: str, chunk_size: int = 2000, overlap: int = 200) -> list[str]:
     """Simple text chunking by character count with overlap."""
     if len(text) <= chunk_size:
         return [text]
@@ -125,9 +121,7 @@ def ingest_pdf_to_rag(pdf_path: str, category: str = "research") -> bool:
             f.write(f"\n=== CONTENT ===\n{text}")
 
         # Save chunks
-        with open(
-            output_dir / f"{safe_filename}_chunks.txt", "w", encoding="utf-8"
-        ) as f:
+        with open(output_dir / f"{safe_filename}_chunks.txt", "w", encoding="utf-8") as f:
             f.write("=== METADATA ===\n")
             f.write(f"source: {pdf_path}\n")
             f.write(f"category: {category}\n")

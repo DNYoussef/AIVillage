@@ -45,9 +45,7 @@ def replace_segment(lines: list[str], node: ast.AST, new_segment: str) -> None:
     lines[start : end + 1] = [prefix + new_segment + suffix]
 
 
-def handle_import(
-    node: ast.Import, lines: list[str], ambiguous: list[tuple[Path, str]]
-) -> bool:
+def handle_import(node: ast.Import, lines: list[str], ambiguous: list[tuple[Path, str]]) -> bool:
     modified = False
     new_parts: list[str] = []
     for alias in node.names:

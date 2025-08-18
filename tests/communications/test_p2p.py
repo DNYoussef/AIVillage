@@ -9,20 +9,9 @@ import torch
 # Import P2P components
 from src.production.communications.p2p import DeviceMesh, P2PNode, TensorStreaming
 from src.production.communications.p2p.device_mesh import ConnectionType, MeshProtocol
-from src.production.communications.p2p.p2p_node import (
-    MessageType,
-    NodeStatus,
-    P2PMessage,
-    PeerInfo,
-)
-from src.production.communications.p2p.tensor_streaming import (
-    CompressionType,
-    StreamingConfig,
-)
-from src.production.communications.p2p_protocol import (
-    P2PCapabilities,
-    P2PCommunicationProtocol,
-)
+from src.production.communications.p2p.p2p_node import MessageType, NodeStatus, P2PMessage, PeerInfo
+from src.production.communications.p2p.tensor_streaming import CompressionType, StreamingConfig
+from src.production.communications.p2p_protocol import P2PCapabilities, P2PCommunicationProtocol
 
 
 class TestP2PNode:
@@ -202,9 +191,7 @@ class TestTensorStreaming:
         # Test numpy array serialization
         test_array = np.random.rand(10, 10).astype(np.float32)
 
-        serialized_data, metadata = await streaming._serialize_tensor(
-            test_array, "test-tensor", "test_tensor", {}
-        )
+        serialized_data, metadata = await streaming._serialize_tensor(test_array, "test-tensor", "test_tensor", {})
 
         assert isinstance(serialized_data, bytes)
         assert metadata.name == "test_tensor"
@@ -237,9 +224,7 @@ class TestTensorStreaming:
                 return True
             return False
 
-        monkeypatch.setattr(
-            sender, "send_message", fake_send_message.__get__(sender, P2PNode)
-        )
+        monkeypatch.setattr(sender, "send_message", fake_send_message.__get__(sender, P2PNode))
 
         async def recv_send_message(self, peer_id, message_type, payload):
             msg = P2PMessage(
@@ -254,15 +239,11 @@ class TestTensorStreaming:
                 return True
             return False
 
-        monkeypatch.setattr(
-            receiver, "send_message", recv_send_message.__get__(receiver, P2PNode)
-        )
+        monkeypatch.setattr(receiver, "send_message", recv_send_message.__get__(receiver, P2PNode))
 
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         tensor = torch.arange(8, dtype=torch.float32, device=device, requires_grad=True)
-        tensor_id = await send_stream.send_tensor(
-            tensor, "torch_round", receiver.node_id
-        )
+        tensor_id = await send_stream.send_tensor(tensor, "torch_round", receiver.node_id)
 
         metadata = recv_stream.tensor_metadata[tensor_id]
         assert metadata.device == str(tensor.device)
@@ -286,9 +267,7 @@ class TestTensorStreaming:
 
         # Test LZ4 compression
         compressed = await streaming._compress_tensor(test_data, CompressionType.LZ4)
-        decompressed = await streaming._decompress_tensor(
-            compressed, CompressionType.LZ4
-        )
+        decompressed = await streaming._decompress_tensor(compressed, CompressionType.LZ4)
 
         assert len(compressed) < len(test_data)  # Should be compressed
         assert decompressed == test_data  # Should decompress correctly
@@ -445,10 +424,7 @@ class TestIntegration:
         nodes = [P2PNode(node_id=f"mesh-node-{i}", port=8050 + i) for i in range(3)]
 
         # Create mesh networks
-        meshes = [
-            DeviceMesh(node=node, protocol=MeshProtocol.OPTIMIZED_LINK_STATE)
-            for node in nodes
-        ]
+        meshes = [DeviceMesh(node=node, protocol=MeshProtocol.OPTIMIZED_LINK_STATE) for node in nodes]
 
         # Simulate mesh connections
         for i, mesh in enumerate(meshes):
@@ -536,9 +512,7 @@ class TestErrorHandling:
 
         try:
             # This should handle the error gracefully
-            result = await streaming._serialize_tensor(
-                UnsupportedType(), "test", "unsupported", {}
-            )
+            result = await streaming._serialize_tensor(UnsupportedType(), "test", "unsupported", {})
             # Should fallback to pickle
             assert result is not None
         except Exception as e:

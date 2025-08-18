@@ -51,9 +51,7 @@ class BattleSystemDeployer:
         self.shield_agent: ShieldAgent = None
         self.battle_orchestrator: BattleOrchestrator = None
 
-        logger.info(
-            f"Battle System Deployer initialized - Daily battles at {battle_time}"
-        )
+        logger.info(f"Battle System Deployer initialized - Daily battles at {battle_time}")
         if dry_run:
             logger.info("DRY RUN MODE: No actual deployment will occur")
 
@@ -90,9 +88,7 @@ class BattleSystemDeployer:
             else:
                 logger.info("DRY RUN: Skipping battle scheduling startup")
 
-            logger.info(
-                "✅ Sword/Shield Security Battle System deployment completed successfully!"
-            )
+            logger.info("✅ Sword/Shield Security Battle System deployment completed successfully!")
             return True
 
         except Exception as e:
@@ -118,9 +114,7 @@ class BattleSystemDeployer:
                 battle_time=self.battle_time,
                 king_agent_id="king",
             )
-            logger.info(
-                f"✓ Battle Orchestrator initialized: {self.battle_orchestrator.agent_id}"
-            )
+            logger.info(f"✓ Battle Orchestrator initialized: {self.battle_orchestrator.agent_id}")
 
             # Register agents with orchestrator
             await self.battle_orchestrator.initialize_agents()
@@ -152,12 +146,8 @@ class BattleSystemDeployer:
                     logger.error(f"Missing sandbox configuration: {key}")
                     return False
 
-            logger.info(
-                f"✓ Sandbox configured with {sandbox_config['virtual_machines']} VMs"
-            )
-            logger.info(
-                f"✓ Simulated services: {', '.join(sandbox_config['simulated_services'])}"
-            )
+            logger.info(f"✓ Sandbox configured with {sandbox_config['virtual_machines']} VMs")
+            logger.info(f"✓ Simulated services: {', '.join(sandbox_config['simulated_services'])}")
             logger.info(f"✓ Network isolation: {sandbox_config['isolated_network']}")
             logger.info(f"✓ Monitoring enabled: {sandbox_config['monitoring_enabled']}")
 
@@ -182,9 +172,7 @@ class BattleSystemDeployer:
                 logger.error("Sword Agent has no attack techniques loaded")
                 return False
 
-            logger.info(
-                f"✓ Sword Agent: {sword_status['attack_techniques_count']} attack techniques ready"
-            )
+            logger.info(f"✓ Sword Agent: {sword_status['attack_techniques_count']} attack techniques ready")
 
             # Test Shield Agent capabilities
             shield_status = self.shield_agent.get_defensive_status()
@@ -196,9 +184,7 @@ class BattleSystemDeployer:
                 logger.error("Shield Agent has no defensive patterns loaded")
                 return False
 
-            logger.info(
-                f"✓ Shield Agent: {shield_status['defensive_patterns_count']} defensive patterns ready"
-            )
+            logger.info(f"✓ Shield Agent: {shield_status['defensive_patterns_count']} defensive patterns ready")
 
             # Test Battle Orchestrator capabilities
             orchestrator_status = self.battle_orchestrator.get_orchestrator_status()
@@ -210,9 +196,7 @@ class BattleSystemDeployer:
                 logger.error("Battle Orchestrator has no battle scenarios")
                 return False
 
-            logger.info(
-                f"✓ Battle Orchestrator: {orchestrator_status['available_scenarios']} scenarios available"
-            )
+            logger.info(f"✓ Battle Orchestrator: {orchestrator_status['available_scenarios']} scenarios available")
 
             return True
 
@@ -227,14 +211,10 @@ class BattleSystemDeployer:
 
             # Test scenario selection
             scenario = self.battle_orchestrator._select_battle_scenario()
-            logger.info(
-                f"✓ Scenario selection working: {scenario.name} ({scenario.difficulty_level})"
-            )
+            logger.info(f"✓ Scenario selection working: {scenario.name} ({scenario.difficulty_level})")
 
             # Test sandbox setup
-            sandbox_status = await self.battle_orchestrator._setup_sandbox_environment(
-                scenario
-            )
+            sandbox_status = await self.battle_orchestrator._setup_sandbox_environment(scenario)
             if not sandbox_status["isolation_confirmed"]:
                 logger.error("Sandbox isolation test failed")
                 return False
@@ -278,22 +258,16 @@ class BattleSystemDeployer:
             logger.info("Starting automated daily battle scheduling...")
 
             # Create background task for battle scheduling
-            battle_task = asyncio.create_task(
-                self.battle_orchestrator.schedule_daily_battles()
-            )
+            battle_task = asyncio.create_task(self.battle_orchestrator.schedule_daily_battles())
 
             # Wait a moment to ensure task started successfully
             await asyncio.sleep(1)
 
             if battle_task.done() and battle_task.exception():
-                logger.error(
-                    f"Battle scheduling task failed immediately: {battle_task.exception()}"
-                )
+                logger.error(f"Battle scheduling task failed immediately: {battle_task.exception()}")
                 return False
 
-            logger.info(
-                f"✓ Daily battle scheduling active - Next battle at {self.battle_time}"
-            )
+            logger.info(f"✓ Daily battle scheduling active - Next battle at {self.battle_time}")
             logger.info("Battle system is now running in background...")
 
             # Keep the system running (in production, this would be managed by a service manager)
@@ -360,9 +334,7 @@ Examples:
         help="Test deployment without starting battle scheduling",
     )
 
-    parser.add_argument(
-        "--verbose", "-v", action="store_true", help="Enable verbose logging"
-    )
+    parser.add_argument("--verbose", "-v", action="store_true", help="Enable verbose logging")
 
     args = parser.parse_args()
 
@@ -375,9 +347,7 @@ Examples:
         hour, minute = map(int, args.battle_time.split(":"))
         battle_time = time(hour, minute)
     except ValueError:
-        logger.error(
-            f"Invalid battle time format: {args.battle_time}. Use HH:MM format."
-        )
+        logger.error(f"Invalid battle time format: {args.battle_time}. Use HH:MM format.")
         return 1
 
     # Create and run deployer

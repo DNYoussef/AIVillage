@@ -21,8 +21,7 @@ warnings.warn(
 
 # Compatibility imports from the new unified system
 try:
-    from packages.rag import HyperRAG, MemoryType, QueryMode, RAGConfig
-    from packages.rag.core.cognitive_nexus import CognitiveNexus
+    from packages.rag import HyperRAG, QueryMode, RAGConfig
 
     # Compatibility class that wraps the new HyperRAG system
     class HyperRAGIntegration:
