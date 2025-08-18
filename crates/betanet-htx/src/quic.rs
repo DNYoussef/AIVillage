@@ -27,6 +27,14 @@ use crate::{transport::TransportStats, HtxConfig, HtxError, Result, Frame};
 
 #[cfg(feature = "quic")]
 use base64::Engine;
+#[cfg(feature = "quic")]
+use trust_dns_resolver::TokioAsyncResolver;
+#[cfg(feature = "quic")]
+use once_cell::sync::Lazy;
+#[cfg(feature = "quic")]
+use dashmap::DashMap;
+#[cfg(feature = "quic")]
+use std::time::{Duration, Instant};
 
 /// QUIC transport with DATAGRAM support
 #[cfg(feature = "quic")]
@@ -112,6 +120,11 @@ impl Default for EchConfig {
 }
 
 #[cfg(feature = "quic")]
+static DNS_ECH_CACHE: Lazy<DashMap<String, (Instant, EchConfig)>> = Lazy::new(|| DashMap::new());
+#[cfg(feature = "quic")]
+const DNS_ECH_TTL: Duration = Duration::from_secs(3600);
+
+#[cfg(feature = "quic")]
 impl EchConfig {
     fn from_bytes(data: &[u8], public_name: String) -> Result<Self> {
         let mut idx = 0;
@@ -178,9 +191,44 @@ impl EchConfig {
         Self::from_bytes(&data, public_name)
     }
 
-    pub async fn from_dns(_domain: &str) -> Result<Self> {
-        // DNS ECH resolution disabled due to dependency issues
-        Err(HtxError::Config("ECH DNS resolution not available".to_string()))
+    pub async fn from_dns(domain: &str) -> Result<Self> {
+        if let Some(entry) = DNS_ECH_CACHE.get(domain) {
+            if entry.value().0.elapsed() < DNS_ECH_TTL {
+                return Ok(entry.value().1.clone());
+            } else {
+                DNS_ECH_CACHE.remove(domain);
+            }
+        }
+
+        let lookup_name = format!("_echconfig.{}", domain);
+        let resolver = TokioAsyncResolver::tokio_from_system_conf()
+            .map_err(|e| HtxError::Config(format!("failed to create DNS resolver: {}", e)))?;
+        let response = resolver
+            .txt_lookup(lookup_name.clone())
+            .await
+            .map_err(|e| HtxError::Config(format!("ECH TXT lookup failed for {}: {}", lookup_name, e)))?;
+
+        let mut txt = String::new();
+        for record in response.iter() {
+            for data in record.txt_data().iter() {
+                if let Ok(part) = std::str::from_utf8(data) {
+                    txt.push_str(part);
+                }
+            }
+        }
+
+        if txt.trim().is_empty() {
+            return Err(HtxError::Config("ECH TXT record empty".into()));
+        }
+
+        let decoded = base64::engine::general_purpose::STANDARD
+            .decode(txt.trim())
+            .map_err(|e| HtxError::Config(format!("invalid ECH base64: {}", e)))?;
+
+        let cfg = Self::from_bytes(&decoded, domain.to_string())?;
+        cfg.validate()?;
+        DNS_ECH_CACHE.insert(domain.to_string(), (Instant::now(), cfg.clone()));
+        Ok(cfg)
     }
 
     pub fn validate(&self) -> Result<()> {
