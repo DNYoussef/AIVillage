@@ -114,6 +114,7 @@ def cleanup_after_test():
 def event_loop_policy():
     """Set event loop policy for async tests"""
     import asyncio
+
     return asyncio.get_event_loop_policy()
 
 
@@ -126,19 +127,13 @@ def mock_p2p_network():
 @pytest.fixture
 def test_config():
     """Standard test configuration"""
-    return {
-        "storage_backend": "sqlite",
-        "db_path": ":memory:",
-        "test_mode": True,
-        "batch_size": 1,
-        "max_workers": 1
-    }
+    return {"storage_backend": "sqlite", "db_path": ":memory:", "test_mode": True, "batch_size": 1, "max_workers": 1}
 
 
 @pytest.fixture
 def mock_database_path():
     """Provide mock database path for testing"""
-    with tempfile.NamedTemporaryFile(suffix='.db', delete=False) as f:
+    with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as f:
         db_path = f.name
     yield db_path
     try:
@@ -150,11 +145,7 @@ def mock_database_path():
 @pytest.fixture
 def validation_environment():
     """Environment setup for validation tests"""
-    return {
-        "AIVILLAGE_ENV": "test",
-        "RAG_LOCAL_MODE": "1",
-        "PYTHONPATH": f"{src_root}:{packages_root}:{project_root}"
-    }
+    return {"AIVILLAGE_ENV": "test", "RAG_LOCAL_MODE": "1", "PYTHONPATH": f"{src_root}:{packages_root}:{project_root}"}
 
 
 # Test markers for categorization
