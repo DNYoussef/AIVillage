@@ -10,6 +10,7 @@ A sophisticated multi-agent AI system with self-evolution capabilities, featurin
 ## 🚀 Quick Start
 
 ### Prerequisites
+
 - Python 3.9+ (3.11 recommended)
 - Git with LFS support
 - Docker (optional, for containerized deployment)
@@ -62,6 +63,7 @@ AIVillage follows a clean, layered architecture optimized for maintainability an
 - **💰 DAO Governance**: Decentralized autonomous organization with token economics
 
 ## 🆕 LATEST: BitChat Transport Stabilization Complete
+
 *August 17, 2025 - P2P Communication Layer Consolidation*
 
 ### P2P System Transformation ✅
@@ -69,12 +71,14 @@ AIVillage follows a clean, layered architecture optimized for maintainability an
 We've successfully completed a major consolidation of our P2P communication infrastructure, unifying 12+ disparate implementations into a single, robust system:
 
 #### 🚀 **Unified Transport Architecture**
+
 - **Central Coordination**: All P2P transports now managed by unified `TransportManager` with intelligent routing
 - **Protocol Support**: BitChat (BLE mesh), BetaNet (HTX), QUIC with automatic failover chains
 - **Message Standards**: Unified message format supporting chunking, priority, and metadata
 - **Resource Awareness**: Battery and data budget management for mobile deployments
 
 #### 🔧 **Technical Achievements**
+
 - **Transport Manager**: `packages/p2p/core/transport_manager.py` (594 lines) - Core orchestration system
 - **BitChat Transport**: `packages/p2p/bitchat/ble_transport.py` (318 lines) - 7-hop mesh networking
 - **BetaNet Transport**: `packages/p2p/betanet/htx_transport.py` (267 lines) - HTX v1.1 frame protocol
@@ -82,6 +86,7 @@ We've successfully completed a major consolidation of our P2P communication infr
 - **Integration Tests**: `test_unified_p2p.py` - 6/6 tests passing with comprehensive validation
 
 #### 📊 **Integration Results**
+
 - **✅ Unified P2P System**: Transport registration, message routing, and protocol coordination working
 - **✅ Legacy Compatibility**: Backward compatibility maintained with deprecation warnings
 - **✅ Mobile Optimization**: Resource-aware transport selection based on battery/network conditions
@@ -90,6 +95,7 @@ We've successfully completed a major consolidation of our P2P communication infr
 - **✅ Performance**: Intelligent scoring algorithm for optimal transport selection
 
 #### 🗂️ **Cleanup Completed**
+
 - **40 legacy files** moved from `src/core/p2p/` to `deprecated/p2p_consolidation/20250818/`
 - **6 infrastructure files** moved from `src/infrastructure/p2p/` to deprecation
 - **Legacy imports** preserved via compatibility bridges during migration period
@@ -104,40 +110,47 @@ This consolidation provides a solid foundation for the next phase: Agent system 
 AIVillage features a comprehensive 7-stage CI/CD pipeline:
 
 #### 1. **Pre-flight Checks** ⚡ (< 30 seconds)
+
 - Syntax error detection
 - Critical security vulnerabilities
 - Production code quality gates
 - No experimental imports in production
 
 #### 2. **Code Quality** 🎨 (1-2 minutes)
+
 - Black formatting (120 char line length)
 - Ruff linting with auto-fixes
 - Import organization (isort)
 - Type checking (MyPy)
 
 #### 3. **Testing** 🧪 (2-5 minutes)
+
 - Cross-platform testing (Ubuntu, Windows, macOS)
 - Python versions: 3.9, 3.11
 - Unit, integration, and coverage tests
 - 60% minimum coverage requirement
 
 #### 4. **Security Scanning** 🔒 (1-2 minutes)
+
 - Bandit static analysis
 - Dependency vulnerability checks (Safety)
 - Semgrep SAST analysis
 - Secret detection
 
 #### 5. **Performance Testing** 🚀 (Optional)
+
 - Benchmark regression testing
 - Load testing with Locust
 - Performance metrics collection
 
 #### 6. **Build & Package** 📦 (On main branch)
+
 - Python package building
 - Docker image creation
 - Artifact publishing
 
 #### 7. **Deployment** 🚀 (Production gates)
+
 - Staging environment deployment
 - Production deployment (manual approval)
 
@@ -154,6 +167,7 @@ pre-commit run --all-files
 ```
 
 **Enabled Hooks:**
+
 - ✅ File quality checks (whitespace, large files, merge conflicts)
 - ✅ Security scanning (private keys, secrets detection)
 - ✅ Python formatting (Black + Ruff)
@@ -300,6 +314,7 @@ open docs/api/index.html
 ### Code Quality Requirements
 
 All contributions must pass:
+
 - ✅ Pre-commit hooks
 - ✅ CI/CD pipeline
 - ✅ Code review
@@ -379,6 +394,7 @@ curl http://localhost:8000/status
 ### Common Issues
 
 #### Installation Problems
+
 ```bash
 # Clear package cache
 make clean
@@ -389,6 +405,7 @@ make dev-install
 ```
 
 #### Test Failures
+
 ```bash
 # Run specific failing test
 pytest tests/path/to/test.py::test_name -v -s
@@ -398,6 +415,7 @@ pytest tests/path/to/test.py::test_name --pdb
 ```
 
 #### CI/CD Issues
+
 ```bash
 # Run local CI checks
 make ci-local

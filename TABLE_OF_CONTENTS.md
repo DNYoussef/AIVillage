@@ -1,13 +1,15 @@
 # AIVillage Project - Table of Contents & Structure Analysis
 
 ## Executive Summary
+
 This document provides a comprehensive mapping of the AIVillage project structure, identifying redundancies, duplicate implementations, and suggesting consolidation strategies. The project contains significant duplication across multiple AI implementations working on similar features.
 
 **UPDATE: Consolidation Groups document created with specific unification strategies and Claude prompts for each component group.**
 
 ## Consolidation Strategy Overview
 
-### 10 Major Consolidation Groups Identified:
+### 10 Major Consolidation Groups Identified
+
 1. **RAG Systems** - 10+ implementations to unify
 2. **Agent Forge & Training** - 8+ implementations
 3. **Specialized Agents** - 15+ locations
@@ -19,7 +21,8 @@ This document provides a comprehensive mapping of the AIVillage project structur
 9. **Evolution & Training Systems** - 5+ evolution variants
 10. **Documentation** - 30% of codebase is old reports/docs
 
-### Consolidation Impact:
+### Consolidation Impact
+
 - **Current State**: 5,000+ files with 70-80% redundancy
 - **Target State**: <2,000 files with 0% redundancy
 - **Expected Reduction**: 60-70% of codebase
@@ -28,6 +31,7 @@ This document provides a comprehensive mapping of the AIVillage project structur
 ## Major Redundancy Issues Identified
 
 ### 1. RAG System Implementations (Multiple Locations)
+
 - **src/rag_system/** - Core RAG implementation
 - **src/production/rag/** - Production RAG system
 - **src/software/hyper_rag/** - Hyper RAG pipeline
@@ -38,6 +42,7 @@ This document provides a comprehensive mapping of the AIVillage project structur
 - **deprecated/backup_20250813/experimental_rag/** - Deprecated RAG experiments
 
 ### 2. Agent Implementations (Multiple Duplicates)
+
 - **agents/** - Top-level agents directory
 - **src/agents/** - Source agents
 - **src/agent_forge/** - Agent forge implementation
@@ -47,6 +52,7 @@ This document provides a comprehensive mapping of the AIVillage project structur
 - **src/software/agent_forge/** - Software layer agent forge
 
 ### 3. P2P/Communication Systems (Scattered)
+
 - **src/communications/** - Core communications
 - **src/core/p2p/** - Core P2P implementation
 - **py/aivillage/p2p/** - Python P2P package
@@ -55,12 +61,14 @@ This document provides a comprehensive mapping of the AIVillage project structur
 - **archive/consolidated_communications/** - Archived communications
 
 ### 4. Compression Implementations (Redundant)
+
 - **src/compression/** - Core compression
 - **src/core/compression/** - Core module compression
 - **src/production/compression/** - Production compression
 - **tests/compression/** - Compression tests
 
 ### 5. Infrastructure/Deployment (Multiple Versions)
+
 - **infra/** - Infrastructure directory
 - **src/infrastructure/** - Source infrastructure
 - **deploy/** - Deployment configurations
@@ -71,6 +79,7 @@ This document provides a comprehensive mapping of the AIVillage project structur
 ## Complete Directory Structure
 
 ### Root Level Organization
+
 ```
 AIVillage/
 ├── Core Source Code
@@ -129,6 +138,7 @@ AIVillage/
 ## Detailed Structure by Component
 
 ### 1. Source Code Structure (src/)
+
 ```
 src/
 ├── Core Systems
@@ -170,6 +180,7 @@ src/
 ```
 
 ### 2. Python Package Structure (py/aivillage/)
+
 ```
 py/aivillage/
 ├── agent_forge/              [Agent forge Python implementation]
@@ -181,6 +192,7 @@ py/aivillage/
 ```
 
 ### 3. Test Structure
+
 ```
 tests/
 ├── Unit Tests
@@ -201,6 +213,7 @@ tests/
 ```
 
 ### 4. Rust/Native Code Structure
+
 ```
 crates/
 ├── BetaNet Components
@@ -225,40 +238,50 @@ crates/
 ## Identified Redundancies & Consolidation Strategy
 
 ### Priority 1: RAG System Consolidation
+
 **Current State:** 8+ separate RAG implementations
 **Recommended Action:**
+
 1. Merge all RAG implementations into `packages/rag/`
 2. Create unified API in `src/production/rag/`
 3. Archive experimental versions in `deprecated/`
 4. Maintain single source of truth
 
 ### Priority 2: Agent System Unification
+
 **Current State:** 7+ agent system implementations
 **Recommended Action:**
+
 1. Consolidate into `packages/agents/` as primary location
 2. Use `src/agent_forge/` for agent creation framework only
 3. Move specialized agents to subdirectories
 4. Remove duplicate implementations
 
 ### Priority 3: P2P/Communication Consolidation
+
 **Current State:** 6+ communication system implementations
 **Recommended Action:**
+
 1. Unify under `packages/p2p/`
 2. Separate protocols (BitChat, BetaNet) into submodules
 3. Archive old implementations
 4. Create clear transport abstraction layer
 
 ### Priority 4: Infrastructure Cleanup
+
 **Current State:** Multiple deployment and infrastructure directories
 **Recommended Action:**
+
 1. Consolidate under `deploy/` directory
 2. Organize by deployment target (docker/, k8s/, etc.)
 3. Move infrastructure code to `infra/`
 4. Remove redundant configuration files
 
 ### Priority 5: Test Organization
+
 **Current State:** Tests scattered across multiple locations
 **Recommended Action:**
+
 1. Centralize all tests in `tests/` directory
 2. Organize by test type (unit/, integration/, e2e/)
 3. Remove test files from source directories
@@ -266,16 +289,18 @@ crates/
 
 ## Key Findings
 
-### Major Issues:
+### Major Issues
+
 1. **Extreme Duplication:** Same features implemented 3-8 times in different locations
 2. **No Clear Architecture:** Flat structure with overlapping responsibilities
 3. **Multiple Package Systems:** py/, packages/, python/ all containing similar code
 4. **Inconsistent Naming:** Same concepts with different names across directories
 5. **Archive Confusion:** Multiple archive/deprecated folders with active-looking code
 
-### Critical Redundancies by Component:
+### Critical Redundancies by Component
 
-#### RAG System Files (30+ implementations found):
+#### RAG System Files (30+ implementations found)
+
 - Production RAG: `src/production/rag/`
 - Software RAG: `src/software/hyper_rag/`
 - Core RAG: `src/rag_system/`
@@ -284,14 +309,16 @@ crates/
 - Test RAG: Multiple test implementations
 - Experimental RAG: Various experimental versions
 
-#### Agent Systems (25+ implementations):
+#### Agent Systems (25+ implementations)
+
 - Atlantis Meta Agents
 - Agent Forge (multiple versions)
 - Specialized Agents
 - Production Agents
 - Experimental Agents
 
-#### Communication/P2P (20+ implementations):
+#### Communication/P2P (20+ implementations)
+
 - BitChat (multiple versions)
 - BetaNet (Rust and Python)
 - LibP2P implementations
@@ -319,48 +346,58 @@ crates/
 ## Consolidation Progress Update
 
 ### ✅ COMPLETED: GitHub Automation & CI/CD (Phase 0)
+
 **Successfully consolidated all automation systems**
 
 #### GitHub Workflows Consolidated
+
 - **✅ Unified CI/CD**: Created comprehensive main-ci.yml combining best features from 18+ workflows
 - **✅ 7-Stage Pipeline**: Pre-flight → Code Quality → Testing → Security → Performance → Build → Deploy
 - **✅ Cross-platform Testing**: Ubuntu, Windows, macOS with Python 3.9, 3.11
 - **✅ Production Gates**: No TODOs, no experimental imports, 60% test coverage
 
 #### Pre-commit Hooks Enhanced
+
 - **✅ Comprehensive Checks**: 10 hook categories with 25+ individual checks
 - **✅ Fast Local Validation**: Format, lint, security, secrets detection
 - **✅ Auto-fixes**: Ruff + Black + isort with automatic corrections
 - **✅ Security Scanning**: Bandit + detect-secrets integration
 
 #### Development Tools Upgraded
+
 - **✅ Enhanced Makefile**: 25+ commands for all development tasks
 - **✅ Help System**: `make help` shows all available commands
 - **✅ CI Commands**: `make ci-local`, `make ci-pre-flight` for local validation
 - **✅ Quality Gates**: Format, lint, security, type-check integration
 
 ### Phase 1: Critical Systems (Week 1)
+
 **Focus: Highest impact, most fragmented components**
 
 #### RAG System Consolidation
+
 - **Target**: Unify 10+ implementations → `packages/rag/`
 - **Claude Prompt**: See CONSOLIDATION_GROUPS.md for specific unification prompt
 - **Priority Features**: Bayesian trust graphs, Hyper RAG cognitive nexus, offline mode
 
 #### Agent Forge Consolidation
+
 - **Target**: Unify 8+ implementations → `packages/agent_forge/`
 - **Components**: Training pipeline, ADAS, curriculum, evolution, compression
 - **Key Preservation**: All training phases, evolution metrics
 
 #### Testing Centralization
+
 - **Target**: Move 200+ scattered tests → `tests/`
 - **Structure**: unit/, integration/, e2e/, benchmarks/
 - **Action**: Delete all src/*/tests/ directories after migration
 
 ### ✅ COMPLETED: P2P/Communication Consolidation (Phase 1 Complete)
+
 **Successfully consolidated all P2P/communication systems**
 
 #### P2P Transport Unification Completed
+
 - **✅ Unified Architecture**: Consolidated 12+ implementations → `packages/p2p/`
 - **✅ Core Transport Manager**: Intelligent routing with transport selection algorithm
 - **✅ Protocol Support**: BitChat (BLE mesh), BetaNet (HTX), QUIC with fallback chains
@@ -368,19 +405,22 @@ crates/
 - **✅ Compatibility Bridges**: Legacy import support during migration period
 
 #### Technical Implementation
+
 - **✅ Transport Manager**: `packages/p2p/core/transport_manager.py` - Unified coordination system
 - **✅ Message Types**: `packages/p2p/core/message_types.py` - Standardized message format
 - **✅ BitChat Transport**: `packages/p2p/bitchat/ble_transport.py` - 7-hop mesh networking
 - **✅ BetaNet Transport**: `packages/p2p/betanet/htx_transport.py` - HTX v1.1 frame protocol
 - **✅ Legacy Support**: `packages/p2p/bridges/compatibility.py` - Migration compatibility
 
-#### Deprecated Locations (Moved to deprecated/p2p_consolidation/20250818/):
+#### Deprecated Locations (Moved to deprecated/p2p_consolidation/20250818/)
+
 - **40 files** from `src/core/p2p/` - Legacy transport implementations
 - **6 files** from `src/infrastructure/p2p/` - Device mesh and NAT traversal
 - **Legacy Python** implementations preserved with compatibility bridges
 - **Test files** migrated to unified test suite
 
 #### Integration Test Results
+
 - **Unified P2P System**: ✅ PASS - Transport registration and message routing functional
 - **Legacy Compatibility**: ✅ PASS - Backward compatibility maintained during migration
 - **Mobile Integration**: ✅ PASS - Resource-aware transport selection working
@@ -390,11 +430,13 @@ crates/
 ### Phase 2: Core Components (Week 2)
 
 #### Agent Consolidation (Next Priority)
+
 - **Target**: Unify 15+ agent locations → `packages/agents/`
 - **Strategy**: One implementation per agent type
 - **Preserve**: Best features from experimental versions
 
 #### Agent Consolidation
+
 - **Target**: Unify 15+ agent locations → `packages/agents/`
 - **Strategy**: One implementation per agent type
 - **Preserve**: Best features from experimental versions
@@ -402,28 +444,33 @@ crates/
 ### Phase 3: Infrastructure (Week 3)
 
 #### Configuration Consolidation
+
 - **Target**: 50+ config files → `config/`
 - **Deployment**: All deploy scripts → `deploy/`
 - **Docker/K8s**: Organize under deploy/
 
 #### Compression Pipeline
+
 - **Target**: 6+ implementations → `packages/compression/`
 - **Features**: BitNet, SeedLM, VPTQ, mobile optimizations
 
 ### Phase 4: Cleanup (Week 4)
 
 #### Delete Deprecated Code
+
 - **Remove**: deprecated/ directory (30% of codebase)
 - **Archive**: Move historical docs to docs/archive/
 - **Clean**: Remove all backup files and duplicates
 
 #### Documentation Organization
+
 - **Structure**: docs/api/, docs/guides/, docs/architecture/
 - **Action**: Move 30+ root *.md files to appropriate locations
 
 ## Claude Prompt Templates
 
-### For Each Consolidation Task:
+### For Each Consolidation Task
+
 ```
 "Consolidate [COMPONENT] from these locations:
 [LIST OF DIRECTORIES]
@@ -442,6 +489,7 @@ Requirements:
 ## Validation Checklist
 
 After each consolidation:
+
 - [ ] All tests pass in new location
 - [ ] No broken imports across codebase
 - [ ] All features preserved and working
@@ -452,14 +500,16 @@ After each consolidation:
 
 ## Success Metrics
 
-### Before Consolidation:
+### Before Consolidation
+
 - **Files**: 5,000+
 - **Duplicate Components**: 31+
 - **Redundant Code**: 70-80%
 - **Scattered Tests**: 200+ locations
 - **Config Files**: 50+ locations
 
-### After Consolidation:
+### After Consolidation
+
 - **Files**: <2,000 (60% reduction)
 - **Duplicate Components**: 0
 - **Redundant Code**: 0%

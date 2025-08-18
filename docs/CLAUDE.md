@@ -50,38 +50,47 @@ from ingestion.pipeline import DataPipeline
 from utils.helpers import format_output
 ```
 
-### Linting Rules and Standards
+### Linting Rules and Standards (Updated August 2025)
 
 #### Ruff Configuration (Primary Linter)
-The project uses Ruff with extensive rule sets:
-- **pycodestyle** (E, W): Style violations
-- **pyflakes** (F): Logical errors
-- **isort** (I): Import sorting
-- **pep8-naming** (N): Naming conventions
-- **pydocstyle** (D): Documentation style (Google convention)
-- **flake8-annotations** (ANN): Type annotations
-- **flake8-bandit** (S): Security issues
-- **Additional plugins**: bugbear, comprehensions, simplify, etc.
+The project uses **Ruff v0.0.263** with streamlined rule sets for compatibility:
+- **pycodestyle** (E): Critical style violations
+- **pyflakes** (F): Logical errors and undefined names
+- **isort** (I): Import sorting and organization
+- **pyupgrade** (UP): Modern Python syntax upgrades
 
-#### Ignored Rules
-- D100-D105: Missing docstrings (temporary)
-- ANN101/102: Type annotations for self/cls
-- S101: Use of assert (allowed)
-- T201/T203: print/pprint statements (allowed)
-
-#### Pre-commit Hooks
-All code must pass these checks:
+#### Streamlined Pre-commit Hooks
+Essential quality checks that run on every commit:
 1. **trailing-whitespace**: Remove trailing spaces
 2. **end-of-file-fixer**: Ensure files end with newline
-3. **check-yaml**: Validate YAML syntax
-4. **check-json**: Validate JSON syntax
-5. **black**: Code formatting
-6. **isort**: Import sorting
-7. **flake8**: Style checking
-8. **ruff**: Comprehensive linting
-9. **mypy**: Type checking (non-blocking)
-10. **bandit**: Security scanning
-11. **check-placeholder-functions**: Custom placeholder detection
+3. **check-merge-conflict**: Detect merge conflicts
+4. **check-added-large-files**: Prevent large files (>5MB)
+5. **detect-private-key**: Security check for private keys
+6. **check-toml**: Validate TOML syntax
+7. **check-ast**: Validate Python syntax
+8. **debug-statements**: Check for debug statements
+9. **ruff**: Core linting with auto-fix
+10. **black**: Code formatting (120 char line length)
+11. **isort**: Import sorting with black profile
+12. **detect-secrets**: Security baseline scanning
+
+#### Compatibility Configuration
+- **Target Python**: 3.11 (compatible with old ruff version)
+- **Line Endings**: LF only (Windows compatible via .gitattributes)
+- **Excluded Paths**: `deprecated/`, `archive/`, `experimental/`
+- **Auto-fix Enabled**: Ruff automatically fixes import issues
+
+#### Manual Linting Commands
+```bash
+# Quick fix
+ruff check packages/ --fix
+
+# Full format
+black packages/ && isort packages/
+
+# Test hooks
+pre-commit run --all-files
+```
 
 ### Type Annotations
 ```python

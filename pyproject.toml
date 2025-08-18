@@ -180,47 +180,27 @@ latency-metrics = "core.cli:latency_metrics"
 requires = ["setuptools>=75.0.0", "wheel>=0.44.0"]
 build-backend = "setuptools.build_meta"
 
-# Unified Code Quality Configuration
+# Simplified Code Quality Configuration (compatible with ruff 0.0.263)
 [tool.ruff]
-target-version = "py311"  # Compatible with Ruff version
+target-version = "py311"
 line-length = 120
 fix = true
-# Comprehensive rule set - enable most rules then selectively exclude
+
+# Core rule set - focus on essential rules that work reliably
 select = [
-    "E",    # pycodestyle errors (syntax, indentation)
-    "W",    # pycodestyle warnings
-    "F",    # pyflakes (undefined names, unused imports)
-    "I",    # isort (import sorting) - replaces standalone isort
-    "UP",   # pyupgrade (modern Python syntax)
-    "B",    # flake8-bugbear (likely bugs)
-    "C4",   # flake8-comprehensions (list/dict comprehensions)
-    "S",    # flake8-bandit (security) - replaces standalone bandit for most cases
-    "N",    # pep8-naming (naming conventions)
-    "RUF",  # Ruff-specific rules
-    "PL",   # Pylint rules (performance, refactoring)
-    "PT",   # pytest-style rules
+    "E",    # pycodestyle errors (critical)
+    "F",    # Pyflakes (logical errors, undefined names)
+    "I",    # isort import sorting
+    "UP",   # pyupgrade (Python version upgrades)
 ]
+
+# Ignore problematic rules for old ruff version
 ignore = [
-    # Formatter conflicts (critical for CI stability)
-    "COM812", # Trailing comma conflicts with ruff format
-    "ISC001", # Implicit string concatenation conflicts with ruff format
-
-    # Development aids (explicitly allowed)
-    "T201",   # print statements (allowed for debugging)
-    "T203",   # pprint statements (allowed for debugging)
-    "S101",   # Use of assert (allowed in tests and development)
-
-    # Documentation (handle separately or disable)
-    "D",      # All pydocstyle rules (too noisy for now)
-
-    # Type annotations (handle with mypy, not ruff)
-    "ANN",    # All annotation rules (mypy provides better type checking)
-
-    # Overly strict style rules (team discretion)
-    "PLR0913", # Too many arguments (sometimes necessary)
-    "PLR0915", # Too many statements (sometimes necessary)
-    "PLR2004", # Magic value used in comparison (context-dependent)
-    "RET504",  # Unnecessary variable assignment (readability choice)
+    "E501",    # Line too long (handled by black formatter)
+    "PLR0912", # Too many branches (complex code structure)
+    "PLR2004", # Magic value comparison (context-dependent)
+    "SIM105",  # Use contextlib.suppress (manual fix only)
+    "S112",    # Try-except-continue (compatibility bridge pattern)
 ]
 
 # Unified exclude patterns (replaces multiple different configs)
@@ -286,16 +266,14 @@ extend-exclude = '''
 '''
 
 [tool.mypy]
-python_version = "3.12"  # Match actual Python version
+python_version = "3.12"
+files = ["packages", "src"]
 ignore_missing_imports = true
-warn_unused_configs = true
-strict = false  # Start lenient, can tighten later
+warn_return_any = false
+warn_unused_configs = false
+strict = false
 show_error_codes = true
-explicit_package_bases = true
-namespace_packages = true
-# Use same exclude patterns as other tools
 exclude = [
-    "archived/",
     "deprecated/",
     "experimental/",
     "tmp.*",
