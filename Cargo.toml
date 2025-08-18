@@ -1,2 +1,16 @@
 [workspace]
-members = ["betanet-mixnode"]
+members = [
+    "crates/betanet-ffi",
+    "crates/betanet-htx",
+    "crates/betanet-mixnode",
+    "crates/betanet-utls",
+    "crates/betanet-linter"
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+rust-version = "1.70"
+authors = ["AI Village"]
+repository = "https://example.com"

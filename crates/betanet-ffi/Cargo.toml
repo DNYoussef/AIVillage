@@ -1,11 +1,8 @@
 [package]
 name = "betanet-ffi"
-version.workspace = true
-edition.workspace = true
-rust-version.workspace = true
-authors.workspace = true
-license.workspace = true
-repository.workspace = true
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
 description = "C FFI bindings for Betanet core components"
 
 [lib]
@@ -14,19 +11,13 @@ crate-type = ["cdylib", "staticlib", "rlib"]
 
 # Minimal dependencies for Day 8-9 deliverable
 [dependencies]
-# Full dependencies commented out due to OpenSSL issues on Windows
-# betanet-htx = { path = "../betanet-htx" }
-# betanet-mixnode = { path = "../betanet-mixnode" }
-# betanet-utls = { path = "../betanet-utls" }
-# betanet-linter = { path = "../betanet-linter" }
+betanet-htx = { path = "../betanet-htx" }
+betanet-mixnode = { path = "../betanet-mixnode" }
+betanet-utls = { path = "../betanet-utls" }
+betanet-linter = { path = "../betanet-linter" }
 
-# FFI dependencies
 libc = "0.2"
-# serde = { workspace = true }
-# serde_json = { workspace = true }
-# tokio = { workspace = true, features = ["rt", "macros"] }
-# anyhow = { workspace = true }
-# futures = { workspace = true }
+futures = "0.3"
 
 [features]
 default = []
