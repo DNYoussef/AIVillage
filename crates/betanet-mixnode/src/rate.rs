@@ -9,6 +9,7 @@ use std::time::{Duration, Instant};
 
 use std::collections::VecDeque;
 use tokio::sync::{Mutex, Semaphore};
+use tokio::task::yield_now;
 use tokio::time::sleep;
 use tracing::{debug, warn};
 
@@ -89,15 +90,15 @@ impl TokenBucket {
                 return Ok(());
             }
 
-            // Adaptive backoff instead of fixed sleep
+            // Adaptive backoff without busy-waiting
             if backoff <= 8 {
-                // Spin for very short waits
-                for _ in 0..backoff * 100 {
-                    std::hint::spin_loop();
-                }
+                // Yield to other tasks and sleep briefly
+                yield_now().await;
+                sleep(Duration::from_micros(backoff)).await;
             } else {
-                // Use async sleep for longer waits
+                // Use longer async sleep as backoff grows
                 let wait_time = Duration::from_micros(backoff * 10);
+                yield_now().await;
                 sleep(wait_time).await;
             }
 
