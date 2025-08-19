@@ -217,8 +217,8 @@ class Sprint6Monitor:
     async def _check_resource_management_health(self) -> str:
         """Check resource management system health."""
         try:
-            from src.core.resources.device_profiler import DeviceProfiler
-            from src.core.resources.resource_monitor import ResourceMonitor
+            from packages.core.resources.device_profiler import DeviceProfiler
+            from packages.core.resources.resource_monitor import ResourceMonitor
 
             # Test device profiler
             profiler = DeviceProfiler()

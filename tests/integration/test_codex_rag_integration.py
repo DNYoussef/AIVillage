@@ -7,19 +7,21 @@ import asyncio
 import os
 import shutil
 import sqlite3
+
+# Import from deprecated location - these files were moved during consolidation
+import sys
 import tempfile
 from pathlib import Path
 
 import pytest
 
-from packages.core.legacy.production.rag.rag_system.core.codex_rag_integration import (
-    CODEXCompliantCache,
-    CODEXRAGPipeline,
+deprecated_path = (
+    Path(__file__).parent.parent.parent / "deprecated" / "rag_consolidation" / "20250818" / "production_rag" / "rag"
 )
-from packages.core.legacy.production.rag.wikipedia_data_loader import (
-    WikipediaDataLoader,
-    create_sample_educational_content,
-)
+sys.path.insert(0, str(deprecated_path))
+
+from rag_system.core.codex_rag_integration import CODEXCompliantCache, CODEXRAGPipeline
+from wikipedia_data_loader import WikipediaDataLoader, create_sample_educational_content
 
 
 class TestCODEXRAGIntegration:

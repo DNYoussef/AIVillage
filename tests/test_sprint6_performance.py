@@ -6,11 +6,10 @@ import time
 from unittest.mock import Mock, patch
 
 import pytest
-
-from src.core.resources.adaptive_loader import AdaptiveLoader
-from src.core.resources.constraint_manager import ConstraintManager
-from src.core.resources.device_profiler import DeviceProfiler, DeviceType
-from src.core.resources.resource_monitor import ResourceMonitor
+from packages.core.resources.adaptive_loader import AdaptiveLoader
+from packages.core.resources.constraint_manager import ConstraintManager
+from packages.core.resources.device_profiler import DeviceProfiler, DeviceType
+from packages.core.resources.resource_monitor import ResourceMonitor
 from src.production.communications.p2p.p2p_node import P2PNode
 
 
@@ -129,7 +128,7 @@ class TestPerformanceBenchmarks:
         loader = AdaptiveLoader(profiler, constraint_manager)
 
         # Create loading context
-        from src.core.resources.adaptive_loader import LoadingContext
+        from packages.core.resources.adaptive_loader import LoadingContext
 
         context = LoadingContext(
             task_type="nightly",

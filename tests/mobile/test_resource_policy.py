@@ -439,7 +439,7 @@ class TestDualPathTransportIntegration:
         # Mock the transport imports
         with patch("src.core.p2p.dual_path_transport.RESOURCE_MANAGEMENT_AVAILABLE", True):
             try:
-                from src.core.p2p.dual_path_transport import DualPathTransport
+                from packages.p2p.core.dual_path_transport import DualPathTransport
 
                 return DualPathTransport(enable_bitchat=True, enable_betanet=True)
             except ImportError:

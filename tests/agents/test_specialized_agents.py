@@ -7,7 +7,7 @@ import asyncio
 import pandas as pd
 import pytest
 
-from src.agents.specialized import (
+from packages.agents.specialized import (
     ArchitectAgent,
     CreativeAgent,
     DataScienceAgent,
@@ -83,7 +83,7 @@ class TestDevOpsAgent:
 
     async def test_deployment_simulation(self, agent):
         """Test deployment simulation"""
-        from src.agents.specialized.devops_agent import DeploymentRequest
+        from packages.agents.specialized.devops_agent import DeploymentRequest
 
         request = DeploymentRequest(environment="staging", service="test-service", version="v1.0.0")
 
@@ -180,7 +180,7 @@ class TestCreativeAgent:
 
     async def test_story_generation(self, agent):
         """Test story generation"""
-        from src.agents.specialized.creative_agent import CreativeRequest
+        from packages.agents.specialized.creative_agent import CreativeRequest
 
         request = CreativeRequest(content_type="story", theme="adventure", style="fantasy", length="medium")
 
@@ -194,7 +194,7 @@ class TestCreativeAgent:
 
     async def test_poetry_creation(self, agent):
         """Test poetry creation"""
-        from src.agents.specialized.creative_agent import CreativeRequest
+        from packages.agents.specialized.creative_agent import CreativeRequest
 
         request = CreativeRequest(content_type="poem", theme="nature", style="haiku")
 
@@ -276,7 +276,7 @@ class TestTranslatorAgent:
 
     async def test_text_translation(self, agent):
         """Test text translation"""
-        from src.agents.specialized.translator_agent import TranslationRequest
+        from packages.agents.specialized.translator_agent import TranslationRequest
 
         request = TranslationRequest(
             source_text="Hello, how are you?",
@@ -354,7 +354,7 @@ class TestTesterAgent:
 
     async def test_unit_test_execution(self, agent):
         """Test unit test execution"""
-        from src.agents.specialized.tester_agent import TestRequest
+        from packages.agents.specialized.tester_agent import TestRequest
 
         request = TestRequest(
             test_type="unit",
@@ -372,7 +372,7 @@ class TestTesterAgent:
 
     async def test_performance_testing(self, agent):
         """Test performance testing"""
-        from src.agents.specialized.tester_agent import TestRequest
+        from packages.agents.specialized.tester_agent import TestRequest
 
         request = TestRequest(
             test_type="performance",

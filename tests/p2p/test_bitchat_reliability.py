@@ -34,7 +34,7 @@ with patch.dict(
         "cryptography.hazmat.backends": MagicMock(),
     },
 ):
-    from src.core.p2p.bitchat_transport import BitChatMessage, BitChatTransport
+    from packages.p2p.core.bitchat_transport import BitChatMessage, BitChatTransport
 
 # Set up logging
 logging.basicConfig(level=logging.DEBUG)

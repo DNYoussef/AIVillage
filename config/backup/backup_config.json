@@ -1,0 +1,230 @@
+{
+  "backup": {
+    "storage": {
+      "backup_root": "backups",
+      "max_backup_size_gb": 100,
+      "cleanup_temp_files": true,
+      "parallel_operations": 4
+    },
+    "compression": {
+      "enabled": true,
+      "level": 6,
+      "threshold_mb": 10
+    },
+    "encryption": {
+      "enabled": true,
+      "algorithm": "AES-256-GCM",
+      "key_rotation_days": 90
+    },
+    "verification": {
+      "verify_after_backup": true,
+      "checksum_algorithm": "SHA-256",
+      "test_restore_weekly": true
+    }
+  },
+  "retention": {
+    "full_backups_keep": 30,
+    "incremental_keep_days": 90,
+    "tenant_backups_keep": 10,
+    "config_backups_keep": 20,
+    "log_backups_keep_days": 14
+  },
+  "scheduling": {
+    "enabled": true,
+    "full_backup_time": "02:00",
+    "incremental_interval_hours": 6,
+    "tenant_backup_time": "03:30",
+    "config_backup_interval_hours": 4,
+    "max_concurrent_jobs": 2
+  },
+  "components": {
+    "rbac_system": {
+      "enabled": true,
+      "priority": "high",
+      "includes": [
+        "data/rbac.db",
+        "data/tenants.db",
+        "config/security/"
+      ]
+    },
+    "tenant_data": {
+      "enabled": true,
+      "priority": "high",
+      "path": "data/tenants/",
+      "per_tenant_backup": true
+    },
+    "agents": {
+      "enabled": true,
+      "priority": "medium",
+      "includes": [
+        "packages/agents/",
+        "data/tenants/*/agents/"
+      ],
+      "excludes": [
+        "*.pyc",
+        "__pycache__/",
+        ".git/"
+      ]
+    },
+    "rag_collections": {
+      "enabled": true,
+      "priority": "high",
+      "includes": [
+        "packages/rag/",
+        "data/tenants/*/rag/",
+        "data/vector_db/"
+      ],
+      "large_files_warning_gb": 5
+    },
+    "p2p_networks": {
+      "enabled": true,
+      "priority": "medium",
+      "includes": [
+        "packages/p2p/",
+        "data/tenants/*/p2p/"
+      ]
+    },
+    "models": {
+      "enabled": true,
+      "priority": "low",
+      "includes": [
+        "packages/agent_forge/**/*.bin",
+        "packages/agent_forge/**/*.safetensors",
+        "data/tenants/*/models/"
+      ],
+      "size_limit_gb": 50,
+      "compress_models": true
+    },
+    "configurations": {
+      "enabled": true,
+      "priority": "high",
+      "includes": [
+        "config/",
+        "deploy/",
+        ".env*"
+      ],
+      "excludes": [
+        "config/security/.backup_key",
+        "*.log"
+      ]
+    },
+    "logs": {
+      "enabled": true,
+      "priority": "low",
+      "includes": [
+        "logs/",
+        "data/logs/"
+      ],
+      "recent_only_days": 30,
+      "compress_old_logs": true
+    }
+  },
+  "restore": {
+    "strategies": {
+      "default": "replace",
+      "available": [
+        "replace",
+        "merge",
+        "side_by_side",
+        "test_restore"
+      ]
+    },
+    "validation": {
+      "pre_restore_checks": true,
+      "post_restore_verification": true,
+      "rollback_on_failure": true
+    },
+    "rollback": {
+      "create_rollback_point": true,
+      "rollback_retention_hours": 72,
+      "auto_rollback_on_failure": true
+    }
+  },
+  "monitoring": {
+    "health_checks": {
+      "enabled": true,
+      "check_interval_minutes": 5,
+      "failure_threshold": 3,
+      "alert_channels": [
+        "log",
+        "email"
+      ]
+    },
+    "metrics": {
+      "track_backup_sizes": true,
+      "track_durations": true,
+      "track_success_rates": true,
+      "retention_days": 90
+    },
+    "alerts": {
+      "backup_failure": {
+        "enabled": true,
+        "severity": "critical",
+        "consecutive_failures_threshold": 2
+      },
+      "large_backup_size": {
+        "enabled": true,
+        "severity": "warning",
+        "size_threshold_gb": 20
+      },
+      "slow_backup": {
+        "enabled": true,
+        "severity": "warning",
+        "duration_threshold_hours": 4
+      },
+      "disk_space_low": {
+        "enabled": true,
+        "severity": "critical",
+        "free_space_threshold_gb": 10
+      }
+    }
+  },
+  "disaster_recovery": {
+    "offsite_backup": {
+      "enabled": false,
+      "provider": "aws_s3",
+      "bucket": "aivillage-backups",
+      "region": "us-east-1",
+      "encryption": true
+    },
+    "cross_region_replication": {
+      "enabled": false,
+      "regions": [
+        "us-west-2",
+        "eu-west-1"
+      ]
+    },
+    "recovery_procedures": {
+      "rto_target_hours": 4,
+      "rpo_target_hours": 1,
+      "test_recovery_monthly": true,
+      "documented_procedures": true
+    }
+  },
+  "security": {
+    "access_control": {
+      "backup_operations": [
+        "admin",
+        "backup_operator"
+      ],
+      "restore_operations": [
+        "admin",
+        "super_admin"
+      ],
+      "emergency_restore": [
+        "super_admin"
+      ]
+    },
+    "audit_logging": {
+      "log_all_operations": true,
+      "log_access_attempts": true,
+      "retention_days": 365
+    },
+    "data_protection": {
+      "encrypt_in_transit": true,
+      "encrypt_at_rest": true,
+      "key_management": "internal",
+      "secure_key_storage": true
+    }
+  }
+}

@@ -24,8 +24,7 @@ from typing import Any
 import aiohttp
 import pytest
 import pytest_asyncio
-
-from src.core.message_types import Message, MessageType
+from packages.core.message_types import Message, MessageType
 from src.navigation.scion_navigator import SCIONAwareNavigator
 from src.transport.scion_gateway import GatewayConfig, SCIONGateway, SCIONGatewayError
 

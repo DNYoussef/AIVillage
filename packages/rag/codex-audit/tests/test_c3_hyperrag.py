@@ -49,7 +49,7 @@ def test_rag_imports():
 def test_intelligent_chunking():
     """Test intelligent chunking functionality."""
     try:
-        from src.production.rag.rag_system.core.intelligent_chunking import IntelligentChunker
+        from packages.rag.rag_system.core.intelligent_chunking import IntelligentChunker
 
         chunker = IntelligentChunker()
 
@@ -102,7 +102,7 @@ def test_intelligent_chunking():
 def test_query_processing():
     """Test query processing pipeline."""
     try:
-        from src.production.rag.rag_system.core.query_processor import QueryProcessor
+        from packages.rag.rag_system.core.query_processor import QueryProcessor
 
         processor = QueryProcessor()
 
@@ -140,7 +140,7 @@ def test_query_processing():
 def test_cache_system():
     """Test three-tier caching system."""
     try:
-        from src.production.rag.rag_system.core.semantic_cache_advanced import ThreeTierCache
+        from packages.rag.rag_system.core.semantic_cache_advanced import ThreeTierCache
 
         cache = ThreeTierCache()
 
@@ -189,7 +189,7 @@ def test_cache_system():
 def test_rag_pipeline():
     """Test complete RAG pipeline."""
     try:
-        from src.production.rag.rag_system.core.graph_enhanced_rag_pipeline import GraphEnhancedRAGPipeline
+        from packages.rag.rag_system.core.graph_enhanced_rag_pipeline import GraphEnhancedRAGPipeline
 
         pipeline = GraphEnhancedRAGPipeline()
 
@@ -237,7 +237,7 @@ def test_rag_pipeline():
 def test_performance_metrics():
     """Test claimed performance metrics."""
     try:
-        from src.production.rag.rag_system.core import config
+        from packages.rag.rag_system.core import config
 
         results = []
 

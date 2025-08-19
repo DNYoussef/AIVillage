@@ -16,8 +16,8 @@ import pytest
 
 # Test imports for integration components
 try:
-    from src.core.evolution_metrics_integrated import EvolutionMetricsData as EvolutionMetrics
-    from src.core.evolution_metrics_integrated import IntegratedEvolutionMetrics as EvolutionMetricsCollector
+    from packages.core.evolution_metrics_integrated import EvolutionMetricsData as EvolutionMetrics
+    from packages.core.evolution_metrics_integrated import IntegratedEvolutionMetrics as EvolutionMetricsCollector
 
     EVOLUTION_AVAILABLE = True
 except ImportError:
@@ -31,8 +31,8 @@ except ImportError:
     RAG_AVAILABLE = False
 
 try:
-    from src.core.p2p.libp2p_mesh import MeshMessage
-    from src.core.p2p.p2p_node import P2PNode
+    from packages.p2p.core.libp2p_mesh import MeshMessage
+    from packages.p2p.core.p2p_node import P2PNode
 
     P2P_AVAILABLE = True
 except ImportError:
@@ -200,7 +200,7 @@ class TestP2PIntegration:
     @pytest.mark.skipif(not P2P_AVAILABLE, reason="P2P components not available")
     def test_mesh_message_compatibility(self):
         """Test mesh message format compatibility."""
-        from src.core.p2p.libp2p_mesh import MeshMessageType
+        from packages.p2p.core.libp2p_mesh import MeshMessageType
 
         message = MeshMessage(
             type=MeshMessageType.DATA_MESSAGE,

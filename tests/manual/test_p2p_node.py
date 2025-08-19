@@ -11,7 +11,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(level
 logger = logging.getLogger(__name__)
 
 # Import the P2P components
-from src.core.p2p import P2PNode
+from packages.core.p2p import P2PNode
 
 
 async def test_single_node():

@@ -25,17 +25,15 @@ import pytest
 # Add src directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
-from hyperag.education import curriculum_graph
-
-from core.compatibility.bridge_system import compatibility_bridge
+from packages.agent_forge.legacy_software.process_orchestrator import AgentForgeOrchestrator
+from packages.agents.specialized.governance.shield_agent import ShieldAgent
+from packages.agents.specialized.governance.sword_agent import SwordAgent
+from packages.core.legacy.compatibility.bridge_system import compatibility_bridge
 
 # Test imports
-from hardware.edge.digital_twin import DigitalTwinConcierge
-from software.agent_forge.process_orchestrator import AgentForgeOrchestrator
-from software.hyper_rag.hyper_rag_pipeline import HyperRAGPipeline, RAGType
-from software.meta_agents.battle_orchestrator import BattleOrchestrator
-from software.meta_agents.shield import ShieldAgent
-from software.meta_agents.sword import SwordAgent
+from packages.edge.mobile.digital_twin_concierge import DigitalTwinConcierge
+from packages.rag.core.hyper_rag import HyperRAGOrchestrator as HyperRAGPipeline
+from packages.rag.legacy_src.education.curriculum_graph import curriculum_graph
 
 logger = logging.getLogger(__name__)
 

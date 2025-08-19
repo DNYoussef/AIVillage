@@ -11,10 +11,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import psutil
 import pytest
-
-from src.core.p2p.p2p_node import P2PNode, PeerCapabilities
-from src.core.resources.device_profiler import DeviceProfiler
-from src.core.resources.resource_monitor import ResourceMonitor
+from packages.core.resources.device_profiler import DeviceProfiler
+from packages.core.resources.resource_monitor import ResourceMonitor
 from src.production.distributed_inference.model_sharding_engine import (
     DeviceProfile,
     ModelShard,
@@ -22,6 +20,8 @@ from src.production.distributed_inference.model_sharding_engine import (
     ShardingPlan,
     ShardingStrategy,
 )
+
+from packages.p2p.core.p2p_node import P2PNode, PeerCapabilities
 
 
 @pytest.fixture

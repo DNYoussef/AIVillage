@@ -19,6 +19,7 @@ from datetime import datetime
 from typing import Any
 
 import pytest
+import pytest_asyncio
 
 from packages.agents.core.agent_interface import AgentCapability, AgentMetadata, MessageInterface, TaskInterface
 from packages.agents.core.agent_orchestration_system import AgentOrchestrationSystem, CommunicationChannelType
@@ -42,6 +43,7 @@ class MockRAGClient:
                     "confidence": 0.9,
                 }
             ],
+            "key_patterns": "Similar task patterns: coordination, communication, analysis",
         }
 
     async def query(self, query: str, mode: str = "balanced", **kwargs):
@@ -160,7 +162,7 @@ class TestAgentTemplate(BaseAgentTemplate):
 class TestAgentSystemIntegration:
     """Integration tests for the complete agent system"""
 
-    @pytest.fixture
+    @pytest_asyncio.fixture
     async def mock_clients(self):
         """Create mock clients for system dependencies"""
         return {
@@ -169,7 +171,7 @@ class TestAgentSystemIntegration:
             "agent_forge_client": MockAgentForgeClient(),
         }
 
-    @pytest.fixture
+    @pytest_asyncio.fixture
     async def orchestration_system(self, mock_clients):
         """Create orchestration system with mock clients"""
         orchestrator = AgentOrchestrationSystem()
@@ -186,7 +188,7 @@ class TestAgentSystemIntegration:
         # Cleanup
         await orchestrator.stop_orchestration()
 
-    @pytest.fixture
+    @pytest_asyncio.fixture
     async def enhanced_king_agent(self, mock_clients):
         """Create Enhanced King Agent with mock clients"""
         king = EnhancedKingAgent("integration_test_king")
@@ -199,7 +201,7 @@ class TestAgentSystemIntegration:
         await king.initialize()
         return king
 
-    @pytest.fixture
+    @pytest_asyncio.fixture
     async def test_agents(self, mock_clients):
         """Create test agents for orchestration"""
         agents = []

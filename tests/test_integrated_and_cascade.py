@@ -21,7 +21,7 @@ def test_integrated_pipeline():
     print("TESTING INTEGRATED COMPRESSION PIPELINE")
     print("=" * 60)
 
-    from src.core.compression.integrated_pipeline import IntegratedCompressionPipeline
+    from packages.core.compression.integrated_pipeline import IntegratedCompressionPipeline
 
     # Create test model
     model = nn.Sequential(
@@ -94,7 +94,7 @@ def test_cascade_compressor():
     print("TESTING CASCADE COMPRESSOR")
     print("=" * 60)
 
-    from src.core.compression.cascade_compressor import CascadeCompressor
+    from packages.core.compression.cascade_compressor import CascadeCompressor
 
     # Test on various tensor sizes
     test_sizes = [
@@ -150,7 +150,7 @@ def test_cascade_stage_contributions():
     print("TESTING CASCADE STAGE CONTRIBUTIONS")
     print("=" * 60)
 
-    from src.core.compression.cascade_compressor import CascadeCompressor
+    from packages.core.compression.cascade_compressor import CascadeCompressor
 
     cascade = CascadeCompressor()
     weights = torch.randn(1000, 1000)
@@ -235,7 +235,7 @@ def comprehensive_comparison():
 
     # 1. Integrated Pipeline
     try:
-        from src.core.compression.integrated_pipeline import IntegratedCompressionPipeline
+        from packages.core.compression.integrated_pipeline import IntegratedCompressionPipeline
 
         integrated = IntegratedCompressionPipeline()
 
@@ -256,7 +256,7 @@ def comprehensive_comparison():
 
     # 2. Cascade Compressor (on concatenated weights)
     try:
-        from src.core.compression.cascade_compressor import CascadeCompressor
+        from packages.core.compression.cascade_compressor import CascadeCompressor
 
         cascade = CascadeCompressor()
 

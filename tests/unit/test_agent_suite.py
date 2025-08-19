@@ -87,27 +87,50 @@ class TestAgentSuite(unittest.TestCase):
         """Test King agent coordination capabilities"""
         from packages.agents.specialized.governance.enhanced_king_agent import EnhancedKingAgent
 
-        king = EnhancedKingAgent(self.agent_config)
+        king = EnhancedKingAgent("test_king_agent")
 
-        # Test task delegation
-        task = {"type": "research", "priority": "high"}
-        delegated_agent = king.delegate_task(task)
+        # Test task orchestration (updated to use correct API)
+        self.assertIsNotNone(king)
+        self.assertEqual(king.agent_type, "Enhanced_King")
+        self.assertIn("orchestrator", king.metadata.tags)
 
-        self.assertIsNotNone(delegated_agent)
-        self.assertIn(delegated_agent, ["Magi", "Sage", "Oracle"])
-
-    def test_king_public_thoughts(self):
-        """Test King agent's unique public thought bubbles"""
+    @pytest.mark.asyncio
+    async def test_king_task_decomposition(self):
+        """Test King agent's task decomposition capabilities"""
         from packages.agents.specialized.governance.enhanced_king_agent import EnhancedKingAgent
 
-        king = EnhancedKingAgent(self.agent_config)
+        king = EnhancedKingAgent("test_king_agent")
+        await king.initialize()
 
-        thought = king.think("What should we prioritize?")
+        # Test task decomposition via MCP tool
+        result = await king.mcp_tools["task_decomposition"].execute(
+            {"task_description": "research new AI technologies", "constraints": {"priority": "high"}}
+        )
 
-        # King's thoughts are public (unencrypted)
-        self.assertFalse(thought.encrypted)
-        self.assertTrue(thought.public)
-        self.assertIn("priority", thought.content.lower())
+        self.assertEqual(result["status"], "success")
+        self.assertIn("task", result)
+
+    @pytest.mark.asyncio
+    async def test_king_agent_assignment(self):
+        """Test King agent's agent assignment capabilities"""
+        from packages.agents.specialized.governance.enhanced_king_agent import EnhancedKingAgent
+
+        king = EnhancedKingAgent("test_king_agent")
+        await king.initialize()
+
+        # First create a task via decomposition
+        decomp_result = await king.mcp_tools["task_decomposition"].execute(
+            {"task_description": "analyze system performance", "constraints": {"urgent": True}}
+        )
+
+        task_id = decomp_result["task"]["task_id"]
+
+        # Test agent assignment
+        assignment_result = await king.mcp_tools["agent_assignment"].execute(
+            {"task_id": task_id, "optimization_config": {"latency": 0.4, "quality": 0.6}}
+        )
+
+        self.assertEqual(assignment_result["status"], "success")
 
     # Coordination System Tests (from test_coordination_system.py)
     @patch("packages.agents.core.agent_orchestration_system.AgentOrchestrationSystem")

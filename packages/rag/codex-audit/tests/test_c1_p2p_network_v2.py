@@ -17,12 +17,12 @@ def test_p2p_imports():
     results = []
 
     modules_to_test = [
-        ("bitchat_transport", "src.core.p2p.bitchat_transport"),
-        ("betanet_transport", "src.core.p2p.betanet_transport"),
-        ("dual_path_transport", "src.core.p2p.dual_path_transport"),
-        ("libp2p_mesh", "src.core.p2p.libp2p_mesh"),
-        ("mdns_discovery", "src.core.p2p.mdns_discovery"),
-        ("fallback_transports", "src.core.p2p.fallback_transports"),
+        ("bitchat_transport", "packages.p2p.bitchat.ble_transport"),
+        ("betanet_transport", "packages.p2p.betanet.htx_transport"),
+        ("dual_path_transport", "packages.p2p.core.transport_manager"),
+        ("libp2p_mesh", "packages.p2p.core.transport_manager"),
+        ("mdns_discovery", "packages.p2p.core.transport_manager"),
+        ("fallback_transports", "packages.p2p.core.transport_manager"),
     ]
 
     for name, module_path in modules_to_test:
@@ -40,8 +40,6 @@ def test_p2p_imports():
 def test_dual_path_transport():
     """Test DualPathTransport functionality."""
     try:
-        from src.core.p2p.dual_path_transport import DualPathMessage, DualPathTransport
-
         # Test basic instantiation
         transport = DualPathTransport(node_id="test_node")
 
@@ -90,7 +88,7 @@ def test_dual_path_transport():
 def test_message_types():
     """Test support for all claimed message types."""
     try:
-        from src.core.p2p.libp2p_mesh import MeshMessageType
+        from packages.p2p.core.libp2p_mesh import MeshMessageType
 
         required_types = [
             "DATA_MESSAGE",
@@ -118,7 +116,7 @@ def test_message_types():
 def test_libp2p_mesh():
     """Test LibP2P mesh network functionality."""
     try:
-        from src.core.p2p.libp2p_mesh import LibP2PMeshNetwork, MeshMessage
+        from packages.p2p.core.libp2p_mesh import LibP2PMeshNetwork, MeshMessage
 
         # Test basic instantiation
         mesh = LibP2PMeshNetwork(peer_id="test_peer")
@@ -152,7 +150,7 @@ def test_libp2p_mesh():
 def test_fallback_transports():
     """Test fallback transport availability."""
     try:
-        from src.core.p2p.fallback_transports import (
+        from packages.p2p.core.fallback_transports import (
             BluetoothFallback,
             FileSystemFallback,
             LocalSocketFallback,
@@ -181,7 +179,7 @@ def test_fallback_transports():
     except ImportError as e:
         # Check if the module exists but classes are different
         try:
-            import src.core.p2p.fallback_transports as ft
+            import packages.core.p2p.fallback_transports as ft
 
             classes = [c for c in dir(ft) if "Fallback" in c or "Transport" in c]
             return [
@@ -200,7 +198,7 @@ def test_fallback_transports():
 def test_mdns_discovery():
     """Test mDNS peer discovery."""
     try:
-        from src.core.p2p.mdns_discovery import MDNSPeerDiscovery
+        from packages.p2p.core.mdns_discovery import MDNSPeerDiscovery
 
         # Test basic instantiation
         discovery = MDNSPeerDiscovery(service_name="aivillage_test")

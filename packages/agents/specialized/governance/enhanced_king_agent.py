@@ -112,11 +112,18 @@ class TaskDecompositionTool(MCPTool):
             )
 
             # Record reflection on decomposition process
+            # Extract key patterns from nested results structure
+            key_patterns = "No similar patterns found"
+            if similar_tasks.get("status") == "success" and "results" in similar_tasks:
+                results_data = similar_tasks["results"]
+                if isinstance(results_data, dict):
+                    key_patterns = results_data.get("key_patterns", "No similar patterns found")
+
             await self.king_agent.record_quiet_star_reflection(
                 reflection_type=ReflectionType.PROBLEM_SOLVING,
                 context=f"Decomposing complex task: {task_description[:100]}",
                 raw_thoughts=f"Analyzing similar patterns from group memory, identifying {len(task.required_capabilities)} required capabilities, estimating complexity {task.estimated_complexity}",
-                insights=f"Task decomposition successful. Key insight: {similar_tasks.get('key_patterns', 'No similar patterns found')}",
+                insights=f"Task decomposition successful. Key insight: {key_patterns}",
                 emotional_valence=0.2,  # Mild satisfaction
                 tags=["task_decomposition", "orchestration", f"priority_{task.priority.name.lower()}"],
             )
@@ -525,8 +532,20 @@ class EnhancedKingAgent(BaseAgentTemplate):
         # Extract required capabilities from RAG analysis
         required_capabilities = []
         if capability_analysis.get("status") == "success":
-            for result in capability_analysis.get("results", []):
-                content = result.get("content", "")
+            # Handle nested results structure from query_group_memory
+            results_data = capability_analysis.get("results", {})
+            if isinstance(results_data, dict) and "results" in results_data:
+                results_list = results_data["results"]
+            else:
+                results_list = capability_analysis.get("results", [])
+
+            for result in results_list:
+                try:
+                    content = result.get("content", "")
+                except AttributeError as e:
+                    print(f"DEBUG: result type: {type(result)}, content: {result}")
+                    print(f"DEBUG: AttributeError: {e}")
+                    content = str(result) if result else ""
                 # Extract capabilities mentioned in content
                 capability_keywords = [
                     "coordination",
@@ -547,10 +566,10 @@ class EnhancedKingAgent(BaseAgentTemplate):
         # Estimate complexity based on similar tasks
         complexity = 5  # Default
         if similar_tasks.get("status") == "success" and similar_tasks.get("results"):
-            avg_complexity = sum(result.get("complexity", 5) for result in similar_tasks["results"]) / len(
-                similar_tasks["results"]
-            )
-            complexity = max(1, min(10, int(avg_complexity)))
+            results = similar_tasks["results"]
+            if len(results) > 0:
+                avg_complexity = sum(result.get("complexity", 5) for result in results) / len(results)
+                complexity = max(1, min(10, int(avg_complexity)))
 
         # Determine priority
         priority = Priority.MEDIUM

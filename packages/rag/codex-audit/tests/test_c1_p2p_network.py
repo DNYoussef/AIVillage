@@ -39,7 +39,7 @@ def test_p2p_imports():
 def test_path_policy():
     """Test BitChat vs Betanet path selection logic."""
     try:
-        from src.core.p2p.dual_path_transport import DualPathTransport
+        from packages.p2p.core.dual_path_transport import DualPathTransport
 
         # Test offline/local preference
         transport = DualPathTransport()
@@ -74,7 +74,7 @@ def test_path_policy():
 def test_message_types():
     """Test support for all claimed message types."""
     try:
-        from src.core.p2p.libp2p_mesh import MessageType
+        from packages.p2p.core.libp2p_mesh import MessageType
 
         required_types = [
             "DATA_MESSAGE",
@@ -100,7 +100,7 @@ def test_message_types():
 def test_fallback_transports():
     """Test fallback transport availability."""
     try:
-        from src.core.p2p.fallback_transports import FallbackTransportLayer
+        from packages.p2p.core.fallback_transports import FallbackTransportLayer
 
         transport = FallbackTransportLayer()
         available = transport.get_available_transports()

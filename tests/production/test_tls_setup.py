@@ -2,7 +2,7 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
-from src.core.p2p.p2p_node import P2PNode
+from packages.p2p.core.p2p_node import P2PNode
 
 
 @pytest.mark.asyncio

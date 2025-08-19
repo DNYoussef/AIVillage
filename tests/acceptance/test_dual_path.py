@@ -29,7 +29,7 @@ try:
         RoutingPriority,
     )
 
-    from src.core.p2p.unified_transport import DeliveryStatus, PathSelection, TransportContext, UnifiedTransport
+    from packages.p2p.core.unified_transport import DeliveryStatus, PathSelection, TransportContext, UnifiedTransport
 
     IMPORTS_AVAILABLE = True
 except ImportError as e:

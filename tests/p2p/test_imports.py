@@ -66,7 +66,7 @@ class TestP2PImports:
         """Test that transport classes can be instantiated with graceful fallbacks."""
         # Test with dependency-aware imports
         try:
-            from src.core.p2p.bitchat_transport import BitChatTransport
+            from packages.p2p.core.bitchat_transport import BitChatTransport
 
             # Should be able to create transport even if dependencies missing
             transport = BitChatTransport(device_id="test_device")
@@ -78,7 +78,7 @@ class TestP2PImports:
             pytest.skip("BitChatTransport not available")
 
         try:
-            from src.core.p2p.betanet_transport_v2 import BetanetTransportV2
+            from packages.p2p.core.betanet_transport_v2 import BetanetTransportV2
 
             # Should be able to create transport
             transport = BetanetTransportV2(peer_id="test_peer")
@@ -133,7 +133,7 @@ class TestP2PImports:
     def test_secure_serializer_integration(self):
         """Test secure serializer integration with P2P components."""
         try:
-            from src.core.security.secure_serializer import SecureSerializer
+            from packages.core.security.secure_serializer import SecureSerializer
 
             serializer = SecureSerializer()
 
@@ -153,7 +153,7 @@ class TestP2PImports:
     def test_p2p_configuration_loading(self):
         """Test that P2P configurations can be loaded."""
         try:
-            from src.core.p2p.libp2p_mesh import MeshConfiguration
+            from packages.p2p.core.libp2p_mesh import MeshConfiguration
 
             # Test default configuration
             config = MeshConfiguration()
@@ -173,7 +173,7 @@ class TestP2PImports:
     def test_fallback_transport_availability(self):
         """Test that fallback transports are available when main deps missing."""
         try:
-            from src.core.p2p.fallback_transports import TransportType, create_default_fallback_manager
+            from packages.p2p.core.fallback_transports import TransportType, create_default_fallback_manager
 
             # Test fallback manager creation
             manager = create_default_fallback_manager("test_node")

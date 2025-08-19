@@ -164,7 +164,7 @@ class TestNoHTTPInProduction(unittest.TestCase):
         os.environ["AIVILLAGE_ENV"] = "production"
 
         try:
-            from src.core.security import validate_production_environment
+            from packages.core.security import validate_production_environment
 
             # This should pass if no HTTP URLs in env vars
             validate_production_environment()
@@ -184,7 +184,7 @@ class TestNoHTTPInProduction(unittest.TestCase):
     def test_vector_store_https_enforcement(self):
         """Test that vector store enforces HTTPS in production."""
         try:
-            from src.production.rag.rag_system.retrieval.vector_store import _get_qdrant_url
+            from packages.rag.rag_system.retrieval.vector_store import _get_qdrant_url
 
             # Test with production environment
             os.environ["AIVILLAGE_ENV"] = "production"
@@ -216,7 +216,7 @@ class TestNoHTTPInProduction(unittest.TestCase):
     def test_config_manager_validates_https(self):
         """Test that config manager validates HTTPS in production."""
         try:
-            from src.core.config_manager import CODEXConfigManager
+            from packages.core.config_manager import CODEXConfigManager
 
             # Create temporary config with HTTP URL
             test_config = {
@@ -231,7 +231,7 @@ class TestNoHTTPInProduction(unittest.TestCase):
 
             with self.assertRaises(Exception) as cm:
                 config_manager.validate_configuration(test_config)
-                from src.core.security import validate_config_dict_for_production
+                from packages.core.security import validate_config_dict_for_production
 
                 validate_config_dict_for_production(test_config)
 

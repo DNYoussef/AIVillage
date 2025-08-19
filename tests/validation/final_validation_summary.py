@@ -23,7 +23,7 @@ async def test_completed_components():
     # 1. Test Enhanced BitNet Compression
     print("\n1. Enhanced BitNet Compression...")
     try:
-        from src.agent_forge.compression.bitnet_enhanced import EnhancedBitNetCompressor
+        from packages.agent_forge.phases.bitnet_compression import EnhancedBitNetCompressor
 
         compressor = EnhancedBitNetCompressor()
 
@@ -46,7 +46,7 @@ async def test_completed_components():
     # 2. Test Enhanced Transport Manager
     print("\n2. Enhanced Transport Manager...")
     try:
-        from src.core.p2p.transport_manager_enhanced import EnhancedTransportManager
+        from packages.p2p.core.transport_manager_enhanced import EnhancedTransportManager
 
         config = {
             "websocket": {"port": 8773},
@@ -74,7 +74,7 @@ async def test_completed_components():
     # 3. Test Complete LibP2P Mesh
     print("\n3. Complete LibP2P Mesh...")
     try:
-        from src.core.p2p.libp2p_mesh import LibP2PMeshNetwork, MeshConfiguration
+        from packages.p2p.core.libp2p_mesh import LibP2PMeshNetwork, MeshConfiguration
 
         config = MeshConfiguration("test_final_mesh", 4004)
         mesh = LibP2PMeshNetwork(config)
@@ -123,7 +123,7 @@ async def test_completed_components():
     # 5. Test Fixed ADAS System
     print("\n5. Fixed ADAS System...")
     try:
-        from src.agent_forge.adas.adas import ADASTask
+        from packages.agent_forge.phases.adas import ADASTask
 
         task = ADASTask(task_type="final_test", task_content="Test ADAS system functionality")
 

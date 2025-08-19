@@ -2,7 +2,12 @@
 
 import time
 
-from src.core.resources.resource_monitor import get_all_metrics, get_cpu_usage, get_memory_usage, get_monitor_instance
+from packages.core.resources.resource_monitor import (
+    get_all_metrics,
+    get_cpu_usage,
+    get_memory_usage,
+    get_monitor_instance,
+)
 
 print("=== Testing Individual Metrics ===")
 

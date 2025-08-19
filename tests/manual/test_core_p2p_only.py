@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 # Import only the core P2P implementation
 import sys
 
-from src.core.p2p import P2PNode
+from packages.core.p2p import P2PNode
 
 
 async def test_five_node_network():

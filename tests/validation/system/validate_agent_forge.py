@@ -13,9 +13,6 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from packages.agent_forge.legacy_production.agent_factory import AgentFactory
-from src.agent_forge.adas.adas import ADASTask, SecureCodeRunner
-from src.agent_forge.compression import BITNETCompressor, bitnet_compress
-from src.production.evolution.evomerge_pipeline import EvolutionConfig, EvoMergePipeline
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

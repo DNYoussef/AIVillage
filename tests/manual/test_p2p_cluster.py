@@ -11,7 +11,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(level
 logger = logging.getLogger(__name__)
 
 # Import both P2P implementations
-from src.core.p2p import P2PNode as CoreP2PNode
+from packages.core.p2p import P2PNode as CoreP2PNode
 from src.production.communications.p2p import P2PNode as ProductionP2PNode
 
 

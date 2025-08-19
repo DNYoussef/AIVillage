@@ -105,8 +105,8 @@ def cleanup_after_test():
         pass
 
 
-# Configure async tests (comment out if pytest_asyncio not installed)
-# pytest_plugins = ["pytest_asyncio"]
+# Configure async tests
+pytest_plugins = ["pytest_asyncio"]
 
 
 # Additional fixtures for consolidated testing

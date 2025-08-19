@@ -13,10 +13,10 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 try:
-    from src.production.rag.rag_system.core.config import RAGConfig
-    from src.production.rag.rag_system.core.pipeline import RAGPipeline
-    from src.production.rag.rag_system.ingestion.document_processor import DocumentProcessor
-    from src.production.rag.rag_system.retrieval.vector_retrieval import VectorRetriever
+    from packages.rag.rag_system.core.config import RAGConfig
+    from packages.rag.rag_system.core.pipeline import RAGPipeline
+    from packages.rag.rag_system.ingestion.document_processor import DocumentProcessor
+    from packages.rag.rag_system.retrieval.vector_retrieval import VectorRetriever
 except ImportError as e:
     print(f"Warning: Could not import RAG components: {e}")
     RAGPipeline = None

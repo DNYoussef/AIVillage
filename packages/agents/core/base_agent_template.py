@@ -676,6 +676,13 @@ class BaseAgentTemplate(AgentInterface):
         try:
             logger.info(f"Initializing {self.agent_type} agent: {self.agent_id}")
 
+            # Connect injected clients to MCP tools
+            if self.rag_client and "rag_query" in self.mcp_tools:
+                self.mcp_tools["rag_query"].rag_client = self.rag_client
+
+            if self.p2p_client and "communicate" in self.mcp_tools:
+                self.mcp_tools["communicate"].p2p_client = self.p2p_client
+
             # Initialize specialized MCP tools
             specialized_tools = await self.get_specialized_mcp_tools()
             self.mcp_tools.update(specialized_tools)

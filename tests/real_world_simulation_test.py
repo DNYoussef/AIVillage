@@ -55,7 +55,7 @@ class RealWorldSimulation:
         try:
             from unittest.mock import patch
 
-            from src.core.resources import ConstraintManager, DeviceProfiler
+            from packages.core.resources import ConstraintManager, DeviceProfiler
 
             # Test different device profiles
             device_scenarios = [
@@ -113,7 +113,7 @@ class RealWorldSimulation:
         logger.info("=== Network Condition Simulation ===")
 
         try:
-            from src.core.p2p import P2PNode, PeerDiscovery
+            from packages.core.p2p import P2PNode, PeerDiscovery
 
             network_scenarios = [
                 (
@@ -162,7 +162,7 @@ class RealWorldSimulation:
         logger.info("=== Evolution Under Load Simulation ===")
 
         try:
-            from src.core.resources import ConstraintManager, DeviceProfiler
+            from packages.core.resources import ConstraintManager, DeviceProfiler
             from src.production.agent_forge.evolution.infrastructure_aware_evolution import (
                 InfrastructureAwareEvolution,
                 InfrastructureConfig,
@@ -232,7 +232,7 @@ class RealWorldSimulation:
         try:
             from unittest.mock import patch
 
-            from src.core.resources import ConstraintManager, DeviceProfiler, ResourceMonitor
+            from packages.core.resources import ConstraintManager, DeviceProfiler, ResourceMonitor
 
             profiler = DeviceProfiler()
             ResourceMonitor(profiler)
@@ -301,7 +301,7 @@ class RealWorldSimulation:
         logger.info("=== Long-Running Stability Simulation ===")
 
         try:
-            from src.core.resources import DeviceProfiler, ResourceMonitor
+            from packages.core.resources import DeviceProfiler, ResourceMonitor
 
             profiler = DeviceProfiler()
             ResourceMonitor(profiler)

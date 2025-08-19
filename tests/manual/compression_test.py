@@ -39,7 +39,7 @@ def test_simple_quantizer():
     print("=== Testing SimpleQuantizer ===")
 
     try:
-        from src.core.compression.simple_quantizer import SimpleQuantizer
+        from packages.core.compression.simple_quantizer import SimpleQuantizer
 
         # Create small test model
         model = create_test_model(10000)  # ~10k parameters
@@ -81,7 +81,7 @@ def test_unified_compressor():
     print("\n=== Testing UnifiedCompressor ===")
 
     try:
-        from src.core.compression.unified_compressor import UnifiedCompressor
+        from packages.core.compression.unified_compressor import UnifiedCompressor
 
         # Create test model
         model = create_test_model(50000)  # ~50k parameters
@@ -129,7 +129,7 @@ def test_advanced_pipeline():
     print("\n=== Testing AdvancedCompressionPipeline ===")
 
     try:
-        from src.core.compression.advanced_pipeline import AdvancedCompressionPipeline
+        from packages.core.compression.advanced_pipeline import AdvancedCompressionPipeline
 
         # Create small test model to avoid timeouts
         model = create_test_model(1000)  # Very small
@@ -273,7 +273,7 @@ def test_memory_usage():
         print(f"After model creation: {after_model_memory:.1f} MB")
 
         # Try compression
-        from src.core.compression.simple_quantizer import SimpleQuantizer
+        from packages.core.compression.simple_quantizer import SimpleQuantizer
 
         quantizer = SimpleQuantizer()
 

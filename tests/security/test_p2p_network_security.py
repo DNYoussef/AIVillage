@@ -20,7 +20,7 @@ from pathlib import Path
 # Add parent directories to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from src.core.p2p.secure_libp2p_mesh import (
+from packages.p2p.core.secure_libp2p_mesh import (
     MessageCrypto,
     SecureLibP2PMeshNetwork,
     SecureMessage,

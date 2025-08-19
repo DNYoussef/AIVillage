@@ -1,7 +1,7 @@
 import socket as real_socket
 import time
 
-from src.infrastructure.p2p.nat_traversal import NATInfo, NATTraversal, NATType
+from packages.p2p.core.nat_traversal import NATInfo, NATTraversal, NATType
 
 
 class DummyUDPSocket:

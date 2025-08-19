@@ -1,6 +1,6 @@
 import socket as real_socket
 
-from src.infrastructure.p2p.nat_traversal import NATInfo, NATTraversal, NATType
+from packages.p2p.core.nat_traversal import NATInfo, NATTraversal, NATType
 
 
 class DummyUDPSocket:
@@ -39,7 +39,7 @@ def test_full_cone_hole_punching(monkeypatch):
         assert sock_type == real_socket.SOCK_DGRAM
         return DummyUDPSocket()
 
-    import src.infrastructure.p2p.nat_traversal as mod
+    import packages.p2p.core.nat_traversal as mod
 
     monkeypatch.setattr(mod, "socket", real_socket)
     monkeypatch.setattr(mod.socket, "socket", socket_factory)
@@ -71,7 +71,7 @@ def test_symmetric_nat_uses_relay(monkeypatch):
             return FailingUDPSocket()
         return RelaySocket()
 
-    import src.infrastructure.p2p.nat_traversal as mod
+    import packages.p2p.core.nat_traversal as mod
 
     monkeypatch.setattr(mod, "socket", real_socket)
     monkeypatch.setattr(mod.socket, "socket", socket_factory)
@@ -93,7 +93,7 @@ def test_port_restricted_success(monkeypatch):
             return DummyUDPSocket()
         raise AssertionError
 
-    import src.infrastructure.p2p.nat_traversal as mod
+    import packages.p2p.core.nat_traversal as mod
 
     monkeypatch.setattr(mod, "socket", real_socket)
     monkeypatch.setattr(mod.socket, "socket", socket_factory)

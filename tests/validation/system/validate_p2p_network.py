@@ -13,12 +13,11 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 try:
-    from src.core.p2p.fallback_transports import FallbackTransportManager
-    from src.core.p2p.libp2p_mesh import LibP2PMeshNetwork, MeshConfiguration
-    from src.core.p2p.mdns_discovery import mDNSDiscovery
-    from src.core.p2p.mesh_network import MeshNetwork
+    from packages.p2p.bitchat.mesh_network import MeshNetwork
+    from packages.p2p.core.transport_manager import TransportManager
 except ImportError as e:
     print(f"Warning: Could not import P2P components: {e}")
+    TransportManager = None
     MeshNetwork = None
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")

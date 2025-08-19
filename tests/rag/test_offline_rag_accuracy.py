@@ -1,6 +1,4 @@
-from src.production.rag.rag_system.core.offline_defaults import (
-    OfflineRAGPipeline,
-)
+from packages.rag.rag_system.core.offline_defaults import OfflineRAGPipeline
 
 
 def test_offline_rag_top1_accuracy():

@@ -1,7 +1,7 @@
 import pytest
 
-from src.infrastructure.p2p.device_mesh import DeviceMesh
-from src.infrastructure.p2p.p2p_node import P2PNode
+from packages.p2p.core.device_mesh import DeviceMesh
+from packages.p2p.core.p2p_node import P2PNode
 
 
 class DummyBleakClient:

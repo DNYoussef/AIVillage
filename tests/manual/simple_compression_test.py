@@ -105,7 +105,7 @@ def test_simple_quantizer_basic():
     """Test SimpleQuantizer with basic tensor."""
     print("\n4. Testing SimpleQuantizer:")
     try:
-        from src.core.compression.simple_quantizer import SimpleQuantizer
+        from packages.core.compression.simple_quantizer import SimpleQuantizer
 
         # Create a simple model directly
         model = SimpleTestModel(32)
@@ -151,7 +151,7 @@ def test_unified_compressor_basic():
     """Test UnifiedCompressor basic functionality."""
     print("\n5. Testing UnifiedCompressor:")
     try:
-        from src.core.compression.unified_compressor import UnifiedCompressor
+        from packages.core.compression.unified_compressor import UnifiedCompressor
 
         model = SimpleTestModel(32)
 

@@ -21,7 +21,7 @@ from pathlib import Path
 # Add parent directories to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from src.core.evolution_metrics_integrated import (
+from packages.core.evolution_metrics_integrated import (
     EvolutionMetricsData,
     IntegratedEvolutionMetrics,
     KPIType,

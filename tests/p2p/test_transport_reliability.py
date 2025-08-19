@@ -20,9 +20,9 @@ import pytest
 
 # Import transport components with fallback mocks
 try:
-    from src.core.p2p.betanet_transport import BetanetMessage, BetanetTransport
-    from src.core.p2p.bitchat_transport import BitChatMessage, BitChatTransport
-    from src.core.p2p.dual_path_transport import DualPathTransport
+    from packages.p2p.core.betanet_transport import BetanetMessage, BetanetTransport
+    from packages.p2p.core.bitchat_transport import BitChatMessage, BitChatTransport
+    from packages.p2p.core.dual_path_transport import DualPathTransport
 
     TRANSPORTS_AVAILABLE = True
 except ImportError:

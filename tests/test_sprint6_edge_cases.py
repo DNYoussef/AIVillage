@@ -4,12 +4,12 @@ import time
 from unittest.mock import Mock, patch
 
 import pytest
+from packages.core.resources.adaptive_loader import AdaptiveLoader
+from packages.core.resources.constraint_manager import ConstraintManager
+from packages.core.resources.device_profiler import DeviceProfiler, DeviceType, ThermalState
+from packages.core.resources.resource_monitor import ResourceMonitor
 
-from src.core.p2p.p2p_node import P2PNode, PeerCapabilities
-from src.core.resources.adaptive_loader import AdaptiveLoader
-from src.core.resources.constraint_manager import ConstraintManager
-from src.core.resources.device_profiler import DeviceProfiler, DeviceType, ThermalState
-from src.core.resources.resource_monitor import ResourceMonitor
+from packages.p2p.core.p2p_node import P2PNode, PeerCapabilities
 
 
 class TestEdgeCases:
@@ -145,7 +145,7 @@ class TestEdgeCases:
         loader = AdaptiveLoader(profiler, constraint_manager)
 
         # Create loading context with very strict constraints
-        from src.core.resources.adaptive_loader import LoadingContext
+        from packages.core.resources.adaptive_loader import LoadingContext
 
         context = LoadingContext(
             task_type="nightly",

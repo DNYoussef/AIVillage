@@ -3,7 +3,7 @@
 import json
 import time
 
-from src.infrastructure.p2p.device_mesh import DeviceMesh, discover_network_peers
+from packages.p2p.core.device_mesh import DeviceMesh, discover_network_peers
 
 print("=== Testing P2P Discovery ===")
 

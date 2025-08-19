@@ -125,7 +125,7 @@ def test_high_level_interfaces():
     # 1. Test SimpleQuantizer
     print("\n1. SimpleQuantizer Test:")
     try:
-        from src.core.compression.simple_quantizer import SimpleQuantizer
+        from packages.core.compression.simple_quantizer import SimpleQuantizer
 
         model = SimpleTestModel(32)
         quantizer = SimpleQuantizer()
@@ -180,7 +180,7 @@ def test_high_level_interfaces():
     # 2. Test UnifiedCompressor
     print("\n2. UnifiedCompressor Test:")
     try:
-        from src.core.compression.unified_compressor import UnifiedCompressor
+        from packages.core.compression.unified_compressor import UnifiedCompressor
 
         model = SimpleTestModel(32)
         compressor = UnifiedCompressor()

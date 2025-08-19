@@ -1,0 +1,208 @@
+{
+  "default_schedules": {
+    "full_backup": {
+      "enabled": true,
+      "schedule": "daily",
+      "hour": 2,
+      "minute": 0,
+      "retention_days": 30,
+      "description": "Complete system backup including all components"
+    },
+    "incremental_backup": {
+      "enabled": true,
+      "schedule": "interval",
+      "interval_hours": 6,
+      "retention_days": 7,
+      "description": "Incremental backup of changes since last backup"
+    },
+    "tenant_backup": {
+      "enabled": true,
+      "schedule": "daily",
+      "hour": 3,
+      "minute": 30,
+      "retention_per_tenant": 10,
+      "description": "Individual tenant data backups"
+    },
+    "config_backup": {
+      "enabled": true,
+      "schedule": "interval",
+      "interval_hours": 4,
+      "retention_days": 14,
+      "description": "System configuration backups"
+    }
+  },
+  "advanced_schedules": {
+    "weekly_full": {
+      "enabled": false,
+      "schedule": "weekly",
+      "day_of_week": "sunday",
+      "hour": 1,
+      "minute": 0,
+      "retention_weeks": 8,
+      "description": "Weekly comprehensive backup"
+    },
+    "monthly_archive": {
+      "enabled": false,
+      "schedule": "monthly",
+      "day_of_month": 1,
+      "hour": 0,
+      "minute": 0,
+      "retention_months": 12,
+      "description": "Monthly archival backup"
+    }
+  },
+  "health_monitoring": {
+    "enabled": true,
+    "failure_threshold": 3,
+    "alert_after_minutes": 60,
+    "health_check_interval": 300,
+    "overdue_job_threshold_minutes": 120,
+    "success_rate_threshold": 0.8,
+    "disk_space_check": true,
+    "backup_size_monitoring": true
+  },
+  "retention_policy": {
+    "auto_cleanup": true,
+    "keep_minimum": 5,
+    "cleanup_check_interval_hours": 6,
+    "cleanup_time": {
+      "hour": 4,
+      "minute": 0
+    },
+    "size_based_cleanup": {
+      "enabled": true,
+      "max_total_size_gb": 500,
+      "cleanup_oldest_first": true
+    }
+  },
+  "performance": {
+    "max_concurrent_jobs": 2,
+    "job_timeout_hours": 12,
+    "retry_failed_jobs": true,
+    "max_retries": 2,
+    "retry_delay_minutes": 30,
+    "resource_monitoring": {
+      "enabled": true,
+      "cpu_threshold": 80,
+      "memory_threshold": 85,
+      "disk_io_threshold": 90
+    }
+  },
+  "job_priorities": {
+    "emergency": 1,
+    "full_backup": 2,
+    "tenant_backup": 3,
+    "incremental_backup": 4,
+    "config_backup": 5
+  },
+  "notifications": {
+    "job_start": {
+      "enabled": false,
+      "channels": [
+        "log"
+      ]
+    },
+    "job_success": {
+      "enabled": true,
+      "channels": [
+        "log"
+      ]
+    },
+    "job_failure": {
+      "enabled": true,
+      "channels": [
+        "log",
+        "alert"
+      ]
+    },
+    "health_issues": {
+      "enabled": true,
+      "channels": [
+        "log",
+        "alert"
+      ]
+    },
+    "retention_cleanup": {
+      "enabled": true,
+      "channels": [
+        "log"
+      ]
+    }
+  },
+  "custom_jobs": {
+    "pre_deployment": {
+      "enabled": false,
+      "trigger": "manual",
+      "backup_type": "full",
+      "retention_days": 90,
+      "description": "Full backup before major deployments"
+    },
+    "security_audit": {
+      "enabled": false,
+      "trigger": "manual",
+      "components": [
+        "rbac_system",
+        "configurations",
+        "logs"
+      ],
+      "retention_days": 365,
+      "description": "Security-focused backup for audits"
+    }
+  },
+  "integration": {
+    "webhook_notifications": {
+      "enabled": false,
+      "url": "https://your-webhook-url.com/backup-notifications",
+      "secret": "your-webhook-secret",
+      "events": [
+        "backup_success",
+        "backup_failure",
+        "health_alert"
+      ]
+    },
+    "monitoring_systems": {
+      "prometheus": {
+        "enabled": false,
+        "metrics_port": 9090,
+        "metrics_path": "/metrics"
+      },
+      "grafana": {
+        "enabled": false,
+        "dashboard_config": "config/monitoring/grafana-backup-dashboard.json"
+      }
+    },
+    "cloud_storage": {
+      "enabled": false,
+      "provider": "aws_s3",
+      "config": {
+        "bucket": "aivillage-backups",
+        "region": "us-east-1",
+        "access_key_id": "",
+        "secret_access_key": "",
+        "server_side_encryption": true
+      },
+      "sync_schedule": {
+        "enabled": true,
+        "hour": 5,
+        "minute": 0
+      }
+    }
+  },
+  "disaster_recovery": {
+    "automated_failover": {
+      "enabled": false,
+      "backup_site_url": "https://backup-site.aivillage.com",
+      "failover_threshold_minutes": 30,
+      "health_check_interval": 60
+    },
+    "recovery_testing": {
+      "enabled": true,
+      "test_frequency_days": 30,
+      "test_components": [
+        "rbac_system",
+        "configurations"
+      ],
+      "automated_cleanup": true
+    }
+  }
+}
