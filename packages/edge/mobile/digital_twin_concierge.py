@@ -43,23 +43,11 @@ from typing import Any
 import numpy as np
 
 from packages.edge.mobile.mini_rag_system import MiniRAGSystem
-from packages.edge.mobile.resource_manager import BatteryThermalResourceManager, MobileDeviceProfile
+from packages.edge.mobile.resource_manager import MobileDeviceProfile, MobileResourceManager
+from packages.edge.mobile.shared_types import DataSource, PrivacyLevel
 from packages.rag.distributed.distributed_rag_coordinator import DistributedRAGCoordinator
 
 logger = logging.getLogger(__name__)
-
-
-class DataSource(Enum):
-    """Available data sources for digital twin learning"""
-
-    CONVERSATIONS = "conversations"  # Messages, chat logs
-    PURCHASES = "purchases"  # Shopping, transactions
-    LOCATION = "location"  # GPS, movement patterns
-    APP_USAGE = "app_usage"  # Application interaction
-    CALENDAR = "calendar"  # Schedule, events
-    VOICE = "voice"  # Voice commands, patterns
-    BIOMETRIC = "biometric"  # Health data (if available)
-    MEDIA = "media"  # Photo, video metadata
 
 
 class DataType(Enum):
@@ -71,15 +59,6 @@ class DataType(Enum):
     TEMPORAL = "temporal"
     SPATIAL = "spatial"
     BEHAVIORAL = "behavioral"
-
-
-class PrivacyLevel(Enum):
-    """Privacy levels for data handling"""
-
-    PUBLIC = 1  # Can be shared if aggregated
-    PERSONAL = 2  # Personal but not sensitive
-    SENSITIVE = 3  # Sensitive personal data
-    CONFIDENTIAL = 4  # Highly confidential
 
 
 @dataclass
@@ -453,7 +432,7 @@ class DigitalTwinConcierge:
     ):
         self.data_dir = data_dir
         self.preferences = preferences
-        self.resource_manager = BatteryThermalResourceManager()
+        self.resource_manager = MobileResourceManager()
         self.data_collector = OnDeviceDataCollector(data_dir, preferences)
         self.learning_system = SurpriseBasedLearning()
         self.model_version = "1.0.0"

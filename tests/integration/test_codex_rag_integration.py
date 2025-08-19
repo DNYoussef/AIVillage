@@ -12,8 +12,14 @@ from pathlib import Path
 
 import pytest
 
-from src.production.rag.rag_system.core.codex_rag_integration import CODEXCompliantCache, CODEXRAGPipeline
-from src.production.rag.wikipedia_data_loader import WikipediaDataLoader, create_sample_educational_content
+from packages.core.legacy.production.rag.rag_system.core.codex_rag_integration import (
+    CODEXCompliantCache,
+    CODEXRAGPipeline,
+)
+from packages.core.legacy.production.rag.wikipedia_data_loader import (
+    WikipediaDataLoader,
+    create_sample_educational_content,
+)
 
 
 class TestCODEXRAGIntegration:

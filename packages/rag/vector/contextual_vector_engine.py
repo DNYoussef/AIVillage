@@ -620,7 +620,11 @@ class ContextualVectorEngine:
         # Update document ID mapping
         self.doc_id_mapping.extend(doc_ids)
 
-        # TODO: If FAISS is available, we would build/update FAISS index here
+        # Build/update FAISS index if available
+        try:
+            self._build_faiss_index()
+        except ImportError:
+            logger.info("FAISS not available, using numpy-based search")
 
     async def _vector_search(self, query_embedding: np.ndarray, k: int, threshold: float) -> list[VectorDocument]:
         """Perform vector similarity search."""
@@ -727,6 +731,83 @@ class ContextualVectorEngine:
         except Exception as e:
             logger.warning(f"Context reranking failed: {e}")
             return candidates
+
+    def _build_faiss_index(self):
+        """Build FAISS index for fast vector similarity search."""
+        try:
+            import faiss
+
+            if self.vector_matrix is None or self.vector_matrix.shape[0] == 0:
+                logger.info("No vectors to index")
+                return
+
+            # Normalize vectors for cosine similarity if needed
+            if self.similarity_metric == SimilarityMetric.COSINE:
+                # Normalize vectors to unit length for cosine similarity
+                faiss.normalize_L2(self.vector_matrix)
+
+            # Create appropriate FAISS index based on vector size
+            vector_dim = self.vector_matrix.shape[1]
+
+            if self.vector_matrix.shape[0] < 1000:
+                # For small datasets, use flat index
+                self.vector_index = faiss.IndexFlatIP(vector_dim)  # Inner product (cosine after normalization)
+            else:
+                # For larger datasets, use IVF index with clustering
+                nlist = min(100, self.vector_matrix.shape[0] // 10)  # Number of clusters
+                quantizer = faiss.IndexFlatIP(vector_dim)
+                self.vector_index = faiss.IndexIVFFlat(quantizer, vector_dim, nlist)
+
+                # Train the index (required for IVF indices)
+                self.vector_index.train(self.vector_matrix.astype(np.float32))
+
+            # Add vectors to index
+            self.vector_index.add(self.vector_matrix.astype(np.float32))
+            self.faiss_available = True
+
+            logger.info(f"Built FAISS index with {self.vector_index.ntotal} vectors")
+
+        except ImportError:
+            logger.info("FAISS not available, using numpy-based search")
+            self.faiss_available = False
+        except Exception as e:
+            logger.error(f"Failed to build FAISS index: {e}")
+            self.faiss_available = False
+
+    async def _faiss_search(self, query_embedding: np.ndarray, k: int) -> tuple[list[float], list[int]]:
+        """Perform fast similarity search using FAISS."""
+        if not self.faiss_available or self.vector_index is None:
+            return [], []
+
+        try:
+            import faiss
+
+            # Normalize query if using cosine similarity
+            if self.similarity_metric == SimilarityMetric.COSINE:
+                query_norm = query_embedding.copy().reshape(1, -1).astype(np.float32)
+                faiss.normalize_L2(query_norm)
+            else:
+                query_norm = query_embedding.reshape(1, -1).astype(np.float32)
+
+            # Search
+            scores, indices = self.vector_index.search(query_norm, k)
+
+            # Convert to lists and filter valid results
+            scores_list = scores[0].tolist()
+            indices_list = indices[0].tolist()
+
+            # Filter out invalid indices (-1 indicates no match)
+            valid_results = [(score, idx) for score, idx in zip(scores_list, indices_list) if idx >= 0]
+
+            if valid_results:
+                scores, indices = zip(*valid_results)
+                return list(scores), list(indices)
+            else:
+                return [], []
+
+        except Exception as e:
+            logger.error(f"FAISS search failed: {e}")
+            return [], []
 
 
 # Factory functions for creating contextual components

@@ -14,30 +14,37 @@ Main Components:
 - ADAS System: Automated architecture search
 """
 
-from .core.forge_orchestrator import ForgeOrchestrator
+# Core components
+from .core.phase_controller import PhaseController, PhaseResult
 from .core.unified_pipeline import UnifiedConfig, UnifiedPipeline
-from .phases import (
-    ADASPhase,
-    CompressionPhase,
-    EvoMergePhase,
-    GeometryLearningPhase,
-    PromptBakingPhase,
-    SelfModelingPhase,
-)
-from .training.forge_trainer import ForgeTrainConfig, ForgeTrainer
+
+# Available phases (comment out missing ones for now)
+# from .phases import (
+#     ADASPhase,
+#     CompressionPhase,
+#     EvoMergePhase,
+#     GeometryLearningPhase,
+#     PromptBakingPhase,
+#     SelfModelingPhase,
+# )
+
+# Training components (comment out if missing)
+# from .training.forge_trainer import ForgeTrainConfig, ForgeTrainer
 
 __version__ = "1.0.0"
 
 __all__ = [
     "UnifiedPipeline",
     "UnifiedConfig",
-    "ForgeOrchestrator",
-    "ForgeTrainer",
-    "ForgeTrainConfig",
-    "EvoMergePhase",
-    "GeometryLearningPhase",
-    "SelfModelingPhase",
-    "PromptBakingPhase",
-    "ADASPhase",
-    "CompressionPhase",
+    "PhaseController",
+    "PhaseResult",
+    # "ForgeOrchestrator",
+    # "ForgeTrainer",
+    # "ForgeTrainConfig",
+    # "EvoMergePhase",
+    # "GeometryLearningPhase",
+    # "SelfModelingPhase",
+    # "PromptBakingPhase",
+    # "ADASPhase",
+    # "CompressionPhase",
 ]

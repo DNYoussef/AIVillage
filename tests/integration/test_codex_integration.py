@@ -24,7 +24,7 @@ except ImportError:
     EVOLUTION_AVAILABLE = False
 
 try:
-    from src.production.rag.rag_system.core.pipeline import Answer, Document, EnhancedRAGPipeline
+    from packages.core.legacy.production.rag.rag_system.core.pipeline import Answer, Document, EnhancedRAGPipeline
 
     RAG_AVAILABLE = True
 except ImportError:
@@ -160,7 +160,7 @@ class TestRAGIntegration:
         pipeline = EnhancedRAGPipeline()
 
         # Mock retrieval results
-        from src.production.rag.rag_system.core.pipeline import RetrievalResult
+        from packages.core.legacy.production.rag.rag_system.core.pipeline import RetrievalResult
 
         results = [
             RetrievalResult(id=1, text="Test content about AI", score=0.9),

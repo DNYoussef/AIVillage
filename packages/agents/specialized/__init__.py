@@ -16,9 +16,8 @@ These agents are designed to work together through the SpecializedAgentRegistry
 for complex multi-agent tasks and specialized domain expertise.
 """
 
-from agents.core.agent_interface import AgentCapability
-
-from src.core.agents.specialist_agent_registry import SpecialistAgentRegistry, get_specialist_registry
+from packages.agents.core.agent_interface import AgentCapability
+from packages.core.legacy.agents.specialist_agent_registry import SpecialistAgentRegistry, get_specialist_registry
 
 from .architect_agent import ArchitectAgent
 from .creative_agent import CreativeAgent, CreativeRequest

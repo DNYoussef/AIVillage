@@ -19,7 +19,12 @@ from pathlib import Path
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
-from agents.coordination_system import (
+from core.resilience.error_handling import CircuitBreakerManager, GracefulDegradationManager, RetryHandler
+
+# Import all major components
+from ml.feature_extraction import FeatureExtractor, ModelComparator
+from monitoring.observability_system import AlertSeverity, LogLevel, ObservabilitySystem
+from packages.agents.coordination_system import (
     Agent,
     AgentCapability,
     AgentRegistry,
@@ -29,12 +34,6 @@ from agents.coordination_system import (
     Task,
     TaskScheduler,
 )
-
-from core.resilience.error_handling import CircuitBreakerManager, GracefulDegradationManager, RetryHandler
-
-# Import all major components
-from ml.feature_extraction import FeatureExtractor, ModelComparator
-from monitoring.observability_system import AlertSeverity, LogLevel, ObservabilitySystem
 from security.auth_system import AuthenticationManager, AuthorizationManager, Permission, SecurityLevel, UserRole
 from testing.coverage_gates import CoverageGate, LintingGate, QualityGateFramework
 from testing.performance_benchmarks import BenchmarkSuite, PerformanceBenchmarkManager
@@ -372,7 +371,7 @@ class TestAgentCoordinationSecurityIntegration:
         }
 
         # Convert to Message object
-        from agents.coordination_system import Message
+        from packages.agents.coordination_system import Message
 
         message = Message(**secure_message)
 

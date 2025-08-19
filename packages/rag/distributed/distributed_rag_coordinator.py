@@ -26,7 +26,7 @@ from typing import Any
 
 from ...edge.fog_compute.fog_coordinator import FogCoordinator
 from ...edge.mobile.mini_rag_system import GlobalContribution, MiniRAGSystem
-from ...p2p.core.transport_manager import UnifiedTransportManager
+from ...p2p.core.transport_manager import TransportManager
 from ..core.hyper_rag import HyperRAG, QueryMode
 from ..graph.bayesian_trust_graph import GraphNode
 
@@ -102,9 +102,7 @@ class DistributedRAGCoordinator:
     - Auto-updates from Sage research jobs
     """
 
-    def __init__(
-        self, hyper_rag: HyperRAG, fog_coordinator: FogCoordinator, transport_manager: UnifiedTransportManager
-    ):
+    def __init__(self, hyper_rag: HyperRAG, fog_coordinator: FogCoordinator, transport_manager: TransportManager):
         self.hyper_rag = hyper_rag
         self.fog_coordinator = fog_coordinator
         self.transport_manager = transport_manager

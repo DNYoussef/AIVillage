@@ -23,9 +23,10 @@ from enum import Enum
 from typing import Any
 from uuid import uuid4
 
+from packages.agents.core.agent_interface import AgentCapability, MessageInterface, TaskInterface
+
 # Core imports
 from packages.agents.core.base_agent_template import BaseAgentTemplate
-from src.agents.core.agent_interface import AgentCapability, MessageInterface, TaskInterface
 
 logger = logging.getLogger(__name__)
 

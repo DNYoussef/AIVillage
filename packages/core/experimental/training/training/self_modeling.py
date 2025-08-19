@@ -40,43 +40,15 @@ except ImportError:
 
 
 try:
-    from grokfast import GrokFastTask
+    from ..grokfast import GrokFastTask
 except ImportError:
-
-    class GrokFastTask:
-        def __init__(self, *args, **kwargs) -> None:
-            """__init__ - Planned feature not yet implemented.
-
-            This functionality is part of the Atlantis roadmap.
-            """
-            msg = "'__init__' is not yet implemented. Track progress: https://github.com/DNYoussef/AIVillage/issues/feature-__init__"
-            raise NotImplementedError(msg)
-
-        def run(self, *args, **kwargs):
-            return {"status": "stub", "message": "GrokFast not available"}
+    from packages.core.experimental.training.grokfast import GrokFastTask
 
 
 try:
-    from sleep_and_dream import DreamNet, SleepNet
+    from ..sleep_and_dream import DreamNet, SleepNet
 except ImportError:
-
-    class SleepNet:
-        def __init__(self, *args, **kwargs) -> None:
-            """__init__ - Planned feature not yet implemented.
-
-            This functionality is part of the Atlantis roadmap.
-            """
-            msg = "'__init__' is not yet implemented. Track progress: https://github.com/DNYoussef/AIVillage/issues/feature-__init__"
-            raise NotImplementedError(msg)
-
-    class DreamNet:
-        def __init__(self, *args, **kwargs) -> None:
-            """__init__ - Planned feature not yet implemented.
-
-            This functionality is part of the Atlantis roadmap.
-            """
-            msg = "'__init__' is not yet implemented. Track progress: https://github.com/DNYoussef/AIVillage/issues/feature-__init__"
-            raise NotImplementedError(msg)
+    from packages.core.experimental.training.sleep_and_dream import DreamNet, SleepNet
 
 
 from agent_forge.model_compression.bitlinearization import quantize_weights

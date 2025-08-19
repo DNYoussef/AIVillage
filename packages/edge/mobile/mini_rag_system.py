@@ -26,7 +26,7 @@ from typing import Any
 
 import numpy as np
 
-from packages.edge.mobile.digital_twin_concierge import DataSource, PrivacyLevel
+from packages.edge.mobile.shared_types import DataSource, PrivacyLevel
 
 logger = logging.getLogger(__name__)
 

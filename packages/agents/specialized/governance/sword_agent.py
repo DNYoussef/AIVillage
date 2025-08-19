@@ -14,7 +14,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any
 
-from src.core.agent_interface import AgentInterface
+from packages.agents.core.agent_interface import AgentInterface
 
 logger = logging.getLogger(__name__)
 

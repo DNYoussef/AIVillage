@@ -1,5 +1,17 @@
-from AIVillage.experimental import warn_experimental
+"""
+Experimental training modules for AIVillage.
 
-warn_experimental(__name__)
+Contains cutting-edge training techniques including:
+- Self-modeling networks
+- Sleep and dream consolidation
+- GrokFast acceleration
+- Model sharding and distributed inference
+"""
 
-"""Production/experimental code organized by Sprint 2."""
+try:
+    from packages.core.experimental import warn_experimental
+
+    warn_experimental(__name__)
+except ImportError:
+    # Experimental warning system not available
+    pass

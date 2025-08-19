@@ -5,7 +5,7 @@ import random
 from dataclasses import dataclass
 from typing import Any
 
-from src.agents.base import BaseAgent
+from packages.agents.core.base import BaseAgent
 
 logger = logging.getLogger(__name__)
 

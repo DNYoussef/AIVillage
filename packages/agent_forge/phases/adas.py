@@ -31,7 +31,7 @@ from pydantic import BaseModel, Field
 from tqdm import tqdm
 
 # Import base phase controller interface
-from ..core.phase_controller import PhaseController, PhaseResult
+from packages.agent_forge.core.phase_controller import PhaseController, PhaseResult
 
 logger = logging.getLogger(__name__)
 

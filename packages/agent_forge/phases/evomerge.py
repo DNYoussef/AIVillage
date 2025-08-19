@@ -578,7 +578,7 @@ class EvoMergePhase:
         )
 
         # Return phase result
-        from ..core.unified_pipeline import PhaseResult
+        from packages.agent_forge.core.phase_controller import PhaseResult
 
         return PhaseResult(
             phase_name="evomerge",

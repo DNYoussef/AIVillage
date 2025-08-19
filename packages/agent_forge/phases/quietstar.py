@@ -42,8 +42,8 @@ from transformers import (
     TrainingArguments,
 )
 
-from ..core.grokfast import GrokfastOptimizer
-from ..core.phase_interface import PhaseController, PhaseResult
+from packages.agent_forge.core.phase_controller import PhaseController, PhaseResult
+from packages.agent_forge.legacy_src.training.grokfast_ctrl import GrokfastOptimizer
 
 logger = logging.getLogger(__name__)
 

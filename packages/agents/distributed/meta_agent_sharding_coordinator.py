@@ -25,15 +25,15 @@ from enum import Enum
 from typing import Any
 
 from packages.agents.core.base_agent_template import BaseAgent
-from packages.edge.fog_compute.fog_coordinator import ComputeCapacity, FogCoordinator
-from packages.edge.mobile.digital_twin_concierge import DigitalTwinConcierge
-from packages.p2p.core.transport_manager import UnifiedTransportManager
-from src.production.distributed_inference.model_sharding_engine import (
+from packages.core.distributed_inference.model_sharding_engine import (
     ModelShard,
     ModelShardingEngine,
     ShardingPlan,
     ShardingStrategy,
 )
+from packages.edge.fog_compute.fog_coordinator import ComputeCapacity, FogCoordinator
+from packages.edge.mobile.digital_twin_concierge import DigitalTwinConcierge
+from packages.p2p.core.transport_manager import UnifiedTransportManager
 
 logger = logging.getLogger(__name__)
 
@@ -634,7 +634,7 @@ async def demo_meta_agent_sharding():
     class MockShardingEngine:
         async def shard_model(self, model_path, strategy, target_devices):
             # Mock sharding plan
-            from src.production.distributed_inference.model_sharding_engine import ModelShard, ShardingPlan
+            # Using the imported ModelShard and ShardingPlan classes
 
             return ShardingPlan(
                 model_name=model_path.split("/")[-1],

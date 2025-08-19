@@ -39,7 +39,7 @@ from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-from ..core.phase_interface import PhaseController, PhaseResult
+from packages.agent_forge.core.phase_controller import PhaseController, PhaseResult
 
 logger = logging.getLogger(__name__)
 

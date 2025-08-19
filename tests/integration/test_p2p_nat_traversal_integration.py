@@ -43,7 +43,7 @@ def test_nat_traversal_flow(monkeypatch) -> None:
         assert sock_type == real_socket.SOCK_DGRAM
         return udp_socket
 
-    import src.infrastructure.p2p.nat_traversal as mod
+    import packages.infrastructure.p2p.nat_traversal as mod
 
     monkeypatch.setattr(mod, "socket", real_socket)
     monkeypatch.setattr(mod.socket, "socket", socket_factory)

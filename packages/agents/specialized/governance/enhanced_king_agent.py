@@ -23,9 +23,10 @@ from datetime import datetime
 from enum import Enum
 from typing import Any
 
+from packages.agents.core.agent_interface import AgentCapability, AgentMetadata, TaskInterface
+
 # Import the base template
 from packages.agents.core.base_agent_template import BaseAgentTemplate, MCPTool, ReflectionType
-from src.agents.core.agent_interface import AgentCapability, AgentMetadata, TaskInterface
 
 logger = logging.getLogger(__name__)
 

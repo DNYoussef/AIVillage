@@ -18,7 +18,10 @@ from pathlib import Path
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
-from agents.coordination_system import (
+# Import core components that we know work
+from ml.feature_extraction import FeatureExtractor, ModelComparator
+from monitoring.observability_system import ObservabilitySystem, traced_operation
+from packages.agents.coordination_system import (
     Agent,
     AgentCapability,
     AgentRegistry,
@@ -30,10 +33,6 @@ from agents.coordination_system import (
     Task,
     TaskScheduler,
 )
-
-# Import core components that we know work
-from ml.feature_extraction import FeatureExtractor, ModelComparator
-from monitoring.observability_system import ObservabilitySystem, traced_operation
 from security.auth_system import AuthenticationManager, AuthorizationManager, Permission, SecurityLevel, UserRole
 
 
@@ -186,7 +185,7 @@ class TestCoreIntegration:
             "available": 100.0,
         }
 
-        from agents.coordination_system import Resource
+        from packages.agents.coordination_system import Resource
 
         cpu_resource = Resource(**resource)
         resource_manager.register_resource(cpu_resource)

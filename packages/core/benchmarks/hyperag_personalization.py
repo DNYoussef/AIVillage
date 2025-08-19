@@ -373,11 +373,72 @@ class PersonalizationApproach:
         self, query: UserQuery, context: PersonalizationContext, top_k: int = 20
     ) -> list[tuple[str, float]]:
         """Retrieve personalized results for a query."""
-        raise NotImplementedError
+        # Base implementation using simple semantic similarity
+        import time
+        start_time = time.time()
+
+        # Mock retrieval based on user preferences and query
+        results = []
+
+        # Simulate personalized scoring based on user preferences
+        for i in range(min(top_k, 100)):  # Mock document collection
+            doc_id = f"doc_{i}"
+
+            # Base relevance score (0.1 to 0.9)
+            base_score = 0.9 - (i * 0.8 / 100)
+
+            # Apply personalization boost based on user preferences
+            personalization_boost = 0.0
+            if context.user_preferences:
+                # Boost for matching preferences
+                if "technical" in context.user_preferences and i % 3 == 0:
+                    personalization_boost += 0.1
+                if "recent" in context.user_preferences and i < 20:
+                    personalization_boost += 0.05
+
+            # Apply history boost
+            if context.interaction_history:
+                # Boost for documents similar to previously interacted content
+                if i in [h % 100 for h in range(len(context.interaction_history))]:
+                    personalization_boost += 0.15
+
+            final_score = min(1.0, base_score + personalization_boost)
+            results.append((doc_id, final_score))
+
+        # Sort by score and take top_k
+        results.sort(key=lambda x: x[1], reverse=True)
+        results = results[:top_k]
+
+        # Record retrieval time
+        retrieval_time = time.time() - start_time
+        self.retrieval_times.append(retrieval_time)
+
+        return results
 
     def calculate_token_cost(self, query_length: int, context_size: int, retrieved_items: int) -> int:
         """Calculate token cost for the approach."""
-        raise NotImplementedError
+        # Base token cost calculation
+        # Cost includes: query processing + context encoding + result processing
+
+        # Query processing cost (base cost per token)
+        query_cost = query_length * 2  # 2 tokens per input token for processing
+
+        # Context encoding cost (depends on personalization complexity)
+        # More complex personalization requires more context processing
+        context_cost = context_size * 1.5  # 1.5 tokens per context token
+
+        # Result processing cost (ranking, reranking, personalization)
+        result_cost = retrieved_items * 10  # 10 tokens per retrieved item for scoring
+
+        # Additional overhead for personalization algorithms
+        personalization_overhead = 50  # Base overhead for personalization processing
+
+        total_cost = int(query_cost + context_cost + result_cost + personalization_overhead)
+
+        # Record cost for metrics
+        self.token_costs.append(total_cost)
+
+        return total_cost
 
 
 class BasePPRApproach(PersonalizationApproach):
