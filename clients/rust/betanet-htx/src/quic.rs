@@ -33,6 +33,8 @@ use base64::Engine;
 use dashmap::DashMap;
 #[cfg(feature = "quic")]
 use once_cell::sync::Lazy;
+#[cfg(all(feature = "quic", test))]
+use std::sync::atomic::{AtomicUsize, Ordering};
 #[cfg(feature = "quic")]
 use std::time::{Duration, Instant};
 #[cfg(feature = "quic")]
@@ -81,6 +83,16 @@ impl Default for EchConfig {
 static DNS_ECH_CACHE: Lazy<DashMap<String, (Instant, EchConfig)>> = Lazy::new(|| DashMap::new());
 #[cfg(feature = "quic")]
 const DNS_ECH_TTL: Duration = Duration::from_secs(3600);
+
+#[cfg(all(feature = "quic", test))]
+static DNS_RESOLVER_INIT_COUNT: AtomicUsize = AtomicUsize::new(0);
+
+#[cfg(feature = "quic")]
+static DNS_RESOLVER: Lazy<TokioAsyncResolver> = Lazy::new(|| {
+    #[cfg(test)]
+    DNS_RESOLVER_INIT_COUNT.fetch_add(1, Ordering::Relaxed);
+    TokioAsyncResolver::tokio_from_system_conf().expect("failed to create DNS resolver")
+});
 
 #[cfg(feature = "quic")]
 impl EchConfig {
@@ -168,9 +180,7 @@ impl EchConfig {
         }
 
         let lookup_name = format!("_echconfig.{}", domain);
-        let resolver = TokioAsyncResolver::tokio_from_system_conf()
-            .map_err(|e| HtxError::Config(format!("failed to create DNS resolver: {}", e)))?;
-        let response = resolver
+        let response = DNS_RESOLVER
             .txt_lookup(lookup_name.clone())
             .await
             .map_err(|e| {
@@ -563,6 +573,19 @@ mod tests {
     fn rejects_overflowing_maximum_name_length() {
         let data = build_config_bytes(256);
         assert!(EchConfig::from_bytes(&data, "example.com".into()).is_err());
+    }
+
+    use std::sync::atomic::Ordering;
+
+    #[tokio::test]
+    async fn repeated_lookups_reuse_resolver() {
+        assert_eq!(DNS_RESOLVER_INIT_COUNT.load(Ordering::Relaxed), 0);
+
+        let _ = EchConfig::from_dns("localhost").await;
+        assert_eq!(DNS_RESOLVER_INIT_COUNT.load(Ordering::Relaxed), 1);
+
+        let _ = EchConfig::from_dns("localhost").await;
+        assert_eq!(DNS_RESOLVER_INIT_COUNT.load(Ordering::Relaxed), 1);
     }
 }
 
