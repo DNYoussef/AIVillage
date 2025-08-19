@@ -101,6 +101,9 @@ pub struct EchConfig {
     pub kem_id: u16,
     pub public_key: Vec<u8>,
     pub cipher_suites: Vec<u16>,
+    // The ECH config encodes `maximum_name_length` as a 16-bit value.
+    // We currently restrict it to 255 and store as `u8` until wider
+    // support is needed.
     pub maximum_name_length: u8,
     pub extensions: Vec<u8>,
 }
@@ -158,8 +161,16 @@ impl EchConfig {
         if data.len() < idx + 2 {
             return Err(HtxError::Config("Missing maximum name length".into()));
         }
-        let maximum_name_length = u16::from_be_bytes([data[idx], data[idx + 1]]) as u8;
-        idx += 2;
+        let maximum_name_length = {
+            let len = u16::from_be_bytes([data[idx], data[idx + 1]]);
+            if len > u8::MAX as u16 {
+                return Err(HtxError::Config(
+                    "ECH maximum_name_length exceeds 255".into(),
+                ));
+            }
+            idx += 2;
+            len as u8
+        };
         if data.len() < idx + 2 {
             return Err(HtxError::Config("Missing extensions length".into()));
         }
@@ -532,6 +543,43 @@ impl HtxConnection for QuicTransport {
         debug!("Closing QUIC connection");
         self.connection.close(0u32.into(), b"closing");
         Ok(())
+    }
+}
+
+#[cfg(all(test, feature = "quic"))]
+mod tests {
+    use super::*;
+
+    fn build_config_bytes(max_len: u16) -> Vec<u8> {
+        let mut bytes = Vec::new();
+        // config_id
+        bytes.push(0);
+        // kem_id
+        bytes.extend_from_slice(&0x0020u16.to_be_bytes());
+        // public_key length and value (1 byte)
+        bytes.extend_from_slice(&1u16.to_be_bytes());
+        bytes.push(0);
+        // cipher_suites length and one suite
+        bytes.extend_from_slice(&2u16.to_be_bytes());
+        bytes.extend_from_slice(&0x1301u16.to_be_bytes());
+        // maximum_name_length
+        bytes.extend_from_slice(&max_len.to_be_bytes());
+        // extensions length (0)
+        bytes.extend_from_slice(&0u16.to_be_bytes());
+        bytes
+    }
+
+    #[test]
+    fn parses_boundary_maximum_name_length() {
+        let data = build_config_bytes(255);
+        let cfg = EchConfig::from_bytes(&data, "example.com".into()).unwrap();
+        assert_eq!(cfg.maximum_name_length, 255);
+    }
+
+    #[test]
+    fn rejects_overflowing_maximum_name_length() {
+        let data = build_config_bytes(256);
+        assert!(EchConfig::from_bytes(&data, "example.com".into()).is_err());
     }
 }
 
