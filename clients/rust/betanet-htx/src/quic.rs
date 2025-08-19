@@ -8,33 +8,35 @@ use std::path::Path;
 use std::sync::Arc;
 
 #[cfg(feature = "quic")]
-use quinn::{ClientConfig, Endpoint, ServerConfig, Connection, SendDatagramError, TransportConfig};
+use bytes::Bytes;
 #[cfg(feature = "quic")]
-use rustls::pki_types::{CertificateDer, PrivatePkcs8KeyDer, ServerName, UnixTime};
+use quinn::{ClientConfig, Connection, Endpoint, SendDatagramError, ServerConfig, TransportConfig};
 #[cfg(feature = "quic")]
 use rcgen::generate_simple_self_signed;
 #[cfg(feature = "quic")]
-use rustls::{SignatureScheme, DigitallySignedStruct};
+use rustls::client::danger::ServerCertVerifier;
 #[cfg(feature = "quic")]
-use rustls::client::danger::{ServerCertVerifier, ServerCertVerified, HandshakeSignatureValid};
+use rustls::pki_types::{CertificateDer, PrivatePkcs8KeyDer, ServerName, UnixTime};
+#[cfg(feature = "quic")]
+use rustls::{OwnedTrustAnchor, RootCertStore};
 #[cfg(feature = "quic")]
 use tracing::{debug, error, info, warn};
 #[cfg(feature = "quic")]
-use bytes::Bytes;
+use webpki_roots::TLS_SERVER_ROOTS;
 
 #[cfg(feature = "quic")]
-use crate::{transport::TransportStats, HtxConfig, HtxError, Result, Frame};
+use crate::{transport::TransportStats, Frame, HtxConfig, HtxError, Result};
 
 #[cfg(feature = "quic")]
 use base64::Engine;
 #[cfg(feature = "quic")]
-use trust_dns_resolver::TokioAsyncResolver;
+use dashmap::DashMap;
 #[cfg(feature = "quic")]
 use once_cell::sync::Lazy;
 #[cfg(feature = "quic")]
-use dashmap::DashMap;
-#[cfg(feature = "quic")]
 use std::time::{Duration, Instant};
+#[cfg(feature = "quic")]
+use trust_dns_resolver::TokioAsyncResolver;
 
 /// QUIC transport with DATAGRAM support
 #[cfg(feature = "quic")]
@@ -43,53 +45,6 @@ pub struct QuicTransport {
     stats: TransportStats,
     enable_datagrams: bool,
     ech_config: Option<EchConfig>,
-}
-
-/// Insecure verifier that accepts any certificate. **Do not use in production.**
-#[cfg(feature = "quic")]
-#[derive(Debug)]
-struct InsecureVerifier;
-
-#[cfg(feature = "quic")]
-impl ServerCertVerifier for InsecureVerifier {
-    fn verify_server_cert(
-        &self,
-        _end_entity: &CertificateDer<'_>,
-        _intermediates: &[CertificateDer<'_>],
-        _server_name: &ServerName<'_>,
-        _ocsp_response: &[u8],
-        _now: UnixTime,
-    ) -> Result<ServerCertVerified, rustls::Error> {
-        Ok(ServerCertVerified::assertion())
-    }
-
-    fn verify_tls12_signature(
-        &self,
-        _message: &[u8],
-        _cert: &CertificateDer<'_>,
-        _dss: &DigitallySignedStruct,
-    ) -> Result<HandshakeSignatureValid, rustls::Error> {
-        Ok(HandshakeSignatureValid::assertion())
-    }
-
-    fn verify_tls13_signature(
-        &self,
-        _message: &[u8],
-        _cert: &CertificateDer<'_>,
-        _dss: &DigitallySignedStruct,
-    ) -> Result<HandshakeSignatureValid, rustls::Error> {
-        Ok(HandshakeSignatureValid::assertion())
-    }
-
-    fn supported_verify_schemes(&self) -> Vec<SignatureScheme> {
-        vec![
-            SignatureScheme::ECDSA_NISTP256_SHA256,
-            SignatureScheme::ECDSA_NISTP384_SHA384,
-            SignatureScheme::RSA_PSS_SHA256,
-            SignatureScheme::RSA_PSS_SHA384,
-            SignatureScheme::RSA_PSS_SHA512,
-        ]
-    }
 }
 
 /// ECH (Encrypted Client Hello) configuration
@@ -110,8 +65,8 @@ impl Default for EchConfig {
         Self {
             public_name: "cloudflare.com".to_string(), // Common fronting domain
             config_id: 0,
-            kem_id: 0x0020, // X25519
-            public_key: vec![0u8; 32], // Placeholder key
+            kem_id: 0x0020,                              // X25519
+            public_key: vec![0u8; 32],                   // Placeholder key
             cipher_suites: vec![0x1301, 0x1302, 0x1303], // TLS 1.3 cipher suites
             maximum_name_length: 64,
             extensions: vec![],
@@ -186,7 +141,8 @@ impl EchConfig {
     pub fn from_file<P: AsRef<Path>>(path: P, public_name: String) -> Result<Self> {
         let contents = std::fs::read_to_string(path)
             .map_err(|e| HtxError::Config(format!("failed to read ECH config file: {}", e)))?;
-        let data = base64::engine::general_purpose::STANDARD.decode(contents.trim())
+        let data = base64::engine::general_purpose::STANDARD
+            .decode(contents.trim())
             .map_err(|e| HtxError::Config(format!("invalid ECH base64: {}", e)))?;
         Self::from_bytes(&data, public_name)
     }
@@ -206,7 +162,9 @@ impl EchConfig {
         let response = resolver
             .txt_lookup(lookup_name.clone())
             .await
-            .map_err(|e| HtxError::Config(format!("ECH TXT lookup failed for {}: {}", lookup_name, e)))?;
+            .map_err(|e| {
+                HtxError::Config(format!("ECH TXT lookup failed for {}: {}", lookup_name, e))
+            })?;
 
         let mut txt = String::new();
         for record in response.iter() {
@@ -256,12 +214,31 @@ pub struct QuicDatagramFrame {
 #[cfg(feature = "quic")]
 impl QuicTransport {
     /// Connect to a remote QUIC endpoint with H3 ALPN and DATAGRAM support
-    pub async fn connect(addr: SocketAddr, config: &HtxConfig) -> Result<Self> {
-        // Build insecure rustls client config that trusts all certificates.
-        let mut crypto = rustls::ClientConfig::builder()
-            .with_safe_defaults()
-            .with_custom_certificate_verifier(Arc::new(InsecureVerifier))
-            .with_no_client_auth();
+    pub async fn connect(
+        addr: SocketAddr,
+        config: &HtxConfig,
+        verifier: Option<Arc<dyn ServerCertVerifier>>,
+    ) -> Result<Self> {
+        // Build rustls client config with system/root certificates or a custom verifier
+        let mut root_store = RootCertStore::empty();
+        root_store.add_trust_anchors(TLS_SERVER_ROOTS.iter().map(|ta| {
+            OwnedTrustAnchor::from_subject_spki_name_constraints(
+                ta.subject,
+                ta.spki,
+                ta.name_constraints,
+            )
+        }));
+
+        let mut builder = rustls::ClientConfig::builder().with_safe_defaults();
+        let mut crypto = if let Some(v) = verifier {
+            builder
+                .with_custom_certificate_verifier(v)
+                .with_no_client_auth()
+        } else {
+            builder
+                .with_root_certificates(root_store)
+                .with_no_client_auth()
+        };
 
         crypto.alpn_protocols = config
             .alpn_protocols
@@ -282,7 +259,10 @@ impl QuicTransport {
         // Optional ECH configuration loading
         let ech_config = if config.enable_tls_camouflage {
             if let Some(path) = &config.ech_config_path {
-                match EchConfig::from_file(path, config.camouflage_domain.clone().unwrap_or_default()) {
+                match EchConfig::from_file(
+                    path,
+                    config.camouflage_domain.clone().unwrap_or_default(),
+                ) {
                     Ok(cfg) => Some(cfg),
                     Err(e) => {
                         warn!("Failed to load ECH config: {}", e);
@@ -347,9 +327,9 @@ impl QuicTransport {
                 debug!("Sent {} bytes via QUIC DATAGRAM", encoded_frame.len());
                 Ok(())
             }
-            Err(SendDatagramError::UnsupportedByPeer) => {
-                Err(HtxError::Transport("DATAGRAM unsupported by peer".to_string()))
-            }
+            Err(SendDatagramError::UnsupportedByPeer) => Err(HtxError::Transport(
+                "DATAGRAM unsupported by peer".to_string(),
+            )),
             Err(SendDatagramError::Disabled) => {
                 Err(HtxError::Transport("DATAGRAM disabled".to_string()))
             }
@@ -438,7 +418,10 @@ impl QuicTransport {
         // Optional ECH configuration loading
         let ech_config = if config.enable_tls_camouflage {
             if let Some(path) = &config.ech_config_path {
-                match EchConfig::from_file(path, config.camouflage_domain.clone().unwrap_or_default()) {
+                match EchConfig::from_file(
+                    path,
+                    config.camouflage_domain.clone().unwrap_or_default(),
+                ) {
                     Ok(cfg) => Some(cfg),
                     Err(e) => {
                         warn!("Failed to load ECH config: {}", e);
@@ -541,14 +524,21 @@ pub struct QuicTransport;
 
 #[cfg(not(feature = "quic"))]
 impl QuicTransport {
-    pub async fn connect(_addr: std::net::SocketAddr, _config: &crate::HtxConfig) -> crate::Result<Self> {
-        Err(crate::HtxError::Config("QUIC feature not enabled".to_string()))
+    pub async fn connect(
+        _addr: std::net::SocketAddr,
+        _config: &crate::HtxConfig,
+    ) -> crate::Result<Self> {
+        Err(crate::HtxError::Config(
+            "QUIC feature not enabled".to_string(),
+        ))
     }
 
     pub async fn listen<F>(_config: crate::HtxConfig, _handler: F) -> crate::Result<()>
     where
         F: Fn(Box<dyn crate::HtxConnection>) + Send + Sync + 'static,
     {
-        Err(crate::HtxError::Config("QUIC feature not enabled".to_string()))
+        Err(crate::HtxError::Config(
+            "QUIC feature not enabled".to_string(),
+        ))
     }
 }
