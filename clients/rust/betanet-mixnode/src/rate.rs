@@ -117,14 +117,17 @@ impl TokenBucket {
     fn refill_lockfree(&self) {
         let now = Self::now_micros();
 
-        let Ok(last) = self.last_refill.fetch_update(Ordering::AcqRel, Ordering::Acquire, |last| {
-            let elapsed = now.saturating_sub(last);
-            if elapsed >= 1_000 {
-                Some(now)
-            } else {
-                None
-            }
-        }) else {
+        let Ok(last) = self
+            .last_refill
+            .fetch_update(Ordering::AcqRel, Ordering::Acquire, |last| {
+                let elapsed = now.saturating_sub(last);
+                if elapsed >= 1_000 {
+                    Some(now)
+                } else {
+                    None
+                }
+            })
+        else {
             return;
         };
 
@@ -199,12 +202,15 @@ pub struct TrafficShaper {
     buffer: Arc<Semaphore>,
     /// Statistics
     stats: Arc<TrafficShaperStats>,
-    /// Queue size limit
+    /// Queue size limit (capped at 10,000 entries to prevent unbounded growth)
     max_queue_size: usize,
 }
 
 impl TrafficShaper {
-    /// Create new high-performance traffic shaper
+    /// Create new high-performance traffic shaper.
+    ///
+    /// The internal queue is capped at 10,000 packets to avoid excessive
+    /// memory use even if a larger buffer capacity is requested.
     pub fn new(target_rate: f64, buffer_capacity: usize) -> Self {
         let rate_limiter = TokenBucket::new(
             (target_rate * 2.0) as u64, // 2 second burst capacity
@@ -217,7 +223,7 @@ impl TrafficShaper {
             rate_limiter,
             buffer: Arc::new(Semaphore::new(buffer_capacity)),
             stats: Arc::new(TrafficShaperStats::new()),
-            max_queue_size: buffer_capacity.max(10000),
+            max_queue_size: buffer_capacity.min(10000),
         }
     }
 
@@ -417,7 +423,7 @@ pub struct RateLimitingConfig {
     pub burst_capacity: u64,
     /// Sustained rate (tokens/packets per second)
     pub sustained_rate: f64,
-    /// Traffic shaping buffer size
+    /// Traffic shaping buffer size (capped at 10,000 packets)
     pub shaping_buffer_size: usize,
     /// Constant output rate (packets per second)
     pub output_rate: f64,
@@ -725,6 +731,36 @@ mod tests {
         // Next packet should be rate limited
         let packet_delayed = timeout(Duration::from_millis(300), shaper.next_packet()).await;
         assert!(packet_delayed.is_err()); // Should timeout due to rate limiting
+    }
+
+    #[tokio::test]
+    async fn test_queue_capacity_small() {
+        let shaper = TrafficShaper::new(1.0, 5);
+
+        for _ in 0..5 {
+            shaper.submit_packet(vec![0u8]).await.unwrap();
+        }
+
+        assert_eq!(shaper.queue_length().await, 5);
+        let overflow = shaper.submit_packet(vec![0u8]).await;
+        assert!(
+            matches!(overflow, Err(MixnodeError::Network(msg)) if msg == "Traffic shaper queue full")
+        );
+    }
+
+    #[tokio::test]
+    async fn test_queue_capacity_large_cap() {
+        let shaper = TrafficShaper::new(1.0, 20000); // should cap at 10k
+
+        for _ in 0..10000 {
+            shaper.submit_packet(vec![0u8]).await.unwrap();
+        }
+
+        assert_eq!(shaper.queue_length().await, 10000);
+        let overflow = shaper.submit_packet(vec![0u8]).await;
+        assert!(
+            matches!(overflow, Err(MixnodeError::Network(msg)) if msg == "Traffic shaper queue full")
+        );
     }
 
     #[tokio::test]
