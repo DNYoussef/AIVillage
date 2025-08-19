@@ -82,27 +82,30 @@ impl TokenBucket {
 
     /// Consume tokens (optimized blocking)
     pub async fn consume(&self, tokens: u64) -> Result<()> {
-        let mut backoff = 1u64;
-        const MAX_BACKOFF: u64 = 64;
+        let tokens_fp = tokens * TOKEN_PRECISION;
 
         loop {
             if self.try_consume(tokens).await {
                 return Ok(());
             }
 
-            // Adaptive backoff without busy-waiting
-            if backoff <= 8 {
-                // Yield to other tasks and sleep briefly
-                yield_now().await;
-                sleep(Duration::from_micros(backoff)).await;
-            } else {
-                // Use longer async sleep as backoff grows
-                let wait_time = Duration::from_micros(backoff * 10);
-                yield_now().await;
-                sleep(wait_time).await;
-            }
+            // Determine how long we need to wait until enough tokens refill
+            self.refill_lockfree();
+            let current = self.tokens.load(Ordering::Acquire);
+            let missing_fp = tokens_fp.saturating_sub(current) as u128;
 
-            backoff = (backoff * 2).min(MAX_BACKOFF);
+            // Avoid division by zero - if refill rate is zero, yield briefly
+            let wait_us = if self.refill_rate_fp > 0 {
+                // Calculate expected wait time in microseconds
+                ((missing_fp * 1_000_000u128) / self.refill_rate_fp as u128) as u64
+            } else {
+                1
+            };
+
+            // Ensure we wait at least 1 microsecond
+            let wait_us = wait_us.max(1);
+            yield_now().await;
+            sleep(Duration::from_micros(wait_us)).await;
         }
     }
 
