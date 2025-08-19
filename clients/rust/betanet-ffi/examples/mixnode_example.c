@@ -94,7 +94,7 @@ int main() {
         return 1;
     }
 
-    printf("Packet encoded: %u bytes\n", encoded_packet.len);
+    printf("Packet encoded: %zu bytes\n", encoded_packet.len);
 
     // Process packet through mixnode
     printf("\nProcessing packet through mixnode...\n");
@@ -104,7 +104,7 @@ int main() {
         fprintf(stderr, "Failed to process packet: %s\n", betanet_error_message(result));
     } else {
         if (output_packet.len > 0) {
-            printf("Packet forwarded: %u bytes\n", output_packet.len);
+            printf("Packet forwarded: %zu bytes\n", output_packet.len);
             betanet_buffer_free(output_packet);
         } else {
             printf("Packet consumed (final destination or dropped)\n");

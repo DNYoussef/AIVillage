@@ -38,8 +38,8 @@ typedef BetanetResult betanet_Result;
 /* Buffer structure for passing data between C and Rust */
 typedef struct {
     uint8_t *data;
-    uint32_t len;
-    uint32_t capacity;
+    size_t len;
+    size_t capacity;
 } BetanetBuffer;
 
 typedef BetanetBuffer betanet_Buffer;
@@ -99,7 +99,7 @@ void betanet_cleanup(void);
 const char* betanet_version(void);
 BetanetResult betanet_feature_supported(const char* feature);
 void betanet_buffer_free(BetanetBuffer buffer);
-BetanetBuffer betanet_buffer_alloc(uint32_t size);
+BetanetBuffer betanet_buffer_alloc(size_t size);
 const char* betanet_error_message(BetanetResult result);
 BetanetResult betanet_packet_encode(BetanetBuffer input, BetanetBuffer* output);
 BetanetResult betanet_packet_decode(BetanetBuffer input, BetanetBuffer* output);

@@ -1,6 +1,6 @@
 //! Common FFI types and utilities
 
-use std::os::raw::{c_char, c_int, c_uint, c_void};
+use std::os::raw::c_char;
 use std::ptr;
 
 /// Result codes for Betanet FFI functions
@@ -39,9 +39,9 @@ pub struct BetanetBuffer {
     /// Pointer to data
     pub data: *mut u8,
     /// Length of data in bytes
-    pub len: c_uint,
+    pub len: usize,
     /// Capacity of buffer (for owned buffers)
-    pub capacity: c_uint,
+    pub capacity: usize,
 }
 
 impl BetanetBuffer {
@@ -57,8 +57,8 @@ impl BetanetBuffer {
     /// Create buffer from Vec<u8>
     pub fn from_vec(mut vec: Vec<u8>) -> Self {
         let data = vec.as_mut_ptr();
-        let len = vec.len() as c_uint;
-        let capacity = vec.capacity() as c_uint;
+        let len = vec.len();
+        let capacity = vec.capacity();
         std::mem::forget(vec); // Transfer ownership to C
 
         Self {
@@ -72,7 +72,7 @@ impl BetanetBuffer {
     pub fn from_slice(slice: &[u8]) -> Self {
         Self {
             data: slice.as_ptr() as *mut u8,
-            len: slice.len() as c_uint,
+            len: slice.len(),
             capacity: 0, // Indicates read-only
         }
     }
@@ -86,7 +86,7 @@ impl BetanetBuffer {
             return Vec::new();
         }
 
-        Vec::from_raw_parts(self.data, self.len as usize, self.capacity as usize)
+        Vec::from_raw_parts(self.data, self.len, self.capacity)
     }
 
     /// Get slice view of buffer data
@@ -97,7 +97,7 @@ impl BetanetBuffer {
         if self.data.is_null() || self.len == 0 {
             &[]
         } else {
-            std::slice::from_raw_parts(self.data, self.len as usize)
+            std::slice::from_raw_parts(self.data, self.len)
         }
     }
 }
@@ -117,7 +117,7 @@ impl BetanetBuffer {
 pub unsafe extern "C" fn betanet_buffer_free(buffer: BetanetBuffer) {
     if buffer.capacity > 0 && !buffer.data.is_null() {
         // Overwrite buffer contents before dropping
-        ptr::write_bytes(buffer.data, 0, buffer.len as usize);
+        ptr::write_bytes(buffer.data, 0, buffer.len);
 
         // This was an owned buffer, convert back to Vec to drop
         let _vec = buffer.into_vec();
@@ -133,12 +133,12 @@ pub unsafe extern "C" fn betanet_buffer_free(buffer: BetanetBuffer) {
 /// * New buffer on success
 /// * Empty buffer on failure
 #[no_mangle]
-pub extern "C" fn betanet_buffer_alloc(size: c_uint) -> BetanetBuffer {
+pub extern "C" fn betanet_buffer_alloc(size: usize) -> BetanetBuffer {
     if size == 0 {
         return BetanetBuffer::new();
     }
 
-    let vec = vec![0u8; size as usize];
+    let vec = vec![0u8; size];
     BetanetBuffer::from_vec(vec)
 }
 

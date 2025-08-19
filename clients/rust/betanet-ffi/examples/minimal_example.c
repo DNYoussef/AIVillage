@@ -31,7 +31,7 @@ int main() {
     BetanetResult result = betanet_echo("Hello from C!", &echo_output);
     if (result == BETANET_SUCCESS) {
         printf("Echo result: ");
-        for (uint32_t i = 0; i < echo_output.len; i++) {
+        for (size_t i = 0; i < echo_output.len; i++) {
             printf("%c", echo_output.data[i]);
         }
         printf("\n");
@@ -45,10 +45,10 @@ int main() {
     printf("Testing buffer allocation...\n");
     BetanetBuffer test_buffer = betanet_buffer_alloc(100);
     if (test_buffer.data != NULL && test_buffer.len == 100) {
-        printf("Buffer allocated successfully: %u bytes\n", test_buffer.len);
+        printf("Buffer allocated successfully: %zu bytes\n", test_buffer.len);
 
         // Fill buffer with test data
-        for (uint32_t i = 0; i < test_buffer.len; i++) {
+        for (size_t i = 0; i < test_buffer.len; i++) {
             test_buffer.data[i] = (uint8_t)(i % 256);
         }
 
@@ -71,15 +71,15 @@ int main() {
     BetanetBuffer encoded_packet;
     result = betanet_packet_encode(input_buffer, &encoded_packet);
     if (result == BETANET_SUCCESS) {
-        printf("Packet encoded: %u bytes\n", encoded_packet.len);
+        printf("Packet encoded: %zu bytes\n", encoded_packet.len);
 
         // Decode packet
         BetanetBuffer decoded_packet;
         result = betanet_packet_decode(encoded_packet, &decoded_packet);
         if (result == BETANET_SUCCESS) {
-            printf("Packet decoded: %u bytes\n", decoded_packet.len);
+            printf("Packet decoded: %zu bytes\n", decoded_packet.len);
             printf("Decoded content: ");
-            for (uint32_t i = 0; i < decoded_packet.len; i++) {
+            for (size_t i = 0; i < decoded_packet.len; i++) {
                 printf("%c", decoded_packet.data[i]);
             }
             printf("\n");
