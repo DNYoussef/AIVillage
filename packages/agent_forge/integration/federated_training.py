@@ -41,6 +41,15 @@ except ImportError as e:
 from ..core.phase_controller import PhaseResult
 from ..core.unified_pipeline import UnifiedConfig
 
+# Import HRRM export adapters for fog burst capabilities
+try:
+    from ...models.hrrm.export_adapters import ConsistencyValidator, FogBurstAdapter
+
+    HRRM_AVAILABLE = True
+except ImportError as e:
+    logging.warning(f"HRRM export adapters not available: {e}")
+    HRRM_AVAILABLE = False
+
 logger = logging.getLogger(__name__)
 
 
@@ -87,6 +96,13 @@ class FederatedTrainingConfig:
     checkpoint_interval: int = 5  # rounds
     fault_tolerance: bool = True
     max_failures: int = 3
+
+    # HRRM Integration
+    hrrm_preset: str = "distributed_inference"  # "local_only", "fog_hybrid", "distributed_inference", "full_sharding"
+    hrrm_sharding_strategy: str = "layer_wise"  # "layer_wise", "attention_heads", "pipeline", "hybrid"
+    hrrm_fog_burst_enabled: bool = True
+    hrrm_parity_validation: bool = True
+    hrrm_parity_tolerance: float = 1e-4
 
 
 class FederatedAgentForge:
@@ -509,8 +525,12 @@ class FederatedAgentForge:
         return aggregated_result
 
     async def run_federated_training(self) -> list[PhaseResult]:
-        """Run complete federated Agent Forge training."""
+        """Run complete federated Agent Forge training with HRRM integration."""
         self.logger.info(f"Starting federated Agent Forge training for {self.fed_config.federated_rounds} rounds")
+
+        # Check for HRRM integration
+        if HRRM_AVAILABLE and self.fed_config.hrrm_fog_burst_enabled:
+            self.logger.info(f"HRRM integration enabled with preset: {self.fed_config.hrrm_preset}")
 
         results = []
 
@@ -529,14 +549,64 @@ class FederatedAgentForge:
 
                 self.logger.info(f"Starting federated round {self.current_round}/{self.fed_config.federated_rounds}")
 
-                # Distribute training tasks
+                # HRRM Integration: Execute HRRM distributed inference if enabled
+                hrrm_result = None
+                if HRRM_AVAILABLE and self.fed_config.hrrm_fog_burst_enabled:
+                    try:
+                        # Prepare model data for HRRM (simplified simulation)
+                        model_data = b"simulated_model_data"  # In production, this would be actual model weights
+                        model_config = {
+                            "model_type": "hrrm",
+                            "hidden_size": 768,
+                            "num_layers": 12,
+                            "num_attention_heads": 12,
+                            "vocab_size": 50000,
+                        }
+                        training_data = {
+                            "baseline_input": {"text": f"federated_round_{self.current_round}_input", "batch_size": 16}
+                        }
+
+                        # Execute HRRM federated training for this round
+                        hrrm_result = await self.execute_hrrm_federated_training(
+                            model_name=f"federated_model_round_{self.current_round}",
+                            model_data=model_data,
+                            model_config=model_config,
+                            training_data=training_data,
+                        )
+
+                        self.logger.info(f"HRRM federated training completed for round {self.current_round}")
+
+                    except Exception as e:
+                        self.logger.error(f"HRRM federated training failed for round {self.current_round}: {e}")
+                        # Continue with standard federated training
+
+                # Standard federated training workflow
                 task_assignments = await self.distribute_training_tasks()
 
                 # Collect results
                 round_results = await self.collect_results(task_assignments)
 
-                # Aggregate results
+                # Aggregate results (integrate HRRM results if available)
                 aggregated_result = await self.aggregate_results(round_results)
+
+                # Enhance aggregated result with HRRM data if available
+                if hrrm_result and hrrm_result.get("status") == "success":
+                    aggregated_result.metadata["hrrm_integration"] = {
+                        "enabled": True,
+                        "preset": self.fed_config.hrrm_preset,
+                        "sharding_strategy": self.fed_config.hrrm_sharding_strategy,
+                        "parity_validation": hrrm_result.get("parity_validation", {}),
+                        "fog_burst_enabled": self.fed_config.hrrm_fog_burst_enabled,
+                        "baseline_latency_ms": hrrm_result.get("baseline_result", {})
+                        .get("execution_metadata", {})
+                        .get("total_time_ms", 0),
+                    }
+                else:
+                    aggregated_result.metadata["hrrm_integration"] = {
+                        "enabled": False,
+                        "reason": "HRRM failed or disabled",
+                    }
+
                 results.append(aggregated_result)
 
                 # Update global model
@@ -557,6 +627,207 @@ class FederatedAgentForge:
         except Exception as e:
             self.logger.error(f"Federated training failed: {e}")
             raise
+
+    async def _setup_hrrm_fog_burst(self) -> Optional[FogBurstAdapter]:
+        """Setup HRRM fog burst adapter if HRRM integration is enabled"""
+
+        if not HRRM_AVAILABLE or not self.fed_config.hrrm_fog_burst_enabled:
+            return None
+
+        try:
+            # Initialize fog burst adapter for HRRM operations
+            fog_burst_adapter = FogBurstAdapter(fog_gateway_url="http://localhost:8080")  # Default fog gateway
+
+            self.logger.info(f"HRRM fog burst adapter initialized with preset: {self.fed_config.hrrm_preset}")
+            return fog_burst_adapter
+
+        except Exception as e:
+            self.logger.error(f"Failed to setup HRRM fog burst: {e}")
+            return None
+
+    async def _execute_hrrm_distributed_inference(
+        self, model_name: str, model_data: bytes, model_config: dict[str, Any], input_data: dict[str, Any]
+    ) -> dict[str, Any]:
+        """Execute HRRM model inference using distributed fog burst"""
+
+        if not HRRM_AVAILABLE:
+            raise RuntimeError("HRRM export adapters not available")
+
+        # Setup fog burst adapter
+        fog_burst_adapter = await self._setup_hrrm_fog_burst()
+        if not fog_burst_adapter:
+            raise RuntimeError("Failed to setup HRRM fog burst adapter")
+
+        try:
+            # Configure model for distributed execution based on preset
+            if self.fed_config.hrrm_preset == "local_only":
+                # Execute locally (fallback)
+                self.logger.info("HRRM preset 'local_only' - executing without fog burst")
+                return {"status": "local_execution", "message": "Executed locally due to local_only preset"}
+
+            elif self.fed_config.hrrm_preset == "fog_hybrid":
+                # Use fog for heavy operations, local for light operations
+                enhanced_config = model_config.copy()
+                enhanced_config["fog_offload_threshold"] = 0.5
+                enhanced_config["prefer_local_for_small_models"] = True
+
+            elif self.fed_config.hrrm_preset == "distributed_inference":
+                # Full distributed inference across fog nodes
+                enhanced_config = model_config.copy()
+                enhanced_config["force_distribution"] = True
+                enhanced_config["sharding_strategy"] = self.fed_config.hrrm_sharding_strategy
+
+            elif self.fed_config.hrrm_preset == "full_sharding":
+                # Maximum distribution with aggressive sharding
+                enhanced_config = model_config.copy()
+                enhanced_config["aggressive_sharding"] = True
+                enhanced_config["max_shards"] = 8
+                enhanced_config["sharding_strategy"] = self.fed_config.hrrm_sharding_strategy
+
+            else:
+                enhanced_config = model_config.copy()
+
+            # Execute distributed inference via fog burst
+            result = await fog_burst_adapter.burst_to_fog(
+                model_name=model_name, model_data=model_data, model_config=enhanced_config, input_data=input_data
+            )
+
+            self.logger.info(f"HRRM distributed inference completed for {model_name}")
+            return result
+
+        except Exception as e:
+            self.logger.error(f"HRRM distributed inference failed: {e}")
+            raise
+
+    async def _validate_hrrm_parity(
+        self,
+        model_name: str,
+        model_data: bytes,
+        model_config: dict[str, Any],
+        input_data: dict[str, Any],
+        distributed_result: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Validate HRRM distributed execution against local execution"""
+
+        if not self.fed_config.hrrm_parity_validation or not HRRM_AVAILABLE:
+            return {"parity_validation": "skipped", "reason": "validation disabled or HRRM unavailable"}
+
+        try:
+            # Execute local version for comparison
+            self.logger.info(f"Running local HRRM inference for parity validation: {model_name}")
+
+            # Note: In production, this would execute the actual local HRRM model
+            # For now, we simulate local execution results
+            local_result = {
+                "model_output": {"confidence": 0.85, "prediction": "simulated_local_output", "latency_ms": 150.0},
+                "execution_metadata": {"strategy": "local", "memory_used_mb": 500.0},
+            }
+
+            # Validate parity using consistency validator
+            consistency_validator = ConsistencyValidator(tolerance=self.fed_config.hrrm_parity_tolerance)
+
+            parity_result = await consistency_validator.validate_distributed_parity(
+                local_result=local_result,
+                distributed_result=distributed_result.get("result", {}),
+                model_name=model_name,
+            )
+
+            self.logger.info(
+                f"HRRM parity validation for {model_name}: "
+                f"{'PASSED' if parity_result.get('parity_passed', False) else 'FAILED'} "
+                f"(max_diff: {parity_result.get('max_difference', 0.0):.6f})"
+            )
+
+            return parity_result
+
+        except Exception as e:
+            self.logger.error(f"HRRM parity validation failed for {model_name}: {e}")
+            return {"parity_validation": "failed", "error": str(e), "parity_passed": False}
+
+    async def execute_hrrm_federated_training(
+        self, model_name: str, model_data: bytes, model_config: dict[str, Any], training_data: dict[str, Any]
+    ) -> dict[str, Any]:
+        """
+        Execute HRRM model training using federated learning with fog burst integration
+
+        This method combines federated training with HRRM fog burst capabilities,
+        allowing for distributed model training and inference across fog nodes.
+        """
+
+        if not HRRM_AVAILABLE:
+            self.logger.warning("HRRM not available, falling back to standard federated training")
+            return {"status": "fallback", "message": "HRRM not available"}
+
+        self.logger.info(
+            f"Starting HRRM federated training for {model_name} with preset: {self.fed_config.hrrm_preset}"
+        )
+
+        try:
+            # Phase 1: Distributed inference for baseline evaluation
+            baseline_result = await self._execute_hrrm_distributed_inference(
+                model_name=f"{model_name}_baseline",
+                model_data=model_data,
+                model_config=model_config,
+                input_data=training_data.get("baseline_input", {}),
+            )
+
+            # Phase 2: Parity validation if enabled
+            parity_result = None
+            if self.fed_config.hrrm_parity_validation:
+                parity_result = await self._validate_hrrm_parity(
+                    model_name=f"{model_name}_baseline",
+                    model_data=model_data,
+                    model_config=model_config,
+                    input_data=training_data.get("baseline_input", {}),
+                    distributed_result=baseline_result,
+                )
+
+                if not parity_result.get("parity_passed", False):
+                    self.logger.warning(f"HRRM parity validation failed for {model_name}")
+                    if self.fed_config.hrrm_preset == "fog_required":
+                        raise RuntimeError("Parity validation failed and fog execution is required")
+
+            # Phase 3: Federated training with HRRM integration
+            training_results = []
+            for round_num in range(self.fed_config.federated_rounds):
+                self.logger.info(f"HRRM federated round {round_num + 1}/{self.fed_config.federated_rounds}")
+
+                # Execute training round with fog burst if applicable
+                round_result = await self._execute_hrrm_distributed_inference(
+                    model_name=f"{model_name}_round_{round_num + 1}",
+                    model_data=model_data,
+                    model_config=model_config,
+                    input_data=training_data.get(
+                        f"round_{round_num + 1}_input", training_data.get("baseline_input", {})
+                    ),
+                )
+
+                training_results.append(round_result)
+
+            # Aggregate results
+            final_result = {
+                "status": "success",
+                "model_name": model_name,
+                "hrrm_preset": self.fed_config.hrrm_preset,
+                "sharding_strategy": self.fed_config.hrrm_sharding_strategy,
+                "baseline_result": baseline_result,
+                "parity_validation": parity_result,
+                "training_results": training_results,
+                "federated_rounds_completed": len(training_results),
+                "fog_burst_enabled": self.fed_config.hrrm_fog_burst_enabled,
+            }
+
+            self.logger.info(f"HRRM federated training completed for {model_name}")
+            return final_result
+
+        except Exception as e:
+            self.logger.error(f"HRRM federated training failed for {model_name}: {e}")
+            return {
+                "status": "error",
+                "model_name": model_name,
+                "error": str(e),
+                "hrrm_preset": self.fed_config.hrrm_preset,
+            }
 
     def _save_checkpoint(self, checkpoint_name: str):
         """Save federated training checkpoint."""

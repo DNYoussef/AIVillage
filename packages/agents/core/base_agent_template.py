@@ -17,6 +17,7 @@ Key Features:
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 import uuid
 from abc import ABC, abstractmethod
@@ -300,6 +301,28 @@ class BaseAgentTemplate(AgentInterface):
         """Initialize core MCP tools that all agents must have"""
         self.mcp_tools["rag_query"] = RAGQueryTool()
         self.mcp_tools["communicate"] = CommunicationChannelTool()
+
+        # Add fog computing MCP tools
+        try:
+            from packages.agents.bridges.fog_tools import (
+                CreateSandboxTool,
+                FetchArtifactsTool,
+                FogJobStatusTool,
+                RunJobTool,
+                StreamLogsTool,
+            )
+
+            self.mcp_tools["create_sandbox"] = CreateSandboxTool()
+            self.mcp_tools["run_job"] = RunJobTool()
+            self.mcp_tools["stream_logs"] = StreamLogsTool()
+            self.mcp_tools["fetch_artifacts"] = FetchArtifactsTool()
+            self.mcp_tools["fog_job_status"] = FogJobStatusTool()
+
+            logger.info("Fog computing MCP tools initialized successfully")
+
+        except ImportError as e:
+            logger.warning(f"Failed to import fog MCP tools: {e}")
+
         # Subclasses will add specialized tools
 
     # RAG System Integration (Read-only Group Memory)
@@ -313,6 +336,157 @@ class BaseAgentTemplate(AgentInterface):
     async def search_knowledge_graph(self, query: str, include_bayesian_trust: bool = True) -> dict[str, Any]:
         """Search the Bayesian trust knowledge graph"""
         return await self.query_group_memory(query=f"bayesian_search:{query}", mode="comprehensive")
+
+    # Fog Computing Integration
+
+    async def create_fog_sandbox(
+        self, namespace: str, runtime: str = "wasi", resources: dict[str, Any] | None = None, name: str | None = None
+    ) -> dict[str, Any]:
+        """Create isolated execution environment in fog network through MCP"""
+        return await self.mcp_tools["create_sandbox"].execute(
+            {
+                "namespace": namespace,
+                "runtime": runtime,
+                "resources": resources or {},
+                "name": name or f"{self.agent_id}_sandbox",
+            }
+        )
+
+    async def run_fog_job(
+        self,
+        namespace: str,
+        image: str,
+        args: list[str] | None = None,
+        env: dict[str, str] | None = None,
+        resources: dict[str, Any] | None = None,
+        input_data: str = "",
+        timeout_s: int = 300,
+    ) -> dict[str, Any]:
+        """Submit job to fog gateway for remote execution through MCP"""
+        return await self.mcp_tools["run_job"].execute(
+            {
+                "namespace": namespace,
+                "image": image,
+                "args": args or [],
+                "env": env or {},
+                "resources": resources or {},
+                "input_data": input_data,
+                "timeout_s": timeout_s,
+            }
+        )
+
+    async def stream_fog_logs(
+        self, job_id: str, tail_lines: int = 50, follow: bool = False, timeout_s: int = 30
+    ) -> dict[str, Any]:
+        """Stream real-time logs from fog job execution through MCP"""
+        return await self.mcp_tools["stream_logs"].execute(
+            {"job_id": job_id, "tail_lines": tail_lines, "follow": follow, "timeout_s": timeout_s}
+        )
+
+    async def fetch_fog_artifacts(
+        self, job_id: str, artifact_types: list[str] | None = None, download_files: bool = False
+    ) -> dict[str, Any]:
+        """Download results and outputs from completed fog jobs through MCP"""
+        return await self.mcp_tools["fetch_artifacts"].execute(
+            {
+                "job_id": job_id,
+                "artifact_types": artifact_types or ["stdout", "stderr", "metrics"],
+                "download_files": download_files,
+            }
+        )
+
+    async def check_fog_job_status(self, job_id: str, include_logs: bool = False) -> dict[str, Any]:
+        """Check status and progress of fog job execution through MCP"""
+        return await self.mcp_tools["fog_job_status"].execute({"job_id": job_id, "include_logs": include_logs})
+
+    async def offload_computation_to_fog(
+        self,
+        computation_type: str,
+        input_data: dict[str, Any],
+        namespace: str | None = None,
+        resources: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """
+        High-level method to offload computation to fog network
+
+        Integrates with geometric self-awareness to determine when fog execution
+        is beneficial based on current resource utilization and task complexity.
+        """
+
+        # Use default namespace based on agent type
+        if not namespace:
+            namespace = f"agent-{self.agent_type.lower()}"
+
+        # Default resources based on computation type
+        if not resources:
+            if computation_type in ["training", "evomerge", "adas"]:
+                resources = {"cpu_cores": 4.0, "memory_gb": 8.0, "max_duration_hours": 2.0, "network_egress": True}
+            else:
+                resources = {"cpu_cores": 2.0, "memory_gb": 4.0, "max_duration_hours": 1.0, "network_egress": False}
+
+        try:
+            # Check if fog offload is beneficial based on current state
+            if self.current_geometric_state:
+                current_load = (
+                    self.current_geometric_state.cpu_utilization + self.current_geometric_state.memory_utilization
+                ) / 2.0
+
+                # Only offload if local system is heavily loaded
+                if current_load < 0.7:
+                    logger.info(f"Local system load is {current_load:.2f}, executing locally")
+                    return {
+                        "status": "executed_locally",
+                        "reason": "Local resources sufficient",
+                        "local_load": current_load,
+                    }
+
+            # Submit fog job
+            job_result = await self.run_fog_job(
+                namespace=namespace,
+                image=f"agent-computation-{computation_type}:latest",
+                args=[
+                    "--computation-type",
+                    computation_type,
+                    "--agent-id",
+                    self.agent_id,
+                    "--input",
+                    json.dumps(input_data),
+                ],
+                env={"AGENT_ID": self.agent_id, "AGENT_TYPE": self.agent_type, "COMPUTATION_TYPE": computation_type},
+                resources=resources,
+                input_data=json.dumps(input_data),
+            )
+
+            if job_result["status"] == "success":
+                job_id = job_result["job_id"]
+
+                # Record reflection on fog computation
+                await self.record_quiet_star_reflection(
+                    reflection_type=ReflectionType.TASK_COMPLETION,
+                    context=f"Offloaded {computation_type} computation to fog network",
+                    raw_thoughts=f"Analyzing local resource constraints and deciding to use fog computing for {computation_type}",
+                    insights=f"Successfully submitted fog job {job_id} for {computation_type} - estimated cost: ${job_result.get('estimated_cost', 0.0):.2f}",
+                    emotional_valence=0.3,  # Positive about optimization
+                    tags=["fog_computing", computation_type, "resource_optimization"],
+                )
+
+                return {
+                    "status": "fog_job_submitted",
+                    "job_id": job_id,
+                    "computation_type": computation_type,
+                    "estimated_cost": job_result.get("estimated_cost", 0.0),
+                    "tracking_url": job_result.get("tracking_url", ""),
+                }
+            else:
+                return {
+                    "status": "fog_job_failed",
+                    "error": job_result.get("message", "Unknown error"),
+                    "computation_type": computation_type,
+                }
+
+        except Exception as e:
+            logger.error(f"Failed to offload {computation_type} to fog: {e}")
+            return {"status": "error", "error": str(e), "computation_type": computation_type}
 
     # Personal Journal (Quiet-STaR Reflection)
 

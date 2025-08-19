@@ -77,6 +77,21 @@ class Permission(Enum):
     TENANT_MANAGE = "tenant.manage"
     TENANT_DELETE = "tenant.delete"
 
+    # Fog Computing permissions
+    FOG_JOB_SUBMIT = "fog.job.submit"
+    FOG_JOB_READ = "fog.job.read"
+    FOG_JOB_CANCEL = "fog.job.cancel"
+    FOG_JOB_LOGS = "fog.job.logs"
+    FOG_NAMESPACE_CREATE = "fog.namespace.create"
+    FOG_NAMESPACE_MANAGE = "fog.namespace.manage"
+    FOG_QUOTA_READ = "fog.quota.read"
+    FOG_QUOTA_MANAGE = "fog.quota.manage"
+    FOG_EGRESS_READ = "fog.egress.read"
+    FOG_EGRESS_MANAGE = "fog.egress.manage"
+    FOG_NODE_REGISTER = "fog.node.register"
+    FOG_NODE_MONITOR = "fog.node.monitor"
+    FOG_ADMIN = "fog.admin"
+
 
 # Role-Permission Mapping
 ROLE_PERMISSIONS: dict[Role, set[Permission]] = {
@@ -102,6 +117,20 @@ ROLE_PERMISSIONS: dict[Role, set[Permission]] = {
         Permission.SYSTEM_BACKUP,
         Permission.SYSTEM_RESTORE,
         Permission.TENANT_MANAGE,
+        # Fog admin permissions
+        Permission.FOG_JOB_SUBMIT,
+        Permission.FOG_JOB_READ,
+        Permission.FOG_JOB_CANCEL,
+        Permission.FOG_JOB_LOGS,
+        Permission.FOG_NAMESPACE_CREATE,
+        Permission.FOG_NAMESPACE_MANAGE,
+        Permission.FOG_QUOTA_READ,
+        Permission.FOG_QUOTA_MANAGE,
+        Permission.FOG_EGRESS_READ,
+        Permission.FOG_EGRESS_MANAGE,
+        Permission.FOG_NODE_REGISTER,
+        Permission.FOG_NODE_MONITOR,
+        Permission.FOG_ADMIN,
     },
     Role.DEVELOPER: {
         Permission.AGENT_CREATE,
@@ -118,6 +147,16 @@ ROLE_PERMISSIONS: dict[Role, set[Permission]] = {
         Permission.MODEL_DEPLOY,
         Permission.MODEL_INFERENCE,
         Permission.SYSTEM_MONITOR,
+        # Fog developer permissions
+        Permission.FOG_JOB_SUBMIT,
+        Permission.FOG_JOB_READ,
+        Permission.FOG_JOB_CANCEL,
+        Permission.FOG_JOB_LOGS,
+        Permission.FOG_NAMESPACE_CREATE,
+        Permission.FOG_QUOTA_READ,
+        Permission.FOG_EGRESS_READ,
+        Permission.FOG_NODE_REGISTER,
+        Permission.FOG_NODE_MONITOR,
     },
     Role.DATA_SCIENTIST: {
         Permission.AGENT_READ,
@@ -128,6 +167,12 @@ ROLE_PERMISSIONS: dict[Role, set[Permission]] = {
         Permission.MODEL_TRAIN,
         Permission.MODEL_INFERENCE,
         Permission.SYSTEM_MONITOR,
+        # Fog data scientist permissions
+        Permission.FOG_JOB_SUBMIT,
+        Permission.FOG_JOB_READ,
+        Permission.FOG_JOB_LOGS,
+        Permission.FOG_QUOTA_READ,
+        Permission.FOG_NODE_MONITOR,
     },
     Role.OPERATOR: {
         Permission.AGENT_READ,
@@ -135,6 +180,11 @@ ROLE_PERMISSIONS: dict[Role, set[Permission]] = {
         Permission.P2P_MONITOR,
         Permission.SYSTEM_MONITOR,
         Permission.SYSTEM_BACKUP,
+        # Fog operator permissions
+        Permission.FOG_JOB_READ,
+        Permission.FOG_QUOTA_READ,
+        Permission.FOG_EGRESS_READ,
+        Permission.FOG_NODE_MONITOR,
     },
     Role.USER: {
         Permission.AGENT_READ,
@@ -143,10 +193,18 @@ ROLE_PERMISSIONS: dict[Role, set[Permission]] = {
         Permission.RAG_QUERY,
         Permission.P2P_JOIN,
         Permission.MODEL_INFERENCE,
+        # Fog user permissions
+        Permission.FOG_JOB_SUBMIT,
+        Permission.FOG_JOB_READ,
+        Permission.FOG_JOB_LOGS,
+        Permission.FOG_QUOTA_READ,
     },
     Role.GUEST: {
         Permission.AGENT_READ,
         Permission.RAG_READ,
+        # Fog guest permissions (read-only)
+        Permission.FOG_JOB_READ,
+        Permission.FOG_QUOTA_READ,
     },
 }
 

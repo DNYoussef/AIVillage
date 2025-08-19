@@ -1268,6 +1268,418 @@ class PIIPHIManager:
 
     # Query methods
 
+    async def scan_job_inputs_for_compliance(
+        self, job_id: str, job_inputs: dict[str, Any], namespace: str = "default", user_id: str | None = None
+    ) -> dict[str, Any]:
+        """
+        Scan fog computing job inputs for PII/PHI violations
+
+        Args:
+            job_id: Unique job identifier
+            job_inputs: Job input data including payload, env vars, args
+            namespace: Job namespace
+            user_id: User submitting the job
+
+        Returns:
+            dict: Scan results with violations and recommendations
+        """
+
+        scan_result = {
+            "job_id": job_id,
+            "namespace": namespace,
+            "scan_timestamp": datetime.utcnow().isoformat(),
+            "violations": [],
+            "compliance_issues": [],
+            "recommendations": [],
+            "risk_level": "LOW",
+            "action_required": False,
+            "audit_trail": [],
+        }
+
+        try:
+            # Log audit event for scan
+            await self._log_audit_event(
+                "job_input_scan_started",
+                job_id=job_id,
+                details={"namespace": namespace, "user_id": user_id, "input_keys": list(job_inputs.keys())},
+            )
+
+            # Scan different input types
+            violations_found = []
+
+            # 1. Scan job payload/code
+            if "payload" in job_inputs:
+                payload_violations = await self._scan_job_payload(job_inputs["payload"], job_id)
+                violations_found.extend(payload_violations)
+
+            # 2. Scan environment variables
+            if "env" in job_inputs:
+                env_violations = await self._scan_environment_variables(job_inputs["env"], job_id)
+                violations_found.extend(env_violations)
+
+            # 3. Scan command line arguments
+            if "args" in job_inputs:
+                args_violations = await self._scan_command_arguments(job_inputs["args"], job_id)
+                violations_found.extend(args_violations)
+
+            # 4. Scan input data files
+            if "input_data" in job_inputs:
+                data_violations = await self._scan_input_data(job_inputs["input_data"], job_id)
+                violations_found.extend(data_violations)
+
+            # 5. Scan metadata and labels
+            if "metadata" in job_inputs:
+                metadata_violations = await self._scan_metadata(job_inputs["metadata"], job_id)
+                violations_found.extend(metadata_violations)
+
+            # Process all violations
+            scan_result["violations"] = violations_found
+
+            if violations_found:
+                scan_result["action_required"] = True
+
+                # Categorize violations by severity
+                high_severity = [v for v in violations_found if v["severity"] == "HIGH"]
+                medium_severity = [v for v in violations_found if v["severity"] == "MEDIUM"]
+
+                if high_severity:
+                    scan_result["risk_level"] = "HIGH"
+                    scan_result["compliance_issues"].extend(
+                        [
+                            f"Found {len(high_severity)} high-severity PII/PHI violations that must be resolved",
+                            "Job execution should be blocked until violations are addressed",
+                        ]
+                    )
+                elif medium_severity:
+                    scan_result["risk_level"] = "MEDIUM"
+                    scan_result["compliance_issues"].extend(
+                        [
+                            f"Found {len(medium_severity)} medium-severity privacy violations",
+                            "Review and sanitize input data before proceeding",
+                        ]
+                    )
+                else:
+                    scan_result["risk_level"] = "LOW"
+
+                # Generate recommendations
+                scan_result["recommendations"] = await self._generate_remediation_recommendations(violations_found)
+
+            # Log completion
+            await self._log_audit_event(
+                "job_input_scan_completed",
+                job_id=job_id,
+                details={
+                    "violations_count": len(violations_found),
+                    "risk_level": scan_result["risk_level"],
+                    "action_required": scan_result["action_required"],
+                },
+            )
+
+            logger.info(
+                f"Job input scan for {job_id}: {len(violations_found)} violations, risk: {scan_result['risk_level']}"
+            )
+
+        except Exception as e:
+            error_msg = f"Job input scan failed for {job_id}: {e}"
+            scan_result["violations"].append(
+                {"type": "SCAN_ERROR", "severity": "HIGH", "message": error_msg, "location": "scan_engine"}
+            )
+
+            await self._log_audit_event("job_input_scan_failed", job_id=job_id, details={"error": str(e)})
+
+            logger.error(error_msg)
+
+        return scan_result
+
+    async def _scan_job_payload(self, payload: bytes | str, job_id: str) -> list[dict[str, Any]]:
+        """Scan job payload for PII/PHI"""
+        violations = []
+
+        try:
+            # Convert bytes to string for analysis
+            if isinstance(payload, bytes):
+                try:
+                    text_content = payload.decode("utf-8")
+                except UnicodeDecodeError:
+                    # Binary content - limited scanning
+                    text_content = str(payload[:1000])  # Sample first 1KB
+            else:
+                text_content = str(payload)
+
+            # Detect PII/PHI in content
+            detections = self.detection_engine.detect_in_text(text_content)
+
+            for rule, matches in detections:
+                for match in matches:
+                    violation = {
+                        "type": "PII_IN_PAYLOAD",
+                        "rule_id": rule.rule_id,
+                        "classification": rule.classification.value,
+                        "severity": self._get_violation_severity(rule.classification),
+                        "message": f"Found {rule.name} in job payload",
+                        "location": "job_payload",
+                        "match": match[:50] + "..." if len(match) > 50 else match,
+                        "regulation": rule.regulation.value if rule.regulation else None,
+                        "confidence": 0.9,  # High confidence for content matches
+                    }
+                    violations.append(violation)
+
+        except Exception as e:
+            logger.warning(f"Error scanning job payload for {job_id}: {e}")
+
+        return violations
+
+    async def _scan_environment_variables(self, env_vars: dict[str, str], job_id: str) -> list[dict[str, Any]]:
+        """Scan environment variables for sensitive data"""
+        violations = []
+
+        for key, value in env_vars.items():
+            # Check variable name for sensitive indicators
+            key_detections = self.detection_engine.detect_in_field_name(key.lower())
+            if key_detections:
+                for rule in key_detections:
+                    violation = {
+                        "type": "SENSITIVE_ENV_VAR_NAME",
+                        "rule_id": rule.rule_id,
+                        "classification": rule.classification.value,
+                        "severity": self._get_violation_severity(rule.classification),
+                        "message": f"Environment variable name '{key}' suggests sensitive data",
+                        "location": f"env.{key}",
+                        "regulation": rule.regulation.value if rule.regulation else None,
+                        "confidence": 0.8,
+                    }
+                    violations.append(violation)
+
+            # Check variable value for PII/PHI
+            if isinstance(value, str):
+                value_detections = self.detection_engine.detect_in_text(value)
+                for rule, matches in value_detections:
+                    for match in matches:
+                        violation = {
+                            "type": "PII_IN_ENV_VAR",
+                            "rule_id": rule.rule_id,
+                            "classification": rule.classification.value,
+                            "severity": "HIGH",  # Environment variables are high risk
+                            "message": f"Found {rule.name} in environment variable '{key}'",
+                            "location": f"env.{key}",
+                            "match": match[:20] + "..." if len(match) > 20 else match,
+                            "regulation": rule.regulation.value if rule.regulation else None,
+                            "confidence": 0.95,
+                        }
+                        violations.append(violation)
+
+        return violations
+
+    async def _scan_command_arguments(self, args: list[str], job_id: str) -> list[dict[str, Any]]:
+        """Scan command line arguments for sensitive data"""
+        violations = []
+
+        for i, arg in enumerate(args):
+            if isinstance(arg, str):
+                # Check for common sensitive argument patterns
+                if any(sensitive in arg.lower() for sensitive in ["password", "token", "key", "secret"]):
+                    violation = {
+                        "type": "SENSITIVE_COMMAND_ARG",
+                        "classification": "sensitive",
+                        "severity": "MEDIUM",
+                        "message": f"Command argument {i} appears to contain sensitive data",
+                        "location": f"args[{i}]",
+                        "match": arg[:30] + "..." if len(arg) > 30 else arg,
+                        "confidence": 0.7,
+                    }
+                    violations.append(violation)
+
+                # Check for PII/PHI patterns
+                detections = self.detection_engine.detect_in_text(arg)
+                for rule, matches in detections:
+                    for match in matches:
+                        violation = {
+                            "type": "PII_IN_COMMAND_ARG",
+                            "rule_id": rule.rule_id,
+                            "classification": rule.classification.value,
+                            "severity": self._get_violation_severity(rule.classification),
+                            "message": f"Found {rule.name} in command argument {i}",
+                            "location": f"args[{i}]",
+                            "match": match[:30] + "..." if len(match) > 30 else match,
+                            "regulation": rule.regulation.value if rule.regulation else None,
+                            "confidence": 0.9,
+                        }
+                        violations.append(violation)
+
+        return violations
+
+    async def _scan_input_data(self, input_data: Any, job_id: str) -> list[dict[str, Any]]:
+        """Scan input data for PII/PHI"""
+        violations = []
+
+        try:
+            # Convert input data to string for analysis
+            if isinstance(input_data, dict | list):
+                text_content = json.dumps(input_data, default=str)
+            elif isinstance(input_data, bytes):
+                try:
+                    text_content = input_data.decode("utf-8")
+                except UnicodeDecodeError:
+                    text_content = str(input_data[:1000])
+            else:
+                text_content = str(input_data)
+
+            # Detect PII/PHI patterns
+            detections = self.detection_engine.detect_in_text(text_content)
+
+            for rule, matches in detections:
+                for match in matches:
+                    violation = {
+                        "type": "PII_IN_INPUT_DATA",
+                        "rule_id": rule.rule_id,
+                        "classification": rule.classification.value,
+                        "severity": self._get_violation_severity(rule.classification),
+                        "message": f"Found {rule.name} in input data",
+                        "location": "input_data",
+                        "match": match[:50] + "..." if len(match) > 50 else match,
+                        "regulation": rule.regulation.value if rule.regulation else None,
+                        "confidence": 0.9,
+                    }
+                    violations.append(violation)
+
+        except Exception as e:
+            logger.warning(f"Error scanning input data for {job_id}: {e}")
+
+        return violations
+
+    async def _scan_metadata(self, metadata: dict[str, Any], job_id: str) -> list[dict[str, Any]]:
+        """Scan job metadata and labels for sensitive information"""
+        violations = []
+
+        for key, value in metadata.items():
+            # Check metadata key names
+            key_detections = self.detection_engine.detect_in_field_name(key.lower())
+            if key_detections:
+                for rule in key_detections:
+                    violation = {
+                        "type": "SENSITIVE_METADATA_KEY",
+                        "rule_id": rule.rule_id,
+                        "classification": rule.classification.value,
+                        "severity": "MEDIUM",
+                        "message": f"Metadata key '{key}' suggests sensitive data",
+                        "location": f"metadata.{key}",
+                        "regulation": rule.regulation.value if rule.regulation else None,
+                        "confidence": 0.7,
+                    }
+                    violations.append(violation)
+
+            # Check metadata values
+            if isinstance(value, str):
+                value_detections = self.detection_engine.detect_in_text(value)
+                for rule, matches in value_detections:
+                    for match in matches:
+                        violation = {
+                            "type": "PII_IN_METADATA",
+                            "rule_id": rule.rule_id,
+                            "classification": rule.classification.value,
+                            "severity": self._get_violation_severity(rule.classification),
+                            "message": f"Found {rule.name} in metadata '{key}'",
+                            "location": f"metadata.{key}",
+                            "match": match[:30] + "..." if len(match) > 30 else match,
+                            "regulation": rule.regulation.value if rule.regulation else None,
+                            "confidence": 0.9,
+                        }
+                        violations.append(violation)
+
+        return violations
+
+    def _get_violation_severity(self, classification: DataClassification) -> str:
+        """Get violation severity based on data classification"""
+        severity_map = {
+            DataClassification.PUBLIC: "LOW",
+            DataClassification.INTERNAL: "LOW",
+            DataClassification.PII: "HIGH",
+            DataClassification.PHI: "HIGH",
+            DataClassification.FINANCIAL: "HIGH",
+            DataClassification.BIOMETRIC: "HIGH",
+            DataClassification.SENSITIVE: "MEDIUM",
+            DataClassification.CONFIDENTIAL: "HIGH",
+        }
+        return severity_map.get(classification, "MEDIUM")
+
+    async def _generate_remediation_recommendations(self, violations: list[dict[str, Any]]) -> list[str]:
+        """Generate recommendations for fixing violations"""
+        recommendations = []
+
+        violation_types = set(v["type"] for v in violations)
+
+        if "PII_IN_PAYLOAD" in violation_types:
+            recommendations.append("Remove or encrypt PII data in job payload before submission")
+            recommendations.append("Consider using data anonymization techniques for training data")
+
+        if "PII_IN_ENV_VAR" in violation_types:
+            recommendations.append("Use secure secret management instead of environment variables for sensitive data")
+            recommendations.append("Move credentials to a secure vault system")
+
+        if "SENSITIVE_ENV_VAR_NAME" in violation_types:
+            recommendations.append("Rename environment variables to avoid indicating sensitive data types")
+
+        if "PII_IN_COMMAND_ARG" in violation_types:
+            recommendations.append("Pass sensitive arguments through secure input channels instead of command line")
+
+        if "PII_IN_INPUT_DATA" in violation_types:
+            recommendations.append("Sanitize input data to remove PII before processing")
+            recommendations.append("Implement data masking or tokenization for sensitive fields")
+
+        if "PII_IN_METADATA" in violation_types:
+            recommendations.append("Review metadata and labels to ensure no sensitive information is exposed")
+
+        # Add regulatory recommendations
+        regulations = set(v.get("regulation") for v in violations if v.get("regulation"))
+        if "gdpr" in regulations:
+            recommendations.append("Ensure GDPR compliance: obtain consent for processing personal data")
+        if "hipaa" in regulations:
+            recommendations.append("Ensure HIPAA compliance: implement appropriate safeguards for PHI")
+
+        return recommendations
+
+    async def validate_job_compliance(
+        self,
+        job_id: str,
+        job_inputs: dict[str, Any],
+        namespace: str = "default",
+        user_id: str | None = None,
+        strict_mode: bool = True,
+    ) -> dict[str, Any]:
+        """
+        Validate job compliance and determine if job should be allowed
+
+        Returns:
+            dict: {"allowed": bool, "violations": list, "reason": str}
+        """
+
+        scan_result = await self.scan_job_inputs_for_compliance(job_id, job_inputs, namespace, user_id)
+
+        violations = scan_result["violations"]
+        high_severity = [v for v in violations if v["severity"] == "HIGH"]
+
+        if strict_mode and high_severity:
+            return {
+                "allowed": False,
+                "violations": violations,
+                "reason": f"Job blocked due to {len(high_severity)} high-severity PII/PHI violations",
+                "scan_result": scan_result,
+            }
+        elif violations:
+            return {
+                "allowed": True,
+                "violations": violations,
+                "reason": f"Job allowed with {len(violations)} compliance warnings",
+                "scan_result": scan_result,
+            }
+        else:
+            return {
+                "allowed": True,
+                "violations": [],
+                "reason": "No compliance violations detected",
+                "scan_result": scan_result,
+            }
+
     async def get_compliance_summary(self) -> dict[str, Any]:
         """Get comprehensive compliance summary."""
         summary = {

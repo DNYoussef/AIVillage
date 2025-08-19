@@ -684,12 +684,12 @@ async def create_cost_tracker_with_infrastructure() -> DistributedCostTracker:
     if INFRASTRUCTURE_AVAILABLE:
         try:
             from ...agent_forge.core.unified_pipeline import UnifiedConfig
-            from ...agent_forge.integration.fog_compute_integration import FogComputeConfig, FogComputeOrchestrator
+            from ...agent_forge.integration.fog_burst import FogBurstConfig, FogBurstOrchestrator
 
             # Create fog compute orchestrator
-            base_config = UnifiedConfig()
-            fog_config = FogComputeConfig()
-            fog_orchestrator = FogComputeOrchestrator(base_config, fog_config)
+            UnifiedConfig()
+            fog_config = FogBurstConfig()
+            fog_orchestrator = FogBurstOrchestrator(fog_config)
 
         except Exception as e:
             logger.warning(f"Could not initialize fog orchestrator: {e}")

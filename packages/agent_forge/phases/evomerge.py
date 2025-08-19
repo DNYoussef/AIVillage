@@ -29,6 +29,46 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass
+class PhaseConfig:
+    """Base configuration class for Agent Forge phases."""
+
+    pass
+
+
+@dataclass
+class EvoMergeConfig(PhaseConfig):
+    """Configuration for EvoMerge phase."""
+
+    # Model paths
+    base_models: list[str] = field(
+        default_factory=lambda: [
+            "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B",
+            "nvidia/Nemotron-Research-Reasoning-Qwen-1.5B",
+            "Qwen/Qwen2-1.5B-Instruct",
+        ]
+    )
+    output_dir: str = "./evomerge_output"
+    device: str = "cuda" if torch.cuda.is_available() else "cpu"
+
+    # Evolution parameters
+    generations: int = 50
+    population_size: int = 8
+    mutation_rate: float = 0.1
+    crossover_rate: float = 0.7
+
+    # Merge techniques
+    merge_techniques: list[str] = field(
+        default_factory=lambda: ["linear", "slerp", "ties", "dare", "frankenmerge", "dfs"]
+    )
+
+    # Evaluation configuration
+    evaluation_domains: list[str] = field(default_factory=lambda: ["code", "math", "multilingual", "structured_data"])
+    fitness_weights: dict[str, float] = field(
+        default_factory=lambda: {"code": 0.25, "math": 0.25, "multilingual": 0.25, "structured_data": 0.25}
+    )
+
+
+@dataclass
 class MergeCandidate:
     """Represents a merged model candidate."""
 

@@ -847,7 +847,7 @@ class ADASConfig(BaseModel):
     # Vector composition parameters
     composition_scale: float = Field(default=0.1, ge=0.01, le=1.0)
     composition_vector_size: int = Field(default=16, ge=8, le=64)
-    composition_distribution: str = Field(default="gaussian", regex="^(gaussian|uniform|beta)$")
+    composition_distribution: str = Field(default="gaussian", pattern="^(gaussian|uniform|beta)$")
 
     # Evaluation parameters
     evaluation_timeout: int = Field(default=60, ge=10, le=300)

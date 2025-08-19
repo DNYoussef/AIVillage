@@ -5,51 +5,44 @@ Provides integration with GitHub Actions workflows to automatically collect
 operational artifacts including coverage, security scans, SBOM, performance
 metrics, and quality reports from CI/CD pipeline runs.
 
-Creates GitHub Actions workflow templates and provides utilities for 
+Creates GitHub Actions workflow templates and provides utilities for
 artifact upload, download, and integration with the artifact collector.
 """
 
 import asyncio
-import json
 import logging
 import os
 import tempfile
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
 from dataclasses import dataclass
+from pathlib import Path
 
-from .artifact_collector import (
-    ArtifactType, 
-    OperationalArtifactCollector, 
-    CollectionConfig,
-    ArtifactMetadata
-)
+from .artifact_collector import ArtifactMetadata, ArtifactType, CollectionConfig, OperationalArtifactCollector
 
 logger = logging.getLogger(__name__)
 
 
-@dataclass 
+@dataclass
 class GitHubWorkflowConfig:
     """Configuration for GitHub Actions integration."""
-    
+
     # GitHub settings
-    github_token: Optional[str] = None
-    repository: Optional[str] = None
+    github_token: str | None = None
+    repository: str | None = None
     workflow_name: str = "aivillage-artifacts"
-    
+
     # Artifact settings
     artifact_retention_days: int = 30
     max_artifact_size_mb: int = 100
-    
+
     # Collection settings
     collect_on_push: bool = True
     collect_on_pr: bool = True
     collect_on_schedule: bool = False
     schedule_cron: str = "0 2 * * *"  # Daily at 2 AM
-    
+
     # Notification settings
     notify_on_failure: bool = True
-    slack_webhook: Optional[str] = None
+    slack_webhook: str | None = None
 
 
 class GitHubArtifactIntegration:
@@ -59,28 +52,28 @@ class GitHubArtifactIntegration:
         """Initialize GitHub integration."""
         self.config = config
         self.github_token = config.github_token or os.getenv("GITHUB_TOKEN")
-        
+
         if not self.github_token:
             logger.warning("No GitHub token provided - GitHub API features disabled")
 
     def generate_workflow_yaml(self) -> str:
         """Generate GitHub Actions workflow YAML for artifact collection."""
-        
+
         workflow_yaml = f"""name: {self.config.workflow_name}
 
 on:"""
-        
+
         # Add triggers
         if self.config.collect_on_push:
             workflow_yaml += """
   push:
     branches: [ main, develop ]"""
-        
+
         if self.config.collect_on_pr:
             workflow_yaml += """
   pull_request:
     branches: [ main, develop ]"""
-        
+
         if self.config.collect_on_schedule:
             workflow_yaml += f"""
   schedule:
@@ -93,7 +86,7 @@ jobs:
   collect-artifacts:
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -242,7 +235,7 @@ with open('artifacts/compliance/compliance-report.json', 'w') as f:
         path: artifacts/coverage/
         retention-days: ${{ github.event_name == 'push' && 30 || 7 }}
 
-    - name: Upload security scan results  
+    - name: Upload security scan results
       uses: actions/upload-artifact@v4
       with:
         name: security-scan
@@ -302,16 +295,16 @@ async def main():
     config = CollectionConfig(
         enabled_types=[
             ArtifactType.COVERAGE,
-            ArtifactType.SECURITY, 
+            ArtifactType.SECURITY,
             ArtifactType.SBOM,
             ArtifactType.PERFORMANCE,
             ArtifactType.QUALITY,
             ArtifactType.COMPLIANCE,
         ]
     )
-    
+
     collector = OperationalArtifactCollector(config)
-    
+
     artifact_sources = {
         ArtifactType.COVERAGE: 'artifacts/coverage/coverage.json',
         ArtifactType.SECURITY: 'artifacts/security/bandit-report.json',
@@ -320,20 +313,20 @@ async def main():
         ArtifactType.QUALITY: 'artifacts/quality/quality-summary.json',
         ArtifactType.COMPLIANCE: 'artifacts/compliance/compliance-report.json',
     }
-    
+
     pipeline_id = f'github-{os.getenv(\"GITHUB_RUN_ID\", \"unknown\")}'
     commit_sha = os.getenv('GITHUB_SHA', 'unknown')
     branch = os.getenv('GITHUB_REF_NAME', 'unknown')
-    
+
     artifacts = await collector.collect_ci_artifacts(
         pipeline_id=pipeline_id,
         commit_sha=commit_sha,
         branch=branch,
         artifact_sources=artifact_sources
     )
-    
+
     print(f'Collected {len(artifacts)} operational artifacts')
-    
+
     # Generate operational report
     report = await collector.generate_operational_report(days_back=7)
     print(f'Generated operational report with {len(report[\"recommendations\"])} recommendations')
@@ -352,12 +345,12 @@ asyncio.run(main())
   cleanup-old-artifacts:
     runs-on: ubuntu-latest
     if: github.event_name == 'schedule'
-    
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Set up Python  
+    - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.11'
@@ -384,70 +377,66 @@ asyncio.run(main())
 
         return workflow_yaml
 
-    async def download_workflow_artifacts(
-        self, workflow_run_id: str, download_dir: Path
-    ) -> Dict[str, Path]:
+    async def download_workflow_artifacts(self, workflow_run_id: str, download_dir: Path) -> dict[str, Path]:
         """Download artifacts from GitHub Actions workflow run."""
-        
+
         if not self.github_token:
             raise ValueError("GitHub token required for artifact download")
-        
+
         # This would use GitHub API to download artifacts
         # For now, return mock paths
         downloaded_artifacts = {}
-        
+
         artifact_names = [
             "coverage-report",
-            "security-scan", 
+            "security-scan",
             "sbom-report",
             "performance-benchmarks",
             "quality-report",
             "compliance-report",
         ]
-        
+
         for artifact_name in artifact_names:
             artifact_path = download_dir / f"{artifact_name}.zip"
             downloaded_artifacts[artifact_name] = artifact_path
-            
+
         logger.info(f"Downloaded {len(downloaded_artifacts)} artifacts from workflow {workflow_run_id}")
         return downloaded_artifacts
 
     def create_workflow_file(self, output_path: Path):
         """Create GitHub Actions workflow file."""
         workflow_yaml = self.generate_workflow_yaml()
-        
+
         # Create .github/workflows directory
         workflow_dir = output_path / ".github" / "workflows"
         workflow_dir.mkdir(parents=True, exist_ok=True)
-        
+
         # Write workflow file
         workflow_file = workflow_dir / f"{self.config.workflow_name}.yml"
         workflow_file.write_text(workflow_yaml)
-        
+
         logger.info(f"Created GitHub Actions workflow: {workflow_file}")
         return workflow_file
 
     async def integrate_with_collector(
-        self, 
+        self,
         collector: OperationalArtifactCollector,
         workflow_run_id: str,
         commit_sha: str,
         branch: str,
-    ) -> List[ArtifactMetadata]:
+    ) -> list[ArtifactMetadata]:
         """Integrate GitHub workflow artifacts with collector."""
-        
+
         # Download artifacts to temporary directory
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_path = Path(temp_dir)
-            
-            # Download workflow artifacts  
-            downloaded_artifacts = await self.download_workflow_artifacts(
-                workflow_run_id, temp_path
-            )
-            
+
+            # Download workflow artifacts
+            downloaded_artifacts = await self.download_workflow_artifacts(workflow_run_id, temp_path)
+
             # Map downloaded artifacts to collector types
             artifact_sources = {}
-            
+
             for artifact_name, artifact_path in downloaded_artifacts.items():
                 if "coverage" in artifact_name:
                     artifact_sources[ArtifactType.COVERAGE] = str(artifact_path)
@@ -461,7 +450,7 @@ asyncio.run(main())
                     artifact_sources[ArtifactType.QUALITY] = str(artifact_path)
                 elif "compliance" in artifact_name:
                     artifact_sources[ArtifactType.COMPLIANCE] = str(artifact_path)
-            
+
             # Collect artifacts using collector
             return await collector.collect_ci_artifacts(
                 pipeline_id=f"github-{workflow_run_id}",
@@ -488,52 +477,49 @@ def create_github_integration_config() -> GitHubWorkflowConfig:
 # CLI integration for manual artifact collection
 async def collect_local_artifacts(
     collector: OperationalArtifactCollector,
-    pipeline_id: Optional[str] = None,
-    commit_sha: Optional[str] = None,
-) -> List[ArtifactMetadata]:
+    pipeline_id: str | None = None,
+    commit_sha: str | None = None,
+) -> list[ArtifactMetadata]:
     """Collect artifacts from local development environment."""
-    
+
     # Use git to get current commit info if not provided
     if not commit_sha:
         try:
             import subprocess
-            result = subprocess.run(
-                ["git", "rev-parse", "HEAD"], 
-                capture_output=True, 
-                text=True,
-                check=True
-            )
+
+            result = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True, check=True)
             commit_sha = result.stdout.strip()
         except Exception:
             commit_sha = "local-dev"
-    
+
     if not pipeline_id:
         import time
+
         pipeline_id = f"local-{int(time.time())}"
-    
+
     # Look for local artifact files
     local_artifacts = {}
-    
+
     # Coverage reports
     for coverage_file in ["coverage.json", "coverage.xml", ".coverage"]:
         if Path(coverage_file).exists():
             local_artifacts[ArtifactType.COVERAGE] = coverage_file
             break
-    
+
     # Security scan results
     for security_file in ["bandit-report.json", "safety-report.json"]:
         if Path(security_file).exists():
             local_artifacts[ArtifactType.SECURITY] = security_file
             break
-    
+
     # Performance benchmarks
     if Path("benchmark-results.json").exists():
         local_artifacts[ArtifactType.PERFORMANCE] = "benchmark-results.json"
-    
+
     # Quality reports
     if Path("quality-report.json").exists():
         local_artifacts[ArtifactType.QUALITY] = "quality-report.json"
-    
+
     if local_artifacts:
         return await collector.collect_ci_artifacts(
             pipeline_id=pipeline_id,
@@ -552,16 +538,16 @@ if __name__ == "__main__":
         # Create GitHub integration
         config = create_github_integration_config()
         integration = GitHubArtifactIntegration(config)
-        
+
         # Generate workflow file
         workflow_file = integration.create_workflow_file(Path.cwd())
         print(f"Created workflow file: {workflow_file}")
-        
+
         # Create collector and collect local artifacts
         collector_config = CollectionConfig()
         collector = OperationalArtifactCollector(collector_config)
-        
+
         artifacts = await collect_local_artifacts(collector)
         print(f"Collected {len(artifacts)} local artifacts")
-    
+
     asyncio.run(main())

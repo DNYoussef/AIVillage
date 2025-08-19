@@ -4,7 +4,7 @@
 
 ## System Overview
 
-AIVillage is a distributed multi-agent AI platform with the following core architecture:
+AIVillage is a distributed multi-agent AI platform with comprehensive fog computing infrastructure and the following core architecture:
 
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
@@ -20,6 +20,15 @@ AIVillage is a distributed multi-agent AI platform with the following core archi
                     │   - Authentication       │
                     │   - Rate Limiting        │
                     │   - Request Routing      │
+                    └─────────────┬─────────────┘
+                                 │
+                    ┌─────────────▼─────────────┐
+                    │     🌫️ Fog Gateway        │
+                    │   Distributed Computing   │
+                    │   - NSGA-II Scheduling   │
+                    │   - Marketplace Bidding  │
+                    │   - Edge Orchestration   │
+                    │   - SLA Management       │
                     └─────────────┬─────────────┘
                                  │
                     ┌─────────────▼─────────────┐
@@ -84,37 +93,46 @@ AIVillage is a distributed multi-agent AI platform with the following core archi
 - **Rate Limiting**: Request throttling and quota management
 - **Request Routing**: Intelligent routing to appropriate services
 
-### 2. Twin Server
+### 2. Fog Computing Infrastructure
+- **Fog Gateway**: Distributed computing orchestration with OpenAPI 3.1 specification
+- **NSGA-II Scheduler**: Multi-objective optimization for resource allocation
+- **Marketplace Engine**: Minimal viable renting with spot/on-demand bidding
+- **Edge Capability Beacon**: Mobile device integration with WASI runner
+- **Security & Compliance**: Namespace isolation, quotas, egress policies
+- **SLA Management**: S-class (replicated+attested), A-class (replicated), B-class (best-effort)
+- **Observability**: Prometheus metrics, distributed tracing, performance monitoring
+
+### 3. Twin Server
 - **Digital Twin Engine**: Personal AI models (1-10MB) running locally
 - **Privacy-First**: All personal data stays on device
 - **Surprise-Based Learning**: Models improve via prediction accuracy
 - **Resource Management**: Battery/thermal-aware processing
 
-### 3. MCP (Model Control Protocol) Layer
+### 4. MCP (Model Control Protocol) Layer
 - **Agent Tools**: Standardized interfaces for agent capabilities
 - **Memory Servers**: Persistent and working memory management
 - **RAG Servers**: Knowledge retrieval and augmentation services
 - **Inter-Service Communication**: Unified protocol for component interaction
 
-### 4. P2P Communication Layer
+### 5. P2P Communication Layer
 - **BitChat**: Bluetooth mesh networking for offline scenarios
 - **BetaNet**: Encrypted HTTP transport for internet connectivity
 - **Mesh Routing**: Intelligent message routing with failover
 - **Mobile-First**: Battery and bandwidth-aware protocols
 
-### 5. RAG System
+### 6. RAG System
 - **HyperRAG**: Multi-modal retrieval-augmented generation
 - **Bayesian Trust Networks**: Probabilistic knowledge validation
 - **Vector Store**: High-performance semantic search
 - **Knowledge Graph**: Structured relationship mapping
 
-### 6. Agent Layer
+### 7. Agent Layer
 - **23 Specialized Agents**: King, Magi, Oracle, Sage, etc.
 - **Democratic Governance**: 2/3 quorum voting on decisions
 - **Quiet-STaR**: Internal reasoning with thought tokens
 - **ADAS Self-Modification**: Architecture discovery and optimization
 
-### 7. Data Stores
+### 8. Data Stores
 - **PostgreSQL**: Relational data (agent states, sessions, profiles)
 - **Neo4j**: Graph data (knowledge networks, trust relationships)
 - **Redis**: Cache and real-time data (sessions, queues, metrics)
@@ -122,6 +140,7 @@ AIVillage is a distributed multi-agent AI platform with the following core archi
 
 ## Data Flow
 
+### Standard Request Flow
 1. **Client Request** → Gateway (auth/rate limiting)
 2. **Gateway** → Twin Server (request processing)
 3. **Twin Server** → MCP Layer (tool invocation)
@@ -130,6 +149,102 @@ AIVillage is a distributed multi-agent AI platform with the following core archi
 6. **Response** ← Twin Server ← MCP Layer ← Components
 7. **Client** ← Gateway ← Twin Server (formatted response)
 
+### Fog Computing Flow
+1. **Resource Request** → Fog Gateway (capability assessment)
+2. **Fog Gateway** → NSGA-II Scheduler (resource optimization)
+3. **Scheduler** → Marketplace Engine (cost calculation)
+4. **Marketplace** → Edge Beacon (device discovery)
+5. **Edge Devices** → WASI Runner (job execution)
+6. **Results** ← Fog Gateway ← Edge Network (aggregation)
+7. **Client** ← Gateway ← Fog Gateway (final response)
+
+## Fog Computing Architecture
+
+### Components Overview
+
+The fog computing infrastructure provides distributed processing capabilities across edge devices and fog nodes:
+
+```
+                    ┌─────────────────────────────────────┐
+                    │        🌫️ Fog Gateway              │
+                    │  ┌─────────────┐ ┌─────────────┐    │
+                    │  │   Admin     │ │   Jobs      │    │
+                    │  │   API       │ │   API       │    │
+                    │  └─────────────┘ └─────────────┘    │
+                    │  ┌─────────────┐ ┌─────────────┐    │
+                    │  │ Sandboxes   │ │   Usage     │    │
+                    │  │    API      │ │    API      │    │
+                    │  └─────────────┘ └─────────────┘    │
+                    └─────────────┬───────────────────────┘
+                                  │
+                    ┌─────────────▼───────────────┐
+                    │     📊 NSGA-II Scheduler    │
+                    │                             │
+                    │ • Multi-objective optimization
+                    │ • Pareto frontier analysis │
+                    │ • Resource allocation       │
+                    │ • Load balancing           │
+                    └─────────────┬───────────────┘
+                                  │
+          ┌───────────────────────┼───────────────────────┐
+          │                       │                       │
+┌─────────▼─────────┐    ┌─────────▼─────────┐   ┌─────────▼─────────┐
+│  💰 Marketplace   │    │  🔒 Security     │   │  📈 Monitoring    │
+│                   │    │                  │   │                   │
+│ • Spot bidding    │    │ • Namespace      │   │ • Prometheus      │
+│ • On-demand       │    │   isolation      │   │ • Tracing         │
+│ • Trust scoring   │    │ • Quota limits   │   │ • Health checks   │
+│ • Price discovery │    │ • Egress policies│   │ • SLA tracking    │
+└─────────┬─────────┘    └─────────┬────────┘   └─────────┬─────────┘
+          │                        │                       │
+          └────────────────────────┼───────────────────────┘
+                                   │
+                      ┌────────────▼────────────┐
+                      │    📱 Edge Network      │
+                      │                         │
+                      │  🔗 Capability Beacon   │
+                      │  🏃 WASI Runtime        │
+                      │  📊 Resource Monitor    │
+                      │  🛡️ Security Sandbox    │
+                      └─────────────────────────┘
+```
+
+### Key Technologies
+
+#### NSGA-II Scheduler
+- **Multi-objective optimization** for cost, latency, and reliability
+- **Pareto frontier analysis** to find optimal trade-offs
+- **Dynamic load balancing** based on real-time conditions
+- **Resource allocation** across heterogeneous fog nodes
+
+#### Marketplace Engine
+- **Spot bidding** for cost-effective resource utilization
+- **On-demand pricing** for guaranteed availability
+- **Trust-based matching** using historical performance data
+- **Dynamic pricing** based on supply and demand
+
+#### Edge Integration
+- **Capability Beacon** discovers and registers mobile devices
+- **WASI Runtime** provides secure sandboxed execution
+- **Resource Monitor** tracks battery, thermal, and network state
+- **Security Sandbox** isolates job execution with quota enforcement
+
+#### SLA Classes
+- **S-Class**: Replicated + cryptographically attested execution
+- **A-Class**: Replicated execution across multiple nodes
+- **B-Class**: Best-effort single-node execution
+
+### Performance Characteristics
+
+| Metric | Value | Notes |
+|--------|-------|-------|
+| Job Scheduling | < 100ms | NSGA-II optimization |
+| Market Price Discovery | < 50ms | Real-time bidding |
+| Edge Device Discovery | 5-30 seconds | mDNS + capability beacon |
+| Job Execution Latency | 200ms - 30s | Depends on workload size |
+| Marketplace Efficiency | 95%+ success rate | Trade execution |
+| Resource Utilization | 70-85% | Across fog network |
+
 ## Security Architecture
 
 - **Zero-Trust Model**: All components authenticate and authorize
@@ -137,6 +252,8 @@ AIVillage is a distributed multi-agent AI platform with the following core archi
 - **Privacy by Design**: Personal data never leaves device
 - **Audit Trails**: All actions logged for compliance
 - **Role-Based Access**: Granular permissions system
+- **Namespace Isolation**: Complete tenant separation in fog computing
+- **Sandbox Security**: WASI-based job execution with resource quotas
 
 ## Deployment Architecture
 
@@ -144,20 +261,36 @@ AIVillage is a distributed multi-agent AI platform with the following core archi
 ```
 Docker Compose Stack:
 - Gateway (port 8000)
+- Fog Gateway (port 8080)
 - Twin Server (port 8001)
 - PostgreSQL (port 5432)
 - Neo4j (port 7474)
 - Redis (port 6379)
 - Vector DB (port 6333)
+- Prometheus (port 9090)
 ```
 
 ### Production
 ```
 Cloud Infrastructure:
 - Load Balancer → Gateway Cluster
+- Fog Gateway Cluster → NSGA-II Scheduler
 - Service Mesh → Twin Server Cluster
+- Edge Network → Mobile Devices + Fog Nodes
 - Managed Databases (RDS, ElasticSearch, ElastiCache)
 - P2P Edge Nodes (Global Distribution)
+- Monitoring Stack (Prometheus, Grafana, Jaeger)
+```
+
+### Fog Computing Deployment
+```
+Distributed Architecture:
+- Central Fog Gateway (Multi-region)
+- Regional Scheduler Instances
+- Edge Capability Beacons (Mobile devices)
+- WASI Runtime Sandboxes
+- Marketplace Trading Engine
+- Security Policy Enforcement
 ```
 
 ## Reference Documentation

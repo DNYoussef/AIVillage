@@ -33,6 +33,13 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass
+class PhaseConfig:
+    """Base configuration class for Agent Forge phases."""
+
+    pass
+
+
+@dataclass
 class ToolPersonaBakingConfig(PhaseConfig):
     """Configuration for Tool & Persona Baking phase."""
 
@@ -1183,3 +1190,7 @@ async def create_tool_persona_baking_phase(
 
     inputs = {"model_path": model_path}
     return await phase.execute_phase(inputs)
+
+
+# Alias for backward compatibility
+PersonaOptimizationSystem = PersonaOptimizer

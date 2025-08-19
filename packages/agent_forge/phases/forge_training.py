@@ -50,7 +50,14 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass
-class ForgeTrainingConfig:
+class PhaseConfig:
+    """Base configuration class for Agent Forge phases."""
+
+    pass
+
+
+@dataclass
+class ForgeTrainingConfig(PhaseConfig):
     """Configuration for Forge training loop."""
 
     # Model configuration
@@ -412,6 +419,10 @@ class SelfModelHead(nn.Module):
             total_loss += layer_loss * 0.1  # Lower weight
 
         return total_loss
+
+
+# Alias for backward compatibility
+SelfModelingModule = SelfModelHead
 
 
 # ============================================================================

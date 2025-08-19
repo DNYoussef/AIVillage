@@ -46,7 +46,21 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass
-class BitNetCompressionConfig:
+class PhaseConfig:
+    """Base configuration class for Agent Forge phases."""
+
+    pass
+
+
+@dataclass
+class BitNetConfig(PhaseConfig):
+    """Configuration for BitNet compression phase."""
+
+    pass
+
+
+@dataclass
+class BitNetCompressionConfig(PhaseConfig):
     """Configuration for BitNet compression phase."""
 
     # Model configuration
