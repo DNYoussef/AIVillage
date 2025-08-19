@@ -96,11 +96,11 @@ int main() {
 
     if (result == betanet_Success) {
         printf("SBOM generated successfully!\n");
-        printf("SBOM size: %u bytes\n", sbom_json.len);
+        printf("SBOM size: %zu bytes\n", sbom_json.len);
 
         // Show first 200 characters of SBOM
         printf("SBOM preview:\n");
-        for (unsigned int i = 0; i < 200 && i < sbom_json.len; i++) {
+        for (size_t i = 0; i < 200 && i < sbom_json.len; i++) {
             printf("%c", sbom_json.data[i]);
         }
         if (sbom_json.len > 200) {
@@ -121,7 +121,7 @@ int main() {
 
     if (result == betanet_Success) {
         printf("CycloneDX SBOM generated successfully!\n");
-        printf("SBOM size: %u bytes\n", sbom_json.len);
+        printf("SBOM size: %zu bytes\n", sbom_json.len);
         betanet_buffer_free(sbom_json);
     } else {
         printf("Failed to generate CycloneDX SBOM: %s\n", betanet_error_message(result));

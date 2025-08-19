@@ -57,7 +57,7 @@ int main() {
     betanet_Result result = utls_ja3_generate(ja3_gen, client_hello, &ja3_fingerprint);
     if (result == betanet_Success) {
         printf("JA3 fingerprint: ");
-        for (unsigned int i = 0; i < ja3_fingerprint.len; i++) {
+        for (size_t i = 0; i < ja3_fingerprint.len; i++) {
             printf("%c", ja3_fingerprint.data[i]);
         }
         printf("\n");
@@ -81,7 +81,7 @@ int main() {
     result = utls_ja4_generate(ja4_gen, client_hello, 0, &ja4_fingerprint); // 0 = TCP
     if (result == betanet_Success) {
         printf("JA4 fingerprint (TCP): ");
-        for (unsigned int i = 0; i < ja4_fingerprint.len; i++) {
+        for (size_t i = 0; i < ja4_fingerprint.len; i++) {
             printf("%c", ja4_fingerprint.data[i]);
         }
         printf("\n");
@@ -94,7 +94,7 @@ int main() {
     result = utls_ja4_generate(ja4_gen, client_hello, 1, &ja4_fingerprint); // 1 = QUIC
     if (result == betanet_Success) {
         printf("JA4 fingerprint (QUIC): ");
-        for (unsigned int i = 0; i < ja4_fingerprint.len; i++) {
+        for (size_t i = 0; i < ja4_fingerprint.len; i++) {
             printf("%c", ja4_fingerprint.data[i]);
         }
         printf("\n");
@@ -115,7 +115,7 @@ int main() {
         betanet_Buffer generated_client_hello;
         result = utls_template_generate_client_hello(template, "example.com", &generated_client_hello);
         if (result == betanet_Success) {
-            printf("Generated ClientHello: %u bytes\n", generated_client_hello.len);
+            printf("Generated ClientHello: %zu bytes\n", generated_client_hello.len);
             betanet_buffer_free(generated_client_hello);
         } else {
             printf("Failed to generate ClientHello: %s\n", betanet_error_message(result));

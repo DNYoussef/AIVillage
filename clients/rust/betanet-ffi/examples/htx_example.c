@@ -50,7 +50,7 @@ int main() {
         return 1;
     }
 
-    printf("Frame encoded: %u bytes\n", encoded_frame.len);
+    printf("Frame encoded: %zu bytes\n", encoded_frame.len);
 
     // Decode frame back
     printf("\nDecoding frame...\n");
@@ -72,7 +72,7 @@ int main() {
     result = htx_frame_payload(decoded_frame, &decoded_payload);
     if (result == betanet_Success) {
         printf("  Payload: ");
-        for (unsigned int i = 0; i < decoded_payload.len; i++) {
+        for (size_t i = 0; i < decoded_payload.len; i++) {
             printf("%c", decoded_payload.data[i]);
         }
         printf("\n");
