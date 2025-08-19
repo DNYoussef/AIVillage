@@ -35,6 +35,8 @@ use once_cell::sync::Lazy;
 use dashmap::DashMap;
 #[cfg(feature = "quic")]
 use std::time::{Duration, Instant};
+#[cfg(all(feature = "quic", test))]
+use std::sync::atomic::{AtomicUsize, Ordering};
 
 /// QUIC transport with DATAGRAM support
 #[cfg(feature = "quic")]
@@ -120,6 +122,17 @@ impl Default for EchConfig {
 }
 
 #[cfg(feature = "quic")]
+static DNS_RESOLVER: Lazy<TokioAsyncResolver> = Lazy::new(|| {
+    #[cfg(test)]
+    DNS_RESOLVER_INIT_COUNT.fetch_add(1, Ordering::SeqCst);
+    TokioAsyncResolver::tokio_from_system_conf()
+        .expect("failed to create DNS resolver")
+});
+
+#[cfg(all(feature = "quic", test))]
+static DNS_RESOLVER_INIT_COUNT: AtomicUsize = AtomicUsize::new(0);
+
+#[cfg(feature = "quic")]
 static DNS_ECH_CACHE: Lazy<DashMap<String, (Instant, EchConfig)>> = Lazy::new(|| DashMap::new());
 #[cfg(feature = "quic")]
 const DNS_ECH_TTL: Duration = Duration::from_secs(3600);
@@ -201,9 +214,7 @@ impl EchConfig {
         }
 
         let lookup_name = format!("_echconfig.{}", domain);
-        let resolver = TokioAsyncResolver::tokio_from_system_conf()
-            .map_err(|e| HtxError::Config(format!("failed to create DNS resolver: {}", e)))?;
-        let response = resolver
+        let response = DNS_RESOLVER
             .txt_lookup(lookup_name.clone())
             .await
             .map_err(|e| HtxError::Config(format!("ECH TXT lookup failed for {}: {}", lookup_name, e)))?;
@@ -532,6 +543,22 @@ impl HtxConnection for QuicTransport {
         debug!("Closing QUIC connection");
         self.connection.close(0u32.into(), b"closing");
         Ok(())
+    }
+}
+
+#[cfg(all(test, feature = "quic"))]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn resolver_is_reused_between_dns_lookups() {
+        // Ignore the result; we only care about resolver initialization count
+        let _ = EchConfig::from_dns("localhost").await;
+        let first = DNS_RESOLVER_INIT_COUNT.load(Ordering::SeqCst);
+        let _ = EchConfig::from_dns("localhost").await;
+        let second = DNS_RESOLVER_INIT_COUNT.load(Ordering::SeqCst);
+        assert_eq!(first, 1);
+        assert_eq!(second, 1);
     }
 }
 
