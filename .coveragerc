@@ -1,46 +1,31 @@
 [run]
-source = src
+source = packages/, src/
 omit =
-    tests/*
-    stubs/*
-    models/*
-    download_env/*
-    experimental/*
-    scripts/*
-    .claude/*
-    .cache/*
-    tmp/*
-    tmp_*/*
-    **/__pycache__/*
-    src/agent_forge/*
-    src/software/*
-    src/architecture/*
-    src/servers/*
-    src/services/*
-    src/transport/*
-    src/security/*
-    src/monitoring/*
-    src/ingestion/*
-    src/android/*
-    src/mcp_servers/*
-    src/federation/*
-    src/agents/*
-    src/production/*
-    src/core/*
-    src/communications/*
-    src/digital_twin/*
-    src/governance/*
-    src/hardware/*
-    src/infrastructure/*
-    src/hyperag/*
-    src/migration/*
-    src/nlp/*
-    src/common/*
-    src/cli/*
-    src/compression/*
-    src/deployment/*
+    */tests/*
+    */test_*
+    */__pycache__/*
+    */deprecated/*
+    */archive/*
+    */experimental/*
+    */stubs/*
+    */benchmarks/*
+    */legacy/*
+    */models/*
+    */download_env/*
+    */scripts/*
+    */.claude/*
+    */.cache/*
+    */tmp/*
+    setup.py
+    */conftest.py
 
 [report]
+# Set the coverage threshold to 60% (will increase to 70% next sprint)
+fail_under = 60
+precision = 2
+show_missing = true
+skip_covered = false
+
 exclude_lines =
     pragma: no cover
     def __repr__
@@ -52,3 +37,10 @@ exclude_lines =
     if __name__ == .__main__.
     class .*\bProtocol\):
     @(abc\.)?abstractmethod
+
+[html]
+directory = htmlcov
+title = AIVillage Coverage Report
+
+[xml]
+output = coverage.xml

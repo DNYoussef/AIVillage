@@ -33,7 +33,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - uses: actions/setup-python@v4
         with:
           python-version: ${{ env.PYTHON_VERSION }}
@@ -84,7 +84,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - uses: actions/setup-python@v4
         with:
           python-version: ${{ env.PYTHON_VERSION }}
@@ -127,10 +127,10 @@ jobs:
         os: [ubuntu-latest, windows-latest, macos-latest]
         python-version: ['3.9', '3.11']
       fail-fast: false
-      
+
     steps:
       - uses: actions/checkout@v4
-      
+
       - uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
@@ -176,7 +176,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - uses: actions/setup-python@v4
         with:
           python-version: ${{ env.PYTHON_VERSION }}
@@ -184,20 +184,40 @@ jobs:
 
       - name: Install security tools
         run: |
-          pip install bandit safety semgrep
+          pip install bandit safety semgrep pip-audit
+
+      - name: 🚨 High CVE Blocking Check
+        run: |
+          echo "Blocking High/Critical CVEs with pip-audit..."
+          pip-audit --format=json --output=pip-audit-report.json || true
+          pip-audit --format=cyclonedx-json --output=sbom-security.json || true
+
+          # Fail build on High/Critical vulnerabilities
+          if pip-audit --desc | grep -E "(HIGH|CRITICAL)"; then
+            echo "❌ High or Critical CVEs found - BLOCKING BUILD"
+            pip-audit --desc
+            exit 1
+          fi
+          echo "✅ No High/Critical CVEs found"
+
+      - name: 🛡️ Safety Dependency Check (Fail on High)
+        run: |
+          echo "Checking for high-severity vulnerable dependencies..."
+          pip freeze | safety check --stdin --json --output safety-report.json || true
+
+          # Fail build on high severity vulnerabilities
+          if pip freeze | safety check --stdin | grep -E "(HIGH|CRITICAL)"; then
+            echo "❌ High severity vulnerabilities found - BLOCKING BUILD"
+            pip freeze | safety check --stdin
+            exit 1
+          fi
+          echo "✅ No high severity vulnerabilities found"
 
       - name: 🔐 Bandit Security Scan
         run: |
           echo "Running Bandit security scan..."
-          bandit -r src/ packages/ -f json -o bandit-report.json || true
-          bandit -r src/ packages/ -ll
+          bandit -r src/ packages/ -f json -o bandit-report.json -ll
           echo "✅ Security scan completed"
-
-      - name: 🛡️ Safety Dependency Check
-        run: |
-          echo "Checking for vulnerable dependencies..."
-          pip freeze | safety check --stdin --json || true
-          echo "✅ Dependency check completed"
 
       - name: 🔍 Semgrep SAST
         if: github.event_name == 'pull_request'
@@ -213,6 +233,9 @@ jobs:
           path: |
             bandit-report.json
             semgrep-report.json
+            pip-audit-report.json
+            safety-report.json
+            sbom-security.json
 
   # ============================================
   # STAGE 5: Performance Testing (Optional)
@@ -224,7 +247,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - uses: actions/setup-python@v4
         with:
           python-version: ${{ env.PYTHON_VERSION }}
@@ -256,7 +279,7 @@ jobs:
             report.html
 
   # ============================================
-  # STAGE 6: Build & Package
+  # STAGE 6: Build, SBOM & Package
   # ============================================
   build:
     name: Build & Package
@@ -265,14 +288,31 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - uses: actions/setup-python@v4
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
+      - name: Install dependencies
+        run: |
+          pip install build wheel cyclonedx-bom pip-audit
+          pip install -r requirements-prod.txt
+
+      - name: 📋 Generate SBOM
+        run: |
+          echo "Generating Software Bill of Materials..."
+          mkdir -p artifacts/sbom
+
+          # Generate SBOM using our custom tool
+          python tools/sbom/generate_sbom.py --output artifacts/sbom --verbose
+
+          # Additional SBOM generation with pip-audit
+          pip-audit --format=cyclonedx-json --output=artifacts/sbom/pip-audit-sbom.json || true
+
+          echo "✅ SBOM generation completed"
+
       - name: 📦 Build Python Package
         run: |
-          pip install build wheel
           python -m build
 
       - name: 🐳 Build Docker Image
@@ -280,11 +320,17 @@ jobs:
           docker build -t aivillage:${{ github.sha }} .
           docker tag aivillage:${{ github.sha }} aivillage:latest
 
-      - name: Upload Artifacts
+      - name: Upload Build Artifacts
         uses: actions/upload-artifact@v3
         with:
           name: dist
           path: dist/
+
+      - name: Upload SBOM Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: sbom
+          path: artifacts/sbom/
 
   # ============================================
   # STAGE 7: Deploy (Main Branch Only)

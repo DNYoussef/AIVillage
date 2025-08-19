@@ -30,6 +30,10 @@ except ImportError as e:
     sys.exit(1)
 
 
+import pytest
+
+
+@pytest.mark.asyncio
 async def test_comprehensive_rag_integration():
     """Test complete RAG system integration across all components."""
     print("=== COMPREHENSIVE RAG SYSTEM INTEGRATION TEST ===")

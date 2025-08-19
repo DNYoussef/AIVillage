@@ -1,9 +1,53 @@
-# Generated from pyproject.toml [security] - do not edit manually
-# Use 'pip install -e ".[security]"' for installation
+# Security Requirements for AIVillage
+# Security-focused dependencies and tools
 
-pip-audit>=2.7.3
-safety>=3.2.7
-bandit>=1.7.7
+# Include base requirements
+-r requirements.txt
+
+# Secret Management & Detection
+detect-secrets>=1.4.0
+keyring>=24.3.0
+python-gnupg>=0.5.2
+
+# Security Scanning
+bandit[toml]>=1.7.5
+safety>=2.3.4
+semgrep>=1.45.0
+pip-audit>=2.6.1
+
+# Vulnerability Database
+vulners>=2.1.9
+osv-scanner>=1.4.3
+
+# Cryptographic Libraries
+pycryptodome>=3.19.0
+cryptography>=41.0.7
 pyotp>=2.9.0
-passlib[bcrypt]>=1.7.4
-python-jose[cryptography]>=3.3.0
+pynacl>=1.5.0
+
+# Authentication & Authorization
+authlib>=1.2.1
+python-oauth2>=1.1.1
+pyjwt[crypto]>=2.8.0
+
+# Security Headers & CORS
+secure>=0.3.0
+
+# Network Security
+requests[socks]>=2.31.0
+urllib3[socks]>=2.1.0
+python-socks>=2.4.3
+
+# Input Validation & Sanitization
+bleach>=6.1.0
+html5lib>=1.1
+defusedxml>=0.7.1
+
+# Rate Limiting & Throttling
+slowapi>=0.1.9
+limits>=3.6.0
+
+# Audit & Compliance
+compliance-checker>=5.0.1
+
+-c constraints.txt

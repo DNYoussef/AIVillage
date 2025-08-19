@@ -1,4 +1,57 @@
-pre-commit
-black>=23.0.0
-mypy>=1.0.0
-ruff>=0.1.0
+# Development Requirements for AIVillage
+# These are development and testing dependencies
+
+# Include base requirements
+-r requirements.txt
+
+# Testing Framework
+pytest>=7.4.3
+pytest-asyncio>=0.21.1
+pytest-cov>=4.1.0
+pytest-mock>=3.12.0
+pytest-timeout>=2.2.0
+pytest-xdist>=3.4.0
+pytest-benchmark>=4.0.0
+
+# Code Quality & Linting
+ruff>=0.1.6
+black>=23.11.0
+isort>=5.12.0
+mypy>=1.7.0
+pre-commit>=3.5.0
+
+# Security Development Tools
+bandit>=1.7.5
+safety>=2.3.4
+semgrep>=1.45.0
+pip-audit>=2.6.1
+
+# Documentation
+sphinx>=7.2.6
+sphinx-rtd-theme>=1.3.0
+mkdocs>=1.5.3
+mkdocs-material>=9.4.8
+
+# Development Utilities
+ipython>=8.17.2
+jupyter>=1.0.0
+rich>=13.6.0
+typer>=0.9.0
+
+# Performance Testing
+locust>=2.17.0
+memory-profiler>=0.61.0
+
+# Development Database Tools
+alembic>=1.12.1
+factory-boy>=3.3.0
+
+# Mock & Testing Utilities
+responses>=0.24.1
+httpx>=0.25.2
+faker>=20.1.0
+
+# Development Monitoring
+watchdog>=3.0.0
+
+-c constraints.txt

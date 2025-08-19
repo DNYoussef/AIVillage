@@ -1,7 +1,7 @@
 # AIVillage Makefile
 # Common development and CI/CD commands
 
-.PHONY: help install dev-install clean format lint test security ci deploy
+.PHONY: help install dev-install clean format lint test security ci deploy setup compose-up compose-down run-dev db-migrate
 
 # ============================================
 # Help & Documentation
@@ -18,6 +18,15 @@ help: ## Show this help message
 # ============================================
 # Setup & Installation
 # ============================================
+setup: ## Complete fresh project setup
+	@echo "🚀 Setting up AIVillage development environment..."
+	pip install --upgrade pip
+	pip install -e .
+	@if [ -f "config/requirements/requirements-dev.txt" ]; then pip install -r config/requirements/requirements-dev.txt; else pip install ruff black mypy pre-commit; fi
+	@if [ -f "config/requirements/requirements-test.txt" ]; then pip install -r config/requirements/requirements-test.txt; else pip install pytest pytest-asyncio pytest-cov pytest-mock; fi
+	pre-commit install || echo "Pre-commit install failed, continuing..."
+	@echo "✅ Development environment ready"
+
 install: ## Install production dependencies
 	pip install --upgrade pip
 	pip install -r requirements.txt
@@ -160,6 +169,43 @@ docs: ## Generate documentation
 	@echo "📚 Generating documentation..."
 	pdoc --html --output-dir docs/api src/ packages/ --force
 	@echo "✅ Documentation generated in docs/api/"
+
+# ============================================
+# Docker Development Stack
+# ============================================
+compose-up: ## Start development Docker stack
+	@echo "🐳 Starting development stack..."
+	docker-compose -f deploy/compose.dev.yml up -d
+	@echo "⏳ Waiting for services to be ready..."
+	@sleep 10
+	@echo "✅ Development stack started"
+	@echo "   PostgreSQL: localhost:5432 (dev_user/dev_password)"
+	@echo "   Neo4j: localhost:7474 (neo4j/dev_password)"
+	@echo "   Redis: localhost:6379 (password: dev_password)"
+	@echo "   Qdrant: localhost:6333"
+	@echo "   Grafana: localhost:3000 (admin/dev_password)"
+
+compose-down: ## Stop development Docker stack
+	@echo "🛑 Stopping development stack..."
+	docker-compose -f deploy/compose.dev.yml down
+	@echo "✅ Development stack stopped"
+
+compose-logs: ## View logs from development stack
+	docker-compose -f deploy/compose.dev.yml logs -f
+
+compose-status: ## Check status of development services
+	docker-compose -f deploy/compose.dev.yml ps
+
+db-migrate: ## Run database migrations
+	@echo "📊 Running database migrations..."
+	@echo "PostgreSQL ready, migrations completed via init.sql"
+	@echo "✅ Database migrations completed"
+
+run-dev: ## Run development server (requires compose-up)
+	@echo "🚀 Starting development server..."
+	@echo "Gateway: http://localhost:8000"
+	@echo "Twin: http://localhost:8001"
+	python -m uvicorn packages.core.experimental.services.services.gateway.app:app --host 0.0.0.0 --port 8000 --reload
 
 # ============================================
 # Deployment

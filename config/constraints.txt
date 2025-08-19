@@ -1,0 +1,131 @@
+# AIVillage Constraints File
+# This file pins critical production dependencies to ensure reproducible builds
+# Generated: 2025-08-19
+# Review: Weekly (every Monday)
+
+# ==============================================================================
+# CRITICAL SECURITY DEPENDENCIES (Must be exact versions)
+# ==============================================================================
+cryptography==41.0.7                    # CVE tracking critical
+pyjwt==2.8.0                            # Security token handling
+pycryptodome==3.19.0                     # Crypto primitives
+passlib==1.7.4                          # Password hashing
+
+# ==============================================================================
+# WEB FRAMEWORK & API (Stability critical)
+# ==============================================================================
+fastapi==0.104.1                        # Core API framework
+uvicorn==0.24.0                          # ASGI server
+pydantic==2.5.0                          # Data validation
+starlette==0.27.0                        # ASGI framework base
+
+# ==============================================================================
+# DATABASE LAYERS (Data integrity critical)
+# ==============================================================================
+asyncpg==0.29.0                         # PostgreSQL async driver
+psycopg2-binary==2.9.9                  # PostgreSQL sync driver
+neo4j==5.13.0                           # Graph database
+redis==5.0.1                            # Cache/session store
+qdrant-client==1.6.9                    # Vector database
+
+# ==============================================================================
+# MACHINE LEARNING CORE (Model stability critical)
+# ==============================================================================
+torch==2.1.0                            # Deep learning framework
+transformers==4.35.0                    # Transformer models
+sentence-transformers==2.2.2            # Embeddings
+numpy==1.24.3                           # Numerical computing
+scikit-learn==1.3.0                     # ML utilities
+faiss-cpu==1.7.4                        # Vector similarity
+
+# ==============================================================================
+# ASYNC & NETWORKING (Concurrency critical)
+# ==============================================================================
+aiohttp==3.9.0                          # Async HTTP client
+httpx==0.25.2                           # HTTP client
+websockets==12.0                        # WebSocket support
+asyncio-mqtt==0.13.0                    # MQTT async
+
+# ==============================================================================
+# MONITORING & OBSERVABILITY (Ops critical)
+# ==============================================================================
+prometheus-client==0.19.0               # Metrics collection
+opentelemetry-api==1.21.0               # Tracing API
+opentelemetry-sdk==1.21.0               # Tracing implementation
+structlog==23.2.0                       # Structured logging
+
+# ==============================================================================
+# SECURITY TOOLING (Must be latest for CVE coverage)
+# ==============================================================================
+bandit==1.7.5                           # Security linter
+safety==2.3.4                           # Vulnerability scanner
+pip-audit==2.6.1                        # Audit pip packages
+semgrep==1.45.0                         # SAST analysis
+detect-secrets==1.4.0                   # Secret detection
+
+# ==============================================================================
+# DEVELOPMENT TOOLING (Dev experience critical)
+# ==============================================================================
+pytest==7.4.3                           # Testing framework
+pytest-asyncio==0.21.1                  # Async testing
+pytest-cov==4.1.0                       # Coverage
+black==23.11.0                          # Code formatting
+ruff==0.1.6                             # Fast linting
+mypy==1.7.0                             # Type checking
+pre-commit==3.5.0                       # Git hooks
+
+# ==============================================================================
+# PRODUCTION DEPLOYMENT (Deployment stability critical)
+# ==============================================================================
+gunicorn==21.2.0                        # Production WSGI server
+supervisor==4.2.5                       # Process management
+docker==6.1.3                           # Container management
+
+# ==============================================================================
+# UTILITY LIBRARIES (Compatibility important)
+# ==============================================================================
+pyyaml==6.0.1                           # YAML parsing
+click==8.1.7                            # CLI framework
+rich==13.6.0                            # Rich text display
+python-dotenv==1.0.0                    # Environment variables
+loguru==0.7.2                           # Logging utility
+
+# ==============================================================================
+# DATA PROCESSING (Processing stability)
+# ==============================================================================
+pandas==2.1.3                           # Data manipulation
+beautifulsoup4==4.12.2                  # HTML parsing
+markdown==3.5.1                         # Markdown processing
+python-multipart==0.0.6                 # File uploads
+
+# ==============================================================================
+# OPTIONAL PERFORMANCE LIBRARIES
+# ==============================================================================
+ujson==5.8.0                            # Fast JSON
+orjson==3.9.10                          # Faster JSON
+msgpack==1.0.7                          # Binary serialization
+
+# ==============================================================================
+# COMPATIBILITY NOTES
+# ==============================================================================
+# - Python 3.9+ required for all packages
+# - PyTorch CPU-only build for deployment efficiency
+# - Redis hiredis extension for performance
+# - Psycopg2-binary for deployment simplicity
+# - All versions tested on Ubuntu 22.04, Windows 11, macOS 13+
+
+# ==============================================================================
+# UPDATE SCHEDULE
+# ==============================================================================
+# Weekly security updates: bandit, safety, pip-audit, semgrep
+# Monthly framework updates: fastapi, torch, transformers
+# Quarterly major updates: Full dependency review
+# Emergency updates: Critical CVEs within 24 hours
+
+# ==============================================================================
+# VERIFICATION COMMANDS
+# ==============================================================================
+# pip install -r requirements-prod.txt -c constraints.txt
+# pip check  # Verify no conflicts
+# safety check  # Security scan
+# pip-audit --desc  # CVE check

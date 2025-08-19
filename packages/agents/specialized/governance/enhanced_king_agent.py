@@ -97,19 +97,47 @@ class TaskDecompositionTool(MCPTool):
 
         try:
             # Query RAG system for similar task patterns
-            similar_tasks = await self.king_agent.query_group_memory(
+            similar_tasks_raw = await self.king_agent.query_group_memory(
                 query=f"task decomposition similar to: {task_description}", mode="comprehensive"
             )
 
+            # Ensure similar_tasks is a dictionary
+            if isinstance(similar_tasks_raw, str):
+                similar_tasks = {"status": "success", "results": [{"text": similar_tasks_raw}]}
+            elif isinstance(similar_tasks_raw, dict):
+                similar_tasks = similar_tasks_raw
+            else:
+                similar_tasks = {"status": "success", "results": []}
+
             # Analyze required capabilities using group memory
-            capability_analysis = await self.king_agent.query_group_memory(
+            capability_analysis_raw = await self.king_agent.query_group_memory(
                 query=f"agent capabilities needed for: {task_description}", mode="balanced"
             )
+
+            # Ensure capability_analysis is a dictionary
+            if isinstance(capability_analysis_raw, str):
+                capability_analysis = {"status": "success", "results": [{"text": capability_analysis_raw}]}
+            elif isinstance(capability_analysis_raw, dict):
+                capability_analysis = capability_analysis_raw
+            else:
+                capability_analysis = {"status": "success", "results": []}
 
             # Create orchestration task
             task = await self.king_agent._create_orchestration_task(
                 task_description, constraints, similar_tasks, capability_analysis
             )
+
+            # Debug logging to identify the actual issue
+            logger.debug(f"Task creation result type: {type(task)}")
+            logger.debug(f"Task creation result value: {task}")
+
+            # Ensure task is a valid object with required attributes
+            if isinstance(task, str):
+                logger.error(f"Task creation returned string instead of OrchestrationTask: {task}")
+                return {"status": "error", "message": f"Task creation failed: {task}"}
+            elif not hasattr(task, "task_id"):
+                logger.error(f"Task object missing required attributes: {dir(task)}")
+                return {"status": "error", "message": "Task object missing required attributes"}
 
             # Record reflection on decomposition process
             # Extract key patterns from nested results structure
@@ -143,7 +171,12 @@ class TaskDecompositionTool(MCPTool):
             }
 
         except Exception as e:
+            import traceback
+
             logger.error(f"Task decomposition failed: {e}")
+            logger.error(f"Full traceback: {traceback.format_exc()}")
+            logger.error(f"Similar tasks type: {type(similar_tasks)}, value: {similar_tasks}")
+            logger.error(f"Capability analysis type: {type(capability_analysis)}, value: {capability_analysis}")
             return {"status": "error", "message": f"Task decomposition failed: {str(e)}"}
 
 
@@ -566,10 +599,26 @@ class EnhancedKingAgent(BaseAgentTemplate):
         # Estimate complexity based on similar tasks
         complexity = 5  # Default
         if similar_tasks.get("status") == "success" and similar_tasks.get("results"):
-            results = similar_tasks["results"]
+            # Handle nested results structure
+            results_data = similar_tasks["results"]
+            if isinstance(results_data, dict) and "results" in results_data:
+                results = results_data["results"]
+            else:
+                results = results_data if isinstance(results_data, list) else []
+
             if len(results) > 0:
-                avg_complexity = sum(result.get("complexity", 5) for result in results) / len(results)
-                complexity = max(1, min(10, int(avg_complexity)))
+                # Only process if results are dictionaries with complexity field
+                complexities = []
+                for result in results:
+                    if isinstance(result, dict) and "complexity" in result:
+                        complexities.append(result.get("complexity", 5))
+                    else:
+                        # Default complexity for items without complexity field
+                        complexities.append(5)
+
+                if complexities:
+                    avg_complexity = sum(complexities) / len(complexities)
+                    complexity = max(1, min(10, int(avg_complexity)))
 
         # Determine priority
         priority = Priority.MEDIUM

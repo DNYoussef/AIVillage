@@ -1,0 +1,100 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+.env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+target/
+node_modules/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+
+# Cache directories
+.cache/
+.ruff_cache/
+.mypy_cache/
+.pytest_cache/
+
+# Model files (usually too large for containers)
+models/
+*.bin
+*.safetensors
+*.pt
+*.pth
+
+# Data directories
+data/
+datasets/
+*.db
+*.sqlite
+*.sqlite3
+
+# Jupyter notebooks
+.ipynb_checkpoints/
+
+# Documentation build
+docs/_build/
+docs/build/
+
+# Rust
+Cargo.lock
+target/
+
+# Docker
+.dockerignore
+Dockerfile*
+docker-compose*.yml
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+
+# Large directories that shouldn't be in containers
+deprecated/
+archive/
+backup/
+wandb/
+
+# Environment files
+.env
+.env.*
+!.env.example
