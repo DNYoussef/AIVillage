@@ -36,7 +36,7 @@ impl HtxClient {
 
         #[cfg(feature = "quic")]
         if self.config.enable_quic {
-            let conn = crate::quic::QuicTransport::connect(addr, &self.config).await?;
+            let conn = crate::quic::QuicTransport::connect(addr, &self.config, None).await?;
             self.connection = Some(Arc::new(RwLock::new(Box::new(conn))));
             return Ok(());
         }

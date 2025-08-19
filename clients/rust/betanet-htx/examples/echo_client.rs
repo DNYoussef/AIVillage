@@ -8,8 +8,7 @@
 //! - Stream multiplexing
 
 use betanet_htx::{
-    dial_tcp, HtxConfig, HtxError, Result, StreamMux,
-    TlsCamouflageBuilder, create_tls_connector,
+    create_tls_connector, dial_tcp, HtxConfig, HtxError, Result, StreamMux, TlsCamouflageBuilder,
 };
 use clap::Parser;
 use std::net::SocketAddr;
@@ -76,10 +75,8 @@ async fn main() -> Result<()> {
     } else {
         tracing::Level::INFO
     };
-    
-    tracing_subscriber::fmt()
-        .with_max_level(log_level)
-        .init();
+
+    tracing_subscriber::fmt().with_max_level(log_level).init();
 
     info!("HTX Echo Client connecting to {}", args.server);
 
@@ -166,14 +163,14 @@ async fn run_tcp_client(server: SocketAddr, config: HtxConfig, args: &Args) -> R
                     }
                 }
             }
-            
+
             // Handle frames from multiplexer
             frame = frame_receiver.recv() => {
                 if let Some(frame) = frame {
                     info!("Multiplexer frame: {:?}", frame.frame_type);
                 }
             }
-            
+
             // Timeout
             _ = sleep(Duration::from_millis(5000)) => {
                 warn!("Timeout waiting for response");
@@ -196,10 +193,10 @@ async fn run_quic_client(server: SocketAddr, config: HtxConfig, args: &Args) -> 
     #[cfg(feature = "quic")]
     {
         info!("QUIC client connecting to {}", server);
-        
+
         use betanet_htx::quic::QuicTransport;
-        
-        let mut transport = QuicTransport::connect(server, &config).await?;
+
+        let mut transport = QuicTransport::connect(server, &config, None).await?;
         info!("Connected to QUIC server at {}", server);
 
         // Send messages using QUIC DATAGRAM if available
@@ -209,7 +206,7 @@ async fn run_quic_client(server: SocketAddr, config: HtxConfig, args: &Args) -> 
 
             // Create a DATA frame for the message
             let frame = betanet_htx::Frame::data(1, message.into())?;
-            
+
             if transport.has_datagram_support() {
                 if let Err(e) = transport.send_datagram(frame).await {
                     error!("Failed to send DATAGRAM: {}", e);
@@ -235,7 +232,7 @@ async fn run_quic_client(server: SocketAddr, config: HtxConfig, args: &Args) -> 
                         info!("Response: {}", response);
                     }
                 }
-                
+
                 _ = sleep(Duration::from_millis(2000)) => {
                     warn!("Timeout waiting for QUIC response");
                 }
@@ -249,12 +246,12 @@ async fn run_quic_client(server: SocketAddr, config: HtxConfig, args: &Args) -> 
         info!("Closing QUIC connection");
         transport.close().await?;
     }
-    
+
     #[cfg(not(feature = "quic"))]
     {
         return Err(HtxError::Config("QUIC feature not enabled".to_string()));
     }
-    
+
     Ok(())
 }
 
@@ -266,14 +263,19 @@ mod tests {
     fn test_args_parsing() {
         let args = Args::parse_from(&[
             "echo_client",
-            "--server", "192.168.1.100:8443",
+            "--server",
+            "192.168.1.100:8443",
             "--quic",
             "--ech-stub",
-            "--ja3-template", "firefox_latest",
-            "--message", "Test message",
-            "--count", "3",
-            "--delay", "500",
-            "--verbose"
+            "--ja3-template",
+            "firefox_latest",
+            "--message",
+            "Test message",
+            "--count",
+            "3",
+            "--delay",
+            "500",
+            "--verbose",
         ]);
 
         assert_eq!(args.server, "192.168.1.100:8443".parse().unwrap());

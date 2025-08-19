@@ -6,15 +6,15 @@
 //! - ECH configuration from DNS
 //! - Fallback to streams for large frames
 
-use betanet_htx::{HtxConfig, Frame, FrameType, HtxError};
+use betanet_htx::{Frame, FrameType, HtxConfig, HtxError};
 use bytes::Bytes;
 use std::net::SocketAddr;
 use std::time::Duration;
 use tokio::time::sleep;
-use tracing::{info, warn, error};
+use tracing::{error, info, warn};
 
 #[cfg(feature = "quic")]
-use betanet_htx::quic::{QuicTransport, EchConfig};
+use betanet_htx::quic::{EchConfig, QuicTransport};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -38,11 +38,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         config.enable_quic = true;
         config.enable_tls_camouflage = true;
         config.camouflage_domain = Some("cloudflare.com".to_string());
-        config.alpn_protocols = vec![
-            "h3".to_string(),
-            "h3-32".to_string(),
-            "htx/1.1".to_string(),
-        ];
+        config.alpn_protocols = vec!["h3".to_string(), "h3-32".to_string(), "htx/1.1".to_string()];
 
         let listen_addr: SocketAddr = "127.0.0.1:9443".parse()?;
         let connect_addr = listen_addr;
@@ -51,9 +47,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         // Start server in background
         let server_config = config.clone();
-        let server_handle = tokio::spawn(async move {
-            run_echo_server(server_config, listen_addr).await
-        });
+        let server_handle =
+            tokio::spawn(async move { run_echo_server(server_config, listen_addr).await });
 
         // Give server time to start
         sleep(Duration::from_millis(100)).await;
@@ -108,14 +103,16 @@ async fn run_echo_client(config: HtxConfig, addr: SocketAddr) -> Result<(), HtxE
     info!("📞 Connecting QUIC client to {}", addr);
 
     // Create QUIC transport (this will fail in demo due to no actual server)
-    match QuicTransport::connect(addr, &config).await {
+    match QuicTransport::connect(addr, &config, None).await {
         Ok(mut transport) => {
             info!("✅ QUIC connection established");
 
             // Check DATAGRAM support
             if transport.has_datagram_support() {
-                info!("📦 DATAGRAM support: enabled (max size: {:?})",
-                      transport.max_datagram_size());
+                info!(
+                    "📦 DATAGRAM support: enabled (max size: {:?})",
+                    transport.max_datagram_size()
+                );
             } else {
                 warn!("📦 DATAGRAM support: disabled, falling back to streams");
             }
