@@ -1,0 +1,21 @@
+{{- if .Values.neo4j.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "aivillage.fullname" . }}-neo4j
+  labels:
+    {{- include "aivillage.serviceLabels" (list "neo4j" .) | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+    - port: 7474
+      targetPort: http
+      protocol: TCP
+      name: http
+    - port: 7687
+      targetPort: bolt
+      protocol: TCP
+      name: bolt
+  selector:
+    {{- include "aivillage.serviceSelectorLabels" (list "neo4j" .) | nindent 4 }}
+{{- end }}

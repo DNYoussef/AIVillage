@@ -1,0 +1,21 @@
+{{- if .Values.hyperagMCP.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "aivillage.fullname" . }}-hyperrag-mcp
+  labels:
+    {{- include "aivillage.serviceLabels" (list "hyperrag-mcp" .) | nindent 4 }}
+  {{- with .Values.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.hyperagMCP.service.port }}
+      targetPort: mcp
+      protocol: TCP
+      name: mcp
+  selector:
+    {{- include "aivillage.serviceSelectorLabels" (list "hyperrag-mcp" .) | nindent 4 }}
+{{- end }}

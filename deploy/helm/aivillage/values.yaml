@@ -1,11 +1,29 @@
 # Default values for aivillage
 # This is a YAML-formatted file.
+# Declare variables to be substituted into your templates.
 
 # Global configuration
 global:
   imageRegistry: ghcr.io
   imagePullSecrets: []
   storageClass: "fast-ssd"
+
+# Environment and debugging
+environment: "production"
+debug: false
+logLevel: "INFO"
+
+# Service Account
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Automatically mount a ServiceAccount's API credentials?
+  automount: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
 
 # Deployment configuration
 deployment:

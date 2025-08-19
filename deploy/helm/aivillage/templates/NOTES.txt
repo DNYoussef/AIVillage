@@ -1,0 +1,62 @@
+1. Get the application URL by running these commands:
+{{- if .Values.ingress.enabled }}
+{{- range $host := .Values.ingress.hosts }}
+  {{- range .paths }}
+  http{{ if $.Values.ingress.tls }}s{{ end }}://{{ $host.host }}{{ .path }}
+  {{- end }}
+{{- end }}
+{{- else if contains "NodePort" .Values.service.type }}
+  export NODE_PORT=$(kubectl get --namespace {{ .Release.Namespace }} -o jsonpath="{.spec.ports[0].nodePort}" services {{ include "aivillage.fullname" . }})
+  export NODE_IP=$(kubectl get nodes --namespace {{ .Release.Namespace }} -o jsonpath="{.items[0].status.addresses[0].address}")
+  echo http://$NODE_IP:$NODE_PORT
+{{- else if contains "LoadBalancer" .Values.service.type }}
+     NOTE: It may take a few minutes for the LoadBalancer IP to be available.
+           You can watch the status of by running 'kubectl get --namespace {{ .Release.Namespace }} svc -w {{ include "aivillage.fullname" . }}'
+  export SERVICE_IP=$(kubectl get svc --namespace {{ .Release.Namespace }} {{ include "aivillage.fullname" . }} --template "{{"{{ range (index .status.loadBalancer.ingress 0) }}{{.}}{{ end }}"}}")
+  echo http://$SERVICE_IP:{{ .Values.service.port }}
+{{- else if contains "ClusterIP" .Values.service.type }}
+  export POD_NAME=$(kubectl get pods --namespace {{ .Release.Namespace }} -l "app.kubernetes.io/name={{ include "aivillage.name" . }},app.kubernetes.io/instance={{ .Release.Name }}" -o jsonpath="{.items[0].metadata.name}")
+  export CONTAINER_PORT=$(kubectl get pod --namespace {{ .Release.Namespace }} $POD_NAME -o jsonpath="{.spec.containers[0].ports[0].containerPort}")
+  echo "Visit http://127.0.0.1:8080 to use your application"
+  kubectl --namespace {{ .Release.Namespace }} port-forward $POD_NAME 8080:$CONTAINER_PORT
+{{- end }}
+
+2. AIVillage services deployed:
+{{- if .Values.gateway.enabled }}
+   - Gateway API: Available on port {{ .Values.gateway.service.port }}
+{{- end }}
+{{- if .Values.twin.enabled }}
+   - Digital Twin Service: Available on port {{ .Values.twin.service.port }}
+{{- end }}
+{{- if .Values.hyperagMCP.enabled }}
+   - HyperRAG MCP Server: Available on port {{ .Values.hyperagMCP.service.port }}
+{{- end }}
+{{- if .Values.agentForge.enabled }}
+   - Agent Forge: Available on port {{ .Values.agentForge.service.port }}
+{{- end }}
+
+3. Monitoring stack:
+{{- if .Values.monitoring.grafana.enabled }}
+   - Grafana Dashboard: Access via ingress or port-forward to grafana service
+{{- end }}
+{{- if .Values.monitoring.prometheus.enabled }}
+   - Prometheus Metrics: Access via grafana or direct port-forward
+{{- end }}
+
+4. Database services:
+{{- if .Values.postgresql.enabled }}
+   - PostgreSQL: Internal access via postgresql service
+{{- end }}
+{{- if .Values.redis.enabled }}
+   - Redis Cache: Internal access via redis service
+{{- end }}
+{{- if .Values.neo4j.enabled }}
+   - Neo4j Graph DB: Internal access via neo4j service
+{{- end }}
+{{- if .Values.qdrant.enabled }}
+   - Qdrant Vector DB: Internal access via qdrant service
+{{- end }}
+
+5. Health checks:
+   kubectl get pods -l app.kubernetes.io/instance={{ .Release.Name }}
+   kubectl logs -l app.kubernetes.io/name=aivillage-gateway -f

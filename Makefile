@@ -127,6 +127,57 @@ test-fast: ## Run fast tests only
 	pytest tests/unit/ -v --tb=short -m "not slow" -n auto
 
 # ============================================
+# Operational Artifacts
+# ============================================
+artifacts: clean ## Collect operational artifacts (coverage, security, SBOM, performance)
+	@echo "🔧 Collecting operational artifacts..."
+	mkdir -p artifacts
+	python scripts/operational/collect_artifacts.py \
+		--output-dir artifacts \
+		--config config/artifacts_collection.json \
+		--parallel
+	@echo "✅ Artifacts collection completed"
+
+artifacts-validate: ## Validate collected artifacts
+	@echo "🔍 Validating artifacts..."
+	python scripts/operational/validate_artifacts.py \
+		--artifacts-dir artifacts \
+		--output artifacts/validation-report.json
+	@echo "✅ Artifacts validation completed"
+
+artifacts-security: ## Collect security artifacts only
+	@echo "🔒 Collecting security artifacts..."
+	mkdir -p artifacts/security
+	bandit -r packages/ src/ -f json -o artifacts/security/bandit-report.json || true
+	safety check --json --output artifacts/security/safety-report.json || true
+	@echo "✅ Security artifacts collected"
+
+artifacts-sbom: ## Generate Software Bill of Materials
+	@echo "📋 Generating SBOM..."
+	mkdir -p artifacts/sbom
+	pip-audit --format=json --output=artifacts/sbom/pip-audit-sbom.json || true
+	pip freeze > artifacts/sbom/requirements-freeze.txt
+	@echo "✅ SBOM generated"
+
+artifacts-performance: ## Collect performance artifacts
+	@echo "⚡ Collecting performance artifacts..."
+	mkdir -p artifacts/performance
+	pytest tests/benchmarks/ --benchmark-json=artifacts/performance/benchmark-results.json --benchmark-only || true
+	python scripts/operational/profile_memory.py > artifacts/performance/memory-profile.txt || true
+	@echo "✅ Performance artifacts collected"
+
+artifacts-quality: ## Collect code quality artifacts
+	@echo "📊 Collecting quality artifacts..."
+	mkdir -p artifacts/quality
+	ruff check packages/ src/ --output-format=json > artifacts/quality/ruff-report.json || true
+	mypy packages/ src/ --no-error-summary > artifacts/quality/mypy-report.txt 2>&1 || true
+	python tools/analysis/hotspots.py --output artifacts/quality/hotspots-report.json || true
+	@echo "✅ Quality artifacts collected"
+
+artifacts-all: artifacts-security artifacts-sbom artifacts-performance artifacts-quality artifacts-validate ## Collect all artifacts separately
+	@echo "🎉 All artifacts collected and validated!"
+
+# ============================================
 # Continuous Integration
 # ============================================
 ci-pre-flight: ## Run pre-flight checks (fast fail)
@@ -140,8 +191,11 @@ ci-pre-flight: ## Run pre-flight checks (fast fail)
 ci-local: format lint type-check test-fast ## Run local CI checks
 	@echo "✅ Local CI checks passed"
 
-ci: ci-pre-flight lint security type-check test-coverage ## Run full CI pipeline
-	@echo "✅ Full CI pipeline passed"
+ci: ci-pre-flight lint security type-check test-coverage artifacts artifacts-validate ## Run full CI pipeline with artifacts
+	@echo "✅ Full CI pipeline with artifacts completed"
+
+ci-basic: ci-pre-flight lint security type-check test-coverage ## Run basic CI pipeline (no artifacts)
+	@echo "✅ Basic CI pipeline passed"
 
 # ============================================
 # Development Helpers

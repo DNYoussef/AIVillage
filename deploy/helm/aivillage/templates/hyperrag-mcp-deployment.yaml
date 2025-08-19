@@ -1,0 +1,95 @@
+{{- if .Values.hyperagMCP.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "aivillage.fullname" . }}-hyperrag-mcp
+  labels:
+    {{- include "aivillage.serviceLabels" (list "hyperrag-mcp" .) | nindent 4 }}
+spec:
+  replicas: {{ .Values.hyperagMCP.replicaCount }}
+  strategy:
+    {{- toYaml .Values.deployment.strategy | nindent 4 }}
+  selector:
+    matchLabels:
+      {{- include "aivillage.serviceSelectorLabels" (list "hyperrag-mcp" .) | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        checksum/secrets: {{ include (print $.Template.BasePath "/secrets.yaml") . | sha256sum }}
+      labels:
+        {{- include "aivillage.serviceSelectorLabels" (list "hyperrag-mcp" .) | nindent 8 }}
+    spec:
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- include "aivillage.podSecurityContext" . | nindent 8 }}
+      containers:
+        - name: hyperrag-mcp
+          securityContext:
+            {{- include "aivillage.securityContext" . | nindent 12 }}
+          image: {{ include "aivillage.image" (list "hyperrag-mcp" .Values.hyperagMCP .) }}
+          imagePullPolicy: {{ .Values.hyperagMCP.image.pullPolicy | default "IfNotPresent" }}
+          ports:
+            - name: mcp
+              containerPort: {{ .Values.hyperagMCP.service.port }}
+              protocol: TCP
+          env:
+            {{- include "aivillage.commonEnv" . | nindent 12 }}
+            - name: MCP_SERVER_PORT
+              value: {{ .Values.hyperagMCP.service.port | quote }}
+            - name: RAG_MODE
+              value: "distributed"
+            - name: BAYESIAN_TRUST_ENABLED
+              value: "true"
+            {{- range $key, $value := .Values.hyperagMCP.env }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+            {{- end }}
+          livenessProbe:
+            tcpSocket:
+              port: mcp
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            tcpSocket:
+              port: mcp
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          resources:
+            {{- include "aivillage.resources" .Values.hyperagMCP | nindent 12 }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: knowledge-cache
+              mountPath: /app/cache/knowledge
+            - name: vector-cache
+              mountPath: /app/cache/vectors
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: knowledge-cache
+          emptyDir:
+            sizeLimit: 1Gi
+        - name: vector-cache
+          emptyDir:
+            sizeLimit: 2Gi
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}

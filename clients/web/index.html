@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- SEO and accessibility meta tags -->
+  <title>AIVillage Web Client</title>
+  <meta name="description" content="AIVillage Distributed AI Platform - Chat with specialized AI agents, advanced RAG queries, and P2P networking" />
+  <meta name="keywords" content="AI, artificial intelligence, chat, RAG, distributed, P2P, agents" />
+  <meta name="author" content="AIVillage Team" />
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://aivillage.io/" />
+  <meta property="og:title" content="AIVillage Web Client" />
+  <meta property="og:description" content="AIVillage Distributed AI Platform - Chat with specialized AI agents, advanced RAG queries, and P2P networking" />
+  <meta property="og:image" content="/aivillage-og-image.jpg" />
+
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image" />
+  <meta property="twitter:url" content="https://aivillage.io/" />
+  <meta property="twitter:title" content="AIVillage Web Client" />
+  <meta property="twitter:description" content="AIVillage Distributed AI Platform - Chat with specialized AI agents, advanced RAG queries, and P2P networking" />
+  <meta property="twitter:image" content="/aivillage-og-image.jpg" />
+
+  <!-- PWA manifest -->
+  <link rel="manifest" href="/manifest.json" />
+
+  <!-- Theme color -->
+  <meta name="theme-color" content="#2563eb" />
+  <meta name="msapplication-TileColor" content="#2563eb" />
+
+  <!-- Apple specific -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="AIVillage" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+  <!-- Favicon variations -->
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+  <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#2563eb" />
+
+  <!-- Preload critical resources -->
+  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"></noscript>
+
+  <!-- Security headers -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://api.aivillage.io https://staging-api.aivillage.io wss://api.aivillage.io wss://staging-api.aivillage.io; frame-src 'none'; object-src 'none'; base-uri 'self';">
+  <meta http-equiv="X-Content-Type-Options" content="nosniff">
+  <meta http-equiv="X-Frame-Options" content="DENY">
+  <meta http-equiv="X-XSS-Protection" content="1; mode=block">
+  <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
+
+  <!-- Accessibility enhancement -->
+  <meta name="color-scheme" content="light dark">
+
+  <!-- Service Worker registration -->
+  <script>
+    // Check for service worker support and register
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register('/sw.js')
+          .then(function(registration) {
+            console.log('SW registered: ', registration);
+          })
+          .catch(function(registrationError) {
+            console.log('SW registration failed: ', registrationError);
+          });
+      });
+    }
+  </script>
+
+  <!-- Critical CSS for loading state -->
+  <style>
+    /* Critical loading styles */
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      background-color: #f9fafb;
+      color: #111827;
+      line-height: 1.6;
+    }
+
+    #app {
+      min-height: 100vh;
+    }
+
+    /* Loading spinner */
+    .loading-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      flex-direction: column;
+    }
+
+    .loading-spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid #e5e7eb;
+      border-top: 4px solid #2563eb;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .loading-text {
+      margin-top: 16px;
+      color: #6b7280;
+      font-size: 14px;
+    }
+
+    /* High contrast support */
+    @media (prefers-contrast: high) {
+      body {
+        background-color: #ffffff;
+        color: #000000;
+      }
+
+      .loading-spinner {
+        border-color: #000000;
+        border-top-color: #0000ff;
+      }
+
+      .loading-text {
+        color: #000000;
+      }
+    }
+
+    /* Reduced motion support */
+    @media (prefers-reduced-motion: reduce) {
+      .loading-spinner {
+        animation: none;
+        border-top-color: #2563eb;
+      }
+    }
+
+    /* Dark mode support */
+    @media (prefers-color-scheme: dark) {
+      body {
+        background-color: #111827;
+        color: #f9fafb;
+      }
+
+      .loading-spinner {
+        border-color: #374151;
+        border-top-color: #3b82f6;
+      }
+
+      .loading-text {
+        color: #9ca3af;
+      }
+    }
+
+    /* Screen reader only utility */
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+  </style>
+</head>
+<body>
+  <!-- Skip to main content for screen readers -->
+  <a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:bg-blue-600 focus:text-white focus:px-4 focus:py-2 focus:rounded-md focus:no-underline">
+    Skip to main content
+  </a>
+
+  <!-- App root -->
+  <div id="app">
+    <!-- Loading state (shown before Vue takes over) -->
+    <div class="loading-container">
+      <div class="loading-spinner" role="status" aria-label="Loading AIVillage application"></div>
+      <div class="loading-text">Loading AIVillage...</div>
+      <div class="sr-only" aria-live="polite" id="loading-announcer">
+        AIVillage application is loading. Please wait.
+      </div>
+    </div>
+  </div>
+
+  <!-- Fallback for users without JavaScript -->
+  <noscript>
+    <div style="padding: 2rem; text-align: center; font-family: sans-serif;">
+      <h1>JavaScript Required</h1>
+      <p>AIVillage requires JavaScript to function properly. Please enable JavaScript in your browser and reload the page.</p>
+      <p>If you're using a screen reader or have accessibility needs, you can contact us at <a href="mailto:accessibility@aivillage.io">accessibility@aivillage.io</a> for alternative access options.</p>
+    </div>
+  </noscript>
+
+  <!-- Main application script -->
+  <script type="module" src="/src/main.ts"></script>
+
+  <!-- Performance monitoring -->
+  <script>
+    // Basic performance monitoring
+    window.addEventListener('load', function() {
+      if (window.performance && window.performance.timing) {
+        const loadTime = window.performance.timing.loadEventEnd - window.performance.timing.navigationStart;
+        console.log('Page load time:', loadTime + 'ms');
+
+        // Report to analytics if available
+        if (window.gtag) {
+          window.gtag('event', 'page_load_time', {
+            custom_parameter: loadTime
+          });
+        }
+      }
+    });
+
+    // Report web vitals if available
+    if (typeof webVitals !== 'undefined') {
+      webVitals.getCLS(console.log);
+      webVitals.getFID(console.log);
+      webVitals.getFCP(console.log);
+      webVitals.getLCP(console.log);
+      webVitals.getTTFB(console.log);
+    }
+  </script>
+</body>
+</html>

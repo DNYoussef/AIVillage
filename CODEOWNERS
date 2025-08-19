@@ -1,0 +1,330 @@
+# AIVillage CODEOWNERS
+# Each critical module requires ≥2 owners for bus factor mitigation
+# Module owners are responsible for reviews, architecture decisions, and mentoring
+# Format: path/pattern @owner1 @owner2 [additional-owners]
+
+# ===========================
+# Repository-wide ownership
+# ===========================
+
+# Root configuration and documentation
+* @DNYoussef @platform-team
+README.md @DNYoussef @platform-team @docs-team
+CHANGELOG.md @DNYoussef @platform-team
+LICENSE @DNYoussef
+.gitignore @platform-team
+.github/ @platform-team @devops-team
+
+# ===========================
+# Platform & Infrastructure
+# ===========================
+
+# Core platform infrastructure
+/packages/core/ @platform-team @DNYoussef
+/packages/core/common/ @platform-team @infrastructure-team
+/packages/core/distributed_inference/ @platform-team @ai-team
+/packages/core/experimental/ @platform-team @research-team
+/packages/core/benchmarks/ @platform-team @performance-team
+
+# Cost management and resource optimization
+/packages/core/cost_management/ @platform-team @infrastructure-team
+/packages/core/backup/ @platform-team @devops-team
+/packages/core/compliance/ @platform-team @security-team
+
+# Build and deployment infrastructure
+/build/ @devops-team @platform-team
+/bin/ @platform-team @devops-team
+/deploy/ @devops-team @infrastructure-team
+/clients/ @frontend-team @platform-team
+
+# Configuration management
+/config/ @platform-team @devops-team @security-team
+
+# ===========================
+# Security & Authentication
+# ===========================
+
+# Security infrastructure and policies
+/packages/core/security/ @security-team @platform-team
+/docs/security/ @security-team @compliance-team
+/tests/security/ @security-team @qa-team
+
+# Authentication and authorization
+/packages/core/security/rbac/ @security-team @identity-team
+/packages/core/security/auth/ @security-team @identity-team
+
+# Compliance and audit
+/packages/core/compliance/ @security-team @compliance-team @legal-team
+
+# ===========================
+# Data & Persistence
+# ===========================
+
+# Database and data management
+/packages/core/data/ @data-team @backend-team
+/packages/core/backup/ @data-team @devops-team
+
+# Data processing and ETL
+/packages/core/data_processing/ @data-team @ai-team
+
+# Vector databases and search
+/packages/rag/vector/ @data-team @search-team
+/packages/rag/graph/ @data-team @knowledge-team
+
+# ===========================
+# AI Agents & Agent Forge
+# ===========================
+
+# Agent Forge pipeline and training
+/packages/agent_forge/ @ai-team @agents-team
+/packages/agent_forge/core/ @ai-team @platform-team
+/packages/agent_forge/phases/ @ai-team @research-team
+/packages/agent_forge/integration/ @ai-team @infrastructure-team
+
+# Specialized agents
+/packages/agents/ @agents-team @ai-team
+/packages/agents/specialized/ @agents-team @domain-experts
+/packages/agents/core/ @agents-team @platform-team
+/packages/agents/governance/ @agents-team @governance-team
+/packages/agents/distributed/ @agents-team @distributed-team
+
+# Agent coordination and orchestration
+/packages/agents/core/agent_orchestration_system.py @agents-team @coordination-team
+
+# ===========================
+# RAG & Knowledge Systems
+# ===========================
+
+# RAG system architecture
+/packages/rag/ @knowledge-team @ai-team
+/packages/rag/core/ @knowledge-team @platform-team
+/packages/rag/memory/ @knowledge-team @cognitive-team
+
+# Knowledge graphs and Bayesian networks
+/packages/rag/graph/ @knowledge-team @data-team
+/packages/rag/analysis/ @knowledge-team @analytics-team
+
+# Distributed RAG coordination
+/packages/rag/distributed/ @knowledge-team @distributed-team
+/packages/rag/integration/ @knowledge-team @integration-team
+
+# Creativity and insight engines
+/packages/rag/creativity/ @knowledge-team @research-team
+
+# ===========================
+# P2P & Communications
+# ===========================
+
+# P2P transport layer
+/packages/p2p/ @p2p-team @networking-team
+/packages/p2p/core/ @p2p-team @platform-team
+/packages/p2p/bitchat/ @p2p-team @mobile-team
+/packages/p2p/betanet/ @p2p-team @security-team
+/packages/p2p/bridges/ @p2p-team @integration-team
+
+# Communication protocols
+/packages/p2p/protocols/ @p2p-team @protocol-team
+
+# Network reliability and failover
+/packages/p2p/resilience/ @p2p-team @reliability-team
+
+# ===========================
+# API, Gateway & Twin Services
+# ===========================
+
+# API gateway and routing
+/packages/core/api/ @api-team @backend-team
+/packages/core/gateway/ @api-team @platform-team
+
+# Twin service (AI interaction layer)
+/packages/core/twin/ @api-team @ai-team
+
+# OpenAPI specifications and documentation
+/docs/api/ @api-team @docs-team
+docs/api/openapi.yaml @api-team @integration-team
+
+# Rate limiting and authentication
+/packages/core/api/middleware/ @api-team @security-team
+
+# ===========================
+# Frontend & User Experience
+# ===========================
+
+# Web frontend
+/clients/web/ @frontend-team @ui-team
+/clients/typescript/ @frontend-team @web-team
+
+# Mobile applications
+/clients/mobile/ @mobile-team @frontend-team
+/clients/mobile/android/ @mobile-team @android-team
+/clients/mobile/ios/ @mobile-team @ios-team
+
+# CLI tools and developer experience
+/bin/ @frontend-team @devops-team
+/clients/python/ @frontend-team @backend-team
+
+# ===========================
+# Edge Computing & Mobile
+# ===========================
+
+# Edge device management
+/packages/edge/ @edge-team @infrastructure-team
+/packages/edge/core/ @edge-team @platform-team
+/packages/edge/mobile/ @edge-team @mobile-team
+/packages/edge/fog_compute/ @edge-team @distributed-team
+
+# Digital twin and personal AI
+/packages/edge/mobile/digital_twin_concierge.py @edge-team @ai-team @privacy-team
+
+# Resource management and optimization
+/packages/edge/mobile/resource_manager.py @edge-team @mobile-team @performance-team
+
+# ===========================
+# Testing & Quality Assurance
+# ===========================
+
+# Test infrastructure and frameworks
+/tests/ @qa-team @platform-team
+/tests/unit/ @qa-team @dev-team
+/tests/integration/ @qa-team @integration-team
+/tests/e2e/ @qa-team @frontend-team
+
+# Performance and benchmark tests
+/tests/benchmarks/ @qa-team @performance-team
+/tests/performance/ @qa-team @performance-team
+
+# Security testing
+/tests/security/ @qa-team @security-team
+
+# Validation scripts
+/tests/validation/ @qa-team @validation-team
+
+# ===========================
+# Documentation & Processes
+# ===========================
+
+# Architecture and technical documentation
+/docs/ @docs-team @platform-team
+/docs/architecture/ @docs-team @architects
+/docs/development/ @docs-team @dev-team
+
+# Process documentation
+/docs/process/ @docs-team @process-team
+docs/process/Definition_of_Done.md @docs-team @qa-team @platform-team
+docs/process/Deprecation_Policy.md @docs-team @platform-team @api-team
+
+# Operations and deployment documentation
+/docs/operations/ @docs-team @devops-team
+/docs/deployment/ @docs-team @devops-team
+
+# User guides and tutorials
+/docs/guides/ @docs-team @ux-team
+
+# ===========================
+# Specialized Components
+# ===========================
+
+# Tokenomics and governance
+/packages/core/tokenomics/ @tokenomics-team @governance-team @economics-team
+
+# Compression and optimization
+/packages/core/compression/ @compression-team @performance-team @ai-team
+
+# Monitoring and observability
+/packages/core/monitoring/ @monitoring-team @devops-team @reliability-team
+
+# Analytics and metrics
+/packages/core/analytics/ @analytics-team @data-team
+
+# ===========================
+# Language-Specific Components
+# ===========================
+
+# Rust components (BetaNet, performance-critical)
+/clients/rust/ @rust-team @p2p-team
+crates/ @rust-team @performance-team
+
+# Python core (majority of codebase)
+*.py @python-team @platform-team
+
+# TypeScript/JavaScript
+*.ts *.js *.tsx *.jsx @frontend-team @web-team
+
+# Configuration files
+*.yaml *.yml *.json @devops-team @platform-team
+*.toml @python-team @devops-team
+
+# Docker and containerization
+Dockerfile* @devops-team @infrastructure-team
+docker-compose*.yml @devops-team @platform-team
+
+# Kubernetes and orchestration
+*.k8s.yaml @devops-team @kubernetes-team
+/deploy/helm/ @devops-team @kubernetes-team
+
+# ===========================
+# Critical Security Files
+# ===========================
+
+# Security-sensitive configuration
+.env* @security-team @devops-team
+**/security.yaml @security-team @platform-team
+**/auth.yaml @security-team @identity-team
+
+# Compliance and audit trails
+**/compliance/ @security-team @compliance-team @legal-team
+**/audit/ @security-team @compliance-team
+
+# ===========================
+# Performance Critical Components
+# ===========================
+
+# High-performance inference
+/packages/core/inference/ @performance-team @ai-team
+/packages/core/distributed_inference/ @performance-team @distributed-team
+
+# Compression pipelines
+/packages/agent_forge/phases/bitnet_compression.py @compression-team @ai-team
+/packages/agent_forge/phases/final_compression.py @compression-team @performance-team
+
+# P2P network performance
+/packages/p2p/core/transport_manager.py @performance-team @p2p-team
+
+# ===========================
+# Research & Experimental
+# ===========================
+
+# Research implementations
+/packages/core/experimental/ @research-team @ai-team
+/packages/agent_forge/phases/quietstar.py @research-team @cognitive-team
+
+# Cutting-edge AI techniques
+/packages/agent_forge/phases/adas.py @research-team @architecture-team
+/packages/rag/creativity/ @research-team @creativity-team
+
+# ===========================
+# Team Definitions
+# ===========================
+# @DNYoussef - Project owner and lead architect
+# @platform-team - Core platform and infrastructure
+# @security-team - Security, compliance, and privacy
+# @data-team - Data management and persistence
+# @ai-team - AI/ML algorithms and models
+# @agents-team - Specialized agents and coordination
+# @knowledge-team - RAG systems and knowledge graphs
+# @p2p-team - P2P networking and communications
+# @api-team - APIs, gateways, and service interfaces
+# @frontend-team - User interfaces and client applications
+# @edge-team - Edge computing and mobile optimization
+# @qa-team - Testing, validation, and quality assurance
+# @docs-team - Documentation and technical writing
+# @devops-team - Deployment, operations, and CI/CD
+# @performance-team - Performance optimization and benchmarking
+# @research-team - Research implementations and experimental features
+
+# Additional specialized teams:
+# @infrastructure-team, @mobile-team, @distributed-team, @integration-team
+# @governance-team, @privacy-team, @compliance-team, @legal-team
+# @rust-team, @python-team, @web-team, @kubernetes-team
+# @monitoring-team, @analytics-team, @reliability-team
+# @architects, @domain-experts, @process-team
