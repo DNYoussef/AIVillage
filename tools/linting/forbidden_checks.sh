@@ -4,7 +4,7 @@
 
 set -e
 
-echo "🔍 Running forbidden terms and patterns check..."
+echo "[CHECK] Running forbidden terms and patterns check..."
 
 # Configuration
 EXIT_CODE=0
@@ -101,14 +101,14 @@ check_files() {
     if [[ ${#found_files[@]} -gt 0 ]]; then
         case "$severity" in
             "ERROR")
-                echo "❌ FORBIDDEN PATTERN FOUND: $description"
+                echo "[ERROR] FORBIDDEN PATTERN FOUND: $description"
                 EXIT_CODE=1
                 ;;
             "WARNING")
-                echo "⚠️  WARNING PATTERN FOUND: $description"
+                echo "[WARN]  WARNING PATTERN FOUND: $description"
                 ;;
             "INFO")
-                echo "ℹ️  INFO PATTERN FOUND: $description"
+                echo "[INFO]  INFO PATTERN FOUND: $description"
                 ;;
         esac
 
@@ -121,13 +121,13 @@ check_files() {
         done
         echo ""
     else
-        echo "✅ No issues found for: $description"
+        echo "[OK] No issues found for: $description"
     fi
 }
 
 # Function to run all checks
 run_forbidden_checks() {
-    echo "🚨 Running security and quality checks..."
+    echo "[CRITICAL] Running security and quality checks..."
     echo ""
 
     # Critical security issues (BLOCK BUILD)
@@ -196,7 +196,7 @@ check_large_files() {
     done < <(find . -type f ! -path "./.git/*" ! -path "./deprecated/*" ! -path "./archive/*" -print0)
 
     if [[ ${#large_files[@]} -gt 0 ]]; then
-        echo "⚠️  Large files found (>10MB):"
+        echo "[WARN]  Large files found (>10MB):"
         for file_info in "${large_files[@]}"; do
             file="${file_info%:*}"
             size="${file_info#*:}"
@@ -205,7 +205,7 @@ check_large_files() {
         done
         echo ""
     else
-        echo "✅ No large files found"
+        echo "[OK] No large files found"
         echo ""
     fi
 }
@@ -232,20 +232,20 @@ check_binary_files() {
     done < <(find . -type f ! -path "./.git/*" ! -path "./deprecated/*" ! -path "./archive/*" ! -path "./target/*" ! -path "./node_modules/*" ! -path "./venv/*" -print0)
 
     if [[ ${#binary_files[@]} -gt 0 ]]; then
-        echo "⚠️  Unexpected binary files found:"
+        echo "[WARN]  Unexpected binary files found:"
         for file in "${binary_files[@]}"; do
             echo "   📁 $file"
         done
         echo ""
     else
-        echo "✅ No unexpected binary files found"
+        echo "[OK] No unexpected binary files found"
         echo ""
     fi
 }
 
 # Main execution
 main() {
-    echo "🔍 AIVillage Forbidden Patterns Check"
+    echo "[CHECK] AIVillage Forbidden Patterns Check"
     echo "======================================"
     echo ""
 
@@ -256,9 +256,9 @@ main() {
     echo "🏁 Forbidden checks completed"
 
     if [[ $EXIT_CODE -eq 0 ]]; then
-        echo "✅ All checks passed"
+        echo "[OK] All checks passed"
     else
-        echo "❌ Some checks failed - see output above"
+        echo "[ERROR] Some checks failed - see output above"
         echo ""
         echo "💡 To fix:"
         echo "   1. Remove or replace forbidden patterns"
