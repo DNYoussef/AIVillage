@@ -115,7 +115,6 @@ jobs:
       run: |
         python scripts/operational/collect_artifacts.py \
           --output-dir artifacts \
-          --config config/artifacts_collection.json \
           ${{ github.event.inputs.parallel_collection == 'true' && '--parallel' || '' }} \
           ${{ github.event.inputs.verbose_output == 'true' && '--verbose' || '' }} || true
 
