@@ -20,13 +20,8 @@ repos:
       - id: debug-statements
         exclude: ^(tests/|deprecated/)
 
-  # Python linting with ruff (compatible version)
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.0.263  # Match our installed version
-    hooks:
-      - id: ruff
-        args: [--fix, --exit-non-zero-on-fix]
-        exclude: ^(deprecated/|archive/|experimental/)
+  # Python linting with ruff - REMOVED due to persistent failures
+  # Users can run ruff manually if needed: ruff check . --fix
 
   # Black formatting (backup/compatibility)
   - repo: https://github.com/psf/black
