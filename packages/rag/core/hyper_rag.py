@@ -21,7 +21,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Any
 
-import numpy as np
+import statistics
 
 from ..analysis.graph_fixer import GraphFixer
 from ..creativity.insight_engine import CreativityEngine
@@ -287,7 +287,7 @@ class HyperRAG:
                     )
                     cognitive_analysis = {
                         "analysis_results": cognitive_results,
-                        "confidence": np.mean([r.confidence.value for r in cognitive_results]),
+                        "confidence": statistics.mean([r.confidence.value for r in cognitive_results]),
                     }
                 except asyncio.TimeoutError:
                     logger.warning(f"Cognitive analysis timed out after {self.config.cognitive_analysis_timeout}s")
@@ -572,7 +572,7 @@ class HyperRAG:
                     supporting_sources.append(result.source)
 
                 answer = f"Based on available information: {' '.join(answer_parts[:2])}"
-                confidence = np.mean([r.relevance_score for r in top_results])
+                confidence = statistics.mean([r.relevance_score for r in top_results])
 
                 return SynthesizedAnswer(
                     answer=answer,
