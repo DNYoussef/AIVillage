@@ -113,10 +113,18 @@ jobs:
 
     - name: Collect operational artifacts
       run: |
+        # Run artifact collection with built-in defaults (no config file needed)
         python scripts/operational/collect_artifacts.py \
           --output-dir artifacts \
           ${{ github.event.inputs.parallel_collection == 'true' && '--parallel' || '' }} \
-          ${{ github.event.inputs.verbose_output == 'true' && '--verbose' || '' }} || true
+          ${{ github.event.inputs.verbose_output == 'true' && '--verbose' || '' }}
+
+        # Check if collection was successful
+        if [ $? -eq 0 ]; then
+          echo "[OK] Artifact collection completed successfully"
+        else
+          echo "[ERROR] Artifact collection failed, continuing with available artifacts"
+        fi
 
     - name: Upload coverage to Codecov
       if: always()

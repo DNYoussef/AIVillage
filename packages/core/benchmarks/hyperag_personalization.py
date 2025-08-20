@@ -375,6 +375,7 @@ class PersonalizationApproach:
         """Retrieve personalized results for a query."""
         # Base implementation using simple semantic similarity
         import time
+
         start_time = time.time()
 
         # Mock retrieval based on user preferences and query
@@ -631,7 +632,8 @@ class ICLEnhancedApproach(PersonalizationApproach):
                     recent_num = int(recent_item.split("_")[1])
                     similarity = 1.0 / (1.0 + abs(current_num - recent_num) * 0.1)
                     icl_score += similarity * 0.3
-                except:
+                except (ValueError, IndexError):
+                    # Skip if item_id format is unexpected
                     pass
 
             elif "paper" in item_id and "paper" in recent_item:

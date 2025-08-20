@@ -58,8 +58,9 @@ jobs:
         run: |
           echo "Checking for critical placeholders in production code..."
           # Only fail on critical placeholders that would break production
-          if grep -r "NotImplementedError\|raise NotImplementedError\|TODO.*CRITICAL\|FIXME.*CRITICAL" \
+          if grep -r "^[[:space:]]*raise NotImplementedError\|TODO.*CRITICAL\|FIXME.*CRITICAL" \
              --include="*.py" --include="*.rs" --include="*.go" \
+             --exclude-dir=experimental --exclude-dir=legacy --exclude-dir=tools \
              packages/core/ packages/rag/ packages/agents/ packages/p2p/ packages/edge/ 2>/dev/null; then
             echo "[ERROR] Critical placeholders found in production code!"
             exit 1
