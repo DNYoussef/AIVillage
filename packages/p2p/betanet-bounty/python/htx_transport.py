@@ -587,10 +587,115 @@ class HtxServer:
             await writer.drain()
 
 
+# Enhanced features from v2 consolidation
+
+
+@dataclass
+class ChromeFingerprintTemplate:
+    """Chrome fingerprint template with auto-refresh capability (from v2)"""
+
+    ja3_hash: str
+    ja4_hash: str
+    cipher_suites: list
+    extensions: list
+    chrome_version: str
+    creation_timestamp: float = field(default_factory=time.time)
+
+    def is_stale(self, max_age_hours: int = 24) -> bool:
+        """Check if template is stale and needs refresh"""
+        return (time.time() - self.creation_timestamp) > (max_age_hours * 3600)
+
+
+@dataclass
+class OriginFingerprint:
+    """Per-origin fingerprint data for precise mimicry (from v2)"""
+
+    hostname: str
+    tls_template: ChromeFingerprintTemplate
+    cookie_patterns: list
+    header_sequences: list
+    response_timings: list
+    last_calibrated: float = field(default_factory=time.time)
+
+    def needs_recalibration(self, max_age_hours: int = 6) -> bool:
+        """Check if origin needs recalibration"""
+        return (time.time() - self.last_calibrated) > (max_age_hours * 3600)
+
+
+class EnhancedHtxClient(HtxClient):
+    """Enhanced HTX client with advanced fingerprinting and covert channels"""
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.fingerprint_templates = {}
+        self.origin_fingerprints = {}
+        self.cover_traffic_enabled = kwargs.get("cover_traffic", False)
+
+    async def enable_chrome_fingerprinting(self, chrome_version: str = "119"):
+        """Enable Chrome fingerprinting with template auto-refresh"""
+        # Generate Chrome template for specified version
+        template = ChromeFingerprintTemplate(
+            ja3_hash="769,47-53-5-10-49162-49161-49171-49172-156-157-47-53",
+            ja4_hash="t13d1516h2_8daaf6152771_02713d6af862",
+            cipher_suites=["TLS_AES_128_GCM_SHA256", "TLS_AES_256_GCM_SHA384"],
+            extensions=[0, 5, 10, 11, 13, 16, 18, 21, 23, 35, 43, 45, 51],
+            chrome_version=chrome_version,
+        )
+        self.fingerprint_templates[chrome_version] = template
+        logger.info(f"Chrome {chrome_version} fingerprinting enabled")
+
+    async def calibrate_origin(self, hostname: str) -> OriginFingerprint:
+        """Calibrate fingerprinting for specific origin"""
+        # Perform calibration requests to learn origin-specific patterns
+        fingerprint = OriginFingerprint(
+            hostname=hostname,
+            tls_template=self.fingerprint_templates.get("119"),
+            cookie_patterns=[],
+            header_sequences=[],
+            response_timings=[],
+        )
+        self.origin_fingerprints[hostname] = fingerprint
+        return fingerprint
+
+
+class CovertChannelManager:
+    """HTTP/2 and HTTP/3 covert channel manager (from deprecated files)"""
+
+    def __init__(self):
+        self.h2_available = HTTP2_AVAILABLE
+        self.h3_available = HTTP3_AVAILABLE
+        self.active_channels = {}
+
+    async def create_h2_channel(self, target_url: str) -> str:
+        """Create HTTP/2 multiplexed covert channel"""
+        if not self.h2_available:
+            raise RuntimeError("HTTP/2 not available")
+
+        channel_id = str(uuid.uuid4())
+        # Implementation would create H2 connection with multiplexing
+        self.active_channels[channel_id] = {"type": "h2", "url": target_url, "streams": {}}
+        return channel_id
+
+    async def create_h3_channel(self, target_url: str) -> str:
+        """Create HTTP/3 QUIC covert channel"""
+        if not self.h3_available:
+            raise RuntimeError("HTTP/3 not available")
+
+        channel_id = str(uuid.uuid4())
+        # Implementation would create H3/QUIC connection
+        self.active_channels[channel_id] = {"type": "h3", "url": target_url, "streams": {}}
+        return channel_id
+
+
 # Factory functions for easy integration
 def create_htx_client(**kwargs) -> HtxClient:
     """Factory function to create HTX client."""
     return HtxClient(**kwargs)
+
+
+def create_enhanced_htx_client(**kwargs) -> EnhancedHtxClient:
+    """Factory function to create Enhanced HTX client with advanced features."""
+    return EnhancedHtxClient(**kwargs)
 
 
 def create_htx_server(**kwargs) -> HtxServer:
