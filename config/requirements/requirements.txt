@@ -56,4 +56,4 @@ beautifulsoup4>=4.12.2
 markdown>=3.5.1
 python-multipart>=0.0.6
 
--c constraints.txt
+-c ../constraints.txt

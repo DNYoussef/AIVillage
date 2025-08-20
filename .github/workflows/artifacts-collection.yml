@@ -137,9 +137,24 @@ jobs:
 
     - name: Upload security results to GitHub Security tab
       if: always()
-      uses: github/codeql-action/upload-sarif@v2
-      with:
-        sarif_file: artifacts/security/
+      run: |
+        # Check if any SARIF files exist before uploading
+        if find artifacts/security/ -name "*.sarif" -type f | head -1 | grep -q .; then
+          echo "Found SARIF files, uploading to Security tab"
+          # Upload each SARIF file individually
+          for sarif_file in artifacts/security/*.sarif; do
+            if [ -f "$sarif_file" ]; then
+              echo "Uploading $sarif_file"
+              curl -X POST \
+                -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+                -H "Accept: application/vnd.github.v3+json" \
+                "${{ github.api_url }}/repos/${{ github.repository }}/code-scanning/sarifs" \
+                -d @"$sarif_file" || echo "Failed to upload $sarif_file"
+            fi
+          done
+        else
+          echo "No SARIF files found in artifacts/security/, skipping upload"
+        fi
       continue-on-error: true
 
     - name: Archive artifact collection

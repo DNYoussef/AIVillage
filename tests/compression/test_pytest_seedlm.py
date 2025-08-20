@@ -12,10 +12,41 @@ import torch
 sys.path.insert(0, os.getcwd())
 
 # Import required libraries
+try:
+    # Try to import from packages structure first
+    from packages.agent_forge.compression.seedlm import (
+        AdaptiveBlockAnalyzer,
+        MultiScaleLFSRGenerator,
+        ProgressiveSeedLMEncoder,
+        SeedLMCompressionError,
+        SeedLMConfig,
+        SeedLMDecompressionError,
+    )
+except ImportError:
+    try:
+        # Fallback to agent_forge structure
+        from agent_forge.compression.seedlm import (
+            AdaptiveBlockAnalyzer,
+            MultiScaleLFSRGenerator,
+            ProgressiveSeedLMEncoder,
+            SeedLMCompressionError,
+            SeedLMConfig,
+            SeedLMDecompressionError,
+        )
+    except ImportError:
+        # Last resort: add to path and import
+        import sys
+        from pathlib import Path
 
-
-# Execute the seedlm module to load classes
-exec(open("agent_forge/compression/seedlm.py").read())
+        sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+        from agent_forge.compression.seedlm import (
+            AdaptiveBlockAnalyzer,
+            MultiScaleLFSRGenerator,
+            ProgressiveSeedLMEncoder,
+            SeedLMCompressionError,
+            SeedLMConfig,
+            SeedLMDecompressionError,
+        )
 
 
 # Now run the test functions from test_seedlm_core.py

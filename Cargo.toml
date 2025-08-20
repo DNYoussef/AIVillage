@@ -1,10 +1,17 @@
 [workspace]
 members = [
-    "crates/betanet-ffi",
-    "crates/betanet-htx",
-    "crates/betanet-mixnode",
-    "crates/betanet-utls",
-    "crates/betanet-linter"
+    "packages/p2p/betanet-bounty/crates/betanet-ffi",
+    "packages/p2p/betanet-bounty/crates/betanet-htx",
+    "packages/p2p/betanet-bounty/crates/betanet-mixnode",
+    "packages/p2p/betanet-bounty/crates/betanet-utls",
+    "packages/p2p/betanet-bounty/crates/betanet-linter",
+    "packages/p2p/betanet-bounty/crates/betanet-cla",
+    "packages/p2p/betanet-bounty/crates/betanet-dtn",
+    "packages/p2p/betanet-bounty/crates/agent-fabric",
+    "packages/p2p/betanet-bounty/crates/bitchat-cla",
+    "packages/p2p/betanet-bounty/crates/federated",
+    "packages/p2p/betanet-bounty/crates/navigator",
+    "packages/p2p/betanet-bounty/crates/twin-vault"
 ]
 
 [workspace.package]
