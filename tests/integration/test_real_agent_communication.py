@@ -320,7 +320,7 @@ class TestRealAgentCommunication:
                     self.metrics["average_response_time"] = (
                         self.metrics["total_processing_time"] / self.metrics["tasks_completed"]
                     )
-                    self.metrics["last_activity"] = time.time()
+                    self.metrics["last_activity"] = time.monotonic()
 
                     # Calculate success rate
                     total_attempts = self.metrics["tasks_completed"] + self.metrics["errors_count"]
@@ -337,7 +337,7 @@ class TestRealAgentCommunication:
                     self.metrics["errors_count"] += 1
                     total_attempts = self.metrics["tasks_completed"] + self.metrics["errors_count"]
                     self.metrics["success_rate"] = self.metrics["tasks_completed"] / total_attempts
-                    self.metrics["last_activity"] = time.time()
+                    self.metrics["last_activity"] = time.monotonic()
 
                     return {
                         "status": "error",

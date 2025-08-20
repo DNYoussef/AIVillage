@@ -11,11 +11,11 @@ transport systems, unified into a single coherent interface.
 
 import asyncio
 import logging
-import time
 from collections import defaultdict
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
+from time import monotonic
 from typing import Any
 
 from .message_types import MessagePriority, UnifiedMessage
@@ -150,7 +150,7 @@ class TransportManager:
             "transport_failures": defaultdict(int),
             "routing_decisions": defaultdict(int),
             "chunk_reassemblies": 0,
-            "last_activity": time.time(),
+            "last_activity": monotonic(),
         }
 
         # Configuration
@@ -327,7 +327,7 @@ class TransportManager:
         if success:
             self.stats["messages_sent"] += 1
             self.stats["bytes_sent"] += message.size_bytes
-            self.stats["last_activity"] = time.time()
+            self.stats["last_activity"] = monotonic()
             return True
 
         # Try fallback transports
@@ -337,7 +337,7 @@ class TransportManager:
             if success:
                 self.stats["messages_sent"] += 1
                 self.stats["bytes_sent"] += message.size_bytes
-                self.stats["last_activity"] = time.time()
+                self.stats["last_activity"] = monotonic()
                 return True
 
         logger.error("Failed to send message via all available transports")
@@ -414,7 +414,7 @@ class TransportManager:
 
         self.stats["messages_received"] += 1
         self.stats["bytes_received"] += message.size_bytes
-        self.stats["last_activity"] = time.time()
+        self.stats["last_activity"] = monotonic()
 
         # Handle chunked messages
         if message.is_chunked:

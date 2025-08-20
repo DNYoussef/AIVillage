@@ -66,8 +66,9 @@ class TestHTXStream:
         assert stream.flow_control_window == 65536  # Default 64KB
         assert stream.data_received == b""
         assert stream.data_to_send == b""
-        assert stream.created_at <= time.time()
-        assert stream.last_activity <= time.time()
+        now = time.monotonic()
+        assert stream.created_at <= now
+        assert stream.last_activity <= now
 
     def test_stream_with_custom_values(self):
         """Test stream with custom values."""
