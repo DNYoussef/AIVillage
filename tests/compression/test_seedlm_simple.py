@@ -9,9 +9,17 @@ import sys
 import torch
 
 sys.path.insert(0, os.getcwd())
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-# Load SeedLM implementation directly
-exec(open("agent_forge/compression/seedlm.py").read())
+# Import SeedLM classes properly to avoid F821 errors
+from test_imports import (
+    AdaptiveBlockAnalyzer,
+    MultiScaleLFSRGenerator,
+    ProgressiveSeedLMEncoder,
+    SeedLMCompressionError,
+    SeedLMConfig,
+    SeedLMDecompressionError,
+)
 
 
 def test_basic_functionality():

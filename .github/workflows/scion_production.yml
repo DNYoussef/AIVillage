@@ -22,15 +22,34 @@ jobs:
         uses: actions/setup-go@v4
         with:
           go-version: stable
-      - name: Run Rust clippy
+      - name: Run Rust clippy (Main Workspace)
+        continue-on-error: true
         run: |
-          if [ -f "build/core-build/Cargo.toml" ]; then
+          if [ -f "Cargo.toml" ]; then
+            echo "Running clippy on main workspace..."
+            cargo clippy --workspace --all-targets --message-format=json > clippy-main.json || echo "[WARNING] Clippy found issues in main workspace"
+          elif [ -f "build/core-build/Cargo.toml" ]; then
             cd build/core-build
-            cargo clippy --message-format=json > ../../clippy.json || echo "Clippy completed with warnings"
+            cargo clippy --message-format=json > ../../clippy-main.json || echo "[WARNING] Clippy completed with warnings"
             cd ../..
           else
-            echo "No Rust workspace found, skipping clippy"
-            echo '[]' > clippy.json
+            echo "[INFO] No main Rust workspace found, skipping clippy"
+            echo '[]' > clippy-main.json
+          fi
+
+      - name: Run Rust clippy (BetaNet Bounty Workspace)
+        continue-on-error: true
+        env:
+          OPENSSL_VENDORED: 1
+        run: |
+          if [ -f "packages/p2p/betanet-bounty/Cargo.toml" ]; then
+            echo "Running clippy on BetaNet bounty workspace..."
+            cd packages/p2p/betanet-bounty
+            cargo clippy --workspace --all-targets --message-format=json > ../../../clippy-betanet.json || echo "[WARNING] Clippy found issues in BetaNet workspace"
+            cd ../../..
+          else
+            echo "[INFO] No BetaNet bounty workspace found, skipping clippy"
+            echo '[]' > clippy-betanet.json
           fi
 
       - name: Run Go vet
@@ -49,10 +68,11 @@ jobs:
         with:
           name: lint-reports
           path: |
-            clippy.json
+            clippy-main.json
+            clippy-betanet.json
             govet.txt
 
-      - name: Build Rust
+      - name: Build Rust (Main Workspace)
         continue-on-error: true
         run: |
           if [ -f "Cargo.toml" ]; then
@@ -64,17 +84,52 @@ jobs:
             cargo build --all-targets || echo "[WARNING] Build completed with some failures (non-blocking)"
             cd ../..
           else
-            echo "[INFO] No Rust workspace found, skipping build"
+            echo "[INFO] No main Rust workspace found, skipping build"
           fi
 
-      - name: Test Rust
+      - name: Build Rust (BetaNet Bounty Workspace)
+        continue-on-error: true
+        env:
+          OPENSSL_VENDORED: 1
         run: |
-          if [ -f "build/core-build/Cargo.toml" ]; then
+          if [ -f "packages/p2p/betanet-bounty/Cargo.toml" ]; then
+            echo "Building BetaNet bounty workspace..."
+            cd packages/p2p/betanet-bounty
+            cargo build --workspace --all-targets || echo "[WARNING] Some BetaNet crates failed to build (non-blocking)"
+            echo "[INFO] BetaNet bounty workspace build completed"
+            cd ../../..
+          else
+            echo "[INFO] No BetaNet bounty workspace found, skipping build"
+          fi
+
+      - name: Test Rust (Main Workspace)
+        continue-on-error: true
+        run: |
+          if [ -f "Cargo.toml" ]; then
+            echo "Testing main Rust workspace..."
+            cargo test --workspace --all-targets || echo "[WARNING] Some workspace tests failed (non-blocking)"
+            echo "[INFO] Main workspace tests completed"
+          elif [ -f "build/core-build/Cargo.toml" ]; then
             cd build/core-build
-            cargo test --all-targets || echo "Some tests failed (non-blocking)"
+            cargo test --all-targets || echo "[WARNING] Some tests failed (non-blocking)"
             cd ../..
           else
-            echo "No Rust workspace found, skipping tests"
+            echo "[INFO] No main Rust workspace found, skipping tests"
+          fi
+
+      - name: Test Rust (BetaNet Bounty Workspace)
+        continue-on-error: true
+        env:
+          OPENSSL_VENDORED: 1
+        run: |
+          if [ -f "packages/p2p/betanet-bounty/Cargo.toml" ]; then
+            echo "Testing BetaNet bounty workspace..."
+            cd packages/p2p/betanet-bounty
+            cargo test --workspace --all-targets || echo "[WARNING] Some BetaNet tests failed (non-blocking)"
+            echo "[INFO] BetaNet bounty workspace tests completed"
+            cd ../../..
+          else
+            echo "[INFO] No BetaNet bounty workspace found, skipping tests"
           fi
 
       - name: Build Go
@@ -115,15 +170,30 @@ jobs:
           name: bench-results
           path: bench.log
 
-      - name: Short fuzz
+      - name: Short fuzz (Main Workspace)
+        continue-on-error: true
         run: |
           if [ -f "build/core-build/crates/betanet-htx/fuzz/Cargo.toml" ]; then
             cd build/core-build/crates/betanet-htx
             cargo install cargo-fuzz >/dev/null 2>&1 || echo "Cargo fuzz installation failed, continuing"
-            cargo fuzz run htx_frame_fuzz -- -runs=100 -max_total_time=30 || echo "Fuzz testing completed with issues (non-blocking)"
+            cargo fuzz run htx_frame_fuzz -- -runs=100 -max_total_time=30 || echo "[WARNING] Main workspace fuzz testing completed with issues (non-blocking)"
             cd ../../../..
           else
-            echo 'No fuzz targets; skipping.'
+            echo '[INFO] No main workspace fuzz targets found, skipping.'
+          fi
+
+      - name: Short fuzz (BetaNet Bounty Workspace)
+        continue-on-error: true
+        env:
+          OPENSSL_VENDORED: 1
+        run: |
+          if [ -f "packages/p2p/betanet-bounty/crates/betanet-htx/fuzz/Cargo.toml" ]; then
+            cd packages/p2p/betanet-bounty/crates/betanet-htx
+            cargo install cargo-fuzz >/dev/null 2>&1 || echo "Cargo fuzz installation failed, continuing"
+            cargo fuzz run htx_frame_fuzz -- -runs=100 -max_total_time=30 || echo "[WARNING] BetaNet workspace fuzz testing completed with issues (non-blocking)"
+            cd ../../../../..
+          else
+            echo '[INFO] No BetaNet bounty fuzz targets found, skipping.'
           fi
 
       - name: Check for forbidden terms

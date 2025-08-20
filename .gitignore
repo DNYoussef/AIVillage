@@ -6,6 +6,7 @@
 __pycache__/
 build/
 dist/
+.ruff_cache/
 
 # Virtual environment
 *.venv
@@ -104,6 +105,11 @@ coverage.xml
 .pytest_cache/
 test_checkpoints/
 test_output/
+test_outputs/
+test_data/
+test_artifacts*/
+test_artifacts_quick/
+tests/test_data/
 forge_checkpoints/
 forge_output/
 agent_forge_outputs/

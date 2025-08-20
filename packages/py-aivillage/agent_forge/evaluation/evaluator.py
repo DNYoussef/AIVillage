@@ -1,28 +1,22 @@
-try:
-    # Try to import from packages structure
-    from packages.agent_forge.evaluation import evaluator as _impl
-except ImportError:
-    try:
-        # Try direct import from agent_forge
-        from agent_forge.evaluation import evaluator as _impl
-    except ImportError:
-        # Create a stub implementation if the module doesn't exist
-        import logging
+"""
+Compatibility wrapper for Agent Forge evaluator.
 
-        logger = logging.getLogger(__name__)
-        logger.warning("Could not import evaluator implementation, using stub")
+This module provides backward compatibility for code that imports from the old location.
+All functionality has been moved to packages.agent_forge.evaluation.
+"""
 
-        class _StubImpl:
-            def evaluate_thought_quality(self, model, eval_data):
-                return {"quality_score": 0.5, "coherence": 0.5, "relevance": 0.5}
+# Import from the new canonical location
+from packages.agent_forge.evaluation import (
+    AgentForgeEvaluator,
+    EvaluationMetrics,
+    default_evaluator,
+    evaluate_hrrm_model,
+    evaluate_model,
+    evaluate_thought_quality,
+)
 
-            def evaluate_model(self, model_or_path, eval_data=None):
-                return {"overall_score": 0.5, "metrics": {}}
-
-            def __getattr__(self, name):
-                return lambda *args, **kwargs: {"score": 0.5}
-
-        _impl = _StubImpl()
+# Create module-level instance for backward compatibility
+_impl = default_evaluator
 
 # re-export helper functions so call sites can import from this location
 
@@ -30,34 +24,57 @@ except ImportError:
 # and ensure the underlying implementation uses the patched version.
 
 
-def evaluate_thought_quality(model, eval_data):
-    return _impl.evaluate_thought_quality(model, eval_data)
-
-
-def evaluate_model(model_or_path, eval_data=None):
-    original = _impl.evaluate_thought_quality
-    try:
-        _impl.evaluate_thought_quality = evaluate_thought_quality
-        return _impl.evaluate_model(model_or_path, eval_data)
-    finally:
-        _impl.evaluate_thought_quality = original
+# Direct re-exports from the new location
+evaluate_thought_quality = evaluate_thought_quality
+evaluate_model = evaluate_model
+evaluate_hrrm_model = evaluate_hrrm_model
 
 
 # expose all other helpers directly
-for _name in [
-    "measure_coherence",
-    "measure_relevance",
-    "evaluate_perplexity",
-    "evaluate_coding",
-    "evaluate_mathematics",
-    "evaluate_writing",
-    "evaluate_zero_shot_classification",
-    "evaluate_zero_shot_qa",
-    "evaluate_story_coherence",
-    "calculate_overall_score",
-    "parallel_evaluate_models",
-]:
-    globals()[_name] = getattr(_impl, _name)
+# Define each function explicitly to satisfy F822 checks
+def measure_coherence(*args, **kwargs):
+    return getattr(_impl, "measure_coherence")(*args, **kwargs)
+
+
+def measure_relevance(*args, **kwargs):
+    return getattr(_impl, "measure_relevance")(*args, **kwargs)
+
+
+def evaluate_perplexity(*args, **kwargs):
+    return getattr(_impl, "evaluate_perplexity")(*args, **kwargs)
+
+
+def evaluate_coding(*args, **kwargs):
+    return getattr(_impl, "evaluate_coding")(*args, **kwargs)
+
+
+def evaluate_mathematics(*args, **kwargs):
+    return getattr(_impl, "evaluate_mathematics")(*args, **kwargs)
+
+
+def evaluate_writing(*args, **kwargs):
+    return getattr(_impl, "evaluate_writing")(*args, **kwargs)
+
+
+def evaluate_zero_shot_classification(*args, **kwargs):
+    return getattr(_impl, "evaluate_zero_shot_classification")(*args, **kwargs)
+
+
+def evaluate_zero_shot_qa(*args, **kwargs):
+    return getattr(_impl, "evaluate_zero_shot_qa")(*args, **kwargs)
+
+
+def evaluate_story_coherence(*args, **kwargs):
+    return getattr(_impl, "evaluate_story_coherence")(*args, **kwargs)
+
+
+def calculate_overall_score(*args, **kwargs):
+    return getattr(_impl, "calculate_overall_score")(*args, **kwargs)
+
+
+def parallel_evaluate_models(*args, **kwargs):
+    return getattr(_impl, "parallel_evaluate_models")(*args, **kwargs)
+
 
 __all__ = [
     "evaluate_model",

@@ -98,6 +98,42 @@ AIVillage is a distributed multi-agent AI platform with comprehensive fog comput
 - **NSGA-II Scheduler**: Multi-objective optimization for resource allocation
 - **Marketplace Engine**: Minimal viable renting with spot/on-demand bidding
 - **Edge Capability Beacon**: Mobile device integration with WASI runner
+- **BetaNet Transport Integration**: Advanced transport protocols via bridge adapters
+
+#### BetaNet Integration Architecture
+The fog computing platform integrates with the separate BetaNet bounty implementation through bridge adapters:
+
+```
+┌─────────────────────────────────┐    ┌─────────────────────────────────┐
+│        Fog Computing            │    │      BetaNet Bounty             │
+│                                 │    │                                 │
+│  ┌─────────────────────────┐   │    │  ┌─────────────────────────┐   │
+│  │     Job Scheduler       │   │    │  │    HTX v1.1 Protocol   │   │
+│  │                         │   │    │  │                         │   │
+│  └─────────────────────────┘   │    │  └─────────────────────────┘   │
+│               │                 │    │               ▲                 │
+│               ▼                 │    │               │                 │
+│  ┌─────────────────────────┐   │    │  ┌─────────────────────────┐   │
+│  │   BetaNet Bridge        │───┼────┼─▶│   Covert Channels       │   │
+│  │   • Transport Adapter   │   │    │  │   • HTTP/2 Steganography│   │
+│  │   • Privacy Router      │   │    │  │   • HTTP/3 QUIC         │   │
+│  │   • Mobile Optimizer    │   │    │  │   • WebSocket Channels  │   │
+│  └─────────────────────────┘   │    │  └─────────────────────────┘   │
+│                                 │    │               ▲                 │
+│  ┌─────────────────────────┐   │    │  ┌─────────────────────────┐   │
+│  │    Fog Compute Node     │   │    │  │   VRF Mixnet Router     │   │
+│  │                         │   │    │  │   • Privacy Modes       │   │
+│  └─────────────────────────┘   │    │  │   • Variable Delays     │   │
+│                                 │    │  └─────────────────────────┘   │
+└─────────────────────────────────┘    └─────────────────────────────────┘
+         Fog Infrastructure                      Bounty (Separate)
+```
+
+**Key Integration Principles:**
+- **Separation**: BetaNet bounty code remains completely untouched in its own workspace
+- **Adaptation**: Bridge adapters provide fog compute interface to BetaNet capabilities
+- **Verification**: Bounty can be verified independently without fog compute dependencies
+- **Fallback**: Graceful degradation when BetaNet bounty is not available
 - **Security & Compliance**: Namespace isolation, quotas, egress policies
 - **SLA Management**: S-class (replicated+attested), A-class (replicated), B-class (best-effort)
 - **Observability**: Prometheus metrics, distributed tracing, performance monitoring
