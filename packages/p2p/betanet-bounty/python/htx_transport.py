@@ -34,7 +34,23 @@ try:
 except ImportError:
     QUIC_AVAILABLE = False
 
-from ..core.message_types import MessageType, UnifiedMessage
+# from ..core.message_types import MessageType, UnifiedMessage  # Commented out for standalone testing
+
+
+# Define locally for standalone testing
+class MessageType:
+    CONTROL = "control"
+    DATA = "data"
+    DISCOVERY = "discovery"
+
+
+class UnifiedMessage:
+    def __init__(self, message_type, metadata=None, **kwargs):
+        self.message_type = message_type
+        self.metadata = metadata or {}
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+
 
 logger = logging.getLogger(__name__)
 
