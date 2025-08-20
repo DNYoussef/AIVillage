@@ -2,9 +2,11 @@
 Unified message types and formats for P2P communication.
 
 Provides standardized message formats that work across all transport types
-including BitChat, BetaNet, and direct QUIC connections.
+including BitChat, BetaNet, and direct QUIC connections. Payloads are
+base64-encoded to maintain interoperability across different transports.
 """
 
+import base64
 import time
 import uuid
 from dataclasses import dataclass, field
@@ -119,7 +121,7 @@ class UnifiedMessage:
         """Convert message to dictionary for serialization."""
         return {
             "message_type": self.message_type.value,
-            "payload": self.payload.hex(),  # Hex encode for JSON safety
+            "payload": base64.b64encode(self.payload).decode("utf-8"),  # Base64 encode for transport interoperability
             "metadata": {
                 "message_id": self.metadata.message_id,
                 "correlation_id": self.metadata.correlation_id,
@@ -173,7 +175,7 @@ class UnifiedMessage:
 
         return cls(
             message_type=MessageType(data["message_type"]),
-            payload=bytes.fromhex(data["payload"]),
+            payload=base64.b64decode(data["payload"]),
             metadata=metadata,
             chunk_index=data["chunk_index"],
             total_chunks=data["total_chunks"],
