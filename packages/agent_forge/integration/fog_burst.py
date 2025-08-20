@@ -781,11 +781,26 @@ class FogBurstOrchestrator:
 
     async def shutdown(self) -> None:
         """Shutdown fog burst orchestrator"""
-
         if self._node_discovery_task:
             self._node_discovery_task.cancel()
+            try:
+                await self._node_discovery_task
+            except asyncio.CancelledError:
+                pass
+            except Exception as e:
+                logger.error(f"Error shutting down node discovery task: {e}")
+            finally:
+                self._node_discovery_task = None
+
+        await self._drain_network_requests()
 
         logger.info("FogBurstOrchestrator shutdown completed")
+
+    async def _drain_network_requests(self) -> None:
+        """Drain outstanding network requests before shutdown."""
+
+        # Give the event loop a chance to finalize any in-flight aiohttp operations
+        await asyncio.sleep(0)
 
 
 # Convenience functions for integration
