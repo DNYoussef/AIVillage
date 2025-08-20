@@ -8,7 +8,7 @@ license = "MIT"
 repository = "https://github.com/aivillage/aivillage"
 description = "Semiring-based multi-criteria path selection for AIVillage routing"
 
-[workspace]
+# [workspace] - Removed to prevent conflicts with parent workspace
 
 [dependencies]
 # DTN integration (commented out for standalone testing)

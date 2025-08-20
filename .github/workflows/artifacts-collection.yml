@@ -170,44 +170,47 @@ jobs:
           echo "|----------|-----------|--------|" >> $GITHUB_STEP_SUMMARY
 
           # Parse JSON report and create summary table
-          python3 -c "
+          cat > /tmp/parse_report.py << 'EOF'
 import json
 import sys
+import os
 
+report_file = os.environ.get('REPORT_FILE', '')
 try:
-    with open('$REPORT_FILE', 'r') as f:
+    with open(report_file, "r") as f:
         report = json.load(f)
 
     categories = [
-        ('Coverage', len(report.get('coverage_artifacts', []))),
-        ('Security', len(report.get('security_artifacts', []))),
-        ('SBOM', len(report.get('sbom_artifacts', []))),
-        ('Performance', len(report.get('performance_artifacts', []))),
-        ('Quality', len(report.get('quality_artifacts', []))),
-        ('Container', len(report.get('container_artifacts', []))),
-        ('Compliance', len(report.get('compliance_artifacts', [])))
+        ("Coverage", len(report.get("coverage_artifacts", []))),
+        ("Security", len(report.get("security_artifacts", []))),
+        ("SBOM", len(report.get("sbom_artifacts", []))),
+        ("Performance", len(report.get("performance_artifacts", []))),
+        ("Quality", len(report.get("quality_artifacts", []))),
+        ("Container", len(report.get("container_artifacts", []))),
+        ("Compliance", len(report.get("compliance_artifacts", [])))
     ]
 
     for category, count in categories:
-        status = '✅' if count > 0 else '❌'
-        print(f'| {category} | {count} | {status} |')
+        status = "[OK]" if count > 0 else "[FAIL]"
+        print(f"| {category} | {count} | {status} |")
 
     print()
-    total = report.get('total_artifacts', 0)
-    successful = report.get('successful_artifacts', 0)
-    size_mb = report.get('total_size_mb', 0)
-    duration = report.get('end_time', 0) - report.get('start_time', 0)
+    total = report.get("total_artifacts", 0)
+    successful = report.get("successful_artifacts", 0)
+    size_mb = report.get("total_size_mb", 0)
+    duration = report.get("end_time", 0) - report.get("start_time", 0)
 
-    print(f'**Total Artifacts:** {total}')
-    print(f'**Success Rate:** {successful}/{total} ({successful/max(1,total)*100:.1f}%)')
-    print(f'**Total Size:** {size_mb:.2f} MB')
-    print(f'**Collection Duration:** {duration:.1f}s')
+    print(f"**Total Artifacts:** {total}")
+    print(f"**Success Rate:** {successful}/{total} ({successful/max(1,total)*100:.1f}%)")
+    print(f"**Total Size:** {size_mb:.2f} MB")
+    print(f"**Collection Duration:** {duration:.1f}s")
 
 except Exception as e:
-    print('Error parsing collection report:', e)
-" >> $GITHUB_STEP_SUMMARY
+    print("Error parsing collection report:", e)
+EOF
+          REPORT_FILE="$REPORT_FILE" python3 /tmp/parse_report.py >> $GITHUB_STEP_SUMMARY
         else
-          echo "❌ Collection report not found" >> $GITHUB_STEP_SUMMARY
+          echo "[ERROR] Collection report not found" >> $GITHUB_STEP_SUMMARY
         fi
 
     - name: Check artifact collection thresholds
@@ -217,29 +220,32 @@ except Exception as e:
         REPORT_FILE=$(ls artifacts/reports/collection_report_*.json | head -1 || echo "")
 
         if [ -n "$REPORT_FILE" ] && [ -f "$REPORT_FILE" ]; then
-          python3 -c "
+          cat > /tmp/check_threshold.py << 'EOF'
 import json
 import sys
+import os
 
-with open('$REPORT_FILE', 'r') as f:
+report_file = os.environ.get('REPORT_FILE', '')
+with open(report_file, "r") as f:
     report = json.load(f)
 
-total = report.get('total_artifacts', 0)
-successful = report.get('successful_artifacts', 0)
+total = report.get("total_artifacts", 0)
+successful = report.get("successful_artifacts", 0)
 
 if total == 0:
-    print('Warning: No artifacts collected')
+    print("Warning: No artifacts collected")
     sys.exit(1)
 
 success_rate = successful / total
 if success_rate < 0.8:  # 80% threshold
-    print(f'Error: Artifact collection success rate too low: {success_rate:.1%}')
+    print(f"Error: Artifact collection success rate too low: {success_rate:.1%}")
     sys.exit(1)
 
-print(f'✅ Artifact collection successful: {success_rate:.1%} ({successful}/{total})')
-"
+print(f"[SUCCESS] Artifact collection successful: {success_rate:.1%} ({successful}/{total})")
+EOF
+          REPORT_FILE="$REPORT_FILE" python3 /tmp/check_threshold.py
         else
-          echo "❌ Could not find collection report for threshold checking"
+          echo "[ERROR] Could not find collection report for threshold checking"
           exit 1
         fi
 
@@ -299,25 +305,28 @@ print(f'✅ Artifact collection successful: {success_rate:.1%} ({successful}/{to
         BENCHMARK_FILE="artifacts/performance/benchmark-results.json"
 
         if [ -f "$BENCHMARK_FILE" ]; then
-          python3 -c "
+          cat > /tmp/analyze_bench.py << 'EOF'
 import json
+import os
 try:
-    with open('$BENCHMARK_FILE', 'r') as f:
+    benchmark_file = os.environ.get('BENCHMARK_FILE', '')
+    with open(benchmark_file, "r") as f:
         data = json.load(f)
 
-    benchmarks = data.get('benchmarks', [])
-    print(f'**Total Benchmarks:** {len(benchmarks)}')
+    benchmarks = data.get("benchmarks", [])
+    print(f"**Total Benchmarks:** {len(benchmarks)}")
 
     if benchmarks:
-        avg_time = sum(b.get('stats', {}).get('mean', 0) for b in benchmarks) / len(benchmarks)
-        print(f'**Average Execution Time:** {avg_time:.4f}s')
+        avg_time = sum(b.get("stats", {}).get("mean", 0) for b in benchmarks) / len(benchmarks)
+        print(f"**Average Execution Time:** {avg_time:.4f}s")
 
-        slowest = max(benchmarks, key=lambda b: b.get('stats', {}).get('mean', 0))
-        print(f'**Slowest Benchmark:** {slowest.get(\"name\", \"unknown\")} ({slowest.get(\"stats\", {}).get(\"mean\", 0):.4f}s)')
+        slowest = max(benchmarks, key=lambda b: b.get("stats", {}).get("mean", 0))
+        print(f"**Slowest Benchmark:** {slowest.get("name", "unknown")} ({slowest.get("stats", {}).get("mean", 0):.4f}s)")
 
 except Exception as e:
-    print('Error analyzing benchmarks:', e)
-" >> $GITHUB_STEP_SUMMARY
+    print("Error analyzing benchmarks:", e)
+EOF
+          BENCHMARK_FILE="$BENCHMARK_FILE" python3 /tmp/analyze_bench.py >> $GITHUB_STEP_SUMMARY
         else
-          echo "❌ No benchmark results found" >> $GITHUB_STEP_SUMMARY
+          echo "[ERROR] No benchmark results found" >> $GITHUB_STEP_SUMMARY
         fi

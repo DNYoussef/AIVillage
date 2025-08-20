@@ -46,13 +46,13 @@ jobs:
         run: |
           echo "Checking for syntax errors..."
           ruff check . --select E9,F63,F7,F82,F821,F823 --output-format=concise
-          echo "✅ No syntax errors found"
+          echo "[OK] No syntax errors found"
 
       - name: 🔒 Security Quick Scan
         run: |
           echo "Checking for critical security issues..."
           ruff check . --select S102,S105,S106,S107,S108,S110 --output-format=concise
-          echo "✅ No critical security issues found"
+          echo "[OK] No critical security issues found"
 
       - name: 🚫 No Placeholders in Production
         run: |
@@ -60,20 +60,20 @@ jobs:
           if grep -r "TODO\|FIXME\|XXX\|HACK\|placeholder\|stub\|not implemented" \
              --include="*.py" --include="*.rs" --include="*.go" \
              packages/core/ packages/rag/ packages/agents/ packages/p2p/ packages/edge/ 2>/dev/null; then
-            echo "❌ Production code cannot contain placeholders!"
+            echo "[ERROR] Production code cannot contain placeholders!"
             exit 1
           fi
-          echo "✅ No placeholders in production code"
+          echo "[OK] No placeholders in production code"
 
       - name: 🚫 No Experimental Imports in Production
         run: |
           echo "Checking for experimental imports..."
           if grep -r "from experimental\|import experimental" \
              --include="*.py" packages/core/ packages/rag/ packages/agents/ packages/p2p/ packages/edge/ 2>/dev/null; then
-            echo "❌ Production code cannot import experimental!"
+            echo "[ERROR] Production code cannot import experimental!"
             exit 1
           fi
-          echo "✅ No experimental imports in production"
+          echo "[OK] No experimental imports in production"
 
   # ============================================
   # STAGE 2: Code Quality
@@ -99,13 +99,13 @@ jobs:
         run: |
           echo "Checking code formatting..."
           black --check --diff --line-length=120 .
-          echo "✅ Code formatting is correct"
+          echo "[OK] Code formatting is correct"
 
       - name: 📝 Lint Check
         run: |
           echo "Running linting checks..."
           ruff check . --select E,W,F,I,UP,B,C4,SIM --output-format=grouped
-          echo "✅ Linting passed"
+          echo "[OK] Linting passed"
 
       - name: 🔍 Type Check
         continue-on-error: true
@@ -113,7 +113,7 @@ jobs:
           echo "Running type checking..."
           mypy . --ignore-missing-imports --no-strict-optional \
             --exclude 'deprecated|archive|experimental|tmp'
-          echo "✅ Type checking completed"
+          echo "[OK] Type checking completed"
 
   # ============================================
   # STAGE 3: Testing
@@ -194,11 +194,11 @@ jobs:
 
           # Fail build on High/Critical vulnerabilities
           if pip-audit --desc | grep -E "(HIGH|CRITICAL)"; then
-            echo "❌ High or Critical CVEs found - BLOCKING BUILD"
+            echo "[ERROR] High or Critical CVEs found - BLOCKING BUILD"
             pip-audit --desc
             exit 1
           fi
-          echo "✅ No High/Critical CVEs found"
+          echo "[OK] No High/Critical CVEs found"
 
       - name: 🛡️ Safety Dependency Check (Fail on High)
         run: |
@@ -207,24 +207,24 @@ jobs:
 
           # Fail build on high severity vulnerabilities
           if pip freeze | safety check --stdin | grep -E "(HIGH|CRITICAL)"; then
-            echo "❌ High severity vulnerabilities found - BLOCKING BUILD"
+            echo "[ERROR] High severity vulnerabilities found - BLOCKING BUILD"
             pip freeze | safety check --stdin
             exit 1
           fi
-          echo "✅ No high severity vulnerabilities found"
+          echo "[OK] No high severity vulnerabilities found"
 
       - name: 🔐 Bandit Security Scan
         run: |
           echo "Running Bandit security scan..."
           bandit -r packages/ -f json -o bandit-report.json -ll
-          echo "✅ Security scan completed"
+          echo "[OK] Security scan completed"
 
       - name: 🔍 Semgrep SAST
         if: github.event_name == 'pull_request'
         run: |
           echo "Running Semgrep security analysis..."
           semgrep --config=auto packages/ --json -o semgrep-report.json || true
-          echo "✅ SAST analysis completed"
+          echo "[OK] SAST analysis completed"
 
       - name: Upload Security Reports
         uses: actions/upload-artifact@v3
@@ -317,7 +317,7 @@ jobs:
           # Additional SBOM generation with pip-audit
           pip-audit --format=cyclonedx-json --output=artifacts/sbom/pip-audit-sbom.json || true
 
-          echo "✅ SBOM generation completed"
+          echo "[OK] SBOM generation completed"
 
       - name: 📦 Build Python Package
         run: |
@@ -356,7 +356,7 @@ jobs:
         run: |
           echo "Deploying to staging environment..."
           # Add actual deployment commands here
-          echo "✅ Deployment completed"
+          echo "[OK] Deployment completed"
 
 # ============================================
 # Status Check (Required for merge)
@@ -373,7 +373,7 @@ jobs:
                 "${{ needs.code-quality.result }}" != "success" || \
                 "${{ needs.test.result }}" != "success" || \
                 "${{ needs.security.result }}" == "failure" ]]; then
-            echo "❌ CI checks failed"
+            echo "[ERROR] CI checks failed"
             exit 1
           fi
-          echo "✅ All CI checks passed"
+          echo "[OK] All CI checks passed"

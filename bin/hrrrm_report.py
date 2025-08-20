@@ -183,10 +183,10 @@ def main():
         print("ACCEPTANCE CRITERIA:")
         print("-" * 40)
         for criterion, passed in criteria.items():
-            status = "✓ PASS" if passed else "✗ FAIL"
+            status = "[PASS]" if passed else "[FAIL]"
             print(f"{criterion.replace('_', ' ').title():<25} {status}")
 
-        print(f"\nOverall Status: {'✓ READY' if report['criteria_met'] else '✗ NOT READY'}")
+        print(f"\nOverall Status: {'[READY]' if report['criteria_met'] else '[NOT READY]'}")
 
     # Return exit code based on criteria
     return 0 if report["criteria_met"] else 1
