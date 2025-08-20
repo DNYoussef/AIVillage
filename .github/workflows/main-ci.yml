@@ -42,19 +42,19 @@ jobs:
       - name: Install minimal tools
         run: pip install ruff
 
-      - name: 🚨 Critical Syntax Check
+      - name: "[CRITICAL] Syntax Check"
         run: |
           echo "Checking for syntax errors..."
           ruff check . --select E9,F63,F7,F82,F821,F823 --format text
           echo "[OK] No syntax errors found"
 
-      - name: 🔒 Security Quick Scan
+      - name: "[SECURITY] Quick Scan"
         run: |
           echo "Checking for critical security issues..."
           ruff check . --select S102,S105,S106,S107,S108,S110 --format text
           echo "[OK] No critical security issues found"
 
-      - name: 🚫 No Critical Placeholders in Production
+      - name: "[CHECK] No Critical Placeholders in Production"
         run: |
           echo "Checking for critical placeholders in production code..."
           # Only fail on critical placeholders that would break production
@@ -67,7 +67,7 @@ jobs:
           fi
           echo "[OK] No critical placeholders in production code"
 
-      - name: 🚫 No Experimental Imports in Production
+      - name: "[CHECK] No Experimental Imports in Production"
         run: |
           echo "Checking for experimental imports..."
           if grep -r "from experimental\|import experimental" \
@@ -97,7 +97,7 @@ jobs:
           pip install ruff black isort mypy
           pip install -r config/requirements/requirements.txt
 
-      - name: 🎨 Format Check
+      - name: "[FORMAT] Format Check"
         run: |
           echo "Checking code formatting..."
           black --check --diff --line-length=120 .
