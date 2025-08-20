@@ -19,7 +19,7 @@ This enables large-scale distributed training while preserving the Agent Forge
 import asyncio
 import json
 import logging
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
 from enum import Enum
 from typing import Any
@@ -32,6 +32,11 @@ from packages.agent_forge.core.phase_controller import PhaseController, PhaseRes
 from packages.agent_forge.core.unified_pipeline import UnifiedConfig
 
 logger = logging.getLogger(__name__)
+
+
+def _serialize_dataclass(obj: Any) -> dict[str, Any]:
+    """Convert a dataclass instance to a JSON-serializable dictionary."""
+    return json.loads(json.dumps(asdict(obj), default=str))
 
 
 class FogBurstStrategy(str, Enum):
@@ -416,11 +421,12 @@ class FogBurstOrchestrator:
 
         try:
             # Create fog burst task
+            config_dict = _serialize_dataclass(config)
             task = FogBurstTask(
                 task_id=task_id,
                 phase_name=phase_name,
                 task_type="phase_execution",
-                config=config.__dict__,
+                config=config_dict,
                 strategy=strategy,
             )
 
@@ -643,7 +649,12 @@ class FogBurstOrchestrator:
             "namespace": "agent-forge",
             "runtime": "wasi",
             "image": f"agent-forge-{task.phase_name}:latest",
-            "args": ["--phase", task.phase_name, "--config", json.dumps(config.__dict__)],
+            "args": [
+                "--phase",
+                task.phase_name,
+                "--config",
+                json.dumps(_serialize_dataclass(config)),
+            ],
             "env": {"AGENT_FORGE_PHASE": task.phase_name, "TASK_ID": task.task_id, "TARGET_NODE": target_node},
             "resources": execution_plan["resource_requirements"],
             "metadata": {"task_type": "agent_forge_phase", "phase_name": task.phase_name, "task_id": task.task_id},
