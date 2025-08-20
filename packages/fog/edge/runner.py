@@ -16,6 +16,7 @@ import logging
 import os
 import shutil
 import tempfile
+import json
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from enum import Enum
@@ -453,8 +454,8 @@ class MicroVMRunner:
         self.default_timeout = default_timeout
         self.temp_dir = temp_dir or tempfile.gettempdir()
 
-        # Active VMs
-        self.active_vms: dict[str, asyncio.Task] = {}
+        # Active VMs {execution_id: {"task": asyncio.Task, "process": subprocess}}
+        self.active_vms: dict[str, dict[str, Any]] = {}
 
         # Runtime verification
         self._verified = False
@@ -530,46 +531,253 @@ class MicroVMRunner:
         args = args or []
         env = env or {}
         resources = resources or ExecutionResources()
-
-        # TODO: Implement full MicroVM execution
-        # This is a simplified placeholder implementation
+        sandbox_dir = self._create_vm_dir(execution_id)
 
         try:
-            logger.info(f"MicroVM execution {execution_id} - implementation pending")
+            # Write kernel and rootfs images
+            kernel_path = sandbox_dir / "kernel.bin"
+            kernel_path.write_bytes(kernel_image)
+            rootfs_path = sandbox_dir / "rootfs.img"
+            rootfs_path.write_bytes(rootfs_image)
 
-            # For now, return a mock successful result
-            result.status = ExecutionStatus.COMPLETED
-            result.exit_code = 0
-            result.stdout = "MicroVM execution completed (mock)"
-            result.stderr = ""
-            result.cpu_time_s = 1.0
-            result.memory_peak_mb = 64
-            result.disk_used_mb = 10
+            # Prepare Firecracker config
+            boot_args = "console=ttyS0 reboot=k panic=1 pci=off"
+            if args:
+                boot_args += " " + " ".join(args)
+
+            machine_cfg = {
+                "vcpu_count": max(1, int(resources.cpu_cores)),
+                "mem_size_mib": resources.memory_mb,
+                "smt": False,
+            }
+
+            config = {
+                "boot-source": {
+                    "kernel_image_path": str(kernel_path),
+                    "boot_args": boot_args,
+                },
+                "drives": [
+                    {
+                        "drive_id": "rootfs",
+                        "path_on_host": str(rootfs_path),
+                        "is_root_device": True,
+                        "is_read_only": False,
+                    }
+                ],
+                "machine-config": machine_cfg,
+            }
+
+            config_path = sandbox_dir / "vmconfig.json"
+            config_path.write_text(json.dumps(config))
+
+            cmd = [self.firecracker_path, "--no-api", "--config-file", str(config_path)]
+            timeout = min(resources.max_duration_s, self.default_timeout)
+
+            logger.info(
+                f"Starting MicroVM execution {execution_id}: {' '.join(cmd)}"
+            )
+
+            result.status = ExecutionStatus.STARTING
+
+            # Start Firecracker process
+            proc = await asyncio.create_subprocess_exec(
+                *cmd,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+                cwd=str(sandbox_dir),
+            )
+
+            exec_task = asyncio.create_task(
+                self._run_microvm_process(proc, timeout, sandbox_dir)
+            )
+            self.active_vms[execution_id] = {"task": exec_task, "process": proc}
+
+            result.status = ExecutionStatus.RUNNING
+
+            try:
+                proc_result = await exec_task
+                result.exit_code = proc_result["exit_code"]
+                result.stdout = proc_result["stdout"]
+                result.stderr = proc_result["stderr"]
+                result.cpu_time_s = proc_result["cpu_time_s"]
+                result.memory_peak_mb = proc_result["memory_peak_mb"]
+                result.disk_used_mb = proc_result["disk_used_mb"]
+
+                if result.exit_code == 0:
+                    result.status = ExecutionStatus.COMPLETED
+                else:
+                    result.status = ExecutionStatus.FAILED
+                    result.error_message = (
+                        f"Process exited with code {result.exit_code}"
+                    )
+
+            except asyncio.TimeoutError:
+                result.status = ExecutionStatus.TIMEOUT
+                result.error_message = f"Execution timed out after {timeout}s"
+
+            except asyncio.CancelledError:
+                result.status = ExecutionStatus.CANCELLED
+                result.error_message = "Execution was cancelled"
+
+            except Exception as e:
+                result.status = ExecutionStatus.FAILED
+                result.error_message = f"Execution error: {str(e)}"
+
+            finally:
+                self.active_vms.pop(execution_id, None)
+                self._cleanup_vm_dir(sandbox_dir)
 
             result.end_time = datetime.now(UTC)
             if result.start_time:
                 duration = result.end_time - result.start_time
                 result.duration_ms = duration.total_seconds() * 1000
 
+            result.resource_violations = self._check_resource_violations(result, resources)
+
+            logger.info(
+                f"MicroVM execution {execution_id} completed: {result.status}"
+            )
             return result
 
         except Exception as e:
             result.status = ExecutionStatus.FAILED
             result.error_message = f"MicroVM error: {str(e)}"
             result.end_time = datetime.now(UTC)
+            self._cleanup_vm_dir(sandbox_dir)
             logger.error(f"MicroVM execution {execution_id} failed: {e}")
             return result
+
+    async def _run_microvm_process(
+        self, proc: asyncio.subprocess.Process, timeout: float, sandbox_dir: Path
+    ) -> dict[str, Any]:
+        """Run the MicroVM process and monitor resources"""
+
+        cpu_times: list[float] = []
+        memory_peaks: list[float] = []
+
+        async def monitor_resources():
+            try:
+                process = psutil.Process(proc.pid)
+                while proc.returncode is None:
+                    try:
+                        cpu_percent = process.cpu_percent()
+                        memory_mb = process.memory_info().rss / (1024 * 1024)
+                        cpu_times.append(cpu_percent)
+                        memory_peaks.append(memory_mb)
+                        await asyncio.sleep(0.5)
+                    except psutil.NoSuchProcess:
+                        break
+            except Exception as e:
+                logger.debug(f"Resource monitoring error: {e}")
+
+        monitor_task = asyncio.create_task(monitor_resources())
+
+        try:
+            stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=timeout)
+            exit_code = proc.returncode
+        except asyncio.TimeoutError:
+            try:
+                if proc.pid:
+                    parent = psutil.Process(proc.pid)
+                    for child in parent.children(recursive=True):
+                        child.kill()
+                    parent.kill()
+            except psutil.NoSuchProcess:
+                pass
+            raise
+        finally:
+            monitor_task.cancel()
+            try:
+                await monitor_task
+            except asyncio.CancelledError:
+                pass
+
+        cpu_time_s = sum(cpu_times) * 0.5 / 100.0
+        memory_peak_mb = max(memory_peaks) if memory_peaks else 0
+
+        disk_used_mb = 0
+        try:
+            sandbox_size = sum(
+                f.stat().st_size for f in sandbox_dir.rglob("*") if f.is_file()
+            )
+            disk_used_mb = sandbox_size / (1024 * 1024)
+        except Exception:
+            pass
+
+        return {
+            "exit_code": exit_code,
+            "stdout": stdout.decode("utf-8", errors="replace"),
+            "stderr": stderr.decode("utf-8", errors="replace"),
+            "cpu_time_s": cpu_time_s,
+            "memory_peak_mb": int(memory_peak_mb),
+            "disk_used_mb": int(disk_used_mb),
+        }
+
+    def _create_vm_dir(self, execution_id: str) -> Path:
+        """Create isolated directory for MicroVM"""
+
+        vm_dir = Path(self.temp_dir) / f"microvm_{execution_id}"
+        vm_dir.mkdir(parents=True, exist_ok=True)
+        return vm_dir
+
+    def _cleanup_vm_dir(self, vm_dir: Path):
+        """Clean up VM directory"""
+
+        try:
+            shutil.rmtree(vm_dir)
+            logger.debug(f"Cleaned up MicroVM dir: {vm_dir}")
+        except Exception as e:
+            logger.warning(f"Failed to cleanup MicroVM dir {vm_dir}: {e}")
+
+    def _check_resource_violations(
+        self, result: ExecutionResult, resources: ExecutionResources
+    ) -> list[str]:
+        """Check for resource limit violations"""
+
+        violations = []
+
+        if result.memory_peak_mb > resources.memory_mb:
+            violations.append(
+                f"Memory limit exceeded: {result.memory_peak_mb}MB > {resources.memory_mb}MB"
+            )
+
+        if result.disk_used_mb > resources.disk_mb:
+            violations.append(
+                f"Disk limit exceeded: {result.disk_used_mb}MB > {resources.disk_mb}MB"
+            )
+
+        if result.duration_ms > resources.max_duration_s * 1000:
+            violations.append(
+                f"Time limit exceeded: {result.duration_ms/1000:.1f}s > {resources.max_duration_s}s"
+            )
+
+        return violations
 
     async def cancel_execution(self, execution_id: str) -> bool:
         """Cancel running MicroVM execution"""
 
-        task = self.active_vms.get(execution_id)
+        vm_info = self.active_vms.get(execution_id)
+        if not vm_info:
+            return False
+
+        task = vm_info.get("task")
+        proc = vm_info.get("process")
+
+        if proc and proc.returncode is None:
+            try:
+                parent = psutil.Process(proc.pid)
+                for child in parent.children(recursive=True):
+                    child.kill()
+                parent.kill()
+            except psutil.NoSuchProcess:
+                pass
+
         if task and not task.done():
             task.cancel()
-            logger.info(f"Cancelled MicroVM execution: {execution_id}")
-            return True
 
-        return False
+        self.active_vms.pop(execution_id, None)
+        logger.info(f"Cancelled MicroVM execution: {execution_id}")
+        return True
 
     def get_active_executions(self) -> list[str]:
         """Get list of active execution IDs"""
