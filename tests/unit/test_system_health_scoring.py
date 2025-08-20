@@ -30,3 +30,21 @@ def test_legitimate_scores_higher_than_stub(tmp_path: Path) -> None:
     stub_score = checker.check_component_health(stub_file, "stub")["implementation_score"]
 
     assert real_score > stub_score
+
+
+def test_todo_in_string_not_flagged(tmp_path: Path) -> None:
+    code = textwrap.dedent(
+        """
+        def greet():
+            return "This string mentions TODO but is fine"
+        """
+    )
+
+    file = tmp_path / "greet.py"
+    file.write_text(code)
+
+    checker = ComponentHealthChecker(project_root=tmp_path)
+    checker._get_runtime_metrics = lambda: {"ping_success": 1.0, "error_rate": 0.0}  # type: ignore
+
+    result = checker.check_component_health(file, "greet")
+    assert "TODO" not in result["stub_indicators"]

@@ -8,15 +8,21 @@ Tracks the progress from 40% to >60% completion after stub replacement sprint.
 
 import ast
 import asyncio
+import io
 import json
 import logging
+import re
 import subprocess
 import sys
+import tokenize
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from production.monitoring.mobile.device_profiler import DeviceProfiler
+try:  # pragma: no cover - optional dependency
+    from production.monitoring.mobile.device_profiler import DeviceProfiler
+except Exception:  # pragma: no cover - fallback stub
+    DeviceProfiler = object  # type: ignore
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -153,29 +159,54 @@ class ComponentHealthChecker:
 
     def _check_for_stubs(self, content: str) -> list[str]:
         """Check for stub patterns that indicate incomplete implementation."""
-        stub_patterns = [
-            "pass",
-            "NotImplementedError",
-            "TODO",
-            "STUB",
-            "# TODO",
-            "raise NotImplementedError",
-        ]
+        found_stubs: set[str] = set()
 
-        found_stubs = [pattern for pattern in stub_patterns if pattern in content]
-
-        # Use AST to detect common stub return patterns
+        # Prioritize AST analysis for accurate stub detection
         try:
             tree = ast.parse(content)
             for node in ast.walk(tree):
-                if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef):
+                if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
                     stub_type = self._get_stub_type(node)
-                    if stub_type and stub_type not in found_stubs:
-                        found_stubs.append(stub_type)
+                    if stub_type:
+                        found_stubs.add(stub_type)
         except SyntaxError:
             pass
 
-        return found_stubs
+        # Tokenize to strip string literals and analyze comments separately
+        try:
+            tokens = list(tokenize.generate_tokens(io.StringIO(content).readline))
+        except tokenize.TokenError:
+            tokens = []
+
+        code_parts: list[str] = []
+        comment_parts: list[str] = []
+        for tok in tokens:
+            if tok.type == tokenize.STRING:
+                continue  # Ignore strings to avoid false positives
+            if tok.type == tokenize.COMMENT:
+                comment_parts.append(tok.string)
+                continue
+            code_parts.append(tok.string)
+
+        code_without_strings = " ".join(code_parts)
+        comment_text = " ".join(comment_parts)
+
+        regex_patterns = {
+            "pass": r"\bpass\b",
+            "STUB": r"\bSTUB\b",
+            "raise NotImplementedError": r"\braise\s+NotImplementedError\b",
+            "TODO": r"\bTODO\b",
+        }
+
+        for name, pattern in regex_patterns.items():
+            if name == "TODO":
+                if re.search(pattern, comment_text):
+                    found_stubs.add("TODO")
+            else:
+                if re.search(pattern, code_without_strings):
+                    found_stubs.add(name)
+
+        return sorted(found_stubs)
 
     def _get_stub_type(self, node: ast.AST) -> str | None:
         """Determine if a function node represents a stub."""
