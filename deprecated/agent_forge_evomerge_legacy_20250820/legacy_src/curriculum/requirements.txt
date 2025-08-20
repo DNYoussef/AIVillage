@@ -1,0 +1,19 @@
+# Frontier Curriculum Engine Dependencies
+
+# Core dependencies
+aiohttp>=3.8.0
+pydantic>=2.0.0
+jinja2>=3.0.0
+PyYAML>=6.0
+click>=8.0.0
+
+# Optional dependencies for enhanced features
+asyncio-throttle>=1.0.0  # Advanced rate limiting
+tenacity>=8.0.0          # Retry with more sophisticated backoff
+rich>=13.0.0             # Enhanced CLI output
+
+# Development dependencies
+pytest>=7.0.0
+pytest-asyncio>=0.21.0
+black>=22.0.0
+ruff>=0.1.0

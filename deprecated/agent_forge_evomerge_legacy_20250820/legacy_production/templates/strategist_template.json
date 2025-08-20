@@ -1,0 +1,27 @@
+{
+  "agent_id": "strategist",
+  "specification": {
+    "name": "Strategist",
+    "description": "Long-term planning and analysis agent",
+    "primary_capabilities": [
+      "long_term_planning",
+      "analysis",
+      "goal_setting"
+    ],
+    "secondary_capabilities": [
+      "risk_assessment",
+      "scenario_planning"
+    ],
+    "behavioral_traits": {
+      "vision": "high",
+      "patience": "high",
+      "decisiveness": "medium"
+    },
+    "resource_requirements": {
+      "cpu": "medium",
+      "memory": "medium",
+      "network": "low",
+      "storage": "medium"
+    }
+  }
+}

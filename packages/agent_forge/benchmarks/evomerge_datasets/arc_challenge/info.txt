@@ -1,0 +1,5 @@
+Dataset: ARC-Challenge
+Source: ai2_arc
+Description: Science exam questions (challenging)
+Split: ARC-Challenge
+Size: 3 examples

@@ -1,0 +1,14 @@
+{
+  "vocab_size": 32000,
+  "d_model": 256,
+  "n_layers": 8,
+  "n_head": 8,
+  "d_ff": 2048,
+  "max_seq_len": 2048,
+  "rope_base": 10000,
+  "max_H": 2,
+  "inner_T": 2,
+  "self_consistency_k": 3,
+  "dropout": 0.0,
+  "lambda_thought": 0.1
+}

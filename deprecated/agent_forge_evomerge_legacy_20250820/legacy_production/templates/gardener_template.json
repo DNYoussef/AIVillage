@@ -1,0 +1,27 @@
+{
+  "agent_id": "gardener",
+  "specification": {
+    "name": "Gardener",
+    "description": "System maintenance and optimization agent",
+    "primary_capabilities": [
+      "maintenance",
+      "optimization",
+      "cleanup"
+    ],
+    "secondary_capabilities": [
+      "resource_balancing",
+      "performance_tuning"
+    ],
+    "behavioral_traits": {
+      "meticulousness": "high",
+      "proactivity": "high",
+      "steadiness": "medium"
+    },
+    "resource_requirements": {
+      "cpu": "medium",
+      "memory": "medium",
+      "network": "low",
+      "storage": "medium"
+    }
+  }
+}

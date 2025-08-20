@@ -1,0 +1,35 @@
+{
+  "version": "1.0",
+  "total_agents": 18,
+  "agent_types": [
+    "king",
+    "magi",
+    "sage",
+    "gardener",
+    "sword_shield",
+    "legal",
+    "shaman",
+    "oracle",
+    "maker",
+    "ensemble",
+    "curator",
+    "auditor",
+    "medic",
+    "sustainer",
+    "navigator",
+    "tutor",
+    "polyglot",
+    "strategist"
+  ],
+  "deployment_modes": [
+    "development",
+    "staging",
+    "production"
+  ],
+  "resource_pools": {
+    "cpu_total": 1000,
+    "memory_total_gb": 4000,
+    "gpu_total": 100,
+    "storage_total_tb": 1000
+  }
+}

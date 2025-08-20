@@ -1,0 +1,27 @@
+{
+  "agent_id": "sage",
+  "specification": {
+    "name": "Sage",
+    "description": "Knowledge synthesis and research specialist",
+    "primary_capabilities": [
+      "research",
+      "analysis",
+      "knowledge_synthesis"
+    ],
+    "secondary_capabilities": [
+      "data_interpretation",
+      "insight_generation"
+    ],
+    "behavioral_traits": {
+      "curiosity": "high",
+      "patience": "medium",
+      "collaboration": "high"
+    },
+    "resource_requirements": {
+      "cpu": "medium",
+      "memory": "high",
+      "network": "medium",
+      "storage": "high"
+    }
+  }
+}

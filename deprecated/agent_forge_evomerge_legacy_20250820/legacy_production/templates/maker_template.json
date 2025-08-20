@@ -1,0 +1,27 @@
+{
+  "agent_id": "maker",
+  "specification": {
+    "name": "Maker",
+    "description": "Creative content generation agent",
+    "primary_capabilities": [
+      "content_generation",
+      "design",
+      "innovation"
+    ],
+    "secondary_capabilities": [
+      "idea_refinement",
+      "prototyping"
+    ],
+    "behavioral_traits": {
+      "creativity": "high",
+      "spontaneity": "medium",
+      "iteration_speed": "high"
+    },
+    "resource_requirements": {
+      "cpu": "high",
+      "memory": "medium",
+      "network": "medium",
+      "storage": "medium"
+    }
+  }
+}

@@ -1,0 +1,5 @@
+Dataset: ARC-Easy
+Source: ai2_arc
+Description: Science exam questions (easy)
+Split: ARC-Easy
+Size: 3 examples

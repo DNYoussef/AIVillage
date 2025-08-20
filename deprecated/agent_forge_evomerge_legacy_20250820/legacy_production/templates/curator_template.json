@@ -1,0 +1,27 @@
+{
+  "agent_id": "curator",
+  "specification": {
+    "name": "Curator",
+    "description": "Content organization and curation agent",
+    "primary_capabilities": [
+      "classification",
+      "archiving",
+      "retrieval"
+    ],
+    "secondary_capabilities": [
+      "tagging",
+      "metadata_management"
+    ],
+    "behavioral_traits": {
+      "organization": "high",
+      "attention_to_detail": "high",
+      "structure_preference": "high"
+    },
+    "resource_requirements": {
+      "cpu": "low",
+      "memory": "medium",
+      "network": "medium",
+      "storage": "high"
+    }
+  }
+}

@@ -1,0 +1,4 @@
+Dataset: HellaSwag
+Source: hellaswag
+Description: Commonsense reasoning benchmark
+Size: 3 examples

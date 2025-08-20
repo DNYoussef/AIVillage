@@ -1,0 +1,27 @@
+{
+  "agent_id": "legal",
+  "specification": {
+    "name": "Legal",
+    "description": "Compliance and risk assessment agent",
+    "primary_capabilities": [
+      "policy_analysis",
+      "risk_assessment",
+      "regulation_monitoring"
+    ],
+    "secondary_capabilities": [
+      "document_review",
+      "advice_generation"
+    ],
+    "behavioral_traits": {
+      "precision": "high",
+      "conservatism": "high",
+      "communication": "formal"
+    },
+    "resource_requirements": {
+      "cpu": "low",
+      "memory": "medium",
+      "network": "low",
+      "storage": "medium"
+    }
+  }
+}
