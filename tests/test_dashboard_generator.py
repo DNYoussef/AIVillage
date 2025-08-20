@@ -276,9 +276,8 @@ class TestDashboard:
 
             if suite.get("tests_total"):
                 print(
-                    f"      └─ {suite['tests_passed']}/{
-                        suite['tests_total']
-                    } tests passed ({suite.get('pass_rate', 0):.1f}%)"
+                    f"      └─ {suite['tests_passed']}/"
+                    f"{suite['tests_total']} tests passed ({suite.get('pass_rate', 0):.1f}%)"
                 )
 
             if suite["status"] != "PASSED" and suite["stderr"]:

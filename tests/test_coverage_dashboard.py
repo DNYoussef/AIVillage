@@ -265,9 +265,7 @@ class TestCoverageDashboard:
         try:
             with open(file_path, encoding="utf-8") as f:
                 lines = f.readlines()
-                total_lines = len(
-                    [l for l in lines if l.strip() and not l.strip().startswith("#")]
-                )
+                total_lines = len([l for l in lines if l.strip() and not l.strip().startswith("#")])
         except Exception:
             total_lines = 0
 
@@ -290,10 +288,7 @@ class TestCoverageDashboard:
         # Check for test files
         test_patterns = [
             self.project_root / "tests" / f"test_{file_path.stem}.py",
-            self.project_root
-            / "tests"
-            / file_path.parent.name
-            / f"test_{file_path.stem}.py",
+            self.project_root / "tests" / file_path.parent.name / f"test_{file_path.stem}.py",
             file_path.parent / f"test_{file_path.stem}.py",
         ]
 
@@ -319,11 +314,7 @@ class TestCoverageDashboard:
                             {
                                 "file": str(file_path),
                                 "category": category,
-                                "priority": (
-                                    "high"
-                                    if "production_critical" in category
-                                    else "medium"
-                                ),
+                                "priority": ("high" if "production_critical" in category else "medium"),
                             }
                         )
 
@@ -341,8 +332,7 @@ class TestCoverageDashboard:
                     "title": "Create tests for production-critical components",
                     "description": f"Found {len(coverage_gaps['critical_untested'])} untested critical files",
                     "action_items": [
-                        f"Create test file for {gap['file']}"
-                        for gap in coverage_gaps["critical_untested"][:5]
+                        f"Create test file for {gap['file']}" for gap in coverage_gaps["critical_untested"][:5]
                     ],
                     "estimated_effort": "2-3 days",
                     "impact": "High - Essential for production reliability",
@@ -616,8 +606,7 @@ class TestCoverageDashboard:
         # Determine overall success
         overall_success = (
             validation_results.get("success", False)
-            and infrastructure_results.get("passed_files", 0)
-            == infrastructure_results.get("total_files", 1)
+            and infrastructure_results.get("passed_files", 0) == infrastructure_results.get("total_files", 1)
             and performance_results.get("success", False)
         )
 
@@ -630,12 +619,8 @@ class TestCoverageDashboard:
             "performance": performance_results,
             "summary": {
                 "validation_passed": validation_results.get("success", False),
-                "infrastructure_tests_passed": infrastructure_results.get(
-                    "passed_files", 0
-                ),
-                "infrastructure_tests_failed": infrastructure_results.get(
-                    "failed_files", 0
-                ),
+                "infrastructure_tests_passed": infrastructure_results.get("passed_files", 0),
+                "infrastructure_tests_failed": infrastructure_results.get("failed_files", 0),
                 "performance_tests_passed": performance_results.get("success", False),
             },
         }
@@ -658,16 +643,9 @@ class TestCoverageDashboard:
         sprint6_class = "success"
 
         if "sprint6_validation" in dashboard_data:
-            validation_success = dashboard_data["sprint6_validation"].get(
-                "success", False
-            )
-            infrastructure_success = (
-                dashboard_data.get("sprint6_infrastructure", {}).get("passed_files", 0)
-                > 0
-            )
-            performance_success = dashboard_data.get("sprint6_performance", {}).get(
-                "success", False
-            )
+            validation_success = dashboard_data["sprint6_validation"].get("success", False)
+            infrastructure_success = dashboard_data.get("sprint6_infrastructure", {}).get("passed_files", 0) > 0
+            performance_success = dashboard_data.get("sprint6_performance", {}).get("success", False)
 
             if validation_success and infrastructure_success and performance_success:
                 sprint6_status = "🟢 All Systems Operational"
@@ -759,12 +737,8 @@ class TestCoverageDashboard:
         # Add Sprint 6 test results sections
         if "sprint6_validation" in dashboard_data:
             validation = dashboard_data["sprint6_validation"]
-            validation_status = (
-                "✅ Passed" if validation.get("success", False) else "❌ Failed"
-            )
-            validation_class = (
-                "success" if validation.get("success", False) else "critical"
-            )
+            validation_status = "✅ Passed" if validation.get("success", False) else "❌ Failed"
+            validation_class = "success" if validation.get("success", False) else "critical"
 
             html_content += f"""
         <div class="test-results {validation_class}">
@@ -809,11 +783,7 @@ class TestCoverageDashboard:
 
             for test_file, result in infra.get("results", {}).items():
                 status_icon = "✅" if result.get("success", False) else "❌"
-                status_class = (
-                    "test-status-pass"
-                    if result.get("success", False)
-                    else "test-status-fail"
-                )
+                status_class = "test-status-pass" if result.get("success", False) else "test-status-fail"
                 exec_time = result.get("execution_time", 0)
 
                 html_content += f"""
@@ -869,13 +839,7 @@ class TestCoverageDashboard:
 
         for category, metrics in dashboard_data["component_coverage"].items():
             coverage = metrics["average_coverage"]
-            status = (
-                "🟢 Good"
-                if coverage > 80
-                else "🟡 Medium"
-                if coverage > 50
-                else "🔴 Needs Work"
-            )
+            status = "🟢 Good" if coverage > 80 else "🟡 Medium" if coverage > 50 else "🔴 Needs Work"
 
             html_content += f"""
             <tr>
@@ -918,9 +882,7 @@ class TestCoverageDashboard:
         <ul>"""
         )
 
-        for category, count in dashboard_data["test_suite_health"][
-            "test_distribution"
-        ].items():
+        for category, count in dashboard_data["test_suite_health"]["test_distribution"].items():
             html_content += f"<li>{category}: {count} files</li>"
 
         html_content += """
@@ -954,9 +916,7 @@ class TestCoverageDashboard:
 
         return html_content
 
-    def save_dashboard(
-        self, dashboard_data: dict, output_dir: Path | None = None
-    ) -> dict[str, str]:
+    def save_dashboard(self, dashboard_data: dict, output_dir: Path | None = None) -> dict[str, str]:
         """Save dashboard data and reports."""
         if output_dir is None:
             output_dir = self.project_root / "coverage_reports"
@@ -1068,12 +1028,8 @@ def main():
 
     # Print summary
     print("\n📋 Quick Summary:")
-    print(
-        f"   - Critical untested files: {len(dashboard_data['coverage_gaps']['critical_untested'])}"
-    )
-    print(
-        f"   - Total test files: {dashboard_data['test_suite_health']['total_test_files']}"
-    )
+    print(f"   - Critical untested files: {len(dashboard_data['coverage_gaps']['critical_untested'])}")
+    print(f"   - Total test files: {dashboard_data['test_suite_health']['total_test_files']}")
     print(f"   - Priority recommendations: {len(dashboard_data['recommendations'])}")
 
     # Show top priority files
