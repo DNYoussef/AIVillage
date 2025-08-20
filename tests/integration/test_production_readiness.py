@@ -13,6 +13,7 @@ from typing import Any
 import numpy as np
 import psutil
 import pytest
+import statistics
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -70,10 +71,10 @@ class ProductionReadinessTestSuite:
             request_times = await asyncio.gather(*tasks)
 
             # Performance analysis
-            avg_response_time = np.mean(request_times)
+            avg_response_time = statistics.mean(request_times)
             p95_response_time = np.percentile(request_times, 95)
-            avg_memory_mb = np.mean(memory_usage) if memory_usage else 0
-            avg_cpu_percent = np.mean(cpu_usage) if cpu_usage else 0
+            avg_memory_mb = statistics.mean(memory_usage) if memory_usage else 0
+            avg_cpu_percent = statistics.mean(cpu_usage) if cpu_usage else 0
 
             # Success criteria for production
             response_time_ok = avg_response_time < 1.0  # Sub-second average
@@ -161,7 +162,7 @@ class ProductionReadinessTestSuite:
 
             # Validate recovery performance
             all_recovered = all(r["success"] for r in recovery_results.values())
-            avg_recovery_time = np.mean([r["recovery_time"] for r in recovery_results.values()])
+            avg_recovery_time = statistics.mean([r["recovery_time"] for r in recovery_results.values()])
 
             success = all_recovered and avg_recovery_time < 1.0
 
@@ -263,7 +264,9 @@ class ProductionReadinessTestSuite:
                     "duration": time.time() - check_start,
                 }
 
-            overall_consistency = np.mean([r["integrity_score"] for r in consistency_results.values()])
+            overall_consistency = statistics.mean([
+                r["integrity_score"] for r in consistency_results.values()
+            ])
             all_consistent = all(r["success"] for r in consistency_results.values())
 
             success = all_consistent and overall_consistency > 0.95
@@ -311,7 +314,7 @@ class ProductionReadinessTestSuite:
                     processing_times.append(proc_time)
                     await asyncio.sleep(0.001)  # Small delay
 
-                avg_processing_time = np.mean(processing_times)
+                avg_processing_time = statistics.mean(processing_times)
                 throughput = load_level / (time.time() - load_start)
 
                 scalability_tests[f"load_{load_level}"] = {
