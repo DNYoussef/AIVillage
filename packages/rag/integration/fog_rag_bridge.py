@@ -771,9 +771,17 @@ class FogRAGCoordinator:
 
         if self._node_discovery_task:
             self._node_discovery_task.cancel()
+            try:
+                await self._node_discovery_task
+            except asyncio.CancelledError:
+                pass
 
         if self._health_monitor_task:
             self._health_monitor_task.cancel()
+            try:
+                await self._health_monitor_task
+            except asyncio.CancelledError:
+                pass
 
         logger.info("FogRAGCoordinator shutdown completed")
 
