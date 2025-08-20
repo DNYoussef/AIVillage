@@ -6,6 +6,7 @@ Downloads 3 seed models to D: drive and starts EvoMerge evolution process.
 import asyncio
 import json
 import logging
+import sys
 from datetime import datetime
 
 from agent_forge.models import SimpleModelManager

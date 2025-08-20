@@ -45,13 +45,13 @@ jobs:
       - name: 🚨 Critical Syntax Check
         run: |
           echo "Checking for syntax errors..."
-          ruff check . --select E9,F63,F7,F82,F821,F823 --output-format=concise
+          ruff check . --select E9,F63,F7,F82,F821,F823 --format text
           echo "[OK] No syntax errors found"
 
       - name: 🔒 Security Quick Scan
         run: |
           echo "Checking for critical security issues..."
-          ruff check . --select S102,S105,S106,S107,S108,S110 --output-format=concise
+          ruff check . --select S102,S105,S106,S107,S108,S110 --format text
           echo "[OK] No critical security issues found"
 
       - name: 🚫 No Placeholders in Production
@@ -104,7 +104,7 @@ jobs:
       - name: 📝 Lint Check
         run: |
           echo "Running linting checks..."
-          ruff check . --select E,W,F,I,UP,B,C4,SIM --output-format=grouped
+          ruff check . --select E,W,F,I,UP,B,C4,SIM --format grouped
           echo "[OK] Linting passed"
 
       - name: 🔍 Type Check

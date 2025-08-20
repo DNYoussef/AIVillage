@@ -760,15 +760,14 @@ class MeshNetworkTester:
             f"   Test Suite: {successful_tests}/{total_tests} test categories passed ({overall_success_rate:.1%})"
         )
         print(f"   Generated: {self.results['test_start']}")
-        print(
-            f"   Status: {
-                '✅ OPERATIONAL'
-                if overall_success_rate >= 0.7
-                else '⚠️ NEEDS ATTENTION'
-                if overall_success_rate >= 0.5
-                else '❌ CRITICAL ISSUES'
-            }"
+        status = (
+            '✅ OPERATIONAL'
+            if overall_success_rate >= 0.7
+            else '⚠️ NEEDS ATTENTION'
+            if overall_success_rate >= 0.5
+            else '❌ CRITICAL ISSUES'
         )
+        print(f"   Status: {status}")
 
         # Test category results
         print("\n🔍 TEST CATEGORY RESULTS")

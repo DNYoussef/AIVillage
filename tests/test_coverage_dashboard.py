@@ -1006,14 +1006,9 @@ Generated: {dashboard_data["timestamp"]}
 """
             + "\n".join(
                 [
-                    f"| {cat.replace('_', ' ').title()} | {metrics['total_files']} | {
-                        metrics['average_coverage']:.1f}% | {
-                        '🟢'
-                        if metrics['average_coverage'] > 80
-                        else '🟡'
-                        if metrics['average_coverage'] > 50
-                        else '🔴'
-                    } |"
+                    f"| {cat.replace('_', ' ').title()} | {metrics['total_files']} | "
+                    f"{metrics['average_coverage']:.1f}% | "
+                    f"{'🟢' if metrics['average_coverage'] > 80 else '🟡' if metrics['average_coverage'] > 50 else '🔴'} |"
                     for cat, metrics in dashboard_data["component_coverage"].items()
                 ]
             )
