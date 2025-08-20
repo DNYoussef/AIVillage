@@ -61,6 +61,7 @@ graph TB
 
 ### HyperRAG Orchestrator
 **Implementation**: `packages/rag/core/hyper_rag.py`
+**Example**: `examples/hyper_rag_example.py`
 **Status**: ✅ Production Ready
 
 The main orchestration layer that coordinates all RAG subsystems:
