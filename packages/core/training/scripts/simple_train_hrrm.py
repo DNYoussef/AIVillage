@@ -11,7 +11,7 @@ import torch
 import torch.optim as optim
 
 # Add the current directory to Python path
-sys.path.insert(0, os.path.abspath('.'))
+sys.path.insert(0, os.path.abspath("."))
 
 from packages.hrrm.memory.model import MemoryAsContextTiny, MemoryConfig
 from packages.hrrm.planner.heads import PlannerConfig
@@ -21,19 +21,21 @@ from packages.hrrm.reasoner.model import HRMReasoner, ReasonerConfig
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 def create_synthetic_data(tokenizer, batch_size=8, seq_len=256, num_batches=100):
     """Create synthetic training data."""
     data = []
     for _ in range(num_batches):
         # Create random token sequences
-        batch = torch.randint(1, min(1000, tokenizer.vocab_size-1), (batch_size, seq_len))
+        batch = torch.randint(1, min(1000, tokenizer.vocab_size - 1), (batch_size, seq_len))
         data.append(batch)
     return data
+
 
 def train_model(model, optimizer, data, model_name, epochs=3):
     """Simple training loop."""
     model.train()
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
 
     logger.info(f"Training {model_name} for {epochs} epochs on {device}")
@@ -53,24 +55,29 @@ def train_model(model, optimizer, data, model_name, epochs=3):
             optimizer.zero_grad()
 
             # Forward pass
-            if hasattr(model, 'forward'):
+            if hasattr(model, "forward"):
                 if model_name == "HRMPlanner":
                     output = model(inputs, labels=labels)
-                    loss = output.loss if hasattr(output, 'loss') else torch.nn.functional.cross_entropy(
-                        output.logits.view(-1, output.logits.size(-1)),
-                        labels.view(-1)
+                    loss = (
+                        output.loss
+                        if hasattr(output, "loss")
+                        else torch.nn.functional.cross_entropy(
+                            output.logits.view(-1, output.logits.size(-1)), labels.view(-1)
+                        )
                     )
                 elif model_name == "HRMReasoner":
                     output = model(inputs, labels=labels)
-                    loss = output.loss if hasattr(output, 'loss') else torch.nn.functional.cross_entropy(
-                        output.logits.view(-1, output.logits.size(-1)),
-                        labels.view(-1)
+                    loss = (
+                        output.loss
+                        if hasattr(output, "loss")
+                        else torch.nn.functional.cross_entropy(
+                            output.logits.view(-1, output.logits.size(-1)), labels.view(-1)
+                        )
                     )
                 else:  # MemoryAsContextTiny
                     output = model(inputs)
                     loss = torch.nn.functional.cross_entropy(
-                        output.logits.view(-1, output.logits.size(-1)),
-                        labels.view(-1)
+                        output.logits.view(-1, output.logits.size(-1)), labels.view(-1)
                     )
 
             # Backward pass
@@ -91,6 +98,7 @@ def train_model(model, optimizer, data, model_name, epochs=3):
     logger.info(f"{model_name} training completed. Average loss: {avg_total_loss:.4f}")
     return avg_total_loss
 
+
 def save_model(model, config, model_name, checkpoint_dir):
     """Save model and config."""
     checkpoint_dir = Path(checkpoint_dir)
@@ -102,15 +110,16 @@ def save_model(model, config, model_name, checkpoint_dir):
 
     # Save config
     config_path = checkpoint_dir / "config.json"
-    if hasattr(config, '__dict__'):
+    if hasattr(config, "__dict__"):
         config_dict = config.__dict__
     else:
         config_dict = config
 
-    with open(config_path, 'w') as f:
+    with open(config_path, "w") as f:
         json.dump(config_dict, f, indent=2)
 
     logger.info(f"Saved {model_name} to {checkpoint_dir}")
+
 
 def main():
     """Main training function."""
@@ -119,14 +128,18 @@ def main():
     tokenizer_path = "artifacts/tokenizer/hrrm_bpe_32k.json"
     if os.path.exists(tokenizer_path):
         logger.info(f"Using existing tokenizer: {tokenizer_path}")
+
         # Create a simple mock tokenizer for now
         class MockTokenizer:
             vocab_size = 32000
+
         tokenizer = MockTokenizer()
     else:
         logger.info("Creating mock tokenizer")
+
         class MockTokenizer:
             vocab_size = 32000
+
         tokenizer = MockTokenizer()
 
     # Create synthetic data (smaller for faster training)
@@ -142,12 +155,12 @@ def main():
     planner_config = PlannerConfig(
         vocab_size=tokenizer.vocab_size,
         d_model=256,  # Smaller for faster training
-        n_layers=8,   # Fewer layers
+        n_layers=8,  # Fewer layers
         n_head=8,
-        max_H=2,      # Fewer H cycles
-        inner_T=2,    # Fewer T steps
+        max_H=2,  # Fewer H cycles
+        inner_T=2,  # Fewer T steps
         control_tokens=5,  # Number of control tokens
-        lambda_ctrl=0.2
+        lambda_ctrl=0.2,
     )
 
     # Patch the config to work with the model expectation
@@ -163,13 +176,7 @@ def main():
     logger.info("=" * 50)
     logger.info("Training HRMReasoner...")
     reasoner_config = ReasonerConfig(
-        vocab_size=tokenizer.vocab_size,
-        d_model=256,
-        n_layers=8,
-        n_head=8,
-        max_H=2,
-        inner_T=2,
-        self_consistency_k=3
+        vocab_size=tokenizer.vocab_size, d_model=256, n_layers=8, n_head=8, max_H=2, inner_T=2, self_consistency_k=3
     )
 
     reasoner = HRMReasoner(reasoner_config)
@@ -192,7 +199,7 @@ def main():
         alpha=1.0,
         beta=0.9,
         eta=0.01,
-        eta_decay=0.001
+        eta_decay=0.001,
     )
 
     memory = MemoryAsContextTiny(memory_config)
@@ -216,27 +223,28 @@ def main():
             "planner": {
                 "final_loss": planner_loss,
                 "config": planner_config.__dict__,
-                "checkpoint": "artifacts/checkpoints/planner"
+                "checkpoint": "artifacts/checkpoints/planner",
             },
             "reasoner": {
                 "final_loss": reasoner_loss,
                 "config": reasoner_config.__dict__,
-                "checkpoint": "artifacts/checkpoints/reasoner"
+                "checkpoint": "artifacts/checkpoints/reasoner",
             },
             "memory": {
                 "final_loss": memory_loss,
                 "config": memory_config.__dict__,
-                "checkpoint": "artifacts/checkpoints/memory"
-            }
-        }
+                "checkpoint": "artifacts/checkpoints/memory",
+            },
+        },
     }
 
     summary_path = "artifacts/hrrm_training_summary.json"
-    with open(summary_path, 'w') as f:
+    with open(summary_path, "w") as f:
         json.dump(summary, f, indent=2)
 
     logger.info(f"Training summary saved to {summary_path}")
     logger.info("🚀 All 3 HRRM models trained successfully!")
+
 
 if __name__ == "__main__":
     main()

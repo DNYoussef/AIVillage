@@ -187,14 +187,14 @@ class EgressRule:
             import ipaddress
 
             # Try to parse destination as CIDR
-            if '/' in self.destination:
+            if "/" in self.destination:
                 network = ipaddress.ip_network(self.destination, strict=False)
                 target_ip = ipaddress.ip_address(destination)
                 return target_ip in network
 
             # Try to match as IP range
-            if '-' in self.destination:
-                start_ip, end_ip = self.destination.split('-', 1)
+            if "-" in self.destination:
+                start_ip, end_ip = self.destination.split("-", 1)
                 start_addr = ipaddress.ip_address(start_ip.strip())
                 end_addr = ipaddress.ip_address(end_ip.strip())
                 target_addr = ipaddress.ip_address(destination)
@@ -205,8 +205,9 @@ class EgressRule:
             pass
 
         # Support wildcard matching
-        if '*' in self.destination:
+        if "*" in self.destination:
             import fnmatch
+
             return fnmatch.fnmatch(destination, self.destination)
 
         return False

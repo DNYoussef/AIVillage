@@ -1011,16 +1011,18 @@ class BaseAgentTemplate(AgentInterface):
 
             # Save journal
             journal_file = agent_data_dir / "journal.json"
-            journal_data = [entry.to_dict() if hasattr(entry, 'to_dict') else entry
-                          for entry in self.reflection_journal[-100:]]  # Last 100 entries
-            with journal_file.open('w') as f:
+            journal_data = [
+                entry.to_dict() if hasattr(entry, "to_dict") else entry for entry in self.reflection_journal[-100:]
+            ]  # Last 100 entries
+            with journal_file.open("w") as f:
                 json.dump(journal_data, f, indent=2, default=str)
 
             # Save memory
             memory_file = agent_data_dir / "memory.json"
-            memory_data = [entry.to_dict() if hasattr(entry, 'to_dict') else entry
-                          for entry in self.long_term_memory[-500:]]  # Last 500 entries
-            with memory_file.open('w') as f:
+            memory_data = [
+                entry.to_dict() if hasattr(entry, "to_dict") else entry for entry in self.long_term_memory[-500:]
+            ]  # Last 500 entries
+            with memory_file.open("w") as f:
                 json.dump(memory_data, f, indent=2, default=str)
 
             # Save configuration
@@ -1034,10 +1036,10 @@ class BaseAgentTemplate(AgentInterface):
                     "processing_capacity": self.geometric_self_state.processing_capacity,
                     "memory_utilization": self.geometric_self_state.memory_utilization,
                     "connection_strength": self.geometric_self_state.connection_strength,
-                    "current_state": self.geometric_self_state.current_state.value
-                }
+                    "current_state": self.geometric_self_state.current_state.value,
+                },
             }
-            with config_file.open('w') as f:
+            with config_file.open("w") as f:
                 json.dump(config_data, f, indent=2)
 
             logger.info(f"Saved persistent state for {self.agent_type} agent to {agent_data_dir}")
@@ -1049,14 +1051,14 @@ class BaseAgentTemplate(AgentInterface):
         """Close RAG and P2P connections."""
         try:
             # Close RAG connection if it exists
-            if hasattr(self, 'rag_connection') and self.rag_connection:
+            if hasattr(self, "rag_connection") and self.rag_connection:
                 try:
                     await self.rag_connection.close()
                 except Exception as e:
                     logger.warning(f"Error closing RAG connection: {e}")
 
             # Close P2P connection if it exists
-            if hasattr(self, 'p2p_connection') and self.p2p_connection:
+            if hasattr(self, "p2p_connection") and self.p2p_connection:
                 try:
                     await self.p2p_connection.disconnect()
                 except Exception as e:
@@ -1065,7 +1067,7 @@ class BaseAgentTemplate(AgentInterface):
             # Close any MCP tool connections
             for tool in self.mcp_tools.values():
                 try:
-                    if hasattr(tool, 'close'):
+                    if hasattr(tool, "close"):
                         await tool.close()
                 except Exception as e:
                     logger.warning(f"Error closing MCP tool {tool}: {e}")

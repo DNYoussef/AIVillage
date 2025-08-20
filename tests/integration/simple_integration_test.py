@@ -21,16 +21,13 @@ async def test_basic_integration():
             PeerType,
             create_p2p_mesh_integration,
         )
-        from packages.p2p.core.message_types import MessagePriority
         from packages.p2p.core.transport_manager import TransportPriority
+
         print("   [OK] All imports successful")
 
         # Test basic object creation
         print("2. Testing object creation...")
-        mesh = P2PMeshIntegration(
-            device_id="test-device-001",
-            peer_type=PeerType.MOBILE
-        )
+        mesh = P2PMeshIntegration(device_id="test-device-001", peer_type=PeerType.MOBILE)
         status = mesh.get_status()
         print(f"   [OK] Created mesh with device ID: {status['device_id']}")
         print(f"   [OK] P2P Available: {status['p2p_available']}")
@@ -39,16 +36,11 @@ async def test_basic_integration():
 
         # Test offline coordinator integration
         print("3. Testing offline coordinator integration...")
-        offline_coord = GlobalSouthOfflineCoordinator(
-            max_storage_mb=5,
-            daily_data_budget_usd=0.25
-        )
+        offline_coord = GlobalSouthOfflineCoordinator(max_storage_mb=5, daily_data_budget_usd=0.25)
         await offline_coord.start()
 
         integrated_mesh = P2PMeshIntegration(
-            device_id="test-device-003",
-            peer_type=PeerType.MOBILE,
-            offline_coordinator=offline_coord
+            device_id="test-device-003", peer_type=PeerType.MOBILE, offline_coordinator=offline_coord
         )
 
         integrated_status = integrated_mesh.get_status()
@@ -68,7 +60,7 @@ async def test_basic_integration():
             device_id="factory-test-device",
             peer_type=PeerType.MOBILE,
             transport_priority=TransportPriority.OFFLINE_FIRST,
-            start_immediately=False
+            start_immediately=False,
         )
 
         if factory_mesh:
@@ -80,7 +72,7 @@ async def test_basic_integration():
 
         # Test mesh startup if P2P is available
         print("6. Testing mesh startup...")
-        if status['p2p_available']:
+        if status["p2p_available"]:
             print("   [INFO] P2P infrastructure available, testing startup...")
             try:
                 start_result = await integrated_mesh.start()
@@ -120,8 +112,10 @@ async def test_basic_integration():
     except Exception as e:
         print(f"   [FAIL] Test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 async def test_transport_integration():
     """Test integration with actual transport infrastructure."""
@@ -137,7 +131,7 @@ async def test_transport_integration():
         mesh = P2PMeshIntegration(
             device_id="transport-test-device",
             peer_type=PeerType.MOBILE,
-            transport_priority=TransportPriority.OFFLINE_FIRST
+            transport_priority=TransportPriority.OFFLINE_FIRST,
         )
 
         # Verify transport manager was created
@@ -150,7 +144,7 @@ async def test_transport_integration():
             print(f"   [OK] Transport priority: {tm_status['transport_priority']}")
 
             # Verify BitChat transport was registered
-            if TransportType.BITCHAT.value in tm_status['available_transports']:
+            if TransportType.BITCHAT.value in tm_status["available_transports"]:
                 print("   [OK] BitChat transport registered successfully")
             else:
                 print("   [INFO] BitChat transport not in available list (may need startup)")
@@ -171,8 +165,10 @@ async def test_transport_integration():
     except Exception as e:
         print(f"   [FAIL] Transport test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 async def main():
     """Run all tests."""
@@ -196,6 +192,7 @@ async def main():
     else:
         print("FAILURE: Some tests failed!")
         return 1
+
 
 if __name__ == "__main__":
     try:

@@ -13,8 +13,8 @@ from torch.utils.data import DataLoader, TensorDataset
 from transformers import AutoTokenizer
 
 # Add paths
-sys.path.insert(0, os.path.abspath('.'))
-sys.path.insert(0, os.path.abspath('packages'))
+sys.path.insert(0, os.path.abspath("."))
+sys.path.insert(0, os.path.abspath("packages"))
 
 from packages.hrrm.memory.model import MemoryAsContextTiny, MemoryConfig
 from packages.hrrm.planner.heads import PlannerConfig
@@ -23,6 +23,7 @@ from packages.hrrm.reasoner.model import HRMReasoner, ReasonerConfig
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
 
 def calculate_model_size(config):
     """Calculate approximate model size in parameters."""
@@ -41,6 +42,7 @@ def calculate_model_size(config):
     # Total parameters
     total_params = embedding_params + (n_layers * per_layer_params)
     return total_params
+
 
 def create_50m_config(model_type, vocab_size):
     """Create configurations for 50M parameter models."""
@@ -63,7 +65,7 @@ def create_50m_config(model_type, vocab_size):
                 max_H=4,
                 inner_T=4,
                 control_tokens=5,
-                lambda_ctrl=0.2
+                lambda_ctrl=0.2,
             )
             params = calculate_model_size(config)
             logger.info(f"Planner config d_model={d_model}, n_layers={n_layers}: ~{params:,} parameters")
@@ -80,7 +82,7 @@ def create_50m_config(model_type, vocab_size):
             max_H=4,
             inner_T=4,
             control_tokens=["<PLAN>", "<SUBGOAL>", "<ACTION>", "<CHECK>", "<ENDPLAN>"],
-            lambda_ctrl=0.2
+            lambda_ctrl=0.2,
         )
         return config
 
@@ -100,7 +102,7 @@ def create_50m_config(model_type, vocab_size):
                 n_head=max(8, d_model // 64),
                 max_H=4,
                 inner_T=4,
-                self_consistency_k=5
+                self_consistency_k=5,
             )
             params = calculate_model_size(config)
             logger.info(f"Reasoner config d_model={d_model}, n_layers={n_layers}: ~{params:,} parameters")
@@ -109,13 +111,7 @@ def create_50m_config(model_type, vocab_size):
 
         # Fallback
         return ReasonerConfig(
-            vocab_size=vocab_size,
-            d_model=512,
-            n_layers=12,
-            n_head=8,
-            max_H=4,
-            inner_T=4,
-            self_consistency_k=5
+            vocab_size=vocab_size, d_model=512, n_layers=12, n_head=8, max_H=4, inner_T=4, self_consistency_k=5
         )
 
     elif model_type == "memory":
@@ -132,13 +128,13 @@ def create_50m_config(model_type, vocab_size):
                 d_model=d_model,
                 n_layers=n_layers,
                 n_head=max(8, d_model // 64),
-                mem_dim=d_model//4,
+                mem_dim=d_model // 4,
                 mem_tokens=64,
                 mem_slots=128,
                 alpha=1.0,
                 beta=0.9,
                 eta=0.01,
-                eta_decay=0.001
+                eta_decay=0.001,
             )
             params = calculate_model_size(config)
             logger.info(f"Memory config d_model={d_model}, n_layers={n_layers}: ~{params:,} parameters")
@@ -157,8 +153,9 @@ def create_50m_config(model_type, vocab_size):
             alpha=1.0,
             beta=0.9,
             eta=0.01,
-            eta_decay=0.001
+            eta_decay=0.001,
         )
+
 
 def load_training_datasets():
     """Load and prepare training datasets."""
@@ -169,24 +166,26 @@ def load_training_datasets():
     # Load synthetic data
     synthetic_data = []
     for i in range(1000):  # More synthetic examples
-        synthetic_data.append(f"This is synthetic training example number {i}. It demonstrates reasoning and planning patterns.")
-    datasets['synthetic'] = synthetic_data
+        synthetic_data.append(
+            f"This is synthetic training example number {i}. It demonstrates reasoning and planning patterns."
+        )
+    datasets["synthetic"] = synthetic_data
 
     # Load reasoner enhancement data (GSM8K + ARC)
     try:
         reasoner_file = Path("packages/core/training/datasets/reasoner_enhancement/reasoner_training_data.jsonl")
         if reasoner_file.exists():
             reasoner_data = []
-            with open(reasoner_file, encoding='utf-8') as f:
+            with open(reasoner_file, encoding="utf-8") as f:
                 for line_num, line in enumerate(f):
                     if line_num >= 2000:  # Limit for training speed
                         break
                     try:
                         data = json.loads(line.strip())
-                        reasoner_data.append(data['text'])
+                        reasoner_data.append(data["text"])
                     except:
                         continue
-            datasets['reasoner'] = reasoner_data
+            datasets["reasoner"] = reasoner_data
             logger.info(f"Loaded {len(reasoner_data)} reasoner enhancement examples")
     except Exception as e:
         logger.warning(f"Could not load reasoner enhancement: {e}")
@@ -196,16 +195,16 @@ def load_training_datasets():
         planner_file = Path("packages/core/training/datasets/planner_enhancement/planner_training_data.jsonl")
         if planner_file.exists():
             planner_data = []
-            with open(planner_file, encoding='utf-8') as f:
+            with open(planner_file, encoding="utf-8") as f:
                 for line_num, line in enumerate(f):
                     if line_num >= 500:  # Limit for training speed
                         break
                     try:
                         data = json.loads(line.strip())
-                        planner_data.append(data['text'])
+                        planner_data.append(data["text"])
                     except:
                         continue
-            datasets['planner'] = planner_data
+            datasets["planner"] = planner_data
             logger.info(f"Loaded {len(planner_data)} planner enhancement examples")
     except Exception as e:
         logger.warning(f"Could not load planner enhancement: {e}")
@@ -223,30 +222,31 @@ def load_training_datasets():
 
     return datasets
 
+
 def prepare_training_data(datasets, tokenizer, model_type):
     """Prepare training data for specific model type."""
     all_texts = []
 
     # Add synthetic data for all models
-    all_texts.extend(datasets.get('synthetic', []))
+    all_texts.extend(datasets.get("synthetic", []))
 
     if model_type == "planner":
         # Planner focuses on code and planning tasks (already formatted)
-        if 'planner' in datasets:
-            all_texts.extend(datasets['planner'])
+        if "planner" in datasets:
+            all_texts.extend(datasets["planner"])
             logger.info(f"Added {len(datasets['planner'])} planner-specific examples")
 
         # Also add some reasoner data for diversity
-        if 'reasoner' in datasets:
+        if "reasoner" in datasets:
             # Take subset of reasoner data
-            reasoner_subset = datasets['reasoner'][:200]
+            reasoner_subset = datasets["reasoner"][:200]
             all_texts.extend(reasoner_subset)
             logger.info(f"Added {len(reasoner_subset)} reasoner examples to planner")
 
     elif model_type == "reasoner":
         # Reasoner focuses on math and logical reasoning (already formatted with SoT/EoT)
-        if 'reasoner' in datasets:
-            all_texts.extend(datasets['reasoner'])
+        if "reasoner" in datasets:
+            all_texts.extend(datasets["reasoner"])
             logger.info(f"Added {len(datasets['reasoner'])} reasoner-specific examples")
 
     elif model_type == "memory":
@@ -255,16 +255,16 @@ def prepare_training_data(datasets, tokenizer, model_type):
 
         # Add all available datasets for memory model
         for dataset_name, dataset_items in datasets.items():
-            if dataset_name == 'synthetic':
+            if dataset_name == "synthetic":
                 continue
-            elif dataset_name in ['planner', 'reasoner']:
+            elif dataset_name in ["planner", "reasoner"]:
                 # For memory model, strip special tokens and use as general text
                 for text in dataset_items[:300]:  # Limit each dataset
                     # Remove special tokens for memory model
-                    clean_text = text.replace('<PLAN>', '').replace('<SUBGOAL>', '').replace('<ACTION>', '')
-                    clean_text = clean_text.replace('<CHECK>', '').replace('<ENDPLAN>', '')
-                    clean_text = clean_text.replace('<SoT>', '').replace('<EoT>', '')
-                    clean_text = ' '.join(clean_text.split())  # Clean whitespace
+                    clean_text = text.replace("<PLAN>", "").replace("<SUBGOAL>", "").replace("<ACTION>", "")
+                    clean_text = clean_text.replace("<CHECK>", "").replace("<ENDPLAN>", "")
+                    clean_text = clean_text.replace("<SoT>", "").replace("<EoT>", "")
+                    clean_text = " ".join(clean_text.split())  # Clean whitespace
                     if len(clean_text.strip()) > 50:  # Only keep substantial texts
                         all_dataset_texts.append(clean_text)
 
@@ -274,6 +274,7 @@ def prepare_training_data(datasets, tokenizer, model_type):
     logger.info(f"Prepared {len(all_texts)} total training examples for {model_type}")
     return all_texts
 
+
 def tokenize_data(texts, tokenizer, max_length=512):
     """Tokenize text data."""
     logger.info(f"Tokenizing {len(texts)} texts with max_length={max_length}")
@@ -282,17 +283,17 @@ def tokenize_data(texts, tokenizer, max_length=512):
 
     for text in texts:
         # Simple whitespace tokenization as fallback
-        if hasattr(tokenizer, 'encode'):
+        if hasattr(tokenizer, "encode"):
             try:
                 tokens = tokenizer.encode(text, max_length=max_length, truncation=True)
             except:
                 # Fallback to simple tokenization
-                words = text.split()[:max_length//2]  # Rough estimate
+                words = text.split()[: max_length // 2]  # Rough estimate
                 tokens = [hash(word) % 32000 for word in words]  # Simple hash-based tokenization
         else:
             # Mock tokenization
-            words = text.split()[:max_length//2]
-            tokens = [(hash(word) % (tokenizer.vocab_size-100)) + 1 for word in words]
+            words = text.split()[: max_length // 2]
+            tokens = [(hash(word) % (tokenizer.vocab_size - 100)) + 1 for word in words]
 
         if len(tokens) < 10:  # Skip very short sequences
             continue
@@ -301,6 +302,7 @@ def tokenize_data(texts, tokenizer, max_length=512):
 
     logger.info(f"Created {len(all_input_ids)} tokenized sequences")
     return all_input_ids
+
 
 def create_dataloader(input_ids_list, batch_size=4):
     """Create DataLoader from tokenized sequences."""
@@ -321,9 +323,10 @@ def create_dataloader(input_ids_list, batch_size=4):
 
     return dataloader
 
+
 def train_model(model, dataloader, model_name, epochs=2):
     """Train model with real datasets."""
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
     model.train()
 
@@ -360,24 +363,28 @@ def train_model(model, dataloader, model_name, epochs=2):
                 # Forward pass
                 if model_name == "HRMPlanner":
                     output = model(inputs, labels=labels)
-                    loss = output.loss if hasattr(output, 'loss') else torch.nn.functional.cross_entropy(
-                        output.logits.view(-1, output.logits.size(-1)),
-                        labels.view(-1),
-                        ignore_index=0  # Ignore padding tokens
+                    loss = (
+                        output.loss
+                        if hasattr(output, "loss")
+                        else torch.nn.functional.cross_entropy(
+                            output.logits.view(-1, output.logits.size(-1)),
+                            labels.view(-1),
+                            ignore_index=0,  # Ignore padding tokens
+                        )
                     )
                 elif model_name == "HRMReasoner":
                     output = model(inputs, labels=labels)
-                    loss = output.loss if hasattr(output, 'loss') else torch.nn.functional.cross_entropy(
-                        output.logits.view(-1, output.logits.size(-1)),
-                        labels.view(-1),
-                        ignore_index=0
+                    loss = (
+                        output.loss
+                        if hasattr(output, "loss")
+                        else torch.nn.functional.cross_entropy(
+                            output.logits.view(-1, output.logits.size(-1)), labels.view(-1), ignore_index=0
+                        )
                     )
                 else:  # MemoryAsContextTiny
                     output = model(inputs)
                     loss = torch.nn.functional.cross_entropy(
-                        output.logits.view(-1, output.logits.size(-1)),
-                        labels.view(-1),
-                        ignore_index=0
+                        output.logits.view(-1, output.logits.size(-1)), labels.view(-1), ignore_index=0
                     )
 
                 # Gradient clipping for stability
@@ -411,6 +418,7 @@ def train_model(model, dataloader, model_name, epochs=2):
 
     return avg_total_loss, trainable_params
 
+
 def save_model_hf_format(model, config, tokenizer, model_name, save_dir):
     """Save model in HuggingFace format for EvoMerge compatibility."""
     save_dir = Path(save_dir)
@@ -433,11 +441,11 @@ def save_model_hf_format(model, config, tokenizer, model_name, save_dir):
     }
 
     # Add model-specific config
-    if hasattr(config, '__dict__'):
+    if hasattr(config, "__dict__"):
         hf_config.update(config.__dict__)
 
     # Save config.json
-    with open(save_dir / "config.json", 'w') as f:
+    with open(save_dir / "config.json", "w") as f:
         json.dump(hf_config, f, indent=2)
 
     # Create simple README
@@ -497,16 +505,17 @@ If you use this model in your research, please cite:
 ```
 """
 
-    with open(save_dir / "README.md", 'w') as f:
+    with open(save_dir / "README.md", "w") as f:
         f.write(readme_content)
 
     logger.info(f"Saved {model_name} to {save_dir} in HuggingFace format")
 
+
 def main():
     """Main training function for 50M parameter models."""
-    logger.info("="*60)
+    logger.info("=" * 60)
     logger.info("Training 50M Parameter HRRM Models with Real Datasets")
-    logger.info("="*60)
+    logger.info("=" * 60)
 
     # Setup tokenizer
     logger.info("Setting up tokenizer...")
@@ -517,11 +526,14 @@ def main():
     except:
         # Fallback to mock tokenizer
         logger.info("Using mock tokenizer")
+
         class MockTokenizer:
             vocab_size = 32000
+
             def encode(self, text, max_length=512, truncation=True):
-                words = text.split()[:max_length//2]
-                return [(hash(word) % (self.vocab_size-100)) + 1 for word in words]
+                words = text.split()[: max_length // 2]
+                return [(hash(word) % (self.vocab_size - 100)) + 1 for word in words]
+
         tokenizer = MockTokenizer()
 
     # Load training datasets
@@ -535,9 +547,9 @@ def main():
     models_info = {}
 
     # 1. Train 50M Parameter Planner
-    logger.info("\n" + "="*50)
+    logger.info("\n" + "=" * 50)
     logger.info("Training 50M Parameter HRMPlanner")
-    logger.info("="*50)
+    logger.info("=" * 50)
 
     planner_config = create_50m_config("planner", tokenizer.vocab_size)
     planner = HRMPlanner(planner_config)
@@ -547,19 +559,18 @@ def main():
     planner_dataloader = create_dataloader(planner_input_ids, batch_size=2)  # Small batch for memory
 
     planner_loss, planner_params = train_model(planner, planner_dataloader, "HRMPlanner", epochs=2)
-    save_model_hf_format(planner, planner_config, tokenizer, "HRMPlanner",
-                         output_dir / "hrrm-planner")
+    save_model_hf_format(planner, planner_config, tokenizer, "HRMPlanner", output_dir / "hrrm-planner")
 
     models_info["planner"] = {
         "parameters": planner_params,
         "final_loss": planner_loss,
-        "config": planner_config.__dict__ if hasattr(planner_config, '__dict__') else str(planner_config)
+        "config": planner_config.__dict__ if hasattr(planner_config, "__dict__") else str(planner_config),
     }
 
     # 2. Train 50M Parameter Reasoner
-    logger.info("\n" + "="*50)
+    logger.info("\n" + "=" * 50)
     logger.info("Training 50M Parameter HRMReasoner")
-    logger.info("="*50)
+    logger.info("=" * 50)
 
     reasoner_config = create_50m_config("reasoner", tokenizer.vocab_size)
     reasoner = HRMReasoner(reasoner_config)
@@ -569,19 +580,18 @@ def main():
     reasoner_dataloader = create_dataloader(reasoner_input_ids, batch_size=2)
 
     reasoner_loss, reasoner_params = train_model(reasoner, reasoner_dataloader, "HRMReasoner", epochs=2)
-    save_model_hf_format(reasoner, reasoner_config, tokenizer, "HRMReasoner",
-                         output_dir / "hrrm-reasoner")
+    save_model_hf_format(reasoner, reasoner_config, tokenizer, "HRMReasoner", output_dir / "hrrm-reasoner")
 
     models_info["reasoner"] = {
         "parameters": reasoner_params,
         "final_loss": reasoner_loss,
-        "config": reasoner_config.__dict__ if hasattr(reasoner_config, '__dict__') else str(reasoner_config)
+        "config": reasoner_config.__dict__ if hasattr(reasoner_config, "__dict__") else str(reasoner_config),
     }
 
     # 3. Train 50M Parameter Memory
-    logger.info("\n" + "="*50)
+    logger.info("\n" + "=" * 50)
     logger.info("Training 50M Parameter MemoryAsContextTiny")
-    logger.info("="*50)
+    logger.info("=" * 50)
 
     memory_config = create_50m_config("memory", tokenizer.vocab_size)
     memory = MemoryAsContextTiny(memory_config)
@@ -591,13 +601,12 @@ def main():
     memory_dataloader = create_dataloader(memory_input_ids, batch_size=2)
 
     memory_loss, memory_params = train_model(memory, memory_dataloader, "MemoryAsContextTiny", epochs=2)
-    save_model_hf_format(memory, memory_config, tokenizer, "MemoryAsContextTiny",
-                         output_dir / "hrrm-memory")
+    save_model_hf_format(memory, memory_config, tokenizer, "MemoryAsContextTiny", output_dir / "hrrm-memory")
 
     models_info["memory"] = {
         "parameters": memory_params,
         "final_loss": memory_loss,
-        "config": memory_config.__dict__ if hasattr(memory_config, '__dict__') else str(memory_config)
+        "config": memory_config.__dict__ if hasattr(memory_config, "__dict__") else str(memory_config),
     }
 
     # Create tokenizer directory
@@ -607,16 +616,16 @@ def main():
     # Save tokenizer info
     tokenizer_info = {
         "vocab_size": tokenizer.vocab_size,
-        "tokenizer_type": "mock" if not hasattr(tokenizer, 'save_pretrained') else "huggingface"
+        "tokenizer_type": "mock" if not hasattr(tokenizer, "save_pretrained") else "huggingface",
     }
 
-    with open(tokenizer_dir / "tokenizer_config.json", 'w') as f:
+    with open(tokenizer_dir / "tokenizer_config.json", "w") as f:
         json.dump(tokenizer_info, f, indent=2)
 
     # Final summary
-    logger.info("\n" + "="*60)
+    logger.info("\n" + "=" * 60)
     logger.info("50M Parameter HRRM Training Summary")
-    logger.info("="*60)
+    logger.info("=" * 60)
 
     total_params = sum(info["parameters"] for info in models_info.values())
 
@@ -631,12 +640,12 @@ def main():
         "total_parameters": total_params,
         "models": models_info,
         "datasets_used": list(datasets.keys()),
-        "output_directory": str(output_dir)
+        "output_directory": str(output_dir),
     }
 
     summary_path = "artifacts/50m_hrrm_training_summary.json"
     os.makedirs(os.path.dirname(summary_path), exist_ok=True)
-    with open(summary_path, 'w') as f:
+    with open(summary_path, "w") as f:
         json.dump(summary, f, indent=2)
 
     logger.info(f"\n✅ Training summary saved to {summary_path}")
@@ -644,6 +653,7 @@ def main():
     logger.info(f"📁 Models saved to: {output_dir}")
 
     return True
+
 
 if __name__ == "__main__":
     main()

@@ -555,11 +555,13 @@ class MultiTenantManager:
         if resource.metadata is None:
             resource.metadata = {}
         resource.metadata["shared_with"] = resource.metadata.get("shared_with", [])
-        resource.metadata["shared_with"].append({
-            "tenant_id": target_tenant_id,
-            "permissions": [p.value for p in permissions],
-            "shared_at": sharing_record["shared_at"]
-        })
+        resource.metadata["shared_with"].append(
+            {
+                "tenant_id": target_tenant_id,
+                "permissions": [p.value for p in permissions],
+                "shared_at": sharing_record["shared_at"],
+            }
+        )
 
         logger.info(f"Shared resource {resource_id} from {owner_tenant_id} to {target_tenant_id}")
         return True

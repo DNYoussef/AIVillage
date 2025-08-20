@@ -411,7 +411,7 @@ class CostGovernanceDashboard:
         if self.cloud_manager:
             try:
                 cloud_metrics = self.cloud_manager.get_utilization_metrics()
-                cloud_utilization = cloud_metrics.get('cpu_utilization', 0.75)
+                cloud_utilization = cloud_metrics.get("cpu_utilization", 0.75)
                 utilizations.append(cloud_utilization)
             except Exception:
                 # Fallback to estimated utilization
@@ -646,8 +646,7 @@ class CostGovernanceDashboard:
             # Calculate utilization based on current cost tracking
             if self.cost_tracker:
                 current_cost = sum(
-                    event.cost_amount for event in self.cost_tracker.cost_events
-                    if event.category == category
+                    event.cost_amount for event in self.cost_tracker.cost_events if event.category == category
                 )
                 return min(1.0, current_cost / governance.monthly_budget_usd)
         except Exception:

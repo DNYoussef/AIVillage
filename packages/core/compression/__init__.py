@@ -1,5 +1,6 @@
 """Core compression utilities."""
 
+
 class SimpleQuantizer:
     """Basic quantizer for testing purposes."""
 
@@ -9,11 +10,12 @@ class SimpleQuantizer:
     def quantize(self, data):
         """Quantize input data using basic bit reduction."""
         import numpy as np
-        if hasattr(data, 'numpy'):
+
+        if hasattr(data, "numpy"):
             data = data.numpy()
         if isinstance(data, np.ndarray):
             # Simple quantization: scale and round to available bit levels
-            scale = (2 ** self.bits - 1)
+            scale = 2**self.bits - 1
             data_min, data_max = data.min(), data.max()
             if data_max > data_min:
                 normalized = (data - data_min) / (data_max - data_min)
@@ -30,10 +32,11 @@ class SimpleQuantizer:
     def quantize_model(self, model):
         """Apply basic quantization to model parameters."""
         # For basic quantization, iterate through model parameters
-        if hasattr(model, 'parameters'):
+        if hasattr(model, "parameters"):
             for param in model.parameters():
                 if param.requires_grad:
                     param.data = self.quantize(param.data)
         return model
+
 
 __all__ = ["SimpleQuantizer"]

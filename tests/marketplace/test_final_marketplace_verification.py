@@ -6,7 +6,8 @@ Final marketplace verification test
 import asyncio
 import sys
 
-sys.path.insert(0, 'packages')
+sys.path.insert(0, "packages")
+
 
 async def test_final_verification():
     print("=== Final Marketplace Verification Test ===")
@@ -15,28 +16,25 @@ async def test_final_verification():
     print("\n1. Testing Core Marketplace Engine...")
     try:
         from packages.fog.gateway.scheduler.marketplace import BidType, PricingTier, get_marketplace_engine
+
         marketplace = await get_marketplace_engine()
 
         # Add listing
         listing_id = await marketplace.add_resource_listing(
-            node_id='verification-server',
+            node_id="verification-server",
             cpu_cores=8.0,
             memory_gb=16.0,
             disk_gb=500.0,
             spot_price=0.10,
             on_demand_price=0.15,
             trust_score=0.8,
-            pricing_tier=PricingTier.STANDARD
+            pricing_tier=PricingTier.STANDARD,
         )
         print(f"   [PASS] Resource listing created: {listing_id}")
 
         # Submit bid
         bid_id = await marketplace.submit_bid(
-            namespace='verification/test',
-            cpu_cores=4.0,
-            memory_gb=8.0,
-            max_price=0.50,
-            bid_type=BidType.SPOT
+            namespace="verification/test", cpu_cores=4.0, memory_gb=8.0, max_price=0.50, bid_type=BidType.SPOT
         )
         print(f"   [PASS] Bid submitted: {bid_id}")
 
@@ -55,21 +53,22 @@ async def test_final_verification():
     print("\n2. Testing Billing Integration...")
     try:
         from packages.fog.gateway.api.billing import get_billing_engine
+
         billing = await get_billing_engine()
 
         # Record usage
         cost = await billing.record_job_usage(
-            namespace='verification/test',
-            job_id='verification-job',
+            namespace="verification/test",
+            job_id="verification-job",
             cpu_cores=2.0,
             memory_gb=4.0,
             disk_gb=20.0,
-            duration_seconds=1800
+            duration_seconds=1800,
         )
         print(f"   [PASS] Job usage recorded: ${cost:.4f}")
 
         # Generate report
-        report = await billing.get_usage_report('verification/test')
+        report = await billing.get_usage_report("verification/test")
         print(f"   [PASS] Usage report generated: ${report.cost_breakdown.total_cost:.4f} total cost")
 
         print("   [SUCCESS] Billing integration working correctly")
@@ -84,10 +83,10 @@ async def test_final_verification():
         from packages.fog.edge.beacon import CapabilityBeacon, DeviceType, PowerProfile
 
         beacon = CapabilityBeacon(
-            device_name='verification-mobile',
-            operator_namespace='verification/mobile',
+            device_name="verification-mobile",
+            operator_namespace="verification/mobile",
             device_type=DeviceType.MOBILE_PHONE,
-            betanet_endpoint='htx://verification:8080'
+            betanet_endpoint="htx://verification:8080",
         )
 
         # Configure device
@@ -99,8 +98,10 @@ async def test_final_verification():
 
         # Update pricing
         await beacon._update_marketplace_pricing()
-        print(f"   [PASS] Mobile pricing: spot=${beacon.capability.spot_price_per_cpu_hour:.4f}, "
-              f"demand=${beacon.capability.on_demand_price_per_cpu_hour:.4f}")
+        print(
+            f"   [PASS] Mobile pricing: spot=${beacon.capability.spot_price_per_cpu_hour:.4f}, "
+            f"demand=${beacon.capability.on_demand_price_per_cpu_hour:.4f}"
+        )
 
         # Get listing data
         listing_data = beacon.get_marketplace_listing()
@@ -136,10 +137,10 @@ async def test_final_verification():
         collector = get_metrics_collector()
 
         # Record sample metrics
-        collector.record_job_queued('verification/test', SLAClass.A)
-        collector.record_job_started('verification-job', RuntimeType.WASI, 'verification/test')
-        collector.update_node_trust_score('verification-node', 0.85)
-        collector.record_job_completed('verification-job', 'verification/test', SLAClass.A, RuntimeType.WASI, 30.5)
+        collector.record_job_queued("verification/test", SLAClass.A)
+        collector.record_job_started("verification-job", RuntimeType.WASI, "verification/test")
+        collector.update_node_trust_score("verification-node", 0.85)
+        collector.record_job_completed("verification-job", "verification/test", SLAClass.A, RuntimeType.WASI, 30.5)
 
         # Get metrics
         metrics_output = collector.export_metrics()
@@ -165,7 +166,8 @@ async def test_final_verification():
 
     return True
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     success = asyncio.run(test_final_verification())
     if success:
         print("\n[SUCCESS] ALL TESTS PASSED - MARKETPLACE IS FULLY FUNCTIONAL!")

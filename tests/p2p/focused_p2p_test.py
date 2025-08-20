@@ -28,7 +28,7 @@ async def test_core_p2p_integration():
         mesh = P2PMeshIntegration(
             device_id="test-global-south-device",
             peer_type=PeerType.MOBILE,
-            transport_priority=TransportPriority.OFFLINE_FIRST
+            transport_priority=TransportPriority.OFFLINE_FIRST,
         )
 
         # Verify basic functionality
@@ -56,10 +56,10 @@ async def test_core_p2p_integration():
 
             # Verify Global South optimizations
             expected_values = {
-                'network_type': 'cellular',
-                'has_internet': False,
-                'is_metered_connection': True,
-                'power_save_mode': True
+                "network_type": "cellular",
+                "has_internet": False,
+                "is_metered_connection": True,
+                "power_save_mode": True,
             }
 
             all_correct = True
@@ -132,8 +132,7 @@ async def test_core_p2p_integration():
 
             # Create a test message
             test_message = UnifiedMessage(
-                message_type=MessageType.DATA,
-                payload=b"Test message for Global South routing"
+                message_type=MessageType.DATA, payload=b"Test message for Global South routing"
             )
             test_message.metadata.priority = MessagePriority.NORMAL
 
@@ -172,8 +171,10 @@ async def test_core_p2p_integration():
     except Exception as e:
         print(f"   [FAIL] Test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 async def test_factory_and_startup():
     """Test factory function and startup process."""
@@ -191,7 +192,7 @@ async def test_factory_and_startup():
             device_id="factory-test-device",
             peer_type=PeerType.MOBILE,
             transport_priority=TransportPriority.OFFLINE_FIRST,
-            start_immediately=False
+            start_immediately=False,
         )
 
         if mesh:
@@ -225,6 +226,7 @@ async def test_factory_and_startup():
         print(f"   [FAIL] Factory test failed: {e}")
         return False
 
+
 async def main():
     """Run comprehensive integration tests."""
 
@@ -257,6 +259,7 @@ async def main():
         print("FAILURE: Integration test failed!")
         return 1
 
+
 if __name__ == "__main__":
     try:
         exit_code = asyncio.run(main())
@@ -264,5 +267,6 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"Test crashed: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)

@@ -336,7 +336,9 @@ class RAGSystemIntegration:
             "status": 200,
             "data": {
                 "query": params.get("query"),
-                "results": [{"text": "Query processed successfully", "score": 1.0, "source": "system"}],  # Basic query response
+                "results": [
+                    {"text": "Query processed successfully", "score": 1.0, "source": "system"}
+                ],  # Basic query response
                 "metadata": {
                     "collection_id": collection_id,
                     "tenant_id": tenant_id,
@@ -612,14 +614,19 @@ class AgentForgeIntegration:
             return {"error": "Permission denied", "status": 403}
 
         # Get training jobs for tenant
-        return {"status": 200, "data": {"training_jobs": [
-            {
-                "job_id": f"{tenant_id}_training_example",
-                "status": "completed",
-                "created_at": datetime.utcnow().isoformat(),
-                "phases_completed": 7
-            }
-        ]}}
+        return {
+            "status": 200,
+            "data": {
+                "training_jobs": [
+                    {
+                        "job_id": f"{tenant_id}_training_example",
+                        "status": "completed",
+                        "created_at": datetime.utcnow().isoformat(),
+                        "phases_completed": 7,
+                    }
+                ]
+            },
+        }
 
 
 class DigitalTwinIntegration:
@@ -810,14 +817,19 @@ class MobileEdgeIntegration:
         if not await self.rbac.check_permission(user_id, Permission.AGENT_READ):
             return {"error": "Permission denied", "status": 403}
 
-        return {"status": 200, "data": {"devices": [
-            {
-                "device_id": f"{tenant_id}_device_example",
-                "device_type": "mobile",
-                "status": "active",
-                "registered_at": datetime.utcnow().isoformat()
-            }
-        ]}}
+        return {
+            "status": 200,
+            "data": {
+                "devices": [
+                    {
+                        "device_id": f"{tenant_id}_device_example",
+                        "device_type": "mobile",
+                        "status": "active",
+                        "registered_at": datetime.utcnow().isoformat(),
+                    }
+                ]
+            },
+        }
 
 
 async def initialize_aivillage_rbac() -> AIVillageRBACIntegration:

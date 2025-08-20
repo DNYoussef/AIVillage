@@ -297,7 +297,7 @@ class OperationalArtifactCollector:
 
                     destination.parent.mkdir(parents=True, exist_ok=True)
 
-                    async with aiofiles.open(destination, 'wb') as f:
+                    async with aiofiles.open(destination, "wb") as f:
                         async for chunk in response.content.iter_chunked(8192):
                             await f.write(chunk)
 

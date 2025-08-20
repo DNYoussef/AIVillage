@@ -267,18 +267,28 @@ class BackupScheduler:
         elif job.schedule_type == ScheduleType.FULL_WEEKLY:
             # Weekly on specific day - calculate next occurrence
             # Default to Sunday if no day specified
-            target_weekday = 6 if not job.day_of_week else {
-                'monday': 0, 'tuesday': 1, 'wednesday': 2, 'thursday': 3,
-                'friday': 4, 'saturday': 5, 'sunday': 6
-            }.get(job.day_of_week.lower(), 6)
+            target_weekday = (
+                6
+                if not job.day_of_week
+                else {
+                    "monday": 0,
+                    "tuesday": 1,
+                    "wednesday": 2,
+                    "thursday": 3,
+                    "friday": 4,
+                    "saturday": 5,
+                    "sunday": 6,
+                }.get(job.day_of_week.lower(), 6)
+            )
 
             # Calculate days until next target weekday
             days_ahead = target_weekday - now.weekday()
             if days_ahead <= 0:  # Target day already happened this week
                 days_ahead += 7
 
-            next_run = now.replace(hour=job.hour or 2, minute=job.minute or 0,
-                                 second=0, microsecond=0) + timedelta(days=days_ahead)
+            next_run = now.replace(hour=job.hour or 2, minute=job.minute or 0, second=0, microsecond=0) + timedelta(
+                days=days_ahead
+            )
 
         elif job.schedule_type in [ScheduleType.INCREMENTAL_HOURLY, ScheduleType.CONFIGURATION_HOURLY]:
             # Hourly interval
@@ -409,9 +419,7 @@ class BackupScheduler:
                     # Get all tenants from RBAC system - use empty list if not available
                     logger.warning("Tenant backup without specific tenant list - using empty tenant set")
                     # Create a minimal tenant backup to maintain backup cycle
-                    backup_id = await self.backup_manager.create_full_backup(
-                        exclude_components=["models", "logs"]
-                    )
+                    backup_id = await self.backup_manager.create_full_backup(exclude_components=["models", "logs"])
 
             elif job.backup_type == BackupType.CONFIGURATION:
                 # Configuration-only backup (subset of full backup)
@@ -548,6 +556,7 @@ class BackupScheduler:
         # Check disk space
         try:
             import shutil
+
             total_size = sum(f.stat().st_size for f in self.backup_manager.backup_root.rglob("*") if f.is_file())
             free_space = shutil.disk_usage(self.backup_manager.backup_root).free
 

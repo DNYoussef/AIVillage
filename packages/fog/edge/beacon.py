@@ -582,7 +582,7 @@ class CapabilityBeacon:
 
                 def add_service(self, zeroconf, type, name):
                     info = zeroconf.get_service_info(type, name)
-                    if info and '_fog-edge._tcp.local.' in type:
+                    if info and "_fog-edge._tcp.local." in type:
                         # Discovered a fog edge device
                         device_capability = self.beacon._parse_service_info(info)
                         if device_capability:
@@ -725,11 +725,16 @@ class CapabilityBeacon:
             if timezone:
                 # Map common timezones to regions
                 timezone_map = {
-                    'PST': 'us-west-1', 'PDT': 'us-west-1',
-                    'MST': 'us-west-2', 'MDT': 'us-west-2',
-                    'CST': 'us-central-1', 'CDT': 'us-central-1',
-                    'EST': 'us-east-1', 'EDT': 'us-east-1',
-                    'UTC': 'eu-west-1', 'GMT': 'eu-west-1'
+                    "PST": "us-west-1",
+                    "PDT": "us-west-1",
+                    "MST": "us-west-2",
+                    "MDT": "us-west-2",
+                    "CST": "us-central-1",
+                    "CDT": "us-central-1",
+                    "EST": "us-east-1",
+                    "EDT": "us-east-1",
+                    "UTC": "eu-west-1",
+                    "GMT": "eu-west-1",
                 }
                 if timezone in timezone_map:
                     return timezone_map[timezone]
@@ -745,12 +750,12 @@ class CapabilityBeacon:
                 properties = {k.decode(): v.decode() for k, v in info.properties.items()}
 
                 capability = EdgeCapability(
-                    device_id=info.name.split('.')[0],
-                    cpu_cores=int(properties.get('cpu_cores', 1)),
-                    memory_mb=int(properties.get('memory_mb', 1024)),
-                    disk_mb=int(properties.get('disk_mb', 10000)),
+                    device_id=info.name.split(".")[0],
+                    cpu_cores=int(properties.get("cpu_cores", 1)),
+                    memory_mb=int(properties.get("memory_mb", 1024)),
+                    disk_mb=int(properties.get("disk_mb", 10000)),
                     private_ip=str(info.addresses[0]) if info.addresses else "127.0.0.1",
-                    bandwidth_mbps=float(properties.get('bandwidth_mbps', 100.0))
+                    bandwidth_mbps=float(properties.get("bandwidth_mbps", 100.0)),
                 )
 
                 return capability
@@ -779,10 +784,10 @@ class CapabilityBeacon:
             interface_names = list(psutil.net_if_addrs().keys())
             for name in interface_names:
                 name_lower = name.lower()
-                if 'eth' in name_lower or 'lan' in name_lower:
+                if "eth" in name_lower or "lan" in name_lower:
                     return 1000.0  # Assume gigabit ethernet
-                elif 'wlan' in name_lower or 'wifi' in name_lower:
-                    return 100.0   # Assume 100 Mbps WiFi
+                elif "wlan" in name_lower or "wifi" in name_lower:
+                    return 100.0  # Assume 100 Mbps WiFi
 
             return 10.0  # Conservative default
 

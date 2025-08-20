@@ -317,7 +317,7 @@ class RBACSystem:
             salt=tenant_id.encode(),
             iterations=100000,
         )
-        derived_key = kdf.derive(self.master_key)
+        kdf.derive(self.master_key)
         return Fernet.generate_key()
 
     # Tenant Management
@@ -670,21 +670,21 @@ class RBACSystem:
             "resource_type": resource_type,
             "created_at": datetime.now().isoformat(),
             "encrypted": encrypted_data is not None,
-            "original_id": resource_id
+            "original_id": resource_id,
         }
 
         metadata_file = tenant_resources_dir / f"{isolated_id}.metadata.json"
-        with metadata_file.open('w') as f:
+        with metadata_file.open("w") as f:
             json.dump(resource_metadata, f)
 
         # Store actual data
         if encrypted_data:
             data_file = tenant_resources_dir / f"{isolated_id}.data.enc"
-            with data_file.open('wb') as f:
+            with data_file.open("wb") as f:
                 f.write(encrypted_data)
         else:
             data_file = tenant_resources_dir / f"{isolated_id}.data.json"
-            with data_file.open('w') as f:
+            with data_file.open("w") as f:
                 json.dump(data, f)
 
         # Update resource tracking
@@ -720,8 +720,7 @@ class RBACSystem:
             # Check file system for other resource types
             tenant_resources_dir = Path(f"data/tenants/{tenant_id}/{resource_type}")
             if tenant_resources_dir.exists():
-                resources = [f.stem.replace('.metadata', '')
-                           for f in tenant_resources_dir.glob('*.metadata.json')]
+                resources = [f.stem.replace(".metadata", "") for f in tenant_resources_dir.glob("*.metadata.json")]
 
         return resources
 
@@ -913,6 +912,7 @@ class RBACMiddleware:
         """Clean up tenant storage resources."""
         try:
             import shutil
+
             tenant_storage_path = Path(f"data/tenants/{tenant_id}")
             if tenant_storage_path.exists():
                 shutil.rmtree(tenant_storage_path)

@@ -240,7 +240,7 @@ class JobsAPI:
         async def submit_job(
             job_spec: JobSpec,
             current_user: str = Header(alias="X-User-ID"),  # User ID from header
-            authorization: str = Header(alias="Authorization")  # JWT token
+            authorization: str = Header(alias="Authorization"),  # JWT token
         ) -> JobResponse:
             """Submit new fog job for execution"""
 
@@ -391,9 +391,10 @@ class JobsAPI:
         # Integrate with existing quota system
         try:
             from packages.core.security.rbac_system import RBACSystem
+
             rbac = RBACSystem()
             # Extract tenant_id from namespace or user context
-            tenant_id = namespace.split('-')[0] if '-' in namespace else user
+            tenant_id = namespace.split("-")[0] if "-" in namespace else user
             quota_available = await rbac.check_quota(tenant_id, "fog_jobs", 1)
             if not quota_available:
                 raise HTTPException(status_code=429, detail="Job quota exceeded for namespace")
@@ -405,6 +406,7 @@ class JobsAPI:
         # Integrate with existing compliance scanner
         try:
             from packages.core.compliance.pii_scanner import PIIScanner
+
             scanner = PIIScanner()
 
             # Scan image and command for PII/PHI
@@ -412,11 +414,8 @@ class JobsAPI:
             scan_result = await scanner.scan_content(content_to_scan)
 
             if scan_result.has_violations:
-                violations = ', '.join(scan_result.violations)
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"Job contains sensitive data: {violations}"
-                )
+                violations = ", ".join(scan_result.violations)
+                raise HTTPException(status_code=400, detail=f"Job contains sensitive data: {violations}")
         except ImportError:
             logger.warning("PII scanner not available, skipping compliance check")
 
@@ -425,12 +424,13 @@ class JobsAPI:
         # Integrate with scheduler
         try:
             from packages.fog.core.scheduler import FogScheduler
+
             scheduler = FogScheduler()
             placement = await scheduler.schedule_job(job)
 
             if placement:
                 job.status = JobStatus.SCHEDULED
-                job.assigned_nodes = placement.get('nodes', [])
+                job.assigned_nodes = placement.get("nodes", [])
             else:
                 job.status = JobStatus.QUEUED
         except ImportError:
@@ -441,13 +441,17 @@ class JobsAPI:
         """Validate user has permissions to submit job in namespace."""
         try:
             from packages.core.security.rbac_system import Permission, RBACSystem
+
             rbac = RBACSystem()
 
             # Validate JWT token
             import jwt
+
             try:
-                payload = jwt.decode(authorization.replace('Bearer ', ''), verify=False)  # In production: verify signature
-                if payload.get('user_id') != user_id:
+                payload = jwt.decode(
+                    authorization.replace("Bearer ", ""), verify=False
+                )  # In production: verify signature
+                if payload.get("user_id") != user_id:
                     raise HTTPException(status_code=403, detail="Invalid token")
             except jwt.InvalidTokenError:
                 raise HTTPException(status_code=403, detail="Invalid authorization token")
@@ -464,6 +468,7 @@ class JobsAPI:
         """Validate user has access to job's namespace."""
         try:
             from packages.core.security.rbac_system import RBACSystem
+
             rbac = RBACSystem()
             user = rbac.users.get(user_id)
             if user and namespace.startswith(user.tenant_id):
@@ -476,6 +481,7 @@ class JobsAPI:
         """Validate user has admin access to namespace."""
         try:
             from packages.core.security.rbac_system import RBACSystem, Role
+
             rbac = RBACSystem()
             user = rbac.users.get(user_id)
             if user and user.role in [Role.ADMIN, Role.SUPER_ADMIN]:
@@ -492,16 +498,18 @@ class JobsAPI:
         """Stream job logs from BetaNet transport."""
         try:
             from packages.p2p.betanet.htx_transport import HtxClient
+
             HtxClient()
 
             # In production: stream real logs from assigned nodes
             # For now: simulate log streaming
             import asyncio
+
             logs = [
                 f"[{job_id}] Job started",
                 f"[{job_id}] Initializing container...",
                 f"[{job_id}] Running user command...",
-                f"[{job_id}] Job completed"
+                f"[{job_id}] Job completed",
             ]
 
             for log in logs:
@@ -515,6 +523,7 @@ class JobsAPI:
         """Send cancellation to assigned nodes via BetaNet."""
         try:
             from packages.p2p.betanet.htx_transport import HtxClient
+
             HtxClient()
 
             # In production: send cancellation messages to assigned nodes
