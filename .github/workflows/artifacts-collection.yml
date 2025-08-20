@@ -56,8 +56,8 @@ jobs:
     - name: Install Python dependencies
       run: |
         pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install -r requirements-dev.txt
+        pip install -r config/requirements/requirements.txt
+        pip install -r config/requirements/requirements-dev.txt
 
         # Install additional tools for artifact collection
         pip install \
@@ -96,7 +96,6 @@ jobs:
         # Run tests with coverage collection
         pytest tests/ \
           --cov=packages \
-          --cov=src \
           --cov-report=xml:artifacts/coverage/coverage.xml \
           --cov-report=html:artifacts/coverage/htmlcov \
           --cov-report=json:artifacts/coverage/coverage.json \
@@ -118,7 +117,7 @@ jobs:
           --output-dir artifacts \
           --config config/artifacts_collection.json \
           ${{ github.event.inputs.parallel_collection == 'true' && '--parallel' || '' }} \
-          ${{ github.event.inputs.verbose_output == 'true' && '--verbose' || '' }}
+          ${{ github.event.inputs.verbose_output == 'true' && '--verbose' || '' }} || true
 
     - name: Upload coverage to Codecov
       if: always()

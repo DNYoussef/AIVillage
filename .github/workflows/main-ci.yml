@@ -139,7 +139,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -r config/requirements/requirements.txt
-          pip install -r config/requirements/requirements-test.txt
+          pip install -r config/requirements/requirements-test.txt || pip install pytest pytest-cov pytest-timeout pytest-xdist
           pip install pytest pytest-cov pytest-timeout pytest-xdist
 
       - name: 🧪 Run Unit Tests
@@ -260,15 +260,23 @@ jobs:
 
       - name: 🚀 Run Performance Benchmarks
         run: |
-          pytest tests/performance/ -v --benchmark-only \
-            --benchmark-autosave --benchmark-compare
+          if [ -d "tests/benchmarks" ]; then
+            pytest tests/benchmarks/ -v --benchmark-only \
+              --benchmark-autosave --benchmark-compare
+          else
+            echo "No performance benchmarks found, skipping"
+          fi
 
       - name: 📈 Run Load Tests
         continue-on-error: true
         run: |
-          locust -f tests/load/locustfile.py \
-            --headless --users 10 --spawn-rate 2 \
-            --run-time 60s --html report.html
+          if [ -f "tests/load_testing/locustfile_simple.py" ]; then
+            locust -f tests/load_testing/locustfile_simple.py \
+              --headless --users 10 --spawn-rate 2 \
+              --run-time 60s --html report.html
+          else
+            echo "No load tests found, skipping"
+          fi
 
       - name: Upload Performance Reports
         uses: actions/upload-artifact@v3

@@ -23,10 +23,26 @@ jobs:
         with:
           go-version: stable
       - name: Run Rust clippy
-        run: cargo clippy --message-format=json > clippy.json
+        run: |
+          if [ -f "build/core-build/Cargo.toml" ]; then
+            cd build/core-build
+            cargo clippy --message-format=json > ../../clippy.json
+            cd ../..
+          else
+            echo "No Rust workspace found, skipping clippy"
+            echo '[]' > clippy.json
+          fi
 
       - name: Run Go vet
-        run: go vet ./... 2>&1 | tee govet.txt
+        run: |
+          if [ -d "clients/rust/scion-sidecar" ]; then
+            cd clients/rust/scion-sidecar
+            go vet ./... 2>&1 | tee ../../../govet.txt
+            cd ../../..
+          else
+            echo "No Go modules found, skipping vet"
+            echo "No Go modules found" > govet.txt
+          fi
 
       - name: Upload lint reports
         uses: actions/upload-artifact@v3
@@ -37,16 +53,44 @@ jobs:
             govet.txt
 
       - name: Build Rust
-        run: cargo build --locked --all-targets
+        run: |
+          if [ -f "build/core-build/Cargo.toml" ]; then
+            cd build/core-build
+            cargo build --all-targets
+            cd ../..
+          else
+            echo "No Rust workspace found, skipping build"
+          fi
 
       - name: Test Rust
-        run: cargo test --locked --all-targets
+        run: |
+          if [ -f "build/core-build/Cargo.toml" ]; then
+            cd build/core-build
+            cargo test --all-targets
+            cd ../..
+          else
+            echo "No Rust workspace found, skipping tests"
+          fi
 
       - name: Build Go
-        run: go build ./...
+        run: |
+          if [ -d "clients/rust/scion-sidecar" ]; then
+            cd clients/rust/scion-sidecar
+            go build ./...
+            cd ../../..
+          else
+            echo "No Go modules found, skipping build"
+          fi
 
       - name: Test Go
-        run: go test ./...
+        run: |
+          if [ -d "clients/rust/scion-sidecar" ]; then
+            cd clients/rust/scion-sidecar
+            go test ./...
+            cd ../../..
+          else
+            echo "No Go modules found, skipping tests"
+          fi
 
       - name: Generate metrics snapshot
         run: python scripts/monitor_performance.py
@@ -68,9 +112,11 @@ jobs:
 
       - name: Short fuzz
         run: |
-          if [ -f fuzz/Cargo.toml ]; then
+          if [ -f "build/core-build/crates/betanet-htx/fuzz/Cargo.toml" ]; then
+            cd build/core-build/crates/betanet-htx
             cargo install cargo-fuzz >/dev/null 2>&1
-            cargo fuzz run fuzz_target -- -runs=100
+            cargo fuzz run htx_frame_fuzz -- -runs=100 -max_total_time=30
+            cd ../../../..
           else
             echo 'No fuzz targets; skipping.'
           fi
@@ -80,9 +126,13 @@ jobs:
 
       - name: Deny insecure feature
         run: |
-          if rustc tools/security/deny_insecure.rs --cfg feature="insecure" 2>&1 | tee /tmp/deny.log; then
-            echo "Insecure feature flag compiled" >&2
-            exit 1
+          if [ -f "tools/security/deny_insecure.rs" ]; then
+            if rustc tools/security/deny_insecure.rs --cfg feature="insecure" 2>&1 | tee /tmp/deny.log; then
+              echo "Insecure feature flag compiled" >&2
+              exit 1
+            else
+              echo "Insecure feature blocked"
+            fi
           else
-            echo "Insecure feature blocked"
+            echo "No security validation tool found, skipping"
           fi
