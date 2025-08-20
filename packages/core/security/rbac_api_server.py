@@ -9,6 +9,7 @@ import asyncio
 import json
 import logging
 from datetime import datetime
+from http.server import BaseHTTPRequestHandler, HTTPServer
 from typing import Any
 
 try:
@@ -21,8 +22,6 @@ try:
     FASTAPI_AVAILABLE = True
 except ImportError:
     FASTAPI_AVAILABLE = False
-    # Fallback to basic HTTP server
-    from http.server import BaseHTTPRequestHandler, HTTPServer
 
 from .aivillage_rbac_integration import AIVillageRBACIntegration, initialize_aivillage_rbac
 from .rbac_system import Role

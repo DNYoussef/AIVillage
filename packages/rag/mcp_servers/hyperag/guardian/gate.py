@@ -5,6 +5,7 @@ import copy
 import datetime
 import hashlib
 import json
+import logging
 import pathlib
 import time
 import uuid
@@ -15,6 +16,8 @@ import yaml
 
 from . import audit
 from .metrics import get_guardian_metrics
+
+logger = logging.getLogger(__name__)
 
 Decision = Literal["APPLY", "QUARANTINE", "REJECT"]
 

@@ -20,7 +20,7 @@ from typing import Any
 import jwt
 from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
 logger = logging.getLogger(__name__)
 
@@ -226,6 +226,12 @@ class TenantConfig:
     storage_quota_gb: int = 100
     compute_quota_vcpu: int = 8
     memory_quota_gb: int = 32
+    # Resource tracking
+    agent_resources: dict[str, Any] = field(default_factory=dict)
+    rag_resources: dict[str, Any] = field(default_factory=dict)
+    storage_usage_gb: float = 0.0
+    compute_usage_vcpu: float = 0.0
+    memory_usage_gb: float = 0.0
 
 
 @dataclass
@@ -305,14 +311,14 @@ class RBACSystem:
 
     def _generate_tenant_key(self, tenant_id: str) -> bytes:
         """Generate tenant-specific encryption key."""
-        kdf = PBKDF2(
+        kdf = PBKDF2HMAC(
             algorithm=hashes.SHA256(),
             length=32,
             salt=tenant_id.encode(),
             iterations=100000,
         )
-        kdf.derive(self.master_key)
-        return Fernet(Fernet.generate_key())
+        derived_key = kdf.derive(self.master_key)
+        return Fernet.generate_key()
 
     # Tenant Management
 
@@ -371,8 +377,27 @@ class RBACSystem:
             await self.delete_user(user.user_id, requester_id)
 
         # Clean up tenant resources
-        self.tenants[tenant_id]
-        # TODO: Clean up actual resources (agents, RAG collections, etc.)
+        tenant = self.tenants[tenant_id]
+
+        # Clean up agents
+        for agent_id in list(tenant.agent_resources.keys()):
+            try:
+                # Call agent cleanup through agent manager
+                await self._cleanup_agent_resource(agent_id, tenant_id)
+            except Exception as e:
+                logger.warning(f"Failed to cleanup agent {agent_id}: {e}")
+
+        # Clean up RAG collections
+        for collection_id in list(tenant.rag_resources.keys()):
+            try:
+                # Call RAG cleanup through RAG manager
+                await self._cleanup_rag_resource(collection_id, tenant_id)
+            except Exception as e:
+                logger.warning(f"Failed to cleanup RAG collection {collection_id}: {e}")
+
+        # Clean up storage and compute resources
+        await self._cleanup_tenant_storage(tenant_id)
+        await self._cleanup_tenant_compute(tenant_id)
 
         del self.tenants[tenant_id]
 
@@ -631,13 +656,42 @@ class RBACSystem:
         isolated_id = f"{tenant_id}_{resource_type}_{resource_id}"
 
         # Encrypt data with tenant key
+        encrypted_data = None
         if tenant.data_encryption_key:
-            tenant.data_encryption_key.encrypt(json.dumps(data).encode())
-        else:
-            pass
+            encrypted_data = tenant.data_encryption_key.encrypt(json.dumps(data).encode())
 
         # Store in appropriate namespace
-        # TODO: Implement actual storage backend
+        tenant_resources_dir = Path(f"data/tenants/{tenant_id}/{resource_type}")
+        tenant_resources_dir.mkdir(parents=True, exist_ok=True)
+
+        # Store resource metadata
+        resource_metadata = {
+            "resource_id": isolated_id,
+            "resource_type": resource_type,
+            "created_at": datetime.now().isoformat(),
+            "encrypted": encrypted_data is not None,
+            "original_id": resource_id
+        }
+
+        metadata_file = tenant_resources_dir / f"{isolated_id}.metadata.json"
+        with metadata_file.open('w') as f:
+            json.dump(resource_metadata, f)
+
+        # Store actual data
+        if encrypted_data:
+            data_file = tenant_resources_dir / f"{isolated_id}.data.enc"
+            with data_file.open('wb') as f:
+                f.write(encrypted_data)
+        else:
+            data_file = tenant_resources_dir / f"{isolated_id}.data.json"
+            with data_file.open('w') as f:
+                json.dump(data, f)
+
+        # Update resource tracking
+        if resource_type == "agents":
+            tenant.agent_resources[isolated_id] = resource_metadata
+        elif resource_type == "rag_collections":
+            tenant.rag_resources[isolated_id] = resource_metadata
 
         self._audit_log(
             "resource_isolated", {"resource_type": resource_type, "resource_id": isolated_id, "tenant_id": tenant_id}
@@ -653,8 +707,21 @@ class RBACSystem:
                 raise PermissionError("Cannot access other tenant's resources")
 
         # Return list of resource IDs for tenant
-        # TODO: Implement actual resource listing
         resources = []
+        tenant = self.tenants[tenant_id]
+
+        if resource_type == "agents":
+            resources = list(tenant.agent_resources.keys())
+        elif resource_type == "rag_collections":
+            resources = list(tenant.rag_resources.keys())
+        elif resource_type == "all":
+            resources = list(tenant.agent_resources.keys()) + list(tenant.rag_resources.keys())
+        else:
+            # Check file system for other resource types
+            tenant_resources_dir = Path(f"data/tenants/{tenant_id}/{resource_type}")
+            if tenant_resources_dir.exists():
+                resources = [f.stem.replace('.metadata', '')
+                           for f in tenant_resources_dir.glob('*.metadata.json')]
 
         return resources
 
@@ -670,8 +737,7 @@ class RBACSystem:
         # Check specific resource quotas
         if resource_type == "agents":
             # Count existing agents
-            # TODO: Implement actual counting
-            current_count = 0
+            current_count = len(tenant.agent_resources)
             return current_count + requested_amount <= tenant.max_agents
 
         elif resource_type == "rag_collections":
@@ -689,7 +755,24 @@ class RBACSystem:
         if tenant_id not in self.tenants:
             return
 
-        # TODO: Implement actual quota tracking
+        # Update quota tracking
+        tenant = self.tenants[tenant_id]
+
+        if resource_type == "storage_gb":
+            if operation == "add":
+                tenant.storage_usage_gb += amount
+            elif operation == "subtract":
+                tenant.storage_usage_gb = max(0, tenant.storage_usage_gb - amount)
+        elif resource_type == "compute_vcpu":
+            if operation == "add":
+                tenant.compute_usage_vcpu += amount
+            elif operation == "subtract":
+                tenant.compute_usage_vcpu = max(0, tenant.compute_usage_vcpu - amount)
+        elif resource_type == "memory_gb":
+            if operation == "add":
+                tenant.memory_usage_gb += amount
+            elif operation == "subtract":
+                tenant.memory_usage_gb = max(0, tenant.memory_usage_gb - amount)
 
         self._audit_log(
             "quota_updated",
@@ -783,6 +866,74 @@ class RBACMiddleware:
             return wrapper
 
         return decorator
+
+    # Resource Cleanup Methods
+
+    async def _cleanup_agent_resource(self, agent_id: str, tenant_id: str):
+        """Clean up agent resource from tenant."""
+        try:
+            # Import here to avoid circular dependencies
+            from packages.agents.core.agent_orchestration_system import AgentOrchestrator
+
+            orchestrator = AgentOrchestrator()
+            await orchestrator.remove_agent(agent_id)
+
+            # Remove from tenant tracking
+            tenant = self.tenants.get(tenant_id)
+            if tenant and agent_id in tenant.agent_resources:
+                del tenant.agent_resources[agent_id]
+
+            logger.info(f"Cleaned up agent resource {agent_id} for tenant {tenant_id}")
+        except ImportError:
+            logger.warning(f"Agent orchestrator not available for cleanup of {agent_id}")
+        except Exception as e:
+            logger.error(f"Failed to cleanup agent {agent_id}: {e}")
+
+    async def _cleanup_rag_resource(self, collection_id: str, tenant_id: str):
+        """Clean up RAG resource from tenant."""
+        try:
+            # Import here to avoid circular dependencies
+            from packages.rag.core.hyper_rag import HyperRAG
+
+            rag = HyperRAG()
+            await rag.delete_collection(collection_id)
+
+            # Remove from tenant tracking
+            tenant = self.tenants.get(tenant_id)
+            if tenant and collection_id in tenant.rag_resources:
+                del tenant.rag_resources[collection_id]
+
+            logger.info(f"Cleaned up RAG resource {collection_id} for tenant {tenant_id}")
+        except ImportError:
+            logger.warning(f"RAG system not available for cleanup of {collection_id}")
+        except Exception as e:
+            logger.error(f"Failed to cleanup RAG collection {collection_id}: {e}")
+
+    async def _cleanup_tenant_storage(self, tenant_id: str):
+        """Clean up tenant storage resources."""
+        try:
+            import shutil
+            tenant_storage_path = Path(f"data/tenants/{tenant_id}")
+            if tenant_storage_path.exists():
+                shutil.rmtree(tenant_storage_path)
+                logger.info(f"Cleaned up storage for tenant {tenant_id}")
+        except Exception as e:
+            logger.error(f"Failed to cleanup storage for tenant {tenant_id}: {e}")
+
+    async def _cleanup_tenant_compute(self, tenant_id: str):
+        """Clean up tenant compute resources."""
+        try:
+            # Import here to avoid circular dependencies
+            from packages.fog.core.fog_orchestrator import FogOrchestrator
+
+            fog = FogOrchestrator()
+            await fog.cleanup_tenant_resources(tenant_id)
+
+            logger.info(f"Cleaned up compute resources for tenant {tenant_id}")
+        except ImportError:
+            logger.warning(f"Fog orchestrator not available for compute cleanup of {tenant_id}")
+        except Exception as e:
+            logger.error(f"Failed to cleanup compute for tenant {tenant_id}: {e}")
 
 
 async def initialize_rbac_system() -> RBACSystem:

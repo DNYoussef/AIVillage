@@ -19,7 +19,7 @@ from pathlib import Path
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
-from packages.agents.coordination_system import (
+from packages.agents.core.coordination_system import (
     Agent,
     AgentCapability,
     AgentRegistry,
@@ -30,7 +30,9 @@ from packages.agents.coordination_system import (
     MessageType,
     Resource,
     ResourceManager,
+    ResourceType,
     Task,
+    TaskPriority,
     TaskScheduler,
     TaskStatus,
 )

@@ -511,7 +511,7 @@ class MultiTenantManager:
             return False
 
         # Create sharing record
-        {
+        sharing_record = {
             "resource_id": resource_id,
             "owner_tenant": owner_tenant_id,
             "shared_with": target_tenant_id,
@@ -520,8 +520,46 @@ class MultiTenantManager:
             "shared_by": user_id,
         }
 
-        # Store sharing configuration
-        # TODO: Implement sharing mechanism
+        # Store sharing configuration in database
+        sharing_db_path = self.data_path / "tenant_sharing.db"
+        with sqlite3.connect(sharing_db_path) as conn:
+            conn.execute(
+                """CREATE TABLE IF NOT EXISTS resource_sharing (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    resource_id TEXT NOT NULL,
+                    owner_tenant TEXT NOT NULL,
+                    shared_with TEXT NOT NULL,
+                    permissions TEXT NOT NULL,
+                    shared_at TEXT NOT NULL,
+                    shared_by TEXT NOT NULL,
+                    active BOOLEAN DEFAULT 1
+                )"""
+            )
+
+            conn.execute(
+                """INSERT INTO resource_sharing
+                   (resource_id, owner_tenant, shared_with, permissions, shared_at, shared_by)
+                   VALUES (?, ?, ?, ?, ?, ?)""",
+                (
+                    resource_id,
+                    owner_tenant_id,
+                    target_tenant_id,
+                    json.dumps([p.value for p in permissions]),
+                    sharing_record["shared_at"],
+                    user_id,
+                ),
+            )
+            conn.commit()
+
+        # Update resource metadata to include sharing info
+        if resource.metadata is None:
+            resource.metadata = {}
+        resource.metadata["shared_with"] = resource.metadata.get("shared_with", [])
+        resource.metadata["shared_with"].append({
+            "tenant_id": target_tenant_id,
+            "permissions": [p.value for p in permissions],
+            "shared_at": sharing_record["shared_at"]
+        })
 
         logger.info(f"Shared resource {resource_id} from {owner_tenant_id} to {target_tenant_id}")
         return True

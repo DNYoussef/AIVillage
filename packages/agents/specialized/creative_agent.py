@@ -551,8 +551,8 @@ class CreativeAgent(BaseAgent):
                     "style": f"Dresses in a way that reflects their {primary_trait} personality",
                 },
                 "character_arc": {
-                    "starting_point": f"Begins as someone who is {primary_trait} but limited by {character_profile.get('personality', {}).get('fatal_flaw', 'unknown flaw')}",
-                    "challenge": f"Must overcome their {character_profile.get('personality', {}).get('greatest_fear', 'fear')} to grow",
+                    "starting_point": f"Begins as someone who is {primary_trait} but limited by their greatest weakness",
+                    "challenge": "Must overcome their fear to grow",
                     "transformation": f"Learns to balance {primary_trait} with {secondary_traits[0]}",
                     "ending_point": "Emerges as a more complete, evolved person",
                 },
@@ -560,7 +560,7 @@ class CreativeAgent(BaseAgent):
                     "speaking_pattern": f"Speaks in a {primary_trait} manner",
                     "vocabulary": "Complex" if primary_trait in ["intelligent", "wise"] else "Direct",
                     "catchphrase": f"A phrase that embodies {primary_trait}",
-                    "internal_thoughts": f"Often contemplates {character_profile.get('personality', {}).get('core_desire', 'their goals')}",
+                    "internal_thoughts": "Often contemplates their goals and motivations",
                 },
             }
 

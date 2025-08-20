@@ -899,8 +899,11 @@ class BaseAgentTemplate(AgentInterface):
                 tags=["shutdown", self.agent_type.lower()],
             )
 
-            # TODO: Save persistent state (journal, memory, configuration)
-            # TODO: Close RAG and P2P connections
+            # Save persistent state (journal, memory, configuration)
+            await self._save_persistent_state()
+
+            # Close RAG and P2P connections
+            await self._close_connections()
 
             return True
 
@@ -995,6 +998,82 @@ class BaseAgentTemplate(AgentInterface):
         # Keep only recent history
         if len(self.task_history) > 1000:
             self.task_history = self.task_history[-1000:]
+
+    async def _save_persistent_state(self):
+        """Save agent state to persistent storage."""
+        try:
+            import json
+            from pathlib import Path
+
+            # Create agent data directory
+            agent_data_dir = Path(f"data/agents/{self.agent_id}")
+            agent_data_dir.mkdir(parents=True, exist_ok=True)
+
+            # Save journal
+            journal_file = agent_data_dir / "journal.json"
+            journal_data = [entry.to_dict() if hasattr(entry, 'to_dict') else entry
+                          for entry in self.reflection_journal[-100:]]  # Last 100 entries
+            with journal_file.open('w') as f:
+                json.dump(journal_data, f, indent=2, default=str)
+
+            # Save memory
+            memory_file = agent_data_dir / "memory.json"
+            memory_data = [entry.to_dict() if hasattr(entry, 'to_dict') else entry
+                          for entry in self.long_term_memory[-500:]]  # Last 500 entries
+            with memory_file.open('w') as f:
+                json.dump(memory_data, f, indent=2, default=str)
+
+            # Save configuration
+            config_file = agent_data_dir / "config.json"
+            config_data = {
+                "agent_id": self.agent_id,
+                "agent_type": self.agent_type,
+                "task_count": len(self.task_history),
+                "reflection_count": self.reflection_count,
+                "geometric_state": {
+                    "processing_capacity": self.geometric_self_state.processing_capacity,
+                    "memory_utilization": self.geometric_self_state.memory_utilization,
+                    "connection_strength": self.geometric_self_state.connection_strength,
+                    "current_state": self.geometric_self_state.current_state.value
+                }
+            }
+            with config_file.open('w') as f:
+                json.dump(config_data, f, indent=2)
+
+            logger.info(f"Saved persistent state for {self.agent_type} agent to {agent_data_dir}")
+
+        except Exception as e:
+            logger.error(f"Failed to save persistent state: {e}")
+
+    async def _close_connections(self):
+        """Close RAG and P2P connections."""
+        try:
+            # Close RAG connection if it exists
+            if hasattr(self, 'rag_connection') and self.rag_connection:
+                try:
+                    await self.rag_connection.close()
+                except Exception as e:
+                    logger.warning(f"Error closing RAG connection: {e}")
+
+            # Close P2P connection if it exists
+            if hasattr(self, 'p2p_connection') and self.p2p_connection:
+                try:
+                    await self.p2p_connection.disconnect()
+                except Exception as e:
+                    logger.warning(f"Error closing P2P connection: {e}")
+
+            # Close any MCP tool connections
+            for tool in self.mcp_tools.values():
+                try:
+                    if hasattr(tool, 'close'):
+                        await tool.close()
+                except Exception as e:
+                    logger.warning(f"Error closing MCP tool {tool}: {e}")
+
+            logger.info(f"Closed all connections for {self.agent_type} agent")
+
+        except Exception as e:
+            logger.error(f"Failed to close connections: {e}")
 
 
 # Export the base template for specialized agents to inherit

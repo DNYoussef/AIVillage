@@ -14,10 +14,9 @@ import time
 import uuid
 from typing import Any
 
-from navigator.path_policy import RoutingPriority
-
 # Import existing dual-path components
 from core.p2p.dual_path_transport import DualPathTransport
+from navigator.path_policy import RoutingPriority
 
 # Import our new federation components
 from .device_registry import DeviceCapability, DeviceIdentity, DeviceProfile, DeviceRegistry, DeviceRole

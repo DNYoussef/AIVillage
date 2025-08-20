@@ -78,6 +78,26 @@ class CoordinationStrategy(Enum):
     CONSENSUS = "consensus"
 
 
+class TaskPriority(Enum):
+    """Task priority levels."""
+
+    LOW = 1
+    NORMAL = 3
+    HIGH = 7
+    CRITICAL = 10
+
+
+class ResourceType(Enum):
+    """Resource types for allocation management."""
+
+    CPU = "cpu"
+    MEMORY = "memory"
+    STORAGE = "storage"
+    NETWORK = "network"
+    GPU = "gpu"
+    POWER = "power"
+
+
 @dataclass
 class AgentCapability:
     """Agent capability description."""

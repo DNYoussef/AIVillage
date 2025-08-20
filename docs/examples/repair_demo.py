@@ -16,8 +16,9 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from mcp_servers.hyperag.repair import InnovatorAgent, RepairOperation, TemplateEncoder
-from mcp_servers.hyperag.repair.llm_driver import LLMDriver, ModelBackend, ModelConfig
+from packages.rag.mcp_servers.hyperag.repair import InnovatorAgent, RepairOperation, TemplateEncoder
+from packages.rag.mcp_servers.hyperag.repair.innovator_agent import RepairOperationType
+from packages.rag.mcp_servers.hyperag.repair.llm_driver import LLMDriver, ModelBackend, ModelConfig
 
 
 async def demo_template_encoding() -> None:

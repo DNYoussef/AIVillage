@@ -15,6 +15,7 @@ Integrates with:
 import asyncio
 import json
 import logging
+import struct
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field

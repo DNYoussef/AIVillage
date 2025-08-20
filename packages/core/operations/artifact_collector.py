@@ -286,12 +286,27 @@ class OperationalArtifactCollector:
             return None
 
     async def _download_artifact(self, url: str, destination: Path):
-        """Download artifact from URL."""
-        # In production, this would use aiohttp or similar
-        # For now, we'll use urllib as a placeholder
-        import urllib.request
+        """Download artifact from URL using async HTTP client."""
+        try:
+            import aiofiles
+            import aiohttp
 
-        urllib.request.urlretrieve(url, str(destination))
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url) as response:
+                    response.raise_for_status()
+
+                    destination.parent.mkdir(parents=True, exist_ok=True)
+
+                    async with aiofiles.open(destination, 'wb') as f:
+                        async for chunk in response.content.iter_chunked(8192):
+                            await f.write(chunk)
+
+        except ImportError:
+            # Fallback to synchronous urllib if aiohttp not available
+            import urllib.request
+
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            urllib.request.urlretrieve(url, str(destination))
 
     async def _validate_artifact(self, artifact_type: ArtifactType, file_path: Path) -> dict[str, Any]:
         """Validate collected artifact."""

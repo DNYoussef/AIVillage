@@ -16,6 +16,12 @@ from datetime import datetime
 from enum import Enum
 from typing import Any
 
+try:
+    import torch
+    TORCH_AVAILABLE = True
+except ImportError:
+    TORCH_AVAILABLE = False
+
 
 class ModelBackend(Enum):
     """Supported model backends."""

@@ -628,7 +628,7 @@ class FederatedAgentForge:
             self.logger.error(f"Federated training failed: {e}")
             raise
 
-    async def _setup_hrrm_fog_burst(self) -> Optional[FogBurstAdapter]:
+    async def _setup_hrrm_fog_burst(self) -> FogBurstAdapter | None:
         """Setup HRRM fog burst adapter if HRRM integration is enabled"""
 
         if not HRRM_AVAILABLE or not self.fed_config.hrrm_fog_burst_enabled:

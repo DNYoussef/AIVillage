@@ -18,7 +18,6 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 from mcp_servers.hyperag.auth import AuthContext, PermissionManager
 from mcp_servers.hyperag.models import ModelRegistry
 from mcp_servers.hyperag.protocol import MCPProtocolHandler
-
 from software.hyper_rag.hyper_rag_pipeline import HyperRAGPipeline
 
 # Configure logging

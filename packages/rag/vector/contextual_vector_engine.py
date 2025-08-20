@@ -194,8 +194,8 @@ class ContextualVectorEngine:
         self.doc_id_mapping: list[str] = []  # Maps index position to doc_id
 
         # Context indexing
-        self.context_index: dict[str, Set[str]] = {}  # context_type -> doc_ids
-        self.tag_index: dict[str, Set[str]] = {}  # tag -> doc_ids
+        self.context_index: dict[str, set[str]] = {}  # context_type -> doc_ids
+        self.tag_index: dict[str, set[str]] = {}  # tag -> doc_ids
 
         # Caching
         self.embedding_cache: dict[str, np.ndarray] = {}

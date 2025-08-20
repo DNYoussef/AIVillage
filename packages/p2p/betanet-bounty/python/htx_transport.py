@@ -18,6 +18,7 @@ import logging
 import secrets
 import struct
 import time
+import uuid
 from dataclasses import dataclass, field
 from enum import IntEnum
 from typing import Any
@@ -33,6 +34,17 @@ try:
     QUIC_AVAILABLE = True
 except ImportError:
     QUIC_AVAILABLE = False
+
+# HTTP/2 and HTTP/3 availability (for covert channels)
+try:
+    HTTP2_AVAILABLE = True
+except ImportError:
+    HTTP2_AVAILABLE = False
+
+try:
+    HTTP3_AVAILABLE = True
+except ImportError:
+    HTTP3_AVAILABLE = False
 
 # from ..core.message_types import MessageType, UnifiedMessage  # Commented out for standalone testing
 

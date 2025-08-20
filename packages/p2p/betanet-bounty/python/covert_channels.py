@@ -37,6 +37,13 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
+# Import HTX transport classes
+try:
+    from .htx_transport import EnhancedHtxClient
+except ImportError:
+    # Fallback if htx_transport not available
+    EnhancedHtxClient = None
+
 
 class CovertChannelType(Enum):
     """Types of covert channels available"""
@@ -306,6 +313,8 @@ def create_advanced_betanet_transport(
     Returns: (enhanced_client, covert_manager, mixnet_integration)
     """
     # Enhanced HTX client
+    if EnhancedHtxClient is None:
+        raise ImportError("HTX transport not available - cannot create enhanced client")
     client = EnhancedHtxClient(cover_traffic=cover_traffic)
 
     # Covert channel manager

@@ -100,6 +100,8 @@ class ConstraintType(Enum):
     MEMORY_LOW = "memory_low"
     CELLULAR_DATA = "cellular_data"
     NETWORK_POOR = "network_poor"
+    MEMORY_CONSTRAINED = "memory_constrained"
+    BATTERY_SAVER = "battery_saver"
 
 
 @dataclass
@@ -279,9 +281,9 @@ class MobileResourceNavigator:
                     # Get current resource metrics from resource manager
                     metrics = self.resource_manager.get_current_metrics()
                     if metrics.get("memory_pressure", 0) > 0.8:
-                        active_constraints.append(MobileConstraintType.MEMORY_CONSTRAINED)
+                        active_constraints.append(ConstraintType.MEMORY_CONSTRAINED)
                     if metrics.get("battery_level", 1.0) < 0.3:
-                        active_constraints.append(MobileConstraintType.BATTERY_SAVER)
+                        active_constraints.append(ConstraintType.BATTERY_SAVER)
                 except Exception as e:
                     logger.warning(f"Resource manager integration error: {e}")
 

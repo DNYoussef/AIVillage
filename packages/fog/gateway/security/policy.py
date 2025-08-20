@@ -19,6 +19,7 @@ Security Model:
 import asyncio
 import json
 import logging
+import re
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from enum import Enum
@@ -181,7 +182,33 @@ class EgressRule:
         if self.destination == destination:
             return True
 
-        # TODO: Add CIDR matching for IP ranges
+        # Add CIDR matching for IP ranges
+        try:
+            import ipaddress
+
+            # Try to parse destination as CIDR
+            if '/' in self.destination:
+                network = ipaddress.ip_network(self.destination, strict=False)
+                target_ip = ipaddress.ip_address(destination)
+                return target_ip in network
+
+            # Try to match as IP range
+            if '-' in self.destination:
+                start_ip, end_ip = self.destination.split('-', 1)
+                start_addr = ipaddress.ip_address(start_ip.strip())
+                end_addr = ipaddress.ip_address(end_ip.strip())
+                target_addr = ipaddress.ip_address(destination)
+                return start_addr <= target_addr <= end_addr
+
+        except (ValueError, ipaddress.AddressValueError):
+            # Not valid IP/CIDR, fall back to string matching
+            pass
+
+        # Support wildcard matching
+        if '*' in self.destination:
+            import fnmatch
+            return fnmatch.fnmatch(destination, self.destination)
+
         return False
 
     def is_expired(self) -> bool:

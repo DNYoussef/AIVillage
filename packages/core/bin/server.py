@@ -73,7 +73,6 @@ except ModuleNotFoundError:  # pragma: no cover - optional dependency
 
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from core.evidence import Chunk, ConfidenceTier, EvidencePack
 from servers.common.config import load_config
 from servers.common.middleware import RateLimiter, SecurityMiddleware
 
@@ -355,24 +354,9 @@ async def v1_explanation_endpoint(chat_id: str):
         if hasattr(app.state, "evidence_cache") and chat_id in app.state.evidence_cache:
             return app.state.evidence_cache[chat_id]
 
-        # Return minimal placeholder for backward compatibility
-        logger.info(f"No evidence found for chat_id: {chat_id}, using minimal placeholder")
-        placeholder_packs = [
-            EvidencePack(
-                query=f"query_for_{chat_id}",
-                chunks=[
-                    Chunk(
-                        id=f"c1_{chat_id}",
-                        text="No evidence available - implement evidence retrieval",
-                        score=0.1,
-                        source_uri="placeholder://none",
-                    )
-                ],
-                proto_confidence=0.1,
-                confidence_tier=ConfidenceTier.LOW,
-            )
-        ]
-        return [pack.model_dump() for pack in placeholder_packs]
+        # Return empty evidence list when no evidence is found
+        logger.info(f"No evidence found for chat_id: {chat_id}, returning empty evidence list")
+        return []
     except Exception as e:
         logger.exception(f"Error retrieving evidence for chat {chat_id}: {e}")
         return []

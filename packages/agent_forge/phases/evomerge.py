@@ -694,7 +694,9 @@ class EvoMergePhase:
             class SimpleHRRMTokenizer(PreTrainedTokenizer):
                 def __init__(self, vocab_size=32000):
                     self._vocab_size = vocab_size
-                    super().__init__(pad_token="<pad>", eos_token="</s>", bos_token="<s>", unk_token="<unk>")  # nosec B106
+                    super().__init__(
+                        pad_token="<pad>", eos_token="</s>", bos_token="<s>", unk_token="<unk>"
+                    )  # nosec B106
 
                 @property
                 def vocab_size(self):

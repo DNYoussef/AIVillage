@@ -6,7 +6,6 @@ from pathlib import Path
 
 import pytest
 from cryptography.fernet import Fernet
-
 from src.digital_twin import guard, runner
 from src.digital_twin.security.preference_vault import PreferenceVault
 

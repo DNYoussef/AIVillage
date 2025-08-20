@@ -257,7 +257,7 @@ class CapabilityBeacon:
 
         # Network capabilities
         self.capability.private_ip = self._get_local_ip()
-        self.capability.bandwidth_mbps = 100.0  # TODO: Detect actual bandwidth
+        self.capability.bandwidth_mbps = await self._detect_bandwidth()
 
         # Runtime support detection
         runtimes = set()
@@ -561,7 +561,7 @@ class CapabilityBeacon:
     async def _mdns_advertise(self):
         """Advertise capabilities via mDNS"""
 
-        # TODO: Implement proper mDNS advertisement
+        # Implement proper mDNS advertisement\n        try:\n            from zeroconf import Zeroconf, ServiceInfo\n            import socket\n            \n            zeroconf = Zeroconf()\n            info = ServiceInfo(\n                "_fog-edge._tcp.local.",\n                f"{self.capability.device_id}._fog-edge._tcp.local.",\n                addresses=[socket.inet_aton(self.capability.private_ip)],\n                port=8080,\n                properties={\n                    "version": "1.0",\n                    "cpu_cores": str(self.capability.cpu_cores),\n                    "memory_mb": str(self.capability.memory_mb)\n                }\n            )\n            zeroconf.register_service(info)\n            logger.info(f"Advertised fog edge service via mDNS")\n        except ImportError:\n            logger.warning("zeroconf library not available for mDNS")"
         # For now, log the advertisement
         logger.debug(
             f"mDNS advertisement: {self.device_name} with "
@@ -572,9 +572,31 @@ class CapabilityBeacon:
     async def _mdns_discover(self):
         """Discover peers via mDNS"""
 
-        # TODO: Implement proper mDNS discovery
-        # This would scan for other fog devices and gateways
-        pass
+        # Implement proper mDNS discovery
+        try:
+            from zeroconf import ServiceBrowser, ServiceListener, Zeroconf
+
+            class FogServiceListener(ServiceListener):
+                def __init__(self, beacon):
+                    self.beacon = beacon
+
+                def add_service(self, zeroconf, type, name):
+                    info = zeroconf.get_service_info(type, name)
+                    if info and '_fog-edge._tcp.local.' in type:
+                        # Discovered a fog edge device
+                        device_capability = self.beacon._parse_service_info(info)
+                        if device_capability:
+                            self.beacon.discovered_peers[device_capability.device_id] = device_capability
+                            logger.info(f"Discovered fog peer: {device_capability.device_id}")
+
+            zeroconf = Zeroconf()
+            listener = FogServiceListener(self)
+            ServiceBrowser(zeroconf, "_fog-edge._tcp.local.", listener)
+
+            logger.info("Started mDNS discovery for fog peers")
+
+        except ImportError:
+            logger.warning("zeroconf library not available for mDNS discovery")
 
     async def _betanet_advertise(self):
         """Advertise capabilities via BetaNet mesh"""
@@ -694,9 +716,79 @@ class CapabilityBeacon:
     def _detect_region(self) -> str:
         """Detect geographic region (rough estimate)"""
 
-        # TODO: Implement proper region detection
-        # Could use IP geolocation, timezone, or system locale
+        # Implement proper region detection using system timezone
+        import time
+
+        try:
+            # Use timezone-based detection first
+            timezone = time.tzname[0] if time.tzname else None
+            if timezone:
+                # Map common timezones to regions
+                timezone_map = {
+                    'PST': 'us-west-1', 'PDT': 'us-west-1',
+                    'MST': 'us-west-2', 'MDT': 'us-west-2',
+                    'CST': 'us-central-1', 'CDT': 'us-central-1',
+                    'EST': 'us-east-1', 'EDT': 'us-east-1',
+                    'UTC': 'eu-west-1', 'GMT': 'eu-west-1'
+                }
+                if timezone in timezone_map:
+                    return timezone_map[timezone]
+        except Exception:
+            pass
+
         return "us-west-2"  # Default region
+
+    def _parse_service_info(self, info) -> EdgeCapability | None:
+        """Parse mDNS service info into EdgeCapability"""
+        try:
+            if info and info.properties:
+                properties = {k.decode(): v.decode() for k, v in info.properties.items()}
+
+                capability = EdgeCapability(
+                    device_id=info.name.split('.')[0],
+                    cpu_cores=int(properties.get('cpu_cores', 1)),
+                    memory_mb=int(properties.get('memory_mb', 1024)),
+                    disk_mb=int(properties.get('disk_mb', 10000)),
+                    private_ip=str(info.addresses[0]) if info.addresses else "127.0.0.1",
+                    bandwidth_mbps=float(properties.get('bandwidth_mbps', 100.0))
+                )
+
+                return capability
+        except (ValueError, KeyError, AttributeError) as e:
+            logger.warning(f"Failed to parse mDNS service info: {e}")
+
+        return None
+
+    async def _detect_bandwidth(self) -> float:
+        """Detect actual network bandwidth in Mbps"""
+        try:
+            import psutil
+
+            # Get network interface speeds
+            interfaces = psutil.net_if_stats()
+            max_speed = 0
+
+            for interface, stats in interfaces.items():
+                if stats.isup and stats.speed > 0:
+                    max_speed = max(max_speed, stats.speed)
+
+            if max_speed > 0:
+                return float(max_speed)
+
+            # Fallback: estimate based on interface names
+            interface_names = list(psutil.net_if_addrs().keys())
+            for name in interface_names:
+                name_lower = name.lower()
+                if 'eth' in name_lower or 'lan' in name_lower:
+                    return 1000.0  # Assume gigabit ethernet
+                elif 'wlan' in name_lower or 'wifi' in name_lower:
+                    return 100.0   # Assume 100 Mbps WiFi
+
+            return 10.0  # Conservative default
+
+        except Exception as e:
+            logger.warning(f"Failed to detect bandwidth: {e}")
+            return 100.0  # Default fallback
 
     def add_gateway(self, gateway_endpoint: str):
         """Add known fog gateway endpoint"""

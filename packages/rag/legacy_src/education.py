@@ -496,8 +496,9 @@ class CurriculumGraph:
                 return json.dumps(graph_data, indent=2)
 
             else:
-                logger.warning(f"Export format {format_type} not implemented")
-                return ""
+                # Fallback to JSON format for unsupported formats
+                logger.warning(f"Export format {format_type} not supported, using JSON format")
+                return json.dumps({"message": f"Format {format_type} not supported", "data": {}}, indent=2)
 
         except Exception as e:
             logger.error(f"Failed to export graph: {e}")

@@ -19,14 +19,14 @@ import torch
 import wandb
 from transformers import pipeline
 
+logger = logging.getLogger(__name__)
+
 # Content filtering imports
 try:
     SPACY_AVAILABLE = True
 except ImportError:
     SPACY_AVAILABLE = False
     logger.warning("spaCy not available - some content analysis features will be limited")
-
-logger = logging.getLogger(__name__)
 
 
 class ValidationSeverity(Enum):

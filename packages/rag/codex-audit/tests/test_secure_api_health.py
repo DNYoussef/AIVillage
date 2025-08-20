@@ -3,7 +3,6 @@ import sqlite3
 from contextlib import contextmanager
 
 import pytest
-
 from core.security.secure_api_server import SecureAPIServer
 
 

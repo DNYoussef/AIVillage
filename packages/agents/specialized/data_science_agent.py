@@ -14,6 +14,13 @@ try:
 except ImportError:
     SKLEARN_AVAILABLE = False
 
+try:
+    from transformers import AutoModelForSequenceClassification, AutoTokenizer
+
+    TRANSFORMERS_AVAILABLE = True
+except ImportError:
+    TRANSFORMERS_AVAILABLE = False
+
 from packages.agents.core.base import BaseAgent
 
 logger = logging.getLogger(__name__)
