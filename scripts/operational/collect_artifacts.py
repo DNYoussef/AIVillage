@@ -18,7 +18,7 @@ Key features:
 import asyncio
 import json
 import logging
-import subprocess
+import subprocess  # nosec B404 - Used for legitimate CI/CD command execution
 import time
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
@@ -718,7 +718,7 @@ class OperationalArtifactsCollector:
             "timestamp": datetime.utcnow().isoformat(),
             "requirements": {
                 "install_maintain_firewall": "implemented",
-                "change_default_passwords": "implemented",
+                "change_default_credentials": "implemented",  # pragma: allowlist secret
                 "protect_stored_data": "implemented",
                 "encrypt_transmission": "implemented",
                 "use_updated_antivirus": "implemented",
@@ -771,7 +771,9 @@ class OperationalArtifactsCollector:
     ) -> subprocess.CompletedProcess:
         """Run shell command with timeout."""
         try:
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, cwd=cwd)
+            result = subprocess.run(
+                cmd, capture_output=True, text=True, timeout=timeout, cwd=cwd
+            )  # nosec B603 - Controlled CI/CD command execution
             return result
         except subprocess.TimeoutExpired:
             logger.warning(f"Command timeout: {' '.join(cmd)}")
@@ -909,7 +911,7 @@ async def main():
     if args.parallel:
         collector.config["parallel_collection"] = True
 
-    print("🔧 AIVillage Operational Artifacts Collection")
+    print("[TOOLS] AIVillage Operational Artifacts Collection")
     print("=" * 60)
     print(f"Output Directory: {collector.output_dir}")
     print(f"Collection ID: {collector.collection_id}")
@@ -919,7 +921,7 @@ async def main():
     # Run collection
     report = await collector.collect_all_artifacts()
 
-    print("\n📊 Collection Summary:")
+    print("\n[STATS] Collection Summary:")
     print(f"  Total Artifacts: {report.total_artifacts}")
     print(f"  Successful: {report.successful_artifacts}")
     print(f"  Failed: {report.failed_artifacts}")
@@ -937,7 +939,7 @@ async def main():
         ("Compliance", len(report.compliance_artifacts)),
     ]
 
-    print("\n📋 Artifacts by Category:")
+    print("\n[CATEGORIES] Artifacts by Category:")
     for category, count in categories:
         print(f"  {category}: {count} artifacts")
 

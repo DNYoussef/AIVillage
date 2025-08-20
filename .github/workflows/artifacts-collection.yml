@@ -157,13 +157,13 @@ jobs:
     - name: Generate artifacts summary
       if: always()
       run: |
-        echo "## 🔧 Operational Artifacts Collection Summary" >> $GITHUB_STEP_SUMMARY
+        echo "## [TOOLS] Operational Artifacts Collection Summary" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
 
         if [ -f "artifacts/reports/collection_report_*.json" ]; then
           REPORT_FILE=$(ls artifacts/reports/collection_report_*.json | head -1)
 
-          echo "### 📊 Collection Statistics" >> $GITHUB_STEP_SUMMARY
+          echo "### [STATS] Collection Statistics" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Category | Artifacts | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|----------|-----------|--------|" >> $GITHUB_STEP_SUMMARY
@@ -264,7 +264,7 @@ EOF
 
     - name: Analyze security findings
       run: |
-        echo "## 🔒 Security Analysis Summary" >> $GITHUB_STEP_SUMMARY
+        echo "## [SECURITY] Security Analysis Summary" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
 
         # Count security findings
@@ -298,7 +298,7 @@ EOF
 
     - name: Analyze performance results
       run: |
-        echo "## ⚡ Performance Analysis Summary" >> $GITHUB_STEP_SUMMARY
+        echo "## [PERFORMANCE] Performance Analysis Summary" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
 
         BENCHMARK_FILE="artifacts/performance/benchmark-results.json"
