@@ -11,6 +11,9 @@
 - EvoMerge integration for 30× faster iteration with pre-optimized seed models
 - Added `digital_twin` module, increasing core module count to 17.
 
+### Changed
+- P2P UnifiedMessage payloads now use base64 encoding instead of hex for interoperability with existing transports.
+
 ## [1.0.0] - 2025-07-27
 ### Added
 - **Sprint 2 Complete**: Production/experimental separation with quality gates
