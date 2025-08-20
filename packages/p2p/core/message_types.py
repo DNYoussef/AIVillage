@@ -102,6 +102,13 @@ class UnifiedMessage:
         if not self.metadata.timestamp:
             self.metadata.timestamp = time.time()
 
+        if self.total_chunks < 1:
+            raise ValueError("total_chunks must be >= 1")
+        if not 0 <= self.chunk_index < self.total_chunks:
+            raise ValueError("chunk_index must be in range [0, total_chunks)")
+        if self.max_chunk_size <= 0:
+            raise ValueError("max_chunk_size must be > 0")
+
     @property
     def is_chunked(self) -> bool:
         """Check if this message is part of a chunked transfer."""
