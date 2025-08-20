@@ -59,7 +59,7 @@ jobs:
           echo "Checking for placeholders in production code..."
           if grep -r "TODO\|FIXME\|XXX\|HACK\|placeholder\|stub\|not implemented" \
              --include="*.py" --include="*.rs" --include="*.go" \
-             src/production/ packages/core/ 2>/dev/null; then
+             packages/core/ packages/rag/ packages/agents/ packages/p2p/ packages/edge/ 2>/dev/null; then
             echo "❌ Production code cannot contain placeholders!"
             exit 1
           fi
@@ -69,7 +69,7 @@ jobs:
         run: |
           echo "Checking for experimental imports..."
           if grep -r "from experimental\|import experimental" \
-             --include="*.py" src/production/ packages/core/ 2>/dev/null; then
+             --include="*.py" packages/core/ packages/rag/ packages/agents/ packages/p2p/ packages/edge/ 2>/dev/null; then
             echo "❌ Production code cannot import experimental!"
             exit 1
           fi
@@ -93,7 +93,7 @@ jobs:
       - name: Install quality tools
         run: |
           pip install ruff black isort mypy
-          pip install -r requirements.txt
+          pip install -r config/requirements/requirements.txt
 
       - name: 🎨 Format Check
         run: |
@@ -138,8 +138,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install -r requirements.txt
-          pip install -r requirements-test.txt
+          pip install -r config/requirements/requirements.txt
+          pip install -r config/requirements/requirements-test.txt
           pip install pytest pytest-cov pytest-timeout pytest-xdist
 
       - name: 🧪 Run Unit Tests
@@ -154,7 +154,7 @@ jobs:
       - name: 📊 Generate Coverage Report
         if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11'
         run: |
-          pytest tests/ --cov=src --cov=packages \
+          pytest tests/ --cov=packages \
             --cov-report=xml --cov-report=term-missing \
             --cov-fail-under=60
 
@@ -216,14 +216,14 @@ jobs:
       - name: 🔐 Bandit Security Scan
         run: |
           echo "Running Bandit security scan..."
-          bandit -r src/ packages/ -f json -o bandit-report.json -ll
+          bandit -r packages/ -f json -o bandit-report.json -ll
           echo "✅ Security scan completed"
 
       - name: 🔍 Semgrep SAST
         if: github.event_name == 'pull_request'
         run: |
           echo "Running Semgrep security analysis..."
-          semgrep --config=auto src/ packages/ --json -o semgrep-report.json || true
+          semgrep --config=auto packages/ --json -o semgrep-report.json || true
           echo "✅ SAST analysis completed"
 
       - name: Upload Security Reports
@@ -255,7 +255,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install -r requirements.txt
+          pip install -r config/requirements/requirements.txt
           pip install pytest-benchmark locust
 
       - name: 🚀 Run Performance Benchmarks
@@ -296,7 +296,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install build wheel cyclonedx-bom pip-audit
-          pip install -r requirements-prod.txt
+          pip install -r config/requirements/requirements-production.txt
 
       - name: 📋 Generate SBOM
         run: |

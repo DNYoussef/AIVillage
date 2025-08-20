@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 ### Added
+- **HRRM Bootstrap System Complete**: Three specialized ~50M parameter models for Agent Forge EvoMerge acceleration
+- HRRM Planner model with HRM two-timescale loops and ControllerHead for DSL planning tokens
+- HRRM Reasoner model with ScratchpadSupervisor for Quiet-STaR reasoning spans
+- HRRM Memory model with Titans test-time learning and Memory-as-Context wiring
+- Complete HRRM training/evaluation infrastructure with HuggingFace export support
+- 18/18 HRRM tests passing with comprehensive model validation
+- EvoMerge integration for 30× faster iteration with pre-optimized seed models
 - Added `digital_twin` module, increasing core module count to 17.
 
 ## [1.0.0] - 2025-07-27

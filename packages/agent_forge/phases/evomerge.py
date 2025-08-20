@@ -47,6 +47,13 @@ class EvoMergeConfig(PhaseConfig):
             "Qwen/Qwen2-1.5B-Instruct",
         ]
     )
+
+    # HRRM seed models for fast iteration
+    seed_models: list[str] = field(default_factory=lambda: [])  # Will be populated with HRRM exports
+
+    # If True, prioritize seed models over base models for faster iteration
+    prefer_seeds: bool = True
+
     output_dir: str = "./evomerge_output"
     device: str = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -529,12 +536,12 @@ class EvoMergePhase:
         self.output_dir.mkdir(parents=True, exist_ok=True)
         self.checkpoint_dir.mkdir(parents=True, exist_ok=True)
 
-    async def run(self, base_model_paths: list[str]) -> Any:
+    async def run(self, base_model_paths: list[str] | None = None) -> Any:
         """
         Run the complete EvoMerge phase with all features.
 
         Args:
-            base_model_paths: List of paths to base models
+            base_model_paths: List of paths to base models (optional if using seed models)
 
         Returns:
             PhaseResult with the best merged model
@@ -543,9 +550,24 @@ class EvoMergePhase:
         self.logger.info("Starting EvoMerge Phase - Evolutionary Model Optimization")
         self.logger.info("=" * 80)
 
+        # Use base_model_paths from config if not provided
+        if base_model_paths is None:
+            base_model_paths = self.config.base_models
+
         # Load base models and tokenizer
         base_models = await self._load_base_models(base_model_paths)
-        tokenizer = AutoTokenizer.from_pretrained(base_model_paths[0])
+
+        # Get tokenizer from first loaded model or first base model path
+        tokenizer_path = base_model_paths[0]
+        if self.config.prefer_seeds and self.config.seed_models:
+            # For HRRM models, use a standard tokenizer
+            try:
+                tokenizer = AutoTokenizer.from_pretrained("deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B")
+            except:
+                tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
+        else:
+            tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
+
         if tokenizer.pad_token is None:
             tokenizer.pad_token = tokenizer.eos_token
 
@@ -640,22 +662,118 @@ class EvoMergePhase:
         )
 
     async def _load_base_models(self, paths: list[str]) -> list[nn.Module]:
-        """Load base models with proper error handling."""
+        """Load base models with HRRM seed model integration."""
         models = []
-        for path in paths:
+
+        # Check for HRRM seed models first if prefer_seeds is enabled
+        seed_paths = []
+        if self.config.prefer_seeds:
+            # Look for exported HRRM models
+            hf_exports_dir = Path("artifacts/hf_exports")
+            for model_type in ["planner", "reasoner", "memory"]:
+                export_path = hf_exports_dir / model_type
+                if export_path.exists():
+                    seed_paths.append(str(export_path))
+
+            # Add explicitly configured seed models
+            if self.config.seed_models:
+                seed_paths.extend(self.config.seed_models)
+
+            if seed_paths:
+                self.logger.info(f"Found {len(seed_paths)} HRRM seed models for fast iteration")
+
+        # Use seed models if available and prefer_seeds is True, otherwise use base models
+        model_paths = seed_paths if seed_paths and self.config.prefer_seeds else paths
+
+        for path in model_paths:
             try:
-                self.logger.info(f"Loading base model: {path}")
-                model = AutoModelForCausalLM.from_pretrained(
-                    path,
-                    torch_dtype=torch.float16 if self.device == "cuda" else torch.float32,
-                    device_map="auto" if self.device == "cuda" else None,
-                    trust_remote_code=True,
-                )
+                self.logger.info(f"Loading {'seed' if path in seed_paths else 'base'} model: {path}")
+
+                # Try loading as standard HF model first
+                try:
+                    model = AutoModelForCausalLM.from_pretrained(
+                        path,
+                        torch_dtype=torch.float16 if self.device == "cuda" else torch.float32,
+                        device_map="auto" if self.device == "cuda" else None,
+                        trust_remote_code=True,
+                    )
+                except Exception as hf_error:
+                    # If HF loading fails, try loading HRRM exported model
+                    if Path(path).exists() and (Path(path) / "pytorch_model.bin").exists():
+                        self.logger.info(f"Loading HRRM exported model: {path}")
+
+                        # Load config
+                        with open(Path(path) / "config.json") as f:
+                            hrrm_config = json.load(f)
+
+                        # Create dummy config for basic transformer loading
+                        class HRRMConfig:
+                            def __init__(self, **kwargs):
+                                self.vocab_size = kwargs.get("vocab_size", 32000)
+                                self.hidden_size = kwargs.get("hidden_size", 512)
+                                self.num_hidden_layers = kwargs.get("num_hidden_layers", 12)
+                                self.num_attention_heads = kwargs.get("num_attention_heads", 8)
+                                self.intermediate_size = kwargs.get("intermediate_size", 2048)
+                                self.max_position_embeddings = kwargs.get("max_position_embeddings", 2048)
+
+                        # Create basic transformer model for merging
+                        from transformers import LlamaConfig, LlamaForCausalLM
+
+                        config = LlamaConfig(
+                            vocab_size=hrrm_config["vocab_size"],
+                            hidden_size=hrrm_config["hidden_size"],
+                            intermediate_size=hrrm_config["intermediate_size"],
+                            num_hidden_layers=hrrm_config["num_hidden_layers"],
+                            num_attention_heads=hrrm_config["num_attention_heads"],
+                            max_position_embeddings=hrrm_config["max_position_embeddings"],
+                        )
+                        model = LlamaForCausalLM(config)
+
+                        # Load state dict
+                        state_dict = torch.load(Path(path) / "pytorch_model.bin", map_location="cpu")
+
+                        # Map HRRM parameters to standard transformer parameters for merging
+                        mapped_state = {}
+                        for key, tensor in state_dict.items():
+                            # Map HRRM-specific parameter names to standard transformer names
+                            mapped_key = key
+                            if "hrm_layers" in key:
+                                mapped_key = key.replace("hrm_layers", "model.layers")
+                            elif "controller_head" in key or "scratchpad_supervisor" in key:
+                                # Skip specialized heads for merging - use core transformer only
+                                continue
+                            elif "memory_" in key:
+                                # Skip memory-specific components
+                                continue
+
+                            mapped_state[mapped_key] = tensor
+
+                        # Load only compatible parameters
+                        model.load_state_dict(mapped_state, strict=False)
+                        self.logger.info(
+                            f"✓ Loaded HRRM model: {path} ({hrrm_config.get('param_count', 'Unknown')} params)"
+                        )
+                    else:
+                        raise hf_error
+
                 models.append(model)
                 self.logger.info(f"✓ Loaded: {path}")
+
             except Exception as e:
                 self.logger.error(f"Failed to load {path}: {e}")
-                raise
+                # If seed model loading fails, fall back to base models
+                if path in seed_paths and not self.config.seed_models:
+                    self.logger.info("Falling back to base models due to seed model loading failure")
+                    return await self._load_base_models(paths)
+                else:
+                    raise
+
+        # If we loaded seed models successfully, log the fast iteration benefit
+        if model_paths == seed_paths:
+            self.logger.info("🚀 Using HRRM seed models for accelerated EvoMerge iteration!")
+            self.logger.info("   - Smaller parameter counts enable faster merging")
+            self.logger.info("   - Pre-optimized architectures provide better starting points")
+            self.logger.info("   - HRM components bring specialized capabilities")
 
         return models
 

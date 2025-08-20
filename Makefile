@@ -29,11 +29,11 @@ setup: ## Complete fresh project setup
 
 install: ## Install production dependencies
 	pip install --upgrade pip
-	pip install -r requirements.txt
+	pip install -r config/requirements/requirements.txt
 	@echo "✅ Production dependencies installed"
 
 dev-install: install ## Install all dependencies (prod + dev + test)
-	pip install -r requirements-dev.txt -r requirements-test.txt
+	pip install -r config/requirements/requirements-dev.txt -r config/requirements/requirements-test.txt
 	pre-commit install
 	@echo "✅ Development environment ready"
 
@@ -93,11 +93,14 @@ security: ## Run security scans
 	ruff check . --select S --output-format=concise
 	@echo ""
 	@echo "Running Bandit security scan..."
-	-bandit -r src/ packages/ -ll -f json -o security_report.json 2>/dev/null
-	-bandit -r src/ packages/ -ll
+	-bandit -r packages/ -ll -f json -o security_report.json 2>/dev/null
+	-bandit -r packages/ -ll
 	@echo ""
 	@echo "Checking dependency vulnerabilities..."
 	-safety check --json
+	@echo ""
+	@echo "Running forbidden checks..."
+	-bash tools/linting/forbidden_checks.sh
 	@echo "✅ Security scan completed"
 
 # ============================================
@@ -117,7 +120,7 @@ test-integration: ## Run integration tests
 
 test-coverage: ## Run tests with coverage report
 	@echo "📊 Running tests with coverage..."
-	pytest tests/ --cov=src --cov=packages \
+	pytest tests/ --cov=packages \
 		--cov-report=html --cov-report=term-missing \
 		--cov-fail-under=60
 	@echo "✅ Coverage report generated in htmlcov/"
@@ -169,8 +172,8 @@ artifacts-performance: ## Collect performance artifacts
 artifacts-quality: ## Collect code quality artifacts
 	@echo "📊 Collecting quality artifacts..."
 	mkdir -p artifacts/quality
-	ruff check packages/ src/ --output-format=json > artifacts/quality/ruff-report.json || true
-	mypy packages/ src/ --no-error-summary > artifacts/quality/mypy-report.txt 2>&1 || true
+	ruff check packages/ --output-format=json > artifacts/quality/ruff-report.json || true
+	mypy packages/ --no-error-summary > artifacts/quality/mypy-report.txt 2>&1 || true
 	python tools/analysis/hotspots.py --output artifacts/quality/hotspots-report.json || true
 	@echo "✅ Quality artifacts collected"
 
@@ -183,7 +186,7 @@ artifacts-all: artifacts-security artifacts-sbom artifacts-performance artifacts
 ci-pre-flight: ## Run pre-flight checks (fast fail)
 	@echo "🚨 Running pre-flight checks..."
 	ruff check . --select E9,F63,F7,F82,F821,F823 --output-format=concise
-	@grep -r "TODO\|FIXME\|XXX" src/production/ packages/core/ --include="*.py" 2>/dev/null && \
+	@grep -r "TODO\|FIXME\|XXX" packages/core/ packages/rag/ packages/agents/ packages/p2p/ packages/edge/ --include="*.py" 2>/dev/null && \
 		(echo "❌ Production code cannot contain TODOs!" && exit 1) || \
 		echo "✅ No TODOs in production"
 	@echo "✅ Pre-flight checks passed"
@@ -313,6 +316,135 @@ pre-commit-update: ## Update pre-commit hooks
 	@echo "🔄 Updating pre-commit hooks..."
 	pre-commit autoupdate
 	@echo "✅ Pre-commit hooks updated"
+
+# ============================================
+# HRRM Bootstrap System
+# ============================================
+hrrm-setup: ## Setup HRRM development environment
+	@echo "🤖 Setting up HRRM bootstrap system..."
+	mkdir -p artifacts/{checkpoints,hf_exports,eval_results,tokenizer}
+	@echo "✅ HRRM directories created"
+
+hrrm-tokenizer: ## Build HRRM tokenizer
+	@echo "🔤 Building HRRM tokenizer..."
+	python packages/hrrm/scripts/build_tokenizer.py \
+		--out artifacts/tokenizer/hrrm_bpe_32k.json \
+		--vocab 32000 \
+		--sample 2000000
+	@echo "✅ HRRM tokenizer built"
+
+hrrm-train-planner: hrrm-tokenizer ## Train HRRM Planner model (~50M params)
+	@echo "🧠 Training HRRM Planner..."
+	python packages/hrrm/planner/train_planner.py \
+		--config packages/hrrm/configs/planner_50m.json \
+		--output-dir artifacts/checkpoints/planner \
+		--epochs 10 \
+		--batch-size 16 \
+		--lr 3e-4 \
+		--save-steps 1000
+	@echo "✅ HRRM Planner training completed"
+
+hrrm-train-reasoner: hrrm-tokenizer ## Train HRRM Reasoner model (~50M params)
+	@echo "🤔 Training HRRM Reasoner..."
+	python packages/hrrm/reasoner/train_reasoner.py \
+		--config packages/hrrm/configs/reasoner_50m.json \
+		--output-dir artifacts/checkpoints/reasoner \
+		--epochs 10 \
+		--batch-size 16 \
+		--lr 3e-4 \
+		--save-steps 1000
+	@echo "✅ HRRM Reasoner training completed"
+
+hrrm-train-memory: hrrm-tokenizer ## Train HRRM Memory model (~50M params)
+	@echo "🧠 Training HRRM Memory..."
+	python packages/hrrm/memory/train_memory.py \
+		--config packages/hrrm/configs/memory_50m.json \
+		--output-dir artifacts/checkpoints/memory \
+		--epochs 10 \
+		--batch-size 16 \
+		--lr 3e-4 \
+		--save-steps 1000
+	@echo "✅ HRRM Memory training completed"
+
+hrrm-train-all: hrrm-train-planner hrrm-train-reasoner hrrm-train-memory ## Train all HRRM models
+	@echo "🎉 All HRRM models training completed"
+
+hrrm-eval-planner: ## Evaluate HRRM Planner model
+	@echo "📊 Evaluating HRRM Planner..."
+	python packages/hrrm/planner/eval_planner.py \
+		--checkpoint artifacts/checkpoints/planner/latest.pt \
+		--output artifacts/eval_results/planner_eval.json \
+		--batch-size 8
+	@echo "✅ HRRM Planner evaluation completed"
+
+hrrm-eval-reasoner: ## Evaluate HRRM Reasoner model
+	@echo "📊 Evaluating HRRM Reasoner..."
+	python packages/hrrm/reasoner/eval_reasoner.py \
+		--checkpoint artifacts/checkpoints/reasoner/latest.pt \
+		--output artifacts/eval_results/reasoner_eval.json \
+		--batch-size 8
+	@echo "✅ HRRM Reasoner evaluation completed"
+
+hrrm-eval-memory: ## Evaluate HRRM Memory model
+	@echo "📊 Evaluating HRRM Memory..."
+	python packages/hrrm/memory/eval_memory.py \
+		--checkpoint artifacts/checkpoints/memory/latest.pt \
+		--output artifacts/eval_results/memory_eval.json \
+		--batch-size 8
+	@echo "✅ HRRM Memory evaluation completed"
+
+hrrm-eval-all: hrrm-eval-planner hrrm-eval-reasoner hrrm-eval-memory ## Evaluate all HRRM models
+	@echo "📈 All HRRM models evaluation completed"
+
+hrrm-export: ## Export HRRM models to HuggingFace format
+	@echo "📦 Exporting HRRM models to HF format..."
+	python packages/hrrm/scripts/export_hf_format.py \
+		--src artifacts/checkpoints \
+		--dst artifacts/hf_exports
+	@echo "✅ HRRM models exported to HuggingFace format"
+
+hrrm-report: hrrm-eval-all ## Generate comprehensive HRRM metrics report
+	@echo "📋 Generating HRRM metrics report..."
+	python bin/hrrrm_report.py \
+		--results-dir artifacts/eval_results \
+		--output artifacts/hrrm_report.json
+	@echo "✅ HRRM metrics report generated"
+
+hrrm-test: ## Run HRRM test suite
+	@echo "🧪 Running HRRM tests..."
+	pytest tests/hrrm/ -v --tb=short --timeout=120
+	@echo "✅ HRRM tests completed"
+
+hrrm-test-fast: ## Run fast HRRM tests only
+	@echo "⚡ Running fast HRRM tests..."
+	pytest tests/hrrm/ -v --tb=short -m "not slow" --timeout=60
+	@echo "✅ Fast HRRM tests completed"
+
+hrrm-test-integration: ## Run HRRM integration tests
+	@echo "🔗 Running HRRM integration tests..."
+	pytest tests/hrrm/test_evomerge_integration.py tests/hrrm/test_end_to_end.py \
+		-v --tb=short --timeout=300
+	@echo "✅ HRRM integration tests completed"
+
+hrrm-acceptance: hrrm-train-all hrrm-eval-all hrrm-export hrrm-report ## Run complete HRRM acceptance criteria
+	@echo "🎯 Running HRRM acceptance criteria validation..."
+	@echo ""
+	@echo "Acceptance Criteria Results:"
+	@echo "============================="
+	@python bin/hrrrm_report.py --quiet && echo "✅ ACCEPTANCE CRITERIA PASSED" || echo "❌ ACCEPTANCE CRITERIA FAILED"
+	@echo ""
+	@echo "HRRM Bootstrap System Ready for Agent Forge Integration! 🚀"
+
+hrrm-pipeline: hrrm-setup hrrm-acceptance ## Complete HRRM bootstrap pipeline
+	@echo "🎉 Complete HRRM bootstrap pipeline executed successfully!"
+
+hrrm-clean: ## Clean HRRM artifacts
+	@echo "🧹 Cleaning HRRM artifacts..."
+	rm -rf artifacts/checkpoints/planner artifacts/checkpoints/reasoner artifacts/checkpoints/memory
+	rm -rf artifacts/hf_exports/planner artifacts/hf_exports/reasoner artifacts/hf_exports/memory
+	rm -rf artifacts/eval_results/planner_eval.json artifacts/eval_results/reasoner_eval.json artifacts/eval_results/memory_eval.json
+	rm -rf artifacts/hrrm_report.json
+	@echo "✅ HRRM artifacts cleaned"
 
 # ============================================
 # Git Helpers

@@ -1,0 +1,39 @@
+[package]
+name = "betanet-cla"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Betanet HTX Convergence Layer Adapter for DTN"
+
+[dependencies]
+# DTN integration
+betanet-dtn = { path = "../betanet-dtn" }
+betanet-htx = { path = "../betanet-htx" }
+
+# Async runtime
+tokio = { workspace = true, features = ["net", "io-util", "macros", "rt-multi-thread", "sync", "time"] }
+futures = { workspace = true }
+async-trait = "0.1"
+
+# Data structures
+bytes = { workspace = true }
+serde = { workspace = true }
+
+# Error handling
+thiserror = { workspace = true }
+anyhow = { workspace = true }
+
+# Logging
+tracing = { workspace = true }
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["test-util"] }
+tempfile = { workspace = true }
+
+[features]
+default = ["tcp"]
+tcp = ["betanet-htx/tcp"]
+quic = ["betanet-htx/quic"]

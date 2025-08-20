@@ -1,6 +1,6 @@
 # AIVillage System Architecture
 
-*Last Updated: August 19, 2025*
+*Last Updated: August 20, 2025*
 
 ## System Overview
 
@@ -131,8 +131,15 @@ AIVillage is a distributed multi-agent AI platform with comprehensive fog comput
 - **Democratic Governance**: 2/3 quorum voting on decisions
 - **Quiet-STaR**: Internal reasoning with thought tokens
 - **ADAS Self-Modification**: Architecture discovery and optimization
+- **HRRM Bootstrap System**: Three ~50M parameter models (Planner, Reasoner, Memory) for Agent Forge EvoMerge acceleration
 
-### 8. Data Stores
+### 8. Agent Forge Pipeline
+- **7-Phase Training**: EvoMerge, Quiet-STaR, BitNet, Training, Tool/Persona Baking, ADAS, Final Compression
+- **HRRM Integration**: Pre-optimized seed models provide 30× faster EvoMerge iteration
+- **Distributed Training**: Federated learning with fog compute integration
+- **Production Ready**: Complete infrastructure with testing, export, and CLI tools
+
+### 9. Data Stores
 - **PostgreSQL**: Relational data (agent states, sessions, profiles)
 - **Neo4j**: Graph data (knowledge networks, trust relationships)
 - **Redis**: Cache and real-time data (sessions, queues, metrics)

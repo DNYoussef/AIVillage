@@ -1,0 +1,49 @@
+# Security-related forbidden patterns
+password=
+secret=
+api_key=
+private_key=
+token=
+auth_token=
+access_token=
+refresh_token=
+
+# Debugging patterns that shouldn't be in production
+console.log(
+print(.*password
+print(.*secret
+print(.*token
+debugger;
+alert(
+confirm(
+
+# Hardcoded URLs and IPs (examples)
+http://localhost
+127.0.0.1
+192.168.
+10.0.0.
+172.16.
+
+# Forbidden imports/packages in production
+import pdb
+from pdb import
+import debugpy
+import pudb
+
+# Quality issues
+TODO:.*URGENT
+FIXME:.*URGENT
+XXX:.*CRITICAL
+HACK:.*PROD
+
+# Insecure patterns
+eval(
+exec(
+system(
+shell_exec(
+passthru(
+
+# Development-only annotations
+@pytest.skip
+@unittest.skip
+@pytest.mark.skip
