@@ -13,6 +13,7 @@ Features:
 - Deprecation warnings and guidance
 """
 
+import importlib
 import logging
 import sys
 import warnings
@@ -66,6 +67,7 @@ class CompatibilityBridge:
         self.mappings: dict[str, CompatibilityMapping] = {}
         self.deprecations: dict[str, DeprecationInfo] = {}
         self.active_bridges: dict[str, Any] = {}
+        self.allowed_modules: set[str] = set()
         self.migration_stats = {
             "total_redirects": 0,
             "active_deprecations": 0,
@@ -90,6 +92,7 @@ class CompatibilityBridge:
         try:
             key = f"{mapping.old_module}.{mapping.old_class or ''}"
             self.mappings[key] = mapping
+            self.allowed_modules.update({mapping.old_module, mapping.new_module})
 
             # Register deprecation if specified
             if mapping.deprecated_in:
@@ -147,8 +150,7 @@ class CompatibilityBridge:
             return False
 
     def create_import_bridge(self, old_module: str, new_module: str) -> bool:
-        """
-        Create an import bridge that redirects old imports to new modules.
+        """Create an import bridge that redirects old imports to new modules.
 
         Args:
             old_module: Old module path
@@ -158,33 +160,30 @@ class CompatibilityBridge:
             bool: True if bridge created successfully
         """
         try:
-            # Create a bridge module that forwards imports
-            bridge_code = f'''
-"""
-Compatibility bridge for {old_module} -> {new_module}
-This module is deprecated and will be removed in a future version.
-Please update your imports to use {new_module} instead.
-"""
+            if old_module not in self.allowed_modules or new_module not in self.allowed_modules:
+                raise ValueError(
+                    f"Unauthorized module redirection attempted: {old_module} -> {new_module}"
+                )
 
-import warnings
-from {new_module} import *
+            target_module = importlib.import_module(new_module)
 
-warnings.warn(
-    f"Module {old_module} is deprecated. Use {new_module} instead.",
-    DeprecationWarning,
-    stacklevel=2
-)
-'''
-
-            # Register the bridge in the module system
             import types
 
+            def __getattr__(name: str):
+                warnings.warn(
+                    f"Module {old_module} is deprecated. Use {new_module} instead.",
+                    DeprecationWarning,
+                    stacklevel=2,
+                )
+                return getattr(target_module, name)
+
             bridge_module = types.ModuleType(old_module)
+            bridge_module.__getattr__ = __getattr__
+            bridge_module.__doc__ = (
+                f"Compatibility bridge for {old_module} -> {new_module}. This module is "
+                "deprecated and will be removed in a future version."
+            )
 
-            # Execute the bridge code in the module's namespace
-            exec(bridge_code, bridge_module.__dict__)
-
-            # Install the bridge module
             sys.modules[old_module] = bridge_module
             self.active_bridges[old_module] = bridge_module
 
@@ -193,7 +192,9 @@ warnings.warn(
             return True
 
         except Exception as e:
-            logger.error(f"Failed to create import bridge {old_module} -> {new_module}: {e}")
+            logger.error(
+                f"Failed to create import bridge {old_module} -> {new_module}: {e}"
+            )
             return False
 
     def create_class_wrapper(self, old_class: type, new_class: type, deprecated_since: str = "1.0.0") -> type:
