@@ -8,7 +8,6 @@ from unittest.mock import Mock, patch
 
 import torch
 import torch.nn as nn
-
 from src.production.compression.compression.stage1_bitnet import (
     BitNetLinear,
     GradualBitnetCallback,

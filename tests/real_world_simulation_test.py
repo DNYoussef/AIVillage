@@ -162,11 +162,12 @@ class RealWorldSimulation:
         logger.info("=== Evolution Under Load Simulation ===")
 
         try:
-            from packages.core.resources import ConstraintManager, DeviceProfiler
             from src.production.agent_forge.evolution.infrastructure_aware_evolution import (
                 InfrastructureAwareEvolution,
                 InfrastructureConfig,
             )
+
+            from packages.core.resources import ConstraintManager, DeviceProfiler
 
             load_scenarios = [
                 ("Light load", 1),

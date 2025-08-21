@@ -11,7 +11,6 @@ from unittest.mock import Mock, patch
 import pytest
 import torch
 import torch.nn as nn
-
 from src.agent_forge.adas.archive import ADASArchive, ExperimentResult
 from src.agent_forge.adas.proposer import ADASProposer
 from src.agent_forge.adas.runner import ADASRunner, TaskSuite

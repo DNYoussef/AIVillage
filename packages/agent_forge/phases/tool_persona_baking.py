@@ -359,9 +359,7 @@ class ToolIntegrationSystem:
             if isinstance(node, ast.Expression):
                 return _eval(node.body)
             if isinstance(node, ast.BinOp) and type(node.op) in ALLOWED_OPERATORS:
-                return ALLOWED_OPERATORS[type(node.op)](
-                    _eval(node.left), _eval(node.right)
-                )
+                return ALLOWED_OPERATORS[type(node.op)](_eval(node.left), _eval(node.right))
             if isinstance(node, ast.UnaryOp) and type(node.op) in ALLOWED_OPERATORS:
                 return ALLOWED_OPERATORS[type(node.op)](_eval(node.operand))
             if isinstance(node, ast.Constant) and isinstance(node.value, (int, float)):

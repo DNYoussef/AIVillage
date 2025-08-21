@@ -11,7 +11,6 @@ print("=" * 60)
 
 # Import our system
 import torch
-
 from src.compression.simple_quantizer import SimpleQuantizer
 from src.compression.test_model_generator import create_test_model
 

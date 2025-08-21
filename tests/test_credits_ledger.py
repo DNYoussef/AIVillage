@@ -1,11 +1,10 @@
 """Unit tests for credits ledger functionality."""
 
-from datetime import UTC, datetime
 import os
 import tempfile
+from datetime import UTC, datetime
 
 import pytest
-
 from communications.credits_ledger import CreditsConfig, CreditsLedger, Wallet
 
 

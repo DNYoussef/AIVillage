@@ -9,9 +9,8 @@ import logging
 import sys
 from pathlib import Path
 
-from mesh_network_manager import MeshNetworkManager
-
 from communications.message import Message, MessageType, Priority
+from mesh_network_manager import MeshNetworkManager
 
 # Add the project root to the path for imports
 project_root = Path(__file__).parent.parent.parent.parent
@@ -60,24 +59,16 @@ async def test_mesh_integration():
     stats1 = node1.get_network_statistics()
     stats2 = node2.get_network_statistics()
 
-    print(
-        f"Node 1 - Active peers: {stats1['active_peers']}, Routes: {stats1['routing_entries']}"
-    )
-    print(
-        f"Node 2 - Active peers: {stats2['active_peers']}, Routes: {stats2['routing_entries']}"
-    )
+    print(f"Node 1 - Active peers: {stats1['active_peers']}, Routes: {stats1['routing_entries']}")
+    print(f"Node 2 - Active peers: {stats2['active_peers']}, Routes: {stats2['routing_entries']}")
 
     # Test 3: Health monitoring
     print("\nTest 3: Health Monitoring")
     health1 = stats1["network_health"]
     health2 = stats2["network_health"]
 
-    print(
-        f"Node 1 Health - Success: {health1['success_rate']:.1%}, Latency: {health1['average_latency_ms']:.1f}ms"
-    )
-    print(
-        f"Node 2 Health - Success: {health2['success_rate']:.1%}, Latency: {health2['average_latency_ms']:.1f}ms"
-    )
+    print(f"Node 1 Health - Success: {health1['success_rate']:.1%}, Latency: {health1['average_latency_ms']:.1f}ms")
+    print(f"Node 2 Health - Success: {health2['success_rate']:.1%}, Latency: {health2['average_latency_ms']:.1f}ms")
 
     # Test 4: Multiple message types
     print("\nTest 4: Multiple Message Types")
@@ -88,9 +79,7 @@ async def test_mesh_integration():
     ]
 
     for msg_type, content in message_types:
-        message = Message(
-            type=msg_type, sender="agent_001", receiver="agent_002", content=content
-        )
+        message = Message(type=msg_type, sender="agent_001", receiver="agent_002", content=content)
         await node1.send_message(message)
         print(f"Sent {msg_type.value} message")
 
@@ -102,16 +91,11 @@ async def test_mesh_integration():
     final_stats1 = node1.get_network_statistics()
     final_stats2 = node2.get_network_statistics()
 
-    print(
-        f"Node 1 - Messages processed: {final_stats1['network_health']['total_messages']}"
-    )
-    print(
-        f"Node 2 - Messages processed: {final_stats2['network_health']['total_messages']}"
-    )
+    print(f"Node 1 - Messages processed: {final_stats1['network_health']['total_messages']}")
+    print(f"Node 2 - Messages processed: {final_stats2['network_health']['total_messages']}")
 
     total_success_rate = (
-        final_stats1["network_health"]["success_rate"]
-        + final_stats2["network_health"]["success_rate"]
+        final_stats1["network_health"]["success_rate"] + final_stats2["network_health"]["success_rate"]
     ) / 2
 
     print(f"Overall success rate: {total_success_rate:.1%}")

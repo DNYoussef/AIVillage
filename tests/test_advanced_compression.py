@@ -13,7 +13,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from agent_forge.compression.bitnet import BITNETCompressor
 from agent_forge.compression.seedlm import SEEDLMCompressor
 from agent_forge.compression.vptq import VPTQCompressor
-
 from core.compression.advanced_pipeline import AdvancedCompressionPipeline
 
 

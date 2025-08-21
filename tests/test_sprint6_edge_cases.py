@@ -4,11 +4,11 @@ import time
 from unittest.mock import Mock, patch
 
 import pytest
+
 from packages.core.resources.adaptive_loader import AdaptiveLoader
 from packages.core.resources.constraint_manager import ConstraintManager
 from packages.core.resources.device_profiler import DeviceProfiler, DeviceType, ThermalState
 from packages.core.resources.resource_monitor import ResourceMonitor
-
 from packages.p2p.core.p2p_node import P2PNode, PeerCapabilities
 
 

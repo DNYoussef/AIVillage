@@ -267,7 +267,7 @@ jobs:
           fi
 
       - name: Upload scan artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: trivy-results-${{ matrix.image }}
@@ -275,6 +275,7 @@ jobs:
             trivy-results-${{ matrix.image }}.sarif
             trivy-results-${{ matrix.image }}.json
           retention-days: 30
+          if-no-files-found: warn
 
   # ============================================
   # Security Summary
@@ -286,7 +287,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download all scan results
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
 
       - name: Generate comprehensive security report
         run: |

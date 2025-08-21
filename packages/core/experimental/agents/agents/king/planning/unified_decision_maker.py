@@ -11,11 +11,10 @@ from typing import Any
 import matplotlib.pyplot as plt
 import networkx as nx
 import torch
+from core.error_handling import AIVillageException, StandardCommunicationProtocol
 from langroid.language_models.openai_gpt import OpenAIGPTConfig
 from rag_system.core.pipeline import EnhancedRAGPipeline
 from transformers import GPT2LMHeadModel, GPT2Tokenizer
-
-from core.error_handling import AIVillageException, StandardCommunicationProtocol
 
 from .quality_assurance_layer import QualityAssuranceLayer
 

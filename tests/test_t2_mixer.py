@@ -8,7 +8,6 @@ from unittest.mock import Mock
 import pytest
 import torch
 import torch.nn as nn
-
 from src.agent_forge.t2.features import FeatureExtractor
 from src.agent_forge.t2.mixer import ExpertAdapter, T2Mixer
 

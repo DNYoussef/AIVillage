@@ -1,6 +1,5 @@
-from torch import nn
-
 from compression.pipeline import UnifiedCompressor
+from torch import nn
 
 
 class TestUnifiedCompression:

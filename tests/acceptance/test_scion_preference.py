@@ -53,7 +53,13 @@ class _DummyTransportManager:
 stub_transport_manager.TransportManager = _DummyTransportManager
 sys.modules["src.core.transport_manager"] = stub_transport_manager
 
-from agents.navigator.path_policy import EnergyMode, MessageContext, NavigatorAgent, PathProtocol, RoutingPriority
+from packages.agents.navigation.scion_navigator import (
+    EnergyMode,
+    MessageContext,
+    NavigatorAgent,
+    PathProtocol,
+    RoutingPriority,
+)
 
 
 # Mock SCION classes for testing
@@ -267,7 +273,7 @@ class TestSCIONPreference(unittest.TestCase):
         self.mock_gateway.set_connectivity(healthy=False, scion_connected=False)
 
         # Mock nearby peer
-        from agents.navigator.path_policy import PeerInfo
+        from packages.agents.navigation.scion_navigator import PeerInfo
 
         peer_info = PeerInfo(
             peer_id=destination,

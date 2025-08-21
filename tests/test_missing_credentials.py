@@ -3,8 +3,8 @@ import pathlib
 import sys
 import types
 
-from pydantic import ValidationError
 import pytest
+from pydantic import ValidationError
 
 
 def _load_module(relative_path: str, name: str):

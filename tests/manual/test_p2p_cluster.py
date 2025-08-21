@@ -10,9 +10,10 @@ import time
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
+from src.production.communications.p2p import P2PNode as ProductionP2PNode
+
 # Import both P2P implementations
 from packages.core.p2p import P2PNode as CoreP2PNode
-from src.production.communications.p2p import P2PNode as ProductionP2PNode
 
 
 async def test_core_p2p_cluster(num_nodes: int = 5):

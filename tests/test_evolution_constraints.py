@@ -3,11 +3,12 @@
 
 import asyncio
 
+from src.production.agent_forge.evolution.infrastructure_aware_evolution import InfrastructureAwareEvolution
+from src.production.agent_forge.evolution.resource_constrained_evolution import ResourceConstrainedEvolution
+
 from packages.core.resources.constraint_manager import ConstraintManager
 from packages.core.resources.device_profiler import DeviceProfiler
 from packages.core.resources.resource_monitor import ResourceMonitor
-from src.production.agent_forge.evolution.infrastructure_aware_evolution import InfrastructureAwareEvolution
-from src.production.agent_forge.evolution.resource_constrained_evolution import ResourceConstrainedEvolution
 
 
 class MockAgent:

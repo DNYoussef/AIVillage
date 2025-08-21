@@ -1,5 +1,4 @@
 import pytest
-
 from core.evidence import Chunk, EvidencePack
 
 

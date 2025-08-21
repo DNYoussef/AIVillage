@@ -445,8 +445,9 @@ class JobsAPI:
             rbac = RBACSystem()
 
             # Validate JWT token
-            import jwt
             import os
+
+            import jwt
 
             jwt_secret = os.getenv("JWT_SECRET")
             jwt_algorithm = os.getenv("JWT_ALGORITHM", "HS256")

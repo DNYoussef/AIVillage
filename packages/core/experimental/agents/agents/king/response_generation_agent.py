@@ -2,10 +2,9 @@ import json
 import logging
 from typing import Any
 
+from core.error_handling import error_handler, safe_execute
 from langroid.language_models.openai_gpt import OpenAIGPTConfig
 from torch import nn
-
-from core.error_handling import error_handler, safe_execute
 
 logger = logging.getLogger(__name__)
 

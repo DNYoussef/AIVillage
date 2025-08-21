@@ -18,7 +18,7 @@ from enum import Enum
 from typing import Any
 from uuid import uuid4
 
-from fastapi import APIRouter, HTTPException, Security, status, Depends
+from fastapi import APIRouter, Depends, HTTPException, Security, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer, SecurityScopes
 from pydantic import BaseModel, Field, validator
 
@@ -365,9 +365,7 @@ class AdminAPI:
         )
         async def register_node(
             registration: NodeRegistration,
-            current_user: User = Security(
-                get_current_user, scopes=[Permission.FOG_NODE_REGISTER.value]
-            ),
+            current_user: User = Security(get_current_user, scopes=[Permission.FOG_NODE_REGISTER.value]),
         ) -> NodeStatusResponse:
             """Register new fog node"""
 
@@ -697,9 +695,7 @@ class AdminAPI:
 
         try:
             rbac = RBACSystem()
-            has_access = await rbac.check_permission(
-                user.user_id, Permission.FOG_NODE_REGISTER, namespace
-            )
+            has_access = await rbac.check_permission(user.user_id, Permission.FOG_NODE_REGISTER, namespace)
             if not has_access:
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,

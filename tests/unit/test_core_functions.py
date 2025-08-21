@@ -2,10 +2,10 @@
 Test that core functions actually work now
 """
 
-from packages.core.resources.resource_monitor import get_all_metrics
 from src.twin_runtime.guard import risk_gate
 from src.twin_runtime.runner import chat
 
+from packages.core.resources.resource_monitor import get_all_metrics
 from packages.p2p.core.device_mesh import discover_network_peers
 
 

@@ -11,9 +11,7 @@ from packages.core.deployment.continuous_deployment_automation import (
 
 @pytest.mark.asyncio
 async def test_run_command_executes_without_shell():
-    automation = ContinuousDeploymentAutomation(
-        DeploymentConfig(environment=DeploymentEnvironment.LOCAL)
-    )
+    automation = ContinuousDeploymentAutomation(DeploymentConfig(environment=DeploymentEnvironment.LOCAL))
     result = await automation._run_command(["python", "-c", "print('hello')"])
     assert result.returncode == 0
     assert result.stdout.strip() == "hello"
@@ -27,9 +25,7 @@ async def test_run_automated_tests_no_shell(monkeypatch):
         executed.append(cmd)
         return subprocess.CompletedProcess(args=cmd, returncode=0, stdout="", stderr="")
 
-    automation = ContinuousDeploymentAutomation(
-        DeploymentConfig(environment=DeploymentEnvironment.LOCAL)
-    )
+    automation = ContinuousDeploymentAutomation(DeploymentConfig(environment=DeploymentEnvironment.LOCAL))
     monkeypatch.setattr(automation, "_run_command", fake_run_command)
 
     result = await automation._run_automated_tests()
@@ -47,9 +43,7 @@ async def test_build_and_validate_no_shell(monkeypatch, tmp_path):
 
     (tmp_path / "tests").mkdir()
 
-    automation = ContinuousDeploymentAutomation(
-        DeploymentConfig(environment=DeploymentEnvironment.LOCAL)
-    )
+    automation = ContinuousDeploymentAutomation(DeploymentConfig(environment=DeploymentEnvironment.LOCAL))
     automation.project_root = tmp_path
 
     captured = []

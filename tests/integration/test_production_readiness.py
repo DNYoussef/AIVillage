@@ -7,13 +7,13 @@ Comprehensive testing for production deployment validation.
 import asyncio
 import json
 import logging
+import statistics
 import time
 from typing import Any
 
 import numpy as np
 import psutil
 import pytest
-import statistics
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -264,9 +264,7 @@ class ProductionReadinessTestSuite:
                     "duration": time.time() - check_start,
                 }
 
-            overall_consistency = statistics.mean([
-                r["integrity_score"] for r in consistency_results.values()
-            ])
+            overall_consistency = statistics.mean([r["integrity_score"] for r in consistency_results.values()])
             all_consistent = all(r["success"] for r in consistency_results.values())
 
             success = all_consistent and overall_consistency > 0.95

@@ -25,4 +25,3 @@ def test_import_bridge_rejects_unlisted_modules():
     result = bridge.create_import_bridge("bad_mod", "math")
     assert result is False
     assert "bad_mod" not in sys.modules
-

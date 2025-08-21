@@ -10,9 +10,8 @@ if importlib.util.find_spec("torch") is None:
 
 from agents.king.king_agent import KingAgent, UnifiedAgentConfig
 from agents.utils.task import Task as LangroidTask
-from rag_system.retrieval.vector_store import VectorStore
-
 from core.error_handling import StandardCommunicationProtocol
+from rag_system.retrieval.vector_store import VectorStore
 
 
 class TestKingAgent(unittest.IsolatedAsyncioTestCase):

@@ -25,6 +25,9 @@ from core.resilience.error_handling import ResilienceManager
 # Import all major system components
 from ml.feature_extraction import FeatureExtractor, ModelComparator
 from monitoring.observability_system import ObservabilitySystem, traced_operation
+from security.auth_system import AuthenticationManager, AuthorizationManager, Permission, SecurityLevel, UserRole
+from testing.performance_benchmarks import PerformanceBenchmarkManager
+
 from packages.agents.coordination_system import (
     Agent,
     AgentCapability,
@@ -37,8 +40,6 @@ from packages.agents.coordination_system import (
     Task,
     TaskScheduler,
 )
-from security.auth_system import AuthenticationManager, AuthorizationManager, Permission, SecurityLevel, UserRole
-from testing.performance_benchmarks import PerformanceBenchmarkManager
 
 
 class AIVillageSystemTest:

@@ -4,10 +4,10 @@ import asyncio
 import time
 
 import pytest
-from packages.core.resources.resource_monitor import ResourceMonitor
 from src.communications.protocol import CommunicationsProtocol
 from src.twin_runtime.guard import risk_gate
 
+from packages.core.resources.resource_monitor import ResourceMonitor
 from packages.p2p.core.device_mesh import DeviceMesh
 
 

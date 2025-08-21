@@ -137,12 +137,12 @@ impl VrfNeighborSelector {
             config,
         }
     }
-    
+
     /// Derive VRF public key from private key
     #[cfg(feature = "vrf")]
     fn derive_vrf_public_key(private_key: &[u8; 32]) -> [u8; 32] {
         use schnorrkel::SecretKey;
-        
+
         if let Ok(secret_key) = SecretKey::from_bytes(private_key) {
             let public_key = secret_key.to_public();
             public_key.to_bytes()
@@ -151,7 +151,7 @@ impl VrfNeighborSelector {
             CryptoUtils::sha256(private_key)
         }
     }
-    
+
     /// Derive VRF public key from private key (fallback)
     #[cfg(not(feature = "vrf"))]
     fn derive_vrf_public_key(private_key: &[u8; 32]) -> [u8; 32] {
@@ -235,29 +235,29 @@ impl VrfNeighborSelector {
     #[cfg(feature = "vrf")]
     fn generate_vrf_output(&self, seed: &[u8]) -> Result<[u8; 32]> {
         use schnorrkel::{SecretKey, vrf::VrfInOut, vrf::VrfPreOut, context::SigningContext};
-        
+
         // Convert private key to Schnorrkel format
         let secret_key = SecretKey::from_bytes(&self.vrf_private_key)
             .map_err(|e| MixnodeError::Vrf(format!("Invalid VRF secret key: {}", e)))?;
-        
+
         // Create signing context
         let context = SigningContext::new(b"betanet-mixnode-vrf");
-        
+
         // Generate VRF input
         let (vrf_in_out, vrf_proof, _) = secret_key.vrf_sign(context.bytes(seed));
-        
+
         // Extract VRF output
         let vrf_output = vrf_in_out.make_bytes(b"vrf-output");
-        
+
         // Verify proof to ensure correctness
         let public_key = secret_key.to_public();
         if !public_key.vrf_verify(context.bytes(seed), &vrf_in_out, &vrf_proof) {
             return Err(MixnodeError::Vrf("VRF proof verification failed".to_string()));
         }
-        
+
         Ok(vrf_output)
     }
-    
+
     /// Generate VRF output (fallback implementation without VRF feature)
     #[cfg(not(feature = "vrf"))]
     fn generate_vrf_output(&self, seed: &[u8]) -> Result<[u8; 32]> {

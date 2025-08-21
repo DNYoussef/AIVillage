@@ -5,7 +5,7 @@
 //!
 //! Features:
 //! - H3 control stream establishment
-//! - CONNECT-UDP request/response handling  
+//! - CONNECT-UDP request/response handling
 //! - UDP datagram tunneling with counters
 //! - Complete transcript generation
 //! - Local UDP echo server fallback
@@ -385,7 +385,7 @@ async fn run_masque_demo(config: DemoConfig) -> Result<(), Box<dyn std::error::E
     for i in 0..config.num_datagrams {
         // Create test payload
         let payload = create_test_payload(i, config.datagram_size);
-        
+
         transcript.write_datagram_sent(session_id, payload.len(), &payload)?;
 
         // Send datagram through MASQUE
@@ -462,9 +462,9 @@ async fn run_stub_demo(config: DemoConfig) -> Result<(), Box<dyn std::error::Err
     for i in 0..config.num_datagrams {
         let payload = create_test_payload(i, config.datagram_size);
         transcript.write_datagram_sent(session_id, payload.len(), &payload)?;
-        
+
         tokio::time::sleep(Duration::from_millis(50)).await;
-        
+
         transcript.write_datagram_received(session_id, payload.len(), &payload)?;
     }
 
@@ -483,15 +483,15 @@ async fn run_stub_demo(config: DemoConfig) -> Result<(), Box<dyn std::error::Err
 #[cfg(feature = "quic")]
 async fn setup_masque_proxy(transcript: &mut TranscriptWriter) -> Result<MasqueProxy, Box<dyn std::error::Error>> {
     transcript.write_event("🔧 Initializing MASQUE proxy server")?;
-    
+
     let proxy = MasqueProxy::with_config(
         100,                             // max_sessions
-        Duration::from_secs(300),        // session_timeout  
+        Duration::from_secs(300),        // session_timeout
         Duration::from_secs(60),         // cleanup_interval
     );
 
     proxy.start().await?;
-    
+
     transcript.write_event("✅ MASQUE proxy started successfully")?;
     transcript.write_event("   Configuration:")?;
     transcript.write_event("     Max sessions: 100")?;
@@ -504,20 +504,20 @@ async fn setup_masque_proxy(transcript: &mut TranscriptWriter) -> Result<MasqueP
 
 fn create_test_payload(index: usize, size: usize) -> Vec<u8> {
     let mut payload = vec![0u8; size];
-    
+
     // Create a simple pattern: timestamp + sequence + padding
     let pattern = format!("MSG{:03}", index);
     let pattern_bytes = pattern.as_bytes();
-    
+
     // Copy pattern to start of payload
     let copy_len = std::cmp::min(pattern_bytes.len(), payload.len());
     payload[..copy_len].copy_from_slice(&pattern_bytes[..copy_len]);
-    
+
     // Fill rest with incrementing pattern
     for (i, byte) in payload.iter_mut().enumerate().skip(copy_len) {
         *byte = ((i + index) % 256) as u8;
     }
-    
+
     payload
 }
 
@@ -538,14 +538,14 @@ mod tests {
     fn test_transcript_writer() -> Result<(), Box<dyn std::error::Error>> {
         let temp_file = NamedTempFile::new()?;
         let path = temp_file.path().to_path_buf();
-        
+
         let mut transcript = TranscriptWriter::new(&path)?;
         transcript.write_event("Test event")?;
-        
+
         let content = std::fs::read_to_string(&path)?;
         assert!(content.contains("Test event"));
         assert!(content.contains("s]"));
-        
+
         Ok(())
     }
 

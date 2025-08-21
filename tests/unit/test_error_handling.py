@@ -3,7 +3,6 @@
 import asyncio
 
 import pytest
-
 from core.error_handling import (
     AIVillageException,
     ErrorCategory,

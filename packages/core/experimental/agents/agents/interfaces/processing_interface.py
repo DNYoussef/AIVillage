@@ -12,7 +12,6 @@ from enum import Enum
 from typing import Any, Generic, TypeVar
 
 from agents.base import ProcessConfig, ProcessResult
-
 from core import ErrorContext
 
 T = TypeVar("T")

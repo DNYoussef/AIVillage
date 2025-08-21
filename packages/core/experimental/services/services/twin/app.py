@@ -22,11 +22,10 @@ from typing import Any
 
 import uvicorn
 from cachetools import LRUCache
+from core.chat_engine import ChatEngine
 from fastapi import Depends, FastAPI, File, HTTPException, UploadFile
 from prometheus_client import REGISTRY, Counter, Histogram, generate_latest
 from pydantic import BaseModel, Field
-
-from core.chat_engine import ChatEngine
 
 # Add the production RAG system to the path
 sys.path.insert(0, str(Path(__file__).resolve().parents[4] / "src" / "production" / "rag"))

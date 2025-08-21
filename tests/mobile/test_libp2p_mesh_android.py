@@ -17,11 +17,7 @@ import pytest
 if os.environ.get("ANDROID_EMULATOR", "0") != "1":  # pragma: no cover - CI env
     pytest.skip("Android emulator not available", allow_module_level=True)
 
-from src.android.p2p.libp2p_mesh import (
-    LibP2PMeshNetwork,
-    MeshConfiguration,
-    MeshMessage,
-)
+from src.android.p2p.libp2p_mesh import LibP2PMeshNetwork, MeshConfiguration, MeshMessage
 
 pytestmark = pytest.mark.asyncio
 

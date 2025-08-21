@@ -6,7 +6,6 @@ if importlib.util.find_spec("torch") is None:
     raise unittest.SkipTest(msg)
 
 import torch
-
 from agent_forge.training.geometry_pipeline import train_geometry_model
 from agent_forge.training.sleep_and_dream import DreamNet, SleepNet
 

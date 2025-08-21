@@ -8,11 +8,7 @@ from __future__ import annotations
 
 import asyncio
 
-from packages.rag.core.hyper_rag import (
-    MemoryType,
-    QueryMode,
-    create_hyper_rag,
-)
+from packages.rag.core.hyper_rag import MemoryType, QueryMode, create_hyper_rag
 
 
 async def main() -> None:
@@ -60,4 +56,3 @@ async def main() -> None:
 
 if __name__ == "__main__":
     asyncio.run(main())
-

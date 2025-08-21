@@ -6,9 +6,8 @@ delegating business logic to the service interfaces.
 
 from typing import Any
 
-from fastapi import UploadFile
-
 from core.error_handling import get_component_logger
+from fastapi import UploadFile
 from services.core.interfaces import ChatRequest as ServiceChatRequest
 from services.core.interfaces import ChatServiceInterface, HealthCheckInterface
 from services.core.interfaces import QueryRequest as ServiceQueryRequest

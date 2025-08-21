@@ -113,7 +113,7 @@ class FogRAGCoordinator:
     def __init__(
         self,
         fog_gateway_url: str = "http://localhost:8080",
-        local_rag: HyperRAGOrchestrator | None = None,
+        local_rag: HyperRAG | None = None,
         default_strategy: FogRAGStrategy = FogRAGStrategy.ADAPTIVE,
     ):
         self.fog_gateway_url = fog_gateway_url.rstrip("/")
@@ -788,7 +788,7 @@ class FogRAGCoordinator:
 
 # Convenience functions for integration
 async def create_fog_rag_coordinator(
-    fog_gateway_url: str = "http://localhost:8080", local_rag: HyperRAGOrchestrator | None = None
+    fog_gateway_url: str = "http://localhost:8080", local_rag: HyperRAG | None = None
 ) -> FogRAGCoordinator:
     """Create and initialize fog RAG coordinator"""
 

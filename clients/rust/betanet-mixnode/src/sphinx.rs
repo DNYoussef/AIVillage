@@ -429,7 +429,7 @@ impl SphinxProcessor {
         key: &[u8; 32],
     ) -> Result<()> {
         let encryption = ChaChaEncryption::new(key);
-        
+
         // SECURITY FIX: Use secure nonce derivation for payload
         // Derive nonce from payload and key using HKDF for deterministic but secure nonce
         let mut nonce = [0u8; 12];

@@ -219,12 +219,12 @@ impl StreamMux {
         if stream.send_window < data_len as u32 {
             // Buffer data if window is insufficient
             stream.send_buffer.push_back(data);
-            
+
             // Update backpressure stats
             let mut stats = self.stats.lock().await;
             stats.backpressure_events += 1;
-            
-            debug!("Buffering {} bytes for stream {} (window: {})", 
+
+            debug!("Buffering {} bytes for stream {} (window: {})",
                    data_len, stream_id, stream.send_window);
             return Ok(());
         }
@@ -326,11 +326,11 @@ impl StreamMux {
             let mut stats = self.stats.lock().await;
             stats.window_updates_sent += 1;
 
-            debug!("Sent WINDOW_UPDATE for stream {} (increment: {})", 
+            debug!("Sent WINDOW_UPDATE for stream {} (increment: {})",
                    stream_id, window_increment);
         }
 
-        debug!("Received {} bytes on stream {} (window: {})", 
+        debug!("Received {} bytes on stream {} (window: {})",
                data_len, stream_id, stream.receive_window);
         Ok(())
     }
@@ -384,7 +384,7 @@ impl StreamMux {
                     }
                 }
 
-                debug!("Stream {} window updated: increment {}, new window: {}", 
+                debug!("Stream {} window updated: increment {}, new window: {}",
                        stream_id, window_increment, stream.send_window);
             }
         }
@@ -396,7 +396,7 @@ impl StreamMux {
     pub async fn close_stream(&self, stream_id: u32, local_close: bool) -> Result<()> {
         if let Some(stream_ref) = self.streams.get(&stream_id) {
             let mut stream = stream_ref.lock().await;
-            
+
             stream.state = match (&stream.state, local_close) {
                 (StreamState::Open, true) => StreamState::LocalClosed,
                 (StreamState::Open, false) => StreamState::RemoteClosed,
@@ -574,7 +574,7 @@ mod tests {
     #[tokio::test]
     async fn test_weighted_rr_scheduler() {
         let mut scheduler = WeightedRRScheduler::new();
-        
+
         scheduler.add_stream(1, 100);
         scheduler.add_stream(2, 200);
         scheduler.add_stream(3, 50);

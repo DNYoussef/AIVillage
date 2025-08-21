@@ -2,14 +2,7 @@
 
 from .compute_mining import ComputeMiningSystem, ComputeSession
 from .credit_system import EarningRule, VILLAGECreditSystem
-from .governance import (
-    GovernanceConfig,
-    GovernanceSystem,
-    Proposal,
-    ProposalStatus,
-    Vote,
-    VoteChoice,
-)
+from .governance import GovernanceConfig, GovernanceSystem, Proposal, ProposalStatus, Vote, VoteChoice
 
 __all__ = [
     "ComputeMiningSystem",

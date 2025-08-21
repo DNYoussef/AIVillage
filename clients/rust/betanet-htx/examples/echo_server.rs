@@ -64,7 +64,7 @@ async fn main() -> Result<()> {
     } else {
         tracing::Level::INFO
     };
-    
+
     tracing_subscriber::fmt()
         .with_max_level(log_level)
         .init();
@@ -118,7 +118,7 @@ async fn run_tcp_server(config: HtxConfig) -> Result<()> {
     loop {
         match accept_tcp(&listener, config.clone()).await {
             Ok(mut connection) => {
-                info!("Accepted TCP connection from {}", 
+                info!("Accepted TCP connection from {}",
                       connection.session().config.listen_addr);
 
                 tokio::spawn(async move {
@@ -155,11 +155,11 @@ async fn handle_tcp_connection(
                     Ok(stream_data) => {
                         for (stream_id, data) in stream_data {
                             info!("Received {} bytes on stream {}", data.len(), stream_id);
-                            
+
                             // Echo the data back
-                            let echo_data = format!("Echo: {}", 
+                            let echo_data = format!("Echo: {}",
                                 String::from_utf8_lossy(&data));
-                            
+
                             if let Err(e) = connection.send(stream_id, echo_data.as_bytes()).await {
                                 error!("Failed to send echo response: {}", e);
                             }
@@ -171,7 +171,7 @@ async fn handle_tcp_connection(
                     }
                 }
             }
-            
+
             // Handle outgoing frames from multiplexer
             frame = frame_receiver.recv() => {
                 if let Some(frame) = frame {
@@ -191,25 +191,25 @@ async fn run_quic_server(config: HtxConfig) -> Result<()> {
     #[cfg(feature = "quic")]
     {
         info!("QUIC server starting on {}", config.listen_addr);
-        
+
         // This would use the QuicTransport implementation
         // For now, this is a stub that demonstrates the interface
-        
+
         use betanet_htx::quic::QuicTransport;
-        
+
         // Create a dummy handler for QUIC connections
         let handler = |_connection: Box<dyn betanet_htx::HtxConnection>| {
             info!("QUIC connection accepted");
         };
-        
+
         QuicTransport::listen(config, handler).await?;
     }
-    
+
     #[cfg(not(feature = "quic"))]
     {
         return Err(HtxError::Config("QUIC feature not enabled".to_string()));
     }
-    
+
     Ok(())
 }
 

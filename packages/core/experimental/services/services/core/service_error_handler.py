@@ -11,11 +11,10 @@ import traceback
 from functools import wraps
 from typing import TYPE_CHECKING, Any
 
+from core.error_handling import AIVillageException, ErrorCategory, ErrorContext, ErrorSeverity
 from fastapi import HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
-
-from core.error_handling import AIVillageException, ErrorCategory, ErrorContext, ErrorSeverity
 
 if TYPE_CHECKING:
     from collections.abc import Callable

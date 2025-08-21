@@ -1,10 +1,5 @@
 import pytest
-
-from src.production.evolution.evolution.math_tutor_evolution import (
-    EvolutionConfig,
-    MathTutorEvolution,
-    ModelIndividual,
-)
+from src.production.evolution.evolution.math_tutor_evolution import EvolutionConfig, MathTutorEvolution, ModelIndividual
 
 
 class DummyEvaluator:

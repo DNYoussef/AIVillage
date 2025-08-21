@@ -4,15 +4,16 @@ import asyncio
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
-from packages.core.resources.adaptive_loader import AdaptiveLoader
-from packages.core.resources.constraint_manager import ConstraintManager
-from packages.core.resources.device_profiler import DeviceProfiler, DeviceType
-from packages.core.resources.resource_monitor import MonitoringMode, ResourceMonitor
 from src.production.agent_forge.evolution.infrastructure_aware_evolution import InfrastructureAwareEvolution
 from src.production.agent_forge.evolution.resource_constrained_evolution import ResourceConstrainedEvolution
 
 # Import the components we're testing
 from src.production.communications.p2p.p2p_node import P2PNode
+
+from packages.core.resources.adaptive_loader import AdaptiveLoader
+from packages.core.resources.constraint_manager import ConstraintManager
+from packages.core.resources.device_profiler import DeviceProfiler, DeviceType
+from packages.core.resources.resource_monitor import MonitoringMode, ResourceMonitor
 
 
 @pytest.fixture

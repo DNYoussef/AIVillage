@@ -10,7 +10,7 @@ jobs:
   scion-prod:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Set up Rust
         uses: actions-rs/toolchain@v1
@@ -64,13 +64,14 @@ jobs:
           fi
 
       - name: Upload lint reports
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: lint-reports
           path: |
             clippy-main.json
             clippy-betanet.json
             govet.txt
+          if-no-files-found: warn
 
       - name: Build Rust (Main Workspace)
         continue-on-error: true
@@ -156,19 +157,21 @@ jobs:
         run: python scripts/monitor_performance.py
 
       - name: Upload metrics snapshot
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: metrics-snapshot
           path: test_performance_summary.json
+          if-no-files-found: warn
 
       - name: Run benches
         run: bash ops/bench/run_bench.sh > bench.log
 
       - name: Upload bench results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: bench-results
           path: bench.log
+          if-no-files-found: warn
 
       - name: Short fuzz (Main Workspace)
         continue-on-error: true

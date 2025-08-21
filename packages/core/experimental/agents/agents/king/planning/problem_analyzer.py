@@ -3,10 +3,10 @@ import logging
 import os
 from typing import Any
 
+from core.error_handling import Message, MessageType, StandardCommunicationProtocol
 from langroid.language_models.openai_gpt import OpenAIGPTConfig
 
 from AIVillage.experimental.agents.agents.king.utils.exceptions import AIVillageException
-from core.error_handling import Message, MessageType, StandardCommunicationProtocol
 
 from .quality_assurance_layer import QualityAssuranceLayer
 from .seal_enhanced_planner import SEALEnhancedPlanGenerator

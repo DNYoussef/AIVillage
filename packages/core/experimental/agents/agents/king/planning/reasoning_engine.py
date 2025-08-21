@@ -1,9 +1,8 @@
 import logging
 from typing import Any
 
-from torch import nn
-
 from core.error_handling import AIVillageException
+from torch import nn
 
 logger = logging.getLogger(__name__)
 

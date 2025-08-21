@@ -3,7 +3,6 @@ import logging
 from typing import Any
 
 import matplotlib.pyplot as plt
-
 from core.error_handling import error_handler, safe_execute
 
 from .base_analytics import BaseAnalytics

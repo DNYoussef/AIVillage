@@ -2,7 +2,6 @@ from datetime import datetime
 
 import duckdb
 import pytest
-
 from src.mcp_servers.hyperag.memory.hippo_index import HippoIndex, HippoNode
 
 

@@ -161,9 +161,7 @@ class CompatibilityBridge:
         """
         try:
             if old_module not in self.allowed_modules or new_module not in self.allowed_modules:
-                raise ValueError(
-                    f"Unauthorized module redirection attempted: {old_module} -> {new_module}"
-                )
+                raise ValueError(f"Unauthorized module redirection attempted: {old_module} -> {new_module}")
 
             target_module = importlib.import_module(new_module)
 
@@ -192,9 +190,7 @@ class CompatibilityBridge:
             return True
 
         except Exception as e:
-            logger.error(
-                f"Failed to create import bridge {old_module} -> {new_module}: {e}"
-            )
+            logger.error(f"Failed to create import bridge {old_module} -> {new_module}: {e}")
             return False
 
     def create_class_wrapper(self, old_class: type, new_class: type, deprecated_since: str = "1.0.0") -> type:

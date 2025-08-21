@@ -15,7 +15,6 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../src"))
 
 try:
     from adaptive_navigator import AdaptiveNavigator, AdaptiveNetworkConditions, MessageContext
-
     from core.p2p.metrics.net_metrics import NetworkMetricsCollector
 
     IMPORTS_AVAILABLE = True

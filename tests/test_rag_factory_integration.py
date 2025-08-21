@@ -1,5 +1,4 @@
 import pytest
-
 from production.rag.rag_system.core.pipeline import Document, RAGPipeline
 
 

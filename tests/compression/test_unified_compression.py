@@ -12,8 +12,6 @@ from unittest.mock import Mock, patch
 
 import pytest
 import torch
-from torch import nn
-
 from src.production.compression import (
     CompressionResult,
     CompressionStrategy,
@@ -22,6 +20,7 @@ from src.production.compression import (
     compress_mobile,
     compress_simple,
 )
+from torch import nn
 
 
 class TinyModel(nn.Module):

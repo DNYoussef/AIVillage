@@ -2,7 +2,6 @@ import asyncio
 import sqlite3
 
 import pytest
-
 from src.production.distributed_inference.tokenomics_receipts import TokenomicsConfig, TokenomicsReceiptManager
 
 

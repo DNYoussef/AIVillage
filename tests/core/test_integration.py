@@ -7,7 +7,6 @@ the various components integrate correctly without breaking each other.
 import logging
 
 import pytest
-
 from core import (
     AgentCommunicationProtocol,
     AgentMessage,

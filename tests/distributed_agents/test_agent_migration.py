@@ -1,7 +1,6 @@
 from unittest.mock import patch
 
 import pytest
-
 from src.production.distributed_agents.agent_migration_manager import AgentMigrationManager, MigrationReason
 
 

@@ -15,13 +15,12 @@ This is the main entry point for the unified RAG system.
 
 import asyncio
 import logging
+import statistics
 import time
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from typing import Any
-
-import statistics
 
 from ..analysis.graph_fixer import GraphFixer
 from ..creativity.insight_engine import CreativityEngine
@@ -708,5 +707,3 @@ async def create_hyper_rag(
     await hyper_rag.initialize()
 
     return hyper_rag
-
-

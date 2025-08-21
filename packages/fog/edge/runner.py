@@ -12,11 +12,11 @@ while protecting the host device and maintaining resource constraints.
 """
 
 import asyncio
+import json
 import logging
 import os
 import shutil
 import tempfile
-import json
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from enum import Enum
@@ -573,9 +573,7 @@ class MicroVMRunner:
             cmd = [self.firecracker_path, "--no-api", "--config-file", str(config_path)]
             timeout = min(resources.max_duration_s, self.default_timeout)
 
-            logger.info(
-                f"Starting MicroVM execution {execution_id}: {' '.join(cmd)}"
-            )
+            logger.info(f"Starting MicroVM execution {execution_id}: {' '.join(cmd)}")
 
             result.status = ExecutionStatus.STARTING
 
@@ -587,9 +585,7 @@ class MicroVMRunner:
                 cwd=str(sandbox_dir),
             )
 
-            exec_task = asyncio.create_task(
-                self._run_microvm_process(proc, timeout, sandbox_dir)
-            )
+            exec_task = asyncio.create_task(self._run_microvm_process(proc, timeout, sandbox_dir))
             self.active_vms[execution_id] = {"task": exec_task, "process": proc}
 
             result.status = ExecutionStatus.RUNNING
@@ -607,9 +603,7 @@ class MicroVMRunner:
                     result.status = ExecutionStatus.COMPLETED
                 else:
                     result.status = ExecutionStatus.FAILED
-                    result.error_message = (
-                        f"Process exited with code {result.exit_code}"
-                    )
+                    result.error_message = f"Process exited with code {result.exit_code}"
 
             except asyncio.TimeoutError:
                 result.status = ExecutionStatus.TIMEOUT
@@ -634,9 +628,7 @@ class MicroVMRunner:
 
             result.resource_violations = self._check_resource_violations(result, resources)
 
-            logger.info(
-                f"MicroVM execution {execution_id} completed: {result.status}"
-            )
+            logger.info(f"MicroVM execution {execution_id} completed: {result.status}")
             return result
 
         except Exception as e:
@@ -697,9 +689,7 @@ class MicroVMRunner:
 
         disk_used_mb = 0
         try:
-            sandbox_size = sum(
-                f.stat().st_size for f in sandbox_dir.rglob("*") if f.is_file()
-            )
+            sandbox_size = sum(f.stat().st_size for f in sandbox_dir.rglob("*") if f.is_file())
             disk_used_mb = sandbox_size / (1024 * 1024)
         except Exception:
             pass
@@ -729,27 +719,19 @@ class MicroVMRunner:
         except Exception as e:
             logger.warning(f"Failed to cleanup MicroVM dir {vm_dir}: {e}")
 
-    def _check_resource_violations(
-        self, result: ExecutionResult, resources: ExecutionResources
-    ) -> list[str]:
+    def _check_resource_violations(self, result: ExecutionResult, resources: ExecutionResources) -> list[str]:
         """Check for resource limit violations"""
 
         violations = []
 
         if result.memory_peak_mb > resources.memory_mb:
-            violations.append(
-                f"Memory limit exceeded: {result.memory_peak_mb}MB > {resources.memory_mb}MB"
-            )
+            violations.append(f"Memory limit exceeded: {result.memory_peak_mb}MB > {resources.memory_mb}MB")
 
         if result.disk_used_mb > resources.disk_mb:
-            violations.append(
-                f"Disk limit exceeded: {result.disk_used_mb}MB > {resources.disk_mb}MB"
-            )
+            violations.append(f"Disk limit exceeded: {result.disk_used_mb}MB > {resources.disk_mb}MB")
 
         if result.duration_ms > resources.max_duration_s * 1000:
-            violations.append(
-                f"Time limit exceeded: {result.duration_ms/1000:.1f}s > {resources.max_duration_s}s"
-            )
+            violations.append(f"Time limit exceeded: {result.duration_ms/1000:.1f}s > {resources.max_duration_s}s")
 
         return violations
 

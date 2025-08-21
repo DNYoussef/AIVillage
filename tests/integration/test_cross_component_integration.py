@@ -24,6 +24,10 @@ from core.resilience.error_handling import CircuitBreakerManager, GracefulDegrad
 # Import all major components
 from ml.feature_extraction import FeatureExtractor, ModelComparator
 from monitoring.observability_system import AlertSeverity, LogLevel, ObservabilitySystem
+from security.auth_system import AuthenticationManager, AuthorizationManager, Permission, SecurityLevel, UserRole
+from testing.coverage_gates import CoverageGate, LintingGate, QualityGateFramework
+from testing.performance_benchmarks import BenchmarkSuite, PerformanceBenchmarkManager
+
 from packages.agents.coordination_system import (
     Agent,
     AgentCapability,
@@ -34,9 +38,6 @@ from packages.agents.coordination_system import (
     Task,
     TaskScheduler,
 )
-from security.auth_system import AuthenticationManager, AuthorizationManager, Permission, SecurityLevel, UserRole
-from testing.coverage_gates import CoverageGate, LintingGate, QualityGateFramework
-from testing.performance_benchmarks import BenchmarkSuite, PerformanceBenchmarkManager
 
 
 class TestAuthenticationMonitoringIntegration:

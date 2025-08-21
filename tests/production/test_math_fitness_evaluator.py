@@ -1,12 +1,7 @@
 import asyncio
 
 import pytest
-
-from src.production.evolution.evolution.math_fitness import (
-    EvaluationResult,
-    MathFitnessEvaluator,
-    MathProblem,
-)
+from src.production.evolution.evolution.math_fitness import EvaluationResult, MathFitnessEvaluator, MathProblem
 
 
 class DummyEvaluator(MathFitnessEvaluator):
