@@ -1,9 +1,9 @@
 """Credits Ledger MVP - Fixed-supply shell currency with Prometheus-based earning."""
 
-import logging
-import os
 from dataclasses import dataclass
 from datetime import UTC, datetime
+import logging
+import os
 
 from sqlalchemy import Column, DateTime, ForeignKey, Index, Integer, String, UniqueConstraint, create_engine
 from sqlalchemy.exc import IntegrityError
@@ -146,8 +146,11 @@ class EarningResponse:
 
 
 class CreditsConfig:
-    def __init__(self) -> None:
-        self.database_url = os.getenv("DATABASE_URL", "postgresql://user:password@localhost/aivillage")
+    def __init__(self, database_url: str | None = None) -> None:
+        self.database_url = database_url or os.getenv("DATABASE_URL")
+        if not self.database_url:
+            msg = "DATABASE_URL environment variable is required"
+            raise RuntimeError(msg)
         self.burn_rate = 0.01  # 1% burn on spend
         self.fixed_supply = 1_000_000_000  # 1 billion credits max supply
         self.earning_rate_flops = 1000  # credits per GFLOP

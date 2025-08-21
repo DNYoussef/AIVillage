@@ -1,13 +1,14 @@
 """Unit tests for credits API endpoints."""
 
+from datetime import UTC, datetime
 import os
 import tempfile
-from datetime import UTC, datetime
 
+from fastapi.testclient import TestClient
 import pytest
+
 from communications.credits_api import app, get_ledger
 from communications.credits_ledger import CreditsConfig, CreditsLedger
-from fastapi.testclient import TestClient
 
 
 @pytest.fixture
@@ -25,8 +26,7 @@ def temp_db():
 @pytest.fixture
 def test_config(temp_db):
     """Create test configuration."""
-    config = CreditsConfig()
-    config.database_url = temp_db
+    config = CreditsConfig(database_url=temp_db)
     config.burn_rate = 0.01
     config.fixed_supply = 1000000
     return config

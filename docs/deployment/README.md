@@ -6,8 +6,13 @@ before starting the services.
 
 Required variables:
 
-- `POSTGRES_PASSWORD` – password for the PostgreSQL credits database
+- `OPENAI_API_KEY` – API key for OpenAI access
+- `NEO4J_URI` – connection URI for the Neo4j graph database
+- `NEO4J_USER` – username for the Neo4j graph database
 - `NEO4J_PASSWORD` – password for the Neo4j graph database
+- `DATABASE_URL` – connection string for the credits ledger database
+- `MCP_SERVER_SECRET` – secret used to secure MCP server tokens
+- `POSTGRES_PASSWORD` – password for the PostgreSQL credits database
 - `REDIS_PASSWORD` – password for the Redis instance
 - `GRAFANA_PASSWORD` – admin password for Grafana
 - `HYPERAG_JWT_SECRET` – secret used to sign HyperRAG JWT tokens
@@ -15,8 +20,13 @@ Required variables:
 Example `.env` file:
 
 ```dotenv
-POSTGRES_PASSWORD=change-me
+OPENAI_API_KEY=change-me
+NEO4J_URI=bolt://localhost:7687
+NEO4J_USER=neo4j
 NEO4J_PASSWORD=change-me
+DATABASE_URL=postgresql://user:password@localhost/aivillage
+MCP_SERVER_SECRET=change-me-change-me-change-me-change-me
+POSTGRES_PASSWORD=change-me
 REDIS_PASSWORD=change-me
 GRAFANA_PASSWORD=change-me
 HYPERAG_JWT_SECRET=change-me

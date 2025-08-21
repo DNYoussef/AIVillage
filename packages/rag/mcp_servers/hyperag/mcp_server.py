@@ -46,9 +46,12 @@ class HypeRAGMCPServer:
             import os
 
             jwt_secret = os.getenv("MCP_SERVER_SECRET")
-            if not jwt_secret or len(jwt_secret) < 32:
-                logger.warning("Using default MCP secret - CHANGE IN PRODUCTION!")
-                jwt_secret = "INSECURE_DEFAULT_MCP_SECRET_CHANGE_IMMEDIATELY_IN_PRODUCTION"
+            if not jwt_secret:
+                msg = "MCP_SERVER_SECRET environment variable is required"
+                raise RuntimeError(msg)
+            if len(jwt_secret) < 32:
+                msg = "MCP_SERVER_SECRET must be at least 32 characters"
+                raise RuntimeError(msg)
 
             self.permission_manager = PermissionManager(jwt_secret=jwt_secret, enable_audit=False)
 
