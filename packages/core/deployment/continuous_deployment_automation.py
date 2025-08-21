@@ -196,7 +196,7 @@ class ContinuousDeploymentAutomation:
         logger.info("Preparing deployment...")
 
         # Check git repository status
-        result = await self._run_command("git status --porcelain")
+        result = await self._run_command(["git", "status", "--porcelain"])
         if result.returncode != 0:
             logger.error("Git repository check failed")
             return False
@@ -223,9 +223,15 @@ class ContinuousDeploymentAutomation:
         for package in key_packages:
             package_path = self.project_root / package
             if package_path.exists():
-                result = await self._run_command(f"python -m py_compile {package_path}/**/*.py", shell=True)
-                if result.returncode != 0:
-                    logger.warning(f"Python compilation warnings in {package}")
+                python_files = [
+                    str(p)
+                    for p in package_path.rglob("*.py")
+                    if p.is_file() and self.project_root in p.resolve().parents
+                ]
+                if python_files:
+                    result = await self._run_command(["python", "-m", "py_compile", *python_files])
+                    if result.returncode != 0:
+                        logger.warning(f"Python compilation warnings in {package}")
 
         return True
 
@@ -235,14 +241,14 @@ class ContinuousDeploymentAutomation:
 
         # Run focused tests to avoid long execution
         test_commands = [
-            "python -m pytest tests/unit/ -x --tb=short",
-            "python -m pytest tests/integration/ -x --tb=short -k 'not slow'",
+            ["python", "-m", "pytest", "tests/unit/", "-x", "--tb=short"],
+            ["python", "-m", "pytest", "tests/integration/", "-x", "--tb=short", "-k", "not slow"],
         ]
 
         for cmd in test_commands:
-            result = await self._run_command(cmd, shell=True, timeout=60)
+            result = await self._run_command(cmd, timeout=60)
             if result.returncode != 0:
-                logger.warning(f"Test command failed: {cmd}")
+                logger.warning(f"Test command failed: {' '.join(cmd)}")
                 # Continue with deployment but log the failure
 
         return True
@@ -298,7 +304,7 @@ class ContinuousDeploymentAutomation:
         logger.info("Staging changed files...")
 
         # Get list of changed files
-        result = await self._run_command("git status --porcelain")
+        result = await self._run_command(["git", "status", "--porcelain"])
         if result.returncode != 0:
             raise Exception("Failed to get git status")
 
@@ -311,7 +317,7 @@ class ContinuousDeploymentAutomation:
 
         # Stage all changes
         if changed_files:
-            stage_result = await self._run_command("git add -A")
+            stage_result = await self._run_command(["git", "add", "-A"])
             if stage_result.returncode != 0:
                 raise Exception("Failed to stage files")
 
@@ -324,10 +330,10 @@ class ContinuousDeploymentAutomation:
         logger.info("Getting changed files since last push...")
 
         # Get files changed since last push to origin
-        result = await self._run_command("git diff --name-only HEAD origin/main")
+        result = await self._run_command(["git", "diff", "--name-only", "HEAD", "origin/main"])
         if result.returncode != 0:
             # If no origin/main, try origin/master or just get all staged files
-            result = await self._run_command("git diff --cached --name-only")
+            result = await self._run_command(["git", "diff", "--cached", "--name-only"])
 
         if result.returncode == 0 and result.stdout.strip():
             files = result.stdout.strip().split("\n")
@@ -455,13 +461,14 @@ This completes the Global South infrastructure requirements, enabling AIVillage 
         """Commit staged changes and return commit hash"""
         logger.info("Committing changes...")
 
-        commit_result = await self._run_command(f'git commit -m "{message}"')
+        safe_message = message.replace("\n", " ").strip()
+        commit_result = await self._run_command(["git", "commit", "-m", safe_message])
         if commit_result.returncode != 0:
             logger.error("Git commit failed")
             return None
 
         # Get commit hash
-        hash_result = await self._run_command("git rev-parse HEAD")
+        hash_result = await self._run_command(["git", "rev-parse", "HEAD"])
         if hash_result.returncode == 0:
             commit_hash = hash_result.stdout.strip()[:8]
             logger.info(f"Created commit: {commit_hash}")
@@ -505,20 +512,15 @@ This completes the Global South infrastructure requirements, enabling AIVillage 
 
         return True
 
-    async def _run_command(self, command: str, shell: bool = False, timeout: int = 30) -> subprocess.CompletedProcess:
-        """Run shell command with timeout"""
+    async def _run_command(self, command: list[str], timeout: int = 30) -> subprocess.CompletedProcess:
+        """Run command with timeout without using shell"""
         try:
-            if shell:
-                process = await asyncio.create_subprocess_shell(
-                    command, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE, cwd=self.project_root
-                )
-            else:
-                process = await asyncio.create_subprocess_exec(
-                    *command.split(),
-                    stdout=asyncio.subprocess.PIPE,
-                    stderr=asyncio.subprocess.PIPE,
-                    cwd=self.project_root,
-                )
+            process = await asyncio.create_subprocess_exec(
+                *command,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+                cwd=self.project_root,
+            )
 
             stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=timeout)
 
@@ -527,7 +529,7 @@ This completes the Global South infrastructure requirements, enabling AIVillage 
             )
 
         except asyncio.TimeoutError:
-            logger.error(f"Command timed out: {command}")
+            logger.error(f"Command timed out: {' '.join(command)}")
             return subprocess.CompletedProcess(args=command, returncode=1, stdout="", stderr="Command timed out")
 
     def _record_deployment_success(self, deployment_id: str) -> None:
