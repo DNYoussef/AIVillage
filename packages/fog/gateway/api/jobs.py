@@ -446,15 +446,22 @@ class JobsAPI:
 
             # Validate JWT token
             import jwt
+            import os
 
+            jwt_secret = os.getenv("JWT_SECRET")
+            jwt_algorithm = os.getenv("JWT_ALGORITHM", "HS256")
+            if not jwt_secret:
+                logger.error("JWT secret not configured")
+                raise HTTPException(status_code=500, detail="JWT secret not configured")
+
+            token = authorization.replace("Bearer ", "")
             try:
-                payload = jwt.decode(
-                    authorization.replace("Bearer ", ""), verify=False
-                )  # In production: verify signature
-                if payload.get("user_id") != user_id:
-                    raise HTTPException(status_code=403, detail="Invalid token")
-            except jwt.InvalidTokenError:
+                payload = jwt.decode(token, jwt_secret, algorithms=[jwt_algorithm])
+            except (jwt.ExpiredSignatureError, jwt.InvalidTokenError):
                 raise HTTPException(status_code=403, detail="Invalid authorization token")
+
+            if payload.get("user_id") != user_id:
+                raise HTTPException(status_code=403, detail="Invalid token")
 
             # Check fog job creation permission
             has_permission = await rbac.check_permission(user_id, Permission.FOG_JOB_SUBMIT)
