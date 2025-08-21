@@ -1,10 +1,11 @@
 """Unit tests for credits ledger functionality."""
 
+from datetime import UTC, datetime
 import os
 import tempfile
-from datetime import UTC, datetime
 
 import pytest
+
 from communications.credits_ledger import CreditsConfig, CreditsLedger, Wallet
 
 
@@ -23,8 +24,7 @@ def temp_db():
 @pytest.fixture
 def test_config(temp_db):
     """Create test configuration."""
-    config = CreditsConfig()
-    config.database_url = temp_db
+    config = CreditsConfig(database_url=temp_db)
     config.burn_rate = 0.01
     config.fixed_supply = 1000000
     config.earning_rate_flops = 1000

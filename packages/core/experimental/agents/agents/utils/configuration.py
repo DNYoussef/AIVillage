@@ -1,5 +1,3 @@
-# agents/langroid/utils/configuration.py
-
 """Utility classes for handling application configuration."""
 
 from __future__ import annotations
@@ -8,17 +6,17 @@ import json
 from pathlib import Path
 from typing import Any
 
+from pydantic import BaseSettings, Field
 import yaml
-from pydantic import BaseSettings
 
 
 class Settings(BaseSettings):
     """Application settings loaded from environment variables or a file."""
 
-    openai_api_key: str = ""
-    neo4j_uri: str = "bolt://localhost:7687"
-    neo4j_user: str = "neo4j"
-    neo4j_password: str = "password"
+    openai_api_key: str = Field(..., env="OPENAI_API_KEY")
+    neo4j_uri: str = Field(..., env="NEO4J_URI")
+    neo4j_user: str = Field(..., env="NEO4J_USER")
+    neo4j_password: str = Field(..., env="NEO4J_PASSWORD")
 
     class Config:
         env_prefix = ""
