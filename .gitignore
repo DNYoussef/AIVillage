@@ -199,6 +199,22 @@ mobile-app/node_modules/
 mobile-app/.expo/
 mobile-app/.expo-shared/
 
+# Node.js dependencies and build artifacts
+node_modules/
+**/node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+.yarn/
+.pnp.*
+
+# Vite build artifacts
+.vite/
+**/.vite/
+dist/
+**/dist/
+
 # AI Village specific paths
 CUsers*/
 aivillage-android-sdk/app/libs/
@@ -394,3 +410,19 @@ dep-graph.bin
 # Allow tracked model utilities
 !agent_forge/models/
 !agent_forge/models/**
+
+# Node.js dependencies and build artifacts
+node_modules/
+**/node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+.yarn/
+.pnp.*
+
+# Vite build artifacts
+.vite/
+**/.vite/
+dist/
+**/dist/

@@ -28,7 +28,7 @@ from uuid import uuid4
 import aiohttp
 
 # Import from existing RAG infrastructure
-from packages.rag.core.hyper_rag import HyperRAGOrchestrator, QueryMode
+from packages.rag.core.hyper_rag import HyperRAG, QueryMode
 
 logger = logging.getLogger(__name__)
 
