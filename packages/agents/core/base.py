@@ -27,7 +27,7 @@ class BaseAgent(AgentInterface):
 
     async def get_embedding(self, text: str) -> list[float]:
         """Generate a simple hash based embedding for *text*."""
-        hash_value = int(hashlib.md5(text.encode()).hexdigest(), 16)
+        hash_value = int(hashlib.md5(text.encode(), usedforsecurity=False).hexdigest(), 16)  # nosec B324
         return [(hash_value % 1000) / 1000.0] * 384
 
     async def communicate(self, message: str, recipient: AgentInterface) -> str:

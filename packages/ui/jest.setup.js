@@ -48,3 +48,28 @@ const localStorageMock = {
   clear: jest.fn(),
 };
 global.localStorage = localStorageMock;
+
+// Mock HTMLCanvasElement.getContext
+HTMLCanvasElement.prototype.getContext = jest.fn(() => {
+  return {
+    fillStyle: '',
+    fillRect: jest.fn(),
+    strokeStyle: '',
+    lineWidth: 0,
+    beginPath: jest.fn(),
+    moveTo: jest.fn(),
+    lineTo: jest.fn(),
+    stroke: jest.fn(),
+    font: '',
+    textAlign: '',
+    fillText: jest.fn(),
+    clearRect: jest.fn(),
+    canvas: {
+      width: 300,
+      height: 100
+    }
+  };
+});
+
+// Mock scrollIntoView
+Element.prototype.scrollIntoView = jest.fn();

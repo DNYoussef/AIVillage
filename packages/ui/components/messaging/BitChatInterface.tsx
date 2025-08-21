@@ -13,7 +13,7 @@ interface BitChatInterfaceProps {
   onMessageReceived?: (message: P2PMessage) => void;
 }
 
-export const BitChatInterface: React.FC<BitChatInterfaceProps> = ({
+const BitChatInterface: React.FC<BitChatInterfaceProps> = ({
   userId,
   onPeerConnect,
   onMessageReceived
@@ -171,3 +171,6 @@ export const BitChatInterface: React.FC<BitChatInterfaceProps> = ({
     </div>
   );
 };
+
+export { BitChatInterface };
+export default BitChatInterface;

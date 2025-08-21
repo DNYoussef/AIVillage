@@ -338,3 +338,5 @@ export const ComputeCreditsWallet: React.FC<ComputeCreditsWalletProps> = ({
     </div>
   );
 };
+
+export default ComputeCreditsWallet;

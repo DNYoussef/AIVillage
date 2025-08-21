@@ -409,7 +409,7 @@ class MigrationManager:
         current_migrations = self.migrations[database]
         next_version = max([m.version for m in current_migrations], default=0) + 1
 
-        template = f'''"""
+        template = f'''"""  # nosec B608
 Migration {next_version}: {name}
 Database: {database}
 Created: {datetime.now().isoformat()}
