@@ -13,8 +13,11 @@ Consolidates implementations from:
 - packages/agent_forge/phases/quietstar.py (iterative baking techniques)
 """
 
+import ast
 import json
 import logging
+import operator
+import re
 from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -30,6 +33,16 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 from packages.agent_forge.core.phase_controller import PhaseController, PhaseResult
 
 logger = logging.getLogger(__name__)
+
+ALLOWED_OPERATORS = {
+    ast.Add: operator.add,
+    ast.Sub: operator.sub,
+    ast.Mult: operator.mul,
+    ast.Div: operator.truediv,
+    ast.Pow: operator.pow,
+    ast.USub: operator.neg,
+    ast.UAdd: operator.pos,
+}
 
 
 @dataclass
@@ -322,11 +335,11 @@ class ToolIntegrationSystem:
                     result = f"Area = π × 5² = {3.14159 * 25:.2f} square units"
                 else:
                     result = "Area = π × r² where r is the radius"
-            elif "+" in expression or "-" in expression or "*" in expression or "/" in expression:
+            elif any(op in expression for op in ["+", "-", "*", "/", "^"]):
                 # Try to evaluate simple expressions safely
                 try:
-                    result = str(eval(expression.replace("^", "**")))
-                except:
+                    result = str(self._safe_eval(expression))
+                except Exception:
                     result = f"Mathematical expression: {expression}"
             else:
                 result = f"Calculator result for: {expression}"
@@ -334,6 +347,28 @@ class ToolIntegrationSystem:
             return {"success": True, "result": result, "tool": "calculator"}
         except Exception as e:
             return {"success": False, "error": str(e), "tool": "calculator"}
+
+    def _safe_eval(self, expression: str) -> float:
+        """Safely evaluate a mathematical expression."""
+        if not re.fullmatch(r"[0-9+\-*/().\s^]*", expression):
+            raise ValueError("Invalid characters in expression")
+        expression = expression.replace("^", "**")
+        node = ast.parse(expression, mode="eval")
+
+        def _eval(node: ast.AST) -> float:
+            if isinstance(node, ast.Expression):
+                return _eval(node.body)
+            if isinstance(node, ast.BinOp) and type(node.op) in ALLOWED_OPERATORS:
+                return ALLOWED_OPERATORS[type(node.op)](
+                    _eval(node.left), _eval(node.right)
+                )
+            if isinstance(node, ast.UnaryOp) and type(node.op) in ALLOWED_OPERATORS:
+                return ALLOWED_OPERATORS[type(node.op)](_eval(node.operand))
+            if isinstance(node, ast.Constant) and isinstance(node.value, (int, float)):
+                return node.value
+            raise ValueError("Unsupported expression")
+
+        return _eval(node)
 
     def _search_tool(self, query: str) -> dict[str, Any]:
         """Mock search tool."""
