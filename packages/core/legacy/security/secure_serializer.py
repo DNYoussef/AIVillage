@@ -43,6 +43,14 @@ except Exception:  # pragma: no cover - fallback path
 
 logger = logging.getLogger(__name__)
 
+# Whitelisted primitive types for secure conversion
+_PRIMITIVE_TYPES = {
+    "str": str,
+    "int": int,
+    "float": float,
+    "bool": bool,
+}
+
 
 class SerializationError(Exception):
     """Raised when serialization/deserialization fails."""
@@ -225,8 +233,11 @@ class SecureSerializer:
 
         if obj_type == "NoneType":
             return None
-        elif obj_type in ("str", "int", "float", "bool"):
-            return eval(obj_type)(obj_value)
+        elif obj_type in _PRIMITIVE_TYPES:
+            converter = _PRIMITIVE_TYPES.get(obj_type)
+            if not converter:
+                raise ValueError(f"Unknown primitive type: {obj_type}")
+            return converter(obj_value)
         elif obj_type == "bytes":
             return base64.b64decode(obj_value)
         elif obj_type == "Path":
@@ -260,7 +271,7 @@ class SecureSerializer:
             return {k: self._restore_data(v) for k, v in obj_value.items()}
         else:
             logger.error(f"Unknown type: {obj_type}")
-            return obj_value
+            raise ValueError(f"Unknown type: {obj_type}")
 
     def dumps(
         self,
