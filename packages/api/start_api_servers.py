@@ -68,9 +68,11 @@ try:
     encryption = DigitalTwinEncryption()
 except DigitalTwinEncryptionError:
     import base64
+    from cryptography.fernet import Fernet
 
-    raw_key = os.urandom(32)
-    os.environ["DIGITAL_TWIN_ENCRYPTION_KEY"] = base64.b64encode(raw_key).decode()
+    # Generate a proper Fernet key
+    fernet_key = Fernet.generate_key()
+    os.environ["DIGITAL_TWIN_ENCRYPTION_KEY"] = fernet_key.decode()
     encryption = DigitalTwinEncryption()
 
 
