@@ -21,8 +21,6 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 # Import core components that we know work
 from ml.feature_extraction import FeatureExtractor, ModelComparator
 from monitoring.observability_system import ObservabilitySystem, traced_operation
-from security.auth_system import AuthenticationManager, AuthorizationManager, Permission, SecurityLevel, UserRole
-
 from packages.agents.coordination_system import (
     Agent,
     AgentCapability,
@@ -35,6 +33,7 @@ from packages.agents.coordination_system import (
     Task,
     TaskScheduler,
 )
+from security.auth_system import AuthenticationManager, AuthorizationManager, Permission, SecurityLevel, UserRole
 
 
 class TestCoreIntegration:

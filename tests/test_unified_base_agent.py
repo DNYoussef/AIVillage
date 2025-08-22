@@ -14,9 +14,10 @@ from agents.unified_base_agent import (
     create_agent,
 )
 from agents.utils.task import Task as LangroidTask
-from core.error_handling import AIVillageException, ErrorCategory, ErrorSeverity, StandardCommunicationProtocol
 from rag_system.core.config import UnifiedConfig
 from rag_system.retrieval.vector_store import VectorStore
+
+from core.error_handling import AIVillageException, ErrorCategory, ErrorSeverity, StandardCommunicationProtocol
 
 
 class TestUnifiedBaseAgent:

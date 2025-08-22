@@ -25,10 +25,10 @@ import aiohttp
 import pytest
 import pytest_asyncio
 
-from packages.agents.navigation.scion_navigator import SCIONAwareNavigator
-from packages.p2p.core.message_types import MessageType
-from packages.p2p.core.message_types import UnifiedMessage as Message
-from packages.p2p.scion_gateway import GatewayConfig, SCIONGateway, SCIONGatewayError
+from core.agents.navigation.scion_navigator import SCIONAwareNavigator
+from infrastructure.p2p.core.message_types import MessageType
+from infrastructure.p2p.core.message_types import UnifiedMessage as Message
+from infrastructure.p2p.scion_gateway import GatewayConfig, SCIONGateway, SCIONGatewayError
 
 # Test configuration
 GATEWAY_ENDPOINT = os.getenv("GATEWAY_ENDPOINT", "https://127.0.0.1:8443")

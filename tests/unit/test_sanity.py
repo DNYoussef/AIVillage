@@ -13,8 +13,9 @@ def test_imports_work():
     """Test that core modules can be imported"""
     try:
         # Try to import main modules
-        import core
         import production
+
+        import core
 
         # Verify they're not empty modules
         assert hasattr(core, "__file__")

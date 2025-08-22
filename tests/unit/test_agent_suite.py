@@ -227,8 +227,9 @@ class TestAgentIntegration(unittest.TestCase):
     @pytest.mark.asyncio
     async def test_agent_system_full_integration(self):
         """Test full agent system integration"""
-        from packages.agents.core.agent_orchestration_system import AgentOrchestrationSystem
         from packages.agents.specialized.governance.enhanced_king_agent import EnhancedKingAgent
+
+        from packages.agents.core.agent_orchestration_system import AgentOrchestrationSystem
 
         # Create orchestration system
         orchestrator = AgentOrchestrationSystem()

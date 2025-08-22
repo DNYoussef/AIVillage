@@ -18,7 +18,6 @@ from test_imports import (
     ProgressiveSeedLMEncoder,
     SeedLMCompressionError,
     SeedLMConfig,
-    SeedLMDecompressionError,
 )
 
 

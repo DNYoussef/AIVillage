@@ -34,7 +34,7 @@ with patch.dict(
         "cryptography.hazmat.backends": MagicMock(),
     },
 ):
-    from packages.p2p.core.bitchat_transport import BitChatMessage, BitChatTransport
+    from infrastructure.p2p.bitchat.mesh_network import MeshNetwork
 
 # Set up logging
 logging.basicConfig(level=logging.DEBUG)
@@ -46,7 +46,7 @@ class MockBitChatNode:
 
     def __init__(self, node_id: str, packet_loss_rate: float = 0.0):
         self.node_id = node_id
-        self.transport = BitChatTransport(device_id=node_id, max_peers=20)
+        self.mesh = MeshNetwork(node_id)
         self.packet_loss_rate = packet_loss_rate
         self.neighbors: list[MockBitChatNode] = []
         self.received_messages: list[BitChatMessage] = []

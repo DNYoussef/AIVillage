@@ -5,7 +5,6 @@ This module provides proper imports for all the classes and functions
 that test files need, avoiding the use of exec() which causes linting issues.
 """
 
-import os
 import sys
 from pathlib import Path
 
@@ -84,7 +83,6 @@ except ImportError:
 try:
     from packages.core.training.models.hrrm.transformer_blocks import TransformerBlock
 except ImportError:
-    import torch
     import torch.nn as nn
 
     class TransformerBlock(nn.Module):

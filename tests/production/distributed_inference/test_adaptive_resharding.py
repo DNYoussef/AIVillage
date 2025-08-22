@@ -2,6 +2,7 @@ import json
 from unittest.mock import AsyncMock
 
 import pytest
+from packages.p2p.core.p2p_node import P2PNode, PeerCapabilities
 from src.production.distributed_inference.adaptive_resharding import (
     AdaptiveReshardingManager,
     ReshardingConfig,
@@ -10,8 +11,6 @@ from src.production.distributed_inference.adaptive_resharding import (
     ReshardingStrategy,
 )
 from src.production.distributed_inference.model_sharding_engine import ModelShard, ModelShardingEngine, ShardingPlan
-
-from packages.p2p.core.p2p_node import P2PNode, PeerCapabilities
 
 
 @pytest.fixture

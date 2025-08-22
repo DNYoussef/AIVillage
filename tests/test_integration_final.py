@@ -2,11 +2,10 @@
 
 import asyncio
 
-from src.communications.protocol import CommunicationsProtocol
-from src.twin_runtime.guard import risk_gate
-
 from packages.core.resources.resource_monitor import get_all_metrics, get_monitor_instance
 from packages.p2p.core.device_mesh import DeviceMesh
+from src.communications.protocol import CommunicationsProtocol
+from src.twin_runtime.guard import risk_gate
 
 
 async def test_full_integration():

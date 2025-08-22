@@ -7,7 +7,6 @@ from unittest.mock import Mock, patch
 
 import pytest
 import torch
-
 from packages.agent_forge.phases.evomerge import EvoMergeConfig, EvoMergePhase
 
 

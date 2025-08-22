@@ -5,8 +5,9 @@ import tempfile
 
 import pytest
 import torch
-from core.compression import CompressionError, SimpleQuantizer
 from torch import nn
+
+from core.compression import CompressionError, SimpleQuantizer
 
 
 class SimpleModel(nn.Module):

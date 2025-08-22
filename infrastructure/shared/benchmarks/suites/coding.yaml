@@ -1,0 +1,14 @@
+objectives: [humaneval_score, mbpp_score, boolq_score]
+task_groups:
+  - name: core
+    tasks:
+      - humaneval
+      - mbpp
+      - boolq
+  - name: reasoning
+    tasks:
+      - winogrande
+      - piqa
+  - name: programming_logic
+    tasks:
+      - gsm8k

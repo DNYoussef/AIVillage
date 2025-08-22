@@ -6,7 +6,6 @@ from datetime import datetime, timedelta
 import jwt
 import pytest
 from fastapi import HTTPException
-
 from packages.fog.gateway.api.jobs import JobsAPI
 
 

@@ -70,6 +70,7 @@ test_merged_models/
 
 # Claude development files
 .claude/
+.claude-flow/
 .claude_analysis/
 .claude_cleanup/
 .cleanup_analysis/
@@ -214,6 +215,46 @@ yarn-error.log*
 **/.vite/
 dist/
 **/dist/
+
+# Quality reports and architectural analysis
+quality_reports/
+**/quality_reports/
+reports/architecture/
+coupling_baseline.json
+fitness_results.json
+connascence_*.json
+magic_literal_*.json
+anti_patterns*.json
+architectural_*.json
+
+# Admin dashboard artifacts
+packages/ui/admin-dashboard.html.tmp.*
+admin_*.log
+start_admin_dashboard.bat.tmp
+
+# Hive memory and coordination
+memory/claude-flow-data.json
+.hive-mind/
+**/.hive-mind/
+
+# Build and deployment artifacts
+artifacts/
+**/artifacts/
+artifacts_collection.log
+pipeline_validation.log
+
+# Error and syntax tracking
+f821_errors.txt
+syntax_errors.txt
+*_errors.txt
+
+# Root cleanup - temporary files should be in subdirectories
+/*.py
+!setup.py
+/coupling_*.json
+/memory/
+/bin/
+/build/
 
 # AI Village specific paths
 CUsers*/
@@ -426,3 +467,46 @@ yarn-error.log*
 **/.vite/
 dist/
 **/dist/
+
+# Quality reports and architectural analysis
+quality_reports/
+**/quality_reports/
+reports/architecture/
+coupling_baseline.json
+fitness_results.json
+connascence_*.json
+magic_literal_*.json
+anti_patterns*.json
+architectural_*.json
+
+# Admin dashboard artifacts
+packages/ui/admin-dashboard.html.tmp.*
+admin_*.log
+start_admin_dashboard.bat.tmp
+
+# Hive memory and coordination
+memory/claude-flow-data.json
+.hive-mind/
+**/.hive-mind/
+
+# Build and deployment artifacts
+artifacts/
+**/artifacts/
+artifacts_collection.log
+pipeline_validation.log
+
+# Error and syntax tracking
+f821_errors.txt
+syntax_errors.txt
+*_errors.txt
+
+# Root cleanup - temporary files should be in subdirectories
+/*.py
+!setup.py
+/coupling_*.json
+/memory/
+/bin/
+/build/
+# Large generated files - do not commit
+docs/quality/connascence_report.txt
+infrastructure/shared/training/datasets/reasoner_enhancement/reasoner_training_data.jsonl

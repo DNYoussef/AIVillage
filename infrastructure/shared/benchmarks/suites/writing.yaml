@@ -1,0 +1,16 @@
+objectives: [mmlu_score, truthfulqa_mc_score, hellaswag_score, boolq_score]
+task_groups:
+  - name: core
+    tasks:
+      - mmlu
+      - truthfulqa_mc
+      - hellaswag
+      - boolq
+  - name: reasoning
+    tasks:
+      - winogrande
+      - piqa
+  - name: language_understanding
+    tasks:
+      - arc_easy
+      - arc_challenge

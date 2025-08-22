@@ -1,0 +1,41 @@
+================================================================================
+AIVILLAGE QUALITY ANALYSIS SUMMARY
+================================================================================
+
+Analysis Date: 2025-08-21 15:47:55
+Target Path: scripts
+Total Runtime: 1.32 seconds
+
+ANALYSIS RESULTS
+----------------------------------------
+Tools Run: 3
+Successful: 0
+Failed: 3
+
+CONNASCENCE ANALYSIS
+----------------------------------------
+ERROR: C:\Users\17175\Desktop\AIVillage\scripts\check_connascence.py:176: DeprecationWarning: ast.Num is deprecated and will be removed in Python 3.14; use ast.Constant instead
+  def visit_Num(self, node: ast.Num):
+
+
+COUPLING METRICS
+----------------------------------------
+ERROR: C:\Users\17175\Desktop\AIVillage\scripts\coupling_metrics.py:250: DeprecationWarning: ast.Num is deprecated and will be removed in Python 3.14; use ast.Constant instead
+  def visit_Num(self, node: ast.Num):
+C:\Users\17175\Desktop\AIVillage\scripts\coupling_metrics.py:258: DeprecationWarning: ast.Str is deprecated and will be removed in Python 3.14; use ast.Constant instead
+  def visit_Str(self, node: ast.Str):
+
+
+ANTI-PATTERN DETECTION
+----------------------------------------
+ERROR: C:\Users\17175\Desktop\AIVillage\scripts\detect_anti_patterns.py:143: DeprecationWarning: ast.Str is deprecated and will be removed in Python 3.14; use ast.Constant instead
+  def _detect_sql_patterns(self, node: ast.Str) -> bool:
+C:\Users\17175\Desktop\AIVillage\scripts\detect_anti_patterns.py:149: DeprecationWarning: Attribute s is deprecated and will be removed in Python 3.14; use value instead
+  content = node.s.upper()
+
+
+RECOMMENDATIONS
+----------------------------------------
+
+For detailed analysis, see the JSON reports in the output directory.
+Next steps: Review and address high/critical issues first.

@@ -1,0 +1,5 @@
+fastapi
+uvicorn
+httpx
+cachetools
+prometheus_client

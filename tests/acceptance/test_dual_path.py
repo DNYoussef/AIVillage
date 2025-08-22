@@ -28,7 +28,6 @@ try:
         PathProtocol,
         RoutingPriority,
     )
-
     from packages.p2p.core.unified_transport import DeliveryStatus, PathSelection, TransportContext, UnifiedTransport
 
     IMPORTS_AVAILABLE = True

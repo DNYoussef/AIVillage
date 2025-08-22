@@ -6,6 +6,7 @@ import os
 import psutil
 import pytest
 import torch
+
 from core.compression import SimpleQuantizer
 
 

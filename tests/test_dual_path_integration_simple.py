@@ -16,9 +16,10 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "experimental",
 
 # Import components to test
 try:
+    from navigator.path_policy import EnergyMode, MessageContext, NavigatorAgent, PathProtocol, RoutingPriority
+
     from core.p2p.bitchat_transport import BitChatMessage, BitChatTransport
     from core.p2p.dual_path_transport import DualPathMessage, DualPathTransport
-    from navigator.path_policy import EnergyMode, MessageContext, NavigatorAgent, PathProtocol, RoutingPriority
 
     IMPORTS_SUCCESSFUL = True
 except ImportError as e:

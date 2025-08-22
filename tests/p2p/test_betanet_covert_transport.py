@@ -17,16 +17,9 @@ from unittest.mock import MagicMock, patch
 # Add src to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
-from core.p2p.betanet_covert_transport import (
-    BetanetCovertTransport,
-    CovertTrafficProfile,
-    CovertTransportMode,
-    HTTP2CovertChannel,
-    HTTP3CovertChannel,
-    ServerSentEventsCovertChannel,
-    WebSocketCovertChannel,
-    enhance_betanet_with_covert_transport,
-)
+# Test BetaNet actual components
+from infrastructure.p2p.betanet.access_tickets import *  # Import what's available
+from infrastructure.p2p.betanet.htx_transport import *  # Import what's available
 
 
 class TestCovertTrafficProfile:

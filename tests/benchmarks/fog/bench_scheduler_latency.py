@@ -21,7 +21,6 @@ import time
 from dataclasses import dataclass
 
 import pytest
-
 from packages.fog.gateway.monitoring.metrics import FogMetricsCollector
 
 # Mock imports for testing (would be real in production)

@@ -1,0 +1,35 @@
+================================================================================
+COUPLING METRICS REPORT
+================================================================================
+
+Total files analyzed: 524
+Total lines of code: 139,689
+Average coupling score: 15.7/100 (lower is better)
+
+CONNASCENCE METRICS
+----------------------------------------
+Positional parameter violations: 430
+Positional parameter ratio: 11.7%
+Magic literal count: 52553
+Magic literal density: 37.62 per 100 LOC
+God classes detected: 79
+God class ratio: 4.9%
+Global usage instances: 39
+
+MOST COUPLED FILES
+----------------------------------------
+   42.1: packages\rag\analysis\graph_fixer.py
+   42.1: packages\rag\analysis\graph_fixer_original.py
+   37.6: packages\fog\sdk\python\fog_client_original.py
+   37.5: packages\core\training\scripts\simple_train_hrrm_original.py
+   37.1: packages\agents\core\base_original.py
+   35.7: packages\edge\fog_compute\fog_node.py
+   33.9: packages\rag\mcp_servers\hyperag\planning\query_planner.py
+   33.8: packages\rag\mcp_servers\hyperag\planning\strategies.py
+   31.9: packages\core\training\scripts\enhanced_hrrm_training.py
+   31.7: packages\core\legacy\security\secure_api_server.py
+
+RECOMMENDATIONS
+----------------------------------------
+• HIGH: Replace magic literals with named constants
+• GOOD: Coupling levels are within acceptable ranges

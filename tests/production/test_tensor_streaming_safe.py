@@ -5,9 +5,8 @@ import time
 import numpy as np
 import pytest
 import torch
-from src.production.communications.p2p.p2p_node import MessageType, P2PNode
-
 from packages.p2p.core.tensor_streaming import TensorStreamer
+from src.production.communications.p2p.p2p_node import MessageType, P2PNode
 
 
 def test_safe_serialization_round_trip():

@@ -1,6 +1,0 @@
-body { font-family: Arial, sans-serif; margin: 20px; }
-nav ul { list-style: none; padding: 0; display: flex; gap: 10px; }
-nav li { display: inline; }
-section { margin-top: 20px; padding: 10px; border: 1px solid #ccc; }
-textarea { width: 100%; }
-pre { background-color: #f4f4f4; padding: 10px; }

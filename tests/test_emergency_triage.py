@@ -4,11 +4,10 @@ import asyncio
 import time
 
 import pytest
-from src.communications.protocol import CommunicationsProtocol
-from src.twin_runtime.guard import risk_gate
-
 from packages.core.resources.resource_monitor import ResourceMonitor
 from packages.p2p.core.device_mesh import DeviceMesh
+from src.communications.protocol import CommunicationsProtocol
+from src.twin_runtime.guard import risk_gate
 
 
 def test_security_gate_blocks_attacks() -> None:

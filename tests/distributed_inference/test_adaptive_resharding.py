@@ -9,6 +9,7 @@ import time
 from unittest.mock import AsyncMock, patch
 
 import pytest
+from packages.p2p.core.p2p_node import P2PNode, PeerCapabilities
 from src.production.distributed_inference.adaptive_resharding import (
     AdaptiveReshardingManager,
     ReshardingConfig,
@@ -22,8 +23,6 @@ from src.production.distributed_inference.model_sharding_engine import (
     ModelShardingEngine,
     ShardingPlan,
 )
-
-from packages.p2p.core.p2p_node import P2PNode, PeerCapabilities
 
 
 @pytest.fixture

@@ -14,10 +14,9 @@ import pytest
 
 # Import the actual classes we're testing
 try:
+    from packages.p2p.core.p2p_node import P2PNode
     from src.communications.message import Message
     from src.communications.protocol import CommunicationProtocol, MessageType, Priority
-
-    from packages.p2p.core.p2p_node import P2PNode
 except ImportError as e:
     pytest.skip(f"Cannot import required modules: {e}", allow_module_level=True)
 
