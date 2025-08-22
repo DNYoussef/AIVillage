@@ -374,7 +374,7 @@ def main():
     logger.info("Starting magic literal analysis...")
 
     # Analyze major packages
-    packages_to_analyze = ["packages/core", "packages/agents", "packages/rag", "packages/fog", "packages/monitoring"]
+    packages_to_analyze = ["core", "infrastructure", "apps"]
 
     packages_stats = []
 

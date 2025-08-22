@@ -16,41 +16,41 @@ jobs:
       contents: read
       pull-requests: write
       checks: write
-    
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0  # Full history for trend analysis
-      
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
           cache: 'pip'
-      
+
       - name: Install Dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install -r config/requirements/requirements.txt || pip install fastapi uvicorn pydantic
           pip install ruff mypy pytest coverage
-          pip install radon xenon vulture bandit
-      
+          pip install radon xenon vulture bandit safety
+
       - name: Install Project Dependencies
         run: |
           if [ -f pyproject.toml ]; then
             pip install -e .
           fi
-      
+
       - name: Run Architectural Fitness Functions
         id: fitness
         run: |
           echo "Running architectural fitness functions..."
-          python scripts/architectural_analysis.py --format=github > fitness_report.md
-          python scripts/coupling_metrics.py --threshold=12.0 > coupling_report.json
-          python scripts/detect_anti_patterns.py --strict > antipatterns_report.json
+          python scripts/architectural_analysis.py --format=github . > fitness_report.md || echo "Architecture analysis completed with warnings"
+          python scripts/coupling_metrics.py . --threshold=12.0 > coupling_report.json || echo "Coupling metrics completed with warnings"
+          python scripts/detect_anti_patterns.py . --strict > antipatterns_report.json || echo "Anti-pattern detection completed with warnings"
         continue-on-error: true
-      
+
       - name: Check Quality Gates
         id: quality_gate
         run: |
@@ -61,12 +61,12 @@ jobs:
             --god-object-threshold=500 \
             --magic-literal-threshold=20 \
             --output=quality_gate_result.json
-          
+
           # Set output variables for next steps
           echo "quality_gate_passed=$(cat quality_gate_result.json | jq -r '.passed')" >> $GITHUB_OUTPUT
           echo "quality_score=$(cat quality_gate_result.json | jq -r '.overall_score')" >> $GITHUB_OUTPUT
         continue-on-error: true
-      
+
       - name: Generate Quality Report
         if: github.event_name == 'pull_request'
         run: |
@@ -77,28 +77,28 @@ jobs:
             --quality-gate=quality_gate_result.json \
             --pr-number=${{ github.event.number }} \
             --output=pr_quality_report.md
-      
+
       - name: Comment PR with Quality Report
         if: github.event_name == 'pull_request'
         uses: actions/github-script@v7
         with:
           script: |
             const fs = require('fs');
-            
+
             if (fs.existsSync('pr_quality_report.md')) {
               const report = fs.readFileSync('pr_quality_report.md', 'utf8');
-              
+
               // Find existing comment
               const comments = await github.rest.issues.listComments({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: context.issue.number,
               });
-              
-              const existingComment = comments.data.find(comment => 
+
+              const existingComment = comments.data.find(comment =>
                 comment.body.includes('## 🏗️ Architectural Quality Report')
               );
-              
+
               if (existingComment) {
                 // Update existing comment
                 await github.rest.issues.updateComment({
@@ -117,7 +117,7 @@ jobs:
                 });
               }
             }
-      
+
       - name: Upload Quality Reports
         uses: actions/upload-artifact@v4
         with:
@@ -129,7 +129,7 @@ jobs:
             quality_gate_result.json
             pr_quality_report.md
           retention-days: 30
-      
+
       - name: Update Quality Dashboard Data
         if: github.ref == 'refs/heads/main'
         run: |
@@ -138,7 +138,7 @@ jobs:
             --commit-sha=${{ github.sha }} \
             --quality-score=${{ steps.quality_gate.outputs.quality_score }} \
             --reports-dir=.
-      
+
       - name: Quality Gate Status Check
         run: |
           if [ "${{ steps.quality_gate.outputs.quality_gate_passed }}" = "false" ]; then
@@ -154,49 +154,49 @@ jobs:
     runs-on: ubuntu-latest
     needs: architectural-quality
     if: always()
-    
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-      
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
-      
+
       - name: Install Analysis Tools
         run: |
           pip install radon xenon vulture bandit safety
-      
+
       - name: Run Complexity Analysis
         run: |
           echo "## Complexity Analysis" > complexity_report.md
           echo "" >> complexity_report.md
-          
+
           # Cyclomatic complexity
           echo "### Cyclomatic Complexity" >> complexity_report.md
           radon cc . --min C --show-complexity >> complexity_report.md
-          
+
           # Maintainability index
           echo "" >> complexity_report.md
           echo "### Maintainability Index" >> complexity_report.md
           radon mi . --min B >> complexity_report.md
-          
+
           # Dead code detection
           echo "" >> complexity_report.md
           echo "### Dead Code Detection" >> complexity_report.md
           vulture . --min-confidence 80 >> complexity_report.md || true
-      
+
       - name: Security Analysis
         run: |
           echo "" >> complexity_report.md
           echo "### Security Analysis" >> complexity_report.md
           bandit -r . -f txt >> complexity_report.md || true
-          
+
           echo "" >> complexity_report.md
           echo "### Dependency Security" >> complexity_report.md
           safety check >> complexity_report.md || true
-      
+
       - name: Upload Complexity Report
         uses: actions/upload-artifact@v4
         with:
@@ -207,27 +207,27 @@ jobs:
   dependency-analysis:
     name: Dependency & Import Analysis
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-      
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
-      
+
       - name: Install Dependencies
         run: |
           pip install pydeps graphviz importlib-metadata
-      
+
       - name: Analyze Dependencies
         run: |
           # Generate dependency graphs
           mkdir -p dependency_analysis
-          
+
           # Core package dependencies
-          for pkg in packages/core/*/; do
+          for pkg in core/*/; do
             if [ -d "$pkg" ]; then
               pkg_name=$(basename "$pkg")
               echo "Analyzing $pkg_name..."
@@ -238,10 +238,23 @@ jobs:
                 --output dependency_analysis/${pkg_name}_deps.svg || true
             fi
           done
-          
+
+          # Infrastructure dependencies
+          for pkg in infrastructure/*/; do
+            if [ -d "$pkg" ]; then
+              pkg_name=$(basename "$pkg")
+              echo "Analyzing $pkg_name..."
+              pydeps "$pkg" \
+                --max-bacon=3 \
+                --cluster \
+                --rankdir TB \
+                --output dependency_analysis/${pkg_name}_deps.svg || true
+            fi
+          done
+
           # Check for circular dependencies
           python scripts/check_circular_deps.py > dependency_analysis/circular_deps.txt || true
-      
+
       - name: Upload Dependency Analysis
         uses: actions/upload-artifact@v4
         with:

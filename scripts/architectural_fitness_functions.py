@@ -417,10 +417,10 @@ class ArchitecturalFitnessChecker:
 
         # Define allowed dependency directions (simplified)
         dependency_rules = {
-            "packages/agents": ["packages/core", "packages/rag"],  # Agents can depend on core/rag
-            "packages/core": [],  # Core should have minimal dependencies
-            "packages/ui": ["packages/api", "packages/core"],  # UI can depend on API/core
-            "packages/api": ["packages/core", "packages/rag"],  # API can depend on core/rag
+            "core/agents": ["core/shared", "core/rag"],  # Agents can depend on core/rag
+            "core/shared": [],  # Core should have minimal dependencies
+            "apps/ui": ["infrastructure/api", "core/shared"],  # UI can depend on API/core
+            "infrastructure/api": ["core/shared", "core/rag"],  # API can depend on core/rag
         }
 
         for py_file in self.codebase_path.rglob("*.py"):

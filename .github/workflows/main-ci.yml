@@ -62,7 +62,7 @@ jobs:
           if grep -r "^[[:space:]]*raise NotImplementedError\|TODO.*CRITICAL\|FIXME.*CRITICAL" \
              --include="*.py" --include="*.rs" --include="*.go" \
              --exclude-dir=experimental --exclude-dir=legacy --exclude-dir=tools \
-             packages/core/ packages/rag/ packages/agents/ packages/p2p/ packages/edge/ 2>/dev/null; then
+             core/ infrastructure/ 2>/dev/null; then
             echo "[ERROR] Critical placeholders found in production code!"
             exit 1
           fi
@@ -72,7 +72,7 @@ jobs:
         run: |
           echo "Checking for experimental imports..."
           if grep -r "from experimental\|import experimental" \
-             --include="*.py" packages/core/ packages/rag/ packages/agents/ packages/p2p/ packages/edge/ 2>/dev/null; then
+             --include="*.py" core/ infrastructure/ 2>/dev/null; then
             echo "[ERROR] Production code cannot import experimental!"
             exit 1
           fi
@@ -158,7 +158,7 @@ jobs:
       - name: 📊 Generate Coverage Report
         if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11'
         run: |
-          pytest tests/ --cov=packages \
+          pytest tests/ --cov=core --cov=infrastructure \
             --cov-report=xml --cov-report=term-missing \
             --cov-fail-under=60
 
@@ -220,14 +220,14 @@ jobs:
       - name: 🔐 Bandit Security Scan
         run: |
           echo "Running Bandit security scan..."
-          bandit -r packages/ -f json -o bandit-report.json -ll
+          bandit -r core/ infrastructure/ -f json -o bandit-report.json -ll
           echo "[OK] Security scan completed"
 
       - name: 🔍 Semgrep SAST
         if: github.event_name == 'pull_request'
         run: |
           echo "Running Semgrep security analysis..."
-          semgrep --config=auto packages/ --json -o semgrep-report.json || true
+          semgrep --config=auto core/ infrastructure/ --json -o semgrep-report.json || true
           echo "[OK] SAST analysis completed"
 
       - name: Upload Security Reports
