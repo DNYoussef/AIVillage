@@ -275,7 +275,7 @@ class TestTorTransport:
         transport.hidden_service = TorHiddenService(
             service_id="test_service",
             onion_address="3g2upl4pq6kufc4m.onion",
-            private_key="mock_key",
+            private_key="test_mock_private_key",  # pragma: allowlist secret
             port=80,
             target_port=8080,
             created_at=1234567890,

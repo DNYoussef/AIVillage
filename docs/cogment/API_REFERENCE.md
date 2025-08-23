@@ -40,7 +40,7 @@ Contact your system administrator or use the management interface to generate AP
 ```json
 {
   "X-RateLimit-Limit": "100",
-  "X-RateLimit-Remaining": "95", 
+  "X-RateLimit-Remaining": "95",
   "X-RateLimit-Reset": "1640995200"
 }
 ```
@@ -178,7 +178,7 @@ POST /visual-reasoning
     },
     {
       "step": 2,
-      "operation": "transformation_hypothesis", 
+      "operation": "transformation_hypothesis",
       "description": "Hypothesis: flip along diagonal"
     }
   ],
@@ -293,7 +293,7 @@ POST /batch
       }
     },
     {
-      "id": "req_2", 
+      "id": "req_2",
       "type": "math-reasoning",
       "data": {
         "problem": "2 + 2 = ?",
@@ -319,7 +319,7 @@ POST /batch
     },
     {
       "id": "req_2",
-      "status": "success", 
+      "status": "success",
       "data": {
         "answer": "4",
         "confidence": 1.0
@@ -358,14 +358,14 @@ GET /model/info
   "capabilities": [
     "text_generation",
     "visual_reasoning",
-    "mathematical_reasoning", 
+    "mathematical_reasoning",
     "long_context_processing",
     "adaptive_computation",
     "memory_augmented_generation"
   ],
   "efficiency_metrics": {
     "vs_hrrm_parameter_reduction": "6.3x",
-    "vs_hrrm_memory_improvement": "4.2x", 
+    "vs_hrrm_memory_improvement": "4.2x",
     "vs_hrrm_speed_improvement": "3.2x"
   },
   "supported_task_types": [
@@ -434,7 +434,7 @@ ws.onopen = function() {
 
 ws.onmessage = function(event) {
   const response = JSON.parse(event.data);
-  
+
   if (response.type === 'token') {
     // Streaming token
     console.log(response.data.token);
@@ -490,7 +490,7 @@ class CogmentClient:
         self.base_url = base_url
         self.session = requests.Session()
         self.session.headers.update({"X-API-Key": api_key})
-    
+
     def generate(self, prompt: str, **kwargs) -> dict:
         """Generate text using Cogment model."""
         response = self.session.post(
@@ -499,7 +499,7 @@ class CogmentClient:
         )
         response.raise_for_status()
         return response.json()
-    
+
     def solve_math(self, problem: str, **kwargs) -> dict:
         """Solve mathematical problems."""
         response = self.session.post(
@@ -508,7 +508,7 @@ class CogmentClient:
         )
         response.raise_for_status()
         return response.json()
-    
+
     def process_visual(self, grid_data: list, **kwargs) -> dict:
         """Process visual reasoning tasks."""
         response = self.session.post(
@@ -560,7 +560,7 @@ class CogmentClient {
     }
 
     const response = await fetch(`${this.baseUrl}${endpoint}`, options);
-    
+
     if (!response.ok) {
       const error = await response.json();
       throw new Error(`API Error: ${error.error.message}`);
@@ -632,7 +632,7 @@ curl -X POST https://api.cogment.aivillage.dev/batch \
     "requests": [
       {
         "id": "gen1",
-        "type": "generate", 
+        "type": "generate",
         "data": {"prompt": "Hello", "max_tokens": 10}
       },
       {

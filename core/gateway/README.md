@@ -32,7 +32,7 @@ User Request → API Gateway → Agent Controller → Knowledge System → Respo
 
 ### 📊 Monitoring
 - Prometheus metrics integration
-- Request/response duration histograms  
+- Request/response duration histograms
 - Rate limiting and security event tracking
 - Downstream service health monitoring
 - Performance bottleneck identification
@@ -103,7 +103,7 @@ docker run -p 8000:8000 -e ENVIRONMENT=production aivillage-gateway
       "response_time_ms": 45.2
     },
     "agent_controller": {
-      "status": "healthy", 
+      "status": "healthy",
       "status_code": 200
     }
   },
@@ -119,7 +119,7 @@ docker run -p 8000:8000 -e ENVIRONMENT=production aivillage-gateway
 ```json
 {
   "query": "What is the capital of France?",
-  "session_id": "optional-session-id", 
+  "session_id": "optional-session-id",
   "options": {
     "max_tokens": 1000,
     "temperature": 0.7
@@ -160,7 +160,7 @@ The gateway uses a hierarchical configuration system:
 
 - [ ] Set strong `API_KEY` and `SECRET_KEY` environment variables
 - [ ] Configure specific `CORS_ORIGINS` (not wildcard)
-- [ ] Set `ENVIRONMENT=production` 
+- [ ] Set `ENVIRONMENT=production`
 - [ ] Disable debug mode (`DEBUG=false`)
 - [ ] Configure proper SSL/TLS termination (reverse proxy)
 - [ ] Set up rate limiting monitoring and alerting
@@ -172,7 +172,7 @@ The gateway uses a hierarchical configuration system:
 ### Security Headers Applied
 
 - `X-Content-Type-Options: nosniff`
-- `X-Frame-Options: DENY` 
+- `X-Frame-Options: DENY`
 - `X-XSS-Protection: 1; mode=block`
 - `Strict-Transport-Security: max-age=63072000; includeSubDomains; preload`
 - `Content-Security-Policy: [restrictive policy]`
@@ -186,7 +186,7 @@ The gateway uses a hierarchical configuration system:
 - **Monitoring**: Prometheus `gateway_health_check_duration_seconds` histogram
 - **Alerting**: Set up alerts if P95 > 100ms
 
-### Request Performance  
+### Request Performance
 - **Target**: P95 < 2s for query requests
 - **Monitoring**: Prometheus `gateway_request_duration_seconds` histogram
 - **Optimization**: Connection pooling, async processing
@@ -204,7 +204,7 @@ The gateway uses a hierarchical configuration system:
 ### Log Levels
 - `ERROR`: Service failures, security events
 - `WARN`: Performance issues, rate limiting
-- `INFO`: Service lifecycle, configuration  
+- `INFO`: Service lifecycle, configuration
 - `DEBUG`: Request/response details (dev only)
 
 ## Migration from Legacy Gateways
@@ -243,7 +243,7 @@ This consolidated gateway replaces multiple existing FastAPI implementations:
    ```bash
    # Run integration tests
    pytest core/gateway/tests/
-   
+
    # Load test health check performance
    curl -w "@curl-format.txt" http://localhost:8000/healthz
    ```
@@ -317,7 +317,7 @@ When adding new endpoints or modifying existing ones:
 
 1. Follow FastAPI best practices
 2. Add comprehensive type hints
-3. Implement proper error handling  
+3. Implement proper error handling
 4. Add Prometheus metrics
 5. Update this documentation
 6. Add integration tests
@@ -327,6 +327,6 @@ When adding new endpoints or modifying existing ones:
 
 For issues and questions:
 1. Check this README and configuration
-2. Review application logs  
+2. Review application logs
 3. Check Prometheus metrics
 4. File an issue with full context and logs

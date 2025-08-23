@@ -8,13 +8,13 @@ Cogment represents a revolutionary unified architecture that replaces the 3-mode
 graph TB
     subgraph "HRRM Legacy (150M Parameters)"
         HP[HRRM Planner<br/>50M params]
-        HR[HRRM Reasoner<br/>50M params] 
+        HR[HRRM Reasoner<br/>50M params]
         HM[HRRM Memory<br/>50M params]
         HP -.-> HR
         HR -.-> HM
         HM -.-> HP
     end
-    
+
     subgraph "Cogment Unified (23.7M Parameters)"
         RC[RefinementCore<br/>Agent 1]
         GL[GatedLTM<br/>Agent 2]
@@ -23,7 +23,7 @@ graph TB
         DP[Data Pipeline<br/>Agent 5]
         IL[Integration Layer<br/>Agent 6]
         CS[Configuration System<br/>Agent 7]
-        
+
         RC <--> GL
         RC <--> HO
         GL <--> HO
@@ -37,7 +37,7 @@ graph TB
         CS --> GL
         CS --> HO
     end
-    
+
     HRRM -.->|Migration| Cogment
 ```
 
@@ -56,23 +56,23 @@ graph TB
 ```python
 class RefinementCore(nn.Module):
     """Unified transformer backbone with ACT halting."""
-    
+
     def __init__(self, config):
         self.transformer_layers = nn.ModuleList([
             TransformerLayer(config) for _ in range(config.n_layers)
         ])
         self.act_halting = ACTHalting(config.d_model, config.act_epsilon)
-    
+
     def forward(self, hidden_states):
         # Dynamic computation with ACT
         for layer in self.transformer_layers:
             hidden_states = layer(hidden_states)
-            
+
             # Check if should halt computation
             act_output = self.act_halting(hidden_states)
             if act_output.should_halt:
                 break
-        
+
         return hidden_states, act_output
 ```
 
@@ -89,22 +89,22 @@ class RefinementCore(nn.Module):
 ```python
 class GatedLTM(nn.Module):
     """Gated Long-Term Memory with surprise-based updates."""
-    
+
     def __init__(self, config):
         self.memory_bank = nn.Parameter(torch.randn(config.ltm_capacity, config.ltm_dim))
         self.surprise_gate = SurpriseGate(config.d_model)
         self.read_head = CrossAttention(config.d_model, config.ltm_dim)
         self.write_head = CrossAttention(config.d_model, config.ltm_dim)
-    
+
     def forward(self, hidden_states, surprise_signal):
         # Read from memory
         read_result = self.read_head(hidden_states, self.memory_bank, self.memory_bank)
-        
+
         # Gated write based on surprise
         write_gate = self.surprise_gate(hidden_states, surprise_signal)
         if write_gate > threshold:
             self.update_memory(hidden_states, surprise_signal)
-        
+
         return read_result, write_gate
 ```
 
@@ -121,13 +121,13 @@ class GatedLTM(nn.Module):
 ```python
 class OptimizedHeads(nn.Module):
     """Optimized output heads with tied embeddings."""
-    
+
     def __init__(self, config):
         # Tied embeddings for efficiency
         self.embedding_layer = nn.Embedding(config.vocab_size, config.d_model)
         self.output_projection = nn.Linear(config.d_model, config.vocab_size, bias=False)
         self.output_projection.weight = self.embedding_layer.weight  # Tied weights
-        
+
         # Task adapters
         self.task_adapters = nn.ModuleDict({
             'arc': TaskAdapter(config.d_model, 'visual'),
@@ -135,11 +135,11 @@ class OptimizedHeads(nn.Module):
             'text': TaskAdapter(config.d_model, 'language'),
             'long_context': TaskAdapter(config.d_model, 'memory')
         })
-    
+
     def forward(self, hidden_states, task_type=None):
         if task_type and task_type in self.task_adapters:
             hidden_states = self.task_adapters[task_type](hidden_states)
-        
+
         logits = self.output_projection(hidden_states)
         return logits
 ```
@@ -160,7 +160,7 @@ graph LR
     S1 --> S2[Stage 2<br/>Puzzles<br/>8K steps]
     S2 --> S3[Stage 3<br/>Reasoning<br/>16K steps]
     S3 --> S4[Stage 4<br/>Long Context<br/>32K steps]
-    
+
     GF[GrokFast<br/>Acceleration] -.-> S0
     GF -.-> S1
     GF -.-> S2
@@ -203,7 +203,7 @@ graph LR
 ```mermaid
 pie title Parameter Distribution (23.7M Total)
     "Embeddings (13K vocab)" : 6656
-    "Transformer Layers (6x)" : 10240 
+    "Transformer Layers (6x)" : 10240
     "Memory System (LTM)" : 4096
     "Output Heads" : 2048
     "ACT & Control" : 660
@@ -232,7 +232,7 @@ sequenceDiagram
     participant M as GatedLTM
     participant H as Heads
     participant O as Output
-    
+
     I->>E: Token IDs
     E->>R: Hidden States
     R->>R: Transformer Layers + ACT
@@ -240,7 +240,7 @@ sequenceDiagram
     M->>R: Memory Context
     R->>H: Final Hidden States
     H->>O: Logits + Task Outputs
-    
+
     Note over R: ACT Halting Decision
     Note over M: Surprise-based Updates
     Note over H: Task-specific Adaptation
@@ -254,26 +254,26 @@ def act_forward_pass(self, hidden_states):
     cumulative_probability = 0.0
     step_count = 0
     outputs = []
-    
+
     while cumulative_probability < self.halt_threshold and step_count < self.max_steps:
         # Process through transformer layer
         hidden_states = self.transformer_layer(hidden_states)
-        
+
         # Compute halting probability
         halt_prob = self.halting_predictor(hidden_states)
         cumulative_probability += halt_prob
         step_count += 1
-        
+
         outputs.append((hidden_states, halt_prob))
-        
+
         # Early stopping if confident
         if halt_prob > self.confidence_threshold:
             break
-    
+
     # Weighted combination of outputs
     final_output = self.combine_outputs(outputs)
     ponder_cost = step_count  # For loss computation
-    
+
     return final_output, ponder_cost
 ```
 
@@ -288,15 +288,15 @@ graph TB
         HS --> WG[Write Gate]
         RG --> RA[Read Attention]
         WG --> WA[Write Attention]
-        
+
         subgraph "Memory Bank"
             MB[(Memory Bank<br/>1024 x 256)]
             RA --> MB
             WA --> MB
         end
-        
+
         MB --> ME[Memory Enhanced<br/>Hidden States]
-        
+
         SS[Surprise Signal] --> WG
         SS --> CD[Consolidation<br/>Decision]
         CD --> MB
@@ -308,7 +308,7 @@ graph TB
 ```python
 class SurpriseGate(nn.Module):
     """Surprise-based gating for memory updates."""
-    
+
     def compute_surprise(self, hidden_states, loss_signal):
         """Compute surprise based on prediction error."""
         # Higher loss = higher surprise = more likely to write
@@ -316,7 +316,7 @@ class SurpriseGate(nn.Module):
             torch.cat([hidden_states, loss_signal], dim=-1)
         ))
         return surprise
-    
+
     def should_write_memory(self, surprise, threshold=0.5):
         """Decide whether to write to memory based on surprise."""
         return surprise > threshold
@@ -332,19 +332,19 @@ graph TB
         IT[Input Tokens] --> TA[Task Analysis]
         TA --> TT[Task Type<br/>Detection]
     end
-    
+
     subgraph "Core Processing"
         TT --> RC[RefinementCore]
         RC --> HS[Hidden States]
     end
-    
+
     subgraph "Task Adapters"
         HS --> ARC[ARC Adapter<br/>Visual Reasoning]
         HS --> MATH[Math Adapter<br/>Symbolic Reasoning]
         HS --> TEXT[Text Adapter<br/>Language Tasks]
         HS --> LONG[Long Context Adapter<br/>Memory Tasks]
     end
-    
+
     subgraph "Output Routing"
         ARC --> OUT[Output Layer]
         MATH --> OUT
@@ -371,24 +371,24 @@ graph TB
 ```python
 def analyze_scaling_properties():
     """Analyze how Cogment scales vs HRRM."""
-    
+
     # Parameter scaling
     cogment_params = lambda layers: layers * 2.5e6 + 10e6  # Base + layer cost
     hrrm_params = lambda layers: 3 * layers * 4e6 + 30e6  # 3 models
-    
-    # Memory scaling  
+
+    # Memory scaling
     cogment_memory = lambda batch: batch * 150  # MB
     hrrm_memory = lambda batch: batch * 600    # MB
-    
+
     # Compute scaling curves
     layers = [4, 6, 8, 12, 16]
     batches = [1, 2, 4, 8, 16]
-    
+
     for l in layers:
         cog_p = cogment_params(l)
         hrrm_p = hrrm_params(l)
         print(f"Layers {l}: Cogment {cog_p/1e6:.1f}M vs HRRM {hrrm_p/1e6:.1f}M")
-    
+
     for b in batches:
         cog_m = cogment_memory(b)
         hrrm_m = hrrm_memory(b)
@@ -402,7 +402,7 @@ def analyze_scaling_properties():
 ```python
 class CogmentEvoMergeAdapter:
     """Adapter for EvoMerge with single Cogment model."""
-    
+
     def prepare_for_evolution(self, cogment_model):
         """Prepare Cogment model for evolutionary merging."""
         # Extract key components
@@ -411,26 +411,26 @@ class CogmentEvoMergeAdapter:
             'memory': cogment_model.gated_ltm.state_dict(),
             'heads': cogment_model.heads.state_dict()
         }
-        
+
         # Preserve ACT and LTM during merging
         preserved_components = {
             'act_halting': cogment_model.refinement_core.act_halting,
             'memory_bank': cogment_model.gated_ltm.memory_bank,
             'gating_mechanisms': cogment_model.gated_ltm.gates
         }
-        
+
         return components, preserved_components
-    
+
     def post_merge_integration(self, merged_components, preserved_components):
         """Restore preserved components after merging."""
         # Rebuild model with merged weights but preserved mechanisms
         merged_model = CogmentModel.from_components(
             backbone=merged_components['backbone'],
-            memory=merged_components['memory'], 
+            memory=merged_components['memory'],
             heads=merged_components['heads'],
             preserved=preserved_components
         )
-        
+
         return merged_model
 ```
 
@@ -439,10 +439,10 @@ class CogmentEvoMergeAdapter:
 ```python
 class CogmentHFExporter:
     """Export Cogment model to HuggingFace format."""
-    
+
     def export_unified_model(self, cogment_model, output_path):
         """Export single unified model vs 3 HRRM models."""
-        
+
         # Create HF configuration
         hf_config = {
             'model_type': 'cogment',
@@ -450,18 +450,18 @@ class CogmentHFExporter:
             'vocab_size': cogment_model.config.vocab_size,
             'd_model': cogment_model.config.d_model,
             'n_layers': cogment_model.config.n_layers,
-            
+
             # Cogment-specific features
             'has_act_halting': True,
             'has_gated_ltm': True,
             'memory_capacity': cogment_model.config.ltm_capacity,
             'unified_architecture': True
         }
-        
+
         # Save model and config
         cogment_model.save_pretrained(output_path)
         json.dump(hf_config, open(f"{output_path}/config.json", "w"))
-        
+
         print(f"✓ Unified Cogment model exported to {output_path}")
         print(f"  Model size: {self.get_model_size(output_path):.1f}MB")
         print(f"  vs HRRM ensemble: ~300MB (3x reduction)")
@@ -495,14 +495,14 @@ spec:
             memory: "1Gi"      # vs 4Gi for HRRM
             cpu: "1000m"       # vs 3000m for HRRM
           limits:
-            memory: "2Gi"      # vs 8Gi for HRRM  
+            memory: "2Gi"      # vs 8Gi for HRRM
             cpu: "2000m"       # vs 6000m for HRRM
         env:
         - name: MODEL_TYPE
           value: "cogment_unified"
         - name: PARAMETER_COUNT
           value: "23700000"
-        - name: MEMORY_EFFICIENCY  
+        - name: MEMORY_EFFICIENCY
           value: "enabled"
 ```
 
@@ -511,7 +511,7 @@ spec:
 ```python
 class CogmentMonitoring:
     """Monitoring for Cogment vs HRRM metrics."""
-    
+
     def track_efficiency_metrics(self):
         """Track efficiency improvements."""
         metrics = {
@@ -520,15 +520,15 @@ class CogmentMonitoring:
             'compute_efficiency': self.measure_compute_efficiency(),
             'deployment_efficiency': self.measure_deployment_efficiency()
         }
-        
+
         # Compare with HRRM baseline
         hrrm_baseline = self.load_hrrm_baseline()
-        
+
         improvements = {
-            metric: baseline / current 
+            metric: baseline / current
             for metric, (baseline, current) in zip(metrics.keys(), hrrm_baseline.items())
         }
-        
+
         return metrics, improvements
 ```
 

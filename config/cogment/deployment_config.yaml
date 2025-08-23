@@ -10,7 +10,7 @@ environments:
     device: "cuda:0"
     mixed_precision: true
     compile_model: false
-    
+
   staging:
     model_config: "cogment_config.yaml"
     batch_size: 8
@@ -18,7 +18,7 @@ environments:
     device: "cuda:0"
     mixed_precision: true
     compile_model: true
-    
+
   production:
     model_config: "cogment_config.yaml"
     batch_size: 16
@@ -36,15 +36,15 @@ serving:
   workers: 4
   max_concurrent_requests: 100
   request_timeout: 30
-  
+
   # Model loading
   model_path: "./checkpoints/cogment/best.pt"
   warmup_requests: 10
-  
+
   # Caching
   response_cache_size: 1000
   model_cache_enabled: true
-  
+
   # Performance
   batch_inference: true
   max_batch_size: 32
@@ -55,11 +55,11 @@ resources:
   # Memory limits
   max_gpu_memory_gb: 24
   max_system_memory_gb: 64
-  
+
   # Compute limits
   max_refinement_steps: 16
   timeout_per_request: 30
-  
+
   # Model size constraints
   max_parameters: 26250000           # 5% above 25M target
   min_parameters: 23750000           # 5% below 25M target
@@ -70,13 +70,13 @@ monitoring:
   enable_metrics: true
   metrics_port: 9090
   metrics_interval: 10
-  
+
   # Performance tracking
   track_latency: true
   track_throughput: true
   track_memory_usage: true
   track_gpu_utilization: true
-  
+
   # Model-specific metrics
   track_refinement_steps: true
   track_ponder_costs: true
@@ -89,12 +89,12 @@ health_checks:
   model_loaded: true
   gpu_available: true
   memory_sufficient: true
-  
+
   # Liveness checks
   inference_working: true
   response_time_acceptable: true
   error_rate_acceptable: true
-  
+
   # Thresholds
   max_response_time: 5.0
   max_error_rate: 0.05
@@ -106,13 +106,13 @@ scaling:
   enable_auto_scaling: true
   scale_up_threshold: 80            # CPU/GPU utilization %
   scale_down_threshold: 30
-  
+
   # Scaling limits
   min_replicas: 1
   max_replicas: 10
   scale_up_cooldown: 300            # seconds
   scale_down_cooldown: 600
-  
+
   # Load balancing
   load_balancer_strategy: "round_robin"
   health_check_interval: 30
@@ -123,12 +123,12 @@ security:
   enable_auth: true
   api_key_required: true
   rate_limiting: true
-  
+
   # Encryption
   tls_enabled: true
   tls_cert_path: "/certs/server.crt"
   tls_key_path: "/certs/server.key"
-  
+
   # Request validation
   validate_input_length: true
   max_input_tokens: 4096
@@ -141,7 +141,7 @@ backup:
   backup_interval_hours: 6
   max_backups_retained: 10
   backup_storage_path: "/backups/cogment"
-  
+
   # Configuration backup
   backup_configs: true
   config_backup_path: "/backups/configs"
@@ -152,17 +152,17 @@ integrations:
   log_level: "INFO"
   structured_logging: true
   log_format: "json"
-  
+
   # Metrics backends
   prometheus_enabled: true
   grafana_dashboard: true
-  
+
   # Tracing
   jaeger_enabled: false
   trace_sampling_rate: 0.1
-  
+
   # Database
-  metrics_db_url: "postgresql://user:pass@localhost/cogment_metrics"
+  metrics_db_url: "${AIVILLAGE_COGMENT_METRICS_DB_URL}"
   session_store: "redis://localhost:6379/0"
 
 # Feature Flags
@@ -171,12 +171,12 @@ features:
   adaptive_batch_size: true
   dynamic_sequence_length: true
   memory_optimization: true
-  
+
   # Model features
   enable_grokfast_serving: false     # Usually disabled in production
   enable_deep_supervision: false     # Training-time feature
   enable_consistency_checks: true
-  
+
   # Performance features
   torch_compile: true
   tensor_parallelism: false
@@ -189,15 +189,15 @@ error_handling:
   retry_backoff: "exponential"
   base_delay: 1.0
   max_delay: 10.0
-  
+
   # Fallback behavior
   enable_fallback_model: false
   fallback_model_path: "./checkpoints/fallback/model.pt"
-  
+
   # Error reporting
   error_tracking_enabled: true
   error_notification_webhook: null
-  
+
   # Recovery
   auto_restart_on_oom: true
   auto_restart_on_crash: true

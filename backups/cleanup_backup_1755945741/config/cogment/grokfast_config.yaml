@@ -4,29 +4,29 @@
 # Core Refinement Component (most aggressive GrokFast)
 refinement_core:
   enabled: true
-  
+
   # Stages 1-2: ARC Visual + Algorithmic (aggressive grokking acceleration)
   stages_1_2:
     alpha: 0.98                  # Strong EMA smoothing for slow gradients
     lamb: 2.0                    # 2x amplification of slow gradients
     window_size: 100             # Look-back window for gradient analysis
-    
+
   # Stages 3-4: Math + Long Context (reduced for stability)
   stages_3_4:
     alpha: 0.95                  # Reduced smoothing
     lamb: 1.2                    # Reduced amplification
     window_size: 150             # Longer window for stability
 
-# Gated LTM Memory Component (gentler to preserve memory dynamics)  
+# Gated LTM Memory Component (gentler to preserve memory dynamics)
 gated_ltm:
   enabled: true
-  
+
   # All stages: consistent gentle acceleration
   all_stages:
     alpha: 0.95                  # Gentler than core refinement
     lamb: 1.5                    # Moderate amplification
     window_size: 50              # Smaller window for responsiveness
-    
+
   # Special memory-specific settings
   preserve_write_dynamics: true  # Don't apply GrokFast to write gates
   preserve_read_dynamics: false  # Apply to read operations
@@ -39,7 +39,7 @@ act_halting:
 # Other Components (moderate GrokFast)
 other_components:
   enabled: true
-  
+
   # Consistent across all stages
   all_stages:
     alpha: 0.92
@@ -51,22 +51,22 @@ stage_scheduling:
   # Stage 0: Sanity - Minimal GrokFast
   stage_0:
     global_multiplier: 0.1       # Very gentle for stability
-    
+
   # Stage 1: ARC Visual - Full GrokFast for pattern recognition
   stage_1:
     global_multiplier: 1.0       # Full strength
     focus_components: ["refinement_core"]
-    
+
   # Stage 2: Algorithmic - Full GrokFast for reasoning
   stage_2:
     global_multiplier: 1.0       # Full strength
     focus_components: ["refinement_core", "gated_ltm"]
-    
+
   # Stage 3: Math Reasoning - Reduced for stability
   stage_3:
     global_multiplier: 0.6       # 40% reduction as per Agent 4
     focus_components: ["refinement_core"]
-    
+
   # Stage 4: Long Context - Further reduced for stability
   stage_4:
     global_multiplier: 0.5       # 50% reduction for long sequences
@@ -77,11 +77,11 @@ monitoring:
   # Thresholds for detecting grokking behavior
   grokking_detection_threshold: 0.7    # Slow gradient ratio indicating grokking
   monitoring_interval: 50              # Steps between grokking checks
-  
+
   # Auto-adjustment based on grokking detection
   auto_adjust_enabled: true
   auto_adjust_sensitivity: 0.1         # How much to adjust lambda when grokking detected
-  
+
   # Metrics to track
   track_metrics:
     - "slow_gradient_ratio"            # Core grokking indicator
@@ -97,7 +97,7 @@ exclusions:
     - "*position*"                     # Positional encodings
     - "*norm*"                        # Layer normalization (sometimes)
     - "*bias*"                        # Biases (optional)
-    
+
   # Module exclusions by name
   module_exclusions:
     - "act_halting"                   # All ACT halting components
@@ -107,15 +107,15 @@ exclusions:
 advanced:
   # Gradient accumulation compatibility
   accumulation_aware: true             # Adjust for gradient accumulation
-  
+
   # Memory efficiency
   efficient_storage: true             # Use efficient gradient history storage
   max_history_size: 1000              # Limit gradient history memory usage
-  
+
   # Numerical stability
   epsilon: 1e-8                       # Small constant for numerical stability
   gradient_clip_threshold: 10.0       # Clip extreme slow gradients
-  
+
   # Dynamic adjustment
   dynamic_lambda: true                # Allow lambda to change during training
   lambda_decay: 0.999                 # Gradual lambda reduction
@@ -126,7 +126,7 @@ stage_transitions:
   # How to handle GrokFast when transitioning between stages
   transition_behavior: "gradual"      # "sudden", "gradual", "overlap"
   transition_steps: 100               # Steps to transition GrokFast settings
-  
+
   # Reset behavior
   reset_history_on_transition: false  # Keep gradient history across stages
   reset_ema_on_transition: true       # Reset EMA state for new stage

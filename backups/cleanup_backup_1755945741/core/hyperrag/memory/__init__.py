@@ -7,13 +7,7 @@ Neurobiologically-inspired memory systems:
 """
 
 try:
-    from .hippo_index import (
-        HippoIndex,
-        EpisodicDocument,
-        MemoryType,
-        ConfidenceType,
-        create_hippo_node
-    )
+    from .hippo_index import ConfidenceType, EpisodicDocument, HippoIndex, MemoryType, create_hippo_node
 except ImportError as e:
     # Graceful fallback for missing dependencies
     HippoIndex = None
@@ -22,10 +16,4 @@ except ImportError as e:
     ConfidenceType = None
     create_hippo_node = None
 
-__all__ = [
-    "HippoIndex",
-    "EpisodicDocument", 
-    "MemoryType",
-    "ConfidenceType",
-    "create_hippo_node"
-]
+__all__ = ["HippoIndex", "EpisodicDocument", "MemoryType", "ConfidenceType", "create_hippo_node"]

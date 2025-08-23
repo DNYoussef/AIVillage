@@ -7,12 +7,8 @@ High-performance retrieval systems:
 """
 
 try:
-    from .vector_engine import (
-        ContextualVectorEngine,
-        ChunkingStrategy,
-        SimilarityMetric,
-        ContextTag
-    )
+    from .vector_engine import ChunkingStrategy, ContextTag, ContextualVectorEngine, SimilarityMetric
+
     # Alias for backward compatibility
     VectorEngine = ContextualVectorEngine
 except ImportError:
@@ -23,12 +19,8 @@ except ImportError:
     VectorEngine = None
 
 try:
-    from .graph_engine import (
-        BayesianTrustGraph,
-        RelationType,
-        TrustLevel,
-        GraphNode
-    )
+    from .graph_engine import BayesianTrustGraph, GraphNode, RelationType, TrustLevel
+
     # Alias for backward compatibility
     GraphEngine = BayesianTrustGraph
 except ImportError:
@@ -41,12 +33,12 @@ except ImportError:
 __all__ = [
     "ContextualVectorEngine",
     "VectorEngine",
-    "ChunkingStrategy", 
+    "ChunkingStrategy",
     "SimilarityMetric",
     "ContextTag",
     "BayesianTrustGraph",
     "GraphEngine",
     "RelationType",
-    "TrustLevel", 
-    "GraphNode"
+    "TrustLevel",
+    "GraphNode",
 ]

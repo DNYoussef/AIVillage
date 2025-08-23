@@ -107,7 +107,7 @@ class AIVillageSystemTest:
             user = auth_manager.create_user(
                 username="workflow_user",
                 email="workflow@aivillage.com",
-                password="SecureWorkflow123!",
+                password="test_e2e_workflow_password_123!",  # pragma: allowlist secret
                 role=UserRole.DEVELOPER,
                 security_level=SecurityLevel.CONFIDENTIAL,
             )
@@ -122,7 +122,7 @@ class AIVillageSystemTest:
             # Authenticate user
             success, auth_user, session_token = auth_manager.authenticate(
                 username="workflow_user",
-                password="SecureWorkflow123!",
+                password="test_e2e_workflow_password_123!",  # pragma: allowlist secret
                 ip_address="192.168.1.100",
                 user_agent="AIVillage-E2E-Test/1.0",
             )
@@ -583,14 +583,14 @@ class AIVillageSystemTest:
         assert api_user.user_id == user_context["user"].user_id, "API user should match original user"
 
         # 2. Test MFA integration
-        mfa_secret = auth_manager.enable_mfa(user_context["user"].user_id)
+        mfa_secret = auth_manager.enable_mfa(user_context["user"].user_id)  # pragma: allowlist secret
         assert mfa_secret is not None, "MFA should be enabled"
 
         # Generate OTP and test MFA authentication
-        otp = auth_manager.mfa_manager.generate_otp(mfa_secret)
+        otp = auth_manager.mfa_manager.generate_otp(mfa_secret)  # pragma: allowlist secret
         mfa_success, mfa_user, mfa_session = auth_manager.authenticate(
             username="workflow_user",
-            password="SecureWorkflow123!",
+            password="test_e2e_workflow_password_123!",  # pragma: allowlist secret
             mfa_code=otp,
             ip_address="192.168.1.100",
         )
@@ -603,15 +603,15 @@ class AIVillageSystemTest:
         high_security_user = auth_manager.create_user(
             username="security_admin",
             email="admin@security.com",
-            password="AdminSecurity123!",
+            password="test_admin_security_123!",  # pragma: allowlist secret
             role=UserRole.ADMIN,
-            security_level=SecurityLevel.TOP_SECRET,
+            security_level=SecurityLevel.TOP_SECRET,  # pragma: allowlist secret
         )
 
         low_security_user = auth_manager.create_user(
             username="public_user",
             email="public@user.com",
-            password="PublicUser123!",
+            password="test_public_user_123!",  # pragma: allowlist secret
             role=UserRole.VIEWER,
             security_level=SecurityLevel.PUBLIC,
         )

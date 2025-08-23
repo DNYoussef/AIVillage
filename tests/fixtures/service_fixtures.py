@@ -80,7 +80,7 @@ def test_config():
             max_request_size=1024 * 1024,  # 1MB for testing
         ),
         security=SecurityConfig(
-            secret_key="test-secret",
+            secret_key="test-secret",  # pragma: allowlist secret
             rate_limit_requests=10,
             rate_limit_window=60,
         ),
@@ -308,7 +308,7 @@ def isolated_test_environment(monkeypatch, mock_external_dependencies):
     test_env = {
         "ENVIRONMENT": "testing",
         "DEBUG": "true",
-        "SECRET_KEY": "test-secret-key",
+        "SECRET_KEY": "test-secret-key",  # pragma: allowlist secret
         "DB_HOST": "localhost",
         "DB_PORT": "5432",
         "REDIS_HOST": "localhost",

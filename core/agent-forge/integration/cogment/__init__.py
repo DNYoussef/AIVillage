@@ -20,18 +20,18 @@ Components:
 - DeploymentManager: Production deployment pipeline
 """
 
+from .deployment_manager import CogmentDeploymentManager
 from .evomerge_adapter import CogmentEvoMergeAdapter
-from .phase_controller import CogmentPhaseController
 from .hf_export import CogmentHFExporter
 from .model_compatibility import CogmentCompatibilityValidator
-from .deployment_manager import CogmentDeploymentManager
+from .phase_controller import CogmentPhaseController
 
 __all__ = [
-    'CogmentEvoMergeAdapter',
-    'CogmentPhaseController', 
-    'CogmentHFExporter',
-    'CogmentCompatibilityValidator',
-    'CogmentDeploymentManager'
+    "CogmentEvoMergeAdapter",
+    "CogmentPhaseController",
+    "CogmentHFExporter",
+    "CogmentCompatibilityValidator",
+    "CogmentDeploymentManager",
 ]
 
 __version__ = "1.0.0"

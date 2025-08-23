@@ -1,14 +1,90 @@
-name: Scion Production
+name: Scion Production - Security Enhanced
 
 on:
   push:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      emergency_bypass:
+        description: 'Emergency deployment bypass (requires security approval)'
+        required: false
+        default: 'false'
+        type: boolean
+      security_override:
+        description: 'Security gate override token'
+        required: false
+        type: string
+
+env:
+  SECURITY_GATE_ENABLED: true
+  DEPLOYMENT_ENVIRONMENT: production
 
 jobs:
-  scion-prod:
+  # ============================================
+  # STAGE 1: Security Pre-Flight Checks
+  # ============================================
+  security-preflight:
+    name: Security Pre-Flight
     runs-on: ubuntu-latest
+    outputs:
+      security-gate-passed: ${{ steps.security-gate.outputs.passed }}
+      emergency-bypass: ${{ github.event.inputs.emergency_bypass == 'true' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install security tools
+        run: |
+          pip install detect-secrets bandit safety semgrep
+          pip install -r config/requirements/requirements-security.txt || echo "Security requirements not found"
+
+      - name: 🔐 Critical Security Validation
+        id: security-gate
+        run: |
+          echo "Running critical security validations..."
+
+          # Secret detection
+          detect-secrets scan --baseline .secrets.baseline || {
+            echo "::error::Secrets detected in production code"
+            exit 1
+          }
+
+          # Production security validation
+          python scripts/validate_secret_sanitization.py --production-ready || {
+            echo "::error::Production security validation failed"
+            exit 1
+          }
+
+          echo "passed=true" >> $GITHUB_OUTPUT
+          echo "✅ Security pre-flight passed"
+
+      - name: 🚨 Emergency Bypass Validation
+        if: github.event.inputs.emergency_bypass == 'true'
+        run: |
+          echo "::warning::Emergency bypass requested - requires manual security approval"
+
+          # Validate security override token (in real deployment, this would check against secure storage)
+          if [[ -z "${{ github.event.inputs.security_override }}" ]]; then
+            echo "::error::Emergency bypass requires security override token"
+            exit 1
+          fi
+
+          echo "⚠️ Emergency bypass validated - proceeding with deployment"
+
+  # ============================================
+  # STAGE 2: Enhanced Production Build
+  # ============================================
+  scion-prod:
+    name: Scion Production Build
+    runs-on: ubuntu-latest
+    needs: security-preflight
+    if: needs.security-preflight.outputs.security-gate-passed == 'true' || needs.security-preflight.outputs.emergency-bypass == 'true'
     steps:
       - uses: actions/checkout@v4
 
@@ -42,9 +118,9 @@ jobs:
         env:
           OPENSSL_VENDORED: 1
         run: |
-          if [ -f "packages/p2p/betanet-bounty/Cargo.toml" ]; then
+          if [ -f "integrations/bounties/betanet/Cargo.toml" ]; then
             echo "Running clippy on BetaNet bounty workspace..."
-            cd packages/p2p/betanet-bounty
+            cd integrations/bounties/betanet
             cargo clippy --workspace --all-targets --message-format=json > ../../../clippy-betanet.json || echo "[WARNING] Clippy found issues in BetaNet workspace"
             cd ../../..
           else
@@ -63,14 +139,17 @@ jobs:
             echo "No Go modules found" > govet.txt
           fi
 
-      - name: Upload lint reports
+      - name: Upload Security and Lint Reports
         uses: actions/upload-artifact@v4
         with:
-          name: lint-reports
+          name: scion-security-lint-reports-${{ github.sha }}
           path: |
             clippy-main.json
             clippy-betanet.json
             govet.txt
+            bandit-report.json
+            safety-report.json
+          retention-days: 90
           if-no-files-found: warn
 
       - name: Build Rust (Main Workspace)
@@ -199,18 +278,113 @@ jobs:
             echo '[INFO] No BetaNet bounty fuzz targets found, skipping.'
           fi
 
+      - name: 🔒 Enhanced Security Scanning
+        run: |
+          pip install bandit detect-secrets safety
+
+          # Comprehensive security scan
+          bandit -r packages/p2p/ core/ infrastructure/ -f json -o bandit-report.json || echo "Bandit completed with warnings"
+
+          # Check for critical security issues
+          if bandit -r packages/p2p/ core/ infrastructure/ -ll | grep -E "(HIGH|CRITICAL)"; then
+            echo "::error::Critical security issues found in production code"
+            exit 1
+          fi
+
+          # Dependency security check
+          safety check --json --output safety-report.json || echo "Safety completed with warnings"
+
+          echo "✅ Security scanning completed"
+
       - name: Check for forbidden terms
         run: tools/linting/forbidden_checks.sh
 
-      - name: Deny insecure feature
+      - name: 🛡️ Production Security Gate
         run: |
+          echo "Final security gate validation..."
+
+          # Rust security validation
           if [ -f "tools/security/deny_insecure.rs" ]; then
             if rustc tools/security/deny_insecure.rs --cfg feature="insecure" 2>&1 | tee /tmp/deny.log; then
-              echo "Insecure feature flag compiled" >&2
+              echo "::error::Insecure feature flag compiled"
               exit 1
             else
-              echo "Insecure feature blocked"
+              echo "✅ Insecure feature blocked"
             fi
-          else
-            echo "No security validation tool found, skipping"
           fi
+
+          # Additional production validations
+          if [ -f "scripts/validate_secret_externalization.py" ]; then
+            python scripts/validate_secret_externalization.py --production
+          fi
+
+          echo "🔒 Production security gate passed"
+
+
+  # ============================================
+  # STAGE 3: Security Compliance Report
+  # ============================================
+  security-compliance:
+    name: Security Compliance
+    runs-on: ubuntu-latest
+    needs: [security-preflight, scion-prod]
+    if: always()
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generate Security Compliance Report
+        run: |
+          mkdir -p compliance-reports
+
+          echo "# Scion Production Security Compliance Report" > compliance-reports/security-report.md
+          echo "" >> compliance-reports/security-report.md
+          echo "**Deployment Date:** $(date)" >> compliance-reports/security-report.md
+          echo "**Commit SHA:** ${{ github.sha }}" >> compliance-reports/security-report.md
+          echo "**Security Gate Status:** ${{ needs.security-preflight.outputs.security-gate-passed }}" >> compliance-reports/security-report.md
+          echo "**Emergency Bypass:** ${{ needs.security-preflight.outputs.emergency-bypass }}" >> compliance-reports/security-report.md
+          echo "" >> compliance-reports/security-report.md
+
+          if [[ "${{ needs.scion-prod.result }}" == "success" ]]; then
+            echo "✅ **Overall Status:** PASSED - Safe for production deployment" >> compliance-reports/security-report.md
+          else
+            echo "❌ **Overall Status:** FAILED - Deployment blocked" >> compliance-reports/security-report.md
+          fi
+
+      - name: Upload Compliance Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: scion-security-compliance-${{ github.sha }}
+          path: compliance-reports/
+          retention-days: 365  # Long retention for compliance
+
+  # ============================================
+  # STAGE 4: Deployment Gate
+  # ============================================
+  deployment-gate:
+    name: Production Deployment Gate
+    runs-on: ubuntu-latest
+    needs: [security-preflight, scion-prod, security-compliance]
+    if: always() && github.ref == 'refs/heads/main'
+    environment: production
+    steps:
+      - name: Final Deployment Decision
+        run: |
+          echo "Evaluating final deployment gate..."
+
+          security_passed="${{ needs.security-preflight.outputs.security-gate-passed }}"
+          build_passed="${{ needs.scion-prod.result }}"
+          emergency_bypass="${{ needs.security-preflight.outputs.emergency-bypass }}"
+
+          if [[ "$emergency_bypass" == "true" ]]; then
+            echo "⚠️ Emergency bypass in effect - deployment proceeding with elevated monitoring"
+          elif [[ "$security_passed" == "true" && "$build_passed" == "success" ]]; then
+            echo "✅ All gates passed - deployment authorized"
+          else
+            echo "❌ Deployment gate failed:"
+            echo "  Security Gate: $security_passed"
+            echo "  Build Status: $build_passed"
+            echo "BLOCKING PRODUCTION DEPLOYMENT"
+            exit 1
+          fi
+
+          echo "🚀 Scion production deployment gate cleared"

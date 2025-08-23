@@ -516,7 +516,9 @@ class ContextualVectorEngine:
             import hashlib
 
             text_bytes = text.encode("utf-8")
-            text_hash_bytes = hashlib.md5(text_bytes).hexdigest()
+            text_hash_bytes = hashlib.md5(
+                text_bytes, usedforsecurity=False
+            ).hexdigest()  # Used for deterministic seeding, not security
             seed = int(text_hash_bytes[:8], 16)
 
             np.random.seed(seed)

@@ -5,7 +5,7 @@ Unified HyperRAG Implementation - Production Ready
 Consolidates the best features from multiple scattered implementations into a single
 working system that coordinates all RAG subsystems:
 - HippoRAG (neurobiological episodic memory)
-- GraphRAG (Bayesian trust networks) 
+- GraphRAG (Bayesian trust networks)
 - VectorRAG (contextual similarity search)
 - Cognitive Nexus (analysis and reasoning)
 
@@ -28,7 +28,7 @@ class QueryMode(Enum):
     """Enhanced query processing modes for different use cases."""
 
     FAST = "fast"  # Vector-only, fastest response
-    BALANCED = "balanced"  # Vector + Graph, good balance  
+    BALANCED = "balanced"  # Vector + Graph, good balance
     COMPREHENSIVE = "comprehensive"  # All systems, most thorough
     CREATIVE = "creative"  # Emphasize creativity engine
     ANALYTICAL = "analytical"  # Emphasize cognitive nexus
@@ -84,7 +84,7 @@ class HyperRAGConfig:
     enable_caching: bool = True
     timeout_seconds: float = 30.0
     fallback_enabled: bool = True
-    
+
     # Subsystem enablement
     enable_hippo_rag: bool = True
     enable_graph_rag: bool = True
@@ -221,7 +221,7 @@ class HyperRAG:
 
             # TODO Phase 2.2: Load actual subsystem implementations
             # - HippoIndex from memory module
-            # - CognitiveNexus from cognitive module  
+            # - CognitiveNexus from cognitive module
             # - CreativityEngine from cognitive module
             # - Integration bridges
 
@@ -270,7 +270,7 @@ class HyperRAG:
 
         try:
             retrieved_info = []
-            
+
             # Vector search
             if self.vector_store:
                 vector_results = self.vector_store.search(query, top_k=self.config.max_results)
@@ -414,9 +414,9 @@ class HyperRAG:
             "graph_store": "operational" if self.graph_store else "disabled",
             "cache": "operational",
         }
-        
+
         # TODO Phase 2.2: Add health checks for additional subsystems
-        
+
         return {
             "status": "healthy",
             "components": components,
@@ -430,7 +430,7 @@ HyperRAGSystem = HyperRAG
 # Export main classes
 __all__ = [
     "HyperRAG",
-    "HyperRAGSystem", 
+    "HyperRAGSystem",
     "HyperRAGConfig",
     "QueryMode",
     "MemoryType",

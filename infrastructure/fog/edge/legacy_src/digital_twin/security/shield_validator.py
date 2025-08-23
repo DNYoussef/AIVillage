@@ -538,9 +538,7 @@ class ShieldValidator:
             return self.performance_cache[cache_key]
 
         # Initialize validation result
-        validation_id = (
-            f"val_{hashlib.md5(f'{student_id}_{content_hash}_{datetime.now().isoformat()}'.encode()).hexdigest()[:12]}"
-        )
+        validation_id = f"val_{hashlib.sha256(f'{student_id}_{content_hash}_{datetime.now().isoformat()}'.encode()).hexdigest()[:12]}"
 
         violations = []
         warnings = []

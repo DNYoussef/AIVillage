@@ -1,4 +1,4 @@
-# Stage 3: Mathematical Reasoning Configuration  
+# Stage 3: Mathematical Reasoning Configuration
 # Advanced math reasoning and multi-hop text understanding
 
 stage:
@@ -12,7 +12,7 @@ training:
   batch_size: 4                  # Smaller batch for longer sequences
   sequence_length: 1536          # Extended context for reasoning chains
   learning_rate: 5e-5            # Further reduced LR for stability
-  
+
   eval_interval: 800
   save_interval: 4000
   log_interval: 200
@@ -23,14 +23,14 @@ model:
   act_threshold: 0.99
   ponder_cost_initial: 0.02
   ponder_cost_final: 0.02        # Stable ponder cost
-  
+
   # Increase memory utilization
   memory_settings:
     ltm_read_only: false
     ltm_write_alpha: 0.15         # Higher write rate for complex reasoning
     ltm_decay_rate: 5e-4          # Slower decay to preserve reasoning chains
 
-# Data Configuration  
+# Data Configuration
 data:
   # Mathematical and reasoning tasks
   task_types:
@@ -39,14 +39,14 @@ data:
     - "hotpot_qa"                 # Multi-hop question answering
     - "logical_reasoning"         # Formal logical reasoning
     - "proof_generation"          # Mathematical proof steps
-    
+
   # Data sources
   datasets:
     - "gsm8k"
     - "math_dataset"
     - "hotpot_qa"
     - "logical_reasoning_corpus"
-    
+
   # Reasoning-focused augmentation
   augmentation:
     enabled: true
@@ -55,13 +55,13 @@ data:
       - "problem_rephrasing"      # Rephrase problems
       - "step_reordering"         # Reorder reasoning steps
       - "context_variation"       # Vary problem context
-      
+
     # Math-specific augmentation
     math_problems:
       number_variations: true     # Change specific numbers
       context_substitution: true  # Different story contexts
       difficulty_scaling: true    # Scale problem difficulty
-      
+
     # Multi-hop QA augmentation
     multihop_qa:
       hop_count_variation: [2, 3, 4]  # Different numbers of reasoning hops
@@ -80,18 +80,18 @@ grokfast:
   enabled: true
   global_multiplier: 0.6         # 40% reduction as per Agent 4
   focus_components: ["refinement_core"]
-  
+
   components:
     refinement_core:
       alpha: 0.95                # Reduced smoothing
       lamb: 1.2                  # Reduced amplification
       window_size: 150           # Longer window for stability
-      
+
     gated_ltm:
       alpha: 0.95
       lamb: 1.5                  # Keep memory dynamics
       window_size: 50
-      
+
     act_halting:
       enabled: false
 
@@ -101,7 +101,7 @@ convergence:
   min_accuracy: 0.6              # Lower target due to complexity
   max_ponder_cost: 8.0          # Allow significant pondering
   min_improvement: 1e-4
-  
+
   # Reasoning-specific indicators
   grokking_indicators:
     reasoning_chain_emergence: true   # Multi-step reasoning appears
@@ -112,11 +112,11 @@ convergence:
 memory:
   consolidation_frequency: "low"     # Preserve complex reasoning chains
   memory_capacity_usage_target: 0.7  # Higher memory usage
-  
+
   # Reasoning-specific memory
   reasoning_memory:
     mathematical_facts: true         # Store math facts and formulas
-    reasoning_patterns: true         # Store common reasoning patterns  
+    reasoning_patterns: true         # Store common reasoning patterns
     proof_strategies: true           # Store proof techniques
     multihop_chains: true           # Store complex reasoning chains
 
@@ -126,15 +126,15 @@ validation:
     - name: "gsm8k_evaluation"
       description: "Solve grade school math word problems"
       expected_accuracy: 0.65
-      
+
     - name: "math_competition_problems"
       description: "Solve mathematical competition problems"
       expected_accuracy: 0.4
-      
+
     - name: "hotpot_qa_evaluation"
       description: "Answer multi-hop questions"
       expected_accuracy: 0.6
-      
+
     - name: "logical_reasoning_tests"
       description: "Solve formal logical reasoning problems"
       expected_accuracy: 0.7
@@ -148,13 +148,13 @@ reasoning_analysis:
     - "logical_coherence"          # Is reasoning logically coherent?
     - "mathematical_accuracy"      # Are calculations correct?
     - "fact_retrieval_accuracy"    # Can model retrieve relevant facts?
-    
+
   # Quality thresholds
   quality_thresholds:
     min_chain_coherence: 0.8
     min_step_accuracy: 0.85
     min_fact_accuracy: 0.9
-    
+
   analysis_interval: 1000
   save_reasoning_examples: true
 
@@ -165,13 +165,13 @@ advanced_features:
     enable_cot_training: true
     cot_loss_weight: 0.2
     require_explicit_steps: true
-    
+
   # Mathematical reasoning features
   math_features:
     symbolic_manipulation: true
     numerical_computation: true
     geometric_reasoning: false     # Not in this stage
-    
+
   # Multi-hop reasoning features
   multihop_features:
     entity_tracking: true
@@ -182,7 +182,7 @@ advanced_features:
 resources:
   max_memory_gb: 16
   max_time_hours: 8
-  
+
   # Optimization for complex reasoning
   gradient_checkpointing: true
   activation_checkpointing: true
@@ -194,7 +194,7 @@ advancement:
     min_accuracy: 0.6
     max_ponder_cost: 8.0
     reasoning_quality_threshold: 0.75
-    
+
   preferred_metrics:
     gsm8k_accuracy: 0.65
     hotpot_qa_accuracy: 0.6

@@ -252,21 +252,21 @@ class MagicLiteralDetector:
         violations = [r for r in results if r.get("threshold_exceeded", False)]
 
         if not violations:
-            return "✅ No magic literal violations detected!"
+            return "[PASS] No magic literal violations detected!"
 
         output = []
-        output.append(f"❌ Found magic literal violations in {len(violations)} file(s):")
+        output.append(f"[FAIL] Found magic literal violations in {len(violations)} file(s):")
         output.append("")
 
         # Sort by severity and density
         severity_order = {"critical": 4, "high": 3, "medium": 2, "low": 1}
         violations.sort(key=lambda x: (severity_order.get(x["severity"], 0), x["density"]), reverse=True)
 
-        severity_emojis = {"critical": "🚨", "high": "⚠️", "medium": "⚡", "low": "📝"}
+        severity_emojis = {"critical": "[CRIT]", "high": "[HIGH]", "medium": "[MED]", "low": "[LOW]"}
 
         for result in violations:
             severity = result["severity"]
-            emoji = severity_emojis.get(severity, "📝")
+            emoji = severity_emojis.get(severity, "[LOW]")
 
             output.append(f"{emoji} {result['file']}")
             output.append(
@@ -302,18 +302,18 @@ class MagicLiteralDetector:
             output.append("")
 
         # Add refactoring suggestions
-        output.append("🛠️  REFACTORING SUGGESTIONS:")
+        output.append("[FIX] REFACTORING SUGGESTIONS:")
         output.append("   1. Extract magic numbers to named constants:")
-        output.append("      ❌ if timeout > 30:")
-        output.append("      ✅ TIMEOUT_SECONDS = 30; if timeout > TIMEOUT_SECONDS:")
+        output.append("      [BAD] if timeout > 30:")
+        output.append("      [GOOD] TIMEOUT_SECONDS = 30; if timeout > TIMEOUT_SECONDS:")
         output.append("")
         output.append("   2. Use enums for categorical values:")
-        output.append("      ❌ if status == 'active':")
-        output.append("      ✅ class Status(Enum): ACTIVE = 'active'; if status == Status.ACTIVE:")
+        output.append("      [BAD] if status == 'active':")
+        output.append("      [GOOD] class Status(Enum): ACTIVE = 'active'; if status == Status.ACTIVE:")
         output.append("")
         output.append("   3. Create configuration classes:")
-        output.append("      ❌ batch_size = 100; learning_rate = 0.001")
-        output.append("      ✅ @dataclass class Config: batch_size: int = 100; learning_rate: float = 0.001")
+        output.append("      [BAD] batch_size = 100; learning_rate = 0.001")
+        output.append("      [GOOD] @dataclass class Config: batch_size: int = 100; learning_rate: float = 0.001")
 
         return "\n".join(output)
 
@@ -369,7 +369,10 @@ def main():
 
         print(json.dumps(filtered_results, indent=2, default=str))
     else:
-        print(detector.format_violations(filtered_results, show_details=args.details))
+        output = detector.format_violations(filtered_results, show_details=args.details)
+        # Ensure ASCII-only output for Windows compatibility
+        safe_output = output.encode("ascii", errors="replace").decode("ascii")
+        print(safe_output)
 
     # Exit with error code if violations found
     if filtered_results:

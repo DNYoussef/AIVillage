@@ -52,7 +52,7 @@ def temp_dir(tmp_path):
 @pytest.fixture
 def mock_p2p_transport():
     """Provide a mock P2P transport for testing."""
-    
+
     class MockTransport:
         def __init__(self, name="mock", success_rate=0.95, latency_ms=10.0):
             self.name = name
@@ -60,37 +60,30 @@ def mock_p2p_transport():
             self.latency_ms = latency_ms
             self.messages_sent = []
             self.is_available = True
-            
+
         async def send_message(self, recipient_id, message_data):
             """Mock send message with configurable reliability."""
             import asyncio
             import random
-            
+
             # Simulate network latency
             await asyncio.sleep(self.latency_ms / 1000.0)
-            
+
             # Record message
-            self.messages_sent.append({
-                "recipient": recipient_id,
-                "data": message_data,
-                "timestamp": time.time()
-            })
-            
+            self.messages_sent.append({"recipient": recipient_id, "data": message_data, "timestamp": time.time()})
+
             # Simulate success/failure based on success_rate
             if random.random() < self.success_rate:
                 return {"status": "delivered", "message_id": f"msg_{len(self.messages_sent)}"}
             else:
                 raise Exception(f"Transport {self.name} delivery failed")
-                
+
         def get_status(self):
             """Get transport status."""
-            return {
-                "name": self.name,
-                "available": self.is_available,
-                "messages_sent": len(self.messages_sent)
-            }
-    
+            return {"name": self.name, "available": self.is_available, "messages_sent": len(self.messages_sent)}
+
     import time
+
     return MockTransport
 
 
@@ -107,21 +100,21 @@ def p2p_test_config():
         "bitchat": {
             "enable_ble": True,
             "device_name": "BitChat_Test",
-            "service_uuid": "12345678-1234-5678-9012-123456789abc"
+            "service_uuid": "12345678-1234-5678-9012-123456789abc",
         },
         "betanet": {
             "enable_htx": True,
             "server_host": "test.betanet.ai",
             "server_port": 8443,
-            "encryption_enabled": True
-        }
+            "encryption_enabled": True,
+        },
     }
 
 
 @pytest.fixture
 def mock_mesh_protocol():
     """Provide a mock mesh protocol for testing."""
-    
+
     class MockMeshProtocol:
         def __init__(self, node_id="test_node"):
             self.node_id = node_id
@@ -129,41 +122,42 @@ def mock_mesh_protocol():
             self.transports = {}
             self.messages = []
             self.is_running = False
-            
+
         async def start(self):
             """Start the mock protocol."""
             self.is_running = True
             return True
-            
+
         async def stop(self):
             """Stop the mock protocol."""
             self.is_running = False
             return True
-            
+
         def add_peer(self, peer_id, transport_info):
             """Add a mock peer."""
             self.peers[peer_id] = transport_info
-            
+
         def register_transport(self, transport_type, transport):
             """Register a mock transport."""
             self.transports[transport_type] = transport
-            
+
         async def send_message(self, recipient_id, message_type, payload, **kwargs):
             """Mock send message."""
             import uuid
+
             message_id = str(uuid.uuid4())
-            
+
             message = {
                 "id": message_id,
                 "recipient": recipient_id,
                 "type": message_type,
                 "payload": payload,
                 "timestamp": time.time(),
-                **kwargs
+                **kwargs,
             }
-            
+
             self.messages.append(message)
-            
+
             # Simulate delivery through available transport
             if recipient_id in self.peers and self.transports:
                 transport = list(self.transports.values())[0]
@@ -172,25 +166,26 @@ def mock_mesh_protocol():
                     return message_id
                 except Exception:
                     raise Exception(f"Failed to deliver message to {recipient_id}")
-            
+
             return message_id
-            
+
         def get_delivery_status(self, message_id):
             """Get mock delivery status."""
             for msg in self.messages:
                 if msg["id"] == message_id:
                     return "ACKNOWLEDGED"  # Mock successful delivery
             return "PENDING"
-            
+
         def get_metrics(self):
             """Get mock metrics."""
             return {
                 "messages_sent": len(self.messages),
                 "peers_connected": len(self.peers),
-                "transports_active": len(self.transports)
+                "transports_active": len(self.transports),
             }
-    
+
     import time
+
     return MockMeshProtocol
 
 
@@ -199,13 +194,15 @@ def p2p_test_messages():
     """Provide standard test messages for P2P testing."""
     messages = []
     for i in range(10):
-        messages.append({
-            "id": f"test_msg_{i:03d}",
-            "type": "test_message",
-            "payload": {"data": f"test_data_{i}", "sequence": i},
-            "priority": "NORMAL" if i % 2 == 0 else "HIGH",
-            "require_ack": True
-        })
+        messages.append(
+            {
+                "id": f"test_msg_{i:03d}",
+                "type": "test_message",
+                "payload": {"data": f"test_data_{i}", "sequence": i},
+                "priority": "NORMAL" if i % 2 == 0 else "HIGH",
+                "require_ack": True,
+            }
+        )
     return messages
 
 

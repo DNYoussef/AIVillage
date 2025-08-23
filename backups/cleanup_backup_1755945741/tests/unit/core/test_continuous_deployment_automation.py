@@ -1,7 +1,6 @@
 import subprocess
 
 import pytest
-
 from packages.core.deployment.continuous_deployment_automation import (
     ContinuousDeploymentAutomation,
     DeploymentConfig,

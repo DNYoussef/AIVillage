@@ -9,7 +9,6 @@ according to Task 3 acceptance criteria:
 from unittest.mock import patch
 
 import pytest
-
 from packages.core.security.rbac_system import RBACSystem, Role
 from packages.fog.gateway.security.policy import EgressPolicy, FogSecurityPolicyEngine, NamespaceQuota
 

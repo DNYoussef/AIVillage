@@ -26,7 +26,7 @@ ingress:
         - path: /
           pathType: Prefix
   tls:
-    - secretName: aivillage-production-tls
+    - secretName: "${AIVILLAGE_TLS_SECRET_NAME}"
       hosts:
         - api.aivillage.com
 
@@ -222,13 +222,13 @@ affinity:
             - aivillage-hyperag-mcp
         topologyKey: kubernetes.io/hostname
 
-# Production secrets (these should be set via CI/CD)
+# Production secrets (loaded from environment variables)
 secrets:
-  # These will be overridden by environment variables in CI/CD
-  postgresPassword: "REPLACE_IN_CICD"
-  redisPassword: "REPLACE_IN_CICD"
-  neo4jPassword: "REPLACE_IN_CICD"
-  hyperhagJwtSecret: "REPLACE_IN_CICD"
-  openaiApiKey: "REPLACE_IN_CICD"
-  anthropicApiKey: "REPLACE_IN_CICD"
-  grafanaPassword: "REPLACE_IN_CICD"
+  # These are loaded from secure environment variables in CI/CD
+  postgresPassword: "${AIVILLAGE_POSTGRES_PASSWORD}"
+  redisPassword: "${AIVILLAGE_REDIS_PASSWORD}"
+  neo4jPassword: "${AIVILLAGE_NEO4J_PASSWORD}"
+  hyperhagJwtSecret: "${AIVILLAGE_HYPERAG_JWT_SECRET}"
+  openaiApiKey: "${AIVILLAGE_OPENAI_API_KEY}"
+  anthropicApiKey: "${AIVILLAGE_ANTHROPIC_API_KEY}"
+  grafanaPassword: "${AIVILLAGE_GRAFANA_PASSWORD}"

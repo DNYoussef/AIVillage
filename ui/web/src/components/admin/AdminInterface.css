@@ -153,13 +153,13 @@
   .admin-metrics-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .admin-header {
     flex-direction: column;
     gap: 15px;
     text-align: center;
   }
-  
+
   .btn-action {
     width: 100%;
     margin: 0 0 10px 0;

@@ -22,9 +22,10 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
-from typing import Any, Optional, Union, List, Dict, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
+
 try:
     from .shared_types import DataSource, PrivacyLevel
 except ImportError:
@@ -33,7 +34,7 @@ except ImportError:
     except ImportError:
         # Define minimal types for standalone operation
         from enum import Enum
-        
+
         class DataSource(Enum):
             CONVERSATION = "conversation"
             PURCHASE = "purchase"
@@ -41,12 +42,13 @@ except ImportError:
             APP_USAGE = "app_usage"
             CALENDAR = "calendar"
             VOICE = "voice"
-        
+
         class PrivacyLevel(Enum):
             PUBLIC = "public"
             PRIVATE = "private"
             PERSONAL = "personal"
             SENSITIVE = "sensitive"
+
 
 logger = logging.getLogger(__name__)
 

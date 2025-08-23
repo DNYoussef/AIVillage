@@ -1,18 +1,49 @@
+#!/usr/bin/env python3
 """
-Domain Layer - Core Business Entities and Rules
+Core Domain Constants Package
 
-Contains the fundamental business concepts, entities, value objects,
-and domain policies that drive AIVillage functionality.
+This package provides type-safe constants to eliminate magic literals
+throughout the AIVillage codebase. Import these constants instead of
+using hardcoded values to improve maintainability and reduce coupling.
 
-Following Domain-Driven Design patterns with connascence awareness:
-- Entities have identity and lifecycle
-- Value objects are immutable and compared by value
-- Services contain domain logic that doesn't belong in entities
-- Policies encapsulate business rules and constraints
+Usage:
+    from core.domain.security_constants import SecurityLevel, UserRole
+    from core.domain.system_constants import SystemLimits, MobileProfile
+
+    # Instead of: if level == "error"
+    if level == SecurityLevel.ERROR:
+
+    # Instead of: if timeout > 30.0
+    if timeout > SystemLimits.DEFAULT_TIMEOUT:
 """
 
-from .entities import *
-from .policies import *
-from .services import *
+# Re-export commonly used constants for convenience
+from .security_constants import SecurityLevel, SecurityLimits, ThreatLevel, TransportSecurity, UserRole
+from .system_constants import (
+    MessageStatus,
+    MobileProfile,
+    NetworkConstants,
+    OperationMode,
+    ProcessingLimits,
+    QualityThresholds,
+    SystemLimits,
+    TransportType,
+)
 
-__all__ = ["entities", "services", "policies"]
+__all__ = [
+    # Security Constants
+    "SecurityLevel",
+    "UserRole",
+    "SecurityLimits",
+    "TransportSecurity",
+    "ThreatLevel",
+    # System Constants
+    "SystemLimits",
+    "MobileProfile",
+    "TransportType",
+    "MessageStatus",
+    "OperationMode",
+    "ProcessingLimits",
+    "NetworkConstants",
+    "QualityThresholds",
+]

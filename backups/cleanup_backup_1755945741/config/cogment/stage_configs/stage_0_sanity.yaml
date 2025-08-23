@@ -5,14 +5,14 @@ stage:
   name: "sanity"
   description: "Sanity checks and basic functionality validation"
   stage_id: 0
-  
+
 # Training Parameters
 training:
   max_steps: 500
   batch_size: 8
   sequence_length: 256
   learning_rate: 3e-4
-  
+
   # Early validation settings
   eval_interval: 50
   save_interval: 250
@@ -24,7 +24,7 @@ model:
   act_threshold: 0.99
   ponder_cost_initial: 0.0
   ponder_cost_final: 0.0
-  
+
   # Minimal memory usage for sanity checks
   memory_settings:
     ltm_read_only: true
@@ -38,12 +38,12 @@ data:
     - "linear_map"              # Simple input->output mappings
     - "sequence_copy"           # Copy input to output
     - "pattern_match"           # Basic pattern recognition
-    
+
   # Data generation
   synthetic_data: true
   num_samples: 1000
   noise_level: 0.0
-  
+
   # Augmentation (minimal)
   augmentation:
     enabled: false
@@ -75,18 +75,18 @@ convergence:
   min_accuracy: 0.95            # High accuracy expected for simple tasks
   max_ponder_cost: 2.0
   min_improvement: 1e-3
-  
+
 # Validation Tasks
 validation:
   tasks:
     - name: "identity_function"
       description: "Input should equal output"
       expected_accuracy: 0.99
-      
+
     - name: "simple_arithmetic"
       description: "Basic addition/subtraction"
       expected_accuracy: 0.95
-      
+
     - name: "token_repetition"
       description: "Repeat input tokens"
       expected_accuracy: 0.98

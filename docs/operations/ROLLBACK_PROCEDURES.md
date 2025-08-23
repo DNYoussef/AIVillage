@@ -1,10 +1,10 @@
 # 🔄 Emergency Rollback Procedures
 ## AIVillage System Recovery Guide
 
-**Document Version**: 1.0  
-**Last Updated**: August 23, 2025  
-**Emergency Contact**: System Administrator  
-**Recovery Time Objective (RTO)**: < 15 minutes  
+**Document Version**: 1.0
+**Last Updated**: August 23, 2025
+**Emergency Contact**: System Administrator
+**Recovery Time Objective (RTO)**: < 15 minutes
 
 ⚠️ **CRITICAL**: Use these procedures only in production emergencies
 
@@ -14,7 +14,7 @@
 
 ### **Immediate Rollback Required:**
 - System performance degraded >50% from baseline
-- Critical component failures affecting user experience  
+- Critical component failures affecting user experience
 - Security vulnerabilities discovered in new components
 - Data corruption or loss detected
 - Cascade failures across multiple systems
@@ -72,7 +72,7 @@
 ```bash
 # Stop failed services
 systemctl stop aivillage-gateway      # If gateway issues
-systemctl stop aivillage-p2p          # If P2P issues  
+systemctl stop aivillage-p2p          # If P2P issues
 systemctl stop aivillage-agents       # If agent issues
 systemctl stop aivillage-rag          # If knowledge issues
 
@@ -108,7 +108,7 @@ find . -name "*.backup" | wc -l  # Should show 0 if all restored
 # Gateway rollback
 cp core/gateway/server.py.backup core/gateway/server.py
 
-# Agent system rollback  
+# Agent system rollback
 rm -rf packages/core/legacy/error_handling.py
 cp core/agents/cognative_nexus_controller.py.backup core/agents/cognative_nexus_controller.py
 
@@ -152,7 +152,7 @@ systemctl start aivillage-gateway
 systemctl status aivillage-gateway
 
 # 2. Start P2P network
-systemctl start aivillage-p2p  
+systemctl start aivillage-p2p
 systemctl status aivillage-p2p
 
 # 3. Start agent system
@@ -202,7 +202,7 @@ print(f'Gateway: {gateway_time:.2f}ms (should be <100ms)')
 
 # Test P2P
 from core.p2p.mesh_protocol import UnifiedMeshProtocol
-start = time.perf_counter()  
+start = time.perf_counter()
 mesh = UnifiedMeshProtocol(node_id='rollback_test')
 p2p_time = (time.perf_counter() - start) * 1000
 print(f'P2P: {p2p_time:.2f}ms (should be <100ms)')
@@ -225,7 +225,7 @@ time curl -f http://localhost:8000/health
 ### **Success Criteria:**
 - ✅ All services start successfully
 - ✅ Health checks return OK
-- ✅ Response times within baseline (Gateway <100ms, P2P <100ms)  
+- ✅ Response times within baseline (Gateway <100ms, P2P <100ms)
 - ✅ No error logs in past 5 minutes
 - ✅ User requests processed successfully
 
@@ -272,8 +272,8 @@ time curl -f http://localhost:8000/health
 ## 🔍 Troubleshooting Common Rollback Issues
 
 ### **Issue 1: Backup Files Missing**
-**Symptoms**: `*.backup` files not found  
-**Cause**: Backup process not run during deployment  
+**Symptoms**: `*.backup` files not found
+**Cause**: Backup process not run during deployment
 **Solution**:
 ```bash
 # Use git to restore previous version
@@ -282,9 +282,9 @@ git checkout HEAD~1 -- core/p2p/mesh_protocol.py
 # Continue with service restart
 ```
 
-### **Issue 2: Services Won't Start**  
-**Symptoms**: `systemctl start` fails  
-**Cause**: Configuration file corruption  
+### **Issue 2: Services Won't Start**
+**Symptoms**: `systemctl start` fails
+**Cause**: Configuration file corruption
 **Solution**:
 ```bash
 # Reset to default configuration
@@ -294,8 +294,8 @@ systemctl start aivillage-*
 ```
 
 ### **Issue 3: Import Errors After Rollback**
-**Symptoms**: Python import failures  
-**Cause**: Import path changes not fully reverted  
+**Symptoms**: Python import failures
+**Cause**: Import path changes not fully reverted
 **Solution**:
 ```bash
 # Clear Python cache
@@ -307,8 +307,8 @@ systemctl restart aivillage-*
 ```
 
 ### **Issue 4: Database Connection Issues**
-**Symptoms**: Database connectivity failures  
-**Cause**: Database migration not reverted  
+**Symptoms**: Database connectivity failures
+**Cause**: Database migration not reverted
 **Solution**:
 ```bash
 # Check database status
@@ -325,13 +325,13 @@ pg_restore -d aivillage /backups/aivillage_backup.sql
 ### **Escalation Chain:**
 
 #### **Level 1: System Administrator** (Primary)
-- **Contact**: System Admin  
+- **Contact**: System Admin
 - **Response Time**: < 5 minutes
 - **Scope**: All rollback procedures, service management
 
-#### **Level 2: Development Team Lead** (Secondary)  
+#### **Level 2: Development Team Lead** (Secondary)
 - **Contact**: Dev Team Lead
-- **Response Time**: < 15 minutes  
+- **Response Time**: < 15 minutes
 - **Scope**: Code issues, complex system problems
 
 #### **Level 3: On-Call Engineer** (Emergency)
@@ -346,7 +346,7 @@ curl -X POST https://pager.service.com/incidents \
   -H "Authorization: Bearer $PAGER_TOKEN" \
   -d '{"message": "AIVillage system rollback required", "severity": "critical"}'
 
-# Send emergency notification  
+# Send emergency notification
 echo "EMERGENCY: AIVillage rollback in progress" | mail -s "CRITICAL: System Rollback" team@aivillage.com
 ```
 
@@ -375,7 +375,7 @@ python scripts/validate_rollback_capability.py
 
 ### **Pre-Rollback** (2 min):
 - [ ] Impact assessment completed
-- [ ] Stakeholders notified  
+- [ ] Stakeholders notified
 - [ ] Current state backed up
 - [ ] Rollback readiness confirmed
 
@@ -399,7 +399,7 @@ python scripts/validate_rollback_capability.py
 
 ---
 
-**Document Maintained By**: Operations Team  
-**Review Frequency**: Quarterly or after each rollback execution  
-**Last Tested**: System deployment (August 23, 2025)  
+**Document Maintained By**: Operations Team
+**Review Frequency**: Quarterly or after each rollback execution
+**Last Tested**: System deployment (August 23, 2025)
 **Next Review**: November 2025

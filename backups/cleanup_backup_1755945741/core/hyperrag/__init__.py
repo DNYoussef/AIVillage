@@ -13,17 +13,17 @@ This consolidates 53+ scattered files into a single, clean API.
 # Main orchestrator
 from .hyperrag import (
     HyperRAG,
-    HyperRAGSystem,
     HyperRAGConfig,
-    QueryMode,
+    HyperRAGSystem,
     MemoryType,
+    QueryMode,
     RetrievedInformation,
-    SynthesizedAnswer
+    SynthesizedAnswer,
 )
 
 # Memory subsystems
 try:
-    from .memory.hippo_index import HippoIndex, EpisodicDocument
+    from .memory.hippo_index import EpisodicDocument, HippoIndex
 except ImportError:
     HippoIndex = None
     EpisodicDocument = None
@@ -38,14 +38,9 @@ except ImportError:
 
 # Cognitive systems
 try:
-    from .cognitive.cognitive_nexus import (
-        CognitiveNexus,
-        AnalysisType,
-        ReasoningStrategy,
-        ConfidenceLevel
-    )
-    from .cognitive.insight_engine import CreativityEngine
+    from .cognitive.cognitive_nexus import AnalysisType, CognitiveNexus, ConfidenceLevel, ReasoningStrategy
     from .cognitive.graph_fixer import GraphFixer
+    from .cognitive.insight_engine import CreativityEngine
 except ImportError:
     CognitiveNexus = None
     AnalysisType = None
@@ -57,8 +52,8 @@ except ImportError:
 # Integration bridges
 try:
     from .integration.edge_device_bridge import EdgeDeviceRAGBridge
-    from .integration.p2p_network_bridge import P2PNetworkRAGBridge
     from .integration.fog_compute_bridge import FogComputeBridge
+    from .integration.p2p_network_bridge import P2PNetworkRAGBridge
 except ImportError:
     EdgeDeviceRAGBridge = None
     P2PNetworkRAGBridge = None
@@ -68,17 +63,16 @@ except ImportError:
 __all__ = [
     # Core system (always available)
     "HyperRAG",
-    "HyperRAGSystem", 
+    "HyperRAGSystem",
     "HyperRAGConfig",
     "QueryMode",
     "MemoryType",
     "RetrievedInformation",
     "SynthesizedAnswer",
-    
     # Subsystems (may be None if not available)
     "HippoIndex",
     "EpisodicDocument",
-    "BayesianTrustGraph", 
+    "BayesianTrustGraph",
     "ContextualVectorEngine",
     "CognitiveNexus",
     "AnalysisType",
@@ -87,8 +81,8 @@ __all__ = [
     "CreativityEngine",
     "GraphFixer",
     "EdgeDeviceRAGBridge",
-    "P2PNetworkRAGBridge", 
-    "FogComputeBridge"
+    "P2PNetworkRAGBridge",
+    "FogComputeBridge",
 ]
 
 # Version info

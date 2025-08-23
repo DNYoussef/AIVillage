@@ -1,53 +1,40 @@
-# Security Requirements for AIVillage
-# Security-focused dependencies and tools
+# Security Tools Requirements
+# Core security scanning tools for CI/CD pipelines
 
-# Include base requirements
--r requirements.txt
-
-# Secret Management & Detection
+# Secret Detection
 detect-secrets>=1.4.0
-keyring>=24.3.0
-python-gnupg>=0.5.2
 
-# Security Scanning
-bandit[toml]>=1.7.5
-safety>=2.3.4
+# Code Security Analysis
+bandit>=1.7.5
+bandit[toml]
+
+# Dependency Security Scanning
+safety>=3.0.0
+pip-audit>=2.6.0
+
+# Static Application Security Testing (SAST)
 semgrep>=1.45.0
-pip-audit>=2.6.1
 
-# Vulnerability Database
-vulners>=2.1.9
-osv-scanner>=1.4.3
+# Container and Image Security
+trivy>=0.48.0
 
-# Cryptographic Libraries
-pycryptodome>=3.19.0
-cryptography>=41.0.7
-pyotp>=2.9.0
-pynacl>=1.5.0
+# Additional Security Analysis Tools
+vulture>=2.7          # Dead code detection
+radon>=6.0.0          # Code complexity analysis
+xenon>=0.9.0          # Complexity monitoring
 
-# Authentication & Authorization
-authlib>=1.2.1
-python-oauth2>=1.1.1
-pyjwt[crypto]>=2.8.0
+# Security Configuration
+PyYAML>=6.0.1
+cryptography>=41.0.0
 
-# Security Headers & CORS
-secure>=0.3.0
+# Security Reporting
+requests>=2.31.0      # For API integrations
+jinja2>=3.1.0         # For report templates
 
-# Network Security
-requests[socks]>=2.31.0
-urllib3[socks]>=2.1.0
-python-socks>=2.4.3
+# Compliance and Audit
+python-dateutil>=2.8.2
+dataclasses-json>=0.5.14
 
-# Input Validation & Sanitization
-bleach>=6.1.0
-html5lib>=1.1
-defusedxml>=0.7.1
-
-# Rate Limiting & Throttling
-slowapi>=0.1.9
-limits>=3.6.0
-
-# Audit & Compliance
-compliance-checker>=5.0.1
-
--c constraints.txt
+# Development and Testing Security
+pytest-bandit>=0.1.0
+pytest-security>=0.1.0

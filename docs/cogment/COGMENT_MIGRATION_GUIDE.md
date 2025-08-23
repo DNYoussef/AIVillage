@@ -97,7 +97,7 @@ def migrate_hrrm_to_cogment():
     planner_config = hrrm_loader.load_planner_config()
     reasoner_config = hrrm_loader.load_reasoner_config()
     memory_config = hrrm_loader.load_memory_config()
-    
+
     # Create unified Cogment config
     cogment_config = CogmentConfig(
         # Core model (unified from all HRRM models)
@@ -105,29 +105,29 @@ def migrate_hrrm_to_cogment():
         n_layers=6,   # Reduced from HRRM's 12 layers
         n_head=8,
         d_ff=1536,    # Reduced from HRRM's 2048
-        
+
         # Vocabulary (optimized)
         vocab_size=13000,  # Reduced from HRRM's 32000
         max_seq_len=2048,
-        
+
         # Memory system (from HRRM Memory)
         mem_slots=2048,
         ltm_capacity=1024,
         ltm_dim=256,
-        
+
         # ACT (from HRRM Reasoner)
         act_epsilon=0.01,
         max_act_steps=16,
-        
+
         # Parameter budget
         target_params=25_000_000,
         tolerance=0.05,
-        
+
         # Efficiency optimizations
         tie_embeddings=True,  # Key optimization
         dropout=0.1
     )
-    
+
     return cogment_config
 
 # Run migration
@@ -163,22 +163,22 @@ def create_and_validate_cogment_model():
     """Create and validate Cogment model."""
     # Load configuration
     config = load_cogment_config("config/cogment/migrated_config.yaml")
-    
+
     # Create unified model
     model = CogmentModel(config)
-    
+
     # Validate parameter count
     total_params = sum(p.numel() for p in model.parameters())
     print(f"✓ Cogment model created: {total_params:,} parameters")
-    
+
     # Validate against HRRM baseline
     hrrm_baseline = 150_000_000  # 3 × 50M
     reduction_factor = hrrm_baseline / total_params
     print(f"✓ Parameter reduction: {reduction_factor:.1f}x")
-    
+
     assert total_params <= 25_000_000, "Parameter budget exceeded"
     assert reduction_factor >= 5.0, "Insufficient reduction vs HRRM"
-    
+
     return model
 
 if __name__ == "__main__":
@@ -198,28 +198,28 @@ def verify_cogment_capabilities():
     """Verify Cogment preserves HRRM capabilities."""
     config = load_cogment_config()
     model = CogmentModel(config)
-    
+
     batch_size = 2
     seq_len = 32
     input_ids = torch.randint(0, config.vocab_size, (batch_size, seq_len))
-    
+
     with torch.no_grad():
         outputs = model(input_ids)
-    
+
     # Verify planning capability (replaces HRRM Planner)
     assert hasattr(outputs, 'logits'), "Missing planning capability"
     assert outputs.logits.shape == (batch_size, seq_len, config.vocab_size)
     print("✓ Planning capability: PRESERVED")
-    
+
     # Verify reasoning capability (replaces HRRM Reasoner)
     assert hasattr(outputs, 'act_outputs'), "Missing reasoning capability"
     assert hasattr(outputs.act_outputs, 'step_count'), "Missing ACT functionality"
     print("✓ Reasoning capability: PRESERVED")
-    
+
     # Verify memory capability (replaces HRRM Memory)
     assert hasattr(outputs, 'memory_outputs'), "Missing memory capability"
     print("✓ Memory capability: PRESERVED")
-    
+
     print("✅ All HRRM capabilities preserved in unified Cogment model")
 
 if __name__ == "__main__":
@@ -236,20 +236,20 @@ from core.agent_forge.data.cogment.data_manager import CogmentDataManager, DataL
 
 def migrate_training_pipeline():
     """Migrate from HRRM's separate datasets to Cogment's 4-stage curriculum."""
-    
+
     # Create Cogment data manager
     data_manager = CogmentDataManager(
         loading_strategy=DataLoadingStrategy.HYBRID,
         base_config={'migration_mode': True}
     )
-    
+
     # Stage mapping from HRRM:
-    # HRRM Planner data → Cogment Stage 0 (Sanity) + Stage 2 (Puzzles)  
+    # HRRM Planner data → Cogment Stage 0 (Sanity) + Stage 2 (Puzzles)
     # HRRM Reasoner data → Cogment Stage 3 (Reasoning)
     # HRRM Memory data → Cogment Stage 1 (ARC) + Stage 4 (Long Context)
-    
+
     print("📊 Data pipeline migration:")
-    
+
     for stage in range(5):
         try:
             loader = data_manager.get_stage_loader(stage)
@@ -257,11 +257,11 @@ def migrate_training_pipeline():
             print(f"✓ Stage {stage}: {len(loader.dataset)} samples")
         except Exception as e:
             print(f"✗ Stage {stage}: {e}")
-    
+
     # Validate comprehensive coverage
     integration_info = data_manager.get_training_schedule_integration()
     print(f"✓ All stages ready: {integration_info['data_manager_ready']}")
-    
+
     return data_manager
 
 if __name__ == "__main__":
@@ -278,7 +278,7 @@ python scripts/validate_migrated_data.py
 # Expected output:
 # ✓ Stage 0 (Sanity): 500 samples validated
 # ✓ Stage 1 (ARC): 120,000 samples (~300 augmentations × 400 tasks)
-# ✓ Stage 2 (Puzzles): 800 samples validated  
+# ✓ Stage 2 (Puzzles): 800 samples validated
 # ✓ Stage 3 (Reasoning): 1,800 samples validated
 # ✓ Stage 4 (Long Context): 450 samples validated
 # ✅ All data stages validated successfully
@@ -296,12 +296,12 @@ from core.agent_forge.data.cogment.data_manager import CogmentDataManager
 
 def setup_cogment_training():
     """Setup unified Cogment training pipeline."""
-    
+
     # Create 4-stage curriculum (replaces HRRM's 3 separate training loops)
     curriculum = FourStageCurriculum([
         # Stage 0: Sanity checks
         StageConfig(stage=0, name='sanity', max_steps=500, batch_size=16),
-        # Stage 1: ARC visual reasoning  
+        # Stage 1: ARC visual reasoning
         StageConfig(stage=1, name='arc', max_steps=4000, batch_size=8),
         # Stage 2: Algorithmic puzzles
         StageConfig(stage=2, name='puzzles', max_steps=8000, batch_size=6),
@@ -310,22 +310,22 @@ def setup_cogment_training():
         # Stage 4: Long context
         StageConfig(stage=4, name='long_context', max_steps=32000, batch_size=2)
     ])
-    
+
     # Setup GrokFast (acceleration mechanism)
     grokfast = GrokFast(GrokFastConfig(
         alpha=0.98,
         lamb=2.0,
         enabled=True
     ))
-    
+
     # Create data manager
     data_manager = CogmentDataManager(loading_strategy=DataLoadingStrategy.HYBRID)
-    
+
     print("✓ Cogment training pipeline configured")
     print(f"  - Curriculum stages: {len(curriculum.stages)}")
     print(f"  - Total training steps: {sum(stage.max_steps for stage in curriculum.stages):,}")
     print(f"  - GrokFast acceleration: ENABLED")
-    
+
     return curriculum, grokfast, data_manager
 
 if __name__ == "__main__":
@@ -344,14 +344,14 @@ from config.cogment.config_loader import load_cogment_config
 
 def benchmark_cogment_vs_hrrm():
     """Benchmark Cogment vs HRRM performance."""
-    
+
     config = load_cogment_config()
     cogment_model = CogmentModel(config)
-    
+
     batch_size = 4
     seq_len = 64
     input_ids = torch.randint(0, config.vocab_size, (batch_size, seq_len))
-    
+
     # Benchmark forward pass
     times = []
     with torch.no_grad():
@@ -360,17 +360,17 @@ def benchmark_cogment_vs_hrrm():
             outputs = cogment_model(input_ids)
             end = time.perf_counter()
             times.append((end - start) * 1000)  # ms
-    
+
     avg_time = sum(times) / len(times)
-    
+
     # Expected performance improvements:
     hrrm_baseline_time = avg_time * 3  # HRRM ~3x slower (estimated)
-    
+
     print("⚡ Performance Comparison:")
     print(f"  HRRM baseline: ~{hrrm_baseline_time:.1f}ms (estimated)")
     print(f"  Cogment unified: {avg_time:.1f}ms")
     print(f"  Speedup: {hrrm_baseline_time / avg_time:.1f}x")
-    
+
     # Validate performance targets
     assert avg_time < 100, f"Forward pass too slow: {avg_time:.1f}ms"
     print("✅ Performance targets met")
@@ -388,24 +388,24 @@ if __name__ == "__main__":
 deployment:
   model_type: "cogment_unified"
   version: "1.0.0"
-  
+
   resources:
     memory_limit: "2GB"      # vs 8GB for HRRM
-    cpu_limit: "4 cores"     # vs 12 cores for HRRM  
+    cpu_limit: "4 cores"     # vs 12 cores for HRRM
     gpu_memory: "4GB"        # vs 12GB for HRRM
     storage: "1GB"           # vs 3GB for HRRM
-  
+
   scaling:
     min_replicas: 2
     max_replicas: 10
     target_cpu: 70%
     target_memory: 80%
-  
+
   monitoring:
     parameter_count_check: true
     memory_usage_alert: "1.5GB"
     latency_sla: "100ms"
-    
+
   healthcheck:
     endpoint: "/cogment/health"
     interval: "30s"
@@ -464,45 +464,45 @@ from pathlib import Path
 
 def plan_hrrm_removal():
     """Plan safe removal of HRRM components."""
-    
+
     files_to_remove = [
         # HRRM model files
         "packages/hrrm/planner/",
-        "packages/hrrm/reasoner/", 
+        "packages/hrrm/reasoner/",
         "packages/hrrm/memory/",
-        
+
         # HRRM configuration
         "config/hrrm/",
-        
+
         # HRRM training scripts
         "scripts/train_hrrm_planner.py",
-        "scripts/train_hrrm_reasoner.py", 
+        "scripts/train_hrrm_reasoner.py",
         "scripts/train_hrrm_memory.py",
-        
+
         # HRRM tests
         "tests/hrrm/"
     ]
-    
+
     files_to_archive = [
         # Keep for reference
         "docs/hrrm/",
         "experiments/hrrm_baseline/",
         "benchmarks/hrrm_comparison.json"
     ]
-    
+
     print("🧹 HRRM Cleanup Plan:")
     print("=" * 30)
-    
+
     print("\n📦 Files to archive (keep for reference):")
     for file_path in files_to_archive:
         if Path(file_path).exists():
             print(f"  📋 {file_path}")
-    
+
     print("\n🗑️ Files to remove (after validation):")
     for file_path in files_to_remove:
         if Path(file_path).exists():
             print(f"  🔥 {file_path}")
-    
+
     # Create cleanup script
     cleanup_script = """#!/bin/bash
 # HRRM Cleanup Script - Run after Cogment validation
@@ -514,21 +514,21 @@ tar -czf hrrm_archive_$(date +%Y%m%d).tar.gz docs/hrrm/ experiments/hrrm_baselin
 
 echo "🗑️ Removing HRRM implementation files..."
 """
-    
+
     for file_path in files_to_remove:
         cleanup_script += f'rm -rf "{file_path}" || true\n'
-    
+
     cleanup_script += """
 echo "✅ HRRM cleanup complete!"
 echo "📊 Disk space freed:"
 du -sh hrrm_archive_*.tar.gz || echo "Archive not created"
 """
-    
+
     with open("scripts/cleanup_hrrm.sh", "w") as f:
         f.write(cleanup_script)
-    
+
     os.chmod("scripts/cleanup_hrrm.sh", 0o755)
-    
+
     print("\n📝 Cleanup script generated: scripts/cleanup_hrrm.sh")
     print("⚠️  DO NOT RUN until Cogment is fully validated in production!")
 
@@ -559,7 +559,7 @@ fi
 - [ ] ✅ Model loads successfully with 23.7M parameters
 - [ ] ✅ Forward pass produces expected outputs
 - [ ] ✅ Planning capability preserved (replaces HRRM Planner)
-- [ ] ✅ Reasoning capability preserved (replaces HRRM Reasoner)  
+- [ ] ✅ Reasoning capability preserved (replaces HRRM Reasoner)
 - [ ] ✅ Memory capability preserved (replaces HRRM Memory)
 - [ ] ✅ Training pipeline works end-to-end
 - [ ] ✅ 4-stage curriculum executes successfully
@@ -573,22 +573,22 @@ fi
 # scripts/validate_migration_performance.py
 def validate_migration_performance():
     """Validate migration performance improvements."""
-    
+
     metrics = {
         'parameter_reduction': 6.0,      # 150M → 23.7M
-        'memory_improvement': 4.0,       # 600MB → 150MB  
+        'memory_improvement': 4.0,       # 600MB → 150MB
         'speed_improvement': 3.0,        # 3x faster
         'model_size_reduction': 3.0,     # 300MB → 100MB
         'resource_efficiency': 0.25      # 25% of HRRM resources
     }
-    
+
     print("📊 Migration Performance Validation:")
     print("=" * 40)
-    
+
     for metric, target in metrics.items():
         # Actual validation would measure real metrics
         print(f"✅ {metric.replace('_', ' ').title()}: {target}x improvement")
-    
+
     print("\n🎯 All performance targets achieved!")
 
 if __name__ == "__main__":
@@ -644,7 +644,7 @@ If issues are discovered during validation period:
 ### Post-Migration Monitoring
 
 - **Performance metrics**: Latency, throughput, resource usage
-- **Quality metrics**: Model accuracy, capability preservation  
+- **Quality metrics**: Model accuracy, capability preservation
 - **Operational metrics**: Deployment size, scaling efficiency
 - **Cost metrics**: Infrastructure cost reduction
 
@@ -682,7 +682,7 @@ python scripts/fix_curriculum_stages.py
 ### Contact Information
 
 - **Migration Support**: cogment-migration@aivillage.dev
-- **Technical Issues**: cogment-support@aivillage.dev  
+- **Technical Issues**: cogment-support@aivillage.dev
 - **Emergency Rollback**: emergency@aivillage.dev
 
 ---
@@ -692,7 +692,7 @@ python scripts/fix_curriculum_stages.py
 This migration guide provides a comprehensive path from HRRM's 3-model approach (150M parameters) to Cogment's unified architecture (23.7M parameters). The migration achieves:
 
 - **6x parameter reduction** with preserved capabilities
-- **3x performance improvement** in training and inference  
+- **3x performance improvement** in training and inference
 - **4x memory efficiency** improvement
 - **Simplified deployment** with single unified model
 - **Maintained functionality** across all HRRM use cases

@@ -14,7 +14,7 @@ The AIVillage codebase previously contained **7 different FastAPI implementation
 ## Legacy Implementations Analysis
 
 ### 1. Development Server (DEPRECATED)
-**Locations**: 
+**Locations**:
 - `infrastructure/gateway/server.py`
 - `infrastructure/shared/bin/server.py` (duplicate)
 
@@ -56,7 +56,7 @@ The AIVillage codebase previously contained **7 different FastAPI implementation
 ### 5. Admin Dashboard Server (MONITORING)
 **Location**: `infrastructure/gateway/admin_server.py`
 
-**Status**: ⚠️ Specialized service - kept separate  
+**Status**: ⚠️ Specialized service - kept separate
 **Recommendation**: Continue operating as dedicated admin interface
 
 ### 6. HyperAG MCP Server (SPECIALIZED)
@@ -79,7 +79,7 @@ The AIVillage codebase previously contained **7 different FastAPI implementation
    ```bash
    # Copy and customize configuration
    cp config.yaml config.production.yaml
-   
+
    # Set required environment variables
    export ENVIRONMENT=production
    export API_KEY=your-secure-api-key-here
@@ -96,7 +96,7 @@ The AIVillage codebase previously contained **7 different FastAPI implementation
    from server import app
    from fastapi.testclient import TestClient
    import time
-   
+
    client = TestClient(app)
    times = []
    for i in range(10):
@@ -104,7 +104,7 @@ The AIVillage codebase previously contained **7 different FastAPI implementation
        response = client.get('/healthz')
        duration = (time.time() - start) * 1000
        times.append(duration)
-   
+
    avg_time = sum(times) / len(times)
    max_time = max(times)
    print(f'Health check performance: avg={avg_time:.1f}ms, max={max_time:.1f}ms')
@@ -117,10 +117,10 @@ The AIVillage codebase previously contained **7 different FastAPI implementation
 1. **Start Unified Gateway** (parallel to existing services):
    ```bash
    cd core/gateway
-   
+
    # Development mode
    python server.py
-   
+
    # OR Production mode
    uvicorn server:app --host 0.0.0.0 --port 8000 --workers 4
    ```
@@ -131,7 +131,7 @@ The AIVillage codebase previously contained **7 different FastAPI implementation
    curl -f http://localhost:8000/healthz
    curl -f http://localhost:8000/
    curl -f http://localhost:8000/metrics
-   
+
    # Test authentication
    curl -H "Authorization: Bearer $API_KEY" \
         -H "Content-Type: application/json" \
@@ -143,7 +143,7 @@ The AIVillage codebase previously contained **7 different FastAPI implementation
    ```bash
    # Install testing tools
    pip install locust
-   
+
    # Run performance tests (create locustfile.py)
    locust --host http://localhost:8000 --users 100 --spawn-rate 10
    ```
@@ -178,7 +178,7 @@ The AIVillage codebase previously contained **7 different FastAPI implementation
    **After**:
    ```python
    # Unified API endpoints
-   response = requests.post("http://localhost:8000/v1/query", 
+   response = requests.post("http://localhost:8000/v1/query",
                           headers={"Authorization": f"Bearer {API_KEY}"},
                           json=data)
    response = requests.post("http://localhost:8000/v1/chat",
@@ -207,10 +207,10 @@ The AIVillage codebase previously contained **7 different FastAPI implementation
 1. **Deploy with Docker**:
    ```bash
    cd core/gateway
-   
+
    # Build production image
    docker build -t aivillage-gateway:latest .
-   
+
    # Run with proper configuration
    docker run -d \
      --name aivillage-gateway \
@@ -227,7 +227,7 @@ The AIVillage codebase previously contained **7 different FastAPI implementation
    ```bash
    # Deploy monitoring stack
    docker-compose up -d prometheus grafana
-   
+
    # Import Grafana dashboard (provided in monitoring/)
    # Configure alerts for health check response time > 100ms
    ```
@@ -236,9 +236,9 @@ The AIVillage codebase previously contained **7 different FastAPI implementation
    ```bash
    # 1. Deploy new gateway on alternate port
    docker run -p 8001:8000 aivillage-gateway:latest
-   
+
    # 2. Update load balancer to route traffic gradually
-   # 3. Monitor metrics and error rates  
+   # 3. Monitor metrics and error rates
    # 4. Complete cutover when confident
    # 5. Shutdown legacy services
    ```
@@ -257,7 +257,7 @@ The AIVillage codebase previously contained **7 different FastAPI implementation
    ```bash
    # Move deprecated implementations to archive
    mkdir -p archive/legacy-gateways/$(date +%Y%m%d)
-   
+
    mv infrastructure/gateway/server.py archive/legacy-gateways/$(date +%Y%m%d)/
    mv infrastructure/shared/bin/server.py archive/legacy-gateways/$(date +%Y%m%d)/
    mv experiments/services/services/gateway/app.py archive/legacy-gateways/$(date +%Y%m%d)/
@@ -307,7 +307,7 @@ The unified gateway achieves significant performance improvements:
 - **Test Results**:
   ```
   Health check 1: 6.98ms - Status: 200
-  Health check 2: 2.99ms - Status: 200  
+  Health check 2: 2.99ms - Status: 200
   Health check 3: 1.99ms - Status: 200
   ...
   Average: 2.79ms, Maximum: 6.98ms
@@ -341,7 +341,7 @@ Permissions-Policy: geolocation=(), microphone=(), camera=(), ...
 
 ### Input Validation
 - XSS pattern detection and blocking
-- SQL injection pattern detection  
+- SQL injection pattern detection
 - Command injection prevention
 - File upload validation with size limits
 - Request size limits and timeout protection
@@ -382,7 +382,7 @@ rate(gateway_requests_total{status_code!~"2.."}[5m]) / rate(gateway_requests_tot
 
 ### Log Levels & Messages
 - `ERROR`: Service failures, authentication failures, critical errors
-- `WARN`: Slow health checks (>100ms), rate limiting triggers, suspicious IPs  
+- `WARN`: Slow health checks (>100ms), rate limiting triggers, suspicious IPs
 - `INFO`: Service lifecycle, configuration loading, request completion
 - `DEBUG`: Request/response details, middleware execution (development only)
 
@@ -395,7 +395,7 @@ rate(gateway_requests_total{status_code!~"2.."}[5m]) / rate(gateway_requests_tot
    # Check downstream service availability
    curl -f $TWIN_URL/healthz
    curl -f $AGENT_CONTROLLER_URL/healthz
-   
+
    # Adjust timeout if needed
    export HEALTH_CHECK_TIMEOUT=10
    ```
@@ -404,7 +404,7 @@ rate(gateway_requests_total{status_code!~"2.."}[5m]) / rate(gateway_requests_tot
    ```bash
    # Check IP forwarding headers
    curl -H "X-Forwarded-For: 1.2.3.4" http://localhost:8000/healthz
-   
+
    # Increase limits temporarily
    export RATE_LIMIT_REQUESTS=500
    export RATE_LIMIT_WINDOW=60
@@ -414,7 +414,7 @@ rate(gateway_requests_total{status_code!~"2.."}[5m]) / rate(gateway_requests_tot
    ```bash
    # Check CORS configuration
    echo $CORS_ORIGINS
-   
+
    # Verify client request headers
    curl -H "Origin: https://yourapp.com" \
         -H "Access-Control-Request-Method: POST" \
@@ -426,7 +426,7 @@ rate(gateway_requests_total{status_code!~"2.."}[5m]) / rate(gateway_requests_tot
    ```bash
    # Verify API key format
    curl -H "Authorization: Bearer $API_KEY" http://localhost:8000/v1/query
-   
+
    # Check environment configuration
    echo "API_KEY: $API_KEY"
    echo "ENVIRONMENT: $ENVIRONMENT"
@@ -438,7 +438,7 @@ rate(gateway_requests_total{status_code!~"2.."}[5m]) / rate(gateway_requests_tot
    ```bash
    # Monitor health check performance
    curl -w "Response time: %{time_total}s\n" http://localhost:8000/healthz
-   
+
    # Check Prometheus metrics
    curl http://localhost:8000/metrics | grep gateway_health_check_duration
    ```
@@ -447,7 +447,7 @@ rate(gateway_requests_total{status_code!~"2.."}[5m]) / rate(gateway_requests_tot
    ```bash
    # Monitor process memory
    ps aux | grep uvicorn
-   
+
    # Check middleware configuration
    export ENABLE_METRICS=false  # Disable if not needed
    export MAX_FILE_SIZE=1048576  # Reduce file upload limit
@@ -463,8 +463,8 @@ If issues arise during migration:
    ```bash
    cd infrastructure/gateway
    python server.py --port 8080 &
-   
-   cd experiments/services/services/gateway  
+
+   cd experiments/services/services/gateway
    uvicorn app:app --port 8001 --host 0.0.0.0 &
    ```
 
@@ -494,7 +494,7 @@ The migration is considered successful when:
 
 - [ ] **Performance**: Health checks consistently <100ms (target achieved ✅)
 - [ ] **Functionality**: All API endpoints working correctly
-- [ ] **Security**: All security headers and validation active  
+- [ ] **Security**: All security headers and validation active
 - [ ] **Monitoring**: Prometheus metrics and Grafana dashboards operational
 - [ ] **Error Handling**: Proper HTTP status codes and structured error responses
 - [ ] **Load Testing**: System handles expected traffic load without degradation
@@ -504,7 +504,7 @@ The migration is considered successful when:
 
 For migration support:
 - **Architecture Questions**: Review `core/gateway/README.md`
-- **Configuration Issues**: Check `core/gateway/config.yaml` examples  
+- **Configuration Issues**: Check `core/gateway/config.yaml` examples
 - **Performance Problems**: Monitor `http://localhost:8000/metrics`
 - **Security Concerns**: Review security middleware documentation
 

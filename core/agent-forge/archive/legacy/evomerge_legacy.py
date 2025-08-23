@@ -59,11 +59,11 @@ class EvoMergeConfig(PhaseConfig):
 
     # If True, prioritize Cogment seed models over base models for faster iteration
     prefer_seeds: bool = True
-    
+
     # Cogment integration settings
     use_cogment_adapter: bool = True  # Enable Cogment-specific merging
     preserve_act_dynamics: bool = True  # Preserve ACT halting during merging
-    preserve_ltm_state: bool = True     # Preserve LTM memory dynamics
+    preserve_ltm_state: bool = True  # Preserve LTM memory dynamics
 
     output_dir: str = "./evomerge_output"
     device: str = "cuda" if torch.cuda.is_available() else "cpu"
@@ -645,7 +645,7 @@ class EvoMergePhase:
 
     Complete consolidation of all EvoMerge implementations with:
     - All merge techniques (linear, slerp, ties, dare, frankenmerge, dfs, task arithmetic)
-    - Multi-objective optimization with NSGA-II  
+    - Multi-objective optimization with NSGA-II
     - Tournament selection and evolutionary strategies
     - Comprehensive evaluation across domains
     - Memory-efficient chunked processing
@@ -661,12 +661,13 @@ class EvoMergePhase:
         self.merge_ops = MergeOperators()
         self.evaluator = ModelEvaluator(self.device, config.__dict__)
         self.tournament = EvolutionaryTournament(config)
-        
+
         # Cogment integration
         self.cogment_adapter = None
-        if getattr(config, 'use_cogment_adapter', False):
+        if getattr(config, "use_cogment_adapter", False):
             try:
                 from core.agent_forge.integration.cogment import CogmentEvoMergeAdapter
+
                 self.cogment_adapter = CogmentEvoMergeAdapter(config)
                 self.logger.info("✅ Cogment adapter initialized for single model workflow")
             except ImportError as e:
@@ -723,7 +724,7 @@ class EvoMergePhase:
             # First try Cogment tokenizer directory, then HRRM for compatibility
             cogment_tokenizer_path = "hf_models/cogment-tokenizer"
             hrrm_tokenizer_path = "hf_models/hrrm-tokenizer"
-            
+
             if Path(cogment_tokenizer_path).exists():
                 tokenizer = AutoTokenizer.from_pretrained(cogment_tokenizer_path, local_files_only=True)
                 self.logger.info("✅ Using Cogment tokenizer")

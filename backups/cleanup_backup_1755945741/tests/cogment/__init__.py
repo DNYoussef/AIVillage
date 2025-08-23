@@ -1,12 +1,12 @@
 """
 Cogment System Test Suite
 
-Comprehensive testing for the unified Cogment model (23.7M parameters) that replaces 
+Comprehensive testing for the unified Cogment model (23.7M parameters) that replaces
 the 3-model HRRM approach (150M total parameters).
 
 Test coverage includes:
 - Core model components (Agent 1): RefinementCore, ACT halting, parameter counting
-- Memory system (Agent 2): GatedLTM read/write, surprise gating, memory decay  
+- Memory system (Agent 2): GatedLTM read/write, surprise gating, memory decay
 - Heads optimization (Agent 3): Image, text, task adapters, vocabulary optimization
 - Training curriculum (Agent 4): 4-stage pipeline, GrokFast integration, loss functions
 - Data pipeline (Agent 5): All stages, ~300 ARC augmentations, batch generation

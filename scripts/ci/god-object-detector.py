@@ -159,10 +159,10 @@ class GodObjectDetector:
     def format_violations(self, violations: list[dict], show_details: bool = True) -> str:
         """Format violations for output."""
         if not violations:
-            return "✅ No God Objects detected!"
+            return "[PASS] No God Objects detected!"
 
         output = []
-        output.append(f"❌ Found {len(violations)} God Object(s):")
+        output.append(f"[FAIL] Found {len(violations)} God Object(s):")
         output.append("")
 
         # Group by severity
@@ -175,14 +175,14 @@ class GodObjectDetector:
 
         # Output by severity (critical first)
         severity_order = ["critical", "high", "medium", "low"]
-        severity_emojis = {"critical": "🚨", "high": "⚠️", "medium": "⚡", "low": "📝"}
+        severity_emojis = {"critical": "[CRIT]", "high": "[HIGH]", "medium": "[MED]", "low": "[LOW]"}
 
         for severity in severity_order:
             if severity in by_severity:
                 output.append(f"{severity_emojis[severity]} {severity.upper()} SEVERITY:")
 
                 for violation in by_severity[severity]:
-                    output.append(f"  📁 {violation['file']}:{violation['line']}")
+                    output.append(f"  FILE: {violation['file']}:{violation['line']}")
                     output.append(f"     Class: {violation['class']}")
                     output.append(f"     Lines: {violation['lines_of_code']}, Methods: {violation['method_count']}")
 
@@ -193,7 +193,7 @@ class GodObjectDetector:
                     output.append("")
 
         # Add refactoring suggestions
-        output.append("🛠️  REFACTORING SUGGESTIONS:")
+        output.append("[FIX] REFACTORING SUGGESTIONS:")
         output.append("   1. Extract related methods into separate classes")
         output.append("   2. Use composition instead of inheritance")
         output.append("   3. Apply Single Responsibility Principle")

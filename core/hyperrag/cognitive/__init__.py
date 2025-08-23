@@ -8,13 +8,7 @@ Advanced reasoning and analysis:
 """
 
 try:
-    from .cognitive_nexus import (
-        CognitiveNexus,
-        AnalysisType,
-        ReasoningStrategy,
-        ConfidenceLevel,
-        AnalysisResult
-    )
+    from .cognitive_nexus import AnalysisResult, AnalysisType, CognitiveNexus, ConfidenceLevel, ReasoningStrategy
 except ImportError:
     CognitiveNexus = None
     AnalysisType = None
@@ -39,5 +33,5 @@ __all__ = [
     "ConfidenceLevel",
     "AnalysisResult",
     "CreativityEngine",
-    "GraphFixer"
+    "GraphFixer",
 ]

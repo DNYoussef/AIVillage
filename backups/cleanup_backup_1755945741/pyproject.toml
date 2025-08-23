@@ -376,7 +376,7 @@ pythonpath = [
 addopts = [
     "-v",
     "--strict-markers",
-    "--strict-config", 
+    "--strict-config",
     "--tb=short",
     "--continue-on-collection-errors",
     "--maxfail=10",
@@ -385,13 +385,13 @@ addopts = [
 norecursedirs = ["experimental", "deprecated", "archive", "build", "dist"]
 filterwarnings = [
     "ignore::DeprecationWarning",
-    "ignore::PendingDeprecationWarning", 
+    "ignore::PendingDeprecationWarning",
     "ignore::UserWarning:torch.*"
 ]
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
     "integration: marks tests as integration tests",
-    "unit: marks tests as unit tests", 
+    "unit: marks tests as unit tests",
     "compression: marks tests as compression tests",
     "mobile: marks tests as mobile constraint tests",
     "validation: marks tests as validation tests",

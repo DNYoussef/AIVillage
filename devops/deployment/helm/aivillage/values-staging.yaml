@@ -24,7 +24,7 @@ ingress:
         - path: /
           pathType: Prefix
   tls:
-    - secretName: aivillage-staging-tls
+    - secretName: "${AIVILLAGE_STAGING_TLS_SECRET_NAME}"
       hosts:
         - staging-api.aivillage.com
 

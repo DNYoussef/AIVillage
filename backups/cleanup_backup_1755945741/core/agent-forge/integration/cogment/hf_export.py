@@ -13,19 +13,19 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 import torch
-from transformers import PretrainedConfig, PreTrainedModel, AutoConfig, AutoModel
+from transformers import AutoConfig, AutoModel, PretrainedConfig, PreTrainedModel
 
-from core.agent_forge.models.cogment.core.model import Cogment
 from core.agent_forge.models.cogment.core.config import CogmentConfig
+from core.agent_forge.models.cogment.core.model import Cogment
 
 logger = logging.getLogger(__name__)
 
 
 class CogmentHFConfig(PretrainedConfig):
     """HuggingFace-compatible configuration for Cogment models."""
-    
+
     model_type = "cogment"
-    
+
     def __init__(
         self,
         d_model: int = 320,
@@ -46,10 +46,10 @@ class CogmentHFConfig(PretrainedConfig):
         layer_norm_eps: float = 1e-5,
         ltm_capacity: int = 1024,
         ltm_dim: int = 512,
-        **kwargs
+        **kwargs,
     ):
         super().__init__(**kwargs)
-        
+
         # Core transformer dimensions
         self.d_model = d_model
         self.n_head = n_head
@@ -58,40 +58,40 @@ class CogmentHFConfig(PretrainedConfig):
         self.vocab_size = vocab_size
         self.max_seq_len = max_seq_len
         self.rope_base = rope_base
-        
+
         # Cogment-specific parameters
         self.memory_fusion_dim = memory_fusion_dim
         self.refinement_steps = refinement_steps
         self.min_refinement_steps = min_refinement_steps
         self.max_refinement_steps = max_refinement_steps
-        
+
         # ACT halting parameters
         self.act_threshold = act_threshold
         self.ponder_cost_weight = ponder_cost_weight
         self.halt_epsilon = halt_epsilon
-        
+
         # Training parameters
         self.dropout = dropout
         self.layer_norm_eps = layer_norm_eps
-        
+
         # Memory parameters
         self.ltm_capacity = ltm_capacity
         self.ltm_dim = ltm_dim
-    
+
     @classmethod
-    def from_cogment_config(cls, cogment_config: CogmentConfig) -> 'CogmentHFConfig':
+    def from_cogment_config(cls, cogment_config: CogmentConfig) -> "CogmentHFConfig":
         """Create HF config from Cogment config."""
         return cls(**cogment_config.__dict__)
 
 
 class CogmentForCausalLM(PreTrainedModel):
     """HuggingFace-compatible wrapper for Cogment models."""
-    
+
     config_class = CogmentHFConfig
-    
+
     def __init__(self, config: CogmentHFConfig):
         super().__init__(config)
-        
+
         # Convert HF config to Cogment config
         cogment_config = CogmentConfig(
             d_model=config.d_model,
@@ -111,12 +111,12 @@ class CogmentForCausalLM(PreTrainedModel):
             dropout=config.dropout,
             layer_norm_eps=config.layer_norm_eps,
             ltm_capacity=config.ltm_capacity,
-            ltm_dim=config.ltm_dim
+            ltm_dim=config.ltm_dim,
         )
-        
+
         # Create the actual Cogment model
         self.cogment_model = Cogment(cogment_config)
-    
+
     def forward(
         self,
         input_ids: torch.Tensor,
@@ -125,7 +125,7 @@ class CogmentForCausalLM(PreTrainedModel):
         memory: Optional[torch.Tensor] = None,
         max_refinement_steps: Optional[int] = None,
         return_dict: bool = True,
-        **kwargs
+        **kwargs,
     ):
         """Forward pass compatible with HuggingFace interface."""
         # Convert attention_mask to causal mask if needed
@@ -136,27 +136,28 @@ class CogmentForCausalLM(PreTrainedModel):
             attn_mask = attn_mask.unsqueeze(0).expand(batch_size, -1, -1)
             # Apply padding mask
             attn_mask = attn_mask * attention_mask.unsqueeze(1)
-        
+
         # Call Cogment model
         output = self.cogment_model(
             input_ids=input_ids,
             labels=labels,
             attn_mask=attn_mask,
             memory=memory,
-            max_refinement_steps=max_refinement_steps
+            max_refinement_steps=max_refinement_steps,
         )
-        
+
         if return_dict:
             from transformers.modeling_outputs import CausalLMOutput
+
             return CausalLMOutput(
                 loss=output.loss,
                 logits=output.logits,
                 hidden_states=None,  # Not implemented
-                attentions=None      # Not implemented
+                attentions=None,  # Not implemented
             )
         else:
             return (output.loss, output.logits)
-    
+
     def generate(
         self,
         input_ids: torch.Tensor,
@@ -166,7 +167,7 @@ class CogmentForCausalLM(PreTrainedModel):
         top_p: Optional[float] = None,
         do_sample: bool = True,
         memory: Optional[torch.Tensor] = None,
-        **kwargs
+        **kwargs,
     ) -> torch.Tensor:
         """Generation compatible with HuggingFace interface."""
         return self.cogment_model.generate(
@@ -176,13 +177,13 @@ class CogmentForCausalLM(PreTrainedModel):
             top_k=top_k,
             top_p=top_p,
             do_sample=do_sample,
-            memory=memory
+            memory=memory,
         )
-    
+
     def count_parameters(self) -> int:
         """Count total trainable parameters."""
         return self.cogment_model.count_parameters()
-    
+
     def parameter_breakdown(self) -> Dict[str, int]:
         """Get detailed parameter breakdown."""
         return self.cogment_model.parameter_breakdown()
@@ -191,15 +192,15 @@ class CogmentForCausalLM(PreTrainedModel):
 class CogmentHFExporter:
     """
     Export Cogment models to HuggingFace format for deployment.
-    
+
     Replaces HRRM's 3-model export with unified single model export
     while preserving all specialized capabilities (ACT, LTM, heads).
     """
-    
+
     def __init__(self):
         self.export_history: list[Dict[str, Any]] = []
         logger.info("Initialized CogmentHFExporter for unified model deployment")
-    
+
     def export_cogment_model(
         self,
         model: Cogment,
@@ -207,11 +208,11 @@ class CogmentHFExporter:
         model_name: str = "cogment-unified",
         push_to_hub: bool = False,
         hub_repo_id: Optional[str] = None,
-        save_metadata: bool = True
+        save_metadata: bool = True,
     ) -> Dict[str, Any]:
         """
         Export trained Cogment model to HuggingFace format.
-        
+
         Args:
             model: Trained Cogment model
             output_path: Directory to save the exported model
@@ -219,7 +220,7 @@ class CogmentHFExporter:
             push_to_hub: Whether to push to HuggingFace Hub
             hub_repo_id: Repository ID for HuggingFace Hub
             save_metadata: Whether to save additional metadata
-            
+
         Returns:
             Export result summary
         """
@@ -227,97 +228,90 @@ class CogmentHFExporter:
             logger.info(f"🚀 Exporting Cogment model to HuggingFace format...")
             logger.info(f"   Model: {model.count_parameters():,} parameters")
             logger.info(f"   Output: {output_path}")
-            
+
             output_dir = Path(output_path)
             output_dir.mkdir(parents=True, exist_ok=True)
-            
+
             # Create HuggingFace config
             hf_config = CogmentHFConfig.from_cogment_config(model.config)
-            
+
             # Create HuggingFace model wrapper
             hf_model = CogmentForCausalLM(hf_config)
-            
+
             # Transfer weights from Cogment model
             hf_model.cogment_model.load_state_dict(model.state_dict())
-            
+
             # Save model and config
             logger.info("💾 Saving HuggingFace model...")
             hf_model.save_pretrained(
-                output_dir,
-                safe_serialization=True,  # Use safetensors format
-                max_shard_size="5GB"
+                output_dir, safe_serialization=True, max_shard_size="5GB"  # Use safetensors format
             )
-            
+
             # Save tokenizer info (placeholder - in production would use actual tokenizer)
             self._create_tokenizer_files(output_dir)
-            
+
             # Create model card
             model_card = self._create_model_card(model, model_name)
             with open(output_dir / "README.md", "w") as f:
                 f.write(model_card)
-            
+
             # Save additional metadata if requested
             if save_metadata:
                 metadata = self._create_model_metadata(model, model_name)
                 with open(output_dir / "cogment_metadata.json", "w") as f:
                     json.dump(metadata, f, indent=2)
-            
+
             # Test loading
             logger.info("🧪 Testing model loading...")
             test_result = self._test_exported_model(output_dir)
-            
-            if not test_result['success']:
+
+            if not test_result["success"]:
                 raise Exception(f"Model loading test failed: {test_result['error']}")
-            
+
             # Push to hub if requested
             hub_url = None
             if push_to_hub and hub_repo_id:
                 hub_url = self._push_to_hub(hf_model, hub_repo_id)
-            
+
             # Create export summary
             export_summary = {
-                'success': True,
-                'model_name': model_name,
-                'output_path': str(output_dir),
-                'parameter_count': model.count_parameters(),
-                'parameter_breakdown': model.parameter_breakdown(),
-                'model_size_mb': self._calculate_model_size(output_dir),
-                'files_created': list(output_dir.iterdir()),
-                'hub_url': hub_url,
-                'test_result': test_result,
-                'export_type': 'unified_cogment_model',
-                'replaces': '3_separate_hrrm_models',
-                'benefits': {
-                    'deployment_simplicity': 'Single model vs 3-model coordination',
-                    'memory_efficiency': '6x smaller than HRRM ensemble',
-                    'inference_speed': 'Unified forward pass',
-                    'maintenance': 'Single model updates'
-                }
+                "success": True,
+                "model_name": model_name,
+                "output_path": str(output_dir),
+                "parameter_count": model.count_parameters(),
+                "parameter_breakdown": model.parameter_breakdown(),
+                "model_size_mb": self._calculate_model_size(output_dir),
+                "files_created": list(output_dir.iterdir()),
+                "hub_url": hub_url,
+                "test_result": test_result,
+                "export_type": "unified_cogment_model",
+                "replaces": "3_separate_hrrm_models",
+                "benefits": {
+                    "deployment_simplicity": "Single model vs 3-model coordination",
+                    "memory_efficiency": "6x smaller than HRRM ensemble",
+                    "inference_speed": "Unified forward pass",
+                    "maintenance": "Single model updates",
+                },
             }
-            
+
             self.export_history.append(export_summary)
-            
+
             logger.info("✅ COGMENT MODEL EXPORT COMPLETED")
             logger.info(f"   Location: {output_dir}")
             logger.info(f"   Size: {export_summary['model_size_mb']:.1f} MB")
             logger.info(f"   Files: {len(export_summary['files_created'])}")
-            
+
             return export_summary
-            
+
         except Exception as e:
             logger.exception("Cogment model export failed")
-            return {
-                'success': False,
-                'error': str(e),
-                'model_name': model_name,
-                'output_path': output_path
-            }
-    
+            return {"success": False, "error": str(e), "model_name": model_name, "output_path": output_path}
+
     def _create_tokenizer_files(self, output_dir: Path):
         """Create basic tokenizer files for the model."""
         # In production, this would use the actual tokenizer
         # For now, create placeholder files
-        
+
         tokenizer_config = {
             "tokenizer_class": "CogmentTokenizer",
             "vocab_size": 16000,
@@ -329,13 +323,13 @@ class CogmentHFExporter:
             "special_tokens": {
                 "act_tokens": ["<think>", "</think>"],
                 "memory_tokens": ["<memory>", "</memory>"],
-                "refinement_tokens": ["<refine>", "</refine>"]
-            }
+                "refinement_tokens": ["<refine>", "</refine>"],
+            },
         }
-        
+
         with open(output_dir / "tokenizer_config.json", "w") as f:
             json.dump(tokenizer_config, f, indent=2)
-        
+
         # Create basic vocab (placeholder)
         vocab = {f"token_{i}": i for i in range(16000)}
         for token in tokenizer_config["special_tokens"].values():
@@ -344,14 +338,14 @@ class CogmentHFExporter:
                     vocab[t] = len(vocab)
             else:
                 vocab[token] = len(vocab)
-        
+
         with open(output_dir / "vocab.json", "w") as f:
             json.dump(vocab, f)
-    
+
     def _create_model_card(self, model: Cogment, model_name: str) -> str:
         """Create a comprehensive model card."""
         param_breakdown = model.parameter_breakdown()
-        
+
         model_card = f"""---
 license: mit
 library_name: transformers
@@ -380,7 +374,7 @@ This is a production-ready Cogment model trained through the 4-stage Agent Forge
 ### Key Features
 
 - **🧠 Adaptive Computation**: ACT halting mechanism for variable computation per token
-- **💾 Long-term Memory**: Gated LTM system with read/write capabilities  
+- **💾 Long-term Memory**: Gated LTM system with read/write capabilities
 - **🔄 Iterative Refinement**: Multi-step reasoning through refinement loops
 - **⚡ Unified Architecture**: Single model replaces 3 separate HRRM models
 - **🎯 Task Specialization**: Integrated heads for different task types
@@ -399,7 +393,7 @@ This is a production-ready Cogment model trained through the 4-stage Agent Forge
 ```python
 # Core dimensions
 d_model: {model.config.d_model}
-n_layers: {model.config.n_layers}  
+n_layers: {model.config.n_layers}
 n_heads: {model.config.n_head}
 vocab_size: {model.config.vocab_size:,}
 
@@ -407,7 +401,7 @@ vocab_size: {model.config.vocab_size:,}
 act_threshold: {model.config.act_threshold}
 max_refinement_steps: {model.config.max_refinement_steps}
 
-# Memory parameters  
+# Memory parameters
 ltm_capacity: {model.config.ltm_capacity:,}
 ltm_dim: {model.config.ltm_dim}
 ```
@@ -417,7 +411,7 @@ ltm_dim: {model.config.ltm_dim}
 The model was trained using the 4-stage Agent Forge curriculum:
 
 1. **Stage 0 - Sanity**: Basic functionality validation
-2. **Stage 1 - ARC Visual**: Pattern recognition with heavy augmentation  
+2. **Stage 1 - ARC Visual**: Pattern recognition with heavy augmentation
 3. **Stage 2 - Algorithmic**: Structured reasoning and logical puzzles
 4. **Stage 3 - Math & Text**: Mathematical reasoning and multi-hop QA
 5. **Stage 4 - Long Context**: Extended sequence processing
@@ -439,7 +433,7 @@ output = model(input_ids)
 
 # Generation with adaptive computation
 generated = model.generate(
-    input_ids, 
+    input_ids,
     max_length=100,
     temperature=0.7,
     do_sample=True
@@ -475,7 +469,7 @@ print(f"Halt weights: {{output.halt_weights}}")
 ## Performance
 
 - **Parameter Efficiency**: 6.3x smaller than HRRM ensemble
-- **Inference Speed**: Single forward pass vs 3-model pipeline  
+- **Inference Speed**: Single forward pass vs 3-model pipeline
 - **Memory Usage**: 6x reduction in GPU memory requirements
 - **Training Speed**: 6x faster evolutionary operations
 - **Deployment**: Single model vs 3-model coordination
@@ -502,108 +496,105 @@ print(f"Halt weights: {{output.halt_weights}}")
 
 Agent Forge Integration Team - Phase 6 (Cogment Integration)
 """
-        
+
         return model_card
-    
+
     def _create_model_metadata(self, model: Cogment, model_name: str) -> Dict[str, Any]:
         """Create detailed metadata for the exported model."""
         return {
-            'model_info': {
-                'name': model_name,
-                'type': 'cogment_unified',
-                'version': '1.0.0',
-                'parameter_count': model.count_parameters(),
-                'parameter_breakdown': model.parameter_breakdown(),
-                'architecture': 'transformer_with_act_and_ltm'
+            "model_info": {
+                "name": model_name,
+                "type": "cogment_unified",
+                "version": "1.0.0",
+                "parameter_count": model.count_parameters(),
+                "parameter_breakdown": model.parameter_breakdown(),
+                "architecture": "transformer_with_act_and_ltm",
             },
-            'cogment_config': model.config.__dict__,
-            'capabilities': {
-                'adaptive_computation': True,
-                'long_term_memory': True,
-                'iterative_refinement': True,
-                'specialized_heads': True,
-                'unified_architecture': True
+            "cogment_config": model.config.__dict__,
+            "capabilities": {
+                "adaptive_computation": True,
+                "long_term_memory": True,
+                "iterative_refinement": True,
+                "specialized_heads": True,
+                "unified_architecture": True,
             },
-            'training_info': {
-                'curriculum': '4_stage_progressive',
-                'stages': ['sanity', 'arc_visual', 'algorithmic', 'math_text', 'long_context'],
-                'optimization': 'grokfast_accelerated',
-                'supervision': 'deep_supervision_with_act'
+            "training_info": {
+                "curriculum": "4_stage_progressive",
+                "stages": ["sanity", "arc_visual", "algorithmic", "math_text", "long_context"],
+                "optimization": "grokfast_accelerated",
+                "supervision": "deep_supervision_with_act",
             },
-            'deployment_benefits': {
-                'vs_hrrm': {
-                    'parameter_reduction': '6.3x',
-                    'memory_efficiency': '6x',
-                    'deployment_complexity': 'single_model_vs_3_model_ensemble',
-                    'inference_speed': 'unified_forward_pass',
-                    'maintenance': 'single_model_updates'
+            "deployment_benefits": {
+                "vs_hrrm": {
+                    "parameter_reduction": "6.3x",
+                    "memory_efficiency": "6x",
+                    "deployment_complexity": "single_model_vs_3_model_ensemble",
+                    "inference_speed": "unified_forward_pass",
+                    "maintenance": "single_model_updates",
                 }
             },
-            'compatibility': {
-                'transformers_version': '>=4.20.0',
-                'torch_version': '>=1.12.0',
-                'python_version': '>=3.8',
-                'special_requirements': ['cogment_extensions']
+            "compatibility": {
+                "transformers_version": ">=4.20.0",
+                "torch_version": ">=1.12.0",
+                "python_version": ">=3.8",
+                "special_requirements": ["cogment_extensions"],
             },
-            'export_metadata': {
-                'exported_by': 'CogmentHFExporter',
-                'export_version': '1.0.0',
-                'export_date': str(torch.datetime.datetime.now()),
-                'original_format': 'cogment_native'
-            }
+            "export_metadata": {
+                "exported_by": "CogmentHFExporter",
+                "export_version": "1.0.0",
+                "export_date": str(torch.datetime.datetime.now()),
+                "original_format": "cogment_native",
+            },
         }
-    
+
     def _test_exported_model(self, model_path: Path) -> Dict[str, Any]:
         """Test that the exported model can be loaded and used."""
         try:
             logger.info("Testing exported model loading...")
-            
+
             # Load the model
             model = AutoModel.from_pretrained(str(model_path), trust_remote_code=True)
             config = AutoConfig.from_pretrained(str(model_path))
-            
+
             # Test forward pass
             batch_size, seq_len = 2, 10
             test_input = torch.randint(0, config.vocab_size, (batch_size, seq_len))
-            
+
             with torch.no_grad():
                 output = model(test_input)
-            
+
             # Validate output
             if output.logits is None:
-                return {'success': False, 'error': 'No logits in output'}
-            
+                return {"success": False, "error": "No logits in output"}
+
             expected_shape = (batch_size, seq_len, config.vocab_size)
             if output.logits.shape != expected_shape:
-                return {
-                    'success': False, 
-                    'error': f'Output shape {output.logits.shape} != expected {expected_shape}'
-                }
-            
+                return {"success": False, "error": f"Output shape {output.logits.shape} != expected {expected_shape}"}
+
             # Test generation
             generated = model.generate(test_input[:1], max_length=15)
-            
+
             if generated.shape[1] <= seq_len:
-                return {'success': False, 'error': 'Generation did not extend sequence'}
-            
+                return {"success": False, "error": "Generation did not extend sequence"}
+
             return {
-                'success': True,
-                'output_shape': list(output.logits.shape),
-                'generation_length': generated.shape[1],
-                'test_passed': True
+                "success": True,
+                "output_shape": list(output.logits.shape),
+                "generation_length": generated.shape[1],
+                "test_passed": True,
             }
-            
+
         except Exception as e:
-            return {'success': False, 'error': str(e)}
-    
+            return {"success": False, "error": str(e)}
+
     def _calculate_model_size(self, model_path: Path) -> float:
         """Calculate total size of exported model in MB."""
         total_size = 0
-        for file_path in model_path.rglob('*'):
+        for file_path in model_path.rglob("*"):
             if file_path.is_file():
                 total_size += file_path.stat().st_size
         return total_size / (1024 * 1024)  # Convert to MB
-    
+
     def _push_to_hub(self, model: CogmentForCausalLM, repo_id: str) -> Optional[str]:
         """Push model to HuggingFace Hub."""
         try:
@@ -615,176 +606,146 @@ Agent Forge Integration Team - Phase 6 (Cogment Integration)
         except Exception as e:
             logger.error(f"Failed to push to hub: {e}")
             return None
-    
+
     def export_for_production(
-        self,
-        model: Cogment,
-        base_output_dir: str,
-        environment: str = "production"
+        self, model: Cogment, base_output_dir: str, environment: str = "production"
     ) -> Dict[str, Any]:
         """
         Export Cogment model for production deployment with optimizations.
-        
+
         Args:
             model: Trained Cogment model
             base_output_dir: Base directory for exports
             environment: Deployment environment (production, staging, dev)
-            
+
         Returns:
             Production export summary
         """
         try:
             logger.info(f"🚀 PRODUCTION EXPORT for {environment.upper()} environment")
-            
+
             base_dir = Path(base_output_dir)
             env_dir = base_dir / environment
             env_dir.mkdir(parents=True, exist_ok=True)
-            
+
             export_results = {}
-            
+
             # 1. Standard HuggingFace export
             standard_export = self.export_cogment_model(
-                model, 
-                str(env_dir / "huggingface"),
-                model_name=f"cogment-{environment}",
-                save_metadata=True
+                model, str(env_dir / "huggingface"), model_name=f"cogment-{environment}", save_metadata=True
             )
-            export_results['huggingface'] = standard_export
-            
+            export_results["huggingface"] = standard_export
+
             # 2. Optimized export (quantized)
             try:
-                optimized_export = self._export_optimized_model(
-                    model, 
-                    env_dir / "optimized"
-                )
-                export_results['optimized'] = optimized_export
+                optimized_export = self._export_optimized_model(model, env_dir / "optimized")
+                export_results["optimized"] = optimized_export
             except Exception as e:
                 logger.warning(f"Optimized export failed: {e}")
-                export_results['optimized'] = {'success': False, 'error': str(e)}
-            
+                export_results["optimized"] = {"success": False, "error": str(e)}
+
             # 3. ONNX export for inference engines
             try:
-                onnx_export = self._export_onnx_model(
-                    model,
-                    env_dir / "onnx"
-                )
-                export_results['onnx'] = onnx_export
+                onnx_export = self._export_onnx_model(model, env_dir / "onnx")
+                export_results["onnx"] = onnx_export
             except Exception as e:
                 logger.warning(f"ONNX export failed: {e}")
-                export_results['onnx'] = {'success': False, 'error': str(e)}
-            
+                export_results["onnx"] = {"success": False, "error": str(e)}
+
             # 4. Deployment configuration
             deployment_config = self._create_deployment_config(model, environment)
             with open(env_dir / "deployment_config.json", "w") as f:
                 json.dump(deployment_config, f, indent=2)
-            
+
             # 5. Production summary
             production_summary = {
-                'environment': environment,
-                'export_location': str(env_dir),
-                'export_results': export_results,
-                'deployment_config': deployment_config,
-                'production_ready': all(result.get('success', False) for result in export_results.values()),
-                'total_size_mb': sum(
-                    result.get('model_size_mb', 0) 
-                    for result in export_results.values() 
-                    if result.get('success', False)
-                )
+                "environment": environment,
+                "export_location": str(env_dir),
+                "export_results": export_results,
+                "deployment_config": deployment_config,
+                "production_ready": all(result.get("success", False) for result in export_results.values()),
+                "total_size_mb": sum(
+                    result.get("model_size_mb", 0) for result in export_results.values() if result.get("success", False)
+                ),
             }
-            
+
             logger.info("✅ PRODUCTION EXPORT COMPLETED")
             logger.info(f"   Environment: {environment}")
             logger.info(f"   Location: {env_dir}")
             logger.info(f"   Formats: {list(export_results.keys())}")
             logger.info(f"   Production ready: {production_summary['production_ready']}")
-            
+
             return production_summary
-            
+
         except Exception as e:
             logger.exception("Production export failed")
-            return {
-                'success': False,
-                'environment': environment,
-                'error': str(e)
-            }
-    
+            return {"success": False, "environment": environment, "error": str(e)}
+
     def _export_optimized_model(self, model: Cogment, output_dir: Path) -> Dict[str, Any]:
         """Export optimized model with quantization."""
         # Placeholder for quantization - would implement actual optimization
         logger.info("Creating optimized model export...")
         output_dir.mkdir(parents=True, exist_ok=True)
-        
+
         # For now, copy the standard model
         # In production, would apply quantization, pruning, etc.
         return {
-            'success': True,
-            'optimization_applied': ['placeholder'],
-            'model_size_mb': 0,  # Would calculate actual size
-            'compression_ratio': '1x'  # Would calculate actual compression
+            "success": True,
+            "optimization_applied": ["placeholder"],
+            "model_size_mb": 0,  # Would calculate actual size
+            "compression_ratio": "1x",  # Would calculate actual compression
         }
-    
+
     def _export_onnx_model(self, model: Cogment, output_dir: Path) -> Dict[str, Any]:
         """Export model to ONNX format for inference engines."""
         # Placeholder for ONNX export
         logger.info("Creating ONNX model export...")
         output_dir.mkdir(parents=True, exist_ok=True)
-        
+
         return {
-            'success': True,
-            'onnx_version': 'placeholder',
-            'model_size_mb': 0,
-            'inference_engines': ['onnxruntime', 'tensorrt']
+            "success": True,
+            "onnx_version": "placeholder",
+            "model_size_mb": 0,
+            "inference_engines": ["onnxruntime", "tensorrt"],
         }
-    
+
     def _create_deployment_config(self, model: Cogment, environment: str) -> Dict[str, Any]:
         """Create deployment configuration for production environment."""
         return {
-            'model_config': {
-                'parameter_count': model.count_parameters(),
-                'max_sequence_length': model.config.max_seq_len,
-                'vocab_size': model.config.vocab_size,
-                'act_enabled': True,
-                'ltm_enabled': True
+            "model_config": {
+                "parameter_count": model.count_parameters(),
+                "max_sequence_length": model.config.max_seq_len,
+                "vocab_size": model.config.vocab_size,
+                "act_enabled": True,
+                "ltm_enabled": True,
             },
-            'inference_config': {
-                'batch_size': {
-                    'production': 1,
-                    'staging': 4,
-                    'dev': 8
-                }.get(environment, 1),
-                'max_refinement_steps': model.config.max_refinement_steps,
-                'act_threshold': model.config.act_threshold,
-                'temperature': 0.7,
-                'top_p': 0.9
+            "inference_config": {
+                "batch_size": {"production": 1, "staging": 4, "dev": 8}.get(environment, 1),
+                "max_refinement_steps": model.config.max_refinement_steps,
+                "act_threshold": model.config.act_threshold,
+                "temperature": 0.7,
+                "top_p": 0.9,
             },
-            'resource_requirements': {
-                'gpu_memory_gb': 4,  # Estimate based on model size
-                'cpu_cores': 2,
-                'ram_gb': 8
+            "resource_requirements": {"gpu_memory_gb": 4, "cpu_cores": 2, "ram_gb": 8},  # Estimate based on model size
+            "monitoring": {
+                "track_ponder_cost": True,
+                "track_memory_usage": True,
+                "track_latency": True,
+                "alert_thresholds": {"avg_ponder_cost": 5.0, "latency_p95_ms": 500, "memory_usage_mb": 2000},
             },
-            'monitoring': {
-                'track_ponder_cost': True,
-                'track_memory_usage': True,
-                'track_latency': True,
-                'alert_thresholds': {
-                    'avg_ponder_cost': 5.0,
-                    'latency_p95_ms': 500,
-                    'memory_usage_mb': 2000
-                }
-            }
         }
-    
+
     def get_export_summary(self) -> Dict[str, Any]:
         """Get summary of all exports performed."""
         return {
-            'total_exports': len(self.export_history),
-            'successful_exports': sum(1 for exp in self.export_history if exp.get('success', False)),
-            'export_history': self.export_history.copy(),
-            'benefits_vs_hrrm': {
-                'unified_deployment': 'Single model vs 3-model ensemble',
-                'parameter_efficiency': '6.3x reduction (150M → 23.7M)',
-                'memory_efficiency': '6x less GPU memory required',
-                'deployment_simplicity': 'No inter-model coordination needed',
-                'maintenance': 'Single model updates and monitoring'
-            }
+            "total_exports": len(self.export_history),
+            "successful_exports": sum(1 for exp in self.export_history if exp.get("success", False)),
+            "export_history": self.export_history.copy(),
+            "benefits_vs_hrrm": {
+                "unified_deployment": "Single model vs 3-model ensemble",
+                "parameter_efficiency": "6.3x reduction (150M → 23.7M)",
+                "memory_efficiency": "6x less GPU memory required",
+                "deployment_simplicity": "No inter-model coordination needed",
+                "maintenance": "Single model updates and monitoring",
+            },
         }

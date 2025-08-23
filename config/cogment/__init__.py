@@ -8,4 +8,4 @@ Provides Option A configuration (~25M parameters) with 4-stage curriculum and Gr
 from .config_loader import CogmentConfigLoader
 from .config_validation import CogmentConfigValidator
 
-__all__ = ['CogmentConfigLoader', 'CogmentConfigValidator']
+__all__ = ["CogmentConfigLoader", "CogmentConfigValidator"]

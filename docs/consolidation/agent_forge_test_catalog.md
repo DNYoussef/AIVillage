@@ -260,7 +260,7 @@ tests/unit/agent_forge/
 ```python
 # tests/unit/agent_forge/phases/test_cognate.py
 - test_cognate_model_initialization()
-- test_cognate_merge_strategies()  
+- test_cognate_merge_strategies()
 - test_cognate_architecture_detection()
 - test_cognate_error_handling()
 ```
@@ -293,7 +293,7 @@ Test module for [Component Name]
 
 Tests:
 - Unit functionality
-- Error conditions  
+- Error conditions
 - Performance characteristics
 - Integration points
 """
@@ -304,12 +304,12 @@ from unittest.mock import Mock, patch
 
 class Test[ComponentName]:
     """Test [Component] functionality."""
-    
+
     @pytest.fixture
     def [component]_config(self):
         """Create test configuration."""
         return {...}
-    
+
     def test_[functionality](self, [component]_config):
         """Test [specific functionality]."""
         # Arrange
@@ -367,7 +367,7 @@ tests/
 │   │   └── load/               # Load testing
 │   ├── validation/
 │   │   ├── claims/             # Claim validation (KEEP)
-│   │   ├── compression/        # Compression validation (KEEP) 
+│   │   ├── compression/        # Compression validation (KEEP)
 │   │   └── production/         # Production readiness
 │   └── fixtures/
 │       ├── models/             # Test model fixtures
@@ -383,7 +383,7 @@ tests/
 - [ ] Update import paths across all tests
 - [ ] Verify all tests still pass after consolidation
 
-### Week 2: Coverage Phase  
+### Week 2: Coverage Phase
 - [ ] Create missing Cognate phase tests
 - [ ] Enhance Tool Persona Baking test coverage
 - [ ] Add BitNet integration tests
@@ -439,7 +439,7 @@ The Agent Forge test suite requires significant consolidation to support the MEC
 
 This consolidation plan provides a roadmap to achieve:
 1. **50% reduction in test file count** through deduplication
-2. **95% phase coverage** through targeted test creation  
+2. **95% phase coverage** through targeted test creation
 3. **Organized structure** supporting long-term maintainability
 4. **Production-ready test suite** enabling confident deployments
 

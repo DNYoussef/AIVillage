@@ -84,7 +84,7 @@ class SecurityLevel(Enum):
     INTERNAL = "internal"
     CONFIDENTIAL = "confidential"
     RESTRICTED = "restricted"
-    TOP_SECRET = "top_secret"
+    TOP_SECRET = "top_secret"  # pragma: allowlist secret
 
 
 class EncryptionAlgorithm(Enum):

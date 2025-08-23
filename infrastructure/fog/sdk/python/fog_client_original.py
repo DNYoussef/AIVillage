@@ -11,7 +11,7 @@ Example usage:
     # Initialize client
     client = FogClient(
         base_url="https://gateway.aivillage.ai",
-        api_key="your-api-key",
+        api_key="your-api-key",  # pragma: allowlist secret
         namespace="myorg/team"
     )
 

@@ -274,7 +274,9 @@ class SecureFileUploadValidator:
 
             # 9. Calculate file hash
             validation_result["metadata"]["sha256"] = hashlib.sha256(content).hexdigest()
-            validation_result["metadata"]["md5"] = hashlib.md5(content).hexdigest()
+            validation_result["metadata"]["md5"] = hashlib.md5(
+                content, usedforsecurity=False
+            ).hexdigest()  # Used for file integrity, not security
 
             # Determine overall safety
             if validation_result["errors"]:

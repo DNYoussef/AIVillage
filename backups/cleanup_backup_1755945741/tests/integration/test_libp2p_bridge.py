@@ -1,7 +1,6 @@
 import asyncio
 
 import pytest
-
 from packages.p2p.core.libp2p_mesh import LibP2PMeshNetwork, MeshMessage, MeshMessageType
 
 

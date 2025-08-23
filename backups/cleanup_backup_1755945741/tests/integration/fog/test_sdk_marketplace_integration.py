@@ -12,7 +12,6 @@ Tests the complete SDK marketplace integration:
 from datetime import UTC, datetime
 
 import pytest
-
 from packages.fog.gateway.scheduler.marketplace import BidType, PricingTier, get_marketplace_engine
 from packages.fog.sdk.python.fog_client import CostEstimate, FogClient, FogClientError, MarketplacePrices, PriceQuote
 

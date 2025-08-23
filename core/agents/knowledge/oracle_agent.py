@@ -28,7 +28,7 @@ class OracleAgent(AgentInterface):
     async def get_embedding(self, text: str) -> list[float]:
         import hashlib
 
-        hash_value = int(hashlib.md5(text.encode()).hexdigest(), 16)
+        hash_value = int(hashlib.sha256(text.encode()).hexdigest(), 16)
         return [(hash_value % 1000) / 1000.0] * 384
 
     async def rerank(self, query: str, results: list[dict[str, Any]], k: int) -> list[dict[str, Any]]:

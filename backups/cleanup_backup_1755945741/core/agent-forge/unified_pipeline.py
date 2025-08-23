@@ -59,7 +59,7 @@ class UnifiedConfig:
 
     # Cognate configuration (Phase 1 - NEW)
     cognate_init_strategy: str = "xavier_uniform"  # xavier_uniform, kaiming_normal, custom
-    cognate_merge_strategy: str = "average"  # average, weighted, evolutionary  
+    cognate_merge_strategy: str = "average"  # average, weighted, evolutionary
     cognate_target_architecture: str = "auto"  # auto, custom, or specific model
     cognate_validate_compatibility: bool = True
 
@@ -168,7 +168,7 @@ class UnifiedPipeline:
 
         try:
             # Import consolidated phase modules
-            
+
             # Phase 1: Cognate (Model Creation) - NEWLY IMPLEMENTED
             if self.config.enable_cognate:
                 from .phases.cognate import CognateConfig, CognatePhase
@@ -179,7 +179,7 @@ class UnifiedPipeline:
                     init_strategy=self.config.cognate_init_strategy,
                     merge_strategy=self.config.cognate_merge_strategy,
                     validate_compatibility=self.config.cognate_validate_compatibility,
-                    device=self.config.device
+                    device=self.config.device,
                 )
                 phases.append(("CognatePhase", CognatePhase(cognate_config)))
 
@@ -407,17 +407,17 @@ class UnifiedPipeline:
     def _create_initial_model(self) -> nn.Module | None:
         """
         Create initial model for pipeline start.
-        
+
         With Cognate phase enabled, returns None to let Cognate create the model.
         Otherwise creates a dummy model for backward compatibility.
         """
         if self.config.enable_cognate:
             self.logger.info("Cognate phase enabled - will create model from base models")
             return None  # Cognate phase will handle model creation
-        
+
         # Fallback: create dummy model if Cognate is disabled
         self.logger.info("Creating fallback initial model for pipeline")
-        
+
         # Create a simple transformer-like model as starting point
         model = nn.Sequential(nn.Linear(768, 768), nn.ReLU(), nn.Linear(768, 768))
 

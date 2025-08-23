@@ -12,7 +12,7 @@ training:
   batch_size: 8
   sequence_length: 1024          # Longer sequences for algorithmic reasoning
   learning_rate: 1e-4            # Reduced learning rate for stability
-  
+
   eval_interval: 400
   save_interval: 2000
   log_interval: 100
@@ -23,7 +23,7 @@ model:
   act_threshold: 0.99
   ponder_cost_initial: 0.01
   ponder_cost_final: 0.015       # Slightly higher ponder cost
-  
+
   # Increase memory writing
   memory_settings:
     ltm_read_only: false
@@ -39,14 +39,14 @@ data:
     - "list_operations"           # ListOps-style operations
     - "arithmetic_chains"         # Multi-step arithmetic
     - "logical_puzzles"           # Logical reasoning
-    
+
   # Data sources
   datasets:
     - "sudoku_puzzles"
-    - "maze_datasets" 
+    - "maze_datasets"
     - "listops"
     - "synthetic_algorithms"
-    
+
   # Structured data augmentation
   augmentation:
     enabled: true
@@ -55,16 +55,16 @@ data:
       - "constraint_variation"    # Vary puzzle constraints
       - "size_scaling"           # Different puzzle sizes
       - "noise_injection"        # Add irrelevant information
-      
+
     # Puzzle-specific augmentation
     sudoku:
       difficulty_levels: ["easy", "medium", "hard"]
       size_variations: [4, 6, 9]  # 4x4, 6x6, 9x9 grids
-      
+
     maze:
       size_range: [8, 16]        # 8x8 to 16x16 mazes
       complexity_levels: ["simple", "moderate", "complex"]
-      
+
     listops:
       max_depth: 5               # Nested operation depth
       operation_types: ["sum", "max", "min", "count"]
@@ -81,18 +81,18 @@ grokfast:
   enabled: true
   global_multiplier: 1.0
   focus_components: ["refinement_core", "gated_ltm"]
-  
+
   components:
     refinement_core:
       alpha: 0.98                # Maintain strong EMA
       lamb: 2.0                  # Full amplification
       window_size: 100
-      
+
     gated_ltm:
-      alpha: 0.95               
+      alpha: 0.95
       lamb: 1.5                  # Help memory learn algorithmic patterns
       window_size: 50
-      
+
     act_halting:
       enabled: false
 
@@ -102,19 +102,19 @@ convergence:
   min_accuracy: 0.7
   max_ponder_cost: 6.0          # Allow more pondering for complex problems
   min_improvement: 3e-4
-  
+
   # Algorithm-specific grokking patterns
   grokking_indicators:
     sudden_accuracy_jump: 0.25   # Larger jumps expected
     algorithm_memorization: true  # Detect when algorithms are learned
     generalization_gap_closure: true
 
-# Memory Management  
+# Memory Management
 memory:
   # Build algorithmic pattern memory
   consolidation_frequency: "medium"
   memory_capacity_usage_target: 0.5
-  
+
   # Algorithm-specific memory patterns
   algorithm_memory:
     constraint_patterns: true    # Learn constraint satisfaction patterns
@@ -127,15 +127,15 @@ validation:
     - name: "sudoku_completion"
       description: "Solve various difficulty Sudoku puzzles"
       expected_accuracy: 0.75
-      
-    - name: "maze_navigation" 
+
+    - name: "maze_navigation"
       description: "Find optimal paths through mazes"
       expected_accuracy: 0.8
-      
+
     - name: "listops_evaluation"
       description: "Evaluate nested list operations"
       expected_accuracy: 0.7
-      
+
     - name: "arithmetic_chains"
       description: "Solve multi-step arithmetic problems"
       expected_accuracy: 0.8
@@ -148,7 +148,7 @@ reasoning_analysis:
     - "constraint_propagation"   # Does model propagate constraints?
     - "systematic_search"        # Does model search systematically?
     - "pattern_recognition"      # Does model recognize sub-patterns?
-    
+
   # Analysis frequency
   analysis_interval: 500
   save_reasoning_traces: true
@@ -157,7 +157,7 @@ reasoning_analysis:
 resources:
   max_memory_gb: 12
   max_time_hours: 4
-  
+
   # Optimization for longer sequences
   gradient_checkpointing: true
   sequence_parallel: false       # Keep simple for algorithmic tasks
@@ -168,7 +168,7 @@ advancement:
     min_accuracy: 0.7
     max_ponder_cost: 6.0
     algorithm_patterns_learned: true
-    
+
   preferred_metrics:
     sudoku_accuracy: 0.75
     maze_accuracy: 0.8

@@ -8,12 +8,12 @@ model:
   n_head: 8                      # Number of attention heads
   n_layers: 6                    # Number of transformer layers (reduced)
   d_ff: 1536                     # Feed-forward dimension (3 * d_model, reduced from 4x)
-  
+
   # Vocabulary and sequence
   vocab_size: 13000              # Optimized vocabulary size for 25M parameter budget
   max_seq_len: 2048              # Maximum sequence length
   rope_base: 10000               # RoPE positional encoding base
-  
+
   # Training parameters
   dropout: 0.1
   layer_norm_eps: 1e-5
@@ -33,7 +33,7 @@ gated_ltm:
   ltm_capacity: 1024             # LTM capacity from Agent 2
   ltm_dim: 256                   # LTM dimension (reduced for budget)
   memory_dim: 256                # Memory embedding dimension
-  
+
   # Memory dynamics
   decay: 0.001                   # Memory decay rate
   write_alpha: 0.1               # Write gate alpha
@@ -59,7 +59,7 @@ parameter_budget:
   target_params: 25000000        # 25M parameter target
   tolerance: 0.05                # 5% tolerance (23.75M - 26.25M acceptable)
   validate_on_load: true         # Validate parameter count when loading config
-  
+
 # Component parameter estimates (for validation)
 estimated_params:
   backbone: 8000000              # Transformer layers with d_model=640

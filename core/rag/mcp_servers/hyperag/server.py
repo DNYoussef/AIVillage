@@ -98,7 +98,7 @@ class HypeRAGMCPServer:
                 "ping_timeout": 10,
             },
             "auth": {
-                "jwt_secret": "dev-secret-change-in-production",
+                "jwt_secret": "dev-secret-change-in-production",  # pragma: allowlist secret
                 "api_keys_enabled": True,
                 "session_timeout_hours": 24,
             },

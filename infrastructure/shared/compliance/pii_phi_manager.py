@@ -239,7 +239,9 @@ class PIIDetectionEngine:
                 pattern=r"\b[A-Fa-f0-9]{40,64}\b",  # SHA-1 or SHA-256 style
                 field_names=["fingerprint", "biometric", "finger_hash"],
                 regulation=ComplianceRegulation.GDPR,
-                examples=["a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3"],
+                examples=[
+                    "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3"  # pragma: allowlist secret
+                ],
             ),
             # Government Identifiers
             PIIDetectionRule(
@@ -250,7 +252,7 @@ class PIIDetectionEngine:
                 pattern=r"\b[A-Z]{1,2}[0-9]{6,9}\b",
                 field_names=["passport", "passport_number", "passport_id"],
                 regulation=ComplianceRegulation.GDPR,
-                examples=["A12345678", "AB1234567"],
+                examples=["A12345678", "AB1234567"],  # pragma: allowlist secret
             ),
             PIIDetectionRule(
                 rule_id="drivers_license",
@@ -260,7 +262,7 @@ class PIIDetectionEngine:
                 pattern=r"\b[A-Z]{1,2}[0-9]{6,8}\b",
                 field_names=["license", "drivers_license", "dl_number"],
                 regulation=ComplianceRegulation.CCPA,
-                examples=["D12345678", "CA9876543"],
+                examples=["D12345678", "CA9876543"],  # pragma: allowlist secret
             ),
             # IP Addresses (can be PII under GDPR)
             PIIDetectionRule(
@@ -727,9 +729,7 @@ class PIIPHIManager:
                             )
 
                             if confidence >= self.config["scanning"]["confidence_threshold"]:
-                                location_id = (
-                                    f"db_{hashlib.md5(f'{db_path}:{table_name}:{col_name}'.encode()).hexdigest()[:16]}"
-                                )
+                                location_id = f"db_{hashlib.sha256(f'{db_path}:{table_name}:{col_name}'.encode()).hexdigest()[:16]}"
 
                                 # Get record count
                                 cursor.execute(f"SELECT COUNT(*) FROM {table_name}")
@@ -809,7 +809,7 @@ class PIIPHIManager:
                                 )
 
                                 if confidence >= self.config["scanning"]["confidence_threshold"]:
-                                    location_id = f"file_{hashlib.md5(str(file_path).encode()).hexdigest()[:16]}"
+                                    location_id = f"file_{hashlib.sha256(str(file_path).encode()).hexdigest()[:16]}"
 
                                     location = DataLocation(
                                         location_id=location_id,
@@ -924,7 +924,7 @@ class PIIPHIManager:
         schedule_cron: str = "0 2 * * 0",
     ) -> str:
         """Create a new data retention job."""
-        job_id = f"retention_{int(time.time())}_{hashlib.md5(name.encode()).hexdigest()[:8]}"
+        job_id = f"retention_{int(time.time())}_{hashlib.sha256(name.encode()).hexdigest()[:8]}"
 
         job = RetentionJob(
             job_id=job_id,
@@ -1227,7 +1227,7 @@ class PIIPHIManager:
         regulation: ComplianceRegulation | None = None,
     ):
         """Log audit event."""
-        audit_id = f"audit_{int(time.time())}_{hashlib.md5(f'{event_type}{location_id}'.encode()).hexdigest()[:8]}"
+        audit_id = f"audit_{int(time.time())}_{hashlib.sha256(f'{event_type}{location_id}'.encode()).hexdigest()[:8]}"
 
         conn = sqlite3.connect(self.compliance_db)
         cursor = conn.cursor()

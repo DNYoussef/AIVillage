@@ -163,8 +163,8 @@ jobs:
                  tests/unit/test_unified_p2p*.py \
                  tests/production/test_p2p_validation.py \
                  -v --tb=short --maxfail=3 --timeout=180
-          
-          # Transport protocol tests  
+
+          # Transport protocol tests
           pytest tests/p2p/test_bitchat_reliability.py \
                  tests/p2p/test_betanet_covert_transport.py \
                  tests/core/p2p/test_mesh_reliability.py \
@@ -351,12 +351,12 @@ jobs:
         run: |
           echo "Collecting operational artifacts..."
           mkdir -p artifacts/{coverage,security,performance,quality,reports}
-          
+
           # Run artifact collection script if available
           if [ -f "scripts/operational/collect_artifacts.py" ]; then
             python scripts/operational/collect_artifacts.py --output-dir artifacts --parallel || echo "Artifact collection script failed, continuing"
           fi
-          
+
           # Generate artifact collection report
           echo '{"collection_id": "main-ci", "total_artifacts": 0, "successful_artifacts": 0}' > artifacts/reports/collection_report.json
           echo "[OK] Operational artifacts collected"

@@ -21,14 +21,14 @@ run_test_category() {
     local category="$1"
     local test_pattern="$2"
     local description="$3"
-    
+
     echo "----------------------------------------"
     echo "Running: $category"
     echo "Description: $description"
     echo "----------------------------------------"
-    
+
     start_time=$(date +%s)
-    
+
     # Run tests with proper error handling
     if pytest $test_pattern -v --tb=short --maxfail=3 --quiet; then
         echo "PASS: $category tests completed successfully"
@@ -40,7 +40,7 @@ run_test_category() {
             exit 1
         fi
     fi
-    
+
     end_time=$(date +%s)
     duration=$((end_time - start_time))
     echo "Duration: ${duration}s"

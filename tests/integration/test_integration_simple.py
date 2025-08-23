@@ -67,7 +67,7 @@ class TestCoreIntegration:
             user = auth_manager.create_user(
                 username="integration_user",
                 email="integration@example.com",
-                password="TestPassword123!",
+                password="test_integration_password_123!",  # pragma: allowlist secret
                 role=UserRole.DEVELOPER,
             )
 
@@ -77,7 +77,7 @@ class TestCoreIntegration:
 
                 success, auth_user, session_token = auth_manager.authenticate(
                     username="integration_user",
-                    password="TestPassword123!",
+                    password="test_integration_password_123!",  # pragma: allowlist secret
                     ip_address="127.0.0.1",
                 )
 
@@ -253,7 +253,7 @@ class TestCoreIntegration:
         admin_user = auth_manager.create_user(
             username="admin_integration",
             email="admin@integration.com",
-            password="AdminPassword123!",
+            password="test_admin_integration_123!",  # pragma: allowlist secret
             role=UserRole.ADMIN,
             security_level=SecurityLevel.TOP_SECRET,
         )
@@ -261,7 +261,7 @@ class TestCoreIntegration:
         viewer_user = auth_manager.create_user(
             username="viewer_integration",
             email="viewer@integration.com",
-            password="ViewerPassword123!",
+            password="test_viewer_integration_123!",  # pragma: allowlist secret
             role=UserRole.VIEWER,
             security_level=SecurityLevel.PUBLIC,
         )
@@ -327,12 +327,14 @@ class TestCoreIntegration:
             auth_manager.create_user(
                 username="e2e_user",
                 email="e2e@test.com",
-                password="E2EPassword123!",
+                password="test_e2e_integration_123!",  # pragma: allowlist secret
                 role=UserRole.DEVELOPER,
             )
 
             success, auth_user, session_token = auth_manager.authenticate(
-                username="e2e_user", password="E2EPassword123!", ip_address="127.0.0.1"
+                username="e2e_user",
+                password="test_e2e_integration_123!",  # pragma: allowlist secret
+                ip_address="127.0.0.1",  # pragma: allowlist secret
             )
             assert success is True
 

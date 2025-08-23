@@ -17,7 +17,6 @@ Tests SLA enforcement across the entire fog computing stack including:
 import time
 
 import pytest
-
 from packages.fog.gateway.monitoring.metrics import FogMetricsCollector
 from packages.fog.gateway.scheduler.placement import FogNode
 from packages.fog.gateway.scheduler.sla_classes import SLAClass, SLAManager, validate_sla_class

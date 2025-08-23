@@ -3,7 +3,7 @@ name: P2P Test Suite - Unified CI/CD Pipeline
 on:
   push:
     branches: [ main, develop ]
-    paths: 
+    paths:
       - 'tests/p2p/**'
       - 'tests/communications/**'
       - 'tests/security/**'
@@ -26,37 +26,89 @@ env:
   AIVILLAGE_ENV: test
   AIVILLAGE_LOG_LEVEL: WARNING
   PYTHONPATH: ${{ github.workspace }}/packages:${{ github.workspace }}/tests:${{ github.workspace }}
+  SECURITY_GATE_ENABLED: true
+  P2P_SECURITY_STRICT: true
 
 jobs:
+  # Stage 0: Security Pre-Flight (Critical - Fast Feedback)
+  security-preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      security-gate-passed: ${{ steps.security-check.outputs.passed }}
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.11
+
+    - name: Install security tools
+      run: |
+        python -m pip install --upgrade pip
+        pip install detect-secrets bandit safety
+
+    - name: 🔐 P2P Security Pre-Flight
+      id: security-check
+      run: |
+        echo "Running P2P security pre-flight checks..."
+
+        # Secret detection in P2P code
+        detect-secrets scan --baseline .secrets.baseline packages/p2p/ tests/p2p/ || {
+          echo "::error::Secrets detected in P2P codebase"
+          exit 1
+        }
+
+        # Security scan of P2P packages
+        bandit -r packages/p2p/ -ll --format json -o p2p-security-precheck.json
+
+        # Check for critical security issues
+        if bandit -r packages/p2p/ -ll | grep -E "(HIGH|CRITICAL)"; then
+          echo "::error::Critical security issues found in P2P code"
+          exit 1
+        fi
+
+        echo "passed=true" >> $GITHUB_OUTPUT
+        echo "✅ P2P security pre-flight passed"
+
+    - name: Upload Security Pre-Check
+      uses: actions/upload-artifact@v3
+      with:
+        name: p2p-security-precheck
+        path: p2p-security-precheck.json
+
   # Stage 1: Core Functionality (Critical - Fast Feedback)
   core-tests:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    needs: security-preflight
+    if: needs.security-preflight.outputs.security-gate-passed == 'true'
     strategy:
       matrix:
         python-version: [3.11, 3.12]
-        
+
     steps:
     - uses: actions/checkout@v4
-    
+
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
-        
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install pytest pytest-asyncio pytest-mock pytest-xdist pytest-cov
         pip install -r requirements.txt || echo "No requirements.txt found"
-        
+
     - name: Run Core P2P Functionality Tests
       run: |
         pytest tests/communications/test_p2p.py \
                tests/unit/test_unified_p2p*.py \
                tests/production/test_p2p_validation.py \
                -v --tb=short --maxfail=3 --cov=packages/p2p
-               
+
     - name: Upload core test coverage
       uses: codecov/codecov-action@v3
       with:
@@ -68,106 +120,139 @@ jobs:
   transport-tests:
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    needs: core-tests
+    needs: [security-preflight, core-tests]
+    if: needs.security-preflight.outputs.security-gate-passed == 'true'
     strategy:
       matrix:
         transport: [bitchat, betanet, mesh]
-        
+
     steps:
     - uses: actions/checkout@v4
-    
+
     - name: Set up Python 3.11
       uses: actions/setup-python@v4
       with:
         python-version: 3.11
-        
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install pytest pytest-asyncio pytest-mock pytest-cov
-        
+
     - name: Run BitChat BLE Mesh Tests
       if: matrix.transport == 'bitchat'
       run: |
         pytest tests/p2p/test_bitchat_reliability.py -v --tb=short --cov=packages/p2p/bitchat
-        
+
     - name: Run BetaNet HTX Transport Tests
       if: matrix.transport == 'betanet'
       run: |
         pytest tests/p2p/test_betanet_covert_transport.py -v --tb=short --cov=packages/p2p/betanet
-        
+
     - name: Run Enhanced Mesh Reliability Tests
       if: matrix.transport == 'mesh'
       run: |
         pytest tests/core/p2p/test_mesh_reliability.py -v --tb=short --cov=packages/p2p/core
 
-  # Stage 3: Security Tests (Critical - Must Pass)
+  # Stage 3: Enhanced Security Tests (Critical - Must Pass)
   security-tests:
     runs-on: ubuntu-latest
-    timeout-minutes: 12
-    needs: core-tests
-    
+    timeout-minutes: 15
+    needs: [security-preflight, core-tests]
+    if: needs.security-preflight.outputs.security-gate-passed == 'true'
+
     steps:
     - uses: actions/checkout@v4
-    
+
     - name: Set up Python 3.11
       uses: actions/setup-python@v4
       with:
         python-version: 3.11
-        
+
     - name: Install security dependencies
       run: |
         python -m pip install --upgrade pip
         pip install pytest pytest-asyncio cryptography
-        
-    - name: Run P2P Network Security Tests
+
+    - name: 🔒 Enhanced P2P Network Security Tests
       run: |
         pytest tests/security/test_p2p_network_security.py -v --tb=short --maxfail=1
-        
-    - name: Security scan with bandit
+
+        # Additional P2P-specific security tests
+        if [ -d "tests/p2p/security" ]; then
+          pytest tests/p2p/security/ -v --tb=short
+        fi
+
+        # P2P encryption validation
+        if [ -f "tests/security/test_p2p_encryption.py" ]; then
+          pytest tests/security/test_p2p_encryption.py -v --tb=short
+        fi
+
+    - name: 🔍 Comprehensive Security Scanning
       run: |
-        pip install bandit
-        bandit -r packages/p2p/ -f json -o security-report.json || true
-        
-    - name: Upload security artifacts
+        pip install bandit safety semgrep
+
+        # Enhanced security scan
+        bandit -r packages/p2p/ core/p2p/ core/decentralized_architecture/ -f json -o enhanced-security-report.json
+
+        # Dependency security check
+        safety check --json --output p2p-safety-report.json || echo "Safety completed with warnings"
+
+        # SAST with Semgrep
+        semgrep --config=security packages/p2p/ --json -o p2p-sast-report.json || echo "Semgrep completed with warnings"
+
+        # Fail on critical security issues
+        if bandit -r packages/p2p/ core/p2p/ -ll | grep -E "(HIGH|CRITICAL)"; then
+          echo "::error::Critical security issues found - BLOCKING BUILD"
+          exit 1
+        fi
+
+        echo "✅ Enhanced security scanning completed"
+
+    - name: Upload Enhanced Security Reports
       uses: actions/upload-artifact@v3
       with:
-        name: security-reports
-        path: security-report.json
+        name: enhanced-p2p-security-reports-${{ github.sha }}
+        path: |
+          enhanced-security-report.json
+          p2p-safety-report.json
+          p2p-sast-report.json
+        retention-days: 90
 
   # Stage 4: Integration & Performance Tests
   integration-tests:
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    needs: [core-tests, transport-tests]
-    
+    needs: [security-preflight, core-tests, transport-tests, security-tests]
+    if: needs.security-preflight.outputs.security-gate-passed == 'true'
+
     steps:
     - uses: actions/checkout@v4
-    
+
     - name: Set up Python 3.11
       uses: actions/setup-python@v4
       with:
         python-version: 3.11
-        
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install pytest pytest-asyncio pytest-benchmark
-        
+
     - name: Run Integration Tests
       run: |
         pytest tests/p2p/test_real_p2p_stack.py \
                tests/integration/test_p2p_bridge_delivery.py \
                tests/integration/test_libp2p_bridge.py \
                -v --tb=short
-               
+
     - name: Run Performance Validation Tests
       run: |
         pytest tests/validation/p2p/test_p2p_performance_validation.py \
                tests/validation/p2p/verify_bitchat*.py \
                tests/validation/system/validate_p2p_network.py \
                -v --tb=short --benchmark-only
-               
+
     - name: Upload performance benchmarks
       uses: actions/upload-artifact@v3
       with:
@@ -178,35 +263,95 @@ jobs:
   mobile-tests:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    needs: core-tests
+    needs: [security-preflight, core-tests]
+    if: needs.security-preflight.outputs.security-gate-passed == 'true'
     continue-on-error: true  # Mobile tests are optional
-    
+
     steps:
     - uses: actions/checkout@v4
-    
+
     - name: Set up Python 3.11
       uses: actions/setup-python@v4
       with:
         python-version: 3.11
-        
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install pytest pytest-asyncio
-        
+
     - name: Run Android Platform Tests
       run: |
         pytest tests/mobile/test_libp2p_mesh_android.py -v --tb=short || echo "Mobile tests skipped"
+
+  # Stage 6: Security Gate Evaluation
+  security-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: [security-preflight, core-tests, transport-tests, security-tests, integration-tests]
+    if: always()
+    outputs:
+      final-security-gate: ${{ steps.final-gate.outputs.passed }}
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Download Security Reports
+      uses: actions/download-artifact@v3
+      with:
+        name: enhanced-p2p-security-reports-${{ github.sha }}
+        path: security-reports/
+
+    - name: 🛡️ Final Security Gate Evaluation
+      id: final-gate
+      run: |
+        echo "Evaluating final P2P security gate..."
+
+        # Check all job results
+        security_passed="${{ needs.security-tests.result }}"
+        core_passed="${{ needs.core-tests.result }}"
+        transport_passed="${{ needs.transport-tests.result }}"
+        integration_passed="${{ needs.integration-tests.result }}"
+        preflight_passed="${{ needs.security-preflight.outputs.security-gate-passed }}"
+
+        echo "Job Results:"
+        echo "  Security Pre-flight: $preflight_passed"
+        echo "  Core Tests: $core_passed"
+        echo "  Transport Tests: $transport_passed"
+        echo "  Security Tests: $security_passed"
+        echo "  Integration Tests: $integration_passed"
+
+        # Analyze security reports
+        high_severity_count=0
+        if [ -f "security-reports/enhanced-security-report.json" ]; then
+          high_severity_count=$(jq '[.results[] | select(.issue_severity == "HIGH" or .issue_severity == "CRITICAL")] | length' security-reports/enhanced-security-report.json || echo "0")
+        fi
+
+        echo "Security Analysis:"
+        echo "  High/Critical Issues: $high_severity_count"
+
+        # Final gate decision
+        if [[ "$preflight_passed" == "true" && \
+              "$security_passed" == "success" && \
+              "$core_passed" == "success" && \
+              $high_severity_count -eq 0 ]]; then
+          echo "✅ P2P Security Gate PASSED - Safe for production"
+          echo "passed=true" >> $GITHUB_OUTPUT
+        else
+          echo "❌ P2P Security Gate FAILED - Blocking deployment"
+          echo "passed=false" >> $GITHUB_OUTPUT
+          exit 1
+        fi
 
   # Final Validation & Reporting
   consolidation-validation:
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    needs: [core-tests, transport-tests, security-tests, integration-tests]
-    
+    needs: [security-gate, core-tests, transport-tests, security-tests, integration-tests]
+    if: needs.security-gate.outputs.final-security-gate == 'true'
+
     steps:
     - uses: actions/checkout@v4
-    
+
     - name: Validate Test Suite Consolidation
       run: |
         echo "=== P2P TEST SUITE CONSOLIDATION VALIDATION ==="
@@ -216,26 +361,29 @@ jobs:
         echo ""
         echo "Test Categories Validated:"
         echo "✓ Core Functionality (4 files)"
-        echo "✓ Transport Protocols (3 files)" 
+        echo "✓ Transport Protocols (3 files)"
         echo "✓ Security Testing (1 file)"
         echo "✓ Performance Validation (4 files)"
         echo "✓ Integration Testing (6 files)"
         echo "✓ Mobile Platform (1 file)"
         echo "✓ System Validation (2 files)"
         echo ""
-        echo "SUCCESS: Unified P2P test suite is production-ready"
-        
+        echo "SUCCESS: Unified P2P test suite is production-ready with enhanced security"
+        echo "✅ Security Gate: PASSED"
+        echo "✅ All Tests: PASSED"
+        echo "✅ Production Ready: YES"
+
     - name: Create consolidation report
       run: |
         cat > consolidation-report.md << EOF
         # P2P Test Suite Consolidation Report
-        
+
         ## Results
         - **File Reduction**: 127+ → 20 files (84% reduction)
         - **Zero Functionality Loss**: All unique test logic preserved
         - **Production Ready**: 100% production-grade implementations
         - **Unified Infrastructure**: Consolidated fixtures and configuration
-        
+
         ## Test Categories
         1. Core Functionality: P2P node management, unified systems
         2. Transport Protocols: BitChat BLE, BetaNet HTX, Mesh reliability
@@ -243,14 +391,14 @@ jobs:
         4. Performance: Latency, throughput, scale testing
         5. Integration: End-to-end protocol testing
         6. Mobile: Android platform optimization
-        
+
         ## CI/CD Status
-        ✅ Ready for automated testing  
-        ✅ All critical tests passing  
-        ✅ Security validation complete  
-        ✅ Performance benchmarks established  
+        ✅ Ready for automated testing
+        ✅ All critical tests passing
+        ✅ Security validation complete
+        ✅ Performance benchmarks established
         EOF
-        
+
     - name: Upload consolidation report
       uses: actions/upload-artifact@v3
       with:

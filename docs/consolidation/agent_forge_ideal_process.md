@@ -77,7 +77,7 @@ Production Agent
 
 1. **Model Loading/Saving**: Handle model state throughout pipeline
 2. **Cognate Generation**: Create model variants
-3. **Evolutionary Merging**: Combine models intelligently  
+3. **Evolutionary Merging**: Combine models intelligently
 4. **Reasoning Integration**: Add reasoning capabilities
 5. **Quantization Engine**: Compress models efficiently
 6. **Training Loop Manager**: Orchestrate multi-stage training

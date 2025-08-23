@@ -39,11 +39,11 @@ export const AdminInterface: React.FC<AdminInterfaceProps> = ({
   const fetchSystemMetrics = async () => {
     try {
       setIsLoading(true);
-      
+
       // Simulate API call to get system metrics
       // In production, this would call the actual admin API endpoints
       const response = await fetch('/api/admin/metrics');
-      
+
       if (response.ok) {
         const data = await response.json();
         setMetrics(data);
@@ -109,19 +109,19 @@ export const AdminInterface: React.FC<AdminInterfaceProps> = ({
               <div className="metric-value">{metrics.p2pNodes}</div>
               <div className="metric-label">Connected Nodes</div>
             </div>
-            
+
             <div className="metric-card">
               <h3>AI Agents</h3>
               <div className="metric-value">{metrics.activeAgents}</div>
               <div className="metric-label">Active Agents</div>
             </div>
-            
+
             <div className="metric-card">
               <h3>Fog Compute</h3>
               <div className="metric-value">{metrics.fogResources}</div>
               <div className="metric-label">Available Resources</div>
             </div>
-            
+
             <div className="metric-card">
               <h3>Network Health</h3>
               <div className="metric-value">{metrics.networkHealth}%</div>
@@ -130,7 +130,7 @@ export const AdminInterface: React.FC<AdminInterfaceProps> = ({
           </div>
 
           <div className="admin-dashboard-container">
-            <SystemControlDashboard 
+            <SystemControlDashboard
               adminMode={true}
               refreshInterval={5000}
             />

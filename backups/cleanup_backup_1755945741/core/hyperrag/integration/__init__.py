@@ -22,8 +22,4 @@ try:
 except ImportError:
     FogComputeBridge = None
 
-__all__ = [
-    "EdgeDeviceRAGBridge",
-    "P2PNetworkRAGBridge",
-    "FogComputeBridge"
-]
+__all__ = ["EdgeDeviceRAGBridge", "P2PNetworkRAGBridge", "FogComputeBridge"]

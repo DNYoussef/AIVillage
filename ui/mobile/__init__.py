@@ -10,19 +10,19 @@ This package consolidates:
 - Cross-platform mobile support
 """
 
-from .shared.digital_twin_concierge import DigitalTwinConcierge, DataPoint, SurpriseBasedLearning
-from .shared.mini_rag_system import MiniRAGSystem, KnowledgePiece, KnowledgeRelevance
-from .shared.resource_manager import MobileResourceManager, MobileDeviceProfile, PowerMode
+from .shared.digital_twin_concierge import DataPoint, DigitalTwinConcierge, SurpriseBasedLearning
+from .shared.mini_rag_system import KnowledgePiece, KnowledgeRelevance, MiniRAGSystem
+from .shared.resource_manager import MobileDeviceProfile, MobileResourceManager, PowerMode
 
 __version__ = "2.0.0"
 __all__ = [
     "DigitalTwinConcierge",
-    "DataPoint", 
+    "DataPoint",
     "SurpriseBasedLearning",
     "MiniRAGSystem",
     "KnowledgePiece",
     "KnowledgeRelevance",
     "MobileResourceManager",
     "MobileDeviceProfile",
-    "PowerMode"
+    "PowerMode",
 ]

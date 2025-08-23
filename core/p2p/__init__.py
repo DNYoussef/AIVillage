@@ -13,29 +13,18 @@ Main exports:
 - Factory functions for easy instantiation
 """
 
-from .mesh_protocol import (
-    # Core protocol
-    UnifiedMeshProtocol,
-    create_mesh_protocol,
-    
-    # Message types
+from .mesh_protocol import (  # Core protocol; Message types; Transport types; Configuration; Network entities; Utility classes
+    CircuitBreaker,
+    ConnectionPool,
     MeshMessage,
     MessagePriority,
     MessageStatus,
-    
-    # Transport types
-    TransportType,
-    
-    # Configuration
-    ReliabilityConfig,
-    
-    # Network entities
-    PeerInfo,
     NodeStatus,
-    
-    # Utility classes
-    CircuitBreaker,
-    ConnectionPool
+    PeerInfo,
+    ReliabilityConfig,
+    TransportType,
+    UnifiedMeshProtocol,
+    create_mesh_protocol,
 )
 
 __version__ = "1.0.0"
@@ -43,25 +32,20 @@ __all__ = [
     # Core protocol
     "UnifiedMeshProtocol",
     "create_mesh_protocol",
-    
     # Message types
-    "MeshMessage", 
+    "MeshMessage",
     "MessagePriority",
     "MessageStatus",
-    
     # Transport types
     "TransportType",
-    
     # Configuration
     "ReliabilityConfig",
-    
     # Network entities
     "PeerInfo",
     "NodeStatus",
-    
     # Utility classes
     "CircuitBreaker",
-    "ConnectionPool"
+    "ConnectionPool",
 ]
 
 # Package metadata

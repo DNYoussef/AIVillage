@@ -183,13 +183,27 @@ jobs:
           output: 'trivy-results-${{ matrix.image }}.json'
           severity: 'UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL'
 
-      - name: Evaluate vulnerability threshold
+      - name: 🔍 Enhanced Vulnerability Analysis
         env:
           SEVERITY_THRESHOLD: ${{ github.event.inputs.severity_threshold || 'HIGH' }}
         run: |
+          echo "Running enhanced vulnerability analysis..."
           echo "Evaluating vulnerabilities against threshold: $SEVERITY_THRESHOLD"
 
-          # Parse JSON results and check for threshold violations
+          # Additional security validations
+          echo "Performing additional container security checks..."
+
+          # Check for secrets in container layers
+          docker history ${{ steps.build.outputs.image-tag }} --format "table {{.CreatedBy}}" | grep -E "(password|secret|key|token)" && {
+            echo "::warning::Potential secrets found in container history"
+          } || echo "No secrets detected in container history"
+
+          # Validate container configuration
+          docker inspect ${{ steps.build.outputs.image-tag }} | jq -r '.[0].Config.User // "root"' | grep -q "^root$" && {
+            echo "::warning::Container running as root user - security risk"
+          } || echo "Container user configuration acceptable"
+
+          # Enhanced vulnerability analysis with security gate integration
           python3 << 'EOF'
           import json
           import sys
@@ -204,33 +218,75 @@ jobs:
 
           blocking_vulns = []
           total_vulns = 0
+          critical_vulns = 0
+          high_vulns = 0
+          security_gate_violations = []
 
           for result in results.get('Results', []):
               for vuln in result.get('Vulnerabilities', []):
                   total_vulns += 1
                   severity = vuln.get('Severity', 'UNKNOWN')
+
+                  # Count critical and high severity separately
+                  if severity == 'CRITICAL':
+                      critical_vulns += 1
+                  elif severity == 'HIGH':
+                      high_vulns += 1
+
                   if severity_levels.get(severity, 0) >= threshold_level:
-                      blocking_vulns.append({
+                      vuln_data = {
                           'id': vuln.get('VulnerabilityID', 'Unknown'),
                           'severity': severity,
                           'title': vuln.get('Title', 'No title'),
-                          'pkg': vuln.get('PkgName', 'Unknown package')
-                      })
+                          'pkg': vuln.get('PkgName', 'Unknown package'),
+                          'fixed_version': vuln.get('FixedVersion', 'Not available')
+                      }
+                      blocking_vulns.append(vuln_data)
+
+                      # Security gate violations (stricter criteria)
+                      if severity in ['CRITICAL', 'HIGH'] and 'remote' in vuln.get('Title', '').lower():
+                          security_gate_violations.append(vuln_data)
 
           print(f"Total vulnerabilities found: {total_vulns}")
+          print(f"Critical vulnerabilities: {critical_vulns}")
+          print(f"High vulnerabilities: {high_vulns}")
           print(f"Vulnerabilities at or above {threshold} severity: {len(blocking_vulns)}")
+          print(f"Security gate violations (critical/high + remote): {len(security_gate_violations)}")
+
+          # Create security summary
+          security_summary = {
+              'total_vulns': total_vulns,
+              'critical_vulns': critical_vulns,
+              'high_vulns': high_vulns,
+              'blocking_vulns': len(blocking_vulns),
+              'security_gate_violations': len(security_gate_violations),
+              'threshold': threshold,
+              'image': '${{ matrix.image }}',
+              'passed': len(blocking_vulns) == 0
+          }
+
+          with open('security-summary-${{ matrix.image }}.json', 'w') as f:
+              json.dump(security_summary, f, indent=2)
 
           if blocking_vulns:
               print(f"\n❌ BLOCKING VULNERABILITIES FOUND ({threshold}+ severity):")
               for vuln in blocking_vulns[:10]:  # Show first 10
-                  print(f"  - {vuln['id']} ({vuln['severity']}): {vuln['title']} in {vuln['pkg']}")
+                  fix_info = f" (Fix: {vuln['fixed_version']})" if vuln['fixed_version'] != 'Not available' else ""
+                  print(f"  - {vuln['id']} ({vuln['severity']}): {vuln['title']} in {vuln['pkg']}{fix_info}")
 
               if len(blocking_vulns) > 10:
                   print(f"  ... and {len(blocking_vulns) - 10} more")
 
+              # Special handling for security gate violations
+              if security_gate_violations:
+                  print(f"\n🚨 SECURITY GATE VIOLATIONS (Critical/High + Remote):")
+                  for vuln in security_gate_violations[:5]:
+                      print(f"  - {vuln['id']}: {vuln['title']} ({vuln['severity']})")
+
               sys.exit(1)
           else:
               print(f"✅ No vulnerabilities found at or above {threshold} severity level")
+              print(f"✅ Security gate: PASSED")
           EOF
 
       - name: Generate vulnerability summary
@@ -266,23 +322,91 @@ jobs:
           EOF
           fi
 
-      - name: Upload scan artifacts
+      - name: Upload Enhanced Scan Artifacts
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: trivy-results-${{ matrix.image }}
+          name: enhanced-security-scan-${{ matrix.image }}-${{ github.sha }}
           path: |
             trivy-results-${{ matrix.image }}.sarif
             trivy-results-${{ matrix.image }}.json
-          retention-days: 30
+            security-summary-${{ matrix.image }}.json
+          retention-days: 90
           if-no-files-found: warn
+
+  # ============================================
+  # Enhanced Security Gate
+  # ============================================
+  security-gate:
+    name: Security Gate Evaluation
+    needs: [detect-changes, scan-images]
+    if: always() && needs.detect-changes.outputs.changed-images != '[]'
+    runs-on: ubuntu-latest
+    outputs:
+      security-gate-passed: ${{ steps.evaluate-gate.outputs.passed }}
+      critical-vulnerabilities: ${{ steps.evaluate-gate.outputs.critical-count }}
+    steps:
+      - name: Download all security summaries
+        uses: actions/download-artifact@v4
+        with:
+          pattern: enhanced-security-scan-*
+          merge-multiple: true
+
+      - name: 🛡️ Evaluate Security Gate
+        id: evaluate-gate
+        run: |
+          echo "Evaluating security gate across all scanned images..."
+
+          total_critical=0
+          total_high=0
+          failed_images=0
+          gate_violations=0
+
+          for summary_file in security-summary-*.json; do
+            if [ -f "$summary_file" ]; then
+              image_name=$(basename "$summary_file" .json | sed 's/security-summary-//')
+
+              critical=$(jq -r '.critical_vulns' "$summary_file" || echo "0")
+              high=$(jq -r '.high_vulns' "$summary_file" || echo "0")
+              passed=$(jq -r '.passed' "$summary_file" || echo "false")
+              violations=$(jq -r '.security_gate_violations' "$summary_file" || echo "0")
+
+              total_critical=$((total_critical + critical))
+              total_high=$((total_high + high))
+              gate_violations=$((gate_violations + violations))
+
+              if [ "$passed" != "true" ]; then
+                failed_images=$((failed_images + 1))
+                echo "❌ $image_name: FAILED ($critical critical, $high high vulnerabilities)"
+              else
+                echo "✅ $image_name: PASSED"
+              fi
+            fi
+          done
+
+          echo "Security Gate Summary:"
+          echo "  Total Critical Vulnerabilities: $total_critical"
+          echo "  Total High Vulnerabilities: $total_high"
+          echo "  Security Gate Violations: $gate_violations"
+          echo "  Failed Images: $failed_images"
+
+          # Security gate decision logic
+          if [ $failed_images -gt 0 ] || [ $gate_violations -gt 0 ]; then
+            echo "::error::Security gate FAILED - Blocking deployment"
+            echo "passed=false" >> $GITHUB_OUTPUT
+          else
+            echo "✅ Security gate PASSED - Safe for deployment"
+            echo "passed=true" >> $GITHUB_OUTPUT
+          fi
+
+          echo "critical-count=$total_critical" >> $GITHUB_OUTPUT
 
   # ============================================
   # Security Summary
   # ============================================
   security-summary:
     name: Security Scan Summary
-    needs: [detect-changes, scan-images]
+    needs: [detect-changes, scan-images, security-gate]
     if: always() && needs.detect-changes.outputs.changed-images != '[]'
     runs-on: ubuntu-latest
     steps:

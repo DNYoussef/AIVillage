@@ -403,8 +403,8 @@ class TestLoadTesting:
     @pytest.mark.asyncio
     async def test_concurrent_component_usage(self):
         """Test concurrent usage of multiple components."""
-        api_key = os.getenv("OPENROUTER_API_KEY", "mock-key")
-        use_mock = api_key == "mock-key"
+        api_key = os.getenv("OPENROUTER_API_KEY", "test_mock_api_key")  # pragma: allowlist secret
+        use_mock = api_key == "test_mock_api_key"  # pragma: allowlist secret
 
         if use_mock:
             from tests.curriculum.test_integration_comprehensive import MockOpenRouterLLM
@@ -509,8 +509,8 @@ class TestLoadTesting:
     @pytest.mark.asyncio
     async def test_memory_scaling(self):
         """Test memory usage scaling with increasing load."""
-        api_key = os.getenv("OPENROUTER_API_KEY", "mock-key")
-        use_mock = api_key == "mock-key"
+        api_key = os.getenv("OPENROUTER_API_KEY", "test_mock_api_key")  # pragma: allowlist secret
+        use_mock = api_key == "test_mock_api_key"  # pragma: allowlist secret
 
         if use_mock:
             from tests.curriculum.test_integration_comprehensive import MockOpenRouterLLM
@@ -580,8 +580,8 @@ class TestScalabilityLimits:
                 )
             )
 
-        api_key = os.getenv("OPENROUTER_API_KEY", "mock-key")
-        use_mock = api_key == "mock-key"
+        api_key = os.getenv("OPENROUTER_API_KEY", "test_mock_api_key")  # pragma: allowlist secret
+        use_mock = api_key == "test_mock_api_key"  # pragma: allowlist secret
 
         if use_mock:
             from tests.curriculum.test_integration_comprehensive import MockOpenRouterLLM

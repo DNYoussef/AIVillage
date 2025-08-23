@@ -14,14 +14,14 @@ gateway:
 
 # Security settings
 security:
-  # Generate secure keys for production!
-  api_key: "dev-gateway-key-12345"
-  secret_key: "dev-secret-key-change-in-production"
-  
+  # API keys loaded from environment variables
+  api_key: "${AIVILLAGE_GATEWAY_API_KEY}"
+  secret_key: "${AIVILLAGE_GATEWAY_SECRET_KEY}"
+
   # Rate limiting
   rate_limit_requests: 100
   rate_limit_window: 60
-  
+
   # CORS policy
   cors_origins:
     - "http://localhost:3000"
