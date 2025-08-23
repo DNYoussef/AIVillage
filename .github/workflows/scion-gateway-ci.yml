@@ -7,25 +7,23 @@ on:
   push:
     branches: [ main, develop, 'feature/scion-*' ]
     paths:
-      - 'proto/**'
-      - 'scion-sidecar/**'
-      - 'betanet-gateway/**'
-      - 'src/transport/scion_gateway.py'
-      - 'src/navigation/scion_navigator.py'
+      - 'integrations/clients/rust/betanet/betanet-gateway/**'
+      - 'integrations/clients/rust/scion-sidecar/**'
+      - 'infrastructure/p2p/scion_gateway.py'
+      - 'core/agents/infrastructure/navigation/scion_navigator.py'
       - 'tests/e2e/test_scion_gateway.py'
-      - 'docker/scion-gateway/**'
+      - 'devops/deployment/docker/docker-compose.scion-gateway.yml'
       - '.github/workflows/scion-gateway-ci.yml'
 
   pull_request:
     branches: [ main, develop ]
     paths:
-      - 'proto/**'
-      - 'scion-sidecar/**'
-      - 'betanet-gateway/**'
-      - 'src/transport/scion_gateway.py'
-      - 'src/navigation/scion_navigator.py'
+      - 'integrations/clients/rust/betanet/betanet-gateway/**'
+      - 'integrations/clients/rust/scion-sidecar/**'
+      - 'infrastructure/p2p/scion_gateway.py'
+      - 'core/agents/infrastructure/navigation/scion_navigator.py'
       - 'tests/e2e/test_scion_gateway.py'
-      - 'docker/scion-gateway/**'
+      - 'devops/deployment/docker/docker-compose.scion-gateway.yml'
 
   workflow_dispatch:
     inputs:
@@ -155,7 +153,7 @@ jobs:
     needs: validate-no-placeholders
     defaults:
       run:
-        working-directory: scion-sidecar
+        working-directory: integrations/clients/rust/scion-sidecar
 
     steps:
       - name: Checkout code
@@ -238,7 +236,7 @@ jobs:
     needs: validate-no-placeholders
     defaults:
       run:
-        working-directory: betanet-gateway
+        working-directory: integrations/clients/rust/betanet/betanet-gateway
 
     steps:
       - name: Checkout code
@@ -337,19 +335,19 @@ jobs:
       - name: Run Python linting
         run: |
           pip install ruff black isort
-          ruff check src/transport/scion_gateway.py src/navigation/scion_navigator.py
-          black --check src/transport/scion_gateway.py src/navigation/scion_navigator.py
-          isort --check-only src/transport/scion_gateway.py src/navigation/scion_navigator.py
+          ruff check infrastructure/p2p/scion_gateway.py core/agents/infrastructure/navigation/scion_navigator.py
+          black --check infrastructure/p2p/scion_gateway.py core/agents/infrastructure/navigation/scion_navigator.py
+          isort --check-only infrastructure/p2p/scion_gateway.py core/agents/infrastructure/navigation/scion_navigator.py
 
       - name: Run Python type checking
         run: |
           pip install mypy
-          mypy src/transport/scion_gateway.py src/navigation/scion_navigator.py --ignore-missing-imports
+          mypy infrastructure/p2p/scion_gateway.py core/agents/infrastructure/navigation/scion_navigator.py --ignore-missing-imports
 
       - name: Run unit tests
         run: |
-          python -m pytest tests/transport/ tests/navigation/ \
-            -v --cov=src/transport --cov=src/navigation \
+          python -m pytest tests/e2e/test_scion_gateway.py \
+            -v --cov=infrastructure/p2p --cov=core/agents/infrastructure/navigation \
             --cov-report=xml --cov-report=term
 
       - name: Upload Python coverage

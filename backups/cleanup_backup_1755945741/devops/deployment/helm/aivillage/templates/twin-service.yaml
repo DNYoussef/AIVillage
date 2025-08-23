@@ -1,0 +1,21 @@
+{{- if .Values.twin.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "aivillage.fullname" . }}-twin
+  labels:
+    {{- include "aivillage.serviceLabels" (list "twin" .) | nindent 4 }}
+  {{- with .Values.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.twin.service.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "aivillage.serviceSelectorLabels" (list "twin" .) | nindent 4 }}
+{{- end }}

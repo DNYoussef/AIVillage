@@ -6,7 +6,6 @@ import asyncio
 
 import pandas as pd
 import pytest
-
 from packages.agents.specialized import (
     ArchitectAgent,
     CreativeAgent,

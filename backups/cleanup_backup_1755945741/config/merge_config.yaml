@@ -1,0 +1,9 @@
+merge_method: frankenmerge
+models:
+  - name: ollama:deepseek-coder-v2:latest
+  - name: ollama:codellama:latest
+parameters:
+  weights:
+    - 0.6
+    - 0.4
+custom_dir: merged_models/

@@ -1,0 +1,55 @@
+[package]
+name = "twin-vault"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Conflict-free twin state with receipts for every operation"
+
+[dependencies]
+# Workspace dependencies
+tokio = { workspace = true }
+bytes = { workspace = true, features = ["serde"] }
+serde = { workspace = true }
+serde_json = { workspace = true }
+bincode = { workspace = true }
+thiserror = { workspace = true }
+anyhow = { workspace = true }
+tracing = { workspace = true }
+async-trait = { workspace = true }
+futures = { workspace = true }
+uuid = { workspace = true, features = ["v4"] }
+chrono = { workspace = true, features = ["serde"] }
+dashmap = { workspace = true }
+parking_lot = { workspace = true }
+
+# Cryptography for signed operations and encryption
+chacha20poly1305 = { workspace = true }
+hkdf = { workspace = true }
+sha2 = { workspace = true }
+ed25519-dalek = { workspace = true }
+rand = { workspace = true }
+rand_core = { workspace = true }
+
+# Storage
+sled = { workspace = true }
+
+# Internal dependencies
+agent-fabric = { path = "../agent-fabric" }
+
+# COSE for receipt signing
+coset = { workspace = true, optional = true }
+
+# OS keystore integration
+# keyring = { workspace = true, optional = true }
+
+[dev-dependencies]
+tempfile = { workspace = true }
+proptest = { workspace = true }
+
+[features]
+default = []  # Temporarily disable receipts for Rust 1.78 compatibility
+receipts = ["coset"]
+# os-keystore = ["keyring"]

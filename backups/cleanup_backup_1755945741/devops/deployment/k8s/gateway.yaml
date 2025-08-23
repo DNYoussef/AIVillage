@@ -1,0 +1,135 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aivillage-gateway
+  namespace: aivillage-production
+  labels:
+    app: aivillage-gateway
+    component: api-gateway
+    slot: blue
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: aivillage-gateway
+      slot: blue
+  template:
+    metadata:
+      labels:
+        app: aivillage-gateway
+        component: api-gateway
+        slot: blue
+    spec:
+      containers:
+      - name: gateway
+        image: ghcr.io/aivillage/gateway:latest
+        ports:
+        - containerPort: 8000
+        env:
+        - name: GATEWAY_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: aivillage-config
+              key: GATEWAY_PORT
+        - name: TWIN_URL
+          value: "http://aivillage-twin:8001"
+        - name: RATE_LIMIT_REQUESTS
+          valueFrom:
+            configMapKeyRef:
+              name: aivillage-config
+              key: RATE_LIMIT_REQUESTS
+        - name: RATE_LIMIT_WINDOW
+          valueFrom:
+            configMapKeyRef:
+              name: aivillage-config
+              key: RATE_LIMIT_WINDOW
+        envFrom:
+        - configMapRef:
+            name: aivillage-config
+        - secretRef:
+            name: aivillage-secrets
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "200m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        securityContext:
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
+          runAsUser: 65534
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: aivillage-gateway
+  namespace: aivillage-production
+spec:
+  selector:
+    app: aivillage-gateway
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 8000
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: aivillage-active
+  namespace: aivillage-production
+  labels:
+    service: active-gateway
+spec:
+  selector:
+    app: aivillage-gateway
+    slot: blue  # This will be updated during blue-green deployments
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 8000
+  type: LoadBalancer
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: aivillage-gateway-ingress
+  namespace: aivillage-production
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/rate-limit: "100"
+    nginx.ingress.kubernetes.io/rate-limit-window: "1m"
+spec:
+  tls:
+  - hosts:
+    - api.aivillage.com
+    secretName: aivillage-tls
+  rules:
+  - host: api.aivillage.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: aivillage-active
+            port:
+              number: 8000

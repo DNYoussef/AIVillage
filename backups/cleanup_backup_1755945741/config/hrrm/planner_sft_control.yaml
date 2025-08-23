@@ -1,0 +1,35 @@
+# Planner SFT configuration for control token learning
+vocab_size: 32000
+d_model: 512
+n_layers: 16
+n_head: 8
+max_seq_len: 2048
+rope_base: 10000
+
+# HRM parameters
+max_H: 4
+inner_T: 4
+
+# Control tokens
+control_tokens: 5
+lambda_ctrl: 0.5  # Higher weight for SFT
+
+# Training
+dropout: 0.1
+tie_embeddings: true
+
+# Training hyperparameters
+learning_rate: 1e-4  # Lower for SFT
+weight_decay: 0.1
+warmup_steps: 500
+max_steps: 10000
+batch_size: 16
+gradient_accumulation_steps: 2
+
+# Scheduler
+scheduler_type: "linear"
+min_lr_ratio: 0.0
+
+# Logging
+log_interval: 25
+checkpoint_interval: 1000

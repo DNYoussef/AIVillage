@@ -1,0 +1,56 @@
+[package]
+name = "navigator"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.70"
+authors = ["AIVillage Team"]
+license = "MIT"
+repository = "https://github.com/aivillage/aivillage"
+description = "Semiring-based multi-criteria path selection for AIVillage routing"
+
+# [workspace] - Removed to prevent conflicts with parent workspace
+
+[dependencies]
+# DTN integration (commented out for standalone testing)
+# betanet-dtn = { path = "../betanet-dtn" }
+# bitchat-cla = { path = "../bitchat-cla" }  # Commented out due to placeholder imports
+# betanet-cla = { path = "../betanet-cla" }  # Commented out due to placeholder imports
+
+# Async runtime
+tokio = { version = "1.0", features = ["net", "io-util", "macros", "rt-multi-thread", "sync", "time", "test-util"] }
+futures = "0.3"
+async-trait = "0.1"
+
+# Data structures
+serde = { version = "1.0", features = ["derive"] }
+thiserror = "1.0"
+anyhow = "1.0"
+
+# Math and ordering
+ordered-float = { version = "4.5", features = ["serde"] }
+
+# Logging
+tracing = "0.1"
+
+# Python bindings (optional)
+pyo3 = { version = "0.20", features = ["auto-initialize"], optional = true }
+
+[dev-dependencies]
+tempfile = "3.0"
+
+[features]
+default = ["privacy-balanced"]
+
+# Privacy mode feature flags as specified in Prompt 8
+privacy-strict = []
+privacy-balanced = []
+privacy-perf = []
+
+# QoS optimization features
+real-time = []
+cost-efficient = []
+reliability-first = []
+gaming = []
+
+# Python integration
+python-bindings = ["pyo3"]

@@ -54,10 +54,10 @@ jobs:
 
       - name: Run Go vet
         run: |
-          if [ -d "clients/rust/scion-sidecar" ]; then
-            cd clients/rust/scion-sidecar
-            go vet ./... 2>&1 | tee ../../../govet.txt
-            cd ../../..
+          if [ -d "integrations/clients/rust/scion-sidecar" ]; then
+            cd integrations/clients/rust/scion-sidecar
+            go vet ./... 2>&1 | tee ../../../../govet.txt
+            cd ../../../..
           else
             echo "No Go modules found, skipping vet"
             echo "No Go modules found" > govet.txt
@@ -135,20 +135,20 @@ jobs:
 
       - name: Build Go
         run: |
-          if [ -d "clients/rust/scion-sidecar" ]; then
-            cd clients/rust/scion-sidecar
+          if [ -d "integrations/clients/rust/scion-sidecar" ]; then
+            cd integrations/clients/rust/scion-sidecar
             go build ./...
-            cd ../../..
+            cd ../../../..
           else
             echo "No Go modules found, skipping build"
           fi
 
       - name: Test Go
         run: |
-          if [ -d "clients/rust/scion-sidecar" ]; then
-            cd clients/rust/scion-sidecar
+          if [ -d "integrations/clients/rust/scion-sidecar" ]; then
+            cd integrations/clients/rust/scion-sidecar
             go test ./...
-            cd ../../..
+            cd ../../../..
           else
             echo "No Go modules found, skipping tests"
           fi

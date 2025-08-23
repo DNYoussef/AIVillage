@@ -13,7 +13,6 @@ import asyncio
 from datetime import UTC, datetime, timedelta
 
 import pytest
-
 from packages.fog.gateway.scheduler.marketplace import BidStatus, BidType, MarketplaceEngine, PricingTier
 
 

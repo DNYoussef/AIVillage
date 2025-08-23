@@ -1,0 +1,5 @@
+msrv = "1.78.0"
+warn-on-all-wildcard-imports = true
+allow-expect-in-tests = true
+allow-unwrap-in-tests = true
+allow-dbg-in-tests = true

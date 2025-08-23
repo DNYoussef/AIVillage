@@ -1,0 +1,55 @@
+# HypeRAG Retrieval Configuration
+
+# Personalized PageRank settings
+pagerank:
+  damping_factor: 0.85
+  max_iterations: 50
+  convergence_tolerance: 1e-6
+  min_score_threshold: 0.001
+
+# α-weight fusion parameters
+alpha_fusion:
+  base_weight: 1.0           # λ₀ for base PPR scores
+  alpha_weight: 0.3          # λ₁ for α-profile boost
+  popularity_penalty: 0.1    # λ₂ for popularity rank penalty
+  min_alpha_threshold: 0.1   # Minimum α-weight to consider
+
+# Recency boost from HippoIndex
+recency_boost:
+  enabled: true
+  knn_limit: 20              # Number of recent nodes to fetch
+  score_multiplier: 1.2      # Boost factor for recent nodes
+  max_age_hours: 24          # Only consider nodes within this age
+
+# Uncertainty handling
+uncertainty:
+  decay_per_hop: 0.1         # Uncertainty increase per hop
+  max_uncertainty: 0.8       # Skip nodes above this uncertainty
+  confidence_weight: 0.5     # Weight for confidence in final scoring
+
+# Performance limits
+performance:
+  max_nodes_per_query: 1000  # Maximum nodes to process
+  max_hops: 5                # Maximum PageRank iterations
+  timeout_ms: 150            # Maximum retrieval time
+  memory_limit_mb: 10        # Memory overhead limit
+
+# Creative mode settings
+creative_mode:
+  enabled: true
+  min_surprise_threshold: 0.7    # Minimum surprise for creative results
+  max_divergent_hops: 7          # Extended hop limit for creativity
+  ignore_popularity: true        # Ignore popular paths in creative mode
+
+# Graph traversal
+traversal:
+  min_edge_confidence: 0.3   # Minimum edge confidence to follow
+  prefer_hyperedges: true    # Prefer n-ary relationships
+  community_bias: 0.2        # Bias towards same community nodes
+
+# Caching
+cache:
+  enabled: true
+  ttl_seconds: 3600          # Cache TTL for PPR results
+  max_cache_size: 1000       # Maximum cached queries
+  key_prefix: "hyperag:ppr"  # Redis key prefix

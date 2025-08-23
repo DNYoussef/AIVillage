@@ -1,0 +1,162 @@
+# Stage 1: ARC Visual Reasoning Configuration
+# ARC-like visual reasoning with heavy augmentation for pattern recognition
+
+stage:
+  name: "arc_visual"
+  description: "ARC-like visual reasoning with augmentations"
+  stage_id: 1
+
+# Training Parameters  
+training:
+  max_steps: 4000
+  batch_size: 8
+  sequence_length: 512
+  learning_rate: 2e-4
+  
+  eval_interval: 200
+  save_interval: 1000
+  log_interval: 50
+
+# Model Behavior
+model:
+  max_refinement_steps: 4
+  act_threshold: 0.99
+  ponder_cost_initial: 0.005
+  ponder_cost_final: 0.01
+  
+  # Begin memory writing
+  memory_settings:
+    ltm_read_only: false
+    ltm_write_alpha: 0.05
+    ltm_decay_rate: 1e-3
+
+# Data Configuration
+data:
+  # ARC-style visual reasoning tasks
+  task_types:
+    - "grid_pattern_completion"   # Complete visual patterns
+    - "object_transformation"     # Transform objects based on rules
+    - "spatial_reasoning"         # Spatial relationship understanding
+    - "color_pattern_matching"    # Color-based pattern recognition
+    
+  # Data sources
+  datasets:
+    - "arc_train"
+    - "arc_eval" 
+    - "synthetic_visual_reasoning"
+    
+  # Heavy augmentation for visual tasks
+  augmentation:
+    enabled: true
+    rate: 0.8                    # 80% of samples augmented
+    types:
+      - "rotation"               # 4-way rotation
+      - "reflection"             # Horizontal/vertical reflection  
+      - "color_permutation"      # Permute colors
+      - "noise_injection"        # Add visual noise
+      
+    # Rotation-specific settings
+    rotation:
+      angles: [90, 180, 270]     # 4-way rotation
+      probability: 0.6
+      
+    # Color permutation
+    color_permutation:
+      max_colors: 10
+      preserve_background: true
+      probability: 0.4
+      
+    # Noise injection
+    noise:
+      max_noise_level: 0.1
+      probability: 0.2
+
+# Loss Configuration
+loss:
+  deep_supervision_weight: 1.0
+  improvement_weight: 0.1        # Encourage step-by-step improvement
+  consistency_weight: 0.1        # Augmentation consistency
+  ponder_weight: 1.0             # Begin penalizing excessive pondering
+
+# GrokFast Settings (full strength for pattern recognition)
+grokfast:
+  enabled: true
+  global_multiplier: 1.0         # Full strength
+  focus_components: ["refinement_core"]
+  
+  components:
+    refinement_core:
+      alpha: 0.98                # Strong EMA smoothing
+      lamb: 2.0                  # 2x slow gradient amplification
+      window_size: 100
+      
+    gated_ltm:
+      alpha: 0.95
+      lamb: 1.5
+      window_size: 50
+      
+    act_halting:
+      enabled: false             # No GrokFast on ACT
+
+# Convergence Criteria
+convergence:
+  patience: 500
+  min_accuracy: 0.7              # Visual reasoning is challenging
+  max_ponder_cost: 4.0
+  min_improvement: 5e-4
+  
+  # Grokking detection
+  grokking_indicators:
+    sudden_accuracy_jump: 0.2    # 20% accuracy jump indicates grokking
+    loss_plateau_before_drop: 100 # Steps of plateau before sudden drop
+    validation_gap_closure: true  # Train/val gap closes rapidly
+
+# Memory Management
+memory:
+  # Start building visual pattern memory
+  consolidation_frequency: "high"
+  memory_capacity_usage_target: 0.3
+  
+  # Visual pattern-specific memory
+  pattern_memory:
+    spatial_patterns: true
+    color_patterns: true
+    transformation_rules: true
+
+# Validation Tasks
+validation:
+  tasks:
+    - name: "arc_pattern_completion"
+      description: "Complete visual patterns like ARC tasks"
+      expected_accuracy: 0.65
+      
+    - name: "rotation_invariance"
+      description: "Maintain accuracy across rotations"
+      expected_accuracy: 0.6
+      
+    - name: "color_invariance"
+      description: "Maintain accuracy across color permutations"
+      expected_accuracy: 0.55
+
+# Resource Management
+resources:
+  max_memory_gb: 8
+  max_time_hours: 2
+  
+  # GPU memory optimization for visual data
+  gradient_checkpointing: true
+  mixed_precision: true
+
+# Stage Advancement Criteria
+advancement:
+  # Requirements to advance to stage 2
+  required_metrics:
+    min_accuracy: 0.7
+    max_ponder_cost: 4.0
+    grokking_detected: true      # Must observe grokking behavior
+    
+  # Optional metrics
+  preferred_metrics:
+    rotation_invariance: 0.6
+    color_invariance: 0.55
+    memory_utilization: 0.3

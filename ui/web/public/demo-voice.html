@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIVillage Voice Interface Demo</title>
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+            color: white;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .demo-container {
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: center;
+            padding: 2rem;
+        }
+        .demo-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(45deg, #8b5cf6, #06b6d4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 1rem;
+        }
+        .demo-description {
+            font-size: 1.2rem;
+            color: #a1a1aa;
+            margin-bottom: 3rem;
+            line-height: 1.6;
+        }
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+        .feature-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 2rem;
+            transition: transform 0.3s ease;
+        }
+        .feature-card:hover {
+            transform: translateY(-4px);
+        }
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        .feature-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        .feature-description {
+            color: #a1a1aa;
+            line-height: 1.5;
+        }
+        .demo-link {
+            background: linear-gradient(45deg, #8b5cf6, #3b82f6);
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.1rem;
+            display: inline-block;
+            transition: transform 0.3s ease;
+            margin: 1rem;
+        }
+        .demo-link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4);
+        }
+        .browser-support {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+        }
+        .support-title {
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        .support-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 0.5rem;
+            color: #a1a1aa;
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <h1 class="demo-title">🎤 AIVillage Voice Interface</h1>
+        <p class="demo-description">
+            Experience the future of AI interaction with our enhanced voice recognition system.
+            Talk naturally to AI agents, get instant responses, and enjoy seamless voice-to-voice conversations.
+        </p>
+
+        <div class="feature-grid">
+            <div class="feature-card">
+                <div class="feature-icon">🎙️</div>
+                <div class="feature-title">Voice Recognition</div>
+                <div class="feature-description">
+                    Advanced Web Speech API integration with real-time transcription and noise handling
+                </div>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">🔊</div>
+                <div class="feature-title">Speech Synthesis</div>
+                <div class="feature-description">
+                    Natural-sounding AI responses with agent-specific voices and adjustable speech patterns
+                </div>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">📊</div>
+                <div class="feature-title">Audio Visualization</div>
+                <div class="feature-description">
+                    Real-time audio level monitoring with beautiful visual feedback during conversations
+                </div>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">🤖</div>
+                <div class="feature-title">Multiple AI Agents</div>
+                <div class="feature-description">
+                    Choose from Concierge, Professor, or Steward - each with unique personalities and expertise
+                </div>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">🔒</div>
+                <div class="feature-title">Privacy First</div>
+                <div class="feature-description">
+                    Secure microphone permissions with graceful fallback to text mode when needed
+                </div>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">⚡</div>
+                <div class="feature-title">Cross-Platform</div>
+                <div class="feature-description">
+                    Works across modern browsers with intelligent feature detection and graceful degradation
+                </div>
+            </div>
+        </div>
+
+        <div>
+            <a href="/index.html" class="demo-link">🚀 Try the Voice Interface</a>
+            <a href="http://localhost:5173" class="demo-link">🔧 Development Server</a>
+        </div>
+
+        <div class="browser-support">
+            <div class="support-title">Browser Support</div>
+            <div class="support-list">
+                <div>✅ Chrome 25+</div>
+                <div>✅ Firefox 94+</div>
+                <div>✅ Safari 14.1+</div>
+                <div>✅ Edge 79+</div>
+                <div>⚠️ Opera (partial)</div>
+                <div>❌ IE (not supported)</div>
+            </div>
+            <p style="margin-top: 1rem; color: #a1a1aa; font-size: 0.9rem;">
+                * Voice features require HTTPS in production environments
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // Simple feature detection demo
+        function checkVoiceSupport() {
+            const speechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            const speechSynthesis = window.speechSynthesis;
+
+            if (speechRecognition && speechSynthesis) {
+                console.log('✅ Voice features fully supported');
+                return true;
+            } else {
+                console.log('❌ Voice features not supported in this browser');
+                return false;
+            }
+        }
+
+        // Check support on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            const isSupported = checkVoiceSupport();
+
+            if (!isSupported) {
+                const demoLinks = document.querySelectorAll('.demo-link');
+                demoLinks.forEach(link => {
+                    if (link.textContent.includes('Voice Interface')) {
+                        link.innerHTML = '⚠️ Voice Not Supported - Try Text Mode';
+                        link.style.background = 'linear-gradient(45deg, #ef4444, #f59e0b)';
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>

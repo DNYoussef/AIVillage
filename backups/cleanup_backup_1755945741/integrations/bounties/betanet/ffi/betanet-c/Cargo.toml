@@ -1,0 +1,51 @@
+[package]
+name = "betanet-c"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "C FFI library for Betanet integration with AI Village Python infrastructure"
+
+[dependencies]
+# Core Betanet components
+betanet-htx = { path = "../../crates/betanet-htx" }
+betanet-mixnode = { path = "../../crates/betanet-mixnode" }
+betanet-utls = { path = "../../crates/betanet-utls" }
+
+# FFI and C interop
+libc = "0.2"
+cbindgen = "0.24"
+
+# Async runtime for FFI
+tokio = { workspace = true, features = ["rt", "macros"] }
+
+# Serialization for Python integration
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# Error handling
+thiserror = { workspace = true }
+anyhow = { workspace = true }
+
+# Logging
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+
+# Utilities
+rand = { workspace = true }
+
+[build-dependencies]
+cbindgen = "0.24"
+
+[lib]
+name = "betanet_c"
+crate-type = ["cdylib", "staticlib"]
+
+[features]
+default = ["htx", "mixnode", "utls"]
+htx = []
+mixnode = []
+utls = []
+python-integration = []

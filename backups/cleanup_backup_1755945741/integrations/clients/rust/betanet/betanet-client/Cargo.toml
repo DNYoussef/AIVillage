@@ -1,0 +1,113 @@
+[package]
+name = "betanet-client"
+version = "0.1.0"
+edition = "2021"
+authors = ["AIVillage Team"]
+description = "Betanet Rust client with HTX covert transport, Noise XK tunneling, and Chrome fingerprint calibration"
+license = "MIT"
+repository = "https://github.com/aivillage/betanet-client"
+
+[dependencies]
+# Async runtime and networking
+tokio = { version = "1.35", features = ["full"] }
+quinn = { version = "0.10", optional = true }
+hyper = { version = "0.14", features = ["full"] }
+h3 = { version = "0.0.4", optional = true }
+h3-quinn = { version = "0.0.4", optional = true }
+
+# TLS and cryptography
+rustls = { version = "0.21", features = ["dangerous_configuration"] }
+rustls-pemfile = "1.0"
+snow = { version = "0.9", optional = true }
+ed25519-dalek = { version = "2.0", features = ["rand_core"], optional = true }
+x25519-dalek = "2.0"
+aes-gcm = "0.10"
+sha2 = "0.10"
+hmac = "0.12"
+rand = "0.8"
+
+# HTTP client for calibration
+reqwest = { version = "0.11", features = ["json", "rustls-tls"] }
+
+# Utilities
+hex = "0.4"
+
+# Serialization
+ciborium = { version = "0.2", optional = true }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+serde_cbor = "0.11"
+
+# Logging and monitoring
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+metrics = "0.22"
+metrics-exporter-prometheus = "0.13"
+chrono = { version = "0.4", features = ["serde"] }
+
+# CLI and configuration
+clap = { version = "4.0", features = ["derive"] }
+toml = "0.8"
+config = "0.13"
+
+# Error handling and utilities
+anyhow = "1.0"
+thiserror = "1.0"
+uuid = { version = "1.0", features = ["v4", "serde"] }
+bytes = "1.0"
+futures = "0.3"
+
+# Python FFI for integration
+pyo3 = { version = "0.20", features = ["extension-module"], optional = true }
+
+# Development dependencies
+[dev-dependencies]
+tokio-test = "0.4"
+criterion = { version = "0.5", features = ["html_reports"] }
+proptest = "1.0"
+tempfile = "3.0"
+
+# Feature flags
+[features]
+default = ["quic", "http2", "http3", "noise", "chrome-fingerprint"]
+python-ffi = ["pyo3"]
+quic = ["quinn"]
+http2 = ["hyper/http2"]
+http3 = ["h3", "h3-quinn"]
+noise = ["snow"]
+chrome-fingerprint = []
+cbor-gateway = ["ciborium", "ed25519-dalek"]
+cffi = []
+
+# Binary targets
+[[bin]]
+name = "betanet-client"
+path = "src/bin/client.rs"
+
+[[bin]]
+name = "betanet-gateway"
+path = "src/bin/gateway.rs"
+
+[[bin]]
+name = "fingerprint-test"
+path = "src/bin/fingerprint_test.rs"
+
+# Python extension module (when python-ffi feature is enabled)
+[lib]
+name = "betanet_rust"
+crate-type = ["cdylib", "rlib"]
+
+# Profile optimizations
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"
+
+[profile.dev]
+opt-level = 0
+debug = true
+
+[profile.bench]
+opt-level = 3
+debug = true

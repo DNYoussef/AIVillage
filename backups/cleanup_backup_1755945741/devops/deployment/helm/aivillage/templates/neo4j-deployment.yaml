@@ -1,0 +1,98 @@
+{{- if .Values.neo4j.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "aivillage.fullname" . }}-neo4j
+  labels:
+    {{- include "aivillage.serviceLabels" (list "neo4j" .) | nindent 4 }}
+spec:
+  replicas: 1  # Neo4j Community Edition doesn't support clustering
+  strategy:
+    type: Recreate  # Neo4j requires recreate strategy
+  selector:
+    matchLabels:
+      {{- include "aivillage.serviceSelectorLabels" (list "neo4j" .) | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "aivillage.serviceSelectorLabels" (list "neo4j" .) | nindent 8 }}
+    spec:
+      securityContext:
+        fsGroup: 7474
+        runAsUser: 7474
+        runAsGroup: 7474
+        runAsNonRoot: true
+      containers:
+        - name: neo4j
+          image: neo4j:5.11-community
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 7474
+              protocol: TCP
+            - name: bolt
+              containerPort: 7687
+              protocol: TCP
+          env:
+            - name: NEO4J_AUTH
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "aivillage.fullname" . }}-secrets
+                  key: neo4j-auth
+            - name: NEO4J_PLUGINS
+              value: '["apoc"]'
+            - name: NEO4J_apoc_export_file_enabled
+              value: "true"
+            - name: NEO4J_apoc_import_file_enabled
+              value: "true"
+            - name: NEO4J_ACCEPT_LICENSE_AGREEMENT
+              value: "yes"
+            - name: NEO4J_dbms_memory_heap_initial_size
+              value: "512m"
+            - name: NEO4J_dbms_memory_heap_max_size
+              value: "2g"
+            - name: NEO4J_dbms_memory_pagecache_size
+              value: "1g"
+          livenessProbe:
+            exec:
+              command:
+                - cypher-shell
+                - -u
+                - neo4j
+                - -p
+                - $(NEO4J_PASSWORD)
+                - "MATCH (n) RETURN count(n)"
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          resources:
+            {{- include "aivillage.resources" .Values.neo4j | nindent 12 }}
+          volumeMounts:
+            - name: neo4j-data
+              mountPath: /data
+            - name: neo4j-logs
+              mountPath: /logs
+            - name: neo4j-import
+              mountPath: /var/lib/neo4j/import
+      volumes:
+        - name: neo4j-data
+          {{- if .Values.neo4j.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ include "aivillage.fullname" . }}-neo4j-data
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+        - name: neo4j-logs
+          emptyDir: {}
+        - name: neo4j-import
+          emptyDir: {}
+{{- end }}

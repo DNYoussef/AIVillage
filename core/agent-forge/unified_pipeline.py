@@ -2,13 +2,16 @@
 Agent Forge Unified Pipeline
 
 Complete end-to-end orchestration of all Agent Forge phases:
-1. EvoMerge: Evolutionary model optimization
-2. Quiet-STaR: Reasoning enhancement baking
-3. BitNet 1.58: Initial compression
-4. Forge Training: Main training loop with Grokfast
-5. Tool & Persona Baking: Identity and capability baking with Grokfast
-6. ADAS: Architecture search with vector composition (Transformers Squared)
-7. Final Compression: SeedLM + VPTQ + Hypercompression
+1. Cognate: Model creation and initialization (NEWLY IMPLEMENTED)
+2. EvoMerge: Evolutionary model optimization
+3. Quiet-STaR: Reasoning enhancement baking
+4. BitNet 1.58: Initial compression
+5. Forge Training: Main training loop with Grokfast
+6. Tool & Persona Baking: Identity and capability baking with Grokfast
+7. ADAS: Architecture search with vector composition (Transformers Squared)
+8. Final Compression: SeedLM + VPTQ + Hypercompression
+
+NOW COMPLETE 8-PHASE PIPELINE WITH MODEL CREATION!
 """
 
 import json
@@ -23,7 +26,7 @@ import torch
 import torch.nn as nn
 
 # Import phase controller infrastructure
-from .phase_controller import PhaseController, PhaseOrchestrator, PhaseResult
+from .core.phase_controller import PhaseController, PhaseOrchestrator, PhaseResult
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +47,8 @@ class UnifiedConfig:
     checkpoint_dir: Path = Path("./agent_forge_checkpoints")
     device: str = "cuda" if torch.cuda.is_available() else "cpu"
 
-    # Phase control flags
+    # Phase control flags (8-phase pipeline)
+    enable_cognate: bool = True  # NEW - Phase 1: Model creation
     enable_evomerge: bool = True
     enable_quietstar: bool = True
     enable_initial_compression: bool = True
@@ -52,6 +56,12 @@ class UnifiedConfig:
     enable_tool_baking: bool = True
     enable_adas: bool = True
     enable_final_compression: bool = True
+
+    # Cognate configuration (Phase 1 - NEW)
+    cognate_init_strategy: str = "xavier_uniform"  # xavier_uniform, kaiming_normal, custom
+    cognate_merge_strategy: str = "average"  # average, weighted, evolutionary
+    cognate_target_architecture: str = "auto"  # auto, custom, or specific model
+    cognate_validate_compatibility: bool = True
 
     # EvoMerge configuration
     evomerge_generations: int = 50
@@ -158,6 +168,21 @@ class UnifiedPipeline:
 
         try:
             # Import consolidated phase modules
+
+            # Phase 1: Cognate (Model Creation) - NEWLY IMPLEMENTED
+            if self.config.enable_cognate:
+                from .phases.cognate import CognateConfig, CognatePhase
+
+                cognate_config = CognateConfig(
+                    base_models=self.config.base_models,
+                    target_architecture=self.config.cognate_target_architecture,
+                    init_strategy=self.config.cognate_init_strategy,
+                    merge_strategy=self.config.cognate_merge_strategy,
+                    validate_compatibility=self.config.cognate_validate_compatibility,
+                    device=self.config.device,
+                )
+                phases.append(("CognatePhase", CognatePhase(cognate_config)))
+
             if self.config.enable_evomerge:
                 from ..phases.evomerge import EvoMergeConfig, EvoMergePhase
 
@@ -379,11 +404,19 @@ class UnifiedPipeline:
                 duration_seconds=duration,
             )
 
-    def _create_initial_model(self) -> nn.Module:
-        """Create initial model for pipeline start."""
-        # For now, create a simple dummy model
-        # In production, this would load/merge the base models
-        self.logger.info("Creating initial model for pipeline")
+    def _create_initial_model(self) -> nn.Module | None:
+        """
+        Create initial model for pipeline start.
+
+        With Cognate phase enabled, returns None to let Cognate create the model.
+        Otherwise creates a dummy model for backward compatibility.
+        """
+        if self.config.enable_cognate:
+            self.logger.info("Cognate phase enabled - will create model from base models")
+            return None  # Cognate phase will handle model creation
+
+        # Fallback: create dummy model if Cognate is disabled
+        self.logger.info("Creating fallback initial model for pipeline")
 
         # Create a simple transformer-like model as starting point
         model = nn.Sequential(nn.Linear(768, 768), nn.ReLU(), nn.Linear(768, 768))

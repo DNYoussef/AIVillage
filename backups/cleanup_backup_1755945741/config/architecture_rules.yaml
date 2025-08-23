@@ -1,0 +1,252 @@
+# AIVillage Architecture Rules Configuration
+# Defines constraints and rules for architectural fitness functions
+
+# File and Module Constraints
+max_file_lines: 500
+max_function_complexity: 10
+max_function_parameters: 3
+max_class_methods: 15
+max_class_fields: 10
+
+# Coupling and Cohesion Thresholds
+max_coupling_threshold: 0.3
+min_cohesion_threshold: 0.7
+max_dependencies_per_module: 20
+max_fan_out: 7
+max_depth_of_inheritance: 4
+
+# Connascence Rules
+connascence_rules:
+  # Weak forms (acceptable across module boundaries)
+  weak_forms:
+    - connascence_of_name
+    - connascence_of_type
+    - connascence_of_meaning
+
+  # Strong forms (should be local only)
+  strong_forms:
+    - connascence_of_position
+    - connascence_of_algorithm
+    - connascence_of_execution_order
+    - connascence_of_timing
+
+  # Locality rules
+  locality_rules:
+    same_function: ["all"]
+    same_class: ["connascence_of_name", "connascence_of_type"]
+    same_module: ["connascence_of_meaning"]
+    different_modules: ["connascence_of_name_only"]
+
+# Layer Dependencies (what each layer can depend on)
+allowed_dependencies:
+  # Core packages - foundational layer
+  core:
+    - common
+    - legacy
+
+  # Agent layer
+  agents:
+    - core
+    - common
+
+  # RAG system
+  rag:
+    - core
+    - common
+
+  # P2P communication layer
+  p2p:
+    - core
+    - common
+
+  # Fog computing layer
+  fog:
+    - core
+    - p2p
+    - common
+
+  # Edge computing layer
+  edge:
+    - core
+    - p2p
+    - fog
+    - common
+
+  # Agent Forge (ML/AI pipeline)
+  agent_forge:
+    - core
+    - agents
+    - hrrm
+    - common
+
+  # HRRM models
+  hrrm:
+    - core
+    - common
+
+  # Monitoring and observability
+  monitoring:
+    - core
+    - common
+
+  # Tokenomics and governance
+  tokenomics:
+    - core
+    - common
+
+  # UI layer (highest level)
+  ui:
+    - core
+    - agents
+    - rag
+    - p2p
+    - fog
+    - common
+
+# Forbidden Dependencies (what should never depend on what)
+forbidden_dependencies:
+  core:
+    - agents
+    - rag
+    - p2p
+    - fog
+    - edge
+    - ui
+    - monitoring
+    - tokenomics
+
+  common:
+    - agents
+    - rag
+    - p2p
+    - fog
+    - edge
+    - ui
+    - monitoring
+    - tokenomics
+    - core
+
+  # Lower layers shouldn't depend on higher layers
+  p2p:
+    - agents
+    - rag
+    - ui
+    - monitoring
+
+  agents:
+    - ui
+
+  rag:
+    - ui
+
+# Security Anti-patterns
+forbidden_patterns:
+  - "eval("
+  - "exec("
+  - "pickle.loads"
+  - "pickle.load"
+  - "__import__"
+  - "globals("
+  - "locals("
+  - "input("  # Should use proper input validation
+  - "raw_input("
+  - "execfile("
+  - "compile("
+  - "open(" # Should use context managers or proper file handling
+  - "file(" # Deprecated, use open()
+
+# Required Security Patterns
+required_patterns:
+  - "with open("  # Context managers for file operations
+  - "try:" # Proper error handling
+  - "logging." # Proper logging instead of print
+
+# Testing Requirements
+test_coverage:
+  minimum_coverage: 80
+  critical_modules_coverage: 90
+
+# Code Quality Metrics
+quality_thresholds:
+  maintainability_index: 70  # Minimum maintainability index
+  halstead_difficulty: 15    # Maximum Halstead difficulty
+  technical_debt_ratio: 5    # Maximum tech debt percentage
+
+# Naming Conventions
+naming_conventions:
+  classes: "PascalCase"
+  functions: "snake_case"
+  variables: "snake_case"
+  constants: "UPPER_CASE"
+  private_methods: "_snake_case"
+  modules: "snake_case"
+
+# API Constraints
+api_constraints:
+  max_endpoint_parameters: 5
+  max_response_size_mb: 10
+  max_request_timeout_seconds: 30
+  required_http_methods: ["GET", "POST", "PUT", "DELETE"]
+  required_status_codes: [200, 201, 400, 401, 403, 404, 500]
+
+# Database Constraints
+database_constraints:
+  max_table_columns: 50
+  max_index_columns: 5
+  required_audit_fields: ["created_at", "updated_at"]
+  forbidden_operations: ["DROP TABLE", "TRUNCATE"]
+
+# Performance Thresholds
+performance_thresholds:
+  max_response_time_ms: 1000
+  max_memory_usage_mb: 512
+  max_cpu_usage_percent: 80
+  max_database_connections: 100
+
+# Documentation Requirements
+documentation_requirements:
+  docstring_coverage: 90
+  api_documentation: true
+  architecture_diagrams: true
+  change_log: true
+
+# Deployment Constraints
+deployment_constraints:
+  max_container_size_mb: 500
+  max_startup_time_seconds: 30
+  required_health_checks: true
+  required_monitoring: true
+
+# Git and Version Control Rules
+version_control_rules:
+  max_commit_files: 20
+  required_commit_message_format: "^(feat|fix|docs|style|refactor|test|chore):\\s.{10,50}"
+  forbidden_large_files_mb: 100
+  required_branch_protection: true
+
+# Integration Rules
+integration_rules:
+  max_external_dependencies: 50
+  required_dependency_licenses: ["MIT", "Apache-2.0", "BSD-3-Clause"]
+  forbidden_dependencies: ["gpl", "lgpl"]  # Copyleft licenses
+
+# Error Handling Rules
+error_handling_rules:
+  required_exception_handling: true
+  forbidden_bare_except: true
+  required_logging_on_error: true
+  max_exception_chain_depth: 3
+
+# Concurrency Rules
+concurrency_rules:
+  max_thread_pool_size: 20
+  required_thread_safety: true
+  forbidden_global_state: true
+  required_async_patterns: ["async/await", "asyncio"]
+
+# Resource Management Rules
+resource_management_rules:
+  required_context_managers: true
+  max_memory_per_request_mb: 64
+  max_file_handles: 100
+  required_cleanup_patterns: true

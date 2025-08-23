@@ -360,3 +360,44 @@ exclude_lines = [
     "class .*\\bProtocol\\):",
     "@(abc\\.)?abstractmethod",
 ]
+
+# Unified pytest configuration (consolidating config/pytest.ini and tests/pytest.ini)
+[tool.pytest.ini_options]
+minversion = "6.0"
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+pythonpath = [
+    ".",
+    "src",
+    "packages"
+]
+addopts = [
+    "-v",
+    "--strict-markers",
+    "--strict-config",
+    "--tb=short",
+    "--continue-on-collection-errors",
+    "--maxfail=10",
+    "--showlocals"
+]
+norecursedirs = ["experimental", "deprecated", "archive", "build", "dist"]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning",
+    "ignore::UserWarning:torch.*"
+]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+    "unit: marks tests as unit tests",
+    "compression: marks tests as compression tests",
+    "mobile: marks tests as mobile constraint tests",
+    "validation: marks tests as validation tests",
+    "security: marks tests as security tests",
+    "e2e: marks tests as end-to-end tests",
+    "benchmark: marks tests as benchmark tests"
+]
+timeout = 300
+asyncio_mode = "auto"

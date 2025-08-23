@@ -1,0 +1,391 @@
+# Docker Compose Override with Resource Limits & Security Hardening
+# This file extends docker-compose.yml with production-ready resource constraints
+# Usage: docker-compose -f docker-compose.yml -f docker-compose.override.yml up
+
+version: '3.9'
+
+services:
+  # ============================================
+  # Application Services with Resource Limits
+  # ============================================
+
+  twin:
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'      # Max 2 CPU cores
+          memory: 4G       # Max 4GB RAM
+        reservations:
+          cpus: '0.5'      # Reserve 0.5 CPU cores
+          memory: 1G       # Reserve 1GB RAM
+    environment:
+      # Resource-aware configuration
+      - TWIN_MAX_WORKERS=4
+      - TWIN_WORKER_TIMEOUT=30
+      - TWIN_MEMORY_LIMIT=3G
+      # Logging configuration
+      - LOG_LEVEL=INFO
+      - LOG_FORMAT=json
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "3"
+    security_opt:
+      - no-new-privileges:true
+    read_only: false  # Model loading requires write access
+    tmpfs:
+      - /tmp:noexec,nosuid,size=1g
+    ulimits:
+      nproc: 65535
+      nofile:
+        soft: 65535
+        hard: 65535
+
+  gateway:
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'      # Max 1 CPU core
+          memory: 1G       # Max 1GB RAM
+        reservations:
+          cpus: '0.25'     # Reserve 0.25 CPU cores
+          memory: 256M     # Reserve 256MB RAM
+    environment:
+      # Resource-aware rate limiting
+      - RATE_LIMIT_REQUESTS=1000
+      - RATE_LIMIT_WINDOW=60
+      - GATEWAY_MAX_WORKERS=4
+      - GATEWAY_WORKER_TIMEOUT=30
+      # Security headers
+      - GATEWAY_CORS_ENABLED=true
+      - GATEWAY_SECURITY_HEADERS=true
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp:noexec,nosuid,size=256m
+    ulimits:
+      nproc: 32768
+      nofile:
+        soft: 32768
+        hard: 32768
+
+  credits-api:
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'      # Max 1 CPU core
+          memory: 2G       # Max 2GB RAM
+        reservations:
+          cpus: '0.25'     # Reserve 0.25 CPU cores
+          memory: 512M     # Reserve 512MB RAM
+    environment:
+      # Database connection pooling
+      - DATABASE_POOL_SIZE=20
+      - DATABASE_MAX_OVERFLOW=30
+      - DATABASE_POOL_TIMEOUT=30
+      # API rate limiting
+      - API_RATE_LIMIT=1000
+      - API_RATE_WINDOW=60
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "5"
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp:noexec,nosuid,size=512m
+    ulimits:
+      nproc: 16384
+      nofile:
+        soft: 16384
+        hard: 16384
+
+  credits-worker:
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'      # Max 0.5 CPU cores
+          memory: 1G       # Max 1GB RAM
+        reservations:
+          cpus: '0.1'      # Reserve 0.1 CPU cores
+          memory: 256M     # Reserve 256MB RAM
+    environment:
+      # Worker configuration
+      - WORKER_CONCURRENCY=4
+      - WORKER_MAX_TASKS_PER_CHILD=1000
+      - WORKER_TIMEOUT=300
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp:noexec,nosuid,size=256m
+
+  # ============================================
+  # Database Services with Resource Limits
+  # ============================================
+
+  postgres:
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'      # Max 2 CPU cores
+          memory: 4G       # Max 4GB RAM
+        reservations:
+          cpus: '0.5'      # Reserve 0.5 CPU cores
+          memory: 1G       # Reserve 1GB RAM
+    environment:
+      # PostgreSQL performance tuning
+      - POSTGRES_SHARED_BUFFERS=1GB
+      - POSTGRES_EFFECTIVE_CACHE_SIZE=3GB
+      - POSTGRES_MAINTENANCE_WORK_MEM=512MB
+      - POSTGRES_CHECKPOINT_COMPLETION_TARGET=0.9
+      - POSTGRES_WAL_BUFFERS=16MB
+      - POSTGRES_DEFAULT_STATISTICS_TARGET=100
+      - POSTGRES_RANDOM_PAGE_COST=1.1
+      - POSTGRES_EFFECTIVE_IO_CONCURRENCY=200
+      - POSTGRES_WORK_MEM=4MB
+      - POSTGRES_MAX_WORKER_PROCESSES=4
+      - POSTGRES_MAX_PARALLEL_WORKERS_PER_GATHER=2
+      - POSTGRES_MAX_PARALLEL_WORKERS=4
+      - POSTGRES_MAX_PARALLEL_MAINTENANCE_WORKERS=2
+    command: >
+      postgres
+      -c shared_buffers=1GB
+      -c effective_cache_size=3GB
+      -c maintenance_work_mem=512MB
+      -c checkpoint_completion_target=0.9
+      -c wal_buffers=16MB
+      -c default_statistics_target=100
+      -c random_page_cost=1.1
+      -c effective_io_concurrency=200
+      -c work_mem=4MB
+      -c max_worker_processes=4
+      -c max_parallel_workers_per_gather=2
+      -c max_parallel_workers=4
+      -c max_parallel_maintenance_workers=2
+      -c log_min_duration_statement=1000
+      -c log_line_prefix='%t [%p]: [%l-1] user=%u,db=%d,app=%a,client=%h '
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "200m"
+        max-file: "5"
+    security_opt:
+      - no-new-privileges:true
+    ulimits:
+      nproc: 65535
+      nofile:
+        soft: 65535
+        hard: 65535
+
+  neo4j:
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'      # Max 2 CPU cores
+          memory: 6G       # Max 6GB RAM (Neo4j is memory-intensive)
+        reservations:
+          cpus: '0.5'      # Reserve 0.5 CPU cores
+          memory: 2G       # Reserve 2GB RAM
+    environment:
+      # Neo4j performance tuning
+      - NEO4J_server_memory_heap_initial__size=2G
+      - NEO4J_server_memory_heap_max__size=4G
+      - NEO4J_server_memory_pagecache_size=1G
+      - NEO4J_server_jvm_additional=-XX:+UseG1GC -XX:+UnlockExperimentalVMOptions -XX:+UseZGC
+      # Security and logging
+      - NEO4J_server_logs_user_stdout__enabled=true
+      - NEO4J_server_logs_security_level=INFO
+      - NEO4J_server_security_auth__minimum__password__length=8
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "200m"
+        max-file: "5"
+    security_opt:
+      - no-new-privileges:true
+    ulimits:
+      nproc: 65535
+      nofile:
+        soft: 65535
+        hard: 65535
+
+  redis:
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'      # Max 1 CPU core
+          memory: 2G       # Max 2GB RAM
+        reservations:
+          cpus: '0.1'      # Reserve 0.1 CPU cores
+          memory: 256M     # Reserve 256MB RAM
+    environment:
+      # Redis configuration
+      - REDIS_MAXMEMORY=1.5G
+      - REDIS_MAXMEMORY_POLICY=allkeys-lru
+    command: >
+      redis-server
+      --appendonly yes
+      --requirepass ${REDIS_PASSWORD}
+      --maxmemory 1.5G
+      --maxmemory-policy allkeys-lru
+      --tcp-keepalive 300
+      --timeout 0
+      --tcp-backlog 511
+      --databases 16
+      --save 900 1
+      --save 300 10
+      --save 60 10000
+      --rdbcompression yes
+      --rdbchecksum yes
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "3"
+    security_opt:
+      - no-new-privileges:true
+
+  qdrant:
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'      # Max 2 CPU cores
+          memory: 4G       # Max 4GB RAM
+        reservations:
+          cpus: '0.5'      # Reserve 0.5 CPU cores
+          memory: 1G       # Reserve 1GB RAM
+    environment:
+      # Qdrant performance tuning
+      - QDRANT__SERVICE__MAX_REQUEST_SIZE_MB=64
+      - QDRANT__SERVICE__MAX_WORKERS=4
+      - QDRANT__STORAGE__PERFORMANCE__MAX_SEARCH_THREADS=4
+      - QDRANT__STORAGE__OPTIMIZERS__MEMMAP_THRESHOLD_KB=500000
+      - QDRANT__STORAGE__WAL__WAL_CAPACITY_MB=256
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "3"
+    security_opt:
+      - no-new-privileges:true
+    ulimits:
+      nofile:
+        soft: 65535
+        hard: 65535
+
+  hyperag-mcp:
+    deploy:
+      resources:
+        limits:
+          cpus: '1.5'      # Max 1.5 CPU cores
+          memory: 3G       # Max 3GB RAM
+        reservations:
+          cpus: '0.5'      # Reserve 0.5 CPU cores
+          memory: 1G       # Reserve 1GB RAM
+    environment:
+      # HyperRAG performance tuning
+      - HYPERAG_MAX_WORKERS=8
+      - HYPERAG_WORKER_TIMEOUT=60
+      - HYPERAG_MAX_CONCURRENT_QUERIES=50
+      - HYPERAG_CACHE_SIZE=1000
+      - HYPERAG_BATCH_SIZE=32
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "3"
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp:noexec,nosuid,size=512m
+
+  # ============================================
+  # Monitoring Services with Resource Limits
+  # ============================================
+
+  prometheus:
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'      # Max 1 CPU core
+          memory: 2G       # Max 2GB RAM
+        reservations:
+          cpus: '0.25'     # Reserve 0.25 CPU cores
+          memory: 512M     # Reserve 512MB RAM
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "3"
+    security_opt:
+      - no-new-privileges:true
+    ulimits:
+      nofile:
+        soft: 65535
+        hard: 65535
+
+  grafana:
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'      # Max 0.5 CPU cores
+          memory: 1G       # Max 1GB RAM
+        reservations:
+          cpus: '0.1'      # Reserve 0.1 CPU cores
+          memory: 256M     # Reserve 256MB RAM
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
+    security_opt:
+      - no-new-privileges:true
+
+  pushgateway:
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'     # Max 0.25 CPU cores
+          memory: 256M     # Max 256MB RAM
+        reservations:
+          cpus: '0.05'     # Reserve 0.05 CPU cores
+          memory: 64M      # Reserve 64MB RAM
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "25m"
+        max-file: "2"
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+
+# ============================================
+# Global Network Configuration
+# ============================================
+networks:
+  ai-village-net:
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.name: aivillage-br0
+      com.docker.network.bridge.enable_ip_masquerade: "true"
+      com.docker.network.driver.mtu: 1500
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+          gateway: 172.20.0.1

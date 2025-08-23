@@ -1,0 +1,63 @@
+# HypeRAG Guardian Gate Policies
+# Tunable thresholds and domain rules for validation decisions
+
+# Component weights for impact score calculation
+weights:
+  structural_fix: 0.4      # How well proposals fix the structural issue
+  domain_veracity: 0.4     # External fact-checking confidence
+  evidence_strength: 0.2   # Strength of proposal evidence
+
+# Decision thresholds
+thresholds:
+  apply: 0.80             # APPLY if severity=high and score >= 0.8
+  quarantine: 0.40        # QUARANTINE if 0.4 <= score < 0.8
+
+# Domain-specific heuristics
+domain_heuristics:
+  medical:
+    # Edges that must be preserved during repairs
+    must_preserve_edges:
+      - "TAKES"
+      - "DIAGNOSED_WITH"
+
+    # Edge types that should never be deleted
+    forbidden_deletes:
+      - "ALLERGIC_TO"
+
+    # Required properties for medical relationships
+    required_properties:
+      PRESCRIBES: ["dosage"]
+      ALLERGIC_TO: ["severity"]
+
+  general:
+    # Standard preservation rules
+    must_preserve_edges:
+      - "IDENTITY"
+      - "HYPERCONNECTION"
+
+    # No forbidden deletes for general domain
+    forbidden_deletes: []
+
+# LoRA adapter quality thresholds by domain
+adapter_thresholds:
+  medical:
+    min_accuracy: 0.85
+    max_perplexity: 50
+
+  movies:
+    min_accuracy: 0.75
+    max_perplexity: 80
+
+  finance:
+    min_accuracy: 0.80
+    max_perplexity: 60
+
+  general:
+    min_accuracy: 0.70
+    max_perplexity: 100
+
+# High-risk domains requiring elevated confidence
+high_risk_domains:
+  - medical
+  - financial
+  - legal

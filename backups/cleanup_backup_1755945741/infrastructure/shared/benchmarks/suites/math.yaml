@@ -1,0 +1,15 @@
+objectives: [gsm8k_score, mmlu_stem_score, winogrande_score]
+task_groups:
+  - name: core
+    tasks:
+      - gsm8k
+      - mmlu_stem
+      - winogrande
+  - name: reasoning
+    tasks:
+      - arc_challenge
+      - hellaswag
+  - name: mathematical_reasoning
+    tasks:
+      - mathqa
+      - drop

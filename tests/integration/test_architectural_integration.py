@@ -28,11 +28,11 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 from packages.agent_forge.legacy_software.process_orchestrator import AgentForgeOrchestrator
 from packages.agents.specialized.governance.shield_agent import ShieldAgent
 from packages.agents.specialized.governance.sword_agent import SwordAgent
-from packages.core.legacy.compatibility.bridge_system import compatibility_bridge
 
 # Test imports
 from packages.edge.mobile.digital_twin_concierge import DigitalTwinConcierge
 
+from packages.core.legacy.compatibility.bridge_system import compatibility_bridge
 from packages.rag.core.hyper_rag import HyperRAGOrchestrator as HyperRAGPipeline
 from packages.rag.legacy_src.education.curriculum_graph import curriculum_graph
 

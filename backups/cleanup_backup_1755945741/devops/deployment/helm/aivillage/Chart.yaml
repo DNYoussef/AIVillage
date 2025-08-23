@@ -1,0 +1,66 @@
+apiVersion: v2
+name: aivillage
+description: AIVillage distributed AI platform - P2P mesh networking, federated learning, and privacy-preserving digital twins
+type: application
+version: 0.2.0
+appVersion: "1.0.0"
+
+keywords:
+  - ai
+  - machine-learning
+  - distributed
+  - federated-learning
+  - p2p
+  - digital-twins
+  - privacy
+  - agents
+  - rag
+  - compression
+
+home: https://github.com/DNYoussef/AIVillage
+sources:
+  - https://github.com/DNYoussef/AIVillage
+
+maintainers:
+  - name: AIVillage Team
+    email: maintainers@aivillage.io
+    url: https://github.com/DNYoussef/AIVillage
+
+dependencies:
+  - name: postgresql
+    version: "12.x.x"
+    repository: "https://charts.bitnami.com/bitnami"
+    condition: postgresql.enabled
+    tags:
+      - database
+  - name: redis
+    version: "18.x.x"
+    repository: "https://charts.bitnami.com/bitnami"
+    condition: redis.enabled
+    tags:
+      - cache
+      - database
+  - name: grafana
+    version: "7.x.x"
+    repository: "https://grafana.github.io/helm-charts"
+    condition: monitoring.grafana.enabled
+    tags:
+      - monitoring
+
+annotations:
+  category: Application
+  licenses: MIT
+
+  # Artifact Hub annotations
+  artifacthub.io/license: MIT
+  artifacthub.io/prerelease: "false"
+  artifacthub.io/containsSecurityUpdates: "false"
+  artifacthub.io/changes: |
+    - kind: added
+      description: Complete Docker Compose to Helm conversion
+    - kind: added
+      description: Production and staging value configurations
+    - kind: added
+      description: Comprehensive service templates with health checks
+    - kind: added
+      description: Security contexts and RBAC support

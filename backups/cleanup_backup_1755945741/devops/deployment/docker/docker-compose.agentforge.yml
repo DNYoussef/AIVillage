@@ -1,0 +1,43 @@
+version: '3.9'
+
+services:
+  agent-forge:
+    build:
+      context: .
+      dockerfile: Dockerfile.agentforge
+    container_name: aivillage-agent-forge
+    runtime: nvidia
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=0
+      - CUDA_VISIBLE_DEVICES=0
+      - HF_HOME=/models/.cache
+      - TRANSFORMERS_CACHE=/models/.cache/transformers
+      - HF_DATASETS_CACHE=/models/.cache/datasets
+      - WANDB_PROJECT=aivillage-agent-forge
+      - WANDB_MODE=offline
+    volumes:
+      # Mount D: drive for model storage
+      - D:/AgentForge/models:/models
+      - D:/AgentForge/data:/workspace/data
+      - D:/AgentForge/results:/workspace/results
+      # Mount source code for development
+      - .:/workspace:rw
+    ports:
+      - "8888:8888"  # Jupyter
+      - "6006:6006"  # TensorBoard
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    working_dir: /workspace
+    tty: true
+    stdin_open: true
+    networks:
+      - agentforge-net
+
+networks:
+  agentforge-net:
+    external: false

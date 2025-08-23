@@ -39,19 +39,30 @@ repos:
         args: [--profile, black, --line-length, "120"]
         exclude: ^(deprecated/|archive/|experimental/)
 
-  # Connascence and Code Quality Tools
+  # Unified Cleanup and Code Quality Tools
   - repo: local
     hooks:
+      - id: unified-cleanup
+        name: Unified Cleanup Framework
+        entry: python scripts/unified_cleanup_framework.py
+        language: python
+        files: \.py$
+        exclude: ^(deprecated/|archive/|experimental/)
+        args: [--dry-run, --verbose]
+        pass_filenames: false
+        always_run: false
+        stages: [manual]  # Run manually for comprehensive cleanup
+
       - id: connascence-check
         name: Connascence Violation Check
-        entry: python scripts/check_connascence.py
+        entry: python scripts/check_connascence.py .
         language: python
         files: \.py$
         exclude: ^(deprecated/|archive/|experimental/|tests/)
         args: [--severity, high]
         pass_filenames: false
         always_run: false
-        
+
       - id: coupling-metrics
         name: Coupling Metrics Analysis
         entry: python scripts/coupling_metrics.py
@@ -62,17 +73,17 @@ repos:
         pass_filenames: false
         always_run: false
         stages: [manual]  # Run manually or on CI
-        
+
       - id: anti-pattern-detection
         name: Anti-Pattern Detection
-        entry: python scripts/detect_anti_patterns.py
+        entry: python scripts/detect_anti_patterns.py .
         language: python
         files: \.py$
         exclude: ^(deprecated/|archive/|experimental/|tests/)
         args: [--severity, high]
         pass_filenames: false
         always_run: false
-        
+
       - id: architectural-fitness
         name: Architectural Fitness Functions
         entry: python scripts/architectural_analysis.py
@@ -83,7 +94,7 @@ repos:
         pass_filenames: false
         always_run: false
         stages: [push]  # Run on git push
-        
+
       - id: god-object-check
         name: God Object Detection
         entry: python scripts/ci/god-object-detector.py
@@ -93,7 +104,7 @@ repos:
         args: [--threshold, "500"]
         pass_filenames: true
         always_run: false
-        
+
       - id: magic-literal-check
         name: Magic Literal Detection
         entry: python scripts/ci/magic-literal-detector.py

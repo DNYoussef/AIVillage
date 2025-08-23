@@ -174,13 +174,13 @@ def process_user_data(user_data):
 def process_user_data(user_data):
     if not user_data:
         return False
-    
+
     if not _is_valid_email(user_data.get('email')):
         return False
-    
+
     if not _is_adult(user_data.get('age')):
         return False
-    
+
     return _has_valid_country(user_data.get('country'))
 
 def _is_valid_email(email):
@@ -215,7 +215,7 @@ class UserService:
         self.email_service = email_service
         self.reporting_service = reporting_service
         self.audit_service = audit_service
-    
+
     def create_user(self): pass
     def update_user(self): pass
     def delete_user(self): pass
@@ -237,7 +237,7 @@ class AuditService:
 def process_batch():
     if batch_size > 100:  # Magic number
         return "error"    # Magic string
-    
+
     timeout = 30         # Magic number
     retry_count = 3      # Magic number
 ```
@@ -256,7 +256,7 @@ class BatchResult(Enum):
 def process_batch():
     if batch_size > BatchConfig.MAX_BATCH_SIZE:
         return BatchResult.ERROR
-    
+
     timeout = BatchConfig.DEFAULT_TIMEOUT_SECONDS
     retry_count = BatchConfig.MAX_RETRY_ATTEMPTS
 ```

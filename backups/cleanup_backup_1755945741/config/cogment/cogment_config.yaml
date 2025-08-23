@@ -1,0 +1,69 @@
+# Cogment System Configuration (Option A: ~25M parameters)
+# Unified configuration replacing HRRM's 3 separate configs
+
+model:
+  # Core model dimensions (Option A targeting ~25M params)
+  d_model: 512                   # Backbone dimension (optimized for 25M budget)
+  d_kv: 64                       # Key/Value dimension (d_model // n_head = 512 / 8 = 64)
+  n_head: 8                      # Number of attention heads
+  n_layers: 6                    # Number of transformer layers (reduced)
+  d_ff: 1536                     # Feed-forward dimension (3 * d_model, reduced from 4x)
+  
+  # Vocabulary and sequence
+  vocab_size: 13000              # Optimized vocabulary size for 25M parameter budget
+  max_seq_len: 2048              # Maximum sequence length
+  rope_base: 10000               # RoPE positional encoding base
+  
+  # Training parameters
+  dropout: 0.1
+  layer_norm_eps: 1e-5
+  tie_embeddings: true           # Parameter efficiency from Agent 3
+
+refinement_core:
+  # RefinementCore specific parameters
+  memory_fusion_dim: 512         # Memory gating dimension
+  refinement_steps: 8            # Default refinement iterations
+  min_refinement_steps: 2        # Minimum steps before halting
+  max_refinement_steps: 16       # Maximum steps before force halt
+  tied_weights: true             # Parameter efficiency
+
+gated_ltm:
+  # Memory parameters (Option A balanced for 25M budget)
+  mem_slots: 2048                # Memory slots (reduced to fit budget)
+  ltm_capacity: 1024             # LTM capacity from Agent 2
+  ltm_dim: 256                   # LTM dimension (reduced for budget)
+  memory_dim: 256                # Memory embedding dimension
+  
+  # Memory dynamics
+  decay: 0.001                   # Memory decay rate
+  write_alpha: 0.1               # Write gate alpha
+  read_threshold: 0.05           # Read attention threshold
+  consolidation_threshold: 0.8   # Memory consolidation threshold
+
+act_halting:
+  # ACT (Adaptive Computation Time) parameters
+  epsilon: 0.01                  # ACT threshold (1-ε = 0.99)
+  max_steps: 16                  # Maximum ACT steps
+  halt_threshold: 0.99           # Halting threshold
+  ponder_cost_weight: 0.1        # λ for ponder cost in loss
+  halt_epsilon: 0.01             # Small value to ensure progress
+
+heads:
+  # Output head configuration (from Agent 3)
+  tie_embeddings: true           # Memory optimization from Agent 3
+  factorize_large_heads: false   # Keep tied approach for parameter efficiency
+  vocab_factorization: false     # No factorization for Option A
+
+# Parameter validation
+parameter_budget:
+  target_params: 25000000        # 25M parameter target
+  tolerance: 0.05                # 5% tolerance (23.75M - 26.25M acceptable)
+  validate_on_load: true         # Validate parameter count when loading config
+  
+# Component parameter estimates (for validation)
+estimated_params:
+  backbone: 8000000              # Transformer layers with d_model=640
+  gated_ltm: 8000000             # Memory system (2048 slots * 256 dim)
+  refinement_core: 3000000       # Refinement processing
+  embeddings: 6000000            # vocab_size * d_model
+  total_estimated: 25000000      # Target 25M parameters

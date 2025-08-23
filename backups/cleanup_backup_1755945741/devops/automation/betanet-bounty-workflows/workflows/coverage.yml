@@ -1,0 +1,32 @@
+name: coverage
+on: [push, pull_request]
+jobs:
+  cov:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: llvm-tools-preview
+      - run: sudo apt-get update && sudo apt-get install -y llvm clang lcov
+      - run: cargo install cargo-llvm-cov
+      - name: Generate coverage report
+        run: |
+          export OPENSSL_VENDORED=1
+          cargo llvm-cov --workspace --branch --html --output-path artifacts/coverage
+          cargo llvm-cov --workspace --branch --summary-only
+      - name: Check coverage threshold
+        run: |
+          # Extract coverage percentage for betanet-htx
+          COVERAGE=$(cargo llvm-cov --package betanet-htx --branch --summary-only | grep -oP '\d+\.\d+%' | head -1 | sed 's/%//')
+          echo "HTX Coverage: ${COVERAGE}%"
+          if (( $(echo "$COVERAGE >= 80.0" | bc -l) )); then
+            echo "✅ Coverage threshold met: ${COVERAGE}% >= 80%"
+          else
+            echo "❌ Coverage below threshold: ${COVERAGE}% < 80%"
+            exit 1
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: coverage-html
+          path: artifacts/coverage

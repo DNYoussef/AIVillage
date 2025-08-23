@@ -1,0 +1,38 @@
+# Memory pretraining configuration
+vocab_size: 32000
+d_model: 512
+n_layers: 12  # Fewer layers to stay ~50M params
+n_head: 8
+max_seq_len: 2048
+rope_base: 10000
+
+# Memory parameters
+mem_dim: 256
+mem_tokens: 8
+mem_slots: 1024
+
+# Titans parameters
+alpha: 4.0      # Surprise gating
+beta: 0.9       # Momentum
+eta: 1e-2       # Learning rate
+eta_decay: 1e-4 # Forgetting rate
+
+# Training
+dropout: 0.0
+tie_embeddings: true
+
+# Training hyperparameters
+learning_rate: 3e-4
+weight_decay: 0.1
+warmup_steps: 2000
+max_steps: 50000
+batch_size: 32
+gradient_accumulation_steps: 4
+
+# Scheduler
+scheduler_type: "cosine"
+min_lr_ratio: 0.1
+
+# Logging
+log_interval: 50
+checkpoint_interval: 5000

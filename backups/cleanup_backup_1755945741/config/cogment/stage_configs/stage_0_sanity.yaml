@@ -1,0 +1,105 @@
+# Stage 0: Sanity Check Configuration
+# Basic functionality validation with minimal complexity
+
+stage:
+  name: "sanity"
+  description: "Sanity checks and basic functionality validation"
+  stage_id: 0
+  
+# Training Parameters
+training:
+  max_steps: 500
+  batch_size: 8
+  sequence_length: 256
+  learning_rate: 3e-4
+  
+  # Early validation settings
+  eval_interval: 50
+  save_interval: 250
+  log_interval: 10
+
+# Model Behavior
+model:
+  max_refinement_steps: 2
+  act_threshold: 0.99
+  ponder_cost_initial: 0.0
+  ponder_cost_final: 0.0
+  
+  # Minimal memory usage for sanity checks
+  memory_settings:
+    ltm_read_only: true
+    ltm_write_alpha: 0.0
+    ltm_decay_rate: 0.0
+
+# Data Configuration
+data:
+  # Simple synthetic tasks for validation
+  task_types:
+    - "linear_map"              # Simple input->output mappings
+    - "sequence_copy"           # Copy input to output
+    - "pattern_match"           # Basic pattern recognition
+    
+  # Data generation
+  synthetic_data: true
+  num_samples: 1000
+  noise_level: 0.0
+  
+  # Augmentation (minimal)
+  augmentation:
+    enabled: false
+
+# Loss Configuration
+loss:
+  deep_supervision_weight: 1.0
+  improvement_weight: 0.0
+  consistency_weight: 0.0
+  ponder_weight: 0.0            # No ponder cost in sanity stage
+
+# GrokFast Settings (minimal)
+grokfast:
+  enabled: true
+  global_multiplier: 0.1        # Very gentle for stability
+  components:
+    refinement_core:
+      alpha: 0.9
+      lamb: 1.1
+    gated_ltm:
+      alpha: 0.9
+      lamb: 1.0
+    act_halting:
+      enabled: false
+
+# Convergence Criteria
+convergence:
+  patience: 100
+  min_accuracy: 0.95            # High accuracy expected for simple tasks
+  max_ponder_cost: 2.0
+  min_improvement: 1e-3
+  
+# Validation Tasks
+validation:
+  tasks:
+    - name: "identity_function"
+      description: "Input should equal output"
+      expected_accuracy: 0.99
+      
+    - name: "simple_arithmetic"
+      description: "Basic addition/subtraction"
+      expected_accuracy: 0.95
+      
+    - name: "token_repetition"
+      description: "Repeat input tokens"
+      expected_accuracy: 0.98
+
+# Resource Limits
+resources:
+  max_memory_gb: 4
+  max_time_minutes: 10
+  early_stop_on_perfection: true
+
+# Debugging
+debug:
+  verbose_logging: true
+  save_intermediate_states: true
+  track_gradient_norms: true
+  validate_each_step: true
