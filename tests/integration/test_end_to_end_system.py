@@ -10,12 +10,12 @@ Comprehensive validation of the complete AIVillage system including:
 Integration Point: Complete system validation for production deployment
 """
 
+from datetime import datetime
 import os
+from pathlib import Path
 import sys
 import tempfile
 import time
-from datetime import datetime
-from pathlib import Path
 
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
@@ -23,6 +23,10 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 # Import all major system components
 from ml.feature_extraction import FeatureExtractor, ModelComparator
 from monitoring.observability_system import ObservabilitySystem, traced_operation
+from security.auth_system import AuthenticationManager, AuthorizationManager, Permission, SecurityLevel, UserRole
+from testing.performance_benchmarks import PerformanceBenchmarkManager
+
+from core.resilience.error_handling import ResilienceManager
 from packages.agents.coordination_system import (
     Agent,
     AgentCapability,
@@ -35,10 +39,6 @@ from packages.agents.coordination_system import (
     Task,
     TaskScheduler,
 )
-from security.auth_system import AuthenticationManager, AuthorizationManager, Permission, SecurityLevel, UserRole
-from testing.performance_benchmarks import PerformanceBenchmarkManager
-
-from core.resilience.error_handling import ResilienceManager
 
 
 class AIVillageSystemTest:

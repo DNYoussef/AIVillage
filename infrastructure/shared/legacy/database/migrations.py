@@ -10,12 +10,12 @@ This module provides comprehensive database schema migration functionality with:
 
 from __future__ import annotations
 
+from datetime import datetime
 import json
 import logging
+from pathlib import Path
 import sqlite3
 import time
-from datetime import datetime
-from pathlib import Path
 from typing import Any
 
 logger = logging.getLogger(__name__)

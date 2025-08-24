@@ -13,6 +13,7 @@ import asyncio
 from datetime import UTC, datetime, timedelta
 
 import pytest
+
 from packages.fog.edge.beacon import CapabilityBeacon, DeviceType, PowerProfile
 from packages.fog.gateway.api.billing import PriceQuoteRequest, get_billing_engine
 

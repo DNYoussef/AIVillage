@@ -35,8 +35,8 @@ except ImportError:
         )
     except ImportError:
         # Last resort: add to path and import
-        import sys
         from pathlib import Path
+        import sys
 
         sys.path.insert(0, str(Path(__file__).parent.parent.parent))
         from agent_forge.compression.seedlm import (

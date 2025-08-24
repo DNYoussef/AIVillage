@@ -8,8 +8,8 @@ Profiles key AIVillage components for memory usage patterns.
 
 import time
 
-import numpy as np
 from memory_profiler import profile
+import numpy as np
 
 
 @profile

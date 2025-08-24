@@ -6,8 +6,8 @@ Detects classes that exceed size thresholds (God Objects).
 
 import argparse
 import ast
-import sys
 from pathlib import Path
+import sys
 
 
 class GodObjectDetector:

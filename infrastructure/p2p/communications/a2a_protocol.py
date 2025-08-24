@@ -1,8 +1,8 @@
 import json
 
-import requests
 from cryptography import x509
 from jwcrypto import jwe, jwk, jws
+import requests
 
 
 def _load_priv(pem_path: str) -> jwk.JWK:

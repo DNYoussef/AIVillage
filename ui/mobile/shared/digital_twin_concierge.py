@@ -29,16 +29,16 @@ Privacy Guarantees:
 """
 
 import asyncio
-import hashlib
-import json
-import logging
-import sqlite3
-import time
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
+import hashlib
+import json
+import logging
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+import sqlite3
+import time
+from typing import Any
 
 import numpy as np
 
@@ -128,9 +128,9 @@ class DataPoint:
     timestamp: datetime
     content: dict[str, Any]  # Actual data content
     context: dict[str, Any]  # Contextual metadata
-    user_action: Optional[str] = None  # What user did
-    twin_prediction: Optional[str] = None  # What twin predicted
-    surprise_score: Optional[float] = None  # How surprised twin was
+    user_action: str | None = None  # What user did
+    twin_prediction: str | None = None  # What twin predicted
+    surprise_score: float | None = None  # How surprised twin was
 
     def anonymize(self) -> dict[str, Any]:
         """Create anonymized version for analysis"""
@@ -150,12 +150,12 @@ class LearningCycle:
 
     cycle_id: str
     start_time: datetime
-    end_time: Optional[datetime] = None
+    end_time: datetime | None = None
     data_points_count: int = 0
     average_surprise: float = 0.0
     improvement_score: float = 0.0
     model_version: str = "1.0"
-    deleted_at: Optional[datetime] = None
+    deleted_at: datetime | None = None
 
 
 @dataclass
@@ -432,7 +432,7 @@ class SurpriseBasedLearning:
                 overlap = len(pred_words & actual_words) / max(len(pred_words | actual_words), 1)
                 return 1.0 - overlap  # Higher surprise for less overlap
 
-        elif isinstance(predicted, (int, float)) and isinstance(actual, (int, float)):
+        elif isinstance(predicted, int | float) and isinstance(actual, int | float):
             # Numerical surprise based on relative difference
             if predicted == actual:
                 return 0.0
@@ -484,7 +484,7 @@ class DigitalTwinConcierge:
     """Main Digital Twin Concierge system"""
 
     def __init__(
-        self, data_dir: Path, preferences: UserPreferences, distributed_rag: Optional[DistributedRAGCoordinator] = None
+        self, data_dir: Path, preferences: UserPreferences, distributed_rag: DistributedRAGCoordinator | None = None
     ):
         self.data_dir = data_dir
         self.preferences = preferences
@@ -730,7 +730,7 @@ class DigitalTwinConcierge:
         except Exception as e:
             logger.error(f"Error updating Mini-RAG knowledge: {e}")
 
-    def _extract_knowledge_from_datapoint(self, dp: DataPoint) -> Optional[str]:
+    def _extract_knowledge_from_datapoint(self, dp: DataPoint) -> str | None:
         """Extract actionable knowledge from a data point"""
         if dp.surprise_score > 0.5:  # High surprise = unreliable pattern
             return None

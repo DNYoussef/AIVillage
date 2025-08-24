@@ -13,10 +13,7 @@ Performance Targets:
 
 import asyncio
 import time
-from dataclasses import dataclass
-from enum import Enum
-from typing import Any, Dict, List, Optional
-from unittest.mock import AsyncMock, MagicMock, call, patch
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -151,7 +148,7 @@ class TestCognativeNexusController:
         assert avg_time < 15.0, f"Average creation time {avg_time:.2f}ms exceeds 15ms target"
         assert p95_time < 25.0, f"95th percentile {p95_time:.2f}ms exceeds 25ms threshold"
 
-        print(f"Agent Creation Performance:")
+        print("Agent Creation Performance:")
         print(f"  Average: {avg_time:.2f}ms (target: <15ms)")
         print(f"  95th percentile: {p95_time:.2f}ms")
         print(f"  Min/Max: {min_time:.2f}ms / {max_time:.2f}ms")
@@ -204,7 +201,7 @@ class TestCognativeNexusController:
         successful_validations = [r for r in validation_results if r["success"]]
         success_rate = (len(successful_validations) / len(validation_results)) * 100
 
-        print(f"NoneType Error Validation:")
+        print("NoneType Error Validation:")
         print(f"  NoneType errors: {len(nonetype_errors)} (target: 0)")
         print(f"  Successful validations: {len(successful_validations)}/{len(validation_results)}")
         print(f"  Success rate: {success_rate:.1f}%")
@@ -269,7 +266,7 @@ class TestCognativeNexusController:
             result["total_iterations"] <= reasoning_request["max_iterations"]
         ), f"Exceeded max iterations: {result['total_iterations']}"
 
-        print(f"Cognitive Reasoning (ACT Halting):")
+        print("Cognitive Reasoning (ACT Halting):")
         print(f"  Processing time: {processing_time_ms:.2f}ms")
         print(f"  Iterations: {result['total_iterations']}")
         print(f"  Final confidence: {result['final_confidence']:.3f}")
@@ -312,7 +309,7 @@ class TestCognativeNexusController:
 
         assert coverage_percentage > 80, f"Only {coverage_percentage:.1f}% category coverage, expected >80%"
 
-        print(f"Agent Registry Management:")
+        print("Agent Registry Management:")
         print(f"  Total agent capacity: {total_agent_count} (target: ≥48)")
         print(f"  Available types: {len(available_types)}")
         print(f"  Active agents: {len(active_agents)}")
@@ -382,7 +379,7 @@ class TestCognativeNexusController:
             avg_creation_time < 50.0
         ), f"Average concurrent creation time {avg_creation_time:.2f}ms exceeds 50ms limit"
 
-        print(f"Concurrent Agent Creation:")
+        print("Concurrent Agent Creation:")
         print(f"  Total time: {total_time:.3f}s for {len(test_agents)} agents")
         print(f"  Success rate: {success_rate}%")
         print(f"  Average creation time: {avg_creation_time:.2f}ms")
@@ -467,7 +464,7 @@ class TestCognativeNexusController:
 
         assert recovery_rate > 75, f"Error recovery rate {recovery_rate:.1f}% below 75% threshold"
 
-        print(f"Error Recovery Mechanisms:")
+        print("Error Recovery Mechanisms:")
         print(f"  Recovery rate: {recovery_rate:.1f}%")
         for result in recovery_results:
             status = "✓" if result["recovered_gracefully"] else "✗"
@@ -518,7 +515,7 @@ class TestCognativeNexusControllerBenchmarks:
         total_time = end_time - start_time
         throughput = successful_creations / total_time
 
-        print(f"Registry Throughput Benchmark:")
+        print("Registry Throughput Benchmark:")
         print(f"  Agents/second: {throughput:.2f}")
         print(f"  Total successful: {successful_creations}/{len(agent_types)}")
         print(f"  Total time: {total_time:.3f}s")

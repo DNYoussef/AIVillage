@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 import base64
-import uuid
 from typing import Any
+import uuid
 
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
+
 from src.digital_twin.core.digital_twin import DigitalTwin, LearningProfile, LearningSession
 
 app = FastAPI(title="Digital Twin API")

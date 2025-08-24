@@ -12,11 +12,11 @@ Provides the following metrics:
 - fog_namespace_cpu_sec_total{namespace}: CPU usage counter by namespace
 """
 
-import logging
-import time
 from collections import defaultdict
 from dataclasses import dataclass
 from enum import Enum
+import logging
+import time
 
 from prometheus_client import CONTENT_TYPE_LATEST, CollectorRegistry, Counter, Gauge, Histogram, generate_latest
 

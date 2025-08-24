@@ -9,11 +9,11 @@ import hashlib
 import logging
 import mimetypes
 import os
+from pathlib import Path
 import re
 import tempfile
-import zipfile
-from pathlib import Path
 from typing import Any
+import zipfile
 
 import magic
 

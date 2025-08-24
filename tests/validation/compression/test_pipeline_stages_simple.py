@@ -10,11 +10,11 @@ Tests each compression stage sequentially without complex dependencies:
 Measures size reduction and validates functionality at each stage.
 """
 
+from dataclasses import dataclass
 import json
 import logging
-import time
-from dataclasses import dataclass
 from pathlib import Path
+import time
 from typing import Any
 
 import numpy as np

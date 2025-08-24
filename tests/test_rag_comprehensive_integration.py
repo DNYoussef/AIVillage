@@ -11,9 +11,9 @@ Tests the complete unified RAG system with all components working together:
 """
 
 import asyncio
+from pathlib import Path
 import sys
 import tempfile
-from pathlib import Path
 
 # Add packages to path
 sys.path.insert(0, str(Path(__file__).parent / "packages"))

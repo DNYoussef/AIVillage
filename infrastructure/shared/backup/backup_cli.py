@@ -6,9 +6,9 @@ and system administration.
 """
 
 import asyncio
+from datetime import datetime
 import json
 import sys
-from datetime import datetime
 
 try:
     import click

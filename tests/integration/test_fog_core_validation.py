@@ -13,8 +13,8 @@ This validation focuses on testing the components that can be imported and run.
 
 import asyncio
 import os
-import sys
 from pathlib import Path
+import sys
 
 
 def setup_test_environment():

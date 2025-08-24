@@ -8,8 +8,8 @@ latency for a series of messages to approximate P2P performance.
 import argparse
 import asyncio
 import json
-import time
 from pathlib import Path
+import time
 
 
 async def _handle_echo(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:

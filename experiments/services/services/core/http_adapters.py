@@ -8,11 +8,14 @@ from typing import Any
 
 from fastapi import UploadFile
 from services.core.interfaces import ChatRequest as ServiceChatRequest
-from services.core.interfaces import ChatServiceInterface, HealthCheckInterface
+from services.core.interfaces import (
+    ChatServiceInterface,
+    HealthCheckInterface,
+    QueryServiceInterface,
+    UploadServiceInterface,
+)
 from services.core.interfaces import QueryRequest as ServiceQueryRequest
-from services.core.interfaces import QueryServiceInterface
 from services.core.interfaces import UploadRequest as ServiceUploadRequest
-from services.core.interfaces import UploadServiceInterface
 from services.core.service_error_handler import ServiceErrorHandler
 
 from core.error_handling import get_component_logger

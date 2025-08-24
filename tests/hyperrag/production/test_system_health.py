@@ -9,10 +9,7 @@ Tests production readiness:
 - Production deployment scenarios
 """
 
-import asyncio
-import logging
 import time
-from typing import Any, Dict
 
 import pytest
 
@@ -26,7 +23,6 @@ class TestSystemHealth:
 
         # Test main system imports
         try:
-            from core.hyperrag import HyperRAG, HyperRAGConfig, MemoryType, QueryMode
 
             import_results["core_system"] = "✅ SUCCESS"
         except ImportError as e:
@@ -34,7 +30,6 @@ class TestSystemHealth:
 
         # Test memory subsystem imports
         try:
-            from core.hyperrag.memory import HippoIndex
 
             import_results["memory_system"] = "✅ SUCCESS"
         except ImportError as e:
@@ -42,7 +37,6 @@ class TestSystemHealth:
 
         # Test retrieval subsystem imports
         try:
-            from core.hyperrag.retrieval import GraphEngine, VectorEngine
 
             import_results["retrieval_system"] = "✅ SUCCESS"
         except ImportError as e:
@@ -50,7 +44,6 @@ class TestSystemHealth:
 
         # Test cognitive subsystem imports
         try:
-            from core.hyperrag.cognitive import CognitiveNexus
 
             import_results["cognitive_system"] = "✅ SUCCESS"
         except ImportError as e:
@@ -58,7 +51,6 @@ class TestSystemHealth:
 
         # Test integration subsystem imports
         try:
-            from core.hyperrag.integration import EdgeDeviceRAGBridge, P2PNetworkRAGBridge
 
             import_results["integration_system"] = "✅ SUCCESS"
         except ImportError as e:

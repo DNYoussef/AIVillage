@@ -5,14 +5,13 @@ Validates security gates across CI/CD pipelines and enforces security policies.
 """
 
 import argparse
-import json
-import logging
-import subprocess
-import sys
 from dataclasses import dataclass
 from enum import Enum
+import json
+import logging
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+import subprocess
+import sys
 
 import yaml
 
@@ -32,17 +31,17 @@ class SecurityViolation:
     category: str
     severity: str
     message: str
-    file_path: Optional[str] = None
-    line_number: Optional[int] = None
-    recommendation: Optional[str] = None
+    file_path: str | None = None
+    line_number: int | None = None
+    recommendation: str | None = None
 
 
 @dataclass
 class SecurityGateReport:
     gate_name: str
     result: SecurityGateResult
-    violations: List[SecurityViolation]
-    metrics: Dict[str, any]
+    violations: list[SecurityViolation]
+    metrics: dict[str, any]
     timestamp: str
 
 
@@ -54,11 +53,11 @@ class SecurityGateValidator:
         self.config = self._load_config()
         self.violations = []
 
-    def _load_config(self) -> Dict:
+    def _load_config(self) -> dict:
         """Load security gate configuration."""
         try:
             if self.config_path.exists():
-                with open(self.config_path, "r") as f:
+                with open(self.config_path) as f:
                     return yaml.safe_load(f)
             else:
                 logger.warning(f"Config file {self.config_path} not found, using defaults")
@@ -67,7 +66,7 @@ class SecurityGateValidator:
             logger.error(f"Error loading config: {e}")
             return self._default_config()
 
-    def _default_config(self) -> Dict:
+    def _default_config(self) -> dict:
         """Default security gate configuration."""
         return {
             "security_gates": {
@@ -81,7 +80,7 @@ class SecurityGateValidator:
             }
         }
 
-    def validate_secret_detection(self, gate_config: Dict) -> List[SecurityViolation]:
+    def validate_secret_detection(self, gate_config: dict) -> list[SecurityViolation]:
         """Validate secret detection requirements."""
         violations = []
         secret_config = gate_config.get("thresholds", {}).get("secret_detection", {})
@@ -118,7 +117,7 @@ class SecurityGateValidator:
 
         return violations
 
-    def validate_vulnerability_scanning(self, gate_config: Dict) -> List[SecurityViolation]:
+    def validate_vulnerability_scanning(self, gate_config: dict) -> list[SecurityViolation]:
         """Validate vulnerability scanning results."""
         violations = []
         vuln_config = gate_config.get("thresholds", {}).get("vulnerability_scanning", {})
@@ -132,12 +131,12 @@ class SecurityGateValidator:
 
         return violations
 
-    def _analyze_security_report(self, report_file: str, config: Dict) -> List[SecurityViolation]:
+    def _analyze_security_report(self, report_file: str, config: dict) -> list[SecurityViolation]:
         """Analyze security report file."""
         violations = []
 
         try:
-            with open(report_file, "r") as f:
+            with open(report_file) as f:
                 report_data = json.load(f)
 
             if "bandit" in report_file:
@@ -152,7 +151,7 @@ class SecurityGateValidator:
 
         return violations
 
-    def _analyze_bandit_report(self, report_data: Dict, config: Dict) -> List[SecurityViolation]:
+    def _analyze_bandit_report(self, report_data: dict, config: dict) -> list[SecurityViolation]:
         """Analyze Bandit security scan results."""
         violations = []
         results = report_data.get("results", [])
@@ -185,7 +184,7 @@ class SecurityGateValidator:
 
         return violations
 
-    def _analyze_safety_report(self, report_data: Dict, config: Dict) -> List[SecurityViolation]:
+    def _analyze_safety_report(self, report_data: dict, config: dict) -> list[SecurityViolation]:
         """Analyze Safety dependency scan results."""
         violations = []
 
@@ -204,7 +203,7 @@ class SecurityGateValidator:
 
         return violations
 
-    def _analyze_semgrep_report(self, report_data: Dict, config: Dict) -> List[SecurityViolation]:
+    def _analyze_semgrep_report(self, report_data: dict, config: dict) -> list[SecurityViolation]:
         """Analyze Semgrep SAST results."""
         violations = []
         results = report_data.get("results", [])
@@ -223,7 +222,7 @@ class SecurityGateValidator:
 
         return violations
 
-    def validate_architecture_quality(self, gate_config: Dict) -> List[SecurityViolation]:
+    def validate_architecture_quality(self, gate_config: dict) -> list[SecurityViolation]:
         """Validate architectural quality gates."""
         violations = []
         arch_config = gate_config.get("thresholds", {})
@@ -231,7 +230,7 @@ class SecurityGateValidator:
         # Check coupling metrics
         if Path("coupling_report.json").exists():
             try:
-                with open("coupling_report.json", "r") as f:
+                with open("coupling_report.json") as f:
                     coupling_data = json.load(f)
 
                 max_coupling = coupling_data.get("max_coupling", 0)
@@ -306,7 +305,7 @@ class SecurityGateValidator:
 
         return datetime.now().isoformat()
 
-    def generate_report(self, report: SecurityGateReport, output_file: Optional[str] = None) -> str:
+    def generate_report(self, report: SecurityGateReport, output_file: str | None = None) -> str:
         """Generate security gate report."""
         report_content = f"""# Security Gate Report: {report.gate_name}
 

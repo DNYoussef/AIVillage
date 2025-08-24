@@ -9,11 +9,11 @@ This module implements the complete federated learning system including:
 """
 
 import asyncio
+from dataclasses import dataclass, field
+from enum import Enum, auto
 import hashlib
 import logging
 import time
-from dataclasses import dataclass, field
-from enum import Enum, auto
 from typing import Any
 
 import numpy as np

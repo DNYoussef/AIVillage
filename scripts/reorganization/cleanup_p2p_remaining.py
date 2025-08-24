@@ -4,8 +4,8 @@ Phase 2.2 Cleanup: Remove remaining empty P2P directories and merge __init__.py 
 """
 
 import logging
-import shutil
 from pathlib import Path
+import shutil
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)

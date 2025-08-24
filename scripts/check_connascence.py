@@ -12,13 +12,13 @@ Based on Meilir Page-Jones' connascence theory for reducing coupling.
 import argparse
 import ast
 import collections
+from dataclasses import asdict, dataclass
 import json
 import os
+from pathlib import Path
 import re
 import sys
 import time
-from dataclasses import asdict, dataclass
-from pathlib import Path
 from typing import Any
 
 

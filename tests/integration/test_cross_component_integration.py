@@ -11,10 +11,10 @@ Integration Point: Complete system validation for production readiness
 """
 
 import os
+from pathlib import Path
 import sys
 import tempfile
 import time
-from pathlib import Path
 
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
@@ -22,6 +22,11 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 # Import all major components
 from ml.feature_extraction import FeatureExtractor, ModelComparator
 from monitoring.observability_system import AlertSeverity, LogLevel, ObservabilitySystem
+from security.auth_system import AuthenticationManager, AuthorizationManager, Permission, SecurityLevel, UserRole
+from testing.coverage_gates import CoverageGate, LintingGate, QualityGateFramework
+from testing.performance_benchmarks import BenchmarkSuite, PerformanceBenchmarkManager
+
+from core.resilience.error_handling import CircuitBreakerManager, GracefulDegradationManager, RetryHandler
 from packages.agents.coordination_system import (
     Agent,
     AgentCapability,
@@ -32,11 +37,6 @@ from packages.agents.coordination_system import (
     Task,
     TaskScheduler,
 )
-from security.auth_system import AuthenticationManager, AuthorizationManager, Permission, SecurityLevel, UserRole
-from testing.coverage_gates import CoverageGate, LintingGate, QualityGateFramework
-from testing.performance_benchmarks import BenchmarkSuite, PerformanceBenchmarkManager
-
-from core.resilience.error_handling import CircuitBreakerManager, GracefulDegradationManager, RetryHandler
 
 
 class TestAuthenticationMonitoringIntegration:

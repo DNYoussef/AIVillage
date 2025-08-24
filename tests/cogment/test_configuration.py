@@ -9,13 +9,10 @@ Tests the configuration management including:
 - Budget enforcement and parameter counting
 """
 
-import tempfile
 from pathlib import Path
-from typing import Any, Dict, Optional
+import tempfile
 
 import pytest
-import torch
-import yaml
 
 # Import Cogment configuration components
 try:
@@ -484,7 +481,7 @@ class TestConfigurationIntegration:
         # Should achieve significant reduction
         assert reduction_factor >= 5.0, f"Insufficient parameter reduction: {reduction_factor:.1f}x"
 
-        print(f"✓ Configuration efficiency vs HRRM:")
+        print("✓ Configuration efficiency vs HRRM:")
         print(f"  - HRRM baseline: {hrrm_baseline_params:,} parameters")
         print(f"  - Cogment unified: {cogment_params:,} parameters")
         print(f"  - Reduction factor: {reduction_factor:.1f}x")

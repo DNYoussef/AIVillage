@@ -4,10 +4,10 @@ Generates metrics showing improvement in coupling strength, degree, and locality
 """
 
 import ast
-import re
 from collections import Counter, defaultdict
 from dataclasses import asdict, dataclass
 from pathlib import Path
+import re
 
 
 @dataclass

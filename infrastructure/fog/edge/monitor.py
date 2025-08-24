@@ -12,11 +12,11 @@ feeding data to both the beacon and the execution fabric.
 """
 
 import asyncio
-import logging
-import time
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from enum import Enum
+import logging
+import time
 from typing import Any
 
 import psutil

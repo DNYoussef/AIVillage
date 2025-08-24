@@ -4,9 +4,9 @@ Unified Agent Test Suite
 Combines best practices from multiple agent test files into single comprehensive suite
 """
 
+from pathlib import Path
 import sys
 import unittest
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -227,9 +227,8 @@ class TestAgentIntegration(unittest.TestCase):
     @pytest.mark.asyncio
     async def test_agent_system_full_integration(self):
         """Test full agent system integration"""
-        from packages.agents.specialized.governance.enhanced_king_agent import EnhancedKingAgent
-
         from packages.agents.core.agent_orchestration_system import AgentOrchestrationSystem
+        from packages.agents.specialized.governance.enhanced_king_agent import EnhancedKingAgent
 
         # Create orchestration system
         orchestrator = AgentOrchestrationSystem()

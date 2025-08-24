@@ -9,11 +9,11 @@ Consolidates mobile-specific BetaNet optimizations from deprecated files:
 - Chunk size adaptation for mobile constraints
 """
 
+from dataclasses import dataclass, field
+from enum import Enum
 import logging
 import platform
 import time
-from dataclasses import dataclass, field
-from enum import Enum
 from typing import Any
 
 import psutil

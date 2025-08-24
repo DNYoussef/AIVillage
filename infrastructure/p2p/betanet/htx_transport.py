@@ -14,12 +14,12 @@ Key features:
 """
 
 import asyncio
+from dataclasses import dataclass, field
+from enum import IntEnum
 import logging
 import secrets
 import struct
 import time
-from dataclasses import dataclass, field
-from enum import IntEnum
 from typing import Any
 
 # Crypto imports with graceful degradation

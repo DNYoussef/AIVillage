@@ -14,14 +14,14 @@ Key Responsibilities:
 - Privacy-aware mixnode selection
 """
 
-import logging
-import socket
-import time
-import uuid
 from collections import defaultdict
 from dataclasses import dataclass, field
 from enum import Enum
+import logging
+import socket
+import time
 from typing import Any
+import uuid
 
 logger = logging.getLogger(__name__)
 

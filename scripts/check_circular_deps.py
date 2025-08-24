@@ -6,10 +6,10 @@ Detects circular dependencies in Python modules.
 
 import argparse
 import ast
-import os
-import sys
 from collections import defaultdict, deque
+import os
 from pathlib import Path
+import sys
 
 
 class CircularDependencyDetector:

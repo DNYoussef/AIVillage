@@ -4,11 +4,10 @@ Unit tests for Enhanced Innovator Repair Agent
 
 import asyncio
 import json
-import sys
 from pathlib import Path
+import sys
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import pytest
 from mcp_servers.hyperag.repair.innovator_agent import (
     InnovatorAgent,
     RepairOperation,
@@ -16,6 +15,7 @@ from mcp_servers.hyperag.repair.innovator_agent import (
     RepairProposalSet,
 )
 from mcp_servers.hyperag.repair.llm_driver import GenerationResponse, LLMDriver, ModelBackend, ModelConfig
+import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 

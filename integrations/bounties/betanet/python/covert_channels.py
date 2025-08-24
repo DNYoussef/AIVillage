@@ -12,19 +12,19 @@ Consolidates advanced covert transport capabilities from deprecated BetaNet file
 
 import asyncio
 import base64
+from dataclasses import dataclass, field
+from enum import Enum
 import json
 import logging
 import random
 import time
 import uuid
-from dataclasses import dataclass, field
-from enum import Enum
 
 # HTTP/2 and HTTP/3 support with graceful degradation
 try:
+    from h2.config import H2Configuration
     import h2.connection
     import h2.events
-    from h2.config import H2Configuration
 
     HTTP2_AVAILABLE = True
 except ImportError:

@@ -5,14 +5,14 @@ of the Frontier Curriculum Engine in improving model training outcomes,
 learning efficiency, and retention rates.
 """
 
+from dataclasses import dataclass
+from datetime import datetime, timedelta
 import logging
+from pathlib import Path
 import statistics
 
 # Test imports
 import sys
-from dataclasses import dataclass
-from datetime import datetime, timedelta
-from pathlib import Path
 from typing import Any
 
 import numpy as np

@@ -1,0 +1,385 @@
+# Unified Refiner Configuration
+# Complete specification for the unified refiner system with:
+# - Model: d_model=384, layers=12, heads=12, ffn_mult=4, ~50M params
+# - ACT: lambda=0.3, T_max=12
+# - LTM: d_mem=384, capacity=8192, topk=4
+# - Training: lr=2e-4, betas=[0.9,0.95], wd=0.1, warmup=2000
+# - Quiet-STaR: p=0.3, max_fast=6, max_slow=24
+# - Dataset curriculum: 45% short/local, 55% long-horizon
+
+name: "unified_refiner"
+version: "1.0.0"
+description: "Unified refiner system with ACT, LTM, and Quiet-STaR integration"
+
+# Model Architecture Configuration
+model:
+  # Base transformer architecture
+  d_model: 384
+  layers: 12
+  heads: 12
+  ffn_mult: 4
+  vocab_size: 32000
+  max_sequence_length: 4096
+  dropout: 0.1
+  layer_norm_eps: 1e-5
+  
+  # Parameter count target: ~50M
+  target_params: 50000000
+  
+  # Activation function
+  activation: "gelu"
+  
+  # Position embeddings
+  position_embedding_type: "learned"  # learned, sinusoidal, rotary
+  max_position_embeddings: 4096
+
+# Adaptive Computation Time (ACT) Configuration
+act:
+  enabled: true
+  lambda: 0.3  # Pondering loss weight
+  T_max: 12    # Maximum computation steps
+  epsilon: 0.01  # Halting threshold
+  bias_init: 1.0  # Initial bias for halting predictor
+  
+  # ACT-specific architecture
+  halting_hidden_size: 256
+  pondering_hidden_size: 128
+  
+  # Training settings
+  warmup_steps: 1000
+  max_pondering_steps: 12
+  min_pondering_steps: 1
+
+# Long-Term Memory (LTM) Configuration
+ltm:
+  enabled: true
+  d_mem: 384      # Memory dimension (matches d_model)
+  capacity: 8192  # Memory bank capacity
+  topk: 4        # Top-K retrieval
+  
+  # Memory architecture
+  memory_layers: [6, 9, 11]  # Layers with memory access
+  memory_heads: 8            # Attention heads for memory
+  
+  # Memory operations
+  update_rate: 0.1     # Memory update learning rate
+  decay_rate: 0.999    # Memory decay rate
+  retrieval_temperature: 0.1
+  
+  # Memory initialization
+  init_strategy: "random"  # random, zeros, learned
+  orthogonal_init: true
+
+# Quiet-STaR Configuration
+quiet_star:
+  enabled: true
+  p: 0.3           # Probability of generating thoughts
+  max_fast: 6      # Max fast thinking steps
+  max_slow: 24     # Max slow thinking steps
+  
+  # Thought generation
+  thought_prefix: "<|thinking|>"
+  thought_suffix: "<|/thinking|>"
+  
+  # Token budgets
+  fast_thought_tokens: 32
+  slow_thought_tokens: 128
+  
+  # Training settings
+  thought_loss_weight: 0.5
+  mixing_weight: 0.2
+  
+  # Sampling parameters
+  temperature: 1.0
+  top_p: 0.9
+  top_k: 50
+
+# Training Configuration
+training:
+  # Optimization
+  learning_rate: 2e-4
+  betas: [0.9, 0.95]
+  weight_decay: 0.1
+  warmup_steps: 2000
+  max_steps: 100000
+  
+  # Scheduling
+  scheduler_type: "cosine"  # linear, cosine, polynomial
+  min_learning_rate: 1e-6
+  warmup_init_lr: 1e-7
+  
+  # Batch configuration
+  batch_size: 32
+  gradient_accumulation_steps: 4
+  effective_batch_size: 128  # batch_size * gradient_accumulation_steps
+  
+  # Sequence lengths
+  max_seq_length: 2048
+  pack_sequences: true
+  
+  # Regularization
+  gradient_clip_norm: 1.0
+  label_smoothing: 0.1
+  
+  # Mixed precision
+  mixed_precision: true
+  loss_scale: "dynamic"
+  
+  # Checkpointing
+  save_steps: 5000
+  eval_steps: 1000
+  logging_steps: 100
+  max_checkpoints: 5
+
+# Dataset Curriculum Configuration
+dataset:
+  # Curriculum ratios
+  short_local_ratio: 0.45   # 45% short/local tasks
+  long_horizon_ratio: 0.55  # 55% long-horizon tasks
+  
+  # Short/local tasks (reasoning, math, coding)
+  short_local:
+    types: ["math", "coding", "logic", "factual"]
+    max_length: 512
+    weight: 0.45
+    
+    sources:
+      - name: "gsm8k"
+        weight: 0.3
+        max_samples: 10000
+      - name: "math_qa"
+        weight: 0.2
+        max_samples: 8000
+      - name: "code_contests"
+        weight: 0.3
+        max_samples: 12000
+      - name: "logic_puzzles"
+        weight: 0.2
+        max_samples: 5000
+  
+  # Long-horizon tasks (planning, multi-step reasoning)
+  long_horizon:
+    types: ["planning", "multi_step", "dialogue", "story"]
+    min_length: 1024
+    max_length: 4096
+    weight: 0.55
+    
+    sources:
+      - name: "planning_tasks"
+        weight: 0.3
+        max_samples: 15000
+      - name: "multi_step_reasoning"
+        weight: 0.4
+        max_samples: 20000
+      - name: "long_dialogue"
+        weight: 0.2
+        max_samples: 10000
+      - name: "story_completion"
+        weight: 0.1
+        max_samples: 5000
+  
+  # Data preprocessing
+  preprocessing:
+    tokenizer: "gpt2"  # gpt2, llama, custom
+    padding_side: "right"
+    truncation_side: "right"
+    add_special_tokens: true
+    
+  # Data loading
+  num_workers: 4
+  pin_memory: true
+  prefetch_factor: 2
+
+# Evaluation Configuration
+evaluation:
+  # Evaluation datasets
+  datasets:
+    - name: "hellaswag"
+      metric: "accuracy"
+      batch_size: 16
+    - name: "arc_challenge"
+      metric: "accuracy"
+      batch_size: 8
+    - name: "mmlu"
+      metric: "accuracy"
+      batch_size: 4
+    - name: "gsm8k"
+      metric: "exact_match"
+      batch_size: 8
+    - name: "humaneval"
+      metric: "pass_at_k"
+      batch_size: 4
+      k: [1, 10]
+  
+  # Evaluation frequency
+  eval_frequency: 1000
+  save_best_model: true
+  
+  # Generation settings
+  generation:
+    max_new_tokens: 512
+    temperature: 0.8
+    top_p: 0.9
+    do_sample: true
+    num_beams: 1
+
+# System Configuration
+system:
+  # Device settings
+  device: "auto"  # auto, cpu, cuda, mps
+  dtype: "bfloat16"  # float32, float16, bfloat16
+  
+  # Memory management
+  memory_efficient: true
+  gradient_checkpointing: true
+  flash_attention: true
+  
+  # Distributed training
+  distributed:
+    enabled: false
+    backend: "nccl"  # nccl, gloo, mpi
+    world_size: 1
+    rank: 0
+  
+  # Monitoring
+  wandb:
+    enabled: false
+    project: "unified_refiner"
+    entity: "aivillage"
+    tags: ["act", "ltm", "quiet-star"]
+  
+  tensorboard:
+    enabled: true
+    log_dir: "runs/unified_refiner"
+  
+  # Paths
+  paths:
+    data_dir: "data/unified_refiner"
+    output_dir: "models/unified_refiner"
+    cache_dir: "cache/unified_refiner"
+    log_dir: "logs/unified_refiner"
+
+# Ablation Study Configuration
+ablation:
+  # Available ablation types
+  types:
+    no_act:
+      description: "Disable ACT (Adaptive Computation Time)"
+      modifications:
+        act.enabled: false
+    
+    no_ltm:
+      description: "Disable LTM (Long-Term Memory)"
+      modifications:
+        ltm.enabled: false
+    
+    no_quiet_star:
+      description: "Disable Quiet-STaR thinking"
+      modifications:
+        quiet_star.enabled: false
+    
+    small_model:
+      description: "Smaller model for comparison (~12M params)"
+      modifications:
+        model.d_model: 256
+        model.layers: 8
+        model.heads: 8
+        model.target_params: 12000000
+    
+    train_few:
+      description: "Train with limited data (10% of full)"
+      modifications:
+        training.max_steps: 10000
+        dataset.short_local.sources[0].max_samples: 1000
+        dataset.short_local.sources[1].max_samples: 800
+        dataset.short_local.sources[2].max_samples: 1200
+        dataset.long_horizon.sources[0].max_samples: 1500
+        dataset.long_horizon.sources[1].max_samples: 2000
+    
+    fast_only:
+      description: "Quiet-STaR with only fast thinking"
+      modifications:
+        quiet_star.max_slow: 0
+        quiet_star.slow_thought_tokens: 0
+
+# Integration with CognateConfig
+cognate_integration:
+  enabled: true
+  
+  # Mapping to CognateConfig fields
+  mapping:
+    hidden_size: "model.d_model"
+    num_hidden_layers: "model.layers"
+    num_attention_heads: "model.heads"
+    vocab_size: "model.vocab_size"
+    max_sequence_length: "model.max_sequence_length"
+    learning_rate: "training.learning_rate"
+    weight_decay: "training.weight_decay"
+    warmup_steps: "training.warmup_steps"
+  
+  # Enhanced features mapping
+  enhanced_features:
+    enable_act_halting: "act.enabled"
+    enable_ltm_dynamics: "ltm.enabled"
+    enable_reasoning_layers: "quiet_star.enabled"
+  
+  # Override defaults for unified refiner
+  overrides:
+    target_architecture: "unified_refiner"
+    model_size: "50M"
+    enable_pretraining: true
+    pretraining_steps: 10000
+
+# Validation Rules
+validation:
+  required_fields:
+    - "model.d_model"
+    - "model.layers"
+    - "model.heads"
+    - "training.learning_rate"
+    - "training.batch_size"
+  
+  constraints:
+    model.d_model:
+      type: "int"
+      min: 64
+      max: 8192
+      divisible_by: ["model.heads"]
+    
+    model.layers:
+      type: "int"
+      min: 1
+      max: 48
+    
+    model.heads:
+      type: "int"
+      min: 1
+      max: 64
+      divides: ["model.d_model"]
+    
+    training.learning_rate:
+      type: "float"
+      min: 1e-6
+      max: 1e-2
+    
+    act.lambda:
+      type: "float"
+      min: 0.0
+      max: 1.0
+    
+    ltm.capacity:
+      type: "int"
+      min: 512
+      max: 32768
+      power_of_2: true
+
+# Version compatibility
+compatibility:
+  min_python: "3.8"
+  min_torch: "2.0.0"
+  min_transformers: "4.30.0"
+  
+  optional_dependencies:
+    flash_attention: "flash-attn>=2.0.0"
+    wandb: "wandb>=0.15.0"
+    tensorboard: "tensorboard>=2.10.0"

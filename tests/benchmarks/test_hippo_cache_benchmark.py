@@ -1,8 +1,8 @@
-import time
 from datetime import datetime
+import time
 
-import numpy as np
 from hyperrag.hippo_cache import CacheEntry, HippoCache
+import numpy as np
 
 
 def test_cache_hit_latency_benchmark() -> None:

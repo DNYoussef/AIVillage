@@ -1,10 +1,10 @@
 import asyncio
-import json
-import logging
-import uuid
 from collections import deque
 from dataclasses import dataclass, field
+import json
+import logging
 from typing import Any
+import uuid
 
 from AIVillage.experimental.agents.agents.analytics.unified_analytics import UnifiedAnalytics
 

@@ -4,9 +4,9 @@ RAG Defaults Offline Validated Config Integration Test - Prompt 6
 """
 
 import os
+from pathlib import Path
 import sys
 import tempfile
-from pathlib import Path
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
 

@@ -1,11 +1,11 @@
 import asyncio
-import threading
-import time
 from dataclasses import dataclass
 from datetime import datetime
+import threading
+import time
 
-import numpy as np
 from hyperrag.hippo_cache import CacheEntry, HippoCache
+import numpy as np
 
 
 @dataclass

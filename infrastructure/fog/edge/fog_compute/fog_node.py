@@ -5,10 +5,10 @@ Represents a single device participating in fog computing.
 """
 
 import asyncio
-import logging
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from enum import Enum
+import logging
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:

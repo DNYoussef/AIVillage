@@ -4,9 +4,9 @@ Startup script for AIVillage Admin Dashboard
 Convenient way to start the admin monitoring dashboard
 """
 
+from pathlib import Path
 import subprocess
 import sys
-from pathlib import Path
 
 
 def main():

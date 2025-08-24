@@ -16,23 +16,17 @@ Usage:
 
 import argparse
 import ast
-import json
-import os
-import sys
 from collections import defaultdict
 from dataclasses import asdict, dataclass
 from datetime import datetime
+import json
 from pathlib import Path
+import sys
 from typing import Any
 
-import matplotlib.pyplot as plt
 import networkx as nx
-import numpy as np
-import pandas as pd
 import radon.complexity as cc
 import radon.metrics as rm
-import seaborn as sns
-import yaml
 
 # Add project root to path
 PROJECT_ROOT = Path(__file__).parent.parent
@@ -155,7 +149,7 @@ class DependencyAnalyzer:
     def _extract_imports(self, file_path: Path) -> list[str]:
         imports = []
         try:
-            with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+            with open(file_path, encoding="utf-8", errors="ignore") as f:
                 tree = ast.parse(f.read())
 
             for node in ast.walk(tree):
@@ -217,7 +211,7 @@ class ConnascenceAnalyzer:
     def _analyze_file_connascence(self, file_path: Path):
         """Analyze connascence patterns in a single file."""
         try:
-            with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+            with open(file_path, encoding="utf-8", errors="ignore") as f:
                 content = f.read()
                 tree = ast.parse(content)
 
@@ -253,8 +247,8 @@ class ConnascenceAnalyzer:
         """Detect connascence of meaning (magic numbers/strings)."""
         magic_literals = 0
         for node in ast.walk(tree):
-            if isinstance(node, (ast.Constant, ast.Num, ast.Str)):
-                if isinstance(node, ast.Constant) and isinstance(node.value, (int, float, str)):
+            if isinstance(node, ast.Constant | ast.Num | ast.Str):
+                if isinstance(node, ast.Constant) and isinstance(node.value, int | float | str):
                     if node.value not in (0, 1, True, False, None, "", []):
                         magic_literals += 1
 
@@ -353,7 +347,7 @@ class MetricsCalculator:
     def _calculate_file_complexity(self, file_path: Path) -> float:
         """Calculate cyclomatic complexity for a file."""
         try:
-            with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+            with open(file_path, encoding="utf-8", errors="ignore") as f:
                 content = f.read()
 
             complexity_results = cc.cc_visit(content)
@@ -364,7 +358,7 @@ class MetricsCalculator:
     def _calculate_file_maintainability(self, file_path: Path) -> float:
         """Calculate maintainability index for a file."""
         try:
-            with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+            with open(file_path, encoding="utf-8", errors="ignore") as f:
                 content = f.read()
 
             mi_results = rm.mi_visit(content, True)

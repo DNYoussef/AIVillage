@@ -11,8 +11,6 @@ Tests the 4-stage curriculum data pipeline including:
 - Data loading strategies and batch generation
 """
 
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
 
 import pytest
 import torch
@@ -21,11 +19,11 @@ import torch
 try:
     from core.agent_forge.data.cogment.augmentations import ARCAugmentationEngine, AugmentationConfig
     from core.agent_forge.data.cogment.data_manager import CogmentDataManager, DataLoadingStrategy, StageDataConfig
-    from core.agent_forge.data.cogment.stage_0_sanity import SanityCheckDataset, create_sanity_dataset
-    from core.agent_forge.data.cogment.stage_1_arc import ARCVisualDataset, create_arc_dataset
-    from core.agent_forge.data.cogment.stage_2_puzzles import AlgorithmicPuzzleDataset, create_puzzle_dataset
-    from core.agent_forge.data.cogment.stage_3_reasoning import MathTextReasoningDataset, create_reasoning_dataset
-    from core.agent_forge.data.cogment.stage_4_longcontext import LongContextDataset, create_long_context_dataset
+    from core.agent_forge.data.cogment.stage_0_sanity import create_sanity_dataset
+    from core.agent_forge.data.cogment.stage_1_arc import create_arc_dataset
+    from core.agent_forge.data.cogment.stage_2_puzzles import create_puzzle_dataset
+    from core.agent_forge.data.cogment.stage_3_reasoning import create_reasoning_dataset
+    from core.agent_forge.data.cogment.stage_4_longcontext import create_long_context_dataset
 
     DATA_AVAILABLE = True
 except ImportError as e:
@@ -250,8 +248,8 @@ class TestAlgorithmicPuzzleDataset:
         assert "difficulty" in sample
 
         # Verify data types
-        assert isinstance(sample["puzzle_input"], (torch.Tensor, str))
-        assert isinstance(sample["puzzle_solution"], (torch.Tensor, str))
+        assert isinstance(sample["puzzle_input"], torch.Tensor | str)
+        assert isinstance(sample["puzzle_solution"], torch.Tensor | str)
 
     def test_puzzle_type_distribution(self, puzzle_dataset, puzzle_config):
         """Test puzzle type distribution."""
@@ -390,7 +388,7 @@ class TestLongContextDataset:
 
         # Verify context length
         context_length = sample["context_length"]
-        assert isinstance(context_length, (int, torch.Tensor))
+        assert isinstance(context_length, int | torch.Tensor)
 
         if isinstance(context_length, int):
             assert context_length >= 512  # Minimum length
@@ -709,7 +707,7 @@ class TestDataPipelineIntegration:
 
                 # Get current stage loader
                 loader = manager.get_stage_loader(current_stage)
-                batch = next(iter(loader))
+                next(iter(loader))
 
                 # Get stage config
                 stage_config = manager.get_stage_config(current_stage)

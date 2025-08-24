@@ -5,13 +5,13 @@ Tests all components according to CODEX Integration Requirements.
 
 import asyncio
 import os
+from pathlib import Path
 import shutil
 import sqlite3
 
 # Import from deprecated location - these files were moved during consolidation
 import sys
 import tempfile
-from pathlib import Path
 
 import pytest
 

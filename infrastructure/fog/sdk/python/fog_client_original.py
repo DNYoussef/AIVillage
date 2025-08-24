@@ -30,9 +30,9 @@ Example usage:
 """
 
 import asyncio
-import logging
 from collections.abc import AsyncGenerator
 from datetime import datetime
+import logging
 from typing import Any
 
 import aiohttp

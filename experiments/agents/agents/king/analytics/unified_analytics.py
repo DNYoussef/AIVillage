@@ -1,5 +1,5 @@
-import logging
 from collections import deque
+import logging
 from typing import Any
 
 import numpy as np

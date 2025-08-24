@@ -13,7 +13,7 @@ import json
 # Import the mesh protocol
 import sys
 import time
-from typing import Any, Dict
+from typing import Any
 
 sys.path.append("C:/Users/17175/Desktop/AIVillage")
 from core.p2p.mesh_protocol import (
@@ -34,7 +34,7 @@ class SimpleTransport:
         self.messages_sent = []
         self.call_count = 0
 
-    async def send_message(self, receiver_id: str, message_data: Dict[str, Any]) -> bool:
+    async def send_message(self, receiver_id: str, message_data: dict[str, Any]) -> bool:
         """Simple send implementation."""
         self.call_count += 1
         self.messages_sent.append((receiver_id, message_data))
@@ -268,7 +268,7 @@ async def test_circuit_breaker_concept():
     cb = CircuitBreaker(failure_threshold=3, recovery_timeout=1)
 
     # Initial state should allow attempts
-    assert cb.can_attempt() == True
+    assert cb.can_attempt() is True
     assert cb.state == "CLOSED"
 
     # Record failures
@@ -277,13 +277,13 @@ async def test_circuit_breaker_concept():
 
     # Should now be open and block attempts
     assert cb.state == "OPEN"
-    assert cb.can_attempt() == False
+    assert cb.can_attempt() is False
 
     # Wait for recovery timeout
     await asyncio.sleep(1.1)
 
     # Should transition to half-open
-    assert cb.can_attempt() == True
+    assert cb.can_attempt() is True
 
     # Success should reset to closed
     cb.on_success()
@@ -399,7 +399,7 @@ async def run_validation_suite():
             results[test_name] = {"passed": False, "error": str(e)}
             print(f"ERROR: {test_name} - {e}")
 
-    print(f"\n=== VALIDATION SUMMARY ===")
+    print("\n=== VALIDATION SUMMARY ===")
     print(f"Tests passed: {passed}/{len(tests)}")
     print(f"Success rate: {passed/len(tests)*100:.1f}%")
 

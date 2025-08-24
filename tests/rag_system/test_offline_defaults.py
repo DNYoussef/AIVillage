@@ -8,11 +8,11 @@ Integration Point: Validates offline readiness for Phase 4 testing
 
 import json
 import os
+from pathlib import Path
 
 # Add src to path for imports
 import sys
 import tempfile
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))

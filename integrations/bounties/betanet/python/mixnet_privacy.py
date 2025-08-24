@@ -9,6 +9,8 @@ Consolidates mixnet privacy features from deprecated files:
 """
 
 import asyncio
+from dataclasses import dataclass
+from enum import Enum
 import hashlib
 import hmac
 import logging
@@ -16,8 +18,6 @@ import random
 import secrets
 import struct
 import time
-from dataclasses import dataclass
-from enum import Enum
 from typing import Any
 
 logger = logging.getLogger(__name__)

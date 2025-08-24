@@ -5,9 +5,9 @@ Extracted from ArchitecturalAnalyzer following single responsibility principle.
 """
 
 import ast
+from collections import defaultdict
 import logging
 import os
-from collections import defaultdict
 from pathlib import Path
 
 import networkx as nx

@@ -5,8 +5,8 @@ Ensures import statements are updated correctly as modules are moved.
 
 import ast
 import importlib
-import sys
 from pathlib import Path
+import sys
 from typing import Any
 
 import pytest

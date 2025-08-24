@@ -1,0 +1,351 @@
+# Environment-Specific Configurations for Cognate 25M
+# Different configurations for development, staging, and production environments
+
+environments:
+  # Development Environment
+  development:
+    name: "cognate_25m_development"
+    description: "Development environment for Cognate 25M with relaxed constraints"
+    
+    # Model configuration overrides
+    model:
+      # Smaller configurations for faster development
+      d_model: 216
+      n_layers: 8              # Reduced for faster iterations
+      n_heads: 4
+      vocab_size: 16000        # Reduced vocabulary for development
+      max_seq_len: 512         # Shorter sequences
+      
+      # Development-friendly parameters
+      target_params: 15000000  # ~15M for development
+      tolerance: 5000000       # Relaxed tolerance
+      
+    # Training overrides
+    training:
+      learning_rate: 2e-4      # Higher LR for faster convergence
+      max_steps: 1000          # Reduced training steps
+      batch_size: 4            # Smaller batches
+      gradient_accumulation_steps: 2
+      warmup_steps: 50         # Faster warmup
+      
+      # More frequent checkpointing for development
+      save_steps: 100
+      eval_steps: 50
+      logging_steps: 10
+      
+    # Memory system
+    memory:
+      mem_capacity: 1024       # Smaller memory bank
+      mem_topk: 2              # Simpler retrieval
+      
+    # System settings
+    system:
+      device: "cpu"            # CPU-only for development
+      torch_dtype: "float32"
+      memory_efficient: false  # Disabled for debugging
+      
+    # Development features
+    development:
+      debug_mode: true
+      verbose_logging: true
+      profiling_enabled: true
+      test_mode: true
+      
+  # Staging Environment  
+  staging:
+    name: "cognate_25m_staging"
+    description: "Staging environment for Cognate 25M with production-like settings"
+    
+    # Production-like model configuration
+    model:
+      d_model: 216
+      n_layers: 11
+      n_heads: 4
+      vocab_size: 32000
+      max_seq_len: 2048
+      target_params: 25000000
+      tolerance: 1000000
+      
+    # Training configuration
+    training:
+      learning_rate: 1e-4
+      max_steps: 5000          # Moderate training for validation
+      batch_size: 8
+      gradient_accumulation_steps: 4
+      warmup_steps: 100
+      
+      # Staging checkpoint frequency
+      save_steps: 250
+      eval_steps: 100
+      logging_steps: 25
+      
+    # Full memory system
+    memory:
+      mem_capacity: 4096
+      mem_topk: 4
+      
+    # System settings
+    system:
+      device: "auto"           # Use GPU if available
+      torch_dtype: "float32"
+      memory_efficient: true
+      
+    # Staging-specific features
+    staging:
+      extended_validation: true
+      performance_testing: true
+      integration_testing: true
+      stress_testing: false
+      
+  # Production Environment
+  production:
+    name: "cognate_25m_production"
+    description: "Production environment for Cognate 25M with full specifications"
+    
+    # Full model configuration
+    model:
+      d_model: 216
+      n_layers: 11
+      n_heads: 4
+      vocab_size: 32000
+      max_seq_len: 2048
+      target_params: 25000000
+      tolerance: 500000        # Strict tolerance
+      
+    # Production training
+    training:
+      learning_rate: 1e-4
+      max_steps: 10000
+      batch_size: 8
+      gradient_accumulation_steps: 4
+      warmup_steps: 100
+      
+      # Production checkpoint strategy
+      save_steps: 500
+      eval_steps: 100
+      logging_steps: 50
+      max_checkpoints: 10      # Keep more checkpoints
+      
+    # Full memory system
+    memory:
+      mem_capacity: 4096
+      mem_topk: 4
+      
+      # Production memory policies
+      read_policy: "entropy_gated"
+      write_policy: "surprise_novelty"
+      
+    # Production system settings
+    system:
+      device: "auto"
+      torch_dtype: "float32"
+      memory_efficient: true
+      gradient_checkpointing: false
+      
+    # Production features
+    production:
+      strict_validation: true
+      comprehensive_monitoring: true
+      automated_backups: true
+      disaster_recovery: true
+      
+  # Testing Environment
+  testing:
+    name: "cognate_25m_testing"
+    description: "Testing environment for Cognate 25M validation and CI/CD"
+    
+    # Minimal configuration for testing
+    model:
+      d_model: 128             # Very small for fast tests
+      n_layers: 4
+      n_heads: 4
+      vocab_size: 8000
+      max_seq_len: 256
+      target_params: 5000000   # ~5M for testing
+      tolerance: 2000000
+      
+    # Fast training for tests
+    training:
+      learning_rate: 1e-3      # High LR for fast convergence
+      max_steps: 100           # Minimal training
+      batch_size: 2
+      gradient_accumulation_steps: 1
+      warmup_steps: 10
+      
+      # Frequent checkpointing for test validation
+      save_steps: 25
+      eval_steps: 25
+      logging_steps: 5
+      
+    # Minimal memory system
+    memory:
+      mem_capacity: 256
+      mem_topk: 1
+      
+    # Test system settings
+    system:
+      device: "cpu"            # CPU for consistent test results
+      torch_dtype: "float32"
+      memory_efficient: false  # Consistency over efficiency
+      
+    # Testing features
+    testing:
+      unit_tests: true
+      integration_tests: true
+      performance_tests: false
+      stress_tests: false
+      mock_components: true
+
+# Environment Selection Logic
+environment_selection:
+  # Automatic detection
+  auto_detection:
+    enabled: true
+    
+    # Detection criteria
+    criteria:
+      development:
+        - "DEBUG environment variable set"
+        - "Running in development container"
+        - "--dev flag present"
+        
+      staging:
+        - "STAGING environment variable set"
+        - "Staging deployment context"
+        - "--staging flag present"
+        
+      production:
+        - "PRODUCTION environment variable set"
+        - "Production deployment context"
+        - "--prod flag present"
+        
+      testing:
+        - "CI environment variable set"
+        - "Testing framework detected"
+        - "--test flag present"
+        
+  # Default fallback
+  default_environment: "development"
+  
+  # Override mechanisms
+  overrides:
+    environment_variable: "COGNATE_ENVIRONMENT"
+    command_line_flag: "--environment"
+    config_file_setting: "environment"
+
+# Cross-Environment Configuration
+cross_environment:
+  # Shared base configuration
+  base_config:
+    # Always use these settings across all environments
+    model:
+      activation: "silu"
+      layer_norm_eps: 1e-5
+      position_type: "rotary"
+      rope_theta: 10000.0
+      
+    # Shared ACT configuration
+    act:
+      act_epsilon: 0.01
+      max_act_steps: 16
+      lambda_act: 0.1
+      
+    # Shared memory thresholds
+    memory:
+      entropy_threshold: 0.8
+      surprise_threshold: 0.6
+      novelty_threshold: 0.7
+      
+  # Environment-specific validations
+  validations:
+    development:
+      - "parameter_count_reasonable"
+      - "basic_functionality"
+      
+    staging:
+      - "parameter_count_accurate"
+      - "full_functionality"
+      - "performance_acceptable"
+      
+    production:
+      - "parameter_count_exact"
+      - "comprehensive_functionality"
+      - "performance_optimal"
+      - "security_validated"
+      
+    testing:
+      - "minimal_functionality"
+      - "test_compatibility"
+
+# Environment Migration
+migration:
+  # Configuration migration between environments
+  migration_paths:
+    development_to_staging:
+      - "increase_model_size"
+      - "enable_full_memory"
+      - "add_performance_monitoring"
+      
+    staging_to_production:
+      - "strict_parameter_validation"
+      - "enable_all_monitoring"
+      - "production_security_settings"
+      
+    production_to_staging:
+      - "relaxed_validation"
+      - "reduced_monitoring"
+      
+  # Migration validation
+  migration_validation:
+    check_compatibility: true
+    validate_functionality: true
+    test_performance: true
+    
+# Environment Monitoring
+monitoring:
+  # Environment-specific monitoring
+  development:
+    metrics:
+      - "development_iteration_speed"
+      - "debug_information_completeness"
+      - "test_execution_frequency"
+      
+  staging:
+    metrics:
+      - "staging_validation_coverage"
+      - "performance_regression_detection"
+      - "integration_test_success_rate"
+      
+  production:
+    metrics:
+      - "production_stability"
+      - "performance_consistency"
+      - "error_rate_tracking"
+      - "resource_utilization"
+      
+  testing:
+    metrics:
+      - "test_execution_time"
+      - "test_coverage_percentage"
+      - "test_reliability"
+
+# Environment Documentation
+documentation:
+  # Environment-specific documentation
+  environment_guides:
+    development: "docs/environments/development_setup.md"
+    staging: "docs/environments/staging_validation.md"
+    production: "docs/environments/production_deployment.md"
+    testing: "docs/environments/testing_framework.md"
+    
+  # Configuration differences
+  diff_documentation:
+    dev_vs_staging: "docs/environments/dev_staging_differences.md"
+    staging_vs_prod: "docs/environments/staging_prod_differences.md"
+    
+  # Environment best practices
+  best_practices:
+    development: "docs/best_practices/development.md"
+    staging: "docs/best_practices/staging.md"
+    production: "docs/best_practices/production.md"
+    testing: "docs/best_practices/testing.md"

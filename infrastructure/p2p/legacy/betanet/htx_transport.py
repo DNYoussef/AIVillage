@@ -8,14 +8,14 @@ Addresses critiques from Betanet 1.1 spec review:
 """
 
 import asyncio
+from collections import defaultdict
+from dataclasses import dataclass, field
 import logging
 import random
 import struct
 import time
-import uuid
-from collections import defaultdict
-from dataclasses import dataclass, field
 from typing import Any
+import uuid
 
 import aiohttp
 from cryptography.hazmat.primitives import hashes

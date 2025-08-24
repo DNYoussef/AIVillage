@@ -13,12 +13,12 @@ This provides comprehensive mobile device optimization:
 - Real-time policy adaptation
 """
 
+from dataclasses import dataclass, field
+from enum import Enum
 import logging
 import os
 import time
-from dataclasses import dataclass, field
-from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -50,11 +50,11 @@ class MobileDeviceProfile:
     device_id: str
 
     # Power state (required)
-    battery_percent: Optional[int]
+    battery_percent: int | None
     battery_charging: bool
 
     # Thermal state (required)
-    cpu_temp_celsius: Optional[float]
+    cpu_temp_celsius: float | None
 
     # System resources (required)
     cpu_percent: float
@@ -66,11 +66,11 @@ class MobileDeviceProfile:
     power_mode: str = "balanced"
     thermal_state: str = "normal"
     network_type: str = "wifi"  # wifi, cellular, 3g, 4g, 5g
-    network_latency_ms: Optional[float] = None
+    network_latency_ms: float | None = None
     has_internet: bool = True
     is_metered_connection: bool = False
     is_foreground: bool = True
-    screen_brightness: Optional[int] = None
+    screen_brightness: int | None = None
     device_type: str = "smartphone"
 
 
@@ -144,7 +144,7 @@ class ResourceOptimization:
     estimated_performance: str = "medium"  # low, medium, high
     estimated_latency: str = "medium"  # low, medium, high
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for serialization"""
         return {
             "power_mode": self.power_mode.value,
@@ -181,7 +181,7 @@ class MobileResourceManager:
     - NETWORK_TYPE: wifi, cellular, 3g, 4g, 5g
     """
 
-    def __init__(self, policy: Optional[ResourcePolicy] = None):
+    def __init__(self, policy: ResourcePolicy | None = None):
         self.policy = policy or ResourcePolicy()
 
         # Environment-driven simulation support
@@ -329,7 +329,7 @@ class MobileResourceManager:
 
         return profile
 
-    async def optimize_for_device(self, profile: Optional[MobileDeviceProfile] = None) -> ResourceOptimization:
+    async def optimize_for_device(self, profile: MobileDeviceProfile | None = None) -> ResourceOptimization:
         """
         Main optimization entry point
 
@@ -666,8 +666,8 @@ class MobileResourceManager:
         return battery_impact, performance, latency
 
     async def get_transport_routing_decision(
-        self, message_size_bytes: int, priority: int = 5, profile: Optional[MobileDeviceProfile] = None
-    ) -> Dict[str, Any]:
+        self, message_size_bytes: int, priority: int = 5, profile: MobileDeviceProfile | None = None
+    ) -> dict[str, Any]:
         """Get routing decision for a specific message"""
 
         # Get current optimization
@@ -717,7 +717,7 @@ class MobileResourceManager:
 
         return decision
 
-    def get_chunking_recommendations(self, data_type: str = "tensor") -> Dict[str, Any]:
+    def get_chunking_recommendations(self, data_type: str = "tensor") -> dict[str, Any]:
         """Get current chunking recommendations for different data types"""
 
         if not self.optimization_history:
@@ -753,7 +753,7 @@ class MobileResourceManager:
 
         return recommendations.get(data_type, recommendations["tensor"])
 
-    def get_status(self) -> Dict[str, Any]:
+    def get_status(self) -> dict[str, Any]:
         """Get comprehensive status of mobile resource management"""
 
         current_optimization = None

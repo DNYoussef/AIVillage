@@ -1,12 +1,12 @@
-import logging
 from collections import deque
+import logging
 from typing import Any
 
 import numpy as np
-import torch
 from scipy.stats import linregress
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
+import torch
 
 logger = logging.getLogger(__name__)
 

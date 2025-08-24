@@ -4,9 +4,8 @@ Import Path Migration Script - Agent 6 Final Cleanup
 Systematically updates all deprecated import paths to consolidated locations
 """
 
-import os
-import re
 from pathlib import Path
+import re
 
 # Import path mappings: OLD -> NEW
 IMPORT_MIGRATIONS = {
@@ -29,7 +28,7 @@ def migrate_imports_in_file(file_path: Path) -> bool:
     Returns True if any changes were made.
     """
     try:
-        with open(file_path, "r", encoding="utf-8") as f:
+        with open(file_path, encoding="utf-8") as f:
             content = f.read()
 
         original_content = content

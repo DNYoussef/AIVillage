@@ -15,16 +15,16 @@ Key features:
 """
 
 import asyncio
-import json
-import logging
-import secrets
-import time
-import uuid
 from collections import defaultdict, deque
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
+import json
+import logging
+import secrets
+import time
 from typing import Any
+import uuid
 
 # Optional dependencies with graceful degradation
 try:

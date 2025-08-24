@@ -6,8 +6,8 @@ instead of plain JSON sockets on port 4001.
 
 import asyncio
 import json
-import sys
 from pathlib import Path
+import sys
 
 import pytest
 

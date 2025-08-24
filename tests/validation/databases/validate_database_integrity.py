@@ -3,17 +3,17 @@
 Verifies all SQLite databases exist with correct schemas and data integrity
 """
 
+from dataclasses import dataclass
+from datetime import datetime
 import json
 import logging
 import os
+from pathlib import Path
 import sqlite3
 import subprocess
 import sys
 import threading
 import time
-from dataclasses import dataclass
-from datetime import datetime
-from pathlib import Path
 
 try:
     from colorama import Fore, Style, init

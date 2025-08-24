@@ -11,8 +11,8 @@ import json
 import logging
 import secrets
 import time
-import uuid
 from typing import Any
+import uuid
 
 from navigator.path_policy import RoutingPriority
 

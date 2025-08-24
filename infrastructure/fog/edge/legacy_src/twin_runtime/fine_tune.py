@@ -3,11 +3,12 @@
 import os
 from pathlib import Path
 
-import torch
-from ingestion.vector_ds import personal_ds
 from llama_cpp import Llama
 from peft import LoraConfig, get_peft_model
+import torch
 from transformers import AutoTokenizer
+
+from ingestion.vector_ds import personal_ds
 
 MODEL_PATH = Path(os.getenv("TWIN_MODEL", "~/ai_twin/weights/twin.gguf")).expanduser()
 LORA_DIR = Path(os.getenv("TWIN_LORA_DIR", "~/ai_twin/loras")).expanduser()

@@ -9,8 +9,8 @@ basic functionality, and model passing.
 
 import asyncio
 import logging
-import sys
 from pathlib import Path
+import sys
 
 import torch.nn as nn
 

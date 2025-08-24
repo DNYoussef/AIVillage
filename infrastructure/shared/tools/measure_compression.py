@@ -6,8 +6,8 @@ Measures model size, inference latency, and memory usage.
 
 import argparse
 import json
-import time
 from pathlib import Path
+import time
 
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer

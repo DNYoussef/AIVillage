@@ -3,14 +3,15 @@ Comprehensive tests for ADAS (Automatic Discovery of Agentic Space) loop.
 Tests archive, proposer, runner, and complete search orchestration.
 """
 
+from pathlib import Path
 import shutil
 import tempfile
-from pathlib import Path
 from unittest.mock import Mock, patch
 
 import pytest
 import torch
 import torch.nn as nn
+
 from src.agent_forge.adas.archive import ADASArchive, ExperimentResult
 from src.agent_forge.adas.proposer import ADASProposer
 from src.agent_forge.adas.runner import ADASRunner, TaskSuite

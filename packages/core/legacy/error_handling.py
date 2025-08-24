@@ -3,11 +3,12 @@ Legacy Error Handling Module - Agent 6 Compatibility Fix
 Provides error handling functions required by the agent system
 """
 
+from collections.abc import Callable
+from functools import wraps
 import logging
 import time
 import traceback
-from functools import wraps
-from typing import Any, Callable, Optional, Union
+from typing import Any
 
 logger = logging.getLogger(__name__)
 

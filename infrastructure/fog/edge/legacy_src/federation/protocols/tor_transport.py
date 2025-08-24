@@ -9,13 +9,13 @@ Implements Tor integration for anonymous communication with:
 """
 
 import asyncio
+from dataclasses import dataclass
 import logging
 import os
 import tempfile
 import time
-import uuid
-from dataclasses import dataclass
 from typing import Any
+import uuid
 
 # Tor control and management
 try:

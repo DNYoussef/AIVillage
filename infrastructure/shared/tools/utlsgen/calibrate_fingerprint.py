@@ -8,13 +8,13 @@ for mimicking legitimate browser traffic patterns.
 
 import argparse
 import asyncio
+from dataclasses import dataclass
 import hashlib
 import json
 import logging
+from pathlib import Path
 import ssl
 import time
-from dataclasses import dataclass
-from pathlib import Path
 
 logger = logging.getLogger(__name__)
 

@@ -7,8 +7,8 @@ Integration Point: Validates CPU-only compression for Phase 4 testing
 """
 
 import os
-import sys
 from pathlib import Path
+import sys
 from unittest.mock import MagicMock, patch
 
 import pytest

@@ -4,8 +4,8 @@ Edge Deployer - AI Model Deployment for Edge Devices
 Handles deployment of AI models to edge devices with optimization for mobile constraints.
 """
 
-import logging
 from dataclasses import dataclass
+import logging
 
 logger = logging.getLogger(__name__)
 

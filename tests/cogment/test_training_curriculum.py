@@ -10,7 +10,6 @@ Tests the 4-stage training curriculum including:
 """
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple
 
 import pytest
 import torch
@@ -19,16 +18,15 @@ import torch.optim as optim
 
 # Import Cogment training components
 try:
-    from core.agent_forge.models.cogment.core.config import CogmentConfig
     from core.agent_forge.models.cogment.training.curriculum import (
         CurriculumScheduler,
         CurriculumStage,
         FourStageCurriculum,
         StageConfig,
     )
-    from core.agent_forge.models.cogment.training.grokfast import GradientFilter, GrokFast, GrokFastConfig
-    from core.agent_forge.models.cogment.training.loss_functions import ACTLoss, CogmentLoss, MemoryLoss, StageLoss
-    from core.agent_forge.models.cogment.training.optimizer import CogmentOptimizer, OptimizerConfig
+    from core.agent_forge.models.cogment.training.grokfast import GrokFast, GrokFastConfig
+    from core.agent_forge.models.cogment.training.loss_functions import CogmentLoss
+    from core.agent_forge.models.cogment.training.optimizer import OptimizerConfig
 
     TRAINING_AVAILABLE = True
 except ImportError as e:
@@ -57,7 +55,7 @@ class TestTrainingConfig:
     gradient_filter_ema: float = 0.99
 
     # Stage configuration
-    stage_steps: List[int] = None
+    stage_steps: list[int] = None
 
     def __post_init__(self):
         if self.stage_steps is None:
@@ -418,7 +416,6 @@ class TestStageLossFunctions:
         """Test memory loss computation."""
         batch_size = 2
         seq_len = 8
-        memory_dim = 64
 
         # Create memory outputs
         memory_outputs = type(
@@ -503,7 +500,7 @@ class TestCurriculumScheduler:
     @pytest.fixture
     def scheduler_config(self):
         """Create scheduler configuration."""
-        config = TestTrainingConfig()
+        TestTrainingConfig()
         return {
             "curriculum_stages": [
                 {"name": "sanity", "steps": 20},
@@ -562,7 +559,7 @@ class TestTrainingIntegration:
         model = nn.Sequential(nn.Linear(10, 20), nn.ReLU(), nn.Linear(20, 5))
 
         # Create training configuration
-        config = TestTrainingConfig()
+        TestTrainingConfig()
 
         # Create curriculum stages
         stage_configs = []

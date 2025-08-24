@@ -1,11 +1,12 @@
+from datetime import datetime, timedelta
 import os
 import sys
 import types
-from datetime import datetime, timedelta
 
+from fastapi import HTTPException
 import jwt
 import pytest
-from fastapi import HTTPException
+
 from packages.fog.gateway.api.jobs import JobsAPI
 
 

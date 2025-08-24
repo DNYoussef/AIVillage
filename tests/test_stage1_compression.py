@@ -7,6 +7,7 @@ import tempfile
 
 import pytest
 import torch
+
 from agent_forge.compression.seedlm import LFSRGenerator, SeedLMCompressor
 from agent_forge.compression.stage1 import Stage1Compressor, run_stage1_compression
 from agent_forge.compression.stage1_bitnet import BitNetLinear, convert_to_bitnet

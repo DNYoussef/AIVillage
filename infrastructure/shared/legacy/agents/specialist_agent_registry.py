@@ -8,14 +8,14 @@ and specialized task delegation.
 Agent Ecosystem Integration Point: Centralized agent capability and routing system
 """
 
-import json
-import logging
-import uuid
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from enum import Enum
+import json
+import logging
 from pathlib import Path
 from typing import Any
+import uuid
 
 from agents.core.agent_interface import AgentCapability
 

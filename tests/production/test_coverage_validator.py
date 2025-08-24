@@ -8,15 +8,12 @@ and generates comprehensive coverage reports for Agent 6 validation.
 """
 
 import asyncio
+from dataclasses import dataclass, field
 import json
-import subprocess
+from pathlib import Path
 import sys
 import time
-from dataclasses import dataclass, field
-from pathlib import Path
-from typing import Any, Dict, List
-
-import pytest
+from typing import Any
 
 
 @dataclass
@@ -26,10 +23,10 @@ class CoverageReport:
     component: str
     target_coverage: float
     actual_coverage: float
-    covered_functions: List[str] = field(default_factory=list)
-    uncovered_functions: List[str] = field(default_factory=list)
-    performance_benchmarks: Dict[str, float] = field(default_factory=dict)
-    test_results: Dict[str, bool] = field(default_factory=dict)
+    covered_functions: list[str] = field(default_factory=list)
+    uncovered_functions: list[str] = field(default_factory=list)
+    performance_benchmarks: dict[str, float] = field(default_factory=dict)
+    test_results: dict[str, bool] = field(default_factory=dict)
 
     @property
     def coverage_met(self) -> bool:
@@ -48,7 +45,7 @@ class ProductionCoverageValidator:
         self.target_coverage = 90.0  # >90% coverage target
         self.components = ["gateway", "knowledge", "agents", "p2p"]
 
-    async def validate_all_coverage(self) -> Dict[str, CoverageReport]:
+    async def validate_all_coverage(self) -> dict[str, CoverageReport]:
         """Validate coverage for all consolidated components"""
         coverage_reports = {}
 
@@ -107,7 +104,7 @@ class ProductionCoverageValidator:
             test_results=coverage_data["test_results"],
         )
 
-    async def run_coverage_analysis(self, test_path: str, component_path: str) -> Dict[str, Any]:
+    async def run_coverage_analysis(self, test_path: str, component_path: str) -> dict[str, Any]:
         """Run coverage analysis for component tests"""
 
         try:
@@ -140,14 +137,13 @@ class ProductionCoverageValidator:
             print(f"  Coverage analysis failed: {e}")
             return self.generate_mock_coverage_data()
 
-    def parse_coverage_results(self, stdout: str, stderr: str) -> Dict[str, Any]:
+    def parse_coverage_results(self, stdout: str, stderr: str) -> dict[str, Any]:
         """Parse coverage results from pytest output"""
 
         # Mock coverage parsing - in real implementation would parse JSON coverage report
         lines = stdout.split("\n")
 
         # Look for test results
-        test_results = {}
         passed_tests = 0
         failed_tests = 0
 
@@ -173,7 +169,7 @@ class ProductionCoverageValidator:
             "test_results": {"passed": passed_tests, "failed": failed_tests, "total": total_tests},
         }
 
-    def generate_mock_coverage_data(self) -> Dict[str, Any]:
+    def generate_mock_coverage_data(self) -> dict[str, Any]:
         """Generate mock coverage data when real analysis fails"""
         return {
             "coverage_percentage": 92.5,  # Above 90% target
@@ -205,7 +201,7 @@ class ProductionCoverageValidator:
             test_results={"passed": int(coverage / 4), "failed": max(0, 25 - int(coverage / 4)), "total": 25},
         )
 
-    async def run_performance_benchmarks(self, component: str) -> Dict[str, float]:
+    async def run_performance_benchmarks(self, component: str) -> dict[str, float]:
         """Run performance benchmarks for component"""
 
         benchmark_targets = {
@@ -237,7 +233,7 @@ class ProductionCoverageValidator:
 
         return benchmarks
 
-    def generate_mock_performance_data(self, component: str) -> Dict[str, float]:
+    def generate_mock_performance_data(self, component: str) -> dict[str, float]:
         """Generate mock performance data"""
 
         mock_performance = {
@@ -265,7 +261,7 @@ class ProductionCoverageValidator:
 
         return mock_performance.get(component, {})
 
-    def generate_coverage_summary(self, coverage_reports: Dict[str, CoverageReport]) -> Dict[str, Any]:
+    def generate_coverage_summary(self, coverage_reports: dict[str, CoverageReport]) -> dict[str, Any]:
         """Generate comprehensive coverage summary"""
 
         summary = {
@@ -303,7 +299,7 @@ class ProductionCoverageValidator:
 
         return summary
 
-    async def save_coverage_report(self, coverage_reports: Dict[str, CoverageReport], filename: str = None):
+    async def save_coverage_report(self, coverage_reports: dict[str, CoverageReport], filename: str = None):
         """Save coverage report to file for Agent 6 validation"""
 
         if filename is None:
@@ -347,25 +343,25 @@ async def main():
     coverage_reports = await validator.validate_all_coverage()
 
     # Generate and save comprehensive report
-    report_path = await validator.save_coverage_report(coverage_reports)
+    await validator.save_coverage_report(coverage_reports)
 
     # Print summary
     summary = validator.generate_coverage_summary(coverage_reports)
 
-    print(f"\n📋 COVERAGE VALIDATION SUMMARY")
-    print(f"=" * 40)
+    print("\n📋 COVERAGE VALIDATION SUMMARY")
+    print("=" * 40)
     print(f"Overall Coverage: {summary['overall_coverage']:.1f}% (target: {summary['overall_coverage_target']}%)")
     print(f"Components Meeting Target: {summary['components_meeting_target']}/{summary['components_tested']}")
     print(f"Total Tests Passed: {summary['total_tests_passed']}")
     print(f"Total Tests Failed: {summary['total_tests_failed']}")
 
-    print(f"\n🎯 COMPONENT BREAKDOWN:")
+    print("\n🎯 COMPONENT BREAKDOWN:")
     for component, details in summary["component_details"].items():
         status = "✓" if details["target_met"] else "✗"
         print(f"  {status} {component.upper()}: {details['coverage']:.1f}% coverage")
 
         if details["performance_benchmarks"]:
-            print(f"    Performance benchmarks:")
+            print("    Performance benchmarks:")
             for metric, value in details["performance_benchmarks"].items():
                 print(f"      {metric}: {value}")
 
@@ -373,11 +369,11 @@ async def main():
     overall_success = summary["components_meeting_target"] == summary["components_tested"]
 
     if overall_success:
-        print(f"\n🎉 SUCCESS: All components meet >90% coverage target!")
-        print(f"📦 Ready for Agent 6 validation handoff")
+        print("\n🎉 SUCCESS: All components meet >90% coverage target!")
+        print("📦 Ready for Agent 6 validation handoff")
     else:
-        print(f"\n⚠️  WARNING: Some components below coverage target")
-        print(f"🔧 Additional test development needed")
+        print("\n⚠️  WARNING: Some components below coverage target")
+        print("🔧 Additional test development needed")
 
     return coverage_reports, overall_success
 

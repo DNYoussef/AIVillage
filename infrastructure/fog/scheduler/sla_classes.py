@@ -4,9 +4,9 @@ SLA Classes and Management for Fog Computing
 Defines Service Level Agreement classes and enforcement for fog jobs.
 """
 
-import logging
 from dataclasses import dataclass
 from enum import Enum
+import logging
 from typing import Any
 
 logger = logging.getLogger(__name__)

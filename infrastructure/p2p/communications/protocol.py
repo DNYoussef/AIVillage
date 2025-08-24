@@ -4,18 +4,18 @@ No more stubs - this actually connects agents!
 """
 
 import asyncio
+from collections.abc import Callable
 import hashlib
 import json
 import logging
 import os
 import ssl
 import time
-import uuid
-from collections.abc import Callable
 from typing import Any
+import uuid
 
-import websockets
 from cryptography.fernet import Fernet
+import websockets
 
 from .message import Message
 from .service_directory import service_directory

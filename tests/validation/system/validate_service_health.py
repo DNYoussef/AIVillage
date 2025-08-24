@@ -4,22 +4,22 @@ Verifies all CODEX integration services are running and responding correctly
 """
 
 import asyncio
+from dataclasses import dataclass, field
+from datetime import datetime
 import json
 import logging
+from pathlib import Path
 import socket
 import struct
 import subprocess
 import sys
 import time
-from dataclasses import dataclass, field
-from datetime import datetime
-from pathlib import Path
 
 try:
     import aiohttp
+    from colorama import Fore, Style, init
     import redis
     import websockets
-    from colorama import Fore, Style, init
 except ImportError as e:
     print(f"Missing dependencies: {e}")
     print("Installing required packages...")
@@ -37,9 +37,9 @@ except ImportError as e:
         check=False,
     )
     import aiohttp
+    from colorama import Fore, Style, init
     import redis
     import websockets
-    from colorama import Fore, Style, init
 
 # Initialize colorama for colored output
 init(autoreset=True)

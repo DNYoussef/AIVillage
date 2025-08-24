@@ -1,0 +1,387 @@
+# Agent Forge Pipeline Integration - Cognate Phase Configuration
+# Integration configuration for the Cognate phase in the Agent Forge pipeline
+
+name: "agent_forge_cognate_integration"
+version: "1.0.0"
+description: "Agent Forge pipeline integration for Cognate 25M phase"
+
+# Pipeline Phase Information
+pipeline:
+  # Phase identification
+  phase_name: "cognate"
+  phase_number: 1
+  phase_description: "Model creation and initialization with 25M Cognate Refiner"
+  
+  # Pipeline flow
+  previous_phase: null       # First phase
+  next_phase: "evomerge"
+  
+  # Phase dependencies
+  dependencies:
+    required: []             # No dependencies for first phase
+    optional: []
+    
+  # Phase outputs
+  outputs:
+    primary: "cognate_refiner_25m"
+    secondary: ["tokenizer", "memory_bank", "config"]
+    artifacts: ["training_metrics", "validation_results"]
+
+# Cognate Phase Configuration
+cognate_phase:
+  # Model specification
+  model:
+    architecture: "cognate_refiner"
+    parameter_count: 25000000
+    target_tolerance: 2000000
+    
+    # Core configuration
+    config:
+      vocab_size: 32000
+      d_model: 216
+      n_layers: 11
+      n_heads: 4
+      ffn_mult: 4
+      max_seq_len: 2048
+      
+    # Features
+    features:
+      act_halting: true
+      ltm_memory: true
+      memory_cross_attention: true
+      train_many_infer_few: true
+      
+  # Execution configuration
+  execution:
+    # Resource requirements
+    resources:
+      min_memory_gb: 4
+      recommended_memory_gb: 8
+      cpu_cores: 4
+      gpu_memory_gb: 2        # Optional GPU
+      
+    # Time constraints
+    max_execution_time_minutes: 120
+    checkpoint_interval_minutes: 10
+    
+    # Parallel execution
+    parallel_execution: false  # Sequential for first phase
+    
+  # Quality gates
+  quality_gates:
+    # Parameter validation
+    parameter_count:
+      target: 25000000
+      min_acceptable: 23000000
+      max_acceptable: 27000000
+      
+    # Model validation
+    model_validation:
+      forward_pass_test: true
+      gradient_flow_test: true
+      memory_functionality_test: true
+      act_functionality_test: true
+      
+    # Performance validation
+    performance:
+      max_initialization_time_seconds: 60
+      max_memory_usage_mb: 4000
+      min_test_accuracy: 0.1    # Basic sanity check
+
+# Integration with Agent Forge Components
+integration:
+  # Phase controller integration
+  phase_controller:
+    controller_class: "CognatePhase"
+    config_class: "CognateConfig"
+    result_class: "PhaseResult"
+    
+  # Model creation
+  model_creation:
+    factory_function: "create_cognate_refiner"
+    config_validation: true
+    parameter_verification: true
+    
+  # Pipeline handoff
+  handoff:
+    export_format: "huggingface"
+    include_components:
+      - "model_state_dict"
+      - "config"
+      - "tokenizer"
+      - "memory_bank"
+      - "training_metadata"
+      
+    validation_required: true
+    compatibility_check: true
+
+# Data Flow Configuration
+data_flow:
+  # Input requirements
+  inputs:
+    base_models: []          # Empty for Cognate creation
+    configurations: ["cognate_25m_config.yaml"]
+    
+  # Output specifications
+  outputs:
+    model_artifacts:
+      path: "artifacts/cognate_checkpoints"
+      format: "pytorch"
+      compression: false
+      
+    metadata:
+      path: "artifacts/cognate_metadata"
+      format: "json"
+      include_metrics: true
+      
+  # Data validation
+  validation:
+    input_validation: true
+    output_validation: true
+    schema_validation: true
+
+# Monitoring and Metrics
+monitoring:
+  # Phase execution metrics
+  execution_metrics:
+    - "phase_duration_seconds"
+    - "memory_usage_peak_mb"
+    - "cpu_utilization_percent"
+    - "model_parameter_count"
+    - "initialization_time_seconds"
+    
+  # Model quality metrics
+  quality_metrics:
+    - "forward_pass_success"
+    - "gradient_computation_success"
+    - "memory_bank_functionality"
+    - "act_halting_functionality"
+    - "parameter_count_accuracy"
+    
+  # Resource usage metrics
+  resource_metrics:
+    - "memory_allocation_mb"
+    - "cpu_time_seconds"
+    - "disk_usage_mb"
+    - "gpu_memory_usage_mb"
+    
+  # Metrics collection
+  collection:
+    interval_seconds: 30
+    export_format: "prometheus"
+    storage_backend: "filesystem"
+
+# Error Handling and Recovery
+error_handling:
+  # Error categories
+  error_categories:
+    configuration_error:
+      retry: false
+      fallback: "use_default_config"
+      escalate: true
+      
+    resource_error:
+      retry: true
+      max_retries: 3
+      retry_delay_seconds: 60
+      
+    model_creation_error:
+      retry: true
+      max_retries: 2
+      fallback: "simplified_architecture"
+      
+    validation_error:
+      retry: false
+      escalate: true
+      block_pipeline: true
+  
+  # Recovery strategies
+  recovery:
+    checkpoint_restoration: true
+    graceful_degradation: true
+    automatic_retry: true
+    manual_intervention_points:
+      - "configuration_validation_failure"
+      - "resource_allocation_failure"
+      - "critical_model_error"
+
+# Testing and Validation
+testing:
+  # Unit tests
+  unit_tests:
+    test_model_creation: true
+    test_parameter_count: true
+    test_forward_pass: true
+    test_memory_functionality: true
+    test_act_functionality: true
+    
+  # Integration tests
+  integration_tests:
+    test_pipeline_integration: true
+    test_data_flow: true
+    test_handoff_to_next_phase: true
+    test_resource_management: true
+    
+  # Performance tests
+  performance_tests:
+    test_initialization_speed: true
+    test_memory_usage: true
+    test_computational_efficiency: true
+    
+  # Test configuration
+  test_config:
+    timeout_seconds: 300
+    parallel_execution: false
+    cleanup_after_tests: true
+
+# Deployment and Environment
+deployment:
+  # Environment configuration
+  environments:
+    development:
+      resource_limits_relaxed: true
+      extended_logging: true
+      test_mode: true
+      
+    staging:
+      full_validation: true
+      performance_testing: true
+      resource_monitoring: true
+      
+    production:
+      strict_validation: true
+      comprehensive_monitoring: true
+      error_escalation: true
+  
+  # Deployment strategies
+  strategies:
+    local_development:
+      single_process: true
+      debug_mode: true
+      
+    containerized:
+      docker_image: "aivillage/cognate-phase:1.0.0"
+      resource_limits: true
+      
+    distributed:
+      supported: false       # Not needed for Cognate phase
+
+# Configuration Management
+configuration:
+  # Configuration sources
+  sources:
+    - "config/cognate/25m/cognate_25m_config.yaml"
+    - "config/cognate/25m/training_config.yaml"
+    - "environment_variables"
+    - "command_line_arguments"
+    
+  # Configuration precedence (highest to lowest)
+  precedence:
+    1: "command_line_arguments"
+    2: "environment_variables"
+    3: "cognate_25m_config.yaml"
+    4: "defaults"
+    
+  # Configuration validation
+  validation:
+    schema_validation: true
+    value_range_checking: true
+    dependency_checking: true
+    compatibility_checking: true
+
+# Agent Forge Ecosystem Integration
+ecosystem:
+  # Integration with other components
+  components:
+    orchestrator:
+      notify_start: true
+      report_progress: true
+      notify_completion: true
+      
+    memory_manager:
+      register_memory_usage: true
+      request_memory_allocation: true
+      
+    metric_collector:
+      export_metrics: true
+      custom_metrics: true
+      
+  # Service discovery
+  service_discovery:
+    register_service: false   # Phase, not long-running service
+    health_check_endpoint: null
+    
+  # Event system
+  events:
+    publish_events: true
+    event_types:
+      - "phase_started"
+      - "model_created"
+      - "validation_completed"
+      - "phase_completed"
+      - "phase_failed"
+
+# Documentation and Metadata
+documentation:
+  # Phase documentation
+  phase_docs:
+    description: "docs/agent-forge/phases/cognate_phase.md"
+    configuration_guide: "docs/config/cognate_configuration.md"
+    troubleshooting: "docs/troubleshooting/cognate_phase_troubleshooting.md"
+    
+  # API documentation
+  api_docs:
+    phase_interface: "docs/api/cognate_phase_api.md"
+    configuration_schema: "docs/schemas/cognate_config_schema.json"
+    
+  # Metadata
+  metadata:
+    version: "1.0.0"
+    last_updated: "2025-01-23"
+    maintainer: "Agent Forge Team"
+    compatibility_version: "pipeline-v1.0"
+    
+  # Change log
+  changelog:
+    path: "docs/changelog/cognate_phase_changelog.md"
+    format: "keepachangelog"
+
+# Advanced Features
+advanced:
+  # Experimental features
+  experimental:
+    dynamic_architecture_adjustment: false
+    automated_hyperparameter_tuning: false
+    multi_variant_generation: false
+    
+  # Performance optimization
+  optimization:
+    memory_optimization: true
+    computational_optimization: false
+    io_optimization: false
+    
+  # Research features
+  research:
+    parameter_analysis: true
+    architecture_comparison: false
+    performance_profiling: true
+
+# Compliance and Security
+compliance:
+  # Security requirements
+  security:
+    model_validation: true
+    configuration_sanitization: true
+    resource_access_control: false
+    
+  # Audit trail
+  audit:
+    log_all_operations: true
+    configuration_history: true
+    decision_trail: true
+    
+  # Compliance standards
+  standards:
+    model_governance: true
+    reproducibility: true
+    documentation_completeness: true

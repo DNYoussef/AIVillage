@@ -4,9 +4,9 @@ Fog Metrics Collector
 Provides metrics collection and monitoring for fog computing infrastructure.
 """
 
+from dataclasses import dataclass, field
 import logging
 import time
-from dataclasses import dataclass, field
 
 logger = logging.getLogger(__name__)
 

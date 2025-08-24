@@ -8,9 +8,7 @@ Tests complete query pipeline:
 - Performance benchmarks
 """
 
-import asyncio
 import time
-from typing import Any, Dict, List
 
 import pytest
 
@@ -175,7 +173,7 @@ class TestEndToEndQueries:
     def test_episodic_memory_integration(self):
         """Test integration with episodic memory system (HippoRAG)."""
         try:
-            from core.hyperrag import HyperRAG, HyperRAGConfig, MemoryType, QueryMode
+            from core.hyperrag import HyperRAG, HyperRAGConfig, QueryMode
 
             config = HyperRAGConfig(enable_hippo_rag=True, enable_vector_rag=True)
             hyperrag = HyperRAG(config)

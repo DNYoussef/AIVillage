@@ -10,11 +10,11 @@ of our constants extraction efforts. It provides detailed reporting on:
 """
 
 import ast
+from dataclasses import dataclass, field
 import json
 import logging
-import re
-from dataclasses import dataclass, field
 from pathlib import Path
+import re
 from typing import Any
 
 logging.basicConfig(level=logging.INFO)

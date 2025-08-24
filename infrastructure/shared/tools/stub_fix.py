@@ -5,8 +5,8 @@ Identifies and helps fix incomplete implementations.
 """
 
 import argparse
-import re
 from pathlib import Path
+import re
 
 
 class StubDetector:

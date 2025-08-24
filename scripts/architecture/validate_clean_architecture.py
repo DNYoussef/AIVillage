@@ -11,12 +11,12 @@ Usage:
 
 import argparse
 import ast
-import json
-import logging
-import sys
 from dataclasses import dataclass
 from enum import Enum
+import json
+import logging
 from pathlib import Path
+import sys
 
 import yaml
 
@@ -62,7 +62,7 @@ class ArchitectureRuleChecker:
         max_lines = self.config.get("max_file_lines", 500)
 
         try:
-            with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+            with open(file_path, encoding="utf-8", errors="ignore") as f:
                 line_count = sum(1 for _ in f)
 
             if line_count > max_lines:
@@ -87,7 +87,7 @@ class ArchitectureRuleChecker:
         max_params = self.config.get("max_function_params", 5)
 
         try:
-            with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+            with open(file_path, encoding="utf-8", errors="ignore") as f:
                 content = f.read()
                 tree = ast.parse(content)
 
@@ -169,7 +169,7 @@ class DependencyValidator:
                                 file_path=str(file_path),
                                 line_number=None,
                                 message=f"Invalid layer dependency: {file_layer} -> {imported_layer}",
-                                suggestion=f"Use dependency injection or move to appropriate layer",
+                                suggestion="Use dependency injection or move to appropriate layer",
                             )
                         )
         except Exception as e:
@@ -181,7 +181,7 @@ class DependencyValidator:
         """Extract import statements from a Python file."""
         imports = []
         try:
-            with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+            with open(file_path, encoding="utf-8", errors="ignore") as f:
                 tree = ast.parse(f.read())
 
             for node in ast.walk(tree):
@@ -247,7 +247,7 @@ class LayerAnalyzer:
             # Count lines and violations
             try:
                 full_path = self.project_root / file_path
-                with open(full_path, "r", encoding="utf-8", errors="ignore") as f:
+                with open(full_path, encoding="utf-8", errors="ignore") as f:
                     lines = sum(1 for _ in f)
                 layer_stats[layer]["total_lines"] += lines
             except Exception:
@@ -408,7 +408,7 @@ class CleanArchitectureValidator:
             print("✅ No clean architecture violations found!")
             return
 
-        print(f"\n🏗️  Clean Architecture Validation Summary")
+        print("\n🏗️  Clean Architecture Validation Summary")
         print("=" * 50)
 
         errors = [v for v in self.violations if v.severity == "error"]
@@ -421,12 +421,12 @@ class CleanArchitectureValidator:
 
         # Show top violations
         if errors:
-            print(f"\n🔴 Critical Issues:")
+            print("\n🔴 Critical Issues:")
             for error in errors[:5]:
                 print(f"  • {error.file_path}:{error.line_number or 'N/A'} - {error.message}")
 
         if warnings:
-            print(f"\n🟡 Warnings:")
+            print("\n🟡 Warnings:")
             for warning in warnings[:10]:
                 print(f"  • {warning.file_path}:{warning.line_number or 'N/A'} - {warning.message}")
 

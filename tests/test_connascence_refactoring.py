@@ -3,8 +3,8 @@ Tests for connascence refactoring - validates elimination of coupling violations
 Tests both the new centralized constants/utilities and refactored modules.
 """
 
-import sys
 from pathlib import Path
+import sys
 from unittest.mock import Mock, patch
 
 import pytest

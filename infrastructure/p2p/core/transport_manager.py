@@ -10,11 +10,11 @@ transport systems, unified into a single coherent interface.
 """
 
 import asyncio
-import logging
 from collections import defaultdict
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
+import logging
 from time import monotonic
 from typing import Any
 

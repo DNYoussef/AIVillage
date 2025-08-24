@@ -1,6 +1,7 @@
 from types import SimpleNamespace
 
 import torch
+
 from src.agent_forge.training.forge_train import ForgeTrainConfig, ForgeTrainer
 
 

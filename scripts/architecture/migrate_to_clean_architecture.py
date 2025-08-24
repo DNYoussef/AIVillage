@@ -11,12 +11,12 @@ Usage:
 
 import argparse
 import ast
+from dataclasses import dataclass
 import logging
+from pathlib import Path
 import shutil
 import sys
-from dataclasses import dataclass
-from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 import yaml
 
@@ -36,7 +36,7 @@ class MigrationPlan:
     target_path: Path
     migration_type: str  # "move", "refactor", "split", "extract"
     reason: str
-    dependencies: List[str]
+    dependencies: list[str]
     estimated_effort: str  # "low", "medium", "high"
 
 
@@ -53,12 +53,12 @@ class RefactoringAction:
 class MigrationPlanner:
     """Plans migration steps based on current architecture analysis."""
 
-    def __init__(self, project_root: Path, config: Dict[str, Any]):
+    def __init__(self, project_root: Path, config: dict[str, Any]):
         self.project_root = project_root
         self.config = config
         self.migration_plans = []
 
-    def analyze_current_structure(self) -> Dict[str, Any]:
+    def analyze_current_structure(self) -> dict[str, Any]:
         """Analyze current project structure and identify migration needs."""
         analysis = {"misplaced_files": [], "large_files": [], "coupling_issues": [], "layer_violations": []}
 
@@ -92,7 +92,7 @@ class MigrationPlanner:
 
             # Check file size
             try:
-                with open(py_file, "r", encoding="utf-8", errors="ignore") as f:
+                with open(py_file, encoding="utf-8", errors="ignore") as f:
                     line_count = sum(1 for _ in f)
 
                 if line_count > 500:
@@ -108,7 +108,7 @@ class MigrationPlanner:
 
         return analysis
 
-    def create_migration_plans(self) -> List[MigrationPlan]:
+    def create_migration_plans(self) -> list[MigrationPlan]:
         """Create detailed migration plans based on analysis."""
         analysis = self.analyze_current_structure()
         plans = []
@@ -148,11 +148,11 @@ class MigrationPlanner:
         self.migration_plans = plans
         return plans
 
-    def _analyze_dependencies(self, file_path: Path) -> List[str]:
+    def _analyze_dependencies(self, file_path: Path) -> list[str]:
         """Analyze dependencies for a given file."""
         dependencies = []
         try:
-            with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+            with open(file_path, encoding="utf-8", errors="ignore") as f:
                 tree = ast.parse(f.read())
 
             for node in ast.walk(tree):
@@ -180,12 +180,12 @@ class CodeTransformer:
         self.project_root = project_root
         self.refactoring_actions = []
 
-    def extract_interfaces(self, file_path: Path) -> List[RefactoringAction]:
+    def extract_interfaces(self, file_path: Path) -> list[RefactoringAction]:
         """Extract interfaces from concrete implementations."""
         actions = []
 
         try:
-            with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+            with open(file_path, encoding="utf-8", errors="ignore") as f:
                 content = f.read()
                 tree = ast.parse(content)
 
@@ -215,7 +215,7 @@ class CodeTransformer:
 
         return len(public_methods) >= 3
 
-    def split_large_file(self, file_path: Path, dry_run: bool = True) -> List[Path]:
+    def split_large_file(self, file_path: Path, dry_run: bool = True) -> list[Path]:
         """Split a large file into smaller, focused modules."""
         if dry_run:
             logger.info(f"DRY RUN: Would split {file_path}")
@@ -224,7 +224,7 @@ class CodeTransformer:
         new_files = []
 
         try:
-            with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+            with open(file_path, encoding="utf-8", errors="ignore") as f:
                 content = f.read()
                 tree = ast.parse(content)
 
@@ -249,7 +249,7 @@ class CodeTransformer:
 
         return new_files
 
-    def _group_components(self, tree: ast.AST) -> Dict[str, List[ast.AST]]:
+    def _group_components(self, tree: ast.AST) -> dict[str, list[ast.AST]]:
         """Group related components for splitting."""
         groups = {"models": [], "services": [], "utilities": [], "interfaces": []}
 
@@ -271,7 +271,7 @@ class CodeTransformer:
         # Remove empty groups
         return {name: nodes for name, nodes in groups.items() if nodes}
 
-    def _generate_file_content(self, nodes: List[ast.AST], original_content: str) -> str:
+    def _generate_file_content(self, nodes: list[ast.AST], original_content: str) -> str:
         """Generate content for a new file from AST nodes."""
         # This is a simplified implementation
         # In a real scenario, you'd want more sophisticated code generation
@@ -430,7 +430,7 @@ class CleanArchitectureMigrator:
 
         return successful_migrations == len(migration_plans)
 
-    def generate_migration_report(self, output_file: Path = None) -> Dict[str, Any]:
+    def generate_migration_report(self, output_file: Path = None) -> dict[str, Any]:
         """Generate migration analysis and planning report."""
         analysis = self.planner.analyze_current_structure()
         migration_plans = self.planner.create_migration_plans()
@@ -466,7 +466,7 @@ class CleanArchitectureMigrator:
 
         return report
 
-    def _update_import_references(self, migration_plans: List[MigrationPlan]):
+    def _update_import_references(self, migration_plans: list[MigrationPlan]):
         """Update import statements after files have been moved."""
         # This would involve updating all import statements across the codebase
         # For now, just log what would be updated
@@ -474,7 +474,7 @@ class CleanArchitectureMigrator:
             if plan.migration_type == "move":
                 logger.info(f"Would update imports for moved file: {plan.source_path}")
 
-    def _calculate_total_effort(self, plans: List[MigrationPlan]) -> str:
+    def _calculate_total_effort(self, plans: list[MigrationPlan]) -> str:
         """Calculate total estimated effort for migration."""
         effort_scores = {"low": 1, "medium": 3, "high": 5}
         total_score = sum(effort_scores.get(plan.estimated_effort, 1) for plan in plans)

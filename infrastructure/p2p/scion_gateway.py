@@ -4,11 +4,11 @@ Provides high-level interface to the Betanet Gateway for SCION packet tunneling.
 """
 
 import asyncio
+from dataclasses import dataclass
 import json
 import logging
 import subprocess  # nosec B404 - Controlled subprocess usage for SCION gateway
 import time
-from dataclasses import dataclass
 from typing import Any
 
 import aiohttp

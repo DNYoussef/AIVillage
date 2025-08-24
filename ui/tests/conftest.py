@@ -4,9 +4,9 @@ Provides common test fixtures and configuration for all UI components.
 """
 
 import os
+from pathlib import Path
 import sys
 import tempfile
-from pathlib import Path
 from unittest.mock import MagicMock, Mock
 
 import pytest

@@ -6,9 +6,9 @@ Tests that verify system functionality is preserved during module reorganization
 import asyncio
 import importlib
 import inspect
+from pathlib import Path
 import sys
 import time
-from pathlib import Path
 from typing import Any
 
 import pytest

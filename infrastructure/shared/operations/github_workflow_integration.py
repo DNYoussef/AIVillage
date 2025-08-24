@@ -10,11 +10,11 @@ artifact upload, download, and integration with the artifact collector.
 """
 
 import asyncio
+from dataclasses import dataclass
 import logging
 import os
-import tempfile
-from dataclasses import dataclass
 from pathlib import Path
+import tempfile
 
 from .artifact_collector import ArtifactMetadata, ArtifactType, CollectionConfig, OperationalArtifactCollector
 

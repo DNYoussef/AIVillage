@@ -9,7 +9,6 @@ Tests the output head components including:
 - Parameter efficiency through weight tying
 """
 
-from typing import Any, Dict, List, Optional, Tuple
 
 import pytest
 import torch
@@ -17,7 +16,6 @@ import torch.nn.functional as F
 
 # Import Cogment heads components
 try:
-    from core.agent_forge.models.cogment.core.config import CogmentConfig
     from core.agent_forge.models.cogment.heads.image_head import ImageHead, ImageHeadConfig
     from core.agent_forge.models.cogment.heads.task_adapters import TaskAdapter, TaskAdapterConfig
     from core.agent_forge.models.cogment.heads.text_head import TextHead, TextHeadConfig
@@ -458,7 +456,7 @@ class TestVocabularyOptimization:
         for i in range(seq_len):
             for j in range(i + 1, seq_len):
                 emb_diff = torch.norm(embeddings[0, i] - embeddings[0, j])
-                assert emb_diff > 0.1, f"Specialized tokens should have distinct embeddings"
+                assert emb_diff > 0.1, "Specialized tokens should have distinct embeddings"
 
 
 @pytest.mark.integration
@@ -506,7 +504,7 @@ class TestHeadsIntegration:
             image_outputs = image_head(images)
 
             # Task adaptation for visual reasoning
-            adapted_visual = task_adapter(image_outputs.visual_features, "arc")
+            task_adapter(image_outputs.visual_features, "arc")
 
             # Can project visual features to text space if needed
             # (this would require additional projection layer in practice)

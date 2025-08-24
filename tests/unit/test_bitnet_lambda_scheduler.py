@@ -4,10 +4,9 @@ Unit tests for BitNet λ scheduler and quantizer functionality.
 Tests the gradual λ schedule and quantization behavior.
 """
 
-import sys
-
 # Import the classes we're testing
 from pathlib import Path
+import sys
 from unittest.mock import Mock
 
 import pytest

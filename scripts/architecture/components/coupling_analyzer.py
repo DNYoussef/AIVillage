@@ -5,8 +5,8 @@ Extracted from ArchitecturalAnalyzer following single responsibility principle.
 """
 
 import ast
-import logging
 from dataclasses import dataclass
+import logging
 from pathlib import Path
 
 import networkx as nx

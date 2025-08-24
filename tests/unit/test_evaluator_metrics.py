@@ -1,8 +1,8 @@
 import importlib.util
+from pathlib import Path
 import sys
 import types
 import unittest
-from pathlib import Path
 
 if importlib.util.find_spec("torch") is None:
     torch_stub = types.ModuleType("torch")

@@ -5,11 +5,11 @@ Provides mutual TLS authentication for LibP2P mesh networking with
 CODEX-compliant security requirements.
 """
 
+from datetime import datetime, timedelta
 import logging
 import os
-import ssl
-from datetime import datetime, timedelta
 from pathlib import Path
+import ssl
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes, serialization

@@ -4,11 +4,9 @@ Secret Externalization Validation Script
 Validates that all hardcoded secrets have been properly externalized to environment variables.
 """
 
-import os
+from pathlib import Path
 import re
 import sys
-from pathlib import Path
-from typing import Dict, List, Tuple
 
 import yaml
 
@@ -22,7 +20,7 @@ class SecretValidator:
     def load_yaml_safely(self, file_path: Path) -> dict:
         """Load YAML file safely."""
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 content = f.read()
                 # Replace environment variable placeholders for validation
                 content = re.sub(r"\${([^}]+)}", r"TEST_\1_VALUE", content)
@@ -36,7 +34,7 @@ class SecretValidator:
         env_var_pattern = r"\${([^}]+)}"
         return set(re.findall(env_var_pattern, content))
 
-    def scan_for_hardcoded_secrets(self, file_path: Path) -> List[Dict]:
+    def scan_for_hardcoded_secrets(self, file_path: Path) -> list[dict]:
         """Scan file for potential hardcoded secrets."""
         violations = []
 
@@ -53,7 +51,7 @@ class SecretValidator:
         ]
 
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 content = f.read()
 
             # Extract environment variables used
@@ -115,7 +113,7 @@ class SecretValidator:
                         print(f"    Content: {violation['content']}")
                     self.violations.extend(violations)
                 else:
-                    print(f"  [PASS] No hardcoded secrets found")
+                    print("  [PASS] No hardcoded secrets found")
             else:
                 print(f"\\n[FAIL] File not found: {file_path_str}")
                 self.violations.append(
@@ -157,7 +155,7 @@ class SecretValidator:
                 print(f"[PASS] Template exists: {template_path_str}")
 
                 # Check if template contains required variables
-                with open(template_path, "r", encoding="utf-8") as f:
+                with open(template_path, encoding="utf-8") as f:
                     template_content = f.read()
 
                 missing_vars = []
@@ -168,7 +166,7 @@ class SecretValidator:
                 if missing_vars:
                     print(f"  [WARN] Missing variables: {', '.join(missing_vars)}")
                 else:
-                    print(f"  [PASS] All required variables documented")
+                    print("  [PASS] All required variables documented")
             else:
                 print(f"[FAIL] Template missing: {template_path_str}")
                 self.violations.append(
@@ -200,7 +198,7 @@ class SecretValidator:
         for env_var in sorted(self.environment_vars_found):
             if not any(env_var.startswith(prefix) for prefix in valid_prefixes):
                 print(f"[WARN] Non-standard naming: {env_var}")
-                print(f"       Consider prefixing with AIVILLAGE_ for consistency")
+                print("       Consider prefixing with AIVILLAGE_ for consistency")
             else:
                 print(f"[PASS] {env_var}")
 

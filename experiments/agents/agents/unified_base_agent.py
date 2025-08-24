@@ -1,23 +1,23 @@
-import random
-import warnings
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
+import random
 from typing import Any
+import warnings
 
 import numpy as np
-import yaml
-from agents.language_models.openai_gpt import OpenAIGPTConfig
-from agents.self_evolve.quality_assurance import BasicUPOChecker
-from agents.utils import DirectPreferenceOptimizer, DPOConfig, MCTSConfig, MonteCarloTreeSearch
-from agents.utils.task import Task as LangroidTask
 from rag_system.core.config import UnifiedConfig
 from rag_system.core.pipeline import EnhancedRAGPipeline
 from rag_system.retrieval.vector_store import VectorStore
 from rag_system.tracking.unified_knowledge_tracker import UnifiedKnowledgeTracker
 from sklearn.linear_model import LogisticRegression
+import yaml
 
+from agents.language_models.openai_gpt import OpenAIGPTConfig
+from agents.self_evolve.quality_assurance import BasicUPOChecker
+from agents.utils import DirectPreferenceOptimizer, DPOConfig, MCTSConfig, MonteCarloTreeSearch
+from agents.utils.task import Task as LangroidTask
 from core.communication import Message, MessageType, Priority, StandardCommunicationProtocol
 from core.error_handling import (
     AIVillageException,

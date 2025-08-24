@@ -5,16 +5,16 @@ key performance indicators for production deployment.
 """
 
 import asyncio
+from dataclasses import dataclass
 import json
 import logging
 import os
+from pathlib import Path
 import statistics
 
 # Test imports
 import sys
 import time
-from dataclasses import dataclass
-from pathlib import Path
 from typing import Any
 
 import psutil

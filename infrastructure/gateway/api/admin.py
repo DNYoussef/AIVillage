@@ -10,18 +10,19 @@ Provides REST endpoints for administrative operations:
 Handles fog node registration, attestation, and capacity management.
 """
 
-import logging
-import time
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from enum import Enum
+import logging
+import time
 from typing import Any
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, Security, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer, SecurityScopes
-from packages.core.security import Permission, RBACSystem, Role, User
 from pydantic import BaseModel, Field, validator
+
+from packages.core.security import Permission, RBACSystem, Role, User
 
 from ..monitoring.metrics import FogMetricsCollector
 from ..scheduler.sla_classes import SLAManager

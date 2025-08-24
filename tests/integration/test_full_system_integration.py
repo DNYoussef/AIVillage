@@ -10,13 +10,13 @@ pytest.skip(
     allow_module_level=True,
 )
 
-from packages.core.evolution_metrics_integrated import IntegratedEvolutionMetrics as EvolutionMetricsCollector
-from src.digital_twin.api.service import DigitalTwinService
-from src.token_economy.credit_system import EarningRule, VILLAGECreditSystem
-
 # Import the real components
 # Correcting the import path for the RAG system
 from AIVillage.rag_system.wikipedia_storm_pipeline import WikipediaSTORMPipeline
+
+from packages.core.evolution_metrics_integrated import IntegratedEvolutionMetrics as EvolutionMetricsCollector
+from src.digital_twin.api.service import DigitalTwinService
+from src.token_economy.credit_system import EarningRule, VILLAGECreditSystem
 
 
 # Mock the P2P network due to platform-specific dependency issues

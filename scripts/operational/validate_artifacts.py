@@ -8,9 +8,9 @@ Used in CI/CD pipeline to ensure artifact collection meets standards.
 
 import json
 import logging
+from pathlib import Path
 import sys
 import xml.etree.ElementTree as ET
-from pathlib import Path
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

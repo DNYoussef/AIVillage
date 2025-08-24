@@ -4,16 +4,14 @@ Security Integration Validator
 Validates that all security enhancements are properly integrated into CI/CD pipelines.
 """
 
-import json
-import logging
-import os
-import subprocess  # nosec B404
-import sys
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
+import json
+import logging
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+import subprocess  # nosec B404
+import sys
 
 import yaml
 
@@ -36,7 +34,7 @@ class ValidationCheck:
     category: str
     result: ValidationResult
     message: str
-    recommendation: Optional[str] = None
+    recommendation: str | None = None
 
 
 class SecurityIntegrationValidator:
@@ -49,7 +47,7 @@ class SecurityIntegrationValidator:
         self.scripts_dir = self.root_dir / "scripts"
         self.checks = []
 
-    def validate_workflow_files(self) -> List[ValidationCheck]:
+    def validate_workflow_files(self) -> list[ValidationCheck]:
         """Validate GitHub workflow files have security enhancements."""
         checks = []
 
@@ -78,7 +76,7 @@ class SecurityIntegrationValidator:
 
             # Validate workflow content
             try:
-                with open(workflow_path, "r", encoding="utf-8") as f:
+                with open(workflow_path, encoding="utf-8") as f:
                     content = f.read()
 
                 workflow_checks = self._validate_workflow_content(workflow, content)
@@ -98,7 +96,7 @@ class SecurityIntegrationValidator:
 
         return checks
 
-    def _validate_workflow_content(self, workflow_name: str, content: str) -> List[ValidationCheck]:
+    def _validate_workflow_content(self, workflow_name: str, content: str) -> list[ValidationCheck]:
         """Validate specific workflow content for security enhancements."""
         checks = []
 
@@ -147,7 +145,7 @@ class SecurityIntegrationValidator:
 
         return checks
 
-    def _validate_main_ci_specifics(self, content: str) -> List[ValidationCheck]:
+    def _validate_main_ci_specifics(self, content: str) -> list[ValidationCheck]:
         """Validate main CI workflow specific enhancements."""
         checks = []
 
@@ -184,7 +182,7 @@ class SecurityIntegrationValidator:
 
         return checks
 
-    def _validate_scion_production_specifics(self, content: str) -> List[ValidationCheck]:
+    def _validate_scion_production_specifics(self, content: str) -> list[ValidationCheck]:
         """Validate SCION production workflow specific enhancements."""
         checks = []
 
@@ -221,7 +219,7 @@ class SecurityIntegrationValidator:
 
         return checks
 
-    def _validate_architectural_quality_specifics(self, content: str) -> List[ValidationCheck]:
+    def _validate_architectural_quality_specifics(self, content: str) -> list[ValidationCheck]:
         """Validate architectural quality workflow specific enhancements."""
         checks = []
 
@@ -258,7 +256,7 @@ class SecurityIntegrationValidator:
 
         return checks
 
-    def _validate_image_security_specifics(self, content: str) -> List[ValidationCheck]:
+    def _validate_image_security_specifics(self, content: str) -> list[ValidationCheck]:
         """Validate image security workflow specific enhancements."""
         checks = []
 
@@ -294,7 +292,7 @@ class SecurityIntegrationValidator:
 
         return checks
 
-    def _validate_p2p_security_specifics(self, content: str) -> List[ValidationCheck]:
+    def _validate_p2p_security_specifics(self, content: str) -> list[ValidationCheck]:
         """Validate P2P test suite specific enhancements."""
         checks = []
 
@@ -332,7 +330,7 @@ class SecurityIntegrationValidator:
 
         return checks
 
-    def validate_security_config_files(self) -> List[ValidationCheck]:
+    def validate_security_config_files(self) -> list[ValidationCheck]:
         """Validate security configuration files exist and are valid."""
         checks = []
 
@@ -359,7 +357,7 @@ class SecurityIntegrationValidator:
 
             # Validate YAML syntax
             try:
-                with open(config_path, "r") as f:
+                with open(config_path) as f:
                     yaml.safe_load(f)
 
                 checks.append(
@@ -386,7 +384,7 @@ class SecurityIntegrationValidator:
 
         return checks
 
-    def validate_security_scripts(self) -> List[ValidationCheck]:
+    def validate_security_scripts(self) -> list[ValidationCheck]:
         """Validate security scripts exist and are executable."""
         checks = []
 
@@ -469,7 +467,7 @@ class SecurityIntegrationValidator:
 
         return checks
 
-    def validate_security_tools_integration(self) -> List[ValidationCheck]:
+    def validate_security_tools_integration(self) -> list[ValidationCheck]:
         """Validate that security tools are properly integrated."""
         checks = []
 
@@ -523,7 +521,7 @@ class SecurityIntegrationValidator:
 
         return checks
 
-    def validate_integration_points(self) -> List[ValidationCheck]:
+    def validate_integration_points(self) -> list[ValidationCheck]:
         """Validate integration points between security components."""
         checks = []
 
@@ -531,7 +529,7 @@ class SecurityIntegrationValidator:
         main_ci = self.workflows_dir / "main-ci.yml"
         if main_ci.exists():
             try:
-                with open(main_ci, "r", encoding="utf-8") as f:
+                with open(main_ci, encoding="utf-8") as f:
                     content = f.read()
 
                 if "requirements-security.txt" in content:
@@ -563,7 +561,7 @@ class SecurityIntegrationValidator:
         scion_prod = self.workflows_dir / "scion_production.yml"
         if scion_prod.exists():
             try:
-                with open(scion_prod, "r", encoding="utf-8") as f:
+                with open(scion_prod, encoding="utf-8") as f:
                     content = f.read()
 
                 if "emergency_bypass" in content:
@@ -593,7 +591,7 @@ class SecurityIntegrationValidator:
 
         return checks
 
-    def run_validation(self) -> Tuple[List[ValidationCheck], Dict[str, int]]:
+    def run_validation(self) -> tuple[list[ValidationCheck], dict[str, int]]:
         """Run complete security integration validation."""
         logger.info("Starting security integration validation...")
 
@@ -622,20 +620,17 @@ class SecurityIntegrationValidator:
         return all_checks, summary
 
     def generate_report(
-        self, checks: List[ValidationCheck], summary: Dict[str, int], output_file: Optional[str] = None
+        self, checks: list[ValidationCheck], summary: dict[str, int], output_file: str | None = None
     ) -> str:
         """Generate validation report."""
 
         # Determine overall status
         if summary["fail"] > 0:
             overall_status = "❌ FAILED"
-            status_color = "red"
         elif summary["warning"] > 0:
             overall_status = "⚠️ WARNINGS"
-            status_color = "yellow"
         else:
             overall_status = "✅ PASSED"
-            status_color = "green"
 
         report = f"""# Security Integration Validation Report
 
@@ -759,7 +754,7 @@ def main():
 
     # Print summary to console
     if not args.quiet:
-        print(f"\nValidation Summary:")
+        print("\nValidation Summary:")
         print(
             f"Total: {summary['total']}, Passed: {summary['pass']}, Failed: {summary['fail']}, Warnings: {summary['warning']}, Skipped: {summary['skip']}"
         )

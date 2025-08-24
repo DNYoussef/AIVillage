@@ -2,14 +2,13 @@
 Tests for HypeRAG LoRA Registry
 """
 
+# Import the registry module
+from pathlib import Path
 import sys
 import tempfile
 
-# Import the registry module
-from pathlib import Path
-
-import pytest
 from mcp_servers.hyperag.lora.registry import AdapterEntry, LoRARegistry
+import pytest
 
 sys.path.append(str(Path(__file__).parent.parent.parent))
 

@@ -5,8 +5,8 @@ Tests core functionality of the unified edge device system.
 """
 
 import asyncio
-import sys
 from pathlib import Path
+import sys
 
 # Add packages to path
 sys.path.insert(0, str(Path(__file__).parent / "packages"))

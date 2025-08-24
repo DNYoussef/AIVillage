@@ -5,7 +5,6 @@ Common types used across mobile integration components.
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, Optional
 
 
 class DataSource(Enum):

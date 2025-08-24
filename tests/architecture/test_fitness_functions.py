@@ -3,11 +3,11 @@ Architectural Fitness Functions for AIVillage
 Based on connascence principles and architectural best practices
 """
 import ast
+from collections import Counter, defaultdict
 import os
+from pathlib import Path
 import re
 import sys
-from collections import Counter, defaultdict
-from pathlib import Path
 
 import networkx as nx
 import pytest

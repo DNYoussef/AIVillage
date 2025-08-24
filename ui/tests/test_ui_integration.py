@@ -11,14 +11,13 @@ This test suite validates:
 - Cross-component communication
 """
 
-import asyncio
 import json
+from pathlib import Path
 import subprocess
 import sys
 import tempfile
 import unittest
-from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import patch
 
 # Add project paths
 project_root = Path(__file__).parent.parent.parent
@@ -273,7 +272,7 @@ class UIPerformanceTests(unittest.TestCase):
                 file_count = len([f for f in files if f.is_file()])
                 category_stats[category] = file_count
 
-        print(f"\nUI Structure Efficiency:")
+        print("\nUI Structure Efficiency:")
         for category, count in category_stats.items():
             print(f"  {category}: {count} files")
 

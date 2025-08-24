@@ -7,11 +7,11 @@ Designed for resource-constrained mobile devices in Global South scenarios.
 """
 
 import asyncio
-import logging
-import platform
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
+import logging
+import platform
 from typing import Any
 
 import psutil

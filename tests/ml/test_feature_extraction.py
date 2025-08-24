@@ -9,9 +9,9 @@ Comprehensive validation of feature extraction and model analysis including:
 Integration Point: Feature extraction validation for Phase 4 testing
 """
 
+from pathlib import Path
 import sys
 import tempfile
-from pathlib import Path
 from unittest.mock import MagicMock
 
 import numpy as np

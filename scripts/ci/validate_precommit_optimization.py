@@ -6,13 +6,9 @@ Validates the optimized pre-commit configuration meets performance and reliabili
 Provides detailed analysis and recommendations for further optimization.
 """
 
-import json
-import os
+from pathlib import Path
 import subprocess  # nosec B404
 import sys
-import time
-from pathlib import Path
-from typing import Dict, List, Tuple
 
 import yaml
 
@@ -27,7 +23,7 @@ class PreCommitValidator:
         self.target_time = 120.0  # 2 minutes
         self.warning_time = 90.0  # 1.5 minutes
 
-    def validate_configuration(self) -> Dict:
+    def validate_configuration(self) -> dict:
         """Validate the pre-commit configuration."""
         print("🔍 Validating Pre-commit Configuration Optimization")
         print("=" * 60)
@@ -68,16 +64,16 @@ class PreCommitValidator:
 
         return results
 
-    def _load_config(self) -> Dict:
+    def _load_config(self) -> dict:
         """Load pre-commit configuration."""
         try:
-            with open(self.config_file, "r") as f:
+            with open(self.config_file) as f:
                 return yaml.safe_load(f)
         except (FileNotFoundError, yaml.YAMLError) as e:
             print(f"❌ Error loading configuration: {e}")
             return {}
 
-    def _validate_file_filtering(self, config: Dict) -> Dict:
+    def _validate_file_filtering(self, config: dict) -> dict:
         """Validate file filtering optimization."""
         results = {"file_filtering_effective": False}
 
@@ -108,7 +104,7 @@ class PreCommitValidator:
 
         return results
 
-    def _validate_parallel_execution(self, config: Dict) -> Dict:
+    def _validate_parallel_execution(self, config: dict) -> dict:
         """Validate parallel execution optimization."""
         results = {"parallel_execution_enabled": False}
 
@@ -136,7 +132,7 @@ class PreCommitValidator:
 
         return results
 
-    def _validate_timeouts(self, config: Dict) -> Dict:
+    def _validate_timeouts(self, config: dict) -> dict:
         """Validate timeout configuration."""
         results = {"timeouts_configured": False}
 
@@ -158,7 +154,7 @@ class PreCommitValidator:
 
         return results
 
-    def _validate_caching(self, config: Dict) -> Dict:
+    def _validate_caching(self, config: dict) -> dict:
         """Validate caching implementation."""
         results = {"caching_implemented": False}
 
@@ -184,7 +180,7 @@ class PreCommitValidator:
 
         return results
 
-    def _validate_performance_settings(self, config: Dict) -> Dict:
+    def _validate_performance_settings(self, config: dict) -> dict:
         """Validate performance-oriented settings."""
         results = {"performance_optimized": False}
 
@@ -219,7 +215,7 @@ class PreCommitValidator:
 
         return results
 
-    def _analyze_file_scope(self) -> Dict:
+    def _analyze_file_scope(self) -> dict:
         """Analyze effective file scope after filtering."""
         analysis = {"total_py_files": 0, "excluded_files": 0, "effective_files": 0, "reduction_percentage": 0.0}
 
@@ -278,7 +274,7 @@ class PreCommitValidator:
 
         return analysis
 
-    def _estimate_performance(self, config: Dict, scope: Dict) -> str:
+    def _estimate_performance(self, config: dict, scope: dict) -> str:
         """Estimate performance category based on configuration and scope."""
         score = 0
         max_score = 10
@@ -318,7 +314,7 @@ class PreCommitValidator:
         else:
             return f"poor ({performance_percentage:.0f}%)"
 
-    def _has_parallel_execution(self, config: Dict) -> bool:
+    def _has_parallel_execution(self, config: dict) -> bool:
         """Check if parallel execution is configured."""
         for repo in config.get("repos", []):
             for hook in repo.get("hooks", []):
@@ -327,7 +323,7 @@ class PreCommitValidator:
                     return True
         return False
 
-    def _has_timeouts(self, config: Dict) -> bool:
+    def _has_timeouts(self, config: dict) -> bool:
         """Check if timeouts are configured."""
         for repo in config.get("repos", []):
             for hook in repo.get("hooks", []):
@@ -335,7 +331,7 @@ class PreCommitValidator:
                     return True
         return False
 
-    def _has_caching(self, config: Dict) -> bool:
+    def _has_caching(self, config: dict) -> bool:
         """Check if caching is implemented."""
         for repo in config.get("repos", []):
             for hook in repo.get("hooks", []):
@@ -344,7 +340,7 @@ class PreCommitValidator:
                     return True
         return False
 
-    def print_summary(self, results: Dict) -> None:
+    def print_summary(self, results: dict) -> None:
         """Print validation summary."""
         print("\n🎯 Optimization Validation Summary")
         print("=" * 40)
@@ -379,7 +375,7 @@ class PreCommitValidator:
         elif passed >= 3:
             print(f"\n⚠️  Configuration needs improvement to achieve <{self.target_time}s target")
         else:
-            print(f"\n🔴 Configuration requires significant optimization for performance target")
+            print("\n🔴 Configuration requires significant optimization for performance target")
 
 
 def main():

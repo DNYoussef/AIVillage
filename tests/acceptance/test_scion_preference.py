@@ -8,15 +8,15 @@ Tests the Navigator's SCION preference implementation with measurable ≤500ms s
 """
 
 import asyncio
+from dataclasses import asdict, dataclass
 import json
+from pathlib import Path
 
 # Test imports
 import sys
 import time
 import types
 import unittest
-from dataclasses import asdict, dataclass
-from pathlib import Path
 from unittest.mock import patch
 
 import pytest

@@ -10,12 +10,12 @@ This module provides automated deployment pipeline management including:
 """
 
 import asyncio
-import logging
-import subprocess
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
+import logging
 from pathlib import Path
+import subprocess
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

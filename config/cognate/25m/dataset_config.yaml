@@ -1,0 +1,563 @@
+# Cognate 25M Dataset Configuration
+# Dataset specification and data pipeline configuration for training
+
+name: "cognate_25m_dataset"
+version: "1.0.0"
+description: "Dataset configuration for Cognate 25M pre-training and fine-tuning"
+
+# Dataset Sources and Composition
+dataset_sources:
+  # Synthetic datasets (primary for initial training)
+  synthetic:
+    # Synthetic reasoning data
+    reasoning:
+      enabled: true
+      weight: 0.4
+      max_samples: 4000
+      
+      # Reasoning templates and patterns
+      templates:
+        step_by_step:
+          pattern: "Let me think step by step: {problem}\n\nStep 1: {step1}\nStep 2: {step2}\nConclusion: {conclusion}"
+          complexity: "medium"
+          weight: 0.4
+          
+        logical_inference:
+          pattern: "Given {premise}, it follows that {inference} because {reasoning}."
+          complexity: "high"
+          weight: 0.3
+          
+        problem_analysis:
+          pattern: "To solve {problem}, I need to consider: {considerations}\n\nTherefore: {solution}"
+          complexity: "medium"
+          weight: 0.3
+          
+      # Generation parameters
+      generation:
+        min_steps: 2
+        max_steps: 8
+        reasoning_depth: 3
+        complexity_levels: ["simple", "medium", "complex"]
+        
+    # Synthetic conversation data
+    conversations:
+      enabled: true
+      weight: 0.3
+      max_samples: 3000
+      
+      # Conversation patterns
+      patterns:
+        qa_pairs:
+          pattern: "Human: {question}\nAssistant: {answer}"
+          context_length: "short"
+          weight: 0.5
+          
+        multi_turn:
+          pattern: "Human: {question1}\nAssistant: {answer1}\nHuman: {followup}\nAssistant: {final_answer}"
+          context_length: "medium"
+          weight: 0.3
+          
+        contextual:
+          pattern: "Context: {context}\nHuman: {question}\nAssistant: {contextual_answer}"
+          context_length: "long"
+          weight: 0.2
+          
+      # Conversation domains
+      domains:
+        - "general_knowledge"
+        - "problem_solving"
+        - "explanation_requests"
+        - "creative_tasks"
+        - "technical_questions"
+        
+    # Code understanding data
+    code:
+      enabled: true
+      weight: 0.2
+      max_samples: 2000
+      
+      # Code patterns
+      patterns:
+        function_definition:
+          pattern: "def {function_name}({parameters}):\n    \"\"\"{docstring}\"\"\"\n    {implementation}\n    return {return_value}"
+          complexity: "medium"
+          weight: 0.4
+          
+        code_explanation:
+          pattern: "# Code explanation\n{code}\n# This code {explanation}"
+          complexity: "simple"
+          weight: 0.3
+          
+        debugging:
+          pattern: "# Bug in this code:\n{buggy_code}\n# Fix:\n{fixed_code}\n# Explanation: {explanation}"
+          complexity: "high"
+          weight: 0.3
+          
+      # Programming languages
+      languages:
+        - "python"
+        - "javascript"
+        - "java"
+        - "cpp"
+        
+    # Long context tasks (for memory system training)
+    long_context:
+      enabled: true
+      weight: 0.1
+      max_samples: 1000
+      
+      # Long context patterns
+      patterns:
+        document_qa:
+          pattern: "Document: {document}\n\nBased on the document above, {question}\n\nAnswer: {answer}"
+          context_length: 1024
+          weight: 0.4
+          
+        multi_doc_synthesis:
+          pattern: "Document 1: {doc1}\n\nDocument 2: {doc2}\n\nSynthesis: {synthesis}"
+          context_length: 1536
+          weight: 0.3
+          
+        narrative_continuation:
+          pattern: "Story beginning: {beginning}\n\nStory continuation: {continuation}"
+          context_length: 768
+          weight: 0.3
+          
+  # External datasets (optional, for production training)
+  external:
+    # Common Crawl subset
+    common_crawl:
+      enabled: false          # Disabled for initial development
+      weight: 0.6
+      max_samples: 100000
+      preprocessing: "standard"
+      quality_filters: ["language_detection", "perplexity_filter", "length_filter"]
+      
+    # Wikipedia subset
+    wikipedia:
+      enabled: false
+      weight: 0.2
+      max_samples: 20000
+      languages: ["en"]
+      preprocessing: "wiki_clean"
+      
+    # Books corpus
+    books:
+      enabled: false
+      weight: 0.1
+      max_samples: 10000
+      preprocessing: "book_segmentation"
+      
+    # Academic papers
+    academic:
+      enabled: false
+      weight: 0.1
+      max_samples: 5000
+      domains: ["cs", "math", "physics"]
+      preprocessing: "academic_clean"
+
+# Data Generation Configuration
+data_generation:
+  # Synthetic data generation
+  synthetic_generation:
+    # Generation engine
+    engine:
+      type: "template_based"
+      randomization_seed: 42
+      
+    # Template expansion
+    template_expansion:
+      variable_pools:
+        problems: 1000         # Pool of problem statements
+        solutions: 1000        # Pool of solution patterns
+        contexts: 500          # Pool of context scenarios
+        entities: 2000         # Pool of entities/concepts
+        
+      # Expansion rules
+      expansion_rules:
+        ensure_diversity: true
+        avoid_repetition: true
+        maintain_coherence: true
+        
+    # Quality control
+    quality_control:
+      min_coherence_score: 0.7
+      max_repetition_ratio: 0.1
+      linguistic_diversity_threshold: 0.8
+      
+  # Data augmentation
+  augmentation:
+    # Text augmentation techniques
+    techniques:
+      paraphrasing:
+        enabled: false       # Disabled to maintain quality
+        probability: 0.1
+        
+      synonym_replacement:
+        enabled: false
+        probability: 0.05
+        
+      sentence_reordering:
+        enabled: false
+        probability: 0.02
+        
+    # Augmentation constraints
+    constraints:
+      preserve_meaning: true
+      maintain_coherence: true
+      max_changes_per_sample: 2
+
+# Data Preprocessing Pipeline
+preprocessing:
+  # Tokenization
+  tokenization:
+    tokenizer: "gpt2"
+    vocab_size: 32000
+    
+    # Tokenizer configuration
+    config:
+      add_special_tokens: true
+      padding_side: "right"
+      truncation_side: "right"
+      return_attention_mask: true
+      return_token_type_ids: false
+      
+    # Special tokens
+    special_tokens:
+      pad_token: "<|pad|>"
+      eos_token: "<|endoftext|>"
+      bos_token: "<|startoftext|>"
+      unk_token: "<|unk|>"
+      
+      # Task-specific tokens
+      thinking_start: "<|thinking|>"
+      thinking_end: "<|/thinking|>"
+      memory_start: "<|memory|>"
+      memory_end: "<|/memory|>"
+      
+  # Sequence processing
+  sequence_processing:
+    max_length: 512          # Training sequence length
+    min_length: 32           # Minimum useful length
+    
+    # Sequence packing
+    packing:
+      enabled: true
+      pack_efficiency_threshold: 0.8
+      max_sequences_per_pack: 8
+      separator_token: "<|sep|>"
+      
+    # Truncation and padding
+    truncation:
+      strategy: "longest_first"
+      pad_to_multiple_of: 8
+      
+  # Quality filtering
+  quality_filtering:
+    # Length filters
+    length_filters:
+      min_tokens: 10
+      max_tokens: 2048
+      min_unique_tokens: 5
+      
+    # Content filters
+    content_filters:
+      language_detection: true
+      minimum_language_confidence: 0.8
+      
+      # Perplexity filtering (using a small model)
+      perplexity_filter:
+        enabled: true
+        max_perplexity: 1000
+        model: "gpt2-small"
+        
+      # Repetition filtering
+      repetition_filter:
+        enabled: true
+        max_repetition_ratio: 0.3
+        n_gram_size: 4
+        
+    # Privacy and safety
+    safety_filters:
+      pii_detection: true
+      toxicity_detection: false  # Disabled for synthetic data
+      copyright_detection: false
+
+# Data Loading and Batching
+data_loading:
+  # DataLoader configuration
+  dataloader:
+    batch_size: 8
+    shuffle: true
+    num_workers: 4
+    pin_memory: true
+    drop_last: true
+    persistent_workers: true
+    prefetch_factor: 2
+    
+  # Batching strategy
+  batching:
+    # Dynamic batching
+    dynamic_batching:
+      enabled: false         # Use fixed batching for simplicity
+      max_batch_size: 16
+      min_batch_size: 4
+      target_tokens_per_batch: 4096
+      
+    # Batch composition
+    composition:
+      # Mix different data types in each batch
+      mixed_batching: true
+      
+      # Data type ratios within each batch
+      batch_ratios:
+        reasoning: 0.4
+        conversations: 0.3
+        code: 0.2
+        long_context: 0.1
+        
+  # Memory management
+  memory_management:
+    # Dataset caching
+    caching:
+      enabled: true
+      cache_size_gb: 4
+      cache_location: "cache/cognate_dataset"
+      
+    # Memory mapping
+    memory_mapping:
+      enabled: true
+      chunk_size_mb: 64
+      
+# Data Validation and Testing
+validation:
+  # Dataset validation
+  dataset_validation:
+    # Statistical validation
+    statistics:
+      check_length_distribution: true
+      check_token_frequency: true
+      check_vocabulary_coverage: true
+      check_data_balance: true
+      
+    # Sample validation
+    sample_validation:
+      validate_random_samples: 100
+      check_format_consistency: true
+      check_content_quality: true
+      
+  # Data pipeline testing
+  pipeline_testing:
+    # Unit tests for each component
+    unit_tests:
+      test_tokenization: true
+      test_preprocessing: true
+      test_batching: true
+      test_data_loading: true
+      
+    # Integration tests
+    integration_tests:
+      test_end_to_end_pipeline: true
+      test_performance: true
+      test_memory_usage: true
+
+# Curriculum Learning
+curriculum:
+  # Curriculum stages
+  enabled: true
+  
+  stages:
+    # Stage 1: Simple patterns (steps 0-2000)
+    simple_patterns:
+      steps: "0-2000"
+      description: "Simple reasoning and basic conversations"
+      
+      # Data composition for this stage
+      data_composition:
+        reasoning: 0.5        # More reasoning
+        conversations: 0.4     # Simple conversations
+        code: 0.1             # Minimal code
+        long_context: 0.0     # No long context
+        
+      # Complexity constraints
+      constraints:
+        max_reasoning_steps: 3
+        max_sequence_length: 256
+        simple_vocabulary: true
+        
+    # Stage 2: Medium complexity (steps 2000-5000)
+    medium_complexity:
+      steps: "2000-5000"
+      description: "Medium complexity reasoning and multi-turn conversations"
+      
+      data_composition:
+        reasoning: 0.4
+        conversations: 0.3
+        code: 0.2
+        long_context: 0.1
+        
+      constraints:
+        max_reasoning_steps: 5
+        max_sequence_length: 384
+        
+    # Stage 3: Full complexity (steps 5000-8000)
+    full_complexity:
+      steps: "5000-8000"
+      description: "Complex reasoning with long context"
+      
+      data_composition:
+        reasoning: 0.4
+        conversations: 0.3
+        code: 0.2
+        long_context: 0.1     # Introduce long context
+        
+      constraints:
+        max_reasoning_steps: 8
+        max_sequence_length: 512
+        
+    # Stage 4: Memory-intensive (steps 8000-10000)
+    memory_intensive:
+      steps: "8000-10000"
+      description: "Memory-intensive tasks requiring long-term dependencies"
+      
+      data_composition:
+        reasoning: 0.3
+        conversations: 0.2
+        code: 0.2
+        long_context: 0.3     # Heavy long context
+        
+      constraints:
+        max_reasoning_steps: 8
+        max_sequence_length: 512
+        require_memory_usage: true
+        
+  # Curriculum transitions
+  transitions:
+    # Transition criteria
+    criteria: "loss_threshold"  # loss_threshold, step_count, both
+    loss_threshold: 2.5
+    smoothing_steps: 200
+    
+    # Validation during transitions
+    validation:
+      validate_before_transition: true
+      validation_samples: 500
+      min_accuracy: 0.6
+
+# Evaluation Datasets
+evaluation:
+  # Validation set
+  validation:
+    # Held-out from training data
+    holdout_ratio: 0.1
+    stratified_split: true    # Maintain data type ratios
+    
+    # Validation data composition
+    composition:
+      reasoning: 0.4
+      conversations: 0.3
+      code: 0.2
+      long_context: 0.1
+      
+  # Test sets
+  test_sets:
+    # Synthetic test set
+    synthetic_test:
+      size: 500
+      description: "Held-out synthetic data for testing"
+      composition_matches_training: true
+      
+    # Capability-specific test sets
+    reasoning_test:
+      size: 200
+      description: "Multi-step reasoning evaluation"
+      focus: "reasoning_capability"
+      
+    memory_test:
+      size: 100
+      description: "Long-context memory evaluation"
+      focus: "memory_utilization"
+      
+    code_test:
+      size: 150
+      description: "Code understanding evaluation"
+      focus: "code_comprehension"
+      
+# Monitoring and Analytics
+monitoring:
+  # Data quality monitoring
+  quality_monitoring:
+    # Real-time monitoring during training
+    monitor_batch_quality: true
+    monitor_data_distribution: true
+    monitor_memory_usage: true
+    
+    # Quality metrics
+    metrics:
+      - "average_sequence_length"
+      - "vocabulary_diversity"
+      - "data_type_distribution"
+      - "quality_score_distribution"
+      
+  # Data usage analytics
+  usage_analytics:
+    track_sample_usage: true
+    track_curriculum_progress: true
+    track_data_efficiency: true
+    
+    # Analytics reports
+    reports:
+      daily_usage_report: true
+      curriculum_progress_report: true
+      data_quality_report: true
+
+# Configuration for Different Environments
+environment_configs:
+  # Development environment
+  development:
+    dataset_sources.synthetic.reasoning.max_samples: 400      # 10% of production
+    dataset_sources.synthetic.conversations.max_samples: 300
+    dataset_sources.synthetic.code.max_samples: 200
+    dataset_sources.synthetic.long_context.max_samples: 100
+    
+    data_loading.dataloader.num_workers: 2
+    preprocessing.sequence_processing.max_length: 256
+    
+  # Staging environment
+  staging:
+    dataset_sources.synthetic.reasoning.max_samples: 2000     # 50% of production
+    dataset_sources.synthetic.conversations.max_samples: 1500
+    dataset_sources.synthetic.code.max_samples: 1000
+    dataset_sources.synthetic.long_context.max_samples: 500
+    
+  # Production environment (full dataset)
+  production:
+    # Use full dataset sizes as specified above
+    dataset_sources.external.common_crawl.enabled: false      # Future enhancement
+    dataset_sources.external.wikipedia.enabled: false
+    
+# Documentation and Metadata
+metadata:
+  # Dataset documentation
+  documentation:
+    dataset_card: "docs/datasets/cognate_25m_dataset_card.md"
+    data_sheet: "docs/datasets/cognate_25m_datasheet.md"
+    generation_report: "docs/datasets/synthetic_generation_report.md"
+    
+  # Licensing and attribution
+  licensing:
+    synthetic_data_license: "CC0-1.0"   # Public domain for synthetic data
+    attribution_required: false
+    
+  # Version control
+  versioning:
+    dataset_version: "1.0.0"
+    schema_version: "1.0"
+    generation_timestamp: null          # Set during generation
+    
+  # Quality assurance
+  quality_assurance:
+    reviewed_by: "Cognate Development Team"
+    validation_status: "pending"
+    known_limitations: []
+    recommended_use_cases: ["pre-training", "reasoning_evaluation", "memory_testing"]

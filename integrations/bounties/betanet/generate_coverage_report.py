@@ -9,9 +9,9 @@ Analyzes the betanet-htx crate test coverage by examining:
 """
 
 import os
+from pathlib import Path
 import re
 import subprocess
-from pathlib import Path
 
 
 def count_lines_of_code(file_path):

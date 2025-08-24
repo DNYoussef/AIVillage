@@ -13,10 +13,8 @@ Performance Targets:
 
 import asyncio
 import time
-from typing import Any, Dict, List
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock
 
-import numpy as np
 import pytest
 
 # Import consolidated HyperRAG system
@@ -119,7 +117,7 @@ class TestHyperRAGIntegration:
         assert p95_time < 3000, f"95th percentile {p95_time:.2f}ms exceeds 3000ms threshold"
         assert avg_accuracy > 0.85, f"Average accuracy {avg_accuracy:.3f} below 85% target"
 
-        print(f"HyperRAG Query Performance:")
+        print("HyperRAG Query Performance:")
         print(f"  Average: {avg_time:.2f}ms (target: <2000ms)")
         print(f"  95th percentile: {p95_time:.2f}ms")
         print(f"  Maximum: {max_time:.2f}ms")
@@ -197,11 +195,11 @@ class TestHyperRAGIntegration:
         avg_response_time = sum(response_times) / len(response_times) if response_times else 0
 
         # Validate concurrent processing targets
-        assert len(successful_results) == len(all_queries), f"Some concurrent queries failed"
+        assert len(successful_results) == len(all_queries), "Some concurrent queries failed"
         assert queries_per_minute > 100, f"Throughput {queries_per_minute:.2f} queries/min below 100 target"
         assert avg_response_time < 5000, f"Average concurrent response time {avg_response_time:.2f}ms too high"
 
-        print(f"Concurrent Query Performance:")
+        print("Concurrent Query Performance:")
         print(f"  Throughput: {queries_per_minute:.2f} queries/min (target: >100)")
         print(f"  Successful queries: {len(successful_results)}/{len(all_queries)}")
         print(f"  Average response time: {avg_response_time:.2f}ms")
@@ -234,7 +232,7 @@ class TestHyperRAGIntegration:
         hybrid_sources = mode_results["hybrid"]["sources"]
         assert len(hybrid_sources) >= 2, f"Hybrid mode only used {len(hybrid_sources)} sources, expected ≥2"
 
-        print(f"Multi-Source Integration Results:")
+        print("Multi-Source Integration Results:")
         for mode, result in mode_results.items():
             print(f"  {mode.upper()}: {result['result_count']} results, sources: {result.get('sources', [])}")
 
@@ -321,7 +319,7 @@ class TestHyperRAGIntegration:
         graceful_handling = all(r["handled_gracefully"] for r in error_handling_results)
         assert graceful_handling, "Some error cases not handled gracefully"
 
-        print(f"Error Handling Test Results:")
+        print("Error Handling Test Results:")
         for result in error_handling_results:
             status = "✓" if result["handled_gracefully"] else "✗"
             print(f"  {status} '{result['query']}': {result.get('response_time_ms', 'N/A')}ms")

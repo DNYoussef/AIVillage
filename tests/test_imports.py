@@ -5,8 +5,8 @@ This module provides proper imports for all the classes and functions
 that test files need, avoiding the use of exec() which causes linting issues.
 """
 
-import sys
 from pathlib import Path
+import sys
 
 # Add necessary paths to sys.path
 project_root = Path(__file__).parent.parent
@@ -15,13 +15,13 @@ sys.path.insert(0, str(project_root / "packages"))
 
 # SeedLM imports
 try:
-    from packages.agent_forge.compression.seedlm import SeedLMCompressor  # If this exists
     from packages.agent_forge.compression.seedlm import (
         AdaptiveBlockAnalyzer,
         LFSRGenerator,
         MultiScaleLFSRGenerator,
         ProgressiveSeedLMEncoder,
         SeedLMCompressionError,
+        SeedLMCompressor,  # If this exists
         SeedLMConfig,
         SeedLMDecompressionError,
     )

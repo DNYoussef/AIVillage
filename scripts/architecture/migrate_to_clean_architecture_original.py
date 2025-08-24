@@ -12,9 +12,9 @@ Usage:
 import argparse
 import ast
 import logging
+from pathlib import Path
 import shutil
 import sys
-from pathlib import Path
 
 import yaml
 

@@ -9,9 +9,9 @@ Integration Point: Security validation for Phase 4 testing
 import ast
 import json
 import os
+from pathlib import Path
 import sys
 import tempfile
-from pathlib import Path
 
 import pytest
 

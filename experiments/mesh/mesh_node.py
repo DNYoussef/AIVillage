@@ -5,12 +5,13 @@ import json
 import logging
 
 import grpc
-import nacl.utils
-from communications.message import Message
 from libp2p import new_node
 from libp2p.pubsub import FloodSub
 from libp2p.security.noise.transport import NoiseSecureTransport
 from nacl.public import Box, PrivateKey, PublicKey
+import nacl.utils
+
+from communications.message import Message
 
 log = logging.getLogger("communications.mesh_node")
 

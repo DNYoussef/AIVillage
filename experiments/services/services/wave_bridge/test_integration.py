@@ -5,12 +5,12 @@ Tests core functionality and performance requirements.
 import time
 from unittest.mock import Mock, patch
 
-import httpx
-import pytest
 from app import app
+import httpx
 from language_support import auto_translate_flow, detect_language
 from metrics import ResponseMetrics
 from prompt_tuning import ABTestManager, PromptTuner
+import pytest
 from tutor_engine import AITutor
 
 # Test configuration

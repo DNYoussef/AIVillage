@@ -14,12 +14,12 @@ Usage:
 
 import argparse
 import ast
-import json
-import logging
-import sys
 from dataclasses import dataclass
 from enum import Enum
+import json
+import logging
 from pathlib import Path
+import sys
 
 import yaml
 

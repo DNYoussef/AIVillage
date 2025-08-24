@@ -16,14 +16,8 @@ comprehensive coverage for:
 This fills the major testing gap identified in the consolidation analysis.
 """
 
-import asyncio
-import tempfile
-from pathlib import Path
-from typing import Any, Dict, List, Optional
-from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
-import torch
 import torch.nn as nn
 
 # Test framework setup

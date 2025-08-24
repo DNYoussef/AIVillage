@@ -8,11 +8,10 @@ Test cases:
 4. Performance targets: ≤ 150ms latency, < 10MB memory overhead
 """
 
-import time
 from datetime import datetime
+import time
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import pytest
 from mcp_servers.hyperag.memory.hippo_index import HippoIndex, HippoNode
 from mcp_servers.hyperag.memory.hypergraph_kg import HypergraphKG, SemanticNode
 from mcp_servers.hyperag.models import QueryPlan
@@ -22,6 +21,7 @@ from mcp_servers.hyperag.retrieval.ppr_retriever import (
     PersonalizedPageRank,
     PPRResults,
 )
+import pytest
 
 
 class TestPersonalizedPageRank:

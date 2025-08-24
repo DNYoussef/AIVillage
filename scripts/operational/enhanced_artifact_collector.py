@@ -4,19 +4,14 @@ Enhanced Artifact Collector
 Collects comprehensive security, quality, and operational artifacts from CI/CD pipelines.
 """
 
+from dataclasses import dataclass
+from datetime import datetime
 import hashlib
 import json
 import logging
-import os
-import shutil
-import subprocess
-import zipfile
-from dataclasses import dataclass
-from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
-
-import yaml
+import shutil
+import zipfile
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -43,7 +38,7 @@ class EnhancedArtifactCollector:
         self.timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         self.collection_manifest = []
 
-    def collect_security_artifacts(self) -> List[ArtifactInfo]:
+    def collect_security_artifacts(self) -> list[ArtifactInfo]:
         """Collect security-related artifacts."""
         artifacts = []
 
@@ -74,7 +69,7 @@ class EnhancedArtifactCollector:
 
         return artifacts
 
-    def collect_quality_artifacts(self) -> List[ArtifactInfo]:
+    def collect_quality_artifacts(self) -> list[ArtifactInfo]:
         """Collect code quality and architectural artifacts."""
         artifacts = []
 
@@ -95,7 +90,7 @@ class EnhancedArtifactCollector:
 
         return artifacts
 
-    def collect_test_artifacts(self) -> List[ArtifactInfo]:
+    def collect_test_artifacts(self) -> list[ArtifactInfo]:
         """Collect testing artifacts."""
         artifacts = []
 
@@ -115,7 +110,7 @@ class EnhancedArtifactCollector:
 
         return artifacts
 
-    def collect_compliance_artifacts(self) -> List[ArtifactInfo]:
+    def collect_compliance_artifacts(self) -> list[ArtifactInfo]:
         """Collect compliance and audit artifacts."""
         artifacts = []
 
@@ -134,7 +129,7 @@ class EnhancedArtifactCollector:
 
         return artifacts
 
-    def collect_operational_artifacts(self) -> List[ArtifactInfo]:
+    def collect_operational_artifacts(self) -> list[ArtifactInfo]:
         """Collect operational artifacts."""
         artifacts = []
 
@@ -154,7 +149,7 @@ class EnhancedArtifactCollector:
 
         return artifacts
 
-    def _collect_files_by_pattern(self, pattern: str, category: str, priority: str, subdir: str) -> List[ArtifactInfo]:
+    def _collect_files_by_pattern(self, pattern: str, category: str, priority: str, subdir: str) -> list[ArtifactInfo]:
         """Collect files matching a pattern."""
         artifacts = []
 
@@ -256,7 +251,7 @@ class EnhancedArtifactCollector:
             logger.error(f"Failed to copy artifact {artifact.path}: {e}")
             return False
 
-    def generate_manifest(self, artifacts: List[ArtifactInfo]) -> Dict:
+    def generate_manifest(self, artifacts: list[ArtifactInfo]) -> dict:
         """Generate collection manifest."""
         manifest = {
             "collection_timestamp": self.timestamp,
@@ -326,7 +321,7 @@ class EnhancedArtifactCollector:
             logger.error(f"Failed to create archive: {e}")
             return ""
 
-    def collect_all_artifacts(self, create_archive: bool = True) -> Dict:
+    def collect_all_artifacts(self, create_archive: bool = True) -> dict:
         """Collect all artifacts and generate manifest."""
         logger.info("Starting enhanced artifact collection...")
 
@@ -375,7 +370,7 @@ class EnhancedArtifactCollector:
 
         return manifest
 
-    def _create_summary_report(self, manifest: Dict):
+    def _create_summary_report(self, manifest: dict):
         """Create human-readable summary report."""
         report_path = self.output_dir / "collection_summary.md"
 
@@ -435,7 +430,7 @@ def main():
     manifest = collector.collect_all_artifacts(create_archive=not args.no_archive)
 
     # Print summary
-    print(f"\nArtifact Collection Complete!")
+    print("\nArtifact Collection Complete!")
     print(f"Collection ID: {manifest['collection_id']}")
     print(f"Total Artifacts: {manifest['total_artifacts']}")
     print(f"Collected: {manifest['collected_artifacts']}")

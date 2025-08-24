@@ -5,11 +5,11 @@ Provides compatibility and bridge layer between the legacy BitChat transport
 implementation and the new unified Python transport system.
 """
 
+from collections.abc import Callable
+from dataclasses import dataclass
 import logging
 import os
 import sys
-from collections.abc import Callable
-from dataclasses import dataclass
 from typing import Any
 
 logger = logging.getLogger(__name__)

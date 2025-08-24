@@ -5,17 +5,17 @@ Serves the admin dashboard on port 3006 with health check endpoints
 """
 
 import asyncio
+from datetime import datetime
 import logging
+from pathlib import Path
 import sys
 import time
-from datetime import datetime
-from pathlib import Path
 
-import psutil
-import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse
+import psutil
+import uvicorn
 
 # Add the project root to the Python path
 project_root = Path(__file__).parent.parent.parent.parent

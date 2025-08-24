@@ -1,0 +1,401 @@
+# Cognate 25M Training Configuration
+# Specialized training configuration for the 25M parameter Cognate Refiner
+# Implements train-many/infer-few paradigm with memory-augmented learning
+
+name: "cognate_25m_training"
+version: "1.0.0"
+description: "Training configuration for 25M Cognate Refiner with ACT and LTM"
+
+# Training Hyperparameters (optimized for 25M model)
+training:
+  # Learning rate schedule
+  learning_rate: 1e-4
+  min_learning_rate: 1e-6
+  warmup_steps: 100
+  max_steps: 10000
+  
+  # Optimizer configuration
+  optimizer:
+    type: "adamw"
+    betas: [0.9, 0.999]
+    eps: 1e-8
+    weight_decay: 0.01
+    amsgrad: false
+  
+  # Batch configuration (memory-efficient for 25M model)
+  batch_size: 8              # Base batch size
+  gradient_accumulation_steps: 4
+  effective_batch_size: 32   # 8 * 4 = 32
+  
+  # Sequence configuration
+  max_seq_length: 512        # Training sequence length
+  pack_sequences: true       # Pack multiple sequences per batch
+  
+  # Gradient handling
+  gradient_clip_norm: 1.0
+  gradient_clip_value: null
+  
+  # Loss configuration
+  loss_weights:
+    lm_loss: 1.0            # Language modeling loss
+    act_loss: 0.1           # ACT pondering loss
+    memory_read_loss: 0.05  # Memory read coherence loss
+    memory_write_loss: 0.05 # Memory write loss
+    compression_loss: 0.02  # Memory compression loss
+  
+  # Regularization
+  dropout: 0.1
+  layer_norm_eps: 1e-5
+  label_smoothing: 0.0
+  
+  # Mixed precision
+  mixed_precision:
+    enabled: true
+    loss_scale: "dynamic"
+    init_scale: 65536
+    growth_factor: 2.0
+    backoff_factor: 0.5
+    growth_interval: 2000
+
+# ACT Training Configuration (train-many/infer-few)
+act_training:
+  # Training phase: use more computation steps
+  training_mode:
+    min_steps: 4
+    max_steps: 8
+    target_steps: 6
+    
+  # Inference phase: use fewer computation steps  
+  inference_mode:
+    min_steps: 1
+    max_steps: 2
+    target_steps: 1
+    
+  # ACT loss configuration
+  pondering_loss:
+    weight: 0.1
+    epsilon: 0.01
+    threshold: 0.99
+    
+  # Halting predictor training
+  halting_predictor:
+    learning_rate: 2e-4      # Slightly higher LR for halting head
+    bias_init: 1.0           # Initialize bias to encourage pondering
+    dropout: 0.1
+
+# Memory Training Configuration (Titans-style)
+memory_training:
+  # Memory bank configuration
+  memory_bank:
+    capacity: 4096
+    d_mem: 216               # Match model dimension
+    topk: 4
+    
+  # Memory update dynamics
+  update_dynamics:
+    learning_rate: 0.01      # Memory-specific learning rate
+    decay_rate: 0.0001       # Memory decay rate
+    momentum: 0.9            # Momentum for memory updates
+    
+  # Surprise × Novelty gating
+  titans_gating:
+    surprise_factor: 4.0     # Alpha: surprise scaling
+    novelty_momentum: 0.9    # Beta: novelty detection momentum
+    gate_threshold: 0.5      # Minimum gate value
+    
+  # Memory policies during training
+  policies:
+    read_policy: "entropy_gated"
+    write_policy: "surprise_novelty"
+    read_frequency: 0.7      # Fraction of steps that read memory
+    write_frequency: 0.3     # Fraction of steps that write memory
+    
+  # Memory loss computation
+  memory_losses:
+    read_coherence:
+      enabled: true
+      weight: 0.05
+      temperature: 0.1
+      
+    write_sparsity:
+      enabled: true
+      weight: 0.05
+      target_sparsity: 0.9
+      
+    compression:
+      enabled: true
+      weight: 0.02
+      compression_ratio: 0.8
+
+# Dataset Configuration
+dataset:
+  # Training data sources
+  sources:
+    - name: "synthetic_reasoning"
+      weight: 0.4
+      max_samples: 4000
+      seq_length: 512
+      description: "Multi-step reasoning chains"
+      
+    - name: "synthetic_conversations"
+      weight: 0.3
+      max_samples: 3000
+      seq_length: 384
+      description: "Conversational data with memory requirements"
+      
+    - name: "code_snippets"
+      weight: 0.2
+      max_samples: 2000
+      seq_length: 256
+      description: "Code understanding and generation"
+      
+    - name: "long_context_tasks"
+      weight: 0.1
+      max_samples: 1000
+      seq_length: 512
+      description: "Tasks requiring long-term memory"
+  
+  # Data preprocessing
+  preprocessing:
+    tokenizer: "gpt2"
+    padding_side: "right"
+    truncation_side: "right"
+    add_special_tokens: true
+    
+  # Data loading
+  dataloader:
+    num_workers: 4
+    pin_memory: true
+    prefetch_factor: 2
+    persistent_workers: true
+    drop_last: true
+
+# Curriculum Learning
+curriculum:
+  # Progressive difficulty
+  enabled: true
+  
+  # Curriculum stages
+  stages:
+    stage_1:
+      steps: "0-2000"
+      description: "Simple reasoning tasks"
+      max_seq_length: 256
+      act_max_steps: 4
+      memory_complexity: "low"
+      
+    stage_2:
+      steps: "2000-5000"
+      description: "Medium complexity tasks"
+      max_seq_length: 384
+      act_max_steps: 6
+      memory_complexity: "medium"
+      
+    stage_3:
+      steps: "5000-8000"
+      description: "Complex reasoning tasks"
+      max_seq_length: 512
+      act_max_steps: 8
+      memory_complexity: "high"
+      
+    stage_4:
+      steps: "8000-10000"
+      description: "Full complexity with memory"
+      max_seq_length: 512
+      act_max_steps: 8
+      memory_complexity: "full"
+  
+  # Curriculum transitions
+  transitions:
+    criteria: "loss_threshold"  # loss_threshold, step_count, both
+    loss_threshold: 2.5
+    smoothing_steps: 200
+
+# Evaluation Configuration
+evaluation:
+  # Evaluation frequency
+  eval_steps: 100
+  save_best_model: true
+  
+  # Evaluation datasets
+  datasets:
+    - name: "reasoning_eval"
+      metric: "exact_match"
+      batch_size: 4
+      max_samples: 500
+      
+    - name: "memory_eval"
+      metric: "memory_retrieval_accuracy"
+      batch_size: 2
+      max_samples: 200
+      
+    - name: "act_eval"
+      metric: "efficiency_score"
+      batch_size: 4
+      max_samples: 300
+  
+  # Generation settings for evaluation
+  generation:
+    max_new_tokens: 128
+    temperature: 0.8
+    top_p: 0.9
+    do_sample: true
+    num_beams: 1
+
+# Checkpointing and Logging
+checkpointing:
+  # Save frequency
+  save_steps: 500
+  max_checkpoints: 5
+  
+  # What to save
+  save_components:
+    - "model_state_dict"
+    - "optimizer_state_dict"
+    - "scheduler_state_dict"
+    - "memory_bank_state"
+    - "training_config"
+    - "training_metrics"
+  
+  # Checkpoint validation
+  validate_on_save: true
+  test_forward_pass: true
+
+# Logging Configuration
+logging:
+  # Logging frequency
+  log_steps: 50
+  
+  # Metrics to log
+  metrics:
+    # Training metrics
+    - "loss/total"
+    - "loss/lm_loss"
+    - "loss/act_loss"
+    - "loss/memory_loss"
+    - "learning_rate"
+    - "gradient_norm"
+    
+    # ACT metrics
+    - "act/avg_steps"
+    - "act/halting_distribution"
+    - "act/pondering_efficiency"
+    
+    # Memory metrics
+    - "memory/read_frequency"
+    - "memory/write_frequency"
+    - "memory/bank_utilization"
+    - "memory/surprise_score"
+    - "memory/novelty_score"
+    
+    # Model metrics
+    - "model/parameter_norm"
+    - "model/memory_usage_mb"
+    - "model/tokens_per_second"
+  
+  # Log destinations
+  destinations:
+    console: true
+    file: true
+    tensorboard: true
+    wandb: false
+
+# Distributed Training (optional)
+distributed:
+  enabled: false
+  
+  # Configuration for multi-GPU training
+  multi_gpu:
+    strategy: "ddp"          # ddp, fsdp, deepspeed
+    backend: "nccl"
+    
+  # Memory optimization for distributed training
+  memory_optimization:
+    gradient_checkpointing: true
+    cpu_offload: false
+    parameter_offload: false
+
+# Performance Optimization
+performance:
+  # Compilation optimizations
+  torch_compile:
+    enabled: false
+    mode: "default"         # default, reduce-overhead, max-autotune
+    
+  # Memory optimizations
+  memory_optimization:
+    gradient_checkpointing: false  # Not needed for 25M model
+    memory_efficient_attention: false
+    cpu_offload: false
+    
+  # Profiling
+  profiling:
+    enabled: false
+    profile_memory: false
+    profile_compute: false
+    export_chrome_trace: false
+
+# Hardware Configuration
+hardware:
+  # Device preferences
+  device: "auto"
+  torch_dtype: "float32"
+  
+  # Memory management
+  memory_management:
+    empty_cache_steps: 100
+    gc_collection_steps: 500
+    max_memory_usage: 0.8    # 80% of available memory
+    
+  # CPU configuration
+  cpu:
+    num_threads: null        # Use all available
+    
+  # GPU configuration  
+  gpu:
+    memory_fraction: 0.9
+    allow_growth: true
+
+# Debugging and Development
+debug:
+  # Debug modes
+  verbose: false
+  debug_memory: false
+  debug_act: false
+  
+  # Development overrides
+  development_mode:
+    enabled: false
+    max_steps_override: 100
+    small_dataset: true
+    frequent_checkpoints: true
+    
+  # Error handling
+  error_handling:
+    continue_on_error: false
+    max_retries: 3
+    retry_backoff: 1.5
+
+# Integration with Agent Forge
+agent_forge_integration:
+  # Pipeline integration
+  pipeline_ready: true
+  export_format: "huggingface"
+  
+  # Model export settings
+  export:
+    include_tokenizer: true
+    include_config: true
+    include_training_args: true
+    include_memory_state: true
+    
+  # Handoff to next phase
+  next_phase: "evomerge"
+  handoff_validation: true
+  
+  # Quality gates
+  quality_gates:
+    min_validation_accuracy: 0.6
+    max_memory_usage_mb: 2000
+    max_training_time_hours: 4
+    convergence_required: true

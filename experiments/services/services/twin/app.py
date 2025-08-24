@@ -7,24 +7,24 @@
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
 import logging
 import os
+from pathlib import Path
 
 # Import unified error handling and configuration
 import sys
-from datetime import datetime, timezone
-from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parents[3]))
 import time
-import uuid
 from typing import Any
+import uuid
 
-import uvicorn
 from cachetools import LRUCache
 from fastapi import Depends, FastAPI, File, HTTPException, UploadFile
 from prometheus_client import REGISTRY, Counter, Histogram, generate_latest
 from pydantic import BaseModel, Field
+import uvicorn
 
 from core.chat_engine import ChatEngine
 

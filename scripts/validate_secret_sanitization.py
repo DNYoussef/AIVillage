@@ -11,10 +11,8 @@ Usage:
 
 import json
 import logging
-import os
-import re
 from pathlib import Path
-from typing import Dict, List, Tuple
+import re
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -56,7 +54,7 @@ class SecretSanitizationValidator:
             r"mock.*key.*pragma.*allowlist.*secret",
         ]
 
-    def validate_file(self, file_path: Path) -> Dict:
+    def validate_file(self, file_path: Path) -> dict:
         """Validate a single file for secret sanitization."""
         result = {
             "file": str(file_path.relative_to(self.base_path)),
@@ -70,7 +68,7 @@ class SecretSanitizationValidator:
             return result
 
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 lines = f.readlines()
                 result["line_count"] = len(lines)
 
@@ -103,7 +101,7 @@ class SecretSanitizationValidator:
 
         return result
 
-    def validate_all_files(self) -> Dict:
+    def validate_all_files(self) -> dict:
         """Validate all target files."""
         results = {
             "validation_summary": {
@@ -141,7 +139,7 @@ class SecretSanitizationValidator:
 
         return results
 
-    def generate_report(self, results: Dict, output_file: str = None) -> str:
+    def generate_report(self, results: dict, output_file: str = None) -> str:
         """Generate a human-readable validation report."""
         summary = results["validation_summary"]
 

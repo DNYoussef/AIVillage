@@ -6,8 +6,8 @@ import json
 from pathlib import Path
 from typing import Any
 
-import yaml
 from pydantic import BaseSettings, Field
+import yaml
 
 
 class Settings(BaseSettings):

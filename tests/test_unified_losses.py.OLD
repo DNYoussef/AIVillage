@@ -1,0 +1,499 @@
+#!/usr/bin/env python3
+"""
+Comprehensive tests for the Unified Refiner Losses implementation.
+
+Tests all loss components and their integration with the main loss aggregation:
+- InfoNCE loss for memory reads
+- Write utility loss with score correlation
+- Compression fidelity loss with ROUGE/F1 and brevity penalty
+- Quiet-STaR support with thought token injection and masking
+"""
+
+import torch
+import torch.nn.functional as F
+import pytest
+import tempfile
+from typing import Dict, List, Any
+
+import sys
+import os
+sys.path.append(os.path.abspath('.'))
+
+from src.cognate.unified_refiner.losses import (
+    UnifiedRefinerLosses,
+    InfoNCELoss, 
+    WriteUtilityLoss,
+    CompressionFidelityLoss,
+    QuietSTaRLoss,
+    LossWeights
+)
+
+
+class TestInfoNCELoss:
+    """Test InfoNCE loss with contrastive learning."""
+    
+    def test_basic_infonce_loss(self):
+        """Test basic InfoNCE computation."""
+        loss_fn = InfoNCELoss(temperature=0.1)
+        
+        # Create test data
+        batch_size, d_mem = 2, 256
+        query = torch.randn(batch_size, d_mem)
+        positive_keys = torch.randn(batch_size, 3, d_mem)
+        negative_keys = torch.randn(batch_size, 5, d_mem)
+        
+        # Mock memory bank
+        class MockMemoryBank:
+            def __init__(self):
+                self.size = 100
+                self.d_mem = d_mem
+                self.keys = torch.randn(100, d_mem)
+        
+        memory_bank = MockMemoryBank()
+        
+        # Compute loss
+        loss = loss_fn.compute_loss(query, positive_keys, negative_keys, memory_bank)
+        
+        assert isinstance(loss, torch.Tensor)
+        assert loss.item() >= 0.0
+        assert not torch.isnan(loss)
+    
+    def test_hard_negative_mining(self):
+        """Test hard negative mining functionality."""
+        loss_fn = InfoNCELoss(temperature=0.1, hard_negative_mining=True)
+        
+        query = torch.randn(1, 128)
+        positive_keys = torch.randn(1, 2, 128)
+        negative_keys = torch.randn(1, 0, 128)  # Empty negatives
+        
+        class MockMemoryBank:
+            def __init__(self):
+                self.size = 50
+                self.d_mem = 128
+                self.keys = torch.randn(50, 128)
+        
+        memory_bank = MockMemoryBank()
+        
+        loss = loss_fn.compute_loss(query, positive_keys, negative_keys, memory_bank)
+        
+        assert loss.item() >= 0.0
+        assert not torch.isnan(loss)
+    
+    def test_relevance_weighting(self):
+        """Test relevance score weighting of positives."""
+        loss_fn = InfoNCELoss()
+        
+        query = torch.randn(1, 64)
+        positive_keys = torch.randn(1, 3, 64)
+        negative_keys = torch.randn(1, 0, 64)
+        relevance_scores = torch.tensor([[0.9, 0.5, 0.3]])  # High to low relevance
+        
+        class MockMemoryBank:
+            size = 0
+            keys = torch.zeros(0, 64)
+        
+        loss = loss_fn.compute_loss(
+            query, positive_keys, negative_keys, MockMemoryBank(), relevance_scores
+        )
+        
+        assert loss.item() >= 0.0
+
+
+class TestWriteUtilityLoss:
+    """Test write utility loss with temporal weighting."""
+    
+    def test_basic_utility_loss(self):
+        """Test basic write utility computation."""
+        loss_fn = WriteUtilityLoss()
+        
+        write_decisions = [
+            {"should_write": True, "gate_prob": torch.tensor(0.8), "memory_index": 0},
+            {"should_write": True, "gate_prob": torch.tensor(0.3), "memory_index": 1},
+        ]
+        
+        future_reads = [[0], [0, 1], [1]]  # Memory 0 read early and often
+        
+        class MockMemoryBank:
+            access_counts = {0: 5, 1: 1}
+        
+        loss = loss_fn.compute_loss(write_decisions, future_reads, MockMemoryBank())
+        
+        assert isinstance(loss, torch.Tensor)
+        assert loss.item() >= 0.0
+    
+    def test_score_improvement_correlation(self):
+        """Test correlation with score improvements."""
+        loss_fn = WriteUtilityLoss()
+        
+        write_decisions = [
+            {"should_write": True, "gate_prob": torch.tensor(0.9), "memory_index": 0, "step_index": 0},
+            {"should_write": True, "gate_prob": torch.tensor(0.2), "memory_index": 1, "step_index": 1},
+        ]
+        
+        future_reads = [[0], []]
+        score_improvements = [0.7, -0.1]  # First write helps, second doesn't
+        
+        class MockMemoryBank:
+            access_counts = {}
+        
+        loss = loss_fn.compute_loss(
+            write_decisions, future_reads, MockMemoryBank(), 
+            score_improvements=score_improvements
+        )
+        
+        assert loss.item() >= 0.0
+    
+    def test_temporal_decay(self):
+        """Test temporal decay in read utility."""
+        loss_fn = WriteUtilityLoss(temporal_decay=0.5)
+        
+        # Test internal method
+        memory_idx = 0
+        future_reads = [[0], [], [0], [], [0]]  # Reads at steps 0, 2, 4
+        
+        utility = loss_fn._compute_read_utility(memory_idx, future_reads, temporal_window=5)
+        
+        # Should be less than if all reads were at step 0 due to decay
+        assert 0.0 <= utility <= 1.0
+
+
+class TestCompressionFidelityLoss:
+    """Test compression fidelity with ROUGE and brevity."""
+    
+    def test_f1_score_computation(self):
+        """Test F1 score between generated and reference."""
+        loss_fn = CompressionFidelityLoss()
+        
+        # Test exact match
+        f1 = loss_fn._compute_f1_score("hello world", "hello world")
+        assert f1 == 1.0
+        
+        # Test partial overlap
+        f1 = loss_fn._compute_f1_score("hello there", "hello world")
+        assert 0.0 < f1 < 1.0
+        
+        # Test no overlap
+        f1 = loss_fn._compute_f1_score("foo bar", "hello world")
+        assert f1 == 0.0
+    
+    def test_rouge_l_computation(self):
+        """Test ROUGE-L (longest common subsequence)."""
+        loss_fn = CompressionFidelityLoss()
+        
+        # Test LCS
+        rouge_l = loss_fn._compute_rouge_l(
+            "the quick brown fox", 
+            "a quick brown dog"
+        )
+        assert rouge_l > 0.0  # Should find "quick brown"
+        
+        # Test identical sequences
+        rouge_l = loss_fn._compute_rouge_l("same text", "same text")
+        assert rouge_l == 1.0
+    
+    def test_evidence_coverage(self):
+        """Test salient evidence coverage."""
+        loss_fn = CompressionFidelityLoss()
+        
+        summary = "user authentication with secure login"
+        evidence = "secure authentication login"
+        
+        coverage = loss_fn._compute_evidence_coverage(summary, evidence)
+        assert coverage == 1.0  # All evidence words covered
+        
+        # Partial coverage
+        summary = "user system"
+        evidence = "secure authentication login"
+        coverage = loss_fn._compute_evidence_coverage(summary, evidence)
+        assert coverage == 0.0  # No evidence words covered
+    
+    def test_compression_loss_with_evidence(self):
+        """Test full compression loss with evidence preservation."""
+        loss_fn = CompressionFidelityLoss(brevity_weight=0.1)
+        
+        summaries = ["Short auth summary", "Very long detailed authentication system description"]
+        references = ["User authentication system", "Authentication system"]
+        evidence = ["authentication system", "authentication"]
+        
+        loss = loss_fn.compute_loss(summaries, references, salient_evidence=evidence)
+        
+        assert isinstance(loss, torch.Tensor)
+        assert loss.item() >= 0.0
+
+
+class TestQuietSTaRLoss:
+    """Test Quiet-STaR support for thought tokens."""
+    
+    def test_thought_injection(self):
+        """Test injecting thought tokens into sequences."""
+        loss_fn = QuietSTaRLoss(
+            thought_token_id=50000,
+            start_token_id=50001, 
+            end_token_id=50002
+        )
+        
+        input_ids = torch.randint(0, 1000, (2, 10))
+        injection_positions = [3, 7]
+        
+        modified_ids, thought_mask = loss_fn.inject_thought_tokens(
+            input_ids, injection_positions, thought_length=4
+        )
+        
+        # Should have more tokens now
+        assert modified_ids.size(1) > input_ids.size(1)
+        
+        # Should have thought positions marked
+        assert thought_mask.sum() > 0
+        
+        # Check thought tokens are properly injected
+        assert (modified_ids == 50001).any()  # Start token
+        assert (modified_ids == 50000).any()  # Thought token
+        assert (modified_ids == 50002).any()  # End token
+    
+    def test_thought_loss_computation(self):
+        """Test thought token loss computation."""
+        loss_fn = QuietSTaRLoss(50000, 50001, 50002)
+        
+        batch_size, seq_len, vocab_size = 2, 20, 1000
+        logits = torch.randn(batch_size, seq_len, vocab_size)
+        input_ids = torch.randint(0, vocab_size, (batch_size, seq_len))
+        
+        # Mark some positions as thought tokens
+        thought_positions = torch.zeros(batch_size, seq_len, dtype=torch.bool)
+        thought_positions[0, 5:9] = True  # Thought sequence in first batch
+        thought_positions[1, 10:14] = True  # Thought sequence in second batch
+        
+        target_tokens = torch.randint(0, vocab_size, (batch_size, seq_len))
+        
+        loss = loss_fn.compute_thought_loss(logits, input_ids, thought_positions, target_tokens)
+        
+        assert isinstance(loss, torch.Tensor)
+        assert loss.item() >= 0.0
+    
+    def test_mixing_loss(self):
+        """Test mixing loss for base and thought-augmented predictions."""
+        loss_fn = QuietSTaRLoss(50000, 50001, 50002)
+        
+        base_logits = torch.randn(2, 10, 1000)
+        thought_logits = torch.randn(2, 10, 1000)
+        mixing_weights = torch.rand(2, 10, 1)
+        targets = torch.randint(0, 1000, (2, 10))
+        
+        loss = loss_fn.compute_mixing_loss(base_logits, thought_logits, mixing_weights, targets)
+        
+        assert isinstance(loss, torch.Tensor)
+        assert loss.item() >= 0.0
+    
+    def test_attention_masking(self):
+        """Test attention masking for thought tokens."""
+        loss_fn = QuietSTaRLoss(50000, 50001, 50002)
+        
+        attention_mask = torch.ones(2, 15)
+        thought_positions = torch.zeros(2, 15, dtype=torch.bool)
+        thought_positions[0, 5:9] = True
+        
+        masked_attention = loss_fn.apply_thought_masking(
+            attention_mask, thought_positions, mask_thoughts=True
+        )
+        
+        assert masked_attention.shape == attention_mask.shape
+        assert masked_attention.sum() <= attention_mask.sum()
+
+
+class TestUnifiedRefinerLosses:
+    """Test unified loss computation and integration."""
+    
+    def test_initialization(self):
+        """Test initialization with and without Quiet-STaR."""
+        # Without Quiet-STaR
+        config1 = type('Config', (), {'quiet_star': False})()
+        losses1 = UnifiedRefinerLosses(config1)
+        assert losses1.quiet_star_loss is None
+        
+        # With Quiet-STaR
+        config2 = type('Config', (), {
+            'quiet_star': True,
+            'thought_token_id': 50000,
+            'start_thought_token_id': 50001,
+            'end_thought_token_id': 50002
+        })()
+        losses2 = UnifiedRefinerLosses(config2)
+        assert losses2.quiet_star_loss is not None
+    
+    def test_task_detection(self):
+        """Test automatic task type detection."""
+        class MockTokenizer:
+            def decode(self, tokens, skip_special_tokens=True):
+                return "def function(x): return x * 2"
+        
+        losses = UnifiedRefinerLosses()
+        tokenizer = MockTokenizer()
+        input_ids = torch.tensor([[1, 2, 3, 4, 5]])
+        
+        task_type = losses.detect_task_type(input_ids, tokenizer)
+        assert task_type == "code"
+    
+    def test_infonce_integration(self):
+        """Test InfoNCE loss integration."""
+        losses = UnifiedRefinerLosses()
+        
+        query_states = torch.randn(2, 10, 384)
+        retrieved_memory = torch.randn(2, 4, 384)
+        retrieved_indices = [[0, 1, 2, 3], [1, 2, 4, 5]]
+        
+        class MockMemoryBank:
+            size = 100
+            keys = torch.randn(100, 384)
+        
+        memory_bank = MockMemoryBank()
+        
+        loss = losses.compute_infonce_loss(
+            query_states, retrieved_memory, retrieved_indices, memory_bank
+        )
+        
+        assert isinstance(loss, torch.Tensor)
+        assert loss.item() >= 0.0
+    
+    def test_total_loss_computation(self):
+        """Test total loss computation with all components."""
+        weights = LossWeights(refinement=1.0, act=0.3, read=0.1, write=0.1, compression=0.05)
+        losses = UnifiedRefinerLosses(weights=weights)
+        
+        step_outputs = []
+        total_losses = {
+            "refinement": torch.tensor(2.5),
+            "halting": torch.tensor(0.8),
+            "read": torch.tensor(1.2),
+            "write": torch.tensor(0.6),
+            "compression": torch.tensor(0.4)
+        }
+        
+        # Test fast batch (no LTM losses)
+        fast_loss = losses.compute_total_loss(step_outputs, total_losses, is_slow_batch=False)
+        expected_fast = 1.0 * 2.5 + 0.3 * 0.8
+        assert abs(fast_loss.item() - expected_fast) < 1e-6
+        
+        # Test slow batch (with LTM losses)
+        slow_loss = losses.compute_total_loss(step_outputs, total_losses, is_slow_batch=True)
+        expected_slow = expected_fast + 0.1 * 1.2 + 0.1 * 0.6 + 0.05 * 0.4
+        assert abs(slow_loss.item() - expected_slow) < 1e-6
+    
+    def test_quiet_star_integration(self):
+        """Test Quiet-STaR loss integration."""
+        config = type('Config', (), {
+            'quiet_star': True,
+            'thought_token_id': 50000,
+            'start_thought_token_id': 50001,
+            'end_thought_token_id': 50002
+        })()
+        
+        losses = UnifiedRefinerLosses(config)
+        
+        logits = torch.randn(2, 15, 1000)
+        input_ids = torch.randint(0, 1000, (2, 15))
+        thought_positions = torch.zeros(2, 15, dtype=torch.bool)
+        thought_positions[0, 5:9] = True
+        target_tokens = torch.randint(0, 1000, (2, 15))
+        
+        quiet_star_losses = losses.compute_quiet_star_loss(
+            logits, input_ids, thought_positions, target_tokens
+        )
+        
+        assert 'thought' in quiet_star_losses
+        assert isinstance(quiet_star_losses['thought'], torch.Tensor)
+
+
+def test_integration_example():
+    """Test a complete integration example."""
+    # Setup
+    config = type('Config', (), {
+        'quiet_star': True,
+        'thought_token_id': 50000,
+        'start_thought_token_id': 50001,
+        'end_thought_token_id': 50002
+    })()
+    
+    weights = LossWeights(refinement=1.0, act=0.3, read=0.1, write=0.1, compression=0.05)
+    losses = UnifiedRefinerLosses(config, weights)
+    
+    # Mock step outputs from refiner
+    step_outputs = [
+        {
+            "memory": {
+                "write_decisions": [
+                    {"should_write": True, "gate_prob": torch.tensor(0.8), "memory_index": 0}
+                ],
+                "read_indices": [0, 1]
+            }
+        }
+    ]
+    
+    # Mock memory bank
+    class MockMemoryBank:
+        size = 50
+        keys = torch.randn(50, 384)
+        access_counts = {0: 3}
+    
+    memory_bank = MockMemoryBank()
+    
+    # Compute individual losses
+    query_states = torch.randn(1, 10, 384)
+    retrieved_memory = torch.randn(1, 2, 384)
+    retrieved_indices = [[0, 1]]
+    
+    infonce_loss = losses.compute_infonce_loss(
+        query_states, retrieved_memory, retrieved_indices, memory_bank
+    )
+    
+    write_loss = losses.compute_write_utility_loss(step_outputs, memory_bank)
+    compression_loss = losses.compute_compression_fidelity_loss(step_outputs)
+    
+    # Aggregate losses
+    total_losses = {
+        "refinement": torch.tensor(1.5),
+        "halting": torch.tensor(0.3),
+        "read": infonce_loss,
+        "write": write_loss,
+        "compression": compression_loss
+    }
+    
+    final_loss = losses.compute_total_loss(step_outputs, total_losses, is_slow_batch=True)
+    
+    assert isinstance(final_loss, torch.Tensor)
+    assert final_loss.item() >= 0.0
+    assert not torch.isnan(final_loss)
+    
+    print(f"Integration test passed! Final loss: {final_loss.item():.4f}")
+
+
+if __name__ == "__main__":
+    # Run tests
+    test_classes = [
+        TestInfoNCELoss,
+        TestWriteUtilityLoss, 
+        TestCompressionFidelityLoss,
+        TestQuietSTaRLoss,
+        TestUnifiedRefinerLosses
+    ]
+    
+    for test_class in test_classes:
+        instance = test_class()
+        methods = [m for m in dir(instance) if m.startswith('test_')]
+        
+        print(f"\nTesting {test_class.__name__}:")
+        for method_name in methods:
+            try:
+                getattr(instance, method_name)()
+                print(f"  PASS {method_name}")
+            except Exception as e:
+                print(f"  FAIL {method_name}: {e}")
+    
+    # Run integration test
+    print(f"\nRunning integration test:")
+    try:
+        test_integration_example()
+        print("  PASS Integration test passed")
+    except Exception as e:
+        print(f"  FAIL Integration test failed: {e}")
+    
+    print("\nAll tests completed!")

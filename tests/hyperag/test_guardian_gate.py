@@ -4,9 +4,9 @@ import pathlib
 import tempfile
 from unittest.mock import patch
 
-import pytest
 from mcp_servers.hyperag.guardian import audit
 from mcp_servers.hyperag.guardian.gate import GuardianGate
+import pytest
 
 
 class MockProposal:

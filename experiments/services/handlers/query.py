@@ -7,12 +7,13 @@ and integrate with the resilient HTTP client for external calls.
 
 import logging
 import time
-import uuid
 from typing import Any
+import uuid
 
 from fastapi import HTTPException, Request, status
-from packages.core.common import get_http_client, is_enabled
 from pydantic import BaseModel
+
+from packages.core.common import get_http_client, is_enabled
 
 logger = logging.getLogger(__name__)
 

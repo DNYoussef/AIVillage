@@ -8,20 +8,16 @@ Tests the memory system components including:
 - Cross-attention integration with transformer layers
 """
 
-from typing import Any, Dict, Optional, Tuple
 
-import numpy as np
 import pytest
 import torch
 import torch.nn.functional as F
 
 # Import Cogment memory components
 try:
-    from core.agent_forge.models.cogment.core.config import CogmentConfig
     from core.agent_forge.models.cogment.memory.cross_attention import CrossAttention
     from core.agent_forge.models.cogment.memory.gated_ltm import GatedLTM, LTMConfig
     from core.agent_forge.models.cogment.memory.memory_gates import MemoryGate, SurpriseGate
-    from core.agent_forge.models.cogment.memory.memory_utils import MemoryUtils
 
     MEMORY_AVAILABLE = True
 except ImportError as e:
@@ -251,7 +247,7 @@ class TestGatedLTM:
             value = torch.randn(batch_size, seq_len, ltm_config.ltm_dim)
             surprise = torch.full((batch_size, seq_len, 1), 0.8)
 
-            write_result = gated_ltm.write(key, value, surprise)
+            gated_ltm.write(key, value, surprise)
 
             # Verify memory bank doesn't exceed capacity
             assert gated_ltm.memory_bank.shape[0] == ltm_config.ltm_capacity
@@ -468,7 +464,7 @@ class TestMemoryIntegration:
         surprise1 = torch.full((1, 8, 1), 0.8)
 
         with torch.no_grad():
-            outputs1 = memory_system(batch1, surprise1)
+            memory_system(batch1, surprise1)
 
         memory_after_batch1 = memory_system.memory_bank.clone()
 

@@ -8,8 +8,8 @@ if importlib.util.find_spec("numpy") is None or importlib.util.find_spec("torch"
     msg = "Required dependency not installed"
     raise unittest.SkipTest(msg)
 
-import sys
 from pathlib import Path
+import sys
 from unittest.mock import AsyncMock, MagicMock
 
 import numpy as np

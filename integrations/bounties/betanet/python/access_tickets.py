@@ -5,13 +5,13 @@ Implements the access ticket authentication system for BetaNet,
 providing controlled access to mixnodes and transport services with proper cryptography.
 """
 
+from dataclasses import dataclass
 import hashlib
 import hmac
 import json
 import logging
 import secrets
 import time
-from dataclasses import dataclass
 
 try:
     from cryptography.hazmat.primitives.asymmetric import ed25519

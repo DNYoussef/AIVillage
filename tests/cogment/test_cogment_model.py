@@ -9,7 +9,6 @@ Tests the unified Cogment model's core functionality including:
 """
 
 from dataclasses import dataclass
-from typing import Any, Dict, Optional
 
 import pytest
 import torch

@@ -10,18 +10,18 @@ Extends existing BitChatTransport with Jack Dorsey's BitChat specification:
 """
 
 import asyncio
+from collections import defaultdict
+from collections.abc import Callable
+from dataclasses import dataclass, field
+from enum import Enum
 import json
 import logging
 import os
 import random
 import struct
 import time
-import uuid
-from collections import defaultdict
-from collections.abc import Callable
-from dataclasses import dataclass, field
-from enum import Enum
 from typing import Any, Optional
+import uuid
 
 # Import existing BitChat implementation
 from core.p2p.bitchat_transport import BitChatMessage, BitChatPeer, BitChatTransport

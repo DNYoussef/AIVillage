@@ -5,9 +5,9 @@ Setup script for architectural fitness function tools
 This script installs and configures all necessary tools for architectural analysis.
 """
 
+from pathlib import Path
 import subprocess
 import sys
-from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).parent.parent
 

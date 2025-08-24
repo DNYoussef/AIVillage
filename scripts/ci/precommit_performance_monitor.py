@@ -6,21 +6,19 @@ Tracks and optimizes pre-commit hook performance to maintain <2 minute execution
 Provides performance analytics, bottleneck detection, and optimization recommendations.
 """
 
+from datetime import datetime
 import json
-import os
+from pathlib import Path
 import statistics
 import subprocess
 import sys
 import time
-from datetime import datetime, timedelta
-from pathlib import Path
-from typing import Dict, List, Optional, Tuple
 
 
 class PreCommitPerformanceMonitor:
     """Monitor and optimize pre-commit hook performance."""
 
-    def __init__(self, metrics_file: Optional[str] = None):
+    def __init__(self, metrics_file: str | None = None):
         """Initialize performance monitor."""
         self.repo_root = Path(__file__).parent.parent.parent
         self.metrics_file = metrics_file or self.repo_root / ".pre-commit-metrics.json"
@@ -53,7 +51,7 @@ class PreCommitPerformanceMonitor:
 
         self._save_metrics(metrics)
 
-    def analyze_performance(self) -> Dict:
+    def analyze_performance(self) -> dict:
         """Analyze current performance and provide recommendations."""
         metrics = self._load_metrics()
         total_time = 0.0
@@ -93,27 +91,27 @@ class PreCommitPerformanceMonitor:
 
         return analysis
 
-    def _load_metrics(self) -> Dict:
+    def _load_metrics(self) -> dict:
         """Load performance metrics from file."""
         if not self.metrics_file.exists():
             return {}
 
         try:
-            with open(self.metrics_file, "r") as f:
+            with open(self.metrics_file) as f:
                 return json.load(f)
-        except (json.JSONDecodeError, IOError):
+        except (OSError, json.JSONDecodeError):
             return {}
 
-    def _save_metrics(self, metrics: Dict) -> None:
+    def _save_metrics(self, metrics: dict) -> None:
         """Save performance metrics to file."""
         try:
             self.metrics_file.parent.mkdir(parents=True, exist_ok=True)
             with open(self.metrics_file, "w") as f:
                 json.dump(metrics, f, indent=2)
-        except IOError as e:
+        except OSError as e:
             print(f"Warning: Could not save metrics: {e}", file=sys.stderr)
 
-    def _update_statistics(self, hook_data: Dict) -> None:
+    def _update_statistics(self, hook_data: dict) -> None:
         """Update statistics for a hook."""
         executions = hook_data["executions"]
         if not executions:
@@ -132,7 +130,7 @@ class PreCommitPerformanceMonitor:
             "last_execution": executions[-1]["timestamp"],
         }
 
-    def _calculate_overall_success_rate(self, metrics: Dict) -> float:
+    def _calculate_overall_success_rate(self, metrics: dict) -> float:
         """Calculate overall success rate across all hooks."""
         total_executions = 0
         total_successes = 0
@@ -147,7 +145,7 @@ class PreCommitPerformanceMonitor:
 
         return (total_successes / total_executions * 100) if total_executions > 0 else 100.0
 
-    def _calculate_trend(self, metrics: Dict) -> str:
+    def _calculate_trend(self, metrics: dict) -> str:
         """Calculate performance trend (improving/degrading/stable)."""
         trends = []
 
@@ -175,7 +173,7 @@ class PreCommitPerformanceMonitor:
         # Return most common trend
         return max(set(trends), key=trends.count)
 
-    def _generate_recommendations(self, analysis: Dict, metrics: Dict) -> List[str]:
+    def _generate_recommendations(self, analysis: dict, metrics: dict) -> list[str]:
         """Generate optimization recommendations."""
         recommendations = []
 

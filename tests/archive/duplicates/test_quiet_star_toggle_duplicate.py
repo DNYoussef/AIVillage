@@ -2,8 +2,9 @@ import importlib.util
 
 import pytest
 import torch
-from agent_forge.training.quiet_star import QuietSTaRModel
 from transformers import AutoModelForCausalLM, AutoTokenizer
+
+from agent_forge.training.quiet_star import QuietSTaRModel
 
 spec = importlib.util.find_spec("torch")
 if spec is None:

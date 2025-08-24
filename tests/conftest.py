@@ -3,9 +3,9 @@ Unified pytest configuration and fixtures for AIVillage testing consolidation.
 """
 
 import os
+from pathlib import Path
 import sys
 import tempfile
-from pathlib import Path
 from unittest.mock import MagicMock
 
 import pytest
@@ -162,7 +162,7 @@ def mock_mesh_protocol():
             if recipient_id in self.peers and self.transports:
                 transport = list(self.transports.values())[0]
                 try:
-                    result = await transport.send_message(recipient_id, message)
+                    await transport.send_message(recipient_id, message)
                     return message_id
                 except Exception:
                     raise Exception(f"Failed to deliver message to {recipient_id}")

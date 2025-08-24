@@ -7,9 +7,9 @@ that caused 88.5% test success rate while hiding 70% functionality failures.
 It demonstrates the transformation from mock-heavy to real functionality testing.
 """
 
+from pathlib import Path
 import re
 import sys
-from pathlib import Path
 from typing import Any
 
 # Add project paths

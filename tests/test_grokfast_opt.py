@@ -6,6 +6,7 @@ if importlib.util.find_spec("torch") is None or importlib.util.find_spec("grokfa
     raise unittest.SkipTest(msg)
 
 import torch
+
 from agent_forge.training.grokfast_opt import GrokfastAdam
 
 

@@ -4,9 +4,9 @@ Device Registry - Central device management and lifecycle tracking
 Provides device registration, discovery, and lifecycle management for the edge computing system.
 """
 
-import logging
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
+import logging
 from typing import Any
 
 logger = logging.getLogger(__name__)

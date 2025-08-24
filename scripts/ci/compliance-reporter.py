@@ -5,15 +5,15 @@ Generates comprehensive security and compliance reports from CI/CD pipeline resu
 """
 
 import argparse
+from dataclasses import asdict, dataclass
+from datetime import datetime
 import json
 import logging
 import os
+from pathlib import Path
 import subprocess
 import sys
-from dataclasses import asdict, dataclass
-from datetime import datetime, timedelta
-from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import yaml
 
@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 class ComplianceMetric:
     name: str
     value: Any
-    threshold: Optional[Any] = None
+    threshold: Any | None = None
     status: str = "unknown"  # passed, failed, warning
     category: str = "general"
 
@@ -37,24 +37,24 @@ class ComplianceReport:
     commit_sha: str
     pipeline_type: str
     overall_status: str
-    metrics: List[ComplianceMetric]
-    security_summary: Dict[str, Any]
-    recommendations: List[str]
+    metrics: list[ComplianceMetric]
+    security_summary: dict[str, Any]
+    recommendations: list[str]
     compliance_score: int
 
 
 class ComplianceReporter:
     """Generate comprehensive compliance reports."""
 
-    def __init__(self, config_path: Optional[str] = None):
+    def __init__(self, config_path: str | None = None):
         self.config = self._load_config(config_path)
         self.timestamp = datetime.now().isoformat()
 
-    def _load_config(self, config_path: Optional[str]) -> Dict:
+    def _load_config(self, config_path: str | None) -> dict:
         """Load compliance configuration."""
         if config_path and Path(config_path).exists():
             try:
-                with open(config_path, "r") as f:
+                with open(config_path) as f:
                     return yaml.safe_load(f)
             except Exception as e:
                 logger.warning(f"Could not load config: {e}")
@@ -71,7 +71,7 @@ class ComplianceReporter:
             }
         }
 
-    def collect_security_metrics(self) -> List[ComplianceMetric]:
+    def collect_security_metrics(self) -> list[ComplianceMetric]:
         """Collect security-related compliance metrics."""
         metrics = []
 
@@ -99,7 +99,7 @@ class ComplianceReporter:
 
         return metrics
 
-    def _collect_vulnerability_metrics(self) -> List[ComplianceMetric]:
+    def _collect_vulnerability_metrics(self) -> list[ComplianceMetric]:
         """Collect vulnerability scanning metrics."""
         metrics = []
 
@@ -114,7 +114,7 @@ class ComplianceReporter:
         for report_file, tool in report_files.items():
             if Path(report_file).exists():
                 try:
-                    with open(report_file, "r") as f:
+                    with open(report_file) as f:
                         report_data = json.load(f)
 
                     if tool == "bandit":
@@ -207,7 +207,7 @@ class ComplianceReporter:
 
         return metrics
 
-    def _collect_security_scan_metrics(self) -> List[ComplianceMetric]:
+    def _collect_security_scan_metrics(self) -> list[ComplianceMetric]:
         """Collect security scanning tool metrics."""
         metrics = []
 
@@ -237,14 +237,14 @@ class ComplianceReporter:
 
         return metrics
 
-    def collect_quality_metrics(self) -> List[ComplianceMetric]:
+    def collect_quality_metrics(self) -> list[ComplianceMetric]:
         """Collect code quality metrics."""
         metrics = []
 
         # Check for architectural quality reports
         if Path("quality_gate_result.json").exists():
             try:
-                with open("quality_gate_result.json", "r") as f:
+                with open("quality_gate_result.json") as f:
                     quality_data = json.load(f)
 
                 metrics.append(
@@ -274,7 +274,7 @@ class ComplianceReporter:
         # Check for coupling metrics
         if Path("coupling_report.json").exists():
             try:
-                with open("coupling_report.json", "r") as f:
+                with open("coupling_report.json") as f:
                     coupling_data = json.load(f)
 
                 max_coupling = coupling_data.get("max_coupling", 0)
@@ -293,7 +293,7 @@ class ComplianceReporter:
 
         return metrics
 
-    def collect_test_metrics(self) -> List[ComplianceMetric]:
+    def collect_test_metrics(self) -> list[ComplianceMetric]:
         """Collect test coverage and test results metrics."""
         metrics = []
 
@@ -312,7 +312,7 @@ class ComplianceReporter:
 
         return metrics
 
-    def calculate_compliance_score(self, metrics: List[ComplianceMetric]) -> int:
+    def calculate_compliance_score(self, metrics: list[ComplianceMetric]) -> int:
         """Calculate overall compliance score."""
         if not metrics:
             return 0
@@ -335,7 +335,7 @@ class ComplianceReporter:
 
         return int((weighted_score / total_weight) * 100) if total_weight > 0 else 0
 
-    def generate_recommendations(self, metrics: List[ComplianceMetric]) -> List[str]:
+    def generate_recommendations(self, metrics: list[ComplianceMetric]) -> list[str]:
         """Generate compliance recommendations based on metrics."""
         recommendations = []
 
@@ -513,7 +513,7 @@ def main():
     reporter.save_report(report, args.output, args.format)
 
     # Print summary
-    print(f"\nCompliance Report Summary:")
+    print("\nCompliance Report Summary:")
     print(f"Overall Status: {report.overall_status.upper()}")
     print(f"Compliance Score: {report.compliance_score}/100")
     print(

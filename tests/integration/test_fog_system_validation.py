@@ -11,8 +11,8 @@ Tests critical fog computing components:
 This test validates the fog system integrity after reorganization.
 """
 
-import sys
 from pathlib import Path
+import sys
 
 import pytest
 

@@ -5,9 +5,9 @@ Agent Forge Validation Report Generator
 Creates a comprehensive report on Agent Forge system status after reorganization.
 """
 
-import sys
 from datetime import datetime
 from pathlib import Path
+import sys
 
 
 def generate_validation_report():

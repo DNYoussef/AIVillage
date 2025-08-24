@@ -2,8 +2,9 @@ import importlib.util
 
 import pytest
 import torch
-from agent_forge.compression import CompressionConfig, stream_compress_model
 from twin_runtime.compressed_loader import CompressedModelLoader
+
+from agent_forge.compression import CompressionConfig, stream_compress_model
 
 torch_spec = importlib.util.find_spec("torch")
 if torch_spec is None:

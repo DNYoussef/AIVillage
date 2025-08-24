@@ -12,18 +12,18 @@ standardized interfaces that can be called from Kotlin/Java via JNI.
 
 import asyncio
 import base64
-import json
-import logging
-import time
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import asdict
+import json
+import logging
 from threading import Thread
+import time
 from typing import Any
 
 # HTTP/WebSocket servers
 try:
-    import uvicorn
     from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
+    import uvicorn
 
     FASTAPI_AVAILABLE = True
 except ImportError:

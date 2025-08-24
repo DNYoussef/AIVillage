@@ -8,10 +8,10 @@ if importlib.util.find_spec("numpy") is None:
     msg = "Required dependency not installed"
     raise unittest.SkipTest(msg)
 
-import sys
-import types
 from datetime import datetime
 from pathlib import Path
+import sys
+import types
 
 import numpy as np
 

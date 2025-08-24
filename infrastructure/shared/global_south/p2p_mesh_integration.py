@@ -13,14 +13,14 @@ Integrates with:
 """
 
 import asyncio
-import json
-import logging
-import struct
-import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
+import json
+import logging
+import struct
+import time
 from typing import Any
 
 # Import existing P2P infrastructure

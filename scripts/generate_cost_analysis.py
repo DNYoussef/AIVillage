@@ -9,8 +9,8 @@ scenarios, providing detailed reports and optimization recommendations.
 import argparse
 import asyncio
 import json
-import sys
 from pathlib import Path
+import sys
 
 # Add src to path for imports
 sys.path.append(str(Path(__file__).parent.parent / "packages"))

@@ -17,16 +17,14 @@ import random
 # Import the mesh protocol
 import sys
 import time
-from typing import Any, Dict, List
+from typing import Any
 
 import pytest
 
 sys.path.append("C:/Users/17175/Desktop/AIVillage")
 from core.p2p.mesh_protocol import (
-    MeshMessage,
     MessagePriority,
     MessageStatus,
-    PeerInfo,
     ReliabilityConfig,
     TransportType,
     UnifiedMeshProtocol,
@@ -43,7 +41,7 @@ class MockTransport:
         self.messages_sent = []
         self.is_available = True
 
-    async def send_message(self, receiver_id: str, message_data: Dict[str, Any]) -> bool:
+    async def send_message(self, receiver_id: str, message_data: dict[str, Any]) -> bool:
         """Simulate message sending with configurable success rate."""
         # Simulate network latency
         await asyncio.sleep(self.latency_ms / 1000.0)
@@ -77,7 +75,7 @@ class ReliabilityValidator:
             "reliability_summary": {},
         }
 
-    async def test_basic_delivery_reliability(self) -> Dict[str, Any]:
+    async def test_basic_delivery_reliability(self) -> dict[str, Any]:
         """Test basic message delivery with acknowledgments."""
         print("Testing basic message delivery reliability...")
 
@@ -150,7 +148,7 @@ class ReliabilityValidator:
         print(f"Basic delivery: {delivery_rate:.2%} success rate (Target: 90%)")
         return results
 
-    async def test_retry_mechanism(self) -> Dict[str, Any]:
+    async def test_retry_mechanism(self) -> dict[str, Any]:
         """Test message retry mechanism with unreliable transport."""
         print("Testing retry mechanism with unreliable transport...")
 
@@ -217,7 +215,7 @@ class ReliabilityValidator:
         )
         return results
 
-    async def test_transport_failover(self) -> Dict[str, Any]:
+    async def test_transport_failover(self) -> dict[str, Any]:
         """Test failover between multiple transports."""
         print("Testing transport failover...")
 
@@ -285,7 +283,7 @@ class ReliabilityValidator:
         print(f"Failover test: {delivery_rate:.2%} success rate with multi-transport")
         return results
 
-    async def test_chunked_message_reliability(self) -> Dict[str, Any]:
+    async def test_chunked_message_reliability(self) -> dict[str, Any]:
         """Test reliability of large chunked messages."""
         print("Testing chunked message reliability...")
 
@@ -339,7 +337,7 @@ class ReliabilityValidator:
         print(f"Chunked messages: {delivery_rate:.2%} success rate for {len(large_payload)}B messages")
         return results
 
-    async def test_store_and_forward(self) -> Dict[str, Any]:
+    async def test_store_and_forward(self) -> dict[str, Any]:
         """Test store-and-forward mechanism during network partitions."""
         print("Testing store-and-forward mechanism...")
 
@@ -394,7 +392,7 @@ class ReliabilityValidator:
         print(f"Store-and-forward: {delivery_rate:.2%} success rate after network restoration")
         return results
 
-    async def test_performance_metrics(self) -> Dict[str, Any]:
+    async def test_performance_metrics(self) -> dict[str, Any]:
         """Test performance metrics under load."""
         print("Testing performance metrics under load...")
 
@@ -459,7 +457,7 @@ class ReliabilityValidator:
         print(f"Performance: {throughput:.0f} msgs/sec, {delivery_rate:.2%} delivery rate")
         return results
 
-    async def test_network_partition_recovery(self) -> Dict[str, Any]:
+    async def test_network_partition_recovery(self) -> dict[str, Any]:
         """Test recovery from network partitions and connection failures."""
         print("Testing network partition recovery...")
 
@@ -557,7 +555,7 @@ class ReliabilityValidator:
         print(f"Partition Recovery: {recovery_rate:.1f}% success rate")
         return results
 
-    async def test_circuit_breaker_pattern(self) -> Dict[str, Any]:
+    async def test_circuit_breaker_pattern(self) -> dict[str, Any]:
         """Test circuit breaker pattern for failed connections."""
         print("Testing circuit breaker pattern...")
 
@@ -627,7 +625,7 @@ class ReliabilityValidator:
         print(f"Circuit Breaker: {failure_rate:.1f}% failure rate, max {max_consecutive_failures} consecutive failures")
         return results
 
-    async def run_all_tests(self) -> Dict[str, Any]:
+    async def run_all_tests(self) -> dict[str, Any]:
         """Run complete reliability validation test suite."""
         print("=== Mesh Protocol Reliability Validation ===")
         print("Target: >90% message delivery reliability")
@@ -660,7 +658,7 @@ class ReliabilityValidator:
 
         return self.test_results
 
-    def _calculate_reliability_summary(self) -> Dict[str, Any]:
+    def _calculate_reliability_summary(self) -> dict[str, Any]:
         """Calculate overall reliability summary from all tests."""
         test_results = [
             ("Basic Delivery", self.test_results["basic_delivery"]),

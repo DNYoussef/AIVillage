@@ -5,10 +5,10 @@ Follows connascence principles by providing single sources of truth for test set
 """
 
 import asyncio
-import uuid
 from datetime import datetime
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock
+import uuid
 
 import pytest
 import pytest_asyncio
@@ -302,8 +302,8 @@ def performance_monitor():
 
         def measure_duration(self, operation_name: str):
             """Context manager for measuring operation duration."""
-            import time
             from contextlib import contextmanager
+            import time
 
             @contextmanager
             def timer():

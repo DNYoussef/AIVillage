@@ -5,11 +5,11 @@ This module provides runtime feature toggles with canary rollouts and kill-switc
 Designed for production safety and gradual feature deployment.
 """
 
+from enum import Enum
 import os
+from pathlib import Path
 import threading
 import time
-from enum import Enum
-from pathlib import Path
 from typing import Any
 
 import yaml

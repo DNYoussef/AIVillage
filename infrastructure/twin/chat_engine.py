@@ -25,11 +25,11 @@
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
+from enum import Enum
 import logging
 import os
 import time
-from datetime import UTC, datetime
-from enum import Enum
 from typing import Any
 
 import requests

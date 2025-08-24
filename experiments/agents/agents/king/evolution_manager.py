@@ -2,8 +2,8 @@ import logging
 import random
 from typing import Any
 
-import torch
 from rag_system.utils.error_handling import AIVillageException, log_and_handle_errors
+import torch
 from torch import nn, optim
 
 # The optimization utilities live in the planning package.  The original

@@ -9,13 +9,11 @@ Tests the integration components including:
 - Phase controller replacing 3-phase HRRM with 4-stage Cogment
 """
 
-import tempfile
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+import tempfile
 
 import pytest
 import torch
-import torch.nn as nn
 
 # Import Cogment integration components
 try:
@@ -595,7 +593,7 @@ class TestCogmentIntegrationComplete:
         assert memory_mb < 1500, f"Memory requirement too high: {memory_mb}MB"
         assert cpu_cores <= 4, f"CPU requirement too high: {cpu_cores} cores"
 
-        print(f"✓ Integration performance improvements:")
+        print("✓ Integration performance improvements:")
         print(f"  - Parameter reduction: {param_reduction:.1f}x ({hrrm_baseline_params:,} → {total_params:,})")
         print(f"  - Memory requirement: {memory_mb}MB")
         print(f"  - CPU requirement: {cpu_cores} cores")
@@ -619,7 +617,7 @@ class TestCogmentIntegrationComplete:
 
         with tempfile.TemporaryDirectory() as temp_dir:
             export_path = Path(temp_dir) / "model"
-            export_result = hf_exporter.export_model(model, export_path)
+            hf_exporter.export_model(model, export_path)
 
             # Validate exported model works
             validation = hf_exporter.validate_exported_model(export_path)
