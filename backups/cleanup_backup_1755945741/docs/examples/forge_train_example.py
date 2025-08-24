@@ -13,12 +13,12 @@ This example shows how to use all the components:
 import logging
 from pathlib import Path
 
+from datasets import Dataset
 import numpy as np
+from transformers import GPT2LMHeadModel, GPT2Tokenizer
 
 # Import Forge components
 from agent_forge.training.forge_train import ForgeTrainConfig, ForgeTrainer
-from datasets import Dataset
-from transformers import GPT2LMHeadModel, GPT2Tokenizer
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)

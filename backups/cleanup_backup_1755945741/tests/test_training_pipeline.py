@@ -6,11 +6,12 @@ from unittest.mock import patch
 
 import pytest
 import torch
+from transformers import AutoModelForCausalLM, AutoTokenizer
+
 from agent_forge.training.curriculum import CurriculumGenerator, CurriculumLevel, Question
 from agent_forge.training.enhanced_self_modeling import EnhancedSelfModeling, SelfModelingConfig, TemperatureRange
 from agent_forge.training.quiet_star import QuietSTaRModel
 from agent_forge.training.training_loop import AgentForgeTrainingLoop
-from transformers import AutoModelForCausalLM, AutoTokenizer
 
 
 class TestCurriculumGenerator:

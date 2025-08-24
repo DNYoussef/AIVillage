@@ -7,9 +7,7 @@ Validates all performance targets and NoneType error fixes.
 
 import asyncio
 import logging
-import sys
 import time
-from pathlib import Path
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")

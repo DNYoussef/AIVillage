@@ -4,19 +4,18 @@ Unified Cleanup Framework for AIVillage
 Standardizes all cleanup, fix, and maintenance scripts with consistent interface
 """
 
+from abc import ABC, abstractmethod
 import argparse
+from dataclasses import dataclass
+from enum import Enum
 import json
 import logging
-import os
+from pathlib import Path
 import shutil
 import subprocess
 import sys
 import time
-from abc import ABC, abstractmethod
-from dataclasses import dataclass
-from enum import Enum
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 
 class CleanupStatus(Enum):
@@ -33,10 +32,10 @@ class CleanupResult:
     status: CleanupStatus
     items_processed: int
     items_fixed: int
-    errors: List[str]
-    warnings: List[str]
+    errors: list[str]
+    warnings: list[str]
     execution_time: float
-    details: Dict[str, Any]
+    details: dict[str, Any]
 
 
 @dataclass
@@ -60,12 +59,12 @@ class BaseCleanupTask(ABC):
         self.logger = logging.getLogger(f"cleanup.{name}")
 
     @abstractmethod
-    def analyze(self, project_root: Path) -> Dict[str, Any]:
+    def analyze(self, project_root: Path) -> dict[str, Any]:
         """Analyze what needs to be cleaned up"""
         pass
 
     @abstractmethod
-    def execute(self, project_root: Path, analysis_result: Dict[str, Any]) -> CleanupResult:
+    def execute(self, project_root: Path, analysis_result: dict[str, Any]) -> CleanupResult:
         """Execute the cleanup task"""
         pass
 
@@ -82,7 +81,7 @@ class BaseCleanupTask(ABC):
 class LintingFixTask(BaseCleanupTask):
     """Fix common linting issues (consolidates fix_linting_issues.py)"""
 
-    def analyze(self, project_root: Path) -> Dict[str, Any]:
+    def analyze(self, project_root: Path) -> dict[str, Any]:
         python_files = list(project_root.rglob("*.py"))
         # Exclude deprecated/archived files
         python_files = [
@@ -95,7 +94,7 @@ class LintingFixTask(BaseCleanupTask):
 
         for py_file in python_files:
             try:
-                with open(py_file, "r", encoding="utf-8") as f:
+                with open(py_file, encoding="utf-8") as f:
                     lines = f.readlines()
 
                 for line_num, line in enumerate(lines, 1):
@@ -113,7 +112,7 @@ class LintingFixTask(BaseCleanupTask):
             "total_issues": sum(len(v) for v in issues.values()),
         }
 
-    def execute(self, project_root: Path, analysis_result: Dict[str, Any]) -> CleanupResult:
+    def execute(self, project_root: Path, analysis_result: dict[str, Any]) -> CleanupResult:
         start_time = time.time()
         result = CleanupResult(
             task_name=self.name,
@@ -154,7 +153,7 @@ class LintingFixTask(BaseCleanupTask):
 class ImportFixTask(BaseCleanupTask):
     """Fix import path issues (consolidates fix_*_imports.py scripts)"""
 
-    def analyze(self, project_root: Path) -> Dict[str, Any]:
+    def analyze(self, project_root: Path) -> dict[str, Any]:
         python_files = list(project_root.rglob("*.py"))
         python_files = [
             f
@@ -165,7 +164,7 @@ class ImportFixTask(BaseCleanupTask):
         import_issues = []
         for py_file in python_files:
             try:
-                with open(py_file, "r", encoding="utf-8") as f:
+                with open(py_file, encoding="utf-8") as f:
                     content = f.read()
 
                 # Look for common import issues
@@ -189,7 +188,7 @@ class ImportFixTask(BaseCleanupTask):
 
         return {"total_files": len(python_files), "import_issues": import_issues, "total_issues": len(import_issues)}
 
-    def execute(self, project_root: Path, analysis_result: Dict[str, Any]) -> CleanupResult:
+    def execute(self, project_root: Path, analysis_result: dict[str, Any]) -> CleanupResult:
         start_time = time.time()
         result = CleanupResult(
             task_name=self.name,
@@ -222,10 +221,10 @@ class ImportFixTask(BaseCleanupTask):
         result.execution_time = time.time() - start_time
         return result
 
-    def _fix_import_path(self, issue: Dict[str, Any]) -> None:
+    def _fix_import_path(self, issue: dict[str, Any]) -> None:
         """Apply specific import path fixes"""
         file_path = issue["file"]
-        line_content = issue["content"]
+        issue["content"]
 
         # Define common path mappings
         path_mappings = {
@@ -238,7 +237,7 @@ class ImportFixTask(BaseCleanupTask):
         }
 
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 content = f.read()
 
             for old_path, new_path in path_mappings.items():
@@ -254,7 +253,7 @@ class ImportFixTask(BaseCleanupTask):
 class FileCleanupTask(BaseCleanupTask):
     """Clean up temporary files and organize structure"""
 
-    def analyze(self, project_root: Path) -> Dict[str, Any]:
+    def analyze(self, project_root: Path) -> dict[str, Any]:
         cleanup_candidates = {"temp_files": [], "cache_dirs": [], "log_files": [], "backup_files": []}
 
         # Find temporary files
@@ -275,7 +274,7 @@ class FileCleanupTask(BaseCleanupTask):
             "total_items": sum(len(v) for v in cleanup_candidates.values()),
         }
 
-    def execute(self, project_root: Path, analysis_result: Dict[str, Any]) -> CleanupResult:
+    def execute(self, project_root: Path, analysis_result: dict[str, Any]) -> CleanupResult:
         start_time = time.time()
         result = CleanupResult(
             task_name=self.name,
@@ -320,7 +319,7 @@ class FileCleanupTask(BaseCleanupTask):
 class UnifiedCleanupManager:
     """Central manager for all cleanup tasks"""
 
-    def __init__(self, config: CleanupConfig, project_root: Optional[Path] = None):
+    def __init__(self, config: CleanupConfig, project_root: Path | None = None):
         self.config = config
         self.project_root = project_root or Path.cwd()
         self.backup_dir = self.project_root / "backups" / f"cleanup_backup_{int(time.time())}"
@@ -360,7 +359,7 @@ class UnifiedCleanupManager:
 
         return self.backup_dir
 
-    def run_all_tasks(self) -> List[CleanupResult]:
+    def run_all_tasks(self) -> list[CleanupResult]:
         """Run all cleanup tasks with standardized workflow"""
         results = []
 
@@ -407,7 +406,7 @@ class UnifiedCleanupManager:
 
         return results
 
-    def _generate_report(self, results: List[CleanupResult], backup_dir: Optional[Path]) -> None:
+    def _generate_report(self, results: list[CleanupResult], backup_dir: Path | None) -> None:
         """Generate comprehensive cleanup report"""
         report_path = self.project_root / "cleanup_report.json"
 
@@ -448,7 +447,7 @@ class UnifiedCleanupManager:
 
         # Print summary
         summary = report["summary"]
-        self.logger.info(f"Cleanup Summary:")
+        self.logger.info("Cleanup Summary:")
         self.logger.info(f"  Tasks: {summary['completed_tasks']}/{summary['total_tasks']} completed")
         self.logger.info(f"  Items: {summary['total_items_fixed']}/{summary['total_items_processed']} fixed")
         self.logger.info(f"  Time: {summary['total_execution_time']:.2f} seconds")

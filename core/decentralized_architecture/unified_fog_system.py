@@ -15,13 +15,13 @@ This consolidates 97+ Fog Computing files into ONE production-ready fog cloud:
 """
 
 import asyncio
+from dataclasses import dataclass, field
+from enum import Enum
 import json
 import logging
 import time
+from typing import Any
 import uuid
-from dataclasses import dataclass, field
-from enum import Enum
-from typing import Any, Dict, List, Optional, Union
 
 logger = logging.getLogger(__name__)
 
@@ -65,16 +65,16 @@ class FogJob:
 
     # Priority and scheduling
     priority: int = 3  # 0=critical, 5=low
-    deadline: Optional[float] = None
-    preferred_nodes: List[str] = field(default_factory=list)
+    deadline: float | None = None
+    preferred_nodes: list[str] = field(default_factory=list)
 
     # Status tracking
     status: FogJobStatus = FogJobStatus.PENDING
-    assigned_node: Optional[str] = None
-    started_at: Optional[float] = None
-    completed_at: Optional[float] = None
-    result_data: Optional[bytes] = None
-    error_message: Optional[str] = None
+    assigned_node: str | None = None
+    started_at: float | None = None
+    completed_at: float | None = None
+    result_data: bytes | None = None
+    error_message: str | None = None
 
     # Billing and marketplace
     max_cost_credits: int = 100
@@ -94,7 +94,7 @@ class FogNode:
     memory_mb: int
     storage_gb: int
     gpu_count: int = 0
-    specialized_hardware: List[str] = field(default_factory=list)
+    specialized_hardware: list[str] = field(default_factory=list)
 
     # Status
     online: bool = True
@@ -109,7 +109,7 @@ class FogNode:
     total_jobs_completed: int = 0
 
     # Network and location
-    location: Optional[str] = None
+    location: str | None = None
     network_latency_ms: float = 0.0
     bandwidth_mbps: float = 100.0
 
@@ -132,9 +132,9 @@ class UnifiedFogSystem:
         self.enable_p2p_bridge = enable_p2p_bridge
 
         # Core fog components
-        self.fog_nodes: Dict[str, FogNode] = {}
-        self.active_jobs: Dict[str, FogJob] = {}
-        self.job_queue: List[FogJob] = []
+        self.fog_nodes: dict[str, FogNode] = {}
+        self.active_jobs: dict[str, FogJob] = {}
+        self.job_queue: list[FogJob] = []
 
         # Scheduling and resource management
         self.scheduler = None
@@ -291,7 +291,7 @@ class UnifiedFogSystem:
 
     # Job Management API
 
-    async def submit_job(self, submitter_id: str, job_type: str, payload: Union[bytes, Dict, str], **job_params) -> str:
+    async def submit_job(self, submitter_id: str, job_type: str, payload: bytes | dict | str, **job_params) -> str:
         """
         Submit job to fog computing system.
 
@@ -327,7 +327,7 @@ class UnifiedFogSystem:
         logger.info(f"Job {job.job_id} submitted by {submitter_id}")
         return job.job_id
 
-    async def submit_job_via_p2p(self, p2p_sender: str, job_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def submit_job_via_p2p(self, p2p_sender: str, job_data: dict[str, Any]) -> dict[str, Any]:
         """
         Submit job received via P2P network.
         Integrates P2P transport with fog computing.
@@ -355,7 +355,7 @@ class UnifiedFogSystem:
             logger.error(f"P2P job submission failed: {e}")
             return {"error": str(e)}
 
-    async def get_job_status(self, job_id: str) -> Optional[Dict[str, Any]]:
+    async def get_job_status(self, job_id: str) -> dict[str, Any] | None:
         """Get status of fog computing job."""
         job = self.active_jobs.get(job_id)
         if not job:
@@ -396,7 +396,7 @@ class UnifiedFogSystem:
 
     # Node Management API
 
-    def register_fog_node(self, node_info: Dict[str, Any]) -> bool:
+    def register_fog_node(self, node_info: dict[str, Any]) -> bool:
         """Register new fog computing node."""
         try:
             node = FogNode(
@@ -440,7 +440,7 @@ class UnifiedFogSystem:
 
         return False
 
-    def update_node_status(self, node_id: str, status_update: Dict[str, Any]):
+    def update_node_status(self, node_id: str, status_update: dict[str, Any]):
         """Update fog node status and resource availability."""
         if node_id in self.fog_nodes:
             node = self.fog_nodes[node_id]
@@ -488,7 +488,7 @@ class UnifiedFogSystem:
             else:
                 logger.debug(f"No suitable node found for job {job.job_id}")
 
-    async def _find_suitable_node(self, job: FogJob) -> Optional[str]:
+    async def _find_suitable_node(self, job: FogJob) -> str | None:
         """Find suitable fog node for job execution."""
         suitable_nodes = []
 
@@ -595,7 +595,7 @@ class UnifiedFogSystem:
         # Mark job as completed
         job.status = FogJobStatus.COMPLETED
         job.completed_at = time.time()
-        job.result_data = f"Job {job.job_id} completed successfully".encode("utf-8")
+        job.result_data = f"Job {job.job_id} completed successfully".encode()
 
         # Calculate cost
         runtime_hours = execution_time / 3600
@@ -730,7 +730,7 @@ class UnifiedFogSystem:
 
     # Public API
 
-    def get_system_metrics(self) -> Dict[str, Any]:
+    def get_system_metrics(self) -> dict[str, Any]:
         """Get comprehensive fog system metrics."""
         return {
             "node_id": self.node_id,
@@ -743,7 +743,7 @@ class UnifiedFogSystem:
             "p2p_integration": self.enable_p2p_bridge and self.p2p_transport is not None,
         }
 
-    def get_node_status(self) -> Dict[str, Any]:
+    def get_node_status(self) -> dict[str, Any]:
         """Get status of all fog nodes."""
         return {
             node_id: {

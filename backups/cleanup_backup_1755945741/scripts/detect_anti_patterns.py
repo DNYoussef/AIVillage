@@ -20,11 +20,11 @@ Provides specific recommendations for refactoring each anti-pattern.
 import argparse
 import ast
 import collections
+from dataclasses import asdict, dataclass
 import json
+from pathlib import Path
 import sys
 import time
-from dataclasses import asdict, dataclass
-from pathlib import Path
 from typing import Any
 
 

@@ -18,12 +18,13 @@ Architecture:
 """
 
 import asyncio
-import logging
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
+import logging
 from typing import Any
 
+from packages.agents.core.base_agent_template import BaseAgent
 from packages.core.distributed_inference.model_sharding_engine import (
     ModelShard,
     ModelShardingEngine,
@@ -33,8 +34,6 @@ from packages.core.distributed_inference.model_sharding_engine import (
 from packages.edge.fog_compute.fog_coordinator import ComputeCapacity, FogCoordinator
 from packages.edge.mobile.digital_twin_concierge import DigitalTwinConcierge
 from packages.p2p.core.transport_manager import UnifiedTransportManager
-
-from packages.agents.core.base_agent_template import BaseAgent
 
 logger = logging.getLogger(__name__)
 

@@ -8,12 +8,12 @@ The guardian of AIVillage, responsible for:
 - Constitutional adherence validation
 """
 
+from dataclasses import dataclass
+from enum import Enum
 import hashlib
 import logging
 import os
 import time
-from dataclasses import dataclass
-from enum import Enum
 from typing import Any
 
 from packages.agents.core.agent_interface import AgentInterface

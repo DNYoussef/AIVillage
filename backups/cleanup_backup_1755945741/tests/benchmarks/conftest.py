@@ -1,10 +1,10 @@
 """Performance benchmark test configuration."""
 
-import json
-import time
 from dataclasses import asdict, dataclass
 from datetime import UTC
+import json
 from pathlib import Path
+import time
 from typing import Any
 
 import pytest

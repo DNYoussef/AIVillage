@@ -5,12 +5,12 @@ Provides comprehensive validation for Cogment configurations including parameter
 stage consistency, and integration compatibility with Agent 1-4 components.
 """
 
-import logging
 from dataclasses import dataclass
+import logging
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any
 
-from config_loader import CogmentCompleteConfig, StageConfig, TrainingConfig
+from config_loader import CogmentCompleteConfig, StageConfig
 
 logger = logging.getLogger(__name__)
 
@@ -20,10 +20,10 @@ class ValidationResult:
     """Result of configuration validation."""
 
     is_valid: bool
-    errors: List[str]
-    warnings: List[str]
-    parameter_analysis: Dict[str, Any]
-    stage_analysis: Dict[int, Dict[str, Any]]
+    errors: list[str]
+    warnings: list[str]
+    parameter_analysis: dict[str, Any]
+    stage_analysis: dict[int, dict[str, Any]]
 
 
 @dataclass
@@ -34,8 +34,8 @@ class ParameterBudgetAnalysis:
     target_budget: int
     utilization_ratio: float
     within_budget: bool
-    component_breakdown: Dict[str, int]
-    optimization_suggestions: List[str]
+    component_breakdown: dict[str, int]
+    optimization_suggestions: list[str]
 
 
 class CogmentConfigValidator:
@@ -51,7 +51,7 @@ class CogmentConfigValidator:
         self.validation_rules = self._setup_validation_rules()
         logger.info("Initialized CogmentConfigValidator")
 
-    def _setup_validation_rules(self) -> Dict[str, Any]:
+    def _setup_validation_rules(self) -> dict[str, Any]:
         """Setup validation rules and constraints."""
         return {
             "parameter_budget": {
@@ -252,7 +252,7 @@ class CogmentConfigValidator:
             optimization_suggestions=suggestions,
         )
 
-    def _validate_model_config(self, model_config: Dict[str, Any]) -> Tuple[List[str], List[str]]:
+    def _validate_model_config(self, model_config: dict[str, Any]) -> tuple[list[str], list[str]]:
         """Validate model configuration."""
         errors = []
         warnings = []
@@ -306,7 +306,7 @@ class CogmentConfigValidator:
 
     def _validate_stage_config(
         self, stage_config: StageConfig, stage_id: int
-    ) -> Tuple[List[str], List[str], Dict[str, Any]]:
+    ) -> tuple[list[str], list[str], dict[str, Any]]:
         """Validate individual stage configuration."""
         errors = []
         warnings = []
@@ -362,7 +362,7 @@ class CogmentConfigValidator:
 
         return errors, warnings, analysis
 
-    def _validate_stage_progression(self, stage_configs: Dict[int, Dict[str, Any]]) -> Tuple[List[str], List[str]]:
+    def _validate_stage_progression(self, stage_configs: dict[int, dict[str, Any]]) -> tuple[list[str], list[str]]:
         """Validate progression across stages."""
         errors = []
         warnings = []
@@ -394,7 +394,7 @@ class CogmentConfigValidator:
 
         return errors, warnings
 
-    def _validate_component_integration(self, config: CogmentCompleteConfig) -> Tuple[List[str], List[str]]:
+    def _validate_component_integration(self, config: CogmentCompleteConfig) -> tuple[list[str], list[str]]:
         """Validate integration between different components."""
         errors = []
         warnings = []
@@ -430,7 +430,7 @@ class CogmentConfigValidator:
 
         return errors, warnings
 
-    def _validate_grokfast_config(self, grokfast_config: Dict[str, Any]) -> Tuple[List[str], List[str]]:
+    def _validate_grokfast_config(self, grokfast_config: dict[str, Any]) -> tuple[list[str], list[str]]:
         """Validate GrokFast configuration."""
         errors = []
         warnings = []
@@ -473,7 +473,7 @@ class CogmentConfigValidator:
         return complexity
 
     def generate_validation_report(
-        self, validation_result: ValidationResult, output_path: Optional[Path] = None
+        self, validation_result: ValidationResult, output_path: Path | None = None
     ) -> str:
         """
         Generate a comprehensive validation report.

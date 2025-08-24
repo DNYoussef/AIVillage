@@ -3,11 +3,11 @@
 Core data structures for representing query plans, execution steps, and checkpoints.
 """
 
-import uuid
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from enum import Enum
 from typing import Any
+import uuid
 
 import numpy as np
 

@@ -14,13 +14,12 @@ Enhanced with unified command structure and comprehensive system management.
 
 import argparse
 import asyncio
+from datetime import datetime
 import logging
+from pathlib import Path
 import subprocess
 import sys
 import time
-from datetime import datetime
-from pathlib import Path
-from typing import Dict, List, Optional
 
 # Configure logging
 logging.basicConfig(
@@ -117,10 +116,10 @@ class AIVillageSystemManager:
 
     async def run_agent_forge(
         self,
-        config: Optional[str] = None,
-        models: Optional[List[str]] = None,
-        benchmark: Optional[str] = None,
-        output_dir: Optional[str] = None,
+        config: str | None = None,
+        models: list[str] | None = None,
+        benchmark: str | None = None,
+        output_dir: str | None = None,
     ) -> int:
         """Run the Agent Forge pipeline with comprehensive execution."""
         logger.info("🤖 Starting Agent Forge Pipeline...")
@@ -174,7 +173,7 @@ class AIVillageSystemManager:
 
         return 0 if success else 1
 
-    def generate_system_report(self, output_file: Optional[str] = None) -> int:
+    def generate_system_report(self, output_file: str | None = None) -> int:
         """Generate comprehensive system status report."""
         logger.info("📊 Generating AIVillage System Report...")
 
@@ -216,7 +215,7 @@ class AIVillageSystemManager:
 
         return 0
 
-    def _check_web_ui_status(self) -> Dict:
+    def _check_web_ui_status(self) -> dict:
         """Check web UI component status."""
         ui_path = self.project_root / "ui" / "web"
         return {
@@ -225,7 +224,7 @@ class AIVillageSystemManager:
             "components": len(list(ui_path.rglob("*.tsx"))) if ui_path.exists() else 0,
         }
 
-    def _check_mobile_status(self) -> Dict:
+    def _check_mobile_status(self) -> dict:
         """Check mobile integration status."""
         mobile_path = self.project_root / "ui" / "mobile"
         return {
@@ -234,7 +233,7 @@ class AIVillageSystemManager:
             "components": len(list(mobile_path.rglob("*.py"))) if mobile_path.exists() else 0,
         }
 
-    def _check_cli_status(self) -> Dict:
+    def _check_cli_status(self) -> dict:
         """Check CLI tools status."""
         cli_path = self.project_root / "ui" / "cli"
         return {
@@ -243,7 +242,7 @@ class AIVillageSystemManager:
             "tools": len(list(cli_path.glob("*.py"))) if cli_path.exists() else 0,
         }
 
-    def _check_p2p_status(self) -> Dict:
+    def _check_p2p_status(self) -> dict:
         """Check P2P network status."""
         p2p_path = self.project_root / "packages" / "p2p"
         return {
@@ -252,7 +251,7 @@ class AIVillageSystemManager:
             "protocols": ["BitChat", "BetaNet", "Mesh"] if p2p_path.exists() else [],
         }
 
-    def _check_agent_forge_status(self) -> Dict:
+    def _check_agent_forge_status(self) -> dict:
         """Check Agent Forge status."""
         forge_locations = [self.project_root / "agent_forge", self.project_root / "src" / "agent_forge"]
 
@@ -263,7 +262,7 @@ class AIVillageSystemManager:
             "location": next((str(p) for p in forge_locations if p.exists()), None),
         }
 
-    def _get_performance_metrics(self) -> Dict:
+    def _get_performance_metrics(self) -> dict:
         """Get system performance metrics."""
         return {
             "uptime": str(datetime.now() - self.start_time),
@@ -272,7 +271,7 @@ class AIVillageSystemManager:
             "disk_usage": "N/A",
         }
 
-    def _get_system_recommendations(self) -> List[str]:
+    def _get_system_recommendations(self) -> list[str]:
         """Generate system recommendations."""
         recommendations = []
 
@@ -322,7 +321,7 @@ For more information, see: docs/UI_SYSTEMS.md
     report_parser.add_argument("--output", help="Output file path")
 
     # Setup command
-    setup_parser = subparsers.add_parser("setup", help="Set up environment")
+    subparsers.add_parser("setup", help="Set up environment")
 
     args = parser.parse_args()
 

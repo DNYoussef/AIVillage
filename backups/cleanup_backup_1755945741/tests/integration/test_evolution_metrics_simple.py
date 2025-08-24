@@ -2,13 +2,13 @@
 Simple test script for Evolution Metrics Integration without complex dependencies.
 """
 
+from datetime import datetime
 import json
 import os
 import random
 import sqlite3
 import sys
 import time
-from datetime import datetime
 
 
 # Simple version without complex imports

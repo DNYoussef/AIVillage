@@ -7,12 +7,10 @@ import sys
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "core", "agent-forge", "models"))
 
-import torch
-import torch.nn as nn
-
 # Import components
 from cogment.core.config import CogmentConfig
 from cogment.memory.gated_ltm import GatedLTMMemory
+import torch
 
 
 def test_gated_ltm():
@@ -40,7 +38,7 @@ def test_gated_ltm():
     B, N = 2, 10
     query_states = torch.randn(B, N, config.d_model)
 
-    print(f"\nTesting READ operation...")
+    print("\nTesting READ operation...")
     print(f"Input query shape: {query_states.shape}")
 
     # Test read
@@ -53,7 +51,7 @@ def test_gated_ltm():
     print(f"Attention weights shape: {attn_info['attention_weights'].shape}")
     print(f"Selected indices shape: {attn_info['selected_indices'].shape}")
 
-    print(f"\nTesting WRITE operation...")
+    print("\nTesting WRITE operation...")
 
     # Test write
     predictions = torch.randn(B, N, config.vocab_size)
@@ -72,7 +70,7 @@ def test_gated_ltm():
         print("No writes performed (low surprisal)")
 
     # Force a write
-    print(f"\nTesting FORCED WRITE...")
+    print("\nTesting FORCED WRITE...")
     write_info = memory_system.write(
         query_states=query_states,
         surprisal=torch.ones(B) * 3.0,  # High surprisal
@@ -82,7 +80,7 @@ def test_gated_ltm():
 
     print(f"Forced write info: {write_info['num_writes']} writes")
 
-    print(f"\nTesting DECAY operation...")
+    print("\nTesting DECAY operation...")
     initial_norm = memory_system.memory_keys.norm()
     memory_system.decay_step()
     final_norm = memory_system.memory_keys.norm()
@@ -90,14 +88,14 @@ def test_gated_ltm():
     print(f"Memory norm after decay: {final_norm:.4f}")
     print(f"Decay applied: {((initial_norm - final_norm) / initial_norm * 100):.2f}% reduction")
 
-    print(f"\nTesting STATISTICS...")
+    print("\nTesting STATISTICS...")
     stats = memory_system.get_memory_stats()
     print(f"Total slots: {stats['total_slots']}")
     print(f"Average usage: {stats['avg_usage']:.4f}")
     print(f"Unused slots: {stats['unused_slots']}")
     print(f"Update count: {stats['update_count']}")
 
-    print(f"\nTesting FULL CYCLE (read-write-read)...")
+    print("\nTesting FULL CYCLE (read-write-read)...")
 
     # Initial read
     initial_context = memory_system.read(query_states)
@@ -123,7 +121,7 @@ def test_gated_ltm():
     else:
         print("Memory may not be updating properly")
 
-    print(f"\nGatedLTM Memory System Test Complete!")
+    print("\nGatedLTM Memory System Test Complete!")
     return True
 
 

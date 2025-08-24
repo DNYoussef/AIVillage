@@ -5,12 +5,12 @@ using property-based testing to verify behavior across many possible inputs.
 """
 
 import asyncio
-import uuid
 from datetime import datetime
+import uuid
 
-import pytest
 from hypothesis import assume, given, settings
 from hypothesis import strategies as st
+import pytest
 
 from packages.agents.core.agent_interface import AgentCapability, AgentMetadata, MessageInterface, TaskInterface
 from packages.agents.core.base_agent_template import BaseAgentTemplate, ReflectionType

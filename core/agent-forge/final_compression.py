@@ -21,13 +21,13 @@ import traceback
 from typing import Any
 
 import numpy as np
+from pydantic import BaseModel, Field
 import torch
 import torch.nn as nn
+from tqdm import tqdm
 
 # Import base phase controller interface
 from packages.agent_forge.core.phase_controller import PhaseController, PhaseResult
-from pydantic import BaseModel, Field
-from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
 

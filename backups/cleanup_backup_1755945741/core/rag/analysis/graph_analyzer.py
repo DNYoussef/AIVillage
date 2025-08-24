@@ -5,8 +5,8 @@ Focused module for analyzing graph completeness and quality metrics.
 Provides comprehensive analysis capabilities with configurable metrics.
 """
 
-import logging
 from dataclasses import dataclass
+import logging
 from typing import Any, Protocol
 
 import numpy as np

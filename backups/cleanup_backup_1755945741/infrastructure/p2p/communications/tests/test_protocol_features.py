@@ -1,6 +1,7 @@
 import asyncio
 
 import pytest
+
 from packages.p2p.communications.protocol import CommunicationsProtocol
 from packages.p2p.communications.service_directory import service_directory
 

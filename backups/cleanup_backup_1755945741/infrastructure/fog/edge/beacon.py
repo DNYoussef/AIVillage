@@ -12,12 +12,12 @@ advertising what resources are available on the edge device.
 """
 
 import asyncio
-import logging
-import socket
-import time
 from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
 from enum import Enum
+import logging
+import socket
+import time
 from typing import Any
 from uuid import uuid4
 

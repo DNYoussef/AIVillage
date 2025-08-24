@@ -2,10 +2,6 @@ import logging
 import math
 from typing import Any
 
-import torch
-from torch import nn
-from transformers import AutoTokenizer
-
 from AIVillage.experimental.training.geometry.snapshot import snapshot
 from AIVillage.experimental.training.meta.geo2z_policy import Geo2Z, Replay
 from AIVillage.experimental.training.optim.augmented_adam import AugmentedAdam
@@ -13,6 +9,9 @@ from AIVillage.experimental.training.training.curriculum import CurriculumGenera
 from AIVillage.experimental.training.training.pid_edgechaos import EdgePID
 from AIVillage.experimental.training.training.quiet_star import QuietSTaRModel
 from AIVillage.experimental.training.training.svf_ops import apply_svf
+import torch
+from torch import nn
+from transformers import AutoTokenizer
 
 logger = logging.getLogger(__name__)
 

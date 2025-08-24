@@ -1,8 +1,8 @@
 import random
 
-import torch
 from langroid import ChatAgent, ChatAgentConfig, Task
 from langroid.language_models.openai_gpt import OpenAIGPTConfig
+import torch
 from torch import nn, optim
 from tqdm import tqdm
 from transformers import AutoModelForMaskedLM, AutoTokenizer

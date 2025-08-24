@@ -10,9 +10,9 @@ Comprehensive validation of error handling and system resilience including:
 Integration Point: Resilience validation for Phase 4 testing
 """
 
+from pathlib import Path
 import sys
 import time
-from pathlib import Path
 
 import pytest
 

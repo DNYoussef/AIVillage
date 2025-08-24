@@ -15,13 +15,13 @@ This provides a single entry point for:
 """
 
 import asyncio
-import logging
-import platform
-import time
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from enum import Enum
+import logging
+import platform
+import time
 from typing import Any
 
 import psutil

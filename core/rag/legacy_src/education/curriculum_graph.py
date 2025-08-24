@@ -6,17 +6,17 @@ focused, manageable components following single responsibility principle.
 """
 
 import asyncio
-import hashlib
-import logging
-from collections import defaultdict, deque
+from collections import defaultdict
 from dataclasses import dataclass
 from datetime import UTC, datetime
+import hashlib
+import logging
 from typing import Any
 
 import wandb
 
 # Import from hyperag components
-from ..core.hypergraph_kg import Hyperedge, HypergraphKG, Node
+from ..core.hypergraph_kg import HypergraphKG
 
 logger = logging.getLogger(__name__)
 
@@ -76,7 +76,6 @@ class ConceptManager:
         prerequisite_difficulty = len(prerequisites) * 0.05
         difficulty = min(base_difficulty + prerequisite_difficulty, 1.0)
 
-        adjustment_factors = {"mathematics": 1.2, "science": 1.1, "language_arts": 0.9, "social_studies": 0.8}
 
         return min(difficulty, 1.0)
 
@@ -555,8 +554,8 @@ class CurriculumGraph:
             wandb.log(
                 {
                     f"curriculum_created/{subject}": 1,
-                    f"grade_range": f"{grade_range[0]}-{grade_range[1]}",
-                    f"path_concepts_count": len(self.path_builder.learning_paths[path_id].concepts),
+                    "grade_range": f"{grade_range[0]}-{grade_range[1]}",
+                    "path_concepts_count": len(self.path_builder.learning_paths[path_id].concepts),
                 }
             )
 

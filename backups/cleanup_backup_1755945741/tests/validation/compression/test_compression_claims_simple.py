@@ -5,13 +5,13 @@ This test validates the core compression claims without relying on complex Agent
 Tests the fundamental compression algorithms and validates claimed compression ratios.
 """
 
+from dataclasses import dataclass
 import json
 import logging
+from pathlib import Path
 import statistics
 import sys
 import time
-from dataclasses import dataclass
-from pathlib import Path
 from typing import Any
 
 import numpy as np

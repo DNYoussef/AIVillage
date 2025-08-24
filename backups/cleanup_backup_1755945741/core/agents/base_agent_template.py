@@ -8,10 +8,10 @@ with a unified, dependency-injected foundation.
 
 from __future__ import annotations
 
-import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
+import logging
 from typing import Any, Protocol
 
 from ..domain.entities.agent_entity import Agent, AgentCapability, AgentId

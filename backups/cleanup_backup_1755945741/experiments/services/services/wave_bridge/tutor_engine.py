@@ -56,16 +56,17 @@ class AITutor:
         """Initialize Agent Forge model for tutoring."""
         try:
             # Import Agent Forge components
-            import sys
             from pathlib import Path
+            import sys
 
             # Add Agent Forge path
             agent_forge_path = Path(__file__).parent.parent.parent / "agent_forge"
             sys.path.append(str(agent_forge_path))
 
             import torch
-            from agent_forge.rag_integration import AgentForgeRAGSelector
             from transformers import AutoModelForCausalLM, AutoTokenizer
+
+            from agent_forge.rag_integration import AgentForgeRAGSelector
 
             # Auto-select best model
             selector = AgentForgeRAGSelector("./benchmark_results")

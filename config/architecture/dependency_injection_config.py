@@ -11,9 +11,9 @@ Key Principles:
 4. Configuration over Convention - Explicit wiring
 """
 
-import logging
 from dataclasses import dataclass
 from enum import Enum
+import logging
 from pathlib import Path
 from typing import Any, Protocol, TypeVar
 
@@ -404,13 +404,12 @@ def configure_aivillage_services() -> None:
 
     # Import implementations - these will be created during implementation phase
     try:
+        from packages.agents.core.communication.channel_manager import ChannelManager
+        from packages.agents.core.memory.langroid_memory import LangroidMemoryService
         from packages.core.common.configuration_manager import ConfigurationManager
         from packages.core.common.logging_service import LoggingService as LoggingServiceImpl
         from packages.core.common.metrics_service import MetricsService as MetricsServiceImpl
         from packages.core.security.digital_twin_encryption import DigitalTwinEncryption
-
-        from packages.agents.core.communication.channel_manager import ChannelManager
-        from packages.agents.core.memory.langroid_memory import LangroidMemoryService
         from packages.rag.unified_rag_client import UnifiedRAGClient
 
         # Register core services as singletons

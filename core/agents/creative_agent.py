@@ -1,8 +1,8 @@
 """Creative Agent - Content Generation and Artistic Task Specialist"""
 
+from dataclasses import dataclass
 import logging
 import random
-from dataclasses import dataclass
 from typing import Any
 
 from packages.agents.core.base import BaseAgent

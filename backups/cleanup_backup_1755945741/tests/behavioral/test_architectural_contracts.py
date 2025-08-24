@@ -6,8 +6,8 @@ Tests that verify architectural layer separation and module contracts.
 import ast
 import importlib
 import inspect
-import sys
 from pathlib import Path
+import sys
 from typing import Protocol
 from unittest.mock import Mock, patch
 

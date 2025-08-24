@@ -11,13 +11,13 @@ Implements sophisticated evolutionary optimization to create a strong foundation
 from multiple base models using various merging techniques.
 """
 
-import json
-import logging
-import random
-import tempfile
 from dataclasses import dataclass, field
 from datetime import datetime
+import json
+import logging
 from pathlib import Path
+import random
+import tempfile
 from typing import Any
 
 import numpy as np
@@ -55,6 +55,7 @@ class EvoMergeConfig(PhaseConfig):
     prefer_seeds: bool = True
 
     output_dir: str = "./evomerge_output"
+    checkpoint_dir: str = "./evomerge_checkpoints"  # Added missing checkpoint_dir
     device: str = "cuda" if torch.cuda.is_available() else "cpu"
 
     # Evolution parameters

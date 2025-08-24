@@ -13,10 +13,10 @@ import asyncio
 import json
 import logging
 import os
+from pathlib import Path
 import random
 import sys
 import time
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))

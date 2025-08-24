@@ -7,9 +7,9 @@ Orchestrates the complete retrieval pipeline:
 - Result fusion and ranking
 """
 
+from dataclasses import dataclass, field
 import logging
 import time
-from dataclasses import dataclass, field
 from typing import Any
 
 from ..memory.hippo_index import HippoIndex

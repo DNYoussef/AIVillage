@@ -11,10 +11,10 @@ This creates a decentralized cloud alternative using edge device resources.
 """
 
 import asyncio
-import logging
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from enum import Enum
+import logging
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:

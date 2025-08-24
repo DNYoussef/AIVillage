@@ -11,21 +11,21 @@ Security: Complete middleware stack with input validation, rate limiting, and he
 """
 
 import asyncio
+from datetime import datetime, timezone
 import logging
 import time
-from datetime import datetime, timezone
-from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
-# Configuration and dependencies
-import httpx
 from cachetools import TTLCache
 
 # Core FastAPI and middleware
 from fastapi import Depends, FastAPI, File, HTTPException, Request, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import JSONResponse
 from fastapi.security import HTTPBearer
+
+# Configuration and dependencies
+import httpx
 
 # Prometheus monitoring
 from prometheus_client import CONTENT_TYPE_LATEST, Counter, Histogram, generate_latest
@@ -239,8 +239,8 @@ class QueryRequest(BaseModel):
     """Secure query request with validation"""
 
     query: str = Field(..., min_length=1, max_length=10000, description="User query text")
-    session_id: Optional[str] = Field(None, description="Optional session ID for conversation tracking")
-    options: Optional[Dict[str, Any]] = Field(default_factory=dict, description="Query options and parameters")
+    session_id: str | None = Field(None, description="Optional session ID for conversation tracking")
+    options: dict[str, Any] | None = Field(default_factory=dict, description="Query options and parameters")
 
     @field_validator("query")
     @classmethod
@@ -264,9 +264,9 @@ class HealthResponse(BaseModel):
 
     status: str = Field(..., description="Overall health status")
     timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    services: Dict[str, Any] = Field(default_factory=dict, description="Downstream service health")
-    gateway: Dict[str, Any] = Field(default_factory=dict, description="Gateway-specific metrics")
-    system: Optional[Dict[str, Any]] = Field(None, description="System resource information")
+    services: dict[str, Any] = Field(default_factory=dict, description="Downstream service health")
+    gateway: dict[str, Any] = Field(default_factory=dict, description="Gateway-specific metrics")
+    system: dict[str, Any] | None = Field(None, description="System resource information")
 
 
 # FastAPI app initialization
@@ -436,7 +436,7 @@ if config.enable_metrics:
 
 # Main query endpoint
 @app.post("/v1/query")
-async def query_endpoint(request: QueryRequest, authenticated: bool = Depends(verify_api_key)) -> Dict[str, Any]:
+async def query_endpoint(request: QueryRequest, authenticated: bool = Depends(verify_api_key)) -> dict[str, Any]:
     """
     Primary query endpoint that routes requests through the knowledge system
     Architecture: Gateway → Agent Controller → Knowledge System
@@ -494,7 +494,7 @@ if config.enable_file_upload:
     @app.post("/v1/upload")
     async def upload_endpoint(
         file: UploadFile = File(...), authenticated: bool = Depends(verify_api_key)
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Secure file upload endpoint with streaming validation
         """
@@ -533,7 +533,7 @@ if config.enable_file_upload:
 
 # Chat endpoint (proxy to Twin service)
 @app.post("/v1/chat")
-async def chat_endpoint(request: Request, authenticated: bool = Depends(verify_api_key)) -> Dict[str, Any]:
+async def chat_endpoint(request: Request, authenticated: bool = Depends(verify_api_key)) -> dict[str, Any]:
     """
     Chat endpoint that proxies requests to Twin service
     """

@@ -5,7 +5,6 @@ Validates that the memory system correctly interfaces with Agent 1's MemoryGate
 and provides the expected tensor shapes and behaviors.
 """
 
-from unittest.mock import Mock
 
 import pytest
 import torch
@@ -13,7 +12,7 @@ import torch.nn as nn
 
 # Import Agent 1's components
 from core.agent_forge.models.cogment.core.config import CogmentConfig
-from core.agent_forge.models.cogment.core.refinement_core import MemoryGate, RefinementCore
+from core.agent_forge.models.cogment.core.refinement_core import RefinementCore
 
 # Import Agent 2's memory system
 from core.agent_forge.models.cogment.memory import GatedLTMMemory
@@ -180,7 +179,6 @@ class TestGatedLTMIntegration:
     def test_surprise_gating(self, memory_system, config):
         """Test surprise-based gating mechanism."""
         B, N = 2, 10
-        vocab_size = config.vocab_size
 
         query_states = torch.randn(B, N, config.d_model)
 

@@ -6,11 +6,11 @@ This bridge connects to the existing dual-path transport system and Navigator ag
 """
 
 import ctypes
+from ctypes import CDLL, POINTER, Structure, c_char_p, c_int, c_uint, c_void_p
 import json
 import logging
-import platform
-from ctypes import CDLL, POINTER, Structure, c_char_p, c_int, c_uint, c_void_p
 from pathlib import Path
+import platform
 from typing import Any
 
 logger = logging.getLogger(__name__)

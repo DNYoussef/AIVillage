@@ -4,14 +4,14 @@ Unit tests for GDC Extractor
 Tests the Graph Denial Constraint violation detection engine.
 """
 
-import sys
 from datetime import datetime
 from pathlib import Path
+import sys
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import pytest
 from mcp_servers.hyperag.gdc.extractor import GDCExtractor, GDCExtractorContext
 from mcp_servers.hyperag.gdc.specs import GDCSpec, Violation
+import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 

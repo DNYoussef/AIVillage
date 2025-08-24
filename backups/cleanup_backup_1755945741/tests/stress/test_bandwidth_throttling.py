@@ -5,6 +5,7 @@ import time
 
 import numpy as np
 import pytest
+
 from src.production.communications.p2p.p2p_node import MessageType, P2PMessage, P2PNode
 from src.production.communications.p2p.tensor_streaming import (
     BandwidthController,

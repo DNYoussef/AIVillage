@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-import os
 from dataclasses import dataclass
+import os
 
 import openai
 from rag_system.utils.logging import setup_logger as get_logger

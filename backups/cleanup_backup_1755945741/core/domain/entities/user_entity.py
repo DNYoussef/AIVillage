@@ -7,11 +7,11 @@ with roles, permissions, and activity tracking.
 
 from __future__ import annotations
 
-import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from typing import Any
+import uuid
 
 
 class UserRole(Enum):

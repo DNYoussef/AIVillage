@@ -4,13 +4,13 @@ import logging
 import os
 from typing import Any
 
-import networkx as nx
+from AIVillage.experimental.agents.agents.king.quality_assurance_layer import QualityAssuranceLayer
+from AIVillage.experimental.agents.agents.king.utils.exceptions import AIVillageException
 from langroid.language_models.openai_gpt import OpenAIGPTConfig
+import networkx as nx
 from rag_system.core.pipeline import EnhancedRAGPipeline
 from torch import nn
 
-from AIVillage.experimental.agents.agents.king.quality_assurance_layer import QualityAssuranceLayer
-from AIVillage.experimental.agents.agents.king.utils.exceptions import AIVillageException
 from core.error_handling import Message, MessageType, StandardCommunicationProtocol
 
 from .optimization import Optimizer

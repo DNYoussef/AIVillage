@@ -8,15 +8,15 @@ Tracks the progress from 40% to >60% completion after stub replacement sprint.
 
 import ast
 import asyncio
+from datetime import datetime
 import io
 import json
 import logging
+from pathlib import Path
 import re
 import subprocess
 import sys
 import tokenize
-from datetime import datetime
-from pathlib import Path
 from typing import Any
 
 try:  # pragma: no cover - optional dependency

@@ -13,16 +13,16 @@ anonymized insights to the global knowledge base managed by Sage and Curator age
 """
 
 import asyncio
-import hashlib
-import json
-import logging
-import sqlite3
-import time
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
+import hashlib
+import json
+import logging
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+import sqlite3
+import time
+from typing import Any
 
 import numpy as np
 
@@ -74,7 +74,7 @@ class KnowledgePiece:
     relevance: KnowledgeRelevance
 
     # Embeddings and search
-    embedding: Optional[np.ndarray] = None
+    embedding: np.ndarray | None = None
     keywords: list[str] = field(default_factory=list)
 
     # Context and metadata
@@ -86,7 +86,7 @@ class KnowledgePiece:
 
     # Global contribution tracking
     contributed_to_global: bool = False
-    contribution_hash: Optional[str] = None
+    contribution_hash: str | None = None
     anonymization_level: float = 0.0  # How much anonymization was applied
 
     def anonymize_for_global_sharing(self) -> dict[str, Any]:

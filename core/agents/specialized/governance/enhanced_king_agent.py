@@ -17,10 +17,10 @@ The King Agent serves as the supreme orchestrator, responsible for:
 - Resource allocation and priority management across the village
 """
 
-import logging
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
+import logging
 from typing import Any
 
 from packages.agents.core.agent_interface import AgentCapability, AgentMetadata, TaskInterface

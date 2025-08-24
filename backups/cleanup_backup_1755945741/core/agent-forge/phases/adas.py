@@ -14,24 +14,24 @@ This phase searches for optimal model architectures by:
 """
 
 import asyncio
+from contextlib import contextmanager
+from dataclasses import dataclass, field
 import logging
 import math
 import random
 import signal
 import time
 import traceback
-from contextlib import contextmanager
-from dataclasses import dataclass, field
 from typing import Any, NoReturn
 
 import numpy as np
+from pydantic import BaseModel, Field
 import torch
 import torch.nn as nn
+from tqdm import tqdm
 
 # Import base phase controller interface
 from packages.agent_forge.core.phase_controller import PhaseController, PhaseResult
-from pydantic import BaseModel, Field
-from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
 

@@ -16,11 +16,12 @@ Tests scheduler performance under different scenarios:
 """
 
 import asyncio
+from dataclasses import dataclass
 import statistics
 import time
-from dataclasses import dataclass
 
 import pytest
+
 from packages.fog.gateway.monitoring.metrics import FogMetricsCollector
 
 # Mock imports for testing (would be real in production)

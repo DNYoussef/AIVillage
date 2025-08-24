@@ -12,9 +12,9 @@ namespace-isolated access to fog computing resources.
 """
 
 import asyncio
+from datetime import UTC, datetime
 import json
 import logging
-from datetime import UTC, datetime
 from typing import Any
 
 import aiohttp

@@ -8,8 +8,8 @@ the orchestration, model passing, and error handling works correctly.
 
 import asyncio
 import logging
-import sys
 from pathlib import Path
+import sys
 
 import torch
 import torch.nn as nn

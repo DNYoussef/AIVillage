@@ -6,14 +6,11 @@ replacing the complex 3-model HRRM deployment with simplified single-model
 production workflows while maintaining performance monitoring and rollback capabilities.
 """
 
-import json
+from datetime import datetime
 import logging
-import time
-from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
-
-import torch
+import time
+from typing import Any
 
 from core.agent_forge.models.cogment.core.model import Cogment
 
@@ -27,14 +24,14 @@ class DeploymentEnvironment:
     """Represents a deployment environment configuration."""
 
     def __init__(
-        self, name: str, config: Dict[str, Any], resource_limits: Dict[str, Any], monitoring_config: Dict[str, Any]
+        self, name: str, config: dict[str, Any], resource_limits: dict[str, Any], monitoring_config: dict[str, Any]
     ):
         self.name = name
         self.config = config
         self.resource_limits = resource_limits
         self.monitoring_config = monitoring_config
-        self.deployment_history: List[Dict[str, Any]] = []
-        self.current_deployment: Optional[Dict[str, Any]] = None
+        self.deployment_history: list[dict[str, Any]] = []
+        self.current_deployment: dict[str, Any] | None = None
         self.health_status = "unknown"
         self.last_health_check = None
 
@@ -60,12 +57,12 @@ class CogmentDeploymentManager:
         self.compatibility_validator = CogmentCompatibilityValidator()
 
         # Environment management
-        self.environments: Dict[str, DeploymentEnvironment] = {}
-        self.deployment_history: List[Dict[str, Any]] = []
+        self.environments: dict[str, DeploymentEnvironment] = {}
+        self.deployment_history: list[dict[str, Any]] = []
 
         # Performance tracking
-        self.performance_metrics: Dict[str, List[Dict[str, Any]]] = {}
-        self.hrrm_comparison_data: Dict[str, Any] = {}
+        self.performance_metrics: dict[str, list[dict[str, Any]]] = {}
+        self.hrrm_comparison_data: dict[str, Any] = {}
 
         # Initialize default environments
         self._setup_default_environments()
@@ -146,10 +143,10 @@ class CogmentDeploymentManager:
         self,
         model: Cogment,
         environment: str,
-        deployment_config: Optional[Dict[str, Any]] = None,
+        deployment_config: dict[str, Any] | None = None,
         rollback_on_failure: bool = True,
         gradual_rollout: bool = False,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Deploy Cogment model to specified environment.
 
@@ -268,8 +265,8 @@ class CogmentDeploymentManager:
             return failed_record
 
     def _validate_deployment(
-        self, model: Cogment, env: DeploymentEnvironment, config: Optional[Dict[str, Any]]
-    ) -> Dict[str, Any]:
+        self, model: Cogment, env: DeploymentEnvironment, config: dict[str, Any] | None
+    ) -> dict[str, Any]:
         """Validate deployment prerequisites."""
         issues = []
 
@@ -305,7 +302,7 @@ class CogmentDeploymentManager:
             "validation_time": datetime.now(),
         }
 
-    def _export_for_deployment(self, model: Cogment, deployment_dir: Path, environment: str) -> Dict[str, Any]:
+    def _export_for_deployment(self, model: Cogment, deployment_dir: Path, environment: str) -> dict[str, Any]:
         """Export model for deployment to specific environment."""
         try:
             # Use production exporter for comprehensive export
@@ -328,8 +325,8 @@ class CogmentDeploymentManager:
             return {"success": False, "error": str(e)}
 
     def _execute_deployment(
-        self, deployment_dir: Path, env: DeploymentEnvironment, config: Optional[Dict[str, Any]], gradual_rollout: bool
-    ) -> Dict[str, Any]:
+        self, deployment_dir: Path, env: DeploymentEnvironment, config: dict[str, Any] | None, gradual_rollout: bool
+    ) -> dict[str, Any]:
         """Execute the actual deployment to environment."""
         try:
             logger.info(f"Executing deployment to {env.name} environment...")
@@ -376,7 +373,7 @@ class CogmentDeploymentManager:
         except Exception as e:
             return {"success": False, "error": str(e)}
 
-    def _perform_health_check(self, env: DeploymentEnvironment, deployment_id: str) -> Dict[str, Any]:
+    def _perform_health_check(self, env: DeploymentEnvironment, deployment_id: str) -> dict[str, Any]:
         """Perform comprehensive health check of deployed model."""
         try:
             logger.info("Performing post-deployment health check...")
@@ -420,7 +417,7 @@ class CogmentDeploymentManager:
                 "deployment_id": deployment_id,
             }
 
-    def _rollback_deployment(self, env: DeploymentEnvironment, failed_deployment_id: str) -> Dict[str, Any]:
+    def _rollback_deployment(self, env: DeploymentEnvironment, failed_deployment_id: str) -> dict[str, Any]:
         """Rollback to previous successful deployment."""
         try:
             logger.warning(f"Performing rollback for deployment {failed_deployment_id}")
@@ -498,7 +495,7 @@ class CogmentDeploymentManager:
 
         self.performance_metrics[env.name].append(monitoring_data)
 
-    def compare_with_hrrm_deployment(self, environment: str) -> Dict[str, Any]:
+    def compare_with_hrrm_deployment(self, environment: str) -> dict[str, Any]:
         """
         Compare current Cogment deployment with equivalent HRRM deployment.
 
@@ -612,7 +609,7 @@ class CogmentDeploymentManager:
             logger.error(f"HRRM comparison failed: {e}")
             return {"error": str(e)}
 
-    def get_deployment_status(self, environment: str) -> Dict[str, Any]:
+    def get_deployment_status(self, environment: str) -> dict[str, Any]:
         """Get comprehensive deployment status for environment."""
         if environment not in self.environments:
             return {"error": f"Unknown environment: {environment}"}
@@ -639,7 +636,7 @@ class CogmentDeploymentManager:
 
         return status
 
-    def get_deployment_summary(self) -> Dict[str, Any]:
+    def get_deployment_summary(self) -> dict[str, Any]:
         """Get comprehensive summary of all deployments."""
         total_deployments = len(self.deployment_history)
         successful_deployments = sum(1 for dep in self.deployment_history if dep.get("success", False))

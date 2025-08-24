@@ -13,10 +13,10 @@ This script confirms the test consolidation was successful and
 maintains comprehensive Agent Forge coverage.
 """
 
+from pathlib import Path
 import subprocess
 import sys
 import time
-from pathlib import Path
 
 
 def print_header(title):
@@ -64,7 +64,7 @@ def check_archived_duplicates():
 
     missing_files = [f for f in expected_files if not (archive_path / f).exists()]
     if missing_files:
-        print(f"\n⚠️  Missing expected archived files:")
+        print("\n⚠️  Missing expected archived files:")
         for file in missing_files:
             print(f"  - {file}")
 
@@ -176,14 +176,14 @@ def run_core_test_suite():
             )
 
             if result.returncode == 0:
-                print(f"    ✓ PASSED")
+                print("    ✓ PASSED")
                 passed_tests += 1
             else:
-                print(f"    ❌ FAILED")
+                print("    ❌ FAILED")
                 print(f"    Error: {result.stderr.split()[-1] if result.stderr else 'Unknown error'}")
 
         except subprocess.TimeoutExpired:
-            print(f"    ❌ TIMEOUT")
+            print("    ❌ TIMEOUT")
         except Exception as e:
             print(f"    ❌ ERROR: {e}")
 
@@ -219,7 +219,7 @@ def generate_consolidation_report():
         "✓ Preserved critical validation and compression tests",
     ]
 
-    print(f"\nQuality Improvements:")
+    print("\nQuality Improvements:")
     for improvement in improvements:
         print(f"  {improvement}")
 

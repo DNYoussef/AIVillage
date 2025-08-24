@@ -1,8 +1,9 @@
-import time
 from dataclasses import dataclass
+import time
 from typing import Any
 
 import pytest
+
 from src.production.distributed_agents.distributed_agent_orchestrator import AgentInstance, DistributedAgentOrchestrator
 
 

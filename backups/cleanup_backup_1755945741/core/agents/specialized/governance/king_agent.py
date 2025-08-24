@@ -8,9 +8,9 @@ The supreme orchestrator of AIVillage, responsible for:
 - Resource allocation and priority management
 """
 
-import logging
 from dataclasses import dataclass
 from enum import Enum
+import logging
 from typing import Any
 
 from packages.agents.core.agent_interface import AgentInterface

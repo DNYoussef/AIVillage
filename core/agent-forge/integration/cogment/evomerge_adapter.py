@@ -11,13 +11,10 @@ to work with a single unified Cogment model while preserving:
 
 import json
 import logging
-import tempfile
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import torch
-import torch.nn as nn
-from transformers import AutoConfig, AutoModelForCausalLM
 
 from core.agent_forge.evomerge import EvoMergeConfig, MergeCandidate, MergeOperators
 from core.agent_forge.models.cogment.core.config import CogmentConfig
@@ -43,12 +40,12 @@ class CogmentEvoMergeAdapter:
         self.compatibility_validator = CogmentCompatibilityValidator()
 
         # Track Cogment-specific parameters
-        self.cogment_config: Optional[CogmentConfig] = None
-        self.base_cogment_models: List[Cogment] = []
+        self.cogment_config: CogmentConfig | None = None
+        self.base_cogment_models: list[Cogment] = []
 
         logger.info("Initialized CogmentEvoMergeAdapter for single model workflow")
 
-    def load_cogment_base_models(self, model_paths: List[str]) -> List[Cogment]:
+    def load_cogment_base_models(self, model_paths: list[str]) -> list[Cogment]:
         """
         Load Cogment models as base models for evolutionary merging.
 
@@ -95,7 +92,7 @@ class CogmentEvoMergeAdapter:
 
         return models
 
-    def _load_cogment_model(self, model_path: str) -> Optional[Cogment]:
+    def _load_cogment_model(self, model_path: str) -> Cogment | None:
         """Load a Cogment model from checkpoint or saved state."""
         model_path = Path(model_path)
 
@@ -133,7 +130,7 @@ class CogmentEvoMergeAdapter:
             logger.warning(f"Failed to load as Cogment model: {e}")
             return None
 
-    def _create_cogment_variant(self, base_path: str, variant_id: int) -> Optional[Cogment]:
+    def _create_cogment_variant(self, base_path: str, variant_id: int) -> Cogment | None:
         """
         Create a Cogment model variant for population diversity.
 
@@ -168,7 +165,7 @@ class CogmentEvoMergeAdapter:
             logger.error(f"Failed to create Cogment variant: {e}")
             return None
 
-    def _generate_config_variants(self, base_config: CogmentConfig, variant_id: int) -> List[CogmentConfig]:
+    def _generate_config_variants(self, base_config: CogmentConfig, variant_id: int) -> list[CogmentConfig]:
         """Generate configuration variants for model diversity."""
         variants = []
 
@@ -199,8 +196,8 @@ class CogmentEvoMergeAdapter:
         return variants
 
     def _apply_parameter_perturbations(
-        self, state_dict: Dict[str, torch.Tensor], variant_id: int, perturbation_scale: float = 0.1
-    ) -> Dict[str, torch.Tensor]:
+        self, state_dict: dict[str, torch.Tensor], variant_id: int, perturbation_scale: float = 0.1
+    ) -> dict[str, torch.Tensor]:
         """Apply parameter perturbations for model diversity."""
         perturbed_state = {}
 
@@ -250,8 +247,8 @@ class CogmentEvoMergeAdapter:
             return False
 
     def create_cogment_merge_candidate(
-        self, models: List[Cogment], merge_recipe: Dict[str, Any], generation: int = 0
-    ) -> Optional[MergeCandidate]:
+        self, models: list[Cogment], merge_recipe: dict[str, Any], generation: int = 0
+    ) -> MergeCandidate | None:
         """
         Create a merged Cogment model using specified merge technique.
 
@@ -307,7 +304,7 @@ class CogmentEvoMergeAdapter:
             logger.error(f"Failed to create Cogment merge candidate: {e}")
             return None
 
-    def _apply_cogment_merge(self, models: List[Cogment], merge_recipe: Dict[str, Any]) -> Optional[Cogment]:
+    def _apply_cogment_merge(self, models: list[Cogment], merge_recipe: dict[str, Any]) -> Cogment | None:
         """Apply merge technique while preserving Cogment components."""
         try:
             technique = merge_recipe.get("technique", "linear")
@@ -331,7 +328,7 @@ class CogmentEvoMergeAdapter:
             logger.error(f"Cogment merge failed: {e}")
             return None
 
-    def _linear_merge_cogment(self, models: List[Cogment], recipe: Dict[str, Any]) -> Cogment:
+    def _linear_merge_cogment(self, models: list[Cogment], recipe: dict[str, Any]) -> Cogment:
         """Linear merge preserving Cogment structure."""
         weights = recipe.get("weights", [1.0 / len(models)] * len(models))
 
@@ -356,7 +353,7 @@ class CogmentEvoMergeAdapter:
         merged_model.load_state_dict(merged_state)
         return merged_model
 
-    def _slerp_merge_cogment(self, models: List[Cogment], recipe: Dict[str, Any]) -> Cogment:
+    def _slerp_merge_cogment(self, models: list[Cogment], recipe: dict[str, Any]) -> Cogment:
         """SLERP merge for Cogment models."""
         if len(models) != 2:
             logger.warning("SLERP requires exactly 2 models, falling back to linear merge")
@@ -392,7 +389,7 @@ class CogmentEvoMergeAdapter:
         merged_model.load_state_dict(merged_state)
         return merged_model
 
-    def _ties_merge_cogment(self, models: List[Cogment], recipe: Dict[str, Any]) -> Cogment:
+    def _ties_merge_cogment(self, models: list[Cogment], recipe: dict[str, Any]) -> Cogment:
         """TIES merge adapted for Cogment models."""
         threshold = recipe.get("threshold", 0.1)
 
@@ -425,7 +422,7 @@ class CogmentEvoMergeAdapter:
         merged_model.load_state_dict(merged_state)
         return merged_model
 
-    def _dare_merge_cogment(self, models: List[Cogment], recipe: Dict[str, Any]) -> Cogment:
+    def _dare_merge_cogment(self, models: list[Cogment], recipe: dict[str, Any]) -> Cogment:
         """DARE merge adapted for Cogment models."""
         threshold = recipe.get("threshold", 0.1)
         amplification = recipe.get("amplification", 2.0)
@@ -451,7 +448,7 @@ class CogmentEvoMergeAdapter:
         merged_model.load_state_dict(merged_state)
         return merged_model
 
-    def _frankenmerge_cogment(self, models: List[Cogment], recipe: Dict[str, Any]) -> Cogment:
+    def _frankenmerge_cogment(self, models: list[Cogment], recipe: dict[str, Any]) -> Cogment:
         """Frankenmerge adapted for Cogment models."""
         layer_assignments = recipe.get("layer_assignments")
 
@@ -483,7 +480,7 @@ class CogmentEvoMergeAdapter:
         merged_model.load_state_dict(merged_state)
         return merged_model
 
-    def _dfs_merge_cogment(self, models: List[Cogment], recipe: Dict[str, Any]) -> Cogment:
+    def _dfs_merge_cogment(self, models: list[Cogment], recipe: dict[str, Any]) -> Cogment:
         """DFS merge adapted for Cogment models."""
         if len(models) == 1:
             return models[0]
@@ -512,7 +509,7 @@ class CogmentEvoMergeAdapter:
         ltm_indicators = ["memory", "ltm", "refinement_core"]
         return any(indicator in param_name.lower() for indicator in ltm_indicators)
 
-    def _merge_act_parameters(self, models: List[Cogment], param_name: str, weights: List[float]) -> torch.Tensor:
+    def _merge_act_parameters(self, models: list[Cogment], param_name: str, weights: list[float]) -> torch.Tensor:
         """Specialized merging for ACT parameters to preserve halting dynamics."""
         params = [model.state_dict()[param_name] for model in models]
 
@@ -530,7 +527,7 @@ class CogmentEvoMergeAdapter:
 
         return merged_param
 
-    def _merge_ltm_parameters(self, models: List[Cogment], param_name: str, weights: List[float]) -> torch.Tensor:
+    def _merge_ltm_parameters(self, models: list[Cogment], param_name: str, weights: list[float]) -> torch.Tensor:
         """Specialized merging for LTM parameters to preserve memory dynamics."""
         params = [model.state_dict()[param_name] for model in models]
 
@@ -544,7 +541,7 @@ class CogmentEvoMergeAdapter:
 
         return merged_param
 
-    def _save_merged_cogment_model(self, model: Cogment, merge_recipe: Dict[str, Any], generation: int) -> Path:
+    def _save_merged_cogment_model(self, model: Cogment, merge_recipe: dict[str, Any], generation: int) -> Path:
         """Save merged Cogment model with metadata."""
         # Create save directory
         output_dir = Path(self.config.output_dir) / "cogment_merges"
@@ -582,7 +579,7 @@ class CogmentEvoMergeAdapter:
         logger.info(f"Saved Cogment merge to {model_path}")
         return model_path
 
-    def get_adaptation_metrics(self) -> Dict[str, Any]:
+    def get_adaptation_metrics(self) -> dict[str, Any]:
         """Get metrics about the HRRM → Cogment adaptation."""
         base_model_count = len(self.base_cogment_models)
 

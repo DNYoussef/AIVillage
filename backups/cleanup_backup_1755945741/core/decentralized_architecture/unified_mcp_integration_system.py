@@ -21,15 +21,14 @@ ARCHITECTURE: Client → **UnifiedMCPIntegrationSystem** → Server Network → 
 """
 
 import asyncio
+from collections.abc import Callable
+from dataclasses import dataclass, field
+from datetime import datetime
+from enum import Enum
 import json
 import logging
-import ssl
 import time
-from dataclasses import dataclass, field
-from datetime import datetime, timedelta
-from enum import Enum
-from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Protocol, Set, Union
+from typing import Any
 from uuid import uuid4
 
 import websockets
@@ -98,9 +97,9 @@ class MCPServerSpec:
     jwt_required: bool = False
 
     # Capability configuration
-    supported_tools: List[str] = field(default_factory=list)
-    supported_resources: List[str] = field(default_factory=list)
-    tool_categories: List[MCPToolCategory] = field(default_factory=list)
+    supported_tools: list[str] = field(default_factory=list)
+    supported_resources: list[str] = field(default_factory=list)
+    tool_categories: list[MCPToolCategory] = field(default_factory=list)
 
     # Performance configuration
     max_connections: int = 100
@@ -110,11 +109,11 @@ class MCPServerSpec:
     # P2P integration (NEW)
     enable_p2p_discovery: bool = True
     p2p_announce_interval: int = 60
-    bitchat_channel: Optional[str] = None
-    betanet_endpoint: Optional[str] = None
+    bitchat_channel: str | None = None
+    betanet_endpoint: str | None = None
 
     # Metadata
-    tags: List[str] = field(default_factory=list)
+    tags: list[str] = field(default_factory=list)
     created_at: datetime = field(default_factory=datetime.now)
 
 
@@ -128,25 +127,25 @@ class MCPToolSpec:
     category: MCPToolCategory = MCPToolCategory.COMPUTATION
 
     # Input/output schema
-    input_schema: Dict[str, Any] = field(default_factory=dict)
-    output_schema: Dict[str, Any] = field(default_factory=dict)
+    input_schema: dict[str, Any] = field(default_factory=dict)
+    output_schema: dict[str, Any] = field(default_factory=dict)
 
     # Execution requirements
-    server_types: List[MCPServerType] = field(default_factory=list)
-    required_capabilities: List[str] = field(default_factory=list)
+    server_types: list[MCPServerType] = field(default_factory=list)
+    required_capabilities: list[str] = field(default_factory=list)
     estimated_duration_ms: int = 1000
 
     # Tool implementation
-    handler_function: Optional[Callable] = None
+    handler_function: Callable | None = None
     async_handler: bool = True
 
     # Authorization
-    required_permissions: List[str] = field(default_factory=list)
+    required_permissions: list[str] = field(default_factory=list)
     admin_only: bool = False
 
     # Metadata
     version: str = "1.0.0"
-    tags: List[str] = field(default_factory=list)
+    tags: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -155,7 +154,7 @@ class MCPRequest:
 
     request_id: str = field(default_factory=lambda: str(uuid4()))
     method: str = ""
-    params: Dict[str, Any] = field(default_factory=dict)
+    params: dict[str, Any] = field(default_factory=dict)
 
     # Request context
     client_id: str = ""
@@ -163,8 +162,8 @@ class MCPRequest:
     transport: MCPTransportType = MCPTransportType.WEBSOCKET
 
     # Authentication
-    api_key: Optional[str] = None
-    jwt_token: Optional[str] = None
+    api_key: str | None = None
+    jwt_token: str | None = None
 
     # Metadata
     timestamp: datetime = field(default_factory=datetime.now)
@@ -180,13 +179,13 @@ class MCPResponse:
     success: bool
 
     # Response data
-    result: Optional[Dict[str, Any]] = None
-    error: Optional[Dict[str, Any]] = None
+    result: dict[str, Any] | None = None
+    error: dict[str, Any] | None = None
 
     # Execution metadata
     execution_time_ms: float = 0.0
     server_id: str = ""
-    tool_used: Optional[str] = None
+    tool_used: str | None = None
 
     # Metadata
     timestamp: datetime = field(default_factory=datetime.now)
@@ -215,7 +214,7 @@ class MCPServerStatus:
     # Availability
     uptime_hours: float = 0.0
     last_ping: datetime = field(default_factory=datetime.now)
-    last_error: Optional[str] = None
+    last_error: str | None = None
 
     # P2P integration
     p2p_discoverable: bool = False
@@ -227,9 +226,9 @@ class MCPToolRegistry:
     """Registry of available MCP tools"""
 
     def __init__(self):
-        self.tools: Dict[str, MCPToolSpec] = {}
-        self.categories: Dict[MCPToolCategory, Set[str]] = {}
-        self.servers: Dict[str, Set[str]] = {}  # server_id -> tool_ids
+        self.tools: dict[str, MCPToolSpec] = {}
+        self.categories: dict[MCPToolCategory, set[str]] = {}
+        self.servers: dict[str, set[str]] = {}  # server_id -> tool_ids
 
     def register_tool(self, tool_spec: MCPToolSpec, server_id: str):
         """Register an MCP tool"""
@@ -248,13 +247,13 @@ class MCPToolRegistry:
 
         logger.info(f"Registered tool: {tool_spec.name} on server {server_id}")
 
-    def find_tools_by_category(self, category: MCPToolCategory) -> List[MCPToolSpec]:
+    def find_tools_by_category(self, category: MCPToolCategory) -> list[MCPToolSpec]:
         """Find tools by category"""
 
         tool_ids = self.categories.get(category, set())
         return [self.tools[tool_id] for tool_id in tool_ids if tool_id in self.tools]
 
-    def find_tools_by_capability(self, capability: str) -> List[MCPToolSpec]:
+    def find_tools_by_capability(self, capability: str) -> list[MCPToolSpec]:
         """Find tools that provide a capability"""
 
         matching_tools = []
@@ -264,7 +263,7 @@ class MCPToolRegistry:
 
         return matching_tools
 
-    def get_tools_for_server(self, server_id: str) -> List[MCPToolSpec]:
+    def get_tools_for_server(self, server_id: str) -> list[MCPToolSpec]:
         """Get all tools for a specific server"""
 
         tool_ids = self.servers.get(server_id, set())
@@ -275,9 +274,9 @@ class MCPServerRegistry:
     """Registry of available MCP servers"""
 
     def __init__(self):
-        self.servers: Dict[str, MCPServerSpec] = {}
-        self.server_status: Dict[str, MCPServerStatus] = {}
-        self.discovery_cache: Dict[str, datetime] = {}
+        self.servers: dict[str, MCPServerSpec] = {}
+        self.server_status: dict[str, MCPServerStatus] = {}
+        self.discovery_cache: dict[str, datetime] = {}
 
     def register_server(self, server_spec: MCPServerSpec):
         """Register an MCP server"""
@@ -289,17 +288,17 @@ class MCPServerRegistry:
 
         logger.info(f"Registered MCP server: {server_spec.name} ({server_spec.server_type.value})")
 
-    def find_servers_by_type(self, server_type: MCPServerType) -> List[MCPServerSpec]:
+    def find_servers_by_type(self, server_type: MCPServerType) -> list[MCPServerSpec]:
         """Find servers by type"""
 
         return [server for server in self.servers.values() if server.server_type == server_type]
 
-    def find_servers_by_capability(self, tool_category: MCPToolCategory) -> List[MCPServerSpec]:
+    def find_servers_by_capability(self, tool_category: MCPToolCategory) -> list[MCPServerSpec]:
         """Find servers that support a tool category"""
 
         return [server for server in self.servers.values() if tool_category in server.tool_categories]
 
-    def get_healthy_servers(self) -> List[MCPServerSpec]:
+    def get_healthy_servers(self) -> list[MCPServerSpec]:
         """Get all healthy/available servers"""
 
         healthy_servers = []
@@ -322,8 +321,8 @@ class MCPClient:
 
     def __init__(self, client_id: str):
         self.client_id = client_id
-        self.connections: Dict[str, Any] = {}  # server_id -> connection
-        self.active_requests: Dict[str, MCPRequest] = {}
+        self.connections: dict[str, Any] = {}  # server_id -> connection
+        self.active_requests: dict[str, MCPRequest] = {}
 
     async def connect_to_server(self, server_spec: MCPServerSpec) -> bool:
         """Connect to an MCP server"""
@@ -444,8 +443,8 @@ class MCPServer:
 
         # Server state
         self.is_running = False
-        self.connections: Set[Any] = set()
-        self.request_handlers: Dict[str, Callable] = {}
+        self.connections: set[Any] = set()
+        self.request_handlers: dict[str, Callable] = {}
 
         # Performance tracking
         self.stats = {"total_requests": 0, "successful_requests": 0, "failed_requests": 0, "total_execution_time": 0.0}
@@ -600,7 +599,7 @@ class MCPServer:
         """Announce server presence on P2P network"""
 
         # This would integrate with BitChat/BetaNet for server discovery
-        announcement = {
+        {
             "server_id": self.server_id,
             "server_type": self.spec.server_type.value,
             "name": self.spec.name,
@@ -662,8 +661,8 @@ class UnifiedMCPIntegrationSystem:
         self.tool_registry = MCPToolRegistry()
 
         # System components
-        self.active_servers: Dict[str, MCPServer] = {}
-        self.active_clients: Dict[str, MCPClient] = {}
+        self.active_servers: dict[str, MCPServer] = {}
+        self.active_clients: dict[str, MCPClient] = {}
 
         # Network integration
         self.p2p_system = None
@@ -938,18 +937,18 @@ class UnifiedMCPIntegrationSystem:
 
         for tool in tools:
             # Register tool handler
-            async def tool_handler(params: Dict[str, Any], tool_name=tool.name):
+            async def tool_handler(params: dict[str, Any], tool_name=tool.name):
                 # Placeholder implementation
                 return {"status": "success", "tool": tool_name, "result": f"Executed {tool_name} with params: {params}"}
 
-            server.register_method_handler(f"tools/call", tool_handler)
+            server.register_method_handler("tools/call", tool_handler)
 
         # Register standard MCP methods
         server.register_method_handler("initialize", self._handle_initialize)
         server.register_method_handler("tools/list", self._handle_tools_list)
         server.register_method_handler("resources/list", self._handle_resources_list)
 
-    async def _handle_initialize(self, params: Dict[str, Any]) -> Dict[str, Any]:
+    async def _handle_initialize(self, params: dict[str, Any]) -> dict[str, Any]:
         """Handle MCP initialization"""
         return {
             "protocolVersion": "2024-11-05",
@@ -957,7 +956,7 @@ class UnifiedMCPIntegrationSystem:
             "serverInfo": {"name": "AIVillage MCP Server", "version": "1.0.0"},
         }
 
-    async def _handle_tools_list(self, params: Dict[str, Any]) -> Dict[str, Any]:
+    async def _handle_tools_list(self, params: dict[str, Any]) -> dict[str, Any]:
         """Handle tools list request"""
 
         # Return all available tools
@@ -967,7 +966,7 @@ class UnifiedMCPIntegrationSystem:
 
         return {"tools": tools_list}
 
-    async def _handle_resources_list(self, params: Dict[str, Any]) -> Dict[str, Any]:
+    async def _handle_resources_list(self, params: dict[str, Any]) -> dict[str, Any]:
         """Handle resources list request"""
 
         # Return available resources
@@ -992,7 +991,7 @@ class UnifiedMCPIntegrationSystem:
         self.logger.info(f"Created MCP client: {client_id}")
         return client
 
-    def find_servers_for_tool(self, tool_name: str) -> List[MCPServerSpec]:
+    def find_servers_for_tool(self, tool_name: str) -> list[MCPServerSpec]:
         """Find servers that provide a specific tool"""
 
         matching_servers = []
@@ -1002,7 +1001,7 @@ class UnifiedMCPIntegrationSystem:
 
         return matching_servers
 
-    def get_system_status(self) -> Dict[str, Any]:
+    def get_system_status(self) -> dict[str, Any]:
         """Get comprehensive system status"""
 
         uptime = (datetime.now() - self.start_time).total_seconds()
@@ -1035,7 +1034,7 @@ class UnifiedMCPIntegrationSystem:
             "p2p": {"p2p_discoveries": self.stats["p2p_discoveries"], "discovery_enabled": self.discovery_enabled},
         }
 
-    def _get_server_type_distribution(self) -> Dict[str, int]:
+    def _get_server_type_distribution(self) -> dict[str, int]:
         """Get distribution of server types"""
 
         distribution = {}

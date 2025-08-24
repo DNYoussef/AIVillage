@@ -5,10 +5,10 @@ Implements the Noise XK handshake pattern for BetaNet HTX transport,
 providing forward secrecy and authentication using proper cryptography.
 """
 
+from dataclasses import dataclass
 import hashlib
 import logging
 import secrets
-from dataclasses import dataclass
 
 try:
     from cryptography.hazmat.primitives import hashes, serialization

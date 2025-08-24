@@ -7,6 +7,7 @@ import time
 
 import pytest
 import torch
+
 from agent_forge.compression.seedlm import (
     ProgressiveSeedLMEncoder,
     SeedLMCompressionError,

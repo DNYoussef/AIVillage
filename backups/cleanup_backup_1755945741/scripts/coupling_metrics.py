@@ -15,14 +15,14 @@ Provides quantitative metrics for tracking code quality improvements.
 
 import argparse
 import ast
+from collections import defaultdict
+from dataclasses import asdict, dataclass
 import json
 import os
+from pathlib import Path
 import re
 import sys
 import time
-from collections import defaultdict
-from dataclasses import asdict, dataclass
-from pathlib import Path
 from typing import Any
 
 

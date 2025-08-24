@@ -5,10 +5,10 @@ their resource utilization and performance state. Extracted from
 BaseAgentTemplate following single responsibility principle.
 """
 
-import logging
-import time
 from dataclasses import dataclass
 from datetime import datetime
+import logging
+import time
 from typing import Any
 
 from ..agent_constants import AgentConstants, GeometricState, GeometricStateConstants

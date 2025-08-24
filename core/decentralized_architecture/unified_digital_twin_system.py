@@ -15,17 +15,17 @@ This consolidates 48+ Digital Twin files into ONE production-ready personal AI s
 """
 
 import asyncio
+from dataclasses import dataclass, field
+from enum import Enum
 import hashlib
 import json
 import logging
+from pathlib import Path
 import secrets
 import sqlite3
 import time
+from typing import Any
 import uuid
-from dataclasses import dataclass, field
-from enum import Enum
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
 
 logger = logging.getLogger(__name__)
 
@@ -59,9 +59,9 @@ class TwinUser:
     email: str
 
     # Security
-    password_hash: Optional[str] = None
+    password_hash: str | None = None
     access_level: TwinAccessLevel = TwinAccessLevel.PRIVATE
-    permissions: List[str] = field(default_factory=list)
+    permissions: list[str] = field(default_factory=list)
 
     # Profile
     display_name: str = ""
@@ -71,7 +71,7 @@ class TwinUser:
     # Preferences
     language: str = "en"
     timezone: str = "UTC"
-    privacy_settings: Dict[str, Any] = field(default_factory=dict)
+    privacy_settings: dict[str, Any] = field(default_factory=dict)
 
     # Status
     created_at: float = field(default_factory=time.time)
@@ -120,8 +120,8 @@ class TwinMessage:
     processing_time_ms: float = 0
 
     # Context
-    context_data: Dict[str, Any] = field(default_factory=dict)
-    references: List[str] = field(default_factory=list)
+    context_data: dict[str, Any] = field(default_factory=dict)
+    references: list[str] = field(default_factory=list)
 
 
 class UnifiedDigitalTwinSystem:
@@ -133,7 +133,7 @@ class UnifiedDigitalTwinSystem:
     """
 
     def __init__(
-        self, twin_id: str, data_dir: Optional[str] = None, enable_encryption: bool = True, enable_p2p: bool = True
+        self, twin_id: str, data_dir: str | None = None, enable_encryption: bool = True, enable_p2p: bool = True
     ):
         self.twin_id = twin_id
         self.data_dir = Path(data_dir) if data_dir else Path("data/twins")
@@ -151,13 +151,13 @@ class UnifiedDigitalTwinSystem:
         self.fog_system = None
 
         # In-memory caches
-        self.users: Dict[str, TwinUser] = {}
-        self.active_conversations: Dict[str, TwinConversation] = {}
-        self.session_cache: Dict[str, Dict[str, Any]] = {}
+        self.users: dict[str, TwinUser] = {}
+        self.active_conversations: dict[str, TwinConversation] = {}
+        self.session_cache: dict[str, dict[str, Any]] = {}
 
         # Security
-        self.encryption_key: Optional[bytes] = None
-        self.access_tokens: Dict[str, Dict[str, Any]] = {}
+        self.encryption_key: bytes | None = None
+        self.access_tokens: dict[str, dict[str, Any]] = {}
 
         # Performance metrics
         self.metrics = {
@@ -463,7 +463,7 @@ class UnifiedDigitalTwinSystem:
         logger.info(f"Created digital twin user {username} ({user_id})")
         return user_id
 
-    async def authenticate_user(self, username: str, password: str) -> Optional[str]:
+    async def authenticate_user(self, username: str, password: str) -> str | None:
         """Authenticate user and return access token."""
         user = await self._get_user_by_username(username)
         if not user or not user.is_active:
@@ -489,7 +489,7 @@ class UnifiedDigitalTwinSystem:
         logger.info(f"User {username} authenticated successfully")
         return token
 
-    async def get_user_profile(self, user_id: str) -> Optional[Dict[str, Any]]:
+    async def get_user_profile(self, user_id: str) -> dict[str, Any] | None:
         """Get user profile data."""
         user = await self._get_user_by_id(user_id)
         if not user:
@@ -509,7 +509,7 @@ class UnifiedDigitalTwinSystem:
             "access_level": user.access_level.value,
         }
 
-    async def update_user_profile(self, user_id: str, updates: Dict[str, Any]) -> bool:
+    async def update_user_profile(self, user_id: str, updates: dict[str, Any]) -> bool:
         """Update user profile data."""
         user = await self._get_user_by_id(user_id)
         if not user:
@@ -580,7 +580,7 @@ class UnifiedDigitalTwinSystem:
         logger.debug(f"Added message {message_id} to conversation {conversation_id}")
         return message_id
 
-    async def get_conversation_history(self, conversation_id: str, limit: int = 50) -> List[Dict[str, Any]]:
+    async def get_conversation_history(self, conversation_id: str, limit: int = 50) -> list[dict[str, Any]]:
         """Get conversation message history."""
         cursor = self.database_manager.cursor()
 
@@ -609,7 +609,7 @@ class UnifiedDigitalTwinSystem:
 
         return list(reversed(messages))  # Return in chronological order
 
-    async def generate_ai_response(self, conversation_id: str, user_message: str, user_id: str) -> Dict[str, Any]:
+    async def generate_ai_response(self, conversation_id: str, user_message: str, user_id: str) -> dict[str, Any]:
         """Generate AI response for conversation."""
         start_time = time.time()
 
@@ -654,13 +654,13 @@ class UnifiedDigitalTwinSystem:
         data_key: str,
         data_value: Any,
         access_level: TwinAccessLevel = TwinAccessLevel.PRIVATE,
-        expires_at: Optional[float] = None,
+        expires_at: float | None = None,
     ) -> str:
         """Store arbitrary data in digital twin."""
         data_id = str(uuid.uuid4())
 
         # Serialize data value
-        if isinstance(data_value, (dict, list)):
+        if isinstance(data_value, dict | list):
             serialized_value = json.dumps(data_value)
         else:
             serialized_value = str(data_value)
@@ -696,7 +696,7 @@ class UnifiedDigitalTwinSystem:
         logger.debug(f"Stored twin data {data_type}:{data_key} for user {user_id}")
         return data_id
 
-    async def get_twin_data(self, user_id: str, data_type: str, data_key: Optional[str] = None) -> Dict[str, Any]:
+    async def get_twin_data(self, user_id: str, data_type: str, data_key: str | None = None) -> dict[str, Any]:
         """Retrieve data from digital twin."""
         cursor = self.database_manager.cursor()
 
@@ -768,7 +768,7 @@ class UnifiedDigitalTwinSystem:
 
     # Utility methods
 
-    async def _simulate_ai_response(self, user_message: str, history: List) -> Dict[str, Any]:
+    async def _simulate_ai_response(self, user_message: str, history: list) -> dict[str, Any]:
         """Simulate AI response generation."""
         # Simple response simulation
         response_content = f"I understand you said: '{user_message}'. How can I help you further?"
@@ -833,7 +833,7 @@ class UnifiedDigitalTwinSystem:
         except Exception:
             return encrypted_data  # Return as-is if decryption fails
 
-    async def _get_user_by_id(self, user_id: str) -> Optional[TwinUser]:
+    async def _get_user_by_id(self, user_id: str) -> TwinUser | None:
         """Get user by ID from cache or database."""
         if user_id in self.users:
             return self.users[user_id]
@@ -867,7 +867,7 @@ class UnifiedDigitalTwinSystem:
 
         return None
 
-    async def _get_user_by_username(self, username: str) -> Optional[TwinUser]:
+    async def _get_user_by_username(self, username: str) -> TwinUser | None:
         """Get user by username."""
         # Check cache first
         for user in self.users.values():
@@ -1124,17 +1124,17 @@ class UnifiedDigitalTwinSystem:
         # Placeholder for P2P sync operations
         logger.debug("P2P synchronization completed")
 
-    async def _sync_user_data_p2p(self, payload: Dict[str, Any]):
+    async def _sync_user_data_p2p(self, payload: dict[str, Any]):
         """Synchronize user data via P2P."""
         logger.debug("Synchronizing user data via P2P")
 
-    async def _sync_conversation_p2p(self, payload: Dict[str, Any]):
+    async def _sync_conversation_p2p(self, payload: dict[str, Any]):
         """Synchronize conversation data via P2P."""
         logger.debug("Synchronizing conversation data via P2P")
 
     # Public API
 
-    def get_system_metrics(self) -> Dict[str, Any]:
+    def get_system_metrics(self) -> dict[str, Any]:
         """Get comprehensive system metrics."""
         return {
             "twin_id": self.twin_id,
@@ -1151,7 +1151,7 @@ class UnifiedDigitalTwinSystem:
             },
         }
 
-    def get_user_statistics(self) -> Dict[str, Any]:
+    def get_user_statistics(self) -> dict[str, Any]:
         """Get user activity statistics."""
         active_users = sum(1 for user in self.users.values() if user.is_active)
 

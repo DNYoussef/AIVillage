@@ -8,10 +8,10 @@ The offensive security specialist of AIVillage, responsible for:
 - Continuous penetration testing
 """
 
-import logging
-import random
 from dataclasses import dataclass
 from enum import Enum
+import logging
+import random
 from typing import Any
 
 from packages.agents.core.agent_interface import AgentInterface

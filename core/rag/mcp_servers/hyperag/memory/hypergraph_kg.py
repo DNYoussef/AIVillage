@@ -4,17 +4,17 @@ Brain-inspired neocortical memory system for consolidated semantic knowledge
 with hypergraph relationships, personalized PageRank, and community detection.
 """
 
+from datetime import datetime
 import json
 import logging
-import uuid
-from datetime import datetime
 from typing import Any
+import uuid
 
-import numpy as np
-import redis.asyncio as redis
 from neo4j import AsyncGraphDatabase
+import numpy as np
 from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, PointStruct, VectorParams
+import redis.asyncio as redis
 
 from .base import ConfidenceType, Edge, EmbeddingManager, MemoryBackend, MemoryStats, MemoryType, Node
 from .schemas import HypergraphSchema, QdrantSchema, RedisSchema

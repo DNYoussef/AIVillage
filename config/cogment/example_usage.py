@@ -7,14 +7,14 @@ This example shows integration with Agent 1-4 components and parameter budget va
 """
 
 import logging
-import sys
 from pathlib import Path
+import sys
 
 # Add the config directory to path for imports
 config_dir = Path(__file__).parent
 sys.path.insert(0, str(config_dir))
 
-from config_loader import CogmentCompleteConfig, CogmentConfigLoader, StageConfig, TrainingConfig
+from config_loader import CogmentConfigLoader
 from config_validation import CogmentConfigValidator
 
 # Setup logging
@@ -38,10 +38,10 @@ def main():
         complete_config = loader.load_complete_config()
 
         print(f"Loaded configuration from: {complete_config.loaded_from}")
-        print(f"   - Model config loaded")
-        print(f"   - Training config loaded")
-        print(f"   - GrokFast config loaded")
-        print(f"   - Deployment config loaded")
+        print("   - Model config loaded")
+        print("   - Training config loaded")
+        print("   - GrokFast config loaded")
+        print("   - Deployment config loaded")
         print(f"   - {len(complete_config.stage_configs)} stage configs loaded")
 
         # 3. Validate configuration
@@ -77,7 +77,7 @@ def main():
 
         # 5. Stage configuration examples
         print("\n5. Stage Configuration Examples...")
-        stage_names = loader.get_stage_names()
+        loader.get_stage_names()
 
         for stage_id in [0, 1, 4]:  # Show sanity, ARC, and long-context stages
             stage_config = loader.load_stage_config(stage_id)
@@ -97,7 +97,7 @@ def main():
                         f"     GrokFast: alpha={core_settings.get('alpha', 'N/A')}, lamb={core_settings.get('lamb', 'N/A')}"
                     )
             else:
-                print(f"     GrokFast: Disabled")
+                print("     GrokFast: Disabled")
 
         # 6. Agent 4 compatibility example
         print("\n6. Agent 4 Compatibility Example...")
@@ -117,8 +117,8 @@ def main():
         overridden_config = loader.override_with_args(complete_config, override_args)
         new_param_analysis = validator.validate_parameter_budget(overridden_config)
 
-        print(f"   Original d_model: 512")
-        print(f"   Override d_model: 480")
+        print("   Original d_model: 512")
+        print("   Override d_model: 480")
         print(f"   New parameter count: {new_param_analysis.total_estimated:,}")
         print(f"   Parameter change: {new_param_analysis.total_estimated - param_analysis['total_estimated']:,}")
 
@@ -186,7 +186,7 @@ def main():
             print(f"     {param}: expected={expected}, actual={actual} {status}")
 
         # Final summary
-        print(f"\nConfiguration System Demo Complete!")
+        print("\nConfiguration System Demo Complete!")
         print(f"   Total Parameters: {param_analysis['total_estimated']:,}")
         print(f"   Budget Utilization: {param_analysis['utilization_ratio']:.1%}")
         print(f"   Configuration Valid: {'YES' if validation_result.is_valid else 'NO'}")

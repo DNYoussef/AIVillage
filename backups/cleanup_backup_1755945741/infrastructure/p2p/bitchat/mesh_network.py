@@ -5,9 +5,9 @@ Provides mesh networking capabilities for BitChat BLE transport,
 including routing, topology management, and store-and-forward messaging.
 """
 
+from dataclasses import dataclass, field
 import logging
 import time
-from dataclasses import dataclass, field
 
 logger = logging.getLogger(__name__)
 

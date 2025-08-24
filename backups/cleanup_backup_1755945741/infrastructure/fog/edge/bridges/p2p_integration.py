@@ -7,9 +7,9 @@ P2P infrastructure (BitChat, BetaNet, QUIC).
 """
 
 import logging
+from pathlib import Path
 import sys
 import time
-from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:

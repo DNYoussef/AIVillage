@@ -6,14 +6,14 @@ Extracted from UnifiedDigitalTwinSystem to handle all storage concerns
 following Single Responsibility Principle.
 """
 
-import asyncio
+from collections.abc import Generator
+from contextlib import contextmanager
 import json
 import logging
+from pathlib import Path
 import sqlite3
 import time
-from contextlib import contextmanager
-from pathlib import Path
-from typing import Any, Dict, Generator, List, Optional
+from typing import Any
 
 from ..unified_digital_twin_system import TwinAccessLevel, TwinConversation, TwinMessage, TwinUser
 
@@ -37,7 +37,7 @@ class DigitalTwinStorage:
         self.db_path = self.data_dir / "twin.db"
 
         # Encryption key management
-        self.encryption_key: Optional[bytes] = None
+        self.encryption_key: bytes | None = None
 
         # Storage metrics
         self.storage_metrics = {
@@ -252,7 +252,7 @@ class DigitalTwinStorage:
             logger.error(f"Failed to save user {user.user_id}: {e}")
             return False
 
-    async def load_user(self, user_id: str) -> Optional[TwinUser]:
+    async def load_user(self, user_id: str) -> TwinUser | None:
         """Load user from database with proper deserialization."""
 
         try:
@@ -364,7 +364,7 @@ class DigitalTwinStorage:
             logger.error(f"Failed to save message {message.message_id}: {e}")
             return False
 
-    async def get_conversation_messages(self, conversation_id: str, limit: int = 50) -> List[Dict[str, Any]]:
+    async def get_conversation_messages(self, conversation_id: str, limit: int = 50) -> list[dict[str, Any]]:
         """Get conversation message history with proper pagination."""
 
         try:
@@ -410,15 +410,15 @@ class DigitalTwinStorage:
         data_key: str,
         data_value: Any,
         access_level: TwinAccessLevel = TwinAccessLevel.PRIVATE,
-        expires_at: Optional[float] = None,
-    ) -> Optional[str]:
+        expires_at: float | None = None,
+    ) -> str | None:
         """Store arbitrary twin data with encryption."""
 
         try:
             data_id = f"{user_id}_{data_type}_{data_key}_{int(time.time())}"
 
             # Serialize data value
-            if isinstance(data_value, (dict, list)):
+            if isinstance(data_value, dict | list):
                 serialized_value = json.dumps(data_value)
             else:
                 serialized_value = str(data_value)
@@ -458,7 +458,7 @@ class DigitalTwinStorage:
             logger.error(f"Failed to store twin data for user {user_id}: {e}")
             return None
 
-    async def get_twin_data(self, user_id: str, data_type: str, data_key: Optional[str] = None) -> Dict[str, Any]:
+    async def get_twin_data(self, user_id: str, data_type: str, data_key: str | None = None) -> dict[str, Any]:
         """Retrieve twin data with decryption."""
 
         try:
@@ -604,7 +604,7 @@ class DigitalTwinStorage:
         except Exception as e:
             logger.error(f"Error closing storage connections: {e}")
 
-    def get_storage_metrics(self) -> Dict[str, Any]:
+    def get_storage_metrics(self) -> dict[str, Any]:
         """Get storage performance metrics."""
 
         return {

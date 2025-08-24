@@ -1,7 +1,7 @@
 """Data Science Agent - Statistical Analysis and ML Model Training Specialist"""
 
-import logging
 from dataclasses import dataclass
+import logging
 from typing import Any
 
 try:

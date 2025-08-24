@@ -7,15 +7,14 @@ import sys
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "core", "agent-forge", "models"))
 
-import torch
-import torch.nn as nn
-
 # Import Agent 1's components
 from cogment.core.config import CogmentConfig
 from cogment.core.refinement_core import MemoryGate, RefinementCore
 
 # Import Agent 2's memory system
 from cogment.memory.gated_ltm import GatedLTMMemory
+import torch
+import torch.nn as nn
 
 
 def test_agent_integration():
@@ -47,7 +46,7 @@ def test_agent_integration():
     hidden_states = torch.randn(B, N, config.d_model)
     targets = torch.randint(0, config.vocab_size, (B, N))
 
-    print(f"\nStep 1: Read from memory...")
+    print("\nStep 1: Read from memory...")
     # Step 1: Read from memory (Agent 2)
     memory_context = memory_system.read(hidden_states)
     print(f"Memory context shape: {memory_context.shape}")
@@ -57,7 +56,7 @@ def test_agent_integration():
     # We need to create memory representations in ltm_dim space
     M = 8  # Number of memory tokens to use
 
-    print(f"\nStep 2: Process through RefinementCore with memory...")
+    print("\nStep 2: Process through RefinementCore with memory...")
 
     # Option 1: Use a subset and project to ltm_dim
     memory_subset = memory_context[:, :M, :]  # [B, M, d_model]
@@ -73,7 +72,7 @@ def test_agent_integration():
         hidden_states=hidden_states, memory=memory_for_refinement, step=0
     )
 
-    print(f"RefinementCore outputs:")
+    print("RefinementCore outputs:")
     print(f"  y_logits: {y_logits.shape}")
     print(f"  delta_logits: {delta_logits.shape}")
     print(f"  halt_prob: {halt_prob.shape}")
@@ -83,7 +82,7 @@ def test_agent_integration():
     combined_logits = refinement_core.compute_prediction(y_logits, delta_logits)
     print(f"  combined_logits: {combined_logits.shape}")
 
-    print(f"\nStep 3: Write refined states back to memory...")
+    print("\nStep 3: Write refined states back to memory...")
     # Step 3: Write back to memory (Agent 2)
     write_info = memory_system.write(
         query_states=refined_states, predictions=combined_logits, targets=targets, return_gate_info=True
@@ -96,7 +95,7 @@ def test_agent_integration():
     else:
         print("No writes performed")
 
-    print(f"\nStep 4: Test complete cycle...")
+    print("\nStep 4: Test complete cycle...")
     # Test a complete read-process-write cycle
     for step in range(3):
         print(f"\nCycle {step + 1}:")
@@ -127,12 +126,12 @@ def test_agent_integration():
 
     # Final statistics
     stats = memory_system.get_memory_stats()
-    print(f"\nFinal memory statistics:")
+    print("\nFinal memory statistics:")
     print(f"  Total updates: {stats['update_count']}")
     print(f"  Average usage: {stats['avg_usage']:.4f}")
     print(f"  Unused slots: {stats['unused_slots']}")
 
-    print(f"\nIntegration test successful!")
+    print("\nIntegration test successful!")
     print(f"Total system parameters: {total_params:,}")
 
     # Parameter budget check

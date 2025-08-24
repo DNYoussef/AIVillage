@@ -6,8 +6,8 @@ including thought quality assessment, model performance metrics, and specialized
 evaluation for HRRM models.
 """
 
-import logging
 from dataclasses import dataclass, field
+import logging
 from pathlib import Path
 from typing import Any
 

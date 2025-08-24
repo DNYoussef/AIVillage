@@ -10,7 +10,6 @@ Tests the core HyperRAG class functionality:
 """
 
 import time
-from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -234,7 +233,7 @@ class TestHyperRAGOrchestrator:
         try:
             from core.hyperrag import HyperRAG, MemoryType
 
-            hyperrag = HyperRAG(hyperrag_config)
+            HyperRAG(hyperrag_config)
 
             # Test all memory types are available
             memory_types = [
@@ -256,7 +255,7 @@ class TestHyperRAGOrchestrator:
         try:
             from core.hyperrag import HyperRAG, QueryMode
 
-            hyperrag = HyperRAG(hyperrag_config)
+            HyperRAG(hyperrag_config)
 
             # Test all query modes are available
             query_modes = [

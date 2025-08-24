@@ -9,12 +9,12 @@ These tests require OPENROUTER_API_KEY environment variable.
 import asyncio
 import logging
 import os
+from pathlib import Path
 
 # Test imports
 import sys
 import tempfile
 import time
-from pathlib import Path
 
 import pytest
 

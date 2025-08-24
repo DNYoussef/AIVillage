@@ -14,10 +14,10 @@ Integrated with fog computing for distributed analysis.
 """
 
 import asyncio
-import logging
-import time
 from dataclasses import dataclass, field
 from enum import Enum
+import logging
+import time
 from typing import Any
 
 import numpy as np

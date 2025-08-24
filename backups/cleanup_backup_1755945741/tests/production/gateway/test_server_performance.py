@@ -13,11 +13,10 @@ Performance Targets:
 
 import asyncio
 import time
-from unittest.mock import AsyncMock, MagicMock, patch
 
+from fastapi.testclient import TestClient
 import httpx
 import pytest
-from fastapi.testclient import TestClient
 
 # Import the consolidated gateway server
 try:
@@ -74,7 +73,7 @@ class TestGatewayPerformance:
         assert p95_time < 5.0, f"95th percentile {p95_time:.2f}ms exceeds 5.0ms threshold"
         assert max_time < 10.0, f"Maximum response time {max_time:.2f}ms exceeds 10.0ms limit"
 
-        print(f"Health Check Performance:")
+        print("Health Check Performance:")
         print(f"  Average: {avg_time:.2f}ms (target: <2.8ms)")
         print(f"  95th percentile: {p95_time:.2f}ms")
         print(f"  Min/Max: {min_time:.2f}ms / {max_time:.2f}ms")
@@ -98,15 +97,15 @@ class TestGatewayPerformance:
                 start_time = time.perf_counter()
 
                 if method == "GET":
-                    response = client.get(endpoint)
+                    client.get(endpoint)
                 elif method == "POST":
                     # Provide minimal valid payloads for POST endpoints
                     if endpoint == "/query":
-                        response = client.post(endpoint, json={"query": "test"})
+                        client.post(endpoint, json={"query": "test"})
                     elif endpoint == "/chat":
-                        response = client.post(endpoint, json={"message": "test"})
+                        client.post(endpoint, json={"message": "test"})
                     else:
-                        response = client.post(endpoint, json={})
+                        client.post(endpoint, json={})
 
                 end_time = time.perf_counter()
                 response_time_ms = (end_time - start_time) * 1000
@@ -165,7 +164,7 @@ class TestGatewayPerformance:
         assert avg_time < 10.0, f"Concurrent average time {avg_time:.2f}ms too high"
         assert p95_time < 20.0, f"Concurrent p95 time {p95_time:.2f}ms too high"
 
-        print(f"Concurrent Load Performance (50 requests):")
+        print("Concurrent Load Performance (50 requests):")
         print(f"  Average: {avg_time:.2f}ms")
         print(f"  95th percentile: {p95_time:.2f}ms")
         print(f"  Maximum: {max_time:.2f}ms")
@@ -212,7 +211,7 @@ class TestGatewayPerformance:
         # Error handling should be fast
         assert avg_404_time < 200.0, f"404 error handling {avg_404_time:.2f}ms exceeds 200ms target"
 
-        print(f"Error Handling Performance:")
+        print("Error Handling Performance:")
         print(f"  404 responses: {avg_404_time:.2f}ms (target: <200ms)")
 
     def test_memory_usage_stability(self, client):
@@ -260,9 +259,9 @@ class TestGatewayBenchmarks:
 
     def test_api_throughput_benchmark(self, client):
         """Test maximum throughput under optimal conditions"""
+        from collections import deque
         import threading
         import time
-        from collections import deque
 
         results = deque()
         stop_event = threading.Event()
@@ -295,7 +294,7 @@ class TestGatewayBenchmarks:
         requests_per_second = total_requests / 10.0
         avg_response_time = sum(results) / len(results) * 1000  # Convert to ms
 
-        print(f"Throughput Benchmark:")
+        print("Throughput Benchmark:")
         print(f"  Requests/second: {requests_per_second:.2f}")
         print(f"  Total requests: {total_requests}")
         print(f"  Average response time: {avg_response_time:.2f}ms")

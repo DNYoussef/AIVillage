@@ -14,8 +14,8 @@ Author: Claude Code Agent
 """
 
 import json
-import shutil
 from pathlib import Path
+import shutil
 
 
 class Phase2MigrationManager:

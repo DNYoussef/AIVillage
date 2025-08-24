@@ -3,8 +3,8 @@
 import datetime
 import json
 import pathlib
-import uuid
 from typing import Any
+import uuid
 
 # Create audit directory
 _AUDIT_PATH = pathlib.Path("data/guardian_audit")

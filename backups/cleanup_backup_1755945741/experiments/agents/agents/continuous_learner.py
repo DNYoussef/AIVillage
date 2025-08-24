@@ -2,6 +2,7 @@ import logging
 from typing import Any
 
 import numpy as np
+
 from agents.utils.task import Task as LangroidTask
 
 from .analytics.base_analytics import BaseAnalytics

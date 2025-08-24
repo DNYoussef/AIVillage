@@ -3,11 +3,12 @@ import tempfile
 
 import pytest
 import torch
+from torch import nn
+
 from agent_forge.compression.eval_utils import CompressionEvaluator
 from agent_forge.compression.seedlm import LFSRGenerator, SeedLMCompressor
 from agent_forge.compression.stage1_bitnet import BitNetLinear, RMSNorm, convert_to_bitnet
 from agent_forge.compression.stage1_config import Stage1Config
-from torch import nn
 
 
 class TestLFSRGenerator:

@@ -16,15 +16,15 @@ This consolidates 105+ P2P files into ONE reliable mesh network system with:
 """
 
 import asyncio
-import hashlib
+from collections import defaultdict
+from collections.abc import Callable
+from dataclasses import dataclass, field
+from enum import Enum
 import json
 import logging
 import time
+from typing import Any
 import uuid
-from collections import defaultdict, deque
-from dataclasses import dataclass, field
-from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Set, Union
 
 logger = logging.getLogger(__name__)
 
@@ -82,7 +82,7 @@ class MeshMessage:
     # Routing and delivery
     hop_limit: int = 7
     hop_count: int = 0
-    route_path: List[str] = field(default_factory=list)
+    route_path: list[str] = field(default_factory=list)
 
     # Reliability
     sequence_number: int = 0
@@ -91,8 +91,8 @@ class MeshMessage:
     expires_at: float = field(default_factory=lambda: time.time() + 300)  # 5 min TTL
 
     # Transport selection
-    preferred_transports: List[TransportType] = field(default_factory=list)
-    attempted_transports: Set[TransportType] = field(default_factory=set)
+    preferred_transports: list[TransportType] = field(default_factory=list)
+    attempted_transports: set[TransportType] = field(default_factory=set)
 
     # Chunking for large messages
     is_chunked: bool = False
@@ -117,7 +117,7 @@ class MeshMessage:
         """Get message payload size."""
         return len(self.payload)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert message to dictionary for serialization."""
         return {
             "message_id": self.message_id,
@@ -140,7 +140,7 @@ class MeshMessage:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "MeshMessage":
+    def from_dict(cls, data: dict[str, Any]) -> "MeshMessage":
         """Create message from dictionary."""
         # Handle payload conversion
         payload = data["payload"]
@@ -176,7 +176,7 @@ class PeerInfo:
     """Information about mesh network peers."""
 
     peer_id: str
-    transports: Dict[TransportType, Dict[str, Any]] = field(default_factory=dict)
+    transports: dict[TransportType, dict[str, Any]] = field(default_factory=dict)
     last_seen: float = field(default_factory=time.time)
     status: NodeStatus = NodeStatus.OFFLINE
 
@@ -274,11 +274,11 @@ class ConnectionPool:
 
     def __init__(self, max_connections: int = 10):
         self.max_connections = max_connections
-        self.connections: Dict[str, Any] = {}
-        self.connection_health: Dict[str, CircuitBreaker] = {}
-        self.last_used: Dict[str, float] = {}
+        self.connections: dict[str, Any] = {}
+        self.connection_health: dict[str, CircuitBreaker] = {}
+        self.last_used: dict[str, float] = {}
 
-    def get_connection(self, peer_id: str, transport_type: TransportType) -> Optional[Any]:
+    def get_connection(self, peer_id: str, transport_type: TransportType) -> Any | None:
         """Get healthy connection to peer."""
         conn_key = f"{peer_id}:{transport_type.value}"
 
@@ -352,33 +352,33 @@ class UnifiedMeshProtocol:
     - Circuit breaker pattern for resilience
     """
 
-    def __init__(self, node_id: str, config: Optional[ReliabilityConfig] = None):
+    def __init__(self, node_id: str, config: ReliabilityConfig | None = None):
         self.node_id = node_id
         self.config = config or ReliabilityConfig()
 
         # Network state
-        self.peers: Dict[str, PeerInfo] = {}
-        self.routing_table: Dict[str, List[str]] = {}  # destination -> [path]
+        self.peers: dict[str, PeerInfo] = {}
+        self.routing_table: dict[str, list[str]] = {}  # destination -> [path]
         self.local_sequence = 0
 
         # Transport management
-        self.transports: Dict[TransportType, Any] = {}
-        self.connection_pools: Dict[TransportType, ConnectionPool] = {}
+        self.transports: dict[TransportType, Any] = {}
+        self.connection_pools: dict[TransportType, ConnectionPool] = {}
 
         # Reliability mechanisms
-        self.pending_messages: Dict[str, MeshMessage] = {}  # message_id -> message
-        self.message_status: Dict[str, MessageStatus] = {}
-        self.retry_counts: Dict[str, int] = defaultdict(int)
-        self.retry_timers: Dict[str, float] = {}
+        self.pending_messages: dict[str, MeshMessage] = {}  # message_id -> message
+        self.message_status: dict[str, MessageStatus] = {}
+        self.retry_counts: dict[str, int] = defaultdict(int)
+        self.retry_timers: dict[str, float] = {}
 
         # Store and forward
-        self.stored_messages: Dict[str, List[MeshMessage]] = defaultdict(list)  # peer_id -> messages
+        self.stored_messages: dict[str, list[MeshMessage]] = defaultdict(list)  # peer_id -> messages
 
         # Chunked message reassembly
-        self.chunk_buffers: Dict[str, Dict[int, MeshMessage]] = defaultdict(dict)  # chunk_id -> {index: chunk}
+        self.chunk_buffers: dict[str, dict[int, MeshMessage]] = defaultdict(dict)  # chunk_id -> {index: chunk}
 
         # Message handlers
-        self.message_handlers: Dict[str, Callable] = {}
+        self.message_handlers: dict[str, Callable] = {}
 
         # Performance metrics
         self.metrics = {
@@ -394,7 +394,7 @@ class UnifiedMeshProtocol:
 
         # Background tasks
         self._running = False
-        self._tasks: List[asyncio.Task] = []
+        self._tasks: list[asyncio.Task] = []
 
         logger.info(f"Unified mesh protocol initialized for node {node_id}")
 
@@ -450,7 +450,7 @@ class UnifiedMeshProtocol:
         self,
         receiver_id: str,
         message_type: str,
-        payload: Union[bytes, str, Dict],
+        payload: bytes | str | dict,
         priority: MessagePriority = MessagePriority.NORMAL,
         requires_ack: bool = True,
     ) -> str:
@@ -611,7 +611,7 @@ class UnifiedMeshProtocol:
             logger.error(f"Send error via {transport_type.value}: {e}")
             return False
 
-    def _select_transport(self, message: MeshMessage) -> Optional[TransportType]:
+    def _select_transport(self, message: MeshMessage) -> TransportType | None:
         """Select optimal transport for message based on various factors."""
         # Check preferred transports first
         for transport_type in message.preferred_transports:
@@ -690,7 +690,7 @@ class UnifiedMeshProtocol:
         logger.info(f"Stored message {message.message_id} for later delivery to {message.receiver_id}")
         return True
 
-    async def handle_incoming_message(self, sender_id: str, message_data: Dict[str, Any]):
+    async def handle_incoming_message(self, sender_id: str, message_data: dict[str, Any]):
         """Handle incoming message from transport layer."""
         try:
             message = MeshMessage.from_dict(message_data)
@@ -814,7 +814,7 @@ class UnifiedMeshProtocol:
 
         logger.warning(f"Could not forward message {message.message_id}")
 
-    def _get_next_hops(self, destination: str) -> List[str]:
+    def _get_next_hops(self, destination: str) -> list[str]:
         """Get next hops for destination from routing table."""
         # Simple routing - return direct peers first, then multi-hop routes
         routes = self.routing_table.get(destination, [])
@@ -1048,7 +1048,7 @@ class UnifiedMeshProtocol:
 
     # Public API methods
 
-    def add_peer(self, peer_id: str, transport_info: Dict[TransportType, Dict[str, Any]]):
+    def add_peer(self, peer_id: str, transport_info: dict[TransportType, dict[str, Any]]):
         """Add or update peer information."""
         if peer_id not in self.peers:
             self.peers[peer_id] = PeerInfo(peer_id=peer_id)
@@ -1068,15 +1068,15 @@ class UnifiedMeshProtocol:
             self.routing_table.pop(peer_id, None)
             logger.info(f"Removed peer {peer_id}")
 
-    def get_delivery_status(self, message_id: str) -> Optional[MessageStatus]:
+    def get_delivery_status(self, message_id: str) -> MessageStatus | None:
         """Get delivery status for a message."""
         return self.message_status.get(message_id)
 
-    def get_metrics(self) -> Dict[str, Any]:
+    def get_metrics(self) -> dict[str, Any]:
         """Get current performance metrics."""
         return self.metrics.copy()
 
-    def get_peer_info(self) -> Dict[str, Dict[str, Any]]:
+    def get_peer_info(self) -> dict[str, dict[str, Any]]:
         """Get information about all peers."""
         return {
             peer_id: {
@@ -1090,7 +1090,7 @@ class UnifiedMeshProtocol:
             for peer_id, peer in self.peers.items()
         }
 
-    def get_network_status(self) -> Dict[str, Any]:
+    def get_network_status(self) -> dict[str, Any]:
         """Get overall network status."""
         connected_peers = sum(1 for peer in self.peers.values() if peer.status == NodeStatus.CONNECTED)
 
@@ -1109,7 +1109,7 @@ class UnifiedMeshProtocol:
 
 
 # Factory function for easy instantiation
-def create_mesh_protocol(node_id: str, config: Optional[ReliabilityConfig] = None) -> UnifiedMeshProtocol:
+def create_mesh_protocol(node_id: str, config: ReliabilityConfig | None = None) -> UnifiedMeshProtocol:
     """Create a new mesh protocol instance."""
     return UnifiedMeshProtocol(node_id, config)
 

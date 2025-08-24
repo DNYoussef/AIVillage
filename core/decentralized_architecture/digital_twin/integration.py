@@ -6,13 +6,12 @@ Extracted from UnifiedDigitalTwinSystem to handle P2P, fog computing,
 and external service integrations following Single Responsibility Principle.
 """
 
-import asyncio
+from dataclasses import dataclass
 import json
 import logging
-import time
-from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+import time
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -23,9 +22,9 @@ class IntegrationStatus:
 
     service_name: str
     is_connected: bool
-    last_sync: Optional[float] = None
+    last_sync: float | None = None
     error_count: int = 0
-    last_error: Optional[str] = None
+    last_error: str | None = None
 
 
 class DigitalTwinIntegration:
@@ -47,7 +46,7 @@ class DigitalTwinIntegration:
         self.config_manager = None
 
         # Integration status tracking
-        self.integrations: Dict[str, IntegrationStatus] = {}
+        self.integrations: dict[str, IntegrationStatus] = {}
 
         # Integration metrics
         self.integration_metrics = {
@@ -183,8 +182,8 @@ class DigitalTwinIntegration:
             )
 
     async def generate_ai_response(
-        self, conversation_id: str, user_message: str, user_id: str, context: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
+        self, conversation_id: str, user_message: str, user_id: str, context: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """Generate AI response using available chat integration."""
 
         start_time = time.time()
@@ -219,7 +218,7 @@ class DigitalTwinIntegration:
                 "error": str(e),
             }
 
-    async def _simulate_ai_response(self, user_message: str, context: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+    async def _simulate_ai_response(self, user_message: str, context: dict[str, Any] | None) -> dict[str, Any]:
         """Built-in AI response simulation for fallback."""
 
         # Simple response patterns for demonstration
@@ -243,7 +242,7 @@ class DigitalTwinIntegration:
             "model": "built-in-simulation",
         }
 
-    async def sync_with_p2p_network(self, data_to_sync: Dict[str, Any]) -> bool:
+    async def sync_with_p2p_network(self, data_to_sync: dict[str, Any]) -> bool:
         """Synchronize data with P2P network."""
 
         if not self.p2p_system or not self.integrations["p2p"].is_connected:
@@ -342,7 +341,7 @@ class DigitalTwinIntegration:
         except Exception as e:
             logger.error(f"P2P query handling error: {e}")
 
-    async def execute_fog_task(self, task_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    async def execute_fog_task(self, task_data: dict[str, Any]) -> dict[str, Any] | None:
         """Execute task using fog computing if available."""
 
         if not self.fog_system or not self.integrations["fog"].is_connected:
@@ -363,7 +362,7 @@ class DigitalTwinIntegration:
             self.integrations["fog"].last_error = str(e)
             return None
 
-    async def _process_user_data_sync(self, payload: Dict[str, Any]):
+    async def _process_user_data_sync(self, payload: dict[str, Any]):
         """Process user data synchronization."""
 
         user_data = payload.get("data", {})
@@ -373,7 +372,7 @@ class DigitalTwinIntegration:
             logger.debug(f"Processing user data sync for user {user_id}")
             # Additional user data sync logic would go here
 
-    async def _process_conversation_sync(self, payload: Dict[str, Any]):
+    async def _process_conversation_sync(self, payload: dict[str, Any]):
         """Process conversation synchronization."""
 
         conv_data = payload.get("data", {})
@@ -383,7 +382,7 @@ class DigitalTwinIntegration:
             logger.debug(f"Processing conversation sync for {conversation_id}")
             # Additional conversation sync logic would go here
 
-    async def _process_config_sync(self, payload: Dict[str, Any]):
+    async def _process_config_sync(self, payload: dict[str, Any]):
         """Process configuration synchronization."""
 
         config_data = payload.get("data", {})
@@ -393,7 +392,7 @@ class DigitalTwinIntegration:
             logger.debug(f"Processing config sync for {config_key}")
             # Additional config sync logic would go here
 
-    async def _create_backup_data(self, backup_type: str) -> Dict[str, Any]:
+    async def _create_backup_data(self, backup_type: str) -> dict[str, Any]:
         """Create backup data for P2P sharing."""
 
         backup_data = {"twin_id": self.twin_id, "backup_type": backup_type, "timestamp": time.time(), "data": {}}
@@ -407,7 +406,7 @@ class DigitalTwinIntegration:
 
         return backup_data
 
-    async def _process_p2p_query(self, query_type: str, query_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def _process_p2p_query(self, query_type: str, query_data: dict[str, Any]) -> dict[str, Any]:
         """Process P2P query and generate response."""
 
         response = {"twin_id": self.twin_id, "query_type": query_type, "timestamp": time.time(), "result": {}}
@@ -453,7 +452,7 @@ class DigitalTwinIntegration:
             except Exception as e:
                 logger.error(f"Error stopping chat engine: {e}")
 
-    async def get_integration_status(self) -> Dict[str, Any]:
+    async def get_integration_status(self) -> dict[str, Any]:
         """Get comprehensive integration status."""
 
         return {
@@ -467,7 +466,7 @@ class DigitalTwinIntegration:
             for integration_name, status in self.integrations.items()
         }
 
-    def get_integration_metrics(self) -> Dict[str, Any]:
+    def get_integration_metrics(self) -> dict[str, Any]:
         """Get integration performance metrics."""
 
         return {

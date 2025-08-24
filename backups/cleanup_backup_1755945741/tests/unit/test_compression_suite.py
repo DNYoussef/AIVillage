@@ -4,9 +4,9 @@ Unified Compression Test Suite
 Combines best practices from multiple compression test files into single comprehensive suite
 """
 
+from pathlib import Path
 import sys
 import unittest
-from pathlib import Path
 
 import pytest
 import torch

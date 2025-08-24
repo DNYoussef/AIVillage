@@ -5,9 +5,9 @@ Extracted common agent functionality into focused, reusable services.
 Follows single responsibility principle and dependency injection.
 """
 
+from abc import ABC, abstractmethod
 import hashlib
 import logging
-from abc import ABC, abstractmethod
 from typing import Any, Protocol
 
 logger = logging.getLogger(__name__)

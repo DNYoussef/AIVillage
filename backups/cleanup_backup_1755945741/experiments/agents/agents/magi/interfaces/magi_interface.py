@@ -7,8 +7,8 @@ capabilities in technical reasoning, Python programming, and algorithm design.
 """
 
 import json
-import sys
 from pathlib import Path
+import sys
 
 # Add project to path
 sys.path.append(".")

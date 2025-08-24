@@ -5,12 +5,12 @@ Provides trend analysis for test success rates, performance metrics,
 and flaky test detection.
 """
 
-import json
-import statistics
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
+import json
 from pathlib import Path
+import statistics
 from typing import Any
 
 

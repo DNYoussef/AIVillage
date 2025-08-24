@@ -16,10 +16,10 @@ Quality & Security Integration Point: Test coverage with system integrity
 """
 
 import ast
-import logging
-import subprocess
 from dataclasses import dataclass, field
+import logging
 from pathlib import Path
+import subprocess
 from typing import Any
 
 import coverage

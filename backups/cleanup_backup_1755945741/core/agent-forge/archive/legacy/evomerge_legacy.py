@@ -17,13 +17,13 @@ from multiple base models using various merging techniques, now optimized for
 single Cogment model architecture.
 """
 
-import json
-import logging
-import random
-import tempfile
 from dataclasses import dataclass, field
 from datetime import datetime
+import json
+import logging
 from pathlib import Path
+import random
+import tempfile
 from typing import Any
 
 import numpy as np

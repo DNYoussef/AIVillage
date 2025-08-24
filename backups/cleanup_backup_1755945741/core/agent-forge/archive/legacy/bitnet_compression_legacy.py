@@ -20,21 +20,22 @@ Consolidates implementations from:
 - packages/agent_forge/legacy_src/foundation/bitnet.py (foundation components)
 """
 
+from dataclasses import dataclass, field
 import json
 import logging
-from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from datasets import load_dataset
 import numpy as np
 import torch
 import torch.nn as nn
-from datasets import load_dataset
-from packages.agent_forge.core.phase_controller import PhaseController, PhaseResult
-from packages.agent_forge.legacy_src.training.grokfast_ctrl import GrokfastOptimizer
 from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
 from transformers import AutoModelForCausalLM, AutoTokenizer, Trainer, TrainingArguments
+
+from packages.agent_forge.core.phase_controller import PhaseController, PhaseResult
+from packages.agent_forge.legacy_src.training.grokfast_ctrl import GrokfastOptimizer
 
 logger = logging.getLogger(__name__)
 

@@ -6,10 +6,10 @@ Implements comprehensive troubleshooting utilities as specified in CODEX Integra
 import json
 import logging
 import os
+from pathlib import Path
 import socket
 import sqlite3
 import time
-from pathlib import Path
 from typing import Any
 
 import psutil

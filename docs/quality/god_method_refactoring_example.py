@@ -9,18 +9,15 @@ BEFORE: 4 God methods exceeding 170+ lines each
 AFTER: Multiple focused methods <50 lines each with clear responsibilities
 """
 
-from dataclasses import dataclass
-from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Tuple
 
-from core.domain import MessageStatus, SystemLimits, TransportType
+from core.domain import SystemLimits, TransportType
 
 
 # Example refactoring of the 234-line _get_next_hops God method
 class RoutingEngine:
     """Extracted routing logic from the monolithic mesh protocol."""
 
-    def __init__(self, routing_table: Dict, peers: Dict, config):
+    def __init__(self, routing_table: dict, peers: dict, config):
         self.routing_table = routing_table
         self.peers = peers
         self.config = config
@@ -29,10 +26,10 @@ class RoutingEngine:
         self,
         destination: str,
         *,
-        exclude: Optional[Set[str]] = None,
+        exclude: set[str] | None = None,
         max_hops: int = SystemLimits.DEFAULT_MAX_HOPS,
         priority: int = 2,
-    ) -> List[str]:
+    ) -> list[str]:
         """
         Get optimal next hops for message routing.
 
@@ -52,7 +49,7 @@ class RoutingEngine:
         # Step 3: Select optimal routes
         return self._select_optimal_routes(scored_routes, max_hops)
 
-    def _find_route_candidates(self, destination: str, exclude: Set[str]) -> List[Dict]:
+    def _find_route_candidates(self, destination: str, exclude: set[str]) -> list[dict]:
         """
         Find all possible routes to destination.
 
@@ -94,7 +91,7 @@ class RoutingEngine:
 
         return candidates
 
-    def _score_routes(self, candidates: List[Dict], priority: int) -> List[Tuple[str, float]]:
+    def _score_routes(self, candidates: list[dict], priority: int) -> list[tuple[str, float]]:
         """
         Score routes based on reliability, latency, and priority.
 
@@ -130,7 +127,7 @@ class RoutingEngine:
 
         return scored
 
-    def _select_optimal_routes(self, scored_routes: List[Tuple[str, float]], max_count: int) -> List[str]:
+    def _select_optimal_routes(self, scored_routes: list[tuple[str, float]], max_count: int) -> list[str]:
         """
         Select top routes for message delivery.
 
@@ -150,7 +147,7 @@ class RoutingEngine:
 class TransportSelector:
     """Extracted transport selection logic."""
 
-    def __init__(self, connection_pools: Dict, peers: Dict, config):
+    def __init__(self, connection_pools: dict, peers: dict, config):
         self.connection_pools = connection_pools
         self.peers = peers
         self.config = config
@@ -259,7 +256,7 @@ class MessageHandlerRegistry:
         self.handler_metrics = {}
 
     def register_message_handler(
-        self, message_type: str, handler, *, middleware: Optional[List] = None, priority: int = 1
+        self, message_type: str, handler, *, middleware: list | None = None, priority: int = 1
     ) -> bool:
         """
         Register message handler with middleware support.
@@ -298,7 +295,7 @@ class MessageHandlerRegistry:
 
         return True
 
-    def _wrap_handler_with_middleware(self, handler, middleware_list: List):
+    def _wrap_handler_with_middleware(self, handler, middleware_list: list):
         """
         Wrap handler with middleware chain.
 
@@ -349,7 +346,7 @@ class RefactoredMeshProtocol:
         self.transport_selector = TransportSelector({}, {}, config)
         self.handler_registry = MessageHandlerRegistry()
 
-    def get_next_hops(self, destination: str, **kwargs) -> List[str]:
+    def get_next_hops(self, destination: str, **kwargs) -> list[str]:
         """Delegate to routing engine - no longer a God method."""
         return self.routing_engine.get_next_hops(destination, **kwargs)
 

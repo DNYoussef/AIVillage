@@ -6,8 +6,8 @@ P2P transport implementations while migrating to the unified system.
 """
 
 import logging
-import sys
 from pathlib import Path
+import sys
 from typing import Any
 
 logger = logging.getLogger(__name__)

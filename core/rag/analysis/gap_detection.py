@@ -7,8 +7,8 @@ and weak connascence through dependency injection.
 """
 
 import asyncio
-import logging
 from dataclasses import dataclass
+import logging
 from typing import Any, Protocol
 
 import numpy as np

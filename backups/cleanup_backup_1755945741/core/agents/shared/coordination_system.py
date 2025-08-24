@@ -11,21 +11,21 @@ Comprehensive multi-agent coordination and orchestration framework including:
 Integration Point: Agent coordination for Phase 4 testing
 """
 
-import heapq
-import json
-import logging
-import sqlite3
-import sys
-import threading
-import time
-import uuid
 from collections import defaultdict, deque
 from collections.abc import Callable
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from enum import Enum
+import heapq
+import json
+import logging
 from pathlib import Path
+import sqlite3
+import sys
+import threading
+import time
 from typing import Any
+import uuid
 
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))

@@ -6,8 +6,8 @@ Run this from the AIVillage root directory.
 
 import asyncio
 import logging
-import sys
 from pathlib import Path
+import sys
 
 # Ensure we're in the right directory
 if not Path("packages/core/global_south").exists():

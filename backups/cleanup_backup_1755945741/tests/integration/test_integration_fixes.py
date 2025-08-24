@@ -4,9 +4,9 @@ This module contains fixes and improvements for the top 5 failing integration te
 """
 
 import asyncio
-import sys
 from datetime import datetime, timezone
 from pathlib import Path
+import sys
 from unittest.mock import AsyncMock, Mock
 
 import pytest

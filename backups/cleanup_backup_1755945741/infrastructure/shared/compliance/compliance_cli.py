@@ -6,10 +6,10 @@ PII/PHI discovery, retention management, and compliance reporting.
 """
 
 import asyncio
-import json
-import sys
 from datetime import datetime
+import json
 from pathlib import Path
+import sys
 
 try:
     import click

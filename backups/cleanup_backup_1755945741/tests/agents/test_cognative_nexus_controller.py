@@ -15,7 +15,7 @@ import os
 # Import the system under test
 import sys
 import time
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -27,7 +27,6 @@ from core.agents.cognative_nexus_controller import (
     CognativeNexusController,
     CognativeTask,
     TaskPriority,
-    create_cognative_nexus_controller,
 )
 
 
@@ -268,7 +267,7 @@ class TestCognativeNexusController:
         )
 
         # Should still process successfully without cognitive nexus
-        agent_id = await controller.create_agent(AgentType.ORACLE, "test_oracle")
+        await controller.create_agent(AgentType.ORACLE, "test_oracle")
         result = await controller.process_task_with_act_halting(task)
 
         assert result["status"] == "success"

@@ -15,10 +15,10 @@ Expired entries are removed and counted as misses in the hit rate.
 from __future__ import annotations
 
 import asyncio
-import threading
 from collections import OrderedDict
 from dataclasses import dataclass
 from datetime import datetime, timedelta
+import threading
 from typing import TYPE_CHECKING, Any
 
 import numpy as np

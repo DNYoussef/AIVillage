@@ -8,6 +8,7 @@ if importlib.util.find_spec("torch") is None:
 from unittest import mock
 
 import torch
+
 from agent_forge.training.expert_vectors import ExpertVectorSystem
 from agent_forge.training.prompt_baking import PromptBakingManager
 

@@ -7,8 +7,6 @@ import sys
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "core", "agent-forge", "models"))
 
-import torch
-import torch.nn as nn
 from cogment.core.config import CogmentConfig
 from cogment.core.refinement_core import RefinementCore
 from cogment.memory.gated_ltm import GatedLTMMemory
@@ -50,7 +48,7 @@ def analyze_refinement_core_params():
 
     total_params, _ = count_module_params(refinement_core, "Total RefinementCore")
 
-    print(f"\nBreakdown:")
+    print("\nBreakdown:")
     print(f"  Encoder: {encoder_params:,} ({encoder_params/total_params*100:.1f}%)")
     print(f"  MemoryGate: {memory_gate_params:,} ({memory_gate_params/total_params*100:.1f}%)")
     print(f"  Y Head: {y_head_params:,} ({y_head_params/total_params*100:.1f}%)")
@@ -69,7 +67,7 @@ def analyze_refinement_core_params():
     expected_delta_head = d_model * vocab_size
     expected_total = expected_y_head + expected_delta_head
 
-    print(f"\nExpected vocab head sizes:")
+    print("\nExpected vocab head sizes:")
     print(f"  Y head: {d_model} × {vocab_size} = {expected_y_head:,}")
     print(f"  Delta head: {d_model} × {vocab_size} = {expected_delta_head:,}")
     print(f"  Total: {expected_total:,}")
@@ -85,7 +83,7 @@ def analyze_memory_system_params():
 
     memory_system = GatedLTMMemory(query_dim=config.d_model, memory_dim=config.ltm_dim, n_slots=config.ltm_capacity)
 
-    print(f"\nGatedLTM component breakdown:")
+    print("\nGatedLTM component breakdown:")
 
     # Memory slots (non-trainable)
     memory_slots = config.ltm_capacity * config.ltm_dim * 2  # keys + values
@@ -99,7 +97,7 @@ def analyze_memory_system_params():
     count_module_params(memory_system.output_projector, "OutputProjector")
 
     param_info = memory_system.count_parameters()
-    print(f"\nTotal GatedLTM:")
+    print("\nTotal GatedLTM:")
     print(f"  Trainable: {param_info['trainable']:,}")
     print(f"  Memory slots: {param_info['memory_slots']:,}")
     print(f"  Total: {param_info['total']:,}")
@@ -142,7 +140,7 @@ def suggest_optimizations():
     print(f"Option 4 - Factorized heads (bottleneck={bottleneck_dim}): {factorized_params:,} parameters")
     print(f"  Savings: {current_vocab_params - factorized_params:,}")
 
-    print(f"\nRECOMMENDATION: Agent 3 should implement Option 3 or 4 to stay within budget!")
+    print("\nRECOMMENDATION: Agent 3 should implement Option 3 or 4 to stay within budget!")
 
 
 def calculate_budget_allocation():

@@ -6,8 +6,8 @@ Tests agent system functionality by directly importing and testing core componen
 """
 
 import os
-import sys
 from pathlib import Path
+import sys
 
 # Set up minimal environment
 project_root = Path(__file__).parent.parent

@@ -5,8 +5,8 @@ Focused module for generating proposals to fix detected gaps.
 Uses strategy pattern to handle different proposal types.
 """
 
-import logging
 from abc import ABC, abstractmethod
+import logging
 from typing import Any, Protocol
 
 from .graph_types import DetectedGap, GapType, ProposedNode, ProposedRelationship

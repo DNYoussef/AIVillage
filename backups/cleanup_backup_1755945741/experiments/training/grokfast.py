@@ -5,8 +5,8 @@ Implements the GrokFast algorithm for 50x acceleration of grokking by amplifying
 slow gradients while dampening fast gradients. Based on the GrokFast paper.
 """
 
-import logging
 from collections import defaultdict, deque
+import logging
 from typing import Optional
 
 import torch

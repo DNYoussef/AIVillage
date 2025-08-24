@@ -3,10 +3,10 @@ SCION-aware Navigator integration for AIVillage transport selection.
 Integrates SCION paths into the Navigator's transport decision-making process.
 """
 
-import logging
-import time
 from dataclasses import dataclass, field
 from enum import Enum
+import logging
+import time
 from typing import Any
 
 from packages.p2p.core.message_types import UnifiedMessage as Message

@@ -7,6 +7,7 @@ import tempfile
 
 import pytest
 import torch
+
 from agent_forge.compression.hyperfn import HyperCompressionEncoder
 from agent_forge.compression.stage2 import Stage2Compressor
 from agent_forge.compression.vptq import VPTQQuantizer

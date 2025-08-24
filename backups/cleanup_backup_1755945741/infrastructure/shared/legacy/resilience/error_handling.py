@@ -11,17 +11,17 @@ Comprehensive error handling and system resilience including:
 Integration Point: Resilience layer for Phase 4 testing
 """
 
-import functools
-import logging
-import random
-import sys
-import threading
-import time
 from collections.abc import Callable
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from enum import Enum
+import functools
+import logging
 from pathlib import Path
+import random
+import sys
+import threading
+import time
 from typing import Any
 
 # Add src to path for imports

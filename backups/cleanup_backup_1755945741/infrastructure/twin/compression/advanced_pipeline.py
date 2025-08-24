@@ -5,10 +5,10 @@ from __future__ import annotations
 import json
 import logging
 import lzma
-import struct
-import zlib
 from pathlib import Path
+import struct
 from typing import Any
+import zlib
 
 import torch
 

@@ -12,8 +12,8 @@ Tests the consolidated systems:
 - Digital Twin (infrastructure.twin.chat_engine)
 """
 
-import sys
 from pathlib import Path
+import sys
 
 # Add project paths
 PROJECT_ROOT = Path(__file__).parent.parent

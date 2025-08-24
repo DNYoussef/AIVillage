@@ -6,9 +6,9 @@ Architecture: API Gateway → **Gateway Integration** → CognativeNexusControll
 """
 
 import asyncio
-import logging
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+import logging
+from typing import Any
 from uuid import uuid4
 
 from .cognative_nexus_controller import (
@@ -32,14 +32,14 @@ class AgentGatewayInterface:
 
     def __init__(self, controller: CognativeNexusController):
         self.controller = controller
-        self.request_cache: Dict[str, Any] = {}
-        self.active_sessions: Dict[str, Dict[str, Any]] = {}
+        self.request_cache: dict[str, Any] = {}
+        self.active_sessions: dict[str, dict[str, Any]] = {}
 
         logger.info("Agent Gateway Interface initialized")
 
     async def process_request(
-        self, request_type: str, content: str, session_id: Optional[str] = None, priority: str = "normal", **kwargs
-    ) -> Dict[str, Any]:
+        self, request_type: str, content: str, session_id: str | None = None, priority: str = "normal", **kwargs
+    ) -> dict[str, Any]:
         """
         Process a request through the agent system
 
@@ -116,8 +116,8 @@ class AgentGatewayInterface:
             }
 
     async def _process_query(
-        self, content: str, priority: TaskPriority, session_id: Optional[str], **kwargs
-    ) -> Dict[str, Any]:
+        self, content: str, priority: TaskPriority, session_id: str | None, **kwargs
+    ) -> dict[str, Any]:
         """Process a knowledge query request"""
 
         # Select appropriate agent for query processing
@@ -154,8 +154,8 @@ class AgentGatewayInterface:
         }
 
     async def _process_analysis(
-        self, content: str, priority: TaskPriority, session_id: Optional[str], **kwargs
-    ) -> Dict[str, Any]:
+        self, content: str, priority: TaskPriority, session_id: str | None, **kwargs
+    ) -> dict[str, Any]:
         """Process an analysis request"""
 
         # Use appropriate analyst agent
@@ -193,8 +193,8 @@ class AgentGatewayInterface:
         }
 
     async def _process_task(
-        self, content: str, priority: TaskPriority, session_id: Optional[str], **kwargs
-    ) -> Dict[str, Any]:
+        self, content: str, priority: TaskPriority, session_id: str | None, **kwargs
+    ) -> dict[str, Any]:
         """Process a general task request"""
 
         # Infer agent type from task content
@@ -227,8 +227,8 @@ class AgentGatewayInterface:
         }
 
     async def _process_conversation(
-        self, content: str, priority: TaskPriority, session_id: Optional[str], **kwargs
-    ) -> Dict[str, Any]:
+        self, content: str, priority: TaskPriority, session_id: str | None, **kwargs
+    ) -> dict[str, Any]:
         """Process a conversational request with session context"""
 
         # Get session context
@@ -277,8 +277,8 @@ class AgentGatewayInterface:
         }
 
     async def _process_generic(
-        self, content: str, priority: TaskPriority, session_id: Optional[str], **kwargs
-    ) -> Dict[str, Any]:
+        self, content: str, priority: TaskPriority, session_id: str | None, **kwargs
+    ) -> dict[str, Any]:
         """Process a generic request"""
 
         # Use sage agent as default for generic requests
@@ -369,7 +369,7 @@ class AgentGatewayInterface:
         # Default to coordinator for general tasks
         return AgentType.COORDINATOR
 
-    def _update_session(self, session_id: str, request_id: str, response: Dict[str, Any]) -> None:
+    def _update_session(self, session_id: str, request_id: str, response: dict[str, Any]) -> None:
         """Update session with request/response information"""
 
         if session_id not in self.active_sessions:
@@ -398,7 +398,7 @@ class AgentGatewayInterface:
         if len(session["exchanges"]) > 10:
             session["exchanges"] = session["exchanges"][-10:]
 
-    async def get_system_status(self) -> Dict[str, Any]:
+    async def get_system_status(self) -> dict[str, Any]:
         """Get comprehensive system status including gateway metrics"""
 
         # Get controller status

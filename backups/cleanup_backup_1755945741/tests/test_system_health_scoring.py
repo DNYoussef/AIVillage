@@ -1,5 +1,5 @@
-import textwrap
 from pathlib import Path
+import textwrap
 
 from monitoring.system_health_dashboard import ComponentHealthChecker
 

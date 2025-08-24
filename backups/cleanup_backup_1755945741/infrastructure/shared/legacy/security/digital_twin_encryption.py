@@ -6,10 +6,10 @@ with 32-byte base64 key requirement and GDPR/COPPA/FERPA compliance.
 """
 
 import base64
+from datetime import datetime, timedelta
 import hashlib
 import logging
 import os
-from datetime import datetime, timedelta
 from typing import Any
 
 from cryptography.fernet import Fernet

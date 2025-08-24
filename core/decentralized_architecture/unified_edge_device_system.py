@@ -21,15 +21,13 @@ ARCHITECTURE: Device → **UnifiedEdgeDeviceSystem** → P2P Network → Fog Com
 """
 
 import asyncio
-import json
+from dataclasses import dataclass, field
+from datetime import datetime
+from enum import Enum
 import logging
 import platform
 import time
-from dataclasses import dataclass, field
-from datetime import datetime, timedelta
-from enum import Enum
-from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Set, Union
+from typing import Any, Optional
 from uuid import uuid4
 
 import psutil
@@ -117,7 +115,7 @@ class EdgeDeviceSpec:
     gpu_memory_gb: float = 0.0
 
     # Power specifications
-    battery_capacity_mah: Optional[int] = None
+    battery_capacity_mah: int | None = None
     power_consumption_watts: float = 5.0
     charging_available: bool = True
 
@@ -152,7 +150,7 @@ class EdgeDeviceStatus:
     gpu_usage_percent: float = 0.0
 
     # Power status
-    battery_percent: Optional[float] = None
+    battery_percent: float | None = None
     is_charging: bool = False
     power_saving_mode: bool = False
 
@@ -184,16 +182,16 @@ class EdgeTask:
     task_type: str = "inference"
 
     # Task requirements
-    required_capabilities: List[EdgeCapability] = field(default_factory=list)
+    required_capabilities: list[EdgeCapability] = field(default_factory=list)
     min_memory_gb: float = 0.1
     min_cpu_cores: int = 1
     estimated_duration_seconds: int = 10
     priority: int = 5  # 1-10, higher is more important
 
     # Task data
-    payload: Dict[str, Any] = field(default_factory=dict)
-    code: Optional[str] = None  # WebAssembly or script code
-    model_path: Optional[str] = None
+    payload: dict[str, Any] = field(default_factory=dict)
+    code: str | None = None  # WebAssembly or script code
+    model_path: str | None = None
 
     # Execution context
     max_retries: int = 3
@@ -204,7 +202,7 @@ class EdgeTask:
     # Metadata
     created_at: datetime = field(default_factory=datetime.now)
     submitted_by: str = "system"
-    tags: List[str] = field(default_factory=list)
+    tags: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -217,12 +215,12 @@ class EdgeTaskResult:
     # Execution details
     execution_time_seconds: float = 0.0
     start_time: datetime = field(default_factory=datetime.now)
-    end_time: Optional[datetime] = None
+    end_time: datetime | None = None
 
     # Results
-    result_data: Dict[str, Any] = field(default_factory=dict)
-    output_logs: List[str] = field(default_factory=list)
-    error_message: Optional[str] = None
+    result_data: dict[str, Any] = field(default_factory=dict)
+    output_logs: list[str] = field(default_factory=list)
+    error_message: str | None = None
 
     # Resource usage during execution
     peak_memory_gb: float = 0.0
@@ -231,9 +229,9 @@ class EdgeTaskResult:
     energy_consumed_joules: float = 0.0
 
     # Quality metrics
-    accuracy: Optional[float] = None
-    confidence: Optional[float] = None
-    throughput: Optional[float] = None
+    accuracy: float | None = None
+    confidence: float | None = None
+    throughput: float | None = None
 
 
 @dataclass
@@ -290,9 +288,9 @@ class EdgeDeviceRegistry:
     """Registry of edge devices in the network"""
 
     def __init__(self):
-        self.devices: Dict[str, "EdgeDevice"] = {}
-        self.capabilities_index: Dict[EdgeCapability, Set[str]] = {}
-        self.performance_history: Dict[str, List[Dict[str, Any]]] = {}
+        self.devices: dict[str, "EdgeDevice"] = {}
+        self.capabilities_index: dict[EdgeCapability, set[str]] = {}
+        self.performance_history: dict[str, list[dict[str, Any]]] = {}
 
     def register_device(self, device: "EdgeDevice"):
         """Register an edge device"""
@@ -304,7 +302,7 @@ class EdgeDeviceRegistry:
                 self.capabilities_index[capability] = set()
             self.capabilities_index[capability].add(device.device_id)
 
-    def find_devices_by_capability(self, capability: EdgeCapability) -> List["EdgeDevice"]:
+    def find_devices_by_capability(self, capability: EdgeCapability) -> list["EdgeDevice"]:
         """Find devices that support a specific capability"""
         device_ids = self.capabilities_index.get(capability, set())
         return [self.devices[device_id] for device_id in device_ids if device_id in self.devices]
@@ -337,8 +335,8 @@ class EdgeTaskScheduler:
 
     def __init__(self, registry: EdgeDeviceRegistry):
         self.registry = registry
-        self.task_queue: List[EdgeTask] = []
-        self.active_tasks: Dict[str, EdgeTask] = {}
+        self.task_queue: list[EdgeTask] = []
+        self.active_tasks: dict[str, EdgeTask] = {}
 
     def submit_task(self, task: EdgeTask) -> bool:
         """Submit task for execution"""
@@ -398,12 +396,12 @@ class EdgeDevice:
         # Device information
         self.spec = self._detect_device_specs()
         self.status = EdgeDeviceStatus()
-        self.capabilities: Set[EdgeCapability] = set()
+        self.capabilities: set[EdgeCapability] = set()
 
         # Execution state
-        self.active_tasks: Dict[str, EdgeTask] = {}
-        self.task_results: Dict[str, EdgeTaskResult] = {}
-        self.performance_metrics: Dict[str, Any] = {}
+        self.active_tasks: dict[str, EdgeTask] = {}
+        self.task_results: dict[str, EdgeTaskResult] = {}
+        self.performance_metrics: dict[str, Any] = {}
 
         # P2P networking integration
         self.p2p_node = None
@@ -433,7 +431,7 @@ class EdgeDevice:
             storage_gb = disk.total / (1024**3)
 
             # Platform detection
-            system = platform.system().lower()
+            platform.system().lower()
 
             return EdgeDeviceSpec(
                 cpu_cores=cpu_count,
@@ -735,7 +733,7 @@ class EdgeDevice:
 
         return result
 
-    def get_device_info(self) -> Dict[str, Any]:
+    def get_device_info(self) -> dict[str, Any]:
         """Get comprehensive device information"""
 
         return {
@@ -807,7 +805,7 @@ class UnifiedEdgeDeviceSystem:
         # System components
         self.device_registry = EdgeDeviceRegistry()
         self.task_scheduler = EdgeTaskScheduler(self.device_registry)
-        self.local_device: Optional[EdgeDevice] = None
+        self.local_device: EdgeDevice | None = None
 
         # Network integration
         self.p2p_system = None
@@ -1022,20 +1020,20 @@ class UnifiedEdgeDeviceSystem:
         """Submit task for execution"""
         return self.task_scheduler.submit_task(task)
 
-    def get_device_info(self, device_id: str) -> Optional[Dict[str, Any]]:
+    def get_device_info(self, device_id: str) -> dict[str, Any] | None:
         """Get information about a specific device"""
 
         if device_id in self.device_registry.devices:
             return self.device_registry.devices[device_id].get_device_info()
         return None
 
-    def find_devices_by_capability(self, capability: EdgeCapability) -> List[Dict[str, Any]]:
+    def find_devices_by_capability(self, capability: EdgeCapability) -> list[dict[str, Any]]:
         """Find devices that support a capability"""
 
         devices = self.device_registry.find_devices_by_capability(capability)
         return [device.get_device_info() for device in devices]
 
-    def get_system_status(self) -> Dict[str, Any]:
+    def get_system_status(self) -> dict[str, Any]:
         """Get comprehensive system status"""
 
         uptime = (datetime.now() - self.start_time).total_seconds()
@@ -1067,7 +1065,7 @@ class UnifiedEdgeDeviceSystem:
             "integration": {"p2p_enabled": self.p2p_system is not None, "fog_enabled": self.fog_system is not None},
         }
 
-    def _get_device_type_distribution(self) -> Dict[str, int]:
+    def _get_device_type_distribution(self) -> dict[str, int]:
         """Get distribution of device types"""
 
         distribution = {}

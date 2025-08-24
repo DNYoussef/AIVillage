@@ -1,9 +1,9 @@
 import time
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import pytest
 from federation.core.device_registry import DeviceRole
 from federation.core.federation_manager import FederationManager, PrivacyLevel
+import pytest
 
 
 @pytest.mark.asyncio

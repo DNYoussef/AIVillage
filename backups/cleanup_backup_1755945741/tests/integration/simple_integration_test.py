@@ -2,8 +2,8 @@
 """Simple test without Unicode characters to validate functionality."""
 
 import asyncio
-import sys
 from pathlib import Path
+import sys
 
 
 async def test_basic_integration():

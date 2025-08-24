@@ -13,11 +13,11 @@ This provides comprehensive mobile device optimization:
 - Real-time policy adaptation
 """
 
+from dataclasses import dataclass, field
+from enum import Enum
 import logging
 import os
 import time
-from dataclasses import dataclass, field
-from enum import Enum
 from typing import Any
 
 logger = logging.getLogger(__name__)

@@ -10,10 +10,10 @@ Provides REST endpoints for usage tracking and billing:
 Integrates with existing AIVillage billing and quota systems.
 """
 
-import logging
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from enum import Enum
+import logging
 
 from fastapi import APIRouter, HTTPException, Query, status
 from pydantic import BaseModel, Field

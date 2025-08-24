@@ -6,9 +6,9 @@ Test the integration between the consolidated RAG system and edge device infrast
 """
 
 import asyncio
+from pathlib import Path
 import sys
 import tempfile
-from pathlib import Path
 
 # Add packages to path
 sys.path.insert(0, str(Path(__file__).parent / "packages"))

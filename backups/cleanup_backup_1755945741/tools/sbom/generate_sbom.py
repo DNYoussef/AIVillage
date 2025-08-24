@@ -5,15 +5,15 @@ Generates comprehensive SBOM including Python, Rust, and Go dependencies.
 """
 
 import argparse
+from datetime import datetime
 import json
+from pathlib import Path
 import subprocess
 import sys
-from datetime import datetime
-from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 
-def get_python_dependencies() -> List[Dict[str, Any]]:
+def get_python_dependencies() -> list[dict[str, Any]]:
     """Get Python dependencies from pip."""
     try:
         result = subprocess.run(["pip", "list", "--format=json"], capture_output=True, text=True, check=True)
@@ -22,7 +22,7 @@ def get_python_dependencies() -> List[Dict[str, Any]]:
         return []
 
 
-def get_rust_dependencies() -> List[Dict[str, Any]]:
+def get_rust_dependencies() -> list[dict[str, Any]]:
     """Get Rust dependencies from Cargo.lock if available."""
     rust_deps = []
 
@@ -33,7 +33,7 @@ def get_rust_dependencies() -> List[Dict[str, Any]]:
         if Path(lock_file).exists():
             try:
                 # Parse Cargo.lock for dependency info
-                with open(lock_file, "r") as f:
+                with open(lock_file) as f:
                     content = f.read()
                     # Simple parsing - in production use proper TOML parser
                     lines = content.split("\n")
@@ -62,7 +62,7 @@ def get_rust_dependencies() -> List[Dict[str, Any]]:
     return rust_deps
 
 
-def get_go_dependencies() -> List[Dict[str, Any]]:
+def get_go_dependencies() -> list[dict[str, Any]]:
     """Get Go dependencies from go.mod if available."""
     go_deps = []
 
@@ -72,7 +72,7 @@ def get_go_dependencies() -> List[Dict[str, Any]]:
     for mod_file in go_mod_files:
         if Path(mod_file).exists():
             try:
-                with open(mod_file, "r") as f:
+                with open(mod_file) as f:
                     content = f.read()
                     lines = content.split("\n")
 
@@ -89,7 +89,7 @@ def get_go_dependencies() -> List[Dict[str, Any]]:
     return go_deps
 
 
-def get_javascript_dependencies() -> List[Dict[str, Any]]:
+def get_javascript_dependencies() -> list[dict[str, Any]]:
     """Get JavaScript dependencies from package.json files."""
     js_deps = []
 
@@ -98,7 +98,7 @@ def get_javascript_dependencies() -> List[Dict[str, Any]]:
 
     for package_file in package_files:
         try:
-            with open(package_file, "r") as f:
+            with open(package_file) as f:
                 package_data = json.load(f)
 
                 # Get dependencies
@@ -112,7 +112,7 @@ def get_javascript_dependencies() -> List[Dict[str, Any]]:
     return js_deps
 
 
-def generate_sbom(output_dir: str, verbose: bool = False) -> Dict[str, Any]:
+def generate_sbom(output_dir: str, verbose: bool = False) -> dict[str, Any]:
     """Generate comprehensive SBOM."""
 
     print("🔍 Generating Software Bill of Materials (SBOM)...")
@@ -180,7 +180,7 @@ def generate_sbom(output_dir: str, verbose: bool = False) -> Dict[str, Any]:
         for component in sbom["components"]:
             f.write(f"- {component['name']} v{component['version']} ({component.get('type', 'unknown')})\n")
 
-    print(f"✅ SBOM generated successfully!")
+    print("✅ SBOM generated successfully!")
     print(f"   📄 SBOM file: {sbom_file}")
     print(f"   📋 Summary file: {summary_file}")
 

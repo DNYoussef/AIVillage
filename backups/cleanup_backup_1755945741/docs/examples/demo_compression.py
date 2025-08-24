@@ -6,9 +6,9 @@ No mocks, no fake data - just real compression achieving 4x reduction.
 """
 
 import logging
+from pathlib import Path
 import sys
 import tempfile
-from pathlib import Path
 
 # Setup logging to see compression progress
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")

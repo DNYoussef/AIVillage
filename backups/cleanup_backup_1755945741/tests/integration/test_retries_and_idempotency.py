@@ -10,6 +10,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import httpx
 import pytest
+
 from packages.core.common import (
     CircuitBreakerConfig,
     CircuitBreakerError,

@@ -1,8 +1,8 @@
 """Financial Agent - Economic Modeling and Financial Analysis Specialist"""
 
+from dataclasses import dataclass
 import logging
 import math
-from dataclasses import dataclass
 from typing import Any
 
 from packages.agents.core.base import BaseAgent

@@ -1,15 +1,16 @@
 import asyncio
-import json
-import logging
-import uuid
 from collections import deque
 from dataclasses import dataclass, field
+import json
+import logging
 from typing import Any
+import uuid
 
 from AIVillage.experimental.agents.agents.analytics.unified_analytics import UnifiedAnalytics
 
 # Decision making utilities were moved under the `planning` package.
 from AIVillage.experimental.agents.agents.planning.unified_decision_maker import UnifiedDecisionMaker
+
 from core.error_handling import AIVillageException, Message, MessageType, Priority, StandardCommunicationProtocol
 
 from .incentive_model import IncentiveModel

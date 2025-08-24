@@ -6,8 +6,8 @@ Tests core agent functionality independently to validate reorganization impact.
 """
 
 import os
-import sys
 from pathlib import Path
+import sys
 
 # Add paths for import resolution
 project_root = Path(__file__).parent.parent

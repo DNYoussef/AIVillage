@@ -6,18 +6,18 @@ and secure access to all AIVillage systems.
 """
 
 import asyncio
-import json
-import logging
 from datetime import datetime
 from http.server import BaseHTTPRequestHandler, HTTPServer
+import json
+import logging
 from typing import Any
 
 try:
-    import uvicorn
     from fastapi import Depends, FastAPI, HTTPException, Request
     from fastapi.middleware.cors import CORSMiddleware
     from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
     from pydantic import BaseModel
+    import uvicorn
 
     FASTAPI_AVAILABLE = True
 except ImportError:

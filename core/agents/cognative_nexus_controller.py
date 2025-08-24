@@ -13,19 +13,16 @@ Architecture: API Gateway → **CognativeNexusController** → Knowledge System 
 """
 
 import asyncio
-import logging
-import time
 from collections import defaultdict
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Type, Union
+import logging
+import time
+from typing import Any
 from uuid import uuid4
 
-import numpy as np
-
 # Core imports - fixed to avoid circular dependencies
-from .core.agent_interface import AgentInterface
 from .core.agent_services import (
     AgentCapabilityRegistry,
     BasicStatusProvider,
@@ -143,7 +140,7 @@ class AgentRegistration:
     health_score: float = 1.0
 
     # Cognitive capabilities
-    reasoning_strategies: Set[str] = field(default_factory=set)
+    reasoning_strategies: set[str] = field(default_factory=set)
     cognitive_load: float = 0.0
 
     # Communication state
@@ -161,7 +158,7 @@ class CognativeTask:
 
     # Cognitive analysis requirements
     requires_reasoning: bool = True
-    reasoning_strategy: Optional[str] = None
+    reasoning_strategy: str | None = None
     confidence_threshold: float = 0.7
 
     # ACT halting configuration
@@ -171,12 +168,12 @@ class CognativeTask:
 
     # Execution tracking
     created_at: datetime = field(default_factory=datetime.now)
-    assigned_agent: Optional[str] = None
+    assigned_agent: str | None = None
     current_iteration: int = 0
 
     # Results and analysis
-    results: Dict[str, Any] = field(default_factory=dict)
-    cognitive_analysis: Optional[Dict[str, Any]] = None
+    results: dict[str, Any] = field(default_factory=dict)
+    cognitive_analysis: dict[str, Any] | None = None
     confidence_score: float = 0.0
     completed: bool = False
 
@@ -186,7 +183,7 @@ class AgentFactory:
 
     def __init__(self, controller: "CognativeNexusController"):
         self.controller = controller
-        self.agent_classes: Dict[AgentType, Type[BaseAgent]] = {}
+        self.agent_classes: dict[AgentType, type[BaseAgent]] = {}
         self.default_services = {}
         self._initialize_default_services()
 
@@ -205,12 +202,12 @@ class AgentFactory:
 
         logger.info("Agent factory services initialized successfully")
 
-    def register_agent_class(self, agent_type: AgentType, agent_class: Type[BaseAgent]) -> None:
+    def register_agent_class(self, agent_type: AgentType, agent_class: type[BaseAgent]) -> None:
         """Register an agent class for instantiation"""
         self.agent_classes[agent_type] = agent_class
         logger.debug(f"Registered agent class: {agent_type.value}")
 
-    async def create_agent(self, agent_type: AgentType, agent_id: str, **kwargs) -> Optional[BaseAgent]:
+    async def create_agent(self, agent_type: AgentType, agent_id: str, **kwargs) -> BaseAgent | None:
         """
         Create agent instance with guaranteed <500ms instantiation time
 
@@ -283,16 +280,16 @@ class CognativeNexusController:
         self.start_time = datetime.now()
 
         # Agent management
-        self.agents: Dict[str, AgentRegistration] = {}
+        self.agents: dict[str, AgentRegistration] = {}
         self.agent_factory = AgentFactory(self)
-        self.agent_types_index: Dict[AgentType, List[str]] = defaultdict(list)
+        self.agent_types_index: dict[AgentType, list[str]] = defaultdict(list)
 
         # Task management with ACT halting
-        self.active_tasks: Dict[str, CognativeTask] = {}
+        self.active_tasks: dict[str, CognativeTask] = {}
         self.task_queue: asyncio.Queue = asyncio.Queue()
 
         # Cognitive reasoning integration
-        self.cognitive_nexus: Optional[CognitiveNexus] = None
+        self.cognitive_nexus: CognitiveNexus | None = None
         self.enable_cognitive_nexus = enable_cognitive_nexus
 
         # Performance tracking
@@ -308,8 +305,8 @@ class CognativeNexusController:
         }
 
         # Communication and coordination
-        self.communication_channels: Dict[str, Any] = {}
-        self.background_tasks: List[asyncio.Task] = []
+        self.communication_channels: dict[str, Any] = {}
+        self.background_tasks: list[asyncio.Task] = []
 
         logger.info("CognativeNexusController initialized")
 
@@ -349,7 +346,7 @@ class CognativeNexusController:
             logger.error(f"❌ CognativeNexusController initialization failed: {e}")
             return False
 
-    async def create_agent(self, agent_type: AgentType, agent_id: Optional[str] = None, **kwargs) -> Optional[str]:
+    async def create_agent(self, agent_type: AgentType, agent_id: str | None = None, **kwargs) -> str | None:
         """
         Create and register a new agent with guaranteed success
 
@@ -408,7 +405,7 @@ class CognativeNexusController:
             )
             return None
 
-    async def process_task_with_act_halting(self, task: CognativeTask) -> Dict[str, Any]:
+    async def process_task_with_act_halting(self, task: CognativeTask) -> dict[str, Any]:
         """
         Process task with ACT (Adaptive Computation Time) halting and iterative refinement
 
@@ -513,12 +510,12 @@ class CognativeNexusController:
 
             return {"status": "failed", "error": str(e), "task_id": task.task_id, "processing_time_ms": processing_time}
 
-    async def get_agent(self, agent_id: str) -> Optional[BaseAgent]:
+    async def get_agent(self, agent_id: str) -> BaseAgent | None:
         """Get agent instance by ID"""
         registration = self.agents.get(agent_id)
         return registration.agent if registration else None
 
-    async def get_agents_by_type(self, agent_type: AgentType) -> List[BaseAgent]:
+    async def get_agents_by_type(self, agent_type: AgentType) -> list[BaseAgent]:
         """Get all agents of specified type"""
         agent_ids = self.agent_types_index.get(agent_type, [])
         return [
@@ -527,7 +524,7 @@ class CognativeNexusController:
             if agent_id in self.agents and self.agents[agent_id].status == AgentStatus.ACTIVE
         ]
 
-    async def get_system_performance_report(self) -> Dict[str, Any]:
+    async def get_system_performance_report(self) -> dict[str, Any]:
         """Generate comprehensive performance report"""
 
         # Calculate success rates
@@ -619,7 +616,7 @@ class CognativeNexusController:
         else:
             raise RuntimeError("System health validation failed - cannot create test agent")
 
-    async def _find_suitable_agents(self, task: CognativeTask) -> List[str]:
+    async def _find_suitable_agents(self, task: CognativeTask) -> list[str]:
         """Find agents suitable for a task"""
 
         # Simple implementation - in production would use capability matching
@@ -627,7 +624,7 @@ class CognativeNexusController:
 
         return active_agents[:3]  # Return up to 3 suitable agents
 
-    async def _analyze_result_confidence(self, query: str, result: str, strategy: Optional[str]) -> float:
+    async def _analyze_result_confidence(self, query: str, result: str, strategy: str | None) -> float:
         """Analyze result confidence using cognitive nexus"""
 
         if not self.cognitive_nexus:
@@ -737,7 +734,7 @@ class CognativeNexusController:
             except Exception as e:
                 logger.error(f"Task processor error: {e}")
 
-    def _calculate_health_score(self, health_info: Dict[str, Any]) -> float:
+    def _calculate_health_score(self, health_info: dict[str, Any]) -> float:
         """Calculate agent health score from health information"""
         try:
             base_score = 1.0

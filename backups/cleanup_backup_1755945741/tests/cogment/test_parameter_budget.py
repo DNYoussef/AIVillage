@@ -10,10 +10,8 @@ Validates the exact parameter budget of 23.7M vs 25M target including:
 """
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple
 
 import pytest
-import torch
 import torch.nn as nn
 
 # Import Cogment components for parameter analysis
@@ -21,9 +19,6 @@ try:
     from config.cogment.config_loader import load_cogment_config
     from core.agent_forge.models.cogment.core.config import CogmentConfig
     from core.agent_forge.models.cogment.core.model import CogmentModel
-    from core.agent_forge.models.cogment.core.refinement_core import RefinementCore
-    from core.agent_forge.models.cogment.heads.text_head import TextHead
-    from core.agent_forge.models.cogment.memory.gated_ltm import GatedLTM
 
     COGMENT_AVAILABLE = True
 except ImportError as e:
@@ -38,7 +33,7 @@ class ComponentParameterBreakdown:
     component_name: str
     parameter_count: int
     percentage: float
-    details: Dict[str, int]
+    details: dict[str, int]
 
 
 @dataclass
@@ -48,8 +43,8 @@ class ParameterBudgetAnalysis:
     total_parameters: int
     target_parameters: int
     budget_utilization: float
-    components: List[ComponentParameterBreakdown]
-    efficiency_metrics: Dict[str, float]
+    components: list[ComponentParameterBreakdown]
+    efficiency_metrics: dict[str, float]
     validation_status: bool
 
 
@@ -92,7 +87,7 @@ class TestParameterCounting:
         """Count trainable parameters in a module."""
         return sum(p.numel() for p in module.parameters() if p.requires_grad)
 
-    def get_parameter_breakdown(self, module: nn.Module, name: str = "model") -> Dict[str, int]:
+    def get_parameter_breakdown(self, module: nn.Module, name: str = "model") -> dict[str, int]:
         """Get detailed parameter breakdown for a module."""
         breakdown = {}
 
@@ -133,7 +128,7 @@ class TestParameterCounting:
         # Calculate budget utilization
         budget_utilization = total_params / budget_limit * 100
 
-        print(f"✓ Total parameter validation:")
+        print("✓ Total parameter validation:")
         print(f"  - Actual: {total_params:,}")
         print(f"  - Target: {achieved_target:,}")
         print(f"  - Budget: {budget_limit:,}")
@@ -222,7 +217,7 @@ class TestParameterCounting:
         # Calculate efficiency
         efficiency = actual_embedding_params / expected_embedding_params
 
-        print(f"✓ Embedding parameter efficiency:")
+        print("✓ Embedding parameter efficiency:")
         print(f"  - Expected: {expected_embedding_params:,}")
         print(f"  - Actual: {actual_embedding_params:,}")
         print(f"  - Efficiency: {efficiency:.2f}")
@@ -241,7 +236,6 @@ class TestParameterCounting:
         d_model = target_config.d_model
         d_ff = target_config.d_ff
         n_layers = target_config.n_layers
-        n_head = target_config.n_head
 
         # Per-layer parameter estimate
         attention_params_per_layer = 4 * d_model * d_model  # Q, K, V, O projections
@@ -260,7 +254,7 @@ class TestParameterCounting:
             min_expected <= core_params <= max_expected
         ), f"Core params {core_params:,} outside expected range [{min_expected:,}, {max_expected:,}]"
 
-        print(f"✓ Transformer core parameters:")
+        print("✓ Transformer core parameters:")
         print(f"  - Expected: {expected_core_params:,}")
         print(f"  - Actual: {core_params:,}")
         print(f"  - Layers: {n_layers}")
@@ -301,7 +295,7 @@ class TestParameterCounting:
             min_expected <= memory_params <= max_expected
         ), f"Memory params {memory_params:,} outside expected range [{min_expected:,}, {max_expected:,}]"
 
-        print(f"✓ Memory system parameters:")
+        print("✓ Memory system parameters:")
         print(f"  - Expected: {expected_memory_params:,}")
         print(f"  - Actual: {memory_params:,}")
         print(f"  - LTM capacity: {ltm_capacity}")
@@ -439,7 +433,7 @@ class TestParameterValidation:
             estimation_error <= max_error
         ), f"Parameter estimation error {estimation_error:.1%} exceeds tolerance {max_error:.1%}"
 
-        print(f"✓ Parameter estimation validation:")
+        print("✓ Parameter estimation validation:")
         print(f"  - Estimated: {estimated_params:,}")
         print(f"  - Actual: {actual_params:,}")
         print(f"  - Error: {estimation_error:.1%}")
@@ -558,7 +552,7 @@ class TestParameterBudgetIntegration:
         # Generate analysis report
         print("📊 PARAMETER BUDGET ANALYSIS")
         print("=" * 50)
-        print(f"🎯 Target: 23.7M parameters (25M budget)")
+        print("🎯 Target: 23.7M parameters (25M budget)")
         print(f"📈 Achieved: {total_params:,} parameters")
         print(f"💹 Budget utilization: {total_params / 25_000_000:.1%}")
         print(f"🎖️ Efficiency: {23_700_000 / total_params:.3f} (target vs actual)")
@@ -578,8 +572,8 @@ class TestParameterBudgetIntegration:
         print("✅ VALIDATION RESULTS:")
         print(f"  {'✓' if budget_valid else '✗'} Budget constraint: {total_params:,} ≤ 25M")
         print(f"  {'✓' if target_achieved else '✗'} Target achievement: ~23.7M ±10%")
-        print(f"  ✓ Option A compliance: Tied embeddings, optimized vocab")
-        print(f"  ✓ Parameter efficiency: 6x reduction vs HRRM (150M → 23.7M)")
+        print("  ✓ Option A compliance: Tied embeddings, optimized vocab")
+        print("  ✓ Parameter efficiency: 6x reduction vs HRRM (150M → 23.7M)")
 
         # Assert validation
         assert budget_valid, f"Budget constraint violated: {total_params:,} > 25M"
@@ -627,7 +621,7 @@ class TestParameterBudgetIntegration:
 
         assert all_passed, "Production validation criteria not met"
 
-        print(f"✅ Cogment model ready for production deployment!")
+        print("✅ Cogment model ready for production deployment!")
         print(f"   Parameter count: {total_params:,}")
         print(f"   Budget utilization: {total_params / 25_000_000:.1%}")
         print(f"   HRRM improvement: {150_000_000 / total_params:.1f}x parameter reduction")

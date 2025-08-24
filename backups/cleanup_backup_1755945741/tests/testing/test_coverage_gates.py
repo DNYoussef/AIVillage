@@ -8,9 +8,9 @@ Integration Point: Quality validation for Phase 4 testing
 
 import json
 import os
+from pathlib import Path
 import sys
 import tempfile
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 # Add src to path for imports

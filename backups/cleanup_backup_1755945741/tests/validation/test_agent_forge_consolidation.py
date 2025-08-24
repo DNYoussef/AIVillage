@@ -10,8 +10,8 @@ Tests the successful consolidation of Agent Forge components:
 - Import paths working correctly
 """
 
-import sys
 from pathlib import Path
+import sys
 
 # Add the agent-forge path for testing
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "core" / "agent-forge"))
@@ -23,35 +23,27 @@ def test_phase_imports():
 
     try:
         # Test individual phase imports
-        from phases.cognate import CognateConfig, CognatePhase
 
         print("  ✓ Cognate phase imported successfully")
 
-        from phases.evomerge import EvoMergeConfig, EvoMergePhase
 
         print("  ✓ EvoMerge phase imported successfully")
 
-        from phases.quietstar import QuietSTaRConfig, QuietSTaRPhase
 
         print("  ✓ Quiet-STaR phase imported successfully")
 
-        from phases.bitnet_compression import BitNetCompressionPhase
 
         print("  ✓ BitNet compression phase imported successfully")
 
-        from phases.forge_training import ForgeTrainingPhase
 
         print("  ✓ Forge training phase imported successfully")
 
-        from phases.tool_persona_baking import ToolPersonaBakingPhase
 
         print("  ✓ Tool persona baking phase imported successfully")
 
-        from phases.adas import ADASPhase
 
         print("  ✓ ADAS phase imported successfully")
 
-        from phases.final_compression import FinalCompressionPhase
 
         print("  ✓ Final compression phase imported successfully")
 
@@ -168,7 +160,7 @@ def test_cognate_implementation():
 
         # Test validation methods
         test_model = None
-        validation_result = (
+        (
             cognate_phase._validate_model(test_model) if hasattr(cognate_phase, "_validate_model") else None
         )
         print("  ✓ CognatePhase validation methods accessible")

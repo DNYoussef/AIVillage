@@ -12,13 +12,13 @@ MISSION: Replace scattered configuration files with unified, production-ready co
 - Production-ready defaults with development overrides
 """
 
+from dataclasses import asdict, dataclass, field
+from enum import Enum
 import json
 import logging
 import os
-from dataclasses import asdict, dataclass, field
-from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -137,8 +137,8 @@ class FogBridgeConfig:
 
     # Cost optimization
     enable_cost_optimization: bool = True
-    max_monthly_spend_usd: Optional[float] = None
-    preferred_regions: List[str] = field(default_factory=lambda: ["us-east-1"])
+    max_monthly_spend_usd: float | None = None
+    preferred_regions: list[str] = field(default_factory=lambda: ["us-east-1"])
 
 
 @dataclass
@@ -147,7 +147,7 @@ class MobileConfig:
 
     # Platform detection
     auto_detect_platform: bool = True
-    platform_override: Optional[str] = None  # android, ios, desktop
+    platform_override: str | None = None  # android, ios, desktop
 
     # Battery optimization
     battery_aware_scheduling: bool = True
@@ -160,7 +160,7 @@ class MobileConfig:
 
     # Data usage optimization
     cellular_data_limits: bool = True
-    wifi_preferred_operations: List[str] = field(
+    wifi_preferred_operations: list[str] = field(
         default_factory=lambda: ["large_transfers", "video_calls", "bulk_sync"]
     )
 
@@ -217,8 +217,8 @@ class SecurityConfig:
     enable_traffic_padding: bool = False
 
     # Access control
-    peer_allowlist: List[str] = field(default_factory=list)
-    peer_blocklist: List[str] = field(default_factory=list)
+    peer_allowlist: list[str] = field(default_factory=list)
+    peer_blocklist: list[str] = field(default_factory=list)
     enable_peer_verification: bool = False
 
     # Data protection
@@ -237,8 +237,8 @@ class UnifiedP2PConfig:
     """
 
     # Core system settings
-    node_id: Optional[str] = None  # Auto-generated if None
-    device_name: Optional[str] = None  # Auto-detected if None
+    node_id: str | None = None  # Auto-generated if None
+    device_name: str | None = None  # Auto-detected if None
     deployment_mode: DeploymentMode = DeploymentMode.DEVELOPMENT
     network_profile: NetworkProfile = NetworkProfile.BALANCED
 
@@ -372,7 +372,7 @@ class UnifiedP2PConfigManager:
     Handles loading, saving, and environment-aware configuration management.
     """
 
-    def __init__(self, config_dir: Optional[Path] = None):
+    def __init__(self, config_dir: Path | None = None):
         self.config_dir = config_dir or Path("config")
         self.config_dir.mkdir(exist_ok=True)
 
@@ -383,7 +383,7 @@ class UnifiedP2PConfigManager:
 
         logger.info(f"P2P config manager initialized: {self.config_dir}")
 
-    def load_config(self, config_file: Optional[Path] = None, environment_overrides: bool = True) -> UnifiedP2PConfig:
+    def load_config(self, config_file: Path | None = None, environment_overrides: bool = True) -> UnifiedP2PConfig:
         """
         Load unified P2P configuration with environment awareness.
 
@@ -401,7 +401,7 @@ class UnifiedP2PConfigManager:
         # Load default config file if exists
         if self.default_config_path.exists():
             try:
-                with open(self.default_config_path, "r") as f:
+                with open(self.default_config_path) as f:
                     default_config = json.load(f)
                 config_dict = self._deep_merge(config_dict, default_config)
                 logger.debug("Loaded default P2P configuration")
@@ -411,7 +411,7 @@ class UnifiedP2PConfigManager:
         # Load user config file if exists
         if self.user_config_path.exists():
             try:
-                with open(self.user_config_path, "r") as f:
+                with open(self.user_config_path) as f:
                     user_config = json.load(f)
                 config_dict = self._deep_merge(config_dict, user_config)
                 logger.debug("Loaded user P2P configuration")
@@ -421,7 +421,7 @@ class UnifiedP2PConfigManager:
         # Load explicit config file if provided
         if config_file and config_file.exists():
             try:
-                with open(config_file, "r") as f:
+                with open(config_file) as f:
                     file_config = json.load(f)
                 config_dict = self._deep_merge(config_dict, file_config)
                 logger.info(f"Loaded explicit P2P config from {config_file}")
@@ -435,7 +435,7 @@ class UnifiedP2PConfigManager:
         # Convert back to dataclass
         return self._dict_to_config(config_dict)
 
-    def save_config(self, config: UnifiedP2PConfig, config_file: Optional[Path] = None):
+    def save_config(self, config: UnifiedP2PConfig, config_file: Path | None = None):
         """Save unified P2P configuration to file."""
 
         save_path = config_file or self.user_config_path
@@ -464,7 +464,7 @@ class UnifiedP2PConfigManager:
         logger.info(f"Created default P2P configuration for {deployment_mode.value}")
         return config
 
-    def _deep_merge(self, base_dict: Dict, override_dict: Dict) -> Dict:
+    def _deep_merge(self, base_dict: dict, override_dict: dict) -> dict:
         """Deep merge two dictionaries."""
 
         result = base_dict.copy()
@@ -477,7 +477,7 @@ class UnifiedP2PConfigManager:
 
         return result
 
-    def _apply_environment_overrides(self, config_dict: Dict) -> Dict:
+    def _apply_environment_overrides(self, config_dict: dict) -> dict:
         """Apply environment variable overrides to configuration."""
 
         # Map environment variables to config paths
@@ -522,7 +522,7 @@ class UnifiedP2PConfigManager:
 
         return config_dict
 
-    def _convert_env_value(self, value: str) -> Union[str, int, float, bool]:
+    def _convert_env_value(self, value: str) -> str | int | float | bool:
         """Convert environment variable string to appropriate type."""
 
         # Boolean conversion
@@ -555,7 +555,7 @@ class UnifiedP2PConfigManager:
         else:
             return obj
 
-    def _dict_to_config(self, config_dict: Dict) -> UnifiedP2PConfig:
+    def _dict_to_config(self, config_dict: dict) -> UnifiedP2PConfig:
         """Convert configuration dictionary back to UnifiedP2PConfig dataclass."""
 
         try:
@@ -590,7 +590,7 @@ class UnifiedP2PConfigManager:
 
 # Global configuration instance
 _config_manager = UnifiedP2PConfigManager()
-_current_config: Optional[UnifiedP2PConfig] = None
+_current_config: UnifiedP2PConfig | None = None
 
 
 def get_p2p_config(reload: bool = False) -> UnifiedP2PConfig:
@@ -664,7 +664,7 @@ if __name__ == "__main__":
         print(f"  Battery Optimization: {config.mobile.battery_aware_scheduling}")
 
     # Demonstrate configuration saving and loading
-    print(f"\n=== Configuration Management Demo ===")
+    print("\n=== Configuration Management Demo ===")
 
     # Save and load a configuration
     test_config = create_mobile_config(node_id="demo-mobile-node")

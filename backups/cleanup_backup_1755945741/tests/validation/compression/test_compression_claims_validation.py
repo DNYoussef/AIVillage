@@ -12,13 +12,13 @@ Validates both compression ratios and reconstruction quality with actual models.
 """
 
 import asyncio
+from dataclasses import dataclass
 import json
 import logging
+from pathlib import Path
 import statistics
 import sys
 import time
-from dataclasses import dataclass
-from pathlib import Path
 from typing import Any
 
 import pytest

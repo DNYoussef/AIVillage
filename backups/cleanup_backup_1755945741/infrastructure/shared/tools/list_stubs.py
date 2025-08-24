@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import argparse
+from collections.abc import Iterable
 import pathlib
 import re
-from collections.abc import Iterable
 
 PATTERNS: dict[str, re.Pattern[str]] = {
     "def-pass": re.compile(r"^\s*def .+:\s*pass\s*$"),

@@ -6,9 +6,9 @@ Detects magic numbers and strings in Python code.
 
 import argparse
 import ast
+from pathlib import Path
 import re
 import sys
-from pathlib import Path
 
 
 class MagicLiteralDetector:

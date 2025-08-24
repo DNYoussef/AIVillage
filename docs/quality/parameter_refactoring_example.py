@@ -10,12 +10,11 @@ TARGET: Fix 1,766+ parameter position violations
 STRATEGY: Convert to keyword-only, create parameter objects, use dataclasses
 """
 
-from dataclasses import dataclass, field
-from enum import Enum
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
-from core.domain import SecurityLevel, SystemLimits
+from core.domain import SystemLimits
 
 
 # BEFORE: Connascence of Position Violations
@@ -60,7 +59,7 @@ class ModelSaveConfig:
     model_name: str
     checkpoint_dir: Path
     enable_compression: bool = True
-    metadata: Optional[Dict[str, Any]] = None
+    metadata: dict[str, Any] | None = None
     backup_enabled: bool = True
     compression_level: int = 6
 
@@ -70,9 +69,9 @@ class QueryConfig:
     """Parameter object for query processing configuration."""
 
     mode: str = "balanced"
-    context: Optional[Dict] = None
-    filters: Optional[Dict] = None
-    options: Optional[Dict] = None
+    context: dict | None = None
+    filters: dict | None = None
+    options: dict | None = None
     timeout: float = SystemLimits.DEFAULT_TIMEOUT
     max_results: int = 10
 
@@ -82,11 +81,11 @@ class MeshNodeConfig:
     """Parameter object for mesh node configuration."""
 
     node_id: str
-    transport_info: Dict
-    peers: Optional[Dict] = None
-    message_handlers: Optional[Dict] = None
-    retry_config: Optional[Dict] = None
-    security_config: Optional[Dict] = None
+    transport_info: dict
+    peers: dict | None = None
+    message_handlers: dict | None = None
+    retry_config: dict | None = None
+    security_config: dict | None = None
     heartbeat_interval: int = 30
     max_connections: int = 100
 
@@ -103,8 +102,6 @@ class RefactoredCleanAPI:
         - Clear intent, impossible to mix up parameters
         - Easy to extend without breaking changes
         """
-        checkpoint_dir = save_config.checkpoint_dir
-        model_name = save_config.model_name
 
         # Implementation logic here
         return True
@@ -167,7 +164,7 @@ class DatabaseManager:
         self,
         sql: str,
         *,
-        params: Optional[Dict] = None,
+        params: dict | None = None,
         timeout: float = SystemLimits.DEFAULT_TIMEOUT,
         retry_count: int = SystemLimits.DEFAULT_MAX_RETRIES,
     ) -> Any:
@@ -182,13 +179,13 @@ class DatabaseManager:
     def batch_insert(
         self,
         table: str,
-        records: List[Dict],
+        records: list[dict],
         *,
         batch_size: int = SystemLimits.DEFAULT_BATCH_SIZE,
         on_conflict: str = "ignore",
         return_ids: bool = False,
         validate_schema: bool = True,
-    ) -> List[int]:
+    ) -> list[int]:
         """
         CLEAN: Required parameters first, all options keyword-only
         - Clear separation of required vs optional
@@ -208,8 +205,8 @@ class MigrationStrategies:
         model,
         config=None,
         *,
-        model_name: Optional[str] = None,
-        checkpoint_dir: Optional[Path] = None,
+        model_name: str | None = None,
+        checkpoint_dir: Path | None = None,
         enable_compression: bool = True,
     ) -> bool:
         """
@@ -285,14 +282,14 @@ class ActualRefactoringExamples:
     # From: experiments/training/training/training.py:214
     # BEFORE: async def compute_reward(self, thoughts: str, code: str, task: CodingTask) -> float:
     async def compute_reward(
-        self, *, thoughts: str, code: str, task: Any, evaluation_config: Optional[Dict] = None
+        self, *, thoughts: str, code: str, task: Any, evaluation_config: dict | None = None
     ) -> float:
         """Refactored reward computation with keyword-only parameters."""
         return 0.5
 
     # From: experiments/training/training/svf_ops.py:14
     # BEFORE: def apply_svf(model: nn.Module, z: dict[str, Tensor], clamp: float = 0.05) -> None:
-    def apply_svf(model, *, tensor_dict: Dict, clamp_value: float = 0.05, apply_gradients: bool = True) -> None:
+    def apply_svf(model, *, tensor_dict: dict, clamp_value: float = 0.05, apply_gradients: bool = True) -> None:
         """Refactored SVF application with clear parameter names."""
         pass
 

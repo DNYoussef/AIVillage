@@ -7,7 +7,6 @@ Validates all performance targets and NoneType error fixes.
 
 import asyncio
 import logging
-import sys
 import time
 
 # Configure logging

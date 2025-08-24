@@ -5,11 +5,10 @@ Unified configuration loading and management system for all Cogment components.
 Provides parameter budget validation and stage-specific configuration loading.
 """
 
-import logging
-import os
 from dataclasses import dataclass, field
+import logging
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 import yaml
 
@@ -21,18 +20,18 @@ class CogmentCompleteConfig:
     """Complete Cogment configuration combining all components."""
 
     # Core configurations
-    model_config: Dict[str, Any]
-    training_config: Dict[str, Any]
-    grokfast_config: Dict[str, Any]
-    deployment_config: Dict[str, Any]
+    model_config: dict[str, Any]
+    training_config: dict[str, Any]
+    grokfast_config: dict[str, Any]
+    deployment_config: dict[str, Any]
 
     # Stage-specific configurations
-    stage_configs: Dict[int, Dict[str, Any]] = field(default_factory=dict)
+    stage_configs: dict[int, dict[str, Any]] = field(default_factory=dict)
 
     # Metadata
     config_version: str = "1.0"
-    loaded_from: Optional[str] = None
-    parameter_budget: Dict[str, Any] = field(default_factory=dict)
+    loaded_from: str | None = None
+    parameter_budget: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -42,30 +41,30 @@ class StageConfig:
     stage_id: int
     name: str
     description: str
-    training: Dict[str, Any]
-    model: Dict[str, Any]
-    data: Dict[str, Any]
-    loss: Dict[str, Any]
-    grokfast: Dict[str, Any]
-    convergence: Dict[str, Any]
+    training: dict[str, Any]
+    model: dict[str, Any]
+    data: dict[str, Any]
+    loss: dict[str, Any]
+    grokfast: dict[str, Any]
+    convergence: dict[str, Any]
 
     # Optional sections
-    memory: Optional[Dict[str, Any]] = None
-    validation: Optional[Dict[str, Any]] = None
-    resources: Optional[Dict[str, Any]] = None
-    advancement: Optional[Dict[str, Any]] = None
+    memory: dict[str, Any] | None = None
+    validation: dict[str, Any] | None = None
+    resources: dict[str, Any] | None = None
+    advancement: dict[str, Any] | None = None
 
 
 @dataclass
 class TrainingConfig:
     """Training configuration for Agent 4 compatibility."""
 
-    curriculum: Dict[str, Any]
-    optimizers: Dict[str, Any]
-    schedulers: Dict[str, Any]
-    training: Dict[str, Any]
-    memory: Dict[str, Any]
-    loss: Dict[str, Any]
+    curriculum: dict[str, Any]
+    optimizers: dict[str, Any]
+    schedulers: dict[str, Any]
+    training: dict[str, Any]
+    memory: dict[str, Any]
+    loss: dict[str, Any]
 
 
 class CogmentConfigLoader:
@@ -76,7 +75,7 @@ class CogmentConfigLoader:
     and provides convenient access to stage-specific configurations.
     """
 
-    def __init__(self, config_dir: Optional[Union[str, Path]] = None):
+    def __init__(self, config_dir: str | Path | None = None):
         """
         Initialize configuration loader.
 
@@ -228,7 +227,7 @@ class CogmentConfigLoader:
         logger.debug("Training configuration loaded for Agent 4 compatibility")
         return training_config
 
-    def override_with_args(self, config: CogmentCompleteConfig, args: Dict[str, Any]) -> CogmentCompleteConfig:
+    def override_with_args(self, config: CogmentCompleteConfig, args: dict[str, Any]) -> CogmentCompleteConfig:
         """
         Override configuration values with command-line arguments or runtime parameters.
 
@@ -317,7 +316,7 @@ class CogmentConfigLoader:
 
         return True
 
-    def _estimate_parameter_count(self, model_config: Dict[str, Any]) -> int:
+    def _estimate_parameter_count(self, model_config: dict[str, Any]) -> int:
         """
         Estimate parameter count based on model configuration.
 
@@ -332,7 +331,7 @@ class CogmentConfigLoader:
         n_layers = model_config["model"]["n_layers"]
         vocab_size = model_config["model"]["vocab_size"]
         d_ff = model_config["model"]["d_ff"]
-        n_head = model_config["model"]["n_head"]
+        model_config["model"]["n_head"]
 
         # Memory parameters
         mem_slots = model_config["gated_ltm"]["mem_slots"]
@@ -376,7 +375,7 @@ class CogmentConfigLoader:
 
         return total_params
 
-    def _load_yaml(self, filename: str, subdirectory: Optional[str] = None) -> Dict[str, Any]:
+    def _load_yaml(self, filename: str, subdirectory: str | None = None) -> dict[str, Any]:
         """
         Load YAML configuration file.
 
@@ -393,7 +392,7 @@ class CogmentConfigLoader:
             file_path = self.config_dir / filename
 
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 data = yaml.safe_load(f)
 
             logger.debug(f"Loaded configuration from {file_path}")
@@ -409,11 +408,11 @@ class CogmentConfigLoader:
             logger.error(f"Unexpected error loading {file_path}: {e}")
             raise
 
-    def get_available_stages(self) -> List[int]:
+    def get_available_stages(self) -> list[int]:
         """Get list of available curriculum stages."""
         return list(range(5))  # Stages 0-4
 
-    def get_stage_names(self) -> Dict[int, str]:
+    def get_stage_names(self) -> dict[int, str]:
         """Get mapping of stage IDs to names."""
         stage_names = {}
         for stage_id in self.get_available_stages():
@@ -426,8 +425,8 @@ class CogmentConfigLoader:
         return stage_names
 
     def export_config_summary(
-        self, config: CogmentCompleteConfig, output_path: Optional[Path] = None
-    ) -> Dict[str, Any]:
+        self, config: CogmentCompleteConfig, output_path: Path | None = None
+    ) -> dict[str, Any]:
         """
         Export a summary of the complete configuration.
 

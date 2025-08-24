@@ -4,9 +4,9 @@ Test C3: RAG Pipeline - Verify default instantiation and basic functionality
 
 import json
 import os
+from pathlib import Path
 import sys
 import time
-from pathlib import Path
 
 # Set RAG_LOCAL_MODE for testing
 os.environ["RAG_LOCAL_MODE"] = "1"

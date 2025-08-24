@@ -9,12 +9,12 @@ The education and learning specialist of AIVillage, responsible for:
 - Mobile-optimized educational experiences
 """
 
+from dataclasses import dataclass
+from enum import Enum
 import hashlib
 import logging
 import random
 import time
-from dataclasses import dataclass
-from enum import Enum
 from typing import Any
 
 from packages.agents.core.agent_interface import AgentInterface

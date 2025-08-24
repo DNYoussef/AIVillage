@@ -1,10 +1,11 @@
 """Comprehensive test suite for DAO governance MVP."""
 
+from pathlib import Path
 import tempfile
 import time
-from pathlib import Path
 
 import pytest
+
 from src.token_economy.credit_system import EarningRule, VILLAGECreditSystem
 from src.token_economy.governance import GovernanceConfig, GovernanceSystem, ProposalStatus, VoteChoice
 

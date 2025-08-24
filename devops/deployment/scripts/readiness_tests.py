@@ -3,12 +3,12 @@
 
 import argparse
 import asyncio
+from dataclasses import dataclass
 import json
 import logging
 import subprocess
 import sys
 import time
-from dataclasses import dataclass
 
 import aiohttp
 

@@ -8,12 +8,12 @@ The routing and data movement specialist of AIVillage, responsible for:
 - Data movement and synchronization
 """
 
+from dataclasses import dataclass
+from enum import Enum
 import hashlib
 import json
 import logging
 import time
-from dataclasses import dataclass
-from enum import Enum
 from typing import Any
 
 from packages.agents.core.agent_interface import AgentInterface

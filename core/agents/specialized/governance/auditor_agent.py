@@ -9,12 +9,12 @@ The auditing and compliance specialist of AIVillage, responsible for:
 - Risk assessment based on activity patterns
 """
 
-import hashlib
-import logging
-import time
 from collections import defaultdict
 from dataclasses import dataclass
 from enum import Enum
+import hashlib
+import logging
+import time
 from typing import Any
 
 from packages.agents.core.agent_interface import AgentInterface

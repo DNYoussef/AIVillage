@@ -14,12 +14,12 @@ Key Features:
 Knowledge & Data Integration Point: Validated RAG system defaults
 """
 
+from dataclasses import asdict, dataclass, field
+from enum import Enum
 import hashlib
 import json
 import logging
 import os
-from dataclasses import asdict, dataclass, field
-from enum import Enum
 from pathlib import Path
 from typing import Any
 

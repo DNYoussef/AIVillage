@@ -8,13 +8,13 @@ Usage:
     python production_benchmark_suite.py
 """
 
+from datetime import datetime
 import json
 import logging
+from pathlib import Path
 import sys
 import time
 import traceback
-from datetime import datetime
-from pathlib import Path
 from typing import Any
 
 try:
@@ -91,6 +91,7 @@ class CompressionBenchmark:
             # Import compression modules
             # Create test data (simulated model weights)
             import torch
+
             from agent_forge.compression import BitNetCompressor, SeedLMCompressor, VPTQCompressor
 
             test_tensor = torch.randn(1000, 1000)  # 4MB test tensor

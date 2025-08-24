@@ -7,12 +7,12 @@ Implements educational AI components including:
 - Knowledge dependency mapping
 """
 
-import hashlib
-import json
-import logging
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
+import hashlib
+import json
+import logging
 from typing import Any
 
 import networkx as nx

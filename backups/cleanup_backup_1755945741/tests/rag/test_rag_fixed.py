@@ -4,10 +4,10 @@ Fixed critical test of the RAG system to verify actual functionality.
 """
 
 import asyncio
+from pathlib import Path
 import sys
 import time
 import traceback
-from pathlib import Path
 
 sys.path.insert(0, str(Path("src/production/rag/rag_system/core")))
 

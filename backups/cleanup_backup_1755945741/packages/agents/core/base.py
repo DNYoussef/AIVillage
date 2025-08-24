@@ -6,12 +6,12 @@ This module provides the foundational BaseAgent class that all AI agents inherit
 Restored during reorganization validation to fix missing packages.agents.core.base module.
 """
 
-import logging
-import time
-import uuid
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
+import logging
+import time
 from typing import Any
+import uuid
 
 logger = logging.getLogger(__name__)
 

@@ -1,6 +1,6 @@
+from pathlib import Path
 import sys
 import unittest
-from pathlib import Path
 
 # Add project root to the Python path
 project_root = Path(__file__).resolve().parents[1]

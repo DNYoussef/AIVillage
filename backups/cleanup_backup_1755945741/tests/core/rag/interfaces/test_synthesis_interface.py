@@ -5,7 +5,6 @@ Behavioral tests ensuring interface compliance and contract validation.
 """
 
 from abc import ABC
-from unittest.mock import AsyncMock
 
 import pytest
 

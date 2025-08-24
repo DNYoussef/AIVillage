@@ -8,13 +8,14 @@ and tests performance regression detection logic.
 
 import asyncio
 import json
+from pathlib import Path
 import sys
 import tempfile
 import unittest
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
+
 from agent_forge.forge_orchestrator import PhaseArtifact, PhaseResult, PhaseStatus, PhaseType
 
 # Add project root to path

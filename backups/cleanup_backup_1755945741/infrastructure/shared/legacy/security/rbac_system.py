@@ -5,13 +5,13 @@ Provides comprehensive RBAC with hierarchical roles, permissions, and
 CODEX-compliant security controls for the AIVillage system.
 """
 
-import logging
-import os
-import sqlite3
 from contextlib import contextmanager
 from datetime import datetime
 from enum import Enum
+import logging
+import os
 from pathlib import Path
+import sqlite3
 from typing import Any
 
 logger = logging.getLogger(__name__)

@@ -31,13 +31,6 @@ __version__ = "1.0.0"
 
 # BetaNet integration exports (optional - graceful fallback if not available)
 try:
-    from .bridges.betanet_integration import (
-        BetaNetFogTransport,
-        FogComputeBetaNetService,
-        create_betanet_transport,
-        get_betanet_capabilities,
-        is_betanet_available,
-    )
 
     BETANET_INTEGRATION_AVAILABLE = True
 except ImportError:

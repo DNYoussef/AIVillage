@@ -5,8 +5,8 @@ Generates comprehensive architectural quality reports for GitHub PR comments.
 """
 
 import argparse
-import json
 from datetime import datetime
+import json
 from pathlib import Path
 
 

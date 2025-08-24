@@ -6,10 +6,9 @@ during evolutionary merging operations and model transitions.
 """
 
 import logging
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import torch
-import torch.nn as nn
 
 from core.agent_forge.models.cogment.core.act_halting import ACTHalting
 from core.agent_forge.models.cogment.core.config import CogmentConfig
@@ -30,10 +29,10 @@ class CogmentCompatibilityValidator:
     """
 
     def __init__(self):
-        self.compatibility_cache: Dict[str, Any] = {}
+        self.compatibility_cache: dict[str, Any] = {}
         logger.info("Initialized CogmentCompatibilityValidator")
 
-    def check_merge_compatibility(self, models: List[Cogment]) -> List[str]:
+    def check_merge_compatibility(self, models: list[Cogment]) -> list[str]:
         """
         Check compatibility issues before merging Cogment models.
 
@@ -87,7 +86,7 @@ class CogmentCompatibilityValidator:
 
         return issues
 
-    def _check_act_compatibility(self, models: List[Cogment]) -> List[str]:
+    def _check_act_compatibility(self, models: list[Cogment]) -> list[str]:
         """Check ACT halting mechanism compatibility."""
         issues = []
 
@@ -124,7 +123,7 @@ class CogmentCompatibilityValidator:
 
         return issues
 
-    def _check_ltm_compatibility(self, models: List[Cogment]) -> List[str]:
+    def _check_ltm_compatibility(self, models: list[Cogment]) -> list[str]:
         """Check LTM memory system compatibility."""
         issues = []
 
@@ -154,7 +153,7 @@ class CogmentCompatibilityValidator:
 
         return issues
 
-    def _check_state_dict_compatibility(self, models: List[Cogment]) -> List[str]:
+    def _check_state_dict_compatibility(self, models: list[Cogment]) -> list[str]:
         """Check state dictionary parameter compatibility."""
         issues = []
 
@@ -188,7 +187,7 @@ class CogmentCompatibilityValidator:
 
         return issues
 
-    def resolve_compatibility_issues(self, models: List[Cogment], issues: List[str]) -> List[Cogment]:
+    def resolve_compatibility_issues(self, models: list[Cogment], issues: list[str]) -> list[Cogment]:
         """
         Attempt to resolve compatibility issues automatically.
 
@@ -232,7 +231,7 @@ class CogmentCompatibilityValidator:
             logger.error(f"Compatibility resolution failed: {e}")
             return models  # Return original models as fallback
 
-    def _find_best_base_model(self, models: List[Cogment]) -> Cogment:
+    def _find_best_base_model(self, models: list[Cogment]) -> Cogment:
         """Find the model that would serve as the best base for compatibility."""
         if len(models) == 1:
             return models[0]
@@ -268,7 +267,7 @@ class CogmentCompatibilityValidator:
         logger.info(f"Selected model {best_idx} as base (score: {scores[best_idx]})")
         return models[best_idx]
 
-    def _fix_model_compatibility(self, model: Cogment, base_model: Cogment, issues: List[str]) -> Optional[Cogment]:
+    def _fix_model_compatibility(self, model: Cogment, base_model: Cogment, issues: list[str]) -> Cogment | None:
         """Fix compatibility issues in a model to match the base model."""
         try:
             # Check if the model can be fixed
@@ -337,7 +336,7 @@ class CogmentCompatibilityValidator:
             logger.error(f"Weight transfer failed: {e}")
             return False
 
-    def validate_cogment_model(self, model: Cogment) -> List[str]:
+    def validate_cogment_model(self, model: Cogment) -> list[str]:
         """Validate a single Cogment model for issues."""
         issues = []
 
@@ -395,7 +394,7 @@ class CogmentCompatibilityValidator:
 
         return issues
 
-    def resolve_model_issues(self, model: Cogment, issues: List[str]) -> Cogment:
+    def resolve_model_issues(self, model: Cogment, issues: list[str]) -> Cogment:
         """Resolve issues in a single Cogment model."""
         try:
             logger.info(f"Resolving {len(issues)} model issues...")
@@ -421,7 +420,7 @@ class CogmentCompatibilityValidator:
             logger.error(f"Model issue resolution failed: {e}")
             return model
 
-    def get_merge_safety_score(self, models: List[Cogment]) -> float:
+    def get_merge_safety_score(self, models: list[Cogment]) -> float:
         """
         Calculate a safety score for merging operations.
 
@@ -456,7 +455,7 @@ class CogmentCompatibilityValidator:
         logger.info(f"Merge safety score: {safety_score:.2f} ({len(issues)} issues)")
         return safety_score
 
-    def create_compatibility_report(self, models: List[Cogment]) -> Dict[str, Any]:
+    def create_compatibility_report(self, models: list[Cogment]) -> dict[str, Any]:
         """Create a comprehensive compatibility report."""
         report = {
             "models_analyzed": len(models),

@@ -1,7 +1,7 @@
 """Translator Agent - Advanced Multi-language Processing Specialist"""
 
-import logging
 from dataclasses import dataclass
+import logging
 from typing import Any
 
 from packages.agents.core.base import BaseAgent

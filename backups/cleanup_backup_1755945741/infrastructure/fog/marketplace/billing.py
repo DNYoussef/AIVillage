@@ -14,9 +14,9 @@ Billing Model:
 - Comprehensive audit trail for compliance
 """
 
-import logging
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
+import logging
 from typing import Any
 from uuid import uuid4
 

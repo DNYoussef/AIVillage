@@ -12,12 +12,10 @@ MISSION: Consolidate scattered P2P tests into comprehensive test coverage
 - Tests cross-system integration
 """
 
-import asyncio
-import json
+from pathlib import Path
 import sys
 import time
-from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -27,15 +25,12 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 try:
     from config.unified_p2p_config import (
-        BetaNetConfig,
-        BitChatConfig,
         DeploymentMode,
         NetworkProfile,
         UnifiedP2PConfig,
         UnifiedP2PConfigManager,
         create_mobile_config,
         create_privacy_first_config,
-        get_p2p_config,
     )
     from core.decentralized_architecture.unified_p2p_system import (
         DecentralizedMessage,

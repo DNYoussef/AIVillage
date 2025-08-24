@@ -6,14 +6,14 @@ and automated issue creation for test degradation.
 """
 
 import asyncio
-import json
-import logging
-import os
-import smtplib
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from email.mime.text import MIMEMultipart, MIMEText
+import json
+import logging
+import os
 from pathlib import Path
+import smtplib
 from typing import Any
 
 import aiohttp

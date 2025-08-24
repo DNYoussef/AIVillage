@@ -20,13 +20,13 @@ from typing import Any
 
 import pytest
 import pytest_asyncio
-from packages.agents.specialized.governance.enhanced_king_agent import EnhancedKingAgent
 
 from packages.agents.core.agent_interface import AgentCapability, AgentMetadata, MessageInterface, TaskInterface
 from packages.agents.core.agent_orchestration_system import AgentOrchestrationSystem, CommunicationChannelType
 
 # Import the complete agent system
 from packages.agents.core.base_agent_template import BaseAgentTemplate, GeometricState, MCPTool, ReflectionType
+from packages.agents.specialized.governance.enhanced_king_agent import EnhancedKingAgent
 
 
 class MockRAGClient:

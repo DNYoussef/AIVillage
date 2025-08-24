@@ -8,8 +8,8 @@ and retrieval accuracy.
 
 import argparse
 import json
-import time
 from pathlib import Path
+import time
 
 # Simple corpus for deterministic retrieval
 CORPUS = {

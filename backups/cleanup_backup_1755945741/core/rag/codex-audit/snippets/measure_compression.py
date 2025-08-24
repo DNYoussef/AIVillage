@@ -9,8 +9,8 @@ for downstream consumption.
 from __future__ import annotations
 
 import json
-import sys
 from pathlib import Path
+import sys
 
 # Ensure repository root is on the path when executed as a script
 ROOT = Path(__file__).resolve().parents[2]

@@ -5,8 +5,8 @@ Move P2P components from libs/p2p/* to their appropriate clean architecture loca
 """
 
 import logging
-import shutil
 from pathlib import Path
+import shutil
 
 # Setup logging
 logging.basicConfig(

@@ -7,8 +7,8 @@ replacing magic literals with constants from our constants modules.
 
 import ast
 import logging
-import re
 from pathlib import Path
+import re
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

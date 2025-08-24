@@ -12,24 +12,24 @@ This is the critical missing Phase 1 of the Agent Forge pipeline that handles:
 Completes the 8-phase Agent Forge pipeline by providing proper model genesis.
 """
 
-import logging
-import time
 from dataclasses import dataclass, field
 from datetime import datetime
+import logging
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+import time
+from typing import Any
 
 import torch
 import torch.nn as nn
-from transformers import AutoConfig, AutoModel, AutoTokenizer
+from transformers import AutoConfig, AutoModel
 
 # Import phase controller base
 try:
     from ..phase_controller import PhaseController, PhaseResult
 except ImportError:
     # Fallback for direct execution
-    import sys
     from pathlib import Path
+    import sys
 
     sys.path.append(str(Path(__file__).parent.parent))
     from phase_controller import PhaseController, PhaseResult
@@ -42,7 +42,7 @@ class CognateConfig:
     """Configuration for Cognate (model creation) phase."""
 
     # Model selection strategy
-    base_models: List[str] = field(
+    base_models: list[str] = field(
         default_factory=lambda: [
             "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B",
             "microsoft/DialoGPT-medium",
@@ -62,7 +62,7 @@ class CognateConfig:
     merge_strategy: str = "average"  # average, weighted, evolutionary
 
     # Model merging weights (if using weighted merge)
-    merge_weights: Optional[Dict[str, float]] = None
+    merge_weights: dict[str, float] | None = None
 
     # Validation settings
     validate_compatibility: bool = True
@@ -100,7 +100,7 @@ class CognatePhase(PhaseController):
         self.dtype_map = {"float32": torch.float32, "float16": torch.float16, "bfloat16": torch.bfloat16}
         self.torch_dtype = self.dtype_map.get(self.config.dtype, torch.float32)
 
-    async def run(self, model: Optional[nn.Module] = None) -> PhaseResult:
+    async def run(self, model: nn.Module | None = None) -> PhaseResult:
         """
         Execute cognate phase for model creation.
 
@@ -213,7 +213,7 @@ class CognatePhase(PhaseController):
                 config={"base_models": self.config.base_models, "target_architecture": self.config.target_architecture},
             )
 
-    def _select_architecture(self) -> Dict[str, Any]:
+    def _select_architecture(self) -> dict[str, Any]:
         """Select model architecture based on configuration."""
         if self.config.target_architecture == "auto":
             return self._auto_select_architecture()
@@ -228,7 +228,7 @@ class CognatePhase(PhaseController):
         else:
             return {"type": "specific", "name": self.config.target_architecture}
 
-    async def _load_base_models(self) -> List[nn.Module]:
+    async def _load_base_models(self) -> list[nn.Module]:
         """Load base models from HuggingFace or local paths."""
         models = []
 
@@ -274,7 +274,7 @@ class CognatePhase(PhaseController):
 
         return models
 
-    def _merge_models(self, models: List[nn.Module], architecture: Dict[str, Any]) -> nn.Module:
+    def _merge_models(self, models: list[nn.Module], architecture: dict[str, Any]) -> nn.Module:
         """Merge multiple base models into single model."""
         if self.config.merge_strategy == "average":
             return self._average_merge(models)
@@ -322,7 +322,7 @@ class CognatePhase(PhaseController):
 
         return model
 
-    def _validate_model(self, model: nn.Module) -> Dict[str, Any]:
+    def _validate_model(self, model: nn.Module) -> dict[str, Any]:
         """Validate model structure and compatibility."""
         validation_results = {"passed": True, "checks": {}, "warnings": [], "errors": []}
 
@@ -393,7 +393,7 @@ class CognatePhase(PhaseController):
 
         return validation_results
 
-    def _auto_select_architecture(self) -> Dict[str, Any]:
+    def _auto_select_architecture(self) -> dict[str, Any]:
         """Auto-select architecture based on base models."""
         # Default architecture selection
         return {
@@ -406,7 +406,7 @@ class CognatePhase(PhaseController):
             "rationale": "Standard transformer architecture suitable for general use",
         }
 
-    def _average_merge(self, models: List[nn.Module]) -> nn.Module:
+    def _average_merge(self, models: list[nn.Module]) -> nn.Module:
         """Average merge multiple models."""
         if len(models) == 1:
             return models[0]
@@ -428,7 +428,7 @@ class CognatePhase(PhaseController):
         base_model.load_state_dict(merged_state_dict)
         return base_model
 
-    def _weighted_merge(self, models: List[nn.Module]) -> nn.Module:
+    def _weighted_merge(self, models: list[nn.Module]) -> nn.Module:
         """Weighted merge using configured weights."""
         if len(models) == 1:
             return models[0]
@@ -461,7 +461,7 @@ class CognatePhase(PhaseController):
         base_model.load_state_dict(merged_state_dict)
         return base_model
 
-    def _evolutionary_merge(self, models: List[nn.Module]) -> nn.Module:
+    def _evolutionary_merge(self, models: list[nn.Module]) -> nn.Module:
         """Use evolutionary algorithm for optimal merging."""
         # For now, fallback to weighted merge with evolutionary weights
         # This could be extended with actual evolutionary optimization
@@ -486,7 +486,7 @@ class CognatePhase(PhaseController):
             with torch.no_grad():
                 module.weight += torch.randn_like(module.weight) * 0.01
 
-    def _get_model_info(self, model: nn.Module) -> Dict[str, Any]:
+    def _get_model_info(self, model: nn.Module) -> dict[str, Any]:
         """Extract model information for artifacts."""
         info = {
             "parameter_count": sum(p.numel() for p in model.parameters()),
@@ -500,7 +500,7 @@ class CognatePhase(PhaseController):
 
         return info
 
-    def _get_model_config(self, model: nn.Module) -> Dict[str, Any]:
+    def _get_model_config(self, model: nn.Module) -> dict[str, Any]:
         """Get model configuration for artifacts."""
         config = {
             "model_class": type(model).__name__,

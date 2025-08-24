@@ -13,12 +13,12 @@ Features:
 - Resource allocation policies per SLA tier
 """
 
+from dataclasses import dataclass, field
+from enum import Enum
 import hashlib
 import json
 import logging
 import time
-from dataclasses import dataclass, field
-from enum import Enum
 from typing import Any
 
 from ..monitoring.metrics import FogMetricsCollector, SLAClass

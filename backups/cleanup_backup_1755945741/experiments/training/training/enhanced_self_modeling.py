@@ -4,19 +4,18 @@ This module implements comprehensive self-modeling with temperature sweeps,
 deeper self-reflection, and integration with the Agent Forge pipeline.
 """
 
+from dataclasses import dataclass
 import logging
 import math
 import random
-from dataclasses import dataclass
-
-import torch
-import torch.nn.functional as F
-from torch import nn
-from tqdm import tqdm
-from transformers import AutoModelForCausalLM, AutoTokenizer
 
 from AIVillage.experimental.training.optim.grokfast_opt import GrokFastOptimizer
 from AIVillage.experimental.training.utils.expert_vector import ExpertVectorManager
+import torch
+from torch import nn
+import torch.nn.functional as F
+from tqdm import tqdm
+from transformers import AutoModelForCausalLM, AutoTokenizer
 
 logger = logging.getLogger(__name__)
 

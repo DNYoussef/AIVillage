@@ -4,10 +4,9 @@ CI/CD Readiness Validation for Unified P2P Test Suite
 Validates the consolidated test suite is ready for automated CI/CD execution.
 """
 
-import os
+from pathlib import Path
 import sys
 import time
-from pathlib import Path
 
 # Add project paths
 project_root = Path(__file__).parent.parent
@@ -61,7 +60,7 @@ def validate_test_structure():
     existing_files = [f for f, info in file_status.items() if info["exists"]]
     total_size = sum(info["size"] for info in file_status.values() if info["exists"])
 
-    print(f"\n📊 STRUCTURE VALIDATION SUMMARY:")
+    print("\n📊 STRUCTURE VALIDATION SUMMARY:")
     print(f"   Expected files: {len(expected_files)}")
     print(f"   Existing files: {len(existing_files)} ({len(existing_files)/len(expected_files)*100:.1f}%)")
     print(f"   Total test code: {total_size:,} bytes ({total_size/1024:.1f} KB)")
@@ -111,7 +110,7 @@ def validate_import_paths():
         except ImportError as e:
             print(f"FAIL {module_name} - {description}: {e}")
 
-    print(f"\n📊 IMPORT VALIDATION SUMMARY:")
+    print("\n📊 IMPORT VALIDATION SUMMARY:")
     print(f"   Required imports: {len(import_tests)}")
     print(f"   Successful imports: {import_success} ({import_success/len(import_tests)*100:.1f}%)")
 
@@ -128,7 +127,7 @@ def validate_test_fixtures():
         print("FAIL conftest.py not found")
         return False
 
-    with open(conftest_path, "r") as f:
+    with open(conftest_path) as f:
         conftest_content = f.read()
 
     required_fixtures = ["mock_p2p_transport", "p2p_test_config", "mock_mesh_protocol", "p2p_test_messages"]
@@ -141,7 +140,7 @@ def validate_test_fixtures():
         print(f"{status} {fixture} fixture")
 
     working_fixtures = sum(fixture_status.values())
-    print(f"\n📊 FIXTURE VALIDATION SUMMARY:")
+    print("\n📊 FIXTURE VALIDATION SUMMARY:")
     print(f"   Required fixtures: {len(required_fixtures)}")
     print(f"   Available fixtures: {working_fixtures} ({working_fixtures/len(required_fixtures)*100:.1f}%)")
 
@@ -165,8 +164,8 @@ def validate_consolidation_results():
     target_file_count = 25  # Target after consolidation
     current_file_count = len(p2p_files)
 
-    print(f"CONSOLIDATION METRICS:")
-    print(f"   Original files: 127+ (before consolidation)")
+    print("CONSOLIDATION METRICS:")
+    print("   Original files: 127+ (before consolidation)")
     print(f"   Current P2P files: {current_file_count}")
     print(f"   Target files: ≤{target_file_count}")
     print(f"   Reduction achieved: {((127 - current_file_count) / 127 * 100):.1f}%")

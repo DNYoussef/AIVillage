@@ -2,8 +2,8 @@
 
 import json
 import logging
-import sqlite3
 from pathlib import Path
+import sqlite3
 from typing import Protocol
 
 from .models import Proposal

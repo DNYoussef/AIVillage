@@ -4,6 +4,7 @@ from dataclasses import dataclass
 
 import pytest
 import torch
+
 from packages.hrrm.memory.model import MemoryAsContextTiny, MemoryConfig, NeuralMemory
 from packages.hrrm.planner.model import ControllerHead, HRMPlanner, PlannerConfig
 from packages.hrrm.reasoner.model import HRMReasoner, ReasonerConfig, ScratchpadSupervisor

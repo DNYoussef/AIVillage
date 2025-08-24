@@ -4,9 +4,9 @@
 import hashlib
 import logging
 import os
+from pathlib import Path
 import sqlite3
 import sys
-from pathlib import Path
 from typing import Any
 
 # Add src to path
@@ -14,8 +14,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from concurrent.futures import ThreadPoolExecutor
 
-import uvicorn
 from fastapi import FastAPI, HTTPException
+import uvicorn
 
 # Import CODEX-compliant RAG implementation
 sys.path.insert(0, str(Path(__file__).parent.parent / "production" / "rag" / "rag_system" / "core"))

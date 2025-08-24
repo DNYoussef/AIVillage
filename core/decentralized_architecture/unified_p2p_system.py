@@ -18,20 +18,21 @@ This consolidates 120+ P2P files into ONE production-ready decentralized system:
 """
 
 import asyncio
+from collections import defaultdict, deque
+from collections.abc import Callable
+from dataclasses import dataclass, field
+from enum import Enum
 import json
 import logging
 import secrets
 import time
-from collections import defaultdict, deque
-from dataclasses import dataclass, field
-from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any
 
 # Import consolidated transport implementations
 try:
     from ...infrastructure.p2p.betanet.htx_transport import HtxClient
     from ...infrastructure.p2p.bitchat.ble_transport import BitChatMessage, BitChatTransport
-    from ...infrastructure.p2p.core.transport_manager import TransportManager, TransportType
+    from ...infrastructure.p2p.core.transport_manager import TransportManager
 
     TRANSPORTS_AVAILABLE = True
 except ImportError:
@@ -39,7 +40,6 @@ except ImportError:
 
 # Mobile integration imports with graceful degradation
 try:
-    from ...infrastructure.p2p.mobile_integration import MobileBridgeInterface
 
     MOBILE_BRIDGE_AVAILABLE = True
 except ImportError:
@@ -85,12 +85,12 @@ class MobileDeviceContext:
     """Mobile device context for optimization."""
 
     platform: str = "unknown"  # android, ios, desktop
-    battery_level: Optional[float] = None  # 0.0 to 1.0
+    battery_level: float | None = None  # 0.0 to 1.0
     is_charging: bool = False
     network_type: str = "unknown"  # wifi, cellular, bluetooth
     is_foreground: bool = True
     thermal_state: str = "normal"  # normal, elevated, critical
-    available_transports: List[str] = field(default_factory=list)
+    available_transports: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -106,7 +106,7 @@ class DecentralizedMessage:
     priority: MessagePriority = MessagePriority.NORMAL
 
     # Routing and transport selection
-    transport_preference: Optional[DecentralizedTransportType] = None
+    transport_preference: DecentralizedTransportType | None = None
     requires_privacy: bool = False
     offline_capable: bool = True
     fog_compatible: bool = True
@@ -115,7 +115,7 @@ class DecentralizedMessage:
     # Mesh routing (BitChat BLE style)
     hop_limit: int = 7  # Maximum hops for BitChat mesh
     hop_count: int = 0
-    route_path: List[str] = field(default_factory=list)
+    route_path: list[str] = field(default_factory=list)
 
     # Reliability and delivery
     requires_ack: bool = True
@@ -162,7 +162,7 @@ class DecentralizedMessage:
         """Get message payload size."""
         return len(self.payload)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Serialize message for transport."""
         return {
             "message_id": self.message_id,
@@ -188,7 +188,7 @@ class DecentralizedMessage:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "DecentralizedMessage":
+    def from_dict(cls, data: dict[str, Any]) -> "DecentralizedMessage":
         """Deserialize message from transport data."""
         payload = data.get("payload", "")
         if isinstance(payload, str) and payload:
@@ -237,9 +237,9 @@ class PeerInfo:
 
     peer_id: str
     last_seen: float = field(default_factory=time.time)
-    transport_types: List[DecentralizedTransportType] = field(default_factory=list)
-    device_capabilities: List[DeviceCapabilities] = field(default_factory=list)
-    mobile_context: Optional[MobileDeviceContext] = None
+    transport_types: list[DecentralizedTransportType] = field(default_factory=list)
+    device_capabilities: list[DeviceCapabilities] = field(default_factory=list)
+    mobile_context: MobileDeviceContext | None = None
 
     # Performance metrics
     latency_ms: float = 1000.0
@@ -307,26 +307,26 @@ class UnifiedDecentralizedSystem:
 
         # Mobile device context
         self.mobile_context = MobileDeviceContext(platform=mobile_platform)
-        self.device_capabilities: List[DeviceCapabilities] = []
+        self.device_capabilities: list[DeviceCapabilities] = []
 
         # Transport instances
-        self.transports: Dict[DecentralizedTransportType, Any] = {}
-        self.transport_manager: Optional[TransportManager] = None
-        self.mobile_bridge: Optional[Any] = None
+        self.transports: dict[DecentralizedTransportType, Any] = {}
+        self.transport_manager: TransportManager | None = None
+        self.mobile_bridge: Any | None = None
 
         # Enhanced peer management
-        self.peers: Dict[str, PeerInfo] = {}
-        self.peer_discovery_cache: Dict[str, float] = {}  # peer_id -> last_discovery_time
+        self.peers: dict[str, PeerInfo] = {}
+        self.peer_discovery_cache: dict[str, float] = {}  # peer_id -> last_discovery_time
 
         # Message handling and routing
-        self.message_handlers: List[Callable] = []
-        self.message_cache: Dict[str, float] = {}  # message_id -> timestamp (deduplication)
-        self.pending_acks: Dict[str, DecentralizedMessage] = {}
-        self.message_queues: Dict[str, deque] = defaultdict(lambda: deque(maxlen=1000))
+        self.message_handlers: list[Callable] = []
+        self.message_cache: dict[str, float] = {}  # message_id -> timestamp (deduplication)
+        self.pending_acks: dict[str, DecentralizedMessage] = {}
+        self.message_queues: dict[str, deque] = defaultdict(lambda: deque(maxlen=1000))
 
         # Store-and-forward queues
-        self.offline_message_store: Dict[str, List[DecentralizedMessage]] = defaultdict(list)
-        self.chunk_reassembly: Dict[str, Dict[int, DecentralizedMessage]] = defaultdict(dict)
+        self.offline_message_store: dict[str, list[DecentralizedMessage]] = defaultdict(list)
+        self.chunk_reassembly: dict[str, dict[int, DecentralizedMessage]] = defaultdict(dict)
 
         # Configuration
         self.config = {
@@ -396,7 +396,7 @@ class UnifiedDecentralizedSystem:
 
         # System state
         self._running = False
-        self._background_tasks: List[asyncio.Task] = []
+        self._background_tasks: list[asyncio.Task] = []
 
         # Initialize device capabilities
         self._detect_device_capabilities()
@@ -570,7 +570,6 @@ class UnifiedDecentralizedSystem:
             if TRANSPORTS_AVAILABLE and self.transports:
                 try:
                     from ...infrastructure.p2p.core.transport_manager import (
-                        TransportCapabilities,
                         TransportManager,
                         TransportPriority,
                     )
@@ -692,7 +691,7 @@ class UnifiedDecentralizedSystem:
         message_type: str,
         payload: bytes,
         priority: MessagePriority = MessagePriority.NORMAL,
-        transport_preference: Optional[DecentralizedTransportType] = None,
+        transport_preference: DecentralizedTransportType | None = None,
         requires_privacy: bool = False,
     ) -> bool:
         """Send a message through the unified decentralized system."""
@@ -803,7 +802,7 @@ class UnifiedDecentralizedSystem:
                 # Use transport's message format
                 if transport_type == DecentralizedTransportType.BITCHAT_BLE:
                     # Convert to BitChatMessage
-                    bitchat_msg = BitChatMessage(
+                    BitChatMessage(
                         message_type=message.message_type,
                         sender=message.sender_id,
                         recipient=message.receiver_id,
@@ -1204,7 +1203,7 @@ class UnifiedDecentralizedSystem:
 
         logger.debug(f"Updated mobile context: {context_updates}")
 
-    def get_status(self) -> Dict[str, Any]:
+    def get_status(self) -> dict[str, Any]:
         """Get comprehensive system status."""
         return {
             "node_id": self.node_id,
@@ -1229,7 +1228,7 @@ class UnifiedDecentralizedSystem:
             "offline_store_size": sum(len(messages) for messages in self.offline_message_store.values()),
         }
 
-    def get_peers(self) -> List[Dict[str, Any]]:
+    def get_peers(self) -> list[dict[str, Any]]:
         """Get list of known peers."""
         return [
             {

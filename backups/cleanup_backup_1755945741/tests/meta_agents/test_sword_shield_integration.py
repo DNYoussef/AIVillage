@@ -9,9 +9,9 @@ Tests the complete daily mock battle system including:
 - King Agent communication
 """
 
+from datetime import time
 import os
 import sys
-from datetime import time
 from unittest.mock import AsyncMock, patch
 
 import pytest

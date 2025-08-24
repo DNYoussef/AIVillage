@@ -12,10 +12,10 @@ for the fog computing system to interact with edge devices.
 """
 
 import asyncio
-import logging
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from enum import Enum
+import logging
 from typing import Any
 from uuid import uuid4
 

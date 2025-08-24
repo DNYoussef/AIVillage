@@ -23,21 +23,19 @@ PIPELINE: Cognate → EvoMerge → Quiet Star → Quantization → 10-Stage Loop
 """
 
 import asyncio
-import json
-import logging
-import time
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
+import json
+import logging
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Type, Union
-from uuid import uuid4
+import time
+from typing import Any
 
-import numpy as np
 import torch
 import torch.nn as nn
 
-from ..agent_forge.evomerge import EvoMergeConfig, EvoMergePhase, MergeCandidate, MergeOperators, ModelEvaluator
+from ..agent_forge.evomerge import EvoMergeConfig, EvoMergePhase, MergeCandidate
 
 # Import consolidated components
 from ..agents.cognative_nexus_controller import (
@@ -130,7 +128,7 @@ class EdgeChaosTrainingConfig:
 
     num_stages: int = 10
     chaos_parameter: float = 2.0  # Edge of chaos
-    temperature_schedule: List[float] = field(
+    temperature_schedule: list[float] = field(
         default_factory=lambda: [2.0, 1.8, 1.6, 1.4, 1.2, 1.0, 0.8, 0.6, 0.4, 0.2]
     )
 
@@ -164,7 +162,7 @@ class MultiModalBakingConfig:
     memory_compression_ratio: float = 0.1
 
     # HyperRAG baking
-    rag_integration_layers: List[int] = field(default_factory=lambda: [6, 12, 18])
+    rag_integration_layers: list[int] = field(default_factory=lambda: [6, 12, 18])
     retrieval_head_count: int = 8
 
     # Persona baking
@@ -181,7 +179,7 @@ class ADASExpertVectorConfig:
     specialization_strength: float = 0.8
 
     # Expert domains
-    expert_domains: List[str] = field(
+    expert_domains: list[str] = field(
         default_factory=lambda: [
             "mathematics",
             "physics",
@@ -273,19 +271,19 @@ class AgentForgeResult:
     success: bool
 
     # Phase-specific results
-    cognate_models: Optional[List[str]] = None  # Paths to generated cognate models
-    evolved_model: Optional[Any] = None  # Best evolved model from EvoMerge
-    controller: Optional[CognativeNexusController] = None  # Orchestration controller
+    cognate_models: list[str] | None = None  # Paths to generated cognate models
+    evolved_model: Any | None = None  # Best evolved model from EvoMerge
+    controller: CognativeNexusController | None = None  # Orchestration controller
 
     # Performance metrics
     total_runtime_ms: float = 0.0
-    phase_timings: Dict[str, float] = field(default_factory=dict)
-    performance_metrics: Dict[str, Any] = field(default_factory=dict)
+    phase_timings: dict[str, float] = field(default_factory=dict)
+    performance_metrics: dict[str, Any] = field(default_factory=dict)
 
     # Output artifacts
-    model_paths: List[str] = field(default_factory=list)
-    agent_registry: Dict[str, AgentRegistration] = field(default_factory=dict)
-    evaluation_results: Dict[str, Any] = field(default_factory=dict)
+    model_paths: list[str] = field(default_factory=list)
+    agent_registry: dict[str, AgentRegistration] = field(default_factory=dict)
+    evaluation_results: dict[str, Any] = field(default_factory=dict)
 
 
 class CognateModelCreator:
@@ -304,7 +302,7 @@ class CognateModelCreator:
         self.output_dir = Path(config.output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
-    async def create_cognate_models(self, num_models: int = 3) -> List[str]:
+    async def create_cognate_models(self, num_models: int = 3) -> list[str]:
         """
         Create cognate foundation models with advanced capabilities
 
@@ -486,10 +484,10 @@ class UnifiedAgentForgeSystem:
         # System components
         self.cognate_creator = CognateModelCreator(config.cognate_config)
         self.evomerge_phase = EvoMergePhase(config.evomerge_config)
-        self.controller: Optional[CognativeNexusController] = None
+        self.controller: CognativeNexusController | None = None
 
         # Results tracking
-        self.cognate_models: List[str] = []
+        self.cognate_models: list[str] = []
         self.evolved_model = None
         self.performance_metrics = {}
 
@@ -710,7 +708,7 @@ class UnifiedAgentForgeSystem:
         else:
             self.logger.info("✅ All validation checks passed - system ready for production")
 
-    async def get_system_status(self) -> Dict[str, Any]:
+    async def get_system_status(self) -> dict[str, Any]:
         """Get current system status and metrics"""
 
         status_report = {

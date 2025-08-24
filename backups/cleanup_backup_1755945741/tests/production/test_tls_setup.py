@@ -1,6 +1,7 @@
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
+
 from packages.p2p.core.p2p_node import P2PNode
 
 

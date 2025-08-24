@@ -11,6 +11,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import psutil
 import pytest
+
 from packages.core.resources.device_profiler import DeviceProfiler
 from packages.core.resources.resource_monitor import ResourceMonitor
 from packages.p2p.core.p2p_node import P2PNode, PeerCapabilities

@@ -5,16 +5,13 @@ Tests the complete transition from 3-model HRRM approach to unified Cogment mode
 validating ACT halting preservation, LTM dynamics, and 6x performance improvement.
 """
 
-import asyncio
-import json
 import logging
-import tempfile
-import unittest
 from pathlib import Path
-from typing import Any, Dict
+import tempfile
+from typing import Any
+import unittest
 
 import torch
-import torch.nn as nn
 
 # Configure logging for tests
 logging.basicConfig(level=logging.INFO)
@@ -42,7 +39,7 @@ class CogmentIntegrationTestSuite(unittest.TestCase):
 
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
-    def _create_test_config(self) -> Dict[str, Any]:
+    def _create_test_config(self) -> dict[str, Any]:
         """Create test configuration for integration testing."""
         return {
             "output_dir": str(self.temp_dir / "output"),
@@ -288,9 +285,9 @@ class CogmentIntegrationTestSuite(unittest.TestCase):
 
         # Calculate reduction factor
         if cogment_params > 0:
-            reduction_factor = simulated_hrrm_params / cogment_params
+            simulated_hrrm_params / cogment_params
         else:
-            reduction_factor = 0
+            pass
 
         # In this test with small models, we can't achieve 6x, but verify structure
         self.assertGreater(cogment_params, 0)

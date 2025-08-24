@@ -8,11 +8,11 @@ Generates domain-specific training data for LoRA fine-tuning by:
 """
 
 import argparse
+from datetime import UTC, datetime
 import json
 import logging
-import random
-from datetime import UTC, datetime
 from pathlib import Path
+import random
 from typing import Any
 
 logger = logging.getLogger(__name__)

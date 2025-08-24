@@ -2,14 +2,15 @@
 """SIMPLE PROOF: Our compression actually works."""
 
 import io
-import tempfile
 from pathlib import Path
+import tempfile
 
 print("=== PROOF: REAL COMPRESSION WORKING ===")
 print()
 
 # Import our system
 import torch
+
 from src.compression.simple_quantizer import SimpleQuantizer
 from src.compression.test_model_generator import create_test_model
 

@@ -10,9 +10,9 @@ Tests the fixes for Prompt 4:
 
 import json
 import os
+from pathlib import Path
 import sys
 import tempfile
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest

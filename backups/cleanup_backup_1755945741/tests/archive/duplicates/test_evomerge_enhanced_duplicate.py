@@ -7,9 +7,9 @@ Unit tests for enhanced EvoMerge functionality including:
 """
 
 import os
+from pathlib import Path
 import tempfile
 import unittest
-from pathlib import Path
 from unittest.mock import Mock, patch
 
 from src.production.evolution.evomerge.bench_orchestrator import BenchmarkOrchestrator, determine_model_suite

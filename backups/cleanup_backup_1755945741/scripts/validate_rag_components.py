@@ -8,9 +8,9 @@ focusing on what can be tested without external dependencies.
 
 import asyncio
 import logging
+from pathlib import Path
 import sys
 import time
-from pathlib import Path
 
 # Add project root to path
 project_root = Path(__file__).parent.parent

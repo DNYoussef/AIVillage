@@ -5,10 +5,10 @@ Provides session management capabilities for agents.
 This is a stub implementation to resolve import issues after reorganization.
 """
 
-import uuid
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
+import uuid
 
 
 @dataclass

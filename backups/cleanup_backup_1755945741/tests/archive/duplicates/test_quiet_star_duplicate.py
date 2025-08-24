@@ -3,13 +3,14 @@ Comprehensive tests for Quiet-STaR system.
 Verifies no leakage, loss terms wired, and tokens present.
 """
 
-import tempfile
 from pathlib import Path
+import tempfile
 from unittest.mock import Mock, patch
 
 import pytest
 import torch
 import torch.nn as nn
+
 from src.agent_forge.quiet_star.config import get_default_config, get_inference_config, get_training_config
 from src.agent_forge.quiet_star.losses import QuietSTaRLoss
 from src.agent_forge.quiet_star.model import QuietSTaRModelWrapper

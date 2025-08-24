@@ -6,6 +6,7 @@ from collections.abc import Iterable
 from dataclasses import dataclass
 
 import torch
+
 from src.production.communications.p2p.p2p_node import P2PNode
 
 

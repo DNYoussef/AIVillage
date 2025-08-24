@@ -7,12 +7,12 @@ The engineering and model R&D specialist of AIVillage, responsible for:
 - Neural architecture search and experimentation
 """
 
+from dataclasses import dataclass
+from enum import Enum
 import hashlib
 import json
 import logging
 import time
-from dataclasses import dataclass
-from enum import Enum
 from typing import Any
 
 from packages.agents.core.agent_interface import AgentInterface

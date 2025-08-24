@@ -12,12 +12,12 @@ This scheduler integrates with the existing fog gateway infrastructure
 to provide intelligent job placement with Pareto-optimal solutions.
 """
 
-import logging
-import random
-import time
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from enum import Enum
+import logging
+import random
+import time
 from typing import Any
 
 # Import marketplace for pricing constraints

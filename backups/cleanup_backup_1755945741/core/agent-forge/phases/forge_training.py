@@ -22,23 +22,24 @@ Consolidates implementations from:
 - packages/agent_forge/legacy_src/training/dream.py (dream cycles)
 """
 
-import json
-import logging
 from collections import deque
 from collections.abc import Callable
 from dataclasses import dataclass, field
+import json
+import logging
 from pathlib import Path
 from typing import Any
 
+from datasets import load_dataset
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from datasets import load_dataset
-from packages.agent_forge.core.phase_controller import PhaseController, PhaseResult
 from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
 from transformers import AutoModelForCausalLM, AutoTokenizer
+
+from packages.agent_forge.core.phase_controller import PhaseController, PhaseResult
 
 logger = logging.getLogger(__name__)
 

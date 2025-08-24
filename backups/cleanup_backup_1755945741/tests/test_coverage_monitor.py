@@ -3,9 +3,9 @@ Test coverage monitoring during clean architecture reorganization.
 Ensures test coverage is maintained throughout the restructuring process.
 """
 
+from pathlib import Path
 import subprocess
 import sys
-from pathlib import Path
 from typing import Any
 
 import coverage

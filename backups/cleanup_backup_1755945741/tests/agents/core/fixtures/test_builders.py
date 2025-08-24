@@ -5,10 +5,10 @@ code duplication and maintain consistency across test suites.
 Follows connascence principles by providing single sources of truth for test data.
 """
 
-import random
-import uuid
 from datetime import datetime, timedelta
+import random
 from typing import Any, TypeVar
+import uuid
 
 from packages.agents.core.agent_interface import AgentCapability, AgentMetadata, MessageInterface, TaskInterface
 from packages.agents.core.base_agent_template import (

@@ -20,16 +20,15 @@ CONSOLIDATION RESULTS:
 ARCHITECTURE: Actions → **UnifiedDAOTokenomicsSystem** → Credits → Governance → Execution
 """
 
-import asyncio
+from collections.abc import Callable
+from dataclasses import dataclass, field
+from datetime import datetime, timedelta
+from enum import Enum
 import json
 import logging
 import sqlite3
 import time
-from dataclasses import dataclass, field
-from datetime import datetime, timedelta
-from enum import Enum
-from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Set, Union
+from typing import Any
 from uuid import uuid4
 
 logger = logging.getLogger(__name__)
@@ -137,9 +136,9 @@ class EarningRule:
 
     action: TokenAction
     base_amount: int
-    multipliers: Dict[str, float] = field(default_factory=dict)
-    requirements: Dict[str, Any] = field(default_factory=dict)
-    daily_limit: Optional[int] = None
+    multipliers: dict[str, float] = field(default_factory=dict)
+    requirements: dict[str, Any] = field(default_factory=dict)
+    daily_limit: int | None = None
     created_at: datetime = field(default_factory=datetime.now)
 
 
@@ -154,13 +153,13 @@ class TokenTransaction:
     balance_after: int = 0
 
     # Metadata
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
     timestamp: datetime = field(default_factory=datetime.now)
 
     # Mining specific
-    device_id: Optional[str] = None
-    compute_proof: Optional[str] = None
-    session_duration: Optional[int] = None
+    device_id: str | None = None
+    compute_proof: str | None = None
+    session_duration: int | None = None
 
 
 @dataclass
@@ -183,14 +182,14 @@ class GovernanceProposal:
 
     # Timing
     created_at: datetime = field(default_factory=datetime.now)
-    voting_starts: Optional[datetime] = None
-    voting_ends: Optional[datetime] = None
-    execution_time: Optional[datetime] = None
+    voting_starts: datetime | None = None
+    voting_ends: datetime | None = None
+    execution_time: datetime | None = None
 
     # Execution
-    execution_metadata: Dict[str, Any] = field(default_factory=dict)
-    executed_at: Optional[datetime] = None
-    execution_result: Optional[str] = None
+    execution_metadata: dict[str, Any] = field(default_factory=dict)
+    executed_at: datetime | None = None
+    execution_result: str | None = None
 
 
 @dataclass
@@ -205,7 +204,7 @@ class GovernanceVote:
 
     # Delegation
     is_delegated: bool = False
-    delegate_id: Optional[str] = None
+    delegate_id: str | None = None
 
     # Metadata
     reasoning: str = ""
@@ -228,7 +227,7 @@ class ComputeSession:
 
     # Rewards
     base_reward: int = 0
-    bonus_multipliers: Dict[str, float] = field(default_factory=dict)
+    bonus_multipliers: dict[str, float] = field(default_factory=dict)
     final_reward: int = 0
 
     # Geography and compliance
@@ -237,7 +236,7 @@ class ComputeSession:
 
     # Timing
     started_at: datetime = field(default_factory=datetime.now)
-    ended_at: Optional[datetime] = None
+    ended_at: datetime | None = None
 
 
 class TokenDatabase:
@@ -498,7 +497,7 @@ class TokenDatabase:
         )
         self.connection.commit()
 
-    def get_proposals(self, status: Optional[ProposalStatus] = None) -> List[GovernanceProposal]:
+    def get_proposals(self, status: ProposalStatus | None = None) -> list[GovernanceProposal]:
         """Get governance proposals"""
         cursor = self.connection.cursor()
 
@@ -566,13 +565,13 @@ class UnifiedDAOTokenomicsSystem:
 
         # Core components
         self.database = TokenDatabase(config.database_path)
-        self.earning_rules: Dict[TokenAction, EarningRule] = {}
-        self.execution_hooks: Dict[str, Callable] = {}
+        self.earning_rules: dict[TokenAction, EarningRule] = {}
+        self.execution_hooks: dict[str, Callable] = {}
 
         # Governance state
-        self.active_proposals: Dict[str, GovernanceProposal] = {}
-        self.user_roles: Dict[str, GovernanceRole] = {}
-        self.delegations: Dict[str, str] = {}  # voter_id -> delegate_id
+        self.active_proposals: dict[str, GovernanceProposal] = {}
+        self.user_roles: dict[str, GovernanceRole] = {}
+        self.delegations: dict[str, str] = {}  # voter_id -> delegate_id
 
         # Performance tracking
         self.stats = {
@@ -859,8 +858,8 @@ class UnifiedDAOTokenomicsSystem:
         title: str,
         description: str,
         proposal_type: ProposalType = ProposalType.GENERAL_GOVERNANCE,
-        execution_metadata: Optional[Dict[str, Any]] = None,
-    ) -> Optional[GovernanceProposal]:
+        execution_metadata: dict[str, Any] | None = None,
+    ) -> GovernanceProposal | None:
         """Create governance proposal"""
 
         # Check proposer has sufficient voting power
@@ -958,7 +957,7 @@ class UnifiedDAOTokenomicsSystem:
         self.logger.info(f"Vote cast by {voter_id} on proposal {proposal_id}: {choice.value}")
         return True
 
-    def check_proposal_results(self, proposal_id: str) -> Optional[ProposalStatus]:
+    def check_proposal_results(self, proposal_id: str) -> ProposalStatus | None:
         """Check if proposal has passed or failed"""
 
         if proposal_id not in self.active_proposals:
@@ -1052,7 +1051,7 @@ class UnifiedDAOTokenomicsSystem:
 
         return success
 
-    async def get_system_status(self) -> Dict[str, Any]:
+    async def get_system_status(self) -> dict[str, Any]:
         """Get comprehensive system status"""
 
         uptime = (datetime.now() - self.start_time).total_seconds()

@@ -8,10 +8,9 @@ targeting consolidated components from Agents 1-4.
 """
 
 import asyncio
-import os
-import sys
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock
+import sys
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -70,7 +69,6 @@ def component_availability():
 
     # Check gateway server
     try:
-        from core.gateway.server import GatewayConfig, app
 
         availability["gateway"] = True
     except ImportError:
@@ -78,7 +76,6 @@ def component_availability():
 
     # Check knowledge system
     try:
-        from core.rag.hyper_rag import HyperRAG
 
         availability["knowledge"] = True
     except ImportError:
@@ -86,7 +83,6 @@ def component_availability():
 
     # Check agent controller
     try:
-        from core.agents.cognative_nexus_controller import CognativeNexusController
 
         availability["agents"] = True
     except ImportError:
@@ -94,7 +90,6 @@ def component_availability():
 
     # Check P2P mesh
     try:
-        from core.p2p.mesh_protocol import MeshProtocol
 
         availability["p2p"] = True
     except ImportError:

@@ -8,11 +8,11 @@ The capacity and efficiency specialist of AIVillage, responsible for:
 - Performance monitoring and system sustainability
 """
 
+from dataclasses import dataclass
+from enum import Enum
 import hashlib
 import logging
 import time
-from dataclasses import dataclass
-from enum import Enum
 from typing import Any
 
 import psutil

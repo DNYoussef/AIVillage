@@ -15,12 +15,12 @@ Quality & Security Integration Point: Stub elimination with system integrity
 """
 
 import ast
-import json
-import logging
-import re
 from dataclasses import dataclass, field
 from enum import Enum
+import json
+import logging
 from pathlib import Path
+import re
 from typing import Any
 
 logger = logging.getLogger(__name__)

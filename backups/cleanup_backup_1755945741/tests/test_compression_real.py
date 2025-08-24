@@ -4,8 +4,8 @@ Test with real models, not mocks. Verify actual compression ratios.
 """
 
 import io
-import tempfile
 from pathlib import Path
+import tempfile
 
 import pytest
 

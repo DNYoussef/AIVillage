@@ -9,11 +9,11 @@ This module provides edge device integration for the unified HyperRAG system.
 """
 
 import asyncio
-import logging
-import time
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
+import logging
+import time
 from typing import Any
 
 logger = logging.getLogger(__name__)

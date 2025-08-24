@@ -11,13 +11,13 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
 
 # Directly import only what we need, avoiding problematic imports
 import asyncio
+from dataclasses import dataclass
+from enum import Enum
 import json
 import random
 import time
-import uuid
-from dataclasses import dataclass
-from enum import Enum
 from typing import Any
+import uuid
 
 
 # Copy core classes to avoid import issues

@@ -3,6 +3,7 @@ from unittest.mock import patch
 
 import msgpack
 import pytest
+
 from packages.p2p.core.p2p_node import PeerCapabilities
 from src.production.distributed_agents.agent_migration_manager import AgentCheckpoint, AgentMigrationManager
 from src.production.distributed_agents.distributed_agent_orchestrator import AgentType

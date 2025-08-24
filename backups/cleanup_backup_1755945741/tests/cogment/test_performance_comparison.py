@@ -10,11 +10,11 @@ Comprehensive benchmarking tests comparing:
 - Resource utilization metrics
 """
 
+from dataclasses import dataclass
 import os
 import tempfile
 import time
-from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import psutil
 import pytest
@@ -59,9 +59,9 @@ class ComparisonResult:
     """Comparison result container."""
 
     cogment_metrics: PerformanceMetrics
-    hrrm_metrics: Optional[PerformanceMetrics]
-    improvements: Dict[str, float]
-    analysis: Dict[str, Any]
+    hrrm_metrics: PerformanceMetrics | None
+    improvements: dict[str, float]
+    analysis: dict[str, Any]
 
 
 class TestParameterEfficiency:
@@ -140,7 +140,7 @@ class TestParameterEfficiency:
             model_params[name] = model_param_count
             total_params += model_param_count
 
-        print(f"✓ HRRM parameter breakdown:")
+        print("✓ HRRM parameter breakdown:")
         for name, count in model_params.items():
             print(f"  - {name}: {count:,}")
         print(f"  - Total: {total_params:,}")
@@ -377,7 +377,7 @@ class TestPerformanceSpeed:
         # Measure training step time
         training_time = self.measure_training_step_time(model)
 
-        print(f"✓ Cogment performance:")
+        print("✓ Cogment performance:")
         print(f"  - Forward pass: {forward_time:.2f}ms")
         print(f"  - Training step: {training_time:.2f}ms")
 
@@ -409,7 +409,7 @@ class TestPerformanceSpeed:
         # Measure training step time
         training_time = self.measure_training_step_time(model)
 
-        print(f"✓ HRRM performance (single model):")
+        print("✓ HRRM performance (single model):")
         print(f"  - Forward pass: {forward_time:.2f}ms")
         print(f"  - Training step: {training_time:.2f}ms")
 
@@ -430,7 +430,7 @@ class TestPerformanceSpeed:
         forward_speedup = hrrm_forward / cogment_forward
         training_speedup = hrrm_training / cogment_training
 
-        print(f"✓ Speed improvements:")
+        print("✓ Speed improvements:")
         print(f"  - Forward pass speedup: {forward_speedup:.1f}x")
         print(f"  - Training speedup: {training_speedup:.1f}x")
 
@@ -550,7 +550,7 @@ class TestComprehensivePerformanceComparison:
         print("=" * 50)
 
         if "param_reduction" in results:
-            print(f"Parameter Efficiency:")
+            print("Parameter Efficiency:")
             print(f"  🔸 HRRM Baseline: {results['hrrm_params']:,} parameters")
             print(f"  🔸 Cogment Unified: {results['cogment_params']:,} parameters")
             print(f"  🎯 Reduction Factor: {results['param_reduction']:.1f}x")

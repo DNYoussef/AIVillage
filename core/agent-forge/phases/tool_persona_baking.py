@@ -14,22 +14,23 @@ Consolidates implementations from:
 """
 
 import ast
+from collections import defaultdict
+from dataclasses import dataclass, field
 import json
 import logging
 import operator
-import re
-from collections import defaultdict
-from dataclasses import dataclass, field
 from pathlib import Path
+import re
 from typing import Any
 
 import numpy as np
 import torch
 import torch.nn as nn
-from packages.agent_forge.core.phase_controller import PhaseController, PhaseResult
 from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
 from transformers import AutoModelForCausalLM, AutoTokenizer
+
+from packages.agent_forge.core.phase_controller import PhaseController, PhaseResult
 
 logger = logging.getLogger(__name__)
 

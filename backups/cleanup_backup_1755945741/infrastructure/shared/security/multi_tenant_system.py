@@ -5,15 +5,15 @@ Provides comprehensive multi-tenant isolation with organizations, workspaces,
 and tenant-aware RBAC for complete data and resource separation.
 """
 
+from contextlib import contextmanager
+from dataclasses import dataclass, field
+from enum import Enum
 import hashlib
 import json
 import logging
 import os
-import sqlite3
-from contextlib import contextmanager
-from dataclasses import dataclass, field
-from enum import Enum
 from pathlib import Path
+import sqlite3
 from typing import Any
 from uuid import uuid4
 

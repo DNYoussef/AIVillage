@@ -8,11 +8,11 @@ The translation and linguistics specialist of AIVillage, responsible for:
 - Cultural localization and context adaptation
 """
 
+from dataclasses import dataclass
+from enum import Enum
 import hashlib
 import logging
 import time
-from dataclasses import dataclass
-from enum import Enum
 from typing import Any
 
 from packages.agents.core.agent_interface import AgentInterface

@@ -11,9 +11,9 @@ Key improvements:
 - Behavioral contracts instead of implementation dependencies
 """
 
-import logging
 from dataclasses import dataclass
 from enum import Enum
+import logging
 from typing import Any
 
 from packages.agents.core.agent_interface import AgentMetadata

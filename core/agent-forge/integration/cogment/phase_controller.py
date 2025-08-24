@@ -6,11 +6,11 @@ with the 4-stage Cogment curriculum (sanity → ARC → algorithmic → math →
 Integrates with GrokFast training acceleration and the unified model architecture.
 """
 
-import logging
-import time
 from datetime import datetime
+import logging
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+import time
+from typing import Any
 
 import torch
 import torch.nn as nn
@@ -57,7 +57,7 @@ class CogmentPhaseController(PhaseController):
 
         # Training state
         self.current_stage = CurriculumStage.SANITY
-        self.stage_results: List[Dict[str, Any]] = []
+        self.stage_results: list[dict[str, Any]] = []
         self.global_step = 0
 
         # Create output directories
@@ -70,7 +70,7 @@ class CogmentPhaseController(PhaseController):
 
         logger.info("Initialized CogmentPhaseController for 4-stage curriculum")
 
-    async def run(self, model: Optional[nn.Module] = None) -> PhaseResult:
+    async def run(self, model: nn.Module | None = None) -> PhaseResult:
         """
         Execute the complete 4-stage Cogment training workflow.
 
@@ -134,7 +134,7 @@ class CogmentPhaseController(PhaseController):
             logger.exception("Cogment phase controller failed")
             return self.create_failure_result(model, f"Unexpected error: {str(e)}", time.time() - start_time)
 
-    async def _initialize_cogment_model(self, input_model: Optional[nn.Module]) -> Optional[Cogment]:
+    async def _initialize_cogment_model(self, input_model: nn.Module | None) -> Cogment | None:
         """Initialize or validate Cogment model for training."""
         try:
             if input_model is None:
@@ -176,7 +176,7 @@ class CogmentPhaseController(PhaseController):
             logger.error(f"Failed to initialize Cogment model: {e}")
             return None
 
-    async def _convert_to_cogment(self, model: nn.Module) -> Optional[Cogment]:
+    async def _convert_to_cogment(self, model: nn.Module) -> Cogment | None:
         """Convert other model types to Cogment architecture."""
         try:
             # Get model size to determine appropriate Cogment config
@@ -236,7 +236,7 @@ class CogmentPhaseController(PhaseController):
             logger.warning(f"Weight transfer failed: {e}")
             return False
 
-    def _find_compatible_parameter(self, target_key: str, source_dict: Dict[str, torch.Tensor]) -> Optional[str]:
+    def _find_compatible_parameter(self, target_key: str, source_dict: dict[str, torch.Tensor]) -> str | None:
         """Find compatible parameter in source model."""
         # Direct match
         if target_key in source_dict:
@@ -313,7 +313,7 @@ class CogmentPhaseController(PhaseController):
             logger.error(f"Cogment model validation failed: {e}")
             return False
 
-    async def _execute_four_stage_curriculum(self, model: Cogment) -> Tuple[Optional[Cogment], Dict[str, Any]]:
+    async def _execute_four_stage_curriculum(self, model: Cogment) -> tuple[Cogment | None, dict[str, Any]]:
         """Execute the complete 4-stage Cogment curriculum."""
         training_metrics = {}
         current_model = model
@@ -350,7 +350,7 @@ class CogmentPhaseController(PhaseController):
                     can_advance = self.curriculum.advance_stage(stage_metrics)
 
                     if not can_advance:
-                        logger.warning(f"⚠️ Stage advancement criteria not met, but continuing")
+                        logger.warning("⚠️ Stage advancement criteria not met, but continuing")
 
                 logger.info(f"✅ Stage {stage.name} completed successfully")
                 logger.info(f"   Final accuracy: {stage_result['metrics'].get('accuracy', 0):.4f}")
@@ -367,7 +367,7 @@ class CogmentPhaseController(PhaseController):
 
     async def _execute_curriculum_stage(
         self, model: Cogment, stage: CurriculumStage, stage_config: Any
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Execute training for a single curriculum stage."""
         stage_start_time = time.time()
 
@@ -443,7 +443,7 @@ class CogmentPhaseController(PhaseController):
                 "metrics": {"stage_duration": time.time() - stage_start_time},
             }
 
-    async def _prepare_stage_data(self, stage: CurriculumStage, config: Any) -> Tuple[Any, Any]:
+    async def _prepare_stage_data(self, stage: CurriculumStage, config: Any) -> tuple[Any, Any]:
         """Prepare training and validation data for a curriculum stage."""
         try:
             logger.info(f"Preparing data for stage {stage.name}...")
@@ -479,7 +479,7 @@ class CogmentPhaseController(PhaseController):
             logger.error(f"Data preparation failed for stage {stage.name}: {e}")
             return None, None
 
-    async def _save_stage_checkpoint(self, model: Cogment, stage: CurriculumStage, metrics: Dict[str, Any]) -> Path:
+    async def _save_stage_checkpoint(self, model: Cogment, stage: CurriculumStage, metrics: dict[str, Any]) -> Path:
         """Save checkpoint after completing a curriculum stage."""
         try:
             # Create stage-specific checkpoint directory
@@ -505,7 +505,7 @@ class CogmentPhaseController(PhaseController):
                 # Convert non-serializable values
                 serializable_metrics = {}
                 for k, v in metrics.items():
-                    if isinstance(v, (int, float, str, bool, list, dict)):
+                    if isinstance(v, int | float | str | bool | list | dict):
                         serializable_metrics[k] = v
                     else:
                         serializable_metrics[k] = str(v)
@@ -577,7 +577,7 @@ class CogmentPhaseController(PhaseController):
             logger.error(f"Failed to save final model: {e}")
             return self.output_dir / "final_model_failed"
 
-    def get_workflow_comparison(self) -> Dict[str, Any]:
+    def get_workflow_comparison(self) -> dict[str, Any]:
         """Get comparison between HRRM 3-phase and Cogment 4-stage workflows."""
         return {
             "hrrm_workflow": {

@@ -5,11 +5,11 @@ Centralized type definitions to reduce connascence of meaning
 and provide single source of truth for data structures.
 """
 
-import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from typing import Any
+import uuid
 
 
 class GapType(Enum):

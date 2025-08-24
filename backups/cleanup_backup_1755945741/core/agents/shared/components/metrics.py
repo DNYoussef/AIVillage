@@ -6,11 +6,11 @@ Provides centralized metrics collection and reporting.
 
 from __future__ import annotations
 
-import logging
 from collections import deque
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
+import logging
 from typing import Any, Deque
 
 logger = logging.getLogger(__name__)

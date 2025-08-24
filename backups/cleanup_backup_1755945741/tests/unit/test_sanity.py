@@ -1,7 +1,7 @@
 """Basic sanity tests that actually verify functionality"""
 
-import sys
 from pathlib import Path
+import sys
 
 import pytest
 

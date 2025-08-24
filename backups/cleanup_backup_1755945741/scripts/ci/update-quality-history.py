@@ -5,10 +5,10 @@ Maintains historical quality metrics for trend analysis.
 """
 
 import argparse
-import json
-import sqlite3
 from datetime import datetime
+import json
 from pathlib import Path
+import sqlite3
 
 
 class QualityHistoryManager:

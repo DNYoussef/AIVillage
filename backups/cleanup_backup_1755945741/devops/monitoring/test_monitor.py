@@ -7,10 +7,10 @@ triggers dashboard updates, and sends alerts on degradation.
 
 import argparse
 import asyncio
-import json
-import logging
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
+import json
+import logging
 from pathlib import Path
 from typing import Any
 

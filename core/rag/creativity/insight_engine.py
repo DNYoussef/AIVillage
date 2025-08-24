@@ -10,14 +10,14 @@ This module provides the creativity component of the unified HyperRAG system.
 """
 
 import asyncio
-import logging
-import random
-import time
-import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
+import logging
+import random
+import time
 from typing import Any
+import uuid
 
 import numpy as np
 

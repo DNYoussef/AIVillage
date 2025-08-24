@@ -7,13 +7,13 @@ if importlib.util.find_spec("httpx") is None:
     raise unittest.SkipTest(msg)
 
 import asyncio
-import sys
 from io import BytesIO
 from pathlib import Path
+import sys
 from unittest.mock import AsyncMock, patch
 
-import numpy as np
 from fastapi import UploadFile
+import numpy as np
 
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 

@@ -6,13 +6,10 @@ Validation Agent 8 - Cleanup coordination and migration execution
 
 import json
 import logging
-import os
-import shutil
-import subprocess
-import sys
-import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+import shutil
+import time
+from typing import Any
 
 # Configure logging
 logging.basicConfig(
@@ -26,7 +23,7 @@ logger = logging.getLogger(__name__)
 class CogmentMigrationManager:
     """Manages the complete migration from HRRM to Cogment"""
 
-    def __init__(self, project_root: Optional[Path] = None):
+    def __init__(self, project_root: Path | None = None):
         self.project_root = project_root or Path(__file__).parent.parent
         self.backup_dir = self.project_root / "backups" / f"hrrm_backup_{int(time.time())}"
         self.migration_log = []
@@ -40,7 +37,7 @@ class CogmentMigrationManager:
             "cleanup_phases": ["analysis", "backup", "validation", "cleanup", "verification"],
         }
 
-    def execute_migration(self) -> Dict[str, Any]:
+    def execute_migration(self) -> dict[str, Any]:
         """Execute complete migration from HRRM to Cogment"""
         logger.info("Starting HRRM to Cogment migration process")
 
@@ -109,7 +106,7 @@ class CogmentMigrationManager:
 
         return migration_result
 
-    def _analyze_hrrm_dependencies(self) -> Dict[str, Any]:
+    def _analyze_hrrm_dependencies(self) -> dict[str, Any]:
         """Analyze HRRM dependencies throughout the codebase"""
         hrrm_path = self.project_root / "core" / "agent-forge" / "models" / "hrrm"
 
@@ -173,7 +170,7 @@ class CogmentMigrationManager:
 
         return analysis
 
-    def _create_hrrm_backups(self) -> Dict[str, Any]:
+    def _create_hrrm_backups(self) -> dict[str, Any]:
         """Create comprehensive backups of HRRM system"""
         hrrm_path = self.project_root / "core" / "agent-forge" / "models" / "hrrm"
 
@@ -227,7 +224,7 @@ class CogmentMigrationManager:
 
         return backup_result
 
-    def _validate_cogment_readiness(self) -> Dict[str, Any]:
+    def _validate_cogment_readiness(self) -> dict[str, Any]:
         """Validate that Cogment system is ready to replace HRRM"""
         validation_result = {
             "cogment_ready": False,
@@ -291,7 +288,7 @@ class CogmentMigrationManager:
 
         return validation_result
 
-    def _execute_hrrm_cleanup(self) -> Dict[str, Any]:
+    def _execute_hrrm_cleanup(self) -> dict[str, Any]:
         """Execute the actual HRRM cleanup"""
         cleanup_result = {
             "files_removed": 0,
@@ -357,7 +354,7 @@ class CogmentMigrationManager:
                 except Exception as e:
                     logger.debug(f"Could not process {config_file}: {e}")
 
-    def _verify_migration(self) -> Dict[str, Any]:
+    def _verify_migration(self) -> dict[str, Any]:
         """Verify that migration was successful"""
         verification_result = {
             "hrrm_removed": False,
@@ -393,7 +390,7 @@ class CogmentMigrationManager:
 
         return verification_result
 
-    def _run_cogment_validation_tests(self) -> Dict[str, Any]:
+    def _run_cogment_validation_tests(self) -> dict[str, Any]:
         """Run Cogment validation tests"""
         test_result = {"success": False, "tests_run": 0, "tests_passed": 0, "test_output": ""}
 
@@ -419,7 +416,7 @@ class CogmentMigrationManager:
 
         return test_result
 
-    def _rollback_migration(self) -> Dict[str, Any]:
+    def _rollback_migration(self) -> dict[str, Any]:
         """Rollback migration if something goes wrong"""
         rollback_result = {"rollback_successful": False, "hrrm_restored": False, "files_restored": 0}
 
@@ -450,7 +447,7 @@ class CogmentMigrationManager:
 
         return rollback_result
 
-    def _save_migration_report(self, migration_result: Dict[str, Any]):
+    def _save_migration_report(self, migration_result: dict[str, Any]):
         """Save comprehensive migration report"""
         report_path = self.project_root / "migration_report.json"
 

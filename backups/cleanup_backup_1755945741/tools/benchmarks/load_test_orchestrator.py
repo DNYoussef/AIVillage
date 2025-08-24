@@ -14,14 +14,14 @@ Replaces mock-based load tests with real system integration.
 """
 
 import asyncio
+from dataclasses import dataclass, field
+from datetime import datetime, timezone
 import json
 import logging
+from pathlib import Path
 import statistics
 import sys
 import time
-from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from pathlib import Path
 from typing import Any
 
 # Add project paths

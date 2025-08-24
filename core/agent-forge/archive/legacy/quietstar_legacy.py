@@ -22,18 +22,16 @@ Consolidates implementations from:
 - src/agent_forge/foundation/quiet_star.py (token definitions)
 """
 
-import logging
-import time
 from dataclasses import dataclass, field
+import logging
 from pathlib import Path
+import time
 from typing import Any
 
+from datasets import load_dataset
 import numpy as np
 import torch
 import torch.nn as nn
-from datasets import load_dataset
-from packages.agent_forge.core.phase_controller import PhaseController, PhaseResult
-from packages.agent_forge.legacy_src.training.grokfast_ctrl import GrokfastOptimizer
 from torch.utils.data import Dataset
 from tqdm import tqdm
 from transformers import (
@@ -43,6 +41,9 @@ from transformers import (
     Trainer,
     TrainingArguments,
 )
+
+from packages.agent_forge.core.phase_controller import PhaseController, PhaseResult
+from packages.agent_forge.legacy_src.training.grokfast_ctrl import GrokfastOptimizer
 
 logger = logging.getLogger(__name__)
 

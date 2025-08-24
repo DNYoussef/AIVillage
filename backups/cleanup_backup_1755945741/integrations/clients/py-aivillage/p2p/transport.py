@@ -10,11 +10,11 @@ Features comprehensive failover, Navigator integration, and mobile optimization.
 """
 
 import asyncio
-import logging
-import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
+import logging
+import time
 from typing import Any
 
 # Import transport implementations

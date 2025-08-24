@@ -8,10 +8,10 @@ from unittest.mock import patch
 
 import pytest
 import torch
+from torch import nn
 
 # Import our working compression stubs (which we know work)
 from agent_forge.compression import bitnet, seedlm
-from torch import nn
 
 
 class TestCompressionPipeline:

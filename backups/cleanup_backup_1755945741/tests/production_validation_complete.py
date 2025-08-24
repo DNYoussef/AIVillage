@@ -6,9 +6,9 @@ This test suite validates that all AIVillage systems work with real data
 and real user workflows, not just import validation.
 """
 
+from datetime import datetime
 import json
 import sys
-from datetime import datetime
 
 # Add project to path
 sys.path.append(".")

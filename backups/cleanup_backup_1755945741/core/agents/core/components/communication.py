@@ -6,9 +6,9 @@ and broadcast systems. Follows single responsibility principle.
 
 from __future__ import annotations
 
-import logging
 from dataclasses import dataclass
 from datetime import datetime
+import logging
 from typing import Any
 
 logger = logging.getLogger(__name__)

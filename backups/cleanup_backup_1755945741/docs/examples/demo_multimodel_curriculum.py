@@ -5,11 +5,11 @@ for question generation, grading, and hint generation.
 """
 
 import asyncio
+from datetime import datetime
 import logging
 import os
-import sys
-from datetime import datetime
 from pathlib import Path
+import sys
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent / "src"))

@@ -4,14 +4,13 @@ Self-model cycle; promotion is blocked until the grok signature
 (slow_grad ↑ & ID_nl ↓) re-appears internally.
 """
 
+from collections.abc import Sequence
 import logging
 import random
-from collections.abc import Sequence
-
-import torch
-from torch.nn import functional as F
 
 from AIVillage.experimental.training.geometry.snapshot import snapshot
+import torch
+from torch.nn import functional as F
 
 logger = logging.getLogger("AF-SelfGrokk")
 

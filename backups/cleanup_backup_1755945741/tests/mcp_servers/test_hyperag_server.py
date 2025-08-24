@@ -5,8 +5,8 @@ Comprehensive tests for HypeRAG MCP Server.
 import asyncio
 import contextlib
 import json
-import tempfile
 from pathlib import Path
+import tempfile
 from unittest.mock import AsyncMock, patch
 
 import pytest

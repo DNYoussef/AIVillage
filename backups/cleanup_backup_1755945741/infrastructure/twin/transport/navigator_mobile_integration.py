@@ -15,9 +15,9 @@ Key integration features:
 Integration Point: Multi-protocol routing with resource awareness
 """
 
-import logging
 from dataclasses import dataclass, field
 from enum import Enum
+import logging
 from typing import Any
 
 try:

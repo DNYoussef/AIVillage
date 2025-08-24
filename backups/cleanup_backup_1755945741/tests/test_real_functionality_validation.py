@@ -9,9 +9,9 @@ by the previous 88.5% pass rate with 70% functionality failures.
 import importlib
 import inspect
 import logging
+from pathlib import Path
 import sys
 import time
-from pathlib import Path
 from typing import Any
 
 import pytest

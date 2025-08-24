@@ -10,12 +10,12 @@ Tests each compression stage in the Agent Forge pipeline sequentially:
 Measures size reduction and validates functionality at each stage.
 """
 
+from dataclasses import dataclass
 import json
 import logging
+from pathlib import Path
 import sys
 import time
-from dataclasses import dataclass
-from pathlib import Path
 from typing import Any
 
 import numpy as np

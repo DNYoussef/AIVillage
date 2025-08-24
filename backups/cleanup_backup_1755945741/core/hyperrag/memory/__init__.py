@@ -8,7 +8,7 @@ Neurobiologically-inspired memory systems:
 
 try:
     from .hippo_index import ConfidenceType, EpisodicDocument, HippoIndex, MemoryType, create_hippo_node
-except ImportError as e:
+except ImportError:
     # Graceful fallback for missing dependencies
     HippoIndex = None
     EpisodicDocument = None

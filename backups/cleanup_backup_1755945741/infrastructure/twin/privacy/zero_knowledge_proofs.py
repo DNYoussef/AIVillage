@@ -11,12 +11,12 @@ Key features:
 - Bulletproofs for efficient verification
 """
 
+from dataclasses import dataclass
+from enum import Enum
 import hashlib
 import json
 import logging
 import secrets
-from dataclasses import dataclass
-from enum import Enum
 from typing import Any
 
 logger = logging.getLogger(__name__)

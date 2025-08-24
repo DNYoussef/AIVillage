@@ -6,19 +6,15 @@ Validation Agent 8 - Complete system validation and performance verification
 
 import json
 import logging
-import os
+from pathlib import Path
 import sys
 import time
 import traceback
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
-from unittest.mock import MagicMock, Mock, patch
 
 import numpy as np
 
 # Test framework
 import pytest
-import torch
 
 # Add project paths for imports
 project_root = Path(__file__).parent.parent.parent
@@ -52,7 +48,6 @@ class TestCogmentFinalValidation:
             sys.path.insert(0, str(self.cogment_path))
 
             # Mock the Cogment model for parameter counting
-            from unittest.mock import Mock
 
             # Simulate Cogment model structure based on documentation
             cogment_components = {
@@ -299,7 +294,7 @@ class TestCogmentFinalValidation:
         except Exception as e:
             pytest.fail(f"Final validation report generation failed: {e}")
 
-    def _calculate_cogment_parameters(self, components: Dict) -> int:
+    def _calculate_cogment_parameters(self, components: dict) -> int:
         """Calculate Cogment parameter count from architecture specs"""
         # Based on architecture documentation - realistic parameter calculation
         rc = components["refinement_core"]
@@ -393,7 +388,7 @@ class TestCogmentFinalValidation:
 
         return sum(scores) / len(scores) if scores else 0.0
 
-    def _generate_recommendations(self) -> List[str]:
+    def _generate_recommendations(self) -> list[str]:
         """Generate recommendations based on validation results"""
         recommendations = []
 
@@ -449,7 +444,7 @@ class TestHRRMCleanupValidation:
                 continue
 
         # Validation
-        cleanup_analysis = {
+        {
             "files_to_remove": len(hrrm_files),
             "external_dependencies": len(hrrm_dependencies),
             "cleanup_safe": len(hrrm_dependencies) == 0,

@@ -8,11 +8,11 @@ following the Facade pattern to maintain API compatibility.
 
 import asyncio
 import logging
-import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+import time
+from typing import Any
 
-from ..unified_digital_twin_system import TwinAccessLevel, TwinDataType
+from ..unified_digital_twin_system import TwinAccessLevel
 from .core import DigitalTwinCore
 from .integration import DigitalTwinIntegration
 from .storage import DigitalTwinStorage
@@ -30,7 +30,7 @@ class DigitalTwinOrchestrator:
     """
 
     def __init__(
-        self, twin_id: str, data_dir: Optional[str] = None, enable_encryption: bool = True, enable_p2p: bool = True
+        self, twin_id: str, data_dir: str | None = None, enable_encryption: bool = True, enable_p2p: bool = True
     ):
         self.twin_id = twin_id
         self.data_dir = Path(data_dir) if data_dir else Path("data/twins")
@@ -44,7 +44,7 @@ class DigitalTwinOrchestrator:
 
         # System state
         self._running = False
-        self._background_tasks: List[asyncio.Task] = []
+        self._background_tasks: list[asyncio.Task] = []
 
     async def start(self) -> bool:
         """Start the unified digital twin system."""
@@ -122,7 +122,7 @@ class DigitalTwinOrchestrator:
 
         return user_id
 
-    async def authenticate_user(self, username: str, password: str) -> Optional[str]:
+    async def authenticate_user(self, username: str, password: str) -> str | None:
         """Authenticate user and return access token."""
 
         token = await self.core.authenticate_user(username, password)
@@ -135,7 +135,7 @@ class DigitalTwinOrchestrator:
 
         return token
 
-    async def get_user_profile(self, user_id: str) -> Optional[Dict[str, Any]]:
+    async def get_user_profile(self, user_id: str) -> dict[str, Any] | None:
         """Get user profile data."""
 
         # Try core cache first
@@ -150,7 +150,7 @@ class DigitalTwinOrchestrator:
 
         return profile
 
-    async def update_user_profile(self, user_id: str, updates: Dict[str, Any]) -> bool:
+    async def update_user_profile(self, user_id: str, updates: dict[str, Any]) -> bool:
         """Update user profile data."""
 
         success = await self.core.update_user_profile(user_id, updates)
@@ -210,12 +210,12 @@ class DigitalTwinOrchestrator:
 
         return message_id
 
-    async def get_conversation_history(self, conversation_id: str, limit: int = 50) -> List[Dict[str, Any]]:
+    async def get_conversation_history(self, conversation_id: str, limit: int = 50) -> list[dict[str, Any]]:
         """Get conversation message history."""
 
         return await self.storage.get_conversation_messages(conversation_id, limit)
 
-    async def generate_ai_response(self, conversation_id: str, user_message: str, user_id: str) -> Dict[str, Any]:
+    async def generate_ai_response(self, conversation_id: str, user_message: str, user_id: str) -> dict[str, Any]:
         """Generate AI response for conversation."""
 
         # Add user message first
@@ -258,8 +258,8 @@ class DigitalTwinOrchestrator:
         data_key: str,
         data_value: Any,
         access_level: TwinAccessLevel = TwinAccessLevel.PRIVATE,
-        expires_at: Optional[float] = None,
-    ) -> Optional[str]:
+        expires_at: float | None = None,
+    ) -> str | None:
         """Store arbitrary data in digital twin."""
 
         data_id = await self.storage.store_twin_data(user_id, data_type, data_key, data_value, access_level, expires_at)
@@ -279,14 +279,14 @@ class DigitalTwinOrchestrator:
 
         return data_id
 
-    async def get_twin_data(self, user_id: str, data_type: str, data_key: Optional[str] = None) -> Dict[str, Any]:
+    async def get_twin_data(self, user_id: str, data_type: str, data_key: str | None = None) -> dict[str, Any]:
         """Retrieve data from digital twin."""
 
         return await self.storage.get_twin_data(user_id, data_type, data_key)
 
     # System Management and Monitoring
 
-    def get_system_metrics(self) -> Dict[str, Any]:
+    def get_system_metrics(self) -> dict[str, Any]:
         """Get comprehensive system metrics."""
 
         core_metrics = self.core.get_core_metrics()
@@ -307,7 +307,7 @@ class DigitalTwinOrchestrator:
             "background_tasks": len([t for t in self._background_tasks if not t.done()]),
         }
 
-    def get_user_statistics(self) -> Dict[str, Any]:
+    def get_user_statistics(self) -> dict[str, Any]:
         """Get user activity statistics."""
 
         core_metrics = self.core.get_core_metrics()

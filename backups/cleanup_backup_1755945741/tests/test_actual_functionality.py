@@ -6,8 +6,8 @@ This file contains tests that prove systems work end-to-end, not just that modul
 Created to address the gap where import tests passed but actual functionality was broken.
 """
 
-import sys
 from pathlib import Path
+import sys
 
 import pytest
 

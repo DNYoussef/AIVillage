@@ -6,6 +6,7 @@ if importlib.util.find_spec("torch") is None:
     raise unittest.SkipTest(msg)
 
 import torch
+
 from agent_forge.phase3.self_modeling_gate import self_model_cycle
 
 

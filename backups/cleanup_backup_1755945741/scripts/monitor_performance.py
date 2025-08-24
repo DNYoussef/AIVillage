@@ -5,10 +5,10 @@ Generates metrics snapshot for performance tracking.
 """
 
 import json
+from pathlib import Path
 import platform
 import sys
 import time
-from pathlib import Path
 
 import psutil
 

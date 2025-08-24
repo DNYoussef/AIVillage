@@ -2,12 +2,13 @@ import datetime
 import json
 import ssl
 
-import pytest
-import websockets
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.x509.oid import NameOID
+import pytest
+import websockets
+
 from packages.p2p.communications.protocol import CommunicationsProtocol
 
 

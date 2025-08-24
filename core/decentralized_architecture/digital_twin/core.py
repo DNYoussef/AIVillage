@@ -6,18 +6,14 @@ Extracted from UnifiedDigitalTwinSystem to handle core twin operations
 following Single Responsibility Principle.
 """
 
-import asyncio
 import hashlib
 import logging
 import secrets
 import time
+from typing import Any
 import uuid
-from dataclasses import dataclass, field
-from enum import Enum
-from pathlib import Path
-from typing import Any, Dict, List, Optional
 
-from ..unified_digital_twin_system import TwinAccessLevel, TwinConversation, TwinDataType, TwinMessage, TwinUser
+from ..unified_digital_twin_system import TwinConversation, TwinMessage, TwinUser
 
 logger = logging.getLogger(__name__)
 
@@ -34,12 +30,12 @@ class DigitalTwinCore:
         self.twin_id = twin_id
 
         # In-memory caches for performance
-        self.users: Dict[str, TwinUser] = {}
-        self.active_conversations: Dict[str, TwinConversation] = {}
-        self.session_cache: Dict[str, Dict[str, Any]] = {}
+        self.users: dict[str, TwinUser] = {}
+        self.active_conversations: dict[str, TwinConversation] = {}
+        self.session_cache: dict[str, dict[str, Any]] = {}
 
         # Security tokens
-        self.access_tokens: Dict[str, Dict[str, Any]] = {}
+        self.access_tokens: dict[str, dict[str, Any]] = {}
 
         # Core metrics
         self.metrics = {
@@ -74,7 +70,7 @@ class DigitalTwinCore:
         logger.info(f"Created digital twin user {username} ({user_id})")
         return user_id
 
-    async def authenticate_user(self, username: str, password: str) -> Optional[str]:
+    async def authenticate_user(self, username: str, password: str) -> str | None:
         """Authenticate user and return access token using secure patterns."""
 
         user = await self._get_user_by_username(username)
@@ -103,7 +99,7 @@ class DigitalTwinCore:
         logger.info(f"User {username} authenticated successfully")
         return token
 
-    async def get_user_profile(self, user_id: str) -> Optional[Dict[str, Any]]:
+    async def get_user_profile(self, user_id: str) -> dict[str, Any] | None:
         """Get user profile with controlled data exposure."""
 
         user = await self._get_user_by_id(user_id)
@@ -125,7 +121,7 @@ class DigitalTwinCore:
             "access_level": user.access_level.value,
         }
 
-    async def update_user_profile(self, user_id: str, updates: Dict[str, Any]) -> bool:
+    async def update_user_profile(self, user_id: str, updates: dict[str, Any]) -> bool:
         """Update user profile with validation."""
 
         user = await self._get_user_by_id(user_id)
@@ -196,7 +192,7 @@ class DigitalTwinCore:
         logger.debug(f"Added message {message_id} to conversation {conversation_id}")
         return message_id
 
-    async def validate_access_token(self, token: str) -> Optional[Dict[str, Any]]:
+    async def validate_access_token(self, token: str) -> dict[str, Any] | None:
         """Validate access token with expiration checks."""
 
         if token not in self.access_tokens:
@@ -237,7 +233,7 @@ class DigitalTwinCore:
         except (ValueError, TypeError):
             return False
 
-    async def _get_user_by_id(self, user_id: str) -> Optional[TwinUser]:
+    async def _get_user_by_id(self, user_id: str) -> TwinUser | None:
         """Get user by ID from cache, with storage fallback handled by composition."""
 
         # Check cache first for performance
@@ -248,7 +244,7 @@ class DigitalTwinCore:
         # This maintains separation of concerns
         return None
 
-    async def _get_user_by_username(self, username: str) -> Optional[TwinUser]:
+    async def _get_user_by_username(self, username: str) -> TwinUser | None:
         """Get user by username with efficient lookup."""
 
         # Check cache first
@@ -259,7 +255,7 @@ class DigitalTwinCore:
         # Note: Database lookup delegated to storage layer
         return None
 
-    def get_core_metrics(self) -> Dict[str, Any]:
+    def get_core_metrics(self) -> dict[str, Any]:
         """Get core system metrics."""
 
         return {
@@ -288,7 +284,7 @@ class DigitalTwinCore:
 
         return len(expired_tokens)
 
-    async def get_user_activity_summary(self, user_id: str) -> Dict[str, Any]:
+    async def get_user_activity_summary(self, user_id: str) -> dict[str, Any]:
         """Get user activity summary for analytics."""
 
         user = await self._get_user_by_id(user_id)

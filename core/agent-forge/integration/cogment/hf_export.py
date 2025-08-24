@@ -8,9 +8,8 @@ deployment-ready model that preserves all specialized capabilities.
 
 import json
 import logging
-import shutil
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 import torch
 from transformers import AutoConfig, AutoModel, PretrainedConfig, PreTrainedModel
@@ -120,10 +119,10 @@ class CogmentForCausalLM(PreTrainedModel):
     def forward(
         self,
         input_ids: torch.Tensor,
-        attention_mask: Optional[torch.Tensor] = None,
-        labels: Optional[torch.Tensor] = None,
-        memory: Optional[torch.Tensor] = None,
-        max_refinement_steps: Optional[int] = None,
+        attention_mask: torch.Tensor | None = None,
+        labels: torch.Tensor | None = None,
+        memory: torch.Tensor | None = None,
+        max_refinement_steps: int | None = None,
         return_dict: bool = True,
         **kwargs,
     ):
@@ -163,10 +162,10 @@ class CogmentForCausalLM(PreTrainedModel):
         input_ids: torch.Tensor,
         max_length: int = 100,
         temperature: float = 1.0,
-        top_k: Optional[int] = None,
-        top_p: Optional[float] = None,
+        top_k: int | None = None,
+        top_p: float | None = None,
         do_sample: bool = True,
-        memory: Optional[torch.Tensor] = None,
+        memory: torch.Tensor | None = None,
         **kwargs,
     ) -> torch.Tensor:
         """Generation compatible with HuggingFace interface."""
@@ -184,7 +183,7 @@ class CogmentForCausalLM(PreTrainedModel):
         """Count total trainable parameters."""
         return self.cogment_model.count_parameters()
 
-    def parameter_breakdown(self) -> Dict[str, int]:
+    def parameter_breakdown(self) -> dict[str, int]:
         """Get detailed parameter breakdown."""
         return self.cogment_model.parameter_breakdown()
 
@@ -198,7 +197,7 @@ class CogmentHFExporter:
     """
 
     def __init__(self):
-        self.export_history: list[Dict[str, Any]] = []
+        self.export_history: list[dict[str, Any]] = []
         logger.info("Initialized CogmentHFExporter for unified model deployment")
 
     def export_cogment_model(
@@ -207,9 +206,9 @@ class CogmentHFExporter:
         output_path: str,
         model_name: str = "cogment-unified",
         push_to_hub: bool = False,
-        hub_repo_id: Optional[str] = None,
+        hub_repo_id: str | None = None,
         save_metadata: bool = True,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Export trained Cogment model to HuggingFace format.
 
@@ -225,7 +224,7 @@ class CogmentHFExporter:
             Export result summary
         """
         try:
-            logger.info(f"🚀 Exporting Cogment model to HuggingFace format...")
+            logger.info("🚀 Exporting Cogment model to HuggingFace format...")
             logger.info(f"   Model: {model.count_parameters():,} parameters")
             logger.info(f"   Output: {output_path}")
 
@@ -499,7 +498,7 @@ Agent Forge Integration Team - Phase 6 (Cogment Integration)
 
         return model_card
 
-    def _create_model_metadata(self, model: Cogment, model_name: str) -> Dict[str, Any]:
+    def _create_model_metadata(self, model: Cogment, model_name: str) -> dict[str, Any]:
         """Create detailed metadata for the exported model."""
         return {
             "model_info": {
@@ -547,7 +546,7 @@ Agent Forge Integration Team - Phase 6 (Cogment Integration)
             },
         }
 
-    def _test_exported_model(self, model_path: Path) -> Dict[str, Any]:
+    def _test_exported_model(self, model_path: Path) -> dict[str, Any]:
         """Test that the exported model can be loaded and used."""
         try:
             logger.info("Testing exported model loading...")
@@ -595,7 +594,7 @@ Agent Forge Integration Team - Phase 6 (Cogment Integration)
                 total_size += file_path.stat().st_size
         return total_size / (1024 * 1024)  # Convert to MB
 
-    def _push_to_hub(self, model: CogmentForCausalLM, repo_id: str) -> Optional[str]:
+    def _push_to_hub(self, model: CogmentForCausalLM, repo_id: str) -> str | None:
         """Push model to HuggingFace Hub."""
         try:
             logger.info(f"Pushing model to HuggingFace Hub: {repo_id}")
@@ -609,7 +608,7 @@ Agent Forge Integration Team - Phase 6 (Cogment Integration)
 
     def export_for_production(
         self, model: Cogment, base_output_dir: str, environment: str = "production"
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Export Cogment model for production deployment with optimizations.
 
@@ -681,7 +680,7 @@ Agent Forge Integration Team - Phase 6 (Cogment Integration)
             logger.exception("Production export failed")
             return {"success": False, "environment": environment, "error": str(e)}
 
-    def _export_optimized_model(self, model: Cogment, output_dir: Path) -> Dict[str, Any]:
+    def _export_optimized_model(self, model: Cogment, output_dir: Path) -> dict[str, Any]:
         """Export optimized model with quantization."""
         # Placeholder for quantization - would implement actual optimization
         logger.info("Creating optimized model export...")
@@ -696,7 +695,7 @@ Agent Forge Integration Team - Phase 6 (Cogment Integration)
             "compression_ratio": "1x",  # Would calculate actual compression
         }
 
-    def _export_onnx_model(self, model: Cogment, output_dir: Path) -> Dict[str, Any]:
+    def _export_onnx_model(self, model: Cogment, output_dir: Path) -> dict[str, Any]:
         """Export model to ONNX format for inference engines."""
         # Placeholder for ONNX export
         logger.info("Creating ONNX model export...")
@@ -709,7 +708,7 @@ Agent Forge Integration Team - Phase 6 (Cogment Integration)
             "inference_engines": ["onnxruntime", "tensorrt"],
         }
 
-    def _create_deployment_config(self, model: Cogment, environment: str) -> Dict[str, Any]:
+    def _create_deployment_config(self, model: Cogment, environment: str) -> dict[str, Any]:
         """Create deployment configuration for production environment."""
         return {
             "model_config": {
@@ -735,7 +734,7 @@ Agent Forge Integration Team - Phase 6 (Cogment Integration)
             },
         }
 
-    def get_export_summary(self) -> Dict[str, Any]:
+    def get_export_summary(self) -> dict[str, Any]:
         """Get summary of all exports performed."""
         return {
             "total_exports": len(self.export_history),

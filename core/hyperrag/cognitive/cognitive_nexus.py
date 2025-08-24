@@ -8,14 +8,12 @@ confidence scoring and uncertainty quantification.
 This is a critical component that was missing from the original scattered implementations.
 """
 
-import asyncio
+from dataclasses import dataclass, field
+from enum import Enum
 import logging
 import statistics
 import time
-from dataclasses import dataclass, field
-from datetime import datetime
-from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -56,10 +54,10 @@ class AnalysisResult:
     """Result of cognitive analysis."""
 
     analysis_type: AnalysisType
-    result: Dict[str, Any]
+    result: dict[str, Any]
     confidence: ConfidenceLevel
-    reasoning_trace: List[str] = field(default_factory=list)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    reasoning_trace: list[str] = field(default_factory=list)
+    metadata: dict[str, Any] = field(default_factory=dict)
     processing_time: float = 0.0
 
 
@@ -72,8 +70,8 @@ class RetrievedInformation:
     source: str
     relevance_score: float
     retrieval_confidence: float
-    graph_connections: List[str] = field(default_factory=list)
-    relationship_types: List[str] = field(default_factory=list)
+    graph_connections: list[str] = field(default_factory=list)
+    relationship_types: list[str] = field(default_factory=list)
     trust_score: float = 0.5
 
 
@@ -83,10 +81,10 @@ class SynthesizedAnswer:
 
     answer: str
     confidence: float
-    supporting_sources: List[str]
+    supporting_sources: list[str]
     synthesis_method: str
-    reasoning_trace: List[str] = field(default_factory=list)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    reasoning_trace: list[str] = field(default_factory=list)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 class CognitiveNexus:
@@ -131,10 +129,10 @@ class CognitiveNexus:
     async def analyze_retrieved_information(
         self,
         query: str,
-        retrieved_info: List[RetrievedInformation],
-        analysis_types: List[AnalysisType] = None,
+        retrieved_info: list[RetrievedInformation],
+        analysis_types: list[AnalysisType] = None,
         reasoning_strategy: ReasoningStrategy = ReasoningStrategy.PROBABILISTIC,
-    ) -> List[AnalysisResult]:
+    ) -> list[AnalysisResult]:
         """
         Perform cognitive analysis on retrieved information.
 
@@ -190,7 +188,7 @@ class CognitiveNexus:
     async def _perform_single_analysis(
         self,
         query: str,
-        retrieved_info: List[RetrievedInformation],
+        retrieved_info: list[RetrievedInformation],
         analysis_type: AnalysisType,
         reasoning_strategy: ReasoningStrategy,
     ) -> AnalysisResult:
@@ -238,7 +236,7 @@ class CognitiveNexus:
                 processing_time=time.time() - start_time,
             )
 
-    async def _verify_facts(self, query: str, retrieved_info: List[RetrievedInformation]) -> tuple:
+    async def _verify_facts(self, query: str, retrieved_info: list[RetrievedInformation]) -> tuple:
         """Verify factual accuracy of retrieved information."""
 
         if not retrieved_info:
@@ -270,7 +268,7 @@ class CognitiveNexus:
             reasoning_trace,
         )
 
-    async def _assess_relevance(self, query: str, retrieved_info: List[RetrievedInformation]) -> tuple:
+    async def _assess_relevance(self, query: str, retrieved_info: list[RetrievedInformation]) -> tuple:
         """Assess relevance of information to the query."""
 
         if not retrieved_info:
@@ -302,7 +300,7 @@ class CognitiveNexus:
             reasoning_trace,
         )
 
-    async def _check_consistency(self, retrieved_info: List[RetrievedInformation]) -> tuple:
+    async def _check_consistency(self, retrieved_info: list[RetrievedInformation]) -> tuple:
         """Check consistency across retrieved information."""
 
         if len(retrieved_info) < 2:
@@ -339,7 +337,7 @@ class CognitiveNexus:
             reasoning_trace,
         )
 
-    async def _detect_contradictions(self, retrieved_info: List[RetrievedInformation]) -> tuple:
+    async def _detect_contradictions(self, retrieved_info: list[RetrievedInformation]) -> tuple:
         """Detect contradictions in retrieved information."""
 
         if len(retrieved_info) < 2:
@@ -377,7 +375,7 @@ class CognitiveNexus:
             reasoning_trace,
         )
 
-    async def _basic_analysis(self, query: str, retrieved_info: List[RetrievedInformation]) -> tuple:
+    async def _basic_analysis(self, query: str, retrieved_info: list[RetrievedInformation]) -> tuple:
         """Perform basic cognitive analysis."""
 
         if not retrieved_info:
@@ -405,7 +403,7 @@ class CognitiveNexus:
         )
 
     async def synthesize_answer(
-        self, query: str, retrieved_info: List[RetrievedInformation], analysis_results: List[AnalysisResult]
+        self, query: str, retrieved_info: list[RetrievedInformation], analysis_results: list[AnalysisResult]
     ) -> SynthesizedAnswer:
         """Synthesize final answer using cognitive analysis results."""
 
@@ -474,7 +472,7 @@ class CognitiveNexus:
             },
         )
 
-    async def get_nexus_stats(self) -> Dict[str, Any]:
+    async def get_nexus_stats(self) -> dict[str, Any]:
         """Get cognitive nexus statistics."""
 
         avg_processing_time = (

@@ -10,17 +10,17 @@ Consolidates the BEST features from:
 This creates ONE consolidated, non-overlapping communication system.
 """
 
-import logging
-import time
-import uuid
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
+import logging
+import time
 from typing import Any
+import uuid
 
-import websockets
 from cryptography.fernet import Fernet
+import websockets
 
 logger = logging.getLogger(__name__)
 

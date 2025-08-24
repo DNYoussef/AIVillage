@@ -9,9 +9,9 @@ Verifies the complete BitChat MVP integration with existing AIVillage infrastruc
 """
 
 import logging
+from pathlib import Path
 import sys
 import time
-from pathlib import Path
 
 # Add project root to path
 project_root = Path(__file__).parent

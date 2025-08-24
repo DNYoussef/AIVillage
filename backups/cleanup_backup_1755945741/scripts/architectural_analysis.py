@@ -16,13 +16,13 @@ Usage:
 
 import argparse
 import ast
-import json
-import os
-import sys
 from collections import defaultdict
 from dataclasses import asdict, dataclass
 from datetime import datetime
+import json
+import os
 from pathlib import Path
+import sys
 from typing import Any
 
 import matplotlib.pyplot as plt

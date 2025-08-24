@@ -10,10 +10,10 @@ Design follows London School TDD principles:
 - Keep coupling weak and dependencies explicit
 """
 
-import logging
-import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+import logging
+import time
 from typing import Any
 
 logger = logging.getLogger(__name__)

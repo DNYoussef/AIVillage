@@ -9,16 +9,16 @@ Security Integration Point: Component serialization with integrity validation
 """
 
 import base64
+from dataclasses import asdict, is_dataclass
+from enum import Enum
 import hashlib
 import hmac
 import json
 import logging
-import time
-import zlib
-from dataclasses import asdict, is_dataclass
-from enum import Enum
 from pathlib import Path
+import time
 from typing import Any
+import zlib
 
 try:  # Optional performant JSON library
     import orjson as _orjson

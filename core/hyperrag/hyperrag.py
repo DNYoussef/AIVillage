@@ -13,13 +13,13 @@ This is the main entry point for the consolidated HyperRAG system.
 """
 
 import asyncio
-import logging
-import statistics
-import time
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+import logging
+import statistics
+import time
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -55,8 +55,8 @@ class RetrievedInformation:
     source: str
     relevance_score: float
     retrieval_confidence: float
-    graph_connections: List[str] = field(default_factory=list)
-    relationship_types: List[str] = field(default_factory=list)
+    graph_connections: list[str] = field(default_factory=list)
+    relationship_types: list[str] = field(default_factory=list)
     timestamp: datetime = field(default_factory=datetime.now)
 
 
@@ -66,9 +66,9 @@ class SynthesizedAnswer:
 
     answer: str
     confidence: float
-    supporting_sources: List[str]
+    supporting_sources: list[str]
     synthesis_method: str
-    retrieval_sources: List[RetrievedInformation] = field(default_factory=list)
+    retrieval_sources: list[RetrievedInformation] = field(default_factory=list)
     processing_time: float = 0.0
     query_mode: str = "balanced"
 
@@ -99,11 +99,11 @@ class SimpleVectorStore:
 
     def __init__(self, dimensions: int = 384):
         self.dimensions = dimensions
-        self.documents: Dict[str, str] = {}
-        self.vectors: Dict[str, List[float]] = {}
-        self.metadata: Dict[str, Dict[str, Any]] = {}
+        self.documents: dict[str, str] = {}
+        self.vectors: dict[str, list[float]] = {}
+        self.metadata: dict[str, dict[str, Any]] = {}
 
-    def add_document(self, doc_id: str, content: str, metadata: Dict = None):
+    def add_document(self, doc_id: str, content: str, metadata: dict = None):
         """Add document to vector store."""
         self.documents[doc_id] = content
         # Simple hash-based pseudo-vector (replace with real embeddings in production)
@@ -111,7 +111,7 @@ class SimpleVectorStore:
         self.vectors[doc_id] = vector
         self.metadata[doc_id] = metadata or {}
 
-    def search(self, query: str, top_k: int = 5) -> List[tuple]:
+    def search(self, query: str, top_k: int = 5) -> list[tuple]:
         """Search for similar documents."""
         if not self.documents:
             return []
@@ -137,22 +137,22 @@ class SimpleGraphStore:
     """Simple in-memory graph store for development/testing."""
 
     def __init__(self):
-        self.nodes: Dict[str, Dict[str, Any]] = {}
-        self.edges: Dict[str, List[tuple]] = {}
+        self.nodes: dict[str, dict[str, Any]] = {}
+        self.edges: dict[str, list[tuple]] = {}
 
-    def add_node(self, node_id: str, properties: Dict[str, Any]):
+    def add_node(self, node_id: str, properties: dict[str, Any]):
         """Add node to graph."""
         self.nodes[node_id] = properties
         if node_id not in self.edges:
             self.edges[node_id] = []
 
-    def add_edge(self, from_node: str, to_node: str, relationship: str, properties: Dict = None):
+    def add_edge(self, from_node: str, to_node: str, relationship: str, properties: dict = None):
         """Add edge between nodes."""
         if from_node not in self.edges:
             self.edges[from_node] = []
         self.edges[from_node].append((to_node, relationship, properties or {}))
 
-    def get_connected_nodes(self, node_id: str, depth: int = 1) -> List[tuple]:
+    def get_connected_nodes(self, node_id: str, depth: int = 1) -> list[tuple]:
         """Get nodes connected to given node within depth."""
         if depth <= 0 or node_id not in self.edges:
             return []
@@ -181,8 +181,8 @@ class HyperRAG:
         self.logger = logging.getLogger(f"{__name__}.HyperRAG")
 
         # Core subsystems (will be enhanced in Phase 2.2)
-        self.vector_store: Optional[SimpleVectorStore] = None
-        self.graph_store: Optional[SimpleGraphStore] = None
+        self.vector_store: SimpleVectorStore | None = None
+        self.graph_store: SimpleGraphStore | None = None
         self.hippo_index = None  # Will be loaded from memory module
         self.cognitive_nexus = None  # Will be created in Phase 2.2
         self.creativity_engine = None  # Will be loaded from cognitive module
@@ -203,7 +203,7 @@ class HyperRAG:
         }
 
         # Simple cache for repeated queries
-        self.query_cache: Dict[str, SynthesizedAnswer] = {}
+        self.query_cache: dict[str, SynthesizedAnswer] = {}
 
         self.logger.info(f"HyperRAG initialized with config: {self.config}")
 
@@ -236,7 +236,7 @@ class HyperRAG:
         """Shutdown and cleanup."""
         self.logger.info("HyperRAG shutdown complete")
 
-    def add_document(self, content: str, doc_id: str = None, metadata: Dict = None) -> str:
+    def add_document(self, content: str, doc_id: str = None, metadata: dict = None) -> str:
         """Add document to knowledge base."""
         if doc_id is None:
             doc_id = f"doc_{int(time.time() * 1000000)}"
@@ -327,7 +327,7 @@ class HyperRAG:
         return await loop.run_in_executor(None, self.process_query, query, mode)
 
     def _synthesize_answer(
-        self, query: str, retrieved_info: List[RetrievedInformation], mode: QueryMode
+        self, query: str, retrieved_info: list[RetrievedInformation], mode: QueryMode
     ) -> SynthesizedAnswer:
         """Synthesize final answer from retrieved information."""
         if not retrieved_info:
@@ -388,7 +388,7 @@ class HyperRAG:
             # Rolling average
             self.stats["average_response_time"] = (current_avg * (query_count - 1) + new_time) / query_count
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get system statistics."""
         return {
             **self.stats,
@@ -407,7 +407,7 @@ class HyperRAG:
         self.query_cache.clear()
         self.logger.info("Query cache cleared")
 
-    def health_check(self) -> Dict[str, Any]:
+    def health_check(self) -> dict[str, Any]:
         """Perform system health check."""
         components = {
             "vector_store": "operational" if self.vector_store else "disabled",

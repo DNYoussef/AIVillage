@@ -2,13 +2,12 @@
 Unit tests for Innovator Repair Agent
 """
 
-import json
-import sys
 from datetime import datetime
+import json
 from pathlib import Path
+import sys
 from unittest.mock import MagicMock, patch
 
-import pytest
 from mcp_servers.hyperag.repair.innovator_agent import (
     InnovatorAgent,
     PromptComposer,
@@ -17,6 +16,7 @@ from mcp_servers.hyperag.repair.innovator_agent import (
     RepairProposal,
 )
 from mcp_servers.hyperag.repair.llm_driver import GenerationResponse
+import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
