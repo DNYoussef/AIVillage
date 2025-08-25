@@ -4,20 +4,21 @@ Real Agent Forge API Server - Uses Actual Training Code
 Connects the existing real Cognate training infrastructure to the UI
 """
 
-from fastapi import FastAPI, BackgroundTasks, WebSocket, WebSocketDisconnect
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
 import asyncio
 import json
 import logging
-import time
-from datetime import datetime
-from pathlib import Path
 import sys
 import threading
-import uvicorn
-from typing import List
+import time
 import traceback
+from datetime import datetime
+from pathlib import Path
+from typing import List
+
+import uvicorn
+from fastapi import BackgroundTasks, FastAPI, WebSocket, WebSocketDisconnect
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 # Setup logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(message)s")
@@ -52,8 +53,8 @@ try:
     sys.path.insert(0, packages_path)
 
     # Import using the working direct import pattern
-    import sys
     import importlib.util
+    import sys
 
     # Direct import of CognateRefiner
     spec = importlib.util.spec_from_file_location(
@@ -89,9 +90,9 @@ try:
         try:
             logger.info("Starting REAL 5-hour Cognate training with proper timing...")
 
+            import random
             import threading
             import time
-            import random
 
             # Create shared training state
             global_training_state = {
@@ -318,11 +319,11 @@ def run_complex_grokfast_training():
             sys.path.insert(0, str(cognate_models_path))
 
             # Import the real training components
-            from train_cognate_models import train_25m_cognate_models, train_with_cognate_refiner
             from consolidated.training.cognate_trainer import CognateTrainer, CognateTrainingConfig
-            from consolidated.training.orchestrator import CognateOrchestrator, TrainingPhase
             from consolidated.training.dataset_manager import CognateDatasetManager
             from consolidated.training.grokfast_optimizer import GrokFastAdamW
+            from consolidated.training.orchestrator import CognateOrchestrator, TrainingPhase
+            from train_cognate_models import train_25m_cognate_models, train_with_cognate_refiner
 
             print("REAL Cognate training infrastructure loaded successfully!")
             REAL_TRAINING_LOADED = True

@@ -10,27 +10,27 @@ Provides chat interface for testing trained models after each Agent Forge phase:
 """
 
 import asyncio
-from datetime import datetime
 import json
 import logging
 import os
-from pathlib import Path
 import sys
 import time
-from typing import Any, Dict, List, Optional
 import uuid
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
+import torch
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-import torch
 
 # Add core to path for Agent Forge imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "core"))
 
 try:
     import transformers
-    from transformers import AutoTokenizer, AutoModelForCausalLM
+    from transformers import AutoModelForCausalLM, AutoTokenizer
 
     TRANSFORMERS_AVAILABLE = True
 except ImportError:

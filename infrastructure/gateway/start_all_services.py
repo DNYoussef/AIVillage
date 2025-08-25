@@ -12,10 +12,10 @@ import asyncio
 import logging
 import multiprocessing
 import os
-import sys
-from pathlib import Path
 import signal
+import sys
 import time
+from pathlib import Path
 
 # Add API directory to path
 api_dir = Path(__file__).parent / "api"
@@ -53,8 +53,8 @@ def run_model_chat_api():
 def run_websocket_manager():
     """Run WebSocket Manager on port 8085."""
     try:
-        import websocket_manager
         import uvicorn
+        import websocket_manager
 
         logger.info("Starting WebSocket Manager on port 8085...")
         uvicorn.run(websocket_manager.app, host="0.0.0.0", port=8085, log_level="info")

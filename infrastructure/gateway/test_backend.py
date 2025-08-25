@@ -5,12 +5,13 @@ Test Script for Agent Forge Minimal Backend
 Tests all endpoints to ensure they work correctly.
 """
 
-import requests
+import asyncio
 import json
 import time
-import asyncio
-import websockets
 from datetime import datetime
+
+import requests
+import websockets
 
 BASE_URL = "http://localhost:8083"
 WS_URL = "ws://localhost:8083/ws"

@@ -13,11 +13,11 @@ CognateRefiner class with 25M parameters. Integrates:
 Total: ~25M parameters with HuggingFace compatibility.
 """
 
-from dataclasses import dataclass
 import json
 import logging
-from pathlib import Path
 import sys
+from dataclasses import dataclass
+from pathlib import Path
 
 import torch
 import torch.nn as nn
@@ -68,10 +68,7 @@ except ImportError as e:
 
 # LTM Bank imports with comprehensive fallbacks
 try:
-    from agent_forge.models.cognate.unified_refiner.ltm_bank import (
-        create_ltm_controllers,
-        create_memory_bank,
-    )
+    from agent_forge.models.cognate.unified_refiner.ltm_bank import create_ltm_controllers, create_memory_bank
 
     logger.info("Successfully imported from unified_refiner.ltm_bank")
 except ImportError:

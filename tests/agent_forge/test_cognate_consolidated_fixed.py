@@ -5,11 +5,12 @@ Consolidated Cognate Model Tests - Fixed Version
 Tests the production-ready cognate_pretrain implementation
 """
 
+import os
+import sys
+from pathlib import Path
+
 import pytest
 import torch
-from pathlib import Path
-import sys
-import os
 
 # Set UTF-8 encoding for Windows console
 if os.name == "nt":  # Windows
@@ -32,7 +33,7 @@ def test_cognate_imports():
         sys.path.insert(0, str(project_root / "core" / "agent-forge" / "phases" / "cognate_pretrain"))
 
         from model_factory import CognateModelFactory
-        from refiner_core import CognateRefiner, CognateConfig
+        from refiner_core import CognateConfig, CognateRefiner
 
         print("SUCCESS: All cognate imports successful")
         return True

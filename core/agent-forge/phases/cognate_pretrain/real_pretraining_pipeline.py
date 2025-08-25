@@ -24,17 +24,17 @@ import logging
 import os
 import sys
 import time
+from dataclasses import asdict, dataclass
 from pathlib import Path
-from dataclasses import dataclass, asdict
-from typing import Dict, List, Any, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import httpx
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.utils.data import DataLoader, Dataset
 from datasets import load_dataset
+from torch.utils.data import DataLoader, Dataset
 from transformers import AutoTokenizer
 
 # Setup logging
@@ -46,10 +46,10 @@ current_dir = Path(__file__).parent
 sys.path.insert(0, str(current_dir))
 
 try:
-    from refiner_core import CognateRefiner, CognateConfig
-    from grokfast_optimizer import GrokFastOptimizer, create_grokfast_adamw
-    from full_cognate_25m import Enhanced25MCognate, create_three_25m_models, create_standard_25m_config
     from download_datasets import CognateDatasetDownloader
+    from full_cognate_25m import Enhanced25MCognate, create_standard_25m_config, create_three_25m_models
+    from grokfast_optimizer import GrokFastOptimizer, create_grokfast_adamw
+    from refiner_core import CognateConfig, CognateRefiner
 
     REAL_IMPORTS = True
     logger.info("✅ Successfully imported real Cognate components")

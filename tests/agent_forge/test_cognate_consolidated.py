@@ -4,10 +4,11 @@ Consolidated Cognate Model Tests
 Tests the production-ready cognate_pretrain implementation
 """
 
+import sys
+from pathlib import Path
+
 import pytest
 import torch
-from pathlib import Path
-import sys
 
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent
@@ -19,10 +20,10 @@ def test_cognate_imports():
     """Test that all cognate components can be imported."""
     try:
         from core.agent_forge.phases.cognate_pretrain.model_factory import (
-            create_three_cognate_models,
             CognateModelFactory,
+            create_three_cognate_models,
         )
-        from core.agent_forge.phases.cognate_pretrain.refiner_core import CognateRefiner, CognateConfig
+        from core.agent_forge.phases.cognate_pretrain.refiner_core import CognateConfig, CognateRefiner
 
         print("✓ All cognate imports successful")
         return True
@@ -55,7 +56,7 @@ def test_cognate_config():
 def test_parameter_count_validation():
     """Test that models hit the 25M parameter target."""
     try:
-        from core.agent_forge.phases.cognate_pretrain.refiner_core import CognateRefiner, CognateConfig
+        from core.agent_forge.phases.cognate_pretrain.refiner_core import CognateConfig, CognateRefiner
 
         config = CognateConfig()
         model = CognateRefiner(config)
@@ -86,7 +87,7 @@ def test_parameter_count_validation():
 def test_model_forward_pass():
     """Test basic forward pass functionality."""
     try:
-        from core.agent_forge.phases.cognate_pretrain.refiner_core import CognateRefiner, CognateConfig
+        from core.agent_forge.phases.cognate_pretrain.refiner_core import CognateConfig, CognateRefiner
 
         config = CognateConfig()
         model = CognateRefiner(config)

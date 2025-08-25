@@ -10,8 +10,8 @@ Starts all necessary services for Agent Forge:
 
 import subprocess
 import sys
-import time
 import threading
+import time
 from pathlib import Path
 
 

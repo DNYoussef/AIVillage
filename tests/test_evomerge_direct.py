@@ -4,10 +4,10 @@ Direct EvoMerge Functionality Test
 Tests the actual EvoMerge system without complex imports
 """
 
-import sys
-import os
-from pathlib import Path
 import json
+import os
+import sys
+from pathlib import Path
 
 # Fix encoding
 if sys.platform.startswith("win"):

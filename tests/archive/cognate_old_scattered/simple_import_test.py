@@ -3,8 +3,8 @@
 Simple import test to debug the module structure
 """
 
-from pathlib import Path
 import sys
+from pathlib import Path
 
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent

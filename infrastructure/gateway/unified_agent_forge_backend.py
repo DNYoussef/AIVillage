@@ -28,7 +28,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from fastapi import FastAPI, HTTPException, BackgroundTasks, WebSocket, WebSocketDisconnect
+from fastapi import BackgroundTasks, FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
@@ -44,8 +44,8 @@ try:
     sys.path.insert(0, str(core_dir))
 
     # Import from the correct cognate_pretrain directory (with underscore)
-    from agent_forge.phases.cognate_pretrain.real_pretraining_pipeline import RealCognateTrainer, RealTrainingConfig
     from agent_forge.phases.cognate_pretrain.download_datasets import CognateDatasetDownloader
+    from agent_forge.phases.cognate_pretrain.real_pretraining_pipeline import RealCognateTrainer, RealTrainingConfig
 
     REAL_TRAINING_AVAILABLE = True
     logging.info("✅ Real training pipeline imported successfully")

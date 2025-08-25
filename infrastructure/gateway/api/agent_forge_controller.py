@@ -10,23 +10,23 @@ Provides real execution control for Agent Forge phases with:
 """
 
 import asyncio
-from datetime import datetime
 import json
 import logging
 import os
-from pathlib import Path
 import sys
 import time
-from typing import Any, Dict, List, Optional
 import uuid
-import httpx
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
-from fastapi import FastAPI, HTTPException, BackgroundTasks, Request
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, FileResponse
-from pydantic import BaseModel
-import torch
+import httpx
 import psutil
+import torch
+from fastapi import BackgroundTasks, FastAPI, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse, HTMLResponse
+from pydantic import BaseModel
 
 # Add core to path for Agent Forge imports
 project_root = Path(__file__).parent.parent.parent.parent
@@ -54,7 +54,7 @@ try:
 
     # Try to import the specific components we need
     try:
-        from agent_forge.core.phase_controller import PhaseController, PhaseResult, PhaseOrchestrator
+        from agent_forge.core.phase_controller import PhaseController, PhaseOrchestrator, PhaseResult
     except ImportError:
         print("Warning: Phase controller not available, using simplified approach")
         PhaseController, PhaseResult, PhaseOrchestrator = None, None, None
@@ -68,10 +68,10 @@ try:
 
     try:
         # Direct imports from the PRODUCTION REAL training components
-        from full_pretraining_pipeline import FullCognateTrainer, FullPretrainingConfig, RealCognateDataset
+        from cognate_creator import CognateCreatorConfig, CognateModelCreator
         from full_cognate_25m import Enhanced25MCognate, create_three_25m_models
+        from full_pretraining_pipeline import FullCognateTrainer, FullPretrainingConfig, RealCognateDataset
         from model_factory import create_three_cognate_models as backup_create_models
-        from cognate_creator import CognateModelCreator, CognateCreatorConfig
 
         # Assign the real training components
         RealCognateTrainer = FullCognateTrainer
@@ -128,7 +128,7 @@ try:
             ]
 
     try:
-        from agent_forge.phases.evomerge import EvoMergePhase, EvoMergeConfig
+        from agent_forge.phases.evomerge import EvoMergeConfig, EvoMergePhase
     except ImportError:
         print("Warning: EvoMerge not available, creating fallback")
 

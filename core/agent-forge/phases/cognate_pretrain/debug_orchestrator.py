@@ -4,8 +4,9 @@ Debug script to isolate the torch.empty() error in the orchestrator.
 """
 
 import sys
-import torch
 from pathlib import Path
+
+import torch
 
 # Add to Python path
 script_dir = Path(__file__).parent.resolve()
@@ -14,8 +15,8 @@ cognate_path = project_root / "packages" / "agent_forge" / "models" / "cognate"
 sys.path.insert(0, str(cognate_path))
 
 try:
-    from refiner_core import CognateRefiner, CognateConfig
-    from unified_refiner import UnifiedRefinerOrchestrator, OrchestrationConfig, create_memory_bank
+    from refiner_core import CognateConfig, CognateRefiner
+    from unified_refiner import OrchestrationConfig, UnifiedRefinerOrchestrator, create_memory_bank
 
     print("SUCCESS: Successfully imported Cognate components")
 

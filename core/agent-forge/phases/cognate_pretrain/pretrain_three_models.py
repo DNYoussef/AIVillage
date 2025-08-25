@@ -11,17 +11,17 @@ This script creates and pretrains 3 identical 25M parameter Cognate models using
 Models will be saved in HuggingFace format for EvoMerge.
 """
 
-from dataclasses import asdict
+import asyncio
 import json
 import logging
-from pathlib import Path
 import random
 import sys
 import time
+from dataclasses import asdict
+from pathlib import Path
 from typing import Any
-import httpx
-import asyncio
 
+import httpx
 import numpy as np
 import torch
 
@@ -74,9 +74,9 @@ sys.path.insert(0, str(packages_path))
 
 # Import components
 try:
+    from agent_forge.models.cognate.training_pipeline import CognateDataset, CognateTrainingPipeline, TrainingConfig
     from full_cognate_25m import Enhanced25MCognate, create_three_25m_models
     from refiner_core import CognateConfig
-    from agent_forge.models.cognate.training_pipeline import CognateDataset, CognateTrainingPipeline, TrainingConfig
 
     IMPORTS_SUCCESS = True
     logger.info("Successfully imported all Cognate components")

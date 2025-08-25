@@ -7,9 +7,9 @@ Provides WebSocket connections for live progress updates.
 import asyncio
 import json
 import logging
+import uuid
 from datetime import datetime
 from typing import Set
-import uuid
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware

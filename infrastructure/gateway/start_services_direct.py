@@ -5,10 +5,10 @@ Direct Service Startup - Bypasses problematic imports
 Starts all three services directly by importing individual modules.
 """
 
-import multiprocessing
-import sys
-import os
 import logging
+import multiprocessing
+import os
+import sys
 from pathlib import Path
 
 # Configure logging
@@ -42,8 +42,8 @@ def start_websocket_service():
         sys.path.insert(0, str(api_dir))
 
         # Import directly
-        import websocket_manager
         import uvicorn
+        import websocket_manager
 
         logger.info("Starting WebSocket Manager on port 8085...")
         uvicorn.run(websocket_manager.app, host="0.0.0.0", port=8085, log_level="info")

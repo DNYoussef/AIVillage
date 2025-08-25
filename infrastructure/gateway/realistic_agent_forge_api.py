@@ -4,20 +4,21 @@ Realistic Agent Forge API Server - Production-like Timing
 Includes WebSocket support and realistic pretraining timeline
 """
 
-from fastapi import FastAPI, BackgroundTasks, WebSocket, WebSocketDisconnect
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
 import asyncio
 import json
 import logging
+import sys
+import threading
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
-import sys
-import threading
-import uvicorn
 from typing import List
+
+import uvicorn
 import websockets
+from fastapi import BackgroundTasks, FastAPI, WebSocket, WebSocketDisconnect
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 # Setup logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(message)s")

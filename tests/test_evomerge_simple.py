@@ -3,10 +3,10 @@
 Simple EvoMerge Test - No Unicode characters
 """
 
-import sys
-import os
-from pathlib import Path
 import json
+import os
+import sys
+from pathlib import Path
 
 # Fix encoding
 if sys.platform.startswith("win"):

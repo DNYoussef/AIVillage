@@ -25,13 +25,13 @@ warnings.warn(
 # Redirect imports to new location
 try:
     from core.agent_forge.phases.cognate_pretrain.model_factory import (
-        create_three_cognate_models,
         CognateModelFactory,
+        create_three_cognate_models,
         validate_models,
     )
     from core.agent_forge.phases.cognate_pretrain.pretrain_three_models import (
-        create_and_pretrain_models,
         CognatePretrainer,
+        create_and_pretrain_models,
     )
 
     # Legacy compatibility

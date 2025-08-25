@@ -5,8 +5,8 @@ Tests Agent Forge pipeline integration and EvoMerge compatibility.
 """
 
 import json
-from pathlib import Path
 import sys
+from pathlib import Path
 
 import pytest
 
@@ -159,9 +159,7 @@ class TestIntegrationValidation:
     def test_pretraining_pipeline_integration(self, temp_output_dir):
         """Test integration with optional pre-training pipeline."""
         try:
-            from agent_forge.phases.cognate_pretrain.pretrain_pipeline import (
-                run_pretraining_pipeline,
-            )
+            from agent_forge.phases.cognate_pretrain.pretrain_pipeline import run_pretraining_pipeline
 
             # Create base models
             models = create_three_cognate_models(output_dir=temp_output_dir, device="cpu")

@@ -5,9 +5,9 @@ No external dependencies, just serves the HTML interface
 """
 
 import http.server
+import os
 import socketserver
 import webbrowser
-import os
 from pathlib import Path
 
 

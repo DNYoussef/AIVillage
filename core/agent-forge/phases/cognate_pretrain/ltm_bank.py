@@ -6,11 +6,12 @@ This is a simplified implementation of the LTM bank that provides
 the core functionality needed for the Cognate pretraining system.
 """
 
+import logging
+from typing import Any, Dict, List, Optional, Tuple
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from typing import Optional, Tuple, List, Dict, Any
-import logging
 
 logger = logging.getLogger(__name__)
 

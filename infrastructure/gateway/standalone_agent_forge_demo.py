@@ -7,10 +7,10 @@ Demonstrates the consolidated Agent Forge system working
 import asyncio
 import json
 import logging
+import sys
 import time
 from datetime import datetime
 from pathlib import Path
-import sys
 
 # Simple logging setup
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(message)s")

@@ -7,9 +7,9 @@ Handles all submodules and provides proper error messages for debugging.
 """
 
 import importlib.util
-from pathlib import Path
-import sys
 import logging
+import sys
+from pathlib import Path
 
 # Set up logging for debugging imports
 logger = logging.getLogger(__name__)

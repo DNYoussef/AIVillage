@@ -5,12 +5,12 @@ Starts all services needed for Agent Forge with proper error handling.
 """
 
 import asyncio
-import sys
-import os
-from pathlib import Path
 import logging
-import time
+import os
 import subprocess
+import sys
+import time
+from pathlib import Path
 from typing import Optional
 
 # Add parent paths to sys.path for imports
