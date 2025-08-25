@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { SystemControlDashboard } from '../dashboard/SystemControlDashboard';
+import { AgentForgeControl } from './AgentForgeControl';
 import './AdminInterface.css';
 
 interface AdminInterfaceProps {
@@ -19,6 +20,7 @@ export const AdminInterface: React.FC<AdminInterfaceProps> = ({
   isAdminMode,
   onToggleAdminMode
 }) => {
+  const [activeTab, setActiveTab] = useState<'system' | 'agent-forge'>('system');
   const [metrics, setMetrics] = useState<SystemMetrics>({
     p2pNodes: 0,
     activeAgents: 0,
@@ -88,6 +90,20 @@ export const AdminInterface: React.FC<AdminInterfaceProps> = ({
     <div className="admin-interface">
       <div className="admin-header">
         <h2>AIVillage Admin Dashboard</h2>
+        <div className="admin-tabs">
+          <button
+            className={`tab-button ${activeTab === 'system' ? 'active' : ''}`}
+            onClick={() => setActiveTab('system')}
+          >
+            System Monitor
+          </button>
+          <button
+            className={`tab-button ${activeTab === 'agent-forge' ? 'active' : ''}`}
+            onClick={() => setActiveTab('agent-forge')}
+          >
+            Agent Forge
+          </button>
+        </div>
         <button
           onClick={() => onToggleAdminMode(false)}
           className="btn-admin-disable"
@@ -96,61 +112,65 @@ export const AdminInterface: React.FC<AdminInterfaceProps> = ({
         </button>
       </div>
 
-      {isLoading ? (
-        <div className="admin-loading">
-          <div className="spinner"></div>
-          <p>Loading system metrics...</p>
-        </div>
+      {activeTab === 'system' ? (
+        isLoading ? (
+          <div className="admin-loading">
+            <div className="spinner"></div>
+            <p>Loading system metrics...</p>
+          </div>
+        ) : (
+          <>
+            <div className="admin-metrics-grid">
+              <div className="metric-card">
+                <h3>P2P Network</h3>
+                <div className="metric-value">{metrics.p2pNodes}</div>
+                <div className="metric-label">Connected Nodes</div>
+              </div>
+
+              <div className="metric-card">
+                <h3>AI Agents</h3>
+                <div className="metric-value">{metrics.activeAgents}</div>
+                <div className="metric-label">Active Agents</div>
+              </div>
+
+              <div className="metric-card">
+                <h3>Fog Compute</h3>
+                <div className="metric-value">{metrics.fogResources}</div>
+                <div className="metric-label">Available Resources</div>
+              </div>
+
+              <div className="metric-card">
+                <h3>Network Health</h3>
+                <div className="metric-value">{metrics.networkHealth}%</div>
+                <div className="metric-label">Overall Health</div>
+              </div>
+            </div>
+
+            <div className="admin-dashboard-container">
+              <SystemControlDashboard
+                adminMode={true}
+                refreshInterval={5000}
+              />
+            </div>
+
+            <div className="admin-actions">
+              <div className="action-group">
+                <h3>System Actions</h3>
+                <button className="btn-action" onClick={() => window.open('/api/admin/logs', '_blank')}>
+                  View System Logs
+                </button>
+                <button className="btn-action" onClick={() => window.open('/api/admin/config', '_blank')}>
+                  System Configuration
+                </button>
+                <button className="btn-action" onClick={fetchSystemMetrics}>
+                  Refresh Metrics
+                </button>
+              </div>
+            </div>
+          </>
+        )
       ) : (
-        <>
-          <div className="admin-metrics-grid">
-            <div className="metric-card">
-              <h3>P2P Network</h3>
-              <div className="metric-value">{metrics.p2pNodes}</div>
-              <div className="metric-label">Connected Nodes</div>
-            </div>
-
-            <div className="metric-card">
-              <h3>AI Agents</h3>
-              <div className="metric-value">{metrics.activeAgents}</div>
-              <div className="metric-label">Active Agents</div>
-            </div>
-
-            <div className="metric-card">
-              <h3>Fog Compute</h3>
-              <div className="metric-value">{metrics.fogResources}</div>
-              <div className="metric-label">Available Resources</div>
-            </div>
-
-            <div className="metric-card">
-              <h3>Network Health</h3>
-              <div className="metric-value">{metrics.networkHealth}%</div>
-              <div className="metric-label">Overall Health</div>
-            </div>
-          </div>
-
-          <div className="admin-dashboard-container">
-            <SystemControlDashboard
-              adminMode={true}
-              refreshInterval={5000}
-            />
-          </div>
-
-          <div className="admin-actions">
-            <div className="action-group">
-              <h3>System Actions</h3>
-              <button className="btn-action" onClick={() => window.open('/api/admin/logs', '_blank')}>
-                View System Logs
-              </button>
-              <button className="btn-action" onClick={() => window.open('/api/admin/config', '_blank')}>
-                System Configuration
-              </button>
-              <button className="btn-action" onClick={fetchSystemMetrics}>
-                Refresh Metrics
-              </button>
-            </div>
-          </div>
-        </>
+        <AgentForgeControl />
       )}
     </div>
   );

@@ -32,7 +32,7 @@ if agent_forge_path.exists():
     phases_path = agent_forge_path / "phases"
     print(f"Phases path: {phases_path}")
     print(f"Phases exists: {phases_path.exists()}")
-    
+
     if phases_path.exists():
         cognate_pretrain_path = phases_path / "cognate-pretrain"
         print(f"Cognate-pretrain path: {cognate_pretrain_path}")
@@ -59,9 +59,10 @@ try:
     cognate_pretrain_path = agent_forge_path / "phases" / "cognate-pretrain"
     if cognate_pretrain_path.exists():
         sys.path.insert(0, str(cognate_pretrain_path.parent))
-        
+
         # Try to manually load the module
         import importlib.util
+
         init_file = cognate_pretrain_path / "__init__.py"
         if init_file.exists():
             spec = importlib.util.spec_from_file_location("cognate_pretrain", init_file)
@@ -69,8 +70,8 @@ try:
                 cognate_pretrain = importlib.util.module_from_spec(spec)
                 spec.loader.exec_module(cognate_pretrain)
                 print("✅ Direct cognate-pretrain module import worked")
-                
-                if hasattr(cognate_pretrain, 'create_three_cognate_models'):
+
+                if hasattr(cognate_pretrain, "create_three_cognate_models"):
                     print("✅ create_three_cognate_models function found")
                 else:
                     print("❌ create_three_cognate_models function not found")
@@ -78,7 +79,7 @@ try:
             print(f"❌ __init__.py not found in {cognate_pretrain_path}")
     else:
         print(f"❌ cognate-pretrain directory not found: {cognate_pretrain_path}")
-        
+
 except Exception as e:
     print(f"❌ Direct module import failed: {e}")
 

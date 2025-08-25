@@ -22,6 +22,38 @@
   color: #ffffff;
 }
 
+.admin-tabs {
+  display: flex;
+  gap: 10px;
+}
+
+.tab-button {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: #e3f2fd;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(5px);
+}
+
+.tab-button:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+.tab-button.active {
+  background: linear-gradient(45deg, #4fc3f7, #29b6f6);
+  border-color: #4fc3f7;
+  color: #ffffff;
+  font-weight: 600;
+  box-shadow: 0 4px 15px rgba(79, 195, 247, 0.3);
+}
+
 .btn-admin-enable,
 .btn-admin-disable {
   background: linear-gradient(45deg, #ff6b6b, #ee5a52);
@@ -158,6 +190,15 @@
     flex-direction: column;
     gap: 15px;
     text-align: center;
+  }
+
+  .admin-tabs {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .tab-button {
+    width: 100%;
   }
 
   .btn-action {
