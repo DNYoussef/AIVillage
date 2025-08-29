@@ -17,18 +17,18 @@ model:
   n_heads: 4                # Attention heads (216 / 4 = 54 dim per head)
   ffn_mult: 4               # FFN multiplier (d_ffn = d_model * ffn_mult = 864)
   max_seq_len: 2048         # Maximum sequence length
-  
+
   # Derived parameters
   head_dim: 54              # d_model / n_heads = 216 / 4 = 54
   intermediate_size: 864    # d_model * ffn_mult = 216 * 4 = 864
-  
+
   # Target parameter count
   target_params: 25000000   # 25M parameters
   tolerance: 1000000        # ±1M tolerance
-  
+
   # Model components breakdown (approximate)
   # embeddings: ~6.9M (32000 * 216)
-  # transformer_layers: ~12.7M 
+  # transformer_layers: ~12.7M
   # halting_head: ~20K
   # edit_head: ~6.9M (216 * 32000)
   # memory_controllers: ~937K
@@ -41,19 +41,19 @@ memory:
   d_mem: 216                # Memory dimension (match d_model for efficiency)
   mem_capacity: 4096        # Memory bank capacity
   mem_topk: 4              # Top-k memory retrieval
-  
+
   # Memory policies
   read_policy: "entropy_gated"         # entropy_gated, always, never
   write_policy: "surprise_novelty"     # surprise_novelty, always, never
-  
+
   # Thresholds
   entropy_threshold: 0.8      # Read activation threshold
-  surprise_threshold: 0.6     # Write surprise threshold  
+  surprise_threshold: 0.6     # Write surprise threshold
   novelty_threshold: 0.7      # Write novelty threshold
-  
+
   # Memory integration layers
   memory_layers: [3, 6, 9]   # Which layers have memory cross-attention
-  
+
   # Surprise × Novelty gating (Titans-style)
   titans_gating:
     enabled: true
@@ -68,11 +68,11 @@ act:
   act_threshold: 0.99        # Halting threshold
   act_epsilon: 0.01         # Numerical stability
   max_act_steps: 16         # Maximum ACT steps
-  
+
   # Train-many/infer-few paradigm
   training_steps: 8          # Training: 4-8 steps
   inference_steps: 2         # Inference: 1-2 steps
-  
+
   # ACT loss weight
   lambda_act: 0.1           # ACT regularization weight
 
@@ -83,35 +83,35 @@ training:
   weight_decay: 0.01
   warmup_steps: 100
   max_steps: 10000
-  
+
   # Batch configuration
   batch_size: 8             # Small batch for memory efficiency
   gradient_accumulation_steps: 4
   effective_batch_size: 32  # batch_size * gradient_accumulation
-  
+
   # Sequence handling
   max_seq_length: 512       # Training sequence length
   pack_sequences: true      # Pack multiple sequences
-  
+
   # Loss weights
   lambda_act: 0.1          # ACT loss weight
   alpha_read: 0.05         # Memory read loss weight
   beta_write: 0.05         # Memory write loss weight
   gamma_comp: 0.02         # Compression loss weight
-  
+
   # Optimization
   optimizer: "adamw"
   betas: [0.9, 0.999]
   gradient_clip_norm: 1.0
-  
+
   # Scheduling
   scheduler_type: "linear_warmup"
   min_learning_rate: 1e-6
-  
+
   # Mixed precision
   mixed_precision: true
   dtype: "float32"          # float32, float16, bfloat16
-  
+
   # Checkpointing
   save_steps: 500
   eval_steps: 100
@@ -121,16 +121,16 @@ training:
 # Model Initialization
 initialization:
   strategy: "xavier_uniform"  # xavier_uniform, kaiming_normal, custom
-  
+
   # Component-specific initialization
   embedding_init: "normal"
   embedding_std: 0.02
-  
+
   linear_init: "xavier_uniform"
   bias_init: "zeros"
-  
+
   layer_norm_init: "ones_zeros"  # weight=1, bias=0
-  
+
   # Memory-specific initialization
   memory_init: "orthogonal"
   memory_std: 0.02
@@ -141,11 +141,11 @@ system:
   device: "auto"            # auto, cpu, cuda, mps
   torch_dtype: "float32"
   device_map: null
-  
+
   # Memory management
   memory_efficient: true
   gradient_checkpointing: false  # Disabled for 25M model
-  
+
   # Compilation
   torch_compile: false      # Disabled for development
   trust_remote_code: false
@@ -157,17 +157,17 @@ agent_forge:
   phase: "cognate"
   phase_number: 1
   next_phase: "evomerge"
-  
+
   # Integration settings
   compatible_with_pipeline: true
   export_format: "huggingface"
-  
+
   # Model export configuration
   export:
     save_tokenizer: true
     save_config: true
     save_memory_bank: true
-    
+
   # Metadata for pipeline
   pipeline_metadata:
     model_type: "cognate_refiner"
@@ -181,19 +181,19 @@ validation:
   parameter_count:
     target: 25000000
     tolerance: 2000000       # ±2M tolerance (relaxed)
-    
+
   # Architecture validation
   architecture_checks:
     - "d_model_divisible_by_n_heads"
     - "positive_dimensions"
     - "reasonable_layer_count"
-    
+
   # Memory validation
   memory_checks:
     - "memory_dimension_matches_model"
     - "reasonable_capacity"
     - "valid_topk"
-    
+
   # Training validation
   training_checks:
     - "positive_learning_rate"
@@ -211,14 +211,14 @@ deployment:
       temperature: 0.8
       top_p: 0.9
       do_sample: true
-      
+
   # Resource requirements
   resources:
     min_memory_gb: 4
     recommended_memory_gb: 8
     min_compute: "cpu"
     recommended_compute: "cuda"
-    
+
   # Performance targets
   performance:
     max_latency_ms: 500
@@ -235,14 +235,14 @@ monitoring:
     - "memory_read_frequency"
     - "memory_write_frequency"
     - "halting_distribution"
-    
+
   # Logging configuration
   logging:
     level: "INFO"
     log_memory_stats: true
     log_act_stats: true
     log_training_dynamics: true
-    
+
   # Experiment tracking
   tracking:
     enabled: false
@@ -257,13 +257,13 @@ development:
     unit_test_batch_size: 2
     integration_test_sequence_length: 128
     performance_test_enabled: true
-    
+
   # Debug settings
   debug:
     verbose_memory: false
     verbose_act: false
     profile_performance: false
-    
+
   # Development overrides
   dev_overrides:
     max_steps: 100          # Reduced for development
@@ -277,13 +277,13 @@ advanced:
     flash_attention: false   # Not needed for 25M model
     gradient_compression: false
     dynamic_batching: false
-    
+
   # Research features
   research:
     attention_visualization: false
     memory_visualization: false
     act_analysis: false
-    
+
   # Optimization features
   optimization:
     memory_pooling: false
@@ -296,18 +296,18 @@ metadata:
   created_date: "2025-01-23"
   version: "1.0.0"
   description: "25M parameter Cognate Refiner configuration for Phase 2C"
-  
+
   # Configuration validation
   schema_version: "1.0"
   last_validated: null
   validation_status: "pending"
-  
+
   # Documentation
   documentation:
     config_guide: "docs/config/cognate_25m_guide.md"
     architecture_doc: "docs/architecture/cognate_25m_architecture.md"
     training_guide: "docs/training/cognate_25m_training.md"
-    
+
   # Related configurations
   related_configs:
     - "config/agent_forge/cognate/pipeline_integration.yaml"

@@ -39,7 +39,45 @@ from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-from packages.agent_forge.core.phase_controller import PhaseController, PhaseResult
+# Try to import PhaseController, with fallback for direct imports
+try:
+    from ..core.phase_controller import PhaseController, PhaseResult
+except (ImportError, ValueError):
+    # Fallback for direct imports - create minimal base classes
+    from abc import ABC, abstractmethod
+    from dataclasses import dataclass
+    from datetime import datetime
+    from typing import Any
+
+    import torch.nn as nn
+
+    @dataclass
+    class PhaseResult:
+        success: bool
+        model: nn.Module
+        phase_name: str = None
+        metrics: dict = None
+        duration_seconds: float = 0.0
+        artifacts: dict = None
+        config: dict = None
+        error: str = None
+        start_time: datetime = None
+        end_time: datetime = None
+
+        def __post_init__(self):
+            if self.end_time is None:
+                self.end_time = datetime.now()
+            if self.start_time is None:
+                self.start_time = self.end_time
+
+    class PhaseController(ABC):
+        def __init__(self, config: Any):
+            self.config = config
+
+        @abstractmethod
+        async def run(self, model: nn.Module) -> PhaseResult:
+            pass
+
 
 logger = logging.getLogger(__name__)
 
@@ -753,18 +791,20 @@ class ForgeTrainer:
 
         progress_bar = tqdm(range(self.config.max_steps), desc="Forge Training")
 
+        dataloader_iter = iter(dataloader)
         for step in progress_bar:
             self.global_step = step
 
+            # Precompute current Grokfast lambda for logging and potential override
+            current_lambda = self._get_grokfast_lambda(step)
+
             # Get batch
             try:
-                batch = next(iter(dataloader))
+                batch = next(dataloader_iter)
             except StopIteration:
-                # Restart dataloader
-                dataloader = DataLoader(
-                    train_dataset, batch_size=self.config.batch_size, shuffle=True, num_workers=self.config.num_workers
-                )
-                batch = next(iter(dataloader))
+                # Restart dataloader iterator
+                dataloader_iter = iter(dataloader)
+                batch = next(dataloader_iter)
 
             # Move to device
             input_ids = batch["input_ids"].to(self.device)
@@ -1069,6 +1109,47 @@ class ForgeTrainingPhase(PhaseController):
                 error_message=str(e),
             )
 
+
+# ============================================================================
+# Backwards compatibility: ensure ForgeTrainingPhase implements run()
+# ============================================================================
+try:
+    # Add an async run wrapper to ForgeTrainingPhase if missing
+    if not hasattr(ForgeTrainingPhase, "run"):
+        import json
+        from pathlib import Path
+        import tempfile
+
+        async def _forge_training_run(self, model_or_path, **kwargs):
+            """Compatibility wrapper: accept nn.Module or path and delegate to execute()."""
+            # If a path string is passed, use it directly
+            if isinstance(model_or_path, str):
+                model_path = model_or_path
+            elif model_or_path is None:
+                model_path = self.config.model_path
+            else:
+                # Persist the nn.Module to a temporary directory where possible
+                tmpdir = Path(tempfile.mkdtemp(prefix="forge_input_model_"))
+                try:
+                    if hasattr(model_or_path, "save_pretrained"):
+                        model_or_path.save_pretrained(tmpdir)
+                    else:
+                        # Save state dict and minimal config
+                        torch.save(model_or_path.state_dict(), tmpdir / "pytorch_model.bin")
+                        if hasattr(model_or_path, "config"):
+                            with open(tmpdir / "config.json", "w") as f:
+                                json.dump(getattr(model_or_path, "config").__dict__, f)
+                except Exception as e:
+                    logger.warning(f"Failed to persist input model, falling back to config.model_path: {e}")
+                    tmpdir = None
+                model_path = str(tmpdir) if tmpdir else self.config.model_path
+
+            return await self.execute(model_path, **kwargs)
+
+        setattr(ForgeTrainingPhase, "run", _forge_training_run)
+except Exception:
+    # Best-effort; do not fail import if wrapper cannot be installed
+    logger.exception("Failed to attach run wrapper to ForgeTrainingPhase")
 
 # ============================================================================
 # Factory Function

@@ -6,9 +6,9 @@ No external dependencies, just serves the HTML interface
 
 import http.server
 import os
+from pathlib import Path
 import socketserver
 import webbrowser
-from pathlib import Path
 
 
 def start_simple_ui():

@@ -9,14 +9,13 @@ import logging
 import math
 import random
 
+from AIVillage.experimental.training.optim.grokfast_opt import GrokFastOptimizer
+from AIVillage.experimental.training.utils.expert_vector import ExpertVectorManager
 import torch
 from torch import nn
 import torch.nn.functional as F
 from tqdm import tqdm
 from transformers import AutoModelForCausalLM, AutoTokenizer
-
-from AIVillage.experimental.training.optim.grokfast_opt import GrokFastOptimizer
-from AIVillage.experimental.training.utils.expert_vector import ExpertVectorManager
 
 logger = logging.getLogger(__name__)
 

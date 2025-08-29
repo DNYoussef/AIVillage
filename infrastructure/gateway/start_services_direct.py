@@ -7,9 +7,8 @@ Starts all three services directly by importing individual modules.
 
 import logging
 import multiprocessing
-import os
-import sys
 from pathlib import Path
+import sys
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")

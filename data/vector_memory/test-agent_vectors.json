@@ -1,0 +1,36 @@
+{
+  "agent_id": "test-agent",
+  "dimension": 10,
+  "last_updated": "2025-08-26T23:26:56.531244",
+  "vectors": {
+    "base": {
+      "vector": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "timestamp": "2025-08-26T23:26:56.407013",
+      "metadata": {}
+    },
+    "test_key": {
+      "vector": [
+        0.1,
+        0.2,
+        0.3,
+        0.4,
+        0.5,
+        0.6,
+        0.7,
+        0.8,
+        0.9,
+        1.0
+      ],
+      "timestamp": "2025-08-26T23:26:56.531244",
+      "metadata": {
+        "context": "test"
+      }
+    }
+  }
+}

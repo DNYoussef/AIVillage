@@ -7,9 +7,9 @@ Handles the hyphenated directory structure and provides clear error messages.
 """
 
 import logging
-import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+import sys
+from typing import Any
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -38,7 +38,7 @@ def setup_agent_forge_paths():
     return project_root
 
 
-def import_agent_forge_module(module_path: str, required: bool = True) -> Optional[Any]:
+def import_agent_forge_module(module_path: str, required: bool = True) -> Any | None:
     """
     Import an agent_forge module with proper error handling.
 
@@ -96,7 +96,7 @@ def import_agent_forge_module(module_path: str, required: bool = True) -> Option
             return None
 
 
-def get_cognate_modules() -> Dict[str, Any]:
+def get_cognate_modules() -> dict[str, Any]:
     """
     Import all Cognate-related modules.
 
@@ -120,7 +120,7 @@ def get_cognate_modules() -> Dict[str, Any]:
     return {k: v for k, v in modules.items() if v is not None}
 
 
-def get_evomerge_modules() -> Dict[str, Any]:
+def get_evomerge_modules() -> dict[str, Any]:
     """
     Import all EvoMerge-related modules.
 
@@ -142,7 +142,7 @@ def get_evomerge_modules() -> Dict[str, Any]:
     return {k: v for k, v in modules.items() if v is not None}
 
 
-def get_core_modules() -> Dict[str, Any]:
+def get_core_modules() -> dict[str, Any]:
     """
     Import core Agent Forge modules.
 
@@ -164,7 +164,7 @@ def get_core_modules() -> Dict[str, Any]:
     return {k: v for k, v in modules.items() if v is not None}
 
 
-def validate_agent_forge_installation() -> Dict[str, Any]:
+def validate_agent_forge_installation() -> dict[str, Any]:
     """
     Validate that Agent Forge modules can be imported.
 
@@ -183,7 +183,7 @@ def validate_agent_forge_installation() -> Dict[str, Any]:
 
     try:
         # Test basic import
-        agent_forge = import_agent_forge_module("agent_forge", required=True)
+        import_agent_forge_module("agent_forge", required=True)
         results["imported_modules"].append("agent_forge")
 
         # Test Cognate modules

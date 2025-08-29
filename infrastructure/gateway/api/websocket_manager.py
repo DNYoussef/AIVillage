@@ -10,15 +10,13 @@ Provides real-time updates for:
 """
 
 import asyncio
-import json
-import logging
-import uuid
 from datetime import datetime
-from typing import Any, Dict, List, Set
+import logging
+from typing import Any
+import uuid
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +28,7 @@ class WebSocketConnection:
         self.websocket = websocket
         self.client_id = client_id
         self.connected_at = datetime.now()
-        self.subscriptions: Set[str] = set()
+        self.subscriptions: set[str] = set()
         self.last_ping = datetime.now()
 
 
@@ -38,8 +36,8 @@ class WebSocketManager:
     """Manages multiple WebSocket connections and broadcasts."""
 
     def __init__(self):
-        self.connections: Dict[str, WebSocketConnection] = {}
-        self.subscriptions: Dict[str, Set[str]] = {}  # channel -> set of client_ids
+        self.connections: dict[str, WebSocketConnection] = {}
+        self.subscriptions: dict[str, set[str]] = {}  # channel -> set of client_ids
 
     async def connect(self, websocket: WebSocket, client_id: str = None) -> str:
         """Accept new WebSocket connection."""
@@ -73,7 +71,7 @@ class WebSocketManager:
             del self.connections[client_id]
             logger.info(f"WebSocket client disconnected: {client_id}")
 
-    async def send_to_client(self, client_id: str, data: Dict[str, Any]) -> bool:
+    async def send_to_client(self, client_id: str, data: dict[str, Any]) -> bool:
         """Send data to specific client."""
         if client_id not in self.connections:
             return False
@@ -87,7 +85,7 @@ class WebSocketManager:
             self.disconnect(client_id)
             return False
 
-    async def broadcast_to_channel(self, channel: str, data: Dict[str, Any]):
+    async def broadcast_to_channel(self, channel: str, data: dict[str, Any]):
         """Broadcast data to all clients subscribed to channel."""
         if channel not in self.subscriptions:
             return
@@ -136,7 +134,7 @@ class WebSocketManager:
             return len(self.subscriptions.get(channel, set()))
         return len(self.connections)
 
-    def get_channels(self) -> List[str]:
+    def get_channels(self) -> list[str]:
         """Get list of active channels."""
         return list(self.subscriptions.keys())
 
@@ -146,14 +144,20 @@ ws_manager = WebSocketManager()
 
 app = FastAPI(title="WebSocket Manager")
 
-# Add CORS middleware
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # In production, specify actual origins
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# SECURITY: Add secure WebSocket CORS middleware - NO WILDCARDS
+try:
+    from src.security.cors_config import WEBSOCKET_CORS_CONFIG
+    app.add_middleware(CORSMiddleware, **WEBSOCKET_CORS_CONFIG)
+except ImportError:
+    # Fallback secure WebSocket configuration
+    import os
+    env = os.getenv("AIVILLAGE_ENV", "development")
+    cors_origins = ["http://localhost:3000", "http://localhost:8080", "http://127.0.0.1:3000"] if env != "production" else ["https://aivillage.app"]
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=cors_origins,
+        allow_credentials=True
+    )
 
 
 @app.websocket("/ws")
@@ -228,7 +232,7 @@ async def get_websocket_stats():
 
 
 @app.post("/broadcast/{channel}")
-async def broadcast_message(channel: str, message: Dict[str, Any]):
+async def broadcast_message(channel: str, message: dict[str, Any]):
     """Broadcast message to all clients in channel."""
     await ws_manager.broadcast_to_channel(channel, message)
     return {"success": True, "channel": channel, "client_count": ws_manager.get_client_count(channel)}
@@ -236,7 +240,7 @@ async def broadcast_message(channel: str, message: Dict[str, Any]):
 
 # Utility functions for other services to use
 async def broadcast_phase_update(
-    phase_name: str, status: str, progress: float, message: str, artifacts: Dict[str, Any] = None
+    phase_name: str, status: str, progress: float, message: str, artifacts: dict[str, Any] = None
 ):
     """Broadcast Agent Forge phase updates."""
     await ws_manager.broadcast_to_channel(
@@ -252,12 +256,12 @@ async def broadcast_phase_update(
     )
 
 
-async def broadcast_system_metrics(metrics: Dict[str, Any]):
+async def broadcast_system_metrics(metrics: dict[str, Any]):
     """Broadcast system resource metrics."""
     await ws_manager.broadcast_to_channel("system_metrics", {"type": "system_metrics", "metrics": metrics})
 
 
-async def broadcast_model_update(model_id: str, event_type: str, data: Dict[str, Any]):
+async def broadcast_model_update(model_id: str, event_type: str, data: dict[str, Any]):
     """Broadcast model-related updates."""
     await ws_manager.broadcast_to_channel(
         "model_updates",
@@ -270,7 +274,7 @@ async def broadcast_model_update(model_id: str, event_type: str, data: Dict[str,
     )
 
 
-async def broadcast_training_metrics(phase_name: str, metrics: Dict[str, Any]):
+async def broadcast_training_metrics(phase_name: str, metrics: dict[str, Any]):
     """Broadcast training metrics during model training."""
     await ws_manager.broadcast_to_channel(
         "training_metrics", {"type": "training_metrics", "phase_name": phase_name, "metrics": metrics}
@@ -306,7 +310,7 @@ async def system_metrics_broadcaster():
             # Broadcast to subscribers
             await broadcast_system_metrics(metrics)
 
-        except Exception as e:
+        except Exception:
             logger.exception("Error in system metrics broadcaster")
 
         await asyncio.sleep(5)  # Update every 5 seconds

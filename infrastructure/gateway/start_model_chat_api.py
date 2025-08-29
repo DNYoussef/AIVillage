@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Start Model Chat API on port 8084."""
 
-import sys
 from pathlib import Path
+import sys
 
 # Add API directory to path
 api_dir = Path(__file__).parent / "api"

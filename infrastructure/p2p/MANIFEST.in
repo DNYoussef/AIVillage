@@ -1,0 +1,48 @@
+# AI Village P2P Infrastructure Package Manifest
+# Archaeological Enhancement: Complete file inclusion for distribution
+
+include README.md
+include LICENSE
+include CHANGELOG.md
+include setup.py
+include pyproject.toml
+
+# Configuration files
+recursive-include configs *.yaml *.json *.toml
+recursive-include certs *.pem *.key *.crt
+
+# Documentation
+recursive-include docs *.md *.rst *.txt
+recursive-include docs/_static *
+recursive-include docs/_templates *
+
+# Test files (for development installs)
+recursive-include tests *.py
+recursive-include tests/data *.json *.yaml *.txt
+
+# Schema and protocol definitions
+recursive-include schemas *.json *.yaml *.proto
+
+# Example configurations and scripts
+recursive-include examples *.py *.yaml *.json *.md
+
+# Source code
+recursive-include infrastructure/p2p *.py *.pyx *.pxd
+
+# Exclude legacy and development files
+prune legacy
+prune .git
+prune .github
+prune __pycache__
+global-exclude *.pyc
+global-exclude *.pyo
+global-exclude *.orig
+global-exclude *.rej
+global-exclude *~
+global-exclude .coverage
+global-exclude .tox
+global-exclude .cache
+
+# Include version and metadata
+include VERSION
+include .gitignore

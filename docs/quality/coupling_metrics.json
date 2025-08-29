@@ -1,0 +1,56 @@
+{
+  "total_files": 498,
+  "total_loc": 134977,
+  "average_coupling_score": 15.770362133662388,
+  "worst_coupled_files": [
+    [
+      "packages\\rag\\analysis\\graph_fixer.py",
+      42.100315457413245
+    ],
+    [
+      "packages\\core\\training\\scripts\\simple_train_hrrm.py",
+      38.25635838150289
+    ],
+    [
+      "packages\\fog\\sdk\\python\\fog_client.py",
+      37.577777777777776
+    ],
+    [
+      "packages\\agents\\core\\base.py",
+      37.13513513513514
+    ],
+    [
+      "packages\\edge\\fog_compute\\fog_node.py",
+      35.66666666666667
+    ],
+    [
+      "packages\\rag\\mcp_servers\\hyperag\\planning\\query_planner.py",
+      33.8547619047619
+    ],
+    [
+      "packages\\rag\\mcp_servers\\hyperag\\planning\\strategies.py",
+      33.84436090225564
+    ],
+    [
+      "packages\\core\\training\\scripts\\enhanced_hrrm_training.py",
+      32.347275405007366
+    ],
+    [
+      "packages\\core\\legacy\\security\\secure_api_server.py",
+      31.65021676300578
+    ],
+    [
+      "packages\\core\\deployment\\cloud_cost_analyzer.py",
+      30.325178753830436
+    ]
+  ],
+  "total_positional_violations": 418,
+  "total_magic_literals": 50738,
+  "total_god_classes": 78,
+  "total_global_usage": 38,
+  "overall_positional_ratio": 11.695579182988249,
+  "overall_magic_density": 37.590107944316436,
+  "god_class_ratio": 5.2774018944519625,
+  "improvement_score": null,
+  "regression_areas": null
+}

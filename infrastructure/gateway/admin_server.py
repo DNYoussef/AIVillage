@@ -40,13 +40,26 @@ class AdminDashboardServer:
 
     def setup_middleware(self):
         """Configure CORS and other middleware"""
-        self.app.add_middleware(
-            CORSMiddleware,
-            allow_origins=["*"],
-            allow_credentials=True,
-            allow_methods=["*"],
-            allow_headers=["*"],
-        )
+        # SECURITY: Admin interface requires MOST restrictive CORS - NO WILDCARDS
+        try:
+            from src.security.cors_config import ADMIN_CORS_CONFIG
+            self.app.add_middleware(CORSMiddleware, **ADMIN_CORS_CONFIG)
+        except ImportError:
+            # Fallback admin configuration (very restrictive)
+            import os
+            env = os.getenv("AIVILLAGE_ENV", "development")
+            if env == "production":
+                admin_origins = ["https://admin.aivillage.app"]
+            else:
+                admin_origins = ["http://localhost:3000", "http://127.0.0.1:3000"]  # Admin localhost only
+            
+            self.app.add_middleware(
+                CORSMiddleware,
+                allow_origins=admin_origins,
+                allow_credentials=True,
+                allow_methods=["GET", "POST"],  # Limited methods for admin
+                allow_headers=["Content-Type", "Authorization"]
+            )
 
     def setup_routes(self):
         """Setup API routes"""

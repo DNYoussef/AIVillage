@@ -1,0 +1,318 @@
+# AI Village P2P Infrastructure - Modern Python Project Configuration
+# Archaeological Enhancement: PEP 518 compliant build system with comprehensive tooling
+
+[build-system]
+requires = ["setuptools>=64", "wheel", "setuptools-scm>=8"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aivillage-p2p"
+dynamic = ["version"]
+description = "Unified P2P networking infrastructure with archaeological enhancements"
+readme = {file = "README.md", content-type = "text/markdown"}
+license = {text = "MIT"}
+authors = [
+    {name = "AI Village Team", email = "dev@aivillage.io"}
+]
+maintainers = [
+    {name = "AI Village Core Team", email = "core@aivillage.io"}
+]
+keywords = [
+    "p2p", "peer-to-peer", "networking", "libp2p", "mesh", 
+    "anonymous", "privacy", "distributed", "decentralized",
+    "bitchat", "betanet", "scion", "nat-traversal"
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: System :: Networking",
+    "Topic :: Communications",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Framework :: AsyncIO",
+    "Operating System :: OS Independent",
+]
+requires-python = ">=3.8"
+dependencies = [
+    "asyncio>=3.4",
+    "aiohttp>=3.8.0",
+    "websockets>=10.0",
+    "cryptography>=38.0.0",
+    "pydantic>=2.0.0",
+    "fastapi>=0.100.0",
+    "uvicorn>=0.20.0",
+]
+
+[project.optional-dependencies]
+# Individual protocol support
+libp2p = [
+    "libp2p>=0.2.0",
+    "multiaddr>=0.0.9",
+    "multihash>=0.2.0",
+]
+mesh = [
+    "aioble>=0.3.0",
+    "zeroconf>=0.70.0",
+]
+privacy = [
+    "pynacl>=1.5.0",
+    "noise-protocol>=0.3.0",
+    "stem>=1.8.0",
+]
+scion = [
+    "scionproto>=0.4.0",
+]
+
+# Combined profiles
+standard = [
+    "aivillage-p2p[libp2p,mesh]",
+]
+full = [
+    "aivillage-p2p[libp2p,mesh,privacy,scion]",
+]
+anonymous = [
+    "aivillage-p2p[privacy,libp2p]",
+]
+
+# Development dependencies
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.0.0",
+    "pytest-mock>=3.10.0",
+    "black>=23.0.0",
+    "mypy>=1.0.0",
+    "ruff>=0.1.0",
+    "pre-commit>=3.0.0",
+]
+docs = [
+    "sphinx>=5.0.0",
+    "sphinx-rtd-theme>=1.0.0",
+    "myst-parser>=2.0.0",
+    "sphinx-autodoc-typehints>=1.20.0",
+]
+test = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.0.0",
+    "pytest-mock>=3.10.0",
+    "pytest-benchmark>=4.0.0",
+]
+all = [
+    "aivillage-p2p[libp2p,mesh,privacy,scion,dev,docs,test]",
+]
+
+[project.scripts]
+p2p-network = "infrastructure.p2p.cli:main"
+p2p-test = "infrastructure.p2p.tools.test_runner:main"
+p2p-benchmark = "infrastructure.p2p.tools.benchmark:main"
+
+[project.urls]
+Homepage = "https://github.com/aivillage/infrastructure"
+Documentation = "https://docs.aivillage.io/p2p"
+Repository = "https://github.com/aivillage/infrastructure.git"
+"Bug Tracker" = "https://github.com/aivillage/infrastructure/issues"
+Changelog = "https://github.com/aivillage/infrastructure/blob/main/CHANGELOG.md"
+
+# Tool configurations
+[tool.setuptools_scm]
+write_to = "infrastructure/p2p/_version.py"
+version_scheme = "post-release"
+local_scheme = "dirty-tag"
+
+[tool.setuptools]
+package-dir = {"" = "."}
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["infrastructure.p2p*"]
+exclude = ["tests*", "legacy*", "examples*"]
+
+[tool.setuptools.package-data]
+"infrastructure.p2p" = [
+    "configs/*.yaml",
+    "configs/*.json", 
+    "certs/*.pem",
+    "schemas/*.json",
+    "schemas/*.yaml",
+]
+
+# Black code formatting
+[tool.black]
+line-length = 100
+target-version = ['py38', 'py39', 'py310', 'py311']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+    # Exclude legacy code
+    legacy/
+    | deprecated/
+    | __pycache__/
+    | \.git/
+    | \.tox/
+    | \.venv/
+    | venv/
+    | build/
+    | dist/
+)/
+'''
+
+# Ruff linting configuration
+[tool.ruff]
+line-length = 100
+target-version = "py38"
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings  
+    "F",   # pyflakes
+    "UP",  # pyupgrade
+    "I",   # isort
+    "N",   # pep8-naming
+    "S",   # bandit
+    "C90", # mccabe
+    "B",   # flake8-bugbear
+    "A",   # flake8-builtins
+    "COM", # flake8-commas
+    "DTZ", # flake8-datetimez
+    "EM",  # flake8-errmsg
+    "G",   # flake8-logging-format
+    "ICN", # flake8-import-conventions
+    "PIE", # flake8-pie
+    "PT",  # flake8-pytest-style
+    "RET", # flake8-return
+    "SIM", # flake8-simplify
+    "TID", # flake8-tidy-imports
+    "ARG", # flake8-unused-arguments
+    "PTH", # flake8-use-pathlib
+    "PL",  # pylint
+    "RUF", # ruff-specific rules
+]
+ignore = [
+    "S101",   # assert-used (common in tests)
+    "S603",   # subprocess-popen-shell-true (needed for some operations)
+    "S607",   # start-process-with-partial-path (common in CLI tools)
+    "PLR0913", # too-many-arguments (common in config classes)
+    "COM812",  # missing-trailing-comma (conflicts with black)
+]
+exclude = [
+    "legacy",
+    "deprecated", 
+    "__pycache__",
+    ".git",
+    ".tox",
+    ".venv",
+    "venv",
+    "build",
+    "dist",
+]
+
+[tool.ruff.per-file-ignores]
+"tests/**/*.py" = [
+    "S101",   # assert statements are fine in tests
+    "PLR2004", # magic values are fine in tests
+    "S105",   # hardcoded passwords are fine in tests
+    "S106",   # hardcoded passwords in function args are fine in tests
+]
+"examples/**/*.py" = [
+    "S105",   # hardcoded passwords are fine in examples
+    "S106",   # hardcoded passwords in function args are fine in examples
+]
+
+[tool.ruff.mccabe]
+max-complexity = 15
+
+[tool.ruff.isort]
+known-first-party = ["infrastructure"]
+force-sort-within-sections = true
+
+# MyPy type checking
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_optional = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+
+[[tool.mypy.overrides]]
+module = [
+    "libp2p.*",
+    "multiaddr.*", 
+    "multihash.*",
+    "aioble.*",
+    "zeroconf.*",
+    "noise.*",
+    "stem.*",
+    "scionproto.*",
+]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+
+# Pytest configuration
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = [
+    "--strict-markers",
+    "--strict-config", 
+    "--cov=infrastructure.p2p",
+    "--cov-report=term-missing",
+    "--cov-report=html",
+    "--cov-report=xml",
+    "--cov-fail-under=80",
+]
+testpaths = ["tests"]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+    "unit: marks tests as unit tests",
+    "network: marks tests that require network access",
+]
+filterwarnings = [
+    "error",
+    "ignore::UserWarning",
+    "ignore::DeprecationWarning",
+]
+
+# Coverage configuration
+[tool.coverage.run]
+source = ["infrastructure/p2p"]
+omit = [
+    "*/tests/*",
+    "*/legacy/*",
+    "*/deprecated/*",
+    "*/_version.py",
+]
+branch = true
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+]
+show_missing = true
+skip_covered = true

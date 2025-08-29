@@ -1,0 +1,100 @@
+{
+  "overall_status": "FAIL",
+  "timestamp": 1756215405.0047019,
+  "results": {
+    "parameter_precision": {
+      "status": "FAIL",
+      "details": {
+        "error": "No module named 'core.agent_forge.phases'; 'core.agent_forge' is not a package"
+      }
+    },
+    "model_creation": {
+      "status": "FAIL",
+      "details": {
+        "error": "No module named 'core.agent_forge.phases'; 'core.agent_forge' is not a package"
+      }
+    },
+    "training_pipeline": {
+      "status": "FAIL",
+      "details": {
+        "error": "No module named 'core.agent_forge.phases'; 'core.agent_forge' is not a package"
+      }
+    },
+    "api_endpoints": {
+      "status": "FAIL",
+      "details": {
+        "endpoints_tested": [
+          {
+            "url": "http://localhost:8083/health",
+            "method": "GET",
+            "error": "HTTPConnectionPool(host='localhost', port=8083): Max retries exceeded with url: /health (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x0000024DF2DF69C0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))",
+            "success": false
+          },
+          {
+            "url": "http://localhost:8083/phases/status",
+            "method": "GET",
+            "error": "HTTPConnectionPool(host='localhost', port=8083): Max retries exceeded with url: /phases/status (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x0000024DF301B290>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))",
+            "success": false
+          },
+          {
+            "url": "http://localhost:8083/models",
+            "method": "GET",
+            "error": "HTTPConnectionPool(host='localhost', port=8083): Max retries exceeded with url: /models (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x0000024DF301BCB0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))",
+            "success": false
+          }
+        ],
+        "server_running": false
+      }
+    },
+    "websocket_monitoring": {
+      "status": "FAIL",
+      "details": {
+        "connection_success": false,
+        "messages_received": [],
+        "error": "BaseEventLoop.create_connection() got an unexpected keyword argument 'timeout'"
+      }
+    },
+    "act_halting": {
+      "status": "FAIL",
+      "details": {
+        "error": "No module named 'core.agent_forge.phases'; 'core.agent_forge' is not a package"
+      }
+    },
+    "ltm_integration": {
+      "status": "FAIL",
+      "details": {
+        "error": "No module named 'core.agent_forge.phases'; 'core.agent_forge' is not a package"
+      }
+    },
+    "evomerge_readiness": {
+      "status": "FAIL",
+      "details": {
+        "error": "No module named 'core.agent_forge.phases'; 'core.agent_forge' is not a package"
+      }
+    },
+    "admin_ui": {
+      "status": "FAIL",
+      "details": {
+        "error": "'charmap' codec can't decode byte 0x8f in position 4255: character maps to <undefined>"
+      }
+    },
+    "end_to_end": {
+      "status": "FAIL",
+      "details": {
+        "tests_evaluated": 6,
+        "tests_passed": 0,
+        "tests_failed": 6,
+        "passed_tests": [],
+        "failed_tests": [
+          "parameter_precision",
+          "model_creation",
+          "training_pipeline",
+          "act_halting",
+          "ltm_integration",
+          "evomerge_readiness"
+        ],
+        "pipeline_integrity": false
+      }
+    }
+  }
+}

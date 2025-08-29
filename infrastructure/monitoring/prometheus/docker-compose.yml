@@ -1,0 +1,122 @@
+version: '3.8'
+
+services:
+  prometheus:
+    image: prom/prometheus:v2.45.0
+    container_name: aivillage-prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./rules:/etc/prometheus/rules:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=90d'
+      - '--web.enable-lifecycle'
+      - '--web.enable-admin-api'
+    networks:
+      - aivillage-monitoring
+    labels:
+      - "aivillage.component=monitoring"
+      - "aivillage.service=prometheus"
+
+  node-exporter:
+    image: prom/node-exporter:v1.6.0
+    container_name: aivillage-node-exporter
+    restart: unless-stopped
+    ports:
+      - "9100:9100"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    networks:
+      - aivillage-monitoring
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.47.0
+    container_name: aivillage-cadvisor
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    devices:
+      - /dev/kmsg
+    privileged: true
+    networks:
+      - aivillage-monitoring
+
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:v0.13.2
+    container_name: aivillage-postgres-exporter
+    restart: unless-stopped
+    ports:
+      - "9187:9187"
+    environment:
+      DATA_SOURCE_NAME: "postgresql://prometheus:prometheus@postgres:5432/aivillage?sslmode=disable"
+    networks:
+      - aivillage-monitoring
+    depends_on:
+      - postgres
+
+  redis-exporter:
+    image: oliver006/redis_exporter:v1.52.0
+    container_name: aivillage-redis-exporter
+    restart: unless-stopped
+    ports:
+      - "9121:9121"
+    environment:
+      REDIS_ADDR: "redis://redis:6379"
+    networks:
+      - aivillage-monitoring
+    depends_on:
+      - redis
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: aivillage-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: aivillage
+      POSTGRES_USER: prometheus
+      POSTGRES_PASSWORD: prometheus
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - aivillage-monitoring
+
+  redis:
+    image: redis:7-alpine
+    container_name: aivillage-redis
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    networks:
+      - aivillage-monitoring
+
+volumes:
+  prometheus_data:
+  postgres_data:
+  redis_data:
+
+networks:
+  aivillage-monitoring:
+    driver: bridge
+    name: aivillage-monitoring
+    labels:
+      - "aivillage.network=monitoring"

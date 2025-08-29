@@ -1,0 +1,140 @@
+{
+  "summary": {
+    "total_magic_literals": 61399,
+    "files_with_literals": 476,
+    "packages_analyzed": 5,
+    "packages_with_constants": 5,
+    "baseline_estimate": 32739,
+    "reduction_target": 0.38,
+    "reduction_achieved": 0,
+    "target_met": false
+  },
+  "category_distribution": {
+    "file_system": 2601,
+    "unknown": 37902,
+    "presentation": 7373,
+    "configuration": 5179,
+    "security": 1280,
+    "timing": 1723,
+    "business_logic": 2391,
+    "network": 2950
+  },
+  "severity_distribution": {
+    "medium": 50315,
+    "high": 9529,
+    "critical": 1555
+  },
+  "package_breakdown": [
+    {
+      "package": "core",
+      "literals": 32876,
+      "files": 295,
+      "constants_modules": 5,
+      "categories": {
+        "file_system": 1859,
+        "unknown": 18620,
+        "presentation": 4232,
+        "configuration": 3272,
+        "security": 834,
+        "timing": 927,
+        "business_logic": 1229,
+        "network": 1903
+      },
+      "severities": {
+        "medium": 26536,
+        "high": 5323,
+        "critical": 1017
+      }
+    },
+    {
+      "package": "agents",
+      "literals": 11397,
+      "files": 60,
+      "constants_modules": 1,
+      "categories": {
+        "unknown": 8132,
+        "network": 349,
+        "configuration": 722,
+        "timing": 188,
+        "presentation": 1160,
+        "business_logic": 418,
+        "file_system": 254,
+        "security": 174
+      },
+      "severities": {
+        "medium": 9614,
+        "high": 1590,
+        "critical": 193
+      }
+    },
+    {
+      "package": "rag",
+      "literals": 10845,
+      "files": 77,
+      "constants_modules": 1,
+      "categories": {
+        "unknown": 7586,
+        "configuration": 803,
+        "timing": 175,
+        "network": 295,
+        "business_logic": 378,
+        "presentation": 1118,
+        "security": 225,
+        "file_system": 265
+      },
+      "severities": {
+        "high": 1589,
+        "medium": 8981,
+        "critical": 275
+      }
+    },
+    {
+      "package": "fog",
+      "literals": 4109,
+      "files": 34,
+      "constants_modules": 1,
+      "categories": {
+        "unknown": 2197,
+        "network": 334,
+        "configuration": 286,
+        "timing": 306,
+        "business_logic": 255,
+        "presentation": 620,
+        "security": 35,
+        "file_system": 76
+      },
+      "severities": {
+        "high": 650,
+        "medium": 3411,
+        "critical": 48
+      }
+    },
+    {
+      "package": "monitoring",
+      "literals": 2172,
+      "files": 10,
+      "constants_modules": 1,
+      "categories": {
+        "unknown": 1367,
+        "configuration": 96,
+        "business_logic": 111,
+        "file_system": 147,
+        "presentation": 243,
+        "timing": 127,
+        "network": 69,
+        "security": 12
+      },
+      "severities": {
+        "medium": 1773,
+        "high": 377,
+        "critical": 22
+      }
+    }
+  ],
+  "recommendations": [
+    "CRITICAL: Replace 1280 security-related magic literals immediately",
+    "HIGH: Create configuration constants for 5179 config literals",
+    "Replace 1723 timing-related magic literals with named constants",
+    "Extract 2391 business logic literals to domain constants"
+  ]
+}

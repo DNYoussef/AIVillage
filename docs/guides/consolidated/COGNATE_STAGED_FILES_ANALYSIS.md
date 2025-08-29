@@ -14,7 +14,7 @@ There are **significant discrepancies** between the staged documentation files a
 - **Architecture**: d_model=256, n_layers=8, n_heads=8
 - **Status**: ❌ **Incorrect** - Falls short of 25M target
 
-#### Current Implementation (Correct) 
+#### Current Implementation (Correct)
 - **File**: `core/agent-forge/phases/cognate_pretrain/full_pretraining_pipeline.py`
 - **Achieves**: 25,069,534 parameters (25.07M)
 - **Architecture**: d_model=216, n_layers=11, n_heads=4
@@ -52,15 +52,15 @@ There are **significant discrepancies** between the staged documentation files a
 
 #### `docs/COGNATE_25M_ARCHITECTURE.md`
 - **Status**: ❌ Outdated, wrong parameters
-- **Issues**: 
+- **Issues**:
   - Claims 24.8M parameters (incorrect)
   - Architecture doesn't match 25M target
   - Missing GrokFast integration
   - No real training pipeline
 
-#### `docs/25M_COGNATE_LTM_IMPLEMENTATION.md` 
+#### `docs/25M_COGNATE_LTM_IMPLEMENTATION.md`
 - **Status**: ⚠️ Partially relevant
-- **Issues**: 
+- **Issues**:
   - Claims 26.4M parameters (overshoots target)
   - Good LTM concepts but wrong sizing
   - Missing curriculum alignment
@@ -106,7 +106,7 @@ There are **significant discrepancies** between the staged documentation files a
 ```bash
 # Remove from staging (incorrect implementations)
 git reset HEAD docs/COGNATE_25M_ARCHITECTURE.md          # Wrong parameters
-git reset HEAD docs/25M_COGNATE_LTM_IMPLEMENTATION.md     # Wrong sizing  
+git reset HEAD docs/25M_COGNATE_LTM_IMPLEMENTATION.md     # Wrong sizing
 git reset HEAD docs/UNIFIED_REFINER_CLI_GUIDE.md         # Wrong target (50M)
 
 # Keep but update
@@ -129,12 +129,12 @@ git add docs/guides/consolidated/COGNATE_PRETRAINING_CONSOLIDATED_GUIDE.md
 # Our architecture calculation:
 vocab_size = 32000
 d_model = 216
-n_layers = 11  
+n_layers = 11
 n_heads = 4
 ffn_mult = 4
 
 # Embeddings: 32000 × 216 = 6,912,000
-# Per layer: ~1.4M × 11 layers = ~15.4M  
+# Per layer: ~1.4M × 11 layers = ~15.4M
 # ACT + LTM + output: ~2.7M
 # Total: ~25.07M ✓
 
@@ -162,7 +162,7 @@ The staged files' architecture (d_model=256, n_layers=8) **systematically unders
 #### Missing Components
 Staged files lack:
 - Real dataset integration
-- EvoMerge format compatibility  
+- EvoMerge format compatibility
 - Working training pipeline
 - GrokFast optimization
 - Curriculum specification alignment

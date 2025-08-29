@@ -1,1 +1,0 @@
-# Fog monitoring module

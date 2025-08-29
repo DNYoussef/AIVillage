@@ -5,8 +5,8 @@ Tests Agent Forge pipeline integration and EvoMerge compatibility.
 """
 
 import json
-import sys
 from pathlib import Path
+import sys
 
 import pytest
 

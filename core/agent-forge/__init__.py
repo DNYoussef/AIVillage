@@ -18,15 +18,17 @@ Main Components:
 from .core.phase_controller import PhaseController, PhaseResult
 from .core.unified_pipeline import UnifiedConfig, UnifiedPipeline
 
-# Available phases (comment out missing ones for now)
-# from .phases import (
-#     ADASPhase,
-#     CompressionPhase,
-#     EvoMergePhase,
-#     GeometryLearningPhase,
-#     PromptBakingPhase,
-#     SelfModelingPhase,
-# )
+# Available phases - import what exists
+from .phases import (
+    ADASPhase,
+    BitNetCompressionPhase,
+    CognatePhase,
+    EvoMergePhase,
+    FinalCompressionPhase,
+    ForgeTrainingPhase,
+    QuietSTaRPhase,
+    ToolPersonaBakingPhase,
+)
 
 # Training components (comment out if missing)
 # from .training.forge_trainer import ForgeTrainConfig, ForgeTrainer
@@ -38,13 +40,12 @@ __all__ = [
     "UnifiedConfig",
     "PhaseController",
     "PhaseResult",
-    # "ForgeOrchestrator",
-    # "ForgeTrainer",
-    # "ForgeTrainConfig",
-    # "EvoMergePhase",
-    # "GeometryLearningPhase",
-    # "SelfModelingPhase",
-    # "PromptBakingPhase",
-    # "ADASPhase",
-    # "CompressionPhase",
+    "ADASPhase",
+    "BitNetCompressionPhase",
+    "CognatePhase",
+    "EvoMergePhase",
+    "FinalCompressionPhase",
+    "ForgeTrainingPhase",
+    "QuietSTaRPhase",
+    "ToolPersonaBakingPhase",
 ]

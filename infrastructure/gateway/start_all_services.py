@@ -8,14 +8,11 @@ Runs all three services required by the Admin UI:
 - WebSocket Manager (port 8085)
 """
 
-import asyncio
 import logging
 import multiprocessing
-import os
+from pathlib import Path
 import signal
 import sys
-import time
-from pathlib import Path
 
 # Add API directory to path
 api_dir = Path(__file__).parent / "api"

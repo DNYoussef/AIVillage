@@ -1,0 +1,29 @@
+{
+  "model_type": "hrmplanner",
+  "vocab_size": 32000,
+  "hidden_size": 640,
+  "num_hidden_layers": 10,
+  "num_attention_heads": 10,
+  "intermediate_size": 2560,
+  "torch_dtype": "float32",
+  "architectures": [
+    "HRMPlanner"
+  ],
+  "d_model": 640,
+  "n_layers": 10,
+  "n_head": 10,
+  "max_seq_len": 2048,
+  "rope_base": 10000,
+  "max_H": 4,
+  "inner_T": 4,
+  "control_tokens": [
+    "<PLAN>",
+    "<SUBGOAL>",
+    "<ACTION>",
+    "<CHECK>",
+    "<ENDPLAN>"
+  ],
+  "lambda_ctrl": 0.2,
+  "dropout": 0.0,
+  "tie_embeddings": true
+}

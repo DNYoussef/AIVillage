@@ -1,0 +1,34 @@
+{
+  "total_datasets": 11,
+  "successful_downloads": 3,
+  "failed_downloads": 8,
+  "download_results": {
+    "GSM8K": true,
+    "SVAMP": true,
+    "ASDiv": false,
+    "Mini-MBPP": true,
+    "CodeXGLUE": false,
+    "HotpotQA": false,
+    "2WikiMultiHopQA": false,
+    "MuSiQue": false,
+    "QuALITY": false,
+    "Qasper": false,
+    "NarrativeQA": false
+  },
+  "output_directory": "cognate_datasets",
+  "short_datasets": [
+    "GSM8K",
+    "SVAMP",
+    "ASDiv",
+    "Mini-MBPP",
+    "CodeXGLUE"
+  ],
+  "long_datasets": [
+    "HotpotQA",
+    "2WikiMultiHopQA",
+    "MuSiQue",
+    "QuALITY",
+    "Qasper",
+    "NarrativeQA"
+  ]
+}

@@ -1,10 +1,9 @@
 from collections.abc import Iterable
 
-import torch
-
 from AIVillage.experimental.training.geometry.snapshot import snapshot
 from AIVillage.experimental.training.meta.geo2z_policy import Geo2Z
 from AIVillage.experimental.training.optim.augmented_adam import AugmentedAdam
+import torch
 
 from .pid_edgechaos import EdgePID
 from .svf_ops import apply_svf

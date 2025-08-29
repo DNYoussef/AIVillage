@@ -1,0 +1,365 @@
+{
+  "status": "PASS",
+  "timestamp": "2025-08-25T22:57:48.409131",
+  "duration_seconds": 0.38544,
+  "summary": {
+    "total_playbooks": 11,
+    "passed": 11,
+    "failed": 0,
+    "pass_rate": 1.0
+  },
+  "results": [
+    {
+      "playbook": "autopilot",
+      "timestamp": "2025-08-25T22:57:48.023691",
+      "tests": {
+        "structure_validation": {
+          "status": "PASS",
+          "issues": []
+        },
+        "router_integration": {
+          "status": "PASS",
+          "issues": []
+        },
+        "agent_coordination": {
+          "status": "PASS",
+          "issues": []
+        },
+        "quality_gates": {
+          "status": "PASS",
+          "issues": []
+        },
+        "command_integration": {
+          "status": "PASS",
+          "issues": []
+        },
+        "memory_integration": {
+          "status": "PASS",
+          "issues": []
+        }
+      },
+      "overall_status": "PASS",
+      "issues": []
+    },
+    {
+      "playbook": "backtest",
+      "timestamp": "2025-08-25T22:57:48.057791",
+      "tests": {
+        "structure_validation": {
+          "status": "PASS",
+          "issues": []
+        },
+        "router_integration": {
+          "status": "PASS",
+          "issues": []
+        },
+        "agent_coordination": {
+          "status": "PASS",
+          "issues": []
+        },
+        "quality_gates": {
+          "status": "PASS",
+          "issues": []
+        },
+        "command_integration": {
+          "status": "PASS",
+          "issues": []
+        },
+        "memory_integration": {
+          "status": "PASS",
+          "issues": []
+        }
+      },
+      "overall_status": "PASS",
+      "issues": []
+    },
+    {
+      "playbook": "canary",
+      "timestamp": "2025-08-25T22:57:48.093960",
+      "tests": {
+        "structure_validation": {
+          "status": "PASS",
+          "issues": []
+        },
+        "router_integration": {
+          "status": "PASS",
+          "issues": []
+        },
+        "agent_coordination": {
+          "status": "PASS",
+          "issues": []
+        },
+        "quality_gates": {
+          "status": "PASS",
+          "issues": []
+        },
+        "command_integration": {
+          "status": "PASS",
+          "issues": []
+        },
+        "memory_integration": {
+          "status": "PASS",
+          "issues": []
+        }
+      },
+      "overall_status": "PASS",
+      "issues": []
+    },
+    {
+      "playbook": "chaos",
+      "timestamp": "2025-08-25T22:57:48.128970",
+      "tests": {
+        "structure_validation": {
+          "status": "PASS",
+          "issues": []
+        },
+        "router_integration": {
+          "status": "PASS",
+          "issues": []
+        },
+        "agent_coordination": {
+          "status": "PASS",
+          "issues": []
+        },
+        "quality_gates": {
+          "status": "PASS",
+          "issues": []
+        },
+        "command_integration": {
+          "status": "PASS",
+          "issues": []
+        },
+        "memory_integration": {
+          "status": "PASS",
+          "issues": []
+        }
+      },
+      "overall_status": "PASS",
+      "issues": []
+    },
+    {
+      "playbook": "fleet",
+      "timestamp": "2025-08-25T22:57:48.159064",
+      "tests": {
+        "structure_validation": {
+          "status": "PASS",
+          "issues": []
+        },
+        "router_integration": {
+          "status": "PASS",
+          "issues": []
+        },
+        "agent_coordination": {
+          "status": "PASS",
+          "issues": []
+        },
+        "quality_gates": {
+          "status": "PASS",
+          "issues": []
+        },
+        "command_integration": {
+          "status": "PASS",
+          "issues": []
+        },
+        "memory_integration": {
+          "status": "PASS",
+          "issues": []
+        }
+      },
+      "overall_status": "PASS",
+      "issues": []
+    },
+    {
+      "playbook": "govern",
+      "timestamp": "2025-08-25T22:57:48.192204",
+      "tests": {
+        "structure_validation": {
+          "status": "PASS",
+          "issues": []
+        },
+        "router_integration": {
+          "status": "PASS",
+          "issues": []
+        },
+        "agent_coordination": {
+          "status": "PASS",
+          "issues": []
+        },
+        "quality_gates": {
+          "status": "PASS",
+          "issues": []
+        },
+        "command_integration": {
+          "status": "PASS",
+          "issues": []
+        },
+        "memory_integration": {
+          "status": "PASS",
+          "issues": []
+        }
+      },
+      "overall_status": "PASS",
+      "issues": []
+    },
+    {
+      "playbook": "preflight",
+      "timestamp": "2025-08-25T22:57:48.227595",
+      "tests": {
+        "structure_validation": {
+          "status": "PASS",
+          "issues": []
+        },
+        "router_integration": {
+          "status": "PASS",
+          "issues": []
+        },
+        "agent_coordination": {
+          "status": "PASS",
+          "issues": []
+        },
+        "quality_gates": {
+          "status": "PASS",
+          "issues": []
+        },
+        "command_integration": {
+          "status": "PASS",
+          "issues": []
+        },
+        "memory_integration": {
+          "status": "PASS",
+          "issues": []
+        }
+      },
+      "overall_status": "PASS",
+      "issues": []
+    },
+    {
+      "playbook": "program",
+      "timestamp": "2025-08-25T22:57:48.271908",
+      "tests": {
+        "structure_validation": {
+          "status": "PASS",
+          "issues": []
+        },
+        "router_integration": {
+          "status": "PASS",
+          "issues": []
+        },
+        "agent_coordination": {
+          "status": "PASS",
+          "issues": []
+        },
+        "quality_gates": {
+          "status": "PASS",
+          "issues": []
+        },
+        "command_integration": {
+          "status": "PASS",
+          "issues": []
+        },
+        "memory_integration": {
+          "status": "PASS",
+          "issues": []
+        }
+      },
+      "overall_status": "PASS",
+      "issues": []
+    },
+    {
+      "playbook": "report",
+      "timestamp": "2025-08-25T22:57:48.305969",
+      "tests": {
+        "structure_validation": {
+          "status": "PASS",
+          "issues": []
+        },
+        "router_integration": {
+          "status": "PASS",
+          "issues": []
+        },
+        "agent_coordination": {
+          "status": "PASS",
+          "issues": []
+        },
+        "quality_gates": {
+          "status": "PASS",
+          "issues": []
+        },
+        "command_integration": {
+          "status": "PASS",
+          "issues": []
+        },
+        "memory_integration": {
+          "status": "PASS",
+          "issues": []
+        }
+      },
+      "overall_status": "PASS",
+      "issues": []
+    },
+    {
+      "playbook": "selftest",
+      "timestamp": "2025-08-25T22:57:48.342010",
+      "tests": {
+        "structure_validation": {
+          "status": "PASS",
+          "issues": []
+        },
+        "router_integration": {
+          "status": "PASS",
+          "issues": []
+        },
+        "agent_coordination": {
+          "status": "PASS",
+          "issues": []
+        },
+        "quality_gates": {
+          "status": "PASS",
+          "issues": []
+        },
+        "command_integration": {
+          "status": "PASS",
+          "issues": []
+        },
+        "memory_integration": {
+          "status": "PASS",
+          "issues": []
+        }
+      },
+      "overall_status": "PASS",
+      "issues": []
+    },
+    {
+      "playbook": "transport-bench",
+      "timestamp": "2025-08-25T22:57:48.377033",
+      "tests": {
+        "structure_validation": {
+          "status": "PASS",
+          "issues": []
+        },
+        "router_integration": {
+          "status": "PASS",
+          "issues": []
+        },
+        "agent_coordination": {
+          "status": "PASS",
+          "issues": []
+        },
+        "quality_gates": {
+          "status": "PASS",
+          "issues": []
+        },
+        "command_integration": {
+          "status": "PASS",
+          "issues": []
+        },
+        "memory_integration": {
+          "status": "PASS",
+          "issues": []
+        }
+      },
+      "overall_status": "PASS",
+      "issues": []
+    }
+  ]
+}

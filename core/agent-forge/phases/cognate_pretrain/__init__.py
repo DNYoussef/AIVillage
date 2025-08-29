@@ -12,9 +12,4 @@ from .cognate_creator import CognateCreatorConfig, CognateModelCreator
 from .model_factory import create_three_cognate_models
 from .pretrain_pipeline import CognatePretrainPipeline
 
-__all__ = [
-    'CognateModelCreator',
-    'CognateCreatorConfig', 
-    'CognatePretrainPipeline',
-    'create_three_cognate_models'
-]
+__all__ = ["CognateModelCreator", "CognateCreatorConfig", "CognatePretrainPipeline", "create_three_cognate_models"]

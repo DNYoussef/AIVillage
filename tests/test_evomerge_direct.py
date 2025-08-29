@@ -6,8 +6,8 @@ Tests the actual EvoMerge system without complex imports
 
 import json
 import os
-import sys
 from pathlib import Path
+import sys
 
 # Fix encoding
 if sys.platform.startswith("win"):
@@ -32,7 +32,7 @@ def test_evomerge_files_exist():
         print(f"   File size: {size:,} bytes")
 
         # Check if it contains key functions
-        with open(evomerge_file, "r", encoding="utf-8") as f:
+        with open(evomerge_file, encoding="utf-8") as f:
             content = f.read()
 
         key_terms = ["EvoMergePhase", "EvoMergeConfig", "MergeCandidate", "linear", "slerp"]
@@ -64,7 +64,7 @@ def test_evomerge_results_exist():
 
             # Try to read the results
             try:
-                with open(results_file, "r", encoding="utf-8") as f:
+                with open(results_file, encoding="utf-8") as f:
                     data = json.load(f)
 
                 print(f"   Keys: {list(data.keys())}")

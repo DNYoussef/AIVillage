@@ -5,8 +5,8 @@ Simple EvoMerge Test - No Unicode characters
 
 import json
 import os
-import sys
 from pathlib import Path
+import sys
 
 # Fix encoding
 if sys.platform.startswith("win"):
@@ -28,7 +28,7 @@ def test_evomerge_exists():
         print(f"  OK EvoMerge file exists: {size:,} bytes")
 
         # Check content
-        with open(evomerge_file, "r", encoding="utf-8") as f:
+        with open(evomerge_file, encoding="utf-8") as f:
             content = f.read()
 
         required = ["EvoMergePhase", "EvoMergeConfig", "generations", "population_size"]
@@ -47,10 +47,10 @@ def test_evomerge_results():
     results_file = PROJECT_ROOT / "core" / "agent-forge" / "phases" / "evomerge_50gen_final_results.json"
     if results_file.exists():
         try:
-            with open(results_file, "r") as f:
+            with open(results_file) as f:
                 data = json.load(f)
 
-            print(f"  OK Results file exists")
+            print("  OK Results file exists")
             if "champion_model" in data:
                 champion = data["champion_model"]
                 print(f"  OK Champion: {champion.get('name', 'Unknown')}")
@@ -107,7 +107,7 @@ def test_evolution_logic():
         best_final = population[0]["fitness"]
         improvement = ((best_final - best_initial) / max(best_initial, 0.001)) * 100
 
-        print(f"  OK Evolution complete")
+        print("  OK Evolution complete")
         print(f"  OK Initial: {best_initial:.4f}, Final: {best_final:.4f}")
         print(f"  OK Improvement: {improvement:+.1f}%")
 
@@ -134,13 +134,13 @@ def main():
         try:
             if test_func():
                 passed += 1
-                print(f"  PASSED")
+                print("  PASSED")
             else:
-                print(f"  FAILED")
+                print("  FAILED")
         except Exception as e:
             print(f"  ERROR: {e}")
 
-    print(f"\n" + "=" * 40)
+    print("\n" + "=" * 40)
     print(f"SUMMARY: {passed}/{len(tests)} tests passed")
 
     if passed >= 2:

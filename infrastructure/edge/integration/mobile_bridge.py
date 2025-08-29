@@ -34,6 +34,7 @@ logger = logging.getLogger(__name__)
 
 class MobilePlatform(Enum):
     """Supported mobile platforms"""
+
     ANDROID = "android"
     IOS = "ios"
     WINDOWS_MOBILE = "windows_mobile"
@@ -43,6 +44,7 @@ class MobilePlatform(Enum):
 
 class MobileCapability(Enum):
     """Mobile-specific capabilities"""
+
     BLE_ADVERTISING = "ble_advertising"
     BLE_SCANNING = "ble_scanning"
     BACKGROUND_PROCESSING = "background_processing"
@@ -61,6 +63,7 @@ class MobileCapability(Enum):
 
 class BridgeStatus(Enum):
     """Mobile bridge connection status"""
+
     DISCONNECTED = "disconnected"
     CONNECTING = "connecting"
     CONNECTED = "connected"
@@ -71,45 +74,47 @@ class BridgeStatus(Enum):
 @dataclass
 class MobileDeviceInfo:
     """Mobile device information and capabilities"""
+
     platform: MobilePlatform
     device_model: str = "unknown"
     os_version: str = "unknown"
     app_version: str = "1.0.0"
-    
+
     # Hardware capabilities
     has_ble: bool = False
     ble_version: str = "unknown"
     max_ble_connections: int = 4
-    
+
     # Battery information
     battery_level: float | None = None
     is_charging: bool = False
     battery_capacity_mah: int | None = None
-    
+
     # Performance characteristics
     cpu_cores: int = 1
     ram_mb: int = 1024
     available_storage_mb: int = 1024
-    
+
     # Network capabilities
     has_wifi: bool = True
     has_cellular: bool = False
     cellular_type: str = "unknown"  # 3G, 4G, 5G
-    
+
     # Sensor capabilities
     available_sensors: list[MobileCapability] = field(default_factory=list)
-    
+
     # App-specific settings
     background_mode_enabled: bool = False
     notifications_enabled: bool = True
     location_permission: bool = False
-    
+
     last_updated: datetime = field(default_factory=datetime.now)
 
 
 @dataclass
 class MobileMessage:
     """Message structure for mobile communication"""
+
     message_id: str
     message_type: str
     payload: dict[str, Any]
@@ -128,19 +133,19 @@ class EnhancedMobileBridge:
         self.platform = self._detect_platform(platform)
         self.status = BridgeStatus.DISCONNECTED
         self.device_info: MobileDeviceInfo | None = None
-        
+
         # Communication state
         self.connection_id: str | None = None
         self.last_heartbeat = datetime.now()
         self.message_queue: list[MobileMessage] = []
         self.pending_responses: dict[str, MobileMessage] = {}
-        
+
         # BitChat integration
         self.bitchat_enabled = False
         self.ble_scanner_active = False
         self.ble_advertiser_active = False
         self.mesh_nodes: dict[str, dict[str, Any]] = {}
-        
+
         # Performance tracking
         self.metrics = {
             "messages_sent": 0,
@@ -149,12 +154,12 @@ class EnhancedMobileBridge:
             "battery_usage_estimate": 0.0,
             "data_transferred_bytes": 0,
         }
-        
+
         # Mobile-specific optimizations
         self.power_save_mode = False
         self.background_sync_enabled = True
         self.adaptive_scanning = True
-        
+
         logger.info(f"Enhanced Mobile Bridge initialized for platform: {self.platform.value}")
 
     def _detect_platform(self, override_platform: str | None = None) -> MobilePlatform:
@@ -164,13 +169,13 @@ class EnhancedMobileBridge:
                 return MobilePlatform(override_platform.lower())
             except ValueError:
                 logger.warning(f"Unknown platform override: {override_platform}")
-        
+
         # Auto-detect platform
         system = platform.system().lower()
-        
+
         if system == "darwin":
             # Could be iOS or macOS - need more detection
-            if hasattr(platform, 'ios_ver'):
+            if hasattr(platform, "ios_ver"):
                 return MobilePlatform.IOS
             else:
                 return MobilePlatform.DESKTOP
@@ -187,29 +192,29 @@ class EnhancedMobileBridge:
         try:
             logger.info(f"Initializing Enhanced Mobile Bridge for {self.platform.value}")
             self.status = BridgeStatus.CONNECTING
-            
+
             # Set or detect device information
             if device_info:
                 self.device_info = device_info
             else:
                 self.device_info = await self._detect_device_capabilities()
-            
+
             # Initialize platform-specific components
             await self._initialize_platform_specific()
-            
+
             # Initialize BitChat BLE integration
             if self.device_info.has_ble:
                 await self._initialize_bitchat_ble()
-            
+
             # Start background tasks
             await self._start_background_tasks()
-            
+
             self.status = BridgeStatus.CONNECTED
             self.connection_id = f"mobile_{int(time.time())}"
-            
+
             logger.info(f"Mobile Bridge successfully initialized with connection ID: {self.connection_id}")
             return True
-            
+
         except Exception as e:
             logger.error(f"Failed to initialize mobile bridge: {e}")
             self.status = BridgeStatus.ERROR
@@ -218,28 +223,28 @@ class EnhancedMobileBridge:
     async def _detect_device_capabilities(self) -> MobileDeviceInfo:
         """Detect mobile device capabilities and hardware information"""
         info = MobileDeviceInfo(platform=self.platform)
-        
+
         try:
             # Basic system information
             info.device_model = platform.machine()
             info.os_version = platform.version()
-            
+
             # Hardware detection
             if psutil:
                 # CPU information
                 info.cpu_cores = psutil.cpu_count(logical=False) or 1
-                
+
                 # Memory information
                 memory = psutil.virtual_memory()
                 info.ram_mb = int(memory.total / (1024 * 1024))
-                
+
                 # Storage information
                 try:
-                    disk = psutil.disk_usage('/')
+                    disk = psutil.disk_usage("/")
                     info.available_storage_mb = int(disk.free / (1024 * 1024))
                 except:
                     info.available_storage_mb = 1024  # Default fallback
-                
+
                 # Battery information (if available)
                 try:
                     battery = psutil.sensors_battery()
@@ -248,13 +253,13 @@ class EnhancedMobileBridge:
                         info.is_charging = battery.power_plugged
                 except:
                     pass  # Battery info not available
-            
+
             # Platform-specific capability detection
             await self._detect_platform_capabilities(info)
-            
+
         except Exception as e:
             logger.warning(f"Error detecting device capabilities: {e}")
-        
+
         return info
 
     async def _detect_platform_capabilities(self, info: MobileDeviceInfo):
@@ -274,7 +279,7 @@ class EnhancedMobileBridge:
                 MobileCapability.GYROSCOPE,
                 MobileCapability.BATTERY_OPTIMIZATION,
             ]
-            
+
         elif self.platform == MobilePlatform.IOS:
             # iOS-specific detection
             info.has_ble = True  # All modern iOS devices have BLE
@@ -291,7 +296,7 @@ class EnhancedMobileBridge:
                 MobileCapability.GYROSCOPE,
                 MobileCapability.THERMAL_MANAGEMENT,
             ]
-            
+
         else:
             # Desktop/other platforms
             info.available_sensors = [
@@ -309,26 +314,26 @@ class EnhancedMobileBridge:
     async def _initialize_android_specific(self):
         """Initialize Android-specific features"""
         logger.info("Initializing Android-specific mobile bridge features")
-        
+
         # Android-specific initialization would go here
         # - Wake lock management
         # - Background service integration
         # - Doze mode optimization
         # - Notification channels
-        
+
         if self.device_info and MobileCapability.BATTERY_OPTIMIZATION in self.device_info.available_sensors:
             await self._setup_android_battery_optimization()
 
     async def _initialize_ios_specific(self):
         """Initialize iOS-specific features"""
         logger.info("Initializing iOS-specific mobile bridge features")
-        
+
         # iOS-specific initialization would go here
         # - Background app refresh
         # - Core Bluetooth integration
         # - Background processing tasks
         # - Push notification setup
-        
+
         if self.device_info and MobileCapability.THERMAL_MANAGEMENT in self.device_info.available_sensors:
             await self._setup_ios_thermal_management()
 
@@ -349,21 +354,21 @@ class EnhancedMobileBridge:
         if not self.device_info or not self.device_info.has_ble:
             logger.warning("BLE not available, skipping BitChat BLE initialization")
             return
-        
+
         try:
             logger.info("Initializing BitChat BLE mesh networking")
-            
+
             # Initialize BLE scanner for mesh node discovery
             if MobileCapability.BLE_SCANNING in self.device_info.available_sensors:
                 await self._start_ble_scanner()
-            
+
             # Initialize BLE advertiser for mesh node broadcasting
             if MobileCapability.BLE_ADVERTISING in self.device_info.available_sensors:
                 await self._start_ble_advertiser()
-            
+
             self.bitchat_enabled = True
             logger.info("BitChat BLE mesh networking initialized successfully")
-            
+
         except Exception as e:
             logger.error(f"Failed to initialize BitChat BLE: {e}")
 
@@ -371,7 +376,7 @@ class EnhancedMobileBridge:
         """Start BLE scanner for mesh node discovery"""
         logger.info("Starting BLE scanner for BitChat mesh discovery")
         self.ble_scanner_active = True
-        
+
         # Start background BLE scanning task
         asyncio.create_task(self._ble_scanner_task())
 
@@ -379,7 +384,7 @@ class EnhancedMobileBridge:
         """Start BLE advertiser for mesh node broadcasting"""
         logger.info("Starting BLE advertiser for BitChat mesh broadcasting")
         self.ble_advertiser_active = True
-        
+
         # Start background BLE advertising task
         asyncio.create_task(self._ble_advertiser_task())
 
@@ -389,10 +394,10 @@ class EnhancedMobileBridge:
             try:
                 # Simulate BLE scanning for demo
                 await asyncio.sleep(10 if self.adaptive_scanning else 5)
-                
+
                 # In real implementation, this would scan for BitChat BLE advertisements
                 logger.debug("BLE scan cycle completed")
-                
+
             except Exception as e:
                 logger.error(f"Error in BLE scanner task: {e}")
                 await asyncio.sleep(30)
@@ -403,10 +408,10 @@ class EnhancedMobileBridge:
             try:
                 # Simulate BLE advertising for demo
                 await asyncio.sleep(30 if self.power_save_mode else 15)
-                
+
                 # In real implementation, this would broadcast BitChat BLE advertisements
                 logger.debug("BLE advertisement cycle completed")
-                
+
             except Exception as e:
                 logger.error(f"Error in BLE advertiser task: {e}")
                 await asyncio.sleep(60)
@@ -440,14 +445,14 @@ class EnhancedMobileBridge:
         while self.status == BridgeStatus.CONNECTED:
             try:
                 # Update connection uptime
-                if hasattr(self, '_start_time'):
+                if hasattr(self, "_start_time"):
                     self.metrics["connection_uptime"] = time.time() - self._start_time
-                
+
                 # Update battery usage estimate
                 if self.device_info and self.device_info.battery_level:
                     # Simple battery usage estimation
                     self.metrics["battery_usage_estimate"] += 0.1
-                
+
                 await asyncio.sleep(60)  # Update every minute
             except Exception as e:
                 logger.error(f"Error updating metrics: {e}")
@@ -458,7 +463,7 @@ class EnhancedMobileBridge:
         if self.status != BridgeStatus.CONNECTED:
             logger.warning("Cannot send data - mobile bridge not connected")
             return False
-        
+
         try:
             # Create message structure
             message = MobileMessage(
@@ -468,15 +473,15 @@ class EnhancedMobileBridge:
                 sender_id=self.connection_id or "bridge",
                 recipient_id=recipient_id,
             )
-            
+
             # Add to queue for processing
             self.message_queue.append(message)
-            
+
             logger.debug(f"Queued {len(data)} bytes for mobile delivery")
             self.metrics["data_transferred_bytes"] += len(data)
-            
+
             return True
-            
+
         except Exception as e:
             logger.error(f"Failed to send data to mobile: {e}")
             return False
@@ -486,10 +491,10 @@ class EnhancedMobileBridge:
         try:
             # Simulate message processing
             await asyncio.sleep(0.1)
-            
+
             logger.debug(f"Processed message {message.message_id}")
             self.metrics["messages_sent"] += 1
-            
+
         except Exception as e:
             logger.error(f"Failed to process message {message.message_id}: {e}")
 
@@ -505,7 +510,9 @@ class EnhancedMobileBridge:
                 "os_version": self.device_info.os_version if self.device_info else "unknown",
                 "battery_level": self.device_info.battery_level if self.device_info else None,
                 "is_charging": self.device_info.is_charging if self.device_info else False,
-                "available_sensors": [s.value for s in (self.device_info.available_sensors if self.device_info else [])],
+                "available_sensors": [
+                    s.value for s in (self.device_info.available_sensors if self.device_info else [])
+                ],
             },
             "bitchat_integration": {
                 "enabled": self.bitchat_enabled,
@@ -528,7 +535,7 @@ class EnhancedMobileBridge:
     async def enable_power_save_mode(self, enabled: bool = True):
         """Enable or disable power save mode for battery optimization"""
         self.power_save_mode = enabled
-        
+
         if enabled:
             logger.info("Power save mode enabled - reducing background activity")
             # Reduce scanning frequency, advertising intervals, etc.
@@ -552,17 +559,17 @@ class EnhancedMobileBridge:
     async def shutdown(self):
         """Gracefully shutdown the mobile bridge"""
         logger.info("Shutting down Enhanced Mobile Bridge")
-        
+
         self.status = BridgeStatus.DISCONNECTED
         self.ble_scanner_active = False
         self.ble_advertiser_active = False
         self.bitchat_enabled = False
-        
+
         # Process remaining messages
         while self.message_queue:
             message = self.message_queue.pop(0)
             await self._process_message(message)
-        
+
         logger.info("Mobile bridge shutdown completed")
 
 
@@ -570,10 +577,10 @@ class EnhancedMobileBridge:
 async def create_mobile_bridge(platform: str | None = None, auto_initialize: bool = True) -> EnhancedMobileBridge:
     """Create and optionally initialize an enhanced mobile bridge"""
     bridge = EnhancedMobileBridge(platform)
-    
+
     if auto_initialize:
         success = await bridge.initialize()
         if not success:
             raise RuntimeError("Failed to initialize mobile bridge")
-    
+
     return bridge

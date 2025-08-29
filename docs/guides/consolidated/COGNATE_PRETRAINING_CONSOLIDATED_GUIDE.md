@@ -17,14 +17,14 @@ graph TB
         A2 --> A3[Full Pretraining Pipeline]
         A3 --> A4[EvoMerge-Ready Models]
     end
-    
+
     subgraph "Agent Forge Pipeline"
         B1[Phase 1: EvoMerge] --> B2[Phase 2: Quiet-STaR]
         B2 --> B3[Phase 3: BitNet] --> B4[Phase 4: Forge Training]
         B4 --> B5[Phase 5: Tool Baking] --> B6[Phase 6: ADAS]
         B6 --> B7[Phase 7: Final Compression]
     end
-    
+
     A4 --> B1
     B7 --> C1[Deployed Specialized Agent]
 ```
@@ -34,7 +34,7 @@ graph TB
 ### Architecture Parameters (Exact 25M Targeting)
 - **Parameters**: 25,069,534 (validated in practice)
 - **d_model**: 216 (hidden dimension)
-- **n_layers**: 11 (transformer layers)  
+- **n_layers**: 11 (transformer layers)
 - **n_heads**: 4 (attention heads, 54 dimensions each)
 - **ffn_mult**: 4 (FFN expansion: 216 × 4 = 864)
 - **vocab_size**: 32,000
@@ -42,7 +42,7 @@ graph TB
 
 ### Model Components Breakdown
 - **Embeddings**: 32,000 × 216 = 6.9M parameters
-- **Transformer Layers**: 11 × ~1.5M = ~16M parameters  
+- **Transformer Layers**: 11 × ~1.5M = ~16M parameters
 - **ACT Halting Head**: ~0.1M parameters
 - **LTM System**: ~1.5M parameters
 - **Output Head**: ~0.5M parameters
@@ -60,13 +60,13 @@ graph TB
 
 #### Short/Local Tasks (45%)
 - **GSM8K**: Grade school math word problems
-- **SVAMP**: Simple variable math problems  
+- **SVAMP**: Simple variable math problems
 - **ASDiv**: Academic dataset for math
 - **Mini-MBPP**: Python code completion
 - **CodeXGLUE**: Code editing tasks
 - **Short Infill**: General completion tasks
 
-#### Long-Horizon Tasks (55%)  
+#### Long-Horizon Tasks (55%)
 - **HotpotQA**: Multi-hop reasoning (fullwiki)
 - **2WikiMultiHopQA**: Complex multi-step QA
 - **MuSiQue**: Multi-step inference questions
@@ -124,7 +124,7 @@ python download_datasets.py
 # Creates 3 identical models with different random seeds
 models = [
     ("cognate-25m-model-1", seed=42),
-    ("cognate-25m-model-2", seed=1337), 
+    ("cognate-25m-model-2", seed=1337),
     ("cognate-25m-model-3", seed=2023)
 ]
 ```
@@ -132,7 +132,7 @@ models = [
 **Architecture**: Complete25MCognateModel with full ACT + LTM integration
 
 ### Phase 0.3: Full Pretraining
-**Command**: 
+**Command**:
 ```bash
 python full_pretraining_pipeline.py
 ```
@@ -275,7 +275,7 @@ config.long_seq_len = 8192
 config.mem_capacity = 8192   # Larger memory
 config.mem_topk = 8         # More retrieval
 
-# ACT halting settings  
+# ACT halting settings
 config.act_threshold = 0.95  # More conservative halting
 config.max_act_steps = 20    # Allow more steps
 ```
@@ -317,7 +317,7 @@ print(f'Model created: {model.count_parameters():,} parameters')
    cp packages/agent_forge/models/cognate/*.py core/agent-forge/phases/cognate_pretrain/
    ```
 
-2. **Dataset Download Failures** 
+2. **Dataset Download Failures**
    ```bash
    # Check internet connection, try offline mode
    export TRANSFORMERS_OFFLINE=1
@@ -348,7 +348,7 @@ python full_pretraining_pipeline.py
 
 ### Measured Results
 - **Model 1 (seed=42)**: 25,069,534 parameters ✅
-- **Model 2 (seed=1337)**: 25,069,534 parameters ✅  
+- **Model 2 (seed=1337)**: 25,069,534 parameters ✅
 - **Model 3 (seed=2023)**: 25,069,534 parameters ✅
 - **Training Speed**: ~3.2s/step on modern CPU
 - **Memory Usage**: ~4-8GB RAM during training
@@ -356,7 +356,7 @@ python full_pretraining_pipeline.py
 
 ### Quality Metrics (Expected)
 - **Training Loss**: Convergence to ~1.8-2.2
-- **Validation Perplexity**: 2.5-3.5 range  
+- **Validation Perplexity**: 2.5-3.5 range
 - **GSM8K Accuracy**: 35-50% after pretraining
 - **Memory Utilization**: Effective LTM integration
 - **ACT Efficiency**: 2.5-4.0 average steps during inference
@@ -385,7 +385,7 @@ This consolidated guide provides a complete, production-ready approach to Cognat
 - **Creates exactly 3 models** with 25,069,534 parameters each
 - **Uses real datasets** with proper curriculum alignment (45/55 ratio)
 - **Implements full architecture** including ACT halting and Titans-style LTM
-- **Optimizes with GrokFast** for 50x training acceleration  
+- **Optimizes with GrokFast** for 50x training acceleration
 - **Saves in EvoMerge format** ready for Phase 1 of Agent Forge
 - **Consolidates all documentation** into one coherent guide
 - **Provides working code** with complete implementation

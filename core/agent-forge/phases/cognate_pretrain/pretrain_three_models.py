@@ -12,13 +12,13 @@ Models will be saved in HuggingFace format for EvoMerge.
 """
 
 import asyncio
+from dataclasses import asdict
 import json
 import logging
+from pathlib import Path
 import random
 import sys
 import time
-from dataclasses import asdict
-from pathlib import Path
 from typing import Any
 
 import httpx
@@ -74,9 +74,10 @@ sys.path.insert(0, str(packages_path))
 
 # Import components
 try:
-    from agent_forge.models.cognate.training_pipeline import CognateDataset, CognateTrainingPipeline, TrainingConfig
     from full_cognate_25m import Enhanced25MCognate, create_three_25m_models
     from refiner_core import CognateConfig
+
+    from agent_forge.models.cognate.training_pipeline import CognateDataset, CognateTrainingPipeline, TrainingConfig
 
     IMPORTS_SUCCESS = True
     logger.info("Successfully imported all Cognate components")

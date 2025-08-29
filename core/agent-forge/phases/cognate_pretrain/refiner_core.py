@@ -13,11 +13,11 @@ CognateRefiner class with 25M parameters. Integrates:
 Total: ~25M parameters with HuggingFace compatibility.
 """
 
+from dataclasses import dataclass
 import json
 import logging
-import sys
-from dataclasses import dataclass
 from pathlib import Path
+import sys
 
 import torch
 import torch.nn as nn

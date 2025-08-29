@@ -8,7 +8,6 @@ Tests all endpoints to ensure they work correctly.
 import asyncio
 import json
 import time
-from datetime import datetime
 
 import requests
 import websockets

@@ -1,0 +1,1503 @@
+[
+  {
+    "type": "god_object",
+    "severity": "critical",
+    "file_path": "scripts\\architectural_analysis.py",
+    "line_number": 95,
+    "column": 0,
+    "description": "Class 'ArchitecturalAnalyzer' is a God Object: 35 methods, ~982 lines",
+    "recommendation": "Split into smaller, focused classes following Single Responsibility Principle",
+    "code_snippet": "     93:     trend_data: Dict[str, List[float]]\n     94: \n>>>  95: class ArchitecturalAnalyzer:\n     96:     \"\"\"Main architectural analysis engine\"\"\"\n     97: ",
+    "context": {
+      "method_count": 35,
+      "estimated_loc": 982,
+      "class_name": "ArchitecturalAnalyzer"
+    }
+  },
+  {
+    "type": "connascence_of_position",
+    "severity": "high",
+    "file_path": "scripts\\architectural_analysis.py",
+    "line_number": 960,
+    "column": 4,
+    "description": "Function 'save_report' has 4 positional parameters (>3)",
+    "recommendation": "Consider using keyword arguments, data classes, or parameter objects",
+    "code_snippet": "    958:         return report\n    959: \n>>> 960:     def save_report(self, report: ArchitecturalReport, output_dir: Path, format_type: str = 'json'):\n    961:         \"\"\"Save architectural report in specified format\"\"\"\n    962:         output_dir.mkdir(parents=True, exist_ok=True)",
+    "context": {
+      "parameter_count": 4,
+      "function_name": "save_report"
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\architectural_analysis.py",
+    "line_number": 166,
+    "column": 50,
+    "description": "Magic literal 'packages.' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    164: \n    165:                 for imported_module in imports:\n>>> 166:                     if imported_module.startswith('packages.'):\n    167:                         # Module-level dependency\n    168:                         module_dependencies[module_name].add(imported_module)",
+    "context": {
+      "literal_value": "packages.",
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\architectural_analysis.py",
+    "line_number": 224,
+    "column": 24,
+    "description": "Magic literal '__init__.py' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    222:         rel_path = file_path.relative_to(self.project_root)\n    223:         parts = list(rel_path.parts)\n>>> 224:         if parts[-1] == '__init__.py':\n    225:             parts = parts[:-1]\n    226:         else:",
+    "context": {
+      "literal_value": "__init__.py",
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\architectural_analysis.py",
+    "line_number": 240,
+    "column": 37,
+    "description": "Magic literal 'packages.' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    238: \n    239:         for module in self.dependency_graph.nodes():\n>>> 240:             if not module.startswith('packages.'):\n    241:                 continue\n    242: ",
+    "context": {
+      "literal_value": "packages.",
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\architectural_analysis.py",
+    "line_number": 304,
+    "column": 38,
+    "description": "Magic literal 'packages.' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    302:     def module_name_to_path(self, module_name: str) -> Optional[Path]:\n    303:         \"\"\"Convert module name back to file path\"\"\"\n>>> 304:         if not module_name.startswith('packages.'):\n    305:             return None\n    306: ",
+    "context": {
+      "literal_value": "packages.",
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\architectural_analysis.py",
+    "line_number": 391,
+    "column": 71,
+    "description": "Magic literal 'http://' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    389:                             magic_values[node.n].append(str(file_path))\n    390:                     elif isinstance(node, ast.Str):\n>>> 391:                         if len(node.s) > 10 and not node.s.startswith(('http://', 'https://')):\n    392:                             magic_values[f\"string:{node.s[:20]}...\"].append(str(file_path))\n    393: ",
+    "context": {
+      "literal_value": "http://",
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\architectural_analysis.py",
+    "line_number": 391,
+    "column": 82,
+    "description": "Magic literal 'https://' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    389:                             magic_values[node.n].append(str(file_path))\n    390:                     elif isinstance(node, ast.Str):\n>>> 391:                         if len(node.s) > 10 and not node.s.startswith(('http://', 'https://')):\n    392:                             magic_values[f\"string:{node.s[:20]}...\"].append(str(file_path))\n    393: ",
+    "context": {
+      "literal_value": "https://",
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\architectural_analysis.py",
+    "line_number": 426,
+    "column": 44,
+    "description": "Magic literal '3' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    424:                 for node in ast.walk(tree):\n    425:                     if isinstance(node, ast.Call) and isinstance(node.func, ast.Name):\n>>> 426:                         if len(node.args) > 3:  # More than 3 positional arguments\n    427:                             function_calls[node.func.id].append(str(file_path))\n    428: ",
+    "context": {
+      "literal_value": 3,
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\architectural_analysis.py",
+    "line_number": 514,
+    "column": 22,
+    "description": "Magic literal '5' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    512:         if score >= 10:\n    513:             return \"critical\"\n>>> 514:         elif score >= 5:\n    515:             return \"high\"\n    516:         elif score >= 3:",
+    "context": {
+      "literal_value": 5,
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\architectural_analysis.py",
+    "line_number": 516,
+    "column": 22,
+    "description": "Magic literal '3' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    514:         elif score >= 5:\n    515:             return \"high\"\n>>> 516:         elif score >= 3:\n    517:             return \"medium\"\n    518:         else:",
+    "context": {
+      "literal_value": 3,
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\architectural_analysis.py",
+    "line_number": 655,
+    "column": 108,
+    "description": "Magic literal '70' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    653: \n    654:                 # Low maintainability indicates technical debt\n>>> 655:                 if maintainability < self.config.get('quality_thresholds', {}).get('maintainability_index', 70):\n    656:                     effort_hours = (70 - maintainability) * 0.5  # Simplified calculation\n    657: ",
+    "context": {
+      "literal_value": 70,
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\architectural_analysis.py",
+    "line_number": 664,
+    "column": 65,
+    "description": "Magic literal '50' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    662:                         description=f\"Low maintainability index: {maintainability:.1f}\",\n    663:                         effort_hours=effort_hours,\n>>> 664:                         risk_level=\"medium\" if maintainability > 50 else \"high\"\n    665:                     )\n    666:                     debt_items.append(debt)",
+    "context": {
+      "literal_value": 50,
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\architectural_analysis.py",
+    "line_number": 675,
+    "column": 94,
+    "description": "Magic literal '5' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    673:         debt_ratio = max(0, 100 - avg_maintainability)\n    674: \n>>> 675:         if debt_ratio > self.config.get('quality_thresholds', {}).get('technical_debt_ratio', 5):\n    676:             debt = TechnicalDebt(\n    677:                 category=\"overall\",",
+    "context": {
+      "literal_value": 5,
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\architectural_analysis.py",
+    "line_number": 682,
+    "column": 50,
+    "description": "Magic literal '20' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    680:                 description=f\"Overall technical debt ratio: {debt_ratio:.1f}%\",\n    681:                 effort_hours=debt_ratio * 2,  # Simplified calculation\n>>> 682:                 risk_level=\"high\" if debt_ratio > 20 else \"medium\"\n    683:             )\n    684:             debt_items.append(debt)",
+    "context": {
+      "literal_value": 20,
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\architectural_analysis.py",
+    "line_number": 844,
+    "column": 98,
+    "description": "Magic literal '0.3' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    842:         # Coupling threshold gate\n    843:         high_coupling_count = sum(1 for metric in self.coupling_metrics\n>>> 844:                                 if metric.instability > self.config.get('max_coupling_threshold', 0.3))\n    845:         gates['coupling_threshold'] = high_coupling_count == 0\n    846: ",
+    "context": {
+      "literal_value": 0.3,
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\architectural_analysis.py",
+    "line_number": 866,
+    "column": 53,
+    "description": "Magic literal '0.5' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    864:         # Architectural drift gate\n    865:         critical_drift_count = sum(1 for drift in self.architectural_drift\n>>> 866:                                  if drift.severity > 0.5)\n    867:         gates['no_critical_drift'] = critical_drift_count == 0\n    868: ",
+    "context": {
+      "literal_value": 0.5,
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\architectural_analysis.py",
+    "line_number": 876,
+    "column": 85,
+    "description": "Magic literal '0.7' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    874: \n    875:         # Coupling recommendations\n>>> 876:         high_coupling_modules = [m for m in self.coupling_metrics if m.instability > 0.7]\n    877:         if high_coupling_modules:\n    878:             recommendations.append(",
+    "context": {
+      "literal_value": 0.7,
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\architectural_analysis.py",
+    "line_number": 902,
+    "column": 32,
+    "description": "Magic literal '0.3' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    900:         # Architectural drift recommendations\n    901:         for drift in self.architectural_drift:\n>>> 902:             if drift.severity > 0.3:\n    903:                 recommendations.append(drift.recommendation)\n    904: ",
+    "context": {
+      "literal_value": 0.3,
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\architecture_dashboard.py",
+    "line_number": 105,
+    "column": 43,
+    "description": "Magic literal '0.3' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    103:                 \"Avg Coupling\",\n    104:                 f\"{coupling:.3f}\",\n>>> 105:                 delta=\"Good\" if coupling < 0.3 else \"High\"\n    106:             )\n    107: ",
+    "context": {
+      "literal_value": 0.3,
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\architecture_dashboard.py",
+    "line_number": 113,
+    "column": 45,
+    "description": "Magic literal '5' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    111:                 \"Tech Debt Items\",\n    112:                 debt_items,\n>>> 113:                 delta=\"Good\" if debt_items < 5 else \"Needs Attention\"\n    114:             )\n    115: ",
+    "context": {
+      "literal_value": 5,
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\architecture_dashboard.py",
+    "line_number": 113,
+    "column": 52,
+    "description": "Magic literal 'Needs Attention' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    111:                 \"Tech Debt Items\",\n    112:                 debt_items,\n>>> 113:                 delta=\"Good\" if debt_items < 5 else \"Needs Attention\"\n    114:             )\n    115: ",
+    "context": {
+      "literal_value": "Needs Attention",
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\architecture_dashboard.py",
+    "line_number": 121,
+    "column": 62,
+    "description": "Magic literal 'Action Required' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    119:                 \"Critical Issues\",\n    120:                 critical_violations,\n>>> 121:                 delta=\"Good\" if critical_violations == 0 else \"Action Required\"\n    122:             )\n    123: ",
+    "context": {
+      "literal_value": "Action Required",
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\architecture_dashboard.py",
+    "line_number": 275,
+    "column": 61,
+    "description": "Magic literal 'Fix Required' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    273:             st.metric(\"Total Dependencies\", total_deps)\n    274:             st.metric(\"Circular Dependencies\", circular_deps,\n>>> 275:                      delta=\"Good\" if circular_deps == 0 else \"Fix Required\")\n    276: \n    277:         with col2:",
+    "context": {
+      "literal_value": "Fix Required",
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\architecture_dashboard.py",
+    "line_number": 401,
+    "column": 30,
+    "description": "Magic literal '8' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    399:                 priority_items.append({\n    400:                     'item': f\"Fix {violation['type']} connascence\",\n>>> 401:                     'impact': 8 if violation['severity'] == 'critical' else 6,\n    402:                     'effort': violation['instances'] * 2,  # Simplified effort calculation\n    403:                     'type': 'Connascence'",
+    "context": {
+      "literal_value": 8,
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\architecture_dashboard.py",
+    "line_number": 401,
+    "column": 76,
+    "description": "Magic literal '6' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    399:                 priority_items.append({\n    400:                     'item': f\"Fix {violation['type']} connascence\",\n>>> 401:                     'impact': 8 if violation['severity'] == 'critical' else 6,\n    402:                     'effort': violation['instances'] * 2,  # Simplified effort calculation\n    403:                     'type': 'Connascence'",
+    "context": {
+      "literal_value": 6,
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\architecture_dashboard.py",
+    "line_number": 418,
+    "column": 35,
+    "description": "Magic literal '0.5' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    416:         # Critical architectural drift\n    417:         for drift in architectural_drift:\n>>> 418:             if drift['severity'] > 0.5:\n    419:                 priority_items.append({\n    420:                     'item': f\"Fix {drift['drift_type']}\",",
+    "context": {
+      "literal_value": 0.5,
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\architecture_dashboard.py",
+    "line_number": 513,
+    "column": 25,
+    "description": "Magic literal 'Update Configuration' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    511:             )\n    512: \n>>> 513:             if st.button(\"Update Configuration\"):\n    514:                 # This would update the configuration file\n    515:                 st.success(\"Configuration updated! (This is a demo - actual file not modified)\")",
+    "context": {
+      "literal_value": "Update Configuration",
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\architecture_dashboard.py",
+    "line_number": 542,
+    "column": 25,
+    "description": "Magic literal '\ud83d\udd04 Refresh Data' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    540: \n    541:     # Refresh button\n>>> 542:     if st.sidebar.button(\"\ud83d\udd04 Refresh Data\"):\n    543:         st.rerun()\n    544: ",
+    "context": {
+      "literal_value": "\ud83d\udd04 Refresh Data",
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\check_connascence.py",
+    "line_number": 107,
+    "column": 30,
+    "description": "Magic literal '3' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    105:         # Check for Connascence of Position (>3 positional parameters)\n    106:         positional_count = sum(1 for arg in node.args.args if not arg.arg.startswith('_'))\n>>> 107:         if positional_count > 3:\n    108:             self.positional_params.append((node, positional_count))\n    109:             self.violations.append(ConnascenceViolation(",
+    "context": {
+      "literal_value": 3,
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\check_connascence.py",
+    "line_number": 123,
+    "column": 28,
+    "description": "Magic literal '3' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    121:         # Check for algorithm duplication\n    122:         body_hash = self._normalize_function_body(node)\n>>> 123:         if len(node.body) > 3:  # Only check substantial functions\n    124:             self.function_hashes[body_hash].append((self.file_path, node))\n    125: ",
+    "context": {
+      "literal_value": 3,
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\check_connascence.py",
+    "line_number": 142,
+    "column": 26,
+    "description": "Magic literal '20' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    140: \n    141:         # God Object detection\n>>> 142:         if method_count > 20 or loc > 500:\n    143:             self.violations.append(ConnascenceViolation(\n    144:                 type=\"god_object\",",
+    "context": {
+      "literal_value": 20,
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\check_connascence.py",
+    "line_number": 142,
+    "column": 38,
+    "description": "Magic literal '500' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    140: \n    141:         # God Object detection\n>>> 142:         if method_count > 20 or loc > 500:\n    143:             self.violations.append(ConnascenceViolation(\n    144:                 type=\"god_object\",",
+    "context": {
+      "literal_value": 500,
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\check_connascence.py",
+    "line_number": 190,
+    "column": 33,
+    "description": "Magic literal '3' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    188:         elif isinstance(node.value, str):\n    189:             # Skip very short strings and common patterns\n>>> 190:             if len(node.value) > 3 and not re.match(r'^[a-zA-Z0-9_-]+$', node.value):\n    191:                 self.magic_literals.append((node, node.value))\n    192:         self.generic_visit(node)",
+    "context": {
+      "literal_value": 3,
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\check_connascence.py",
+    "line_number": 190,
+    "column": 52,
+    "description": "Magic literal '^[a-zA-Z0-9_-]+$' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    188:         elif isinstance(node.value, str):\n    189:             # Skip very short strings and common patterns\n>>> 190:             if len(node.value) > 3 and not re.match(r'^[a-zA-Z0-9_-]+$', node.value):\n    191:                 self.magic_literals.append((node, node.value))\n    192:         self.generic_visit(node)",
+    "context": {
+      "literal_value": "^[a-zA-Z0-9_-]+$",
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\check_connascence.py",
+    "line_number": 253,
+    "column": 35,
+    "description": "Magic literal '5' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    251: \n    252:         # Check for excessive global usage\n>>> 253:         if len(self.global_vars) > 5:\n    254:             # Find a representative location (first global usage)\n    255:             for node in ast.walk(ast.parse(\"\".join(self.source_lines))):",
+    "context": {
+      "literal_value": 5,
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\check_connascence.py",
+    "line_number": 271,
+    "column": 8,
+    "description": "Magic literal 'Check if node is within a conditional statement.' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    269: \n    270:     def _is_in_conditional(self, node: ast.AST) -> bool:\n>>> 271:         \"\"\"Check if node is within a conditional statement.\"\"\"\n    272:         # This is a simplified check - in practice you'd walk up the AST\n    273:         line_content = self.source_lines[node.lineno - 1] if node.lineno <= len(self.source_lines) else \"\"",
+    "context": {
+      "literal_value": "Check if node is within a conditional statement.",
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\check_connascence.py",
+    "line_number": 274,
+    "column": 66,
+    "description": "Magic literal 'elif ' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    272:         # This is a simplified check - in practice you'd walk up the AST\n    273:         line_content = self.source_lines[node.lineno - 1] if node.lineno <= len(self.source_lines) else \"\"\n>>> 274:         return any(keyword in line_content for keyword in ['if ', 'elif ', 'while ', 'assert '])\n    275: \n    276: ",
+    "context": {
+      "literal_value": "elif ",
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\check_connascence.py",
+    "line_number": 274,
+    "column": 75,
+    "description": "Magic literal 'while ' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    272:         # This is a simplified check - in practice you'd walk up the AST\n    273:         line_content = self.source_lines[node.lineno - 1] if node.lineno <= len(self.source_lines) else \"\"\n>>> 274:         return any(keyword in line_content for keyword in ['if ', 'elif ', 'while ', 'assert '])\n    275: \n    276: ",
+    "context": {
+      "literal_value": "while ",
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\check_connascence.py",
+    "line_number": 274,
+    "column": 85,
+    "description": "Magic literal 'assert ' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    272:         # This is a simplified check - in practice you'd walk up the AST\n    273:         line_content = self.source_lines[node.lineno - 1] if node.lineno <= len(self.source_lines) else \"\"\n>>> 274:         return any(keyword in line_content for keyword in ['if ', 'elif ', 'while ', 'assert '])\n    275: \n    276: ",
+    "context": {
+      "literal_value": "assert ",
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\check_connascence.py",
+    "line_number": 291,
+    "column": 8,
+    "description": "Magic literal 'Check if file should be analyzed based on exclusions.' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    289: \n    290:     def should_analyze_file(self, file_path: Path) -> bool:\n>>> 291:         \"\"\"Check if file should be analyzed based on exclusions.\"\"\"\n    292:         path_str = str(file_path)\n    293:         for exclusion in self.exclusions:",
+    "context": {
+      "literal_value": "Check if file should be analyzed based on exclusions.",
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "god_object",
+    "severity": "critical",
+    "file_path": "scripts\\ci_integration.py",
+    "line_number": 35,
+    "column": 0,
+    "description": "Class 'CIIntegration' is a God Object: 11 methods, ~528 lines",
+    "recommendation": "Split into smaller, focused classes following Single Responsibility Principle",
+    "code_snippet": "     33: PROJECT_ROOT = Path(__file__).parent.parent\n     34: \n>>>  35: class CIIntegration:\n     36:     \"\"\"CI/CD integration for architectural fitness functions\"\"\"\n     37: ",
+    "context": {
+      "method_count": 11,
+      "estimated_loc": 528,
+      "class_name": "CIIntegration"
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\ci_integration.py",
+    "line_number": 372,
+    "column": 103,
+    "description": "Magic literal '80' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    370:                 'label': 'quality gates',\n    371:                 'message': f'{gates_passed}/{gates_total} ({gates_percentage}%)',\n>>> 372:                 'color': 'brightgreen' if gates_percentage == 100 else 'yellow' if gates_percentage >= 80 else 'red'\n    373:             }\n    374:         else:",
+    "context": {
+      "literal_value": 80,
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\coupling_metrics.py",
+    "line_number": 154,
+    "column": 8,
+    "description": "Magic literal 'Determine if a literal value is a magic number/string.' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    152: \n    153:     def _is_magic_literal(self, value: Any) -> bool:\n>>> 154:         \"\"\"Determine if a literal value is a magic number/string.\"\"\"\n    155:         if isinstance(value, (int, float)):\n    156:             # Common non-magic numbers",
+    "context": {
+      "literal_value": "Determine if a literal value is a magic number/string.",
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\coupling_metrics.py",
+    "line_number": 163,
+    "column": 24,
+    "description": "Magic literal '^[a-zA-Z0-9_-]+$' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    161:                 return False\n    162:             # Skip simple alphanumeric strings\n>>> 163:             if re.match(r'^[a-zA-Z0-9_-]+$', value) and len(value) < 10:\n    164:                 return False\n    165:             return True",
+    "context": {
+      "literal_value": "^[a-zA-Z0-9_-]+$",
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\coupling_metrics.py",
+    "line_number": 169,
+    "column": 8,
+    "description": "Magic literal 'Check if node is in a conditional context (simplified).' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    167: \n    168:     def _is_in_conditional_context(self, node: ast.AST) -> bool:\n>>> 169:         \"\"\"Check if node is in a conditional context (simplified).\"\"\"\n    170:         # In a real implementation, you'd walk up the AST\n    171:         line_content = self.source_lines[node.lineno - 1] if node.lineno <= len(self.source_lines) else \"\"",
+    "context": {
+      "literal_value": "Check if node is in a conditional context (simplified).",
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\coupling_metrics.py",
+    "line_number": 172,
+    "column": 66,
+    "description": "Magic literal 'elif ' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    170:         # In a real implementation, you'd walk up the AST\n    171:         line_content = self.source_lines[node.lineno - 1] if node.lineno <= len(self.source_lines) else \"\"\n>>> 172:         return any(keyword in line_content for keyword in ['if ', 'elif ', 'while ', 'assert ', 'return '])\n    173: \n    174:     def visit_FunctionDef(self, node: ast.FunctionDef):",
+    "context": {
+      "literal_value": "elif ",
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\coupling_metrics.py",
+    "line_number": 172,
+    "column": 75,
+    "description": "Magic literal 'while ' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    170:         # In a real implementation, you'd walk up the AST\n    171:         line_content = self.source_lines[node.lineno - 1] if node.lineno <= len(self.source_lines) else \"\"\n>>> 172:         return any(keyword in line_content for keyword in ['if ', 'elif ', 'while ', 'assert ', 'return '])\n    173: \n    174:     def visit_FunctionDef(self, node: ast.FunctionDef):",
+    "context": {
+      "literal_value": "while ",
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\coupling_metrics.py",
+    "line_number": 172,
+    "column": 85,
+    "description": "Magic literal 'assert ' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    170:         # In a real implementation, you'd walk up the AST\n    171:         line_content = self.source_lines[node.lineno - 1] if node.lineno <= len(self.source_lines) else \"\"\n>>> 172:         return any(keyword in line_content for keyword in ['if ', 'elif ', 'while ', 'assert ', 'return '])\n    173: \n    174:     def visit_FunctionDef(self, node: ast.FunctionDef):",
+    "context": {
+      "literal_value": "assert ",
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\coupling_metrics.py",
+    "line_number": 172,
+    "column": 96,
+    "description": "Magic literal 'return ' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    170:         # In a real implementation, you'd walk up the AST\n    171:         line_content = self.source_lines[node.lineno - 1] if node.lineno <= len(self.source_lines) else \"\"\n>>> 172:         return any(keyword in line_content for keyword in ['if ', 'elif ', 'while ', 'assert ', 'return '])\n    173: \n    174:     def visit_FunctionDef(self, node: ast.FunctionDef):",
+    "context": {
+      "literal_value": "return ",
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\coupling_metrics.py",
+    "line_number": 180,
+    "column": 34,
+    "description": "Magic literal '3' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    178:         # Check positional parameters\n    179:         positional_args = [arg for arg in node.args.args if not arg.arg.startswith('_')]\n>>> 180:         if len(positional_args) > 3:\n    181:             self.positional_violations += 1\n    182: ",
+    "context": {
+      "literal_value": 3,
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\coupling_metrics.py",
+    "line_number": 213,
+    "column": 26,
+    "description": "Magic literal '20' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    211: \n    212:         # God class detection\n>>> 213:         if method_count > 20 or class_loc > 500:\n    214:             self.god_classes.append(node.name)\n    215: ",
+    "context": {
+      "literal_value": 20,
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\coupling_metrics.py",
+    "line_number": 213,
+    "column": 44,
+    "description": "Magic literal '500' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    211: \n    212:         # God class detection\n>>> 213:         if method_count > 20 or class_loc > 500:\n    214:             self.god_classes.append(node.name)\n    215: ",
+    "context": {
+      "literal_value": 500,
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\coupling_metrics.py",
+    "line_number": 332,
+    "column": 8,
+    "description": "Magic literal 'Check if file should be analyzed based on exclusions.' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    330: \n    331:     def should_analyze_file(self, file_path: Path) -> bool:\n>>> 332:         \"\"\"Check if file should be analyzed based on exclusions.\"\"\"\n    333:         path_str = str(file_path)\n    334:         for exclusion in self.exclusions:",
+    "context": {
+      "literal_value": "Check if file should be analyzed based on exclusions.",
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\coupling_metrics.py",
+    "line_number": 514,
+    "column": 16,
+    "description": "Magic literal 'Status: ' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    512:                 \"-\" * 40,\n    513:                 f\"Coupling score change: {project_metrics.improvement_score:+.1f}\",\n>>> 514:                 \"Status: \" + (\"IMPROVED\" if project_metrics.improvement_score > 0 else\n    515:                              \"DEGRADED\" if project_metrics.improvement_score < 0 else \"STABLE\"),\n    516:                 \"\"",
+    "context": {
+      "literal_value": "Status: ",
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\coupling_metrics.py",
+    "line_number": 545,
+    "column": 54,
+    "description": "Magic literal '20' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    543:         ])\n    544: \n>>> 545:         if project_metrics.overall_positional_ratio > 20:\n    546:             lines.append(\"\u2022 HIGH: Reduce positional parameters (use keyword args, data classes)\")\n    547:         if project_metrics.overall_magic_density > 5:",
+    "context": {
+      "literal_value": 20,
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\coupling_metrics.py",
+    "line_number": 547,
+    "column": 51,
+    "description": "Magic literal '5' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    545:         if project_metrics.overall_positional_ratio > 20:\n    546:             lines.append(\"\u2022 HIGH: Reduce positional parameters (use keyword args, data classes)\")\n>>> 547:         if project_metrics.overall_magic_density > 5:\n    548:             lines.append(\"\u2022 HIGH: Replace magic literals with named constants\")\n    549:         if project_metrics.god_class_ratio > 10:",
+    "context": {
+      "literal_value": 5,
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\coupling_metrics.py",
+    "line_number": 551,
+    "column": 52,
+    "description": "Magic literal '50' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    549:         if project_metrics.god_class_ratio > 10:\n    550:             lines.append(\"\u2022 CRITICAL: Break down God classes using Single Responsibility Principle\")\n>>> 551:         if project_metrics.average_coupling_score > 50:\n    552:             lines.append(\"\u2022 CRITICAL: Overall coupling is very high - prioritize decoupling efforts\")\n    553:         elif project_metrics.average_coupling_score > 30:",
+    "context": {
+      "literal_value": 50,
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\coupling_metrics.py",
+    "line_number": 553,
+    "column": 54,
+    "description": "Magic literal '30' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    551:         if project_metrics.average_coupling_score > 50:\n    552:             lines.append(\"\u2022 CRITICAL: Overall coupling is very high - prioritize decoupling efforts\")\n>>> 553:         elif project_metrics.average_coupling_score > 30:\n    554:             lines.append(\"\u2022 MEDIUM: Consider architectural improvements to reduce coupling\")\n    555:         else:",
+    "context": {
+      "literal_value": 30,
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\coupling_metrics.py",
+    "line_number": 679,
+    "column": 57,
+    "description": "Magic literal '75' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    677: \n    678:     # Exit with error code if coupling is very high\n>>> 679:     return 1 if project_metrics.average_coupling_score > 75 else 0\n    680: \n    681: ",
+    "context": {
+      "literal_value": 75,
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_position",
+    "severity": "high",
+    "file_path": "scripts\\detect_anti_patterns.py",
+    "line_number": 53,
+    "column": 4,
+    "description": "Function '__init__' has 4 positional parameters (>3)",
+    "recommendation": "Consider using keyword arguments, data classes, or parameter objects",
+    "code_snippet": "     51:     \"\"\"AST visitor that detects anti-patterns.\"\"\"\n     52: \n>>>  53:     def __init__(self, file_path: str, source_lines: List[str], project_context: Optional[Dict] = None):\n     54:         self.file_path = file_path\n     55:         self.source_lines = source_lines",
+    "context": {
+      "parameter_count": 4,
+      "function_name": "__init__"
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\detect_anti_patterns.py",
+    "line_number": 175,
+    "column": 45,
+    "description": "Magic literal '50' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    173:             method_lines = len(node.body) * 3  # Rough estimate\n    174: \n>>> 175:         if complexity > 10 or method_lines > 50 or max_nesting > 4:\n    176:             self.anti_patterns.append(AntiPattern(\n    177:                 pattern_type=\"god_method\",",
+    "context": {
+      "literal_value": 50,
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\detect_anti_patterns.py",
+    "line_number": 175,
+    "column": 65,
+    "description": "Magic literal '4' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    173:             method_lines = len(node.body) * 3  # Rough estimate\n    174: \n>>> 175:         if complexity > 10 or method_lines > 50 or max_nesting > 4:\n    176:             self.anti_patterns.append(AntiPattern(\n    177:                 pattern_type=\"god_method\",",
+    "context": {
+      "literal_value": 4,
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\detect_anti_patterns.py",
+    "line_number": 200,
+    "column": 26,
+    "description": "Magic literal '5' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    198:             total_params += 1\n    199: \n>>> 200:         if total_params > 5:\n    201:             self.parameter_lists.append((node, total_params))\n    202:             self.anti_patterns.append(AntiPattern(",
+    "context": {
+      "literal_value": 5,
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\detect_anti_patterns.py",
+    "line_number": 215,
+    "column": 28,
+    "description": "Magic literal '3' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    213: \n    214:         # Extract code blocks for duplication detection\n>>> 215:         if len(node.body) > 3:\n    216:             block_signature = self._extract_code_block_signature(node.body)\n    217:             self.code_blocks.append((node, block_signature))",
+    "context": {
+      "literal_value": 3,
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\detect_anti_patterns.py",
+    "line_number": 239,
+    "column": 26,
+    "description": "Magic literal '20' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    237:         business_methods = method_count - data_methods\n    238: \n>>> 239:         if method_count > 20 or class_lines > 500:\n    240:             self.anti_patterns.append(AntiPattern(\n    241:                 pattern_type=\"god_object\",",
+    "context": {
+      "literal_value": 20,
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\detect_anti_patterns.py",
+    "line_number": 239,
+    "column": 46,
+    "description": "Magic literal '500' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    237:         business_methods = method_count - data_methods\n    238: \n>>> 239:         if method_count > 20 or class_lines > 500:\n    240:             self.anti_patterns.append(AntiPattern(\n    241:                 pattern_type=\"god_object\",",
+    "context": {
+      "literal_value": 500,
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\detect_anti_patterns.py",
+    "line_number": 312,
+    "column": 33,
+    "description": "Magic literal '20' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    310:         elif isinstance(node.value, str):\n    311:             # Check for SQL queries\n>>> 312:             if len(node.value) > 20 and self._detect_sql_patterns(node):\n    313:                 self.sql_queries.append(node)\n    314:                 self.anti_patterns.append(AntiPattern(",
+    "context": {
+      "literal_value": 20,
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\detect_anti_patterns.py",
+    "line_number": 327,
+    "column": 57,
+    "description": "Magic literal 'http://' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    325: \n    326:             # Check for hardcoded paths, URLs, etc.\n>>> 327:             if any(pattern in node.value for pattern in ['http://', 'https://', '/usr/', '/var/', 'C:\\\\']):\n    328:                 self.anti_patterns.append(AntiPattern(\n    329:                     pattern_type=\"hardcoded_path\",",
+    "context": {
+      "literal_value": "http://",
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\detect_anti_patterns.py",
+    "line_number": 327,
+    "column": 68,
+    "description": "Magic literal 'https://' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    325: \n    326:             # Check for hardcoded paths, URLs, etc.\n>>> 327:             if any(pattern in node.value for pattern in ['http://', 'https://', '/usr/', '/var/', 'C:\\\\']):\n    328:                 self.anti_patterns.append(AntiPattern(\n    329:                     pattern_type=\"hardcoded_path\",",
+    "context": {
+      "literal_value": "https://",
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\detect_anti_patterns.py",
+    "line_number": 327,
+    "column": 80,
+    "description": "Magic literal '/usr/' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    325: \n    326:             # Check for hardcoded paths, URLs, etc.\n>>> 327:             if any(pattern in node.value for pattern in ['http://', 'https://', '/usr/', '/var/', 'C:\\\\']):\n    328:                 self.anti_patterns.append(AntiPattern(\n    329:                     pattern_type=\"hardcoded_path\",",
+    "context": {
+      "literal_value": "/usr/",
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\detect_anti_patterns.py",
+    "line_number": 327,
+    "column": 89,
+    "description": "Magic literal '/var/' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    325: \n    326:             # Check for hardcoded paths, URLs, etc.\n>>> 327:             if any(pattern in node.value for pattern in ['http://', 'https://', '/usr/', '/var/', 'C:\\\\']):\n    328:                 self.anti_patterns.append(AntiPattern(\n    329:                     pattern_type=\"hardcoded_path\",",
+    "context": {
+      "literal_value": "/var/",
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\detect_anti_patterns.py",
+    "line_number": 344,
+    "column": 25,
+    "description": "Magic literal '20' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    342:     def visit_Str(self, node: ast.Str):\n    343:         \"\"\"Handle string literals in older Python versions.\"\"\"\n>>> 344:         if len(node.s) > 20 and self._detect_sql_patterns(node):\n    345:             self.sql_queries.append(node)\n    346:             self.anti_patterns.append(AntiPattern(",
+    "context": {
+      "literal_value": 20,
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\detect_anti_patterns.py",
+    "line_number": 404,
+    "column": 30,
+    "description": "Magic literal '5' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    402:         \"\"\"Detect methods that use other objects more than their own.\"\"\"\n    403:         for object_name, methods in self.method_calls.items():\n>>> 404:             if len(methods) > 5:  # Threshold for feature envy\n    405:                 # Find the context (which function this is in)\n    406:                 # This is simplified - in practice you'd track the calling context",
+    "context": {
+      "literal_value": 5,
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\detect_anti_patterns.py",
+    "line_number": 436,
+    "column": 31,
+    "description": "Magic literal '3' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    434:         for pattern in sequential_patterns:\n    435:             matches = [name for name in function_names if any(p in name.lower() for p in pattern)]\n>>> 436:             if len(matches) >= 3:\n    437:                 # This suggests a sequential coupling API\n    438:                 for func_name in matches:",
+    "context": {
+      "literal_value": 3,
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\detect_anti_patterns.py",
+    "line_number": 491,
+    "column": 8,
+    "description": "Magic literal 'Check if file should be analyzed based on exclusions.' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    489: \n    490:     def should_analyze_file(self, file_path: Path) -> bool:\n>>> 491:         \"\"\"Check if file should be analyzed based on exclusions.\"\"\"\n    492:         path_str = str(file_path)\n    493:         for exclusion in self.exclusions:",
+    "context": {
+      "literal_value": "Check if file should be analyzed based on exclusions.",
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\generate_cost_analysis.py",
+    "line_number": 145,
+    "column": 44,
+    "description": "Magic literal '14' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    143:         resource_type = cost.resource_spec.resource_type.value[:11]\n    144:         monthly_cost = format_currency(float(cost.monthly_cost))\n>>> 145:         instance_info = cost.instance_type[:14] if cost.instance_type else \"N/A\"\n    146: \n    147:         print(f\"{resource_name:<25} {resource_type:<12} {monthly_cost:<15} {instance_info:<15}\")",
+    "context": {
+      "literal_value": 14,
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\monitor_performance.py",
+    "line_number": 48,
+    "column": 4,
+    "description": "Magic literal 'Check if critical imports work quickly.' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "     46: \n     47: def check_python_imports():\n>>>  48:     \"\"\"Check if critical imports work quickly.\"\"\"\n     49:     import_tests = {}\n     50: ",
+    "context": {
+      "literal_value": "Check if critical imports work quickly.",
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\run_architecture_suite.py",
+    "line_number": 127,
+    "column": 12,
+    "description": "Magic literal '--server.headless' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    125:             str(self.scripts_dir / \"architecture_dashboard.py\"),\n    126:             \"--server.port\", str(port),\n>>> 127:             \"--server.headless\", \"true\" if background else \"false\"\n    128:         ]\n    129: ",
+    "context": {
+      "literal_value": "--server.headless",
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\run_architecture_suite.py",
+    "line_number": 271,
+    "column": 28,
+    "description": "Magic literal 'Exit with error code if violations found' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    269:                        help='Stop on first failure')\n    270:     parser.add_argument('--fail-on-violations', action='store_true',\n>>> 271:                        help='Exit with error code if violations found')\n    272:     parser.add_argument('--visualizations', action='store_true', default=True,\n    273:                        help='Generate visualization charts')",
+    "context": {
+      "literal_value": "Exit with error code if violations found",
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\run_architecture_suite.py",
+    "line_number": 354,
+    "column": 12,
+    "description": "Magic literal '\n\u2705 Architecture suite completed ' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    352:         sys.exit(1)\n    353: \n>>> 354:     print(f\"\\n\u2705 Architecture suite completed {'successfully' if overall_success else 'with issues'}\")\n    355:     sys.exit(0 if overall_success else 0)  # Don't fail by default unless --fail-on-violations\n    356: ",
+    "context": {
+      "literal_value": "\n\u2705 Architecture suite completed ",
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\run_architecture_suite.py",
+    "line_number": 354,
+    "column": 87,
+    "description": "Magic literal 'with issues' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    352:         sys.exit(1)\n    353: \n>>> 354:     print(f\"\\n\u2705 Architecture suite completed {'successfully' if overall_success else 'with issues'}\")\n    355:     sys.exit(0 if overall_success else 0)  # Don't fail by default unless --fail-on-violations\n    356: ",
+    "context": {
+      "literal_value": "with issues",
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_position",
+    "severity": "high",
+    "file_path": "scripts\\run_quality_analysis.py",
+    "line_number": 107,
+    "column": 0,
+    "description": "Function 'run_quality_analysis' has 5 positional parameters (>3)",
+    "recommendation": "Consider using keyword arguments, data classes, or parameter objects",
+    "code_snippet": "    105: \n    106: \n>>> 107: def run_quality_analysis(\n    108:     target_path: str,\n    109:     output_dir: Optional[str] = None,",
+    "context": {
+      "parameter_count": 5,
+      "function_name": "run_quality_analysis"
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\run_quality_analysis.py",
+    "line_number": 49,
+    "column": 98,
+    "description": "Magic literal 'is deprecated' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "     47:             if result.stderr:\n     48:                 stderr_lines = [line.strip() for line in result.stderr.strip().split('\\n') if line.strip()]\n>>>  49:                 warning_lines = [line for line in stderr_lines if 'DeprecationWarning' in line or 'is deprecated' in line or 'warning' in line.lower()]\n     50:                 if len(warning_lines) >= len(stderr_lines) - 1:\n     51:                     # Most/all stderr is just warnings",
+    "context": {
+      "literal_value": "is deprecated",
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\run_quality_analysis.py",
+    "line_number": 342,
+    "column": 28,
+    "description": "Magic literal '50' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    340:     if 'coupling' in results['summary']:\n    341:         coupling_score = results['summary']['coupling'].get('coupling_score', 0)\n>>> 342:         if coupling_score > 50:\n    343:             lines.append(\"CRITICAL: Coupling score is very high - prioritize decoupling efforts\")\n    344:         elif coupling_score > 30:",
+    "context": {
+      "literal_value": 50,
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\run_quality_analysis.py",
+    "line_number": 344,
+    "column": 30,
+    "description": "Magic literal '30' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    342:         if coupling_score > 50:\n    343:             lines.append(\"CRITICAL: Coupling score is very high - prioritize decoupling efforts\")\n>>> 344:         elif coupling_score > 30:\n    345:             lines.append(\"MEDIUM: Consider architectural improvements to reduce coupling\")\n    346:         else:",
+    "context": {
+      "literal_value": 30,
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\run_quality_analysis.py",
+    "line_number": 360,
+    "column": 29,
+    "description": "Magic literal '20' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    358:     if 'anti_patterns' in results['summary']:\n    359:         anti_violations = results['summary']['anti_patterns'].get('total_violations', 0)\n>>> 360:         if anti_violations > 20:\n    361:             lines.append(f\"MEDIUM: Multiple anti-patterns detected ({anti_violations}) - review architecture\")\n    362: ",
+    "context": {
+      "literal_value": 20,
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\run_quality_analysis.py",
+    "line_number": 459,
+    "column": 80,
+    "description": "Magic literal '75' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    457: \n    458:     # Check coupling score\n>>> 459:     if 'coupling' in summary and summary['coupling'].get('coupling_score', 0) > 75:\n    460:         print(f\"CRITICAL: Coupling score is very high - architectural review recommended\")\n    461:         return 1",
+    "context": {
+      "literal_value": 75,
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\fixes\\fix_agent_forge_imports.py",
+    "line_number": 33,
+    "column": 29,
+    "description": "Magic literal '__init__.py' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "     31: \n     32:     for file_path in python_files:\n>>>  33:         if file_path.name == '__init__.py':\n     34:             continue\n     35: ",
+    "context": {
+      "literal_value": "__init__.py",
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\fixes\\fix_linting_issues.py",
+    "line_number": 21,
+    "column": 36,
+    "description": "Magic literal '120' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "     19:         new_lines = []\n     20:         for line_num, line in enumerate(lines):\n>>>  21:             if len(line.rstrip()) > 120:  # Use 120 char limit as per pyproject.toml\n     22:                 # For import statements\n     23:                 if line.strip().startswith(('from ', 'import ')):",
+    "context": {
+      "literal_value": 120,
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\fixes\\fix_linting_issues.py",
+    "line_number": 23,
+    "column": 44,
+    "description": "Magic literal 'from ' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "     21:             if len(line.rstrip()) > 120:  # Use 120 char limit as per pyproject.toml\n     22:                 # For import statements\n>>>  23:                 if line.strip().startswith(('from ', 'import ')):\n     24:                     # Split long import lines\n     25:                     if ' import ' in line and len(line.split(' import ')[1].split(',')) > 1:",
+    "context": {
+      "literal_value": "from ",
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\fixes\\fix_linting_issues.py",
+    "line_number": 23,
+    "column": 53,
+    "description": "Magic literal 'import ' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "     21:             if len(line.rstrip()) > 120:  # Use 120 char limit as per pyproject.toml\n     22:                 # For import statements\n>>>  23:                 if line.strip().startswith(('from ', 'import ')):\n     24:                     # Split long import lines\n     25:                     if ' import ' in line and len(line.split(' import ')[1].split(',')) > 1:",
+    "context": {
+      "literal_value": "import ",
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\fixes\\fix_linting_issues.py",
+    "line_number": 25,
+    "column": 23,
+    "description": "Magic literal ' import ' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "     23:                 if line.strip().startswith(('from ', 'import ')):\n     24:                     # Split long import lines\n>>>  25:                     if ' import ' in line and len(line.split(' import ')[1].split(',')) > 1:\n     26:                         parts = line.split(' import ')\n     27:                         imports = [imp.strip() for imp in parts[1].split(',')]",
+    "context": {
+      "literal_value": " import ",
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\fixes\\fix_linting_issues.py",
+    "line_number": 25,
+    "column": 61,
+    "description": "Magic literal ' import ' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "     23:                 if line.strip().startswith(('from ', 'import ')):\n     24:                     # Split long import lines\n>>>  25:                     if ' import ' in line and len(line.split(' import ')[1].split(',')) > 1:\n     26:                         parts = line.split(' import ')\n     27:                         imports = [imp.strip() for imp in parts[1].split(',')]",
+    "context": {
+      "literal_value": " import ",
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\fixes\\fix_linting_issues.py",
+    "line_number": 29,
+    "column": 42,
+    "description": "Magic literal '3' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "     27:                         imports = [imp.strip() for imp in parts[1].split(',')]\n     28: \n>>>  29:                         if len(imports) > 3:  # Only split if many imports\n     30:                             base = parts[0] + ' import ('\n     31:                             new_lines.append(base + '\\n')",
+    "context": {
+      "literal_value": 3,
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\fixes\\fix_linting_issues.py",
+    "line_number": 100,
+    "column": 40,
+    "description": "Magic literal 'import ' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "     98: \n     99:         for line in lines:\n>>> 100:             if line.strip().startswith(('import ', 'from ')) and in_imports:\n    101:                 import_lines.append(line)\n    102:             elif line.strip() == '' and in_imports:",
+    "context": {
+      "literal_value": "import ",
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\fixes\\fix_linting_issues.py",
+    "line_number": 100,
+    "column": 51,
+    "description": "Magic literal 'from ' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "     98: \n     99:         for line in lines:\n>>> 100:             if line.strip().startswith(('import ', 'from ')) and in_imports:\n    101:                 import_lines.append(line)\n    102:             elif line.strip() == '' and in_imports:",
+    "context": {
+      "literal_value": "from ",
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\fixes\\fix_linting_issues.py",
+    "line_number": 122,
+    "column": 45,
+    "description": "Magic literal 'from packages.' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    120:                 if any(lib in line for lib in ['os', 'sys', 'json', 'logging', 'pathlib', 'typing']):\n    121:                     stdlib_imports.append(line)\n>>> 122:                 elif line.strip().startswith('from packages.') or line.strip().startswith('from core.'):\n    123:                     local_imports.append(line)\n    124:                 else:",
+    "context": {
+      "literal_value": "from packages.",
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\fixes\\fix_linting_issues.py",
+    "line_number": 122,
+    "column": 90,
+    "description": "Magic literal 'from core.' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    120:                 if any(lib in line for lib in ['os', 'sys', 'json', 'logging', 'pathlib', 'typing']):\n    121:                     stdlib_imports.append(line)\n>>> 122:                 elif line.strip().startswith('from packages.') or line.strip().startswith('from core.'):\n    123:                     local_imports.append(line)\n    124:                 else:",
+    "context": {
+      "literal_value": "from core.",
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\fixes\\fix_linting_issues.py",
+    "line_number": 183,
+    "column": 22,
+    "description": "Magic literal 'index.tsx' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    181: \n    182:     # Create index.tsx\n>>> 183:     if not (src_dir / \"index.tsx\").exists():\n    184:         with open(src_dir / \"index.tsx\", 'w') as f:\n    185:             f.write('''import React from 'react';",
+    "context": {
+      "literal_value": "index.tsx",
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\fixes\\fix_linting_issues.py",
+    "line_number": 201,
+    "column": 21,
+    "description": "Magic literal 'vite.config.ts' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    199: \n    200:     # Create vite.config.ts\n>>> 201:     if not (ui_dir / \"vite.config.ts\").exists():\n    202:         with open(ui_dir / \"vite.config.ts\", 'w') as f:\n    203:             f.write('''import { defineConfig } from 'vite';",
+    "context": {
+      "literal_value": "vite.config.ts",
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "god_object",
+    "severity": "critical",
+    "file_path": "scripts\\operational\\collect_artifacts.py",
+    "line_number": 82,
+    "column": 0,
+    "description": "Class 'OperationalArtifactsCollector' is a God Object: 3 methods, ~806 lines",
+    "recommendation": "Split into smaller, focused classes following Single Responsibility Principle",
+    "code_snippet": "     80: \n     81: \n>>>  82: class OperationalArtifactsCollector:\n     83:     \"\"\"\n     84:     Comprehensive operational artifacts collection system.",
+    "context": {
+      "method_count": 3,
+      "estimated_loc": 806,
+      "class_name": "OperationalArtifactsCollector"
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\operational\\validate_artifacts.py",
+    "line_number": 105,
+    "column": 38,
+    "description": "Magic literal '80' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    103:                 if coverage_attr:\n    104:                     coverage_pct = float(coverage_attr) * 100\n>>> 105:                     if coverage_pct < 80:\n    106:                         warnings.append(f\"Coverage below 80%: {coverage_pct:.1f}%\")\n    107:                     logger.info(f\"Coverage: {coverage_pct:.1f}%\")",
+    "context": {
+      "literal_value": 80,
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\operational\\validate_artifacts.py",
+    "line_number": 268,
+    "column": 35,
+    "description": "Magic literal '5.0' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    266:                     stats = benchmark.get(\"stats\", {})\n    267:                     mean_time = stats.get(\"mean\", 0)\n>>> 268:                     if mean_time > 5.0:  # 5 second threshold\n    269:                         warnings.append(f\"Slow benchmark: {benchmark.get('name')} ({mean_time:.2f}s)\")\n    270:             except Exception as e:",
+    "context": {
+      "literal_value": 5.0,
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\operational\\validate_artifacts.py",
+    "line_number": 320,
+    "column": 33,
+    "description": "Magic literal '50' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    318: \n    319:                 error_count = content.count(\"error:\")\n>>> 320:                 if error_count > 50:  # Threshold\n    321:                     warnings.append(f\"MyPy found {error_count} type errors\")\n    322:             except Exception as e:",
+    "context": {
+      "literal_value": 50,
+      "in_conditional": true
+    }
+  },
+  {
+    "type": "connascence_of_position",
+    "severity": "high",
+    "file_path": "scripts\\validation\\validate_hrrm_models.py",
+    "line_number": 28,
+    "column": 0,
+    "description": "Function 'load_and_validate_model' has 5 positional parameters (>3)",
+    "recommendation": "Consider using keyword arguments, data classes, or parameter objects",
+    "code_snippet": "     26: \n     27: \n>>>  28: def load_and_validate_model(model_path, config_path, model_class, config_class, model_name):\n     29:     \"\"\"Load and validate a single model.\"\"\"\n     30:     logger.info(f\"Validating {model_name}...\")",
+    "context": {
+      "parameter_count": 5,
+      "function_name": "load_and_validate_model"
+    }
+  },
+  {
+    "type": "connascence_of_meaning",
+    "severity": "high",
+    "file_path": "scripts\\validation\\validate_hrrm_models.py",
+    "line_number": 149,
+    "column": 28,
+    "description": "Magic literal '3' should be a named constant",
+    "recommendation": "Replace with a well-named constant or configuration value",
+    "code_snippet": "    147:     logger.info(f\"Total Parameters: {total_params:,} ({total_params/1e6:.1f}M)\")\n    148: \n>>> 149:     if successful_models == 3:\n    150:         logger.info(\"\u2705 ALL HRRM MODELS VALIDATION PASSED!\")\n    151:         logger.info(\"\")",
+    "context": {
+      "literal_value": 3,
+      "in_conditional": true
+    }
+  }
+]

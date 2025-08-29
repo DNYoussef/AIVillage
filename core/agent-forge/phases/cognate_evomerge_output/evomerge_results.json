@@ -1,0 +1,57 @@
+{
+  "best_model": {
+    "path": "cognate_evomerge_output\\gen1_winner1_child1",
+    "fitness": 0.004769808185907702,
+    "scores": {
+      "code": 0.004646738680700461,
+      "math": 0.005112845295419295,
+      "reasoning": 0.004724875558167696,
+      "language": 0.004594773209343354
+    },
+    "recipe": {
+      "type": "winner_child",
+      "parent": "cognate_evomerge_output\\gen1_winner1_child1",
+      "technique": "linear",
+      "crossover_parent": "parent_1"
+    }
+  },
+  "fitness_history": [
+    0.004618216732827325,
+    0.005182503062921266,
+    0.004675290353285769,
+    0.004757455938185255,
+    0.004769808185907702
+  ],
+  "final_population": [
+    {
+      "path": "cognate_evomerge_output\\gen1_winner1_child1",
+      "fitness": 0.004769808185907702,
+      "scores": {
+        "code": 0.004646738680700461,
+        "math": 0.005112845295419295,
+        "reasoning": 0.004724875558167696,
+        "language": 0.004594773209343354
+      }
+    },
+    {
+      "path": "cognate_evomerge_output\\gen1_winner1_child3",
+      "fitness": 0.004616501973941922,
+      "scores": {
+        "code": 0.004616501275449991,
+        "math": 0.004616501275449991,
+        "reasoning": 0.004616502672433853,
+        "language": 0.004616502672433853
+      }
+    },
+    {
+      "path": "cognate_evomerge_output\\gen1_winner2_child1",
+      "fitness": 0.004616501973941922,
+      "scores": {
+        "code": 0.004616501275449991,
+        "math": 0.004616501275449991,
+        "reasoning": 0.004616502672433853,
+        "language": 0.004616502672433853
+      }
+    }
+  ]
+}

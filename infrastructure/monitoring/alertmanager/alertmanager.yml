@@ -1,0 +1,222 @@
+# AIVillage Alertmanager Configuration
+global:
+  smtp_smarthost: 'localhost:587'
+  smtp_from: 'alerts@aivillage.com'
+  smtp_require_tls: true
+  pagerduty_url: 'https://events.pagerduty.com/v2/enqueue'
+  slack_api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+
+# Alert routing tree
+route:
+  group_by: ['alertname', 'cluster', 'service']
+  group_wait: 10s
+  group_interval: 5m
+  repeat_interval: 12h
+  receiver: 'web.hook'
+
+  # Route configuration for different severity levels
+  routes:
+    # Critical alerts - immediate escalation
+    - match:
+        severity: critical
+      receiver: 'critical-alerts'
+      group_wait: 1s
+      group_interval: 1m
+      repeat_interval: 5m
+
+    # Performance alerts for core services
+    - match:
+        component: agent-forge
+      receiver: 'agent-forge-team'
+      group_interval: 2m
+
+    - match:
+        component: hyperrag
+      receiver: 'hyperrag-team'
+      group_interval: 2m
+
+    - match:
+        component: p2p-mesh
+      receiver: 'p2p-team'
+      group_interval: 3m
+
+    # Infrastructure alerts
+    - match:
+        component: infrastructure
+      receiver: 'infrastructure-team'
+      group_interval: 5m
+
+    # Business impact alerts
+    - match:
+        severity: warning
+        component: core-services
+      receiver: 'business-alerts'
+      group_interval: 1m
+
+# Receivers define how alerts are sent
+receivers:
+  - name: 'web.hook'
+    webhook_configs:
+      - url: 'http://webhook-receiver:8080/generic'
+        send_resolved: true
+        http_config:
+          bearer_token: 'aivillage2024'
+        title: 'AIVillage Alert: {{ .GroupLabels.alertname }}'
+        text: >
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          Labels: {{ .Labels }}
+          {{ end }}
+
+  - name: 'critical-alerts'
+    # Multiple notification channels for critical alerts
+    email_configs:
+      - to: 'oncall@aivillage.com'
+        subject: '[CRITICAL] AIVillage Alert: {{ .GroupLabels.alertname }}'
+        body: |
+          🚨 CRITICAL ALERT 🚨
+
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          Service: {{ .Labels.job }}
+          Severity: {{ .Labels.severity }}
+          Time: {{ .StartsAt }}
+
+          Labels:
+          {{ range .Labels.SortedPairs }}  {{ .Name }}: {{ .Value }}
+          {{ end }}
+          {{ end }}
+
+          Dashboard: http://localhost:3000/d/aivillage-overview
+          Runbook: https://docs.aivillage.com/runbooks/{{ .GroupLabels.alertname }}
+
+    pagerduty_configs:
+      - routing_key: 'YOUR_PAGERDUTY_INTEGRATION_KEY'
+        description: '[{{ .Status | toUpper }}] {{ .GroupLabels.alertname }}: {{ .CommonAnnotations.summary }}'
+        severity: 'critical'
+        details:
+          alert_count: '{{ .Alerts | len }}'
+          alerts: '{{ range .Alerts }}{{ .Annotations.summary }} | {{ end }}'
+        links:
+          - href: 'http://localhost:3000/d/aivillage-overview'
+            text: 'AIVillage Dashboard'
+
+  - name: 'agent-forge-team'
+    slack_configs:
+      - api_url: 'YOUR_SLACK_WEBHOOK_FOR_AGENT_FORGE_TEAM'
+        channel: '#agent-forge-alerts'
+        title: '🤖 Agent Forge Alert: {{ .GroupLabels.alertname }}'
+        text: >
+          🤖 Agent Forge Pipeline Issue
+
+          {{ range .Alerts }}
+          **Alert**: {{ .Annotations.summary }}
+          **Description**: {{ .Annotations.description }}
+          **Phase**: {{ .Labels.phase }}
+          **Model**: {{ .Labels.model }}
+          **Severity**: {{ .Labels.severity }}
+          **Time**: {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+          {{ end }}
+
+          <http://localhost:3000/d/agent-forge-dashboard|View Dashboard>
+        short_fields: true
+
+  - name: 'hyperrag-team'
+    slack_configs:
+      - api_url: 'YOUR_SLACK_WEBHOOK_FOR_HYPERRAG_TEAM'
+        channel: '#hyperrag-alerts'
+        title: '🧠 HyperRAG Alert: {{ .GroupLabels.alertname }}'
+        text: >
+          🧠 HyperRAG Memory System Issue
+
+          {{ range .Alerts }}
+          **Alert**: {{ .Annotations.summary }}
+          **Description**: {{ .Annotations.description }}
+          **Query Type**: {{ .Labels.query_type }}
+          **Collection**: {{ .Labels.collection }}
+          **Severity**: {{ .Labels.severity }}
+          **Time**: {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+          {{ end }}
+
+          <http://localhost:3000/d/hyperrag-dashboard|View Dashboard>
+
+  - name: 'p2p-team'
+    webhook_configs:
+      - url: 'http://webhook-receiver:8080/p2p'
+        send_resolved: true
+        http_config:
+          bearer_token: 'aivillage2024'
+        title: '🌐 P2P Mesh Alert: {{ .GroupLabels.alertname }}'
+        text: >
+          🌐 P2P Mesh Network Issue
+
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          Peer Count: {{ .Labels.peer_count }}
+          Message Type: {{ .Labels.message_type }}
+          Success Rate: {{ .Labels.success_rate }}
+          {{ end }}
+
+  - name: 'infrastructure-team'
+    email_configs:
+      - to: 'infrastructure@aivillage.com'
+        subject: '[INFRA] AIVillage Alert: {{ .GroupLabels.alertname }}'
+        body: |
+          🏗️ Infrastructure Alert
+
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          Instance: {{ .Labels.instance }}
+          Severity: {{ .Labels.severity }}
+          Time: {{ .StartsAt }}
+          {{ end }}
+
+          Dashboard: http://localhost:3000/d/infrastructure-dashboard
+
+  - name: 'business-alerts'
+    webhook_configs:
+      - url: 'http://webhook-receiver:8080/business'
+        send_resolved: true
+        http_config:
+          bearer_token: 'aivillage2024'
+        title: '📊 Business Impact Alert: {{ .GroupLabels.alertname }}'
+        text: >
+          📊 Business Impact Alert
+
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          Service: {{ .Labels.job }}
+          Impact: {{ .Labels.business_impact }}
+          {{ end }}
+
+# Inhibition rules - suppress certain alerts when others are firing
+inhibit_rules:
+  # Don't alert on service-specific issues if the entire service is down
+  - source_match:
+      alertname: 'ServiceUnavailable'
+    target_match_re:
+      alertname: '(HighLatency|ErrorRate).*'
+    equal: ['job']
+
+  # Don't alert on high memory usage if the node is down
+  - source_match:
+      alertname: 'NodeDown'
+    target_match:
+      alertname: 'HighMemoryUsage'
+    equal: ['instance']
+
+  # Don't alert on individual component failures if there's a critical system failure
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['cluster', 'service']
+
+# Templates for custom message formatting
+templates:
+  - '/etc/alertmanager/templates/*.tmpl'

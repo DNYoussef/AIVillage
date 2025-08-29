@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  loki:
+    image: grafana/loki:2.8.0
+    container_name: aivillage-loki
+    restart: unless-stopped
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./loki-config.yml:/etc/loki/local-config.yaml:ro
+      - loki_data:/tmp/loki
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - aivillage-monitoring
+    labels:
+      - "aivillage.component=logging"
+      - "aivillage.service=loki"
+
+  promtail:
+    image: grafana/promtail:2.8.0
+    container_name: aivillage-promtail
+    restart: unless-stopped
+    volumes:
+      - /var/log:/var/log:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - ./promtail-config.yml:/etc/promtail/config.yml:ro
+    command: -config.file=/etc/promtail/config.yml
+    networks:
+      - aivillage-monitoring
+    depends_on:
+      - loki
+    labels:
+      - "aivillage.component=logging"
+      - "aivillage.service=promtail"
+
+  fluentd:
+    image: fluent/fluentd:v1.16-debian-1
+    container_name: aivillage-fluentd
+    restart: unless-stopped
+    ports:
+      - "24224:24224"
+      - "24224:24224/udp"
+    volumes:
+      - ./fluentd-config.conf:/fluentd/etc/fluent.conf:ro
+      - fluentd_data:/fluentd/log
+    environment:
+      FLUENTD_CONF: fluent.conf
+      FLUENTD_OPT: -v
+    networks:
+      - aivillage-monitoring
+    depends_on:
+      - loki
+    labels:
+      - "aivillage.component=logging"
+      - "aivillage.service=fluentd"
+
+volumes:
+  loki_data:
+  fluentd_data:
+
+networks:
+  aivillage-monitoring:
+    external: true

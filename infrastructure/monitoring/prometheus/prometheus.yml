@@ -1,0 +1,147 @@
+# Prometheus Configuration for AIVillage Monitoring
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'aivillage-production'
+    environment: 'production'
+
+rule_files:
+  - "rules/*.yml"
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093
+
+scrape_configs:
+  # Prometheus Self-Monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+    metrics_path: /metrics
+    scrape_interval: 5s
+
+  # Agent Forge Pipeline Monitoring
+  - job_name: 'agent-forge'
+    static_configs:
+      - targets: ['localhost:8001', 'localhost:8002', 'localhost:8003']
+    metrics_path: /metrics
+    scrape_interval: 10s
+    scrape_timeout: 5s
+    params:
+      format: ['prometheus']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: localhost:8001
+
+  # HyperRAG Memory System
+  - job_name: 'hyperrag'
+    static_configs:
+      - targets: ['localhost:8010']
+    metrics_path: /metrics
+    scrape_interval: 5s
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: 'hyperrag_.*'
+        action: keep
+
+  # P2P Networking Stack
+  - job_name: 'p2p-mesh'
+    static_configs:
+      - targets: ['localhost:9001', 'localhost:9002']
+    metrics_path: /api/metrics
+    scrape_interval: 15s
+    params:
+      module: [p2p_health]
+
+  # Edge Computing Infrastructure
+  - job_name: 'edge-computing'
+    static_configs:
+      - targets: ['localhost:8020', 'localhost:8021']
+    metrics_path: /edge/metrics
+    scrape_interval: 30s
+    relabel_configs:
+      - source_labels: [__meta_consul_service]
+        target_label: service
+
+  # Unified REST API Gateway
+  - job_name: 'api-gateway'
+    static_configs:
+      - targets: ['localhost:8000']
+    metrics_path: /api/v1/metrics
+    scrape_interval: 10s
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: 'http_.*'
+        action: keep
+      - source_labels: [__name__]
+        regex: 'api_.*'
+        action: keep
+
+  # Service Mesh Infrastructure
+  - job_name: 'service-mesh'
+    consul_sd_configs:
+      - server: 'localhost:8500'
+        services: ['aivillage-service']
+    relabel_configs:
+      - source_labels: [__meta_consul_service]
+        target_label: job
+      - source_labels: [__meta_consul_node]
+        target_label: instance
+
+  # Database Systems
+  - job_name: 'postgresql'
+    static_configs:
+      - targets: ['postgres-exporter:9187']
+    scrape_interval: 30s
+
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis-exporter:9121']
+    scrape_interval: 30s
+
+  - job_name: 'neo4j'
+    static_configs:
+      - targets: ['localhost:2004']
+    metrics_path: /metrics
+    scrape_interval: 30s
+
+  # Infrastructure Monitoring
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['localhost:9100']
+    scrape_interval: 30s
+
+  # Container Monitoring
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['localhost:8080']
+    scrape_interval: 30s
+
+  # Application Performance
+  - job_name: 'performance-metrics'
+    static_configs:
+      - targets: ['localhost:8030']
+    metrics_path: /performance/metrics
+    scrape_interval: 5s
+    params:
+      collect: ['cpu', 'memory', 'disk', 'network']
+
+# Remote Write Configuration for Long-term Storage
+remote_write:
+  - url: "http://localhost:8086/api/v1/prom/write?db=aivillage_metrics"
+    queue_config:
+      max_samples_per_send: 10000
+      max_shards: 200
+      capacity: 20000
+
+# Remote Read Configuration
+remote_read:
+  - url: "http://localhost:8086/api/v1/prom/read?db=aivillage_metrics"
+    read_recent: true

@@ -1,0 +1,43 @@
+{
+  "target_path": "scripts",
+  "timestamp": "2025-08-21 15:47:55",
+  "analysis_results": {
+    "connascence": {
+      "command": "C:\\Python312\\python.exe scripts/check_connascence.py scripts --format json --severity high --output quality_reports\\connascence_report.json --exclude tests/* --exclude *_test.py",
+      "description": "Connascence Violation Detection",
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "C:\\Users\\17175\\Desktop\\AIVillage\\scripts\\check_connascence.py:176: DeprecationWarning: ast.Num is deprecated and will be removed in Python 3.14; use ast.Constant instead\n  def visit_Num(self, node: ast.Num):\n",
+      "elapsed_time": 0.3876156806945801,
+      "success": false
+    },
+    "coupling": {
+      "command": "C:\\Python312\\python.exe scripts/coupling_metrics.py scripts --format json --output quality_reports\\coupling_metrics.json --exclude tests/* --exclude *_test.py",
+      "description": "Coupling Metrics Analysis",
+      "returncode": 0,
+      "stdout": "",
+      "stderr": "C:\\Users\\17175\\Desktop\\AIVillage\\scripts\\coupling_metrics.py:250: DeprecationWarning: ast.Num is deprecated and will be removed in Python 3.14; use ast.Constant instead\n  def visit_Num(self, node: ast.Num):\nC:\\Users\\17175\\Desktop\\AIVillage\\scripts\\coupling_metrics.py:258: DeprecationWarning: ast.Str is deprecated and will be removed in Python 3.14; use ast.Constant instead\n  def visit_Str(self, node: ast.Str):\n",
+      "elapsed_time": 0.43738484382629395,
+      "success": true
+    },
+    "anti_patterns": {
+      "command": "C:\\Python312\\python.exe scripts/detect_anti_patterns.py scripts --format json --severity high --output quality_reports\\anti_patterns.json --exclude tests/* --exclude *_test.py",
+      "description": "Anti-Pattern Detection",
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "C:\\Users\\17175\\Desktop\\AIVillage\\scripts\\detect_anti_patterns.py:143: DeprecationWarning: ast.Str is deprecated and will be removed in Python 3.14; use ast.Constant instead\n  def _detect_sql_patterns(self, node: ast.Str) -> bool:\nC:\\Users\\17175\\Desktop\\AIVillage\\scripts\\detect_anti_patterns.py:149: DeprecationWarning: Attribute s is deprecated and will be removed in Python 3.14; use value instead\n  content = node.s.upper()\n",
+      "elapsed_time": 0.4907951354980469,
+      "success": false
+    }
+  },
+  "summary": {
+    "tools_run": 3,
+    "successful_runs": 0,
+    "failed_runs": 3,
+    "total_runtime": 1.315795660018921,
+    "connascence_error": "C:\\Users\\17175\\Desktop\\AIVillage\\scripts\\check_connascence.py:176: DeprecationWarning: ast.Num is deprecated and will be removed in Python 3.14; use ast.Constant instead\n  def visit_Num(self, node: ast.Num):\n",
+    "coupling_error": "C:\\Users\\17175\\Desktop\\AIVillage\\scripts\\coupling_metrics.py:250: DeprecationWarning: ast.Num is deprecated and will be removed in Python 3.14; use ast.Constant instead\n  def visit_Num(self, node: ast.Num):\nC:\\Users\\17175\\Desktop\\AIVillage\\scripts\\coupling_metrics.py:258: DeprecationWarning: ast.Str is deprecated and will be removed in Python 3.14; use ast.Constant instead\n  def visit_Str(self, node: ast.Str):\n",
+    "anti_patterns_error": "C:\\Users\\17175\\Desktop\\AIVillage\\scripts\\detect_anti_patterns.py:143: DeprecationWarning: ast.Str is deprecated and will be removed in Python 3.14; use ast.Constant instead\n  def _detect_sql_patterns(self, node: ast.Str) -> bool:\nC:\\Users\\17175\\Desktop\\AIVillage\\scripts\\detect_anti_patterns.py:149: DeprecationWarning: Attribute s is deprecated and will be removed in Python 3.14; use value instead\n  content = node.s.upper()\n"
+  },
+  "total_elapsed": 1.315795660018921
+}

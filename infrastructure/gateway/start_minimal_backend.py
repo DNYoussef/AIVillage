@@ -8,11 +8,11 @@ Starts all necessary services for Agent Forge:
 - Optional additional services
 """
 
+from pathlib import Path
 import subprocess
 import sys
 import threading
 import time
-from pathlib import Path
 
 
 def start_service(name, script_path, port, wait_time=2):

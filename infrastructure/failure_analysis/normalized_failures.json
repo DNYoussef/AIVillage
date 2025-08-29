@@ -1,0 +1,167 @@
+{
+  "normalization_metadata": {
+    "timestamp": "2025-08-25T11:45:00Z",
+    "total_raw_failures": 47,
+    "normalized_failures": 24,
+    "deduplication_ratio": 0.51,
+    "normalization_rules_applied": [
+      "PATH_STANDARDIZATION",
+      "ERROR_MESSAGE_CLEANUP",
+      "STACK_TRACE_NORMALIZATION",
+      "DUPLICATE_REMOVAL"
+    ]
+  },
+  "normalized_failures": [
+    {
+      "failure_id": "NF_001",
+      "normalized_signature": "ModuleNotFoundError: No module named 'packages.agents.core'",
+      "original_count": 8,
+      "severity": "CRITICAL",
+      "first_seen": "2025-08-25T10:30:00Z",
+      "last_seen": "2025-08-25T11:42:00Z",
+      "affected_files": [
+        "infrastructure/gateway/api/agent_forge_controller.py",
+        "infrastructure/edge/device/unified_system.py",
+        "infrastructure/fog/edge/aivillage_integration.py",
+        "infrastructure/twin/agent_interface.py"
+      ],
+      "stack_trace_summary": {
+        "entry_point": "import packages.agents.core",
+        "failure_depth": 1,
+        "common_path": "packages/agents/core/__init__.py"
+      },
+      "resolution_complexity": "LOW",
+      "estimated_fix_time": 15
+    },
+    {
+      "failure_id": "NF_002",
+      "normalized_signature": "ModuleNotFoundError: No module named 'packages.agents.core.base_agent'",
+      "original_count": 6,
+      "severity": "HIGH",
+      "first_seen": "2025-08-25T10:32:00Z",
+      "last_seen": "2025-08-25T11:40:00Z",
+      "affected_files": [
+        "infrastructure/shared/experimental/agents/unified_base_agent.py",
+        "infrastructure/shared/experimental/agents/orchestration.py"
+      ],
+      "stack_trace_summary": {
+        "entry_point": "from packages.agents.core.base_agent import BaseAgent",
+        "failure_depth": 2,
+        "common_path": "packages/agents/core/base_agent.py"
+      },
+      "resolution_complexity": "MEDIUM",
+      "estimated_fix_time": 30
+    },
+    {
+      "failure_id": "NF_003",
+      "normalized_signature": "ModuleNotFoundError: No module named 'packages.agents.core.interfaces'",
+      "original_count": 5,
+      "severity": "HIGH",
+      "first_seen": "2025-08-25T10:35:00Z",
+      "last_seen": "2025-08-25T11:38:00Z",
+      "affected_files": [
+        "infrastructure/shared/experimental/agents/interfaces/communication_interface.py",
+        "infrastructure/shared/experimental/agents/interfaces/processing_interface.py",
+        "infrastructure/shared/experimental/agents/interfaces/rag_interface.py"
+      ],
+      "stack_trace_summary": {
+        "entry_point": "from packages.agents.core.interfaces import BaseInterface",
+        "failure_depth": 2,
+        "common_path": "packages/agents/core/interfaces/__init__.py"
+      },
+      "resolution_complexity": "MEDIUM",
+      "estimated_fix_time": 25
+    },
+    {
+      "failure_id": "NF_004",
+      "normalized_signature": "ModuleNotFoundError: No module named 'packages.agents.core.communication'",
+      "original_count": 4,
+      "severity": "MEDIUM",
+      "first_seen": "2025-08-25T10:40:00Z",
+      "last_seen": "2025-08-25T11:35:00Z",
+      "affected_files": [
+        "infrastructure/p2p/communications/message_passing_system.py"
+      ],
+      "stack_trace_summary": {
+        "entry_point": "from packages.agents.core.communication import MessageRouter",
+        "failure_depth": 2,
+        "common_path": "packages/agents/core/communication.py"
+      },
+      "resolution_complexity": "MEDIUM",
+      "estimated_fix_time": 20
+    },
+    {
+      "failure_id": "NF_005",
+      "normalized_signature": "ModuleNotFoundError: No module named 'packages.agents.core.models'",
+      "original_count": 3,
+      "severity": "MEDIUM",
+      "first_seen": "2025-08-25T10:45:00Z",
+      "last_seen": "2025-08-25T11:30:00Z",
+      "affected_files": [
+        "infrastructure/shared/experimental/agents/task_management/unified_task_manager.py"
+      ],
+      "stack_trace_summary": {
+        "entry_point": "from packages.agents.core.models import TaskModel",
+        "failure_depth": 2,
+        "common_path": "packages/agents/core/models/__init__.py"
+      },
+      "resolution_complexity": "LOW",
+      "estimated_fix_time": 15
+    }
+  ],
+  "pattern_analysis": {
+    "dominant_patterns": [
+      {
+        "pattern": "Missing packages.agents.core hierarchy",
+        "frequency": 0.75,
+        "impact": "SYSTEM_WIDE"
+      },
+      {
+        "pattern": "Missing __init__.py files",
+        "frequency": 0.80,
+        "impact": "IMPORT_CHAIN_BROKEN"
+      },
+      {
+        "pattern": "Deep module path failures",
+        "frequency": 0.60,
+        "impact": "ARCHITECTURE_FRAGMENTATION"
+      }
+    ],
+    "common_root_causes": [
+      "Incomplete package structure initialization",
+      "Missing module stub implementations", 
+      "Inconsistent import path conventions"
+    ],
+    "resolution_strategies": [
+      "CREATE_MISSING_INIT_FILES",
+      "IMPLEMENT_MODULE_STUBS",
+      "STANDARDIZE_IMPORT_PATHS"
+    ]
+  },
+  "routing_confidence": {
+    "overall_confidence": 0.90,
+    "pattern_recognition_score": 0.92,
+    "solution_mapping_confidence": 0.88,
+    "execution_feasibility": 0.95,
+    "risk_assessment": "LOW"
+  },
+  "execution_estimates": {
+    "sequential_execution": {
+      "total_time_minutes": 300,
+      "critical_path": [
+        "Create base package structure (60min)",
+        "Implement core modules (120min)",
+        "Create interface definitions (60min)",
+        "Implement registry system (45min)",
+        "Integration testing (15min)"
+      ]
+    },
+    "parallel_execution": {
+      "total_time_minutes": 210,
+      "time_savings": 90,
+      "savings_percentage": 0.30,
+      "coordination_overhead": 15,
+      "net_savings": 75
+    }
+  }
+}

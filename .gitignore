@@ -1,512 +1,202 @@
-# Python-related
-*.egg
-*.egg-info/
-*.py[cod]
-*.so
-__pycache__/
-build/
-dist/
-.ruff_cache/
+# Claude Flow Integration Directories
+.claude-flow/
+.claude/
+.hive-mind/
+.swarm/
+.roo/
 
-# Virtual environment
-*.venv
-ENV/
-env/
-evomerge_env/
-new_env/
-old_env/
-venv/
-
-# Environment variables
-.env
-.roo
-
-# IDE-related
-.idea/
+# IDE and Editor Files
 .vscode/
+.idea/
+*.swp
 *.swo
+*~
 
-# OS-related
-.DS_Store
-Thumbs.db
+# Python Cache and Build Files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
 
-# Project-specific
+# Virtual Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Database Files
 *.db
-*.log
+*.db-wal
+*.db-shm
+*.sqlite
 *.sqlite3
 
-# Jupyter Notebooks
-.ipynb_checkpoints
-
-# Model files (if you don't want to track large model files)
-*.pth
-*.onnx
-*.pt
-
-# Temporary files
-*.bak
-*.swp
-*.tmp
-*.backup
-*.orig
-*~
-.~*
-
-# Security analysis artifacts
-*_security.json
-comprehensive_security.json
-analyze_security.py
-security_fixes.py
-apply_security_patches.py
-
-# Development environments and models
-download_env/
-models/
-models--*/
-!src/agent_forge/models/
-merged_model/
-compressed_*/
-test_merged_models/
-
-# Claude development files
-.claude/
-.claude-flow/
-.claude_analysis/
-.claude_cleanup/
-.cleanup_analysis/
-.cleanup_backups/
-.test_repair_backup/
-
-# WandB experiment tracking files
-wandb/
-wandb_offline/
-
-# Temporary and generated files
-core/nul
-baseline_test_results.txt
-*_results.json
-*_report.json
-*_report.md
-*_dashboard.json
-*_summary.json
-*_analysis.json
-
-# MCP and memory files
-.mcp/
-memory_system_access_report.md
-read_agent_test.py
-mcp_config.json
-
-# Test and coverage files
-htmlcov/
-coverage.xml
-.coverage
-*.cover
-.hypothesis/
-.pytest_cache/
-test_checkpoints/
-test_output/
-test_outputs/
-test_data/
-test_artifacts*/
-test_artifacts_quick/
-tests/test_data/
-forge_checkpoints/
-forge_output/
-agent_forge_outputs/
-
-# RAG system cache and temporary files
-/tmp/rag_disk_cache/
-*.faiss
-*.pkl
-bm25_corpus/
-faiss_index/
-
-# Performance and analysis files
-performance_*.py
-performance_*.json
-performance_*.md
-memory_optimizer.py
-memory_optimization_report.md
-comprehensive_*.py
-fix_*.py
-apply_*.py
-run_*.py
-quick_*.py
-!benchmarks/run_all.py
-
-# Mesh network and integration test files
-mesh_network_*.py
-mesh_network_*.json
-mesh_network_*.md
-integration_*.json
-implementation_*.json
-production_*.json
-quality_*.json
-final_*.json
-
-# Benchmark and evaluation files
-benchmark_results/
-baseline_test_results.txt
-mobile_benchmark_*.json
-mobile_benchmark_*.md
-
-# Documentation cleanup files
-CLEANUP_*.md
-COMPREHENSIVE_*.md
-PERFORMANCE_*.md
-TEST_*.md
-SECURITY_*.md
-QUALITY_*.md
-FINAL_*.md
-DEPLOYMENT_*.md
-MESH_*.md
-CODE_*.md
-stub_*.md
-*_REPORT.md
-*_DASHBOARD.md
-*_CHECKLIST.md
-*_SUMMARY.md
-*_STATUS.md
-!docs/HONEST_STATUS.md
-*_ROADMAP.md
-*_PLAN.md
-
-# GitHub sync files
-github_issues.json
-github_issues_plan.json
-bandit_results.json
-
-# Style and cleanup files
-style_cleanup_report.md
-dependency_audit_report.json
-dependency_audit_report.py
-
-# Data and cache directories
-data/
-cache/
-logs/
-
-# Vendor files
-vendor/wheels/*.whl
-vendor/wheels/*.tar.gz
-.mcp/backups/
-
-# Notebooks checkpoint
-.ipynb_checkpoints/
-
-# Mobile app specific
-mobile-app/node_modules/
-mobile-app/.expo/
-mobile-app/.expo-shared/
-
-# Node.js dependencies and build artifacts
+# Node.js Dependencies
 node_modules/
-**/node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-.npm
-.yarn/
-.pnp.*
+lerna-debug.log*
+.pnpm-debug.log*
 
-# Vite build artifacts
-.vite/
-**/.vite/
-dist/
-**/dist/
-
-# Quality reports and architectural analysis
-quality_reports/
-**/quality_reports/
-reports/architecture/
-coupling_baseline.json
-fitness_results.json
-connascence_*.json
-magic_literal_*.json
-anti_patterns*.json
-architectural_*.json
-
-# Admin dashboard artifacts
-packages/ui/admin-dashboard.html.tmp.*
-admin_*.log
-start_admin_dashboard.bat.tmp
-
-# Hive memory and coordination
-memory/claude-flow-data.json
-.hive-mind/
-**/.hive-mind/
-
-# Build and deployment artifacts
-artifacts/
-**/artifacts/
-artifacts_collection.log
-pipeline_validation.log
-
-# Error and syntax tracking
-f821_errors.txt
-syntax_errors.txt
-*_errors.txt
-
-# Root cleanup - temporary files should be in subdirectories
-/*.py
-!setup.py
-/coupling_*.json
-/memory/
-/bin/
-/build/
-
-# AI Village specific paths
-CUsers*/
-aivillage-android-sdk/app/libs/
-aivillage-monorepo/node_modules/
-
-# ROO configuration (keep .roo/mcp.json)
-.roo/*
-!.roo/mcp.json
-
-# Generated files and artifacts
-forge_checkpoints/
-forge_output/
-test_output/
-wandb/
-test_merged_models/
-benchmark_results/
-*.pyc
-__pycache__/
-coverage.xml
-*.json
-!*config.json
-!pyproject.toml
-!package.json
-!package-lock.json
-!tsconfig.json
-!cleanup_metrics.json
-
-# Specific generated JSON files
-*_results.json
-*_report.json
-*_summary.json
-*_dashboard.json
-*_analysis.json
-*_audit.json
-!docs/benchmarks/compression_results.json
-!docs/benchmarks/rag_latency_results.json
-!docs/benchmarks/p2p_network_results.json
-github_issues.json
-implementation_status.json
-quality_gate_report.json
-
-# Test and benchmark artifacts
-integration_test_report.json
-final_performance_summary.json
-test_performance_summary.json
-mobile_benchmark_results.json
-mesh_network_*_results.json
-bandit_results.json
-dependency_audit_report.json
-
-# Generated artifacts and logs
-*.log
-*.db
-wandb/
-wandb_offline/
-htmlcov/
-cache/
-test_checkpoints/
-compressed_*/
-merged_model/
-agent_forge_outputs/
-evomerge_env/
-new_env/
-
-# Mobile and UI builds
-mobile-app/node_modules/
-aivillage-monorepo/node_modules/
-aivillage-android-sdk/build/
-
-# Data backups (keep only recent)
-data/backups/agent_data_*.db
-data/cleanup_archive/
-
-# Performance and monitoring
-performance_monitor_*.log
-monitoring/logs/
-
-# Audit artifacts and temporary analysis files
-tmp_audit/
-*_audit/
-*_analysis/
-*_backup/
-*_archive/
-AI_VILLAGE_READINESS.md
-*_READINESS.md
-*_VERIFICATION_*.md
-*_ANALYSIS_*.md
-*_IMPLEMENTATION_*.md
-*_COMPLETION_*.md
-
-# Temporary files and logs
-*.backup
-magi_production_*.log
-cleanup_*.log
-*.tmp
-temp_env/
-
-# Root directory organization - files should be in appropriate subdirectories
-/*_analyzer.py
-/execute_*.py
-/validate_*.py
-/verify_*.py
-/test_*.py
-/enhanced_*.py
-/focused_*.py
-/simple_*.py
-!src/
-!tests/
-!scripts/
-!validation/
-
-# Temporary analysis and audit directories - prevent accumulation
-tmp_*/
-tmp*/
-*_audit*/
-*_analysis*/
-*_tmp/
-*_temp/
-temp_*/
-temporary_*/
-CUsers*/
-DAIVillage*/
-
-# Specific temporary patterns to prevent accumulation
-tmp_audit*/
-tmp_codex*/
-tmp_betanet*/
-tmp_submission*/
-tmp_models*/
-tmp_bounty*/
-tmp_bloat*/
-tmp_scion*/
-tmp_bitchat*/
-!tmp_codex_audit_v3/
-!tmp_codex_audit_v3/tests/
-!tmp_codex_audit_v3/tests/**
-!tmp_codex_audit_v3/tests/**
-
-# Archive and backup directories in root
-docs/archived_reports/
-logs/archived/
-tmp/analysis_scripts/
-tmp/database_files/
-
-# Knowledge graph and visualization files
-knowledge_graph.png
-*.png
-*.jpg
-*.jpeg
-*.gif
-!docs/images/
-
-# Additional database patterns
-test_*.db
-*_test.db
-governance.db
-edge_deployment.db
-shield_validation.db
-
-# Additional log patterns
-graph_rag_*.log
-stem_textbook_*.log
-evomerge_*.log
-pipeline_*.log
-
-# Configuration and analysis JSON files
-*_kpi_report.json
-*_integration_readiness*.json
-*_codex_audit*.json
-bitchat_*.json
-test_dual_path_*.json
-ruff_results.json
-
-# Text analysis and cleanup files
-comprehensive_lint_cleanup.txt
-INTEGRATION_SETUP_COMPLETE.txt
-
-# Rust build artifacts
-**/target/
+# Build Artifacts and Caches
 target/
 Cargo.lock
-*.rlib
-*.rmeta
 *.pdb
-*.dll
-*.exe
-*.exp
-*.lib
-dep-graph.bin
-*.o
-*.obj
 
-# Allow tracked model utilities
-!agent_forge/models/
-!agent_forge/models/**
+# Temporary Files
+*.tmp
+*.temp
+*.log
+*.backup
+*.bak
 
-# Node.js dependencies and build artifacts
-node_modules/
-**/node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.npm
-.yarn/
-.pnp.*
+# OS Generated Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
 
-# Vite build artifacts
-.vite/
-**/.vite/
-dist/
-**/dist/
+# Model and Data Files (Large Files) - Now handled by Git LFS
+cognate_models/
+cognate_models_pretrained/
+*.h5
+*.pkl
+*.joblib
 
-# Quality reports and architectural analysis
-quality_reports/
-**/quality_reports/
-reports/architecture/
-coupling_baseline.json
-fitness_results.json
-connascence_*.json
-magic_literal_*.json
-anti_patterns*.json
-architectural_*.json
+# NOTE: *.bin, *.pt, *.safetensors are now tracked by Git LFS instead of .gitignore
 
-# Admin dashboard artifacts
-packages/ui/admin-dashboard.html.tmp.*
-admin_*.log
-start_admin_dashboard.bat.tmp
+# Large Archive Files (>100MB)
+.claude/archaeology/backups/*.tar.gz
+.claude/archaeology/backups/*.bundle
 
-# Hive memory and coordination
-memory/claude-flow-data.json
-.hive-mind/
-**/.hive-mind/
+# Analysis and Reports
+analysis/
+experiments/agents/agents/*/coordinator.py.backup
+experiments/agents/agents/*/demo.py.backup
+experiments/agents/agents/*/*.backup
+experiments/agents/agents/base/process_handler.py.backup
+experiments/agents/agents/king/analytics/analytics_manager.py.backup
+experiments/agents/agents/king/input/*.backup
+experiments/agents/agents/king/planning/*.backup
+experiments/agents/agents/king/tests/*.backup
+experiments/agents/agents/magi/magi_agent.py.backup
+experiments/agents/agents/orchestration.py.backup
+experiments/agents/agents/sage/*.backup
+experiments/agents/agents/task_management/*.backup
+experiments/agents/agents/unified_base_agent.py.backup
+infrastructure/shared/experimental/agents/agents/*/*.backup
 
-# Build and deployment artifacts
-artifacts/
-**/artifacts/
-artifacts_collection.log
-pipeline_validation.log
+# Environment Configuration
+integrations/bounties/betanet/.env
+fallback_dataset.json
 
-# Error and syntax tracking
-f821_errors.txt
-syntax_errors.txt
-*_errors.txt
+# Build and Compilation Artifacts
+integrations/bounties/betanet/target/
+integrations/clients/rust/betanet/betanet-lint/Cargo.lock
 
-# Root cleanup - temporary files should be in subdirectories
-/*.py
-!setup.py
-/coupling_*.json
-/memory/
-/bin/
-/build/
-# Large generated files - do not commit
-docs/quality/connascence_report.txt
-infrastructure/shared/training/datasets/reasoner_enhancement/reasoner_training_data.jsonl
+# Examples and Demo Data
+examples/demos/
+
+# Performance and Benchmarking Data
+tools/benchmarks/*.json
+tools/benchmarks/*.md
+ui/*/aivillage_system.log
+
+# Package Manager Files
+packages/agent_forge/
+packages/agents/core/components/
+packages/agents/core/interfaces/
+packages/agents/core/models/
+packages/agents/navigation/
+packages/core/legacy/agents/
+
+# Integration Artifacts
+integrations/bounties/betanet/artifacts/
+integrations/bounties/betanet/bounty_artifacts/
+integrations/bounties/betanet/submission/artifacts/
+integrations/bounties/betanet/system_integration_results.json
+integrations/bounties/betanet/final-sbom.json
+integrations/bounties/betanet/comprehensive_system_integration_test.py
+integrations/bounties/betanet/BOUNTY_COMPLETION_REPORT.md
+integrations/bounties/tmp/
+integrations/clients/p2p/
+integrations/clients/web/src/locales/
+
+# Scripts and Utilities (Generated)
+scripts/architectural_analysis/
+scripts/fixes/
+scripts/utilities/
+scripts/create_real_cognate_models.py
+scripts/demo_vrf_neighbor_selection.py
+scripts/deploy_enhanced_fog_system.py
+scripts/fix_tool_calling_errors.py
+scripts/phase2_completion_summary.md
+scripts/phase2_migration_report.json
+scripts/pretrain_cognate_models.py
+scripts/run_*.py
+scripts/test_enhanced_fog_integration.py
+
+# Infrastructure Data and Performance Cache
+infrastructure/data/
+infrastructure/distributed_inference/
+infrastructure/evolution_scheduler/
+infrastructure/failure_analysis/
+infrastructure/ml/
+infrastructure/monitoring/grafana/dashboards/
+infrastructure/monitoring/triage/
+infrastructure/p2p/advanced/
+infrastructure/performance/cache/
+infrastructure/routing_engine/
+infrastructure/shared/jobs/data/
+infrastructure/shared/python/
+infrastructure/twin/performance/
+
+# Source Data and Monitoring
+src/data/
+src/monitoring/performance_profiler.py
+src/security/
+
+# Development Tools
+tools/ci-cd/
+tools/deployment/
+tools/development/
+tools/monitoring/
+tools/operations/
+tools/security/deny_insecure_test.pdb
+
+# UI Build Artifacts
+ui/web/node_modules/
+ui/web/tsconfig.node.json
+
+# Rust Build Artifacts
+*.rs.bak
+crates/*/target/
+
+# Backup and Archive Files
+*.tar.gz
+*.bundle

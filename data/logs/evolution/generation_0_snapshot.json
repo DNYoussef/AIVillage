@@ -1,0 +1,70 @@
+{
+  "generation": 0,
+  "timestamp": 1756227537.220885,
+  "population_size": 8,
+  "statistics": {
+    "generation": 0,
+    "population_size": 8,
+    "best_fitness": 0.6927170773905655,
+    "mean_fitness": 0.6520950634876216
+  },
+  "top_models": [
+    {
+      "name": "seed_1",
+      "parameter_count": 25083528,
+      "scores": {
+        "coding": 0.7586838014346508,
+        "math": 0.7361490853786966,
+        "reasoning": 0.5352328592408039,
+        "language": 0.7363322540264758
+      },
+      "fitness": 0.6927170773905655,
+      "generation": 0
+    },
+    {
+      "name": "initial_merge_4",
+      "scores": {
+        "coding": 0.6640807902856704,
+        "math": 0.6774180841495,
+        "reasoning": 0.6572001830720203,
+        "language": 0.7338908869106419
+      },
+      "fitness": 0.6796569812732096,
+      "generation": 0,
+      "parents": [
+        "initial_merge_3",
+        "seed_3"
+      ],
+      "technique": "dare"
+    },
+    {
+      "name": "initial_merge_5",
+      "scores": {
+        "coding": 0.6476594154565618,
+        "math": 0.6636794440108852,
+        "reasoning": 0.6407781810238461,
+        "language": 0.7300005542055434
+      },
+      "fitness": 0.66641234173676,
+      "generation": 0,
+      "parents": [
+        "seed_3",
+        "initial_merge_4"
+      ],
+      "technique": "ties"
+    }
+  ],
+  "diversity_metrics": {
+    "fitness_std": 0.03116105185765753,
+    "fitness_range": 0.10370565924760733,
+    "unique_techniques": 6,
+    "technique_distribution": {
+      "task_arithmetic": 1,
+      "linear": 1,
+      "unknown": 3,
+      "dare": 1,
+      "slerp": 1,
+      "ties": 1
+    }
+  }
+}

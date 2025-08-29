@@ -282,6 +282,9 @@ jobs:
         run: |
           pip install bandit detect-secrets safety
 
+          # Use optimized security checks
+          bash tools/linting/forbidden_checks_optimized.sh
+
           # Comprehensive security scan
           bandit -r packages/p2p/ core/ infrastructure/ -f json -o bandit-report.json || echo "Bandit completed with warnings"
 
@@ -297,7 +300,7 @@ jobs:
           echo "✅ Security scanning completed"
 
       - name: Check for forbidden terms
-        run: tools/linting/forbidden_checks.sh
+        run: bash tools/linting/forbidden_checks_optimized.sh
 
       - name: 🛡️ Production Security Gate
         run: |

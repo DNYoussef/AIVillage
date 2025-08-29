@@ -26,6 +26,7 @@ logger = logging.getLogger(__name__)
 class TransportType(Enum):
     """Available transport types in order of typical preference."""
 
+    LIBP2P_MESH = "libp2p_mesh"  # LibP2P mesh network (primary)
     BITCHAT = "bitchat"  # Bluetooth Low Energy mesh
     BETANET = "betanet"  # Encrypted internet (HTX)
     QUIC = "quic"  # Direct QUIC connections
@@ -216,27 +217,31 @@ class TransportManager:
         # Transport priority strategy
         if self.transport_priority == TransportPriority.OFFLINE_FIRST:
             priority_scores = {
-                TransportType.BITCHAT: 1.0,
+                TransportType.LIBP2P_MESH: 1.0,
+                TransportType.BITCHAT: 0.9,
                 TransportType.BETANET: 0.8,
                 TransportType.QUIC: 0.6,
                 TransportType.FALLBACK: 0.2,
             }
         elif self.transport_priority == TransportPriority.PRIVACY_FIRST:
             priority_scores = {
-                TransportType.BETANET: 1.0,
-                TransportType.BITCHAT: 0.9,
+                TransportType.LIBP2P_MESH: 1.0,
+                TransportType.BETANET: 0.9,
+                TransportType.BITCHAT: 0.8,
                 TransportType.QUIC: 0.5,
                 TransportType.FALLBACK: 0.2,
             }
         elif self.transport_priority == TransportPriority.PERFORMANCE_FIRST:
             priority_scores = {
-                TransportType.QUIC: 1.0,
+                TransportType.LIBP2P_MESH: 1.0,
+                TransportType.QUIC: 0.9,
                 TransportType.BETANET: 0.8,
                 TransportType.BITCHAT: 0.4,
                 TransportType.FALLBACK: 0.2,
             }
         else:  # Default to balanced
             priority_scores = {
+                TransportType.LIBP2P_MESH: 1.0,
                 TransportType.BITCHAT: 0.9,
                 TransportType.BETANET: 0.9,
                 TransportType.QUIC: 0.9,

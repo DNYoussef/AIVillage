@@ -1,0 +1,16 @@
+2025-08-24 07:29:40,744 - agent_forge.phases.cognate - ERROR - ❌ New cognate-pretrain structure not available
+2025-08-24 07:29:45,988 - datasets - INFO - PyTorch version 2.2.1 available.
+2025-08-24 07:29:53,377 - agent_forge - INFO - Loaded 1 phase modules: ['cognate_pretrain']
+2025-08-24 07:29:53,377 - agent_forge - INFO - Agent Forge bridge module loaded successfully
+2025-08-24 07:29:53,378 - import_helper - ERROR - Failed to import agent_forge.phases.cognate_pretrain.model_factory: Module agent_forge.phases.cognate_pretrain.model_factory not found - missing attribute 'model_factory'
+2025-08-24 07:29:53,378 - import_helper - WARNING - Optional import failed: agent_forge.phases.cognate_pretrain.model_factory
+2025-08-24 07:29:53,379 - import_helper - ERROR - Failed to import agent_forge.phases.cognate_pretrain.cognate_creator: Module agent_forge.phases.cognate_pretrain.cognate_creator not found - missing attribute 'cognate_creator'
+2025-08-24 07:29:53,379 - import_helper - WARNING - Optional import failed: agent_forge.phases.cognate_pretrain.cognate_creator
+2025-08-24 07:29:53,379 - import_helper - ERROR - Failed to import agent_forge.phases.cognate_pretrain.phase_integration: Module agent_forge.phases.cognate_pretrain.phase_integration not found - missing attribute 'phase_integration'
+2025-08-24 07:29:53,379 - import_helper - WARNING - Optional import failed: agent_forge.phases.cognate_pretrain.phase_integration
+2025-08-24 07:29:53,381 - import_helper - ERROR - Failed to import agent_forge.phases.cognate_pretrain.model_factory: Module agent_forge.phases.cognate_pretrain.model_factory not found - missing attribute 'model_factory'
+2025-08-24 07:29:53,381 - import_helper - WARNING - Optional import failed: agent_forge.phases.cognate_pretrain.model_factory
+2025-08-24 07:29:53,381 - import_helper - ERROR - Failed to import agent_forge.phases.cognate_pretrain.cognate_creator: Module agent_forge.phases.cognate_pretrain.cognate_creator not found - missing attribute 'cognate_creator'
+2025-08-24 07:29:53,381 - import_helper - WARNING - Optional import failed: agent_forge.phases.cognate_pretrain.cognate_creator
+2025-08-24 07:29:53,382 - import_helper - ERROR - Failed to import agent_forge.phases.cognate_pretrain.phase_integration: Module agent_forge.phases.cognate_pretrain.phase_integration not found - missing attribute 'phase_integration'
+2025-08-24 07:29:53,382 - import_helper - WARNING - Optional import failed: agent_forge.phases.cognate_pretrain.phase_integration

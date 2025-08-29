@@ -1,0 +1,3 @@
+2025-08-23 06:42:21,188 - unified_cleanup - INFO - Starting unified cleanup process...
+2025-08-23 06:42:21,188 - unified_cleanup - INFO - Creating backup at C:\Users\17175\Desktop\AIVillage\backups\cleanup_backup_1755945741
+2025-08-23 06:43:45,149 - unified_cleanup - INFO - Running task: linting_fixes - Fix common linting issues

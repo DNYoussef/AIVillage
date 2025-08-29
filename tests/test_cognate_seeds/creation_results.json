@@ -1,0 +1,21 @@
+{
+  "method": "factory",
+  "models": [
+    {
+      "name": "model-1",
+      "parameter_count": 25083528,
+      "path": "./model-1"
+    },
+    {
+      "name": "model-2",
+      "parameter_count": 25083528,
+      "path": "./model-2"
+    },
+    {
+      "name": "model-3",
+      "parameter_count": 25083528,
+      "path": "./model-3"
+    }
+  ],
+  "validation": "factory_handled"
+}

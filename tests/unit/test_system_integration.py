@@ -378,6 +378,7 @@ class SystemIntegrationTester:
         """Test T5 Federation + T6 Distributed Inference integration"""
         try:
             from federation.core.federation_manager import FederationManager
+
             from production.distributed_inference.tokenomics_receipts import TokenomicsReceiptManager
 
             # Create components

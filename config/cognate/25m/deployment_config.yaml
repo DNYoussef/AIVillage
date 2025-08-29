@@ -9,24 +9,24 @@ description: "Production deployment configuration for 25M Cognate Refiner"
 environment:
   # Environment type
   type: "production"         # production, staging, development
-  
+
   # Resource allocation
   resources:
     # Minimum requirements
     min_memory_gb: 4
     min_cpu_cores: 2
     min_storage_gb: 10
-    
+
     # Recommended configuration
     recommended_memory_gb: 8
     recommended_cpu_cores: 4
     recommended_storage_gb: 20
-    
+
     # Maximum limits
     max_memory_gb: 16
     max_cpu_cores: 8
     max_storage_gb: 50
-  
+
   # Hardware preferences
   hardware:
     prefer_gpu: false        # 25M model runs well on CPU
@@ -40,20 +40,20 @@ serving:
   port: 8080
   workers: 2               # Number of worker processes
   max_concurrent_requests: 10
-  
+
   # Model loading
   model_loading:
     lazy_loading: false
     preload_memory: true
     warmup_requests: 5
-    
+
   # Request handling
   request_handling:
     max_batch_size: 8
     batching_timeout_ms: 50
     queue_size: 100
     timeout_seconds: 30
-  
+
   # Generation settings
   generation:
     # Default generation parameters
@@ -63,13 +63,13 @@ serving:
       top_p: 0.9
       top_k: 50
       do_sample: true
-      
+
     # Limits
     max_tokens_limit: 1024
     min_tokens_limit: 1
     temperature_range: [0.1, 2.0]
     top_p_range: [0.1, 1.0]
-    
+
   # Memory configuration during serving
   memory_serving:
     enable_memory_bank: true
@@ -84,25 +84,25 @@ performance:
     target_p50_ms: 200
     target_p95_ms: 500
     target_p99_ms: 1000
-    
+
   # Throughput targets
   throughput:
     target_requests_per_second: 10
     target_tokens_per_second: 50
-    
+
   # ACT configuration for inference (infer-few paradigm)
   act_inference:
     max_steps: 2            # Reduced for inference
     target_steps: 1
     early_stopping: true
     efficiency_threshold: 0.95
-    
+
   # Memory efficiency
   memory_efficiency:
     enable_kv_cache: true
     max_cache_size_mb: 512
     cache_cleanup_threshold: 0.8
-    
+
   # Optimization flags
   optimization:
     torch_compile: false     # Stable deployment
@@ -116,13 +116,13 @@ scaling:
     enabled: false
     min_replicas: 1
     max_replicas: 3
-    
+
   # Scaling metrics
   scaling_metrics:
     cpu_utilization_target: 70
     memory_utilization_target: 80
     request_queue_length_target: 20
-    
+
   # Load balancing
   load_balancing:
     strategy: "round_robin"  # round_robin, least_connections, weighted
@@ -135,25 +135,25 @@ security:
   authentication:
     enabled: false           # Configure based on deployment needs
     method: "api_key"        # api_key, jwt, oauth
-    
+
   # Authorization
   authorization:
     enabled: false
     role_based: false
-    
+
   # Rate limiting
   rate_limiting:
     enabled: true
     requests_per_minute: 60
     tokens_per_minute: 3000
     burst_size: 10
-    
+
   # Input validation
   input_validation:
     max_input_length: 2048
     sanitize_input: true
     block_malicious_patterns: true
-    
+
   # Output filtering
   output_filtering:
     content_filter: false
@@ -168,20 +168,20 @@ monitoring:
     endpoint: "/health"
     interval_seconds: 30
     timeout_seconds: 5
-    
+
     # Health check criteria
     criteria:
       - "model_loaded"
       - "memory_usage_ok"
       - "response_time_ok"
       - "error_rate_ok"
-  
+
   # Metrics collection
   metrics:
     enabled: true
     endpoint: "/metrics"
     format: "prometheus"     # prometheus, json, custom
-    
+
     # Metrics to collect
     collect:
       # System metrics
@@ -189,36 +189,36 @@ monitoring:
       - "memory_usage"
       - "disk_usage"
       - "network_io"
-      
+
       # Application metrics
       - "request_count"
       - "request_duration"
       - "error_count"
       - "queue_length"
-      
+
       # Model metrics
       - "tokens_generated"
       - "act_steps_used"
       - "memory_reads"
       - "memory_writes"
       - "model_memory_usage"
-  
+
   # Logging
   logging:
     level: "INFO"
     format: "json"
-    
+
     # Log destinations
     destinations:
       console: true
       file: true
       remote: false
-      
+
     # Log rotation
     rotation:
       max_size_mb: 100
       backup_count: 5
-      
+
     # Sensitive data handling
     sanitize_logs: true
     log_requests: false      # Privacy consideration
@@ -232,20 +232,20 @@ data:
     config_path: "/models/cognate_25m/config.json"
     tokenizer_path: "/models/cognate_25m"
     memory_bank_path: "/models/cognate_25m/memory_bank.json"
-    
+
   # Caching
   caching:
     enabled: true
     cache_type: "memory"     # memory, redis, disk
     cache_size_mb: 256
     cache_ttl_seconds: 3600
-    
+
   # Data persistence
   persistence:
     memory_sessions: true
     conversation_history: false
     usage_analytics: true
-    
+
   # Data cleanup
   cleanup:
     cleanup_interval_hours: 24
@@ -259,20 +259,20 @@ error_handling:
     include_details: false   # Security consideration
     include_stack_trace: false
     default_message: "An error occurred processing your request"
-    
+
   # Retry configuration
   retries:
     max_retries: 3
     retry_delay_ms: 1000
     backoff_factor: 2.0
-    
+
   # Circuit breaker
   circuit_breaker:
     enabled: true
     failure_threshold: 5
     recovery_timeout_seconds: 60
     half_open_max_calls: 3
-    
+
   # Fallback strategies
   fallbacks:
     enable_fallback_model: false
@@ -287,13 +287,13 @@ backup:
     backup_interval_hours: 24
     max_backups: 7
     backup_location: "/backups/cognate_25m"
-    
+
   # Memory bank backup
   memory_backup:
     enabled: true
     backup_interval_hours: 6
     incremental_backup: true
-    
+
   # Configuration backup
   config_backup:
     enabled: true
@@ -304,19 +304,19 @@ backup:
 deployment_strategy:
   # Deployment type
   type: "blue_green"       # blue_green, rolling, canary
-  
+
   # Blue-green deployment
   blue_green:
     health_check_duration: 300
     traffic_switch_delay: 60
     rollback_trigger: "health_check_failure"
-    
+
   # Rolling deployment
   rolling:
     batch_size: 1
     max_unavailable: 0
     health_check_delay: 30
-    
+
   # Canary deployment
   canary:
     canary_percentage: 10
@@ -329,7 +329,7 @@ pipeline_integration:
   pipeline_phase: "deployment"
   model_version: "1.0.0"
   build_id: null           # Set during deployment
-  
+
   # Integration points
   integrations:
     # Metrics export to pipeline
@@ -337,24 +337,24 @@ pipeline_integration:
       enabled: true
       endpoint: "/pipeline/metrics"
       format: "json"
-      
+
     # Health reporting
     health_reporting:
       enabled: true
       report_interval: 300
       endpoint: "/pipeline/health"
-      
+
   # Quality gates for production
   quality_gates:
     # Performance gates
     max_p95_latency_ms: 500
     min_throughput_rps: 5
     max_error_rate_percent: 1
-    
+
     # Resource gates
     max_memory_usage_percent: 80
     max_cpu_usage_percent: 70
-    
+
     # Model gates
     min_model_accuracy: 0.7
     max_model_memory_mb: 2000
@@ -367,13 +367,13 @@ environment_overrides:
     serving.workers: 1
     security.rate_limiting.enabled: false
     monitoring.logging.level: "DEBUG"
-    
+
   # Staging environment
   staging:
     resources.recommended_memory_gb: 4
     serving.workers: 1
     security.rate_limiting.requests_per_minute: 120
-    
+
   # Production environment
   production:
     # Production settings are the defaults
@@ -386,13 +386,13 @@ maintenance:
     enabled: false
     maintenance_window: "02:00-04:00 UTC"
     notification_advance_hours: 24
-    
+
   # Update strategy
   updates:
     auto_update: false
     update_channel: "stable"  # stable, beta, alpha
     rollback_on_failure: true
-    
+
   # Health monitoring during maintenance
   maintenance_monitoring:
     extended_health_checks: true
@@ -409,13 +409,13 @@ documentation:
     enabled: true
     endpoint: "/docs"
     format: "swagger"
-    
+
   # Operational documentation
   operational_docs:
     deployment_guide: "docs/deployment/cognate_25m_deployment_guide.md"
     troubleshooting_guide: "docs/troubleshooting/cognate_25m_troubleshooting.md"
     monitoring_guide: "docs/monitoring/cognate_25m_monitoring.md"
-    
+
   # Support information
   support:
     contact_info: "support@aivillage.com"

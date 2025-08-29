@@ -1,4 +1,0 @@
-mcts_iterations: 15
-mcts_exploration_weight: 1.0
-mcts_simulation_depth: 10
-dpo_beta: 0.1

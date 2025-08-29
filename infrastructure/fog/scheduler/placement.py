@@ -23,6 +23,9 @@ from typing import Any
 # Import marketplace for pricing constraints
 from .marketplace import BidType, PricingTier
 
+# Import reputation system for trust scoring
+from ..reputation import BayesianReputationEngine, integrate_with_scheduler
+
 logger = logging.getLogger(__name__)
 
 
@@ -855,18 +858,21 @@ class FogScheduler:
     Main fog job scheduler integrating NSGA-II placement with existing infrastructure
     """
 
-    def __init__(self):
+    def __init__(self, reputation_engine: BayesianReputationEngine = None):
         self.placement_engine = NSGA2PlacementEngine()
         self.node_registry: dict[str, FogNode] = {}
         self.job_queue: list[JobRequest] = []
         self.placement_cache: dict[str, PlacementSolution] = {}
+        
+        # Reputation system integration
+        self.reputation_engine = reputation_engine or BayesianReputationEngine()
 
         # Performance metrics
         self.placement_latencies: list[float] = []
         self.successful_placements = 0
         self.failed_placements = 0
 
-        logger.info("Fog scheduler initialized with NSGA-II placement engine")
+        logger.info("Fog scheduler initialized with NSGA-II placement engine and reputation system")
 
     async def register_node(self, node: FogNode) -> None:
         """Register a fog node in the scheduler"""
@@ -898,6 +904,11 @@ class FogScheduler:
                 node.queued_jobs = status_update["queued_jobs"]
 
             node.last_heartbeat = datetime.now(UTC)
+            
+            # Update reputation system with latest trust score
+            reputation_score = self.reputation_engine.get_reputation_score(node_id)
+            if reputation_score:
+                node.trust_score = self.reputation_engine.get_trust_score(node_id)
 
     async def schedule_job(
         self, job: JobRequest, strategy: PlacementStrategy = PlacementStrategy.NSGA_II

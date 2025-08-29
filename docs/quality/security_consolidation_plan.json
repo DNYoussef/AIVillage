@@ -1,0 +1,83 @@
+{
+  "analysis": {
+    "total_encryption_methods": 33,
+    "duplicate_algorithms": {
+      "unknown": [
+        "EncryptionMethod(file_path='packages\\\\core\\\\tools\\\\security\\\\test_security_standalone.py', function_name='generate_encryption_key', line_number=17, method_type='encrypt', parameters=[], algorithm='unknown', complexity_score=1.4, usage_count=0)",
+        "EncryptionMethod(file_path='packages\\\\core\\\\tools\\\\security\\\\test_security_standalone.py', function_name='hash_password', line_number=68, method_type='hash', parameters=['self', 'password'], algorithm='unknown', complexity_score=1.5, usage_count=0)",
+        "EncryptionMethod(file_path='packages\\\\core\\\\tools\\\\security\\\\test_security_standalone.py', function_name='test_password_hashing', line_number=88, method_type='hash', parameters=['self'], algorithm='unknown', complexity_score=2.8, usage_count=0)",
+        "EncryptionMethod(file_path='packages\\\\core\\\\tools\\\\security\\\\test_security_standalone.py', function_name='test_password_hash_uniqueness', line_number=107, method_type='hash', parameters=['self'], algorithm='unknown', complexity_score=2.5, usage_count=0)",
+        "EncryptionMethod(file_path='packages\\\\core\\\\tools\\\\security\\\\verify_p2p_security.py', function_name='test_message_encryption', line_number=83, method_type='encrypt', parameters=[], algorithm='unknown', complexity_score=18.6, usage_count=0)",
+        "EncryptionMethod(file_path='packages\\\\core\\\\security\\\\digital_twin_encryption.py', function_name='encrypt_sensitive_field', line_number=28, method_type='encrypt', parameters=['self', 'data', 'field_name'], algorithm='unknown', complexity_score=2.7, usage_count=0)",
+        "EncryptionMethod(file_path='packages\\\\core\\\\security\\\\digital_twin_encryption.py', function_name='decrypt_sensitive_field', line_number=36, method_type='decrypt', parameters=['self', 'encrypted_data', 'field_name'], algorithm='unknown', complexity_score=2.7, usage_count=0)",
+        "EncryptionMethod(file_path='packages\\\\core\\\\security\\\\digital_twin_encryption.py', function_name='encrypt', line_number=44, method_type='encrypt', parameters=['self', 'data'], algorithm='unknown', complexity_score=2.8, usage_count=0)",
+        "EncryptionMethod(file_path='packages\\\\core\\\\security\\\\digital_twin_encryption.py', function_name='decrypt', line_number=53, method_type='decrypt', parameters=['self', 'encrypted_data'], algorithm='unknown', complexity_score=2.8, usage_count=0)",
+        "EncryptionMethod(file_path='packages\\\\core\\\\legacy\\\\security\\\\digital_twin_encryption.py', function_name='generate_encryption_key', line_number=358, method_type='encrypt', parameters=[], algorithm='unknown', complexity_score=1.8, usage_count=0)",
+        "EncryptionMethod(file_path='packages\\\\core\\\\legacy\\\\security\\\\digital_twin_encryption.py', function_name='encrypt_sensitive_field', line_number=103, method_type='encrypt', parameters=['self', 'plaintext_value', 'field_name'], algorithm='unknown', complexity_score=7.2, usage_count=0)",
+        "EncryptionMethod(file_path='packages\\\\core\\\\legacy\\\\security\\\\digital_twin_encryption.py', function_name='decrypt_sensitive_field', line_number=146, method_type='decrypt', parameters=['self', 'encrypted_data', 'field_name'], algorithm='unknown', complexity_score=5.2, usage_count=0)",
+        "EncryptionMethod(file_path='packages\\\\core\\\\legacy\\\\security\\\\digital_twin_encryption.py', function_name='hash_user_id', line_number=207, method_type='hash', parameters=['self', 'user_id'], algorithm='unknown', complexity_score=2.5, usage_count=0)",
+        "EncryptionMethod(file_path='packages\\\\core\\\\legacy\\\\security\\\\digital_twin_encryption.py', function_name='encrypt_profile_data', line_number=285, method_type='encrypt', parameters=['self', 'profile_data'], algorithm='unknown', complexity_score=7.1000000000000005, usage_count=0)",
+        "EncryptionMethod(file_path='packages\\\\core\\\\legacy\\\\security\\\\digital_twin_encryption.py', function_name='decrypt_profile_data', line_number=327, method_type='decrypt', parameters=['self', 'encrypted_profile'], algorithm='unknown', complexity_score=4.9, usage_count=0)",
+        "EncryptionMethod(file_path='packages\\\\edge\\\\legacy_src\\\\digital_twin\\\\security\\\\encryption_manager.py', function_name='encrypt_data', line_number=14, method_type='encrypt', parameters=['self', 'data'], algorithm='unknown', complexity_score=1.3, usage_count=0)",
+        "EncryptionMethod(file_path='packages\\\\edge\\\\legacy_src\\\\digital_twin\\\\security\\\\encryption_manager.py', function_name='decrypt_data', line_number=18, method_type='decrypt', parameters=['self', 'data'], algorithm='unknown', complexity_score=1.3, usage_count=0)",
+        "EncryptionMethod(file_path='packages\\\\core\\\\security\\\\digital_twin_encryption.py', function_name='encrypt_sensitive_field', line_number=28, method_type='encrypt', parameters=['self', 'data', 'field_name'], algorithm='unknown', complexity_score=2.7, usage_count=0)",
+        "EncryptionMethod(file_path='packages\\\\core\\\\security\\\\digital_twin_encryption.py', function_name='decrypt_sensitive_field', line_number=36, method_type='decrypt', parameters=['self', 'encrypted_data', 'field_name'], algorithm='unknown', complexity_score=2.7, usage_count=0)",
+        "EncryptionMethod(file_path='packages\\\\core\\\\security\\\\digital_twin_encryption.py', function_name='encrypt', line_number=44, method_type='encrypt', parameters=['self', 'data'], algorithm='unknown', complexity_score=2.8, usage_count=0)",
+        "EncryptionMethod(file_path='packages\\\\core\\\\security\\\\digital_twin_encryption.py', function_name='decrypt', line_number=53, method_type='decrypt', parameters=['self', 'encrypted_data'], algorithm='unknown', complexity_score=2.8, usage_count=0)",
+        "EncryptionMethod(file_path='packages\\\\core\\\\legacy\\\\security\\\\digital_twin_encryption.py', function_name='generate_encryption_key', line_number=358, method_type='encrypt', parameters=[], algorithm='unknown', complexity_score=1.8, usage_count=0)",
+        "EncryptionMethod(file_path='packages\\\\core\\\\legacy\\\\security\\\\digital_twin_encryption.py', function_name='encrypt_sensitive_field', line_number=103, method_type='encrypt', parameters=['self', 'plaintext_value', 'field_name'], algorithm='unknown', complexity_score=7.2, usage_count=0)",
+        "EncryptionMethod(file_path='packages\\\\core\\\\legacy\\\\security\\\\digital_twin_encryption.py', function_name='decrypt_sensitive_field', line_number=146, method_type='decrypt', parameters=['self', 'encrypted_data', 'field_name'], algorithm='unknown', complexity_score=5.2, usage_count=0)",
+        "EncryptionMethod(file_path='packages\\\\core\\\\legacy\\\\security\\\\digital_twin_encryption.py', function_name='hash_user_id', line_number=207, method_type='hash', parameters=['self', 'user_id'], algorithm='unknown', complexity_score=2.5, usage_count=0)",
+        "EncryptionMethod(file_path='packages\\\\core\\\\legacy\\\\security\\\\digital_twin_encryption.py', function_name='encrypt_profile_data', line_number=285, method_type='encrypt', parameters=['self', 'profile_data'], algorithm='unknown', complexity_score=7.1000000000000005, usage_count=0)",
+        "EncryptionMethod(file_path='packages\\\\core\\\\legacy\\\\security\\\\digital_twin_encryption.py', function_name='decrypt_profile_data', line_number=327, method_type='decrypt', parameters=['self', 'encrypted_profile'], algorithm='unknown', complexity_score=4.9, usage_count=0)",
+        "EncryptionMethod(file_path='packages\\\\core\\\\legacy\\\\security\\\\secure_api_server.py', function_name='hash_password', line_number=161, method_type='hash', parameters=['self', 'password'], algorithm='unknown', complexity_score=1.6, usage_count=0)",
+        "EncryptionMethod(file_path='packages\\\\core\\\\legacy\\\\security\\\\secure_api_server.py', function_name='_generate_self_signed_cert', line_number=827, method_type='sign', parameters=['self'], algorithm='unknown', complexity_score=6.800000000000001, usage_count=0)",
+        "EncryptionMethod(file_path='packages\\\\rag\\\\mcp_servers\\\\hyperag\\\\secure_database.py', function_name='_generate_content_hash', line_number=105, method_type='hash', parameters=['self', 'content'], algorithm='unknown', complexity_score=1.3, usage_count=0)",
+        "EncryptionMethod(file_path='packages\\\\rag\\\\mcp_servers\\\\hyperag\\\\secure_database.py', function_name='hash_content', line_number=339, method_type='hash', parameters=['content', 'salt'], algorithm='unknown', complexity_score=2.5, usage_count=0)",
+        "EncryptionMethod(file_path='packages\\\\rag\\\\mcp_servers\\\\hyperag\\\\secure_database.py', function_name='verify_hash', line_number=346, method_type='hash', parameters=['content', 'hash_value', 'salt'], algorithm='unknown', complexity_score=1.3, usage_count=0)",
+        "EncryptionMethod(file_path='packages\\\\rag\\\\mcp_servers\\\\hyperag\\\\secure_database.py', function_name='validate_hash', line_number=372, method_type='hash', parameters=['hash_value'], algorithm='unknown', complexity_score=5.4, usage_count=0)"
+      ]
+    },
+    "consolidation_opportunities": [],
+    "complexity_analysis": {
+      "average_complexity": 3.8696969696969696,
+      "max_complexity": 18.6,
+      "min_complexity": 1.3,
+      "total_methods": 33
+    }
+  },
+  "consolidation_plan": {
+    "target_module": "packages/core/security/unified_encryption.py",
+    "migration_steps": [
+      "1. Create unified encryption module with interface",
+      "2. Implement DigitalTwinEncryption as primary implementation",
+      "3. Create adapter pattern for legacy implementations",
+      "4. Update dependency injection container",
+      "5. Migrate high-usage files first (packages/core/security/)",
+      "6. Update agent base template to use unified service",
+      "7. Migrate remaining usages module by module",
+      "8. Remove duplicate implementations",
+      "9. Update tests to use behavioral contracts",
+      "10. Validate performance and security equivalence"
+    ],
+    "backward_compatibility": [
+      "Maintain existing method signatures during transition",
+      "Use decorator pattern to wrap legacy calls",
+      "Provide migration utilities for common patterns",
+      "Keep deprecated methods with warnings for 1 release cycle",
+      "Document migration path for each deprecated method"
+    ],
+    "estimated_reduction": {
+      "method_count": 62,
+      "code_lines": 0.6,
+      "coupling_score": 0.4,
+      "maintenance_burden": 0.7
+    }
+  },
+  "priority_files": [
+    "packages/core/security/digital_twin_encryption.py",
+    "packages/core/legacy/security/digital_twin_encryption.py",
+    "packages/edge/legacy_src/digital_twin/security/encryption_manager.py",
+    "packages/p2p/communications/a2a_protocol.py"
+  ]
+}

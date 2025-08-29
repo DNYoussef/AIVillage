@@ -1,0 +1,37 @@
+{
+  "collection_enabled": true,
+  "parallel_collection": true,
+  "compression_enabled": true,
+  "retention_days": 30,
+  
+  "coverage_enabled": true,
+  "coverage_threshold": 80.0,
+  "coverage_formats": ["xml", "html", "json"],
+  
+  "security_enabled": true,
+  "security_tools": ["bandit", "safety", "semgrep"],
+  "vulnerability_threshold": "medium",
+  
+  "sbom_enabled": true,
+  "sbom_formats": ["spdx", "cyclonedx"],
+  "include_dev_dependencies": false,
+  
+  "performance_enabled": true,
+  "benchmark_timeout": 300,
+  "performance_regression_threshold": 0.10,
+  
+  "quality_enabled": true,
+  "quality_tools": ["ruff", "mypy", "complexity"],
+  "hotspot_analysis": true,
+  
+  "container_enabled": true,
+  "container_tools": ["trivy", "grype"],
+  "base_image_scanning": true,
+  
+  "compliance_enabled": true,
+  "compliance_frameworks": ["gdpr", "soc2", "pci"],
+  
+  "notifications_enabled": true,
+  "notification_channels": ["console", "file"],
+  "failure_notifications": true
+}

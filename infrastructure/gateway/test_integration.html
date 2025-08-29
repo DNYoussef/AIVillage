@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>P2P/Fog Integration Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #1a1a2e;
+            color: white;
+        }
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .test-section {
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            background: #16213e;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .success { background: rgba(16, 185, 129, 0.2); border-left: 4px solid #10b981; }
+        .error { background: rgba(248, 113, 113, 0.2); border-left: 4px solid #f87171; }
+        .warning { background: rgba(251, 191, 36, 0.2); border-left: 4px solid #fbbf24; }
+        #p2p-network-card, #fog-computing-card, #privacy-security-card, #token-economics-card {
+            min-height: 200px;
+            border: 2px dashed #444;
+            margin: 10px 0;
+            padding: 20px;
+        }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #2563eb; }
+        .log {
+            background: #000;
+            color: #0f0;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🚀 P2P/Fog Integration Test Dashboard</h1>
+
+        <div class="test-section">
+            <h2>📡 Backend API Connection Test</h2>
+            <button onclick="testBackendAPI()">Test Backend APIs</button>
+            <button onclick="testWebSocketConnection()">Test WebSocket</button>
+            <div id="backend-status" class="status"></div>
+            <div id="websocket-log" class="log"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>🧩 Component Integration Test</h2>
+            <button onclick="testComponentsLoading()">Test Components Loading</button>
+            <button onclick="simulateDataUpdates()">Simulate Data Updates</button>
+            <div id="component-status" class="status"></div>
+
+            <h3>P2P Network Status Component</h3>
+            <div id="p2p-network-card"></div>
+
+            <h3>Fog Computing Resources Component</h3>
+            <div id="fog-computing-card"></div>
+
+            <h3>Privacy & Security Status Component</h3>
+            <div id="privacy-security-card"></div>
+
+            <h3>Token Economics Widget Component</h3>
+            <div id="token-economics-card"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>📊 Real-time Updates Test</h2>
+            <button onclick="startRealTimeTest()">Start Real-time Test</button>
+            <button onclick="stopRealTimeTest()">Stop Test</button>
+            <div id="realtime-status" class="status"></div>
+        </div>
+    </div>
+
+    <!-- Load P2P/Fog Components -->
+    <script src="ui/components/p2p-fog-components.js"></script>
+
+    <script>
+        let ws = null;
+        let components = {};
+        let realTimeInterval = null;
+
+        // Test backend API endpoints
+        async function testBackendAPI() {
+            const statusDiv = document.getElementById('backend-status');
+            const endpoints = [
+                'http://localhost:8083/api/p2p/status',
+                'http://localhost:8083/api/p2p/peers',
+                'http://localhost:8083/api/fog/nodes',
+                'http://localhost:8083/api/fog/resources',
+                'http://localhost:8083/api/fog/marketplace',
+                'http://localhost:8083/api/fog/tokens'
+            ];
+
+            statusDiv.innerHTML = '<div class="warning">Testing backend APIs...</div>';
+
+            let results = [];
+            for (let endpoint of endpoints) {
+                try {
+                    const response = await fetch(endpoint);
+                    const data = await response.json();
+                    results.push(`✅ ${endpoint}: ${response.status} - ${JSON.stringify(data).substring(0, 50)}...`);
+                } catch (error) {
+                    results.push(`❌ ${endpoint}: Error - ${error.message}`);
+                }
+            }
+
+            statusDiv.innerHTML = `<div class="success"><h4>API Test Results:</h4><pre>${results.join('\n')}</pre></div>`;
+        }
+
+        // Test WebSocket connection
+        function testWebSocketConnection() {
+            const logDiv = document.getElementById('websocket-log');
+
+            try {
+                ws = new WebSocket('ws://localhost:8083/ws');
+
+                ws.onopen = function(event) {
+                    logDiv.innerHTML += '[OPEN] WebSocket connection established\n';
+                };
+
+                ws.onmessage = function(event) {
+                    logDiv.innerHTML += `[MESSAGE] ${event.data}\n`;
+                    logDiv.scrollTop = logDiv.scrollHeight;
+                };
+
+                ws.onclose = function(event) {
+                    logDiv.innerHTML += '[CLOSE] WebSocket connection closed\n';
+                };
+
+                ws.onerror = function(error) {
+                    logDiv.innerHTML += `[ERROR] WebSocket error: ${error}\n`;
+                };
+
+            } catch (error) {
+                logDiv.innerHTML += `[ERROR] Failed to create WebSocket: ${error.message}\n`;
+            }
+        }
+
+        // Test component loading
+        function testComponentsLoading() {
+            const statusDiv = document.getElementById('component-status');
+
+            try {
+                // Initialize components
+                components.p2pNetwork = new P2PNetworkStatus('p2p-network-card');
+                components.fogResources = new FogResourceChart('fog-computing-card');
+                components.privacySecurity = new PrivacySecurityStatus('privacy-security-card');
+                components.tokenEconomics = new TokenEconomicsWidget('token-economics-card');
+
+                statusDiv.innerHTML = `<div class="success">✅ All 4 components loaded successfully!</div>`;
+            } catch (error) {
+                statusDiv.innerHTML = `<div class="error">❌ Component loading failed: ${error.message}</div>`;
+            }
+        }
+
+        // Simulate data updates
+        function simulateDataUpdates() {
+            const testData = {
+                p2p: {
+                    bitchat: { connected_peers: 12, active_channels: 8, message_count: 1547 },
+                    betanet: { active_circuits: 5, relay_nodes: 23, privacy_level: 85 }
+                },
+                fog: {
+                    nodes_online: 156,
+                    cpu_utilization: 67,
+                    memory_utilization: 72,
+                    storage_utilization: 45,
+                    bandwidth_utilization: 88
+                },
+                privacy: {
+                    active_circuits: 8,
+                    anonymity_score: 92,
+                    hidden_services: 3
+                },
+                tokens: {
+                    balance: 2847,
+                    daily_rewards: 12.5,
+                    staking_rewards: 8.3
+                }
+            };
+
+            if (components.p2pNetwork) {
+                components.p2pNetwork.updateStatus(testData.p2p);
+            }
+            if (components.fogResources) {
+                components.fogResources.updateResources(testData.fog);
+            }
+            if (components.privacySecurity) {
+                components.privacySecurity.updatePrivacyLevel(testData.privacy);
+            }
+            if (components.tokenEconomics) {
+                components.tokenEconomics.updateBalance(testData.tokens);
+            }
+
+            document.getElementById('component-status').innerHTML =
+                '<div class="success">📊 Test data applied to all components!</div>';
+        }
+
+        // Start real-time testing
+        function startRealTimeTest() {
+            const statusDiv = document.getElementById('realtime-status');
+
+            statusDiv.innerHTML = '<div class="warning">🔄 Starting real-time updates...</div>';
+
+            realTimeInterval = setInterval(() => {
+                // Generate random test data
+                const randomData = {
+                    p2p: {
+                        bitchat: {
+                            connected_peers: Math.floor(Math.random() * 20) + 5,
+                            active_channels: Math.floor(Math.random() * 15) + 3,
+                            message_count: Math.floor(Math.random() * 2000) + 1000
+                        },
+                        betanet: {
+                            active_circuits: Math.floor(Math.random() * 10) + 2,
+                            relay_nodes: Math.floor(Math.random() * 30) + 10,
+                            privacy_level: Math.floor(Math.random() * 30) + 70
+                        }
+                    },
+                    fog: {
+                        nodes_online: Math.floor(Math.random() * 100) + 100,
+                        cpu_utilization: Math.floor(Math.random() * 40) + 40,
+                        memory_utilization: Math.floor(Math.random() * 40) + 40,
+                        storage_utilization: Math.floor(Math.random() * 60) + 20,
+                        bandwidth_utilization: Math.floor(Math.random() * 50) + 30
+                    },
+                    privacy: {
+                        active_circuits: Math.floor(Math.random() * 12) + 3,
+                        anonymity_score: Math.floor(Math.random() * 20) + 80,
+                        hidden_services: Math.floor(Math.random() * 5) + 1
+                    },
+                    tokens: {
+                        balance: Math.floor(Math.random() * 5000) + 2000,
+                        daily_rewards: (Math.random() * 20 + 5).toFixed(1),
+                        staking_rewards: (Math.random() * 15 + 3).toFixed(1)
+                    }
+                };
+
+                // Update components
+                if (components.p2pNetwork) components.p2pNetwork.updateStatus(randomData.p2p);
+                if (components.fogResources) components.fogResources.updateResources(randomData.fog);
+                if (components.privacySecurity) components.privacySecurity.updatePrivacyLevel(randomData.privacy);
+                if (components.tokenEconomics) components.tokenEconomics.updateBalance(randomData.tokens);
+
+                statusDiv.innerHTML = '<div class="success">🔄 Real-time updates active (every 2 seconds)</div>';
+            }, 2000);
+        }
+
+        // Stop real-time testing
+        function stopRealTimeTest() {
+            if (realTimeInterval) {
+                clearInterval(realTimeInterval);
+                realTimeInterval = null;
+                document.getElementById('realtime-status').innerHTML =
+                    '<div class="warning">⏸️ Real-time updates stopped</div>';
+            }
+        }
+
+        // Initialize test
+        window.addEventListener('load', function() {
+            console.log('P2P/Fog Integration Test Dashboard loaded');
+        });
+    </script>
+</body>
+</html>

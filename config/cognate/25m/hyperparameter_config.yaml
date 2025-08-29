@@ -15,20 +15,20 @@ model_hyperparameters:
     ffn_mult: 4              # FFN expansion factor
     head_dim: 54             # d_model / n_heads
     intermediate_size: 864    # d_model * ffn_mult
-    
+
   # Positional encoding
   positional:
     max_position_embeddings: 2048
     rope_theta: 10000.0
     rope_scaling: null
-    
+
   # Regularization
   regularization:
     dropout: 0.1
     attention_dropout: 0.1
     ffn_dropout: 0.1
     layer_norm_eps: 1e-5
-    
+
   # Activation functions
   activations:
     hidden_act: "silu"
@@ -43,71 +43,71 @@ training_hyperparameters:
     learning_rate: 1e-4
     min_learning_rate: 1e-6
     max_learning_rate: 5e-4
-    
+
     # Optimizer settings
     optimizer: "adamw"
     adam_beta1: 0.9
     adam_beta2: 0.999
     adam_epsilon: 1e-8
     weight_decay: 0.01
-    
+
     # Gradient handling
     gradient_clip_norm: 1.0
     gradient_clip_value: null
     max_grad_norm: 1.0
-    
+
   # Learning rate scheduling
   lr_scheduling:
     scheduler_type: "linear_warmup_cosine_decay"
     warmup_steps: 100
     warmup_init_lr: 1e-7
     cosine_decay_alpha: 0.1
-    
+
     # Step-based scheduling (alternative)
     step_schedule:
       enabled: false
       decay_factor: 0.8
       decay_steps: 1000
-      
+
   # Batch configuration
   batching:
     # Base batch settings
     batch_size: 8
     gradient_accumulation_steps: 4
     effective_batch_size: 32    # batch_size * gradient_accumulation_steps
-    
+
     # Dynamic batching
     dynamic_batching:
       enabled: false
       min_batch_size: 4
       max_batch_size: 16
       target_tokens_per_batch: 4096
-      
+
     # Sequence packing
     sequence_packing:
       enabled: true
       pack_efficiency_threshold: 0.8
       max_sequences_per_pack: 8
-      
+
   # Training dynamics
   training_dynamics:
     max_steps: 10000
     max_epochs: null          # Use steps, not epochs
-    
+
     # Early stopping
     early_stopping:
       enabled: true
       patience: 500
       min_delta: 0.001
       monitor_metric: "validation_loss"
-      
+
     # Checkpointing
     checkpointing:
       save_steps: 500
       max_checkpoints: 5
       save_best_only: false
       monitor_metric: "validation_loss"
-      
+
   # Loss configuration
   loss_configuration:
     # Primary loss
@@ -115,23 +115,23 @@ training_hyperparameters:
       type: "cross_entropy"
       label_smoothing: 0.0
       ignore_index: -100
-      
+
     # Auxiliary losses
     auxiliary_losses:
       act_loss:
         weight: 0.1
         type: "pondering_regularization"
-        
+
       memory_read_loss:
         weight: 0.05
         type: "coherence_loss"
         temperature: 0.1
-        
+
       memory_write_loss:
         weight: 0.05
         type: "sparsity_regularization"
         target_sparsity: 0.9
-        
+
       compression_loss:
         weight: 0.02
         type: "memory_compression"
@@ -144,47 +144,47 @@ act_hyperparameters:
     act_threshold: 0.99       # Halting threshold
     act_epsilon: 0.01         # Numerical stability
     max_act_steps: 16         # Maximum computation steps
-    
+
   # Train-many/infer-few paradigm
   paradigm:
     training_steps:
       min_steps: 4
       max_steps: 8
       target_steps: 6
-      
+
     inference_steps:
       min_steps: 1
       max_steps: 2
       target_steps: 1
-      
+
   # ACT loss configuration
   loss:
     pondering_loss_weight: 0.1
     halting_bias_init: 1.0     # Encourage initial pondering
     halting_temperature: 1.0
-    
+
   # ACT optimization
   optimization:
     halting_head_lr: 2e-4      # Separate LR for halting head
     pondering_regularization: 0.01
     efficiency_target: 0.95    # Target computational efficiency
-    
+
   # ACT scheduling (curriculum)
   scheduling:
     curriculum_enabled: true
-    
+
     # Progressive ACT complexity
     stages:
       stage_1:
         steps: "0-2000"
         max_act_steps: 4
         act_loss_weight: 0.05
-        
+
       stage_2:
         steps: "2000-5000"
         max_act_steps: 6
         act_loss_weight: 0.075
-        
+
       stage_3:
         steps: "5000-10000"
         max_act_steps: 8
@@ -197,50 +197,50 @@ memory_hyperparameters:
     capacity: 4096           # Memory bank size
     d_mem: 216              # Memory dimension (matches d_model)
     topk: 4                 # Top-k retrieval
-    
+
   # Memory policies
   policies:
     read_policy: "entropy_gated"
     write_policy: "surprise_novelty"
-    
+
     # Policy thresholds
     entropy_threshold: 0.8   # When to read memory
     surprise_threshold: 0.6  # When to write (surprise)
     novelty_threshold: 0.7   # When to write (novelty)
-    
+
   # Titans-style gating (surprise × novelty)
   titans_gating:
     # Surprise computation
     surprise_alpha: 4.0      # Surprise scaling factor
     surprise_momentum: 0.9   # Exponential moving average for surprise
     surprise_epsilon: 1e-8   # Numerical stability
-    
+
     # Novelty computation
     novelty_beta: 0.9        # Novelty momentum
     novelty_threshold: 0.5   # Minimum novelty for write
     novelty_temperature: 0.1 # Novelty sharpening
-    
+
     # Gating dynamics
     gate_sharpening: 2.0     # Gate sharpening factor
     gate_minimum: 0.1        # Minimum gate value
-    
+
   # Memory update dynamics
   update_dynamics:
     memory_lr: 0.01          # Memory-specific learning rate
     memory_decay: 0.0001     # Memory decay rate
     update_momentum: 0.9     # Momentum for memory updates
-    
+
     # Memory consolidation
     consolidation_steps: 1000
     consolidation_threshold: 0.8
-    
+
   # Memory attention
   memory_attention:
     attention_temperature: 0.1
     attention_dropout: 0.1
     cross_attention_heads: 4
     cross_attention_layers: [3, 6, 9]  # Which layers use memory
-    
+
   # Memory initialization
   initialization:
     memory_init_strategy: "orthogonal"
@@ -256,14 +256,14 @@ data_hyperparameters:
     min_seq_length: 32       # Minimum useful sequence length
     padding_side: "right"
     truncation_side: "right"
-    
+
   # Tokenization
   tokenization:
     tokenizer_type: "gpt2"
     add_special_tokens: true
     return_attention_mask: true
     return_token_type_ids: false
-    
+
   # Data loading
   data_loading:
     num_workers: 4
@@ -272,7 +272,7 @@ data_hyperparameters:
     persistent_workers: true
     drop_last: true
     shuffle: true
-    
+
   # Data augmentation (minimal for language modeling)
   augmentation:
     enabled: false
@@ -289,33 +289,33 @@ inference_hyperparameters:
     top_k: 50
     repetition_penalty: 1.1
     length_penalty: 1.0
-    
+
     # Generation limits
     max_new_tokens: 256
     min_new_tokens: 1
     max_time: null
-    
+
     # Beam search (alternative to sampling)
     num_beams: 1             # Use sampling by default
     early_stopping: false
-    
+
     # Special tokens
     pad_token_id: null       # Set based on tokenizer
     eos_token_id: null       # Set based on tokenizer
     bos_token_id: null       # Set based on tokenizer
-    
+
   # Memory during inference
   inference_memory:
     enable_memory: true
     memory_persistence: true  # Keep memory across generations
     memory_reset_frequency: 100  # Reset every N generations
-    
+
   # ACT during inference (infer-few)
   inference_act:
     max_steps: 2             # Reduced for inference
     target_efficiency: 0.95
     early_stopping: true
-    
+
   # Batched inference
   batch_inference:
     max_batch_size: 8
@@ -328,34 +328,34 @@ evaluation_hyperparameters:
   scheduling:
     eval_steps: 100
     save_best_model: true
-    
+
   # Evaluation datasets
   datasets:
     validation_split: 0.1
     test_split: 0.05
     cross_validation_folds: null
-    
+
   # Evaluation metrics
   metrics:
     primary_metrics:
       - "perplexity"
       - "loss"
-      
+
     secondary_metrics:
       - "bleu_score"
       - "rouge_score"
       - "exact_match"
-      
+
     memory_metrics:
       - "memory_utilization"
       - "memory_coherence"
       - "retrieval_accuracy"
-      
+
     act_metrics:
       - "average_act_steps"
       - "pondering_efficiency"
       - "halting_accuracy"
-      
+
   # Evaluation generation
   eval_generation:
     temperature: 0.8
@@ -369,26 +369,26 @@ system_hyperparameters:
     device_type: "auto"      # auto, cpu, cuda, mps
     mixed_precision: true
     autocast_dtype: "float16"
-    
+
   # Memory management
   memory:
     memory_efficient: true
     gradient_checkpointing: false  # Not needed for 25M model
     cpu_offload: false
     pin_memory: true
-    
+
   # Compilation and optimization
   optimization:
     torch_compile: false     # Disabled for stability
     torch_script: false
     onnx_export: false
-    
+
     # Backend optimization
     backend_optimization:
       fused_adam: false
       fused_layer_norm: false
       flash_attention: false   # Not needed for 25M model
-      
+
   # Distributed training (future)
   distributed:
     enabled: false
@@ -402,33 +402,33 @@ hyperparameter_search:
   search:
     enabled: false           # Manual tuning for now
     strategy: "grid_search"   # grid_search, random_search, bayesian
-    
+
   # Search spaces (if enabled)
   search_spaces:
     learning_rate:
       type: "log_uniform"
       min: 1e-5
       max: 1e-3
-      
+
     batch_size:
       type: "choice"
       choices: [4, 8, 16]
-      
+
     act_threshold:
       type: "uniform"
       min: 0.95
       max: 0.99
-      
+
     memory_topk:
       type: "choice"
       choices: [2, 4, 8]
-      
+
   # Search constraints
   constraints:
     max_trials: 50
     max_time_hours: 24
     early_stopping_patience: 10
-    
+
   # Search objectives
   objectives:
     primary: "minimize_validation_loss"
@@ -444,31 +444,31 @@ ablation_studies:
       modifications:
         act_hyperparameters.core.max_act_steps: 1
         training_hyperparameters.loss_configuration.auxiliary_losses.act_loss.weight: 0.0
-        
+
     no_memory:
       description: "Disable memory system"
       modifications:
         memory_hyperparameters.memory_bank.capacity: 0
         memory_hyperparameters.memory_attention.cross_attention_layers: []
-        
+
     simplified_memory:
       description: "Simple memory without Titans gating"
       modifications:
         memory_hyperparameters.policies.write_policy: "always"
         memory_hyperparameters.titans_gating.surprise_alpha: 1.0
-        
+
     reduced_model:
       description: "Smaller model for comparison"
       modifications:
         model_hyperparameters.architecture.d_model: 128
         model_hyperparameters.architecture.n_layers: 8
-        
+
   # Ablation experimental setup
   experimental_setup:
     baseline_config: "default"
     repetitions: 3
     evaluation_metrics: ["perplexity", "efficiency", "memory_usage"]
-    
+
 # Configuration Validation Rules
 validation_rules:
   # Parameter constraints
@@ -476,29 +476,29 @@ validation_rules:
     model_hyperparameters.architecture.d_model:
       type: "divisible_by"
       value: "n_heads"
-      
+
     training_hyperparameters.batching.effective_batch_size:
       type: "equals"
       value: "batch_size * gradient_accumulation_steps"
-      
+
     memory_hyperparameters.memory_bank.d_mem:
       type: "equals"
       value: "model_hyperparameters.architecture.d_model"
-      
+
   # Range validations
   ranges:
     training_hyperparameters.optimization.learning_rate:
       min: 1e-6
       max: 1e-2
-      
+
     act_hyperparameters.core.act_threshold:
       min: 0.5
       max: 0.999
-      
+
     memory_hyperparameters.memory_bank.capacity:
       min: 64
       max: 16384
-      
+
   # Consistency checks
   consistency:
     - "act_max_steps >= inference_max_steps"

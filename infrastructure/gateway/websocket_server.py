@@ -5,11 +5,10 @@ Provides WebSocket connections for live progress updates.
 """
 
 import asyncio
+from datetime import datetime
 import json
 import logging
 import uuid
-from datetime import datetime
-from typing import Set
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
@@ -20,20 +19,22 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Agent Forge WebSocket Server")
 
-# Add CORS middleware
+# SECURITY: Secure WebSocket CORS configuration - NO WILDCARDS
+import os
+ws_cors_origins = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:8080,http://127.0.0.1:3000").split(",")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[origin.strip() for origin in ws_cors_origins],  # SECURITY: No wildcards
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "OPTIONS"],  # Limited methods for WebSocket
+    allow_headers=["Content-Type", "Authorization", "Sec-WebSocket-Protocol"],
 )
 
 
 # Connection manager
 class ConnectionManager:
     def __init__(self):
-        self.active_connections: Set[WebSocket] = set()
+        self.active_connections: set[WebSocket] = set()
         self.subscriptions: dict = {}
 
     async def connect(self, websocket: WebSocket, client_id: str):

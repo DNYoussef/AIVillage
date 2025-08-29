@@ -22,8 +22,49 @@ from typing import Any
 import torch
 import torch.nn as nn
 
-# Import phase controller infrastructure
-from .phase_controller import PhaseController, PhaseOrchestrator, PhaseResult
+# Import phase controller infrastructure with fallback
+try:
+    from .phase_controller import PhaseController, PhaseOrchestrator, PhaseResult
+except (ImportError, ValueError):
+    # Fallback for direct imports
+    from abc import ABC, abstractmethod
+    from dataclasses import dataclass
+    from datetime import datetime
+    from typing import Any
+
+    import torch.nn as nn
+
+    @dataclass
+    class PhaseResult:
+        success: bool
+        model: nn.Module
+        phase_name: str = None
+        metrics: dict = None
+        duration_seconds: float = 0.0
+        artifacts: dict = None
+        config: dict = None
+        error: str = None
+        start_time: datetime = None
+        end_time: datetime = None
+
+        def __post_init__(self):
+            if self.end_time is None:
+                self.end_time = datetime.now()
+            if self.start_time is None:
+                self.start_time = self.end_time
+
+    class PhaseController(ABC):
+        def __init__(self, config: Any):
+            self.config = config
+
+        @abstractmethod
+        async def run(self, model: nn.Module) -> PhaseResult:
+            pass
+
+    class PhaseOrchestrator:
+        def __init__(self):
+            self.logger = logging.getLogger(__name__)
+
 
 logger = logging.getLogger(__name__)
 

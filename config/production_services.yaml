@@ -1,0 +1,319 @@
+# Production Services Configuration
+# Comprehensive service definitions for AIVillage production deployment
+
+services:
+  # API Gateway - Main entry point
+  gateway:
+    name: gateway
+    host: "0.0.0.0"
+    port: 8000
+    protocol: http
+    health_check_path: /health
+    command: ["python", "infrastructure/gateway/unified_api_gateway.py"]
+    working_dir: "."
+    env:
+      ENVIRONMENT: production
+      LOG_LEVEL: INFO
+      CORS_ORIGINS: "*"
+    dependencies: []
+    weight: 3
+    tags:
+      - api
+      - gateway
+      - production
+      - entry_point
+    deployment:
+      replicas: 2
+      resources:
+        cpu: "0.5"
+        memory: "512Mi"
+    monitoring:
+      metrics_enabled: true
+      tracing_enabled: true
+
+  # Agent Forge - ML Training Pipeline (CODEX Integration)
+  agent_forge:
+    name: agent_forge
+    host: "0.0.0.0"
+    port: 8083
+    protocol: http
+    health_check_path: /health
+    command: ["python", "infrastructure/gateway/unified_agent_forge_backend.py"]
+    working_dir: "."
+    env:
+      ENVIRONMENT: production
+      REAL_TRAINING_ENABLED: "true"
+      P2P_FOG_ENABLED: "true"
+      GROKFAST_OPTIMIZATION: "true"
+      MODEL_OUTPUT_DIR: "./models/agent_forge"
+      TRAINING_DATA_DIR: "./data/training"
+    dependencies:
+      - evolution_metrics
+    weight: 3
+    tags:
+      - agent_forge
+      - training
+      - production
+      - codex
+      - ml_pipeline
+    deployment:
+      replicas: 1
+      resources:
+        cpu: "2"
+        memory: "4Gi"
+        gpu: "optional"
+    monitoring:
+      metrics_enabled: true
+      custom_metrics:
+        - training_progress
+        - model_performance
+        - resource_utilization
+
+  # Digital Twin Service (CODEX Integration)
+  twin_service:
+    name: twin_service
+    host: "0.0.0.0"
+    port: 8001
+    protocol: http
+    health_check_path: /health
+    command: ["python", "src/digital_twin/api/twin_api.py"]
+    working_dir: "."
+    env:
+      ENVIRONMENT: production
+      DIGITAL_TWIN_ENCRYPTION_KEY: "${DIGITAL_TWIN_KEY}"
+      DIGITAL_TWIN_DB_PATH: "./data/digital_twin.db"
+      PRIVACY_MODE: strict
+      COPPA_COMPLIANT: "true"
+      FERPA_COMPLIANT: "true"
+      GDPR_COMPLIANT: "true"
+    dependencies: []
+    weight: 2
+    tags:
+      - digital_twin
+      - api
+      - production
+      - codex
+      - privacy
+    deployment:
+      replicas: 2
+      resources:
+        cpu: "0.5"
+        memory: "1Gi"
+    security:
+      encryption_at_rest: true
+      encryption_in_transit: true
+
+  # Evolution Metrics Service (CODEX Integration)
+  evolution_metrics:
+    name: evolution_metrics
+    host: "0.0.0.0"
+    port: 8081
+    protocol: http
+    health_check_path: /health
+    command: ["python", "packages/core/evolution_metrics_api.py"]
+    working_dir: "."
+    env:
+      ENVIRONMENT: production
+      AIVILLAGE_STORAGE_BACKEND: sqlite
+      AIVILLAGE_DB_PATH: "./data/evolution_metrics.db"
+      METRICS_FLUSH_THRESHOLD: "50"
+      METRICS_RETENTION_DAYS: "90"
+    dependencies: []
+    weight: 1
+    tags:
+      - metrics
+      - evolution
+      - production
+      - codex
+      - analytics
+    deployment:
+      replicas: 1
+      resources:
+        cpu: "0.25"
+        memory: "256Mi"
+    persistence:
+      volume_size: "1Gi"
+      backup_enabled: true
+
+  # HyperRAG Service (CODEX Integration)
+  hyperrag:
+    name: hyperrag
+    host: "0.0.0.0"
+    port: 8082
+    protocol: http
+    health_check_path: /health
+    command: ["python", "packages/core/legacy/production/rag/api/rag_api.py"]
+    working_dir: "."
+    env:
+      ENVIRONMENT: production
+      RAG_CACHE_ENABLED: "true"
+      RAG_EMBEDDING_MODEL: "paraphrase-MiniLM-L3-v2"
+      RAG_L1_CACHE_SIZE: "128"
+      RAG_VECTOR_DIM: "384"
+      RAG_DEFAULT_K: "10"
+      RAG_CHUNK_SIZE: "512"
+      FAISS_INDEX_PATH: "./data/faiss_index"
+    dependencies:
+      - evolution_metrics
+    weight: 2
+    tags:
+      - rag
+      - retrieval
+      - production
+      - codex
+      - neural_memory
+    deployment:
+      replicas: 2
+      resources:
+        cpu: "1"
+        memory: "2Gi"
+    storage:
+      vector_index_size: "2Gi"
+      document_cache_size: "1Gi"
+
+  # P2P Networking Service (CODEX Integration)
+  p2p_networking:
+    name: p2p_networking
+    host: "0.0.0.0"
+    port: 4001
+    protocol: tcp
+    health_check_path: /status
+    command: ["python", "packages/p2p/api/p2p_api.py"]
+    working_dir: "."
+    env:
+      ENVIRONMENT: production
+      LIBP2P_HOST: "0.0.0.0"
+      LIBP2P_PORT: "4001"
+      MDNS_SERVICE_NAME: "_aivillage._tcp"
+      MESH_MAX_PEERS: "50"
+      P2P_ENCRYPTION: "true"
+    dependencies: []
+    weight: 2
+    tags:
+      - p2p
+      - networking
+      - production
+      - codex
+      - mesh
+    deployment:
+      replicas: 1
+      resources:
+        cpu: "0.5"
+        memory: "512Mi"
+    networking:
+      ports:
+        - 4001  # Main P2P port
+        - 4002  # WebSocket transport
+        - 5353  # mDNS discovery
+
+  # Service Mesh API - Management Interface
+  service_mesh_api:
+    name: service_mesh_api
+    host: "0.0.0.0"
+    port: 8090
+    protocol: http
+    health_check_path: /health
+    command: ["python", "infrastructure/service_mesh/service_mesh_api.py"]
+    working_dir: "."
+    env:
+      ENVIRONMENT: production
+      LOG_LEVEL: INFO
+    dependencies:
+      - gateway
+      - agent_forge
+      - twin_service
+      - evolution_metrics
+      - hyperrag
+      - p2p_networking
+    weight: 1
+    tags:
+      - service_mesh
+      - management
+      - monitoring
+      - production
+    deployment:
+      replicas: 1
+      resources:
+        cpu: "0.25"
+        memory: "256Mi"
+
+# Global configuration
+global:
+  environment: production
+
+  # Health checking
+  health_check:
+    interval_seconds: 30
+    timeout_seconds: 10
+    retries: 3
+
+  # Circuit breaker
+  circuit_breaker:
+    failure_threshold: 5
+    timeout_seconds: 30
+
+  # Load balancing
+  load_balancing:
+    default_strategy: health_based
+
+  # Monitoring
+  monitoring:
+    metrics_enabled: true
+    tracing_enabled: false
+    log_level: INFO
+
+  # Security
+  security:
+    tls_enabled: true
+    authentication_required: false
+    rate_limiting:
+      requests_per_minute: 100
+
+  # Resource limits
+  resources:
+    default_cpu_limit: "1"
+    default_memory_limit: "1Gi"
+
+  # Storage
+  storage:
+    base_path: "./data"
+    backup_enabled: true
+    retention_days: 30
+
+# Environment-specific overrides
+environments:
+  development:
+    global:
+      log_level: DEBUG
+      health_check:
+        interval_seconds: 60
+    services:
+      gateway:
+        env:
+          DEBUG: "true"
+        deployment:
+          replicas: 1
+
+  staging:
+    global:
+      monitoring:
+        tracing_enabled: true
+    services:
+      agent_forge:
+        env:
+          REAL_TRAINING_ENABLED: "false"  # Use simulation in staging
+
+  production:
+    global:
+      security:
+        authentication_required: true
+        tls_enabled: true
+    services:
+      gateway:
+        deployment:
+          replicas: 3
+      agent_forge:
+        deployment:
+          resources:
+            cpu: "4"
+            memory: "8Gi"

@@ -1,0 +1,301 @@
+{
+  "timestamp": "2025-08-21T17:53:45.888Z",
+  "totalTests": 43,
+  "totalPassed": 39,
+  "overallPercentage": 91,
+  "sections": {
+    "navigation": {
+      "passed": 2,
+      "total": 6,
+      "details": [
+        {
+          "description": "Dashboard tab button exists",
+          "passed": null,
+          "matches": 0
+        },
+        {
+          "description": "Concierge tab button exists",
+          "passed": null,
+          "matches": 0
+        },
+        {
+          "description": "Messaging tab button exists",
+          "passed": null,
+          "matches": 0
+        },
+        {
+          "description": "Wallet tab button exists",
+          "passed": null,
+          "matches": 0
+        },
+        {
+          "description": "Active tab state management",
+          "passed": true,
+          "matches": 1
+        },
+        {
+          "description": "Tab switching functionality",
+          "passed": true,
+          "matches": 1
+        }
+      ]
+    },
+    "dashboard": {
+      "passed": 7,
+      "total": 7,
+      "details": [
+        {
+          "description": "Navigator Agent card",
+          "passed": true,
+          "matches": 1
+        },
+        {
+          "description": "Magi Agent card",
+          "passed": true,
+          "matches": 1
+        },
+        {
+          "description": "King Agent card",
+          "passed": true,
+          "matches": 1
+        },
+        {
+          "description": "Curator Agent card",
+          "passed": true,
+          "matches": 1
+        },
+        {
+          "description": "Agent status display",
+          "passed": true,
+          "matches": 4
+        },
+        {
+          "description": "Agent health percentages",
+          "passed": true,
+          "matches": 4
+        },
+        {
+          "description": "Agent role descriptions",
+          "passed": true,
+          "matches": 4
+        }
+      ]
+    },
+    "concierge": {
+      "passed": 5,
+      "total": 5,
+      "details": [
+        {
+          "description": "Digital Twin Concierge title",
+          "passed": true,
+          "matches": 1
+        },
+        {
+          "description": "Welcome message",
+          "passed": true,
+          "matches": 1
+        },
+        {
+          "description": "Message input field",
+          "passed": true,
+          "matches": 1
+        },
+        {
+          "description": "Send button",
+          "passed": true,
+          "matches": 2
+        },
+        {
+          "description": "Chat interface container",
+          "passed": true,
+          "matches": 2
+        }
+      ]
+    },
+    "messaging": {
+      "passed": 8,
+      "total": 8,
+      "details": [
+        {
+          "description": "BitChat P2P Messaging title",
+          "passed": true,
+          "matches": 1
+        },
+        {
+          "description": "Peers Discovered section",
+          "passed": true,
+          "matches": 1
+        },
+        {
+          "description": "Node-Alpha peer",
+          "passed": true,
+          "matches": 2
+        },
+        {
+          "description": "Node-Beta peer",
+          "passed": true,
+          "matches": 1
+        },
+        {
+          "description": "Online status display",
+          "passed": true,
+          "matches": 2
+        },
+        {
+          "description": "Secure Chat interface",
+          "passed": true,
+          "matches": 1
+        },
+        {
+          "description": "Encrypted message input",
+          "passed": true,
+          "matches": 1
+        },
+        {
+          "description": "Distance/hops display",
+          "passed": true,
+          "matches": 2
+        }
+      ]
+    },
+    "wallet": {
+      "passed": 9,
+      "total": 9,
+      "details": [
+        {
+          "description": "Compute Credits Wallet title",
+          "passed": true,
+          "matches": 1
+        },
+        {
+          "description": "Current Balance display",
+          "passed": true,
+          "matches": 1
+        },
+        {
+          "description": "Balance amount",
+          "passed": true,
+          "matches": 1
+        },
+        {
+          "description": "Resources Contributed section",
+          "passed": true,
+          "matches": 1
+        },
+        {
+          "description": "TFLOPS display",
+          "passed": true,
+          "matches": 1
+        },
+        {
+          "description": "Network Rank section",
+          "passed": true,
+          "matches": 1
+        },
+        {
+          "description": "Rank number",
+          "passed": true,
+          "matches": 1
+        },
+        {
+          "description": "Transaction History",
+          "passed": true,
+          "matches": 1
+        },
+        {
+          "description": "Credit transactions",
+          "passed": true,
+          "matches": 3
+        }
+      ]
+    },
+    "styling": {
+      "passed": 8,
+      "total": 8,
+      "details": [
+        {
+          "description": "Dark gradient background",
+          "passed": true,
+          "matches": 1
+        },
+        {
+          "description": "Header styling",
+          "passed": true,
+          "matches": 2
+        },
+        {
+          "description": "Border radius styling",
+          "passed": true,
+          "matches": 2
+        },
+        {
+          "description": "Button hover transitions",
+          "passed": true,
+          "matches": 1
+        },
+        {
+          "description": "Active button gradient",
+          "passed": true,
+          "matches": 1
+        },
+        {
+          "description": "System health indicator",
+          "passed": true,
+          "matches": 1
+        },
+        {
+          "description": "White text color",
+          "passed": true,
+          "matches": 4
+        },
+        {
+          "description": "Content area styling",
+          "passed": true,
+          "matches": 1
+        }
+      ]
+    }
+  },
+  "architecture": [
+    {
+      "name": "React Functional Component",
+      "pattern": "const App: React\\.FC",
+      "found": true
+    },
+    {
+      "name": "useState Hook Usage",
+      "pattern": "useState\\(",
+      "found": true
+    },
+    {
+      "name": "Inline CSS Styling",
+      "pattern": "React\\.CSSProperties",
+      "found": true
+    },
+    {
+      "name": "Switch Statement Navigation",
+      "pattern": "switch.*activeTab",
+      "found": true
+    },
+    {
+      "name": "Grid Layout System",
+      "pattern": "gridTemplateColumns",
+      "found": true
+    },
+    {
+      "name": "Flexbox Layout",
+      "pattern": "display.*flex",
+      "found": true
+    },
+    {
+      "name": "Responsive Design",
+      "pattern": "minmax\\(",
+      "found": true
+    },
+    {
+      "name": "Event Handlers",
+      "pattern": "onClick.*=>",
+      "found": true
+    }
+  ]
+}

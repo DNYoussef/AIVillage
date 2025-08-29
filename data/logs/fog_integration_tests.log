@@ -1,0 +1,291 @@
+2025-08-27 08:08:34,474 - __main__ - ERROR - Integration test execution failed: non-default argument 'start_time' follows default argument
+2025-08-27 08:11:15,450 - root - WARNING - AIVillage edge infrastructure not available: No module named 'packages.edge'
+2025-08-27 08:11:15,500 - infrastructure.fog.integration.integration_test_suite - INFO - Fog Integration Tester initialized
+2025-08-27 08:11:15,501 - infrastructure.fog.integration.integration_test_suite - INFO - Starting complete integration test suite: fog_integration_1756296675
+2025-08-27 08:11:15,501 - infrastructure.fog.integration.integration_test_suite - INFO - 
+==================================================
+2025-08-27 08:11:15,501 - infrastructure.fog.integration.integration_test_suite - INFO - Running Component Startup Tests
+2025-08-27 08:11:15,501 - infrastructure.fog.integration.integration_test_suite - INFO - ==================================================
+2025-08-27 08:11:15,502 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Mobile Resource Manager Startup
+2025-08-27 08:11:15,502 - infrastructure.fog.edge.mobile.resource_manager - INFO - Mobile Resource Manager initialized: harvest_enabled=True, token_rewards=True
+2025-08-27 08:11:15,529 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Fog Harvest Manager Startup
+2025-08-27 08:11:15,531 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Onion Router Startup
+2025-08-27 08:11:15,534 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Mixnet Client Startup
+2025-08-27 08:11:15,561 - infrastructure.fog.privacy.mixnet_integration - INFO - Nym Mixnet client initialized: test_client_001
+2025-08-27 08:11:15,561 - infrastructure.fog.privacy.mixnet_integration - INFO - Starting Nym Mixnet client
+2025-08-27 08:11:15,561 - infrastructure.fog.privacy.mixnet_integration - INFO - Discovering mixnet topology
+2025-08-27 08:11:15,562 - infrastructure.fog.privacy.mixnet_integration - INFO - Discovered 33 mixnet nodes
+2025-08-27 08:11:15,562 - infrastructure.fog.privacy.mixnet_integration - INFO - Nym Mixnet client started successfully
+2025-08-27 08:11:15,564 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Fog Marketplace Startup
+2025-08-27 08:11:15,567 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Token System Startup
+2025-08-27 08:11:15,567 - infrastructure.fog.tokenomics.fog_token_system - INFO - FogTokenSystem initialized: 1,000,000,000 FOG initial supply, 10 FOG/hour base reward
+2025-08-27 08:11:15,571 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Hidden Service Host Startup
+2025-08-27 08:11:15,574 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Contribution Ledger Startup
+2025-08-27 08:11:15,574 - infrastructure.fog.governance.contribution_ledger - INFO - Contribution Ledger initialized
+2025-08-27 08:11:15,574 - infrastructure.fog.governance.contribution_ledger - INFO - Starting Contribution Ledger
+2025-08-27 08:11:15,575 - infrastructure.fog.governance.contribution_ledger - INFO - Loaded 0 contributions, 0 contributors, 0 proposals
+2025-08-27 08:11:15,575 - infrastructure.fog.governance.contribution_ledger - INFO - Contribution Ledger started successfully
+2025-08-27 08:11:15,575 - infrastructure.fog.governance.contribution_ledger - INFO - Recorded contribution contrib_1756296675_99bbb358 by test_contributor_001
+2025-08-27 08:11:15,578 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: SLO Monitor Startup
+2025-08-27 08:11:15,579 - infrastructure.fog.monitoring.slo_monitor - INFO - SLO Monitor initialized
+2025-08-27 08:11:15,579 - infrastructure.fog.monitoring.slo_monitor - INFO - Starting SLO Monitor
+2025-08-27 08:11:15,579 - infrastructure.fog.monitoring.slo_monitor - INFO - SLO Monitor started successfully
+2025-08-27 08:11:15,582 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Chaos Testing Framework Startup
+2025-08-27 08:11:15,583 - infrastructure.fog.testing.chaos_tester - INFO - Chaos Testing Framework initialized
+2025-08-27 08:11:15,583 - infrastructure.fog.testing.chaos_tester - INFO - Starting Chaos Testing Framework
+2025-08-27 08:11:15,583 - infrastructure.fog.testing.chaos_tester - INFO - Collecting baseline metrics
+2025-08-27 08:11:15,583 - infrastructure.fog.testing.chaos_tester - INFO - Chaos Testing Framework started successfully
+2025-08-27 08:11:15,583 - infrastructure.fog.testing.chaos_tester - INFO - Starting production validation suite
+2025-08-27 08:11:15,588 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Fog Coordinator Startup
+2025-08-27 08:11:15,592 - infrastructure.fog.integration.integration_test_suite - INFO - 
+==================================================
+2025-08-27 08:11:15,592 - infrastructure.fog.integration.integration_test_suite - INFO - Running Component Interaction Tests
+2025-08-27 08:11:15,592 - infrastructure.fog.integration.integration_test_suite - INFO - ==================================================
+2025-08-27 08:11:15,592 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Harvest Manager + Mobile Resource Manager Interaction
+2025-08-27 08:11:15,595 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Onion Router + Mixnet Client Integration
+2025-08-27 08:11:15,597 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Marketplace + Token System Integration
+2025-08-27 08:11:15,599 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Hidden Service + Onion Router Integration
+2025-08-27 08:11:15,602 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Contribution Ledger + Token System Integration
+2025-08-27 08:11:15,605 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: SLO Monitor Integration with All Components
+2025-08-27 08:11:15,607 - infrastructure.fog.integration.integration_test_suite - INFO - 
+==================================================
+2025-08-27 08:11:15,607 - infrastructure.fog.integration.integration_test_suite - INFO - Running End-to-End Workflow Tests
+2025-08-27 08:11:15,607 - infrastructure.fog.integration.integration_test_suite - INFO - ==================================================
+2025-08-27 08:11:15,607 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Complete Fog Compute Workflow
+2025-08-27 08:11:15,610 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Hidden Service Hosting Workflow
+2025-08-27 08:11:15,612 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Anonymous Communication Workflow
+2025-08-27 08:11:15,613 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Contribution Tracking and Rewards Workflow
+2025-08-27 08:11:15,616 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: DAO Governance Workflow
+2025-08-27 08:11:15,618 - infrastructure.fog.integration.integration_test_suite - INFO - 
+==================================================
+2025-08-27 08:11:15,618 - infrastructure.fog.integration.integration_test_suite - INFO - Running Performance Tests
+2025-08-27 08:11:15,618 - infrastructure.fog.integration.integration_test_suite - INFO - ==================================================
+2025-08-27 08:11:15,618 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Compute Harvesting Performance Test
+2025-08-27 08:11:15,620 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Onion Routing Latency Test
+2025-08-27 08:11:15,622 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Marketplace Scalability Test
+2025-08-27 08:11:15,624 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Token Transaction Throughput Test
+2025-08-27 08:11:15,627 - infrastructure.fog.integration.integration_test_suite - INFO - 
+==================================================
+2025-08-27 08:11:15,627 - infrastructure.fog.integration.integration_test_suite - INFO - Running Security Tests
+2025-08-27 08:11:15,627 - infrastructure.fog.integration.integration_test_suite - INFO - ==================================================
+2025-08-27 08:11:15,627 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Privacy Preservation Test
+2025-08-27 08:11:15,630 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Anonymous Communication Security Test
+2025-08-27 08:11:15,632 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Token System Security Test
+2025-08-27 08:11:15,635 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Access Control Validation Test
+2025-08-27 08:11:15,637 - infrastructure.fog.integration.integration_test_suite - INFO - 
+==================================================
+2025-08-27 08:11:15,637 - infrastructure.fog.integration.integration_test_suite - INFO - Running Resilience Tests
+2025-08-27 08:11:15,637 - infrastructure.fog.integration.integration_test_suite - INFO - ==================================================
+2025-08-27 08:11:15,637 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Component Failure Recovery Test
+2025-08-27 08:11:15,639 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Network Partition Tolerance Test
+2025-08-27 08:11:15,642 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: SLO Breach Recovery Test
+2025-08-27 08:11:15,643 - infrastructure.fog.monitoring.slo_monitor - INFO - System Health: 100.0% (8/8 SLOs healthy)
+2025-08-27 08:11:15,644 - infrastructure.fog.testing.chaos_tester - INFO - Generating periodic validation report
+2025-08-27 08:11:15,645 - infrastructure.fog.testing.chaos_tester - INFO - Starting production validation suite
+2025-08-27 08:11:15,645 - infrastructure.fog.testing.chaos_tester - ERROR - Error in report generator: ValidationReport.__init__() missing 3 required positional arguments: 'passed_tests', 'failed_tests', and 'critical_failures'
+2025-08-27 08:14:51,554 - root - WARNING - AIVillage edge infrastructure not available: No module named 'packages.edge'
+2025-08-27 08:14:51,599 - infrastructure.fog.integration.integration_test_suite - INFO - Fog Integration Tester initialized
+2025-08-27 08:14:51,599 - infrastructure.fog.integration.integration_test_suite - INFO - Starting complete integration test suite: fog_integration_1756296891
+2025-08-27 08:14:51,599 - infrastructure.fog.integration.integration_test_suite - INFO - 
+==================================================
+2025-08-27 08:14:51,599 - infrastructure.fog.integration.integration_test_suite - INFO - Running Component Startup Tests
+2025-08-27 08:14:51,599 - infrastructure.fog.integration.integration_test_suite - INFO - ==================================================
+2025-08-27 08:14:51,599 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Mobile Resource Manager Startup
+2025-08-27 08:14:51,600 - infrastructure.fog.edge.mobile.resource_manager - INFO - Mobile Resource Manager initialized: harvest_enabled=True, token_rewards=True
+2025-08-27 08:14:51,608 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Fog Harvest Manager Startup
+2025-08-27 08:14:51,609 - infrastructure.fog.compute.harvest_manager - INFO - FogHarvestManager initialized: test_harvest_node
+2025-08-27 08:14:51,613 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Onion Router Startup
+2025-08-27 08:14:51,617 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Mixnet Client Startup
+2025-08-27 08:14:51,630 - infrastructure.fog.privacy.mixnet_integration - INFO - Nym Mixnet client initialized: test_client_001
+2025-08-27 08:14:51,631 - infrastructure.fog.privacy.mixnet_integration - INFO - Starting Nym Mixnet client
+2025-08-27 08:14:51,631 - infrastructure.fog.privacy.mixnet_integration - INFO - Discovering mixnet topology
+2025-08-27 08:14:51,631 - infrastructure.fog.privacy.mixnet_integration - INFO - Discovered 33 mixnet nodes
+2025-08-27 08:14:51,631 - infrastructure.fog.privacy.mixnet_integration - INFO - Nym Mixnet client started successfully
+2025-08-27 08:14:51,635 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Fog Marketplace Startup
+2025-08-27 08:14:51,635 - infrastructure.fog.marketplace.fog_marketplace - INFO - FogMarketplace initialized: test_marketplace
+2025-08-27 08:14:51,638 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Token System Startup
+2025-08-27 08:14:51,638 - infrastructure.fog.tokenomics.fog_token_system - INFO - FogTokenSystem initialized: 1,000,000,000 FOG initial supply, 10 FOG/hour base reward
+2025-08-27 08:14:51,643 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Hidden Service Host Startup
+2025-08-27 08:14:51,645 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Contribution Ledger Startup
+2025-08-27 08:14:51,646 - infrastructure.fog.governance.contribution_ledger - INFO - Contribution Ledger initialized
+2025-08-27 08:14:51,646 - infrastructure.fog.governance.contribution_ledger - INFO - Starting Contribution Ledger
+2025-08-27 08:14:51,683 - infrastructure.fog.governance.contribution_ledger - INFO - Loaded 1 contributions, 1 contributors, 0 proposals
+2025-08-27 08:14:51,683 - infrastructure.fog.governance.contribution_ledger - INFO - Contribution Ledger started successfully
+2025-08-27 08:14:51,683 - infrastructure.fog.governance.contribution_ledger - INFO - Recorded contribution contrib_1756296891_62875588 by test_contributor_001
+2025-08-27 08:14:51,686 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: SLO Monitor Startup
+2025-08-27 08:14:51,686 - infrastructure.fog.monitoring.slo_monitor - INFO - SLO Monitor initialized
+2025-08-27 08:14:51,686 - infrastructure.fog.monitoring.slo_monitor - INFO - Starting SLO Monitor
+2025-08-27 08:14:51,686 - infrastructure.fog.monitoring.slo_monitor - INFO - SLO Monitor started successfully
+2025-08-27 08:14:51,688 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Chaos Testing Framework Startup
+2025-08-27 08:14:51,688 - infrastructure.fog.testing.chaos_tester - INFO - Chaos Testing Framework initialized
+2025-08-27 08:14:51,688 - infrastructure.fog.testing.chaos_tester - INFO - Starting Chaos Testing Framework
+2025-08-27 08:14:51,688 - infrastructure.fog.testing.chaos_tester - INFO - Collecting baseline metrics
+2025-08-27 08:14:51,689 - infrastructure.fog.testing.chaos_tester - INFO - Chaos Testing Framework started successfully
+2025-08-27 08:14:51,689 - infrastructure.fog.testing.chaos_tester - INFO - Starting production validation suite
+2025-08-27 08:14:51,692 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Fog Coordinator Startup
+2025-08-27 08:14:51,695 - infrastructure.fog.integration.integration_test_suite - INFO - 
+==================================================
+2025-08-27 08:14:51,695 - infrastructure.fog.integration.integration_test_suite - INFO - Running Component Interaction Tests
+2025-08-27 08:14:51,695 - infrastructure.fog.integration.integration_test_suite - INFO - ==================================================
+2025-08-27 08:14:51,695 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Harvest Manager + Mobile Resource Manager Interaction
+2025-08-27 08:14:51,697 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Onion Router + Mixnet Client Integration
+2025-08-27 08:14:51,698 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Marketplace + Token System Integration
+2025-08-27 08:14:51,700 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Hidden Service + Onion Router Integration
+2025-08-27 08:14:51,703 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Contribution Ledger + Token System Integration
+2025-08-27 08:14:51,705 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: SLO Monitor Integration with All Components
+2025-08-27 08:14:51,707 - infrastructure.fog.integration.integration_test_suite - INFO - 
+==================================================
+2025-08-27 08:14:51,707 - infrastructure.fog.integration.integration_test_suite - INFO - Running End-to-End Workflow Tests
+2025-08-27 08:14:51,707 - infrastructure.fog.integration.integration_test_suite - INFO - ==================================================
+2025-08-27 08:14:51,707 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Complete Fog Compute Workflow
+2025-08-27 08:14:51,710 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Hidden Service Hosting Workflow
+2025-08-27 08:14:51,712 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Anonymous Communication Workflow
+2025-08-27 08:14:51,714 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Contribution Tracking and Rewards Workflow
+2025-08-27 08:14:51,716 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: DAO Governance Workflow
+2025-08-27 08:14:51,718 - infrastructure.fog.integration.integration_test_suite - INFO - 
+==================================================
+2025-08-27 08:14:51,718 - infrastructure.fog.integration.integration_test_suite - INFO - Running Performance Tests
+2025-08-27 08:14:51,718 - infrastructure.fog.integration.integration_test_suite - INFO - ==================================================
+2025-08-27 08:14:51,719 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Compute Harvesting Performance Test
+2025-08-27 08:14:51,721 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Onion Routing Latency Test
+2025-08-27 08:14:51,723 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Marketplace Scalability Test
+2025-08-27 08:14:51,725 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Token Transaction Throughput Test
+2025-08-27 08:14:51,726 - infrastructure.fog.integration.integration_test_suite - INFO - 
+==================================================
+2025-08-27 08:14:51,726 - infrastructure.fog.integration.integration_test_suite - INFO - Running Security Tests
+2025-08-27 08:14:51,727 - infrastructure.fog.integration.integration_test_suite - INFO - ==================================================
+2025-08-27 08:14:51,727 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Privacy Preservation Test
+2025-08-27 08:14:51,730 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Anonymous Communication Security Test
+2025-08-27 08:14:51,732 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Token System Security Test
+2025-08-27 08:14:51,734 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Access Control Validation Test
+2025-08-27 08:14:51,736 - infrastructure.fog.integration.integration_test_suite - INFO - 
+==================================================
+2025-08-27 08:14:51,737 - infrastructure.fog.integration.integration_test_suite - INFO - Running Resilience Tests
+2025-08-27 08:14:51,737 - infrastructure.fog.integration.integration_test_suite - INFO - ==================================================
+2025-08-27 08:14:51,737 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Component Failure Recovery Test
+2025-08-27 08:14:51,739 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Network Partition Tolerance Test
+2025-08-27 08:14:51,741 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: SLO Breach Recovery Test
+2025-08-27 08:14:51,741 - infrastructure.fog.monitoring.slo_monitor - INFO - System Health: 100.0% (8/8 SLOs healthy)
+2025-08-27 08:14:51,742 - infrastructure.fog.testing.chaos_tester - INFO - Generating periodic validation report
+2025-08-27 08:14:51,742 - infrastructure.fog.testing.chaos_tester - INFO - Starting production validation suite
+2025-08-27 08:14:51,742 - infrastructure.fog.testing.chaos_tester - ERROR - Error in report generator: ValidationReport.__init__() missing 3 required positional arguments: 'passed_tests', 'failed_tests', and 'critical_failures'
+2025-08-27 08:18:50,557 - root - WARNING - AIVillage edge infrastructure not available: No module named 'packages.edge'
+2025-08-27 08:18:50,593 - infrastructure.fog.integration.integration_test_suite - INFO - Fog Integration Tester initialized
+2025-08-27 08:18:50,593 - infrastructure.fog.integration.integration_test_suite - INFO - Starting complete integration test suite: fog_integration_1756297130
+2025-08-27 08:18:50,593 - infrastructure.fog.integration.integration_test_suite - INFO - 
+==================================================
+2025-08-27 08:18:50,593 - infrastructure.fog.integration.integration_test_suite - INFO - Running Component Startup Tests
+2025-08-27 08:18:50,594 - infrastructure.fog.integration.integration_test_suite - INFO - ==================================================
+2025-08-27 08:18:50,594 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Mobile Resource Manager Startup
+2025-08-27 08:18:50,594 - infrastructure.fog.edge.mobile.resource_manager - INFO - Mobile Resource Manager initialized: harvest_enabled=True, token_rewards=True
+2025-08-27 08:18:50,594 - infrastructure.fog.integration.integration_test_suite - ERROR - [FAIL] Test FAILED: Mobile Resource Manager Startup - 'dict' object has no attribute 'battery_percent'
+2025-08-27 08:18:50,594 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Fog Harvest Manager Startup
+2025-08-27 08:18:50,594 - infrastructure.fog.compute.harvest_manager - INFO - FogHarvestManager initialized: test_harvest_node
+2025-08-27 08:18:50,594 - infrastructure.fog.compute.harvest_manager - ERROR - Failed to register device test_device_001: 'dict' object has no attribute 'device_type'
+2025-08-27 08:18:50,595 - infrastructure.fog.integration.integration_test_suite - ERROR - [FAIL] Test FAILED: Fog Harvest Manager Startup - 'FogHarvestManager' object has no attribute 'start_harvest_session'
+2025-08-27 08:18:50,595 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Onion Router Startup
+2025-08-27 08:18:50,610 - infrastructure.fog.privacy.onion_routing - INFO - OnionRouter initialized: test_onion_node, types: {<NodeType.MIDDLE: 'middle'>}
+2025-08-27 08:18:50,610 - infrastructure.fog.integration.integration_test_suite - ERROR - [FAIL] Test FAILED: Onion Router Startup - Missing create_circuit method
+2025-08-27 08:18:50,610 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Mixnet Client Startup
+2025-08-27 08:18:50,611 - infrastructure.fog.privacy.mixnet_integration - INFO - Nym Mixnet client initialized: test_client_001
+2025-08-27 08:18:50,611 - infrastructure.fog.privacy.mixnet_integration - INFO - Starting Nym Mixnet client
+2025-08-27 08:18:50,611 - infrastructure.fog.privacy.mixnet_integration - INFO - Discovering mixnet topology
+2025-08-27 08:18:50,611 - infrastructure.fog.privacy.mixnet_integration - INFO - Discovered 33 mixnet nodes
+2025-08-27 08:18:50,611 - infrastructure.fog.privacy.mixnet_integration - INFO - Nym Mixnet client started successfully
+2025-08-27 08:18:50,611 - infrastructure.fog.integration.integration_test_suite - INFO - [PASS] Test PASSED: Mixnet Client Startup (0.00s)
+2025-08-27 08:18:50,612 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Fog Marketplace Startup
+2025-08-27 08:18:50,612 - infrastructure.fog.marketplace.fog_marketplace - INFO - FogMarketplace initialized: test_marketplace
+2025-08-27 08:18:50,612 - infrastructure.fog.integration.integration_test_suite - ERROR - [FAIL] Test FAILED: Fog Marketplace Startup - Missing publish_service method
+2025-08-27 08:18:50,612 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Token System Startup
+2025-08-27 08:18:50,612 - infrastructure.fog.tokenomics.fog_token_system - INFO - FogTokenSystem initialized: 1,000,000,000 FOG initial supply, 10 FOG/hour base reward
+2025-08-27 08:18:50,612 - infrastructure.fog.integration.integration_test_suite - ERROR - [FAIL] Test FAILED: Token System Startup - Missing mint_tokens method
+2025-08-27 08:18:50,612 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Hidden Service Host Startup
+2025-08-27 08:18:50,612 - infrastructure.fog.integration.integration_test_suite - INFO - [PASS] Test PASSED: Hidden Service Host Startup (0.00s)
+2025-08-27 08:18:50,612 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Contribution Ledger Startup
+2025-08-27 08:18:50,613 - infrastructure.fog.governance.contribution_ledger - INFO - Contribution Ledger initialized
+2025-08-27 08:18:50,613 - infrastructure.fog.governance.contribution_ledger - INFO - Starting Contribution Ledger
+2025-08-27 08:18:50,656 - infrastructure.fog.governance.contribution_ledger - INFO - Loaded 2 contributions, 1 contributors, 0 proposals
+2025-08-27 08:18:50,656 - infrastructure.fog.governance.contribution_ledger - INFO - Contribution Ledger started successfully
+2025-08-27 08:18:50,656 - infrastructure.fog.governance.contribution_ledger - INFO - Recorded contribution contrib_1756297130_b1330ae2 by test_contributor_001
+2025-08-27 08:18:50,657 - infrastructure.fog.integration.integration_test_suite - INFO - [PASS] Test PASSED: Contribution Ledger Startup (0.04s)
+2025-08-27 08:18:50,657 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: SLO Monitor Startup
+2025-08-27 08:18:50,657 - infrastructure.fog.monitoring.slo_monitor - INFO - SLO Monitor initialized
+2025-08-27 08:18:50,657 - infrastructure.fog.monitoring.slo_monitor - INFO - Starting SLO Monitor
+2025-08-27 08:18:50,658 - infrastructure.fog.monitoring.slo_monitor - INFO - SLO Monitor started successfully
+2025-08-27 08:18:50,658 - infrastructure.fog.integration.integration_test_suite - INFO - [PASS] Test PASSED: SLO Monitor Startup (0.00s)
+2025-08-27 08:18:50,658 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Chaos Testing Framework Startup
+2025-08-27 08:18:50,658 - infrastructure.fog.testing.chaos_tester - INFO - Chaos Testing Framework initialized
+2025-08-27 08:18:50,659 - infrastructure.fog.testing.chaos_tester - INFO - Starting Chaos Testing Framework
+2025-08-27 08:18:50,659 - infrastructure.fog.testing.chaos_tester - INFO - Collecting baseline metrics
+2025-08-27 08:18:50,659 - infrastructure.fog.testing.chaos_tester - INFO - Chaos Testing Framework started successfully
+2025-08-27 08:18:50,659 - infrastructure.fog.testing.chaos_tester - INFO - Starting production validation suite
+2025-08-27 08:18:50,659 - infrastructure.fog.integration.integration_test_suite - ERROR - [FAIL] Test FAILED: Chaos Testing Framework Startup - ValidationReport.__init__() missing 3 required positional arguments: 'passed_tests', 'failed_tests', and 'critical_failures'
+2025-08-27 08:18:50,659 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Fog Coordinator Startup
+2025-08-27 08:18:50,659 - infrastructure.fog.integration.integration_test_suite - ERROR - [FAIL] Test FAILED: Fog Coordinator Startup - FogCoordinator.__init__() missing 1 required positional argument: 'node_id'
+2025-08-27 08:18:50,659 - infrastructure.fog.integration.integration_test_suite - INFO - 
+==================================================
+2025-08-27 08:18:50,659 - infrastructure.fog.integration.integration_test_suite - INFO - Running Component Interaction Tests
+2025-08-27 08:18:50,659 - infrastructure.fog.integration.integration_test_suite - INFO - ==================================================
+2025-08-27 08:18:50,659 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Harvest Manager + Mobile Resource Manager Interaction
+2025-08-27 08:18:50,660 - infrastructure.fog.integration.integration_test_suite - INFO - [PASS] Test PASSED: Harvest Manager + Mobile Resource Manager Interaction (0.00s)
+2025-08-27 08:18:50,660 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Onion Router + Mixnet Client Integration
+2025-08-27 08:18:50,660 - infrastructure.fog.integration.integration_test_suite - INFO - [PASS] Test PASSED: Onion Router + Mixnet Client Integration (0.00s)
+2025-08-27 08:18:50,660 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Marketplace + Token System Integration
+2025-08-27 08:18:50,660 - infrastructure.fog.integration.integration_test_suite - INFO - [PASS] Test PASSED: Marketplace + Token System Integration (0.00s)
+2025-08-27 08:18:50,660 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Hidden Service + Onion Router Integration
+2025-08-27 08:18:50,660 - infrastructure.fog.integration.integration_test_suite - INFO - [PASS] Test PASSED: Hidden Service + Onion Router Integration (0.00s)
+2025-08-27 08:18:50,660 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Contribution Ledger + Token System Integration
+2025-08-27 08:18:50,661 - infrastructure.fog.integration.integration_test_suite - INFO - [PASS] Test PASSED: Contribution Ledger + Token System Integration (0.00s)
+2025-08-27 08:18:50,661 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: SLO Monitor Integration with All Components
+2025-08-27 08:18:50,661 - infrastructure.fog.integration.integration_test_suite - INFO - [PASS] Test PASSED: SLO Monitor Integration with All Components (0.00s)
+2025-08-27 08:18:50,661 - infrastructure.fog.integration.integration_test_suite - INFO - 
+==================================================
+2025-08-27 08:18:50,661 - infrastructure.fog.integration.integration_test_suite - INFO - Running End-to-End Workflow Tests
+2025-08-27 08:18:50,661 - infrastructure.fog.integration.integration_test_suite - INFO - ==================================================
+2025-08-27 08:18:50,661 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Complete Fog Compute Workflow
+2025-08-27 08:18:50,661 - infrastructure.fog.integration.integration_test_suite - INFO - [PASS] Test PASSED: Complete Fog Compute Workflow (0.00s)
+2025-08-27 08:18:50,661 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Hidden Service Hosting Workflow
+2025-08-27 08:18:50,661 - infrastructure.fog.integration.integration_test_suite - INFO - [PASS] Test PASSED: Hidden Service Hosting Workflow (0.00s)
+2025-08-27 08:18:50,661 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Anonymous Communication Workflow
+2025-08-27 08:18:50,661 - infrastructure.fog.integration.integration_test_suite - INFO - [PASS] Test PASSED: Anonymous Communication Workflow (0.00s)
+2025-08-27 08:18:50,661 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Contribution Tracking and Rewards Workflow
+2025-08-27 08:18:50,661 - infrastructure.fog.integration.integration_test_suite - INFO - [PASS] Test PASSED: Contribution Tracking and Rewards Workflow (0.00s)
+2025-08-27 08:18:50,662 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: DAO Governance Workflow
+2025-08-27 08:18:50,662 - infrastructure.fog.integration.integration_test_suite - INFO - [PASS] Test PASSED: DAO Governance Workflow (0.00s)
+2025-08-27 08:18:50,662 - infrastructure.fog.integration.integration_test_suite - INFO - 
+==================================================
+2025-08-27 08:18:50,662 - infrastructure.fog.integration.integration_test_suite - INFO - Running Performance Tests
+2025-08-27 08:18:50,662 - infrastructure.fog.integration.integration_test_suite - INFO - ==================================================
+2025-08-27 08:18:50,662 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Compute Harvesting Performance Test
+2025-08-27 08:18:50,662 - infrastructure.fog.integration.integration_test_suite - INFO - [PASS] Test PASSED: Compute Harvesting Performance Test (0.00s)
+2025-08-27 08:18:50,662 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Onion Routing Latency Test
+2025-08-27 08:18:50,662 - infrastructure.fog.integration.integration_test_suite - INFO - [PASS] Test PASSED: Onion Routing Latency Test (0.00s)
+2025-08-27 08:18:50,662 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Marketplace Scalability Test
+2025-08-27 08:18:50,662 - infrastructure.fog.integration.integration_test_suite - INFO - [PASS] Test PASSED: Marketplace Scalability Test (0.00s)
+2025-08-27 08:18:50,662 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Token Transaction Throughput Test
+2025-08-27 08:18:50,662 - infrastructure.fog.integration.integration_test_suite - INFO - [PASS] Test PASSED: Token Transaction Throughput Test (0.00s)
+2025-08-27 08:18:50,662 - infrastructure.fog.integration.integration_test_suite - INFO - 
+==================================================
+2025-08-27 08:18:50,663 - infrastructure.fog.integration.integration_test_suite - INFO - Running Security Tests
+2025-08-27 08:18:50,663 - infrastructure.fog.integration.integration_test_suite - INFO - ==================================================
+2025-08-27 08:18:50,663 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Privacy Preservation Test
+2025-08-27 08:18:50,663 - infrastructure.fog.integration.integration_test_suite - INFO - [PASS] Test PASSED: Privacy Preservation Test (0.00s)
+2025-08-27 08:18:50,663 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Anonymous Communication Security Test
+2025-08-27 08:18:50,663 - infrastructure.fog.integration.integration_test_suite - INFO - [PASS] Test PASSED: Anonymous Communication Security Test (0.00s)
+2025-08-27 08:18:50,663 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Token System Security Test
+2025-08-27 08:18:50,663 - infrastructure.fog.integration.integration_test_suite - INFO - [PASS] Test PASSED: Token System Security Test (0.00s)
+2025-08-27 08:18:50,663 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Access Control Validation Test
+2025-08-27 08:18:50,663 - infrastructure.fog.integration.integration_test_suite - INFO - [PASS] Test PASSED: Access Control Validation Test (0.00s)
+2025-08-27 08:18:50,663 - infrastructure.fog.integration.integration_test_suite - INFO - 
+==================================================
+2025-08-27 08:18:50,663 - infrastructure.fog.integration.integration_test_suite - INFO - Running Resilience Tests
+2025-08-27 08:18:50,664 - infrastructure.fog.integration.integration_test_suite - INFO - ==================================================
+2025-08-27 08:18:50,664 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Component Failure Recovery Test
+2025-08-27 08:18:50,664 - infrastructure.fog.integration.integration_test_suite - INFO - [PASS] Test PASSED: Component Failure Recovery Test (0.00s)
+2025-08-27 08:18:50,664 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: Network Partition Tolerance Test
+2025-08-27 08:18:50,664 - infrastructure.fog.integration.integration_test_suite - INFO - [PASS] Test PASSED: Network Partition Tolerance Test (0.00s)
+2025-08-27 08:18:50,664 - infrastructure.fog.integration.integration_test_suite - INFO - Running test: SLO Breach Recovery Test
+2025-08-27 08:18:50,665 - infrastructure.fog.monitoring.slo_monitor - INFO - System Health: 100.0% (8/8 SLOs healthy)
+2025-08-27 08:18:50,666 - infrastructure.fog.testing.chaos_tester - INFO - Generating periodic validation report
+2025-08-27 08:18:50,666 - infrastructure.fog.testing.chaos_tester - INFO - Starting production validation suite
+2025-08-27 08:18:50,666 - infrastructure.fog.testing.chaos_tester - ERROR - Error in report generator: ValidationReport.__init__() missing 3 required positional arguments: 'passed_tests', 'failed_tests', and 'critical_failures'

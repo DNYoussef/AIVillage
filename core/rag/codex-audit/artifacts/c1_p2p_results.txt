@@ -1,0 +1,25 @@
+C1 P2P Network Test Results (V2)
+==================================================
+Total Tests: 15
+Passed: 12
+Partial: 1
+Failed: 2
+Success Rate: 80.0%
+Verdict: PARTIAL
+
+Detailed Results:
+  bitchat_transport: PASS - Import successful
+  betanet_transport: PASS - Import successful
+  dual_path_transport: PASS - Import successful
+  libp2p_mesh: PASS - Import successful
+  mdns_discovery: PASS - Import successful
+  fallback_transports: PASS - Import successful
+  Has node_id: PASS - node_id: test_node
+  Has bitchat: PASS - BitChat transport attribute
+  Has betanet: PASS - Betanet transport attribute
+  Has routing_stats: PASS - Routing statistics
+  Message creation: PASS - Created message ID: c7c764ef...
+  Message Types: PASS - All 4 types found
+  LibP2P Mesh: FAIL - Test failed: LibP2PMeshNetwork.__init__() got an unexpected keyword argument 'peer_id'
+  Fallback Transports: PARTIAL - Module exists, found: ['BluetoothTransport', 'FallbackTransport', 'FallbackTransportManager']...
+  mDNS Discovery: FAIL - Import failed: cannot import name 'MDNSPeerDiscovery' from 'src.core.p2p.mdns_discovery' (C:\Users\17175\Desktop\AIVillage\tmp_codex_audit_v3\tests\../..\src\core\p2p\mdns_discovery.py)

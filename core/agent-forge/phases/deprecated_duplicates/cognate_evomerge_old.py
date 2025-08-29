@@ -12,11 +12,11 @@ Breeding Strategy:
 - Evaluation: Code, Math, Multilingual, Structured Data domains
 """
 
+from dataclasses import dataclass, field
 import json
 import logging
-import random
-from dataclasses import dataclass, field
 from pathlib import Path
+import random
 from typing import Any
 
 import numpy as np

@@ -5,8 +5,8 @@ Verify reorganization is clean and no duplicate functionality remains.
 """
 
 import ast
-import sys
 from pathlib import Path
+import sys
 
 import pytest
 

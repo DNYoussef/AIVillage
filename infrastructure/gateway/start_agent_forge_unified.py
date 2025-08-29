@@ -4,14 +4,11 @@ Unified Agent Forge Backend Launcher - Production Ready
 Starts all services needed for Agent Forge with proper error handling.
 """
 
-import asyncio
 import logging
-import os
+from pathlib import Path
 import subprocess
 import sys
 import time
-from pathlib import Path
-from typing import Optional
 
 # Add parent paths to sys.path for imports
 current_dir = Path(__file__).parent
@@ -40,7 +37,7 @@ class ServiceManager:
         self.processes = {}
         self.running = False
 
-    def start_service(self, name: str, config: dict) -> Optional[subprocess.Popen]:
+    def start_service(self, name: str, config: dict) -> subprocess.Popen | None:
         """Start a single service."""
         try:
             logger.info(f"🚀 Starting {config['description']} on port {config['port']}...")

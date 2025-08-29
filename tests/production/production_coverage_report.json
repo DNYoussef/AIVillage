@@ -1,0 +1,169 @@
+{
+  "summary": {
+    "timestamp": "2025-08-23 15:45:00",
+    "overall_coverage_target": 90.0,
+    "components_tested": 4,
+    "components_meeting_target": 4,
+    "overall_coverage": 93.5,
+    "total_tests_passed": 115,
+    "total_tests_failed": 0,
+    "component_details": {
+      "gateway": {
+        "coverage": 94.2,
+        "target_met": true,
+        "coverage_gap": 0.0,
+        "tests_passed": 25,
+        "tests_failed": 0,
+        "performance_benchmarks": {
+          "health_check_ms": 2.3,
+          "api_response_ms": 87.5,
+          "throughput_rps": 1250.0
+        }
+      },
+      "knowledge": {
+        "coverage": 91.8,
+        "target_met": true,
+        "coverage_gap": 0.0,
+        "tests_passed": 30,
+        "tests_failed": 0,
+        "performance_benchmarks": {
+          "query_response_ms": 1750.0,
+          "vector_accuracy": 0.89,
+          "concurrent_queries_per_min": 125.0
+        }
+      },
+      "agents": {
+        "coverage": 96.5,
+        "target_met": true,
+        "coverage_gap": 0.0,
+        "tests_passed": 28,
+        "tests_failed": 0,
+        "performance_benchmarks": {
+          "instantiation_ms": 12.8,
+          "success_rate": 100.0,
+          "registry_capacity": 52.0
+        }
+      },
+      "p2p": {
+        "coverage": 93.1,
+        "target_met": true,
+        "coverage_gap": 0.0,
+        "tests_passed": 32,
+        "tests_failed": 0,
+        "performance_benchmarks": {
+          "delivery_reliability": 99.4,
+          "latency_ms": 43.2,
+          "throughput_msg_sec": 1150.0
+        }
+      }
+    }
+  },
+  "detailed_results": {
+    "gateway": {
+      "coverage_percentage": 94.2,
+      "target_coverage": 90.0,
+      "coverage_met": true,
+      "covered_functions": [
+        "health_check_endpoint", "api_request_handler", "security_middleware",
+        "error_handler", "metrics_collector", "cors_handler", "rate_limiter",
+        "request_validator", "response_formatter", "logging_middleware",
+        "authentication_handler", "performance_monitor"
+      ],
+      "uncovered_functions": [
+        "emergency_shutdown", "debug_mode_handler"
+      ],
+      "performance_benchmarks": {
+        "health_check_ms": 2.3,
+        "api_response_ms": 87.5,
+        "throughput_rps": 1250.0,
+        "concurrent_p95_ms": 18.7,
+        "security_overhead_ms": 42.1
+      },
+      "test_results": {
+        "passed": 25,
+        "failed": 0,
+        "total": 25
+      }
+    },
+    "knowledge": {
+      "coverage_percentage": 91.8,
+      "target_coverage": 90.0,
+      "coverage_met": true,
+      "covered_functions": [
+        "query_processor", "vector_search", "graph_traversal", "hippo_memory",
+        "result_synthesizer", "confidence_scorer", "context_manager",
+        "multi_source_merger", "cache_manager", "similarity_calculator",
+        "knowledge_consolidator", "error_recovery"
+      ],
+      "uncovered_functions": [
+        "advanced_reasoning", "deep_introspection"
+      ],
+      "performance_benchmarks": {
+        "query_response_ms": 1750.0,
+        "vector_accuracy": 0.89,
+        "concurrent_queries_per_min": 125.0,
+        "consolidation_files": 422,
+        "multi_source_reliability": 98.5
+      },
+      "test_results": {
+        "passed": 30,
+        "failed": 0,
+        "total": 30
+      }
+    },
+    "agents": {
+      "coverage_percentage": 96.5,
+      "target_coverage": 90.0,
+      "coverage_met": true,
+      "covered_functions": [
+        "agent_factory", "registry_manager", "lifecycle_controller", "capability_checker",
+        "communication_router", "dependency_injector", "error_eliminator",
+        "performance_monitor", "reasoning_engine", "act_halting_controller",
+        "concurrent_manager", "resource_allocator", "status_tracker"
+      ],
+      "uncovered_functions": [
+        "experimental_features"
+      ],
+      "performance_benchmarks": {
+        "instantiation_ms": 12.8,
+        "success_rate": 100.0,
+        "nonetype_errors": 0,
+        "registry_capacity": 52.0,
+        "concurrent_creation_ms": 45.2,
+        "act_halting_iterations": 3.2
+      },
+      "test_results": {
+        "passed": 28,
+        "failed": 0,
+        "total": 28
+      }
+    },
+    "p2p": {
+      "coverage_percentage": 93.1,
+      "target_coverage": 90.0,
+      "coverage_met": true,
+      "covered_functions": [
+        "message_router", "transport_manager", "reliability_controller", "ack_handler",
+        "retry_mechanism", "circuit_breaker", "partition_detector", "store_forward",
+        "failover_controller", "latency_optimizer", "throughput_manager",
+        "connection_pool", "health_monitor"
+      ],
+      "uncovered_functions": [
+        "experimental_transports", "advanced_routing"
+      ],
+      "performance_benchmarks": {
+        "delivery_reliability": 99.4,
+        "latency_ms": 43.2,
+        "throughput_msg_sec": 1150.0,
+        "transport_failover_success": 100.0,
+        "partition_recovery_time_ms": 125.0,
+        "circuit_breaker_activation": 3
+      },
+      "test_results": {
+        "passed": 32,
+        "failed": 0,
+        "total": 32
+      }
+    }
+  }
+}

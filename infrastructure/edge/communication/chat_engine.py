@@ -3,7 +3,7 @@ Resilient Chat Engine for Edge Computing
 
 A robust chat engine with circuit breaker pattern, graceful degradation, and multi-mode operation:
 - Remote mode: Full twin service integration
-- Local mode: Offline chat processing with basic responses  
+- Local mode: Offline chat processing with basic responses
 - Hybrid mode: Intelligent failover with health monitoring
 - Circuit breaker protection against cascade failures
 - Comprehensive fallback mechanisms for offline scenarios
@@ -441,7 +441,7 @@ class ChatEngine:
                 "circuit_breaker_state": self._circuit_breaker.state.value,
                 "circuit_breaker_stats": self._circuit_breaker.get_stats(),
             }
-        
+
         return {
             "mode": self._mode.value,
             "service_status": self._current_status.value,

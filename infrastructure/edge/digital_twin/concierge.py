@@ -52,23 +52,26 @@ class _FallbackDataSource(Enum):
     CALENDAR = "calendar"
     VOICE = "voice"
 
+
 class _FallbackPrivacyLevel(Enum):
     PUBLIC = "public"
     PRIVATE = "private"
     PERSONAL = "personal"
     SENSITIVE = "sensitive"
 
+
 class _FallbackMobileDeviceProfile:
     def __init__(self, **kwargs):
-        self.timestamp = kwargs.get('timestamp', time.time())
-        self.device_id = kwargs.get('device_id', 'unknown')
-        self.battery_percent = kwargs.get('battery_percent', 100)
-        self.battery_charging = kwargs.get('battery_charging', False)
-        self.cpu_temp_celsius = kwargs.get('cpu_temp_celsius', 25.0)
-        self.cpu_percent = kwargs.get('cpu_percent', 10.0)
-        self.ram_used_mb = kwargs.get('ram_used_mb', 1000)
-        self.ram_available_mb = kwargs.get('ram_available_mb', 3000)
-        self.ram_total_mb = kwargs.get('ram_total_mb', 4000)
+        self.timestamp = kwargs.get("timestamp", time.time())
+        self.device_id = kwargs.get("device_id", "unknown")
+        self.battery_percent = kwargs.get("battery_percent", 100)
+        self.battery_charging = kwargs.get("battery_charging", False)
+        self.cpu_temp_celsius = kwargs.get("cpu_temp_celsius", 25.0)
+        self.cpu_percent = kwargs.get("cpu_percent", 10.0)
+        self.ram_used_mb = kwargs.get("ram_used_mb", 1000)
+        self.ram_available_mb = kwargs.get("ram_available_mb", 3000)
+        self.ram_total_mb = kwargs.get("ram_total_mb", 4000)
+
 
 class _FallbackMobileResourceManager:
     def __init__(self, **kwargs):
@@ -80,6 +83,7 @@ class _FallbackMobileResourceManager:
     def should_throttle_processing(self):
         return False
 
+
 class _FallbackMiniRAGSystem:
     def __init__(self, **kwargs):
         pass
@@ -90,16 +94,19 @@ class _FallbackMiniRAGSystem:
     def search_knowledge(self, *args, **kwargs):
         return []
 
+
 # Now try importing real classes
 try:
     from ..integration.shared_types import DataSource, MobileDeviceProfile, PrivacyLevel
     from ..knowledge.minirag_system import MiniRAGSystem
+
     # MobileResourceManager doesn't exist in shared_types, use fallback
     MobileResourceManager = _FallbackMobileResourceManager
 except ImportError:
     # Graceful degradation for missing components
     try:
         from packages.edge.mobile.shared_types import DataSource, MobileDeviceProfile, PrivacyLevel
+
         MobileResourceManager = _FallbackMobileResourceManager
     except ImportError:
         # Use fallback classes

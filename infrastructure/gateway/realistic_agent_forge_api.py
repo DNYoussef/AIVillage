@@ -5,20 +5,18 @@ Includes WebSocket support and realistic pretraining timeline
 """
 
 import asyncio
+from datetime import datetime, timedelta
 import json
 import logging
+from pathlib import Path
 import sys
 import threading
 import time
-from datetime import datetime, timedelta
-from pathlib import Path
-from typing import List
 
-import uvicorn
-import websockets
 from fastapi import BackgroundTasks, FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+import uvicorn
 
 # Setup logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(message)s")
@@ -44,7 +42,7 @@ app.add_middleware(
 active_phases = {}
 created_models = []
 is_running = {}
-websocket_clients: List[WebSocket] = []
+websocket_clients: list[WebSocket] = []
 
 
 # Configuration
@@ -421,8 +419,8 @@ if __name__ == "__main__":
     print("=" * 80)
     print("REALISTIC AGENT FORGE API SERVER")
     print("=" * 80)
-    print(f"Starting API server on http://localhost:8083")
-    print(f"WebSocket server on ws://localhost:8085/ws")
+    print("Starting API server on http://localhost:8083")
+    print("WebSocket server on ws://localhost:8085/ws")
     print()
     print("REALISTIC TIMING CONFIGURATION:")
     print(f"   Demo Speed Multiplier: {Config.DEMO_SPEED_MULTIPLIER}x")

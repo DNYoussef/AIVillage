@@ -181,8 +181,22 @@ class MobileResourceManager:
     - NETWORK_TYPE: wifi, cellular, 3g, 4g, 5g
     """
 
-    def __init__(self, policy: ResourcePolicy | None = None):
+    def __init__(
+        self, policy: ResourcePolicy | None = None, harvest_enabled: bool = True, token_rewards_enabled: bool = True
+    ):
         self.policy = policy or ResourcePolicy()
+
+        # Fog computing configuration
+        self.harvest_enabled = harvest_enabled
+        self.token_rewards_enabled = token_rewards_enabled
+
+        # Harvesting state tracking
+        self.harvesting_sessions: dict[str, dict[str, Any]] = {}
+        self.contribution_metrics: dict[str, dict[str, float]] = {}
+
+        # P2P and marketplace integration
+        self.p2p_coordinator = None
+        self.marketplace_client = None
 
         # Environment-driven simulation support
         self.env_simulation_mode = self._check_env_simulation()
@@ -204,7 +218,10 @@ class MobileResourceManager:
         self.profile_history: list[MobileDeviceProfile] = []
         self.optimization_history: list[ResourceOptimization] = []
 
-        logger.info("Mobile Resource Manager initialized")
+        logger.info(
+            f"Mobile Resource Manager initialized: "
+            f"harvest_enabled={harvest_enabled}, token_rewards={token_rewards_enabled}"
+        )
 
     def _check_env_simulation(self) -> bool:
         """Check if environment-driven simulation mode is enabled"""
@@ -794,3 +811,248 @@ class MobileResourceManager:
         self.stats = dict.fromkeys(self.stats, 0)
         self.profile_history.clear()
         self.optimization_history.clear()
+
+        # Reset fog computing state
+        self.harvesting_sessions.clear()
+        self.contribution_metrics.clear()
+
+    # ============================================================================
+    # FOG COMPUTING METHODS - Idle Resource Harvesting
+    # ============================================================================
+
+    async def evaluate_harvest_eligibility(self, device_id: str, profile: MobileDeviceProfile) -> bool:
+        """Evaluate if device is eligible for compute harvesting"""
+
+        if not self.harvest_enabled:
+            return False
+
+        # Check battery level and charging status
+        if profile.battery_percent is None or profile.battery_percent < 20:
+            logger.debug(f"Device {device_id} battery too low: {profile.battery_percent}%")
+            return False
+
+        if not profile.battery_charging:
+            logger.debug(f"Device {device_id} not charging")
+            return False
+
+        # Check thermal state
+        if profile.cpu_temp_celsius and profile.cpu_temp_celsius > 45.0:
+            logger.debug(f"Device {device_id} too hot: {profile.cpu_temp_celsius}°C")
+            return False
+
+        # Check network - prefer WiFi for fog computing
+        if profile.network_type not in ["wifi", "ethernet"]:
+            logger.debug(f"Device {device_id} on metered network: {profile.network_type}")
+            return False
+
+        # Check if user is actively using device
+        if profile.is_foreground and profile.screen_brightness and profile.screen_brightness > 10:
+            logger.debug(f"Device {device_id} in active use")
+            return False
+
+        logger.info(f"Device {device_id} eligible for compute harvesting")
+        return True
+
+    async def start_harvest_session(self, device_id: str, profile: MobileDeviceProfile) -> str | None:
+        """Start a compute harvesting session"""
+
+        if not await self.evaluate_harvest_eligibility(device_id, profile):
+            return None
+
+        # Don't start if already harvesting
+        if device_id in self.harvesting_sessions:
+            return self.harvesting_sessions[device_id]["session_id"]
+
+        session_id = f"harvest_{device_id}_{int(time.time())}"
+
+        session = {
+            "session_id": session_id,
+            "device_id": device_id,
+            "start_time": time.time(),
+            "initial_profile": profile.to_dict() if hasattr(profile, "to_dict") else vars(profile),
+            "cpu_cycles_contributed": 0,
+            "memory_mb_hours_contributed": 0.0,
+            "bandwidth_gb_contributed": 0.0,
+            "tasks_completed": 0,
+            "tokens_earned": 0,
+            "status": "active",
+        }
+
+        self.harvesting_sessions[device_id] = session
+
+        # Initialize contribution metrics if not exists
+        if device_id not in self.contribution_metrics:
+            self.contribution_metrics[device_id] = {
+                "total_sessions": 0,
+                "total_hours": 0.0,
+                "total_cpu_cycles": 0,
+                "total_tokens_earned": 0,
+                "average_performance": 0.0,
+            }
+
+        logger.info(
+            f"Started harvest session {session_id} for device {device_id}: "
+            f"battery {profile.battery_percent}%, temp {profile.cpu_temp_celsius}°C"
+        )
+
+        return session_id
+
+    async def update_harvest_metrics(self, device_id: str, metrics: dict[str, Any]) -> bool:
+        """Update metrics for an active harvesting session"""
+
+        if device_id not in self.harvesting_sessions:
+            logger.warning(f"No active harvest session for device {device_id}")
+            return False
+
+        session = self.harvesting_sessions[device_id]
+
+        # Update session metrics
+        session["cpu_cycles_contributed"] += metrics.get("cpu_cycles", 0)
+        session["memory_mb_hours_contributed"] += metrics.get("memory_mb_hours", 0.0)
+        session["bandwidth_gb_contributed"] += metrics.get("bandwidth_gb", 0.0)
+        session["tasks_completed"] += metrics.get("tasks_completed", 0)
+
+        # Calculate token rewards based on contribution
+        duration_hours = (time.time() - session["start_time"]) / 3600
+        base_tokens = int(duration_hours * 10)  # 10 tokens per hour base rate
+
+        # Bonus for completing tasks
+        task_bonus = session["tasks_completed"] * 5  # 5 tokens per task
+
+        # Performance multiplier based on device capabilities
+        performance_multiplier = 1.0
+        if metrics.get("cpu_cores", 0) > 4:
+            performance_multiplier += 0.2  # 20% bonus for multi-core devices
+        if metrics.get("has_gpu", False):
+            performance_multiplier += 0.3  # 30% bonus for GPU devices
+
+        session["tokens_earned"] = int((base_tokens + task_bonus) * performance_multiplier)
+
+        logger.debug(
+            f"Updated harvest session {session['session_id']}: "
+            f"{session['tasks_completed']} tasks, {session['tokens_earned']} tokens"
+        )
+
+        return True
+
+    async def stop_harvest_session(self, device_id: str, reason: str = "conditions_changed") -> dict[str, Any] | None:
+        """Stop a harvesting session and finalize contributions"""
+
+        if device_id not in self.harvesting_sessions:
+            return None
+
+        session = self.harvesting_sessions[device_id]
+        session["end_time"] = time.time()
+        session["duration_hours"] = (session["end_time"] - session["start_time"]) / 3600
+        session["stop_reason"] = reason
+        session["status"] = "completed"
+
+        # Update cumulative contribution metrics
+        metrics = self.contribution_metrics[device_id]
+        metrics["total_sessions"] += 1
+        metrics["total_hours"] += session["duration_hours"]
+        metrics["total_cpu_cycles"] += session["cpu_cycles_contributed"]
+        metrics["total_tokens_earned"] += session["tokens_earned"]
+
+        # Calculate average performance
+        if metrics["total_hours"] > 0:
+            metrics["average_performance"] = (
+                metrics["total_cpu_cycles"] / metrics["total_hours"] / 1000000000  # GHz equivalent
+            )
+
+        # Archive session data
+        final_session = session.copy()
+        del self.harvesting_sessions[device_id]
+
+        logger.info(
+            f"Stopped harvest session {session['session_id']}: "
+            f"{session['duration_hours']:.2f} hours, "
+            f"{session['tasks_completed']} tasks, "
+            f"{session['tokens_earned']} tokens earned"
+        )
+
+        return final_session
+
+    def get_harvest_stats(self, device_id: str | None = None) -> dict[str, Any]:
+        """Get harvesting statistics for device or all devices"""
+
+        if device_id:
+            # Stats for specific device
+            if device_id not in self.contribution_metrics:
+                return {"error": "Device not found"}
+
+            stats = self.contribution_metrics[device_id].copy()
+
+            # Add current session info if active
+            if device_id in self.harvesting_sessions:
+                session = self.harvesting_sessions[device_id]
+                stats["current_session"] = {
+                    "session_id": session["session_id"],
+                    "duration_hours": (time.time() - session["start_time"]) / 3600,
+                    "tasks_completed": session["tasks_completed"],
+                    "tokens_earned": session["tokens_earned"],
+                }
+
+            return stats
+
+        else:
+            # Aggregate stats for all devices
+            total_devices = len(self.contribution_metrics)
+            active_sessions = len(self.harvesting_sessions)
+
+            total_hours = sum(m["total_hours"] for m in self.contribution_metrics.values())
+            total_tokens = sum(m["total_tokens_earned"] for m in self.contribution_metrics.values())
+            total_sessions = sum(m["total_sessions"] for m in self.contribution_metrics.values())
+
+            return {
+                "total_devices": total_devices,
+                "active_sessions": active_sessions,
+                "total_contribution_hours": total_hours,
+                "total_tokens_earned": total_tokens,
+                "total_sessions": total_sessions,
+                "average_tokens_per_hour": total_tokens / max(total_hours, 1),
+                "harvest_enabled": self.harvest_enabled,
+            }
+
+    async def set_p2p_coordinator(self, coordinator):
+        """Set P2P coordinator for task distribution"""
+        self.p2p_coordinator = coordinator
+        logger.info("P2P coordinator connected for fog task distribution")
+
+    async def set_marketplace_client(self, client):
+        """Set marketplace client for service offerings"""
+        self.marketplace_client = client
+        logger.info("Marketplace client connected for fog services")
+
+    async def register_as_fog_provider(self, device_capabilities: dict[str, Any]) -> bool:
+        """Register device as fog computing provider in marketplace"""
+
+        if not self.marketplace_client:
+            logger.warning("No marketplace client available")
+            return False
+
+        try:
+            # Create service offering based on device capabilities
+            offering = {
+                "service_type": "compute_instance",
+                "service_tier": "basic",
+                "cpu_cores": device_capabilities.get("cpu_cores", 2),
+                "memory_gb": device_capabilities.get("ram_total_mb", 4096) / 1024,
+                "gpu_available": device_capabilities.get("has_gpu", False),
+                "base_price": 0.1,  # 0.1 tokens per hour
+                "regions": ["mobile_fog"],
+                "uptime_guarantee": 95.0,  # 95% uptime for mobile devices
+            }
+
+            success = await self.marketplace_client.register_offering(offering)
+
+            if success:
+                logger.info("Successfully registered as fog computing provider")
+            else:
+                logger.error("Failed to register as fog computing provider")
+
+            return success
+
+        except Exception as e:
+            logger.error(f"Error registering as fog provider: {e}")
+            return False

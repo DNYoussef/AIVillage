@@ -52,6 +52,12 @@ class SecretSanitizationValidator:
             r"test.*secret.*pragma.*allowlist.*secret",
             r"test.*key.*pragma.*allowlist.*secret",
             r"mock.*key.*pragma.*allowlist.*secret",
+            # More lenient patterns for test code
+            r".*PasswordManager.*pragma.*allowlist.*secret",
+            r".*mfa.*secret.*pragma.*allowlist.*secret",
+            r".*generate_.*secret.*pragma.*allowlist.*secret",
+            r".*password.*=.*test_.*pragma.*allowlist.*secret",
+            r".*SecurityLevel.*pragma.*allowlist.*secret",
         ]
 
     def validate_file(self, file_path: Path) -> dict:

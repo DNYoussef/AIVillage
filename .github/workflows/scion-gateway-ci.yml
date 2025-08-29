@@ -11,7 +11,7 @@ on:
       - 'integrations/clients/rust/scion-sidecar/**'
       - 'infrastructure/p2p/scion_gateway.py'
       - 'core/agents/infrastructure/navigation/scion_navigator.py'
-      - 'tests/e2e/test_scion_gateway.py'
+      - 'tests/integration/test_scion_unified.py'
       - 'devops/deployment/docker/docker-compose.scion-gateway.yml'
       - '.github/workflows/scion-gateway-ci.yml'
 
@@ -22,7 +22,7 @@ on:
       - 'integrations/clients/rust/scion-sidecar/**'
       - 'infrastructure/p2p/scion_gateway.py'
       - 'core/agents/infrastructure/navigation/scion_navigator.py'
-      - 'tests/e2e/test_scion_gateway.py'
+      - 'tests/integration/test_scion_unified.py'
       - 'devops/deployment/docker/docker-compose.scion-gateway.yml'
 
   workflow_dispatch:

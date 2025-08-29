@@ -22,13 +22,13 @@ model:
   max_sequence_length: 4096
   dropout: 0.1
   layer_norm_eps: 1e-5
-  
+
   # Parameter count target: ~50M
   target_params: 50000000
-  
+
   # Activation function
   activation: "gelu"
-  
+
   # Position embeddings
   position_embedding_type: "learned"  # learned, sinusoidal, rotary
   max_position_embeddings: 4096
@@ -40,11 +40,11 @@ act:
   T_max: 12    # Maximum computation steps
   epsilon: 0.01  # Halting threshold
   bias_init: 1.0  # Initial bias for halting predictor
-  
+
   # ACT-specific architecture
   halting_hidden_size: 256
   pondering_hidden_size: 128
-  
+
   # Training settings
   warmup_steps: 1000
   max_pondering_steps: 12
@@ -56,16 +56,16 @@ ltm:
   d_mem: 384      # Memory dimension (matches d_model)
   capacity: 8192  # Memory bank capacity
   topk: 4        # Top-K retrieval
-  
+
   # Memory architecture
   memory_layers: [6, 9, 11]  # Layers with memory access
   memory_heads: 8            # Attention heads for memory
-  
+
   # Memory operations
   update_rate: 0.1     # Memory update learning rate
   decay_rate: 0.999    # Memory decay rate
   retrieval_temperature: 0.1
-  
+
   # Memory initialization
   init_strategy: "random"  # random, zeros, learned
   orthogonal_init: true
@@ -76,19 +76,19 @@ quiet_star:
   p: 0.3           # Probability of generating thoughts
   max_fast: 6      # Max fast thinking steps
   max_slow: 24     # Max slow thinking steps
-  
+
   # Thought generation
   thought_prefix: "<|thinking|>"
   thought_suffix: "<|/thinking|>"
-  
+
   # Token budgets
   fast_thought_tokens: 32
   slow_thought_tokens: 128
-  
+
   # Training settings
   thought_loss_weight: 0.5
   mixing_weight: 0.2
-  
+
   # Sampling parameters
   temperature: 1.0
   top_p: 0.9
@@ -102,29 +102,29 @@ training:
   weight_decay: 0.1
   warmup_steps: 2000
   max_steps: 100000
-  
+
   # Scheduling
   scheduler_type: "cosine"  # linear, cosine, polynomial
   min_learning_rate: 1e-6
   warmup_init_lr: 1e-7
-  
+
   # Batch configuration
   batch_size: 32
   gradient_accumulation_steps: 4
   effective_batch_size: 128  # batch_size * gradient_accumulation_steps
-  
+
   # Sequence lengths
   max_seq_length: 2048
   pack_sequences: true
-  
+
   # Regularization
   gradient_clip_norm: 1.0
   label_smoothing: 0.1
-  
+
   # Mixed precision
   mixed_precision: true
   loss_scale: "dynamic"
-  
+
   # Checkpointing
   save_steps: 5000
   eval_steps: 1000
@@ -136,13 +136,13 @@ dataset:
   # Curriculum ratios
   short_local_ratio: 0.45   # 45% short/local tasks
   long_horizon_ratio: 0.55  # 55% long-horizon tasks
-  
+
   # Short/local tasks (reasoning, math, coding)
   short_local:
     types: ["math", "coding", "logic", "factual"]
     max_length: 512
     weight: 0.45
-    
+
     sources:
       - name: "gsm8k"
         weight: 0.3
@@ -156,14 +156,14 @@ dataset:
       - name: "logic_puzzles"
         weight: 0.2
         max_samples: 5000
-  
+
   # Long-horizon tasks (planning, multi-step reasoning)
   long_horizon:
     types: ["planning", "multi_step", "dialogue", "story"]
     min_length: 1024
     max_length: 4096
     weight: 0.55
-    
+
     sources:
       - name: "planning_tasks"
         weight: 0.3
@@ -177,14 +177,14 @@ dataset:
       - name: "story_completion"
         weight: 0.1
         max_samples: 5000
-  
+
   # Data preprocessing
   preprocessing:
     tokenizer: "gpt2"  # gpt2, llama, custom
     padding_side: "right"
     truncation_side: "right"
     add_special_tokens: true
-    
+
   # Data loading
   num_workers: 4
   pin_memory: true
@@ -210,11 +210,11 @@ evaluation:
       metric: "pass_at_k"
       batch_size: 4
       k: [1, 10]
-  
+
   # Evaluation frequency
   eval_frequency: 1000
   save_best_model: true
-  
+
   # Generation settings
   generation:
     max_new_tokens: 512
@@ -228,30 +228,30 @@ system:
   # Device settings
   device: "auto"  # auto, cpu, cuda, mps
   dtype: "bfloat16"  # float32, float16, bfloat16
-  
+
   # Memory management
   memory_efficient: true
   gradient_checkpointing: true
   flash_attention: true
-  
+
   # Distributed training
   distributed:
     enabled: false
     backend: "nccl"  # nccl, gloo, mpi
     world_size: 1
     rank: 0
-  
+
   # Monitoring
   wandb:
     enabled: false
     project: "unified_refiner"
     entity: "aivillage"
     tags: ["act", "ltm", "quiet-star"]
-  
+
   tensorboard:
     enabled: true
     log_dir: "runs/unified_refiner"
-  
+
   # Paths
   paths:
     data_dir: "data/unified_refiner"
@@ -267,17 +267,17 @@ ablation:
       description: "Disable ACT (Adaptive Computation Time)"
       modifications:
         act.enabled: false
-    
+
     no_ltm:
       description: "Disable LTM (Long-Term Memory)"
       modifications:
         ltm.enabled: false
-    
+
     no_quiet_star:
       description: "Disable Quiet-STaR thinking"
       modifications:
         quiet_star.enabled: false
-    
+
     small_model:
       description: "Smaller model for comparison (~12M params)"
       modifications:
@@ -285,7 +285,7 @@ ablation:
         model.layers: 8
         model.heads: 8
         model.target_params: 12000000
-    
+
     train_few:
       description: "Train with limited data (10% of full)"
       modifications:
@@ -295,7 +295,7 @@ ablation:
         dataset.short_local.sources[2].max_samples: 1200
         dataset.long_horizon.sources[0].max_samples: 1500
         dataset.long_horizon.sources[1].max_samples: 2000
-    
+
     fast_only:
       description: "Quiet-STaR with only fast thinking"
       modifications:
@@ -305,7 +305,7 @@ ablation:
 # Integration with CognateConfig
 cognate_integration:
   enabled: true
-  
+
   # Mapping to CognateConfig fields
   mapping:
     hidden_size: "model.d_model"
@@ -316,13 +316,13 @@ cognate_integration:
     learning_rate: "training.learning_rate"
     weight_decay: "training.weight_decay"
     warmup_steps: "training.warmup_steps"
-  
+
   # Enhanced features mapping
   enhanced_features:
     enable_act_halting: "act.enabled"
     enable_ltm_dynamics: "ltm.enabled"
     enable_reasoning_layers: "quiet_star.enabled"
-  
+
   # Override defaults for unified refiner
   overrides:
     target_architecture: "unified_refiner"
@@ -338,35 +338,35 @@ validation:
     - "model.heads"
     - "training.learning_rate"
     - "training.batch_size"
-  
+
   constraints:
     model.d_model:
       type: "int"
       min: 64
       max: 8192
       divisible_by: ["model.heads"]
-    
+
     model.layers:
       type: "int"
       min: 1
       max: 48
-    
+
     model.heads:
       type: "int"
       min: 1
       max: 64
       divides: ["model.d_model"]
-    
+
     training.learning_rate:
       type: "float"
       min: 1e-6
       max: 1e-2
-    
+
     act.lambda:
       type: "float"
       min: 0.0
       max: 1.0
-    
+
     ltm.capacity:
       type: "int"
       min: 512
@@ -378,7 +378,7 @@ compatibility:
   min_python: "3.8"
   min_torch: "2.0.0"
   min_transformers: "4.30.0"
-  
+
   optional_dependencies:
     flash_attention: "flash-attn>=2.0.0"
     wandb: "wandb>=0.15.0"

@@ -1,0 +1,353 @@
+{
+  "cost_optimization": {
+    "global_settings": {
+      "target_monthly_budget": 2000,
+      "acceptable_budget_variance": 0.15,
+      "cost_monitoring_enabled": true,
+      "alert_thresholds": {
+        "warning_percentage": 0.8,
+        "critical_percentage": 0.95
+      }
+    },
+    "reserved_instances": {
+      "enabled": true,
+      "commitment_term": "1_year",
+      "payment_option": "partial_upfront",
+      "minimum_stable_workload_hours": 17280,
+      "target_coverage_percentage": 0.7,
+      "instance_types_to_reserve": [
+        "m5.large",
+        "m5.xlarge",
+        "c5.large",
+        "r5.large"
+      ],
+      "exclude_from_reservation": [
+        "agent-forge-training",
+        "development-instances"
+      ]
+    },
+    "spot_instances": {
+      "enabled": true,
+      "max_interruption_tolerance": 0.1,
+      "workload_types": [
+        "agent_forge_training",
+        "batch_processing",
+        "development",
+        "testing"
+      ],
+      "minimum_spot_discount": 0.5,
+      "fallback_to_on_demand": true,
+      "spot_fleet_diversification": {
+        "enabled": true,
+        "instance_types_per_az": 3,
+        "az_distribution": "balanced"
+      }
+    },
+    "auto_scaling": {
+      "enabled": true,
+      "scaling_policies": {
+        "production_apps": {
+          "min_instances": 2,
+          "max_instances": 10,
+          "target_cpu_utilization": 70,
+          "scale_up_cooldown": 300,
+          "scale_down_cooldown": 900
+        },
+        "agent_forge": {
+          "min_instances": 0,
+          "max_instances": 5,
+          "target_cpu_utilization": 80,
+          "scale_up_cooldown": 600,
+          "scale_down_cooldown": 1800,
+          "scheduled_scaling": {
+            "training_hours": {
+              "start_time": "02:00",
+              "end_time": "06:00",
+              "min_instances": 2,
+              "timezone": "UTC"
+            }
+          }
+        },
+        "development": {
+          "min_instances": 0,
+          "max_instances": 2,
+          "target_cpu_utilization": 60,
+          "schedule_based_shutdown": {
+            "weekdays": {
+              "shutdown_time": "19:00",
+              "startup_time": "08:00"
+            },
+            "weekends": {
+              "enabled": true,
+              "full_shutdown": true
+            }
+          }
+        }
+      }
+    },
+    "storage_optimization": {
+      "lifecycle_policies": {
+        "backup_data": {
+          "move_to_ia_days": 30,
+          "move_to_glacier_days": 90,
+          "delete_after_days": 2555
+        },
+        "logs": {
+          "move_to_ia_days": 7,
+          "move_to_glacier_days": 30,
+          "delete_after_days": 365
+        },
+        "model_artifacts": {
+          "move_to_ia_days": 90,
+          "move_to_glacier_days": 365,
+          "delete_never": true
+        }
+      },
+      "compression": {
+        "enabled": true,
+        "compression_formats": ["gzip", "lz4"],
+        "target_compression_ratio": 0.3
+      },
+      "deduplication": {
+        "enabled": true,
+        "hash_algorithm": "sha256",
+        "expected_dedup_ratio": 0.2
+      }
+    },
+    "database_optimization": {
+      "read_replicas": {
+        "auto_scaling": true,
+        "min_replicas": 1,
+        "max_replicas": 3,
+        "cpu_threshold": 70
+      },
+      "query_optimization": {
+        "slow_query_monitoring": true,
+        "index_recommendations": true,
+        "query_cache_enabled": true
+      },
+      "backup_optimization": {
+        "automated_backups": true,
+        "backup_retention_days": 7,
+        "point_in_time_recovery": true,
+        "cross_region_backup": false
+      },
+      "right_sizing": {
+        "enabled": true,
+        "monitoring_period_days": 14,
+        "cpu_threshold_low": 20,
+        "memory_threshold_low": 40
+      }
+    },
+    "network_optimization": {
+      "cdn": {
+        "enabled": true,
+        "cache_policies": {
+          "static_assets": {
+            "ttl": 31536000,
+            "compress": true
+          },
+          "api_responses": {
+            "ttl": 300,
+            "compress": true
+          }
+        },
+        "geographic_restrictions": {
+          "enabled": false,
+          "allowed_countries": ["*"]
+        }
+      },
+      "data_transfer": {
+        "compression_enabled": true,
+        "regional_optimization": true,
+        "vpc_endpoints_enabled": true
+      },
+      "load_balancing": {
+        "connection_draining": true,
+        "idle_timeout": 60,
+        "health_check_optimization": true
+      }
+    },
+    "monitoring_and_alerting": {
+      "cost_monitoring": {
+        "enabled": true,
+        "monitoring_frequency": "daily",
+        "cost_allocation_tags": [
+          "Environment",
+          "Project",
+          "Component",
+          "Team"
+        ],
+        "budget_alerts": {
+          "enabled": true,
+          "alert_channels": ["email", "slack"],
+          "forecasting_enabled": true
+        }
+      },
+      "resource_utilization": {
+        "enabled": true,
+        "underutilized_resource_threshold": 20,
+        "overutilized_resource_threshold": 85,
+        "recommendation_frequency": "weekly"
+      }
+    },
+    "multi_cloud_strategy": {
+      "enabled": false,
+      "primary_provider": "aws",
+      "cost_arbitrage": {
+        "enabled": false,
+        "workload_portability": ["compute", "storage"],
+        "cost_difference_threshold": 0.15
+      },
+      "disaster_recovery": {
+        "cross_cloud_backup": false,
+        "failover_strategy": "single_cloud"
+      }
+    },
+    "global_south_optimization": {
+      "enabled": true,
+      "edge_deployment": {
+        "regions": [
+          "sa-east-1",
+          "ap-south-1",
+          "af-south-1",
+          "me-south-1"
+        ],
+        "local_caching": true,
+        "reduced_feature_set": false
+      },
+      "cost_considerations": {
+        "lower_instance_types": true,
+        "optimized_bandwidth": true,
+        "local_currency_pricing": true
+      }
+    }
+  },
+  "deployment_scenarios": {
+    "development": {
+      "cost_target": 100,
+      "optimization_priority": "maximum_savings",
+      "allowed_interruptions": true,
+      "spot_instance_percentage": 100,
+      "auto_shutdown_enabled": true
+    },
+    "staging": {
+      "cost_target": 300,
+      "optimization_priority": "balanced",
+      "allowed_interruptions": false,
+      "spot_instance_percentage": 30,
+      "reserved_instance_percentage": 50
+    },
+    "production": {
+      "cost_target": 1500,
+      "optimization_priority": "performance_first",
+      "allowed_interruptions": false,
+      "spot_instance_percentage": 0,
+      "reserved_instance_percentage": 70,
+      "high_availability": true
+    },
+    "high_availability": {
+      "cost_target": 2500,
+      "optimization_priority": "reliability_first",
+      "allowed_interruptions": false,
+      "spot_instance_percentage": 0,
+      "reserved_instance_percentage": 80,
+      "multi_az_deployment": true,
+      "automated_backup": true
+    },
+    "edge_distributed": {
+      "cost_target": 800,
+      "optimization_priority": "edge_efficiency",
+      "allowed_interruptions": true,
+      "spot_instance_percentage": 50,
+      "local_processing_enabled": true,
+      "bandwidth_optimization": true
+    }
+  },
+  "provider_specific_optimizations": {
+    "aws": {
+      "savings_plans": {
+        "enabled": true,
+        "compute_savings_plan_commitment": "1_year",
+        "ec2_instance_savings_plan": true
+      },
+      "aws_credits": {
+        "track_usage": true,
+        "optimize_for_credits": true
+      },
+      "free_tier": {
+        "maximize_usage": true,
+        "monitor_limits": true
+      }
+    },
+    "azure": {
+      "reserved_vm_instances": {
+        "enabled": true,
+        "term": "1_year"
+      },
+      "hybrid_benefit": {
+        "windows_server": false,
+        "sql_server": false
+      },
+      "dev_test_pricing": {
+        "enabled_for_development": true
+      }
+    },
+    "gcp": {
+      "committed_use_discounts": {
+        "enabled": true,
+        "commitment_term": "1_year"
+      },
+      "sustained_use_discounts": {
+        "automatic": true
+      },
+      "preemptible_instances": {
+        "enabled": true,
+        "workload_types": ["training", "batch"]
+      }
+    },
+    "digitalocean": {
+      "monthly_billing": true,
+      "volume_discounts": {
+        "enabled": true,
+        "minimum_spend": 500
+      }
+    }
+  },
+  "cost_reporting": {
+    "frequency": "weekly",
+    "recipients": [
+      "engineering-team@aivillage.com",
+      "finance@aivillage.com"
+    ],
+    "include_forecasts": true,
+    "include_recommendations": true,
+    "cost_allocation_breakdown": [
+      "by_environment",
+      "by_service",
+      "by_team",
+      "by_project"
+    ],
+    "budget_variance_alerts": true
+  },
+  "optimization_automation": {
+    "enabled": true,
+    "safe_optimizations": {
+      "auto_apply": true,
+      "actions": [
+        "stop_unused_instances",
+        "delete_old_snapshots",
+        "cleanup_unused_volumes",
+        "optimize_storage_classes"
+      ]
+    },
+    "approval_required_optimizations": {
+      "actions": [
+        "instance_type_changes",
+        "database_scaling",
+        "architecture_changes"
+      ],
+      "approval_workflow": "engineering_manager"
+    }
+  }
+}

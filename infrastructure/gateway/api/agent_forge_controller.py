@@ -9,24 +9,22 @@ Provides real execution control for Agent Forge phases with:
 - Integration with existing Agent Forge components
 """
 
-import asyncio
-import json
+from datetime import datetime
 import logging
 import os
+from pathlib import Path
 import sys
 import time
+from typing import Any
 import uuid
-from datetime import datetime
-from pathlib import Path
-from typing import Any, Dict, List, Optional
 
-import httpx
-import psutil
-import torch
 from fastapi import BackgroundTasks, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, HTMLResponse
+import httpx
+import psutil
 from pydantic import BaseModel
+import torch
 
 # Add core to path for Agent Forge imports
 project_root = Path(__file__).parent.parent.parent.parent
@@ -49,7 +47,6 @@ print(f"DEBUG: PYTHONPATH: {os.environ.get('PYTHONPATH', 'Not set')}")
 
 try:
     # Import the bridge module first
-    import agent_forge
     from agent_forge.phases import get_available_phases
 
     # Try to import the specific components we need
@@ -69,9 +66,7 @@ try:
     try:
         # Direct imports from the PRODUCTION REAL training components
         from cognate_creator import CognateCreatorConfig, CognateModelCreator
-        from full_cognate_25m import Enhanced25MCognate, create_three_25m_models
-        from full_pretraining_pipeline import FullCognateTrainer, FullPretrainingConfig, RealCognateDataset
-        from model_factory import create_three_cognate_models as backup_create_models
+        from full_pretraining_pipeline import FullCognateTrainer, FullPretrainingConfig
 
         # Assign the real training components
         RealCognateTrainer = FullCognateTrainer
@@ -166,16 +161,16 @@ except ImportError as e:
 logger = logging.getLogger(__name__)
 
 # Global state management
-EXECUTION_TASKS: Dict[str, Dict[str, Any]] = {}
-TRAINED_MODELS: Dict[str, Dict[str, Any]] = {}
-PHASE_STATUS: Dict[str, str] = {}
+EXECUTION_TASKS: dict[str, dict[str, Any]] = {}
+TRAINED_MODELS: dict[str, dict[str, Any]] = {}
+PHASE_STATUS: dict[str, str] = {}
 
 
 class PhaseStartRequest(BaseModel):
     """Request to start a specific phase."""
 
-    config: Optional[Dict[str, Any]] = None
-    input_model_path: Optional[str] = None
+    config: dict[str, Any] | None = None
+    input_model_path: str | None = None
 
 
 class PhaseStatusResponse(BaseModel):
@@ -185,9 +180,9 @@ class PhaseStatusResponse(BaseModel):
     status: str  # "ready", "running", "completed", "error"
     progress: float  # 0.0 to 1.0
     message: str
-    start_time: Optional[datetime] = None
-    duration_seconds: Optional[float] = None
-    artifacts: Optional[Dict[str, Any]] = None
+    start_time: datetime | None = None
+    duration_seconds: float | None = None
+    artifacts: dict[str, Any] | None = None
 
 
 class ModelInfo(BaseModel):
@@ -199,7 +194,7 @@ class ModelInfo(BaseModel):
     model_path: str
     parameter_count: int
     created_at: datetime
-    artifacts: Dict[str, Any]
+    artifacts: dict[str, Any]
 
 
 app = FastAPI(title="Agent Forge Controller API")
@@ -219,7 +214,7 @@ MODEL_STORAGE_DIR.mkdir(parents=True, exist_ok=True)
 
 
 # WebSocket communication functions
-async def broadcast_websocket_update(channel: str, data: Dict[str, Any]):
+async def broadcast_websocket_update(channel: str, data: dict[str, Any]):
     """Broadcast updates to WebSocket channel."""
     try:
         async with httpx.AsyncClient() as client:
@@ -228,7 +223,7 @@ async def broadcast_websocket_update(channel: str, data: Dict[str, Any]):
         logger.warning(f"Failed to broadcast to WebSocket: {e}")
 
 
-async def register_model_with_chat_api(model_info: Dict[str, Any]):
+async def register_model_with_chat_api(model_info: dict[str, Any]):
     """Register model with chat API."""
     try:
         async with httpx.AsyncClient() as client:
@@ -238,7 +233,7 @@ async def register_model_with_chat_api(model_info: Dict[str, Any]):
         logger.warning(f"Failed to register model with chat API: {e}")
 
 
-def get_system_metrics() -> Dict[str, Any]:
+def get_system_metrics() -> dict[str, Any]:
     """Get current system resource utilization."""
     try:
         # CPU metrics
@@ -922,7 +917,7 @@ async def start_evomerge_phase(background_tasks: BackgroundTasks, request: Phase
     return {"task_id": task_id, "phase_name": "EvoMerge", "status": "started", "message": "EvoMerge phase started"}
 
 
-async def execute_evomerge_phase(task_id: str, config: Dict[str, Any]):
+async def execute_evomerge_phase(task_id: str, config: dict[str, Any]):
     """Execute the EvoMerge phase."""
     # Implementation would go here - keeping existing logic
     pass

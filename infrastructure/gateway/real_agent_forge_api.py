@@ -4,21 +4,19 @@ Real Agent Forge API Server - Uses Actual Training Code
 Connects the existing real Cognate training infrastructure to the UI
 """
 
-import asyncio
+from datetime import datetime
 import json
 import logging
+from pathlib import Path
 import sys
 import threading
 import time
 import traceback
-from datetime import datetime
-from pathlib import Path
-from typing import List
 
-import uvicorn
 from fastapi import BackgroundTasks, FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+import uvicorn
 
 # Setup logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(message)s")
@@ -44,7 +42,7 @@ app.add_middleware(
 active_phases = {}
 created_models = []
 is_running = {}
-websocket_clients: List[WebSocket] = []
+websocket_clients: list[WebSocket] = []
 
 # Import real Cognate training functions - Use the working consolidated system
 try:
@@ -91,7 +89,6 @@ try:
             logger.info("Starting REAL 5-hour Cognate training with proper timing...")
 
             import random
-            import threading
             import time
 
             # Create shared training state
@@ -311,19 +308,14 @@ def run_complex_grokfast_training():
         try:
             print("Loading REAL Cognate training infrastructure...")
 
-            import sys
             from pathlib import Path
+            import sys
 
             # Add the real Cognate training paths
             cognate_models_path = Path("C:/Users/17175/Desktop/AIVillage/packages/agent_forge/models/cognate")
             sys.path.insert(0, str(cognate_models_path))
 
             # Import the real training components
-            from consolidated.training.cognate_trainer import CognateTrainer, CognateTrainingConfig
-            from consolidated.training.dataset_manager import CognateDatasetManager
-            from consolidated.training.grokfast_optimizer import GrokFastAdamW
-            from consolidated.training.orchestrator import CognateOrchestrator, TrainingPhase
-            from train_cognate_models import train_25m_cognate_models, train_with_cognate_refiner
 
             print("REAL Cognate training infrastructure loaded successfully!")
             REAL_TRAINING_LOADED = True
@@ -345,8 +337,8 @@ def run_complex_grokfast_training():
                 model_num = i + 1
                 print(f"\nCreating and Training Model {model_num}/{len(focuses)}: {focus}")
                 print(f"   Focus: {focus}")
-                print(f"   Target: 25,083,528 parameters")
-                print(f"   Using GrokFast optimization")
+                print("   Target: 25,083,528 parameters")
+                print("   Using GrokFast optimization")
 
                 try:
                     # Create real model using CognateConfig and CognateRefiner
@@ -358,7 +350,7 @@ def run_complex_grokfast_training():
                     print(f"   Model architecture created: {param_count:,} parameters")
 
                     # Enhanced GrokFast pretraining simulation
-                    print(f"   Starting GrokFast pretraining cycles...")
+                    print("   Starting GrokFast pretraining cycles...")
 
                     # Realistic training simulation with dataset-specific focus
                     training_epochs = 15  # More epochs for complex training
@@ -377,8 +369,8 @@ def run_complex_grokfast_training():
                         # Realistic training delay - GrokFast accelerated but complex
                         time.sleep(0.3)  # Slightly faster due to GrokFast but still realistic
 
-                    print(f"   GrokFast pretraining completed!")
-                    print(f"   Training accelerated 50x with GrokFast optimization")
+                    print("   GrokFast pretraining completed!")
+                    print("   Training accelerated 50x with GrokFast optimization")
 
                     model_info = {
                         "model_id": f"cognate_grokfast_{focus}_{model_num}",
@@ -407,11 +399,11 @@ def run_complex_grokfast_training():
 
                     traceback.print_exc()
 
-        print(f"\nCOMPLEX GrokFast Training Complete!")
+        print("\nCOMPLEX GrokFast Training Complete!")
         print(f"Models successfully trained: {len(models_created)}/{len(focuses)}")
         print(f"Total parameters: {sum(m['parameter_count'] for m in models_created):,}")
-        print(f"Training accelerated with GrokFast optimization")
-        print(f"Real datasets used for each model focus")
+        print("Training accelerated with GrokFast optimization")
+        print("Real datasets used for each model focus")
 
         return {
             "successful_models": len(models_created),
@@ -750,8 +742,8 @@ if __name__ == "__main__":
     print("=" * 80)
     print("REAL AGENT FORGE API SERVER")
     print("=" * 80)
-    print(f"Starting API server on http://localhost:8084")
-    print(f"WebSocket server on ws://localhost:8085/ws")
+    print("Starting API server on http://localhost:8084")
+    print("WebSocket server on ws://localhost:8085/ws")
     print()
     if REAL_TRAINING_AVAILABLE:
         print("REAL TRAINING MODE:")

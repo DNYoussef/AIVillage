@@ -9,10 +9,10 @@ Starts all backend services required for the Agent Forge system:
 4. Agent Fleet Manager - Port 8086
 """
 
+from pathlib import Path
 import subprocess
 import sys
 import time
-from pathlib import Path
 
 
 def start_service(script_name, port, description):
@@ -71,7 +71,7 @@ def main():
     print("   ✅ System resource monitoring")
 
     try:
-        print(f"\n⏳ Services running... Press Ctrl+C to stop all services")
+        print("\n⏳ Services running... Press Ctrl+C to stop all services")
 
         # Keep main process alive and monitor services
         while True:
@@ -83,7 +83,7 @@ def main():
                     print(f"⚠️  {desc} stopped unexpectedly (exit code: {process.returncode})")
 
     except KeyboardInterrupt:
-        print(f"\n🛑 Stopping all Agent Forge services...")
+        print("\n🛑 Stopping all Agent Forge services...")
 
         for process, desc in processes:
             if process.poll() is None:  # Still running

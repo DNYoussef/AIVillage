@@ -2,6 +2,10 @@
 
 Thank you for your interest in contributing to AIVillage! This document provides guidelines and information for contributors.
 
+**Archaeological Integration Status**: ACTIVE (v2.1.0)  
+**Latest Enhancement**: Archaeological innovations from 81 branches integrated  
+**Current Focus**: Production-ready AI infrastructure with enhanced security, monitoring, and optimization
+
 ## 🚀 Quick Start
 
 1. **Fork & Clone**
@@ -14,21 +18,39 @@ Thank you for your interest in contributing to AIVillage! This document provides
    ```bash
    make dev-install
    make compose-up  # Start local database stack
+   
+   # Install archaeological enhancements
+   pip install -r requirements-archaeological.txt
    ```
 
-3. **Verify Setup**
+3. **Configure Archaeological Features (Optional)**
+   ```bash
+   cp .env.example .env.archaeological
+   # Edit .env.archaeological to enable/configure archaeological features
+   export ARCHAEOLOGICAL_INTEGRATION_ENABLED=true
+   ```
+
+4. **Verify Setup**
    ```bash
    make ci-pre-flight  # Fast validation
    make test-fast      # Quick test run
+   pytest tests/archaeological/ -v  # Test archaeological integrations
    ```
 
-## 📊 Current Status (August 19, 2025)
+## 📊 Current Status (August 29, 2025)
 
 **Before Contributing, Please Note:**
-- **Tests**: 196/295 unit tests currently passing (66.4%)
+- **Archaeological Integration**: v2.1.0 ACTIVE - 3 major enhancements integrated
+- **Tests**: 196/295 unit tests currently passing (66.4%), plus comprehensive archaeological tests
 - **Test Files**: 491 test files, 93 have import/dependency issues
-- **Infrastructure**: Core systems are consolidated and production-ready
+- **Infrastructure**: Core systems consolidated and production-ready with archaeological enhancements
 - **Architecture**: Well-documented in [docs/architecture/ARCHITECTURE.md](docs/architecture/ARCHITECTURE.md)
+
+### Archaeological Integration Summary
+- ✅ **Enhanced Security Layer**: ECH + Noise Protocol (Innovation Score: 8.3/10)
+- ✅ **Emergency Triage System**: ML-based anomaly detection (Innovation Score: 8.0/10)  
+- ✅ **Tensor Memory Optimization**: Memory leak prevention (Innovation Score: 6.9/10)
+- 📍 **Phase 2 Planned**: Distributed Inference, Evolution Scheduler, LibP2P Advanced Features
 
 ## 🛠️ Development Workflow
 
@@ -74,22 +96,30 @@ Thank you for your interest in contributing to AIVillage! This document provides
 
 ## 🎯 Areas Needing Contributions
 
-### High Priority
+### 🏺 Archaeological Integration (High Priority)
+- **Phase 2 Implementation**: Distributed Inference Enhancement (20h estimated)
+- **Evolution Scheduler Integration**: Automated model evolution with regression detection (28h)
+- **LibP2P Advanced Features**: Enhanced mesh reliability and performance (40h)
+- **Archaeological Pattern Mining**: Analyze remaining branches for additional innovations
+- **Performance Benchmarking**: Quantify benefits of archaeological integrations
+
+### High Priority (Core Systems)
 - **Test Infrastructure**: Fix 93 failing test files with import issues
 - **Integration Tests**: Add database setup automation
-- **Documentation**: API documentation and examples
-- **Performance**: Optimize slow test execution
+- **Documentation**: API documentation and examples, archaeological integration guides
+- **Performance**: Optimize slow test execution, validate archaeological performance gains
 
 ### Medium Priority
-- **Security**: Enhance threat modeling and security tests
+- **Security**: Enhance threat modeling, extend ECH + Noise Protocol capabilities
 - **Mobile**: iOS/Android client improvements
-- **P2P**: Network resilience and performance optimization
+- **P2P**: Network resilience, integration with archaeological security enhancements
 - **RAG**: Knowledge graph expansion and optimization
+- **Monitoring**: Extend Emergency Triage System patterns and ML models
 
 ### Low Priority
-- **UI/UX**: Dashboard improvements
-- **Monitoring**: Enhanced observability and metrics
-- **Deployment**: Additional cloud provider support
+- **UI/UX**: Dashboard improvements, archaeological feature dashboards
+- **Observability**: Enhanced metrics beyond archaeological monitoring
+- **Deployment**: Additional cloud provider support, archaeological deployment automation
 
 ## 📝 Coding Standards
 

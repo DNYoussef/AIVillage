@@ -1,0 +1,71 @@
+{
+  "generation": 30,
+  "timestamp": 1756227531.8712575,
+  "population_size": 8,
+  "statistics": {
+    "generation": 30,
+    "population_size": 8,
+    "best_fitness": 0.8762369491149444,
+    "mean_fitness": 0.8702649063839566,
+    "std_fitness": 0.006290222008691452,
+    "top_model": "gen30_mutant_9584",
+    "mutation_rate_used": 0.15000000000000002,
+    "diversity_score": 0.006290222008691452
+  },
+  "top_models": [
+    {
+      "name": "gen30_mutant_9584",
+      "scores": {
+        "coding": 0.8179122575893096,
+        "math": 0.9537387951205964,
+        "reasoning": 1.0,
+        "language": 0.7121428652900119
+      },
+      "fitness": 0.8762369491149444,
+      "generation": 30,
+      "parents": [
+        "gen27_mutant_1510"
+      ],
+      "technique": "mutation"
+    },
+    {
+      "name": "gen30_mutant_8033",
+      "scores": {
+        "coding": 0.8216177288519407,
+        "math": 0.9425161624222435,
+        "reasoning": 1.0,
+        "language": 0.7121428652900119
+      },
+      "fitness": 0.8745429323191455,
+      "generation": 30,
+      "parents": [
+        "gen27_mutant_1510"
+      ],
+      "technique": "mutation"
+    },
+    {
+      "name": "gen26_mutant_4990",
+      "scores": {
+        "coding": 0.8121220543174109,
+        "math": 0.9537387951205964,
+        "reasoning": 1.0,
+        "language": 0.7121428652900119
+      },
+      "fitness": 0.8744998881333748,
+      "generation": 26,
+      "parents": [
+        "gen25_mutant_7689"
+      ],
+      "technique": "mutation",
+      "rank": 1
+    }
+  ],
+  "diversity_metrics": {
+    "fitness_std": 0.006290222008691452,
+    "fitness_range": 0.01682446186692854,
+    "unique_techniques": 1,
+    "technique_distribution": {
+      "mutation": 8
+    }
+  }
+}

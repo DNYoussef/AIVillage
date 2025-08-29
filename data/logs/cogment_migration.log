@@ -1,0 +1,3 @@
+2025-08-22 18:26:17,802 - INFO - Starting HRRM to Cogment migration process
+2025-08-22 18:26:17,802 - INFO - Phase 1: Analyzing HRRM dependencies and usage
+2025-08-22 18:26:17,804 - INFO - Found 25 HRRM files

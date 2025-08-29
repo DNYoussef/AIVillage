@@ -1,0 +1,15 @@
+=== Betanet uTLS Self-Test Report ===
+Timestamp: 2025-08-17T01:58:41.808875800+00:00
+Template: tmp_submission/utls/templates/chrome-stable-119.json
+PCAP directory: betanet-bounty/artifacts/pcaps
+Expected JA3: ac70771d34ad83a2b79f094506d57332
+Expected JA4: th2120703h2_85c7cbb1a81272e45f38ec6f
+
+Found 0 pcap files
+
+=== Test Summary ===
+Total: 0
+Passed: 0
+Failed: 0
+Tolerance violations: 0
+Success rate: 0.0%

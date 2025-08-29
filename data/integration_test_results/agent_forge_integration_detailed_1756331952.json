@@ -1,0 +1,292 @@
+{
+  "summary": {
+    "timestamp": "2025-08-27 17:59:12",
+    "duration_seconds": 5.211376905441284,
+    "overall_status": "PARTIAL",
+    "test_counts": {
+      "successful_tests": 3,
+      "total_tests": 6,
+      "success_rate": 0.5
+    },
+    "import_status": {
+      "successful_imports": 8,
+      "total_imports": 10,
+      "critical_imports_success": 1,
+      "critical_imports_total": 2,
+      "critical_imports_ok": true
+    },
+    "pipeline_status": {
+      "can_create_pipeline": false,
+      "phases_available": 0,
+      "ready_for_execution": false
+    },
+    "performance_status": {
+      "baseline_measured": true,
+      "ready_for_benchmarking": false
+    },
+    "readiness_assessment": {
+      "structure_analysis": "COMPLETE",
+      "import_validation": "COMPLETE",
+      "pipeline_creation": "FAILED",
+      "execution_testing": "ATTEMPTED",
+      "performance_baseline": "COMPLETE"
+    }
+  },
+  "detailed_results": {
+    "imports": {
+      "unified_pipeline": {
+        "success": false,
+        "module": "unified_pipeline",
+        "imported_classes": [],
+        "missing_classes": [
+          "UnifiedPipeline",
+          "UnifiedConfig"
+        ],
+        "required": true,
+        "error": "attempted relative import with no known parent package"
+      },
+      "phase_controller": {
+        "success": true,
+        "module": "core.phase_controller",
+        "imported_classes": [
+          "PhaseController",
+          "PhaseResult",
+          "PhaseOrchestrator"
+        ],
+        "missing_classes": [],
+        "required": true,
+        "error": null
+      },
+      "cognate_phase": {
+        "success": false,
+        "module": "phases.cognate",
+        "imported_classes": [],
+        "missing_classes": [
+          "CognatePhase",
+          "CognateConfig"
+        ],
+        "required": false,
+        "error": null
+      },
+      "evomerge_phase": {
+        "success": true,
+        "module": "phases.evomerge",
+        "imported_classes": [
+          "EvoMergePhase",
+          "EvoMergeConfig"
+        ],
+        "missing_classes": [],
+        "required": false,
+        "error": null
+      },
+      "quietstar_phase": {
+        "success": true,
+        "module": "phases.quietstar",
+        "imported_classes": [
+          "QuietSTaRPhase",
+          "QuietSTaRConfig"
+        ],
+        "missing_classes": [],
+        "required": false,
+        "error": null
+      },
+      "bitnet_phase": {
+        "success": true,
+        "module": "phases.bitnet_compression",
+        "imported_classes": [
+          "BitNetCompressionPhase",
+          "BitNetConfig"
+        ],
+        "missing_classes": [],
+        "required": false,
+        "error": null
+      },
+      "training_phase": {
+        "success": true,
+        "module": "phases.forge_training",
+        "imported_classes": [
+          "ForgeTrainingPhase",
+          "ForgeTrainingConfig"
+        ],
+        "missing_classes": [],
+        "required": false,
+        "error": null
+      },
+      "toolbaking_phase": {
+        "success": true,
+        "module": "phases.tool_persona_baking",
+        "imported_classes": [
+          "ToolPersonaBakingPhase",
+          "ToolPersonaBakingConfig"
+        ],
+        "missing_classes": [],
+        "required": false,
+        "error": null
+      },
+      "adas_phase": {
+        "success": true,
+        "module": "phases.adas",
+        "imported_classes": [
+          "ADASPhase",
+          "ADASConfig"
+        ],
+        "missing_classes": [],
+        "required": false,
+        "error": null
+      },
+      "compression_phase": {
+        "success": true,
+        "module": "phases.final_compression",
+        "imported_classes": [
+          "FinalCompressionPhase",
+          "FinalCompressionConfig"
+        ],
+        "missing_classes": [],
+        "required": false,
+        "error": null
+      }
+    },
+    "codebase_structure": {
+      "success": true,
+      "directory_structure": {
+        "agent_forge_root": {
+          "exists": true,
+          "is_dir": true,
+          "path": "C:\\Users\\17175\\Desktop\\AIVillage\\core\\agent-forge",
+          "python_files_count": 5,
+          "subdirectories_count": 13,
+          "subdirectories": [
+            "archive",
+            "benchmarks",
+            "compression",
+            "core",
+            "data",
+            "evaluation",
+            "evolution",
+            "experiments",
+            "integration",
+            "model-management",
+            "models",
+            "phases",
+            "__pycache__"
+          ]
+        },
+        "phases_dir": {
+          "exists": true,
+          "is_dir": true,
+          "path": "C:\\Users\\17175\\Desktop\\AIVillage\\core\\agent-forge\\phases",
+          "python_files_count": 10,
+          "subdirectories_count": 10,
+          "subdirectories": [
+            "cognate-pretrain",
+            "cognate_evomerge_50gen_final",
+            "cognate_evomerge_checkpoints",
+            "cognate_evomerge_output",
+            "cognate_pretrain",
+            "deprecated_duplicates",
+            "evomerge_50gen_checkpoints",
+            "evomerge_50gen_final",
+            "trained_25m_models",
+            "__pycache__"
+          ]
+        },
+        "models_dir": {
+          "exists": true,
+          "is_dir": true,
+          "path": "C:\\Users\\17175\\Desktop\\AIVillage\\core\\agent-forge\\models",
+          "python_files_count": 0,
+          "subdirectories_count": 4,
+          "subdirectories": [
+            "cogment",
+            "cognate",
+            "hrrm",
+            "hrrm_models"
+          ]
+        },
+        "benchmarks_dir": {
+          "exists": true,
+          "is_dir": true,
+          "path": "C:\\Users\\17175\\Desktop\\AIVillage\\core\\agent-forge\\benchmarks",
+          "python_files_count": 12,
+          "subdirectories_count": 3,
+          "subdirectories": [
+            "evomerge_datasets",
+            "suites",
+            "__pycache__"
+          ]
+        },
+        "integration_dir": {
+          "exists": true,
+          "is_dir": true,
+          "path": "C:\\Users\\17175\\Desktop\\AIVillage\\core\\agent-forge\\integration",
+          "python_files_count": 3,
+          "subdirectories_count": 2,
+          "subdirectories": [
+            "cogment",
+            "__pycache__"
+          ]
+        }
+      },
+      "key_files": {
+        "unified_pipeline": {
+          "exists": true,
+          "path": "C:\\Users\\17175\\Desktop\\AIVillage\\core\\agent-forge\\unified_pipeline.py",
+          "size_bytes": 21478
+        },
+        "phase_controller": {
+          "exists": true,
+          "path": "C:\\Users\\17175\\Desktop\\AIVillage\\core\\agent-forge\\core\\phase_controller.py",
+          "size_bytes": 12239
+        },
+        "cognate_phase": {
+          "exists": true,
+          "path": "C:\\Users\\17175\\Desktop\\AIVillage\\core\\agent-forge\\phases\\cognate.py",
+          "size_bytes": 2446
+        },
+        "evomerge_phase": {
+          "exists": true,
+          "path": "C:\\Users\\17175\\Desktop\\AIVillage\\core\\agent-forge\\phases\\evomerge.py",
+          "size_bytes": 56363
+        }
+      },
+      "codebase_accessible": true,
+      "error": null
+    },
+    "pipeline_creation": {
+      "success": false,
+      "pipeline_created": false,
+      "phases_available": 0,
+      "phase_names": [],
+      "config_valid": false,
+      "error": "Import error: attempted relative import with no known parent package"
+    },
+    "phase_compatibility": {
+      "success": true,
+      "orchestrator_created": true,
+      "empty_phases_compatible": true,
+      "mock_phases_compatible": true,
+      "error": null
+    },
+    "baseline_performance": {
+      "success": true,
+      "baseline_inference_time_seconds": 0.05485367774963379,
+      "average_inference_time_ms": 0.5485367774963379,
+      "parameter_count": 1181184,
+      "model_size_mb": 4.505859375,
+      "batch_size": 32,
+      "num_inferences": 100,
+      "error": null
+    },
+    "pipeline_execution": {
+      "success": false,
+      "executed": false,
+      "error": "Setup error: attempted relative import with no known parent package"
+    }
+  },
+  "test_metadata": {
+    "test_type": "Agent Forge Integration Test",
+    "python_version": "3.12.5 (tags/v3.12.5:ff3bc82, Aug  6 2024, 20:45:27) [MSC v.1940 64 bit (AMD64)]",
+    "torch_version": "2.2.1+cpu",
+    "platform": "win32"
+  }
+}

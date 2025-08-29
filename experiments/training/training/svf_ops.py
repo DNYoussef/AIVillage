@@ -5,10 +5,9 @@ Batched Singular-Value Fine-tuning helpers (Transformer² style).
 
 from __future__ import annotations
 
+from AIVillage.experimental.training.svf.ops import batched_svd  # NeurIPS-22 SVF kernel
 import torch
 from torch import Tensor, nn
-
-from AIVillage.experimental.training.svf.ops import batched_svd  # NeurIPS-22 SVF kernel
 
 
 def apply_svf(model: nn.Module, z: dict[str, Tensor], clamp: float = 0.05) -> None:

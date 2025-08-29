@@ -1,0 +1,302 @@
+# AIVillage Reproducible Builds Configuration
+# Ensures deterministic, verifiable builds across all ecosystems
+
+version: "1.0"
+
+# Global Build Configuration
+global:
+  build_environment: "isolated"
+  deterministic: true
+  timestamp_normalization: true
+  build_id_tracking: true
+  artifact_signing: true
+  
+# Build Environment Standards
+environment:
+  containers:
+    base_image: "reproducible-builds/debian:bookworm"
+    user_id: 1000
+    group_id: 1000
+    timezone: "UTC"
+    locale: "C.UTF-8"
+    
+  system_packages:
+    - "build-essential"
+    - "git"
+    - "curl"
+    - "ca-certificates"
+    - "reproducible-builds-tools"
+    - "faketime"
+    
+  environment_variables:
+    # Normalize timestamps
+    SOURCE_DATE_EPOCH: "${BUILD_TIMESTAMP}"
+    TZ: "UTC"
+    LC_ALL: "C.UTF-8"
+    # Disable randomization
+    PYTHONHASHSEED: "0"
+    CARGO_BUILD_JOBS: "1"  # Deterministic parallel builds
+
+# Python Reproducible Builds
+python:
+  version: "3.12.0"  # Exact version pinning
+  installation_method: "pyenv"
+  
+  build_environment:
+    PYTHONHASHSEED: "0"
+    PYTHONDONTWRITEBYTECODE: "1"
+    PYTHONUNBUFFERED: "1"
+    
+  pip_configuration:
+    no_cache_dir: true
+    disable_pip_version_check: true
+    require_hashes: true
+    only_binary: ":all:"  # Use only wheels for reproducibility
+    
+  requirements:
+    freeze_file: "requirements.lock"
+    hash_verification: true
+    
+  build_tools:
+    - name: "pip-tools"
+      version: "7.3.0"
+      purpose: "Deterministic requirement resolution"
+      
+    - name: "build"
+      version: "1.0.3"
+      purpose: "Standard build tool"
+      
+  wheel_building:
+    reproducible: true
+    normalize_timestamps: true
+    exclude_dev_dependencies: true
+    
+  bytecode_compilation:
+    enabled: false  # Exclude .pyc files for reproducibility
+    optimization_level: 0
+
+# Node.js Reproducible Builds
+nodejs:
+  version: "20.10.0"  # LTS version
+  installation_method: "nvm"
+  
+  npm_configuration:
+    package_lock: true
+    exact_dependencies: true
+    no_optional: false
+    cache: false
+    progress: false
+    audit: false
+    fund: false
+    
+  build_environment:
+    NODE_ENV: "production"
+    npm_config_cache: "/tmp/.npm"
+    npm_config_progress: "false"
+    
+  lockfile:
+    version: 2
+    integrity_checking: true
+    exact_versions: true
+    
+  build_process:
+    clean_install: true  # npm ci
+    frozen_lockfile: true
+    ignore_scripts: false  # But verify scripts
+    production_only: true
+
+# Rust Reproducible Builds  
+rust:
+  version: "1.70.0"  # Exact toolchain version
+  installation_method: "rustup"
+  
+  toolchain:
+    channel: "1.70.0"
+    profile: "minimal"
+    components: ["clippy", "rustfmt"]
+    
+  cargo_configuration:
+    offline: false  # But use locked dependencies
+    frozen: true    # Use Cargo.lock exactly
+    locked: true    # Ensure Cargo.lock consistency
+    
+  build_environment:
+    CARGO_INCREMENTAL: "0"  # Disable incremental builds
+    CARGO_NET_RETRY: "10"
+    CARGO_NET_GIT_FETCH_WITH_CLI: "true"
+    
+  target_configuration:
+    reproducible_builds: true
+    strip_symbols: true
+    codegen_units: 1  # Single codegen unit for determinism
+    
+  build_features:
+    default_features: false
+    features: ["production"]
+
+# Go Reproducible Builds
+go:
+  version: "1.21.0"  # Exact version
+  installation_method: "go-install"
+  
+  build_environment:
+    CGO_ENABLED: "0"  # Static binaries
+    GOPROXY: "https://proxy.golang.org"
+    GOSUMDB: "sum.golang.org"
+    GOFLAGS: "-trimpath"  # Remove absolute paths
+    
+  module_configuration:
+    readonly: true
+    verify_checksums: true
+    
+  build_flags:
+    - "-trimpath"           # Remove absolute paths
+    - "-buildvcs=false"     # Disable VCS info
+    - "-ldflags=-s -w"      # Strip debug info
+
+# Container Reproducible Builds
+containers:
+  build_strategy: "multi-stage"
+  base_images:
+    # Use digest-pinned images
+    - name: "python:3.12-slim"
+      digest: "sha256:af4e85f1cac90dd3771e47292ea7c8a9830abfabbe4faa5c53f158854c2e819d"
+      
+    - name: "node:20-alpine"
+      digest: "sha256:6e80991f69cc7722c561e5d14d5e72ab47c0d6b6cfb3ae50fb9cf9a7b30fdf97"
+      
+    - name: "rust:1.70-slim"
+      digest: "sha256:ac8de3c2c2094b9963b6955b01e8b0e7e36d8f7c7f2e1f1fce6b5b4b8f2e1a9c"
+  
+  dockerfile_best_practices:
+    user_creation: true
+    minimal_layers: true
+    no_secrets: true
+    deterministic_apt: true
+    
+  build_args:
+    BUILD_DATE: "${SOURCE_DATE_EPOCH}"
+    VCS_REF: "${GITHUB_SHA}"
+    VERSION: "${VERSION}"
+    
+  layer_optimization:
+    minimize_layers: true
+    cache_optimization: true
+    clean_up_packages: true
+
+# Artifact Management
+artifacts:
+  naming_convention: "{name}-{version}-{arch}-{hash}.{ext}"
+  
+  checksums:
+    algorithms: ["sha256", "sha512"]
+    file_format: "BSD"
+    verification_required: true
+    
+  signatures:
+    signing_key: "cosign"
+    attestation_format: "in-toto"
+    keyless_signing: true
+    transparency_log: true
+    
+  metadata:
+    build_timestamp: "${SOURCE_DATE_EPOCH}"
+    build_id: "${BUILD_ID}"
+    git_commit: "${GITHUB_SHA}"
+    build_environment: "github-actions"
+    
+# Build Verification
+verification:
+  reproducibility_test:
+    enabled: true
+    iterations: 3
+    tolerance: "bit-identical"
+    
+  security_scanning:
+    container_scanning: true
+    dependency_scanning: true
+    secret_scanning: true
+    
+  compliance_checks:
+    sbom_generation: true
+    provenance_attestation: true
+    vulnerability_assessment: true
+
+# CI/CD Integration
+cicd:
+  github_actions:
+    runner_image: "ubuntu-22.04"
+    isolation: "container"
+    
+    cache_strategy:
+      dependencies: true
+      build_cache: false  # Disable for reproducibility
+      
+    environment_cleanup:
+      clean_workspace: true
+      reset_permissions: true
+      
+  build_matrix:
+    architectures: ["amd64", "arm64"]
+    operating_systems: ["linux", "darwin"]
+    
+# Monitoring and Alerting
+monitoring:
+  build_drift_detection: true
+  reproducibility_metrics: true
+  
+  alerts:
+    non_reproducible_build: "critical"
+    checksum_mismatch: "high"
+    signature_verification_failure: "critical"
+    
+  reporting:
+    reproducibility_dashboard: true
+    build_comparison_reports: true
+    drift_analysis: true
+
+# Documentation and Compliance
+documentation:
+  build_instructions: "docs/builds/REPRODUCIBLE_BUILDS.md"
+  verification_guide: "docs/builds/BUILD_VERIFICATION.md"
+  
+  compliance_frameworks:
+    - "SLSA Level 3"
+    - "NIST SSDF"
+    - "Reproducible Builds"
+    
+# Quality Gates
+quality_gates:
+  reproducibility_check:
+    required: true
+    tolerance: "0 bytes"
+    
+  security_scan:
+    required: true
+    severity_threshold: "high"
+    
+  sbom_generation:
+    required: true
+    formats: ["SPDX", "CycloneDX"]
+    
+# Build Optimization
+optimization:
+  parallel_builds:
+    enabled: false  # Sacrifice speed for reproducibility
+    
+  incremental_builds:
+    enabled: false  # Full clean builds only
+    
+  caching:
+    dependency_cache: true
+    build_cache: false
+    
+# Tools and Utilities
+tools:
+  reproducible_builds_tools: "1.0.0"
+  diffoscope: "latest"  # For build comparison
+  
+  verification_scripts:
+    - "scripts/verify-reproducible-build.sh"
+    - "scripts/compare-artifacts.py"
+    - "scripts/generate-build-report.py"

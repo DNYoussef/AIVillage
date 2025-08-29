@@ -1,0 +1,109 @@
+{
+  "start_time": "2025-08-26T19:51:23.989837",
+  "levels_completed": 10,
+  "total_levels": 10,
+  "level_results": {
+    "1": {
+      "success": true,
+      "problems_mastered": "50/50",
+      "mastery_percentage": 100.0,
+      "grokking_events": 0,
+      "sleep_cycles": 3,
+      "self_model_accuracy": 0.8296281789163003,
+      "alignment_consistency": 0.9146682700940157,
+      "duration_seconds": 3.594551
+    },
+    "2": {
+      "success": true,
+      "problems_mastered": "50/50",
+      "mastery_percentage": 100.0,
+      "grokking_events": 0,
+      "sleep_cycles": 3,
+      "self_model_accuracy": 0.8252984181525342,
+      "alignment_consistency": 0.935577667503679,
+      "duration_seconds": 3.461852
+    },
+    "3": {
+      "success": true,
+      "problems_mastered": "50/50",
+      "mastery_percentage": 100.0,
+      "grokking_events": 0,
+      "sleep_cycles": 3,
+      "self_model_accuracy": 0.8111670198717589,
+      "alignment_consistency": 0.9752443641499211,
+      "duration_seconds": 3.582958
+    },
+    "4": {
+      "success": true,
+      "problems_mastered": "50/50",
+      "mastery_percentage": 100.0,
+      "grokking_events": 0,
+      "sleep_cycles": 3,
+      "self_model_accuracy": 0.8243886490837543,
+      "alignment_consistency": 0.9267489715931377,
+      "duration_seconds": 3.386585
+    },
+    "5": {
+      "success": true,
+      "problems_mastered": "50/50",
+      "mastery_percentage": 100.0,
+      "grokking_events": 0,
+      "sleep_cycles": 3,
+      "self_model_accuracy": 0.8254043190000846,
+      "alignment_consistency": 0.9681825958109646,
+      "duration_seconds": 3.447429
+    },
+    "6": {
+      "success": true,
+      "problems_mastered": "50/50",
+      "mastery_percentage": 100.0,
+      "grokking_events": 0,
+      "sleep_cycles": 3,
+      "self_model_accuracy": 0.837695653620586,
+      "alignment_consistency": 0.9531532653437638,
+      "duration_seconds": 3.52294
+    },
+    "7": {
+      "success": true,
+      "problems_mastered": "50/50",
+      "mastery_percentage": 100.0,
+      "grokking_events": 0,
+      "sleep_cycles": 3,
+      "self_model_accuracy": 0.8194330852983676,
+      "alignment_consistency": 0.9793588813115437,
+      "duration_seconds": 3.484642
+    },
+    "8": {
+      "success": true,
+      "problems_mastered": "50/50",
+      "mastery_percentage": 100.0,
+      "grokking_events": 0,
+      "sleep_cycles": 3,
+      "self_model_accuracy": 0.809174259369797,
+      "alignment_consistency": 0.9334129863434073,
+      "duration_seconds": 3.382321
+    },
+    "9": {
+      "success": true,
+      "problems_mastered": "50/50",
+      "mastery_percentage": 100.0,
+      "grokking_events": 0,
+      "sleep_cycles": 3,
+      "self_model_accuracy": 0.8243322951180956,
+      "alignment_consistency": 0.9097515377962736,
+      "duration_seconds": 3.276183
+    },
+    "10": {
+      "success": true,
+      "problems_mastered": "50/50",
+      "mastery_percentage": 100.0,
+      "grokking_events": 0,
+      "sleep_cycles": 3,
+      "self_model_accuracy": 0.8198649561720472,
+      "alignment_consistency": 0.9265765410347025,
+      "duration_seconds": 3.582211
+    }
+  },
+  "end_time": "2025-08-26T19:51:58.715499",
+  "total_duration_seconds": 34.725662
+}

@@ -9,8 +9,8 @@ NEW LOCATION: core/agent-forge/phases/cognate-pretrain/
 """
 
 import logging
-import warnings
 from typing import Any
+import warnings
 
 # Issue deprecation warning
 warnings.warn(

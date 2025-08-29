@@ -1,0 +1,83 @@
+version: '3.8'
+
+services:
+  jaeger:
+    image: jaegertracing/all-in-one:1.47.0
+    container_name: aivillage-jaeger
+    restart: unless-stopped
+    ports:
+      - "16686:16686"  # Jaeger UI
+      - "14268:14268"  # HTTP collector
+      - "14250:14250"  # gRPC collector
+      - "6831:6831/udp"  # UDP agent
+      - "6832:6832/udp"  # UDP agent
+    environment:
+      COLLECTOR_OTLP_ENABLED: true
+      COLLECTOR_ZIPKIN_HOST_PORT: ":9411"
+      SPAN_STORAGE_TYPE: elasticsearch
+      ES_SERVER_URLS: http://elasticsearch:9200
+      ES_INDEX_PREFIX: aivillage-traces
+    networks:
+      - aivillage-monitoring
+    depends_on:
+      - elasticsearch
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.81.0
+    container_name: aivillage-otel-collector
+    restart: unless-stopped
+    ports:
+      - "4317:4317"   # OTLP gRPC receiver
+      - "4318:4318"   # OTLP HTTP receiver
+      - "8888:8888"   # Prometheus metrics
+      - "13133:13133" # Health check
+    volumes:
+      - ./otel-collector-config.yml:/etc/otel-collector-config.yml:ro
+    command: ["--config=/etc/otel-collector-config.yml"]
+    networks:
+      - aivillage-monitoring
+    depends_on:
+      - jaeger
+      - prometheus
+
+  elasticsearch:
+    image: elasticsearch:8.8.0
+    container_name: aivillage-elasticsearch
+    restart: unless-stopped
+    environment:
+      - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xms1g -Xmx1g"
+      - xpack.security.enabled=false
+      - action.auto_create_index=true
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+    networks:
+      - aivillage-monitoring
+
+  prometheus:
+    image: prom/prometheus:v2.45.0
+    container_name: aivillage-prometheus-tracing
+    restart: unless-stopped
+    ports:
+      - "9091:9090"
+    volumes:
+      - ./prometheus-tracing.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_tracing_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=30d'
+    networks:
+      - aivillage-monitoring
+
+volumes:
+  elasticsearch_data:
+  prometheus_tracing_data:
+
+networks:
+  aivillage-monitoring:
+    external: true

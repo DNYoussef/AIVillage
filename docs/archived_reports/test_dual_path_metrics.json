@@ -1,0 +1,258 @@
+{
+  "node_id": "metrics_node",
+  "export_timestamp": 1755060261.4299614,
+  "total_messages": 10,
+  "path_distribution": {
+    "bitchat": 0,
+    "betanet": 10,
+    "store_forward": 0
+  },
+  "link_change_performance": {
+    "events": 0,
+    "within_target": true
+  },
+  "receipts": [
+    {
+      "message_id": "2524b8ec-b39f-4c08-befd-b18ccc98aec6",
+      "destination": "peer_0",
+      "timestamp": 1755060261.2748408,
+      "path_chosen": "betanet",
+      "path_reasoning": "large_urgent",
+      "status": "delivered",
+      "hops": 1,
+      "rtt_ms": 15.950679779052734,
+      "success": true,
+      "energy_cost": 0.8,
+      "data_cost_mb": 1.735687255859375e-05,
+      "metadata": {}
+    },
+    {
+      "message_id": "bc905f2d-02e0-4e1f-90b1-8fda5b12318b",
+      "destination": "peer_1",
+      "timestamp": 1755060261.2907915,
+      "path_chosen": "betanet",
+      "path_reasoning": "large_urgent",
+      "status": "delivered",
+      "hops": 1,
+      "rtt_ms": 15.95759391784668,
+      "success": true,
+      "energy_cost": 0.8,
+      "data_cost_mb": 1.735687255859375e-05,
+      "metadata": {}
+    },
+    {
+      "message_id": "15ec33a1-1def-473b-9144-e78d8dc408f0",
+      "destination": "peer_2",
+      "timestamp": 1755060261.306749,
+      "path_chosen": "betanet",
+      "path_reasoning": "large_urgent",
+      "status": "delivered",
+      "hops": 1,
+      "rtt_ms": 15.957355499267578,
+      "success": true,
+      "energy_cost": 0.8,
+      "data_cost_mb": 1.735687255859375e-05,
+      "metadata": {}
+    },
+    {
+      "message_id": "7bf68180-7fe4-4e28-bb5f-ec770833d333",
+      "destination": "peer_3",
+      "timestamp": 1755060261.3227065,
+      "path_chosen": "betanet",
+      "path_reasoning": "large_urgent",
+      "status": "delivered",
+      "hops": 1,
+      "rtt_ms": 14.960050582885742,
+      "success": true,
+      "energy_cost": 0.8,
+      "data_cost_mb": 1.735687255859375e-05,
+      "metadata": {}
+    },
+    {
+      "message_id": "08d61d3a-f609-4613-916f-5f7da6dbf76c",
+      "destination": "peer_4",
+      "timestamp": 1755060261.3376665,
+      "path_chosen": "betanet",
+      "path_reasoning": "large_urgent",
+      "status": "delivered",
+      "hops": 1,
+      "rtt_ms": 14.93215560913086,
+      "success": true,
+      "energy_cost": 0.8,
+      "data_cost_mb": 1.735687255859375e-05,
+      "metadata": {}
+    },
+    {
+      "message_id": "520df8a6-dca8-446c-b7f5-331d40c1e61c",
+      "destination": "peer_5",
+      "timestamp": 1755060261.3525987,
+      "path_chosen": "betanet",
+      "path_reasoning": "large_urgent",
+      "status": "delivered",
+      "hops": 1,
+      "rtt_ms": 15.957117080688477,
+      "success": true,
+      "energy_cost": 0.8,
+      "data_cost_mb": 1.735687255859375e-05,
+      "metadata": {}
+    },
+    {
+      "message_id": "a6af15c7-5f29-4c1d-b4e7-7520cfda79ca",
+      "destination": "peer_6",
+      "timestamp": 1755060261.3685558,
+      "path_chosen": "betanet",
+      "path_reasoning": "large_urgent",
+      "status": "delivered",
+      "hops": 1,
+      "rtt_ms": 15.47384262084961,
+      "success": true,
+      "energy_cost": 0.8,
+      "data_cost_mb": 1.735687255859375e-05,
+      "metadata": {}
+    },
+    {
+      "message_id": "eb2c2507-6598-40c5-8a6b-03020fccc067",
+      "destination": "peer_7",
+      "timestamp": 1755060261.3840296,
+      "path_chosen": "betanet",
+      "path_reasoning": "large_urgent",
+      "status": "delivered",
+      "hops": 1,
+      "rtt_ms": 15.286922454833984,
+      "success": true,
+      "energy_cost": 0.8,
+      "data_cost_mb": 1.735687255859375e-05,
+      "metadata": {}
+    },
+    {
+      "message_id": "c4bf3676-e2db-4ca6-9c6a-203009d481cc",
+      "destination": "peer_8",
+      "timestamp": 1755060261.3993165,
+      "path_chosen": "betanet",
+      "path_reasoning": "large_urgent",
+      "status": "delivered",
+      "hops": 1,
+      "rtt_ms": 15.461444854736328,
+      "success": true,
+      "energy_cost": 0.8,
+      "data_cost_mb": 1.735687255859375e-05,
+      "metadata": {}
+    },
+    {
+      "message_id": "9aa6bd4a-f815-4dcd-8631-6242f708197e",
+      "destination": "peer_9",
+      "timestamp": 1755060261.414778,
+      "path_chosen": "betanet",
+      "path_reasoning": "large_urgent",
+      "status": "delivered",
+      "hops": 1,
+      "rtt_ms": 15.183448791503906,
+      "success": true,
+      "energy_cost": 0.8,
+      "data_cost_mb": 1.735687255859375e-05,
+      "metadata": {}
+    }
+  ],
+  "recent_metrics": [
+    {
+      "timestamp": 1755060261.2748408,
+      "path_chosen": "betanet",
+      "path_reasoning": "large_urgent",
+      "success": true,
+      "rtt_ms": 15.950679779052734,
+      "hops": 1,
+      "energy_cost": 0.8,
+      "data_cost_mb": 1.735687255859375e-05
+    },
+    {
+      "timestamp": 1755060261.2907915,
+      "path_chosen": "betanet",
+      "path_reasoning": "large_urgent",
+      "success": true,
+      "rtt_ms": 15.95759391784668,
+      "hops": 1,
+      "energy_cost": 0.8,
+      "data_cost_mb": 1.735687255859375e-05
+    },
+    {
+      "timestamp": 1755060261.306749,
+      "path_chosen": "betanet",
+      "path_reasoning": "large_urgent",
+      "success": true,
+      "rtt_ms": 15.957355499267578,
+      "hops": 1,
+      "energy_cost": 0.8,
+      "data_cost_mb": 1.735687255859375e-05
+    },
+    {
+      "timestamp": 1755060261.3227065,
+      "path_chosen": "betanet",
+      "path_reasoning": "large_urgent",
+      "success": true,
+      "rtt_ms": 14.960050582885742,
+      "hops": 1,
+      "energy_cost": 0.8,
+      "data_cost_mb": 1.735687255859375e-05
+    },
+    {
+      "timestamp": 1755060261.3376665,
+      "path_chosen": "betanet",
+      "path_reasoning": "large_urgent",
+      "success": true,
+      "rtt_ms": 14.93215560913086,
+      "hops": 1,
+      "energy_cost": 0.8,
+      "data_cost_mb": 1.735687255859375e-05
+    },
+    {
+      "timestamp": 1755060261.3525987,
+      "path_chosen": "betanet",
+      "path_reasoning": "large_urgent",
+      "success": true,
+      "rtt_ms": 15.957117080688477,
+      "hops": 1,
+      "energy_cost": 0.8,
+      "data_cost_mb": 1.735687255859375e-05
+    },
+    {
+      "timestamp": 1755060261.3685558,
+      "path_chosen": "betanet",
+      "path_reasoning": "large_urgent",
+      "success": true,
+      "rtt_ms": 15.47384262084961,
+      "hops": 1,
+      "energy_cost": 0.8,
+      "data_cost_mb": 1.735687255859375e-05
+    },
+    {
+      "timestamp": 1755060261.3840296,
+      "path_chosen": "betanet",
+      "path_reasoning": "large_urgent",
+      "success": true,
+      "rtt_ms": 15.286922454833984,
+      "hops": 1,
+      "energy_cost": 0.8,
+      "data_cost_mb": 1.735687255859375e-05
+    },
+    {
+      "timestamp": 1755060261.3993165,
+      "path_chosen": "betanet",
+      "path_reasoning": "large_urgent",
+      "success": true,
+      "rtt_ms": 15.461444854736328,
+      "hops": 1,
+      "energy_cost": 0.8,
+      "data_cost_mb": 1.735687255859375e-05
+    },
+    {
+      "timestamp": 1755060261.414778,
+      "path_chosen": "betanet",
+      "path_reasoning": "large_urgent",
+      "success": true,
+      "rtt_ms": 15.183448791503906,
+      "hops": 1,
+      "energy_cost": 0.8,
+      "data_cost_mb": 1.735687255859375e-05
+    }
+  ]
+}

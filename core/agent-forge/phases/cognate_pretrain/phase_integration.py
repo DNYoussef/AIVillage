@@ -67,8 +67,8 @@ class CognateConfig:
     # Architecture configuration (25M target)
     target_architecture: str = "cognate_25m"  # auto, custom, or cognate_25m
     hidden_size: int = 216  # Updated for 25M params
-    num_layers: int = 11    # Updated for 25M params  
-    num_heads: int = 4      # Updated for 25M params
+    num_layers: int = 11  # Updated for 25M params
+    num_heads: int = 4  # Updated for 25M params
     intermediate_size: int = 864  # hidden_size * 4
 
     # Initialization strategy
@@ -526,13 +526,13 @@ class CognatePhase(PhaseController):
             vocab_size=32000,
             d_model=self.config.hidden_size,  # 216 for 25M
             n_layers=self.config.num_layers,  # 11 for 25M
-            n_heads=self.config.num_heads,    # 4 for 25M
+            n_heads=self.config.num_heads,  # 4 for 25M
             ffn_mult=4,
-            d_mem=self.config.hidden_size,    # Match model dimension
+            d_mem=self.config.hidden_size,  # Match model dimension
             mem_capacity=4096,
             max_seq_len=2048,
             device=str(self.device),
-            dtype=self.config.dtype
+            dtype=self.config.dtype,
         )
 
     def _create_cognate_refiner(self, config: RefinerCognateConfig) -> CognateRefiner:
@@ -541,11 +541,11 @@ class CognatePhase(PhaseController):
             model = CognateRefiner(config)
             param_count = sum(p.numel() for p in model.parameters())
             self.logger.info(f"Created CognateRefiner with {param_count:,} parameters")
-            
+
             # Verify it's close to 25M
             if abs(param_count - 25_000_000) > 2_000_000:  # Within 2M tolerance
                 self.logger.warning(f"Parameter count {param_count:,} is far from 25M target")
-            
+
             return model
         except Exception as e:
             self.logger.error(f"Failed to create CognateRefiner: {e}")
@@ -554,38 +554,38 @@ class CognatePhase(PhaseController):
     def _validate_cognate_refiner(self, model: CognateRefiner) -> dict[str, Any]:
         """Validate the CognateRefiner model."""
         validation_results = {"passed": True, "checks": {}, "warnings": [], "errors": []}
-        
+
         try:
             # Parameter count check
             param_count = sum(p.numel() for p in model.parameters())
             validation_results["checks"]["parameter_count"] = param_count
             validation_results["checks"]["target_25m"] = abs(param_count - 25_000_000) < 2_000_000
-            
+
             # Forward pass test
             try:
                 with torch.no_grad():
                     dummy_input = torch.randint(0, 1000, (2, 10))  # Small test input
                     outputs = model(dummy_input)
                     validation_results["checks"]["forward_pass"] = True
-                    validation_results["checks"]["has_halt_logits"] = hasattr(outputs, 'halt_logits')
-                    validation_results["checks"]["has_memory_info"] = hasattr(outputs, 'memory_info')
+                    validation_results["checks"]["has_halt_logits"] = hasattr(outputs, "halt_logits")
+                    validation_results["checks"]["has_memory_info"] = hasattr(outputs, "memory_info")
             except Exception as e:
                 validation_results["checks"]["forward_pass"] = False
                 validation_results["errors"].append(f"Forward pass failed: {e}")
-            
+
             # Device check
             model_device = next(model.parameters()).device
             validation_results["checks"]["correct_device"] = model_device.type == self.device.type
-            
+
             # Overall validation
             validation_results["passed"] = (
-                validation_results["checks"].get("target_25m", False) and
-                validation_results["checks"].get("forward_pass", False) and
-                len(validation_results["errors"]) == 0
+                validation_results["checks"].get("target_25m", False)
+                and validation_results["checks"].get("forward_pass", False)
+                and len(validation_results["errors"]) == 0
             )
-            
+
         except Exception as e:
             validation_results["passed"] = False
             validation_results["errors"].append(f"Validation failed: {e}")
-        
+
         return validation_results

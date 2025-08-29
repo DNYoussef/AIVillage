@@ -1,0 +1,151 @@
+version: '3.8'
+
+services:
+  # Redis Cluster for Agent Forge Pipeline Caching
+  redis-master:
+    image: redis:7-alpine
+    container_name: aivillage-redis-master
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_master_data:/data
+      - ./redis-master.conf:/usr/local/etc/redis/redis.conf:ro
+    command: redis-server /usr/local/etc/redis/redis.conf
+    networks:
+      - aivillage-performance
+    labels:
+      - "aivillage.component=cache"
+      - "aivillage.service=redis-master"
+      - "aivillage.role=primary"
+
+  redis-replica-1:
+    image: redis:7-alpine
+    container_name: aivillage-redis-replica-1
+    restart: unless-stopped
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis_replica1_data:/data
+      - ./redis-replica.conf:/usr/local/etc/redis/redis.conf:ro
+    command: redis-server /usr/local/etc/redis/redis.conf --replicaof redis-master 6379
+    networks:
+      - aivillage-performance
+    depends_on:
+      - redis-master
+    labels:
+      - "aivillage.component=cache"
+      - "aivillage.service=redis-replica"
+      - "aivillage.role=secondary"
+
+  redis-replica-2:
+    image: redis:7-alpine
+    container_name: aivillage-redis-replica-2
+    restart: unless-stopped
+    ports:
+      - "6381:6379"
+    volumes:
+      - redis_replica2_data:/data
+      - ./redis-replica.conf:/usr/local/etc/redis/redis.conf:ro
+    command: redis-server /usr/local/etc/redis/redis.conf --replicaof redis-master 6379
+    networks:
+      - aivillage-performance
+    depends_on:
+      - redis-master
+    labels:
+      - "aivillage.component=cache"
+      - "aivillage.service=redis-replica"
+      - "aivillage.role=secondary"
+
+  # Redis Sentinel for High Availability
+  redis-sentinel-1:
+    image: redis:7-alpine
+    container_name: aivillage-redis-sentinel-1
+    restart: unless-stopped
+    ports:
+      - "26379:26379"
+    volumes:
+      - ./sentinel.conf:/usr/local/etc/redis/sentinel.conf:ro
+    command: redis-sentinel /usr/local/etc/redis/sentinel.conf
+    networks:
+      - aivillage-performance
+    depends_on:
+      - redis-master
+      - redis-replica-1
+      - redis-replica-2
+
+  redis-sentinel-2:
+    image: redis:7-alpine
+    container_name: aivillage-redis-sentinel-2
+    restart: unless-stopped
+    ports:
+      - "26380:26379"
+    volumes:
+      - ./sentinel.conf:/usr/local/etc/redis/sentinel.conf:ro
+    command: redis-sentinel /usr/local/etc/redis/sentinel.conf
+    networks:
+      - aivillage-performance
+    depends_on:
+      - redis-master
+      - redis-replica-1
+      - redis-replica-2
+
+  redis-sentinel-3:
+    image: redis:7-alpine
+    container_name: aivillage-redis-sentinel-3
+    restart: unless-stopped
+    ports:
+      - "26381:26379"
+    volumes:
+      - ./sentinel.conf:/usr/local/etc/redis/sentinel.conf:ro
+    command: redis-sentinel /usr/local/etc/redis/sentinel.conf
+    networks:
+      - aivillage-performance
+    depends_on:
+      - redis-master
+      - redis-replica-1
+      - redis-replica-2
+
+  # Memcached for HyperRAG Query Caching
+  memcached:
+    image: memcached:1.6-alpine
+    container_name: aivillage-memcached
+    restart: unless-stopped
+    ports:
+      - "11211:11211"
+    command: memcached -m 1024 -c 1024 -I 32m -v
+    networks:
+      - aivillage-performance
+    labels:
+      - "aivillage.component=cache"
+      - "aivillage.service=memcached"
+
+  # KeyDB for Edge Computing Cache
+  keydb:
+    image: eqalpha/keydb:latest
+    container_name: aivillage-keydb
+    restart: unless-stopped
+    ports:
+      - "6380:6379"
+    volumes:
+      - keydb_data:/data
+      - ./keydb.conf:/etc/keydb/keydb.conf:ro
+    command: keydb-server /etc/keydb/keydb.conf
+    networks:
+      - aivillage-performance
+    labels:
+      - "aivillage.component=cache"
+      - "aivillage.service=keydb"
+
+volumes:
+  redis_master_data:
+  redis_replica1_data:
+  redis_replica2_data:
+  keydb_data:
+
+networks:
+  aivillage-performance:
+    driver: bridge
+    name: aivillage-performance
+    labels:
+      - "aivillage.network=performance"

@@ -1,0 +1,57 @@
+{
+  "scan_summary": {
+    "timestamp": "2025-08-29T12:44:10.231947",
+    "total_files_scanned": 54,
+    "websocket_files_found": 24,
+    "total_findings": 5,
+    "critical_count": 0,
+    "high_count": 5,
+    "medium_count": 0,
+    "low_count": 0,
+    "fixes_validated_count": 0
+  },
+  "critical_findings": [],
+  "high_findings": [
+    {
+      "file": "enhanced_agent_forge_api.py",
+      "line": 161,
+      "type": "Command Injection",
+      "description": "Direct subprocess usage without input validation",
+      "code": "process = subprocess.Popen(",
+      "recommendation": "Add input validation and use shell=False"
+    },
+    {
+      "file": "start_agent_forge_unified.py",
+      "line": 55,
+      "type": "Command Injection",
+      "description": "Direct subprocess usage without input validation",
+      "code": "process = subprocess.Popen(",
+      "recommendation": "Add input validation and use shell=False"
+    },
+    {
+      "file": "start_all_services_enhanced.py",
+      "line": 24,
+      "type": "Command Injection",
+      "description": "Direct subprocess usage without input validation",
+      "code": "process = subprocess.Popen([sys.executable, script_name], cwd=Path(__file__).parent)",
+      "recommendation": "Add input validation and use shell=False"
+    },
+    {
+      "file": "start_minimal_backend.py",
+      "line": 24,
+      "type": "Command Injection",
+      "description": "Direct subprocess usage without input validation",
+      "code": "process = subprocess.Popen(",
+      "recommendation": "Add input validation and use shell=False"
+    },
+    {
+      "file": "api\\start_api_servers.py",
+      "line": 407,
+      "type": "Command Injection",
+      "description": "Direct subprocess usage without input validation",
+      "code": "subprocess.run(",
+      "recommendation": "Add input validation and use shell=False"
+    }
+  ],
+  "fixes_validated": []
+}

@@ -11,20 +11,20 @@ Provides advanced API endpoints for Agent Forge with:
 """
 
 import asyncio
+from datetime import datetime
 import json
 import logging
 import os
+from pathlib import Path
 import subprocess
 import sys
 import time
+from typing import Any
 import uuid
-from datetime import datetime
-from pathlib import Path
-from typing import Any, Dict, List, Optional
 
 from fastapi import BackgroundTasks, FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 
 # Setup logging
@@ -33,14 +33,22 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Enhanced Agent Forge API")
 
-# Add CORS middleware
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# SECURITY: Add secure CORS middleware - NO WILDCARDS
+try:
+    from src.security.cors_config import SECURE_CORS_CONFIG
+    app.add_middleware(CORSMiddleware, **SECURE_CORS_CONFIG)
+except ImportError:
+    # Fallback secure configuration
+    import os
+    env = os.getenv("AIVILLAGE_ENV", "development")
+    cors_origins = ["http://localhost:3000", "http://localhost:8080"] if env != "production" else ["https://aivillage.app"]
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=cors_origins,
+        allow_credentials=True,
+        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        allow_headers=["Accept", "Content-Type", "Authorization"]
+    )
 
 # Global state
 phase_status = {}
@@ -52,8 +60,8 @@ websocket_connections = set()
 # Request models
 class PhaseStartRequest(BaseModel):
     phase_name: str
-    parameters: Optional[Dict[str, Any]] = {}
-    use_real_training: Optional[bool] = True
+    parameters: dict[str, Any] | None = {}
+    use_real_training: bool | None = True
 
 
 class ChatRequest(BaseModel):
@@ -63,13 +71,13 @@ class ChatRequest(BaseModel):
 
 class WebSocketMessage(BaseModel):
     type: str
-    data: Dict[str, Any]
+    data: dict[str, Any]
 
 
 # WebSocket connection manager
 class ConnectionManager:
     def __init__(self):
-        self.active_connections: List[WebSocket] = []
+        self.active_connections: list[WebSocket] = []
 
     async def connect(self, websocket: WebSocket):
         await websocket.accept()
@@ -101,7 +109,7 @@ manager = ConnectionManager()
 
 
 # Real training integration
-async def run_real_cognate_training(task_id: str, parameters: Dict[str, Any]):
+async def run_real_cognate_training(task_id: str, parameters: dict[str, Any]):
     """Run real Cognate training with GrokFast optimization."""
     try:
         logger.info(f"🚀 Starting REAL Cognate training (task: {task_id})")
@@ -257,7 +265,7 @@ async def run_real_cognate_training(task_id: str, parameters: Dict[str, Any]):
         await manager.broadcast({"type": "phase_update", "data": phase_status["Cognate"]})
 
 
-async def run_simulated_training(task_id: str, parameters: Dict[str, Any], fallback: bool = False):
+async def run_simulated_training(task_id: str, parameters: dict[str, Any], fallback: bool = False):
     """Run simulated training as backup."""
     logger.info(f"🎭 Running simulated Cognate training (task: {task_id})")
 
@@ -320,7 +328,7 @@ async def run_simulated_training(task_id: str, parameters: Dict[str, Any], fallb
 
 async def create_real_trained_models(task_id: str):
     """Create model entries for successfully trained real models."""
-    logger.info(f"📦 Creating real trained model entries")
+    logger.info("📦 Creating real trained model entries")
 
     # Look for trained models in the output directory
     models_dir = Path("./cognate_25m_models_real")
@@ -548,10 +556,10 @@ async def chat_with_model(request: ChatRequest):
 
     # Generate context-aware response
     if training_type.startswith("real"):
-        response_prefix = f"[Real Trained Model - {model['model_name']}]"
+        f"[Real Trained Model - {model['model_name']}]"
         context = f"I'm a production-trained 25M parameter Cognate model with real GrokFast optimization. My specialization is {model.get('focus', 'general reasoning')}."
     else:
-        response_prefix = f"[Simulated Model - {model['model_name']}]"
+        f"[Simulated Model - {model['model_name']}]"
         context = f"I'm a demonstration model specialized in {model.get('focus', 'general reasoning')}."
 
     # Simulate intelligent response based on model focus

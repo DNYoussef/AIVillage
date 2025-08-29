@@ -1,0 +1,97 @@
+{
+  "start_time": 1756034977.5430899,
+  "end_time": 1756034993.5458188,
+  "total_tests": 8,
+  "passed_tests": 8,
+  "failed_tests": 0,
+  "skipped_tests": 0,
+  "test_suites": {
+    "basic_imports": {
+      "name": "Basic Imports",
+      "passed": 4,
+      "failed": 0,
+      "tests": [
+        {
+          "name": "agent_forge",
+          "description": "Main agent_forge module",
+          "status": "passed",
+          "error": null
+        },
+        {
+          "name": "agent_forge.phases",
+          "description": "Phases module",
+          "status": "passed",
+          "error": null
+        },
+        {
+          "name": "agent_forge.phases.cognate_pretrain",
+          "description": "Cognate pretrain module",
+          "status": "passed",
+          "error": null
+        },
+        {
+          "name": "agent_forge.phases.evomerge",
+          "description": "EvoMerge module",
+          "status": "passed",
+          "error": null
+        }
+      ]
+    },
+    "cognate_functionality": {
+      "name": "Cognate Functionality",
+      "passed": 2,
+      "failed": 0,
+      "tests": [
+        {
+          "name": "mock_model_creation",
+          "description": "Mock Cognate model creation",
+          "status": "passed",
+          "details": "850,024 parameters"
+        },
+        {
+          "name": "forward_pass",
+          "description": "Model forward pass",
+          "status": "passed",
+          "details": "Output shape: torch.Size([1, 10, 1000])"
+        }
+      ]
+    },
+    "evomerge_functionality": {
+      "name": "EvoMerge Functionality",
+      "passed": 2,
+      "failed": 0,
+      "tests": [
+        {
+          "name": "population_creation",
+          "description": "Create initial population",
+          "status": "passed",
+          "details": "4 candidates"
+        },
+        {
+          "name": "evolution_simulation",
+          "description": "Simple evolution simulation",
+          "status": "passed",
+          "details": "Best fitness: 0.5440"
+        }
+      ]
+    }
+  },
+  "errors": [],
+  "warnings": [],
+  "import_status": {
+    "success": true,
+    "errors": [],
+    "warnings": [],
+    "imported_modules": [
+      "agent_forge",
+      "cognate_pretrain",
+      "evomerge",
+      "evomerge_phase",
+      "phase_controller",
+      "unified_pipeline"
+    ],
+    "cognate_available": true,
+    "evomerge_available": true,
+    "core_available": true
+  }
+}

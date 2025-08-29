@@ -7,7 +7,6 @@ the core functionality needed for the Cognate pretraining system.
 """
 
 import logging
-from typing import Any, Dict, List, Optional, Tuple
 
 import torch
 import torch.nn as nn
@@ -34,7 +33,7 @@ class SimpleLTMBank(nn.Module):
         self.read_controller = nn.Linear(d_model, d_model)
         self.write_controller = nn.Linear(d_model, 1)
 
-    def read(self, query: torch.Tensor, k: int = 4) -> Tuple[torch.Tensor, torch.Tensor]:
+    def read(self, query: torch.Tensor, k: int = 4) -> tuple[torch.Tensor, torch.Tensor]:
         """Read from memory bank."""
         if self.memory_size == 0:
             batch_size = query.shape[0]

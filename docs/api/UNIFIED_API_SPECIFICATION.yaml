@@ -1,0 +1,549 @@
+openapi: 3.0.3
+info:
+  title: AIVillage Unified API Gateway
+  description: |
+    Production-ready unified API for AIVillage services including:
+    - Agent Forge 7-phase training pipeline
+    - P2P/Fog computing integration
+    - JWT authentication with MFA support
+    - Real-time WebSocket updates
+    - Comprehensive health monitoring
+  version: 1.0.0
+  contact:
+    name: AIVillage API Support
+    url: https://github.com/DNYoussef/AIVillage
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:8000
+    description: Local development server
+  - url: https://api.aivillage.com
+    description: Production server
+
+security:
+  - BearerAuth: []
+  - ApiKeyAuth: []
+
+paths:
+  /:
+    get:
+      summary: API Root
+      description: Get API information and available endpoints
+      responses:
+        '200':
+          description: API information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIResponse'
+              example:
+                success: true
+                data:
+                  service: "AIVillage Unified API Gateway"
+                  version: "1.0.0"
+                  status: "operational"
+                message: ""
+
+  /health:
+    get:
+      summary: Health Check
+      description: Comprehensive health check for all services
+      responses:
+        '200':
+          description: Health status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthCheckResponse'
+              example:
+                status: "healthy"
+                timestamp: "2025-08-27T14:30:00Z"
+                services:
+                  agent_forge:
+                    status: "running"
+                    available: true
+                  p2p_fog:
+                    status: "running"
+                    available: true
+
+  # Agent Forge Endpoints
+  /v1/models/train:
+    post:
+      summary: Start Model Training
+      description: Start Agent Forge model training pipeline
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TrainingRequest'
+            example:
+              phase_name: "cognate"
+              real_training: true
+              max_steps: 2000
+              batch_size: 2
+      responses:
+        '200':
+          description: Training started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIResponse'
+              example:
+                success: true
+                data:
+                  task_id: "12345-abcde"
+                  phase: "cognate"
+                  status: "started"
+                message: "Training started for phase cognate"
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailableError'
+
+  /v1/models:
+    get:
+      summary: List Models
+      description: List all trained models for authenticated user
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: List of models
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIResponse'
+              example:
+                success: true
+                data:
+                  models: []
+                  total_count: 0
+                message: "Models retrieved successfully"
+
+  /v1/chat:
+    post:
+      summary: Chat with Model
+      description: Send message to trained model
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatRequest'
+            example:
+              model_id: "cognate-model-123"
+              message: "Hello, how can you help me?"
+              conversation_id: "conv-456"
+      responses:
+        '200':
+          description: Chat response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIResponse'
+              example:
+                success: true
+                data:
+                  model_id: "cognate-model-123"
+                  response: "Hello! I'm a production-trained AI model..."
+                  conversation_id: "conv-456"
+                message: "Chat completed successfully"
+
+  # P2P/Fog Endpoints
+  /v1/p2p/status:
+    get:
+      summary: P2P Network Status
+      description: Get current P2P network connectivity status
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: P2P network status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIResponse'
+              example:
+                success: true
+                data:
+                  status: "operational"
+                  bitchat:
+                    connected: true
+                    status: "online"
+                  betanet:
+                    connected: true
+                    active_circuits: 3
+                message: "P2P status retrieved"
+
+  /v1/fog/nodes:
+    get:
+      summary: Fog Computing Nodes
+      description: Get status of fog computing nodes
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Fog nodes status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIResponse'
+              example:
+                success: true
+                data:
+                  total_nodes: 5
+                  active_nodes: 4
+                  nodes:
+                    - node_id: "unified_gateway_node"
+                      status: "active"
+                      type: "coordinator"
+                message: "Fog nodes retrieved"
+
+  /v1/tokens:
+    get:
+      summary: Token Economics
+      description: Get FOG token balance and economics info
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Token information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIResponse'
+              example:
+                success: true
+                data:
+                  balance: 1000
+                  total_supply: 1000000000
+                  network_status: "operational"
+                message: "Token status retrieved"
+
+  # Utility Endpoints
+  /v1/query:
+    post:
+      summary: Process RAG Query
+      description: Process query using RAG pipeline
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryRequest'
+            example:
+              query: "What are the benefits of renewable energy?"
+              max_results: 10
+              include_sources: true
+              mode: "comprehensive"
+      responses:
+        '200':
+          description: Query response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIResponse'
+              example:
+                success: true
+                data:
+                  query: "What are the benefits of renewable energy?"
+                  answer: "Renewable energy offers numerous benefits..."
+                  sources: []
+                  confidence: 0.85
+                message: "Query processed successfully"
+
+  /v1/upload:
+    post:
+      summary: Upload File
+      description: Upload and process file
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: File to upload
+      responses:
+        '200':
+          description: File uploaded successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIResponse'
+              example:
+                success: true
+                data:
+                  file_id: "file-123-abc"
+                  filename: "document.pdf"
+                  size: 1048576
+                  content_type: "application/pdf"
+                  status: "processed"
+                message: "File uploaded and processed successfully"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token for authentication
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API key for authentication
+
+  schemas:
+    APIResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Whether the request was successful
+        data:
+          type: object
+          description: Response data
+        message:
+          type: string
+          description: Human-readable message
+        error_code:
+          type: string
+          nullable: true
+          description: Error code if applicable
+        timestamp:
+          type: string
+          format: date-time
+          description: Response timestamp
+        request_id:
+          type: string
+          nullable: true
+          description: Unique request identifier
+
+    HealthCheckResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+          description: Overall system health
+        timestamp:
+          type: string
+          format: date-time
+          description: Health check timestamp
+        services:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              status:
+                type: string
+              available:
+                type: boolean
+          description: Individual service statuses
+        version:
+          type: string
+          description: API version
+
+    TrainingRequest:
+      type: object
+      required:
+        - phase_name
+      properties:
+        phase_name:
+          type: string
+          description: Training phase name
+          example: "cognate"
+        parameters:
+          type: object
+          description: Training parameters
+          default: {}
+        real_training:
+          type: boolean
+          description: Whether to use real training
+          default: true
+        max_steps:
+          type: integer
+          description: Maximum training steps
+          default: 2000
+        batch_size:
+          type: integer
+          description: Training batch size
+          default: 2
+
+    ChatRequest:
+      type: object
+      required:
+        - model_id
+        - message
+      properties:
+        model_id:
+          type: string
+          description: Model ID to chat with
+        message:
+          type: string
+          minLength: 1
+          maxLength: 5000
+          description: Message to send to model
+        conversation_id:
+          type: string
+          nullable: true
+          description: Optional conversation ID
+        stream:
+          type: boolean
+          default: false
+          description: Whether to stream response
+
+    QueryRequest:
+      type: object
+      required:
+        - query
+      properties:
+        query:
+          type: string
+          minLength: 1
+          maxLength: 5000
+          description: Query text
+        max_results:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 10
+          description: Maximum number of results
+        include_sources:
+          type: boolean
+          default: true
+          description: Whether to include sources
+        mode:
+          type: string
+          default: "comprehensive"
+          description: Query processing mode
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error_code:
+          type: string
+          description: Machine-readable error code
+        message:
+          type: string
+          description: Human-readable error message
+        timestamp:
+          type: string
+          format: date-time
+          description: Error timestamp
+        request_id:
+          type: string
+          description: Request identifier for tracking
+
+  responses:
+    UnauthorizedError:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            error_code: "AUTHENTICATION_REQUIRED"
+            message: "Authentication required"
+            timestamp: "2025-08-27T14:30:00Z"
+
+    ForbiddenError:
+      description: Insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            error_code: "INSUFFICIENT_PERMISSIONS"
+            message: "Insufficient permissions for this operation"
+            timestamp: "2025-08-27T14:30:00Z"
+
+    NotFoundError:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            error_code: "RESOURCE_NOT_FOUND"
+            message: "Requested resource not found"
+            timestamp: "2025-08-27T14:30:00Z"
+
+    RateLimitError:
+      description: Rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            error_code: "RATE_LIMIT_EXCEEDED"
+            message: "Rate limit exceeded for tier standard"
+            timestamp: "2025-08-27T14:30:00Z"
+
+    ServiceUnavailableError:
+      description: Service temporarily unavailable
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            error_code: "SERVICE_UNAVAILABLE"
+            message: "Agent Forge service unavailable"
+            timestamp: "2025-08-27T14:30:00Z"
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            error_code: "INTERNAL_ERROR"
+            message: "Internal server error"
+            timestamp: "2025-08-27T14:30:00Z"
+
+  parameters:
+    RequestIdHeader:
+      name: X-Request-ID
+      in: header
+      schema:
+        type: string
+      description: Unique request identifier for tracking
+
+  headers:
+    RateLimitTier:
+      schema:
+        type: string
+      description: Current rate limit tier
+    RateLimitLimit:
+      schema:
+        type: integer
+      description: Rate limit per minute
+    RequestId:
+      schema:
+        type: string
+      description: Unique request identifier

@@ -1,0 +1,174 @@
+{
+  "plan_id": "EXECUTION_PLAN_20250825_123000",
+  "created_at": "2025-08-25T12:30:00Z",
+  "total_estimated_duration": 126,
+  "parallel_savings": 54,
+  "routing_decisions": [
+    {
+      "cluster_id": "CLUSTER_001",
+      "template_id": "stub_implementation_specialist",
+      "confidence_score": 0.95,
+      "priority": "CRITICAL",
+      "execution_strategy": "PARALLEL",
+      "assigned_agents": ["coder", "researcher", "code-analyzer"],
+      "estimated_duration": 45,
+      "validation_checkpoints": [
+        "Module imports successfully",
+        "No circular dependencies introduced", 
+        "Architecture compliance maintained",
+        "Unit tests pass"
+      ],
+      "affected_modules": [
+        "packages.agents.core.base_agent",
+        "packages.agents.core.agent_manager", 
+        "packages.agents.core.communication",
+        "packages.agents.core.utils"
+      ],
+      "wave_assignment": 1
+    },
+    {
+      "cluster_id": "CLUSTER_002", 
+      "template_id": "stub_implementation_specialist",
+      "confidence_score": 0.88,
+      "priority": "HIGH",
+      "execution_strategy": "PARALLEL",
+      "assigned_agents": ["code-analyzer", "researcher"],
+      "estimated_duration": 30,
+      "validation_checkpoints": [
+        "Interface contracts properly defined",
+        "Communication interfaces functional",
+        "Task interfaces operational"
+      ],
+      "affected_modules": [
+        "packages.agents.core.interfaces.base_interface",
+        "packages.agents.core.interfaces.communication_interface",
+        "packages.agents.core.interfaces.task_interface"
+      ],
+      "wave_assignment": 2
+    },
+    {
+      "cluster_id": "CLUSTER_003",
+      "template_id": "stub_implementation_specialist", 
+      "confidence_score": 0.90,
+      "priority": "MEDIUM",
+      "execution_strategy": "PARALLEL",
+      "assigned_agents": ["coder", "researcher"],
+      "estimated_duration": 25,
+      "validation_checkpoints": [
+        "Model classes instantiable",
+        "Data persistence functional", 
+        "Agent models properly structured"
+      ],
+      "affected_modules": [
+        "packages.agents.core.models.agent_model",
+        "packages.agents.core.models.task_model",
+        "packages.agents.core.models.communication_model"
+      ],
+      "wave_assignment": 2
+    },
+    {
+      "cluster_id": "CLUSTER_004",
+      "template_id": "stub_implementation_specialist",
+      "confidence_score": 0.85, 
+      "priority": "MEDIUM",
+      "execution_strategy": "SEQUENTIAL",
+      "assigned_agents": ["researcher", "coder"],
+      "estimated_duration": 30,
+      "validation_checkpoints": [
+        "Agent registry functional",
+        "Capability discovery operational",
+        "Service registration working"
+      ],
+      "affected_modules": [
+        "packages.agents.core.registry.agent_registry",
+        "packages.agents.core.registry.capability_registry"
+      ],
+      "wave_assignment": 3
+    }
+  ],
+  "execution_waves": [
+    {
+      "wave": 1,
+      "duration": 45,
+      "parallel_execution": false,
+      "clusters": ["CLUSTER_001"],
+      "reasoning": "Critical dependency for all other clusters - must complete first",
+      "success_criteria": "packages.agents.core base modules import successfully",
+      "agents_required": ["coder", "researcher", "code-analyzer"],
+      "coordination_overhead": 0
+    },
+    {
+      "wave": 2, 
+      "duration": 35,
+      "parallel_execution": true,
+      "clusters": ["CLUSTER_002", "CLUSTER_003"],
+      "reasoning": "Can be processed simultaneously after base foundation is complete",
+      "success_criteria": "Interface contracts defined and model classes instantiable",
+      "agents_required": ["code-analyzer", "researcher", "coder"],
+      "coordination_overhead": 5,
+      "parallel_savings": 20
+    },
+    {
+      "wave": 3,
+      "duration": 30, 
+      "parallel_execution": false,
+      "clusters": ["CLUSTER_004"],
+      "reasoning": "Registry depends on both interface definitions and model classes",
+      "success_criteria": "Complete agent discovery and registration functionality",
+      "agents_required": ["researcher", "coder"],
+      "coordination_overhead": 0
+    }
+  ],
+  "success_criteria": [
+    "All ModuleNotFoundError failures resolved",
+    "No new circular dependencies introduced",
+    "All import chains function correctly",
+    "Architecture compliance maintained across 4 remediation areas",
+    "Unit tests pass for all affected modules",
+    "Agent utilization efficiency >= 80%"
+  ],
+  "contingency_plans": {
+    "template_failure": {
+      "description": "Primary remediation template fails", 
+      "fallback_action": "Route to general_remediation_specialist",
+      "escalation_threshold": 2,
+      "rollback_strategy": "Preserve working state, revert changes"
+    },
+    "agent_unavailable": {
+      "description": "Required agent becomes unavailable",
+      "fallback_action": "Substitute with available agent of similar capability",
+      "wait_threshold_minutes": 30,
+      "alternative_agents": {
+        "coder": ["researcher", "code-analyzer"],
+        "researcher": ["code-analyzer", "coder"], 
+        "code-analyzer": ["researcher", "coder"]
+      }
+    },
+    "validation_failure": {
+      "description": "Remediation validation fails",
+      "retry_attempts": 2,
+      "escalation_contact": "system-architect",
+      "rollback_required": true
+    },
+    "time_overrun": {
+      "description": "Execution time exceeds estimates by >50%",
+      "action": "Reassess complexity, consider strategy change",
+      "escalation_threshold_minutes": 90
+    }
+  },
+  "performance_metrics": {
+    "routing_confidence": 0.92,
+    "pattern_recognition_score": 0.95,
+    "solution_mapping_confidence": 0.88,
+    "execution_feasibility": 0.95,
+    "risk_assessment": "LOW",
+    "expected_success_rate": 0.92
+  },
+  "resource_optimization": {
+    "agent_utilization_target": 0.80,
+    "parallel_efficiency_gain": 0.30,
+    "coordination_overhead_total": 5,
+    "specialization_benefits": 0.15,
+    "load_balancing_score": 0.85
+  }
+}

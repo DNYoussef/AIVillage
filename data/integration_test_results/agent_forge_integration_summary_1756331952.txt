@@ -1,0 +1,28 @@
+Agent Forge Integration Test Summary
+==================================================
+
+Test completed: 2025-08-27 17:59:12
+Duration: 5.21 seconds
+Overall status: PARTIAL
+
+Test Results:
+- Successful tests: 3/6
+- Success rate: 50.0%
+
+Import Status:
+- Successful imports: 8/10
+- Critical imports OK: True
+
+Pipeline Status:
+- Can create pipeline: False
+- Phases available: 0
+- Ready for execution: False
+
+Readiness Assessment:
+- structure_analysis: COMPLETE
+- import_validation: COMPLETE
+- pipeline_creation: FAILED
+- execution_testing: ATTEMPTED
+- performance_baseline: COMPLETE
+
+Detailed results: integration_test_results\agent_forge_integration_detailed_1756331952.json

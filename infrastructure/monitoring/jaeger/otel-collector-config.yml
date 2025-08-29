@@ -1,0 +1,133 @@
+# OpenTelemetry Collector Configuration for AIVillage
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+        cors:
+          allowed_origins:
+            - http://localhost:*
+            - https://localhost:*
+
+  prometheus:
+    config:
+      scrape_configs:
+        - job_name: 'otel-collector'
+          scrape_interval: 10s
+          static_configs:
+            - targets: ['0.0.0.0:8888']
+
+  jaeger:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:14250
+      thrift_http:
+        endpoint: 0.0.0.0:14268
+      thrift_compact:
+        endpoint: 0.0.0.0:6831
+      thrift_binary:
+        endpoint: 0.0.0.0:6832
+
+  zipkin:
+    endpoint: 0.0.0.0:9411
+
+processors:
+  batch:
+    timeout: 1s
+    send_batch_size: 1024
+    send_batch_max_size: 2048
+
+  memory_limiter:
+    limit_mib: 1024
+    spike_limit_mib: 256
+    check_interval: 5s
+
+  resource:
+    attributes:
+      - key: service.namespace
+        value: "aivillage"
+        action: insert
+      - key: deployment.environment
+        value: "production"
+        action: insert
+
+  probabilistic_sampler:
+    sampling_percentage: 10.0
+    hash_seed: 22
+
+  span:
+    name:
+      to_attributes:
+        rules:
+          - ^\/api\/v1\/(?P<version>\d+)\/(?P<operation>.*)$$
+          - ^(?P<service_name>[^\/]+)\/(?P<operation>.*)$$
+
+  attributes:
+    actions:
+      - key: environment
+        value: production
+        action: insert
+      - key: cluster
+        value: aivillage-main
+        action: insert
+
+exporters:
+  jaeger:
+    endpoint: jaeger:14250
+    tls:
+      insecure: true
+    sending_queue:
+      enabled: true
+      num_consumers: 4
+      queue_size: 100
+
+  prometheus:
+    endpoint: "0.0.0.0:8889"
+    const_labels:
+      cluster: aivillage
+    metric_relabeling:
+      - source_labels: [__name__]
+        regex: '.*_bucket'
+        target_label: __name__
+        replacement: '${1}_histogram'
+
+  logging:
+    loglevel: info
+    sampling_initial: 5
+    sampling_thereafter: 200
+
+  otlp/metrics:
+    endpoint: http://prometheus:9090/api/v1/otlp
+    tls:
+      insecure: true
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp, jaeger, zipkin]
+      processors: [memory_limiter, resource, probabilistic_sampler, span, attributes, batch]
+      exporters: [jaeger, logging]
+
+    metrics:
+      receivers: [otlp, prometheus]
+      processors: [memory_limiter, resource, attributes, batch]
+      exporters: [prometheus, logging]
+
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, resource, attributes, batch]
+      exporters: [logging]
+
+  extensions: [health_check, pprof, zpages]
+
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
+
+  pprof:
+    endpoint: 0.0.0.0:1777
+
+  zpages:
+    endpoint: 0.0.0.0:55679

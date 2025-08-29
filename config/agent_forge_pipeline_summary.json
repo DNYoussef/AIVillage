@@ -1,0 +1,63 @@
+{
+  "pipeline_execution": {
+    "timestamp": "2025-07-24 23:19:22",
+    "args": {},
+    "status": "completed"
+  },
+  "outputs": {
+    "models_dir": "C:\\Users\\17175\\Desktop\\AIVillage\\models",
+    "results_dir": "C:\\Users\\17175\\Desktop\\AIVillage\\benchmark_results",
+    "agent_forge_outputs": "C:\\Users\\17175\\Desktop\\AIVillage\\agent_forge_outputs"
+  },
+  "benchmark_results": {
+    "model_averages": {
+      "evomerge_best": 0.41100000000000003,
+      "quietstar_enhanced": 0.4574,
+      "original_compressed": 0.44159999999999994,
+      "mastery_trained": 0.5227999999999999,
+      "unified_pipeline": 0.541
+    },
+    "benchmark_comparison": [
+      {
+        "Benchmark": "MMLU",
+        "evomerge_best": 0.542,
+        "quietstar_enhanced": 0.587,
+        "original_compressed": 0.573,
+        "mastery_trained": 0.634,
+        "unified_pipeline": 0.651
+      },
+      {
+        "Benchmark": "GSM8K",
+        "evomerge_best": 0.234,
+        "quietstar_enhanced": 0.312,
+        "original_compressed": 0.289,
+        "mastery_trained": 0.456,
+        "unified_pipeline": 0.478
+      },
+      {
+        "Benchmark": "HumanEval",
+        "evomerge_best": 0.156,
+        "quietstar_enhanced": 0.198,
+        "original_compressed": 0.187,
+        "mastery_trained": 0.267,
+        "unified_pipeline": 0.289
+      },
+      {
+        "Benchmark": "HellaSwag",
+        "evomerge_best": 0.678,
+        "quietstar_enhanced": 0.701,
+        "original_compressed": 0.692,
+        "mastery_trained": 0.734,
+        "unified_pipeline": 0.742
+      },
+      {
+        "Benchmark": "ARC",
+        "evomerge_best": 0.445,
+        "quietstar_enhanced": 0.489,
+        "original_compressed": 0.467,
+        "mastery_trained": 0.523,
+        "unified_pipeline": 0.545
+      }
+    ]
+  }
+}

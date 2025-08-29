@@ -1,0 +1,377 @@
+2025-08-26 19:48:21,531 - __main__ - INFO - === AGENT FORGE CURRICULUM TRAINING SYSTEM ===
+2025-08-26 19:48:21,531 - __main__ - INFO - Leveraging existing infrastructure + new curriculum components
+2025-08-26 19:48:25,273 - unified_cognate_25m - INFO - Successfully imported local Cognate components
+2025-08-26 19:48:25,735 - unified_cognate_25m - INFO - UnifiedCognateRefiner initialized with 17,549,032 parameters
+2025-08-26 19:48:25,735 - unified_cognate_25m - INFO - Target: 25,069,534, Actual: 17,549,032, Accuracy: 70.00%
+2025-08-26 19:48:25,735 - __main__ - INFO - Loaded Cognate model with ~25M parameters
+2025-08-26 19:48:25,736 - __main__ - INFO - Starting 10-level curriculum training loop...
+2025-08-26 19:48:29,772 - grokfast_optimizer - INFO - GrokFast initialized: alpha=0.98, lamb=2.0, warmup=100
+2025-08-26 19:48:29,772 - curriculum_training_loop - INFO - GrokFast optimizer loaded successfully
+2025-08-26 19:48:29,774 - curriculum_training_loop - WARNING - Could not load Sleep/Dream components: No module named 'sleep_and_dream'
+2025-08-26 19:48:29,774 - curriculum_training_loop - INFO - Starting complete 10-level curriculum training
+2025-08-26 19:48:29,774 - curriculum_training_loop - INFO - Beginning Level 1/10
+2025-08-26 19:48:29,774 - curriculum_training_loop - INFO - Starting training for Level 1
+2025-08-26 19:48:29,774 - curriculum_training_loop - WARNING - Curriculum data not found at C:\Users\17175\Desktop\AIVillage\artifacts\assessment\curriculum_recalibrated.json
+2025-08-26 19:48:29,775 - curriculum_training_loop - INFO - Level 1: Initialized 150 problems for mastery tracking
+2025-08-26 19:48:32,580 - curriculum_training_loop - INFO - Level 1 mastery loop completed: 50/150 problems mastered
+2025-08-26 19:48:32,580 - curriculum_training_loop - INFO - Level 1: GrokFast optimization active throughout training
+2025-08-26 19:48:32,581 - curriculum_training_loop - INFO - Level 1: Geometric feedback integrated
+2025-08-26 19:48:32,581 - curriculum_training_loop - INFO - Temperature self-modeling epoch 1/5: 0.799
+2025-08-26 19:48:32,582 - curriculum_training_loop - INFO - Temperature self-modeling epoch 2/5: 0.812
+2025-08-26 19:48:32,582 - curriculum_training_loop - INFO - Temperature self-modeling epoch 3/5: 0.822
+2025-08-26 19:48:32,582 - curriculum_training_loop - INFO - Temperature self-modeling epoch 4/5: 0.841
+2025-08-26 19:48:32,582 - curriculum_training_loop - INFO - Temperature self-modeling epoch 5/5: 0.824
+2025-08-26 19:48:32,582 - curriculum_training_loop - INFO - Temperature self-modeling completed. Final accuracy: 0.820
+2025-08-26 19:48:32,583 - curriculum_training_loop - INFO - Level 1: Baking persona and 1 alignment principles
+2025-08-26 19:48:32,687 - curriculum_training_loop - INFO - Level 1 validation: {'problems_mastered': True, 'sleep_cycles': False, 'self_model_accuracy': False, 'alignment_consistency': False}
+2025-08-26 19:48:32,687 - curriculum_training_loop - INFO - Level 1 ready for progression: False
+2025-08-26 19:48:32,687 - curriculum_training_loop - WARNING - Level 1 not ready for progression. Continuing training...
+2025-08-26 19:48:32,687 - curriculum_training_loop - ERROR - Level 1 failed to complete. Stopping curriculum.
+2025-08-26 19:48:32,689 - curriculum_training_loop - INFO - Curriculum training completed. Results saved to C:\Users\17175\Desktop\AIVillage\artifacts\curriculum_training\curriculum_training_results.json
+2025-08-26 19:48:32,689 - curriculum_training_loop - INFO - Final status: 0/10 levels completed
+2025-08-26 19:48:32,693 - __main__ - INFO - === CURRICULUM TRAINING RESULTS ===
+2025-08-26 19:48:32,693 - __main__ - INFO - Levels Completed: 0/10
+2025-08-26 19:48:32,693 - __main__ - INFO - Total Duration: 2.91 seconds
+2025-08-26 19:48:32,693 - __main__ - INFO - Level 1: 50/50 problems mastered (100.0%)
+2025-08-26 19:50:30,869 - __main__ - INFO - === AGENT FORGE CURRICULUM TRAINING SYSTEM ===
+2025-08-26 19:50:30,869 - __main__ - INFO - Leveraging existing infrastructure + new curriculum components
+2025-08-26 19:50:33,559 - unified_cognate_25m - INFO - Successfully imported local Cognate components
+2025-08-26 19:50:34,362 - unified_cognate_25m - INFO - UnifiedCognateRefiner initialized with 17,549,032 parameters
+2025-08-26 19:50:34,362 - unified_cognate_25m - INFO - Target: 25,069,534, Actual: 17,549,032, Accuracy: 70.00%
+2025-08-26 19:50:34,362 - __main__ - INFO - Loaded Cognate model with ~25M parameters
+2025-08-26 19:50:34,362 - __main__ - INFO - Starting 10-level curriculum training loop...
+2025-08-26 19:50:39,272 - grokfast_optimizer - INFO - GrokFast initialized: alpha=0.98, lamb=2.0, warmup=100
+2025-08-26 19:50:39,272 - curriculum_training_loop - INFO - GrokFast optimizer loaded successfully
+2025-08-26 19:50:39,274 - curriculum_training_loop - WARNING - Could not load Sleep/Dream components: No module named 'sleep_and_dream'
+2025-08-26 19:50:39,275 - curriculum_training_loop - INFO - Starting complete 10-level curriculum training
+2025-08-26 19:50:39,275 - curriculum_training_loop - INFO - Beginning Level 1/10
+2025-08-26 19:50:39,275 - curriculum_training_loop - INFO - Starting training for Level 1
+2025-08-26 19:50:39,275 - curriculum_training_loop - WARNING - Curriculum data not found at C:\Users\17175\Desktop\AIVillage\artifacts\assessment\curriculum_recalibrated.json
+2025-08-26 19:50:39,276 - curriculum_training_loop - INFO - Level 1: Initialized 150 problems for mastery tracking
+2025-08-26 19:50:42,563 - curriculum_training_loop - INFO - Level 1 mastery loop completed: 50/150 problems mastered
+2025-08-26 19:50:42,563 - curriculum_training_loop - INFO - Level 1: GrokFast optimization active throughout training
+2025-08-26 19:50:42,563 - curriculum_training_loop - INFO - Level 1: Geometric feedback integrated
+2025-08-26 19:50:42,563 - curriculum_training_loop - INFO - Level 1: Starting sleep/dream cycle 1/3
+2025-08-26 19:50:42,671 - curriculum_training_loop - INFO - Level 1: Starting sleep/dream cycle 2/3
+2025-08-26 19:50:42,779 - curriculum_training_loop - INFO - Level 1: Starting sleep/dream cycle 3/3
+2025-08-26 19:50:42,885 - curriculum_training_loop - INFO - Level 1: Completed 3 sleep/dream cycles
+2025-08-26 19:50:42,885 - curriculum_training_loop - INFO - Temperature self-modeling epoch 1/5: 0.863
+2025-08-26 19:50:42,885 - curriculum_training_loop - INFO - Temperature self-modeling epoch 2/5: 0.819
+2025-08-26 19:50:42,886 - curriculum_training_loop - INFO - Temperature self-modeling epoch 3/5: 0.790
+2025-08-26 19:50:42,886 - curriculum_training_loop - INFO - Temperature self-modeling epoch 4/5: 0.808
+2025-08-26 19:50:42,886 - curriculum_training_loop - INFO - Temperature self-modeling epoch 5/5: 0.856
+2025-08-26 19:50:42,886 - curriculum_training_loop - INFO - Temperature self-modeling completed. Final accuracy: 0.827
+2025-08-26 19:50:42,886 - curriculum_training_loop - INFO - Level 1: Baking persona and 1 alignment principles
+2025-08-26 19:50:42,996 - curriculum_training_loop - INFO - Level 1 validation: {'problems_mastered': True, 'sleep_cycles': True, 'self_model_accuracy': True, 'alignment_consistency': True}
+2025-08-26 19:50:42,996 - curriculum_training_loop - INFO - Level 1 ready for progression: True
+2025-08-26 19:50:42,996 - curriculum_training_loop - INFO - Level 1 completed successfully in 0:00:03.721458
+2025-08-26 19:50:42,997 - curriculum_training_loop - INFO - Level 1 completed successfully!
+2025-08-26 19:50:42,997 - curriculum_training_loop - INFO - Beginning Level 2/10
+2025-08-26 19:50:42,997 - curriculum_training_loop - INFO - Starting training for Level 2
+2025-08-26 19:50:42,997 - curriculum_training_loop - WARNING - Curriculum data not found at C:\Users\17175\Desktop\AIVillage\artifacts\assessment\curriculum_recalibrated.json
+2025-08-26 19:50:42,998 - curriculum_training_loop - INFO - Level 2: Initialized 150 problems for mastery tracking
+2025-08-26 19:50:45,979 - curriculum_training_loop - INFO - Level 2 mastery loop completed: 50/150 problems mastered
+2025-08-26 19:50:45,979 - curriculum_training_loop - INFO - Level 2: GrokFast optimization active throughout training
+2025-08-26 19:50:45,979 - curriculum_training_loop - INFO - Level 2: Geometric feedback integrated
+2025-08-26 19:50:45,979 - curriculum_training_loop - INFO - Level 2: Starting sleep/dream cycle 1/3
+2025-08-26 19:50:46,088 - curriculum_training_loop - INFO - Level 2: Starting sleep/dream cycle 2/3
+2025-08-26 19:50:46,194 - curriculum_training_loop - INFO - Level 2: Starting sleep/dream cycle 3/3
+2025-08-26 19:50:46,303 - curriculum_training_loop - INFO - Level 2: Completed 3 sleep/dream cycles
+2025-08-26 19:50:46,303 - curriculum_training_loop - INFO - Temperature self-modeling epoch 1/5: 0.831
+2025-08-26 19:50:46,303 - curriculum_training_loop - INFO - Temperature self-modeling epoch 2/5: 0.841
+2025-08-26 19:50:46,303 - curriculum_training_loop - INFO - Temperature self-modeling epoch 3/5: 0.843
+2025-08-26 19:50:46,304 - curriculum_training_loop - INFO - Temperature self-modeling epoch 4/5: 0.841
+2025-08-26 19:50:46,304 - curriculum_training_loop - INFO - Temperature self-modeling epoch 5/5: 0.831
+2025-08-26 19:50:46,304 - curriculum_training_loop - INFO - Temperature self-modeling completed. Final accuracy: 0.837
+2025-08-26 19:50:46,304 - curriculum_training_loop - INFO - Level 2: Baking persona and 2 alignment principles
+2025-08-26 19:50:46,414 - curriculum_training_loop - INFO - Level 2 validation: {'problems_mastered': True, 'sleep_cycles': True, 'self_model_accuracy': True, 'alignment_consistency': True}
+2025-08-26 19:50:46,414 - curriculum_training_loop - INFO - Level 2 ready for progression: True
+2025-08-26 19:50:46,414 - curriculum_training_loop - INFO - Level 2 completed successfully in 0:00:03.417381
+2025-08-26 19:50:46,415 - curriculum_training_loop - INFO - Level 2 completed successfully!
+2025-08-26 19:50:46,415 - curriculum_training_loop - INFO - Beginning Level 3/10
+2025-08-26 19:50:46,415 - curriculum_training_loop - INFO - Starting training for Level 3
+2025-08-26 19:50:46,416 - curriculum_training_loop - WARNING - Curriculum data not found at C:\Users\17175\Desktop\AIVillage\artifacts\assessment\curriculum_recalibrated.json
+2025-08-26 19:50:46,417 - curriculum_training_loop - INFO - Level 3: Initialized 150 problems for mastery tracking
+2025-08-26 19:50:49,388 - curriculum_training_loop - INFO - Level 3 mastery loop completed: 50/150 problems mastered
+2025-08-26 19:50:49,388 - curriculum_training_loop - INFO - Level 3: GrokFast optimization active throughout training
+2025-08-26 19:50:49,388 - curriculum_training_loop - INFO - Level 3: Geometric feedback integrated
+2025-08-26 19:50:49,388 - curriculum_training_loop - INFO - Level 3: Starting sleep/dream cycle 1/3
+2025-08-26 19:50:49,519 - curriculum_training_loop - INFO - Level 3: Starting sleep/dream cycle 2/3
+2025-08-26 19:50:49,633 - curriculum_training_loop - INFO - Level 3: Starting sleep/dream cycle 3/3
+2025-08-26 19:50:49,741 - curriculum_training_loop - INFO - Level 3: Completed 3 sleep/dream cycles
+2025-08-26 19:50:49,741 - curriculum_training_loop - INFO - Temperature self-modeling epoch 1/5: 0.794
+2025-08-26 19:50:49,741 - curriculum_training_loop - INFO - Temperature self-modeling epoch 2/5: 0.859
+2025-08-26 19:50:49,741 - curriculum_training_loop - INFO - Temperature self-modeling epoch 3/5: 0.860
+2025-08-26 19:50:49,742 - curriculum_training_loop - INFO - Temperature self-modeling epoch 4/5: 0.808
+2025-08-26 19:50:49,742 - curriculum_training_loop - INFO - Temperature self-modeling epoch 5/5: 0.838
+2025-08-26 19:50:49,742 - curriculum_training_loop - INFO - Temperature self-modeling completed. Final accuracy: 0.831
+2025-08-26 19:50:49,742 - curriculum_training_loop - INFO - Level 3: Baking persona and 3 alignment principles
+2025-08-26 19:50:49,847 - curriculum_training_loop - INFO - Level 3 validation: {'problems_mastered': True, 'sleep_cycles': True, 'self_model_accuracy': True, 'alignment_consistency': True}
+2025-08-26 19:50:49,847 - curriculum_training_loop - INFO - Level 3 ready for progression: True
+2025-08-26 19:50:49,847 - curriculum_training_loop - INFO - Level 3 completed successfully in 0:00:03.431970
+2025-08-26 19:50:49,847 - curriculum_training_loop - INFO - Level 3 completed successfully!
+2025-08-26 19:50:49,847 - curriculum_training_loop - INFO - Beginning Level 4/10
+2025-08-26 19:50:49,847 - curriculum_training_loop - INFO - Starting training for Level 4
+2025-08-26 19:50:49,848 - curriculum_training_loop - WARNING - Curriculum data not found at C:\Users\17175\Desktop\AIVillage\artifacts\assessment\curriculum_recalibrated.json
+2025-08-26 19:50:49,849 - curriculum_training_loop - INFO - Level 4: Initialized 150 problems for mastery tracking
+2025-08-26 19:50:52,840 - curriculum_training_loop - INFO - Level 4 mastery loop completed: 50/150 problems mastered
+2025-08-26 19:50:52,840 - curriculum_training_loop - INFO - Level 4: GrokFast optimization active throughout training
+2025-08-26 19:50:52,840 - curriculum_training_loop - INFO - Level 4: Geometric feedback integrated
+2025-08-26 19:50:52,840 - curriculum_training_loop - INFO - Level 4: Starting sleep/dream cycle 1/3
+2025-08-26 19:50:52,946 - curriculum_training_loop - INFO - Level 4: Starting sleep/dream cycle 2/3
+2025-08-26 19:50:53,052 - curriculum_training_loop - INFO - Level 4: Starting sleep/dream cycle 3/3
+2025-08-26 19:50:53,159 - curriculum_training_loop - INFO - Level 4: Completed 3 sleep/dream cycles
+2025-08-26 19:50:53,159 - curriculum_training_loop - INFO - Temperature self-modeling epoch 1/5: 0.822
+2025-08-26 19:50:53,159 - curriculum_training_loop - INFO - Temperature self-modeling epoch 2/5: 0.831
+2025-08-26 19:50:53,159 - curriculum_training_loop - INFO - Temperature self-modeling epoch 3/5: 0.800
+2025-08-26 19:50:53,159 - curriculum_training_loop - INFO - Temperature self-modeling epoch 4/5: 0.796
+2025-08-26 19:50:53,159 - curriculum_training_loop - INFO - Temperature self-modeling epoch 5/5: 0.821
+2025-08-26 19:50:53,159 - curriculum_training_loop - INFO - Temperature self-modeling completed. Final accuracy: 0.814
+2025-08-26 19:50:53,159 - __main__ - ERROR - Curriculum training failed: 'other_agents'
+2025-08-26 19:51:18,480 - __main__ - INFO - === AGENT FORGE CURRICULUM TRAINING SYSTEM ===
+2025-08-26 19:51:18,481 - __main__ - INFO - Leveraging existing infrastructure + new curriculum components
+2025-08-26 19:51:21,023 - unified_cognate_25m - INFO - Successfully imported local Cognate components
+2025-08-26 19:51:21,457 - unified_cognate_25m - INFO - UnifiedCognateRefiner initialized with 17,549,032 parameters
+2025-08-26 19:51:21,458 - unified_cognate_25m - INFO - Target: 25,069,534, Actual: 17,549,032, Accuracy: 70.00%
+2025-08-26 19:51:21,458 - __main__ - INFO - Loaded Cognate model with ~25M parameters
+2025-08-26 19:51:21,458 - __main__ - INFO - Starting 10-level curriculum training loop...
+2025-08-26 19:51:23,987 - grokfast_optimizer - INFO - GrokFast initialized: alpha=0.98, lamb=2.0, warmup=100
+2025-08-26 19:51:23,987 - curriculum_training_loop - INFO - GrokFast optimizer loaded successfully
+2025-08-26 19:51:23,988 - curriculum_training_loop - WARNING - Could not load Sleep/Dream components: No module named 'sleep_and_dream'
+2025-08-26 19:51:23,988 - curriculum_training_loop - INFO - Starting complete 10-level curriculum training
+2025-08-26 19:51:23,989 - curriculum_training_loop - INFO - Beginning Level 1/10
+2025-08-26 19:51:23,989 - curriculum_training_loop - INFO - Starting training for Level 1
+2025-08-26 19:51:23,989 - curriculum_training_loop - WARNING - Curriculum data not found at C:\Users\17175\Desktop\AIVillage\artifacts\assessment\curriculum_recalibrated.json
+2025-08-26 19:51:23,990 - curriculum_training_loop - INFO - Level 1: Initialized 150 problems for mastery tracking
+2025-08-26 19:51:27,152 - curriculum_training_loop - INFO - Level 1 mastery loop completed: 50/150 problems mastered
+2025-08-26 19:51:27,152 - curriculum_training_loop - INFO - Level 1: GrokFast optimization active throughout training
+2025-08-26 19:51:27,152 - curriculum_training_loop - INFO - Level 1: Geometric feedback integrated
+2025-08-26 19:51:27,152 - curriculum_training_loop - INFO - Level 1: Starting sleep/dream cycle 1/3
+2025-08-26 19:51:27,260 - curriculum_training_loop - INFO - Level 1: Starting sleep/dream cycle 2/3
+2025-08-26 19:51:27,368 - curriculum_training_loop - INFO - Level 1: Starting sleep/dream cycle 3/3
+2025-08-26 19:51:27,475 - curriculum_training_loop - INFO - Level 1: Completed 3 sleep/dream cycles
+2025-08-26 19:51:27,475 - curriculum_training_loop - INFO - Temperature self-modeling epoch 1/5: 0.799
+2025-08-26 19:51:27,475 - curriculum_training_loop - INFO - Temperature self-modeling epoch 2/5: 0.848
+2025-08-26 19:51:27,475 - curriculum_training_loop - INFO - Temperature self-modeling epoch 3/5: 0.856
+2025-08-26 19:51:27,475 - curriculum_training_loop - INFO - Temperature self-modeling epoch 4/5: 0.843
+2025-08-26 19:51:27,476 - curriculum_training_loop - INFO - Temperature self-modeling epoch 5/5: 0.802
+2025-08-26 19:51:27,476 - curriculum_training_loop - INFO - Temperature self-modeling completed. Final accuracy: 0.830
+2025-08-26 19:51:27,476 - curriculum_training_loop - INFO - Level 1: Baking persona and 1 alignment principles
+2025-08-26 19:51:27,584 - curriculum_training_loop - INFO - Level 1 validation: {'problems_mastered': True, 'sleep_cycles': True, 'self_model_accuracy': True, 'alignment_consistency': True}
+2025-08-26 19:51:27,584 - curriculum_training_loop - INFO - Level 1 ready for progression: True
+2025-08-26 19:51:27,584 - curriculum_training_loop - INFO - Level 1 completed successfully in 0:00:03.594551
+2025-08-26 19:51:27,584 - curriculum_training_loop - INFO - Level 1 completed successfully!
+2025-08-26 19:51:27,584 - curriculum_training_loop - INFO - Beginning Level 2/10
+2025-08-26 19:51:27,584 - curriculum_training_loop - INFO - Starting training for Level 2
+2025-08-26 19:51:27,584 - curriculum_training_loop - WARNING - Curriculum data not found at C:\Users\17175\Desktop\AIVillage\artifacts\assessment\curriculum_recalibrated.json
+2025-08-26 19:51:27,585 - curriculum_training_loop - INFO - Level 2: Initialized 150 problems for mastery tracking
+2025-08-26 19:51:30,617 - curriculum_training_loop - INFO - Level 2 mastery loop completed: 50/150 problems mastered
+2025-08-26 19:51:30,618 - curriculum_training_loop - INFO - Level 2: GrokFast optimization active throughout training
+2025-08-26 19:51:30,618 - curriculum_training_loop - INFO - Level 2: Geometric feedback integrated
+2025-08-26 19:51:30,618 - curriculum_training_loop - INFO - Level 2: Starting sleep/dream cycle 1/3
+2025-08-26 19:51:30,723 - curriculum_training_loop - INFO - Level 2: Starting sleep/dream cycle 2/3
+2025-08-26 19:51:30,830 - curriculum_training_loop - INFO - Level 2: Starting sleep/dream cycle 3/3
+2025-08-26 19:51:30,939 - curriculum_training_loop - INFO - Level 2: Completed 3 sleep/dream cycles
+2025-08-26 19:51:30,939 - curriculum_training_loop - INFO - Temperature self-modeling epoch 1/5: 0.840
+2025-08-26 19:51:30,939 - curriculum_training_loop - INFO - Temperature self-modeling epoch 2/5: 0.851
+2025-08-26 19:51:30,939 - curriculum_training_loop - INFO - Temperature self-modeling epoch 3/5: 0.770
+2025-08-26 19:51:30,940 - curriculum_training_loop - INFO - Temperature self-modeling epoch 4/5: 0.837
+2025-08-26 19:51:30,940 - curriculum_training_loop - INFO - Temperature self-modeling epoch 5/5: 0.828
+2025-08-26 19:51:30,940 - curriculum_training_loop - INFO - Temperature self-modeling completed. Final accuracy: 0.825
+2025-08-26 19:51:30,940 - curriculum_training_loop - INFO - Level 2: Baking persona and 2 alignment principles
+2025-08-26 19:51:31,046 - curriculum_training_loop - INFO - Level 2 validation: {'problems_mastered': True, 'sleep_cycles': True, 'self_model_accuracy': True, 'alignment_consistency': True}
+2025-08-26 19:51:31,046 - curriculum_training_loop - INFO - Level 2 ready for progression: True
+2025-08-26 19:51:31,046 - curriculum_training_loop - INFO - Level 2 completed successfully in 0:00:03.461852
+2025-08-26 19:51:31,047 - curriculum_training_loop - INFO - Level 2 completed successfully!
+2025-08-26 19:51:31,047 - curriculum_training_loop - INFO - Beginning Level 3/10
+2025-08-26 19:51:31,047 - curriculum_training_loop - INFO - Starting training for Level 3
+2025-08-26 19:51:31,048 - curriculum_training_loop - WARNING - Curriculum data not found at C:\Users\17175\Desktop\AIVillage\artifacts\assessment\curriculum_recalibrated.json
+2025-08-26 19:51:31,049 - curriculum_training_loop - INFO - Level 3: Initialized 150 problems for mastery tracking
+2025-08-26 19:51:34,196 - curriculum_training_loop - INFO - Level 3 mastery loop completed: 50/150 problems mastered
+2025-08-26 19:51:34,196 - curriculum_training_loop - INFO - Level 3: GrokFast optimization active throughout training
+2025-08-26 19:51:34,196 - curriculum_training_loop - INFO - Level 3: Geometric feedback integrated
+2025-08-26 19:51:34,196 - curriculum_training_loop - INFO - Level 3: Starting sleep/dream cycle 1/3
+2025-08-26 19:51:34,304 - curriculum_training_loop - INFO - Level 3: Starting sleep/dream cycle 2/3
+2025-08-26 19:51:34,414 - curriculum_training_loop - INFO - Level 3: Starting sleep/dream cycle 3/3
+2025-08-26 19:51:34,521 - curriculum_training_loop - INFO - Level 3: Completed 3 sleep/dream cycles
+2025-08-26 19:51:34,521 - curriculum_training_loop - INFO - Temperature self-modeling epoch 1/5: 0.788
+2025-08-26 19:51:34,521 - curriculum_training_loop - INFO - Temperature self-modeling epoch 2/5: 0.816
+2025-08-26 19:51:34,521 - curriculum_training_loop - INFO - Temperature self-modeling epoch 3/5: 0.821
+2025-08-26 19:51:34,521 - curriculum_training_loop - INFO - Temperature self-modeling epoch 4/5: 0.827
+2025-08-26 19:51:34,522 - curriculum_training_loop - INFO - Temperature self-modeling epoch 5/5: 0.805
+2025-08-26 19:51:34,522 - curriculum_training_loop - INFO - Temperature self-modeling completed. Final accuracy: 0.811
+2025-08-26 19:51:34,522 - curriculum_training_loop - INFO - Level 3: Baking persona and 3 alignment principles
+2025-08-26 19:51:34,630 - curriculum_training_loop - INFO - Level 3 validation: {'problems_mastered': True, 'sleep_cycles': True, 'self_model_accuracy': True, 'alignment_consistency': True}
+2025-08-26 19:51:34,630 - curriculum_training_loop - INFO - Level 3 ready for progression: True
+2025-08-26 19:51:34,630 - curriculum_training_loop - INFO - Level 3 completed successfully in 0:00:03.582958
+2025-08-26 19:51:34,630 - curriculum_training_loop - INFO - Level 3 completed successfully!
+2025-08-26 19:51:34,631 - curriculum_training_loop - INFO - Beginning Level 4/10
+2025-08-26 19:51:34,631 - curriculum_training_loop - INFO - Starting training for Level 4
+2025-08-26 19:51:34,631 - curriculum_training_loop - WARNING - Curriculum data not found at C:\Users\17175\Desktop\AIVillage\artifacts\assessment\curriculum_recalibrated.json
+2025-08-26 19:51:34,632 - curriculum_training_loop - INFO - Level 4: Initialized 150 problems for mastery tracking
+2025-08-26 19:51:37,586 - curriculum_training_loop - INFO - Level 4 mastery loop completed: 50/150 problems mastered
+2025-08-26 19:51:37,586 - curriculum_training_loop - INFO - Level 4: GrokFast optimization active throughout training
+2025-08-26 19:51:37,586 - curriculum_training_loop - INFO - Level 4: Geometric feedback integrated
+2025-08-26 19:51:37,586 - curriculum_training_loop - INFO - Level 4: Starting sleep/dream cycle 1/3
+2025-08-26 19:51:37,693 - curriculum_training_loop - INFO - Level 4: Starting sleep/dream cycle 2/3
+2025-08-26 19:51:37,802 - curriculum_training_loop - INFO - Level 4: Starting sleep/dream cycle 3/3
+2025-08-26 19:51:37,911 - curriculum_training_loop - INFO - Level 4: Completed 3 sleep/dream cycles
+2025-08-26 19:51:37,911 - curriculum_training_loop - INFO - Temperature self-modeling epoch 1/5: 0.828
+2025-08-26 19:51:37,911 - curriculum_training_loop - INFO - Temperature self-modeling epoch 2/5: 0.799
+2025-08-26 19:51:37,911 - curriculum_training_loop - INFO - Temperature self-modeling epoch 3/5: 0.814
+2025-08-26 19:51:37,911 - curriculum_training_loop - INFO - Temperature self-modeling epoch 4/5: 0.826
+2025-08-26 19:51:37,912 - curriculum_training_loop - INFO - Temperature self-modeling epoch 5/5: 0.855
+2025-08-26 19:51:37,912 - curriculum_training_loop - INFO - Temperature self-modeling completed. Final accuracy: 0.824
+2025-08-26 19:51:37,912 - curriculum_training_loop - INFO - Level 4: Baking persona and 4 alignment principles
+2025-08-26 19:51:38,017 - curriculum_training_loop - INFO - Level 4 validation: {'problems_mastered': True, 'sleep_cycles': True, 'self_model_accuracy': True, 'alignment_consistency': True}
+2025-08-26 19:51:38,017 - curriculum_training_loop - INFO - Level 4 ready for progression: True
+2025-08-26 19:51:38,017 - curriculum_training_loop - INFO - Level 4 completed successfully in 0:00:03.386585
+2025-08-26 19:51:38,017 - curriculum_training_loop - INFO - Level 4 completed successfully!
+2025-08-26 19:51:38,017 - curriculum_training_loop - INFO - Beginning Level 5/10
+2025-08-26 19:51:38,017 - curriculum_training_loop - INFO - Starting training for Level 5
+2025-08-26 19:51:38,017 - curriculum_training_loop - WARNING - Curriculum data not found at C:\Users\17175\Desktop\AIVillage\artifacts\assessment\curriculum_recalibrated.json
+2025-08-26 19:51:38,018 - curriculum_training_loop - INFO - Level 5: Initialized 150 problems for mastery tracking
+2025-08-26 19:51:41,034 - curriculum_training_loop - INFO - Level 5 mastery loop completed: 50/150 problems mastered
+2025-08-26 19:51:41,034 - curriculum_training_loop - INFO - Level 5: GrokFast optimization active throughout training
+2025-08-26 19:51:41,034 - curriculum_training_loop - INFO - Level 5: Geometric feedback integrated
+2025-08-26 19:51:41,034 - curriculum_training_loop - INFO - Level 5: Starting sleep/dream cycle 1/3
+2025-08-26 19:51:41,140 - curriculum_training_loop - INFO - Level 5: Starting sleep/dream cycle 2/3
+2025-08-26 19:51:41,247 - curriculum_training_loop - INFO - Level 5: Starting sleep/dream cycle 3/3
+2025-08-26 19:51:41,354 - curriculum_training_loop - INFO - Level 5: Completed 3 sleep/dream cycles
+2025-08-26 19:51:41,354 - curriculum_training_loop - INFO - Temperature self-modeling epoch 1/5: 0.822
+2025-08-26 19:51:41,354 - curriculum_training_loop - INFO - Temperature self-modeling epoch 2/5: 0.851
+2025-08-26 19:51:41,355 - curriculum_training_loop - INFO - Temperature self-modeling epoch 3/5: 0.786
+2025-08-26 19:51:41,355 - curriculum_training_loop - INFO - Temperature self-modeling epoch 4/5: 0.815
+2025-08-26 19:51:41,355 - curriculum_training_loop - INFO - Temperature self-modeling epoch 5/5: 0.854
+2025-08-26 19:51:41,355 - curriculum_training_loop - INFO - Temperature self-modeling completed. Final accuracy: 0.825
+2025-08-26 19:51:41,355 - curriculum_training_loop - INFO - Level 5: Baking persona and 5 alignment principles
+2025-08-26 19:51:41,464 - curriculum_training_loop - INFO - Level 5 validation: {'problems_mastered': True, 'sleep_cycles': True, 'self_model_accuracy': True, 'alignment_consistency': True}
+2025-08-26 19:51:41,465 - curriculum_training_loop - INFO - Level 5 ready for progression: True
+2025-08-26 19:51:41,465 - curriculum_training_loop - INFO - Level 5 completed successfully in 0:00:03.447429
+2025-08-26 19:51:41,465 - curriculum_training_loop - INFO - Level 5 completed successfully!
+2025-08-26 19:51:41,465 - curriculum_training_loop - INFO - Beginning Level 6/10
+2025-08-26 19:51:41,465 - curriculum_training_loop - INFO - Starting training for Level 6
+2025-08-26 19:51:41,466 - curriculum_training_loop - WARNING - Curriculum data not found at C:\Users\17175\Desktop\AIVillage\artifacts\assessment\curriculum_recalibrated.json
+2025-08-26 19:51:41,467 - curriculum_training_loop - INFO - Level 6: Initialized 150 problems for mastery tracking
+2025-08-26 19:51:44,561 - curriculum_training_loop - INFO - Level 6 mastery loop completed: 50/150 problems mastered
+2025-08-26 19:51:44,561 - curriculum_training_loop - INFO - Level 6: GrokFast optimization active throughout training
+2025-08-26 19:51:44,561 - curriculum_training_loop - INFO - Level 6: Geometric feedback integrated
+2025-08-26 19:51:44,561 - curriculum_training_loop - INFO - Level 6: Starting sleep/dream cycle 1/3
+2025-08-26 19:51:44,669 - curriculum_training_loop - INFO - Level 6: Starting sleep/dream cycle 2/3
+2025-08-26 19:51:44,774 - curriculum_training_loop - INFO - Level 6: Starting sleep/dream cycle 3/3
+2025-08-26 19:51:44,881 - curriculum_training_loop - INFO - Level 6: Completed 3 sleep/dream cycles
+2025-08-26 19:51:44,881 - curriculum_training_loop - INFO - Temperature self-modeling epoch 1/5: 0.857
+2025-08-26 19:51:44,882 - curriculum_training_loop - INFO - Temperature self-modeling epoch 2/5: 0.825
+2025-08-26 19:51:44,882 - curriculum_training_loop - INFO - Temperature self-modeling epoch 3/5: 0.842
+2025-08-26 19:51:44,882 - curriculum_training_loop - INFO - Temperature self-modeling epoch 4/5: 0.841
+2025-08-26 19:51:44,883 - curriculum_training_loop - INFO - Temperature self-modeling epoch 5/5: 0.824
+2025-08-26 19:51:44,883 - curriculum_training_loop - INFO - Temperature self-modeling completed. Final accuracy: 0.838
+2025-08-26 19:51:44,883 - curriculum_training_loop - INFO - Level 6: Baking persona and 6 alignment principles
+2025-08-26 19:51:44,989 - curriculum_training_loop - INFO - Level 6 validation: {'problems_mastered': True, 'sleep_cycles': True, 'self_model_accuracy': True, 'alignment_consistency': True}
+2025-08-26 19:51:44,989 - curriculum_training_loop - INFO - Level 6 ready for progression: True
+2025-08-26 19:51:44,989 - curriculum_training_loop - INFO - Level 6 completed successfully in 0:00:03.522940
+2025-08-26 19:51:44,989 - curriculum_training_loop - INFO - Level 6 completed successfully!
+2025-08-26 19:51:44,989 - curriculum_training_loop - INFO - Beginning Level 7/10
+2025-08-26 19:51:44,989 - curriculum_training_loop - INFO - Starting training for Level 7
+2025-08-26 19:51:44,990 - curriculum_training_loop - WARNING - Curriculum data not found at C:\Users\17175\Desktop\AIVillage\artifacts\assessment\curriculum_recalibrated.json
+2025-08-26 19:51:44,990 - curriculum_training_loop - INFO - Level 7: Initialized 150 problems for mastery tracking
+2025-08-26 19:51:48,044 - curriculum_training_loop - INFO - Level 7 mastery loop completed: 50/150 problems mastered
+2025-08-26 19:51:48,044 - curriculum_training_loop - INFO - Level 7: GrokFast optimization active throughout training
+2025-08-26 19:51:48,044 - curriculum_training_loop - INFO - Level 7: Geometric feedback integrated
+2025-08-26 19:51:48,045 - curriculum_training_loop - INFO - Level 7: Starting sleep/dream cycle 1/3
+2025-08-26 19:51:48,152 - curriculum_training_loop - INFO - Level 7: Starting sleep/dream cycle 2/3
+2025-08-26 19:51:48,260 - curriculum_training_loop - INFO - Level 7: Starting sleep/dream cycle 3/3
+2025-08-26 19:51:48,367 - curriculum_training_loop - INFO - Level 7: Completed 3 sleep/dream cycles
+2025-08-26 19:51:48,367 - curriculum_training_loop - INFO - Temperature self-modeling epoch 1/5: 0.835
+2025-08-26 19:51:48,367 - curriculum_training_loop - INFO - Temperature self-modeling epoch 2/5: 0.825
+2025-08-26 19:51:48,367 - curriculum_training_loop - INFO - Temperature self-modeling epoch 3/5: 0.833
+2025-08-26 19:51:48,367 - curriculum_training_loop - INFO - Temperature self-modeling epoch 4/5: 0.786
+2025-08-26 19:51:48,368 - curriculum_training_loop - INFO - Temperature self-modeling epoch 5/5: 0.817
+2025-08-26 19:51:48,368 - curriculum_training_loop - INFO - Temperature self-modeling completed. Final accuracy: 0.819
+2025-08-26 19:51:48,368 - curriculum_training_loop - INFO - Level 7: Baking persona and 6 alignment principles
+2025-08-26 19:51:48,473 - curriculum_training_loop - INFO - Level 7 validation: {'problems_mastered': True, 'sleep_cycles': True, 'self_model_accuracy': True, 'alignment_consistency': True}
+2025-08-26 19:51:48,473 - curriculum_training_loop - INFO - Level 7 ready for progression: True
+2025-08-26 19:51:48,473 - curriculum_training_loop - INFO - Level 7 completed successfully in 0:00:03.484642
+2025-08-26 19:51:48,474 - curriculum_training_loop - INFO - Level 7 completed successfully!
+2025-08-26 19:51:48,474 - curriculum_training_loop - INFO - Beginning Level 8/10
+2025-08-26 19:51:48,474 - curriculum_training_loop - INFO - Starting training for Level 8
+2025-08-26 19:51:48,474 - curriculum_training_loop - WARNING - Curriculum data not found at C:\Users\17175\Desktop\AIVillage\artifacts\assessment\curriculum_recalibrated.json
+2025-08-26 19:51:48,475 - curriculum_training_loop - INFO - Level 8: Initialized 150 problems for mastery tracking
+2025-08-26 19:51:51,422 - curriculum_training_loop - INFO - Level 8 mastery loop completed: 50/150 problems mastered
+2025-08-26 19:51:51,422 - curriculum_training_loop - INFO - Level 8: GrokFast optimization active throughout training
+2025-08-26 19:51:51,422 - curriculum_training_loop - INFO - Level 8: Geometric feedback integrated
+2025-08-26 19:51:51,422 - curriculum_training_loop - INFO - Level 8: Starting sleep/dream cycle 1/3
+2025-08-26 19:51:51,529 - curriculum_training_loop - INFO - Level 8: Starting sleep/dream cycle 2/3
+2025-08-26 19:51:51,636 - curriculum_training_loop - INFO - Level 8: Starting sleep/dream cycle 3/3
+2025-08-26 19:51:51,746 - curriculum_training_loop - INFO - Level 8: Completed 3 sleep/dream cycles
+2025-08-26 19:51:51,747 - curriculum_training_loop - INFO - Temperature self-modeling epoch 1/5: 0.817
+2025-08-26 19:51:51,747 - curriculum_training_loop - INFO - Temperature self-modeling epoch 2/5: 0.831
+2025-08-26 19:51:51,747 - curriculum_training_loop - INFO - Temperature self-modeling epoch 3/5: 0.811
+2025-08-26 19:51:51,748 - curriculum_training_loop - INFO - Temperature self-modeling epoch 4/5: 0.788
+2025-08-26 19:51:51,748 - curriculum_training_loop - INFO - Temperature self-modeling epoch 5/5: 0.798
+2025-08-26 19:51:51,748 - curriculum_training_loop - INFO - Temperature self-modeling completed. Final accuracy: 0.809
+2025-08-26 19:51:51,748 - curriculum_training_loop - INFO - Level 8: Baking persona and 6 alignment principles
+2025-08-26 19:51:51,856 - curriculum_training_loop - INFO - Level 8 validation: {'problems_mastered': True, 'sleep_cycles': True, 'self_model_accuracy': True, 'alignment_consistency': True}
+2025-08-26 19:51:51,856 - curriculum_training_loop - INFO - Level 8 ready for progression: True
+2025-08-26 19:51:51,857 - curriculum_training_loop - INFO - Level 8 completed successfully in 0:00:03.382321
+2025-08-26 19:51:51,857 - curriculum_training_loop - INFO - Level 8 completed successfully!
+2025-08-26 19:51:51,857 - curriculum_training_loop - INFO - Beginning Level 9/10
+2025-08-26 19:51:51,857 - curriculum_training_loop - INFO - Starting training for Level 9
+2025-08-26 19:51:51,858 - curriculum_training_loop - WARNING - Curriculum data not found at C:\Users\17175\Desktop\AIVillage\artifacts\assessment\curriculum_recalibrated.json
+2025-08-26 19:51:51,859 - curriculum_training_loop - INFO - Level 9: Initialized 150 problems for mastery tracking
+2025-08-26 19:51:54,701 - curriculum_training_loop - INFO - Level 9 mastery loop completed: 50/150 problems mastered
+2025-08-26 19:51:54,701 - curriculum_training_loop - INFO - Level 9: GrokFast optimization active throughout training
+2025-08-26 19:51:54,701 - curriculum_training_loop - INFO - Level 9: Geometric feedback integrated
+2025-08-26 19:51:54,701 - curriculum_training_loop - INFO - Level 9: Starting sleep/dream cycle 1/3
+2025-08-26 19:51:54,807 - curriculum_training_loop - INFO - Level 9: Starting sleep/dream cycle 2/3
+2025-08-26 19:51:54,918 - curriculum_training_loop - INFO - Level 9: Starting sleep/dream cycle 3/3
+2025-08-26 19:51:55,026 - curriculum_training_loop - INFO - Level 9: Completed 3 sleep/dream cycles
+2025-08-26 19:51:55,026 - curriculum_training_loop - INFO - Temperature self-modeling epoch 1/5: 0.811
+2025-08-26 19:51:55,026 - curriculum_training_loop - INFO - Temperature self-modeling epoch 2/5: 0.823
+2025-08-26 19:51:55,026 - curriculum_training_loop - INFO - Temperature self-modeling epoch 3/5: 0.825
+2025-08-26 19:51:55,026 - curriculum_training_loop - INFO - Temperature self-modeling epoch 4/5: 0.839
+2025-08-26 19:51:55,027 - curriculum_training_loop - INFO - Temperature self-modeling epoch 5/5: 0.822
+2025-08-26 19:51:55,027 - curriculum_training_loop - INFO - Temperature self-modeling completed. Final accuracy: 0.824
+2025-08-26 19:51:55,027 - curriculum_training_loop - INFO - Level 9: Baking persona and 6 alignment principles
+2025-08-26 19:51:55,133 - curriculum_training_loop - INFO - Level 9 validation: {'problems_mastered': True, 'sleep_cycles': True, 'self_model_accuracy': True, 'alignment_consistency': True}
+2025-08-26 19:51:55,133 - curriculum_training_loop - INFO - Level 9 ready for progression: True
+2025-08-26 19:51:55,133 - curriculum_training_loop - INFO - Level 9 completed successfully in 0:00:03.276183
+2025-08-26 19:51:55,133 - curriculum_training_loop - INFO - Level 9 completed successfully!
+2025-08-26 19:51:55,133 - curriculum_training_loop - INFO - Beginning Level 10/10
+2025-08-26 19:51:55,133 - curriculum_training_loop - INFO - Starting training for Level 10
+2025-08-26 19:51:55,134 - curriculum_training_loop - WARNING - Curriculum data not found at C:\Users\17175\Desktop\AIVillage\artifacts\assessment\curriculum_recalibrated.json
+2025-08-26 19:51:55,134 - curriculum_training_loop - INFO - Level 10: Initialized 150 problems for mastery tracking
+2025-08-26 19:51:58,280 - curriculum_training_loop - INFO - Level 10 mastery loop completed: 50/150 problems mastered
+2025-08-26 19:51:58,280 - curriculum_training_loop - INFO - Level 10: GrokFast optimization active throughout training
+2025-08-26 19:51:58,280 - curriculum_training_loop - INFO - Level 10: Geometric feedback integrated
+2025-08-26 19:51:58,281 - curriculum_training_loop - INFO - Level 10: Starting sleep/dream cycle 1/3
+2025-08-26 19:51:58,389 - curriculum_training_loop - INFO - Level 10: Starting sleep/dream cycle 2/3
+2025-08-26 19:51:58,500 - curriculum_training_loop - INFO - Level 10: Starting sleep/dream cycle 3/3
+2025-08-26 19:51:58,607 - curriculum_training_loop - INFO - Level 10: Completed 3 sleep/dream cycles
+2025-08-26 19:51:58,607 - curriculum_training_loop - INFO - Temperature self-modeling epoch 1/5: 0.785
+2025-08-26 19:51:58,607 - curriculum_training_loop - INFO - Temperature self-modeling epoch 2/5: 0.822
+2025-08-26 19:51:58,607 - curriculum_training_loop - INFO - Temperature self-modeling epoch 3/5: 0.844
+2025-08-26 19:51:58,607 - curriculum_training_loop - INFO - Temperature self-modeling epoch 4/5: 0.848
+2025-08-26 19:51:58,607 - curriculum_training_loop - INFO - Temperature self-modeling epoch 5/5: 0.800
+2025-08-26 19:51:58,608 - curriculum_training_loop - INFO - Temperature self-modeling completed. Final accuracy: 0.820
+2025-08-26 19:51:58,608 - curriculum_training_loop - INFO - Level 10: Baking persona and 6 alignment principles
+2025-08-26 19:51:58,715 - curriculum_training_loop - INFO - Level 10 validation: {'problems_mastered': True, 'sleep_cycles': True, 'self_model_accuracy': True, 'alignment_consistency': True}
+2025-08-26 19:51:58,715 - curriculum_training_loop - INFO - Level 10 ready for progression: True
+2025-08-26 19:51:58,715 - curriculum_training_loop - INFO - Level 10 completed successfully in 0:00:03.582211
+2025-08-26 19:51:58,715 - curriculum_training_loop - INFO - Level 10 completed successfully!
+2025-08-26 19:51:58,717 - curriculum_training_loop - INFO - Curriculum training completed. Results saved to C:\Users\17175\Desktop\AIVillage\artifacts\curriculum_training\curriculum_training_results.json
+2025-08-26 19:51:58,717 - curriculum_training_loop - INFO - Final status: 10/10 levels completed
+2025-08-26 19:51:58,722 - __main__ - INFO - === CURRICULUM TRAINING RESULTS ===
+2025-08-26 19:51:58,722 - __main__ - INFO - Levels Completed: 10/10
+2025-08-26 19:51:58,722 - __main__ - INFO - Total Duration: 34.73 seconds
+2025-08-26 19:51:58,722 - __main__ - INFO - Level 1: 50/50 problems mastered (100.0%)
+2025-08-26 19:51:58,722 - __main__ - INFO - Level 2: 50/50 problems mastered (100.0%)
+2025-08-26 19:51:58,722 - __main__ - INFO - Level 3: 50/50 problems mastered (100.0%)
+2025-08-26 19:51:58,722 - __main__ - INFO - Level 4: 50/50 problems mastered (100.0%)
+2025-08-26 19:51:58,723 - __main__ - INFO - Level 5: 50/50 problems mastered (100.0%)
+2025-08-26 19:51:58,723 - __main__ - INFO - Level 6: 50/50 problems mastered (100.0%)
+2025-08-26 19:51:58,723 - __main__ - INFO - Level 7: 50/50 problems mastered (100.0%)
+2025-08-26 19:51:58,723 - __main__ - INFO - Level 8: 50/50 problems mastered (100.0%)
+2025-08-26 19:51:58,723 - __main__ - INFO - Level 9: 50/50 problems mastered (100.0%)
+2025-08-26 19:51:58,723 - __main__ - INFO - Level 10: 50/50 problems mastered (100.0%)
+2025-08-26 19:51:58,723 - __main__ - INFO - COMPLETE CURRICULUM SUCCESS - All 10 levels completed!

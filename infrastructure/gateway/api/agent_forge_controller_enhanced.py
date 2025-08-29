@@ -10,19 +10,16 @@ Provides real execution control for Agent Forge phases with:
 """
 
 import asyncio
-import json
-import logging
-import sys
-import uuid
 from datetime import datetime
+import logging
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+import sys
+from typing import Any
 
-import psutil
-import torch
 from fastapi import BackgroundTasks, FastAPI, HTTPException, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+import psutil
+import torch
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -40,15 +37,15 @@ app.add_middleware(
 )
 
 # Global storage
-active_phases: Dict[str, Any] = {}
-model_storage: Dict[str, Any] = {}
-websocket_connections: List[WebSocket] = []
+active_phases: dict[str, Any] = {}
+model_storage: dict[str, Any] = {}
+websocket_connections: list[WebSocket] = []
 
 
 # WebSocket connection manager
 class ConnectionManager:
     def __init__(self):
-        self.active_connections: List[WebSocket] = []
+        self.active_connections: list[WebSocket] = []
 
     async def connect(self, websocket: WebSocket):
         await websocket.accept()
@@ -144,7 +141,6 @@ async def run_cognate_phase_real():
 
         try:
             # Import the real consolidated implementation
-            from core.agent_forge.phases.cognate_pretrain.model_factory import create_three_cognate_models
             from core.agent_forge.phases.cognate_pretrain.refiner_core import CognateConfig, CognateRefiner
 
             active_phases[phase_name]["progress"] = 0.2

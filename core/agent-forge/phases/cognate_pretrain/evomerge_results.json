@@ -1,0 +1,2951 @@
+{
+  "cycle_complete": true,
+  "total_generations": 51,
+  "final_population_size": 8,
+  "champion_model": {
+    "name": "gen47_mutant_4814",
+    "fitness": 0.9296904628520186,
+    "scores": {
+      "coding": 1.0,
+      "math": 0.7580341810027338,
+      "reasoning": 0.9607276704053406,
+      "language": 1.0
+    },
+    "generation": 47,
+    "parents": [
+      "gen46_mutant_4397"
+    ],
+    "technique": "mutation"
+  },
+  "top_5_models": [
+    {
+      "rank": 1,
+      "name": "gen47_mutant_4814",
+      "fitness": 0.9296904628520186,
+      "scores": {
+        "coding": 1.0,
+        "math": 0.7580341810027338,
+        "reasoning": 0.9607276704053406,
+        "language": 1.0
+      },
+      "generation": 47
+    },
+    {
+      "rank": 2,
+      "name": "gen48_mutant_3252",
+      "fitness": 0.9296904628520186,
+      "scores": {
+        "coding": 1.0,
+        "math": 0.7580341810027338,
+        "reasoning": 0.9607276704053406,
+        "language": 1.0
+      },
+      "generation": 48
+    },
+    {
+      "rank": 3,
+      "name": "gen50_mutant_8625",
+      "fitness": 0.9296904628520186,
+      "scores": {
+        "coding": 1.0,
+        "math": 0.7580341810027338,
+        "reasoning": 0.9607276704053406,
+        "language": 1.0
+      },
+      "generation": 50
+    },
+    {
+      "rank": 4,
+      "name": "gen50_mutant_6095",
+      "fitness": 0.9296904628520186,
+      "scores": {
+        "coding": 1.0,
+        "math": 0.7580341810027338,
+        "reasoning": 0.9607276704053406,
+        "language": 1.0
+      },
+      "generation": 50
+    },
+    {
+      "rank": 5,
+      "name": "gen50_mutant_3188",
+      "fitness": 0.9296904628520186,
+      "scores": {
+        "coding": 1.0,
+        "math": 0.7580341810027338,
+        "reasoning": 0.9607276704053406,
+        "language": 1.0
+      },
+      "generation": 50
+    }
+  ],
+  "evolution_history": [
+    {
+      "generation": 1,
+      "population_size": 8,
+      "best_fitness": 0.6930700233710484,
+      "mean_fitness": 0.6872898126485623,
+      "std_fitness": 0.0049727052395688994,
+      "top_model": "seed_3"
+    },
+    {
+      "generation": 2,
+      "population_size": 8,
+      "best_fitness": 0.6976799051152001,
+      "mean_fitness": 0.6942197179952031,
+      "std_fitness": 0.001991337240890438,
+      "top_model": "gen2_mutant_3621"
+    },
+    {
+      "generation": 3,
+      "population_size": 8,
+      "best_fitness": 0.7039885244958384,
+      "mean_fitness": 0.6986826231915886,
+      "std_fitness": 0.002087015123859779,
+      "top_model": "gen3_mutant_3103"
+    },
+    {
+      "generation": 4,
+      "population_size": 8,
+      "best_fitness": 0.7050267881605806,
+      "mean_fitness": 0.6995837250903147,
+      "std_fitness": 0.007244099960097257,
+      "top_model": "gen4_mutant_8062"
+    },
+    {
+      "generation": 5,
+      "population_size": 8,
+      "best_fitness": 0.7050267881605806,
+      "mean_fitness": 0.7021099852224798,
+      "std_fitness": 0.006557491880835257,
+      "top_model": "gen4_mutant_8062"
+    },
+    {
+      "generation": 6,
+      "population_size": 8,
+      "best_fitness": 0.7079427518766406,
+      "mean_fitness": 0.7024434389326333,
+      "std_fitness": 0.007849051518052154,
+      "top_model": "gen6_mutant_1651"
+    },
+    {
+      "generation": 7,
+      "population_size": 8,
+      "best_fitness": 0.7079427518766406,
+      "mean_fitness": 0.7020633362620439,
+      "std_fitness": 0.01026841653097276,
+      "top_model": "gen6_mutant_1651"
+    },
+    {
+      "generation": 8,
+      "population_size": 8,
+      "best_fitness": 0.7079427518766406,
+      "mean_fitness": 0.7066814311463141,
+      "std_fitness": 0.002931277905938487,
+      "top_model": "gen6_mutant_1651"
+    },
+    {
+      "generation": 9,
+      "population_size": 8,
+      "best_fitness": 0.7162998996805832,
+      "mean_fitness": 0.7075695496685181,
+      "std_fitness": 0.005281872749633647,
+      "top_model": "gen9_mutant_5279"
+    },
+    {
+      "generation": 10,
+      "population_size": 8,
+      "best_fitness": 0.7232868379310455,
+      "mean_fitness": 0.7149952046161983,
+      "std_fitness": 0.0034759775507592497,
+      "top_model": "gen10_mutant_6085"
+    },
+    {
+      "generation": 11,
+      "population_size": 8,
+      "best_fitness": 0.7232868379310455,
+      "mean_fitness": 0.7167930618668534,
+      "std_fitness": 0.004986231674011433,
+      "top_model": "gen10_mutant_6085"
+    },
+    {
+      "generation": 12,
+      "population_size": 8,
+      "best_fitness": 0.735258373358938,
+      "mean_fitness": 0.7266979451056377,
+      "std_fitness": 0.0046763019999769735,
+      "top_model": "gen12_mutant_4388"
+    },
+    {
+      "generation": 13,
+      "population_size": 8,
+      "best_fitness": 0.7483187689212143,
+      "mean_fitness": 0.7348094013388435,
+      "std_fitness": 0.006725499175089647,
+      "top_model": "gen13_mutant_2124"
+    },
+    {
+      "generation": 14,
+      "population_size": 8,
+      "best_fitness": 0.7657134505557064,
+      "mean_fitness": 0.7438273285836771,
+      "std_fitness": 0.01054929190672431,
+      "top_model": "gen14_mutant_7071"
+    },
+    {
+      "generation": 15,
+      "population_size": 8,
+      "best_fitness": 0.7657134505557064,
+      "mean_fitness": 0.7570821926475173,
+      "std_fitness": 0.009039354906864696,
+      "top_model": "gen14_mutant_7071"
+    },
+    {
+      "generation": 16,
+      "population_size": 8,
+      "best_fitness": 0.7755004539827794,
+      "mean_fitness": 0.7669368259840905,
+      "std_fitness": 0.0032367471435715235,
+      "top_model": "gen16_mutant_9042"
+    },
+    {
+      "generation": 17,
+      "population_size": 8,
+      "best_fitness": 0.7782929728899777,
+      "mean_fitness": 0.773402767989411,
+      "std_fitness": 0.004529993678195707,
+      "top_model": "gen17_mutant_9056"
+    },
+    {
+      "generation": 18,
+      "population_size": 8,
+      "best_fitness": 0.7864419715014385,
+      "mean_fitness": 0.7786170540344542,
+      "std_fitness": 0.003933595775306384,
+      "top_model": "gen18_mutant_8699"
+    },
+    {
+      "generation": 19,
+      "population_size": 8,
+      "best_fitness": 0.7868860271824245,
+      "mean_fitness": 0.781006893400756,
+      "std_fitness": 0.006635428132732171,
+      "top_model": "gen19_mutant_8245"
+    },
+    {
+      "generation": 20,
+      "population_size": 8,
+      "best_fitness": 0.7868860271824245,
+      "mean_fitness": 0.7827057038637525,
+      "std_fitness": 0.006860070725558514,
+      "top_model": "gen19_mutant_8245"
+    },
+    {
+      "generation": 21,
+      "population_size": 8,
+      "best_fitness": 0.7868860271824245,
+      "mean_fitness": 0.7865288190210673,
+      "std_fitness": 0.0009450839612338655,
+      "top_model": "gen19_mutant_8245"
+    },
+    {
+      "generation": 22,
+      "population_size": 8,
+      "best_fitness": 0.7868860271824245,
+      "mean_fitness": 0.7839411413006563,
+      "std_fitness": 0.0077914356826240235,
+      "top_model": "gen19_mutant_8245"
+    },
+    {
+      "generation": 23,
+      "population_size": 8,
+      "best_fitness": 0.7898640743487044,
+      "mean_fitness": 0.7857609458487207,
+      "std_fitness": 0.00421650777760798,
+      "top_model": "gen23_mutant_3385"
+    },
+    {
+      "generation": 24,
+      "population_size": 8,
+      "best_fitness": 0.7898640743487044,
+      "mean_fitness": 0.7878773567631118,
+      "std_fitness": 0.002330931720443044,
+      "top_model": "gen23_mutant_3385"
+    },
+    {
+      "generation": 25,
+      "population_size": 8,
+      "best_fitness": 0.8097750688686525,
+      "mean_fitness": 0.7938513324589964,
+      "std_fitness": 0.0071846341307467785,
+      "top_model": "gen25_mutant_4696"
+    },
+    {
+      "generation": 26,
+      "population_size": 8,
+      "best_fitness": 0.8097750688686525,
+      "mean_fitness": 0.8049885627270543,
+      "std_fitness": 0.0037313039645750336,
+      "top_model": "gen25_mutant_4696"
+    },
+    {
+      "generation": 27,
+      "population_size": 8,
+      "best_fitness": 0.8132955020404153,
+      "mean_fitness": 0.8095166171804938,
+      "std_fitness": 0.0022737593531777255,
+      "top_model": "gen27_mutant_3129"
+    },
+    {
+      "generation": 28,
+      "population_size": 8,
+      "best_fitness": 0.8360414673410284,
+      "mean_fitness": 0.811344629984025,
+      "std_fitness": 0.013208519203889742,
+      "top_model": "gen28_mutant_9984"
+    },
+    {
+      "generation": 29,
+      "population_size": 8,
+      "best_fitness": 0.8497526200982728,
+      "mean_fitness": 0.8324897033161367,
+      "std_fitness": 0.011035989207173857,
+      "top_model": "gen29_mutant_1982"
+    },
+    {
+      "generation": 30,
+      "population_size": 8,
+      "best_fitness": 0.8497526200982728,
+      "mean_fitness": 0.8421062805462001,
+      "std_fitness": 0.009034188692857575,
+      "top_model": "gen29_mutant_1982"
+    },
+    {
+      "generation": 31,
+      "population_size": 8,
+      "best_fitness": 0.8497526200982728,
+      "mean_fitness": 0.8475127735778978,
+      "std_fitness": 0.004205814842409033,
+      "top_model": "gen29_mutant_1982"
+    },
+    {
+      "generation": 32,
+      "population_size": 8,
+      "best_fitness": 0.8657831466227084,
+      "mean_fitness": 0.8507639566840716,
+      "std_fitness": 0.006243359757656563,
+      "top_model": "gen32_mutant_2868"
+    },
+    {
+      "generation": 33,
+      "population_size": 8,
+      "best_fitness": 0.8718245339612112,
+      "mean_fitness": 0.8570516539286791,
+      "std_fitness": 0.01026350786770831,
+      "top_model": "gen33_mutant_2695"
+    },
+    {
+      "generation": 34,
+      "population_size": 8,
+      "best_fitness": 0.8718245339612112,
+      "mean_fitness": 0.8689337116152764,
+      "std_fitness": 0.005717815322005803,
+      "top_model": "gen33_mutant_2695"
+    },
+    {
+      "generation": 35,
+      "population_size": 8,
+      "best_fitness": 0.8718245339612112,
+      "mean_fitness": 0.8718245339612112,
+      "std_fitness": 0.0,
+      "top_model": "gen33_mutant_2695"
+    },
+    {
+      "generation": 36,
+      "population_size": 8,
+      "best_fitness": 0.8928691136326985,
+      "mean_fitness": 0.8742830974194828,
+      "std_fitness": 0.008383671717971792,
+      "top_model": "gen36_mutant_7495"
+    },
+    {
+      "generation": 37,
+      "population_size": 8,
+      "best_fitness": 0.8928691136326985,
+      "mean_fitness": 0.8804144361832931,
+      "std_fitness": 0.008423922884176314,
+      "top_model": "gen36_mutant_7495"
+    },
+    {
+      "generation": 38,
+      "population_size": 8,
+      "best_fitness": 0.8928691136326985,
+      "mean_fitness": 0.8909954406633988,
+      "std_fitness": 0.0016185012643549566,
+      "top_model": "gen36_mutant_7495"
+    },
+    {
+      "generation": 39,
+      "population_size": 8,
+      "best_fitness": 0.9016169062575665,
+      "mean_fitness": 0.890414805930599,
+      "std_fitness": 0.006410888273993466,
+      "top_model": "gen39_mutant_8179"
+    },
+    {
+      "generation": 40,
+      "population_size": 8,
+      "best_fitness": 0.9016169062575665,
+      "mean_fitness": 0.8972430099451325,
+      "std_fitness": 0.004373896312434011,
+      "top_model": "gen39_mutant_8179"
+    },
+    {
+      "generation": 41,
+      "population_size": 8,
+      "best_fitness": 0.9016169062575665,
+      "mean_fitness": 0.8997021450426479,
+      "std_fitness": 0.005065981994746766,
+      "top_model": "gen39_mutant_8179"
+    },
+    {
+      "generation": 42,
+      "population_size": 8,
+      "best_fitness": 0.9016169062575665,
+      "mean_fitness": 0.8973821330853164,
+      "std_fitness": 0.007993132981491681,
+      "top_model": "gen39_mutant_8179"
+    },
+    {
+      "generation": 43,
+      "population_size": 8,
+      "best_fitness": 0.9016169062575665,
+      "mean_fitness": 0.9003443825633379,
+      "std_fitness": 0.003366781232366229,
+      "top_model": "gen39_mutant_8179"
+    },
+    {
+      "generation": 44,
+      "population_size": 8,
+      "best_fitness": 0.9155807079326177,
+      "mean_fitness": 0.9026117489129208,
+      "std_fitness": 0.005281226334188749,
+      "top_model": "gen44_mutant_4524"
+    },
+    {
+      "generation": 45,
+      "population_size": 8,
+      "best_fitness": 0.9211569389337385,
+      "mean_fitness": 0.9075503607608508,
+      "std_fitness": 0.007827366516634411,
+      "top_model": "gen45_mutant_8761"
+    },
+    {
+      "generation": 46,
+      "population_size": 8,
+      "best_fitness": 0.9241142318508977,
+      "mean_fitness": 0.9194355139229631,
+      "std_fitness": 0.0031289416219721453,
+      "top_model": "gen46_mutant_4397"
+    },
+    {
+      "generation": 47,
+      "population_size": 8,
+      "best_fitness": 0.9296904628520186,
+      "mean_fitness": 0.9229629526528133,
+      "std_fitness": 0.0028332558310124193,
+      "top_model": "gen47_mutant_4814"
+    },
+    {
+      "generation": 48,
+      "population_size": 8,
+      "best_fitness": 0.9296904628520186,
+      "mean_fitness": 0.927097726073211,
+      "std_fitness": 0.002636535809289216,
+      "top_model": "gen47_mutant_4814"
+    },
+    {
+      "generation": 49,
+      "population_size": 8,
+      "best_fitness": 0.9296904628520186,
+      "mean_fitness": 0.929205212125563,
+      "std_fitness": 0.0012838527457152702,
+      "top_model": "gen47_mutant_4814"
+    },
+    {
+      "generation": 50,
+      "population_size": 8,
+      "best_fitness": 0.9296904628520186,
+      "mean_fitness": 0.9296904628520186,
+      "std_fitness": 0.0,
+      "top_model": "gen47_mutant_4814"
+    }
+  ],
+  "genealogy_data": {
+    "seed_1": {
+      "parents": [],
+      "technique": "seed",
+      "generation": 0,
+      "birth_time": 1756227223.9337308
+    },
+    "seed_2": {
+      "parents": [],
+      "technique": "seed",
+      "generation": 0,
+      "birth_time": 1756227223.9337308
+    },
+    "seed_3": {
+      "parents": [],
+      "technique": "seed",
+      "generation": 0,
+      "birth_time": 1756227223.9337308
+    },
+    "initial_merge_1": {
+      "parents": [
+        "seed_1",
+        "seed_2"
+      ],
+      "technique": "linear",
+      "generation": 0,
+      "birth_time": 1756227223.9337308
+    },
+    "initial_merge_2": {
+      "parents": [
+        "seed_3",
+        "seed_1"
+      ],
+      "technique": "slerp",
+      "generation": 0,
+      "birth_time": 1756227223.9337308
+    },
+    "initial_merge_3": {
+      "parents": [
+        "seed_2",
+        "initial_merge_1"
+      ],
+      "technique": "task_arithmetic",
+      "generation": 0,
+      "birth_time": 1756227223.9337308
+    },
+    "initial_merge_4": {
+      "parents": [
+        "seed_3",
+        "initial_merge_3"
+      ],
+      "technique": "dare",
+      "generation": 0,
+      "birth_time": 1756227223.9337308
+    },
+    "initial_merge_5": {
+      "parents": [
+        "seed_1",
+        "seed_3"
+      ],
+      "technique": "ties",
+      "generation": 0,
+      "birth_time": 1756227223.9337308
+    },
+    "gen1_mutant_7201": {
+      "parents": [
+        "initial_merge_5"
+      ],
+      "technique": "mutation",
+      "generation": 1,
+      "birth_time": 1756227223.9347284
+    },
+    "gen1_mutant_4150": {
+      "parents": [
+        "seed_3"
+      ],
+      "technique": "mutation",
+      "generation": 1,
+      "birth_time": 1756227223.9347284
+    },
+    "gen1_mutant_5554": {
+      "parents": [
+        "seed_3"
+      ],
+      "technique": "mutation",
+      "generation": 1,
+      "birth_time": 1756227223.9347284
+    },
+    "gen1_mutant_5374": {
+      "parents": [
+        "initial_merge_5"
+      ],
+      "technique": "mutation",
+      "generation": 1,
+      "birth_time": 1756227223.9347284
+    },
+    "gen1_mutant_7216": {
+      "parents": [
+        "seed_3"
+      ],
+      "technique": "mutation",
+      "generation": 1,
+      "birth_time": 1756227223.9347284
+    },
+    "gen1_mutant_1916": {
+      "parents": [
+        "initial_merge_5"
+      ],
+      "technique": "mutation",
+      "generation": 1,
+      "birth_time": 1756227223.9347284
+    },
+    "gen2_mutant_6155": {
+      "parents": [
+        "seed_3"
+      ],
+      "technique": "mutation",
+      "generation": 2,
+      "birth_time": 1756227223.936723
+    },
+    "gen2_mutant_5339": {
+      "parents": [
+        "seed_3"
+      ],
+      "technique": "mutation",
+      "generation": 2,
+      "birth_time": 1756227223.936723
+    },
+    "gen2_mutant_7543": {
+      "parents": [
+        "seed_3"
+      ],
+      "technique": "mutation",
+      "generation": 2,
+      "birth_time": 1756227223.936723
+    },
+    "gen2_mutant_3621": {
+      "parents": [
+        "gen1_mutant_4150"
+      ],
+      "technique": "mutation",
+      "generation": 2,
+      "birth_time": 1756227223.936723
+    },
+    "gen2_mutant_5119": {
+      "parents": [
+        "gen1_mutant_4150"
+      ],
+      "technique": "mutation",
+      "generation": 2,
+      "birth_time": 1756227223.936723
+    },
+    "gen2_mutant_6573": {
+      "parents": [
+        "seed_3"
+      ],
+      "technique": "mutation",
+      "generation": 2,
+      "birth_time": 1756227223.936723
+    },
+    "gen3_mutant_5315": {
+      "parents": [
+        "gen2_mutant_3621"
+      ],
+      "technique": "mutation",
+      "generation": 3,
+      "birth_time": 1756227223.936723
+    },
+    "gen3_mutant_9317": {
+      "parents": [
+        "gen2_mutant_3621"
+      ],
+      "technique": "mutation",
+      "generation": 3,
+      "birth_time": 1756227223.936723
+    },
+    "gen3_mutant_9689": {
+      "parents": [
+        "gen2_mutant_3621"
+      ],
+      "technique": "mutation",
+      "generation": 3,
+      "birth_time": 1756227223.936723
+    },
+    "gen3_mutant_6038": {
+      "parents": [
+        "gen2_mutant_3621"
+      ],
+      "technique": "mutation",
+      "generation": 3,
+      "birth_time": 1756227223.936723
+    },
+    "gen3_mutant_3103": {
+      "parents": [
+        "gen2_mutant_3621"
+      ],
+      "technique": "mutation",
+      "generation": 3,
+      "birth_time": 1756227223.936723
+    },
+    "gen3_mutant_4470": {
+      "parents": [
+        "gen2_mutant_6155"
+      ],
+      "technique": "mutation",
+      "generation": 3,
+      "birth_time": 1756227223.936723
+    },
+    "gen4_mutant_9479": {
+      "parents": [
+        "gen3_mutant_3103"
+      ],
+      "technique": "mutation",
+      "generation": 4,
+      "birth_time": 1756227223.936723
+    },
+    "gen4_mutant_4770": {
+      "parents": [
+        "gen3_mutant_5315"
+      ],
+      "technique": "mutation",
+      "generation": 4,
+      "birth_time": 1756227223.936723
+    },
+    "gen4_mutant_9423": {
+      "parents": [
+        "gen3_mutant_3103"
+      ],
+      "technique": "mutation",
+      "generation": 4,
+      "birth_time": 1756227223.936723
+    },
+    "gen4_mutant_8744": {
+      "parents": [
+        "gen3_mutant_3103"
+      ],
+      "technique": "mutation",
+      "generation": 4,
+      "birth_time": 1756227223.936723
+    },
+    "gen4_mutant_8062": {
+      "parents": [
+        "gen3_mutant_3103"
+      ],
+      "technique": "mutation",
+      "generation": 4,
+      "birth_time": 1756227223.936723
+    },
+    "gen4_mutant_2612": {
+      "parents": [
+        "gen3_mutant_5315"
+      ],
+      "technique": "mutation",
+      "generation": 4,
+      "birth_time": 1756227223.936723
+    },
+    "gen5_mutant_4116": {
+      "parents": [
+        "gen4_mutant_8062"
+      ],
+      "technique": "mutation",
+      "generation": 5,
+      "birth_time": 1756227223.936723
+    },
+    "gen5_mutant_2235": {
+      "parents": [
+        "gen3_mutant_3103"
+      ],
+      "technique": "mutation",
+      "generation": 5,
+      "birth_time": 1756227223.936723
+    },
+    "gen5_mutant_2528": {
+      "parents": [
+        "gen3_mutant_3103"
+      ],
+      "technique": "mutation",
+      "generation": 5,
+      "birth_time": 1756227223.936723
+    },
+    "gen5_mutant_1960": {
+      "parents": [
+        "gen4_mutant_8062"
+      ],
+      "technique": "mutation",
+      "generation": 5,
+      "birth_time": 1756227223.936723
+    },
+    "gen5_mutant_8454": {
+      "parents": [
+        "gen4_mutant_8062"
+      ],
+      "technique": "mutation",
+      "generation": 5,
+      "birth_time": 1756227223.936723
+    },
+    "gen5_mutant_8973": {
+      "parents": [
+        "gen3_mutant_3103"
+      ],
+      "technique": "mutation",
+      "generation": 5,
+      "birth_time": 1756227223.936723
+    },
+    "gen6_mutant_1821": {
+      "parents": [
+        "gen4_mutant_8062"
+      ],
+      "technique": "mutation",
+      "generation": 6,
+      "birth_time": 1756227223.9377205
+    },
+    "gen6_mutant_2312": {
+      "parents": [
+        "gen5_mutant_4116"
+      ],
+      "technique": "mutation",
+      "generation": 6,
+      "birth_time": 1756227223.9377205
+    },
+    "gen6_mutant_1651": {
+      "parents": [
+        "gen4_mutant_8062"
+      ],
+      "technique": "mutation",
+      "generation": 6,
+      "birth_time": 1756227223.9377205
+    },
+    "gen6_mutant_4346": {
+      "parents": [
+        "gen4_mutant_8062"
+      ],
+      "technique": "mutation",
+      "generation": 6,
+      "birth_time": 1756227223.9377205
+    },
+    "gen6_mutant_6180": {
+      "parents": [
+        "gen5_mutant_4116"
+      ],
+      "technique": "mutation",
+      "generation": 6,
+      "birth_time": 1756227223.9377205
+    },
+    "gen6_mutant_3170": {
+      "parents": [
+        "gen4_mutant_8062"
+      ],
+      "technique": "mutation",
+      "generation": 6,
+      "birth_time": 1756227223.9377205
+    },
+    "gen7_mutant_9900": {
+      "parents": [
+        "gen4_mutant_8062"
+      ],
+      "technique": "mutation",
+      "generation": 7,
+      "birth_time": 1756227223.9377205
+    },
+    "gen7_mutant_5905": {
+      "parents": [
+        "gen4_mutant_8062"
+      ],
+      "technique": "mutation",
+      "generation": 7,
+      "birth_time": 1756227223.9377205
+    },
+    "gen7_mutant_3546": {
+      "parents": [
+        "gen6_mutant_1651"
+      ],
+      "technique": "mutation",
+      "generation": 7,
+      "birth_time": 1756227223.9377205
+    },
+    "gen7_mutant_5325": {
+      "parents": [
+        "gen4_mutant_8062"
+      ],
+      "technique": "mutation",
+      "generation": 7,
+      "birth_time": 1756227223.9377205
+    },
+    "gen7_mutant_6464": {
+      "parents": [
+        "gen4_mutant_8062"
+      ],
+      "technique": "mutation",
+      "generation": 7,
+      "birth_time": 1756227223.9377205
+    },
+    "gen7_mutant_8007": {
+      "parents": [
+        "gen6_mutant_1651"
+      ],
+      "technique": "mutation",
+      "generation": 7,
+      "birth_time": 1756227223.9377205
+    },
+    "gen8_mutant_1590": {
+      "parents": [
+        "gen6_mutant_1651"
+      ],
+      "technique": "mutation",
+      "generation": 8,
+      "birth_time": 1756227223.9377205
+    },
+    "gen8_mutant_1653": {
+      "parents": [
+        "gen7_mutant_3546"
+      ],
+      "technique": "mutation",
+      "generation": 8,
+      "birth_time": 1756227223.9377205
+    },
+    "gen8_mutant_7658": {
+      "parents": [
+        "gen7_mutant_3546"
+      ],
+      "technique": "mutation",
+      "generation": 8,
+      "birth_time": 1756227223.9377205
+    },
+    "gen8_mutant_3900": {
+      "parents": [
+        "gen6_mutant_1651"
+      ],
+      "technique": "mutation",
+      "generation": 8,
+      "birth_time": 1756227223.9377205
+    },
+    "gen8_mutant_5065": {
+      "parents": [
+        "gen7_mutant_3546"
+      ],
+      "technique": "mutation",
+      "generation": 8,
+      "birth_time": 1756227223.9377205
+    },
+    "gen8_mutant_8711": {
+      "parents": [
+        "gen7_mutant_3546"
+      ],
+      "technique": "mutation",
+      "generation": 8,
+      "birth_time": 1756227223.9377205
+    },
+    "gen9_mutant_4728": {
+      "parents": [
+        "gen6_mutant_1651"
+      ],
+      "technique": "mutation",
+      "generation": 9,
+      "birth_time": 1756227223.9377205
+    },
+    "gen9_mutant_9346": {
+      "parents": [
+        "gen6_mutant_1651"
+      ],
+      "technique": "mutation",
+      "generation": 9,
+      "birth_time": 1756227223.9377205
+    },
+    "gen9_mutant_5279": {
+      "parents": [
+        "gen7_mutant_3546"
+      ],
+      "technique": "mutation",
+      "generation": 9,
+      "birth_time": 1756227223.9377205
+    },
+    "gen9_mutant_8149": {
+      "parents": [
+        "gen6_mutant_1651"
+      ],
+      "technique": "mutation",
+      "generation": 9,
+      "birth_time": 1756227223.9377205
+    },
+    "gen9_mutant_1027": {
+      "parents": [
+        "gen6_mutant_1651"
+      ],
+      "technique": "mutation",
+      "generation": 9,
+      "birth_time": 1756227223.9377205
+    },
+    "gen9_mutant_6143": {
+      "parents": [
+        "gen6_mutant_1651"
+      ],
+      "technique": "mutation",
+      "generation": 9,
+      "birth_time": 1756227223.9377205
+    },
+    "gen10_mutant_7592": {
+      "parents": [
+        "gen9_mutant_5279"
+      ],
+      "technique": "mutation",
+      "generation": 10,
+      "birth_time": 1756227223.9387183
+    },
+    "gen10_mutant_3851": {
+      "parents": [
+        "gen9_mutant_9346"
+      ],
+      "technique": "mutation",
+      "generation": 10,
+      "birth_time": 1756227223.9387183
+    },
+    "gen10_mutant_6279": {
+      "parents": [
+        "gen9_mutant_9346"
+      ],
+      "technique": "mutation",
+      "generation": 10,
+      "birth_time": 1756227223.9387183
+    },
+    "gen10_mutant_3780": {
+      "parents": [
+        "gen9_mutant_9346"
+      ],
+      "technique": "mutation",
+      "generation": 10,
+      "birth_time": 1756227223.9387183
+    },
+    "gen10_mutant_6085": {
+      "parents": [
+        "gen9_mutant_5279"
+      ],
+      "technique": "mutation",
+      "generation": 10,
+      "birth_time": 1756227223.9387183
+    },
+    "gen10_mutant_2193": {
+      "parents": [
+        "gen9_mutant_5279"
+      ],
+      "technique": "mutation",
+      "generation": 10,
+      "birth_time": 1756227223.9387183
+    },
+    "gen11_mutant_9099": {
+      "parents": [
+        "gen9_mutant_5279"
+      ],
+      "technique": "mutation",
+      "generation": 11,
+      "birth_time": 1756227223.9387183
+    },
+    "gen11_mutant_7965": {
+      "parents": [
+        "gen9_mutant_5279"
+      ],
+      "technique": "mutation",
+      "generation": 11,
+      "birth_time": 1756227223.9387183
+    },
+    "gen11_mutant_5082": {
+      "parents": [
+        "gen10_mutant_6085"
+      ],
+      "technique": "mutation",
+      "generation": 11,
+      "birth_time": 1756227223.9387183
+    },
+    "gen11_mutant_6198": {
+      "parents": [
+        "gen10_mutant_6085"
+      ],
+      "technique": "mutation",
+      "generation": 11,
+      "birth_time": 1756227223.9387183
+    },
+    "gen11_mutant_9976": {
+      "parents": [
+        "gen9_mutant_5279"
+      ],
+      "technique": "mutation",
+      "generation": 11,
+      "birth_time": 1756227223.9387183
+    },
+    "gen11_mutant_5050": {
+      "parents": [
+        "gen9_mutant_5279"
+      ],
+      "technique": "mutation",
+      "generation": 11,
+      "birth_time": 1756227223.9387183
+    },
+    "gen12_mutant_2269": {
+      "parents": [
+        "gen11_mutant_6198"
+      ],
+      "technique": "mutation",
+      "generation": 12,
+      "birth_time": 1756227223.9387183
+    },
+    "gen12_mutant_3503": {
+      "parents": [
+        "gen11_mutant_6198"
+      ],
+      "technique": "mutation",
+      "generation": 12,
+      "birth_time": 1756227223.9387183
+    },
+    "gen12_mutant_4388": {
+      "parents": [
+        "gen10_mutant_6085"
+      ],
+      "technique": "mutation",
+      "generation": 12,
+      "birth_time": 1756227223.9387183
+    },
+    "gen12_mutant_8814": {
+      "parents": [
+        "gen11_mutant_6198"
+      ],
+      "technique": "mutation",
+      "generation": 12,
+      "birth_time": 1756227223.9387183
+    },
+    "gen12_mutant_7865": {
+      "parents": [
+        "gen10_mutant_6085"
+      ],
+      "technique": "mutation",
+      "generation": 12,
+      "birth_time": 1756227223.9387183
+    },
+    "gen12_mutant_7624": {
+      "parents": [
+        "gen10_mutant_6085"
+      ],
+      "technique": "mutation",
+      "generation": 12,
+      "birth_time": 1756227223.9387183
+    },
+    "gen13_mutant_7455": {
+      "parents": [
+        "gen12_mutant_4388"
+      ],
+      "technique": "mutation",
+      "generation": 13,
+      "birth_time": 1756227223.9387183
+    },
+    "gen13_mutant_5262": {
+      "parents": [
+        "gen12_mutant_4388"
+      ],
+      "technique": "mutation",
+      "generation": 13,
+      "birth_time": 1756227223.9387183
+    },
+    "gen13_mutant_5558": {
+      "parents": [
+        "gen12_mutant_8814"
+      ],
+      "technique": "mutation",
+      "generation": 13,
+      "birth_time": 1756227223.9387183
+    },
+    "gen13_mutant_2124": {
+      "parents": [
+        "gen12_mutant_8814"
+      ],
+      "technique": "mutation",
+      "generation": 13,
+      "birth_time": 1756227223.9387183
+    },
+    "gen13_mutant_3496": {
+      "parents": [
+        "gen12_mutant_4388"
+      ],
+      "technique": "mutation",
+      "generation": 13,
+      "birth_time": 1756227223.9387183
+    },
+    "gen13_mutant_5198": {
+      "parents": [
+        "gen12_mutant_4388"
+      ],
+      "technique": "mutation",
+      "generation": 13,
+      "birth_time": 1756227223.9387183
+    },
+    "gen14_mutant_3683": {
+      "parents": [
+        "gen13_mutant_3496"
+      ],
+      "technique": "mutation",
+      "generation": 14,
+      "birth_time": 1756227223.9387183
+    },
+    "gen14_mutant_4249": {
+      "parents": [
+        "gen13_mutant_3496"
+      ],
+      "technique": "mutation",
+      "generation": 14,
+      "birth_time": 1756227223.9387183
+    },
+    "gen14_mutant_5941": {
+      "parents": [
+        "gen13_mutant_2124"
+      ],
+      "technique": "mutation",
+      "generation": 14,
+      "birth_time": 1756227223.9387183
+    },
+    "gen14_mutant_7071": {
+      "parents": [
+        "gen13_mutant_2124"
+      ],
+      "technique": "mutation",
+      "generation": 14,
+      "birth_time": 1756227223.9387183
+    },
+    "gen14_mutant_2729": {
+      "parents": [
+        "gen13_mutant_2124"
+      ],
+      "technique": "mutation",
+      "generation": 14,
+      "birth_time": 1756227223.9387183
+    },
+    "gen14_mutant_8135": {
+      "parents": [
+        "gen13_mutant_3496"
+      ],
+      "technique": "mutation",
+      "generation": 14,
+      "birth_time": 1756227223.9387183
+    },
+    "gen15_mutant_9817": {
+      "parents": [
+        "gen14_mutant_7071"
+      ],
+      "technique": "mutation",
+      "generation": 15,
+      "birth_time": 1756227223.9387183
+    },
+    "gen15_mutant_5022": {
+      "parents": [
+        "gen13_mutant_2124"
+      ],
+      "technique": "mutation",
+      "generation": 15,
+      "birth_time": 1756227223.9387183
+    },
+    "gen15_mutant_7209": {
+      "parents": [
+        "gen14_mutant_7071"
+      ],
+      "technique": "mutation",
+      "generation": 15,
+      "birth_time": 1756227223.9387183
+    },
+    "gen15_mutant_5526": {
+      "parents": [
+        "gen13_mutant_2124"
+      ],
+      "technique": "mutation",
+      "generation": 15,
+      "birth_time": 1756227223.9387183
+    },
+    "gen15_mutant_4937": {
+      "parents": [
+        "gen14_mutant_7071"
+      ],
+      "technique": "mutation",
+      "generation": 15,
+      "birth_time": 1756227223.9387183
+    },
+    "gen15_mutant_4630": {
+      "parents": [
+        "gen13_mutant_2124"
+      ],
+      "technique": "mutation",
+      "generation": 15,
+      "birth_time": 1756227223.9387183
+    },
+    "gen16_mutant_9698": {
+      "parents": [
+        "gen15_mutant_9817"
+      ],
+      "technique": "mutation",
+      "generation": 16,
+      "birth_time": 1756227223.9387183
+    },
+    "gen16_mutant_5438": {
+      "parents": [
+        "gen15_mutant_9817"
+      ],
+      "technique": "mutation",
+      "generation": 16,
+      "birth_time": 1756227223.9387183
+    },
+    "gen16_mutant_9779": {
+      "parents": [
+        "gen15_mutant_9817"
+      ],
+      "technique": "mutation",
+      "generation": 16,
+      "birth_time": 1756227223.9387183
+    },
+    "gen16_mutant_9595": {
+      "parents": [
+        "gen14_mutant_7071"
+      ],
+      "technique": "mutation",
+      "generation": 16,
+      "birth_time": 1756227223.9387183
+    },
+    "gen16_mutant_5952": {
+      "parents": [
+        "gen15_mutant_9817"
+      ],
+      "technique": "mutation",
+      "generation": 16,
+      "birth_time": 1756227223.9387183
+    },
+    "gen16_mutant_9042": {
+      "parents": [
+        "gen14_mutant_7071"
+      ],
+      "technique": "mutation",
+      "generation": 16,
+      "birth_time": 1756227223.9387183
+    },
+    "gen17_mutant_4020": {
+      "parents": [
+        "gen16_mutant_9042"
+      ],
+      "technique": "mutation",
+      "generation": 17,
+      "birth_time": 1756227223.9387183
+    },
+    "gen17_mutant_9056": {
+      "parents": [
+        "gen16_mutant_9042"
+      ],
+      "technique": "mutation",
+      "generation": 17,
+      "birth_time": 1756227223.9397154
+    },
+    "gen17_mutant_5978": {
+      "parents": [
+        "gen16_mutant_9042"
+      ],
+      "technique": "mutation",
+      "generation": 17,
+      "birth_time": 1756227223.9397154
+    },
+    "gen17_mutant_4697": {
+      "parents": [
+        "gen16_mutant_9042"
+      ],
+      "technique": "mutation",
+      "generation": 17,
+      "birth_time": 1756227223.9397154
+    },
+    "gen17_mutant_6003": {
+      "parents": [
+        "gen14_mutant_7071"
+      ],
+      "technique": "mutation",
+      "generation": 17,
+      "birth_time": 1756227223.9397154
+    },
+    "gen17_mutant_4457": {
+      "parents": [
+        "gen16_mutant_9042"
+      ],
+      "technique": "mutation",
+      "generation": 17,
+      "birth_time": 1756227223.9397154
+    },
+    "gen18_mutant_8699": {
+      "parents": [
+        "gen16_mutant_9042"
+      ],
+      "technique": "mutation",
+      "generation": 18,
+      "birth_time": 1756227223.9397154
+    },
+    "gen18_mutant_2166": {
+      "parents": [
+        "gen16_mutant_9042"
+      ],
+      "technique": "mutation",
+      "generation": 18,
+      "birth_time": 1756227223.9397154
+    },
+    "gen18_mutant_4241": {
+      "parents": [
+        "gen17_mutant_9056"
+      ],
+      "technique": "mutation",
+      "generation": 18,
+      "birth_time": 1756227223.9397154
+    },
+    "gen18_mutant_3330": {
+      "parents": [
+        "gen16_mutant_9042"
+      ],
+      "technique": "mutation",
+      "generation": 18,
+      "birth_time": 1756227223.9397154
+    },
+    "gen18_mutant_8679": {
+      "parents": [
+        "gen17_mutant_9056"
+      ],
+      "technique": "mutation",
+      "generation": 18,
+      "birth_time": 1756227223.9397154
+    },
+    "gen18_mutant_2317": {
+      "parents": [
+        "gen16_mutant_9042"
+      ],
+      "technique": "mutation",
+      "generation": 18,
+      "birth_time": 1756227223.9397154
+    },
+    "gen19_mutant_4750": {
+      "parents": [
+        "gen18_mutant_8699"
+      ],
+      "technique": "mutation",
+      "generation": 19,
+      "birth_time": 1756227223.9397154
+    },
+    "gen19_mutant_8245": {
+      "parents": [
+        "gen18_mutant_8699"
+      ],
+      "technique": "mutation",
+      "generation": 19,
+      "birth_time": 1756227223.9397154
+    },
+    "gen19_mutant_2494": {
+      "parents": [
+        "gen18_mutant_8679"
+      ],
+      "technique": "mutation",
+      "generation": 19,
+      "birth_time": 1756227223.9397154
+    },
+    "gen19_mutant_6403": {
+      "parents": [
+        "gen18_mutant_8679"
+      ],
+      "technique": "mutation",
+      "generation": 19,
+      "birth_time": 1756227223.9397154
+    },
+    "gen19_mutant_1601": {
+      "parents": [
+        "gen18_mutant_8679"
+      ],
+      "technique": "mutation",
+      "generation": 19,
+      "birth_time": 1756227223.9397154
+    },
+    "gen19_mutant_9431": {
+      "parents": [
+        "gen18_mutant_8679"
+      ],
+      "technique": "mutation",
+      "generation": 19,
+      "birth_time": 1756227223.9397154
+    },
+    "gen20_mutant_6927": {
+      "parents": [
+        "gen19_mutant_8245"
+      ],
+      "technique": "mutation",
+      "generation": 20,
+      "birth_time": 1756227223.9397154
+    },
+    "gen20_mutant_5719": {
+      "parents": [
+        "gen18_mutant_8699"
+      ],
+      "technique": "mutation",
+      "generation": 20,
+      "birth_time": 1756227223.9397154
+    },
+    "gen20_mutant_6091": {
+      "parents": [
+        "gen18_mutant_8699"
+      ],
+      "technique": "mutation",
+      "generation": 20,
+      "birth_time": 1756227223.9397154
+    },
+    "gen20_mutant_8560": {
+      "parents": [
+        "gen19_mutant_8245"
+      ],
+      "technique": "mutation",
+      "generation": 20,
+      "birth_time": 1756227223.9397154
+    },
+    "gen20_mutant_5479": {
+      "parents": [
+        "gen19_mutant_8245"
+      ],
+      "technique": "mutation",
+      "generation": 20,
+      "birth_time": 1756227223.9397154
+    },
+    "gen20_mutant_7284": {
+      "parents": [
+        "gen18_mutant_8699"
+      ],
+      "technique": "mutation",
+      "generation": 20,
+      "birth_time": 1756227223.9397154
+    },
+    "gen21_mutant_5526": {
+      "parents": [
+        "gen19_mutant_8245"
+      ],
+      "technique": "mutation",
+      "generation": 21,
+      "birth_time": 1756227223.9397154
+    },
+    "gen21_mutant_9022": {
+      "parents": [
+        "gen20_mutant_6927"
+      ],
+      "technique": "mutation",
+      "generation": 21,
+      "birth_time": 1756227223.9397154
+    },
+    "gen21_mutant_7180": {
+      "parents": [
+        "gen19_mutant_8245"
+      ],
+      "technique": "mutation",
+      "generation": 21,
+      "birth_time": 1756227223.9397154
+    },
+    "gen21_mutant_7274": {
+      "parents": [
+        "gen20_mutant_6927"
+      ],
+      "technique": "mutation",
+      "generation": 21,
+      "birth_time": 1756227223.9397154
+    },
+    "gen21_mutant_7246": {
+      "parents": [
+        "gen19_mutant_8245"
+      ],
+      "technique": "mutation",
+      "generation": 21,
+      "birth_time": 1756227223.9397154
+    },
+    "gen21_mutant_1606": {
+      "parents": [
+        "gen20_mutant_6927"
+      ],
+      "technique": "mutation",
+      "generation": 21,
+      "birth_time": 1756227223.9397154
+    },
+    "gen22_mutant_8213": {
+      "parents": [
+        "gen19_mutant_8245"
+      ],
+      "technique": "mutation",
+      "generation": 22,
+      "birth_time": 1756227223.9397154
+    },
+    "gen22_mutant_3529": {
+      "parents": [
+        "gen19_mutant_8245"
+      ],
+      "technique": "mutation",
+      "generation": 22,
+      "birth_time": 1756227223.9397154
+    },
+    "gen22_mutant_2315": {
+      "parents": [
+        "gen19_mutant_8245"
+      ],
+      "technique": "mutation",
+      "generation": 22,
+      "birth_time": 1756227223.9397154
+    },
+    "gen22_mutant_8994": {
+      "parents": [
+        "gen20_mutant_6927"
+      ],
+      "technique": "mutation",
+      "generation": 22,
+      "birth_time": 1756227223.9397154
+    },
+    "gen22_mutant_4727": {
+      "parents": [
+        "gen19_mutant_8245"
+      ],
+      "technique": "mutation",
+      "generation": 22,
+      "birth_time": 1756227223.9397154
+    },
+    "gen22_mutant_8269": {
+      "parents": [
+        "gen19_mutant_8245"
+      ],
+      "technique": "mutation",
+      "generation": 22,
+      "birth_time": 1756227223.9397154
+    },
+    "gen23_mutant_3385": {
+      "parents": [
+        "gen19_mutant_8245"
+      ],
+      "technique": "mutation",
+      "generation": 23,
+      "birth_time": 1756227223.9397154
+    },
+    "gen23_mutant_2293": {
+      "parents": [
+        "gen19_mutant_8245"
+      ],
+      "technique": "mutation",
+      "generation": 23,
+      "birth_time": 1756227223.9397154
+    },
+    "gen23_mutant_8555": {
+      "parents": [
+        "gen20_mutant_6927"
+      ],
+      "technique": "mutation",
+      "generation": 23,
+      "birth_time": 1756227223.9397154
+    },
+    "gen23_mutant_5712": {
+      "parents": [
+        "gen20_mutant_6927"
+      ],
+      "technique": "mutation",
+      "generation": 23,
+      "birth_time": 1756227223.9397154
+    },
+    "gen23_mutant_7951": {
+      "parents": [
+        "gen19_mutant_8245"
+      ],
+      "technique": "mutation",
+      "generation": 23,
+      "birth_time": 1756227223.9397154
+    },
+    "gen23_mutant_2747": {
+      "parents": [
+        "gen20_mutant_6927"
+      ],
+      "technique": "mutation",
+      "generation": 23,
+      "birth_time": 1756227223.9407122
+    },
+    "gen24_mutant_1359": {
+      "parents": [
+        "gen23_mutant_3385"
+      ],
+      "technique": "mutation",
+      "generation": 24,
+      "birth_time": 1756227223.9407122
+    },
+    "gen24_mutant_1803": {
+      "parents": [
+        "gen19_mutant_8245"
+      ],
+      "technique": "mutation",
+      "generation": 24,
+      "birth_time": 1756227223.9407122
+    },
+    "gen24_mutant_6772": {
+      "parents": [
+        "gen19_mutant_8245"
+      ],
+      "technique": "mutation",
+      "generation": 24,
+      "birth_time": 1756227223.9407122
+    },
+    "gen24_mutant_3240": {
+      "parents": [
+        "gen23_mutant_3385"
+      ],
+      "technique": "mutation",
+      "generation": 24,
+      "birth_time": 1756227223.9407122
+    },
+    "gen24_mutant_6977": {
+      "parents": [
+        "gen23_mutant_3385"
+      ],
+      "technique": "mutation",
+      "generation": 24,
+      "birth_time": 1756227223.9407122
+    },
+    "gen24_mutant_6994": {
+      "parents": [
+        "gen23_mutant_3385"
+      ],
+      "technique": "mutation",
+      "generation": 24,
+      "birth_time": 1756227223.9407122
+    },
+    "gen25_mutant_5835": {
+      "parents": [
+        "gen24_mutant_1359"
+      ],
+      "technique": "mutation",
+      "generation": 25,
+      "birth_time": 1756227223.9407122
+    },
+    "gen25_mutant_4696": {
+      "parents": [
+        "gen24_mutant_1359"
+      ],
+      "technique": "mutation",
+      "generation": 25,
+      "birth_time": 1756227223.9407122
+    },
+    "gen25_mutant_1228": {
+      "parents": [
+        "gen24_mutant_1359"
+      ],
+      "technique": "mutation",
+      "generation": 25,
+      "birth_time": 1756227223.9407122
+    },
+    "gen25_mutant_7242": {
+      "parents": [
+        "gen24_mutant_1359"
+      ],
+      "technique": "mutation",
+      "generation": 25,
+      "birth_time": 1756227223.9407122
+    },
+    "gen25_mutant_4626": {
+      "parents": [
+        "gen24_mutant_1359"
+      ],
+      "technique": "mutation",
+      "generation": 25,
+      "birth_time": 1756227223.9407122
+    },
+    "gen25_mutant_2911": {
+      "parents": [
+        "gen23_mutant_3385"
+      ],
+      "technique": "mutation",
+      "generation": 25,
+      "birth_time": 1756227223.9407122
+    },
+    "gen26_mutant_7367": {
+      "parents": [
+        "gen25_mutant_4696"
+      ],
+      "technique": "mutation",
+      "generation": 26,
+      "birth_time": 1756227223.9407122
+    },
+    "gen26_mutant_3531": {
+      "parents": [
+        "gen25_mutant_4626"
+      ],
+      "technique": "mutation",
+      "generation": 26,
+      "birth_time": 1756227223.9407122
+    },
+    "gen26_mutant_5583": {
+      "parents": [
+        "gen25_mutant_4626"
+      ],
+      "technique": "mutation",
+      "generation": 26,
+      "birth_time": 1756227223.9407122
+    },
+    "gen26_mutant_6942": {
+      "parents": [
+        "gen25_mutant_4696"
+      ],
+      "technique": "mutation",
+      "generation": 26,
+      "birth_time": 1756227223.9407122
+    },
+    "gen26_mutant_1992": {
+      "parents": [
+        "gen25_mutant_4696"
+      ],
+      "technique": "mutation",
+      "generation": 26,
+      "birth_time": 1756227223.9407122
+    },
+    "gen26_mutant_2501": {
+      "parents": [
+        "gen25_mutant_4626"
+      ],
+      "technique": "mutation",
+      "generation": 26,
+      "birth_time": 1756227223.9407122
+    },
+    "gen27_mutant_4990": {
+      "parents": [
+        "gen25_mutant_4696"
+      ],
+      "technique": "mutation",
+      "generation": 27,
+      "birth_time": 1756227223.9407122
+    },
+    "gen27_mutant_4538": {
+      "parents": [
+        "gen25_mutant_4696"
+      ],
+      "technique": "mutation",
+      "generation": 27,
+      "birth_time": 1756227223.9407122
+    },
+    "gen27_mutant_3129": {
+      "parents": [
+        "gen25_mutant_4696"
+      ],
+      "technique": "mutation",
+      "generation": 27,
+      "birth_time": 1756227223.9407122
+    },
+    "gen27_mutant_6869": {
+      "parents": [
+        "gen26_mutant_6942"
+      ],
+      "technique": "mutation",
+      "generation": 27,
+      "birth_time": 1756227223.9407122
+    },
+    "gen27_mutant_7897": {
+      "parents": [
+        "gen25_mutant_4696"
+      ],
+      "technique": "mutation",
+      "generation": 27,
+      "birth_time": 1756227223.9407122
+    },
+    "gen27_mutant_2786": {
+      "parents": [
+        "gen25_mutant_4696"
+      ],
+      "technique": "mutation",
+      "generation": 27,
+      "birth_time": 1756227223.9407122
+    },
+    "gen28_mutant_8504": {
+      "parents": [
+        "gen25_mutant_4696"
+      ],
+      "technique": "mutation",
+      "generation": 28,
+      "birth_time": 1756227223.9407122
+    },
+    "gen28_mutant_9032": {
+      "parents": [
+        "gen27_mutant_3129"
+      ],
+      "technique": "mutation",
+      "generation": 28,
+      "birth_time": 1756227223.9407122
+    },
+    "gen28_mutant_9984": {
+      "parents": [
+        "gen25_mutant_4696"
+      ],
+      "technique": "mutation",
+      "generation": 28,
+      "birth_time": 1756227223.9407122
+    },
+    "gen28_mutant_8048": {
+      "parents": [
+        "gen25_mutant_4696"
+      ],
+      "technique": "mutation",
+      "generation": 28,
+      "birth_time": 1756227223.9407122
+    },
+    "gen28_mutant_4522": {
+      "parents": [
+        "gen27_mutant_3129"
+      ],
+      "technique": "mutation",
+      "generation": 28,
+      "birth_time": 1756227223.9407122
+    },
+    "gen28_mutant_7815": {
+      "parents": [
+        "gen25_mutant_4696"
+      ],
+      "technique": "mutation",
+      "generation": 28,
+      "birth_time": 1756227223.9407122
+    },
+    "gen29_mutant_8770": {
+      "parents": [
+        "gen28_mutant_9984"
+      ],
+      "technique": "mutation",
+      "generation": 29,
+      "birth_time": 1756227223.9407122
+    },
+    "gen29_mutant_1982": {
+      "parents": [
+        "gen28_mutant_9984"
+      ],
+      "technique": "mutation",
+      "generation": 29,
+      "birth_time": 1756227223.9407122
+    },
+    "gen29_mutant_7929": {
+      "parents": [
+        "gen28_mutant_8504"
+      ],
+      "technique": "mutation",
+      "generation": 29,
+      "birth_time": 1756227223.9407122
+    },
+    "gen29_mutant_4485": {
+      "parents": [
+        "gen28_mutant_9984"
+      ],
+      "technique": "mutation",
+      "generation": 29,
+      "birth_time": 1756227223.9407122
+    },
+    "gen29_mutant_7022": {
+      "parents": [
+        "gen28_mutant_9984"
+      ],
+      "technique": "mutation",
+      "generation": 29,
+      "birth_time": 1756227223.9407122
+    },
+    "gen29_mutant_1430": {
+      "parents": [
+        "gen28_mutant_9984"
+      ],
+      "technique": "mutation",
+      "generation": 29,
+      "birth_time": 1756227223.9407122
+    },
+    "gen30_mutant_6751": {
+      "parents": [
+        "gen28_mutant_9984"
+      ],
+      "technique": "mutation",
+      "generation": 30,
+      "birth_time": 1756227223.9407122
+    },
+    "gen30_mutant_2503": {
+      "parents": [
+        "gen29_mutant_1982"
+      ],
+      "technique": "mutation",
+      "generation": 30,
+      "birth_time": 1756227223.9407122
+    },
+    "gen30_mutant_6314": {
+      "parents": [
+        "gen29_mutant_1982"
+      ],
+      "technique": "mutation",
+      "generation": 30,
+      "birth_time": 1756227223.9407122
+    },
+    "gen30_mutant_2336": {
+      "parents": [
+        "gen29_mutant_1982"
+      ],
+      "technique": "mutation",
+      "generation": 30,
+      "birth_time": 1756227223.9407122
+    },
+    "gen30_mutant_4531": {
+      "parents": [
+        "gen28_mutant_9984"
+      ],
+      "technique": "mutation",
+      "generation": 30,
+      "birth_time": 1756227223.9407122
+    },
+    "gen30_mutant_9633": {
+      "parents": [
+        "gen29_mutant_1982"
+      ],
+      "technique": "mutation",
+      "generation": 30,
+      "birth_time": 1756227223.9407122
+    },
+    "gen31_mutant_3248": {
+      "parents": [
+        "gen30_mutant_6314"
+      ],
+      "technique": "mutation",
+      "generation": 31,
+      "birth_time": 1756227223.9417095
+    },
+    "gen31_mutant_3116": {
+      "parents": [
+        "gen30_mutant_6314"
+      ],
+      "technique": "mutation",
+      "generation": 31,
+      "birth_time": 1756227223.9417095
+    },
+    "gen31_mutant_6802": {
+      "parents": [
+        "gen30_mutant_6314"
+      ],
+      "technique": "mutation",
+      "generation": 31,
+      "birth_time": 1756227223.9417095
+    },
+    "gen31_mutant_2275": {
+      "parents": [
+        "gen29_mutant_1982"
+      ],
+      "technique": "mutation",
+      "generation": 31,
+      "birth_time": 1756227223.9417095
+    },
+    "gen31_mutant_2887": {
+      "parents": [
+        "gen30_mutant_6314"
+      ],
+      "technique": "mutation",
+      "generation": 31,
+      "birth_time": 1756227223.9417095
+    },
+    "gen31_mutant_2443": {
+      "parents": [
+        "gen30_mutant_6314"
+      ],
+      "technique": "mutation",
+      "generation": 31,
+      "birth_time": 1756227223.9417095
+    },
+    "gen32_mutant_7484": {
+      "parents": [
+        "gen30_mutant_6314"
+      ],
+      "technique": "mutation",
+      "generation": 32,
+      "birth_time": 1756227223.9417095
+    },
+    "gen32_mutant_2868": {
+      "parents": [
+        "gen30_mutant_6314"
+      ],
+      "technique": "mutation",
+      "generation": 32,
+      "birth_time": 1756227223.9417095
+    },
+    "gen32_mutant_3419": {
+      "parents": [
+        "gen29_mutant_1982"
+      ],
+      "technique": "mutation",
+      "generation": 32,
+      "birth_time": 1756227223.9417095
+    },
+    "gen32_mutant_2234": {
+      "parents": [
+        "gen29_mutant_1982"
+      ],
+      "technique": "mutation",
+      "generation": 32,
+      "birth_time": 1756227223.9417095
+    },
+    "gen32_mutant_8354": {
+      "parents": [
+        "gen29_mutant_1982"
+      ],
+      "technique": "mutation",
+      "generation": 32,
+      "birth_time": 1756227223.9417095
+    },
+    "gen32_mutant_5500": {
+      "parents": [
+        "gen30_mutant_6314"
+      ],
+      "technique": "mutation",
+      "generation": 32,
+      "birth_time": 1756227223.9417095
+    },
+    "gen33_mutant_2479": {
+      "parents": [
+        "gen32_mutant_2868"
+      ],
+      "technique": "mutation",
+      "generation": 33,
+      "birth_time": 1756227223.9417095
+    },
+    "gen33_mutant_8368": {
+      "parents": [
+        "gen29_mutant_1982"
+      ],
+      "technique": "mutation",
+      "generation": 33,
+      "birth_time": 1756227223.9417095
+    },
+    "gen33_mutant_2695": {
+      "parents": [
+        "gen32_mutant_2868"
+      ],
+      "technique": "mutation",
+      "generation": 33,
+      "birth_time": 1756227223.9417095
+    },
+    "gen33_mutant_9586": {
+      "parents": [
+        "gen29_mutant_1982"
+      ],
+      "technique": "mutation",
+      "generation": 33,
+      "birth_time": 1756227223.9417095
+    },
+    "gen33_mutant_1857": {
+      "parents": [
+        "gen32_mutant_2868"
+      ],
+      "technique": "mutation",
+      "generation": 33,
+      "birth_time": 1756227223.9417095
+    },
+    "gen33_mutant_3463": {
+      "parents": [
+        "gen29_mutant_1982"
+      ],
+      "technique": "mutation",
+      "generation": 33,
+      "birth_time": 1756227223.9417095
+    },
+    "gen34_mutant_7421": {
+      "parents": [
+        "gen32_mutant_2868"
+      ],
+      "technique": "mutation",
+      "generation": 34,
+      "birth_time": 1756227223.9417095
+    },
+    "gen34_mutant_6381": {
+      "parents": [
+        "gen33_mutant_2695"
+      ],
+      "technique": "mutation",
+      "generation": 34,
+      "birth_time": 1756227223.9417095
+    },
+    "gen34_mutant_9624": {
+      "parents": [
+        "gen33_mutant_2695"
+      ],
+      "technique": "mutation",
+      "generation": 34,
+      "birth_time": 1756227223.9417095
+    },
+    "gen34_mutant_3953": {
+      "parents": [
+        "gen33_mutant_2695"
+      ],
+      "technique": "mutation",
+      "generation": 34,
+      "birth_time": 1756227223.9417095
+    },
+    "gen34_mutant_3538": {
+      "parents": [
+        "gen33_mutant_2695"
+      ],
+      "technique": "mutation",
+      "generation": 34,
+      "birth_time": 1756227223.9417095
+    },
+    "gen34_mutant_9626": {
+      "parents": [
+        "gen33_mutant_2695"
+      ],
+      "technique": "mutation",
+      "generation": 34,
+      "birth_time": 1756227223.9417095
+    },
+    "gen35_mutant_3527": {
+      "parents": [
+        "gen33_mutant_2695"
+      ],
+      "technique": "mutation",
+      "generation": 35,
+      "birth_time": 1756227223.9417095
+    },
+    "gen35_mutant_8170": {
+      "parents": [
+        "gen33_mutant_2695"
+      ],
+      "technique": "mutation",
+      "generation": 35,
+      "birth_time": 1756227223.9417095
+    },
+    "gen35_mutant_5668": {
+      "parents": [
+        "gen33_mutant_2695"
+      ],
+      "technique": "mutation",
+      "generation": 35,
+      "birth_time": 1756227223.9417095
+    },
+    "gen35_mutant_4178": {
+      "parents": [
+        "gen34_mutant_6381"
+      ],
+      "technique": "mutation",
+      "generation": 35,
+      "birth_time": 1756227223.9417095
+    },
+    "gen35_mutant_7256": {
+      "parents": [
+        "gen34_mutant_6381"
+      ],
+      "technique": "mutation",
+      "generation": 35,
+      "birth_time": 1756227223.9417095
+    },
+    "gen35_mutant_5096": {
+      "parents": [
+        "gen34_mutant_6381"
+      ],
+      "technique": "mutation",
+      "generation": 35,
+      "birth_time": 1756227223.9417095
+    },
+    "gen36_mutant_9452": {
+      "parents": [
+        "gen33_mutant_2695"
+      ],
+      "technique": "mutation",
+      "generation": 36,
+      "birth_time": 1756227223.9417095
+    },
+    "gen36_mutant_3414": {
+      "parents": [
+        "gen33_mutant_2695"
+      ],
+      "technique": "mutation",
+      "generation": 36,
+      "birth_time": 1756227223.9417095
+    },
+    "gen36_mutant_7495": {
+      "parents": [
+        "gen34_mutant_6381"
+      ],
+      "technique": "mutation",
+      "generation": 36,
+      "birth_time": 1756227223.9417095
+    },
+    "gen36_mutant_2623": {
+      "parents": [
+        "gen34_mutant_6381"
+      ],
+      "technique": "mutation",
+      "generation": 36,
+      "birth_time": 1756227223.9417095
+    },
+    "gen36_mutant_3273": {
+      "parents": [
+        "gen34_mutant_6381"
+      ],
+      "technique": "mutation",
+      "generation": 36,
+      "birth_time": 1756227223.9417095
+    },
+    "gen36_mutant_9647": {
+      "parents": [
+        "gen34_mutant_6381"
+      ],
+      "technique": "mutation",
+      "generation": 36,
+      "birth_time": 1756227223.9417095
+    },
+    "gen37_mutant_7878": {
+      "parents": [
+        "gen36_mutant_9647"
+      ],
+      "technique": "mutation",
+      "generation": 37,
+      "birth_time": 1756227223.9417095
+    },
+    "gen37_mutant_3352": {
+      "parents": [
+        "gen36_mutant_9647"
+      ],
+      "technique": "mutation",
+      "generation": 37,
+      "birth_time": 1756227223.9417095
+    },
+    "gen37_mutant_2402": {
+      "parents": [
+        "gen36_mutant_9647"
+      ],
+      "technique": "mutation",
+      "generation": 37,
+      "birth_time": 1756227223.9417095
+    },
+    "gen37_mutant_1333": {
+      "parents": [
+        "gen36_mutant_9647"
+      ],
+      "technique": "mutation",
+      "generation": 37,
+      "birth_time": 1756227223.9417095
+    },
+    "gen37_mutant_2106": {
+      "parents": [
+        "gen36_mutant_9647"
+      ],
+      "technique": "mutation",
+      "generation": 37,
+      "birth_time": 1756227223.9417095
+    },
+    "gen37_mutant_6447": {
+      "parents": [
+        "gen36_mutant_9647"
+      ],
+      "technique": "mutation",
+      "generation": 37,
+      "birth_time": 1756227223.9417095
+    },
+    "gen38_mutant_8612": {
+      "parents": [
+        "gen36_mutant_7495"
+      ],
+      "technique": "mutation",
+      "generation": 38,
+      "birth_time": 1756227223.9417095
+    },
+    "gen38_mutant_1717": {
+      "parents": [
+        "gen37_mutant_3352"
+      ],
+      "technique": "mutation",
+      "generation": 38,
+      "birth_time": 1756227223.9417095
+    },
+    "gen38_mutant_9897": {
+      "parents": [
+        "gen36_mutant_7495"
+      ],
+      "technique": "mutation",
+      "generation": 38,
+      "birth_time": 1756227223.9417095
+    },
+    "gen38_mutant_1783": {
+      "parents": [
+        "gen37_mutant_3352"
+      ],
+      "technique": "mutation",
+      "generation": 38,
+      "birth_time": 1756227223.9417095
+    },
+    "gen38_mutant_8204": {
+      "parents": [
+        "gen37_mutant_3352"
+      ],
+      "technique": "mutation",
+      "generation": 38,
+      "birth_time": 1756227223.9417095
+    },
+    "gen38_mutant_9507": {
+      "parents": [
+        "gen37_mutant_3352"
+      ],
+      "technique": "mutation",
+      "generation": 38,
+      "birth_time": 1756227223.9417095
+    },
+    "gen39_mutant_3956": {
+      "parents": [
+        "gen38_mutant_8612"
+      ],
+      "technique": "mutation",
+      "generation": 39,
+      "birth_time": 1756227223.9427075
+    },
+    "gen39_mutant_8272": {
+      "parents": [
+        "gen38_mutant_8612"
+      ],
+      "technique": "mutation",
+      "generation": 39,
+      "birth_time": 1756227223.9427075
+    },
+    "gen39_mutant_8126": {
+      "parents": [
+        "gen38_mutant_8612"
+      ],
+      "technique": "mutation",
+      "generation": 39,
+      "birth_time": 1756227223.9427075
+    },
+    "gen39_mutant_7655": {
+      "parents": [
+        "gen38_mutant_8612"
+      ],
+      "technique": "mutation",
+      "generation": 39,
+      "birth_time": 1756227223.9427075
+    },
+    "gen39_mutant_8179": {
+      "parents": [
+        "gen38_mutant_8612"
+      ],
+      "technique": "mutation",
+      "generation": 39,
+      "birth_time": 1756227223.9427075
+    },
+    "gen39_mutant_1530": {
+      "parents": [
+        "gen36_mutant_7495"
+      ],
+      "technique": "mutation",
+      "generation": 39,
+      "birth_time": 1756227223.9427075
+    },
+    "gen40_mutant_3255": {
+      "parents": [
+        "gen39_mutant_8179"
+      ],
+      "technique": "mutation",
+      "generation": 40,
+      "birth_time": 1756227223.9427075
+    },
+    "gen40_mutant_4048": {
+      "parents": [
+        "gen36_mutant_7495"
+      ],
+      "technique": "mutation",
+      "generation": 40,
+      "birth_time": 1756227223.9427075
+    },
+    "gen40_mutant_8311": {
+      "parents": [
+        "gen36_mutant_7495"
+      ],
+      "technique": "mutation",
+      "generation": 40,
+      "birth_time": 1756227223.9427075
+    },
+    "gen40_mutant_3009": {
+      "parents": [
+        "gen39_mutant_8179"
+      ],
+      "technique": "mutation",
+      "generation": 40,
+      "birth_time": 1756227223.9427075
+    },
+    "gen40_mutant_2438": {
+      "parents": [
+        "gen39_mutant_8179"
+      ],
+      "technique": "mutation",
+      "generation": 40,
+      "birth_time": 1756227223.9427075
+    },
+    "gen40_mutant_5914": {
+      "parents": [
+        "gen36_mutant_7495"
+      ],
+      "technique": "mutation",
+      "generation": 40,
+      "birth_time": 1756227223.9427075
+    },
+    "gen41_mutant_9335": {
+      "parents": [
+        "gen39_mutant_8179"
+      ],
+      "technique": "mutation",
+      "generation": 41,
+      "birth_time": 1756227223.9427075
+    },
+    "gen41_mutant_1430": {
+      "parents": [
+        "gen39_mutant_8179"
+      ],
+      "technique": "mutation",
+      "generation": 41,
+      "birth_time": 1756227223.9427075
+    },
+    "gen41_mutant_2412": {
+      "parents": [
+        "gen40_mutant_3255"
+      ],
+      "technique": "mutation",
+      "generation": 41,
+      "birth_time": 1756227223.9427075
+    },
+    "gen41_mutant_7708": {
+      "parents": [
+        "gen39_mutant_8179"
+      ],
+      "technique": "mutation",
+      "generation": 41,
+      "birth_time": 1756227223.9427075
+    },
+    "gen41_mutant_9476": {
+      "parents": [
+        "gen39_mutant_8179"
+      ],
+      "technique": "mutation",
+      "generation": 41,
+      "birth_time": 1756227223.9427075
+    },
+    "gen41_mutant_3114": {
+      "parents": [
+        "gen40_mutant_3255"
+      ],
+      "technique": "mutation",
+      "generation": 41,
+      "birth_time": 1756227223.9427075
+    },
+    "gen42_mutant_5982": {
+      "parents": [
+        "gen40_mutant_3255"
+      ],
+      "technique": "mutation",
+      "generation": 42,
+      "birth_time": 1756227223.9427075
+    },
+    "gen42_mutant_9501": {
+      "parents": [
+        "gen39_mutant_8179"
+      ],
+      "technique": "mutation",
+      "generation": 42,
+      "birth_time": 1756227223.9427075
+    },
+    "gen42_mutant_3050": {
+      "parents": [
+        "gen40_mutant_3255"
+      ],
+      "technique": "mutation",
+      "generation": 42,
+      "birth_time": 1756227223.9427075
+    },
+    "gen42_mutant_6531": {
+      "parents": [
+        "gen40_mutant_3255"
+      ],
+      "technique": "mutation",
+      "generation": 42,
+      "birth_time": 1756227223.9427075
+    },
+    "gen42_mutant_7825": {
+      "parents": [
+        "gen39_mutant_8179"
+      ],
+      "technique": "mutation",
+      "generation": 42,
+      "birth_time": 1756227223.9427075
+    },
+    "gen42_mutant_8912": {
+      "parents": [
+        "gen39_mutant_8179"
+      ],
+      "technique": "mutation",
+      "generation": 42,
+      "birth_time": 1756227223.9427075
+    },
+    "gen43_mutant_1981": {
+      "parents": [
+        "gen39_mutant_8179"
+      ],
+      "technique": "mutation",
+      "generation": 43,
+      "birth_time": 1756227223.9427075
+    },
+    "gen43_mutant_6121": {
+      "parents": [
+        "gen39_mutant_8179"
+      ],
+      "technique": "mutation",
+      "generation": 43,
+      "birth_time": 1756227223.9427075
+    },
+    "gen43_mutant_7070": {
+      "parents": [
+        "gen40_mutant_3255"
+      ],
+      "technique": "mutation",
+      "generation": 43,
+      "birth_time": 1756227223.9427075
+    },
+    "gen43_mutant_2586": {
+      "parents": [
+        "gen39_mutant_8179"
+      ],
+      "technique": "mutation",
+      "generation": 43,
+      "birth_time": 1756227223.9427075
+    },
+    "gen43_mutant_3616": {
+      "parents": [
+        "gen39_mutant_8179"
+      ],
+      "technique": "mutation",
+      "generation": 43,
+      "birth_time": 1756227223.9427075
+    },
+    "gen43_mutant_9433": {
+      "parents": [
+        "gen40_mutant_3255"
+      ],
+      "technique": "mutation",
+      "generation": 43,
+      "birth_time": 1756227223.9427075
+    },
+    "gen44_mutant_4524": {
+      "parents": [
+        "gen40_mutant_3255"
+      ],
+      "technique": "mutation",
+      "generation": 44,
+      "birth_time": 1756227223.9427075
+    },
+    "gen44_mutant_8710": {
+      "parents": [
+        "gen40_mutant_3255"
+      ],
+      "technique": "mutation",
+      "generation": 44,
+      "birth_time": 1756227223.9427075
+    },
+    "gen44_mutant_6992": {
+      "parents": [
+        "gen40_mutant_3255"
+      ],
+      "technique": "mutation",
+      "generation": 44,
+      "birth_time": 1756227223.9427075
+    },
+    "gen44_mutant_5728": {
+      "parents": [
+        "gen40_mutant_3255"
+      ],
+      "technique": "mutation",
+      "generation": 44,
+      "birth_time": 1756227223.9427075
+    },
+    "gen44_mutant_2946": {
+      "parents": [
+        "gen39_mutant_8179"
+      ],
+      "technique": "mutation",
+      "generation": 44,
+      "birth_time": 1756227223.9427075
+    },
+    "gen44_mutant_6990": {
+      "parents": [
+        "gen39_mutant_8179"
+      ],
+      "technique": "mutation",
+      "generation": 44,
+      "birth_time": 1756227223.9427075
+    },
+    "gen45_mutant_8761": {
+      "parents": [
+        "gen44_mutant_4524"
+      ],
+      "technique": "mutation",
+      "generation": 45,
+      "birth_time": 1756227223.9427075
+    },
+    "gen45_mutant_6218": {
+      "parents": [
+        "gen39_mutant_8179"
+      ],
+      "technique": "mutation",
+      "generation": 45,
+      "birth_time": 1756227223.9427075
+    },
+    "gen45_mutant_9311": {
+      "parents": [
+        "gen44_mutant_4524"
+      ],
+      "technique": "mutation",
+      "generation": 45,
+      "birth_time": 1756227223.9427075
+    },
+    "gen45_mutant_2795": {
+      "parents": [
+        "gen39_mutant_8179"
+      ],
+      "technique": "mutation",
+      "generation": 45,
+      "birth_time": 1756227223.9427075
+    },
+    "gen45_mutant_1436": {
+      "parents": [
+        "gen39_mutant_8179"
+      ],
+      "technique": "mutation",
+      "generation": 45,
+      "birth_time": 1756227223.9427075
+    },
+    "gen45_mutant_4728": {
+      "parents": [
+        "gen39_mutant_8179"
+      ],
+      "technique": "mutation",
+      "generation": 45,
+      "birth_time": 1756227223.9427075
+    },
+    "gen46_mutant_7229": {
+      "parents": [
+        "gen45_mutant_8761"
+      ],
+      "technique": "mutation",
+      "generation": 46,
+      "birth_time": 1756227223.9427075
+    },
+    "gen46_mutant_4125": {
+      "parents": [
+        "gen45_mutant_8761"
+      ],
+      "technique": "mutation",
+      "generation": 46,
+      "birth_time": 1756227223.9427075
+    },
+    "gen46_mutant_9221": {
+      "parents": [
+        "gen45_mutant_8761"
+      ],
+      "technique": "mutation",
+      "generation": 46,
+      "birth_time": 1756227223.9427075
+    },
+    "gen46_mutant_4397": {
+      "parents": [
+        "gen44_mutant_4524"
+      ],
+      "technique": "mutation",
+      "generation": 46,
+      "birth_time": 1756227223.9427075
+    },
+    "gen46_mutant_8531": {
+      "parents": [
+        "gen44_mutant_4524"
+      ],
+      "technique": "mutation",
+      "generation": 46,
+      "birth_time": 1756227223.9427075
+    },
+    "gen46_mutant_5331": {
+      "parents": [
+        "gen44_mutant_4524"
+      ],
+      "technique": "mutation",
+      "generation": 46,
+      "birth_time": 1756227223.9427075
+    },
+    "gen47_mutant_5876": {
+      "parents": [
+        "gen45_mutant_8761"
+      ],
+      "technique": "mutation",
+      "generation": 47,
+      "birth_time": 1756227223.9427075
+    },
+    "gen47_mutant_5480": {
+      "parents": [
+        "gen45_mutant_8761"
+      ],
+      "technique": "mutation",
+      "generation": 47,
+      "birth_time": 1756227223.9427075
+    },
+    "gen47_mutant_6654": {
+      "parents": [
+        "gen45_mutant_8761"
+      ],
+      "technique": "mutation",
+      "generation": 47,
+      "birth_time": 1756227223.9427075
+    },
+    "gen47_mutant_8247": {
+      "parents": [
+        "gen46_mutant_4397"
+      ],
+      "technique": "mutation",
+      "generation": 47,
+      "birth_time": 1756227223.9427075
+    },
+    "gen47_mutant_5450": {
+      "parents": [
+        "gen45_mutant_8761"
+      ],
+      "technique": "mutation",
+      "generation": 47,
+      "birth_time": 1756227223.9427075
+    },
+    "gen47_mutant_4814": {
+      "parents": [
+        "gen46_mutant_4397"
+      ],
+      "technique": "mutation",
+      "generation": 47,
+      "birth_time": 1756227223.9427075
+    },
+    "gen48_mutant_3252": {
+      "parents": [
+        "gen47_mutant_4814"
+      ],
+      "technique": "mutation",
+      "generation": 48,
+      "birth_time": 1756227223.9427075
+    },
+    "gen48_mutant_8793": {
+      "parents": [
+        "gen47_mutant_4814"
+      ],
+      "technique": "mutation",
+      "generation": 48,
+      "birth_time": 1756227223.9427075
+    },
+    "gen48_mutant_1969": {
+      "parents": [
+        "gen46_mutant_4397"
+      ],
+      "technique": "mutation",
+      "generation": 48,
+      "birth_time": 1756227223.9427075
+    },
+    "gen48_mutant_1611": {
+      "parents": [
+        "gen47_mutant_4814"
+      ],
+      "technique": "mutation",
+      "generation": 48,
+      "birth_time": 1756227223.9427075
+    },
+    "gen48_mutant_7504": {
+      "parents": [
+        "gen47_mutant_4814"
+      ],
+      "technique": "mutation",
+      "generation": 48,
+      "birth_time": 1756227223.9427075
+    },
+    "gen48_mutant_1613": {
+      "parents": [
+        "gen46_mutant_4397"
+      ],
+      "technique": "mutation",
+      "generation": 48,
+      "birth_time": 1756227223.9427075
+    },
+    "gen49_mutant_8444": {
+      "parents": [
+        "gen47_mutant_4814"
+      ],
+      "technique": "mutation",
+      "generation": 49,
+      "birth_time": 1756227223.9437041
+    },
+    "gen49_mutant_2845": {
+      "parents": [
+        "gen48_mutant_3252"
+      ],
+      "technique": "mutation",
+      "generation": 49,
+      "birth_time": 1756227223.9437041
+    },
+    "gen49_mutant_6523": {
+      "parents": [
+        "gen48_mutant_3252"
+      ],
+      "technique": "mutation",
+      "generation": 49,
+      "birth_time": 1756227223.9437041
+    },
+    "gen49_mutant_7643": {
+      "parents": [
+        "gen48_mutant_3252"
+      ],
+      "technique": "mutation",
+      "generation": 49,
+      "birth_time": 1756227223.9437041
+    },
+    "gen49_mutant_5064": {
+      "parents": [
+        "gen48_mutant_3252"
+      ],
+      "technique": "mutation",
+      "generation": 49,
+      "birth_time": 1756227223.9437041
+    },
+    "gen49_mutant_5947": {
+      "parents": [
+        "gen47_mutant_4814"
+      ],
+      "technique": "mutation",
+      "generation": 49,
+      "birth_time": 1756227223.9437041
+    },
+    "gen50_mutant_8625": {
+      "parents": [
+        "gen47_mutant_4814"
+      ],
+      "technique": "mutation",
+      "generation": 50,
+      "birth_time": 1756227223.9437041
+    },
+    "gen50_mutant_6095": {
+      "parents": [
+        "gen48_mutant_3252"
+      ],
+      "technique": "mutation",
+      "generation": 50,
+      "birth_time": 1756227223.9437041
+    },
+    "gen50_mutant_3188": {
+      "parents": [
+        "gen47_mutant_4814"
+      ],
+      "technique": "mutation",
+      "generation": 50,
+      "birth_time": 1756227223.9437041
+    },
+    "gen50_mutant_9998": {
+      "parents": [
+        "gen48_mutant_3252"
+      ],
+      "technique": "mutation",
+      "generation": 50,
+      "birth_time": 1756227223.9437041
+    },
+    "gen50_mutant_2341": {
+      "parents": [
+        "gen48_mutant_3252"
+      ],
+      "technique": "mutation",
+      "generation": 50,
+      "birth_time": 1756227223.9437041
+    },
+    "gen50_mutant_9972": {
+      "parents": [
+        "gen48_mutant_3252"
+      ],
+      "technique": "mutation",
+      "generation": 50,
+      "birth_time": 1756227223.9437041
+    }
+  },
+  "diversity_preserved": 1,
+  "ready_for_deployment": true
+}

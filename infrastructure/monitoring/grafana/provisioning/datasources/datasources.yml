@@ -1,0 +1,140 @@
+# Grafana Datasources Configuration for AIVillage
+apiVersion: 1
+
+deleteDatasources:
+  - name: Prometheus
+    orgId: 1
+  - name: Jaeger
+    orgId: 1
+
+datasources:
+  # Prometheus for metrics
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    orgId: 1
+    url: http://prometheus:9090
+    basicAuth: false
+    isDefault: true
+    version: 1
+    editable: false
+    jsonData:
+      timeInterval: "5s"
+      httpMethod: "POST"
+      manageAlerts: true
+      prometheusType: "Prometheus"
+      prometheusVersion: "2.45.0"
+      cacheLevel: "High"
+    secureJsonData: {}
+
+  # Jaeger for distributed tracing
+  - name: Jaeger
+    type: jaeger
+    access: proxy
+    orgId: 1
+    url: http://jaeger:16686
+    basicAuth: false
+    isDefault: false
+    version: 1
+    editable: false
+    jsonData:
+      tracesToLogs:
+        datasourceUid: "loki"
+        tags: ["job", "instance", "pod", "namespace"]
+        mappedTags: [
+          { key: "service.name", value: "service" },
+          { key: "service.namespace", value: "namespace" }
+        ]
+        mapTagNamesEnabled: true
+        filterByTraceID: true
+        filterBySpanID: true
+      tracesToMetrics:
+        datasourceUid: "prometheus"
+        tags: [
+          { key: "service.name", value: "service" },
+          { key: "job", value: "job" }
+        ]
+        queries:
+          - name: "Sample query"
+            query: "sum(rate(traces_spanmetrics_latency_bucket{$$__tags}[5m]))"
+      nodeGraph:
+        enabled: true
+      search:
+        hide: false
+      spanBar:
+        type: "Tag"
+        tag: "http.path"
+
+  # Loki for log aggregation
+  - name: Loki
+    type: loki
+    access: proxy
+    orgId: 1
+    url: http://loki:3100
+    basicAuth: false
+    isDefault: false
+    version: 1
+    editable: false
+    uid: "loki"
+    jsonData:
+      derivedFields:
+        - datasourceUid: "jaeger"
+          matcherRegex: "trace_id=(\\w+)"
+          name: "TraceID"
+          url: "$${__value.raw}"
+        - datasourceUid: "jaeger"
+          matcherRegex: "trace_id=(\\w+)"
+          name: "View Trace"
+          url: "$${__value.raw}"
+          urlDisplayLabel: "View Trace"
+
+  # InfluxDB for long-term storage
+  - name: InfluxDB
+    type: influxdb
+    access: proxy
+    orgId: 1
+    url: http://influxdb:8086
+    database: aivillage_metrics
+    user: aivillage
+    basicAuth: false
+    isDefault: false
+    version: 1
+    editable: false
+    jsonData:
+      timeInterval: "10s"
+      httpMode: "GET"
+    secureJsonData:
+      password: "aivillage2024"
+
+  # Tempo for enhanced tracing (if available)
+  - name: Tempo
+    type: tempo
+    access: proxy
+    orgId: 1
+    url: http://tempo:3200
+    basicAuth: false
+    isDefault: false
+    version: 1
+    editable: false
+    jsonData:
+      tracesToLogs:
+        datasourceUid: "loki"
+        tags: ["job", "instance"]
+        mappedTags: [
+          { key: "service.name", value: "service" }
+        ]
+        filterByTraceID: true
+      tracesToMetrics:
+        datasourceUid: "prometheus"
+        tags: [
+          { key: "service.name", value: "service" },
+          { key: "job", value: "job" }
+        ]
+      serviceMap:
+        datasourceUid: "prometheus"
+      nodeGraph:
+        enabled: true
+      search:
+        hide: false
+      lokiSearch:
+        datasourceUid: "loki"

@@ -4,19 +4,16 @@ Simple Agent Forge API Server - Standalone Version
 No external dependencies, works with the consolidated cognate system
 """
 
-import asyncio
-import json
-import logging
-import sys
-import threading
-import time
 from datetime import datetime
+import logging
 from pathlib import Path
+import sys
+import time
 
-import uvicorn
 from fastapi import BackgroundTasks, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+import uvicorn
 
 # Setup logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(message)s")

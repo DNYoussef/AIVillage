@@ -31,7 +31,45 @@ import torch.nn as nn
 from tqdm import tqdm
 
 # Import base phase controller interface
-from packages.agent_forge.core.phase_controller import PhaseController, PhaseResult
+# Try to import PhaseController, with fallback for direct imports
+try:
+    from ..core.phase_controller import PhaseController, PhaseResult
+except (ImportError, ValueError):
+    # Fallback for direct imports - create minimal base classes
+    from abc import ABC, abstractmethod
+    from dataclasses import dataclass
+    from datetime import datetime
+    from typing import Any
+
+    import torch.nn as nn
+
+    @dataclass
+    class PhaseResult:
+        success: bool
+        model: nn.Module
+        phase_name: str = None
+        metrics: dict = None
+        duration_seconds: float = 0.0
+        artifacts: dict = None
+        config: dict = None
+        error: str = None
+        start_time: datetime = None
+        end_time: datetime = None
+
+        def __post_init__(self):
+            if self.end_time is None:
+                self.end_time = datetime.now()
+            if self.start_time is None:
+                self.start_time = self.end_time
+
+    class PhaseController(ABC):
+        def __init__(self, config: Any):
+            self.config = config
+
+        @abstractmethod
+        async def run(self, model: nn.Module) -> PhaseResult:
+            pass
+
 
 logger = logging.getLogger(__name__)
 

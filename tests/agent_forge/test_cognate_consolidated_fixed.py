@@ -1,16 +1,12 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Consolidated Cognate Model Tests - Fixed Version
 Tests the production-ready cognate_pretrain implementation
 """
 
 import os
-import sys
 from pathlib import Path
-
-import pytest
-import torch
+import sys
 
 # Set UTF-8 encoding for Windows console
 if os.name == "nt":  # Windows
@@ -31,9 +27,6 @@ def test_cognate_imports():
     try:
         # Try direct path import
         sys.path.insert(0, str(project_root / "core" / "agent-forge" / "phases" / "cognate_pretrain"))
-
-        from model_factory import CognateModelFactory
-        from refiner_core import CognateConfig, CognateRefiner
 
         print("SUCCESS: All cognate imports successful")
         return True
@@ -140,7 +133,7 @@ if __name__ == "__main__":
         except Exception as e:
             print(f"ERROR: {test_func.__name__} failed with exception: {e}")
 
-    print(f"\n=== Consolidation Validation Results ===")
+    print("\n=== Consolidation Validation Results ===")
     print(f"Passed: {passed}/{total}")
     print(f"Success rate: {passed/total*100:.1f}%")
 

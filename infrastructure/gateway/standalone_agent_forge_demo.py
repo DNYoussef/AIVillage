@@ -4,13 +4,11 @@ Standalone Agent Forge Demo - No External Dependencies
 Demonstrates the consolidated Agent Forge system working
 """
 
-import asyncio
-import json
+from datetime import datetime
 import logging
+from pathlib import Path
 import sys
 import time
-from datetime import datetime
-from pathlib import Path
 
 # Simple logging setup
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(message)s")
@@ -132,7 +130,7 @@ class SimpleAgentForgeDemo:
             "output_directory": "core/agent-forge/phases/cognate_pretrain/models",
         }
 
-        print(f"\nPHASE COMPLETE!")
+        print("\nPHASE COMPLETE!")
         print(f"Models created: {len(created_models)}")
         print(f"Total parameters: {sum(m['parameter_count'] for m in created_models):,}")
 
@@ -159,9 +157,9 @@ class SimpleAgentForgeDemo:
                 f"I'm a {model_info['parameter_count']:,} parameter model ready for advanced AI tasks!"
             )
 
-            print(f"User: Hello, introduce yourself")
+            print("User: Hello, introduce yourself")
             print(f"Model: {response}")
-            print(f"Response time: 150ms")
+            print("Response time: 150ms")
 
     def show_system_status(self):
         """Show overall system status."""
@@ -179,7 +177,7 @@ class SimpleAgentForgeDemo:
 
         total_params = sum(m["parameter_count"] for m in self.model_storage.values())
         print(f"\nTotal Parameters: {total_params:,}")
-        print(f"System Status: OPERATIONAL")
+        print("System Status: OPERATIONAL")
 
     def run_complete_demo(self):
         """Run the complete Agent Forge demonstration."""
@@ -190,7 +188,7 @@ class SimpleAgentForgeDemo:
         print("'START COGNATE' in the UI interface.\n")
 
         # Step 1: Create models
-        created_models = self.simulate_cognate_creation()
+        self.simulate_cognate_creation()
 
         # Step 2: Demonstrate chat
         self.demonstrate_model_chat()

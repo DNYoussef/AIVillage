@@ -1,0 +1,261 @@
+{
+  "agent_id": "demo-village-001",
+  "last_updated": "2025-08-26T22:56:25.792380",
+  "entries": [
+    {
+      "timestamp": "2025-08-26T22:25:35.514783",
+      "type": "initialization",
+      "content": "Village agent initialized successfully",
+      "metadata": {
+        "capabilities": [
+          "personal_journal",
+          "vector_memory_surprise_detection",
+          "hyperrag_knowledge_exploration",
+          "multimodal_io_processing",
+          "daily_refinement",
+          "pattern_recognition",
+          "knowledge_synthesis",
+          "adaptive_learning"
+        ]
+      }
+    },
+    {
+      "timestamp": "2025-08-26T22:25:35.516778",
+      "type": "task_completion",
+      "content": "Completed knowledge_exploration: What are the key features of Village integration?",
+      "metadata": {
+        "task_type": "knowledge_exploration",
+        "processing_time": 0.0,
+        "success": true
+      }
+    },
+    {
+      "timestamp": "2025-08-26T22:25:35.530739",
+      "type": "task_completion",
+      "content": "Completed surprise_analysis: Completely unexpected quantum computing breakthrough in agent reasoning",
+      "metadata": {
+        "task_type": "surprise_analysis",
+        "processing_time": 0.012965,
+        "success": true
+      }
+    },
+    {
+      "timestamp": "2025-08-26T22:25:35.531737",
+      "type": "task_completion",
+      "content": "Completed multimodal_processing: ",
+      "metadata": {
+        "task_type": "multimodal_processing",
+        "processing_time": 0.0,
+        "success": true
+      }
+    },
+    {
+      "timestamp": "2025-08-26T22:25:35.532737",
+      "type": "daily_reflection",
+      "content": "No specific information found for query: Daily reflection on recent activities: [{'type': 'activity_summary', 'content': 'Analyzed 4 recent activities', 'entry_count': 4}]",
+      "metadata": {
+        "insights": [
+          {
+            "type": "activity_summary",
+            "content": "Analyzed 4 recent activities",
+            "entry_count": 4
+          }
+        ],
+        "days_analyzed": 1
+      }
+    },
+    {
+      "timestamp": "2025-08-26T22:25:35.533733",
+      "type": "task_completion",
+      "content": "Completed daily_reflection: Generate insights from today's activities",
+      "metadata": {
+        "task_type": "daily_reflection",
+        "processing_time": 0.000996,
+        "success": true
+      }
+    },
+    {
+      "timestamp": "2025-08-26T22:25:35.534730",
+      "type": "shutdown",
+      "content": "Village agent shutting down",
+      "metadata": {
+        "final_metrics": {
+          "tasks_completed": 4,
+          "journal_entries": 6,
+          "memories_stored": 1,
+          "streams_processed": 1
+        }
+      }
+    },
+    {
+      "timestamp": "2025-08-26T22:34:49.256833",
+      "type": "initialization",
+      "content": "Village agent initialized successfully",
+      "metadata": {
+        "capabilities": [
+          "personal_journal",
+          "vector_memory_surprise_detection",
+          "hyperrag_knowledge_exploration",
+          "multimodal_io_processing",
+          "daily_refinement",
+          "pattern_recognition",
+          "knowledge_synthesis",
+          "adaptive_learning"
+        ]
+      }
+    },
+    {
+      "timestamp": "2025-08-26T22:34:49.258828",
+      "type": "task_completion",
+      "content": "Completed knowledge_exploration: What are the key features of Village integration?",
+      "metadata": {
+        "task_type": "knowledge_exploration",
+        "processing_time": 0.0,
+        "success": true
+      }
+    },
+    {
+      "timestamp": "2025-08-26T22:34:49.264812",
+      "type": "task_completion",
+      "content": "Completed surprise_analysis: Completely unexpected quantum computing breakthrough in agent reasoning",
+      "metadata": {
+        "task_type": "surprise_analysis",
+        "processing_time": 0.004987,
+        "success": true
+      }
+    },
+    {
+      "timestamp": "2025-08-26T22:34:49.266807",
+      "type": "task_completion",
+      "content": "Completed multimodal_processing: ",
+      "metadata": {
+        "task_type": "multimodal_processing",
+        "processing_time": 0.0,
+        "success": true
+      }
+    },
+    {
+      "timestamp": "2025-08-26T22:34:49.267804",
+      "type": "daily_reflection",
+      "content": "No specific information found for query: Daily reflection on recent activities: [{'type': 'activity_summary', 'content': 'Analyzed 11 recent activities', 'entry_count': 11}]",
+      "metadata": {
+        "insights": [
+          {
+            "type": "activity_summary",
+            "content": "Analyzed 11 recent activities",
+            "entry_count": 11
+          }
+        ],
+        "days_analyzed": 1
+      }
+    },
+    {
+      "timestamp": "2025-08-26T22:34:49.268802",
+      "type": "task_completion",
+      "content": "Completed daily_reflection: Generate insights from today's activities",
+      "metadata": {
+        "task_type": "daily_reflection",
+        "processing_time": 0.000998,
+        "success": true
+      }
+    },
+    {
+      "timestamp": "2025-08-26T22:34:49.269800",
+      "type": "shutdown",
+      "content": "Village agent shutting down",
+      "metadata": {
+        "final_metrics": {
+          "tasks_completed": 4,
+          "journal_entries": 13,
+          "memories_stored": 1,
+          "streams_processed": 1
+        }
+      }
+    },
+    {
+      "timestamp": "2025-08-26T22:56:25.784401",
+      "type": "initialization",
+      "content": "Village agent initialized successfully",
+      "metadata": {
+        "capabilities": [
+          "personal_journal",
+          "vector_memory_surprise_detection",
+          "hyperrag_knowledge_exploration",
+          "multimodal_io_processing",
+          "daily_refinement",
+          "pattern_recognition",
+          "knowledge_synthesis",
+          "adaptive_learning"
+        ]
+      }
+    },
+    {
+      "timestamp": "2025-08-26T22:56:25.785399",
+      "type": "task_completion",
+      "content": "Completed knowledge_exploration: What are the key features of Village integration?",
+      "metadata": {
+        "task_type": "knowledge_exploration",
+        "processing_time": 0.0,
+        "success": true
+      }
+    },
+    {
+      "timestamp": "2025-08-26T22:56:25.788391",
+      "type": "task_completion",
+      "content": "Completed surprise_analysis: Completely unexpected quantum computing breakthrough in agent reasoning",
+      "metadata": {
+        "task_type": "surprise_analysis",
+        "processing_time": 0.001994,
+        "success": true
+      }
+    },
+    {
+      "timestamp": "2025-08-26T22:56:25.789388",
+      "type": "task_completion",
+      "content": "Completed multimodal_processing: ",
+      "metadata": {
+        "task_type": "multimodal_processing",
+        "processing_time": 0.0,
+        "success": true
+      }
+    },
+    {
+      "timestamp": "2025-08-26T22:56:25.790385",
+      "type": "daily_reflection",
+      "content": "No specific information found for query: Daily reflection on recent activities: [{'type': 'activity_summary', 'content': 'Analyzed 18 recent activities', 'entry_count': 18}]",
+      "metadata": {
+        "insights": [
+          {
+            "type": "activity_summary",
+            "content": "Analyzed 18 recent activities",
+            "entry_count": 18
+          }
+        ],
+        "days_analyzed": 1
+      }
+    },
+    {
+      "timestamp": "2025-08-26T22:56:25.791383",
+      "type": "task_completion",
+      "content": "Completed daily_reflection: Generate insights from today's activities",
+      "metadata": {
+        "task_type": "daily_reflection",
+        "processing_time": 0.000998,
+        "success": true
+      }
+    },
+    {
+      "timestamp": "2025-08-26T22:56:25.791383",
+      "type": "shutdown",
+      "content": "Village agent shutting down",
+      "metadata": {
+        "final_metrics": {
+          "tasks_completed": 4,
+          "journal_entries": 20,
+          "memories_stored": 1,
+          "streams_processed": 1
+        }
+      }
+    }
+  ]
+}

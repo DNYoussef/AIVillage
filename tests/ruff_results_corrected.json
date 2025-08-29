@@ -1,0 +1,1547 @@
+[
+  {
+    "code": "E402",
+    "message": "Module level import not at top of file",
+    "fix": null,
+    "location": {
+      "row": 22,
+      "column": 1
+    },
+    "end_location": {
+      "row": 22,
+      "column": 34
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\agent_forge\\experiments\\download_benchmarks.py",
+    "noqa_row": 22
+  },
+  {
+    "code": "E402",
+    "message": "Module level import not at top of file",
+    "fix": null,
+    "location": {
+      "row": 17,
+      "column": 1
+    },
+    "end_location": {
+      "row": 17,
+      "column": 73
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\agent_forge\\experiments\\export_hrrm_hf.py",
+    "noqa_row": 17
+  },
+  {
+    "code": "E402",
+    "message": "Module level import not at top of file",
+    "fix": null,
+    "location": {
+      "row": 18,
+      "column": 1
+    },
+    "end_location": {
+      "row": 18,
+      "column": 54
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\agent_forge\\experiments\\export_hrrm_hf.py",
+    "noqa_row": 18
+  },
+  {
+    "code": "E402",
+    "message": "Module level import not at top of file",
+    "fix": null,
+    "location": {
+      "row": 19,
+      "column": 1
+    },
+    "end_location": {
+      "row": 19,
+      "column": 51
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\agent_forge\\experiments\\export_hrrm_hf.py",
+    "noqa_row": 19
+  },
+  {
+    "code": "E402",
+    "message": "Module level import not at top of file",
+    "fix": null,
+    "location": {
+      "row": 20,
+      "column": 1
+    },
+    "end_location": {
+      "row": 20,
+      "column": 69
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\agent_forge\\experiments\\export_hrrm_hf.py",
+    "noqa_row": 20
+  },
+  {
+    "code": "E722",
+    "message": "Do not use bare `except`",
+    "fix": null,
+    "location": {
+      "row": 345,
+      "column": 13
+    },
+    "end_location": {
+      "row": 345,
+      "column": 19
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\agent_forge\\phases\\bitnet_compression.py",
+    "noqa_row": 345
+  },
+  {
+    "code": "E741",
+    "message": "Ambiguous variable name: `l`",
+    "fix": null,
+    "location": {
+      "row": 1171,
+      "column": 51
+    },
+    "end_location": {
+      "row": 1171,
+      "column": 52
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\agent_forge\\phases\\evomerge.py",
+    "noqa_row": 1171
+  },
+  {
+    "code": "E402",
+    "message": "Module level import not at top of file",
+    "fix": null,
+    "location": {
+      "row": 15,
+      "column": 1
+    },
+    "end_location": {
+      "row": 15,
+      "column": 50
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\api\\start_api_servers.py",
+    "noqa_row": 15
+  },
+  {
+    "code": "E402",
+    "message": "Module level import not at top of file",
+    "fix": null,
+    "location": {
+      "row": 17,
+      "column": 1
+    },
+    "end_location": {
+      "row": 17,
+      "column": 43
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\api\\start_api_servers.py",
+    "noqa_row": 17
+  },
+  {
+    "code": "E402",
+    "message": "Module level import not at top of file",
+    "fix": null,
+    "location": {
+      "row": 18,
+      "column": 1
+    },
+    "end_location": {
+      "row": 18,
+      "column": 15
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\api\\start_api_servers.py",
+    "noqa_row": 18
+  },
+  {
+    "code": "E402",
+    "message": "Module level import not at top of file",
+    "fix": null,
+    "location": {
+      "row": 23,
+      "column": 1
+    },
+    "end_location": {
+      "row": 23,
+      "column": 109
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\api\\start_api_servers.py",
+    "noqa_row": 23
+  },
+  {
+    "code": "F811",
+    "message": "Redefinition of unused `uvicorn` from line 18",
+    "fix": null,
+    "location": {
+      "row": 401,
+      "column": 16
+    },
+    "end_location": {
+      "row": 401,
+      "column": 23
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\api\\start_api_servers.py",
+    "noqa_row": 401
+  },
+  {
+    "code": "E402",
+    "message": "Module level import not at top of file",
+    "fix": null,
+    "location": {
+      "row": 16,
+      "column": 1
+    },
+    "end_location": {
+      "row": 16,
+      "column": 13
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\core\\aivillage-module\\__init__.py",
+    "noqa_row": 16
+  },
+  {
+    "code": "E402",
+    "message": "Module level import not at top of file",
+    "fix": null,
+    "location": {
+      "row": 14,
+      "column": 1
+    },
+    "end_location": {
+      "row": 14,
+      "column": 75
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\core\\benchmarks\\benchmark_advanced_compression.py",
+    "noqa_row": 14
+  },
+  {
+    "code": "E402",
+    "message": "Module level import not at top of file",
+    "fix": null,
+    "location": {
+      "row": 15,
+      "column": 1
+    },
+    "end_location": {
+      "row": 15,
+      "column": 62
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\core\\benchmarks\\benchmark_advanced_compression.py",
+    "noqa_row": 15
+  },
+  {
+    "code": "E402",
+    "message": "Module level import not at top of file",
+    "fix": null,
+    "location": {
+      "row": 14,
+      "column": 1
+    },
+    "end_location": {
+      "row": 14,
+      "column": 51
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\core\\benchmarks\\benchmark_unified_compression.py",
+    "noqa_row": 14
+  },
+  {
+    "code": "E402",
+    "message": "Module level import not at top of file",
+    "fix": null,
+    "location": {
+      "row": 16,
+      "column": 1
+    },
+    "end_location": {
+      "row": 16,
+      "column": 75
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\core\\benchmarks\\benchmark_unified_compression.py",
+    "noqa_row": 16
+  },
+  {
+    "code": "E402",
+    "message": "Module level import not at top of file",
+    "fix": null,
+    "location": {
+      "row": 17,
+      "column": 1
+    },
+    "end_location": {
+      "row": 17,
+      "column": 62
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\core\\benchmarks\\benchmark_unified_compression.py",
+    "noqa_row": 17
+  },
+  {
+    "code": "E402",
+    "message": "Module level import not at top of file",
+    "fix": null,
+    "location": {
+      "row": 34,
+      "column": 1
+    },
+    "end_location": {
+      "row": 34,
+      "column": 75
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\core\\benchmarks\\hyperag_creativity.py",
+    "noqa_row": 34
+  },
+  {
+    "code": "E402",
+    "message": "Module level import not at top of file",
+    "fix": null,
+    "location": {
+      "row": 34,
+      "column": 1
+    },
+    "end_location": {
+      "row": 34,
+      "column": 59
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\core\\benchmarks\\hyperag_repair_test_suite.py",
+    "noqa_row": 34
+  },
+  {
+    "code": "E402",
+    "message": "Module level import not at top of file",
+    "fix": null,
+    "location": {
+      "row": 35,
+      "column": 1
+    },
+    "end_location": {
+      "row": 35,
+      "column": 70
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\core\\benchmarks\\hyperag_repair_test_suite.py",
+    "noqa_row": 35
+  },
+  {
+    "code": "F811",
+    "message": "Redefinition of unused `asyncio` from line 12",
+    "fix": null,
+    "location": {
+      "row": 454,
+      "column": 12
+    },
+    "end_location": {
+      "row": 454,
+      "column": 19
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\core\\common\\http_client.py",
+    "noqa_row": 454
+  },
+  {
+    "code": "E402",
+    "message": "Module level import not at top of file",
+    "fix": null,
+    "location": {
+      "row": 100,
+      "column": 1
+    },
+    "end_location": {
+      "row": 100,
+      "column": 58
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\core\\legacy\\communication.py",
+    "noqa_row": 100
+  },
+  {
+    "code": "F811",
+    "message": "Redefinition of unused `asyncio` from line 12",
+    "fix": null,
+    "location": {
+      "row": 727,
+      "column": 12
+    },
+    "end_location": {
+      "row": 727,
+      "column": 19
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\core\\legacy\\database\\database_manager.py",
+    "noqa_row": 727
+  },
+  {
+    "code": "F811",
+    "message": "Redefinition of unused `tempfile` from line 14",
+    "fix": null,
+    "location": {
+      "row": 580,
+      "column": 12
+    },
+    "end_location": {
+      "row": 580,
+      "column": 20
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\core\\legacy\\security\\secure_file_upload.py",
+    "noqa_row": 580
+  },
+  {
+    "code": "F811",
+    "message": "Redefinition of unused `dataclass` from line 18",
+    "fix": null,
+    "location": {
+      "row": 33,
+      "column": 29
+    },
+    "end_location": {
+      "row": 33,
+      "column": 38
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\core\\legacy\\transport\\navigator_mobile_integration.py",
+    "noqa_row": 33
+  },
+  {
+    "code": "F811",
+    "message": "Redefinition of unused `field` from line 18",
+    "fix": null,
+    "location": {
+      "row": 33,
+      "column": 40
+    },
+    "end_location": {
+      "row": 33,
+      "column": 45
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\core\\legacy\\transport\\navigator_mobile_integration.py",
+    "noqa_row": 33
+  },
+  {
+    "code": "F811",
+    "message": "Redefinition of unused `Enum` from line 19",
+    "fix": null,
+    "location": {
+      "row": 34,
+      "column": 22
+    },
+    "end_location": {
+      "row": 34,
+      "column": 26
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\core\\legacy\\transport\\navigator_mobile_integration.py",
+    "noqa_row": 34
+  },
+  {
+    "code": "F402",
+    "message": "Import `field` from line 13 shadowed by loop variable",
+    "fix": null,
+    "location": {
+      "row": 362,
+      "column": 21
+    },
+    "end_location": {
+      "row": 362,
+      "column": 26
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\core\\operations\\artifact_collector.py",
+    "noqa_row": 362
+  },
+  {
+    "code": "E741",
+    "message": "Ambiguous variable name: `l`",
+    "fix": null,
+    "location": {
+      "row": 810,
+      "column": 27
+    },
+    "end_location": {
+      "row": 810,
+      "column": 28
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\core\\security\\rbac_system.py",
+    "noqa_row": 810
+  },
+  {
+    "code": "E741",
+    "message": "Ambiguous variable name: `l`",
+    "fix": null,
+    "location": {
+      "row": 812,
+      "column": 27
+    },
+    "end_location": {
+      "row": 812,
+      "column": 28
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\core\\security\\rbac_system.py",
+    "noqa_row": 812
+  },
+  {
+    "code": "E741",
+    "message": "Ambiguous variable name: `l`",
+    "fix": null,
+    "location": {
+      "row": 814,
+      "column": 27
+    },
+    "end_location": {
+      "row": 814,
+      "column": 28
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\core\\security\\rbac_system.py",
+    "noqa_row": 814
+  },
+  {
+    "code": "E722",
+    "message": "Do not use bare `except`",
+    "fix": null,
+    "location": {
+      "row": 349,
+      "column": 13
+    },
+    "end_location": {
+      "row": 349,
+      "column": 19
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\core\\tools\\p2p\\hw_probe.py",
+    "noqa_row": 349
+  },
+  {
+    "code": "E722",
+    "message": "Do not use bare `except`",
+    "fix": null,
+    "location": {
+      "row": 170,
+      "column": 9
+    },
+    "end_location": {
+      "row": 170,
+      "column": 15
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\core\\tools\\security\\verify_p2p_security.py",
+    "noqa_row": 170
+  },
+  {
+    "code": "E402",
+    "message": "Module level import not at top of file",
+    "fix": null,
+    "location": {
+      "row": 22,
+      "column": 1
+    },
+    "end_location": {
+      "row": 22,
+      "column": 34
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\core\\training\\scripts\\download_benchmarks.py",
+    "noqa_row": 22
+  },
+  {
+    "code": "E402",
+    "message": "Module level import not at top of file",
+    "fix": null,
+    "location": {
+      "row": 21,
+      "column": 1
+    },
+    "end_location": {
+      "row": 21,
+      "column": 73
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\core\\training\\scripts\\enhanced_hrrm_training.py",
+    "noqa_row": 21
+  },
+  {
+    "code": "E402",
+    "message": "Module level import not at top of file",
+    "fix": null,
+    "location": {
+      "row": 22,
+      "column": 1
+    },
+    "end_location": {
+      "row": 22,
+      "column": 54
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\core\\training\\scripts\\enhanced_hrrm_training.py",
+    "noqa_row": 22
+  },
+  {
+    "code": "E402",
+    "message": "Module level import not at top of file",
+    "fix": null,
+    "location": {
+      "row": 23,
+      "column": 1
+    },
+    "end_location": {
+      "row": 23,
+      "column": 51
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\core\\training\\scripts\\enhanced_hrrm_training.py",
+    "noqa_row": 23
+  },
+  {
+    "code": "E402",
+    "message": "Module level import not at top of file",
+    "fix": null,
+    "location": {
+      "row": 24,
+      "column": 1
+    },
+    "end_location": {
+      "row": 24,
+      "column": 69
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\core\\training\\scripts\\enhanced_hrrm_training.py",
+    "noqa_row": 24
+  },
+  {
+    "code": "E402",
+    "message": "Module level import not at top of file",
+    "fix": null,
+    "location": {
+      "row": 16,
+      "column": 1
+    },
+    "end_location": {
+      "row": 16,
+      "column": 73
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\core\\training\\scripts\\simple_train_hrrm.py",
+    "noqa_row": 16
+  },
+  {
+    "code": "E402",
+    "message": "Module level import not at top of file",
+    "fix": null,
+    "location": {
+      "row": 17,
+      "column": 1
+    },
+    "end_location": {
+      "row": 17,
+      "column": 54
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\core\\training\\scripts\\simple_train_hrrm.py",
+    "noqa_row": 17
+  },
+  {
+    "code": "E402",
+    "message": "Module level import not at top of file",
+    "fix": null,
+    "location": {
+      "row": 18,
+      "column": 1
+    },
+    "end_location": {
+      "row": 18,
+      "column": 51
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\core\\training\\scripts\\simple_train_hrrm.py",
+    "noqa_row": 18
+  },
+  {
+    "code": "E402",
+    "message": "Module level import not at top of file",
+    "fix": null,
+    "location": {
+      "row": 19,
+      "column": 1
+    },
+    "end_location": {
+      "row": 19,
+      "column": 69
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\core\\training\\scripts\\simple_train_hrrm.py",
+    "noqa_row": 19
+  },
+  {
+    "code": "E402",
+    "message": "Module level import not at top of file",
+    "fix": null,
+    "location": {
+      "row": 19,
+      "column": 1
+    },
+    "end_location": {
+      "row": 19,
+      "column": 73
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\core\\training\\scripts\\train_50m_hrrm.py",
+    "noqa_row": 19
+  },
+  {
+    "code": "E402",
+    "message": "Module level import not at top of file",
+    "fix": null,
+    "location": {
+      "row": 20,
+      "column": 1
+    },
+    "end_location": {
+      "row": 20,
+      "column": 54
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\core\\training\\scripts\\train_50m_hrrm.py",
+    "noqa_row": 20
+  },
+  {
+    "code": "E402",
+    "message": "Module level import not at top of file",
+    "fix": null,
+    "location": {
+      "row": 21,
+      "column": 1
+    },
+    "end_location": {
+      "row": 21,
+      "column": 51
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\core\\training\\scripts\\train_50m_hrrm.py",
+    "noqa_row": 21
+  },
+  {
+    "code": "E402",
+    "message": "Module level import not at top of file",
+    "fix": null,
+    "location": {
+      "row": 22,
+      "column": 1
+    },
+    "end_location": {
+      "row": 22,
+      "column": 69
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\core\\training\\scripts\\train_50m_hrrm.py",
+    "noqa_row": 22
+  },
+  {
+    "code": "E722",
+    "message": "Do not use bare `except`",
+    "fix": null,
+    "location": {
+      "row": 186,
+      "column": 21
+    },
+    "end_location": {
+      "row": 186,
+      "column": 27
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\core\\training\\scripts\\train_50m_hrrm.py",
+    "noqa_row": 186
+  },
+  {
+    "code": "E722",
+    "message": "Do not use bare `except`",
+    "fix": null,
+    "location": {
+      "row": 205,
+      "column": 21
+    },
+    "end_location": {
+      "row": 205,
+      "column": 27
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\core\\training\\scripts\\train_50m_hrrm.py",
+    "noqa_row": 205
+  },
+  {
+    "code": "E722",
+    "message": "Do not use bare `except`",
+    "fix": null,
+    "location": {
+      "row": 289,
+      "column": 13
+    },
+    "end_location": {
+      "row": 289,
+      "column": 19
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\core\\training\\scripts\\train_50m_hrrm.py",
+    "noqa_row": 289
+  },
+  {
+    "code": "E722",
+    "message": "Do not use bare `except`",
+    "fix": null,
+    "location": {
+      "row": 526,
+      "column": 5
+    },
+    "end_location": {
+      "row": 526,
+      "column": 11
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\core\\training\\scripts\\train_50m_hrrm.py",
+    "noqa_row": 526
+  },
+  {
+    "code": "E402",
+    "message": "Module level import not at top of file",
+    "fix": null,
+    "location": {
+      "row": 52,
+      "column": 1
+    },
+    "end_location": {
+      "row": 58,
+      "column": 2
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\edge\\legacy_src\\federated_learning\\test_fl_coordinator.py",
+    "noqa_row": 52
+  },
+  {
+    "code": "E402",
+    "message": "Module level import not at top of file",
+    "fix": null,
+    "location": {
+      "row": 53,
+      "column": 1
+    },
+    "end_location": {
+      "row": 58,
+      "column": 2
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\edge\\legacy_src\\federated_learning\\test_hierarchical_aggregation.py",
+    "noqa_row": 53
+  },
+  {
+    "code": "E402",
+    "message": "Module level import not at top of file",
+    "fix": null,
+    "location": {
+      "row": 52,
+      "column": 1
+    },
+    "end_location": {
+      "row": 57,
+      "column": 2
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\edge\\legacy_src\\federated_learning\\test_privacy_preservation.py",
+    "noqa_row": 52
+  },
+  {
+    "code": "F821",
+    "message": "Undefined name `ComplianceResult`",
+    "fix": null,
+    "location": {
+      "row": 451,
+      "column": 68
+    },
+    "end_location": {
+      "row": 451,
+      "column": 84
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\fog\\gateway\\api\\sandboxes.py",
+    "noqa_row": 451
+  },
+  {
+    "code": "F821",
+    "message": "Undefined name `NodeAssignment`",
+    "fix": null,
+    "location": {
+      "row": 505,
+      "column": 66
+    },
+    "end_location": {
+      "row": 505,
+      "column": 80
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\fog\\gateway\\api\\sandboxes.py",
+    "noqa_row": 505
+  },
+  {
+    "code": "E741",
+    "message": "Ambiguous variable name: `l`",
+    "fix": null,
+    "location": {
+      "row": 511,
+      "column": 41
+    },
+    "end_location": {
+      "row": 511,
+      "column": 42
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\fog\\gateway\\scheduler\\marketplace.py",
+    "noqa_row": 511
+  },
+  {
+    "code": "E741",
+    "message": "Ambiguous variable name: `l`",
+    "fix": null,
+    "location": {
+      "row": 512,
+      "column": 44
+    },
+    "end_location": {
+      "row": 512,
+      "column": 45
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\fog\\gateway\\scheduler\\marketplace.py",
+    "noqa_row": 512
+  },
+  {
+    "code": "E741",
+    "message": "Ambiguous variable name: `l`",
+    "fix": null,
+    "location": {
+      "row": 513,
+      "column": 43
+    },
+    "end_location": {
+      "row": 513,
+      "column": 44
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\fog\\gateway\\scheduler\\marketplace.py",
+    "noqa_row": 513
+  },
+  {
+    "code": "E741",
+    "message": "Ambiguous variable name: `l`",
+    "fix": null,
+    "location": {
+      "row": 681,
+      "column": 52
+    },
+    "end_location": {
+      "row": 681,
+      "column": 53
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\fog\\gateway\\scheduler\\marketplace.py",
+    "noqa_row": 681
+  },
+  {
+    "code": "E741",
+    "message": "Ambiguous variable name: `l`",
+    "fix": null,
+    "location": {
+      "row": 719,
+      "column": 53
+    },
+    "end_location": {
+      "row": 719,
+      "column": 54
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\fog\\gateway\\scheduler\\marketplace.py",
+    "noqa_row": 719
+  },
+  {
+    "code": "E402",
+    "message": "Module level import not at top of file",
+    "fix": null,
+    "location": {
+      "row": 19,
+      "column": 1
+    },
+    "end_location": {
+      "row": 19,
+      "column": 22
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\p2p\\betanet-bounty\\python\\test_betanet_cover.py",
+    "noqa_row": 19
+  },
+  {
+    "code": "E402",
+    "message": "Module level import not at top of file",
+    "fix": null,
+    "location": {
+      "row": 17,
+      "column": 1
+    },
+    "end_location": {
+      "row": 17,
+      "column": 42
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\p2p\\betanet-bounty\\python\\test_betanet_tls_quic.py",
+    "noqa_row": 17
+  },
+  {
+    "code": "E402",
+    "message": "Module level import not at top of file",
+    "fix": null,
+    "location": {
+      "row": 18,
+      "column": 1
+    },
+    "end_location": {
+      "row": 18,
+      "column": 72
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\p2p\\betanet-bounty\\python\\test_betanet_tls_quic.py",
+    "noqa_row": 18
+  },
+  {
+    "code": "E741",
+    "message": "Ambiguous variable name: `l`",
+    "fix": null,
+    "location": {
+      "row": 21,
+      "column": 70
+    },
+    "end_location": {
+      "row": 21,
+      "column": 71
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\p2p\\communications\\sharder.py",
+    "noqa_row": 21
+  },
+  {
+    "code": "E741",
+    "message": "Ambiguous variable name: `l`",
+    "fix": null,
+    "location": {
+      "row": 29,
+      "column": 13
+    },
+    "end_location": {
+      "row": 29,
+      "column": 14
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\p2p\\communications\\sharder.py",
+    "noqa_row": 29
+  },
+  {
+    "code": "E741",
+    "message": "Ambiguous variable name: `l`",
+    "fix": null,
+    "location": {
+      "row": 34,
+      "column": 90
+    },
+    "end_location": {
+      "row": 34,
+      "column": 91
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\p2p\\communications\\sharder.py",
+    "noqa_row": 34
+  },
+  {
+    "code": "E741",
+    "message": "Ambiguous variable name: `l`",
+    "fix": null,
+    "location": {
+      "row": 39,
+      "column": 13
+    },
+    "end_location": {
+      "row": 39,
+      "column": 14
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\p2p\\communications\\sharder.py",
+    "noqa_row": 39
+  },
+  {
+    "code": "E402",
+    "message": "Module level import not at top of file",
+    "fix": null,
+    "location": {
+      "row": 12,
+      "column": 1
+    },
+    "end_location": {
+      "row": 12,
+      "column": 56
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\p2p\\communications\\test_credits_standalone.py",
+    "noqa_row": 12
+  },
+  {
+    "code": "F811",
+    "message": "Redefinition of unused `dataclass` from line 18",
+    "fix": null,
+    "location": {
+      "row": 33,
+      "column": 29
+    },
+    "end_location": {
+      "row": 33,
+      "column": 38
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\p2p\\legacy_src\\navigator_mobile_integration.py",
+    "noqa_row": 33
+  },
+  {
+    "code": "F811",
+    "message": "Redefinition of unused `field` from line 18",
+    "fix": null,
+    "location": {
+      "row": 33,
+      "column": 40
+    },
+    "end_location": {
+      "row": 33,
+      "column": 45
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\p2p\\legacy_src\\navigator_mobile_integration.py",
+    "noqa_row": 33
+  },
+  {
+    "code": "F811",
+    "message": "Redefinition of unused `Enum` from line 19",
+    "fix": null,
+    "location": {
+      "row": 34,
+      "column": 22
+    },
+    "end_location": {
+      "row": 34,
+      "column": 26
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\p2p\\legacy_src\\navigator_mobile_integration.py",
+    "noqa_row": 34
+  },
+  {
+    "code": "F811",
+    "message": "Redefinition of unused `asyncio` from line 13",
+    "fix": null,
+    "location": {
+      "row": 518,
+      "column": 12
+    },
+    "end_location": {
+      "row": 518,
+      "column": 19
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\p2p\\mobile_integration\\jni\\libp2p_mesh_bridge.py",
+    "noqa_row": 518
+  },
+  {
+    "code": "F811",
+    "message": "Redefinition of unused `asyncio` from line 12",
+    "fix": null,
+    "location": {
+      "row": 887,
+      "column": 12
+    },
+    "end_location": {
+      "row": 887,
+      "column": 19
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\rag\\analysis\\graph_fixer.py",
+    "noqa_row": 887
+  },
+  {
+    "code": "E402",
+    "message": "Module level import not at top of file",
+    "fix": null,
+    "location": {
+      "row": 20,
+      "column": 1
+    },
+    "end_location": {
+      "row": 20,
+      "column": 58
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\rag\\codex-audit\\snippets\\measure_compression.py",
+    "noqa_row": 20
+  },
+  {
+    "code": "E722",
+    "message": "Do not use bare `except`",
+    "fix": null,
+    "location": {
+      "row": 51,
+      "column": 5
+    },
+    "end_location": {
+      "row": 51,
+      "column": 11
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\rag\\codex-audit\\tests\\test_all_remaining.py",
+    "noqa_row": 51
+  },
+  {
+    "code": "E722",
+    "message": "Do not use bare `except`",
+    "fix": null,
+    "location": {
+      "row": 59,
+      "column": 5
+    },
+    "end_location": {
+      "row": 59,
+      "column": 11
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\rag\\codex-audit\\tests\\test_all_remaining.py",
+    "noqa_row": 59
+  },
+  {
+    "code": "E722",
+    "message": "Do not use bare `except`",
+    "fix": null,
+    "location": {
+      "row": 174,
+      "column": 5
+    },
+    "end_location": {
+      "row": 174,
+      "column": 11
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\rag\\codex-audit\\tests\\test_all_remaining.py",
+    "noqa_row": 174
+  },
+  {
+    "code": "E722",
+    "message": "Do not use bare `except`",
+    "fix": null,
+    "location": {
+      "row": 207,
+      "column": 9
+    },
+    "end_location": {
+      "row": 207,
+      "column": 15
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\rag\\codex-audit\\tests\\test_c1_p2p_network_v2.py",
+    "noqa_row": 207
+  },
+  {
+    "code": "E722",
+    "message": "Do not use bare `except`",
+    "fix": null,
+    "location": {
+      "row": 173,
+      "column": 9
+    },
+    "end_location": {
+      "row": 173,
+      "column": 15
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\rag\\codex-audit\\tests\\test_c2_agent_forge.py",
+    "noqa_row": 173
+  },
+  {
+    "code": "E722",
+    "message": "Do not use bare `except`",
+    "fix": null,
+    "location": {
+      "row": 200,
+      "column": 9
+    },
+    "end_location": {
+      "row": 200,
+      "column": 15
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\rag\\codex-audit\\tests\\test_c2_agent_forge.py",
+    "noqa_row": 200
+  },
+  {
+    "code": "E722",
+    "message": "Do not use bare `except`",
+    "fix": null,
+    "location": {
+      "row": 183,
+      "column": 9
+    },
+    "end_location": {
+      "row": 183,
+      "column": 15
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\rag\\codex-audit\\tests\\test_c3_hyperrag.py",
+    "noqa_row": 183
+  },
+  {
+    "code": "E722",
+    "message": "Do not use bare `except`",
+    "fix": null,
+    "location": {
+      "row": 231,
+      "column": 9
+    },
+    "end_location": {
+      "row": 231,
+      "column": 15
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\rag\\codex-audit\\tests\\test_c3_hyperrag.py",
+    "noqa_row": 231
+  },
+  {
+    "code": "E402",
+    "message": "Module level import not at top of file",
+    "fix": null,
+    "location": {
+      "row": 10,
+      "column": 1
+    },
+    "end_location": {
+      "row": 10,
+      "column": 60
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\rag\\codex-audit\\tests\\test_p2p_reliability_fixed.py",
+    "noqa_row": 10
+  },
+  {
+    "code": "F811",
+    "message": "Redefinition of unused `asyncio` from line 12",
+    "fix": null,
+    "location": {
+      "row": 939,
+      "column": 12
+    },
+    "end_location": {
+      "row": 939,
+      "column": 19
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\rag\\creativity\\insight_engine.py",
+    "noqa_row": 939
+  },
+  {
+    "code": "F402",
+    "message": "Import `field` from line 20 shadowed by loop variable",
+    "fix": null,
+    "location": {
+      "row": 440,
+      "column": 13
+    },
+    "end_location": {
+      "row": 440,
+      "column": 18
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\rag\\distributed\\distributed_rag_coordinator.py",
+    "noqa_row": 440
+  },
+  {
+    "code": "F811",
+    "message": "Redefinition of unused `asyncio` from line 11",
+    "fix": null,
+    "location": {
+      "row": 770,
+      "column": 12
+    },
+    "end_location": {
+      "row": 770,
+      "column": 19
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\rag\\graph\\bayesian_trust_graph.py",
+    "noqa_row": 770
+  },
+  {
+    "code": "F811",
+    "message": "Redefinition of unused `asyncio` from line 11",
+    "fix": null,
+    "location": {
+      "row": 714,
+      "column": 12
+    },
+    "end_location": {
+      "row": 714,
+      "column": 19
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\rag\\integration\\edge_device_bridge.py",
+    "noqa_row": 714
+  },
+  {
+    "code": "F811",
+    "message": "Redefinition of unused `asyncio` from line 11",
+    "fix": null,
+    "location": {
+      "row": 889,
+      "column": 12
+    },
+    "end_location": {
+      "row": 889,
+      "column": 19
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\rag\\integration\\p2p_network_bridge.py",
+    "noqa_row": 889
+  },
+  {
+    "code": "F524",
+    "message": "`.format` call is missing argument(s) for placeholder(s):  font-family,  border,  font-weight,  margin,  background-color,  background-color,  background-color,  color",
+    "fix": null,
+    "location": {
+      "row": 470,
+      "column": 16
+    },
+    "end_location": {
+      "row": 496,
+      "column": 10
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\rag\\mcp_servers\\hyperag\\guardian\\metrics.py",
+    "noqa_row": 494
+  },
+  {
+    "code": "E402",
+    "message": "Module level import not at top of file",
+    "fix": null,
+    "location": {
+      "row": 18,
+      "column": 1
+    },
+    "end_location": {
+      "row": 18,
+      "column": 68
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\rag\\mcp_servers\\hyperag\\mcp_server.py",
+    "noqa_row": 18
+  },
+  {
+    "code": "E402",
+    "message": "Module level import not at top of file",
+    "fix": null,
+    "location": {
+      "row": 19,
+      "column": 1
+    },
+    "end_location": {
+      "row": 19,
+      "column": 53
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\rag\\mcp_servers\\hyperag\\mcp_server.py",
+    "noqa_row": 19
+  },
+  {
+    "code": "E402",
+    "message": "Module level import not at top of file",
+    "fix": null,
+    "location": {
+      "row": 20,
+      "column": 1
+    },
+    "end_location": {
+      "row": 20,
+      "column": 60
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\rag\\mcp_servers\\hyperag\\mcp_server.py",
+    "noqa_row": 20
+  },
+  {
+    "code": "E402",
+    "message": "Module level import not at top of file",
+    "fix": null,
+    "location": {
+      "row": 21,
+      "column": 1
+    },
+    "end_location": {
+      "row": 21,
+      "column": 67
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\rag\\mcp_servers\\hyperag\\mcp_server.py",
+    "noqa_row": 21
+  },
+  {
+    "code": "E722",
+    "message": "Do not use bare `except`",
+    "fix": null,
+    "location": {
+      "row": 274,
+      "column": 9
+    },
+    "end_location": {
+      "row": 274,
+      "column": 15
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\rag\\mcp_servers\\hyperag\\repair\\llm_driver.py",
+    "noqa_row": 274
+  },
+  {
+    "code": "E722",
+    "message": "Do not use bare `except`",
+    "fix": null,
+    "location": {
+      "row": 289,
+      "column": 9
+    },
+    "end_location": {
+      "row": 289,
+      "column": 15
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\rag\\mcp_servers\\hyperag\\repair\\llm_driver.py",
+    "noqa_row": 289
+  },
+  {
+    "code": "E722",
+    "message": "Do not use bare `except`",
+    "fix": null,
+    "location": {
+      "row": 416,
+      "column": 9
+    },
+    "end_location": {
+      "row": 416,
+      "column": 15
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\rag\\mcp_servers\\hyperag\\repair\\llm_driver.py",
+    "noqa_row": 416
+  },
+  {
+    "code": "E722",
+    "message": "Do not use bare `except`",
+    "fix": null,
+    "location": {
+      "row": 429,
+      "column": 9
+    },
+    "end_location": {
+      "row": 429,
+      "column": 15
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\rag\\mcp_servers\\hyperag\\repair\\llm_driver.py",
+    "noqa_row": 429
+  },
+  {
+    "code": "E722",
+    "message": "Do not use bare `except`",
+    "fix": null,
+    "location": {
+      "row": 332,
+      "column": 13
+    },
+    "end_location": {
+      "row": 332,
+      "column": 19
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\rag\\mcp_servers\\hyperag\\retrieval\\importance_flow.py",
+    "noqa_row": 332
+  },
+  {
+    "code": "F823",
+    "message": "Local variable `node_id` referenced before assignment",
+    "fix": null,
+    "location": {
+      "row": 54,
+      "column": 18
+    },
+    "end_location": {
+      "row": 54,
+      "column": 25
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\rag\\mcp_servers\\hyperag\\storage\\sqlite_storage.py",
+    "noqa_row": 54
+  },
+  {
+    "code": "F811",
+    "message": "Redefinition of unused `asyncio` from line 11",
+    "fix": null,
+    "location": {
+      "row": 713,
+      "column": 12
+    },
+    "end_location": {
+      "row": 713,
+      "column": 19
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\rag\\memory\\hippo_index.py",
+    "noqa_row": 713
+  },
+  {
+    "code": "F811",
+    "message": "Redefinition of unused `asyncio` from line 11",
+    "fix": null,
+    "location": {
+      "row": 892,
+      "column": 12
+    },
+    "end_location": {
+      "row": 892,
+      "column": 19
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\rag\\vector\\contextual_vector_engine.py",
+    "noqa_row": 892
+  },
+  {
+    "code": "E722",
+    "message": "Do not use bare `except`",
+    "fix": null,
+    "location": {
+      "row": 82,
+      "column": 9
+    },
+    "end_location": {
+      "row": 82,
+      "column": 15
+    },
+    "filename": "C:\\Users\\17175\\Desktop\\AIVillage\\packages\\ui\\node_modules\\flatted\\python\\flatted.py",
+    "noqa_row": 82
+  }
+]

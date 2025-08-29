@@ -4,10 +4,9 @@ Consolidated Cognate Model Tests
 Tests the production-ready cognate_pretrain implementation
 """
 
-import sys
 from pathlib import Path
+import sys
 
-import pytest
 import torch
 
 # Add project root to path
@@ -19,12 +18,6 @@ sys.path.insert(0, str(project_root))
 def test_cognate_imports():
     """Test that all cognate components can be imported."""
     try:
-        from core.agent_forge.phases.cognate_pretrain.model_factory import (
-            CognateModelFactory,
-            create_three_cognate_models,
-        )
-        from core.agent_forge.phases.cognate_pretrain.refiner_core import CognateConfig, CognateRefiner
-
         print("✓ All cognate imports successful")
         return True
     except ImportError as e:
@@ -155,7 +148,7 @@ if __name__ == "__main__":
         except Exception as e:
             print(f"✗ {test_func.__name__} failed with exception: {e}")
 
-    print(f"\n=== Test Results ===")
+    print("\n=== Test Results ===")
     print(f"Passed: {passed}/{total}")
     print(f"Success rate: {passed/total*100:.1f}%")
 

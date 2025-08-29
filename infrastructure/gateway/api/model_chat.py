@@ -10,26 +10,24 @@ Provides chat interface for testing trained models after each Agent Forge phase:
 """
 
 import asyncio
-import json
+from datetime import datetime
 import logging
 import os
+from pathlib import Path
 import sys
 import time
+from typing import Any
 import uuid
-from datetime import datetime
-from pathlib import Path
-from typing import Any, Dict, List, Optional
 
-import torch
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+import torch
 
 # Add core to path for Agent Forge imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "core"))
 
 try:
-    import transformers
     from transformers import AutoModelForCausalLM, AutoTokenizer
 
     TRANSFORMERS_AVAILABLE = True
@@ -45,8 +43,8 @@ class ChatMessage(BaseModel):
     role: str  # "user" or "assistant"
     content: str
     timestamp: datetime = datetime.now()
-    model_id: Optional[str] = None
-    response_time_ms: Optional[float] = None
+    model_id: str | None = None
+    response_time_ms: float | None = None
 
 
 class ChatRequest(BaseModel):
@@ -54,9 +52,9 @@ class ChatRequest(BaseModel):
 
     model_id: str
     message: str
-    session_id: Optional[str] = None
-    max_tokens: Optional[int] = 256
-    temperature: Optional[float] = 0.7
+    session_id: str | None = None
+    max_tokens: int | None = 256
+    temperature: float | None = 0.7
 
 
 class ChatResponse(BaseModel):
@@ -68,27 +66,35 @@ class ChatResponse(BaseModel):
     response: str
     response_time_ms: float
     token_count: int
-    conversation_history: List[ChatMessage]
+    conversation_history: list[ChatMessage]
 
 
 # Global state for chat sessions and loaded models
-CHAT_SESSIONS: Dict[str, Dict[str, Any]] = {}
-LOADED_MODELS: Dict[str, Dict[str, Any]] = {}
-MODEL_REGISTRY: Dict[str, Dict[str, Any]] = {}
+CHAT_SESSIONS: dict[str, dict[str, Any]] = {}
+LOADED_MODELS: dict[str, dict[str, Any]] = {}
+MODEL_REGISTRY: dict[str, dict[str, Any]] = {}
 
 app = FastAPI(title="Model Chat Interface API")
 
-# Add CORS middleware
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # In production, specify actual origins
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# SECURITY: Add secure CORS middleware - NO WILDCARDS
+try:
+    from src.security.cors_config import SECURE_CORS_CONFIG
+    app.add_middleware(CORSMiddleware, **SECURE_CORS_CONFIG)
+except ImportError:
+    # Fallback secure configuration
+    import os
+    env = os.getenv("AIVILLAGE_ENV", "development")
+    cors_origins = ["http://localhost:3000", "http://localhost:8080"] if env != "production" else ["https://aivillage.app"]
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=cors_origins,
+        allow_credentials=True,
+        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        allow_headers=["Accept", "Content-Type", "Authorization"]
+    )
 
 
-def register_model(model_id: str, model_info: Dict[str, Any]):
+def register_model(model_id: str, model_info: dict[str, Any]):
     """Register a trained model for chat interface."""
     MODEL_REGISTRY[model_id] = {**model_info, "registered_at": datetime.now()}
     logger.info(f"Registered model for chat: {model_id}")
@@ -153,7 +159,7 @@ async def get_available_models():
 
 
 @app.post("/models/{model_id}/register")
-async def register_model_endpoint(model_id: str, model_info: Dict[str, Any]):
+async def register_model_endpoint(model_id: str, model_info: dict[str, Any]):
     """Register a new trained model for chat interface."""
     register_model(model_id, model_info)
     return {"message": f"Model {model_id} registered successfully"}
@@ -344,7 +350,7 @@ async def get_all_sessions():
 
 
 @app.post("/compare")
-async def compare_models(request: Dict[str, Any]):
+async def compare_models(request: dict[str, Any]):
     """Compare responses from multiple models to the same prompt."""
     message = request.get("message")
     model_ids = request.get("model_ids", [])

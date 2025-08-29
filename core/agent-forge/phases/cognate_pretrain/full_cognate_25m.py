@@ -20,19 +20,19 @@ import sys
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", "packages"))
 
+from dataclasses import asdict, dataclass
 import json
 import logging
-from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 
-import torch
-import torch.nn as nn
 from halting_head import ACTScheduler
 from memory_cross_attn import MemoryScheduler
 
 # Import Cognate components
 from refiner_core import CognateConfig, CognateRefiner
+import torch
+import torch.nn as nn
 
 logger = logging.getLogger(__name__)
 

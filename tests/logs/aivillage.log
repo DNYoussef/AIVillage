@@ -1,0 +1,1 @@
+{"timestamp": "2025-08-18T11:03:49.027968", "level": "INFO", "component": "AIVillage", "message": "AIVillage logging system initialized", "module": "logging_config", "function": "setup_aivillage_logging", "line": 233, "thread": 18768, "process": 2152, "taskName": null, "log_level": "INFO", "log_dir": null, "structured_logging": true}

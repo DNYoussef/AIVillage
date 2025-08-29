@@ -1,0 +1,7 @@
+error: unexpected argument '--output-format' found
+
+  tip: to pass '--output-format' as a value, use '-- --output-format'
+
+Usage: ruff.exe check <FILES|--fix|--no-fix|--show-source|--no-show-source|--show-fixes|--no-show-fixes|--diff|--watch|--fix-only|--no-fix-only|--ignore-noqa|--format <FORMAT>|--target-version <TARGET_VERSION>|--config <CONFIG>|--select <RULE_CODE>|--ignore <RULE_CODE>|--extend-select <RULE_CODE>|--extend-ignore <RULE_CODE>|--per-file-ignores <PER_FILE_IGNORES>|--exclude <FILE_PATTERN>|--extend-exclude <FILE_PATTERN>|--fixable <RULE_CODE>|--unfixable <RULE_CODE>|--respect-gitignore|--no-respect-gitignore|--force-exclude|--no-force-exclude|--line-length <LINE_LENGTH>|--dummy-variable-rgx <DUMMY_VARIABLE_RGX>|--no-cache|--isolated|--cache-dir <CACHE_DIR>|--stdin-filename <STDIN_FILENAME>|--exit-zero|--exit-non-zero-on-fix|--update-check|--no-update-check|--statistics|--add-noqa|--show-files|--show-settings>
+
+For more information, try '--help'.

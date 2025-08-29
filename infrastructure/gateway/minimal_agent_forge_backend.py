@@ -16,17 +16,16 @@ Ports:
 """
 
 import asyncio
+from datetime import datetime
 import json
 import logging
 import time
+from typing import Any
 import uuid
-from datetime import datetime
-from pathlib import Path
-from typing import Any, Dict, List, Set
 
 from fastapi import BackgroundTasks, FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 
 # Configure logging
@@ -41,19 +40,24 @@ app = FastAPI(
 )
 
 # CORS middleware
+# SECURITY: Secure CORS configuration - NO WILDCARDS
+import os
+cors_origins_env = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:8080,http://127.0.0.1:3000")
+secure_origins = [origin.strip() for origin in cors_origins_env.split(",")]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=secure_origins,  # SECURITY: Environment-controlled, no wildcards
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Accept", "Content-Type", "Authorization", "X-Requested-With"],
 )
 
 # Global state
-active_phases: Dict[str, Any] = {}
-created_models: List[Dict[str, Any]] = []
-is_running: Dict[str, bool] = {}
-websocket_connections: Set[WebSocket] = set()
+active_phases: dict[str, Any] = {}
+created_models: list[dict[str, Any]] = []
+is_running: dict[str, bool] = {}
+websocket_connections: set[WebSocket] = set()
 
 
 # Data models
@@ -71,8 +75,8 @@ class PhaseStartRequest(BaseModel):
 # WebSocket Connection Manager
 class ConnectionManager:
     def __init__(self):
-        self.active_connections: Set[WebSocket] = set()
-        self.subscriptions: Dict[str, Dict] = {}
+        self.active_connections: set[WebSocket] = set()
+        self.subscriptions: dict[str, dict] = {}
 
     async def connect(self, websocket: WebSocket, client_id: str):
         await websocket.accept()
@@ -85,7 +89,7 @@ class ConnectionManager:
         self.subscriptions.pop(client_id, None)
         logger.info(f"Client {client_id} disconnected. Total: {len(self.active_connections)}")
 
-    async def broadcast(self, message: Dict, channel: str = "global"):
+    async def broadcast(self, message: dict, channel: str = "global"):
         disconnected = set()
         for client_id, sub_info in self.subscriptions.items():
             if channel in sub_info["channels"]:

@@ -93,7 +93,7 @@ Claude Flow MCP tools configuration:
 ```yaml
 # Exact 25M parameter targeting
 d_model: 216        # Hidden dimension
-n_layers: 11        # Transformer layers  
+n_layers: 11        # Transformer layers
 n_heads: 4          # Attention heads (54 dim each)
 ffn_mult: 4         # FFN expansion (864 intermediate)
 vocab_size: 32000   # Vocabulary size
@@ -195,7 +195,7 @@ print(f"Memory reads: {outputs['memory_info']['retrieved_count']}")
 
 ### Performance Benchmarks
 - **Training**: 100+ tokens/second on 8GB GPU
-- **Inference**: 200ms latency, 50 tokens/second  
+- **Inference**: 200ms latency, 50 tokens/second
 - **Memory**: <4GB for inference, <8GB for training
 - **ACT Efficiency**: ~2 steps average during inference
 
@@ -325,7 +325,7 @@ Configuration system ready for Phase 3 testing and validation. The comprehensive
 
 - ✅ Exact 25M parameter architecture
 - ✅ ACT halting system (train-many/infer-few)
-- ✅ Titans-style LTM with surprise×novelty gating  
+- ✅ Titans-style LTM with surprise×novelty gating
 - ✅ Memory cross-attention integration
 - ✅ Agent Forge pipeline compatibility
 - ✅ Environment-specific configurations

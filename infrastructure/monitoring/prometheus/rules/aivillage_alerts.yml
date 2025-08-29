@@ -1,0 +1,165 @@
+# AIVillage Monitoring Alert Rules
+groups:
+  - name: aivillage.performance
+    rules:
+      # Agent Forge Pipeline Performance
+      - alert: AgentForgeHighLatency
+        expr: histogram_quantile(0.95, rate(agent_forge_request_duration_seconds_bucket[5m])) > 2.0
+        for: 2m
+        labels:
+          severity: warning
+          component: agent-forge
+        annotations:
+          summary: "Agent Forge pipeline experiencing high latency"
+          description: "95th percentile latency is {{ $value }}s for Agent Forge requests"
+
+      - alert: AgentForgeErrorRate
+        expr: rate(agent_forge_errors_total[5m]) / rate(agent_forge_requests_total[5m]) > 0.05
+        for: 1m
+        labels:
+          severity: critical
+          component: agent-forge
+        annotations:
+          summary: "Agent Forge error rate too high"
+          description: "Error rate is {{ $value | humanizePercentage }} over the last 5 minutes"
+
+      # HyperRAG Memory System
+      - alert: HyperRAGQuerySlow
+        expr: histogram_quantile(0.90, rate(hyperrag_query_duration_seconds_bucket[5m])) > 0.002
+        for: 3m
+        labels:
+          severity: warning
+          component: hyperrag
+        annotations:
+          summary: "HyperRAG queries slower than expected"
+          description: "90th percentile query time is {{ $value }}ms, exceeding 2ms baseline"
+
+      - alert: HyperRAGMemoryUsage
+        expr: hyperrag_memory_usage_bytes / hyperrag_memory_limit_bytes > 0.85
+        for: 5m
+        labels:
+          severity: warning
+          component: hyperrag
+        annotations:
+          summary: "HyperRAG memory usage high"
+          description: "Memory usage is {{ $value | humanizePercentage }} of limit"
+
+      # P2P Networking
+      - alert: P2PMessageDeliveryFailed
+        expr: rate(p2p_message_delivery_failures_total[5m]) / rate(p2p_messages_sent_total[5m]) > 0.05
+        for: 2m
+        labels:
+          severity: critical
+          component: p2p-mesh
+        annotations:
+          summary: "P2P message delivery failure rate high"
+          description: "Message delivery failure rate is {{ $value | humanizePercentage }}"
+
+      - alert: P2PPeerCount
+        expr: p2p_connected_peers < 3
+        for: 5m
+        labels:
+          severity: warning
+          component: p2p-mesh
+        annotations:
+          summary: "Low P2P peer count"
+          description: "Only {{ $value }} peers connected, minimum recommended is 3"
+
+      # API Gateway Performance
+      - alert: APIGatewayResponseTime
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job="api-gateway"}[5m])) > 0.1
+        for: 2m
+        labels:
+          severity: warning
+          component: api-gateway
+        annotations:
+          summary: "API Gateway response time high"
+          description: "95th percentile response time is {{ $value }}s"
+
+      # Edge Computing
+      - alert: EdgeBatteryLow
+        expr: edge_device_battery_percentage < 15
+        for: 1m
+        labels:
+          severity: critical
+          component: edge-computing
+        annotations:
+          summary: "Edge device battery critically low"
+          description: "Device {{ $labels.device_id }} battery at {{ $value }}%"
+
+  - name: aivillage.infrastructure
+    rules:
+      # System Resources
+      - alert: HighCPUUsage
+        expr: 100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+          component: infrastructure
+        annotations:
+          summary: "High CPU usage detected"
+          description: "CPU usage is {{ $value }}% on {{ $labels.instance }}"
+
+      - alert: HighMemoryUsage
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+          component: infrastructure
+        annotations:
+          summary: "High memory usage detected"
+          description: "Memory usage is {{ $value }}% on {{ $labels.instance }}"
+
+      - alert: DiskSpaceLow
+        expr: (node_filesystem_avail_bytes{fstype!="tmpfs"} / node_filesystem_size_bytes{fstype!="tmpfs"}) * 100 < 10
+        for: 5m
+        labels:
+          severity: critical
+          component: infrastructure
+        annotations:
+          summary: "Low disk space"
+          description: "Disk space is {{ $value }}% full on {{ $labels.instance }}"
+
+      # Database Health
+      - alert: PostgreSQLDown
+        expr: up{job="postgresql"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: database
+        annotations:
+          summary: "PostgreSQL is down"
+          description: "PostgreSQL database is not responding"
+
+      - alert: RedisDown
+        expr: up{job="redis"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: database
+        annotations:
+          summary: "Redis is down"
+          description: "Redis cache is not responding"
+
+  - name: aivillage.business
+    rules:
+      # Business Metrics
+      - alert: UserAuthenticationFailures
+        expr: rate(auth_failures_total[5m]) > 10
+        for: 2m
+        labels:
+          severity: warning
+          component: authentication
+        annotations:
+          summary: "High authentication failure rate"
+          description: "{{ $value }} authentication failures per second"
+
+      - alert: ServiceUnavailable
+        expr: up{job=~"agent-forge|hyperrag|api-gateway"} == 0
+        for: 30s
+        labels:
+          severity: critical
+          component: core-services
+        annotations:
+          summary: "Core service unavailable"
+          description: "Service {{ $labels.job }} is down"

@@ -13,7 +13,6 @@ Or use the main API:
 """
 
 import warnings
-from pathlib import Path
 
 warnings.warn(
     "Importing from core.agent_forge.phases.cognate is deprecated. "
@@ -27,7 +26,6 @@ try:
     from core.agent_forge.phases.cognate_pretrain.model_factory import (
         CognateModelFactory,
         create_three_cognate_models,
-        validate_models,
     )
     from core.agent_forge.phases.cognate_pretrain.pretrain_three_models import (
         CognatePretrainer,

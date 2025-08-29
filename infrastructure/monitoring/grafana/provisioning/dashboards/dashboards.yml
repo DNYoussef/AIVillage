@@ -1,0 +1,63 @@
+# Grafana Dashboard Provisioning for AIVillage
+apiVersion: 1
+
+providers:
+  # Core AIVillage Dashboards
+  - name: 'aivillage-core'
+    orgId: 1
+    folder: 'AIVillage Core'
+    type: file
+    disableDeletion: false
+    editable: true
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /var/lib/grafana/dashboards/core
+
+  # Service-Specific Dashboards
+  - name: 'aivillage-services'
+    orgId: 1
+    folder: 'Services'
+    type: file
+    disableDeletion: false
+    editable: true
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /var/lib/grafana/dashboards/services
+
+  # Infrastructure Dashboards
+  - name: 'aivillage-infrastructure'
+    orgId: 1
+    folder: 'Infrastructure'
+    type: file
+    disableDeletion: false
+    editable: true
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /var/lib/grafana/dashboards/infrastructure
+
+  # Business Metrics Dashboards
+  - name: 'aivillage-business'
+    orgId: 1
+    folder: 'Business Metrics'
+    type: file
+    disableDeletion: false
+    editable: true
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /var/lib/grafana/dashboards/business
+
+  # Performance & SLA Dashboards
+  - name: 'aivillage-performance'
+    orgId: 1
+    folder: 'Performance & SLA'
+    type: file
+    disableDeletion: false
+    editable: true
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /var/lib/grafana/dashboards/performance

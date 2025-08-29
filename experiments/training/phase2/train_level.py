@@ -2,11 +2,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import torch
-
 from AIVillage.experimental.training.geometry import snapshot
 from AIVillage.experimental.training.optim import Adam
 from AIVillage.experimental.training.svf.svf_ops import apply_svf
+import torch
 
 from .pid import EdgePID
 

@@ -14,25 +14,21 @@ Single command to start the entire Agent Forge developer ecosystem.
 """
 
 import asyncio
-import json
+from datetime import datetime
 import logging
-import os
+from pathlib import Path
 import signal
 import subprocess
 import sys
 import threading
 import time
-from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime
-from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
-import psutil
+from fastapi import FastAPI
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
 import requests
 import uvicorn
-from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import HTMLResponse, JSONResponse
-from fastapi.staticfiles import StaticFiles
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
@@ -43,7 +39,7 @@ class ServiceManager:
     """Manages lifecycle of all Agent Forge API services."""
 
     def __init__(self):
-        self.processes: Dict[str, subprocess.Popen] = {}
+        self.processes: dict[str, subprocess.Popen] = {}
         self.service_configs = {
             "agent_forge_controller": {
                 "script": "infrastructure/gateway/api/agent_forge_controller.py",
@@ -126,7 +122,7 @@ class ServiceManager:
             logger.exception(f"Failed to stop {service_name}: {e}")
             return False
 
-    def check_service_health(self, service_name: str) -> Dict[str, Any]:
+    def check_service_health(self, service_name: str) -> dict[str, Any]:
         """Check health of individual service."""
         config = self.service_configs[service_name]
         health_url = f"http://localhost:{config['port']}{config['health_endpoint']}"
@@ -180,7 +176,7 @@ class ServiceManager:
         self.running = False
         logger.info("All services stopped")
 
-    def get_service_status(self) -> Dict[str, Any]:
+    def get_service_status(self) -> dict[str, Any]:
         """Get comprehensive status of all services."""
         status = {"timestamp": datetime.now().isoformat(), "services": {}, "overall_health": "healthy"}
 
@@ -263,7 +259,7 @@ class IntegrationTester:
         self.service_manager = service_manager
         self.test_results = []
 
-    async def run_integration_tests(self) -> Dict[str, Any]:
+    async def run_integration_tests(self) -> dict[str, Any]:
         """Run comprehensive integration tests."""
         logger.info("Starting integration tests...")
 
@@ -301,7 +297,7 @@ class IntegrationTester:
         )
         return test_results
 
-    async def _test_service_health(self, results: Dict[str, Any]):
+    async def _test_service_health(self, results: dict[str, Any]):
         """Test all services are healthy."""
         test_name = "Service Health Checks"
         try:
@@ -321,7 +317,7 @@ class IntegrationTester:
                 {"name": test_name, "passed": False, "error": str(e), "message": "Failed to check service health"}
             )
 
-    async def _test_agent_forge_api(self, results: Dict[str, Any]):
+    async def _test_agent_forge_api(self, results: dict[str, Any]):
         """Test Agent Forge Controller API endpoints."""
         test_name = "Agent Forge API"
         try:
@@ -347,7 +343,7 @@ class IntegrationTester:
                 {"name": test_name, "passed": False, "error": str(e), "message": "Failed to test Agent Forge API"}
             )
 
-    async def _test_model_chat_api(self, results: Dict[str, Any]):
+    async def _test_model_chat_api(self, results: dict[str, Any]):
         """Test Model Chat API endpoints."""
         test_name = "Model Chat API"
         try:
@@ -373,7 +369,7 @@ class IntegrationTester:
                 {"name": test_name, "passed": False, "error": str(e), "message": "Failed to test Model Chat API"}
             )
 
-    async def _test_websocket_connection(self, results: Dict[str, Any]):
+    async def _test_websocket_connection(self, results: dict[str, Any]):
         """Test WebSocket Manager connectivity."""
         test_name = "WebSocket Connection"
         try:
@@ -395,7 +391,7 @@ class IntegrationTester:
                 {"name": test_name, "passed": False, "error": str(e), "message": "Failed to test WebSocket connection"}
             )
 
-    async def _test_model_registration_flow(self, results: Dict[str, Any]):
+    async def _test_model_registration_flow(self, results: dict[str, Any]):
         """Test model registration between services."""
         test_name = "Model Registration Flow"
         try:

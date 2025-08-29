@@ -4,9 +4,20 @@ Authentication Module for Gateway Layer
 Handles JWT tokens, API keys, OAuth2, and user authentication.
 """
 
-# Authentication components will be imported here
-# from .jwt_handler import JWTHandler
-# from .oauth2_provider import OAuth2Provider
-# from .api_key_manager import APIKeyManager
+from .jwt_handler import (
+    APIKeyValidator,
+    JWTBearer,
+    JWTHandler,
+    TokenPayload,
+    create_api_key_to_jwt_dependency,
+    create_jwt_dependency,
+)
 
-__all__ = []
+__all__ = [
+    "JWTHandler",
+    "JWTBearer",
+    "TokenPayload",
+    "APIKeyValidator",
+    "create_jwt_dependency",
+    "create_api_key_to_jwt_dependency",
+]

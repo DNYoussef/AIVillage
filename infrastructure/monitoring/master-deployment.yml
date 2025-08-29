@@ -1,0 +1,438 @@
+# AIVillage Complete Monitoring & Observability Platform Deployment
+# Master deployment configuration for production-ready observability
+
+version: '3.8'
+
+networks:
+  aivillage-monitoring:
+    driver: bridge
+    name: aivillage-monitoring
+    labels:
+      - "aivillage.network=monitoring"
+  aivillage-performance:
+    driver: bridge
+    name: aivillage-performance
+    labels:
+      - "aivillage.network=performance"
+
+volumes:
+  # Monitoring data
+  prometheus_data:
+  grafana_data:
+  alertmanager_data:
+
+  # Tracing data
+  jaeger_data:
+  elasticsearch_data:
+
+  # Logging data
+  loki_data:
+
+  # Performance data
+  redis_master_data:
+  redis_replica1_data:
+  redis_replica2_data:
+  keydb_data:
+
+  # Database data
+  postgres_monitoring_data:
+  influxdb_data:
+
+services:
+  # === METRICS COLLECTION ===
+  prometheus:
+    image: prom/prometheus:v2.45.0
+    container_name: aivillage-prometheus-master
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/rules:/etc/prometheus/rules:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=90d'
+      - '--web.enable-lifecycle'
+      - '--web.enable-admin-api'
+      - '--web.external-url=http://localhost:9090'
+    networks:
+      - aivillage-monitoring
+    environment:
+      - ENVIRONMENT=production
+    labels:
+      - "aivillage.component=monitoring"
+      - "aivillage.service=prometheus"
+      - "aivillage.tier=core"
+
+  # === DISTRIBUTED TRACING ===
+  jaeger:
+    image: jaegertracing/all-in-one:1.47.0
+    container_name: aivillage-jaeger-master
+    restart: unless-stopped
+    ports:
+      - "16686:16686"  # Jaeger UI
+      - "14268:14268"  # HTTP collector
+      - "14250:14250"  # gRPC collector
+    environment:
+      COLLECTOR_OTLP_ENABLED: true
+      SPAN_STORAGE_TYPE: elasticsearch
+      ES_SERVER_URLS: http://elasticsearch:9200
+      ES_INDEX_PREFIX: aivillage-traces
+      QUERY_BASE_PATH: /jaeger
+    volumes:
+      - jaeger_data:/tmp/jaeger
+    networks:
+      - aivillage-monitoring
+    depends_on:
+      - elasticsearch
+    labels:
+      - "aivillage.component=tracing"
+      - "aivillage.service=jaeger"
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.81.0
+    container_name: aivillage-otel-collector
+    restart: unless-stopped
+    ports:
+      - "4317:4317"   # OTLP gRPC receiver
+      - "4318:4318"   # OTLP HTTP receiver
+      - "8888:8888"   # Prometheus metrics
+      - "13133:13133" # Health check
+    volumes:
+      - ./jaeger/otel-collector-config.yml:/etc/otel-collector-config.yml:ro
+    command: ["--config=/etc/otel-collector-config.yml"]
+    networks:
+      - aivillage-monitoring
+    depends_on:
+      - jaeger
+      - prometheus
+    labels:
+      - "aivillage.component=tracing"
+      - "aivillage.service=otel-collector"
+
+  # === LOG AGGREGATION ===
+  loki:
+    image: grafana/loki:2.8.0
+    container_name: aivillage-loki-master
+    restart: unless-stopped
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./loki/loki-config.yml:/etc/loki/local-config.yaml:ro
+      - loki_data:/tmp/loki
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - aivillage-monitoring
+    labels:
+      - "aivillage.component=logging"
+      - "aivillage.service=loki"
+
+  promtail:
+    image: grafana/promtail:2.8.0
+    container_name: aivillage-promtail-master
+    restart: unless-stopped
+    volumes:
+      - /var/log:/var/log:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - ./loki/promtail-config.yml:/etc/promtail/config.yml:ro
+    command: -config.file=/etc/promtail/config.yml
+    networks:
+      - aivillage-monitoring
+    depends_on:
+      - loki
+    labels:
+      - "aivillage.component=logging"
+      - "aivillage.service=promtail"
+
+  # === VISUALIZATION ===
+  grafana:
+    image: grafana/grafana:10.0.0
+    container_name: aivillage-grafana-master
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=aivillage2024
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_INSTALL_PLUGINS=grafana-piechart-panel,grafana-worldmap-panel,grafana-clock-panel
+      - GF_FEATURE_TOGGLES_ENABLE=traceqlSearch
+      - GF_SERVER_ROOT_URL=http://localhost:3000
+      - GF_ANALYTICS_REPORTING_ENABLED=false
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    networks:
+      - aivillage-monitoring
+    depends_on:
+      - prometheus
+      - jaeger
+      - loki
+    labels:
+      - "aivillage.component=visualization"
+      - "aivillage.service=grafana"
+
+  # === ALERTING ===
+  alertmanager:
+    image: prom/alertmanager:v0.25.0
+    container_name: aivillage-alertmanager-master
+    restart: unless-stopped
+    ports:
+      - "9093:9093"
+    volumes:
+      - ./alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanager_data:/alertmanager
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager'
+      - '--web.external-url=http://localhost:9093'
+      - '--web.route-prefix=/'
+      - '--log.level=info'
+    networks:
+      - aivillage-monitoring
+    labels:
+      - "aivillage.component=alerting"
+      - "aivillage.service=alertmanager"
+
+  # === PERFORMANCE OPTIMIZATION - CACHING ===
+  redis-master:
+    image: redis:7-alpine
+    container_name: aivillage-redis-master-perf
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_master_data:/data
+      - ./performance/cache/redis-master.conf:/usr/local/etc/redis/redis.conf:ro
+    command: redis-server /usr/local/etc/redis/redis.conf
+    networks:
+      - aivillage-performance
+      - aivillage-monitoring
+    labels:
+      - "aivillage.component=cache"
+      - "aivillage.service=redis-master"
+      - "aivillage.role=primary"
+
+  redis-replica-1:
+    image: redis:7-alpine
+    container_name: aivillage-redis-replica-1-perf
+    restart: unless-stopped
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis_replica1_data:/data
+      - ./performance/cache/redis-replica.conf:/usr/local/etc/redis/redis.conf:ro
+    command: redis-server /usr/local/etc/redis/redis.conf --replicaof redis-master 6379
+    networks:
+      - aivillage-performance
+      - aivillage-monitoring
+    depends_on:
+      - redis-master
+    labels:
+      - "aivillage.component=cache"
+      - "aivillage.service=redis-replica"
+
+  memcached:
+    image: memcached:1.6-alpine
+    container_name: aivillage-memcached-perf
+    restart: unless-stopped
+    ports:
+      - "11211:11211"
+    command: memcached -m 1024 -c 1024 -I 32m -v
+    networks:
+      - aivillage-performance
+      - aivillage-monitoring
+    labels:
+      - "aivillage.component=cache"
+      - "aivillage.service=memcached"
+
+  # === INFRASTRUCTURE MONITORING ===
+  node-exporter:
+    image: prom/node-exporter:v1.6.0
+    container_name: aivillage-node-exporter
+    restart: unless-stopped
+    ports:
+      - "9100:9100"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    networks:
+      - aivillage-monitoring
+    labels:
+      - "aivillage.component=monitoring"
+      - "aivillage.service=node-exporter"
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.47.0
+    container_name: aivillage-cadvisor
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    privileged: true
+    networks:
+      - aivillage-monitoring
+    labels:
+      - "aivillage.component=monitoring"
+      - "aivillage.service=cadvisor"
+
+  # === DATABASE SYSTEMS ===
+  elasticsearch:
+    image: elasticsearch:8.8.0
+    container_name: aivillage-elasticsearch
+    restart: unless-stopped
+    environment:
+      - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xms2g -Xmx2g"
+      - xpack.security.enabled=false
+      - action.auto_create_index=true
+      - bootstrap.memory_lock=true
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+    networks:
+      - aivillage-monitoring
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    labels:
+      - "aivillage.component=database"
+      - "aivillage.service=elasticsearch"
+
+  postgres-monitoring:
+    image: postgres:15-alpine
+    container_name: aivillage-postgres-monitoring
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: aivillage_monitoring
+      POSTGRES_USER: monitoring
+      POSTGRES_PASSWORD: monitoring2024
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8"
+    volumes:
+      - postgres_monitoring_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    networks:
+      - aivillage-monitoring
+      - aivillage-performance
+    labels:
+      - "aivillage.component=database"
+      - "aivillage.service=postgres-monitoring"
+
+  influxdb:
+    image: influxdb:2.7-alpine
+    container_name: aivillage-influxdb
+    restart: unless-stopped
+    environment:
+      - DOCKER_INFLUXDB_INIT_MODE=setup
+      - DOCKER_INFLUXDB_INIT_USERNAME=aivillage
+      - DOCKER_INFLUXDB_INIT_PASSWORD=aivillage2024
+      - DOCKER_INFLUXDB_INIT_ORG=aivillage
+      - DOCKER_INFLUXDB_INIT_BUCKET=metrics
+      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=aivillage-monitoring-token-2024
+    volumes:
+      - influxdb_data:/var/lib/influxdb2
+    ports:
+      - "8086:8086"
+    networks:
+      - aivillage-monitoring
+    labels:
+      - "aivillage.component=database"
+      - "aivillage.service=influxdb"
+
+  # === DATABASE EXPORTERS ===
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:v0.13.2
+    container_name: aivillage-postgres-exporter
+    restart: unless-stopped
+    ports:
+      - "9187:9187"
+    environment:
+      DATA_SOURCE_NAME: "postgresql://monitoring:monitoring2024@postgres-monitoring:5432/aivillage_monitoring?sslmode=disable"
+    networks:
+      - aivillage-monitoring
+    depends_on:
+      - postgres-monitoring
+    labels:
+      - "aivillage.component=monitoring"
+      - "aivillage.service=postgres-exporter"
+
+  redis-exporter:
+    image: oliver006/redis_exporter:v1.52.0
+    container_name: aivillage-redis-exporter
+    restart: unless-stopped
+    ports:
+      - "9121:9121"
+    environment:
+      REDIS_ADDR: "redis://redis-master:6379"
+      REDIS_PASSWORD: "aivillage2024"
+    networks:
+      - aivillage-monitoring
+      - aivillage-performance
+    depends_on:
+      - redis-master
+    labels:
+      - "aivillage.component=monitoring"
+      - "aivillage.service=redis-exporter"
+
+  # === HEALTH CHECK SERVICE ===
+  health-checker:
+    image: alpine:latest
+    container_name: aivillage-health-checker
+    restart: unless-stopped
+    volumes:
+      - ./scripts/health-check.sh:/app/health-check.sh:ro
+    command: sh -c "chmod +x /app/health-check.sh && while true; do /app/health-check.sh; sleep 30; done"
+    networks:
+      - aivillage-monitoring
+      - aivillage-performance
+    depends_on:
+      - prometheus
+      - grafana
+      - jaeger
+      - loki
+      - alertmanager
+      - redis-master
+    labels:
+      - "aivillage.component=monitoring"
+      - "aivillage.service=health-checker"
+
+  # === REVERSE PROXY & LOAD BALANCER ===
+  nginx-monitoring:
+    image: nginx:alpine
+    container_name: aivillage-nginx-monitoring
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    networks:
+      - aivillage-monitoring
+    depends_on:
+      - grafana
+      - prometheus
+      - jaeger
+      - alertmanager
+    labels:
+      - "aivillage.component=proxy"
+      - "aivillage.service=nginx"

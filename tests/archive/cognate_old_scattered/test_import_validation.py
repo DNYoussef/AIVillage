@@ -4,9 +4,9 @@ Test Suite 1: Import Testing
 Tests all imports work correctly for the reorganized Cognate system.
 """
 
+from pathlib import Path
 import sys
 import warnings
-from pathlib import Path
 
 import pytest
 

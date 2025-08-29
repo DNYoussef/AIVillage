@@ -1,0 +1,30 @@
+{
+  "model_name": "cognate_foundation_1",
+  "model_index": 0,
+  "focus": "reasoning",
+  "parameter_count": 22112817,
+  "target_parameters": 25000000,
+  "parameter_accuracy": 11.548732000000001,
+  "architecture": {
+    "d_model": 216,
+    "n_layers": 11,
+    "n_heads": 4,
+    "ffn_mult": 4,
+    "vocab_size": 32000
+  },
+  "cognate_features": {
+    "act_halting": true,
+    "act_threshold": 0.95,
+    "ltm_memory": true,
+    "memory_capacity": 4096,
+    "memory_cross_attn": true,
+    "surprise_weight": 0.7,
+    "novelty_weight": 0.3
+  },
+  "training_config": {
+    "train_max_steps": 8,
+    "infer_max_steps": 2
+  },
+  "created_at": "2025-08-26T09:36:59.355346",
+  "ready_for_evomerge": true
+}
