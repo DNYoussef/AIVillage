@@ -18,7 +18,7 @@ from typing import Any
 from uuid import uuid4
 
 from fastapi import APIRouter, HTTPException, status
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 logger = logging.getLogger(__name__)
 
@@ -69,7 +69,8 @@ class SandboxSpec(BaseModel):
     # Labels and metadata
     labels: dict[str, str] = Field(default_factory=dict, description="User labels")
 
-    @validator("namespace")
+    @field_validator("namespace")
+    @classmethod
     def validate_namespace(cls, v):
         """Validate namespace format"""
         if not v or "/" not in v:

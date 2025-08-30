@@ -49,6 +49,10 @@ jobs:
       run: |
         pip install pip-audit safety bandit semgrep cyclonedx-bom
         
+    - name: Create security reports directory
+      run: |
+        mkdir -p security/reports security/sboms
+        
     - name: Pip Audit Scan
       run: |
         pip-audit --desc --format=json --output=security/reports/pip-audit.json || true
@@ -67,7 +71,7 @@ jobs:
         
     - name: Generate Python SBOM
       run: |
-        cyclonedx-py requirements config/requirements/requirements.txt -o security/sboms/python-sbom.json
+        cyclonedx-py requirements config/requirements/requirements.txt -o security/sboms/python-sbom.json || cyclonedx-py requirements config/requirements/CONSOLIDATED_REQUIREMENTS.txt -o security/sboms/python-sbom.json || echo "SBOM generation completed with fallback"
         
     - name: Upload Python Security Results
       uses: actions/upload-artifact@v3

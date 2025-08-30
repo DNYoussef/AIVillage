@@ -20,7 +20,7 @@ from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, Security, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer, SecurityScopes
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 from infrastructure.shared.security.rbac_system import Permission, RBACSystem, Role, User
 
@@ -133,14 +133,16 @@ class NodeRegistration(BaseModel):
     attestation_type: AttestationType = Field(AttestationType.SELF_ATTESTATION)
     attestation_data: dict[str, Any] = Field(default_factory=dict, description="Attestation evidence")
 
-    @validator("operator_namespace")
+    @field_validator("operator_namespace")
+    @classmethod
     def validate_namespace(cls, v):
         """Validate namespace format"""
         if not v or "/" not in v:
             raise ValueError("Namespace must be in format 'org/team'")
         return v
 
-    @validator("public_key")
+    @field_validator("public_key")
+    @classmethod
     def validate_public_key(cls, v):
         """Validate Ed25519 public key format"""
         if not v or len(v) != 64:  # 32 bytes = 64 hex chars
