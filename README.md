@@ -113,6 +113,8 @@ AIVillage implements a distributed multi-agent architecture with fog computing c
 
 ## 🚀 **Quick Start** - Production Ready
 
+📋 **For detailed installation instructions, see [docs/installation/SETUP.md](docs/installation/SETUP.md)**
+
 ### **Prerequisites & Installation**
 ```bash
 # Clone the repository
@@ -120,13 +122,17 @@ git clone https://github.com/DNYoussef/AIVillage.git
 cd AIVillage
 
 # Install Python dependencies
-pip install -r requirements.txt
+pip install -r config/requirements/requirements.txt -c config/constraints.txt
 
 # Deploy the enhanced fog computing system
 python scripts/deploy_enhanced_fog_system.py
 
 # Verify all systems operational
 python scripts/test_enhanced_fog_integration.py
+
+# Alternative: Install specific component requirements
+# For development: pip install -r config/requirements/requirements-dev.txt -c config/constraints.txt
+# For production: pip install -r config/requirements/requirements-production.txt -c config/constraints.txt
 ```
 
 ### **Launch Enhanced Fog Computing Platform**

@@ -1,0 +1,391 @@
+{
+  "routing_analysis_metadata": {
+    "analysis_date": "2025-01-29T18:00:00Z",
+    "analyzer": "Strategic Planning Agent",
+    "total_issues_analyzed": 1094,
+    "sources": [
+      "SECURITY_ISSUES.json - 47 issues",
+      "PERFORMANCE_ISSUES.json - 34 issues", 
+      "CODE_QUALITY_ISSUES.json - 377 issues",
+      "TEST_ISSUES.json - 291 issues",
+      "DOCUMENTATION_ISSUES.json - 124 issues",
+      "DEPENDENCY_MAP.md - Dependencies analysis"
+    ],
+    "clustering_methodology": "Root cause analysis with impact area prioritization"
+  },
+
+  "issue_clustering": {
+    "security_cluster": {
+      "root_causes": [
+        "hardcoded_secrets_management",
+        "injection_vulnerabilities", 
+        "weak_cryptography",
+        "authentication_bypass"
+      ],
+      "total_issues": 47,
+      "priority_distribution": {
+        "critical": 8,
+        "high": 12,
+        "medium": 18, 
+        "low": 9
+      },
+      "impact_areas": ["authentication", "data_integrity", "system_security", "compliance"]
+    },
+
+    "performance_cluster": {
+      "root_causes": [
+        "database_optimization",
+        "async_operations_blocking",
+        "algorithm_inefficiency",
+        "memory_management"
+      ],
+      "total_issues": 34,
+      "priority_distribution": {
+        "critical": 8,
+        "high": 12,
+        "medium": 10,
+        "low": 4
+      },
+      "impact_areas": ["response_time", "scalability", "resource_usage", "user_experience"]
+    },
+
+    "code_quality_cluster": {
+      "root_causes": [
+        "god_objects_complexity",
+        "parameter_coupling",
+        "duplicate_code_patterns",
+        "architectural_debt"
+      ],
+      "total_issues": 377,
+      "priority_distribution": {
+        "critical": 30,
+        "high": 47,
+        "medium": 215,
+        "low": 85
+      },
+      "impact_areas": ["maintainability", "technical_debt", "developer_productivity", "code_consistency"]
+    },
+
+    "test_quality_cluster": {
+      "root_causes": [
+        "empty_assertions",
+        "flaky_time_dependencies",
+        "excessive_mocking",
+        "test_organization"
+      ],
+      "total_issues": 291,
+      "priority_distribution": {
+        "critical": 50,
+        "high": 85,
+        "medium": 120,
+        "low": 36
+      },
+      "impact_areas": ["test_reliability", "continuous_integration", "quality_assurance", "development_velocity"]
+    },
+
+    "documentation_cluster": {
+      "root_causes": [
+        "missing_installation_guides",
+        "api_documentation_gaps",
+        "broken_references",
+        "dependency_mismatches"
+      ],
+      "total_issues": 124,
+      "priority_distribution": {
+        "critical": 34,
+        "high": 67,
+        "medium": 23,
+        "low": 0
+      },
+      "impact_areas": ["developer_onboarding", "api_usability", "project_adoption", "maintenance"]
+    },
+
+    "dependency_cluster": {
+      "root_causes": [
+        "missing_critical_packages",
+        "circular_dependencies",
+        "version_mismatches",
+        "security_vulnerabilities"
+      ],
+      "total_issues": 15,
+      "priority_distribution": {
+        "critical": 3,
+        "high": 8,
+        "medium": 4,
+        "low": 0
+      },
+      "impact_areas": ["system_functionality", "deployment", "security", "stability"]
+    }
+  },
+
+  "priority_hierarchy": {
+    "CRITICAL_TIER_1": {
+      "description": "Blocking issues that prevent system functionality or pose immediate security risks",
+      "criteria": [
+        "System cannot start or deploy",
+        "Critical security vulnerabilities",
+        "Data loss or corruption risks",
+        "Complete feature breakage"
+      ],
+      "issues": [
+        {
+          "id": "CRIT-DEP-001",
+          "title": "Missing grokfast dependency blocks Agent Forge",
+          "source": "documentation",
+          "impact": "Complete Agent Forge pipeline failure",
+          "fix_complexity": "medium",
+          "estimated_time": "4-6 hours"
+        },
+        {
+          "id": "CRIT-SEC-001", 
+          "title": "Hardcoded JWT secrets in production code",
+          "source": "security",
+          "impact": "Authentication bypass vulnerability",
+          "fix_complexity": "low",
+          "estimated_time": "2-3 hours"
+        },
+        {
+          "id": "CRIT-SEC-002",
+          "title": "SQL injection via string concatenation",
+          "source": "security", 
+          "impact": "Database compromise risk",
+          "fix_complexity": "medium",
+          "estimated_time": "4-6 hours"
+        },
+        {
+          "id": "CRIT-PERF-001",
+          "title": "N+1 database queries in wallet operations", 
+          "source": "performance",
+          "impact": "Database performance degradation",
+          "fix_complexity": "medium",
+          "estimated_time": "4-6 hours"
+        },
+        {
+          "id": "CRIT-TEST-001",
+          "title": "Empty test assertions provide false security",
+          "source": "test_quality",
+          "impact": "Undetected bugs in production",
+          "fix_complexity": "high",
+          "estimated_time": "8-10 hours"
+        }
+      ]
+    },
+
+    "HIGH_TIER_2": {
+      "description": "Major issues affecting system performance, reliability, or security",
+      "criteria": [
+        "Performance bottlenecks >50% impact",
+        "High security vulnerabilities", 
+        "Major quality issues affecting maintainability",
+        "Test reliability problems"
+      ],
+      "issues": [
+        {
+          "id": "HIGH-SEC-003",
+          "title": "XSS via dangerouslySetInnerHTML",
+          "source": "security",
+          "impact": "Client-side script injection",
+          "fix_complexity": "medium",
+          "estimated_time": "3-4 hours"
+        },
+        {
+          "id": "HIGH-PERF-002",
+          "title": "Blocking I/O in async context",
+          "source": "performance",
+          "impact": "UI freezing during operations",
+          "fix_complexity": "high",
+          "estimated_time": "6-8 hours"
+        },
+        {
+          "id": "HIGH-CODE-001",
+          "title": "God objects exceeding 500 lines",
+          "source": "code_quality",
+          "impact": "Maintainability degradation",
+          "fix_complexity": "high",
+          "estimated_time": "12-16 hours"
+        },
+        {
+          "id": "HIGH-TEST-002",
+          "title": "Flaky tests with time dependencies",
+          "source": "test_quality",
+          "impact": "CI/CD instability",
+          "fix_complexity": "medium",
+          "estimated_time": "6-8 hours"
+        },
+        {
+          "id": "HIGH-DOC-001",
+          "title": "Missing installation and setup guides",
+          "source": "documentation",
+          "impact": "Developer onboarding barriers",
+          "fix_complexity": "medium",
+          "estimated_time": "8-12 hours"
+        }
+      ]
+    },
+
+    "MEDIUM_TIER_3": {
+      "description": "Code maintainability, test quality, and documentation improvements",
+      "criteria": [
+        "Code quality improvements",
+        "Test organization and reliability",
+        "Documentation completeness",
+        "Developer experience enhancements"
+      ],
+      "issues_count": 372,
+      "primary_focus": [
+        "Long parameter lists and coupling issues",
+        "Duplicate code consolidation", 
+        "Test organization and mocking reduction",
+        "API documentation completion",
+        "Development environment setup"
+      ]
+    },
+
+    "LOW_TIER_4": {
+      "description": "Style issues, minor optimizations, and cleanup tasks",
+      "criteria": [
+        "Code style consistency",
+        "Minor performance optimizations",
+        "Documentation formatting",
+        "Dead code removal"
+      ],
+      "issues_count": 134,
+      "primary_focus": [
+        "Magic number constants",
+        "Naming convention consistency",
+        "Documentation formatting standardization",
+        "Code cleanup and organization"
+      ]
+    }
+  },
+
+  "fix_dependencies": {
+    "sequential_requirements": [
+      {
+        "prerequisite": "CRIT-DEP-001 (grokfast dependency)",
+        "blocks": [
+          "Agent Forge performance optimizations",
+          "Training pipeline tests",
+          "Production deployment validation"
+        ],
+        "reason": "Core functionality dependency must be resolved first"
+      },
+      {
+        "prerequisite": "CRIT-SEC-001 (hardcoded secrets)",
+        "blocks": [
+          "Authentication system testing", 
+          "Security penetration testing",
+          "Production environment setup"
+        ],
+        "reason": "Security infrastructure must be secure before testing"
+      },
+      {
+        "prerequisite": "CRIT-PERF-001 (database N+1 queries)",
+        "blocks": [
+          "Database migration scripts",
+          "Performance benchmarking",
+          "Load testing scenarios"
+        ],
+        "reason": "Database optimization affects all subsequent testing"
+      },
+      {
+        "prerequisite": "HIGH-CODE-001 (god object refactoring)",
+        "blocks": [
+          "Unit test updates",
+          "Integration test modifications", 
+          "API contract updates"
+        ],
+        "reason": "Architectural changes require test and API updates"
+      }
+    ],
+
+    "parallel_safe_groups": [
+      {
+        "group": "security_fixes",
+        "issues": ["CRIT-SEC-002", "HIGH-SEC-003", "CRIT-SEC-004"],
+        "reason": "Independent security vulnerabilities can be fixed in parallel"
+      },
+      {
+        "group": "documentation_improvements", 
+        "issues": ["HIGH-DOC-001", "MEDIUM-DOC-002", "MEDIUM-DOC-003"],
+        "reason": "Documentation updates don't affect code functionality"
+      },
+      {
+        "group": "code_quality_cleanup",
+        "issues": ["MEDIUM-CODE-002", "MEDIUM-CODE-003", "LOW-CODE-001"],
+        "reason": "Independent quality improvements with minimal coupling"
+      }
+    ]
+  },
+
+  "specialist_agent_requirements": {
+    "security_specialist": {
+      "required_for": ["CRIT-SEC-001", "CRIT-SEC-002", "HIGH-SEC-003", "CRIT-SEC-004"],
+      "expertise": ["Authentication systems", "SQL injection prevention", "XSS mitigation", "Cryptographic implementations"],
+      "tools": ["Security scanners", "Penetration testing", "Dependency auditing"]
+    },
+
+    "database_specialist": {
+      "required_for": ["CRIT-PERF-001", "HIGH-PERF-003", "MEDIUM-PERF-001"],
+      "expertise": ["Query optimization", "Index design", "Connection pooling", "Database migrations"],
+      "tools": ["Query analyzers", "Performance profilers", "Migration tools"]
+    },
+
+    "performance_engineer": {
+      "required_for": ["HIGH-PERF-002", "MEDIUM-PERF-002", "CRIT-PERF-003"],
+      "expertise": ["Async programming", "Memory management", "Caching strategies", "Load testing"],
+      "tools": ["Profilers", "Benchmarking tools", "Monitoring systems"]
+    },
+
+    "test_automation_specialist": {
+      "required_for": ["CRIT-TEST-001", "HIGH-TEST-002", "MEDIUM-TEST-001"],
+      "expertise": ["Test architecture", "Mock management", "CI/CD pipelines", "Test data management"],
+      "tools": ["Testing frameworks", "Mock libraries", "Test runners", "Coverage tools"]
+    },
+
+    "architecture_specialist": {
+      "required_for": ["HIGH-CODE-001", "MEDIUM-CODE-001", "CRIT-ARCH-001"],
+      "expertise": ["Design patterns", "Refactoring", "Dependency injection", "Clean architecture"],
+      "tools": ["Static analysis", "Refactoring tools", "Architecture visualization"]
+    },
+
+    "documentation_specialist": {
+      "required_for": ["HIGH-DOC-001", "MEDIUM-DOC-002", "CRIT-DOC-001"],
+      "expertise": ["Technical writing", "API documentation", "Developer experience", "Documentation tooling"],
+      "tools": ["Documentation generators", "Markdown processors", "API spec tools"]
+    },
+
+    "devops_specialist": {
+      "required_for": ["CRIT-DEP-001", "HIGH-DEP-002", "MEDIUM-DEP-001"],
+      "expertise": ["Dependency management", "Build systems", "Deployment automation", "Environment configuration"],
+      "tools": ["Package managers", "Build tools", "Deployment platforms", "Configuration management"]
+    }
+  },
+
+  "routing_recommendations": {
+    "batch_execution_strategy": "Parallel within safety groups, sequential for dependencies",
+    "team_allocation": "7 specialist agents with cross-functional coordination",
+    "timeline_estimate": "4-6 weeks for complete remediation",
+    "resource_requirements": {
+      "critical_tier": "2 weeks with full team focus",
+      "high_tier": "2-3 weeks with parallel execution", 
+      "medium_tier": "2-3 weeks with maintenance focus",
+      "low_tier": "Ongoing with available capacity"
+    },
+    
+    "success_metrics": {
+      "security_score": "Target: 8.5/10 (from 3.2/10)",
+      "performance_improvement": "Target: 50-70% latency reduction",
+      "code_quality_score": "Target: 8.0/10 (from 6.2/10)",
+      "test_reliability": "Target: 9.0/10 (from 4.0/10)",
+      "documentation_completeness": "Target: 85% (from 65%)"
+    },
+
+    "risk_mitigation": {
+      "rollback_strategy": "Feature flags for major changes",
+      "testing_strategy": "Comprehensive regression testing after each tier",
+      "monitoring_strategy": "Real-time metrics for performance and reliability",
+      "communication_strategy": "Daily standups with cross-agent coordination"
+    }
+  }
+}

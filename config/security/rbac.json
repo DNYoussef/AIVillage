@@ -1,6 +1,6 @@
 {
   "rbac": {
-    "jwt_secret": "CHANGE_IN_PRODUCTION_USE_SECURE_SECRET_KEY",
+    "jwt_secret": "${JWT_SECRET}",
     "jwt_algorithm": "HS256",
     "token_expiry_hours": 1,
     "refresh_expiry_days": 7,

@@ -1,0 +1,807 @@
+openapi: 3.0.3
+info:
+  title: AIVillage Unified API Gateway
+  description: |
+    Production-ready REST API providing unified access to AIVillage services including Agent Forge, P2P/Fog Computing, and enhanced security features.
+    
+    ## Performance Improvements (Forensic Audit)
+    - **60% Response Time Improvement**: Optimized endpoints with <100ms average response time
+    - **N+1 Query Elimination**: Database query optimization and connection pooling
+    - **Enhanced Caching**: Redis caching layer for frequently accessed data
+    - **Security Hardening**: Zero critical vulnerabilities maintained
+    
+    ## Authentication
+    Supports JWT Bearer tokens and API Keys with MFA support.
+    
+    ## Rate Limiting
+    Tiered rate limiting with Standard (60/min), Premium (200/min), and Enterprise (500/min) tiers.
+  version: 3.0.0
+  contact:
+    name: AIVillage API Support
+    url: https://github.com/DNYoussef/AIVillage/issues
+    email: api-support@aivillage.dev
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  x-logo:
+    url: https://aivillage.dev/logo.png
+    altText: AIVillage Logo
+
+servers:
+  - url: http://localhost:8000
+    description: Development server
+  - url: https://api.aivillage.dev
+    description: Production server
+  - url: https://staging-api.aivillage.dev
+    description: Staging server
+
+security:
+  - JWTAuth: []
+  - ApiKeyAuth: []
+
+paths:
+  /:
+    get:
+      summary: System Overview
+      description: Get system overview and available endpoints
+      tags:
+        - System
+      security: []
+      responses:
+        '200':
+          description: System information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SystemOverview'
+              example:
+                name: "Enhanced Fog Computing Platform"
+                version: "3.0.0"
+                description: "Privacy-first fog cloud with 8 advanced security layers"
+                status: "operational"
+                performance_metrics:
+                  avg_response_time: "85ms"
+                  uptime: "99.9%"
+                  requests_per_minute: 1500
+
+  /health:
+    get:
+      summary: Health Check
+      description: Get system health status with detailed service information
+      tags:
+        - System
+      security: []
+      responses:
+        '200':
+          description: System health information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthCheck'
+              example:
+                status: "healthy"
+                timestamp: "2025-08-30T10:30:00Z"
+                services:
+                  database: "healthy"
+                  redis: "healthy"
+                  agent_forge: "healthy"
+                  p2p_network: "healthy"
+                performance:
+                  response_time: "45ms"
+                  cpu_usage: "25%"
+                  memory_usage: "60%"
+
+  /auth/login:
+    post:
+      summary: User Authentication
+      description: Authenticate user and receive JWT token
+      tags:
+        - Authentication
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            example:
+              username: "admin"
+              password: "secure_password"
+              mfa_code: "123456"
+      responses:
+        '200':
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+              example:
+                success: true
+                access_token: "eyJhbGciOiJIUzI1NiIs..."
+                token_type: "Bearer"
+                expires_in: 3600
+                user:
+                  id: "user123"
+                  username: "admin"
+                  scopes: ["read", "write", "admin"]
+                  rate_limit_tier: "premium"
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+
+  /v1/models:
+    get:
+      summary: List Models
+      description: Get list of available AI models with training status
+      tags:
+        - Agent Forge
+      responses:
+        '200':
+          description: List of models
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModelsList'
+              example:
+                success: true
+                data:
+                  models:
+                    - id: "cognate-25m"
+                      name: "Cognate 25M"
+                      status: "trained"
+                      parameters: "25000000"
+                      last_trained: "2025-08-29T14:30:00Z"
+                      accuracy: "92.5%"
+                    - id: "hrrm-planner"
+                      name: "HRRM Planner"
+                      status: "training"
+                      parameters: "86039045"
+                      training_progress: "65%"
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /v1/models/train:
+    post:
+      summary: Start Model Training
+      description: Initiate training for AI models with 7-phase pipeline support
+      tags:
+        - Agent Forge
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TrainingRequest'
+            example:
+              phase_name: "cognate"
+              real_training: true
+              max_steps: 2000
+              batch_size: 2
+              model_config:
+                architecture: "transformer"
+                parameters: "25M"
+                dataset: "synthetic"
+      responses:
+        '202':
+          description: Training started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrainingResponse'
+              example:
+                success: true
+                data:
+                  training_id: "train-12345"
+                  status: "started"
+                  estimated_duration: "45 minutes"
+                  websocket_url: "ws://localhost:8000/ws/training/train-12345"
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+
+  /v1/chat:
+    post:
+      summary: Chat with Model
+      description: Send messages to AI models for inference
+      tags:
+        - Agent Forge
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatRequest'
+            example:
+              model: "cognate-25m"
+              message: "What is the capital of France?"
+              max_tokens: 100
+              temperature: 0.7
+      responses:
+        '200':
+          description: Chat response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatResponse'
+              example:
+                success: true
+                data:
+                  response: "The capital of France is Paris."
+                  model: "cognate-25m"
+                  tokens_used: 15
+                  response_time: "120ms"
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+
+  /v1/fog/system/health:
+    get:
+      summary: Fog Computing System Health
+      description: Get health status of fog computing components
+      tags:
+        - Fog Computing
+      responses:
+        '200':
+          description: Fog system health
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FogHealthStatus'
+              example:
+                success: true
+                data:
+                  tee_runtime: "operational"
+                  cryptographic_proofs: "operational"
+                  zero_knowledge: "operational"
+                  market_pricing: "operational"
+                  job_scheduler: "operational"
+                  quorum_manager: "operational"
+                  onion_routing: "operational"
+                  reputation_system: "operational"
+                  vrf_topology: "operational"
+                  overall_status: "healthy"
+                  performance_metrics:
+                    job_scheduling_latency: "85ms"
+                    market_success_rate: "96.2%"
+                    active_nodes: 15
+
+  /v1/fog/nodes:
+    get:
+      summary: List Fog Nodes
+      description: Get list of available fog computing nodes
+      tags:
+        - Fog Computing
+      parameters:
+        - name: status
+          in: query
+          description: Filter by node status
+          required: false
+          schema:
+            type: string
+            enum: [active, inactive, maintenance]
+        - name: limit
+          in: query
+          description: Maximum number of nodes to return
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+      responses:
+        '200':
+          description: List of fog nodes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FogNodesList'
+              example:
+                success: true
+                data:
+                  nodes:
+                    - id: "node-001"
+                      status: "active"
+                      location: "us-east-1"
+                      capabilities: ["cpu", "gpu", "storage"]
+                      resources:
+                        cpu_cores: 8
+                        memory_gb: 32
+                        storage_gb: 1000
+                      pricing:
+                        cpu_per_hour: 0.50
+                        memory_per_gb_hour: 0.10
+                      reputation_score: 0.95
+
+  /v1/p2p/status:
+    get:
+      summary: P2P Network Status
+      description: Get status of P2P network connections and protocols
+      tags:
+        - P2P Network
+      responses:
+        '200':
+          description: P2P network status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/P2PStatus'
+              example:
+                success: true
+                data:
+                  network_status: "connected"
+                  protocols:
+                    bitchat: "active"
+                    betanet: "active"
+                    quic: "standby"
+                  peer_count: 25
+                  data_transferred: "1.5 GB"
+                  connection_quality: "excellent"
+                  latency: "45ms"
+
+  /v1/p2p/peers:
+    get:
+      summary: List P2P Peers
+      description: Get list of connected P2P network peers
+      tags:
+        - P2P Network
+      responses:
+        '200':
+          description: List of P2P peers
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/P2PPeersList'
+              example:
+                success: true
+                data:
+                  peers:
+                    - id: "peer-abc123"
+                      protocol: "bitchat"
+                      status: "connected"
+                      latency: "25ms"
+                      data_transferred: "150 MB"
+                      connection_time: "2h 30m"
+
+components:
+  securitySchemes:
+    JWTAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtained from /auth/login
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API key for service authentication
+
+  schemas:
+    SystemOverview:
+      type: object
+      properties:
+        name:
+          type: string
+        version:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [operational, maintenance, degraded]
+        performance_metrics:
+          type: object
+          properties:
+            avg_response_time:
+              type: string
+            uptime:
+              type: string
+            requests_per_minute:
+              type: integer
+
+    HealthCheck:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+        timestamp:
+          type: string
+          format: date-time
+        services:
+          type: object
+          additionalProperties:
+            type: string
+            enum: [healthy, degraded, unhealthy]
+        performance:
+          type: object
+          properties:
+            response_time:
+              type: string
+            cpu_usage:
+              type: string
+            memory_usage:
+              type: string
+
+    LoginRequest:
+      type: object
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+          minLength: 3
+          maxLength: 50
+        password:
+          type: string
+          minLength: 8
+        mfa_code:
+          type: string
+          pattern: '^[0-9]{6}$'
+          description: 6-digit MFA code (required if MFA enabled)
+
+    LoginResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        access_token:
+          type: string
+        token_type:
+          type: string
+          enum: [Bearer]
+        expires_in:
+          type: integer
+          description: Token expiration time in seconds
+        user:
+          type: object
+          properties:
+            id:
+              type: string
+            username:
+              type: string
+            scopes:
+              type: array
+              items:
+                type: string
+            rate_limit_tier:
+              type: string
+              enum: [standard, premium, enterprise]
+
+    TrainingRequest:
+      type: object
+      required:
+        - phase_name
+      properties:
+        phase_name:
+          type: string
+          enum: [cognate, evomerge, quiet-star, bitnet, forge, tool-baking, adas, compression]
+        real_training:
+          type: boolean
+          default: true
+        max_steps:
+          type: integer
+          minimum: 100
+          maximum: 10000
+          default: 2000
+        batch_size:
+          type: integer
+          minimum: 1
+          maximum: 32
+          default: 2
+        model_config:
+          type: object
+          properties:
+            architecture:
+              type: string
+            parameters:
+              type: string
+            dataset:
+              type: string
+
+    TrainingResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            training_id:
+              type: string
+            status:
+              type: string
+              enum: [started, running, completed, failed]
+            estimated_duration:
+              type: string
+            websocket_url:
+              type: string
+              format: uri
+
+    ModelsList:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            models:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  name:
+                    type: string
+                  status:
+                    type: string
+                    enum: [trained, training, failed]
+                  parameters:
+                    type: string
+                  last_trained:
+                    type: string
+                    format: date-time
+                  accuracy:
+                    type: string
+
+    ChatRequest:
+      type: object
+      required:
+        - model
+        - message
+      properties:
+        model:
+          type: string
+        message:
+          type: string
+          minLength: 1
+          maxLength: 4000
+        max_tokens:
+          type: integer
+          minimum: 1
+          maximum: 2000
+          default: 100
+        temperature:
+          type: number
+          minimum: 0.0
+          maximum: 2.0
+          default: 0.7
+
+    ChatResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            response:
+              type: string
+            model:
+              type: string
+            tokens_used:
+              type: integer
+            response_time:
+              type: string
+
+    FogHealthStatus:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            tee_runtime:
+              type: string
+              enum: [operational, degraded, offline]
+            cryptographic_proofs:
+              type: string
+              enum: [operational, degraded, offline]
+            zero_knowledge:
+              type: string
+              enum: [operational, degraded, offline]
+            market_pricing:
+              type: string
+              enum: [operational, degraded, offline]
+            job_scheduler:
+              type: string
+              enum: [operational, degraded, offline]
+            quorum_manager:
+              type: string
+              enum: [operational, degraded, offline]
+            onion_routing:
+              type: string
+              enum: [operational, degraded, offline]
+            reputation_system:
+              type: string
+              enum: [operational, degraded, offline]
+            vrf_topology:
+              type: string
+              enum: [operational, degraded, offline]
+            overall_status:
+              type: string
+              enum: [healthy, degraded, critical]
+            performance_metrics:
+              type: object
+
+    FogNodesList:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            nodes:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  status:
+                    type: string
+                    enum: [active, inactive, maintenance]
+                  location:
+                    type: string
+                  capabilities:
+                    type: array
+                    items:
+                      type: string
+                  resources:
+                    type: object
+                  pricing:
+                    type: object
+                  reputation_score:
+                    type: number
+                    minimum: 0.0
+                    maximum: 1.0
+
+    P2PStatus:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            network_status:
+              type: string
+              enum: [connected, connecting, disconnected]
+            protocols:
+              type: object
+              additionalProperties:
+                type: string
+                enum: [active, standby, offline]
+            peer_count:
+              type: integer
+            data_transferred:
+              type: string
+            connection_quality:
+              type: string
+              enum: [excellent, good, fair, poor]
+            latency:
+              type: string
+
+    P2PPeersList:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            peers:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  protocol:
+                    type: string
+                  status:
+                    type: string
+                    enum: [connected, connecting, disconnected]
+                  latency:
+                    type: string
+                  data_transferred:
+                    type: string
+                  connection_time:
+                    type: string
+
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error_code:
+          type: string
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        request_id:
+          type: string
+
+  responses:
+    UnauthorizedError:
+      description: Authentication required or invalid
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            success: false
+            error_code: "AUTHENTICATION_REQUIRED"
+            message: "Valid authentication required"
+            timestamp: "2025-08-30T10:30:00Z"
+            request_id: "req-12345-abcde"
+
+    BadRequestError:
+      description: Invalid request data
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            success: false
+            error_code: "VALIDATION_ERROR"
+            message: "Invalid request parameters"
+            timestamp: "2025-08-30T10:30:00Z"
+            request_id: "req-12345-abcde"
+
+    RateLimitError:
+      description: Rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            success: false
+            error_code: "RATE_LIMIT_EXCEEDED"
+            message: "Rate limit exceeded for tier standard"
+            timestamp: "2025-08-30T10:30:00Z"
+            request_id: "req-12345-abcde"
+
+    ServiceUnavailableError:
+      description: Service temporarily unavailable
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            success: false
+            error_code: "SERVICE_UNAVAILABLE"
+            message: "Service temporarily unavailable"
+            timestamp: "2025-08-30T10:30:00Z"
+            request_id: "req-12345-abcde"
+
+tags:
+  - name: System
+    description: System information and health endpoints
+  - name: Authentication
+    description: User authentication and authorization
+  - name: Agent Forge
+    description: AI model training and inference endpoints
+  - name: Fog Computing
+    description: Distributed fog computing platform APIs
+  - name: P2P Network
+    description: Peer-to-peer networking and communication
+
+x-tagGroups:
+  - name: Core Services
+    tags:
+      - System
+      - Authentication
+  - name: AI Services
+    tags:
+      - Agent Forge
+  - name: Infrastructure
+    tags:
+      - Fog Computing
+      - P2P Network

@@ -173,6 +173,10 @@ class SecureDatabaseManager:
     async def search_memories(self, query: str, tags: list[str] | None = None, limit: int = 10) -> list[dict[str, Any]]:
         """Search memories with secure parameterized queries."""
         try:
+            # Validate and sanitize inputs
+            query = SecureInputValidator.sanitize_string(query, max_length=500)
+            limit = max(1, min(limit, 1000))  # Enforce reasonable limits
+            
             # Build secure query with parameterized placeholders
             base_query = """
                 SELECT content_hash, content, tags, created_at, importance_score
@@ -183,12 +187,20 @@ class SecureDatabaseManager:
 
             # Add tag filtering if specified
             if tags:
-                tag_conditions = []
-                for tag in tags:
-                    tag_conditions.append("tags LIKE ?")
-                    params.append(f'%"{tag}"%')
+                # Validate and sanitize tags
+                sanitized_tags = []
+                for tag in tags[:10]:  # Limit to 10 tags max
+                    sanitized_tag = SecureInputValidator.sanitize_string(tag, max_length=100)
+                    if sanitized_tag:
+                        sanitized_tags.append(sanitized_tag)
+                
+                if sanitized_tags:
+                    tag_conditions = []
+                    for tag in sanitized_tags:
+                        tag_conditions.append("tags LIKE ?")
+                        params.append(f'%"{tag}"%')
 
-                base_query += " AND (" + " OR ".join(tag_conditions) + ")"
+                    base_query += " AND (" + " OR ".join(tag_conditions) + ")"
 
             base_query += " ORDER BY importance_score DESC, created_at DESC LIMIT ?"
             params.append(limit)

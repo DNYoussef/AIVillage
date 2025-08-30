@@ -16,25 +16,34 @@ Thank you for your interest in contributing to AIVillage! This document provides
 
 2. **Setup Development Environment**
    ```bash
-   make dev-install
-   make compose-up  # Start local database stack
+   # Install development dependencies
+   pip install -r config/requirements/requirements-dev.txt -c config/constraints.txt
    
-   # Install archaeological enhancements
-   pip install -r requirements-archaeological.txt
+   # Start local services (if using Docker)
+   # docker-compose up -d
+   
+   # Install development dependencies
+   pip install -r config/requirements/requirements-dev.txt -c config/constraints.txt
    ```
 
 3. **Configure Archaeological Features (Optional)**
    ```bash
-   cp .env.example .env.archaeological
-   # Edit .env.archaeological to enable/configure archaeological features
-   export ARCHAEOLOGICAL_INTEGRATION_ENABLED=true
+   cp .env.example .env.local
+   # Edit .env.local to configure local development settings
+   export AIVILLAGE_ENV=development
    ```
 
 4. **Verify Setup**
    ```bash
-   make ci-pre-flight  # Fast validation
-   make test-fast      # Quick test run
-   pytest tests/archaeological/ -v  # Test archaeological integrations
+   # Run basic validation
+   python scripts/test_enhanced_fog_integration.py
+   
+   # Run tests
+   pytest tests/ -v --tb=short
+   
+   # Check code quality
+   ruff check . --fix
+   black . --check
    ```
 
 ## 📊 Current Status (August 29, 2025)
@@ -76,10 +85,18 @@ Thank you for your interest in contributing to AIVillage! This document provides
 
 3. **Test Locally**
    ```bash
-   make format      # Auto-format code
-   make lint        # Check code quality
-   make test-fast   # Run quick tests
-   make ci-local    # Full local CI
+   # Auto-format code
+   black . --check --diff
+   ruff check . --fix
+   
+   # Check code quality
+   mypy . --ignore-missing-imports
+   
+   # Run quick tests
+   pytest tests/ -v --tb=short -x
+   
+   # Full local CI equivalent
+   ruff check . && black . --check && mypy . --ignore-missing-imports && pytest
    ```
 
 4. **Commit Changes**
@@ -293,14 +310,16 @@ Brief description of changes made.
 ### Local Development Stack
 ```bash
 # Start all services
-make compose-up
+# Start services manually or using Docker
+# For development, configure database connections in .env
 
-# Available services:
-# - PostgreSQL: localhost:5432
-# - Neo4j: localhost:7474
-# - Redis: localhost:6379
-# - Gateway: localhost:8000
-# - Twin Server: localhost:8001
+# Gateway service:
+python infrastructure/gateway/enhanced_unified_api_gateway.py
+
+# Available endpoints:
+# - API Gateway: localhost:8000
+# - Admin Dashboard: localhost:8000/admin_interface.html
+# - API Docs: localhost:8000/docs
 ```
 
 ### Environment Variables

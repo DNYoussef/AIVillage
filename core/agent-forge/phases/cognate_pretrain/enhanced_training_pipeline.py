@@ -31,7 +31,31 @@ import numpy as np
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, Dataset
-from torch.amp import autocast, GradScaler
+try:
+    from torch.amp import autocast, GradScaler
+except ImportError:
+    # Fallback for older PyTorch versions
+    try:
+        from torch.cuda.amp import autocast, GradScaler
+    except ImportError:
+        # Mock implementations for compatibility
+        def autocast(*args, **kwargs):
+            class MockAutocast:
+                def __enter__(self):
+                    return self
+                def __exit__(self, *args):
+                    pass
+            return MockAutocast()
+        
+        class GradScaler:
+            def __init__(self, *args, **kwargs):
+                pass
+            def scale(self, loss):
+                return loss
+            def step(self, optimizer):
+                optimizer.step()
+            def update(self):
+                pass
 
 # Import enhanced GrokFast implementation
 from grokfast_enhanced import (

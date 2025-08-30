@@ -51,9 +51,9 @@ from transformers import AutoTokenizer
 try:
     from .grokfast import gradfilter_ema, gradfilter_ma
     GROKFAST_AVAILABLE = True
-    print("✅ GrokFast optimization loaded successfully")
+    print("GrokFast optimization loaded successfully")
 except ImportError as e:
-    print(f"⚠️  GrokFast not available: {e}")
+    print(f"WARNING: GrokFast not available: {e}")
     GROKFAST_AVAILABLE = False
     
     # Define dummy functions if GrokFast not available
@@ -74,12 +74,24 @@ sys.path.insert(0, str(current_dir))
 try:
     from download_datasets import CognateDatasetDownloader
     from full_cognate_25m import Enhanced25MCognate, create_standard_25m_config
-    from grokfast_optimizer import create_grokfast_adamw
+    # Use local grokfast implementation
+    from grokfast_optimizer import GrokFastOptimizer
+    
+    def create_grokfast_adamw(model, lr=1e-4, alpha=0.98, lamb=2.0, warmup_steps=100):
+        """Create GrokFast-enhanced AdamW optimizer using local implementation."""
+        base_optimizer = torch.optim.AdamW(model.parameters(), lr=lr)
+        return GrokFastOptimizer(
+            model=model,
+            base_optimizer=base_optimizer,
+            alpha=alpha,
+            lamb=lamb,
+            warmup_steps=warmup_steps
+        )
 
     REAL_IMPORTS = True
-    logger.info("✅ Successfully imported real Cognate components")
+    logger.info("Successfully imported real Cognate components with local grokfast")
 except ImportError as e:
-    logger.error(f"❌ Import error: {e}")
+    logger.error(f"Import error: {e}")
     REAL_IMPORTS = False
 
 
@@ -327,7 +339,7 @@ class RealCognateTrainer:
         # WebSocket client for progress updates
         self.ws_client = None
 
-        logger.info("🚀 Real Cognate Trainer initialized")
+        logger.info("Real Cognate Trainer initialized")
         logger.info(f"   Device: {self.device}")
         logger.info(f"   Output: {self.output_dir}")
         logger.info(f"   Max steps: {config.max_steps}")
@@ -612,7 +624,7 @@ class RealCognateTrainer:
             f"{model_name} training completed! Best loss: {best_eval_loss:.4f}",
         )
 
-        logger.info(f"✅ Completed training {model_name}: {global_step} steps, " f"best loss: {best_eval_loss:.4f}")
+        logger.info(f"Completed training {model_name}: {global_step} steps, " f"best loss: {best_eval_loss:.4f}")
 
         return training_stats
 
@@ -679,7 +691,7 @@ class RealCognateTrainer:
 
     def train_three_models(self) -> dict[str, Any]:
         """Train 3 Cognate models for EvoMerge."""
-        logger.info("🚀 Starting real training of 3 Cognate models with GrokFast")
+        logger.info("Starting real training of 3 Cognate models with GrokFast")
 
         model_names = ["cognate_foundation_1", "cognate_foundation_2", "cognate_foundation_3"]
         all_stats = {}
@@ -691,7 +703,7 @@ class RealCognateTrainer:
                 stats = self.train_single_model(model_name, i, len(model_names))
                 all_stats[model_name] = stats
             except Exception as e:
-                logger.error(f"❌ Failed to train {model_name}: {e}")
+                logger.error(f"Failed to train {model_name}: {e}")
                 all_stats[model_name] = {"model_name": model_name, "status": "failed", "error": str(e)}
 
         # Create final summary
@@ -710,14 +722,14 @@ class RealCognateTrainer:
                 "Cognate",
                 "completed",
                 1.0,
-                f"✅ All {total_models} models trained successfully with real GrokFast optimization!",
+                f"All {total_models} models trained successfully with real GrokFast optimization!",
             )
         else:
             self.sync_broadcast_progress(
                 "Cognate", "error", 1.0, f"Training completed: {successful_models}/{total_models} models successful"
             )
 
-        logger.info(f"🎉 Training complete: {successful_models}/{total_models} models successful")
+        logger.info(f"Training complete: {successful_models}/{total_models} models successful")
 
         return summary
 
@@ -763,7 +775,7 @@ class RealCognateTrainer:
 def main():
     """Main training function."""
     if not REAL_IMPORTS:
-        logger.error("❌ Cannot run real training without proper imports")
+        logger.error("Cannot run real training without proper imports")
         return {"error": "Import failures prevent real training"}
 
     config = RealTrainingConfig()
@@ -777,12 +789,12 @@ def main():
     summary = trainer.train_three_models()
 
     logger.info("=" * 60)
-    logger.info("🎉 REAL COGNATE TRAINING COMPLETE")
+    logger.info("REAL COGNATE TRAINING COMPLETE")
     logger.info("=" * 60)
-    logger.info(f"✅ Successful models: {summary['successful_models']}/{summary['models_trained']}")
+    logger.info(f"Successful models: {summary['successful_models']}/{summary['models_trained']}")
     logger.info(f"📊 Total steps: {summary['aggregate_stats'].get('total_training_steps', 0)}")
     logger.info(f"⏱️  Total time: {summary['aggregate_stats'].get('total_training_time_hours', 0):.2f} hours")
-    logger.info(f"🚀 Ready for EvoMerge: {summary['evomerge_ready']}")
+    logger.info(f"Ready for EvoMerge: {summary['evomerge_ready']}")
 
     return summary
 

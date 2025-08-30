@@ -52,7 +52,7 @@ redis:
 
 # Security configuration
 security:
-  secret_key: "dev-secret-key-change-in-production"
+  secret_key: "${SECRET_KEY}"
   jwt_algorithm: "HS256"
   jwt_expiration: 3600  # 1 hour
   rate_limit_requests: 100

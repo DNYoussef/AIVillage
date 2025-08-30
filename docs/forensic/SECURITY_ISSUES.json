@@ -1,0 +1,395 @@
+{
+  "security_analysis_metadata": {
+    "analysis_date": "2025-01-29",
+    "analyzer": "Claude Code Security Analysis",
+    "codebase": "AIVillage",
+    "scan_scope": ["core/", "infrastructure/", "src/", "packages/", "apps/", "ui/", "config/"],
+    "severity_levels": {
+      "CRITICAL": "Immediate security risk requiring urgent remediation",
+      "HIGH": "Significant security vulnerability requiring prompt attention", 
+      "MEDIUM": "Security weakness that should be addressed",
+      "LOW": "Security improvement recommended"
+    }
+  },
+  
+  "executive_summary": {
+    "total_issues_found": 47,
+    "critical_issues": 8,
+    "high_issues": 12,
+    "medium_issues": 18,
+    "low_issues": 9,
+    "risk_rating": "HIGH",
+    "immediate_action_required": true
+  },
+
+  "critical_vulnerabilities": [
+    {
+      "id": "CRIT-001",
+      "title": "Hardcoded Development Secrets in Production Code",
+      "severity": "CRITICAL",
+      "category": "Secret Management",
+      "description": "Multiple hardcoded secrets and API keys found in source code that could be exposed in production",
+      "locations": [
+        {
+          "file": "core/rag/mcp_servers/hyperag/server.py",
+          "line": 51,
+          "code": "jwt_secret = self.config.get(\"auth\", {}).get(\"jwt_secret\", \"dev-secret-change-in-production\")",
+          "issue": "Hardcoded JWT secret with obvious placeholder"
+        },
+        {
+          "file": "config/services.yaml",
+          "line": 55,
+          "code": "secret_key: \"dev-secret-key-change-in-production\"",
+          "issue": "Hardcoded secret key in configuration"
+        },
+        {
+          "file": "config/security/rbac.json",
+          "line": 3,
+          "code": "\"jwt_secret\": \"CHANGE_IN_PRODUCTION_USE_SECURE_SECRET_KEY\"",
+          "issue": "Placeholder JWT secret in security configuration"
+        }
+      ],
+      "impact": "Full authentication bypass and session hijacking",
+      "recommendation": "Use environment variables or secure key management system for all secrets"
+    },
+    
+    {
+      "id": "CRIT-002", 
+      "title": "SQL Injection Vulnerabilities via String Concatenation",
+      "severity": "CRITICAL",
+      "category": "Injection",
+      "description": "SQL queries constructed using string concatenation without proper parameterization",
+      "locations": [
+        {
+          "file": "core/rag/mcp_servers/hyperag/secure_database.py",
+          "line": 191,
+          "code": "base_query += \" AND (\" + \" OR \".join(tag_conditions) + \")\"",
+          "issue": "Dynamic SQL construction without parameterization"
+        },
+        {
+          "file": "infrastructure/shared/security/multi_tenant_system.py", 
+          "line": 913,
+          "code": "query += f\" WHERE {tenant_filter}\"",
+          "issue": "SQL injection via f-string formatting"
+        }
+      ],
+      "impact": "Complete database compromise and data exfiltration",
+      "recommendation": "Use parameterized queries exclusively and implement input validation"
+    },
+
+    {
+      "id": "CRIT-003",
+      "title": "Cross-Site Scripting (XSS) via dangerouslySetInnerHTML", 
+      "severity": "CRITICAL",
+      "category": "XSS",
+      "description": "Unsafe use of dangerouslySetInnerHTML allows arbitrary HTML injection",
+      "locations": [
+        {
+          "file": "apps/web/components/common/MessageBubble.tsx",
+          "line": 89,
+          "code": "dangerouslySetInnerHTML={{ __html: parseMarkdown(message.content) }}",
+          "issue": "User content rendered without sanitization"
+        }
+      ],
+      "impact": "Account takeover and malicious script execution",
+      "recommendation": "Use DOMPurify for HTML sanitization or render content safely"
+    },
+
+    {
+      "id": "CRIT-004",
+      "title": "Command Injection via subprocess.call",
+      "severity": "CRITICAL", 
+      "category": "Injection",
+      "description": "User input may reach system command execution without validation",
+      "locations": [
+        {
+          "file": "core/agent-forge/archive/experiments/legacy_evomerge/bench_driver.py",
+          "line": 62,
+          "code": "rc = subprocess.call(cmd)",
+          "issue": "Direct command execution without input sanitization"
+        }
+      ],
+      "impact": "Remote code execution and system compromise",
+      "recommendation": "Validate all inputs and use subprocess with shell=False"
+    },
+
+    {
+      "id": "CRIT-005",
+      "title": "Insecure Random Number Generation",
+      "severity": "CRITICAL",
+      "category": "Cryptography",
+      "description": "Use of weak random number generators for security-sensitive operations",
+      "locations": [
+        {
+          "file": "ui/web/src/utils/messageUtils.ts",
+          "line": 53,
+          "code": "return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;",
+          "issue": "Math.random() used for ID generation"
+        },
+        {
+          "file": "apps/web/src/services/bitchatService.ts", 
+          "line": 69,
+          "code": "return `peer_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;",
+          "issue": "Predictable peer ID generation"
+        }
+      ],
+      "impact": "Predictable tokens leading to session hijacking",
+      "recommendation": "Use cryptographically secure random generators (crypto.randomBytes)"
+    },
+
+    {
+      "id": "CRIT-006",
+      "title": "Authentication Bypass Potential",
+      "severity": "CRITICAL",
+      "category": "Authentication",
+      "description": "Authentication can be disabled or bypassed in configuration",
+      "locations": [
+        {
+          "file": "config/unified_p2p_config.py",
+          "line": 212,
+          "code": "require_authentication: bool = False",
+          "issue": "Authentication can be disabled by default"
+        }
+      ],
+      "impact": "Complete authentication bypass",
+      "recommendation": "Force authentication requirement and remove bypass options"
+    },
+
+    {
+      "id": "CRIT-007", 
+      "title": "Weak Hash Algorithm Usage",
+      "severity": "CRITICAL",
+      "category": "Cryptography",
+      "description": "MD5 hash algorithm used for security-sensitive operations",
+      "locations": [
+        {
+          "file": "tests/production/test_tensor_streaming_integration.py",
+          "line": 49,
+          "code": "assert hashlib.md5(chunk.data).hexdigest() == chunk.checksum",
+          "issue": "MD5 used for integrity checking"
+        },
+        {
+          "file": "infrastructure/shared/tools/utlsgen/calibrate_fingerprint.py",
+          "line": 51, 
+          "code": "ja3_hash = hashlib.md5(ja3_string.encode()).hexdigest()",
+          "issue": "MD5 used for fingerprinting"
+        }
+      ],
+      "impact": "Hash collision attacks and integrity bypass",
+      "recommendation": "Use SHA-256 or SHA-3 for all cryptographic operations"
+    },
+
+    {
+      "id": "CRIT-008",
+      "title": "Unsafe Deserialization Risk",
+      "severity": "CRITICAL", 
+      "category": "Deserialization",
+      "description": "Potential unsafe deserialization through eval-like operations",
+      "locations": [
+        {
+          "file": "core/agent-forge/archive/legacy/tool_persona_baking_legacy.py",
+          "line": 341,
+          "code": "result = str(self._safe_eval(expression))",
+          "issue": "Custom eval implementation may have bypass vulnerabilities"
+        }
+      ],
+      "impact": "Remote code execution through malicious payloads",
+      "recommendation": "Remove eval operations or use sandboxed execution environment"
+    }
+  ],
+
+  "high_vulnerabilities": [
+    {
+      "id": "HIGH-001",
+      "title": "Default Database Credentials",
+      "severity": "HIGH",
+      "category": "Authentication",
+      "description": "Default passwords used in database configurations",
+      "locations": [
+        {
+          "file": "core/rag/mcp_servers/hyperag/memory/hypergraph_kg.py",
+          "line": 148,
+          "code": "neo4j_password: str = \"password\"",
+          "issue": "Default password 'password' for Neo4j database"
+        },
+        {
+          "file": "config/services.yaml",
+          "line": 41,
+          "code": "password: \"\"",
+          "issue": "Empty password in service configuration"
+        }
+      ],
+      "impact": "Unauthorized database access",
+      "recommendation": "Generate strong passwords and store securely"
+    },
+
+    {
+      "id": "HIGH-002",
+      "title": "Hardcoded API Keys in Examples",
+      "severity": "HIGH", 
+      "category": "Secret Management",
+      "description": "API keys hardcoded in example files may be copied to production",
+      "locations": [
+        {
+          "file": "examples/sdk_usage_example.py",
+          "line": 23,
+          "code": "api_key=\"your-api-key-here\"",
+          "issue": "Placeholder API key in example code"
+        }
+      ],
+      "impact": "Credential exposure in production systems",
+      "recommendation": "Use environment variables in all example code"
+    },
+
+    {
+      "id": "HIGH-003",
+      "title": "CORS Misconfiguration",
+      "severity": "HIGH",
+      "category": "Web Security", 
+      "description": "Overly permissive CORS configuration",
+      "locations": [
+        {
+          "file": "experiments/services/services/gateway/app.py",
+          "line": 44,
+          "code": "allow_headers=[\"Authorization\", \"Content-Type\"]",
+          "issue": "CORS allows all origins by default"
+        }
+      ],
+      "impact": "Cross-origin attacks and data theft",
+      "recommendation": "Restrict CORS to specific trusted domains"
+    },
+
+    {
+      "id": "HIGH-004",
+      "title": "Directory Traversal Vulnerability",
+      "severity": "HIGH",
+      "category": "Path Traversal",
+      "description": "File operations without proper path validation",
+      "locations": [
+        {
+          "file": "core/rag/storage/encrypted_mounts.py",
+          "line": 352,
+          "code": "async def access_file(",
+          "issue": "File access without path traversal protection"
+        }
+      ],
+      "impact": "Access to unauthorized files and directories",
+      "recommendation": "Validate and sanitize all file paths"
+    }
+  ],
+
+  "medium_vulnerabilities": [
+    {
+      "id": "MED-001",
+      "title": "Excessive innerHTML Usage",
+      "severity": "MEDIUM",
+      "category": "XSS",
+      "description": "Multiple uses of innerHTML without sanitization",
+      "affected_files": [
+        "ui/components/p2p-fog-components.js",
+        "infrastructure/dev-ui/static/js/model-chat.js"
+      ],
+      "impact": "Potential XSS if user data reaches these paths",
+      "recommendation": "Replace innerHTML with safer alternatives like textContent"
+    },
+
+    {
+      "id": "MED-002", 
+      "title": "Development Debug Settings",
+      "severity": "MEDIUM",
+      "category": "Configuration",
+      "description": "Debug settings enabled in configuration files",
+      "impact": "Information disclosure in production",
+      "recommendation": "Disable debug modes in production configurations"
+    },
+
+    {
+      "id": "MED-003",
+      "title": "Insufficient Input Validation",
+      "severity": "MEDIUM", 
+      "category": "Input Validation",
+      "description": "User inputs processed without comprehensive validation",
+      "impact": "Data corruption and injection attacks",
+      "recommendation": "Implement comprehensive input validation framework"
+    }
+  ],
+
+  "dependencies_analysis": {
+    "vulnerable_packages": [
+      {
+        "package": "crypto-js",
+        "version": "^4.1.1",
+        "vulnerability": "Known timing attack vulnerabilities in older versions",
+        "severity": "MEDIUM",
+        "recommendation": "Upgrade to latest version and consider native crypto API"
+      },
+      {
+        "package": "simple-peer",
+        "version": "^9.11.1", 
+        "vulnerability": "Potential WebRTC security issues",
+        "severity": "LOW",
+        "recommendation": "Review WebRTC security configuration"
+      }
+    ],
+    "outdated_packages": [
+      "@babel/preset-env", "@types/react", "eslint"
+    ]
+  },
+
+  "remediation_plan": {
+    "immediate_actions": [
+      "Replace all hardcoded secrets with environment variables",
+      "Fix SQL injection vulnerabilities with parameterized queries",
+      "Sanitize all HTML content before rendering",
+      "Replace Math.random() with cryptographically secure alternatives",
+      "Remove or secure eval operations",
+      "Update weak hash algorithms to SHA-256+"
+    ],
+    
+    "short_term_actions": [
+      "Implement comprehensive input validation",
+      "Configure proper CORS policies", 
+      "Add path traversal protection",
+      "Update vulnerable dependencies",
+      "Remove default credentials",
+      "Disable debug modes in production"
+    ],
+    
+    "long_term_actions": [
+      "Implement security code review process",
+      "Add automated security scanning to CI/CD",
+      "Conduct regular penetration testing",
+      "Implement security monitoring and alerting",
+      "Create security training program for developers"
+    ]
+  },
+
+  "compliance_gaps": {
+    "owasp_top_10": [
+      "A01:2021 – Broken Access Control",
+      "A02:2021 – Cryptographic Failures", 
+      "A03:2021 – Injection",
+      "A05:2021 – Security Misconfiguration",
+      "A07:2021 – Identification and Authentication Failures"
+    ],
+    "recommendations": [
+      "Implement OWASP security guidelines",
+      "Add security headers",
+      "Implement proper session management",
+      "Add comprehensive logging and monitoring"
+    ]
+  },
+
+  "security_score": {
+    "overall_score": "3.2/10",
+    "score_breakdown": {
+      "authentication": "2/10",
+      "authorization": "3/10", 
+      "data_protection": "2/10",
+      "input_validation": "4/10",
+      "error_handling": "5/10",
+      "logging_monitoring": "3/10"
+    },
+    "improvement_potential": "7.8/10 with recommended fixes"
+  }
+}

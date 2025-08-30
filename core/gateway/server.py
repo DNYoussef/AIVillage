@@ -51,8 +51,33 @@ class GatewayConfig:
         self.debug = os.getenv("DEBUG", "false").lower() == "true"
 
         # Security configuration
-        self.api_key = os.getenv("API_KEY", "dev-gateway-key-12345")
-        self.secret_key = os.getenv("SECRET_KEY", "dev-secret-key-change-in-production")
+        self.api_key = os.getenv("API_KEY")
+        if not self.api_key:
+            raise ValueError(
+                "API_KEY environment variable is required. "
+                "Please set API_KEY with a secure random value."
+            )
+        
+        self.secret_key = os.getenv("SECRET_KEY")
+        if not self.secret_key:
+            raise ValueError(
+                "SECRET_KEY environment variable is required. "
+                "Please set SECRET_KEY with a secure random value (minimum 32 characters)."
+            )
+        
+        # Validate against insecure default values
+        insecure_keys = [
+            "dev-gateway-key-12345", 
+            "dev-secret-key-change-in-production", 
+            "changeme", 
+            "default", 
+            "secret"
+        ]
+        if self.api_key in insecure_keys or self.secret_key in insecure_keys:
+            raise ValueError(
+                "Insecure default API key or secret key detected. "
+                "Please use secure random values for API_KEY and SECRET_KEY environment variables."
+            )
 
         # Rate limiting
         self.rate_limit_requests = int(os.getenv("RATE_LIMIT_REQUESTS", "100"))

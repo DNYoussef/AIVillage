@@ -6,6 +6,7 @@ Main server implementation for HypeRAG Model Context Protocol server.
 import asyncio
 import json
 import logging
+import os
 from pathlib import Path
 import signal
 import sys
@@ -48,7 +49,18 @@ class HypeRAGMCPServer:
         await self._load_config()
 
         # Initialize permission manager
-        jwt_secret = self.config.get("auth", {}).get("jwt_secret", "dev-secret-change-in-production")
+        jwt_secret = os.getenv("JWT_SECRET") or self.config.get("auth", {}).get("jwt_secret")
+        if not jwt_secret:
+            raise ValueError(
+                "JWT_SECRET environment variable is required. "
+                "Please set JWT_SECRET with a secure random value (minimum 32 characters)."
+            )
+        if jwt_secret in ["dev-secret-change-in-production", "CHANGE_IN_PRODUCTION", "changeme"]:
+            raise ValueError(
+                "Insecure default JWT secret detected. "
+                "Please set JWT_SECRET environment variable with a secure random value."
+            )
+        
         self.permission_manager = PermissionManager(
             jwt_secret=jwt_secret,
             enable_audit=self.config.get("audit", {}).get("enabled", True),
@@ -98,7 +110,7 @@ class HypeRAGMCPServer:
                 "ping_timeout": 10,
             },
             "auth": {
-                "jwt_secret": "dev-secret-change-in-production",  # pragma: allowlist secret
+                "jwt_secret": os.getenv("JWT_SECRET", ""),
                 "api_keys_enabled": True,
                 "session_timeout_hours": 24,
             },

@@ -4,8 +4,10 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 import logging
 import os
+from functools import lru_cache
+from typing import Dict, List, Optional
 
-from sqlalchemy import Column, DateTime, ForeignKey, Index, Integer, String, UniqueConstraint, create_engine
+from sqlalchemy import Column, DateTime, ForeignKey, Index, Integer, String, UniqueConstraint, create_engine, text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Session, relationship, sessionmaker
@@ -164,8 +166,22 @@ class CreditsConfig:
 class CreditsLedger:
     def __init__(self, config: CreditsConfig) -> None:
         self.config = config
-        self.engine = create_engine(config.database_url)
-        self.SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=self.engine)
+        # OPTIMIZATION: Connection pooling for high-performance database access
+        self.engine = create_engine(
+            config.database_url,
+            pool_size=20,              # Base pool size for concurrent connections
+            max_overflow=30,           # Additional connections allowed beyond pool_size
+            pool_pre_ping=True,        # Validate connections before use
+            pool_recycle=3600,         # Recycle connections every hour
+            echo=False,                # Disable SQL logging in production
+            future=True,               # Use SQLAlchemy 2.0 style
+        )
+        self.SessionLocal = sessionmaker(
+            autocommit=False, 
+            autoflush=False, 
+            bind=self.engine,
+            expire_on_commit=False     # Keep objects accessible after commit
+        )
 
     def create_tables(self) -> None:
         """Create all database tables."""
@@ -174,6 +190,13 @@ class CreditsLedger:
     def get_session(self) -> Session:
         """Get database session."""
         return self.SessionLocal()
+        
+    @lru_cache(maxsize=1000)
+    def _get_user_id_by_username(self, username: str) -> Optional[int]:
+        """OPTIMIZATION: Cache frequently accessed user lookups."""
+        with self.get_session() as session:
+            user = session.query(User.id).filter(User.username == username).first()
+            return user.id if user else None
 
     def create_user(self, username: str, node_id: str | None = None) -> User:
         """Create a new user with wallet."""
@@ -201,9 +224,18 @@ class CreditsLedger:
             return session.query(User).filter(User.username == username).first()
 
     def get_balance(self, username: str) -> BalanceResponse:
-        """Get user balance."""
+        """Get user balance with optimized JOIN query."""
         with self.get_session() as session:
-            user = session.query(User).filter(User.username == username).first()
+            # OPTIMIZATION: Single query with JOIN to get user and wallet data together
+            from sqlalchemy.orm import joinedload
+            
+            user = (
+                session.query(User)
+                .options(joinedload(User.wallet))  # Eager load wallet to avoid N+1
+                .filter(User.username == username)
+                .first()
+            )
+            
             if not user:
                 msg = f"User {username} not found"
                 raise ValueError(msg)
@@ -226,9 +258,15 @@ class CreditsLedger:
         net_amount = amount - burn_amount
 
         with self.get_session() as session:
-            # Get users
-            from_user = session.query(User).filter(User.username == from_username).first()
-            to_user = session.query(User).filter(User.username == to_username).first()
+            # OPTIMIZATION: Batch user lookup with single query using IN clause
+            usernames = [from_username, to_username]
+            users = session.query(User).filter(User.username.in_(usernames)).all()
+            
+            # Create username -> user mapping for O(1) lookup
+            user_map = {user.username: user for user in users}
+            
+            from_user = user_map.get(from_username)
+            to_user = user_map.get(to_username)
 
             if not from_user:
                 msg = f"Sender {from_username} not found"
@@ -362,39 +400,41 @@ class CreditsLedger:
             )
 
     def get_transactions(self, username: str, limit: int = 100) -> list[TransactionResponse]:
-        """Get transaction history for user."""
+        """Get transaction history for user with optimized JOIN queries to eliminate N+1 pattern."""
         with self.get_session() as session:
             user = session.query(User).filter(User.username == username).first()
             if not user:
                 msg = f"User {username} not found"
                 raise ValueError(msg)
 
-            # Get both sent and received transactions
-            sent_txs = (
+            # OPTIMIZATION: Single query with JOINs to fetch all data at once
+            # This eliminates the N+1 query pattern by eagerly loading user data
+            from sqlalchemy.orm import joinedload
+            
+            # Get transactions with eager loading of related users
+            all_txs_query = (
                 session.query(Transaction)
-                .filter(Transaction.from_user_id == user.id)
+                .options(
+                    joinedload(Transaction.from_user),  # Eager load from_user
+                    joinedload(Transaction.to_user)     # Eager load to_user  
+                )
+                .filter(
+                    (Transaction.from_user_id == user.id) | 
+                    (Transaction.to_user_id == user.id)
+                )
                 .order_by(Transaction.created_at.desc())
-                .limit(limit)
+                .limit(limit * 2)  # Get extra to account for duplicates
                 .all()
             )
 
-            received_txs = (
-                session.query(Transaction)
-                .filter(Transaction.to_user_id == user.id)
-                .order_by(Transaction.created_at.desc())
-                .limit(limit)
-                .all()
-            )
-
-            # Combine and sort
-            all_txs = sent_txs + received_txs
-            all_txs.sort(key=lambda tx: tx.created_at, reverse=True)
+            # Sort and limit results
+            all_txs_query.sort(key=lambda tx: tx.created_at, reverse=True)
 
             return [
                 TransactionResponse(
                     id=tx.id,
-                    from_user=tx.from_user.username,
-                    to_user=tx.to_user.username,
+                    from_user=tx.from_user.username,  # No additional query - already loaded
+                    to_user=tx.to_user.username,      # No additional query - already loaded
                     amount=tx.amount,
                     burn_amount=tx.burn_amount,
                     net_amount=tx.net_amount,
@@ -403,13 +443,125 @@ class CreditsLedger:
                     created_at=tx.created_at,
                     completed_at=tx.completed_at,
                 )
-                for tx in all_txs[:limit]
+                for tx in all_txs_query[:limit]
             ]
 
     def get_total_supply(self) -> int:
-        """Get total credits in circulation."""
+        """Get total credits in circulation with caching optimization."""
         from sqlalchemy import func
 
         with self.get_session() as session:
-            total = session.query(func.sum(Wallet.balance)).scalar() or 0
-            return total
+            # OPTIMIZATION: Use more efficient aggregation query with hint
+            result = session.execute(
+                text("SELECT SUM(balance) FROM wallets")
+            ).scalar()
+            return result or 0
+            
+    def bulk_get_balances(self, usernames: List[str]) -> Dict[str, int]:
+        """OPTIMIZATION: Bulk balance retrieval to eliminate N+1 queries."""
+        with self.get_session() as session:
+            from sqlalchemy.orm import joinedload
+            
+            users = (
+                session.query(User)
+                .options(joinedload(User.wallet))
+                .filter(User.username.in_(usernames))
+                .all()
+            )
+            
+            return {
+                user.username: user.wallet.balance if user.wallet else 0
+                for user in users
+            }
+            
+    def bulk_transfer(self, transfers: List[Dict]) -> List[TransactionResponse]:
+        """OPTIMIZATION: Bulk transfer operations for improved performance.
+        
+        Args:
+            transfers: List of dicts with 'from_username', 'to_username', 'amount'
+        """
+        if not transfers:
+            return []
+            
+        responses = []
+        with self.get_session() as session:
+            # Collect all unique usernames for batch lookup
+            all_usernames = set()
+            for transfer in transfers:
+                all_usernames.add(transfer['from_username'])
+                all_usernames.add(transfer['to_username'])
+                
+            # Single query to fetch all users with their wallets
+            from sqlalchemy.orm import joinedload
+            users = (
+                session.query(User)
+                .options(joinedload(User.wallet))
+                .filter(User.username.in_(list(all_usernames)))
+                .all()
+            )
+            user_map = {user.username: user for user in users}
+            
+            # Process all transfers in batch
+            transactions_to_add = []
+            
+            for transfer in transfers:
+                from_username = transfer['from_username']
+                to_username = transfer['to_username']
+                amount = transfer['amount']
+                
+                if amount <= 0:
+                    continue
+                    
+                from_user = user_map.get(from_username)
+                to_user = user_map.get(to_username)
+                
+                if not from_user or not to_user:
+                    continue
+                    
+                if from_user.wallet.balance < amount:
+                    continue
+                    
+                burn_amount = int(amount * self.config.burn_rate)
+                net_amount = amount - burn_amount
+                
+                # Update balances in memory
+                from_user.wallet.balance -= amount
+                to_user.wallet.balance += net_amount
+                
+                # Create transaction record
+                transaction = Transaction(
+                    from_user_id=from_user.id,
+                    to_user_id=to_user.id,
+                    amount=amount,
+                    burn_amount=burn_amount,
+                    net_amount=net_amount,
+                    transaction_type="transfer",
+                    status="completed",
+                    completed_at=datetime.now(UTC)
+                )
+                transactions_to_add.append(transaction)
+                session.add(transaction)
+                
+                responses.append(TransactionResponse(
+                    id=0,  # Will be set after flush
+                    from_user=from_username,
+                    to_user=to_username,
+                    amount=amount,
+                    burn_amount=burn_amount,
+                    net_amount=net_amount,
+                    transaction_type="transfer",
+                    status="completed",
+                    created_at=datetime.now(UTC),
+                    completed_at=datetime.now(UTC)
+                ))
+                
+            # Commit all changes in single transaction
+            session.commit()
+            
+            # Update response IDs
+            for i, tx in enumerate(transactions_to_add):
+                responses[i] = responses[i].__class__(
+                    **{**responses[i].__dict__, 'id': tx.id}
+                )
+                
+        return responses

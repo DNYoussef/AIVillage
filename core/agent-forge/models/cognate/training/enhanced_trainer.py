@@ -24,13 +24,42 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader, Dataset
-from torch.amp import autocast, GradScaler
+try:
+    from torch.amp import autocast, GradScaler
+except ImportError:
+    # Fallback for older PyTorch versions
+    try:
+        from torch.cuda.amp import autocast, GradScaler
+    except ImportError:
+        # Mock implementations for compatibility
+        def autocast(*args, **kwargs):
+            class MockAutocast:
+                def __enter__(self):
+                    return self
+                def __exit__(self, *args):
+                    pass
+            return MockAutocast()
+        
+        class GradScaler:
+            def __init__(self, *args, **kwargs):
+                pass
+            def scale(self, loss):
+                return loss
+            def step(self, optimizer):
+                optimizer.step()
+            def update(self):
+                pass
 import torch.distributed as dist
 
-# Import enhanced GrokFast components
+# Setup logger
+logger = logging.getLogger(__name__)
+
+# Import enhanced GrokFast components from local implementation
 try:
     import sys
-    sys.path.append(str(Path(__file__).parent.parent.parent.parent / "phases" / "cognate_pretrain"))
+    grokfast_path = str(Path(__file__).parent.parent.parent.parent / "phases" / "cognate_pretrain")
+    if grokfast_path not in sys.path:
+        sys.path.append(grokfast_path)
     
     from grokfast_enhanced import (
         EnhancedGrokFastOptimizer,
@@ -43,10 +72,13 @@ try:
         GrokFastValidator,
         create_optimized_grokfast_config
     )
+    GROKFAST_AVAILABLE = True
+    logger.info("Successfully imported local enhanced GrokFast components")
 except ImportError as e:
     warnings.warn(f"Enhanced GrokFast components not available: {e}")
     # Fallback to basic implementation
     EnhancedGrokFastOptimizer = None
+    GROKFAST_AVAILABLE = False
     EnhancedGrokFastConfig = None
 
 # Import existing Cognate components

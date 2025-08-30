@@ -889,22 +889,30 @@ class MultiTenantSystem:
         query: str,
         tenant_context: TenantContext,
         table_name: str,
-    ) -> str:
-        """Add tenant isolation to a SQL query.
+        params: list | None = None,
+    ) -> tuple[str, list]:
+        """Add tenant isolation to a SQL query with parameterized filtering.
 
         Args:
             query: Original SQL query
             tenant_context: Tenant context
             table_name: Table being queried
+            params: Existing query parameters
 
         Returns:
-            Modified query with tenant isolation
+            Tuple of (modified query, updated parameters) with tenant isolation
         """
         if tenant_context.isolation_level == IsolationLevel.NONE:
-            return query
+            return query, params or []
 
-        # Add tenant filtering
-        tenant_filter = f" {table_name}.tenant_id = '{tenant_context.tenant_id}'"
+        # Sanitize table name to prevent injection
+        if not table_name.replace('_', '').replace('-', '').isalnum():
+            raise ValueError(f"Invalid table name: {table_name}")
+
+        # Add tenant filtering with parameterized query
+        tenant_filter = f" {table_name}.tenant_id = ?"
+        updated_params = params or []
+        updated_params.append(tenant_context.tenant_id)
 
         # Simple query modification (in production, use proper SQL parser)
         if "WHERE" in query.upper():
@@ -912,7 +920,7 @@ class MultiTenantSystem:
         else:
             query += f" WHERE {tenant_filter}"
 
-        return query
+        return query, updated_params
 
     def get_tenant_database(
         self,
@@ -1199,6 +1207,181 @@ class MultiTenantSystem:
                 "members": members,
                 "workspaces": workspaces,
             }
+
+
+# SQL Security utilities
+class SQLSecurityManager:
+    """Advanced SQL injection prevention and query validation."""
+
+    @staticmethod
+    def validate_identifier(identifier: str, max_length: int = 64) -> str:
+        """Validate and sanitize SQL identifiers (table/column names).
+        
+        Args:
+            identifier: SQL identifier to validate
+            max_length: Maximum allowed length
+            
+        Returns:
+            Validated identifier
+            
+        Raises:
+            ValueError: If identifier is invalid or potentially malicious
+        """
+        if not isinstance(identifier, str):
+            raise ValueError("Identifier must be a string")
+            
+        if not identifier:
+            raise ValueError("Identifier cannot be empty")
+            
+        if len(identifier) > max_length:
+            raise ValueError(f"Identifier too long: {len(identifier)} > {max_length}")
+            
+        # Check for valid characters (alphanumeric, underscore, hyphen)
+        if not identifier.replace('_', '').replace('-', '').isalnum():
+            raise ValueError(f"Invalid characters in identifier: {identifier}")
+            
+        # Check for SQL injection patterns
+        dangerous_patterns = [
+            '--', '/*', '*/', ';', 'union', 'select', 'insert', 'update', 
+            'delete', 'drop', 'create', 'alter', 'exec', 'execute'
+        ]
+        
+        identifier_lower = identifier.lower()
+        for pattern in dangerous_patterns:
+            if pattern in identifier_lower:
+                raise ValueError(f"Potentially dangerous pattern in identifier: {pattern}")
+                
+        return identifier
+
+    @staticmethod
+    def build_parameterized_query(
+        base_query: str,
+        where_conditions: dict[str, Any],
+        allowed_columns: set[str] | None = None
+    ) -> tuple[str, list]:
+        """Build parameterized query with dynamic WHERE conditions.
+        
+        Args:
+            base_query: Base SQL query
+            where_conditions: Dictionary of column->value conditions
+            allowed_columns: Set of allowed column names for filtering
+            
+        Returns:
+            Tuple of (query, parameters)
+        """
+        if not where_conditions:
+            return base_query, []
+            
+        conditions = []
+        params = []
+        
+        for column, value in where_conditions.items():
+            # Validate column name
+            SQLSecurityManager.validate_identifier(column)
+            
+            # Check against allowlist if provided
+            if allowed_columns and column not in allowed_columns:
+                raise ValueError(f"Column not allowed: {column}")
+                
+            conditions.append(f"{column} = ?")
+            params.append(value)
+            
+        where_clause = " AND ".join(conditions)
+        
+        if "WHERE" in base_query.upper():
+            query = base_query.replace("WHERE", f"WHERE {where_clause} AND", 1)
+        else:
+            query = f"{base_query} WHERE {where_clause}"
+            
+        return query, params
+
+    @staticmethod  
+    def validate_query_structure(query: str) -> None:
+        """Validate SQL query structure for basic safety.
+        
+        Args:
+            query: SQL query to validate
+            
+        Raises:
+            ValueError: If query structure is potentially unsafe
+        """
+        if not isinstance(query, str):
+            raise ValueError("Query must be a string")
+            
+        query_lower = query.lower().strip()
+        
+        # Check for multiple statements (basic check)
+        if query_lower.count(';') > 1:
+            raise ValueError("Multiple statements not allowed")
+            
+        # Check for dangerous SQL functions/keywords
+        dangerous_keywords = [
+            'xp_cmdshell', 'sp_oacreate', 'sp_oamethod', 'sp_oagetproperty',
+            'dbms_java', 'dbms_lob.fileopen', 'utl_file', 'load_file',
+            'into outfile', 'into dumpfile', 'load data'
+        ]
+        
+        for keyword in dangerous_keywords:
+            if keyword in query_lower:
+                raise ValueError(f"Dangerous keyword not allowed: {keyword}")
+                
+        # Basic structure validation
+        if not any(keyword in query_lower for keyword in ['select', 'insert', 'update', 'delete', 'create', 'alter', 'drop']):
+            raise ValueError("Query must contain a valid SQL command")
+
+
+class SecureInputValidator:
+    """Enhanced input validation to prevent injection attacks."""
+
+    @staticmethod
+    def sanitize_string(input_str: str, max_length: int = 1000) -> str:
+        """Sanitize string input."""
+        if not isinstance(input_str, str):
+            msg = "Input must be a string"
+            raise ValueError(msg)
+
+        # Remove null bytes and control characters
+        sanitized = "".join(char for char in input_str if ord(char) >= 32 or char in "\n\r\t")
+
+        # Truncate to max length
+        if len(sanitized) > max_length:
+            sanitized = sanitized[:max_length]
+
+        return sanitized
+
+    @staticmethod
+    def validate_tenant_id(tenant_id: str) -> str:
+        """Validate tenant ID format."""
+        if not isinstance(tenant_id, str):
+            raise ValueError("Tenant ID must be a string")
+            
+        # Remove any potentially dangerous characters
+        sanitized = ''.join(c for c in tenant_id if c.isalnum() or c in '_-')
+        
+        if len(sanitized) != len(tenant_id):
+            raise ValueError("Tenant ID contains invalid characters")
+            
+        if len(sanitized) > 64:
+            raise ValueError("Tenant ID too long")
+            
+        if not sanitized:
+            raise ValueError("Tenant ID cannot be empty")
+            
+        return sanitized
+
+    @staticmethod
+    def validate_sql_limit(limit: int, max_limit: int = 10000) -> int:
+        """Validate SQL LIMIT values."""
+        if not isinstance(limit, int):
+            raise ValueError("Limit must be an integer")
+            
+        if limit < 0:
+            raise ValueError("Limit cannot be negative")
+            
+        if limit > max_limit:
+            raise ValueError(f"Limit too large: {limit} > {max_limit}")
+            
+        return limit
 
 
 # Example usage
