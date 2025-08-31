@@ -149,13 +149,15 @@ class TestFileOrganizationValidation:
                         if actual_duplicates:
                             print(f"⚠️  Potential duplicate functionality in {py_file}: {actual_duplicates}")
 
-                    except SyntaxError:
+                    except SyntaxError as e:
                         # Skip files with syntax errors
-                        pass
+                        import logging
+                        logging.warning("Syntax error in file %s: %s", py_file, str(e))
 
-            except Exception:
+            except Exception as e:
                 # Skip files that can't be read
-                pass
+                import logging
+                logging.exception("Error reading file %s: %s", py_file, str(e))
 
         print("✅ Duplicate functionality scan complete")
 

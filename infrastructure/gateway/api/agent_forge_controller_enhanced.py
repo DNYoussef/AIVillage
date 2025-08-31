@@ -308,8 +308,8 @@ async def get_system_metrics():
                     "gpu_memory_total": gpu_memory_total,
                     "gpu_name": gpu_name,
                 }
-            except:
-                pass
+            except Exception as e:
+                logger.debug(f"Failed to collect GPU metrics: {e}")
 
         return metrics
 

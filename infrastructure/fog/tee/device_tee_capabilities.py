@@ -225,8 +225,8 @@ class DeviceTEEDetector:
         if env_type:
             try:
                 return DeviceType(env_type.lower())
-            except ValueError:
-                pass
+            except ValueError as e:
+                logger.warning(f"Invalid device type in environment variable '{env_type}': {e}")
 
         # Platform-based detection
         if self.platform in ["android", "ios"]:
@@ -483,8 +483,8 @@ class DeviceTEEDetector:
 
             return min(memory_based, cpu_based, 32)  # Cap at 32
 
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning(f"Failed to estimate TEE enclave count: {e}")
 
         return 4  # Default
 
@@ -493,8 +493,8 @@ class DeviceTEEDetector:
         try:
             if hasattr(os, "getloadavg"):
                 return os.getloadavg()[0]  # 1-minute load average
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"Failed to get system load average: {e}")
 
         return 0.0
 
@@ -519,8 +519,8 @@ class DeviceTEEDetector:
                         else:
                             return "normal"
 
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"Failed to read thermal state from sysfs: {e}")
 
         # Check environment variable for testing
         return os.getenv("THERMAL_STATE", "normal")
@@ -536,16 +536,16 @@ class DeviceTEEDetector:
                     with open(capacity_file) as f:
                         return int(f.read().strip())
 
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"Failed to read battery level from sysfs: {e}")
 
         # Check environment variable for testing
         battery_env = os.getenv("BATTERY_LEVEL")
         if battery_env:
             try:
                 return int(battery_env)
-            except ValueError:
-                pass
+            except ValueError as e:
+                logger.warning(f"Invalid battery level in environment variable '{battery_env}': {e}")
 
         return None  # No battery (desktop/server)
 
@@ -573,8 +573,8 @@ class DeviceTEEDetector:
                         elif status == "Discharging":
                             return "battery"
 
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"Failed to read power status from sysfs: {e}")
 
         return "plugged"  # Default assumption
 

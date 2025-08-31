@@ -498,8 +498,9 @@ class TestComponentInteraction:
         # Cause an error in one component
         try:
             config.set_configuration("invalid", None, "invalid_level")  # This should fail
-        except:
-            pass
+        except Exception as e:
+            import logging
+            logging.exception("Configuration error in component isolation test: %s", str(e))
 
         # Other component should still work
         metrics.record_metric(MetricType.PERFORMANCE, "test_metric", 1.0)

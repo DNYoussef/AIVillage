@@ -288,8 +288,9 @@ async def agent_factory():
     for agent in created_agents:
         try:
             await agent.shutdown()
-        except Exception:
-            pass  # Ignore shutdown errors in tests
+        except Exception as e:
+            import logging
+            logging.exception("Agent shutdown error in tests: %s", str(e))
 
 
 @pytest.fixture
@@ -368,8 +369,9 @@ def test_isolation():
             for cleanup_func in reversed(self.cleanup_functions):
                 try:
                     cleanup_func()
-                except Exception:
-                    pass  # Ignore cleanup errors
+                except Exception as e:
+                    import logging
+                    logging.exception("Cleanup error in tests: %s", str(e))
             self.cleanup_functions.clear()
 
     isolation = TestIsolation()

@@ -214,8 +214,9 @@ def generate_test_report():
                 lines = len(f.readlines())
                 total_lines += lines
                 print(f"  {py_file.name}: {lines} lines")
-        except Exception:
-            pass
+        except Exception as e:
+            import logging
+            logging.exception("Error reading file for line count: %s", str(e))
 
     print(f"\nTotal implementation: {total_lines} lines of Python code")
 

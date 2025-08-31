@@ -376,8 +376,9 @@ class TestComponentInteractions:
         with patch.object(integrated_agent, "retrieve_similar_memories", side_effect=Exception("Memory error")):
             try:
                 await integrated_agent.retrieve_similar_memories("test query")
-            except Exception:
-                pass  # Expected to fail
+            except Exception as e:
+                import logging
+                logging.exception("Memory component error during integration test: %s", str(e))
 
         # Then: Other components should remain functional
         task = TaskInterface(task_id="recovery-test", task_type="test", content="recovery test")

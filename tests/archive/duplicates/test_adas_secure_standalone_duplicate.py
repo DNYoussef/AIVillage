@@ -40,8 +40,9 @@ class MockSecureCodeRunner:
                     try:
                         score = float(match.group(1))
                         return max(0.0, min(1.0, score))
-                    except BaseException:
-                        pass
+                    except BaseException as e:
+                        import logging
+                        logging.exception("Code execution error: %s", str(e))
 
                 # Check for params.get pattern
                 match = re.search(r"params\.get\('score',\s*([\d.]+)\)", code)
@@ -50,7 +51,9 @@ class MockSecureCodeRunner:
 
             return 0.5  # Default score
 
-        except Exception:
+        except Exception as e:
+            import logging
+            logging.exception("Code sandbox execution error: %s", str(e))
             return 0.0
 
 

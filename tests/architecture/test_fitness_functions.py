@@ -257,8 +257,9 @@ class TestConnascencePrinciples:
                 if len(set(contexts)) > 1 and not self.is_acceptable_shared_name(name):
                     violations.append(f"{file_path}: Variable '{name}' used across multiple contexts: {set(contexts)}")
 
-        except Exception:
-            pass  # Skip files that can't be parsed
+        except Exception as e:
+            import logging
+            logging.exception("File parsing error in connascence check: %s", str(e))
 
         return violations
 
@@ -338,8 +339,9 @@ class TestConnascencePrinciples:
                         f"{file_path}: Magic number '{number}' appears {count} times (possible connascence of value)"
                     )
 
-        except Exception:
-            pass
+        except Exception as e:
+            import logging
+            logging.exception("Type connascence check error: %s", str(e))
 
         return violations
 
@@ -507,8 +509,9 @@ class TestLayeringViolations:
                 elif isinstance(node, ast.ImportFrom):
                     if node.module:
                         imports.add(node.module)
-        except Exception:
-            pass
+        except Exception as e:
+            import logging
+            logging.exception("Import extraction error in fitness tests: %s", str(e))
 
         return imports
 
@@ -574,8 +577,9 @@ class TestGlobalState:
                                 and self.is_mutable_assignment(node.value)  # Not private
                             ):
                                 violations.append(f"{file_path}:{node.lineno} Global mutable variable '{target.id}'")
-        except Exception:
-            pass
+        except Exception as e:
+            import logging
+            logging.exception("Global state check error: %s", str(e))
 
         return violations
 

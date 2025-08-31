@@ -142,8 +142,9 @@ class LayerBoundaryTest:
                         imports.add(alias.name)
                 elif isinstance(node, ast.ImportFrom) and node.module:
                     imports.add(node.module)
-        except Exception:
-            pass
+        except Exception as e:
+            import logging
+            logging.exception("Error extracting imports from file: %s", str(e))
 
         return imports
 

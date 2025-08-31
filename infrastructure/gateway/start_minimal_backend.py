@@ -53,8 +53,8 @@ def monitor_process(name, process):
             if not line:
                 break
             print(f"[{name}] {line.strip()}")
-    except:
-        pass
+    except Exception as e:
+        print(f"[{name}] Error reading output: {e}")
 
 
 def main():
@@ -159,8 +159,8 @@ def main():
         for name, process in services:
             try:
                 process.kill()
-            except:
-                pass
+            except Exception as e:
+                print(f"Failed to kill process {name}: {e}")
 
 
 if __name__ == "__main__":

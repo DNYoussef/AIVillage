@@ -263,8 +263,9 @@ class TestSecurityMonitoring(BaseSecurityTest):
         with self.capture_logs('security') as log_capture:
             try:
                 await self.security_validator.validate_message(malicious_payload, {})
-            except Exception:
-                pass  # Expected to fail
+            except Exception as e:
+                import logging
+                logging.exception("Security validation test expected failure: %s", str(e))
             
             log_content = log_capture.getvalue()
             assert 'threat detected' in log_content.lower()

@@ -304,8 +304,8 @@ async def system_metrics_broadcaster():
                 try:
                     metrics["gpu_memory_used"] = torch.cuda.memory_allocated() / 1024**3
                     metrics["gpu_memory_total"] = torch.cuda.get_device_properties(0).total_memory / 1024**3
-                except:
-                    pass
+                except Exception as e:
+                    logger.debug(f"Failed to collect GPU metrics: {e}")
 
             # Broadcast to subscribers
             await broadcast_system_metrics(metrics)

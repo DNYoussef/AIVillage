@@ -225,8 +225,8 @@ class WebSocketService:
         
         try:
             await conn_info.websocket.close()
-        except Exception:
-            pass  # Connection might already be closed
+        except Exception as e:
+            logger.debug(f"Failed to close WebSocket connection {connection_id}: {e}")  # Connection might already be closed
         
         conn_info.state = ConnectionState.DISCONNECTED
         del self.connections[connection_id]

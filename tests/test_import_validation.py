@@ -178,8 +178,9 @@ class ImportValidator:
                     parts = parts[:-1] + (parts[-1][:-3],)  # Remove .py
 
                 return ".".join(parts)
-        except Exception:
-            pass
+        except Exception as e:
+            import logging
+            logging.exception("File to module name conversion error: %s", str(e))
 
         return ""
 

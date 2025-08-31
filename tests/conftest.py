@@ -259,8 +259,9 @@ def cleanup_after_test():
 
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
-    except BaseException:
-        pass
+    except BaseException as e:
+        import logging
+        logging.exception("Error clearing CUDA cache: %s", str(e))
 
 
 # Configure async tests
