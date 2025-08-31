@@ -1472,7 +1472,7 @@ class FogIntegrationTester:
                 result.logs.append("✓ Unauthorized transfer prevention verified")
                 result.assertions_passed += 1
             except Exception:
-                pass  # Expected to fail
+                logging.exception("Expected failure in unauthorized transfer prevention test - this is normal behavior")
 
         # Test transaction integrity
         if account1 and account2:

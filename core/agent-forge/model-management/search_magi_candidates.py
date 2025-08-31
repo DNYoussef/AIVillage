@@ -34,8 +34,9 @@ def estimate_params_from_config(config: dict) -> float | None:
                 params = (hidden_size * intermediate_size * num_layers * 3 + vocab_size * hidden_size * 2) / 1e9
                 return params
 
-    except Exception:
-        pass
+    except Exception as e:
+        import logging
+        logging.exception("Exception in model parameter estimation: %s", str(e))
 
     return None
 

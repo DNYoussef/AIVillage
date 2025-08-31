@@ -446,7 +446,7 @@ class MarketSchedulerIntegration:
                 ):
                     return True
             except Exception:
-                pass
+                logging.exception("Failed to check market component health status")
 
         # Default to market for hybrid mode if components are available
         return self.config.scheduling_mode == TaskSchedulingMode.MARKET_HYBRID

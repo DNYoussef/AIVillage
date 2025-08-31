@@ -12,6 +12,7 @@ from enum import Enum
 import hashlib
 import ipaddress
 import json
+import logging
 
 try:
     import geoip2.database
@@ -266,7 +267,7 @@ class InfrastructureClassifier:
                             'longitude': data.get('longitude', 0)
                         }
                 except Exception:
-                    pass
+                    logging.exception("Failed to parse geo location data from IP service response")
 
         return {
             'country_code': '',

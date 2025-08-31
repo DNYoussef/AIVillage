@@ -635,8 +635,9 @@ class RepairTestSuite:
                                 "affected_elements": [edge["id"]],
                             }
                         )
-                except Exception:
-                    pass  # Invalid date format
+                except Exception as e:
+                    import logging
+                    logging.exception("Exception in temporal consistency check date parsing: %s", str(e))
 
         # Check for duplicate identities (simplified)
         patient_names = defaultdict(list)

@@ -594,8 +594,9 @@ class EdgeDevice:
                 if battery:
                     self.status.battery_percent = battery.percent
                     self.status.is_charging = battery.power_plugged
-            except:  # nosec B110
-                pass  # Battery info not available
+            except Exception as e:  # nosec B110
+                import logging
+                logging.exception("Exception in battery status collection: %s", str(e))
 
             # Update constraint level
             memory_ratio = self.status.memory_usage_gb / self.spec.memory_gb

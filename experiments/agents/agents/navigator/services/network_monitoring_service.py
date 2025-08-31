@@ -360,8 +360,9 @@ class NetworkMonitoringService(INetworkMonitoringService):
                     writer.close()
                     await writer.wait_closed()
                     success_count += 1
-                except:
-                    pass
+                except Exception as e:
+                    import logging
+                    logging.exception("Exception in network connection test: %s", str(e))
             
             loss_rate = 1.0 - (success_count / total_attempts)
             return max(0.0, min(1.0, loss_rate))

@@ -251,8 +251,9 @@ class EnhancedMobileBridge:
                     if battery:
                         info.battery_level = battery.percent
                         info.is_charging = battery.power_plugged
-                except:
-                    pass  # Battery info not available
+                except Exception as e:
+                    import logging
+                    logging.exception("Exception in device battery info collection: %s", str(e))
 
             # Platform-specific capability detection
             await self._detect_platform_capabilities(info)

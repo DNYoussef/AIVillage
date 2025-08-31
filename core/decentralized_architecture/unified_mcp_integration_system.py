@@ -578,8 +578,9 @@ class MCPServer:
             try:
                 if hasattr(connection, "send"):
                     await connection.send(json.dumps(error_response))
-            except:
-                pass  # Connection may be closed
+            except Exception as e:
+                import logging
+                logging.exception("Exception in error response sending: %s", str(e))
 
             self.stats["failed_requests"] += 1
 

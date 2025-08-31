@@ -874,8 +874,9 @@ class ShieldAgent(AgentInterface):
                             threats_found.append(f"Suspicious pattern detected: {pattern.decode()}")
                             signature_matches.append(f"pattern:{pattern.decode()}")
 
-        except Exception:
-            pass  # Silent fail for signature scanning
+        except Exception as e:
+            import logging
+            logging.exception("Exception in malware signature scanning: %s", str(e))
 
         return {"threats_found": threats_found, "signature_matches": signature_matches}
 

@@ -246,8 +246,8 @@ class DeviceTEEDetector:
                     cpu_info = f.read().lower()
                     if "mobile" in cpu_info or "atom" in cpu_info:
                         return DeviceType.TABLET
-            except:
-                pass
+            except Exception:
+                logging.exception("Failed to read CPU info for device type detection")
             return DeviceType.DESKTOP
         elif self.platform == "darwin":
             # macOS - could be laptop or desktop
@@ -379,7 +379,7 @@ class DeviceTEEDetector:
                     return True
 
         except Exception:
-            pass
+            logging.exception("Failed to check AMD SEV-SNP support")
 
         return False
 
@@ -396,7 +396,7 @@ class DeviceTEEDetector:
                 return True
 
         except Exception:
-            pass
+            logging.exception("Failed to check Intel TDX support")
 
         return False
 
@@ -409,7 +409,7 @@ class DeviceTEEDetector:
                 return True
 
         except Exception:
-            pass
+            logging.exception("Failed to check Intel SGX support")
 
         return False
 
@@ -426,7 +426,7 @@ class DeviceTEEDetector:
                         return len(data) > 4 and data[-1] == 1
 
         except Exception:
-            pass
+            logging.exception("Failed to detect secure boot status")
 
         return False
 
@@ -439,7 +439,7 @@ class DeviceTEEDetector:
                 return True
 
         except Exception:
-            pass
+            logging.exception("Failed to detect TPM availability")
 
         return False
 
@@ -465,7 +465,7 @@ class DeviceTEEDetector:
                             return max_tee_mb
 
         except Exception:
-            pass
+            logging.exception("Failed to calculate TEE memory allocation from system memory info")
 
         # Default allocation
         return 1024  # 1GB default

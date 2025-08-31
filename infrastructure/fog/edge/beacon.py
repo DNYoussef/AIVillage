@@ -738,8 +738,9 @@ class CapabilityBeacon:
                 }
                 if timezone in timezone_map:
                     return timezone_map[timezone]
-        except Exception:
-            pass
+        except Exception as e:
+            import logging
+            logging.exception("Exception in timezone-based region detection: %s", str(e))
 
         return "us-west-2"  # Default region
 

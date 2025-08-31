@@ -133,10 +133,10 @@ class TestWebSocketSecurityRegression:
         """Must block SQL injection attempts."""
         sql_payloads = [
             '{"query": "1\\"; DROP TABLE users; --"}',
-            '{"search": "admin\\' OR \\'1\\'=\\'1"}',
+            '{"search": "admin\' OR \'1\'=\'1"}',
             '{"filter": "UNION SELECT * FROM passwords"}',
-            '{"data": "1\\' AND 1=1--"}',
-            '{"param": "xp_cmdshell \\'dir\\'"}',
+            '{"data": "1\' AND 1=1--"}',
+            '{"param": "xp_cmdshell \'dir\'"}',
             '{"sql": "SELECT * FROM information_schema.tables"}',
         ]
         

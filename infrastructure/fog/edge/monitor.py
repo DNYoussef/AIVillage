@@ -273,8 +273,9 @@ class ResourceMonitor:
             cpu_freq = psutil.cpu_freq()
             if cpu_freq:
                 snapshot.cpu_freq_mhz = cpu_freq.current
-        except Exception:
-            pass
+        except Exception as e:
+            import logging
+            logging.exception("Exception in CPU frequency collection: %s", str(e))
 
         # CPU temperature
         try:
@@ -283,8 +284,9 @@ class ResourceMonitor:
                 snapshot.cpu_temp_celsius = temps["coretemp"][0].current
             elif "cpu_thermal" in temps:
                 snapshot.cpu_temp_celsius = temps["cpu_thermal"][0].current
-        except Exception:
-            pass
+        except Exception as e:
+            import logging
+            logging.exception("Exception in CPU temperature collection: %s", str(e))
 
         # Memory metrics
         memory = psutil.virtual_memory()
@@ -318,8 +320,9 @@ class ResourceMonitor:
 
             if disk_io:
                 self._prev_disk_io = {"read_bytes": disk_io.read_bytes, "write_bytes": disk_io.write_bytes}
-        except Exception:
-            pass
+        except Exception as e:
+            import logging
+            logging.exception("Exception in disk I/O metrics collection: %s", str(e))
 
         # Network metrics
         try:
@@ -337,8 +340,9 @@ class ResourceMonitor:
 
             # Network connections
             snapshot.network_connections = len(psutil.net_connections())
-        except Exception:
-            pass
+        except Exception as e:
+            import logging
+            logging.exception("Exception in network metrics collection: %s", str(e))
 
         # Battery metrics
         try:
@@ -349,14 +353,16 @@ class ResourceMonitor:
                     battery.secsleft if battery.secsleft != psutil.POWER_TIME_UNLIMITED else None
                 )
                 snapshot.power_plugged = battery.power_plugged
-        except Exception:
-            pass
+        except Exception as e:
+            import logging
+            logging.exception("Exception in battery metrics collection: %s", str(e))
 
         # Process metrics
         try:
             snapshot.process_count = len(psutil.pids())
-        except Exception:
-            pass
+        except Exception as e:
+            import logging
+            logging.exception("Exception in process count collection: %s", str(e))
 
         # Load average (Unix/Linux only)
         try:

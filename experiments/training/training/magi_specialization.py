@@ -344,8 +344,9 @@ class GeometricSelfAwareness:
                     _, s, _ = np.linalg.svd(param_2d, compute_uv=False)
                     condition_number = s[0] / (s[-1] + 1e-10)
                     complexity_score += np.log(condition_number + 1)
-                except:
-                    pass  # Skip problematic layers
+                except Exception as e:
+                    import logging
+                    logging.exception("Exception in complexity score calculation for SVD: %s", str(e))
 
         return complexity_score
 

@@ -364,8 +364,9 @@ class WASIRunner:
         try:
             sandbox_size = sum(f.stat().st_size for f in sandbox_dir.rglob("*") if f.is_file())
             disk_used_mb = sandbox_size / (1024 * 1024)
-        except Exception:
-            pass
+        except Exception as e:
+            import logging
+            logging.exception("Exception in sandbox disk usage calculation: %s", str(e))
 
         return {
             "exit_code": exit_code,
@@ -691,8 +692,9 @@ class MicroVMRunner:
         try:
             sandbox_size = sum(f.stat().st_size for f in sandbox_dir.rglob("*") if f.is_file())
             disk_used_mb = sandbox_size / (1024 * 1024)
-        except Exception:
-            pass
+        except Exception as e:
+            import logging
+            logging.exception("Exception in WASI sandbox disk usage calculation: %s", str(e))
 
         return {
             "exit_code": exit_code,

@@ -412,8 +412,9 @@ class RealCognateTrainer:
         """Synchronous wrapper for progress broadcasting."""
         try:
             asyncio.run(self.broadcast_progress(phase, status, progress, message))
-        except:
-            pass  # Ignore failures
+        except Exception as e:
+            import logging
+            logging.exception("Exception in sync_broadcast_progress: %s", str(e))
 
     def create_model(self, variant_name: str, seed: int = 42) -> Enhanced25MCognate:
         """Create a single Cognate model."""
