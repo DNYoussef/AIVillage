@@ -9,7 +9,7 @@ on:
       - 'tests/security/**'
       - 'tests/core/p2p/**'
       - 'tests/validation/**'
-      - 'packages/p2p/**'
+      - 'infrastructure/p2p/**'
       - 'core/decentralized_architecture/**'
   pull_request:
     branches: [ main, develop ]
@@ -19,7 +19,7 @@ on:
       - 'tests/security/**'
       - 'tests/core/p2p/**'
       - 'tests/validation/**'
-      - 'packages/p2p/**'
+      - 'infrastructure/p2p/**'
       - 'core/decentralized_architecture/**'
 
 env:
@@ -55,16 +55,16 @@ jobs:
         echo "Running P2P security pre-flight checks..."
 
         # Secret detection in P2P code
-        detect-secrets scan --baseline .secrets.baseline packages/p2p/ tests/p2p/ || {
+        detect-secrets scan --baseline .secrets.baseline infrastructure/p2p/ tests/p2p/ || {
           echo "::error::Secrets detected in P2P codebase"
           exit 1
         }
 
         # Security scan of P2P packages
-        bandit -r packages/p2p/ -ll --format json -o p2p-security-precheck.json
+        bandit -r infrastructure/p2p/ -ll --format json -o p2p-security-precheck.json
 
         # Check for critical security issues
-        if bandit -r packages/p2p/ -ll | grep -E "(HIGH|CRITICAL)"; then
+        if bandit -r infrastructure/p2p/ -ll | grep -E "(HIGH|CRITICAL)"; then
           echo "::error::Critical security issues found in P2P code"
           exit 1
         fi

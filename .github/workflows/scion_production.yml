@@ -286,10 +286,10 @@ jobs:
           bash tools/linting/forbidden_checks_optimized.sh
 
           # Comprehensive security scan
-          bandit -r packages/p2p/ core/ infrastructure/ -f json -o bandit-report.json || echo "Bandit completed with warnings"
+          bandit -r infrastructure/p2p/ core/ infrastructure/ -f json -o bandit-report.json || echo "Bandit completed with warnings"
 
           # Check for critical security issues
-          if bandit -r packages/p2p/ core/ infrastructure/ -ll | grep -E "(HIGH|CRITICAL)"; then
+          if bandit -r infrastructure/p2p/ core/ infrastructure/ -ll | grep -E "(HIGH|CRITICAL)"; then
             echo "::error::Critical security issues found in production code"
             exit 1
           fi

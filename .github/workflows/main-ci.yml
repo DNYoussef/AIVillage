@@ -267,12 +267,12 @@ jobs:
       - name: 🔍 Semgrep SAST (Enhanced)
         run: |
           echo "Running Semgrep security analysis..."
-          semgrep --config=auto --config=security core/ infrastructure/ packages/ --json -o semgrep-report.json
+          semgrep --config=auto --config=security core/ infrastructure/ --json -o semgrep-report.json
 
           # Check for high severity findings
-          if semgrep --config=security --severity=ERROR core/ infrastructure/ packages/ | grep -q "ERROR"; then
+          if semgrep --config=security --severity=ERROR core/ infrastructure/ | grep -q "ERROR"; then
             echo "[ERROR] High severity security issues found - BLOCKING BUILD"
-            semgrep --config=security --severity=ERROR core/ infrastructure/ packages/
+            semgrep --config=security --severity=ERROR core/ infrastructure/
             exit 1
           fi
           echo "[OK] SAST analysis completed"

@@ -16,7 +16,7 @@ pip-audit>=2.6.0
 semgrep>=1.45.0
 
 # Container and Image Security
-trivy>=0.48.0
+# trivy>=0.48.0  # External binary, install separately if needed
 
 # Additional Security Analysis Tools
 vulture>=2.7          # Dead code detection
