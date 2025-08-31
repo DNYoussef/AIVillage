@@ -635,8 +635,9 @@ class RepairTestSuite:
                                 "affected_elements": [edge["id"]],
                             }
                         )
-                except Exception:
-                    pass  # Invalid date format
+                except Exception as e:
+                    logger.debug(f"Failed to parse date format for edge {edge.get('id', 'unknown')}: {e}")
+                    continue  # Skip invalid date format
 
         # Check for duplicate identities (simplified)
         patient_names = defaultdict(list)

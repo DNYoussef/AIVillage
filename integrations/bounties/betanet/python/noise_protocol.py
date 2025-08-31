@@ -148,9 +148,8 @@ class NoiseXKHandshake:
                 ciphertext = encryptor.update(plaintext) + encryptor.finalize()
 
                 return nonce + ciphertext
-            except Exception:
-                # Fallback to simple XOR
-                pass
+            except Exception as e:
+                logger.debug(f"ChaCha20 encryption failed, using XOR fallback: {e}")
 
         # Fallback encryption (XOR with key)
         key_stream = (self.encryption_key * ((len(plaintext) // 32) + 1))[: len(plaintext)]
@@ -170,9 +169,8 @@ class NoiseXKHandshake:
                 cipher = Cipher(algorithms.ChaCha20(self.decryption_key, nonce), mode=None)
                 decryptor = cipher.decryptor()
                 return decryptor.update(actual_ciphertext) + decryptor.finalize()
-            except Exception:
-                # Fall through to XOR fallback
-                pass
+            except Exception as e:
+                logger.debug(f"ChaCha20 decryption failed, using XOR fallback: {e}")
 
         # Fallback decryption (XOR with key)
         key_stream = (self.decryption_key * ((len(ciphertext) // 32) + 1))[: len(ciphertext)]

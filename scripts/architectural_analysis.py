@@ -20,6 +20,7 @@ from collections import defaultdict
 from dataclasses import asdict, dataclass
 from datetime import datetime
 import json
+import logging
 from pathlib import Path
 import sys
 from typing import Any
@@ -27,6 +28,9 @@ from typing import Any
 import networkx as nx
 import radon.complexity as cc
 import radon.metrics as rm
+
+# Configure logging
+logger = logging.getLogger(__name__)
 
 # Add project root to path
 PROJECT_ROOT = Path(__file__).parent.parent
@@ -159,8 +163,8 @@ class DependencyAnalyzer:
                 elif isinstance(node, ast.ImportFrom):
                     if node.module:
                         imports.append(node.module)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"Failed to parse imports from file {file_path}: {e}")
         return imports
 
     def _is_internal_module(self, module_name: str) -> bool:
@@ -220,8 +224,8 @@ class ConnascenceAnalyzer:
             self._detect_meaning_connascence(tree, file_path)
             self._detect_position_connascence(tree, file_path)
 
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"Failed to analyze connascence in file {file_path}: {e}")
 
     def _detect_name_connascence(self, tree: ast.AST, file_path: Path):
         """Detect connascence of name."""

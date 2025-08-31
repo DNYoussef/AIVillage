@@ -27,6 +27,9 @@ import sys
 from typing import Any
 
 import matplotlib.pyplot as plt
+
+# Configure logging
+logger = logging.getLogger(__name__)
 import networkx as nx
 import numpy as np
 import pandas as pd
@@ -153,8 +156,8 @@ class DependencyAnalyzer:
                 elif isinstance(node, ast.ImportFrom):
                     if node.module:
                         imports.append(node.module)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"Failed to parse imports from file {file_path}: {e}")
         return imports
 
     def _is_internal_module(self, module_name: str) -> bool:

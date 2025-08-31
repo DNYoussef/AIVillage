@@ -344,8 +344,9 @@ class GeometricSelfAwareness:
                     _, s, _ = np.linalg.svd(param_2d, compute_uv=False)
                     condition_number = s[0] / (s[-1] + 1e-10)
                     complexity_score += np.log(condition_number + 1)
-                except:
-                    pass  # Skip problematic layers
+                except Exception as e:
+                    logger.debug(f"Failed to compute SVD complexity for layer {layer_name}: {e}")
+                    continue  # Skip problematic layers
 
         return complexity_score
 

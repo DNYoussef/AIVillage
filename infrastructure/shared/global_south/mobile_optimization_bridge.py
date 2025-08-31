@@ -104,8 +104,8 @@ class MobileDeviceState:
                                 cpu_temps.extend([entry.current for entry in entries])
                         if cpu_temps:
                             cpu_temp = sum(cpu_temps) / len(cpu_temps)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"Failed to read CPU temperature sensors: {e}")
 
             # Determine thermal state
             if cpu_temp < 40:

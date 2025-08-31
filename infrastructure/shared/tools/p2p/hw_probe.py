@@ -346,8 +346,8 @@ class HardwareProbe:
             try:
                 process.terminate()
                 await process.wait()
-            except:
-                pass
+            except Exception as e:
+                logger.debug(f"Failed to terminate process gracefully: {e}")
             return None
 
         except FileNotFoundError:

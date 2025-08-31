@@ -78,8 +78,8 @@ class SimpleModelManager:
             for file_path in path.rglob("*"):
                 if file_path.is_file():
                     total += file_path.stat().st_size
-        except Exception:  # pragma: no cover - best effort
-            pass
+        except Exception as e:  # pragma: no cover - best effort
+            logger.debug(f"Failed to calculate cache size for path {self.cache_dir}: {e}")
         return total
 
     async def download_model(self, model_spec: dict[str, Any]) -> bool:
